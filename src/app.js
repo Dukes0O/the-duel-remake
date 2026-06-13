@@ -9,7 +9,7 @@ import { DRIVE } from './config.js';
 export class App {
   constructor() {
     const url = (typeof window !== 'undefined') ? new URLSearchParams(window.location.search) : new URLSearchParams('');
-    this.seed = seedFromUrl(1989);
+    this.seed = seedFromUrl();
     this.autopilot = url.get('autopilot') === '1';
     this.duel = new Duel({
       seed: this.seed,
@@ -106,7 +106,7 @@ export class App {
       this.keys[e.code] = true;
       if (e.code === 'ShiftRight' || e.code === 'KeyE') this.duel.setInput({ shiftUp: true });
       if (e.code === 'ShiftLeft' || e.code === 'KeyQ') this.duel.setInput({ shiftDown: true });
-      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
     });
     window.addEventListener('keyup', (e) => { this.keys[e.code] = false; });
   }

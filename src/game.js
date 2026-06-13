@@ -9,7 +9,7 @@ import { makeRng, seedFromUrl } from './rng.js';
 
 export class Duel {
   constructor(opts = {}) {
-    this.seed = (opts.seed ?? seedFromUrl(1989)) >>> 0;
+    this.seed = (opts.seed ?? seedFromUrl()) >>> 0;
     this.difficultyKey = opts.difficulty || DEFAULT_DIFFICULTY;
     this.carKey = opts.car || DEFAULT_CAR;
     this.listeners = new Set();
@@ -60,6 +60,7 @@ export class Duel {
     this.state.stageIndex = 0;
     this.state.lives = LIVES.start;
     this.state.totalTimeSec = 0;
+    this.state.penaltySec = 0;
     this._loadStage(0);
   }
 
@@ -71,11 +72,13 @@ export class Duel {
     s.stageTimeSec = 0;
     s.police = { beep: 0, triggered: false, pursuit: null, ticket: null };
     s.results = null;
+    s.lastCrashReason = null;
+    s.crashFlash = 0;
     s.countdown = 3;
     s.status = 'countdown';
     // rival
     s.rival = (COURSE[idx].hasRival && s.mode === 'duel')
-      ? { s: this.course.rivalStartS ?? -40, lateral: -DRIVE.laneOffset, speedMph: 0, finished: false, finishTime: null }
+      ? { s: this.course.rivalStartS, lateral: -DRIVE.laneOffset, speedMph: 0, finished: false, finishTime: null }
       : null;
     // pre-spawn deterministic two-way traffic
     s.traffic = this._spawnTraffic(idx);
@@ -85,7 +88,8 @@ export class Duel {
   _spawnTraffic(idx) {
     const def = COURSE[idx];
     const rng = makeRng(this.seed ^ (idx * 0x51ed) ^ 0x7a17);
-    const density = this.diff.trafficDensity * (this.course.theme.fogDensity > 0.015 ? 0.85 : 1);
+    const density = this.diff.trafficDensity
+      * (this.course.theme.fogDensity > TRAFFIC.fogDensityThreshold ? TRAFFIC.fogSpawnMult : 1);
     const gap = TRAFFIC.baseGapU / Math.max(0.4, density);
     const cars = [];
     for (let s = 320; s < def.lengthU - 120; s += gap * rng.range(0.7, 1.3)) {
@@ -114,10 +118,16 @@ export class Duel {
     s.totalTimeSec += dt;
     if (s.crashFlash > 0) s.crashFlash = Math.max(0, s.crashFlash - dt);
 
+    // each sub-step can end the run (gameover crash, ticket); once the status
+    // leaves 'racing' the rest of the frame must not keep simulating, or a
+    // finish-line crossing could overwrite the gameover/ticket state
     this._drive(dt);
+    if (s.status !== 'racing') return;
     this._traffic(dt);
     this._collisions();
+    if (s.status !== 'racing') return;
     this._police(dt);
+    if (s.status !== 'racing') return;
     if (s.rival) this._rival(dt);
 
     // stage finish (reach the gas station)
@@ -126,6 +136,9 @@ export class Duel {
 
   _drive(dt) {
     const s = this.state, car = this.car, d = this.diff;
+    // recorded up front (not at the integration line) so the swept collision
+    // test stays valid on frames where a crash bails out of _drive early
+    s.prevS = s.s;
     // gearbox
     const gmax = car.gears[s.gear];
     s.revs = gmax ? s.speedMph / gmax : 0;
@@ -142,16 +155,17 @@ export class Duel {
     const gearMax = car.gears[s.gear];
     const accelFactor = Math.max(0.15, 1 - Math.max(0, s.revs - 0.5)); // falls off near redline
     if (s.input.throttle > 0) {
-      const ceil = Math.min(car.topSpeed, gearMax * 1.04);
-      if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * 3.2;
+      const ceil = Math.min(car.topSpeed, gearMax * DRIVE.gearCeilFrac);
+      if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * DRIVE.accelScale;
     }
     if (s.input.brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * s.input.brake * dt;
     s.speedMph -= DRIVE.dragCoeff * dt * (s.input.throttle > 0 ? 0.2 : 1);
 
-    // engine blow if you hold past redline on a manual at Pro difficulty
-    if (!d.autoShift && d.engineBlow && s.revs > 1.06 && s.input.throttle > 0) {
+    // engine blow if you ride the limiter on a Pro manual — the threshold sits
+    // below the gear ceiling so holding throttle without upshifting gets there
+    if (!d.autoShift && d.engineBlow && s.revs > DRIVE.overRevFrac && s.input.throttle > 0) {
       s.overrevSec += dt;
-      if (s.overrevSec > 1.6) { this._crash('engine_blew'); return; }
+      if (s.overrevSec > DRIVE.overRevBlowSec) { this._crash('engine_blew'); return; }
     } else {
       s.overrevSec = Math.max(0, s.overrevSec - dt);
     }
@@ -166,7 +180,7 @@ export class Duel {
     s.offRoad = Math.abs(s.lateral) > DRIVE.roadHalfWidth;
     if (s.offRoad) {
       s.speedMph *= (1 - (1 - DRIVE.offRoadGrip) * dt * 2);
-      if (Math.abs(s.lateral) > DRIVE.roadHalfWidth + 4.5) { this._crash('off_road'); return; }
+      if (Math.abs(s.lateral) > DRIVE.roadHalfWidth + DRIVE.offRoadCrashMarginU) { this._crash('off_road'); return; }
     }
 
     s.speedMph = Math.max(0, Math.min(car.topSpeed, s.speedMph));
@@ -177,6 +191,7 @@ export class Duel {
     const s = this.state;
     for (const c of s.traffic) {
       if (!c.alive) continue;
+      c.prevS = c.s;
       c.s += c.dir * c.speedMph * dt; // oncoming move toward the player
     }
   }
@@ -185,7 +200,12 @@ export class Duel {
     const s = this.state;
     for (const c of s.traffic) {
       if (!c.alive) continue;
-      if (Math.abs(c.s - s.s) < TRAFFIC.collideLongU && Math.abs(c.lateral - s.lateral) < TRAFFIC.collideLatU) {
+      // swept longitudinal test: a head-on closing speed can cross the whole
+      // hit window in one clamped frame, so a relative sign flip counts too
+      const now = c.s - s.s;
+      const prev = (c.prevS ?? c.s) - (s.prevS ?? s.s);
+      const hitLong = Math.abs(now) < TRAFFIC.collideLongU || (prev > 0) !== (now > 0);
+      if (hitLong && Math.abs(c.lateral - s.lateral) < TRAFFIC.collideLatU) {
         c.alive = false;
         this._crash('traffic');
         return;
@@ -201,17 +221,18 @@ export class Duel {
       const dist = radar.s - s.s;
       p.beep = dist > 0 ? Math.max(0, 1 - dist / POLICE.detectorRangeU) : 0;
       // crossing the trap over the limit triggers a pursuer
-      if (!p.triggered && dist <= 0 && dist > -40 && s.speedMph > radar.limitMph + POLICE.trapOverLimitMph) {
+      if (!p.triggered && dist <= 0 && dist > -POLICE.trapWindowU && s.speedMph > radar.limitMph + POLICE.trapOverLimitMph) {
         p.triggered = true;
-        p.pursuit = { active: true, gapU: 120, caught: false };
+        p.pursuit = { active: true, gapU: POLICE.pursuitStartGapU, caught: false };
         this.emit({ radarTriggered: true, speed: Math.round(s.speedMph), limit: radar.limitMph });
       }
     } else {
       p.beep = Math.max(0, p.beep - dt);
     }
-    // pursuit dynamics: gap closes if you're slower than the cruiser
+    // pursuit dynamics: gapU is the player's lead — it closes when the
+    // cruiser is faster, opens when the player outruns it
     if (p.pursuit && p.pursuit.active) {
-      const rel = POLICE.pursuitSpeedMph - s.speedMph;
+      const rel = s.speedMph - POLICE.pursuitSpeedMph;
       p.pursuit.gapU += rel * dt;
       if (p.pursuit.gapU <= POLICE.pursuitCatchU) {
         p.pursuit.active = false; p.pursuit.caught = true;
@@ -230,11 +251,11 @@ export class Duel {
       offense: 'Speeding past a radar trap',
       speedMph: Math.round(s.speedMph),
       limitMph: radar ? radar.limitMph : this.stageDef.speedLimitMph,
-      penaltySec: 20,
+      penaltySec: POLICE.ticketPenaltySec,
       fine: POLICE.ticketBaseFine,
     };
-    s.penaltySec += 20;
-    s.totalTimeSec += 20;
+    s.penaltySec += POLICE.ticketPenaltySec;
+    s.totalTimeSec += POLICE.ticketPenaltySec;
     this.emit({ ticket: s.police.ticket });
   }
 
@@ -244,7 +265,7 @@ export class Duel {
     const s = this.state;
     if (s.status !== 'ticket') return;
     s.police.pursuit = null;
-    s.speedMph = Math.min(s.speedMph, 50);
+    s.speedMph = Math.min(s.speedMph, POLICE.ticketSpeedCapMph);
     s.status = 'racing';
     this.emit({ ticketAcked: true });
   }
@@ -281,8 +302,8 @@ export class Duel {
       return;
     }
     // recover: scrub speed, recenter on the road, keep racing
-    s.speedMph = Math.min(s.speedMph, 40);
-    s.lateral = 0; s.gear = Math.min(s.gear, 1); s.overrevSec = 0;
+    s.speedMph = Math.min(s.speedMph, DRIVE.crashSpeedCapMph);
+    s.lateral = 0; s.gear = Math.min(s.gear, DRIVE.crashGearMax); s.overrevSec = 0;
     s.status = 'racing';
   }
 
@@ -293,7 +314,7 @@ export class Duel {
     if (missed) { s.lives -= LIVES.missedStationCost; }
     else { s.lives += LIVES.cleanStageReward; }
 
-    const par = this.course.length / 110; // par seconds
+    const par = this.course.length / SCORING.parSpeedMph; // par seconds
     const timeBonus = Math.max(0, Math.round((par - s.stageTimeSec) * SCORING.perSecondUnder));
     const beatRival = s.rival ? (s.rival.finishTime == null || s.stageTimeSec <= s.rival.finishTime) : null;
     const score = SCORING.perStageBase + timeBonus + s.lives * SCORING.perLifeLeft;

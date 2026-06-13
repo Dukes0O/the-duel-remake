@@ -13,7 +13,7 @@ non-localhost requests.
   campaign complete / game over. 5 lives, crash/penalty/clean-stage/missed-
   station scoring.
 - Two-way traffic + collisions; off-road crashes; police radar trap with an
-  escalating detector beep, a pursuer, ticket screen, and escape.
+  escalating detector warning bar, a pursuer, ticket screen, and escape.
 - Manual gearbox (Pro) with redline engine-blow; automatic (Casual). Beatable
   AI rival with rubber-banding in Duel mode; solo Time Trial mode.
 - 2 themes × 2 stages core campaign; start menu (car / difficulty / mode);
@@ -22,7 +22,7 @@ non-localhost requests.
 - `?autopilot=1` drives stage 1 through the radar trap to the results screen.
 
 **Partial / stretch (in config, not all wired end-to-end):**
-- 4 stretch themes (coast, city, …) exist in `config.js` and render through the
+- 2 stretch themes (coast, city) exist in `config.js` and render through the
   same generator but aren't in the default 4-stage campaign rotation.
 - Audio (engine/skid/beep) not implemented (procedural WebAudio was the
   cut-first polish item).

@@ -18,8 +18,8 @@ brief; HOUSE = plausible arcade values invented to fill gaps, frozen in
   (tests, `?autopilot`) and under rAF (rendering).
 - **One spline-extrusion course generator** (`course.js`) builds every
   stage/theme from summed-sine curvature + elevation, seeded per stage. Themes
-  are just parameters (palette, fog, scenery, tunnels) — the four stretch
-  themes reuse the same generator. Strictly point-to-point: s=0 → s=lengthU,
+  are just parameters (palette, fog, scenery, tunnels) — all four themes
+  (two core + two stretch) reuse the same generator. Strictly point-to-point: s=0 → s=lengthU,
   gas-station checkpoint at the end, **no laps**.
 - **Views read state, never mutate it.** `render3d.js` (three.js chase cam) and
   `main.js` (DOM menu/HUD) both read `app.duel.state`. The renderer is
@@ -67,6 +67,36 @@ brief; HOUSE = plausible arcade values invented to fill gaps, frozen in
   auto-shifting 1→5, speed 24→201 mph, scene rendering 48–80 draw calls /
   ~4,800 triangles / 21 colors. Zero non-localhost requests.
 
+## Post-build review pass
+A multi-agent adversarial review (61 confirmed findings across both game repos)
+drove a hardening pass. The behavior-affecting calls:
+
+- **Pursuit dynamics were inverted and are now correct.** gapU is the player's
+  lead; it previously *shrank* when the player was faster than the cruiser, so
+  outrunning the cop earned the ticket and dawdling escaped — the opposite of
+  canon. One-line sign fix, plus regression tests for both outcomes.
+- **The Pro engine blow is reachable.** The throttle ceiling caps revs at
+  ~1.04 × gearMax but the blow threshold was 1.06 — dead code. The threshold
+  is now 1.02 (config `DRIVE.overRevFrac`): riding the limiter without
+  upshifting blows the engine after the 1.6 s grace window, as advertised.
+- **step() bails out once the status leaves 'racing'.** A final-life crash on
+  the finish-crossing frame used to fall through to `_finishStage`, award the
+  clean-stage life, and overwrite the gameover with a results screen.
+- **Head-on collisions are swept.** At the clamped worst-case dt (50 ms) a
+  201-mph pass closed more than the 12-unit hit window in one frame and
+  tunneled through oncoming traffic; the test now also fires on a relative
+  sign flip between frames.
+- **HUD is live without rebuilds.** The rival gap, radar label, and radar
+  warm/hot colors were frozen at their race-start values during normal racing,
+  while pursuits rebuilt the whole overlay every frame. All gauges now update
+  in place; full re-renders happen only on structural transitions.
+- **Campaign restarts are clean** (penalties and crash banners cleared), the
+  stage renderer keys on Course identity (restart-on-same-stage rebuilds), and
+  surplus traffic-pool meshes are hidden between stages.
+- **HOUSE constants hoisted to config** (ticket penalty seconds, redline/blow
+  fractions, accel scale, pursuit gaps, crash recovery caps, fog spawn tuning,
+  par speed); dead keys removed (`mphPerUnit`, per-car `redlineMph`).
+
 ## Waivers / gaps
 - **CDP screenshots and rAF both throttle in the unfocused headless preview**
   on this machine. Game logic verified via the synchronous `advance()` path;
@@ -77,5 +107,5 @@ brief; HOUSE = plausible arcade values invented to fill gaps, frozen in
   `screenshots/` PNGs captured.
 - Milestones 3–5 (police+gearbox depth, duel-AI tuning, stretch roster/themes/
   audio): the mechanics exist (manual gearbox + engine-blow, rival AI, police
-  pursuit, 4 stretch themes in config) — see README STATUS for what is wired
+  pursuit, 2 stretch themes in config) — see README STATUS for what is wired
   end-to-end vs. stubbed.

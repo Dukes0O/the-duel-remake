@@ -109,17 +109,22 @@ export function attachRenderer(host, app) {
     stageObjs.add(inst);
 
     scene.add(stageObjs);
-    // size the traffic pool
+    // size the traffic pool, then start every pool mesh hidden — a stage with
+    // fewer cars must not inherit visible ghosts from the previous one
     while (trafficPool.length < app.duel.state.traffic.length) {
       const t = buildCar(0x888888, 0x444444); t.visible = false; scene.add(t); trafficPool.push(t);
     }
+    for (const t of trafficPool) t.visible = false;
   }
 
-  let loadedStage = -1;
+  // keyed on Course object identity: _loadStage always builds a fresh Course,
+  // so this covers stage advance, campaign restart on the same stage index,
+  // and car/difficulty changes in one check
+  let loadedCourse = null;
   function frame() {
     const st = app.duel.state;
     if (!app.duel.course) { renderer.render(scene, camera); return; }
-    if (loadedStage !== st.stageIndex) { buildStage(); loadedStage = st.stageIndex; playerCar.children[0].material.color.set(app.duel.car.color); playerCar.children[1].material.color.set(app.duel.car.accent); }
+    if (loadedCourse !== app.duel.course) { buildStage(); loadedCourse = app.duel.course; playerCar.children[0].material.color.set(app.duel.car.color); playerCar.children[1].material.color.set(app.duel.car.accent); }
 
     const course = app.duel.course;
     // player
@@ -141,13 +146,14 @@ export function attachRenderer(host, app) {
       rivalCar.position.set(rp.x, rp.y + 0.1, rp.z); rivalCar.rotation.y = rp.heading;
     } else rivalCar.visible = false;
 
-    // traffic
+    // traffic; pool meshes beyond this stage's car count stay hidden
     st.traffic.forEach((c, i) => {
       const obj = trafficPool[i]; if (!obj) return;
       const near = Math.abs(c.s - st.s) < 320 && c.alive;
       obj.visible = near;
       if (near) { const cp = course.worldAt(c.s, c.lateral); obj.position.set(cp.x, cp.y + 0.1, cp.z); obj.rotation.y = cp.heading + (c.dir < 0 ? Math.PI : 0); }
     });
+    for (let i = st.traffic.length; i < trafficPool.length; i++) trafficPool[i].visible = false;
 
     // police pursuer + flashing lamps
     const pur = st.police.pursuit;

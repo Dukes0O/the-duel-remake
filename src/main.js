@@ -3,11 +3,12 @@
 
 import './style.css';
 import { App } from './app.js';
-import { CARS, DIFFICULTY, COURSE } from './config.js';
+import { CARS, DIFFICULTY, COURSE, DRIVE } from './config.js';
 
 const root = document.querySelector('#app');
 const app = new App();
 let renderHandle = null;
+let renderPromise = null;
 
 // layout: a canvas host + an overlay layer
 root.innerHTML = `
@@ -16,13 +17,16 @@ root.innerHTML = `
 const view3d = root.querySelector('#view3d');
 const overlay = root.querySelector('#overlay');
 
-async function ensureRenderer() {
-  if (renderHandle) return;
-  try {
-    const mod = await import(/* @vite-ignore */ './render3d.js');
-    renderHandle = mod.attachRenderer(view3d, app);
-    view3d.classList.add('live');
-  } catch (e) { /* 3D failed; HUD still drives the game */ }
+// Memoizing the in-flight promise (not the result) stops two callers racing
+// the import into two renderers; a failure clears it so a retry is possible
+// while the HUD keeps driving the game.
+function ensureRenderer() {
+  if (!renderPromise) {
+    renderPromise = import(/* @vite-ignore */ './render3d.js')
+      .then((m) => { renderHandle = m.attachRenderer(view3d, app); view3d.classList.add('live'); })
+      .catch((e) => { renderPromise = null; console.warn('3D renderer unavailable; HUD remains playable', e); });
+  }
+  return renderPromise;
 }
 
 function el(tag, attrs = {}, ...kids) {
@@ -53,6 +57,12 @@ function renderOverlay() {
 }
 
 let menuChoice = { car: 'falcone_f42', difficulty: 'casual', mode: 'duel' };
+// chip selection toggles classes in place — rebuilding the menu would drop
+// keyboard focus to <body> on every pick
+function selectChip(row, btn) {
+  for (const b of row.children) b.classList.remove('on');
+  btn.classList.add('on');
+}
 function menuScreen() {
   const m = el('div', { class: 'panel menu' });
   m.append(el('h1', {}, 'THE DUEL'), el('p', { class: 'sub' }, 'Point-to-point road racing · pass in the oncoming lane · beat the rival · don’t get caught'));
@@ -60,7 +70,7 @@ function menuScreen() {
   m.append(el('h3', {}, 'Car'));
   const cars = el('div', { class: 'row' });
   for (const [key, c] of Object.entries(CARS)) {
-    cars.append(el('button', { class: 'chip' + (menuChoice.car === key ? ' on' : ''), onclick: () => { menuChoice.car = key; renderOverlay(); } },
+    cars.append(el('button', { class: 'chip' + (menuChoice.car === key ? ' on' : ''), onclick: (ev) => { menuChoice.car = key; selectChip(cars, ev.currentTarget); } },
       `${c.name}`, el('small', {}, ` ${c.topSpeed} mph · ${c.gears.length}-spd`)));
   }
   m.append(cars);
@@ -68,7 +78,7 @@ function menuScreen() {
   m.append(el('h3', {}, 'Difficulty'));
   const diffs = el('div', { class: 'row' });
   for (const [key, d] of Object.entries(DIFFICULTY)) {
-    diffs.append(el('button', { class: 'chip' + (menuChoice.difficulty === key ? ' on' : ''), onclick: () => { menuChoice.difficulty = key; renderOverlay(); } },
+    diffs.append(el('button', { class: 'chip' + (menuChoice.difficulty === key ? ' on' : ''), onclick: (ev) => { menuChoice.difficulty = key; selectChip(diffs, ev.currentTarget); } },
       d.name, el('small', {}, d.autoShift ? ' auto' : ' manual')));
   }
   m.append(diffs);
@@ -76,7 +86,7 @@ function menuScreen() {
   m.append(el('h3', {}, 'Mode'));
   const modes = el('div', { class: 'row' });
   for (const [key, label] of [['duel', 'Duel (vs rival)'], ['timetrial', 'Time Trial']]) {
-    modes.append(el('button', { class: 'chip' + (menuChoice.mode === key ? ' on' : ''), onclick: () => { menuChoice.mode = key; renderOverlay(); } }, label));
+    modes.append(el('button', { class: 'chip' + (menuChoice.mode === key ? ' on' : ''), onclick: (ev) => { menuChoice.mode = key; selectChip(modes, ev.currentTarget); } }, label));
   }
   m.append(modes);
 
@@ -91,6 +101,21 @@ function startGame() {
   renderOverlay();
 }
 
+// radar presentation shared by the initial build and the live updater
+function radarClass(beep) { return beep > 0.66 ? 'hot' : beep > 0.2 ? 'warm' : ''; }
+function radarLabel(s) {
+  const p = s.police;
+  return p.pursuit && p.pursuit.active ? '🚓 PURSUIT' : p.beep > 0.05 ? 'RADAR' : 'clear';
+}
+function rivalText(s) {
+  const gap = Math.round(s.rival.s - s.s);
+  return gap >= 0 ? `RIVAL ahead ${gap}u` : `RIVAL behind ${-gap}u`;
+}
+function crashText(s) {
+  return s.lastCrashReason === 'engine_blew' ? 'ENGINE BLOWN!'
+    : s.lastCrashReason === 'traffic' ? 'CRASH!' : 'OFF ROAD!';
+}
+
 function hud(s) {
   const car = app.duel.car;
   const h = el('div', { class: 'hud' });
@@ -102,26 +127,22 @@ function hud(s) {
   ));
   // speedo + tach + gear
   const tachPct = Math.min(1, s.revs) * 100;
-  const redline = s.revs > 0.92;
+  const redline = s.revs > DRIVE.redlineWarnFrac;
   h.append(el('div', { class: 'hud-bot' },
     el('div', { class: 'gauge' }, el('b', {}, String(Math.round(s.speedMph))), el('small', {}, 'MPH')),
     el('div', { class: 'tach' + (redline ? ' red' : '') }, el('i', { style: `width:${tachPct}%` }), el('span', {}, `GEAR ${s.gear + 1}/${car.gears.length}`)),
     radarWidget(s),
   ));
-  if (s.rival) {
-    const gap = Math.round(s.rival.s - s.s);
-    h.append(el('div', { class: 'rival-tag' }, gap >= 0 ? `RIVAL ahead ${gap}u` : `RIVAL behind ${-gap}u`));
-  }
-  if (s.crashFlash > 0) h.append(el('div', { class: 'crashflash' }, s.lastCrashReason === 'engine_blew' ? 'ENGINE BLOWN!' : s.lastCrashReason === 'traffic' ? 'CRASH!' : 'OFF ROAD!'));
+  if (s.rival) h.append(el('div', { class: 'rival-tag' }, rivalText(s)));
+  if (s.crashFlash > 0) h.append(el('div', { class: 'crashflash' }, crashText(s)));
   return h;
 }
 
 function radarWidget(s) {
-  const p = s.police;
   const w = el('div', { class: 'radar' });
-  const beepPct = Math.round(p.beep * 100);
-  w.append(el('div', { class: 'radar-bar' + (p.beep > 0.66 ? ' hot' : p.beep > 0.2 ? ' warm' : '') }, el('i', { style: `width:${beepPct}%` })));
-  w.append(el('small', {}, p.pursuit && p.pursuit.active ? '🚓 PURSUIT' : p.beep > 0.05 ? 'RADAR' : 'clear'));
+  const beepPct = Math.round(s.police.beep * 100);
+  w.append(el('div', { class: ('radar-bar ' + radarClass(s.police.beep)).trim() }, el('i', { style: `width:${beepPct}%` })));
+  w.append(el('small', {}, radarLabel(s)));
   return w;
 }
 
@@ -174,25 +195,52 @@ function completeScreen(s) {
 
 // ---- boot --------------------------------------------------------------
 let lastStatus = null;
+let hudFlags = { countdown: false, crash: false, pursuit: false };
+const computeHudFlags = (s) => ({
+  countdown: s.status === 'countdown',
+  crash: s.crashFlash > 0,
+  pursuit: !!(s.police.pursuit && s.police.pursuit.active),
+});
+
 app.onFrame = (s) => {
-  // re-render the overlay on status change or every frame while racing (cheap)
-  if (s.status !== lastStatus) { lastStatus = s.status; renderOverlay(); if (s.status !== 'menu') ensureRenderer(); }
-  else if (s.status === 'racing' || s.status === 'countdown') updateHudLive(s);
+  if (s.status !== lastStatus) {
+    lastStatus = s.status;
+    hudFlags = computeHudFlags(s);
+    renderOverlay();
+    if (s.status !== 'menu') ensureRenderer();
+  } else if (s.status === 'racing' || s.status === 'countdown') {
+    updateHudLive(s);
+  }
 };
 
-// lightweight live HUD update without rebuilding the DOM tree every frame
+// Live HUD path: a full overlay rebuild only on structural transitions
+// (countdown / crash flash / pursuit appearing or clearing); every other
+// frame updates text and classes in place, which also keeps the CSS width
+// transitions on the tach and radar bars alive.
 function updateHudLive(s) {
+  const want = computeHudFlags(s);
+  if (want.countdown !== hudFlags.countdown || want.crash !== hudFlags.crash || want.pursuit !== hudFlags.pursuit) {
+    hudFlags = want;
+    renderOverlay();
+    return;
+  }
   const car = app.duel.car;
   const set = (sel, txt) => { const e = overlay.querySelector(sel); if (e && txt != null) e.textContent = txt; };
   set('.gauge b', String(Math.round(s.speedMph)));
   set('.timer', `${s.stageTimeSec.toFixed(1)}s` + (s.penaltySec ? `  +${Math.round(s.penaltySec)}s` : ''));
   set('.lives', '❤ '.repeat(Math.max(0, s.lives)).trim() || '—');
   const tach = overlay.querySelector('.tach i'); if (tach) tach.style.width = `${Math.min(1, s.revs) * 100}%`;
-  const tachBox = overlay.querySelector('.tach'); if (tachBox) tachBox.classList.toggle('red', s.revs > 0.92);
+  const tachBox = overlay.querySelector('.tach'); if (tachBox) tachBox.classList.toggle('red', s.revs > DRIVE.redlineWarnFrac);
   set('.tach span', `GEAR ${s.gear + 1}/${car.gears.length}`);
   const rb = overlay.querySelector('.radar-bar i'); if (rb) rb.style.width = `${Math.round(s.police.beep * 100)}%`;
-  // countdown / crash flash need structural change — fall back to full render
-  if (s.status === 'countdown' || s.crashFlash > 0 || (s.police.pursuit && s.police.pursuit.active)) renderOverlay();
+  const rbox = overlay.querySelector('.radar-bar'); if (rbox) rbox.className = ('radar-bar ' + radarClass(s.police.beep)).trim();
+  set('.radar small', radarLabel(s));
+  if (s.rival) set('.rival-tag', rivalText(s));
+  if (want.crash) set('.crashflash', crashText(s)); // back-to-back crashes can change the reason mid-flash
+  if (want.countdown) {
+    const n = Math.ceil(s.countdown);
+    set('.big-center', n > 0 ? String(n) : 'GO!');
+  }
 }
 
 renderOverlay();

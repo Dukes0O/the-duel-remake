@@ -12,18 +12,19 @@ export const LIVES = {
 
 // CANON — two core cars: F40 / 959 homages with fictional names + original
 // silhouettes. HOUSE — the stat blocks (speed/accel/grip/braking/gears).
-// topSpeed in mph; accel in mph/s at full throttle in an ideal gear; grip and
-// braking are 0..1 multipliers; gears list per-gear max speed (mph).
+// topSpeed in mph; accel is the base throttle rate (peak mph/s ≈ accel *
+// DRIVE.accelScale); grip and braking are 0..1 multipliers; gears list
+// per-gear max speed (mph).
 export const CARS = {
   falcone_f42: {
     name: 'Falcone F42', homage: 'F40-style', gearbox: 'manual',
-    topSpeed: 201, accel: 7.6, grip: 0.82, braking: 0.90, redlineMph: 8,
+    topSpeed: 201, accel: 7.6, grip: 0.82, braking: 0.90,
     gears: [55, 95, 135, 172, 201], // 5-speed, twitchy & fast
     color: 0xc81d11, accent: 0xf2c200,
   },
   stuttgart_959s: {
     name: 'Stuttgart 959-S', homage: '959-style', gearbox: 'manual',
-    topSpeed: 197, accel: 6.9, grip: 0.95, braking: 1.00, redlineMph: 6,
+    topSpeed: 197, accel: 6.9, grip: 0.95, braking: 1.00,
     gears: [50, 88, 124, 158, 184, 197], // 6-speed, planted AWD
     color: 0xded6c8, accent: 0x2b6cb0,
   },
@@ -73,25 +74,38 @@ export const COURSE = [
 ];
 
 // CANON — police: fixed radar traps, escalating detector beep, one pursuer.
-// HOUSE — beep range, pursuit catch model.
+// HOUSE — beep range, pursuit catch model, ticket terms.
 export const POLICE = {
   detectorRangeU: 900,    // detector starts beeping within this distance
   trapOverLimitMph: 8,    // > limit by this when passing a trap = triggered
+  trapWindowU: 40,        // trap measures speed within this span past it
   pursuitCatchU: 14,      // pursuer within this distance = caught/ticket
   pursuitSpeedMph: 150,   // pursuer cruise speed
+  pursuitStartGapU: 120,  // player's head start when the pursuit begins
   escapeAheadU: 1200,     // open this gap to shake the pursuer
   ticketBaseFine: 150,
+  ticketPenaltySec: 20,   // seconds added when caught
+  ticketSpeedCapMph: 50,  // rolling speed after paying the ticket
 };
 
 // HOUSE — kinematic controller constants (no sim physics — non-goal).
+// Unit convention: 1 mph == 1 unit/sec along the centerline; s advances by
+// speedMph * dt.
 export const DRIVE = {
-  mphPerUnit: 0.06,       // display: mph = speedU * (1/mphPerUnit)? see game.js
   steerRate: 26,          // lateral units/sec at full steer
-  roadHalfWidth: 7,       // |lateral| beyond this = off-road crash
+  roadHalfWidth: 7,       // |lateral| beyond this = off-road
+  offRoadCrashMarginU: 4.5, // this far past the road edge = crash
   laneOffset: 3.4,        // center of a lane
   brakeAccel: 34,         // mph/s braking baseline
   dragCoeff: 0.6,         // passive deceleration
   offRoadGrip: 0.45,      // speed scrub when off the paved road
+  accelScale: 3.2,        // peak mph/s = car.accel * accelScale (falls off near redline)
+  gearCeilFrac: 1.04,     // throttle stops adding speed past gearMax * this
+  redlineWarnFrac: 0.92,  // tach shows red from this rev fraction
+  overRevFrac: 1.02,      // sustained revs above this can blow the engine (Pro)
+  overRevBlowSec: 1.6,    // grace window riding the limiter before it lets go
+  crashSpeedCapMph: 40,   // rolling speed after recovering from a crash
+  crashGearMax: 1,        // gear index cap after recovering from a crash
 };
 
 // HOUSE — two-way traffic. Density scales spawns; fog reduces sight => the
@@ -102,10 +116,13 @@ export const TRAFFIC = {
   carSpeedMph: 48,
   collideLongU: 6,        // longitudinal overlap for a collision
   collideLatU: 2.6,       // lateral overlap for a collision
+  fogDensityThreshold: 0.015, // themes foggier than this spawn fewer cars
+  fogSpawnMult: 0.85,     // spawn density multiplier in fog
 };
 
 export const SCORING = {
   perStageBase: 1000,
   perSecondUnder: 12,     // bonus for beating the par time
   perLifeLeft: 500,
+  parSpeedMph: 110,       // par time = stage length / this
 };
