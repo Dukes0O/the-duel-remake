@@ -2,7 +2,17 @@
 
 Checkpoint: 19 September 2026. The latest vehicle, reward and route iteration is described first. All later sections preserve earlier checkpoints; their counts and screenshots do not describe the latest geometry.
 
-## Cactus knockdowns and two-car damage — latest follow-up
+## Jump-height HUD — latest follow-up
+
+An airborne car now shows its actual ground clearance in metres, rounded to one decimal place, above the speedometer. The same readout tracks the current jump's peak. On landing it shows `JUMP PEAK` for two simulation seconds, then hides. Pause freezes the timer; menu, restart, new stage and crash/recovery clear stale values. This is presentation-only: driving, jump scoring, records and saved careers are unchanged. The continuously changing number is not an ARIA live region.
+
+Passing focused checks: jump-height helper 95, actual HUD presentation 98, Stunt Trial 44, reverse driving 241, reverse presentation 18, Busted/quit 280, Heritage driving 94, completion UI 72 and App lifecycle 8. The helper's separate input-driven Titan flight reached 4.902 m and stayed airborne for 1.350 seconds; full-state trajectories matched the no-helper baseline and 30/144 FPS runs. Four complete F42/Heritage forward replays also retained their previous exact signature. The package now registers 80 commands; the full chain and expensive campaign matrix were not rerun for this HUD-only change.
+
+Isolated memory-only browser review used real Titan ramp physics, not invented height values. The rising sample had 1.374 m ground clearance above terrain at 1.984 m elevation; the HUD correctly showed 1.4 m, not world altitude. The 2.942 m peak displayed as 2.9 m, stayed visible after landing and hid after two seconds. A new run started with the readout hidden. No browser errors were observed. This fixture freezes real simulation snapshots for visual inspection; it is not a new human play-test.
+
+Production and QA builds pass. The same live server returns `index-BCAL93Ki.js`; the existing approximately 940 kB rendering-chunk warning remains. The live tab had Dukes00's garage open with 200 CR and was left untouched. Refresh from the menu to load the update. No real race, purchase or account change was used for testing.
+
+## Cactus knockdowns and two-car damage — earlier follow-up
 
 Desert cacti fall on the first player or NPC contact, stop blocking immediately and remain down through later laps. Restart/new-stage/menu resets restore the same cached instances upright. Falls follow impact direction, pause with the simulation clock and settle onto the actual rendered terrain. A cactus causes only a small speed scrub/light scratch, not a lost crash life or reward. Other trees and rocks remain solid.
 

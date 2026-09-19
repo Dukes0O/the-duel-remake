@@ -6,6 +6,8 @@ The user authorized moving the game server to this updated checkout and committi
 
 Updated checkout: `C:\Users\kyleb\.codex\worktrees\4555\the-duel-remake`.
 
+Latest: the jump-height HUD build is `index-BCAL93Ki.js`, verified in the live server's HTTP response. Production and QA builds pass. The open Dukes00 garage was not refreshed or changed; load the update with a menu refresh when ready. Isolated browser checks used only memory-local test data.
+
 The latest reverse-driving follow-up rebuilds this same served directory as `index-mwTQ9czz.js`. Refresh from the menu to receive it; do not interrupt an active race. The account changes requested separately for Spikyferns are browser-local and are not part of the build.
 
 The subsequent one-click Exit / Restart update supersedes that bundle with `index-iwWIpGeS.js`. Both the production build and the existing Chrome tab were verified on this version; the menu refresh preserved the selected player and displayed balance.
