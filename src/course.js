@@ -38,7 +38,7 @@ export class Course {
     this.samples = samples;
 
     // --- features ---
-    this.features = { checkpoints: [], radarTraps: [], scenery: [] };
+    this.features = { checkpoints: [], radarTraps: [], scenery: [], rocks: [] };
     // gas-station checkpoint at the very end (CANON: stages end at a station)
     this.features.checkpoints.push({ s: this.length, kind: 'gas_station' });
     // radar trap at a fixed fraction so it's deterministic per stage
@@ -55,7 +55,23 @@ export class Course {
       const off = side * this.rng.range(11, 30);
       this.features.scenery.push({ s, off, scale: this.rng.range(0.7, 1.6), kind: this.theme.scenery });
     }
+    // One source of truth for rendered rocks and their road-coordinate colliders.
+    const rockRng=makeRng(9817+this.def.stage), rocks=this.features.rocks;
+    for(let i=0;i<180;i++){
+      const sx=rockRng.range(1.3,4),sy=rockRng.range(.9,3),sz=rockRng.range(1.2,4),angle=rockRng.range(0,6.28);
+      rocks.push({s:rockRng.range(80,this.length-60),off:(i%2?1:-1)*rockRng.range(16,62),scale:[sx,sy,sz],angle,
+        radiusX:(Math.abs(Math.cos(angle))*sx+Math.abs(Math.sin(angle))*sz)*.73,
+        radiusZ:(Math.abs(Math.cos(angle))*sz+Math.abs(Math.sin(angle))*sx)*.73});
+    }
+    if(this.def.theme!=='alpine')for(let i=0;i<32;i++){
+      const layer=i%4,s=145+Math.floor(i/4)*480,off=(i%2?1:-1)*(37+Math.floor(i%4/2)*8);
+      if(s<this.length)rocks.push({s,off,scale:[8-layer*.9,5+layer*3.3,10-layer],angle:i*.8,outcrop:true,radiusX:7.5-layer*.8,radiusZ:8.7-layer*.8});
+    }
+    this.rockBuckets=new Map();
+    for(const rock of rocks){const key=Math.floor(rock.s/64);if(!this.rockBuckets.has(key))this.rockBuckets.set(key,[]);this.rockBuckets.get(key).push(rock);}
   }
+
+  rocksNear(from,to){const rocks=[];for(let b=Math.floor((Math.min(from,to)-14)/64);b<=Math.floor((Math.max(from,to)+14)/64);b++)rocks.push(...(this.rockBuckets.get(b)||[]));return rocks;}
 
   // Interpolated centerline frame at distance s.
   at(s) {

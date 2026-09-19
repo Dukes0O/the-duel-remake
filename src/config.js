@@ -88,24 +88,53 @@ export const POLICE = {
   ticketSpeedCapMph: 50,  // rolling speed after paying the ticket
 };
 
-// HOUSE — kinematic controller constants (no sim physics — non-goal).
-// Unit convention: 1 mph == 1 unit/sec along the centerline; s advances by
-// speedMph * dt.
+// Arcade road-coordinate dynamics: heading persists until the driver steers.
+// Course, vehicles, and distances are metres. Displayed speed remains mph.
 export const DRIVE = {
-  steerRate: 26,          // lateral units/sec at full steer
+  majorCrashLimit: 5,    // cumulative hard head-on / rock impacts per campaign
+  majorImpactMph: 45,    // closing speed needed to count as structural damage
+  catastrophicDuration: 4.6, // leave time to see the explosion before the result screen
+  mphToWorld: 0.44704,    // miles/hour to metres/second
+  maxLateralAccel: 30,   // generous arcade cornering authority; drift handles tire slip
+  steerRate: 12.5,        // legacy UI tuning value; steering now changes yaw
+  steerResponse: 24,     // quick keyboard and controller response
+  yawRate: 1.35,
+  yawResponse: 22,
   roadHalfWidth: 7,       // |lateral| beyond this = off-road
   offRoadCrashMarginU: 4.5, // this far past the road edge = crash
   laneOffset: 3.4,        // center of a lane
   brakeAccel: 34,         // mph/s braking baseline
   dragCoeff: 0.6,         // passive deceleration
-  offRoadGrip: 0.45,      // speed scrub when off the paved road
-  accelScale: 3.2,        // peak mph/s = car.accel * accelScale (falls off near redline)
+  offRoadGrip: 0.74,     // enough steering authority to return from the shoulder
+  offRoadScrub: 0.48,
+  accelScale: 5.2,        // immediate arcade launch; falls off near redline
   gearCeilFrac: 1.04,     // throttle stops adding speed past gearMax * this
   redlineWarnFrac: 0.92,  // tach shows red from this rev fraction
   overRevFrac: 1.02,      // sustained revs above this can blow the engine (Pro)
   overRevBlowSec: 1.6,    // grace window riding the limiter before it lets go
   crashSpeedCapMph: 40,   // rolling speed after recovering from a crash
   crashGearMax: 1,        // gear index cap after recovering from a crash
+  recoverySec: 1.8,       // one impact cannot consume several lives
+  impactDuration: 1.7,   // visible impact and control lock, then road recovery
+};
+
+// Maximum yaw under the current conditions. Shared with the demo driver so
+// its route knowledge becomes steering input rather than a physics bypass.
+export function steeringYawAuthority(speedMph, grip = 1, traction = 1) {
+  const rolling = Math.min(1, Math.max(0, speedMph) / 30);
+  const highSpeed = 1 / (1 + Math.max(0, speedMph - 110) * 0.0022);
+  const steeringLimit = DRIVE.yawRate * rolling * highSpeed * grip * traction;
+  const tireLimit = DRIVE.maxLateralAccel * grip * traction / Math.max(8, speedMph * DRIVE.mphToWorld);
+  return Math.min(steeringLimit, tireLimit);
+}
+
+export const BOOST = {
+  drainPerSec: 0.19,
+  refillPerSec: 0.028,
+  nearMissRefill: 0.22,
+  accelMphPerSec: 42,
+  topSpeedMult: 1.12,
+  minSpeedMph: 25,
 };
 
 // HOUSE — two-way traffic. Density scales spawns; fog reduces sight => the
@@ -118,6 +147,8 @@ export const TRAFFIC = {
   collideLatU: 2.6,       // lateral overlap for a collision
   fogDensityThreshold: 0.015, // themes foggier than this spawn fewer cars
   fogSpawnMult: 0.85,     // spawn density multiplier in fog
+  nearMissLatU: 4.6,
+  nearMissMinMph: 65,
 };
 
 export const SCORING = {
@@ -125,4 +156,7 @@ export const SCORING = {
   perSecondUnder: 12,     // bonus for beating the par time
   perLifeLeft: 500,
   parSpeedMph: 110,       // par time = stage length / this
+  nearMissPoints: 150,
+  comboWindowSec: 5,
+  comboMax: 5,
 };

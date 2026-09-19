@@ -1,17 +1,17 @@
-// game.js — The Duel controller. A kinematic spline driver (no sim physics),
-// gears + redline, two-way traffic, police radar/pursuit, lives, and the
-// stage/checkpoint/results loop. step(dt) is pure logic so it runs headless
-// (tests, ?autopilot) and under rAF (rendering) identically.
+// Road-coordinate arcade driving with independent vehicle heading, steering
+// traction, rough shoulders, and timed impact recovery. The simulation also
+// owns traffic, police, gearbox, lives and campaign progression. step(dt)
+// runs identically in headless tests and the fixed-step browser loop.
 
-import { CARS, DEFAULT_CAR, DIFFICULTY, DEFAULT_DIFFICULTY, COURSE, LIVES, POLICE, DRIVE, TRAFFIC, SCORING } from './config.js';
+import { CARS, DEFAULT_CAR, DIFFICULTY, DEFAULT_DIFFICULTY, COURSE, LIVES, POLICE, DRIVE, TRAFFIC, SCORING, BOOST, steeringYawAuthority } from './config.js';
 import { Course } from './course.js';
 import { makeRng, seedFromUrl } from './rng.js';
 
 export class Duel {
   constructor(opts = {}) {
     this.seed = (opts.seed ?? seedFromUrl()) >>> 0;
-    this.difficultyKey = opts.difficulty || DEFAULT_DIFFICULTY;
-    this.carKey = opts.car || DEFAULT_CAR;
+    this.difficultyKey = DIFFICULTY[opts.difficulty] ? opts.difficulty : DEFAULT_DIFFICULTY;
+    this.carKey = CARS[opts.car] ? opts.car : DEFAULT_CAR;
     this.listeners = new Set();
     this.state = this._freshState();
   }
@@ -20,6 +20,7 @@ export class Duel {
     return {
       seed: this.seed,
       status: 'menu', // menu -> countdown -> racing -> (crashed|ticket) -> stage_result -> ... -> gameover|complete
+      paused: false,
       car: this.carKey,
       difficulty: this.difficultyKey,
       stageIndex: 0,
@@ -29,6 +30,12 @@ export class Duel {
       totalTimeSec: 0,
       // driving
       s: 0, lateral: 0, speedMph: 0, gear: 0, revs: 0, overrevSec: 0, offRoad: false,
+      steerVisual: 0, boost: 1, boosting: false, invulnerableSec: 0,
+      headingError: 0, yawVelocity: 0, roughness: 0, offRoadTime: 0, slipAngle: 0, drifting: false,
+      impactTimer: 0, impactDuration: 0, impactStrength: 0, impactSide: 1, crashSpin: 0,
+      majorCrashes: 0, catastrophic: false,
+      score: 0, stageStyleScore: 0, nearMisses: 0, combo: 0, comboTimer: 0,
+      callout: '', calloutTimer: 0,
       // police
       police: { beep: 0, triggered: false, pursuit: null, ticket: null },
       // rival
@@ -36,7 +43,7 @@ export class Duel {
       // traffic
       traffic: [],
       // input (set by main.js or autopilot)
-      input: { throttle: 0, brake: 0, steer: 0, shiftUp: false, shiftDown: false },
+      input: { throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false },
       countdown: 0,
       results: null,
       mode: 'duel', // 'duel' | 'timetrial'
@@ -54,13 +61,17 @@ export class Duel {
 
   // ---- lifecycle -------------------------------------------------------
   startCampaign({ mode = 'duel', car, difficulty } = {}) {
-    if (car) this.state.car = car;
-    if (difficulty) this.state.difficulty = difficulty;
-    this.state.mode = mode;
+    if (CARS[car]) this.state.car = car;
+    if (DIFFICULTY[difficulty]) this.state.difficulty = difficulty;
+    this.state.mode = mode === 'timetrial' ? 'timetrial' : 'duel';
     this.state.stageIndex = 0;
     this.state.lives = LIVES.start;
     this.state.totalTimeSec = 0;
     this.state.penaltySec = 0;
+    this.state.score = 0;
+    this.state.nearMisses = 0;
+    this.state.majorCrashes = 0;
+    this.state.catastrophic = false;
     this._loadStage(0);
   }
 
@@ -69,6 +80,14 @@ export class Duel {
     s.stageIndex = idx;
     this.course = new Course(COURSE[idx], this.seed);
     s.s = 0; s.lateral = 0; s.speedMph = 0; s.gear = 0; s.revs = 0; s.overrevSec = 0;
+    s.paused = false; s.offRoad = false; s.steerVisual = 0;
+    s.boost = 1; s.boosting = false; s.invulnerableSec = 0;
+    s.headingError = 0; s.yawVelocity = 0; s.roughness = 0; s.offRoadTime = 0;
+    s.slipAngle = 0; s.drifting = false;
+    s.impactTimer = 0; s.impactDuration = 0; s.impactStrength = 0; s.impactSide = 1; s.crashSpin = 0;
+    s.combo = 0; s.comboTimer = 0; s.stageStyleScore = 0;
+    s.callout = ''; s.calloutTimer = 0;
+    s.input = { throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false };
     s.stageTimeSec = 0;
     s.police = { beep: 0, triggered: false, pursuit: null, ticket: null };
     s.results = null;
@@ -82,7 +101,7 @@ export class Duel {
       : null;
     // pre-spawn deterministic two-way traffic
     s.traffic = this._spawnTraffic(idx);
-    this.emit({ stageLoaded: idx });
+    this.emit({ stageLoaded: idx, countdown: 3 });
   }
 
   _spawnTraffic(idx) {
@@ -107,25 +126,48 @@ export class Duel {
   // ---- the core step ---------------------------------------------------
   step(dt) {
     const s = this.state;
-    if (s.status === 'countdown') {
-      s.countdown -= dt;
-      if (s.countdown <= 0) { s.status = 'racing'; this.emit({ go: true }); }
+    if (!Number.isFinite(dt) || dt <= 0 || s.paused) return;
+    // Substeps retain swept collision detection and stable handling after a slow frame.
+    if (dt > 0.05) {
+      let remaining = Math.min(dt, 1);
+      while (remaining > 0.000001) { const slice = Math.min(0.05, remaining); this.step(slice); remaining -= slice; }
       return;
     }
-    if (s.status !== 'racing') return;
+    if (s.status === 'countdown') {
+      const beat = Math.ceil(s.countdown);
+      s.countdown -= dt;
+      if (s.countdown <= 0) { s.status = 'racing'; this._callout('GO. MAKE IT COUNT.', 2); this.emit({ go: true }); }
+      else if (Math.ceil(s.countdown) !== beat) this.emit({ countdown: Math.ceil(s.countdown) });
+      return;
+    }
+    if (s.status !== 'racing') {
+      if (s.status === 'gameover' && s.impactTimer > 0) this._impact(dt);
+      return;
+    }
 
     s.stageTimeSec += dt;
     s.totalTimeSec += dt;
     if (s.crashFlash > 0) s.crashFlash = Math.max(0, s.crashFlash - dt);
+    s.invulnerableSec = Math.max(0, s.invulnerableSec - dt);
+    s.calloutTimer = Math.max(0, s.calloutTimer - dt);
+    s.comboTimer = Math.max(0, s.comboTimer - dt);
+    if (s.comboTimer === 0) s.combo = 0;
+
+    if (s.impactTimer > 0) {
+      this._impact(dt);
+      this._traffic(dt);
+      if (s.rival) this._rival(dt);
+      return; // A crash must play out before a ticket or finish can replace it.
+    }
 
     // each sub-step can end the run (gameover crash, ticket); once the status
     // leaves 'racing' the rest of the frame must not keep simulating, or a
     // finish-line crossing could overwrite the gameover/ticket state
     this._drive(dt);
-    if (s.status !== 'racing') return;
+    if (s.status !== 'racing' || s.impactTimer > 0) return;
     this._traffic(dt);
     this._collisions();
-    if (s.status !== 'racing') return;
+    if (s.status !== 'racing' || s.impactTimer > 0) return;
     this._police(dt);
     if (s.status !== 'racing') return;
     if (s.rival) this._rival(dt);
@@ -139,6 +181,8 @@ export class Duel {
     // recorded up front (not at the integration line) so the swept collision
     // test stays valid on frames where a crash bails out of _drive early
     s.prevS = s.s;
+    s.prevLateral = s.lateral;
+    const previousGear = s.gear;
     // gearbox
     const gmax = car.gears[s.gear];
     s.revs = gmax ? s.speedMph / gmax : 0;
@@ -148,8 +192,9 @@ export class Duel {
     } else {
       if (s.input.shiftUp && s.gear < car.gears.length - 1) s.gear++;
       if (s.input.shiftDown && s.gear > 0) s.gear--;
-      s.input.shiftUp = s.input.shiftDown = false;
     }
+    s.input.shiftUp = s.input.shiftDown = false;
+    if (s.gear !== previousGear) this.emit({ shift: s.gear });
 
     // acceleration limited by the current gear's max speed
     const gearMax = car.gears[s.gear];
@@ -161,6 +206,18 @@ export class Duel {
     if (s.input.brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * s.input.brake * dt;
     s.speedMph -= DRIVE.dragCoeff * dt * (s.input.throttle > 0 ? 0.2 : 1);
 
+    const wasBoosting = s.boosting;
+    s.boosting = !!s.input.boost && s.boost > 0 && s.speedMph >= BOOST.minSpeedMph && !s.offRoad && s.input.brake === 0;
+    if (s.boosting) {
+      const available = Math.min(1, s.boost / (BOOST.drainPerSec * dt));
+      s.boost = Math.max(0, s.boost - BOOST.drainPerSec * dt);
+      const boostCeiling = d.autoShift ? car.topSpeed * BOOST.topSpeedMult : Math.min(car.topSpeed * BOOST.topSpeedMult, gearMax * DRIVE.gearCeilFrac);
+      s.speedMph += Math.max(0, Math.min(boostCeiling - s.speedMph, BOOST.accelMphPerSec * dt * available));
+    } else if (!s.input.boost) {
+      s.boost = Math.min(1, s.boost + BOOST.refillPerSec * dt);
+    }
+    if (s.boosting && !wasBoosting) this.emit({ boostStarted: true });
+
     // engine blow if you ride the limiter on a Pro manual — the threshold sits
     // below the gear ceiling so holding throttle without upshifting gets there
     if (!d.autoShift && d.engineBlow && s.revs > DRIVE.overRevFrac && s.input.throttle > 0) {
@@ -170,21 +227,41 @@ export class Duel {
       s.overrevSec = Math.max(0, s.overrevSec - dt);
     }
 
-    // steering + corner drift (grip resists being pushed wide)
+    // A released steering wheel keeps a physical world heading. The road can
+    // bend away underneath the car; it never supplies free steering.
     const frame = this.course.at(s.s);
-    s.lateral += s.input.steer * DRIVE.steerRate * dt;
-    const drift = frame.curvature * s.speedMph * (1 - car.grip) * 9;
-    s.lateral += drift * dt;
-
-    // off-road scrub + crash at the edge
     s.offRoad = Math.abs(s.lateral) > DRIVE.roadHalfWidth;
+    s.offRoadTime = s.offRoad ? s.offRoadTime + dt : Math.max(0, s.offRoadTime - dt * 3);
+    const shoulderDepth = Math.max(0, Math.abs(s.lateral) - DRIVE.roadHalfWidth);
+    const roughTarget = s.offRoad ? Math.min(1, .32 + shoulderDepth * .12 + s.offRoadTime * .2) : 0;
+    s.roughness += (roughTarget - s.roughness) * (1 - Math.exp(-8 * dt));
+    const traction = s.offRoad ? DRIVE.offRoadGrip : 1;
+    s.steerVisual += (s.input.steer - s.steerVisual) * (1 - Math.exp(-DRIVE.steerResponse * dt));
+    const targetYaw = -s.steerVisual * steeringYawAuthority(s.speedMph, car.grip, traction);
+    s.yawVelocity += (targetYaw - s.yawVelocity) * (1 - Math.exp(-DRIVE.yawResponse * dt));
+    // The nose turns first while momentum carries the rear outward. A short
+    // release or counter-steer settles the slide without steering toward the road.
+    const driftSpeed=Math.max(0,Math.min(1,(s.speedMph-38)/85));
+    const slipTarget=-s.steerVisual*driftSpeed*(s.offRoad?.31:.21)*(1+s.input.brake*.6);
+    s.slipAngle+=(slipTarget-s.slipAngle)*(1-Math.exp(-(s.input.steer*s.slipAngle>0?13:7)*dt));
+    s.drifting=Math.abs(s.slipAngle)>.075&&s.speedMph>40;
     if (s.offRoad) {
-      s.speedMph *= (1 - (1 - DRIVE.offRoadGrip) * dt * 2);
-      if (Math.abs(s.lateral) > DRIVE.roadHalfWidth + DRIVE.offRoadCrashMarginU) { this._crash('off_road'); return; }
+      s.speedMph *= Math.exp(-DRIVE.offRoadScrub * dt);
+      s.boosting = false;
     }
 
-    s.speedMph = Math.max(0, Math.min(car.topSpeed, s.speedMph));
-    s.s += s.speedMph * dt; // 1 mph == 1 unit/sec (see config DRIVE)
+    const speedCap = s.boosting ? car.topSpeed * BOOST.topSpeedMult : car.topSpeed;
+    if (!s.boosting && s.speedMph > speedCap) s.speedMph -= 22 * dt;
+    s.speedMph = Math.max(0, Math.min(car.topSpeed * BOOST.topSpeedMult, s.speedMph));
+    s.revs = s.speedMph / car.gears[s.gear];
+    const metresPerSec = s.speedMph * DRIVE.mphToWorld;
+    const forward = Math.max(0, Math.cos(s.headingError)) * metresPerSec * dt;
+    s.headingError += s.yawVelocity * dt - frame.curvature * forward;
+    s.headingError = Math.max(-1.45, Math.min(1.45, s.headingError));
+    s.lateral += Math.sin(s.headingError) * metresPerSec * dt;
+    s.s += forward;
+    s.offRoad = Math.abs(s.lateral) > DRIVE.roadHalfWidth;
+    // Dirt alone never consumes a life or structural hit. Only contact does.
   }
 
   _traffic(dt) {
@@ -192,7 +269,7 @@ export class Duel {
     for (const c of s.traffic) {
       if (!c.alive) continue;
       c.prevS = c.s;
-      c.s += c.dir * c.speedMph * dt; // oncoming move toward the player
+      c.s += c.dir * c.speedMph * DRIVE.mphToWorld * dt;
     }
   }
 
@@ -205,11 +282,34 @@ export class Duel {
       const now = c.s - s.s;
       const prev = (c.prevS ?? c.s) - (s.prevS ?? s.s);
       const hitLong = Math.abs(now) < TRAFFIC.collideLongU || (prev > 0) !== (now > 0);
-      if (hitLong && Math.abs(c.lateral - s.lateral) < TRAFFIC.collideLatU) {
+      const clearance = Math.abs(c.lateral - s.lateral);
+      if (s.invulnerableSec <= 0 && hitLong && clearance < TRAFFIC.collideLatU) {
         c.alive = false;
-        this._crash('traffic');
+        const closingMph=Math.abs(s.speedMph-c.dir*c.speedMph);
+        this._crash(c.dir<0?'head_on':'traffic',Math.sign(s.lateral-c.lateral),closingMph);
         return;
       }
+      // Reward a completed pass once, rather than every frame spent near a car.
+      if (!c.passed && prev > 0 && now <= 0) {
+        c.passed = true;
+        if (s.invulnerableSec <= 0 && clearance >= TRAFFIC.collideLatU && clearance < TRAFFIC.nearMissLatU && s.speedMph >= TRAFFIC.nearMissMinMph) {
+          s.combo = Math.min(SCORING.comboMax, s.combo + 1);
+          s.comboTimer = SCORING.comboWindowSec;
+          s.nearMisses++;
+          const points = SCORING.nearMissPoints * s.combo;
+          s.stageStyleScore += points; s.score += points;
+          s.boost = Math.min(1, s.boost + BOOST.nearMissRefill);
+          this._callout(`NEAR MISS  +${points}${s.combo > 1 ? `  /  ${s.combo}× COMBO` : ''}`);
+          this.emit({ nearMiss: { points, combo: s.combo } });
+        }
+      }
+    }
+    if(s.invulnerableSec<=0)for(const rock of this.course.rocksNear(s.prevS??s.s,s.s)){
+      const ds=s.s-(s.prevS??s.s),dl=s.lateral-(s.prevLateral??s.lateral);
+      const rz=rock.radiusZ+1.7,rx=rock.radiusX+.85;
+      const x=((s.prevLateral??s.lateral)-rock.off)/rx,z=((s.prevS??s.s)-rock.s)/rz;
+      const vx=dl/rx,vz=ds/rz,t=Math.max(0,Math.min(1,-(x*vx+z*vz)/Math.max(1e-8,vx*vx+vz*vz)));
+      if((x+vx*t)**2+(z+vz*t)**2<1){this._crash('rock',Math.sign(s.lateral-rock.off),s.speedMph);return;}
     }
   }
 
@@ -224,6 +324,7 @@ export class Duel {
       if (!p.triggered && dist <= 0 && dist > -POLICE.trapWindowU && s.speedMph > radar.limitMph + POLICE.trapOverLimitMph) {
         p.triggered = true;
         p.pursuit = { active: true, gapU: POLICE.pursuitStartGapU, caught: false };
+        this._callout('POLICE PURSUIT. OPEN THE GAP.', 3);
         this.emit({ radarTriggered: true, speed: Math.round(s.speedMph), limit: radar.limitMph });
       }
     } else {
@@ -233,12 +334,13 @@ export class Duel {
     // cruiser is faster, opens when the player outruns it
     if (p.pursuit && p.pursuit.active) {
       const rel = s.speedMph - POLICE.pursuitSpeedMph;
-      p.pursuit.gapU += rel * dt;
+      p.pursuit.gapU += rel * DRIVE.mphToWorld * dt;
       if (p.pursuit.gapU <= POLICE.pursuitCatchU) {
         p.pursuit.active = false; p.pursuit.caught = true;
         this._ticket(radar);
       } else if (p.pursuit.gapU >= POLICE.escapeAheadU) {
         p.pursuit.active = false;
+        this._callout('PURSUIT EVADED', 3);
         this.emit({ escaped: true });
       }
     }
@@ -247,6 +349,7 @@ export class Duel {
   _ticket(radar) {
     const s = this.state;
     s.status = 'ticket';
+    s.boosting = false;
     s.police.ticket = {
       offense: 'Speeding past a radar trap',
       speedMph: Math.round(s.speedMph),
@@ -281,30 +384,64 @@ export class Duel {
     // occasional "mistake": brief slow patch keyed deterministically to distance
     if (Math.sin(r.s * 0.01) > 0.96) target *= 0.6;
     r.speedMph += (target - r.speedMph) * Math.min(1, dt * 1.5);
-    r.s += r.speedMph * dt;
+    r.s += r.speedMph * DRIVE.mphToWorld * dt;
     // rival weaves between lanes
     r.lateral = -DRIVE.laneOffset + Math.sin(r.s * 0.02) * 1.4;
     if (r.s >= this.course.length) { r.finished = true; r.finishTime = s.stageTimeSec; this.emit({ rivalFinished: true }); }
   }
 
-  _crash(reason) {
+  _crash(reason, side = 0, impactMph = this.state.speedMph) {
     const s = this.state;
+    if (s.impactTimer > 0 || s.status !== 'racing') return;
+    s.boosting = false;
+    s.combo = 0; s.comboTimer = 0;
     s.lives -= LIVES.crashLifeCost;
     s.penaltySec += LIVES.crashPenaltySec;
     s.totalTimeSec += LIVES.crashPenaltySec;
     s.lastCrashReason = reason;
     s.crashFlash = 1.2;
-    this.emit({ crash: reason, livesLeft: s.lives });
-    if (s.lives <= 0) {
+    s.impactStrength = Math.max(.35, Math.min(1, impactMph / 145));
+    if ((reason === 'head_on' || reason === 'rock') && impactMph >= DRIVE.majorImpactMph) s.majorCrashes++;
+    s.catastrophic = s.majorCrashes >= DRIVE.majorCrashLimit;
+    s.impactSide = side || Math.sign(s.lateral) || Math.sign(s.headingError) || 1;
+    s.impactDuration = DRIVE.impactDuration + s.impactStrength * .25;
+    if (s.catastrophic) { s.impactDuration = DRIVE.catastrophicDuration; s.impactStrength = 1; }
+    s.impactTimer = s.impactDuration;
+    s.crashSpin = 0;
+    s.slipAngle = 0; s.drifting = false;
+    s.invulnerableSec = s.impactDuration + DRIVE.recoverySec;
+    s.speedMph = Math.min(DRIVE.crashSpeedCapMph, s.speedMph * .3);
+    this._callout(reason === 'engine_blew' ? 'ENGINE FAILURE. SHIFT EARLIER.' : 'IMPACT  /  +30 SECONDS', 2.8);
+    this.emit({ crash: reason, livesLeft: s.lives, strength: s.impactStrength, side: s.impactSide, explosion: s.catastrophic });
+    if (s.lives <= 0 || s.catastrophic) {
       s.status = 'gameover';
-      s.results = { gameover: true, stageIndex: s.stageIndex, totalTimeSec: Math.round(s.totalTimeSec) };
+      s.results = { gameover: true, catastrophic: s.catastrophic, majorCrashes: s.majorCrashes, stageIndex: s.stageIndex, totalTimeSec: Math.round(s.totalTimeSec) };
       this.emit({ gameover: true });
       return;
     }
-    // recover: scrub speed, recenter on the road, keep racing
-    s.speedMph = Math.min(s.speedMph, DRIVE.crashSpeedCapMph);
-    s.lateral = 0; s.gear = Math.min(s.gear, DRIVE.crashGearMax); s.overrevSec = 0;
+    // Hold the impact location. Recovery happens after the visible skid.
+    s.steerVisual = 0; s.yawVelocity = 0; s.overrevSec = 0;
     s.status = 'racing';
+  }
+
+  _impact(dt) {
+    const s = this.state, remaining = s.impactTimer / s.impactDuration;
+    s.prevS = s.s;
+    s.impactTimer = Math.max(0, s.impactTimer - dt);
+    s.speedMph *= Math.exp(-3.2 * dt);
+    s.crashSpin += s.impactSide * s.impactStrength * 5 * remaining * dt;
+    s.lateral += s.impactSide * s.speedMph * DRIVE.mphToWorld * .15 * remaining * dt;
+    s.s = Math.min(this.course.length - 1, s.s + s.speedMph * DRIVE.mphToWorld * .3 * dt);
+    s.revs = s.speedMph / this.car.gears[s.gear];
+    s.roughness = Math.max(s.roughness, remaining * s.impactStrength);
+    if (s.impactTimer === 0 && s.status === 'racing') {
+      s.lateral = 0; s.headingError = 0; s.yawVelocity = 0; s.crashSpin = 0;
+      s.speedMph = 12; s.gear = 0; s.revs = s.speedMph / this.car.gears[0];
+      s.offRoad = false; s.offRoadTime = 0; s.roughness = 0;
+      s.input.shiftUp = false; s.input.shiftDown = false;
+      this._callout('BACK ON THE ROAD. FIND YOUR LINE.', 2);
+      this.emit({ recovered: true });
+    }
   }
 
   _finishStage() {
@@ -314,16 +451,19 @@ export class Duel {
     if (missed) { s.lives -= LIVES.missedStationCost; }
     else { s.lives += LIVES.cleanStageReward; }
 
-    const par = this.course.length / SCORING.parSpeedMph; // par seconds
+    const par = this.course.length / (SCORING.parSpeedMph * DRIVE.mphToWorld);
     const timeBonus = Math.max(0, Math.round((par - s.stageTimeSec) * SCORING.perSecondUnder));
     const beatRival = s.rival ? (s.rival.finishTime == null || s.stageTimeSec <= s.rival.finishTime) : null;
-    const score = SCORING.perStageBase + timeBonus + s.lives * SCORING.perLifeLeft;
+    const stageBaseScore = SCORING.perStageBase + timeBonus + s.lives * SCORING.perLifeLeft;
+    const score = stageBaseScore + s.stageStyleScore;
+    s.score += stageBaseScore;
+    s.boosting = false;
 
     this._recordBest(this.stageDef.name, s.stageTimeSec);
     s.results = {
       stageIndex: s.stageIndex, stageName: this.stageDef.name,
       stageTimeSec: +s.stageTimeSec.toFixed(2), missedStation: missed,
-      cleanStage: !missed, lives: s.lives, timeBonus, beatRival, score,
+      cleanStage: !missed, lives: s.lives, timeBonus, beatRival, score, styleScore: s.stageStyleScore,
       best: this._bestFor(this.stageDef.name),
     };
     if (s.lives <= 0) { s.status = 'gameover'; s.results.gameover = true; this.emit({ gameover: true }); return; }
@@ -333,9 +473,10 @@ export class Duel {
 
   nextStage() {
     const s = this.state;
+    if (s.status !== 'stage_result') return;
     if (s.stageIndex + 1 >= COURSE.length) {
       s.status = 'complete';
-      s.results = { complete: true, totalTimeSec: Math.round(s.totalTimeSec), lives: s.lives };
+      s.results = { complete: true, totalTimeSec: Math.round(s.totalTimeSec), lives: s.lives, score: s.score, nearMisses: s.nearMisses };
       this.emit({ complete: true });
       return;
     }
@@ -345,16 +486,38 @@ export class Duel {
   // ---- best times (localStorage with in-memory fallback) ---------------
   _recordBest(stageName, timeSec) {
     const all = loadBest();
-    if (all[stageName] == null || timeSec < all[stageName]) { all[stageName] = +timeSec.toFixed(2); saveBest(all); }
+    const key = this._bestKey(stageName);
+    if (all[key] == null || timeSec < all[key]) { all[key] = +timeSec.toFixed(2); saveBest(all); }
   }
-  _bestFor(stageName) { return loadBest()[stageName] ?? null; }
+  _bestKey(stageName) { return [stageName, this.state.car, this.state.difficulty, this.state.mode].join('|'); }
+  _bestFor(stageName) { return loadBest()[this._bestKey(stageName)] ?? null; }
 
   // ---- input helpers ---------------------------------------------------
-  setInput(partial) { Object.assign(this.state.input, partial); }
+  _callout(text, seconds = 2.2) { this.state.callout = text; this.state.calloutTimer = seconds; }
+  setInput(partial) {
+    const input = this.state.input;
+    for (const key of ['throttle', 'brake', 'steer']) {
+      if (Number.isFinite(partial[key])) input[key] = Math.max(key === 'steer' ? -1 : 0, Math.min(1, partial[key]));
+    }
+    for (const key of ['boost', 'shiftUp', 'shiftDown']) if (partial[key] != null) input[key] = !!partial[key];
+  }
 }
 
+let memoryBest = {};
+const BEST_STORAGE_KEY = 'duel_redline_best_v2';
 function loadBest() {
-  try { const r = (typeof localStorage !== 'undefined') && localStorage.getItem('duel_best'); if (r) return JSON.parse(r); } catch (_) {}
-  return {};
+  try {
+    const raw = typeof localStorage !== 'undefined' && localStorage.getItem(BEST_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        memoryBest = Object.fromEntries(Object.entries(parsed).filter(([, time]) => Number.isFinite(time) && time > 0));
+      }
+    }
+  } catch (_) {}
+  return { ...memoryBest };
 }
-function saveBest(obj) { try { if (typeof localStorage !== 'undefined') localStorage.setItem('duel_best', JSON.stringify(obj)); } catch (_) {} }
+function saveBest(obj) {
+  memoryBest = { ...obj };
+  try { if (typeof localStorage !== 'undefined') localStorage.setItem(BEST_STORAGE_KEY, JSON.stringify(obj)); } catch (_) {}
+}

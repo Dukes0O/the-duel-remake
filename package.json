@@ -1,13 +1,15 @@
 {
   "name": "the-duel-remake",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node src/test.js"
+    "test": "node src/test.js",
+    "assets:export": "node tools/export-assets.mjs",
+    "assets:audio": "node tools/prepare-audio.mjs"
   },
   "dependencies": {
     "three": "0.171.0"
