@@ -5,9 +5,12 @@ const ENGINE_BANDS = [
   { key: 'loadMid', rpm: .65, toneHz:81 }, { key: 'loadHigh', rpm: .82, toneHz:86 },
 ];
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-// Original voicing of the shared licensed recordings, not recordings of seven cars.
+// Original voicing of shared licensed recordings, not recordings of each car.
+// Heritage changes the body, not the F42 engine or its recorded sound mix.
+const FALCONE_VOICE={pitch:1,brightness:1,gain:1,accent:1,exhaust:.14,intake:.09};
 const CAR_VOICES = {
-  falcone_f42:{pitch:1,brightness:1,gain:1,accent:1,exhaust:.14,intake:.09},
+  falcone_f42:FALCONE_VOICE,
+  falcone_heritage:FALCONE_VOICE,
   stuttgart_959s:{pitch:.93,brightness:.9,gain:.97,accent:.86,exhaust:.12,intake:.07},
   aurora_gt:{pitch:.98,brightness:.95,gain:.96,accent:.9,exhaust:.10,intake:.11},
   dusthawk_rally:{pitch:1.035,brightness:1.04,gain:.98,accent:1.05,exhaust:.12,intake:.13},

@@ -4,8 +4,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { CARS } from '../src/config.js';
 import { createVehicle, updateVehicleDamage } from '../src/vehicles.js';
-import { createUnlockedVehicle, UNLOCK_VEHICLE_DIMENSIONS } from '../src/unlock-vehicles.js';
-import { createClassicVehicle } from '../src/classic-vehicles.js';
+import { createVehicleAssets } from '../src/vehicle-assets.js';
 import { loadHeroVehicle } from '../src/hero-vehicle.js';
 import { applyVehiclePaint } from '../src/vehicle-paint.js';
 import { PAINT_PRESETS } from '../src/paint-presets.js';
@@ -60,14 +59,17 @@ async function importedFactory() {
 }
 
 const hero = await importedFactory();
+const assets=createVehicleAssets({loadHero:()=>hero});
+await Promise.all(Object.keys(CARS).map(key=>assets.load(key)));
 const fixtures = [];
-for (const [key, config] of Object.entries(CARS)) {
-  const options = { color: config.color, accent: config.accent, kind: key === 'aurora_gt' ? 'gt' : key.includes('959') ? 'stuttgart' : 'sport' };
-  fixtures.push([key, () => createClassicVehicle({key,...options}) || (UNLOCK_VEHICLE_DIMENSIONS[key] ? createUnlockedVehicle({ key, ...options }) : hero(options))]);
-}
+for (const key of Object.keys(CARS)) fixtures.push([key, () => assets.create(key)]);
+equal(fixtures.length,8,'Paint fixtures cover every current runtime car, including Heritage');
 
 for (const [label, make] of fixtures) {
   const vehicle = make(), other = make(), data = vehicle.userData, paint = data.paint;
+  equal(data.vehicleKey,label,`${label}: paint fixture uses the actual runtime model router`);
+  if(label==='falcone_heritage')equal(data.aeroPackage,undefined,'Heritage retains the old sport body without Aurora carbon GT trim');
+  if(label==='aurora_gt')equal(data.aeroPackage,'carbon-gt','Aurora retains its distinct GT package');
   const factory = materialState(paint), original = inventory(vehicle);
   const compile = paint.onBeforeCompile, program = paint.customProgramCacheKey;
   const fractures = data.fractures, fractureMeshes = fractures.map(item => item.mesh);
@@ -160,4 +162,4 @@ const sharedInventory = inventory(group);
 equal(applyVehiclePaint(group, copper), false);
 equal(inventory(group), sharedInventory, 'shared guard clones only once');
 
-console.log(`Vehicle paint: ${checks} checks passed across all seven actual runtime cars; damage, factory restore, trim isolation and repeated updates preserve resources.`);
+console.log(`Vehicle paint: ${checks} checks passed across all ${fixtures.length} actual runtime cars; damage, factory restore, trim isolation and repeated updates preserve resources.`);

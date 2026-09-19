@@ -6,8 +6,7 @@ import {CARS,COURSE} from '../src/config.js';
 import {Course} from '../src/course.js';
 import {strip} from '../src/world.js';
 import {loadHeroVehicle} from '../src/hero-vehicle.js';
-import {createUnlockedVehicle,UNLOCK_VEHICLE_DIMENSIONS} from '../src/unlock-vehicles.js';
-import {createClassicVehicle} from '../src/classic-vehicles.js';
+import {createVehicleAssets} from '../src/vehicle-assets.js';
 import {placeGroundedVehicle as place,vehicleGroundSlope as groundSlope,vehicleGroundPoint,prepareVehicleGrounding} from '../src/vehicle-grounding.js';
 
 // Preserve every original mesh, physical factor and transform. Only texture
@@ -23,9 +22,10 @@ const sourceBounds=new THREE.Box3().setFromObject(parsed.scene),sourceScale=4.8/
 parsed.scene.traverse(mesh=>{if(mesh.isMesh){const bounds=new THREE.Box3().setFromObject(mesh);sourceLowest.push({name:mesh.name,material:mesh.material.name,normalizedBottomM:+((bounds.min.y-sourceBounds.min.y)*sourceScale).toFixed(5)});}});
 sourceLowest.sort((a,b)=>a.normalizedBottomM-b.normalizedBottomM);
 let hero;try{GLTFLoader.prototype.loadAsync=async()=>parsed;hero=await loadHeroVehicle();}finally{GLTFLoader.prototype.loadAsync=oldLoad;}
+const assets=createVehicleAssets({loadHero:()=>hero});await Promise.all(Object.keys(CARS).map(key=>assets.load(key)));
 const point=new THREE.Vector3(),center=new THREE.Vector3(),plane=new THREE.Plane(),normal=new THREE.Vector3(),inverse=new THREE.Matrix4(),ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0);
-export const models=Object.entries(CARS).map(([key,config])=>{
-  const vehicle=createClassicVehicle({key,...config})||(UNLOCK_VEHICLE_DIMENSIONS[key]?createUnlockedVehicle({key,...config}):hero({color:config.color,kind:'gt'}));
+export const models=Object.keys(CARS).map(key=>{
+  const vehicle=assets.create(key);
   vehicle.updateMatrixWorld(true);
   const wheels=vehicle.userData.wheels.map(wheel=>{
     const vertices=[];let minY=Infinity,maxY=-Infinity;
@@ -51,7 +51,8 @@ export function contacts(model,course,s,lateral,road,angle=0){
 }
 if(process.argv[1]?.endsWith('audit-vehicle-grounding.mjs')){
 const report={method:'Minimum actual wheel vertex relative to the rendered road triangle plane, then vertical ray at that contact. Straight, undamaged, no airborne/roughness animation.',heroSourceLowest:sourceLowest.slice(0,8),flat:[],slopes:[],worst:[]};
-report.heroRuntimeLowest=[];models[0].vehicle.traverse(mesh=>{if(!mesh.isMesh||mesh===models[0].vehicle.userData.contactShadow)return;let min=Infinity;const positions=mesh.geometry.attributes.position;for(let i=0;i<positions.count;i++){point.fromBufferAttribute(positions,i).applyMatrix4(mesh.matrixWorld);min=Math.min(min,point.y);}report.heroRuntimeLowest.push({material:mesh.material.name,bottomM:+min.toFixed(5)});});report.heroRuntimeLowest.sort((a,b)=>a.bottomM-b.bottomM);report.heroRuntimeLowest=report.heroRuntimeLowest.slice(0,8);
+const heritage=models.find(model=>model.key==='falcone_heritage').vehicle;
+report.heroRuntimeLowest=[];heritage.traverse(mesh=>{if(!mesh.isMesh||mesh===heritage.userData.contactShadow)return;let min=Infinity;const positions=mesh.geometry.attributes.position;for(let i=0;i<positions.count;i++){point.fromBufferAttribute(positions,i).applyMatrix4(mesh.matrixWorld);min=Math.min(min,point.y);}report.heroRuntimeLowest.push({material:mesh.material.name,bottomM:+min.toFixed(5)});});report.heroRuntimeLowest.sort((a,b)=>a.bottomM-b.bottomM);report.heroRuntimeLowest=report.heroRuntimeLowest.slice(0,8);
 for(const model of models)report.flat.push({car:model.key,tireBottomsM:model.wheels.map(w=>+w.minY.toFixed(5)),measured:prepareVehicleGrounding(model.vehicle)});
 for(const id of ['high-country','ridge-rally','timberline-rush']){
   const course=new Course(COURSE.find(c=>c.id===id),1989),candidates=[];

@@ -22,11 +22,14 @@ Each catch has a saved `runId:stageIndex:ticketIndex` identity. A repeated event
 | --- | ---: | --- |
 | Falcone F42 | Free | — |
 | Stuttgart 959-S | Free | — |
+| Falcone Heritage | 1,800 CR | — |
 | Aurora GTR | 2,200 CR | — |
 | Dusthawk Rally | 3,500 CR | Ridge Rally |
 | Banshee Muscle | 5,000 CR | Midnight Muscle Chase |
 | Viper Prototype | 7,500 CR | — |
 | Titan Monster | 12,000 CR | Titan Monster Arena |
+
+There are eight cars: two included starters and six earnable unlocks. Falcone Heritage brings back the previous F42 body as a separate 1,800-credit purchase; the redesigned F42 and Stuttgart remain unchanged. Heritage keeps the F42's driving statistics, five-speed gearbox and factory colors. It has its own upgrades, paint ownership and car records. Existing saves keep their credits, seven-car ownership, settings and records; Heritage starts locked until purchased, including for a previously maxed-out garage.
 
 Each car has engine, nitro, handling, tires, brakes, suspension and nitro tank upgrades. Each upgrade has three levels, costing 350, 600 and 950 credits. Purchases apply to that car only. A race takes a copy of the selected car's upgrades, so its performance cannot change during the race.
 

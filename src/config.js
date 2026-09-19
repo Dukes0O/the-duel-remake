@@ -28,6 +28,12 @@ export const CARS = {
     gears: [50, 88, 124, 158, 184, 197], // 6-speed, planted AWD
     color: 0xded6c8, accent: 0x2b6cb0,
   },
+  falcone_heritage: {
+    name: 'Falcone Heritage', price: 1800, homage: 'Earlier Falcone F42 body', gearbox: 'manual',
+    topSpeed: 201, accel: 7.6, grip: 0.82, braking: 0.90,
+    gears: [55, 95, 135, 172, 201],
+    color: 0xc81d11, accent: 0xf2c200,
+  },
   aurora_gt: {
     name: 'Aurora GTR', price:2200, homage: 'Carbon GT package', gearbox: 'manual',
     topSpeed: 214, accel: 8.1, grip: 1.01, braking: 1.06,
@@ -188,7 +194,7 @@ export const TRAFFIC = {
   collideLatU: 2.6,       // lateral overlap for a collision
   fogDensityThreshold: 0.015, // themes foggier than this spawn fewer cars
   fogSpawnMult: 0.85,     // spawn density multiplier in fog
-  nearMissLatU: 7.2,     // include a close pass across the two standard lanes
+  nearMissLatU: 6.4,     // reward a close pass, not a full lane-centre separation
   nearMissMinMph: 65,
 };
 

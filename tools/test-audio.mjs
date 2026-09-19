@@ -78,16 +78,47 @@ for(const asset of ambientManifest.sources){
   check(peak<=.551&&Math.sqrt(power/samples.length)>.01,`${asset.runtime}: audible PCM with conservative peak headroom`);
   check(seam<=diffs[Math.floor(diffs.length*.99)]*1.25,`${asset.runtime}: loop boundary is not an exceptional sample jump`);
 }
-const rates=[];
+const rates=new Map();
 for(const car of Object.keys(CARS)){
   const st=state({car});for(let n=0;n<180;n++){context.advance(1/60);audio.update(st);}
-  const rate=audio.samples.loadHigh.source.playbackRate.value,gain=audio.samples.loadHigh.gain.gain.value;rates.push(rate);
+  const rate=audio.samples.loadHigh.source.playbackRate.value,gain=audio.samples.loadHigh.gain.gain.value;rates.set(car,rate);
   for(let n=0;n<90;n++){context.advance(1/60);audio.update(st);const voices=['engine','idle','loadLow','loadMid','loadHigh','coast'].filter(key=>audio.samples[key].gain.gain.value>.001);assert.deepEqual(voices,['loadHigh']);assert(Math.abs(audio.samples.loadHigh.gain.gain.value-gain)<1e-6);assert.equal(audio.samples.loadHigh.source.playbackRate.value,rate);}
   check(rate>=.65&&rate<=1.4,`${car} has bounded steady high-speed pitch`);
   check(audio.engineGain.gain.value===0,`${car} has no synthesized overlay with samples loaded`);
   check(audio.samples.loadHigh.filter.frequency.value<=3000,`${car} avoids excessive top-band brightness`);
 }
-check(new Set(rates).size===7,'each car has a distinct stable voicing');
+check(Object.hasOwn(CARS,'falcone_heritage')&&rates.get('falcone_heritage')===rates.get('falcone_f42'),'Heritage explicitly shares the F42 steady engine pitch');
+check(new Set(rates.values()).size===rates.size-1,'the two Falcones share one voice while other cars keep distinct stable voices');
+const audioSnapshot=audio=>({
+  voice:audio.carVoice,
+  engine:audio.engine.map(layer=>layer.osc.frequency.value),engineGain:audio.engineGain.gain.value,engineFilter:audio.engineFilter.frequency.value,
+  samples:Object.fromEntries(Object.entries(audio.samples).filter(([,layer])=>layer.source).map(([key,layer])=>[key,[layer.source.playbackRate.value,layer.gain.gain.value,layer.filter.frequency.value,layer.body?.gain.gain.value,layer.body?.filter.frequency.value,layer.intake?.gain.gain.value,layer.intake?.filter.frequency.value]])),
+  tires:[audio.tires.filter.frequency.value,audio.tires.gain.gain.value,audio.gravel.filter.frequency.value,audio.gravel.gain.gain.value],
+  perspective:[audio.vehicleBus.gain.value,audio.tunnelWet.gain.value],
+  shots:[...audio.activeShots].map(shot=>[Object.keys(audio.samples).find(key=>audio.samples[key]===shot.source.buffer),shot.source.playbackRate.value,shot.gain.gain.value,!!shot.stopping]),
+});
+for(const failed of [new Set(),new Set(['*'])]){
+  const f42=await makeAudio(failed),heritage=await makeAudio(failed);
+  const cases=[
+    {status:'countdown',speedMph:0,revs:.15,input:{throttle:0,brake:0}},
+    {revs:.42,speedMph:60,input:{throttle:1,brake:0}},
+    {revs:.8,speedMph:130,input:{throttle:1,brake:0},shift:3},
+    {revs:.5,speedMph:110,input:{throttle:0,brake:.8},slipAngle:.3,steerVisual:.6},
+    {revs:.6,speedMph:85,offRoad:true,roughness:.8,slipAngle:.25},
+    {revs:.9,speedMph:100,airborne:true,airHeight:2,slipAngle:.3},
+    {paused:true,revs:.8,speedMph:100},
+    {status:'menu',speedMph:0,revs:0,input:{throttle:0,brake:0}},
+  ];
+  for(const cameraMode of ['chase','hood','wide'])for(const [index,values]of cases.entries()){
+    const environment={cameraMode,looseSurface:!!values.offRoad,tunnel:index===2?1:0};
+    for(const [key,item]of [['falcone_f42',f42],['falcone_heritage',heritage]]){
+      item.context.advance(.1);item.audio.update(state({...values,car:key}),environment);
+      if(values.shift)item.audio.event({shift:values.shift});
+    }
+    assert.deepEqual(audioSnapshot(heritage.audio),audioSnapshot(f42.audio));checks++;
+  }
+  check(heritage.audio.carVoice===f42.audio.carVoice,`${failed.size?'fallback':'recorded'} Heritage uses the same F42 voice definition, including shift/throttle accents`);
+}
 check(['engine','idle','loadLow','loadMid','loadHigh','coast'].every(key=>audio.samples[key].body&&audio.samples[key].intake),'every recorded engine loop supplies filtered exhaust body and intake detail');
 context.advance(.2);audio.update(state({car:'banshee_muscle',revs:.72,input:{throttle:1,brake:0}}));const muscleBody=audio.samples.loadMid.body.gain.gain.value,muscleIntake=audio.samples.loadMid.intake.gain.gain.value;
 context.advance(.2);audio.update(state({car:'viper_proto',revs:.72,input:{throttle:1,brake:0}}));check(muscleBody>audio.samples.loadMid.body.gain.gain.value,'muscle-car mix carries more low exhaust body than the prototype');check(audio.samples.loadMid.intake.gain.gain.value>muscleIntake,'prototype mix carries more recorded intake detail than the muscle car');
@@ -134,5 +165,5 @@ const missing=await makeAudio(new Set(['*']));missing.audio.update(state());chec
 const app=new App();const stage=COURSE.findIndex(item=>item.sections?.some(section=>section.theme==='alpine')&&!item.requiredCar);app.duel.startCampaign({startStage:stage});const tunnel=app.duel.course.features.tunnels[0];assert(tunnel);let forwarded;app.audio.update=(_state,environment)=>{forwarded=environment;};app.duel.state.s=tunnel.start+30;app.duel.state.lateral=0;app._updateAudio();check(forwarded.tunnel===1,'App forwards actual tunnel interior');app.duel.state.s+=app.duel.course.length;app._updateAudio();check(forwarded.tunnel===1,'second physical lap keeps tunnel sound');app.duel.state.lateral=tunnel.width+3;app._updateAudio();check(forwarded.tunnel===0,'outside a tunnel wall does not add tunnel sound');
 check(forwarded.biome===app.duel.course.themeAt(app.duel.state.s)&&forwarded.night===false&&forwarded.cameraMode===app.cameraMode,'App forwards actual wrapped section biome, daylight and camera perspective');
 const nightStage=COURSE.findIndex(item=>item.timeOfDay==='night'&&!item.requiredCar);app.duel.startCampaign({startStage:nightStage});app._updateAudio();check(forwarded.night===true&&forwarded.biome===app.duel.course.themeAt(0),'night course forwards its actual ambience metadata');
-console.log(seamRows.join('\n'));console.log(`Six-second PCM mixes at three band transitions and full speed across all seven cars: maximum 100ms envelope swing ${maximumBlendSwing.toFixed(2)}dB.`);
+console.log(seamRows.join('\n'));console.log(`Six-second PCM mixes at three band transitions and full speed across all ${Object.keys(CARS).length} cars: maximum 100ms envelope swing ${maximumBlendSwing.toFixed(2)}dB.`);
 console.log(`Audio/PCM: ${checks} checks passed; ${commands.toLocaleString()} finite automation commands. Actual PCM decoded; no listening claim.`);

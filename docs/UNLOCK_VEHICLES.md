@@ -1,6 +1,6 @@
 # Earned vehicle models
 
-Four original 3D models extend the two starter cars and Aurora GTR. Their shapes and details follow the generated [vehicle reference sheet](../public/assets/reference/unlock-vehicles.png). The actual game geometry is built in `src/unlock-vehicles.js`; the same builder exports the Blender-ready GLBs.
+Four original 3D models extend the two starter cars and the two concept-body variants, Falcone Heritage and Aurora GTR. Heritage costs 1,800 credits and preserves the previous F42's sport body, red finish and handling without replacing the current redesign. Its own car ID keeps ownership, tuning, paint, records and ghosts separate. The four original models' shapes and details follow the generated [vehicle reference sheet](../public/assets/reference/unlock-vehicles.png). Their actual game geometry is built in `src/unlock-vehicles.js`; the same builder exports the Blender-ready GLBs.
 
 | Vehicle | Shape and visible hardware | Width × length × height | Tire radius |
 | --- | --- | --- | --- |
@@ -30,7 +30,7 @@ The second art pass uses smoothly interpolated body sections, rounder shoulders,
 
 Livery is clipped against the actual body triangles. This replaced the first sampled patch implementation after browser review exposed flickering across shoulder and wheel-arch creases. The small normal offset is 4 mm; the polygons retain the source surface shape rather than bridging across it. All detail is original geometry; no new third-party runtime dependency or texture was added.
 
-The standalone developer page `/tools/vehicle-art-check.html` shows all seven cars under neutral lighting, with front, rear, side and close views, a shared neutral-paint comparison, damage and driver controls. It never reads or writes player profiles. The two starter cars now have their own original bodies; see [CLASSIC_VEHICLES.md](CLASSIC_VEHICLES.md).
+The standalone developer page `/tools/vehicle-art-check.html` shows all eight cars under neutral lighting, with front, rear, side and close views, a shared neutral-paint comparison, damage and driver controls. It never reads or writes player profiles. The two starter cars retain their own original bodies; see [CLASSIC_VEHICLES.md](CLASSIC_VEHICLES.md).
 
 ## Blender workflow
 

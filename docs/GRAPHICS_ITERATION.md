@@ -1,6 +1,6 @@
 # Graphics, sound and handling
 
-The current build has nine two-lap events, seven cars, local player garages, directional damage, prepared gravel shortcuts and solid scenery. Event and reward rules come from [config.js](../src/config.js), [game.js](../src/game.js) and [progression.js](../src/progression.js).
+The current build has nine two-lap events, eight cars, local player garages, directional damage, prepared gravel shortcuts and solid scenery. Event and reward rules come from [config.js](../src/config.js), [game.js](../src/game.js) and [progression.js](../src/progression.js).
 
 ## Driving and damage
 
@@ -14,7 +14,7 @@ Course data supplies collision footprints for mountains, rocks, buildings, stati
 
 ## Cars and crash effects
 
-Falcone and Stuttgart now have separate [original starter bodies](CLASSIC_VEHICLES.md): a flat wedge and bridge wing versus a rounded coupe with flush oval lamps and an integrated rear wing. Aurora alone uses the licensed [Car Concept body](../public/assets/models/CREDITS.md), with carbon aero and gold wheels. Dusthawk Rally, Banshee Muscle, Viper Prototype and Titan Monster have separate original geometry and Blender-compatible GLB exports; see [unlock vehicle notes](UNLOCK_VEHICLES.md).
+Falcone and Stuttgart retain their separate [original starter bodies](CLASSIC_VEHICLES.md): a flat wedge and bridge wing versus a rounded coupe with flush oval lamps and an integrated rear wing. Falcone Heritage preserves the former F42's licensed [Car Concept body](../public/assets/models/CREDITS.md) and sport trim as a separate unlock. Aurora uses the same source with carbon aero and gold wheels. Dusthawk Rally, Banshee Muscle, Viper Prototype and Titan Monster retain their refined original geometry and Blender-compatible GLB exports; see [unlock vehicle notes](UNLOCK_VEHICLES.md).
 
 Helmeted drivers have harnesses, arms and steering wheels. Front, rear, left and right contacts deform and scuff the matching panels; damage also affects glass and lamps. Catastrophe ejects wheels and debris and produces light, fire and smoke. These are scripted effects, not soft-body physics. Only traffic and police use simpler procedural sedans; the old player-loading fallback has been removed. Factory, Copper Metallic and Glacier Satin finishes change private body-paint materials while preserving trim and damage behavior.
 

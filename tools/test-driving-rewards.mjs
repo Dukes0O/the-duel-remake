@@ -11,10 +11,10 @@ function race(difficulty='casual',stage=0){
 function finish(duel){const s=duel.state;s.s=duel.raceLength;s.completedLaps=s.lapsTotal;return duel._finishStage();}
 for(const difficulty of ['casual','pro']){
   const d=race(difficulty),s=d.state,m=difficulty==='pro'?2:1;
-  // A physical clean pass across the standard lane centres must now count.
-  Object.assign(s,{s:600,prevS:598,lateral:-3.4,prevLateral:-3.4,speedMph:80});
-  s.traffic=[{s:599,prevS:601,lateral:3.4,prevLateral:3.4,speedMph:40,headingError:0,slipAngle:0,dir:-1,alive:true}];
-  d._collisions();check(s.nearMisses===1&&s.score===SCORING.nearMissPoints*m,`${difficulty}: widened lane pass earns points`);
+  // Close lane passes still count after tightening the earlier 7.2m range.
+  Object.assign(s,{s:600,prevS:598,lateral:-3.1,prevLateral:-3.1,speedMph:80});
+  s.traffic=[{s:599,prevS:601,lateral:3.1,prevLateral:3.1,speedMph:40,headingError:0,slipAngle:0,dir:-1,alive:true}];
+  d._collisions();check(s.nearMisses===1&&s.score===SCORING.nearMissPoints*m,`${difficulty}: close lane pass earns points`);
   d._collisions();check(s.nearMisses===1,`${difficulty}: the same pass cannot farm points`);
   const outside=race(difficulty),o=outside.state;
   Object.assign(o,{s:600,prevS:598,lateral:0,speedMph:80});
@@ -30,7 +30,7 @@ for(const difficulty of ['casual','pro']){
 }
 const auto=race(),manual=race('pro');finish(auto);finish(manual);
 check(manual.state.results.score===auto.state.results.score*2,'Pro doubles total race points');
-for(const [speed,clearance,expected]of[[64,6.8,0],[65,6.8,1],[80,TRAFFIC.nearMissLatU,0],[80,1,0]]){
+for(const [speed,clearance,expected]of[[64,6.2,0],[65,6.2,1],[80,6.39,1],[80,6.4,0],[80,6.8,0],[80,7.19,0],[80,1,0]]){
   const d=race(),s=d.state;
   Object.assign(s,{s:600,prevS:598,lateral:0,prevLateral:0,speedMph:speed});
   s.traffic=[{s:599,prevS:601,lateral:clearance,prevLateral:clearance,speedMph:40,headingError:0,slipAngle:0,dir:-1,alive:true}];

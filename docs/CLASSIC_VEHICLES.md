@@ -1,6 +1,6 @@
 # Original starter vehicles
 
-Falcone F42 and Stuttgart 959-S now use separate original procedural bodies in `src/classic-vehicles.js`. Changing paint no longer turns one into the other. Both build synchronously, so the race renderer can use the final model from its first displayed frame. Aurora GTR remains the separately loaded, credited concept asset with its GT package.
+Falcone F42 and Stuttgart 959-S use separate original procedural bodies in `src/classic-vehicles.js`. Changing paint no longer turns one into the other. Both build synchronously, so the race renderer can use the final model from its first displayed frame. Their redesign is retained. Falcone Heritage is a separate 1,800-credit unlock preserving the previous F42 concept body and sport trim, alongside the separately loaded Aurora GT package. The older appearance does not replace either starter or appear as a loading placeholder.
 
 | Vehicle | Body and visible features | Nominal width × length × height |
 | --- | --- | --- |
@@ -19,4 +19,4 @@ The exporter validates four damage directions, crack geometry, exact vertex/norm
 
 `node tools/test-classic-vehicles.mjs` independently checks production hooks, four wheels, body bounds, the open driver compartment and a same-paint surface comparison. The final geometry checkpoint has 196 checks and 140 matched surface samples: the two silhouettes differ by 14.6 cm RMS, with a 27.2 cm largest sampled difference. This proves different bodies, not photorealistic quality. Paint and rendered-road grounding use these actual new starter factories in their existing integration suites.
 
-Use `/tools/vehicle-art-check.html` in the development server for all seven cars, front/rear/side views, shared neutral paint, damage and driver pose. This page has no career or player-storage effects. It is excluded from the production entry point.
+Use `/tools/vehicle-art-check.html` in the development server for all eight cars, front/rear/side views, shared neutral paint, damage and driver pose. This page has no career or player-storage effects. It is excluded from the production entry point.

@@ -60,11 +60,11 @@ Getting caught by police adds a 150-credit fine against the current race's earni
 
 Named players on this computer have separate credits, cars, upgrades, history and last-used race setups. Switching players restores that player's event, car, challenge, CPU difficulty, transmission and route. They share a local leaderboard with circuit and car filters. The previous garage save migrates into Player 1.
 
-Two cars are included. Five more can be earned: Aurora GTR, Dusthawk Rally, Banshee Muscle, Viper Prototype and Titan Monster. They have different acceleration, speed, road grip, dirt performance, brakes, mass and dimensions. The monster truck costs 12,000 credits and opens both stadium events.
+Two cars are included. Six more can be earned: Falcone Heritage, Aurora GTR, Dusthawk Rally, Banshee Muscle, Viper Prototype and Titan Monster. Falcone Heritage costs 1,800 credits and preserves the previous F42 concept body, red finish and handling as a separate car; the redesigned F42 and 959 stay unchanged. The other earned cars offer different acceleration, speed, road grip, dirt performance, brakes, mass and dimensions. The monster truck costs 12,000 credits and opens both stadium events.
 
 Seven upgrade categories each have three levels: engine, nitro, handling, tires, brakes, suspension and nitro tank. Difficulty sets the base win reward to 600, 1,000 or 1,500 credits. An actual race loss charges half that amount, stopping at zero. Clean finishes, improved car records, win streaks, police escapes, arena jumps and crushing can earn separate bonuses. Manual/Pro doubles driving points and recurring positive credit rewards; it does not double one-time milestones or loss charges. Quitting, restarting or reloading an unfinished race forfeits only that race's unbanked earnings. Saved credits and earnings from completed stages stay safe.
 
-Near misses allow a wider passing gap without widening collisions. Escaping police earns points, including when crossing the finish line during a pursuit. A car's first finish establishes its record; each later improvement with the same route, car, race mode, CPU and transmission can earn the car-best bonus. Upgrades can help beat the existing record. Stage repairs do not turn a damaged run into a clean run.
+Near misses require less than 6.4 m of lateral separation, tightened from the earlier 7.2 m range, without changing collisions or the 65 MPH minimum. Escaping police earns points, including when crossing the finish line during a pursuit. A car's first finish establishes its record; each later improvement with the same route, car, race mode, CPU and transmission can earn the car-best bonus. Upgrades can help beat the existing record. Stage repairs do not turn a damaged run into a clean run.
 
 Copper Metallic and Glacier Satin finishes cost 250 and 400 credits per car. Once purchased, switching between owned finishes or restoring the factory finish is free. Paint changes appearance only and does not affect records or performance.
 
@@ -78,7 +78,7 @@ The game uses Three.js, original procedural 3D models, a licensed detailed conce
 
 - [Starter vehicles](docs/CLASSIC_VEHICLES.md): separate wedge-shaped Falcone and rounded Stuttgart bodies, with no old-model loading fallback.
 - [Vehicle assets](docs/UNLOCK_VEHICLES.md): four distinct original earned-car models, damage hooks and Blender-ready GLBs.
-- [Model credits](public/assets/models/CREDITS.md): licensed Aurora body and the six original playable-car models.
+- [Model credits](public/assets/models/CREDITS.md): licensed Heritage/Aurora body and the six original playable-car models.
 - [Audio credits](public/assets/audio/CREDITS.md): source recordings, licenses and processing.
 - [Image prompts](docs/IMAGE_PROMPTS.md): full prompts and how generated references and textures are used.
 - [Asset workflow](docs/ASSET_PIPELINE.md): export and Blender guidance.

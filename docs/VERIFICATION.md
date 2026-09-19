@@ -2,6 +2,23 @@
 
 Checkpoint: 19 September 2026. The latest vehicle, reward and route iteration is described first. All later sections preserve earlier checkpoints; their counts and screenshots do not describe the latest geometry.
 
+## Heritage unlock and tighter near misses — latest follow-up
+
+All six redesigned original vehicles remain unchanged from `2a36b47`; the cancelled rollback was fully reversed. A read-only Git-filtered blob audit confirmed the builders, six exports, both manifests, exporters and licensed source still match. Falcone Heritage adds the earlier F42 sport body as an independent 1,800 CR unlock. It shares the existing licensed source import with Aurora but not its GT trim. No duplicate asset was added.
+
+Focused verification passes:
+
+- Core: 443 checks with expensive campaign matrices skipped.
+- Heritage driving: 95 checks, including four complete input-only Medium Time Trial races at 30/144 FPS. Stock F42 and Heritage each finished in 105.67 seconds with zero crashes and identical full per-step motion/control/damage/timing signatures. Their bests, leaderboard rows, ghosts, ownership and saved setups remain separate.
+- Driving rewards: 47 checks. Near misses score at 6.39 m but not at 6.4 m or wider; the unchanged 65 mph minimum and collision rejection still apply. Police fines: 225; Busted/quit flows: 249.
+- Progression: 27 groups; App progression: 92; paint presets: 79; paint App flows: 35; saved settings: 42.
+- Model routing: 107; paint: 1,906; grounding: 4,398, within −4.02 to +4.19 cm. Readiness: 63; ghosts: 76; ghost vehicle ownership/cleanup: 395; completion UI: 72.
+- Audio: 310 checks and 348,686 finite automation commands across eight cars. F42/Heritage engine behavior matches for recorded and fallback sound across all three cameras. This is not a new human listening review.
+
+Memory-only browser QA confirmed the real garage purchase reduced 2,000 CR to 200 CR, the old F42 body appeared as Heritage, and normal race startup worked without observed console errors. The fixture toolbar now collapses after choosing a test to avoid covering game buttons. Real career storage was not used for these tests.
+
+Production and QA builds pass, with the existing approximately 937 kB rendering-chunk warning. The live server responds with `index-COmGH8FU.js`; the same bundle was confirmed in the existing Chrome tab after a menu-only refresh. The user subsequently began a race, which was left untouched. The package now registers 73 test commands. This follow-up used focused suites, not a complete rerun of all 73 commands; the preceding complete 72-command checkpoint is below.
+
 ## Bank protection and player settings — current rule
 
 The user clarified that quitting must forfeit only current-race earnings. This replaces the intermediate police-fine/quit policy described in the historical subsection below. Quitting, restarting or reopening an unfinished race now settles it with zero payout and zero debit. Prior completed stages remain banked. Police fines accrue against positive net earnings from the current race and cannot create debt or take saved credits.

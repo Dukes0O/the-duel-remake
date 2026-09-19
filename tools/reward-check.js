@@ -3,8 +3,11 @@
 const memory=new Map();
 Object.defineProperty(window,'localStorage',{value:{getItem:key=>memory.get(String(key))??null,setItem:(key,value)=>memory.set(String(key),String(value)),removeItem:key=>memory.delete(String(key)),clear:()=>memory.clear()}});
 const {app,refreshRaceSetup}=await import('../src/main.js');
+const controls=document.createElement('details');controls.open=true;
+controls.style.cssText='position:fixed;left:12px;bottom:8px;z-index:999;max-width:calc(100vw - 24px);padding:8px;background:#0c151a;color:white';
+const summary=document.createElement('summary');summary.textContent='Test fixtures · temporary data';summary.style.cursor='pointer';controls.append(summary);
 const nav=document.createElement('nav');
-nav.style.cssText='position:fixed;left:12px;bottom:8px;z-index:999;display:flex;gap:6px;padding:8px;background:#0c151a;color:white;flex-wrap:wrap';
+nav.style.cssText='display:flex;gap:6px;padding:8px;background:#0c151a;color:white;flex-wrap:wrap';
 nav.setAttribute('aria-label','Temporary reward review');
 const label=document.createElement('span');label.textContent='TEST ONLY · no saved data';nav.append(label);
 function finish({manual=false,hits=0,time=110,escape=true}={}){
@@ -31,11 +34,16 @@ function playerSettingsFixture(){
   ]){const player=app.players.players.find(p=>p.name===name);if(player)app.selectPlayer(player.id);else app.addPlayer(name);app.setRaceSettings(settings);app.setRouteVariant(route);app.setLightingMood(lighting);app.setGhostEnabled(ghost);}
   app.selectPlayer(app.players.players.find(p=>p.name==='Alpine Manual').id);refreshRaceSetup();
 }
+function heritagePurchaseFixture(){
+  app.returnToMenu();app.profile={...app.profile,credits:2000};app._saveProfile();
+  app.setRaceSettings({startStage:0,car:'falcone_f42',mode:'timetrial',difficulty:'casual',cpuDifficulty:'medium'});refreshRaceSetup();
+}
 for(const [name,callback]of[
   ['Medium baseline',()=>finish()],['Medium improvement',()=>finish({time:100})],
   ['Manual clean escape',()=>finish({manual:true})],['Manual damaged win',()=>finish({manual:true,hits:3,time:100})],
   ['Busted · 2,000 CR fixture',()=>busted()],
   ['Two player setups',()=>playerSettingsFixture()],
+  ['Heritage purchase · 2,000 CR',()=>heritagePurchaseFixture()],
   ['Return to menu',()=>app.returnToMenu()],
-]){const button=document.createElement('button');button.textContent=name;button.onclick=callback;button.style.cssText='padding:8px;background:#263941;color:white;border:1px solid #7e969d;cursor:pointer';nav.append(button);}
-document.body.append(nav);
+]){const button=document.createElement('button');button.textContent=name;button.onclick=()=>{controls.open=false;callback();};button.style.cssText='padding:8px;background:#263941;color:white;border:1px solid #7e969d;cursor:pointer';nav.append(button);}
+controls.append(nav);document.body.append(controls);

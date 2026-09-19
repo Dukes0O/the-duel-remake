@@ -12,9 +12,12 @@ const ok=(value,message)=>{assert.ok(value,message);checks++;};
 const near=(a,b,tolerance,message)=>ok(Math.abs(a-b)<=tolerance,`${message}: ${a} vs ${b}`);
 const material=new THREE.MeshBasicMaterial({side:THREE.DoubleSide});
 const courses=['high-country','ridge-rally','timberline-rush'].map(id=>new Course(COURSE.find(c=>c.id===id),1989));
+ok(models.length===8,'Grounding checks include all eight actual runtime models');
 
 for(const model of models){
   const v=model.vehicle,geometryBefore=[];
+  ok(v.userData.vehicleKey===model.key,`${model.key} fixture comes through the runtime model router`);
+  if(model.key==='falcone_heritage')ok(v.userData.vehicleSource==='licensed'&&!v.userData.aeroPackage,'Heritage uses licensed sport geometry, not the redesigned starter or Aurora GT');
   v.traverse(n=>{if(n.isMesh)geometryBefore.push([n,n.geometry,n.geometry.attributes.position.version,n.position.clone()]);});
   const meta=prepareVehicleGrounding(v);
   ok(Object.isFrozen(meta)&&Object.isFrozen(meta.wheels),`${model.key} immutable cached metadata`);
@@ -87,4 +90,4 @@ const ridge=courses[1],ridgeRoad=new THREE.Mesh(strip(ridge,s=>-ridge.roadHalfWi
 const titanGaps=contacts(models.find(m=>m.key==='titan_monster'),ridge,2168,0,ridgeRoad);
 for(const gap of titanGaps)ok(gap>-.05&&gap<.05,`Ridge2168 Titan contact ${gap}`);
 ridgeRoad.geometry.dispose();material.dispose();
-console.log(`Vehicle grounding: ${checks} checks across seven actual models; steep asphalt/gravel triangle gaps ${min.toFixed(4)}..${max.toFixed(4)}m; Ridge2168 Titan ${titanGaps.map(n=>n.toFixed(4)).join(', ')}m.`);
+console.log(`Vehicle grounding: ${checks} checks across ${models.length} actual models; steep asphalt/gravel triangle gaps ${min.toFixed(4)}..${max.toFixed(4)}m; Ridge2168 Titan ${titanGaps.map(n=>n.toFixed(4)).join(', ')}m.`);
