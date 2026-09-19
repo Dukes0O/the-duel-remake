@@ -6,6 +6,10 @@
 import { CARS, DEFAULT_CAR, DIFFICULTY, DEFAULT_DIFFICULTY, COURSE, LIVES, POLICE, DRIVE, TRAFFIC, SCORING, BOOST, steeringYawAuthority } from './config.js';
 import { Course } from './course.js';
 import { makeRng, seedFromUrl } from './rng.js';
+import { sweepBox, sweepObstacle, contactZone, segmentCircle, CAR_HALF_WIDTH, CAR_HALF_LENGTH } from './collision.js';
+
+const BOUNDARY_WARNING = 60, BOUNDARY_RESET = 78;
+const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 
 export class Duel {
   constructor(opts = {}) {
@@ -23,6 +27,7 @@ export class Duel {
       paused: false,
       car: this.carKey,
       difficulty: this.difficultyKey,
+      upgrades: { engine: 0, nitro: 0, handling: 0, tires: 0 },
       stageIndex: 0,
       lives: LIVES.start,
       penaltySec: 0,
@@ -34,6 +39,8 @@ export class Duel {
       headingError: 0, yawVelocity: 0, roughness: 0, offRoadTime: 0, slipAngle: 0, drifting: false,
       impactTimer: 0, impactDuration: 0, impactStrength: 0, impactSide: 1, crashSpin: 0,
       majorCrashes: 0, catastrophic: false,
+      damageZones: { front: 0, rear: 0, left: 0, right: 0 }, damageCooldown: 0,
+      boundaryWarning: false, boundaryResets: 0, pushVelocity: 0, collectedFlocks: [],
       score: 0, stageStyleScore: 0, nearMisses: 0, combo: 0, comboTimer: 0,
       callout: '', calloutTimer: 0,
       // police
@@ -55,16 +62,26 @@ export class Duel {
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
   emit(ev) { for (const fn of this.listeners) fn(this.state, ev); }
 
-  get car() { return CARS[this.state.car]; }
+  get car() {
+    const base = CARS[this.state.car], upgrades = this.state.upgrades;
+    const key = `${this.state.car}|${upgrades.engine}|${upgrades.nitro}|${upgrades.handling}|${upgrades.tires}`;
+    if (this._carCache?.key === key) return this._carCache.value;
+    const engine = 1 + upgrades.engine * .035;
+    const value = { ...base, topSpeed: base.topSpeed * engine, gears: base.gears.map(gear => gear * engine),
+      accel: base.accel * (1 + upgrades.engine * .04), grip: Math.min(1.2, base.grip + upgrades.handling * .045 + upgrades.tires * .025),
+      braking: base.braking * (1 + upgrades.tires * .06) };
+    this._carCache = { key, value }; return value;
+  }
   get diff() { return DIFFICULTY[this.state.difficulty]; }
   get stageDef() { return COURSE[this.state.stageIndex]; }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, startStage = 0, upgrades = {} } = {}) {
     if (CARS[car]) this.state.car = car;
     if (DIFFICULTY[difficulty]) this.state.difficulty = difficulty;
+    this.state.upgrades = Object.fromEntries(['engine', 'nitro', 'handling', 'tires'].map(key => [key, Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     this.state.mode = mode === 'timetrial' ? 'timetrial' : 'duel';
-    this.state.stageIndex = 0;
+    this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
     this.state.lives = LIVES.start;
     this.state.totalTimeSec = 0;
     this.state.penaltySec = 0;
@@ -72,18 +89,22 @@ export class Duel {
     this.state.nearMisses = 0;
     this.state.majorCrashes = 0;
     this.state.catastrophic = false;
-    this._loadStage(0);
+    this.state.damageZones = { front: 0, rear: 0, left: 0, right: 0 };
+    this.state.boundaryResets = 0;
+    this._loadStage(this.state.stageIndex);
   }
 
   _loadStage(idx) {
     const s = this.state;
     s.stageIndex = idx;
     this.course = new Course(COURSE[idx], this.seed);
+    this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     s.s = 0; s.lateral = 0; s.speedMph = 0; s.gear = 0; s.revs = 0; s.overrevSec = 0;
     s.paused = false; s.offRoad = false; s.steerVisual = 0;
     s.boost = 1; s.boosting = false; s.invulnerableSec = 0;
     s.headingError = 0; s.yawVelocity = 0; s.roughness = 0; s.offRoadTime = 0;
     s.slipAngle = 0; s.drifting = false;
+    s.boundaryWarning = false; s.pushVelocity = 0; s.damageCooldown = 0; s.collectedFlocks = [];
     s.impactTimer = 0; s.impactDuration = 0; s.impactStrength = 0; s.impactSide = 1; s.crashSpin = 0;
     s.combo = 0; s.comboTimer = 0; s.stageStyleScore = 0;
     s.callout = ''; s.calloutTimer = 0;
@@ -97,7 +118,8 @@ export class Duel {
     s.status = 'countdown';
     // rival
     s.rival = (COURSE[idx].hasRival && s.mode === 'duel')
-      ? { s: this.course.rivalStartS, lateral: -DRIVE.laneOffset, speedMph: 0, finished: false, finishTime: null }
+      ? { s: this.course.rivalStartS, lateral: -DRIVE.laneOffset, speedMph: 0, finished: false, finishTime: null,
+        headingError: 0, yawVelocity: 0, pushVelocity: 0, offRoad: false, contactCooldown: 0 }
       : null;
     // pre-spawn deterministic two-way traffic
     s.traffic = this._spawnTraffic(idx);
@@ -149,6 +171,7 @@ export class Duel {
     s.totalTimeSec += dt;
     if (s.crashFlash > 0) s.crashFlash = Math.max(0, s.crashFlash - dt);
     s.invulnerableSec = Math.max(0, s.invulnerableSec - dt);
+    s.damageCooldown = Math.max(0, s.damageCooldown - dt);
     s.calloutTimer = Math.max(0, s.calloutTimer - dt);
     s.comboTimer = Math.max(0, s.comboTimer - dt);
     if (s.comboTimer === 0) s.combo = 0;
@@ -157,6 +180,7 @@ export class Duel {
       this._impact(dt);
       this._traffic(dt);
       if (s.rival) this._rival(dt);
+      this._collisions();
       return; // A crash must play out before a ticket or finish can replace it.
     }
 
@@ -166,11 +190,12 @@ export class Duel {
     this._drive(dt);
     if (s.status !== 'racing' || s.impactTimer > 0) return;
     this._traffic(dt);
+    if (s.rival) this._rival(dt);
     this._collisions();
+    this._flockBonuses();
     if (s.status !== 'racing' || s.impactTimer > 0) return;
     this._police(dt);
     if (s.status !== 'racing') return;
-    if (s.rival) this._rival(dt);
 
     // stage finish (reach the gas station)
     if (s.s >= this.course.length) this._finishStage();
@@ -207,12 +232,14 @@ export class Duel {
     s.speedMph -= DRIVE.dragCoeff * dt * (s.input.throttle > 0 ? 0.2 : 1);
 
     const wasBoosting = s.boosting;
+    const nitro = s.upgrades.nitro, boostDrain = BOOST.drainPerSec / (1 + nitro * .14);
+    const boostTopSpeed = BOOST.topSpeedMult + nitro * .025;
     s.boosting = !!s.input.boost && s.boost > 0 && s.speedMph >= BOOST.minSpeedMph && !s.offRoad && s.input.brake === 0;
     if (s.boosting) {
-      const available = Math.min(1, s.boost / (BOOST.drainPerSec * dt));
-      s.boost = Math.max(0, s.boost - BOOST.drainPerSec * dt);
-      const boostCeiling = d.autoShift ? car.topSpeed * BOOST.topSpeedMult : Math.min(car.topSpeed * BOOST.topSpeedMult, gearMax * DRIVE.gearCeilFrac);
-      s.speedMph += Math.max(0, Math.min(boostCeiling - s.speedMph, BOOST.accelMphPerSec * dt * available));
+      const available = Math.min(1, s.boost / (boostDrain * dt));
+      s.boost = Math.max(0, s.boost - boostDrain * dt);
+      const boostCeiling = d.autoShift ? car.topSpeed * boostTopSpeed : Math.min(car.topSpeed * boostTopSpeed, gearMax * DRIVE.gearCeilFrac);
+      s.speedMph += Math.max(0, Math.min(boostCeiling - s.speedMph, BOOST.accelMphPerSec * (1 + nitro * .15) * dt * available));
     } else if (!s.input.boost) {
       s.boost = Math.min(1, s.boost + BOOST.refillPerSec * dt);
     }
@@ -250,18 +277,20 @@ export class Duel {
       s.boosting = false;
     }
 
-    const speedCap = s.boosting ? car.topSpeed * BOOST.topSpeedMult : car.topSpeed;
+    const speedCap = s.boosting ? car.topSpeed * boostTopSpeed : car.topSpeed;
     if (!s.boosting && s.speedMph > speedCap) s.speedMph -= 22 * dt;
-    s.speedMph = Math.max(0, Math.min(car.topSpeed * BOOST.topSpeedMult, s.speedMph));
+    s.speedMph = Math.max(0, Math.min(car.topSpeed * boostTopSpeed, s.speedMph));
     s.revs = s.speedMph / car.gears[s.gear];
     const metresPerSec = s.speedMph * DRIVE.mphToWorld;
     const forward = Math.max(0, Math.cos(s.headingError)) * metresPerSec * dt;
     s.headingError += s.yawVelocity * dt - frame.curvature * forward;
     s.headingError = Math.max(-1.45, Math.min(1.45, s.headingError));
-    s.lateral += Math.sin(s.headingError) * metresPerSec * dt;
+    s.lateral += (Math.sin(s.headingError) * metresPerSec + s.pushVelocity) * dt;
+    s.pushVelocity *= Math.exp(-2.4 * dt);
     s.s += forward;
     s.offRoad = Math.abs(s.lateral) > DRIVE.roadHalfWidth;
     // Dirt alone never consumes a life or structural hit. Only contact does.
+    this._boundary(s);
   }
 
   _traffic(dt) {
@@ -269,26 +298,33 @@ export class Duel {
     for (const c of s.traffic) {
       if (!c.alive) continue;
       c.prevS = c.s;
+      c.prevLateral = c.lateral;
+      if (Number.isFinite(c.lateral)) {
+        c.lateral += (c.pushVelocity || 0) * dt;
+        c.pushVelocity = (c.pushVelocity || 0) * Math.exp(-1.5 * dt);
+        const lane = c.dir < 0 ? DRIVE.laneOffset : -DRIVE.laneOffset;
+        c.lateral += clamp(lane - c.lateral, -dt * .7, dt * .7);
+        if (Math.abs(c.lateral) > DRIVE.roadHalfWidth) c.speedMph *= Math.exp(-DRIVE.offRoadScrub * dt);
+      }
       c.s += c.dir * c.speedMph * DRIVE.mphToWorld * dt;
+      c.contactCooldown = Math.max(0, (c.contactCooldown || 0) - dt);
+      if (Number.isFinite(c.lateral)) this._staticContacts(c, false);
     }
   }
 
   _collisions() {
     const s = this.state;
+    this._staticContacts(s, true);
+    if (s.rival && !s.rival.finished) this._vehicleContact(s, s.rival, 'rival');
     for (const c of s.traffic) {
       if (!c.alive) continue;
       // swept longitudinal test: a head-on closing speed can cross the whole
       // hit window in one clamped frame, so a relative sign flip counts too
       const now = c.s - s.s;
       const prev = (c.prevS ?? c.s) - (s.prevS ?? s.s);
-      const hitLong = Math.abs(now) < TRAFFIC.collideLongU || (prev > 0) !== (now > 0);
       const clearance = Math.abs(c.lateral - s.lateral);
-      if (s.invulnerableSec <= 0 && hitLong && clearance < TRAFFIC.collideLatU) {
-        c.alive = false;
-        const closingMph=Math.abs(s.speedMph-c.dir*c.speedMph);
-        this._crash(c.dir<0?'head_on':'traffic',Math.sign(s.lateral-c.lateral),closingMph);
-        return;
-      }
+      this._vehicleContact(s, c, c.dir < 0 ? 'head_on' : 'traffic');
+      if (s.rival && !s.rival.finished) this._vehicleContact(s.rival, c, 'traffic');
       // Reward a completed pass once, rather than every frame spent near a car.
       if (!c.passed && prev > 0 && now <= 0) {
         c.passed = true;
@@ -304,12 +340,185 @@ export class Duel {
         }
       }
     }
-    if(s.invulnerableSec<=0)for(const rock of this.course.rocksNear(s.prevS??s.s,s.s)){
-      const ds=s.s-(s.prevS??s.s),dl=s.lateral-(s.prevLateral??s.lateral);
-      const rz=rock.radiusZ+1.7,rx=rock.radiusX+.85;
-      const x=((s.prevLateral??s.lateral)-rock.off)/rx,z=((s.prevS??s.s)-rock.s)/rz;
-      const vx=dl/rx,vz=ds/rz,t=Math.max(0,Math.min(1,-(x*vx+z*vz)/Math.max(1e-8,vx*vx+vz*vz)));
-      if((x+vx*t)**2+(z+vz*t)**2<1){this._crash('rock',Math.sign(s.lateral-rock.off),s.speedMph);return;}
+    // A vehicle pushed sideways may now touch scenery. Resolve that contact
+    // again, including when damage is temporarily disabled after a crash.
+    this._staticContacts(s, true);
+    if (s.rival && !s.rival.finished) this._staticContacts(s.rival, false);
+  }
+
+  _obstacles(fromS, toS) {
+    if (this.course.obstaclesNear) {
+      if (this._obstacleArray !== this.course.features.obstacles) { this._obstacleArray = this.course.features.obstacles; this._obstacleQueryCache.clear(); }
+      const first = Math.floor((Math.min(fromS, toS) - 10) / 64), last = Math.floor((Math.max(fromS, toS) + 10) / 64), key = `${first}:${last}`;
+      if (!this._obstacleQueryCache.has(key)) this._obstacleQueryCache.set(key, this.course.obstaclesNear(fromS, toS));
+      return this._obstacleQueryCache.get(key);
+    }
+    // Keeps older exported courses usable while they acquire world colliders.
+    return (this.course.rocksNear?.(fromS, toS) || []).map(rock => ({
+      ...this.course.worldAt(rock.s, rock.off), id: rock.id, kind: 'rock', s: rock.s, off: rock.off,
+      halfX: rock.radiusX, halfZ: rock.radiusZ,
+    }));
+  }
+
+  _roadPosition(world, hintS) {
+    if (this.course.nearest) return this.course.nearest(world.x, world.z, hintS);
+    // Local projection fallback for older saved course objects.
+    const f = this.course.at(hintS), dx = world.x - f.x, dz = world.z - f.z;
+    return { s: hintS + dx * Math.sin(f.heading) + dz * Math.cos(f.heading),
+      lateral: dx * Math.cos(f.heading) - dz * Math.sin(f.heading) };
+  }
+
+  _staticContacts(car, player) {
+    const oldS = car.prevS ?? car.s, oldLateral = car.prevLateral ?? car.lateral;
+    let start = this.course.worldAt(oldS, oldLateral), end = this.course.worldAt(car.s, car.lateral);
+    if (![start.x, start.z, end.x, end.z].every(Number.isFinite)) return;
+    const travelHeading = this.course.at(car.s).heading + (car.headingError || 0) + (car.dir < 0 ? Math.PI : 0);
+    const heading = travelHeading + (car.slipAngle || 0);
+    const obstacles = this._obstacles(oldS, car.s);
+    for (let attempt = 0; attempt < 4; attempt++) {
+      let first = null;
+      for (const obstacle of obstacles) {
+        const hit = sweepObstacle(start, end, obstacle, heading);
+        if (hit && (!first || hit.t < first.t)) first = hit;
+      }
+      if (!first) break;
+      const { nx, nz, t, penetration, obstacle } = first;
+      const dx = end.x - start.x, dz = end.z - start.z;
+      const incoming = Math.max(0, -(Math.sin(travelHeading) * nx + Math.cos(travelHeading) * nz));
+      const roadHeading = this.course.at(car.s).heading;
+      const pushNormal = Math.cos(roadHeading) * nx - Math.sin(roadHeading) * nz;
+      const impactMph = car.speedMph * incoming + Math.max(0, -(car.pushVelocity || 0) * pushNormal) / DRIVE.mphToWorld;
+      const zone = contactZone(nx, nz, heading);
+      // Stop the normal component at the first contact; allow the unused
+      // tangential movement to slide along the wall instead of sticking.
+      const stop = { x: start.x + dx * t + nx * (penetration + .04), z: start.z + dz * t + nz * (penetration + .04) };
+      const remainingX = dx * (1 - t), remainingZ = dz * (1 - t);
+      const inward = Math.min(0, remainingX * nx + remainingZ * nz);
+      end = { x: stop.x + remainingX - nx * inward, z: stop.z + remainingZ - nz * inward };
+      if (first.inside) end = stop;
+      start = stop;
+      const road = this._roadPosition(end, car.s);
+      if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) { car.s = road.s; car.lateral = road.lateral; }
+      car.pushVelocity = (car.pushVelocity || 0) * .25;
+      if (player && this.state.invulnerableSec <= 0 && this.state.impactTimer <= 0) {
+        if (impactMph >= 28) this._crash(obstacle.kind || 'rock', Math.sign(nx), impactMph, zone);
+        else if (impactMph > 4) this._scrape(zone, impactMph);
+      }
+      car.speedMph *= Math.max(.08, 1 - incoming * .94);
+      if (!player) { car.contactCooldown = 1.2; car.headingError = clamp((car.headingError || 0) - Math.sign(car.lateral) * .25, -.65, .65); }
+    }
+    car.offRoad = Math.abs(car.lateral) > DRIVE.roadHalfWidth;
+  }
+
+  _vehicleContact(a, b, reason) {
+    const start = { x: (a.prevLateral ?? a.lateral) - (b.prevLateral ?? b.lateral), z: (a.prevS ?? a.s) - (b.prevS ?? b.s) };
+    const end = { x: a.lateral - b.lateral, z: a.s - b.s };
+    // A road-aligned envelope is intentionally a little generous to avoid
+    // the visible cars interpenetrating while their bodies drift.
+    const angleA = (a.headingError || 0) + (a.slipAngle || 0), angleB = (b.headingError || 0) + (b.slipAngle || 0);
+    const width = CAR_HALF_WIDTH * (Math.abs(Math.cos(angleA)) + Math.abs(Math.cos(angleB)))
+      + CAR_HALF_LENGTH * (Math.abs(Math.sin(angleA)) + Math.abs(Math.sin(angleB))) + .2;
+    const length = CAR_HALF_LENGTH * (Math.abs(Math.cos(angleA)) + Math.abs(Math.cos(angleB)))
+      + CAR_HALF_WIDTH * (Math.abs(Math.sin(angleA)) + Math.abs(Math.sin(angleB))) + .3;
+    const hit = sweepBox(start, end, width, length);
+    if (!hit) return false;
+    const { nx, nz } = hit;
+    // A rival arriving from behind must yield to a player who cuts in.
+    // Resolve late contacts even if there was too little room to brake first:
+    // the CPU moves back and loses speed; the player's run remains intact.
+    if (a === this.state && b === this.state.rival && nz > 0 && (b.dir || 1) > 0 && Math.cos(a.headingError || 0) > 0) {
+      b.s = Math.min(b.s, a.s - length - .15);
+      const forwardMph = Math.max(0, a.speedMph * Math.cos(a.headingError || 0));
+      b.speedMph = Math.min(b.speedMph, forwardMph * .94);
+      b.braking = true; b.yieldingToPlayer = true; b.contactCooldown = Math.max(b.contactCooldown || 0, .45);
+      return true;
+    }
+    const vaX = Math.sin(a.headingError || 0) * a.speedMph * DRIVE.mphToWorld + (a.pushVelocity || 0);
+    const vbX = Math.sin(b.headingError || 0) * b.speedMph * DRIVE.mphToWorld + (b.pushVelocity || 0);
+    const vaZ = a.speedMph * (a.dir || 1), vbZ = b.speedMph * (b.dir || 1);
+    const impactMph = Math.max(0, -(vaX - vbX) / DRIVE.mphToWorld * nx - (vaZ - vbZ) * nz);
+    // Share the positional correction. Even a protected car remains solid.
+    const required = nx ? width + .04 - (a.lateral - b.lateral) * nx : length + .04 - (a.s - b.s) * nz;
+    const correction = Math.max(0, required);
+    a.lateral += nx * correction * .5; b.lateral -= nx * correction * .5;
+    a.s += nz * correction * .5; b.s -= nz * correction * .5;
+    const zone = contactZone(nx, nz, angleA);
+    if (nx) {
+      const shove = clamp(2.5 + impactMph * DRIVE.mphToWorld * .62, 2.5, 13);
+      a.pushVelocity = clamp((a.pushVelocity || 0) + nx * shove * .3, -16, 16);
+      b.pushVelocity = clamp((b.pushVelocity || 0) - nx * shove, -16, 16);
+      b.headingError = clamp((b.headingError || 0) - nx * .07, -.8, .8);
+      a.speedMph *= .992; b.speedMph *= .985;
+      if (a === this.state && impactMph > 3 && this.state.invulnerableSec <= 0) this._scrape(zone, impactMph);
+    } else if (impactMph > 0) {
+      const combined = Math.max(0, (vaZ + vbZ) * .5);
+      a.speedMph = (a.dir || 1) > 0 ? combined : Math.abs(combined);
+      b.speedMph = (b.dir || 1) > 0 ? combined : Math.abs(combined);
+      if (a === this.state && this.state.invulnerableSec <= 0 && impactMph >= 28) this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
+      else if (a === this.state && this.state.invulnerableSec <= 0 && impactMph > 4) this._scrape(zone, impactMph);
+    }
+    a.offRoad = Math.abs(a.lateral) > DRIVE.roadHalfWidth;
+    b.offRoad = Math.abs(b.lateral) > DRIVE.roadHalfWidth;
+    b.contactCooldown = Math.max(b.contactCooldown || 0, .8);
+    return true;
+  }
+
+  _scrape(zone, impactMph) {
+    const s = this.state;
+    if (s.damageCooldown > 0 || s.impactTimer > 0) return;
+    s.damageZones[zone] = Math.min(5, s.damageZones[zone] + clamp(impactMph / 100, .08, .3));
+    s.damageCooldown = .65;
+    this.emit({ scrape: true, zone, strength: clamp(impactMph / 80, .1, .5) });
+  }
+
+  _boundary(car) {
+    const player = car === this.state, outside = Math.abs(car.lateral);
+    const seaward = this.course.def.theme === 'coast' && car.lateral > 28;
+    const coastHeight = seaward ? this.course.groundAt(car.s, car.lateral).y : Infinity;
+    if (player) {
+      const warning = outside > BOUNDARY_WARNING || coastHeight < -10;
+      if (warning && !car.boundaryWarning) this._callout(coastHeight < -10 ? 'RETURN TO THE ROAD  /  WATER AHEAD' : 'RETURN TO THE ROAD  /  COURSE BOUNDARY', 3);
+      car.boundaryWarning = warning;
+    }
+    if (outside <= BOUNDARY_RESET && coastHeight >= -14) return;
+    this._safeReset(car);
+    if (player) {
+      car.boundaryWarning = false; car.boundaryResets++;
+      car.invulnerableSec = Math.max(car.invulnerableSec, 2.2);
+      this._callout('BACK ON COURSE  /  NO DAMAGE', 2.8);
+      this.emit({ boundaryReset: true });
+    }
+  }
+
+  _safeReset(car) {
+    const others = [...this.state.traffic.filter(other => other.alive), this.state.rival, this.state].filter(other => other && other !== car);
+    let chosen = { s: Math.min(this.course.length - 8, Math.max(0, car.s)), lateral: 0 };
+    search: for (const back of [0, 10, 22, 40, 70, 110]) {
+      for (const lateral of [-DRIVE.laneOffset, DRIVE.laneOffset, 0]) {
+        const distance = Math.max(0, Math.min(this.course.length - 8, car.s - back));
+        if (others.some(other => Math.abs(other.s - distance) < 13 && Math.abs(other.lateral - lateral) < 2.7)) continue;
+        const point = this.course.worldAt(distance, lateral);
+        if (this._obstacles(distance - 4, distance + 4).some(obstacle => sweepObstacle(point, point, obstacle, point.heading))) continue;
+        chosen = { s: distance, lateral }; break search;
+      }
+    }
+    car.s = car.prevS = chosen.s; car.lateral = car.prevLateral = chosen.lateral;
+    car.speedMph = Math.min(28, car.speedMph * .4);
+    car.headingError = 0; car.yawVelocity = 0; car.pushVelocity = 0; car.slipAngle = 0; car.drifting = false;
+    car.offRoad = false; car.offRoadTime = 0; car.roughness = 0; car.boosting = false;
+    car.steerVisual = 0;
+    if (car === this.state) { car.gear = 0; car.revs = car.speedMph / this.car.gears[0]; car.overrevSec = 0; }
+  }
+
+  _flockBonuses() {
+    const s = this.state;
+    if (s.speedMph < 1 || s.status !== 'racing' || s.impactTimer > 0) return;
+    for (const flock of this.course.features.flocks || []) {
+      if (s.collectedFlocks.includes(flock.id)) continue;
+      if (!segmentCircle(s.prevS ?? s.s, s.prevLateral ?? s.lateral, s.s, s.lateral, flock.s, flock.off, (flock.radius || 3.5) + CAR_HALF_WIDTH)) continue;
+      s.collectedFlocks.push(flock.id); s.boost = 1;
+      this._callout('CHICKEN RUN!  /  NITRO REFILLED', 2.7);
+      this.emit({ chickenBonus: true, flockId: flock.id });
     }
   }
 
@@ -376,6 +585,10 @@ export class Duel {
   _rival(dt) {
     const s = this.state, r = s.rival;
     if (r.finished) return;
+    r.prevS = r.s; r.prevLateral = r.lateral;
+    r.pushVelocity ||= 0; r.headingError ||= 0;
+    r.contactCooldown = Math.max(0, (r.contactCooldown || 0) - dt);
+    r.braking = false; r.yieldingToPlayer = false;
     // beatable AI: targets a pace with mild rubber-banding and visible slips
     const skill = this.diff.rivalSkill;
     const targetPace = this.car.topSpeed * (0.66 + 0.18 * skill);
@@ -383,14 +596,55 @@ export class Duel {
     let target = targetPace + rubber;
     // occasional "mistake": brief slow patch keyed deterministically to distance
     if (Math.sin(r.s * 0.01) > 0.96) target *= 0.6;
-    r.speedMph += (target - r.speedMph) * Math.min(1, dt * 1.5);
-    r.s += r.speedMph * DRIVE.mphToWorld * dt;
-    // rival weaves between lanes
-    r.lateral = -DRIVE.laneOffset + Math.sin(r.s * 0.02) * 1.4;
+    r.offRoad = Math.abs(r.lateral) > DRIVE.roadHalfWidth;
+    if (r.offRoad) target = Math.min(target * .52, 75);
+    if (r.contactCooldown > 0) target *= .55;
+    let lane = -DRIVE.laneOffset + Math.sin(r.s * .007) * 1.05;
+    for (const traffic of s.traffic) {
+      if (!traffic.alive) continue;
+      const ahead = traffic.s - r.s;
+      if (ahead > -8 && ahead < 85 && Math.abs(traffic.lateral - lane) < 2.8) {
+        const otherLane = traffic.lateral > 0 ? -DRIVE.laneOffset : DRIVE.laneOffset;
+        const blocked = s.traffic.some(other => other !== traffic && other.alive && Math.abs(other.s - r.s) < 75 && Math.abs(other.lateral - otherLane) < 2.8);
+        if (!blocked) lane = otherLane;
+        else target = Math.min(target, traffic.dir < 0 ? 18 : Math.max(12, traffic.speedMph - 8));
+      }
+    }
+    // Anticipate a cut-in using the player's travel direction, not only the
+    // lane occupied at this instant. A sideways car advances much more slowly.
+    const lead = s.s - r.s;
+    const playerForwardMph = s.speedMph * Math.max(0, Math.cos(s.headingError || 0));
+    const lookahead = .65;
+    const lateralNow = s.lateral - r.lateral;
+    const playerLateralSpeed = Math.sin(s.headingError || 0) * s.speedMph * DRIVE.mphToWorld + (s.pushVelocity || 0);
+    const rivalLateralSpeed = Math.sin(r.headingError) * r.speedMph * DRIVE.mphToWorld + r.pushVelocity;
+    const lateralFuture = lateralNow + (playerLateralSpeed - rivalLateralSpeed) * lookahead;
+    const playerAngle = (s.headingError || 0) + (s.slipAngle || 0);
+    const corridor = CAR_HALF_WIDTH * (1 + Math.abs(Math.cos(playerAngle))) + CAR_HALF_LENGTH * Math.abs(Math.sin(playerAngle)) + .55;
+    const crossingLane = Math.abs(lateralNow) < corridor || Math.abs(lateralFuture) < corridor || lateralNow * lateralFuture < 0;
+    const closingMetres = Math.max(0, r.speedMph - playerForwardMph) * DRIVE.mphToWorld;
+    const followingGap = 8 + r.speedMph * DRIVE.mphToWorld * .6 + closingMetres * .8;
+    if (lead > 0 && lead < followingGap && crossingLane) {
+      r.yieldingToPlayer = true;
+      const spacing = clamp((lead - 5) / Math.max(1, followingGap - 5), 0, 1);
+      target = Math.min(target, playerForwardMph * (.7 + .3 * spacing));
+      r.braking = r.speedMph > target;
+    }
+    if (r.braking) r.speedMph = Math.max(target, r.speedMph - (lead < 18 ? 190 : 110) * dt);
+    else r.speedMph += (target - r.speedMph) * Math.min(1, dt * 1.5);
+    if (r.offRoad) r.speedMph *= Math.exp(-DRIVE.offRoadScrub * dt);
+    const desiredHeading = clamp((lane - r.lateral) * .095, -.55, .55);
+    // Recovery is a steering manoeuvre with limited grip, never a lane snap.
+    r.headingError += clamp(desiredHeading - r.headingError, -dt * (r.offRoad ? .48 : .95), dt * (r.offRoad ? .48 : .95));
+    r.lateral += (Math.sin(r.headingError) * r.speedMph * DRIVE.mphToWorld + r.pushVelocity) * dt;
+    r.s += Math.cos(r.headingError) * r.speedMph * DRIVE.mphToWorld * dt;
+    r.pushVelocity *= Math.exp(-(r.offRoad ? .9 : 1.5) * dt);
+    this._staticContacts(r, false);
+    this._boundary(r);
     if (r.s >= this.course.length) { r.finished = true; r.finishTime = s.stageTimeSec; this.emit({ rivalFinished: true }); }
   }
 
-  _crash(reason, side = 0, impactMph = this.state.speedMph) {
+  _crash(reason, side = 0, impactMph = this.state.speedMph, zone = 'front') {
     const s = this.state;
     if (s.impactTimer > 0 || s.status !== 'racing') return;
     s.boosting = false;
@@ -401,7 +655,9 @@ export class Duel {
     s.lastCrashReason = reason;
     s.crashFlash = 1.2;
     s.impactStrength = Math.max(.35, Math.min(1, impactMph / 145));
-    if ((reason === 'head_on' || reason === 'rock') && impactMph >= DRIVE.majorImpactMph) s.majorCrashes++;
+    if (['head_on', 'rock', 'mountain', 'building', 'tree', 'prop'].includes(reason) && impactMph >= DRIVE.majorImpactMph) s.majorCrashes++;
+    if (reason !== 'engine_blew') s.damageZones[zone] = Math.min(5, s.damageZones[zone] + s.impactStrength);
+    s.damageCooldown = 1.2;
     s.catastrophic = s.majorCrashes >= DRIVE.majorCrashLimit;
     s.impactSide = side || Math.sign(s.lateral) || Math.sign(s.headingError) || 1;
     s.impactDuration = DRIVE.impactDuration + s.impactStrength * .25;
@@ -412,7 +668,7 @@ export class Duel {
     s.invulnerableSec = s.impactDuration + DRIVE.recoverySec;
     s.speedMph = Math.min(DRIVE.crashSpeedCapMph, s.speedMph * .3);
     this._callout(reason === 'engine_blew' ? 'ENGINE FAILURE. SHIFT EARLIER.' : 'IMPACT  /  +30 SECONDS', 2.8);
-    this.emit({ crash: reason, livesLeft: s.lives, strength: s.impactStrength, side: s.impactSide, explosion: s.catastrophic });
+    this.emit({ crash: reason, livesLeft: s.lives, strength: s.impactStrength, side: s.impactSide, zone, explosion: s.catastrophic });
     if (s.lives <= 0 || s.catastrophic) {
       s.status = 'gameover';
       s.results = { gameover: true, catastrophic: s.catastrophic, majorCrashes: s.majorCrashes, stageIndex: s.stageIndex, totalTimeSec: Math.round(s.totalTimeSec) };
@@ -427,6 +683,7 @@ export class Duel {
   _impact(dt) {
     const s = this.state, remaining = s.impactTimer / s.impactDuration;
     s.prevS = s.s;
+    s.prevLateral = s.lateral;
     s.impactTimer = Math.max(0, s.impactTimer - dt);
     s.speedMph *= Math.exp(-3.2 * dt);
     s.crashSpin += s.impactSide * s.impactStrength * 5 * remaining * dt;
@@ -434,8 +691,9 @@ export class Duel {
     s.s = Math.min(this.course.length - 1, s.s + s.speedMph * DRIVE.mphToWorld * .3 * dt);
     s.revs = s.speedMph / this.car.gears[s.gear];
     s.roughness = Math.max(s.roughness, remaining * s.impactStrength);
+    this._staticContacts(s, true);
     if (s.impactTimer === 0 && s.status === 'racing') {
-      s.lateral = 0; s.headingError = 0; s.yawVelocity = 0; s.crashSpin = 0;
+      this._safeReset(s); s.crashSpin = 0;
       s.speedMph = 12; s.gear = 0; s.revs = s.speedMph / this.car.gears[0];
       s.offRoad = false; s.offRoadTime = 0; s.roughness = 0;
       s.input.shiftUp = false; s.input.shiftDown = false;
@@ -464,6 +722,7 @@ export class Duel {
       stageIndex: s.stageIndex, stageName: this.stageDef.name,
       stageTimeSec: +s.stageTimeSec.toFixed(2), missedStation: missed,
       cleanStage: !missed, lives: s.lives, timeBonus, beatRival, score, styleScore: s.stageStyleScore,
+      won: s.mode === 'duel' && s.rival ? beatRival === true : s.stageTimeSec < par,
       best: this._bestFor(this.stageDef.name),
     };
     if (s.lives <= 0) { s.status = 'gameover'; s.results.gameover = true; this.emit({ gameover: true }); return; }
@@ -489,7 +748,10 @@ export class Duel {
     const key = this._bestKey(stageName);
     if (all[key] == null || timeSec < all[key]) { all[key] = +timeSec.toFixed(2); saveBest(all); }
   }
-  _bestKey(stageName) { return [stageName, this.state.car, this.state.difficulty, this.state.mode].join('|'); }
+  _bestKey(stageName) {
+    const s = this.state, upgrades = s.upgrades;
+    return [stageName, s.car, s.difficulty, s.mode, upgrades.engine, upgrades.nitro, upgrades.handling, upgrades.tires].join('|');
+  }
   _bestFor(stageName) { return loadBest()[this._bestKey(stageName)] ?? null; }
 
   // ---- input helpers ---------------------------------------------------
@@ -504,7 +766,7 @@ export class Duel {
 }
 
 let memoryBest = {};
-const BEST_STORAGE_KEY = 'duel_redline_best_v2';
+const BEST_STORAGE_KEY = 'duel_redline_best_v3';
 function loadBest() {
   try {
     const raw = typeof localStorage !== 'undefined' && localStorage.getItem(BEST_STORAGE_KEY);

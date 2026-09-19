@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {App} from '../src/app.js';
+import {PROFILE_KEY} from '../src/progression.js';
+const memory=new Map();globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)};
+const app=new App();app.startCampaign();let s=app.duel.state;
+s.stageTimeSec=90;s.s=app.duel.course.length;s.lateral=0;app.duel._finishStage();
+assert.equal(s.results.won,true);assert.equal(s.results.creditReward,750);assert.equal(app.profile.credits,750);
+app.duel.emit({stageResult:s.results});assert.equal(app.profile.credits,750,'duplicate result cannot pay twice');
+assert.equal(new App().profile.credits,750,'earnings survive new App');
+app.returnToMenu();assert.equal(app.purchaseUpgrade('falcone_f42','engine').ok,true);assert.equal(app.profile.credits,400);
+app.startCampaign({startStage:4});s=app.duel.state;assert.equal(s.stageIndex,4);assert.equal(s.upgrades.engine,1);assert.equal(app.duel.car.topSpeed,201*1.035);
+assert.equal(app.purchaseUpgrade('falcone_f42','tires').ok,false,'race cannot change fitted upgrades');
+app.profile.upgrades.falcone_f42.engine=3;assert.equal(s.upgrades.engine,1,'active physics snapshot stays fixed');
+app.startCampaign({car:'aurora_gt'});assert.equal(app.duel.state.car,'falcone_f42','locked car cannot start through App');
+s=app.duel.state;s.rival.finishTime=1;s.stageTimeSec=150;s.s=app.duel.course.length;const before=app.profile.credits;app.duel._finishStage();assert.equal(s.results.won,false);assert.equal(app.profile.credits,before,'loss gives no win credits');
+assert.ok(memory.has(PROFILE_KEY));
+console.log('App progression integration: 13 assertions passed');

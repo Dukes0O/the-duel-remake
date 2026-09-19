@@ -28,6 +28,12 @@ export const CARS = {
     gears: [50, 88, 124, 158, 184, 197], // 6-speed, planted AWD
     color: 0xded6c8, accent: 0x2b6cb0,
   },
+  aurora_gt: {
+    name: 'Aurora GTR', homage: 'Carbon GT package', gearbox: 'manual',
+    topSpeed: 214, accel: 8.1, grip: 1.01, braking: 1.06,
+    gears: [56, 96, 136, 171, 197, 214],
+    color: 0x355a87, accent: 0xb99858,
+  },
 };
 export const DEFAULT_CAR = 'falcone_f42';
 
@@ -71,6 +77,8 @@ export const COURSE = [
   { theme: 'desert', stage: 1, name: 'Mojave Run II', lengthU: 4600, hasRadar: true,  hasRival: false, speedLimitMph: 65 },
   { theme: 'alpine', stage: 0, name: 'Alpine Pass I', lengthU: 4400, hasRadar: false, hasRival: true,  speedLimitMph: 55 },
   { theme: 'alpine', stage: 1, name: 'Alpine Pass II',lengthU: 4800, hasRadar: true,  hasRival: false, speedLimitMph: 55 },
+  { theme: 'coast', stage: 0, name: 'Pacific Coast', lengthU: 4400, hasRadar: true, hasRival: true, speedLimitMph: 65 },
+  { theme: 'city', stage: 0, name: 'Harbor After Dark', lengthU: 4000, hasRadar: true, hasRival: true, speedLimitMph: 50 },
 ];
 
 // CANON — police: fixed radar traps, escalating detector beep, one pursuer.
@@ -101,7 +109,8 @@ export const DRIVE = {
   yawRate: 1.35,
   yawResponse: 22,
   roadHalfWidth: 7,       // |lateral| beyond this = off-road
-  offRoadCrashMarginU: 4.5, // this far past the road edge = crash
+  boundaryWarning: 60,
+  boundaryReset: 78,     // scenery boundary resets without chassis/life damage
   laneOffset: 3.4,        // center of a lane
   brakeAccel: 34,         // mph/s braking baseline
   dragCoeff: 0.6,         // passive deceleration

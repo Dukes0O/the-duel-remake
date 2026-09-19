@@ -3,6 +3,7 @@ import { CARS, COURSE, LIVES, DIFFICULTY, POLICE, DRIVE, BOOST, SCORING } from '
 import { Course } from './course.js';
 import { Duel } from './game.js';
 import { App } from './app.js';
+import { sweepObstacle, sweepBox, contactZone } from './collision.js';
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.error('  FAIL:', m); } };
@@ -20,9 +21,25 @@ ok(CARS.falcone_f42 && /F40/.test(CARS.falcone_f42.homage), 'Falcone F42 present
 ok(CARS.stuttgart_959s && /959/.test(CARS.stuttgart_959s.homage), 'Stuttgart 959-S present (959 homage)');
 ok(!/ferrari|porsche/i.test(JSON.stringify(CARS)), 'no real trademarks in car data');
 
-// --- CANON 2 themes × 2 stages core campaign ---
-eq(COURSE.length, 4, '4 core stages (2 themes x 2)');
-eq(new Set(COURSE.map(c => c.theme)).size, 2, 'exactly 2 core themes');
+// --- The campaign now includes the coastal and city scenes ---
+eq(COURSE.length, 6, 'six stages in the expanded campaign');
+eq(new Set(COURSE.map(c => c.theme)).size, 4, 'four distinct scene themes');
+for (const definition of COURSE) {
+  const course = new Course(definition, 611);
+  ok(course.samples.slice(1).every((point, index) => point.z > course.samples[index].z), `${definition.name}: the highway never doubles back across itself`);
+  let clear = true;
+  for (let s = 8; s < course.length; s += 32) {
+    for (const lateral of [-DRIVE.laneOffset, DRIVE.laneOffset]) {
+      const point = course.groundAt(s, lateral);
+      if (course.obstaclesNear(s).some(obstacle => sweepObstacle(point, point, obstacle, point.heading))) clear = false;
+    }
+  }
+  ok(clear, `${definition.name}: scenery leaves both driving lanes clear`);
+  const world = course.groundAt(900, 40), recovered = course.nearest(world.x, world.z);
+  ok(Math.abs(recovered.s - 900) < .01 && Math.abs(recovered.lateral - 40) < .01, `${definition.name}: world contacts project back onto the same road position`);
+  ok(course.features.turns.every(turn => turn.signS < turn.s - 80), `${definition.name}: hard-turn signs give advance warning`);
+  ok(course.features.flocks.length >= 20, `${definition.name}: the stage contains many chicken flock bonuses`);
+}
 
 // --- CANON stage 1 of the default course has a radar trap AND the rival ---
 ok(COURSE[0].hasRadar && COURSE[0].hasRival, 'default stage 1 declares radar + rival');
@@ -249,7 +266,8 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   while (s.impactTimer > 0) d.step(1 / 120);
   s.traffic = [{ s: s.s, lateral: s.lateral, speedMph: 0, dir: 1, alive: true }];
   s.prevS = s.s; s.invulnerableSec = 0; d._collisions();
-  eq(s.lives, lives - 1, 'traffic collisions return when recovery ends');
+  eq(s.lives, lives, 'a stationary overlap separates without charging another crash');
+  ok(Math.abs(s.s-s.traffic[0].s)>=5 || Math.abs(s.lateral-s.traffic[0].lateral)>=2.24,'protected traffic remains physically solid');
 }
 
 // --- Pause freezes countdown and racing without changing the status contract ---
@@ -346,7 +364,7 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   ok([s.s, s.lateral, s.impactTimer, s.crashSpin].every((value, i) => value === frozen[i]), 'pause freezes the entire crash effect');
   s.paused = false;
   while (s.impactTimer > 0) d.step(1 / 120);
-  eq(s.lateral, 0, 'road recovery occurs after the impact finishes');
+  ok(Math.abs(s.lateral) < DRIVE.roadHalfWidth, 'road recovery selects a safe lane after the impact finishes');
   eq(s.headingError, 0, 'recovery places the car facing down the road');
   eq(s.lives, LIVES.start - 1, 'the complete impact consumes exactly one life');
 }
@@ -361,15 +379,15 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
         for (const fps of [30, 60, 144]) {
           const app = new App(); app.duel.seed = seed; app.autopilot = true;
           app.startCampaign({ car, difficulty });
-          let guard = 0, stages = 0, finite = true;
+          let guard = 0, stages = 0, wins = 0, finite = true;
           while (!['gameover', 'complete'].includes(app.duel.state.status) && guard++ < fps * 900) {
             app.advance(1 / fps, 1 / fps);
             const s = app.duel.state;
             finite &&= [s.s, s.lateral, s.speedMph, s.revs, s.boost, s.stageTimeSec, s.headingError, s.yawVelocity, s.roughness, s.impactTimer, s.crashSpin].every(Number.isFinite);
-            if (s.status === 'stage_result') { stages++; app.duel.nextStage(); }
+            if (s.status === 'stage_result') { stages++; if (s.results.won) wins++; app.duel.nextStage(); }
           }
           const s = app.duel.state;
-          runs.push({ complete: s.status === 'complete' && stages === 4, catastrophic: s.status === 'gameover' && s.catastrophic && s.majorCrashes === DRIVE.majorCrashLimit, finite });
+          runs.push({ complete: s.status === 'complete' && stages === COURSE.length, catastrophic: s.status === 'gameover' && s.catastrophic && s.majorCrashes === DRIVE.majorCrashLimit, finite, wins, stages });
           frames.push({ time: s.totalTimeSec, lives: s.lives, score: s.score, hits:s.majorCrashes,status:s.status });
         }
         ok(frames.every(f => Math.abs(f.time - frames[0].time) < 0.001 && f.lives === frames[0].lives && f.score === frames[0].score && f.hits===frames[0].hits && f.status===frames[0].status),
@@ -377,9 +395,10 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
       }
     }
   }
-  ok(runs.every(r => r.complete || r.catastrophic), 'all 60 campaigns end with four completed stages or the major crash limit');
+  ok(runs.every(r => r.complete || r.catastrophic), 'all 60 campaigns end with every stage completed or the major crash limit');
   ok(runs.some(r=>r.complete), 'the stricter damage limit still permits complete campaigns');
   console.log(`  Campaign outcomes: ${runs.filter(r=>r.complete).length} completed, ${runs.filter(r=>r.catastrophic).length} catastrophic`);
+  console.log(`  Course wins: ${runs.reduce((sum, run) => sum + run.wins, 0)} / ${runs.reduce((sum, run) => sum + run.stages, 0)} finished stages`);
   ok(runs.every(r => r.finite), 'all 60 campaign runs keep finite simulation state');
 }
 
@@ -416,6 +435,9 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   eq(d._bestFor('scoped leaderboard regression'), null, 'best times are separate for each difficulty');
   d.state.difficulty = 'casual'; d.state.mode = 'timetrial';
   eq(d._bestFor('scoped leaderboard regression'), null, 'best times are separate for each race mode');
+  d.state.mode = 'duel'; d.state.upgrades.engine = 1;
+  eq(d._bestFor('scoped leaderboard regression'), null, 'upgraded cars have separate best times from stock cars');
+  d.state.upgrades.engine = 0;
   const previous = globalThis.localStorage;
   try {
     d.state.mode = 'duel';
@@ -471,10 +493,12 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
 // --- Contacts, not terrain flags, classify major damage ---
 {
   const d=new Duel({seed:73});d.startCampaign();const s=d.state;s.status='racing';s.traffic=[];
+  const courseFrame=d.course.at.bind(d.course);
   s.s=20;s.prevS=20;s.lateral=12;s.speedMph=80;d.course.at=()=>({curvature:0});
   d.setInput({throttle:1});for(let i=0;i<240;i++)d.step(1/120);
   eq(s.majorCrashes,0,'two seconds of off-road driving does not count as a crash');eq(s.lives,5,'off-road driving does not lose lives');
   ok(s.offRoad&&s.speedMph>40,'car keeps driving on open dirt');
+  d.course.at=courseFrame;
   const rock=d.course.features.rocks[0];s.prevS=rock.s-15;s.s=rock.s+15;s.prevLateral=s.lateral=rock.off;s.speedMph=100;
   d._collisions();eq(s.lastCrashReason,'rock','swept rock collision cannot tunnel through scenery');eq(s.majorCrashes,1,'hard hit on a visible rock counts');
   while(s.impactTimer>0)d.step(1/120);
@@ -491,6 +515,240 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   ok(s.drifting&&s.slipAngle>.075,'a fast corner develops visible rear slip');
   d.setInput({steer:0});for(let i=0;i<70;i++)d.step(1/120);
   ok(Math.abs(s.slipAngle)<.01,'releasing the steering settles the drift');
+}
+
+// Isolate contacts from random course placement while exercising the exact
+// production sweep, resolution, damage and steering code.
+function collisionArena() {
+  const d = new Duel({ seed: 611 }); d.startCampaign();
+  d.state.status = 'racing'; d.state.s = d.state.prevS = 100;
+  d.state.lateral = d.state.prevLateral = 0; d.state.speedMph = 80;
+  d.state.traffic = []; d.state.rival = null;
+  d.course.at = () => ({ x: 0, y: 0, z: 0, heading: 0, curvature: 0 });
+  d.course.worldAt = (s, lateral = 0) => ({ x: lateral, y: 0, z: s, heading: 0 });
+  d.course.nearest = (x, z) => ({ s: z, lateral: x, distance: Math.abs(x) });
+  d.course.features.obstacles = []; d.course.features.flocks = [];
+  d.course.obstaclesNear = () => d.course.features.obstacles;
+  return d;
+}
+
+// --- Bounds return either car to an empty paved position without damage ---
+{
+  const d = collisionArena(), s = d.state, events = [];
+  d.onChange((_, event) => events.push(event));
+  s.lateral = 62; d.step(1 / 120);
+  ok(s.boundaryWarning && s.callout.includes('BOUNDARY'), 'the course warns before its outer boundary');
+  eq(s.majorCrashes, 0, 'the outer shoulder warning is harmless');
+  s.lateral = 79; s.speedMph = 100; s.headingError = .6;
+  s.traffic = [{ s: s.s, lateral: -DRIVE.laneOffset, speedMph: 0, dir: 1, alive: true }];
+  const lives = s.lives, penalties = s.penaltySec;
+  d.step(1 / 120);
+  ok(Math.abs(s.lateral) < DRIVE.roadHalfWidth && !s.boundaryWarning, 'crossing the boundary returns to the paved course');
+  ok(Math.abs(s.lateral - s.traffic[0].lateral) > 2.7 || Math.abs(s.s - s.traffic[0].s) > 12, 'reset avoids an occupied lane');
+  ok(s.speedMph <= 28 && s.invulnerableSec > 2, 'boundary reset slows the car and grants brief protection');
+  eq(s.lives, lives, 'boundary reset preserves lives'); eq(s.penaltySec, penalties, 'boundary reset adds no crash penalty');
+  eq(s.majorCrashes, 0, 'boundary reset adds no structural damage'); eq(s.boundaryResets, 1, 'one crossing records one reset');
+  eq(events.filter(event => event.boundaryReset).length, 1, 'one boundary reset emits one event');
+  s.rival = { s: 160, lateral: -82, speedMph: 100, pushVelocity: -5, headingError: -.4 };
+  d._boundary(s.rival);
+  ok(Math.abs(s.rival.lateral) < DRIVE.roadHalfWidth && s.rival.speedMph <= 28, 'the rival obeys the same course boundary');
+}
+
+// --- Coastal recovery keeps both cars above the sea ---
+{
+  const d = collisionArena(), s = d.state;
+  d.course.def = { ...d.course.def, theme: 'coast' };
+  d.course.groundAt = (distance, lateral) => ({ x: lateral, y: lateral > 28 ? -(lateral - 28) * .55 : 0, z: distance, heading: 0 });
+  s.lateral = 40; d._boundary(s);
+  eq(s.lateral, 40, 'dry coastal dirt remains drivable');
+  ok(!s.boundaryWarning, 'dry coastal dirt does not show a water warning');
+  s.lateral = 48; d._boundary(s);
+  ok(s.boundaryWarning && s.callout.includes('WATER'), 'the sea approach warns before the water line');
+  eq(s.boundaryResets, 0, 'the sea warning alone does not reset the car');
+  s.lateral = 55; const lives = s.lives, hits = s.majorCrashes;
+  d._boundary(s);
+  ok(Math.abs(s.lateral) < DRIVE.roadHalfWidth && d.course.groundAt(s.s, s.lateral).y > -14, 'seaward driving resets before the car reaches sea level');
+  eq(s.lives, lives, 'a sea-edge reset costs no life'); eq(s.majorCrashes, hits, 'a sea-edge reset causes no structural damage');
+  const r = s.rival = { s: 160, lateral: 55, speedMph: 80, headingError: 0, pushVelocity: 0 };
+  d._boundary(r);
+  ok(Math.abs(r.lateral) < DRIVE.roadHalfWidth && r.speedMph <= 28, 'the opponent also resets before driving underwater');
+  s.lateral = -55; d._boundary(s); eq(s.lateral, -55, 'the inland side retains its normal course boundary');
+}
+
+// --- Continuous solid scenery, including during damage protection ---
+for (const kind of ['rock', 'mountain', 'building']) {
+  const d = collisionArena(), s = d.state;
+  const obstacle = { id: kind, kind, x: 0, z: 110, s: 110, off: 0, heading: 0, halfX: 4, halfZ: 3, shape: kind === 'building' ? 'box' : 'ellipse' };
+  d.course.features.obstacles = [obstacle];
+  s.prevS = 90; s.s = 135; s.speedMph = 120;
+  d._collisions();
+  ok(s.s < 105, `${kind}: a fast swept contact stops on the near face`);
+  eq(s.majorCrashes, 1, `${kind}: a hard impact counts once`);
+  ok(s.damageZones.front > .5, `${kind}: a frontal hit visibly damages the front`);
+  const lives = s.lives; d._collisions();
+  eq(s.lives, lives, `${kind}: repeated overlap cannot consume another life`);
+  s.impactTimer = 0; s.prevS = 90; s.s = 135; s.prevLateral = s.lateral = 0; s.speedMph = 120; s.invulnerableSec = 1;
+  d._collisions();
+  ok(s.s < 105, `${kind}: invulnerability never permits passing through scenery`);
+  eq(s.majorCrashes, 1, `${kind}: protected contact adds no damage`);
+  const rival = { s: 135, prevS: 90, lateral: 0, prevLateral: 0, speedMph: 120, headingError: 0, pushVelocity: 0 };
+  d._staticContacts(rival, false);
+  ok(rival.s < 105 && rival.speedMph < 30, `${kind}: the rival also stops against solid scenery`);
+}
+
+{
+  const d = collisionArena(), s = d.state;
+  d.course.features.obstacles = [{ id: 'wall', kind: 'building', x: 0, z: 110, heading: 0, halfX: 4, halfZ: 3 }];
+  s.prevS = 102; s.s = 110; s.speedMph = 12;
+  d._collisions();
+  eq(s.lives, LIVES.start, 'gentle scenery contact does not consume a life');
+  eq(s.majorCrashes, 0, 'gentle scenery contact is not a major crash');
+  ok(s.s < 105 && s.damageZones.front > 0, 'gentle contact separates and records a small visible scrape');
+  const damage = s.damageZones.front; d._collisions();
+  eq(s.damageZones.front, damage, 'scrape cooldown prevents one wall contact accumulating damage every frame');
+  // Sweeping a rotated box must use its actual heading, and ellipse corners
+  // remain traversable instead of behaving like invisible rectangular walls.
+  const rotated = { x: 0, z: 0, halfX: 1, halfZ: 8, heading: Math.PI / 2 };
+  ok(!!sweepObstacle({ x: -20, z: 0 }, { x: 20, z: 0 }, rotated), 'rotated building contact uses the world orientation');
+  const ellipse = { x: 0, z: 0, halfX: 20, halfZ: 20, heading: 0, shape: 'ellipse' };
+  eq(sweepObstacle({ x: 19, z: 19 }, { x: 20, z: 20 }, ellipse), null, 'rounded mountain corners do not create invisible box walls');
+}
+
+// --- Ramming transfers motion and the rival recovers by steering ---
+{
+  const d = collisionArena(), s = d.state;
+  const r = s.rival = { s: 100, prevS: 100, lateral: 6.4, prevLateral: 6.4, speedMph: 100, headingError: 0, pushVelocity: 0, finished: false };
+  s.prevLateral = 3.8; s.lateral = 5.3; s.headingError = .3; s.speedMph = 105;
+  d._vehicleContact(s, r, 'rival');
+  ok(r.lateral > 7 && r.pushVelocity > 0 && r.offRoad, 'a sideswipe physically pushes the opponent off the road');
+  ok(Math.abs(r.lateral - s.lateral) >= 2.24, 'cars separate after the sideswipe');
+  eq(s.majorCrashes, 0, 'an ordinary side ram is not a major head-on crash');
+  eq(s.lives, LIVES.start, 'a side ram preserves the player life');
+  const before = r.lateral, speed = r.speedMph; d._rival(1 / 120);
+  ok(Math.abs(r.lateral - before) < .4 && r.lateral > 7, 'the rival cannot snap back into its lane');
+  ok(r.speedMph < speed, 'an off-road opponent loses speed');
+  let maxStep = 0;
+  for (let i = 0; i < 1200; i++) { const lateral = r.lateral; s.s = r.s; d._rival(1 / 120); maxStep = Math.max(maxStep, Math.abs(r.lateral - lateral)); }
+  ok(Math.abs(r.lateral) < DRIVE.roadHalfWidth && maxStep < .4, 'the opponent recovers gradually using steering and traction');
+}
+
+{
+  const d = collisionArena(), s = d.state;
+  s.s = 100; s.prevS = 80; s.speedMph = 130;
+  const r = s.rival = { s: 95, prevS: 95, lateral: 0, prevLateral: 0, speedMph: 25, headingError: 0, pushVelocity: 0, finished: false };
+  d._vehicleContact(s, r, 'rival');
+  ok(s.s < r.s && r.s - s.s >= 5, 'a fast rear-end impact cannot tunnel through the opponent');
+  ok(r.speedMph > 25, 'a rear-end hit transfers forward speed to the opponent');
+  eq(s.lastCrashReason, 'rival', 'hard rival contact triggers the impact response');
+  const traffic = { s: 140, prevS: 160, lateral: 0, prevLateral: 0, speedMph: 60, dir: -1, alive: true };
+  r.prevS = 120; r.s = 150; r.prevLateral = r.lateral = 0; r.speedMph = 110;
+  d._vehicleContact(r, traffic, 'traffic');
+  ok(r.s < traffic.s && traffic.s - r.s >= 5, 'the opponent cannot pass through oncoming traffic');
+}
+
+// --- The CPU must yield when the player cuts in front ---
+{
+  const d = collisionArena(), s = d.state;
+  s.s = s.prevS = 120; s.speedMph = 25;
+  const r = s.rival = { prevS: 100, s: 124, prevLateral: 0, lateral: 0, speedMph: 170, headingError: 0, pushVelocity: 0, finished: false };
+  const playerPosition = s.s, playerSpeed = s.speedMph;
+  d._vehicleContact(s, r, 'rival');
+  eq(s.s, playerPosition, 'a late CPU rear-end contact cannot shove the player forward');
+  eq(s.speedMph, playerSpeed, 'cutting off the CPU does not cost player speed');
+  ok(r.s < s.s - 5 && r.speedMph < s.speedMph, 'the CPU backs out of an overlap and slows below player speed');
+  ok(r.braking && r.yieldingToPlayer, 'the CPU exposes its emergency-braking state');
+  eq(s.lives, LIVES.start, 'a CPU rear-end contact costs no player life');
+  eq(s.majorCrashes, 0, 'a CPU rear-end contact is not a player major crash');
+  eq(s.impactTimer, 0, 'a CPU rear-end contact cannot start a player crash animation');
+  eq(Object.values(s.damageZones).reduce((sum, damage) => sum + damage, 0), 0, 'the yielding CPU does not damage the player');
+}
+
+{
+  const d = collisionArena(), s = d.state;
+  s.s = 130; s.lateral = 8; s.speedMph = 70; s.headingError = -.75;
+  const r = s.rival = { s: 100, lateral: 0, speedMph: 160, headingError: 0, pushVelocity: 0, finished: false };
+  d._rival(1 / 60);
+  ok(r.yieldingToPlayer && r.braking && r.speedMph < 159, 'the CPU brakes for a predicted cut-in before the player reaches its lane');
+  // The same separation without sideways motion is a safe neighbouring lane.
+  r.s = 100; r.lateral = 0; r.speedMph = 160; r.headingError = 0; s.headingError = 0;
+  d._rival(1 / 60);
+  ok(!r.yieldingToPlayer, 'the CPU can race past a car that stays in a separate lane');
+  // A broadside car occupies more width and makes little forward progress.
+  r.s = 100; r.lateral = 0; r.speedMph = 140; r.headingError = 0;
+  s.lateral = 3.2; s.headingError = 1.25; s.speedMph = 90;
+  d._rival(1 / 60);
+  ok(r.braking && r.yieldingToPlayer, 'cut-in avoidance accounts for the player body angle and forward travel speed');
+}
+
+{
+  const d = collisionArena(), s = d.state;
+  s.s = 135; s.lateral = 3; s.speedMph = 70; s.headingError = -.5;
+  const r = s.rival = { s: 100, lateral: 0, speedMph: 160, headingError: 0, pushVelocity: 0, finished: false };
+  let slowed = false;
+  for (let i = 0; i < 100; i++) { d.step(1 / 120); slowed ||= r.speedMph < 125; }
+  ok(slowed, 'a real cut-in during fixed-step driving makes the CPU shed speed');
+  eq(s.lives, LIVES.start, 'a simulated cut-in preserves the player life');
+  eq(s.lastCrashReason, null, 'the CPU cannot turn a player cut-in into a crash');
+  const headOn = collisionArena(), player = headOn.state;
+  player.prevS = 100; player.s = 105; player.speedMph = 100;
+  const oncoming = { prevS: 115, s: 105, prevLateral: 0, lateral: 0, speedMph: 70, dir: -1, alive: true };
+  headOn._vehicleContact(player, oncoming, 'head_on');
+  eq(player.majorCrashes, 1, 'true oncoming head-on collisions still cause major damage');
+}
+
+// --- Damage follows the actual side of contact, and persists between stages ---
+{
+  eq(contactZone(-1, 0, 0), 'left', 'world-left contact maps to the left panels');
+  eq(contactZone(1, 0, 0), 'right', 'world-right contact maps to the right panels');
+  eq(contactZone(0, 1, 0), 'rear', 'rear contact maps to rear bodywork');
+  eq(contactZone(0, -1, Math.PI / 2), 'right', 'damage mapping follows the car heading');
+  const d = collisionArena(), s = d.state;
+  s.prevS = s.s = 100; s.speedMph = 30;
+  const rearCar = { prevS: 90, s: 98, prevLateral: 0, lateral: 0, speedMph: 100, dir: 1, alive: true };
+  d._vehicleContact(s, rearCar, 'traffic');
+  ok(s.damageZones.rear > 0 && s.damageZones.front === 0, 'a faster car arriving from behind damages the rear');
+  const rearDamage = s.damageZones.rear;
+  d._loadStage(1); eq(s.damageZones.rear, rearDamage, 'stage transitions preserve localized damage');
+  d.startCampaign(); eq(Object.values(s.damageZones).reduce((a, b) => a + b, 0), 0, 'a new campaign resets all damage zones');
+}
+
+// --- Chicken flocks refill nitro once, without damage or repeated farming ---
+{
+  const d = collisionArena(), s = d.state, events = [];
+  d.onChange((_, event) => events.push(event));
+  d.course.features.flocks = [{ id: 'bonus-a', s: 110, off: 9, radius: 3.5, count: 8 }];
+  s.boost = .1; s.prevS = 90; s.s = 130; s.prevLateral = s.lateral = 9; s.speedMph = 60;
+  d._flockBonuses();
+  eq(s.boost, 1, 'a swept pass through a flock refills nitro to full');
+  eq(events.filter(event => event.chickenBonus).length, 1, 'flock crossing emits one comic scatter bonus event');
+  eq(s.collectedFlocks[0], 'bonus-a', 'the collected flock ID is available to rendering');
+  eq(s.lives, LIVES.start, 'a chicken bonus causes no injury or crash penalty');
+  s.boost = .2; d._flockBonuses(); eq(s.boost, .2, 'a collected flock cannot repeatedly refill nitro');
+  s.collectedFlocks = []; s.speedMph = 0; d._flockBonuses(); eq(s.boost, .2, 'parking next to chickens cannot collect the bonus');
+  s.s = s.prevS = 110; s.speedMph = 1.5; d._flockBonuses(); eq(s.boost, 1, 'even a slow moving contact with a flock refills nitro');
+  s.collectedFlocks = ['bonus-a']; d._loadStage(1); eq(s.collectedFlocks.length, 0, 'each stage starts with new flock pickups');
+}
+
+// --- Scene selection and purchased upgrades enter the same simulation ---
+{
+  const d = new Duel({ seed: 120 });
+  d.startCampaign({ startStage: COURSE.length - 1, upgrades: { engine: 3, nitro: 3, handling: 2, tires: 1 } });
+  eq(d.state.stageIndex, COURSE.length - 1, 'scene selection starts a fresh run at the chosen stage');
+  const base = CARS[d.state.car];
+  ok(d.car.topSpeed > base.topSpeed && d.car.accel > base.accel && d.car.gears[0] > base.gears[0], 'engine upgrades improve speed, acceleration and gearing');
+  ok(d.car.grip > base.grip && d.car.braking > base.braking, 'handling and tire upgrades improve control');
+  eq(base.gears[0], CARS[d.state.car].gears[0], 'upgrade calculation preserves the base car data');
+  const s = d.state; s.status = 'racing'; s.traffic = []; s.rival = null; s.speedMph = d.car.topSpeed; s.gear = d.car.gears.length - 1;
+  d.course.at = () => ({ curvature: 0 }); d.setInput({ throttle: 1, boost: true }); d.step(1 / 120);
+  ok(1 - s.boost < BOOST.drainPerSec / 120, 'nitro upgrades reduce boost drain');
+  d.startCampaign({ startStage: -100, upgrades: { engine: 99, nitro: -4, handling: NaN, tires: 2.8 } });
+  eq(d.state.stageIndex, 0, 'invalid negative scene index clamps safely');
+  eq(d.state.upgrades.engine, 3, 'upgrade levels have a fixed maximum');
+  eq(d.state.upgrades.nitro, 0, 'negative upgrade levels clamp to zero');
+  eq(d.state.upgrades.handling, 0, 'non-finite upgrade data is ignored');
+  eq(d.state.upgrades.tires, 2, 'upgrade levels stay integral');
+  s.status = 'racing'; s.s = d.course.length; s.stageTimeSec = 60; s.rival = { finishTime: 70 };
+  d._finishStage(); ok(s.results.won, 'beating the opponent records a race win');
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

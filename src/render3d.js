@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { Course } from './course.js';
 import { COURSE, CARS, DRIVE } from './config.js';
@@ -14,6 +13,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { createChickens } from './chickens.js';
 import { loadHeroVehicle } from './hero-vehicle.js';
+import { updateDriver } from './driver.js';
 
 // This layer only reads simulation state. Asset replacement never changes race rules.
 export function attachRenderer(host, app) {
@@ -41,7 +41,7 @@ export function attachRenderer(host, app) {
   new RGBELoader().load('/assets/textures/sunset-lighting.hdr',texture=>{
     if(disposed){texture.dispose();return;}
     const pm=new THREE.PMREMGenerator(renderer);naturalEnvironment=pm.fromEquirectangular(texture);
-    scene.environment=naturalEnvironment.texture;scene.environmentIntensity=.85;
+    if(course?.def.theme!=='city')scene.environment=naturalEnvironment.texture;
     texture.dispose();pm.dispose();host.dataset.environment='sunset-hdri';
   },undefined,()=>{host.dataset.environment='studio-fallback';});
   const hemi = new THREE.HemisphereLight(0xb2cde0, 0x714226, 1.65);
@@ -52,26 +52,27 @@ export function attachRenderer(host, app) {
   scene.add(hemi, sun, sun.target);
   const sky = new THREE.Mesh(new THREE.SphereGeometry(1900, 32, 20), new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false,
-    uniforms: { top: { value: new THREE.Color('#466d86') }, horizon: { value: new THREE.Color('#f6bc82') }, sunDir: { value: new THREE.Vector3(-.6, .17, .8).normalize() } },
+    uniforms: { top: { value: new THREE.Color('#466d86') }, horizon: { value: new THREE.Color('#f6bc82') }, sunDir: { value: new THREE.Vector3(-.6, .17, .8).normalize() },sunStrength:{value:1} },
     vertexShader: 'varying vec3 vDir; void main(){vDir=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader: `varying vec3 vDir; uniform vec3 top; uniform vec3 horizon; uniform vec3 sunDir;
+    fragmentShader: `varying vec3 vDir; uniform vec3 top; uniform vec3 horizon; uniform vec3 sunDir; uniform float sunStrength;
       void main(){ vec3 d=normalize(vDir); float h=max(d.y,0.); vec3 c=mix(horizon,top,pow(h,.45));
-      float s=max(dot(d,sunDir),0.); c+=vec3(1.,.58,.22)*pow(s,24.)*.36;
-      c+=vec3(1.,.9,.66)*smoothstep(.99915,.99965,s)*2.;
+      float s=max(dot(d,sunDir),0.); c+=vec3(1.,.58,.22)*pow(s,24.)*.36*sunStrength;
+      c+=vec3(1.,.9,.66)*smoothstep(.99996,.99999,s)*2.*sunStrength;
       float cloud=sin(d.x*19.+d.z*8.)*sin(d.z*32.-d.x*15.);
-      c=mix(c,vec3(.85,.71,.59),smoothstep(.58,.93,cloud)*smoothstep(.12,.2,d.y)*(1.-smoothstep(.28,.4,d.y))*.2);
+      c=mix(c,vec3(.85,.71,.59),smoothstep(.58,.93,cloud)*smoothstep(.12,.2,d.y)*(1.-smoothstep(.28,.4,d.y))*.2*sunStrength);
       gl_FragColor=vec4(c,1.);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
       }`,
   }));
   sky.frustumCulled = false; scene.add(sky);
-  const preview = new Course(COURSE[0], app.seed);
-  let course, world, loadedCar, player, rival, loadedStation, chickens;
+  const previews = new Map();
+  const previewCourse=index=>{if(!previews.has(index))previews.set(index,new Course(COURSE[index]||COURSE[0],app.seed));return previews.get(index);};
+  let course, world, loadedCar, player, rival, chickens;
   let heroFactory;
   loadHeroVehicle().then(factory => {
     if (disposed) return;
-    heroFactory = factory; loadedCar = null; host.dataset.heroAsset = 'ready';
+    heroFactory = factory; loadedCar = null; if(rival){scene.remove(rival);disposeTree(rival);rival=null;} host.dataset.heroAsset = 'ready';
   }).catch(error => { host.dataset.heroAsset = 'fallback'; console.warn('Detailed car unavailable; using local fallback.', error); });
   const traffic = [];
   const police = createVehicle({ color: 0x172a36, accent: 0xeeeecc, kind: 'sedan', detail: 'low' });
@@ -83,16 +84,9 @@ export function attachRenderer(host, app) {
   police.add(lamps); scene.add(police);
   const effects = createDrivingEffects(); scene.add(effects.group);
   const explosion = createExplosion(); scene.add(explosion.group);
-  // Blender exports use metres, +Y up, +Z forward. Procedural world works before loading.
-  new GLTFLoader().load('/assets/models/desert-service-station.glb', gltf => {
-    loadedStation = gltf.scene;
-    loadedStation.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-    if (world) addStationAsset();
-  }, undefined, () => {});
-  function addStationAsset() {
-    const g = loadedStation.clone(true), p = course.worldAt(900, 27);
-    g.userData.sharedAsset = true;
-    g.position.set(p.x, p.y, p.z); g.rotation.y = p.heading; world.add(g);
+  const headlights=[];
+  for(const side of[-1,1]){
+    const light=new THREE.SpotLight(0xe3edff,0,95,.43,.55,1.2);scene.add(light,light.target);headlights.push({light,side});
   }
   function build(next) {
     if (world) {
@@ -102,20 +96,25 @@ export function attachRenderer(host, app) {
       disposeTree(world);
     }
     course = next;
-    const alpine = course.def.theme === 'alpine';
-    scene.fog = new THREE.Fog(alpine ? 0xb5c6ca : 0xdec1a0, 230, 1450);
-    sky.material.uniforms.top.value.set(alpine ? '#426e87' : '#466d86');
-    sky.material.uniforms.horizon.value.set(alpine ? '#c4d4d8' : '#f6bc82');
-    hemi.groundColor.set(alpine ? 0x526153 : 0x714226);
+    const theme=course.def.theme,night=theme==='city';
+    const settings={
+      desert:{fog:0xdec1a0,top:'#466d86',horizon:'#f6bc82',ground:0x714226,sun:3.3,hemi:1.65,env:.85},
+      alpine:{fog:0xb5c6ca,top:'#426e87',horizon:'#c4d4d8',ground:0x526153,sun:3.05,hemi:1.8,env:.8},
+      coast:{fog:0xa6c8ce,top:'#326e92',horizon:'#bcd7d8',ground:0x647658,sun:3.6,hemi:1.7,env:.9},
+      city:{fog:0x263549,top:'#14253f',horizon:'#596477',ground:0x28313c,sun:.24,hemi:.9,env:.5},
+    }[theme];
+    scene.fog=new THREE.Fog(settings.fog,night?160:260,night?1250:1650);
+    sky.material.uniforms.top.value.set(settings.top);sky.material.uniforms.horizon.value.set(settings.horizon);sky.material.uniforms.sunStrength.value=night?.03:1;
+    hemi.groundColor.set(settings.ground);hemi.intensity=settings.hemi;sun.intensity=settings.sun;sun.color.set(night?0xa2bde6:theme==='alpine'?0xf1f0df:0xffddac);
+    scene.environment=night?environment.texture:naturalEnvironment?.texture||environment.texture;scene.environmentIntensity=settings.env;renderer.toneMappingExposure=night?1.22:1.04;bloom.strength=night?.32:.18;host.dataset.theme=theme;
     world = buildEnvironment(course); scene.add(world);
     chickens=createChickens(course);world.add(chickens.group);
-    if (loadedStation) addStationAsset();
   }
   const camTarget = new THREE.Vector3(), lookTarget = new THREE.Vector3();
   let ready = false, lastMenu = null, previousT = performance.now(), metricsTime = previousT, metricFrames = 0;
   function frame(now = performance.now()) {
     const dt = Math.min(.05, Math.max(.001, (now - previousT) / 1000)); previousT = now;
-    const st = app.duel.state, menu = st.status === 'menu', next = menu ? preview : app.duel.course;
+    const st = app.duel.state, menu = st.status === 'menu', next = menu ? previewCourse(app.menuStage||0) : app.duel.course;
     const moving = st.status === 'racing' && !st.paused;
     if (!next) return;
     if (course !== next) { build(next); ready = false; }
@@ -124,27 +123,26 @@ export function attachRenderer(host, app) {
     if (carKey !== loadedCar) {
       if (player) { scene.remove(player); disposeTree(player); }
       const car = CARS[carKey] || CARS.falcone_f42;
-      player = (heroFactory || createVehicle)({ color: car.color, accent: car.accent, kind: carKey.includes('959') ? 'stuttgart' : 'sport' });
+      player = (heroFactory || createVehicle)({ color: car.color, accent: car.accent, kind: carKey==='aurora_gt'?'gt':carKey.includes('959') ? 'stuttgart' : 'sport' });
       scene.add(player); loadedCar = carKey;
     }
-    if (!rival) { rival = createVehicle({ color: 0xbfcace, accent: 0x142a36 }); scene.add(rival); }
+    if (!rival) { rival = (heroFactory||createVehicle)({ color: 0xbfcace, accent: 0x142a36 }); scene.add(rival); }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
-    const pp = worldAtExtended(course, distance, lateral);
-    if (Math.abs(lateral)>7) {
-      const edge=Math.max(0,Math.abs(lateral)-13),wave=Math.sin(distance*.009+lateral*.007)*Math.cos(lateral*.021+distance*.004);
-      pp.y+=edge<1?-.06:Math.max(-2,wave*Math.min(32,edge*.13)+edge*.014-.2);
-    }
+    const pp = Math.abs(lateral)>7?course.groundAt(distance,lateral):worldAtExtended(course,distance,lateral);
     const wheelTravel = mph => moving ? mph * (DRIVE.mphToWorld || .44704) * dt : 0;
     place(player, pp, 0, wheelTravel(st.speedMph));
     const wreckAge=st.catastrophic ? Math.max(0,(st.impactDuration||0)-(st.impactTimer||0)) : 0;
-    updateVehicleDamage(player,menu?0:st.majorCrashes, !menu&&st.catastrophic, wreckAge);
+    updateVehicleDamage(player,menu?0:st.majorCrashes, !menu&&st.catastrophic, wreckAge,menu?null:st.damageZones);
     const steering = menu ? 0 : st.steerVisual || 0;
+    updateDriver(player.userData.driver,steering,menu?0:st.slipAngle,!menu&&st.catastrophic);
+    if(player.userData.steeringPivot)player.userData.steeringPivot.rotation.z=steering*.7;
     const impact = menu ? 0 : Math.min(1, (st.impactTimer || 0) / (st.impactDuration || 1.8));
     const rough = menu ? 0 : st.roughness || 0;
     const motionTime = st.stageTimeSec;
     player.rotation.y += menu ? 0 : (st.headingError || 0) + (st.slipAngle || 0) + (st.crashSpin || 0);
     player.rotation.z = steering * Math.min(st.speedMph / 160, 1) * .045;
-    player.rotation.x = menu ? 0 : -(course.at(distance + 2).y - course.at(distance - 2).y) / 4;
+    const slope=groundSlope(course,distance,lateral,menu?0:st.headingError||0);
+    player.rotation.x=menu?0:slope.pitch;player.rotation.z+=menu?0:slope.roll;
     if (!menu) {
       player.position.y += rough * Math.abs(Math.sin(motionTime * 35)) * .15;
       player.rotation.z += Math.sin(motionTime * 24) * rough * .07;
@@ -194,18 +192,21 @@ export function attachRenderer(host, app) {
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix(); sky.position.copy(camera.position);
     sun.position.set(pp.x - 75, pp.y + 90, pp.z + 50); sun.target.position.set(pp.x, pp.y, pp.z); sun.target.updateMatrixWorld();
     rival.visible = !menu && !!st.rival && Math.abs(st.rival.s - st.s) < 650;
-    if (rival.visible) place(rival, worldAtExtended(course, st.rival.s, st.rival.lateral), 0, wheelTravel(st.rival.speedMph));
+    if (rival.visible) {place(rival, course.groundAt(st.rival.s, st.rival.lateral), st.rival.headingError||0, wheelTravel(st.rival.speedMph));const slope=groundSlope(course,st.rival.s,st.rival.lateral,st.rival.headingError||0);rival.rotation.x=slope.pitch;rival.rotation.z=slope.roll;updateDriver(rival.userData.driver,Math.max(-1,Math.min(1,(st.rival.pushVelocity||0)*.08)),0,false);for(const lamp of rival.userData.brakeLights||[])lamp.material.emissiveIntensity=st.rival.braking?4:1.4;}
     const palette = [0xd9c99c, 0x2c566a, 0x847458, 0xf0e9dc, 0x5e3d2f];
     while (traffic.length < st.traffic.length) { const car = createVehicle({ color: palette[traffic.length % palette.length], kind: 'sedan', detail: 'low' }); scene.add(car); traffic.push(car); }
     traffic.forEach((car, i) => {
       const d = st.traffic[i]; car.visible = !menu && !!d?.alive && Math.abs(d.s - st.s) < 540;
-      if (car.visible) place(car, worldAtExtended(course, d.s, d.lateral), d.dir < 0 ? Math.PI : 0, wheelTravel(d.speedMph));
+      if (car.visible) place(car, course.groundAt(d.s,d.lateral), d.dir < 0 ? Math.PI : 0, wheelTravel(d.speedMph));
     });
     const pursuit = st.police.pursuit; police.visible = !menu && !!pursuit?.active && pursuit.gapU < 250;
     if (police.visible) { place(police, worldAtExtended(course, st.s - Math.max(6, pursuit.gapU), st.lateral), 0, wheelTravel(140)); lamps.children.forEach((lamp, i) => { lamp.visible = Math.floor(now / 130) % 2 === i; }); }
     effects.update({ p: pp, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now });
     explosion.update(pp,st,st.paused?0:dt);
     if(!st.paused)chickens.update(st,menu?now/1000:st.totalTimeSec);
+    world.userData.update?.(now/1000);for(const update of world.userData.updates||[])update(now/1000);
+    for(const {light,side}of headlights){const heading=player.rotation.y,c=Math.cos(heading),sn=Math.sin(heading);light.intensity=course.def.theme==='city'?150:0;light.position.set(pp.x+c*side*.65+sn*1.8,pp.y+.72,pp.z-sn*side*.65+c*1.8);light.target.position.set(pp.x+sn*40,pp.y-1,pp.z+c*40);light.target.updateMatrixWorld();}
+    host.dataset.driver=player.userData.driver?'ready':'absent';
     renderer.info.autoReset=false;renderer.info.reset();composer.render();
     metricFrames++;
     if (now - metricsTime >= 1000) {
@@ -233,4 +234,10 @@ export function attachRenderer(host, app) {
 function place(car, p, turn = 0, travel = 0) {
   car.position.set(p.x, p.y + .07, p.z); car.rotation.set(0, p.heading + turn, 0);
   for (const wheel of car.userData.wheels || []) wheel.rotation.x += travel / .36;
+}
+
+function groundSlope(course,s,lat,angle){
+  const point=Math.abs(lat)>7?(s,l)=>course.groundAt(s,l):(s,l)=>course.worldAt(s,l);
+  const forward=(point(s+2,lat).y-point(s-2,lat).y)/4,side=(point(s,lat+1).y-point(s,lat-1).y)/2,c=Math.cos(angle),sn=Math.sin(angle);
+  return {pitch:-Math.atan(forward*c+side*sn),roll:Math.atan(side*c-forward*sn)};
 }

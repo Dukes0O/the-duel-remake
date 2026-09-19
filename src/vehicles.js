@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { createDriver } from './driver.js';
 
 // Original vehicle design, based on assets/reference/redline-horizons-art-direction.png.
 // Metres. +Z is forward. Ground is y=0. Static detail is batched by material.
@@ -215,8 +216,8 @@ export function createVehicle({ color = 0xef382b, accent = 0x111924, kind = 'spo
   const brakeMaterial = new THREE.MeshStandardMaterial({ color: 0xef211c, emissive: 0xff2116, emissiveIntensity: 0.85, roughness: 0.3 });
   for (const x of [-0.76, -0.49, 0.49, 0.76]) {
     b.add(cached('tail-rim', () => new THREE.CylinderGeometry(0.128, 0.128, 0.024, 18).rotateX(Math.PI / 2)), shared.darkAlloy, [x, 0.785, -2.365]);
-    const light = new THREE.Mesh(cached('tail', () => new THREE.TorusGeometry(0.082, 0.028, 7, 18)), brakeMaterial);
-    light.position.set(x, 0.785, -2.389); brakeLights.push(light); vehicle.add(light);
+    const light = new THREE.Mesh(cached('tail', () => new THREE.TorusGeometry(0.082, 0.028, 7, 18)).clone().translate(x, .785, -2.389), brakeMaterial);
+    light.geometry.userData.sharedAsset = false; brakeLights.push(light); vehicle.add(light);
   }
   vehicle.userData.brakeLights = brakeLights;
   vehicle.userData.brakeMaterial = brakeMaterial;
@@ -254,13 +255,9 @@ export function createVehicle({ color = 0xef382b, accent = 0x111924, kind = 'spo
   vehicle.userData.damageMeshes = vehicle.children.filter(o => o.isMesh && !o.geometry.userData.sharedAsset).map(mesh => ({mesh, rest: mesh.geometry.attributes.position.array.slice()}));
   vehicle.userData.paint = paint; vehicle.userData.originalColor = originalColor;
   makeWheels(vehicle, paint, detailed, sedan);
-  if (detailed) {
-    const cracks = new THREE.BufferGeometry(), points = [];
-    for (let i=0;i<12;i++) { const angle=i*2.4, x=Math.sin(angle)*.3, z=Math.cos(angle)*.19; points.push(-.2,1.195,.64,-.2+x,1.195-z*.53,.64+z); }
-    cracks.setAttribute('position',new THREE.Float32BufferAttribute(points,3));
-    const fracture = new THREE.LineSegments(cracks,new THREE.LineBasicMaterial({color:0xb8dce4,transparent:true,opacity:.65}));
-    fracture.visible=false; vehicle.add(fracture); vehicle.userData.fracture=fracture;
-  }
+  if (detailed) { vehicle.userData.driver = createDriver({ suitColor: silver ? 0x314b62 : 0x233e46 }); vehicle.add(vehicle.userData.driver); }
+  // Traffic uses the inexpensive undamaged model; player and rival own their wear.
+  if (!sedan) prepareVehicleDamage(vehicle);
   vehicle.userData.size = { width: 2.59, length: 4.8, height: sedan ? 1.55 : 1.52 };
   return vehicle;
 }
@@ -305,33 +302,135 @@ function addFineDetail(b, silver, paint) {
   for(let i=-8;i<=8;i++) b.box(shared.darkAlloy,[.027,.073,.013],[i*.042,.48,2.376]);
 }
 
-export function updateVehicleDamage(vehicle, count, catastrophic, age = 0) {
-  if(vehicle.userData.contactShadow) vehicle.userData.contactShadow.visible = !catastrophic;
-  const damage = Math.min(3, (count || 0)*.6), key = `${damage}:${catastrophic}`;
-  if (vehicle.userData.damageKey !== key) {
-    vehicle.userData.damageKey = key;
-    const paint=vehicle.userData.paint;
-    paint.color.copy(vehicle.userData.originalColor).lerp(new THREE.Color(0x191a1b),catastrophic?.88:damage*.14);
-    paint.roughness = .22+damage*.14; paint.clearcoat = catastrophic ? .05 : 1-damage*.16;
-    for (const {mesh,rest} of vehicle.userData.damageMeshes || []) {
-      const a=mesh.geometry.attributes.position;
-      for(let i=0;i<a.count;i++) {
-        const x=rest[i*3],y=rest[i*3+1],z=rest[i*3+2];
-        const dent=Math.exp(-((x+.8)**2*3+(z-1.8)**2*1.6))*damage;
-        const rear=Math.exp(-((x-.7)**2*3+(z+1.9)**2*2))*Math.max(0,damage-1);
-        a.setXYZ(i,x+dent*.13-rear*.08,y-dent*.14+Math.sin(z*21+x*16)*dent*.025,z-dent*.19+rear*.16);
+// Cache intact vertex data once. Every vehicle owns these mutable meshes/materials;
+// the loaded template, wheel geometry and texture maps remain safely shared.
+export function prepareVehicleDamage(vehicle) {
+  const data = vehicle.userData, privateMaterials = new Map();
+  data.damageBase = { roughness: data.paint.roughness, clearcoat: data.paint.clearcoat };
+  for (const item of data.damageMeshes || []) {
+    const { mesh } = item;
+    if (mesh.material.userData.sharedAsset) {
+      if (!privateMaterials.has(mesh.material)) {
+        const material = mesh.material.clone(); material.userData.sharedAsset = false;
+        privateMaterials.set(mesh.material, material);
       }
-      a.needsUpdate=true; mesh.geometry.computeVertexNormals(); mesh.geometry.computeBoundingSphere();
+      mesh.material = privateMaterials.get(mesh.material);
     }
-    if(vehicle.userData.fracture)vehicle.userData.fracture.visible=damage>0;
+    item.normals = mesh.geometry.attributes.normal?.array.slice();
+    const wear = new THREE.Float32BufferAttribute(new Float32Array(mesh.geometry.attributes.position.count), 1);
+    mesh.geometry.setAttribute('panelWear', wear);
+    installWearShader(mesh.material);
   }
-  for (let i=0;i<(vehicle.userData.wheelPivots||[]).length;i++) {
-    const pivot=vehicle.userData.wheelPivots[i]; pivot.position.copy(pivot.userData.restPosition);
-    pivot.visible=!(catastrophic&&i%2===0);
-    if(catastrophic && i%2===0) { const t=Math.min(2,age),side=pivot.position.x<0?-1:1;
-      pivot.position.x+=side*t*2.4; pivot.position.z+=(i===0?-1:1)*t*1.8;
-      pivot.position.y+=Math.max(-.15,Math.sin(Math.min(1,t/1.2)*Math.PI)*1.5);
-      pivot.rotation.z=side*Math.min(age*4,Math.PI/2);
-    } else pivot.rotation.z=damage*.025*(i%2?1:-1);
+  const glass = (data.damageMeshes || []).filter(({ mesh }) => /glass/i.test(mesh.material.name) || mesh.material.transparent && mesh.material.opacity < .8).map(({ mesh }) => mesh);
+  data.fractures = [];
+  vehicle.updateMatrixWorld(true);
+  for (const zone of ['front', 'rear', 'left', 'right']) {
+    const points = [], ray = new THREE.Raycaster(), side = zone === 'left' ? 1 : -1;
+    const sideWindow = zone === 'left' || zone === 'right';
+    const project = (u, v) => {
+      if (sideWindow) ray.set(new THREE.Vector3(side * 3, 1.275 + u, -.06 + v), new THREE.Vector3(-side, 0, 0));
+      else ray.set(new THREE.Vector3((zone === 'front' ? -.23 : .21) + u, 3, (zone === 'front' ? .88 : -1.03) + v), new THREE.Vector3(0, -1, 0));
+      const hit = ray.intersectObjects(glass, false)[0];
+      return hit ? hit.point.addScaledVector(hit.face.normal, .004) : null;
+    };
+    for (let i = 0; i < 13; i++) {
+      const angle = i * 2.39996, u = Math.sin(angle), v = Math.cos(angle);
+      const p = project(0, 0), q = project(u * (sideWindow ? .043 : .11), v * .1), r = project(u * (sideWindow ? .105 : .25), v * .24);
+      if (p && q) points.push(...p.toArray(), ...q.toArray());
+      if (q && r) points.push(...q.toArray(), ...r.toArray());
+    }
+    const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+    const fracture = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: 0xc6d8df, transparent: true, opacity: .74, depthWrite: false }));
+    fracture.visible = false; vehicle.add(fracture);
+    data.fractures.push({ mesh: fracture, rest: geometry.attributes.position.array.slice(), zone });
+  }
+}
+
+function installWearShader(material) {
+  if (material.userData.panelWearShader) return;
+  material.userData.panelWearShader = true;
+  const previous = material.onBeforeCompile, previousKey = material.customProgramCacheKey();
+  material.onBeforeCompile = (shader, renderer) => {
+    previous.call(material, shader, renderer);
+    shader.vertexShader = 'attribute float panelWear; varying float vPanelWear; varying vec3 vWearPosition;\n' + shader.vertexShader;
+    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvPanelWear=panelWear;vWearPosition=position;');
+    shader.fragmentShader = 'varying float vPanelWear; varying vec3 vWearPosition;\n' + shader.fragmentShader;
+    shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+      float wear = clamp(vPanelWear * 1.8, 0., 1.);
+      float grit = fract(sin(dot(floor(vWearPosition * 160.), vec3(12.9898, 78.233, 39.425))) * 43758.5453);
+      float streak = smoothstep(.85,.96,fract(vWearPosition.y * 64. + sin(vWearPosition.z * 12.) * .12 + vWearPosition.x * 1.7));
+      float scratch = smoothstep(.48,.94,grit) * streak * wear;
+      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.085,.092,.10), wear * .24);
+      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.34,.36,.37), scratch * .82);`);
+    shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, .93, clamp(vPanelWear * 1.5,0.,1.));');
+    // Damage lives in the shader, so the normal brake input cannot relight a broken lens.
+    shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance *= 1. - clamp(vPanelWear * 1.85, 0., .97);');
+  };
+  material.customProgramCacheKey = () => `${previousKey}:localized-panel-wear-v1`;
+  material.needsUpdate = true;
+}
+
+const damageWeights = [0, 0, 0, 0];
+function weightsAt(x, y, z, strengths) {
+  const height = THREE.MathUtils.smoothstep(y, .12, .42);
+  damageWeights[0] = strengths[0] * THREE.MathUtils.smoothstep(z, .65, 2.18) * Math.exp(-((x + .22) ** 2) * .38) * height;
+  damageWeights[1] = strengths[1] * THREE.MathUtils.smoothstep(-z, .70, 2.15) * Math.exp(-((x - .20) ** 2) * .43) * height;
+  const door = Math.exp(-((z - .04) ** 2) * .60 - ((y - .79) ** 2) * 1.7) * height;
+  // Vehicle +X is the driver's left, matching contactZone and the source GLB.
+  damageWeights[2] = strengths[2] * THREE.MathUtils.smoothstep(x, .32, .99) * door;
+  damageWeights[3] = strengths[3] * THREE.MathUtils.smoothstep(-x, .32, .99) * door;
+  return damageWeights;
+}
+function deformGeometry(mesh, rest, strengths, wear) {
+  const a = mesh.geometry.attributes.position;
+  for (let i = 0; i < a.count; i++) {
+    const x = rest[i * 3], y = rest[i * 3 + 1], z = rest[i * 3 + 2];
+    const [front, rear, left, right] = weightsAt(x, y, z, strengths);
+    const crush = front + rear, side = left + right;
+    const crease = Math.sin(z * 24 + x * 19) * .005 + Math.sin(y * 51 + z * 11) * .002;
+    // One buckled fold per end reads as crushed sheet metal without regular ripples.
+    const buckle = front * Math.exp(-(((z - 1.65) * 7 + x * .7) ** 2)) * .10
+      + rear * Math.exp(-(((z + 1.67) * 7 - x * .7) ** 2)) * .10;
+    a.setXYZ(i,
+      x - left * .34 + right * .34 + (right - left) * crease * 1.4,
+      y - crush * .18 + buckle + (crush + side) * crease + Math.sin(z * 7) * side * .012,
+      z - front * .39 + rear * .38 + (front - rear) * crease * 1.2);
+    wear?.setX(i, Math.min(1, Math.max(front, rear, left, right)));
+  }
+  a.needsUpdate = true; if (wear) wear.needsUpdate = true;
+  mesh.geometry.computeBoundingSphere();
+}
+
+export function updateVehicleDamage(vehicle, count, catastrophic, age = 0, damageZones) {
+  const data = vehicle.userData;
+  if (data.contactShadow) data.contactShadow.visible = !catastrophic;
+  // Fallback keeps old preview calls useful while gameplay supplies true contact sides.
+  const zones = damageZones || { front: Math.min(count || 0, 2), rear: Math.max(0, (count || 0) - 2), left: 0, right: 0 };
+  const values = ['front', 'rear', 'left', 'right'].map(zone => Math.max(0, Number(zones[zone]) || 0));
+  const strengths = values.map(value => catastrophic ? 1 : 1 - Math.exp(-value * .62));
+  const key = `${values.join(':')}:${!!catastrophic}`;
+  if (data.damageKey !== key) {
+    data.damageKey = key;
+    const paint = data.paint, total = Math.min(5, values.reduce((a, b) => a + b, 0));
+    paint.color.copy(data.originalColor).lerp(new THREE.Color(0x191a1b), catastrophic ? .88 : total * .018);
+    paint.roughness = catastrophic ? .94 : data.damageBase?.roughness ?? .22;
+    paint.clearcoat = catastrophic ? .05 : data.damageBase?.clearcoat ?? 1;
+    for (const { mesh, rest, normals } of data.damageMeshes || []) {
+      deformGeometry(mesh, rest, strengths, mesh.geometry.attributes.panelWear);
+      if (strengths.some(Boolean)) mesh.geometry.computeVertexNormals();
+      else if (normals) { mesh.geometry.attributes.normal.array.set(normals); mesh.geometry.attributes.normal.needsUpdate = true; }
+    }
+    for (const { mesh, rest, zone } of data.fractures || []) {
+      mesh.visible = catastrophic || (zones[zone] || 0) > .2;
+      deformGeometry(mesh, rest, strengths);
+    }
+  }
+  for (let i = 0; i < (data.wheelPivots || []).length; i++) {
+    const pivot = data.wheelPivots[i], rest = pivot.userData.restPosition;
+    pivot.position.copy(rest); pivot.visible = !(catastrophic && i % 2 === 0);
+    // Detached wheels are independent debris in the explosion system.
+    const corner = (rest.x > 0 ? strengths[2] : strengths[3]) * .8 + (pivot.userData.front ? strengths[0] : strengths[1]) * .5;
+    pivot.rotation.z = corner * .095 * (rest.x < 0 ? -1 : 1);
+    pivot.position.x -= Math.sign(rest.x) * corner * .035;
   }
 }

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node src/test.js",
+    "test": "node src/test.js && node tools/test-progression.mjs && node tools/test-progression-integration.mjs && node tools/test-terrain.mjs",
     "assets:export": "node tools/export-assets.mjs",
     "assets:audio": "node tools/prepare-audio.mjs"
   },

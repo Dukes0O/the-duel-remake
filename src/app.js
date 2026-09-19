@@ -6,6 +6,7 @@ import { Duel } from './game.js';
 import { seedFromUrl } from './rng.js';
 import { DRIVE, steeringYawAuthority } from './config.js';
 import { EngineAudio } from './audio.js';
+import { loadProfile, saveProfile, awardCourseWin, purchaseUpgrade, unlockCar, getUpgradeLevels, isCarUnlocked } from './progression.js';
 
 const SIMULATION_STEP = 1 / 120;
 
@@ -20,9 +21,22 @@ export class App {
       car: url.get('car') || undefined,
     });
     this.keys = {};
+    this.profile = loadProfile();
+    this.menuStage = 0;
+    this.runId = null;
     this.cameraMode = 'chase';
     this.audio = new EngineAudio();
-    this.duel.onChange((_state, event) => this.audio.event(event));
+    this.duel.onChange((state, event) => {
+      this.audio.event(event);
+      if (event.stageResult) {
+        const result=event.stageResult;
+        const awarded=awardCourseWin(this.profile,{runId:this.runId,stageIndex:state.stageIndex,won:result.won,clean:!result.missedStation&&state.majorCrashes===this._stageStartCrashes,difficulty:state.difficulty});
+        if(awarded.awarded){this.profile=awarded.profile;this.profileSaved=saveProfile(this.profile);result.creditReward=awarded.reward;}
+        else if(result.creditReward==null)result.creditReward=0;
+        result.creditBalance=this.profile.credits;
+      }
+      if(event.stageLoaded!=null)this._stageStartCrashes=state.majorCrashes;
+    });
     this._gamepadButtons = [];
     this._stepAccumulator = 0;
     this.raf = 0;
@@ -62,16 +76,30 @@ export class App {
   }
 
   startCampaign(options = {}) {
+    const car=isCarUnlocked(this.profile,options.car||this.duel.state.car)?options.car||this.duel.state.car:'falcone_f42';
+    this.runId=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    this._stageStartCrashes=0;
+    this._campaignStart=options.startStage??this.menuStage;
     this.audio.unlock();
     this.audio.setPaused(false);
     this.keys = {};
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
-    this.duel.startCampaign(options);
+    this.duel.startCampaign({...options,car,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car)});
   }
   restart() {
     const { mode, car, difficulty } = this.duel.state;
-    this.startCampaign({ mode, car, difficulty });
+    this.startCampaign({ mode, car, difficulty,startStage:this._campaignStart||0 });
+  }
+  purchaseUpgrade(car,type){
+    if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before upgrading.'};
+    const result=purchaseUpgrade(this.profile,car,type);
+    if(result.ok){this.profile=result.profile;this.profileSaved=saveProfile(this.profile);this.duel.emit({garage:true});}return result;
+  }
+  unlockCar(car){
+    if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before unlocking cars.'};
+    const result=unlockCar(this.profile,car);
+    if(result.ok){this.profile=result.profile;this.profileSaved=saveProfile(this.profile);this.duel.emit({garage:true});}return result;
   }
   togglePause() {
     const st = this.duel.state;
@@ -181,12 +209,13 @@ export class App {
     let targetLat = -DRIVE.laneOffset;
     // Start the pass with enough time to steer, and clear the car's rear
     // before returning. The center offers a safe gap to two-way traffic.
-    for (const c of st.traffic) {
+    const obstacles = st.rival ? [...st.traffic, { ...st.rival, alive: true, dir: 1 }] : st.traffic;
+    for (const c of obstacles) {
       if (!c.alive) continue;
       const ahead = c.s - st.s;
       const closingSpeed = Math.max(0, st.speedMph - c.dir * c.speedMph) * DRIVE.mphToWorld;
-      if (ahead > -28 && ahead < 35 + closingSpeed * 1.15 && Math.abs(c.lateral + DRIVE.laneOffset) < 2.4) {
-        targetLat = 0; break;
+      if (ahead > -28 && ahead < 35 + closingSpeed * 1.15 && Math.abs(c.lateral + DRIVE.laneOffset) < 2.7) {
+        targetLat = Math.min(3.3, Math.max(0, c.lateral + 3.2)); break;
       }
     }
     const metresPerSec = st.speedMph * DRIVE.mphToWorld;

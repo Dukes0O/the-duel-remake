@@ -1,6 +1,29 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
+// Image-generated needle sprays form a full radial crown; roots are placed by
+// course.groundAt so the same terrain surface supports every tree.
+export function pineTreeAssets() {
+  const parts=[];
+  for(let tier=0;tier<12;tier++)for(let arm=0;arm<9;arm++){
+    const reach=(2.65-tier*.205)*(1+.19*Math.sin(arm*4.1+tier*1.7)),angle=arm*Math.PI*2/9+tier*.81+.17*Math.sin(arm*3.1+tier);
+    for(const tilt of [0,1.57,.8]){
+      const g=new THREE.PlaneGeometry(reach,reach*.68);
+      g.translate(reach*.46,0,0);g.rotateX(-Math.PI/2+tilt);g.rotateZ(-.12);
+      g.rotateY(angle);g.translate(0,1.05+tier*.43+.09*Math.sin(arm*3+tier),0);parts.push(g);
+    }
+  }
+  const crown=mergeGeometries(parts);parts.forEach(g=>g.dispose());
+  const map=new THREE.TextureLoader().load('/assets/textures/pine-bough.png');
+  map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=8;
+  return {
+    trunk:new THREE.CylinderGeometry(.06,.23,5.9,9).translate(0,2.95,0),
+    crown,
+    bark:new THREE.MeshStandardMaterial({color:0x514335,roughness:1}),
+    needles:new THREE.MeshStandardMaterial({map,color:0xbed0ae,roughness:.88,alphaTest:.48,side:THREE.DoubleSide}),
+  };
+}
+
 // One reusable mesh per species: rounded saguaro arms and irregular pine tiers.
 export function vegetationGeometry(alpine) {
   const pieces = [];
