@@ -148,7 +148,7 @@ export class EngineAudio {
 
   _updateAmbience(st,environment,t){
     const active=['countdown','racing','ticket'].includes(st.status)&&!st.paused;
-    const speed=clamp((Number(st.speedMph)||0)/180,0,1),load=clamp(Number(st.input?.throttle)||0,0,1);
+    const speed=clamp(Math.abs(Number(st.speedMph)||0)/180,0,1),load=clamp(Number(st.gear===-1?st.input?.brake:st.input?.throttle)||0,0,1);
     // Exterior sound stays behind the engine and fades down inside tunnels.
     const duck=(1-speed*.38)*(1-load*.2)*(1-clamp(Number(environment.tunnel)||0,0,1)*.88);
     for(const [biome,layer]of Object.entries(this.ambience)){
@@ -218,9 +218,11 @@ export class EngineAudio {
     this.vehicleBus.gain.setTargetAtTime(perspective.gain,t,.12);
     const wet=clamp(Number(environment.tunnel)||0,0,1);
     this.tunnelWet.gain.setTargetAtTime(running?wet*.09:0,t,.12);
-    const speed = Math.min(1.2, st.speedMph / 200);
+    const speed = Math.min(1.2, Math.abs(st.speedMph) / 200);
     const rpm = 0.18 + clamp(st.revs,0,1.15) * 0.82;
-    const throttle=running?clamp(st.input.throttle,0,1):0;
+    // Input remains W/RT and S/LT; reverse swaps which pedal loads the engine.
+    const throttleInput=st.gear===-1?st.input.brake:st.input.throttle,brakeInput=st.gear===-1?st.input.throttle:st.input.brake;
+    const throttle=running?clamp(throttleInput,0,1):0;
     this.smoothedLoad+=(throttle-this.smoothedLoad)*(1-Math.exp(-dt/.065));
     const load=this.smoothedLoad;
     let shiftCut=1;
@@ -235,11 +237,11 @@ export class EngineAudio {
     // leveled steady loop is the only loaded-engine voice; no pitched overlay.
     const targetTone=62+rpm*47,carPitch=voice.pitch;
     for (const layer of this.engine) layer.osc.frequency.setTargetAtTime((32 + rpm * 112) * layer.multiple*carPitch, t, 0.055);
-    this.engineFilter.frequency.setTargetAtTime(Math.min(3000,(500 + rpm * 1700 + (st.input.throttle ? 600 : 0))*voice.brightness*perspective.brightness), t, 0.08);
+    this.engineFilter.frequency.setTargetAtTime(Math.min(3000,(500 + rpm * 1700 + (throttleInput ? 600 : 0))*voice.brightness*perspective.brightness), t, 0.08);
     const synthFallback=this.samples.engine?0:1-coverage;
     this.engineGain.gain.setTargetAtTime(running ? (0.1 + rpm * 0.12 + throttle * 0.045)*synthFallback*shiftCut*voice.gain : 0, t, 0.1);
     this.wind.gain.gain.setTargetAtTime(racing ? speed * speed * 0.085 : 0, t, 0.12);
-    const rawSlip=Math.min(1,Math.max(0,Math.abs(st.slipAngle||0)*4.3+Math.abs(st.steerVisual)*speed*.22-.2,st.input.brake*speed*.9-.2));
+    const rawSlip=Math.min(1,Math.max(0,Math.abs(st.slipAngle||0)*4.3+Math.abs(st.steerVisual)*speed*.22-.2,brakeInput*speed*.9-.2));
     this.smoothedSlip+=(rawSlip-this.smoothedSlip)*(1-Math.exp(-dt/(rawSlip>this.smoothedSlip?.045:.12)));
     const slip=this.smoothedSlip,recordedSlip=clamp((slip-.08)/.92,0,1),squeal=recordedSlip*recordedSlip*(3-2*recordedSlip);
     for(let i=0;i<ENGINE_BANDS.length;i++){
@@ -281,7 +283,7 @@ export class EngineAudio {
         this._stopShot(this.throttleVoice);this._stopShot(this.liftVoice);
         this.throttleVoice=this._sample(this.samples.throttle,(.22+rpm*.14)*voice.accent,clamp((.85+rpm*.28)*carPitch,.65,1.4),this.vehicleBus);
         this.nextThrottle=t+.7;
-      }else if(throttle<.2&&this.lastThrottle>.65&&st.speedMph>35&&this.samples.lift){
+      }else if(throttle<.2&&this.lastThrottle>.65&&Math.abs(st.speedMph)>35&&this.samples.lift){
         this._stopShot(this.throttleVoice);
         this.liftVoice=this._sample(this.samples.lift,(.2+rpm*.1)*voice.accent,clamp((.85+rpm*.35)*carPitch,.65,1.4),this.vehicleBus);
         this.nextThrottle=t+.45;

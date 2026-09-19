@@ -111,7 +111,7 @@ export function createDrivingEffects() {
     if (!(dt > 0) || !p || !state) return;
     dt = Math.min(dt, .06);
     const activeDrive = !state.status || state.status === 'racing';
-    const speed = Math.max(0, state.speedMph || 0), moving = speed > 9 && activeDrive;
+    const speed = Math.abs(state.speedMph || 0), direction = state.speedMph < 0 ? -1 : 1, moving = speed > 9 && activeDrive;
     const heading = (p.heading || 0) + (state.headingError || 0) + (state.slipAngle || 0);
     const fx = Math.sin(heading), fz = Math.cos(heading), rx = Math.cos(heading), rz = -Math.sin(heading);
     const ground = p.y || 0, vehicle = CARS[state.car] || {}, monster = vehicle.kind === 'monster', rally = vehicle.kind === 'rally';
@@ -191,15 +191,15 @@ export function createDrivingEffects() {
         dustBudget--;
         const contact = contacts[Math.random() < .5 ? 0 : 1];
         emit(contact.x, contact.y + .1, contact.z,
-          -fx * 1.8 + rx * (Math.random() - .5) * 2.6, .8 + Math.random() * .8,
-          -fz * 1.8 + rz * (Math.random() - .5) * 2.6, 0, monster ? 1.3 : 1, contact);
+          -fx * direction * 1.8 + rx * (Math.random() - .5) * 2.6, .8 + Math.random() * .8,
+          -fz * direction * 1.8 + rz * (Math.random() - .5) * 2.6, 0, monster ? 1.3 : 1, contact);
       }
       while (gravelBudget >= 1) {
         gravelBudget--;
         const side = Math.random() < .5 ? -1 : 1, scatter = side * (1.5 + Math.random() * 3), contact = contacts[side < 0 ? 0 : 1];
         emit(contact.x, contact.y + .12, contact.z,
-          -fx * (3 + speed * .035) + rx * scatter, 1.8 + Math.random() * 3,
-          -fz * (3 + speed * .035) + rz * scatter, 1, 1, contact);
+          -fx * direction * (3 + speed * .035) + rx * scatter, 1.8 + Math.random() * 3,
+          -fz * direction * (3 + speed * .035) + rz * scatter, 1, 1, contact);
       }
     } else { dustBudget = 0; gravelBudget = 0; }
 
@@ -209,28 +209,28 @@ export function createDrivingEffects() {
       const contact = contactAt(rx * side, rz * side), bodyHeight = (state.airHeight || 0) + .45;
       for (let i = 0; i < 30 + power * 65; i++) {
         const spread = (Math.random() - .5) * (4 + power * 13);
-        emit(x, ground + bodyHeight, z, -fx * (3 + Math.random() * 12) + rx * spread,
-          Math.random() * (4 + power * 4), -fz * (3 + Math.random() * 12) + rz * spread, i % 5 === 0 ? 0 : 2, power, contact);
+        emit(x, ground + bodyHeight, z, -fx * direction * (3 + Math.random() * 12) + rx * spread,
+          Math.random() * (4 + power * 4), -fz * direction * (3 + Math.random() * 12) + rz * spread, i % 5 === 0 ? 0 : 2, power, contact);
       }
       for (let n = 0; n < 7 + power * 9; n++) {
         const i = chipCursor++ % chipCount, j = i * 3;
         chipLife[i] = 1.8; chipFloor[i] = contact.y + .035; chipFloorX[i] = contact.x; chipFloorZ[i] = contact.z; chipSlopeX[i] = contact.slopeX; chipSlopeZ[i] = contact.slopeZ;
         chipPosition[j] = x; chipPosition[j + 1] = ground + bodyHeight; chipPosition[j + 2] = z;
-        chipVelocity[j] = -fx * 5 + (Math.random() - .5) * 10;
+        chipVelocity[j] = -fx * direction * 5 + (Math.random() - .5) * 10;
         chipVelocity[j + 1] = 2 + Math.random() * 5;
-        chipVelocity[j + 2] = -fz * 5 + (Math.random() - .5) * 10;
+        chipVelocity[j + 2] = -fz * direction * 5 + (Math.random() - .5) * 10;
       }
     }
     previousImpact = impact;
 
-    const braking = Number(state.input?.brake || 0) > .2;
+    const braking = Number((state.gear===-1?state.input?.throttle:state.input?.brake) || 0) > .2;
     const sliding = !!state.drifting || (Math.abs(state.slipAngle || 0) > .075);
     if(activeDrive&&!dirt&&!airborne&&speed>40&&sliding&&contacts.length){
       const strength=Math.min(1,Math.max(.18,Math.abs(state.slipAngle||0)*2.8));
       const night=course?.def.timeOfDay==='night'||course?.themeAt(state.s||0)==='city';
       smokeBudget+=dt*(12+48*strength);
       while(smokeBudget>=1){smokeBudget--;const side=cursor%2,contact=contacts[side];
-        emit(contact.x,contact.y+.12,contact.z,-fx*1.4+rx*(side?1:-1)*.45,.5+strength*.4,-fz*1.4+rz*(side?1:-1)*.45,3,strength*(night?.72:1),contact);
+        emit(contact.x,contact.y+.12,contact.z,-fx*direction*1.4+rx*(side?1:-1)*.45,.5+strength*.4,-fz*direction*1.4+rz*(side?1:-1)*.45,3,strength*(night?.72:1),contact);
       }
     }else smokeBudget=0;
     if (activeDrive && !airborne && speed > (dirt ? 12 : 24) && (dirt || braking || sliding || impact > .1)) {
@@ -247,7 +247,7 @@ export function createDrivingEffects() {
           transform.position.set(previous?(contact.x+previous.x)/2:contact.x,previous?(contact.y+previous.y)/2:contact.y,previous?(contact.z+previous.z)/2:contact.z);
           normal.set(contact.nx, contact.ny, contact.nz);
           if(previous)markAlong.set(previous.x-contact.x,previous.y-contact.y,previous.z-contact.z);
-          else markAlong.set(-fx,0,-fz);
+          else markAlong.set(-fx*direction,0,-fz*direction);
           markAlong.addScaledVector(normal,-markAlong.dot(normal)).normalize();
           markAcross.crossVectors(markAlong, normal).normalize();
           basis.makeBasis(markAcross, markAlong, normal); transform.quaternion.setFromRotationMatrix(basis);

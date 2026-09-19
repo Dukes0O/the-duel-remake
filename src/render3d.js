@@ -164,6 +164,8 @@ export function attachRenderer(host, app) {
     const pp = vehicleGroundPoint(course,distance,lateral);
     applyLighting(course.themeAt(distance),1-Math.exp(-dt*1.1),!!course.tunnelAt(distance));
     const tall=carKey==='titan_monster';
+    const speed=Math.abs(st.speedMph);
+    // Keep travel signed for both the live car and recorded reverse ghost poses.
     const wheelTravel = mph => moving ? mph * (DRIVE.mphToWorld || .44704) * dt : 0;
     place(player, pp, 0, wheelTravel(st.speedMph));
     applyVehiclePaint(player,app.getPaintPreset?.(carKey,{menu})??null);
@@ -177,7 +179,7 @@ export function attachRenderer(host, app) {
     const rough = menu ? 0 : st.roughness || 0;
     const motionTime = st.stageTimeSec;
     player.rotation.y += menu ? 0 : (st.headingError || 0) + (st.slipAngle || 0) + (st.crashSpin || 0);
-    player.rotation.z = steering * Math.min(st.speedMph / 160, 1) * .045;
+    player.rotation.z = steering * Math.min(speed / 160, 1) * .045;
     const slope=groundSlope(course,distance,lateral,player.rotation.y-pp.heading);
     player.rotation.x=slope.pitch;player.rotation.z+=slope.roll;
     if (!menu) {
@@ -191,7 +193,8 @@ export function attachRenderer(host, app) {
       player.rotation.x -= hitArc * .18;
       if(st.catastrophic){player.position.y+=.36+Math.sin(Math.min(1,wreckAge/1.25)*Math.PI)*1.4;player.rotation.z+=(st.impactSide||1)*Math.min(wreckAge,1.1)*.56;}
     }
-    for (const lamp of player.userData.brakeLights || []) lamp.material.emissiveIntensity = st.input.brake ? 4 : 1.4;
+    const braking=st.gear===-1?st.input.throttle:st.input.brake;
+    for (const lamp of player.userData.brakeLights || []) lamp.material.emissiveIntensity = braking ? 4 : 1.4;
     for (const flame of player.userData.boostFlames || []) { flame.visible = !!st.boosting && !menu; flame.scale.z = .7 + Math.sin(now * .052) * .3; }
     for (const pivot of player.userData.wheelPivots || []) if (pivot.userData.front) pivot.rotation.y = -steering * .22;
     player.visible = menu || app.cameraMode !== 'hood' || st.catastrophic;
@@ -211,8 +214,8 @@ export function attachRenderer(host, app) {
       camTarget.set(cp.x, cp.y + height + groundLift, cp.z);
       const aim = worldAtExtended(course, distance + (mode === 'hood' ? 42 : 26), lateral);
       lookTarget.set(aim.x, aim.y + (tall?1.65:1.05) + groundLift, aim.z);
-      camera.fov = THREE.MathUtils.damp(camera.fov, 55 + Math.min(st.speedMph / 200, 1) * 10 + (st.boosting ? 7 : 0) + impact * 7, 4, dt);
-      const shake = impact * (st.impactStrength || 0) * .34 + rough * Math.min(st.speedMph / 100, 1) * .10;
+      camera.fov = THREE.MathUtils.damp(camera.fov, 55 + Math.min(speed / 200, 1) * 10 + (st.boosting ? 7 : 0) + impact * 7, 4, dt);
+      const shake = impact * (st.impactStrength || 0) * .34 + rough * Math.min(speed / 100, 1) * .10;
       camTarget.x += Math.sin(motionTime * 81) * shake;
       camTarget.y += Math.cos(motionTime * 93) * shake * .62;
       if(st.catastrophic){

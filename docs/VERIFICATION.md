@@ -2,6 +2,18 @@
 
 Checkpoint: 19 September 2026. The latest vehicle, reward and route iteration is described first. All later sections preserve earlier checkpoints; their counts and screenshots do not describe the latest geometry.
 
+## Reverse driving — latest follow-up
+
+Reverse is available in both transmissions through a deliberate 0.25-second brake hold at rest. It is capped at 22 mph, has opposite steering yaw, cannot boost or over-rev, and must stop before accelerating forward. The R indicator, wheel direction, brake lamps, engine load, dust and ghosts follow signed speed. Rear static and vehicle contacts remain solid. NPCs keep nonnegative forward speeds when yielding to a backing player.
+
+Passing checks: core 446 (`DUEL_SKIP_CAMPAIGNS=1`), reverse 241, reverse presentation 18, audio 392, effects 172, ghosts 86, layout archives 65, NPC routes 17,057, police reset 3, police fines 225, App lifecycle 8, driving rewards 47, race integrity 44, Busted/quit 249, Stunt Trial 44, Drift App 101 and Checkpoint App 80. Four complete F42/Heritage forward replays at 30/144 FPS still match the prior exact per-step signature and 105.67-second result (95 checks).
+
+The core ramp fixture now explicitly marks its second lap as validated, matching the new guard against farming jump rewards before the start or on a previous lap. Backward ghost travel is recorded, but unsnapped teleports in either direction are rejected. Legitimate missed-checkpoint recovery marks a discontinuity. These changes preserve rewards for genuine forward driving.
+
+The memory-only `/tools/reverse-check.html` browser test showed Auto and Manual travelling backward at −22 mph with R and positive 022 MPH on the HUD. Pressing W restored forward movement and forward gears. No browser errors were observed. This page uses only temporary memory and never touches real career storage.
+
+Production and QA builds pass. The live server's current bundle is `index-mwTQ9czz.js`. The existing large-rendering-chunk warning remains. The package now registers 75 commands; this follow-up ran focused suites, not all 75 commands or the full campaign matrices.
+
 ## Heritage unlock and tighter near misses — latest follow-up
 
 All six redesigned original vehicles remain unchanged from `2a36b47`; the cancelled rollback was fully reversed. A read-only Git-filtered blob audit confirmed the builders, six exports, both manifests, exporters and licensed source still match. Falcone Heritage adds the earlier F42 sport body as an independent 1,800 CR unlock. It shares the existing licensed source import with Aurora but not its GT trim. No duplicate asset was added.

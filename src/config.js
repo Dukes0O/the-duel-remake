@@ -151,6 +151,9 @@ export const DRIVE = {
   boundaryReset: 78,     // scenery boundary resets without chassis/life damage
   laneOffset: 3.4,        // center of a lane
   brakeAccel: 52,         // mph/s braking baseline
+  reverseMaxMph: 22,     // low-speed manoeuvring, unaffected by engine upgrades
+  reverseAccel: 14,      // mph/s while holding brake after stopping
+  reverseHoldSec: .25,   // deliberate hold at rest before reverse engages
   dragCoeff: 0.6,         // passive deceleration
   offRoadGrip: 0.74,     // enough steering authority to return from the shoulder
   offRoadScrub: 0.48,

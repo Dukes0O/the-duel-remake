@@ -41,7 +41,7 @@ export class Duel {
       lapTimeSec: 0, lapTimes: [], lapStartedAt: 0, nextLapGate: 0,
       timeLimitSec: null, parTimeSec: null, objective: null, drift: null, checkpointRush: null, timeRemaining: null,
       // driving
-      s: 0, lateral: 0, speedMph: 0, gear: 0, revs: 0, overrevSec: 0, offRoad: false,
+      s: 0, lateral: 0, speedMph: 0, gear: 0, revs: 0, overrevSec: 0, reverseHoldSec: 0, offRoad: false,
       steerVisual: 0, boost: 1, boosting: false, invulnerableSec: 0,
       headingError: 0, yawVelocity: 0, roughness: 0, offRoadTime: 0, preparedGravel: false, slipAngle: 0, drifting: false,
       impactTimer: 0, impactDuration: 0, impactStrength: 0, impactSide: 1, crashSpin: 0,
@@ -149,7 +149,7 @@ export class Duel {
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     const rawGates = this.course.features.lapGates?.map(gate => typeof gate === 'number' ? gate : gate.s) || [this.course.length * .25, this.course.length * .5, this.course.length * .75];
     this._lapGates = [...new Set(rawGates.filter(distance => distance > 0 && distance < this.course.length))].sort((a, b) => a - b);
-    s.s = 0; s.lateral = 0; s.speedMph = 0; s.gear = 0; s.revs = 0; s.overrevSec = 0;
+    s.s = 0; s.lateral = 0; s.speedMph = 0; s.gear = 0; s.revs = 0; s.overrevSec = 0; s.reverseHoldSec = 0;
     s.paused = false; s.offRoad = false; s.steerVisual = 0;
     s.boost = 1; s.boosting = false; s.invulnerableSec = 0;
     s.headingError = 0; s.yawVelocity = 0; s.roughness = 0; s.offRoadTime = 0; s.preparedGravel = false;
@@ -317,28 +317,45 @@ export class Duel {
     s.prevLateral = s.lateral;
     s.prevAirHeight = s.airHeight || 0;
     const previousGear = s.gear;
-    // gearbox
-    const gmax = car.gears[s.gear];
-    s.revs = gmax ? s.speedMph / gmax : 0;
-    if (d.autoShift) {
+    // S / Down / LT brakes first, then backs up after a deliberate hold at
+    // rest. This works in both transmissions; Q/E still shift forward gears.
+    // Signed speed preserves the chassis heading while travelling backwards.
+    if (s.speedMph < 0) s.gear = -1;
+    else if (s.speedMph > 0 && s.gear < 0) s.gear = 0;
+    if (s.gear >= 0 && s.speedMph === 0 && s.input.brake > .1 && s.input.throttle === 0) {
+      s.reverseHoldSec += dt;
+      if (s.reverseHoldSec + 1e-9 >= DRIVE.reverseHoldSec) s.gear = -1;
+    } else s.reverseHoldSec = 0;
+    const reversing = s.gear < 0;
+    const gmax = reversing ? DRIVE.reverseMaxMph : car.gears[s.gear];
+    s.revs = gmax ? Math.abs(s.speedMph) / gmax : 0;
+    if (!reversing && d.autoShift) {
       if (s.revs > 0.96 && s.gear < car.gears.length - 1) s.gear++;
       else if (s.revs < 0.55 && s.gear > 0) s.gear--;
-    } else {
+    } else if (!reversing) {
       if (s.input.shiftUp && s.gear < car.gears.length - 1) s.gear++;
       if (s.input.shiftDown && s.gear > 0) s.gear--;
     }
     s.input.shiftUp = s.input.shiftDown = false;
-    if (s.gear !== previousGear) this.emit({ shift: s.gear });
 
     // acceleration limited by the current gear's max speed
-    const gearMax = car.gears[s.gear];
+    const gearMax = reversing ? DRIVE.reverseMaxMph : car.gears[s.gear];
     const accelFactor = Math.max(0.15, 1 - Math.max(0, s.revs - 0.5)); // falls off near redline
-    if (s.input.throttle > 0) {
-      const ceil = Math.min(car.topSpeed, gearMax * DRIVE.gearCeilFrac);
-      if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * DRIVE.accelScale;
+    if (reversing) {
+      if (s.input.throttle > 0) {
+        s.speedMph = Math.min(0, s.speedMph + DRIVE.brakeAccel * car.braking * s.input.throttle * dt);
+        if (s.speedMph === 0) { s.gear = 0; s.reverseHoldSec = 0; }
+      } else if (s.input.brake > 0) s.speedMph -= DRIVE.reverseAccel * s.input.brake * dt;
+      s.speedMph = Math.min(0, s.speedMph + DRIVE.dragCoeff * dt * (s.input.brake > 0 && s.input.throttle === 0 ? .2 : 1));
+    } else {
+      if (s.input.throttle > 0) {
+        const ceil = Math.min(car.topSpeed, gearMax * DRIVE.gearCeilFrac);
+        if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * DRIVE.accelScale;
+      }
+      if (s.input.brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * s.input.brake * dt;
+      s.speedMph = Math.max(0, s.speedMph - DRIVE.dragCoeff * dt * (s.input.throttle > 0 ? 0.2 : 1));
     }
-    if (s.input.brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * s.input.brake * dt;
-    s.speedMph -= DRIVE.dragCoeff * dt * (s.input.throttle > 0 ? 0.2 : 1);
+    if (s.gear !== previousGear) this.emit({ shift: s.gear });
 
     const wasBoosting = s.boosting;
     const surface = this._drivingSurface(s.s, s.lateral, car);
@@ -357,7 +374,7 @@ export class Duel {
 
     // engine blow if you ride the limiter on a Pro manual — the threshold sits
     // below the gear ceiling so holding throttle without upshifting gets there
-    if (!d.autoShift && d.engineBlow && s.revs > DRIVE.overRevFrac && s.input.throttle > 0) {
+    if (!reversing && !d.autoShift && d.engineBlow && s.revs > DRIVE.overRevFrac && s.input.throttle > 0) {
       s.overrevSec += dt;
       if (s.overrevSec > DRIVE.overRevBlowSec) { this._crash('engine_blew'); return; }
     } else {
@@ -376,7 +393,7 @@ export class Duel {
     s.roughness += (roughTarget - s.roughness) * (1 - Math.exp(-8 * dt));
     const traction = surface.traction;
     s.steerVisual += (s.input.steer - s.steerVisual) * (1 - Math.exp(-DRIVE.steerResponse * dt));
-    const targetYaw = -s.steerVisual * steeringYawAuthority(s.speedMph, car.grip, traction);
+    const targetYaw = -s.steerVisual * steeringYawAuthority(Math.abs(s.speedMph), car.grip, traction) * (s.speedMph < 0 ? -1 : 1);
     s.yawVelocity += (targetYaw - s.yawVelocity) * (1 - Math.exp(-DRIVE.yawResponse * dt));
     // The nose turns first while momentum carries the rear outward. A short
     // release or counter-steer settles the slide without steering toward the road.
@@ -394,8 +411,8 @@ export class Duel {
 
     const speedCap = s.boosting ? car.topSpeed * boostTopSpeed : car.topSpeed;
     if (!s.boosting && s.speedMph > speedCap) s.speedMph -= 22 * dt;
-    s.speedMph = Math.max(0, Math.min(car.topSpeed * boostTopSpeed, s.speedMph));
-    s.revs = s.speedMph / car.gears[s.gear];
+    s.speedMph = Math.max(-DRIVE.reverseMaxMph, Math.min(car.topSpeed * boostTopSpeed, s.speedMph));
+    s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[s.gear]);
     const metresPerSec = s.speedMph * DRIVE.mphToWorld;
     const forward = Math.max(0, Math.cos(s.headingError)) * metresPerSec * dt;
     // Inside a bend, a metre of physical travel covers more centreline progress.
@@ -513,10 +530,10 @@ export class Duel {
       if (player) this._breakDrift('hit');
       const { nx, nz, t, penetration, obstacle } = first;
       const dx = end.x - start.x, dz = end.z - start.z;
-      const incoming = Math.max(0, -(Math.sin(travelHeading) * nx + Math.cos(travelHeading) * nz));
+      const incoming = Math.max(0, -(Math.sin(travelHeading) * nx + Math.cos(travelHeading) * nz) * (car.speedMph < 0 ? -1 : 1));
       const roadHeading = this.course.at(car.s).heading;
       const pushNormal = Math.cos(roadHeading) * nx - Math.sin(roadHeading) * nz;
-      const impactMph = car.speedMph * incoming + Math.max(0, -(car.pushVelocity || 0) * pushNormal) / DRIVE.mphToWorld;
+      const impactMph = Math.abs(car.speedMph) * incoming + Math.max(0, -(car.pushVelocity || 0) * pushNormal) / DRIVE.mphToWorld;
       const zone = contactZone(nx, nz, heading);
       // Stop the normal component at the first contact; allow the unused
       // tangential movement to slide along the wall instead of sticking.
@@ -563,7 +580,7 @@ export class Duel {
     // A rival arriving from behind must yield to a player who cuts in.
     // Resolve late contacts even if there was too little room to brake first:
     // the CPU moves back and loses speed; the player's run remains intact.
-    if (a === this.state && (b === this.state.rival || b === this.state.police.pursuit) && nz > 0 && (b.dir || 1) > 0 && Math.cos(a.headingError || 0) > 0) {
+    if (a === this.state && a.speedMph >= 0 && (b === this.state.rival || b === this.state.police.pursuit) && nz > 0 && (b.dir || 1) > 0 && Math.cos(a.headingError || 0) > 0) {
       b.s = Math.min(b.s, a.s - phase - length - .15);
       const forwardMph = Math.max(0, a.speedMph * Math.cos(a.headingError || 0));
       b.speedMph = Math.min(b.speedMph, forwardMph * .94);
@@ -589,9 +606,11 @@ export class Duel {
       a.speedMph *= .992; b.speedMph *= .985;
       if (a === this.state && impactMph > 3 && this.state.invulnerableSec <= 0) this._scrape(zone, impactMph);
     } else if (impactMph > 0) {
-      const combined = Math.max(0, (vaZ * specA.mass + vbZ * specB.mass) / (specA.mass + specB.mass));
+      const backingPlayer = a === this.state && a.speedMph < 0;
+      const momentum = (vaZ * specA.mass + vbZ * specB.mass) / (specA.mass + specB.mass);
+      const combined = backingPlayer ? momentum : Math.max(0, momentum);
       a.speedMph = (a.dir || 1) > 0 ? combined : Math.abs(combined);
-      b.speedMph = (b.dir || 1) > 0 ? combined : Math.abs(combined);
+      b.speedMph = backingPlayer ? Math.max(0, combined * (b.dir || 1)) : (b.dir || 1) > 0 ? combined : Math.abs(combined);
       if (a === this.state && this.state.invulnerableSec <= 0 && impactMph >= 28) this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
       else if (a === this.state && this.state.invulnerableSec <= 0 && impactMph > 4) this._scrape(zone, impactMph);
     }
@@ -663,13 +682,13 @@ export class Duel {
       }
     }
     car.s = car.prevS = chosen.s; car.lateral = car.prevLateral = chosen.lateral;
-    car.speedMph = Math.min(28, car.speedMph * .4);
+    car.speedMph = Math.max(0, Math.min(28, car.speedMph * .4));
     car.headingError = 0; car.yawVelocity = 0; car.pushVelocity = 0; car.slipAngle = 0; car.drifting = false;
     car.offRoad = false; car.offRoadTime = 0; car.roughness = 0; car.boosting = false;
     car.steerVisual = 0;
     car.routeId = null; car.routeLap = null; this._npcRoutePlanner?.reset(car);
     car.airborne = false; car.airHeight = 0; car._jumpY = null; car._verticalSpeed = 0; car._jumpOrigin = null;
-    if (car === this.state) { car.gear = 0; car.revs = car.speedMph / this.car.gears[0]; car.overrevSec = 0; }
+    if (car === this.state) { car.gear = 0; car.revs = car.speedMph / this.car.gears[0]; car.overrevSec = 0; car.reverseHoldSec = 0; }
   }
 
   _flockBonuses() {
@@ -749,6 +768,7 @@ export class Duel {
     // Stay near a fleeing off-road driver instead of overtaking on the main
     // road and teleporting sideways through the intervening buildings.
     if (lead < 14 && !cutIn) target = Math.min(target, Math.max(0, playerForward + (lead - 8) * 1.5));
+    target = Math.max(0, target);
     cruiser.braking = cruiser.speedMph > target;
     const braking = cruiser.yieldingToPlayer ? lead < 20 ? 190 : 110 : 65;
     cruiser.speedMph += clamp(target - cruiser.speedMph, -braking * dt, 32 * dt);
@@ -919,6 +939,7 @@ export class Duel {
       target = Math.min(target, playerForwardMph * (.7 + .3 * spacing));
       r.braking = r.speedMph > target;
     }
+    target = Math.max(0, target);
     if (r.braking) r.speedMph = Math.max(target, r.speedMph - (lead < 18 ? 190 : 110) * dt);
     else r.speedMph += clamp(target - r.speedMph, -DRIVE.brakeAccel * car.braking * dt, car.accel * DRIVE.accelScale * .85 * dt);
     if (r.offRoad) r.speedMph *= Math.exp(-rivalSurface.scrub * dt * (rivalSurface.preparedGravel ? .25 : 1));
@@ -948,7 +969,7 @@ export class Duel {
     if (r.completedLaps >= s.lapsTotal) { r.finished = true; r.finishTime = s.stageTimeSec; this.emit({ rivalFinished: true }); }
   }
 
-  _crash(reason, side = 0, impactMph = this.state.speedMph, zone = 'front') {
+  _crash(reason, side = 0, impactMph = Math.abs(this.state.speedMph), zone = 'front') {
     const s = this.state;
     if (s.impactTimer > 0 || s.status !== 'racing') return;
     this._breakDrift('hit');
@@ -976,7 +997,8 @@ export class Duel {
     s.crashSpin = 0;
     s.slipAngle = 0; s.drifting = false;
     s.invulnerableSec = s.impactDuration + DRIVE.recoverySec;
-    s.speedMph = Math.min(DRIVE.crashSpeedCapMph, s.speedMph * .3);
+    s.speedMph = clamp(s.speedMph * .3, -DRIVE.crashSpeedCapMph, DRIVE.crashSpeedCapMph);
+    s.gear = s.speedMph < 0 ? -1 : Math.max(0, s.gear); s.reverseHoldSec = 0;
     this._callout(reason === 'engine_blew' ? 'ENGINE FAILURE. SHIFT EARLIER.' : `IMPACT  /  +${penalty} SECONDS`, 2.8);
     this.emit({ crash: reason, livesLeft: s.lives, strength: s.impactStrength, side: s.impactSide, zone, explosion: s.catastrophic });
     if (!recoverable && (s.lives <= 0 || s.catastrophic)) {
@@ -1001,7 +1023,7 @@ export class Duel {
     s.crashSpin += s.impactSide * s.impactStrength * 5 * remaining * dt;
     s.lateral += s.impactSide * s.speedMph * DRIVE.mphToWorld * .15 * remaining * dt;
     s.s = Math.min(this.raceLength - 1, s.s + s.speedMph * DRIVE.mphToWorld * .3 * dt);
-    s.revs = s.speedMph / this.car.gears[s.gear];
+    s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : this.car.gears[s.gear]);
     s.roughness = Math.max(s.roughness, remaining * s.impactStrength);
     this._staticContacts(s, true);
     if (s.impactTimer === 0 && s.status === 'racing') {
@@ -1084,7 +1106,7 @@ export class Duel {
     if (actor._jumpY > ground) return;
     actor._jumpY = ground; actor._verticalSpeed = 0; actor.airborne = false; actor.airHeight = 0;
     const origin = actor._jumpOrigin; actor._jumpOrigin = null;
-    if (actor !== this.state || !origin) return;
+    if (actor !== this.state || !origin || origin.lap !== actor.completedLaps + 1 || origin.s < actor.completedLaps * this.course.length) return;
     const key = `${origin.rampId}:lap-${origin.lap}`;
     if (actor.collectedJumps.includes(key)) return;
     const landing = this.course.worldAt(actor.s, actor.lateral), distance = Math.hypot(landing.x - origin.world.x, landing.z - origin.world.z);

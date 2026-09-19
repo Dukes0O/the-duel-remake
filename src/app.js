@@ -68,7 +68,7 @@ export class App {
       else if(event.gameover)this._settleResult(state.results||{},state);
       if(event.stageLoaded!=null){this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;this._startGhostStage(state);}
       if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);}
-      if(event.boundaryReset||event.recovered)this.ghostRecorder?.discontinuity();
+      if(event.boundaryReset||event.recovered||event.checkpointReset)this.ghostRecorder?.discontinuity();
     });
     this._gamepadButtons = [];
     this._stepAccumulator = 0;
@@ -558,8 +558,8 @@ export class App {
       get duel() { return a.duel; },
       get state() { return a.duel.state; },
       get stage() { return { index: a.duel.state.stageIndex, name: a.duel.stageDef.name }; },
-      get speed() { return Math.round(a.duel.state.speedMph); },
-      get gear() { return a.duel.state.gear + 1; },
+      get speed() { return Math.round(Math.abs(a.duel.state.speedMph)); },
+      get gear() { return a.duel.state.gear < 0 ? 'R' : a.duel.state.gear + 1; },
       get lives() { return a.duel.state.lives; },
       get penalties() { return Math.round(a.duel.state.penaltySec); },
       get status() { return a.duel.state.status; },

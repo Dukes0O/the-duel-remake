@@ -11,8 +11,12 @@ const validId=id=>typeof id==='string'&&/^[\w-]{1,80}$/.test(id);
 const currentRecord=record=>{const stageIndex=COURSE.findIndex((stage,index)=>stageEventId(index)===record.eventId),stage=COURSE[stageIndex];return !!stage&&record.layoutVersion===(stage.layoutVersion??1)&&record.laps===(stage.laps||2)&&record.key===ghostKey(record.playerId,{...record,stageIndex});};
 function validSamples(samples,timeSec,raceLength){
   if(!Array.isArray(samples)||samples.length<12||samples.length>MAX_GHOST_SAMPLES)return false;
+  // A driver may reverse through the start and onto the preceding circuit.
+  // Keep the old 80m recovery allowance, plus the most reverse travel physically
+  // possible during this recording. Forward bounds remain unchanged.
+  const minPosition=-(timeSec*DRIVE.reverseMaxMph*DRIVE.mphToWorld+80)*100;
   let prior=-1;
-  for(const row of samples){if(!Array.isArray(row)||row.length!==7||!row.every(Number.isSafeInteger)||row[0]<=prior||row[0]<0||row[0]>(timeSec+.03)*1000||row[1]<-8000||row[1]>(raceLength+24)*100||Math.abs(row[2])>18000||Math.abs(row[3])>400000||row[4]<0||row[4]>10000||row[5]<0||row[5]>5000||![0,1].includes(row[6]))return false;prior=row[0];}
+  for(const row of samples){if(!Array.isArray(row)||row.length!==7||!row.every(Number.isSafeInteger)||row[0]<=prior||row[0]<0||row[0]>(timeSec+.03)*1000||row[1]<minPosition||row[1]>(raceLength+24)*100||Math.abs(row[2])>18000||Math.abs(row[3])>400000||row[4]<0||row[4]>10000||Math.abs(row[5])>5000||![0,1].includes(row[6]))return false;prior=row[0];}
   return samples[0][0]===0&&Math.abs(samples[0][1])<=300&&Math.abs(samples.at(-1)[0]-timeSec*1000)<=30&&samples.at(-1)[1]>=raceLength*100-10;
 }
 function normalizeRecord(row){
@@ -51,7 +55,7 @@ export function storeGhost(store,record){
 function pack(state,snap=false){
   const values=[clock(state),state.s,state.lateral??0,(state.headingError??0)+(state.slipAngle??0)+(state.crashSpin??0),state.airHeight??0,state.speedMph??0];
   if(!values.every(Number.isFinite))return null;
-  return [round(values[0],1000),round(values[1],100),round(values[2],100),round(values[3],10000),round(Math.max(0,values[4]),100),round(Math.max(0,values[5]),10),snap?1:0];
+  return [round(values[0],1000),round(values[1],100),round(values[2],100),round(values[3],10000),round(Math.max(0,values[4]),100),round(values[5],10),snap?1:0];
 }
 export class GhostRecorder {
   constructor(context){this.context={...context,upgrades:{...context.upgrades}};this.samples=[];this.interval=.2;this.next=0;this.previous=null;this.previousClock=null;this.invalid=false;this.pendingSnap=false;}
@@ -72,7 +76,7 @@ export class GhostRecorder {
     const now=clock(state),row=pack(state);if(!row){this.invalid=true;return;}
     const delta=this.previousClock==null?0:now-this.previousClock;
     if(delta<-.001){this.invalid=true;return;}
-    if(this.previous&&delta>0&&!this.pendingSnap&&state.s-this.previous[1]/100>Math.max(20,(state.speedMph||0)*DRIVE.mphToWorld*delta*4+12)){this.invalid=true;return;}
+    if(this.previous&&delta>0&&!this.pendingSnap&&Math.abs(state.s-this.previous[1]/100)>Math.max(20,Math.abs(state.speedMph||0)*DRIVE.mphToWorld*delta*4+12)){this.invalid=true;return;}
     const snap=this.pendingSnap||delta>.75;
     if(snap&&this.previous){this._append([...this.previous]);row[6]=1;}
     if(!this.samples.length||now+1e-6>=this.next||snap||final){this._append(row);this.next=now+this.interval;}

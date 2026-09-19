@@ -120,6 +120,24 @@ for(const failed of [new Set(),new Set(['*'])]){
   check(heritage.audio.carVoice===f42.audio.carVoice,`${failed.size?'fallback':'recorded'} Heritage uses the same F42 voice definition, including shift/throttle accents`);
 }
 check(['engine','idle','loadLow','loadMid','loadHigh','coast'].every(key=>audio.samples[key].body&&audio.samples[key].intake),'every recorded engine loop supplies filtered exhaust body and intake detail');
+// Equal speed magnitudes and equivalent pedals must feed the same audio mix.
+// S/LT loads reverse; W/RT brakes it. Neither is a negative audio parameter.
+{
+  const forward=await makeAudio(),reverse=await makeAudio();
+  for(const cameraMode of ['chase','hood','wide'])for(const looseSurface of [false,true])for(const [throttle,brake]of [[1,0],[0,0],[0,1]]){
+    const environment={cameraMode,looseSurface,biome:'coast',tunnel:looseSurface?0:1};
+    for(const [item,gear,speedMph,input]of [[forward,0,22,{throttle,brake}],[reverse,-1,-22,{throttle:brake,brake:throttle}]]){
+      item.context.advance(.1);item.audio.update(state({gear,speedMph,revs:.45,roughness:.7,input}),environment);
+    }
+    assert.deepEqual(audioSnapshot(reverse.audio),audioSnapshot(forward.audio));checks++;
+    check(reverse.audio.ambience.coast.gain.gain.value===forward.audio.ambience.coast.gain.gain.value,'reverse speed and throttle duck exterior ambience by their magnitudes');
+    check(reverse.audio.samples.squeal.gain.gain.value===0,'straight low-speed reversing and stopping do not falsely trigger tire squeal');
+    check(reverse.context.nodes.every(node=>['frequency','playbackRate','gain'].every(key=>!node[key]||node[key].value>=0)),'reverse keeps every audio gain, frequency and sample rate nonnegative');
+    if(looseSurface)check(reverse.audio.gravel.gain.gain.value>0,'backing across loose terrain keeps a quiet rolling gravel bed');
+  }
+  reverse.context.advance(.1);reverse.audio.update(state({gear:-1,speedMph:0,revs:.18,input:{throttle:0,brake:0}}));
+  check(reverse.audio.wind.gain.gain.value===0&&reverse.audio.tires.gain.gain.value===0&&reverse.audio.gravel.gain.gain.value===0,'stopped reverse is silent at the tires');
+}
 context.advance(.2);audio.update(state({car:'banshee_muscle',revs:.72,input:{throttle:1,brake:0}}));const muscleBody=audio.samples.loadMid.body.gain.gain.value,muscleIntake=audio.samples.loadMid.intake.gain.gain.value;
 context.advance(.2);audio.update(state({car:'viper_proto',revs:.72,input:{throttle:1,brake:0}}));check(muscleBody>audio.samples.loadMid.body.gain.gain.value,'muscle-car mix carries more low exhaust body than the prototype');check(audio.samples.loadMid.intake.gain.gain.value>muscleIntake,'prototype mix carries more recorded intake detail than the muscle car');
 context.advance(.2);audio.update(state({car:'viper_proto',revs:.72,input:{throttle:1,brake:0}}),{cameraMode:'chase'});const chaseIntake=audio.samples.loadMid.intake.gain.gain.value;

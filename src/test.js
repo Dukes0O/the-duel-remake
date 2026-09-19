@@ -911,7 +911,10 @@ function crossGate(duel, actor, gate, lateral = 0) {
   ok(s.jumpScore>100&&s.bestJumpMeters>25,'jump distance produces a meaningful style score');
   eq(events.filter(event=>event.jumpLanded).length,1,'landing emits one distance event');
   const points=s.jumpScore;jump(0);eq(s.jumpScore,points,'revisiting the same ramp on one lap cannot farm points');
-  jump(1);eq(s.jumps,2,'the same ramp can reward a new lap');
+  jump(-1);eq(s.jumps,1,'reversing before the start cannot create a lap-zero jump reward');
+  jump(1);eq(s.jumps,1,'jumping ahead without a validated lap cannot create another reward');
+  s.completedLaps=1;jump(1);eq(s.jumps,2,'the same ramp can reward a new validated lap');
+  jump(0);eq(s.jumps,2,'returning to a previous lap cannot create another jump reward');
   eq(s.lives,LIVES.start,'a clean jump and landing never cause crash damage');
   const contact=collisionArena(),a=contact.state;a.car='titan_monster';a.airborne=true;a.airHeight=5;a.prevS=90;a.s=115;a.speedMph=90;
   contact.course.groundAt=(distance,lateral)=>({x:lateral,y:0,z:distance});

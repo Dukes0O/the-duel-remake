@@ -14,6 +14,7 @@ Open **http://localhost:5174/**. Use Node.js 22.12 or later. Runtime assets are 
 | Action | Keyboard | Standard gamepad |
 | --- | --- | --- |
 | Throttle / brake | W / S or Up / Down | Right / left trigger |
+| Reverse from a stop | Hold S or Down | Hold left trigger |
 | Steer | A / D or Left / Right | Left stick |
 | Boost | Space | Bottom face button |
 | Shift down / up with manual transmission | Q / E | Left / right bumper |
@@ -23,6 +24,8 @@ Open **http://localhost:5174/**. Use Node.js 22.12 or later. Runtime assets are 
 | Mute | M | Sound control |
 
 Audio starts after a click or key press. The game pauses when the window loses focus. Automatic and manual transmission are separate from Easy, Medium and Hard CPU difficulty. Keyboard or gamepad is required for driving.
+
+Hold the brake for a quarter-second after stopping to select reverse in either transmission. The gear display shows **R** and reverse speed is capped at 22 mph. Press accelerate to brake while reversing, then move forward in first gear. Q/E shifts forward gears only. Nitro is unavailable in reverse.
 
 ## Events
 

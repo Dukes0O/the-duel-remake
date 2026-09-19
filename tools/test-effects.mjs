@@ -215,4 +215,25 @@ function driftRun(fps,seconds,{night=false}={}){
     fx.dispose();
   }
 }
-console.log(`Driving effects: ${checks} terrain, connected tracks, smoke frame-rate, suppression, sprite-alpha, pause, reset and disposal checks passed.`);
+{
+  for(const speedMph of [-22,-12,0]){
+    const course=surface(),fx=createDrivingEffects(),s=state({gear:-1,speedMph,input:{throttle:0,brake:1}});
+    for(let frame=0;frame<30;frame++){s.s+=speedMph*.44704/60;fx.update({p:course.groundAt(s.s,0),state:s,dt:1/60,course});}
+    const {particles,marks}=arrays(fx);
+    check(particles.geometry.attributes.particleAlpha.array.every(alpha=>alpha===0)&&marks.geometry.attributes.markAlpha.array.every(alpha=>alpha===0),'normal reverse acceleration cannot create false skid marks or tire smoke');
+    check(Object.values(particles.geometry.attributes).every(attribute=>attribute.array.every(Number.isFinite)),'low-speed reverse and stopped effects remain finite');fx.dispose();
+  }
+  for(const direction of [-1,1]){
+    const original=Math.random;Math.random=()=>.5;
+    try{
+      const course=surface({dirt:true}),fx=createDrivingEffects(),s=state({gear:direction<0?-1:0,speedMph:direction*22,offRoad:true,input:direction<0?{throttle:0,brake:1}:{throttle:1,brake:0}});
+      fx.update({p:course.groundAt(s.s,0),state:s,dt:.06,course});
+      const {particles,marks}=arrays(fx),a=particles.geometry.attributes,live=Array.from(a.particleAlpha.array,(_,i)=>i).filter(i=>a.particleAlpha.array[i]>0);
+      check(live.length>0&&live.every(i=>(a.position.array[i*3+2]-(s.s-1.4))*direction<0),'dirt trails opposite actual forward or reverse travel');
+      check(marks.geometry.attributes.markAlpha.array.some(alpha=>alpha>0),'reverse dirt tires can leave a grounded tread track');
+      for(let frame=0;frame<60;frame++){s.s+=s.speedMph*.44704/60;fx.update({p:course.groundAt(s.s,0),state:s,dt:1/60,course});}
+      check(Object.values(a).every(attribute=>attribute.array.every(Number.isFinite))&&marks.instanceMatrix.array.every(Number.isFinite),'moving reverse dirt particles and tracks remain finite');fx.dispose();
+    }finally{Math.random=original;}
+  }
+}
+console.log(`Driving effects: ${checks} terrain, connected tracks, smoke frame-rate, reverse, suppression, sprite-alpha, pause, reset and disposal checks passed.`);

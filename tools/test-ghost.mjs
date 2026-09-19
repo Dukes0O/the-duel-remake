@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {App} from '../src/app.js';
-import {COURSE} from '../src/config.js';
+import {COURSE,DRIVE} from '../src/config.js';
 import {getUpgradeLevels,createProfile,bestKey} from '../src/progression.js';
 import {GHOST_KEY,MAX_GHOSTS,MAX_GHOST_SAMPLES,MAX_GHOST_BYTES,GhostRecorder,ghostKey,createGhostStore,normalizeGhostStore,loadGhosts,saveGhosts,readGhostEnabled,saveGhostEnabled,findGhost,mergeGhostStores,storeGhost,sampleGhost} from '../src/ghost.js';
 let count=0;const check=(value,message)=>{assert(value,message);count++;};
@@ -28,6 +28,25 @@ const gap={...record,timeSec:9,samples:[[0,0,0,31000,0,600,0],[1000,1000,100,310
 check(sampleGhost(gap,4).s===10&&sampleGhost(gap,7.999).lateral===1,'penalty gap holds the earlier pose');check(sampleGhost(gap,8).s===30&&sampleGhost(gap,8).lateral===4,'penalty end snaps to the recorded position');check(sampleGhost(gap,8.5).s===35,'ordinary intervals interpolate');check(sampleGhost(gap,9.01)===null&&sampleGhost(gap,-1)===null,'ghost does not continue beyond its saved run');
 const wrap={...gap,timeSec:1,samples:[[0,0,0,31000,0,0,0],[1000,100,0,-31000,0,0,0]]};check(Math.abs(sampleGhost(wrap,.5).headingError-Math.PI)<.001,'yaw interpolates over the short circular arc');const out={};check(sampleGhost(gap,.5,out)===out,'playback reuses a renderer-owned pose buffer');
 const long=run(650);check(long.record&&long.record.samples.length<=MAX_GHOST_SAMPLES,'long run thins samples within the limit');check(long.record.samples.at(-1)[1]===Math.round(length*100),'thinning retains the finishing position');
+// Signed speed is part of playback, so the ghost moves and spins its wheels
+// backward during a real reverse segment. More than 80m before the start is a
+// legal circuit coordinate; the completed recording still needs both laps.
+const reverseRecorder=new GhostRecorder(context),reverseState={...base.state,s:0,stageTimeSec:0,speedMph:-DRIVE.reverseMaxMph};
+const reverseSeconds=15,backwards=reverseSeconds*DRIVE.reverseMaxMph*DRIVE.mphToWorld,forwardSeconds=120,totalSeconds=reverseSeconds+forwardSeconds;
+for(let i=0;i<=reverseSeconds*10;i++){reverseState.stageTimeSec=i/10;reverseState.s=-i/10*DRIVE.reverseMaxMph*DRIVE.mphToWorld;reverseRecorder.observe(reverseState);}
+check(reverseState.s<-80&&!reverseRecorder.invalid,'Physical reversing beyond the old start bound remains recordable');
+reverseState.speedMph=(length+backwards)/forwardSeconds/DRIVE.mphToWorld;
+for(let i=1;i<=forwardSeconds*10;i++){reverseState.stageTimeSec=reverseSeconds+i/10;reverseState.s=-backwards+(length+backwards)*i/(forwardSeconds*10);reverseRecorder.observe(reverseState);}
+const reversed=reverseRecorder.finish({...base.result,timeSec:totalSeconds},reverseState,player);
+check(!!reversed&&reversed.samples.some(row=>row[1]<-8000&&row[5]<0),'Valid finish keeps negative positions and signed reverse speed');
+check(sampleGhost(reversed,5).s<sampleGhost(reversed,4).s&&sampleGhost(reversed,5).speedMph===-DRIVE.reverseMaxMph,'Playback preserves backward travel and wheel direction');
+check(normalizeGhostStore({version:1,records:[reversed]}).records.length===1,'Signed reverse recording survives normalization');
+check(normalizeGhostStore({version:1,records:[record]}).records.length===1,'Legacy forward-only recordings remain compatible');
+const reverseStorage=new Map(),reverseMemory={getItem:key=>reverseStorage.get(key)??null,setItem:(key,value)=>reverseStorage.set(key,value)};
+check(saveGhosts({version:1,records:[reversed]},reverseMemory)&&loadGhosts(reverseMemory).records[0].samples.some(row=>row[5]<0),'Signed reverse recording survives persistence');
+rec=new GhostRecorder(context);rec.observe({...base.state,s:0,stageTimeSec:0,speedMph:-DRIVE.reverseMaxMph});rec.observe({...base.state,s:-100,stageTimeSec:.01,speedMph:-DRIVE.reverseMaxMph});check(rec.invalid,'Impossible backward teleport is rejected without a reset event');
+rec=new GhostRecorder(context);rec.observe({...base.state,s:0,stageTimeSec:0,speedMph:-DRIVE.reverseMaxMph});rec.discontinuity();rec.observe({...base.state,s:-100,stageTimeSec:.2,speedMph:0});check(!rec.invalid&&rec.samples.at(-1)[6]===1,'Explicit backward recovery remains a snap, not a teleport');
+for(const mutate of[r=>r.samples[2][5]=-5001,r=>r.samples[2][1]=Math.floor(-(r.timeSec*DRIVE.reverseMaxMph*DRIVE.mphToWorld+80)*100)-1]){const bad=structuredClone(reversed);mutate(bad);check(normalizeGhostStore({version:1,records:[bad]}).records.length===0,'Signed samples still enforce speed and physical reverse coordinate limits');}
 for(const mutate of [r=>r.layoutVersion++,r=>r.laps=1,r=>r.samples[1][0]=0,r=>r.samples[2][2]=Infinity,r=>r.samples.at(-1)[1]=100,r=>r.samples[0][0]=10,r=>r.timeSec=NaN]){const bad=structuredClone(record);mutate(bad);check(normalizeGhostStore({version:1,records:[bad]}).records.length===0,'malformed or incompatible storage rejected');}
 const extras=normalizeGhostStore({version:1,records:[{...record,untrustedExtra:'x'.repeat(10000)}]});check(!Object.hasOwn(extras.records[0],'untrustedExtra'),'unknown stored fields are discarded');
 const many=Array.from({length:15},(_,i)=>{const row={...long.record,seed:i,lastUsedAt:i,recordedAt:i};row.key=ghostKey(row.playerId,row);return row;});store=normalizeGhostStore({version:1,records:many});check(store.records.length===MAX_GHOSTS,'store caps recording count');check(store.records[0].seed===14&&store.records.at(-1).seed===3,'least recently used runs are pruned first');check(new TextEncoder().encode(JSON.stringify(store)).length<=MAX_GHOST_BYTES,'serialized store remains within byte cap');check(mergeGhostStores({version:1,records:[record]},{version:1,records:[quicker]}).records[0].timeSec===115,'cross-tab merge retains faster record');
