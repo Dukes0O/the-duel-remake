@@ -96,6 +96,12 @@ Rigid visual chassis can still span sharp crests with roughly −4 to +6.5 cm ti
 
 No online accounts or sync are planned: local players are the accepted requirement. Existing concrete gameplay requests are implemented; the items above are quality/production work, not claims of finished AAA fidelity.
 
-## Stop condition fulfilled
+## Audio continuation after quota override
 
-The usage tool reported 95% used, 5% remaining. The session stopped feature work and completed verification/handoff. Future work should start from this working tree and this document; do not repeat the full campaign matrix unless gameplay changes or a new failure justify it. Do not redeem a reset credit without the user's explicit confirmation.
+The next task initially stopped at the saved 5% boundary. The user then explicitly said to continue. No reset credit was redeemed; the weekly window subsequently reset to 0% used during the work.
+
+The continuation focuses on sound. Existing licensed engine recordings now have separate filtered exhaust-body and intake paths with car-specific balance. Gear changes smoothly unload and recover all recorded layers. Hood, chase and wide cameras change the vehicle perspective. Normal asphalt travel has a quiet rolling bed, recorded squeal fades in from meaningful slip without the former rapid pitch wobble, and the in-race synthesized sequencer is quieter. Loose-surface, airborne, tunnel, pause, mute and failure behavior is preserved. No audio asset, licence, runtime dependency, progression rule or save format changed.
+
+Current validation: 248 audio/PCM checks and 301,448 finite commands; 70 App/progression assertions; 481 core checks, 60 campaigns and 180/180 stage wins; production and QA builds; clean browser decoding and runs for Pacific, Midnight Muscle Chase and Neon Drift Trial on isolated port 5176. The browser reported all samples and ambience ready and no warnings/errors. The QA page and port 5176 development server were left available for the user's listening review. This is not a claimed human listening pass.
+
+Next sound priority is subjective tuning on headphones and speakers: acceleration transitions, shift weight, steady cruise, tire onset, gravel balance and the three camera perspectives. If shared source character still makes the cars feel too similar, the next material step is separately licensed RPM/load/coast recordings for each broad vehicle class. Do not redeem a reset credit without explicit confirmation.

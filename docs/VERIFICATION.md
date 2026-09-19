@@ -113,3 +113,9 @@ Seven garage vehicles and nine two-lap events are implemented. Generated modelin
 The engine/tire files are real licensed recordings. Seven voices mix shared recordings; they are not seven independently recorded cars. Police wails, impacts, salvage-car crunches and several other cues are original synthesis.
 
 No new runtime dependency was installed. The game uses Three.js, Web Audio and the browser Gamepad API. GLBs were exported and reloaded, but no Blender render was performed. Blender was not found on PATH, in the checked registered installations or as a running process. Native release, Unreal migration, mobile controls and broad hardware testing are not claimed. Driving remains arcade drift and bounded visual damage, not soft-body simulation or an open-world GTA game.
+
+## Audio depth continuation
+
+The post-checkpoint audio pass uses the existing licensed recordings and adds filtered exhaust-body and intake paths, car-specific balance, a smooth recorded-load gear-change envelope, camera-aware hood/chase/wide perspective, a normal-driving asphalt tire bed and a stable fade into the recorded squeal. It also lowers the in-race synthesized sequencer so vehicle cues remain dominant. No source asset, licence, runtime dependency, handling rule, event, reward or save format changed.
+
+Validation passes 248 focused audio/PCM checks with 301,448 finite Web Audio automation commands, 70 App/progression integration assertions, and the unchanged 481-check core simulation with 60 complete campaigns and 180/180 stage wins. Production and QA builds pass with only the existing renderer chunk-size warning. Browser QA on isolated port 5176 reported `Audio running · samples ready · ambience ready` in Pacific Canyon Circuit, Midnight Muscle Chase and Neon Drift Trial; the inspected browser log had no warnings or errors. This is browser decoding and runtime evidence, not a substitute for human listening on headphones and speakers.

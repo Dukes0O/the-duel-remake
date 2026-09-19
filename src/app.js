@@ -123,7 +123,7 @@ export class App {
     const phase=course?.phase?.(state.s)??state.s;
     const inside=tunnel&&Math.abs(state.lateral)<=tunnel.width&&(state.airHeight||0)<tunnel.height;
     const tunnelMix=inside?Math.max(0,Math.min(1,(phase-tunnel.start)/12,(tunnel.end-phase)/12)):0;
-    this.audio.update(state,{tunnel:tunnelMix,looseSurface:!!course?.def.offroad||!!course?.def.arena,biome:course?.themeAt(state.s),night:course?.def.timeOfDay==='night'});
+    this.audio.update(state,{tunnel:tunnelMix,looseSurface:!!course?.def.offroad||!!course?.def.arena,biome:course?.themeAt(state.s),night:course?.def.timeOfDay==='night',cameraMode:this.cameraMode});
   }
 
   _simulate(seconds) {
