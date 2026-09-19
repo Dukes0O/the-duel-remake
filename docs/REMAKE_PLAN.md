@@ -8,7 +8,9 @@ The remake replaces the visual layer and interface, builds an asset pipeline, ad
 
 ## Current boundary
 
-This is a playable vertical slice: a small but complete sample of the intended experience. It has real 3D meshes and materials, but not production-quality scanned environments or hand-sculpted hero models. Cars have directional steering and heading error relative to a sampled road; they do not have physical tire contact, simulated suspension, body deformation, or rigid-body collision responses. Off-road suspension movement and crash body motion are visual effects driven by the simulation. Roadside scenery is visual rather than collidable. Traffic uses simplified collision bounds. The rival uses a pace controller and does not physically collide with the player. Sound is synthesized rather than recorded from engines. There is no multiplayer, open world, cockpit interior, save campaign, touch driving, or console build.
+The current game has nine two-lap events, a local career and leaderboard, seven selectable cars, recorded engine/tire audio, solid scenery, collision-aware rivals and police, drifting, airborne arena jumps and crushable salvage cars. Timberline Checkpoint Rush has passed input-driven and browser checks. The latest core matrix and all 64 remaining regression suites pass. Courses share their road, terrain and collider data with the renderer. Mountain and rally geometry have dedicated mesh-clearance audits. See `SESSION_HANDOFF.md` for the current working state and `VERIFICATION.md` for checked results.
+
+The simulation still uses road coordinates and arcade yaw rather than four independently simulated tire contact patches. Suspension response and body dents are controlled animation, not soft-body deformation. The city chase is a bounded driving event with recoverable crashes, not a GTA-sized open world. Local players take turns on one computer; there is no online multiplayer. Desktop keyboard and gamepad driving are supported; touch driving and native console builds are outside the current implementation.
 
 ## Engine decision
 
@@ -30,12 +32,12 @@ If the target is a photorealistic native PC/console game with complex terrain, s
 
 Rapier has JavaScript bindings and WebAssembly setup requirements. KTX2 is a texture delivery workflow rather than an art creation tool. [Rapier setup](https://rapier.rs/docs/user_guides/templates/getting_started_js/), [Khronos KTX2 guide](https://github.com/KhronosGroup/3D-Formats-Guidelines/blob/main/subpages/KTXArtistGuide_glTF-Transform.md).
 
-## Next production milestones
+## Remaining production work
 
-1. **Playtest the driving loop.** Measure input latency, time to reach racing speed, collision frequency, rival win rate, near-miss frequency, and whether boost creates interesting choices. Tune for both keyboard and controller.
-2. **Build one production car and one authored road.** Use the reference sheet to sculpt the coupe in Blender, correct body panels and wheel wells, create a UV layout, bake normal/roughness maps, and build three levels of detail. Add a polished checkpoint station and canyon kit.
-3. **Replace synthesized engine timbre with licensed or original recordings.** Layer idle/load/coast RPM bands, tire surfaces, spatial traffic pass-bys, and a proper music mix. Keep the existing event routing.
-4. **Choose the long-term engine with a measured prototype.** Compare a 60-second road section in this browser build and an Unreal vehicle template using the same scale and visual assets. Judge frame time, handling, iteration speed, and target hardware.
-5. **Expand only after the slice is fun.** Add distinct routes, difficulty curves, rivals, progression, accessibility options, remappable input, quality settings, and broader hardware testing.
+1. **Playtest the expanded loop.** Check whether the new circuits, shortcuts, braking, offroad grip, CPU levels and unlock prices remain fun for a human driver. Automated demonstrations check consistency but do not replace player feedback.
+2. **Refine the art in Blender.** The four earned-car GLBs are ready for UV layouts, baked normal/roughness maps and detailed damage variants. The generated reference sheet provides their visual direction. Preserve collision dimensions and animation names when replacing runtime geometry.
+3. **Listen to the recorded mix.** Engine bands, coast, tires, sirens and tunnel reflections are implemented and mathematically checked. Listen for convincing shifts, load changes, loops and surface transitions on speakers and headphones.
+4. **Measure target hardware.** Compare High and Performance modes during dense city driving, shadows, crashes and stadium jumps. First scene loads still compile shaders and build procedural geometry. Add model/texture LOD only against measured bottlenecks.
+5. **Author richer challenges.** The chase, rally and monster arena establish separate vehicle roles. Personal-best ghosts, the timed Titan Stunt Trial, three selectable scenic layouts and physical CPU shortcut choices build on those systems. Neon Drift Trial adds score-based city driving; Timberline Checkpoint Rush adds ordered gates and earned time on an offroad mountain route. Free-roaming arena play would need a different driving model.
 
-Initial targets, not measured promises: 60 fps at 1080p on a declared midrange desktop, no visible shader pauses during racing, under 250 visible draw calls where possible, sensible car/environment LOD, and a compact first-load download. Profile on real target hardware before setting a quality bar.
+Frame-rate samples from this host are not a broad performance guarantee. Keep geometry, collision and reward checks alongside each route or asset revision. Do not call the result a finished AAA game solely because it uses physically based materials or generated reference images.

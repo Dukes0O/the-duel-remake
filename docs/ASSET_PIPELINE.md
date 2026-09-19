@@ -1,6 +1,8 @@
 # Asset pipeline
 
-The remake uses real 3D vehicle and environment meshes. The detailed player car and service station load from glTF binary (GLB), a portable format that Blender can import. Original procedural cars remain for traffic, the rival and loading fallback. Image generation supplies modeling reference and a sandstone surface texture.
+The remake uses 3D vehicle and environment meshes. Its seven playable cars comprise two free starters and five earned vehicles. Falcone F42, Stuttgart 959-S and the earned Aurora GTR share one licensed GLB body. The four other earned cars—Dusthawk Rally, Banshee Muscle, Viper Prototype and Titan Monster—use distinct original geometry, articulated wheels, drivers and damage hooks; Blender-ready GLBs are exported from the same factories. The rival uses the selected vehicle class. Lightweight procedural cars serve traffic and police. Image generation supplies modeling references and runtime surface textures.
+
+The current earned-car source is `src/unlock-vehicles.js`. Run `npm run assets:unlocks` to rebuild `public/assets/models/unlocks/` and its manifest. See `docs/UNLOCK_VEHICLES.md` for dimensions, export checks and the driver/damage contract. The vehicle reference is `public/assets/reference/unlock-vehicles.png`; exact prompts for it and the asphalt, brick and gravel maps are in `docs/IMAGE_PROMPTS.md`.
 
 ## Asset catalog
 
@@ -10,7 +12,7 @@ The remake uses real 3D vehicle and environment meshes. The detailed player car 
 | `public/assets/textures/red-sandstone.png` | Runtime sandstone surface color | Built-in image generator; exact prompt in `docs/IMAGE_PROMPTS.md` |
 | `src/vehicles.js` | Runtime original coupe and traffic geometry | Sculpted cross sections, material batches, articulated wheels |
 | `public/assets/models/car-concept.glb` | Detailed player car with embedded surface maps and cabin | Eric Chadwick / Darmstadt Graphics Group, CC BY 4.0; see `public/assets/models/CREDITS.md` |
-| `src/hero-vehicle.js` | Runtime GLB adaptation, material batching, wheel pivots and damage | Both player paint variants share the concept body |
+| `src/hero-vehicle.js` | Runtime GLB adaptation, material batching, wheel pivots and damage | Falcone, Stuttgart and Aurora share the concept body |
 | `public/assets/textures/ground-*.jpg` | Scanned ground color, normal and roughness | Poly Haven Gravelly Sand, CC0 |
 | `public/assets/textures/sunset-lighting.hdr` | Natural reflection lighting | Poly Haven, CC0; see texture credits |
 | `public/assets/models/cinder-gt.glb` | Portable editable coupe for Blender | `node tools/export-assets.mjs` |
@@ -35,9 +37,13 @@ The exporter strips live animation references from object metadata. Wheel and br
 
 The runtime factory returns wheel groups in `userData.wheels` for X-axis spin. Steering pivots are in `userData.wheelPivots`; front wheels carry `userData.front` and steer around Y. `brakeMaterial`, `brakeLights` and `boostFlames` support driving feedback. Shared materials and cached geometries carry `userData.sharedAsset` so switching vehicles does not dispose resources still used by other cars.
 
+## Tire contact and model origins
+
+`src/vehicle-grounding.js` measures the intact wheel geometry once per runtime car and caches its tire-base offset and rolling radii. The whole model moves together; body parts and wheels are not shifted independently. Paved, gravel and shortcut surfaces use their actual rendered heights, and road pitch/roll follow the car's heading. Preserve the wheel groups when replacing a GLB. A conservative whole-model bounding box can include empty space below rotated meshes and is not a reliable tire contact plane. Airborne motion and visual damage remain separate from this placement step.
+
 ## Work in Blender
 
-Import any included GLB through **File → Import → glTF 2.0**. This works without running the native Blender script. The active player loader is `src/hero-vehicle.js`; it loads `car-concept.glb`, recentres and scales to 4.8 m, straightens the source's posed wheels, omits badges, replaces the plate artwork, and creates independent steering/spin groups. Preserve its node names when editing. Inspect both paint variants and damage in `/tools/visual-check.html` after exporting. Keep source credits with derived assets. The original coupe export command does not overwrite Car Concept.
+Import any included GLB through **File → Import → glTF 2.0**. This works without running the native Blender script. The shared-body player loader is `src/hero-vehicle.js`; it loads `car-concept.glb`, recentres and scales to 4.8 m, straightens the source's posed wheels, omits badges, replaces the plate artwork, and creates independent steering/spin groups. Preserve its node names when editing. Inspect all three shared-body variants and damage in `/tools/visual-check.html` after exporting. Keep source credits with derived assets. The original coupe export command does not overwrite Car Concept.
 
 The optional script creates equivalent native editable assets and saves a .blend authoring file:
 
@@ -67,6 +73,36 @@ Blender was not found on PATH or in the checked standard Windows install locatio
 
 Three.js and its existing glTF tools support the current browser game. Blender supplies modeling, baking and rendering. Unreal Engine is not a dependency of this remake; adopting it would be a separate engine migration and would change how the game is built and distributed.
 
+## Meadow grass material
+
+`public/assets/textures/meadow-grass.png` is the generated RGBA blade image used on three crossed cards per tuft. Keep its alpha channel when replacing it. `src/landscape-detail.js` reads its color as sRGB and uses an alpha cutoff of 0.5. The material has a muted green tint, slight root darkening and an 85% upward lighting bias. Both sides use the same lighting basis, which reduces the folded-sheet appearance while retaining real sunlight, shadows and wind. These settings do not change the card geometry, UVs, placement or collisions. Each biome view owns one texture shared by its cells and releases it when that world is disposed.
+
+Run `node tools/test-meadow-material.mjs` to check the real PNG alpha, merged UVs, front/back lighting and texture lifetime. `node tools/test-landscape-cells.mjs` also checks that source geometry, instance transforms and culling bounds remain intact. Review close and distant grass in the browser after changing the image or shader; headless checks do not establish appearance.
+
+## Pine foliage and bark
+
+`pine-bough.png` remains the transparent crown asset. Its standard lit material uses a cooler evergreen tint, smooth outward/upward diffuse normals and lower-crown shading; the tree geometry, UVs, alpha cutoff and collision placement remain unchanged. `pine-bark.png` is a generated color texture with restrained luminance bump, one circumferential repeat and three vertical repeats per trunk. Each world owns one bark texture shared between color and bump; disposal releases it once. The crown and trunk material tests are in `tools/test-pine-material.mjs`. Exact artwork prompts and retained original paths are in `docs/IMAGE_PROMPTS.md`.
+
+## Deterministic route presets
+
+`src/generated-shortcut-presets.js` stores exact shortcut solutions for the selectable course/seed combinations. This avoids running the full geometric search when opening those routes. Saved paths retain all numeric offsets and metadata; they are not approximate replacements. Geometry, event definitions, tunnels, seeds and solver versions contribute to compatibility checks. An unknown or changed route falls back to the solver.
+
+After changing route generation, rebuild and check the saved output from the repository root:
+
+```powershell
+npm run assets:routes
+npm run assets:routes -- --check
+node tools/test-shortcut-presets.mjs
+```
+
+Generation and `--check` both run the full solver and can take several minutes. The ordinary test checks saved paths, source freshness, invalidation and isolation quickly. For a full comparison of generated and cached course features, run:
+
+```powershell
+node tools/test-shortcut-presets.mjs --verify-solvers
+```
+
+Do not hand-edit the generated file. Increment the affected course's `layoutVersion` when geometry or race distance changes so older personal bests and ghosts remain separate.
+
 ## Reference image prompt
 
 Mode: built-in image generation. Saved original: `public/assets/reference/redline-horizons-art-direction.png`.
@@ -83,4 +119,4 @@ Style: premium automotive visualization and environment concept art, physically 
 
 ### Expanded scene reference
 
-`public/assets/reference/expanded-scenes.png` guides the coast lighthouse, station trim, harbor warehouses, driver and chickens. Generated `alpine-granite.png` and alpha `pine-bough.png` are used directly by the renderer. Import these images into Blender as material references; model in metres, +Y up and +Z forward for the current game adapter. Cars currently share the licensed concept-car body. Aurora GTR adds separate original carbon aero and gold-wheel materials; it is not a separately scanned vehicle.
+`public/assets/reference/expanded-scenes.png` guides the coast lighthouse, station trim, harbor warehouses, driver and chickens. Generated `alpine-granite.png` and alpha `pine-bough.png` are used directly by the renderer. Import these images into Blender as material references; model in metres, +Y up and +Z forward for the current game adapter. Only Falcone F42, Stuttgart 959-S and Aurora GTR share the licensed concept-car body. Aurora adds original carbon aero and gold-wheel materials; it is not a separately scanned vehicle. Dusthawk Rally, Banshee Muscle, Viper Prototype and Titan Monster have separate original bodies in `src/unlock-vehicles.js` and four matching GLB exports under `public/assets/models/unlocks/`.

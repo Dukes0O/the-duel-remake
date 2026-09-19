@@ -1,0 +1,52 @@
+{
+  "retrieved": "2026-09-19",
+  "license": "CC0 1.0 Universal",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "downloadFormat": "Publicly served HQ MP3 preview, not the account-only original WAV",
+  "decoder": "FFmpeg 7.1, mono PCM 16-bit, 44100 Hz",
+  "rebuild": "node tools/prepare-audio.mjs --ambience-only",
+  "sources": [
+    {
+      "title": "Sea waves on the beach, some seagulls in background",
+      "author": "felix.blume",
+      "published": "2019-12-26",
+      "page": "https://freesound.org/people/felix.blume/sounds/500171/",
+      "download": "https://cdn.freesound.org/previews/500/500171_1661766-hq.mp3",
+      "original": "coast-source.mp3",
+      "sha256": "c453ee1acef1f57d4f8d25acdd869b1b9263d9cc070175e7ab2cd11fdc6321c2",
+      "decodedExcerpt": "coast-source.wav",
+      "sourceStartSeconds": 20,
+      "sourceDurationSeconds": 24,
+      "runtime": "ambience-coast.wav",
+      "processing": "DC removal, 75 Hz high-pass, 1.25-second loop crossfade, peak ceiling 0.55 and RMS ceiling 0.09"
+    },
+    {
+      "title": "Sunny Forest Ambience 1",
+      "author": "deadrobotmusic",
+      "published": "2021-11-30",
+      "page": "https://freesound.org/people/deadrobotmusic/sounds/609952/",
+      "download": "https://cdn.freesound.org/previews/609/609952_11532701-hq.mp3",
+      "original": "forest-source.mp3",
+      "sha256": "b0bae8dbcef0d4fdfba998bf93a50e39245a6b94d389f87fa5cc5bd4db430b4b",
+      "decodedExcerpt": "forest-source.wav",
+      "sourceStartSeconds": 10,
+      "sourceDurationSeconds": 24,
+      "runtime": "ambience-forest.wav",
+      "processing": "DC removal, 90 Hz high-pass, 1.25-second loop crossfade, peak ceiling 0.50 and RMS ceiling 0.08"
+    },
+    {
+      "title": "Stadium Crowd",
+      "author": "stomachache",
+      "published": "2015-05-20",
+      "page": "https://freesound.org/people/stomachache/sounds/274516/",
+      "download": "https://cdn.freesound.org/previews/274/274516_177850-hq.mp3",
+      "original": "stadium-source.mp3",
+      "sha256": "eea0213d5ccb6262c5c752a4f7c7241365b036b1ba1c9c05383776a5de586cc0",
+      "decodedExcerpt": "stadium-source.wav",
+      "sourceStartSeconds": 0,
+      "sourceDurationSeconds": 8.193061224489796,
+      "runtime": "ambience-stadium.wav",
+      "processing": "DC removal, 100 Hz high-pass, 0.8-second loop crossfade, peak ceiling 0.55 and RMS ceiling 0.11"
+    }
+  ]
+}

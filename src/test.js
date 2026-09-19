@@ -1,5 +1,5 @@
 // test.js — Duel canon + invariant tests. Headless: `npm test`.
-import { CARS, COURSE, LIVES, DIFFICULTY, POLICE, DRIVE, BOOST, SCORING } from './config.js';
+import { CARS, COURSE, LIVES, DIFFICULTY, CPU_DIFFICULTY, DEFAULT_CPU_DIFFICULTY, POLICE, DRIVE, BOOST, SCORING } from './config.js';
 import { Course } from './course.js';
 import { Duel } from './game.js';
 import { App } from './app.js';
@@ -21,12 +21,15 @@ ok(CARS.falcone_f42 && /F40/.test(CARS.falcone_f42.homage), 'Falcone F42 present
 ok(CARS.stuttgart_959s && /959/.test(CARS.stuttgart_959s.homage), 'Stuttgart 959-S present (959 homage)');
 ok(!/ferrari|porsche/i.test(JSON.stringify(CARS)), 'no real trademarks in car data');
 
-// --- The campaign now includes the coastal and city scenes ---
-eq(COURSE.length, 6, 'six stages in the expanded campaign');
-eq(new Set(COURSE.map(c => c.theme)).size, 4, 'four distinct scene themes');
+// --- Mixed-biome circuits close cleanly and keep the driving lanes clear ---
+eq(COURSE.filter(course => !course.kind).length, 3, 'three mixed circuits in the campaign');
+ok(COURSE.some(course => course.kind === 'arena'), 'the monster arena is a separate event');
 for (const definition of COURSE) {
   const course = new Course(definition, 611);
-  ok(course.samples.slice(1).every((point, index) => point.z > course.samples[index].z), `${definition.name}: the highway never doubles back across itself`);
+  const start = course.at(0), finish = course.at(course.length), before = course.at(course.length - .01), after = course.at(.01);
+  ok(Math.hypot(start.x - finish.x, start.z - finish.z) < .001 && Math.hypot(before.x - after.x, before.z - after.z) < .04, `${definition.name}: the circuit closes without a position jump`);
+  eq(course.raceLength, course.length * 2, `${definition.name}: a complete event covers two laps`);
+  if (!['arena', 'chase', 'drift'].includes(definition.kind)) ok(new Set(course.sections.map(section => section.theme)).size >= 2, `${definition.name}: several landscapes appear within one lap`);
   let clear = true;
   for (let s = 8; s < course.length; s += 32) {
     for (const lateral of [-DRIVE.laneOffset, DRIVE.laneOffset]) {
@@ -35,10 +38,10 @@ for (const definition of COURSE) {
     }
   }
   ok(clear, `${definition.name}: scenery leaves both driving lanes clear`);
-  const world = course.groundAt(900, 40), recovered = course.nearest(world.x, world.z);
-  ok(Math.abs(recovered.s - 900) < .01 && Math.abs(recovered.lateral - 40) < .01, `${definition.name}: world contacts project back onto the same road position`);
+  const world = course.groundAt(course.length + 900, 40), recovered = course.nearest(world.x, world.z, course.length + 900);
+  ok(Math.abs(recovered.s - course.length - 900) < .04 && Math.abs(recovered.lateral - 40) < .04, `${definition.name}: world contacts preserve the absolute lap phase`);
   ok(course.features.turns.every(turn => turn.signS < turn.s - 80), `${definition.name}: hard-turn signs give advance warning`);
-  ok(course.features.flocks.length >= 20, `${definition.name}: the stage contains many chicken flock bonuses`);
+  if (definition.kind !== 'arena') ok(course.features.flocks.length >= 15, `${definition.name}: the stage contains many chicken flock bonuses`);
 }
 
 // --- CANON stage 1 of the default course has a radar trap AND the rival ---
@@ -47,10 +50,10 @@ ok(COURSE[0].hasRadar && COURSE[0].hasRival, 'default stage 1 declares radar + r
   const c = new Course(COURSE[0], 1989);
   ok(c.features.radarTraps.length >= 1, 'stage 1 course has a radar trap');
   ok(c.rivalStartS != null, 'stage 1 course spawns a rival');
-  ok(c.features.checkpoints.some(cp => cp.kind === 'gas_station' && cp.s === c.length), 'stage ends at a gas station (no laps)');
+  ok(c.features.lapGates.length >= 3 && c.features.checkpoints.some(cp => cp.kind === 'finish' && cp.s === c.raceLength), 'checkpoint gates validate two laps before the finish');
 }
 
-// --- Course is point-to-point and deterministic ---
+// --- Course generation is deterministic ---
 {
   const a = new Course(COURSE[1], 42), b = new Course(COURSE[1], 42);
   ok(a.at(1000).x === b.at(1000).x && a.at(1000).z === b.at(1000).z, 'same seed -> identical centerline');
@@ -73,13 +76,14 @@ ok(COURSE[0].hasRadar && COURSE[0].hasRival, 'default stage 1 declares radar + r
 ok(DIFFICULTY.casual.autoShift && !DIFFICULTY.casual.engineBlow, 'casual = auto, no engine blow');
 ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engine blow');
 
-// --- Clean stage +1 life; missed station -1 life ---
+// --- A clean final lap awards a life; an invalid arrival is harmless recovery ---
 {
   const d = new Duel({ seed: 21 });
   d.startCampaign({ mode: 'timetrial' });
   const s = d.state;
   s.status = 'racing';
-  s.s = d.course.length - 1; s.lateral = 0; s.speedMph = 60;
+  s.completedLaps = 1; s.nextLapGate = d._lapGates.length;
+  s.s = d.raceLength - 1; s.lateral = 0; s.speedMph = 60; s.traffic = []; s.rival = null;
   const lives0 = s.lives;
   for (let i = 0; i < 5 && s.status === 'racing'; i++) d.step(1 / 60);
   eq(s.status, 'stage_result', 'crossing the line on-road reaches stage_result');
@@ -90,12 +94,13 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   d.startCampaign({ mode: 'timetrial' });
   const s = d.state;
   s.status = 'racing';
-  s.s = d.course.length - 1; s.lateral = 9; s.speedMph = 60; // off-road, short of the crash margin
+  s.completedLaps = 1; s.nextLapGate = d._lapGates.length;
+  s.s = d.raceLength - 1; s.lateral = 12; s.speedMph = 60; s.traffic = []; s.rival = null;
   const lives0 = s.lives;
   for (let i = 0; i < 5 && s.status === 'racing'; i++) d.step(1 / 60);
-  eq(s.status, 'stage_result', 'an off-road arrival still ends the stage');
-  eq(s.lives, lives0 - LIVES.missedStationCost, 'missing the gas station costs a life');
-  ok(s.results.missedStation, 'results flag the missed station');
+  eq(s.status, 'racing', 'an off-road finish must be crossed again on the course');
+  eq(s.lives, lives0, 'missing a finish gate does not cost a life');
+  ok(s.s < d.raceLength - 100 && s.results === null, 'an invalid finish restores the last checkpoint without awarding results');
 }
 
 // --- Pursuit: dawdling gets you caught (ticket), outrunning escapes ---
@@ -132,7 +137,6 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   while (s.police.pursuit && s.police.pursuit.active && guard++ < 30000) {
     s.speedMph = 200;
     d.step(1 / 60);
-    s.s = 100; // hold position so the stage cannot end before the pursuit resolves
     if (s.status !== 'racing') break;
   }
   ok(escaped, 'outrunning the cruiser escapes the pursuit');
@@ -173,8 +177,9 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   const s = d.state;
   s.status = 'racing';
   s.lives = 1;
-  s.s = d.course.length - 2; s.speedMph = 120; s.lateral = -DRIVE.laneOffset;
-  s.traffic.push({ s: d.course.length - 1, dir: 1, lateral: -DRIVE.laneOffset, speedMph: 0, alive: true });
+  s.completedLaps = 1; s.nextLapGate = d._lapGates.length;
+  s.s = d.raceLength - 2; s.speedMph = 120; s.lateral = -DRIVE.laneOffset;
+  s.traffic = [{ s: d.raceLength - 1, dir: 1, lateral: -DRIVE.laneOffset, speedMph: 0, alive: true }];
   d.step(1 / 60);
   eq(s.status, 'gameover', 'gameover is not overwritten by the same-frame finish');
   ok(s.lives <= 0, 'no clean-stage resurrection after the fatal crash');
@@ -323,7 +328,7 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
     states.push({ ...s });
   }
   const [road, dirt] = states;
-  ok(dirt.speedMph < road.speedMph * .9 && dirt.speedMph > road.speedMph*.65, 'dirt slows the car but leaves enough speed to recover');
+  ok(dirt.speedMph < road.speedMph * .9 && dirt.speedMph > 55, 'dirt slows the road car but leaves enough speed to recover');
   ok(dirt.roughness > .3 && dirt.offRoadTime > .45, 'roughness and time off the road build while on the shoulder');
   const yaw = [];
   for (const offRoad of [false, true]) {
@@ -370,7 +375,7 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
 }
 
 // --- Campaign simulation is independent of display frame rate ---
-{
+if (!process.env.DUEL_SKIP_CAMPAIGNS) {
   const runs = [];
   for (const seed of [1, 42, 1989, 2026, 90517]) {
     for (const car of ['falcone_f42', 'stuttgart_959s']) {
@@ -387,7 +392,7 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
             if (s.status === 'stage_result') { stages++; if (s.results.won) wins++; app.duel.nextStage(); }
           }
           const s = app.duel.state;
-          runs.push({ complete: s.status === 'complete' && stages === COURSE.length, catastrophic: s.status === 'gameover' && s.catastrophic && s.majorCrashes === DRIVE.majorCrashLimit, finite, wins, stages });
+          runs.push({ complete: s.status === 'complete' && stages === COURSE.filter(course => !course.kind).length, catastrophic: s.status === 'gameover' && s.catastrophic && s.majorCrashes === DRIVE.majorCrashLimit, finite, wins, stages });
           frames.push({ time: s.totalTimeSec, lives: s.lives, score: s.score, hits:s.majorCrashes,status:s.status });
         }
         ok(frames.every(f => Math.abs(f.time - frames[0].time) < 0.001 && f.lives === frames[0].lives && f.score === frames[0].score && f.hits===frames[0].hits && f.status===frames[0].status),
@@ -468,7 +473,7 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   eq(s.majorCrashes,1,'a head-on impact causes one major crash');eq(s.status,'racing','first major crash can recover');
   d._crash('head_on');eq(s.majorCrashes,1,'one impact cannot count twice');
   while(s.impactTimer>0)d.step(1/120);
-  s.s=d.course.length;s.lateral=0;d._finishStage();d.nextStage();
+  s.s=d.raceLength;s.completedLaps=s.lapsTotal;s.lateral=0;d._finishStage();d.nextStage();
   eq(s.majorCrashes,1,'checkpoint repairs do not erase structural damage');
   s.status='racing';s.traffic=[];s.speedMph=120;d._crash('rock');
   eq(s.majorCrashes,2,'a hard rock impact adds structural damage');
@@ -499,7 +504,13 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   eq(s.majorCrashes,0,'two seconds of off-road driving does not count as a crash');eq(s.lives,5,'off-road driving does not lose lives');
   ok(s.offRoad&&s.speedMph>40,'car keeps driving on open dirt');
   d.course.at=courseFrame;
-  const rock=d.course.features.rocks[0];s.prevS=rock.s-15;s.s=rock.s+15;s.prevLateral=s.lateral=rock.off;s.speedMph=100;
+  const rock=d.course.features.rocks.find(candidate=>{
+    const from=d.course.worldAt(candidate.s-15,candidate.off),to=d.course.worldAt(candidate.s+15,candidate.off);from.y=to.y=undefined;
+    const first=d.course.obstaclesNear(candidate.s-15,candidate.s+15).map(obstacle=>sweepObstacle(from,to,obstacle,to.heading,d._vehicleSpec(s))).filter(Boolean).sort((a,b)=>a.t-b.t)[0];
+    return first?.obstacle.source===candidate&&first.t>0;
+  });
+  ok(!!rock,'the rock contact fixture has an unobstructed real approach');
+  s.prevS=rock.s-15;s.s=rock.s+15;s.prevLateral=s.lateral=rock.off;s.speedMph=100;
   d._collisions();eq(s.lastCrashReason,'rock','swept rock collision cannot tunnel through scenery');eq(s.majorCrashes,1,'hard hit on a visible rock counts');
   while(s.impactTimer>0)d.step(1/120);
   s.invulnerableSec=0;s.prevS=s.s=rock.s;s.prevLateral=s.lateral=rock.off;s.speedMph=12;
@@ -527,8 +538,11 @@ function collisionArena() {
   d.course.at = () => ({ x: 0, y: 0, z: 0, heading: 0, curvature: 0 });
   d.course.worldAt = (s, lateral = 0) => ({ x: lateral, y: 0, z: s, heading: 0 });
   d.course.nearest = (x, z) => ({ s: z, lateral: x, distance: Math.abs(x) });
-  d.course.features.obstacles = []; d.course.features.flocks = [];
+  d.course.features.obstacles = []; d.course.features.flocks = []; d.course.features.shortcuts = [];
   d.course.obstaclesNear = () => d.course.features.obstacles;
+  d.course.closed = false;
+  d.course.themeAt = () => d.course.def.theme;
+  d.course.surfaceAt = (_, lateral) => ({road: Math.abs(lateral) <= DRIVE.roadHalfWidth, mainRoad: Math.abs(lateral) <= DRIVE.roadHalfWidth, roadHalfWidth: DRIVE.roadHalfWidth, shortcutId: null});
   return d;
 }
 
@@ -747,8 +761,381 @@ for (const kind of ['rock', 'mountain', 'building']) {
   eq(d.state.upgrades.nitro, 0, 'negative upgrade levels clamp to zero');
   eq(d.state.upgrades.handling, 0, 'non-finite upgrade data is ignored');
   eq(d.state.upgrades.tires, 2, 'upgrade levels stay integral');
-  s.status = 'racing'; s.s = d.course.length; s.stageTimeSec = 60; s.rival = { finishTime: 70 };
+  s.status = 'racing'; s.s = d.raceLength; s.completedLaps = s.lapsTotal; s.stageTimeSec = 60; s.rival = { finishTime: 70 };
   d._finishStage(); ok(s.results.won, 'beating the opponent records a race win');
+}
+
+// --- Sequential checkpoint gates validate two continuous laps ---
+function crossGate(duel, actor, gate, lateral = 0) {
+  actor.prevS = gate - .5; actor.s = gate + .5;
+  actor.prevLateral = actor.lateral = lateral; actor.speedMph = 100;
+  duel.state.stageTimeSec += 10;
+  duel._advanceLaps(actor, 1 / 60);
+}
+{
+  const d = new Duel({seed:611}); d.startCampaign({mode:'timetrial'});
+  const s = d.state; s.status = 'racing'; s.traffic = [];
+  for (const gate of d._lapGates) crossGate(d, s, gate);
+  eq(s.nextLapGate, d._lapGates.length, 'all first-lap checkpoints register in order');
+  crossGate(d, s, d.course.length);
+  eq(s.completedLaps, 1, 'the first complete circuit awards one lap');
+  eq(s.currentLap, 2, 'the HUD advances to lap two');
+  eq(s.s, d.course.length + .5, 'a valid lap does not teleport or reposition the car');
+  eq(s.lapTimes.length, 1, 'a completed lap records its own time');
+  eq(d._finishStage(), false, 'one lap cannot finish a two-lap race');
+  eq(s.results, null, 'one lap cannot produce a rewarded result');
+  for (const gate of d._lapGates) crossGate(d, s, d.course.length + gate);
+  s.racePenaltySec = 30;
+  crossGate(d, s, d.raceLength);
+  ok(d._finishStage(), 'the second validated lap completes the event');
+  eq(s.results.completed, true, 'only full races expose completed results');
+  eq(s.results.laps, 2, 'the result records both completed laps');
+  eq(s.results.timeSec, s.stageTimeSec + 30, 'race result time includes this race’s penalties');
+  eq(s.results.lapTimes.length, 2, 'both individual lap times reach the result');
+  ok(Math.abs(s.results.lapTimes.reduce((sum,time)=>sum+time,0)-s.results.timeSec)<.03, 'lap times include penalties and add up to total race time');
+  const score = s.score; d._finishStage(); eq(s.score, score, 'a completed event cannot award its score twice');
+}
+{
+  const d = new Duel({seed:612}); d.startCampaign({mode:'timetrial'});
+  const s = d.state; s.status = 'racing'; s.traffic=[];
+  crossGate(d,s,d.course.length);
+  eq(s.completedLaps,0,'crossing the start alone cannot award a lap');
+  ok(s.s < 20 && s.invulnerableSec > 2,'missing every checkpoint restores the start safely');
+  eq(s.lives,LIVES.start,'invalid lap recovery preserves lives');
+  eq(s.majorCrashes,0,'invalid lap recovery does not count as a crash');
+  const gate=d._lapGates[0]; crossGate(d,s,gate,65);
+  eq(s.nextLapGate,0,'passing outside a checkpoint does not validate it');
+  s.prevS=gate+.5;s.s=gate-.5;d._advanceLaps(s,1/60);
+  eq(s.nextLapGate,0,'wrong-way checkpoint crossings do not validate progress');
+  s.prevS=0;s.s=d.raceLength+1;s.speedMph=200;d._advanceLaps(s,1/60);
+  eq(s.completedLaps,0,'a position jump cannot substitute for two laps');
+  s.completedLaps=1;s.s=d.course.length+80;s.lateral=79;d._boundary(s);
+  ok(s.s>=d.course.length&&s.s<d.raceLength,'safe recovery preserves the current absolute lap');
+}
+{
+  const d=new Duel({seed:613});d.startCampaign();const s=d.state,r=s.rival;s.status='racing';s.traffic=[];s.s=800;
+  r.s=d.course.length-.1;r.nextLapGate=d._lapGates.length;r.speedMph=100;d._rival(1/60);
+  eq(r.completedLaps,1,'the CPU validates the same first lap');
+  ok(!r.finished,'the CPU cannot finish after one lap');
+  r.s=d.raceLength-.1;r.nextLapGate=d._lapGates.length;r.speedMph=100;d._rival(1/60);
+  ok(r.finished&&r.completedLaps===2,'the CPU finishes only after its second full lap');
+}
+
+// --- Cars, pickups and static contacts stay solid across the lap seam ---
+{
+  const d=collisionArena(),s=d.state;d.course.closed=true;d.course.length=1000;d.course.raceLength=2000;
+  s.prevS=990;s.s=1002;s.speedMph=140;
+  const other={s:3,prevS:3,lateral:0,prevLateral:0,speedMph:20,dir:1};
+  d._vehicleContact(s,other,'traffic');
+  ok(d.relativeS(other.s,s.s)-s.s>=5,'a car beyond the start line remains solid to a car finishing the lap');
+  eq(s.lastCrashReason,'traffic','wrapped physical contact uses the usual damage rules');
+  const finish=collisionArena(),f=finish.state;f.prevS=90;f.s=115;f.speedMph=120;
+  f.rival={s:110,prevS:110,lateral:0,prevLateral:0,speedMph:0,headingError:0,finished:true,finishTime:30};
+  finish._collisions();
+  ok(f.s<f.rival.s&&f.rival.s-f.s>=5,'the visible finished opponent remains solid');
+  f.rival.speedMph=80;const stoppedAt=f.rival.s;finish._rival(.05);
+  ok(f.rival.s>stoppedAt&&f.rival.speedMph<80&&f.rival.braking,'a finished CPU car coasts down using its brakes');
+  eq(f.rival.finishTime,30,'post-finish braking cannot change the CPU finish time');
+  const cpu=collisionArena(),p=cpu.state;cpu.course.closed=true;cpu.course.length=1000;
+  p.prevS=p.s=1010;p.speedMph=25;
+  const r=p.rival={prevS:990,s:1014,lateral:0,prevLateral:0,speedMph:170,headingError:0,pushVelocity:0};
+  cpu._vehicleContact(p,r,'rival');
+  eq(p.lives,LIVES.start,'CPU cut-in yielding remains harmless at a lap seam');
+  ok(r.s<p.s-5&&r.speedMph<25,'the CPU yields behind the player across the seam');
+  const pick=collisionArena(),q=pick.state;pick.course.closed=true;pick.course.length=1000;
+  pick.course.features.flocks=[{id:'wrap-flock',s:5,off:0,radius:3.5}];
+  q.prevS=999;q.s=1010;q.boost=.2;pick._flockBonuses();
+  eq(q.boost,1,'flocks are collectible on the second lap using wrapped positions');
+  q.prevS=1999;q.s=2010;q.boost=.2;pick._flockBonuses();
+  eq(q.boost,.2,'the same flock cannot be farmed on later laps');
+}
+{
+  const d=new Duel({seed:614});d.startCampaign({mode:'timetrial'});const s=d.state;s.status='racing';s.traffic=[];
+  const point=d.course.worldAt(100,0);
+  d.course.features.obstacles=[{id:'lap-wall',kind:'building',shape:'box',s:100,off:0,...point,halfX:5,halfZ:3}];
+  d.course.obstaclesNear=()=>d.course.features.obstacles;
+  s.prevS=d.course.length+80;s.s=d.course.length+120;s.prevLateral=s.lateral=0;s.speedMph=120;
+  d._staticContacts(s,true);
+  ok(s.s>d.course.length+80&&s.s<d.course.length+100,'a second-lap wall collision preserves the absolute race position');
+  eq(s.majorCrashes,1,'a second-lap building impact causes normal structural damage');
+}
+
+// --- Vehicle choice, CPU level and paid upgrades alter real driving behavior ---
+{
+  const distances=[];
+  for(const level of Object.keys(CPU_DIFFICULTY)){
+    const d=collisionArena();d.state.cpuDifficulty=level;d.state.s=900;
+    d.state.rival={s:100,lateral:-3.4,speedMph:0,headingError:0,pushVelocity:0,completedLaps:0,nextLapGate:0,lapTimes:[],lapStartedAt:0};
+    for(let i=0;i<1200;i++)d._rival(1/120);
+    distances.push(d.state.rival.s);
+  }
+  ok(distances[0]<distances[1]&&distances[1]<distances[2],'higher CPU levels make progressively more race progress');
+  const d=collisionArena();d.startCampaign({cpuDifficulty:'invalid'});eq(d.state.cpuDifficulty,DEFAULT_CPU_DIFFICULTY,'invalid CPU level uses the configured default');
+  const speeds=[];
+  for(const car of ['falcone_f42','dusthawk_rally']){
+    const race=collisionArena();race.state.car=car;race.state.lateral=20;race.state.speedMph=120;
+    for(let i=0;i<120;i++)race._drive(1/120);speeds.push(race.state.speedMph);
+  }
+  ok(speeds[1]>speeds[0]+25,'the rally car retains substantially more speed on dirt');
+  const stock=collisionArena(),upgraded=collisionArena();
+  upgraded.state.upgrades={...upgraded.state.upgrades,brakes:3,suspension:3,tank:3};
+  for(const race of [stock,upgraded]){race.state.speedMph=100;race.setInput({brake:1});for(let i=0;i<120;i++)race._drive(1/120);}
+  ok(stock.state.speedMph<55,'standard brakes shed at least 45 mph in a second');
+  ok(upgraded.state.speedMph<stock.state.speedMph-12,'brake upgrades reduce stopping time');
+  ok(upgraded.car.offRoadGrip>stock.car.offRoadGrip&&upgraded.car.roughnessScale<stock.car.roughnessScale,'suspension improves dirt grip and reduces shake');
+  for(const race of [stock,upgraded]){race.state.speedMph=100;race.state.boost=1;race.setInput({brake:0,boost:true});race._drive(1/120);}
+  ok(1-upgraded.state.boost<(1-stock.state.boost)*.6,'tank upgrades add usable nitro capacity');
+  const wall={x:0,z:0,halfX:1,halfZ:1};
+  eq(sweepObstacle({x:2.3,z:-10},{x:2.3,z:10},wall),null,'a narrow road car clears a close obstacle');
+  ok(!!sweepObstacle({x:2.3,z:-10},{x:2.3,z:10},wall,0,CARS.titan_monster.collision),'the wider monster truck collides with the same obstacle');
+}
+{
+  const d=new Duel();const arena=COURSE.findIndex(course=>course.kind==='arena');d.startCampaign({startStage:arena,car:'titan_monster'});
+  d.state.status='stage_result';d.nextStage();eq(d.state.status,'complete','the arena is one standalone event');
+  d.startCampaign({startStage:arena-1});d.state.status='stage_result';d.nextStage();
+  eq(d.state.status,'complete','the main campaign finishes before the locked arena');
+}
+
+// --- Arena ramps launch the truck, land cleanly and reward each ramp once per lap ---
+{
+  const d=new Duel({seed:615});d.startCampaign({startStage:COURSE.findIndex(course=>course.kind==='arena'),car:'titan_monster'});
+  const s=d.state,events=[];s.status='racing';s.traffic=[];s.rival=null;d.onChange((_,event)=>events.push(event));
+  const ramp=d.course.features.ramps[0];
+  const jump=lap=>{s.s=ramp.start-20+lap*d.course.length;s.lateral=s.prevLateral=0;s.speedMph=90;s._jumpY=null;s._verticalSpeed=0;s.airborne=false;s.airHeight=0;
+    let highest=0;for(let i=0;i<500;i++){s.prevS=s.s;s.s+=90*DRIVE.mphToWorld/120;d._jump(s,1/120);highest=Math.max(highest,s.airHeight);}return highest;};
+  const highest=jump(0);
+  ok(highest>1&&highest<8,'ramp speed produces a visible, bounded gravity arc');
+  ok(!s.airborne&&s.airHeight===0,'the truck lands back on the terrain');
+  eq(s.jumps,1,'one airborne ramp crossing records one jump');
+  ok(s.jumpScore>100&&s.bestJumpMeters>25,'jump distance produces a meaningful style score');
+  eq(events.filter(event=>event.jumpLanded).length,1,'landing emits one distance event');
+  const points=s.jumpScore;jump(0);eq(s.jumpScore,points,'revisiting the same ramp on one lap cannot farm points');
+  jump(1);eq(s.jumps,2,'the same ramp can reward a new lap');
+  eq(s.lives,LIVES.start,'a clean jump and landing never cause crash damage');
+  const contact=collisionArena(),a=contact.state;a.car='titan_monster';a.airborne=true;a.airHeight=5;a.prevS=90;a.s=115;a.speedMph=90;
+  contact.course.groundAt=(distance,lateral)=>({x:lateral,y:0,z:distance});
+  const below={s:110,prevS:110,lateral:0,prevLateral:0,speedMph:0,dir:1};
+  eq(contact._vehicleContact(a,below,'traffic'),false,'a truck can jump over a car it visibly clears');
+  a.airHeight=.5;ok(contact._vehicleContact(a,below,'traffic'),'a low jump remains solid when the vehicle bodies overlap');
+  s.s=ramp.start+10;s.airborne=true;s.airHeight=2;d._safeReset(s);
+  ok(!s.airborne&&s.airHeight===0&&s._jumpY===null,'safe recovery clears airborne state');
+  d._loadStage(0);eq(s.jumpScore,0,'a new event starts with fresh jump rewards');
+}
+
+// --- Chase impacts cost time while the car survives; pursuit and deadlines remain real ---
+{
+  const index=COURSE.findIndex(course=>course.kind==='chase'),d=new Duel({seed:616});d.startCampaign({startStage:index,car:'banshee_muscle'});
+  const s=d.state,events=[];s.status='racing';s.traffic=[];d.onChange((_,event)=>events.push(event));
+  ok(s.police.pursuit?.active,'the chase starts with a continuous police pursuit');
+  for(let i=0;i<7;i++){s.speedMph=100;s.impactTimer=0;d._crash('head_on');}
+  eq(s.majorCrashes,7,'chase bodywork still records repeated major impacts');
+  eq(s.lives,LIVES.start,'recoverable chase crashes do not consume lives');
+  eq(s.racePenaltySec,7*COURSE[index].chaseCrashPenaltySec,'each chase crash has its shorter recovery penalty');
+  ok(s.status==='racing'&&!s.catastrophic,'the chase car survives more than five major crashes');
+  eq(events.filter(event=>event.explosion).length,0,'chase impacts never trigger an explosion');
+  d.startCampaign({startStage:index,car:'banshee_muscle'});s.status='racing';s.police.pursuit.s=s.s-1;s.police.pursuit.lateral=0;s.speedMph=0;d._police(1/120);
+  eq(s.status,'ticket','the pursuing police can catch the chase car');
+  eq(s.racePenaltySec,COURSE[index].chaseCatchPenaltySec,'a police catch costs chase time');
+  d.ackTicket();ok(s.police.pursuit?.active&&s.police.pursuit.gapU>200,'police resume the chase after the catch');
+  const limit=s.timeLimitSec;s.stageTimeSec=limit-s.racePenaltySec-.005;s.traffic=[];d.step(.01);
+  eq(s.status,'stage_result','missing the chase deadline produces an event result');
+  ok(s.results.timeout&&!s.results.won&&!s.results.completed,'a timeout cannot claim a completed race or win');
+  ok(!s.catastrophic&&s.lives===LIVES.start,'a chase timeout leaves the car intact');
+  d.nextStage();eq(s.status,'complete','finishing a chase never enters the next standalone event');
+  d.startCampaign({startStage:index,car:'banshee_muscle'});s.status='racing';s.s=d.raceLength;s.completedLaps=s.lapsTotal;s.stageTimeSec=s.timeLimitSec-1;
+  d._finishStage();ok(s.results.won&&s.results.completed,'two validated laps before the chase deadline win');
+  d.startCampaign({mode:'timetrial',cpuDifficulty:'easy'});const easy=d.state.parTimeSec;
+  d.startCampaign({mode:'timetrial',cpuDifficulty:'hard'});ok(d.state.parTimeSec<easy*.8,'Hard time trials require a substantially faster finish than Easy');
+}
+{
+  for(const cpuDifficulty of Object.keys(CPU_DIFFICULTY)){
+    const d=collisionArena(),s=d.state;s.cpuDifficulty=cpuDifficulty;s.s=130;s.lateral=8;s.speedMph=70;s.headingError=-.75;
+    s.rival={s:100,lateral:0,speedMph:190,headingError:0,pushVelocity:0,finished:false};
+    d._rival(1/60);
+    ok(s.rival.braking&&s.rival.yieldingToPlayer&&s.rival.speedMph<189,`${cpuDifficulty}: even a fast CPU brakes for an imminent cut-in`);
+    eq(s.lives,LIVES.start,`${cpuDifficulty}: emergency CPU braking never charges the player a crash`);
+  }
+  const d=new Duel({seed:617});d.startCampaign();const lane=d.course.features.passingLanes[0],distance=(lane.start+lane.end)/2;
+  ok(d._surface(distance,8).mainRoad,'the added passing lane is real driveable asphalt');
+  const cut=d.course.features.shortcuts[0],middle=(cut.start+cut.end)/2,lateral=d.course.shortcutOffset(cut,middle),surface=d._surface(middle,lateral);
+  ok(surface.road&&surface.shortcutId&&!surface.mainRoad,'the shortcut is a legal gravel corridor with separate traction');
+  const frame=d.course.at(middle);
+  ok(1-frame.curvature*lateral<1,'the inside shortcut covers more course progress per metre of travel');
+  d.startCampaign({startStage:COURSE.findIndex(course=>course.kind==='rally'),car:'dusthawk_rally'});
+  ok(d._surface(500,0).road&&!d._surface(500,0).mainRoad,'the rally route is legal racing surface with gravel grip');
+  d.state.status='stage_result';d.nextStage();eq(d.state.status,'complete','the rally stays a standalone event');
+}
+if (!process.env.DUEL_SKIP_CAMPAIGNS) {
+  for(const event of COURSE.filter(course=>course.kind)){
+    const outcomes=[];
+    for(const fps of [30,144]){
+      const app=new App();app.autopilot=true;app.duel.seed=1989;
+      app.duel.startCampaign({startStage:event.stage,car:event.requiredCar,cpuDifficulty:'easy'});app._scriptedCrashDone=true;
+      let frames=0;while(!['stage_result','gameover'].includes(app.duel.state.status)&&frames++<fps*400)app.advance(1/fps);
+      const s=app.duel.state;outcomes.push({status:s.status,time:s.totalTimeSec,score:s.score,hits:s.majorCrashes,jumps:s.jumps,won:s.results?.won,laps:s.completedLaps});
+    }
+    ok(outcomes.every(outcome=>outcome.status==='stage_result'&&outcome.laps===2&&outcome.won),`${event.name}: its required car can win both complete laps`);
+    ok(outcomes.every(outcome=>Math.abs(outcome.time-outcomes[0].time)<.001&&outcome.score===outcomes[0].score&&outcome.hits===outcomes[0].hits&&outcome.jumps===outcomes[0].jumps),`${event.name}: event and jump scoring agree across display frame rates`);
+    if(event.kind==='arena')eq(outcomes[0].jumps,6,'the complete arena demo scores every ramp on both laps');
+  }
+  const app=new App();app.autopilot=true;app.duel.startCampaign({startStage:COURSE.findIndex(course=>course.kind==='chase'),car:'banshee_muscle',cpuDifficulty:'hard'});app._scriptedCrashDone=true;
+  let impacts=0,frames=0;
+  while(app.duel.state.status!=='stage_result'&&frames++<120*300){const s=app.duel.state;
+    if(s.status==='racing'&&!s.impactTimer&&s.s>(impacts+1)*900&&impacts<3){s.speedMph=90;app.duel._crash('head_on');impacts++;}app.advance(1/120);}
+  ok(app.duel.state.results?.won&&impacts===3,'Hard chase remains winnable after three recoverable major crashes');
+  ok(app.duel.state.racePenaltySec>=24&&app.duel.state.racePenaltySec<=36,'three chase crashes and at most one police catch stay within the recovery budget');
+}
+
+// --- Police cars have physical poses, obey solids, and catch by real separation ---
+{
+  const d=new Duel({seed:1989});d.startCampaign({startStage:COURSE.findIndex(course=>course.kind==='chase'),car:'banshee_muscle'});
+  const s=d.state,branch=d.course.features.shortcuts[0],gap=60;
+  let playerS=branch.start+gap+5,largestChange=-1;
+  for(let distance=branch.start+gap+5;distance<branch.end-5;distance+=20){const change=Math.abs(d.course.shortcutOffset(branch,distance)-d.course.shortcutOffset(branch,distance-gap));if(change>largestChange){largestChange=change;playerS=distance;}}
+  const playerOffset=d.course.shortcutOffset(branch,playerS);
+  Object.assign(s,{status:'racing',s:playerS,prevS:playerS,lateral:playerOffset,prevLateral:playerOffset,speedMph:80,traffic:[]});
+  const p=s.police.pursuit=d._newPursuit(gap),cut=d.course.features.shortcuts.find(route=>route.id===p.routeId);
+  ok(!!cut&&Math.abs(p.lateral-d.course.shortcutOffset(cut,p.s))<1e-8,'police use the branch offset at their own road position');
+  ok(Math.abs(p.lateral-s.lateral)>1,'police never copy a distant player’s lateral offset');
+  const position=d.course.groundAt(p.s,p.lateral);
+  ok(d.course.obstaclesNear(p.s).every(obstacle=>!sweepObstacle(position,position,obstacle,position.heading+p.headingError)),'a changing branch offset spawns a solid, unobstructed police car');
+  d._police(1/120);
+  eq(s.status,'racing','a police car60 metres behind on a branch cannot issue a remote catch');
+  ok(Math.abs(p.gapU-(s.s-p.s))<1e-9,'the displayed pursuit gap comes from real actor positions');
+  const a=d.course.groundAt(s.s,s.lateral),b=d.course.groundAt(p.s,p.lateral);
+  ok(Math.abs(p.distanceU-Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z))<1e-8,'actual police distance uses the full branch geometry');
+}
+{
+  const d=collisionArena(),s=d.state;s.s=s.prevS=100;s.lateral=s.prevLateral=50;s.speedMph=60;
+  const p=s.police.pursuit={...d._newPursuit(0),s:100,lateral:0,speedMph:30};
+  d._police(1/120);
+  eq(s.status,'racing','matching course progress50 metres away cannot catch the player');
+  ok(p.distanceU>49&&Math.abs(p.gapU)<1,'catch logic uses real distance rather than the small longitudinal gap');
+  s.lateral=s.prevLateral=0;s.speedMph=30;p.s=92;p.lateral=0;p.speedMph=50;d._police(1/120);
+  eq(s.status,'ticket','the police can catch a nearby driver on the same road');
+  eq(s.lives,LIVES.start,'being caught does not cost a chassis life');
+}
+{
+  const d=collisionArena(),s=d.state;s.s=s.prevS=200;s.speedMph=60;
+  d.course.features.obstacles=[{id:'police-wall',kind:'building',x:0,z:110,s:110,off:0,heading:0,halfX:4,halfZ:3}];
+  const p=s.police.pursuit={...d._newPursuit(100),s:100,lateral:0,speedMph:300};
+  d._police(.05);
+  ok(p.s<105&&p.speedMph<30,'a fast police car cannot pass through a building');
+  eq(s.lives,LIVES.start,'a remote police wall impact cannot damage the player');
+  d.course.features.obstacles=[];s.s=300;s.prevS=300;s.traffic=[{s:120,prevS:120,lateral:0,prevLateral:0,speedMph:0,dir:1,alive:true}];
+  Object.assign(p,{s:110,lateral:0,headingError:0,speedMph:250,contactCooldown:0});d._police(.05);
+  ok(p.s<s.traffic[0].s&&s.traffic[0].s-p.s>=5,'the police remain solid against traffic');
+}
+{
+  const d=collisionArena(),s=d.state;s.s=s.prevS=130;s.lateral=s.prevLateral=8;s.speedMph=70;s.headingError=-.75;
+  const p=s.police.pursuit={...d._newPursuit(30),s:100,lateral:0,speedMph:190};
+  d._police(1/60);
+  ok(p.braking&&p.yieldingToPlayer&&p.speedMph<189,'police brake when the player cuts across their path');
+  eq(s.lives,LIVES.start,'a police cut-in does not create a player crash');
+  s.s=s.prevS=120;s.lateral=s.prevLateral=0;s.speedMph=25;s.headingError=0;
+  Object.assign(p,{prevS:100,s:124,prevLateral:0,lateral:0,speedMph:170});d._vehicleContact(s,p,'police');
+  ok(p.s<s.s-5&&p.speedMph<25,'a late police rear-end contact yields behind the player');
+  eq(s.impactTimer,0,'police yielding cannot trigger the player impact animation');
+}
+{
+  const d=collisionArena(),s=d.state;s.s=s.prevS=700;s.speedMph=80;
+  const p=s.police.pursuit={...d._newPursuit(500),s:200,lateral:20,speedMph:120};
+  d._police(1/120);
+  ok(p.offRoad&&p.speedMph<120&&Math.abs(p.lateral-20)<.4,'a dirt excursion slows the cruiser and recovers through steering');
+  d.course.closed=true;p.s=-20;p.lateral=82;p.speedMph=100;d._boundary(p);
+  ok(p.s<0&&Math.abs(p.lateral)<DRIVE.roadHalfWidth&&p.speedMph<=28,'police boundary recovery preserves the unwrapped phase before the start');
+  const real=new Duel({seed:619});real.startCampaign({startStage:4,car:'banshee_muscle'});const player=real.state;player.status='racing';player.traffic=[];
+  player.s=player.prevS=real.course.length+5;player.lateral=player.prevLateral=0;player.speedMph=40;
+  const police=player.police.pursuit={...real._newPursuit(12),lateral:0,speedMph:60};real._police(1/120);
+  ok(police.s>real.course.length-10&&police.s<real.course.length,'the cruiser keeps its continuous position at the lap seam');
+  eq(player.status,'ticket','physical catch distance remains correct across the closed-course seam');
+}
+{
+  const d=collisionArena(),s=d.state;s.s=s.prevS=100;s.speedMph=80;
+  const p=s.police.pursuit={...d._newPursuit(10),s:90,lateral:0,speedMph:100};
+  d._crash('head_on');const before=p.s;d.step(1/120);
+  ok(p.s>before,'the physical police car keeps moving during impact recovery');
+  eq(s.status,'racing','a police catch cannot replace an active crash recovery animation');
+}
+
+// --- Arena junk cars deform once, reward only their crusher, and stay harmless ---
+{
+  const arena=COURSE.findIndex(course=>course.kind==='arena');
+  const make=()=>{const duel=new Duel({seed:1989});duel.startCampaign({startStage:arena,car:'titan_monster'});duel.state.status='racing';return duel;};
+  const pose=(actor,prop,extra={})=>Object.assign(actor,{prevS:prop.s-9,s:prop.s-1,prevLateral:prop.off,lateral:prop.off,
+    speedMph:4,headingError:0,slipAngle:0,airborne:false,airHeight:0,prevAirHeight:0,_verticalSpeed:0,...extra});
+  const d=make(),s=d.state,prop=d.course.features.crushables[0],events=[];d.onChange((_,event)=>events.push(event));
+  eq(d.course.features.crushables.length,6,'the arena supplies six parked crushable cars');
+  pose(s,prop);d._crushProps(s);
+  ok(s.crushedProps.includes(prop.id)&&s.crushCount===1,'the monster can crush a junk car at walking speed');
+  eq(s.crushScore,150,'each first player crush adds its style reward');
+  ok(s.speedMph>2&&s.speedMph<4,'crushing sheds a modest amount of speed');
+  ok(s.airborne&&s.airHeight>0&&s._verticalSpeed>1,'the truck rebounds on its suspension after crushing');
+  ok(s.majorCrashes===0&&s.lives===LIVES.start&&s.impactTimer===0,'junk cars do not trigger major damage or crash recovery');
+  ok(events[0].propCrushed.byPlayer&&s.crushBurst.serial===1,'crush effects carry the actor and an event serial');
+  pose(s,prop,{prevS:prop.s+d.course.length-9,s:prop.s+d.course.length-1});d._crushProps(s);
+  eq(s.crushCount,1,'the crushed shell cannot reward another pass or lap');
+  const other=d.course.features.crushables[2];pose(s.rival,other);d._crushProps(s.rival);
+  ok(s.crushedProps.includes(other.id)&&s.crushCount===1,'rival crushing deforms shared scenery without player credit');
+  ok(events.at(-1).propCrushed.byPlayer===false&&s.crushBurst.serial===2,'rival crushing has a separate physical effect');
+  pose(s,other);d._crushProps(s);eq(s.crushScore,150,'the player cannot claim a car already crushed by the rival');
+  s.s=d.raceLength;s.completedLaps=s.lapsTotal;d._finishStage();
+  ok(s.results.crushCount===1&&s.results.crushScore===150,'the final result preserves only the player crush rewards');
+  d.startCampaign({startStage:arena,car:'titan_monster'});
+  ok(s.crushedProps.length===0&&s.crushCount===0&&s.crushBurst===null,'a fresh event restores its junk cars and rewards');
+
+  const air=make(),a=air.state,junk=air.course.features.crushables[0];
+  pose(a,junk,{prevAirHeight:5,airHeight:5,airborne:true,speedMph:90});air._crushProps(a);
+  eq(a.crushCount,0,'a high jump over a junk car cannot crush or score it');
+  pose(a,junk,{prevS:junk.s,s:junk.s,prevAirHeight:5,airHeight:.6,airborne:true,_verticalSpeed:-8});air._crushProps(a);
+  eq(a.crushCount,1,'landing on a roof crushes the car beneath the monster');
+  const miss=make(),m=miss.state,missed=miss.course.features.crushables[0];
+  pose(m,missed,{prevS:missed.s-10,s:missed.s+45,prevAirHeight:10,airHeight:.1,airborne:true});miss._crushProps(m);
+  eq(m.crushCount,0,'landing beyond a jumped row does not claim an airborne overflight');
+  const light=make(),l=light.state,solid=light.course.features.crushables[0];l.car='falcone_f42';
+  pose(l,solid,{speedMph:40});light._crushProps(l);
+  ok(l.crushCount===0&&l.s<solid.s-4&&l.majorCrashes===0,'a lightweight car meets a solid shell but cannot crush it');
+  const moving=make(),truck=moving.state,target=moving.course.features.crushables[0];truck.rival=null;
+  pose(truck,target,{s:target.s-7,prevS:target.s-7,speedMph:20});moving.setInput({throttle:1});
+  for(let i=0;i<80&&!truck.crushCount;i++)moving.step(1/120);
+  eq(truck.crushCount,1,'ordinary simulation steps sweep the monster into crushable scenery');
+  const recovery=make(),rolling=recovery.state,wreck=recovery.course.features.crushables[0];rolling.rival=null;
+  recovery._crash('head_on',1,90);pose(rolling,wreck,{s:wreck.s-3,prevS:wreck.s-3,speedMph:15});recovery.step(1/120);
+  ok(rolling.crushCount===1&&rolling.majorCrashes===1,'a recovering truck can crush scenery without a second crash');
+  ok(!rolling.airborne,'crushing during recovery cannot suspend its impact animation in the air');
+  const ordinary=new Duel({seed:1989});ordinary.startCampaign();ordinary.course.features.crushables=[prop];
+  pose(ordinary.state,prop);ordinary._crushProps(ordinary.state);eq(ordinary.state.crushCount,0,'crushing is restricted to the arena event');
+}
+
+// --- Known-height scenery respects clear jumps and solid tunnel cover ---
+{
+  const post={id:'low-post',kind:'prop',x:0,y:0,z:10,heading:0,halfX:1,halfZ:1,height:2};
+  const shell={halfWidth:1,halfLength:2,height:1.5};
+  eq(sweepObstacle({x:0,y:5,z:0},{x:0,y:5,z:20},post,0,shell),null,'a vehicle clears a post when its whole swept body is above it');
+  ok(sweepObstacle({x:0,y:1,z:0},{x:0,y:1,z:20},post,0,shell),'a low flight still hits the same solid post');
+  const landing=sweepObstacle({x:0,y:6,z:0},{x:0,y:0,z:15},post,0,shell);
+  ok(landing&&Math.abs(landing.t-2/3)<1e-8,'a roof descent contacts at the vertical crossing time');
+  eq(sweepObstacle({x:0,y:6,z:0},{x:0,y:0,z:40},post,0,shell),null,'descending after a cleared obstacle does not create a late false collision');
+  eq(sweepObstacle({x:0,y:1,z:0},{x:0,y:1,z:20},{...post,minY:5,maxY:8},0,shell),null,'explicit elevated hulls allow a car that fits underneath');
+  ok(sweepObstacle({x:0,y:50,z:0},{x:0,y:50,z:20},{...post,height:undefined},0,shell),'scenery without height metadata retains its existing solid behavior');
+  const d=new Duel({seed:1989});d.startCampaign({startStage:COURSE.findIndex(course=>course.kind==='rally'),car:'dusthawk_rally'});
+  const tunnel=d.course.features.tunnels[0],cover=d.course.features.obstacles.filter(obstacle=>obstacle.tunnelCover);
+  ok(cover.length>20&&cover.every(obstacle=>obstacle.height>0),'the tunnel supplies visible-height outer rock collision cells');
+  d.course.obstaclesNear=()=>cover;
+  for(const name of ['player','rival','police']) {
+    const actor=name==='player'?d.state:name==='rival'?d.state.rival:(d.state.police.pursuit={});
+    Object.assign(actor,{prevS:tunnel.start-15,s:tunnel.start+18,prevLateral:20,lateral:20,speedMph:110,headingError:0,airHeight:0,prevAirHeight:0,airborne:false});
+    d.state.status='racing';d.state.invulnerableSec=0;d._staticContacts(actor,name==='player');
+    const point=d.course.worldAt(actor.s,actor.lateral);point.y=undefined;
+    ok(actor.s<tunnel.start&&actor.speedMph<12,`${name}: the outer tunnel rock stops a lateral20m approach`);
+    ok(cover.every(obstacle=>!sweepObstacle(point,point,obstacle,point.heading,d._vehicleSpec(actor))),`${name}: resolving the outer cover leaves no intersecting vehicle shell`);
+  }
+  eq(d.state.majorCrashes,1,'only the player’s own hard tunnel impact counts toward major damage');
+  const flyer=d.state.rival;
+  Object.assign(flyer,{prevS:tunnel.start-15,s:tunnel.start+18,prevLateral:20,lateral:20,speedMph:110,headingError:0,airHeight:40,prevAirHeight:40,airborne:true});
+  d._staticContacts(flyer,false);ok(flyer.s>tunnel.start+17&&flyer.speedMph===110,'swept scenery permits a vehicle fully above the cover');
+  Object.assign(flyer,{prevS:tunnel.start-15,s:tunnel.start+18,prevLateral:20,lateral:20,speedMph:110,headingError:0,airHeight:.5,prevAirHeight:.5,airborne:true});
+  d._staticContacts(flyer,false);ok(flyer.s<tunnel.start&&flyer.speedMph<12,'a low airborne vehicle cannot pass through the tunnel hill');
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

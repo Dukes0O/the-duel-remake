@@ -4,8 +4,9 @@ import { makeRng } from './rng.js';
 // Geometry follows the solid station/warehouse footprints in course.features.
 // This layer adds surface construction, not new roadside collision obstacles.
 export function addSceneryDetail(world, course) {
-  const night = course.def.theme === 'city', coast = course.def.theme === 'coast';
+  const cityBuildings = (course.features.buildings || []).filter(b => (b.theme || course.themeAt(b.s)) === 'city');
   const detail = new THREE.Group(); detail.name = 'Station and warehouse construction';
+  if (!course.features.stations.length && !cityBuildings.length) { world.add(detail); return detail; }
   const wallMap = surfaceMap('plaster'), metalMap = surfaceMap('metal');
   const windowMap = glazingMap(), signs = serviceAtlas();
   const materials = {
@@ -13,24 +14,26 @@ export function addSceneryDetail(world, course) {
     steel: new THREE.MeshStandardMaterial({ color: 0x9ba6a6, roughness: .57, metalness: .72, map: metalMap, bumpMap: metalMap, bumpScale: .016 }),
     dark: new THREE.MeshStandardMaterial({ color: 0x192326, roughness: .71, metalness: .32 }),
     concrete: new THREE.MeshStandardMaterial({ color: 0xb8b3a2, roughness: .96, map: wallMap, bumpMap: wallMap, bumpScale: .015 }),
-    soffit: new THREE.MeshStandardMaterial({ color: coast ? 0xe8e1cb : 0xc9cbc2, roughness: .78, metalness: .15 }),
-    enamel: new THREE.MeshStandardMaterial({ color: coast ? 0x315d72 : night ? 0x294957 : 0x6a4938, roughness: .48, metalness: .25 }),
-    lamp: new THREE.MeshStandardMaterial({ color: 0xffebc6, emissive: 0xffce86, emissiveIntensity: night ? 2.4 : .5, roughness: .3 }),
+    soffit: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .78, metalness: .15 }),
+    enamel: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .48, metalness: .25 }),
+    lamp: new THREE.MeshStandardMaterial({ color: 0xffebc6, emissive: 0xffce86, emissiveIntensity: .5, roughness: .3 }),
+    nightLamp: new THREE.MeshStandardMaterial({ color: 0xffebc6, emissive: 0xffce86, emissiveIntensity: 2.4, roughness: .3 }),
     paint: new THREE.MeshStandardMaterial({ color: 0xd0c6a3, roughness: .95, transparent: true, opacity: .64, depthWrite: false }),
     decal: new THREE.MeshStandardMaterial({ map: signs, transparent: true, alphaTest: .15, roughness: .8, metalness: .05, side: THREE.DoubleSide }),
   };
   const batch = instancedBuilder(detail, materials);
   const decalGeometries = [];
   for (const station of course.features.stations || []) {
+    const theme = station.theme || course.themeAt(station.s), night = theme === 'city', coast = theme === 'coast';
     refineStationSurfaces(world, station, { wallMap, windowMap, coast, night });
-    stationDetail(batch, station, night);
+    stationDetail(batch, station, night, coast);
     decalGeometries.push(decal(station, 0, [0, 1.76, 2.148], [.65, .20], Math.PI));
     decalGeometries.push(decal(station, 1, [1.30, 1.97, 2.242], [.49, .58], Math.PI));
     for (const x of [-3, 3]) decalGeometries.push(decal(station, 2, [x, 2.10, -2.984], [.57, .235], Math.PI));
   }
-  if (night) {
+  if (cityBuildings.length) {
     refineWarehouseSurfaces(world, course, metalMap, windowMap);
-    (course.features.buildings || []).forEach((building, i) => {
+    cityBuildings.forEach((building, i) => {
       warehouseDetail(batch, building, i);
       for (const face of [-1, 1]) decalGeometries.push(decal(building, 3, [building.halfX - 1.5, 2.3, face * (building.halfZ + .071)], [1.6, .76], face < 0 ? Math.PI : 0));
     });
@@ -76,15 +79,22 @@ function instancedBuilder(group, materials) {
       mesh.name = `Architectural ${shape} details`;
       const color = new THREE.Color();
       items.forEach((item, i) => { mesh.setMatrixAt(i, item.matrix); mesh.setColorAt(i, color.set(item.tint)); });
-      mesh.castShadow = material !== materials.paint && material !== materials.lamp;
+      mesh.castShadow = material !== materials.paint && material !== materials.lamp && material !== materials.nightLamp;
       mesh.receiveShadow = true; mesh.computeBoundingSphere(); group.add(mesh);
     }
     for (const [shape, geometry] of Object.entries(geometries)) if (!used.has(shape)) geometry.dispose();
+    const usedMaterials = new Set([...buckets.values()].map(b => b.material));
+    for (const [key, material] of Object.entries(materials)) if (key !== 'decal' && !usedMaterials.has(material)) material.dispose();
   } };
 }
 
-function stationDetail(batch, s, night) {
-  const put = (material, size, p, r, shape, tint) => batch.add(s, material, size, p, r, shape, tint);
+function stationDetail(batch, s, night, coast) {
+  const put = (material, size, p, r, shape, tint) => {
+    if (material === 'soffit') tint = coast ? 0xe8e1cb : 0xc9cbc2;
+    if (material === 'enamel') tint = coast ? 0x315d72 : night ? 0x294957 : 0x6a4938;
+    if (material === 'lamp' && night) material = 'nightLamp';
+    batch.add(s, material, size, p, r, shape, tint);
+  };
   // Window frames sit over the existing glazing at local z=2.22.
   for (const center of [-3.7, 3.7]) {
     for (const dx of [-1.80, -.60, .60, 1.80]) put('frame', [.052, 1.96, .055], [center + dx, 2.15, 2.167]);
@@ -141,7 +151,7 @@ function stationDetail(batch, s, night) {
 }
 
 function warehouseDetail(batch, b, index) {
-  const put = (material, size, p, r, shape, tint) => batch.add(b, material, size, p, r, shape, tint);
+  const put = (material, size, p, r, shape, tint) => batch.add(b, material === 'lamp' ? 'nightLamp' : material, size, p, r, shape, tint);
   const tint = [0xb3bbc0, 0x778d98, 0xb0a48c, 0x839c9b][index % 4];
   // Slim facade beams subdivide the existing box without enlarging its footprint.
   for (const face of [-1, 1]) {

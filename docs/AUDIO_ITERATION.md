@@ -36,3 +36,49 @@ Checks performed:
 - A mocked Web Audio scheduling check loaded all 11 runtime WAVs and exercised 1,200 driving frames, RPM and throttle changes, shifts, flock bonus, mute, pause and partial/total download failure. Another 660 full-speed frames confirmed one active engine voice, stable gain and pitch, a playback rate below 1.4 and a filter cutoff below 3 kHz. All 56,579 automation commands were finite, and repeated stop requests did not extend a stopping source's life.
 
 These checks validate the files and scheduling. Browser decoding and listening remain separate checks.
+
+## Seven-car and environment pass
+
+The seven cars now use distinct, conservative voicings of the existing recordings. Falcone keeps the base pitch; Stuttgart is softer and lower; Aurora is smoother; Dusthawk is slightly sharper; Banshee has a lower exhaust tone; Viper is brighter; Titan is deepest. Pitch multipliers range from 0.83 to 1.06, with small gain and filter changes. Loaded loops, coasting and throttle/shift accents use the same car profile. Final engine playback rates stay between 0.65 and 1.4, and engine filter cutoffs stay at or below 3 kHz. This is original sound design using shared source material, not seven new vehicle recording sessions.
+
+The high-speed safeguard remains: after the load transition settles, full throttle plays only the leveled high-speed recording. No extra loaded engine loop or synthesized harmonic plays over it. Car voicing does not modulate pitch or gain with time at a fixed RPM and throttle.
+
+Police now use an original two-voice synthesized wail. It gets louder as the pursuit car gets closer, with a fixed maximum level. No police recording was downloaded. Engine and tire sounds gain two quiet, filtered reflections while inside a real tunnel. The delays are fixed at 71 and 131 ms, have no feedback, and fade at tunnel entrances and exits. Sirens, music and reward chimes stay outside that effect.
+
+Rally, arena and off-road tires use a filtered gravel layer. Recorded asphalt squeal is suppressed on dirt. Both gravel and squeal stop while airborne. A scored landing adds a short original low thump. Loss and timeout results use the descending result cue rather than the victory fanfare.
+
+Run `node tools/test-audio.mjs`. The new mocked Web Audio check reads the 11 existing WAV headers, tests all seven voices at steady full speed, checks bounds throughout RPM/load changes, exercises asphalt/dirt/airborne transitions, tunnel routing, pursuit proximity, landing/shift effects, pause/mute cleanup and partial/total download failures. It also checks App tunnel masks inside and outside a tunnel and on the second lap. **116 checks passed, with 66,363 finite parameter commands.** The App progression integration suite still passes all 59 assertions. These are scheduling and routing checks; this pass does not claim human listening or real browser decoding.
+
+## PCM and interruption audit
+
+The later audit decodes actual PCM samples, rather than stopping at WAV headers. The test's RIFF PCM decoder handles the four committed source WAVs and all 11 runtime WAVs, including the original 96 kHz/24-bit tire source. It validates non-silent sample data, unclipped runtime loops and normal loop-boundary sample steps. No external codec or dependency is needed for these PCM files. It does not decode the original MP3 previews or replace real browser decoding and listening.
+
+The source loops contained repeated volume swells even at fixed game RPM. The existing circular 90 ms RMS leveling now also applies to idle, low/mid load and coasting. Idle gain compensation is limited to 2.5 times; other loops retain the existing 1.7 limit. Source regions, target RMS levels and all one-shot accents stay the same. The high-speed WAV is byte-for-byte unchanged.
+
+| Loop | Previous 100 ms envelope swing | Current swing |
+| --- | ---: | ---: |
+| Idle | 16.13 dB | 5.62 dB |
+| Low load | 8.83 dB | 1.38 dB |
+| Mid load | 6.40 dB | 1.11 dB |
+| High load | 1.07 dB | 1.07 dB |
+| Coasting | 9.88 dB | 3.15 dB |
+
+The idle pitch reference now matches its measured 75.73 Hz tonal peak. A six-second offline PCM mix at each adjacent-band midpoint across seven cars reduced the worst 100 ms envelope swing from 8.53 to 5.99 dB. The same test includes each car at full speed, checks headroom and verifies one loaded engine voice after throttle settles. The rendered comparison uses linear sample interpolation and the actual mixer gains/rates; it is not a perceptual audio-quality test. All runtime loop seams are within normal waveform step sizes, including the inherently noisy tire recording.
+
+The siren now uses the patrol car's physical 3D distance when available, keeping volume correct when vehicles are separated by a shortcut or another road section. Its legacy longitudinal gap remains a fallback.
+
+Final audit validation: **205 audio/PCM checks and 162,898 finite parameter commands passed**, alongside **66 App/progression integration assertions** and **19 progression/leaderboard checks**. The audio test uses actual decoded PCM for signal analysis; Web Audio scheduling uses a mock. Neither test is a claim of human listening.
+
+Arena junk-car crushes reuse the original collision-noise source at a 0.72 playback rate, with a 260 ms maximum burst and a quieter metallic accent. Only player crush events trigger this close impact; no fatal cue or explosion sample plays. Pause/mute also covers this voice. This is original synthesis, not a newly sourced crash recording.
+
+## Recorded landscape ambience
+
+Added three CC0 field recordings, verified on their primary Freesound pages: [Pacific beach waves by felix.blume](https://freesound.org/people/felix.blume/sounds/500171/), [Sunny Forest Ambience 1 by deadrobotmusic](https://freesound.org/people/deadrobotmusic/sounds/609952/), and [Stadium Crowd by stomachache](https://freesound.org/people/stomachache/sounds/274516/). The complete public HQ MP3 previews are preserved, together with SHA-256 hashes, source times and exact processing in `public/assets/audio/AMBIENCE_SOURCES.json`. These are the public compressed previews, not the account-only original WAV files. Both in-game credits and `CREDITS.md` identify the authors and licence.
+
+FFmpeg 7.1 decoded coast seconds 20–44, forest seconds 10–34, and the full 8.193-second crowd clip into retained mono 44.1 kHz/16-bit PCM excerpts. Runtime processing removes DC, applies a modest high-pass filter, limits peaks and RMS, and crossfades each loop boundary. Coast and forest loops run 22.75 seconds; the crowd loop runs 7.39 seconds. Runtime loop files total about 4.7 MB. No new runtime dependency or external request is needed. Rebuild only ambience with `node tools/prepare-audio.mjs --ambience-only`; the standard audio build also includes these files.
+
+Each recording has one decoded buffer and one continuously looping, unpitched source after the existing user-gesture unlock. Repeated loading reuses the same promise and voices. Failed ambience downloads leave engine and tire playback unchanged. `ambienceStatus` reports `locked`, `loading`, `ready`, or `partial` independently of engine sample status.
+
+App forwards the actual wrapped course section and day/night setting. Surf plays in coastal sections, forest ambience in daytime alpine sections, and crowd in the two stadium events. Desert and city use no borrowed ambient recording. Daytime forest birds are suppressed on night routes. A 0.65-second exponential fade handles section transitions; the transition is mostly settled within about two seconds. These exterior signals bypass engine tunnel reflections, and their volume drops inside tunnels and under high-speed acceleration. Recorded vehicle sounds remain the priority. Pause and mute use the shared master control, and returning to the menu fades the previous race ambience.
+
+Validation: **240 audio/PCM checks passed, with 177,736 finite automation commands**. New checks decode the real ambient PCM, verify non-silence and peak headroom, compare loop-boundary discontinuities with normal waveform steps, verify original MP3 hashes, and exercise loading deduplication, independent failure handling, biome selection, night suppression, crossfade scheduling, tunnel/load attenuation, pause/mute, menu exit and App forwarding across laps. The existing seven-car steady-engine and transition checks still pass with the same maximum 5.99 dB short-window envelope swing. This evidence does not claim a human listening review or native browser decoding of the new ambient loops.

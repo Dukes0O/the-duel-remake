@@ -1,0 +1,153 @@
+{
+  "source": "Original procedural vehicle models for The Duel",
+  "vehicles": [
+    {
+      "key": "dusthawk_rally",
+      "file": "dusthawk_rally.glb",
+      "bytes": 4315856,
+      "triangles": 46360,
+      "draws": 46,
+      "dimensions": {
+        "width": 2.1,
+        "length": 4.2,
+        "height": 1.68,
+        "wheelRadius": 0.41
+      },
+      "measured": [
+        2.11,
+        1.684,
+        4.227
+      ],
+      "glassDamage": [
+        {
+          "zone": "front",
+          "segments": 22
+        },
+        {
+          "zone": "rear",
+          "segments": 26
+        },
+        {
+          "zone": "left",
+          "segments": 26
+        },
+        {
+          "zone": "right",
+          "segments": 26
+        }
+      ],
+      "visibilityChecks": 18
+    },
+    {
+      "key": "banshee_muscle",
+      "file": "banshee_muscle.glb",
+      "bytes": 4752240,
+      "triangles": 50916,
+      "draws": 45,
+      "dimensions": {
+        "width": 2.26,
+        "length": 5.1,
+        "height": 1.47,
+        "wheelRadius": 0.43
+      },
+      "measured": [
+        2.26,
+        1.457,
+        5.108
+      ],
+      "glassDamage": [
+        {
+          "zone": "front",
+          "segments": 24
+        },
+        {
+          "zone": "rear",
+          "segments": 26
+        },
+        {
+          "zone": "left",
+          "segments": 20
+        },
+        {
+          "zone": "right",
+          "segments": 20
+        }
+      ],
+      "visibilityChecks": 21
+    },
+    {
+      "key": "viper_proto",
+      "file": "viper_proto.glb",
+      "bytes": 4924888,
+      "triangles": 52706,
+      "draws": 46,
+      "dimensions": {
+        "width": 2.2,
+        "length": 4.9,
+        "height": 1.1,
+        "wheelRadius": 0.39
+      },
+      "measured": [
+        2.2,
+        1.1,
+        4.901
+      ],
+      "glassDamage": [
+        {
+          "zone": "front",
+          "segments": 16
+        },
+        {
+          "zone": "rear",
+          "segments": 20
+        },
+        {
+          "zone": "left",
+          "segments": 26
+        },
+        {
+          "zone": "right",
+          "segments": 26
+        }
+      ],
+      "visibilityChecks": 21
+    },
+    {
+      "key": "titan_monster",
+      "file": "titan_monster.glb",
+      "bytes": 12807640,
+      "triangles": 134784,
+      "draws": 50,
+      "dimensions": {
+        "width": 2.8,
+        "length": 5.2,
+        "height": 3.6,
+        "wheelRadius": 0.98
+      },
+      "measured": [
+        2.8,
+        3.597,
+        5.2
+      ],
+      "glassDamage": [
+        {
+          "zone": "front",
+          "segments": 23
+        },
+        {
+          "zone": "rear",
+          "segments": 14
+        },
+        {
+          "zone": "left",
+          "segments": 26
+        },
+        {
+          "zone": "right",
+          "segments": 26
+        }
+      ],
+      "visibilityChecks": 21
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import {App} from '../src/app.js';
+
+let checks=0;const check=(value,label)=>{assert(value,label);checks++;};
+const memory=new Map();globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)};
+globalThis.window=new EventTarget();window.location={search:''};
+globalThis.Element=class{};
+let scheduled=0,cancelled=0;globalThis.requestAnimationFrame=()=>++scheduled;globalThis.cancelAnimationFrame=()=>cancelled++;
+const key=code=>{const event=new Event('keydown',{cancelable:true});Object.assign(event,{code,repeat:false});return event;};
+const first=new App();let firstUnlocks=0,closed=0;first.audio.unlock=()=>firstUnlocks++;first.audio.context={close:()=>{closed++;return Promise.resolve();}};first.audio.setPaused=paused=>{first.audio.paused=paused;};
+first.start();first.onFrame=()=>{};first.getMenuCourse();window.dispatchEvent(key('ArrowUp'));
+check(first.keys.ArrowUp&&firstUnlocks===1&&first.running,'live App receives input and owns one frame loop');
+const second=new App();let secondUnlocks=0;second.audio.unlock=()=>secondUnlocks++;
+first.dispose();check(!first.running&&cancelled===1&&first.onFrame===null,'App disposal stops its frame loop and detaches its HUD callback');
+check(first._menuCourses.size===0&&first.ghostRecorder===null&&first.audio.paused&&closed===1,'App disposal releases preview references and closes its audio context');
+check(window.__game.duel===second.duel,'disposing an older App cannot remove the newer App debug handle');
+window.dispatchEvent(key('ArrowRight'));window.dispatchEvent(new Event('pointerdown'));
+check(firstUnlocks===1&&!first.keys.ArrowRight,'disposed keyboard and pointer listeners cannot reactivate audio or input');
+check(secondUnlocks===2&&second.keys.ArrowRight,'the current App still receives keyboard and pointer input');
+second.dispose();check(window.__game===undefined,'disposing the current owner removes its debug handle');
+check(!second.running&&cancelled===2,'a current App without a started loop still disposes safely');
+console.log(`App lifecycle: ${checks} frame, input, audio and debug ownership checks passed.`);

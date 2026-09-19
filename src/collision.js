@@ -30,8 +30,9 @@ export function sweepBox(start, end, halfX, halfZ) {
   return { t: entry, nx, nz, penetration: 0, inside: false };
 }
 
-export function sweepObstacle(start, end, obstacle, carHeading = 0) {
-  const reach = Math.hypot(obstacle.halfX, obstacle.halfZ) + CAR_HALF_LENGTH + CAR_HALF_WIDTH;
+export function sweepObstacle(start, end, obstacle, carHeading = 0, dimensions = {}) {
+  const halfWidth = dimensions.halfWidth ?? CAR_HALF_WIDTH, halfLength = dimensions.halfLength ?? CAR_HALF_LENGTH;
+  const reach = Math.hypot(obstacle.halfX, obstacle.halfZ) + halfLength + halfWidth;
   if (obstacle.x + reach < Math.min(start.x, end.x) || obstacle.x - reach > Math.max(start.x, end.x)
     || obstacle.z + reach < Math.min(start.z, end.z) || obstacle.z - reach > Math.max(start.z, end.z)) return null;
   const angle = obstacle.heading || 0, cs = Math.cos(angle), sn = Math.sin(angle);
@@ -39,9 +40,31 @@ export function sweepObstacle(start, end, obstacle, carHeading = 0) {
     z: (point.x - obstacle.x) * sn + (point.z - obstacle.z) * cs });
   const relative = carHeading - angle, c = Math.abs(Math.cos(relative)), s = Math.abs(Math.sin(relative));
   const sweep = obstacle.shape === 'ellipse' ? sweepEllipse : sweepBox;
-  const hit = sweep(local(start), local(end), obstacle.halfX + CAR_HALF_WIDTH * c + CAR_HALF_LENGTH * s,
-    obstacle.halfZ + CAR_HALF_LENGTH * c + CAR_HALF_WIDTH * s);
+  const startLocal = local(start), endLocal = local(end);
+  const width = obstacle.halfX + halfWidth * c + halfLength * s, length = obstacle.halfZ + halfLength * c + halfWidth * s;
+  let hit = sweep(startLocal, endLocal, width, length);
   if (!hit) return null;
+  const minY = obstacle.minY ?? obstacle.y, maxY = obstacle.maxY ?? (obstacle.y + obstacle.height);
+  if ([start.y, end.y, minY, maxY, dimensions.height].every(Number.isFinite)) {
+    // Clip against the time interval where the vehicle and obstacle overlap
+    // vertically. This handles both a clear overflight and descent onto a roof.
+    const dy = end.y - start.y;
+    let entryY = 0, exitY = 1;
+    if (Math.abs(dy) < 1e-9) {
+      if (start.y > maxY || start.y + dimensions.height < minY) return null;
+    } else {
+      let near = (minY - dimensions.height - start.y) / dy, far = (maxY - start.y) / dy;
+      if (near > far) [near, far] = [far, near];
+      entryY = Math.max(0, near); exitY = Math.min(1, far);
+      if (entryY > exitY || hit.t > exitY) return null;
+    }
+    if (entryY > hit.t) {
+      const point = { x: startLocal.x + (endLocal.x - startLocal.x) * entryY, z: startLocal.z + (endLocal.z - startLocal.z) * entryY };
+      const contact = sweep(point, point, width + 1e-8, length + 1e-8);
+      if (!contact) return null;
+      hit = { ...contact, t: entryY };
+    }
+  }
   const nx = hit.nx * cs + hit.nz * sn, nz = -hit.nx * sn + hit.nz * cs;
   return { ...hit, nx, nz, obstacle };
 }

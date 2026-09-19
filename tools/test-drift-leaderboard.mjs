@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {COURSE} from '../src/config.js';
+import {createLeaderboard,recordFinish,getLeaderboard,loadLeaderboard,saveLeaderboard,mergeLeaderboards,LEADERBOARD_KEY} from '../src/leaderboard.js';
+import {createProfile,settleRace,bestKey,eventKey} from '../src/progression.js';
+let checks=0,serial=0;const check=(value,message)=>{assert(value,message);checks++;};
+const driftIndex=COURSE.findIndex(stage=>stage.kind==='drift'),stage=COURSE[driftIndex],normal=COURSE.findIndex(stage=>!stage.kind),player={id:'score-driver',name:'Score Driver'};
+const result=extra=>({runId:`drift-board-${++serial}`,stageIndex:driftIndex,car:stage.requiredCar,completed:true,won:true,targetsMet:true,driftScore:7000,driftTarget:3500,driftBestChain:1200,driftMeters:1900,timeSec:100,laps:2,lapTimes:[50,50],cpuDifficulty:'easy',difficulty:'casual',mode:'duel',seed:1989,...extra});
+let board=createLeaderboard(),first=result(),record=recordFinish(board,first,player);board=record.board;
+check(record.recorded&&record.scoreBest===7000&&!record.scoreImproved,'first valid score establishes a baseline');
+check(board.entries[0].driftScore===7000&&board.entries[0].driftTarget===3500&&board.entries[0].driftBestChain===1200&&board.entries[0].driftMeters===1900,'record retains score, original difficulty target, best chain and distance');
+const before=JSON.stringify(board);record=recordFinish(board,result({driftScore:6000,timeSec:80}),player);check(!record.recorded&&record.scoreBest===7000&&JSON.stringify(board)===before,'faster lower score cannot replace the car score best or mutate the board');
+record=recordFinish(board,result({driftScore:9000,timeSec:120}),player);board=record.board;check(record.recorded&&record.scoreImproved&&record.scoreBest===9000&&board.entries[0].timeSec===120,'higher score replaces a faster lower score');
+record=recordFinish(board,result({driftScore:9000,timeSec:110}),player);board=record.board;check(record.recorded&&!record.scoreImproved&&board.entries[0].timeSec===110,'equal score uses faster time without claiming a score improvement');
+check(!recordFinish(board,result({driftScore:9000,timeSec:115}),player).recorded,'slower score tie does not replace the record');check(!recordFinish(board,result({driftScore:9000,timeSec:110}),player).recorded,'exact duplicate does not replace the record');
+board=recordFinish(board,result({driftScore:8500,timeSec:70,cpuDifficulty:'hard',driftTarget:6000}),{id:'fast-driver',name:'Fast Driver'}).board;
+board=recordFinish(board,result({driftScore:9000,timeSec:105}),{id:'tie-driver',name:'Tie Driver'}).board;
+const rows=getLeaderboard(board,{event:eventKey(first)});check(rows.map(row=>row.playerId).join(',')==='tie-driver,score-driver,fast-driver','drift ranking prioritizes score, then time');
+check(rows[2].cpuDifficulty==='hard'&&rows[2].driftTarget===6000,'difficulty target remains visible on each score record');
+check(getLeaderboard(board,{event:eventKey(first),playerId:player.id,car:stage.requiredCar})[0].driftScore===9000,'per-player/car score best is available independently of wallet time PB');
+for(const bad of [{won:false},{targetsMet:false},{completed:false},{timeout:true},{driftScore:3499},{driftScore:NaN}])check(!recordFinish(board,result(bad),player).recorded,'invalid or failed drift result cannot enter board');
+const ordinary=result({stageIndex:normal,car:'falcone_f42',driftScore:1,timeSec:120});board=recordFinish(board,ordinary,player).board;board=recordFinish(board,{...ordinary,timeSec:115,driftScore:0},player).board;
+check(board.entries.find(row=>row.eventId===COURSE[normal].id).timeSec===115,'ordinary circuit still selects faster time regardless of score fields');
+check(!recordFinish(board,{...ordinary,timeSec:130,driftScore:1e7},player).recorded,'large irrelevant style score cannot replace ordinary circuit time');
+const memory=new Map(),storage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)};check(saveLeaderboard(board,storage),'score board persists');let restored=loadLeaderboard(storage);
+check(getLeaderboard(restored,{event:eventKey(first)}).map(row=>`${row.playerId}:${row.driftScore}:${row.timeSec}`).join('|')===rows.map(row=>`${row.playerId}:${row.driftScore}:${row.timeSec}`).join('|'),'reload retains score ranking and target metadata');
+const inferior=recordFinish(createLeaderboard(),result({driftScore:7500,timeSec:65}),player).board;
+check(getLeaderboard(mergeLeaderboards(inferior,board),{event:eventKey(first),playerId:player.id})[0].driftScore===9000&&getLeaderboard(mergeLeaderboards(board,inferior),{event:eventKey(first),playerId:player.id})[0].driftScore===9000,'cross-tab merge order cannot replace the higher score with a faster lower score');
+for(const corrupt of [{driftScore:undefined},{driftScore:Infinity},{driftTarget:1},{driftBestChain:100000},{driftMeters:-1}]){memory.set(LEADERBOARD_KEY,JSON.stringify({version:1,entries:[{...rows[0],...corrupt}]}));check(loadLeaderboard(storage).entries.length===0,'incomplete or inconsistent score records are not invented during migration');}
+saveLeaderboard(board,storage);const version=stage.layoutVersion;try{stage.layoutVersion++;check(loadLeaderboard(storage).entries.every(row=>row.eventId!==stage.id),'layout revision invalidates incompatible drift score records');}finally{stage.layoutVersion=version;}
+const baseline=settleRace(createProfile(),first).profile,fasterLower=result({driftScore:6500,timeSec:90});const paid=settleRace(baseline,fasterLower),scoreRecord=recordFinish(record.board,fasterLower,player);
+check(paid.personalBest&&paid.breakdown.personalBest===120&&paid.profile.personalBests[bestKey(first)]===90,'successful faster drift run retains the existing time-PB reward');
+check(scoreRecord.scoreBest===9000&&!scoreRecord.recorded,'time improvement leaves the higher local score best untouched');
+check(!settleRace(paid.profile,fasterLower).awarded,'record display and repeated result cannot create a second credit payout');
+console.log(`Drift leaderboard: ${checks} score/time ordering, metadata, persistence, compatibility and unchanged reward checks passed`);

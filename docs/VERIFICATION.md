@@ -1,34 +1,115 @@
 # Remake verification
 
-Checked 19 September 2026 UTC in the local Windows workspace.
+Checkpoint: 19 September 2026. The current nine-event update passed 481 core checks and all 64 remaining suites. The sections below preserve earlier checkpoints and the final integration evidence.
 
-## Automated checks
+## Complete checkpoint
 
-- `npm test`: 292 gameplay assertions, nine progression check groups, and 13 App integration assertions passed.
-- Includes 60 six-stage campaigns across seeds, base cars, difficulties and 30/60/144 simulated display frames per second. All completed with matching outcomes across frame rates. The route-aware demo driver won 360 of 360 stages.
-- Six extra runs using the actually unlocked Aurora GTR also completed at all three frame rates in Casual and Pro, earning credits.
-- Regression coverage includes responsive drift, throttle-only road departure, dirt without damage, swept static and vehicle collision, pushing the rival, CPU braking for cut-ins, harmless late CPU rear contact, boundary and coastal water recovery, flock collection/deduplication, five-hit catastrophe, directional damage, stage selection, upgrade physics and upgrade-scoped best times.
-- The final terrain audit adds 1,130 checks across six scenes and two seeds: station foundations match yard height, coastal towers/trees remain above water, water recovery works, and sampled mountain rims stay at least 1.98 m below terrain.
-- Profile checks cover corrupt/blocked storage, persistent win deduplication, win-only rewards, affordability, level caps, car unlocks, and fixed upgrade snapshots during races.
-- `npm run build` passes. The renderer/Three.js chunk is approximately 694 KB minified / 186 KB gzip. Vite reports its existing large-chunk advisory.
-- `git diff --check` is clean apart from routine LF/CRLF notices.
+- Gameplay:464 checks passed;60 completed three-stage campaigns,180/180 stage wins, no catastrophic outcomes in that deterministic matrix.
+- Progression:20 groups; App persistence, ownership and interrupted-race integration:70 assertions.
+- Terrain:622034 checks across seven events and four seeds. Station foundations had 0.0000 m maximum error. Actual rendered terrain kept mountain rims at least 3.98 m buried. The audit included 281725 far-triangle queries and 1859 near-strip hits for omitted far quads.
+- Circuits:33921 checks, with a 14.9% maximum road grade. Shortcuts:59 branches across 45 layouts,1449561 clear Titan hull sweeps,3.03% minimum 3D distance saving.
+- Prepared gravel:29 pace, nitro, upgrade, NPC and route-boundary checks. Driving effects:27 terrain, airborne, landing, crush and pool checks.
+- Audio:209 checks and 162916 finite automation commands. Actual source/runtime PCM was decoded and measured. Worst six-second mixed-envelope variation was 5.99dB across the tested band transitions and seven car voices.
+- Map:77 projection/branch/cache checks. Arena props:29 deformation/bounds/reset checks. Rally detail:22700 checks, visible rut clearance 9.7–13.0 mm, terrain at least 34.1 mm under the driving mesh.
+- Mountain geometry:133388 checks and 12642 clear road/branch rays. Camera clearance:176 roof/portal/damping checks. Furniture:243037 assertions and 219294 clear Titan hull sweeps; tunnel rock has at least 1.87 m of cover around every collidable cell.
+- Ghost recording:76 assertions; ghost vehicle material ownership/cleanup:332 checks. Terrain style:10228 continuity/vertex checks.
+- Titan Stunt Trial:44 checks. Independent input-driven Hard trial replays matched at 30/144 FPS:50.45 s Auto and 50.44 s Manual, six landings and five crushes. App demo runs on Easy/Medium/Hard each finished in 49.68 s.
+- Driving milestones:89 assertions covering one-time awards, player isolation, persistence and actual stunt finishes.
 
-## Browser checks
+Separate later tunnel-detail tests passed 28620 checks, with overlay triangles no farther than 0.094 mm from the existing lining. Roof geometry remained unchanged. Their 176 camera checks also passed.
 
-Separate hidden development and production tabs were used. The user's race tab was not used for test interactions. Production testing used port 5175 so test credits did not change the profile on port 5174.
+The input-only shortcut pace audit is separate from distance and collision clearance. Primary seeds 1989/42 across all five non-arena events produced 3.02–12.48% clean segment savings, with no crashes, resets or off-route time. Harbor seed 20 gave 2.73–2.93%; see `SHORTCUT_PACE_AUDIT.md`. These are driver-model measurements, not a guarantee for every human line.
 
-An actual production demo race completed and awarded 750 credits. Engine and tire upgrades each cost 350 credits, leaving 50. The displayed top speed increased from 201 to 208 mph. Reloading preserved both upgrade levels and the remaining credits; unaffordable next purchases were disabled. The garage, locked Aurora entry, and scene selector were visually inspected at the browser's 1280 by 720 viewport. The prior mobile layout check predates this garage expansion; no new mobile driving mode is claimed.
+## Browser evidence
 
-Alpine, coast and harbor scenes were inspected in the browser, including meadow terrain, alpha-cutout vegetation, unobstructed roads, detailed buildings and the driver. The fifth major hit still reported catastrophic game over. A boundary test reset safely with zero major crashes; a flock hit restored nitro from 0.1 to 1.0 and recorded one collected flock. No shader errors appeared in the final scene checks. The development log retained a temporary syntax error from an earlier edit that was immediately corrected; the rebuilt production page loaded without errors.
+Tests used the isolated local QA origin on port 5175. No purchase or race commands were sent to the user's port 5174 origin.
 
-Steady samples reported 60 FPS on this host. Representative scenes ranged from roughly 1.7 to 2.2 million rendered triangles and 250 to 340 draws, including shadows. First loads and scene changes were slower while assets and shaders initialized. These are point samples, not a broad hardware benchmark.
+- Actual UI Pacific races completed older layout 1 in 1:42.05 and layout 2 in 1:47.10. Each earned 660 CR, and the local leaderboard recorded the appropriate layout. Those times are not comparable across route revisions.
+- Circuit QA and Player 1 remained separate. Player 1 retained 50 CR and its level-one engine and tires.
+- A later Time Trial recorded 1:46.21 and saved a ghost. The ghost survived reload and visibly pulled away from a stationary player. Abandoning that replay charged 300 CR once and preserved the saved ghost.
+- A funded Garage QA fixture tested the real purchase flow:40000 CR minus the 12000 CR Titan price left 28000 CR and opened both arena events. The real-UI Hard stunt run finished in 49.68 s with six landings and five crushes. It earned 3000 CR:1500 base,150 clean,450 jumps,300 crushing,100 Clean debut and 500 Arena show. The wallet became 31000 CR.
+- The wide tunnel camera stayed under the roof; generated concrete and flush service details rendered correctly. The arena physics preview flattened a salvage car without a major crash. Generated crowd cutouts and coastal waves rendered with no observed shader errors.
+- The HUD map was readable at 1280×720 and did not cover the car or speedometer. Stunt objectives and bonus details fit the result screen.
+- Point samples on this host were about 56–57 FPS. Dense city after batching and later route changes: about 6.80 M submitted triangles; coast 3.76 M; stadium crowd 0.82 M. Counts include shadow passes. These are snapshots, not a minimum frame-rate or hardware guarantee.
+- All 11 runtime audio assets decoded and Web Audio reached the running state. No independent human listening review is claimed.
 
-AudioContext ran and all 11 runtime audio assets decoded. The revised high-speed mix passed 1,200 variable driving frames and 660 steady full-speed mock frames, including mute, pause, and fallback. Waveform checks verified the steadier high-rev loop. Browser decoding and mathematical checks do not constitute an independent listening review.
+## Later integrations
+
+- Paint catalog, renderer helper and App integration passed 76, 2,410 and 35 checks. The actual garage bought Copper Metallic for 250 credits, kept it through a reload, then bought Glacier Satin for 400 credits. Both visibly changed the detailed car. Factory restoration and race snapshots passed the automated checks.
+- High graphics adds edge smoothing and 2,048-pixel shadows. Performance disables the extra shading and smoothing passes and uses 1,024-pixel shadows. City samples were 56 FPS in both modes, with about 6.80 million and 3.47 million submitted triangles respectively. These are point samples.
+- CPU route strategy passed 17,018 checks. Four complete Medium/Hard races matched at 30 and 144 FPS. Useful branch replays saved 0.73–1.75 seconds through physical motion. The stale police target regression passed three checks after its fix.
+- Recovery integrity passed 44 checks. The reproduced lap-line bug is fixed; repeated jumps do not duplicate rewards, and chase deadlines settle once.
+- Route choices passed 1,768,977 geometry assertions, including 1,651,293 clear Titan-width sweeps across 12 natural layouts. The closest two shapes still differ by 11.82 m RMS after alignment. App integration passed 68 checks, including actual two-lap runs on all three choices and separate records, leaderboards and ghosts.
+- Desert detail passed 340,471 checks. Across nine scenes, 874 cacti were grounded against rendered terrain and 608 rock transforms kept their original collision footprints. Visible cactus heights range from 0.94 to 4.25 m.
+- Generated cloud density and granite cliff textures are integrated. The sky and scene light now share one sun direction. The cloud deck compiled and rendered in the coastal scene without observed errors.
+- A real browser Time Trial on Pacific Route B finished in 1:45.38, awarded 660 credits and saved a separate ghost. Its best time and ghost appeared in the menu on return. Garage QA held 31,010 credits after this run and the two paint purchases.
+
+The later combined checkpoint completed logically across `.qa-checkpoint.log` and `.qa-checkpoint-rest.log`. Its 60 campaigns passed. A coastal recovery fixture was corrected to mark gates before teleporting the player; the unchanged production fix then passed 622,058 terrain checks. The course-preview assertion was corrected for singular “shortcut” and passed all 93 checks. All intervening suites passed.
+
+## Eighth event and latest graphics
+
+- Neon Drift Trial: 435 focused gameplay, 152 trial, 46 scoring, 44 recovery, 38,437 circuit and 755,534 terrain checks passed across eight events. Actual App inputs finish the unmodified city route in 99.38 seconds with 6,319 banked points. Easy/Medium/Hard targets are 3,500/5,000/6,000; deadlines are 150/125/110 seconds. A real crash produces 110.13 seconds and 5,899 points: Easy and Medium win, Hard times out. Independent 30/144 FPS input runs match.
+- Drift App integration passed 98 checks, including failed score goals, deadline losses, restart/reload settlement, player isolation and a 15% performance-bonus cap. Failed goals cannot set best times, leaderboard records or ghosts. Time records for normal completed race losses remain eligible.
+- City interiors passed 548,422 checks; the shader adds perspective rooms without changing building footprints. A browser close-up showed shelves, counters and room surfaces with no observed errors.
+- Vegetation grouping passed 35,713 checks for 3,791 exact part instances. Harbor building grouping and hidden-window removal passed 19,327 checks, including a legacy-window fallback fixture. These reduce submission without deleting visible scenery.
+- Three new CC0 ambience loops passed 240 PCM/automation checks with 177,736 finite audio commands. The old engine envelope remains at 5.99 dB worst tested six-second variation. Engine samples and ambience both reached ready in the browser.
+- City paint placement passed 5,772 checks and 2,880 ray samples. Crosswalks and stop bars now sit 22.6–27.4 mm above actual asphalt, instead of below it.
+- Current coastal point sample at canonical seed 1989: 56 FPS, 627 draws, 3.05 million submitted triangles in High. This includes shadow and shading passes. It is a point sample, not a hardware performance guarantee.
+
+Score-first drift board passed 30 checks; the updated App suite passed 101. A second real-UI Hard run finished in 99.38 seconds with 6,319 points and a 798-point best chain. The visible leaderboard showed 6,319 PTS, target 6,000, Hard/Auto and stock upgrades. Each QA Hard win earned 1,950 credits, including its existing win streak; Garage QA reached 29,910 credits after buying the Banshee and winning twice.
+
+Road materials passed 71,948 checks. Browser QA caught bright night-time wheel bands; night roughness polish was removed and the corrected city asphalt was reviewed. The skyline passed 692,828 checks; 96 towers remain at least 117.27 m from driving surfaces and their foundations are at least 1.20 m below rendered ground. Local lamp pools and restored crosswalks rendered without observed shader errors. A city point sample held 57 FPS with 5.14 million submitted triangles in High.
+
+Landscape cells passed 313,575 checks across 47,927 unchanged instances. Modeled total camera/AO/shadow submissions fell 61.9%, though draws increase and hardware timing still matters. Chevron cells passed 50,146 checks; the largest packed world-vertex difference was 0.061 mm, and sampled draws fell from 702 to 200.
+
+Retained environment behavior passed 112 checks: keys, chicken/crush resets, effect cleanup and shared/private resource disposal. Actual menu→race retained world build count 2 instead of rebuilding the same scenery. The root renderer also disposes its sun shadow and clears its owned debug reference; App/HMR teardown subsequently passed eight checks.
+
+Generated `tire-smoke.png` is 1254×1254 RGBA with real transparency (alpha 0–254). Existing effects regression passed 27 checks after adding separate gray rubber smoke. Later driving visual QA confirmed soft neutral wisps; see the final integration entry.
+
+## Nine-event checkpoint
+
+The combined nine-event run passed in two consecutive portions: `.qa-nine-event.log` through road furniture and `.qa-nine-event-rest.log` from prepared surfaces onward. The first run found an old synthetic rally fixture missing `def.offroad`; matching the real event definition corrected it. No driving rule was weakened. The resumed chain exited successfully. Later route-load presets and parked-city detail are separate follow-up work.
+
+- Main simulation: 481 passed, zero failed; 60 completed campaigns and zero catastrophic outcomes in that matrix.
+- Terrain: 869,098 checks over nine events/four seeds; circuit geometry: 44,321; shortcuts: 86 branches across 63 circuits with 2,172,162 clear obstacle sweeps. Maximum grade remains 14.9%.
+- Timberline Checkpoint Rush: 457 trial checks and 80 App/reward checks. Twenty-four input replays match across frame rates: Auto 101.68 seconds, Manual 101.65, 12/12 gates, zero hits/resets. The Hard clock retains at least 8.49 seconds before each successful gate. A crash-delayed Easy run succeeds; tighter timers correctly fail it.
+- Gate rendering: 19,943 checks and 1,656 actual road-triangle rays. Minimum banner underside clearance is 5.328 m; numbering faces approaching drivers, physical posts match the model, and two-lap signals update correctly.
+- Actual QA UI: Dusthawk purchase cost 3,500 credits (29,910→26,410). The Hard checkpoint run finished in 1:41.68 with 12/12 gates and no misses, paid 1,950 credits, and the menu showed its car best and 28,360-credit wallet.
+- Tire smoke: 74 checks, including 31 live particles after 0.75 seconds at each of 30/60/144 FPS, terrain/airborne suppression, reset, bounded pools, real sprite alpha and single texture disposal.
+- Chicken pool: 35,660 checks. Across 28 populated course views, 17% of source birds were submitted on average, reducing chicken triangles by 83%. All physical flocks, colors, scatter and pickup/restart states remain present. Retained-environment checks now pass 119; App teardown passes eight.
+- Exact polyline lookup: 59,133 helper checks and 69,715 Course checks, plus 7,571 terrain-integration checks. Full positions, geometry buffers, mountain transforms and skyline foundations match the original scans. Local query benchmarks improve roughly 1.6–4.7× depending on workload; these are CPU microbenchmarks.
+- Weathered sidewalk: 37,676 checks cover 1,044 strips, 1,044 curb faces and 64 cell joins. Two-metre texture coordinates remain continuous; station and shortcut access stays open. City interior checks remain 548,422; changed sidewalk joint batching lowers total detail draws to 206 Harbor / 361 Chase without adding glass draws.
+
+The city concrete/curbs were reviewed in the browser. First GPU frame timing varies substantially under parallel testing; world-build and first-frame times are now displayed in the QA fixture so future profiling can separate CPU geometry work from GPU compilation.
+
+## Final route, lighting and detail integration
+
+The fresh core run passes 481 checks with 60 complete campaigns, 180/180 stage wins and no catastrophic outcomes in that matrix. All 64 other current suites pass in `.qa-final-rest.log`: the first 58 finished in 238.7 seconds, followed by warmup, readiness, meadow-material, completion-screen, pine-material and vehicle-grounding checks. Later bark and parked-glass corrections reran their affected suites. No fixture or production fix was required in this final run.
+
+- Exact shortcut presets: 222 checks with `--verify-solvers`, including all 15 solver comparisons. `npm run assets:routes -- --check` passes. The normal 177-check suite covers cloning, invalidation and custom-seed fallback. Cold default constructors sampled at 57–118 ms instead of 701–1,801 ms; unchanged physical geometry is checked independently.
+- City parking: the final fitted-glass version passes 424,213 placement/geometry checks, with 179,952 transformed vertices inside colliders, 143,630 Titan clearance sweeps and 42 gameplay checks. The earlier 438,481-check version used more box vertices; replacing those with fitted glass quads reduces geometry. Harbor has 10 cars; Chase and Drift have 18. Player, rival and police all hit solid parked cars. Six actual App city runs finish with no unintended hits or resets.
+- Cosmetic city relocation: 3,770,694 checks. Of 18,954 cosmetic instances, 4,706 moved away from sidewalks/driving corridors; none were removed. Non-city instances and physical transforms are unchanged.
+- Daylight choices: 2,666 lighting checks and 135 App checks. Clear, Golden hour and Overcast produce identical 1,084-sample trajectories, rewards and ghosts in the same 105.38-second Time Trial. Night and tunnel constraints remain active. Browser menu selection, persistent Golden hour on reload, disabled Night event selection, golden coast and overcast pass were reviewed.
+- Meadow material: 323 focused checks and 313,578 landscape checks. The original transparent grass image, geometry, placement and wind are retained. Cooler tint, soft root shading and mostly upward diffuse normals remove the glaring folded-card appearance. Front/back lighting is consistent; close-up browser review passed.
+- Pine material: 1,725 focused checks and 47,441 vegetation checks across 4,984 unchanged instances. Smooth radial/upward crown normals retain depth with consistent front/back lighting; the generated bark map adds color and subtle bump to unchanged trunks. The browser crown close-up shows a darker evergreen canopy.
+- Standalone completion: 72 checks. Garage events use their actual name, settled reward, precise time and objective metrics after final navigation. Campaign-only geography and lives no longer appear on a city escape or other standalone event. Three-stage campaign results are unchanged.
+- Tire effects: 160 checks. Road contact now uses the same visible-surface sampler as the car, preventing raised marks where a shortcut approach flattens roadside relief. Tire marks connect actual ground contacts at 30/60/144 FPS and restart cleanly after release or reset. Neutral generated smoke and continuous tracks were reviewed in the city drift fixture.
+- Experimental shader preparation: 132 controller, 63 readiness, eight App lifecycle and 119 retained-renderer checks pass. `?warmup=1` requires parallel shader compilation; default stays off. It restores the render target, prevents simulation advancement before the first drawn frame and defers resource disposal safely.
+
+Browser timing samples from the same QA sequence are exploratory, not a controlled benchmark. With warmup off, first composer calls took 2,184 ms at menu, 1,248 ms in Alpine and 1,370 ms in City. With warmup on they took 592/131/223 ms, plus submission of 40/236/152 ms and asynchronous waits of 174/989/119 ms. Shader caches and driver scheduling affect these figures. Warmup does not cover every shadow, post-processing, texture upload or geometry upload cost; do not describe it as eliminating loading pauses.
+
+Two actual browser Hard chases with optional shader warmup each finish in 99.68 seconds. The first earns 2,300 credits including the one-time Night Escape milestone; the repeat earns 1,950. The corrected final screen shows CITY ESCAPED, the exact time, 2/2 laps and settled credits. Returning to the menu shows 32,610 credits and the correct car best.
+
+The final tire-grounding correction passes 3,665 checks using all seven actual vehicle models and rendered asphalt, gravel and shortcut triangles. Intact tire bases and rolling radii are measured once; the whole car moves together and road pitch/roll use yaw-first orientation. The steep Ridge Rally s=2168 Titan contacts improve from roughly −40 to +40 cm to 0.91–1.03 cm. Browser views of Titan and the imported Falcone confirm grounded tires and intact bodies. Other sampled crests retain −4.0 to +6.5 cm variation because this remains a rigid visual chassis. All actual model bodies remain over 5 cm above their tire plane. Paint 2,410 and effects 160 checks pass after integration; airborne displacement and damage reset remain intact.
+
+Final `npm run build`, `npm run qa:build` and `git diff --check` pass. The release contains the new bark and packaged license; the QA controls are excluded. Vite reports its known renderer chunk-size warning (about 917 kB minified / 278 kB gzip). No new runtime dependencies were added. Latest inspected QA browser logs contained no warnings/errors after 10:00 UTC. Temporary QA tabs were closed at the 5% quota stop.
+
+The packaged asset audit resolves all runtime URLs and confirms self-contained GLBs. It restored the unmodified upstream `LicenseRef-LegalMark-Khronos.txt` under `public/LICENSES/`, fixing two broken relative links in the model license. Original/source audio, generated textures and route presets are included in the normal build.
 
 ## Assets and limits
 
-Generated scene reference, granite, pine bough, meadow turf and verge grass assets are used in the game or its modeling references. Full prompts are in `IMAGE_PROMPTS.md`. Licensed car, scanned ground, HDR and real audio sources are documented in the asset credits.
+Seven garage vehicles and nine two-lap events are implemented. Generated modeling references and material maps support the scene work. Source licenses and generated prompts remain documented in the asset folders and `IMAGE_PROMPTS.md`.
 
-All three player choices share the licensed concept-car body, with distinct tuning and trim. Aurora adds carbon aero and gold wheels. The rival also uses the detailed body; traffic and loading fallbacks use procedural geometry. Driver and directional damage geometry were checked on the actual GLB, including exact reset and independent instances.
+The engine/tire files are real licensed recordings. Seven voices mix shared recordings; they are not seven independently recorded cars. Police wails, impacts, salvage-car crunches and several other cues are original synthesis.
 
-No new runtime dependencies were installed. Three.js and Web Audio supply this iteration. Blender can import the GLB and reference assets; no Blender render is claimed. Handling remains arcade drift, visual deformation is not soft-body physics, and explosion debris uses lightweight effects.
+No new runtime dependency was installed. The game uses Three.js, Web Audio and the browser Gamepad API. GLBs were exported and reloaded, but no Blender render was performed. Blender was not found on PATH, in the checked registered installations or as a running process. Native release, Unreal migration, mobile controls and broad hardware testing are not claimed. Driving remains arcade drift and bounded visual damage, not soft-body simulation or an open-world GTA game.

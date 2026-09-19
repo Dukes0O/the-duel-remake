@@ -1,6 +1,45 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
+export const VEGETATION_CELL_SIZE = 200;
+
+// Keep source indices stable: cactus shape, height and tint must not change
+// when a cell boundary splits the original feature list.
+export function vegetationCells(features, size = VEGETATION_CELL_SIZE) {
+  const cells = new Map();
+  features.forEach((feature, index) => {
+    const key = `${Math.floor(feature.x / size)}:${Math.floor(feature.z / size)}`;
+    if (!cells.has(key)) cells.set(key, { key, entries: [] });
+    cells.get(key).entries.push({ feature, index });
+  });
+  return [...cells.values()];
+}
+
+export function finishVegetationCell(mesh, key, entries) {
+  mesh.castShadow = mesh.receiveShadow = true;
+  // Bounds include the full transformed crown/arms, not just feature centers.
+  // The small padding avoids clipping foliage on a numerical frustum boundary.
+  mesh.computeBoundingBox(); mesh.boundingBox.expandByScalar(.02);
+  mesh.computeBoundingSphere(); mesh.boundingSphere.radius += .02;
+  mesh.userData.vegetationCell = { key, size: VEGETATION_CELL_SIZE, entries };
+  return mesh;
+}
+
+export function addPineTrees(group, trees) {
+  if (!trees.length) return;
+  const assets = pineTreeAssets(), object = new THREE.Object3D();
+  for (const { key, entries } of vegetationCells(trees)) {
+    const trunks = new THREE.InstancedMesh(assets.trunk, assets.bark, entries.length);
+    const leaves = new THREE.InstancedMesh(assets.crown, assets.needles, entries.length);
+    trunks.name = `Pine trunks ${key}`; leaves.name = `Pine crowns ${key}`;
+    entries.forEach(({ feature: tree }, i) => {
+      object.position.set(tree.x, tree.y - .24, tree.z); object.rotation.set(0, tree.heading, 0); object.scale.setScalar(tree.scale); object.updateMatrix();
+      trunks.setMatrixAt(i, object.matrix); leaves.setMatrixAt(i, object.matrix);
+    });
+    group.add(finishVegetationCell(trunks, key, entries), finishVegetationCell(leaves, key, entries));
+  }
+}
+
 // Image-generated needle sprays form a full radial crown; roots are placed by
 // course.groundAt so the same terrain surface supports every tree.
 export function pineTreeAssets() {
@@ -16,11 +55,34 @@ export function pineTreeAssets() {
   const crown=mergeGeometries(parts);parts.forEach(g=>g.dispose());
   const map=new THREE.TextureLoader().load('/assets/textures/pine-bough.png');
   map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=8;
+  const barkMap=new THREE.TextureLoader().load('/assets/textures/pine-bark.png');
+  barkMap.colorSpace=THREE.SRGBColorSpace;barkMap.wrapS=barkMap.wrapT=THREE.RepeatWrapping;barkMap.repeat.set(1,3);barkMap.anisotropy=8;
+  const needles=new THREE.MeshStandardMaterial({map,color:0x91b69b,roughness:.95,alphaTest:.48,side:THREE.DoubleSide});
+  needles.onBeforeCompile=shader=>{
+    shader.uniforms.pineCrownBias={value:.82};shader.uniforms.pineLowerShade={value:.80};
+    shader.vertexShader=shader.vertexShader
+      .replace('#include <common>','#include <common>\nuniform float pineCrownBias;\nvarying float vPineHeight;')
+      .replace('#include <beginnormal_vertex>',`#include <beginnormal_vertex>
+vPineHeight=clamp(position.y/5.9,0.0,1.0);
+vec3 pineCrownNormal=normalize(vec3(position.x*.55,.75+vPineHeight*.35,position.z*.55));
+objectNormal=normalize(mix(objectNormal,pineCrownNormal,pineCrownBias));`);
+    // Smooth radial foliage lighting retains the crown's volume. Three's
+    // normal transform still handles each tree, and both card faces receive
+    // the same lighting rather than flashing pale on their reverse side.
+    shader.fragmentShader=shader.fragmentShader
+      .replace('#include <common>','#include <common>\nuniform float pineLowerShade;\nvarying float vPineHeight;')
+      .replace('#include <color_fragment>','#include <color_fragment>\ndiffuseColor.rgb*=mix(pineLowerShade,1.0,smoothstep(.1,.8,vPineHeight));')
+      .replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+#if defined(DOUBLE_SIDED) && !defined(FLAT_SHADED)
+normal*=faceDirection;
+nonPerturbedNormal=normal;
+#endif`);
+  };
   return {
     trunk:new THREE.CylinderGeometry(.06,.23,5.9,9).translate(0,2.95,0),
     crown,
-    bark:new THREE.MeshStandardMaterial({color:0x514335,roughness:1}),
-    needles:new THREE.MeshStandardMaterial({map,color:0xbed0ae,roughness:.88,alphaTest:.48,side:THREE.DoubleSide}),
+    bark:new THREE.MeshStandardMaterial({map:barkMap,bumpMap:barkMap,bumpScale:.025,color:0xc8c5be,roughness:1}),
+    needles,
   };
 }
 

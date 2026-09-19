@@ -1,46 +1,69 @@
-# Detail, sound and handling iteration
+# Graphics, sound and handling
 
-The current rules reflect the latest play feedback: faster steering, controllable arcade drift, harmless dirt excursions, five major impacts before an explosion, solid scenery, a yielding physical rival, garage progression, and roadside chicken bonuses.
+The current build has nine two-lap events, seven cars, local player garages, directional damage, prepared gravel shortcuts and solid scenery. Event and reward rules come from [config.js](../src/config.js), [game.js](../src/game.js) and [progression.js](../src/progression.js).
 
 ## Driving and damage
 
-Steering responds faster and has more cornering authority, including on dirt. `headingError` is the direction of travel relative to the road; `slipAngle` is the body's rotation relative to that travel. This gives a controllable arcade slide without applying hidden road following. It is not a full tire-force simulation. Drift drives tire squeal, smoke, skid marks and the HUD callout.
+Steering changes direction directly; accelerating does not steer the car along the road. Travel direction and body slip are separate, giving responsive arcade drifting. Slides drive tire effects and scoring where supported. This is not a full tire-force simulation.
 
-Head-on traffic and rock impacts count as major at 45 mph or more closing speed. Slower contacts and other collision types retain ordinary impact recovery. Going off-road does not trigger an impact. The five-hit tally persists across checkpoints and resets only with a new campaign. Legacy run reserves can still be exhausted by ordinary collisions or engine failures; the explosion specifically requires five major crashes.
+In ordinary events, five major crashes cause a catastrophic explosion. Head-on vehicle contacts and impacts with rocks, mountains, buildings, trees or rigid props count as major at a closing speed of at least 45 mph. Ordinary collisions and engine failures can exhaust the separate life reserve sooner. Major damage persists between campaign circuits and resets with a new campaign. Midnight Muscle Chase and Neon Drift Trial use recoverable cars: impacts cost time and damage the body, but do not consume lives or trigger the five-hit explosion.
 
-The course owns boulder/outcrop positions and collision footprints. Both the renderer and swept collision checks use those same entries. Tiny stones and grass are decoration. Mountains, station walls, pumps, canopy supports, tree trunks, poles, and bend barriers share world-space collision footprints. Mountains are cleared against the entire route. Cars warn at 60 metres from the centerline and safely reset at 78 metres. Boundary recovery does not damage the car. Tiny gravel, grass and flexible delineators remain decoration.
+Driving onto dirt does not itself count as a crash. Legal gravel routes retain useful pace, grip and nitro; rough ground outside the route slows the car more. Player, rival and pursuit vehicles share solid scenery and route boundaries. Contact can push an opponent off the road.
 
-Near-road ground follows a narrow course strip. Distant ground is a separate world-space grid with a gap covered by that strip, preventing wide extrusions from folding over tight bends. The car's off-road render height follows the local ground relief.
+Course data supplies collision footprints for mountains, rocks, buildings, station structures, tree trunks, poles, signs, tunnel covers and rigid barriers. Tiny gravel, grass and flexible markers are decorative. The normal boundary warns at 60 metres and resets at 78 metres from the road centerline. Distant shortcuts have their own 20-metre warning and 32-metre reset buffers beyond their edges. Coastal water recovery also applies. A boundary reset does not damage the car.
 
-## Art and audio
+## Cars and crash effects
 
-The player now uses the detailed [Car Concept model](../public/assets/models/CREDITS.md), with sculpted body panels, full cabin, textured tires, machined rims and separate brake assemblies. Both included cars and the unlockable Aurora GTR share this body while retaining their handling differences. The GTR has gold wheels, a carbon wing, splitter and skirts. A helmeted driver has articulated arms, a harness, and a steering wheel. Front, rear, left and right impacts dent and scratch the matching panels. Source geometry is normalized and batched by material; wheels steer and spin independently. The rival also uses the detailed body. Original procedural cars remain for traffic and the loading fallback. Impact damage deforms meshes, fractures glass and darkens paint. Catastrophe ejects wheels and metal debris, lights the surroundings, and leaves fire and smoke. These are visual effects, not deformable rigid-body physics.
+Falcone, Stuttgart and Aurora use the licensed [Car Concept body](../public/assets/models/CREDITS.md), with a detailed cabin, textured tires, brakes and articulated wheels. Aurora adds carbon bodywork and gold wheels. They share a body model despite their distinct handling. Dusthawk Rally, Banshee Muscle, Viper Prototype and Titan Monster have separate original geometry and Blender-compatible GLB exports; see [unlock vehicle notes](UNLOCK_VEHICLES.md).
 
-Natural HDR lighting comes from [Poly Haven's Zwartkops Curve Sunset](https://polyhaven.com/a/zwartkops_curve_sunset), under CC0. Scanned Gravelly Sand color, normal and roughness maps give the ground fine relief. The existing generated sandstone supplies canyon color and bump detail. Rounded branching cacti and dense pine crowns use instanced geometry. The generated pine needle cutout is applied to radial branch planes; tree roots use the shared ground surface. Generated granite covers eroded heightfield massifs, with snow on high alpine ridges. Mountain floors are buried below sampled terrain, preserving summit height. Sun shadows, baked car occlusion, a soft underbody shadow and restrained bloom add depth. All runtime assets are local. No additional library was installed; the lighting loader, bloom and output passes are included in the existing Three.js dependency. A full-screen ambient-occlusion pass was evaluated and excluded because it reduced the tested frame rate.
+Helmeted drivers have harnesses, arms and steering wheels. Front, rear, left and right contacts deform and scuff the matching panels; damage also affects glass and lamps. Catastrophe ejects wheels and debris and produces light, fire and smoke. These are scripted effects, not soft-body physics. Traffic and loading fallbacks use simpler procedural cars. Factory, Copper Metallic and Glacier Satin finishes change private body-paint materials while preserving trim and damage behavior.
 
-Recorded engine and tire assets are listed in [audio credits](../public/assets/audio/CREDITS.md). The engine recording is pitched and filtered with RPM and throttle, backed by a quiet synthesized combustion layer. It is not a measured recording set for every RPM band. The tire recording follows slip and braking. The explosion WAV is original synthesis. Browser samples are loaded only after audio is unlocked by a user gesture, with procedural fallback if loading fails.
+## Landscape and lighting
 
-Each stage has up to 28 flocks of eight chickens. White and brown birds walk and peck within their flock footprint. Crossing a flock refills nitro once per stage; birds flap away. The next stage or restart restores the flocks.
+Generated references guide vehicle and scenery design. Generated textures are used directly for grass, pine cutouts, sandstone, granite, roads, concrete, masonry, clouds and drift smoke. Natural environment lighting uses the credited CC0 [Zwartkops Curve Sunset HDR](https://polyhaven.com/a/zwartkops_curve_sunset). Sources and licences remain with the local assets.
 
-## Reproduce checks
+Landscape detail includes connected mountain ridges, slope-aware snow, muted ribbed cacti, dense pines, wind-blown meadow clumps, rally markers and grounded tire ruts. Roads and shortcuts follow the shared terrain sampler. Grounding checks use actual rendered triangles; mountain skirts and building foundations extend below terrain without lowering their tops. Coastal headlands, lighthouses, water and foam add depth beyond the road.
 
-Run `npm test`, `npm run build`, `npm run assets:audio`, and `npm run assets:export` as appropriate. With Vite running, `/tools/visual-check.html` provides visible buttons for fresh/red and silver cars, a drive sample, fourth and fifth impacts, Alpine scenery and chickens. Use Pause animation to inspect an effect. The ordinary `/` route always starts in manual mode.
+City scenes have detailed facades, perspective interiors, sidewalks, crossings, skyline buildings, parked cars and nearby street lighting. Cosmetic foliage and grit are kept off sidewalks and building footprints. Tunnels use scaled concrete grain and construction seams. Stadiums include crowds, grandstands, floodlights, ramps and crushable cars.
 
+Clear, Golden hour and Overcast change daylight, sky and clouds. Night events keep fixed lighting; visible sun and shadow directions stay aligned. High graphics includes ambient contact shading, edge smoothing and 2048-pixel sun shadows. Performance disables those two screen passes and reduces shadow resolution and pixel density. Transparent surfaces, foliage cutouts and the sky are excluded from the ambient depth pass to avoid false dark rectangles.
 
-## New scenes and progression
+Spatial batches let vegetation, landscape detail, signs and buildings be culled without reducing density. Indexed route queries preserve terrain geometry while reducing build work. The optional `?warmup=1` experiment prepares colour-scene shaders and holds simulation until the first drawn frame. It is disabled by default pending browser measurements; it does not prepare every post-processing/shadow shader or upload all geometry and textures.
 
-The six-stage campaign now includes Pacific Coast and Harbor After Dark. All scenes can be selected from the start menu. Coastal terrain drops toward an animated water surface; lighthouses and blue fuel canopies follow the generated reference. Harbor warehouses have warm windows, dock cranes, lamps, and car headlights under blue-hour lighting. Roads use bounded headings so they cannot loop across themselves. Turn warnings precede hard bends by 125 metres.
+## Sound and chickens
 
-Credits are local to the browser profile. A course win gives 650 credits, plus 100 for a clean finish and 150 on Pro. A loss gives no win credits. Each run/stage pair can pay once. Engine, nitro, handling and tire upgrades have three levels at 350, 600 and 950 credits. The Aurora GTR costs 2,200 credits. Race physics copies fitted upgrade levels when the run starts; later garage changes cannot alter that active snapshot. Best-time records include the four upgrade levels.
+Real idle, revving, acceleration and tire recordings supply seven restrained vehicle voicings. Sustained high revs use one leveled recording. Gravel, landing, pursuit and tunnel effects add context; coast, forest and stadium ambience use credited field recordings. These are shared recordings, not measured RPM/load packs for each fictional car. Audio unlocks after a user gesture and retains fallbacks on loading failure. See [audio notes](AUDIO_ITERATION.md) and [credits](../public/assets/audio/CREDITS.md) for sources, processing and verification limits.
 
-No new runtime library or engine is needed for this iteration. Three.js already supplies instancing, physical materials, image/GLB loaders, HDR lighting, shadows and postprocessing. Web Audio supplies playback and mixing. Blender can import the licensed GLB and generated references for future bespoke vehicle bodies and sculpted environments. This remains an arcade browser racer; these changes do not implement soft-body crash physics or a complete AAA production pipeline.
+Courses place up to 28 flocks of eight chickens where clearance permits. Birds walk and peck, then flap away when collected. Crossing a flock refills nitro to maximum once per event run. Restarting or advancing to another campaign circuit restores its bonuses.
 
+## Events and progression
 
-### Landscape follow-up
+The first three events form the campaign; the other six are standalone challenges.
 
-Generated meadow turf replaces the sand map on alpine and coastal land. Fourteen thousand instanced grass clumps per meadow scene use a photographic alpha cutout with a small wind animation. Taller rolling terrain stays tied to the same `groundAt` function used by props, birds and cars. Car pitch and roll follow off-road slopes. Mountain skirts are buried below the terrain at their footprints. The coastline drops toward the water close to the road, making the ocean and lighthouses visible while driving. Harbor reflection lighting uses a cooler environment to avoid a false sunset glare on the road.
+| Event | Entry |
+| --- | --- |
+| Pacific Canyon Circuit | Any owned car |
+| High Country Grand Tour | Any owned car |
+| Harbor & Highlands | Any owned car |
+| Titan Monster Arena | Titan Monster |
+| Midnight Muscle Chase | Banshee Muscle |
+| Ridge Rally | Dusthawk Rally |
+| Titan Stunt Trial | Titan Monster |
+| Neon Drift Trial | Banshee Muscle |
+| Timberline Checkpoint Rush | Dusthawk Rally |
 
-The high-rev engine mix was also corrected after play feedback: a steady leveled recording replaces the repeating rev blip, and redundant pitched/synthetic voices are removed at full revs. See `AUDIO_ITERATION.md`. CPU following now predicts cut-ins and brakes; a late rear contact caused by the CPU cannot trigger player damage or an impact animation.
+The three campaign circuits and Ridge Rally offer curated Route A, B and C layouts. Other challenges use fixed routes. Circuits validate sequential gates and both laps. Paved and gravel shortcuts have measured distance and driving-time checks.
 
+Each local player has a separate wallet and garage. Base wins pay 600 CR on Easy, 1,000 on Medium and 1,500 on Hard. A loss charges half that base, capped by the wallet so the charge cannot create debt. Eligible personal-best bonuses can still follow a completed loss. Clean finishes, improvements, streaks, arena actions, drift performance and one-time milestones have separate bonuses. Every run/stage pair settles once; leaving after GO and interrupted active races also count as losses. Transmission is separate from CPU difficulty and adds no flat Pro reward.
 
-Station yards are now level with their building and pump foundations, then blend into the surrounding terrain. Coastal lighthouses stand on raised headlands, and trees are excluded from underwater positions. The water boundary resets both cars before submergence. A 64-point footprint check buries mountain skirts without lowering their summits.
+Engine, nitro, handling, tires, brakes, suspension and nitro tank each have three levels costing 350, 600 and 950 CR. Paid cars cost 2,200 CR for Aurora, 3,500 for Dusthawk, 5,000 for Banshee, 7,500 for Viper and 12,000 for Titan. Upgrades and paint are fixed when the race starts. Records retain all seven upgrade levels; personal-best comparisons allow tuning improvements, while ghosts require a compatible build. Paint is cosmetic. See [progression rules](PROGRESSION_V2.md) for exact bonuses, comparison rules and saves.
+
+## Checks and remaining limits
+
+Run `npm test` and `npm run build`. Asset changes can be rebuilt with `npm run assets:audio`, `npm run assets:export` and `npm run assets:unlocks`. The stable QA build uses `npm run qa:build` and `npm run qa:preview`; its `/tools/visual-check.html` page has visible scene, vehicle and crash controls. The ordinary `/` route starts in manual mode; `?autopilot=1` explicitly enables the demo driver.
+
+Focused suites check rendered route clearance, grounding, damage, material ownership, batch transforms, shortcuts, event objectives, audio scheduling and progression. Browser inspection remains necessary for shader compilation, appearance, frame times and audible quality. [Verification notes](VERIFICATION.md) describe tested snapshots, not guaranteed performance on every device.
+
+Historical note: the early six-stage build used a flat 650-credit win and excluded the first ambient-occlusion experiment. Both have been superseded by the nine-event economy and selectable High/Performance rendering.
+
+The runtime still uses the existing Three.js and Web Audio stack. No additional game engine or runtime library is required. Blender can edit the exported GLBs and develop bespoke assets from the references. This remains a browser arcade racer with local saves and a bounded city chase, not a complete AAA production pipeline or open-world simulation.

@@ -28,8 +28,26 @@ Original file: `engine-source.wav` (`loop_0.wav` from the source). The author de
 
 Original file: `tire-squeal.wav` (`tires_squal_loop.wav` from the source). Runtime file: `tire-loop.wav`. Changes: 96 kHz/24-bit mono resampled to 44.1 kHz/16-bit mono with a windowed-sinc filter, DC removal, short loop crossfade, peak normalization. Runtime pitch and volume follow sliding and braking. No endorsement by the authors is implied.
 
-## Original sound
+## Recorded landscape ambience
+
+Three real field recordings are used under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). Each licence was verified on its primary Freesound page on 19 September 2026:
+
+- [Sea waves on the beach, some seagulls in background](https://freesound.org/people/felix.blume/sounds/500171/), by **felix.blume**, 26 December 2019. The author identifies Caleta Portales near Valparaíso, Chile, and a Schoeps CCM41/CCM8 microphone setup. The 20–44 second selection becomes `ambience-coast.wav`.
+- [Sunny Forest Ambience 1](https://freesound.org/people/deadrobotmusic/sounds/609952/), by **deadrobotmusic**, 30 November 2021. The author identifies this as forest field-recorded ambience with birds. The 10–34 second selection becomes `ambience-forest.wav`.
+- [Stadium Crowd](https://freesound.org/people/stomachache/sounds/274516/), by **stomachache**, 20 May 2015. The author describes general crowd noise recorded at a sports stadium. The full 8.193-second preview becomes `ambience-stadium.wav`.
+
+The original downloaded public HQ MP3 previews are preserved as `coast-source.mp3`, `forest-source.mp3`, and `stadium-source.mp3`. These are compressed previews, not the account-only original WAV recordings. FFmpeg 7.1 decoded the stated excerpts to mono 44.1 kHz/16-bit PCM `*-source.wav` files. `AMBIENCE_SOURCES.json` records exact download URLs, source hashes, time selections and processing. The runtime loops apply DC removal, modest high-pass filtering, peak/RMS ceilings and 1.25-second coast/forest or 0.8-second crowd loop crossfades. Rebuild only these files with `node tools/prepare-audio.mjs --ambience-only`.
+
+The mixer plays one unpitched loop per recording and fades between landscape sections. Coast surf, daytime alpine forest and arena crowd play quietly below vehicle sounds; tunnels and high-speed acceleration reduce them further. Daytime forest birds are omitted on night routes. No author endorsement is implied.
+
+## Original sound design
 
 `catastrophic-blast.wav` is an original synthesized pressure wave, noise burst and debris tail created for this game by `tools/prepare-audio.mjs`. Engine underlay, wind, gravel, siren, boost, impact, chicken-flock wing flutter, bonus chime and the musical sequence are original synthesis in `src/audio.js`.
 
+The seven fictional cars use original pitch, gain and filtering profiles applied to the shared licensed recordings above. These are not recordings of seven separate vehicles. Tunnel reflections use short fixed filtered delays on engine and tire signals. The two-voice proximity siren, gravel layer and landing thump are original synthesis; no additional recording or impulse response was downloaded for them.
+
+Idle, low/mid load and coasting loops also use the same 90 ms circular RMS leveling as the high-speed loop. This reduces repeated source loudness swells without changing the selected recording regions. Idle compensation is capped at 2.5 times; the other loops use the original 1.7 limit. The idle pitch reference was calibrated against its PCM tonal peak. No new source recording was added during this audit.
+
 Downloaded and processed 19 September 2026. Keep this attribution file and the in-game Audio Credits link when distributing the audio. Rebuild processed WAVs with `npm run assets:audio`.
+
+Harmless arena junk-car crushing reuses the original synthesized collision-noise buffer at a lower playback rate and gain, with a short original metallic tone. It does not use a recorded crash source or the catastrophic explosion sample.

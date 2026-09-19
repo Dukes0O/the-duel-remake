@@ -306,6 +306,7 @@ function addFineDetail(b, silver, paint) {
 // the loaded template, wheel geometry and texture maps remain safely shared.
 export function prepareVehicleDamage(vehicle) {
   const data = vehicle.userData, privateMaterials = new Map();
+  const damageSpace = data.damageSpace || { scale: [1, 1, 1], offset: [0, 0, 0] };
   data.damageBase = { roughness: data.paint.roughness, clearcoat: data.paint.clearcoat };
   for (const item of data.damageMeshes || []) {
     const { mesh } = item;
@@ -329,7 +330,8 @@ export function prepareVehicleDamage(vehicle) {
     const sideWindow = zone === 'left' || zone === 'right';
     const project = (u, v) => {
       if (sideWindow) ray.set(new THREE.Vector3(side * 3, 1.275 + u, -.06 + v), new THREE.Vector3(-side, 0, 0));
-      else ray.set(new THREE.Vector3((zone === 'front' ? -.23 : .21) + u, 3, (zone === 'front' ? .88 : -1.03) + v), new THREE.Vector3(0, -1, 0));
+      else ray.set(new THREE.Vector3((zone === 'front' ? -.23 : .21) + u, 3, (zone === 'front' ? damageSpace.frontGlassZ ?? .88 : damageSpace.rearGlassZ ?? -1.03) + v), new THREE.Vector3(0, -1, 0));
+      ray.ray.origin.multiply(new THREE.Vector3(...damageSpace.scale)).add(new THREE.Vector3(...damageSpace.offset));
       const hit = ray.intersectObjects(glass, false)[0];
       return hit ? hit.point.addScaledVector(hit.face.normal, .004) : null;
     };
@@ -381,10 +383,17 @@ function weightsAt(x, y, z, strengths) {
   damageWeights[3] = strengths[3] * THREE.MathUtils.smoothstep(-x, .32, .99) * door;
   return damageWeights;
 }
-function deformGeometry(mesh, rest, strengths, wear) {
+function deformGeometry(mesh, rest, strengths, wear, space) {
   const a = mesh.geometry.attributes.position;
+  // The default preserves existing cars; tall bodies use canonical panel space.
+  const scale = space?.scale || [1, 1, 1], offset = space?.offset || [0, 0, 0];
+  if (!strengths.some(Boolean)) {
+    a.array.set(rest); a.needsUpdate = true;
+    if (wear) { wear.array.fill(0); wear.needsUpdate = true; }
+    mesh.geometry.computeBoundingSphere(); return;
+  }
   for (let i = 0; i < a.count; i++) {
-    const x = rest[i * 3], y = rest[i * 3 + 1], z = rest[i * 3 + 2];
+    const x = (rest[i * 3] - offset[0]) / scale[0], y = (rest[i * 3 + 1] - offset[1]) / scale[1], z = (rest[i * 3 + 2] - offset[2]) / scale[2];
     const [front, rear, left, right] = weightsAt(x, y, z, strengths);
     const crush = front + rear, side = left + right;
     const crease = Math.sin(z * 24 + x * 19) * .005 + Math.sin(y * 51 + z * 11) * .002;
@@ -392,9 +401,9 @@ function deformGeometry(mesh, rest, strengths, wear) {
     const buckle = front * Math.exp(-(((z - 1.65) * 7 + x * .7) ** 2)) * .10
       + rear * Math.exp(-(((z + 1.67) * 7 - x * .7) ** 2)) * .10;
     a.setXYZ(i,
-      x - left * .34 + right * .34 + (right - left) * crease * 1.4,
-      y - crush * .18 + buckle + (crush + side) * crease + Math.sin(z * 7) * side * .012,
-      z - front * .39 + rear * .38 + (front - rear) * crease * 1.2);
+      (x - left * .34 + right * .34 + (right - left) * crease * 1.4) * scale[0] + offset[0],
+      (y - crush * .18 + buckle + (crush + side) * crease + Math.sin(z * 7) * side * .012) * scale[1] + offset[1],
+      (z - front * .39 + rear * .38 + (front - rear) * crease * 1.2) * scale[2] + offset[2]);
     wear?.setX(i, Math.min(1, Math.max(front, rear, left, right)));
   }
   a.needsUpdate = true; if (wear) wear.needsUpdate = true;
@@ -416,13 +425,13 @@ export function updateVehicleDamage(vehicle, count, catastrophic, age = 0, damag
     paint.roughness = catastrophic ? .94 : data.damageBase?.roughness ?? .22;
     paint.clearcoat = catastrophic ? .05 : data.damageBase?.clearcoat ?? 1;
     for (const { mesh, rest, normals } of data.damageMeshes || []) {
-      deformGeometry(mesh, rest, strengths, mesh.geometry.attributes.panelWear);
+      deformGeometry(mesh, rest, strengths, mesh.geometry.attributes.panelWear, data.damageSpace);
       if (strengths.some(Boolean)) mesh.geometry.computeVertexNormals();
       else if (normals) { mesh.geometry.attributes.normal.array.set(normals); mesh.geometry.attributes.normal.needsUpdate = true; }
     }
     for (const { mesh, rest, zone } of data.fractures || []) {
       mesh.visible = catastrophic || (zones[zone] || 0) > .2;
-      deformGeometry(mesh, rest, strengths);
+      deformGeometry(mesh, rest, strengths, undefined, data.damageSpace);
     }
   }
   for (let i = 0; i < (data.wheelPivots || []).length; i++) {
