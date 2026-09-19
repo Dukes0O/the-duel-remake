@@ -25,12 +25,11 @@ for(const cpu of ['easy','medium','hard'])for(const manual of [false,true]){
   app.duel.emit({ticket:t});app.duel._ticket({limitMph:55});eq(app.profile.credits,2000,'duplicate event or catch call cannot accrue again');
   eq(app.profile.activeRace.pendingPoliceFineCount,1,'duplicate event cannot grow pending fines');
   eq(s.racePenaltySec,POLICE.ticketPenaltySec,'duplicate catch cannot add time twice');
-  eq(app.requestNavigation('menu'),false);eq(app.pendingNavigation.charge,0);
-  eq(app.profile.credits,2000,'opening quit prompt does not refund or charge');
-  app.cancelNavigation();eq(s.status,'ticket');eq(app.profile.credits,2000,'cancelled quit preserves bank and pending fine');
-  app.requestNavigation('menu');eq(app.confirmNavigation(),true);eq(s.status,'menu');
-  eq(app.profile.credits,2000,'confirmed quit discards current earnings without touching bank');
-  app.confirmNavigation();app.returnToMenu();app.duel.emit({ticket:t});eq(app.profile.credits,2000);
+  s.score=1200;s.nearMisses=3;
+  eq(app.requestNavigation('menu'),true);eq(s.status,'menu','one click leaves the Busted screen immediately');
+  eq(app.profile.credits,2000,'immediate quit discards current earnings without touching bank');
+  eq(app.pendingNavigation,undefined,'no confirmation state remains');
+  eq(app.requestNavigation('menu'),true);app.returnToMenu();app.duel.emit({ticket:t});eq(app.profile.credits,2000,'repeated exit and late ticket cannot change the bank');
   eq(new App().profile.credits,2000,'reload after quit preserves banked credits');
   eq(app.profile.history.length,1,'police fine does not pretend to be an extra race');
   eq(app.profile.history[0].abandoned,true);eq(app.profile.history[0].charge,0);eq(app.profile.history[0].reward,0);eq(app.profile.activeRace,null);
@@ -39,7 +38,7 @@ for(const cpu of ['easy','medium','hard'])for(const manual of [false,true]){
 }
 {
   const app=start(),t=bust(app);app.duel.ackTicket();eq(app.profile.credits,2000,'continuing cannot debit the bank');
-  app.requestNavigation('restart');app.confirmNavigation();eq(app.profile.credits,2000,'restart after a catch discards pending fine and preserves bank');
+  eq(app.requestNavigation('restart'),true);eq(app.duel.state.status,'countdown','one click starts a fresh countdown');eq(app.profile.credits,2000,'restart after a catch discards pending fine and preserves bank');
   eq(app.duel.state.police.ticketCount,0,'new run resets the catch counter');
   app.advance(4);bust(app);eq(app.profile.credits,2000,'catch in a new run still preserves banked credits');
   app._settlePoliceTicket(t,app.duel.state);eq(app.profile.credits,2000,'previous-run ticket cannot fine the new race');
@@ -65,7 +64,7 @@ for(const cpu of ['easy','medium','hard'])for(const manual of [false,true]){
 for(const credits of [0,80,150,200]){
   const app=start({credits});bust(app);eq(app.profile.credits,credits);
   eq(app.duel.state.police.ticket.creditCharge,0);
-  app.requestNavigation('menu');app.confirmNavigation();eq(app.profile.credits,credits,'quit and pending fine never reduce the bank');
+  eq(app.requestNavigation('menu'),true);eq(app.duel.state.status,'menu');eq(app.profile.credits,credits,'quit and pending fine never reduce the bank');
   eq(new App().profile.credits,credits);
 }
 {
@@ -79,7 +78,7 @@ for(const credits of [0,80,150,200]){
   const app=start();globalThis.localStorage={getItem:storage.getItem,setItem(){throw Error('storage full');}};
   bust(app);eq(app.profile.credits,2000);eq(app.profileSaved,false,'failed persistence is exposed as session-only');
   app.duel.emit({ticket:app.duel.state.police.ticket});eq(app.profile.credits,2000);
-  app.requestNavigation('menu');app.confirmNavigation();eq(app.profile.credits,2000,'session-only quit preserves banked credits');
+  eq(app.requestNavigation('menu'),true);eq(app.duel.state.status,'menu');eq(app.profile.credits,2000,'session-only quit preserves banked credits');
   globalThis.localStorage=storage;
 }
 
@@ -91,12 +90,15 @@ function finish(app){const s=app.duel.state;Object.assign(s,{status:'racing',sta
   app.duel.emit({stageResult:result});eq(app.profile.credits,3050,'duplicate finish cannot debit fine or award earnings again');
   const savedBests=JSON.stringify(app.profile.personalBests),savedMilestones=JSON.stringify(app.profile.milestones);
   app.duel.nextStage();app.advance(4);bust(app);eq(s.stageIndex,1,'real campaign transition starts next circuit');eq(app.profile.credits,3050,'next-stage catch cannot touch completed-stage earnings');
-  app.requestNavigation('menu');app.confirmNavigation();eq(app.profile.credits,3050,'quitting a later stage preserves the previous completed-stage reward');
+  eq(app.requestNavigation('menu'),true);eq(s.status,'menu');eq(app.profile.credits,3050,'quitting a later stage preserves the previous completed-stage reward');
   eq(JSON.stringify(app.profile.personalBests),savedBests);eq(JSON.stringify(app.profile.milestones),savedMilestones);eq(app.leaderboard.entries.length,1);eq(new App().profile.credits,3050);
 }
-{
-  const app=start(),s=app.duel.state;bust(app);app.duel.ackTicket();app.togglePause();eq(s.paused,true);app.requestNavigation('menu');app.cancelNavigation();eq(s.paused,true,'cancel preserves pre-existing pause');
-  app.resume();eq(s.paused,false);app.requestNavigation('menu');app.confirmNavigation();eq(app.profile.credits,2000,'paused and resumed quit still preserves bank');
+for(const action of ['menu','restart'])for(const resumeFirst of [false,true]){
+  const app=start(),s=app.duel.state;bust(app);app.duel.ackTicket();app.togglePause();eq(s.paused,true);
+  if(resumeFirst){app.resume();eq(s.paused,false);}
+  eq(app.requestNavigation(action),true);eq(s.status,action==='menu'?'menu':'countdown','paused or resumed navigation completes in one action');
+  eq(s.paused,false,'navigation never leaves a stale pause over the next screen');eq(app.profile.credits,2000,'paused and resumed navigation preserves the bank');
+  eq(app.profile.history.at(-1).abandoned,true);eq(app.profile.activeRace,null,'pending fine is discarded with the abandoned stage');
 }
 {
   const app=start(),s=app.duel.state;s.lives=1;bust(app);eq(s.lives,1,'ticket itself does not consume last life');app.duel.ackTicket();app.duel._crash('rock',0,160);
@@ -104,7 +106,7 @@ function finish(app){const s=app.duel.state;Object.assign(s,{status:'racing',sta
   app.requestNavigation('menu');eq(app.profile.credits,1500,'dismissing an already settled loss has no additional cost');eq(new App().profile.credits,1500);
 }
 
-// Render the production ticket and confirmation panels, not copied UI logic.
+// Render the production ticket and pause panels, not copied UI logic.
 const main=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
 const modal=main.slice(main.indexOf('function modalScreen(s) {'),main.indexOf('\nfunction renderState(s) {'));
 const app=start(),ticket=bust(app);
@@ -112,6 +114,11 @@ const render=new Function('COURSE','app','metric','time','credits','action','pro
   COURSE,app,(label,value)=>`${label}: ${value}`,String,value=>Number(value||0).toLocaleString('en-US'),label=>label,()=>app.profile,String);
 let html=render(app.duel.state);eq(html.includes('RACE FINE: 150 CR'),true);eq(html.includes('SAVED BALANCE: 2,000 CR'),true);
 eq(html.includes("only this race's earnings"),true);eq(html.includes('$150'),false,'ticket and wallet use the same credit unit');
-app.requestNavigation('menu');html=render(app.duel.state);eq(html.includes('2,000 credits will not be deducted'),true);
-app.confirmNavigation();eq(JSON.parse(memory.get(PLAYERS_KEY)).players[0].profile.credits,2000);
+eq(html.includes('MAIN MENU'),true,'Busted keeps its direct Main Menu action');
+eq(app.requestNavigation('menu'),true);eq(render(app.duel.state),'','one action closes the modal with no confirmation panel');
+eq(JSON.parse(memory.get(PLAYERS_KEY)).players[0].profile.credits,2000);
+app.startCampaign();app.advance(4);app.togglePause();html=render(app.duel.state);
+eq(html.includes('MAIN MENU'),true);eq(html.includes('RESTART RUN'),true);eq(html.includes('Saved credits are safe.'),true);
+eq(app.requestNavigation('restart'),true);eq(render(app.duel.state),'','Restart replaces the pause panel with countdown, not another dialog');
+eq(main.includes('confirm-leave'),false,'production UI has no confirmation action');eq(main.includes('keep-racing'),false,'production UI has no obsolete cancel-confirmation action');
 console.log(`Busted/quit: ${checks} actual App, physical catch, duplicate, deadline, restart, reload, balance-floor, player-isolation and production UI checks passed.`);

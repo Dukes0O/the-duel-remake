@@ -27,6 +27,8 @@ Audio starts after a click or key press. The game pauses when the window loses f
 
 Hold the brake for a quarter-second after stopping to select reverse in either transmission. The gear display shows **R** and reverse speed is capped at 22 mph. Press accelerate to brake while reversing, then move forward in first gear. Q/E shifts forward gears only. Nitro is unavailable in reverse.
 
+Main Menu and Restart act immediately with one click, including after Busted. The R key also restarts immediately. Leaving or restarting forfeits unbanked race earnings, but never deducts saved credits.
+
 ## Events
 
 | Event | Route | Entry |

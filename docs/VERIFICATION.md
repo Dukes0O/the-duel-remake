@@ -2,6 +2,16 @@
 
 Checkpoint: 19 September 2026. The latest vehicle, reward and route iteration is described first. All later sections preserve earlier checkpoints; their counts and screenshots do not describe the latest geometry.
 
+## One-click Exit and Restart — latest follow-up
+
+Main Menu / Exit and Restart now perform their normal navigation immediately, without the second confirmation. The old prompt, pending state and confirm/cancel handlers were removed. Existing settlement still discards unfinished race earnings once while preserving the saved bank and completed-stage rewards. R restarts directly; browser key-repeat does not repeatedly restart.
+
+Passing focused checks: Busted/quit 280, App progression 141, Heritage driving 94, completion UI 72, player settings 42, reverse driving 241 and App lifecycle 8. They cover pause, Busted, countdown, the GO boundary, duplicate actions, keyboard R, retained settings, completed rewards and exact forward-driving replays. The full 75-command chain was not repeated for this navigation-only change.
+
+Isolated browser QA clicked Main Menu once from Busted and reached the menu with no dialog, retaining 2,000 CR. A single Restart from pause produced a fresh countdown at zero race time; a later one-click exit still retained the same 2,000 CR. No browser errors were observed. These checks used memory-only data, not real accounts.
+
+Production and QA builds pass. The live Chrome tab loaded `index-iwWIpGeS.js` through a menu-only refresh and retained Dukes00's displayed 200 CR balance. No real race, purchase or account edit was used to test this change. The existing rendering-chunk warning remains.
+
 ## Reverse driving — latest follow-up
 
 Reverse is available in both transmissions through a deliberate 0.25-second brake hold at rest. It is capped at 22 mph, has opposite steering yaw, cannot boost or over-rev, and must stop before accelerating forward. The R indicator, wheel direction, brake lamps, engine load, dust and ghosts follow signed speed. Rear static and vehicle contacts remain solid. NPCs keep nonnegative forward speeds when yielding to a backing player.

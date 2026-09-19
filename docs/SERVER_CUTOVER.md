@@ -8,6 +8,8 @@ Updated checkout: `C:\Users\kyleb\.codex\worktrees\4555\the-duel-remake`.
 
 The latest reverse-driving follow-up rebuilds this same served directory as `index-mwTQ9czz.js`. Refresh from the menu to receive it; do not interrupt an active race. The account changes requested separately for Spikyferns are browser-local and are not part of the build.
 
+The subsequent one-click Exit / Restart update supersedes that bundle with `index-iwWIpGeS.js`. Both the production build and the existing Chrome tab were verified on this version; the menu refresh preserved the selected player and displayed balance.
+
 Previous checkout: `C:\Users\kyleb\dev\the-duel-remake`. Its tracked baseline is `0c2583c`. The pre-existing untracked `game-icon.ico` and `start-game.bat` belong to the user and must be preserved.
 
 The cutover is complete. The verified old Vite development process (PID 60472) was stopped, and a hidden production-preview process (PID 47924 at cutover) now serves this updated checkout's `dist` on `::1:5174`. It uses `vite preview --host localhost --port 5174 --strictPort`. The initial HTTP response matched `index-D4YA0FgL.js`; the later Heritage / 6.4 m near-miss follow-up rebuilt the same served directory and now returns `index-COmGH8FU.js`. The existing Chrome tab also loads that bundle. Process IDs are historical evidence, not safe future stop targets: always resolve the current listener and inspect its command line again.

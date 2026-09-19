@@ -149,8 +149,6 @@ root.addEventListener('click',e => {
     case 'resume': app.resume(); break;
     case 'restart': app.requestNavigation('restart'); break;
     case 'menu': garageOpen = playersOpen = leaderboardOpen = false; app.requestNavigation('menu');if(app.duel.state.status==='menu'){Object.assign(choices,app.getRaceChoices());updateMenuScene();}break;
-    case 'confirm-leave':app.confirmNavigation();if(app.duel.state.status==='menu'){Object.assign(choices,app.getRaceChoices());updateMenuScene();}break;
-    case 'keep-racing':app.cancelNavigation();break;
     case 'next': app.duel.nextStage(); break;
     case 'ticket': app.duel.ackTicket(); break;
     case 'retry-renderer': if(rendererHandle&&ui.view3d.dataset.vehicleAsset==='error')rendererHandle.retryVehicle();else ensureRenderer(); break;
@@ -205,7 +203,6 @@ function garageScreen() {
 }
 function modalScreen(s) {
   const r = s.results || {}; let eyebrow='',title='',description='',metrics='',actions='';
-  if(app.pendingNavigation){const leaving=app.pendingNavigation.action==='menu';return `<section class="result-panel" role="dialog" aria-modal="true" aria-labelledby="abandon-title"><p class="eyebrow">RACE IN PROGRESS</p><h2 id="abandon-title">${leaving?'LEAVE THIS<br>RACE?':'START<br>OVER?'}</h2><p class="result-description">${leaving?'Leaving':'Restarting'} forfeits this race's unbanked earnings. Your saved balance of ${credits(profile().credits)} credits will not be deducted. Credits from completed races are safe. This unfinished race will not enter the leaderboard.</p><div class="result-actions">${action('KEEP RACING','keep-racing',true)}${action(leaving?'LEAVE RACE':'RESTART RACE','confirm-leave')}</div></section>`;}
   if (s.paused) { eyebrow='TAKE A BREATH'; title='ROAD<br>ON HOLD.'; description='The clock is paused. Pick up where you left off.'; metrics=metric('EVENT',COURSE[s.stageIndex].name)+metric('TIME',time(s.stageTimeSec)); actions=action('BACK TO THE ROAD','resume',true)+action('RESTART RUN','restart')+action('MAIN MENU','menu'); }
   else if (s.status==='ticket') { const t=s.police.ticket; eyebrow='HIGHWAY PATROL'; title='BUSTED.'; description=`${t.speedMph} mph in a ${t.limitMph} zone. The fine reduces only this race's earnings when you finish. Your saved credits are untouched. Quitting forfeits the race earnings, not your saved balance.${app.profileSaved===false?' Storage is unavailable; progress lasts for this session.':''}`; metrics=metric('TIME PENALTY',`+${t.penaltySec} SEC`,true)+metric('RACE FINE',`${credits(t.fine)} CR`,true)+metric('SAVED BALANCE',`${credits(profile().credits)} CR`); actions=action('GET BACK OUT THERE','ticket',true)+action('MAIN MENU','menu'); }
   else if (s.status==='stage_result') {
@@ -266,7 +263,7 @@ function renderState(s) {
   ui.overlay.dataset.status=s.status; ui.overlay.dataset.paused=String(!!s.paused); ui.overlay.dataset.audioState=app.audio?.context?.state||'locked'; ui.overlay.dataset.muted=String(!!app.audio?.muted);
   ui.overlay.dataset.audioSamples=app.audio.sampleStatus;ui.overlay.dataset.majorCrashes=String(s.majorCrashes);ui.overlay.dataset.catastrophic=String(s.catastrophic);
   const showImpact = s.status === 'gameover' && s.impactTimer > 0;
-  const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${app.pendingNavigation?.action||''}:${garageOpen}:${playersOpen}:${leaderboardOpen}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
+  const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${playersOpen}:${leaderboardOpen}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
   if (screen!==lastScreen) {
     lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu); ui['menu-screen'].hidden=!menu; ui['race-hud'].hidden=menu; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu;});
     ui['garage-open'].hidden = !menu;

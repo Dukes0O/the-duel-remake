@@ -52,7 +52,6 @@ export class App {
     this.driftNotice=null;
     this.checkpointNotice=null;
     this.runId = null;
-    this.pendingNavigation=null;
     this._markedRaceKey=null;this.interruptedRaceCharge=0;
     this._recoverInterruptedRace();
     this.cameraMode = 'chase';
@@ -155,7 +154,6 @@ export class App {
     const stageIndex=Math.max(0,Math.min(COURSE.length-1,Math.floor(options.startStage??this.menuStage))),stage=COURSE[stageIndex];
     if((stage.arena||stage.requiredCar)&&!isCarUnlocked(this.profile,stage.requiredCar||'titan_monster'))return false;
     this._settleAbandoned();
-    this.pendingNavigation=null;
     const selectedCar=(stage.arena||stage.requiredCar)?stage.requiredCar||'titan_monster':options.car||this.duel.state.car;
     const car=isCarUnlocked(this.profile,selectedCar)?selectedCar:'falcone_f42';
     const explicitSeed=Number.isSafeInteger(options.seed)?options.seed>>>0:null;
@@ -331,20 +329,9 @@ export class App {
   }
   requestNavigation(action){
     if(!['restart','menu'].includes(action))return false;
-    const state=this.duel.state,key=`${this.runId}:${state.stageIndex}`;
-    const active=this.runId&&['racing','ticket','countdown'].includes(state.status)&&(state.stageTimeSec>0||this.profile.activeRace?.key===key)&&!this.profile.settledResults.includes(key);
-    if(!active){if(action==='restart')this.restart();else this.returnToMenu();return true;}
-    this.pendingNavigation={action,wasPaused:!!state.paused,charge:0,forfeitsRaceEarnings:true};
-    if(!state.paused&&['racing','countdown'].includes(state.status))this.togglePause();
-    this.duel.emit({navigationPrompt:true});return false;
-  }
-  confirmNavigation(){
-    const action=this.pendingNavigation?.action;if(!action)return false;this.pendingNavigation=null;
+    // One action is enough. The normal navigation paths settle unfinished
+    // earnings once, preserve the saved bank, and clear held driving inputs.
     if(action==='restart')this.restart();else this.returnToMenu();return true;
-  }
-  cancelNavigation(){
-    const pending=this.pendingNavigation;if(!pending)return;this.pendingNavigation=null;
-    if(!pending.wasPaused&&this.duel.state.paused)this.resume();this.duel.emit({navigationPrompt:false});
   }
   addPlayer(name){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the menu to change players.'};
@@ -394,7 +381,6 @@ export class App {
   resume() { if (this.duel.state.paused) this.togglePause(); }
   returnToMenu() {
     this._settleAbandoned();
-    this.pendingNavigation=null;
     this.keys = {};
     const st = this.duel.state;
     st.paused = false; st.status = 'menu'; st.boosting = false;
@@ -529,7 +515,6 @@ export class App {
     this._inputEvents=new AbortController();const signal=this._inputEvents.signal;
     window.addEventListener('keydown', (e) => {
       if (e.target instanceof Element && e.target.closest('input, select, textarea, summary, [contenteditable="true"]')) return;
-      if(this.pendingNavigation){if(e.code==='Escape'||e.code==='KeyP'){e.preventDefault();this.cancelNavigation();}return;}
       this.audio.unlock();
       if (!e.repeat) {
         if (e.code === 'Escape' || e.code === 'KeyP') this.togglePause();

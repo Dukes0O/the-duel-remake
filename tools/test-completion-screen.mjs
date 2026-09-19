@@ -6,7 +6,7 @@ import {Duel} from '../src/game.js';
 let checks=0;const check=(ok,message)=>{assert.ok(ok,message);checks++;};
 const main=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
 const modal=main.slice(main.indexOf('function modalScreen(s) {'),main.indexOf('\nfunction renderState(s) {'));
-const app={runId:'ui-test',pendingNavigation:null,menuStage:0},wallet={credits:12300};
+const app={runId:'ui-test',menuStage:0},wallet={credits:12300};
 // Execute the production modal without booting the browser or changing saves.
 const render=new Function('COURSE','app','metric','time','credits','action','profile','escapeHTML',`let lastEventResult=null;${modal};return modalScreen;`)(
   COURSE,app,(label,value)=>`<dt>${label}</dt><dd>${value}</dd>`,value=>Number(value).toFixed(2),value=>Number(value||0).toLocaleString('en-US'),label=>`<button>${label}</button>`,()=>wallet,value=>String(value));
