@@ -2,7 +2,21 @@
 
 Checkpoint: 19 September 2026. The latest vehicle, reward and route iteration is described first. All later sections preserve earlier checkpoints; their counts and screenshots do not describe the latest geometry.
 
-## One-click Exit and Restart — latest follow-up
+## Cactus knockdowns and two-car damage — latest follow-up
+
+Desert cacti fall on the first player or NPC contact, stop blocking immediately and remain down through later laps. Restart/new-stage/menu resets restore the same cached instances upright. Falls follow impact direction, pause with the simulation clock and settle onto the actual rendered terrain. A cactus causes only a small speed scrub/light scratch, not a lost crash life or reward. Other trees and rocks remain solid.
+
+Traffic, rivals and police own separate localized damage. Vehicle impacts above 1 mph closing speed mark the facing panels on both cars, including reverse and oncoming contacts. Repeated overlaps are gated by cooldown; reused render meshes return to exact clean vertices, normals and wear. Existing player major-crash, recovery protection, credits and rear-yield rules remain. The former core assertion that a yielding CPU never dents the player was replaced with explicit checks for cosmetic rear damage only and CPU front damage; its no-life-loss, no-speed-loss and no-crash-animation assertions remain.
+
+Passing checks: core 448 (`DUEL_SKIP_CAMPAIGNS=1`), contact physics/account guards 207, NPC damage 1,656, cactus fall geometry 55,727, desert detail 441,087, vegetation cells 47,934, render reuse 119, vehicle grounding 4,398, paint 1,906, model routing 107, classic vehicles 196, reverse 241, reverse presentation 18, Heritage driving 94, driving rewards 47, Busted/quit 280, race integrity 44, NPC routes 17,057, police reset 3, police fines 225, Stunt Trial 44, Drift App 101, Checkpoint App 80, App progression 141, effects 172 and audio 392. The four complete F42/Heritage input-only races retain their exact `054228b00c4c90bc` per-step signature and 105.67-second finish at 30/144 FPS.
+
+The new fall tests exercise 24 slope/direction/model combinations. Lowest support is 1.5 cm below the terrain, with no floating plant; touched cell bounds include all fallen geometry. This is numerical geometry verification, not a broad new art review. The package has 78 test commands; the complete chain and expensive campaign matrix were not rerun for this change.
+
+Production and QA builds pass. The live server returns `index-0-v__HrJ.js` at the unchanged `http://localhost:5174/` origin. The existing large-rendering-chunk warning remains (approximately 940 kB).
+
+Memory-only browser QA at `/tools/contact-check.html` showed actual cactus `tree-9` standing, then settled on the ground after one 18 mph swept contact with all five lives retained. The paired 100 mph collision showed player-front and traffic-rear damage; reset restored both to zero and cleared the visible wear. A separate cactus reset restored the upright plant in the cached world. No browser errors were observed. These are scripted real-physics visual fixtures, not human play-test acceptance. The live tab was in Spikyferns' Titan Stunt Trial, so it was not refreshed or otherwise disturbed; the new bundle will load on a later menu refresh.
+
+## One-click Exit and Restart — earlier follow-up
 
 Main Menu / Exit and Restart now perform their normal navigation immediately, without the second confirmation. The old prompt, pending state and confirm/cancel handlers were removed. Existing settlement still discards unfinished race earnings once while preserving the saved bank and completed-stage rewards. R restarts directly; browser key-repeat does not repeatedly restart.
 

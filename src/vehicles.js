@@ -188,8 +188,10 @@ export function createVehicle({ color = 0xef382b, accent = 0x111924 } = {}) {
   vehicle.userData.damageMeshes = vehicle.children.filter(o => o.isMesh && !o.geometry.userData.sharedAsset).map(mesh => ({mesh, rest: mesh.geometry.attributes.position.array.slice()}));
   vehicle.userData.paint = paint; vehicle.userData.originalColor = originalColor;
   makeWheels(vehicle);
-  // Traffic uses the inexpensive undamaged model; playable factories own wear.
   vehicle.userData.size = { width: 2.59, length: 4.8, height: 1.55 };
+  // Prepare once, before world placement. Wear is zero until this sedan is hit;
+  // private body materials keep a traffic dent from changing every shared sedan.
+  prepareVehicleDamage(vehicle);
   return vehicle;
 }
 
@@ -197,6 +199,7 @@ export function createVehicle({ color = 0xef382b, accent = 0x111924 } = {}) {
 // the loaded template, wheel geometry and texture maps remain safely shared.
 export function prepareVehicleDamage(vehicle) {
   const data = vehicle.userData, privateMaterials = new Map();
+  if(data.damagePrepared)return;
   const damageSpace = data.damageSpace || { scale: [1, 1, 1], offset: [0, 0, 0] };
   data.damageBase = { roughness: data.paint.roughness, clearcoat: data.paint.clearcoat };
   for (const item of data.damageMeshes || []) {
@@ -237,6 +240,7 @@ export function prepareVehicleDamage(vehicle) {
     fracture.visible = false; vehicle.add(fracture);
     data.fractures.push({ mesh: fracture, rest: geometry.attributes.position.array.slice(), zone });
   }
+  data.damagePrepared=true;
 }
 
 function installWearShader(material) {
@@ -299,6 +303,18 @@ function deformGeometry(mesh, rest, strengths, wear, space) {
   }
   a.needsUpdate = true; if (wear) wear.needsUpdate = true;
   mesh.geometry.computeBoundingSphere();
+}
+
+const cleanDamageZones=Object.freeze({front:0,rear:0,left:0,right:0});
+
+// NPC meshes are pooled independently of simulation actors. Missing/menu actors
+// clear the mesh; unchanged clean or damaged actors never rewrite vertex buffers.
+export function updateNpcVehicleDamage(vehicle,actor=null) {
+  const zones=actor?.damageZones||cleanDamageZones;
+  const key=`${Math.max(0,Number(zones.front)||0)}:${Math.max(0,Number(zones.rear)||0)}:${Math.max(0,Number(zones.left)||0)}:${Math.max(0,Number(zones.right)||0)}:false`;
+  if(vehicle.userData.damageKey===key)return false;
+  updateVehicleDamage(vehicle,0,false,0,zones);
+  return true;
 }
 
 export function updateVehicleDamage(vehicle, count, catastrophic, age = 0, damageZones) {

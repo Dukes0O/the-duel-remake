@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { COURSE, CARS, DRIVE } from './config.js';
-import { createVehicle, updateVehicleDamage } from './vehicles.js';
+import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage } from './vehicles.js';
 import { buildEnvironment, worldAtExtended, disposeTree } from './world.js';
 import { createDrivingEffects } from './effects.js';
 import { createExplosion } from './explosion.js';
@@ -247,15 +247,18 @@ export function attachRenderer(host, app) {
       ghost.visible=!!ghostPose&&Math.abs(ghostPose.s-st.s)<650;
       if(ghost.visible){const gp=vehicleGroundPoint(course,ghostPose.s,ghostPose.lateral),separation=Math.hypot(gp.x-pp.x,gp.z-pp.z);ghostStyle.opacity(.22*THREE.MathUtils.clamp((separation-2)/7,0,1));place(ghost,gp,ghostPose.headingError,wheelTravel(ghostPose.speedMph));ghost.position.y+=ghostPose.airHeight||0;const slope=groundSlope(course,ghostPose.s,ghostPose.lateral,ghostPose.headingError);ghost.rotation.x=slope.pitch;ghost.rotation.z=slope.roll;}
     }
+    updateNpcVehicleDamage(rival,menu?null:st.rival);
     rival.visible = !menu && !!st.rival && Math.abs(visualGap(st.rival.s)) < 650;
     if (rival.visible) {place(rival, vehicleGroundPoint(course,st.rival.s, st.rival.lateral), st.rival.headingError||0, wheelTravel(st.rival.speedMph));rival.position.y+=st.rival.airHeight||0;const slope=groundSlope(course,st.rival.s,st.rival.lateral,st.rival.headingError||0);rival.rotation.x=slope.pitch;rival.rotation.z=slope.roll;updateDriver(rival.userData.driver,Math.max(-1,Math.min(1,(st.rival.pushVelocity||0)*.08)),0,false);for(const lamp of rival.userData.brakeLights||[])lamp.material.emissiveIntensity=st.rival.braking?4:1.4;}
     const palette = [0xd9c99c, 0x2c566a, 0x847458, 0xf0e9dc, 0x5e3d2f];
     while (traffic.length < st.traffic.length) { const car = createVehicle({ color: palette[traffic.length % palette.length] }); scene.add(car); traffic.push(car);sceneRevision++;ambientShading.refresh(); }
     traffic.forEach((car, i) => {
       const d = st.traffic[i]; car.visible = !menu && !!d?.alive && Math.abs(visualGap(d.s)) < 540;
+      updateNpcVehicleDamage(car,!menu&&d?.alive?d:null);
       if (car.visible) {const turn=d.dir<0?Math.PI:0;place(car,vehicleGroundPoint(course,d.s,d.lateral),turn,wheelTravel(d.speedMph));const slope=groundSlope(course,d.s,d.lateral,turn);car.rotation.x=slope.pitch;car.rotation.z=slope.roll;}
     });
     const pursuit = st.police.pursuit; police.visible = !menu && !!pursuit?.active && pursuit.distanceU < 250;
+    updateNpcVehicleDamage(police,!menu&&pursuit?.active?pursuit:null);
     if (police.visible) {
       place(police, vehicleGroundPoint(course,pursuit.s, pursuit.lateral), pursuit.headingError || 0, wheelTravel(pursuit.speedMph));
       const slope=groundSlope(course,pursuit.s,pursuit.lateral,pursuit.headingError||0);police.rotation.x=slope.pitch;police.rotation.z=slope.roll;

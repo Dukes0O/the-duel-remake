@@ -12,6 +12,7 @@ import { createDriftState, stepDrift, finishDrift, breakDrift } from './drift-sc
 
 const BOUNDARY_WARNING = 60, BOUNDARY_RESET = 78;
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+const freshDamageZones = () => ({ front: 0, rear: 0, left: 0, right: 0 });
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
 
 export class Duel {
@@ -46,10 +47,11 @@ export class Duel {
       headingError: 0, yawVelocity: 0, roughness: 0, offRoadTime: 0, preparedGravel: false, slipAngle: 0, drifting: false,
       impactTimer: 0, impactDuration: 0, impactStrength: 0, impactSide: 1, crashSpin: 0,
       majorCrashes: 0, stageCrashes: 0, catastrophic: false,
-      damageZones: { front: 0, rear: 0, left: 0, right: 0 }, damageCooldown: 0,
+      damageZones: freshDamageZones(), damageCooldown: 0,
       boundaryWarning: false, boundaryResets: 0, pushVelocity: 0, collectedFlocks: [],
       airborne: false, airHeight: 0, jumpScore: 0, jumps: 0, bestJumpMeters: 0, collectedJumps: [],
       crushedProps: [], crushCount: 0, crushScore: 0, crushBurst: null,
+      fallenCacti: [],
       score: 0, stageStyleScore: 0, nearMisses: 0, policeEscapes: 0, combo: 0, comboTimer: 0,
       callout: '', calloutTimer: 0,
       // police
@@ -157,6 +159,7 @@ export class Duel {
     s.boundaryWarning = false; s.pushVelocity = 0; s.damageCooldown = 0; s.collectedFlocks = [];
     s.airborne = false; s.airHeight = 0; s.jumpScore = 0; s.jumps = 0; s.bestJumpMeters = 0; s.collectedJumps = [];
     s.crushedProps = []; s.crushCount = 0; s.crushScore = 0; s.crushBurst = null;
+    s.fallenCacti = []; this._fallenCactusIds = new Set();
     s._jumpY = null; s._verticalSpeed = 0; s._jumpOrigin = null; s.prevAirHeight = 0;
     s.impactTimer = 0; s.impactDuration = 0; s.impactStrength = 0; s.impactSide = 1; s.crashSpin = 0;
     s.combo = 0; s.comboTimer = 0; s.stageStyleScore = 0; s.stageCrashes = 0; s.policeEscapes = 0;
@@ -184,6 +187,7 @@ export class Duel {
     s.rival = (COURSE[idx].hasRival && s.mode === 'duel')
       ? { s: this.course.rivalStartS, lateral: -DRIVE.laneOffset, speedMph: 0, finished: false, finishTime: null,
         headingError: 0, yawVelocity: 0, pushVelocity: 0, offRoad: false, contactCooldown: 0,
+        damageZones: freshDamageZones(), damageCooldown: 0,
         airborne: false, airHeight: 0, _jumpY: null, _verticalSpeed: 0, _jumpOrigin: null,
         completedLaps: 0, nextLapGate: 0, lapTimes: [], lapStartedAt: 0 }
       : null;
@@ -206,7 +210,7 @@ export class Duel {
         s, dir: oncoming ? -1 : 1,
         lateral: oncoming ? DRIVE.laneOffset : -DRIVE.laneOffset,
         speedMph: TRAFFIC.carSpeedMph * rng.range(0.8, 1.15),
-        alive: true,
+        alive: true, damageZones: freshDamageZones(), damageCooldown: 0,
       });
     }
     return cars;
@@ -241,6 +245,9 @@ export class Duel {
     if (s.crashFlash > 0) s.crashFlash = Math.max(0, s.crashFlash - dt);
     s.invulnerableSec = Math.max(0, s.invulnerableSec - dt);
     s.damageCooldown = Math.max(0, s.damageCooldown - dt);
+    for (const actor of [s.rival, s.police.pursuit, ...s.traffic]) {
+      if (actor?.damageCooldown > 0) actor.damageCooldown = Math.max(0, actor.damageCooldown - dt);
+    }
     s.calloutTimer = Math.max(0, s.calloutTimer - dt);
     s.comboTimer = Math.max(0, s.comboTimer - dt);
     if (s.comboTimer === 0) s.combo = 0;
@@ -523,7 +530,13 @@ export class Duel {
     for (let attempt = 0; attempt < 4; attempt++) {
       let first = null;
       for (const obstacle of obstacles) {
-        const hit = sweepObstacle(start, end, obstacle, heading, dimensions);
+        const cactus = obstacle.kind === 'tree' && obstacle.theme === 'desert';
+        if (cactus && this._fallenCactusIds?.has(obstacle.id)) continue;
+        // Unlike a solid tree, a cactus can be cleared by a jump and gives way
+        // on contact. Keep the course's reusable scenery data immutable.
+        const collider = cactus && Number.isFinite(start.y)
+          ? { ...obstacle, height: 3.1 * (obstacle.scale || 1) } : obstacle;
+        const hit = sweepObstacle(start, end, collider, heading, dimensions);
         if (hit && (!first || hit.t < first.t)) first = hit;
       }
       if (!first) break;
@@ -535,6 +548,21 @@ export class Duel {
       const pushNormal = Math.cos(roadHeading) * nx - Math.sin(roadHeading) * nz;
       const impactMph = Math.abs(car.speedMph) * incoming + Math.max(0, -(car.pushVelocity || 0) * pushNormal) / DRIVE.mphToWorld;
       const zone = contactZone(nx, nz, heading);
+      if (obstacle.kind === 'tree' && obstacle.theme === 'desert') {
+        const distance = Math.hypot(dx, dz);
+        const fallen = { id: obstacle.id, atTime: this.state.stageTimeSec,
+          directionX: distance > .0001 ? dx / distance : -nx,
+          directionZ: distance > .0001 ? dz / distance : -nz };
+        (this._fallenCactusIds ??= new Set()).add(obstacle.id);
+        this.state.fallenCacti.push(fallen);
+        car.speedMph *= .92;
+        if (player && this.state.invulnerableSec <= 0 && impactMph > 1) this._scrape(zone, Math.min(impactMph, 12));
+        this.emit({ cactusHit: fallen });
+        // Search the same sweep again: a wall behind the cactus remains solid.
+        // Each pass removes one cactus, so this cannot loop on the same plant.
+        attempt--;
+        continue;
+      }
       // Stop the normal component at the first contact; allow the unused
       // tangential movement to slide along the wall instead of sticking.
       const stop = { x: start.x + dx * t + nx * (penetration + .04), z: start.z + dz * t + nz * (penetration + .04),
@@ -577,34 +605,38 @@ export class Duel {
     if (!hit) return false;
     if (a === this.state || b === this.state) this._breakDrift('hit');
     const { nx, nz } = hit;
+    const vaX = Math.sin(a.headingError || 0) * a.speedMph * (a.dir || 1) * DRIVE.mphToWorld + (a.pushVelocity || 0);
+    const vbX = Math.sin(b.headingError || 0) * b.speedMph * (b.dir || 1) * DRIVE.mphToWorld + (b.pushVelocity || 0);
+    const vaZ = a.speedMph * Math.cos(a.headingError || 0) * (a.dir || 1), vbZ = b.speedMph * Math.cos(b.headingError || 0) * (b.dir || 1);
+    const impactMph = Math.max(0, -(vaX - vbX) / DRIVE.mphToWorld * nx - (vaZ - vbZ) * nz);
+    const zone = contactZone(nx, nz, angleA + (a.dir < 0 ? Math.PI : 0));
+    const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
+    if (a !== this.state) this._dentVehicle(a, zone, impactMph);
+    if (b !== this.state) this._dentVehicle(b, zoneB, impactMph);
     // A rival arriving from behind must yield to a player who cuts in.
     // Resolve late contacts even if there was too little room to brake first:
     // the CPU moves back and loses speed; the player's run remains intact.
     if (a === this.state && a.speedMph >= 0 && (b === this.state.rival || b === this.state.police.pursuit) && nz > 0 && (b.dir || 1) > 0 && Math.cos(a.headingError || 0) > 0) {
+      if (impactMph > 1 && a.invulnerableSec <= 0) this._scrape(zone, impactMph);
       b.s = Math.min(b.s, a.s - phase - length - .15);
       const forwardMph = Math.max(0, a.speedMph * Math.cos(a.headingError || 0));
       b.speedMph = Math.min(b.speedMph, forwardMph * .94);
       b.braking = true; b.yieldingToPlayer = true; b.contactCooldown = Math.max(b.contactCooldown || 0, .45);
       return true;
     }
-    const vaX = Math.sin(a.headingError || 0) * a.speedMph * DRIVE.mphToWorld + (a.pushVelocity || 0);
-    const vbX = Math.sin(b.headingError || 0) * b.speedMph * DRIVE.mphToWorld + (b.pushVelocity || 0);
-    const vaZ = a.speedMph * Math.cos(a.headingError || 0) * (a.dir || 1), vbZ = b.speedMph * Math.cos(b.headingError || 0) * (b.dir || 1);
-    const impactMph = Math.max(0, -(vaX - vbX) / DRIVE.mphToWorld * nx - (vaZ - vbZ) * nz);
     // Share the positional correction. Even a protected car remains solid.
     const required = nx ? width + .04 - (a.lateral - b.lateral) * nx : length + .04 - end.z * nz;
     const correction = Math.max(0, required);
     const shareA = specB.mass / (specA.mass + specB.mass), shareB = 1 - shareA;
     a.lateral += nx * correction * shareA; b.lateral -= nx * correction * shareB;
     a.s += nz * correction * shareA; b.s -= nz * correction * shareB;
-    const zone = contactZone(nx, nz, angleA);
     if (nx) {
       const shove = clamp(2.5 + impactMph * DRIVE.mphToWorld * .62, 2.5, 13);
       a.pushVelocity = clamp((a.pushVelocity || 0) + nx * shove * .6 * shareA, -16, 16);
       b.pushVelocity = clamp((b.pushVelocity || 0) - nx * shove * 2 * shareB, -16, 16);
       b.headingError = clamp((b.headingError || 0) - nx * .07, -.8, .8);
       a.speedMph *= .992; b.speedMph *= .985;
-      if (a === this.state && impactMph > 3 && this.state.invulnerableSec <= 0) this._scrape(zone, impactMph);
+      if (a === this.state && impactMph > 1 && this.state.invulnerableSec <= 0) this._scrape(zone, impactMph);
     } else if (impactMph > 0) {
       const backingPlayer = a === this.state && a.speedMph < 0;
       const momentum = (vaZ * specA.mass + vbZ * specB.mass) / (specA.mass + specB.mass);
@@ -612,7 +644,7 @@ export class Duel {
       a.speedMph = (a.dir || 1) > 0 ? combined : Math.abs(combined);
       b.speedMph = backingPlayer ? Math.max(0, combined * (b.dir || 1)) : (b.dir || 1) > 0 ? combined : Math.abs(combined);
       if (a === this.state && this.state.invulnerableSec <= 0 && impactMph >= 28) this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
-      else if (a === this.state && this.state.invulnerableSec <= 0 && impactMph > 4) this._scrape(zone, impactMph);
+      else if (a === this.state && this.state.invulnerableSec <= 0 && impactMph > 1) this._scrape(zone, impactMph);
     }
     a.offRoad = !this._surface(a.s, a.lateral).mainRoad;
     b.offRoad = !this._surface(b.s, b.lateral).mainRoad;
@@ -626,6 +658,13 @@ export class Duel {
     s.damageZones[zone] = Math.min(5, s.damageZones[zone] + clamp(impactMph / 100, .08, .3));
     s.damageCooldown = .65;
     this.emit({ scrape: true, zone, strength: clamp(impactMph / 80, .1, .5) });
+  }
+
+  _dentVehicle(actor, zone, impactMph) {
+    if (impactMph <= 1 || actor.damageCooldown > 0) return;
+    actor.damageZones ??= freshDamageZones();
+    actor.damageZones[zone] = Math.min(5, actor.damageZones[zone] + clamp(impactMph / 100, .18, 1));
+    actor.damageCooldown = .65;
   }
 
   _boundary(car) {
@@ -712,6 +751,7 @@ export class Duel {
     const lateral = onBranch ? this.course.shortcutOffset(route, distance) : -DRIVE.laneOffset;
     const branchHeading = onBranch ? Math.atan((this.course.shortcutOffset(route, distance + .5) - this.course.shortcutOffset(route, distance - .5)) / Math.max(.25, 1 - this.course.at(distance).curvature * lateral)) : 0;
     return { kind: 'police', active: true, caught: false, gapU: gap, distanceU: gap,
+      damageZones: freshDamageZones(), damageCooldown: 0,
       s: distance, prevS: distance, lateral,
       headingError: branchHeading, pushVelocity: 0, speedMph: this._policePace(), contactCooldown: 0, routeId: onBranch ? route.id : null };
   }

@@ -675,7 +675,9 @@ for (const kind of ['rock', 'mountain', 'building']) {
   eq(s.lives, LIVES.start, 'a CPU rear-end contact costs no player life');
   eq(s.majorCrashes, 0, 'a CPU rear-end contact is not a player major crash');
   eq(s.impactTimer, 0, 'a CPU rear-end contact cannot start a player crash animation');
-  eq(Object.values(s.damageZones).reduce((sum, damage) => sum + damage, 0), 0, 'the yielding CPU does not damage the player');
+  ok(s.damageZones.rear > 0 && s.damageZones.rear <= .3, 'a late CPU rear contact leaves only a cosmetic player dent');
+  ok(r.damageZones.front > 0, 'the yielding CPU receives its own front impact damage');
+  eq(s.damageZones.front + s.damageZones.left + s.damageZones.right, 0, 'a rear contact leaves unrelated player panels intact');
 }
 
 {

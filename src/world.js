@@ -21,6 +21,7 @@ const TERRAIN_THEMES=['desert','alpine','coast','city','arena'];
 
 export function buildEnvironment(course) {
   const group = new THREE.Group(), alpine = course.def.theme === 'alpine', night=course.def.theme==='city';
+  const simulationUpdates=[];
   const roadMat = createPavedRoadMaterial({asphalt:surfaceTexture('asphalt'),night});
   const groundMat=createTerrainMaterial({earth:groundTexture('color'),grass:meadowTexture(),city:surfaceTexture('asphalt'),rock:rockTexture('alpine'),normal:groundTexture('normal'),roughness:groundTexture('roughness')});
   const cream = new THREE.MeshStandardMaterial({ color: 0xe8d2a5, roughness: .8 });
@@ -42,10 +43,12 @@ export function buildEnvironment(course) {
     const view=Object.create(course);view.def={...course.def,theme};view.features={...course.features};
     for(const field of ['mountains','trees','rocks'])view.features[field]=course.features[field].filter(p=>p.theme===theme);
     view.detailSections=course.sections.filter(s=>s.theme===theme);
-    addLandscape(group,view,theme==='alpine');addLandscapeDetail(group,view,theme==='alpine');
+    const updateLandscape=addLandscape(group,view,theme==='alpine');if(updateLandscape)simulationUpdates.push(updateLandscape);
+    addLandscapeDetail(group,view,theme==='alpine');
   }
   addFurniture(group, course, metal);
-  const crushables=addArenaCrushables(group,course);if(crushables)group.userData.updateSimulation=crushables.userData.updateSimulation;
+  const crushables=addArenaCrushables(group,course);if(crushables)simulationUpdates.push(crushables.userData.updateSimulation);
+  if(simulationUpdates.length)group.userData.updateSimulation=(state,dt)=>{for(const update of simulationUpdates)update(state,dt);};
   for(const cut of course.features.shortcuts){
     const paved=cut.surface==='paved',gravel=paved?roadMat:trailMat;
     const path=new THREE.Mesh(strip(course,s=>course.shortcutOffset(cut,s)-cut.halfWidth,s=>course.shortcutOffset(cut,s)+cut.halfWidth,.065,cut.start,cut.end,true),gravel);path.receiveShadow=true;group.add(path);
@@ -198,7 +201,7 @@ function addLandscape(group,course,alpine){
   const trees=course.features.trees;
   const pine=course.def.theme!=='desert';
   if(pine)addPineTrees(group,trees);
-  else addDesertCacti(group,course);
+  else return addDesertCacti(group,course);
 }
 
 function addFurniture(group,course,metal){

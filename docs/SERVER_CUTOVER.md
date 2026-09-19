@@ -10,6 +10,10 @@ The latest reverse-driving follow-up rebuilds this same served directory as `ind
 
 The subsequent one-click Exit / Restart update supersedes that bundle with `index-iwWIpGeS.js`. Both the production build and the existing Chrome tab were verified on this version; the menu refresh preserved the selected player and displayed balance.
 
+The cactus knockdown and two-car damage follow-up now supersedes those bundles with `index-0-v__HrJ.js`. Production and QA builds pass, and the same live server returns this build. No account or saved-balance changes are part of this update. Refresh from the menu to load it; do not interrupt an active race.
+
+At final verification the live tab was in Spikyferns' Titan Stunt Trial. It was left running without refresh or input. Browser visuals were checked separately using memory-only collision fixtures on port 5177, then that temporary tab/server were closed.
+
 Previous checkout: `C:\Users\kyleb\dev\the-duel-remake`. Its tracked baseline is `0c2583c`. The pre-existing untracked `game-icon.ico` and `start-game.bat` belong to the user and must be preserved.
 
 The cutover is complete. The verified old Vite development process (PID 60472) was stopped, and a hidden production-preview process (PID 47924 at cutover) now serves this updated checkout's `dist` on `::1:5174`. It uses `vite preview --host localhost --port 5174 --strictPort`. The initial HTTP response matched `index-D4YA0FgL.js`; the later Heritage / 6.4 m near-miss follow-up rebuilt the same served directory and now returns `index-COmGH8FU.js`. The existing Chrome tab also loads that bundle. Process IDs are historical evidence, not safe future stop targets: always resolve the current listener and inspect its command line again.
