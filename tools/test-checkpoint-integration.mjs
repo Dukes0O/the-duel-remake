@@ -60,9 +60,9 @@ app.duel.emit({stageResult:result});check(app.profile.credits===timeoutBalance-C
 app.returnToMenu();app.startCampaign({startStage:index,cpuDifficulty:'medium'});app.advance(4);const retryBalance=app.profile.credits;
 app.duel.emit({checkpointRushEvent:{type:'passed',index:0,extensionSec:8,passed:1,total:required}});check(app.checkpointNotice.type==='passed'&&app.checkpointNotice.extensionSec===8,'App keeps brief time-gained notice');
 app.duel.emit({checkpointRushEvent:{type:'missed',index:1,extensionSec:0,passed:1,total:required}});check(app.checkpointNotice.type==='missed'&&app.checkpointNotice.extensionSec===0,'missed gate notice never promises an extension');
-app.restart();check(app.profile.credits===retryBalance-CPU_REWARDS.medium/2&&app.duel.state.checkpointRush.passed===0&&app.checkpointNotice===null,'restart charges one loss and resets checkpoints and notices');
-app.restart();check(app.profile.credits===retryBalance-CPU_REWARDS.medium/2,'restarting an untouched countdown is free');
-app.advance(4);const interruptedBalance=app.profile.credits;const recovered=new App();check(recovered.profile.credits===interruptedBalance-CPU_REWARDS.medium/2&&!recovered.profile.activeRace,'reload settles an interrupted checkpoint run once');
+app.restart();check(app.profile.credits===retryBalance&&app.duel.state.checkpointRush.passed===0&&app.checkpointNotice===null,'restart preserves banked credits and resets checkpoints and notices');
+app.restart();check(app.profile.credits===retryBalance,'restarting an untouched countdown is free');
+app.advance(4);const interruptedBalance=app.profile.credits;const recovered=new App();check(recovered.profile.credits===interruptedBalance&&!recovered.profile.activeRace,'reload forfeits interrupted checkpoint earnings without debiting bank');
 check(new App().profile.credits===recovered.profile.credits,'second reload cannot repeat interruption debit');
 app.returnToMenu();const oldState={...app.duel.state};check(app.addPlayer('Timberline newcomer').ok,'new local player can be created');app._settleResult({...valid},oldState);
 check(app.profile.credits===0&&app.profile.history.length===0,'late old-player checkpoint result cannot credit another profile');
@@ -70,7 +70,7 @@ check(!app.startCampaign({startStage:index}),'a second player must unlock their 
 
 for(const invalid of [{won:false},{targetsMet:false},{objectiveMissed:true},{checkpointsPassed:required-1},{checkpointsPassed:required+1},{checkpointsRequired:required-1},{checkpointMisses:1},{checkpointMisses:NaN},{timeSec:stage.checkpointRush.initialTimeSec.easy+required*stage.checkpointRush.extensionSec.easy+1},{completed:false},{abandoned:true},{timeout:true},{laps:1},{car:'falcone_f42'}]){
   const outcome={...valid,...invalid};check(!isValidFinish(outcome),'incomplete or malformed checkpoint result cannot qualify for records');
-  const payment=settleRace({...createProfile(),credits:1000},outcome);check(payment.breakdown.personalBest===0&&payment.breakdown.base===-CPU_REWARDS.easy/2,'invalid result earns no best bonus and retains the standard loss');
+  const payment=settleRace({...createProfile(),credits:1000},outcome);check(payment.breakdown.personalBest===0&&payment.breakdown.base===(outcome.abandoned?0:-CPU_REWARDS.easy/2),'invalid result earns no best bonus; abandonment preserves bank while genuine loss retains its charge');
   check(!recordFinish(createLeaderboard(),outcome,{id:'p',name:'Player'}).recorded,'leaderboard rejects invalid checkpoint metadata');
 }
 const recorded=recordFinish(createLeaderboard(),valid,{id:'p',name:'Player'});check(recorded.recorded,'valid fixture can be recorded');saveLeaderboard(recorded.board);check(loadLeaderboard().entries.length===1,'valid checkpoint board row normalizes on reload');

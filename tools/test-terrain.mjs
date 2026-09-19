@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {terrainGeometry as buildNear,farTerrainGeometry as buildFar} from '../src/world.js';
 import * as THREE from 'three';
-import {buildMountainGeometry,mountainTransform} from '../src/mountain-landscape.js';
+import {buildMountainGeometry,mountainTransform,mountainVisualHeight} from '../src/mountain-landscape.js';
 import { Course } from '../src/course.js';
 import { Duel } from '../src/game.js';
 import { COURSE, DRIVE, LIVES } from '../src/config.js';
@@ -72,23 +72,35 @@ for (const seed of [1989, 42, 17, 9999]) {
       const coast=course.sections.find(section=>section.theme==='coast');
       state.s=coast.start+(coast.end-coast.start)*.3;state.speedMph = 65; state.lateral = 20;
       duel._boundary(state); check(state.lateral === 20, `Coast/${seed}: open dry dirt stays drivable`);
-      let warning, water;
-      for (let lateral = 29; lateral < 78; lateral += .25) {
-        const height = duel.course.groundAt(state.s, lateral).y;
-        if (warning == null && height < -10 && height >= -14) warning = lateral;
-        if (water == null && height < -14) water = lateral;
-      }
+      const waterThresholds=s=>{
+        // Isolate the water boundary from a shortcut's narrower recovery
+        // shoulder; that branch contract has separate driving coverage.
+        if(duel.course.features.shortcuts.some(cut=>s>=cut.start&&s<=cut.end))return{};
+        let warning,water;
+        for(let lateral=29;lateral<78;lateral+=.25){
+          const height=duel.course.groundAt(s,lateral).y;
+          if(warning==null&&height<-10&&height>=-14)warning=lateral;
+          if(water==null&&height<-14)water=lateral;
+        }
+        return{warning,water};
+      };
+      let {warning,water}=waterThresholds(state.s);
       // A high coastal road can stay above the sea all the way to the lateral boundary.
-      if(water==null){for(let sample=coast.start+100;sample<coast.end-100;sample+=40){if(duel.course.groundAt(sample,77).y<-14){state.s=sample;break;}}
-        for(let lateral=29;lateral<78;lateral+=.25){const height=duel.course.groundAt(state.s,lateral).y;if(warning==null&&height<-10&&height>=-14)warning=lateral;if(water==null&&height<-14)water=lateral;}}
-      check(warning != null && water != null, `Coast/${seed}: sea approach has both warning and recovery thresholds`);
+      // Both thresholds must come from the same shore transect. Retaining a
+      // warning offset from the first hill after moving to a lower coast point
+      // could put the warning fixture straight into the water.
+      if(water==null||warning==null)for(let sample=coast.start+100;sample<coast.end-100;sample+=40){
+        const thresholds=waterThresholds(sample);
+        if(thresholds.warning!=null&&thresholds.water!=null){state.s=sample;({warning,water}=thresholds);break;}
+      }
+      check(warning != null && water != null, `${definition.id}/${seed}: sea approach has both warning and recovery thresholds`);
       // This fixture starts mid-lap: preceding gates have already been driven.
       // Keep the original coast position when testing both actors, because a
       // valid recovery may move back to clear another car or a pending gate.
       const waterApproachS = state.s;
       state.nextLapGate = duel._lapGates.filter(gate => gate < waterApproachS).length;
       state.lateral = warning; duel._boundary(state);
-      check(state.boundaryWarning && state.boundaryResets === 0, `Coast/${seed}: water warning precedes recovery`);
+      check(state.boundaryWarning && state.boundaryResets === 0, `${definition.id}/${seed}: water warning precedes recovery`);
       state.lateral = water; duel._boundary(state);
       check(Math.abs(state.lateral) < DRIVE.roadHalfWidth && state.boundaryResets === 1, `Coast/${seed}: player recovers before entering the sea`);
       check(state.s <= waterApproachS && duel.course.groundAt(state.s,state.lateral).y > -14, `Coast/${seed}: player recovery is dry and cannot advance progress`);
@@ -115,7 +127,7 @@ for (const seed of [1989, 42, 17, 9999]) {
       }
       highestMountainRim=Math.max(highestMountainRim,highestRim);
       if(highestRim>=-.5)exposed.push({course:definition.name,seed,id:mountain.id,height:highestRim});
-      point.set(0,1,0).applyMatrix4(matrix);check(Math.abs(point.y-(mountain.y+mountain.height))<1e-6,'burial preserves the original summit elevation');
+      point.set(0,1,0).applyMatrix4(matrix);check(Math.abs(point.y-(mountain.y+mountainVisualHeight(mountain)))<1e-6,'burial preserves the intended capped summit elevation');
     }
     ground.dispose();
   }

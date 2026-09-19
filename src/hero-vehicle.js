@@ -55,7 +55,7 @@ export function loadHeroVehicle() {
     const originals = new Set(); source.traverse(o => { if (o.geometry) originals.add(o.geometry); });
     originals.forEach(g => g.dispose());
     return options => instantiate(parts, wheelCenters, options);
-  });
+  }).catch(error => { assetPromise = null; throw error; });
   return assetPromise;
 }
 

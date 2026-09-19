@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { Course } from '../src/course.js';
 import { COURSE } from '../src/config.js';
-import { buildMountainGeometry, mountainTransform, createMountainMaterial } from '../src/mountain-landscape.js';
+import { buildMountainGeometry, mountainTransform, mountainVisualHeight, createMountainMaterial } from '../src/mountain-landscape.js';
 
 let checks=0,rimClearance=Infinity,roadSamples=0;
 const check=(ok,message)=>{assert.ok(ok,message);checks++;};
@@ -10,6 +10,7 @@ const geometries=Array.from({length:4},(_,i)=>buildMountainGeometry(i));
 for(const [variant,g] of geometries.entries()){
   const p=g.attributes.position,n=g.attributes.normal,vector=new THREE.Vector3();
   check(Math.abs(g.boundingBox.max.y-1)<1e-6,`${variant}: summit preserves the source mountain height`);
+  check(g.index.count/3<=8400,`${variant}: ridge refinement keeps the existing triangle budget`);
   for(let i=0;i<p.count;i++){
     const x=p.getX(i),y=p.getY(i),z=p.getZ(i),radius=Math.hypot(x,z);vector.fromBufferAttribute(n,i);
     check(Number.isFinite(x+y+z)&&Number.isFinite(vector.length()),`${variant}: finite geometry`);
@@ -40,7 +41,9 @@ for(const seed of [1989,42])for(const def of COURSE.filter(def=>!def.arena)){
       point.fromBufferAttribute(p,i).applyMatrix4(matrix);const n=course.nearest(point.x,point.z),clearance=course.groundAt(n.s,n.lateral).y-point.y;
       rimClearance=Math.min(rimClearance,clearance);check(clearance>2.5,`${def.name}/${seed}: exposed mountain rim`);
     }
-    point.set(0,1,0).applyMatrix4(matrix);check(Math.abs(point.y-feature.y-feature.height)<1e-7,`${def.name}: original top height preserved`);
+    const visualHeight=mountainVisualHeight(feature);
+    point.set(0,1,0).applyMatrix4(matrix);check(Math.abs(point.y-feature.y-visualHeight)<1e-7,`${def.name}: buried rim preserves the intended visible summit`);
+    check(visualHeight<=feature.height&&visualHeight<=Math.min(feature.halfX,feature.halfZ)*1.08,`${def.name}: visible ridge fits its unchanged collision envelope and broad footprint`);
   }
   const sample=(s,off)=>{
     const p=course.groundAt(s,off);ray.set(new THREE.Vector3(p.x,p.y+400,p.z),new THREE.Vector3(0,-1,0));

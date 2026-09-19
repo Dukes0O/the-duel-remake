@@ -19,6 +19,19 @@ Body parts are batched by material. Wheels, driver arms/head, steering and boost
 
 Front and rear fascia details sit outside recessed body end caps, so the lamps and exhaust outlets remain visible from driving cameras. Each car has a blank registration plate, bumper detail and thin panel seams projected onto its actual body surface. Paint retains its selected color with softer clearcoat reflections.
 
+## September refinement
+
+The second art pass uses smoothly interpolated body sections, rounder shoulders, recessed brake discs, open wheel barrels, visible sidewall detail, fuller window frames and small dashboard instruments. It keeps the original wheel centers, tire radius, driver poses and physics dimensions. Rally and muscle cabins now have an open tub beneath their occupants instead of a painted deck across their bodies.
+
+- Dusthawk: angular green livery, hood and roof intakes, perforated skid plate, forward auxiliary lamps and supported roof spoiler.
+- Banshee: fitted hood stripes, split five-spoke wheels, window trim, quarter vents, side markers and detailed blower butterflies.
+- Viper: fitted nose stripe, cockpit sills, airbox, sidepod louvers and visible wishbones beneath separate fenders.
+- Titan: angular side graphics, front protection bar, ribbed bed and more chassis links and damper hardware.
+
+Livery is clipped against the actual body triangles. This replaced the first sampled patch implementation after browser review exposed flickering across shoulder and wheel-arch creases. The small normal offset is 4 mm; the polygons retain the source surface shape rather than bridging across it. All detail is original geometry; no new third-party runtime dependency or texture was added.
+
+The standalone developer page `/tools/vehicle-art-check.html` shows all seven cars under neutral lighting, with front, rear, side and close views, a shared neutral-paint comparison, damage and driver controls. It never reads or writes player profiles. The two starter cars now have their own original bodies; see [CLASSIC_VEHICLES.md](CLASSIC_VEHICLES.md).
+
 ## Blender workflow
 
 Run:
@@ -27,7 +40,7 @@ Run:
 node tools/export-unlock-vehicles.mjs
 ```
 
-The command validates the model dimensions, four damage directions, exact resets, glazing intersections and driver poses. It also traces 81 camera sightlines to verify that front lamps, brake lamps, exhaust outlets and blank plates are not hidden behind body panels. It then writes these files:
+The command validates the model dimensions, four damage directions, exact resets, glazing intersections and driver poses. It also traces 141 camera sightlines to verify that front lamps, brake lamps, exhaust outlets and blank plates are not hidden behind body panels. These include 60 rays across the four rally auxiliary lamp faces, protecting against grille bars crossing the lenses. It then writes these files:
 
 - `public/assets/models/unlocks/dusthawk_rally.glb`
 - `public/assets/models/unlocks/banshee_muscle.glb`

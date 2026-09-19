@@ -4,9 +4,9 @@
     {
       "key": "dusthawk_rally",
       "file": "dusthawk_rally.glb",
-      "bytes": 4315856,
-      "triangles": 46360,
-      "draws": 46,
+      "bytes": 5780228,
+      "triangles": 61535,
+      "draws": 55,
       "dimensions": {
         "width": 2.1,
         "length": 4.2,
@@ -15,8 +15,8 @@
       },
       "measured": [
         2.11,
-        1.684,
-        4.227
+        1.688,
+        4.239
       ],
       "glassDamage": [
         {
@@ -36,14 +36,14 @@
           "segments": 26
         }
       ],
-      "visibilityChecks": 18
+      "visibilityChecks": 78
     },
     {
       "key": "banshee_muscle",
       "file": "banshee_muscle.glb",
-      "bytes": 4752240,
-      "triangles": 50916,
-      "draws": 45,
+      "bytes": 6845592,
+      "triangles": 72643,
+      "draws": 54,
       "dimensions": {
         "width": 2.26,
         "length": 5.1,
@@ -51,8 +51,8 @@
         "wheelRadius": 0.43
       },
       "measured": [
-        2.26,
-        1.457,
+        2.265,
+        1.484,
         5.108
       ],
       "glassDamage": [
@@ -78,9 +78,9 @@
     {
       "key": "viper_proto",
       "file": "viper_proto.glb",
-      "bytes": 4924888,
-      "triangles": 52706,
-      "draws": 46,
+      "bytes": 6358664,
+      "triangles": 67562,
+      "draws": 55,
       "dimensions": {
         "width": 2.2,
         "length": 4.9,
@@ -88,7 +88,7 @@
         "wheelRadius": 0.39
       },
       "measured": [
-        2.2,
+        2.205,
         1.1,
         4.901
       ],
@@ -115,9 +115,9 @@
     {
       "key": "titan_monster",
       "file": "titan_monster.glb",
-      "bytes": 12807640,
-      "triangles": 134784,
-      "draws": 50,
+      "bytes": 14295108,
+      "triangles": 150200,
+      "draws": 59,
       "dimensions": {
         "width": 2.8,
         "length": 5.2,
@@ -125,7 +125,7 @@
         "wheelRadius": 0.98
       },
       "measured": [
-        2.8,
+        2.814,
         3.597,
         5.2
       ],

@@ -13,6 +13,17 @@ for(const seed of[1989,42,17,2026])for(const def of COURSE){
   check(Math.max(...curves.map(Math.abs))<1/170,`${tag}: terrain ribbon cannot fold across the road`);
   check(def.layoutVersion>=2,`${tag}: revised geometry uses separate leaderboard records`);
  }
+ if(['canyon','highland','harbor','ridge'].includes(def.layout)){
+  check(def.layoutVersion>=4,`${tag}: landform revision cannot compare against old times or ghosts`);
+  const heights=course.samples.map(p=>p.y),ascent=heights.reduce((total,y,i)=>total+(i?Math.max(0,y-heights[i-1]):0),0);
+  check(ascent>50,`${tag}: repeated climbs create meaningful road-height variation`);
+  if(def.layout==='canyon')check(Math.max(...heights)-Math.min(...heights)>30,`${tag}: canyon now has visible hills rather than the old 7.6 metre ripple`);
+  for(const section of course.sections.filter(sec=>sec.theme==='alpine')){
+   const summit=(section.start+section.end)/2,valley=course.at(summit).y;
+   const before=course.samples.filter(p=>p.s>summit-course.length*.10&&p.s<summit),after=course.samples.filter(p=>p.s>summit&&p.s<summit+course.length*.10);
+   check(Math.max(...before.map(p=>p.y))>valley+1&&Math.max(...after.map(p=>p.y))>valley+1,`${tag}: two mountain crests frame a real saddle`);
+  }
+ }
  if(def.offroad){check(course.roadHalfWidthAt(0)===5.5&&!course.features.passingLanes.length,`${tag}: narrow unpainted rally trail`);}
  for(const s of[-25,0,80,course.length*.53,course.length-1]){
   const a=course.worldAt(s,4),b=course.worldAt(s+course.length,4);

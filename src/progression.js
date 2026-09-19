@@ -1,5 +1,6 @@
-import { CARS, COURSE, DEFAULT_CAR, DRIVE, CPU_DIFFICULTY } from './config.js';
+import { CARS, COURSE, DEFAULT_CAR, DRIVE, CPU_DIFFICULTY, POLICE } from './config.js';
 import {normalizeCosmetics} from './paint-presets.js';
+import {normalizeRaceSettings} from './race-settings.js';
 
 export const PROFILE_KEY = 'the-duel-profile-v1';
 export const PLAYERS_KEY = 'the-duel-players-v2';
@@ -7,7 +8,7 @@ export const UPGRADE_COSTS = Object.freeze([350, 600, 950]);
 export const CAR_PRICES = Object.freeze(Object.fromEntries(Object.entries(CARS).filter(([,car])=>car.price>0).map(([key,car])=>[key,car.price])));
 export const CPU_REWARDS = Object.freeze(Object.fromEntries(Object.entries(CPU_DIFFICULTY).map(([key,item])=>[key,item.winReward])));
 export const DRIVING_MILESTONES=Object.freeze({
-  clean_debut:{name:'Clean debut',description:'Win a race with no major crashes or missed fuel stop.',reward:100},
+  clean_debut:{name:'Clean debut',description:'Win a race with no crashes or missed fuel stop.',reward:100},
   faster_again:{name:'Faster again',description:'Beat an existing comparable car best.',reward:150},
   circuit_tour:{name:'Circuit tour',description:'Win all three campaign circuits.',reward:400},
   trail_winner:{name:'Trail winner',description:'Win Ridge Rally in the Dusthawk.',reward:300},
@@ -29,20 +30,25 @@ const validStrings=value=>[...new Set((Array.isArray(value)?value:[]).filter(key
 export const playerName=value=>String(value||'').replace(/[\u0000-\u001f\u007f]/g,'').trim().replace(/\s+/g,' ').slice(0,24);
 const newId=()=>globalThis.crypto?.randomUUID?.()||`player-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-export function createProfile(){return {version:2,credits:0,unlockedCars:[...FREE_CARS],upgrades:{},cosmetics:normalizeCosmetics(),settledResults:[],pbBonusRuns:[],personalBests:{},milestones:[],circuitWins:[],winStreak:0,history:[],activeRace:null};}
+export function createProfile(){return {version:2,credits:0,unlockedCars:[...FREE_CARS],upgrades:{},cosmetics:normalizeCosmetics(),raceSettings:null,settledResults:[],settledPoliceFines:[],pbBonusRuns:[],personalBests:{},milestones:[],circuitWins:[],winStreak:0,history:[],activeRace:null};}
 export function normalizeProfile(value){
   if(!value||typeof value!=='object'||![1,2].includes(value.version))return createProfile();
   const profile=createProfile();profile.credits=integer(value.credits,1_000_000_000);
   profile.unlockedCars=[...new Set([...FREE_CARS,...(Array.isArray(value.unlockedCars)?value.unlockedCars.filter(car=>Object.hasOwn(CARS,car)):[])])];
   for(const car of profile.unlockedCars)profile.upgrades[car]=getUpgradeLevels(value,car);
   profile.cosmetics=normalizeCosmetics(value.cosmetics);
+  profile.raceSettings=value.raceSettings==null?null:normalizeRaceSettings(value.raceSettings,profile);
   profile.settledResults=validStrings(value.settledResults||value.awardedWins);profile.pbBonusRuns=validStrings(value.pbBonusRuns);
+  profile.settledPoliceFines=validStrings(value.settledPoliceFines);
   profile.milestones=validStrings(value.milestones).filter(id=>Object.hasOwn(DRIVING_MILESTONES,id));profile.circuitWins=validStrings(value.circuitWins).filter(id=>COURSE.some((stage,index)=>!stage.kind&&stageEventId(index)===id));
   profile.winStreak=integer(value.winStreak,1_000_000);
   if(value.personalBests&&typeof value.personalBests==='object')for(const [key,time] of Object.entries(value.personalBests))if(key.length<=400&&Number.isFinite(time)&&time>0)profile.personalBests[key]=time;
   profile.history=(Array.isArray(value.history)?value.history:[]).filter(row=>row&&typeof row.key==='string'&&typeof row.won==='boolean'&&Number.isFinite(row.reward)).slice(-60).map(row=>({...row}));
   const race=value.activeRace;
-  if(race&&typeof race.runId==='string'&&race.runId.length>0&&race.runId.length<=128&&Number.isInteger(race.stageIndex)&&COURSE[race.stageIndex]&&Object.hasOwn(CARS,race.car))profile.activeRace={runId:race.runId,stageIndex:race.stageIndex,key:`${race.runId}:${race.stageIndex}`,car:race.car,cpuDifficulty:Object.hasOwn(CPU_REWARDS,race.cpuDifficulty)?race.cpuDifficulty:'easy'};
+  if(race&&typeof race.runId==='string'&&race.runId.length>0&&race.runId.length<=128&&Number.isInteger(race.stageIndex)&&COURSE[race.stageIndex]&&Object.hasOwn(CARS,race.car)){
+    const pendingPoliceFineCount=integer(race.pendingPoliceFineCount,1_000_000);
+    profile.activeRace={runId:race.runId,stageIndex:race.stageIndex,key:`${race.runId}:${race.stageIndex}`,car:race.car,cpuDifficulty:Object.hasOwn(CPU_REWARDS,race.cpuDifficulty)?race.cpuDifficulty:'easy',pendingPoliceFineCount,pendingPoliceFines:pendingPoliceFineCount*POLICE.ticketBaseFine};
+  }
   return profile;
 }
 export function createPlayerRegistry(profile=createProfile()){return {version:2,activePlayerId:'player-1',players:[{id:'player-1',name:'Player 1',profile:normalizeProfile(profile)}]};}
@@ -72,13 +78,19 @@ export function saveProfile(profile,storage){const registry=loadPlayers(storage)
 export function isCarUnlocked(profile,car){return Object.hasOwn(CARS,car)&&(FREE_CARS.includes(car)||!!profile?.unlockedCars?.includes(car));}
 export function getUpgradeLevels(profile,car=DEFAULT_CAR){const levels=profile?.upgrades?.[car];return Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type=>[type,integer(levels?.[type],3)]));}
 export function stageEventId(index){const stage=COURSE[index];return stage?String(stage.id||`course-${index}`):'';}
-export function eventKey({stageIndex,seed=1989,laps}={}){const stage=COURSE[stageIndex];return stage?`${stageEventId(stageIndex)}|layout:${stage.layoutVersion??1}|seed:${seed>>>0}|laps:${laps||stage.laps||2}`:'';}
-export function bestKey(result){return [eventKey(result),result.car,result.mode||'duel',result.difficulty||'casual',result.cpuDifficulty||'easy'].join('|');}
+// Only archival validation supplies the second argument. Ordinary callers
+// always key new races against the current layout, regardless of payload extras.
+export function eventKey({stageIndex,seed=1989,laps}={},layoutVersion){const stage=COURSE[stageIndex];return stage?`${stageEventId(stageIndex)}|layout:${layoutVersion??stage.layoutVersion??1}|seed:${seed>>>0}|laps:${laps||stage.laps||2}`:'';}
+export function bestKey(result,layoutVersion){return [eventKey(result,layoutVersion),result.car,result.mode||'duel',result.difficulty||'casual',result.cpuDifficulty||'easy'].join('|');}
 function isCompletedRace(result){const stage=COURSE[result?.stageIndex];return !!stage&&result.completed===true&&result.abandoned!==true&&result.timeout!==true&&Number.isFinite(result.timeSec)&&result.timeSec>0&&Number.isInteger(result.laps)&&result.laps===(stage.laps||2)&&Object.hasOwn(CARS,result.car);}
 export function isValidFinish(result){
   if(!isCompletedRace(result))return false;
-  const stage=COURSE[result.stageIndex];if(!['drift','checkpoint'].includes(stage.kind))return true;
+  const stage=COURSE[result.stageIndex];if(!stage.stuntTrial&&!['drift','checkpoint'].includes(stage.kind))return true;
   const cpu=Object.hasOwn(CPU_REWARDS,result.cpuDifficulty)?result.cpuDifficulty:'easy';
+  if(stage.stuntTrial){
+    const target=stage.stuntTrial;
+    return result.won===true&&result.targetsMet===true&&result.objectiveMissed!==true&&result.car===stage.requiredCar&&Number.isSafeInteger(result.jumps)&&result.jumps>=target.jumps&&Number.isSafeInteger(result.crushCount)&&result.crushCount>=target.crushes&&result.timeSec<=target.timeLimitSec[cpu];
+  }
   if(stage.kind==='checkpoint'){
     const required=stage.checkpointRush.gatesPerLap*(stage.laps||2);
     return result.won===true&&result.targetsMet===true&&result.objectiveMissed!==true&&result.car===stage.requiredCar&&result.checkpointsPassed===required&&result.checkpointsRequired===required&&result.checkpointMisses===0&&result.timeSec<=stage.checkpointRush.initialTimeSec[cpu]+required*stage.checkpointRush.extensionSec[cpu];
@@ -99,12 +111,34 @@ function finishMilestones(profile,result,{finished,won,improved}){
   return {earned,circuitWins,awards,reward:awards.reduce((sum,award)=>sum+award.reward,0)};
 }
 
+// Catches accrue against this race's future earnings, never the banked wallet.
+// Keep legacy settled IDs for duplicate protection, but do not turn earlier
+// saved fines into new pending debt. Only a new catch in the active race accrues.
+export function settlePoliceFine(profile,ticket={}){
+  const valid=typeof ticket?.runId==='string'&&ticket.runId.length>0&&ticket.runId.length<=128&&Number.isInteger(ticket.stageIndex)&&!!COURSE[ticket.stageIndex]&&Number.isSafeInteger(ticket.ticketIndex)&&ticket.ticketIndex>0;
+  const ignored={profile,accrued:false,charge:0,pendingFine:0,pendingFineTotal:0};
+  if(!valid)return ignored;
+  const stageKey=`${ticket.runId}:${ticket.stageIndex}`,key=`${stageKey}:${ticket.ticketIndex}`,settled=profile.settledPoliceFines||[];
+  if(profile.activeRace?.key!==stageKey||profile.settledResults?.includes(stageKey)||settled.includes(key))return ignored;
+  const pendingPoliceFineCount=integer(profile.activeRace.pendingPoliceFineCount,1_000_000)+1,pendingPoliceFines=pendingPoliceFineCount*POLICE.ticketBaseFine;
+  return {profile:{...profile,activeRace:{...profile.activeRace,pendingPoliceFineCount,pendingPoliceFines},settledPoliceFines:[...settled,key]},accrued:true,charge:0,pendingFine:POLICE.ticketBaseFine,pendingFineTotal:pendingPoliceFines};
+}
+
 // Every race settles once, whether won, lost or abandoned by a terminal crash.
-// Personal-best improvement pays once per campaign/run, on a comparable event/car.
+// Each stage can pay for a comparable best improvement; its settlement key
+// prevents repeats even when another stage in the campaign already paid a best.
 export function settleRace(profile,result={}){
   const valid=typeof result.runId==='string'&&result.runId.length>0&&result.runId.length<=128&&Number.isInteger(result.stageIndex)&&!!COURSE[result.stageIndex]&&typeof result.won==='boolean';
   const key=`${result.runId}:${result.stageIndex}`;
   if(!valid||profile.settledResults.includes(key))return {profile,reward:0,awarded:false,personalBest:false,breakdown:{}};
+  // Race earnings are deferred until the finish. Leaving discards that attempt
+  // and its pending fines without touching any credits already in the bank.
+  if(result.abandoned===true){
+    const breakdown={base:0,clean:0,personalBest:0,streak:0,jumps:0,crush:0,drift:0,police:0,manual:0,milestones:0,policeFines:0};
+    const updated={...profile,winStreak:0,settledResults:[...profile.settledResults,key],activeRace:profile.activeRace?.key===key?null:profile.activeRace,
+      history:[...profile.history,{key,eventId:stageEventId(result.stageIndex),car:result.car,won:false,completed:false,abandoned:true,timeSec:null,cpuDifficulty:Object.hasOwn(CPU_REWARDS,result.cpuDifficulty)?result.cpuDifficulty:'easy',reward:0,charge:0,policeFineCharge:0,breakdown,milestones:[],at:Date.now()}].slice(-60)};
+    return {profile:updated,reward:0,charge:0,policeFineCharge:0,awarded:true,personalBest:false,personalBestStatus:'ineligible',previousBest:null,best:null,breakdown,winStreak:0,milestones:[]};
+  }
   const cpu=Object.hasOwn(CPU_REWARDS,result.cpuDifficulty)?result.cpuDifficulty:'easy',base=CPU_REWARDS[cpu],finished=isCompletedRace(result),recordEligible=isValidFinish(result),won=result.won&&recordEligible;
   const comparison=bestKey({...result,cpuDifficulty:cpu}),previous=profile.personalBests[comparison],personalBest=recordEligible&&(previous==null||result.timeSec<previous-.005);
   const improved=personalBest&&previous!=null,streak=won?profile.winStreak+1:0;
@@ -112,14 +146,24 @@ export function settleRace(profile,result={}){
   const crushed=won&&COURSE[result.stageIndex].arena?integer(result.crushCount,4):0;
   const driftRatio=won&&COURSE[result.stageIndex].kind==='drift'?result.driftScore/COURSE[result.stageIndex].driftTrial.targets[cpu]:0;
   const driftBonus=driftRatio>=2?.15:driftRatio>=1.5?.1:driftRatio>=1.25?.05:0;
+  const policeEscapes=recordEligible&&result.objectiveMissed!==true&&Number.isSafeInteger(result.policeEscapes)?Math.min(3,Math.max(0,result.policeEscapes)):0;
+  const personalBestStatus=!recordEligible?'ineligible':previous==null?'baseline':!improved?'not-improved':'improved';
   const milestones=finishMilestones(profile,result,{finished,won,improved});
-  const breakdown={base:won?base:-Math.round(base*.5),clean:won&&result.clean?Math.round(base*.1):0,personalBest:improved&&!profile.pbBonusRuns.includes(result.runId)?Math.round(base*.2):0,streak:won&&streak>=3?Math.round(base*.2):0,jumps:Math.round(base*.1*jumps),crush:Math.round(base*.05*crushed),drift:Math.round(base*driftBonus),milestones:milestones.reward};
-  const charge=won?0:Math.min(profile.credits,-breakdown.base),bonus=breakdown.clean+breakdown.personalBest+breakdown.streak+breakdown.jumps+breakdown.crush+breakdown.drift+breakdown.milestones;
-  const balance=integer((won?profile.credits+base:profile.credits-charge)+bonus,1_000_000_000),reward=balance-profile.credits;
-  const updated={...profile,credits:balance,winStreak:streak,settledResults:[...profile.settledResults,key],activeRace:profile.activeRace?.key===key?null:profile.activeRace,pbBonusRuns:breakdown.personalBest?[...profile.pbBonusRuns,result.runId]:profile.pbBonusRuns,
+  const breakdown={base:won?base:-Math.round(base*.5),clean:won&&result.clean===true?Math.round(base*.1):0,personalBest:personalBestStatus==='improved'?Math.round(base*.2):0,streak:won&&streak>=3?Math.round(base*.2):0,jumps:Math.round(base*.1*jumps),crush:Math.round(base*.05*crushed),drift:Math.round(base*driftBonus),police:Math.round(base*.1*policeEscapes),manual:0,milestones:milestones.reward};
+  // Pro doubles positive recurring earnings. Loss charges and lifetime milestones
+  // stay separate, including when a completed loss improves a comparable best.
+  const recurringBonus=breakdown.clean+breakdown.personalBest+breakdown.streak+breakdown.jumps+breakdown.crush+breakdown.drift+breakdown.police;
+  breakdown.manual=result.difficulty==='pro'?(won?base:0)+recurringBonus:0;
+  const charge=won?0:Math.min(profile.credits,-breakdown.base),bonus=recurringBonus+breakdown.manual+breakdown.milestones;
+  const grossReward=(won?base:-charge)+bonus;
+  const pendingFines=profile.activeRace?.key===key?integer(profile.activeRace.pendingPoliceFineCount,1_000_000)*POLICE.ticketBaseFine:0;
+  const policeFineCharge=recordEligible?Math.min(pendingFines,Math.max(0,grossReward)):0;
+  breakdown.policeFines=-policeFineCharge;
+  const balance=integer(profile.credits+grossReward-policeFineCharge,1_000_000_000),reward=balance-profile.credits;
+  const updated={...profile,credits:balance,winStreak:streak,settledResults:[...profile.settledResults,key],activeRace:profile.activeRace?.key===key?null:profile.activeRace,pbBonusRuns:breakdown.personalBest&&!profile.pbBonusRuns.includes(result.runId)?[...profile.pbBonusRuns,result.runId]:profile.pbBonusRuns,
     personalBests:personalBest?{...profile.personalBests,[comparison]:result.timeSec}:profile.personalBests,milestones:milestones.earned,circuitWins:milestones.circuitWins,
-    history:[...profile.history,{key,eventId:stageEventId(result.stageIndex),car:result.car,won,completed:finished,timeSec:finished?result.timeSec:null,cpuDifficulty:cpu,reward,charge,breakdown,milestones:milestones.awards.map(award=>award.id),at:Date.now()}].slice(-60)};
-  return {profile:updated,reward,charge,awarded:true,personalBest,previousBest:previous??null,best:updated.personalBests[comparison]??null,breakdown,winStreak:streak,milestones:milestones.awards};
+    history:[...profile.history,{key,eventId:stageEventId(result.stageIndex),car:result.car,won,completed:finished,timeSec:finished?result.timeSec:null,cpuDifficulty:cpu,reward,charge,policeFineCharge,breakdown,milestones:milestones.awards.map(award=>award.id),at:Date.now()}].slice(-60)};
+  return {profile:updated,reward,charge,policeFineCharge,awarded:true,personalBest,personalBestStatus,previousBest:previous??null,best:updated.personalBests[comparison]??null,breakdown,winStreak:streak,milestones:milestones.awards};
 }
 export const awardCourseWin=settleRace;
 export function purchaseUpgrade(profile,car,type){

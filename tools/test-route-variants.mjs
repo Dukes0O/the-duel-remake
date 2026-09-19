@@ -85,7 +85,7 @@ for (const definition of COURSE.filter(supportsRouteVariants)) {
   const report = { event: definition.id, pairs: [], variants: [] };
   for (let a = 0; a < courses.length; a++) for (let b = a + 1; b < courses.length; b++) {
     const delta = compare(courses[a], courses[b]);
-    check(delta.rms > 15 && delta.maximum > 25, `${definition.id}: variants must change actual centerline positions substantially`);
+    check(delta.rms > 15 && delta.maximum > 25, `${definition.id}: variants must change actual centerline positions substantially (RMS ${delta.rms}, max ${delta.maximum})`);
     check(delta.alignedRms > 7, `${definition.id}: variants must change shape, not only rotation/translation (${delta.alignedRms})`);
     report.pairs.push({ routes: `${ROUTE_VARIANTS[a].label}/${ROUTE_VARIANTS[b].label}`, ...Object.fromEntries(Object.entries(delta).map(([key, value]) => [key, +value.toFixed(2)])) });
   }

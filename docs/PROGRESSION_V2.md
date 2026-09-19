@@ -2,6 +2,20 @@
 
 Each named player has a separate wallet, garage, upgrades, race history and personal bests. Players on this computer share a leaderboard. The menu selects the player, circuit, car, CPU difficulty and transmission before a race starts.
 
+## Each player's race setup
+
+The last selected event, car, challenge mode, CPU difficulty, transmission, route, daylight mood and ghost preference are saved in that player's `raceSettings`. Switching players or reopening the game restores those choices. Menu changes save without requiring the player to start a race. Graphics quality stays browser-wide because it is a device performance setting.
+
+Events are stored by stable ID. Loading checks ownership and event rules, so invalid or locked cars/events fall back safely and objective events keep their required mode and car. Existing profiles without individual settings adopt the earlier browser-wide route, lighting and ghost preferences once; settings that the old version never saved cannot be recovered. Newly created players start with the normal defaults, not the previous player's setup. These preferences do not change the wallet, upgrades, records or an active race's copied settings.
+
+## Police fines
+
+Each catch adds the configured 150-credit fine against the current race's earnings. It does not debit the saved wallet. The Busted screen uses the same CR unit as the garage and explains that saved credits are protected. At a finish, the total fine is capped at the positive net race payout, so it cannot deepen a race loss or create debt.
+
+Each catch has a saved `runId:stageIndex:ticketIndex` identity. A repeated event cannot add the same fine again. Separate catches in the city pursuit each carry a fine. CPU difficulty and Manual do not multiply fines. A catch that expires the pursuit clock records its fine before the ordinary loss is settled. Quitting, restarting or reloading forfeits the unfinished race's earnings and clears its pending fines, leaving saved credits untouched. Existing historical fine IDs remain saved but are not reconstructed into new charges or refunds.
+
+`tools/test-police-fines.mjs` covers arithmetic, duplicates, serialization and migration. `tools/test-busted-quit.mjs` covers actual App, physical catch, quit/restart/reload, timeout, player-isolation and production-modal checks. If browser storage is unavailable, pending progress lasts for the current session and the Busted screen warns about it.
+
 ## Garage
 
 | Car | Price | Extra event |
@@ -30,6 +44,8 @@ Regular campaigns cover the three mixed-scenery circuits. Any course with `kind`
 
 Titan Stunt Trial also forces its own objective mode, with no rival or Time Trial ghost. It requires both laps, four landed jumps and four player crushes within 95 seconds on Easy, 75 on Medium, or 62 on Hard. Setup states these targets before starting; the HUD shows progress and time left. Finishing the laps without the targets is a completed loss. Running out of time is a DNF. The result distinguishes those outcomes from a pursuit timeout. The demo driver targets uncrushed props through normal steering input and skips its ordinary deliberate shoulder excursion in this timed objective.
 
+Stunt results must prove the configured jump and crush counts, correct vehicle, complete laps, successful objective and deadline before saving a car best or leaderboard row. A faster two-lap run with missed stunt goals cannot earn car-best, police, Manual or milestone credits. New stunt leaderboard rows retain jump/crush evidence and validate it on reload. Earlier rows lack that evidence and are retained without inventing it; this change does not erase old careers or reclaim historical credits. Regression checks reproduce the failed Hard trial at 50 seconds and a faster failed attempt after a valid 55-second record.
+
 ## Rewards and losses
 
 | CPU difficulty | Win base | Loss charge |
@@ -38,19 +54,23 @@ Titan Stunt Trial also forces its own objective mode, with no rival or Time Tria
 | Medium | 1,000 CR | 500 CR |
 | Hard | 1,500 CR | 750 CR |
 
-Transmission is separate from CPU difficulty. Harder rivals and harder clock targets earn higher rewards.
+Transmission is separate from CPU difficulty. Harder rivals and harder clock targets earn higher base rewards. Pro / Manual doubles style and race points and positive recurring credit earnings. Its win bases are 1,200 / 2,000 / 3,000 CR for Easy / Medium / Hard. The loss charges in the table stay unchanged.
 
-- A valid win can earn a clean bonus of 10% of the base. This means no new major crashes during that circuit and no missed fuel stop. Going onto dirt does not remove this bonus by itself.
-- Beating an existing comparable car best earns 20% of the base. This can happen on a completed loss too. The first finish sets a baseline and earns no improvement bonus. The bonus pays at most once per campaign run, even if later circuits also improve.
+- A valid win can earn a clean bonus of 10% of the base. This means no crashes during that circuit and no missed fuel stop. Going onto dirt does not remove this bonus by itself. The result captures actual stage crashes before repairs, so the win repair cannot turn a damaged run into a clean run.
+- Beating an existing comparable car best earns 20% of the base. This can happen on a completed loss too. The first finish sets a baseline and earns no improvement bonus. Each genuine stage improvement pays, including several improved circuits in one campaign. Each stage still settles only once.
 - The third consecutive win and every later win earn a flat 20% streak bonus. A loss resets the streak. The bonus does not grow beyond 20%.
 - A completed arena win earns 10% per scored jump, capped at three jumps and 30% of the base. Landing points do not change the wallet during the race.
 - A completed arena win also earns a separate **Crush Bonus** of 5% per junk car crushed by the player, capped at four cars and 20% of the base. Six junk cars are shared with the rival; a car can only be crushed once per race. Rival crushes, an unfinished event or a loss earn no crush credits. The HUD shows the player's count, and credits settle only with the result.
+- Each police escape earns 10% of the base, capped at three escapes and 30% per stage. It requires a valid completed result, including a completed ordinary loss. A live pursuit escaped at a valid finish counts; a timeout, abandonment or missed challenge objective does not. This reward repeats in later races and is separate from the one-time Night escape milestone.
+- The named **Pro / Manual Bonus** adds the positive base win reward plus the ordinary clean, car-best, streak, jump, crush, drift and police bonuses a second time. One-time milestone awards are excluded. A completed loss doubles only its eligible positive bonuses, after the unchanged loss charge floors at the wallet balance. For example, a clean first Medium Manual win earns 1,000 base + 100 clean + 1,100 Manual + 100 Clean debut = 2,300 CR. A Medium Manual loss with two police escapes and a car-best improvement earns 400 ordinary bonuses + 400 Manual after its loss charge, plus Faster again if newly earned.
+
+A stage win restores up to two crash slots, capped at five, and repairs up to two major crashes. These are recovery rewards, not extra clean-run credit. A loss does not repair the car. Chase and Drift retain their recoverable-crash rules. The result states the actual number of repairs and slots restored.
 
 A loss first deducts half the CPU base, stopping at zero credits. A valid car-best improvement bonus is then added separately. For example, an Easy loss from 100 credits deducts 100; a qualifying 120-credit best bonus leaves 120. If this is also the player's first improvement, the one-time 150-credit Faster Again milestone leaves 270 instead. The result shows the loss charge, ordinary bonuses, named milestone awards, and net wallet change.
 
 All outcomes settle once per `runId:stageIndex`. Duplicate finish events, repeated result screens and repeated navigation cannot pay or charge twice. Unfinished races cannot earn a win, a personal best or a leaderboard time.
 
-Leaving or restarting after GO counts as a loss. The game pauses and shows the exact charge before an in-game exit or restart. Keeping the race resumes without charging. Restarting before GO is free. GO also writes an active-race marker: reopening the game after an interrupted race settles that loss once. This prevents refreshing the page from avoiding the loss rule. Previously settled markers clear without a second charge.
+Leaving or restarting after GO forfeits the current race's unbanked earnings, without deducting pre-existing credits. The confirmation states this explicitly. Keeping the race resumes it. Restarting before GO is also free. GO writes an active-race marker: reopening after an interruption settles it as an abandoned race with zero payout and zero charge. Finished prior stages remain banked. Previously settled markers clear without a second settlement. Abandonment still ends the win streak and cannot create a best, ghost, milestone or leaderboard entry. Actual completed losses, timeouts and terminal crashes retain their existing race-loss rule.
 
 ## Driving milestones
 
@@ -58,7 +78,7 @@ Each local player can earn these six rewards once, for a total of 1,800 credits.
 
 | Milestone | Verified completed result required | Reward |
 | --- | --- | ---: |
-| Clean debut | First clean win: no new major crashes and no missed fuel stop | 100 CR |
+| Clean debut | First clean win: no crashes and no missed fuel stop | 100 CR |
 | Faster again | First improvement of an existing comparable car best; a completed loss can qualify | 150 CR |
 | Circuit tour | A win on each of the three normal campaign event IDs, across any number of runs | 400 CR |
 | Trail winner | Ridge Rally win in its required Dusthawk | 300 CR |
@@ -75,9 +95,11 @@ Existing version-1 and version-2 saves retain their credits, cars and prior sett
 
 The simulation must validate both complete laps, including sequential route gates, before `completed: true` reaches progression. Race times include that race's crash and police penalties. A chase timeout is a DNF, even though the car survives.
 
-The event identity includes course ID, `layoutVersion` (default 1), seed and lap count. **Increment the course's `layoutVersion` whenever its route geometry or distance changes.** Old layout times cannot establish a best or compete against the new route; incompatible leaderboard entries are discarded when loaded or saved.
+The event identity includes course ID, `layoutVersion` (default 1), seed and lap count. **Increment the course's `layoutVersion` whenever its route geometry or distance changes.** Old layout times cannot establish a best or compete against the new route. Valid prior-layout leaderboard entries are retained in `archivedEntries` within the same version-1 store; current `entries` and every UI ranking contain only the active layout. Loading, saving and merging preserve historical keys and results separately. Personal-best keys already retain their layout, and career balances, ownership and rewards are unaffected.
 
 Personal-best comparisons also include car, race mode, transmission and CPU difficulty. Changing one of those creates a new baseline. Upgrades stay comparable so tuning a car can help beat its existing time.
+
+The setup screen states the selected CPU/transmission next to its car best and shows the credit target. With no matching record, it says the first finish sets the baseline. Results distinguish a baseline, an actual improvement and a time that did not beat the matching record. The first Medium finish does not inherit an Easy baseline. The reported missing car-best credits also exposed a separate rule: the former once-per-campaign cap could save and announce a later circuit's improvement without paying it. That cap has been removed; existing `pbBonusRuns` save data is preserved but no longer suppresses a new stage's improvement. The `runId:stageIndex` settlement key still prevents repeat payouts. Ghost keys and competitive comparison boundaries are unchanged.
 
 The shared leaderboard keeps one fastest valid time per local player, event and car. It can mix CPU difficulties and transmissions; each row shows those settings and the upgrade build. Circuit and car filters narrow the comparison. The leaderboard and personal-best rewards deliberately answer different questions: the board shows each car's fastest run; rewards compare like race settings.
 
@@ -125,9 +147,9 @@ Validation: `node tools/test-drift-integration.mjs` passes **98 checks**. Real A
 
 The local leaderboard keeps each player's best valid drift score for the event and car. Higher banked points rank first; equal scores use faster finish time, including penalties. Each row retains its score target, best chain, drift distance, CPU target difficulty and car upgrade metadata. Circuit, rally, chase and arena boards continue to rank by time. The drift menu shows the player's local car score best alongside the existing comparable car time best.
 
-A higher score may replace a faster score record. A faster valid run with fewer points may still improve the separate time best and earn the existing once-per-run time bonus, while leaving the higher score record intact. Score-record updates themselves add no credits; the capped drift performance bonus is unchanged. Duplicate results, cross-tab merges and reloads cannot pay again.
+A higher score may replace a faster score record. A faster valid run with fewer points may still improve the separate time best and earn that stage's time bonus, while leaving the higher score record intact. Score-record updates themselves add no credits; the capped drift performance bonus is unchanged. Duplicate results, cross-tab merges and reloads cannot pay again.
 
-Legacy time-only drift rows from development lack the evidence needed for score ranking, so they are ignored instead of inventing a score. They do not erase the separate saved car time best or wallet. Invalid score metadata, failed objectives, incompatible layout revisions and malformed records are rejected. A new successful trial creates a full score record.
+Legacy time-only drift rows from development lack the evidence needed for score ranking, so they are ignored instead of inventing a score. They do not erase the separate saved car time best or wallet. Invalid score metadata, failed objectives and malformed records are rejected. Valid records from prior layouts are archived with their original target evidence, not ranked against the current route. A new successful trial creates a full score record.
 
 Validation after score-board integration: **30 drift leaderboard checks**, **101 drift App/reward checks**, **20 general progression/leaderboard checks**, and the route-selection App integration checks pass. Actual App finishes store the same 6,319 points and difficulty targets shown in results. The score-board tests cover score-first selection, time tie-breaks, original target metadata, local player/car filtering, save/reload, both cross-tab merge orders, layout compatibility and unchanged credit rewards.
 ## Timberline Checkpoint Rush

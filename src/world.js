@@ -8,7 +8,7 @@ import { addSceneryDetail } from './scenery-detail.js';
 import { addRaceStructures } from './race-structures.js';
 import { addArenaCrushables } from './arena-props.js';
 import { addRallyDetail } from './rally-detail.js';
-import { addMountainLandscape } from './mountain-landscape.js';
+import { addMountainLandscape, rockTexture } from './mountain-landscape.js';
 import { addCoastalWater } from './coastal-water.js';
 import { addCheckpointGates } from './checkpoint-gates.js';
 import { createTerrainMaterial, terrainStyleAt } from './terrain-style.js';
@@ -22,7 +22,7 @@ const TERRAIN_THEMES=['desert','alpine','coast','city','arena'];
 export function buildEnvironment(course) {
   const group = new THREE.Group(), alpine = course.def.theme === 'alpine', night=course.def.theme==='city';
   const roadMat = createPavedRoadMaterial({asphalt:surfaceTexture('asphalt'),night});
-  const groundMat=createTerrainMaterial({earth:groundTexture('color'),grass:meadowTexture(),city:surfaceTexture('asphalt'),normal:groundTexture('normal'),roughness:groundTexture('roughness')});
+  const groundMat=createTerrainMaterial({earth:groundTexture('color'),grass:meadowTexture(),city:surfaceTexture('asphalt'),rock:rockTexture('alpine'),normal:groundTexture('normal'),roughness:groundTexture('roughness')});
   const cream = new THREE.MeshStandardMaterial({ color: 0xe8d2a5, roughness: .8 });
   const yellow = new THREE.MeshStandardMaterial({ color: 0xd8a943, roughness: .85 });
   const metal = new THREE.MeshStandardMaterial({ color: 0xa6aaa5, metalness: .55, roughness: .57 });

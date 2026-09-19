@@ -89,7 +89,7 @@ for (const cpuDifficulty of ['easy', 'medium', 'hard']) for (const difficulty of
   }
   check(outcomes.every(r => r.completed && r.won && r.laps === 2 && !r.hits && !r.resets), `${cpuDifficulty}/${difficulty}: ordinary steering and shifts can win cleanly`);
   assert.deepEqual(outcomes[0], outcomes[1]); checks++;
-  check(outcomes[0].styleScore === outcomes[0].score, 'banked drift points enter game style score exactly once');
+  check(outcomes[0].styleScore === outcomes[0].score*(difficulty==='pro'?2:1), 'banked drift points enter style score once, with the Pro multiplier');
   replays.push({ cpuDifficulty, difficulty, ...outcomes[0] });
 }
 const recoveryReplays = [];
@@ -102,7 +102,7 @@ for (const level of ['easy', 'medium', 'hard']) {
     app.advance(1 / 120);
   }
   const s = app.duel.state;
-  check(hit && s.racePenaltySec === 8 && s.majorCrashes === 1 && !s.catastrophic, 'the injected physical impact has one recoverable eight-second cost');
+  check(hit && s.racePenaltySec === 8 && s.stageCrashes === 1 && s.majorCrashes === (s.results.won?0:1) && !s.catastrophic, 'the physical impact keeps its eight-second cost and stage evidence; only a win repairs it');
   check(level === 'hard' ? s.results.timeout && !s.results.won : s.results.completed && s.results.won, 'Easy and Medium allow this mistake; Hard requires a cleaner or faster drive');
   recoveryReplays.push({ level, time: s.results.timeSec, driftScore: s.results.driftScore, completed: s.results.completed, won: s.results.won });
 }

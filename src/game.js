@@ -45,15 +45,15 @@ export class Duel {
       steerVisual: 0, boost: 1, boosting: false, invulnerableSec: 0,
       headingError: 0, yawVelocity: 0, roughness: 0, offRoadTime: 0, preparedGravel: false, slipAngle: 0, drifting: false,
       impactTimer: 0, impactDuration: 0, impactStrength: 0, impactSide: 1, crashSpin: 0,
-      majorCrashes: 0, catastrophic: false,
+      majorCrashes: 0, stageCrashes: 0, catastrophic: false,
       damageZones: { front: 0, rear: 0, left: 0, right: 0 }, damageCooldown: 0,
       boundaryWarning: false, boundaryResets: 0, pushVelocity: 0, collectedFlocks: [],
       airborne: false, airHeight: 0, jumpScore: 0, jumps: 0, bestJumpMeters: 0, collectedJumps: [],
       crushedProps: [], crushCount: 0, crushScore: 0, crushBurst: null,
-      score: 0, stageStyleScore: 0, nearMisses: 0, combo: 0, comboTimer: 0,
+      score: 0, stageStyleScore: 0, nearMisses: 0, policeEscapes: 0, combo: 0, comboTimer: 0,
       callout: '', calloutTimer: 0,
       // police
-      police: { beep: 0, triggered: false, pursuit: null, ticket: null },
+      police: { beep: 0, triggered: false, pursuit: null, ticket: null, ticketCount: 0, pendingFines: 0 },
       // rival
       rival: null,
       // traffic
@@ -84,6 +84,7 @@ export class Duel {
     this._carCache = { key, value }; return value;
   }
   get diff() { return DIFFICULTY[this.state.difficulty]; }
+  get scoreMultiplier() { return this.state.difficulty === 'pro' ? SCORING.manualMultiplier : 1; }
   get stageDef() { return COURSE[this.state.stageIndex]; }
   get raceLength() { return this.course?.raceLength || this.course?.length || 0; }
   _parTime() {
@@ -158,7 +159,7 @@ export class Duel {
     s.crushedProps = []; s.crushCount = 0; s.crushScore = 0; s.crushBurst = null;
     s._jumpY = null; s._verticalSpeed = 0; s._jumpOrigin = null; s.prevAirHeight = 0;
     s.impactTimer = 0; s.impactDuration = 0; s.impactStrength = 0; s.impactSide = 1; s.crashSpin = 0;
-    s.combo = 0; s.comboTimer = 0; s.stageStyleScore = 0;
+    s.combo = 0; s.comboTimer = 0; s.stageStyleScore = 0; s.stageCrashes = 0; s.policeEscapes = 0;
     s.callout = ''; s.calloutTimer = 0;
     s.input = { throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false };
     s.stageTimeSec = 0;
@@ -172,7 +173,7 @@ export class Duel {
     s.drift = drift ? createDriftState({ lapLength: this.course.length, laps: s.lapsTotal }) : null;
     s.checkpointRush = rush ? {passed:0,total:this.course.features.rushGates.length*s.lapsTotal,nextGate:0,missed:0,lastEvent:null,initialTimeSec:s.timeLimitSec,extensionSec:rush.extensionSec[s.cpuDifficulty]} : null;
     s.parTimeSec = this._parTime();
-    s.police = { beep: 0, triggered: false, pursuit: null, ticket: null };
+    s.police = { beep: 0, triggered: false, pursuit: null, ticket: null, ticketCount: 0, pendingFines: 0 };
     if (this.course.def.kind === 'chase') s.police.pursuit = this._newPursuit(260);
     s.results = null;
     s.lastCrashReason = null;
@@ -285,7 +286,8 @@ export class Duel {
   _commitDrift(next) {
     const s = this.state;
     const gained = Math.max(0, Math.round(next.bankedScore) - Math.round(s.drift.bankedScore));
-    s.drift = next; s.score += gained; s.stageStyleScore += gained;
+    // Challenge targets retain raw drift points; the general race score earns Pro 2x.
+    s.drift = next; s.score += gained * this.scoreMultiplier; s.stageStyleScore += gained * this.scoreMultiplier;
     if (next.lastEvent?.type === 'banked') this.emit({ driftBanked: { points: Math.round(next.lastEvent.points), total: Math.round(next.bankedScore) } });
     else if (next.lastEvent?.type === 'lost') this.emit({ driftChainLost: { reason: next.lastEvent.reason, points: Math.round(next.lastEvent.points) } });
   }
@@ -449,7 +451,7 @@ export class Duel {
           s.combo = Math.min(SCORING.comboMax, s.combo + 1);
           s.comboTimer = SCORING.comboWindowSec;
           s.nearMisses++;
-          const points = SCORING.nearMissPoints * s.combo;
+          const points = SCORING.nearMissPoints * s.combo * this.scoreMultiplier;
           s.stageStyleScore += points; s.score += points;
           s.boost = Math.min(1, s.boost + BOOST.nearMissRefill);
           this._callout(`NEAR MISS  +${points}${s.combo > 1 ? `  /  ${s.combo}× COMBO` : ''}`);
@@ -795,19 +797,30 @@ export class Duel {
         this._ticket(radar);
       } else if (p.pursuit.gapU >= POLICE.escapeAheadU) {
         if (chase) return;
-        p.pursuit.active = false;
-        this._callout('PURSUIT EVADED', 3);
-        this.emit({ escaped: true });
+        this._awardPoliceEscape('gap');
       }
     }
   }
 
+  _awardPoliceEscape(reason) {
+    const s = this.state, pursuit = s.police.pursuit;
+    if (!pursuit?.active || pursuit.caught || pursuit.escapeAwarded) return false;
+    pursuit.active = false; pursuit.escapeAwarded = true;
+    const points = SCORING.policeEscapePoints * this.scoreMultiplier;
+    s.policeEscapes++; s.stageStyleScore += points; s.score += points;
+    this._callout(`PURSUIT EVADED  /  +${points}`, 3);
+    this.emit({ escaped: true, policeEscape: { points, count: s.policeEscapes, reason } });
+    return true;
+  }
+
   _ticket(radar) {
     const s = this.state;
+    if (s.status !== 'racing') return;
     const penalty = this.stageDef.kind === 'chase' ? this.stageDef.chaseCatchPenaltySec : POLICE.ticketPenaltySec;
     s.status = 'ticket';
     s.boosting = false;
     s.police.ticket = {
+      ticketIndex: ++s.police.ticketCount,
       offense: this.stageDef.kind === 'chase' ? 'Intercepted by pursuit patrol' : 'Speeding past a radar trap',
       speedMph: Math.round(s.speedMph),
       limitMph: radar ? radar.limitMph : this.stageDef.speedLimitMph,
@@ -817,8 +830,10 @@ export class Duel {
     s.penaltySec += penalty;
     s.racePenaltySec += penalty;
     s.totalTimeSec += penalty;
-    if (this._deadline()) return;
+    // Record the pending earnings fine before a catch can also end a timed
+    // pursuit. Saved credits are never debited by a catch.
     this.emit({ ticket: s.police.ticket });
+    this._deadline();
   }
 
   // Acknowledge the ticket screen and resume the stage (penalty already paid;
@@ -937,6 +952,7 @@ export class Duel {
     const s = this.state;
     if (s.impactTimer > 0 || s.status !== 'racing') return;
     this._breakDrift('hit');
+    s.stageCrashes++;
     s.boosting = false;
     s.combo = 0; s.comboTimer = 0;
     const recoverable = this.stageDef.persistentVehicle || this.stageDef.kind === 'chase';
@@ -1037,8 +1053,9 @@ export class Duel {
         serial: (state.crushBurst?.serial || 0) + 1 };
       state.crushBurst = burst;
       if (byPlayer) {
-        state.crushCount++; state.crushScore += 150; state.stageStyleScore += 150; state.score += 150;
-        this._callout('CAR CRUSH  /  +150', 1.8);
+        const points = 150 * this.scoreMultiplier;
+        state.crushCount++; state.crushScore += points; state.stageStyleScore += points; state.score += points;
+        this._callout(`CAR CRUSH  /  +${points}`, 1.8);
       }
       this.emit({ propCrushed: burst });
     }
@@ -1072,7 +1089,7 @@ export class Duel {
     if (actor.collectedJumps.includes(key)) return;
     const landing = this.course.worldAt(actor.s, actor.lateral), distance = Math.hypot(landing.x - origin.world.x, landing.z - origin.world.z);
     if (distance < 4) return;
-    const points = Math.min(400, Math.round(distance * 4));
+    const points = Math.min(400, Math.round(distance * 4)) * this.scoreMultiplier;
     actor.collectedJumps.push(key); actor.jumpScore += points; actor.stageStyleScore += points; actor.score += points;
     actor.jumps++; actor.bestJumpMeters = Math.max(actor.bestJumpMeters, +distance.toFixed(1));
     this._callout(`BIG AIR  /  ${Math.round(distance)} m  /  +${points}`, 2.4);
@@ -1175,20 +1192,29 @@ export class Duel {
     if (s.status !== 'racing' || s.completedLaps < s.lapsTotal || s.s < this.raceLength) return false;
     if (this._deadline()) return false;
     if (s.drift) this._commitDrift(finishDrift(s.drift, { completed: true }));
-    s.lives += LIVES.cleanStageReward;
-
     const timeSec = s.stageTimeSec + s.racePenaltySec;
     const par = this._parTime();
     const timeBonus = Math.max(0, Math.round((par - timeSec) * SCORING.perSecondUnder));
     const beatRival = s.rival ? (s.rival.finishTime == null || s.stageTimeSec <= s.rival.finishTime) : null;
-    const stageBaseScore = SCORING.perStageBase + timeBonus + s.lives * SCORING.perLifeLeft;
+    const objective = this._objectiveResult();
+    const won = s.objective ? objective.targetsMet && timeSec < s.timeLimitSec : this.stageDef.kind === 'chase' ? timeSec < s.timeLimitSec : s.mode === 'duel' && s.rival ? beatRival === true : timeSec < par;
+    const recordEligible = !s.objective || objective.targetsMet;
+    if (recordEligible) this._awardPoliceEscape('finish');
+    // Capture the completed circuit before repairs so repairs cannot create a clean bonus.
+    const majorCrashesBeforeRepair = s.majorCrashes;
+    const crashesRepaired = won ? Math.min(LIVES.stageWinRepair, s.majorCrashes) : 0;
+    const livesRestored = won ? Math.min(LIVES.stageWinRepair, Math.max(0, LIVES.start - s.lives)) : 0;
+    if (won) {
+      const damageFraction = Math.max(crashesRepaired / Math.max(1, s.majorCrashes), livesRestored / Math.max(1, LIVES.start - s.lives));
+      s.majorCrashes -= crashesRepaired; s.lives += livesRestored;
+      for (const zone of Object.keys(s.damageZones)) s.damageZones[zone] *= 1 - damageFraction;
+    }
+    const stageBaseScore = (SCORING.perStageBase + timeBonus + s.lives * SCORING.perLifeLeft) * this.scoreMultiplier;
     const score = stageBaseScore + s.stageStyleScore;
     s.score += stageBaseScore;
     s.boosting = false;
 
     const previousBest = this._bestFor(this.stageDef.name);
-    const objective = this._objectiveResult();
-    const recordEligible = !(s.drift||s.checkpointRush) || objective.targetsMet;
     if (recordEligible) this._recordBest(this.stageDef.name, timeSec);
     s.results = {
       stageIndex: s.stageIndex, stageName: this.stageDef.name, seed: s.seed,
@@ -1196,8 +1222,9 @@ export class Duel {
       completed: true, laps: s.completedLaps, lapTimes: [...s.lapTimes], isPersonalBest: recordEligible && (previousBest == null || timeSec < previousBest),
       jumpScore: s.jumpScore, jumps: s.jumps, bestJumpMeters: s.bestJumpMeters,
       crushCount: s.crushCount, crushScore: s.crushScore,
-      cleanStage: true, lives: s.lives, timeBonus, beatRival, score, styleScore: s.stageStyleScore,
-      won: s.objective ? objective.targetsMet && timeSec < s.timeLimitSec : this.stageDef.kind === 'chase' ? timeSec < s.timeLimitSec : s.mode === 'duel' && s.rival ? beatRival === true : timeSec < par,
+      cleanStage: s.stageCrashes === 0, stageCrashes: s.stageCrashes, majorCrashesBeforeRepair,
+      crashesRepaired, livesRestored, policeEscapes: s.policeEscapes, scoreMultiplier: this.scoreMultiplier,
+      lives: s.lives, timeBonus: timeBonus * this.scoreMultiplier, beatRival, score, styleScore: s.stageStyleScore, won,
       best: this._bestFor(this.stageDef.name),
       ...objective, ...(s.objective ? { objectiveMissed: !objective.targetsMet } : {}),
     };

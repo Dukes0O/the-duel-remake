@@ -5,6 +5,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { CARS } from '../src/config.js';
 import { createVehicle, updateVehicleDamage } from '../src/vehicles.js';
 import { createUnlockedVehicle, UNLOCK_VEHICLE_DIMENSIONS } from '../src/unlock-vehicles.js';
+import { createClassicVehicle } from '../src/classic-vehicles.js';
 import { loadHeroVehicle } from '../src/hero-vehicle.js';
 import { applyVehiclePaint } from '../src/vehicle-paint.js';
 import { PAINT_PRESETS } from '../src/paint-presets.js';
@@ -62,8 +63,7 @@ const hero = await importedFactory();
 const fixtures = [];
 for (const [key, config] of Object.entries(CARS)) {
   const options = { color: config.color, accent: config.accent, kind: key === 'aurora_gt' ? 'gt' : key.includes('959') ? 'stuttgart' : 'sport' };
-  fixtures.push([key, () => UNLOCK_VEHICLE_DIMENSIONS[key] ? createUnlockedVehicle({ key, ...options }) : createVehicle(options)]);
-  if (!UNLOCK_VEHICLE_DIMENSIONS[key]) fixtures.push([`${key} imported`, () => hero(options)]);
+  fixtures.push([key, () => createClassicVehicle({key,...options}) || (UNLOCK_VEHICLE_DIMENSIONS[key] ? createUnlockedVehicle({ key, ...options }) : hero(options))]);
 }
 
 for (const [label, make] of fixtures) {
@@ -160,4 +160,4 @@ const sharedInventory = inventory(group);
 equal(applyVehiclePaint(group, copper), false);
 equal(inventory(group), sharedInventory, 'shared guard clones only once');
 
-console.log(`Vehicle paint: ${checks} checks passed across all seven cars plus three imported hero variants; damage, factory restore, trim isolation and repeated updates preserve resources.`);
+console.log(`Vehicle paint: ${checks} checks passed across all seven actual runtime cars; damage, factory restore, trim isolation and repeated updates preserve resources.`);

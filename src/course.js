@@ -11,6 +11,27 @@ const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
 const angleDiff=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 
+// Broad, authored landforms use lap fractions so the road, terrain and scenery
+// share the same crests. Compact cosine shoulders meet the original ground
+// with zero slope; no random height noise or seam crosses the starting grid.
+// Entries are [centre, half-span, metres]. Negative summit features form a
+// shallow saddle between two visible ridges rather than one rounded dome.
+const ROAD_LANDFORMS={
+  canyon:[[.12,.12,14],[.38,.13,22],[.70,.13,8],[.86,.09,-4]],
+  highland:[[.11,.10,14],[.37,.05,6],[.50,.06,-14],[.64,.05,5],[.86,.10,4]],
+  harbor:[[.52,.048,-12],[.80,.08,9]],
+  ridge:[[.15,.12,12],[.34,.08,-4],[.71,.06,-12],[.91,.065,8]],
+};
+const ROUTE_SHAPES={
+  // x/z aspect, broad two/three/five-lobe bends, paired four/six-lobe bends.
+  canyon:[1.24,.87,.09,.05,.012,.030,.003],
+  highland:[1.08,.93,.15,.075,.012,.040,.008],
+  harbor:[1.2,.82,.12,.08,.025,0,0],
+  ridge:[1.12,.93,.11,.065,.018,.034,.004],
+  // The timed checkpoint challenge keeps its already calibrated centreline.
+  timberline:[1.24,.86,.145,.072,.014,0,0],
+};
+
 export class Course {
   constructor(def,seed,{solveShortcuts=false}={}){
     this.def=def;this.seed=seed>>>0;this.theme=THEMES[def.theme];this.length=def.lengthU;
@@ -31,6 +52,10 @@ export class Course {
     const p=this.phase(s),a=p/this.length*TAU;
     let h=14+3.5*Math.sin(a)+1.8*Math.sin(a*3);
     for(const sec of this.sections)if(sec.theme==='alpine'&&p>=sec.start&&p<=sec.end){const t=(p-sec.start)/(sec.end-sec.start);h+=75*Math.sin(t*Math.PI)**2;}
+    for(const [centre,halfSpan,height]of ROAD_LANDFORMS[this.def.layout]||[]){
+      const distance=(p/this.length-centre)/halfSpan;
+      if(Math.abs(distance)<1)h+=height*(1+Math.cos(Math.PI*distance))*.5;
+    }
     return h;
   }
   _build(){
@@ -38,8 +63,8 @@ export class Course {
     const cityLoop=this.def.kind==='chase'||this.def.layout==='city'?roundedCityLoop():null;
     // Distinct flowing layouts include gentle reverse bends and longer
     // straights. Their tightest radius stays beyond the near-terrain ribbon.
-    const shape={canyon:[1.3,.82,.12,.055,.012],highland:[1.08,.93,.2,.08,.012],harbor:[1.2,.82,.12,.08,.025],ridge:[1.15,.9,.15,.075,.018],timberline:[1.24,.86,.145,.072,.014]}[this.def.layout]||[1.08,.93,0,.055,.018];
-    for(let i=0;i<=count;i++){const a=i/count*TAU,r=arena?1:1+shape[2]*Math.cos(a*2+phase*.2)+shape[3]*Math.cos(a*3+phase)+shape[4]*Math.sin(a*5+phase);
+    const shape=ROUTE_SHAPES[this.def.layout]||[1.08,.93,0,.055,.018,0,0];
+    for(let i=0;i<=count;i++){const a=i/count*TAU,r=arena?1:1+shape[2]*Math.cos(a*2+phase*.2)+shape[3]*Math.cos(a*3+phase)+shape[4]*Math.sin(a*5+phase)+shape[5]*Math.sin(a*4+phase*.5)+shape[6]*Math.cos(a*6-phase*.3);
       const city=cityLoop?.(i/count);raw.push({x:city?city.x:Math.cos(a)*r*(arena?1.3:shape[0]),z:city?city.z:Math.sin(a)*r*(arena?.8:shape[1]),s:0});
       if(i)raw[i].s=raw[i-1].s+Math.hypot(raw[i].x-raw[i-1].x,raw[i].z-raw[i-1].z);}
     const scale=this.length/raw.at(-1).s;raw.forEach(p=>{p.x*=scale;p.z*=scale;p.s*=scale;});

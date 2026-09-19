@@ -11,9 +11,8 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { createChickens } from './chickens.js';
-import { loadHeroVehicle } from './hero-vehicle.js';
+import { createVehicleAssets } from './vehicle-assets.js';
 import { updateDriver } from './driver.js';
-import { createUnlockedVehicle, UNLOCK_VEHICLE_DIMENSIONS } from './unlock-vehicles.js';
 import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
 import { constrainTunnelCamera } from './camera-clearance.js';
@@ -28,7 +27,7 @@ import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope } from './
 
 // This layer only reads simulation state. Asset replacement never changes race rules.
 export function attachRenderer(host, app) {
-  let disposed=false,raf,sceneRevision=0,warmupTicket=null,warmupKey=null;
+  let disposed=false,raf,sceneRevision=0,warmupTicket=null,warmupKey=null,readinessClaimed=false;
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   const warmupRequested=isRenderWarmupEnabled(window.location.search),parallelShaderCompile=renderer.extensions.has('KHR_parallel_shader_compile');
   const warmup=warmupRequested&&parallelShaderCompile?createRenderWarmup():null,readinessOwner={};
@@ -72,13 +71,24 @@ export function attachRenderer(host, app) {
   const localLighting=createLocalLighting(scene);
   let course, world, loadedCar, player, rival, chickens, ghost, ghostStyle, worldKey;
   let worldBuildCount=0,firstWorldFrame=false;
-  let heroFactory;
-  loadHeroVehicle().then(factory => {
-    if (disposed) return;
-    heroFactory = factory; loadedCar = null; if(rival){retireObject(rival);rival=null;} host.dataset.heroAsset = 'ready';
-  }).catch(error => { if(disposed)return;host.dataset.heroAsset = 'fallback'; console.warn('Detailed car unavailable; using local fallback.', error); });
+  const vehicleAssets=createVehicleAssets();
+  function prepareVehicle(key,{retry=false}={}) {
+    if(disposed)return false;
+    let status=vehicleAssets.status(key);
+    if(status==='idle'||status==='error'&&retry){vehicleAssets.load(key,{retry});status=vehicleAssets.status(key);}
+    host.dataset.vehicleKey=key;host.dataset.vehicleAsset=status;host.dataset.heroAsset=status;
+    host.dataset.vehicleSource=vehicleAssets.source(key)||'unknown';
+    if(status!=='ready'){
+      // Hide the previous selection; a loading model must not show an old body.
+      renderer.domElement.style.visibility='hidden';
+      if(!readinessClaimed){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
+      app.holdVisualReadiness?.(readinessOwner);
+      return false;
+    }
+    return true;
+  }
   const traffic = [];
-  const police = createVehicle({ color: 0x172a36, accent: 0xeeeecc, kind: 'sedan', detail: 'low' });
+  const police = createVehicle({ color: 0x172a36, accent: 0xeeeecc });
   const lamps = new THREE.Group();
   for (let i = 0; i < 2; i++) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(.48, .16, .32), new THREE.MeshBasicMaterial({ color: i ? 0x178aff : 0xff2211 }));
@@ -132,6 +142,8 @@ export function attachRenderer(host, app) {
     const st = app.duel.state, menu = st.status === 'menu', next = menu ? app.getMenuCourse(app.menuStage||0) : app.duel.course;
     const moving = st.status === 'racing' && !st.paused;
     if (!next) return;
+    const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
+    if(!prepareVehicle(carKey))return;
     if (course !== next) {
       if(world&&worldKey===environmentKey(next)){course=next;applyLighting(course.def.theme);}
       else build(next);
@@ -139,17 +151,15 @@ export function attachRenderer(host, app) {
       ready = false;
     }
     if (menu !== lastMenu) { ready = false; lastMenu = menu; }
-    const carKey = (menu && app.menuCar) || st.car;
     if (carKey !== loadedCar) {
       if(ghost){const style=ghostStyle;retireObject(ghost,()=>style.restore());ghost=null;ghostStyle=null;}
       if (player) retireObject(player);
       if(rival){retireObject(rival);rival=null;}
-      const car = CARS[carKey] || CARS.falcone_f42;
-      player = UNLOCK_VEHICLE_DIMENSIONS[carKey]?createUnlockedVehicle({key:carKey,color:car.color,accent:car.accent}):(heroFactory || createVehicle)({ color: car.color, accent: car.accent, kind: carKey==='aurora_gt'?'gt':carKey.includes('959') ? 'stuttgart' : 'sport' });
+      player = vehicleAssets.create(carKey);
       scene.add(player); loadedCar = carKey;sceneRevision++;
       ambientShading.refresh();
     }
-    if (!rival) { rival = UNLOCK_VEHICLE_DIMENSIONS[carKey]?createUnlockedVehicle({key:carKey,color:0xbfcace,accent:0x142a36}):(heroFactory||createVehicle)({ color: 0xbfcace, accent: 0x142a36 }); scene.add(rival);sceneRevision++;ambientShading.refresh(); }
+    if (!rival) { rival = vehicleAssets.create(carKey,{color:0xbfcace,accent:0x142a36}); scene.add(rival);sceneRevision++;ambientShading.refresh(); }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
     const pp = vehicleGroundPoint(course,distance,lateral);
     applyLighting(course.themeAt(distance),1-Math.exp(-dt*1.1),!!course.tunnelAt(distance));
@@ -227,7 +237,7 @@ export function attachRenderer(host, app) {
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;
     const ghostPose=!menu&&app.ghostPose?.car===carKey?app.ghostPose:null;
     if(ghostPose&&!ghost){
-      const car=CARS[carKey];ghost=UNLOCK_VEHICLE_DIMENSIONS[carKey]?createUnlockedVehicle({key:carKey,color:car.color,accent:car.accent}):(heroFactory||createVehicle)({color:car.color,accent:car.accent,kind:carKey==='aurora_gt'?'gt':carKey.includes('959')?'stuttgart':'sport'});
+      ghost=vehicleAssets.create(carKey);
       ghost.name='Personal best ghost';ghostStyle=styleGhostVehicle(ghost);scene.add(ghost);sceneRevision++;ambientShading.refresh();
     }
     if(ghost){
@@ -237,7 +247,7 @@ export function attachRenderer(host, app) {
     rival.visible = !menu && !!st.rival && Math.abs(visualGap(st.rival.s)) < 650;
     if (rival.visible) {place(rival, vehicleGroundPoint(course,st.rival.s, st.rival.lateral), st.rival.headingError||0, wheelTravel(st.rival.speedMph));rival.position.y+=st.rival.airHeight||0;const slope=groundSlope(course,st.rival.s,st.rival.lateral,st.rival.headingError||0);rival.rotation.x=slope.pitch;rival.rotation.z=slope.roll;updateDriver(rival.userData.driver,Math.max(-1,Math.min(1,(st.rival.pushVelocity||0)*.08)),0,false);for(const lamp of rival.userData.brakeLights||[])lamp.material.emissiveIntensity=st.rival.braking?4:1.4;}
     const palette = [0xd9c99c, 0x2c566a, 0x847458, 0xf0e9dc, 0x5e3d2f];
-    while (traffic.length < st.traffic.length) { const car = createVehicle({ color: palette[traffic.length % palette.length], kind: 'sedan', detail: 'low' }); scene.add(car); traffic.push(car);sceneRevision++;ambientShading.refresh(); }
+    while (traffic.length < st.traffic.length) { const car = createVehicle({ color: palette[traffic.length % palette.length] }); scene.add(car); traffic.push(car);sceneRevision++;ambientShading.refresh(); }
     traffic.forEach((car, i) => {
       const d = st.traffic[i]; car.visible = !menu && !!d?.alive && Math.abs(visualGap(d.s)) < 540;
       if (car.visible) {const turn=d.dir<0?Math.PI:0;place(car,vehicleGroundPoint(course,d.s,d.lateral),turn,wheelTravel(d.speedMph));const slope=groundSlope(course,d.s,d.lateral,turn);car.rotation.x=slope.pitch;car.rotation.z=slope.roll;}
@@ -279,7 +289,8 @@ export function attachRenderer(host, app) {
     renderer.info.autoReset=false;renderer.info.reset();
     const firstFrameStart=firstWorldFrame?performance.now():0;composer.render();
     if(firstWorldFrame){host.dataset.firstFrameMs=(performance.now()-firstFrameStart).toFixed(0);firstWorldFrame=false;}
-    if(warmupRequested&&!app.visualReady)app.presentVisualFrame?.(readinessOwner,st,app.duel.course);
+    renderer.domElement.style.visibility='visible';
+    if(readinessClaimed&&!app.visualReady)app.presentVisualFrame?.(readinessOwner,st,app.duel.course);
     metricFrames++;
     if (now - metricsTime >= 1000) {
       host.dataset.drawCalls = String(renderer.info.render.calls);
@@ -293,16 +304,16 @@ export function attachRenderer(host, app) {
   const tick = t => { if (disposed) return; frame(t); raf = requestAnimationFrame(tick); }; raf = requestAnimationFrame(tick);
   const resize = () => { renderer.setSize(host.clientWidth, host.clientHeight); composer.setSize(host.clientWidth,host.clientHeight); camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix(); };
   window.addEventListener('resize', resize);
-  if(warmupRequested)app.claimVisualReadiness?.(readinessOwner);
+  if(warmupRequested){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
   const debugApi=window.__render = { renderer, scene, camera, renderFrame() { frame(); return { drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles }; }, sample() {
     frame();if(disposed||warmup&&!warmup.canDraw(warmupKey))return {warming:!disposed,distinctColors:0,drawCalls:0,triangles:0};const rt = new THREE.WebGLRenderTarget(64, 48); renderer.setRenderTarget(rt); renderer.render(scene, camera);
     const data = new Uint8Array(64 * 48 * 4); renderer.readRenderTargetPixels(rt, 0, 0, 64, 48, data); renderer.setRenderTarget(null); rt.dispose();
     const colors = new Set(); for (let i = 0; i < data.length; i += 4) colors.add(`${data[i] >> 4},${data[i + 1] >> 4},${data[i + 2] >> 4}`);
     return { distinctColors: colors.size, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles };
   } };
-  return { dispose() {
+  return { prepareVehicle, retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); }, dispose() {
     if(disposed)return;disposed=true;cancelAnimationFrame(raf);window.removeEventListener('resize',resize);
-    if(warmupRequested)app.releaseVisualReadiness?.(readinessOwner);
+    if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
     const release=()=>{effects.dispose();explosion.dispose();atmosphere.dispose();localLighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);sun.dispose();environment.dispose();naturalEnvironment?.dispose();renderer.dispose();};

@@ -109,7 +109,7 @@ for(const cpuDifficulty of['easy','medium','hard']){
   const app=new App();app.autopilot=true;app._scriptedCrashDone=true;app.duel.startCampaign({startStage:index,cpuDifficulty});let frames=0,hit=false;
   while(!['stage_result','gameover'].includes(app.duel.state.status)&&frames++<120*190){const s=app.duel.state;
     if(!hit&&s.s>1500){app.duel._crash('rock');hit=true;}app.advance(1/120);}
-  const s=app.duel.state;check(hit&&s.majorCrashes===1&&s.racePenaltySec===LIVES.crashPenaltySec,'an actual replay crash has the ordinary thirty-second cost');
+  const s=app.duel.state;check(hit&&s.stageCrashes===1&&s.majorCrashes===(s.results.won?0:1)&&s.racePenaltySec===LIVES.crashPenaltySec,'a replay crash keeps its thirty-second cost and stage evidence; only a win repairs it');
   check(cpuDifficulty==='easy'?s.results.completed&&s.results.won:s.results.timeout&&!s.results.won,'Easy allows this crash; Medium and Hard demand a cleaner run');
   recovery.push({cpuDifficulty,time:s.results.timeSec,won:s.results.won,passed:s.results.checkpointsPassed,missed:s.results.checkpointMisses});
 }

@@ -7,6 +7,7 @@ import {Course} from '../src/course.js';
 import {strip} from '../src/world.js';
 import {loadHeroVehicle} from '../src/hero-vehicle.js';
 import {createUnlockedVehicle,UNLOCK_VEHICLE_DIMENSIONS} from '../src/unlock-vehicles.js';
+import {createClassicVehicle} from '../src/classic-vehicles.js';
 import {placeGroundedVehicle as place,vehicleGroundSlope as groundSlope,vehicleGroundPoint,prepareVehicleGrounding} from '../src/vehicle-grounding.js';
 
 // Preserve every original mesh, physical factor and transform. Only texture
@@ -24,7 +25,7 @@ sourceLowest.sort((a,b)=>a.normalizedBottomM-b.normalizedBottomM);
 let hero;try{GLTFLoader.prototype.loadAsync=async()=>parsed;hero=await loadHeroVehicle();}finally{GLTFLoader.prototype.loadAsync=oldLoad;}
 const point=new THREE.Vector3(),center=new THREE.Vector3(),plane=new THREE.Plane(),normal=new THREE.Vector3(),inverse=new THREE.Matrix4(),ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0);
 export const models=Object.entries(CARS).map(([key,config])=>{
-  const vehicle=UNLOCK_VEHICLE_DIMENSIONS[key]?createUnlockedVehicle({key,...config}):hero({color:config.color,kind:key==='aurora_gt'?'gt':key.includes('959')?'stuttgart':'sport'});
+  const vehicle=createClassicVehicle({key,...config})||(UNLOCK_VEHICLE_DIMENSIONS[key]?createUnlockedVehicle({key,...config}):hero({color:config.color,kind:'gt'}));
   vehicle.updateMatrixWorld(true);
   const wheels=vehicle.userData.wheels.map(wheel=>{
     const vertices=[];let minY=Infinity,maxY=-Infinity;

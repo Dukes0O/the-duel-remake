@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
+import * as THREE from 'three';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
-import {terrainStyleAt} from '../src/terrain-style.js';
+import {terrainStyleAt,createTerrainMaterial} from '../src/terrain-style.js';
 import {terrainGeometry} from '../src/world.js';
 
 let checks=0;
@@ -25,4 +26,13 @@ for(const def of COURSE){
   }
   geometry.dispose();
 }
-console.log(`Terrain style: ${checks} continuous biome and rendered vertex checks passed.`);
+const textures=Object.fromEntries(['earth','grass','city','rock','normal','roughness'].map(name=>[name,new THREE.Texture()]));
+const material=createTerrainMaterial(textures),shader={vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader,uniforms:{}};
+material.onBeforeCompile(shader);
+check(shader.uniforms.terrainRock.value===textures.rock&&shader.uniforms.terrainGrass.value===textures.grass,'Existing source textures are reused without clones');
+check(material.map===textures.earth&&material.normalMap===textures.normal&&material.roughnessMap===textures.roughness,'Existing material maps stay available to render readiness and disposal');
+check(shader.vertexShader.includes('modelMatrix*vec4(transformed,1.0)')&&shader.vertexShader.includes('inverseTransformDirection(transformedNormal,viewMatrix)'),'Slope detail is evaluated in shared world space');
+check(shader.fragmentShader.includes('terrainRockSample(vTerrainPosition')&&!shader.fragmentShader.includes('#include <map_fragment>'),'Slope textures replace the repeated terrain map path');
+check(shader.fragmentShader.includes('cityTexel*weights.z'),'City surfaces retain their existing layer without meadow overlays');
+material.dispose();Object.values(textures).forEach(texture=>texture.dispose());
+console.log(`Terrain style: ${checks} continuous biome, rendered vertex and material checks passed.`);

@@ -1,6 +1,6 @@
 # Asset pipeline
 
-The remake uses 3D vehicle and environment meshes. Its seven playable cars comprise two free starters and five earned vehicles. Falcone F42, Stuttgart 959-S and the earned Aurora GTR share one licensed GLB body. The four other earned cars—Dusthawk Rally, Banshee Muscle, Viper Prototype and Titan Monster—use distinct original geometry, articulated wheels, drivers and damage hooks; Blender-ready GLBs are exported from the same factories. The rival uses the selected vehicle class. Lightweight procedural cars serve traffic and police. Image generation supplies modeling references and runtime surface textures.
+The remake uses 3D vehicle and environment meshes. Its seven playable cars comprise two free starters and five earned vehicles. Falcone F42 and Stuttgart 959-S have separate original bodies in `src/classic-vehicles.js`. Dusthawk Rally, Banshee Muscle, Viper Prototype and Titan Monster use four original bodies in `src/unlock-vehicles.js`. Aurora GTR alone adapts the licensed Car Concept GLB. Original cars have articulated wheels, drivers and damage hooks; Blender-ready GLBs are exported from the same factories. The rival and personal-best ghost use the selected car's same model. Lightweight procedural sedans serve traffic and police. Image generation supplies modeling references and runtime surface textures.
 
 The current earned-car source is `src/unlock-vehicles.js`. Run `npm run assets:unlocks` to rebuild `public/assets/models/unlocks/` and its manifest. See `docs/UNLOCK_VEHICLES.md` for dimensions, export checks and the driver/damage contract. The vehicle reference is `public/assets/reference/unlock-vehicles.png`; exact prompts for it and the asphalt, brick and gravel maps are in `docs/IMAGE_PROMPTS.md`.
 
@@ -10,30 +10,32 @@ The current earned-car source is `src/unlock-vehicles.js`. Run `npm run assets:u
 | --- | --- | --- |
 | `public/assets/reference/redline-horizons-art-direction.png` | Art direction: matching car views, service station, canyon | Built-in image generator; prompt below |
 | `public/assets/textures/red-sandstone.png` | Runtime sandstone surface color | Built-in image generator; exact prompt in `docs/IMAGE_PROMPTS.md` |
-| `src/vehicles.js` | Runtime original coupe and traffic geometry | Sculpted cross sections, material batches, articulated wheels |
-| `public/assets/models/car-concept.glb` | Detailed player car with embedded surface maps and cabin | Eric Chadwick / Darmstadt Graphics Group, CC BY 4.0; see `public/assets/models/CREDITS.md` |
-| `src/hero-vehicle.js` | Runtime GLB adaptation, material batching, wheel pivots and damage | Falcone, Stuttgart and Aurora share the concept body |
+| `src/classic-vehicles.js` | Separate Falcone and Stuttgart starter bodies | Original runtime factories and portable exports |
+| `src/unlock-vehicles.js` | Distinct Rally, Muscle, Prototype and Monster bodies | Original runtime factories and portable exports |
+| `src/vehicles.js` | Runtime traffic/police sedans and shared damage support | Original geometry, material batches and articulated wheels; no player fallback |
+| `src/vehicle-assets.js` | Model selection and import state | Shared by menu, player, rival and ghost |
+| `public/assets/models/car-concept.glb` | Aurora body with embedded surface maps and cabin | Eric Chadwick / Darmstadt Graphics Group, CC BY 4.0; see `public/assets/models/CREDITS.md` |
+| `src/hero-vehicle.js` | Aurora GLB adaptation, material batching, wheel pivots and damage | Loaded only when Aurora is selected |
 | `public/assets/textures/ground-*.jpg` | Scanned ground color, normal and roughness | Poly Haven Gravelly Sand, CC0 |
 | `public/assets/textures/sunset-lighting.hdr` | Natural reflection lighting | Poly Haven, CC0; see texture credits |
-| `public/assets/models/cinder-gt.glb` | Portable editable coupe for Blender | `node tools/export-assets.mjs` |
-| `public/assets/models/desert-service-station.glb` | Runtime roadside station with canopy, pumps and hoses | `node tools/export-assets.mjs` |
-| `tools/blender/build_assets.py` | Native Blender asset builder and optional studio render | Python; uses only Blender's built-in modules |
+| `src/world.js` and `src/scenery-detail.js` | Current roadside stations and scenery | Live environment mesh factories |
+| `tools/export-classic-vehicles.mjs` and `tools/export-unlock-vehicles.mjs` | Portable current-model GLBs for Blender | Three.js GLTFExporter |
 
 The image sheet guides the coupe's wide wedge body, dark glazing, rear louvers, side intakes, circular rear lamps and five-spoke wheels. Its cream stucco, oxidized red canopy and petroleum-blue windows guide the station materials. It is a concept reference; the small labels generated inside it are not game specifications.
 
-The original exported coupe and station use solid material colors and editable geometry. Car Concept includes authored material maps and a full cabin. Neither has a full bespoke dirt/wear/damage texture set for this game. The reference sheet itself is not a 3D model.
+The original cars use editable mesh geometry and generated paint detail. Car Concept includes authored material maps and a full cabin. The cars do not have full bespoke dirt/wear/damage texture sets. The reference sheet itself is not a 3D model.
 
 ## Rebuild the portable models
 
 From the repository root:
 
 ```powershell
-node tools/export-assets.mjs
+npm run assets:export
 ```
 
-This uses the project's existing Three.js dependency and its GLTFExporter. No account, API key, external exporter or additional package is needed. Files are deterministic and replace the two generated GLBs.
+This runs both maintained car exporters, using the project's existing Three.js dependency and GLTFExporter. It replaces only the six original car exports and their manifests. The licensed Aurora source stays unchanged. No account, API key, external exporter or additional package is needed.
 
-The exporter strips live animation references from object metadata. Wheel and brake-light names remain in the model for later rigging. Exported axes use metres, +Y up and +Z forward. The coupe is approximately 4.8 m long and 2.6 m wide including wheels. Its ground clearance starts near zero at the tires.
+The exporters strip live animation references from object metadata. Wheel and brake-light names remain in the models for later rigging. Exported axes use metres, +Y up and +Z forward. Each manifest records the exported model bounds. Ground clearance starts near zero at the tires.
 
 The runtime factory returns wheel groups in `userData.wheels` for X-axis spin. Steering pivots are in `userData.wheelPivots`; front wheels carry `userData.front` and steer around Y. `brakeMaterial`, `brakeLights` and `boostFlames` support driving feedback. Shared materials and cached geometries carry `userData.sharedAsset` so switching vehicles does not dispose resources still used by other cars.
 
@@ -43,24 +45,17 @@ The runtime factory returns wheel groups in `userData.wheels` for X-axis spin. S
 
 ## Work in Blender
 
-Import any included GLB through **File → Import → glTF 2.0**. This works without running the native Blender script. The shared-body player loader is `src/hero-vehicle.js`; it loads `car-concept.glb`, recentres and scales to 4.8 m, straightens the source's posed wheels, omits badges, replaces the plate artwork, and creates independent steering/spin groups. Preserve its node names when editing. Inspect all three shared-body variants and damage in `/tools/visual-check.html` after exporting. Keep source credits with derived assets. The original coupe export command does not overwrite Car Concept.
+Import a current car GLB through **File → Import → glTF 2.0**. Aurora's loader is `src/hero-vehicle.js`; it loads `car-concept.glb`, recentres and scales to 4.8 m, straightens the source's posed wheels, omits badges, replaces the plate artwork, and creates independent steering/spin groups. Preserve wheel, driver and damage contracts when editing. Inspect the relevant car and its damage in `/tools/visual-check.html` or the seven-car showroom after exporting. Keep source credits with derived assets.
 
-The optional script creates equivalent native editable assets and saves a .blend authoring file:
+Blender was not found on PATH or in the checked standard Windows install locations during earlier work. Current GLBs are built with Three.js and can be imported into Blender without a build script. No Blender rendering is claimed.
 
-```powershell
-& 'C:\path\to\blender.exe' --background --python tools/blender/build_assets.py -- --output public/assets/blender-build --render
-```
+## Model loading and retired prototypes
 
-Outputs:
+The former renderer built the first-iteration procedural coupe immediately, then replaced it after the licensed GLB finished loading. That visible swap was an active fallback path, not a stale career save. The player, rival and ghost now share `src/vehicle-assets.js`. Six original models are immediately available; choosing Aurora loads its source once. While it loads, the previous car is hidden and the race clock waits for the selected model's first draw. Failure offers a retry, and the loader clears a failed import promise so retry can make a new request. Switching back to an original model works without the import. No vehicle-loading action clears browser storage, player profiles, records or paint ownership.
 
-- `cinder-gt.glb`
-- `desert-service-station.glb`
-- `redline-assets.blend`
-- `cinder-gt-preview.png` when `--render` is included
+The following tracked first-iteration files were removed after checking all runtime references: `public/assets/models/cinder-gt.glb`, `public/assets/models/desert-service-station.glb`, `tools/export-assets.mjs` and `tools/blender/build_assets.py`. Neither GLB had a runtime consumer; current stations already come from the live environment mesh factories. Both removed scripts rebuilt only those retired prototypes. They remain recoverable through Git history. `assets:export` now rebuilds the current six original cars. The licensed Aurora GLB, its license/credits, current original model exports and reference images are retained.
 
-Keep this output directory separate from the runtime models while reviewing Blender work. The Python version adds small bevels and uses a Cycles studio render. It is an editable foundation for sculpting, UV layouts, texture baking and damage variants. It does not yet reproduce every procedural tread or trim detail.
-
-Blender was not found on PATH or in the checked standard Windows install locations during this run. The script was checked for Python syntax but has not been run inside Blender. The included GLBs were built with Three.js and successfully reloaded through GLTFLoader.
+The unused sport/Stuttgart/high-detail branches were also removed from `src/vehicles.js`. Its traffic/police sedan retains exactly the same 39-node geometry, transforms and material values: the measured before/after SHA-256 was `c903126c66e6e52d2c537351be7173d51f5301c48d5c737f82168d5cae386145`. Shared damage helpers remain in place for all seven playable vehicles. `node tools/test-vehicle-assets.mjs` checks all model routes, coalesced loading, absent placeholders, failed-import retry and preservation of race clocks while waiting; render readiness and vehicle paint/grounding suites cover the shared contracts.
 
 ## Next asset production steps
 
@@ -119,4 +114,4 @@ Style: premium automotive visualization and environment concept art, physically 
 
 ### Expanded scene reference
 
-`public/assets/reference/expanded-scenes.png` guides the coast lighthouse, station trim, harbor warehouses, driver and chickens. Generated `alpine-granite.png` and alpha `pine-bough.png` are used directly by the renderer. Import these images into Blender as material references; model in metres, +Y up and +Z forward for the current game adapter. Only Falcone F42, Stuttgart 959-S and Aurora GTR share the licensed concept-car body. Aurora adds original carbon aero and gold-wheel materials; it is not a separately scanned vehicle. Dusthawk Rally, Banshee Muscle, Viper Prototype and Titan Monster have separate original bodies in `src/unlock-vehicles.js` and four matching GLB exports under `public/assets/models/unlocks/`.
+`public/assets/reference/expanded-scenes.png` guides the coast lighthouse, station trim, harbor warehouses, driver and chickens. Generated `alpine-granite.png` and alpha `pine-bough.png` are used directly by the renderer. Import these images into Blender as material references; model in metres, +Y up and +Z forward for the current game adapter. Aurora alone retains the licensed concept-car body, with original carbon aero and gold-wheel materials; it is not a separately scanned vehicle. The other six cars have separate original bodies and matching portable exports.

@@ -56,6 +56,12 @@ for (const [key, dimensions] of Object.entries(UNLOCK_VEHICLE_DIMENSIONS)) {
     assert.equal(hit?.object.material.name, visibleMaterial[name], `${key}: ${name} must be visible from camera x=${cameraX}, side=${side}`);
     visibilityChecks++;
   }
+  if(key==='dusthawk_rally')for(const x of[-.57,-.19,.19,.57])for(const cameraX of[-2,0,2])for(const[dx,dy]of[[0,0],[-.065,0],[.065,0],[0,-.065],[0,.065]]) {
+    const eye=new THREE.Vector3(cameraX,3.65,9),target=new THREE.Vector3(x+dx,.742+dy,2.137),ray=new THREE.Raycaster(eye,target.clone().sub(eye).normalize());
+    const hit=ray.intersectObject(vehicle,true).find(h=>h.object.isMesh&&h.object.visible&&!h.object.material.transparent);
+    assert.equal(hit?.object.material.name,'Headlamp lenses',`Rally auxiliary lamp ${x}: clear face at ${dx},${dy}, camera ${cameraX}`);
+    assert(hit.point.z>2.13&&hit.point.distanceTo(target)<.025,'Auxiliary lamp sightline must reach its own lens, not a main light or grille bar');visibilityChecks++;
+  }
   const bounds = new THREE.Box3(), size = new THREE.Vector3(); let triangles = 0, draws = 0;
   vehicle.traverseVisible(object => {
     if (!object.isMesh) return;

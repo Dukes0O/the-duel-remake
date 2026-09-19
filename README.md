@@ -44,11 +44,13 @@ Pacific Canyon, High Country, Harbor & Highlands and Ridge Rally each offer **Ro
 
 Steering is responsive and allows controlled drift. It does not follow the road automatically. Brakes are stronger, with a separate brake upgrade. Leaving the road slows the car and reduces grip but does not count as a crash. Far-boundary and coastal-water recovery return the car safely to the track.
 
-Ordinary races end after five major crashes. Head-on and solid scenery impacts count; harmless dirt driving does not. Front, rear and side damage persists. The CPU brakes when cut off, remains solid after finishing, and can be pushed off-road.
+Ordinary races end after five unrepaired major crashes. Head-on and solid scenery impacts count; harmless dirt driving does not. A stage win repairs up to two major impacts and restores two crash slots, capped at five. Damage otherwise persists. The CPU brakes when cut off, remains solid after finishing, and can be pushed off-road.
 
 **Midnight Muscle Chase keeps the car driveable after crashes.** Impacts cost eight seconds; police catches cost twelve seconds and the pursuit resumes. Finish both laps before the difficulty-specific deadline: 205, 175 or 150 seconds. Arena ramps launch the truck, record landing distance and award a capped event bonus. Six stripped salvage cars can be crushed for a separate finish bonus. Rival crushes do not earn the player credits. The separate **Titan Stunt Trial** requires at least four landings and four player crushes within 95, 75 or 62 seconds, including both laps. It has no rival or traffic. See [trial rules](docs/STUNT_TRIAL.md).
 
 Chicken flocks wander near ordinary routes. Contact refills nitro and scatters the birds. A flock can be collected once per event.
+
+Getting caught by police adds a 150-credit fine against the current race's earnings, as well as the time penalty. It never takes credits from the saved balance. Each catch is counted once. At a finish, fines are capped at the race's positive payout; there is no debt.
 
 **Neon Drift Trial** requires 3,500 / 5,000 / 6,000 banked points within 150 / 125 / 110 seconds on Easy / Medium / Hard. Straighten a controlled slide to bank it. Impacts, dirt and spins lose the live chain; crashes add eight seconds and the car keeps driving. Its local leaderboard ranks score first, then time.
 
@@ -56,11 +58,13 @@ Chicken flocks wander near ordinary routes. Contact refills nitro and scatters t
 
 ## Players and garage
 
-Named players on this computer have separate credits, cars, upgrades and history. They share a local leaderboard with circuit and car filters. The previous garage save migrates into Player 1.
+Named players on this computer have separate credits, cars, upgrades, history and last-used race setups. Switching players restores that player's event, car, challenge, CPU difficulty, transmission and route. They share a local leaderboard with circuit and car filters. The previous garage save migrates into Player 1.
 
 Two cars are included. Five more can be earned: Aurora GTR, Dusthawk Rally, Banshee Muscle, Viper Prototype and Titan Monster. They have different acceleration, speed, road grip, dirt performance, brakes, mass and dimensions. The monster truck costs 12,000 credits and opens both stadium events.
 
-Seven upgrade categories each have three levels: engine, nitro, handling, tires, brakes, suspension and nitro tank. Difficulty sets the base win reward to 600, 1,000 or 1,500 credits. A loss charges half that amount, stopping at zero. Clean finishes, improved car records, win streaks, arena jumps and crushing can earn separate bonuses. Leaving or restarting after GO counts as a loss; the game shows the charge first. Reloading an interrupted race also settles its loss once.
+Seven upgrade categories each have three levels: engine, nitro, handling, tires, brakes, suspension and nitro tank. Difficulty sets the base win reward to 600, 1,000 or 1,500 credits. An actual race loss charges half that amount, stopping at zero. Clean finishes, improved car records, win streaks, police escapes, arena jumps and crushing can earn separate bonuses. Manual/Pro doubles driving points and recurring positive credit rewards; it does not double one-time milestones or loss charges. Quitting, restarting or reloading an unfinished race forfeits only that race's unbanked earnings. Saved credits and earnings from completed stages stay safe.
+
+Near misses allow a wider passing gap without widening collisions. Escaping police earns points, including when crossing the finish line during a pursuit. A car's first finish establishes its record; each later improvement with the same route, car, race mode, CPU and transmission can earn the car-best bonus. Upgrades can help beat the existing record. Stage repairs do not turn a damaged run into a clean run.
 
 Copper Metallic and Glacier Satin finishes cost 250 and 400 credits per car. Once purchased, switching between owned finishes or restoring the factory finish is free. Paint changes appearance only and does not affect records or performance.
 
@@ -72,8 +76,9 @@ See [progression rules](docs/PROGRESSION_V2.md) for prices, comparison rules, mi
 
 The game uses Three.js, original procedural 3D models, a licensed detailed concept-car body, generated material maps and recorded engine/tire sounds. Landscapes have blended ground materials, fractured granite, grass, cloud cover and animated coastal foam. City scenes have perspective room interiors, a distant skyline, weathered sidewalks, solid parked cars and local street lighting. Day routes offer Clear, Golden hour and Overcast lighting; night events keep their authored lighting. Drift smoke uses a generated transparent sprite. High quality includes contact shading and edge smoothing; Performance reduces those costs. It remains a browser arcade game; the city chase is a bounded driving event rather than a full open-world simulation.
 
+- [Starter vehicles](docs/CLASSIC_VEHICLES.md): separate wedge-shaped Falcone and rounded Stuttgart bodies, with no old-model loading fallback.
 - [Vehicle assets](docs/UNLOCK_VEHICLES.md): four distinct original earned-car models, damage hooks and Blender-ready GLBs.
-- [Model credits](public/assets/models/CREDITS.md): licensed concept-car body used by the starter cars and Aurora trim.
+- [Model credits](public/assets/models/CREDITS.md): licensed Aurora body and the six original playable-car models.
 - [Audio credits](public/assets/audio/CREDITS.md): source recordings, licenses and processing.
 - [Image prompts](docs/IMAGE_PROMPTS.md): full prompts and how generated references and textures are used.
 - [Asset workflow](docs/ASSET_PIPELINE.md): export and Blender guidance.

@@ -12,20 +12,21 @@ const equal=(a,b,message)=>{assert.deepEqual(a,b,message);checks++;};
 const hash=arrays=>{const result=createHash('sha256');for(const array of arrays)result.update(Buffer.from(array.buffer,array.byteOffset,array.byteLength));return result.digest('hex');};
 const matrix=new THREE.Matrix4(),object=new THREE.Object3D(),point=new THREE.Vector3();
 const kinds=['foliage','grit','boulders','posts','reflectors','outcrops'];
-// Captured from the pre-batching factory: geometry vertices, then complete
-// source-order matrix and colour buffers for each original mesh. These catch
-// accidental RNG/order changes that a count-only test would miss.
+// Source-order geometry, transform and colour snapshots, refreshed for the
+// deliberately revised version-4 natural routes. Legal scenery placement can
+// change rock counts with a new curve; batching must still retain every source
+// instance and all of its buffer values exactly.
 const baseline={
-  'pacific-canyon/desert':[[1820,780,96,138,138],'c5a230d5e3c38a80026ec8774b2a2429b7bad84367365dc8dc9b66cfbc6abc84'],
-  'pacific-canyon/coast':[[6720,720,85,128,128],'c7ab9ab5088f313d8d7f6716fb3e2e62a9cbffdeeafe674415b16cea8e1448cb'],
-  'high-country/desert':[[910,390,49,84,84],'2dbbed89aca864579c061c4ec80c34de24f501595f1a477b1e1f48d1cecd314c'],
-  'high-country/alpine':[[6720,720,87,144,144],'e134e9abeac6f5a8a694dbdb3d41ff3d782b3365bdc49f6eb9f98306f4428192'],
-  'high-country/coast':[[3640,390,37,84,84],'3f4e0760529ac2cc30d37ac0bf26a8d4983e176c9d4e5323ebb7275e6afb6769'],
-  'harbor-highlands/city':[[408,510,48,100,100],'acb5b061f0def2151031ad0ddb4a7bb7a46767b8f8fa722006943f06cc187eea'],
-  'harbor-highlands/alpine':[[5040,540,66,96,96],'e2cc8799bc5bd2993f6635056bc296267ced0688943a769e71389758ee70094c'],
-  'harbor-highlands/coast':[[4200,450,61,88,88],'94166ffe000f249de12995a301113716519741a9a4c275de253fa554d58893d4'],
-  'ridge-rally/desert':[[1470,630,67,98,98],'3f0476ef7ddac6937cd9e42566a021b28670b69983606b341a57bff931abbf6a'],
-  'ridge-rally/alpine':[[8120,870,104,126,126],'a51e38d25b3c55de0e4b5c5de49e87d30c6bc507971aeb45da55b72e585724e4'],
+  'pacific-canyon/desert':[[1820,780,94,138,138],'c11746854ec721d7cce6b8003c5a14430bd06ffcb50c71cb1111ff4d8ffb00bd'],
+  'pacific-canyon/coast':[[6720,720,81,128,128],'7dca3188eb53604601614972fe94280ce97f2b14f73c3633b8efb5f8cf69975e'],
+  'high-country/desert':[[910,390,49,84,84],'b662c79323bd9d543f6d8b99d63145ccb13c17df96edb101c32b1827003d6767'],
+  'high-country/alpine':[[6720,720,80,144,144],'7be5512e4c9f0e4fbcc2c5b6c8d7364e50d8e8479030a637df3a86fa3c89306a'],
+  'high-country/coast':[[3640,390,37,84,84],'6deee0b90cd4481348c4b252b31a1a330b57df6dab7e6a6f850d4b8d793e9c2b'],
+  'harbor-highlands/city':[[408,510,48,100,100],'f03a4c3f26e9ebcae8b5940ab340be2eb6c7f7d37a3e1cceb13f099528df00a4'],
+  'harbor-highlands/alpine':[[5040,540,66,96,96],'269e645c2fd9b13202dc18acc5a401c3d19b0d24b1f96d6a7eccebf2dd28e15d'],
+  'harbor-highlands/coast':[[4200,450,61,88,88],'388aa5e5a8f5f70bb8e7d2a5c1c7099013e153b7968bfc4f9ff7d251796eaed0'],
+  'ridge-rally/desert':[[1470,630,68,98,98],'756a77f9131796a01054ed60c12aa2c7e9d3dff1d8dffec00b4e874e61ef3ef4'],
+  'ridge-rally/alpine':[[8120,870,103,126,126],'fb82fa44aa60522a86eaa9b7e5e02615e56e75c8b0390d6baefbfff92e945024'],
 };
 
 function auditAndReconstruct(meshes){
@@ -33,6 +34,7 @@ function auditAndReconstruct(meshes){
   for(const kind of kinds){
     const cells=meshes.filter(mesh=>mesh.userData.landscapeCell.kind===kind);if(!cells.length)continue;
     const first=cells[0],count=cells.reduce((total,mesh)=>total+mesh.count,0),seen=new Set();
+    equal(count,first.userData.landscapeCell.sourceCount,'Batching preserves the entire source population');
     const original=new THREE.InstancedMesh(first.geometry,first.material,count);
     original.castShadow=first.castShadow;original.receiveShadow=first.receiveShadow;
     if(first.instanceColor)original.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(count*3),3);
@@ -99,8 +101,8 @@ try{
     for(const theme of new Set(course.sections.map(section=>section.theme))){
       const view=Object.create(course);view.def={...course.def,theme};view.features={...course.features,rocks:course.features.rocks.filter(rock=>rock.theme===theme)};view.detailSections=course.sections.filter(section=>section.theme===theme);
       const group=new THREE.Group();addLandscapeDetail(group,view,theme==='alpine');const originals=auditAndReconstruct(group.children),expected=baseline[`${def.id}/${theme}`];
-      equal(originals.map(mesh=>mesh.count),expected[0],'Density is unchanged in every biome');
-      if(theme!=='city')equal(hash(originals.flatMap(mesh=>[mesh.geometry.attributes.position.array,mesh.instanceMatrix.array,...(mesh.instanceColor?[mesh.instanceColor.array]:[])])),expected[1],'Every non-city geometry vertex, transform and colour bit matches the old placement');
+      equal(originals.map(mesh=>mesh.count),expected[0],'Density matches the audited version-4 route in every biome');
+      if(theme!=='city')equal(hash(originals.flatMap(mesh=>[mesh.geometry.attributes.position.array,mesh.instanceMatrix.array,...(mesh.instanceColor?[mesh.instanceColor.array]:[])])),expected[1],'Every non-city geometry vertex, transform and colour bit matches the audited placement');
       else{
         const unchanged=['d56577b40fc9cc7b3bc182b2c9f45e4ae63f9b092bda0cb080dab65b8eba27b8','5b15b186ab8ad3add60189005f236739bd6bc02546455c8ee8bcd2470b8f3746','a555d41acd44fc4afcf18942adc4f4c7c6d980fc6a57736f69ae6c5ff366c098'];
         originals.slice(2).forEach((mesh,index)=>equal(hash([mesh.instanceMatrix.array,...(mesh.instanceColor?[mesh.instanceColor.array]:[])]),unchanged[index],'City decoration relocation leaves every physical rock/delineator transform and colour unchanged'));

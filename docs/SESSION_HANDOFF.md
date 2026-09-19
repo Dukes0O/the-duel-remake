@@ -1,8 +1,29 @@
 # Session handoff — 19 September 2026
 
-Session wrapped at the user's requested **5% quota remaining**. New feature work stopped; the final tire-grounding correction, focused checks, browser review and production build are complete. No reset credit was used.
+Current work continues the earlier quota-limited checkpoint below. The user authorized more iteration: larger near misses, Manual rewards, police escapes, two-crash stage repairs, clearer car-best rewards, distinct starter models, retired-asset cleanup and more varied natural routes. No reset credit or saved-player reset was used.
 
-## Repository and saves
+## Latest working update
+
+- Final credit rule: quitting, restarting or reloading an unfinished race forfeits only its unbanked earnings. Saved credits and completed-stage earnings remain intact, including after Busted. Police fines accrue against the current race and reduce only its positive finish payout; they cannot create debt. Actual completed losses, timeouts and terminal crashes retain the existing half-base loss charge. This replaces the intermediate immediate-debit policy.
+- Each player saves their own event, car, challenge, CPU difficulty, transmission, route, lighting and ghost choice. Menu changes save immediately; switching and reopening restore them. Graphics quality remains device-wide. Legacy browser preferences migrate once, and new players start with defaults.
+
+- Active worktree: `C:\Users\kyleb\.codex\worktrees\4555\the-duel-remake`. The previous audio commit is `4ef6fbf`; this iteration is not pushed.
+- Falcone and Stuttgart have separate original bodies. Six original cars build immediately; only Aurora loads the licensed GLB. The old coupe fallback is gone from player, rival and ghost rendering.
+- Retired `cinder-gt.glb`, `desert-service-station.glb`, `tools/export-assets.mjs` and `tools/blender/build_assets.py` were removed. They remain recoverable from Git. Live stations and Aurora's credited source remain.
+- Near-miss lateral range is 7.2 m, with collision and minimum-speed limits unchanged. Pro doubles driving score and positive recurring credits, not milestone awards or loss charges. A police escape gives 500 base points and 10% of the CPU base in credits, up to three credit awards per valid finished stage.
+- Winning repairs two major impacts and restores two lives, both bounded by actual damage and the five-life maximum. Pre-repair stage crash evidence controls the clean bonus.
+- Each genuine comparable car-best improvement can pay. First finishes explicitly establish a CPU/transmission/car/route baseline. Failed stunt objectives no longer create records or associated rewards.
+- Four natural routes use layout version 4, with new hills and saddles; three also have stronger bend variation. Existing older-layout records remain stored separately. Mountains are broader, terrain blends meadow/soil/rock, and cacti fit actual rendered triangles.
+- Dev review: port 5176. Stable no-HMR review: port 5177. `/tools/vehicle-art-check.html` shows all seven cars without save effects. `/tools/reward-check.html` uses page-local memory only; it cannot alter a real wallet or record. Browser QA confirmed 2,000 CR before Busted and after quitting, plus round-trip restoration of two contrasting player setups.
+- Live cutover is complete: `http://localhost:5174/` now serves this checkout's tested production build through a hidden Vite preview process. The existing three player names and selected-player balance were retained; the prior 959 menu selection was restored and survives reload. No live race or purchase was run. Keep the old checkout until human play-test acceptance. See `SERVER_CUTOVER.md`: the old folder owns the shared Git history and must not simply be deleted. Its launcher is unchanged; use the running play-test link.
+- The complete 72-command test chain passes with only the expensive core campaign matrices skipped (`DUEL_SKIP_CAMPAIGNS=1`). Production/QA builds pass; the known large rendering-chunk warning remains. Work is on `codex/race-refinements-and-player-settings`; no push was requested.
+- Current validation and limitations are recorded at the top of `docs/VERIFICATION.md`. Earlier sections below are historical context, not a claim that the original shared-body cars remain current.
+
+## Earlier checkpoint — historical context
+
+The remaining sections describe the preceding main-checkout release. The current rules and paths above take precedence.
+
+### Repository and saves
 
 - Workspace: `C:\Users\kyleb\dev\the-duel-remake`; branch `master`.
 - Requested baseline commit: `1b96949` — Expand racing scenes, garage progression, collisions and recorded audio.

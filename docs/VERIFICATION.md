@@ -1,6 +1,52 @@
 # Remake verification
 
-Checkpoint: 19 September 2026. The current nine-event update passed 481 core checks and all 64 remaining suites. The sections below preserve earlier checkpoints and the final integration evidence.
+Checkpoint: 19 September 2026. The latest vehicle, reward and route iteration is described first. All later sections preserve earlier checkpoints; their counts and screenshots do not describe the latest geometry.
+
+## Bank protection and player settings — current rule
+
+The user clarified that quitting must forfeit only current-race earnings. This replaces the intermediate police-fine/quit policy described in the historical subsection below. Quitting, restarting or reopening an unfinished race now settles it with zero payout and zero debit. Prior completed stages remain banked. Police fines accrue against positive net earnings from the current race and cannot create debt or take saved credits.
+
+Each player now stores an independent last-used race setup, including event, mode, CPU, transmission, car and route. Graphics quality remains device-wide. The live server now serves the updated production build at `http://localhost:5174/`. The browser still shows the three existing player names and the same selected-player balance. The selected 959 persists across reload. Human play-test acceptance is required before retiring the duplicate checkout; see `SERVER_CUTOVER.md`.
+
+One uninterrupted final `npm test` run passed all 72 commands with `DUEL_SKIP_CAMPAIGNS=1`: 443 core checks plus all 71 remaining suites. Only the expensive core campaign matrices were skipped in this final run; their earlier 60 campaigns / 180 stage wins are recorded below. The other suites still ran their full driving replays, physics and geometry checks.
+
+Focused checks pass: 225 police-fine checks, 249 Busted/quit/App/UI checks and 42 player-settings checks. They cover quit, restart, reload, repeated tickets, stale finish events, retained completed-stage credits, real loss settlement, menu restoration, challenge ownership, legacy migration and unavailable storage. The package registers 72 test commands.
+
+Memory-only browser QA confirmed Busted → Main menu → Leave race keeps the wallet at 2,000 CR throughout. Switching Alpine Manual → Harbor Auto → Alpine Manual restored distinct circuit, car, mode, CPU, transmission and route controls, including Golden hour on the day route. No browser errors were observed. These fixtures never access the user's real career storage.
+
+The final production and QA builds pass. The existing rendering-chunk warning remains (about 937 kB minified, 284 kB compressed). A fresh read-only export audit confirms all six original GLBs and both manifests match their builders byte-for-byte. Retired asset names occur only in retirement notes, not live code or build scripts.
+
+## Earlier Busted → quit diagnosis — policy superseded
+
+The existing confirmed-quit loss charge passed diagnosis; the displayed 150 police fine was never debited. Catches now save that credit deduction immediately, independently of the later race-loss charge. Unique saved ticket identities prevent duplicate charges, including after reload and after a zero-balance catch. Deadline-causing catches settle the fine before the timeout loss.
+
+Focused checks: 157 fine settlement checks, 163 actual App/UI flow checks, 25 progression groups, 92 progression App checks, 72 completion-screen checks and 44 driving-reward checks pass. The package now registers 71 test commands. Browser QA used only the memory-backed reward fixture: Medium wallet 2,000 → 1,850 on Busted → 1,350 after Main menu / Leave race. No console errors were observed. A read-only source check confirmed the user's `localhost:5174` server still serves code without this fix; its live race and saved careers were not changed.
+
+The non-campaign core rerun passes 443 checks. Race integrity44, police route reset3 and layout archives65 also pass. Production and QA builds pass, with the existing rendering-chunk size warning; `git diff --check` is clean.
+
+## Latest vehicle, reward and route iteration
+
+Validation was completed in separate runs, not one uninterrupted green `npm test`. The long core run passed both campaign matrices, including 60 completed campaigns, 180/180 stage wins and frame-rate comparisons. Its one failure came from an old shoulder-recovery fixture colliding with real traffic on a new bend. That fixture now isolates recovery in Time Trial. The rerun with `DUEL_SKIP_CAMPAIGNS=1` passed all 443 non-campaign checks. The unchanged expensive matrices were not repeated.
+
+- The package now registers 69 test commands. The remaining suites were run in batches; five old geometry/reward fixtures failed initially, were investigated and corrected, then passed on rerun. Collision clearance and rendered-ground checks remain strict.
+- Driving rewards: 44 checks cover the larger near-miss zone, unchanged collision/speed limits, Manual multipliers, police escapes at ordinary and chase finishes, duplicate protection, two-crash repairs, clean-run evidence and losses.
+- Progression: 25 groups and 92 App assertions cover comparable bests, first-run baselines, repeated stage improvements, police credit awards, Manual earnings and failed stunt objectives. Failed challenge objectives cannot set bests or receive finish-related bonuses.
+- Layout archives: 65 checks prove layout-3 records and complete ghost samples survive load/save/merge after the move to layout 4. Current rankings, ghost selection and direct playback exclude old geometry. Drift leaderboard compatibility passes 33 checks; ghost material ownership and cleanup pass 395. Active ghosts retain the 12-record/1.25 MB limit; archives remain separate. If browser storage fills, saving reports failure without replacing prior stored data.
+- Vehicle routing: 76 checks; separate classic bodies: 196; paint and surface decals: 1,637; actual vehicle grounding: 3,837. Grounding samples stayed within −4.02 to +4.19 cm across the measured crests. The isolated incline test still verifies yaw-first wheel fitting independently.
+- Natural circuits: 44,409 checks, maximum road grade 14.9%. Route variations: 1,866,146 checks, including 1,738,521 clear Titan-width sweeps. Wide shortcuts: 93 branches across 63 layouts, 2,406,819 clear hull sweeps and at least 3.09% 3D distance saving. Twenty input-only branch replays saved 2.41–12.15% with no hits, resets or off-surface time.
+- Terrain: 872,619 checks across nine events and four seeds; station foundation error 0.0000 m. Mountains: 148,233 checks, 18,048 clear road/branch rays, unchanged collision footprints. Exact presets: 222 checks including all 15 fresh solver comparisons. Terrain materials: 15,121 checks.
+- Desert grounding: 441,087 checks across 1,140 cacti and 798 rock colliders. Cactus burial is now measured against the actual rendered triangles and remains 0.296–0.338 m. Landscape cells: 314,376 checks; exact polyline integration: 7,598 checks with independent full-scan equality retained.
+- Audio retains the preceding recorded engine/tire mix: 248 checks and 301,448 finite automation commands passed. No new human listening review is claimed here.
+
+Browser review used isolated ports 5176/5177. The vehicle showroom uses no career data. Its final pass confirmed distinct starter silhouettes in neutral paint, fitted 959 lamps and rear grille, unobstructed rally lamps and clean livery edges. Damage and wheel/driver hooks remain automated checks. These are original stylized models, not exact licensed replicas of the references.
+
+The real App reward screen was tested through scripted finish fixtures backed only by page-local memory: a first Medium/Auto finish showed its baseline and 1,300 CR; the comparable improvement showed 1,550 CR; a clean Manual win showed 2,800 CR; a three-hit Manual win showed 3,000 CR, no clean bonus, and two repairs/two refilled slots. These are settlement fixtures, not claims of human-driven races. No real wallet or port 5174 storage was changed.
+
+The latest mountain silhouette and slope-sensitive meadow/soil/rock shading were reviewed in the browser. A shader compile issue found during review was fixed; the final scene and car viewer reported no console errors. First-frame compilation can still pause for seconds, and point FPS samples are not a hardware performance guarantee.
+
+Retired `cinder-gt.glb`, `desert-service-station.glb` and their unused exporter scripts were removed; they remain recoverable from Git. The licensed Aurora asset and live procedural stations remain.
+
+Final `npm run build`, `npm run qa:build` and `git diff --check` pass. Vite still warns about the roughly 938 kB minified rendering chunk (284 kB compressed). A read-only asset audit found no live references to the retired files and verified all 332 meshes in the six original GLB exports against their current builders. The actual game menu selected Stuttgart from the synchronous classic source and rendered its new body without console errors.
 
 ## Complete checkpoint
 

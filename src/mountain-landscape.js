@@ -26,18 +26,21 @@ const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 
 function ridgeHeight(x,z,variant) {
   const definition=RIDGES[variant%RIDGES.length],r=Math.hypot(x,z);
-  let h=.23*Math.max(0,1-r*r);
+  let h=.15*Math.max(0,1-r*r);
   for(let pathIndex=0;pathIndex<definition.paths.length;pathIndex++){
     const path=definition.paths[pathIndex];
     for(let i=1;i<path.length;i++){
       const a=path[i-1],b=path[i],dx=b[0]-a[0],dz=b[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz));
-      const distance=Math.hypot(x-a[0]-t*dx,z-a[1]-t*dz),height=THREE.MathUtils.lerp(a[2],b[2],smooth(t));
-      const width=definition.width*(pathIndex? .74:1)*(.67+.33*height);
-      h=Math.max(h,height*Math.exp(-Math.pow(distance/width,1.8)));
+      const distance=Math.hypot(x-a[0]-t*dx,z-a[1]-t*dz),height=THREE.MathUtils.lerp(a[2],b[2],t);
+      const width=definition.width*1.32*(pathIndex? .74:1)*(.67+.33*height);
+      // Linear crest segments and broad tapered faces read as connected rock
+      // shoulders. The former Gaussian profile rounded each high ridge into
+      // a narrow dome, particularly on the tallest alpine instances.
+      h=Math.max(h,height*Math.max(0,1-distance/width)**1.3);
     }
   }
   // Fine gullies break the flank silhouette without making separate cones.
-  const erosion=1+.02*Math.sin(x*19+Math.sin(z*9)*2)+.012*Math.sin(z*31-x*17)+.008*Math.sin(x*57+z*43);
+  const erosion=1+.035*Math.sin(x*19+Math.sin(z*9)*2)+.022*Math.sin(z*31-x*17)+.012*Math.sin(x*57+z*43);
   return Math.max(0,h*erosion*(1-smooth((r-.82)/.18)));
 }
 
@@ -83,8 +86,14 @@ function farRimSurface(course){
   farSurfaceCache.set(course.samples,sample);return sample;
 }
 
+// The original obstacle ellipses remain solid. Bound the visible height by the
+// narrower footprint so a 200m seed cannot become a vertical 110m-wide blob.
+export function mountainVisualHeight(mountain){
+  return Math.min(mountain.height,Math.min(mountain.halfX,mountain.halfZ)*1.08);
+}
+
 // Bury the full rendered rim beneath both terrain representations. Increasing
-// the vertical scale by the burial depth preserves the exact top elevation.
+// the vertical scale by the burial depth preserves the capped top elevation.
 export function mountainTransform(course,mountain) {
   let minY=mountain.y;
   const c=Math.cos(mountain.heading),sn=Math.sin(mountain.heading),farSurface=farRimSurface(course);
@@ -100,11 +109,11 @@ export function mountainTransform(course,mountain) {
     }
   }
   const burial=mountain.y-minY+4;
-  return new THREE.Matrix4().compose(new THREE.Vector3(mountain.x,mountain.y-burial,mountain.z),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),mountain.heading),new THREE.Vector3(mountain.halfX,mountain.height+burial,mountain.halfZ));
+  return new THREE.Matrix4().compose(new THREE.Vector3(mountain.x,mountain.y-burial,mountain.z),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),mountain.heading),new THREE.Vector3(mountain.halfX,mountainVisualHeight(mountain)+burial,mountain.halfZ));
 }
 
 const textureCache=new Map();
-function rockTexture(theme) {
+export function rockTexture(theme) {
   const name=theme==='desert'?'red-sandstone':'granite-cliff';
   if(!textureCache.has(name)){
     const texture=new THREE.TextureLoader().load(`/assets/textures/${name}.png`);texture.colorSpace=THREE.SRGBColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=8;texture.userData.sharedAsset=true;textureCache.set(name,texture);

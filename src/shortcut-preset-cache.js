@@ -4,7 +4,7 @@ import { SHORTCUT_PRESET_DATA } from './generated-shortcut-presets.js';
 // or constants used by the solver. The generator's optional --check also
 // checks source hashes and every freshly solved path, without slowing normal
 // gameplay or requiring a filesystem/network API in the browser.
-export const SHORTCUT_GENERATION_VERSION = 1;
+export const SHORTCUT_GENERATION_VERSION = 2;
 export function cloneShortcuts(cuts){return cuts.map(cut=>({...cut,offsets:[...cut.offsets]}));}
 
 // Two independent 32-bit accumulators keep the numeric-route digest compact.

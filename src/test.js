@@ -13,7 +13,7 @@ const eq = (a, b, m) => ok(a === b, `${m} (got ${a}, want ${b})`);
 eq(LIVES.start, 5, '5 lives');
 eq(LIVES.crashPenaltySec, 30, 'crash = 30s penalty');
 eq(LIVES.crashLifeCost, 1, 'crash = -1 life');
-eq(LIVES.cleanStageReward, 1, 'clean stage = +1 life');
+eq(LIVES.stageWinRepair, 2, 'stage win restores up to two crash slots');
 eq(LIVES.missedStationCost, 1, 'missed station = -1 life');
 
 // --- CANON two core cars (F40 / 959 homages, fictional names) ---
@@ -76,7 +76,7 @@ ok(COURSE[0].hasRadar && COURSE[0].hasRival, 'default stage 1 declares radar + r
 ok(DIFFICULTY.casual.autoShift && !DIFFICULTY.casual.engineBlow, 'casual = auto, no engine blow');
 ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engine blow');
 
-// --- A clean final lap awards a life; an invalid arrival is harmless recovery ---
+// --- A clean final lap cannot overfill the crash reserve; invalid arrival is harmless ---
 {
   const d = new Duel({ seed: 21 });
   d.startCampaign({ mode: 'timetrial' });
@@ -87,7 +87,7 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   const lives0 = s.lives;
   for (let i = 0; i < 5 && s.status === 'racing'; i++) d.step(1 / 60);
   eq(s.status, 'stage_result', 'crossing the line on-road reaches stage_result');
-  eq(s.lives, lives0 + LIVES.cleanStageReward, 'clean stage awards +1 life');
+  eq(s.lives, lives0, 'clean stage keeps the full five-slot reserve');
 }
 {
   const d = new Duel({ seed: 21 });
@@ -189,7 +189,8 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
 {
   const app = new App();
   app.autopilot = true;
-  app.duel.startCampaign({ mode: 'duel', difficulty: 'casual' });
+  // Isolate shoulder handling; seeded traffic is covered by the campaign matrix.
+  app.duel.startCampaign({ mode: 'timetrial', difficulty: 'casual' });
   // run out the countdown then race
   let guard = 0;
   const livesStart = app.duel.state.lives;
@@ -466,7 +467,7 @@ if (!process.env.DUEL_SKIP_CAMPAIGNS) {
   eq(d.state.input.brake, 0, 'non-finite input is ignored');
 }
 
-// --- Structural damage survives stage repair; the fifth hard impact is final ---
+// --- Stage wins repair damage; five unrepaired hard impacts are final ---
 {
   const d=new Duel({seed:1989});d.startCampaign();const s=d.state,events=[];d.onChange((_,ev)=>events.push(ev));
   s.status='racing';s.traffic=[];s.speedMph=110;d._crash('head_on');
@@ -474,17 +475,17 @@ if (!process.env.DUEL_SKIP_CAMPAIGNS) {
   d._crash('head_on');eq(s.majorCrashes,1,'one impact cannot count twice');
   while(s.impactTimer>0)d.step(1/120);
   s.s=d.raceLength;s.completedLaps=s.lapsTotal;s.lateral=0;d._finishStage();d.nextStage();
-  eq(s.majorCrashes,1,'checkpoint repairs do not erase structural damage');
+  eq(s.majorCrashes,0,'a stage win repairs the single structural impact');
   s.status='racing';s.traffic=[];s.speedMph=120;d._crash('rock');
-  eq(s.majorCrashes,2,'a hard rock impact adds structural damage');
+  eq(s.majorCrashes,1,'a hard rock impact adds fresh structural damage');
   while(s.impactTimer>0)d.step(1/120);
-  for(let hit=3;hit<=5;hit++){
+  for(let hit=2;hit<=5;hit++){
     s.speedMph=130;d._crash('head_on');
     if(hit<5){eq(s.status,'racing',`major crash ${hit} remains recoverable`);while(s.impactTimer>0)d.step(1/120);}
   }
   eq(s.majorCrashes,5,'fifth major impact reaches the limit');
-  eq(s.status,'gameover','fifth major crash ends the campaign despite remaining lives');
-  ok(s.lives>0&&s.catastrophic&&s.results.catastrophic,'catastrophic defeat is independent of legacy life rewards');
+  eq(s.status,'gameover','fifth unrepaired major crash ends the campaign');
+  ok(s.catastrophic&&s.results.catastrophic,'fifth unrepaired hit causes the catastrophic defeat');
   eq(events.filter(e=>e.explosion).length,1,'catastrophe emits exactly one explosion event');
   const remaining=s.impactTimer;s.paused=true;d.step(.5);eq(s.impactTimer,remaining,'paused catastrophic animation is frozen');s.paused=false;
   for(let i=0;i<600;i++)d.step(1/120);

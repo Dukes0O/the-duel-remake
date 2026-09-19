@@ -8,12 +8,13 @@ import {RouteMap} from './route-map.js';
 import {CoursePreview} from './course-preview.js';
 import {PAINT_PRESETS,getPaintState} from './paint-presets.js';
 import {ROUTE_VARIANTS,getRouteVariantForSeed,supportsRouteVariants} from './route-variants.js';
+import {syncRaceChoiceButtons} from './race-settings-ui.js';
 
-const app = new App();
+export const app = new App();
 const root = document.querySelector('#app');
 const arrow = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg>';
 const sound = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5ZM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>';
-const choices = { car: app.duel.state.car, difficulty: app.duel.state.difficulty, cpuDifficulty:app.cpuDifficulty, mode: 'duel', startStage: app.menuStage || 0 };
+const choices = app.getRaceChoices();
 let rendererPromise,rendererHandle,uiDisposed=false,lastScreen, garageOpen = false, garageCar = choices.car, garageMessage = '', playersOpen=false,playerMessage='',leaderboardOpen=false;
 let lastEventResult=null;
 const domEvents=new AbortController();
@@ -73,7 +74,9 @@ function updateMenuCar() {
 function updateEntryReward(){
   const base=CPU_REWARDS[choices.cpuDifficulty],best=profile().personalBests[bestKey({stageIndex:choices.startStage,seed:app.getMenuSeed(choices.startStage),laps:COURSE[choices.startStage]?.laps||2,...choices})];
   const scoreBest=COURSE[choices.startStage].kind==='drift'?getLeaderboard(app.leaderboard,{event:eventKey({stageIndex:choices.startStage,seed:app.getMenuSeed(),laps:2}),car:choices.car,playerId:app.player.id})[0]?.driftScore:null;
-  text('entry-reward',`WIN ${credits(base)} CR · LOSS −${credits(base/2)} CR${best?` · CAR BEST ${time(best)}`:''}${scoreBest!=null?` · SCORE BEST ${credits(scoreBest)}`:''}`);
+  const manual=choices.difficulty==='pro',settings=`${choices.cpuDifficulty.toUpperCase()} / ${manual?'MANUAL':'AUTO'}`;
+  text('entry-reward',`WIN ${credits(base*(manual?2:1))} CR · LOSS −${credits(base/2)} CR${manual?' · 2× POINTS & RACE CREDITS':''} · ${best?`CAR BEST ${time(best)} (${settings}) · BEAT IT +${credits(base*.2*(manual?2:1))} CR`:`${settings}: FIRST FINISH SETS YOUR CAR BEST`}${scoreBest!=null?` · SCORE BEST ${credits(scoreBest)}`:''}`);
+  ui['entry-reward'].title='Car bests compare the same car, circuit, route, race mode, CPU level and transmission. Each improved stage best pays once. Clean wins and police escapes earn extra credits. Manual doubles race earnings; one-time milestones and loss charges stay unchanged.';
   const stage=COURSE[choices.startStage],stunt=stage?.stuntTrial,drift=stage?.driftTrial,rush=stage?.checkpointRush;text('cpu-target-label',stage.kind==='chase'?'PURSUIT LEVEL':rush?'GATE TIMER':drift?'DRIFT TARGET':stage.stuntTrial||choices.mode==='timetrial'?'TIME TARGET':'CPU RIVAL');ui['event-brief'].hidden=!stunt&&!drift&&!rush;text('event-brief',rush?`Pass all ${rush.gatesPerLap*(stage.laps||2)} gates in order over 2 laps. Start with ${rush.initialTimeSec[choices.cpuDifficulty]} seconds; each gate adds ${rush.extensionSec[choices.cpuDifficulty]}. Missing a gate cannot set a record.`:drift?`Bank ${credits(drift.targets[choices.cpuDifficulty])} drift points in 2 laps / ${drift.timeLimitSec[choices.cpuDifficulty]} seconds. Slide above 45 MPH. Straighten to bank; impacts and dirt lose your live chain.`:stunt?`Land ${stunt.jumps} jumps, crush ${stunt.crushes} cars, and finish both laps within ${stunt.timeLimitSec[choices.cpuDifficulty]} seconds.`:'');
   const record=app.getGhostRecord(choices);ui['ghost-control'].hidden=!record;ui['ghost-hint'].hidden=choices.mode!=='timetrial'||!!record;ui['ghost-toggle'].checked=app.ghostEnabled;
   if(record){const build=Object.values(record.upgrades).reduce((sum,n)=>sum+n,0);text('ghost-record-label',`${time(record.timeSec)} · RECORD BUILD ${build}/21`);ui['ghost-control'].title=Object.entries(record.upgrades).map(([key,level])=>`${UPGRADE_TYPES[key]?.name||key}: ${level}`).join(' · ');}
@@ -82,11 +85,13 @@ function updatePlayers(){
   ui['player-select'].innerHTML=app.players.players.map(player=>`<option value="${escapeHTML(player.id)}">${escapeHTML(player.name)}</option>`).join('');ui['player-select'].value=app.player.id;
 }
 function updateMenuScene() {
+  Object.assign(choices,app.setRaceSettings(choices)||app.getRaceChoices());
   if(COURSE[choices.startStage]?.requiredCar&&!isCarUnlocked(profile(),COURSE[choices.startStage].requiredCar))choices.startStage=0;
   const stage = COURSE[choices.startStage] || COURSE[0];
   if(stage.requiredCar)choices.car=stage.requiredCar;
   if(['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial)choices.mode='duel';
   for(const button of root.querySelectorAll('[data-mode]')){button.disabled=(['chase','drift','checkpoint'].includes(stage.kind)||!!stage.stuntTrial)&&button.dataset.mode==='timetrial';button.classList.toggle('on',button.dataset.mode===choices.mode);button.setAttribute('aria-pressed',String(button.dataset.mode===choices.mode));if(button.dataset.mode==='duel')button.textContent=stage.checkpointRush?'CHECKPOINT RUSH':stage.driftTrial?'DRIFT TRIAL':stage.stuntTrial?'STUNT TRIAL':stage.kind==='chase'?'ESCAPE THE PURSUIT':'RIVAL DUEL';}
+  syncRaceChoiceButtons(root,choices);
   const fixedNight=stage.timeOfDay==='night'||stage.theme==='city';ui['lighting-mood'].disabled=fixedNight;ui['lighting-mood'].value=fixedNight?'night':app.lightingMood;
   app.menuStage = choices.startStage; ui['scene-select'].value = choices.startStage;ui['route-choice'].hidden=!supportsRouteVariants(stage);text('route-choice-label',app.getMenuRouteLabel()==='Custom route'?'CUSTOM ROUTE':'ROUTE');
   for(const button of root.querySelectorAll('[data-route-variant]')){const selected=getRouteVariantForSeed(app.getMenuSeed())?.id===button.dataset.routeVariant;button.classList.toggle('on',selected);button.setAttribute('aria-pressed',String(selected));}
@@ -98,13 +103,16 @@ function updateMenuScene() {
   text('menu-location', {desert:'MOJAVE COUNTY, USA',alpine:'THE HIGH ALPINE PASS',coast:'PACIFIC COAST, USA',city:'HARBOR DISTRICT · AFTER DARK'}[stage.theme] || stage.name.toUpperCase());
   updateMenuCar();
 }
+export function refreshRaceSetup(){
+  Object.assign(choices,app.getRaceChoices());garageCar=choices.car;updatePlayers();updateMenuScene();lastScreen=null;renderState(app.duel.state);
+}
 ui['ghost-toggle'].addEventListener('change',event=>app.setGhostEnabled(event.target.checked));
 ui['lighting-mood'].addEventListener('change',event=>{app.setLightingMood(event.target.value);ui['lighting-mood'].value=app.lightingMood;});
 ui['graphics-quality'].value=app.ambientOcclusionEnabled?'high':'performance';
 ui['graphics-quality'].addEventListener('change',event=>app.setGraphicsQuality(event.target.value));
 ui['car-select'].addEventListener('change',event=>{const car=event.target.value;if(!isCarUnlocked(profile(),car)){ui['car-select'].value=choices.car;openGarage(car);return;}choices.car=car;if(COURSE[choices.startStage]?.requiredCar&&COURSE[choices.startStage].requiredCar!==car)choices.startStage=0;updateMenuScene();});
 ui['scene-select'].addEventListener('change', e => { choices.startStage = Math.max(0, Math.min(COURSE.length-1, Number(e.target.value) || 0)); updateMenuScene(); });
-ui['player-select'].addEventListener('change',e=>{app.selectPlayer(e.target.value);updatePlayers();updateMenuScene();lastScreen=null;renderState(app.duel.state);});
+ui['player-select'].addEventListener('change',e=>{app.selectPlayer(e.target.value);refreshRaceSetup();});
 function openGarage(car = choices.car) {
   if (app.duel.state.status !== 'menu') return;
   garageCar = car; garageMessage = ''; garageOpen = true; playersOpen=leaderboardOpen=false; app.menuCar = car; lastScreen = null; renderState(app.duel.state);
@@ -121,7 +129,7 @@ root.addEventListener('click',e => {
   if(button.dataset.paint){const result=app.purchasePaint(garageCar,button.dataset.paint);refreshGarage(result.ok?`${PAINT_PRESETS[button.dataset.paint].name} applied to ${CARS[garageCar].name}.${result.purchased?` Purchased for ${credits(result.cost)} credits.`:''}`:result.reason);return;}
   if (button.dataset.upgrade) { const result = app.purchaseUpgrade(garageCar, button.dataset.upgrade); refreshGarage(result.ok ? `${UPGRADE_TYPES[button.dataset.upgrade].name} upgraded to level ${getUpgradeLevels(profile(), garageCar)[button.dataset.upgrade]}.` : result.reason); return; }
   if (button.dataset.car && !isCarUnlocked(profile(), button.dataset.car)) { openGarage(button.dataset.car); return; }
-  for (const key of ['car','difficulty','mode','cpuDifficulty']) if (button.dataset[key]) { choices[key] = button.dataset[key]; for (const sibling of button.parentElement.children) { sibling.classList.toggle('on', sibling === button); sibling.setAttribute('aria-pressed', String(sibling === button)); } if (key === 'car') {if(COURSE[choices.startStage]?.requiredCar&&COURSE[choices.startStage].requiredCar!==choices.car)choices.startStage=0;updateMenuScene();}updateEntryReward();return; }
+  for (const key of ['car','difficulty','mode','cpuDifficulty']) if (button.dataset[key]) { choices[key] = button.dataset[key];if(key==='car'&&COURSE[choices.startStage]?.requiredCar&&COURSE[choices.startStage].requiredCar!==choices.car)choices.startStage=0;updateMenuScene();return; }
   if(button.closest('form')&&button.type==='submit')return;
   e.preventDefault();
   switch (button.dataset.action) {
@@ -140,12 +148,12 @@ root.addEventListener('click',e => {
     case 'pause': app.togglePause(); break;
     case 'resume': app.resume(); break;
     case 'restart': app.requestNavigation('restart'); break;
-    case 'menu': garageOpen = playersOpen = leaderboardOpen = false; app.requestNavigation('menu');if(app.duel.state.status==='menu'){updateMenuCar();updateMenuScene();}break;
-    case 'confirm-leave':app.confirmNavigation();if(app.duel.state.status==='menu'){updateMenuCar();updateMenuScene();}break;
+    case 'menu': garageOpen = playersOpen = leaderboardOpen = false; app.requestNavigation('menu');if(app.duel.state.status==='menu'){Object.assign(choices,app.getRaceChoices());updateMenuScene();}break;
+    case 'confirm-leave':app.confirmNavigation();if(app.duel.state.status==='menu'){Object.assign(choices,app.getRaceChoices());updateMenuScene();}break;
     case 'keep-racing':app.cancelNavigation();break;
     case 'next': app.duel.nextStage(); break;
     case 'ticket': app.duel.ackTicket(); break;
-    case 'retry-renderer': ensureRenderer(); break;
+    case 'retry-renderer': if(rendererHandle&&ui.view3d.dataset.vehicleAsset==='error')rendererHandle.retryVehicle();else ensureRenderer(); break;
     case 'manual': app.autopilot = false; break;
     default: return;
   }
@@ -168,7 +176,7 @@ function leaderboardScreen(){
 }
 root.addEventListener('submit',event=>{
   if(event.target.id!=='new-player-form')return;event.preventDefault();const input=root.querySelector('#new-player-name'),result=app.addPlayer(input.value);
-  if(result.ok){playersOpen=false;updatePlayers();updateMenuScene();}else playerMessage=result.reason;
+  if(result.ok){playersOpen=false;Object.assign(choices,app.getRaceChoices());garageCar=choices.car;updatePlayers();updateMenuScene();}else playerMessage=result.reason;
   lastScreen=null;renderState(app.duel.state);if(!result.ok)root.querySelector('#new-player-name')?.focus();
 },{signal:domEvents.signal});
 root.addEventListener('change',event=>{const key=event.target.dataset.boardFilter;if(!key)return;boardFilter[key]=key==='stage'?Number(event.target.value):event.target.value;lastScreen=null;renderState(app.duel.state);},{signal:domEvents.signal});
@@ -197,23 +205,26 @@ function garageScreen() {
 }
 function modalScreen(s) {
   const r = s.results || {}; let eyebrow='',title='',description='',metrics='',actions='';
-  if(app.pendingNavigation){const leaving=app.pendingNavigation.action==='menu';return `<section class="result-panel" role="dialog" aria-modal="true" aria-labelledby="abandon-title"><p class="eyebrow">RACE IN PROGRESS</p><h2 id="abandon-title">${leaving?'LEAVE THIS<br>RACE?':'START<br>OVER?'}</h2><p class="result-description">${leaving?'Leaving':'Restarting'} counts as a loss. ${app.pendingNavigation.charge?`${credits(app.pendingNavigation.charge)} credits will be deducted.`:'Your balance is zero, so no credits will be deducted.'} This race will not enter the leaderboard.</p><div class="result-actions">${action('KEEP RACING','keep-racing',true)}${action(leaving?'LEAVE RACE':'RESTART RACE','confirm-leave')}</div></section>`;}
+  if(app.pendingNavigation){const leaving=app.pendingNavigation.action==='menu';return `<section class="result-panel" role="dialog" aria-modal="true" aria-labelledby="abandon-title"><p class="eyebrow">RACE IN PROGRESS</p><h2 id="abandon-title">${leaving?'LEAVE THIS<br>RACE?':'START<br>OVER?'}</h2><p class="result-description">${leaving?'Leaving':'Restarting'} forfeits this race's unbanked earnings. Your saved balance of ${credits(profile().credits)} credits will not be deducted. Credits from completed races are safe. This unfinished race will not enter the leaderboard.</p><div class="result-actions">${action('KEEP RACING','keep-racing',true)}${action(leaving?'LEAVE RACE':'RESTART RACE','confirm-leave')}</div></section>`;}
   if (s.paused) { eyebrow='TAKE A BREATH'; title='ROAD<br>ON HOLD.'; description='The clock is paused. Pick up where you left off.'; metrics=metric('EVENT',COURSE[s.stageIndex].name)+metric('TIME',time(s.stageTimeSec)); actions=action('BACK TO THE ROAD','resume',true)+action('RESTART RUN','restart')+action('MAIN MENU','menu'); }
-  else if (s.status==='ticket') { const t=s.police.ticket; eyebrow='HIGHWAY PATROL'; title='BUSTED.'; description=`${t.speedMph} mph in a ${t.limitMph} zone. The patrol caught up.`; metrics=metric('TIME PENALTY',`+${t.penaltySec} SEC`,true)+metric('FINE',`$${t.fine}`); actions=action('GET BACK OUT THERE','ticket',true)+action('MAIN MENU','menu'); }
+  else if (s.status==='ticket') { const t=s.police.ticket; eyebrow='HIGHWAY PATROL'; title='BUSTED.'; description=`${t.speedMph} mph in a ${t.limitMph} zone. The fine reduces only this race's earnings when you finish. Your saved credits are untouched. Quitting forfeits the race earnings, not your saved balance.${app.profileSaved===false?' Storage is unavailable; progress lasts for this session.':''}`; metrics=metric('TIME PENALTY',`+${t.penaltySec} SEC`,true)+metric('RACE FINE',`${credits(t.fine)} CR`,true)+metric('SAVED BALANCE',`${credits(profile().credits)} CR`); actions=action('GET BACK OUT THERE','ticket',true)+action('MAIN MENU','menu'); }
   else if (s.status==='stage_result') {
     lastEventResult={state:s,stageIndex:s.stageIndex,runId:app.runId,result:r};
     const stage=COURSE[s.stageIndex],drift=stage.kind==='drift',rush=stage.kind==='checkpoint',stunt=r.objective==='stuntTrial',kind=rush?'CHECKPOINT RUSH':drift?'DRIFT TRIAL':stunt?'STUNT TRIAL':stage.kind==='chase'?'PURSUIT':stage.arena?'ARENA':stage.kind==='rally'?'RALLY':'CIRCUIT';
     eyebrow=`${kind} / ${r.won?'VICTORY':r.completed?'COMPLETE':'DNF'}`;title=r.timeout?'TIME RAN<br>OUT.':r.objectiveMissed?(rush?'GATES<br>MISSED.':drift?'TARGET<br>MISSED.':'STUNTS NOT<br>DONE.'):r.won?'OWN THE<br>FINISH.':'SO CLOSE.';
-    description=r.won?`${r.personalBest?(r.previousBest==null?'First time recorded for this car. Beat it to earn a best-time bonus. ':'A new best for this car. '):''}${r.winStreak>=3?`${r.winStreak} wins in a row. Streak bonus earned.`:'Both laps are in the books.'}`:r.timeout?'The pursuit deadline passed. The car survives, but this run does not enter the leaderboard.':s.mode==='timetrial'?'You finished both laps but missed the target time. Car-best bonuses still count.':'Your rival took this one. Car-best bonuses still count.';
+    description=r.won?`${r.winStreak>=3?`${r.winStreak} wins in a row. Streak bonus earned.`:'Both laps are in the books.'}`:r.timeout?'The pursuit deadline passed. The car survives, but this run does not enter the leaderboard.':s.mode==='timetrial'?'You finished both laps but missed the target time.':'Your rival took this one.';
     if(stunt)description=`${r.timeout?'The stunt deadline passed.':r.objectiveMissed?'Both laps finished, but the stunt targets were missed.':'Both laps and the stunt targets are complete.'} ${r.jumps||0} / ${r.targets?.jumps||s.objective?.targetJumps||4} landed jumps · ${r.crushCount||0} / ${r.targets?.crushes||s.objective?.targetCrushes||4} cars crushed.`;
     if(drift)description=`${r.timeout?'The deadline passed.':r.objectiveMissed?'Both laps finished, but the drift target was missed.':'Both laps and the drift target are complete.'} Banked ${credits(r.driftScore)} / ${credits(r.driftTarget||s.objective?.targetScore)} points. Best chain ${credits(r.driftBestChain)}. Time ${time(r.timeSec??r.stageTimeSec)}.${r.driftScoreImproved?' A new car score best.':''}${r.won?'':' Only successful trials set a car best.'}`;
     if(rush)description=`${r.timeout?'The checkpoint clock ran out.':r.objectiveMissed?'Both laps finished, but some gates were missed.':'Every gate cleared. Both laps complete.'} ${r.checkpointsPassed||0} / ${r.checkpointsRequired||s.checkpointRush?.total||12} gates passed. ${r.checkpointMisses||0} missed. Time ${time(r.timeSec??r.stageTimeSec)}.${r.won?'':' Only successful runs set a car best.'}`;
-    if(!r.won)description+=' The loss charge is half the event win reward, down to zero credits.';
+    if(r.personalBestStatus==='baseline')description+=` First ${s.cpuDifficulty.toUpperCase()} / ${s.difficulty==='pro'?'Manual':'Auto'} time for this car and route. This sets the baseline; beat ${time(r.best)} next time for the car-best bonus.`;
+    else if(r.personalBestStatus==='improved')description+=` Car best beaten by ${time(r.previousBest-r.best)}. The car-best bonus is included below.`;
+    else if(r.personalBestStatus==='not-improved')description+=` Beat your matching car best of ${time(r.best)} to earn the car-best bonus.`;
+    if(!r.won)description+=' The loss charge is half the CPU base reward, down to zero credits.';
     metrics=(rush?metric('GATES PASSED',`${r.checkpointsPassed||0} / ${r.checkpointsRequired||12}`,true)+metric('RACE TIME',time(r.timeSec??r.stageTimeSec)):drift?metric('BANKED POINTS',credits(r.driftScore),true)+metric('TARGET',credits(r.driftTarget||s.objective?.targetScore)):metric('RACE TIME',time(r.timeSec??r.stageTimeSec),true)+metric('CAR BEST',r.best==null?'—':time(r.best)))+metric(r.creditReward<0?'CREDITS LOST':'CREDITS EARNED',`${r.creditReward<0?'−':'+'}${credits(Math.abs(r.creditReward||0))}`,true);
     const atEnd=!!stage.kind||!COURSE[s.stageIndex+1]||!!COURSE[s.stageIndex+1].kind;
     actions=r.timeout?action('TRY AGAIN','restart',true)+action('MAIN MENU','menu'):action(atEnd?'FINISH THE RUN':'NEXT CIRCUIT','next',true)+action('RESTART RUN','restart')+action('MAIN MENU','menu');
   }
-  else if (s.status==='gameover') { eyebrow=s.catastrophic?'CATASTROPHIC DAMAGE':'END OF THE ROAD'; title=s.catastrophic?'TOTALLED.':'ONE MORE<br>RUN?'; description=(s.catastrophic?'Five major crashes. The car is destroyed.':'This race is over.')+' The loss costs half the event win reward, down to zero credits.'; metrics=metric('RACE TIME',time(s.stageTimeSec))+metric('CREDITS LOST',`−${credits(Math.abs(r.creditReward||0))}`,true)+metric('BALANCE',`${credits(profile().credits)} CR`); actions=action('RUN IT BACK','restart',true)+action('MAIN MENU','menu'); }
+  else if (s.status==='gameover') { eyebrow=s.catastrophic?'CATASTROPHIC DAMAGE':'END OF THE ROAD'; title=s.catastrophic?'TOTALLED.':'ONE MORE<br>RUN?'; description=(s.catastrophic?'Five major crashes. The car is destroyed.':'This race is over.')+' The loss costs half the CPU base reward, down to zero credits.'; metrics=metric('RACE TIME',time(s.stageTimeSec))+metric('CREDITS LOST',`−${credits(Math.abs(r.creditReward||0))}`,true)+metric('BALANCE',`${credits(profile().credits)} CR`); actions=action('RUN IT BACK','restart',true)+action('MAIN MENU','menu'); }
   else if (s.status==='complete') {
     const stage=COURSE[s.stageIndex];
     if(stage?.kind){
@@ -235,10 +246,20 @@ function modalScreen(s) {
     }
   }
   else return '';
-  const bonus=r.creditBreakdown?Object.entries(r.creditBreakdown).filter(([key,value])=>key!=='base'&&key!=='milestones'&&value>0).map(([key,value])=>`${{clean:'CLEAN RACE',personalBest:'CAR BEST',streak:'WIN STREAK',jumps:'ARENA JUMPS',crush:'CRUSH BONUS',drift:'DRIFT BONUS'}[key]} +${credits(value)}`).join(' · '):'';
-  return `<section class="result-panel" role="dialog" aria-modal="true" aria-labelledby="result-title"><p class="eyebrow"><i></i>${eyebrow}</p><h2 id="result-title">${title}</h2><p class="result-description">${description}</p><div class="result-metrics">${metrics}</div>${r.creditCharge?`<p class="result-bonuses">LOSS CHARGE −${credits(r.creditCharge)} CR</p>`:''}${bonus?`<p class="result-bonuses">${bonus}</p>`:''}${r.milestoneAwards?.length?`<p class="result-bonuses milestone-earned" role="status">${r.milestoneAwards.map(award=>`${escapeHTML(award.name).toUpperCase()} +${credits(award.reward)} CR`).join(" · ")}</p>`:''}${r.ghostRecorded?`<p class="result-bonuses ghost-saved">BEST GHOST SAVED${app.ghostSaved===false?' · THIS SESSION ONLY':''}</p>`:''}<div class="result-actions">${actions}</div>${s.paused?'<p class="pause-help">WASD / ARROWS TO DRIVE · SPACE TO BOOST · C TO CHANGE CAMERA<br>Restarting or leaving an active race counts as a loss.</p>':''}</section>`;
+  const bonus=r.creditBreakdown?Object.entries(r.creditBreakdown).filter(([key,value])=>key!=='base'&&key!=='milestones'&&value>0).map(([key,value])=>`${{clean:'CLEAN RACE',personalBest:'CAR BEST',streak:'WIN STREAK',jumps:'ARENA JUMPS',crush:'CRUSH BONUS',drift:'DRIFT BONUS',police:'POLICE ESCAPE',manual:'PRO / MANUAL BONUS'}[key]} +${credits(value)}`).join(' · '):'';
+  const repairs=r.won&&(r.crashesRepaired>0||r.livesRestored>0)?`<p class="result-bonuses">STAGE WIN REPAIRS · ${r.crashesRepaired||0} MAJOR CRASH${r.crashesRepaired===1?'':'ES'} REPAIRED · ${r.livesRestored||0} CRASH SLOT${r.livesRestored===1?'':'S'} REFILLED</p>`:'';
+  return `<section class="result-panel" role="dialog" aria-modal="true" aria-labelledby="result-title"><p class="eyebrow"><i></i>${eyebrow}</p><h2 id="result-title">${title}</h2><p class="result-description">${description}</p><div class="result-metrics">${metrics}</div>${r.creditCharge?`<p class="result-bonuses">LOSS CHARGE −${credits(r.creditCharge)} CR</p>`:''}${r.policeFineCharge?`<p class="result-bonuses">POLICE FINE FROM RACE EARNINGS −${credits(r.policeFineCharge)} CR</p>`:''}${bonus?`<p class="result-bonuses">${bonus}</p>`:''}${repairs}${r.milestoneAwards?.length?`<p class="result-bonuses milestone-earned" role="status">${r.milestoneAwards.map(award=>`${escapeHTML(award.name).toUpperCase()} +${credits(award.reward)} CR`).join(" · ")}</p>`:''}${r.ghostRecorded?`<p class="result-bonuses ghost-saved">BEST GHOST SAVED${app.ghostSaved===false?' · THIS SESSION ONLY':''}</p>`:''}<div class="result-actions">${actions}</div>${s.paused?'<p class="pause-help">WASD / ARROWS TO DRIVE · SPACE TO BOOST · C TO CHANGE CAMERA<br>Restarting or leaving forfeits unbanked race earnings. Saved credits are safe.</p>':''}</section>`;
 }
 function renderState(s) {
+  if(rendererHandle){
+    rendererHandle.prepareVehicle(s.status==='menu'?app.menuCar||choices.car:s.car);
+    const asset=ui.view3d.dataset.vehicleAsset,loading=asset==='loading'||asset==='idle',failed=asset==='error';
+    ui['renderer-loading'].hidden=!loading;
+    ui['renderer-loading'].lastChild.textContent=` LOADING ${CARS[ui.view3d.dataset.vehicleKey]?.name.toUpperCase()||'VEHICLE'}`;
+    ui['start-engine'].disabled=asset!=='ready';
+    ui['renderer-error'].hidden=!failed;
+    if(failed){ui['renderer-error'].querySelector('strong').textContent="The car couldn't load.";ui['renderer-error'].querySelector('span').textContent='Retry the car download, or choose another car. Your progress is unchanged.';ui['renderer-error'].querySelector('button').textContent='RETRY CAR ↗';}
+  }
   ui.overlay.dataset.credits = String(profile().credits);ui.overlay.dataset.ghostStatus=app.ghostStatus;ui.overlay.dataset.ghostRecords=String(app.ghosts.records.length);ui.overlay.dataset.routeVariant=getRouteVariantForSeed(s.status==='menu'?app.getMenuSeed():s.seed)?.id||'custom';
   ui.overlay.dataset.playerId=app.player.id;ui.overlay.dataset.playerName=app.player.name;ui.overlay.dataset.cpuDifficulty=s.cpuDifficulty||choices.cpuDifficulty;ui.overlay.dataset.lap=String(s.currentLap||s.lap||1);
   text('menu-credits', `${credits(profile().credits)} CR`);

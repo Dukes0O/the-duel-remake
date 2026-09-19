@@ -1,12 +1,12 @@
 // config.js — The Duel canon. CANON = fixed by the build brief; HOUSE =
 // plausible arcade values invented to fill gaps, frozen here.
 
-// CANON — 5 lives; crash -1 + 30s; clean stage +1; missed station -1.
+// Five crash slots; a stage win restores up to two, never above the starting reserve.
 export const LIVES = {
   start: 5,
   crashPenaltySec: 30,
   crashLifeCost: 1,
-  cleanStageReward: 1,
+  stageWinRepair: 2,
   missedStationCost: 1,
 };
 
@@ -102,12 +102,12 @@ export const THEMES = {
 
 // Three two-lap campaign circuits, followed by garage-gated standalone events.
 export const COURSE = [
-  {id:'pacific-canyon',layout:'canyon',layoutVersion:3,theme:'desert',stage:0,name:'Pacific Canyon Circuit',lengthU:4000,closed:true,laps:2,hasRadar:true,hasRival:true,speedLimitMph:65,sections:[{theme:'desert',name:'Mojave Canyon',share:.52},{theme:'coast',name:'Pacific Coast',share:.48}]},
-  {id:'high-country',layout:'highland',layoutVersion:3,theme:'alpine',stage:1,name:'High Country Grand Tour',lengthU:4800,closed:true,laps:2,hasRadar:false,hasRival:true,speedLimitMph:65,sections:[{theme:'desert',name:'Canyon Ascent',share:.26},{theme:'alpine',name:'Alpine Summit',share:.48},{theme:'coast',name:'Coastal Descent',share:.26}]},
-  {id:'harbor-highlands',layout:'harbor',layoutVersion:3,timeOfDay:'night',theme:'city',stage:2,name:'Harbor & Highlands',lengthU:4400,closed:true,laps:2,hasRadar:true,hasRival:true,speedLimitMph:60,sections:[{theme:'city',name:'Harbor District',share:.34},{theme:'alpine',name:'Moonlight Pass',share:.36},{theme:'coast',name:'Coast Road',share:.30}]},
+  {id:'pacific-canyon',layout:'canyon',layoutVersion:4,theme:'desert',stage:0,name:'Pacific Canyon Circuit',lengthU:4000,closed:true,laps:2,hasRadar:true,hasRival:true,speedLimitMph:65,sections:[{theme:'desert',name:'Mojave Canyon',share:.52},{theme:'coast',name:'Pacific Coast',share:.48}]},
+  {id:'high-country',layout:'highland',layoutVersion:4,theme:'alpine',stage:1,name:'High Country Grand Tour',lengthU:4800,closed:true,laps:2,hasRadar:false,hasRival:true,speedLimitMph:65,sections:[{theme:'desert',name:'Canyon Ascent',share:.26},{theme:'alpine',name:'Alpine Summit',share:.48},{theme:'coast',name:'Coastal Descent',share:.26}]},
+  {id:'harbor-highlands',layout:'harbor',layoutVersion:4,timeOfDay:'night',theme:'city',stage:2,name:'Harbor & Highlands',lengthU:4400,closed:true,laps:2,hasRadar:true,hasRival:true,speedLimitMph:60,sections:[{theme:'city',name:'Harbor District',share:.34},{theme:'alpine',name:'Moonlight Pass',share:.36},{theme:'coast',name:'Coast Road',share:.30}]},
   {id:'titan-arena',layoutVersion:2,theme:'arena',stage:3,name:'Titan Monster Arena',lengthU:1120,closed:true,laps:2,kind:'arena',arena:true,requiredCar:'titan_monster',hasRadar:false,hasRival:true,speedLimitMph:100,sections:[{theme:'arena',name:'Titan Stadium',share:1}]},
   {id:'midnight-chase',timeOfDay:'night',theme:'city',stage:4,name:'Midnight Muscle Chase',lengthU:2880,closed:true,laps:2,kind:'chase',requiredCar:'banshee_muscle',persistentVehicle:true,hasRadar:false,hasRival:false,speedLimitMph:65,chaseTimeLimit:{easy:205,medium:175,hard:150},chaseCrashPenaltySec:8,chaseCatchPenaltySec:12,sections:[{theme:'city',name:'Old Harbor',share:.5},{theme:'city',name:'Neon Exchange',share:.5}]},
-  {id:'ridge-rally',layout:'ridge',layoutVersion:3,theme:'alpine',stage:5,name:'Ridge Rally',lengthU:3520,closed:true,laps:2,kind:'rally',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:true,speedLimitMph:100,sections:[{theme:'desert',name:'Dry Creek Trail',share:.42},{theme:'alpine',name:'Timberline Ridge',share:.58}]},
+  {id:'ridge-rally',layout:'ridge',layoutVersion:4,theme:'alpine',stage:5,name:'Ridge Rally',lengthU:3520,closed:true,laps:2,kind:'rally',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:true,speedLimitMph:100,sections:[{theme:'desert',name:'Dry Creek Trail',share:.42},{theme:'alpine',name:'Timberline Ridge',share:.58}]},
   {id:'titan-stunt-trial',layoutVersion:1,theme:'arena',stage:6,name:'Titan Stunt Trial',lengthU:1120,closed:true,laps:2,kind:'arena',arena:true,requiredCar:'titan_monster',hasRadar:false,hasRival:false,speedLimitMph:100,stuntTrial:{jumps:4,crushes:4,timeLimitSec:{easy:95,medium:75,hard:62}},sections:[{theme:'arena',name:'Titan Stunt Trial',share:1}]},
   {id:'neon-drift-trial',layout:'city',layoutVersion:1,timeOfDay:'night',theme:'city',stage:7,name:'Neon Drift Trial',lengthU:2880,closed:true,laps:2,kind:'drift',requiredCar:'banshee_muscle',persistentVehicle:true,crashPenaltySec:8,hasRadar:false,hasRival:false,speedLimitMph:65,driftTrial:{targets:{easy:3500,medium:5000,hard:6000},timeLimitSec:{easy:150,medium:125,hard:110}},sections:[{theme:'city',name:'Neon District',share:.5},{theme:'city',name:'Harbor Slide',share:.5}]},
   {id:'timberline-rush',layout:'timberline',layoutSeed:1989,layoutVersion:2,theme:'alpine',stage:8,name:'Timberline Checkpoint Rush',lengthU:3800,closed:true,laps:2,kind:'checkpoint',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:false,speedLimitMph:100,checkpointRush:{gatesPerLap:6,initialTimeSec:{easy:40,medium:34,hard:30},extensionSec:{easy:10,medium:8,hard:7}},sections:[{theme:'desert',name:'Dry Creek',share:.35},{theme:'alpine',name:'Timberline Summit',share:.65}]},
@@ -131,7 +131,7 @@ export const POLICE = {
 // Arcade road-coordinate dynamics: heading persists until the driver steers.
 // Course, vehicles, and distances are metres. Displayed speed remains mph.
 export const DRIVE = {
-  majorCrashLimit: 5,    // cumulative hard head-on / rock impacts per campaign
+  majorCrashLimit: 5,    // unrepaired hard impacts; stage wins repair up to two
   majorImpactMph: 45,    // closing speed needed to count as structural damage
   catastrophicDuration: 4.6, // leave time to see the explosion before the result screen
   mphToWorld: 0.44704,    // miles/hour to metres/second
@@ -188,7 +188,7 @@ export const TRAFFIC = {
   collideLatU: 2.6,       // lateral overlap for a collision
   fogDensityThreshold: 0.015, // themes foggier than this spawn fewer cars
   fogSpawnMult: 0.85,     // spawn density multiplier in fog
-  nearMissLatU: 4.6,
+  nearMissLatU: 7.2,     // include a close pass across the two standard lanes
   nearMissMinMph: 65,
 };
 
@@ -198,6 +198,8 @@ export const SCORING = {
   perLifeLeft: 500,
   parSpeedMph: 110,       // par time = stage length / this
   nearMissPoints: 150,
+  policeEscapePoints: 500,
+  manualMultiplier: 2,
   comboWindowSec: 5,
   comboMax: 5,
 };

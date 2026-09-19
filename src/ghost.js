@@ -5,9 +5,10 @@ export const GHOST_KEY='the-duel-ghosts-v1',GHOST_ENABLED_KEY='duel_ghost_enable
 export const MAX_GHOSTS=12,MAX_GHOST_SAMPLES=1800,MAX_GHOST_BYTES=1_250_000;
 const round=(value,scale)=>Math.round(value*scale),clock=state=>(state.stageTimeSec??0)+(state.racePenaltySec??0);
 const bytes=value=>new TextEncoder().encode(JSON.stringify(value)).length;
-export const ghostKey=(playerId,options)=>options?.mode==='timetrial'&&playerId?`${playerId}|${bestKey(options)}`:'';
-export function createGhostStore(){return {version:1,records:[]};}
+export const ghostKey=(playerId,options,layoutVersion)=>options?.mode==='timetrial'&&playerId?`${playerId}|${bestKey(options,layoutVersion)}`:'';
+export function createGhostStore(){return {version:1,records:[],archivedRecords:[]};}
 const validId=id=>typeof id==='string'&&/^[\w-]{1,80}$/.test(id);
+const currentRecord=record=>{const stageIndex=COURSE.findIndex((stage,index)=>stageEventId(index)===record.eventId),stage=COURSE[stageIndex];return !!stage&&record.layoutVersion===(stage.layoutVersion??1)&&record.laps===(stage.laps||2)&&record.key===ghostKey(record.playerId,{...record,stageIndex});};
 function validSamples(samples,timeSec,raceLength){
   if(!Array.isArray(samples)||samples.length<12||samples.length>MAX_GHOST_SAMPLES)return false;
   let prior=-1;
@@ -17,28 +18,35 @@ function validSamples(samples,timeSec,raceLength){
 function normalizeRecord(row){
   if(!row||!validId(row.playerId)||!playerName(row.playerName)||row.mode!=='timetrial'||!Object.hasOwn(CARS,row.car)||!Number.isFinite(row.timeSec)||row.timeSec<=0||row.timeSec>3600)return null;
   const stageIndex=COURSE.findIndex((def,index)=>stageEventId(index)===row.eventId),stage=COURSE[stageIndex];
-  if(!stage||row.laps!==(stage.laps||2)||row.layoutVersion!==(stage.layoutVersion??1)||!['casual','pro'].includes(row.difficulty)||!['easy','medium','hard'].includes(row.cpuDifficulty))return null;
-  const context={...row,stageIndex,seed:row.seed>>>0},key=ghostKey(row.playerId,context);
-  if(key!==row.key||!validSamples(row.samples,row.timeSec,stage.lengthU*row.laps))return null;
-  return {key,playerId:row.playerId,playerName:playerName(row.playerName),stageIndex,eventId:row.eventId,layoutVersion:row.layoutVersion,seed:context.seed,laps:row.laps,car:row.car,mode:row.mode,difficulty:row.difficulty,cpuDifficulty:row.cpuDifficulty,timeSec:row.timeSec,samples:row.samples,upgrades:getUpgradeLevels({upgrades:{[row.car]:row.upgrades}},row.car),recordedAt:Number.isFinite(row.recordedAt)?row.recordedAt:0,lastUsedAt:Number.isFinite(row.lastUsedAt)?row.lastUsedAt:0};
+  if(!stage||!Number.isSafeInteger(row.laps)||row.laps<1||!Number.isSafeInteger(row.layoutVersion)||row.layoutVersion<1||!['casual','pro'].includes(row.difficulty)||!['easy','medium','hard'].includes(row.cpuDifficulty))return null;
+  const current=row.layoutVersion===(stage.layoutVersion??1);
+  if(current&&row.laps!==(stage.laps||2))return null;
+  const context={...row,stageIndex,seed:row.seed>>>0},key=ghostKey(row.playerId,context,row.layoutVersion);
+  // Legacy ghosts did not retain the old route length. Their final sample is
+  // the only available old finish position; never validate it against new roads.
+  const raceLength=current?stage.lengthU*row.laps:row.raceLength??row.samples?.at(-1)?.[1]/100;
+  if(!Number.isFinite(raceLength)||raceLength<=0||key!==row.key||!validSamples(row.samples,row.timeSec,raceLength))return null;
+  return {key,playerId:row.playerId,playerName:playerName(row.playerName),stageIndex,eventId:row.eventId,layoutVersion:row.layoutVersion,seed:context.seed,laps:row.laps,raceLength,car:row.car,mode:row.mode,difficulty:row.difficulty,cpuDifficulty:row.cpuDifficulty,timeSec:row.timeSec,samples:row.samples,upgrades:getUpgradeLevels({upgrades:{[row.car]:row.upgrades}},row.car),recordedAt:Number.isFinite(row.recordedAt)?row.recordedAt:0,lastUsedAt:Number.isFinite(row.lastUsedAt)?row.lastUsedAt:0};
 }
 export function normalizeGhostStore(value){
   if(value?.version!==1||!Array.isArray(value.records))return createGhostStore();
-  const best=new Map();for(const row of value.records){const record=normalizeRecord(row);if(!record)continue;const old=best.get(record.key);if(!old||record.timeSec<old.timeSec)best.set(record.key,record);else old.lastUsedAt=Math.max(old.lastUsedAt,record.lastUsedAt);}
-  const records=[...best.values()].sort((a,b)=>b.lastUsedAt-a.lastUsedAt||b.recordedAt-a.recordedAt).slice(0,MAX_GHOSTS);
-  while(records.length&&bytes({version:1,records})>MAX_GHOST_BYTES)records.pop();
-  return {version:1,records};
+  const best=new Map();for(const row of [...value.records,...(Array.isArray(value.archivedRecords)?value.archivedRecords:[])]){const record=normalizeRecord(row);if(!record)continue;const old=best.get(record.key);if(!old||record.timeSec<old.timeSec)best.set(record.key,record);else old.lastUsedAt=Math.max(old.lastUsedAt,record.lastUsedAt);}
+  const all=[...best.values()].sort((a,b)=>b.lastUsedAt-a.lastUsedAt||b.recordedAt-a.recordedAt),records=all.filter(currentRecord).slice(0,MAX_GHOSTS),archivedRecords=all.filter(record=>!currentRecord(record));
+  // Active playback keeps its existing budget. Archiving a layout must not
+  // silently evict its recordings when new-layout recordings fill that budget.
+  while(records.length&&bytes({version:1,records,archivedRecords:[]})>MAX_GHOST_BYTES)records.pop();
+  return {version:1,records,archivedRecords};
 }
-export function loadGhosts(storage){try{const raw=(storage??globalThis.localStorage)?.getItem(GHOST_KEY);return raw&&raw.length<=MAX_GHOST_BYTES*2?normalizeGhostStore(JSON.parse(raw)):createGhostStore();}catch{return createGhostStore();}}
+export function loadGhosts(storage){try{const raw=(storage??globalThis.localStorage)?.getItem(GHOST_KEY);return raw?normalizeGhostStore(JSON.parse(raw)):createGhostStore();}catch{return createGhostStore();}}
 export function saveGhosts(store,storage){try{const target=storage??globalThis.localStorage;if(!target)return false;target.setItem(GHOST_KEY,JSON.stringify(normalizeGhostStore(store)));return true;}catch{return false;}}
 export function readGhostEnabled(storage){try{return (storage??globalThis.localStorage)?.getItem(GHOST_ENABLED_KEY)!=='false';}catch{return true;}}
 export function saveGhostEnabled(enabled,storage){try{const target=storage??globalThis.localStorage;if(!target)return false;target.setItem(GHOST_ENABLED_KEY,String(!!enabled));return true;}catch{return false;}}
-export function findGhost(store,playerId,options){const key=ghostKey(playerId,options);return key?store.records.find(record=>record.key===key)||null:null;}
-export function mergeGhostStores(...stores){return normalizeGhostStore({version:1,records:stores.flatMap(store=>store?.records||[])});}
+export function findGhost(store,playerId,options){const key=ghostKey(playerId,options);return key?store.records.find(record=>currentRecord(record)&&record.key===key)||null:null;}
+export function mergeGhostStores(...stores){return normalizeGhostStore({version:1,records:stores.flatMap(store=>store?.records||[]),archivedRecords:stores.flatMap(store=>store?.archivedRecords||[])});}
 export function storeGhost(store,record){
-  const valid=normalizeRecord(record);if(!valid)return {store,saved:false};const prior=store.records.find(row=>row.key===valid.key);
+  const valid=normalizeRecord(record);if(!valid||!currentRecord(valid))return {store,saved:false};store=normalizeGhostStore(store);const prior=store.records.find(row=>row.key===valid.key);
   if(prior&&prior.timeSec<=valid.timeSec+.005)return {store,saved:false};
-  return {store:normalizeGhostStore({version:1,records:[...store.records.filter(row=>row.key!==valid.key),valid]}),saved:true};
+  return {store:normalizeGhostStore({version:1,records:[...store.records.filter(row=>row.key!==valid.key),valid],archivedRecords:store.archivedRecords}),saved:true};
 }
 function pack(state,snap=false){
   const values=[clock(state),state.s,state.lateral??0,(state.headingError??0)+(state.slipAngle??0)+(state.crashSpin??0),state.airHeight??0,state.speedMph??0];
@@ -74,12 +82,12 @@ export class GhostRecorder {
     if(this.invalid||result.stageIndex!==this.context.stageIndex||player?.id!==this.context.playerId||state.playerId!==player.id||state.car!==this.context.car||state.mode!=='timetrial'||!isValidFinish({...result,car:state.car})||!playerName(player.name))return null;
     this.observe(state,true);if(this.invalid)return null;
     const stage=COURSE[result.stageIndex],timeSec=result.timeSec;
-    const record={...this.context,key:ghostKey(player.id,this.context),playerId:player.id,playerName:player.name,eventId:stageEventId(result.stageIndex),layoutVersion:stage.layoutVersion??1,laps:result.laps,timeSec,recordedAt:Date.now(),lastUsedAt:Date.now(),samples:this.samples};
+    const record={...this.context,key:ghostKey(player.id,this.context),playerId:player.id,playerName:player.name,eventId:stageEventId(result.stageIndex),layoutVersion:stage.layoutVersion??1,laps:result.laps,raceLength:stage.lengthU*result.laps,timeSec,recordedAt:Date.now(),lastUsedAt:Date.now(),samples:this.samples};
     return normalizeRecord(record);
   }
 }
 export function sampleGhost(record,timeSec,out={}){
-  if(!record||!Number.isFinite(timeSec)||timeSec<0||timeSec>record.timeSec)return null;
+  if(!record||!currentRecord(record)||!Number.isFinite(timeSec)||timeSec<0||timeSec>record.timeSec)return null;
   const rows=record.samples,t=timeSec*1000;let lo=0,hi=rows.length-1;
   while(lo<hi){const mid=Math.ceil((lo+hi)/2);if(rows[mid][0]<=t)lo=mid;else hi=mid-1;}
   const a=rows[lo],b=rows[Math.min(rows.length-1,lo+1)],blend=b[6]||b[0]===a[0]?0:Math.max(0,Math.min(1,(t-a[0])/(b[0]-a[0]))),mix=index=>a[index]+(b[index]-a[index])*blend;

@@ -8,10 +8,10 @@ Licensed under [Creative Commons Attribution 4.0 International](https://creative
 
 Downloaded 19 September 2026 from `https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CarConcept/glTF-Binary/CarConcept.glb`.
 
-Runtime adaptations in `src/hero-vehicle.js`: normalized to 4.8 metres, straightened front wheels, batched meshes, omitted emblem meshes, replaced license-plate artwork with a plain material, customized paint/glass/lights, added steering and wheel spin, deforming damage and a contact shadow. Both player selections currently use paint/trim variants of this concept body with their existing distinct handling specifications. Neither is an accurate model of a named real-world car.
+Runtime adaptations in `src/hero-vehicle.js`: normalized to 4.8 metres, straightened front wheels, batched meshes, omitted emblem meshes, replaced license-plate artwork with a plain material, customized paint/glass/lights, added steering and wheel spin, deforming damage and a contact shadow. Aurora GTR alone uses this concept body with its own trim and handling. It is not an accurate model of a named real-world car. Falcone F42 and Stuttgart 959-S now use separate original geometry.
 
 The original source GLB is retained for editing in Blender. `npm run assets:export` does not overwrite it.
 
 ## Original procedural models
 
-`cinder-gt.glb` and `desert-service-station.glb` are original editable geometry authored for this remake. See `docs/ASSET_PIPELINE.md`. Traffic and the fallback player vehicle use `src/vehicles.js`.
+The six original playable cars are built in `src/classic-vehicles.js` and `src/unlock-vehicles.js`. Traffic and police sedans use `src/vehicles.js`. Current stations use the live environment mesh factories. The unused first-iteration Cinder coupe and station exports, and their obsolete builders, were removed; they remain recoverable in Git history. See `docs/ASSET_PIPELINE.md`.

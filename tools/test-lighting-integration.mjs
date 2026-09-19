@@ -15,6 +15,7 @@ globalThis.localStorage=storage;
 const moods=Object.keys(LIGHTING_MOODS),stageIndex=COURSE.findIndex(stage=>!stage.kind);
 const options={startStage:stageIndex,stageIndex,mode:'timetrial',car:'falcone_f42',difficulty:'casual',cpuDifficulty:'easy',seed:42,laps:2};
 const preferenceKey='duel_lighting_mood';
+const progressionOnly=profile=>{const{raceSettings,...rest}=profile;return JSON.stringify(rest);};
 
 let app=new App();
 check(app.lightingMood==='clear','fresh browser uses clear lighting');
@@ -29,22 +30,22 @@ for(const value of ['night','Golden','','__proto__',null,{},false,42]){
 memory.set(preferenceKey,'corrupt-value');
 check(new App().lightingMood==='clear','invalid stored value falls back to clear');
 
-// This display preference lives outside player progression and never writes a wallet.
+// Lighting is a per-player preference; economic progression remains unchanged.
 memory.clear();app=new App();
 const firstId=app.player.id;
 app.profile.credits=2000;app._saveProfile();
-const firstSave=memory.get(PLAYERS_KEY);
+const firstSave=progressionOnly(app.profile);
 app.setLightingMood('golden');
-check(memory.get(PLAYERS_KEY)===firstSave,'changing lighting does not rewrite the player registry');
+check(progressionOnly(app.profile)===firstSave&&app.profile.raceSettings.lightingMood==='golden','changing lighting saves only the preference, not economic progression');
 app.addPlayer('Lighting driver');
 const secondId=app.player.id;
-check(secondId!==firstId&&app.profile.credits===0&&app.lightingMood==='golden','new player starts an isolated wallet while retaining browser lighting');
+check(secondId!==firstId&&app.profile.credits===0&&app.lightingMood==='clear','new player starts an isolated wallet and default lighting');
 app.profile.credits=600;app._saveProfile();app.setLightingMood('overcast');
 app.selectPlayer(firstId);
-check(app.profile.credits===2000&&app.lightingMood==='overcast','returning to the first player restores only their wallet');
+check(app.profile.credits===2000&&app.lightingMood==='golden','returning to the first player restores their wallet and own lighting');
 app.selectPlayer(secondId);
-check(app.profile.credits===600&&app.lightingMood==='overcast','second player retains their own wallet and shared display preference');
-check(app.players.players.every(player=>!Object.hasOwn(player.profile,'lightingMood')),'lighting does not leak into per-player profile data');
+check(app.profile.credits===600&&app.lightingMood==='overcast','second player retains their own wallet and display preference');
+check(app.players.players.every(player=>!Object.hasOwn(player.profile,'lightingMood')&&player.profile.raceSettings?.lightingMood),'lighting belongs in the bounded preference object');
 const restored=new App();
 check(restored.player.id===secondId&&restored.profile.credits===600&&restored.lightingMood==='overcast','reload restores active player, wallet and independent lighting preference');
 
@@ -64,7 +65,7 @@ const recordKeys=[bestKey(context),eventKey(context),ghostKey(app.player.id,cont
 for(const phase of ['countdown','racing','paused']){
   if(phase==='racing')app.advance(5);
   if(phase==='paused')app.togglePause();
-  const before=JSON.stringify(app.duel.state),samples=JSON.stringify(app.ghostRecorder.samples),wallet=memory.get(PLAYERS_KEY),runId=app.runId;
+  const before=JSON.stringify(app.duel.state),samples=JSON.stringify(app.ghostRecorder.samples),wallet=progressionOnly(app.profile),runId=app.runId;
   const emitted=[];app.duel.onChange((_state,event)=>{if(event.lightingMood)emitted.push(event.lightingMood);});
   for(const mood of moods){
     app.setLightingMood(mood);
@@ -72,7 +73,7 @@ for(const phase of ['countdown','racing','paused']){
     check(JSON.stringify(app.duel.state)===before&&app.runId===runId,`${phase}/${mood}: race state and settlement identity stay unchanged`);
     check(app.ghostRecorder.context===context&&JSON.stringify(app.ghostRecorder.samples)===samples,`${phase}/${mood}: ghost recording remains untouched`);
     same([bestKey(context),eventKey(context),ghostKey(app.player.id,context)],recordKeys,`${phase}/${mood}: comparable record identities stay unchanged`);
-    check(memory.get(PLAYERS_KEY)===wallet&&app.getMenuCourse(stageIndex)===previews[0],`${phase}/${mood}: wallet and menu geometry stay untouched`);
+    check(progressionOnly(app.profile)===wallet&&app.getMenuCourse(stageIndex)===previews[0],`${phase}/${mood}: wallet and menu geometry stay untouched`);
   }
   same(emitted,moods,`${phase}: the view receives each selected mood`);
 }
@@ -97,12 +98,12 @@ for(const mood of moods){
   check(ghost?.samples.length>400&&ghost.timeSec===result.timeSec,`${mood}: a complete local ghost was recorded`);
   check(app.profile.personalBests[bestKey(options)]===result.timeSec,`${mood}: completed car best is saved under the same record key`);
   check(app.leaderboard.entries.length===1,`${mood}: one local leaderboard result is saved`);
-  const before={profile:JSON.stringify(app.profile),board:JSON.stringify(app.leaderboard),ghosts:JSON.stringify(app.ghosts)};
+  const before={profile:progressionOnly(app.profile),board:JSON.stringify(app.leaderboard),ghosts:JSON.stringify(app.ghosts)};
   app.returnToMenu();
   for(const next of moods){
     app.setLightingMood(next);
     check(app.getGhostRecord(options)===ghost,`${mood} to ${next}: changing light keeps the same compatible ghost`);
-    same({profile:JSON.stringify(app.profile),board:JSON.stringify(app.leaderboard),ghosts:JSON.stringify(app.ghosts)},before,`${mood} to ${next}: lighting cannot add or alter recorded results`);
+    same({profile:progressionOnly(app.profile),board:JSON.stringify(app.leaderboard),ghosts:JSON.stringify(app.ghosts)},before,`${mood} to ${next}: lighting cannot add or alter recorded results`);
   }
   runs.push({mood,samples,trajectory:hash.digest('hex'),ghost:createHash('sha256').update(JSON.stringify(ghost.samples)).digest('hex'),
     timeSec:result.timeSec,reward:result.creditReward,breakdown:result.creditBreakdown,bestKey:bestKey(options),ghostKey:ghost.key});

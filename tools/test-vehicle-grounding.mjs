@@ -72,10 +72,19 @@ for(const course of courses){
   }
   road.geometry.dispose();
 }
-// Concrete browser regression: the old XYZ pose put Titan tires ±40cm from the
-// Ridge Rally road at this location. The local yaw-first pose should be level.
+// An authored route can change. Keep the yaw-first regression independently on
+// a fixed 14% inclined plane so a new crest cannot weaken its strict tolerance.
+const heading=2.4,grade=.14,sn=Math.sin(heading),cs=Math.cos(heading);
+const slopeFixture={def:{offroad:true},groundAt:(s,l)=>({x:s*sn+l*cs,y:s*grade,z:s*cs-l*sn,heading}),at:s=>({y:s*grade}),surfaceAt:()=>({roadHalfWidth:7,shortcutId:null})};
+const slopeGeometry=new THREE.PlaneGeometry(30,30).rotateX(-Math.PI/2),sp=slopeGeometry.attributes.position;
+for(let i=0;i<sp.count;i++)sp.setY(i,(sp.getX(i)*sn+sp.getZ(i)*cs)*grade+.035);
+slopeGeometry.computeVertexNormals();const slopeRoad=new THREE.Mesh(slopeGeometry,material);slopeRoad.updateMatrixWorld(true);
+for(const model of models)for(const gap of contacts(model,slopeFixture,0,0,slopeRoad))near(gap,TIRE_CLEARANCE,.016,`${model.key} yaw-first inclined plane`);
+slopeGeometry.dispose();
+// Recheck the user's original location with the newly authored hill. A rigid
+// chassis spans changing slopes here; the fixed plane above protects pose math.
 const ridge=courses[1],ridgeRoad=new THREE.Mesh(strip(ridge,s=>-ridge.roadHalfWidthAt(s),s=>ridge.roadHalfWidthAt(s),.035),material);ridgeRoad.updateMatrixWorld(true);
 const titanGaps=contacts(models.find(m=>m.key==='titan_monster'),ridge,2168,0,ridgeRoad);
-for(const gap of titanGaps)ok(gap>-.01&&gap<.02,`Ridge2168 Titan contact ${gap}`);
+for(const gap of titanGaps)ok(gap>-.05&&gap<.05,`Ridge2168 Titan contact ${gap}`);
 ridgeRoad.geometry.dispose();material.dispose();
 console.log(`Vehicle grounding: ${checks} checks across seven actual models; steep asphalt/gravel triangle gaps ${min.toFixed(4)}..${max.toFixed(4)}m; Ridge2168 Titan ${titanGaps.map(n=>n.toFixed(4)).join(', ')}m.`);

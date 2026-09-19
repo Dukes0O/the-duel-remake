@@ -1,0 +1,41 @@
+{
+  "source": "Original classic starter vehicles for The Duel",
+  "vehicles": [
+    {
+      "key": "falcone_f42",
+      "file": "falcone_f42.glb",
+      "bytes": 6752580,
+      "triangles": 71682,
+      "draws": 53,
+      "dimensions": {
+        "width": 2.3,
+        "length": 4.8,
+        "height": 1.36,
+        "wheelRadius": 0.4
+      },
+      "measured": [
+        2.299,
+        1.37,
+        4.848
+      ]
+    },
+    {
+      "key": "stuttgart_959s",
+      "file": "stuttgart_959s.glb",
+      "bytes": 5565092,
+      "triangles": 59285,
+      "draws": 56,
+      "dimensions": {
+        "width": 2.3,
+        "length": 4.8,
+        "height": 1.48,
+        "wheelRadius": 0.41
+      },
+      "measured": [
+        2.299,
+        1.473,
+        4.816
+      ]
+    }
+  ]
+}

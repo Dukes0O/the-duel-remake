@@ -7,12 +7,13 @@ import { Course } from './course.js';
 import { seedFromUrl } from './rng.js';
 import { DRIVE, COURSE, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority } from './config.js';
 import { EngineAudio } from './audio.js';
-import { loadPlayers, savePlayers, activePlayer, createPlayer, selectPlayer, replacePlayerProfile, settleRace, purchaseUpgrade, unlockCar, getUpgradeLevels, isCarUnlocked, CPU_REWARDS } from './progression.js';
+import { loadPlayers, savePlayers, activePlayer, createPlayer, selectPlayer, replacePlayerProfile, settleRace, settlePoliceFine, purchaseUpgrade, unlockCar, getUpgradeLevels, isCarUnlocked, CPU_REWARDS } from './progression.js';
 import {loadLeaderboard,saveLeaderboard,recordFinish,mergeLeaderboards} from './leaderboard.js';
 import {loadGhosts,saveGhosts,findGhost,mergeGhostStores,storeGhost,GhostRecorder,sampleGhost,readGhostEnabled,saveGhostEnabled} from './ghost.js';
 import {getPaintAppearance,purchasePaint as buyPaint,applyPaint as equipPaint} from './paint-presets.js';
 import {DEFAULT_ROUTE_VARIANT,isRouteVariant,getRouteVariant,getRouteVariantForSeed,supportsRouteVariants} from './route-variants.js';
 import {normalizeLightingMood} from './lighting-moods.js';
+import {DEFAULT_RACE_SETTINGS,normalizeRaceSettings,raceSettingsChoices,raceSettingsStage} from './race-settings.js';
 
 const SIMULATION_STEP = 1 / 120;
 export const ROUTE_PREFERENCE_KEY='duel_route_variant';
@@ -32,11 +33,20 @@ export class App {
     });
     this.keys = {};
     this.players=loadPlayers();this.player=activePlayer(this.players);this.profile=this.player.profile;
+    this._legacyRaceDefaults={...DEFAULT_RACE_SETTINGS,routeVariant:readRoutePreference(),lightingMood:readLightingMood(),ghostEnabled:readGhostEnabled()};
+    // Capture old browser preferences once for every existing legacy player.
+    // Later global compatibility writes cannot change another player's setup.
+    if(this.players.players.some(player=>!player.profile.raceSettings)) {
+      this.players={...this.players,players:this.players.players.map(player=>player.profile.raceSettings?player:{...player,profile:{...player.profile,raceSettings:normalizeRaceSettings(this._legacyRaceDefaults,player.profile)}})};
+      this.player=activePlayer(this.players);this.profile=this.player.profile;this.profileSaved=savePlayers(this.players);
+    }
     this.leaderboard=loadLeaderboard();this.cpuDifficulty=DEFAULT_CPU_DIFFICULTY;
     this.ghosts=loadGhosts();this.ghostEnabled=readGhostEnabled();this.ghostPose=null;this.ghostRecord=null;this.ghostRecorder=null;this.ghostStatus='none';this._ghostPoseBuffer={};
     this.ambientOcclusionEnabled=readGraphicsQuality()!=='performance';
     this.lightingMood=readLightingMood();
     this.menuStage = 0;
+    const preferenceOverrides={};if(urlRoute)preferenceOverrides.routeVariant=urlRoute.id;if(url.has('car'))preferenceOverrides.car=url.get('car');if(url.has('diff'))preferenceOverrides.difficulty=url.get('diff');
+    this._restoreRaceSettings({overrides:preferenceOverrides,customSeed:this._customMenuSeed});
     this._menuCourses=new Map();
     this._racePaint=null;this._racePaintCar=null;
     this.driftNotice=null;
@@ -51,6 +61,7 @@ export class App {
       this.audio.event(event);
       if(event.driftBanked||event.driftChainLost)this.driftNotice={type:event.driftBanked?'banked':'lost',...(event.driftBanked||event.driftChainLost),expiresAt:state.stageTimeSec+2};
       if(event.checkpointRushEvent)this.checkpointNotice={...event.checkpointRushEvent,expiresAt:state.stageTimeSec+2.5};
+      if(event.ticket)this._settlePoliceTicket(event.ticket,state);
       if (event.stageResult) {
         this._settleResult(event.stageResult,state);
       }
@@ -157,13 +168,40 @@ export class App {
     this._stageStartCrashes=0;
     this._campaignStart=stageIndex;this._runPlayerId=this.player.id;
     this.cpuDifficulty=['easy','medium','hard'].includes(options.cpuDifficulty)?options.cpuDifficulty:this.cpuDifficulty;
+    const mode=['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':options.mode??this._raceSettings.mode;
+    const difficulty=options.difficulty??this.duel.state.difficulty;
+    this._rememberRaceSettings({eventId:stage.id,mode,difficulty,car,cpuDifficulty:this.cpuDifficulty,routeVariant:supportsRouteVariants(stage)?getRouteVariantForSeed(this.seed)?.id??this.menuRouteId:this.menuRouteId});
+    this.menuStage=stageIndex;this.menuCar=car;
     this.audio.unlock();
     this.audio.setPaused(false);
     this.keys = {};
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
-    this.duel.startCampaign({...options,seed:this.seed,mode:['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':options.mode,car,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
+    this.duel.startCampaign({...options,seed:this.seed,mode,difficulty,car,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     return true;
+  }
+  getRaceChoices(){return raceSettingsChoices(this._raceSettings);}
+  _restoreRaceSettings({defaultsOnly=false,overrides={},customSeed=null}={}){
+    const saved=defaultsOnly?DEFAULT_RACE_SETTINGS:this.profile.raceSettings||this._legacyRaceDefaults;
+    this._applyRaceSettings(normalizeRaceSettings({...saved,...overrides},this.profile),customSeed);
+  }
+  _applyRaceSettings(settings,customSeed=this._customMenuSeed){
+    this._raceSettings=settings;this.menuStage=raceSettingsStage(settings);this.menuCar=settings.car;this.menuRouteId=settings.routeVariant;this._customMenuSeed=customSeed;
+    this.cpuDifficulty=settings.cpuDifficulty;this.ghostEnabled=settings.ghostEnabled;this.lightingMood=settings.lightingMood;
+    this.seed=this.getMenuSeed();this.duel.seed=this.seed;this.duel.carKey=settings.car;this.duel.difficultyKey=settings.difficulty;
+    Object.assign(this.duel.state,{seed:this.seed,car:settings.car,difficulty:settings.difficulty,cpuDifficulty:settings.cpuDifficulty,mode:settings.mode});
+  }
+  _rememberRaceSettings(patch={}){
+    const settings=normalizeRaceSettings({...this._raceSettings,routeVariant:this.menuRouteId,lightingMood:this.lightingMood,ghostEnabled:this.ghostEnabled,...patch},this.profile);
+    this._raceSettings=settings;
+    if(JSON.stringify(this.profile.raceSettings)!==JSON.stringify(settings)){this.profile={...this.profile,raceSettings:settings};this._saveProfile();}
+    return settings;
+  }
+  setRaceSettings(patch={}){
+    if(this.duel.state.status!=='menu'||!patch||typeof patch!=='object')return false;
+    this._refreshPlayer();const values={...patch};if(Object.hasOwn(values,'startStage'))values.eventId=COURSE[values.startStage]?.id||COURSE[0].id;
+    const settings=this._rememberRaceSettings(values),customSeed=Object.hasOwn(values,'routeVariant')?null:this._customMenuSeed;
+    this._applyRaceSettings(settings,customSeed);this.duel.emit({raceSettingsChanged:true});return this.getRaceChoices();
   }
   restart() {
     const { mode, car, difficulty,cpuDifficulty } = this.duel.state;
@@ -182,7 +220,7 @@ export class App {
   getMenuRouteLabel(stageIndex=this.menuStage){return supportsRouteVariants(COURSE[stageIndex])?(this._customMenuSeed!=null?'Custom route':getRouteVariant(this.menuRouteId).label):'Fixed route';}
   setRouteVariant(id){
     if(this.duel.state.status!=='menu'||!isRouteVariant(id))return false;
-    this.menuRouteId=id;this._customMenuSeed=null;this.seed=this.getMenuSeed();this.duel.seed=this.seed;this.duel.state.seed=this.seed;
+    this.setRaceSettings({routeVariant:id});
     try{globalThis.localStorage?.setItem(ROUTE_PREFERENCE_KEY,id);}catch{}
     this.duel.emit({routeChanged:true});return true;
   }
@@ -202,7 +240,7 @@ export class App {
     if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,paintChanged:true});}return result;
   }
   setGhostEnabled(enabled){
-    this.ghostEnabled=!!enabled;saveGhostEnabled(this.ghostEnabled);this._updateGhost(this.duel.state);this.duel.emit({ghostChanged:true});return this.ghostEnabled;
+    this._refreshPlayer();this.ghostEnabled=!!enabled;this._rememberRaceSettings({ghostEnabled:this.ghostEnabled});saveGhostEnabled(this.ghostEnabled);this._updateGhost(this.duel.state);this.duel.emit({ghostChanged:true});return this.ghostEnabled;
   }
   _startGhostStage(state){
     this.ghostPose=null;this.ghostRecord=null;this.ghostRecorder=null;this.ghostStatus='none';
@@ -250,22 +288,33 @@ export class App {
   }
   _recoverInterruptedRace(){
     if(!this.profile.activeRace)return;
-    const interrupted=settleRace(this.profile,{...this.profile.activeRace,won:false,completed:false});
+    const interrupted=settleRace(this.profile,{...this.profile.activeRace,won:false,completed:false,abandoned:true});
     this.profile={...interrupted.profile,activeRace:null};this.interruptedRaceCharge=interrupted.charge||0;this._saveProfile();
+  }
+  _settlePoliceTicket(ticket,state){
+    if(!this.runId||this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId||state!==this.duel.state||ticket!==state.police.ticket)return;
+    this._refreshPlayer();
+    const settled=settlePoliceFine(this.profile,{runId:this.runId,stageIndex:state.stageIndex,ticketIndex:ticket.ticketIndex});
+    if(settled.accrued){
+      this.profile=settled.profile;this._saveProfile();
+      ticket.creditCharge=0;ticket.pendingFine=settled.pendingFine;ticket.pendingFineTotal=settled.pendingFineTotal;ticket.creditBalance=this.profile.credits;
+      state.police.pendingFines=settled.pendingFineTotal;
+    }
   }
   _settleResult(result,state){
     if(this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return;
     this._refreshPlayer();
     const payload={...result,runId:this.runId,stageIndex:state.stageIndex,won:result.won===true,completed:result.completed===true,
       timeSec:result.timeSec??result.stageTimeSec,laps:result.laps??state.completedLaps,seed:state.seed,car:state.car,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,
-      upgrades:{...state.upgrades},clean:result.completed===true&&!result.missedStation&&state.majorCrashes===this._stageStartCrashes};
+      upgrades:{...state.upgrades},policeEscapes:result.policeEscapes??state.policeEscapes,
+      clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     const awarded=settleRace(this.profile,payload);
     if(awarded.awarded){
       this.profile=awarded.profile;this._saveProfile();
       const recorded=recordFinish(mergeLeaderboards(this.leaderboard,loadLeaderboard()),payload,this.player);this.leaderboard=recorded.board;
       if(recorded.recorded)this.leaderboardSaved=saveLeaderboard(this.leaderboard);
       if(recorded.scoreBest!=null){result.driftScoreBest=recorded.scoreBest;result.driftScoreImproved=recorded.scoreImproved;}
-      Object.assign(result,{creditReward:awarded.reward,creditCharge:awarded.charge,creditBreakdown:awarded.breakdown,personalBest:awarded.personalBest,previousBest:awarded.previousBest,best:awarded.best,winStreak:awarded.winStreak,milestoneAwards:awarded.milestones});
+      Object.assign(result,{creditReward:awarded.reward,creditCharge:awarded.charge,policeFineCharge:awarded.policeFineCharge||0,creditBreakdown:awarded.breakdown,personalBest:awarded.personalBest,personalBestStatus:awarded.personalBestStatus,previousBest:awarded.previousBest,best:awarded.best,winStreak:awarded.winStreak,milestoneAwards:awarded.milestones});
     }else if(result.creditReward==null)result.creditReward=0;
     this._finishGhost(payload,state,awarded,result);
     result.creditBalance=this.profile.credits;
@@ -277,14 +326,15 @@ export class App {
   _markActiveRace(state){
     const key=`${this.runId}:${state.stageIndex}`;
     if(!this.runId||this._markedRaceKey===key||this.profile.settledResults.includes(key))return;
-    this._markedRaceKey=key;this.profile={...this.profile,activeRace:{key,runId:this.runId,stageIndex:state.stageIndex,car:state.car,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty}};this._saveProfile();
+    const pending=this.profile.activeRace?.key===key?this.profile.activeRace:{pendingPoliceFineCount:0,pendingPoliceFines:0};
+    this._markedRaceKey=key;this.profile={...this.profile,activeRace:{...pending,key,runId:this.runId,stageIndex:state.stageIndex,car:state.car,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty}};this._saveProfile();
   }
   requestNavigation(action){
     if(!['restart','menu'].includes(action))return false;
     const state=this.duel.state,key=`${this.runId}:${state.stageIndex}`;
     const active=this.runId&&['racing','ticket','countdown'].includes(state.status)&&(state.stageTimeSec>0||this.profile.activeRace?.key===key)&&!this.profile.settledResults.includes(key);
     if(!active){if(action==='restart')this.restart();else this.returnToMenu();return true;}
-    this.pendingNavigation={action,wasPaused:!!state.paused,charge:Math.min(this.profile.credits,CPU_REWARDS[state.cpuDifficulty||this.cpuDifficulty]/2)};
+    this.pendingNavigation={action,wasPaused:!!state.paused,charge:0,forfeitsRaceEarnings:true};
     if(!state.paused&&['racing','countdown'].includes(state.status))this.togglePause();
     this.duel.emit({navigationPrompt:true});return false;
   }
@@ -300,12 +350,12 @@ export class App {
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the menu to change players.'};
     this._refreshPlayers();
     const result=createPlayer(this.players,name);if(!result.ok)return result;
-    this.players=result.registry;this.player=activePlayer(this.players);this.profile=this.player.profile;this.profileSaved=savePlayers(this.players);this.duel.emit({playerChanged:true});return result;
+    this.players=result.registry;this.player=activePlayer(this.players);this.profile=this.player.profile;this._restoreRaceSettings({defaultsOnly:true});this._rememberRaceSettings();this.profileSaved=savePlayers(this.players);this.duel.emit({playerChanged:true});return {...result,registry:this.players,player:this.player};
   }
   selectPlayer(id){
     if(this.duel.state.status!=='menu')return false;
     this._refreshPlayers();if(!this.players.players.some(p=>p.id===id))return false;
-    this.players=selectPlayer(this.players,id);this.player=activePlayer(this.players);this.profile=this.player.profile;this._recoverInterruptedRace();this.profileSaved=savePlayers(this.players);this.duel.emit({playerChanged:true});return true;
+    this.players=selectPlayer(this.players,id);this.player=activePlayer(this.players);this.profile=this.player.profile;this._restoreRaceSettings();this._rememberRaceSettings();this._recoverInterruptedRace();this.profileSaved=savePlayers(this.players);this.duel.emit({playerChanged:true});return true;
   }
   purchaseUpgrade(car,type){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before upgrading.'};
@@ -337,7 +387,7 @@ export class App {
     this.duel.emit({graphicsQuality:selected});return selected;
   }
   setLightingMood(mood){
-    this.lightingMood=normalizeLightingMood(mood);
+    this._refreshPlayer();this.lightingMood=normalizeLightingMood(mood);this._rememberRaceSettings({lightingMood:this.lightingMood});
     try{globalThis.localStorage?.setItem('duel_lighting_mood',this.lightingMood);}catch{}
     this.duel.emit({lightingMood:this.lightingMood});return this.lightingMood;
   }
