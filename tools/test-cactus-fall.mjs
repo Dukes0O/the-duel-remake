@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {syncScene} from '../src/scene-systems.js';
 import * as THREE from 'three';
 import {COURSE} from '../src/config.js';
 import {Course} from '../src/course.js';
@@ -95,10 +96,10 @@ try{
   const world=buildEnvironment(hybrid),cacti=world.children.filter(mesh=>mesh.userData.cactusFeatures),cactus=cacti[0],tree=cactus.userData.cactusFeatures[0].tree;
   const upright=Array.from(cactus.instanceMatrix.array),props=world.getObjectByName('Arena salvage cars');
   check(cacti.reduce((total,mesh)=>total+mesh.count,0)===natural.features.trees.filter(feature=>feature.theme==='desert').length,'Only desert theme trees participate in cactus animation');
-  world.userData.updateSimulation({status:'racing',stageTimeSec:2,fallenCacti:[{id:tree.id,atTime:0,directionX:1,directionZ:0}],crushedProps:arena.features.crushables.map(prop=>prop.id)},0);
+  syncScene(world,{status:'racing',stageTimeSec:2,fallenCacti:[{id:tree.id,atTime:0,directionX:1,directionZ:0}],crushedProps:arena.features.crushables.map(prop=>prop.id)},0);
   check(JSON.stringify(Array.from(cactus.instanceMatrix.array))!==JSON.stringify(upright),'Production world advances cactus simulation');
   check(props.children.every(car=>car.children[2].scale.y<.4),'Production world retains arena crushable simulation');
-  world.userData.updateSimulation({crushedProps:[]},0);
+  syncScene(world,{crushedProps:[]},0);
   equal(Array.from(cactus.instanceMatrix.array),upright,'Actual renderer menu payload restores cacti without a world rebuild');
   check(props.children.every(car=>car.children[2].scale.y===1),'Same menu payload also restores salvage cars');
   disposeTree(world);

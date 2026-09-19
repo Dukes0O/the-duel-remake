@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { registerSceneSystem } from './scene-systems.js';
 
 export const SEA_LEVEL=-15;
 
@@ -63,6 +64,6 @@ export function addCoastalWater(group,course){
     `);
   };
   const foam=new THREE.Mesh(shoreFoamGeometry(course),foamMaterial);foam.name='Breaking shoreline foam';group.add(foam);
-  (group.userData.updates??=[]).push(t=>{time.value=t;});
+  registerSceneSystem(group, { animate: t => { time.value = t; } });
   return {water,foam};
 }

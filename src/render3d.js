@@ -1,7 +1,5 @@
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { COURSE, CARS, DRIVE } from './config.js';
+import { CARS, DRIVE } from './config.js';
 import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage } from './vehicles.js';
 import { buildEnvironment, worldAtExtended, disposeTree } from './world.js';
 import { createDrivingEffects } from './effects.js';
@@ -18,9 +16,8 @@ import { styleGhostVehicle } from './ghost-vehicle.js';
 import { constrainTunnelCamera } from './camera-clearance.js';
 import { applyVehiclePaint } from './vehicle-paint.js';
 import { createRenderQuality } from './render-quality.js';
-import { createAtmosphericSky, SUN_OFFSET } from './atmosphere.js';
-import { resolveLightingSettings } from './lighting-moods.js';
-import { createLocalLighting } from './local-lighting.js';
+import { createSceneLighting } from './scene-lighting.js';
+import { animateScene, syncScene } from './scene-systems.js';
 import { environmentKey } from './environment-key.js';
 import { createRenderWarmup, compileWarmupScene, isRenderWarmupEnabled } from './render-warmup.js';
 import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope } from './vehicle-grounding.js';
@@ -49,26 +46,8 @@ export function attachRenderer(host, app) {
   const ambientShading=createAmbientShading(scene,camera);composer.addPass(ambientShading);
   const bloom=new UnrealBloomPass(new THREE.Vector2(host.clientWidth,host.clientHeight),.20,.55,1.9);
   composer.addPass(bloom);composer.addPass(new OutputPass());
-  const pmrem = new THREE.PMREMGenerator(renderer), room = new RoomEnvironment();
-  const environment = pmrem.fromScene(room, .04);
-  scene.environment = environment.texture; scene.environmentIntensity = .82;
-  room.dispose(); pmrem.dispose();
-  let naturalEnvironment;
-  new RGBELoader().load('/assets/textures/sunset-lighting.hdr',texture=>{
-    if(disposed){texture.dispose();return;}
-    const pm=new THREE.PMREMGenerator(renderer);naturalEnvironment=pm.fromEquirectangular(texture);
-    if(course?.def.theme!=='city')scene.environment=naturalEnvironment.texture;
-    texture.dispose();pm.dispose();host.dataset.environment='sunset-hdri';
-  },undefined,()=>{if(!disposed)host.dataset.environment='studio-fallback';});
-  const hemi = new THREE.HemisphereLight(0xb2cde0, 0x714226, 1.65);
-  const sun = new THREE.DirectionalLight(0xffddac, 3.3);
-  sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
-  Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 240 });
-  sun.shadow.bias = -.00035; sun.shadow.normalBias = .03;
-  scene.add(hemi, sun, sun.target);
-  const quality=createRenderQuality({renderer,composer,ambientShading,sun,host});
-  const atmosphere=createAtmosphericSky(),sky=atmosphere.sky;scene.add(sky);
-  const localLighting=createLocalLighting(scene);
+  const lighting=createSceneLighting({scene,renderer,bloom,host});
+  const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   let course, world, loadedCar, player, rival, chickens, ghost, ghostStyle, worldKey;
   let worldBuildCount=0,firstWorldFrame=false;
   const vehicleAssets=createVehicleAssets();
@@ -97,38 +76,19 @@ export function attachRenderer(host, app) {
   police.add(lamps); scene.add(police);
   const effects = createDrivingEffects(); scene.add(effects.group);
   const explosion = createExplosion(); scene.add(explosion.group);
-  const headlights=[];
-  for(const side of[-1,1]){
-    const light=new THREE.SpotLight(0xe3edff,0,95,.43,.55,1.2);scene.add(light,light.target);headlights.push({light,side});
-  }
-  const lightColor=new THREE.Color(),sunOffset=new THREE.Vector3(SUN_OFFSET.x,SUN_OFFSET.y,SUN_OFFSET.z),targetSun=new THREE.Vector3();
   function retireObject(object,beforeDispose){
     scene.remove(object);
     const release=()=>{beforeDispose?.();disposeTree(object);};
     if(warmup)warmup.releaseWhenIdle(release);else release();
   }
-  function applyLighting(theme,blend=1,tunnel=false){
-    const night=theme==='city'||course?.def.timeOfDay==='night',settings=resolveLightingSettings(theme,{mood:app.lightingMood,night,tunnel});
-    if(!scene.fog)scene.fog=new THREE.Fog(settings.fog,260,1650);
-    scene.fog.color.lerp(lightColor.set(settings.fog),blend);scene.fog.near=THREE.MathUtils.lerp(scene.fog.near,settings.fogNear,blend);scene.fog.far=THREE.MathUtils.lerp(scene.fog.far,settings.fogFar,blend);
-    sky.material.uniforms.top.value.lerp(lightColor.set(settings.top),blend);sky.material.uniforms.horizon.value.lerp(lightColor.set(settings.horizon),blend);sky.material.uniforms.sunStrength.value=THREE.MathUtils.lerp(sky.material.uniforms.sunStrength.value,settings.sunStrength,blend);
-    sunOffset.lerp(targetSun.set(settings.sunOffset.x,settings.sunOffset.y,settings.sunOffset.z),blend);sky.material.uniforms.sunDir.value.copy(sunOffset).normalize();
-    sky.material.uniforms.cloudCover.value=THREE.MathUtils.lerp(sky.material.uniforms.cloudCover.value,settings.cloudCover,blend);sky.material.uniforms.cloudTint.value.lerp(lightColor.setRGB(...settings.cloudTint),blend);
-    hemi.groundColor.lerp(lightColor.set(settings.ground),blend);hemi.intensity=THREE.MathUtils.lerp(hemi.intensity,settings.hemi,blend);sun.intensity=THREE.MathUtils.lerp(sun.intensity,settings.sun,blend);sun.color.lerp(lightColor.set(settings.sunColor),blend);
-    scene.environment=night?environment.texture:naturalEnvironment?.texture||environment.texture;scene.environmentIntensity=THREE.MathUtils.lerp(scene.environmentIntensity,settings.env,blend);renderer.toneMappingExposure=THREE.MathUtils.lerp(renderer.toneMappingExposure,settings.exposure,blend);bloom.strength=settings.bloom;host.dataset.theme=theme;host.dataset.tunnel=String(tunnel);host.dataset.lightingMood=night?'night':app.lightingMood||'clear';
-  }
   function build(next) {
     const buildStart=performance.now();
-    if (world) {
-      // Imported instances share resources with the retained template.
-      for (const child of [...world.children]) if (child.userData.sharedAsset) world.remove(child);
-      retireObject(world);
-    }
+    if (world) retireObject(world);
     course = next;
     worldKey=environmentKey(next);
     host.dataset.worldBuilds=String(++worldBuildCount);
     sceneRevision++;
-    applyLighting(course.def.theme);
+    lighting.apply({course,mood:app.lightingMood});
     world = buildEnvironment(course); scene.add(world);
     chickens=createChickens(course);world.add(chickens.group);
     ambientShading.refresh();
@@ -145,9 +105,9 @@ export function attachRenderer(host, app) {
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
     if(!prepareVehicle(carKey))return;
     if (course !== next) {
-      if(world&&worldKey===environmentKey(next)){course=next;applyLighting(course.def.theme);}
+      if(world&&worldKey===environmentKey(next)){course=next;lighting.apply({course,mood:app.lightingMood});}
       else build(next);
-      world.userData.updateSimulation?.(menu?{crushedProps:[]}:st,0);
+      syncScene(world,menu?{crushedProps:[]}:st,0);
       ready = false;
     }
     if (menu !== lastMenu) { ready = false; lastMenu = menu; }
@@ -162,7 +122,7 @@ export function attachRenderer(host, app) {
     if (!rival) { rival = vehicleAssets.create(carKey,{color:0xbfcace,accent:0x142a36}); scene.add(rival);sceneRevision++;ambientShading.refresh(); }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
     const pp = vehicleGroundPoint(course,distance,lateral);
-    applyLighting(course.themeAt(distance),1-Math.exp(-dt*1.1),!!course.tunnelAt(distance));
+    lighting.apply({course,theme:course.themeAt(distance),mood:app.lightingMood,blend:1-Math.exp(-dt*1.1),tunnel:!!course.tunnelAt(distance)});
     const tall=carKey==='titan_monster';
     const speed=Math.abs(st.speedMph);
     // Keep travel signed for both the live car and recorded reverse ghost poses.
@@ -234,9 +194,8 @@ export function attachRenderer(host, app) {
       camera.position.x = camTarget.x; camera.position.z = camTarget.z;
     }
     if(!menu)constrainTunnelCamera(course,camera.position,distance);
-    ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix(); sky.position.copy(camera.position);
-    atmosphere.update(now/1000);
-    sun.position.set(pp.x+sunOffset.x, pp.y+sunOffset.y, pp.z+sunOffset.z); sun.target.position.set(pp.x, pp.y, pp.z); sun.target.updateMatrixWorld();
+    ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
+    lighting.followCamera(camera,pp,now/1000);
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;
     const ghostPose=!menu&&app.ghostPose?.car===carKey?app.ghostPose:null;
     if(ghostPose&&!ghost){
@@ -268,10 +227,9 @@ export function attachRenderer(host, app) {
     effects.update({ p: pp, course, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now });
     explosion.update(pp,st,st.paused?0:dt);
     if(!st.paused)chickens.update(menu?{status:'menu',s:172,collectedFlocks:[]}:st,menu?now/1000:st.totalTimeSec);
-    world.userData.update?.(now/1000);for(const update of world.userData.updates||[])update(now/1000);
-    world.userData.updateSimulation?.(menu?{crushedProps:[]}:st,st.paused?0:dt);
-    for(const {light,side}of headlights){const heading=player.rotation.y,c=Math.cos(heading),sn=Math.sin(heading);light.intensity=course.tunnelAt(distance)?125:course.def.timeOfDay==='night'||course.themeAt(distance)==='city'?78:0;light.position.set(pp.x+c*side*.65+sn*1.8,pp.y+(tall?2.2:.72),pp.z-sn*side*.65+c*1.8);light.target.position.set(pp.x+sn*40,pp.y-1,pp.z+c*40);light.target.updateMatrixWorld();}
-    localLighting.update({course,position:pp,police,now,night:course.def.timeOfDay==='night'||course.themeAt(distance)==='city',high:app.ambientOcclusionEnabled!==false,menu});
+    animateScene(world,now/1000);
+    syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);
+    lighting.updateVehicles({course,position:pp,player,police,distance,tall,now,high:app.ambientOcclusionEnabled!==false,menu});
     host.dataset.driver=player.userData.driver?'ready':'absent';
     quality.update(app.ambientOcclusionEnabled!==false);host.dataset.ambientShading=String(ambientShading.enabled);
     if(warmup){
@@ -318,11 +276,11 @@ export function attachRenderer(host, app) {
     return { distinctColors: colors.size, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles };
   } };
   return { prepareVehicle, retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); }, dispose() {
-    if(disposed)return;disposed=true;cancelAnimationFrame(raf);window.removeEventListener('resize',resize);
+    if(disposed)return;disposed=true;lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
-    const release=()=>{effects.dispose();explosion.dispose();atmosphere.dispose();localLighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);sun.dispose();environment.dispose();naturalEnvironment?.dispose();renderer.dispose();};
+    const release=()=>{effects.dispose();explosion.dispose();lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
     if(warmup)warmup.dispose(release);else release();
   } };
 }

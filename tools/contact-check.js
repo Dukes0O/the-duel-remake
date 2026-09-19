@@ -1,7 +1,7 @@
 // Isolated visual fixture: replace storage BEFORE importing any game module.
 // If the override fails, module execution stops without loading a real career.
-const memory=new Map();
-Object.defineProperty(window,'localStorage',{value:{getItem:key=>memory.get(String(key))??null,setItem:(key,value)=>memory.set(String(key),String(value)),removeItem:key=>memory.delete(String(key)),clear:()=>memory.clear()}});
+import {installIsolatedStorage} from './qa-storage.js';
+const memory=installIsolatedStorage();
 const {app}=await import('../src/main.js');
 app.stop();app.audio.setMuted(true);
 const style=document.createElement('style');

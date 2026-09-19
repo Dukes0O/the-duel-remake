@@ -11,6 +11,8 @@ export function createAmbientShading(scene,camera){
   pass.refresh=()=>{excluded=[];scene.traverse(object=>{if(!object.isMesh)return;const materials=Array.isArray(object.material)?object.material:[object.material];if(materials.some(m=>m?.transparent||m?.alphaTest>0)||object.userData.excludeAmbientOcclusion||object.name==='Atmospheric sky')excluded.push(object);});};
   const renderOverride=pass.renderOverride.bind(pass);
   pass.renderOverride=(...args)=>{const visibility=excluded.map(object=>object.visible);excluded.forEach(object=>object.visible=false);try{renderOverride(...args);}finally{excluded.forEach((object,index)=>object.visible=visibility[index]);}};
-  const dispose=pass.dispose.bind(pass);pass.dispose=()=>{dispose();pass.blendMaterial.dispose();};
+  // Three r171 omits these two shader materials from GTAOPass.dispose().
+  const dispose=pass.dispose.bind(pass);let disposed=false;
+  pass.dispose=()=>{if(disposed)return;disposed=true;dispose();pass.gtaoMaterial.dispose();pass.blendMaterial.dispose();};
   return pass;
 }

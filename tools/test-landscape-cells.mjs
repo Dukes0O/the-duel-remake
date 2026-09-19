@@ -1,3 +1,4 @@
+import {animateScene} from '../src/scene-systems.js';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import * as THREE from 'three';
@@ -109,7 +110,7 @@ try{
       }
       originals.forEach((mesh,index)=>{check(mesh.castShadow===(index===2),'Only boulders cast shadows');check(mesh.receiveShadow===(index<3),'Original receiver flags remain unchanged');});
       const meadow=group.children.find(mesh=>mesh.userData.landscapeCell.sway>0);
-      if(meadow){const shader={uniforms:{},vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader};meadow.material.onBeforeCompile(shader);group.userData.updates.forEach(update=>update(4.2));check(shader.uniforms.meadowTime.value===4.2&&shader.vertexShader.includes('instanceMatrix[3].x*.17'),'The original shared world-phased wind keeps updating');}
+      if(meadow){const shader={uniforms:{},vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader};meadow.material.onBeforeCompile(shader);animateScene(group,4.2);check(shader.uniforms.meadowTime.value===4.2&&shader.vertexShader.includes('instanceMatrix[3].x*.17'),'The original shared world-phased wind keeps updating');}
       old.push(...originals);while(group.children.length)scene.add(group.children[0]);
     }
     equal(JSON.stringify(course.features.obstacles),obstacles,'Physical rocks and all course placements remain unchanged');scene.updateMatrixWorld(true);

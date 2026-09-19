@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { registerSceneSystem } from './scene-systems.js';
 
 function bannerAtlas(){
   if(typeof document==='undefined'){
@@ -61,8 +62,6 @@ export function addCheckpointGates(world,course){
       material.color.set(active?0x84e0b8:0xd8a660);material.emissive.set(active?0x24ad69:0x9a5120);material.emissiveIntensity=active?1.1:.2;
     });
   };
-  (world.userData.updates??=[]).push(t=>{time.value=t;});
-  const previous=world.userData.updateSimulation;
-  world.userData.updateSimulation=(state,dt)=>{previous?.(state,dt);group.userData.updateSimulation(state);};
+  registerSceneSystem(world, { animate: t => { time.value = t; }, sync: group.userData.updateSimulation });
   world.add(group);return group;
 }

@@ -107,9 +107,13 @@ npm run qa:build
 npm run qa:preview
 ```
 
-The QA build runs on port 5175 and includes `/tools/visual-check.html`. Its visible controls inspect tunnels, car models, damage, arena jumps and scenery. It is excluded from the normal release build.
+The QA build runs on port 5175 and includes `/tools/visual-check.html`. Its visible controls inspect tunnels, car models, damage, arena jumps and scenery. Test players and settings use temporary page memory, never real career storage. Reloading clears them. QA pages are excluded from the normal release build.
+
+The test runner keeps the established suite order and automatically finds new `tools/test-*.mjs` files. Use `npm test -- --list` to list suites, or `npm test -- --filter scene --filter world` for a focused run. The default core suite includes the expensive campaign matrix; a deliberately skipped matrix must be reported separately.
 
 `src/course.js` is the shared route, surface and scenery source. `src/game.js` owns simulation and race validation; `src/collision.js` handles swept contacts. `src/progression.js` and `src/leaderboard.js` own local careers and records. `src/app.js` connects input, audio and fixed-step updates. The renderer reads simulation state without changing race rules.
+
+See [scene architecture](docs/ARCHITECTURE.md) for module ownership, animation and cleanup contracts, safe visual fixtures, and the next graphics-work plan.
 
 `?warmup=1` opts into experimental asynchronous scene-shader preparation on supported browsers. It holds simulation until a frame is ready, but shadow/post-processing work can still delay the first frame. It is off by default.
 

@@ -14,11 +14,11 @@ The current earned-car source is `src/unlock-vehicles.js`. Run `npm run assets:u
 | `src/unlock-vehicles.js` | Distinct Rally, Muscle, Prototype and Monster bodies | Original runtime factories and portable exports |
 | `src/vehicles.js` | Runtime traffic/police sedans and shared damage support | Original geometry, material batches and articulated wheels; no player fallback |
 | `src/vehicle-assets.js` | Model selection and import state | Shared by menu, player, rival and ghost |
-| `public/assets/models/car-concept.glb` | Aurora body with embedded surface maps and cabin | Eric Chadwick / Darmstadt Graphics Group, CC BY 4.0; see `public/assets/models/CREDITS.md` |
-| `src/hero-vehicle.js` | Aurora GLB adaptation, material batching, wheel pivots and damage | Loaded only when Aurora is selected |
+| `public/assets/models/car-concept.glb` | Shared Heritage/Aurora body with embedded surface maps and cabin | Eric Chadwick / Darmstadt Graphics Group, CC BY 4.0; see `public/assets/models/CREDITS.md` |
+| `src/hero-vehicle.js` | Heritage sport and Aurora GT adaptation, material batching, wheel pivots and damage | Shared source import when either car is selected |
 | `public/assets/textures/ground-*.jpg` | Scanned ground color, normal and roughness | Poly Haven Gravelly Sand, CC0 |
 | `public/assets/textures/sunset-lighting.hdr` | Natural reflection lighting | Poly Haven, CC0; see texture credits |
-| `src/world.js` and `src/scenery-detail.js` | Current roadside stations and scenery | Live environment mesh factories |
+| `src/world.js`, `src/world-surfaces.js`, `src/world-props.js` and feature modules | Current terrain, roads, stations and scenery | Ordered composition and live environment mesh factories; see `docs/ARCHITECTURE.md` |
 | `tools/export-classic-vehicles.mjs` and `tools/export-unlock-vehicles.mjs` | Portable current-model GLBs for Blender | Three.js GLTFExporter |
 
 The image sheet guides the coupe's wide wedge body, dark glazing, rear louvers, side intakes, circular rear lamps and five-spoke wheels. Its cream stucco, oxidized red canopy and petroleum-blue windows guide the station materials. It is a concept reference; the small labels generated inside it are not game specifications.

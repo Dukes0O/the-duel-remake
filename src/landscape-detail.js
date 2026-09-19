@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { registerSceneSystem } from './scene-systems.js';
 import { makeRng } from './rng.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createDesertStoneMaterial } from './desert-detail.js';
@@ -71,9 +72,12 @@ export function addLandscapeDetail(group,course,alpine){
     const geometry=mergeGeometries(parts);parts.forEach(g=>g.dispose());
     const map=new THREE.TextureLoader().load('/assets/textures/meadow-grass.png');map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4;
     const meadow=new THREE.MeshStandardMaterial({map,color:0xb9ccb7,roughness:1,alphaTest:.5,side:THREE.DoubleSide});
+    // All shader variants share one clock. Recompiling the material must not
+    // append another per-frame callback or retain an obsolete shader program.
+    const meadowTime={value:0};
+    registerSceneSystem(group, { animate: t => { meadowTime.value = t; } });
     meadow.onBeforeCompile=shader=>{
-      shader.uniforms.meadowTime={value:0};shader.uniforms.meadowUpBias={value:.85};shader.uniforms.meadowRootShade={value:.84};
-      (group.userData.updates??=[]).push(t=>{shader.uniforms.meadowTime.value=t;});
+      shader.uniforms.meadowTime=meadowTime;shader.uniforms.meadowUpBias={value:.85};shader.uniforms.meadowRootShade={value:.84};
       shader.vertexShader=shader.vertexShader
         .replace('#include <common>','#include <common>\nuniform float meadowTime;\nvarying float vMeadowHeight;')
         .replace('#include <begin_vertex>','#include <begin_vertex>\nvMeadowHeight=uv.y;\ntransformed.x+=max(0.,position.y)*max(0.,position.y)*sin(meadowTime*1.5+instanceMatrix[3].x*.17+instanceMatrix[3].z*.11)*.14;');
@@ -96,12 +100,12 @@ nonPerturbedNormal=normal;`);
     tuft.dispose();plants.dispose();
   }else instances(tuft,plants,Math.round((desert?3500:1200)*fraction),(i,o)=>{const s=sampleS(),off=(i%2?1:-1)*rng.range(8.5,38),p=foliagePoint(s,off);o.position.set(p.x,p.y,p.z);o.rotation.y=rng.range(0,6.28);o.scale.setScalar(rng.range(.4,1.4));},'plants',{kind:'foliage'});
   // Gravel and fallen rocks add a readable shoulder at driving speed.
-  const grit=instances(new THREE.IcosahedronGeometry(1,0),new THREE.MeshStandardMaterial({color:alpine?0xb1aca1:0xd5b891,roughness:1}),Math.round(1500*fraction),(i,o)=>{
+  instances(new THREE.IcosahedronGeometry(1,0),new THREE.MeshStandardMaterial({color:alpine?0xb1aca1:0xd5b891,roughness:1}),Math.round(1500*fraction),(i,o)=>{
     const p=foliagePoint(sampleS(),(i%2?1:-1)*rng.range(7.25,13.5));o.position.set(p.x,p.y+.04,p.z);o.scale.set(rng.range(.05,.3),rng.range(.035,.15),rng.range(.08,.4));o.rotation.set(rng.range(0,3),rng.range(0,6),0);},'stone',{kind:'grit'});
   const rockTex=new THREE.TextureLoader().load(desert?'/assets/textures/red-sandstone.png':'/assets/textures/alpine-granite.png');rockTex.colorSpace=THREE.SRGBColorSpace;rockTex.wrapS=rockTex.wrapT=THREE.RepeatWrapping;rockTex.repeat.set(2,2);rockTex.anisotropy=8;
   const stone=desert?createDesertStoneMaterial(rockTex):new THREE.MeshStandardMaterial({color:coolStone?0xc1c6c2:0x9ca29e,map:rockTex,bumpMap:rockTex,bumpScale:.24,roughness:1});
   const boulders=course.features.rocks.filter(r=>!r.outcrop);
-  const rock=instances(new THREE.DodecahedronGeometry(1,1),stone,boulders.length,(i,o)=>{
+  instances(new THREE.DodecahedronGeometry(1,1),stone,boulders.length,(i,o)=>{
     const r=boulders[i],p=point(r.s,r.off);o.position.set(p.x,p.y+.1,p.z);o.scale.set(...r.scale);o.rotation.set(0,p.heading+r.angle,0);},'stone',{kind:'boulders',castShadow:true});
   // Delineator posts and reflectors reinforce scale and make corners readable.
   const postLocations=[];for(const sec of sections)for(let s=sec.start+15;s<sec.end;s+=30)if(!course.tunnelAt(s))for(const side of[-1,1])postLocations.push({s,side});

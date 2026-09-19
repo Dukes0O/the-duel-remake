@@ -1,6 +1,6 @@
 // Isolated browser review. Never reads or writes a real career.
-const memory=new Map();
-Object.defineProperty(window,'localStorage',{value:{getItem:key=>memory.get(String(key))??null,setItem:(key,value)=>memory.set(String(key),String(value)),removeItem:key=>memory.delete(String(key)),clear:()=>memory.clear()}});
+import {installIsolatedStorage} from './qa-storage.js';
+const memory=installIsolatedStorage();
 const {app}=await import('../src/main.js');
 const panel=document.createElement('aside');panel.setAttribute('aria-label','Temporary reverse review');
 panel.style.cssText='position:fixed;left:12px;bottom:12px;z-index:999;background:#101d21;color:white;padding:10px;font:14px system-ui;max-width:75vw';

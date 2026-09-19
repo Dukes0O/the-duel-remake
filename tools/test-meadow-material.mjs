@@ -1,3 +1,4 @@
+import {animateScene} from '../src/scene-systems.js';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {inflateSync} from 'node:zlib';
@@ -76,7 +77,7 @@ try{
     }
     check(maxSideDifference<1e-12&&maxCameraDifference<1e-12,`${theme}: front/back diffuse bases match and remain stable as the camera moves`);
     check(newMaximum-newMinimum<(oldMaximum-oldMinimum)*.4,`${theme}: crossed-card sunlight contrast is materially reduced`);
-    for(const time of[0,1.25,100]){group.userData.updates.forEach(update=>update(time));check(shader.uniforms.meadowTime.value===time,'shared wind time still updates');}
+    for(const time of[0,1.25,100]){animateScene(group,time);check(shader.uniforms.meadowTime.value===time,'shared wind time still updates');}
     check(hash(cells)===before&&JSON.stringify(course.features)===physicalBefore,'shader compilation and animation cannot move source geometry, colors, instance transforms or physical scenery');
     check(group.children.filter(mesh=>!cells.includes(mesh)).every(mesh=>!mesh.material.onBeforeCompile.toString().includes('meadowUpBias')),'rocks, posts and other materials do not inherit the grass lighting change');
     console.log(`${theme}: flat-card sunlight spread ${(oldMaximum-oldMinimum).toFixed(3)} -> ${(newMaximum-newMinimum).toFixed(3)}; front/back difference ${maxSideDifference}; camera error ${maxCameraDifference.toExponential(2)}.`);

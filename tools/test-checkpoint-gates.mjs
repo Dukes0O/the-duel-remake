@@ -1,3 +1,4 @@
+import {registerSceneSystem,animateScene,syncScene} from '../src/scene-systems.js';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {Course} from '../src/course.js';
@@ -16,11 +17,11 @@ globalThis.document={createElement(tag){
 }};
 const point=new THREE.Vector3(),other=new THREE.Vector3(),normal=new THREE.Vector3(),ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0);
 try{
-  const empty=new THREE.Group();equal(addCheckpointGates(empty,{features:{rushGates:[]}}),null);equal(empty.children.length,0);check(!empty.userData.updates,'Non-checkpoint courses receive no wind callback');
+  const empty=new THREE.Group();equal(addCheckpointGates(empty,{features:{rushGates:[]}}),null);equal(empty.children.length,0);animateScene(empty,1);syncScene(empty,{},0);check(!empty.userData.updates,'No legacy callback arrays are created');
   const def=COURSE.find(course=>course.id==='timberline-rush');check(!!def&&def.checkpointRush.gatesPerLap===6,'The event has six gates per lap');
   for(const seed of[1989,42,17]){
     const course=new Course(def,seed),features=JSON.stringify(course.features.rushGates),obstacles=JSON.stringify(course.features.obstacles),world=new THREE.Group();
-    let previousCalls=0,lastState,lastDt;world.userData.updateSimulation=(state,dt)=>{previousCalls++;lastState=state;lastDt=dt;};
+    let previousCalls=0,lastState,lastDt;registerSceneSystem(world,{sync:(state,dt)=>{previousCalls++;lastState=state;lastDt=dt;}});
     const gates=addCheckpointGates(world,course);world.updateMatrixWorld(true);
     equal(course.features.rushGates.map(gate=>gate.index),[0,1,2,3,4,5]);equal(gates.children.length,18,'Each gate has two physical supports and one clear overhead frame');
     const road=new THREE.Mesh(strip(course,s=>-course.roadHalfWidthAt(s),s=>course.roadHalfWidthAt(s),.035),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));road.updateMatrixWorld(true);
@@ -79,13 +80,13 @@ try{
     equal(map.image.labels.map(label=>label.text),['CHECKPOINT  01','CHECKPOINT  02','CHECKPOINT  03','CHECKPOINT  04','CHECKPOINT  05','CHECKPOINT  06']);
     map.image.labels.forEach((label,index)=>check(label.y>index*128&&label.y<(index+1)*128&&label.x===1024,'Each label is centered within its atlas tile'));
     const shaders=[0,1].map(()=>({uniforms:{},vertexShader:THREE.ShaderLib.standard.vertexShader}));shaders.forEach(shader=>material.onBeforeCompile(shader));
-    equal(shaders[0].uniforms.gateTime,shaders[1].uniforms.gateTime,'Shader programs share one wind clock');world.userData.updates.forEach(update=>update(12.25));equal(shaders[0].uniforms.gateTime.value,12.25);
+    equal(shaders[0].uniforms.gateTime,shaders[1].uniforms.gateTime,'Shader programs share one wind clock');animateScene(world,12.25);equal(shaders[0].uniforms.gateTime.value,12.25);
     for(let next=0;next<=13;next++){
-      const state={checkpointRush:{nextGate:next,total:12}},before=previousCalls;world.userData.updateSimulation(state,1/120);
+      const state={checkpointRush:{nextGate:next,total:12}},before=previousCalls;syncScene(world,state,1/120);
       equal(previousCalls,before+1,'Existing scenery update callback remains composed');equal(lastState,state);equal(lastDt,1/120);
       signals.forEach((signal,index)=>{const active=next<12&&index===next%6;equal(signal.emissiveIntensity,active?1.1:.2,'Highlight follows the absolute nextGate index across both laps');equal(signal.color.getHex(),active?0x84e0b8:0xd8a660);});
     }
-    world.userData.updateSimulation({checkpointRush:{nextGate:6,total:6}},0);check(signals.every(signal=>signal.emissiveIntensity===.2),'Completed events do not light an extra lap gate');
+    syncScene(world,{checkpointRush:{nextGate:6,total:6}},0);check(signals.every(signal=>signal.emissiveIntensity===.2),'Completed events do not light an extra lap gate');
     equal(JSON.stringify(course.features.rushGates),features);equal(JSON.stringify(course.features.obstacles),obstacles,'Renderer cannot change gate positions or colliders');
     const resources=new Set();world.traverse(mesh=>{if(mesh.geometry)resources.add(mesh.geometry);if(mesh.material){resources.add(mesh.material);for(const value of Object.values(mesh.material))if(value?.isTexture)resources.add(value);}});
     const disposed=new Map([...resources].map(resource=>[resource,0]));for(const resource of resources)resource.addEventListener('dispose',()=>disposed.set(resource,disposed.get(resource)+1));

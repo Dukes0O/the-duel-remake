@@ -54,7 +54,7 @@ async function legacyModule(file){
   });
   return import(dataUrl(source));
 }
-const [legacyWorld,legacyMountain,legacyCity]=await Promise.all(['world.js','mountain-landscape.js','city-skyline.js'].map(legacyModule));
+const [legacyWorld,legacyMountain,legacyCity]=await Promise.all(['world-surfaces.js','mountain-landscape.js','city-skyline.js'].map(legacyModule));
 const benchmarks=[];
 for(const def of COURSE){
   const course=new Course(def,1989),samplesBefore=JSON.stringify(course.samples),featuresBefore=JSON.stringify(course.features);

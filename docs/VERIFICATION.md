@@ -1,8 +1,26 @@
 # Remake verification
 
-Checkpoint: 19 September 2026. The latest vehicle, reward and route iteration is described first. All later sections preserve earlier checkpoints; their counts and screenshots do not describe the latest geometry.
+Checkpoint: 19 September 2026. The latest checked update is described first. Later sections preserve earlier checkpoints; their counts and screenshots are historical evidence.
 
-## Jump-height HUD — latest follow-up
+## Scene architecture cleanup — latest follow-up
+
+The rendering refactor separates ordered world composition, sampled surfaces, roadside structures and scene lighting. Water, meadow wind, checkpoint signals, fallen cacti and crushed arena props now use one explicit scene-system interface. Ambient and simulation clocks remain separate. No vehicle design, route geometry, physics, reward, account or save-format change is part of this update. See [architecture and extension plan](ARCHITECTURE.md).
+
+Removed confirmed dead renderer callbacks, an unused import, an unwritten object-level shared-asset path, unreachable texture-generation fallback code and unused local bindings. Current model sources, exports, credits, references and historical save/layout compatibility remain. No additional obsolete binary assets were found, so none were deleted.
+
+The cleanup also fixes repeated grass shader compilation retaining extra update callbacks and Three r171's undisposed GTAO shader material. Lighting has one resource owner; late HDR results cannot allocate resources after retirement, while in-flight shader preparation keeps its deferred cleanup. Scene-system cleanup is ordered and idempotent, retires even initially static worlds, and completes other hooks and graph resource cleanup before reporting a cleanup error.
+
+All **85/85 suites pass in 325.10 seconds**, using `DUEL_SKIP_CAMPAIGNS=1`. The 448 non-campaign core checks passed; the expensive core campaign matrices were not rerun. The original 80 suites retain their established order, and new suites are discovered automatically. Added checks: 19 complete-world signatures/immutability checks across all nine events, 1,060 lighting/lifecycle checks, 16 scene-system checks, 24 QA-storage checks and 85 test-runner checks. Geometry/index bytes, transforms, material/texture properties, instance matrices/colors, object order and resource sharing match the pre-extraction world signatures exactly. Existing F42/Heritage input-only replays also retain their previous exact motion signature.
+
+App-based QA pages share a fail-closed memory-only storage helper installed before importing App/main. The older visual-check page now has the same protection and visibly labels its temporary data; reload clears that data. No real careers were read or modified by the test fixtures.
+
+Browser review covered Golden coast, Overcast alpine, tunnel headlights, night harbor, a checkpoint gate and the monster arena. Arena crush state changed from one to zero on a new sample while the cached world-build count stayed at five. Performance mode switched to 1,024-pixel shadows. No browser warnings or errors were observed. These are visual/behavior checks, not a controlled frame-rate benchmark. The live tab was left unchanged at Spikyferns' menu, showing 200 CR, Harbor & Highlands and Titan Monster selected.
+
+Production and QA builds pass. The unchanged live address `http://localhost:5174/` serves `index-B3qtBbvL.js`, verified by HTTP response. The existing approximately 941 kB rendering-chunk warning remains. Refresh from the game menu when ready; no live refresh, race, purchase or account edit was performed for this refactor.
+
+After verification, generated `.qa-dist` was removed and the temporary QA browser tab/server were closed. No one-off probe files or processes remain. `dist` remains because it serves the game; `node_modules` and reusable tests/docs remain for development. Two tiny redirected logs are locked by the active preview server and are retained until its next normal stop. The server still returns HTTP 200 after cleanup.
+
+## Jump-height HUD — earlier follow-up
 
 An airborne car now shows its actual ground clearance in metres, rounded to one decimal place, above the speedometer. The same readout tracks the current jump's peak. On landing it shows `JUMP PEAK` for two simulation seconds, then hides. Pause freezes the timer; menu, restart, new stage and crash/recovery clear stale values. This is presentation-only: driving, jump scoring, records and saved careers are unchanged. The continuously changing number is not an ARIA live region.
 

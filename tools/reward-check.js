@@ -1,7 +1,7 @@
 // Developer-only fixture. Replace storage before importing the real UI so no
 // career, wallet, leaderboard, preferences or interrupted-race record is touched.
-const memory=new Map();
-Object.defineProperty(window,'localStorage',{value:{getItem:key=>memory.get(String(key))??null,setItem:(key,value)=>memory.set(String(key),String(value)),removeItem:key=>memory.delete(String(key)),clear:()=>memory.clear()}});
+import {installIsolatedStorage} from './qa-storage.js';
+const memory=installIsolatedStorage();
 const {app,refreshRaceSetup}=await import('../src/main.js');
 const controls=document.createElement('details');controls.open=true;
 controls.style.cssText='position:fixed;left:12px;bottom:8px;z-index:999;max-width:calc(100vw - 24px);padding:8px;background:#0c151a;color:white';
