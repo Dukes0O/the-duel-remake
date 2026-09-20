@@ -20,6 +20,8 @@ Keep the current Three.js game and its deterministic simulation. Extend the scen
 | `scene-systems.js` | Per-world animation, simulation-state synchronization and cleanup hooks | Explicit callbacks instead of chained `userData` handlers |
 | `scene-lighting.js` | Sky, environment maps, global/local lights and headlights | Owns asynchronous lighting loads and their GPU resources |
 | `render3d.js` | Frame orchestration, vehicle views, cameras, post-processing and readiness | Reads state, calls visual systems, draws a frame |
+| `scene-presentation.js`, `render-quality.js` | Direct Performance rendering and High's composed effects | Same scene/shadows; only High resizes and uses the effect targets |
+| `adaptive-resolution.js` | Bounded, slow-changing Performance render scale | Learn from visible driving frames, never loading/paused intervals; no gameplay or save writes |
 | `pacific-coast.js`, `coast-lighthouse.js` | Pacific-only shoreline rocks, surf and lighthouse shell | No route RNG, feature-list, collider or terrain changes |
 | `frame-metrics.js` | Bounded frame-interval and CPU-render summaries | CPU submission time is not GPU time; keep load and hidden gaps separate |
 | `render-warmup.js` | Structural shader preparation and safe retirement | Gate world/car/quality changes, never transient race activity; only presentation releases the clock |
@@ -55,6 +57,8 @@ Remove-Item Env:DUEL_SKIP_CAMPAIGNS
 Always report that skip. Do not describe the result as a new full campaign-matrix run.
 
 App-based QA pages install `tools/qa-storage.js` before importing the App. Their players, balances and settings live only in page memory and disappear on reload. The helper fails closed if it cannot isolate storage. It never reads or copies real careers. The vehicle-only showroom does not create an App or use saves.
+
+Use `tools/menu-check.html` → **Start driving performance sample** → **Measure frame pacing** for actual production HUD and mirror costs. The scene-only visual page does not load production mirror-frame styling. Reports include the browser's exposed GPU, active pipeline, start/end resolution scale and mirror availability. Compare identical scene/view/quality settings, keep other heavy tests idle, and do not confuse GPU pass time with whole-frame delivery or startup time.
 
 `test-world-composition.mjs` preserves pre-refactor geometry, material, texture, instance and object-order signatures for all nine events. These are change detectors, not values to regenerate blindly. An intentional art revision needs a reviewed visual difference and matching physical/clearance checks before changing its expected signatures.
 

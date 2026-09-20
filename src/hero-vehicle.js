@@ -112,7 +112,10 @@ function instantiate(parts, wheelCenters, {color, kind}) {
   const contact = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 5.5), new THREE.ShaderMaterial({
     transparent: true, depthWrite: false,
     vertexShader: 'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader: 'varying vec2 vUv; void main(){vec2 p=(vUv-.5)*2.;float a=exp(-pow(p.x*1.8,4.)-pow(p.y*1.8,6.))*.38;gl_FragColor=vec4(.015,.02,.025,a);}',
+    fragmentShader: `varying vec2 vUv; void main(){vec2 p=(vUv-.5)*2.;float a=exp(-pow(p.x*1.8,4.)-pow(p.y*1.8,6.))*.38;gl_FragColor=vec4(.015,.02,.025,a);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`,
   }));
   contact.rotation.x = -Math.PI / 2; contact.position.y = -.015; vehicle.add(contact); data.contactShadow = contact;
   data.heroAsset = true;

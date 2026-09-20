@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {SMAAPass} from 'three/addons/postprocessing/SMAAPass.js';
 import {createAmbientShading} from '../src/ambient-shading.js';
-import {compileWarmupPostprocessing,compileWarmupPipeline} from '../src/render-warmup.js';
+import {compileWarmupPostprocessing,compileWarmupPipeline,compileWarmupScene} from '../src/render-warmup.js';
 
 let checks=0;
 const equal=(a,b,label)=>{assert.deepEqual(a,b,label);checks++;};
@@ -58,6 +59,23 @@ function actualPassDispatch(f){
   });
 }
 try{
+  {
+    const f=fixture(false),quads=f.composer.passes.map(p=>p.fsQuad?.material),screenFlags=f.composer.passes.map(p=>p.renderToScreen);
+    try{
+      await compileWarmupScene(f.renderer,f.scene,f.camera,null);
+      equal(f.calls.length,1,'Direct Performance preparation submits only the driving scene');
+      equal([f.calls[0].object,f.calls[0].camera,f.calls[0].target],[f.scene,f.camera,null],'Direct preparation uses the native canvas tone/colour variant');
+      equal(f.getTarget(),[f.original,4,2],'Direct preparation restores previous target, face and mip');
+      equal(f.composer.passes.map(p=>p.fsQuad?.material),quads,'Direct preparation never selects fullscreen materials');
+      equal(f.composer.passes.map(p=>p.renderToScreen),screenFlags,'Direct preparation never mutates pass routing');
+      equal(f.output.material.defines,{},'Direct preparation does not compile the unused Output shader');
+      const failure=new Error('direct scene failed');f.renderer.compileAsync=()=>{throw failure;};
+      assert.throws(()=>compileWarmupScene(f.renderer,f.scene,f.camera,null),error=>error===failure);checks++;
+      equal(f.getTarget(),[f.original,4,2],'Failed direct preparation restores renderer target state');
+    }finally{f.retire();}
+    const source=readFileSync(new URL('../src/render3d.js',import.meta.url),'utf8');
+    check(/compilation=high\?compileWarmupPipeline\(renderer,scene,camera,composer\):compileWarmupScene\(renderer,scene,camera,null\)/.test(source),'Production Performance selects direct preparation instead of the composite pipeline');
+  }
   for(const high of [true,false]){
     const f=fixture(high),buffers=[f.composer.readBuffer,f.composer.writeBuffer],quads=f.composer.passes.map(p=>p.fsQuad?.material),screenFlags=f.composer.passes.map(p=>p.renderToScreen);
     try{
@@ -99,7 +117,7 @@ try{
     try{
       const error=new Error('scene rejected'),work=compileWarmupPipeline(f.renderer,f.scene,f.camera,f.composer),observed=work.then(()=>{settled=true;},reason=>{settled=true;equal(reason,error);});
       sceneWork.reject(error);await flush();check(!settled,'Pipeline failure retains all submitted fullscreen materials until native work settles');
-      postWork.resolve();await observed;equal(calls,10,'Performance pipeline submits one scene and nine fullscreen materials');
+      postWork.resolve();await observed;equal(calls,10,'Composite pipeline with AO disabled submits one scene and nine fullscreen materials');
       equal(f.getTarget(),[f.original,4,2]);
     }finally{f.retire();}
   }

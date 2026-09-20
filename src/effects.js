@@ -61,7 +61,10 @@ export function createDrivingEffects() {
         float grooves=.82+.18*sin(vUv.x*70.);
         float tread=.5+.5*smoothstep(.32,.5,fract(vUv.y*9.+abs(vUv.x-.5)*2.5));
         vec3 tint=mix(vec3(.035,.026,.02),vec3(.13,.08,.035),vDirt);
-        gl_FragColor=vec4(tint,vAlpha*edge*mix(grooves,tread,vDirt));}`,
+        gl_FragColor=vec4(tint,vAlpha*edge*mix(grooves,tread,vDirt));
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
   });
   markMaterial.forceSinglePass = true;
   const marks = new THREE.InstancedMesh(markGeometry, markMaterial, markCount);

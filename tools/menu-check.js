@@ -1,6 +1,7 @@
 // Real production UI with disposable in-memory careers. Never import this
 // entry from production; it cannot read or modify the origin's saved players.
 import {installIsolatedStorage} from './qa-storage.js';
+import {installPerformanceReview} from './performance-review.js';
 installIsolatedStorage();
 const {app,refreshRaceSetup}=await import('../src/main.js');
 const {CARS}=await import('../src/config.js');
@@ -35,4 +36,11 @@ const mirror=document.createElement('button');mirror.textContent='Freeze rear-vi
   cancelAnimationFrame(frozenPaint);frozenPaint=requestAnimationFrame(paint);
 };panel.append(mirror);
 const resume=document.createElement('button');resume.textContent='Return to menu and resume test';resume.onclick=()=>{cancelAnimationFrame(frozenPaint);app.returnToMenu();app.start();refreshRaceSetup();};panel.append(resume);
+const drive=document.createElement('button');drive.textContent='Start driving performance sample';drive.onclick=()=>{
+  if(app.duel.state.status!=='menu')return;
+  app.startCampaign({car:app.getRaceChoices().car,startStage:0,mode:'timetrial',difficulty:'casual'});
+  app.autopilot=true;app._scriptedCrashDone=true;app.start();panel.open=false;
+};panel.append(drive);
+const performanceReview=installPerformanceReview(app,document.querySelector('#view3d'),panel,{hudSource:'production HUD with active rear-view mirror'});
+if(import.meta.hot)import.meta.hot.dispose(()=>performanceReview.dispose());
 document.body.append(panel);

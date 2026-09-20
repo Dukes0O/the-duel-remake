@@ -16,10 +16,12 @@ import { styleGhostVehicle } from './ghost-vehicle.js';
 import { constrainTunnelCamera } from './camera-clearance.js';
 import { applyVehiclePaint } from './vehicle-paint.js';
 import { createRenderQuality } from './render-quality.js';
+import { createAdaptiveResolution } from './adaptive-resolution.js';
+import { renderMainView } from './scene-presentation.js';
 import { createSceneLighting } from './scene-lighting.js';
 import { animateScene, syncScene } from './scene-systems.js';
 import { environmentKey } from './environment-key.js';
-import { createRenderWarmup, compileWarmupPipeline, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
+import { createRenderWarmup, compileWarmupPipeline, compileWarmupScene, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
 import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose } from './vehicle-grounding.js';
 import { createFrameMetrics } from './frame-metrics.js';
 import { createRearView } from './rear-view.js';
@@ -29,13 +31,16 @@ export function attachRenderer(host, app) {
   const rendererAttachedAt=performance.now();let firstPresentation=true;
   let disposed=false,raf,sceneRevision=0,warmupTicket=null,warmupKey=null,readinessClaimed=false;
   const frameMetrics=createFrameMetrics();
+  const adaptiveResolution=createAdaptiveResolution();
   let metricRevision=-1,metricEnvironment=null,metricQuality=null,metricRatio=null,metricMenu=null,metricCamera=null,metricMood=null,metricInspection=null,metricCar=null;
   function resetFrameMetrics(){
     frameMetrics.reset();
     // Clear stale readings on a real configuration change, not every frame.
     for(const key of ['frameSamples','frameWindowMs','frameMsP50','frameMsP95','frameMsMax','frameJankCount','cpuRenderMsP50','cpuRenderMsP95','cpuRenderMsMax','fps'])host.dataset[key]='0';
   }
-  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  // High uses SMAA; Performance keeps its original unsmoothed edge treatment.
+  // Canvas MSAA would add a new full-scene cost on the direct rendering path.
+  const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
   const warmupRequested=isRenderWarmupEnabled(window.location.search),parallelShaderCompile=renderer.extensions.has('KHR_parallel_shader_compile');
   const warmup=warmupRequested&&parallelShaderCompile?createRenderWarmup():null,readinessOwner={};
   host.dataset.parallelShaderCompile=String(parallelShaderCompile);host.dataset.warmupSubmitMs='0';host.dataset.warmupWaitMs='0';
@@ -118,9 +123,9 @@ export function attachRenderer(host, app) {
     const dt = Math.min(.05, Math.max(.001, (now - previousT) / 1000)); previousT = now;
     const st = app.duel.state, menu = st.status === 'menu', next = menu ? app.getMenuCourse(app.menuStage||0) : app.duel.course;
     const moving = st.status === 'racing' && !st.paused;
-    if (!next) {rearView.hide();frameMetrics.suspend();return;}
+    if (!next) {rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
-    if(!prepareVehicle(carKey)){frameMetrics.suspend();return;}
+    if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if (course !== next) {
       if(world&&worldKey===environmentKey(next)){course=next;lighting.apply({course,mood:app.lightingMood});}
       else build(next);
@@ -254,7 +259,8 @@ export function attachRenderer(host, app) {
     syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);
     lighting.updateVehicles({course,position:pp,player,police,distance,tall,now,high:app.ambientOcclusionEnabled!==false,menu});
     host.dataset.driver=player.userData.driver?'ready':'absent';
-    quality.update(app.ambientOcclusionEnabled!==false);host.dataset.ambientShading=String(ambientShading.enabled);
+    const high=app.ambientOcclusionEnabled!==false;
+    quality.update(high,adaptiveResolution.scale);host.dataset.ambientShading=String(ambientShading.enabled);
     const ratio=renderer.getPixelRatio();
     const metricsChanged=metricRevision!==sceneRevision||metricEnvironment!==scene.environment||metricQuality!==ambientShading.enabled||metricRatio!==ratio||metricMenu!==menu||metricCamera!==app.cameraMode||metricMood!==app.lightingMood||metricInspection!==app.inspectionCamera||metricCar!==carKey;
     if(metricsChanged){
@@ -269,7 +275,7 @@ export function attachRenderer(host, app) {
         host.dataset.warmupSubmitMs='0';host.dataset.warmupWaitMs='0';
         warmupTicket=warmup.request(revision,()=>{
           const started=performance.now();let compilation;
-          try{compilation=compileWarmupPipeline(renderer,scene,camera,composer);}
+          try{compilation=high?compileWarmupPipeline(renderer,scene,camera,composer):compileWarmupScene(renderer,scene,camera,null);}
           finally{if(!disposed&&warmupKey===revision)host.dataset.warmupSubmitMs=(performance.now()-started).toFixed(0);}
           const submitted=performance.now();
           return Promise.resolve(compilation).finally(()=>{
@@ -278,11 +284,11 @@ export function attachRenderer(host, app) {
         });
       }
       host.dataset.warmupStatus=warmupTicket.state.status;
-      if(!warmup.canDraw(warmupKey)){rearView.hide();frameMetrics.suspend();return;}
+      if(!warmup.canDraw(warmupKey)){rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     }
     renderer.info.autoReset=false;renderer.info.reset();
     const updateEnded=phaseProbe?phaseProbe.now():0;
-    const loadingFrame=firstWorldFrame||metricsChanged,renderStarted=performance.now();composer.render();
+    const loadingFrame=firstWorldFrame||metricsChanged,renderStarted=performance.now();renderMainView(renderer,composer,high);
     rearView.render({state:st,player,course,now});
     const cpuRenderMs=performance.now()-renderStarted;
     phaseProbe?.recordRendererFrame(now,updateEnded-updateStarted,cpuRenderMs);
@@ -294,6 +300,9 @@ export function attachRenderer(host, app) {
     // Only consecutive, presented RAF frames count. Debug draws, compilation,
     // loading and hidden-tab intervals cannot dilute or inflate these samples.
     if(capture&&!loadingFrame)frameMetrics.record(now,cpuRenderMs);else frameMetrics.suspend();
+    // Learn only from visible, presented driving frames. Loading, pauses,
+    // menus and debug draws must not lower quality. Apply changes next frame.
+    adaptiveResolution.sample(now,capture&&!loadingFrame&&!high&&moving);
     const summary=capture&&!loadingFrame?frameMetrics.summary(now):null;
     if (summary) {
       host.dataset.drawCalls = String(renderer.info.render.calls);
@@ -308,8 +317,8 @@ export function attachRenderer(host, app) {
     }
   }
   const tick = t => { if (disposed) return; frame(t,true); raf = requestAnimationFrame(tick); }; raf = requestAnimationFrame(tick);
-  const resize = () => { renderer.setSize(host.clientWidth, host.clientHeight); composer.setSize(host.clientWidth,host.clientHeight); camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix();rearView.resize();resetFrameMetrics(); };
-  const visibility = () => {resetFrameMetrics();};
+  const resize = () => { renderer.setSize(host.clientWidth, host.clientHeight); composer.setSize(host.clientWidth,host.clientHeight); camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix();rearView.resize();resetFrameMetrics();adaptiveResolution.reset(); };
+  const visibility = () => {resetFrameMetrics();adaptiveResolution.reset();};
   window.addEventListener('resize', resize);
   document.addEventListener('visibilitychange',visibility);
   if(warmupRequested){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}

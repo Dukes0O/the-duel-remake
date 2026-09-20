@@ -28,6 +28,9 @@ export function installPerformanceReview(app,view,nav,{hudSource='custom callbac
     diagnostics=createPhaseDiagnostics();app.frameDiagnostics=diagnostics;
     try{passProfile=startRenderProfile(window.__render);}catch{cancel('Pass profiling is unavailable on this renderer');return;}
     const signature=key(),intervals=[],label=`${app.duel.course?.def.id||'menu'} @ ${Math.round(app.duel.state.s)}m`,quality=view.dataset.edgeSmoothing==='true'?'High':'Performance';
+    const startScale=Number(view.dataset.resolutionScale)||1;
+    const gl=window.__render.renderer.getContext(),gpuInfo=gl.getExtension('WEBGL_debug_renderer_info');
+    const gpu=gpuInfo?gl.getParameter(gpuInfo.UNMASKED_RENDERER_WEBGL):'not exposed by browser';
     let previous=null,warmup=30;
     timeout=setTimeout(()=>cancel('Sample cancelled: exceeded 30 seconds'),30000);
     const sample=now=>{
@@ -37,7 +40,7 @@ export function installPerformanceReview(app,view,nav,{hudSource='custom callbac
       previous=now;
       if(intervals.length===120){
         diagnostics.stop();const phaseTiming=diagnostics.summary(),passTiming=passProfile.stop();passProfile=null;
-        reports.push({scene:label,quality,viewport:`${view.clientWidth}x${view.clientHeight}`,dpr:window.devicePixelRatio,...summarizeFrames(intervals),phaseTiming,passTiming,drawCalls:Number(view.dataset.drawCalls),triangles:Number(view.dataset.triangles),worldBuildMs:Number(view.dataset.worldBuildMs),worldReadyMs:Number(view.dataset.worldReadyMs),rendererSetupMs:Number(view.dataset.rendererSetupMs),visualReadyMs:Number(view.dataset.visualReadyMs),firstFrameMs:Number(view.dataset.firstFrameMs),warmupStatus:view.dataset.warmupStatus,warmupSubmitMs:Number(view.dataset.warmupSubmitMs),warmupWaitMs:Number(view.dataset.warmupWaitMs),geometries:Number(view.dataset.geometries),textures:Number(view.dataset.textures),shaderPrograms:Number(view.dataset.shaderPrograms)||null});
+        reports.push({scene:label,quality,viewport:`${view.clientWidth}x${view.clientHeight}`,dpr:window.devicePixelRatio,gpu,pipeline:view.dataset.renderPipeline,startScale,endScale:Number(view.dataset.resolutionScale)||1,renderPixelRatio:Number(view.dataset.renderPixelRatio)||null,rearView:view.dataset.rearView||'off',rearViewResolution:view.dataset.rearViewResolution||null,...summarizeFrames(intervals),phaseTiming,passTiming,drawCalls:Number(view.dataset.drawCalls),triangles:Number(view.dataset.triangles),worldBuildMs:Number(view.dataset.worldBuildMs),worldReadyMs:Number(view.dataset.worldReadyMs),rendererSetupMs:Number(view.dataset.rendererSetupMs),visualReadyMs:Number(view.dataset.visualReadyMs),firstFrameMs:Number(view.dataset.firstFrameMs),warmupStatus:view.dataset.warmupStatus,warmupSubmitMs:Number(view.dataset.warmupSubmitMs),warmupWaitMs:Number(view.dataset.warmupWaitMs),geometries:Number(view.dataset.geometries),textures:Number(view.dataset.textures),shaderPrograms:Number(view.dataset.shaderPrograms)||null});
         if(reports.length>12)reports.shift();
         result.textContent=JSON.stringify(reports,null,2);title.textContent=`Performance samples (${reports.length}) · last p95 ${reports.at(-1).p95} ms`;cancel();
       }else raf=requestAnimationFrame(sample);

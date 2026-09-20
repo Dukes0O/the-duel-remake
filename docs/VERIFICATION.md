@@ -2,6 +2,29 @@
 
 Checkpoint: 20 September 2026. The latest checked update is described first. Later sections preserve earlier checkpoints; their counts and screenshots are historical evidence.
 
+## Adaptive Performance graphics
+
+Performance was a fixed lighter preset, not a hardware-specific setting. This pass adds a bounded 80–100% 3D render scale based on delivered racing frames. It requires sustained slow delivery before a five-point reduction and much longer stable delivery before recovery. Loading, hidden tabs, pauses, menus, countdowns, debug draws and configuration-change frames do not train it. The HUD remains native-resolution; physics, saves and the selected quality preference are unchanged. High retains its existing contact shading, bloom, smoothing and 2,048-pixel shadows.
+
+Performance now draws the same scene directly to the canvas with tone/colour conversion and 1,024-pixel shadows, bypassing bloom and composition. It retains its original unsmoothed edge treatment. An initial version accidentally enabled canvas multisampling, increasing Harbor scene GPU median to 10.42 ms; that version was rejected. The final version disables that extra cost. All five custom fragment shaders now have the required display transforms. Warmup matches the direct canvas target; no startup-time improvement is claimed.
+
+Read-only hardware inspection found an i7-13700H, RTX A1000 6GB Laptop GPU and Intel Iris Xe. Browser WebGL diagnostics confirmed the tests used the NVIDIA adapter through ANGLE/D3D11. The same compiled, isolated scene controls were sampled before and after, at 1,280 × 720, device ratio 1.5 and actual Performance render ratio 1. Each sample covers 120 frames after 30 settling frames. Final timed samples ran without concurrent heavy test processes.
+
+| Frozen scene | Before: GPU medians, scene / bloom / output | After: direct scene GPU median | Draws before → after |
+| --- | --- | --- | --- |
+| Harbor, 700 m | 7.39 / 1.13 / 0.09 ms | 7.35 ms | 673 → 659 |
+| Neon Docks, 557 m | 8.84 / 1.54 / 0.09 ms | 7.19 ms | 667 → 653 |
+
+These are separate pass medians, not summed frame percentiles or universal speedup figures. Both before/after samples delivered about 60 FPS, 16.8 ms frame p95 and no frames above 33 ms. The improvement is graphics headroom at this viewport, not a measured increase beyond the display limit. Short samples are sensitive to clock speed and background load. They exclude startup, and the scene-only page does not include the production mirror styling.
+
+A separate real-UI driving sample used the production HUD, audio, traffic and active 252 × 76 rear-view mirror. Pacific Canyon at 261 m delivered **120 frames, 16.7 ms median, 16.8 ms p95, 16.9 ms maximum and no >33 ms frames**, at full Performance scale. CPU submission p95 was 8.8 ms including the mirror; App CPU p95 was 1.7 ms including simulation, audio and HUD. This is a short moving sample, not a full-course or all-hardware guarantee. Visual checks covered night scenery, tire marks, normal driving and the mirror. High → Performance → High restored the expected pipeline, ratio, smoothing and shadow resolution. No browser warnings or errors were captured.
+
+Local lamps use a reused two/four-light shortlist instead of allocating and sorting every pole each frame. **1,440 exact light-state comparisons** preserve lamp placement, intensity, ties and cutoffs. Its isolated 10,000-update median improved from 9.83 to 2.67 ms; this tiny subsystem result is not an overall FPS claim.
+
+**29 distinct suites pass** across the final 25-suite rendering/lighting/lifecycle collector and four additional core/model/grounding suites. The fast core passes 504 checks. New checks cover adaptive timing and resize feedback, High restoration, real RenderPass clearing and failure state, direct shader output, matching warmup and lighting parity. The long campaign block and expansion-driving matrix were not rerun for this rendering-only change.
+
+Production and QA builds pass, with the existing large renderer-chunk warning. The unchanged live URL `http://localhost:5174/` serves entry `index-DwHQhR8L.js`, renderer `render3d-BY-Lz-sF.js` and build `20260920202636-b2556cadc83d`. HTTP 200 and byte-for-byte disk matches were verified for HTML, manifest, entry, stylesheet and renderer. Footer: **26.09.20 20:26 UTC · b2556c**. No live browser refresh or save access was performed. Reusable QA controls and tests remain; generated QA output and this pass's temporary server logs are removed after verification.
+
 ## Koenigsegg reward, metric speed and rear-view mirror
 
 The ninth car, Koenigsegg Jesko Absolut, unlocks automatically after a player owns and fully upgrades all eight other cars in all seven categories. It arrives maxed and has no credit purchase. Progression passes **818 checks**, including all 56 possible final-upgrade paths, existing complete garages, malformed saves, free ownership, settings, paint, player isolation and real App purchase/reload/race flows. The production UI passes 49 checks. A disposable browser career showed 7/8 complete, then earned the car when buying Titan's final 950-credit tank upgrade. Its balance fell from 50,000 to 49,050 only; all seven Jesko upgrades showed level 3 and disabled purchase buttons. No live career was read or changed.

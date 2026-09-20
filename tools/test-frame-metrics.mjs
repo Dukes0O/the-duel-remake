@@ -60,12 +60,12 @@ check(!/new |\.push\(|\.map\(|\.filter\(|\.sort\(|\.slice\(|\.toFixed\(|JSON\.|d
 const renderer=readFileSync(new URL('../src/render3d.js',import.meta.url),'utf8');
 check(/function frame\(now = performance\.now\(\),measure=false\)/.test(renderer)&&/frame\(t,true\)/.test(renderer),'only RAF opts into metrics; manual debug calls default out');
 check(/const capture=measure&&!document\.hidden/.test(renderer),'hidden draws are not recorded');
-check(/if\(!prepareVehicle\(carKey\)\)\{frameMetrics\.suspend\(\);return;\}/.test(renderer),'asset loading breaks the interval anchor');
-check(/if\(!warmup\.canDraw\(warmupKey\)\)\{rearView\.hide\(\);frameMetrics\.suspend\(\);return;\}/.test(renderer),'shader warmup hides the mirror and breaks the interval anchor');
+check(/if\(!prepareVehicle\(carKey\)\)\{frameMetrics\.suspend\(\);adaptiveResolution\.reset\(\);return;\}/.test(renderer),'asset loading breaks the interval anchor');
+check(/if\(!warmup\.canDraw\(warmupKey\)\)\{rearView\.hide\(\);frameMetrics\.suspend\(\);adaptiveResolution\.reset\(\);return;\}/.test(renderer),'shader warmup hides the mirror and breaks the interval anchor');
 check(/loadingFrame=firstWorldFrame\|\|metricsChanged/.test(renderer),'first loading and configuration-change frames do not pollute steady-state metrics');
-check(/renderStarted=performance\.now\(\);composer\.render\(\);\s*rearView\.render\(\{state:st,player,course,now\}\);\s*const cpuRenderMs=performance\.now\(\)-renderStarted/.test(renderer),'CPU cost covers both composer and mirror submission, not an asserted GPU duration');
+check(/renderStarted=performance\.now\(\);renderMainView\(renderer,composer,high\);\s*rearView\.render\(\{state:st,player,course,now\}\);\s*const cpuRenderMs=performance\.now\(\)-renderStarted/.test(renderer),'CPU cost covers both main view and mirror submission, not an asserted GPU duration');
 check(/if\(capture&&!loadingFrame\)frameMetrics\.record\(now,cpuRenderMs\)/.test(renderer),'only presented steady-state RAF frames reach the ring');
-check(/const visibility = \(\) => \{resetFrameMetrics\(\);\}/.test(renderer)&&/document\.addEventListener\('visibilitychange',visibility\)/.test(renderer)&&/document\.removeEventListener\('visibilitychange',visibility\)/.test(renderer),'hidden-tab gaps reset the window and the observer is cleaned on disposal');
+check(/const visibility = \(\) => \{resetFrameMetrics\(\);adaptiveResolution\.reset\(\);\}/.test(renderer)&&/document\.addEventListener\('visibilitychange',visibility\)/.test(renderer)&&/document\.removeEventListener\('visibilitychange',visibility\)/.test(renderer),'hidden-tab gaps reset the window and the observer is cleaned on disposal');
 for(const key of ['metricRevision','metricEnvironment','metricQuality','metricRatio','metricMenu','metricCamera','metricMood','metricInspection','metricCar'])check(new RegExp(`${key}!==`).test(renderer),`${key} changes invalidate old readings`);
 for(const key of ['frameSamples','frameWindowMs','frameMsP50','frameMsP95','frameMsMax','frameJankCount','cpuRenderMsP50','cpuRenderMsP95','cpuRenderMsMax','shaderPrograms'])check(renderer.includes(`host.dataset.${key}=`),`${key} is published for the reusable performance review`);
 console.log(`Frame metrics: ${checks} bounded ring, percentile, CPU separation, long-stall, hidden-gap and reset checks passed.`);

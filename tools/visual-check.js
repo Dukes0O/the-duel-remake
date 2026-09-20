@@ -165,6 +165,7 @@ app.onFrame=s=>{
     `Renderer setup ${d.rendererSetupMs||0} ms · attach-to-first-picture ${d.visualReadyMs||0} ms`,
     `World builds ${d.worldBuilds||0} (build CPU ${d.worldBuildMs||0} ms · first frame CPU ${d.firstFrameMs||0} ms · build-to-present wall ${d.worldReadyMs||0} ms)`,
     `Shader warmup ${d.warmupStatus||'off'} · parallel ${d.parallelShaderCompile||'unknown'} · submit ${d.warmupSubmitMs||0} ms · wait ${d.warmupWaitMs||0} ms · Quality ${d.edgeSmoothing==='true'?'High':'Performance'} · shadow ${d.shadowResolution||'loading'} · paint ${d.paint||'factory'}`,
+    `Render ${d.renderPipeline||'loading'} · 3D scale ${Math.round(Number(d.resolutionScale||1)*100)}% · pixel ratio ${d.renderPixelRatio||'loading'}`,
     `Nitro ${s.boost.toFixed(2)} · crushes ${s.crushCount} · flocks ${s.collectedFlocks.length} · boundary resets ${s.boundaryResets} · lateral ${s.lateral.toFixed(1)} · height ${(s.airHeight||0).toFixed(2)} m`,
     `Jump length ${(s.airDistance||0).toFixed(2)} m · airtime ${(s.airTime||0).toFixed(2)} s · rollovers ${s.rollovers||0} · crushed opponents ${s.traffic.filter(c=>c.crushed).length} · support ${(s.groundHeight||0).toFixed(2)} m`,
   ].join('\n');

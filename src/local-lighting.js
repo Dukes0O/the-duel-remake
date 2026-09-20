@@ -13,6 +13,9 @@ export function createLocalLighting(scene) {
   });
   let currentCourse=null,fixtures=[];
   const local=new THREE.Vector3();
+  // Only two/four lamps can illuminate the frame. Reuse a bounded shortlist
+  // instead of allocating a distance object per pole and sorting the route.
+  const nearest=new Array(street.length),distances=new Float64Array(street.length);
   return {
     update({course,position,police,now,night,high=true,menu=false}) {
       if(currentCourse!==course){
@@ -22,12 +25,27 @@ export function createLocalLighting(scene) {
           return {x:p.x+c*5.4,y:p.y+10.25,z:p.z-s*5.4,target:course.worldAt(p.s,-4.8)};
         });
       }
-      const nearby=night?fixtures.map(p=>({p,d:Math.hypot(p.x-position.x,p.z-position.z)})).filter(p=>p.d<135).sort((a,b)=>a.d-b.d):[];
+      let count=0;
+      const limit=high?street.length:2;
+      if(night)for(const p of fixtures){
+        const dx=p.x-position.x,dz=p.z-position.z;
+        // Most poles are far down the route; reject the enclosing square
+        // before calculating an exact distance for the few nearby fixtures.
+        if(Math.abs(dx)>=135||Math.abs(dz)>=135)continue;
+        const d=Math.hypot(dx,dz);
+        if(!(d<135)||(count===limit&&d>=distances[limit-1]))continue;
+        let index=count;
+        // Strict comparison preserves the original stable order for ties.
+        while(index>0&&d<distances[index-1])index--;
+        for(let j=Math.min(count,limit-1);j>index;j--){nearest[j]=nearest[j-1];distances[j]=distances[j-1];}
+        nearest[index]=p;distances[index]=d;
+        count=Math.min(count+1,limit);
+      }
       for(let i=0;i<street.length;i++){
-        const light=street[i],entry=nearby[i];
+        const light=street[i];
         light.intensity=0;
-        if(entry&&(high||i<2)){
-          const p=entry.p,fade=THREE.MathUtils.smoothstep(entry.d,78,135);
+        if(i<count){
+          const p=nearest[i],fade=THREE.MathUtils.smoothstep(distances[i],78,135);
           light.position.set(p.x,p.y,p.z);light.target.position.set(p.target.x,p.target.y,p.target.z);
           light.target.updateMatrixWorld();light.intensity=155*(1-fade);
         }
