@@ -12,7 +12,7 @@ const ok=(value,message)=>{assert.ok(value,message);checks++;};
 const near=(a,b,tolerance,message)=>ok(Math.abs(a-b)<=tolerance,`${message}: ${a} vs ${b}`);
 const material=new THREE.MeshBasicMaterial({side:THREE.DoubleSide});
 const courses=['high-country','ridge-rally','timberline-rush'].map(id=>new Course(COURSE.find(c=>c.id===id),1989));
-ok(models.length===8,'Grounding checks include all eight actual runtime models');
+ok(models.length===9,'Grounding checks include all nine actual runtime models');
 
 for(const model of models){
   const v=model.vehicle,geometryBefore=[];

@@ -1,5 +1,6 @@
 // Shared placements keep the drawn furniture and physical supports in agreement.
 // Clearance includes the widest earned car, not only a sign's narrow posts.
+import {formatSpeed} from './speed-format.js';
 const VEHICLE_MARGIN=2.0;
 export function tunnelCoverShape(tunnel,s){
   const t=Math.max(0,Math.min(1,(s-tunnel.start)/(tunnel.end-tunnel.start))),swell=Math.sin(t*Math.PI);
@@ -41,11 +42,11 @@ export function buildRoadFurniture(course){
   };
   for(const cut of course.features.shortcuts)sign(cut.start-42,Math.sign(cut.offset)*12,'SHORTCUT',cut.name.toUpperCase(),'#8c6528');
   for(const lane of course.features.passingLanes){sign(lane.start-42,13,'PASSING LANE','KEEP LEFT','#25433d');sign(lane.end-70,13,'LANE ENDS','MERGE LEFT','#a27228');}
-  for(const trap of course.features.radarTraps)sign(trap.s-160,10.8,'SPEED LIMIT',`${trap.limitMph}`,'#ede2c6');
+  for(const trap of course.features.radarTraps)sign(trap.s-160,10.8,'SPEED LIMIT',formatSpeed(trap.limitMph),'#ede2c6');
   for(const section of course.sections)sign(section.start+65,-14,section.name.toUpperCase(),course.def.arena?'STADIUM LOOP':'TWO LAP CIRCUIT','#25433d');
   sign(course.length-220,-14,'FINISH STRAIGHT','200 M','#ce4c2d');
   for(const turn of course.features.turns){
-    sign(turn.signS,10.8,turn.direction>0?'LEFT BEND':'RIGHT BEND',`${turn.advisory} MPH`,'#b78720');
+    sign(turn.signS,10.8,turn.direction>0?'LEFT BEND':'RIGHT BEND',formatSpeed(turn.advisory),'#b78720');
     for(let d=0;d<=64;d+=16){const s=turn.s+d,p=place(s,-turn.direction*10.5,.6);if(!p)continue;
       const n=course.nearest(p.x,p.z);chevrons.push({id:`turn-chevron-${chevrons.length}`,s:course.phase(s),off:n.lateral,...p,heading:p.heading+Math.PI,direction:turn.direction,height:2.725,halfX:.05,halfZ:.05});}
   }

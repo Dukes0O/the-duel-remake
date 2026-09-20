@@ -66,6 +66,16 @@ export const CARS = {
     color:0x58329b,accent:0xb5db3b,price:12000,offRoadGrip:1.05,offRoadSpeed:108,offRoadScrub:.12,mass:4700,
     collision:{halfWidth:1.4,halfLength:2.6},height:3.6,kind:'monster',
   },
+  koenigsegg_jesko: {
+    name:'Koenigsegg Jesko Absolut',homage:'Jesko Absolut-inspired hypercar',gearbox:'manual',
+    unlockRequirement:'max-all-other-cars',factoryMaxed:true,
+    // Arcade base tuning: the included level-three upgrades apply exactly once.
+    topSpeed:298,accel:10.8,grip:1.12,braking:1.5,
+    gears:[60,105,150,188,221,247,269,284,298],
+    color:0xe7e9e7,accent:0x27c8bb,offRoadGrip:.64,offRoadSpeed:65,offRoadScrub:.48,mass:1390,
+    collision:{halfWidth:1.05,halfLength:2.475},height:1.25,kind:'hypercar',
+    boostCapacity:1.4,nitroAcceleration:1.4,nitroSpeedBonus:.025,
+  },
 };
 export const DEFAULT_CAR = 'falcone_f42';
 
@@ -143,7 +153,7 @@ export const POLICE = {
 export const ROAD_SHOULDER_WIDTH = 1.25;
 
 // Arcade road-coordinate dynamics: heading persists until the driver steers.
-// Course, vehicles, and distances are metres. Displayed speed remains mph.
+// Course, vehicles, and distances are metres. Dynamics keep mph; the UI shows km/h.
 export const DRIVE = {
   majorCrashLimit: 5,    // unrepaired hard impacts; stage wins repair up to two
   majorImpactMph: 45,    // closing speed needed to count as structural damage

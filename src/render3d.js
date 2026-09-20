@@ -22,6 +22,7 @@ import { environmentKey } from './environment-key.js';
 import { createRenderWarmup, compileWarmupPipeline, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
 import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose } from './vehicle-grounding.js';
 import { createFrameMetrics } from './frame-metrics.js';
+import { createRearView } from './rear-view.js';
 
 // This layer only reads simulation state. Asset replacement never changes race rules.
 export function attachRenderer(host, app) {
@@ -57,6 +58,7 @@ export function attachRenderer(host, app) {
   bloom.name='Bloom';composer.addPass(bloom);composer.addPass(Object.assign(new OutputPass(),{name:'Tone and colour'}));
   const lighting=createSceneLighting({scene,renderer,bloom,host});
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
+  const rearView=createRearView({renderer,scene,host});
   let course, world, loadedCar, player, rival, chickens, ghost, ghostStyle, worldKey;
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
   const vehicleAssets=createVehicleAssets();
@@ -69,6 +71,7 @@ export function attachRenderer(host, app) {
     if(status!=='ready'){
       // Hide the previous selection; a loading model must not show an old body.
       renderer.domElement.style.visibility='hidden';
+      rearView.hide();
       if(!readinessClaimed){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
       app.holdVisualReadiness?.(readinessOwner);
       return false;
@@ -115,7 +118,7 @@ export function attachRenderer(host, app) {
     const dt = Math.min(.05, Math.max(.001, (now - previousT) / 1000)); previousT = now;
     const st = app.duel.state, menu = st.status === 'menu', next = menu ? app.getMenuCourse(app.menuStage||0) : app.duel.course;
     const moving = st.status === 'racing' && !st.paused;
-    if (!next) {frameMetrics.suspend();return;}
+    if (!next) {rearView.hide();frameMetrics.suspend();return;}
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
     if(!prepareVehicle(carKey)){frameMetrics.suspend();return;}
     if (course !== next) {
@@ -275,11 +278,12 @@ export function attachRenderer(host, app) {
         });
       }
       host.dataset.warmupStatus=warmupTicket.state.status;
-      if(!warmup.canDraw(warmupKey)){frameMetrics.suspend();return;}
+      if(!warmup.canDraw(warmupKey)){rearView.hide();frameMetrics.suspend();return;}
     }
     renderer.info.autoReset=false;renderer.info.reset();
     const updateEnded=phaseProbe?phaseProbe.now():0;
     const loadingFrame=firstWorldFrame||metricsChanged,renderStarted=performance.now();composer.render();
+    rearView.render({state:st,player,course,now});
     const cpuRenderMs=performance.now()-renderStarted;
     phaseProbe?.recordRendererFrame(now,updateEnded-updateStarted,cpuRenderMs);
     if(firstWorldFrame){host.dataset.firstFrameMs=cpuRenderMs.toFixed(0);firstWorldFrame=false;}
@@ -304,7 +308,7 @@ export function attachRenderer(host, app) {
     }
   }
   const tick = t => { if (disposed) return; frame(t,true); raf = requestAnimationFrame(tick); }; raf = requestAnimationFrame(tick);
-  const resize = () => { renderer.setSize(host.clientWidth, host.clientHeight); composer.setSize(host.clientWidth,host.clientHeight); camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix();resetFrameMetrics(); };
+  const resize = () => { renderer.setSize(host.clientWidth, host.clientHeight); composer.setSize(host.clientWidth,host.clientHeight); camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix();rearView.resize();resetFrameMetrics(); };
   const visibility = () => {resetFrameMetrics();};
   window.addEventListener('resize', resize);
   document.addEventListener('visibilitychange',visibility);
@@ -321,7 +325,7 @@ export function attachRenderer(host, app) {
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
-    const release=()=>{effects.dispose();explosion.dispose();lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
+    const release=()=>{rearView.dispose();effects.dispose();explosion.dispose();lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
     if(warmup)warmup.dispose(release);else release();
   } };
 }

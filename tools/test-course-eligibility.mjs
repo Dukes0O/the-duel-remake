@@ -3,12 +3,13 @@ import {readFileSync} from 'node:fs';
 import {App} from '../src/app.js';
 import {CARS,COURSE} from '../src/config.js';
 import {normalizeRaceSettings} from '../src/race-settings.js';
-import {createProfile,CPU_REWARDS,isCarUnlocked,bestKey,eventKey,isValidFinish,UPGRADE_TYPES} from '../src/progression.js';
+import {createProfile,CAR_PRICES,CPU_REWARDS,isCarUnlocked,bestKey,eventKey,isValidFinish,UPGRADE_TYPES} from '../src/progression.js';
 import {getEquippedDriverId} from '../src/drivers.js';
 import {getLeaderboard} from '../src/leaderboard.js';
 import {supportsRouteVariants,getRouteVariantForSeed} from '../src/route-variants.js';
 import {syncRaceChoiceButtons} from '../src/race-settings-ui.js';
 import {COURSE_PRICES,isCourseUnlocked} from '../src/course-access.js';
+import {formatSpeed} from '../src/speed-format.js';
 
 let checks=0;
 const check=(value,label)=>{assert.ok(value,label);checks++;};
@@ -28,7 +29,9 @@ try{
   }
   same(app.profile.credits,0,'course entry and countdown cancellation do not change the wallet');same(Object.keys(app.profile.personalBests).length,0,'countdown entry cannot fabricate records');
   same(app.profile.unlockedCars,createProfile().unlockedCars,'no course entry gifts vehicles');
-  app.profile.credits=50000;app._saveProfile();for(const car of Object.keys(CARS))if(!isCarUnlocked(app.profile,car))check(app.unlockCar(car).ok,'test-only wallet buys every remaining car at catalog cost');
+  app.profile.credits=250000;app._saveProfile();for(const car of Object.keys(CAR_PRICES))if(!isCarUnlocked(app.profile,car))check(app.unlockCar(car).ok,'test-only wallet buys every priced car at catalog cost');
+  for(const [car,spec]of Object.entries(CARS).filter(([,spec])=>!spec.unlockRequirement))for(const type of Object.keys(UPGRADE_TYPES))for(let level=0;level<3;level++)check(app.purchaseUpgrade(car,type).ok,'test-only wallet maxes the ordinary fleet through the real garage API');
+  check(Object.keys(CARS).every(car=>isCarUnlocked(app.profile,car)),'maxing the ordinary fleet earns the completion car before eligibility checks');
   const bank=app.profile.credits;
   for(const car of Object.keys(CARS))for(const [startStage,event]of COURSE.entries()){
     app.setRaceSettings({car,startStage,mode:'timetrial'});same(app.getRaceChoices().car,car,'all course changes preserve every owned car');same(app.getRaceChoices().startStage,startStage,'all vehicle changes preserve the course');
@@ -54,7 +57,7 @@ try{
   const values={},choices={...app.getRaceChoices()},node=()=>({hidden:false,disabled:false,value:'',checked:false,title:'',innerHTML:'',classList:{toggle(){}},setAttribute(){}});
   const ui=Object.fromEntries(['lighting-mood','scene-select','route-choice','menu-biome-legend','menu-elevation','entry-reward','event-brief','ghost-control','ghost-hint','ghost-toggle'].map(id=>[id,node()]));
   ui['scene-select'].options=COURSE.map((event,index)=>({value:String(index),disabled:true,textContent:event.name}));
-  const env={app,choices,ui,COURSE,CARS,CAR_PRICES:{},COURSE_PRICES,isCourseUnlocked,CPU_REWARDS,UPGRADE_TYPES,bestKey,eventKey,getLeaderboard,getEquippedDriverId,isCarUnlocked,supportsRouteVariants,getRouteVariantForSeed,syncRaceChoiceButtons,
+  const env={app,choices,ui,COURSE,CARS,CAR_PRICES:{},COURSE_PRICES,isCourseUnlocked,CPU_REWARDS,UPGRADE_TYPES,bestKey,eventKey,getLeaderboard,getEquippedDriverId,isCarUnlocked,supportsRouteVariants,getRouteVariantForSeed,syncRaceChoiceButtons,formatSpeed,
     root:{querySelectorAll:()=>[],querySelector:()=>({textContent:''})},profile:()=>app.profile,text:(id,value)=>{values[id]=String(value);},credits:value=>Math.floor(value||0).toLocaleString(),time:value=>String(value),escapeHTML:value=>String(value),
     coursePreview:{update:()=>({distanceKm:4,laps:2,biomes:[],map:{gates:[],branches:[]},showElevation:false,reliefMeters:0})},updateMenuCar(){env.updateEntryReward();}};
   Object.assign(env,new Function('env',`with(env){${reward}\n${menu}\nreturn {updateEntryReward,updateMenuScene};}`)(env));

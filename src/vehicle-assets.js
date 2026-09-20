@@ -1,16 +1,17 @@
 import { CARS } from './config.js';
 import { createClassicVehicle, CLASSIC_VEHICLE_DIMENSIONS } from './classic-vehicles.js';
 import { createUnlockedVehicle, UNLOCK_VEHICLE_DIMENSIONS } from './unlock-vehicles.js';
+import { createKoenigseggVehicle, KOENIGSEGG_VEHICLE_DIMENSIONS } from './koenigsegg-vehicle.js';
 import { loadHeroVehicle } from './hero-vehicle.js';
 
 // One source of model selection for the player, rival and personal-best ghost.
-// Six original cars are ready synchronously. Heritage and Aurora share the
+// Seven original models are ready synchronously. Heritage and Aurora share the
 // licensed GLB, with the former F42 sport trim and the separate GT package.
 // A pending or failed import never substitutes an earlier coupe silhouette.
 export function createVehicleAssets({ loadHero = loadHeroVehicle } = {}) {
   let hero, pending, failed = false;
   const licensedKinds = { falcone_heritage: 'sport', aurora_gt: 'gt' };
-  const source = key => Object.hasOwn(CLASSIC_VEHICLE_DIMENSIONS,key) ? 'classic' : Object.hasOwn(UNLOCK_VEHICLE_DIMENSIONS,key) ? 'unlock' : Object.hasOwn(licensedKinds,key) ? 'licensed' : null;
+  const source = key => Object.hasOwn(CLASSIC_VEHICLE_DIMENSIONS,key) ? 'classic' : Object.hasOwn(UNLOCK_VEHICLE_DIMENSIONS,key) ? 'unlock' : Object.hasOwn(KOENIGSEGG_VEHICLE_DIMENSIONS,key) ? 'ultimate' : Object.hasOwn(licensedKinds,key) ? 'licensed' : null;
   const status = key => source(key) === 'licensed' ? hero ? 'ready' : failed ? 'error' : pending ? 'loading' : 'idle' : source(key) ? 'ready' : 'error';
   function load(key, { retry = false } = {}) {
     if (source(key) !== 'licensed') return Promise.resolve(status(key) === 'ready');
@@ -27,7 +28,7 @@ export function createVehicleAssets({ loadHero = loadHeroVehicle } = {}) {
   function create(key, options = {}) {
     if (status(key) !== 'ready') return null;
     const appearance = { color: CARS[key].color, accent: CARS[key].accent, ...options, key };
-    const vehicle = source(key) === 'classic' ? createClassicVehicle(appearance) : source(key) === 'unlock' ? createUnlockedVehicle(appearance) : hero({ ...appearance, kind: licensedKinds[key] });
+    const vehicle = source(key) === 'classic' ? createClassicVehicle(appearance) : source(key) === 'unlock' ? createUnlockedVehicle(appearance) : source(key) === 'ultimate' ? createKoenigseggVehicle(appearance) : hero({ ...appearance, kind: licensedKinds[key] });
     vehicle.userData.vehicleKey = key;
     vehicle.userData.vehicleSource = source(key);
     return vehicle;

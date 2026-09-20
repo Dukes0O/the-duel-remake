@@ -6,6 +6,7 @@ import {courseAccessPanel} from '../src/course-access-ui.js';
 import {DRIVERS} from '../src/drivers.js';
 import {getLeaderboard} from '../src/leaderboard.js';
 import {eventKey} from '../src/progression.js';
+import {speedKph,formatSpeed} from '../src/speed-format.js';
 
 let checks=0;
 const check=(ok,label)=>{assert.ok(ok,label);checks++;};
@@ -34,7 +35,7 @@ try{
   const node=()=>({hidden:false,textContent:'',dataset:{},style:{},firstChild:{textContent:''},classList:{values:new Map(),toggle(name,on){this.values.set(name,!!on);}},setAttribute(){}});
   const ui=new Proxy({}, {get:(target,key)=>target[key]??(target[key]=node())});
   const text=(id,value)=>ui[id].textContent=String(value),time=value=>Number(value||0).toFixed(2),credits=value=>Math.floor(value||0).toLocaleString(),clamp=value=>Math.max(0,Math.min(1,Number(value)||0));
-  const update=new Function('app','ui','text','time','credits','clamp','DRIVE','routeMap',`${source.slice(start,end)};return updateHud;`)(app,ui,text,time,credits,clamp,DRIVE,{update(){}});
+  const update=new Function('app','ui','text','time','credits','clamp','DRIVE','routeMap','speedKph','formatSpeed',`${source.slice(start,end)};return updateHud;`)(app,ui,text,time,credits,clamp,DRIVE,{update(){}},speedKph,formatSpeed);
   const practice=COURSE.find(course=>course.practice);check(app.purchaseCourse(practice.id).ok,'UI practice test uses an explicit paid unlock');app.startCampaign({startStage:practice.stage,car:'falcone_f42'});
   const boardStart=source.indexOf('function leaderboardScreen(){'),boardEnd=source.indexOf("\nroot.addEventListener('submit'",boardStart),boardFilter={stage:practice.stage,car:'',driverId:'club'};
   const board=new Function('app','COURSE','CARS','DRIVERS','boardFilter','eventKey','getLeaderboard','escapeHTML',`${source.slice(boardStart,boardEnd)};return leaderboardScreen;`)(app,COURSE,CARS,DRIVERS,boardFilter,eventKey,getLeaderboard,String);

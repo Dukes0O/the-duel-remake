@@ -61,4 +61,4 @@ for(const {key,vehicle:v}of actors){
   equal(versions(v),versionsBefore,`${key}: tumble never rewrites body buffers`);
 }
 for(const {vehicle}of actors)disposeTree(vehicle);
-console.log(`Vehicle crush graphics: ${checks} checks covering all eight models, traffic/police, localized collapse, cached updates, resource isolation, exact resets and physics-owned climb/tumble.`);
+console.log(`Vehicle crush graphics: ${checks} checks covering all ${models.length} models, traffic/police, localized collapse, cached updates, resource isolation, exact resets and physics-owned climb/tumble.`);

@@ -7,7 +7,7 @@ import {normalizeCourseAccess} from './course-access.js';
 export const PROFILE_KEY = 'the-duel-profile-v1';
 export const PLAYERS_KEY = 'the-duel-players-v2';
 export const UPGRADE_COSTS = Object.freeze([350, 600, 950]);
-export const CAR_PRICES = Object.freeze(Object.fromEntries(Object.entries(CARS).filter(([,car])=>car.price>0).map(([key,car])=>[key,car.price])));
+export const CAR_PRICES = Object.freeze(Object.fromEntries(Object.entries(CARS).filter(([,car])=>car.price>0&&!car.unlockRequirement).map(([key,car])=>[key,car.price])));
 export const CPU_REWARDS = Object.freeze(Object.fromEntries(Object.entries(CPU_DIFFICULTY).map(([key,item])=>[key,item.winReward])));
 export const DRIVING_MILESTONES=Object.freeze({
   clean_debut:{name:'Clean debut',description:'Win a race with no crashes or missed fuel stop.',reward:100},
@@ -27,7 +27,10 @@ export const UPGRADE_TYPES = Object.freeze({
   tank:{name:'Nitro tank',description:'More boost capacity for longer bursts.'},
 });
 const FREE_CARS=['falcone_f42','stuttgart_959s'];
+const completionCars=()=>Object.keys(CARS).filter(car=>CARS[car].unlockRequirement==='max-all-other-cars');
+const maxUpgradeLevels=()=>Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type=>[type,3]));
 const integer=(value,max)=>Math.min(max,Math.max(0,Math.floor(Number(value)||0)));
+const upgradeLevel=value=>['number','string'].includes(typeof value)&&Number.isFinite(Number(value))?integer(value,3):0;
 const validStrings=value=>[...new Set((Array.isArray(value)?value:[]).filter(key=>typeof key==='string'&&key.length>0&&key.length<=180))];
 export const playerName=value=>String(value||'').replace(/[\u0000-\u001f\u007f]/g,'').trim().replace(/\s+/g,' ').slice(0,24);
 const newId=()=>globalThis.crypto?.randomUUID?.()||`player-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -35,9 +38,12 @@ const newId=()=>globalThis.crypto?.randomUUID?.()||`player-${Date.now()}-${Math.
 export function createProfile(){return {version:2,credits:0,unlockedCars:[...FREE_CARS],upgrades:{},cosmetics:normalizeCosmetics(),drivers:normalizeDrivers(),courses:normalizeCourseAccess(),raceSettings:null,settledResults:[],settledPoliceFines:[],pbBonusRuns:[],personalBests:{},milestones:[],circuitWins:[],winStreak:0,history:[],activeRace:null};}
 export function normalizeProfile(value){
   if(!value||typeof value!=='object'||![1,2].includes(value.version))return createProfile();
-  const profile=createProfile();profile.credits=integer(value.credits,1_000_000_000);
+  let profile=createProfile();profile.credits=integer(value.credits,1_000_000_000);
   profile.unlockedCars=[...new Set([...FREE_CARS,...(Array.isArray(value.unlockedCars)?value.unlockedCars.filter(car=>Object.hasOwn(CARS,car)):[])])];
   for(const car of profile.unlockedCars)profile.upgrades[car]=getUpgradeLevels(value,car);
+  // Reward old, fully built garages on load, before validating the selected car.
+  // A previously earned reward stays owned if the roster grows in a later update.
+  profile=grantCompletionCars(profile);
   profile.cosmetics=normalizeCosmetics(value.cosmetics);
   profile.drivers=normalizeDrivers(value.drivers);
   profile.courses=normalizeCourseAccess(value.courses,value);
@@ -80,7 +86,17 @@ export function replacePlayerProfile(registry,id,profile){return {...registry,pl
 export function loadProfile(storage){return activePlayer(loadPlayers(storage)).profile;}
 export function saveProfile(profile,storage){const registry=loadPlayers(storage);return savePlayers(replacePlayerProfile(registry,registry.activePlayerId,profile),storage);}
 export function isCarUnlocked(profile,car){return Object.hasOwn(CARS,car)&&(FREE_CARS.includes(car)||!!profile?.unlockedCars?.includes(car));}
-export function getUpgradeLevels(profile,car=DEFAULT_CAR){const levels=profile?.upgrades?.[car];return Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type=>[type,integer(levels?.[type],3)]));}
+export function getUpgradeLevels(profile,car=DEFAULT_CAR){if(CARS[car]?.factoryMaxed)return maxUpgradeLevels();const levels=profile?.upgrades?.[car];return Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type=>[type,upgradeLevel(levels?.[type])]));}
+export function completionCarProgress(profile,car='koenigsegg_jesko'){
+  const required=CARS[car]?.unlockRequirement==='max-all-other-cars'?Object.keys(CARS).filter(key=>key!==car):[];
+  const maxed=required.filter(key=>isCarUnlocked(profile,key)&&Object.values(getUpgradeLevels(profile,key)).every(level=>level===3)).length;
+  return {car,maxed,total:required.length,eligible:required.length>0&&maxed===required.length,unlocked:isCarUnlocked(profile,car),requirementLabel:required.length?`Fully upgrade all ${required.length} other cars in all ${Object.keys(UPGRADE_TYPES).length} upgrade categories.`:''};
+}
+function grantCompletionCars(profile){
+  const earned=completionCars().filter(car=>!isCarUnlocked(profile,car)&&completionCarProgress(profile,car).eligible);
+  if(!earned.length)return profile;
+  return {...profile,unlockedCars:[...profile.unlockedCars,...earned],upgrades:{...profile.upgrades,...Object.fromEntries(earned.map(car=>[car,maxUpgradeLevels()]))}};
+}
 export function stageEventId(index){const stage=COURSE[index];return stage?String(stage.id||`course-${index}`):'';}
 // Only archival validation supplies the second argument. Ordinary callers
 // always key new races against the current layout, regardless of payload extras.
@@ -175,15 +191,26 @@ export function purchaseUpgrade(profile,car,type){
   if(!isCarUnlocked(profile,car))return failure('Unlock this car first.');if(!Object.hasOwn(UPGRADE_TYPES,type))return failure('Choose an available upgrade.');
   const levels=getUpgradeLevels(profile,car),current=levels[type];if(current>=3)return failure('This upgrade is complete.');
   const cost=UPGRADE_COSTS[current];if(profile.credits<cost)return failure(`You need ${cost-profile.credits} more credits.`);
-  return {profile:{...profile,credits:profile.credits-cost,upgrades:{...profile.upgrades,[car]:{...levels,[type]:current+1}}},ok:true,reason:'',cost,level:current+1};
+  const upgraded={...profile,credits:profile.credits-cost,upgrades:{...profile.upgrades,[car]:{...levels,[type]:current+1}}},updated=grantCompletionCars(upgraded);
+  return {profile:updated,ok:true,reason:'',cost,level:current+1,earnedCars:updated.unlockedCars.filter(key=>!isCarUnlocked(profile,key))};
 }
 export function unlockCar(profile,car){
+  if(CARS[car]?.unlockRequirement==='max-all-other-cars'){
+    if(isCarUnlocked(profile,car))return {profile,ok:false,reason:'This car is already in your garage.',cost:0};
+    const progress=completionCarProgress(profile,car);
+    if(!progress.eligible)return {profile,ok:false,reason:progress.requirementLabel,cost:0};
+    return {profile:grantCompletionCars(profile),ok:true,reason:'',cost:0,earnedCars:[car]};
+  }
   const cost=CAR_PRICES[car];if(!Object.hasOwn(CARS,car)||!Number.isFinite(cost))return {profile,ok:false,reason:'This car is already included.',cost:0};
   if(isCarUnlocked(profile,car))return {profile,ok:false,reason:'This car is already in your garage.',cost:0};
   if(profile.credits<cost)return {profile,ok:false,reason:`You need ${cost-profile.credits} more credits.`,cost:0};
-  return {profile:{...profile,credits:profile.credits-cost,unlockedCars:[...profile.unlockedCars,car]},ok:true,reason:'',cost};
+  // Unowned cars cannot carry upgrades. This also keeps direct callers from
+  // turning stale or malformed save data into a completed prerequisite.
+  const upgrades=Object.hasOwn(profile.upgrades||{},car)?{...profile.upgrades,[car]:getUpgradeLevels(null,car)}:profile.upgrades;
+  return {profile:{...profile,credits:profile.credits-cost,unlockedCars:[...profile.unlockedCars,car],upgrades},ok:true,reason:'',cost};
 }
 export function upgradedCar(car,levels={}){
+  if(car.factoryMaxed)levels=maxUpgradeLevels();
   const engine=integer(levels.engine,3),handling=integer(levels.handling,3),tires=integer(levels.tires,3),brakes=integer(levels.brakes,3),suspension=integer(levels.suspension,3),tank=integer(levels.tank,3),speed=1+engine*.035;
-  return {...car,topSpeed:car.topSpeed*speed,gears:car.gears.map(v=>v*speed),accel:car.accel*(1+engine*.04),grip:Math.min(1.2,car.grip+handling*.045+tires*.025),braking:car.braking*(1+tires*.06+brakes*.12),offRoadGrip:Math.min(1.15,(car.offRoadGrip??DRIVE.offRoadGrip)+suspension*.04+tires*.02),boostCapacity:1+tank*.25,roughnessScale:1/(1+suspension*.18)};
+  return {...car,topSpeed:car.topSpeed*speed,gears:car.gears.map(v=>v*speed),accel:car.accel*(1+engine*.04),grip:Math.min(1.2,car.grip+handling*.045+tires*.025),braking:car.braking*(1+tires*.06+brakes*.12),offRoadGrip:Math.min(1.15,(car.offRoadGrip??DRIVE.offRoadGrip)+suspension*.04+tires*.02),boostCapacity:(car.boostCapacity??1)*(1+tank*.25),roughnessScale:1/(1+suspension*.18)};
 }

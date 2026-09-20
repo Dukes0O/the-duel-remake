@@ -9,7 +9,7 @@ export const PAINT_PRESETS=Object.freeze({
 });
 const factory=Object.freeze({owned:Object.freeze(['factory']),selected:'factory'});
 const knownCar=car=>Object.hasOwn(CARS,car);
-const ownsCar=(profile,car)=>knownCar(car)&&(!(CARS[car].price>0)||profile?.unlockedCars?.includes(car));
+const ownsCar=(profile,car)=>knownCar(car)&&(!(CARS[car].price>0)&&!CARS[car].unlockRequirement||profile?.unlockedCars?.includes(car));
 const makeState=(owned,selected)=>Object.freeze({owned:Object.freeze(owned),selected});
 
 export function normalizePaintState(value){

@@ -6,24 +6,26 @@ import {COURSE} from '../src/config.js';
 import {buildEnvironment,disposeTree} from '../src/world.js';
 
 // Reviewed scene composition after spatial scenery batching and harbor detail.
+// Metric road-sign lettering changes only canvas texture commands. Restoring
+// the old labels reproduced all sixteen prior complete-scene hashes exactly.
 // Instance parity and bounded harbor changes have separate focused tests.
 // UUIDs, allocation counters, callbacks and wall-clock values are not scene data.
 const baseline={
-  'pacific-canyon':{hash:'2769611337c31502023345ca3d1cd75e4fc74fd49b5af94c52d42052fa71b4b8',nodes:523,meshes:501,instances:11981,geometries:237,materials:102,textures:33},
-  'high-country':{hash:'40d0e80311b5a0bedce4346bbc92e5d3dfd8f98f55e463737ba7382ce91c0bc1',nodes:712,meshes:682,instances:15698,geometries:358,materials:136,textures:43},
-  'harbor-highlands':{hash:'d38960c3630d06cbc565c2147e3ef2ece3345b949ad77bd76b325323250d53d2',nodes:1011,meshes:967,instances:116421,geometries:384,materials:167,textures:46},
+  'pacific-canyon':{hash:'d6c1f3bfe80e5348f53dff6edd122e1d939a0ea6c74056efc319914f72f5c51c',nodes:523,meshes:501,instances:11981,geometries:237,materials:102,textures:33},
+  'high-country':{hash:'8baeb15a8550afdd185924439a1db15e7b2a6471d75b528bddb0e45347c18301',nodes:712,meshes:682,instances:15698,geometries:358,materials:136,textures:43},
+  'harbor-highlands':{hash:'85b7b99f02ce5364fbfb53b8904539aa5d700ee380443425839b97d8a2adbbf4',nodes:1011,meshes:967,instances:116421,geometries:384,materials:167,textures:46},
   'titan-arena':{hash:'c41de422a08b1ea2ece04d823beeb28ddca8a81eec892df391745b6d602bb1a7',nodes:158,meshes:120,instances:2096,geometries:112,materials:35,textures:10},
-  'midnight-chase':{hash:'10044817822457055dbd04d767d428cefb1b1015e2b1fdd6a5a1481a05322be3',nodes:1262,meshes:1214,instances:171674,geometries:404,materials:129,textures:32},
-  'ridge-rally':{hash:'8e21f45c0d9ee0a270743a58e0df5cd0d7b995f200a00cc17915b99a2b3691f9',nodes:438,meshes:416,instances:14087,geometries:174,materials:101,textures:33},
+  'midnight-chase':{hash:'41675688e789b1fc9e98f59737e1a8236d4c82c87ce617f34716fd99bd79ed33',nodes:1262,meshes:1214,instances:171674,geometries:404,materials:129,textures:32},
+  'ridge-rally':{hash:'53931d14e95d075d9dcedf4f51ca7e7b7ae02471b806fa05d79b923d2605d7d4',nodes:438,meshes:416,instances:14087,geometries:174,materials:101,textures:33},
   'titan-stunt-trial':{hash:'65c3d7f8d7bc8b3a9e525b8b083bae29a144b75af6ab20dac13c6e7e3e6e6f34',nodes:158,meshes:120,instances:2096,geometries:112,materials:35,textures:10},
-  'neon-drift-trial':{hash:'87e8eade2c487575d4debcb3f2ad6b3cd77cdd52549b39c8d31dd328fa67c9fb',nodes:1269,meshes:1222,instances:169354,geometries:402,materials:128,textures:32},
-  'timberline-rush':{hash:'70f5137668e51858c36f0b0aa96107c45ae1d5fb2c9ce13f081427a6327eea1b',nodes:523,meshes:484,instances:14950,geometries:239,materials:103,textures:31},
-  'eifel-crown':{hash:'1268618b4dd5c4910c283e931f4abccd52c9f0b4127f9d00fdb2c71d4ea078fd',nodes:645,meshes:613,instances:20292,geometries:248,materials:140,textures:46},
-  'alpine-serpent':{hash:'d3b774969ecd4a23992773dd9c721371262530188690a9df9ffc8754ad465753',nodes:578,meshes:545,instances:19015,geometries:219,materials:129,textures:41},
-  'azure-riviera':{hash:'f1acf5ed40e2ae31f9e08cb9293c4ffc60b3deb2cbeea3f11f6dc39bf759f565',nodes:555,meshes:528,instances:18370,geometries:243,materials:121,textures:40},
-  'red-mesa':{hash:'ea3514eb1599a891f88418a2f1454ff5ef1b503a7d5c8794e8c750ce6b3a07ce',nodes:522,meshes:494,instances:6732,geometries:211,materials:116,textures:36},
-  'neon-docks':{hash:'245c1e57e8af0e6ae970e32635454305aaaeb84389b86e538e08dea3615c0eed',nodes:1432,meshes:1374,instances:229433,geometries:448,materials:174,textures:44},
-  'cloudbreak-skyway':{hash:'0fc2e9f2abacb89cf639a81e03a19eab91d88c1c6c467dcb86a7038b704a512f',nodes:608,meshes:577,instances:15771,geometries:252,materials:142,textures:44},
+  'neon-drift-trial':{hash:'98a7420ffad0e5173401c4ef40bca4f469102d955d215f6a15cff8e3ae96187b',nodes:1269,meshes:1222,instances:169354,geometries:402,materials:128,textures:32},
+  'timberline-rush':{hash:'2c82f4833f2ce060f490a168b43abbc869b47f1633181db9e1ce79f723fad6e4',nodes:523,meshes:484,instances:14950,geometries:239,materials:103,textures:31},
+  'eifel-crown':{hash:'c3931d0b127855bbe11315794f3fa65d5866a5851dfcd2663d46a1d7ab4aba2b',nodes:645,meshes:613,instances:20292,geometries:248,materials:140,textures:46},
+  'alpine-serpent':{hash:'be479d04c34f17132a290a6f8dd7f82bb3b32b49eef8a39b47096a0d831cfa93',nodes:578,meshes:545,instances:19015,geometries:219,materials:129,textures:41},
+  'azure-riviera':{hash:'b6696b4341a7a799bdc9c6bc52c271e056dd9ae89d0ede49e8babf623b151dc4',nodes:555,meshes:528,instances:18370,geometries:243,materials:121,textures:40},
+  'red-mesa':{hash:'6bb5b5a400ae2a8b83c7466c81e4c054092dc0fac0e4eac169c3707261b85a33',nodes:522,meshes:494,instances:6732,geometries:211,materials:116,textures:36},
+  'neon-docks':{hash:'38b59a97e9ea91d8551719f63eaf272b7a1ca18e015b20ea5fbac2d45a8da451',nodes:1432,meshes:1374,instances:229433,geometries:448,materials:174,textures:44},
+  'cloudbreak-skyway':{hash:'d37553f4af313e50f6b24ffbc1d3e0cec0e431362e572b693e4e31d79cff4c4b',nodes:608,meshes:577,instances:15771,geometries:252,materials:142,textures:44},
   'titan-freestyle':{hash:'b85d7b46c9f386b0afe21b230c5e93382c9827c2fa9fe9db0b91ad386a29fc08',nodes:225,meshes:160,instances:129,geometries:157,materials:36,textures:5},
 };
 let checks=0;

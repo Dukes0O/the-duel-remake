@@ -19,6 +19,7 @@ const GLANCING_WALL_NORMAL_FRACTION = Math.sin(35 * Math.PI / 180);
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const freshDamageZones = () => ({ front: 0, rear: 0, left: 0, right: 0 });
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
+const FACTORY_MAX_UPGRADES = Object.freeze(Object.fromEntries(UPGRADE_KEYS.map(key => [key, 3])));
 
 export class Duel {
   constructor(opts = {}) {
@@ -38,7 +39,7 @@ export class Duel {
       driverId: DEFAULT_DRIVER,
       difficulty: this.difficultyKey,
       cpuDifficulty: DEFAULT_CPU_DIFFICULTY, playerId: null,
-      upgrades: Object.fromEntries(UPGRADE_KEYS.map(key => [key, 0])),
+      upgrades: Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.carKey]?.factoryMaxed ? 3 : 0])),
       stageIndex: 0,
       lives: LIVES.start,
       penaltySec: 0,
@@ -82,7 +83,7 @@ export class Duel {
   emit(ev) { for (const fn of this.listeners) fn(this.state, ev); }
 
   get car() {
-    const base = CARS[this.state.car], upgrades = this.state.upgrades;
+    const base = CARS[this.state.car], upgrades = base.factoryMaxed ? FACTORY_MAX_UPGRADES : this.state.upgrades;
     const driverId = normalizeDriverId(this.state.driverId);
     const key = `${this.state.car}|${driverId}|${UPGRADE_KEYS.map(name => upgrades[name] || 0).join(':')}`;
     if (this._carCache?.key === key) return this._carCache.value;
@@ -91,7 +92,7 @@ export class Duel {
       accel: base.accel * (1 + upgrades.engine * .04), grip: Math.min(1.2, base.grip + upgrades.handling * .045 + upgrades.tires * .025),
       braking: base.braking * (1 + upgrades.tires * .06 + (upgrades.brakes || 0) * .12),
       offRoadGrip: Math.min(1.15, (base.offRoadGrip ?? DRIVE.offRoadGrip) + (upgrades.suspension || 0) * .04 + upgrades.tires * .02),
-      roughnessScale: 1 / (1 + (upgrades.suspension || 0) * .18), boostCapacity: 1 + (upgrades.tank || 0) * .25 };
+      roughnessScale: 1 / (1 + (upgrades.suspension || 0) * .18), boostCapacity: (base.boostCapacity ?? 1) * (1 + (upgrades.tank || 0) * .25) };
     const modified = applyDriverModifiers(value, driverId, this.state.car);
     this._carCache = { key, value: modified }; return modified;
   }
@@ -153,7 +154,7 @@ export class Duel {
     this.state.cpuDifficulty = CPU_DIFFICULTY[cpuDifficulty] ? cpuDifficulty : DEFAULT_CPU_DIFFICULTY;
     this.state.playerId = typeof playerId === 'string' ? playerId : null;
     this.state.driverId = normalizeDriverId(driverId);
-    this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
+    this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     this.state.mode = mode === 'timetrial' ? 'timetrial' : 'duel';
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
@@ -398,13 +399,13 @@ export class Duel {
     const wasBoosting = s.boosting;
     const surface = this._drivingSurface(s.s, s.lateral, car);
     const nitro = s.upgrades.nitro, boostDrain = BOOST.drainPerSec / ((1 + nitro * .14) * car.boostCapacity);
-    const boostTopSpeed = BOOST.topSpeedMult + nitro * .025;
+    const boostTopSpeed = BOOST.topSpeedMult + nitro * .025 + (car.nitroSpeedBonus ?? 0);
     s.boosting = !!s.input.boost && s.boost > 0 && s.speedMph >= BOOST.minSpeedMph && surface.boostAllowed && s.input.brake === 0;
     if (s.boosting) {
       const available = Math.min(1, s.boost / (boostDrain * dt));
       s.boost = Math.max(0, s.boost - boostDrain * dt);
       const boostCeiling = d.autoShift ? car.topSpeed * boostTopSpeed : Math.min(car.topSpeed * boostTopSpeed, gearMax * DRIVE.gearCeilFrac);
-      s.speedMph += Math.max(0, Math.min(boostCeiling - s.speedMph, BOOST.accelMphPerSec * (1 + nitro * .15) * dt * available));
+      s.speedMph += Math.max(0, Math.min(boostCeiling - s.speedMph, BOOST.accelMphPerSec * (1 + nitro * .15) * (car.nitroAcceleration ?? 1) * dt * available));
     } else if (!s.input.boost) {
       s.boost = Math.min(1, s.boost + BOOST.refillPerSec * dt);
     }

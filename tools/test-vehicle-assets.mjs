@@ -15,7 +15,7 @@ const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve
 let loadCalls=0,importOptions=[];
 const waiting=deferred(),assets=createVehicleAssets({loadHero:()=>{loadCalls++;return waiting.promise;}});
 const licensedKinds={aurora_gt:'gt',falcone_heritage:'sport'};
-same(Object.keys(CARS).length,8,'Eight playable cars retain the six redesigned bodies plus two licensed trims');
+same(Object.keys(CARS).length,9,'Nine playable cars retain the six earlier bodies, two licensed trims and the distinct Jesko');
 for(const key of Object.keys(CARS).filter(key=>!Object.hasOwn(licensedKinds,key))){
   same(assets.status(key),'ready',`${key}: original body needs no async import`);
   same(await assets.load(key),true);
@@ -27,7 +27,7 @@ for(const key of Object.keys(CARS).filter(key=>!Object.hasOwn(licensedKinds,key)
   check(player.userData.wheels.length===4&&rival.userData.wheels.length===4&&ghost.userData.wheels.length===4,`${key}: all model routes preserve articulated wheels`);
   for(const vehicle of[player,rival,ghost])disposeTree(vehicle);
 }
-same(loadCalls,0,'selecting any of the six redesigned originals never downloads the licensed body');
+same(loadCalls,0,'selecting any synchronous original model never downloads the licensed body');
 for(const key of['unknown','toString','__proto__']){same(assets.status(key),'error');same(assets.create(key),null,'unknown models never fall back to an old coupe');}
 for(const key of Object.keys(licensedKinds)){same(assets.source(key),'licensed');same(assets.status(key),'idle');same(assets.create(key),null,`${key}: cold import has no substitute body`);}
 const first=assets.load('aurora_gt'),second=assets.load('falcone_heritage');same(first,second,'Aurora and Heritage share one source download');

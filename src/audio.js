@@ -20,6 +20,7 @@ const CAR_VOICES = {
   dusthawk_rally:{pitch:1.035,brightness:1.04,gain:.98,accent:1.05,exhaust:.12,intake:.13},
   banshee_muscle:{pitch:.89,brightness:.83,gain:1.035,accent:1.08,exhaust:.22,intake:.055},
   viper_proto:{pitch:1.06,brightness:1.08,gain:.96,accent:.92,exhaust:.075,intake:.16},
+  koenigsegg_jesko:{pitch:1.075,brightness:1.12,gain:1,accent:1.08,exhaust:.17,intake:.19},
   titan_monster:{pitch:.83,brightness:.76,gain:1.04,accent:1.02,exhaust:.25,intake:.04},
 };
 const AMBIENCE = {

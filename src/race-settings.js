@@ -4,7 +4,7 @@ import {normalizeLightingMood} from './lighting-moods.js';
 import {isCourseUnlocked} from './course-access.js';
 
 export const DEFAULT_RACE_SETTINGS=Object.freeze({version:1,eventId:COURSE[0].id,mode:'duel',cpuDifficulty:DEFAULT_CPU_DIFFICULTY,difficulty:DEFAULT_DIFFICULTY,car:DEFAULT_CAR,routeVariant:DEFAULT_ROUTE_VARIANT,lightingMood:'clear',ghostEnabled:true});
-const owned=(profile,key)=>Object.hasOwn(CARS,key)&&(!(CARS[key].price>0)||profile?.unlockedCars?.includes(key));
+const owned=(profile,key)=>Object.hasOwn(CARS,key)&&(!(CARS[key].price>0)&&!CARS[key].unlockRequirement||profile?.unlockedCars?.includes(key));
 export const raceSettingsStage=settings=>Math.max(0,COURSE.findIndex(stage=>stage.id===settings?.eventId));
 
 // Only preference fields are retained. Stable event IDs survive menu reordering;

@@ -111,8 +111,9 @@ for(const action of ['menu','restart'])for(const resumeFirst of [false,true]){
 const main=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
 const modal=main.slice(main.indexOf('function modalScreen(s) {'),main.indexOf('\nfunction renderState(s) {'));
 const app=start(),ticket=bust(app);
-const render=new Function('COURSE','app','metric','time','credits','action','profile','escapeHTML',`let lastEventResult=null;${modal};return modalScreen;`)(
-  COURSE,app,(label,value)=>`${label}: ${value}`,String,value=>Number(value||0).toLocaleString('en-US'),label=>label,()=>app.profile,String);
+const {formatSpeed}=await import('../src/speed-format.js');
+const render=new Function('COURSE','app','metric','time','credits','action','profile','escapeHTML','formatSpeed',`let lastEventResult=null;${modal};return modalScreen;`)(
+  COURSE,app,(label,value)=>`${label}: ${value}`,String,value=>Number(value||0).toLocaleString('en-US'),label=>label,()=>app.profile,String,formatSpeed);
 let html=render(app.duel.state);eq(html.includes('RACE FINE: 150 CR'),true);eq(html.includes('SAVED BALANCE: 2,000 CR'),true);
 eq(html.includes("only this race's earnings"),true);eq(html.includes('$150'),false,'ticket and wallet use the same credit unit');
 eq(html.includes('MAIN MENU'),true,'Busted keeps its direct Main Menu action');

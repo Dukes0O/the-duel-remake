@@ -3,14 +3,15 @@ import {readFile} from 'node:fs/promises';
 import {COURSE} from '../src/config.js';
 import {Duel} from '../src/game.js';
 import {COURSE_PRICES,isCourseUnlocked} from '../src/course-access.js';
+import {formatSpeed} from '../src/speed-format.js';
 
 let checks=0;const check=(ok,message)=>{assert.ok(ok,message);checks++;};
 const main=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
 const modal=main.slice(main.indexOf('function modalScreen(s) {'),main.indexOf('\nfunction renderState(s) {'));
 const app={runId:'ui-test',menuStage:0},wallet={credits:12300,courses:{version:1,unlocked:COURSE.map(course=>course.id)}};
 // Execute the production modal without booting the browser or changing saves.
-const render=new Function('COURSE','app','metric','time','credits','action','profile','escapeHTML','isCourseUnlocked','COURSE_PRICES',`let lastEventResult=null;${modal};return modalScreen;`)(
-  COURSE,app,(label,value)=>`<dt>${label}</dt><dd>${value}</dd>`,value=>Number(value).toFixed(2),value=>Number(value||0).toLocaleString('en-US'),label=>`<button>${label}</button>`,()=>wallet,value=>String(value),isCourseUnlocked,COURSE_PRICES);
+const render=new Function('COURSE','app','metric','time','credits','action','profile','escapeHTML','isCourseUnlocked','COURSE_PRICES','formatSpeed',`let lastEventResult=null;${modal};return modalScreen;`)(
+  COURSE,app,(label,value)=>`<dt>${label}</dt><dd>${value}</dd>`,value=>Number(value).toFixed(2),value=>Number(value||0).toLocaleString('en-US'),label=>`<button>${label}</button>`,()=>wallet,value=>String(value),isCourseUnlocked,COURSE_PRICES,formatSpeed);
 const expected={chase:'CITY<br>ESCAPED.',rally:'TRAIL<br>CONQUERED.',drift:'DRIFT<br>MASTERED.',checkpoint:'GATES<br>CLEARED.',circuit:'CIRCUIT<br>CONQUERED.'};
 
 for(const [stageIndex,stage]of COURSE.entries()){

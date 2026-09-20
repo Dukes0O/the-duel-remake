@@ -3,8 +3,9 @@ import {readFileSync} from 'node:fs';
 import {App} from '../src/app.js';
 import {CARS} from '../src/config.js';
 import {DRIVERS,getDriverState,getEquippedDriverId,applyDriverModifiers} from '../src/drivers.js';
-import {createProfile,CAR_PRICES,isCarUnlocked,upgradedCar,getUpgradeLevels} from '../src/progression.js';
+import {createProfile,CAR_PRICES,isCarUnlocked,upgradedCar,getUpgradeLevels,completionCarProgress} from '../src/progression.js';
 import {driverMenuMarkup,driverPanel,driverSkillLabel} from '../src/driver-ui.js';
+import {speedKph} from '../src/speed-format.js';
 
 let checks=0;
 const check=(value,label)=>{assert.ok(value,label);checks++;};
@@ -47,7 +48,7 @@ try{
   const app=new App(),choices={car:'falcone_f42'},textValues={},ui={'car-select':{options:Object.keys(CARS).map(value=>({value})),value:''},'driver-select':{innerHTML:'',value:''}};
   let rewardRefreshes=0,opened=0,message='';
   const profile=()=>app.profile,text=(id,value)=>{textValues[id]=String(value);};
-  const paint=new Function('profile','choices','ui','app','CARS','CAR_PRICES','DRIVERS','getDriverState','getEquippedDriverId','applyDriverModifiers','upgradedCar','getUpgradeLevels','isCarUnlocked','escapeHTML','credits','driverSkillLabel','text','updateEntryReward',`${main.slice(start,end)};return updateMenuCar;`)(profile,choices,ui,app,CARS,CAR_PRICES,DRIVERS,getDriverState,getEquippedDriverId,applyDriverModifiers,upgradedCar,getUpgradeLevels,isCarUnlocked,escapeHTML,credits,driverSkillLabel,text,()=>rewardRefreshes++);
+  const paint=new Function('profile','choices','ui','app','CARS','CAR_PRICES','DRIVERS','getDriverState','getEquippedDriverId','applyDriverModifiers','upgradedCar','getUpgradeLevels','isCarUnlocked','escapeHTML','credits','driverSkillLabel','text','updateEntryReward','completionCarProgress','speedKph',`${main.slice(start,end)};return updateMenuCar;`)(profile,choices,ui,app,CARS,CAR_PRICES,DRIVERS,getDriverState,getEquippedDriverId,applyDriverModifiers,upgradedCar,getUpgradeLevels,isCarUnlocked,escapeHTML,credits,driverSkillLabel,text,()=>rewardRefreshes++,completionCarProgress,speedKph);
   const root={querySelector:selector=>selector==='.driver-panel'?{setAttribute:(name,value)=>{same([name,value],['open',''],'post-action roster stays open');opened++;}}:null};
   const click=new Function('button','app','refreshGarage','root','DRIVERS','credits','driverSkillLabel','garageCar',main.slice(clickStart,clickEnd));
   const activate=dataset=>click({dataset},app,value=>{message=value;paint();},root,DRIVERS,credits,driverSkillLabel,choices.car);
