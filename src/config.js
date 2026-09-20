@@ -134,6 +134,10 @@ export const POLICE = {
   ticketSpeedCapMph: 50,  // rolling speed after paying the ticket
 };
 
+// Shared by paved shoulder drawing and ordinary lap validation. The shoulder
+// remains rough ground; crossing it does not mean skipping the course.
+export const ROAD_SHOULDER_WIDTH = 1.25;
+
 // Arcade road-coordinate dynamics: heading persists until the driver steers.
 // Course, vehicles, and distances are metres. Displayed speed remains mph.
 export const DRIVE = {

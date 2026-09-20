@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ROAD_SHOULDER_WIDTH } from './config.js';
 import { addLandscapeDetail } from './landscape-detail.js';
 import { addPineTrees } from './vegetation.js';
 import { addDesertCacti } from './desert-detail.js';
@@ -38,7 +39,7 @@ export function buildEnvironment(course) {
   const shoulder = createPavedShoulderMaterial({gravel:surfaceTexture('gravel'),alpine,course});
   for (const side of [-1, 1]) {
     if(course.def.offroad||course.def.arena)addTrailShoulder(group,course,side,trailMat);
-    else group.add(new THREE.Mesh(strip(course, s=>side*course.roadHalfWidthAt(s), s=>side*(course.roadHalfWidthAt(s)+1.25), .018), shoulder));
+    else group.add(new THREE.Mesh(strip(course, s=>side*course.roadHalfWidthAt(s), s=>side*(course.roadHalfWidthAt(s)+ROAD_SHOULDER_WIDTH), .018), shoulder));
     if(!course.def.arena&&!course.def.offroad){group.add(new THREE.Mesh(strip(course, s=>side*(course.roadHalfWidthAt(s)-.45), s=>side*(course.roadHalfWidthAt(s)-.28), .057), cream));
     group.add(new THREE.Mesh(strip(course, side * .12, side * .22, .058), yellow));}
   }

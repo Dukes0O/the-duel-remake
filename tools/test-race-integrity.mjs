@@ -1,14 +1,120 @@
 import assert from 'node:assert/strict';
 import { Duel } from '../src/game.js';
 import { App } from '../src/app.js';
-import { COURSE, LIVES } from '../src/config.js';
+import { COURSE, LIVES, ROAD_SHOULDER_WIDTH } from '../src/config.js';
 
 let checks = 0;
 const check = (condition, label) => { assert.ok(condition, label); checks++; };
 const chaseIndex = COURSE.findIndex(event => event.kind === 'chase');
+const harborIndex = COURSE.findIndex(event => event.id === 'harbor-highlands');
 function chase() {
   const d = new Duel({ seed: 1989 }); d.startCampaign({ startStage: chaseIndex });
   d.state.status = 'racing'; d.state.traffic = []; d.state.police.pursuit = null; return d;
+}
+
+// Harbor Route C: a clean physical crossing on the visible shoulder or just
+// inside a finish post must not silently invalidate the lap. Use real driving
+// steps here, including static collision checks, rather than awarding a gate.
+for (const side of [-1, 1]) for (const line of ['checkpoint', 'lap', 'finish']) {
+  const d = new Duel({ seed: 17 }); d.startCampaign({ startStage: harborIndex, mode: 'timetrial' });
+  const s = d.state, lap = line === 'finish' ? 1 : 0;
+  const threshold = lap * d.course.length + (line === 'checkpoint' ? d._lapGates[0] : d.course.length);
+  const lateral = side * (line === 'checkpoint' ? 7.4 : 7.1), events = [];
+  d.onChange((_, event) => events.push(event));
+  Object.assign(s, { status: 'racing', traffic: [], s: threshold - .6, prevS: threshold - .6,
+    lateral, prevLateral: lateral, speedMph: 60, stageTimeSec: 100, completedLaps: lap,
+    nextLapGate: line === 'checkpoint' ? 0 : d._lapGates.length });
+  const beforeLives = s.lives;
+  for (let step = 0; step < 8 && s.s < threshold; step++) d.step(1 / 120);
+  check(s.s >= threshold, `${line}: a real edge crossing keeps its position`);
+  check(line === 'checkpoint' ? s.nextLapGate === 1 : s.completedLaps === lap + 1,
+    `${line}: the collision-free visible crossing registers on side ${side}`);
+  check(s.majorCrashes === 0 && s.lives === beforeLives && !s.impactTimer &&
+    Object.values(s.damageZones).every(value => value === 0), 'the edge crossing does not hit a post or other scenery');
+  check(!events.some(event => event.checkpointReset), 'a clean edge crossing never triggers the delayed missed-checkpoint reset');
+  if (line === 'finish') check(s.results?.completed && s.results.laps === 2, 'the final edge crossing produces a completed two-lap result');
+}
+
+function crossLine(d, actor, threshold, lateral, nextLateral = lateral) {
+  Object.assign(actor, { prevS: threshold - .5, s: threshold + .5, prevLateral: lateral, lateral: nextLateral, speedMph: 100 });
+  d.state.stageTimeSec += 10;
+  d._advanceLaps(actor, 1 / 60);
+}
+
+// Each campaign route, both road edges, both racers and both laps use the
+// same bounded envelope. Shoulder acceptance must not turn gravel into asphalt.
+for (const seed of [1989, 42, 17]) for (const event of COURSE.filter(event => !event.kind)) for (const side of [-1, 1]) {
+  const d = new Duel({ seed }); d.startCampaign({ startStage: event.stage });
+  const s = d.state; s.status = 'racing'; s.traffic = [];
+  for (const actor of [s, s.rival]) for (let lap = 0; lap < 2; lap++) {
+    for (const [index, gate] of d._lapGates.entries()) {
+      const threshold = lap * d.course.length + gate, lateral = side * (d.course.roadHalfWidthAt(threshold) + ROAD_SHOULDER_WIDTH);
+      crossLine(d, actor, threshold, lateral);
+      check(actor.nextLapGate === index + 1, 'every ordered gate accepts the exact shoulder edge');
+      const surface = d._drivingSurface(threshold, lateral);
+      check(!surface.mainRoad && !surface.boostAllowed && surface.traction < 1, 'the accepted shoulder keeps off-road grip and boost rules');
+    }
+    const threshold = (lap + 1) * d.course.length;
+    crossLine(d, actor, threshold, side * (d.course.roadHalfWidthAt(threshold) + .1));
+    check(actor.completedLaps === lap + 1 && actor.s === threshold + .5, 'each completed lap keeps the racer at the crossed line');
+  }
+}
+
+// The added shoulder is not permission to cut across the countryside. Measure
+// lateral position at the crossing instant, not at either end of the step.
+for (const side of [-1, 1]) {
+  const d = new Duel({ seed: 17 }); d.startCampaign({ startStage: harborIndex, mode: 'timetrial' });
+  const s = d.state, gate = d._lapGates[0], limit = d.course.roadHalfWidthAt(gate) + ROAD_SHOULDER_WIDTH;
+  s.status = 'racing'; s.traffic = [];
+  for (const distance of [limit + .001, 20, 65]) {
+    crossLine(d, s, gate, side * distance);
+    check(s.nextLapGate === 0, 'just beyond the shoulder and distant fields do not count');
+  }
+  crossLine(d, s, gate, side * (limit + 1), side * (limit - .5));
+  check(s.nextLapGate === 0, 'returning to the shoulder after the line cannot repair an outside crossing');
+  crossLine(d, s, gate, side * (limit - 1), side * (limit + .5));
+  check(s.nextLapGate === 1, 'a valid interpolated crossing counts even if the step ends just outside');
+  s.nextLapGate = 0;
+  Object.assign(s, { prevS: gate + .5, s: gate - .5, prevLateral: side * limit, lateral: side * limit });
+  d._advanceLaps(s, 1 / 60);
+  check(s.nextLapGate === 0, 'reverse shoulder crossings cannot award progress');
+  Object.assign(s, { prevS: gate - 100, s: gate + .5 }); d._advanceLaps(s, 1 / 60);
+  check(s.nextLapGate === 0, 'teleporting across a shoulder gate cannot award progress');
+  crossLine(d, s, d._lapGates[1], side * limit);
+  check(s.nextLapGate === 0, 'crossing a later shoulder gate does not skip the missing earlier gate');
+  crossLine(d, s, d.course.length, side * 7.1);
+  check(s.completedLaps === 0 && s.s < gate, 'a valid finish opening still rejects an incomplete circuit');
+  s.nextLapGate = d._lapGates.length;
+  crossLine(d, s, d.course.length, side * (limit + .001));
+  check(s.completedLaps === 0, 'driving outside the finish opening cannot complete a lap');
+}
+
+// The long legacy campaign matrix does not contain Route C. Keep its Harbor
+// full-race regression here, so even quick runs cover this reported route.
+{
+  const previousStorage = globalThis.localStorage, outcomes = [];
+  try {
+    for (const fps of [30, 144]) {
+      const memory = new Map();
+      globalThis.localStorage = { getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)) };
+      const app = new App(), events = []; app.autopilot = true;
+      app.startCampaign({ startStage: harborIndex, routeVariant: 'route_c', car: 'falcone_f42', mode: 'timetrial', cpuDifficulty: 'medium' });
+      app.duel.onChange((_, event) => {
+        if (event.lapCheckpoint || event.lapCompleted || event.checkpointReset) events.push(event);
+      });
+      for (let frame = 0; frame < fps * 240 && ['countdown', 'racing', 'ticket'].includes(app.duel.state.status); frame++) app.advance(1 / fps);
+      const s = app.duel.state;
+      check(s.seed === 17 && s.results?.completed && s.results.won && s.completedLaps === 2, 'ordinary inputs complete Harbor Route C on Medium');
+      check(events.filter(event => event.lapCheckpoint).length === 6 && events.filter(event => event.lapCompleted).length === 2,
+        'the full race drives through all six checkpoints and both lap lines');
+      check(!events.some(event => event.checkpointReset) && !s.boundaryResets && !s.majorCrashes, 'the full Route C race has no false reset or crash');
+      outcomes.push({ time: s.results.timeSec, score: s.score, lapTimes: s.lapTimes, events });
+    }
+    assert.deepEqual(outcomes[0], outcomes[1]); checks++;
+  } finally {
+    if (previousStorage === undefined) delete globalThis.localStorage;
+    else globalThis.localStorage = previousStorage;
+  }
 }
 {
   const d = new Duel({ seed: 1989 });

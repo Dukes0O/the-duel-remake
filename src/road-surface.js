@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ROAD_SHOULDER_WIDTH } from './config.js';
 
 const NOISE = `
   float roadHash(vec2 p) { return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
@@ -85,7 +86,7 @@ export function createPavedShoulderMaterial({ gravel, alpine = false, course }) 
         vec2 bounds=shoulderPassingLanes[lane];
         shoulderWidth+=3.5*smoothstep(0.0,45.0,shoulderPhase-bounds.x)*smoothstep(0.0,45.0,bounds.y-shoulderPhase);
       }` : ''}
-      vShoulderAcross=clamp((abs(uv.x*5.0)-shoulderWidth)/1.25,0.0,1.0);
+      vShoulderAcross=clamp((abs(uv.x*5.0)-shoulderWidth)/${ROAD_SHOULDER_WIDTH},0.0,1.0);
     `);
     shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vShoulderAcross;')
       .replace('#include <map_fragment>', `

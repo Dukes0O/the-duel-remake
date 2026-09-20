@@ -375,6 +375,21 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   eq(s.lives, LIVES.start - 1, 'the complete impact consumes exactly one life');
 }
 
+// Ordinary impacts can exhaust the crash allowance without reaching the
+// separate high-speed structural-damage limit. That is a valid losing end.
+{
+  const d = new Duel({ seed: 2026 }); d.startCampaign();
+  const s = d.state; s.status = 'racing'; s.traffic = [];
+  for (let crash = 0; crash < LIVES.start / LIVES.crashLifeCost; crash++) {
+    s.impactTimer = 0; s.speedMph = 20; d._crash('traffic', 0, 20);
+  }
+  eq(s.lives, 0, 'ordinary crashes can exhaust all lives');
+  eq(s.status, 'gameover', 'life exhaustion ends the race without waiting for major damage');
+  ok(!s.catastrophic && s.majorCrashes === 0, 'ordinary life exhaustion is not a catastrophic crash');
+  ok(s.results.gameover && !s.results.completed && !s.results.won, 'life exhaustion records a loss, never a completed win');
+  eq(d._finishStage(), false, 'an exhausted race cannot claim finish rewards');
+}
+
 // --- Campaign simulation is independent of display frame rate ---
 if (!process.env.DUEL_SKIP_CAMPAIGNS) {
   const runs = [];
@@ -393,7 +408,13 @@ if (!process.env.DUEL_SKIP_CAMPAIGNS) {
             if (s.status === 'stage_result') { stages++; if (s.results.won) wins++; app.duel.nextStage(); }
           }
           const s = app.duel.state;
-          runs.push({ complete: s.status === 'complete' && stages === COURSE.filter(course => !course.kind).length, catastrophic: s.status === 'gameover' && s.catastrophic && s.majorCrashes === DRIVE.majorCrashLimit, finite, wins, stages });
+          runs.push({ seed, car, difficulty, fps, status: s.status, stage: s.stageIndex, lap: s.completedLaps, gate: s.nextLapGate,
+            position: +s.s.toFixed(2), speedMph: +s.speedMph.toFixed(2),
+            complete: s.status === 'complete' && stages === COURSE.filter(course => !course.kind).length,
+            catastrophic: s.status === 'gameover' && s.catastrophic && s.majorCrashes === DRIVE.majorCrashLimit,
+            exhausted: s.status === 'gameover' && s.lives === 0 && !s.catastrophic && s.stageCrashes > 0 &&
+              s.results?.gameover === true && s.results.completed === false && s.results.won === false,
+            finite, wins, stages });
           frames.push({ time: s.totalTimeSec, lives: s.lives, score: s.score, hits:s.majorCrashes,status:s.status });
         }
         ok(frames.every(f => Math.abs(f.time - frames[0].time) < 0.001 && f.lives === frames[0].lives && f.score === frames[0].score && f.hits===frames[0].hits && f.status===frames[0].status),
@@ -401,9 +422,10 @@ if (!process.env.DUEL_SKIP_CAMPAIGNS) {
       }
     }
   }
-  ok(runs.every(r => r.complete || r.catastrophic), 'all 60 campaigns end with every stage completed or the major crash limit');
+  const unfinished = runs.filter(r => !r.complete && !r.catastrophic && !r.exhausted);
+  ok(unfinished.length === 0, `all 60 campaigns complete or end with a valid crash-limit loss${unfinished.length ? `; unfinished runs: ${JSON.stringify(unfinished)}` : ''}`);
   ok(runs.some(r=>r.complete), 'the stricter damage limit still permits complete campaigns');
-  console.log(`  Campaign outcomes: ${runs.filter(r=>r.complete).length} completed, ${runs.filter(r=>r.catastrophic).length} catastrophic`);
+  console.log(`  Campaign outcomes: ${runs.filter(r=>r.complete).length} completed, ${runs.filter(r=>r.catastrophic).length} catastrophic, ${runs.filter(r=>r.exhausted).length} life-exhausted`);
   console.log(`  Course wins: ${runs.reduce((sum, run) => sum + run.wins, 0)} / ${runs.reduce((sum, run) => sum + run.stages, 0)} finished stages`);
   ok(runs.every(r => r.finite), 'all 60 campaign runs keep finite simulation state');
 }

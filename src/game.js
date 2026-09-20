@@ -3,7 +3,7 @@
 // owns traffic, police, gearbox, lives and campaign progression. step(dt)
 // runs identically in headless tests and the fixed-step browser loop.
 
-import { CARS, DEFAULT_CAR, DIFFICULTY, DEFAULT_DIFFICULTY, CPU_DIFFICULTY, DEFAULT_CPU_DIFFICULTY, COURSE, LIVES, POLICE, DRIVE, TRAFFIC, SCORING, BOOST, steeringYawAuthority } from './config.js';
+import { CARS, DEFAULT_CAR, DIFFICULTY, DEFAULT_DIFFICULTY, CPU_DIFFICULTY, DEFAULT_CPU_DIFFICULTY, COURSE, LIVES, POLICE, DRIVE, TRAFFIC, SCORING, BOOST, ROAD_SHOULDER_WIDTH, steeringYawAuthority } from './config.js';
 import { Course } from './course.js';
 import { makeRng, seedFromUrl } from './rng.js';
 import { sweepBox, sweepObstacle, contactZone, segmentCircle, CAR_HALF_WIDTH, CAR_HALF_LENGTH } from './collision.js';
@@ -1195,7 +1195,11 @@ export class Duel {
       const fraction = clamp((threshold - previous) / (current - previous), 0, 1);
       const lateral = (actor.prevLateral ?? actor.lateral) + (actor.lateral - (actor.prevLateral ?? actor.lateral)) * fraction;
       const surface = this._surface(threshold, lateral);
-      return surface.road || !!surface.shortcutId;
+      // Invisible circuit checkpoints include the narrow roadside shoulder.
+      // Otherwise a harmless edge crossing (even inside the finish arch)
+      // silently invalidates the lap. This does not alter grip, boost, solid
+      // posts, ordered progress, or the separate timed challenge gate widths.
+      return surface.road || !!surface.shortcutId || Math.abs(lateral) <= surface.roadHalfWidth + ROAD_SHOULDER_WIDTH;
     };
     // A discontinuous position change cannot substitute for driving a circuit.
     const plausibleTravel = current - previous < Math.max(20, actor.speedMph * DRIVE.mphToWorld * dt * 4 + 12);
