@@ -2,6 +2,16 @@
 
 Checkpoint: 20 September 2026. The latest checked update is described first. Later sections preserve earlier checkpoints; their counts and screenshots are historical evidence.
 
+## Koenigsegg completion driver — Axel Storm
+
+Axel unlocks automatically with the Jesko, for no extra credits, and is granted to existing car owners on load. Unlocking never changes the selected driver. The four car-specific bonuses are +30% handling, +20% suspension, +30% tires and +20% nitro. They map to corner grip ×1.3, tire braking/loose-surface grip ×1.3, roughness response ÷1.2, and boost acceleration/capacity ×1.2. Base top speed, gearing, other cars, ordinary drivers and banked-credit rules remain unchanged. A bounded `v2` record class keeps the enhanced Jesko separate from neutral bests, leaderboards and ghosts; existing `v1` signatures stay intact.
+
+**12 distinct focused suites pass.** The new driver suite passes 818 checks, including every one of the 56 possible final upgrades, already-owned-car migration, malformed/forged ownership, no charges or auto-selection, player isolation, physical steering/suspension/nitro effects, records and replay persistence. Its actual input-only two-lap Pacific race finishes in **68.88 seconds with zero crashes and 346 replay samples**. The older driver-driving suite also completes both ordinary input-only races. Progression, driver UI, ghost, race settings and busted/quit regressions pass. The broad campaign and expansion-driving matrices were not rerun for this addition.
+
+Compiled browser QA used an isolated in-memory garage. A final 950-credit Titan tank upgrade reduced its wallet from 50,000 to 49,050 and unlocked both the Jesko and Axel immediately. Club Driver stayed selected until Axel was explicitly chosen. The menu showed all four percentages, the Koenigsegg remained at 530 km/h before boost, and the driver note fit at 1,280 × 720. No browser warnings or errors were captured. No live player data was read or changed.
+
+Production and QA builds pass with the existing renderer-size warning. The live `http://localhost:5174/` build is **26.09.20 20:40 UTC · ce3e7f**, ID `20260920204010-ce3e7fe7c777`, entry `index-c2gTHa2T.js` and renderer `render3d-BP8UEfjs.js`. The temporary QA tab, server, generated output and this pass's logs are cleaned after verification; reusable regression tests remain.
+
 ## Adaptive Performance graphics
 
 Performance was a fixed lighter preset, not a hardware-specific setting. This pass adds a bounded 80–100% 3D render scale based on delivered racing frames. It requires sustained slow delivery before a five-point reduction and much longer stable delivery before recovery. Loading, hidden tabs, pauses, menus, countdowns, debug draws and configuration-change frames do not train it. The HUD remains native-resolution; physics, saves and the selected quality preference are unchanged. High retains its existing contact shading, bloom, smoothing and 2,048-pixel shadows.

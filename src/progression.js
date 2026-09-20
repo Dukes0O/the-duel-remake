@@ -1,7 +1,7 @@
 import { CARS, COURSE, DEFAULT_CAR, DRIVE, CPU_DIFFICULTY, POLICE } from './config.js';
 import {normalizeCosmetics} from './paint-presets.js';
 import {normalizeRaceSettings} from './race-settings.js';
-import {DRIVERS,normalizeDrivers,normalizeDriverId,driverModifierSignature} from './drivers.js';
+import {DRIVERS,normalizeDrivers,getDriverState,normalizeDriverId,driverModifierSignature} from './drivers.js';
 import {normalizeCourseAccess} from './course-access.js';
 
 export const PROFILE_KEY = 'the-duel-profile-v1';
@@ -45,7 +45,7 @@ export function normalizeProfile(value){
   // A previously earned reward stays owned if the roster grows in a later update.
   profile=grantCompletionCars(profile);
   profile.cosmetics=normalizeCosmetics(value.cosmetics);
-  profile.drivers=normalizeDrivers(value.drivers);
+  profile.drivers=getDriverState({...profile,drivers:value.drivers});
   profile.courses=normalizeCourseAccess(value.courses,value);
   profile.raceSettings=value.raceSettings==null?null:normalizeRaceSettings(value.raceSettings,profile);
   profile.settledResults=validStrings(value.settledResults||value.awardedWins);profile.pbBonusRuns=validStrings(value.pbBonusRuns);
@@ -94,8 +94,8 @@ export function completionCarProgress(profile,car='koenigsegg_jesko'){
 }
 function grantCompletionCars(profile){
   const earned=completionCars().filter(car=>!isCarUnlocked(profile,car)&&completionCarProgress(profile,car).eligible);
-  if(!earned.length)return profile;
-  return {...profile,unlockedCars:[...profile.unlockedCars,...earned],upgrades:{...profile.upgrades,...Object.fromEntries(earned.map(car=>[car,maxUpgradeLevels()]))}};
+  const updated=earned.length?{...profile,unlockedCars:[...profile.unlockedCars,...earned],upgrades:{...profile.upgrades,...Object.fromEntries(earned.map(car=>[car,maxUpgradeLevels()]))}}:profile;
+  return {...updated,drivers:getDriverState(updated)};
 }
 export function stageEventId(index){const stage=COURSE[index];return stage?String(stage.id||`course-${index}`):'';}
 // Only archival validation supplies the second argument. Ordinary callers

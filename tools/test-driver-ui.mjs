@@ -19,7 +19,7 @@ const defaultProfile=createProfile(),markup=driverMenuMarkup();
 check(markup.includes('for="driver-select"')&&markup.includes('id="driver-select"')&&markup.includes('aria-label="Choose an unlocked driver"'),'native menu select has a connected accessible label');
 check(markup.includes('id="driver-skill-note"'),'the active car skill has a visible description');
 const initial=driverPanel(defaultProfile,'falcone_f42');
-same((initial.match(/<article\b/g)||[]).length,Object.keys(DRIVERS).length,'garage lists all six specialists and the neutral driver');
+same((initial.match(/<article\b/g)||[]).length,Object.keys(DRIVERS).length,'garage lists all specialists, the reward driver and the neutral driver');
 check(initial.startsWith('<details')&&!/^<details[^>]*\bopen\b/.test(initial),'garage roster starts collapsed to keep the existing upgrade panel compact');
 for(const driver of Object.values(DRIVERS)){
   const button=tags(initial).find(tag=>tag.includes(`="${driver.id}"`));
@@ -53,8 +53,9 @@ try{
   const click=new Function('button','app','refreshGarage','root','DRIVERS','credits','driverSkillLabel','garageCar',main.slice(clickStart,clickEnd));
   const activate=dataset=>click({dataset},app,value=>{message=value;paint();},root,DRIVERS,credits,driverSkillLabel,choices.car);
   paint();same(ui['driver-select'].value,'club','old and new neutral profiles display Club Driver');
-  same((ui['driver-select'].innerHTML.match(/<option\b/g)||[]).length,7,'menu lists every catalog driver');
-  same((ui['driver-select'].innerHTML.match(/disabled/g)||[]).length,6,'locked menu choices cannot be selected');
+  same((ui['driver-select'].innerHTML.match(/<option\b/g)||[]).length,8,'menu lists every catalog driver');
+  same((ui['driver-select'].innerHTML.match(/disabled/g)||[]).length,7,'locked menu choices cannot be selected');
+  check(ui['driver-select'].innerHTML.includes('Axel Storm · LOCKED · UNLOCK KOENIGSEGG'),'menu explains the achievement requirement instead of offering a zero-credit purchase');
   check(textValues['driver-skill-note'].includes('no performance changes'),'menu describes the currently applied skill');
   app.profile.credits=3000;app._saveProfile();const initialBank=app.profile.credits;
   activate({driverUnlock:'mara_vale'});same(app.profile.credits,initialBank-1200,'production unlock action charges exactly once');same(ui['driver-select'].value,'club','unlock does not silently equip a specialist');

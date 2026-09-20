@@ -11,7 +11,7 @@ let checks=0;
 const same=(actual,expected,label)=>{assert.deepEqual(actual,expected,label);checks++;};
 const check=(condition,label)=>{assert.ok(condition,label);checks++;};
 const snapshot=value=>JSON.stringify(value);
-same(Object.keys(DRIVERS).length,7,'neutral default and six specialists');
+same(Object.keys(DRIVERS).length,8,'neutral default, six purchasable specialists and the Koenigsegg reward driver');
 same(getEquippedDriverId(createProfile()),DEFAULT_DRIVER,'new careers use the neutral driver');
 same(normalizeDrivers(),{version:1,unlocked:['club'],selected:'club'},'missing legacy driver data is neutral');
 same(normalizeDrivers({version:1,unlocked:['unknown','mara_vale','mara_vale'],selected:'iko_ren'}),{version:1,unlocked:['club','mara_vale'],selected:'club'},'normalization filters unknowns, duplicates and unowned selection');
@@ -21,7 +21,7 @@ for(const [id,driver]of Object.entries(DRIVERS))for(const [key,base]of Object.en
   const car=upgradedCar(base,{engine:3,tires:3,handling:3,brakes:3,suspension:3,tank:3}),before=snapshot(car),modifiers=getDriverModifiers(id,key),adjusted=applyDriverModifiers(car,id,key);
   same(snapshot(car),before,'driver modifiers never mutate an installed build');
   for(const [stat,value]of Object.entries(car)){
-    if(Object.hasOwn(modifiers,stat)){same(adjusted[stat],value*modifiers[stat],`${id}/${key}: exact ${stat} modifier`);check(modifiers[stat]>1&&modifiers[stat]<=1.06,'skill magnitude remains bounded');}
+    if(Object.hasOwn(modifiers,stat)){same(adjusted[stat],value*modifiers[stat],`${id}/${key}: exact ${stat} modifier`);check(id==='axel_storm'?(stat==='roughnessScale'?modifiers[stat]===1/1.2:modifiers[stat]>1&&modifiers[stat]<=1.3):modifiers[stat]>1&&modifiers[stat]<=1.06,'legacy skills stay within 6%; the completion reward stays within its declared 20/30% limits');}
     else same(adjusted[stat],value,`${id}/${key}: unrelated ${stat} unchanged`);
   }
   const active=driver.cars.includes(key);
@@ -38,7 +38,7 @@ const migrated=normalizeProfile(legacy);
 same(migrated.credits,legacy.credits,'migration grants no money');same(migrated.personalBests,legacy.personalBests,'migration leaves existing best keys untouched');same(migrated.history,legacy.history,'migration preserves history');
 same(migrated.drivers.unlocked,['club'],'no specialist is gifted to an old career');
 let profile={...migrated,credits:15000};
-for(const [id,driver]of Object.entries(DRIVERS).filter(([id])=>id!=='club')){
+for(const [id,driver]of Object.entries(DRIVERS).filter(([,driver])=>driver.price>0)){
   const before=profile,copy=snapshot(profile),result=purchaseDriver(profile,id);
   check(result.ok,'an affordable specialist unlocks');same(result.cost,driver.price,'catalog controls price');same(result.profile.credits,before.credits-driver.price,'one exact debit');same(snapshot(before),copy,'purchase is immutable');same(result.profile.drivers.selected,'club','unlock is not an implicit selection');
   same(purchaseDriver(result.profile,id).profile,result.profile,'duplicate purchase cannot charge again');profile=result.profile;

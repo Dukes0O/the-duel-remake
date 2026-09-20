@@ -94,7 +94,7 @@ function updateMenuCar() {
   for(const option of ui['car-select'].options){const key=option.value,progress=completionCarProgress(profile(),key),locked=progress.total?`MAX OTHER CARS ${progress.maxed}/${progress.total}`:`${credits(CAR_PRICES[key])} CR`;option.textContent=isCarUnlocked(profile(),key)?CARS[key].name:`${CARS[key].name} · LOCKED · ${locked}`;}
   ui['car-select'].value=choices.car;
   const drivers=getDriverState(profile());
-  ui['driver-select'].innerHTML=Object.values(DRIVERS).map(driver=>`<option value="${driver.id}" ${drivers.unlocked.includes(driver.id)?'':'disabled'}>${escapeHTML(driver.name)}${drivers.unlocked.includes(driver.id)?'':` · LOCKED · ${credits(driver.price)} CR`}</option>`).join('');
+  ui['driver-select'].innerHTML=Object.values(DRIVERS).map(driver=>`<option value="${driver.id}" ${drivers.unlocked.includes(driver.id)?'':'disabled'}>${escapeHTML(driver.name)}${drivers.unlocked.includes(driver.id)?'':driver.unlockCar?' · LOCKED · UNLOCK KOENIGSEGG':` · LOCKED · ${credits(driver.price)} CR`}</option>`).join('');
   ui['driver-select'].value=drivers.selected;text('driver-skill-note',driverSkillLabel(drivers.selected,choices.car));
   updateEntryReward();
 }
@@ -173,7 +173,7 @@ root.addEventListener('click',e => {
   if(button.dataset.paint){const result=app.purchasePaint(garageCar,button.dataset.paint);refreshGarage(result.ok?`${PAINT_PRESETS[button.dataset.paint].name} applied to ${CARS[garageCar].name}.${result.purchased?` Purchased for ${credits(result.cost)} credits.`:''}`:result.reason);return;}
   if(button.dataset.driverUnlock){if(app.duel.state.status!=='menu')return;const id=button.dataset.driverUnlock,result=app.purchaseDriver(id);refreshGarage(result.ok?`${DRIVERS[id].name} unlocked for ${credits(result.cost)} credits. Select this driver to use their skill.`:result.reason);root.querySelector('.driver-panel')?.setAttribute('open','');return;}
   if(button.dataset.driverSelect){if(app.duel.state.status!=='menu')return;const id=button.dataset.driverSelect,result=app.selectDriver(id);refreshGarage(result.ok?`${DRIVERS[id].name} selected. ${driverSkillLabel(id,garageCar)}`:result.reason);root.querySelector('.driver-panel')?.setAttribute('open','');return;}
-  if (button.dataset.upgrade) { const result = app.purchaseUpgrade(garageCar, button.dataset.upgrade); refreshGarage(result.ok ? `${UPGRADE_TYPES[button.dataset.upgrade].name} upgraded to level ${getUpgradeLevels(profile(), garageCar)[button.dataset.upgrade]}.${result.earnedCars?.length?` ${result.earnedCars.map(key=>CARS[key].name).join(', ')} unlocked! All seven upgrades are already maxed. Select it in the garage.`:''}` : result.reason); return; }
+  if (button.dataset.upgrade) { const result = app.purchaseUpgrade(garageCar, button.dataset.upgrade); refreshGarage(result.ok ? `${UPGRADE_TYPES[button.dataset.upgrade].name} upgraded to level ${getUpgradeLevels(profile(), garageCar)[button.dataset.upgrade]}.${result.earnedCars?.length?` ${result.earnedCars.map(key=>CARS[key].name).join(', ')} unlocked! All seven upgrades are already maxed. Select it in the garage. Axel Storm is also unlocked for free; select him under Specialist Drivers.`:''}` : result.reason); return; }
   if (button.dataset.car && !isCarUnlocked(profile(), button.dataset.car)) { openGarage(button.dataset.car); return; }
   for (const key of ['car','difficulty','mode','cpuDifficulty']) if (button.dataset[key]) { choices[key] = button.dataset[key];updateMenuScene();return; }
   if(button.closest('form')&&button.type==='submit')return;
