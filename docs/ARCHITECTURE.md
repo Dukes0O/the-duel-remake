@@ -8,11 +8,14 @@ Keep the current Three.js game and its deterministic simulation. Extend the scen
 | --- | --- | --- |
 | `config.js`, `course.js` | Event definitions, seeded routes, surfaces and physical features | One source for visible and collidable track geometry |
 | `game.js`, `collision.js` | Driving, damage, race state and contacts | The renderer must not change simulation state |
+| `npc-yielding.js` | Shared NPC stopping plan, contact envelope and responsibility | Traffic, rival and police callers preserve player-caused impacts and police catches |
 | `progression.js`, `leaderboard.js` | Careers, rewards, records and local players | Scene changes must not change saves or settlement rules |
 | `app.js` | Input, audio, fixed-step simulation and menus | Coordinates gameplay; does not build scenery |
+| `keyboard-steering.js` | Brief-keypress shaping and held-direction history | Keyboard only; raw physics, gamepad and autopilot inputs bypass it |
 | `world.js` | Ordered scene composition and graph disposal | Calls feature builders in a stable order |
 | `world-surfaces.js` | Terrain, road and shoulder meshes and surface textures | Samples the existing course geometry |
 | `world-props.js` | Road furniture, stations, harbor, coast structures and finish | Uses course features and existing mesh factories |
+| `harbor-detail.js` | Batched crane frames, braces, hoists and cabins | Reuses existing decorative positions and bounds; no new colliders or lights |
 | Feature modules such as `landscape-detail.js`, `coastal-water.js`, `checkpoint-gates.js` | One visual feature each | Own their meshes, uniforms and visual state |
 | `scene-systems.js` | Per-world animation, simulation-state synchronization and cleanup hooks | Explicit callbacks instead of chained `userData` handlers |
 | `scene-lighting.js` | Sky, environment maps, global/local lights and headlights | Owns asynchronous lighting loads and their GPU resources |
@@ -59,6 +62,8 @@ App-based QA pages install `tools/qa-storage.js` before importing the App. Their
 
 The first bounded pass uses these interfaces for Pacific Canyon's rocky shoreline, surf and lighthouse. It also adds repeatable frame samples and removes unused tire-plane sampling during clean driving. See [the showcase and measurement notes](COAST_SHOWCASE.md). The follow-up [performance pass](PERFORMANCE_PASS.md) prepares shaders, removes duplicate shadows and groups existing architectural detail into spatial batches. Per-instance equality tests guard the intentional grouping-signature changes; no further art revision is part of that pass.
 
+The night-city follow-up refines existing harbor cranes with two instanced material draws per crane and repairs warehouse material selection after spatial batching. Wall cells are identified by their part metadata, not by matching the total building count; palette colours retain their original building order. Only the three city-event composition signatures change. Existing buildings still obscure some crane views; this is a detail pass, not a new harbor layout.
+
 The architecture now has clear homes for richer scenes. Build the next improvements in bounded passes:
 
 1. Measure draw calls, triangles, shader count, first-frame time and frame times on dense city, mountain and stadium views in both quality modes. Establish budgets before adding detail.
@@ -66,4 +71,4 @@ The architecture now has clear homes for richer scenes. Build the next improveme
 3. Prototype weather and visibility as a visual system coordinated with the lighting controller. Keep gameplay effects separate and explicit if they are later wanted.
 4. Author memorable track sections using course feature data: set-piece structures, vista framing and lighting transitions. Test approach, passage and exit at driving speed, not only a static screenshot.
 
-Future weather and set-piece work remains separate. Loading measurements improve, but a general frame-rate or hitch-free guarantee is not supported by the short samples. Vehicles, terrain shape, route versions, driving rules, account data and save formats are unchanged.
+Future weather and set-piece work remains separate. Loading measurements improve, but a general frame-rate or hitch-free guarantee is not supported by the short samples. Vehicle designs, terrain shape, route versions, account data and save formats remain unchanged. The separate handling follow-up changes keyboard taps and NPC yielding, not these scene boundaries.

@@ -4,6 +4,7 @@ import { hasDetailedCityFacade } from './city-chase-detail.js';
 import { addCoastalWater } from './coastal-water.js';
 import { addPacificCoast, isPacificCoast } from './pacific-coast.js';
 import { createCoastLighthouse } from './coast-lighthouse.js';
+import { addHarborCranes } from './harbor-detail.js';
 
 // Visual shells follow Course's existing feature footprints. Keep direct world
 // children: the later scenery-detail pass refines these base structures.
@@ -135,14 +136,7 @@ export function addHarbor(group,course){
   }
   if(!draws)cube.dispose();
   group.userData.harborBuildings={buildings:course.features.buildings.length,replacedBuildings,legacyWindowCount,fallbackWindows:windows.length,removedWindowBoxes:legacyWindowCount-windows.length,draws};
-  const steel=new THREE.MeshStandardMaterial({color:0x3e5966,metalness:.7,roughness:.55}),amber=new THREE.MeshStandardMaterial({color:0xffb93d,emissive:0xf77722,emissiveIntensity:1.8});
-  for(let s=420;s<course.length;s+=680){
-    if(course.themeAt(s)!=='city')continue;
-    const p=course.groundAt(s,130),g=new THREE.Group();
-    for(const x of[-12,12])box(g,[1.4,45,1.4],[x,22.5,0],steel);
-    box(g,[27,2,2],[0,44,0],steel);box(g,[2,2,70],[0,47,-10],steel);box(g,[.15,31,.15],[0,31,-36],steel);box(g,[2,.5,2],[0,15.5,-36],amber);
-    g.position.set(p.x,p.y,p.z);g.rotation.y=p.heading;group.add(g);
-  }
+  addHarborCranes(group,course);
 }
 
 export function addFinish(group, course) {

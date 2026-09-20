@@ -5,18 +5,18 @@ import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
 import {buildEnvironment,disposeTree} from '../src/world.js';
 
-// Reviewed scene composition after spatial scenery batching. Per-instance
-// equivalence to the previous grouping is checked in test-scenery-batches.mjs.
+// Reviewed scene composition after spatial scenery batching and harbor detail.
+// Instance parity and bounded harbor changes have separate focused tests.
 // UUIDs, allocation counters, callbacks and wall-clock values are not scene data.
 const baseline={
   'pacific-canyon':{hash:'2769611337c31502023345ca3d1cd75e4fc74fd49b5af94c52d42052fa71b4b8',nodes:523,meshes:501,instances:11981,geometries:237,materials:102,textures:33},
   'high-country':{hash:'40d0e80311b5a0bedce4346bbc92e5d3dfd8f98f55e463737ba7382ce91c0bc1',nodes:712,meshes:682,instances:15698,geometries:358,materials:136,textures:43},
-  'harbor-highlands':{hash:'ee9fb6aaaae97af2393f216176fe13e858846cb29f72beb7b6826d9113f5da86',nodes:1018,meshes:975,instances:116321,geometries:395,materials:167,textures:46},
+  'harbor-highlands':{hash:'d38960c3630d06cbc565c2147e3ef2ece3345b949ad77bd76b325323250d53d2',nodes:1011,meshes:967,instances:116421,geometries:384,materials:167,textures:46},
   'titan-arena':{hash:'c41de422a08b1ea2ece04d823beeb28ddca8a81eec892df391745b6d602bb1a7',nodes:158,meshes:120,instances:2096,geometries:112,materials:35,textures:10},
-  'midnight-chase':{hash:'d93da886d2c279a0326f8d806b88051b25f89ef867161a8648464108a875d13d',nodes:1277,meshes:1230,instances:171474,geometries:427,materials:129,textures:32},
+  'midnight-chase':{hash:'10044817822457055dbd04d767d428cefb1b1015e2b1fdd6a5a1481a05322be3',nodes:1262,meshes:1214,instances:171674,geometries:404,materials:129,textures:32},
   'ridge-rally':{hash:'8e21f45c0d9ee0a270743a58e0df5cd0d7b995f200a00cc17915b99a2b3691f9',nodes:438,meshes:416,instances:14087,geometries:174,materials:101,textures:33},
   'titan-stunt-trial':{hash:'65c3d7f8d7bc8b3a9e525b8b083bae29a144b75af6ab20dac13c6e7e3e6e6f34',nodes:158,meshes:120,instances:2096,geometries:112,materials:35,textures:10},
-  'neon-drift-trial':{hash:'8f70b0613434c8336520bad4782c9c84fd47a2823e7ccd99960470a9c5f1f483',nodes:1284,meshes:1238,instances:169154,geometries:425,materials:128,textures:32},
+  'neon-drift-trial':{hash:'87e8eade2c487575d4debcb3f2ad6b3cd77cdd52549b39c8d31dd328fa67c9fb',nodes:1269,meshes:1222,instances:169354,geometries:402,materials:128,textures:32},
   'timberline-rush':{hash:'70f5137668e51858c36f0b0aa96107c45ae1d5fb2c9ce13f081427a6327eea1b',nodes:523,meshes:484,instances:14950,geometries:239,materials:103,textures:31},
 };
 let checks=0;

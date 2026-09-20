@@ -240,15 +240,22 @@ function refineStationSurfaces(world, feature, { wallMap, windowMap, coast, nigh
 }
 
 function refineWarehouseSurfaces(world, course, metalMap, windowMap) {
+  const buildingIndices = new Map(course.features.buildings.map((building, index) => [building.id, index]));
+  const tint = new THREE.Color(), palette = [0x83969e, 0xb0aaa0, 0x5c7782, 0x81877b, 0x657b85];
+  const finishedWalls = new Set();
   for (const mesh of world.children) {
     if (!mesh.isInstancedMesh || !mesh.material?.color) continue;
     const material = mesh.material, color = material.color.getHex();
-    if (mesh.count === course.features.buildings.length && color === 0x687d86) {
-      material.map = metalMap; material.bumpMap = metalMap; material.bumpScale = .045; material.roughness = .76; material.metalness = .24;
-      // Replace the old view-space stripes with surface-attached cladding.
-      material.onBeforeCompile = () => {}; material.needsUpdate = true;
-      const tint = new THREE.Color(), palette = [0x83969e, 0xb0aaa0, 0x5c7782, 0x81877b, 0x657b85];
-      for (let i = 0; i < mesh.count; i++) mesh.setColorAt(i, tint.set(palette[i % palette.length]));
+    if (mesh.userData.harborCell?.kind === 'walls') {
+      if (!finishedWalls.has(material)) {
+        material.map = metalMap; material.bumpMap = metalMap; material.bumpScale = .045; material.roughness = .76; material.metalness = .24;
+        // Cell size cannot decide whether the wall receives its finish. Replace
+        // the old view-space stripes once on the material shared by all cells.
+        material.onBeforeCompile = () => {}; material.needsUpdate = true; finishedWalls.add(material);
+      }
+      // One wall instance per building. Keep the original global tint order,
+      // rather than repeating the five-colour palette at every cell boundary.
+      mesh.userData.harborCell.buildings.forEach((id, i) => mesh.setColorAt(i, tint.set(palette[buildingIndices.get(id) % palette.length])));
       mesh.instanceColor.needsUpdate = true;
     }
     if (color === 0xffc783 && material.emissiveIntensity === 1.5) {

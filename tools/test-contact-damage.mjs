@@ -166,8 +166,9 @@ for(const kind of ['rival','police']){
   const d=fixture(),s=d.state,b=npc({prevS:100,s:107,speedMph:50});Object.assign(s,{prevS:110,s:110,speedMph:10});
   if(kind==='rival')s.rival=b;else s.police.pursuit=b;
   d._vehicleContact(s,b,kind);check(b.yieldingToPlayer,`${kind} still yields after its late rear contact`);
-  damagedOnly(s,'rear',`${kind} cosmetic rear hit on player`);damagedOnly(b,'front',`${kind} cosmetic front impact`);
-  same([s.s,s.speedMph,s.stageCrashes,s.majorCrashes,s.lives],[110,10,0,0,LIVES.start],`${kind} cosmetic damage cannot remove rear-yield player safety`);
+  same(s.damageZones,zeroDamage(),`${kind} late rear approach cannot cosmetically damage the player`);
+  same(b.damageZones,zeroDamage(),`${kind} safe yielding correction is not an impact dent`);
+  same([s.s,s.speedMph,s.stageCrashes,s.majorCrashes,s.lives],[110,10,0,0,LIVES.start],`${kind} late rear yield preserves player safety`);
 }
 {
   const d=fixture(),s=d.state,b=npc();Object.assign(s,{prevS:100,s:107,speedMph:20,airborne:true,airHeight:5});

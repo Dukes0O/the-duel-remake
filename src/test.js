@@ -643,8 +643,14 @@ for (const kind of ['rock', 'mountain', 'building']) {
   ok(Math.abs(r.lateral - before) < .4 && r.lateral > 7, 'the rival cannot snap back into its lane');
   ok(r.speedMph < speed, 'an off-road opponent loses speed');
   let maxStep = 0;
+  // Hold a stationary blocker at the recovery edge. A still-steering 105 mph
+  // player was a moving prediction, not a sustained stopped-lane obstruction.
+  s.headingError = 0; s.speedMph = 0; s.pushVelocity = 0;
   for (let i = 0; i < 1200; i++) { const lateral = r.lateral; s.s = r.s; d._rival(1 / 120); maxStep = Math.max(maxStep, Math.abs(r.lateral - lateral)); }
-  ok(Math.abs(r.lateral) < DRIVE.roadHalfWidth && maxStep < .4, 'the opponent recovers gradually using steering and traction');
+  ok(r.yieldingToPlayer && r.speedMph < 5, 'the opponent waits while the player continues to block its recovery corridor');
+  s.lateral = s.prevLateral = -DRIVE.laneOffset; s.headingError = 0; s.speedMph = 0;
+  for (let i = 0; i < 1200; i++) { const lateral = r.lateral; s.s = r.s; d._rival(1 / 120); maxStep = Math.max(maxStep, Math.abs(r.lateral - lateral)); }
+  ok(Math.abs(r.lateral) < DRIVE.roadHalfWidth && maxStep < .4, 'after the player clears, the opponent recovers gradually using steering and traction');
 }
 
 {
@@ -675,8 +681,8 @@ for (const kind of ['rock', 'mountain', 'building']) {
   eq(s.lives, LIVES.start, 'a CPU rear-end contact costs no player life');
   eq(s.majorCrashes, 0, 'a CPU rear-end contact is not a player major crash');
   eq(s.impactTimer, 0, 'a CPU rear-end contact cannot start a player crash animation');
-  ok(s.damageZones.rear > 0 && s.damageZones.rear <= .3, 'a late CPU rear contact leaves only a cosmetic player dent');
-  ok(r.damageZones.front > 0, 'the yielding CPU receives its own front impact damage');
+  eq(s.damageZones.rear, 0, 'a late CPU rear approach cannot cosmetically damage the player');
+  eq(r.damageZones?.front ?? 0, 0, 'safe yielding does not create an NPC impact dent');
   eq(s.damageZones.front + s.damageZones.left + s.damageZones.right, 0, 'a rear contact leaves unrelated player panels intact');
 }
 
@@ -723,7 +729,11 @@ for (const kind of ['rock', 'mountain', 'building']) {
   s.prevS = s.s = 100; s.speedMph = 30;
   const rearCar = { prevS: 90, s: 98, prevLateral: 0, lateral: 0, speedMph: 100, dir: 1, alive: true };
   d._vehicleContact(s, rearCar, 'traffic');
-  ok(s.damageZones.rear > 0 && s.damageZones.front === 0, 'a faster car arriving from behind damages the rear');
+  eq(s.damageZones.rear, 0, 'a faster NPC arriving from behind yields without rear damage');
+  Object.assign(s, { prevS: 110, s: 100, speedMph: -22, gear: -1 });
+  Object.assign(rearCar, { prevS: 98, s: 98, speedMph: 0 });
+  d._vehicleContact(s, rearCar, 'traffic');
+  ok(s.damageZones.rear > 0 && s.damageZones.front === 0, 'player reversing into a stopped car damages the rear');
   const rearDamage = s.damageZones.rear;
   d._loadStage(1); eq(s.damageZones.rear, rearDamage, 'stage transitions preserve localized damage');
   d.startCampaign(); eq(Object.values(s.damageZones).reduce((a, b) => a + b, 0), 0, 'a new campaign resets all damage zones');

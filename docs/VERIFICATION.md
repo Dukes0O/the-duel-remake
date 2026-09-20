@@ -1,6 +1,26 @@
 # Remake verification
 
-Checkpoint: 19 September 2026. The latest checked update is described first. Later sections preserve earlier checkpoints; their counts and screenshots are historical evidence.
+Checkpoint: 20 September 2026. The latest checked update is described first. Later sections preserve earlier checkpoints; their counts and screenshots are historical evidence.
+
+## Gentler keyboard taps, NPC yielding and night-harbor detail
+
+All 100 suites have passing results on the final production source: 99 non-core suites passed together in 409.70 seconds, and the corrected core suite separately passed all 450 checks with `DUEL_SKIP_CAMPAIGNS=1`. The expensive core campaign matrix was not run. Production and QA builds pass; the known large rendering-chunk warning remains.
+
+Keyboard steering now starts at 78% and reaches full input over 0.20 simulation seconds. A release or direction change resets immediately. In a real input-only F42 approach at 74.8 mph, 50/100 ms taps produced 79.48%/80.82% of the previous sideways movement. Held steering, analog gamepad input, autopilot and raw vehicle tuning are unchanged. The new 94-check suite covers lifecycle resets and identical complete test trajectories at 30/60/144 FPS (`cfe859d2a6aea7e9`).
+
+Traffic in both directions, rivals and police share a collision-shell-aware stopping plan. NPC-caused contact is handled before player damage, push or drift loss. Player-initiated forward, reverse, side and head-on impacts remain real, and police catches/fines remain enabled. Ordinary contact expectations were revised only where the user explicitly requested protection from arriving NPCs; rear-damage persistence is still tested through a player-initiated reverse collision.
+
+Final focused checks pass: 450 core checks with the expensive campaign matrix explicitly skipped, 40,884 NPC yielding checks, 195 contact checks and 241 reverse checks. The yielding suite includes real-course full-step stops, both traffic directions, all CPU levels, large/turned vehicles, lap seams, shortcut separation, jumps and wall-safe corrections. An independent 372-check replay verified the wall-side cut-in over 30 follow-up steps. The final guard also sweeps the correction path across thin walls; if no local retreat is clear, it holds the previous pose instead of teleporting through scenery. The recovery test now checks waiting for a blocking player, then gradual recovery once the lane clears.
+
+Four stock F42/Heritage replays still finish in 105.67 seconds without crashes and match across 30/144 FPS. Their combined motion/reward signature changes from `054228b00c4c90bc` to `d4504223d89a80de`. An in-memory comparison with the previous commit attributes this solely to one near-miss award occurring 11 simulation steps (91.7 ms) later: score, style score and near-miss count temporarily differ. Every player movement/control/damage/timing field, final result and saved ghost sample stays exact in this fixture. This does not claim unchanged NPC motion or keyboard onset; those are intentional changes.
+
+Memory-only browser fixtures ran real 80 mph approaches for 12 seconds on seed-1989 road geometry. All four roles stopped at 0 mph, with 5.83–5.84 m centre gaps, no player movement or panel damage. Clearing the lane let traffic reach 36 mph after two seconds. The 100 mph player-into-stopped-traffic fixture still damaged both struck panels. Police movement was isolated from enforcement for that visual fixture; automated checks retain the normal catch radius and fine.
+
+The night-city pass restores warehouse cladding and original building-order tints across spatial cells, replacing the obsolete total-building-count match. Existing cranes gain bracing, paired hoists, cabins and amber tips. They use 600 triangles and two material draws each, versus 72 triangles and six draws before. Harbor adds 1,056 crane triangles and removes eight draws; Midnight/Neon each add 2,112 triangles and remove 16 draws. No new lights, textures, collider changes or crane placement changes. Some cranes remain obscured by existing buildings; this is not a new waterfront layout.
+
+The 52,788-check harbor suite verifies original positions, all vertex bounds, material identity/tints, resource disposal and geometry budgets. Harbor/Midnight/Neon complete-scene signatures were updated after browser and physical-feature review; all six other scene signatures stay exact. Browser review covered harbor driving height, crane detail, warehouse close-up and Midnight in High/Performance quality without observed warnings/errors. These are visual checks, not a general frame-rate improvement claim. Saved accounts, balances, ghost format and route versions are unchanged.
+
+The same live address returns HTTP 200 with `index-_-3O2cGD.js`, renderer `render3d-C1l4au6Q.js` and build `20260920144459-f371a452d667`; the served manifest matches the production build. No live restart or browser refresh was forced. The temporary browser tab and port 5175 preview were closed, and generated `.qa-dist` was removed. Reusable regression tools remain; the live build, dependencies, old Git-owning checkout and its launcher are preserved.
 
 ## Startup and High-quality rendering — latest follow-up
 

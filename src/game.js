@@ -9,6 +9,7 @@ import { makeRng, seedFromUrl } from './rng.js';
 import { sweepBox, sweepObstacle, contactZone, segmentCircle, CAR_HALF_WIDTH, CAR_HALF_LENGTH } from './collision.js';
 import { NpcRoutePlanner } from './npc-route.js';
 import { createDriftState, stepDrift, finishDrift, breakDrift } from './drift-scoring.js';
+import { vehicleContactEnvelope, planNpcYield, npcYieldContactNormal } from './npc-yielding.js';
 
 const BOUNDARY_WARNING = 60, BOUNDARY_RESET = 78;
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
@@ -116,6 +117,22 @@ export class Duel {
     // Upgrades change handling and power, never the collision shell or mass.
     const car = CARS[actor === this.state || actor === this.state.rival ? this.state.car : actor.car] || {};
     return { halfWidth: car.collision?.halfWidth ?? CAR_HALF_WIDTH, halfLength: car.collision?.halfLength ?? CAR_HALF_LENGTH, mass: car.mass || 1450, height: car.height || 1.35 };
+  }
+
+  _npcYield(actor, targetMph, plannedHeading = actor.headingError || 0) {
+    const player = this.state, playerSpec = this._vehicleSpec(player), actorSpec = this._vehicleSpec(actor);
+    if (player.airborne || actor.airborne) {
+      const playerY = this.course.groundAt(player.s, player.lateral).y + (player.airHeight || 0);
+      const actorY = this.course.groundAt(actor.s, actor.lateral).y + (actor.airHeight || 0);
+      if (playerY > actorY + actorSpec.height || actorY > playerY + playerSpec.height) {
+        actor.yieldingToPlayer = false;
+        return { yielding: false, targetMph, braking: 110 };
+      }
+    }
+    const envelope = vehicleContactEnvelope(player, actor, playerSpec, actorSpec);
+    const plan = planNpcYield({ player, npc: actor, lead: this.relativeS(player.s, actor.s) - actor.s, envelope, targetMph, plannedHeading });
+    actor.yieldingToPlayer = plan.yielding;
+    return plan;
   }
 
   // ---- lifecycle -------------------------------------------------------
@@ -441,11 +458,15 @@ export class Duel {
       if (!c.alive) continue;
       c.prevS = c.s;
       c.prevLateral = c.lateral;
+      c.cruiseSpeedMph ??= Math.max(0, c.speedMph);
+      const yieldPlan = this._npcYield(c, c.cruiseSpeedMph);
+      c.braking = c.speedMph > yieldPlan.targetMph;
+      c.speedMph += clamp(yieldPlan.targetMph - c.speedMph, -yieldPlan.braking * dt, 18 * dt);
       if (Number.isFinite(c.lateral)) {
         c.lateral += (c.pushVelocity || 0) * dt;
         c.pushVelocity = (c.pushVelocity || 0) * Math.exp(-1.5 * dt);
         const lane = c.dir < 0 ? DRIVE.laneOffset : -DRIVE.laneOffset;
-        c.lateral += clamp(lane - c.lateral, -dt * .7, dt * .7);
+        if (!(c.yieldingToPlayer && c.speedMph < .1)) c.lateral += clamp(lane - c.lateral, -dt * .7, dt * .7);
         if (!this._surface(c.s, c.lateral).road) c.speedMph *= Math.exp(-DRIVE.offRoadScrub * dt);
       }
       c.s += c.dir * c.speedMph * DRIVE.mphToWorld * dt;
@@ -586,6 +607,7 @@ export class Duel {
   }
 
   _vehicleContact(a, b, reason) {
+    if (b === this.state && a !== this.state) return this._vehicleContact(b, a, reason);
     const phase = this.relativeS(b.s, a.s) - b.s;
     const start = { x: (a.prevLateral ?? a.lateral) - (b.prevLateral ?? b.lateral), z: (a.prevS ?? a.s) - (b.prevS ?? b.s) - phase };
     const end = { x: a.lateral - b.lateral, z: a.s - b.s - phase };
@@ -597,12 +619,44 @@ export class Duel {
       const heightA = this.course.groundAt(a.s, a.lateral).y + (a.airHeight || 0), heightB = this.course.groundAt(b.s, b.lateral).y + (b.airHeight || 0);
       if (heightA > heightB + specB.height || heightB > heightA + specA.height) return false;
     }
-    const width = specA.halfWidth * Math.abs(Math.cos(angleA)) + specB.halfWidth * Math.abs(Math.cos(angleB))
-      + specA.halfLength * Math.abs(Math.sin(angleA)) + specB.halfLength * Math.abs(Math.sin(angleB)) + .2;
-    const length = specA.halfLength * Math.abs(Math.cos(angleA)) + specB.halfLength * Math.abs(Math.cos(angleB))
-      + specA.halfWidth * Math.abs(Math.sin(angleA)) + specB.halfWidth * Math.abs(Math.sin(angleB)) + .3;
+    const { width, length } = vehicleContactEnvelope(a, b, specA, specB);
     const hit = sweepBox(start, end, width, length);
     if (!hit) return false;
+    const yieldNormal = a === this.state ? npcYieldContactNormal(a, b, hit, start.z) : null;
+    if (yieldNormal) {
+      // A late cut-in or numerical overlap is not permission for an NPC to
+      // damage/shove the player. Rewind only that NPC to the contact side.
+      const { nx, nz } = yieldNormal;
+      const correction = Math.max(0, nx ? width + .08 - end.x * nx : length + .08 - end.z * nz);
+      const proposed = { s: b.s - nz * correction, lateral: b.lateral - nx * correction };
+      const previous = { s: b.prevS ?? b.s, lateral: b.prevLateral ?? b.lateral };
+      const previousPoint = this.course.worldAt(previous.s, previous.lateral);
+      const clear = pose => {
+        if (Math.abs(a.lateral - pose.lateral) < width + .04 && Math.abs(this.relativeS(pose.s, a.s) - a.s) < length + .04) return false;
+        const point = this.course.worldAt(pose.s, pose.lateral), heading = this.course.at(pose.s).heading + angleB + (b.dir < 0 ? Math.PI : 0);
+        return !this._obstacles(Math.min(previous.s, pose.s) - specB.halfLength, Math.max(previous.s, pose.s) + specB.halfLength).some(obstacle =>
+          !(obstacle.kind === 'tree' && obstacle.theme === 'desert' && this._fallenCactusIds?.has(obstacle.id))
+          && sweepObstacle(previousPoint, point, obstacle, heading, specB));
+      };
+      let safe = clear(proposed) ? proposed : null;
+      if (!safe) {
+        if (clear(previous)) safe = previous;
+        else for (const back of [length + .8, 12, 24, 40]) {
+          const retreat = { s: this.relativeS(a.s, b.s) - (b.dir || 1) * back, lateral: previous.lateral };
+          if (clear(retreat)) { safe = retreat; break; }
+        }
+      }
+      // If a pathological cut-in leaves no clear local retreat, hold the last
+      // pre-movement pose. Do not teleport across scenery or reset near player.
+      b.s = (safe || previous).s; b.lateral = (safe || previous).lateral;
+      const playerAlong = a.speedMph * Math.cos(a.headingError || 0) * (b.dir || 1);
+      b.speedMph = nx || !safe ? 0 : Math.min(b.speedMph, Math.max(0, playerAlong) * .9);
+      b.pushVelocity = 0; b.braking = true; b.yieldingToPlayer = true;
+      b.contactCooldown = Math.max(b.contactCooldown || 0, .45);
+      b.prevS = b.s; b.prevLateral = b.lateral;
+      b.offRoad = !this._surface(b.s, b.lateral).mainRoad;
+      return true;
+    }
     if (a === this.state || b === this.state) this._breakDrift('hit');
     const { nx, nz } = hit;
     const vaX = Math.sin(a.headingError || 0) * a.speedMph * (a.dir || 1) * DRIVE.mphToWorld + (a.pushVelocity || 0);
@@ -613,17 +667,6 @@ export class Duel {
     const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
     if (a !== this.state) this._dentVehicle(a, zone, impactMph);
     if (b !== this.state) this._dentVehicle(b, zoneB, impactMph);
-    // A rival arriving from behind must yield to a player who cuts in.
-    // Resolve late contacts even if there was too little room to brake first:
-    // the CPU moves back and loses speed; the player's run remains intact.
-    if (a === this.state && a.speedMph >= 0 && (b === this.state.rival || b === this.state.police.pursuit) && nz > 0 && (b.dir || 1) > 0 && Math.cos(a.headingError || 0) > 0) {
-      if (impactMph > 1 && a.invulnerableSec <= 0) this._scrape(zone, impactMph);
-      b.s = Math.min(b.s, a.s - phase - length - .15);
-      const forwardMph = Math.max(0, a.speedMph * Math.cos(a.headingError || 0));
-      b.speedMph = Math.min(b.speedMph, forwardMph * .94);
-      b.braking = true; b.yieldingToPlayer = true; b.contactCooldown = Math.max(b.contactCooldown || 0, .45);
-      return true;
-    }
     // Share the positional correction. Even a protected car remains solid.
     const required = nx ? width + .04 - (a.lateral - b.lateral) * nx : length + .04 - end.z * nz;
     const correction = Math.max(0, required);
@@ -799,18 +842,14 @@ export class Duel {
     const footprint = this._vehicleSpec(s), angle = (s.headingError || 0) + (s.slipAngle || 0);
     const corridor = footprint.halfWidth * (1 + Math.abs(Math.cos(angle))) + footprint.halfLength * Math.abs(Math.sin(angle)) + .55;
     const cutIn = Math.abs(lateral) < corridor || Math.abs(lateralFuture) < corridor || lateral * lateralFuture < 0;
-    const closing = Math.max(0, cruiser.speedMph - playerForward) * DRIVE.mphToWorld;
-    const stoppingGap = 12 + closing * .2 + closing * closing / (2 * 110 * DRIVE.mphToWorld);
-    if (lead > 0 && lead < stoppingGap && cutIn) {
-      target = Math.min(target, playerForward + clamp((lead - 10) * 1.2, -30, 35));
-      cruiser.yieldingToPlayer = true;
-    }
     // Stay near a fleeing off-road driver instead of overtaking on the main
     // road and teleporting sideways through the intervening buildings.
-    if (lead < 14 && !cutIn) target = Math.min(target, Math.max(0, playerForward + (lead - 8) * 1.5));
-    target = Math.max(0, target);
+    if (lead < 14 && !cutIn && !this._surface(s.s, s.lateral).road) target = Math.min(target, Math.max(0, playerForward + (lead - 8) * 1.5));
+    const plannedHeading = clamp(Math.atan((lane - cruiser.lateral) * 2.4 / Math.max(15, cruiser.speedMph * DRIVE.mphToWorld)), -.7, .7);
+    const yieldPlan = this._npcYield(cruiser, Math.max(0, target), plannedHeading);
+    target = yieldPlan.targetMph;
     cruiser.braking = cruiser.speedMph > target;
-    const braking = cruiser.yieldingToPlayer ? lead < 20 ? 190 : 110 : 65;
+    const braking = cruiser.yieldingToPlayer ? yieldPlan.braking : 65;
     cruiser.speedMph += clamp(target - cruiser.speedMph, -braking * dt, 32 * dt);
     if (cruiser.offRoad) cruiser.speedMph *= Math.exp(-policeSurface.scrub * dt * (policeSurface.preparedGravel ? .25 : 1));
     const desired = clamp(Math.atan((lane - cruiser.lateral) * 2.4 / Math.max(15, cruiser.speedMph * DRIVE.mphToWorld)), -.7, .7);
@@ -913,7 +952,8 @@ export class Duel {
     r.prevAirHeight = r.airHeight || 0;
     if (r.finished) {
       r.braking = r.speedMph > 0;
-      r.speedMph = Math.max(0, r.speedMph - DRIVE.brakeAccel * dt);
+      const nextSpeed = Math.max(0, r.speedMph - DRIVE.brakeAccel * dt), plan = this._npcYield(r, nextSpeed);
+      r.speedMph = plan.yielding ? Math.max(plan.targetMph, r.speedMph - plan.braking * dt) : nextSpeed;
       r.s += r.speedMph * DRIVE.mphToWorld * dt;
       this._jump(r, dt); this._staticContacts(r, false); this._boundary(r); this._crushProps(r);
       return;
@@ -956,31 +996,16 @@ export class Duel {
         else target = Math.min(target, traffic.dir < 0 ? 18 : Math.max(12, traffic.speedMph - 8));
       }
     }
-    // Anticipate a cut-in using the player's travel direction, not only the
-    // lane occupied at this instant. A sideways car advances much more slowly.
-    const lead = this.relativeS(s.s, r.s) - r.s;
-    const playerForwardMph = s.speedMph * Math.max(0, Math.cos(s.headingError || 0));
-    const lookahead = .65;
-    const lateralNow = s.lateral - r.lateral;
-    const playerLateralSpeed = Math.sin(s.headingError || 0) * s.speedMph * DRIVE.mphToWorld + (s.pushVelocity || 0);
-    const rivalLateralSpeed = Math.sin(r.headingError) * r.speedMph * DRIVE.mphToWorld + r.pushVelocity;
-    const lateralFuture = lateralNow + (playerLateralSpeed - rivalLateralSpeed) * lookahead;
-    const plannedFuture = route ? lateralNow + (playerLateralSpeed - Math.sin(route.headingTarget) * r.speedMph * DRIVE.mphToWorld - r.pushVelocity) * lookahead : lateralFuture;
-    const playerAngle = (s.headingError || 0) + (s.slipAngle || 0);
-    const footprint = this._vehicleSpec(s);
-    const corridor = footprint.halfWidth * (1 + Math.abs(Math.cos(playerAngle))) + footprint.halfLength * Math.abs(Math.sin(playerAngle)) + .55;
-    const crossingLane = Math.abs(lateralNow) < corridor || Math.abs(lateralFuture) < corridor || lateralNow * lateralFuture < 0 || Math.abs(plannedFuture) < corridor || lateralNow * plannedFuture < 0;
-    const closingMetres = Math.max(0, r.speedMph - playerForwardMph) * DRIVE.mphToWorld;
-    const followingGap = 8 + r.speedMph * DRIVE.mphToWorld * .6 + closingMetres * .8;
+    const plannedHeading = route?.headingTarget ?? clamp((lane - r.lateral) * .095, -.55, .55);
+    const yieldPlan = this._npcYield(r, Math.max(0, target), plannedHeading);
+    target = yieldPlan.targetMph;
     if (route?.mustYield) { r.yieldingToPlayer = route.yieldingToPlayer; r.braking = r.speedMph > target; }
-    if (lead > 0 && lead < followingGap && crossingLane) {
+    if (yieldPlan.yielding) {
       r.yieldingToPlayer = true;
-      const spacing = clamp((lead - 5) / Math.max(1, followingGap - 5), 0, 1);
-      target = Math.min(target, playerForwardMph * (.7 + .3 * spacing));
       r.braking = r.speedMph > target;
     }
     target = Math.max(0, target);
-    if (r.braking) r.speedMph = Math.max(target, r.speedMph - (lead < 18 ? 190 : 110) * dt);
+    if (r.braking) r.speedMph = Math.max(target, r.speedMph - yieldPlan.braking * dt);
     else r.speedMph += clamp(target - r.speedMph, -DRIVE.brakeAccel * car.braking * dt, car.accel * DRIVE.accelScale * .85 * dt);
     if (r.offRoad) r.speedMph *= Math.exp(-rivalSurface.scrub * dt * (rivalSurface.preparedGravel ? .25 : 1));
     if (route) {

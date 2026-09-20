@@ -24,6 +24,8 @@ for(const [id,label,fn]of[
   ['ambient','Toggle graphics quality',()=>{app.ambientOcclusionEnabled=app.ambientOcclusionEnabled===false;}],
 
   ['coast','Coast scene',()=>scene(0,2850)],['harbor','Harbor scene',()=>scene(2,700)],
+  ['harbor-crane','Harbor crane detail',()=>{scene(2,420);const p=app.duel.course.groundAt(420,130),c=Math.cos(p.heading),sn=Math.sin(p.heading);app.inspectionCamera={position:[p.x-c*64+sn*36,p.y+31,p.z+sn*64+c*36],target:[p.x,p.y+29,p.z]};}],
+  ['harbor-wall','Harbor warehouse finish',()=>{scene(2,700);const b=app.duel.course.features.buildings.find(b=>b.s>550&&b.s<850);if(b){const c=Math.cos(b.heading),sn=Math.sin(b.heading),side=-Math.sign(b.off),reach=b.halfX+14;app.inspectionCamera={position:[b.x+c*side*reach+sn*8,b.y+5,b.z-sn*side*reach+c*8],target:[b.x+c*side*b.halfX,b.y+5,b.z-sn*side*b.halfX]};}}],
   ['coast-approach','Coastal approach',()=>scene(0,2500)],
   ['lighthouse-pass','Lighthouse pass',()=>scene(0,3050)],
   ['coast-exit','Coastal exit',()=>scene(0,3500)],
