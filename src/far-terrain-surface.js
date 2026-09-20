@@ -1,4 +1,5 @@
 import { createPolylineIndex } from './polyline-index.js';
+import { freestyleSurfaceHeightAt } from './freestyle-course.js';
 
 // Read the exact far-terrain grid and triangle diagonal without allocating a
 // render mesh. Null means that quad is omitted beneath the near-road ribbon.
@@ -6,6 +7,7 @@ import { createPolylineIndex } from './polyline-index.js';
 const surfaceCache = new WeakMap();
 export function farTerrainHeightSampler(course) {
   if(surfaceCache.has(course.samples))return surfaceCache.get(course.samples);
+  if(course.def.practice){const sample=(x,z)=>freestyleSurfaceHeightAt(course,x,z);surfaceCache.set(course.samples,sample);return sample;}
   const grid=(course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena||course.def.expansion?16:32,threshold=course.def.arena?18:course.def.expansion?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80;
   const route=course.samples.filter((_,i)=>i%4===0),last=course.samples.at(-1),vertices=new Map();if(route.at(-1)!==last)route.push(last);
   const routeIndex=createPolylineIndex(route);

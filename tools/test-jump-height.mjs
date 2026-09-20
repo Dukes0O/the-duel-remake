@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {createJumpHeightReadout} from '../src/jump-height.js';
+import {createJumpHeightReadout as createFullJumpReadout} from '../src/jump-height.js';
 import {Duel} from '../src/game.js';
 import {COURSE,DRIVE,steeringYawAuthority} from '../src/config.js';
 
 let checks=0;
+// Preserve the full historical height/lifecycle contract; distance and airtime
+// have their own physics-driven suite rather than changing these assertions.
+function createJumpHeightReadout(){const full=createFullJumpReadout();return {update(...args){const {phase,heightMeters,peakMeters}=full.update(...args);return {phase,heightMeters,peakMeters};}};}
 const check=(value,label)=>{assert.ok(value,label);checks++;};
 const same=(actual,expected,label)=>{assert.deepEqual(actual,expected,label);checks++;};
 const HIDDEN={phase:'hidden',heightMeters:0,peakMeters:0};

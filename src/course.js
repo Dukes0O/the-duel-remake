@@ -8,6 +8,7 @@ import { cloneShortcuts, findShortcutPreset, shortcutPresetFingerprint } from '.
 import { buildCityParking } from './city-parking-layout.js';
 import { expansionPoint, expansionHeight } from './expansion-courses.js';
 import { buildCourseSetPieces } from './course-set-pieces.js';
+import { buildFreestyleFeatures, freestyleSurfaceHeightAt } from './freestyle-course.js';
 const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -83,9 +84,10 @@ export class Course {
     this._nearestIndex=createPolylineIndex(this.samples);
     this.rivalStartS=this.def.hasRival?-20:null;
     const f=this.features;
-    f.checkpoints.push({s:this.raceLength,kind:'finish'});
+    if(!this.def.practice)f.checkpoints.push({s:this.raceLength,kind:'finish'});
     if(this.def.hasRadar)f.radarTraps.push({s:Math.round(this.length*.43),limitMph:this.def.speedLimitMph});
-    if(arena){
+    if(this.def.practice){buildFreestyleFeatures(this);}
+    else if(arena){
       for(const frac of [.17,.55,.78])f.ramps.push({start:this.length*frac,end:this.length*frac+38,height:2.6});
       for(const [row,s]of[330,680,960].entries())for(let i=0;i<2;i++){
         const distance=s+i*5.5,off=(row%2?-1:1)*5.2,p=this.groundAt(distance,off);
@@ -101,7 +103,7 @@ export class Course {
       if(!this.def.expansion)f.shortcuts.push(...buildShortcuts(this));
       for(const cut of f.shortcuts)Object.assign(cut,measureShortcut(this,cut,2,true));
     }
-    for(let i=1;i<4;i++){let s=this.length*i/4;for(const cut of f.shortcuts)if(s>cut.start-16&&s<cut.end+16)s=cut.end+24;f.lapGates.push({s});}
+    if(!this.def.practice)for(let i=1;i<4;i++){let s=this.length*i/4;for(const cut of f.shortcuts)if(s>cut.start-16&&s<cut.end+16)s=cut.end+24;f.lapGates.push({s});}
     this._solidScenery();
   }
   shortcutOffset(cut,s){
@@ -109,7 +111,7 @@ export class Course {
     if(cut.offsets)return sampledOffset(cut.offsets,t);
     const u=Math.min(1,Math.min(t,1-t)/(cut.transition||.5));return cut.offset*Math.sin(Math.PI*.5*u)**2;
   }
-  roadHalfWidthAt(s){if(this.def.arena)return 13;if(this.def.offroad)return 5.5;const p=this.phase(s);let width=7;
+  roadHalfWidthAt(s){if(this.def.practice)return 24;if(this.def.arena)return 13;if(this.def.offroad)return 5.5;const p=this.phase(s);let width=7;
     for(const lane of this.features.passingLanes)if(p>=lane.start&&p<=lane.end)width+=3.5*smooth((p-lane.start)/45)*smooth((lane.end-p)/45);return width;}
   surfaceAt(s,lateral=0){const p=this.phase(s),roadHalfWidth=this.roadHalfWidthAt(p);
     const cut=this.features.shortcuts.find(c=>p>=c.start&&p<=c.end&&Math.abs(lateral-this.shortcutOffset(c,p))<=c.halfWidth);
@@ -118,6 +120,7 @@ export class Course {
   jumpAt(s){const p=this.phase(s),r=this.features.ramps.find(r=>p>=r.start&&p<=r.end);if(!r)return 0;
     const t=(p-r.start)/(r.end-r.start);return r.height*Math.sin(Math.PI*t)**2;}
   _relief(s,off){
+    if(this.def.practice){const p=this.worldAt(s,off);return freestyleSurfaceHeightAt(this,p.x,p.z);}
     if(this.def.arena)return Math.abs(off)<=15?this.jumpAt(s):0;
     const p=this.phase(s),theme=this.themeAt(p),edge=Math.max(0,Math.abs(off)-this.roadHalfWidthAt(p)-2.5);
     const wave=frequency=>p/this.length*TAU*Math.max(1,Math.round(this.length*frequency/TAU));
@@ -146,7 +149,7 @@ export class Course {
       for(const cut of f.shortcuts)if(n.s>=cut.start-12&&n.s<=cut.end+12&&Math.abs(n.lateral-this.shortcutOffset(cut,n.s))<radius+cut.halfWidth+margin)return false;
       return !this.tunnelAt(n.s)||Math.abs(n.lateral)>35+radius;};
     const vacant=(s,off,radius)=>{const p=this.groundAt(s,off);return f.obstacles.every(o=>Math.hypot(o.x-p.x,o.z-p.z)>Math.hypot(o.halfX,o.halfZ)+radius+(o.setPiece==='gantry'?18:0));};
-    for(const side of[-1,1])add(`finish-post-${side}`,'prop',0,side*(this.roadHalfWidthAt(0)+1.5),.25,.25);
+    if(!this.def.practice)for(const side of[-1,1])add(`finish-post-${side}`,'prop',0,side*(this.roadHalfWidthAt(0)+1.5),.25,.25);
     if(this.def.expansion){f.setPieces=buildCourseSetPieces(this);f.obstacles.push(...f.setPieces);}
     if(!this.def.arena){
       for(const [i,sec]of this.sections.entries()){
@@ -222,10 +225,10 @@ export class Course {
       for(let i=0;i<28;i++){let s=130+i*(this.length-220)/28,off=(i%2?1:-1)*(i%3===0?5.5:12+rng.range(0,6));
         if(this.tunnelAt(s))continue;if(!vacant(s,off,4))off=(i%2?1:-1)*5;
         if(vacant(s,off,3.5))f.flocks.push({id:`flock-${i}`,s,off,radius:3.5,count:8,seed:rng.int(1,100000)});}
-    }else{
+    }else if(!this.def.practice){
       for(let s=0;s<this.length;s+=8)for(const side of[-1,1])f.barriers.push(add(`arena-wall-${s}-${side}`,'prop',s,side*22,.5,4.2,0,{barrier:true,arenaWall:true}));
     }
-    Object.assign(f,buildRoadFurniture(this));
+    if(!this.def.practice)Object.assign(f,buildRoadFurniture(this));
     for(const sign of f.signs)for(const post of sign.posts)f.obstacles.push({...post,kind:'prop',shape:'box',theme:this.themeAt(post.s),signSupport:true});
     for(const post of f.chevrons)f.obstacles.push({...post,kind:'prop',shape:'box',theme:this.themeAt(post.s),signSupport:true});
     if(this.def.checkpointRush){

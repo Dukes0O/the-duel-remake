@@ -33,7 +33,7 @@ Main Menu and Restart act immediately with one click, including after Busted. Th
 
 ## Events
 
-Every owned car can enter all fifteen courses. Course selection keeps your chosen car; recommendations do not unlock or force a vehicle.
+Every owned car can enter every unlocked course. Pacific Canyon is included; the other courses cost 900–2,200 earned credits in **COURSES ↗**. Buying does not select a course. Course selection keeps your chosen car; recommendations do not unlock or force a vehicle. See [course prices and existing-save access](docs/COURSE_ACCESS.md).
 
 | Event | Route | Recommended car |
 | --- | --- | --- |
@@ -52,20 +52,25 @@ Every owned car can enter all fifteen courses. Course selection keeps your chose
 | Red Mesa Corkscrew | Desert approach, corkscrew drop and redstone; 4 km per lap | Any owned car |
 | Neon Docks Circuit | Port, cranes and breakwater at night; 4.16 km per lap | Any owned car |
 | Cloudbreak Skyway | Canyon, high ridges and skyline; 5.2 km per lap | Any owned car |
+| Titan Freestyle Playground | Untimed ramp playground; no rival, laps, finish or rewards | Titan Monster |
 
-Every event runs two complete laps. The original three circuits still form the campaign; the other twelve events run separately. The six new circuits have distinct authored layouts and landmarks; see [the course expansion](docs/COURSE_EXPANSION.md). Ordered route gates prevent skipping a lap. Gravel and paved branches offer measured shortcuts. The live course map shows the player, rival, patrol, branch choices and finish. Mountain roads have real elevation changes and illuminated tunnels. Passing lanes merge into the main road.
+The fifteen races run two complete laps; the separate practice area has no finish target. The original three circuits still form the campaign; the other twelve races run separately. A campaign banks its stage reward before stopping at a locked next circuit, with a menu link to unlock it. The six new circuits have distinct authored layouts and landmarks; see [the course expansion](docs/COURSE_EXPANSION.md). Ordered route gates prevent skipping a lap. Gravel and paved branches offer measured shortcuts. The live course map shows the player, rival, patrol, branch choices and finish. Mountain roads have real elevation changes and illuminated tunnels. Passing lanes merge into the main road.
 
 Pacific Canyon, High Country, Harbor & Highlands and Ridge Rally each offer **Route A, B and C**. These change the actual bends and shortcuts. Route selection saves for the next session, and each route keeps separate best times and ghosts. The other standalone events use fixed layouts. Easy rivals stay on the road; Medium rivals can use a worthwhile shortcut on lap two, and Hard rivals can use one on either lap. They must steer through it and yield at a blocked entry or merge.
 
-Steering is responsive and allows controlled drift. Short keyboard taps are gentler; holding a direction reaches full steering in 0.2 seconds. Controller steering is unchanged. It does not follow the road automatically. Brakes are stronger, with a separate brake upgrade. Leaving the road slows the car and reduces grip but does not count as a crash. Far-boundary and coastal-water recovery return the car safely to the track.
+Steering is responsive and allows controlled drift. Short keyboard taps are gentler; holding a direction reaches full steering in 0.2 seconds. Controller steering is unchanged. It does not follow the road automatically. Brakes are stronger, with a separate brake upgrade. Leaving the road slows the car and reduces grip but does not count as a crash. Ordinary road cars retain far-boundary and coastal-water recovery.
 
-Tunnel lining and guardrails allow scrapes below 35° to the wall face: they slow the car without using a crash slot. Steeper hits use the normal impact-speed rules; rail ends and other solid scenery remain obstacles. Fast cars can lift off the six new circuits' road crests, while low-speed travel stays grounded. These natural jumps earn no arena points or stunt progress. Older road courses retain their previous grounded behavior. See [wall and flight rules](docs/PHYSICS_EXPANSION.md).
+Titan Monster and Dusthawk Rally can leave those bounds, turn around, climb real mountains and cross small rocks on every course. Excessive slopes, sustained climbs or oversized boulders cause a recoverable tumble. Titan can crush smaller opponent cars and drive over their visibly damaged wrecks. Jump readouts include height, horizontal length and airtime. The new 900-credit playground offers untimed practice without career rewards. See [off-road mechanics, reference and graphics iterations](docs/FREESTYLE_EXPANSION.md).
+
+Tunnel lining and guardrails allow scrapes below 35° to the wall face: they slow the car without using a crash slot. Steeper hits use the normal impact-speed rules; rail ends and other solid scenery remain obstacles. Fast cars can lift off the six new circuits' road crests, while low-speed travel stays grounded. These natural jumps earn no arena points or stunt progress. Ordinary road cars retain their previous grounded behavior on older road courses. See [wall and flight rules](docs/PHYSICS_EXPANSION.md).
 
 Ordinary races end after five unrepaired major crashes. Head-on and solid scenery impacts count; harmless dirt driving does not. A stage win repairs up to two major impacts and restores two crash slots, capped at five. Damage otherwise persists. Traffic in either direction, rivals and police brake and stop when you block their path, then resume when clear. NPC-initiated contact cannot damage or shove you, but driving or reversing into another car still causes a collision. Police can still catch you while stopped. Rivals remain solid after finishing and can be pushed off-road.
 
 **Midnight Muscle Chase keeps the car driveable after crashes.** Impacts cost eight seconds; police catches cost twelve seconds and the pursuit resumes. Finish both laps before the difficulty-specific deadline: 205, 175 or 150 seconds. Arena ramps launch the truck, record landing distance and award a capped event bonus. Six stripped salvage cars can be crushed for a separate finish bonus. Rival crushes do not earn the player credits. The separate **Titan Stunt Trial** requires at least four landings and four player crushes within 95, 75 or 62 seconds, including both laps. It has no rival or traffic. See [trial rules](docs/STUNT_TRIAL.md).
 
-Titan is recommended for both arena events: lighter cars can enter, but cannot crush wrecks. The Stunt Trial's four-crush target remains mandatory. Current any-owned-car entry rules supersede compulsory vehicle requirements in older event notes.
+Titan is recommended for the arena events and playground: lighter cars can enter unlocked courses, but cannot crush wrecks. The Stunt Trial's four-crush target remains mandatory. Current any-owned-car entry rules supersede compulsory vehicle requirements in older event notes; course purchases remain separate.
+
+**Titan Freestyle Playground** costs 900 credits to unlock. After that, free practice has no timer, rival, lap target, race rewards or records. Crash recovery keeps the session going. The flight panel shows height, peak, horizontal jump distance and time in the air, with a brief landing readout. Leaving or restarting practice changes no career results, win streak or saved balance.
 
 Chicken flocks wander near ordinary routes. Contact refills nitro and scatters the birds. A flock can be collected once per event.
 
@@ -77,7 +82,7 @@ Getting caught by police adds a 150-credit fine against the current race's earni
 
 ## Players and garage
 
-Named players on this computer have separate credits, cars, upgrades, drivers, history and last-used race setups. Switching players restores that player's event, car, challenge, CPU difficulty, transmission and route. They share a local leaderboard with circuit, car and driver-performance filters. The previous garage save migrates into Player 1.
+Named players on this computer have separate credits, cars, upgrades, drivers, courses, history and last-used race setups. Switching players restores that player's event, car, challenge, CPU difficulty, transmission and route. They share a local leaderboard with circuit, car and driver-performance filters. The previous garage save migrates into Player 1.
 
 Two cars are included. Six more can be earned: Falcone Heritage, Aurora GTR, Dusthawk Rally, Banshee Muscle, Viper Prototype and Titan Monster. Falcone Heritage costs 1,800 credits and preserves the previous F42 concept body, red finish and handling as a separate car; the redesigned F42 and 959 stay unchanged. The other earned cars offer different acceleration, speed, road grip, dirt performance, brakes, mass and dimensions. The monster truck costs 12,000 credits and can crush the stadium's wrecks.
 

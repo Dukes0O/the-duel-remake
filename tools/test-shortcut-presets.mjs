@@ -49,7 +49,7 @@ for(const definition of COURSE)for(const seed of supportsRouteVariants(definitio
   }
   reports.push({event:definition.id,seed,presetMs:+presetMs.toFixed(2),...(solverMs==null?{}:{solverMs:+solverMs.toFixed(2),speedup:+(solverMs/presetMs).toFixed(2)})});
 }
-equal(layouts,17,'four events × three routes plus five fixed events');
+equal(layouts,18,'four events × three routes plus six fixed events, including untimed practice');
 equal(SHORTCUT_PRESET_DATA.entries.length,15,'only fifteen non-arena layouts need presets');
 equal(JSON.stringify(SHORTCUT_PRESET_DATA),saved,'generation records remain unchanged after all courses and mutation probes');
 // A small custom route has no matching preset and still runs the original

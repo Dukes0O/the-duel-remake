@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {ownTestCourses} from './career-fixture.mjs';
 import {App} from '../src/app.js';
 import {COURSE} from '../src/config.js';
 import {CPU_REWARDS,createProfile,settleRace,bestKey,isValidFinish} from '../src/progression.js';
@@ -10,8 +11,8 @@ let checks=0;const check=(value,message)=>{assert(value,message);checks++;};
 const memory=new Map();globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)};
 const index=COURSE.findIndex(stage=>stage.kind==='checkpoint'),stage=COURSE[index];assert(stage,'Checkpoint event exists');
 const required=stage.checkpointRush.gatesPerLap*(stage.laps||2);
-const create=()=>{const app=new App();app.profile.credits=20000;app._saveProfile();check(app.unlockCar(stage.requiredCar).ok,'Dusthawk unlock succeeds');return app;};
-const starter=new App();check(starter.startCampaign({startStage:index,car:'falcone_f42'}),'a starter car can enter checkpoint rush without the recommended car');check(starter.duel.state.car==='falcone_f42','checkpoint entry preserves the chosen owned vehicle');starter.returnToMenu();
+const create=()=>{const app=ownTestCourses(new App());app.profile.credits=20000;app._saveProfile();check(app.unlockCar(stage.requiredCar).ok,'Dusthawk unlock succeeds');return app;};
+const starter=ownTestCourses(new App());check(starter.startCampaign({startStage:index,car:'falcone_f42'}),'a starter car can enter checkpoint rush without the recommended car');check(starter.duel.state.car==='falcone_f42','checkpoint entry preserves the chosen owned vehicle');starter.returnToMenu();
 
 memory.clear();let app=create();app.autopilot=true;let passes=0,sawNotice=false;
 app.duel.onChange((_state,event)=>{if(event.checkpointRushEvent?.type==='passed')passes++;});
@@ -66,7 +67,7 @@ app.advance(4);const interruptedBalance=app.profile.credits;const recovered=new 
 check(new App().profile.credits===recovered.profile.credits,'second reload cannot repeat interruption debit');
 app.returnToMenu();const oldState={...app.duel.state};check(app.addPlayer('Timberline newcomer').ok,'new local player can be created');app._settleResult({...valid},oldState);
 check(app.profile.credits===0&&app.profile.history.length===0,'late old-player checkpoint result cannot credit another profile');
-check(app.startCampaign({startStage:index,car:'dusthawk_rally'})&&app.duel.state.car==='falcone_f42','a second player can enter but cannot use another player’s locked Dusthawk');
+check(!app.startCampaign({startStage:index}),'second player does not inherit course ownership');ownTestCourses(app);check(app.startCampaign({startStage:index,car:'dusthawk_rally'})&&app.duel.state.car==='falcone_f42','a second player can enter but cannot use another player’s locked Dusthawk');
 
 for(const invalid of [{won:false},{targetsMet:false},{objectiveMissed:true},{checkpointsPassed:required-1},{checkpointsPassed:required+1},{checkpointsRequired:required-1},{checkpointMisses:1},{checkpointMisses:NaN},{timeSec:stage.checkpointRush.initialTimeSec.easy+required*stage.checkpointRush.extensionSec.easy+1},{completed:false},{abandoned:true},{timeout:true},{laps:1},{car:'missing'}]){
   const outcome={...valid,...invalid};check(!isValidFinish(outcome),'incomplete or malformed checkpoint result cannot qualify for records');

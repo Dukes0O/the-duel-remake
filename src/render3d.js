@@ -20,7 +20,7 @@ import { createSceneLighting } from './scene-lighting.js';
 import { animateScene, syncScene } from './scene-systems.js';
 import { environmentKey } from './environment-key.js';
 import { createRenderWarmup, compileWarmupPipeline, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
-import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope } from './vehicle-grounding.js';
+import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose } from './vehicle-grounding.js';
 import { createFrameMetrics } from './frame-metrics.js';
 
 // This layer only reads simulation state. Asset replacement never changes race rules.
@@ -82,7 +82,7 @@ export function attachRenderer(host, app) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(.48, .16, .32), new THREE.MeshBasicMaterial({ color: i ? 0x178aff : 0xff2211 }));
     m.position.set(i ? .34 : -.34, 1.66, -.1); lamps.add(m);
   }
-  police.add(lamps); scene.add(police);
+  police.add(lamps);police.userData.crushAttachments=[lamps];scene.add(police);
   const effects = createDrivingEffects(); scene.add(effects.group);
   const explosion = createExplosion(); scene.add(explosion.group);
   function retireObject(object,beforeDispose){
@@ -145,7 +145,7 @@ export function attachRenderer(host, app) {
     applyVehiclePaint(player,app.getPaintPreset?.(carKey,{menu})??null);
     host.dataset.paint=player.userData.paintAppearance?.id||'factory';
     const wreckAge=st.catastrophic ? Math.max(0,(st.impactDuration||0)-(st.impactTimer||0)) : 0;
-    updateVehicleDamage(player,menu?0:st.majorCrashes, !menu&&st.catastrophic, wreckAge,menu?null:st.damageZones);
+    updateVehicleDamage(player,menu?0:st.majorCrashes, !menu&&st.catastrophic, wreckAge,menu?null:st.damageZones,menu?0:st.crushDamage);
     const steering = menu ? 0 : st.steerVisual || 0;
     updateDriver(player.userData.driver,steering,menu?0:st.slipAngle,!menu&&st.catastrophic);
     if(player.userData.steeringPivot)player.userData.steeringPivot.rotation.z=steering*.7;
@@ -157,7 +157,9 @@ export function attachRenderer(host, app) {
     const slope=groundSlope(course,distance,lateral,player.rotation.y-pp.heading);
     player.rotation.x=slope.pitch;player.rotation.z+=slope.roll;
     if (!menu) {
+      applyVehicleTerrainPose(player,course,st);
       player.position.y+=st.airHeight||0;
+      if(!st.tumble){
       player.position.y += rough * Math.abs(Math.sin(motionTime * 35)) * .15;
       player.rotation.z += Math.sin(motionTime * 24) * rough * .07;
       player.rotation.x += Math.sin(motionTime * 29) * rough * .055;
@@ -166,6 +168,7 @@ export function attachRenderer(host, app) {
       player.rotation.z += hitArc * (st.impactSide || 1) * .24;
       player.rotation.x -= hitArc * .18;
       if(st.catastrophic){player.position.y+=.36+Math.sin(Math.min(1,wreckAge/1.25)*Math.PI)*1.4;player.rotation.z+=(st.impactSide||1)*Math.min(wreckAge,1.1)*.56;}
+      }
     }
     const braking=st.gear===-1?st.input.throttle:st.input.brake;
     for (const lamp of player.userData.brakeLights || []) lamp.material.emissiveIntensity = braking ? 4 : 1.4;
@@ -184,7 +187,8 @@ export function attachRenderer(host, app) {
       const back = mode === 'hood' ? .8 : mode === 'wide' ? -16 : tall?-12:-8.7;
       const height = mode === 'hood' ? (tall?3.2:1.38) : mode === 'wide' ? (tall?7.5:5.6) : tall?5.8:3.65;
       const cp = worldAtExtended(course, distance + back, lateral);
-      const groundLift = pp.y - course.at(distance).y+(st.airHeight||0)*.65;
+      const supportLift=Number.isFinite(st.groundHeight)?st.groundHeight-course.groundAt(distance,lateral).y:0;
+      const groundLift = pp.y - course.at(distance).y+supportLift+(st.airHeight||0)*.65;
       camTarget.set(cp.x, cp.y + height + groundLift, cp.z);
       const aim = worldAtExtended(course, distance + (mode === 'hood' ? 42 : 26), lateral);
       lookTarget.set(aim.x, aim.y + (tall?1.65:1.05) + groundLift, aim.z);
@@ -218,17 +222,17 @@ export function attachRenderer(host, app) {
     }
     if(ghost){
       ghost.visible=!!ghostPose&&Math.abs(ghostPose.s-st.s)<650;
-      if(ghost.visible){const gp=vehicleGroundPoint(course,ghostPose.s,ghostPose.lateral),separation=Math.hypot(gp.x-pp.x,gp.z-pp.z);ghostStyle.opacity(.22*THREE.MathUtils.clamp((separation-2)/7,0,1));place(ghost,gp,ghostPose.headingError,wheelTravel(ghostPose.speedMph));ghost.position.y+=ghostPose.airHeight||0;const slope=groundSlope(course,ghostPose.s,ghostPose.lateral,ghostPose.headingError);ghost.rotation.x=slope.pitch;ghost.rotation.z=slope.roll;}
+      if(ghost.visible){const gp=vehicleGroundPoint(course,ghostPose.s,ghostPose.lateral),separation=Math.hypot(gp.x-pp.x,gp.z-pp.z);ghostStyle.opacity(.22*THREE.MathUtils.clamp((separation-2)/7,0,1));place(ghost,gp,ghostPose.headingError,wheelTravel(ghostPose.speedMph));ghost.position.y+=ghostPose.airHeight||0;const slope=groundSlope(course,ghostPose.s,ghostPose.lateral,ghostPose.headingError);ghost.rotation.x=slope.pitch;ghost.rotation.z=slope.roll;applyVehicleTerrainPose(ghost,course,ghostPose);}
     }
     updateNpcVehicleDamage(rival,menu?null:st.rival);
     rival.visible = !menu && !!st.rival && Math.abs(visualGap(st.rival.s)) < 650;
-    if (rival.visible) {place(rival, vehicleGroundPoint(course,st.rival.s, st.rival.lateral), st.rival.headingError||0, wheelTravel(st.rival.speedMph));rival.position.y+=st.rival.airHeight||0;const slope=groundSlope(course,st.rival.s,st.rival.lateral,st.rival.headingError||0);rival.rotation.x=slope.pitch;rival.rotation.z=slope.roll;updateDriver(rival.userData.driver,Math.max(-1,Math.min(1,(st.rival.pushVelocity||0)*.08)),0,false);for(const lamp of rival.userData.brakeLights||[])lamp.material.emissiveIntensity=st.rival.braking?4:1.4;}
+    if (rival.visible) {place(rival, vehicleGroundPoint(course,st.rival.s, st.rival.lateral), st.rival.headingError||0, wheelTravel(st.rival.speedMph));rival.position.y+=st.rival.airHeight||0;const slope=groundSlope(course,st.rival.s,st.rival.lateral,st.rival.headingError||0);rival.rotation.x=slope.pitch;rival.rotation.z=slope.roll;applyVehicleTerrainPose(rival,course,st.rival);updateDriver(rival.userData.driver,Math.max(-1,Math.min(1,(st.rival.pushVelocity||0)*.08)),0,false);for(const lamp of rival.userData.brakeLights||[])lamp.material.emissiveIntensity=st.rival.braking?4:1.4;}
     const palette = [0xd9c99c, 0x2c566a, 0x847458, 0xf0e9dc, 0x5e3d2f];
     while (traffic.length < st.traffic.length) { const car = createVehicle({ color: palette[traffic.length % palette.length] }); scene.add(car); traffic.push(car);sceneRevision++;ambientShading.refresh(); }
     traffic.forEach((car, i) => {
       const d = st.traffic[i]; car.visible = !menu && !!d?.alive && Math.abs(visualGap(d.s)) < 540;
       updateNpcVehicleDamage(car,!menu&&d?.alive?d:null);
-      if (car.visible) {const turn=d.dir<0?Math.PI:0;place(car,vehicleGroundPoint(course,d.s,d.lateral),turn,wheelTravel(d.speedMph));car.position.y+=d.airHeight||0;const slope=groundSlope(course,d.s,d.lateral,turn);car.rotation.x=slope.pitch;car.rotation.z=slope.roll;}
+      if (car.visible) {const turn=(d.dir<0?Math.PI:0)+(d.headingError||0);place(car,vehicleGroundPoint(course,d.s,d.lateral),turn,wheelTravel(d.speedMph));car.position.y+=d.airHeight||0;const slope=groundSlope(course,d.s,d.lateral,turn);car.rotation.x=slope.pitch;car.rotation.z=slope.roll;applyVehicleTerrainPose(car,course,d);}
     });
     const pursuit = st.police.pursuit; police.visible = !menu && !!pursuit?.active && pursuit.distanceU < 250;
     updateNpcVehicleDamage(police,!menu&&pursuit?.active?pursuit:null);
@@ -236,6 +240,7 @@ export function attachRenderer(host, app) {
       place(police, vehicleGroundPoint(course,pursuit.s, pursuit.lateral), pursuit.headingError || 0, wheelTravel(pursuit.speedMph));
       police.position.y+=pursuit.airHeight||0;
       const slope=groundSlope(course,pursuit.s,pursuit.lateral,pursuit.headingError||0);police.rotation.x=slope.pitch;police.rotation.z=slope.roll;
+      applyVehicleTerrainPose(police,course,pursuit);
       for(const lamp of police.userData.brakeLights||[])lamp.material.emissiveIntensity=pursuit.braking?4:1.4;
       lamps.children.forEach((lamp, i) => { lamp.visible = Math.floor(now / 130) % 2 === i; });
     }

@@ -1,4 +1,4 @@
-import {buildRouteMapGeometry} from './route-map.js';
+import {buildRouteMapGeometry,drawPracticeMarkers,practiceMapLegendText} from './route-map.js';
 import {supportsRouteVariants} from './route-variants.js';
 
 export const PREVIEW_BIOMES=Object.freeze({
@@ -10,6 +10,7 @@ export const PREVIEW_BIOMES=Object.freeze({
 });
 export function buildCoursePreview(course,width=320,height=200){
   const map=buildRouteMapGeometry(course,width,height,19);if(!map)return null;
+  if(course.def.practice)return {map,biomes:[{key:'quarry',label:'Quarry',color:'#d5c583'}],elevation:new Float32Array(),reliefMeters:null,minimum:null,maximum:null,showElevation:false,laps:0,distanceKm:0,practice:true};
   const biomes=[...new Set(course.sections.map(section=>section.theme))].map(key=>({key,...(PREVIEW_BIOMES[key]||{label:key,color:'#c8d5c2'})}));
   const elevation=new Float32Array(65);let minimum=Infinity,maximum=-Infinity;
   for(let i=0;i<elevation.length;i++){const y=course.at(course.length*i/(elevation.length-1)).y;elevation[i]=y;minimum=Math.min(minimum,y);maximum=Math.max(maximum,y);}
@@ -31,8 +32,10 @@ export class CoursePreview {
       for(const section of map.sections){path(ctx,section.points);ctx.strokeStyle=PREVIEW_BIOMES[section.theme]?.color||'#c8d5c2';ctx.lineWidth=4.2;ctx.stroke();}
       for(const branch of map.branches){path(ctx,branch.points);ctx.strokeStyle=branch.color;ctx.lineWidth=3.3;ctx.setLineDash([6,4]);ctx.stroke();ctx.setLineDash([]);}
       for(const gate of map.gates){ctx.beginPath();ctx.arc(gate.marker.x,gate.marker.y,3.8,0,Math.PI*2);ctx.fillStyle='#ffce75';ctx.fill();ctx.lineWidth=1.2;ctx.strokeStyle='#122426';ctx.stroke();}
-      ctx.save();ctx.translate(map.finish.x,map.finish.y);ctx.rotate(map.finishHeading);ctx.fillStyle='#0d1e21';ctx.fillRect(-9,-6,18,12);
+      if(map.finish){ctx.save();ctx.translate(map.finish.x,map.finish.y);ctx.rotate(map.finishHeading);ctx.fillStyle='#0d1e21';ctx.fillRect(-9,-6,18,12);
       for(let x=0;x<4;x++)for(let y=0;y<2;y++){ctx.fillStyle=(x+y)%2?'#132324':'#f2ecd4';ctx.fillRect(-8+x*4,-4+y*4,4,4);}ctx.restore();
+      }
+      drawPracticeMarkers(ctx,map);
     }
     const elevation=this.elevationContext,canvas=this.elevationCanvas;
     if(elevation&&canvas){
@@ -43,7 +46,7 @@ export class CoursePreview {
         path(elevation,points);elevation.lineTo(canvas.width-2,canvas.height);elevation.lineTo(2,canvas.height);elevation.closePath();elevation.fillStyle='#b8cda61a';elevation.fill();path(elevation,points);elevation.lineWidth=2;elevation.strokeStyle='#b5c8a0';elevation.stroke();
       }
     }
-    this.canvas.setAttribute('aria-label',`${course.def.name}. ${label}. ${data.laps} laps, ${data.distanceKm.toFixed(1)} kilometers. ${biomes.map(b=>b.label).join(', ')}. ${map.branches.length} dashed shortcut${map.branches.length===1?'':'s'}.${map.gates.length?` ${map.gates.length} gold gate markers per lap.`:''} Checkered line marks the start and finish.${data.showElevation?` Elevation changes by ${data.reliefMeters} meters.`:''}`);
+    this.canvas.setAttribute('aria-label',data.practice?`${course.def.name}. ${label}. Quarry playground. Untimed exploration, with no laps or finish line. ${practiceMapLegendText()}`:`${course.def.name}. ${label}. ${data.laps} laps, ${data.distanceKm.toFixed(1)} kilometers. ${biomes.map(b=>b.label).join(', ')}. ${map.branches.length} dashed shortcut${map.branches.length===1?'':'s'}.${map.gates.length?` ${map.gates.length} gold gate markers per lap.`:''} Checkered line marks the start and finish.${data.showElevation?` Elevation changes by ${data.reliefMeters} meters.`:''}`);
     return data;
   }
   dispose(){this.context?.clearRect(0,0,this.canvas.width,this.canvas.height);this.elevationContext?.clearRect(0,0,this.elevationCanvas.width,this.elevationCanvas.height);this.cache=new WeakMap();this.canvas=this.context=this.elevationCanvas=this.elevationContext=this.current=this.course=null;}

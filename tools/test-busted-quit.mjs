@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {ownTestCourses} from './career-fixture.mjs';
 import {readFile} from 'node:fs/promises';
 import {App} from '../src/app.js';
 import {COURSE,POLICE} from '../src/config.js';
@@ -9,7 +10,7 @@ const memory=new Map(),storage={getItem:key=>memory.get(key)??null,setItem:(key,
 globalThis.localStorage=storage;
 const chase=COURSE.findIndex(stage=>stage.kind==='chase');
 function start({credits=2000,cpu='medium',manual=false,stage=0}={}){
-  memory.clear();const app=new App();app.profile.credits=credits;
+  memory.clear();const app=ownTestCourses(new App());app.profile.credits=credits;
   if(stage===chase)app.profile.unlockedCars.push('banshee_muscle');
   app._saveProfile();app.startCampaign({startStage:stage,cpuDifficulty:cpu,difficulty:manual?'pro':'casual'});app.advance(4);
   app.duel.state.traffic=[];app.duel.state.rival=null;return app;

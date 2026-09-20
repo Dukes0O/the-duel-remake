@@ -1,37 +1,41 @@
 import {CARS,COURSE,DRIVE} from './config.js';
 import {bestKey,isValidFinish,playerName,getUpgradeLevels,stageEventId} from './progression.js';
 import {normalizeDriverId,driverModifierSignature,driverRecordMetadata,isCurrentDriverRecord} from './drivers.js';
+import {offroadCapability} from './offroad-physics.js';
 
 export const GHOST_KEY='the-duel-ghosts-v1',GHOST_ENABLED_KEY='duel_ghost_enabled';
 export const MAX_GHOSTS=12,MAX_GHOST_SAMPLES=1800,MAX_GHOST_BYTES=1_250_000;
 const round=(value,scale)=>Math.round(value*scale),clock=state=>(state.stageTimeSec??0)+(state.racePenaltySec??0);
 const bytes=value=>new TextEncoder().encode(JSON.stringify(value)).length;
-export const ghostKey=(playerId,options,layoutVersion,driverSignature)=>options?.mode==='timetrial'&&playerId?`${playerId}|${bestKey(options,layoutVersion,driverSignature)}`:'';
+export const ghostKey=(playerId,options,layoutVersion,driverSignature)=>options?.mode==='timetrial'&&playerId&&!COURSE[options.stageIndex]?.practice?`${playerId}|${bestKey(options,layoutVersion,driverSignature)}`:'';
 export function createGhostStore(){return {version:1,records:[],archivedRecords:[]};}
 const validId=id=>typeof id==='string'&&/^[\w-]{1,80}$/.test(id);
 const currentRecord=record=>{const stageIndex=COURSE.findIndex((stage,index)=>stageEventId(index)===record.eventId),stage=COURSE[stageIndex];return !!stage&&record.layoutVersion===(stage.layoutVersion??1)&&record.laps===(stage.laps||2)&&isCurrentDriverRecord(record)&&record.key===ghostKey(record.playerId,{...record,stageIndex});};
-function validSamples(samples,timeSec,raceLength){
+function validSamples(samples,timeSec,raceLength,car){
   if(!Array.isArray(samples)||samples.length<12||samples.length>MAX_GHOST_SAMPLES)return false;
   // A driver may reverse through the start and onto the preceding circuit.
   // Keep the old 80m recovery allowance, plus the most reverse travel physically
   // possible during this recording. Forward bounds remain unchanged.
-  const minPosition=-(timeSec*DRIVE.reverseMaxMph*DRIVE.mphToWorld+80)*100;
+  const freeTerrain=!!offroadCapability(CARS[car]),reach=(timeSec*500*DRIVE.mphToWorld+180)*100;
+  const minPosition=freeTerrain?-reach:-(timeSec*DRIVE.reverseMaxMph*DRIVE.mphToWorld+80)*100,maxPosition=(raceLength+24)*100+(freeTerrain?reach:0),maxLateral=freeTerrain?reach:18000;
   let prior=-1;
-  for(const row of samples){if(!Array.isArray(row)||row.length!==7||!row.every(Number.isSafeInteger)||row[0]<=prior||row[0]<0||row[0]>(timeSec+.03)*1000||row[1]<minPosition||row[1]>(raceLength+24)*100||Math.abs(row[2])>18000||Math.abs(row[3])>400000||row[4]<0||row[4]>10000||Math.abs(row[5])>5000||![0,1].includes(row[6]))return false;prior=row[0];}
+  for(const row of samples){if(!Array.isArray(row)||![7,11].includes(row.length)||!row.every(Number.isSafeInteger)||row[0]<=prior||row[0]<0||row[0]>(timeSec+.03)*1000||row[1]<minPosition||row[1]>maxPosition||Math.abs(row[2])>maxLateral||Math.abs(row[3])>400000||row[4]<0||row[4]>10000||Math.abs(row[5])>5000||![0,1].includes(row[6]))return false;
+    if(row.length===11&&(Math.abs(row[7])>1_000_000||Math.abs(row[8])>800_000||Math.abs(row[9])>800_000||row[10]<0||row[10]>15))return false;
+    prior=row[0];}
   return samples[0][0]===0&&Math.abs(samples[0][1])<=300&&Math.abs(samples.at(-1)[0]-timeSec*1000)<=30&&samples.at(-1)[1]>=raceLength*100-10;
 }
 function normalizeRecord(row){
   if(!row||!validId(row.playerId)||!playerName(row.playerName)||row.mode!=='timetrial'||!Object.hasOwn(CARS,row.car)||!Number.isFinite(row.timeSec)||row.timeSec<=0||row.timeSec>3600)return null;
   const driver=driverRecordMetadata(row);if(!driver)return null;
   const stageIndex=COURSE.findIndex((def,index)=>stageEventId(index)===row.eventId),stage=COURSE[stageIndex];
-  if(!stage||!Number.isSafeInteger(row.laps)||row.laps<1||!Number.isSafeInteger(row.layoutVersion)||row.layoutVersion<1||!['casual','pro'].includes(row.difficulty)||!['easy','medium','hard'].includes(row.cpuDifficulty))return null;
+  if(!stage||stage.practice||!Number.isSafeInteger(row.laps)||row.laps<1||!Number.isSafeInteger(row.layoutVersion)||row.layoutVersion<1||!['casual','pro'].includes(row.difficulty)||!['easy','medium','hard'].includes(row.cpuDifficulty))return null;
   const current=row.layoutVersion===(stage.layoutVersion??1);
   if(current&&row.laps!==(stage.laps||2))return null;
   const context={...row,...driver,stageIndex,seed:row.seed>>>0},key=ghostKey(row.playerId,context,row.layoutVersion,driver.driverSignature);
   // Legacy ghosts did not retain the old route length. Their final sample is
   // the only available old finish position; never validate it against new roads.
   const raceLength=current?stage.lengthU*row.laps:row.raceLength??row.samples?.at(-1)?.[1]/100;
-  if(!Number.isFinite(raceLength)||raceLength<=0||key!==row.key||!validSamples(row.samples,row.timeSec,raceLength))return null;
+  if(!Number.isFinite(raceLength)||raceLength<=0||key!==row.key||!validSamples(row.samples,row.timeSec,raceLength,row.car))return null;
   return {key,playerId:row.playerId,playerName:playerName(row.playerName),stageIndex,eventId:row.eventId,layoutVersion:row.layoutVersion,seed:context.seed,laps:row.laps,raceLength,car:row.car,mode:row.mode,difficulty:row.difficulty,cpuDifficulty:row.cpuDifficulty,...driver,timeSec:row.timeSec,samples:row.samples,upgrades:getUpgradeLevels({upgrades:{[row.car]:row.upgrades}},row.car),recordedAt:Number.isFinite(row.recordedAt)?row.recordedAt:0,lastUsedAt:Number.isFinite(row.lastUsedAt)?row.lastUsedAt:0};
 }
 export function normalizeGhostStore(value){
@@ -57,7 +61,14 @@ export function storeGhost(store,record){
 function pack(state,snap=false){
   const values=[clock(state),state.s,state.lateral??0,(state.headingError??0)+(state.slipAngle??0)+(state.crashSpin??0),state.airHeight??0,state.speedMph??0];
   if(!values.every(Number.isFinite))return null;
-  return [round(values[0],1000),round(values[1],100),round(values[2],100),round(values[3],10000),round(Math.max(0,values[4]),100),round(values[5],10),snap?1:0];
+  const row=[round(values[0],1000),round(values[1],100),round(values[2],100),round(values[3],10000),round(Math.max(0,values[4]),100),round(values[5],10),snap?1:0];
+  // Keep the seven-column legacy representation when no terrain pose exists.
+  // Presence bits distinguish an actual zero from a missing legacy field.
+  const pose=[state.groundHeight,state.terrainPitch,state.terrainRoll];
+  if(pose.some(value=>value!=null&&!Number.isFinite(value)))return null;
+  const flags=(pose[0]!=null?1:0)|(pose[1]!=null?2:0)|(pose[2]!=null?4:0)|(state.tumble?8:0);
+  if(flags)row.push(round(pose[0]??0,100),round(pose[1]??0,10000),round(pose[2]??0,10000),flags);
+  return row;
 }
 export class GhostRecorder {
   constructor(context){this.context={...context,driverId:normalizeDriverId(context.driverId),driverSignature:driverModifierSignature(context.driverId,context.car),upgrades:{...context.upgrades}};this.samples=[];this.interval=.2;this.next=0;this.previous=null;this.previousClock=null;this.invalid=false;this.pendingSnap=false;}
@@ -99,5 +110,7 @@ export function sampleGhost(record,timeSec,out={}){
   while(lo<hi){const mid=Math.ceil((lo+hi)/2);if(rows[mid][0]<=t)lo=mid;else hi=mid-1;}
   const a=rows[lo],b=rows[Math.min(rows.length-1,lo+1)],blend=b[6]||b[0]===a[0]?0:Math.max(0,Math.min(1,(t-a[0])/(b[0]-a[0]))),mix=index=>a[index]+(b[index]-a[index])*blend;
   const angleA=a[3]/10000,angleB=b[3]/10000;
-  Object.assign(out,{s:mix(1)/100,lateral:mix(2)/100,headingError:angleA+Math.atan2(Math.sin(angleB-angleA),Math.cos(angleB-angleA))*blend,airHeight:mix(4)/100,speedMph:mix(5)/10,car:record.car,playerId:record.playerId,timeSec,recordTimeSec:record.timeSec,upgrades:record.upgrades});return out;
+  const flagsA=a.length===11?a[10]:0,flagsB=b.length===11?b[10]:0;
+  const pose=(index,bit,scale)=>flagsA&bit?((flagsB&bit?a[index]+(b[index]-a[index])*blend:a[index])/scale):blend>0&&(flagsB&bit)?b[index]/scale:null;
+  Object.assign(out,{s:mix(1)/100,lateral:mix(2)/100,headingError:angleA+Math.atan2(Math.sin(angleB-angleA),Math.cos(angleB-angleA))*blend,airHeight:mix(4)/100,speedMph:mix(5)/10,groundHeight:pose(7,1,100),terrainPitch:pose(8,2,10000),terrainRoll:pose(9,4,10000),tumble:!!(flagsA&8),car:record.car,playerId:record.playerId,timeSec,recordTimeSec:record.timeSec,upgrades:record.upgrades});return out;
 }

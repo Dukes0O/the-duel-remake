@@ -7,7 +7,7 @@ const check=(value,message)=>{assert.ok(value,message);checks++;};
 for(const seed of[1989,42,17,2026])for(const def of COURSE){
  const course=new Course(def,seed),tag=`${def.id}/${seed}`;
  check(course.raceLength===course.length*2,`${tag}: two complete laps`);
- if(def.layout&&def.layout!=='city'){
+ if(def.layout&&def.layout!=='city'&&!def.practice){
   const curves=course.samples.map(p=>p.curvature);
   check(curves.some(k=>k>.00003)&&curves.some(k=>k<-.001),`${tag}: flowing reverse bends`);
   check(Math.max(...curves.map(Math.abs))<1/(def.expansion?84:170),`${tag}: terrain ribbon cannot fold across the road`);
@@ -24,7 +24,8 @@ for(const seed of[1989,42,17,2026])for(const def of COURSE){
    check(Math.max(...before.map(p=>p.y))>valley+1&&Math.max(...after.map(p=>p.y))>valley+1,`${tag}: two mountain crests frame a real saddle`);
   }
  }
- if(def.offroad){check(course.roadHalfWidthAt(0)===5.5&&!course.features.passingLanes.length,`${tag}: narrow unpainted rally trail`);}
+ if(def.offroad&&!def.practice){check(course.roadHalfWidthAt(0)===5.5&&!course.features.passingLanes.length,`${tag}: narrow unpainted rally trail`);}
+ if(def.practice)check(course.roadHalfWidthAt(0)===24&&!course.features.lapGates.length,`${tag}: broad untimed practice loop`);
  for(const s of[-25,0,80,course.length*.53,course.length-1]){
   const a=course.worldAt(s,4),b=course.worldAt(s+course.length,4);
   check(Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z)<1e-7,`${tag}: seamless lap at ${s}`);

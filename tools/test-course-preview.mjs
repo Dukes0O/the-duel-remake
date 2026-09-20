@@ -14,7 +14,7 @@ const shapes=[];
 for(const route of ROUTE_VARIANTS){
   app.setRouteVariant(route.id);
   for(const {def,index}of natural){
-    const course=app.getMenuCourse(index),data=buildCoursePreview(course);
+  const course=app.getMenuCourse(index),data=buildCoursePreview(course);
     check(course.seed===route.seed&&course.def===def,`${def.id} ${route.label} uses the selected geometry`);
     check(data.laps===def.laps&&data.distanceKm===def.lengthU*def.laps/1000,`${def.id}: distance covers the full race`);
     check(data.biomes.length===new Set(def.sections.map(section=>section.theme)).size,`${def.id}: legend includes unique route biomes`);
@@ -29,6 +29,7 @@ check(app._menuCourses.size===12,'twelve natural previews fill the cache');
 app.menuRouteId='route_a';check(app.getMenuCourse(natural[0].index)===first,'returning to Route A reuses the cached Course');
 const retainedKey=`${natural[0].index}:1989`,evictedKey=app._menuCourses.keys().next().value;
 for(const [index,def]of COURSE.entries())if(!supportsRouteVariants(def)){
+  app.getMenuCourse(natural[0].index); // Keep this reference genuinely recent as the catalog grows beyond capacity.
   const course=app.getMenuCourse(index),data=buildCoursePreview(course);check(course.seed===1989&&data.showElevation===!!def.expansion,`${def.id}: fixed event uses canonical geometry; expansion circuits show elevation`);
   if(def.expansion)check(data.elevation.every(Number.isFinite)&&data.elevation[0]===data.elevation.at(-1),`${def.id}: expansion elevation is finite and closes at the finish`);
   check(app._menuCourses.size===12,'course preview cache stays bounded');

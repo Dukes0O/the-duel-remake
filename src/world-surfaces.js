@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { terrainStyleAt } from './terrain-style.js';
 import { createPolylineIndex } from './polyline-index.js';
+import { freestyleTerrainGeometry, freestyleFarGeometry } from './freestyle-scene.js';
 
 // Pure sampled surfaces and shared source textures. Course owns all route and
 // ground placement decisions; these builders never add collision features.
@@ -32,6 +33,7 @@ export function strip(course, left, right, y, start=0, end=course.length, ground
 }
 
 export function terrainGeometry(course) {
+  if(course.def.practice)return freestyleTerrainGeometry(course);
   const v = [], colors = [], uv = [], weights = [], groups = TERRAIN_THEMES.map(()=>[]);
   // Keep the road extrusion narrower than the tightest bend radius. Wider
   // strips fold back across the road; the outer landscape uses a world grid.
@@ -59,6 +61,7 @@ export function terrainGeometry(course) {
 }
 
 export function farTerrainGeometry(course) {
+  if(course.def.practice)return freestyleFarGeometry(course);
   const grid=(course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena||course.def.expansion?16:32;
   const route=course.samples.filter((_,i)=>i%4===0),last=course.samples.at(-1);
   if(route.at(-1)!==last)route.push(last);

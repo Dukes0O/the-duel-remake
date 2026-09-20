@@ -10,6 +10,7 @@ document.querySelector('nav').prepend(storageNotice);
 const {App}=await import('../src/app.js');
 
 import {COURSE} from '../src/config.js';
+import {freestyleLayout} from '../src/freestyle-course.js';
 
 import {attachRenderer} from '../src/render3d.js';
 import {installPerformanceReview} from './performance-review.js';
@@ -23,6 +24,12 @@ if(import.meta.hot)import.meta.hot.dispose(()=>performanceReview.dispose());
 for(const [id,label,fn]of[
 
   ['ambient','Toggle graphics quality',()=>{app.ambientOcclusionEnabled=app.ambientOcclusionEnabled===false;}],
+
+  ['practice-overview','Freestyle quarry overview',()=>{practice();const b=freestyleLayout(app.duel.course).bounds,cx=(b.minX+b.maxX)*.5,cz=(b.minZ+b.maxZ)*.5;app.inspectionCamera={position:[cx+310,195,cz+260],target:[cx,0,cz]};}],
+  ['practice-jump','Freestyle real jump',()=>{practice();Object.assign(app.duel.state,{s:130,prevS:130,speedMph:75,gear:3,paused:false});app.autopilot=true;app._scriptedCrashDone=true;pauseAtFlight=true;smokePauseAt=app.duel.state.totalTimeSec+6;}],
+  ['practice-rocks','Freestyle rock crawl',()=>{practice();const rock=app.duel.course.features.obstacles.find(o=>o.id==='practice-rock-3');practiceDriveToward(rock,10,12,.9);}],
+  ['practice-climb','Freestyle mountain climb',()=>{practice();const mound=app.duel.course.features.practiceMounds.at(-1);practiceDriveToward(mound,48,28,8,true);}],
+  ['truck-crush','Truck crushes traffic',()=>{scene(0,90,'titan_monster');const s=app.duel.state;Object.assign(s,{s:90,prevS:90,lateral:-3.4,prevLateral:-3.4,speedMph:26,gear:1,paused:false});const target={s:102,prevS:102,lateral:-3.4,prevLateral:-3.4,speedMph:0,cruiseSpeedMph:0,dir:1,alive:true,damageZones:{front:0,rear:0,left:0,right:0},damageCooldown:0};s.traffic=[target];let followThrough=0;for(let i=0;i<480;i++){app.duel.setInput({throttle:.35,brake:0,steer:0});app.duel.step(1/120);if(target.crushed&&++followThrough>=90)break;}s.paused=true;const p=app.duel.course.groundAt(target.s,target.lateral);app.inspectionCamera={position:[p.x+12,p.y+7,p.z+13],target:[p.x,p.y+1,p.z]};}],
 
   ...COURSE.filter(def=>def.expansion).flatMap(def=>{
     const stage=COURSE.indexOf(def),prepare=()=>{app.setLightingMood(def.defaultMood);scene(stage,def.lengthU*def.expansion.landmarkFraction-150);};
@@ -109,6 +116,14 @@ for(const [id,label,fn]of[
 if(location.port==='5175'){const button=document.createElement('button');button.textContent='Create funded QA player';button.onclick=()=>{app.returnToMenu();const player=app.players.players.find(p=>p.name==='Garage QA');if(player)app.selectPlayer(player.id);else app.addPlayer('Garage QA');app.profile={...app.profile,credits:Math.max(app.profile.credits,40000)};app._saveProfile();};document.querySelector('nav').append(button);}
 
 function scene(stage,s,car='falcone_f42',seed=1989){smokePauseAt=null;pauseAtFlight=false;document.body.classList.remove('smoke-check');app.autopilot=false;app.inspectionCamera=null;app.duel.startCampaign({startStage:stage,car,seed});Object.assign(app.duel.state,{status:'racing',s,traffic:[],rival:null,paused:true});app.cameraMode='chase';}
+function practice(){app.setLightingMood('golden');scene(COURSE.findIndex(c=>c.practice),0,'titan_monster');}
+function practiceDriveToward(feature,back,speed,seconds,stopOnTumble=false){
+  const course=app.duel.course,s=app.duel.state,c=Math.cos(feature.heading),sn=Math.sin(feature.heading);
+  const pose=course.nearest(feature.x-sn*back,feature.z-c*back,feature.s);
+  Object.assign(s,{s:pose.s,prevS:pose.s,lateral:pose.lateral,prevLateral:pose.lateral,headingError:Math.atan2(Math.sin(feature.heading-pose.heading),Math.cos(feature.heading-pose.heading)),speedMph:speed,gear:1,paused:false});
+  for(let i=0;i<seconds*120;i++){const heading=course.at(s.s).heading+s.headingError,error=Math.atan2(Math.sin(feature.heading-heading),Math.cos(feature.heading-heading));app.duel.setInput({throttle:.75,brake:0,steer:Math.max(-1,Math.min(1,-error*2))});app.duel.step(1/120);if(stopOnTumble&&s.tumble&&s.tumble.elapsed>.6)break;}
+  s.paused=true;const p=course.worldAt(s.s,s.lateral);app.inspectionCamera={position:[p.x+c*16-sn*8,(s.groundHeight||0)+7,p.z-sn*16-c*8],target:[p.x,(s.groundHeight||0)+1.8,p.z]};
+}
 
 const start=()=>{app.inspectionCamera=null;app.startCampaign();const s=app.duel.state;s.status='racing';s.s=172;s.traffic=[];s.rival=null;};
 
@@ -151,6 +166,7 @@ app.onFrame=s=>{
     `World builds ${d.worldBuilds||0} (build CPU ${d.worldBuildMs||0} ms · first frame CPU ${d.firstFrameMs||0} ms · build-to-present wall ${d.worldReadyMs||0} ms)`,
     `Shader warmup ${d.warmupStatus||'off'} · parallel ${d.parallelShaderCompile||'unknown'} · submit ${d.warmupSubmitMs||0} ms · wait ${d.warmupWaitMs||0} ms · Quality ${d.edgeSmoothing==='true'?'High':'Performance'} · shadow ${d.shadowResolution||'loading'} · paint ${d.paint||'factory'}`,
     `Nitro ${s.boost.toFixed(2)} · crushes ${s.crushCount} · flocks ${s.collectedFlocks.length} · boundary resets ${s.boundaryResets} · lateral ${s.lateral.toFixed(1)} · height ${(s.airHeight||0).toFixed(2)} m`,
+    `Jump length ${(s.airDistance||0).toFixed(2)} m · airtime ${(s.airTime||0).toFixed(2)} s · rollovers ${s.rollovers||0} · crushed opponents ${s.traffic.filter(c=>c.crushed).length} · support ${(s.groundHeight||0).toFixed(2)} m`,
   ].join('\n');
 };
 app.start();

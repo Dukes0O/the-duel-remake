@@ -2,6 +2,7 @@ import { CARS, COURSE, DEFAULT_CAR, DRIVE, CPU_DIFFICULTY, POLICE } from './conf
 import {normalizeCosmetics} from './paint-presets.js';
 import {normalizeRaceSettings} from './race-settings.js';
 import {DRIVERS,normalizeDrivers,normalizeDriverId,driverModifierSignature} from './drivers.js';
+import {normalizeCourseAccess} from './course-access.js';
 
 export const PROFILE_KEY = 'the-duel-profile-v1';
 export const PLAYERS_KEY = 'the-duel-players-v2';
@@ -31,7 +32,7 @@ const validStrings=value=>[...new Set((Array.isArray(value)?value:[]).filter(key
 export const playerName=value=>String(value||'').replace(/[\u0000-\u001f\u007f]/g,'').trim().replace(/\s+/g,' ').slice(0,24);
 const newId=()=>globalThis.crypto?.randomUUID?.()||`player-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-export function createProfile(){return {version:2,credits:0,unlockedCars:[...FREE_CARS],upgrades:{},cosmetics:normalizeCosmetics(),drivers:normalizeDrivers(),raceSettings:null,settledResults:[],settledPoliceFines:[],pbBonusRuns:[],personalBests:{},milestones:[],circuitWins:[],winStreak:0,history:[],activeRace:null};}
+export function createProfile(){return {version:2,credits:0,unlockedCars:[...FREE_CARS],upgrades:{},cosmetics:normalizeCosmetics(),drivers:normalizeDrivers(),courses:normalizeCourseAccess(),raceSettings:null,settledResults:[],settledPoliceFines:[],pbBonusRuns:[],personalBests:{},milestones:[],circuitWins:[],winStreak:0,history:[],activeRace:null};}
 export function normalizeProfile(value){
   if(!value||typeof value!=='object'||![1,2].includes(value.version))return createProfile();
   const profile=createProfile();profile.credits=integer(value.credits,1_000_000_000);
@@ -39,6 +40,7 @@ export function normalizeProfile(value){
   for(const car of profile.unlockedCars)profile.upgrades[car]=getUpgradeLevels(value,car);
   profile.cosmetics=normalizeCosmetics(value.cosmetics);
   profile.drivers=normalizeDrivers(value.drivers);
+  profile.courses=normalizeCourseAccess(value.courses,value);
   profile.raceSettings=value.raceSettings==null?null:normalizeRaceSettings(value.raceSettings,profile);
   profile.settledResults=validStrings(value.settledResults||value.awardedWins);profile.pbBonusRuns=validStrings(value.pbBonusRuns);
   profile.settledPoliceFines=validStrings(value.settledPoliceFines);
@@ -84,7 +86,7 @@ export function stageEventId(index){const stage=COURSE[index];return stage?Strin
 // always key new races against the current layout, regardless of payload extras.
 export function eventKey({stageIndex,seed=1989,laps}={},layoutVersion){const stage=COURSE[stageIndex];return stage?`${stageEventId(stageIndex)}|layout:${layoutVersion??stage.layoutVersion??1}|seed:${seed>>>0}|laps:${laps||stage.laps||2}`:'';}
 export function bestKey(result,layoutVersion,signature=driverModifierSignature(result.driverId,result.car)){return [eventKey(result,layoutVersion),result.car,result.mode||'duel',result.difficulty||'casual',result.cpuDifficulty||'easy',...(signature?[`driver:${signature}`]:[])].join('|');}
-function isCompletedRace(result){const stage=COURSE[result?.stageIndex];return !!stage&&result.completed===true&&result.abandoned!==true&&result.timeout!==true&&Number.isFinite(result.timeSec)&&result.timeSec>0&&Number.isInteger(result.laps)&&result.laps===(stage.laps||2)&&Object.hasOwn(CARS,result.car)&&(result.driverId==null||Object.hasOwn(DRIVERS,result.driverId));}
+function isCompletedRace(result){const stage=COURSE[result?.stageIndex];return !!stage&&!stage.practice&&result.completed===true&&result.abandoned!==true&&result.timeout!==true&&Number.isFinite(result.timeSec)&&result.timeSec>0&&Number.isInteger(result.laps)&&result.laps===(stage.laps||2)&&Object.hasOwn(CARS,result.car)&&(result.driverId==null||Object.hasOwn(DRIVERS,result.driverId));}
 export function isValidFinish(result){
   if(!isCompletedRace(result))return false;
   const stage=COURSE[result.stageIndex];if(!stage.stuntTrial&&!['drift','checkpoint'].includes(stage.kind))return true;
@@ -132,7 +134,7 @@ export function settlePoliceFine(profile,ticket={}){
 export function settleRace(profile,result={}){
   const valid=typeof result.runId==='string'&&result.runId.length>0&&result.runId.length<=128&&Number.isInteger(result.stageIndex)&&!!COURSE[result.stageIndex]&&typeof result.won==='boolean';
   const key=`${result.runId}:${result.stageIndex}`;
-  if(!valid||profile.settledResults.includes(key))return {profile,reward:0,awarded:false,personalBest:false,breakdown:{}};
+  if(!valid||COURSE[result.stageIndex]?.practice||profile.settledResults.includes(key))return {profile,reward:0,awarded:false,personalBest:false,breakdown:{}};
   // Race earnings are deferred until the finish. Leaving discards that attempt
   // and its pending fines without touching any credits already in the bank.
   if(result.abandoned===true){

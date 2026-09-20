@@ -5,7 +5,7 @@ import {DEFAULT_DRIVER,normalizeDriverId,driverModifierSignature,driverRecordMet
 export const LEADERBOARD_KEY='the-duel-leaderboard-v1';
 export function createLeaderboard(){return {version:1,entries:[],archivedEntries:[]};}
 const isDriftRow=row=>COURSE.find(stage=>stage.id===row.eventId)?.kind==='drift';
-const currentRow=row=>{const stageIndex=COURSE.findIndex((stage,index)=>stageEventId(index)===row.eventId);return stageIndex>=0&&row.laps===(COURSE[stageIndex].laps||2)&&row.eventKey===eventKey({...row,stageIndex})&&isCurrentDriverRecord(row);};
+const currentRow=row=>{const stageIndex=COURSE.findIndex((stage,index)=>stageEventId(index)===row.eventId);return stageIndex>=0&&!COURSE[stageIndex].practice&&row.laps===(COURSE[stageIndex].laps||2)&&row.eventKey===eventKey({...row,stageIndex})&&isCurrentDriverRecord(row);};
 const rowKey=row=>[row.playerId,row.eventKey,row.car,row.driverSignature??driverModifierSignature(row.driverId,row.car)].join('|');
 function better(row,prior,drift){return !prior||drift&&!Number.isFinite(prior.driftScore)||(drift&&row.driftScore!==prior.driftScore?row.driftScore>prior.driftScore:row.timeSec<prior.timeSec-.005);}
 function driftMetadata(result,stage){return {discipline:'drift',driftScore:Math.round(result.driftScore),driftTarget:stage.driftTrial.targets[result.cpuDifficulty||'easy'],driftBestChain:Math.round(result.driftBestChain||0),driftMeters:Math.round((result.driftMeters||0)*10)/10};}
@@ -21,6 +21,7 @@ function normalize(value){
     const layoutVersion=row.layoutVersion??Number(row.eventKey.match(/\|layout:([1-9]\d*)\|seed:/)?.[1]);
     if(stageIndex<0||!Number.isSafeInteger(layoutVersion)||layoutVersion<1||row.eventKey!==eventKey({stageIndex,seed:row.seed,laps:row.laps},layoutVersion))continue;
     const stage=COURSE[stageIndex],drift=stage.kind==='drift',cpu=['easy','medium','hard'].includes(row.cpuDifficulty)?row.cpuDifficulty:'easy';
+    if(stage.practice)continue;
     const current=layoutVersion===(stage.layoutVersion??1);
     if(current&&row.laps!==(stage.laps||2))continue;
     if(drift&&(!Number.isInteger(row.driftScore)||row.driftScore<0||!Number.isFinite(row.driftTarget)||row.driftTarget<=0||row.driftScore<row.driftTarget||!Number.isFinite(row.driftBestChain)||row.driftBestChain<0||row.driftBestChain>row.driftScore||!Number.isFinite(row.driftMeters)||row.driftMeters<0))continue;

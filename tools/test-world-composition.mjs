@@ -24,6 +24,7 @@ const baseline={
   'red-mesa':{hash:'ea3514eb1599a891f88418a2f1454ff5ef1b503a7d5c8794e8c750ce6b3a07ce',nodes:522,meshes:494,instances:6732,geometries:211,materials:116,textures:36},
   'neon-docks':{hash:'245c1e57e8af0e6ae970e32635454305aaaeb84389b86e538e08dea3615c0eed',nodes:1432,meshes:1374,instances:229433,geometries:448,materials:174,textures:44},
   'cloudbreak-skyway':{hash:'0fc2e9f2abacb89cf639a81e03a19eab91d88c1c6c467dcb86a7038b704a512f',nodes:608,meshes:577,instances:15771,geometries:252,materials:142,textures:44},
+  'titan-freestyle':{hash:'b85d7b46c9f386b0afe21b230c5e93382c9827c2fa9fe9db0b91ad386a29fc08',nodes:225,meshes:160,instances:129,geometries:157,materials:36,textures:5},
 };
 let checks=0;
 const equal=(actual,expected,message)=>{assert.deepEqual(actual,expected,message);checks++;};
@@ -85,7 +86,7 @@ function sceneSignature(world){
   return {hash,nodes,meshes,instances,geometries:geometries.size,materials:materials.size,textures:textures.size};
 }
 try{
-  equal(COURSE.length,15,'all fifteen event scenes are covered');
+  equal(COURSE.length,16,'all sixteen event scenes are covered');
   for(const def of COURSE){
     const course=new Course(def,1989),before=JSON.stringify(course.features),world=buildEnvironment(course),signature=sceneSignature(world);
     equal(JSON.stringify(course.features),before,`${def.id}: scene assembly never changes physical feature placement`);
@@ -94,4 +95,4 @@ try{
     disposeTree(world);
   }
 }finally{THREE.TextureLoader.prototype.load=oldLoad;if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;}
-console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across fifteen events.`);
+console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across sixteen events.`);

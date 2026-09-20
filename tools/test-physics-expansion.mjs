@@ -106,7 +106,7 @@ for (const height of [() => 0, s => s * .24, s => -s * .24, s => .00006 * s * s]
 // Linear interpolation of its old 8 m samples produced 2–4 tiny false hops
 // per crest at 30 mph. Expansion roads now evaluate their authored height.
 const actualCrests = [];
-for (const def of COURSE.filter(course => course.airborne === true)) {
+for (const def of COURSE.filter(course => course.expansion && course.airborne === true)) {
   const d = new Duel({ seed: 1989 }); d.startCampaign({ startStage: COURSE.indexOf(def), mode: 'timetrial' });
   for (const [center, span] of def.expansion.crests) for (const speed of [30, 70, 150]) {
     const actor = { s: center * def.lengthU - span - 15, lateral: 0, speedMph: speed };

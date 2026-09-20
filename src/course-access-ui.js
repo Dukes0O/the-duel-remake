@@ -1,0 +1,13 @@
+import {COURSE,CARS} from './config.js';
+import {COURSE_PRICES,isCourseUnlocked} from './course-access.js';
+
+const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+const credits=value=>Math.floor(value||0).toLocaleString();
+export function courseAccessPanel(profile,selectedStage=0,message=''){
+  const cards=COURSE.map((course,index)=>{
+    const owned=isCourseUnlocked(profile,course),selected=index===selectedStage,price=COURSE_PRICES[course.id];
+    const description=course.practice?'Untimed free driving. No credits, records or finish line.':course.stuntTrial?'Two laps, four landed jumps and four crushes.':course.kind==='drift'?'Bank the drift target and finish before the deadline.':course.kind==='checkpoint'?'Pass all twelve timed gates over two laps.':course.kind==='chase'?'Escape pursuit and finish before the deadline.':`${(course.lengthU/1000).toFixed(2).replace(/0$/,'')} km per lap · Two-lap ${course.kind?'standalone event':'campaign circuit'}.`;
+    return `<article class="course-access-card${selected?' selected':''}"><div><span class="field-label">${course.practice?'PRACTICE':owned?'UNLOCKED':`${credits(price)} CR`}</span><h3>${escape(course.name)}</h3><p>${description}</p>${course.requiredCar?`<p class="course-recommendation">${escape(CARS[course.requiredCar]?.name||'Titan')} recommended.${course.arena?' Lighter cars cannot crush wrecks.':''}</p>`:''}</div>${owned?`<button type="button" data-course-select="${course.id}" aria-label="Select ${escape(course.name)} for free" aria-pressed="${selected}" ${selected?'disabled':''}>${selected?'SELECTED':'SELECT COURSE'}</button>`:`<button type="button" data-course-unlock="${course.id}" aria-label="Unlock ${escape(course.name)} for ${price} credits" ${profile.credits<price?'disabled':''}>UNLOCK · ${credits(price)} CR</button>`}</article>`;
+  }).join('');
+  return `<section class="career-panel course-access-panel" role="dialog" aria-modal="true" aria-labelledby="courses-title"><header class="shop-heading"><div><p class="eyebrow">EARN YOUR NEXT HORIZON</p><h2 id="courses-title">YOUR COURSES.</h2></div><div class="shop-wallet"><span>YOUR CREDITS</span><b>${credits(profile.credits)}<small> CR</small></b></div><button class="shop-close" data-action="courses-close" aria-label="Close course garage">×</button></header><p>Pacific Canyon is included. Unlocking a course does not select it. Any owned car can enter an unlocked course.</p><p class="course-access-message" role="status" aria-live="polite">${escape(message)||'Course purchases belong to this player. Completed race credits stay safe.'}</p><div class="course-access-grid">${cards}</div></section>`;
+}

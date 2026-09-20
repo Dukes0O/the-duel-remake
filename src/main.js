@@ -14,6 +14,8 @@ import {BUILD_VERSION} from './build-version.js';
 import {createBuildUpdateChecker} from './build-update.js';
 import {DRIVERS,getDriverState,getEquippedDriverId,normalizeDriverId,applyDriverModifiers} from './drivers.js';
 import {driverMenuMarkup,driverSkillLabel,driverPanel} from './driver-ui.js';
+import {COURSE_PRICES,isCourseUnlocked} from './course-access.js';
+import {courseAccessPanel} from './course-access-ui.js';
 
 export const app = new App();
 const jumpHeightReadout = createJumpHeightReadout();
@@ -23,6 +25,7 @@ const sound = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="
 const choices = app.getRaceChoices();
 let rendererPromise,rendererHandle,uiDisposed=false,lastScreen, garageOpen = false, garageCar = choices.car, garageMessage = '', playersOpen=false,playerMessage='',leaderboardOpen=false;
 let lastEventResult=null;
+let coursesOpen=false,courseMessage='';
 const domEvents=new AbortController();
 const boardFilter={stage:choices.startStage,car:'',driverId:getEquippedDriverId(app.profile)};
 const profile = () => app.profile || createProfile();
@@ -38,9 +41,9 @@ root.innerHTML = `<div id="stage" class="in-menu"><div id="view3d" aria-label="T
     <aside id="build-update" class="build-update" aria-label="Game update" hidden><div><p id="build-update-message" role="status" aria-live="polite" aria-atomic="true"></p><span id="build-update-help">Reload at the menu. Your saved progress and settings stay here.</span></div><button type="button" data-action="reload-update" aria-describedby="build-update-help">RELOAD</button></aside>
     <footer class="menu-footer"><span class="footer-label">BUILT FOR THE DRIVE</span><div class="controls-strip"><span title="Hold S / Down / LT at rest to reverse. W / Up / RT brakes reverse and returns to first gear."><kbd>W A S D</kbd> DRIVE / REVERSE</span><span><kbd>SPACE</kbd> BOOST</span><span><kbd>C</kbd> CAMERA</span><span><kbd>Q / E</kbd> MANUAL SHIFT</span><span><kbd>ESC</kbd> PAUSE</span></div><div class="build-meta"><span id="build-version" class="build-version" title="Build ${escapeHTML(BUILD_VERSION.id)}">BUILD ${escapeHTML(BUILD_VERSION.label)}</span><a class="build-label audio-credits" href="/assets/audio/credits.html" target="_blank" rel="noopener">ASSET CREDITS ↗</a></div></footer>
   </main>
-  <section id="race-hud" class="hud" aria-label="Race information" hidden><div class="race-progress"><i id="progress-fill"></i></div><div class="race-heading"><p class="eyebrow" id="stage-label"></p><h2 id="stage-name"></h2><p id="stage-objective"></p></div><div class="race-clock"><span class="field-label">RACE TIME</span><b id="race-time">00:00.00</b><span id="penalty-time"></span><div class="lap-readout"><b id="lap-number">LAP 1 / 2</b><span id="lap-time">00:00.00</span></div></div><div class="race-position"><span class="position-number"><b id="race-position">01</b><span id="position-total">/02</span></span><div><span class="field-label" id="gap-label">RIVAL BEHIND</span><b id="rival-gap">0.0 SEC</b></div></div>
+  <section id="race-hud" class="hud" aria-label="Race information" hidden><div class="race-progress"><i id="progress-fill"></i></div><div class="race-heading"><p class="eyebrow" id="stage-label"></p><h2 id="stage-name"></h2><p id="stage-objective"></p></div><div class="race-clock"><span id="race-time-label" class="field-label">RACE TIME</span><b id="race-time">00:00.00</b><span id="penalty-time"></span><div class="lap-readout"><b id="lap-number">LAP 1 / 2</b><span id="lap-time">00:00.00</span></div></div><div class="race-position"><span class="position-number"><b id="race-position">01</b><span id="position-total">/02</span></span><div><span class="field-label" id="gap-label">RIVAL BEHIND</span><b id="rival-gap">0.0 SEC</b></div></div>
   <div class="route-hud"><div class="route-hud-top"><span class="field-label">CIRCUIT / LIVE</span><b id="route-percent">0%</b></div><div class="route-section"><span id="route-section"></span><b id="route-lap">1 / 2</b></div><canvas id="route-map" width="400" height="280" role="img" aria-label="Circuit map with your heading, race actors and shortcut branches"></canvas><div class="route-legend"><span><i class="player-dot"></i> YOU</span><span id="rival-legend"><i class="rival-dot"></i> RIVAL</span><span id="police-legend" hidden><i class="police-dot"></i> PATROL</span></div><div class="route-map-footer"><span id="arena-crush" class="arena-crush" role="status" hidden>CRUSHED 0 / 6</span><span id="shortcut-legend" class="shortcut-legend" hidden>SHORTCUTS <i class="shortcut-a"></i>A <span id="shortcut-b-legend"><i class="shortcut-b"></i>B</span></span><b id="route-remaining"></b></div></div><div class="race-health"><span class="field-label">CHASSIS INTEGRITY</span><span id="lives-display"></span><b id="damage-label">0 / 5 MAJOR CRASHES</b><span id="radar-label">RADAR CLEAR</span><div id="radar-meter" class="radar-meter"><i id="radar-fill"></i></div></div>
-  <div class="speedometer"><section id="jump-height-panel" class="jump-height" aria-label="Jump height above the ground" hidden><span id="jump-height-label" class="field-label">HEIGHT ABOVE GROUND</span><div class="jump-height-number"><b id="jump-height-value">0.0</b><span>m</span></div><span id="jump-height-peak" class="jump-height-peak">PEAK 0.0 m</span></section><div class="speed-top"><div class="gear"><span class="field-label">GEAR</span><b id="gear-value">1</b></div><div class="speed"><b id="speed-value">000</b><span>MPH</span></div></div><div class="rpm-track"><i id="rpm-fill"></i></div><div class="rpm-labels"><span>0</span><span>RPM × 1000</span><span id="rpm-value">8</span></div><div class="boost-readout"><span class="field-label">NITRO</span><div class="boost-track"><i id="boost-fill"></i></div><kbd>SPACE</kbd></div><div class="speed-footer"><span id="camera-label">CHASE CAM</span><span><kbd>ESC</kbd> PAUSE</span></div></div><div id="style-score-panel" class="style-score"><b id="style-score">0000</b><span class="field-label">STYLE POINTS</span><span id="combo-label"></span></div><section id="drift-panel" class="drift-panel" aria-label="Drift trial score" hidden><div class="drift-score-row"><div><span>BANKED <small id="drift-target-label"></small></span><b id="drift-banked">0</b></div><div><span>LIVE CHAIN</span><b id="drift-chain">+0 <small id="drift-multiplier">×1.00</small></b></div></div><div class="drift-target-track"><i id="drift-target-fill"></i></div><p id="drift-notice" aria-live="polite">Straighten to bank your chain.</p></section>
+  <div class="speedometer"><section id="jump-height-panel" class="jump-height" aria-label="Jump height above the ground" hidden><span id="jump-height-label" class="field-label">HEIGHT ABOVE GROUND</span><div class="jump-height-number"><b id="jump-height-value">0.0</b><span>m</span></div><span id="jump-height-peak" class="jump-height-peak">PEAK 0.0 m</span><span id="jump-distance" class="jump-distance">DISTANCE 0.0 m · 0.0 s</span></section><div class="speed-top"><div class="gear"><span class="field-label">GEAR</span><b id="gear-value">1</b></div><div class="speed"><b id="speed-value">000</b><span>MPH</span></div></div><div class="rpm-track"><i id="rpm-fill"></i></div><div class="rpm-labels"><span>0</span><span>RPM × 1000</span><span id="rpm-value">8</span></div><div class="boost-readout"><span class="field-label">NITRO</span><div class="boost-track"><i id="boost-fill"></i></div><kbd>SPACE</kbd></div><div class="speed-footer"><span id="camera-label">CHASE CAM</span><span><kbd>ESC</kbd> PAUSE</span></div></div><div id="style-score-panel" class="style-score"><b id="style-score">0000</b><span class="field-label">STYLE POINTS</span><span id="combo-label"></span></div><section id="drift-panel" class="drift-panel" aria-label="Drift trial score" hidden><div class="drift-score-row"><div><span>BANKED <small id="drift-target-label"></small></span><b id="drift-banked">0</b></div><div><span>LIVE CHAIN</span><b id="drift-chain">+0 <small id="drift-multiplier">×1.00</small></b></div></div><div class="drift-target-track"><i id="drift-target-fill"></i></div><p id="drift-notice" aria-live="polite">Straighten to bank your chain.</p></section>
   <section id="checkpoint-panel" class="drift-panel checkpoint-panel" aria-label="Checkpoint rush progress" hidden><div class="drift-score-row"><div><span>GATES PASSED</span><b id="checkpoint-passed">0 / 12</b></div><div><span>TIME LEFT</span><b id="checkpoint-time">00:00.00</b></div></div><div class="drift-target-track"><i id="checkpoint-target-fill"></i></div><p id="checkpoint-next">NEXT GATE 1 / 12</p><p id="checkpoint-notice" aria-live="polite">Each gate adds time.</p></section>
   <div id="countdown" class="countdown" hidden><span id="countdown-word">GET READY</span><b id="countdown-number">3</b><p>HOLD W OR ↑ TO ACCELERATE</p></div><div id="race-callout" class="race-callout" aria-live="polite" hidden><span id="callout-kicker"></span><b id="callout-text"></b></div><div id="crash-flash" class="crash-flash" hidden></div></section>
   <div id="modal-layer" class="modal-layer" hidden></div><div id="renderer-error" class="renderer-error" role="alert" hidden><strong>The road couldn't load.</strong><span>Enable browser graphics acceleration, then try again.</span><button class="text-button" data-action="retry-renderer">RETRY GRAPHICS ↗</button></div><div id="renderer-loading" class="renderer-loading"><span></span> FINDING THE OPEN ROAD</div><button id="test-driver" class="test-driver" data-action="manual" hidden>TEST DRIVER ACTIVE · TAKE CONTROL</button>
@@ -48,6 +51,7 @@ root.innerHTML = `<div id="stage" class="in-menu"><div id="view3d" aria-label="T
 
 root.querySelector('.garage-tune').insertAdjacentHTML('beforebegin',driverMenuMarkup());
 root.querySelector('.garage-tune').innerHTML='TUNE CAR & DRIVER <span>→</span>';
+root.querySelector('.scene-line').insertAdjacentHTML('beforeend','<button type="button" class="course-store-button" data-action="courses" aria-label="Unlock or select courses">COURSES ↗</button>');
 const ui = Object.fromEntries([...root.querySelectorAll('[id]')].map(el => [el.id, el]));
 const buildUpdates=createBuildUpdateChecker({
   getStatus:()=>uiDisposed?null:app.duel.state.status,
@@ -100,11 +104,13 @@ function updateEntryReward(){
   text('entry-reward',`WIN ${credits(base*(manual?2:1))} CR · LOSS −${credits(base/2)} CR${manual?' · 2× POINTS & RACE CREDITS':''} · ${best?`CAR BEST ${time(best)} (${settings}) · BEAT IT +${credits(base*.2*(manual?2:1))} CR`:`${settings}: FIRST FINISH SETS YOUR CAR BEST`}${scoreBest!=null?` · SCORE BEST ${credits(scoreBest)}`:''}`);
   ui['entry-reward'].title='Car bests compare the same car, circuit, route, race mode, CPU level, transmission and active driver skills. Each improved stage best pays once. Clean wins and police escapes earn extra credits. Manual doubles race earnings; one-time milestones and loss charges stay unchanged.';
   const stage=COURSE[choices.startStage],stunt=stage?.stuntTrial,drift=stage?.driftTrial,rush=stage?.checkpointRush;
+  if(stage.practice)text('entry-reward','FREE PRACTICE · NO CREDITS, RECORDS OR FINISH LINE');
   const recommendation=stage.arena&&(CARS[choices.car]?.mass||1400)<3500?'Titan recommended: lighter cars cannot crush wrecks.':stage.requiredCar?`${CARS[stage.requiredCar].name} recommended. Any unlocked car can enter.`:'';
-  const objective=rush?`Pass all ${rush.gatesPerLap*(stage.laps||2)} gates in order over 2 laps. Start with ${rush.initialTimeSec[choices.cpuDifficulty]} seconds; each gate adds ${rush.extensionSec[choices.cpuDifficulty]}. Missing a gate cannot set a record.`:drift?`Bank ${credits(drift.targets[choices.cpuDifficulty])} drift points in 2 laps / ${drift.timeLimitSec[choices.cpuDifficulty]} seconds. Slide above 45 MPH. Straighten to bank; impacts and dirt lose your live chain.`:stunt?`Land ${stunt.jumps} jumps, crush ${stunt.crushes} cars, and finish both laps within ${stunt.timeLimitSec[choices.cpuDifficulty]} seconds.`:stage.arena?'Finish both laps. Land jumps and crush wrecks for bonus points.':stage.kind==='chase'?`Finish both laps within ${stage.chaseTimeLimit[choices.cpuDifficulty]} seconds and evade pursuit.`:'';
+  const objective=stage.practice?'Explore the ramps at your own pace. No timer, rival, laps or rewards. Leave or restart in one click.':rush?`Pass all ${rush.gatesPerLap*(stage.laps||2)} gates in order over 2 laps. Start with ${rush.initialTimeSec[choices.cpuDifficulty]} seconds; each gate adds ${rush.extensionSec[choices.cpuDifficulty]}. Missing a gate cannot set a record.`:drift?`Bank ${credits(drift.targets[choices.cpuDifficulty])} drift points in 2 laps / ${drift.timeLimitSec[choices.cpuDifficulty]} seconds. Slide above 45 MPH. Straighten to bank; impacts and dirt lose your live chain.`:stunt?`Land ${stunt.jumps} jumps, crush ${stunt.crushes} cars, and finish both laps within ${stunt.timeLimitSec[choices.cpuDifficulty]} seconds.`:stage.arena?'Finish both laps. Land jumps and crush wrecks for bonus points.':stage.kind==='chase'?`Finish both laps within ${stage.chaseTimeLimit[choices.cpuDifficulty]} seconds and evade pursuit.`:'';
   text('cpu-target-label',stage.kind==='chase'?'PURSUIT LEVEL':rush?'GATE TIMER':drift?'DRIFT TARGET':stunt||choices.mode==='timetrial'?'TIME TARGET':'CPU RIVAL');
   ui['event-brief'].hidden=!objective&&!recommendation;text('event-brief',[objective,recommendation].filter(Boolean).join(' '));
   const record=app.getGhostRecord(choices);ui['ghost-control'].hidden=!record;ui['ghost-hint'].hidden=choices.mode!=='timetrial'||!!record;ui['ghost-toggle'].checked=app.ghostEnabled;
+  if(stage.practice){ui['ghost-control'].hidden=true;ui['ghost-hint'].hidden=true;}
   if(record){const build=Object.values(record.upgrades).reduce((sum,n)=>sum+n,0);text('ghost-record-label',`${time(record.timeSec)} · RECORD BUILD ${build}/21`);ui['ghost-control'].title=Object.entries(record.upgrades).map(([key,level])=>`${UPGRADE_TYPES[key]?.name||key}: ${level}`).join(' · ');}
 }
 function updatePlayers(){
@@ -113,17 +119,21 @@ function updatePlayers(){
 function updateMenuScene() {
   Object.assign(choices,app.setRaceSettings(choices)||app.getRaceChoices());
   const stage = COURSE[choices.startStage] || COURSE[0];
-  if(['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial)choices.mode='duel';
-  for(const button of root.querySelectorAll('[data-mode]')){button.disabled=(['chase','drift','checkpoint'].includes(stage.kind)||!!stage.stuntTrial)&&button.dataset.mode==='timetrial';button.classList.toggle('on',button.dataset.mode===choices.mode);button.setAttribute('aria-pressed',String(button.dataset.mode===choices.mode));if(button.dataset.mode==='duel')button.textContent=stage.checkpointRush?'CHECKPOINT RUSH':stage.driftTrial?'DRIFT TRIAL':stage.stuntTrial?'STUNT TRIAL':stage.kind==='chase'?'ESCAPE THE PURSUIT':'RIVAL DUEL';}
+  if(stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial)choices.mode='duel';
+  for(const button of root.querySelectorAll('[data-mode]')){button.disabled=(stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||!!stage.stuntTrial)&&button.dataset.mode==='timetrial';button.classList.toggle('on',button.dataset.mode===choices.mode);button.setAttribute('aria-pressed',String(button.dataset.mode===choices.mode));if(button.dataset.mode==='duel')button.textContent=stage.practice?'FREE PRACTICE':stage.checkpointRush?'CHECKPOINT RUSH':stage.driftTrial?'DRIFT TRIAL':stage.stuntTrial?'STUNT TRIAL':stage.kind==='chase'?'ESCAPE THE PURSUIT':'RIVAL DUEL';}
+  for(const button of root.querySelectorAll('[data-cpu-difficulty]'))button.disabled=!!stage.practice;
   syncRaceChoiceButtons(root,choices);
   const fixedNight=stage.timeOfDay==='night'||stage.theme==='city';ui['lighting-mood'].disabled=fixedNight;ui['lighting-mood'].value=fixedNight?'night':app.lightingMood;
   app.menuStage = choices.startStage; ui['scene-select'].value = choices.startStage;ui['route-choice'].hidden=!supportsRouteVariants(stage);text('route-choice-label',app.getMenuRouteLabel()==='Custom route'?'CUSTOM ROUTE':'ROUTE');
   for(const button of root.querySelectorAll('[data-route-variant]')){const selected=getRouteVariantForSeed(app.getMenuSeed())?.id===button.dataset.routeVariant;button.classList.toggle('on',selected);button.setAttribute('aria-pressed',String(selected));}
-  for(const option of ui['scene-select'].options){const item=COURSE[Number(option.value)];option.disabled=false;option.textContent=item.name;}
+  for(const option of ui['scene-select'].options){const item=COURSE[Number(option.value)],owned=isCourseUnlocked(profile(),item);option.disabled=!owned;option.textContent=owned?item.name:`${item.name} · LOCKED · ${credits(COURSE_PRICES[item.id])} CR`;}
   const preview=coursePreview.update(app.getMenuCourse(),app.getMenuRouteLabel());
   text('scene-name',stage.name);text('scene-length',`${preview.distanceKm.toFixed(1)} KM · ${preview.laps} LAPS`);text('menu-route-label',app.getMenuRouteLabel().toUpperCase());
+  if(stage.practice)text('scene-length','UNTIMED PLAYGROUND');
+  root.querySelector('.start-note').textContent=stage.practice?'FREE PRACTICE · NO RACE REWARDS':`2 LAPS · ${Object.keys(CAR_PRICES).length} EARNABLE CARS · LOCAL PLAYER PROGRESS`;
   ui['menu-biome-legend'].innerHTML=preview.biomes.map(biome=>`<span><i style="--biome-color:${biome.color}" aria-hidden="true"></i>${escapeHTML(biome.label)}</span>`).join('');
   text('menu-shortcuts',preview.map.gates.length?`${preview.map.gates.length} GATES PER LAP`:preview.map.branches.length?`${preview.map.branches.length} DASHED SHORTCUT${preview.map.branches.length===1?'':'S'}`:'CLOSED CIRCUIT');ui['menu-elevation'].hidden=!preview.showElevation;text('menu-relief',`${preview.reliefMeters} M HEIGHT RANGE`);
+  if(stage.practice)text('menu-shortcuts','JUMPS · CRUSH LANES · CLIMB');
   text('menu-location', {desert:'MOJAVE COUNTY, USA',alpine:'THE HIGH ALPINE PASS',coast:'PACIFIC COAST, USA',city:'HARBOR DISTRICT · AFTER DARK'}[stage.theme] || stage.name.toUpperCase());
   updateMenuCar();
 }
@@ -140,7 +150,7 @@ ui['player-select'].addEventListener('change',e=>{app.selectPlayer(e.target.valu
 ui['driver-select'].addEventListener('change',event=>{if(app.duel.state.status!=='menu')return;app.selectDriver(event.target.value);updateMenuCar();},{signal:domEvents.signal});
 function openGarage(car = choices.car) {
   if (app.duel.state.status !== 'menu') return;
-  garageCar = car; garageMessage = ''; garageOpen = true; playersOpen=leaderboardOpen=false; app.menuCar = car; lastScreen = null; renderState(app.duel.state);
+  garageCar = car; garageMessage = ''; garageOpen = true; coursesOpen=playersOpen=leaderboardOpen=false; app.menuCar = car; lastScreen = null; renderState(app.duel.state);
 }
 function closeGarage() { garageOpen = false; lastScreen = null; updateMenuCar(); renderState(app.duel.state); ui['garage-open'].focus({preventScroll:true}); }
 function refreshGarage(message) {
@@ -148,8 +158,16 @@ function refreshGarage(message) {
 }
 root.addEventListener('click',e => {
   const button = e.target.closest('button,[data-action]'); if (!button) return;
+  if(button.dataset.courseUnlock){
+    if(app.duel.state.status!=='menu')return;
+    const result=app.purchaseCourse(button.dataset.courseUnlock);courseMessage=result.ok?'Course unlocked. Select it when you are ready.':result.reason;
+    updateMenuScene();lastScreen=null;renderState(app.duel.state);return;
+  }
+  if(button.dataset.courseSelect){
+    if(app.selectCourse(button.dataset.courseSelect)){Object.assign(choices,app.getRaceChoices());coursesOpen=false;updateMenuScene();lastScreen=null;renderState(app.duel.state);}return;
+  }
   if(button.dataset.routeVariant){if(app.setRouteVariant(button.dataset.routeVariant))updateMenuScene();return;}
-  if(button.dataset.challenge!=null){choices.startStage=Number(button.dataset.challenge);updateMenuScene();closeGarage();return;}
+  if(button.dataset.challenge!=null){const stageIndex=Number(button.dataset.challenge);if(!isCourseUnlocked(profile(),stageIndex)){garageOpen=false;coursesOpen=true;courseMessage='Unlock the recommended course here, then select it.';lastScreen=null;renderState(app.duel.state);return;}choices.startStage=stageIndex;updateMenuScene();closeGarage();return;}
   if (button.dataset.garageCar) { garageCar = button.dataset.garageCar; app.menuCar = garageCar; garageMessage = ''; lastScreen = null; renderState(app.duel.state); return; }
   if(button.dataset.paint){const result=app.purchasePaint(garageCar,button.dataset.paint);refreshGarage(result.ok?`${PAINT_PRESETS[button.dataset.paint].name} applied to ${CARS[garageCar].name}.${result.purchased?` Purchased for ${credits(result.cost)} credits.`:''}`:result.reason);return;}
   if(button.dataset.driverUnlock){if(app.duel.state.status!=='menu')return;const id=button.dataset.driverUnlock,result=app.purchaseDriver(id);refreshGarage(result.ok?`${DRIVERS[id].name} unlocked for ${credits(result.cost)} credits. Select this driver to use their skill.`:result.reason);root.querySelector('.driver-panel')?.setAttribute('open','');return;}
@@ -160,10 +178,13 @@ root.addEventListener('click',e => {
   if(button.closest('form')&&button.type==='submit')return;
   e.preventDefault();
   switch (button.dataset.action) {
-    case 'start': garageOpen = playersOpen = leaderboardOpen = false; app.startCampaign(choices); break;
-    case 'new-player':playersOpen=true;leaderboardOpen=garageOpen=false;playerMessage='';lastScreen=null;renderState(app.duel.state);root.querySelector('#new-player-name')?.focus();return;
+    case 'start': coursesOpen = garageOpen = playersOpen = leaderboardOpen = false; app.startCampaign(choices); break;
+    case 'courses':if(app.duel.state.status!=='menu')return;coursesOpen=true;garageOpen=playersOpen=leaderboardOpen=false;courseMessage='';lastScreen=null;break;
+    case 'courses-close':coursesOpen=false;lastScreen=null;break;
+    case 'unlock-next':app.returnToMenu();Object.assign(choices,app.getRaceChoices());updateMenuScene();coursesOpen=true;garageOpen=playersOpen=leaderboardOpen=false;courseMessage='Completed race credits are safe. Unlock the next course, then select it.';lastScreen=null;break;
+    case 'new-player':playersOpen=true;coursesOpen=leaderboardOpen=garageOpen=false;playerMessage='';lastScreen=null;renderState(app.duel.state);root.querySelector('#new-player-name')?.focus();return;
     case 'player-close':playersOpen=false;lastScreen=null;break;
-    case 'leaderboard':leaderboardOpen=true;playersOpen=garageOpen=false;boardFilter.stage=choices.startStage;boardFilter.driverId=getEquippedDriverId(profile());lastScreen=null;break;
+    case 'leaderboard':leaderboardOpen=true;coursesOpen=playersOpen=garageOpen=false;boardFilter.stage=choices.startStage;boardFilter.driverId=getEquippedDriverId(profile());lastScreen=null;break;
     case 'leaderboard-close':leaderboardOpen=false;lastScreen=null;break;
     case 'garage': openGarage(); return;
     case 'garage-close': closeGarage(); return;
@@ -175,8 +196,8 @@ root.addEventListener('click',e => {
     case 'pause': app.togglePause(); break;
     case 'resume': app.resume(); break;
     case 'restart': app.requestNavigation('restart'); break;
-    case 'menu': garageOpen = playersOpen = leaderboardOpen = false; app.requestNavigation('menu');if(app.duel.state.status==='menu'){Object.assign(choices,app.getRaceChoices());updateMenuScene();}break;
-    case 'next': app.duel.nextStage(); break;
+    case 'menu': coursesOpen = garageOpen = playersOpen = leaderboardOpen = false; app.requestNavigation('menu');if(app.duel.state.status==='menu'){Object.assign(choices,app.getRaceChoices());updateMenuScene();}break;
+    case 'next': app.nextStage(); break;
     case 'ticket': app.duel.ackTicket(); break;
     case 'reload-update': buildUpdates.requestReload(); return;
     case 'retry-renderer': if(rendererHandle&&ui.view3d.dataset.vehicleAsset==='error')rendererHandle.retryVehicle();else ensureRenderer(); break;
@@ -192,6 +213,7 @@ function playerScreen(){
   return `<section class="career-panel player-panel" role="dialog" aria-modal="true" aria-labelledby="player-title"><header class="shop-heading"><div><p class="eyebrow">LOCAL PLAYERS</p><h2 id="player-title">A NAME ON THE GRID.</h2></div><button class="shop-close" data-action="player-close" aria-label="Close player setup">×</button></header><p>Each player has their own credits, cars, upgrades and race history. Everyone on this computer shares the leaderboard.</p><form id="new-player-form"><label for="new-player-name">NEW PLAYER NAME</label><div><input id="new-player-name" name="playerName" maxlength="24" autocomplete="off" placeholder="Your racing name" required><button class="secondary-button" type="submit">CREATE PLAYER</button></div><p role="status" class="career-message">${escapeHTML(playerMessage)}</p></form><h3>${escapeHTML(app.player.name)} · RECENT RACES</h3><div class="player-history">${history.length?history.map(row=>`<div><span>${escapeHTML(COURSE.find(scene=>scene.id===row.eventId)?.name||'Race')}<small>${escapeHTML(CARS[row.car]?.name||'Car')} · ${row.won?'WIN':row.completed?'LOSS':'DNF'}</small></span><b>${row.reward<0?'−':'+'}${credits(Math.abs(row.reward))} CR</b></div>`).join(''):'<p>Complete your first race to start your history.</p>'}</div></section>`;
 }
 function leaderboardScreen(){
+  if(COURSE[boardFilter.stage]?.practice)boardFilter.stage=0;
   const stage=COURSE[boardFilter.stage]||COURSE[0],drift=stage.kind==='drift',rush=stage.kind==='checkpoint',event=eventKey({stageIndex:boardFilter.stage,seed:app.getMenuSeed(boardFilter.stage),laps:stage.laps||2});
   const rows=getLeaderboard(app.leaderboard,{event,car:boardFilter.car,driverId:boardFilter.driverId});
   const driverFilter=`<label>DRIVER CLASS<select data-board-filter="driverId" aria-label="Leaderboard driver skill class">${Object.values(DRIVERS).map(driver=>`<option value="${driver.id}" ${driver.id===boardFilter.driverId?'selected':''}>${escapeHTML(driver.name)}</option>`).join('')}</select></label>`;
@@ -199,7 +221,7 @@ function leaderboardScreen(){
   const resultRows=rows.map((row,index)=>{const challenge=rush?'CHECKPOINT RUSH':drift?'DRIFT TRIAL':stage.stuntTrial?'STUNT TRIAL':stage.kind==='chase'?'PURSUIT':row.mode==='timetrial'?'TIME TRIAL':'DUEL',difficultyLabel=stage.kind==='chase'?'PURSUIT':rush||drift||stage.stuntTrial||row.mode==='timetrial'?'TARGET':'CPU';
     return `<tr class="${row.playerId===app.player.id?'current-player':''}"><td>${String(index+1).padStart(2,'0')}</td><td><b>${escapeHTML(row.playerName)}</b><small>${escapeHTML(CARS[row.car]?.name||row.car)}</small></td><td><b>${drift?`${credits(row.driftScore)} PTS`:time(row.timeSec)}</b><small>${drift?`${time(row.timeSec)} · TARGET ${credits(row.driftTarget)}`:rush?`${row.checkpointsPassed} / ${row.checkpointsRequired} GATES`:`${row.laps} LAPS`}</small></td><td><b>${escapeHTML(row.cpuDifficulty.toUpperCase())} ${difficultyLabel} · ${row.difficulty==='pro'?'MANUAL':'AUTO'}</b><small>${escapeHTML(DRIVERS[normalizeDriverId(row.driverId)].name)}</small><small title="${escapeHTML(Object.entries(row.upgrades).map(([key,level])=>`${UPGRADE_TYPES[key].name} ${level}`).join(', '))}">${Object.values(row.upgrades).reduce((n,level)=>n+level,0)} / 21 UPGRADES · ${challenge}</small></td></tr>`;
   }).join('');
-  return `<section class="career-panel leaderboard-panel" role="dialog" aria-modal="true" aria-labelledby="leaderboard-title"><header class="shop-heading"><div><p class="eyebrow">THIS COMPUTER · LOCAL LEADERBOARD</p><h2 id="leaderboard-title">${drift?'SCORES TO CHASE.':'NAMES TO CHASE.'}</h2></div><button class="shop-close" data-action="leaderboard-close" aria-label="Close leaderboard">×</button></header><p>${description}</p><div class="leaderboard-filters"><label>CIRCUIT<select data-board-filter="stage" aria-label="Leaderboard circuit">${COURSE.map((scene,index)=>`<option value="${index}" ${index===boardFilter.stage?'selected':''}>${scene.name}</option>`).join('')}</select></label><label>CAR<select data-board-filter="car" aria-label="Leaderboard car"><option value="">All cars</option>${Object.entries(CARS).map(([key,item])=>`<option value="${key}" ${key===boardFilter.car?'selected':''}>${item.name}</option>`).join('')}</select></label>${driverFilter}</div><div class="leaderboard-table"><table><thead><tr><th>RANK</th><th>PLAYER / CAR</th><th>${drift?'SCORE / TIME':'TIME'}</th><th>RACE / BUILD</th></tr></thead><tbody>${resultRows||`<tr><td colspan="4" class="empty-board">${drift?'No scores here yet. Reach the target and finish both laps before the deadline.':'No times here yet. Finish both laps to set the first record.'}</td></tr>`}</tbody></table></div><p class="career-note">Saved in this browser on this computer. ${app.getMenuRouteLabel(boardFilter.stage)} · ${stage.laps||2} laps. ${app.leaderboardSaved===false?'Storage is unavailable; new records last for this session.':''}</p></section>`;
+  return `<section class="career-panel leaderboard-panel" role="dialog" aria-modal="true" aria-labelledby="leaderboard-title"><header class="shop-heading"><div><p class="eyebrow">THIS COMPUTER · LOCAL LEADERBOARD</p><h2 id="leaderboard-title">${drift?'SCORES TO CHASE.':'NAMES TO CHASE.'}</h2></div><button class="shop-close" data-action="leaderboard-close" aria-label="Close leaderboard">×</button></header><p>${description}</p><div class="leaderboard-filters"><label>CIRCUIT<select data-board-filter="stage" aria-label="Leaderboard circuit">${COURSE.map((scene,index)=>scene.practice?'':`<option value="${index}" ${index===boardFilter.stage?'selected':''}>${scene.name}</option>`).join('')}</select></label><label>CAR<select data-board-filter="car" aria-label="Leaderboard car"><option value="">All cars</option>${Object.entries(CARS).map(([key,item])=>`<option value="${key}" ${key===boardFilter.car?'selected':''}>${item.name}</option>`).join('')}</select></label>${driverFilter}</div><div class="leaderboard-table"><table><thead><tr><th>RANK</th><th>PLAYER / CAR</th><th>${drift?'SCORE / TIME':'TIME'}</th><th>RACE / BUILD</th></tr></thead><tbody>${resultRows||`<tr><td colspan="4" class="empty-board">${drift?'No scores here yet. Reach the target and finish both laps before the deadline.':'No times here yet. Finish both laps to set the first record.'}</td></tr>`}</tbody></table></div><p class="career-note">Saved in this browser on this computer. ${app.getMenuRouteLabel(boardFilter.stage)} · ${stage.laps||2} laps. ${app.leaderboardSaved===false?'Storage is unavailable; new records last for this session.':''}</p></section>`;
 }
 root.addEventListener('submit',event=>{
   if(event.target.id!=='new-player-form')return;event.preventDefault();const input=root.querySelector('#new-player-name'),result=app.addPlayer(input.value);
@@ -232,7 +254,7 @@ function garageScreen() {
 }
 function modalScreen(s) {
   const r = s.results || {}; let eyebrow='',title='',description='',metrics='',actions='';
-  if (s.paused) { eyebrow='TAKE A BREATH'; title='ROAD<br>ON HOLD.'; description='The clock is paused. Pick up where you left off.'; metrics=metric('EVENT',COURSE[s.stageIndex].name)+metric('TIME',time(s.stageTimeSec)); actions=action('BACK TO THE ROAD','resume',true)+action('RESTART RUN','restart')+action('MAIN MENU','menu'); }
+  if (s.paused) { const practice=!!COURSE[s.stageIndex]?.practice;eyebrow=practice?'FREE PRACTICE':'TAKE A BREATH'; title='ROAD<br>ON HOLD.'; description=practice?'Explore at your own pace. Practice has no timer, records or rewards.':'The clock is paused. Pick up where you left off.'; metrics=metric('EVENT',COURSE[s.stageIndex].name)+(practice?'':metric('TIME',time(s.stageTimeSec))); actions=action('BACK TO THE ROAD','resume',true)+action(practice?'RESTART PRACTICE':'RESTART RUN','restart')+action('MAIN MENU','menu'); }
   else if (s.status==='ticket') { const t=s.police.ticket; eyebrow='HIGHWAY PATROL'; title='BUSTED.'; description=`${t.speedMph} mph in a ${t.limitMph} zone. The fine reduces only this race's earnings when you finish. Your saved credits are untouched. Quitting forfeits the race earnings, not your saved balance.${app.profileSaved===false?' Storage is unavailable; progress lasts for this session.':''}`; metrics=metric('TIME PENALTY',`+${t.penaltySec} SEC`,true)+metric('RACE FINE',`${credits(t.fine)} CR`,true)+metric('SAVED BALANCE',`${credits(profile().credits)} CR`); actions=action('GET BACK OUT THERE','ticket',true)+action('MAIN MENU','menu'); }
   else if (s.status==='stage_result') {
     lastEventResult={state:s,stageIndex:s.stageIndex,runId:app.runId,result:r};
@@ -249,6 +271,7 @@ function modalScreen(s) {
     metrics=(rush?metric('GATES PASSED',`${r.checkpointsPassed||0} / ${r.checkpointsRequired||12}`,true)+metric('RACE TIME',time(r.timeSec??r.stageTimeSec)):drift?metric('BANKED POINTS',credits(r.driftScore),true)+metric('TARGET',credits(r.driftTarget||s.objective?.targetScore)):metric('RACE TIME',time(r.timeSec??r.stageTimeSec),true)+metric('CAR BEST',r.best==null?'—':time(r.best)))+metric(r.creditReward<0?'CREDITS LOST':'CREDITS EARNED',`${r.creditReward<0?'−':'+'}${credits(Math.abs(r.creditReward||0))}`,true);
     const atEnd=!!stage.kind||!COURSE[s.stageIndex+1]||!!COURSE[s.stageIndex+1].kind;
     actions=r.timeout?action('TRY AGAIN','restart',true)+action('MAIN MENU','menu'):action(atEnd?'FINISH THE RUN':'NEXT CIRCUIT','next',true)+action('RESTART RUN','restart')+action('MAIN MENU','menu');
+    if(!r.timeout&&!atEnd&&!isCourseUnlocked(profile(),s.stageIndex+1)){description+=` Completed race credits are safe. Unlock ${escapeHTML(COURSE[s.stageIndex+1].name)} for ${credits(COURSE_PRICES[COURSE[s.stageIndex+1].id])} CR in the course garage to continue.`;actions=action('UNLOCK NEXT COURSE','unlock-next',true)+action('RESTART RUN','restart')+action('MAIN MENU','menu');}
   }
   else if (s.status==='gameover') { eyebrow=s.catastrophic?'CATASTROPHIC DAMAGE':'END OF THE ROAD'; title=s.catastrophic?'TOTALLED.':'ONE MORE<br>RUN?'; description=(s.catastrophic?'Five major crashes. The car is destroyed.':'This race is over.')+' The loss costs half the CPU base reward, down to zero credits.'; metrics=metric('RACE TIME',time(s.stageTimeSec))+metric('CREDITS LOST',`−${credits(Math.abs(r.creditReward||0))}`,true)+metric('BALANCE',`${credits(profile().credits)} CR`); actions=action('RUN IT BACK','restart',true)+action('MAIN MENU','menu'); }
   else if (s.status==='complete') {
@@ -284,7 +307,7 @@ function syncRendererReadiness(s) {
     const preparing=asset==='ready'&&!app.visualReady;
     ui['renderer-loading'].hidden=!(loading||preparing);
     ui['renderer-loading'].lastChild.textContent=preparing?' PREPARING THE ROAD':` LOADING ${CARS[ui.view3d.dataset.vehicleKey]?.name.toUpperCase()||'VEHICLE'}`;
-    ui['start-engine'].disabled=asset!=='ready'||!app.visualReady;
+    ui['start-engine'].disabled=asset!=='ready'||!app.visualReady||!isCourseUnlocked(profile(),choices.startStage);
     ui['renderer-error'].hidden=!failed;
     if(failed){ui['renderer-error'].querySelector('strong').textContent="The car couldn't load.";ui['renderer-error'].querySelector('span').textContent='Retry the car download, or choose another car. Your progress is unchanged.';ui['renderer-error'].querySelector('button').textContent='RETRY CAR ↗';}
   }
@@ -298,11 +321,11 @@ function renderState(s) {
   ui.overlay.dataset.status=s.status; ui.overlay.dataset.paused=String(!!s.paused); ui.overlay.dataset.audioState=app.audio?.context?.state||'locked'; ui.overlay.dataset.muted=String(!!app.audio?.muted);
   ui.overlay.dataset.audioSamples=app.audio.sampleStatus;ui.overlay.dataset.majorCrashes=String(s.majorCrashes);ui.overlay.dataset.catastrophic=String(s.catastrophic);
   const showImpact = s.status === 'gameover' && s.impactTimer > 0;
-  const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${playersOpen}:${leaderboardOpen}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
+  const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
   if (screen!==lastScreen) {
     lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu); ui['menu-screen'].hidden=!menu; ui['race-hud'].hidden=menu; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu;});
     ui['garage-open'].hidden = !menu;
-    const modal=menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
+    const modal=menu&&coursesOpen?courseAccessPanel(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
     const challengeLabel=app.duel.stageDef?.kind==='chase'?'PURSUIT':s.objective||s.mode==='timetrial'?'TARGET':'CPU',routeLabel=supportsRouteVariants(app.duel.stageDef)?` · ${(getRouteVariantForSeed(s.seed)?.label||'Custom route').toUpperCase()}`:'';text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||choices.cpuDifficulty).toUpperCase()} ${challengeLabel}${routeLabel}`); text('stage-name',app.duel.stageDef?.name||'The open road'); text('stage-objective',s.rival?'BEAT YOUR RIVAL OVER TWO LAPS':'CHASE YOUR CAR PERSONAL BEST');
     ui['pause-button'].setAttribute('aria-label',s.paused?'Resume race':'Pause race');
     if(modal) ui['modal-layer'].querySelector('button')?.focus({preventScroll:true});
@@ -314,6 +337,7 @@ function renderState(s) {
   text('jump-height-label',jumpHeight.phase==='landed'?'JUMP PEAK':'HEIGHT ABOVE GROUND');
   text('jump-height-value',(jumpHeight.phase==='landed'?jumpHeight.peakMeters:jumpHeight.heightMeters).toFixed(1));
   text('jump-height-peak',jumpHeight.phase==='landed'?'LANDED':`PEAK ${jumpHeight.peakMeters.toFixed(1)} m`);
+  text('jump-distance',`DISTANCE ${(jumpHeight.distanceMeters||0).toFixed(1)} m · ${(jumpHeight.durationSeconds||0).toFixed(1)} s`);
   if(s.status!=='menu') updateHud(s);
 }
 function updateHud(s) {
@@ -351,9 +375,22 @@ function updateHud(s) {
   const dirtCourse=!!app.duel.stageDef.offroad||!!app.duel.stageDef.arena;
   const callout=crash?(s.catastrophic?'CATASTROPHIC IMPACT':s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):s.calloutTimer>0?s.callout:s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
   ui['race-callout'].hidden=!callout||!!s.paused; text('callout-kicker',s.catastrophic?'FIVE HITS. END OF THE ROAD.':crash?persistent?'THE CAR SURVIVES. THE CLOCK KEEPS RUNNING.':hits===DRIVE.majorCrashLimit-1?'CHASSIS CRITICAL. MAKE THIS LIFE COUNT.':'SHAKE IT OFF. KEEP DRIVING.':s.boundaryWarning?'COURSE BOUNDARY · RESET AHEAD':s.preparedGravel?'KEEP YOUR LINE':s.offRoad?dirtCourse?'CONTROL THE SLIDE':'FIND THE TARMAC':s.boosting?'FULL SEND':'MAKE EVERY MOVE COUNT');text('callout-text',callout);ui['race-callout'].classList.toggle('crash-callout',crash);
-  ui.stage.classList.toggle('is-arena',!!app.duel.stageDef.arena);ui['arena-crush'].hidden=!app.duel.stageDef.arena;text('arena-crush',`CRUSHED ${Math.max(0,Math.min(6,Math.floor(s.crushCount||0)))} / 6`);
+  ui.stage.classList.toggle('is-arena',!!app.duel.stageDef.arena);ui['arena-crush'].hidden=!app.duel.stageDef.arena;const crushed=Math.max(0,Math.floor(s.crushCount||0));text('arena-crush',app.duel.stageDef.practice?`CRUSHED ${crushed}`:`CRUSHED ${Math.min(6,crushed)} / 6`);
   text('route-section',section);text('route-lap',`${s.currentLap||s.lap||1} / ${app.duel.stageDef.laps||2}`);ui['police-legend'].hidden=!s.police?.pursuit?.active;ui['shortcut-legend'].hidden=!app.duel.course?.features.shortcuts.length;ui['shortcut-b-legend'].hidden=(app.duel.course?.features.shortcuts.length||0)<2;routeMap.update(app.duel.course,s);
+  const practice=!!app.duel.stageDef.practice;
+  ui.stage.classList.toggle('is-practice',practice);
+  text('race-time-label',practice?'NO TIMER · NO REWARDS':'RACE TIME');
+  if(practice){
+    text('race-time','FREE PRACTICE');text('penalty-time','');text('lap-number','NO LAP TARGET');text('lap-time','');
+    text('stage-label',`${app.player.name.toUpperCase()} · FREE PRACTICE`);text('stage-objective','EXPLORE THE RAMPS · NO TIMER, RIVAL OR FINISH LINE');
+    text('route-percent','FREE');text('route-remaining','EXPLORE AT YOUR OWN PACE');text('route-lap','PLAYGROUND');ui['progress-fill'].style.transform='scaleX(0)';
+    text('race-position','∞');text('gap-label','FREE PRACTICE');text('rival-gap','NO RECORDS OR REWARDS');
+    ui['style-score-panel'].hidden=true;ui['lives-display'].hidden=true;ui['radar-label'].hidden=true;ui['radar-meter'].hidden=true;
+    text('damage-label','PRACTICE · RECOVER AND KEEP DRIVING');
+    if(crash)text('callout-kicker','RECOVER AND TRY AGAIN · NO RACE PENALTY');
+    if(s.status==='countdown')text('countdown-word','EXPLORE THE PLAYGROUND');
+  }
 }
 
-document.addEventListener('keydown',e=>{if(e.code==='Escape'&&(garageOpen||playersOpen||leaderboardOpen)){e.preventDefault();garageOpen=playersOpen=leaderboardOpen=false;lastScreen=null;updateMenuCar();renderState(app.duel.state);return;}if(e.code!=='Tab'||ui['modal-layer'].hidden)return;const buttons=[...ui['modal-layer'].querySelectorAll('button:not(:disabled),select,input,summary')],first=buttons[0],last=buttons.at(-1);if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}},{signal:domEvents.signal});
+document.addEventListener('keydown',e=>{if(e.code==='Escape'&&(coursesOpen||garageOpen||playersOpen||leaderboardOpen)){e.preventDefault();coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;lastScreen=null;updateMenuCar();renderState(app.duel.state);return;}if(e.code!=='Tab'||ui['modal-layer'].hidden)return;const buttons=[...ui['modal-layer'].querySelectorAll('button:not(:disabled),select,input,summary')],first=buttons[0],last=buttons.at(-1);if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}},{signal:domEvents.signal});
 app.onFrame=renderState;updatePlayers();updateMenuCar();updateMenuScene();renderState(app.duel.state);ensureRenderer();app.start();

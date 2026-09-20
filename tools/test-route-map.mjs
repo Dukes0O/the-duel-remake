@@ -16,7 +16,8 @@ for(const course of courses){
   const first=routeActorPose(course,map,{s:120,lateral:3,headingError:.2}),second=routeActorPose(course,map,{s:course.length+120,lateral:3,headingError:.2});
   check(near(first.x,second.x)&&near(first.y,second.y)&&near(first.heading,second.heading),`${course.def.name} player heading/position matches on second lap`);
   const center=projectRoutePoint(map,{x:0,z:0}),north=projectRoutePoint(map,{x:0,z:10});check(north.y<center.y,`${course.def.name} positive world Z points up on map`);
-  check(near(map.finish.x,route[0])&&near(map.finish.y,route[1]),`${course.def.name} finish stays at circuit start`);
+  if(course.def.practice)check(map.finish===null&&map.finishHeading===null,`${course.def.name} has no finish marker`);
+  else check(near(map.finish.x,route[0])&&near(map.finish.y,route[1]),`${course.def.name} finish stays at circuit start`);
   for(let i=0;i<map.branches.length;i++){
     const branch=map.branches[i],start=projectRoutePoint(map,course.worldAt(branch.start)),end=projectRoutePoint(map,course.worldAt(branch.end)),points=branch.points;
     check(near(points[0],start.x)&&near(points[1],start.y)&&near(points.at(-2),end.x)&&near(points.at(-1),end.y),`${course.def.name} shortcut ${branch.label} joins the actual road at both ends`);

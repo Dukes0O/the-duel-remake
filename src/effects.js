@@ -45,6 +45,7 @@ export function createDrivingEffects() {
   });
   const particles = new THREE.Points(geometry, material);
   particles.renderOrder = 2;
+  particles.visible=false;
   group.add(particles);
 
   const markGeometry = new THREE.PlaneGeometry(1, 1);
@@ -68,6 +69,7 @@ export function createDrivingEffects() {
   // A small world-space pool can span behind the camera; disable instance culling
   // rather than risk marks vanishing when the original pool origin leaves view.
   marks.frustumCulled = false;
+  marks.visible=false;
   group.add(marks);
 
   const chipGeometry = new THREE.TetrahedronGeometry(.12);
@@ -75,6 +77,7 @@ export function createDrivingEffects() {
   const chips = new THREE.InstancedMesh(chipGeometry, chipMaterial, chipCount);
   chips.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   chips.frustumCulled = false;
+  chips.visible=false;
   group.add(chips);
   const chipPosition = new Float32Array(chipCount * 3), chipVelocity = new Float32Array(chipCount * 3);
   const chipLife = new Float32Array(chipCount), chipFloor = new Float32Array(chipCount), chipFloorX = new Float32Array(chipCount), chipFloorZ = new Float32Array(chipCount), chipSlopeX = new Float32Array(chipCount), chipSlopeZ = new Float32Array(chipCount);
@@ -88,8 +91,10 @@ export function createDrivingEffects() {
   let previousAirborne = false, peakAirHeight = 0, previousCourse;
   let previousMarkContacts = null;
   let previousCrushSerial = 0;
+  let liveParticles=0,liveMarks=0,liveChips=0,emitted=false,marksAdded=false,chipsAdded=false;
 
   function emit(x, y, z, vx, vy, vz, type, strength = 1, contact = null) {
+    emitted=true;
     const i = cursor++ % count, n = i * 3;
     position[n] = x; position[n + 1] = y; position[n + 2] = z;
     velocity[n] = vx; velocity[n + 1] = vy; velocity[n + 2] = vz;
@@ -110,13 +115,14 @@ export function createDrivingEffects() {
   function update({ p, state, dt, now = 0, course = null }) {
     if (!(dt > 0) || !p || !state) return;
     dt = Math.min(dt, .06);
+    emitted=false;marksAdded=false;chipsAdded=false;
     const activeDrive = !state.status || state.status === 'racing';
     const speed = Math.abs(state.speedMph || 0), direction = state.speedMph < 0 ? -1 : 1, moving = speed > 9 && activeDrive;
     const heading = (p.heading || 0) + (state.headingError || 0) + (state.slipAngle || 0);
     const fx = Math.sin(heading), fz = Math.cos(heading), rx = Math.cos(heading), rz = -Math.sin(heading);
-    const ground = p.y || 0, vehicle = CARS[state.car] || {}, monster = vehicle.kind === 'monster', rally = vehicle.kind === 'rally';
+    const ground = Number.isFinite(state.groundHeight)?state.groundHeight:p.y || 0, vehicle = CARS[state.car] || {}, monster = vehicle.kind === 'monster', rally = vehicle.kind === 'rally';
     const roughness = Math.max(monster ? .65 : .2, state.roughness || 0);
-    const airborne = !!state.airborne || (state.airHeight || 0) > .08;
+    const airborne = !!state.airborne || !!state.tumble || (state.airHeight || 0) > .08;
     const dirt = !!state.offRoad || !!course?.def.arena || !!course?.def.offroad;
     const wheelTrack = monster ? 1.32 : rally ? .89 : 1, rearAxle = monster ? 1.5 : rally ? 1.25 : 1.4;
     const impact = state.impactTimer || 0;
@@ -141,6 +147,10 @@ export function createDrivingEffects() {
       return { ...center, nx: normal.x, ny: normal.y, nz: normal.z, slopeX: -normal.x / Math.max(.2, normal.y), slopeZ: -normal.z / Math.max(.2, normal.y) };
     };
     const contactAt = (dx, dz) => {
+      if(Number.isFinite(state.groundHeight)){
+        const along=state.tumble?0:Math.tan(state.terrainPitch||0),across=state.tumble?0:Math.tan(state.terrainRoll||0),slopeX=fx*along+rx*across,slopeZ=fz*along+rz*across,length=Math.hypot(slopeX,1,slopeZ);
+        return{x:p.x+dx,y:ground+dx*slopeX+dz*slopeZ+.04,z:p.z+dz,nx:-slopeX/length,ny:1/length,nz:-slopeZ/length,slopeX,slopeZ};
+      }
       if (!course?.groundAt || !roadFrame) return { x: p.x + dx, y: ground + .04, z: p.z + dz, nx: 0, ny: 1, nz: 0, slopeX: 0, slopeZ: 0 };
       const cs = Math.cos(roadFrame.heading), sn = Math.sin(roadFrame.heading);
       const distance = (state.s || 0) + (dx * sn + dz * cs) / Math.max(.25, 1 - roadFrame.curvature * (state.lateral || 0));
@@ -178,6 +188,7 @@ export function createDrivingEffects() {
             vx * (2 + Math.random() * 5), 1 + Math.random() * 3, vz * (2 + Math.random() * 5), n % 7 === 0 ? 2 : 0, power, contact);
         }
         for (let n = 0; n < 6 + power * 6; n++) {
+          chipsAdded=true;
           const i = chipCursor++ % chipCount, j = i * 3;
           chipLife[i] = 1.8; chipFloor[i] = contact.y + .035; chipFloorX[i] = contact.x; chipFloorZ[i] = contact.z; chipSlopeX[i] = contact.slopeX; chipSlopeZ[i] = contact.slopeZ;
           chipPosition[j] = crush.x; chipPosition[j + 1] = contact.y + .65; chipPosition[j + 2] = crush.z;
@@ -216,6 +227,7 @@ export function createDrivingEffects() {
           Math.random() * (4 + power * 4), -fz * direction * (3 + Math.random() * 12) + rz * spread, i % 5 === 0 ? 0 : 2, power, contact);
       }
       for (let n = 0; n < 7 + power * 9; n++) {
+        chipsAdded=true;
         const i = chipCursor++ % chipCount, j = i * 3;
         chipLife[i] = 1.8; chipFloor[i] = contact.y + .035; chipFloorX[i] = contact.x; chipFloorZ[i] = contact.z; chipSlopeX[i] = contact.slopeX; chipSlopeZ[i] = contact.slopeZ;
         chipPosition[j] = x; chipPosition[j + 1] = ground + bodyHeight; chipPosition[j + 2] = z;
@@ -244,6 +256,7 @@ export function createDrivingEffects() {
           const span=previous?Math.hypot(contact.x-previous.x,contact.y-previous.y,contact.z-previous.z):.4;
           if(span<.05)continue;
           const i = markCursor++ % markCount;
+          marksAdded=true;
           markLife[i] = dirt ? 9 : 7; markDirt[i] = dirt ? 1 : 0; markMaxAlpha[i] = dirt ? monster ? .62 : .44 : .48;
           transform.position.set(previous?(contact.x+previous.x)/2:contact.x,previous?(contact.y+previous.y)/2:contact.y,previous?(contact.z+previous.z)/2:contact.z);
           normal.set(contact.nx, contact.ny, contact.nz);
@@ -261,10 +274,16 @@ export function createDrivingEffects() {
       }
     } else {skidBudget = 0;previousMarkContacts=null;}
 
+    // Empty pools neither upload buffers nor enter the draw list. Keep the
+    // fixed storage for the next burst; paused frames and reuse allocate none.
+    if(!liveParticles&&!liveMarks&&!liveChips&&!emitted&&!marksAdded&&!chipsAdded)return;
+    if(liveParticles||emitted){
+    liveParticles=0;
     let minX = p.x, maxX = p.x, minY = ground, maxY = ground, minZ = p.z, maxZ = p.z;
     for (let i = 0; i < count; i++) {
       if (life[i] <= 0) { opacity[i] = 0; size[i] = 0; continue; }
       life[i] -= dt;
+      if(life[i]>0)liveParticles++;
       const n = i * 3, age = 1 - Math.max(0, life[i]) / lifetime[i], isDust = kind[i] === 0||kind[i]===3;
       velocity[n + 1] -= (isDust ? -.15 : 12) * dt;
       position[n] += velocity[n] * dt; position[n + 1] += velocity[n + 1] * dt; position[n + 2] += velocity[n + 2] * dt;
@@ -278,13 +297,24 @@ export function createDrivingEffects() {
     }
     geometry.boundingSphere.center.set((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
     geometry.boundingSphere.radius = Math.hypot(maxX - minX, maxY - minY, maxZ - minZ) / 2 + 5;
-    for (const attribute of Object.values(geometry.attributes)) attribute.needsUpdate = true;
-    for (let i = 0; i < markCount; i++) { markLife[i] = Math.max(0, markLife[i] - dt); markAlpha[i] = Math.min(markMaxAlpha[i], markLife[i] * .2); }
-    markGeometry.attributes.markAlpha.needsUpdate = true; markGeometry.attributes.markDirt.needsUpdate = true; marks.instanceMatrix.needsUpdate = true;
+    for(const name of ['position','particleSize','particleAlpha'])geometry.attributes[name].needsUpdate=true;
+    if(emitted)for(const name of ['color','particleKind','particleSpin'])geometry.attributes[name].needsUpdate=true;
+    particles.visible=liveParticles>0;
+    }
+    if(liveMarks||marksAdded){
+    liveMarks=0;
+    for (let i = 0; i < markCount; i++) { markLife[i] = Math.max(0, markLife[i] - dt); markAlpha[i] = Math.min(markMaxAlpha[i], markLife[i] * .2);if(markLife[i]>0)liveMarks++; }
+    markGeometry.attributes.markAlpha.needsUpdate = true;
+    if(marksAdded){markGeometry.attributes.markDirt.needsUpdate=true;marks.instanceMatrix.needsUpdate=true;}
+    marks.visible=liveMarks>0;
+    }
+    if(liveChips||chipsAdded){
+    liveChips=0;
     for (let i = 0; i < chipCount; i++) {
       chipLife[i] = Math.max(0, chipLife[i] - dt);
       const j = i * 3;
       if (chipLife[i] > 0) {
+        liveChips++;
         chipVelocity[j + 1] -= 13 * dt;
         for (let axis = 0; axis < 3; axis++) chipPosition[j + axis] += chipVelocity[j + axis] * dt;
         const contactFloor = chipFloor[i] + (chipPosition[j] - chipFloorX[i]) * chipSlopeX[i] + (chipPosition[j + 2] - chipFloorZ[i]) * chipSlopeZ[i];
@@ -296,6 +326,8 @@ export function createDrivingEffects() {
       transform.updateMatrix(); chips.setMatrixAt(i, transform.matrix);
     }
     chips.instanceMatrix.needsUpdate = true;
+    chips.visible=liveChips>0;
+    }
   }
 
   return { group, update, dispose() {

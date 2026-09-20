@@ -25,9 +25,10 @@ function groundAtWorld(course, point) {
 const mountainGeometries=Array.from({length:4},(_,i)=>buildMountainGeometry(i));
 let farRimSamples=0,nearRimSamples=0,omittedQueries=0;const exposed=[];
 function farGroundSampler(course) {
+  if(course.def.practice)return practiceGroundSampler(course);
   const geometry=buildFar(course,false),p=geometry.attributes.position,index=geometry.index;
   geometry.computeBoundingBox();const box=geometry.boundingBox,grid=p.getX(1)-p.getX(0),columns=Math.round((box.max.x-box.min.x)/grid)+1,rows=p.count/columns,renderedQuads=new Set();
-  check(grid===((course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena||course.def.expansion?16:32),'far-grid resolution matches the scene');
+  check(grid===(course.def.practice?2:(course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena||course.def.expansion?16:32),'ground-grid resolution matches the scene');
   for(let i=0;i<index.count;i+=6){const a=index.getX(i);renderedQuads.add(a);check(index.getX(i+1)===a+columns&&index.getX(i+2)===a+1&&index.getX(i+3)===a+1&&index.getX(i+4)===a+columns&&index.getX(i+5)===a+columns+1,'actual far-grid triangle diagonal');}
   const height=point=>{
     const i=Math.floor((point.x-box.min.x)/grid),j=Math.floor((point.z-box.min.z)/grid),a=j*columns+i;
@@ -40,8 +41,32 @@ function farGroundSampler(course) {
   };
   const material=new THREE.MeshBasicMaterial({side:THREE.DoubleSide}),ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0);let near;
   const sample=point=>{const far=height(point);if(far!==null){farRimSamples++;return far;}omittedQueries++;near??=new THREE.Mesh(buildNear(course,false),material);ray.set(new THREE.Vector3(point.x,2000,point.z),down);const hit=ray.intersectObject(near,false)[0];if(hit)nearRimSamples++;return hit?.point.y??null;};
-  const nearest=course.at(0);check(height(nearest)===null,'omitted road-center quad is not a rendered far surface');
+  const nearest=course.at(0);check(course.def.practice?Number.isFinite(height(nearest)):height(nearest)===null,'practice ground is continuous; other road centres omit the far quad');
   sample.dispose=()=>{geometry.dispose();near?.geometry.dispose();material.dispose();};return sample;
+}
+
+// Read the adaptive practice mesh itself, with a test-only spatial bucket.
+// This remains independent of the production height formula and catches holes.
+function practiceGroundSampler(course){
+  const geometry=buildNear(course),p=geometry.attributes.position,index=geometry.index,buckets=new Map(),size=16;
+  for(let i=0;i<index.count;i+=3){
+    const ids=[index.getX(i),index.getX(i+1),index.getX(i+2)],points=ids.map(id=>({x:p.getX(id),y:p.getY(id),z:p.getZ(id)}));
+    const xs=points.map(v=>v.x),zs=points.map(v=>v.z);
+    for(let z=Math.floor(Math.min(...zs)/size);z<=Math.floor(Math.max(...zs)/size);z++)for(let x=Math.floor(Math.min(...xs)/size);x<=Math.floor(Math.max(...xs)/size);x++){
+      const key=`${x},${z}`;if(!buckets.has(key))buckets.set(key,[]);buckets.get(key).push(points);
+    }
+  }
+  const sample=point=>{
+    for(const [a,b,c]of buckets.get(`${Math.floor(point.x/size)},${Math.floor(point.z/size)}`)||[]){
+      const denominator=(b.z-c.z)*(a.x-c.x)+(c.x-b.x)*(a.z-c.z);
+      const u=((b.z-c.z)*(point.x-c.x)+(c.x-b.x)*(point.z-c.z))/denominator;
+      const v=((c.z-a.z)*(point.x-c.x)+(a.x-c.x)*(point.z-c.z))/denominator,w=1-u-v;
+      if(Math.min(u,v,w)>=-1e-7){farRimSamples++;return a.y*u+b.y*v+c.y*w;}
+    }
+    return null;
+  };
+  check(Number.isFinite(sample(course.at(0))),'adaptive practice floor covers the starting area');
+  sample.dispose=()=>geometry.dispose();return sample;
 }
 
 for (const seed of [1989, 42, 17, 9999]) {

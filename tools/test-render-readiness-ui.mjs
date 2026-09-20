@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {App} from '../src/app.js';
 import {CARS} from '../src/config.js';
+import {isCourseUnlocked} from '../src/course-access.js';
 let checks=0;
 const check=(value,label)=>{assert(value,label);checks++;};
 const equal=(actual,expected,label)=>{assert.deepEqual(actual,expected,label);checks++;};
@@ -12,7 +13,8 @@ const sync=source.slice(source.indexOf('function syncRendererReadiness(s) {'),so
 const ensure=source.slice(source.indexOf('function ensureRenderer() {'),source.indexOf('\nfunction updateMenuCar() {')).replace("import('./render3d.js')",'importRenderer()');
 check(sync.includes('PREPARING THE ROAD'),'the production readiness UI has a distinct preparation message');
 check(ensure.indexOf("ui['start-engine'].disabled = true")<ensure.indexOf('importRenderer()'),'the lazy import path disables Start synchronously');
-const bootstrap=new Function('ui','app','CARS','choices','importRenderer','console',`
+const bootstrap=new Function('ui','app','CARS','choices','importRenderer','console','isCourseUnlocked',`
+  const profile=()=>app.profile;
   let rendererPromise=null,rendererHandle=null,uiDisposed=false;
   ${sync}
   ${ensure}
@@ -33,7 +35,7 @@ function fixture(){
   const imported=new Promise((a,b)=>{resolve=a;reject=b;});
   const renderer={prepareVehicle(key){prepared.push(key);ui.view3d.dataset.vehicleKey=key;ui.view3d.dataset.vehicleAsset=asset;}};
   const importedModule={attachRenderer(){attached++;app.claimVisualReadiness(owner);return renderer;}};
-  const controller=bootstrap(ui,app,CARS,{car:'falcone_f42'},()=>{imports++;return imported;},{error:(...args)=>errors.push(args)});
+  const controller=bootstrap(ui,app,CARS,{car:'falcone_f42',startStage:0},()=>{imports++;return imported;},{error:(...args)=>errors.push(args)},isCourseUnlocked);
   return {app,ui,owner,controller,renderer,errorNodes,errors,prepared,resolve:()=>resolve(importedModule),reject,
     setAsset:value=>{asset=value;},get imports(){return imports;},get attached(){return attached;},
     clickStart(){if(!ui['start-engine'].disabled)app.startCampaign({car:'falcone_f42',startStage:0,mode:'timetrial'});}};

@@ -1,5 +1,14 @@
+import {freestyleLayout} from './freestyle-course.js';
+
 // A fixed circuit overview. Geometry and static canvas layers are cached per Course.
 const BRANCH_COLORS=['#62dabc','#b99aff'];
+export const PRACTICE_MAP_LEGEND=Object.freeze([
+  Object.freeze({kind:'jump',label:'Jumps',color:'#ffce75',description:'Gold triangles mark jump mounds'}),
+  Object.freeze({kind:'climb',label:'Climb',color:'#c2a5f2',description:'Violet peaks mark the climbing hill'}),
+  Object.freeze({kind:'rocks',label:'Rocks',color:'#8bc8dd',description:'Blue diamonds mark the rock garden'}),
+  Object.freeze({kind:'crush',label:'Crush',color:'#f0937d',description:'Coral rectangles mark crush lanes'}),
+]);
+export const practiceMapLegendText=()=>PRACTICE_MAP_LEGEND.map(item=>item.description).join('. ')+'.';
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 export function routePhase(distance,length,closed=true){return closed?((distance%length)+length)%length:clamp(distance,0,length);}
 export function projectRoutePoint(geometry,point,out={}){
@@ -12,10 +21,24 @@ function sampleRange(course,start,end,offset){
   for(let i=0;i<=count;i++){const s=start+(end-start)*i/count;points.push(course.worldAt(s,offset?offset(s):0));}
   return points;
 }
+function practiceFeatures(course){
+  if(!course.def.practice)return [];
+  const features=freestyleLayout(course).mounds.map(mound=>({id:mound.id,kind:mound.id==='summit-climb'?'climb':'jump',world:course.worldAt(mound.s,mound.off),sourceIds:[mound.id]}));
+  const cluster=(id,kind,sources)=>{
+    if(!sources.length)return;
+    const world={x:0,z:0};for(const source of sources){const p=course.worldAt(source.s,source.off);world.x+=p.x/sources.length;world.z+=p.z/sources.length;}
+    features.push({id,kind,world,sourceIds:sources.map((source,i)=>source.id??`${id}-${i}`)});
+  };
+  cluster('rock-garden','rocks',course.features.rocks||[]);
+  const lanes=new Map();for(const car of course.features.crushables||[]){const lane=car.id.replace(/-\d+$/,'');if(!lanes.has(lane))lanes.set(lane,[]);lanes.get(lane).push(car);}
+  for(const [id,cars]of lanes)cluster(id,'crush',cars);
+  return features;
+}
 export function buildRouteMapGeometry(course,width=400,height=280,padding=28){
   if(!course?.samples?.length)return null;
+  const practice=practiceFeatures(course);if(course.def.practice)padding=Math.max(padding,32);
   const branches=(course.features.shortcuts||[]).map((cut,index)=>({id:cut.id,label:String.fromCharCode(65+index),color:BRANCH_COLORS[index%BRANCH_COLORS.length],start:cut.start,end:cut.end,world:sampleRange(course,cut.start,cut.end,s=>course.shortcutOffset(cut,s))}));
-  const all=[...course.samples,...branches.flatMap(branch=>branch.world)];let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+  const all=[...course.samples,...branches.flatMap(branch=>branch.world),...practice.map(feature=>feature.world)];let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
   for(const p of all){minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minZ=Math.min(minZ,p.z);maxZ=Math.max(maxZ,p.z);}
   const scale=Math.min((width-padding*2)/Math.max(1,maxX-minX),(height-padding*2)/Math.max(1,maxZ-minZ));
   const geometry={width,height,minX,minZ,scale,offsetX:(width-(maxX-minX)*scale)/2,offsetY:(height-(maxZ-minZ)*scale)/2,length:course.length,closed:course.closed};
@@ -30,7 +53,24 @@ export function buildRouteMapGeometry(course,width=400,height=280,padding=28){
   geometry.finish=projectRoutePoint(geometry,course.worldAt(course.closed?0:course.length));
   geometry.finishHeading=course.at(course.closed?0:course.length).heading;
   geometry.gates=(course.features.rushGates||[]).map((gate,index)=>({id:gate.id,index,s:gate.s,marker:projectRoutePoint(geometry,course.worldAt(gate.s,gate.off||0))}));
+  if(course.def.practice){geometry.finish=null;geometry.finishHeading=null;geometry.practiceMarkers=practice.map(({world,...feature})=>({...feature,marker:projectRoutePoint(geometry,world)}));}
   return geometry;
+}
+function practiceSymbol(ctx,kind,x,y,color,size=5){
+  ctx.save();ctx.translate(x,y);ctx.fillStyle=color;ctx.strokeStyle='#102326';ctx.lineWidth=1.4;ctx.beginPath();
+  if(kind==='crush'){ctx.rect(-size,-size*.6,size*2,size*1.2);}
+  else if(kind==='rocks'){ctx.moveTo(0,-size);ctx.lineTo(size,0);ctx.lineTo(0,size);ctx.lineTo(-size,0);ctx.closePath();}
+  else{ctx.moveTo(0,-size);ctx.lineTo(size,size*.8);ctx.lineTo(-size,size*.8);ctx.closePath();}
+  ctx.fill();ctx.stroke();
+  if(kind==='climb'){ctx.beginPath();ctx.moveTo(-size*.35,size*.3);ctx.lineTo(0,-size*.35);ctx.lineTo(size*.35,size*.3);ctx.stroke();}
+  ctx.restore();
+}
+export function drawPracticeMarkers(ctx,map){
+  if(!map.practiceMarkers)return;
+  for(const feature of map.practiceMarkers){const style=PRACTICE_MAP_LEGEND.find(item=>item.kind===feature.kind);practiceSymbol(ctx,feature.kind,feature.marker.x,feature.marker.y,style.color);}
+  ctx.save();ctx.font='10px Segoe UI, sans-serif';ctx.textAlign='left';
+  for(const [i,item]of PRACTICE_MAP_LEGEND.entries()){const x=9+i*(map.width-12)/4,y=map.height-11;practiceSymbol(ctx,item.kind,x+4,y,item.color,3.5);ctx.fillStyle=item.color;ctx.fillText(item.label,x+12,y+3);}
+  ctx.restore();
 }
 export function routeActorPose(course,geometry,actor,out={}){
   const point=course.worldAt(actor.s,actor.lateral||0);projectRoutePoint(geometry,point,out);out.heading=point.heading+(actor.headingError||0);return out;
@@ -49,8 +89,10 @@ export class RouteMap {
     for(let i=0;i<branches.length;i++)stroke(ctx,branches[i],geometry.branches[i].color,3.6,[7,5]);
     for(let i=1;i<geometry.sections.length;i++){const marker=geometry.sections[i].marker;ctx.beginPath();ctx.arc(marker.x,marker.y,5,0,Math.PI*2);ctx.fillStyle='#142326';ctx.fill();ctx.lineWidth=1.5;ctx.strokeStyle='#d8e3cf';ctx.stroke();}
     // A checkered finish bar is separate from the player arrow, including lap two.
-    ctx.save();ctx.translate(geometry.finish.x,geometry.finish.y);ctx.rotate(geometry.finishHeading);ctx.fillStyle='#112026';ctx.fillRect(-12,-7,24,14);
+    if(geometry.finish){ctx.save();ctx.translate(geometry.finish.x,geometry.finish.y);ctx.rotate(geometry.finishHeading);ctx.fillStyle='#112026';ctx.fillRect(-12,-7,24,14);
     for(let x=0;x<4;x++)for(let y=0;y<2;y++){ctx.fillStyle=(x+y)%2?'#152224':'#f1edcf';ctx.fillRect(-10+x*5,-5+y*5,5,5);}ctx.restore();
+    }
+    drawPracticeMarkers(ctx,geometry);
     cached={...geometry,routePath:route,sectionPaths:sections,branchPaths:branches,base};this.cache.set(course,cached);return cached;
   }
   update(course,state,now=performance.now()){
@@ -62,7 +104,8 @@ export class RouteMap {
     let sectionIndex=map.sections.findIndex(section=>phase>=section.start&&phase<section.end);if(sectionIndex<0)sectionIndex=map.sections.length-1;
     ctx.clearRect(0,0,map.width,map.height);ctx.lineCap=ctx.lineJoin='round';
     // Broad low-opacity emphasis separates the active section from completed ones.
-    stroke(ctx,map.sectionPaths[sectionIndex],'#eeb87638',11);ctx.drawImage(map.base,0,0);stroke(ctx,map.sectionPaths[sectionIndex],'#e8bb82',3.7);
+    if(course.def.practice)ctx.drawImage(map.base,0,0);
+    else{stroke(ctx,map.sectionPaths[sectionIndex],'#eeb87638',11);ctx.drawImage(map.base,0,0);stroke(ctx,map.sectionPaths[sectionIndex],'#e8bb82',3.7);}
     const branchIndex=map.branches.findIndex(branch=>branch.id===state.shortcutId);
     if(branchIndex>=0)stroke(ctx,map.branchPaths[branchIndex],map.branches[branchIndex].color,6);
     for(let i=0;i<map.branches.length;i++){const branch=map.branches[i];ctx.font='bold 13px Segoe UI, sans-serif';ctx.textAlign='center';ctx.fillStyle=branch.color;ctx.fillText(branch.label,branch.marker.x,branch.marker.y-9);}
@@ -74,8 +117,8 @@ export class RouteMap {
     const police=state.police?.pursuit;
     if(police?.active&&Number.isFinite(police.s))this._actor(course,map,police,Math.floor(now/380)%2?'#7cbff2':'#ee8588',8,false);
     this._actor(course,map,state,'#fff1d0',11,true);
-    const lap=Math.min(course.def.laps||2,state.currentLap||state.lap||1),section=map.sections[sectionIndex].name;
-    const label=`${course.def.name} circuit map. Lap ${lap} of ${course.def.laps||2}. ${section}. Your arrow shows your heading.${state.rival?' Yellow is your rival.':''}${police?.active?' Blue and red is the police patrol.':''}${map.branches.length?` Dashed shortcuts ${map.branches.map(branch=>branch.label).join(' and ')}.${branchIndex>=0?` You are on shortcut ${map.branches[branchIndex].label}.`:''}`:''}${state.checkpointRush?` ${state.checkpointRush.passed} of ${state.checkpointRush.total} gates passed. ${state.checkpointRush.nextGate<state.checkpointRush.total?'Gold marks the next gate.':'Finish both laps.'}`:''} Checkered line marks the finish.`;
+    const lap=course.def.practice?0:Math.min(course.def.laps||2,state.currentLap||state.lap||1),section=map.sections[sectionIndex].name;
+    const label=course.def.practice?`${course.def.name} quarry practice map. Untimed exploration, with no laps or finish line. Your arrow shows your heading. ${practiceMapLegendText()}`:`${course.def.name} circuit map. Lap ${lap} of ${course.def.laps||2}. ${section}. Your arrow shows your heading.${state.rival?' Yellow is your rival.':''}${police?.active?' Blue and red is the police patrol.':''}${map.branches.length?` Dashed shortcuts ${map.branches.map(branch=>branch.label).join(' and ')}.${branchIndex>=0?` You are on shortcut ${map.branches[branchIndex].label}.`:''}`:''}${state.checkpointRush?` ${state.checkpointRush.passed} of ${state.checkpointRush.total} gates passed. ${state.checkpointRush.nextGate<state.checkpointRush.total?'Gold marks the next gate.':'Finish both laps.'}`:''} Checkered line marks the finish.`;
     if(label!==this.lastLabel){this.canvas.setAttribute('aria-label',label);this.lastLabel=label;}
     this.canvas.dataset.section=section;this.canvas.dataset.lap=String(lap);this.canvas.dataset.shortcuts=String(map.branches.length);
   }

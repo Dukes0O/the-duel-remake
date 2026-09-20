@@ -57,10 +57,12 @@ const legacyQueryModule=dataUrl(`export const createPolylineIndex=${legacyIndex.
 async function legacyModuleUrl(file){
   const url=new URL(`../src/${file}`,import.meta.url);let source=await readFile(url,'utf8');
   const usesFarSampler=source.includes("from './far-terrain-surface.js'");
-  check(source.includes("from './polyline-index.js'")||usesFarSampler,`${file} uses the shared index directly or through its far-surface sampler`);
+  const usesMountainSurface=source.includes("from './mountain-surface.js'");
+  check(source.includes("from './polyline-index.js'")||usesFarSampler||usesMountainSurface,`${file} uses the shared index directly or through its surface sampler`);
   const legacyFarSampler=usesFarSampler?await legacyModuleUrl('far-terrain-surface.js'):null;
+  const legacyMountainSurface=usesMountainSurface?await legacyModuleUrl('mountain-surface.js'):null;
   source=source.replace(/from\s+(['"])([^'"]+)\1/g,(match,quote,specifier)=>{
-    const resolved=specifier==='./polyline-index.js'?legacyQueryModule:specifier==='./far-terrain-surface.js'?legacyFarSampler:specifier.startsWith('.')?new URL(specifier,url).href:import.meta.resolve(specifier);
+    const resolved=specifier==='./polyline-index.js'?legacyQueryModule:specifier==='./far-terrain-surface.js'?legacyFarSampler:specifier==='./mountain-surface.js'?legacyMountainSurface:specifier.startsWith('.')?new URL(specifier,url).href:import.meta.resolve(specifier);
     return `from ${JSON.stringify(resolved)}`;
   });
   return dataUrl(source);
@@ -68,7 +70,9 @@ async function legacyModuleUrl(file){
 async function legacyModule(file){return import(await legacyModuleUrl(file));}
 const [legacyWorld,legacyMountain,legacyCity]=await Promise.all(['world-surfaces.js','mountain-landscape.js','city-skyline.js'].map(legacyModule));
 const benchmarks=[];
-for(const def of COURSE){
+// The new world-space practice surface is covered by freestyle-course and
+// terrain tests. This audit preserves every byte of the fifteen road scenes.
+for(const def of COURSE.filter(def=>!def.practice)){
   const course=new Course(def,1989),samplesBefore=JSON.stringify(course.samples),featuresBefore=JSON.stringify(course.features);
   const actual=farTerrainGeometry(course,false),legacy=legacyWorld.farTerrainGeometry(course,false);
   equal(Object.keys(actual.attributes),Object.keys(legacy.attributes),'No terrain attributes added or removed');

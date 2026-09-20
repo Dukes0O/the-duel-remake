@@ -14,6 +14,7 @@ import { createTerrainMaterial } from './terrain-style.js';
 import { createPavedRoadMaterial, createPavedShoulderMaterial } from './road-surface.js';
 import { addCitySkyline } from './city-skyline.js';
 import { addCityParking } from './city-parking.js';
+import { addFreestyleScenery } from './freestyle-scene.js';
 
 import { strip, terrainGeometry, farTerrainGeometry, meadowTexture, groundTexture, surfaceTexture, addTrailShoulder } from './world-surfaces.js';
 import { addFurniture, addSign, box, addStation, addTurnSigns, addCoast, addHarbor, addFinish } from './world-props.js';
@@ -29,7 +30,7 @@ export { addTurnSigns, addHarbor } from './world-props.js';
 export function buildEnvironment(course) {
   const group = new THREE.Group(), alpine = course.def.theme === 'alpine', night=course.def.theme==='city';
   const roadMat = createPavedRoadMaterial({asphalt:surfaceTexture('asphalt'),night});
-  const groundMat=createTerrainMaterial({earth:groundTexture('color'),grass:meadowTexture(),city:surfaceTexture('asphalt'),rock:rockTexture('alpine'),normal:groundTexture('normal'),roughness:groundTexture('roughness')});
+  const groundMat=course.def.practice?new THREE.MeshStandardMaterial({map:surfaceTexture('gravel'),bumpMap:surfaceTexture('gravel'),bumpScale:.06,color:0xd0b28a,roughness:1,vertexColors:true}):createTerrainMaterial({earth:groundTexture('color'),grass:meadowTexture(),city:surfaceTexture('asphalt'),rock:rockTexture('alpine'),normal:groundTexture('normal'),roughness:groundTexture('roughness')});
   const cream = new THREE.MeshStandardMaterial({ color: 0xe8d2a5, roughness: .8 });
   const yellow = new THREE.MeshStandardMaterial({ color: 0xd8a943, roughness: .85 });
   const metal = new THREE.MeshStandardMaterial({ color: 0xa6aaa5, metalness: .55, roughness: .57 });
@@ -71,10 +72,10 @@ export function buildEnvironment(course) {
   addCitySkyline(group,course);
   addCityParking(group,course);
   addSceneryDetail(group,course);
-  addRaceStructures(group,course);
+  if(course.def.practice)addFreestyleScenery(group,course);else addRaceStructures(group,course);
   addCourseLandmarks(group,course);
   addRallyDetail(group,course);
-  addFinish(group, course);
+  if(!course.def.practice)addFinish(group, course);
   addCheckpointGates(group,course);
   return group;
 }

@@ -28,6 +28,10 @@ function run(course, car, difficulty, fps) {
   const memory = new Map();
   globalThis.localStorage = { getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)), removeItem: key => memory.delete(key) };
   const app = new App();
+  // Track-line physics fixture owns every course explicitly; access/purchase
+  // rules have a separate suite. This memory-only setup changes no handling.
+  app.profile.courses={version:1,unlocked:COURSE.map(course=>course.id)};
+  app._saveProfile();
   const stageIndex = COURSE.findIndex(item => item.id === course.id);
   assert(stageIndex >= 0);
   assert(app.startCampaign({ startStage: stageIndex, seed: 1989, mode: 'duel', car, difficulty, cpuDifficulty: DEFAULT_CPU_DIFFICULTY, driverId: DEFAULT_DRIVER }));

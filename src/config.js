@@ -1,6 +1,7 @@
 // config.js — The Duel canon. CANON = fixed by the build brief; HOUSE =
 // plausible arcade values invented to fill gaps, frozen here.
 import { EXPANSION_COURSES } from './expansion-courses.js';
+import { FREESTYLE_COURSE } from './freestyle-course.js';
 
 // Five crash slots; a stage win restores up to two, never above the starting reserve.
 export const LIVES = {
@@ -119,6 +120,7 @@ export const COURSE = [
   {id:'neon-drift-trial',layout:'city',layoutVersion:1,timeOfDay:'night',theme:'city',stage:7,name:'Neon Drift Trial',lengthU:2880,closed:true,laps:2,kind:'drift',requiredCar:'banshee_muscle',persistentVehicle:true,crashPenaltySec:8,hasRadar:false,hasRival:false,speedLimitMph:65,driftTrial:{targets:{easy:3500,medium:5000,hard:6000},timeLimitSec:{easy:150,medium:125,hard:110}},sections:[{theme:'city',name:'Neon District',share:.5},{theme:'city',name:'Harbor Slide',share:.5}]},
   {id:'timberline-rush',layout:'timberline',layoutSeed:1989,layoutVersion:2,theme:'alpine',stage:8,name:'Timberline Checkpoint Rush',lengthU:3800,closed:true,laps:2,kind:'checkpoint',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:false,speedLimitMph:100,checkpointRush:{gatesPerLap:6,initialTimeSec:{easy:40,medium:34,hard:30},extensionSec:{easy:10,medium:8,hard:7}},sections:[{theme:'desert',name:'Dry Creek',share:.35},{theme:'alpine',name:'Timberline Summit',share:.65}]},
   ...EXPANSION_COURSES,
+  FREESTYLE_COURSE,
 ];
 
 // CANON — police: fixed radar traps, escalating detector beep, one pursuer.

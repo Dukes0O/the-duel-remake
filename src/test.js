@@ -784,14 +784,16 @@ for (const kind of ['rock', 'mountain', 'building']) {
 // --- Scene selection and purchased upgrades enter the same simulation ---
 {
   const d = new Duel({ seed: 120 });
-  d.startCampaign({ startStage: COURSE.length - 1, upgrades: { engine: 3, nitro: 3, handling: 2, tires: 1 } });
-  eq(d.state.stageIndex, COURSE.length - 1, 'scene selection starts a fresh run at the chosen stage');
+  const selectedStage = COURSE.findLastIndex(definition => !definition.practice);
+  d.startCampaign({ startStage: selectedStage, upgrades: { engine: 3, nitro: 3, handling: 2, tires: 1 } });
+  eq(d.state.stageIndex, selectedStage, 'scene selection starts a fresh run at the chosen racing stage');
   const base = CARS[d.state.car];
   ok(d.car.topSpeed > base.topSpeed && d.car.accel > base.accel && d.car.gears[0] > base.gears[0], 'engine upgrades improve speed, acceleration and gearing');
   ok(d.car.grip > base.grip && d.car.braking > base.braking, 'handling and tire upgrades improve control');
   eq(base.gears[0], CARS[d.state.car].gears[0], 'upgrade calculation preserves the base car data');
   const s = d.state; s.status = 'racing'; s.traffic = []; s.rival = null; s.speedMph = d.car.topSpeed; s.gear = d.car.gears.length - 1;
-  d.course.at = () => ({ curvature: 0 }); d.setInput({ throttle: 1, boost: true }); d.step(1 / 120);
+  const realAt = d.course.at.bind(d.course);
+  d.course.at = distance => ({ ...realAt(distance), curvature: 0 }); d.setInput({ throttle: 1, boost: true }); d.step(1 / 120);
   ok(1 - s.boost < BOOST.drainPerSec / 120, 'nitro upgrades reduce boost drain');
   d.startCampaign({ startStage: -100, upgrades: { engine: 99, nitro: -4, handling: NaN, tires: 2.8 } });
   eq(d.state.stageIndex, 0, 'invalid negative scene index clamps safely');
@@ -1007,7 +1009,7 @@ function crossGate(duel, actor, gate, lateral = 0) {
   d.state.status='stage_result';d.nextStage();eq(d.state.status,'complete','the rally stays a standalone event');
 }
 if (!process.env.DUEL_SKIP_CAMPAIGNS) {
-  for(const event of COURSE.filter(course=>course.kind)){
+  for(const event of COURSE.filter(course=>course.kind&&!course.practice)){
     const outcomes=[];
     for(const fps of [30,144]){
       const app=new App();app.autopilot=true;app.duel.seed=1989;

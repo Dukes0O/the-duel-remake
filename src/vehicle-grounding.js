@@ -25,7 +25,14 @@ export function prepareVehicleGrounding(vehicle){
     wheels.push(Object.freeze({contactY:low,radius}));
   }
   if(!Number.isFinite(contactY))contactY=0;
-  const metadata=Object.freeze({contactY,wheels:Object.freeze(wheels)});
+  const bounds=new THREE.Box3(),part=new THREE.Box3();
+  vehicle.traverse(mesh=>{
+    if(!mesh.isMesh||!mesh.visible||mesh===vehicle.userData.contactShadow)return;
+    mesh.geometry.computeBoundingBox();local.multiplyMatrices(inverse,mesh.matrixWorld);
+    part.copy(mesh.geometry.boundingBox).applyMatrix4(local);bounds.union(part);
+  });
+  const tumbleBounds=Object.freeze({min:Object.freeze(bounds.min.toArray()),max:Object.freeze(bounds.max.toArray())});
+  const metadata=Object.freeze({contactY,wheels:Object.freeze(wheels),tumbleBounds});
   vehicle.userData.grounding=metadata;vehicle.rotation.order='YXZ';
   if(vehicle.userData.contactShadow)vehicle.userData.contactShadow.position.y=contactY+.004;
   return metadata;
@@ -58,4 +65,36 @@ export function placeGroundedVehicle(vehicle,p,turn=0,travel=0){
   vehicle.position.set(p.x,p.y+TIRE_CLEARANCE-grounding.contactY,p.z);
   vehicle.rotation.set(0,p.heading+turn,0,'YXZ');
   for(const wheel of vehicle.userData.wheels||[])wheel.rotation.x+=travel/(wheel.parent?.userData.radius||.36);
+}
+
+// Optional physics-owned wheel support and orientation. Ordinary road actors
+// omit these fields and keep the exact existing grounding path. Pitch in the
+// simulation is nose-up positive; Three's +X rotation points the nose down.
+export function applyVehicleTerrainPose(vehicle,course,actor){
+  if(Number.isFinite(actor?.groundHeight))vehicle.position.y+=actor.groundHeight-course.groundAt(actor.s,actor.lateral).y;
+  if(Number.isFinite(actor?.terrainPitch))vehicle.rotation.x=-actor.terrainPitch;
+  if(Number.isFinite(actor?.terrainRoll)){
+    const pitch=Number.isFinite(actor.terrainPitch)?actor.terrainPitch:0,roll=actor.terrainRoll;
+    // Ground grades are measured independently along/across the tire plane.
+    // YXZ applies roll before pitch, so remove that pitch cross-coupling.
+    vehicle.rotation.z=actor.tumble?roll:Math.atan2(Math.sin(roll)*Math.cos(pitch),Math.cos(roll));
+  }
+  if(actor?.tumble){
+    // A complete roll rotates around the chassis, not the tire-plane origin.
+    // Keep the rotated box above its physics support without rebuilding meshes
+    // or scanning vertices each frame. This offset never enters simulation.
+    const {tumbleBounds:{min,max},contactY}=prepareVehicleGrounding(vehicle);
+    const pitch=vehicle.rotation.x,roll=vehicle.rotation.z,sy=Math.sin(pitch),cy=Math.cos(pitch),sr=Math.sin(roll),cr=Math.cos(roll);
+    const centerX=(min[0]+max[0])*.5,centerY=(min[1]+max[1])*.5,centerZ=(min[2]+max[2])*.5;
+    point.set(centerX,centerY,centerZ).applyEuler(vehicle.rotation);
+    const yaw=vehicle.rotation.y,c=Math.cos(yaw),s=Math.sin(yaw);
+    vehicle.position.x+=c*centerX+s*centerZ-point.x;
+    vehicle.position.z+=-s*centerX+c*centerZ-point.z;
+    let low=Infinity;
+    for(let ix=0;ix<2;ix++)for(let iy=0;iy<2;iy++)for(let iz=0;iz<2;iz++){
+      const x=ix?max[0]:min[0],y=iy?max[1]:min[1],z=iz?max[2]:min[2];
+      low=Math.min(low,cy*(sr*x+cr*y)-sy*z);
+    }
+    vehicle.position.y+=Math.max(centerY-point.y,contactY-low);
+  }
 }

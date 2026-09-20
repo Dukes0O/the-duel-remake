@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {ownTestCourses} from './career-fixture.mjs';
 import { Duel } from '../src/game.js';
 import { App } from '../src/app.js';
 import { COURSE, LIVES, ROAD_SHOULDER_WIDTH } from '../src/config.js';
@@ -97,7 +98,7 @@ for (const side of [-1, 1]) {
     for (const fps of [30, 144]) {
       const memory = new Map();
       globalThis.localStorage = { getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)) };
-      const app = new App(), events = []; app.autopilot = true;
+      const app = ownTestCourses(new App()), events = []; app.autopilot = true;
       app.startCampaign({ startStage: harborIndex, routeVariant: 'route_c', car: 'falcone_f42', mode: 'timetrial', cpuDifficulty: 'medium' });
       app.duel.onChange((_, event) => {
         if (event.lapCheckpoint || event.lapCompleted || event.checkpointReset) events.push(event);

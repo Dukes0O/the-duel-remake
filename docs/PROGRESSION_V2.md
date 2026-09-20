@@ -1,20 +1,26 @@
 # Local players, garage and race rewards
 
-Each named player has a separate wallet, garage, upgrades, specialist drivers, race history and personal bests. Players on this computer share a leaderboard. The menu selects the player, circuit, car, driver, CPU difficulty and transmission before a race starts.
+Each named player has a separate wallet, garage, upgrades, specialist drivers, courses, race history and personal bests. Players on this computer share a leaderboard. The menu selects the player, circuit, car, driver, CPU difficulty and transmission before a race starts.
 
 ## Each player's race setup
 
 The last selected event, car, challenge mode, CPU difficulty, transmission, route, daylight mood and ghost preference are saved in that player's `raceSettings`. Switching players or reopening the game restores those choices. Menu changes save without requiring the player to start a race. Graphics quality stays browser-wide because it is a device performance setting.
 
-Events are stored by stable ID. Loading checks car ownership and event rules, so invalid or locked cars fall back safely and objective events keep their required mode. Courses do not require a particular car. Existing profiles without individual settings adopt the earlier browser-wide route, lighting and ghost preferences once; settings that the old version never saved cannot be recovered. Newly created players start with the normal defaults, not the previous player's setup. These preferences do not change the wallet, upgrades, records or an active race's copied settings.
+Events are stored by stable ID. Loading checks course and car ownership and event rules, so locked selections fall back safely and objective events keep their required mode. Courses do not require a particular car. Existing profiles without individual settings adopt the earlier browser-wide route, lighting and ghost preferences once; settings that the old version never saved cannot be recovered. Newly created players start with the normal defaults, not the previous player's setup. These preferences do not change the wallet, upgrades, records or an active race's copied settings.
 
 ## Course entry
 
-Every owned car can enter all fifteen courses. Selecting a course preserves the chosen car, including for the six earlier special events. A locked vehicle still requires its normal credit purchase; course entry grants no vehicles or rewards. The `requiredCar` metadata now means a recommendation, not a restriction. This rule supersedes compulsory-car entry statements in older event documents.
+Every owned car can enter any unlocked course: fifteen races and the new Titan Freestyle Playground. Pacific Canyon is included. The other fifteen courses cost 900–2,200 earned credits; see [course prices and migration](COURSE_ACCESS.md). Buying unlocks without selecting, and selecting preserves the chosen car. Course entry grants no vehicles or rewards. The `requiredCar` metadata means a recommendation, not a restriction. These rules supersede compulsory-car entry and unrestricted free-course access in older documents.
+
+Course purchases and selections are menu-only and saved per player in `profile.courses`. App start and next-stage checks enforce ownership, independently of the UI. A campaign may start on free Pacific, bank its completed reward, then stop before a locked next circuit. The result offers a menu link to buy that course; no purchase or paid-course entry occurs within the active run.
+
+Existing saves keep evidence-backed access from completed history, personal bests, circuit wins and valid active races. Older Dusthawk, Banshee and Titan purchases also retain their previously included special events. A menu selection alone does not grant access, and neither the new circuit group nor practice is granted wholesale. This migration changes no wallet balance, vehicle ownership or records.
 
 The original three circuits remain the campaign. The six earlier special events and six new circuits run separately. The new circuits are Eifel Crown, Alpine Serpent, Azure Riviera, Red Mesa Corkscrew, Neon Docks Circuit and Cloudbreak Skyway. They use `kind: 'circuit'`, with ordinary rival or Time Trial choices. See [the course expansion](COURSE_EXPANSION.md) for layouts and landmarks.
 
 Special-event modes, deadlines and objective targets remain mandatory. Titan is recommended for arena and stunt events: lighter cars can enter but cannot crush wrecks under the existing mass rules. They therefore cannot meet the Stunt Trial's four-crush objective. The menu explains the target and warning before starting; it does not force a different car.
+
+Titan Freestyle Playground costs 900 CR. After unlocking, it is untimed practice with no rival, laps, finish, credits, milestones, personal bests, leaderboard or ghosts. Driving, crash recovery, restart, exit and reload leave the career balance, history and win streak unchanged. Practice writes no active-race marker and cannot settle as a race result. The HUD says **Free practice**; its height, horizontal jump distance and airborne duration are measurements only.
 
 ## Police fines
 
@@ -128,7 +134,7 @@ Time Trial ghosts require the same active driver modifiers as the current run, a
 
 ## Saves and migration
 
-- `the-duel-players-v2` stores the registry, active player and each player's profile, including driver unlocks and selection.
+- `the-duel-players-v2` stores the registry, active player and each player's profile, including driver unlocks, course ownership and saved selections.
 - `the-duel-leaderboard-v1` stores shared records and their race/build metadata.
 - If no valid registry exists, `the-duel-profile-v1` migrates to **Player 1**. Credits, owned cars, upgrade levels and prior award keys are retained. The old save remains available as a migration backup.
 
@@ -142,7 +148,7 @@ Adding or selecting a player first refreshes the registry, so a stale menu does 
 
 Run `node tools/test-progression.mjs` for reward arithmetic, bounds, unlocks, migration, profile isolation, best comparisons, layout revisions and record normalization. Run `node tools/test-progression-integration.mjs` for actual App/Duel settlement, upgrade snapshots, objective rules, interrupted-race recovery, duplicate protection and immediate leave/restart behavior.
 
-The driver suites (`test-drivers.mjs`, `test-driver-ui.mjs` and `test-driver-driving.mjs` in `tools/`) cover purchases, persistence, menu-only selection, race snapshots, active-skill labels and separate records from real input-driven Time Trials. `tools/test-course-eligibility.mjs` checks all eight cars against all fifteen courses through App and the production menu, including locked-car protection and unchanged objective rules. These fixtures use in-memory saves, never real careers.
+The driver suites (`test-drivers.mjs`, `test-driver-ui.mjs` and `test-driver-driving.mjs` in `tools/`) cover purchases, persistence, menu-only selection, race snapshots, active-skill labels and separate records from real input-driven Time Trials. `tools/test-course-eligibility.mjs` checks all eight cars against all sixteen courses through App and the production menu, including locked-car protection and unchanged objective rules. These fixtures use in-memory saves, never real careers.
 
 Progression tests simulate finish settlement with already validated two-lap fixtures; the simulation suite separately tests lap gates and collision behavior. Browser review and project-wide test results are recorded in [Verification](VERIFICATION.md). Counts in the historical integration notes below describe their earlier checkpoints, not a current whole-project pass.
 

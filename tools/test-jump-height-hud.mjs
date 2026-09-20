@@ -13,7 +13,7 @@ check(/^<section\b[^>]*\bhidden(?:\s|>)/.test(markup),'the panel starts hidden b
 check(/^<section\b[^>]*\baria-label="[^"]*(?:height|Height)[^"]*"/.test(markup),'the panel has an accessible height label');
 check(!/\baria-live\s*=|\brole="(?:status|alert|log)"/.test(markup),'frame-by-frame height does not flood a live region');
 check(/<div class="speedometer">\s*<section\b[^>]*id="jump-height-panel"/.test(main),'the height readout is attached to the speedometer');
-for(const id of ['jump-height-panel','jump-height-label','jump-height-value','jump-height-peak']){
+for(const id of ['jump-height-panel','jump-height-label','jump-height-value','jump-height-peak','jump-distance']){
   equal([...main.matchAll(new RegExp(`\\bid="${id}"`,'g'))].length,1,`${id} has exactly one markup target`);
 }
 check(/id="jump-height-label"[^>]*>HEIGHT ABOVE GROUND</.test(markup),'the initial label states ground clearance');
@@ -33,9 +33,11 @@ const renderState=main.slice(main.indexOf('function renderState(s) {'),main.inde
 const block=renderState.match(/const jumpHeight=jumpHeightReadout\.update\(s,app\.duel\.course\);[\s\S]*?(?=\s*if\(s\.status!=='menu'\) updateHud\(s\);)/)?.[0];
 check(block,'height rendering runs before the menu guard so stale jumps can reset');
 const present=new Function('s','app','ui','text','jumpHeightReadout',block);
-const ui=Object.fromEntries(['jump-height-panel','jump-height-label','jump-height-value','jump-height-peak'].map(id=>[id,{hidden:true,dataset:{},textContent:''}]));
+const ui=Object.fromEntries(['jump-height-panel','jump-height-label','jump-height-value','jump-height-peak','jump-distance'].map(id=>[id,{hidden:true,dataset:{},textContent:''}]));
 const text=(id,value)=>{ui[id].textContent=String(value);};
 const app={duel:{course:{id:'height-ui-course'}}},readout=createJumpHeightReadout();
+present({status:'racing'},app,ui,text,{update:()=>({phase:'airborne',heightMeters:2,peakMeters:3,distanceMeters:12.36,durationSeconds:1.27})});
+equal(ui['jump-distance'].textContent,'DISTANCE 12.4 m · 1.3 s','production readout shows measured horizontal distance and duration with explicit units');
 const sample={status:'racing',stageTimeSec:0,airborne:false,airHeight:0,_jumpY:0,stageCrashes:0,boundaryResets:0,impactTimer:0,paused:false};
 const view=()=>({hidden:ui['jump-height-panel'].hidden,phase:ui['jump-height-panel'].dataset.phase,label:ui['jump-height-label'].textContent,value:ui['jump-height-value'].textContent,peak:ui['jump-height-peak'].textContent});
 function render(overrides={}){

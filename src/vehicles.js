@@ -278,11 +278,11 @@ function weightsAt(x, y, z, strengths) {
   damageWeights[3] = strengths[3] * THREE.MathUtils.smoothstep(-x, .32, .99) * door;
   return damageWeights;
 }
-function deformGeometry(mesh, rest, strengths, wear, space) {
+function deformGeometry(mesh, rest, strengths, wear, space, roofCrush = 0) {
   const a = mesh.geometry.attributes.position;
   // The default preserves existing cars; tall bodies use canonical panel space.
   const scale = space?.scale || [1, 1, 1], offset = space?.offset || [0, 0, 0];
-  if (!strengths.some(Boolean)) {
+  if (!roofCrush && !strengths.some(Boolean)) {
     a.array.set(rest); a.needsUpdate = true;
     if (wear) { wear.array.fill(0); wear.needsUpdate = true; }
     mesh.geometry.computeBoundingSphere(); return;
@@ -295,11 +295,16 @@ function deformGeometry(mesh, rest, strengths, wear, space) {
     // One buckled fold per end reads as crushed sheet metal without regular ripples.
     const buckle = front * Math.exp(-(((z - 1.65) * 7 + x * .7) ** 2)) * .10
       + rear * Math.exp(-(((z + 1.67) * 7 - x * .7) ** 2)) * .10;
+    // The tire load collapses the cabin most, with smaller buckles reaching the
+    // hood and deck. Deform glazing/interior in the same panel space so nothing
+    // is left floating above the flattened roof. The sill stays on its wheels.
+    const roof = roofCrush * (.42 + .58 * Math.exp(-((z + .12) ** 2) * .48));
+    const upper = Math.max(0, y - .43), fold = Math.sin(z * 8 + x * 3.5) * .025 * roof * THREE.MathUtils.smoothstep(y, .45, .9);
     a.setXYZ(i,
-      (x - left * .34 + right * .34 + (right - left) * crease * 1.4) * scale[0] + offset[0],
-      (y - crush * .18 + buckle + (crush + side) * crease + Math.sin(z * 7) * side * .012) * scale[1] + offset[1],
+      (x - left * .34 + right * .34 + (right - left) * crease * 1.4 + Math.sign(x) * roof * upper * .10) * scale[0] + offset[0],
+      (y - crush * .18 + buckle + (crush + side) * crease + Math.sin(z * 7) * side * .012 - upper * roof * .79 + fold) * scale[1] + offset[1],
       (z - front * .39 + rear * .38 + (front - rear) * crease * 1.2) * scale[2] + offset[2]);
-    wear?.setX(i, Math.min(1, Math.max(front, rear, left, right)));
+    wear?.setX(i, Math.min(1, Math.max(front, rear, left, right, roof * THREE.MathUtils.smoothstep(y, .35, .85))));
   }
   a.needsUpdate = true; if (wear) wear.needsUpdate = true;
   mesh.geometry.computeBoundingSphere();
@@ -311,20 +316,24 @@ const cleanDamageZones=Object.freeze({front:0,rear:0,left:0,right:0});
 // clear the mesh; unchanged clean or damaged actors never rewrite vertex buffers.
 export function updateNpcVehicleDamage(vehicle,actor=null) {
   const zones=actor?.damageZones||cleanDamageZones;
-  const key=`${Math.max(0,Number(zones.front)||0)}:${Math.max(0,Number(zones.rear)||0)}:${Math.max(0,Number(zones.left)||0)}:${Math.max(0,Number(zones.right)||0)}:false`;
+  const crush=crushAmount(actor?.crushDamage);
+  const key=`${Math.max(0,Number(zones.front)||0)}:${Math.max(0,Number(zones.rear)||0)}:${Math.max(0,Number(zones.left)||0)}:${Math.max(0,Number(zones.right)||0)}:false:${crush}`;
   if(vehicle.userData.damageKey===key)return false;
-  updateVehicleDamage(vehicle,0,false,0,zones);
+  updateVehicleDamage(vehicle,0,false,0,zones,crush);
   return true;
 }
 
-export function updateVehicleDamage(vehicle, count, catastrophic, age = 0, damageZones) {
+const crushAmount=value=>Number.isFinite(value)?THREE.MathUtils.clamp(value,0,1):0;
+
+export function updateVehicleDamage(vehicle, count, catastrophic, age = 0, damageZones, crushDamage = 0) {
   const data = vehicle.userData;
+  const roofCrush=crushAmount(crushDamage);
   if (data.contactShadow) data.contactShadow.visible = !catastrophic;
   // Fallback keeps old preview calls useful while gameplay supplies true contact sides.
   const zones = damageZones || { front: Math.min(count || 0, 2), rear: Math.max(0, (count || 0) - 2), left: 0, right: 0 };
   const values = ['front', 'rear', 'left', 'right'].map(zone => Math.max(0, Number(zones[zone]) || 0));
   const strengths = values.map(value => catastrophic ? 1 : 1 - Math.exp(-value * .62));
-  const key = `${values.join(':')}:${!!catastrophic}`;
+  const key = `${values.join(':')}:${!!catastrophic}:${roofCrush}`;
   if (data.damageKey !== key) {
     data.damageKey = key;
     const paint = data.paint, total = Math.min(5, values.reduce((a, b) => a + b, 0));
@@ -332,13 +341,23 @@ export function updateVehicleDamage(vehicle, count, catastrophic, age = 0, damag
     paint.roughness = catastrophic ? .94 : data.damageBase?.roughness ?? .22;
     paint.clearcoat = catastrophic ? .05 : data.damageBase?.clearcoat ?? 1;
     for (const { mesh, rest, normals } of data.damageMeshes || []) {
-      deformGeometry(mesh, rest, strengths, mesh.geometry.attributes.panelWear, data.damageSpace);
-      if (strengths.some(Boolean)) mesh.geometry.computeVertexNormals();
+      deformGeometry(mesh, rest, strengths, mesh.geometry.attributes.panelWear, data.damageSpace, roofCrush);
+      if (roofCrush || strengths.some(Boolean)) mesh.geometry.computeVertexNormals();
       else if (normals) { mesh.geometry.attributes.normal.array.set(normals); mesh.geometry.attributes.normal.needsUpdate = true; }
     }
     for (const { mesh, rest, zone } of data.fractures || []) {
-      mesh.visible = catastrophic || (zones[zone] || 0) > .2;
-      deformGeometry(mesh, rest, strengths, undefined, data.damageSpace);
+      mesh.visible = catastrophic || roofCrush > .12 || (zones[zone] || 0) > .2;
+      deformGeometry(mesh, rest, strengths, undefined, data.damageSpace, roofCrush);
+    }
+    // These articulated cabin accessories are outside the baked body batches.
+    // Hide the driver only in a flattened wreck; preserve its intact pose for a
+    // pooled reset, and lower roof-mounted accessories with the cabin.
+    if(data.driver)data.driver.visible=roofCrush<.45;
+    if(data.steeringPivot)data.steeringPivot.visible=roofCrush<.45;
+    for(const attachment of data.crushAttachments||[]){
+      attachment.userData.crushRestY??=attachment.position.y;
+      attachment.position.y=attachment.userData.crushRestY*(1-roofCrush*.52);
+      attachment.scale.y=1-roofCrush*.52;
     }
   }
   for (let i = 0; i < (data.wheelPivots || []).length; i++) {
@@ -348,5 +367,9 @@ export function updateVehicleDamage(vehicle, count, catastrophic, age = 0, damag
     const corner = (rest.x > 0 ? strengths[2] : strengths[3]) * .8 + (pivot.userData.front ? strengths[0] : strengths[1]) * .5;
     pivot.rotation.z = corner * .095 * (rest.x < 0 ? -1 : 1);
     pivot.position.x -= Math.sign(rest.x) * corner * .035;
+    pivot.rotation.z += Math.sign(rest.x) * roofCrush * .42;
+    pivot.position.x += Math.sign(rest.x) * roofCrush * .10;
+    pivot.position.y -= roofCrush * .075;
+    pivot.scale.y = 1-roofCrush*.18;
   }
 }

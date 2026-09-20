@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {ownTestCourses} from './career-fixture.mjs';
 import {App} from '../src/app.js';
 import {COURSE} from '../src/config.js';
 import {DRIVING_MILESTONES,CPU_REWARDS,createProfile,normalizeProfile,settleRace,milestoneProgress,bestKey,createPlayerRegistry,savePlayers,loadPlayers,activePlayer,createPlayer,selectPlayer} from '../src/progression.js';
@@ -28,7 +29,7 @@ memory.clear();globalThis.localStorage=storage;const app=new App();app.startCamp
 const trial=COURSE.findIndex(stage=>stage.stuntTrial);
 if(trial>=0){
   for(const cpuDifficulty of ['easy','medium','hard']){
-    memory.clear();const demo=new App();demo.profile.credits=20000;demo._saveProfile();demo.unlockCar('titan_monster');demo.autopilot=true;
+    memory.clear();const demo=ownTestCourses(new App());demo.profile.credits=20000;demo._saveProfile();demo.unlockCar('titan_monster');demo.autopilot=true;
     check(demo.startCampaign({startStage:trial,car:'titan_monster',cpuDifficulty,mode:'timetrial'}),'owned stunt trial starts');check(demo.duel.state.mode==='duel'&&demo.ghostRecorder===null,'objective trial cannot enter ordinary ghost recording');
     for(let i=0;i<1500&&['countdown','racing','ticket'].includes(demo.duel.state.status);i++)demo.advance(.1);
     const result=demo.duel.state.results;check(result?.completed&&result.won&&result.targetsMet,`${cpuDifficulty}: input-only App demo completes actual laps and stunt targets`);check(result.milestoneAwards.some(row=>row.id==='arena_show'),`${cpuDifficulty}: genuine objective win can earn arena milestone`);check(demo.ghosts.records.length===0,'objective trial cannot save a Time Trial ghost');

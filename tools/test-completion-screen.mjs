@@ -2,18 +2,19 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {COURSE} from '../src/config.js';
 import {Duel} from '../src/game.js';
+import {COURSE_PRICES,isCourseUnlocked} from '../src/course-access.js';
 
 let checks=0;const check=(ok,message)=>{assert.ok(ok,message);checks++;};
 const main=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
 const modal=main.slice(main.indexOf('function modalScreen(s) {'),main.indexOf('\nfunction renderState(s) {'));
-const app={runId:'ui-test',menuStage:0},wallet={credits:12300};
+const app={runId:'ui-test',menuStage:0},wallet={credits:12300,courses:{version:1,unlocked:COURSE.map(course=>course.id)}};
 // Execute the production modal without booting the browser or changing saves.
-const render=new Function('COURSE','app','metric','time','credits','action','profile','escapeHTML',`let lastEventResult=null;${modal};return modalScreen;`)(
-  COURSE,app,(label,value)=>`<dt>${label}</dt><dd>${value}</dd>`,value=>Number(value).toFixed(2),value=>Number(value||0).toLocaleString('en-US'),label=>`<button>${label}</button>`,()=>wallet,value=>String(value));
+const render=new Function('COURSE','app','metric','time','credits','action','profile','escapeHTML','isCourseUnlocked','COURSE_PRICES',`let lastEventResult=null;${modal};return modalScreen;`)(
+  COURSE,app,(label,value)=>`<dt>${label}</dt><dd>${value}</dd>`,value=>Number(value).toFixed(2),value=>Number(value||0).toLocaleString('en-US'),label=>`<button>${label}</button>`,()=>wallet,value=>String(value),isCourseUnlocked,COURSE_PRICES);
 const expected={chase:'CITY<br>ESCAPED.',rally:'TRAIL<br>CONQUERED.',drift:'DRIFT<br>MASTERED.',checkpoint:'GATES<br>CLEARED.',circuit:'CIRCUIT<br>CONQUERED.'};
 
 for(const [stageIndex,stage]of COURSE.entries()){
-  if(!stage.kind)continue;
+  if(!stage.kind||stage.practice)continue;
   const duel=new Duel({seed:1989});duel.startCampaign({startStage:stageIndex,car:stage.requiredCar});
   const s=duel.state;s.status='stage_result';s.completedLaps=s.lapsTotal;s.stageTimeSec=99.68;s.totalTimeSec=99.68;
   s.results={won:true,completed:true,timeSec:99.68,creditReward:2300,driftScore:6000,driftTarget:3500,checkpointsPassed:12,checkpointsRequired:12,jumps:4,crushCount:4,...(stage.stuntTrial?{objective:'stuntTrial'}:{})};
@@ -57,4 +58,4 @@ for(const [stageIndex,stage]of COURSE.entries()){
   check(html.includes('TOTAL TIME')&&html.includes('LIVES LEFT')&&html.includes('STYLE POINTS'),'campaign retains its meaningful run metrics');
   check(html.includes('CHASE IT AGAIN')&&html.includes('MAIN MENU'),'campaign actions remain unchanged');
 }
-console.log(`Completion screen: ${checks} checks passed across all ${COURSE.filter(stage=>stage.kind).length} standalone events and the three-circuit campaign, including real final-state replacement, circuit duel/Time Trial copy, losses and stale result isolation.`);
+console.log(`Completion screen: ${checks} checks passed across all ${COURSE.filter(stage=>stage.kind&&!stage.practice).length} standalone races and the three-circuit campaign, including real final-state replacement, circuit duel/TimeTrial copy, losses and stale result isolation.`);
