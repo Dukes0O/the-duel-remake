@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 
 .qa-dist/
+.qa-blender/
+.qa-art/

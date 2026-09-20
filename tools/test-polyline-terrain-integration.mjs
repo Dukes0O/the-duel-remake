@@ -27,6 +27,15 @@ const before={
   'titan-stunt-trial':['5f346798466b9aa20248352fcd879e0693a6c98a355300f4347efd19a54de01b',emptyHash,emptyHash],
   'neon-drift-trial':['f07f86f14b514cccfd80166b6cf42a86a82c1a123e2e81401e478eb94c9c9586',emptyHash,'65e2d8fbddc8b3d47f8973125f2e37c0ee5bd6ed1e9abddc8ff8a545d81298df'],
   'timberline-rush':['59e0ca753a67a22b73ecc8a5449ea20a45d3979eae9772c07f31309166893dd9','695a4c6784eff52a33c82003343a827c49c27c8ecce381801d3f725077cb7a7c',emptyHash],
+  // Six authored expansion circuits: 64 m near ribbon, 16 m far grid with
+  // audited gap overlap, and rim placement sampled against those triangles.
+  // The nine legacy snapshots above remain exact and unchanged.
+  'eifel-crown':['4ae50477325eadbadcf8c0d92a7f9a15713a6c472c6da5f176f61b644ce1f63d','d961204d90069eadae3b3e7296449d31a833019fb084ef9b343ba2adbd1607d2',emptyHash],
+  'alpine-serpent':['98e2a718dea98e3a4f3b6b435f5a5ce4f40b2dd3d02daba135fd95ecfd3ab3c9','d0278c4ce1fe7ee3088274b2424759608de3e04ec8be31e67eda061ea1a52551',emptyHash],
+  'azure-riviera':['149e05cc8727dd3727347fd1acb535933af62613272f0914544cfab2d0f31fee','455f15afbc28d5e4455f7ccb2f5a789e637908c9482fb5e7c15581c9a1068b03',emptyHash],
+  'red-mesa':['2d6ec82b1b37b21739ac0702db56f876e2c03ad8c8af4a0a00106cdd56b89648','2b495c2d55aa5afd0c9bc32952bea1d31c47745e5de6f835a3d76ac8a35fce3d',emptyHash],
+  'neon-docks':['d7d8d2b0b944d7cd5f89038f745c1e3af24ec04f83a06be6bd2e034ed92b23c9','08e1020089a62020adccc089dd659cf53f0fdd649f538b312caadee37a4042ef',emptyHash],
+  'cloudbreak-skyway':['254becc33a1a45b0f6de9f706d66207adc6cc287ff382688e9c69a939d7d7835','6a55a0523445e315175380d563ca01608ec78c2072d25f4ef8ea2e9c4c9fcdce',emptyHash],
 };
 function geometryHash(geometry){
   const hash=createHash('sha256');for(const[name,attribute]of Object.entries(geometry.attributes).sort(([a],[b])=>a.localeCompare(b))){hash.update(name);hash.update(Buffer.from(attribute.array.buffer));}
@@ -45,15 +54,18 @@ function legacyIndex(points){return{query(x,z){
 // does not add a test hook or a dependency override to the shipped scene API.
 const dataUrl=source=>'data:text/javascript;base64,'+Buffer.from(source).toString('base64');
 const legacyQueryModule=dataUrl(`export const createPolylineIndex=${legacyIndex.toString()};`);
-async function legacyModule(file){
+async function legacyModuleUrl(file){
   const url=new URL(`../src/${file}`,import.meta.url);let source=await readFile(url,'utf8');
-  check(source.includes("from './polyline-index.js'"),`${file} uses the shared index`);
+  const usesFarSampler=source.includes("from './far-terrain-surface.js'");
+  check(source.includes("from './polyline-index.js'")||usesFarSampler,`${file} uses the shared index directly or through its far-surface sampler`);
+  const legacyFarSampler=usesFarSampler?await legacyModuleUrl('far-terrain-surface.js'):null;
   source=source.replace(/from\s+(['"])([^'"]+)\1/g,(match,quote,specifier)=>{
-    const resolved=specifier==='./polyline-index.js'?legacyQueryModule:specifier.startsWith('.')?new URL(specifier,url).href:import.meta.resolve(specifier);
+    const resolved=specifier==='./polyline-index.js'?legacyQueryModule:specifier==='./far-terrain-surface.js'?legacyFarSampler:specifier.startsWith('.')?new URL(specifier,url).href:import.meta.resolve(specifier);
     return `from ${JSON.stringify(resolved)}`;
   });
-  return import(dataUrl(source));
+  return dataUrl(source);
 }
+async function legacyModule(file){return import(await legacyModuleUrl(file));}
 const [legacyWorld,legacyMountain,legacyCity]=await Promise.all(['world-surfaces.js','mountain-landscape.js','city-skyline.js'].map(legacyModule));
 const benchmarks=[];
 for(const def of COURSE){

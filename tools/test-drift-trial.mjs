@@ -8,11 +8,11 @@ let checks = 0;
 const check = (condition, label) => { assert.ok(condition, label); checks++; };
 const index = COURSE.findIndex(event => event.id === 'neon-drift-trial');
 function trial(cpuDifficulty = 'hard') {
-  const d = new Duel({ seed: 1989 }); d.startCampaign({ startStage: index, cpuDifficulty, car: 'falcone_f42', mode: 'timetrial' }); return d;
+  const d = new Duel({ seed: 1989 }); d.startCampaign({ startStage: index, cpuDifficulty, car: 'banshee_muscle', mode: 'timetrial' }); return d;
 }
 for (const [level, target, limit] of [['easy', 3500, 150], ['medium', 5000, 125], ['hard', 6000, 110]]) {
   const d = trial(level), s = d.state;
-  check(s.car === 'banshee_muscle' && s.mode === 'duel' && s.lapsTotal === 2, 'the drift trial enforces its car, objective mode and two laps');
+  check(s.car === 'banshee_muscle' && s.mode === 'duel' && s.lapsTotal === 2, 'the intended Banshee drift fixture retains the chosen car, objective mode and two laps');
   check(!s.rival && !s.traffic.length && !s.police.pursuit && !d.course.features.radarTraps.length, 'closed city streets have no rival, traffic or pursuit');
   check(s.objective.kind === 'driftTrial' && s.objective.targetScore === target && s.timeLimitSec === limit && s.timeRemaining === limit, `${level} uses its stated score and time goals`);
   check(s.drift.bankedScore === 0 && s.drift.chainScore === 0 && s.drift.visitedTo === 0, 'each entry starts fresh scoring and visited intervals');
@@ -80,7 +80,7 @@ for (const cpuDifficulty of ['easy', 'medium', 'hard']) for (const difficulty of
   const outcomes = [];
   for (const fps of [30, 144]) {
     const app = new App(); app.autopilot = true;
-    app.duel.startCampaign({ startStage: index, cpuDifficulty, difficulty, seed: 1989 }); app._scriptedCrashDone = true;
+    app.duel.startCampaign({ startStage: index, car: 'banshee_muscle', cpuDifficulty, difficulty, seed: 1989 }); app._scriptedCrashDone = true;
     let frames = 0;
     while (!['stage_result', 'gameover'].includes(app.duel.state.status) && frames++ < fps * 200) app.advance(1 / fps);
     const s = app.duel.state, r = s.results;
@@ -94,7 +94,7 @@ for (const cpuDifficulty of ['easy', 'medium', 'hard']) for (const difficulty of
 }
 const recoveryReplays = [];
 for (const level of ['easy', 'medium', 'hard']) {
-  const app = new App(); app.autopilot = true; app.duel.startCampaign({ startStage: index, cpuDifficulty: level, seed: 1989 }); app._scriptedCrashDone = true;
+  const app = new App(); app.autopilot = true; app.duel.startCampaign({ startStage: index, car: 'banshee_muscle', cpuDifficulty: level, seed: 1989 }); app._scriptedCrashDone = true;
   let hit = false, frames = 0;
   while (!['stage_result', 'gameover'].includes(app.duel.state.status) && frames++ < 120 * 180) {
     const s = app.duel.state;

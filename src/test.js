@@ -23,13 +23,16 @@ ok(!/ferrari|porsche/i.test(JSON.stringify(CARS)), 'no real trademarks in car da
 
 // --- Mixed-biome circuits close cleanly and keep the driving lanes clear ---
 eq(COURSE.filter(course => !course.kind).length, 3, 'three mixed circuits in the campaign');
+eq(COURSE.filter(course => course.kind === 'circuit').length, 6, 'six standalone expansion circuits');
+eq(new Set(COURSE.filter(course => course.kind === 'circuit').map(course => course.id)).size, 6, 'expansion circuits have unique stable identities');
 ok(COURSE.some(course => course.kind === 'arena'), 'the monster arena is a separate event');
 for (const definition of COURSE) {
   const course = new Course(definition, 611);
   const start = course.at(0), finish = course.at(course.length), before = course.at(course.length - .01), after = course.at(.01);
   ok(Math.hypot(start.x - finish.x, start.z - finish.z) < .001 && Math.hypot(before.x - after.x, before.z - after.z) < .04, `${definition.name}: the circuit closes without a position jump`);
   eq(course.raceLength, course.length * 2, `${definition.name}: a complete event covers two laps`);
-  if (!['arena', 'chase', 'drift'].includes(definition.kind)) ok(new Set(course.sections.map(section => section.theme)).size >= 2, `${definition.name}: several landscapes appear within one lap`);
+  if (!['arena', 'chase', 'drift', 'circuit'].includes(definition.kind)) ok(new Set(course.sections.map(section => section.theme)).size >= 2, `${definition.name}: several landscapes appear within one lap`);
+  if (definition.kind === 'circuit') ok(course.sections.length >= 3 && course.sections.every(section => typeof section.name === 'string' && section.name.trim()), `${definition.name}: standalone circuit has named driving sections without requiring mixed biomes`);
   let clear = true;
   for (let s = 8; s < course.length; s += 32) {
     for (const lateral of [-DRIVE.laneOffset, DRIVE.laneOffset]) {
@@ -928,7 +931,7 @@ function crossGate(duel, actor, gate, lateral = 0) {
   const d=new Duel();const arena=COURSE.findIndex(course=>course.kind==='arena');d.startCampaign({startStage:arena,car:'titan_monster'});
   d.state.status='stage_result';d.nextStage();eq(d.state.status,'complete','the arena is one standalone event');
   d.startCampaign({startStage:arena-1});d.state.status='stage_result';d.nextStage();
-  eq(d.state.status,'complete','the main campaign finishes before the locked arena');
+  eq(d.state.status,'complete','the main campaign finishes before the standalone events');
 }
 
 // --- Arena ramps launch the truck, land cleanly and reward each ramp once per lap ---
@@ -1008,11 +1011,11 @@ if (!process.env.DUEL_SKIP_CAMPAIGNS) {
     const outcomes=[];
     for(const fps of [30,144]){
       const app=new App();app.autopilot=true;app.duel.seed=1989;
-      app.duel.startCampaign({startStage:event.stage,car:event.requiredCar,cpuDifficulty:'easy'});app._scriptedCrashDone=true;
+      app.duel.startCampaign({startStage:event.stage,car:event.requiredCar||'falcone_f42',cpuDifficulty:'easy'});app._scriptedCrashDone=true;
       let frames=0;while(!['stage_result','gameover'].includes(app.duel.state.status)&&frames++<fps*400)app.advance(1/fps);
       const s=app.duel.state;outcomes.push({status:s.status,time:s.totalTimeSec,score:s.score,hits:s.majorCrashes,jumps:s.jumps,won:s.results?.won,laps:s.completedLaps});
     }
-    ok(outcomes.every(outcome=>outcome.status==='stage_result'&&outcome.laps===2&&outcome.won),`${event.name}: its required car can win both complete laps`);
+    ok(outcomes.every(outcome=>outcome.status==='stage_result'&&outcome.laps===2&&outcome.won),`${event.name}: its recommended/default car can win both complete laps`);
     ok(outcomes.every(outcome=>Math.abs(outcome.time-outcomes[0].time)<.001&&outcome.score===outcomes[0].score&&outcome.hits===outcomes[0].hits&&outcome.jumps===outcomes[0].jumps),`${event.name}: event and jump scoring agree across display frame rates`);
     if(event.kind==='arena')eq(outcomes[0].jumps,6,'the complete arena demo scores every ramp on both laps');
   }

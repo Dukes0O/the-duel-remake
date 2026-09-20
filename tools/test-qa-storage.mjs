@@ -14,7 +14,7 @@ storage.setItem(2,3);same(storage.getItem('2'),'3','keys are normalized');storag
 const second={};installIsolatedStorage(second);storage.setItem('wallet',50);same(second.localStorage.getItem('wallet'),null,'test pages have separate memory');
 const blocked={};Object.defineProperty(blocked,'localStorage',{value:{},configurable:false});
 assert.throws(()=>installIsolatedStorage(blocked),TypeError);checks++;
-for(const file of ['visual-check','reward-check','reverse-check','contact-check','jump-height-check']){
+for(const file of ['visual-check','reward-check','reverse-check','contact-check','jump-height-check','update-check','menu-check']){
   const source=readFileSync(new URL(`./${file}.js`,import.meta.url),'utf8');
   assert.ok(source.includes("from './qa-storage.js'"));checks++;
   const install=source.indexOf('installIsolatedStorage();'),appImport=source.search(/await import\('\.\.\/src\/(?:main|app)\.js'\)/);

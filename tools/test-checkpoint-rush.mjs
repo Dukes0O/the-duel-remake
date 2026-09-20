@@ -8,13 +8,13 @@ import { sweepObstacle } from '../src/collision.js';
 let checks=0;
 const check=(value,label)=>{assert.ok(value,label);checks++;};
 const index=COURSE.findIndex(event=>event.id==='timberline-rush'),definition=COURSE[index];
-function trial(cpuDifficulty='hard',seed=1989){const d=new Duel({seed});d.startCampaign({startStage:index,cpuDifficulty,car:'falcone_f42',mode:'timetrial'});return d;}
+function trial(cpuDifficulty='hard',seed=1989){const d=new Duel({seed});d.startCampaign({startStage:index,cpuDifficulty,car:'dusthawk_rally',mode:'timetrial'});return d;}
 function cross(d,gateIndex,lateral=0){const s=d.state,gate=d.course.features.rushGates[gateIndex%6],lap=Math.floor(gateIndex/6),distance=gate.s+lap*d.course.length;
   Object.assign(s,{status:'racing',prevS:distance-.2,s:distance+.2,prevLateral:lateral,lateral,speedMph:120,completedLaps:lap});d._advanceRushGates(1/120);}
 
 for(const [level,initial,extension]of[['easy',40,10],['medium',34,8],['hard',30,7]]){
   const d=trial(level),s=d.state;
-  check(s.car==='dusthawk_rally'&&s.mode==='duel'&&s.lapsTotal===2,'checkpoint entry enforces Dusthawk, objective mode and two laps');
+  check(s.car==='dusthawk_rally'&&s.mode==='duel'&&s.lapsTotal===2,'the intended Dusthawk checkpoint fixture retains the chosen car, objective mode and two laps');
   check(!s.rival&&!s.traffic.length&&!s.police.pursuit&&!d.course.features.radarTraps.length,'the rally challenge has no traffic, rival or police');
   check(s.checkpointRush.total===12&&s.timeRemaining===initial&&s.checkpointRush.extensionSec===extension,'each difficulty has its advertised starting clock and extension');
   check(s.objective.kind==='checkpointRush'&&s.objective.targetCheckpoints===12,'the objective advertises all twelve gates');
@@ -95,7 +95,7 @@ const replays=[];
 for(const seed of[1989,42])for(const cpuDifficulty of['easy','medium','hard'])for(const difficulty of['casual','pro']){
   const outcomes=[];
   for(const fps of[30,144]){
-    const app=new App();app.autopilot=true;app._scriptedCrashDone=true;app.duel.startCampaign({startStage:index,cpuDifficulty,difficulty,seed});
+    const app=new App();app.autopilot=true;app._scriptedCrashDone=true;app.duel.startCampaign({startStage:index,car:'dusthawk_rally',cpuDifficulty,difficulty,seed});
     let frames=0,minRemaining=Infinity,passes=0;app.duel.onChange((s,event)=>{if(event.checkpointRushEvent){passes++;minRemaining=Math.min(minRemaining,s.timeRemaining-event.checkpointRushEvent.extensionSec);}});
     while(!['stage_result','gameover'].includes(app.duel.state.status)&&frames++<fps*180)app.advance(1/fps);
     const s=app.duel.state,r=s.results;outcomes.push({time:r?.timeSec,won:r?.won,completed:r?.completed,passed:r?.checkpointsPassed,missed:r?.checkpointMisses,hits:s.majorCrashes,resets:s.boundaryResets,laps:s.completedLaps,minRemaining:+minRemaining.toFixed(3),events:passes});
@@ -106,7 +106,7 @@ for(const seed of[1989,42])for(const cpuDifficulty of['easy','medium','hard'])fo
 }
 const recovery=[];
 for(const cpuDifficulty of['easy','medium','hard']){
-  const app=new App();app.autopilot=true;app._scriptedCrashDone=true;app.duel.startCampaign({startStage:index,cpuDifficulty});let frames=0,hit=false;
+  const app=new App();app.autopilot=true;app._scriptedCrashDone=true;app.duel.startCampaign({startStage:index,car:'dusthawk_rally',cpuDifficulty});let frames=0,hit=false;
   while(!['stage_result','gameover'].includes(app.duel.state.status)&&frames++<120*190){const s=app.duel.state;
     if(!hit&&s.s>1500){app.duel._crash('rock');hit=true;}app.advance(1/120);}
   const s=app.duel.state;check(hit&&s.stageCrashes===1&&s.majorCrashes===(s.results.won?0:1)&&s.racePenaltySec===LIVES.crashPenaltySec,'a replay crash keeps its thirty-second cost and stage evidence; only a win repairs it');

@@ -51,3 +51,5 @@ Idle, low/mid load and coasting loops also use the same 90 ms circular RMS level
 Downloaded and processed 19 September 2026. Keep this attribution file and the in-game Audio Credits link when distributing the audio. Rebuild processed WAVs with `npm run assets:audio`.
 
 Harmless arena junk-car crushing reuses the original synthesized collision-noise buffer at a lower playback rate and gain, with a short original metallic tone. It does not use a recorded crash source or the catastrophic explosion sample.
+
+The engine-response expansion also reduces a narrow 43 Hz drone in `engine-load-high.wav` and `engine-loop.wav`, using a Q 3.5 notch blended with 14% of the dry signal. Both loops use level matching and circular RMS leveling. The retained source recording is unchanged. Runtime rev pitch now has a wider, continuous contour; the coast texture is tuned to its measured 63.5 Hz fundamental. No new source or licence is involved. See `docs/AUDIO_EXPANSION.md` for processing and test details.

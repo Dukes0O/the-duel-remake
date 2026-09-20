@@ -11,7 +11,8 @@ const ray=new THREE.Raycaster();
 for(const seed of[1989,42])for(const def of COURSE.filter(def=>def.sections.some(section=>section.theme==='alpine'))){
   const course=new Course(def,seed),structures=addRaceStructures(new THREE.Group(),course);structures.updateMatrixWorld(true);
   const lining=structures.children.filter(mesh=>mesh.name==='Circuit lining surface');
-  check(lining.length===1,`${def.id}: original tunnel lining is retained`);
+  check(lining.length===(course.features.tunnels.length?1:0),`${def.id}: lining exists exactly when the actual course has tunnels`);
+  if(def.expansion)check(course.features.tunnels.length===def.expansion.tunnelSections.length,`${def.id}: tunnels follow the authored expansion sections`);
   for(const tunnel of course.features.tunnels)for(const geometry of Object.values(buildTunnelWallDetails(course,tunnel))){
     const positions=geometry.attributes.position,normals=geometry.attributes.normal;triangles+=positions.count/3;
     for(let i=0;i<positions.count;i++){

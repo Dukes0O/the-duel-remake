@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
 import {sweepObstacle} from '../src/collision.js';
-let checks=0,maxGrade=0;
+let checks=0,maxGrade=0,maxExpansionGrade=0;
 const check=(value,message)=>{assert.ok(value,message);checks++;};
 for(const seed of[1989,42,17,2026])for(const def of COURSE){
  const course=new Course(def,seed),tag=`${def.id}/${seed}`;
@@ -10,7 +10,7 @@ for(const seed of[1989,42,17,2026])for(const def of COURSE){
  if(def.layout&&def.layout!=='city'){
   const curves=course.samples.map(p=>p.curvature);
   check(curves.some(k=>k>.00003)&&curves.some(k=>k<-.001),`${tag}: flowing reverse bends`);
-  check(Math.max(...curves.map(Math.abs))<1/170,`${tag}: terrain ribbon cannot fold across the road`);
+  check(Math.max(...curves.map(Math.abs))<1/(def.expansion?84:170),`${tag}: terrain ribbon cannot fold across the road`);
   check(def.layoutVersion>=2,`${tag}: revised geometry uses separate leaderboard records`);
  }
  if(['canyon','highland','harbor','ridge'].includes(def.layout)){
@@ -33,7 +33,8 @@ for(const seed of[1989,42,17,2026])for(const def of COURSE){
  }
  for(let s=0;s<course.length;s+=8){
   const width=course.roadHalfWidthAt(s),previous=course.worldAt(s-4),next=course.worldAt(s+4);
-  maxGrade=Math.max(maxGrade,Math.abs(next.y-previous.y)/8);
+  const grade=Math.abs(next.y-previous.y)/8;
+  if(def.expansion)maxExpansionGrade=Math.max(maxExpansionGrade,grade);else maxGrade=Math.max(maxGrade,grade);
   for(const lateral of[-Math.min(5,width-2),0,Math.min(5,width-2)]){
    const a=course.worldAt(s,lateral),b=course.worldAt(s+4,lateral);
    const contact=course.obstaclesNear(s,s+4).find(o=>sweepObstacle(a,b,o,a.heading,{halfWidth:1.1,halfLength:2.45}));
@@ -53,4 +54,5 @@ for(const seed of[1989,42,17,2026])for(const def of COURSE){
  if(course.sections.some(s=>s.theme==='alpine'))check(Math.max(...course.samples.map(s=>s.y))-Math.min(...course.samples.map(s=>s.y))>60,`${tag}: real mountain climbs`);
 }
 check(maxGrade<.17,`Maximum road grade remains drivable: ${maxGrade}`);
-console.log(`Circuit geometry: ${checks} checks across ${COURSE.length} events and four seeds; steepest road ${(maxGrade*100).toFixed(1)}%.`);
+check(maxExpansionGrade<.32,`Expansion road grade stays within the authored 32% limit: ${maxExpansionGrade}`);
+console.log(`Circuit geometry: ${checks} checks across ${COURSE.length} events and four seeds; steepest legacy road ${(maxGrade*100).toFixed(1)}%, expansion ${(maxExpansionGrade*100).toFixed(1)}%.`);

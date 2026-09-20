@@ -15,6 +15,7 @@ import {attachRenderer} from '../src/render3d.js';
 import {installPerformanceReview} from './performance-review.js';
 
 let smokePauseAt=null;
+let pauseAtFlight=false;
 const app=new App();const view=document.querySelector('#view');attachRenderer(view,app);
 const performanceReview=installPerformanceReview(app,view,document.querySelector('nav'),{hudSource:'visual-check telemetry (not production HUD)'});
 if(import.meta.hot)import.meta.hot.dispose(()=>performanceReview.dispose());
@@ -22,6 +23,15 @@ if(import.meta.hot)import.meta.hot.dispose(()=>performanceReview.dispose());
 for(const [id,label,fn]of[
 
   ['ambient','Toggle graphics quality',()=>{app.ambientOcclusionEnabled=app.ambientOcclusionEnabled===false;}],
+
+  ...COURSE.filter(def=>def.expansion).flatMap(def=>{
+    const stage=COURSE.indexOf(def),prepare=()=>{app.setLightingMood(def.defaultMood);scene(stage,def.lengthU*def.expansion.landmarkFraction-150);};
+    return [
+      [`${def.id}-approach`,`${def.name} approach`,prepare],
+      [`${def.id}-landmark`,`${def.name} landmark`,()=>{prepare();const p=app.duel.course.features.setPieces[0],c=Math.cos(p.heading),sn=Math.sin(p.heading);app.duel.state.s=p.s;app.inspectionCamera={position:[p.x+c*30+sn*36,p.baseY+18,p.z-sn*30+c*36],target:[p.x,p.baseY+p.height*.45,p.z]};}],
+      [`${def.id}-drive`,`${def.name} crest drive`,()=>{prepare();Object.assign(app.duel.state,{s:def.expansion.crests[0][0]*def.lengthU-220,speedMph:150,gear:4,paused:false});smokePauseAt=app.duel.state.totalTimeSec+10;pauseAtFlight=true;app.autopilot=true;app._scriptedCrashDone=true;}],
+    ];
+  }),
 
   ['coast','Coast scene',()=>scene(0,2850)],['harbor','Harbor scene',()=>scene(2,700)],
   ['harbor-crane','Harbor crane detail',()=>{scene(2,420);const p=app.duel.course.groundAt(420,130),c=Math.cos(p.heading),sn=Math.sin(p.heading);app.inspectionCamera={position:[p.x-c*64+sn*36,p.y+31,p.z+sn*64+c*36],target:[p.x,p.y+29,p.z]};}],
@@ -98,7 +108,7 @@ for(const [id,label,fn]of[
 
 if(location.port==='5175'){const button=document.createElement('button');button.textContent='Create funded QA player';button.onclick=()=>{app.returnToMenu();const player=app.players.players.find(p=>p.name==='Garage QA');if(player)app.selectPlayer(player.id);else app.addPlayer('Garage QA');app.profile={...app.profile,credits:Math.max(app.profile.credits,40000)};app._saveProfile();};document.querySelector('nav').append(button);}
 
-function scene(stage,s,car='falcone_f42',seed=1989){smokePauseAt=null;document.body.classList.remove('smoke-check');app.autopilot=false;app.inspectionCamera=null;app.duel.startCampaign({startStage:stage,car,seed});Object.assign(app.duel.state,{status:'racing',s,traffic:[],rival:null,paused:true});app.cameraMode='chase';}
+function scene(stage,s,car='falcone_f42',seed=1989){smokePauseAt=null;pauseAtFlight=false;document.body.classList.remove('smoke-check');app.autopilot=false;app.inspectionCamera=null;app.duel.startCampaign({startStage:stage,car,seed});Object.assign(app.duel.state,{status:'racing',s,traffic:[],rival:null,paused:true});app.cameraMode='chase';}
 
 const start=()=>{app.inspectionCamera=null;app.startCampaign();const s=app.duel.state;s.status='racing';s.s=172;s.traffic=[];s.rival=null;};
 
@@ -127,6 +137,7 @@ document.querySelector('#chickens').onclick=()=>{start();app.duel.state.s=179;ap
 document.querySelector('#offroad').onclick=()=>{scene(1,3100);app.duel.state.lateral=-45;};
 
 app.onFrame=s=>{
+  if(pauseAtFlight&&s.airborne&&s.airHeight>.8){s.paused=true;pauseAtFlight=false;smokePauseAt=null;}
   if(smokePauseAt!==null&&s.totalTimeSec>=smokePauseAt){s.paused=true;smokePauseAt=null;}
   const d=view.dataset;
   document.querySelector('#state').textContent=[
@@ -139,7 +150,7 @@ app.onFrame=s=>{
     `Renderer setup ${d.rendererSetupMs||0} ms · attach-to-first-picture ${d.visualReadyMs||0} ms`,
     `World builds ${d.worldBuilds||0} (build CPU ${d.worldBuildMs||0} ms · first frame CPU ${d.firstFrameMs||0} ms · build-to-present wall ${d.worldReadyMs||0} ms)`,
     `Shader warmup ${d.warmupStatus||'off'} · parallel ${d.parallelShaderCompile||'unknown'} · submit ${d.warmupSubmitMs||0} ms · wait ${d.warmupWaitMs||0} ms · Quality ${d.edgeSmoothing==='true'?'High':'Performance'} · shadow ${d.shadowResolution||'loading'} · paint ${d.paint||'factory'}`,
-    `Nitro ${s.boost.toFixed(2)} · crushes ${s.crushCount} · flocks ${s.collectedFlocks.length} · boundary resets ${s.boundaryResets} · lateral ${s.lateral.toFixed(1)}`,
+    `Nitro ${s.boost.toFixed(2)} · crushes ${s.crushCount} · flocks ${s.collectedFlocks.length} · boundary resets ${s.boundaryResets} · lateral ${s.lateral.toFixed(1)} · height ${(s.airHeight||0).toFixed(2)} m`,
   ].join('\n');
 };
 app.start();

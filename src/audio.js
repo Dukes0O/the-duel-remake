@@ -5,6 +5,10 @@ const ENGINE_BANDS = [
   { key: 'loadMid', rpm: .65, toneHz:81 }, { key: 'loadHigh', rpm: .82, toneHz:86 },
 ];
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+// A continuous 18.6-semitone sweep makes each gear audible. Texture crossfades
+// retain the same tonal target, so switching recordings cannot reset the pitch.
+const engineTone = revs => 52 * 2 ** (clamp(revs, 0, 1.15) * 1.55);
+const engineRate = (tone, reference, pitch, ceiling = 2.2) => clamp(tone / reference * pitch, .48, ceiling);
 // Original voicing of shared licensed recordings, not recordings of each car.
 // Heritage changes the body, not the F42 engine or its recorded sound mix.
 const FALCONE_VOICE={pitch:1,brightness:1,gain:1,accent:1,exhaust:.14,intake:.09};
@@ -35,7 +39,8 @@ export class EngineAudio {
     this.samples = {}; this.sampleStatus = 'locked';
     this.ambience={};this.ambienceStatus='locked';this._ambiencePromise=null;
     this.smoothedLoad = 0; this.smoothedSlip = 0; this.lastThrottle = 0; this.lastUpdateTime = 0;
-    this.nextThrottle = 0; this.shiftStarted = 0; this.shiftUntil = 0; this.activeShots = new Set();
+    this.nextThrottle = 0; this.nextLift = 0; this.shiftStarted = 0; this.shiftUntil = 0; this.activeShots = new Set();
+    this._samplesPromise = null;
     this.carVoice=CAR_VOICES.falcone_f42;
   }
 
@@ -98,7 +103,8 @@ export class EngineAudio {
     this._loadAmbience();
   }
 
-  async _loadSamples() {
+  _loadSamples() {
+    if(this._samplesPromise)return this._samplesPromise;
     this.sampleStatus='loading';
     const entries=[
       ['engine','engine-loop.wav'], ['squeal','tire-loop.wav'],
@@ -108,7 +114,7 @@ export class EngineAudio {
       ['lift','engine-lift.wav',true], ['shift','engine-shift.wav',true],
       ['explosion','catastrophic-blast.wav',true],
     ];
-    const results=await Promise.allSettled(entries.map(async([key,file,oneShot])=>{
+    this._samplesPromise=Promise.allSettled(entries.map(async([key,file,oneShot])=>{
       const response=await fetch(`/assets/audio/${file}`);if(!response.ok)throw Error(file);
       const buffer=await this.context.decodeAudioData(await response.arrayBuffer());
       if(oneShot){this.samples[key]=buffer;return;}
@@ -127,8 +133,8 @@ export class EngineAudio {
         intake={filter:intakeFilter,gain:intakeGain};
       }
       source.start();this.samples[key]={source,gain,filter,body,intake};
-    }));
-    this.sampleStatus=results.every(r=>r.status==='fulfilled')?'ready':'fallback';
+    })).then(results=>{this.sampleStatus=results.every(r=>r.status==='fulfilled')?'ready':'fallback';});
+    return this._samplesPromise;
   }
 
   _loadAmbience(){
@@ -158,14 +164,15 @@ export class EngineAudio {
     }
   }
 
-  _sample(buffer,volume=1,rate=1,destination=this.master) {
+  _sample(buffer,volume=1,rate=1,destination=this.master,maxDuration=Infinity) {
     const ctx=this.context,source=ctx.createBufferSource(),gain=ctx.createGain(),start=ctx.currentTime;
     source.buffer=buffer;source.playbackRate.value=rate;
-    const duration=buffer.duration/rate;
+    const duration=Math.min(buffer.duration/rate,maxDuration);
     gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(volume,start+.008);
     gain.gain.setValueAtTime(volume,start+Math.max(.009,duration-.035));gain.gain.linearRampToValueAtTime(0,start+duration);
     source.connect(gain);gain.connect(destination);source.start();
-    const voice={source,gain};this.activeShots.add(voice);
+    if(Number.isFinite(maxDuration))source.stop(start+duration+.01);
+    const voice={source,gain,endAt:start+duration+.01};this.activeShots.add(voice);
     source.onended=()=>{source.disconnect();gain.disconnect();this.activeShots.delete(voice);};
     return voice;
   }
@@ -176,7 +183,7 @@ export class EngineAudio {
     const t=this.context.currentTime;
     voice.gain.gain.cancelScheduledValues(t);
     voice.gain.gain.setTargetAtTime(0,t,.018);
-    try{voice.source.stop(t+.08);}catch(_){}
+    try{voice.source.stop(Math.min(t+.08,voice.endAt??Infinity));}catch(_){}
   }
 
   _noiseLayer(type, frequency,destination=this.master) {
@@ -192,11 +199,12 @@ export class EngineAudio {
     this.muted = !!muted;
     try { localStorage.setItem('duel_audio_muted', String(this.muted)); } catch (_) {}
     this._volume();
+    if(this.muted)for(const voice of this.activeShots)this._stopShot(voice);
   }
   toggleMute() { this.unlock(); this.setMuted(!this.muted); return this.muted; }
   setPaused(paused) {
     this.paused = !!paused; this._volume();
-    if(this.paused){for(const voice of this.activeShots)this._stopShot(voice);this.lastThrottle=0;}
+    if(this.paused){for(const voice of this.activeShots)this._stopShot(voice);this.lastThrottle=0;this.shiftStarted=this.shiftUntil=0;}
   }
   _volume() {
     if (this.context) this.master.gain.setTargetAtTime(this.muted || this.paused ? 0 : 0.42, this.context.currentTime, 0.025);
@@ -223,7 +231,7 @@ export class EngineAudio {
     // Input remains W/RT and S/LT; reverse swaps which pedal loads the engine.
     const throttleInput=st.gear===-1?st.input.brake:st.input.throttle,brakeInput=st.gear===-1?st.input.throttle:st.input.brake;
     const throttle=running?clamp(throttleInput,0,1):0;
-    this.smoothedLoad+=(throttle-this.smoothedLoad)*(1-Math.exp(-dt/.065));
+    this.smoothedLoad+=(throttle-this.smoothedLoad)*(1-Math.exp(-dt/(throttle>this.smoothedLoad?.045:.09)));
     const load=this.smoothedLoad;
     let shiftCut=1;
     if(t<this.shiftUntil&&this.shiftUntil>this.shiftStarted){
@@ -235,8 +243,9 @@ export class EngineAudio {
     const coverage=clamp(bandCoverage*load+(this.samples.coast?1:0)*(1-load),0,1);
     // Match the dominant recorded tone during crossfades. At high revs the
     // leveled steady loop is the only loaded-engine voice; no pitched overlay.
-    const targetTone=62+rpm*47,carPitch=voice.pitch;
-    for (const layer of this.engine) layer.osc.frequency.setTargetAtTime((32 + rpm * 112) * layer.multiple*carPitch, t, 0.055);
+    const targetTone=engineTone(st.revs),carPitch=voice.pitch;
+    const pitchResponse=t<this.shiftUntil?.024:.055;
+    for (const layer of this.engine) layer.osc.frequency.setTargetAtTime(targetTone * layer.multiple*carPitch, t, pitchResponse);
     this.engineFilter.frequency.setTargetAtTime(Math.min(3000,(500 + rpm * 1700 + (throttleInput ? 600 : 0))*voice.brightness*perspective.brightness), t, 0.08);
     const synthFallback=this.samples.engine?0:1-coverage;
     this.engineGain.gain.setTargetAtTime(running ? (0.1 + rpm * 0.12 + throttle * 0.045)*synthFallback*shiftCut*voice.gain : 0, t, 0.1);
@@ -248,9 +257,9 @@ export class EngineAudio {
       const band=ENGINE_BANDS[i],sample=this.samples[band.key];if(!sample)continue;
       // Adjacent recordings crossfade with equal power. Moderate pitch changes
       // retain exhaust texture instead of stretching a single loop sixfold.
-      const rate=clamp(targetTone/band.toneHz*carPitch,.65,1.4);
-      sample.source.playbackRate.setTargetAtTime(rate,t,.09);
-      sample.filter.frequency.setTargetAtTime(Math.min(3000,(950+rpm*1400+load*350)*voice.brightness*perspective.brightness),t,.1);
+      const rate=engineRate(targetTone,band.toneHz,carPitch);
+      sample.source.playbackRate.setTargetAtTime(rate,t,pitchResponse);
+      sample.filter.frequency.setTargetAtTime(Math.min(3400,(700+rpm*1300+load*1000)*voice.brightness*perspective.brightness),t,.06);
       const idleSupport=i===0?Math.max(0,1-rpm/.46)*.52:0;
       const volume=bandWeights[i]*(.58+rpm*.35)*Math.sqrt(load)+idleSupport*Math.sqrt(1-load);
       sample.gain.gain.setTargetAtTime(running?volume*shiftCut*voice.gain:0,t,.05);
@@ -260,17 +269,19 @@ export class EngineAudio {
       sample.intake.gain.gain.setTargetAtTime(running?volume*voice.intake*perspective.intake*load*Math.max(0,(rpm-.25)/.75)*shiftCut:0,t,.06);
     }
     if(this.samples.coast){const sample=this.samples.coast;
-      sample.source.playbackRate.setTargetAtTime(clamp((.68+rpm*.85)*carPitch,.65,1.4),t,.09);
-      sample.filter.frequency.setTargetAtTime(Math.min(3000,(600+rpm*1500)*voice.brightness*perspective.brightness),t,.09);
-      const coastVolume=(.26+rpm*.4)*Math.sqrt(1-load);
+      // Its measured fundamental is 63.5 Hz, not the high-load loop's 86 Hz.
+      // Lifting changes load/brightness, without an unrelated octave drop.
+      sample.source.playbackRate.setTargetAtTime(engineRate(targetTone,63.5,carPitch,3),t,pitchResponse);
+      sample.filter.frequency.setTargetAtTime((420+rpm*1150)*voice.brightness*perspective.brightness,t,.07);
+      const coastVolume=(.17+rpm*.21)*Math.sqrt(1-load);
       sample.gain.gain.setTargetAtTime(running?coastVolume*shiftCut*voice.gain:0,t,.065);
       sample.body.filter.frequency.setTargetAtTime(130+rpm*110,t,.1);
       sample.body.gain.gain.setTargetAtTime(running?coastVolume*voice.exhaust*perspective.exhaust*.45*shiftCut:0,t,.09);
       sample.intake.gain.gain.setTargetAtTime(0,t,.06);
     }
     if(this.samples.engine){const sample=this.samples.engine;
-      sample.source.playbackRate.setTargetAtTime(clamp(targetTone/86*carPitch,.65,1.4),t,.09);
-      sample.filter.frequency.setTargetAtTime(Math.min(3000,(950+rpm*1400+load*350)*voice.brightness*perspective.brightness),t,.1);
+      sample.source.playbackRate.setTargetAtTime(engineRate(targetTone,86,carPitch),t,pitchResponse);
+      sample.filter.frequency.setTargetAtTime(Math.min(3400,(700+rpm*1300+load*1000)*voice.brightness*perspective.brightness),t,.06);
       const fallbackVolume=(.26+rpm*.15+load*.16)*(1-coverage);
       sample.gain.gain.setTargetAtTime(running?fallbackVolume*shiftCut*voice.gain:0,t,.08);
       sample.body.filter.frequency.setTargetAtTime(145+rpm*135,t,.1);
@@ -278,18 +289,19 @@ export class EngineAudio {
       sample.intake.filter.frequency.setTargetAtTime(820+rpm*980,t,.09);
       sample.intake.gain.gain.setTargetAtTime(running?fallbackVolume*voice.intake*perspective.intake*load*shiftCut:0,t,.07);
     }
-    if(running&&racing&&!this.muted&&t>=this.nextThrottle){
-      if(throttle>.6&&this.lastThrottle<.3&&this.samples.throttle){
+    if(running&&racing&&!this.muted){
+      if(throttle>.6&&this.lastThrottle<.3&&t>=this.nextThrottle&&this.samples.throttle){
         this._stopShot(this.throttleVoice);this._stopShot(this.liftVoice);
-        this.throttleVoice=this._sample(this.samples.throttle,(.22+rpm*.14)*voice.accent,clamp((.85+rpm*.28)*carPitch,.65,1.4),this.vehicleBus);
-        this.nextThrottle=t+.7;
-      }else if(throttle<.2&&this.lastThrottle>.65&&Math.abs(st.speedMph)>35&&this.samples.lift){
+        this.throttleVoice=this._sample(this.samples.throttle,(.18+rpm*.12)*voice.accent,clamp((.85+rpm*.28)*carPitch,.65,1.4),this.vehicleBus,.32);
+        this.nextThrottle=t+.35;
+      }else if(throttle<.2&&this.lastThrottle>.65&&t>=this.nextLift&&Math.abs(st.speedMph)>35&&this.samples.lift){
         this._stopShot(this.throttleVoice);
-        this.liftVoice=this._sample(this.samples.lift,(.2+rpm*.1)*voice.accent,clamp((.85+rpm*.35)*carPitch,.65,1.4),this.vehicleBus);
-        this.nextThrottle=t+.45;
+        this._stopShot(this.liftVoice);
+        this.liftVoice=this._sample(this.samples.lift,(.16+rpm*.09)*voice.accent,clamp((.85+rpm*.35)*carPitch,.65,1.4),this.vehicleBus,.28);
+        this.nextLift=t+.3;
       }
     }
-    if(!running){this._stopShot(this.throttleVoice);this._stopShot(this.liftVoice);}
+    if(!running){this._stopShot(this.throttleVoice);this._stopShot(this.liftVoice);this._stopShot(this.shiftVoice);this.shiftStarted=this.shiftUntil=0;}
     this.lastThrottle=throttle;
     if(this.samples.squeal){const sample=this.samples.squeal;
       sample.source.playbackRate.setTargetAtTime(.84+speed*.11+squeal*.2,t,.075);
@@ -323,13 +335,20 @@ export class EngineAudio {
   }
 
   event(ev) {
+    // Stage restart must clear old load/cut history even while muted or paused.
+    // Keep the decoded sources and graph: a new race does not create new loops.
+    if(ev?.stageLoaded!=null){
+      for(const shot of [this.throttleVoice,this.liftVoice,this.shiftVoice])this._stopShot(shot);
+      this.smoothedLoad=0;this.lastThrottle=0;this.nextThrottle=this.nextLift=0;this.shiftStarted=this.shiftUntil=0;
+    }
     if (!this.context || this.context.state !== 'running' || this.muted || this.paused || !ev) return;
     if (ev.countdown) this._tone(440, 0.12, 0.16, 'sine');
     if (ev.go) { this._tone(880, 0.32, 0.16); this._tone(1320, 0.22, 0.055); }
     if (ev.shift != null) {
       this.shiftStarted=this.context.currentTime;this.shiftUntil=this.shiftStarted+.18;
       this._stopShot(this.throttleVoice);
-      if(this.samples.shift)this._sample(this.samples.shift,.42*this.carVoice.accent,this.carVoice.pitch,this.vehicleBus);
+      this._stopShot(this.liftVoice);this._stopShot(this.shiftVoice);
+      if(this.samples.shift)this.shiftVoice=this._sample(this.samples.shift,.5*this.carVoice.accent,this.carVoice.pitch,this.vehicleBus,.16);
       else this._tone(95,0.085,0.075,'triangle');
     }
     if(ev.chickenBonus){

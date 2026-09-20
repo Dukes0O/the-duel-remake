@@ -29,7 +29,8 @@ check(app._menuCourses.size===12,'twelve natural previews fill the cache');
 app.menuRouteId='route_a';check(app.getMenuCourse(natural[0].index)===first,'returning to Route A reuses the cached Course');
 const retainedKey=`${natural[0].index}:1989`,evictedKey=app._menuCourses.keys().next().value;
 for(const [index,def]of COURSE.entries())if(!supportsRouteVariants(def)){
-  const course=app.getMenuCourse(index),data=buildCoursePreview(course);check(course.seed===1989&&!data.showElevation,`${def.id}: fixed event uses canonical geometry and hides elevation`);
+  const course=app.getMenuCourse(index),data=buildCoursePreview(course);check(course.seed===1989&&data.showElevation===!!def.expansion,`${def.id}: fixed event uses canonical geometry; expansion circuits show elevation`);
+  if(def.expansion)check(data.elevation.every(Number.isFinite)&&data.elevation[0]===data.elevation.at(-1),`${def.id}: expansion elevation is finite and closes at the finish`);
   check(app._menuCourses.size===12,'course preview cache stays bounded');
 }
 check(app._menuCourses.has(retainedKey)&&!app._menuCourses.has(evictedKey),'cache evicts oldest unused course and retains recently viewed route');

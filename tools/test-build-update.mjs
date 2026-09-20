@@ -208,8 +208,9 @@ render(ui,true,false,null);check(!ui['build-update'].hidden,'disposed main UI re
 render(ui,false,false,null);check(ui['build-update'].hidden&&ui['build-update-message'].textContent==='','race and unavailable states hide and clear the notice');
 const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
 check(/\.build-update button:focus-visible/.test(css),'reload button has a visible keyboard focus style');
-const mobile=css.slice(css.lastIndexOf('@media(max-width:700px)'));
-const uncompressed=mobile.match(/\{([^{}]+)\{flex-shrink:0\}/)?.[1].split(',') || [];
+// Find the intrinsic-height rule itself; unrelated responsive driver styles
+// can legitimately follow it in the stylesheet.
+const uncompressed=css.match(/@media\(max-width:700px\)\{([^{}]+)\{flex-shrink:0\}/)?.[1].split(',') || [];
 for(const child of ['.menu-intro','section','.menu-footer','.build-update'])
   check(uncompressed.includes(`.in-menu .menu-screen>${child}`),`mobile ${child} keeps its intrinsic height in the scrolling menu`);
 check(/\.in-menu \.menu-screen\{[^}]*overflow-y:auto/.test(css),'menu retains vertical scrolling instead of squeezing its contents');

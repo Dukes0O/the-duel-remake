@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createPolylineIndex } from './polyline-index.js';
+import { farTerrainHeightSampler } from './far-terrain-surface.js';
 
 // Normalized ridge networks stay strictly inside the existing collision ellipse.
 // Each path stores x, z, elevation; subsidiary paths form connected spurs.
@@ -61,31 +61,6 @@ export function buildMountainGeometry(variant=0) {
   return geometry;
 }
 
-// Match the far landscape's grid and triangle diagonal, including omitted
-// near-road quads. Cache shared vertices across the biome views of one course.
-// test-terrain compares this placement against world.js's actual mesh buffers.
-const farSurfaceCache=new WeakMap();
-function farRimSurface(course){
-  if(farSurfaceCache.has(course.samples))return farSurfaceCache.get(course.samples);
-  const grid=(course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena?16:32,threshold=course.def.arena?18:(course.def.kind==='chase'||course.def.layout==='city')?50:80;
-  const route=course.samples.filter((_,i)=>i%4===0),last=course.samples.at(-1),vertices=new Map();if(route.at(-1)!==last)route.push(last);
-  const routeIndex=createPolylineIndex(route);
-  const vertex=(i,j)=>{
-    const key=`${i}:${j}`;if(vertices.has(key))return vertices.get(key);
-    const x=i*grid,z=j*grid,{index,t,distanceSq:best}=routeIndex.query(x,z);
-    const a=route[index-1],b=route[index],dx=b.x-a.x,dz=b.z-a.z,px=x-a.x-t*dx,pz=z-a.z-t*dz;
-    const roadS=a.s+(b.s-a.s)*t,off=Math.sqrt(best)*Math.sign(px*dz-pz*dx);
-    const result={y:Math.fround(course.groundAt(roadS,off).y-.15),distance:Math.sqrt(best)};vertices.set(key,result);return result;
-  };
-  const sample=(x,z)=>{
-    const i=Math.floor(x/grid),j=Math.floor(z/grid),u=x/grid-i,v=z/grid-j;
-    const a=vertex(i,j),b=vertex(i+1,j),c=vertex(i,j+1),d=vertex(i+1,j+1);
-    if([a,b,c,d].some(p=>p.distance<=threshold))return null;
-    return u+v<=1?a.y*(1-u-v)+b.y*u+c.y*v:b.y*(1-v)+c.y*(1-u)+d.y*(u+v-1);
-  };
-  farSurfaceCache.set(course.samples,sample);return sample;
-}
-
 // The original obstacle ellipses remain solid. Bound the visible height by the
 // narrower footprint so a 200m seed cannot become a vertical 110m-wide blob.
 export function mountainVisualHeight(mountain){
@@ -96,7 +71,7 @@ export function mountainVisualHeight(mountain){
 // the vertical scale by the burial depth preserves the capped top elevation.
 export function mountainTransform(course,mountain) {
   let minY=mountain.y;
-  const c=Math.cos(mountain.heading),sn=Math.sin(mountain.heading),farSurface=farRimSurface(course);
+  const c=Math.cos(mountain.heading),sn=Math.sin(mountain.heading),farSurface=farTerrainHeightSampler(course);
   for(let i=0;i<64;i++){
     const a=i*Math.PI/32,x=Math.cos(a)*mountain.halfX,z=Math.sin(a)*mountain.halfZ,n=course.nearest(mountain.x+c*x+sn*z,mountain.z-sn*x+c*z);
     minY=Math.min(minY,course.groundAt(n.s,n.lateral).y);
@@ -104,7 +79,11 @@ export function mountainTransform(course,mountain) {
   for(let i=0;i<112;i++){
     const a=i*Math.PI/56,b=(i+1)*Math.PI/56,ax=Math.cos(a)*mountain.halfX,az=Math.sin(a)*mountain.halfZ,bx=Math.cos(b)*mountain.halfX,bz=Math.sin(b)*mountain.halfZ;
     for(const t of[0,.25,.5,.75]){
-      const x=ax+(bx-ax)*t,z=az+(bz-az)*t,height=farSurface(mountain.x+c*x+sn*z,mountain.z-sn*x+c*z);
+      const x=ax+(bx-ax)*t,z=az+(bz-az)*t,worldX=mountain.x+c*x+sn*z,worldZ=mountain.z-sn*x+c*z,height=farSurface(worldX,worldZ);
+      // Steeper authored expansion terrain needs the actual rendered rim's
+      // 112 vertices and edge quarters, not only the coarser 64-point ring.
+      // Keep the legacy transforms byte-for-byte unchanged.
+      if(course.def.expansion){const nearest=course.nearest(worldX,worldZ);minY=Math.min(minY,course.groundAt(nearest.s,nearest.lateral).y);}
       if(height!==null)minY=Math.min(minY,height);
     }
   }

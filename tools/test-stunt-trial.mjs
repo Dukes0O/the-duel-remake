@@ -6,11 +6,11 @@ let checks=0;const check=(condition,label)=>{assert.ok(condition,label);checks++
 const index=COURSE.findIndex(course=>course.id==='titan-stunt-trial');
 const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
 function trial(cpuDifficulty='hard',difficulty='casual') {
-  const duel=new Duel({seed:1989});duel.startCampaign({startStage:index,car:'falcone_f42',cpuDifficulty,difficulty});return duel;
+  const duel=new Duel({seed:1989});duel.startCampaign({startStage:index,car:'titan_monster',cpuDifficulty,difficulty});return duel;
 }
 for(const [level,seconds] of [['easy',95],['medium',75],['hard',62]]) {
   const d=trial(level),s=d.state;
-  check(s.car==='titan_monster'&&s.lapsTotal===2,'the trial requires the Titan and two complete laps');
+  check(s.car==='titan_monster'&&s.lapsTotal===2,'the intended Titan stunt fixture retains the chosen car and two complete laps');
   check(s.rival===null&&s.traffic.length===0&&!s.police.pursuit,'the trial has no CPU race, traffic, or police');
   check(s.timeLimitSec===seconds&&s.objective.timeLimitSec===seconds,`${level} applies its configured deadline`);
   check(s.objective.targetJumps===4&&s.objective.targetCrushes===4,'the objective requires four landed jumps and four player crushes');

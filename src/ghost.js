@@ -1,14 +1,15 @@
 import {CARS,COURSE,DRIVE} from './config.js';
 import {bestKey,isValidFinish,playerName,getUpgradeLevels,stageEventId} from './progression.js';
+import {normalizeDriverId,driverModifierSignature,driverRecordMetadata,isCurrentDriverRecord} from './drivers.js';
 
 export const GHOST_KEY='the-duel-ghosts-v1',GHOST_ENABLED_KEY='duel_ghost_enabled';
 export const MAX_GHOSTS=12,MAX_GHOST_SAMPLES=1800,MAX_GHOST_BYTES=1_250_000;
 const round=(value,scale)=>Math.round(value*scale),clock=state=>(state.stageTimeSec??0)+(state.racePenaltySec??0);
 const bytes=value=>new TextEncoder().encode(JSON.stringify(value)).length;
-export const ghostKey=(playerId,options,layoutVersion)=>options?.mode==='timetrial'&&playerId?`${playerId}|${bestKey(options,layoutVersion)}`:'';
+export const ghostKey=(playerId,options,layoutVersion,driverSignature)=>options?.mode==='timetrial'&&playerId?`${playerId}|${bestKey(options,layoutVersion,driverSignature)}`:'';
 export function createGhostStore(){return {version:1,records:[],archivedRecords:[]};}
 const validId=id=>typeof id==='string'&&/^[\w-]{1,80}$/.test(id);
-const currentRecord=record=>{const stageIndex=COURSE.findIndex((stage,index)=>stageEventId(index)===record.eventId),stage=COURSE[stageIndex];return !!stage&&record.layoutVersion===(stage.layoutVersion??1)&&record.laps===(stage.laps||2)&&record.key===ghostKey(record.playerId,{...record,stageIndex});};
+const currentRecord=record=>{const stageIndex=COURSE.findIndex((stage,index)=>stageEventId(index)===record.eventId),stage=COURSE[stageIndex];return !!stage&&record.layoutVersion===(stage.layoutVersion??1)&&record.laps===(stage.laps||2)&&isCurrentDriverRecord(record)&&record.key===ghostKey(record.playerId,{...record,stageIndex});};
 function validSamples(samples,timeSec,raceLength){
   if(!Array.isArray(samples)||samples.length<12||samples.length>MAX_GHOST_SAMPLES)return false;
   // A driver may reverse through the start and onto the preceding circuit.
@@ -21,16 +22,17 @@ function validSamples(samples,timeSec,raceLength){
 }
 function normalizeRecord(row){
   if(!row||!validId(row.playerId)||!playerName(row.playerName)||row.mode!=='timetrial'||!Object.hasOwn(CARS,row.car)||!Number.isFinite(row.timeSec)||row.timeSec<=0||row.timeSec>3600)return null;
+  const driver=driverRecordMetadata(row);if(!driver)return null;
   const stageIndex=COURSE.findIndex((def,index)=>stageEventId(index)===row.eventId),stage=COURSE[stageIndex];
   if(!stage||!Number.isSafeInteger(row.laps)||row.laps<1||!Number.isSafeInteger(row.layoutVersion)||row.layoutVersion<1||!['casual','pro'].includes(row.difficulty)||!['easy','medium','hard'].includes(row.cpuDifficulty))return null;
   const current=row.layoutVersion===(stage.layoutVersion??1);
   if(current&&row.laps!==(stage.laps||2))return null;
-  const context={...row,stageIndex,seed:row.seed>>>0},key=ghostKey(row.playerId,context,row.layoutVersion);
+  const context={...row,...driver,stageIndex,seed:row.seed>>>0},key=ghostKey(row.playerId,context,row.layoutVersion,driver.driverSignature);
   // Legacy ghosts did not retain the old route length. Their final sample is
   // the only available old finish position; never validate it against new roads.
   const raceLength=current?stage.lengthU*row.laps:row.raceLength??row.samples?.at(-1)?.[1]/100;
   if(!Number.isFinite(raceLength)||raceLength<=0||key!==row.key||!validSamples(row.samples,row.timeSec,raceLength))return null;
-  return {key,playerId:row.playerId,playerName:playerName(row.playerName),stageIndex,eventId:row.eventId,layoutVersion:row.layoutVersion,seed:context.seed,laps:row.laps,raceLength,car:row.car,mode:row.mode,difficulty:row.difficulty,cpuDifficulty:row.cpuDifficulty,timeSec:row.timeSec,samples:row.samples,upgrades:getUpgradeLevels({upgrades:{[row.car]:row.upgrades}},row.car),recordedAt:Number.isFinite(row.recordedAt)?row.recordedAt:0,lastUsedAt:Number.isFinite(row.lastUsedAt)?row.lastUsedAt:0};
+  return {key,playerId:row.playerId,playerName:playerName(row.playerName),stageIndex,eventId:row.eventId,layoutVersion:row.layoutVersion,seed:context.seed,laps:row.laps,raceLength,car:row.car,mode:row.mode,difficulty:row.difficulty,cpuDifficulty:row.cpuDifficulty,...driver,timeSec:row.timeSec,samples:row.samples,upgrades:getUpgradeLevels({upgrades:{[row.car]:row.upgrades}},row.car),recordedAt:Number.isFinite(row.recordedAt)?row.recordedAt:0,lastUsedAt:Number.isFinite(row.lastUsedAt)?row.lastUsedAt:0};
 }
 export function normalizeGhostStore(value){
   if(value?.version!==1||!Array.isArray(value.records))return createGhostStore();
@@ -58,7 +60,7 @@ function pack(state,snap=false){
   return [round(values[0],1000),round(values[1],100),round(values[2],100),round(values[3],10000),round(Math.max(0,values[4]),100),round(values[5],10),snap?1:0];
 }
 export class GhostRecorder {
-  constructor(context){this.context={...context,upgrades:{...context.upgrades}};this.samples=[];this.interval=.2;this.next=0;this.previous=null;this.previousClock=null;this.invalid=false;this.pendingSnap=false;}
+  constructor(context){this.context={...context,driverId:normalizeDriverId(context.driverId),driverSignature:driverModifierSignature(context.driverId,context.car),upgrades:{...context.upgrades}};this.samples=[];this.interval=.2;this.next=0;this.previous=null;this.previousClock=null;this.invalid=false;this.pendingSnap=false;}
   discontinuity(){this.pendingSnap=true;}
   _append(row){
     if(!row){this.invalid=true;return;}
@@ -73,6 +75,7 @@ export class GhostRecorder {
   }
   observe(state,final=false){
     if(this.invalid||state.paused||(!final&&!['racing','ticket'].includes(state.status)))return;
+    if(driverModifierSignature(state.driverId,state.car)!==this.context.driverSignature){this.invalid=true;return;}
     const now=clock(state),row=pack(state);if(!row){this.invalid=true;return;}
     const delta=this.previousClock==null?0:now-this.previousClock;
     if(delta<-.001){this.invalid=true;return;}

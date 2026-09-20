@@ -6,6 +6,8 @@ import { buildRoadFurniture, tunnelCoverShape } from './road-furniture.js';
 import { createPolylineIndex } from './polyline-index.js';
 import { cloneShortcuts, findShortcutPreset, shortcutPresetFingerprint } from './shortcut-preset-cache.js';
 import { buildCityParking } from './city-parking-layout.js';
+import { expansionPoint, expansionHeight } from './expansion-courses.js';
+import { buildCourseSetPieces } from './course-set-pieces.js';
 const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -48,6 +50,7 @@ export class Course {
   sectionAt(s){const p=this.phase(s);return this.sections.find(v=>p>=v.start&&p<v.end)||this.sections.at(-1);}
   themeAt(s){return this.sectionAt(s).theme;}
   _height(s){
+    if(this.def.expansion)return expansionHeight(this.def,s);
     if(this.def.arena)return 0;
     const p=this.phase(s),a=p/this.length*TAU;
     let h=14+3.5*Math.sin(a)+1.8*Math.sin(a*3);
@@ -65,7 +68,7 @@ export class Course {
     // straights. Their tightest radius stays beyond the near-terrain ribbon.
     const shape=ROUTE_SHAPES[this.def.layout]||[1.08,.93,0,.055,.018,0,0];
     for(let i=0;i<=count;i++){const a=i/count*TAU,r=arena?1:1+shape[2]*Math.cos(a*2+phase*.2)+shape[3]*Math.cos(a*3+phase)+shape[4]*Math.sin(a*5+phase)+shape[5]*Math.sin(a*4+phase*.5)+shape[6]*Math.cos(a*6-phase*.3);
-      const city=cityLoop?.(i/count);raw.push({x:city?city.x:Math.cos(a)*r*(arena?1.3:shape[0]),z:city?city.z:Math.sin(a)*r*(arena?.8:shape[1]),s:0});
+      const city=this.def.expansion?expansionPoint(this.def,i/count):cityLoop?.(i/count);raw.push({x:city?city.x:Math.cos(a)*r*(arena?1.3:shape[0]),z:city?city.z:Math.sin(a)*r*(arena?.8:shape[1]),s:0});
       if(i)raw[i].s=raw[i-1].s+Math.hypot(raw[i].x-raw[i-1].x,raw[i].z-raw[i-1].z);}
     const scale=this.length/raw.at(-1).s;raw.forEach(p=>{p.x*=scale;p.z*=scale;p.s*=scale;});
     const origin=raw[0];let cursor=1;this.samples=[];
@@ -89,13 +92,13 @@ export class Course {
         f.crushables.push({id:`junk-${row}-${i}`,kind:'junkCar',s:distance,off,...p,halfX:1.06,halfZ:2.25,height:1.30,shape:'box',color:[0x53645b,0x935143,0x557185][row]});
       }
     }else{
-      for(const sec of this.sections){
+      for(const [sectionIndex,sec] of this.sections.entries()){
         const span=sec.end-sec.start;
-        if(sec.theme==='alpine')f.tunnels.push({id:`tunnel-${f.tunnels.length}`,start:sec.start+span*.4,end:sec.start+span*.4+152,width:8.3,height:8.5});
+        if(sec.theme==='alpine'&&(!this.def.expansion||this.def.expansion.tunnelSections.includes(sectionIndex)))f.tunnels.push({id:`tunnel-${f.tunnels.length}`,start:sec.start+span*.4,end:sec.start+span*.4+152,width:8.3,height:8.5});
         const start=sec.start+span*.12,end=Math.min(sec.end-70,start+290);
         if(end-start>140&&!this.def.offroad)f.passingLanes.push({start,end,side:1});
       }
-      f.shortcuts.push(...buildShortcuts(this));
+      if(!this.def.expansion)f.shortcuts.push(...buildShortcuts(this));
       for(const cut of f.shortcuts)Object.assign(cut,measureShortcut(this,cut,2,true));
     }
     for(let i=1;i<4;i++){let s=this.length*i/4;for(const cut of f.shortcuts)if(s>cut.start-16&&s<cut.end+16)s=cut.end+24;f.lapGates.push({s});}
@@ -142,8 +145,9 @@ export class Course {
       if(n.distance<width+radius+margin)return false;
       for(const cut of f.shortcuts)if(n.s>=cut.start-12&&n.s<=cut.end+12&&Math.abs(n.lateral-this.shortcutOffset(cut,n.s))<radius+cut.halfWidth+margin)return false;
       return !this.tunnelAt(n.s)||Math.abs(n.lateral)>35+radius;};
-    const vacant=(s,off,radius)=>{const p=this.groundAt(s,off);return f.obstacles.every(o=>Math.hypot(o.x-p.x,o.z-p.z)>Math.hypot(o.halfX,o.halfZ)+radius);};
+    const vacant=(s,off,radius)=>{const p=this.groundAt(s,off);return f.obstacles.every(o=>Math.hypot(o.x-p.x,o.z-p.z)>Math.hypot(o.halfX,o.halfZ)+radius+(o.setPiece==='gantry'?18:0));};
     for(const side of[-1,1])add(`finish-post-${side}`,'prop',0,side*(this.roadHalfWidthAt(0)+1.5),.25,.25);
+    if(this.def.expansion){f.setPieces=buildCourseSetPieces(this);f.obstacles.push(...f.setPieces);}
     if(!this.def.arena){
       for(const [i,sec]of this.sections.entries()){
         const s=sec.start+195,off=-26,angle=0,p=this.groundAt(s,off),station={id:`station-${i}`,s,off,...p,angle,theme:sec.theme,checkpoint:i===0};f.stations.push(station);
@@ -151,6 +155,9 @@ export class Course {
           f.obstacles.push({id:`${station.id}-${name}`,kind,shape:'box',s:n.s,off:n.lateral,x,y:p.y,z,heading:p.heading,halfX:hx,halfZ:hz,theme:sec.theme});};
         part('building',0,5,6,2.75,'building');for(const side of[-1,1]){part(`post-${side}`,side*5.5,-3,.16,.16,'prop');part(`pump-${side}`,side*3,-2.5,.55,.45,'prop');}
       }
+      // Reserve authored expansion headlands before random rocks/trees. Their
+      // reference landmark must not disappear when the scenery seed changes.
+      if(this.def.expansion)for(const sec of this.sections)if(sec.theme==='coast'){const s=sec.start+(sec.end-sec.start)*.58;f.landmarks.push(add(`lighthouse-${s}`,'building',s,73,3.2,3.2,0,{height:22,landmark:'lighthouse',shape:'ellipse'}));}
       for(let i=0;i<190;i++){const s=rng.range(50,this.length-50),off=(i%2?1:-1)*rng.range(18,72),sx=rng.range(1.3,4),sz=rng.range(1.2,4),sy=rng.range(.9,3),angle=rng.range(0,TAU);
         if(!roadClear(s,off,Math.hypot(sx,sz),4)||!vacant(s,off,5))continue;
         const rock={s,off,theme:this.themeAt(s),scale:[sx,sy,sz],angle,radiusX:sx,radiusZ:sz};f.rocks.push(rock);add(`rock-${i}`,'rock',s,off,sx,sz,angle,{shape:'ellipse',source:rock});}
@@ -181,8 +188,8 @@ export class Course {
           }
         }
       }
-      for(const sec of this.sections)if(sec.theme==='coast'){const s=sec.start+(sec.end-sec.start)*.58;if(vacant(s,73,5))f.landmarks.push(add(`lighthouse-${s}`,'building',s,73,3.2,3.2,0,{height:22,landmark:'lighthouse',shape:'ellipse'}));}
-      for(let i=0;i<800;i++){const s=rng.range(5,this.length-5),theme=this.themeAt(s);if(theme==='city'&&i%5||theme==='desert'&&i%3)continue;
+      if(!this.def.expansion)for(const sec of this.sections)if(sec.theme==='coast'){const s=sec.start+(sec.end-sec.start)*.58;if(vacant(s,73,5))f.landmarks.push(add(`lighthouse-${s}`,'building',s,73,3.2,3.2,0,{height:22,landmark:'lighthouse',shape:'ellipse'}));}
+      for(let i=0;i<(this.def.expansion?.treeAttempts||800);i++){const s=rng.range(5,this.length-5),theme=this.themeAt(s);if(theme==='city'&&i%5||theme==='desert'&&i%3)continue;
         const off=(i%2?1:-1)*rng.range(13,80),scale=rng.range(.65,1.7);
         if(roadClear(s,off,2.1*scale,3)&&vacant(s,off,2.1*scale)&&this.groundAt(s,off).y>-12)f.trees.push(add(`tree-${i}`,'tree',s,off,.23*scale,.23*scale,rng.range(0,TAU),{scale}));}
       let last=-350;
@@ -236,7 +243,7 @@ export class Course {
     for(let d=0;d<=span+64;d+=32){const b=Math.floor(this.phase(start+d)/64);for(const o of this.obstacleBuckets.get(b)||[])found.add(o);}return [...found];}
   rocksNear(from,to=from){return this.obstaclesNear(from,to).filter(o=>o.kind==='rock').map(o=>o.source);}
   at(s){const p=this.phase(s),idx=Math.min(this.samples.length-2,Math.floor(p/STEP)),a=this.samples[idx],b=this.samples[idx+1],t=(p-a.s)/STEP;
-    return{x:lerp(a.x,b.x,t),z:lerp(a.z,b.z,t),y:lerp(a.y,b.y,t),heading:lerp(a.heading,b.heading,t),curvature:lerp(a.curvature,b.curvature,t),tunnel:!!this.tunnelAt(s)};}
+    return{x:lerp(a.x,b.x,t),z:lerp(a.z,b.z,t),y:this.def.expansion?this._height(s):lerp(a.y,b.y,t),heading:lerp(a.heading,b.heading,t),curvature:lerp(a.curvature,b.curvature,t),tunnel:!!this.tunnelAt(s)};}
   worldAt(s,lat=0){const f=this.at(s);return{x:f.x+Math.cos(f.heading)*lat,y:f.y,z:f.z-Math.sin(f.heading)*lat,heading:f.heading};}
   nearest(x,z,referenceS){const nearest=this._nearestIndex.query(x,z);let bestS=nearest.index<0?0:this.samples[nearest.index-1].s+nearest.t*STEP;
     for(let i=0;i<3;i++){const f=this.at(bestS),lat=(x-f.x)*Math.cos(f.heading)-(z-f.z)*Math.sin(f.heading),along=(x-f.x)*Math.sin(f.heading)+(z-f.z)*Math.cos(f.heading);bestS=this.phase(bestS+along/Math.max(.3,1-f.curvature*lat));}

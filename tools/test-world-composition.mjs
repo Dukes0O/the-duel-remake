@@ -18,6 +18,12 @@ const baseline={
   'titan-stunt-trial':{hash:'65c3d7f8d7bc8b3a9e525b8b083bae29a144b75af6ab20dac13c6e7e3e6e6f34',nodes:158,meshes:120,instances:2096,geometries:112,materials:35,textures:10},
   'neon-drift-trial':{hash:'87e8eade2c487575d4debcb3f2ad6b3cd77cdd52549b39c8d31dd328fa67c9fb',nodes:1269,meshes:1222,instances:169354,geometries:402,materials:128,textures:32},
   'timberline-rush':{hash:'70f5137668e51858c36f0b0aa96107c45ae1d5fb2c9ce13f081427a6327eea1b',nodes:523,meshes:484,instances:14950,geometries:239,materials:103,textures:31},
+  'eifel-crown':{hash:'1268618b4dd5c4910c283e931f4abccd52c9f0b4127f9d00fdb2c71d4ea078fd',nodes:645,meshes:613,instances:20292,geometries:248,materials:140,textures:46},
+  'alpine-serpent':{hash:'d3b774969ecd4a23992773dd9c721371262530188690a9df9ffc8754ad465753',nodes:578,meshes:545,instances:19015,geometries:219,materials:129,textures:41},
+  'azure-riviera':{hash:'f1acf5ed40e2ae31f9e08cb9293c4ffc60b3deb2cbeea3f11f6dc39bf759f565',nodes:555,meshes:528,instances:18370,geometries:243,materials:121,textures:40},
+  'red-mesa':{hash:'ea3514eb1599a891f88418a2f1454ff5ef1b503a7d5c8794e8c750ce6b3a07ce',nodes:522,meshes:494,instances:6732,geometries:211,materials:116,textures:36},
+  'neon-docks':{hash:'245c1e57e8af0e6ae970e32635454305aaaeb84389b86e538e08dea3615c0eed',nodes:1432,meshes:1374,instances:229433,geometries:448,materials:174,textures:44},
+  'cloudbreak-skyway':{hash:'0fc2e9f2abacb89cf639a81e03a19eab91d88c1c6c467dcb86a7038b704a512f',nodes:608,meshes:577,instances:15771,geometries:252,materials:142,textures:44},
 };
 let checks=0;
 const equal=(actual,expected,message)=>{assert.deepEqual(actual,expected,message);checks++;};
@@ -79,7 +85,7 @@ function sceneSignature(world){
   return {hash,nodes,meshes,instances,geometries:geometries.size,materials:materials.size,textures:textures.size};
 }
 try{
-  equal(COURSE.length,9,'all nine event scenes are covered');
+  equal(COURSE.length,15,'all fifteen event scenes are covered');
   for(const def of COURSE){
     const course=new Course(def,1989),before=JSON.stringify(course.features),world=buildEnvironment(course),signature=sceneSignature(world);
     equal(JSON.stringify(course.features),before,`${def.id}: scene assembly never changes physical feature placement`);
@@ -88,4 +94,4 @@ try{
     disposeTree(world);
   }
 }finally{THREE.TextureLoader.prototype.load=oldLoad;if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;}
-console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across nine events.`);
+console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across fifteen events.`);

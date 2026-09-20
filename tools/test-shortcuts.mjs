@@ -12,6 +12,7 @@ const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 for (const seed of seeds) for (const definition of COURSE) {
   const course = new Course(definition, seed), branches = course.features.shortcuts;
   if (definition.arena) { assert.equal(branches.length, 0); continue; }
+  if (definition.expansion) { assert.equal(branches.length, 0, `${definition.id}/${seed}: authored expansion circuits have no generated shortcuts`); continue; }
   courses++;
   assert.ok(branches.length>=1&&branches.length<=2, `${definition.id}/${seed}: retain only useful branches`);
   assert.ok(branches.every(c=>definition.offroad?c.surface==='gravel':['gravel','paved'].includes(c.surface)));

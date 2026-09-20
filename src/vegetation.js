@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { renderedGroundHeight } from './rendered-ground.js';
 
 export const VEGETATION_CELL_SIZE = 200;
 
@@ -25,7 +26,7 @@ export function finishVegetationCell(mesh, key, entries) {
   return mesh;
 }
 
-export function addPineTrees(group, trees) {
+export function addPineTrees(group, trees, course) {
   if (!trees.length) return;
   const assets = pineTreeAssets(), object = new THREE.Object3D();
   for (const { key, entries } of vegetationCells(trees)) {
@@ -33,7 +34,8 @@ export function addPineTrees(group, trees) {
     const leaves = new THREE.InstancedMesh(assets.crown, assets.needles, entries.length);
     trunks.name = `Pine trunks ${key}`; leaves.name = `Pine crowns ${key}`;
     entries.forEach(({ feature: tree }, i) => {
-      object.position.set(tree.x, tree.y - .24, tree.z); object.rotation.set(0, tree.heading, 0); object.scale.setScalar(tree.scale); object.updateMatrix();
+      const groundY=course?.def.expansion?renderedGroundHeight(course,tree):tree.y;
+      object.position.set(tree.x, groundY - .24, tree.z); object.rotation.set(0, tree.heading, 0); object.scale.setScalar(tree.scale); object.updateMatrix();
       trunks.setMatrixAt(i, object.matrix); leaves.setMatrixAt(i, object.matrix);
     });
     group.add(finishVegetationCell(trunks, key, entries), finishVegetationCell(leaves, key, entries));

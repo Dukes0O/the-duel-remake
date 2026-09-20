@@ -23,15 +23,15 @@ const activeBefore=JSON.stringify(app.duel.state);ok(!app.setRaceSettings({car:'
 app.returnToMenu();app.selectPlayer(second);same(app.getRaceChoices(),{startStage:2,car:'falcone_f42',difficulty:'casual',cpuDifficulty:'hard',mode:'duel'},'Second setup survives first player racing');
 same(new App().getRaceChoices(),app.getRaceChoices(),'Active player and preferences survive reload together');
 
-// New challenge selections remain ownership gated and keep a natural route
+// Challenge selections keep the chosen owned car and a natural route
 // preference even though the challenge itself uses its fixed canonical course.
 app.profile={...app.profile,unlockedCars:[...app.profile.unlockedCars,'banshee_muscle']};app._saveProfile();
 const chase=COURSE.findIndex(stage=>stage.kind==='chase');app.setRaceSettings({startStage:chase,mode:'timetrial',car:'falcone_f42'});
-same([app.getRaceChoices().car,app.getRaceChoices().mode,app.getMenuSeed(),app.menuRouteId],['banshee_muscle','duel',1989,'route_c'],'Challenge enforces its car/mode without losing the chosen natural route');
+same([app.getRaceChoices().car,app.getRaceChoices().mode,app.getMenuSeed(),app.menuRouteId],['falcone_f42','duel',1989,'route_c'],'Challenge preserves the chosen car and objective mode without losing the natural route');
 const reloaded=new App();same(reloaded.getRaceChoices(),app.getRaceChoices(),'Owned challenge restores by stable event ID');same(reloaded.profile.raceSettings.eventId,COURSE[chase].id,'Saved event key is independent of menu index');
 reloaded.setRaceSettings({startStage:0});same(reloaded.getMenuSeed(),17,'Returning to natural circuit restores its route context');
 const invalid=normalizeProfile({...createProfile(),raceSettings:{version:1,eventId:COURSE[chase].id,car:'titan_monster',mode:'wrong',cpuDifficulty:'__proto__',difficulty:'manual',routeVariant:'route_z',lightingMood:'night',ghostEnabled:'false',seed:123,credits:99999}});
-same(invalid.raceSettings,DEFAULT_RACE_SETTINGS,'Locked/invalid stored setup falls back safely and discards unrelated fields');
+same(invalid.raceSettings,{...DEFAULT_RACE_SETTINGS,eventId:COURSE[chase].id},'Locked vehicle falls back safely while the chosen course stays available');
 same(normalizeRaceSettings({eventId:COURSE[1].id,stageIndex:999,car:'stuttgart_959s'},createProfile()).eventId,COURSE[1].id,'Stable event ID wins over stale numeric menu index');
 for(const value of[null,[],false,'stuttgart_959s',42])same(normalizeRaceSettings(value,createProfile()),DEFAULT_RACE_SETTINGS,'Malformed stored preferences are safe');
 
@@ -58,4 +58,4 @@ for(const button of buttons){const[key,value]=Object.entries(button.dataset)[0];
 globalThis.localStorage={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');}};app=new App();const sessionFirst=app.player.id;app.setRaceSettings(setup);app.setRouteVariant('route_b');app.addPlayer('Session Two');app.setRaceSettings({cpuDifficulty:'hard'});app.selectPlayer(sessionFirst);
 same(app.getRaceChoices(),setup,'Storage failure preserves each session-only setup');same(app.menuRouteId,'route_b','Session-only route remains per-player');ok(app.profileSaved===false,'Save failure stays visible to the app');same(new App().getRaceChoices(),raceSettingsChoices(DEFAULT_RACE_SETTINGS),'Unavailable storage cannot invent cross-session persistence');
 delete globalThis.localStorage;
-console.log(`Race settings: ${checks} per-player save/switch/reload, challenge ownership, route context, legacy migration, UI and session-only checks passed.`);
+console.log(`Race settings: ${checks} per-player save/switch/reload, vehicle ownership, open course choice, route context, legacy migration, UI and session-only checks passed.`);

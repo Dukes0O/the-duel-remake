@@ -14,7 +14,14 @@ equal(SHORTCUT_PRESET_DATA.version,SHORTCUT_GENERATION_VERSION,'saved paths use 
 equal(await shortcutSourceFingerprint(),SHORTCUT_PRESET_DATA.sourceFingerprint,'generation code changed: rerun tools/generate-shortcut-presets.mjs and --verify-solvers');
 const saved=JSON.stringify(SHORTCUT_PRESET_DATA),reports=[];
 for(const definition of COURSE)for(const seed of supportsRouteVariants(definition)?ROUTE_VARIANTS.map(route=>route.seed):[1989]){
-  const before=performance.now(),course=new Course(definition,seed),presetMs=performance.now()-before;layouts++;
+  const before=performance.now(),course=new Course(definition,seed),presetMs=performance.now()-before;
+  if(definition.expansion){
+    equal(course.features.shortcuts,[],'authored expansion circuits do not generate shortcuts');
+    equal(course._shortcutSource,undefined,'authored expansion circuits bypass the preset cache entirely');
+    check(!SHORTCUT_PRESET_DATA.entries.some(entry=>entry.event===definition.id),'no empty expansion geometry is added to the legacy preset payload');
+    continue;
+  }
+  layouts++;
   if(definition.arena){equal(course.features.shortcuts,[],'arenas do not need solved shortcut presets');continue;}
   equal(course._shortcutSource,'preset',`${definition.id}/${seed}: a cold selectable route uses its saved solution`);
   const key=shortcutPresetFingerprint(course),entry=SHORTCUT_PRESET_DATA.entries.find(record=>record.fingerprint===key);

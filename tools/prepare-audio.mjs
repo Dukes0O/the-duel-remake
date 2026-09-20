@@ -11,12 +11,22 @@ function read(name){const b=fs.readFileSync(new URL(name,dir));let i=12,format,s
 }
 function write(name,a,rate=44100){const b=Buffer.alloc(44+a.length*2);b.write('RIFF');b.writeUInt32LE(b.length-8,4);b.write('WAVEfmt ',8);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(rate,24);b.writeUInt32LE(rate*2,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(a.length*2,40);
   for(let i=0;i<a.length;i++)b.writeInt16LE(Math.round(Math.max(-1,Math.min(1,a[i]))*32767),44+i*2);fs.writeFileSync(new URL(name,dir),b);}
-function process(source,target,peak,{start=0,end=Infinity,loop=true,fadeSeconds=.06,highpass=0,rmsTarget=0,levelWindowSeconds=0,levelGainMax=1.7}={}){let {samples:a,rate}=read(source);
+function process(source,target,peak,{start=0,end=Infinity,loop=true,fadeSeconds=.06,highpass=0,notch=0,rmsTarget=0,levelWindowSeconds=0,levelGainMax=1.7}={}){let {samples:a,rate}=read(source);
   a=a.slice(Math.floor(start*rate),Math.min(a.length,Math.floor(end*rate)));
   if(a.length<rate*.08)throw Error(`Audio selection is too short: ${target}`);
   const mean=a.reduce((s,v)=>s+v,0)/a.length;a=a.map(v=>v-mean);
   if(highpass){let lastIn=0,lastOut=0;const coefficient=Math.exp(-2*Math.PI*highpass/rate);
     a=a.map(value=>{const out=coefficient*(lastOut+value-lastIn);lastIn=value;lastOut=out;return out;});}
+  if(notch){
+    // The sustained recording has a strong 43 Hz drone below the 86 Hz engine
+    // harmonic used by the mixer. Remove only that drone, not the exhaust
+    // texture. Retain 14% dry body to keep adjacent-band beating controlled.
+    // Two circular passes settle filter memory before keeping output.
+    const omega=2*Math.PI*notch/rate,alpha=Math.sin(omega)/(2*3.5),a0=1+alpha;
+    const b0=1/a0,b1=-2*Math.cos(omega)/a0,b2=b0,a1=b1,a2=(1-alpha)/a0;
+    let x1=0,x2=0,y1=0,y2=0;
+    for(let pass=0;pass<2;pass++){const output=new Float64Array(a.length);for(let i=0;i<a.length;i++){const x=a[i],y=b0*x+b1*x1+b2*x2-a1*y1-a2*y2;output[i]=y*.86+x*.14;x2=x1;x1=x;y2=y1;y1=y;}if(pass===1)a=output;}
+  }
   // Windowed-sinc resampling avoids aliasing the 96 kHz tire recording.
   if(rate!==44100){const ratio=rate/44100,cutoff=Math.min(1,1/ratio)*.94;
     a=Float64Array.from({length:Math.floor(a.length/ratio)},(_,i)=>{const x=i*ratio;let total=0,weight=0;
@@ -43,7 +53,7 @@ function process(source,target,peak,{start=0,end=Infinity,loop=true,fadeSeconds=
   console.log(`${target}: ${(result.length/44100).toFixed(2)} s, peak ${(max*gain).toFixed(3)}, RMS ${(rms*gain).toFixed(3)}, ${result.length*2+44} bytes`);
 }
 if(!argv.includes('--ambience-only')){
-process('engine-source.wav','engine-loop.wav',.8);
+process('engine-source.wav','engine-loop.wav',.8,{notch:43,rmsTarget:.17,levelWindowSeconds:.09});
 process('tire-squeal.wav','tire-loop.wav',.72);
 
 // Real field recordings, not measured dyno RPM bands. Selections supply different
@@ -56,7 +66,7 @@ process('acceleration-source.wav','engine-load-low.wav',.8,{...engineOptions,sta
 process('acceleration-source.wav','engine-load-mid.wav',.8,{...engineOptions,start:4.3,end:5.7,levelWindowSeconds:.09});
 // The rev-blip recording is intentionally not used as a sustained top-speed
 // loop: it contains a repeating rise/fall even when the player holds steady RPM.
-process('engine-source.wav','engine-load-high.wav',.8,{highpass:38,rmsTarget:.17,fadeSeconds:.06,levelWindowSeconds:.09});
+process('engine-source.wav','engine-load-high.wav',.8,{highpass:38,notch:43,rmsTarget:.17,fadeSeconds:.06,levelWindowSeconds:.09});
 process('v8-rev-source.wav','engine-coast.wav',.74,{...engineOptions,start:6.2,end:7.6,rmsTarget:.14,levelWindowSeconds:.09});
 process('v8-rev-source.wav','engine-throttle.wav',.78,{...engineOptions,start:2,end:3.3,loop:false,fadeSeconds:.045});
 process('v8-rev-source.wav','engine-lift.wav',.72,{...engineOptions,start:3.85,end:5.1,loop:false,fadeSeconds:.055,rmsTarget:.14});

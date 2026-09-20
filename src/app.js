@@ -15,6 +15,7 @@ import {DEFAULT_ROUTE_VARIANT,isRouteVariant,getRouteVariant,getRouteVariantForS
 import {normalizeLightingMood} from './lighting-moods.js';
 import {DEFAULT_RACE_SETTINGS,normalizeRaceSettings,raceSettingsChoices,raceSettingsStage} from './race-settings.js';
 import {createKeyboardSteering,keyboardSteeringDirection} from './keyboard-steering.js';
+import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as buyDriver,selectDriver as equipDriver} from './drivers.js';
 
 const SIMULATION_STEP = 1 / 120;
 export const ROUTE_PREFERENCE_KEY='duel_route_variant';
@@ -164,10 +165,10 @@ export class App {
   startCampaign(options = {}) {
     this._refreshPlayer();
     const stageIndex=Math.max(0,Math.min(COURSE.length-1,Math.floor(options.startStage??this.menuStage))),stage=COURSE[stageIndex];
-    if((stage.arena||stage.requiredCar)&&!isCarUnlocked(this.profile,stage.requiredCar||'titan_monster'))return false;
     this._settleAbandoned();
-    const selectedCar=(stage.arena||stage.requiredCar)?stage.requiredCar||'titan_monster':options.car||this.duel.state.car;
+    const selectedCar=options.car||this.duel.state.car;
     const car=isCarUnlocked(this.profile,selectedCar)?selectedCar:'falcone_f42';
+    const driverId=isDriverUnlocked(this.profile,options.driverId)?normalizeDriverId(options.driverId):getEquippedDriverId(this.profile);
     const explicitSeed=Number.isSafeInteger(options.seed)?options.seed>>>0:null;
     // Keep legacy headless callers that set duel.seed before their first start.
     const legacySeed=this.duel.state.status==='menu'&&this.duel.seed!==this.seed?this.duel.seed>>>0:null;
@@ -188,7 +189,7 @@ export class App {
     this._keyboardSteering.reset();
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
-    this.duel.startCampaign({...options,seed:this.seed,mode,difficulty,car,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
+    this.duel.startCampaign({...options,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     return true;
   }
   getRaceChoices(){return raceSettingsChoices(this._raceSettings);}
@@ -200,7 +201,7 @@ export class App {
     this._raceSettings=settings;this.menuStage=raceSettingsStage(settings);this.menuCar=settings.car;this.menuRouteId=settings.routeVariant;this._customMenuSeed=customSeed;
     this.cpuDifficulty=settings.cpuDifficulty;this.ghostEnabled=settings.ghostEnabled;this.lightingMood=settings.lightingMood;
     this.seed=this.getMenuSeed();this.duel.seed=this.seed;this.duel.carKey=settings.car;this.duel.difficultyKey=settings.difficulty;
-    Object.assign(this.duel.state,{seed:this.seed,car:settings.car,difficulty:settings.difficulty,cpuDifficulty:settings.cpuDifficulty,mode:settings.mode});
+    Object.assign(this.duel.state,{seed:this.seed,car:settings.car,driverId:getEquippedDriverId(this.profile),difficulty:settings.difficulty,cpuDifficulty:settings.cpuDifficulty,mode:settings.mode});
   }
   _rememberRaceSettings(patch={}){
     const settings=normalizeRaceSettings({...this._raceSettings,routeVariant:this.menuRouteId,lightingMood:this.lightingMood,ghostEnabled:this.ghostEnabled,...patch},this.profile);
@@ -215,8 +216,8 @@ export class App {
     this._applyRaceSettings(settings,customSeed);this.duel.emit({raceSettingsChanged:true});return this.getRaceChoices();
   }
   restart() {
-    const { mode, car, difficulty,cpuDifficulty } = this.duel.state;
-    this.startCampaign({ mode, car, difficulty,cpuDifficulty,seed:this.duel.state.seed,startStage:this._campaignStart||0 });
+    const { mode, car, difficulty,cpuDifficulty,driverId } = this.duel.state;
+    this.startCampaign({ mode, car, difficulty,cpuDifficulty,driverId,seed:this.duel.state.seed,startStage:this._campaignStart||0 });
   }
   getMenuSeed(stageIndex=this.menuStage){return supportsRouteVariants(COURSE[stageIndex])?(this._customMenuSeed??getRouteVariant(this.menuRouteId).seed):1989;}
   // Menu views share these immutable-by-convention previews; racing always builds its own Course.
@@ -237,7 +238,7 @@ export class App {
   }
   getGhostRecord(options={}){
     const stageIndex=options.startStage??options.stageIndex??this.menuStage;
-    return findGhost(this.ghosts,this.player.id,{seed:this.getMenuSeed(stageIndex),car:this.duel.state.car,difficulty:this.duel.state.difficulty,cpuDifficulty:this.cpuDifficulty,...options,stageIndex,laps:COURSE[stageIndex]?.laps||2});
+    return findGhost(this.ghosts,this.player.id,{seed:this.getMenuSeed(stageIndex),car:this.duel.state.car,driverId:getEquippedDriverId(this.profile),difficulty:this.duel.state.difficulty,cpuDifficulty:this.cpuDifficulty,...options,stageIndex,laps:COURSE[stageIndex]?.laps||2});
   }
   getPaintPreset(car,{menu=false}={}){
     if(menu||this.duel.state.status==='menu')return getPaintAppearance(this.profile,car);
@@ -258,6 +259,7 @@ export class App {
     if(state.mode!=='timetrial'||!this.runId||this._runPlayerId!==this.player.id||state.playerId!==this.player.id)return;
     if(this.ghostSaved!==false)this.ghosts=mergeGhostStores(this.ghosts,loadGhosts());
     const context={playerId:this.player.id,seed:state.seed,stageIndex:state.stageIndex,laps:state.lapsTotal,car:state.car,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty,upgrades:{...state.upgrades}};
+    context.driverId=state.driverId;
     this.ghostRecord=this.getGhostRecord(context);
     if(this.ghostRecord){this.ghostRecord.lastUsedAt=Date.now();this.ghostSaved=saveGhosts(this.ghosts);}
     this.ghostRecorder=new GhostRecorder(context);this._updateGhost(state);
@@ -312,11 +314,19 @@ export class App {
       state.police.pendingFines=settled.pendingFineTotal;
     }
   }
+  purchaseDriver(id){return this._driverOperation(id,true);}
+  selectDriver(id){return this._driverOperation(id,false);}
+  _driverOperation(id,buy){
+    if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the menu before changing drivers.',cost:0};
+    this._refreshPlayer();const result=(buy?buyDriver:equipDriver)(this.profile,id);
+    if(result.ok&&result.profile!==this.profile){this.profile=result.profile;this._saveProfile();this.duel.state.driverId=getEquippedDriverId(this.profile);this.duel.emit({garage:true,driverChanged:true});}
+    return result;
+  }
   _settleResult(result,state){
     if(this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return;
     this._refreshPlayer();
     const payload={...result,runId:this.runId,stageIndex:state.stageIndex,won:result.won===true,completed:result.completed===true,
-      timeSec:result.timeSec??result.stageTimeSec,laps:result.laps??state.completedLaps,seed:state.seed,car:state.car,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,
+      timeSec:result.timeSec??result.stageTimeSec,laps:result.laps??state.completedLaps,seed:state.seed,car:state.car,driverId:state.driverId,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,
       upgrades:{...state.upgrades},policeEscapes:result.policeEscapes??state.policeEscapes,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     const awarded=settleRace(this.profile,payload);
@@ -338,7 +348,7 @@ export class App {
     const key=`${this.runId}:${state.stageIndex}`;
     if(!this.runId||this._markedRaceKey===key||this.profile.settledResults.includes(key))return;
     const pending=this.profile.activeRace?.key===key?this.profile.activeRace:{pendingPoliceFineCount:0,pendingPoliceFines:0};
-    this._markedRaceKey=key;this.profile={...this.profile,activeRace:{...pending,key,runId:this.runId,stageIndex:state.stageIndex,car:state.car,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty}};this._saveProfile();
+    this._markedRaceKey=key;this.profile={...this.profile,activeRace:{...pending,key,runId:this.runId,stageIndex:state.stageIndex,car:state.car,driverId:state.driverId,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty}};this._saveProfile();
   }
   requestNavigation(action){
     if(!['restart','menu'].includes(action))return false;
@@ -399,6 +409,7 @@ export class App {
     this._keyboardSteering.reset();
     const st = this.duel.state;
     st.paused = false; st.status = 'menu'; st.boosting = false;
+    st.driverId=getEquippedDriverId(this.profile);
     this.ghostRecorder=null;this.ghostRecord=null;this.ghostPose=null;this.ghostStatus='none';
     this._racePaint=null;this._racePaintCar=null;
     this.driftNotice=null;

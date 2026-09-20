@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { ROAD_SHOULDER_WIDTH } from './config.js';
+import { addCourseLandmarks } from './course-landmarks.js';
 import { addLandscapeDetail } from './landscape-detail.js';
 import { addPineTrees } from './vegetation.js';
 import { addDesertCacti } from './desert-detail.js';
@@ -71,6 +72,7 @@ export function buildEnvironment(course) {
   addCityParking(group,course);
   addSceneryDetail(group,course);
   addRaceStructures(group,course);
+  addCourseLandmarks(group,course);
   addRallyDetail(group,course);
   addFinish(group, course);
   addCheckpointGates(group,course);
@@ -81,7 +83,7 @@ function addLandscape(group,course){
   addMountainLandscape(group,course);
   const trees=course.features.trees;
   const pine=course.def.theme!=='desert';
-  if(pine)addPineTrees(group,trees);
+  if(pine)addPineTrees(group,trees,course);
   else return addDesertCacti(group,course);
 }
 

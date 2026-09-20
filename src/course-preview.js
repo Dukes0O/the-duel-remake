@@ -13,7 +13,7 @@ export function buildCoursePreview(course,width=320,height=200){
   const biomes=[...new Set(course.sections.map(section=>section.theme))].map(key=>({key,...(PREVIEW_BIOMES[key]||{label:key,color:'#c8d5c2'})}));
   const elevation=new Float32Array(65);let minimum=Infinity,maximum=-Infinity;
   for(let i=0;i<elevation.length;i++){const y=course.at(course.length*i/(elevation.length-1)).y;elevation[i]=y;minimum=Math.min(minimum,y);maximum=Math.max(maximum,y);}
-  return {map,biomes,elevation,reliefMeters:Math.round(maximum-minimum),minimum,maximum,showElevation:supportsRouteVariants(course.def),laps:course.def.laps||2,distanceKm:course.raceLength/1000};
+  return {map,biomes,elevation,reliefMeters:Math.round(maximum-minimum),minimum,maximum,showElevation:supportsRouteVariants(course.def)||!!course.def.expansion,laps:course.def.laps||2,distanceKm:course.raceLength/1000};
 }
 function path(ctx,points){ctx.beginPath();for(let i=0;i<points.length;i+=2)i?ctx.lineTo(points[i],points[i+1]):ctx.moveTo(points[i],points[i+1]);}
 // A static menu view. It redraws only when the selected Course or label changes.

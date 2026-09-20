@@ -11,12 +11,12 @@ const memory=new Map();globalThis.localStorage={getItem:key=>memory.get(key)??nu
 const index=COURSE.findIndex(stage=>stage.kind==='checkpoint'),stage=COURSE[index];assert(stage,'Checkpoint event exists');
 const required=stage.checkpointRush.gatesPerLap*(stage.laps||2);
 const create=()=>{const app=new App();app.profile.credits=20000;app._saveProfile();check(app.unlockCar(stage.requiredCar).ok,'Dusthawk unlock succeeds');return app;};
-check(!new App().startCampaign({startStage:index}),'locked player cannot enter checkpoint rush');
+const starter=new App();check(starter.startCampaign({startStage:index,car:'falcone_f42'}),'a starter car can enter checkpoint rush without the recommended car');check(starter.duel.state.car==='falcone_f42','checkpoint entry preserves the chosen owned vehicle');starter.returnToMenu();
 
 memory.clear();let app=create();app.autopilot=true;let passes=0,sawNotice=false;
 app.duel.onChange((_state,event)=>{if(event.checkpointRushEvent?.type==='passed')passes++;});
-check(app.startCampaign({startStage:index,car:'falcone_f42',mode:'timetrial',cpuDifficulty:'hard',seed:42}),'owned checkpoint event starts');
-let s=app.duel.state;check(s.car===stage.requiredCar&&s.mode==='duel'&&s.seed===1989,'checkpoint event snapshots required car, objective mode and audited fixed route');
+check(app.startCampaign({startStage:index,car:stage.requiredCar,mode:'timetrial',cpuDifficulty:'hard',seed:42}),'owned checkpoint event starts');
+let s=app.duel.state;check(s.car===stage.requiredCar&&s.mode==='duel'&&s.seed===1989,'checkpoint event snapshots the explicitly selected car, objective mode and audited fixed route');
 check(s.rival===null&&s.traffic.length===0&&!s.police.pursuit?.active,'checkpoint event has no CPU, traffic or pursuit');
 check(app.ghostRecorder===null,'checkpoint event never records a Time Trial ghost');
 for(let i=0;i<3500&&['countdown','racing','ticket'].includes(s.status);i++){app.advance(.1);sawNotice||=!!app.checkpointNotice;}
@@ -66,9 +66,9 @@ app.advance(4);const interruptedBalance=app.profile.credits;const recovered=new 
 check(new App().profile.credits===recovered.profile.credits,'second reload cannot repeat interruption debit');
 app.returnToMenu();const oldState={...app.duel.state};check(app.addPlayer('Timberline newcomer').ok,'new local player can be created');app._settleResult({...valid},oldState);
 check(app.profile.credits===0&&app.profile.history.length===0,'late old-player checkpoint result cannot credit another profile');
-check(!app.startCampaign({startStage:index}),'a second player must unlock their own Dusthawk');
+check(app.startCampaign({startStage:index,car:'dusthawk_rally'})&&app.duel.state.car==='falcone_f42','a second player can enter but cannot use another player’s locked Dusthawk');
 
-for(const invalid of [{won:false},{targetsMet:false},{objectiveMissed:true},{checkpointsPassed:required-1},{checkpointsPassed:required+1},{checkpointsRequired:required-1},{checkpointMisses:1},{checkpointMisses:NaN},{timeSec:stage.checkpointRush.initialTimeSec.easy+required*stage.checkpointRush.extensionSec.easy+1},{completed:false},{abandoned:true},{timeout:true},{laps:1},{car:'falcone_f42'}]){
+for(const invalid of [{won:false},{targetsMet:false},{objectiveMissed:true},{checkpointsPassed:required-1},{checkpointsPassed:required+1},{checkpointsRequired:required-1},{checkpointMisses:1},{checkpointMisses:NaN},{timeSec:stage.checkpointRush.initialTimeSec.easy+required*stage.checkpointRush.extensionSec.easy+1},{completed:false},{abandoned:true},{timeout:true},{laps:1},{car:'missing'}]){
   const outcome={...valid,...invalid};check(!isValidFinish(outcome),'incomplete or malformed checkpoint result cannot qualify for records');
   const payment=settleRace({...createProfile(),credits:1000},outcome);check(payment.breakdown.personalBest===0&&payment.breakdown.base===(outcome.abandoned?0:-CPU_REWARDS.easy/2),'invalid result earns no best bonus; abandonment preserves bank while genuine loss retains its charge');
   check(!recordFinish(createLeaderboard(),outcome,{id:'p',name:'Player'}).recorded,'leaderboard rejects invalid checkpoint metadata');

@@ -228,12 +228,13 @@ export function attachRenderer(host, app) {
     traffic.forEach((car, i) => {
       const d = st.traffic[i]; car.visible = !menu && !!d?.alive && Math.abs(visualGap(d.s)) < 540;
       updateNpcVehicleDamage(car,!menu&&d?.alive?d:null);
-      if (car.visible) {const turn=d.dir<0?Math.PI:0;place(car,vehicleGroundPoint(course,d.s,d.lateral),turn,wheelTravel(d.speedMph));const slope=groundSlope(course,d.s,d.lateral,turn);car.rotation.x=slope.pitch;car.rotation.z=slope.roll;}
+      if (car.visible) {const turn=d.dir<0?Math.PI:0;place(car,vehicleGroundPoint(course,d.s,d.lateral),turn,wheelTravel(d.speedMph));car.position.y+=d.airHeight||0;const slope=groundSlope(course,d.s,d.lateral,turn);car.rotation.x=slope.pitch;car.rotation.z=slope.roll;}
     });
     const pursuit = st.police.pursuit; police.visible = !menu && !!pursuit?.active && pursuit.distanceU < 250;
     updateNpcVehicleDamage(police,!menu&&pursuit?.active?pursuit:null);
     if (police.visible) {
       place(police, vehicleGroundPoint(course,pursuit.s, pursuit.lateral), pursuit.headingError || 0, wheelTravel(pursuit.speedMph));
+      police.position.y+=pursuit.airHeight||0;
       const slope=groundSlope(course,pursuit.s,pursuit.lateral,pursuit.headingError||0);police.rotation.x=slope.pitch;police.rotation.z=slope.roll;
       for(const lamp of police.userData.brakeLights||[])lamp.material.emissiveIntensity=pursuit.braking?4:1.4;
       lamps.children.forEach((lamp, i) => { lamp.visible = Math.floor(now / 130) % 2 === i; });

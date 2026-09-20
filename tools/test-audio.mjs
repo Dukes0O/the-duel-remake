@@ -83,9 +83,9 @@ for(const car of Object.keys(CARS)){
   const st=state({car});for(let n=0;n<180;n++){context.advance(1/60);audio.update(st);}
   const rate=audio.samples.loadHigh.source.playbackRate.value,gain=audio.samples.loadHigh.gain.gain.value;rates.set(car,rate);
   for(let n=0;n<90;n++){context.advance(1/60);audio.update(st);const voices=['engine','idle','loadLow','loadMid','loadHigh','coast'].filter(key=>audio.samples[key].gain.gain.value>.001);assert.deepEqual(voices,['loadHigh']);assert(Math.abs(audio.samples.loadHigh.gain.gain.value-gain)<1e-6);assert.equal(audio.samples.loadHigh.source.playbackRate.value,rate);}
-  check(rate>=.65&&rate<=1.4,`${car} has bounded steady high-speed pitch`);
+  check(rate>=.48&&rate<=2.2,`${car} has bounded steady high-speed pitch`);
   check(audio.engineGain.gain.value===0,`${car} has no synthesized overlay with samples loaded`);
-  check(audio.samples.loadHigh.filter.frequency.value<=3000,`${car} avoids excessive top-band brightness`);
+  check(audio.samples.loadHigh.filter.frequency.value<=3400,`${car} avoids excessive top-band brightness`);
 }
 check(Object.hasOwn(CARS,'falcone_heritage')&&rates.get('falcone_heritage')===rates.get('falcone_f42'),'Heritage explicitly shares the F42 steady engine pitch');
 check(new Set(rates.values()).size===rates.size-1,'the two Falcones share one voice while other cars keep distinct stable voices');
@@ -156,10 +156,10 @@ for(const car of Object.keys(CARS))for(const targetRpm of [.31,.545,.735,1]){
   const st=state({car,revs:(targetRpm-.18)/.82});for(let i=0;i<100;i++){context.advance(1/60);audio.update(st);}
   const layers=['idle','loadLow','loadMid','loadHigh'].map(key=>audio.samples[key]).filter(layer=>layer.gain.gain.value>.001),rendered=new Float32Array(44100*6);
   for(const layer of layers){const x=layer.source.buffer.getChannelData(0),rate=layer.source.playbackRate.value,gain=layer.gain.gain.value;for(let i=0;i<rendered.length;i++){const position=i*rate,index=Math.floor(position),fraction=position-index;rendered[i]+=(x[index%x.length]*(1-fraction)+x[(index+1)%x.length]*fraction)*gain;}}
-  const swing=envelopeSwing(rendered);maximumBlendSwing=Math.max(maximumBlendSwing,swing);check(swing<7,`${car} steady PCM mix avoids deep beating`);check(rendered.every(value=>Math.abs(value)<1),`${car} steady PCM mix has headroom`);
+  const swing=envelopeSwing(rendered);maximumBlendSwing=Math.max(maximumBlendSwing,swing);check(swing<7,`${car} steady PCM mix avoids deep beating (${targetRpm}: ${swing.toFixed(2)}dB)`);check(rendered.every(value=>Math.abs(value)<1),`${car} steady PCM mix has headroom`);
 }
 for(const file of ['engine-source.wav','v8-rev-source.wav','acceleration-source.wav','tire-squeal.wav']){const decoded=readWav(file);check(decoded.samples.length>decoded.rate/2&&decoded.samples.some(value=>Math.abs(value)>.01),`${file} source PCM decodes to non-silent samples`);}
-for(const revs of [0,.12,.4,.7,1,1.15])for(const throttle of [0,1]){context.advance(.1);audio.update(state({car:'viper_proto',revs,input:{throttle,brake:0}}));for(const key of ['engine','idle','loadLow','loadMid','loadHigh','coast'])check(audio.samples[key].source.playbackRate.value<=1.4,`${key} rate capped throughout rev/load changes`);}
+for(const revs of [0,.12,.4,.7,1,1.15])for(const throttle of [0,1]){context.advance(.1);audio.update(state({car:'viper_proto',revs,input:{throttle,brake:0}}));for(const key of ['engine','idle','loadLow','loadMid','loadHigh','coast'])check(audio.samples[key].source.playbackRate.value<=(key==='coast'?3:2.2),`${key} rate capped throughout rev/load changes`);}
 audio.smoothedSlip=0;audio.update(state({speedMph:100,input:{throttle:0,brake:0},slipAngle:0,steerVisual:0}));check(audio.tires.gain.gain.value>0&&audio.samples.squeal.gain.gain.value===0,'normal asphalt driving has a quiet rolling bed without false squeal');
 context.advance(.1);audio.update(state({input:{throttle:1,brake:1},slipAngle:.3}));check(audio.samples.squeal.gain.gain.value>0,'asphalt sliding fades in the recorded squeal');
 audio.update(state({input:{throttle:1,brake:1},slipAngle:.3}),{looseSurface:true});check(audio.samples.squeal.gain.gain.value===0&&audio.gravel.gain.gain.value>0,'rally dirt uses gravel without asphalt squeal');
@@ -180,6 +180,94 @@ audio.update(state());audio.setMuted(true);const before=context.nodes.length;aud
 const partial=await makeAudio(new Set(['engine-load-high.wav']));partial.context.advance(.1);partial.audio.update(state());check(partial.audio.sampleStatus==='fallback'&&partial.audio.samples.engine.gain.gain.value>0,'missing high band uses original recorded fallback');
 const absentAmbience=await makeAudio(new Set(['ambience-coast.wav']));absentAmbience.context.advance(.1);absentAmbience.audio.update(state(),{biome:'coast'});check(absentAmbience.audio.ambienceStatus==='partial'&&absentAmbience.audio.sampleStatus==='ready'&&absentAmbience.audio.samples.loadHigh.gain.gain.value>0,'missing ambience cannot degrade loaded engine or tires');
 const missing=await makeAudio(new Set(['*']));missing.audio.update(state());check(missing.audio.sampleStatus==='fallback'&&missing.audio.engineGain.gain.value>0,'all asset failures retain synthetic engine');
+
+// Decode and resample the real engine loops at the mixer targets. This isolates
+// the dry recorded engine, not a substitute for Web Audio filtering/listening.
+function renderEngine(mixer,seconds=2){
+  const rendered=new Float32Array(Math.round(44100*seconds));
+  for(const key of ['engine','idle','loadLow','loadMid','loadHigh','coast']){
+    const layer=mixer.samples[key];if(!layer||layer.gain.gain.value<1e-6)continue;
+    const samples=layer.source.buffer.getChannelData(0),rate=layer.source.playbackRate.value,gain=layer.gain.gain.value;
+    for(let i=0;i<rendered.length;i++){const position=i*rate,index=Math.floor(position),fraction=position-index;rendered[i]+=(samples[index%samples.length]*(1-fraction)+samples[(index+1)%samples.length]*fraction)*gain;}
+  }
+  return rendered;
+}
+const rmsOf=samples=>Math.sqrt(samples.reduce((sum,value)=>sum+value*value,0)/samples.length);
+function dominantTone(samples){
+  // A Hann-windowed low-frequency scan measures the exhaust fundamental. The
+  // 8:1 stride is safe for this sub-230 Hz analysis of 44.1 kHz PCM.
+  let bestFrequency=0,bestPower=0;
+  const length=Math.min(samples.length,44100);
+  for(let frequency=35;frequency<=230;frequency+=.5){
+    let real=0,imaginary=0;
+    for(let i=0;i<length;i+=8){const window=.5-.5*Math.cos(2*Math.PI*i/(length-1)),phase=2*Math.PI*frequency*i/44100;real+=samples[i]*window*Math.cos(phase);imaginary-=samples[i]*window*Math.sin(phase);}
+    const power=real*real+imaginary*imaginary;if(power>bestPower){bestPower=power;bestFrequency=frequency;}
+  }
+  return bestFrequency;
+}
+const response=await makeAudio(),responseRows=[];
+const settleResponse=(values,frames=120)=>{for(let frame=0;frame<frames;frame++){response.context.advance(1/60);response.audio.update(state(values));}};
+const loadedSources=Object.values(response.audio.samples).filter(layer=>layer.source).map(layer=>layer.source),loadedNodeCount=response.context.nodes.length;
+await response.audio._loadSamples();await response.audio._loadSamples();
+check(response.context.nodes.length===loadedNodeCount&&loadedSources.every(source=>Object.values(response.audio.samples).some(layer=>layer.source===source)),'repeated sample loading reuses every engine/tire loop and decoded buffer');
+for(const car of ['falcone_f42','stuttgart_959s','banshee_muscle','titan_monster','viper_proto']){
+  settleResponse({car,revs:0});const idleTone=dominantTone(renderEngine(response.audio));
+  settleResponse({car,revs:1});const high=renderEngine(response.audio),highTone=dominantTone(high),semitones=12*Math.log2(highTone/idleTone);
+  check(semitones>17&&semitones<20,`${car}: actual PCM rev sweep spans over an octave without extreme pitch stretch (${idleTone}->${highTone}Hz; ${semitones.toFixed(2)} semitones)`);
+  check(high.every(value=>Math.abs(value)<1),`${car}: redline PCM keeps unclipped dry-loop headroom`);
+  settleResponse({car,revs:.7});const loadedPcm=renderEngine(response.audio),loaded=rmsOf(loadedPcm),loadedTone=dominantTone(loadedPcm);
+  settleResponse({car,revs:.7,input:{throttle:0,brake:0}});const coastPcm=renderEngine(response.audio),coast=rmsOf(coastPcm),contrast=20*Math.log10(loaded/coast);
+  check(Math.abs(12*Math.log2(dominantTone(coastPcm)/loadedTone))<1.5,`${car}: lift keeps measured PCM pitch close to the same engine RPM`);
+  check(contrast>6&&contrast<13,`${car}: throttle lift makes a clear bounded recorded-engine loudness change`);
+  responseRows.push(`${car}: rev sweep ${semitones.toFixed(2)} semitones, lift ${contrast.toFixed(2)}dB`);
+}
+settleResponse({revs:.96,gear:2});const beforeShiftRate=response.audio.samples.loadHigh.source.playbackRate.value;
+response.audio.event({shift:3});response.context.advance(.03);response.audio.update(state({revs:.65,gear:3}));
+const afterShiftRate=response.audio.samples.loadHigh.source.playbackRate.value;
+check(12*Math.log2(beforeShiftRate/afterShiftRate)>5,'upshift changes the common recorded pitch by more than five semitones');
+check(response.audio.samples.loadHigh.source.playbackRate.lastTimeConstant===.024,'shift pitch settles in 24 ms rather than blurring over the load cut');
+response.audio.event({shift:2});response.context.advance(.03);response.audio.update(state({revs:.96,gear:2}));
+check(response.audio.samples.loadHigh.source.playbackRate.value>afterShiftRate*1.3,'downshift raises the recorded pitch instead of replaying an upshift drop');
+const shiftNodes=response.context.nodes.length;response.audio.event({shift:2});
+check([...response.audio.activeShots].filter(shot=>!shot.stopping&&shot.source.buffer===response.audio.samples.shift).length===1,'rapid shifting replaces the prior accent instead of stacking engine bursts');
+check(response.context.nodes.length===shiftNodes+2,'a shift adds only one bounded source/gain pair');
+settleResponse({revs:.45,input:{throttle:0,brake:0}});
+response.context.advance(.02);response.audio.update(state({revs:.45,input:{throttle:1,brake:0}}));const jab=response.audio.throttleVoice;
+response.context.advance(.08);response.audio.update(state({revs:.45,input:{throttle:0,brake:0}}));
+check(jab.stopping&&response.audio.liftVoice&&!response.audio.liftVoice.stopping,'a quick throttle jab can play its lift without the attack cooldown swallowing it');
+check(response.audio.liftVoice.source.stopAt-response.context.currentTime<=.3,'lift accent cannot mask later rev movement with a long recorded deceleration');
+response.audio.event({shift:1});response.audio.setMuted(true);
+check([...response.audio.activeShots].every(shot=>shot.stopping),'muting ends in-flight engine accents so unmute cannot reveal a stale burst');
+response.audio.event({stageLoaded:0,countdown:3});
+check(response.audio.smoothedLoad===0&&response.audio.shiftUntil===0&&response.audio.lastThrottle===0,'muted restart clears engine load, pedal and shift history');
+response.context.advance(.1);check(response.audio.activeShots.size===0,'muted restart accents finish and disconnect');
+response.audio.setMuted(false);const restartLoops=Object.values(response.audio.samples).filter(layer=>layer.source).map(layer=>layer.source);
+for(let run=0;run<8;run++){response.audio.event({stageLoaded:0});response.context.advance(.1);response.audio.update(state({status:'countdown',speedMph:0,revs:0,input:{throttle:0,brake:0}}));}
+check(restartLoops.every((source,index)=>source===loadedSources[index]),'restarting retains the exact original continuous engine sources');
+settleResponse({revs:.6,speedMph:50});const speedIndependentRate=response.audio.samples.loadMid.source.playbackRate.value;
+settleResponse({revs:.6,speedMph:180});
+check(response.audio.samples.loadMid.source.playbackRate.value===speedIndependentRate,'engine pitch follows revs rather than road speed');
+let previousRate=0;
+for(const revs of [.05,.2,.4,.6,.8,1]){
+  response.context.advance(1/60);response.audio.update(state({revs}));const rate=response.audio.samples.loadHigh.source.playbackRate.value;
+  check(rate>previousRate,'accelerating through a gear raises the same recorded pitch target continuously');previousRate=rate;
+}
+for(const revs of [.8,.6,.4,.2,.05]){
+  response.context.advance(1/60);response.audio.update(state({revs,input:{throttle:0,brake:1}}));const rate=response.audio.samples.loadHigh.source.playbackRate.value;
+  check(rate<previousRate,'braking down through the rev range lowers recorded pitch without a time wobble');previousRate=rate;
+}
+// Integrate the actual exponential targets at audio-sample resolution. This
+// catches a cut too short/soft to survive AudioParam smoothing; the full engine
+// mix still needs native Web Audio and a human listening check.
+let smoothedCut=1,minimumCut=1;
+for(let sample=0;sample<44100*.18;sample++){
+  const time=sample/44100,command=1-.72*Math.sin(Math.PI*time/.18);
+  smoothedCut+=(command-smoothedCut)*(1-Math.exp(-1/(44100*.05)));minimumCut=Math.min(minimumCut,smoothedCut);
+}
+check(minimumCut<.46,'the 180 ms gear cut stays deeper than 6dB after real-time gain smoothing');
+for(let sample=0;sample<44100*.2;sample++)smoothedCut+=(1-smoothedCut)*(1-Math.exp(-1/(44100*.05)));
+check(smoothedCut>.98,'the smoothed gear cut recovers promptly after the shift');
+console.log(responseRows.join('\n'));
 const app=new App();const stage=COURSE.findIndex(item=>item.sections?.some(section=>section.theme==='alpine')&&!item.requiredCar);app.duel.startCampaign({startStage:stage});const tunnel=app.duel.course.features.tunnels[0];assert(tunnel);let forwarded;app.audio.update=(_state,environment)=>{forwarded=environment;};app.duel.state.s=tunnel.start+30;app.duel.state.lateral=0;app._updateAudio();check(forwarded.tunnel===1,'App forwards actual tunnel interior');app.duel.state.s+=app.duel.course.length;app._updateAudio();check(forwarded.tunnel===1,'second physical lap keeps tunnel sound');app.duel.state.lateral=tunnel.width+3;app._updateAudio();check(forwarded.tunnel===0,'outside a tunnel wall does not add tunnel sound');
 check(forwarded.biome===app.duel.course.themeAt(app.duel.state.s)&&forwarded.night===false&&forwarded.cameraMode===app.cameraMode,'App forwards actual wrapped section biome, daylight and camera perspective');
 const nightStage=COURSE.findIndex(item=>item.timeOfDay==='night'&&!item.requiredCar);app.duel.startCampaign({startStage:nightStage});app._updateAudio();check(forwarded.night===true&&forwarded.biome===app.duel.course.themeAt(0),'night course forwards its actual ambience metadata');

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { Course } from '../src/course.js';
 import { COURSE } from '../src/config.js';
-import { terrainGeometry } from '../src/world.js';
+import { terrainGeometry, farTerrainGeometry } from '../src/world.js';
 import { addLandscapeDetail } from '../src/landscape-detail.js';
 import { buildCactusGeometry, cactusTransform, addDesertCacti, createCactusMaterial, createDesertStoneMaterial } from '../src/desert-detail.js';
 import { vegetationCells } from '../src/vegetation.js';
@@ -34,6 +34,8 @@ try {
     for (const key of ['trees', 'rocks', 'mountains']) view.features[key] = course.features[key].filter(item => item.theme === 'desert');
     view.detailSections = course.sections.filter(section => section.theme === 'desert');
     const terrain = new THREE.Mesh(terrainGeometry(course, false), material), group = new THREE.Group();
+    const terrainSurfaces = [terrain];
+    if(definition.expansion)terrainSurfaces.push(new THREE.Mesh(farTerrainGeometry(course),material));
     addDesertCacti(group, view);
     check(group.children.length <= vegetationCells(view.features.trees).length * 3, 'maximum three instanced cactus draws per spatial cell');
     check(group.children.reduce((sum, mesh) => sum + mesh.count, 0) === view.features.trees.length, 'spatial cells preserve every cactus exactly once');
@@ -45,8 +47,8 @@ try {
         check(actual.elements.every((value, j) => Math.abs(value - transform.elements[j]) < .0003), 'instance uses audited transform');
         const base = transform.elements[13];
         ray.set(new THREE.Vector3(tree.x, tree.y + 30, tree.z), down);
-        const hit = ray.intersectObject(terrain, false)[0];
-        check(!!hit, 'plant has rendered ground');
+        const hit = ray.intersectObjects(terrainSurfaces, false)[0];
+        check(!!hit, `${definition.id}/${seed}/${tree.id}: plant has actual rendered near or far ground`);
         const burial = hit.point.y - base;
         minimumBurial = Math.min(minimumBurial, burial); maximumBurial = Math.max(maximumBurial, burial);
         check(burial > .01 && burial < .7, `plant root must be grounded without burying its stem: ${definition.id}/${seed}/${tree.id}: ${burial}`);
@@ -75,7 +77,7 @@ try {
       const collider = course.features.obstacles.find(obstacle => obstacle.source === feature);
       check(collider?.shape === 'ellipse' && collider.halfX === feature.scale[0] && collider.halfZ === feature.scale[2], 'existing conservative rock collision footprint'); stones++;
     }
-    terrain.geometry.dispose();
+    for(const surface of terrainSurfaces)surface.geometry.dispose();
   }
 } finally { THREE.TextureLoader.prototype.load = originalLoad; }
 for (const factory of [createCactusMaterial, () => createDesertStoneMaterial(new THREE.Texture())]) {

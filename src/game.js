@@ -10,8 +10,10 @@ import { sweepBox, sweepObstacle, contactZone, segmentCircle, CAR_HALF_WIDTH, CA
 import { NpcRoutePlanner } from './npc-route.js';
 import { createDriftState, stepDrift, finishDrift, breakDrift } from './drift-scoring.js';
 import { vehicleContactEnvelope, planNpcYield, npcYieldContactNormal } from './npc-yielding.js';
+import { DEFAULT_DRIVER, normalizeDriverId, applyDriverModifiers, driverModifierSignature } from './drivers.js';
 
 const BOUNDARY_WARNING = 60, BOUNDARY_RESET = 78;
+const GLANCING_WALL_NORMAL_FRACTION = Math.sin(35 * Math.PI / 180);
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const freshDamageZones = () => ({ front: 0, rear: 0, left: 0, right: 0 });
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
@@ -31,6 +33,7 @@ export class Duel {
       status: 'menu', // menu -> countdown -> racing -> (crashed|ticket) -> stage_result -> ... -> gameover|complete
       paused: false,
       car: this.carKey,
+      driverId: DEFAULT_DRIVER,
       difficulty: this.difficultyKey,
       cpuDifficulty: DEFAULT_CPU_DIFFICULTY, playerId: null,
       upgrades: Object.fromEntries(UPGRADE_KEYS.map(key => [key, 0])),
@@ -76,7 +79,8 @@ export class Duel {
 
   get car() {
     const base = CARS[this.state.car], upgrades = this.state.upgrades;
-    const key = `${this.state.car}|${UPGRADE_KEYS.map(name => upgrades[name] || 0).join(':')}`;
+    const driverId = normalizeDriverId(this.state.driverId);
+    const key = `${this.state.car}|${driverId}|${UPGRADE_KEYS.map(name => upgrades[name] || 0).join(':')}`;
     if (this._carCache?.key === key) return this._carCache.value;
     const engine = 1 + upgrades.engine * .035;
     const value = { ...base, topSpeed: base.topSpeed * engine, gears: base.gears.map(gear => gear * engine),
@@ -84,7 +88,8 @@ export class Duel {
       braking: base.braking * (1 + upgrades.tires * .06 + (upgrades.brakes || 0) * .12),
       offRoadGrip: Math.min(1.15, (base.offRoadGrip ?? DRIVE.offRoadGrip) + (upgrades.suspension || 0) * .04 + upgrades.tires * .02),
       roughnessScale: 1 / (1 + (upgrades.suspension || 0) * .18), boostCapacity: 1 + (upgrades.tank || 0) * .25 };
-    this._carCache = { key, value }; return value;
+    const modified = applyDriverModifiers(value, driverId, this.state.car);
+    this._carCache = { key, value: modified }; return modified;
   }
   get diff() { return DIFFICULTY[this.state.difficulty]; }
   get scoreMultiplier() { return this.state.difficulty === 'pro' ? SCORING.manualMultiplier : 1; }
@@ -136,18 +141,17 @@ export class Duel {
   }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, startStage = 0, upgrades = {}, seed } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     if (CARS[car]) this.state.car = car;
     if (DIFFICULTY[difficulty]) this.state.difficulty = difficulty;
     this.state.cpuDifficulty = CPU_DIFFICULTY[cpuDifficulty] ? cpuDifficulty : DEFAULT_CPU_DIFFICULTY;
     this.state.playerId = typeof playerId === 'string' ? playerId : null;
+    this.state.driverId = normalizeDriverId(driverId);
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     this.state.mode = mode === 'timetrial' ? 'timetrial' : 'duel';
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
-    const requiredCar = COURSE[this.state.stageIndex].requiredCar;
-    if (CARS[requiredCar]) this.state.car = requiredCar;
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
     this.state.lives = LIVES.start;
     this.state.totalTimeSec = 0;
@@ -458,6 +462,7 @@ export class Duel {
       if (!c.alive) continue;
       c.prevS = c.s;
       c.prevLateral = c.lateral;
+      c.prevAirHeight = c.airHeight || 0;
       c.cruiseSpeedMph ??= Math.max(0, c.speedMph);
       const yieldPlan = this._npcYield(c, c.cruiseSpeedMph);
       c.braking = c.speedMph > yieldPlan.targetMph;
@@ -466,12 +471,22 @@ export class Duel {
         c.lateral += (c.pushVelocity || 0) * dt;
         c.pushVelocity = (c.pushVelocity || 0) * Math.exp(-1.5 * dt);
         const lane = c.dir < 0 ? DRIVE.laneOffset : -DRIVE.laneOffset;
-        if (!(c.yieldingToPlayer && c.speedMph < .1)) c.lateral += clamp(lane - c.lateral, -dt * .7, dt * .7);
+        const laneStep = c.yieldingToPlayer && c.speedMph < .1 ? 0 : clamp(lane - c.lateral, -dt * .7, dt * .7);
+        c.lateral += laneStep;
+        // Traffic follows a road-relative lane path, unlike the free-steering
+        // rival. A contact yaw must recover toward that path instead of leaving
+        // a permanently diagonal collision shell travelling straight ahead.
+        // Include direction for oncoming lane recovery; don't pivot a stopped
+        // shell into a player while waiting for the road to clear.
+        const along = (c.dir || 1) * Math.max(1, c.speedMph * DRIVE.mphToWorld);
+        const headingTarget = Math.atan((dt > 0 ? laneStep / dt : 0) / along);
+        const turn = .95 * Math.min(1, c.speedMph / 12) * dt;
+        c.headingError = (c.headingError || 0) + clamp(headingTarget - (c.headingError || 0), -turn, turn);
         if (!this._surface(c.s, c.lateral).road) c.speedMph *= Math.exp(-DRIVE.offRoadScrub * dt);
       }
       c.s += c.dir * c.speedMph * DRIVE.mphToWorld * dt;
       c.contactCooldown = Math.max(0, (c.contactCooldown || 0) - dt);
-      if (Number.isFinite(c.lateral)) { this._staticContacts(c, false); this._boundary(c); }
+      if (Number.isFinite(c.lateral)) { this._jump(c, dt); this._staticContacts(c, false); this._boundary(c); }
     }
   }
 
@@ -568,6 +583,14 @@ export class Duel {
       const roadHeading = this.course.at(car.s).heading;
       const pushNormal = Math.cos(roadHeading) * nx - Math.sin(roadHeading) * nz;
       const impactMph = Math.abs(car.speedMph) * incoming + Math.max(0, -(car.pushVelocity || 0) * pushNormal) / DRIVE.mphToWorld;
+      // A shallow hit on a continuous rail/lining is a sliding scrape, not a
+      // crash. Measure incidence against the actual contacted face: striking
+      // a rail end remains head-on. Signed reverse travel and sideways pushes
+      // count too; body yaw alone cannot turn a sharp impact into a safe one.
+      const velocityX = Math.sin(travelHeading) * car.speedMph * DRIVE.mphToWorld + Math.cos(roadHeading) * (car.pushVelocity || 0);
+      const velocityZ = Math.cos(travelHeading) * car.speedMph * DRIVE.mphToWorld - Math.sin(roadHeading) * (car.pushVelocity || 0);
+      const normalFraction = Math.max(0, -(velocityX * nx + velocityZ * nz)) / Math.max(.000001, Math.hypot(velocityX, velocityZ));
+      const glancingWall = !obstacle.arenaWall && (obstacle.tunnelWall || obstacle.barrier) && normalFraction < GLANCING_WALL_NORMAL_FRACTION - 1e-10;
       const zone = contactZone(nx, nz, heading);
       if (obstacle.kind === 'tree' && obstacle.theme === 'desert') {
         const distance = Math.hypot(dx, dz);
@@ -597,7 +620,7 @@ export class Duel {
       if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) { car.s = road.s; car.lateral = road.lateral; }
       car.pushVelocity = (car.pushVelocity || 0) * .25;
       if (player && this.state.invulnerableSec <= 0 && this.state.impactTimer <= 0) {
-        if (impactMph >= 28) this._crash(obstacle.kind || 'rock', Math.sign(nx), impactMph, zone);
+        if (impactMph >= 28 && !glancingWall) this._crash(obstacle.kind || 'rock', Math.sign(nx), impactMph, zone);
         else if (impactMph > 4) this._scrape(zone, impactMph);
       }
       car.speedMph *= Math.max(.08, 1 - incoming * .94);
@@ -769,7 +792,7 @@ export class Duel {
     car.offRoad = false; car.offRoadTime = 0; car.roughness = 0; car.boosting = false;
     car.steerVisual = 0;
     car.routeId = null; car.routeLap = null; this._npcRoutePlanner?.reset(car);
-    car.airborne = false; car.airHeight = 0; car._jumpY = null; car._verticalSpeed = 0; car._jumpOrigin = null;
+    car.airborne = false; car.airHeight = 0; car.prevAirHeight = 0; car._jumpY = null; car._verticalSpeed = 0; car._jumpOrigin = null;
     if (car === this.state) { car.gear = 0; car.revs = car.speedMph / this.car.gears[0]; car.overrevSec = 0; car.reverseHoldSec = 0; }
   }
 
@@ -809,6 +832,7 @@ export class Duel {
     // pose once, then derive the gap from that pose for the rest of the chase.
     if (!Number.isFinite(cruiser.s)) Object.assign(cruiser, this._newPursuit(cruiser.gapU ?? POLICE.pursuitStartGapU));
     cruiser.prevS = cruiser.s; cruiser.prevLateral = cruiser.lateral;
+    cruiser.prevAirHeight = cruiser.airHeight || 0;
     cruiser.headingError ||= 0; cruiser.pushVelocity ||= 0;
     cruiser.braking = false; cruiser.yieldingToPlayer = false;
     cruiser.contactCooldown = Math.max(0, (cruiser.contactCooldown || 0) - dt);
@@ -859,6 +883,7 @@ export class Duel {
     cruiser.lateral += (Math.sin(cruiser.headingError) * speed + cruiser.pushVelocity) * dt;
     cruiser.s += Math.cos(cruiser.headingError) * speed * dt / Math.max(.25, 1 - this.course.at(cruiser.s).curvature * cruiser.lateral);
     cruiser.pushVelocity *= Math.exp(-1.7 * dt);
+    this._jump(cruiser, dt);
     this._staticContacts(cruiser, false); this._boundary(cruiser);
     this._vehicleContact(s, cruiser, 'police');
     for (const car of s.traffic) if (car.alive) this._vehicleContact(cruiser, car, 'traffic');
@@ -1149,19 +1174,33 @@ export class Duel {
   }
 
   _jump(actor, dt) {
-    if (this.course.def.kind !== 'arena') return;
+    const arena = this.course.def.kind === 'arena';
+    if ((!arena && this.course.def.airborne !== true) || !Number.isFinite(dt) || dt <= 0) return;
     const ground = this.course.groundAt(actor.s, actor.lateral).y;
     const previousGround = this.course.groundAt(actor.prevS ?? actor.s, actor.prevLateral ?? actor.lateral).y;
     if (!Number.isFinite(ground) || !Number.isFinite(previousGround)) return;
-    if (actor._jumpY == null) { actor._jumpY = previousGround; actor._verticalSpeed = 0; }
-    const gravity = 18, predicted = actor._jumpY + actor._verticalSpeed * dt - gravity * dt * dt * .5;
+    const groundVelocity = (ground - previousGround) / dt;
+    if (actor._jumpY == null) { actor._jumpY = previousGround; actor._verticalSpeed = arena ? 0 : groundVelocity; }
+    // Consecutive terrain velocities are interval averages. Their midpoint
+    // estimates the tangent velocity at the start of this step. Extrapolating
+    // only the older average would detach at half gravity and create repeated
+    // tiny hops on ordinary rolling crests. Keep authored arena timing exact.
+    const verticalSpeed = !arena && !actor.airborne ? (actor._verticalSpeed + groundVelocity) * .5 : actor._verticalSpeed;
+    const gravity = 18, predicted = actor._jumpY + verticalSpeed * dt - gravity * dt * dt * .5;
     if (!actor.airborne) {
-      if (predicted > ground + .0001 && actor._verticalSpeed > 1 && actor.speedMph > 28) {
+      // A descending convex crest can leave the road too: the car keeps its
+      // signed tangent velocity while the road falls away faster. The arena
+      // retains its authored upward-ramp threshold and exact existing timing.
+      const fastEnough = (arena ? actor.speedMph : Math.abs(actor.speedMph)) > 28;
+      if (predicted > ground + .0001 && (!arena || verticalSpeed > 1) && fastEnough) {
         actor.airborne = true;
-        const phase = this.course.phase(actor.s), index = this.course.features.ramps.findIndex(ramp => phase >= ramp.start && phase <= ramp.end + 8);
+        actor._verticalSpeed = verticalSpeed;
+        // Natural crests share flight/landing physics, but only authored arena
+        // ramps can create a scored jump token. Resets still clear that token.
+        const phase = this.course.phase(actor.s), index = arena ? this.course.features.ramps.findIndex(ramp => phase >= ramp.start && phase <= ramp.end + 8) : -1;
         actor._jumpOrigin = index >= 0 ? { s: actor.s, world: this.course.worldAt(actor.s, actor.lateral), rampId: `ramp-${index}`, lap: Math.floor(actor.s / this.course.length) + 1 } : null;
       } else {
-        actor._verticalSpeed = (ground - previousGround) / dt;
+        actor._verticalSpeed = groundVelocity;
         actor._jumpY = ground; actor.airHeight = 0; return;
       }
     }
@@ -1169,9 +1208,11 @@ export class Duel {
     actor._verticalSpeed -= gravity * dt;
     actor.airHeight = Math.max(0, actor._jumpY - ground);
     if (actor._jumpY > ground) return;
-    actor._jumpY = ground; actor._verticalSpeed = 0; actor.airborne = false; actor.airHeight = 0;
+    // Rejoin a descending road at its tangent speed. Zeroing this for natural
+    // roads would manufacture a second hop on the next downhill step.
+    actor._jumpY = ground; actor._verticalSpeed = arena ? 0 : groundVelocity; actor.airborne = false; actor.airHeight = 0;
     const origin = actor._jumpOrigin; actor._jumpOrigin = null;
-    if (actor !== this.state || !origin || origin.lap !== actor.completedLaps + 1 || origin.s < actor.completedLaps * this.course.length) return;
+    if (!arena || actor !== this.state || !origin || origin.lap !== actor.completedLaps + 1 || origin.s < actor.completedLaps * this.course.length) return;
     const key = `${origin.rampId}:lap-${origin.lap}`;
     if (actor.collectedJumps.includes(key)) return;
     const landing = this.course.worldAt(actor.s, actor.lateral), distance = Math.hypot(landing.x - origin.world.x, landing.z - origin.world.z);
@@ -1345,8 +1386,10 @@ export class Duel {
   }
   _bestKey(stageName) {
     const s = this.state, upgrades = s.upgrades, event = this.course?.def || this.stageDef;
-    return [event.id || stageName, `layout${event.layoutVersion || 1}`, `seed${s.seed}`, `laps${s.lapsTotal}`,
+    const key = [event.id || stageName, `layout${event.layoutVersion || 1}`, `seed${s.seed}`, `laps${s.lapsTotal}`,
       stageName, s.car, s.difficulty, s.cpuDifficulty, s.mode, ...UPGRADE_KEYS.map(key => upgrades[key])].join('|');
+    const signature = driverModifierSignature(s.driverId, s.car);
+    return signature ? `${key}|driver:${signature}` : key;
   }
   _bestFor(stageName) { return loadBest()[this._bestKey(stageName)] ?? null; }
 

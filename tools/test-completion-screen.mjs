@@ -10,7 +10,7 @@ const app={runId:'ui-test',menuStage:0},wallet={credits:12300};
 // Execute the production modal without booting the browser or changing saves.
 const render=new Function('COURSE','app','metric','time','credits','action','profile','escapeHTML',`let lastEventResult=null;${modal};return modalScreen;`)(
   COURSE,app,(label,value)=>`<dt>${label}</dt><dd>${value}</dd>`,value=>Number(value).toFixed(2),value=>Number(value||0).toLocaleString('en-US'),label=>`<button>${label}</button>`,()=>wallet,value=>String(value));
-const expected={chase:'CITY<br>ESCAPED.',rally:'TRAIL<br>CONQUERED.',drift:'DRIFT<br>MASTERED.',checkpoint:'GATES<br>CLEARED.'};
+const expected={chase:'CITY<br>ESCAPED.',rally:'TRAIL<br>CONQUERED.',drift:'DRIFT<br>MASTERED.',checkpoint:'GATES<br>CLEARED.',circuit:'CIRCUIT<br>CONQUERED.'};
 
 for(const [stageIndex,stage]of COURSE.entries()){
   if(!stage.kind)continue;
@@ -28,6 +28,10 @@ for(const [stageIndex,stage]of COURSE.entries()){
   if(stage.kind==='drift')check(html.includes('BANKED POINTS')&&html.includes('6,000'),'drift shows its score');
   if(stage.kind==='checkpoint')check(html.includes('GATES PASSED')&&html.includes('12 / 12'),'checkpoint shows its gates');
   if(stage.stuntTrial)check(html.includes('LANDED JUMPS')&&html.includes('CARS CRUSHED'),'stunt shows its objectives');
+  if(stage.kind==='circuit'){
+    check(!html.includes('ARENA')&&!html.includes('stadium')&&!html.includes('CARS CRUSHED'),`${stage.id}: road circuits never inherit arena copy or objectives`);
+    check(html.includes(`You beat your rival at ${stage.name}.`)&&html.includes('LAPS COMPLETE'),`${stage.id}: circuit victory describes its actual duel and laps`);
+  }
   check(html.includes('RUN IT AGAIN')&&html.includes('MAIN MENU'),'standalone actions remain available');
   check(JSON.stringify(s)===before&&JSON.stringify(wallet)===balance,'completion is a pure view of the settled state');
 
@@ -37,6 +41,12 @@ for(const [stageIndex,stage]of COURSE.entries()){
   check(loss.includes('winning target was not met')&&loss.includes('CREDITS LOST')&&loss.includes('−300'),'completed loss retains its outcome and actual charge');
   app.runId+='-next';const stale=render(s);
   check(!stale.includes('CREDITS LOST')&&!stale.includes('winning target was not met'),'a previous run cannot provide the current outcome');
+  if(stage.kind==='circuit'){
+    s.mode='timetrial';s.status='stage_result';s.results={won:true,completed:true,timeSec:99.68,creditReward:660};render(s);duel.nextStage();
+    const trial=render(s);
+    check(trial.includes(expected.circuit)&&trial.includes(`You beat the Time Trial target at ${stage.name}.`),`${stage.id}: Time Trial completion describes the timed target`);
+    check(!trial.includes('your rival')&&!trial.includes('ARENA'),`${stage.id}: Time Trial victory does not claim a rival or arena win`);
+  }
 }
 
 {
@@ -47,4 +57,4 @@ for(const [stageIndex,stage]of COURSE.entries()){
   check(html.includes('TOTAL TIME')&&html.includes('LIVES LEFT')&&html.includes('STYLE POINTS'),'campaign retains its meaningful run metrics');
   check(html.includes('CHASE IT AGAIN')&&html.includes('MAIN MENU'),'campaign actions remain unchanged');
 }
-console.log(`Completion screen: ${checks} checks passed across all six standalone events and the three-circuit campaign, including real final-state replacement, losses and stale result isolation.`);
+console.log(`Completion screen: ${checks} checks passed across all ${COURSE.filter(stage=>stage.kind).length} standalone events and the three-circuit campaign, including real final-state replacement, circuit duel/Time Trial copy, losses and stale result isolation.`);

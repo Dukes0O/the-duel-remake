@@ -1,6 +1,7 @@
 import { CARS, COURSE, DEFAULT_CAR, DRIVE, CPU_DIFFICULTY, POLICE } from './config.js';
 import {normalizeCosmetics} from './paint-presets.js';
 import {normalizeRaceSettings} from './race-settings.js';
+import {DRIVERS,normalizeDrivers,normalizeDriverId,driverModifierSignature} from './drivers.js';
 
 export const PROFILE_KEY = 'the-duel-profile-v1';
 export const PLAYERS_KEY = 'the-duel-players-v2';
@@ -11,7 +12,7 @@ export const DRIVING_MILESTONES=Object.freeze({
   clean_debut:{name:'Clean debut',description:'Win a race with no crashes or missed fuel stop.',reward:100},
   faster_again:{name:'Faster again',description:'Beat an existing comparable car best.',reward:150},
   circuit_tour:{name:'Circuit tour',description:'Win all three campaign circuits.',reward:400},
-  trail_winner:{name:'Trail winner',description:'Win Ridge Rally in the Dusthawk.',reward:300},
+  trail_winner:{name:'Trail winner',description:'Win Ridge Rally.',reward:300},
   night_escape:{name:'Night escape',description:'Finish Midnight Muscle Chase before the deadline.',reward:350},
   arena_show:{name:'Arena show',description:'Win the Titan arena with 3 landed jumps or 2 player crushes.',reward:500},
 });
@@ -30,13 +31,14 @@ const validStrings=value=>[...new Set((Array.isArray(value)?value:[]).filter(key
 export const playerName=value=>String(value||'').replace(/[\u0000-\u001f\u007f]/g,'').trim().replace(/\s+/g,' ').slice(0,24);
 const newId=()=>globalThis.crypto?.randomUUID?.()||`player-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-export function createProfile(){return {version:2,credits:0,unlockedCars:[...FREE_CARS],upgrades:{},cosmetics:normalizeCosmetics(),raceSettings:null,settledResults:[],settledPoliceFines:[],pbBonusRuns:[],personalBests:{},milestones:[],circuitWins:[],winStreak:0,history:[],activeRace:null};}
+export function createProfile(){return {version:2,credits:0,unlockedCars:[...FREE_CARS],upgrades:{},cosmetics:normalizeCosmetics(),drivers:normalizeDrivers(),raceSettings:null,settledResults:[],settledPoliceFines:[],pbBonusRuns:[],personalBests:{},milestones:[],circuitWins:[],winStreak:0,history:[],activeRace:null};}
 export function normalizeProfile(value){
   if(!value||typeof value!=='object'||![1,2].includes(value.version))return createProfile();
   const profile=createProfile();profile.credits=integer(value.credits,1_000_000_000);
   profile.unlockedCars=[...new Set([...FREE_CARS,...(Array.isArray(value.unlockedCars)?value.unlockedCars.filter(car=>Object.hasOwn(CARS,car)):[])])];
   for(const car of profile.unlockedCars)profile.upgrades[car]=getUpgradeLevels(value,car);
   profile.cosmetics=normalizeCosmetics(value.cosmetics);
+  profile.drivers=normalizeDrivers(value.drivers);
   profile.raceSettings=value.raceSettings==null?null:normalizeRaceSettings(value.raceSettings,profile);
   profile.settledResults=validStrings(value.settledResults||value.awardedWins);profile.pbBonusRuns=validStrings(value.pbBonusRuns);
   profile.settledPoliceFines=validStrings(value.settledPoliceFines);
@@ -47,7 +49,7 @@ export function normalizeProfile(value){
   const race=value.activeRace;
   if(race&&typeof race.runId==='string'&&race.runId.length>0&&race.runId.length<=128&&Number.isInteger(race.stageIndex)&&COURSE[race.stageIndex]&&Object.hasOwn(CARS,race.car)){
     const pendingPoliceFineCount=integer(race.pendingPoliceFineCount,1_000_000);
-    profile.activeRace={runId:race.runId,stageIndex:race.stageIndex,key:`${race.runId}:${race.stageIndex}`,car:race.car,cpuDifficulty:Object.hasOwn(CPU_REWARDS,race.cpuDifficulty)?race.cpuDifficulty:'easy',pendingPoliceFineCount,pendingPoliceFines:pendingPoliceFineCount*POLICE.ticketBaseFine};
+    profile.activeRace={runId:race.runId,stageIndex:race.stageIndex,key:`${race.runId}:${race.stageIndex}`,car:race.car,driverId:normalizeDriverId(race.driverId),cpuDifficulty:Object.hasOwn(CPU_REWARDS,race.cpuDifficulty)?race.cpuDifficulty:'easy',pendingPoliceFineCount,pendingPoliceFines:pendingPoliceFineCount*POLICE.ticketBaseFine};
   }
   return profile;
 }
@@ -81,21 +83,21 @@ export function stageEventId(index){const stage=COURSE[index];return stage?Strin
 // Only archival validation supplies the second argument. Ordinary callers
 // always key new races against the current layout, regardless of payload extras.
 export function eventKey({stageIndex,seed=1989,laps}={},layoutVersion){const stage=COURSE[stageIndex];return stage?`${stageEventId(stageIndex)}|layout:${layoutVersion??stage.layoutVersion??1}|seed:${seed>>>0}|laps:${laps||stage.laps||2}`:'';}
-export function bestKey(result,layoutVersion){return [eventKey(result,layoutVersion),result.car,result.mode||'duel',result.difficulty||'casual',result.cpuDifficulty||'easy'].join('|');}
-function isCompletedRace(result){const stage=COURSE[result?.stageIndex];return !!stage&&result.completed===true&&result.abandoned!==true&&result.timeout!==true&&Number.isFinite(result.timeSec)&&result.timeSec>0&&Number.isInteger(result.laps)&&result.laps===(stage.laps||2)&&Object.hasOwn(CARS,result.car);}
+export function bestKey(result,layoutVersion,signature=driverModifierSignature(result.driverId,result.car)){return [eventKey(result,layoutVersion),result.car,result.mode||'duel',result.difficulty||'casual',result.cpuDifficulty||'easy',...(signature?[`driver:${signature}`]:[])].join('|');}
+function isCompletedRace(result){const stage=COURSE[result?.stageIndex];return !!stage&&result.completed===true&&result.abandoned!==true&&result.timeout!==true&&Number.isFinite(result.timeSec)&&result.timeSec>0&&Number.isInteger(result.laps)&&result.laps===(stage.laps||2)&&Object.hasOwn(CARS,result.car)&&(result.driverId==null||Object.hasOwn(DRIVERS,result.driverId));}
 export function isValidFinish(result){
   if(!isCompletedRace(result))return false;
   const stage=COURSE[result.stageIndex];if(!stage.stuntTrial&&!['drift','checkpoint'].includes(stage.kind))return true;
   const cpu=Object.hasOwn(CPU_REWARDS,result.cpuDifficulty)?result.cpuDifficulty:'easy';
   if(stage.stuntTrial){
     const target=stage.stuntTrial;
-    return result.won===true&&result.targetsMet===true&&result.objectiveMissed!==true&&result.car===stage.requiredCar&&Number.isSafeInteger(result.jumps)&&result.jumps>=target.jumps&&Number.isSafeInteger(result.crushCount)&&result.crushCount>=target.crushes&&result.timeSec<=target.timeLimitSec[cpu];
+    return result.won===true&&result.targetsMet===true&&result.objectiveMissed!==true&&Number.isSafeInteger(result.jumps)&&result.jumps>=target.jumps&&Number.isSafeInteger(result.crushCount)&&result.crushCount>=target.crushes&&result.timeSec<=target.timeLimitSec[cpu];
   }
   if(stage.kind==='checkpoint'){
     const required=stage.checkpointRush.gatesPerLap*(stage.laps||2);
-    return result.won===true&&result.targetsMet===true&&result.objectiveMissed!==true&&result.car===stage.requiredCar&&result.checkpointsPassed===required&&result.checkpointsRequired===required&&result.checkpointMisses===0&&result.timeSec<=stage.checkpointRush.initialTimeSec[cpu]+required*stage.checkpointRush.extensionSec[cpu];
+    return result.won===true&&result.targetsMet===true&&result.objectiveMissed!==true&&result.checkpointsPassed===required&&result.checkpointsRequired===required&&result.checkpointMisses===0&&result.timeSec<=stage.checkpointRush.initialTimeSec[cpu]+required*stage.checkpointRush.extensionSec[cpu];
   }
-  return result.won===true&&result.targetsMet===true&&result.objectiveMissed!==true&&result.car===stage.requiredCar&&Number.isFinite(result.driftScore)&&result.driftScore>=stage.driftTrial.targets[cpu]&&result.timeSec<=stage.driftTrial.timeLimitSec[cpu];
+  return result.won===true&&result.targetsMet===true&&result.objectiveMissed!==true&&Number.isFinite(result.driftScore)&&result.driftScore>=stage.driftTrial.targets[cpu]&&result.timeSec<=stage.driftTrial.timeLimitSec[cpu];
 }
 export function milestoneProgress(profile){
   const circuits=COURSE.flatMap((stage,index)=>stage.kind?[]:[stageEventId(index)]);
@@ -105,8 +107,8 @@ function finishMilestones(profile,result,{finished,won,improved}){
   const stage=COURSE[result.stageIndex],earned=[...(profile.milestones||[])],circuitWins=[...(profile.circuitWins||[])],awards=[];
   if(!finished)return {earned,circuitWins,awards,reward:0};
   if(won&&!stage.kind&&!circuitWins.includes(stageEventId(result.stageIndex)))circuitWins.push(stageEventId(result.stageIndex));
-  const correctCar=!stage.requiredCar||stage.requiredCar===result.car,validCount=(value,min)=>Number.isInteger(value)&&value>=min;
-  const conditions={clean_debut:won&&result.clean===true,faster_again:improved,circuit_tour:won&&!stage.kind&&COURSE.every((event,index)=>event.kind||circuitWins.includes(stageEventId(index))),trail_winner:won&&correctCar&&stage.kind==='rally',night_escape:won&&correctCar&&stage.kind==='chase',arena_show:won&&correctCar&&stage.arena&&(validCount(result.jumps,3)||validCount(result.crushCount,2))};
+  const validCount=(value,min)=>Number.isInteger(value)&&value>=min;
+  const conditions={clean_debut:won&&result.clean===true,faster_again:improved,circuit_tour:won&&!stage.kind&&COURSE.every((event,index)=>event.kind||circuitWins.includes(stageEventId(index))),trail_winner:won&&stage.kind==='rally',night_escape:won&&stage.kind==='chase',arena_show:won&&stage.arena&&(validCount(result.jumps,3)||validCount(result.crushCount,2))};
   for(const [id,eligible] of Object.entries(conditions))if(eligible&&!earned.includes(id)){earned.push(id);awards.push({id,...DRIVING_MILESTONES[id]});}
   return {earned,circuitWins,awards,reward:awards.reduce((sum,award)=>sum+award.reward,0)};
 }

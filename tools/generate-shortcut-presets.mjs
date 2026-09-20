@@ -10,7 +10,7 @@ import { shortcutSourceFingerprint } from './shortcut-preset-freshness.mjs';
 const sourceFingerprint=await shortcutSourceFingerprint();
 const entries=[];
 for(const definition of COURSE){
-  if(definition.arena)continue;
+  if(definition.arena||definition.expansion)continue;
   const seeds=supportsRouteVariants(definition)?ROUTE_VARIANTS.map(route=>route.seed):[1989];
   for(const seed of seeds){
     const course=new Course(definition,seed,{solveShortcuts:true});

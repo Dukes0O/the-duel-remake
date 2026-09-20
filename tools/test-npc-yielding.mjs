@@ -36,6 +36,43 @@ function move(duel,kind,actor,dt){
   duel._collisions();
 }
 
+// A traffic contact used to leave yaw permanently nonzero even though traffic
+// continued along its road-relative lane. Its diagonal shell then caused a
+// repeat rear-end crash at each pass. Moving recovery must be bounded, retain
+// the same lane/speed integration, and leave stationary blockers untouched.
+for(const dir of [1,-1])for(const angle of [-.65,.65])for(const dt of [1/120,.05]){
+  const d=fixture(),s=d.state,lane=dir<0?3.4:-3.4;
+  const npc=addNpc(d,'traffic',{dir,gap:700,speed:45,lateral:lane,prevLateral:lane,headingError:angle});
+  const start=npc.s,player=protectedState(s);let steps=0;
+  for(let time=0;time<2-1e-9;time+=dt){
+    const before=npc.headingError;d._traffic(dt);steps++;
+    check(Math.abs(npc.headingError-before)<=.95*dt+1e-10,'moving traffic countersteers without an instant yaw reset');
+    check(Math.abs(npc.headingError)<=Math.abs(before)+1e-10,'lane-centred contact yaw decays instead of persisting');
+  }
+  equal(npc.headingError,0,'moving traffic recovers its road-relative heading in either travel direction');
+  check(Math.abs(npc.s-(start+dir*45*DRIVE.mphToWorld*steps*dt))<1e-8,'heading repair preserves original traffic forward integration');
+  equal(npc.lateral,lane,'heading repair does not move a centred sedan sideways');
+  equal(protectedState(s),player,'heading recovery never moves or damages the player');
+}
+for(const dir of [1,-1])for(const offset of [-1.4,1.4]){
+  const d=fixture(),lane=dir<0?3.4:-3.4;
+  const npc=addNpc(d,'traffic',{dir,gap:700,speed:45,lateral:lane+offset,prevLateral:lane+offset});
+  for(let frame=0;frame<120;frame++)d._traffic(1/120);
+  check(Math.sign(npc.headingError)===-Math.sign(offset)*dir,'oncoming and forward traffic point toward their lane-return movement');
+  check(Math.abs(npc.headingError-Math.atan(-Math.sign(offset)*.7/(dir*45*DRIVE.mphToWorld)))<1e-8,'recovered heading matches the existing lateral/longitudinal traffic path');
+}
+for(const dir of [1,-1]){
+  const d=fixture(),s=d.state,lane=dir<0?3.4:-3.4;s.lateral=s.prevLateral=lane;
+  const npc=addNpc(d,'traffic',{dir,gap:6,speed:0,cruiseSpeedMph:80,lateral:lane,prevLateral:lane,headingError:.65});
+  const stoppedGap=vehicleContactEnvelope(s,npc,d._vehicleSpec(s),d._vehicleSpec(npc)).length+.79;
+  npc.s=npc.prevS=s.s-dir*stoppedGap;
+  const player=protectedState(s),start=npc.s;
+  for(let frame=0;frame<120;frame++)move(d,'traffic',npc,1/120);
+  equal(npc.headingError,.65,'a blocked stationary sedan does not pivot its shell into the player');
+  equal(npc.s,start,'a true stopped yielding sedan does not creep during heading recovery');
+  equal(protectedState(s),player,'stationary angled NPC remains harmless to the blocking player');
+}
+
 // Actual NPC integrations stop without a single forced player correction, then
 // accelerate again when the obstacle clears. Include long-frame substep sizes.
 for(const kind of ['traffic','rival','police'])for(const dir of kind==='traffic'?[1,-1]:[1])for(const cpuDifficulty of ['easy','medium','hard'])for(const dt of [1/120,.05]){

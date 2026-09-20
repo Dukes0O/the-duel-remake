@@ -15,3 +15,18 @@ The original source GLB is retained for editing in Blender. `npm run assets:expo
 ## Original procedural models
 
 The six original playable cars are built in `src/classic-vehicles.js` and `src/unlock-vehicles.js`. Traffic and police sedans use `src/vehicles.js`. Current stations use the live environment mesh factories. The unused first-iteration Cinder coupe and station exports, and their obsolete builders, were removed; they remain recoverable in Git history. See `docs/ASSET_PIPELINE.md`.
+
+## Original Blender course landmarks
+
+`course-landmarks.blend` contains six original, editable scenery collections:
+forest lodge, avalanche gallery, coastal pavilion, sandstone tower, harbor
+gantry and mountain skydeck. They were authored with Blender 4.5.9 LTS using
+`tools/build-course-landmarks.py`, then refined through three render passes.
+The same evaluated meshes are exported to `src/generated/course-landmarks.json`
+for the game; no third-party model or commercial game asset is included.
+
+The generated art board at `public/assets/reference/course-expansion.png` was
+created with the built-in image tool. It is a visual target, not a screenshot
+of the game. The prompt brief, source/export contract and iteration notes are
+in `docs/COURSE_EXPANSION.md`. Existing landscape materials and their credits
+remain unchanged.

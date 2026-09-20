@@ -27,7 +27,7 @@ let farRimSamples=0,nearRimSamples=0,omittedQueries=0;const exposed=[];
 function farGroundSampler(course) {
   const geometry=buildFar(course,false),p=geometry.attributes.position,index=geometry.index;
   geometry.computeBoundingBox();const box=geometry.boundingBox,grid=p.getX(1)-p.getX(0),columns=Math.round((box.max.x-box.min.x)/grid)+1,rows=p.count/columns,renderedQuads=new Set();
-  check(grid===((course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena?16:32),'far-grid resolution matches the scene');
+  check(grid===((course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena||course.def.expansion?16:32),'far-grid resolution matches the scene');
   for(let i=0;i<index.count;i+=6){const a=index.getX(i);renderedQuads.add(a);check(index.getX(i+1)===a+columns&&index.getX(i+2)===a+1&&index.getX(i+3)===a+1&&index.getX(i+4)===a+columns&&index.getX(i+5)===a+columns+1,'actual far-grid triangle diagonal');}
   const height=point=>{
     const i=Math.floor((point.x-box.min.x)/grid),j=Math.floor((point.z-box.min.z)/grid),a=j*columns+i;
@@ -93,7 +93,24 @@ for (const seed of [1989, 42, 17, 9999]) {
         const thresholds=waterThresholds(sample);
         if(thresholds.warning!=null&&thresholds.water!=null){state.s=sample;({warning,water}=thresholds);break;}
       }
-      check(warning != null && water != null, `${definition.id}/${seed}: sea approach has both warning and recovery thresholds`);
+      let raisedShore=false;
+      if(definition.expansion&&(water==null||warning==null)){
+        // Some new coast roads stay above the water-recovery plane all the
+        // way to the ordinary lateral boundary. Find real low shores first;
+        // only a genuinely raised shore uses the separate boundary contract.
+        let raised;
+        for(let sample=coast.start+5;sample<coast.end-5;sample+=5){
+          const thresholds=waterThresholds(sample);
+          if(thresholds.warning!=null&&thresholds.water!=null){state.s=sample;({warning,water}=thresholds);break;}
+          if(!raised&&thresholds.warning!=null&&duel.course.groundAt(sample,79).y>=-14)raised={s:sample,warning:thresholds.warning};
+        }
+        if((water==null||warning==null)&&raised){state.s=raised.s;warning=raised.warning;water=79;raisedShore=true;}
+      }
+      check(warning != null && water != null, `${definition.id}/${seed}: sea approach has a warning before water or the raised-shore boundary`);
+      if(raisedShore){
+        for(let off=29;off<=79;off+=.25)check(duel.course.groundAt(state.s,off).y>=-14,`${definition.id}/${seed}: raised shore reaches the general boundary before water`);
+        check(warning<78&&water>78,`${definition.id}/${seed}: raised shore warns before general recovery`);
+      }
       // This fixture starts mid-lap: preceding gates have already been driven.
       // Keep the original coast position when testing both actors, because a
       // valid recovery may move back to clear another car or a pending gate.

@@ -97,7 +97,7 @@ function rampInput(d){
   d.setInput({throttle:1,brake:0,steer:Math.max(-1,Math.min(1,-yaw/authority)),boost:false});
 }
 function rampRun(fps,withReadout){
-  const d=new Duel({seed:1989});d.startCampaign({startStage:stageIndex,cpuDifficulty:'hard',difficulty:'casual'});
+  const d=new Duel({seed:1989});d.startCampaign({startStage:stageIndex,car:'titan_monster',cpuDifficulty:'hard',difficulty:'casual'});
   const r=withReadout?createJumpHeightReadout():null,physics=createHash('sha256'),presentation=createHash('sha256');
   let accumulator=0,steps=0,wasAirborne=false,launchAt=null,landedAt=null,peak=0,paused=false,last=HIDDEN;
   while(steps<1560){

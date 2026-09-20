@@ -16,7 +16,7 @@ export function worldAtExtended(course, s, lateral = 0) {
 export function strip(course, left, right, y, start=0, end=course.length, ground=false) {
   const verts = [], uvs = [], indices = [];
   const followsGround=ground||course.def.arena||course.def.offroad;
-  const steps=Math.ceil((end-start)/(followsGround?2:8));
+  const steps=Math.ceil((end-start)/(followsGround||course.def.expansion?2:8));
   let maxWidth=0;
   for(let n=0;n<=steps;n++){const s=start+(end-start)*n/steps;maxWidth=Math.max(maxWidth,Math.abs((typeof right==='function'?right(s):right)-(typeof left==='function'?left(s):left)));}
   // Thin painted lines and feathered shoulders retain their two edge columns.
@@ -35,7 +35,7 @@ export function terrainGeometry(course) {
   const v = [], colors = [], uv = [], weights = [], groups = TERRAIN_THEMES.map(()=>[]);
   // Keep the road extrusion narrower than the tightest bend radius. Wider
   // strips fold back across the road; the outer landscape uses a world grid.
-  const baseOffsets = course.def.arena?[-42,-32,-24,-18,-14,-10,-7,0,7,10,14,18,24,32,42]:(course.def.kind==='chase'||course.def.layout==='city')?[-64,-56,-48,-40,-32,-24,-18,-14,-10,-7,0,7,10,14,18,24,32,40,48,56,64]:[-140,-120,-100,-80,-72,-64,-56,-48,-40,-32,-24,-18,-14,-10,-7,0,7,10,14,18,24,32,40,48,56,64,72,80,100,120,140];
+  const baseOffsets = course.def.arena?[-42,-32,-24,-18,-14,-10,-7,0,7,10,14,18,24,32,42]:(course.def.terrainHalfWidth===64||course.def.kind==='chase'||course.def.layout==='city')?[-64,-56,-48,-40,-32,-24,-18,-14,-10,-7,0,7,10,14,18,24,32,40,48,56,64]:[-140,-120,-100,-80,-72,-64,-56,-48,-40,-32,-24,-18,-14,-10,-7,0,7,10,14,18,24,32,40,48,56,64,72,80,100,120,140];
   const base = new THREE.Color(groundTint(course)), col = new THREE.Color(); let row = 0;
   const terrainStep=course.def.offroad||course.def.arena?2:4;
   for (let s = 0; s <= course.length; s += terrainStep, row++) {
@@ -59,7 +59,7 @@ export function terrainGeometry(course) {
 }
 
 export function farTerrainGeometry(course) {
-  const grid=(course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena?16:32;
+  const grid=(course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena||course.def.expansion?16:32;
   const route=course.samples.filter((_,i)=>i%4===0),last=course.samples.at(-1);
   if(route.at(-1)!==last)route.push(last);
   const routeIndex=createPolylineIndex(route);
@@ -77,7 +77,7 @@ export function farTerrainGeometry(course) {
     const style=terrainStyleAt(course,roadS);weights.push(...style.weights);base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));colors.push(col.r,col.g,col.b);
     if(i&&j){const a=j*columns+i,quad=[a-columns-1,a-1,a-columns,a];
       // Leave a gap safely covered by the narrow, precisely fitted road strip.
-      if(quad.every(k=>distances[k]>(course.def.arena?18:(course.def.kind==='chase'||course.def.layout==='city')?50:80)))groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(quad[0],quad[1],quad[2],quad[2],quad[1],quad[3]);
+      if(quad.every(k=>distances[k]>(course.def.arena?18:course.def.expansion?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80)))groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(quad[0],quad[1],quad[2],quad[2],quad[1],quad[3]);
     }
   }
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);g.computeVertexNormals();return g;
