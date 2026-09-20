@@ -147,9 +147,12 @@ export function createDrivingEffects() {
       const lateral = (state.lateral || 0) + dx * cs - dz * sn;
       return roadContactAt(distance, lateral);
     };
-    // Only a few emitter footprints are sampled per frame. Every pooled
-    // particle keeps that local plane for its bounce, without a road search.
-    const contacts = moving && !airborne ? [-1, 1].map(side => contactAt(-fx * rearAxle + rx * side * wheelTrack, -fz * rearAxle + rz * side * wheelTrack)) : [];
+    // Sample tire planes only when an emitter or mark can use them. Clean
+    // paved driving needs none; existing particles retain their cached planes.
+    // Landing, crush and impact bursts sample their own contact below.
+    const braking = Number((state.gear===-1?state.input?.throttle:state.input?.brake) || 0) > .2;
+    const sliding = !!state.drifting || (Math.abs(state.slipAngle || 0) > .075);
+    const contacts = moving && !airborne && (dirt || braking || sliding || impact > .1) ? [-1, 1].map(side => contactAt(-fx * rearAxle + rx * side * wheelTrack, -fz * rearAxle + rz * side * wheelTrack)) : [];
     if (airborne) peakAirHeight = Math.max(peakAirHeight, state.airHeight || 0);
     if (previousAirborne && !airborne && activeDrive && !teleported) {
       const contact = contactAt(0, 0), power = Math.min(1, .3 + peakAirHeight * .16), amount = Math.round((monster ? 65 : 40) * power);
@@ -223,8 +226,6 @@ export function createDrivingEffects() {
     }
     previousImpact = impact;
 
-    const braking = Number((state.gear===-1?state.input?.throttle:state.input?.brake) || 0) > .2;
-    const sliding = !!state.drifting || (Math.abs(state.slipAngle || 0) > .075);
     if(activeDrive&&!dirt&&!airborne&&speed>40&&sliding&&contacts.length){
       const strength=Math.min(1,Math.max(.18,Math.abs(state.slipAngle||0)*2.8));
       const night=course?.def.timeOfDay==='night'||course?.themeAt(state.s||0)==='city';

@@ -87,3 +87,13 @@
 .checkpoint-panel .drift-score-row>div:last-child b{color:#f0d196;font-size:21px}.checkpoint-panel .drift-target-track>i{background:#8bceb7}.checkpoint-panel.time-low #checkpoint-time{color:#ff9676}#checkpoint-next{font-weight:700;letter-spacing:1px;color:#d1dec7}.checkpoint-panel>p:last-child{margin-top:4px}@media(max-width:450px){.checkpoint-panel .drift-score-row>div:last-child b{font-size:14px}}
 
 .lighting-control{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0 8px;padding-top:8px;border-top:1px solid #e0d8bb25}.lighting-control>span{font-size:7px;letter-spacing:1.3px;color:#bdc1b3}.lighting-control select{font-size:10px!important;width:140px;max-width:none!important;padding:5px 8px;color:var(--ink);background:#10201bd9;border:1px solid #e0d8bb35;cursor:pointer}.lighting-control select:disabled{opacity:.7;cursor:default}@media(max-width:700px){.lighting-control{margin-top:9px}.lighting-control select{font-size:9px!important;width:130px}}
+.build-meta{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0}
+.build-meta .build-version{color:#c2c5b7;font-size:8px;line-height:1.4;letter-spacing:.35px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.build-update{position:absolute;top:96px;right:5%;z-index:3;display:flex;align-items:center;gap:18px;max-width:390px;padding:14px 16px;border:1px solid #d8c39570;border-radius:3px;background:#12211bf5;box-shadow:0 8px 32px #0003;pointer-events:auto}
+.build-update p{margin:0 0 6px;color:#f3dfb4;font-size:12px;font-weight:700;line-height:1.4}
+.build-update span{display:block;color:#bdc8bc;font-size:10px;line-height:1.5}
+.build-update button{min-height:40px;padding:10px 13px;background:#ead5a9;border:1px solid #ead5a9;border-radius:2px;color:#12211b;font-size:10px;letter-spacing:1px;font-weight:800}
+.build-update button:hover{background:#ffedc9;color:#12211b}
+.build-update button:focus-visible{outline:3px solid #fff0c9;outline-offset:4px}
+/* The mobile menu scrolls; its sections must not compress into the viewport. */
+@media(max-width:700px){.in-menu .menu-screen>.menu-intro,.in-menu .menu-screen>section,.in-menu .menu-screen>.menu-footer,.in-menu .menu-screen>.build-update{flex-shrink:0}.build-meta{align-items:flex-start;gap:4px;flex-shrink:1;min-width:0}.build-meta .build-version{font-size:7px;letter-spacing:0;white-space:normal}.build-update{position:relative;inset:auto;order:-1;max-width:none;width:100%;padding:10px 12px;gap:12px}.build-update p{font-size:11px}.build-update span{font-size:9px}}

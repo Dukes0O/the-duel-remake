@@ -2,7 +2,25 @@
 
 Checkpoint: 19 September 2026. The latest checked update is described first. Later sections preserve earlier checkpoints; their counts and screenshots are historical evidence.
 
-## Scene architecture cleanup — latest follow-up
+## Pacific coast, frame metrics and build notice — latest follow-up
+
+Pacific Canyon now has asymmetric offshore crags, animated broken surf, layered water motion and a more detailed weathered lighthouse. Three visual iterations removed low hidden tips, then overly regular slab silhouettes. Browser review accepted the final driving-view shapes and corrected transparent surf order. Cars, road/terrain shape, colliders, driving, economy and saves remain unchanged. See [scope, measurements and reproduction](COAST_SHOWCASE.md).
+
+All 90 suites have passing results. The broad run used `DUEL_SKIP_CAMPAIGNS=1`: 448 non-campaign core checks and 89 suites passed in a 581.16-second run; the final world-signature suite correctly failed against the old Pacific art signature. After visual and clearance review, only that Pacific signature was updated. A focused five-suite rerun passed in 24.12 seconds, including all nine complete worlds. The eight other event signatures remain exactly unchanged. The expensive core campaign matrix was not rerun; existing F42/Heritage complete input replays still match `054228b00c4c90bc`.
+
+New checks: 229,856 coast placement/geometry/lifecycle checks across Route A/B/C, 194 build/update checks, 121 frame-metric checks, 3,795 effect-equivalence checks and eight sample-summary checks. The nearest new rock vertex is 96.77 m from the road. Rock bases stay at least 5.03 m below rendered terrain, and the lighthouse stays inside its original 3.2 m radius. The shoreline adds at most 13,608 triangles and 18 spatial draws across tested seeds, with no new bitmap assets. Geometry tests cover actual terrain triangles, not just analytic height estimates.
+
+Build-notice browser checks use the actual production menu with memory-only QA saves: one version request after 20 focus events; notice hidden during racing; stale reload ignored; notice restored at menu; explicit double-click reload returns to the menu once; offline requests stay quiet. The narrow layout prevents flex sections shrinking into one another and keeps the menu scrollable. No real account or live race is used for these tests.
+
+The effects optimization removes ten unnecessary ground samples during clean paved driving. Exact particle/mark/bound snapshots and RNG calls match the former path across 1,260 snapshots. Frame metrics separate steady frame intervals from first-draw time and synchronous render-submission time; the latter is not GPU time. No overall FPS or startup improvement is claimed. High and Performance presets and opt-in shader warmup behavior are unchanged.
+
+A final diagnostic reproduced an existing texture warning: tunnel concrete was marked ready while the asynchronous image was still null. Only the already-populated headless DataTexture now receives the manual ready flag; browser TextureLoader sets it after completion. The actual delayed-loader regression passes, as do 38,165 tunnel checks and all nine world signatures in a two-suite, 11.67-second rerun. A fresh browser Harbor Performance → High → Titan transition produced no warnings or errors. This fixes that warning source; it does not establish the cause of the variable Titan timing samples.
+
+Production and QA builds pass. The live HTTP response serves `index-D0oJcuFm.js`, renderer `render3d-jf8x0MIR.js` and matching manifest `20260920034918-d9ee120b4824`. The existing large rendering-chunk warning remains (about 957 kB). The live Spikyferns chase was left untouched. Refresh from the game menu when ready; no live account edit, race input or forced reload was used for verification.
+
+Browser art checks covered the coast approach, road-level lighthouse pass, exit, close lighthouse, shoreline overview and Route B/C. A bounded real-physics test drive progressed from 2500 m to 3468 m with zero major crashes or boundary resets, then paused. These scripted checks are not human play-test acceptance. Temporary review tabs were closed, the 5177 QA server stopped and generated `.qa-dist` removed; `npm run qa:build` recreates it. Reusable tests/fixtures, operational `dist`/dependencies and the two tiny logs held by the live preview remain.
+
+## Scene architecture cleanup — earlier follow-up
 
 The rendering refactor separates ordered world composition, sampled surfaces, roadside structures and scene lighting. Water, meadow wind, checkpoint signals, fallen cacti and crushed arena props now use one explicit scene-system interface. Ambient and simulation clocks remain separate. No vehicle design, route geometry, physics, reward, account or save-format change is part of this update. See [architecture and extension plan](ARCHITECTURE.md).
 

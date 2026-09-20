@@ -31,7 +31,36 @@ for(const seed of[1989,42])for(const def of COURSE.filter(def=>def.sections.some
 for(const portal of[false,true]){
   const mat=createTunnelConcrete(portal),shader={vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader,uniforms:{}};mat.onBeforeCompile(shader);
   check(mat.map===mat.bumpMap&&mat.roughness>=.9,'Concrete uses the generated color/bump texture and a rough response');
+  check(mat.map.isDataTexture&&mat.map.image.data.length===4&&mat.map.version===1,'Headless concrete pixels are ready for upload');
   check(shader.uniforms.tunnelTile.value===TUNNEL_CONCRETE_TILE_METRES,'World texture repeats at a physical metre scale');
   check(shader.vertexShader.includes('instanceMatrix*tunnelPosition')&&shader.fragmentShader.includes('vTunnelWorld/tunnelTile'),'Scaled portal instances keep the same texture scale');
+}
+// Exercise Three's actual asynchronous TextureLoader contract. A fresh module
+// instance keeps this browser path separate from the cached headless texture.
+{
+  const previousDocument=globalThis.document,images=[];
+  globalThis.document={createElementNS(_namespace,tag){
+    assert.equal(tag,'img');
+    const listeners=new Map(),image={complete:false,
+      addEventListener:(type,callback)=>listeners.set(type,callback),
+      removeEventListener:type=>listeners.delete(type),
+      finish(){this.complete=true;listeners.get('load').call(this);},
+    };
+    images.push(image);return image;
+  }};
+  let concrete,portal;
+  try{
+    const browser=await import('../src/tunnel-detail.js?browser-texture-readiness');
+    concrete=browser.createTunnelConcrete();portal=browser.createTunnelConcrete(true);
+    check(images.length===1&&images[0].src==='/assets/textures/tunnel-concrete.png','Browser concrete shares one requested image');
+    check(concrete.map===portal.map&&concrete.map===concrete.bumpMap,'Portals and lining retain their shared texture');
+    check(concrete.map.image===null&&concrete.map.version===0,'Pending image must not be marked for GPU upload');
+    images[0].finish();
+    check(concrete.map.image===images[0]&&concrete.map.version===1,'TextureLoader marks concrete ready only after image completion');
+    check(concrete.map.userData.sharedAsset&&concrete.map.wrapS===THREE.RepeatWrapping&&concrete.map.anisotropy===8,'Readiness fix preserves texture sharing and sampling');
+  }finally{
+    concrete?.dispose();portal?.dispose();concrete?.map.dispose();
+    if(previousDocument===undefined)delete globalThis.document;else globalThis.document=previousDocument;
+  }
 }
 console.log(`Tunnel detail: ${checks} checks passed; ${triangles} detail triangles over6fixtures; maximum wall-plane gap ${(maximumGap*1000).toFixed(3)}mm; roof unchanged.`);

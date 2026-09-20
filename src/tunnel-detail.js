@@ -5,7 +5,10 @@ let concreteTexture;
 function texture(){
   if(!concreteTexture){
     concreteTexture=typeof document==='undefined'?new THREE.DataTexture(new Uint8Array([154,156,150,255]),1,1):new THREE.TextureLoader().load('/assets/textures/tunnel-concrete.png');
-    concreteTexture.colorSpace=THREE.SRGBColorSpace;concreteTexture.wrapS=concreteTexture.wrapT=THREE.RepeatWrapping;concreteTexture.anisotropy=8;concreteTexture.needsUpdate=true;concreteTexture.userData.sharedAsset=true;
+    concreteTexture.colorSpace=THREE.SRGBColorSpace;concreteTexture.wrapS=concreteTexture.wrapT=THREE.RepeatWrapping;concreteTexture.anisotropy=8;concreteTexture.userData.sharedAsset=true;
+    // TextureLoader marks the browser texture ready after its image arrives.
+    // Only the synchronous headless fallback already has pixels to upload.
+    if(concreteTexture.isDataTexture)concreteTexture.needsUpdate=true;
   }
   return concreteTexture;
 }

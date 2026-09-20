@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { vegetationCells } from './vegetation.js';
 import { hasDetailedCityFacade } from './city-chase-detail.js';
 import { addCoastalWater } from './coastal-water.js';
+import { addPacificCoast, isPacificCoast } from './pacific-coast.js';
+import { createCoastLighthouse } from './coast-lighthouse.js';
 
 // Visual shells follow Course's existing feature footprints. Keep direct world
 // children: the later scenery-detail pass refines these base structures.
@@ -84,6 +86,12 @@ export function addStation(world, station) {
 
 export function addCoast(group,course){
   addCoastalWater(group,course);
+  const showcase=isPacificCoast(course);
+  if(showcase){
+    addPacificCoast(group,course);
+    for(const p of course.features.landmarks)group.add(createCoastLighthouse(p,course));
+    return;
+  }
   const white=new THREE.MeshStandardMaterial({color:0xe9e4d4,roughness:.88}),dark=new THREE.MeshStandardMaterial({color:0x233e4a,metalness:.6,roughness:.45});
   for(const p of course.features.landmarks){
     const g=new THREE.Group(),tower=new THREE.Mesh(new THREE.CylinderGeometry(1.9,3.2,20,24),white);tower.position.y=10;tower.castShadow=true;g.add(tower);

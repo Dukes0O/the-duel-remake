@@ -6,7 +6,11 @@ The user authorized moving the game server to this updated checkout and committi
 
 Updated checkout: `C:\Users\kyleb\.codex\worktrees\4555\the-duel-remake`.
 
-Latest: the scene-architecture cleanup build is `index-B3qtBbvL.js`, verified in the live server's HTTP response. Production and QA builds pass, as do all 85 regression suites with only the expensive core campaign matrices skipped. The open Spikyferns menu (200 CR, Harbor & Highlands, Titan Monster) was not refreshed or changed. Load the update with a menu refresh when ready. Isolated visual fixtures use temporary page memory and do not read or write real career saves.
+Latest: the Pacific coast/build-notice release is `index-D0oJcuFm.js`, with renderer `render3d-jf8x0MIR.js` and build ID `20260920034918-d9ee120b4824`. Its footer reads **26.09.20 03:49 UTC · d9ee12**. The live HTTP response and manifest match the built files. Production and QA builds pass; all 90 suites have passing results after the reviewed Pacific signature update, with only the expensive core campaign matrix skipped. See `VERIFICATION.md` for the exact run sequence.
+
+The live tab was in Spikyferns' Midnight Muscle Chase and was not refreshed, stopped or otherwise changed. Refresh the existing game tab from its menu when ready. The old loaded client cannot show the new build notice until this first manual refresh. Saved accounts, balances and settings are unchanged by this release.
+
+The existing preview process continues serving the new `dist` without interruption. It returns `no-cache` for the manifest; client checks also use `no-store` and a unique query. The new preview middleware's stronger `no-store, max-age=0` manifest header was verified on the temporary QA server and will apply to the live preview on its next normal restart. No live restart was forced during play.
 
 ## Earlier cutover evidence
 

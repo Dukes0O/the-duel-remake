@@ -12,15 +12,25 @@ const {App}=await import('../src/app.js');
 import {COURSE} from '../src/config.js';
 
 import {attachRenderer} from '../src/render3d.js';
+import {installPerformanceReview} from './performance-review.js';
 
 let smokePauseAt=null;
 const app=new App();const view=document.querySelector('#view');attachRenderer(view,app);
+installPerformanceReview(app,view,document.querySelector('nav'));
 
 for(const [id,label,fn]of[
 
   ['ambient','Toggle graphics quality',()=>{app.ambientOcclusionEnabled=app.ambientOcclusionEnabled===false;}],
 
   ['coast','Coast scene',()=>scene(0,2850)],['harbor','Harbor scene',()=>scene(2,700)],
+  ['coast-approach','Coastal approach',()=>scene(0,2500)],
+  ['lighthouse-pass','Lighthouse pass',()=>scene(0,3050)],
+  ['coast-exit','Coastal exit',()=>scene(0,3500)],
+  ['coast-drive','Coastal driving sample',()=>{scene(0,2500);Object.assign(app.duel.state,{speedMph:110,gear:4,paused:false});smokePauseAt=app.duel.state.totalTimeSec+12;app.autopilot=true;app._scriptedCrashDone=true;}],
+  ['lighthouse-detail','Lighthouse detail',()=>{scene(0,3150);const course=app.duel.course,p=course.features.landmarks[0];if(p){const c=Math.cos(p.heading),sn=Math.sin(p.heading);app.inspectionCamera={position:[p.x+c*33-sn*22,p.y+13,p.z-sn*33-c*22],target:[p.x,p.y+11,p.z]};}}],
+  ['shore-detail','Shoreline overview',()=>{scene(0,3050);const p=app.duel.course.groundAt(3050,70),q=app.duel.course.groundAt(3110,150);app.inspectionCamera={position:[p.x,p.y+25,p.z],target:[q.x,-6,q.z]};}],
+  ['coast-b','Coast Route B',()=>scene(0,2850,'falcone_f42',42)],
+  ['coast-c','Coast Route C',()=>scene(0,2850,'falcone_f42',17)],
 
   ['tunnel','Tunnel interior',()=>scene(1,COURSE[1].lengthU*(.26+.48*.4)+55)],
 
@@ -85,7 +95,7 @@ for(const [id,label,fn]of[
 
 if(location.port==='5175'){const button=document.createElement('button');button.textContent='Create funded QA player';button.onclick=()=>{app.returnToMenu();const player=app.players.players.find(p=>p.name==='Garage QA');if(player)app.selectPlayer(player.id);else app.addPlayer('Garage QA');app.profile={...app.profile,credits:Math.max(app.profile.credits,40000)};app._saveProfile();};document.querySelector('nav').append(button);}
 
-function scene(stage,s,car='falcone_f42'){smokePauseAt=null;document.body.classList.remove('smoke-check');app.autopilot=false;app.inspectionCamera=null;app.duel.startCampaign({startStage:stage,car,seed:1989});Object.assign(app.duel.state,{status:'racing',s,traffic:[],rival:null,paused:true});app.cameraMode='chase';}
+function scene(stage,s,car='falcone_f42',seed=1989){smokePauseAt=null;document.body.classList.remove('smoke-check');app.autopilot=false;app.inspectionCamera=null;app.duel.startCampaign({startStage:stage,car,seed});Object.assign(app.duel.state,{status:'racing',s,traffic:[],rival:null,paused:true});app.cameraMode='chase';}
 
 const start=()=>{app.inspectionCamera=null;app.startCampaign();const s=app.duel.state;s.status='racing';s.s=172;s.traffic=[];s.rival=null;};
 
@@ -113,4 +123,19 @@ document.querySelector('#chickens').onclick=()=>{start();app.duel.state.s=179;ap
 
 document.querySelector('#offroad').onclick=()=>{scene(1,3100);app.duel.state.lateral=-45;};
 
-app.onFrame=s=>{if(smokePauseAt!==null&&s.totalTimeSec>=smokePauseAt){s.paused=true;smokePauseAt=null;}document.querySelector('#state').textContent=`${s.status} · major crashes ${s.majorCrashes} · catastrophic ${s.catastrophic}\nCourse ${app.duel.course?.def.name} · section ${app.duel.course?.sectionAt(s.s).name} · s ${s.s.toFixed(0)} · lap ${s.lap||1} · car ${s.car}\nAudio ${app.audio.context?.state||'locked'} · samples ${app.audio.sampleStatus} · ambience ${app.audio.ambienceStatus||'locked'}\n${view.dataset.fps||0} FPS · ${view.dataset.drawCalls||0} draws · ${view.dataset.triangles||0} triangles\nWorld builds ${view.dataset.worldBuilds||0} (${view.dataset.worldBuildMs||0} ms + first frame ${view.dataset.firstFrameMs||0} ms)\nShader warmup ${view.dataset.warmupStatus||'off'} · parallel ${view.dataset.parallelShaderCompile||'unknown'} · submit ${view.dataset.warmupSubmitMs||0} ms · wait ${view.dataset.warmupWaitMs||0} ms · Quality ${view.dataset.edgeSmoothing==='true'?'High':'Performance'} · shadow ${view.dataset.shadowResolution||'loading'} · paint ${view.dataset.paint||'factory'}\nNitro ${s.boost.toFixed(2)} · crushes ${s.crushCount} · flocks ${s.collectedFlocks.length} · boundary resets ${s.boundaryResets} · lateral ${s.lateral.toFixed(1)}`;};app.start();
+app.onFrame=s=>{
+  if(smokePauseAt!==null&&s.totalTimeSec>=smokePauseAt){s.paused=true;smokePauseAt=null;}
+  const d=view.dataset;
+  document.querySelector('#state').textContent=[
+    `${s.status} · major crashes ${s.majorCrashes} · catastrophic ${s.catastrophic}`,
+    `Course ${app.duel.course?.def.name} · section ${app.duel.course?.sectionAt(s.s).name} · s ${s.s.toFixed(0)} · lap ${s.lap||1} · car ${s.car}`,
+    `Audio ${app.audio.context?.state||'locked'} · samples ${app.audio.sampleStatus} · ambience ${app.audio.ambienceStatus||'locked'}`,
+    `${d.fps||0} FPS · ${d.drawCalls||0} draws · ${d.triangles||0} triangles · ${d.shaderPrograms||0} shaders`,
+    `Frame p50 / p95 / max ${d.frameMsP50||0} / ${d.frameMsP95||0} / ${d.frameMsMax||0} ms · stalls >33 ms ${d.frameJankCount||0} / ${d.frameSamples||0}`,
+    `CPU render p95 ${d.cpuRenderMsP95||0} ms (not GPU time)`,
+    `World builds ${d.worldBuilds||0} (${d.worldBuildMs||0} ms + first frame ${d.firstFrameMs||0} ms)`,
+    `Shader warmup ${d.warmupStatus||'off'} · parallel ${d.parallelShaderCompile||'unknown'} · submit ${d.warmupSubmitMs||0} ms · wait ${d.warmupWaitMs||0} ms · Quality ${d.edgeSmoothing==='true'?'High':'Performance'} · shadow ${d.shadowResolution||'loading'} · paint ${d.paint||'factory'}`,
+    `Nitro ${s.boost.toFixed(2)} · crushes ${s.crushCount} · flocks ${s.collectedFlocks.length} · boundary resets ${s.boundaryResets} · lateral ${s.lateral.toFixed(1)}`,
+  ].join('\n');
+};
+app.start();

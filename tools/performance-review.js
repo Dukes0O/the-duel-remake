@@ -1,0 +1,41 @@
+// Repeatable, bounded browser samples. These measure delivered RAF intervals,
+// not GPU time. Keep the tab visible and do not change scene or quality mid-run.
+export function summarizeFrames(values) {
+  const ordered=[...values].sort((a,b)=>a-b);
+  if(!ordered.length||ordered.some(value=>!Number.isFinite(value)||value<=0))throw new Error('Expected positive frame intervals.');
+  const round=value=>Math.round(value*100)/100;
+  const percentile=fraction=>ordered[Math.ceil(ordered.length*fraction)-1];
+  return {frames:ordered.length,p50:round(percentile(.5)),p95:round(percentile(.95)),max:round(ordered.at(-1)),over33ms:ordered.filter(value=>value>1000/30).length};
+}
+
+export function installPerformanceReview(app,view,nav) {
+  const button=document.createElement('button');button.textContent='Measure frame pacing';nav.append(button);
+  const panel=document.createElement('details');panel.style.cssText='position:fixed;right:12px;bottom:12px;max-width:430px;max-height:45vh;overflow:auto;z-index:5;padding:12px;background:#081317ee;color:white;font:12px monospace';
+  const title=document.createElement('summary');title.textContent='Performance samples (none)';panel.append(title);
+  const result=document.createElement('pre');result.id='performance-results';result.style.whiteSpace='pre-wrap';panel.append(result);document.body.append(panel);
+  const reports=[];let raf=0,timeout=0,active=false;
+  const key=()=>[view.dataset.worldBuilds,view.dataset.edgeSmoothing,view.clientWidth,view.clientHeight,window.devicePixelRatio,app.cameraMode,app.lightingMood,app.duel.state.status,JSON.stringify(app.inspectionCamera)].join(':');
+  const cancel=reason=>{cancelAnimationFrame(raf);clearTimeout(timeout);active=false;button.disabled=false;button.textContent='Measure frame pacing';if(reason)title.textContent=reason;};
+  document.addEventListener('visibilitychange',()=>{if(active&&document.hidden)cancel('Sample cancelled: tab became hidden');});
+  window.addEventListener('pagehide',()=>cancel());
+  button.onclick=()=>{
+    if(active)return;
+    if(document.hidden){title.textContent='Show this tab before measuring';return;}
+    active=true;button.disabled=true;button.textContent='Measuring 120 frames…';
+    const signature=key(),intervals=[],label=`${app.duel.course?.def.id||'menu'} @ ${Math.round(app.duel.state.s)}m`,quality=view.dataset.edgeSmoothing==='true'?'High':'Performance';
+    let previous=null,warmup=30;
+    timeout=setTimeout(()=>cancel('Sample cancelled: exceeded 30 seconds'),30000);
+    const sample=now=>{
+      if(!active)return;
+      if(key()!==signature){cancel('Sample cancelled: scene or quality changed');return;}
+      if(previous!==null){if(warmup)warmup--;else intervals.push(now-previous);}
+      previous=now;
+      if(intervals.length===120){
+        reports.push({scene:label,quality,viewport:`${view.clientWidth}x${view.clientHeight}`,dpr:window.devicePixelRatio,...summarizeFrames(intervals),drawCalls:Number(view.dataset.drawCalls),triangles:Number(view.dataset.triangles),worldBuildMs:Number(view.dataset.worldBuildMs),firstFrameMs:Number(view.dataset.firstFrameMs),geometries:Number(view.dataset.geometries),textures:Number(view.dataset.textures),shaderPrograms:Number(view.dataset.shaderPrograms)||null});
+        if(reports.length>12)reports.shift();
+        result.textContent=JSON.stringify(reports,null,2);title.textContent=`Performance samples (${reports.length}) · last p95 ${reports.at(-1).p95} ms`;cancel();
+      }else raf=requestAnimationFrame(sample);
+    };
+    raf=requestAnimationFrame(sample);
+  };
+}

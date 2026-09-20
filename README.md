@@ -25,6 +25,8 @@ Open **http://localhost:5174/**. Use Node.js 22.12 or later. Runtime assets are 
 
 Audio starts after a click or key press. The game pauses when the window loses focus. Automatic and manual transmission are separate from Easy, Medium and Hard CPU difficulty. Keyboard or gamepad is required for driving.
 
+The menu footer identifies the running build. If a newer build is available, a menu-only notice offers **Reload**. It never reloads automatically or interrupts a race, and it keeps saved progress and settings.
+
 Hold the brake for a quarter-second after stopping to select reverse in either transmission. The gear display shows **R** and reverse speed is capped at 22 mph. Press accelerate to brake while reversing, then move forward in first gear. Q/E shifts forward gears only. Nitro is unavailable in reverse.
 
 Main Menu and Restart act immediately with one click, including after Busted. The R key also restarts immediately. Leaving or restarting forfeits unbanked race earnings, but never deducts saved credits.
@@ -88,6 +90,7 @@ The game uses Three.js, original procedural 3D models, a licensed detailed conce
 - [Image prompts](docs/IMAGE_PROMPTS.md): full prompts and how generated references and textures are used.
 - [Asset workflow](docs/ASSET_PIPELINE.md): export and Blender guidance.
 - [Verification](docs/VERIFICATION.md): tests and browser findings.
+- [Pacific coast showcase](docs/COAST_SHOWCASE.md): shoreline art, performance measurements and safe build updates.
 
 ## Development
 
@@ -107,9 +110,9 @@ npm run qa:build
 npm run qa:preview
 ```
 
-The QA build runs on port 5175 and includes `/tools/visual-check.html`. Its visible controls inspect tunnels, car models, damage, arena jumps and scenery. Test players and settings use temporary page memory, never real career storage. Reloading clears them. QA pages are excluded from the normal release build.
+The QA build runs on port 5175 and includes `/tools/visual-check.html`. Its collapsible controls inspect tunnels, car models, damage, arena jumps and scenery, and collect bounded frame-time samples. `/tools/update-check.html` tests the real menu's build notice with simulated version replies. Test players and settings use temporary page memory, never real career storage. Reloading clears them. QA pages are excluded from the normal release build.
 
-The test runner keeps the established suite order and automatically finds new `tools/test-*.mjs` files. Use `npm test -- --list` to list suites, or `npm test -- --filter scene --filter world` for a focused run. The default core suite includes the expensive campaign matrix; a deliberately skipped matrix must be reported separately.
+The test runner keeps the established suite order and automatically finds new `tools/test-*.mjs` files. Use `node tools/run-tests.mjs --list` to list suites, or `node tools/run-tests.mjs --filter scene --filter world` for a focused run. Calling the runner directly avoids PowerShell/npm argument forwarding differences. The default core suite includes the expensive campaign matrix; a deliberately skipped matrix must be reported separately.
 
 `src/course.js` is the shared route, surface and scenery source. `src/game.js` owns simulation and race validation; `src/collision.js` handles swept contacts. `src/progression.js` and `src/leaderboard.js` own local careers and records. `src/app.js` connects input, audio and fixed-step updates. The renderer reads simulation state without changing race rules.
 

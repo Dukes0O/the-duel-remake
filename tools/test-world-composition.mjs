@@ -5,10 +5,11 @@ import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
 import {buildEnvironment,disposeTree} from '../src/world.js';
 
-// Captured from the complete world before extracting surface and prop modules.
+// Captured before extracting surface/prop modules. Pacific alone was updated
+// after the reviewed shoreline/lighthouse pass; see docs/COAST_SHOWCASE.md.
 // UUIDs, allocation counters, callbacks and wall-clock values are not scene data.
 const baseline={
-  'pacific-canyon':{hash:'662ac816bae2847ca18f8092603edc6fa2a3b9db0f2a537cf157c300dcbdc0df',nodes:499,meshes:478,instances:11981,geometries:232,materials:97,textures:33},
+  'pacific-canyon':{hash:'acbea287a1f4ca9c23ba0ce8a2932be71481758cd4e77137f9d4e52e1ce09a29',nodes:505,meshes:483,instances:11981,geometries:237,materials:102,textures:33},
   'high-country':{hash:'e35dfab3314c16eaf2310f79d7461e7c67696988b7962affb198232c0df66d8d',nodes:690,meshes:660,instances:15698,geometries:358,materials:136,textures:43},
   'harbor-highlands':{hash:'fe566e03af809c4e111090786602889c83283110e47f30db9c53507436b29e98',nodes:909,meshes:866,instances:116321,geometries:395,materials:167,textures:46},
   'titan-arena':{hash:'c41de422a08b1ea2ece04d823beeb28ddca8a81eec892df391745b6d602bb1a7',nodes:158,meshes:120,instances:2096,geometries:112,materials:35,textures:10},

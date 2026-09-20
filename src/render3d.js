@@ -21,10 +21,18 @@ import { animateScene, syncScene } from './scene-systems.js';
 import { environmentKey } from './environment-key.js';
 import { createRenderWarmup, compileWarmupScene, isRenderWarmupEnabled } from './render-warmup.js';
 import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope } from './vehicle-grounding.js';
+import { createFrameMetrics } from './frame-metrics.js';
 
 // This layer only reads simulation state. Asset replacement never changes race rules.
 export function attachRenderer(host, app) {
   let disposed=false,raf,sceneRevision=0,warmupTicket=null,warmupKey=null,readinessClaimed=false;
+  const frameMetrics=createFrameMetrics();
+  let metricRevision=-1,metricEnvironment=null,metricQuality=null,metricRatio=null,metricMenu=null,metricCamera=null,metricMood=null,metricInspection=null,metricCar=null;
+  function resetFrameMetrics(){
+    frameMetrics.reset();
+    // Clear stale readings on a real configuration change, not every frame.
+    for(const key of ['frameSamples','frameWindowMs','frameMsP50','frameMsP95','frameMsMax','frameJankCount','cpuRenderMsP50','cpuRenderMsP95','cpuRenderMsMax','fps'])host.dataset[key]='0';
+  }
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   const warmupRequested=isRenderWarmupEnabled(window.location.search),parallelShaderCompile=renderer.extensions.has('KHR_parallel_shader_compile');
   const warmup=warmupRequested&&parallelShaderCompile?createRenderWarmup():null,readinessOwner={};
@@ -95,15 +103,17 @@ export function attachRenderer(host, app) {
     host.dataset.worldBuildMs=(performance.now()-buildStart).toFixed(0);firstWorldFrame=true;
   }
   const camTarget = new THREE.Vector3(), lookTarget = new THREE.Vector3();
-  let ready = false, lastMenu = null, previousT = performance.now(), metricsTime = previousT, metricFrames = 0;
-  function frame(now = performance.now()) {
+  let ready = false, lastMenu = null, previousT = performance.now();
+  function frame(now = performance.now(),measure=false) {
     if(disposed)return;
+    const capture=measure&&!document.hidden;
+    if(!capture)frameMetrics.suspend();
     const dt = Math.min(.05, Math.max(.001, (now - previousT) / 1000)); previousT = now;
     const st = app.duel.state, menu = st.status === 'menu', next = menu ? app.getMenuCourse(app.menuStage||0) : app.duel.course;
     const moving = st.status === 'racing' && !st.paused;
-    if (!next) return;
+    if (!next) {frameMetrics.suspend();return;}
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
-    if(!prepareVehicle(carKey))return;
+    if(!prepareVehicle(carKey)){frameMetrics.suspend();return;}
     if (course !== next) {
       if(world&&worldKey===environmentKey(next)){course=next;lighting.apply({course,mood:app.lightingMood});}
       else build(next);
@@ -232,6 +242,11 @@ export function attachRenderer(host, app) {
     lighting.updateVehicles({course,position:pp,player,police,distance,tall,now,high:app.ambientOcclusionEnabled!==false,menu});
     host.dataset.driver=player.userData.driver?'ready':'absent';
     quality.update(app.ambientOcclusionEnabled!==false);host.dataset.ambientShading=String(ambientShading.enabled);
+    const ratio=renderer.getPixelRatio();
+    const metricsChanged=metricRevision!==sceneRevision||metricEnvironment!==scene.environment||metricQuality!==ambientShading.enabled||metricRatio!==ratio||metricMenu!==menu||metricCamera!==app.cameraMode||metricMood!==app.lightingMood||metricInspection!==app.inspectionCamera||metricCar!==carKey;
+    if(metricsChanged){
+      resetFrameMetrics();metricRevision=sceneRevision;metricEnvironment=scene.environment;metricQuality=ambientShading.enabled;metricRatio=ratio;metricMenu=menu;metricCamera=app.cameraMode;metricMood=app.lightingMood;metricInspection=app.inspectionCamera;metricCar=carKey;
+    }
     if(warmup){
       const revision=`${sceneRevision}:${scene.environment?.id??'none'}:${ambientShading.enabled}:${explosion.group.visible}`;
       if(revision!==warmupKey){
@@ -248,26 +263,35 @@ export function attachRenderer(host, app) {
         });
       }
       host.dataset.warmupStatus=warmupTicket.state.status;
-      if(!warmup.canDraw(warmupKey))return;
+      if(!warmup.canDraw(warmupKey)){frameMetrics.suspend();return;}
     }
     renderer.info.autoReset=false;renderer.info.reset();
-    const firstFrameStart=firstWorldFrame?performance.now():0;composer.render();
-    if(firstWorldFrame){host.dataset.firstFrameMs=(performance.now()-firstFrameStart).toFixed(0);firstWorldFrame=false;}
+    const loadingFrame=firstWorldFrame||metricsChanged,renderStarted=performance.now();composer.render();
+    const cpuRenderMs=performance.now()-renderStarted;
+    if(firstWorldFrame){host.dataset.firstFrameMs=cpuRenderMs.toFixed(0);firstWorldFrame=false;}
     renderer.domElement.style.visibility='visible';
     if(readinessClaimed&&!app.visualReady)app.presentVisualFrame?.(readinessOwner,st,app.duel.course);
-    metricFrames++;
-    if (now - metricsTime >= 1000) {
+    // Only consecutive, presented RAF frames count. Debug draws, compilation,
+    // loading and hidden-tab intervals cannot dilute or inflate these samples.
+    if(capture&&!loadingFrame)frameMetrics.record(now,cpuRenderMs);else frameMetrics.suspend();
+    const summary=capture&&!loadingFrame?frameMetrics.summary(now):null;
+    if (summary) {
       host.dataset.drawCalls = String(renderer.info.render.calls);
       host.dataset.triangles = String(renderer.info.render.triangles);
-      host.dataset.fps = String(Math.round(metricFrames * 1000 / (now - metricsTime)));
+      host.dataset.fps = String(Math.round(summary.fps));
       host.dataset.geometries = String(renderer.info.memory.geometries);
       host.dataset.textures = String(renderer.info.memory.textures);
-      metricsTime = now; metricFrames = 0;
+      host.dataset.shaderPrograms=String(renderer.info.programs?.length||0);
+      host.dataset.frameSamples=String(summary.samples);host.dataset.frameWindowMs=summary.windowMs.toFixed(1);
+      host.dataset.frameMsP50=summary.frameMsP50.toFixed(2);host.dataset.frameMsP95=summary.frameMsP95.toFixed(2);host.dataset.frameMsMax=summary.frameMsMax.toFixed(2);host.dataset.frameJankCount=String(summary.jankCount);
+      host.dataset.cpuRenderMsP50=summary.cpuRenderMsP50.toFixed(2);host.dataset.cpuRenderMsP95=summary.cpuRenderMsP95.toFixed(2);host.dataset.cpuRenderMsMax=summary.cpuRenderMsMax.toFixed(2);
     }
   }
-  const tick = t => { if (disposed) return; frame(t); raf = requestAnimationFrame(tick); }; raf = requestAnimationFrame(tick);
-  const resize = () => { renderer.setSize(host.clientWidth, host.clientHeight); composer.setSize(host.clientWidth,host.clientHeight); camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix(); };
+  const tick = t => { if (disposed) return; frame(t,true); raf = requestAnimationFrame(tick); }; raf = requestAnimationFrame(tick);
+  const resize = () => { renderer.setSize(host.clientWidth, host.clientHeight); composer.setSize(host.clientWidth,host.clientHeight); camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix();resetFrameMetrics(); };
+  const visibility = () => {resetFrameMetrics();};
   window.addEventListener('resize', resize);
+  document.addEventListener('visibilitychange',visibility);
   if(warmupRequested){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
   const debugApi=window.__render = { renderer, scene, camera, renderFrame() { frame(); return { drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles }; }, sample() {
     frame();if(disposed||warmup&&!warmup.canDraw(warmupKey))return {warming:!disposed,distinctColors:0,drawCalls:0,triangles:0};const rt = new THREE.WebGLRenderTarget(64, 48); renderer.setRenderTarget(rt); renderer.render(scene, camera);
@@ -276,7 +300,7 @@ export function attachRenderer(host, app) {
     return { distinctColors: colors.size, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles };
   } };
   return { prepareVehicle, retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); }, dispose() {
-    if(disposed)return;disposed=true;lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);
+    if(disposed)return;disposed=true;lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);

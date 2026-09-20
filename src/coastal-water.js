@@ -35,8 +35,10 @@ export function shoreFoamGeometry(course){
 
 export function addCoastalWater(group,course){
   const time={value:0};
+  const showcase=course.def.id==='pacific-canyon';
   const material=new THREE.MeshPhysicalMaterial({color:0x245765,metalness:.02,roughness:.19,ior:1.333,specularIntensity:1,envMapIntensity:1.2,transparent:true,opacity:.96});
-  material.customProgramCacheKey=()=> 'coastal-world-waves-v1';
+  if(showcase){material.color.set(0x3b666d);material.roughness=.24;}
+  material.customProgramCacheKey=()=> showcase?'pacific-layered-waves-v1':'coastal-world-waves-v1';
   material.onBeforeCompile=shader=>{
     shader.uniforms.coastalTime=time;
     shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vCoastalPosition;').replace('#include <begin_vertex>','#include <begin_vertex>\nvCoastalPosition=(modelMatrix*vec4(transformed,1.0)).xyz;');
@@ -49,6 +51,15 @@ export function addCoastalWater(group,course){
       float farFade=1.0/(1.0+pow(distance(cameraPosition,vCoastalPosition)/1600.0,2.0));
       normal=normalize(mat3(viewMatrix)*normalize(vec3(-gradient.x*farFade,1.0,-gradient.y*farFade)));
     `).replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nroughnessFactor=clamp(roughnessFactor+.035*sin(vCoastalPosition.x*.031+vCoastalPosition.z*.021),.12,.3);');
+    if(showcase)shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+      vec2 wavePlace=vCoastalPosition.xz;
+      float longSwell=sin(dot(wavePlace,vec2(.083,.127))-coastalTime*.53);
+      float crossSwell=sin(dot(wavePlace,vec2(.29,-.18))-coastalTime*.92);
+      float fragments=sin(wavePlace.x*.78+sin(wavePlace.y*.56)*1.7);
+      float whitecap=smoothstep(.84,.995,longSwell)*smoothstep(.58,.93,crossSwell)*smoothstep(.25,.88,fragments);
+      diffuseColor.rgb*=.94+.065*longSwell+.025*crossSwell;
+      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.59,.69,.65),whitecap*.28);
+    `);
   };
   const water=new THREE.Mesh(new THREE.PlaneGeometry(12000,12000),material);water.name='Coastal ocean';water.rotation.x=-Math.PI/2;water.position.set(0,SEA_LEVEL,course.length*.45);water.receiveShadow=true;group.add(water);
   const foamMaterial=new THREE.MeshBasicMaterial({color:0xcbdcd8,transparent:true,opacity:.7,depthWrite:false,side:THREE.DoubleSide});
@@ -64,6 +75,9 @@ export function addCoastalWater(group,course){
     `);
   };
   const foam=new THREE.Mesh(shoreFoamGeometry(course),foamMaterial);foam.name='Breaking shoreline foam';group.add(foam);
+  // Draw the Pacific ocean before either transparent foam layer. Keep depth
+  // testing so the terrain and solid sea stacks still occlude the surf.
+  if(showcase){water.renderOrder=-2;foam.renderOrder=-1;}
   registerSceneSystem(group, { animate: t => { time.value = t; } });
   return {water,foam};
 }

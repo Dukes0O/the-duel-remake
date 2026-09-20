@@ -17,6 +17,9 @@ Keep the current Three.js game and its deterministic simulation. Extend the scen
 | `scene-systems.js` | Per-world animation, simulation-state synchronization and cleanup hooks | Explicit callbacks instead of chained `userData` handlers |
 | `scene-lighting.js` | Sky, environment maps, global/local lights and headlights | Owns asynchronous lighting loads and their GPU resources |
 | `render3d.js` | Frame orchestration, vehicle views, cameras, post-processing and readiness | Reads state, calls visual systems, draws a frame |
+| `pacific-coast.js`, `coast-lighthouse.js` | Pacific-only shoreline rocks, surf and lighthouse shell | No route RNG, feature-list, collider or terrain changes |
+| `frame-metrics.js` | Bounded frame-interval and CPU-render summaries | CPU submission time is not GPU time; keep load and hidden gaps separate |
+| `build-version.js`, `build-update.js` | Immutable build identity and menu-only update checks | No player storage access; only an explicit, live-state-guarded reload |
 
 ## Add a track effect
 
@@ -34,7 +37,7 @@ Static features need no registered system. The registry is a small lifecycle hel
 
 ## Tests and safe visual checks
 
-`npm test` runs the original suites in their established order, then discovers additional `tools/test-*.mjs` files. Missing original suites are an error. Use `npm test -- --list` to see the plan and `npm test -- --filter scene --filter world` for focused work. `--filter core` selects the simulation suite.
+`npm test` runs the original suites in their established order, then discovers additional `tools/test-*.mjs` files. Missing original suites are an error. Use `node tools/run-tests.mjs --list` to see the plan and `node tools/run-tests.mjs --filter scene --filter world` for focused work. Direct calls also avoid PowerShell/npm argument forwarding differences. `--filter core` selects the simulation suite.
 
 By default the core suite includes its expensive campaign matrix. For a quicker complete regression pass in PowerShell:
 
@@ -50,7 +53,9 @@ App-based QA pages install `tools/qa-storage.js` before importing the App. Their
 
 `test-world-composition.mjs` preserves pre-refactor geometry, material, texture, instance and object-order signatures for all nine events. These are change detectors, not values to regenerate blindly. An intentional art revision needs a reviewed visual difference and matching physical/clearance checks before changing its expected signatures.
 
-## Next graphics work
+## Current showcase and next graphics work
+
+The first bounded pass uses these interfaces for Pacific Canyon's rocky shoreline, surf and lighthouse. It also adds repeatable frame samples and removes unused tire-plane sampling during clean driving. See [the showcase and measurement notes](COAST_SHOWCASE.md). The other eight complete-scene signatures stay unchanged; Pacific's reviewed signature is an intentional art revision.
 
 The architecture now has clear homes for richer scenes. Build the next improvements in bounded passes:
 
@@ -59,4 +64,4 @@ The architecture now has clear homes for richer scenes. Build the next improveme
 3. Prototype weather and visibility as a visual system coordinated with the lighting controller. Keep gameplay effects separate and explicit if they are later wanted.
 4. Author memorable track sections using course feature data: set-piece structures, vista framing and lighting transitions. Test approach, passage and exit at driving speed, not only a static screenshot.
 
-This cleanup does not add those new scenes or promise a frame-rate improvement. It removes barriers to building and verifying them. Vehicles, terrain shape, route versions, driving rules, account data and save formats are unchanged.
+Future weather and set-piece work remains separate. The current pass does not promise a general frame-rate or startup improvement. Vehicles, terrain shape, route versions, driving rules, account data and save formats are unchanged.
