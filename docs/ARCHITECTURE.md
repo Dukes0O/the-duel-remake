@@ -19,6 +19,8 @@ Keep the current Three.js game and its deterministic simulation. Extend the scen
 | `render3d.js` | Frame orchestration, vehicle views, cameras, post-processing and readiness | Reads state, calls visual systems, draws a frame |
 | `pacific-coast.js`, `coast-lighthouse.js` | Pacific-only shoreline rocks, surf and lighthouse shell | No route RNG, feature-list, collider or terrain changes |
 | `frame-metrics.js` | Bounded frame-interval and CPU-render summaries | CPU submission time is not GPU time; keep load and hidden gaps separate |
+| `render-warmup.js` | Structural shader preparation and safe retirement | Gate world/car/quality changes, never transient race activity; only presentation releases the clock |
+| `phase-diagnostics.js`, QA profiling tools | Explicit, bounded CPU/GPU attribution | No normal-play capture, synchronous GPU waits or saved-player access |
 | `build-version.js`, `build-update.js` | Immutable build identity and menu-only update checks | No player storage access; only an explicit, live-state-guarded reload |
 
 ## Add a track effect
@@ -55,7 +57,7 @@ App-based QA pages install `tools/qa-storage.js` before importing the App. Their
 
 ## Current showcase and next graphics work
 
-The first bounded pass uses these interfaces for Pacific Canyon's rocky shoreline, surf and lighthouse. It also adds repeatable frame samples and removes unused tire-plane sampling during clean driving. See [the showcase and measurement notes](COAST_SHOWCASE.md). The other eight complete-scene signatures stay unchanged; Pacific's reviewed signature is an intentional art revision.
+The first bounded pass uses these interfaces for Pacific Canyon's rocky shoreline, surf and lighthouse. It also adds repeatable frame samples and removes unused tire-plane sampling during clean driving. See [the showcase and measurement notes](COAST_SHOWCASE.md). The follow-up [performance pass](PERFORMANCE_PASS.md) prepares shaders, removes duplicate shadows and groups existing architectural detail into spatial batches. Per-instance equality tests guard the intentional grouping-signature changes; no further art revision is part of that pass.
 
 The architecture now has clear homes for richer scenes. Build the next improvements in bounded passes:
 
@@ -64,4 +66,4 @@ The architecture now has clear homes for richer scenes. Build the next improveme
 3. Prototype weather and visibility as a visual system coordinated with the lighting controller. Keep gameplay effects separate and explicit if they are later wanted.
 4. Author memorable track sections using course feature data: set-piece structures, vista framing and lighting transitions. Test approach, passage and exit at driving speed, not only a static screenshot.
 
-Future weather and set-piece work remains separate. The current pass does not promise a general frame-rate or startup improvement. Vehicles, terrain shape, route versions, driving rules, account data and save formats are unchanged.
+Future weather and set-piece work remains separate. Loading measurements improve, but a general frame-rate or hitch-free guarantee is not supported by the short samples. Vehicles, terrain shape, route versions, driving rules, account data and save formats are unchanged.

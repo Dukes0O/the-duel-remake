@@ -2,7 +2,23 @@
 
 Checkpoint: 19 September 2026. The latest checked update is described first. Later sections preserve earlier checkpoints; their counts and screenshots are historical evidence.
 
-## Pacific coast, frame metrics and build notice — latest follow-up
+## Startup and High-quality rendering — latest follow-up
+
+All **97/97 suites pass in 277.65 seconds** with `DUEL_SKIP_CAMPAIGNS=1`. The 448 non-campaign core checks passed; the expensive campaign matrix was not rerun. Full F42/Heritage replay, rewards, account isolation, collision, reverse, cactus, HUD and scene suites are included in this run.
+
+Shader preparation is now the supported-browser default, with explicit `?warmup=0` comparison/fallback. Start is disabled from initial markup and lazy import through first presentation. The loading UI distinguishes car loading from `PREPARING THE ROAD`. Preparation keys include only world rebuild, car and quality. Tests cover frozen clocks/rewards, preserved pause state, first-draw release, timeout/rejection, superseded work and resource retirement. Fullscreen preparation matches the actual Three r171 material/target/define dispatch; texture uploads and some first-draw work remain synchronous.
+
+High contact shading no longer duplicates the colour pass's shadow rendering. The 256 m station/warehouse batches preserve 326,479 original instances across tested worlds/seeds. All geometry, transforms, colours, materials and physical features remain equal. Seven complete-scene signatures are intentionally updated for grouping and conservative bounds; both Titan signatures and all nine instance/geometry/material/texture counts remain unchanged. New/expanded checks include 983,788 batch checks, 94 shadow checks, 134 pass-preparation checks, 39 preparation-key checks, 34 production-readiness UI checks, 76 phase-diagnostic checks and 1,078 scene-lighting checks. The QA GPU profiler covers bounded queries, unsupported/disjoint/busy GPU results, exceptions and cleanup.
+
+Same-build browser observations at 1280×720 / DPR approximately 1: initial renderer-attach-to-picture 2720 → 1768 ms and Harbor build-to-picture 2470 → 1009 ms with preparation enabled. Harbor submitted triangles fall from 4,169,241 to 2,722,763 while draws change 1174 → 1191. Short frame p95 remains about 18.1–18.2 ms; that is not proof of an FPS increase or universal hitch-free play. CPU/GPU tail variability and synchronous work are explicitly recorded in [the performance notes](PERFORMANCE_PASS.md).
+
+Browser checks use memory-only saves. The Harbor review retained the same visible scenery and shadows. A real bounded coastal drive reached 3467 m with zero major crashes and boundary resets. The production menu showed Start disabled while importing, enabled only when ready, then a zero-time countdown; pause/resume worked. No live-player input, account edit, purchase, forced refresh or save reset was used.
+
+The final real-menu check switched High → Performance, loaded the Stuttgart, then switched back to High and Harbor. Shadows were1024/2048 respectively, smoothing off/on, and the visible `PREPARING THE ROAD` state disabled Start until ready. One-click menu return worked. No warnings/errors were captured. A separate120-frame production-HUD sample at0m with the race clock active measured App CPU p95 0.7ms and HUD0.3ms; the stationary, muted sample is not a moving/audio-load benchmark.
+
+Production and QA builds pass. The live server returns HTTP200 with `index-CGZjB_7O.js`, renderer `render3d-DFJA9nV3.js` and manifest `20260920060656-1aa5eee519bf`, exactly matching disk. The approximately960kB renderer-chunk warning remains. The live tab was untouched. The temporary QA tab was closed, viewport reset, port5175 server stopped and rebuildable `.qa-dist` removed. No new scratch files or helper processes remain; reusable tests, live build/dependencies and pre-existing live-process logs are retained.
+
+## Pacific coast, frame metrics and build notice — earlier follow-up
 
 Pacific Canyon now has asymmetric offshore crags, animated broken surf, layered water motion and a more detailed weathered lighthouse. Three visual iterations removed low hidden tips, then overly regular slab silhouettes. Browser review accepted the final driving-view shapes and corrected transparent surf order. Cars, road/terrain shape, colliders, driving, economy and saves remain unchanged. See [scope, measurements and reproduction](COAST_SHOWCASE.md).
 

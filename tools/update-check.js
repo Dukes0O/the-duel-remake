@@ -62,4 +62,11 @@ updateTelemetry=()=>{
   output.textContent=`${BUILD_VERSION.production?'BUILT QA':'DEV: update checks intentionally disabled; use qa:build'}\nMode: ${mode} · requests: ${requests} · aborts: ${aborts}\nStatus: ${app.duel.state.status} · saved credits: ${app.profile.credits}\n${statusNote}`;
 };
 updateTelemetry();
-if(import.meta.hot)import.meta.hot.dispose(()=>{window.fetch=realFetch;panel.remove();});
+// Optional CPU/pass attribution through the real production main.onFrame. Use
+// normal Start Engine; the frozen fixture deliberately stops the App loop.
+let performanceReview;
+if(params.get('profile')==='1'){
+  const {installPerformanceReview}=await import('./performance-review.js');
+  performanceReview=installPerformanceReview(app,document.querySelector('#view3d'),nav,{hudSource:'production main HUD'});
+}
+if(import.meta.hot)import.meta.hot.dispose(()=>{performanceReview?.dispose();window.fetch=realFetch;panel.remove();});

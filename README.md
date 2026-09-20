@@ -118,6 +118,6 @@ The test runner keeps the established suite order and automatically finds new `t
 
 See [scene architecture](docs/ARCHITECTURE.md) for module ownership, animation and cleanup contracts, safe visual fixtures, and the next graphics-work plan.
 
-`?warmup=1` opts into experimental asynchronous scene-shader preparation on supported browsers. It holds simulation until a frame is ready, but shadow/post-processing work can still delay the first frame. It is off by default.
+Supported browsers prepare scene and post-processing shaders before the first picture by default. Start stays disabled until that picture is ready, and loading does not consume race time. `?warmup=0` keeps the synchronous comparison path. Some setup, uploads and first-draw work still block. See [performance measurements and limits](docs/PERFORMANCE_PASS.md).
 
 `?autopilot=1` enables the test driver after starting a race. `?seed=N` supports repeatable layouts. Diagnostics remain exposed through `window.__game` and `window.__render` for development. Historical prototype decisions are superseded by the current circuit, progression and handling rules.

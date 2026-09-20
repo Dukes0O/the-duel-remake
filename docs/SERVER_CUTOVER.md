@@ -6,9 +6,9 @@ The user authorized moving the game server to this updated checkout and committi
 
 Updated checkout: `C:\Users\kyleb\.codex\worktrees\4555\the-duel-remake`.
 
-Latest: the Pacific coast/build-notice release is `index-D0oJcuFm.js`, with renderer `render3d-jf8x0MIR.js` and build ID `20260920034918-d9ee120b4824`. Its footer reads **26.09.20 03:49 UTC · d9ee12**. The live HTTP response and manifest match the built files. Production and QA builds pass; all 90 suites have passing results after the reviewed Pacific signature update, with only the expensive core campaign matrix skipped. See `VERIFICATION.md` for the exact run sequence.
+Latest: the startup/High-quality performance release is `index-CGZjB_7O.js`, with renderer `render3d-DFJA9nV3.js` and build ID `20260920060656-1aa5eee519bf`. Its footer reads **26.09.20 06:06 UTC · 1aa5ee**. The live HTTP response and manifest match the built files. Production and QA builds pass; all 97 suites pass in one 277.65-second run, with only the expensive core campaign matrix skipped. See `VERIFICATION.md` and `PERFORMANCE_PASS.md` for measured gains and remaining limitations.
 
-The live tab was in Spikyferns' Midnight Muscle Chase and was not refreshed, stopped or otherwise changed. Refresh the existing game tab from its menu when ready. The old loaded client cannot show the new build notice until this first manual refresh. Saved accounts, balances and settings are unchanged by this release.
+The live browser tab was not refreshed, inspected or controlled for this follow-up. All browser checks used memory-only QA saves. Refresh the existing game tab from its menu when ready, or use its menu-only update notice if available. Saved accounts, balances and settings are unchanged by this release. The temporary port5175 QA server was stopped and its rebuildable `.qa-dist` removed after verification.
 
 The existing preview process continues serving the new `dist` without interruption. It returns `no-cache` for the manifest; client checks also use `no-store` and a unique query. The new preview middleware's stronger `no-store, max-age=0` manifest header was verified on the temporary QA server and will apply to the live preview on its next normal restart. No live restart was forced during play.
 

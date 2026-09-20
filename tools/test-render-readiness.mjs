@@ -12,8 +12,8 @@ globalThis.requestAnimationFrame=callback=>{frames.set(++serial,callback);return
 const flush=async()=>{await Promise.resolve();await Promise.resolve();};
 const pending=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};
 
-for(const search of ['','?warmup=0','?warmup=true','?other=1','?warmup=01','?warmup='])equal(isRenderWarmupEnabled(search),false,'default and nonexplicit URLs do not enable the experiment');
-for(const search of ['?warmup=1','?route=b&warmup=1','warmup=1'])equal(isRenderWarmupEnabled(search),true,'explicit URL enables the experiment');
+for(const search of ['?warmup=0','?route=b&warmup=0','warmup=0'])equal(isRenderWarmupEnabled(search),false,'explicit zero retains the synchronous comparison path');
+for(const search of ['','?warmup=1','?route=b&warmup=1','warmup=1','?warmup=true','?other=1','?warmup=01','?warmup='])equal(isRenderWarmupEnabled(search),true,'preparation is the default when the renderer supports it');
 
 {
   const camera={},scene={},screen={},composerTarget={},work=pending();let target=screen,face=2,level=3,submissions=0;
@@ -96,4 +96,4 @@ const runFrame=t=>{const callbacks=[...frames.values()];frames.clear();callbacks
 before=snapshot();runFrame(100);runFrame(20100);equal(snapshot(),before);equal(hudFrames,2,'loading does not stop the App/HUD animation loop');
 app.presentVisualFrame(secondOwner,app.duel.state,app.duel.course);before=snapshot();runFrame(30100);equal(snapshot(),before,'first loop after presentation establishes a fresh clock');
 app.dispose();check(app.visualReady,'App disposal clears its optional gate');equal(frames.size,0,'App disposal stops its frame loop');
-console.log(`Render readiness: ${checks} checks passed; explicit opt-in, correct compile target, frozen loading clocks/rewards, first-draw release, pause preservation and stale renderer ownership.`);
+console.log(`Render readiness: ${checks} checks passed; default preparation with opt-out, correct compile target, frozen loading clocks/rewards, first-draw release, pause preservation and stale renderer ownership.`);

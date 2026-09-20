@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import { createSceneLighting } from '../src/scene-lighting.js';
 import { createAmbientShading } from '../src/ambient-shading.js';
 import { resolveLightingSettings } from '../src/lighting-moods.js';
@@ -21,16 +23,16 @@ const countDisposals = resource => {
 };
 const originalLoader = THREE.TextureLoader.prototype.load;
 THREE.TextureLoader.prototype.load = () => new THREE.Texture();
-function fixture() {
+function fixture({prefilterError}={}) {
   const scene = new THREE.Scene(), renderer = { toneMappingExposure: 1.05 };
   const bloom = { strength: .2 }, host = { dataset: {} }, targets = [], log = [];
-  let loaded, failed;
+  let loaded, failed, generatorCount=0;
   const lighting = createSceneLighting({ scene, renderer, bloom, host }, {
-    createPMREM: () => ({
+    createPMREM: () => {generatorCount++;return({
       fromScene(room, blur) { equal(blur, .04, 'studio blur unchanged'); log.push('studio'); return target(); },
-      fromEquirectangular(texture) { log.push('hdr'); return target(); },
+      fromEquirectangular(texture) { log.push('hdr');if(prefilterError)throw prefilterError;return target(); },
       dispose() { log.push('pmrem-dispose'); },
-    }),
+    });},
     createRoom: () => ({ dispose() { log.push('room-dispose'); } }),
     loadEnvironment(success, failure) { loaded = success; failed = failure; },
   });
@@ -43,7 +45,7 @@ function fixture() {
   const sky = scene.getObjectByName('Atmosphere and cloud deck');
   const hemi = scene.children.find(object => object.isHemisphereLight);
   const headlights = scene.children.filter(object => object.isSpotLight && !object.name);
-  return { lighting, scene, renderer, bloom, host, targets, log, sky, hemi, headlights,
+  return { lighting, scene, renderer, bloom, host, targets, log, sky, hemi, headlights,get generatorCount(){return generatorCount;},
     load(texture = new THREE.Texture()) { loaded(texture); return texture; }, fail: () => failed() };
 }
 const course = (theme = 'coast', timeOfDay = 'day', tunnel = false) => ({
@@ -54,7 +56,7 @@ const course = (theme = 'coast', timeOfDay = 'day', tunnel = false) => ({
 try {
   {
     const f = fixture(), { lighting, scene, sky, hemi, targets } = f, sun = lighting.sun;
-    equal(f.log, ['studio', 'room-dispose', 'pmrem-dispose'], 'temporary studio resources release immediately in order');
+    equal(f.log, ['studio', 'room-dispose'], 'room releases immediately while reusable prefilter resources await the HDR');
     equal(scene.environment, targets[0].texture, 'studio environment is available before the HDR');
     equal(scene.environmentIntensity, .82, 'initial reflection strength unchanged');
     equal(sun.shadow.mapSize.toArray(), [2048, 2048], 'shadow resolution unchanged');
@@ -103,6 +105,8 @@ try {
     near(f.renderer.toneMappingExposure, THREE.MathUtils.lerp(before.exposure, expected.exposure, blend), 'exposure easing unchanged');
     const source = new THREE.Texture(), sourceDisposals = countDisposals(source);
     f.load(source);
+    equal(f.generatorCount,1,'Studio and HDR reuse one prefilter generator');
+    equal(f.log,['studio','room-dispose','hdr','pmrem-dispose'],'Prefilter scratch releases after the HDR finishes');
     equal(sourceDisposals(), 1, 'HDR source releases after prefiltering');
     equal(scene.environment, targets[1].texture, 'day scene receives HDR after loading');
     equal(f.host.dataset.environment, 'sunset-hdri');
@@ -129,6 +133,7 @@ try {
     equal(f.targets.length, 1, 'late completion cannot create a GPU target');
     equal(f.host.dataset, before, 'late callbacks cannot rewrite stale host state');
     f.lighting.dispose();
+    equal(f.log.filter(item=>item==='pmrem-dispose').length,1,'Stopped or disposed prefilter releases once despite late callbacks');
   }
   {
     const f = fixture(); f.lighting.apply({ course: course('city') });
@@ -140,6 +145,15 @@ try {
     const f = fixture(); f.fail();
     equal(f.host.dataset.environment, 'studio-fallback', 'failed HDR keeps the original studio fallback');
     equal(f.targets.length, 1); f.lighting.dispose();
+    equal(f.log.filter(item=>item==='pmrem-dispose').length,1,'Failed HDR releases the retained prefilter exactly once');
+  }
+  {
+    const f=fixture({prefilterError:new Error('prefilter failed')}),texture=new THREE.Texture(),disposals=countDisposals(texture),studio=f.scene.environment;
+    f.load(texture);
+    equal(f.host.dataset.environment,'studio-fallback','A rejected prefilter keeps the usable studio fallback');
+    equal(f.scene.environment,studio,'A prefilter failure cannot install an incomplete environment');
+    equal(disposals(),1,'A prefilter failure releases the decoded HDR source');
+    f.lighting.dispose();equal(f.log.filter(item=>item==='pmrem-dispose').length,1,'Prefilter failure and renderer disposal release scratch once');
   }
   {
     const f = fixture(), player = new THREE.Group(), police = new THREE.Group(), position = { x: 15, y: 6, z: 90 };
@@ -164,6 +178,28 @@ try {
     second.load(); second.lighting.apply({ course: course(), mood: 'golden' });
     equal(second.host.dataset.lightingMood, 'golden', 'remaining instance still works after another is disposed');
     second.lighting.dispose();
+  }
+  {
+    // Run the installed PMREM generator with a no-draw renderer. This checks
+    // its actual size-dependent resource reuse, not our test-double policy.
+    const header=readFileSync(new URL('../public/assets/textures/sunset-lighting.hdr',import.meta.url)).subarray(0,200).toString('ascii');
+    const dimensions=header.match(/-Y (\d+) \+X (\d+)/);
+    equal(dimensions?.slice(1).map(Number),[512,1024],'Local HDR retains the same cube256 prefilter size as the studio');
+    const renderer={target:null,autoClear:true,toneMapping:THREE.ACESFilmicToneMapping,xr:{enabled:false},compile(){},render(){},clear(){},
+      getRenderTarget(){return this.target;},setRenderTarget(target){this.target=target;},getActiveCubeFace:()=>0,getActiveMipmapLevel:()=>0,getClearColor:color=>color.set(0),setClearColor(){},getClearAlpha:()=>1};
+    const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment(),studio=pmrem.fromScene(room,.04);
+    const scratch=pmrem._pingPongRenderTarget,blur=pmrem._blurMaterial,planes=pmrem._lodPlanes;
+    const source=new THREE.DataTexture(new Uint16Array(1024*512*4),1024,512,THREE.RGBAFormat,THREE.HalfFloatType);
+    source.mapping=THREE.EquirectangularReflectionMapping;
+    const natural=pmrem.fromEquirectangular(source),owned=[scratch,blur,...planes],disposals=owned.map(countDisposals);
+    equal([studio.width,studio.height,natural.width,natural.height],[768,1024,768,1024],'Independent studio and HDR outputs keep identical dimensions');
+    check(studio!==natural,'Studio and HDR reflection targets remain independent');
+    equal(pmrem._pingPongRenderTarget,scratch,'HDR reuses the actual PMREM scratch target');
+    equal(pmrem._blurMaterial,blur,'HDR reuses the actual blur shader material');
+    equal(pmrem._lodPlanes,planes,'HDR reuses the actual LOD geometry array');
+    equal(planes.length,11,'Full prefilter detail is retained');
+    pmrem.dispose();equal(disposals.map(count=>count()),owned.map(()=>1),'One final release disposes all reused prefilter resources');
+    studio.dispose();natural.dispose();source.dispose();room.dispose();
   }
   {
     const pass = createAmbientShading(new THREE.Scene(), new THREE.PerspectiveCamera());

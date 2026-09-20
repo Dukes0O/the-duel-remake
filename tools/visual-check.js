@@ -16,7 +16,8 @@ import {installPerformanceReview} from './performance-review.js';
 
 let smokePauseAt=null;
 const app=new App();const view=document.querySelector('#view');attachRenderer(view,app);
-installPerformanceReview(app,view,document.querySelector('nav'));
+const performanceReview=installPerformanceReview(app,view,document.querySelector('nav'),{hudSource:'visual-check telemetry (not production HUD)'});
+if(import.meta.hot)import.meta.hot.dispose(()=>performanceReview.dispose());
 
 for(const [id,label,fn]of[
 
@@ -133,7 +134,8 @@ app.onFrame=s=>{
     `${d.fps||0} FPS · ${d.drawCalls||0} draws · ${d.triangles||0} triangles · ${d.shaderPrograms||0} shaders`,
     `Frame p50 / p95 / max ${d.frameMsP50||0} / ${d.frameMsP95||0} / ${d.frameMsMax||0} ms · stalls >33 ms ${d.frameJankCount||0} / ${d.frameSamples||0}`,
     `CPU render p95 ${d.cpuRenderMsP95||0} ms (not GPU time)`,
-    `World builds ${d.worldBuilds||0} (${d.worldBuildMs||0} ms + first frame ${d.firstFrameMs||0} ms)`,
+    `Renderer setup ${d.rendererSetupMs||0} ms · attach-to-first-picture ${d.visualReadyMs||0} ms`,
+    `World builds ${d.worldBuilds||0} (build CPU ${d.worldBuildMs||0} ms · first frame CPU ${d.firstFrameMs||0} ms · build-to-present wall ${d.worldReadyMs||0} ms)`,
     `Shader warmup ${d.warmupStatus||'off'} · parallel ${d.parallelShaderCompile||'unknown'} · submit ${d.warmupSubmitMs||0} ms · wait ${d.warmupWaitMs||0} ms · Quality ${d.edgeSmoothing==='true'?'High':'Performance'} · shadow ${d.shadowResolution||'loading'} · paint ${d.paint||'factory'}`,
     `Nitro ${s.boost.toFixed(2)} · crushes ${s.crushCount} · flocks ${s.collectedFlocks.length} · boundary resets ${s.boundaryResets} · lateral ${s.lateral.toFixed(1)}`,
   ].join('\n');

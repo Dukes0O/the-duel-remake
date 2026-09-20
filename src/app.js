@@ -89,16 +89,25 @@ export class App {
       let dt = (t - this.lastT) / 1000;
       this.lastT = t;
       dt = Math.min(0.1, Math.max(0, dt)); // bounded catch-up after a slow frame
-      this._simulate(dt);
-      this._updateAudio();
-      this.onFrame?.(this.duel.state, dt);
+      const diagnostics=this.frameDiagnostics;
+      if(diagnostics?.active){
+        const started=diagnostics.now();
+        this._simulate(dt);const simulated=diagnostics.now();
+        this._updateAudio();const sounded=diagnostics.now();
+        this.onFrame?.(this.duel.state,dt);const presented=diagnostics.now();
+        diagnostics.recordAppFrame(t,simulated-started,sounded-simulated,presented-sounded);
+      }else{
+        this._simulate(dt);
+        this._updateAudio();
+        this.onFrame?.(this.duel.state, dt);
+      }
       this.raf = requestAnimationFrame(loop);
     };
     this.raf = requestAnimationFrame(loop);
   }
   stop() { this.running = false; this.lastT = null; cancelAnimationFrame(this.raf); }
-  // The optional renderer experiment owns this gate. Headless callers and the
-  // normal renderer have no gate, and loading never changes the user's pause.
+  // The renderer owns this gate. Headless callers need no visual gate, and
+  // loading never changes the user's pause or replays elapsed loading time.
   claimVisualReadiness(owner){
     if(owner==null)return false;
     this._visualReadiness={owner,ready:false,state:null,course:null};this._stepAccumulator=0;return true;
@@ -123,6 +132,7 @@ export class App {
   }
   dispose(){
     this.stop();this._inputEvents?.abort();this.keys={};this.onFrame=null;
+    this.frameDiagnostics?.stop();this.frameDiagnostics=null;
     this._visualReadiness=null;
     this._menuCourses.clear();this.ghostRecorder=this.ghostRecord=this.ghostPose=null;
     this.audio.setPaused(true);this.audio.context?.close?.()?.catch?.(()=>{});

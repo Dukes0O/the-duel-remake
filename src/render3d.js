@@ -19,12 +19,13 @@ import { createRenderQuality } from './render-quality.js';
 import { createSceneLighting } from './scene-lighting.js';
 import { animateScene, syncScene } from './scene-systems.js';
 import { environmentKey } from './environment-key.js';
-import { createRenderWarmup, compileWarmupScene, isRenderWarmupEnabled } from './render-warmup.js';
+import { createRenderWarmup, compileWarmupPipeline, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
 import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope } from './vehicle-grounding.js';
 import { createFrameMetrics } from './frame-metrics.js';
 
 // This layer only reads simulation state. Asset replacement never changes race rules.
 export function attachRenderer(host, app) {
+  const rendererAttachedAt=performance.now();let firstPresentation=true;
   let disposed=false,raf,sceneRevision=0,warmupTicket=null,warmupKey=null,readinessClaimed=false;
   const frameMetrics=createFrameMetrics();
   let metricRevision=-1,metricEnvironment=null,metricQuality=null,metricRatio=null,metricMenu=null,metricCamera=null,metricMood=null,metricInspection=null,metricCar=null;
@@ -50,14 +51,14 @@ export function attachRenderer(host, app) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(54, host.clientWidth / host.clientHeight, .15, 2400);
   const composer=new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene,camera));
-  const ambientShading=createAmbientShading(scene,camera);composer.addPass(ambientShading);
+  composer.addPass(Object.assign(new RenderPass(scene,camera),{name:'Scene and shadows'}));
+  const ambientShading=createAmbientShading(scene,camera);ambientShading.name='Contact shading';composer.addPass(ambientShading);
   const bloom=new UnrealBloomPass(new THREE.Vector2(host.clientWidth,host.clientHeight),.20,.55,1.9);
-  composer.addPass(bloom);composer.addPass(new OutputPass());
+  bloom.name='Bloom';composer.addPass(bloom);composer.addPass(Object.assign(new OutputPass(),{name:'Tone and colour'}));
   const lighting=createSceneLighting({scene,renderer,bloom,host});
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   let course, world, loadedCar, player, rival, chickens, ghost, ghostStyle, worldKey;
-  let worldBuildCount=0,firstWorldFrame=false;
+  let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
   const vehicleAssets=createVehicleAssets();
   function prepareVehicle(key,{retry=false}={}) {
     if(disposed)return false;
@@ -91,6 +92,7 @@ export function attachRenderer(host, app) {
   }
   function build(next) {
     const buildStart=performance.now();
+    worldReadyStarted=buildStart;host.dataset.worldReadyMs='0';
     if (world) retireObject(world);
     course = next;
     worldKey=environmentKey(next);
@@ -106,6 +108,8 @@ export function attachRenderer(host, app) {
   let ready = false, lastMenu = null, previousT = performance.now();
   function frame(now = performance.now(),measure=false) {
     if(disposed)return;
+    const phaseProbe=measure&&app.frameDiagnostics?.active?app.frameDiagnostics:null;
+    const updateStarted=phaseProbe?phaseProbe.now():0;
     const capture=measure&&!document.hidden;
     if(!capture)frameMetrics.suspend();
     const dt = Math.min(.05, Math.max(.001, (now - previousT) / 1000)); previousT = now;
@@ -248,13 +252,15 @@ export function attachRenderer(host, app) {
       resetFrameMetrics();metricRevision=sceneRevision;metricEnvironment=scene.environment;metricQuality=ambientShading.enabled;metricRatio=ratio;metricMenu=menu;metricCamera=app.cameraMode;metricMood=app.lightingMood;metricInspection=app.inspectionCamera;metricCar=carKey;
     }
     if(warmup){
-      const revision=`${sceneRevision}:${scene.environment?.id??'none'}:${ambientShading.enabled}:${explosion.group.visible}`;
+      // Preparation gates structural changes only. New traffic, ghosts, damage,
+      // weather blends and HDR completion must not pause an underway race.
+      const revision=preparationKey({worldBuildCount,car:loadedCar,high:ambientShading.enabled});
       if(revision!==warmupKey){
         warmupKey=revision;app.holdVisualReadiness?.(readinessOwner);firstWorldFrame=true;
         host.dataset.warmupSubmitMs='0';host.dataset.warmupWaitMs='0';
         warmupTicket=warmup.request(revision,()=>{
           const started=performance.now();let compilation;
-          try{compilation=compileWarmupScene(renderer,scene,camera,composer.readBuffer);}
+          try{compilation=compileWarmupPipeline(renderer,scene,camera,composer);}
           finally{if(!disposed&&warmupKey===revision)host.dataset.warmupSubmitMs=(performance.now()-started).toFixed(0);}
           const submitted=performance.now();
           return Promise.resolve(compilation).finally(()=>{
@@ -266,9 +272,13 @@ export function attachRenderer(host, app) {
       if(!warmup.canDraw(warmupKey)){frameMetrics.suspend();return;}
     }
     renderer.info.autoReset=false;renderer.info.reset();
+    const updateEnded=phaseProbe?phaseProbe.now():0;
     const loadingFrame=firstWorldFrame||metricsChanged,renderStarted=performance.now();composer.render();
     const cpuRenderMs=performance.now()-renderStarted;
+    phaseProbe?.recordRendererFrame(now,updateEnded-updateStarted,cpuRenderMs);
     if(firstWorldFrame){host.dataset.firstFrameMs=cpuRenderMs.toFixed(0);firstWorldFrame=false;}
+    if(worldReadyStarted){host.dataset.worldReadyMs=(performance.now()-worldReadyStarted).toFixed(0);worldReadyStarted=0;}
+    if(firstPresentation){host.dataset.visualReadyMs=(performance.now()-rendererAttachedAt).toFixed(0);firstPresentation=false;}
     renderer.domElement.style.visibility='visible';
     if(readinessClaimed&&!app.visualReady)app.presentVisualFrame?.(readinessOwner,st,app.duel.course);
     // Only consecutive, presented RAF frames count. Debug draws, compilation,
@@ -293,7 +303,8 @@ export function attachRenderer(host, app) {
   window.addEventListener('resize', resize);
   document.addEventListener('visibilitychange',visibility);
   if(warmupRequested){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
-  const debugApi=window.__render = { renderer, scene, camera, renderFrame() { frame(); return { drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles }; }, sample() {
+  host.dataset.rendererSetupMs=(performance.now()-rendererAttachedAt).toFixed(0);
+  const debugApi=window.__render = { renderer, scene, camera, composer, renderFrame() { frame(); return { drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles }; }, sample() {
     frame();if(disposed||warmup&&!warmup.canDraw(warmupKey))return {warming:!disposed,distinctColors:0,drawCalls:0,triangles:0};const rt = new THREE.WebGLRenderTarget(64, 48); renderer.setRenderTarget(rt); renderer.render(scene, camera);
     const data = new Uint8Array(64 * 48 * 4); renderer.readRenderTargetPixels(rt, 0, 0, 64, 48, data); renderer.setRenderTarget(null); rt.dispose();
     const colors = new Set(); for (let i = 0; i < data.length; i += 4) colors.add(`${data[i] >> 4},${data[i + 1] >> 4},${data[i + 2] >> 4}`);

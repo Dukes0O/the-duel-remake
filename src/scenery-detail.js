@@ -64,23 +64,38 @@ function instancedBuilder(group, materials) {
     cylinder: new THREE.CylinderGeometry(.5, .5, 1, 12),
     ring: new THREE.TorusGeometry(.43, .035, 6, 20).rotateX(Math.PI / 2),
   };
-  const buckets = new Map(), matrix = new THREE.Matrix4(), rotation = new THREE.Quaternion();
+  const buckets = new Map(), frames = new WeakMap(), matrix = new THREE.Matrix4(), rotation = new THREE.Quaternion();
+  const translation = new THREE.Vector3(), scale = new THREE.Vector3(), angles = new THREE.Euler();
+  const cellSize = 256;
   const add = (feature, material, size, position, euler = [0, 0, 0], shape = 'box', tint = 0xffffff) => {
-    const key = `${material}:${shape}`;
-    if (!buckets.has(key)) buckets.set(key, { material: materials[material], shape, items: [] });
-    rotation.setFromEuler(new THREE.Euler(...euler));
-    matrix.compose(new THREE.Vector3(...position), rotation, new THREE.Vector3(...size)).premultiply(frameMatrix(feature));
+    // Each facade has many small parts but only one immutable world frame.
+    // Cache that frame during assembly and reuse scratch vectors for its parts.
+    if (!frames.has(feature)) frames.set(feature, frameMatrix(feature));
+    rotation.setFromEuler(angles.set(...euler));
+    matrix.compose(translation.set(...position), rotation, scale.set(...size)).premultiply(frames.get(feature));
+    // Whole-course batches submitted every distant vent, sill and fan whenever
+    // any warehouse was visible. Cells change only grouping, never placement.
+    const cell = `${Math.floor(matrix.elements[12] / cellSize)}:${Math.floor(matrix.elements[14] / cellSize)}`;
+    const key = `${material}:${shape}:${cell}`;
+    if (!buckets.has(key)) buckets.set(key, { material: materials[material], shape, cell, items: [] });
     buckets.get(key).items.push({ matrix: matrix.clone(), tint });
   };
   return { add, finish() {
     const used = new Set();
-    for (const { material, shape, items } of buckets.values()) {
+    for (const { material, shape, cell, items } of buckets.values()) {
       const mesh = new THREE.InstancedMesh(geometries[shape], material, items.length); used.add(shape);
       mesh.name = `Architectural ${shape} details`;
       const color = new THREE.Color();
       items.forEach((item, i) => { mesh.setMatrixAt(i, item.matrix); mesh.setColorAt(i, color.set(item.tint)); });
       mesh.castShadow = material !== materials.paint && material !== materials.lamp && material !== materials.nightLamp;
-      mesh.receiveShadow = true; mesh.computeBoundingSphere(); group.add(mesh);
+      mesh.receiveShadow = true;
+      // Three's sphere encloses every complete rotated/scaled part, including
+      // cell crossings. Derive a conservative box from it instead of walking
+      // every instance twice; rendering uses this same padded sphere.
+      mesh.computeBoundingSphere(); mesh.boundingSphere.radius += .02;
+      mesh.boundingBox = mesh.boundingSphere.getBoundingBox(new THREE.Box3());
+      mesh.userData.sceneryCell = { key: cell, size: cellSize };
+      group.add(mesh);
     }
     for (const [shape, geometry] of Object.entries(geometries)) if (!used.has(shape)) geometry.dispose();
     const usedMaterials = new Set([...buckets.values()].map(b => b.material));

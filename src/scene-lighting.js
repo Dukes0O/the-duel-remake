@@ -12,22 +12,26 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
   createRoom = () => new RoomEnvironment(),
   loadEnvironment = (loaded, failed) => new RGBELoader().load('/assets/textures/sunset-lighting.hdr', loaded, undefined, failed),
 } = {}) {
-  let stopped = false, disposed = false, course, naturalEnvironment;
+  let stopped = false, disposed = false, course, naturalEnvironment, pmremReleased = false;
   const pmrem = createPMREM(), room = createRoom();
+  const releasePMREM = () => { if (!pmremReleased) { pmremReleased = true; pmrem.dispose(); } };
   const environment = pmrem.fromScene(room, .04);
   scene.environment = environment.texture;
   scene.environmentIntensity = .82;
   room.dispose();
-  pmrem.dispose();
+  // The studio and our 1024x512 HDR both use cube size 256. Retain the
+  // prefilter's scratch target, blur program and LOD planes for the HDR instead
+  // of disposing and rebuilding them; the output targets remain independent.
   loadEnvironment(texture => {
-    if (stopped) { texture.dispose(); return; }
-    const pm = createPMREM();
-    naturalEnvironment = pm.fromEquirectangular(texture);
-    if (course?.def.theme !== 'city') scene.environment = naturalEnvironment.texture;
-    texture.dispose();
-    pm.dispose();
-    host.dataset.environment = 'sunset-hdri';
-  }, () => { if (!stopped) host.dataset.environment = 'studio-fallback'; });
+    if (stopped || pmremReleased) { texture.dispose(); releasePMREM(); return; }
+    try {
+      naturalEnvironment = pmrem.fromEquirectangular(texture);
+      if (course?.def.theme !== 'city') scene.environment = naturalEnvironment.texture;
+      host.dataset.environment = 'sunset-hdri';
+    } catch {
+      if (!stopped) host.dataset.environment = 'studio-fallback';
+    } finally { texture.dispose(); releasePMREM(); }
+  }, () => { releasePMREM(); if (!stopped) host.dataset.environment = 'studio-fallback'; });
 
   const hemi = new THREE.HemisphereLight(0xb2cde0, 0x714226, 1.65);
   const sun = new THREE.DirectionalLight(0xffddac, 3.3);
@@ -105,6 +109,7 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
     dispose() {
       if (disposed) return;
       stopped = disposed = true;
+      releasePMREM();
       atmosphere.dispose();
       localLighting.dispose();
       scene.remove(sky, hemi, sun, sun.target);

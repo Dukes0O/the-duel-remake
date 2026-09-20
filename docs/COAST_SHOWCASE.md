@@ -1,5 +1,7 @@
 # Pacific coast showcase
 
+This document records the earlier art checkpoint. The later [performance pass](PERFORMANCE_PASS.md) supersedes its opt-in warmup policy and architectural batching, without changing the reviewed coastal artwork.
+
 This pass improves Pacific Canyon's shoreline and lighthouse without changing driving, cars, tracks, rewards or saves. It is a bounded scene improvement, not a claim that the whole game now matches the concept artwork.
 
 ## Visual scope

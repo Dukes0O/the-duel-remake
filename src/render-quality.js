@@ -3,7 +3,7 @@ import {SMAAPass} from 'three/addons/postprocessing/SMAAPass.js';
 // Composer render targets bypass the canvas's built-in antialiasing. A final
 // edge pass preserves small road markings and vegetation in the High preset.
 export function createRenderQuality({renderer,composer,ambientShading,sun,host}){
-  const smoothing=new SMAAPass(host.clientWidth,host.clientHeight);composer.addPass(smoothing);
+  const smoothing=new SMAAPass(host.clientWidth,host.clientHeight);smoothing.name='Edge smoothing';composer.addPass(smoothing);
   let previous=null,previousRatio=null;
   return {
     update(high){

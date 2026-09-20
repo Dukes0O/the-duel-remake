@@ -1,7 +1,20 @@
-// Scheduling and lifetime control only. The renderer supplies the GPU work.
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
+
+// Scheduling and lifetime control. The renderer supplies the scene GPU work.
 // A completed/failed/timed-out warmup permits a draw; only that completed draw
 // should release the App's simulation gate. No GPU work can be cancelled here.
-export const isRenderWarmupEnabled=search=>new URLSearchParams(search).get('warmup')==='1';
+// Supported renderers prepare by default. The explicit zero keeps a stable
+// synchronous A/B path; the renderer still checks KHR_parallel_shader_compile.
+export const isRenderWarmupEnabled=search=>new URLSearchParams(search).get('warmup')!=='0';
+
+// Only structural preparation may hold presentation. A new ghost, traffic,
+// explosion, reflection image or lighting mood must not pause a running race.
+// Use the build counter, not environment identity: a rebuilt equivalent world
+// owns new materials and still needs its first preparation.
+export const preparationKey=({worldBuildCount,car,high})=>`${worldBuildCount}:${car}:${!!high}`;
 
 // compileAsync submits synchronously before returning its promise. Restore the
 // render target immediately, while compiling the same linear variants used by
@@ -10,6 +23,81 @@ export function compileWarmupScene(renderer,scene,camera,target){
   const previous=renderer.getRenderTarget(),face=renderer.getActiveCubeFace?.()??0,level=renderer.getActiveMipmapLevel?.()??0;
   try{renderer.setRenderTarget(target);return renderer.compileAsync(scene,camera);}
   finally{renderer.setRenderTarget(previous,face,level);}
+}
+
+// Three r171's compileAsync only visits scene materials. These are the exact
+// fullscreen materials used by our enabled composer passes, not another world
+// traversal. Source-image/geometry uploads and shadow variants remain first-draw
+// work. Keep this version-specific adapter beside its real-pass parity tests.
+export function compileWarmupPostprocessing(renderer,composer){
+  const pending=[];
+  let failure,read=composer.readBuffer,write=composer.writeBuffer;
+  function submit(pass,material,target){
+    const previous=pass.fsQuad.material;
+    try{
+      pass.fsQuad.material=material;
+      pass.fsQuad.render({render:(mesh,camera)=>pending.push(compileWarmupScene(renderer,mesh,camera,target))});
+    }finally{pass.fsQuad.material=previous;}
+  }
+  try{
+    for(let index=0;index<composer.passes.length;index++){
+      const pass=composer.passes[index];if(!pass.enabled)continue;
+      const screen=composer.renderToScreen&&composer.isLastEnabledPass(index),target=screen?null:write;
+      if(pass instanceof GTAOPass){
+        submit(pass,pass.gtaoMaterial,pass.gtaoRenderTarget);
+        submit(pass,pass.pdMaterial,pass.pdRenderTarget);
+        if(pass.output!==GTAOPass.OUTPUT.Off){
+          submit(pass,pass.output===GTAOPass.OUTPUT.Depth?pass.depthRenderMaterial:pass.copyMaterial,target);
+          if(pass.output===GTAOPass.OUTPUT.Default)submit(pass,pass.blendMaterial,target);
+        }
+      }else if(pass instanceof UnrealBloomPass){
+        if(screen)submit(pass,pass.basic,null);
+        submit(pass,pass.materialHighPassFilter,pass.renderTargetBright);
+        // Horizontal and vertical draws share one program per blur material.
+        pass.separableBlurMaterials.forEach((material,i)=>submit(pass,material,pass.renderTargetsHorizontal[i]));
+        submit(pass,pass.compositeMaterial,pass.renderTargetsHorizontal[0]);
+        submit(pass,pass.blendMaterial,screen?null:read);
+      }else if(pass instanceof OutputPass){
+        // OutputPass establishes tone/colour defines inside render(), not its
+        // constructor. Run that tiny setup using a draw-only interception;
+        // no scene traversal, clear, source-image upload or pixel draw occurs.
+        const previous=pass.renderToScreen;
+        let outputTarget;
+        try{
+          pass.renderToScreen=screen;
+          pass.render({outputColorSpace:renderer.outputColorSpace,toneMapping:renderer.toneMapping,toneMappingExposure:renderer.toneMappingExposure,
+            setRenderTarget:next=>{outputTarget=next;},clear(){},
+            render:(mesh,camera)=>pending.push(compileWarmupScene(renderer,mesh,camera,outputTarget)),
+          },write,read);
+        }finally{pass.renderToScreen=previous;}
+      }else if(pass instanceof SMAAPass){
+        submit(pass,pass.materialEdges,pass.edgesRT);
+        submit(pass,pass.materialWeights,pass.weightsRT);
+        submit(pass,pass.materialBlend,target);
+      }
+      if(pass.needsSwap)[read,write]=[write,read];
+    }
+  }catch(error){failure=error;}
+  // Never release materials while another native compileAsync poll remains,
+  // even if an earlier submission throws or a later promise rejects first.
+  return settleCompilations(pending,failure).then(()=>({materials:pending.length}));
+}
+
+export function compileWarmupPipeline(renderer,scene,camera,composer){
+  const pending=[];let failure;
+  try{pending.push(compileWarmupScene(renderer,scene,camera,composer.readBuffer));}
+  catch(error){failure=error;}
+  pending.push(compileWarmupPostprocessing(renderer,composer));
+  return settleCompilations(pending,failure);
+}
+
+function settleCompilations(pending,failure){
+  return Promise.allSettled(pending).then(results=>{
+    if(failure)throw failure;
+    const rejected=results.find(result=>result.status==='rejected');
+    if(rejected)throw rejected.reason;
+    return results.map(result=>result.value);
+  });
 }
 
 export function createRenderWarmup({
