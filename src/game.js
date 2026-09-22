@@ -1,3 +1,4 @@
+import {normalizeWeapons,weaponSignature} from './weapon-upgrades.js';
 import {createCombat,fireWeapon,stepCombat,supportsCombat} from './combat.js';
 // Road-coordinate arcade driving with independent vehicle heading, steering
 // traction, rough shoulders, and timed impact recovery. The simulation also
@@ -149,7 +150,7 @@ export class Duel {
   }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, weaponLevels } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     if (CARS[car]) this.state.car = car;
@@ -157,7 +158,7 @@ export class Duel {
     this.state.cpuDifficulty = CPU_DIFFICULTY[cpuDifficulty] ? cpuDifficulty : DEFAULT_CPU_DIFFICULTY;
     this.state.playerId = typeof playerId === 'string' ? playerId : null;
     this.state.driverId = normalizeDriverId(driverId);
-    this.state.rivalSettings = normalizeRival(rival);
+    this.state.rivalSettings = normalizeRival(rival);this.state.weaponLevels=normalizeWeapons({levels:weaponLevels}).levels;
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     this.state.mode = mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
@@ -232,7 +233,7 @@ export class Duel {
       : null;
     // pre-spawn deterministic two-way traffic
     s.traffic = this._spawnTraffic(idx);
-    s.combat=s.mode==='wasteland'&&supportsCombat(COURSE[idx])?createCombat():null;
+    s.combat=s.mode==='wasteland'&&supportsCombat(COURSE[idx])?createCombat(s.weaponLevels):null;
     this.emit({ stageLoaded: idx, countdown: 3 });
   }
 
@@ -1646,7 +1647,7 @@ export class Duel {
       stageName, s.car, s.difficulty, s.cpuDifficulty, s.mode, ...UPGRADE_KEYS.map(key => upgrades[key])].join('|');
     const signature = driverModifierSignature(s.driverId, s.car);
     const rival=rivalSignature(s);
-    return key+(signature?`|driver:${signature}`:'')+(rival?`|rival:${rival}`:'');
+    return key+(signature?`|driver:${signature}`:'')+(rival?`|rival:${rival}`:'')+(weaponSignature(s)?`|weapons:${weaponSignature(s)}`:'');
   }
   _bestFor(stageName) { return loadBest()[this._bestKey(stageName)] ?? null; }
 

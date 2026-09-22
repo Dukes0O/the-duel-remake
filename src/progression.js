@@ -1,3 +1,4 @@
+import {normalizeWeapons,weaponSignature} from './weapon-upgrades.js';
 import { CARS, COURSE, DEFAULT_CAR, DRIVE, CPU_DIFFICULTY, POLICE } from './config.js';
 import {normalizeCosmetics} from './paint-presets.js';
 import {normalizeRaceSettings} from './race-settings.js';
@@ -36,7 +37,7 @@ const validStrings=value=>[...new Set((Array.isArray(value)?value:[]).filter(key
 export const playerName=value=>String(value||'').replace(/[\u0000-\u001f\u007f]/g,'').trim().replace(/\s+/g,' ').slice(0,24);
 const newId=()=>globalThis.crypto?.randomUUID?.()||`player-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-export function createProfile(){return {version:2,credits:0,unlockedCars:[...FREE_CARS],upgrades:{},cosmetics:normalizeCosmetics(),drivers:normalizeDrivers(),courses:normalizeCourseAccess(),raceSettings:null,settledResults:[],settledPoliceFines:[],pbBonusRuns:[],personalBests:{},milestones:[],circuitWins:[],winStreak:0,history:[],activeRace:null};}
+export function createProfile(){return {version:2,credits:0,weapons:normalizeWeapons(),unlockedCars:[...FREE_CARS],upgrades:{},cosmetics:normalizeCosmetics(),drivers:normalizeDrivers(),courses:normalizeCourseAccess(),raceSettings:null,settledResults:[],settledPoliceFines:[],pbBonusRuns:[],personalBests:{},milestones:[],circuitWins:[],winStreak:0,history:[],activeRace:null};}
 export function normalizeProfile(value){
   if(!value||typeof value!=='object'||![1,2].includes(value.version))return createProfile();
   let profile=createProfile();profile.credits=integer(value.credits,1_000_000_000);
@@ -45,7 +46,7 @@ export function normalizeProfile(value){
   // Reward old, fully built garages on load, before validating the selected car.
   // A previously earned reward stays owned if the roster grows in a later update.
   profile=grantCompletionCars(profile);
-  profile.cosmetics=normalizeCosmetics(value.cosmetics);
+  profile.cosmetics=normalizeCosmetics(value.cosmetics);profile.weapons=normalizeWeapons(value.weapons);
   profile.drivers=getDriverState({...profile,drivers:value.drivers});
   profile.courses=normalizeCourseAccess(value.courses,value);
   profile.raceSettings=value.raceSettings==null?null:normalizeRaceSettings(value.raceSettings,profile);
@@ -102,7 +103,7 @@ export function stageEventId(index){const stage=COURSE[index];return stage?Strin
 // Only archival validation supplies the second argument. Ordinary callers
 // always key new races against the current layout, regardless of payload extras.
 export function eventKey({stageIndex,seed=1989,laps}={},layoutVersion){const stage=COURSE[stageIndex];return stage?`${stageEventId(stageIndex)}|layout:${layoutVersion??stage.layoutVersion??1}|seed:${seed>>>0}|laps:${laps||stage.laps||2}`:'';}
-export function bestKey(result,layoutVersion,signature=driverModifierSignature(result.driverId,result.car)){const rival=rivalSignature(result);return [eventKey(result,layoutVersion),result.car,result.mode||'duel',result.difficulty||'casual',result.cpuDifficulty||'easy',...(signature?[`driver:${signature}`]:[]),...(rival?[`rival:${rival}`]:[])].join('|');}
+export function bestKey(result,layoutVersion,signature=driverModifierSignature(result.driverId,result.car)){const rival=rivalSignature(result);return [eventKey(result,layoutVersion),result.car,result.mode||'duel',result.difficulty||'casual',result.cpuDifficulty||'easy',...(signature?[`driver:${signature}`]:[]),...(rival?[`rival:${rival}`]:[]),...(weaponSignature(result)?[`weapons:${weaponSignature(result)}`]:[])].join('|');}
 function isCompletedRace(result){const stage=COURSE[result?.stageIndex];return !!stage&&!stage.practice&&result.completed===true&&result.abandoned!==true&&result.timeout!==true&&Number.isFinite(result.timeSec)&&result.timeSec>0&&Number.isInteger(result.laps)&&result.laps===(stage.laps||2)&&Object.hasOwn(CARS,result.car)&&(result.driverId==null||Object.hasOwn(DRIVERS,result.driverId));}
 export function isValidFinish(result){
   if(!isCompletedRace(result))return false;

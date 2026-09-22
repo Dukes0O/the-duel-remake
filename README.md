@@ -53,6 +53,15 @@ Weapons recharge during racing and freeze while paused. The rival uses bombs,
 arrows, and shields when nearby. Ordinary races, time trials, and objective-only
 events keep their existing rules. Drivers and cars retain their saved upgrades.
 
+Open **Garage → Weapon Upgrades** to buy levels 1–3 for 350, 700, and 1,200
+credits per weapon. All four base weapons are included. Upgrades belong to the
+player and apply to every car at the next race. Each level cuts recharge by 15%
+of the base time. Max UFO forward range is 325 metres (checkpoint limit still
+applies); max bombs throw 14 charges with 28-metre blasts and 45% stronger force;
+max arrows travel 45% faster with 60% stronger force. The star always lasts five
+seconds; its max recharge is 8.8 seconds. Weapon builds keep separate combat
+records so stock and upgraded results do not overwrite one another.
+
 Every owned car can enter every unlocked course. Pacific Canyon is included; the other courses cost 900–2,200 earned credits in **COURSES ↗**. Buying does not select a course. Course selection keeps your chosen car; recommendations do not unlock or force a vehicle. See [course prices and existing-save access](docs/COURSE_ACCESS.md).
 
 | Event | Route | Recommended car |

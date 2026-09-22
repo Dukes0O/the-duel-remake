@@ -1,3 +1,4 @@
+import {purchaseWeaponUpgrade,normalizeWeapons} from './weapon-upgrades.js';
 import {CAMERA_KEYS,CAMERA_MODES} from './camera-views.js';
 // app.js — owns the Duel instance, the rAF/step loop, keyboard input, the
 // scripted autopilot, dev hooks, and window.__game. Rendering (render3d.js) and
@@ -194,7 +195,7 @@ export class App {
     this._keyboardSteering.reset();
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
-    this.duel.startCampaign({...options,rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
+    this.duel.startCampaign({...options,weaponLevels:normalizeWeapons(this.profile.weapons).levels,rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     return true;
   }
   nextStage(){
@@ -351,7 +352,7 @@ export class App {
     this._refreshPlayer();
     const payload={...result,runId:this.runId,stageIndex:state.stageIndex,won:result.won===true,completed:result.completed===true,
       timeSec:result.timeSec??result.stageTimeSec,laps:result.laps??state.completedLaps,seed:state.seed,car:state.car,driverId:state.driverId,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,
-      upgrades:{...state.upgrades},rival:state.rivalSettings,policeEscapes:result.policeEscapes??state.policeEscapes,
+      upgrades:{...state.upgrades},rival:state.rivalSettings,weaponLevels:state.weaponLevels,policeEscapes:result.policeEscapes??state.policeEscapes,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     const awarded=settleRace(this.profile,payload);
     if(awarded.awarded){
@@ -391,6 +392,11 @@ export class App {
     if(this.duel.state.status!=='menu')return false;
     this._refreshPlayers();if(!this.players.players.some(p=>p.id===id))return false;
     this.players=selectPlayer(this.players,id);this.player=activePlayer(this.players);this.profile=this.player.profile;this._restoreRaceSettings();this._rememberRaceSettings();this._recoverInterruptedRace();this.profileSaved=savePlayers(this.players);this.duel.emit({playerChanged:true});return true;
+  }
+  purchaseWeapon(id){
+    if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage to upgrade weapons.'};
+    this._refreshPlayer();const result=purchaseWeaponUpgrade(this.profile,id);
+    if(result.ok){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true});}return result;
   }
   purchaseUpgrade(car,type){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before upgrading.'};

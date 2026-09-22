@@ -1,5 +1,18 @@
 # Remake verification
 
+## Weapon upgrades — September 22, 2026
+
+Added player-specific level 0–3 weapon builds, garage purchases, saved-profile
+migration, race snapshots, and separate upgraded combat records. The weapon
+upgrade test covers costs/caps, normalization, persistence, max bomb count,
+five-second shield duration, reduced recharge, and leaderboard separation.
+Combat (27), progression (27), App progression (141), and custom rival (5,651)
+checks pass; production build passes with the existing chunk-size advisory.
+
+The requested local account grant was verified after reloading its temporary
+maintenance page. That page was then removed. The active game race was not
+reloaded; weapon builds take effect next race. No account defaults were changed.
+
 ## Mad Max Duel — September 22, 2026
 
 Added an opt-in combat mode with UFO position/progress swaps, eight-direction

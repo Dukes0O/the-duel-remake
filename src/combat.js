@@ -1,7 +1,8 @@
+import {normalizeWeapons} from './weapon-upgrades.js';
 // Arcade vehicle combat. All timers and projectile motion use simulation time.
 export const WEAPONS=Object.freeze({ufo:{name:'UFO SWAP',key:'1',cooldown:18},bomb:{name:'BOMB STORM',key:'2',cooldown:9},crossbow:{name:'CROSSBOW',key:'3',cooldown:4},star:{name:'STAR SHIELD',key:'4',cooldown:16}});
 export const supportsCombat=stage=>!!stage?.hasRival&&!stage.practice&&!stage.stuntTrial;
-export function createCombat(){return {cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],serial:0,aiTimer:7,aiShot:0,hits:0};}
+export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],serial:0,aiTimer:7,aiShot:0,hits:0};}
 const point=(duel,actor)=>{const p=duel.course.groundAt(actor.s,actor.lateral);return {...p,y:p.y+1+(actor.airHeight||0)};};
 function burst(c,p,kind='blast'){c.bursts.push({...p,kind,id:++c.serial,age:0});if(c.bursts.length>32)c.bursts.shift();}
 function relocate(actor,pose){
@@ -14,7 +15,7 @@ export function fireWeapon(duel,weapon,enemy=false){
  const s=duel.state,c=s.combat,actor=enemy?s.rival:s,target=enemy?s:s.rival;
  if(!c||s.mode!=='wasteland'||s.status!=='racing'||s.paused||!actor||actor.finished||actor.crushed||actor.impactTimer>0||!WEAPONS[weapon])return false;
  if(!enemy&&c.cooldowns[weapon]>0)return false;
- const p=point(duel,actor);
+ const p=point(duel,actor),level=enemy?0:c.levels[weapon];
  if(weapon==='ufo'){
   if(enemy)return false;
   if(target&&!target.finished&&!target.crushed&&target.s>s.s){
@@ -26,7 +27,7 @@ export function fireWeapon(duel,weapon,enemy=false){
    duel._callout('UFO / POSITIONS SWAPPED',2);
   }else{
    const next=s.completedLaps*duel.course.length+(duel._lapGates[s.nextLapGate]??duel.course.length);
-   relocate(s,{s:Math.max(s.s,Math.min(s.s+100,next-2)),lateral:0});
+   relocate(s,{s:Math.max(s.s,Math.min(s.s+100+75*level,next-2)),lateral:0});
    duel._callout('UFO / WARP FORWARD',2);
   }
   s.invulnerableSec=Math.max(s.invulnerableSec,1);burst(c,p,'ufo');burst(c,point(duel,s),'ufo');
@@ -35,16 +36,16 @@ export function fireWeapon(duel,weapon,enemy=false){
   burst(c,p,'star');
  }else{
   if(weapon==='crossbow'&&(!target||target.finished||target.crushed))return false;
-  const count=weapon==='bomb'?8:1;
+  const count=weapon==='bomb'?8+2*level:1;
   if(c.projectiles.length+count>40)return false;
   for(let i=0;i<count;i++){
    let dx,dz,speed,vy=13;
-   if(weapon==='bomb'){const angle=p.heading+i*Math.PI/4;dx=Math.sin(angle);dz=Math.cos(angle);speed=27;}
-   else{const t=point(duel,target);dx=t.x-p.x;dz=t.z-p.z;const length=Math.hypot(dx,dz)||1;dx/=length;dz/=length;speed=200;vy=(t.y-p.y-1)/length*speed;}
-   c.projectiles.push({id:++c.serial,kind:weapon,enemy,x:p.x+dx*3,y:p.y+1,z:p.z+dz*3,vx:dx*speed,vz:dz*speed,vy,age:0});
+   if(weapon==='bomb'){const angle=p.heading+i*Math.PI*2/count;dx=Math.sin(angle);dz=Math.cos(angle);speed=27;}
+   else{const t=point(duel,target);dx=t.x-p.x;dz=t.z-p.z;const length=Math.hypot(dx,dz)||1;dx/=length;dz/=length;speed=200+30*level;vy=(t.y-p.y-1)/length*speed;}
+   c.projectiles.push({id:++c.serial,kind:weapon,enemy,level,x:p.x+dx*3,y:p.y+1,z:p.z+dz*3,vx:dx*speed,vz:dz*speed,vy,age:0});
   }
  }
- if(!enemy)c.cooldowns[weapon]=WEAPONS[weapon].cooldown;
+ if(!enemy)c.cooldowns[weapon]=WEAPONS[weapon].cooldown*(1-level*.15);
  duel.emit({weaponFired:weapon});return true;
 }
 function hit(duel,actor,p,power,enemy){
@@ -79,8 +80,8 @@ export function stepCombat(duel,dt){
    burst(c,{x:p.x,y:Math.max(floor+.3,p.y),z:p.z},p.kind==='bomb'?'blast':'spark');
    if(p.kind==='bomb'&&!c.blastSound){duel.emit({combatExplosion:true});c.blastSound=.12;}
    if(p.kind==='bomb'){
-    for(const actor of [s,s.rival,...s.traffic])if(actor){const a=point(duel,actor),distance=Math.hypot(a.x-p.x,a.z-p.z,a.y-p.y);if(distance<22)hit(duel,actor,p,(1-distance/22)*1.3,p.enemy);}
-   }else if(contact)hit(duel,target,p,.9,p.enemy);
+    for(const actor of [s,s.rival,...s.traffic])if(actor){const a=point(duel,actor),distance=Math.hypot(a.x-p.x,a.z-p.z,a.y-p.y);const radius=22+2*p.level;if(distance<radius)hit(duel,actor,p,(1-distance/radius)*1.3*(1+p.level*.15),p.enemy);}
+   }else if(contact)hit(duel,target,p,.9*(1+p.level*.2),p.enemy);
   }else live.push(p);
  }
  c.projectiles=live;
