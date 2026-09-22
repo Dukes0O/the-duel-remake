@@ -7,7 +7,7 @@ export const LEADERBOARD_KEY='the-duel-leaderboard-v1';
 export function createLeaderboard(){return {version:1,entries:[],archivedEntries:[]};}
 const isDriftRow=row=>COURSE.find(stage=>stage.id===row.eventId)?.kind==='drift';
 const currentRow=row=>{const stageIndex=COURSE.findIndex((stage,index)=>stageEventId(index)===row.eventId);return stageIndex>=0&&!COURSE[stageIndex].practice&&row.laps===(COURSE[stageIndex].laps||2)&&row.eventKey===eventKey({...row,stageIndex})&&isCurrentDriverRecord(row);};
-const rowKey=row=>[row.playerId,row.eventKey,row.car,row.driverSignature??driverModifierSignature(row.driverId,row.car),rivalSignature({...row,stageIndex:COURSE.findIndex(stage=>stage.id===row.eventId)})].join('|');
+const rowKey=row=>[row.playerId,row.eventKey,row.car,...(row.mode==='wasteland'?['wasteland']:[]),row.driverSignature??driverModifierSignature(row.driverId,row.car),rivalSignature({...row,stageIndex:COURSE.findIndex(stage=>stage.id===row.eventId)})].join('|');
 function better(row,prior,drift){return !prior||drift&&!Number.isFinite(prior.driftScore)||(drift&&row.driftScore!==prior.driftScore?row.driftScore>prior.driftScore:row.timeSec<prior.timeSec-.005);}
 function driftMetadata(result,stage){return {discipline:'drift',driftScore:Math.round(result.driftScore),driftTarget:stage.driftTrial.targets[result.cpuDifficulty||'easy'],driftBestChain:Math.round(result.driftBestChain||0),driftMeters:Math.round((result.driftMeters||0)*10)/10};}
 function checkpointMetadata(result){return {discipline:'checkpoint',checkpointsPassed:result.checkpointsPassed,checkpointsRequired:result.checkpointsRequired,checkpointMisses:result.checkpointMisses};}
@@ -48,7 +48,7 @@ export function recordFinish(board,result,player){
   const stage=COURSE[result.stageIndex],drift=stage.kind==='drift',cpu=['easy','medium','hard'].includes(result.cpuDifficulty)?result.cpuDifficulty:'easy';
   if(!better(result,old,drift))return {board,recorded:false,best:old.timeSec,...(drift?{scoreBest:old.driftScore,scoreImproved:false}:{})};
   const entry={playerId:player.id,playerName:playerName(player.name),eventKey:event,eventId:id,eventName:COURSE[result.stageIndex].name,layoutVersion:COURSE[result.stageIndex].layoutVersion??1,seed:(result.seed??1989)>>>0,laps:result.laps,car:result.car,timeSec:result.timeSec,
-    cpuDifficulty:['easy','medium','hard'].includes(result.cpuDifficulty)?result.cpuDifficulty:'easy',difficulty:result.difficulty==='pro'?'pro':'casual',mode:result.mode==='timetrial'?'timetrial':'duel',driverId,driverSignature,
+    cpuDifficulty:['easy','medium','hard'].includes(result.cpuDifficulty)?result.cpuDifficulty:'easy',difficulty:result.difficulty==='pro'?'pro':'casual',mode:result.mode==='wasteland'?'wasteland':result.mode==='timetrial'?'timetrial':'duel',driverId,driverSignature,
     ...(rivalSignature(result)?{rival:normalizeRival(result.rival)}:{}),upgrades:getUpgradeLevels({upgrades:{[result.car]:result.upgrades}},result.car),lapTimes:(result.lapTimes||[]).filter(v=>Number.isFinite(v)&&v>0).slice(0,result.laps),recordedAt:Date.now(),...(drift?driftMetadata({...result,cpuDifficulty:cpu},stage):{}),...(stage.kind==='checkpoint'?checkpointMetadata(result):{}),...(stage.stuntTrial?stuntMetadata(result):{})};
   const entries=board.entries.slice();if(index>=0)entries[index]=entry;else entries.push(entry);
   return {board:{version:1,entries,archivedEntries:board.archivedEntries},recorded:true,best:entry.timeSec,...(drift?{scoreBest:entry.driftScore,scoreImproved:!!old&&entry.driftScore>old.driftScore}:{})};

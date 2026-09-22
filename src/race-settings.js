@@ -1,3 +1,4 @@
+import {supportsCombat} from './combat.js';
 import {CARS,COURSE,DEFAULT_CAR,DEFAULT_CPU_DIFFICULTY,DEFAULT_DIFFICULTY,CPU_DIFFICULTY,DIFFICULTY} from './config.js';
 import {DEFAULT_ROUTE_VARIANT,isRouteVariant} from './route-variants.js';
 import {normalizeLightingMood} from './lighting-moods.js';
@@ -14,7 +15,7 @@ export function normalizeRaceSettings(value,profile) {
   const v=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
   const requested=COURSE.find(item=>item.id===v.eventId),stage=requested&&isCourseUnlocked(profile,requested)?requested:COURSE[0];
   const car=owned(profile,v.car)?v.car:DEFAULT_CAR,rival=normalizeRival(v.rival);
-  return {version:1,eventId:stage.id,mode:stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':v.mode==='timetrial'?'timetrial':'duel',
+  return {version:1,eventId:stage.id,mode:stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':v.mode==='wasteland'&&supportsCombat(stage)?'wasteland':v.mode==='timetrial'?'timetrial':'duel',
     cpuDifficulty:Object.hasOwn(CPU_DIFFICULTY,v.cpuDifficulty)?v.cpuDifficulty:DEFAULT_CPU_DIFFICULTY,difficulty:Object.hasOwn(DIFFICULTY,v.difficulty)?v.difficulty:DEFAULT_DIFFICULTY,
     car,...(rival?{rival}:{}),routeVariant:isRouteVariant(v.routeVariant)?v.routeVariant:DEFAULT_ROUTE_VARIANT,lightingMood:normalizeLightingMood(v.lightingMood),ghostEnabled:typeof v.ghostEnabled==='boolean'?v.ghostEnabled:true};
 }

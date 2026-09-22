@@ -573,6 +573,7 @@ export class App {
       if (!e.repeat) {
         if (e.code === 'Escape' || e.code === 'KeyP') this.togglePause();
         if (CAMERA_KEYS[e.code]) this.setCamera(CAMERA_KEYS[e.code]);
+        if (['Digit1','Digit2','Digit3','Digit4'].includes(e.code)) this.duel.fireWeapon(['ufo','bomb','crossbow','star'][Number(e.code.slice(-1))-1]);
         if (e.code === 'KeyM') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
         if (e.code === 'KeyR' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
       }

@@ -366,6 +366,9 @@ export class EngineAudio {
       [440, 554.37, 659.25, 880].forEach((f, i) => this._tone(f, 0.35, 0.08, 'triangle', i * 0.08));
     }
     if (ev.ticket || ev.gameover || ev.stageResult?.won===false) this._tone(110, 0.65, 0.1, 'triangle', 0, 65);
+    if(ev.weaponFired){const note={ufo:760,bomb:130,crossbow:440,star:980}[ev.weaponFired]||220;this._tone(note,.22,.12,'triangle',0,note*.4);}
+    if(ev.combatExplosion){if(this.samples.explosion)this._sample(this.samples.explosion,.35);else this._tone(65,.45,.2,'sine',0,22);}
+    if(ev.combatHit)this._tone(90,.16,.12,'triangle',0,35);
     if(ev.explosion && this.samples.explosion)this._sample(this.samples.explosion,1.15);
     if (ev.crash) {
       const force = .55 + (ev.strength ?? .7) * .45;

@@ -1,3 +1,4 @@
+import {createCombat,fireWeapon,stepCombat,supportsCombat} from './combat.js';
 // Road-coordinate arcade driving with independent vehicle heading, steering
 // traction, rough shoulders, and timed impact recovery. The simulation also
 // owns traffic, police, gearbox, lives and campaign progression. step(dt)
@@ -158,7 +159,7 @@ export class Duel {
     this.state.driverId = normalizeDriverId(driverId);
     this.state.rivalSettings = normalizeRival(rival);
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
-    this.state.mode = mode === 'timetrial' ? 'timetrial' : 'duel';
+    this.state.mode = mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
     this.state.lives = LIVES.start;
@@ -222,7 +223,7 @@ export class Duel {
     const rivalCar=rivalSettings?.car&&rivalSettings.car!=='match'?rivalSettings.car:s.car;
     const rivalLevels=Object.fromEntries(UPGRADE_KEYS.map(key=>[key,CARS[rivalCar].factoryMaxed?3:rivalSettings?.upgradeLevel||0]));
     this.rivalSpec=rivalSettings?applyDriverModifiers(upgradedCar(CARS[rivalCar],rivalLevels),rivalSettings.driverId,rivalCar):CARS[s.car];
-    s.rival = (!s.practice && COURSE[idx].hasRival && s.mode === 'duel')
+    s.rival = (!s.practice && COURSE[idx].hasRival && s.mode !== 'timetrial')
       ? { car:rivalCar,driverId:rivalSettings?.driverId||DEFAULT_DRIVER,upgrades:rivalLevels,s: this.course.rivalStartS, lateral: -DRIVE.laneOffset, speedMph: 0, finished: false, finishTime: null,
         headingError: 0, yawVelocity: 0, pushVelocity: 0, offRoad: false, contactCooldown: 0, boost:1, boosting:false,
         damageZones: freshDamageZones(), damageCooldown: 0,
@@ -231,6 +232,7 @@ export class Duel {
       : null;
     // pre-spawn deterministic two-way traffic
     s.traffic = this._spawnTraffic(idx);
+    s.combat=s.mode==='wasteland'&&supportsCombat(COURSE[idx])?createCombat():null;
     this.emit({ stageLoaded: idx, countdown: 3 });
   }
 
@@ -255,6 +257,8 @@ export class Duel {
   }
 
   // ---- the core step ---------------------------------------------------
+  fireWeapon(weapon){return fireWeapon(this,weapon);}
+
   step(dt) {
     const s = this.state;
     if (!Number.isFinite(dt) || dt <= 0 || s.paused) return;
@@ -283,6 +287,7 @@ export class Duel {
     if (s.crashFlash > 0) s.crashFlash = Math.max(0, s.crashFlash - dt);
     s.invulnerableSec = Math.max(0, s.invulnerableSec - dt);
     s.damageCooldown = Math.max(0, s.damageCooldown - dt);
+    stepCombat(this,dt);
     for (const actor of [s.rival, s.police.pursuit, ...s.traffic]) {
       if (actor?.damageCooldown > 0) actor.damageCooldown = Math.max(0, actor.damageCooldown - dt);
     }
@@ -653,7 +658,7 @@ export class Duel {
 
   _startTumble(reason) {
     const s = this.state;
-    if (s.tumble || s.impactTimer > 0 || s.status !== 'racing') return;
+    if (s.tumble || s.impactTimer > 0 || s.status !== 'racing' || s.combat?.shield>0) return;
     const pitch = s.terrainPitch || 0, safe = s._offroadSafe, travelSign = s.speedMph < 0 ? -1 : 1;
     this._crash('rollover', Math.sign(s.terrainRoll) || 1, Math.max(30, Math.abs(s.speedMph)), 'rear');
     s.rollovers++;
@@ -886,14 +891,14 @@ export class Duel {
 
   _scrape(zone, impactMph) {
     const s = this.state;
-    if (s.damageCooldown > 0 || s.impactTimer > 0) return;
+    if (s.damageCooldown > 0 || s.impactTimer > 0 || s.combat?.shield>0) return;
     s.damageZones[zone] = Math.min(5, s.damageZones[zone] + clamp(impactMph / 100, .08, .3));
     s.damageCooldown = .65;
     this.emit({ scrape: true, zone, strength: clamp(impactMph / 80, .1, .5) });
   }
 
   _crushVehicle(actor, reason, impactMph) {
-    if (actor.crushed) return;
+    if (actor.crushed || (actor===this.state?this.state.combat?.shield:this.state.combat?.rivalShield)>0) return;
     const s = this.state, point = this.course.groundAt(actor.s, actor.lateral);
     actor.crushed = true; actor.crushDamage = clamp(.65 + impactMph / 160, .65, 1);
     actor.speedMph = 0; actor.pushVelocity = 0; actor.braking = true;
@@ -913,7 +918,7 @@ export class Duel {
   }
 
   _dentVehicle(actor, zone, impactMph) {
-    if (impactMph <= 1 || actor.damageCooldown > 0) return;
+    if (impactMph <= 1 || actor.damageCooldown > 0 || (actor===this.state?this.state.combat?.shield:this.state.combat?.rivalShield)>0) return;
     actor.damageZones ??= freshDamageZones();
     actor.damageZones[zone] = Math.min(5, actor.damageZones[zone] + clamp(impactMph / 100, .18, 1));
     actor.damageCooldown = .65;
@@ -1298,13 +1303,13 @@ export class Duel {
 
   _crash(reason, side = 0, impactMph = Math.abs(this.state.speedMph), zone = 'front') {
     const s = this.state;
-    if (s.impactTimer > 0 || s.status !== 'racing') return;
+    if (s.impactTimer > 0 || s.status !== 'racing' || s.combat?.shield>0) return;
     this._breakDrift('hit');
     s.stageCrashes++;
     s.boosting = false;
     s.combo = 0; s.comboTimer = 0;
     const practice = this.course.def.practice === true;
-    const recoverable = practice || this.stageDef.persistentVehicle || this.stageDef.kind === 'chase';
+    const recoverable = practice || s.mode==='wasteland' || this.stageDef.persistentVehicle || this.stageDef.kind === 'chase';
     const penalty = practice ? 0 : this.stageDef.crashPenaltySec ?? (this.stageDef.kind === 'chase' ? this.stageDef.chaseCrashPenaltySec : LIVES.crashPenaltySec);
     if (!recoverable) s.lives -= LIVES.crashLifeCost;
     s.penaltySec += penalty;
@@ -1580,7 +1585,7 @@ export class Duel {
     const timeBonus = Math.max(0, Math.round((par - timeSec) * SCORING.perSecondUnder));
     const beatRival = s.rival ? (s.rival.finishTime == null || s.stageTimeSec <= s.rival.finishTime) : null;
     const objective = this._objectiveResult();
-    const won = s.objective ? objective.targetsMet && timeSec < s.timeLimitSec : this.stageDef.kind === 'chase' ? timeSec < s.timeLimitSec : s.mode === 'duel' && s.rival ? beatRival === true : timeSec < par;
+    const won = s.objective ? objective.targetsMet && timeSec < s.timeLimitSec : this.stageDef.kind === 'chase' ? timeSec < s.timeLimitSec : s.mode !== 'timetrial' && s.rival ? beatRival === true : timeSec < par;
     const recordEligible = !s.objective || objective.targetsMet;
     if (recordEligible) this._awardPoliceEscape('finish');
     // Capture the completed circuit before repairs so repairs cannot create a clean bonus.

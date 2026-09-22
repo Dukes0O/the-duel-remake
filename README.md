@@ -35,6 +35,24 @@ Main Menu and Restart act immediately with one click, including after Busted. Th
 
 ## Events
 
+### Mad Max Duel
+
+Choose **MAD MAX DUEL** on a circuit with a rival. Race with spiked bumpers,
+roof-mounted crossbows, exploding bombs, flying debris, and a CPU that fights
+back. Wrecks recover automatically; finish first to win. Combat records are
+separate from ordinary race records. Use the numbered keys or HUD buttons:
+
+| Key | Weapon | Effect | Recharge |
+| --- | --- | --- | --- |
+| 1 | UFO swap | Swap positions and route progress when the rival is ahead; otherwise warp forward up to 100 metres, stopping before the next checkpoint. | 18 sec |
+| 2 | Bomb storm | Throw eight gravity-driven bombs in all directions. Blasts slow and shove nearby vehicles, including your own unshielded car. | 9 sec |
+| 3 | Crossbow | Fire an aimed, moving bolt at the rival. A hit slows, dents, and knocks the car sideways. | 4 sec |
+| 4 | Star shield | Block damage for five seconds, with a gold shield around the car. | 16 sec |
+
+Weapons recharge during racing and freeze while paused. The rival uses bombs,
+arrows, and shields when nearby. Ordinary races, time trials, and objective-only
+events keep their existing rules. Drivers and cars retain their saved upgrades.
+
 Every owned car can enter every unlocked course. Pacific Canyon is included; the other courses cost 900–2,200 earned credits in **COURSES ↗**. Buying does not select a course. Course selection keeps your chosen car; recommendations do not unlock or force a vehicle. See [course prices and existing-save access](docs/COURSE_ACCESS.md).
 
 | Event | Route | Recommended car |

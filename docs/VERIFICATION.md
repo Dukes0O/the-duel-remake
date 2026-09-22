@@ -1,5 +1,26 @@
 # Remake verification
 
+## Mad Max Duel — September 22, 2026
+
+Added an opt-in combat mode with UFO position/progress swaps, eight-direction
+ballistic bombs, swept-hit crossbow bolts, five-second damage shields, and CPU
+weapons. Fixed visual pools show projectiles, blast clouds, shockwaves, debris,
+UFOs, and shields; combat-only rigs add bumpers and roof crossbows.
+
+`test-combat.mjs` passes 27 checks, including pause/restart isolation, exact shield
+duration, incoming damage immunity, bounded pools, UFO checkpoint handling,
+separate records, and a complete input-driven combat race saved through App.
+Race integrity (601), audio (449), custom rivals (5,651), saved race settings,
+progression, driver progression, render reuse, camera, and build-update tests
+pass. Production build passes with the existing large-chunk advisory. The QA
+build passed before the final cosmetic rig/HUD refinements.
+
+An isolated in-memory Chrome game verified the new mode, all four keyboard
+actions and cooldowns, UFO position swap, and visible shield. Screenshot review
+identified a style-score/HUD overlap; the combat style score now sits above the
+weapon bar. No real career storage was used by this browser check. Full campaign
+matrices were not rerun for this change.
+
 ## Desktop release promotion — September 22, 2026
 
 Promoted the previously uncommitted rival, camera, and freestyle changes into

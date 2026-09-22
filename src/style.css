@@ -126,3 +126,12 @@
 .rival-customization .setup-line { margin-top: 10px; }
 .rival-customization select { min-width: 0; width: 100%; background: #172327; color: #fff; padding: 8px; border: 1px solid #ffffff35; border-radius: 4px; }
 .rival-customization[hidden] { display: none; }
+
+/* Wasteland combat stays within the existing race HUD. */
+.combat-help{display:none;color:#ffd29a;font-size:11px;line-height:1.5;border-left:3px solid #ff792a;padding:8px 10px;background:#24170fe6}
+.combat-mode .combat-help{display:block}.combat-mode .race-setup{border-color:#b96a33}.combat-mode .brand-slashes{color:#ff9d3c}
+.weapon-hud{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:grid;grid-template-columns:repeat(4,minmax(100px,1fr));gap:6px;width:min(620px,68vw);z-index:12;pointer-events:auto}
+.weapon-hud[hidden]{display:none}.weapon-hud button{border:1px solid #cc783c;background:linear-gradient(#3c2b20,#17130f);color:#ffdda0;padding:13px 6px;font:700 11px monospace;cursor:pointer;box-shadow:inset 0 2px #ffffff12}
+.weapon-hud button:disabled{color:#aa9988;border-color:#625040;cursor:default}.weapon-hud button:focus-visible{outline:3px solid #a1ffdc;outline-offset:2px}.weapon-status{grid-column:1/-1;text-align:center;font:700 10px monospace;letter-spacing:1px;color:#ffe2a4;text-shadow:0 2px 3px #000}
+@media(max-width:700px){.weapon-hud{width:94vw;bottom:8px;grid-template-columns:repeat(4,1fr)}.weapon-hud button{font-size:9px;padding:10px 3px}}
+.combat-mode #style-score-panel{bottom:105px}.combat-mode .race-health #damage-label{color:#ffc68a}

@@ -1,3 +1,4 @@
+import {createCombatScene} from './combat-scene.js';
 import * as THREE from 'three';
 import {directionalCameraPose} from './camera-views.js';
 import { CARS, DRIVE } from './config.js';
@@ -94,6 +95,7 @@ export function attachRenderer(host, app) {
   police.add(lamps);police.userData.crushAttachments=[lamps];scene.add(police);
   const effects = createDrivingEffects(); scene.add(effects.group);
   const explosion = createExplosion(); scene.add(explosion.group);
+  const combatScene=createCombatScene();scene.add(combatScene.group);
   function retireObject(object,beforeDispose){
     scene.remove(object);
     const release=()=>{beforeDispose?.();disposeTree(object);};
@@ -264,7 +266,7 @@ export function attachRenderer(host, app) {
       lamps.children.forEach((lamp, i) => { lamp.visible = Math.floor(now / 130) % 2 === i; });
     }
     effects.update({ p: pp, course, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now });
-    explosion.update(pp,st,st.paused?0:dt);
+    explosion.update(pp,st,st.paused?0:dt);combatScene.update(app.duel);
     if(!st.paused)chickens.update(menu?{status:'menu',s:172,collectedFlocks:[]}:st,menu?now/1000:st.totalTimeSec);
     animateScene(world,now/1000);
     syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);
@@ -345,7 +347,7 @@ export function attachRenderer(host, app) {
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
-    const release=()=>{rearView.dispose();effects.dispose();explosion.dispose();lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
+    const release=()=>{rearView.dispose();combatScene.dispose();effects.dispose();explosion.dispose();lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
     if(warmup)warmup.dispose(release);else release();
   } };
 }
