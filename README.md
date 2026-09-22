@@ -113,6 +113,11 @@ After a recoverable crash or rollover, the car respawns at the crash site in eve
 
 ## Players and garage
 
+The Armory button beside Garage contains all four weapon upgrades. During Mad Max
+Duel, glowing pickups appear on the road center every 10–19 seconds after the
+first spawn. Drive through one to recharge its weapon instantly. Missed pickups
+expire. Press D to restore the chase camera; use arrow keys to steer.
+
 Named players on this computer have separate credits, cars, upgrades, drivers, courses, history and last-used race setups. Switching players restores that player's event, car, challenge, CPU difficulty, transmission and route. They share a local leaderboard with circuit, car and driver-performance filters. The previous garage save migrates into Player 1.
 
 Two cars are included. Six more can be bought with earned credits: Falcone Heritage, Aurora GTR, Dusthawk Rally, Banshee Muscle, Viper Prototype and Titan Monster. Falcone Heritage costs 1,800 credits and preserves the previous F42 concept body, red finish and handling as a separate car; the redesigned F42 and 959 stay unchanged. The other earned cars offer different acceleration, speed, road grip, dirt performance, brakes, mass and dimensions. The monster truck costs 12,000 credits and can crush the stadium's wrecks.

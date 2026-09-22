@@ -1,5 +1,14 @@
 # Remake verification
 
+## Armory, road pickups, and camera reset — September 22, 2026
+
+D restores chase view without steering. Weapon upgrades now have a separate
+Armory beside Garage. Mad Max Duel periodically spawns bounded, expiring road
+center pickups that recharge a weapon when crossed, including at high speed.
+Camera (95), keyboard steering (92), combat (27), weapon upgrades, and road pickup
+checks pass. Production build passes. The isolated browser preview confirms the
+Armory button opens all four upgrade cards without changing the user's saves.
+
 ## Crash-site recovery — September 22, 2026
 
 Recoverable impacts and rollovers now restore the car at its impact location in

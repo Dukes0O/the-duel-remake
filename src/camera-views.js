@@ -1,4 +1,4 @@
-export const CAMERA_KEYS=Object.freeze({KeyC:'front',KeyB:'back',KeyV:'right',KeyX:'left'});
+export const CAMERA_KEYS=Object.freeze({KeyD:'chase',KeyC:'front',KeyB:'back',KeyV:'right',KeyX:'left'});
 export const CAMERA_MODES=Object.freeze(['chase','hood','wide','front','back','right','left']);
 
 // Directions follow the car's heading, even when it reverses or leaves the road.

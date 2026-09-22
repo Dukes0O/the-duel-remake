@@ -20,6 +20,9 @@ export function createCombatScene(){
   const shards=Array.from({length:6},()=>{const m=new THREE.Mesh(sphere,materials.iron);g.add(m);return m;});group.add(g);return {g,flame,smoke,wave,saucer,shards};
  });
  const armorGeometry=new THREE.BoxGeometry(1,1,1);
+ const pickupColors={ufo:0x64ffce,bomb:0xff8c16,crossbow:0x6cbcff,star:0xffe16b};
+ const pickupMaterials=Object.fromEntries(Object.entries(pickupColors).map(([key,color])=>[key,new THREE.MeshBasicMaterial({color})]));
+ const pickups=Array.from({length:4},()=>{const g=new THREE.Group(),box=new THREE.Mesh(armorGeometry,materials.gold),halo=new THREE.Mesh(ring,materials.gold);box.scale.setScalar(1.8);halo.scale.setScalar(2.3);g.add(box,halo);group.add(g);return {g,box,halo};});
  const rigs=[0,1].map(()=>{
   const g=new THREE.Group(),bumper=new THREE.Mesh(armorGeometry,materials.iron),bow=new THREE.Group();
   bumper.scale.set(2.7,.35,.5);bumper.position.set(0,.5,2.3);g.add(bumper);
@@ -31,6 +34,7 @@ export function createCombatScene(){
  const shields=[0,1].map(()=>{const g=new THREE.Group(),ball=new THREE.Mesh(sphere,materials.gold),halo=new THREE.Mesh(ring,materials.gold);ball.scale.set(3,2,5);halo.rotation.x=Math.PI/2;halo.scale.setScalar(5);g.add(ball,halo);group.add(g);return g;});
  function update(duel){
   const s=duel.state,c=s.combat;group.visible=!!c&&s.status!=='menu';if(!group.visible)return;
+  pickups.forEach(({g,box,halo},i)=>{const p=c.pickups[i];g.visible=!!p;if(!p)return;const at=duel.course.groundAt(p.s,0);g.position.set(at.x,at.y+2+Math.sin(p.age*3)*.4,at.z);box.material=pickupMaterials[p.weapon];box.rotation.set(p.age,p.age*1.5,0);halo.rotation.set(Math.PI/2,p.age,0);});
   projectiles.forEach(({g,bomb,arrow},i)=>{const p=c.projectiles[i];g.visible=!!p;if(!p)return;g.position.set(p.x,p.y,p.z);bomb.visible=p.kind==='bomb';arrow.visible=!bomb.visible;g.rotation.set(0,Math.atan2(p.vx,p.vz),0);bomb.rotation.set(p.age*5,p.age*3,0);});
   bursts.forEach(({g,flame,smoke,wave,saucer,shards},i)=>{
    const b=c.bursts[i];g.visible=!!b;if(!b)return;g.position.set(b.x,b.y,b.z);
@@ -45,5 +49,5 @@ export function createCombatScene(){
   rigs.forEach(({g,bow},i)=>{const actor=i?s.rival:s;g.visible=!!actor&&!actor.crushed;if(!g.visible)return;const p=duel.course.groundAt(actor.s,actor.lateral),spec=duel._vehicleSpec(actor);g.position.set(p.x,p.y+(actor.airHeight||0),p.z);g.rotation.set(actor.terrainPitch||0,p.heading+(actor.headingError||0),actor.terrainRoll||0);bow.position.y=spec.height+.2;});
   shields.forEach((g,i)=>{const actor=i?s.rival:s;g.visible=!!actor&&(i?c.rivalShield:c.shield)>0;if(!g.visible)return;const p=duel.course.groundAt(actor.s,actor.lateral);g.position.set(p.x,p.y+1+(actor.airHeight||0),p.z);g.rotation.y=s.stageTimeSec*2;});
  }
- return {group,update,dispose(){for(const g of [sphere,ring,shaft,tip,armorGeometry])g.dispose();Object.values(materials).forEach(m=>m.dispose());}};
+ return {group,update,dispose(){for(const g of [sphere,ring,shaft,tip,armorGeometry])g.dispose();Object.values({...materials,...pickupMaterials}).forEach(m=>m.dispose());}};
 }

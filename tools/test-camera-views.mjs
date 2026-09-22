@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {CAMERA_KEYS,directionalCameraPose} from '../src/camera-views.js';
 import {App} from '../src/app.js';
 let checks=0;const check=(value,message)=>{assert.ok(value,message);checks++;};
-for(const heading of [0,Math.PI/2,Math.PI,-Math.PI/2,.71])for(const tall of [false,true])for(const mode of Object.values(CAMERA_KEYS)){
+for(const heading of [0,Math.PI/2,Math.PI,-Math.PI/2,.71])for(const tall of [false,true])for(const mode of Object.values(CAMERA_KEYS).filter(mode=>mode!=='chase')){
   const origin={x:50,y:25,z:-30},view=directionalCameraPose(mode,origin,heading,tall),dx=view.position.x-origin.x,dz=view.position.z-origin.z;
   const forward=dx*Math.sin(heading)+dz*Math.cos(heading),right=dx*Math.cos(heading)-dz*Math.sin(heading);
   check(mode==='front'?forward>9:mode==='back'?forward< -9:mode==='right'?right>9:right< -9,`${mode} follows car heading`);
@@ -16,7 +16,7 @@ const press=(code,repeat=false)=>{const e=new Event('keydown',{cancelable:true})
 for(const [code,mode]of Object.entries(CAMERA_KEYS)){
   press(code);check(app.cameraMode===mode,`${code} selects ${mode}`);press(code);check(app.cameraMode===mode,'repeated taps select, never cycle');
 }
-press('KeyD');check(app.keys.KeyD&&app.cameraMode==='left','D stays a steering key');
+press('KeyD');check(app.keys.KeyD&&app.cameraMode==='chase','D resets the camera');
 app.setCamera('front');press('KeyB',true);check(app.cameraMode==='front','held key repeats ignored');
 check(app.setCamera('invalid')==='front','invalid camera rejected');
 app.setCamera('chase');check(app.cycleCamera()==='hood'&&app.cycleCamera()==='wide','button retains hood and wide views');

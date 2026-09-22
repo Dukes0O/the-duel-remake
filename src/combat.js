@@ -2,7 +2,7 @@ import {normalizeWeapons} from './weapon-upgrades.js';
 // Arcade vehicle combat. All timers and projectile motion use simulation time.
 export const WEAPONS=Object.freeze({ufo:{name:'UFO SWAP',key:'1',cooldown:18},bomb:{name:'BOMB STORM',key:'2',cooldown:9},crossbow:{name:'CROSSBOW',key:'3',cooldown:4},star:{name:'STAR SHIELD',key:'4',cooldown:16}});
 export const supportsCombat=stage=>!!stage?.hasRival&&!stage.practice&&!stage.stuntTrial;
-export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],serial:0,aiTimer:7,aiShot:0,hits:0};}
+export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],pickups:[],pickupTimer:4,pickupCount:0,serial:0,aiTimer:7,aiShot:0,hits:0};}
 const point=(duel,actor)=>{const p=duel.course.groundAt(actor.s,actor.lateral);return {...p,y:p.y+1+(actor.airHeight||0)};};
 function burst(c,p,kind='blast'){c.bursts.push({...p,kind,id:++c.serial,age:0});if(c.bursts.length>32)c.bursts.shift();}
 function relocate(actor,pose){
@@ -62,6 +62,23 @@ function hit(duel,actor,p,power,enemy){
 function sweptDistance(p,old,t){const dx=p.x-old.x,dz=p.z-old.z,d=dx*dx+dz*dz,f=d?Math.max(0,Math.min(1,((t.x-old.x)*dx+(t.z-old.z)*dz)/d)):0;return Math.hypot(old.x+f*dx-t.x,old.z+f*dz-t.z);}
 export function stepCombat(duel,dt){
  const s=duel.state,c=s.combat;if(!c||s.status!=='racing'||s.paused)return;
+ c.pickupTimer-=dt;
+ if(c.pickupTimer<=0){
+  const n=c.pickupCount++,where=s.s+100+40*(n%3);
+  c.pickupTimer=10+3*(n%4);
+  if(where<duel.raceLength-12&&c.pickups.length<4)c.pickups.push({s:where,weapon:Object.keys(WEAPONS)[n%4],age:0});
+ }
+ c.pickups=c.pickups.filter(p=>{
+  p.age+=dt;
+  const delta=s.s-(s.prevS??s.s),t=delta?Math.max(0,Math.min(1,(p.s-s.prevS)/delta)):1;
+  const lateral=(s.prevLateral??s.lateral)+(s.lateral-(s.prevLateral??s.lateral))*t;
+  const crossed=Math.abs(s.s-p.s)<3||(delta>0&&s.prevS<=p.s&&s.s>=p.s);
+  if(crossed&&Math.abs(lateral)<2.5&&(s.airHeight||0)<3&&s.impactTimer<=0){
+   c.cooldowns[p.weapon]=0;burst(c,duel.course.groundAt(p.s,0),'star');
+   duel._callout(`${WEAPONS[p.weapon].name} / POWER-UP READY`,2);duel.emit({powerupCollected:p.weapon});return false;
+  }
+  return p.age<24&&p.s>s.s-30;
+ });
  for(const key of Object.keys(c.cooldowns))c.cooldowns[key]=Math.max(0,c.cooldowns[key]-dt);
  c.shield=Math.max(0,c.shield-dt);c.rivalShield=Math.max(0,c.rivalShield-dt);
  c.bursts=c.bursts.filter(b=>(b.age+=dt)<1.4);

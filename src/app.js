@@ -394,7 +394,7 @@ export class App {
     this.players=selectPlayer(this.players,id);this.player=activePlayer(this.players);this.profile=this.player.profile;this._restoreRaceSettings();this._rememberRaceSettings();this._recoverInterruptedRace();this.profileSaved=savePlayers(this.players);this.duel.emit({playerChanged:true});return true;
   }
   purchaseWeapon(id){
-    if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage to upgrade weapons.'};
+    if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the Armory to upgrade weapons.'};
     this._refreshPlayer();const result=purchaseWeaponUpgrade(this.profile,id);
     if(result.ok){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true});}return result;
   }

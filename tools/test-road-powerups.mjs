@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {Duel} from '../src/game.js';
+import {stepCombat} from '../src/combat.js';
+import {keyboardSteeringDirection} from '../src/keyboard-steering.js';
+const d=new Duel();d.startCampaign({mode:'wasteland'});
+const s=d.state,c=s.combat;s.status='racing';s.s=s.prevS=100;s.lateral=s.prevLateral=0;
+stepCombat(d,4);assert.equal(c.pickups.length,1);
+const p=c.pickups[0];assert.ok(p.s>s.s);c.cooldowns[p.weapon]=10;
+s.prevS=p.s-10;s.s=p.s+10;s.lateral=s.prevLateral=6;
+stepCombat(d,.05);assert.equal(c.pickups.length,1,'outside center misses pickup');
+s.lateral=s.prevLateral=0;s.paused=true;
+const timer=c.pickupTimer;stepCombat(d,10);assert.equal(c.pickupTimer,timer);assert.equal(c.pickups.length,1);
+s.paused=false;stepCombat(d,.05);assert.equal(c.pickups.length,0);assert.equal(c.cooldowns[p.weapon],0,'swept crossing recharges weapon');
+c.pickups.push({s:s.s+50,weapon:'star',age:23.99});stepCombat(d,.05);assert.equal(c.pickups.length,0,'uncollected pickup expires');
+assert.equal(keyboardSteeringDirection({KeyD:true}),0,'camera reset never steers');
+d.startCampaign({mode:'wasteland'});assert.equal(d.state.combat.pickups.length,0,'restart clears pickups');
+console.log('Road power-ups: spawn, miss, collect, pause, expiry, restart and D steering checks passed.');
