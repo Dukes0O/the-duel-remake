@@ -109,6 +109,8 @@ Getting caught by police adds a 150-credit fine against the current race's earni
 
 **Timberline Checkpoint Rush** starts with 40 / 34 / 30 seconds. Each gate adds 10 / 8 / 7 seconds. Pass all six gates in order on both laps and finish before time expires. It uses a fixed gravel mountain route with real climbs, a tunnel and a shortcut. Missing gates cannot set a record. Ordinary five-crash damage rules apply.
 
+After a recoverable crash or rollover, the car respawns at the crash site in every mode. If an obstacle or another car blocks that spot, recovery looks for a clear position within 12 metres. Lap gates and timed checkpoint objectives still apply; water and map-boundary rescue remain separate safety actions.
+
 ## Players and garage
 
 Named players on this computer have separate credits, cars, upgrades, drivers, courses, history and last-used race setups. Switching players restores that player's event, car, challenge, CPU difficulty, transmission and route. They share a local leaderboard with circuit, car and driver-performance filters. The previous garage save migrates into Player 1.

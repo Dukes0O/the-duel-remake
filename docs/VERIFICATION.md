@@ -1,5 +1,18 @@
 # Remake verification
 
+## Crash-site recovery — September 22, 2026
+
+Recoverable impacts and rollovers now restore the car at its impact location in
+every race mode, with up to 12 metres of clearance when blocked. Recovery retains
+legitimate lap-gate crossings interrupted by an impact. Lap validation and water
+or map-boundary rescue still apply.
+
+The crash-site checks cover all 16 courses in duel, time trial, and combat modes,
+blocked positions, interrupted gate crossings, and rollover recovery. Core tests
+(509, long campaigns skipped), off-road physics (8,788), race integrity (601),
+combat (27), and police route reset (3) pass. Production build passes with the
+existing chunk-size advisory.
+
 ## Weapon upgrades — September 22, 2026
 
 Added player-specific level 0–3 weapon builds, garage purchases, saved-profile

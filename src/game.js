@@ -196,7 +196,7 @@ export class Duel {
     this._crushedVehicles = [];
     s.fallenCacti = []; this._fallenCactusIds = new Set();
     s._jumpY = null; s._verticalSpeed = 0; s._jumpOrigin = null; s.prevAirHeight = 0;
-    s.impactTimer = 0; s.impactDuration = 0; s.impactStrength = 0; s.impactSide = 1; s.crashSpin = 0;
+    s.crashSite = null; s.impactTimer = 0; s.impactDuration = 0; s.impactStrength = 0; s.impactSide = 1; s.crashSpin = 0;
     s.combo = 0; s.comboTimer = 0; s.stageStyleScore = 0; s.stageCrashes = 0; s.policeEscapes = 0;
     s.callout = ''; s.calloutTimer = 0;
     s.input = { throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false };
@@ -694,13 +694,8 @@ export class Duel {
     s.groundHeight = this._supportAt(s.s, s.lateral).y + attitude.lift;
     s.terrainPitch = attitude.pitch; s.terrainRoll = attitude.roll; s.impactTimer = Math.max(0, tumble.duration - tumble.elapsed);
     if (s.impactTimer > 1e-9) return;
-    const safe = tumble.safe;
-    if (safe && Number.isFinite(safe.s) && Number.isFinite(safe.lateral)) {
-      s.s = s.prevS = safe.s; s.lateral = s.prevLateral = safe.lateral;
-      s.headingError = wrapHeading(tumble.heading - this.course.at(s.s).heading + Math.PI);
-      s.speedMph = 0; s.gear = 0; s.revs = 0; s.yawVelocity = 0; s.pushVelocity = 0;
-      s.airborne = false; s.airHeight = 0; s._jumpY = null; s._verticalSpeed = 0; s._jumpOrigin = null;
-    } else this._safeReset(s);
+    this._safeReset(s,s.crashSite||{s:s.s,lateral:s.lateral,headingError:s.headingError});
+    s.crashSite=null;
     s.tumble = null; s.impactTimer = 0; s.crashSpin = 0; s._climbGain = 0; s._climbRest = 0;
     this._terrainPose(); this._callout('RECOVERED  /  TRY A GENTLER LINE', 2); this.emit({ recovered: true });
   }
@@ -961,18 +956,20 @@ export class Duel {
     }
   }
 
-  _practiceRecoveryPose(car, others) {
+  _practiceRecoveryPose(car, others, crashSite = null) {
+    const actor=car;
+    car=crashSite?{...car,...crashSite}:car;
     const origin = this.course.worldAt(car.s, car.lateral), heading = origin.heading + (car.headingError || 0);
-    const spec = this._vehicleSpec(car), capability = car === this.state ? offroadCapability(this.car) : null;
+    const spec = this._vehicleSpec(actor), capability = actor === this.state ? offroadCapability(this.car) : null;
     // Freestyle has no validated lap interval. Search a bounded physical area
     // around the impact instead of wrapping/clamping to a distant road gate.
-    for (const radius of [0, 4, 8, 12, 20, 32, 48]) for (let spoke = 0; spoke < (radius ? 16 : 1); spoke++) {
+    for (const radius of crashSite ? [0, 2, 4, 8, 12] : [0, 4, 8, 12, 20, 32, 48]) for (let spoke = 0; spoke < (radius ? 16 : 1); spoke++) {
       const angle = heading + Math.PI + spoke * Math.PI / 8;
       const pose = radius ? this._roadPosition({ x: origin.x + Math.sin(angle) * radius, z: origin.z + Math.cos(angle) * radius }, car.s)
         : { s: car.s, lateral: car.lateral };
-      const point = this._supportAt(pose.s, pose.lateral, car);
+      const point = this._supportAt(pose.s, pose.lateral, actor);
       if (![pose.s, pose.lateral, point.x, point.y, point.z].every(Number.isFinite)
-        || Math.hypot(point.x - origin.x, point.z - origin.z) > 48.1) continue;
+        || Math.hypot(point.x - origin.x, point.z - origin.z) > (crashSite?12.1:48.1)) continue;
       if (others.some(other => {
         if (other.crushed) return false;
         const otherPoint = this.course.worldAt(other.s, other.lateral), otherSpec = this._vehicleSpec(other);
@@ -992,7 +989,7 @@ export class Duel {
     return { s: car.s, lateral: car.lateral, headingError: car.headingError || 0 };
   }
 
-  _safeReset(car) {
+  _safeReset(car, crashSite = null) {
     if (car === this.state) this._breakDrift('reset');
     const others = [...this.state.traffic.filter(other => other.alive), this.state.rival, this.state.police.pursuit?.active ? this.state.police.pursuit : null, this.state].filter(other => other && other !== car);
     const racer = Number.isFinite(car.completedLaps);
@@ -1004,8 +1001,9 @@ export class Duel {
       car.completedLaps * this.course.length + (this._lapGates?.[car.nextLapGate] ?? this.course.length) - 1 : Infinity;
     const upperBound = this.course.closed && !racer ? Infinity : Math.min(this.raceLength - 8, nextGate);
     const practice = this.course.def.practice === true;
-    let chosen = practice ? this._practiceRecoveryPose(car, others) : { s: clamp(car.s, lowerBound, upperBound), lateral: 0 };
-    search: for (const back of practice ? [] : [0, 10, 22, 40, 70, 110]) {
+    const local = practice || !!crashSite;
+    let chosen = local ? this._practiceRecoveryPose(car, others, crashSite) : { s: clamp(car.s, lowerBound, upperBound), lateral: 0 };
+    search: for (const back of local ? [] : [0, 10, 22, 40, 70, 110]) {
       for (const lateral of [-DRIVE.laneOffset, DRIVE.laneOffset, 0]) {
         const distance = clamp(car.s - back, lowerBound, upperBound);
         if (others.some(other => Math.abs(this.relativeS(other.s, distance) - distance) < 13 && Math.abs(other.lateral - lateral) < 2.7)) continue;
@@ -1016,7 +1014,7 @@ export class Duel {
     }
     car.s = car.prevS = chosen.s; car.lateral = car.prevLateral = chosen.lateral;
     car.speedMph = Math.max(0, Math.min(28, car.speedMph * .4));
-    car.headingError = practice ? chosen.headingError : 0; car.yawVelocity = 0; car.pushVelocity = 0; car.slipAngle = 0; car.drifting = false;
+    car.headingError = local ? chosen.headingError : 0; car.yawVelocity = 0; car.pushVelocity = 0; car.slipAngle = 0; car.drifting = false;
     car.offRoad = false; car.offRoadTime = 0; car.roughness = 0; car.boosting = false;
     car.steerVisual = 0;
     car.routeId = null; car.routeLap = null; this._npcRoutePlanner?.reset(car);
@@ -1025,7 +1023,7 @@ export class Duel {
     car.groundHeight = null; car.prevGroundHeight = null; car.terrainPitch = null; car.terrainRoll = null; car.tumble = null;
     car._climbGain = 0; car._climbRest = 0; car._offroadSafe = null;
     if (car === this.state) { car.gear = 0; car.revs = car.speedMph / this.car.gears[0]; car.overrevSec = 0; car.reverseHoldSec = 0; }
-    if (practice) this._terrainPose(car);
+    if (local) {car.offRoad=!this._surface(car.s,car.lateral).road;this._terrainPose(car);}
   }
 
   _flockBonuses() {
@@ -1305,6 +1303,9 @@ export class Duel {
   _crash(reason, side = 0, impactMph = Math.abs(this.state.speedMph), zone = 'front') {
     const s = this.state;
     if (s.impactTimer > 0 || s.status !== 'racing' || s.combat?.shield>0) return;
+    // Record a real crossing interrupted by impact before prevS is replaced.
+    this._advanceLaps(s,.05,true);
+    s.crashSite={s:s.s,lateral:s.lateral,headingError:this.course.def.practice?s.headingError:0};
     this._breakDrift('hit');
     s.stageCrashes++;
     s.boosting = false;
@@ -1363,11 +1364,11 @@ export class Duel {
     s.roughness = Math.max(s.roughness, remaining * s.impactStrength);
     this._staticContacts(s, true);
     if (s.impactTimer === 0 && s.status === 'racing') {
-      this._safeReset(s); s.crashSpin = 0;
+      this._safeReset(s,s.crashSite||{s:s.s,lateral:s.lateral,headingError:0}); s.crashSite=null; s.crashSpin = 0;
       s.speedMph = 12; s.gear = 0; s.revs = s.speedMph / this.car.gears[0];
-      s.offRoad = false; s.offRoadTime = 0; s.roughness = 0;
+      s.offRoad = !this._surface(s.s,s.lateral).road; s.offRoadTime = 0; s.roughness = 0;
       s.input.shiftUp = false; s.input.shiftDown = false;
-      this._callout(this.course.def.practice ? 'RECOVERED  /  KEEP EXPLORING' : 'BACK ON THE ROAD. FIND YOUR LINE.', 2);
+      this._callout('RECOVERED AT CRASH SITE / KEEP DRIVING', 2);
       this.emit({ recovered: true });
     }
   }
@@ -1478,7 +1479,7 @@ export class Duel {
     this.emit({ jumpLanded: { rampId: origin.rampId, lap: origin.lap, distance: +distance.toFixed(1), points } });
   }
 
-  _advanceLaps(actor, dt) {
+  _advanceLaps(actor, dt, noReset = false) {
     if (this.course.def.practice || actor.crushed) return;
     const player = actor === this.state, laps = this.state.lapsTotal;
     if (actor.completedLaps >= laps) return;
@@ -1505,6 +1506,7 @@ export class Duel {
     }
     if (!crossed(finish)) return;
     if (actor.nextLapGate < this._lapGates.length || !legalAt(finish) || !plausibleTravel) {
+      if(noReset)return;
       // Restore the last validated segment; there is no life or damage cost.
       actor.s = lapBase + (this._lapGates[actor.nextLapGate - 1] || 0) + 1;
       this._safeReset(actor);

@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import {Duel} from '../src/game.js';
+import {COURSE} from '../src/config.js';
+let checks=0;const check=(v,m)=>{assert.ok(v,m);checks++;};
+for(const stage of COURSE)for(const mode of ['duel','timetrial','wasteland']){
+ const d=new Duel({seed:1989});d.startCampaign({startStage:stage.stage,mode});const s=d.state;
+ Object.assign(s,{status:'racing',s:700,prevS:700,lateral:14,prevLateral:14,speedMph:70,traffic:[],rival:null});
+ d._obstacles=()=>[];const before=d.course.worldAt(s.s,s.lateral);d._crash('prop',1,70);
+ const site={...s.crashSite};check(site.s===700&&site.lateral===14,'records actual impact position');
+ for(let i=0;i<100&&s.impactTimer>0;i++)d._impact(.05);
+ const after=d.course.worldAt(s.s,s.lateral);
+ check(Math.hypot(after.x-before.x,after.z-before.z)<.01,`${stage.id}/${mode}: clear crash site remains exact`);
+ check(s.crashSite===null&&s.prevS===s.s&&s.prevLateral===s.lateral,'clears crash anchor and teleport sweep');
+}
+const d=new Duel();d.startCampaign();const s=d.state;Object.assign(s,{status:'racing',s:900,prevS:900,lateral:0,speedMph:80,traffic:[],rival:null});
+const p=d.course.worldAt(900,0),block={...p,halfX:2,halfZ:3,kind:'prop'};d._obstacles=()=>[block];d._crash('prop');
+for(let i=0;i<100&&s.impactTimer>0;i++)d._impact(.05);
+const after=d.course.worldAt(s.s,s.lateral),distance=Math.hypot(after.x-p.x,after.z-p.z);
+check(distance>0&&distance<=12.1,'solid object gets a small local clearance adjustment');
+const gateDuel=new Duel();gateDuel.startCampaign();const q=gateDuel.state,gate=gateDuel._lapGates[0];
+Object.assign(q,{status:'racing',prevS:gate-.5,s:gate+.5,prevLateral:0,lateral:0,speedMph:100,traffic:[],rival:null});gateDuel._obstacles=()=>[];
+gateDuel._crash('prop');check(q.nextLapGate===1,'real gate crossing interrupted by impact is retained');
+for(let i=0;i<100&&q.impactTimer>0;i++)gateDuel._impact(.05);
+check(q.s===gate+.5,'recovery never clamps back before a crossed gate');
+const roll=new Duel();roll.startCampaign({startStage:15,car:'titan_monster'});const truck=roll.state;
+Object.assign(truck,{status:'racing',s:400,prevS:400,lateral:30,speedMph:40,traffic:[],rival:null,_offroadSafe:{s:0,lateral:0}});roll._obstacles=()=>[];
+const rolledAt=roll.course.worldAt(truck.s,truck.lateral);roll._startTumble('climb_limit');
+for(let i=0;i<60&&truck.tumble;i++)roll._rollover(.05);
+const rolledBack=roll.course.worldAt(truck.s,truck.lateral);
+check(Math.hypot(rolledAt.x-rolledBack.x,rolledAt.z-rolledBack.z)<=12.1,'rollover ignores distant old safe position and recovers locally');
+console.log(`Crash-site recovery: ${checks} checks across every course and mode passed.`);

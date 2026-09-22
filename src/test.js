@@ -375,8 +375,9 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   ok([s.s, s.lateral, s.impactTimer, s.crashSpin].every((value, i) => value === frozen[i]), 'pause freezes the entire crash effect');
   s.paused = false;
   while (s.impactTimer > 0) d.step(1 / 120);
-  ok(Math.abs(s.lateral) < DRIVE.roadHalfWidth, 'road recovery selects a safe lane after the impact finishes');
-  eq(s.headingError, 0, 'recovery places the car facing down the road');
+  const crashPoint=d.course.worldAt(d.course.length-3,10),recoveryPoint=d.course.worldAt(s.s,s.lateral);
+  ok(Math.hypot(crashPoint.x-recoveryPoint.x,crashPoint.z-recoveryPoint.z)<=12.1, 'recovery stays beside the impact instead of returning to a road gate');
+  ok(Math.abs(s.headingError)<.3, 'recovery faces along the nearby road');
   eq(s.lives, LIVES.start - 1, 'the complete impact consumes exactly one life');
 }
 
