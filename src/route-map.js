@@ -1,4 +1,4 @@
-import {freestyleLayout} from './freestyle-course.js';
+import {freestyleLayout,FREESTYLE_DRAG} from './freestyle-course.js';
 
 // A fixed circuit overview. Geometry and static canvas layers are cached per Course.
 const BRANCH_COLORS=['#62dabc','#b99aff'];
@@ -67,6 +67,7 @@ function practiceSymbol(ctx,kind,x,y,color,size=5){
 }
 export function drawPracticeMarkers(ctx,map){
   if(!map.practiceMarkers)return;
+  ctx.save();ctx.font='bold 11px Segoe UI, sans-serif';ctx.textAlign='right';ctx.fillStyle='#ffce75';ctx.fillText('DRAG STRIP 4 KM →',map.width-10,18);ctx.restore();
   for(const feature of map.practiceMarkers){const style=PRACTICE_MAP_LEGEND.find(item=>item.kind===feature.kind);practiceSymbol(ctx,feature.kind,feature.marker.x,feature.marker.y,style.color);}
   ctx.save();ctx.font='10px Segoe UI, sans-serif';ctx.textAlign='left';
   for(const [i,item]of PRACTICE_MAP_LEGEND.entries()){const x=9+i*(map.width-12)/4,y=map.height-11;practiceSymbol(ctx,item.kind,x+4,y,item.color,3.5);ctx.fillStyle=item.color;ctx.fillText(item.label,x+12,y+3);}
@@ -117,6 +118,7 @@ export class RouteMap {
     const police=state.police?.pursuit;
     if(police?.active&&Number.isFinite(police.s))this._actor(course,map,police,Math.floor(now/380)%2?'#7cbff2':'#ee8588',8,false);
     this._actor(course,map,state,'#fff1d0',11,true);
+    if(course.def.practice){const world=course.worldAt(state.s,state.lateral);if(world.x>=FREESTYLE_DRAG.startX){ctx.save();ctx.font='bold 13px Segoe UI, sans-serif';ctx.textAlign='center';ctx.fillStyle='#ffce75';ctx.fillText(world.x>=FREESTYLE_DRAG.endX?'BRAKING AREA':`${Math.max(0,Math.round(world.x-FREESTYLE_DRAG.startX))} / 4000 M`,map.width/2,38);ctx.restore();}}
     const lap=course.def.practice?0:Math.min(course.def.laps||2,state.currentLap||state.lap||1),section=map.sections[sectionIndex].name;
     const label=course.def.practice?`${course.def.name} quarry practice map. Untimed exploration, with no laps or finish line. Your arrow shows your heading. ${practiceMapLegendText()}`:`${course.def.name} circuit map. Lap ${lap} of ${course.def.laps||2}. ${section}. Your arrow shows your heading.${state.rival?' Yellow is your rival.':''}${police?.active?' Blue and red is the police patrol.':''}${map.branches.length?` Dashed shortcuts ${map.branches.map(branch=>branch.label).join(' and ')}.${branchIndex>=0?` You are on shortcut ${map.branches[branchIndex].label}.`:''}`:''}${state.checkpointRush?` ${state.checkpointRush.passed} of ${state.checkpointRush.total} gates passed. ${state.checkpointRush.nextGate<state.checkpointRush.total?'Gold marks the next gate.':'Finish both laps.'}`:''} Checkered line marks the finish.`;
     if(label!==this.lastLabel){this.canvas.setAttribute('aria-label',label);this.lastLabel=label;}

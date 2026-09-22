@@ -13,6 +13,8 @@ import { vehicleContactEnvelope, planNpcYield, npcYieldContactNormal } from './n
 import { DEFAULT_DRIVER, normalizeDriverId, applyDriverModifiers, driverModifierSignature } from './drivers.js';
 import { offroadCapability, wrapHeading, rockHeight, rockSupportHeight, limitClimb, terrainAttitude, tumbleAttitude, canCrushVehicle, crushedVehicleSupport } from './offroad-physics.js';
 import { sampleMountainSupport } from './mountain-support.js';
+import {normalizeRival,rivalSignature} from './rival-settings.js';
+import {upgradedCar} from './progression.js';
 
 const BOUNDARY_WARNING = 60, BOUNDARY_RESET = 78;
 const GLANCING_WALL_NORMAL_FRACTION = Math.sin(35 * Math.PI / 180);
@@ -117,7 +119,7 @@ export class Duel {
     const surface = this._surface(distance, lateral);
     const preparedGravel = surface.road && !surface.mainRoad && (this.course.def.offroad || !!surface.shortcutId);
     const rally = car.kind === 'rally', roughnessScale = car.roughnessScale ?? 1;
-    return { ...surface, preparedGravel, boostAllowed: surface.road,
+    return { ...surface, preparedGravel, boostAllowed: surface.road || this.course.def.practice,
       traction: surface.mainRoad ? 1 : preparedGravel ? clamp(.6 + .4 * (car.offRoadGrip ?? DRIVE.offRoadGrip), .82, .995) : car.offRoadGrip ?? DRIVE.offRoadGrip,
       speedLimit: surface.mainRoad ? car.topSpeed : preparedGravel ? car.topSpeed * (rally ? .98 : .95) : car.offRoadSpeed ?? 68,
       scrub: surface.mainRoad ? 0 : (preparedGravel ? rally ? .014 : .035 : car.offRoadScrub ?? DRIVE.offRoadScrub) * roughnessScale,
@@ -146,7 +148,7 @@ export class Duel {
   }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     if (CARS[car]) this.state.car = car;
@@ -154,6 +156,7 @@ export class Duel {
     this.state.cpuDifficulty = CPU_DIFFICULTY[cpuDifficulty] ? cpuDifficulty : DEFAULT_CPU_DIFFICULTY;
     this.state.playerId = typeof playerId === 'string' ? playerId : null;
     this.state.driverId = normalizeDriverId(driverId);
+    this.state.rivalSettings = normalizeRival(rival);
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     this.state.mode = mode === 'timetrial' ? 'timetrial' : 'duel';
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
@@ -215,9 +218,13 @@ export class Duel {
     s.countdown = 3;
     s.status = 'countdown';
     // rival
+    const rivalSettings=s.rivalSettings;
+    const rivalCar=rivalSettings?.car&&rivalSettings.car!=='match'?rivalSettings.car:s.car;
+    const rivalLevels=Object.fromEntries(UPGRADE_KEYS.map(key=>[key,CARS[rivalCar].factoryMaxed?3:rivalSettings?.upgradeLevel||0]));
+    this.rivalSpec=rivalSettings?applyDriverModifiers(upgradedCar(CARS[rivalCar],rivalLevels),rivalSettings.driverId,rivalCar):CARS[s.car];
     s.rival = (!s.practice && COURSE[idx].hasRival && s.mode === 'duel')
-      ? { s: this.course.rivalStartS, lateral: -DRIVE.laneOffset, speedMph: 0, finished: false, finishTime: null,
-        headingError: 0, yawVelocity: 0, pushVelocity: 0, offRoad: false, contactCooldown: 0,
+      ? { car:rivalCar,driverId:rivalSettings?.driverId||DEFAULT_DRIVER,upgrades:rivalLevels,s: this.course.rivalStartS, lateral: -DRIVE.laneOffset, speedMph: 0, finished: false, finishTime: null,
+        headingError: 0, yawVelocity: 0, pushVelocity: 0, offRoad: false, contactCooldown: 0, boost:1, boosting:false,
         damageZones: freshDamageZones(), damageCooldown: 0,
         airborne: false, airHeight: 0, _jumpY: null, _verticalSpeed: 0, _jumpOrigin: null,
         completedLaps: 0, nextLapGate: 0, lapTimes: [], lapStartedAt: 0 }
@@ -400,10 +407,11 @@ export class Duel {
     const surface = this._drivingSurface(s.s, s.lateral, car);
     const nitro = s.upgrades.nitro, boostDrain = BOOST.drainPerSec / ((1 + nitro * .14) * car.boostCapacity);
     const boostTopSpeed = BOOST.topSpeedMult + nitro * .025 + (car.nitroSpeedBonus ?? 0);
-    s.boosting = !!s.input.boost && s.boost > 0 && s.speedMph >= BOOST.minSpeedMph && surface.boostAllowed && s.input.brake === 0;
+    if(s.practice)s.boost=1;
+    s.boosting = !!s.input.boost && s.boost > 0 && s.gear>=0 && s.speedMph >= (s.practice?0:BOOST.minSpeedMph) && surface.boostAllowed && s.input.brake === 0;
     if (s.boosting) {
       const available = Math.min(1, s.boost / (boostDrain * dt));
-      s.boost = Math.max(0, s.boost - boostDrain * dt);
+      s.boost = s.practice?1:Math.max(0, s.boost - boostDrain * dt);
       const boostCeiling = d.autoShift ? car.topSpeed * boostTopSpeed : Math.min(car.topSpeed * boostTopSpeed, gearMax * DRIVE.gearCeilFrac);
       s.speedMph += Math.max(0, Math.min(boostCeiling - s.speedMph, BOOST.accelMphPerSec * (1 + nitro * .15) * (car.nitroAcceleration ?? 1) * dt * available));
     } else if (!s.input.boost) {
@@ -1209,7 +1217,7 @@ export class Duel {
     r.contactCooldown = Math.max(0, (r.contactCooldown || 0) - dt);
     r.braking = false; r.yieldingToPlayer = false;
     // CPU pace is independent of the player's manual/automatic gearbox.
-    const skill = CPU_DIFFICULTY[s.cpuDifficulty], car = CARS[s.car];
+    const skill = CPU_DIFFICULTY[s.cpuDifficulty], car = this.rivalSpec || CARS[s.car];
     if (s.cpuDifficulty !== 'easy' && (this._npcRoutePlanner?.course !== this.course || this._npcRoutePlanner?.car !== car)) {
       this._npcRoutePlanner = new NpcRoutePlanner(this.course, { car, surfaceAt: (distance, lateral) => this._drivingSurface(distance, lateral, car) });
     }
@@ -1219,6 +1227,13 @@ export class Duel {
     const targetPace = car.topSpeed * skill.skill;
     const rubber = clamp((s.s - r.s) * .012, -8, 8);
     let target = targetPace + rubber;
+    // Custom rivals spend their chosen nitro build on clear straights. The
+    // legacy default rival keeps its original pace and does not gain boost.
+    r.boosting=!!s.rivalSettings&&r.boost>.05&&r.speedMph>=BOOST.minSpeedMph&&rivalSurface.boostAllowed&&r.contactCooldown<=0&&[0,40,80,120].every(ahead=>Math.abs(this.course.at(r.s+ahead).curvature)<.0012);
+    if(r.boosting){
+      r.boost=Math.max(0,r.boost-BOOST.drainPerSec/((1+r.upgrades.nitro*.14)*car.boostCapacity)*dt);
+      target*=BOOST.topSpeedMult+r.upgrades.nitro*.025+(car.nitroSpeedBonus||0);
+    }else r.boost=Math.min(1,r.boost+BOOST.refillPerSec*dt);
     if (route) target = Math.min(target, route.targetSpeedMph);
     else {
       let curve = 0;
@@ -1253,7 +1268,7 @@ export class Duel {
     }
     target = Math.max(0, target);
     if (r.braking) r.speedMph = Math.max(target, r.speedMph - yieldPlan.braking * dt);
-    else r.speedMph += clamp(target - r.speedMph, -DRIVE.brakeAccel * car.braking * dt, car.accel * DRIVE.accelScale * .85 * dt);
+    else r.speedMph += clamp(target - r.speedMph, -DRIVE.brakeAccel * car.braking * dt, (car.accel * DRIVE.accelScale * .85+(r.boosting?BOOST.accelMphPerSec*(1+r.upgrades.nitro*.15)*(car.nitroAcceleration||1):0)) * dt);
     if (r.offRoad) r.speedMph *= Math.exp(-rivalSurface.scrub * dt * (rivalSurface.preparedGravel ? .25 : 1));
     if (route) {
       // Follow the physical tangent with the same tire-limited yaw authority
@@ -1625,7 +1640,8 @@ export class Duel {
     const key = [event.id || stageName, `layout${event.layoutVersion || 1}`, `seed${s.seed}`, `laps${s.lapsTotal}`,
       stageName, s.car, s.difficulty, s.cpuDifficulty, s.mode, ...UPGRADE_KEYS.map(key => upgrades[key])].join('|');
     const signature = driverModifierSignature(s.driverId, s.car);
-    return signature ? `${key}|driver:${signature}` : key;
+    const rival=rivalSignature(s);
+    return key+(signature?`|driver:${signature}`:'')+(rival?`|rival:${rival}`:'');
   }
   _bestFor(stageName) { return loadBest()[this._bestKey(stageName)] ?? null; }
 

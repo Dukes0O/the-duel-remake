@@ -26,6 +26,7 @@ for(const [id,label,fn]of[
   ['ambient','Toggle graphics quality',()=>{app.ambientOcclusionEnabled=app.ambientOcclusionEnabled===false;}],
 
   ['practice-overview','Freestyle quarry overview',()=>{practice();const b=freestyleLayout(app.duel.course).bounds,cx=(b.minX+b.maxX)*.5,cz=(b.minZ+b.maxZ)*.5;app.inspectionCamera={position:[cx+310,195,cz+260],target:[cx,0,cz]};}],
+  ['practice-drag','Freestyle drag strip',()=>{practice();Object.assign(app.duel.state,{s:0,lateral:70,headingError:Math.PI/2});app.inspectionCamera={position:[25,18,40],target:[210,4,0]};}],
   ['practice-jump','Freestyle real jump',()=>{practice();Object.assign(app.duel.state,{s:130,prevS:130,speedMph:75,gear:3,paused:false});app.autopilot=true;app._scriptedCrashDone=true;pauseAtFlight=true;smokePauseAt=app.duel.state.totalTimeSec+6;}],
   ['practice-rocks','Freestyle rock crawl',()=>{practice();const rock=app.duel.course.features.obstacles.find(o=>o.id==='practice-rock-3');practiceDriveToward(rock,10,12,.9);}],
   ['practice-climb','Freestyle mountain climb',()=>{practice();const mound=app.duel.course.features.practiceMounds.at(-1);practiceDriveToward(mound,48,28,8,true);}],

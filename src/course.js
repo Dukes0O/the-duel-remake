@@ -8,7 +8,7 @@ import { cloneShortcuts, findShortcutPreset, shortcutPresetFingerprint } from '.
 import { buildCityParking } from './city-parking-layout.js';
 import { expansionPoint, expansionHeight } from './expansion-courses.js';
 import { buildCourseSetPieces } from './course-set-pieces.js';
-import { buildFreestyleFeatures, freestyleSurfaceHeightAt } from './freestyle-course.js';
+import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } from './freestyle-course.js';
 const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -114,6 +114,7 @@ export class Course {
   roadHalfWidthAt(s){if(this.def.practice)return 24;if(this.def.arena)return 13;if(this.def.offroad)return 5.5;const p=this.phase(s);let width=7;
     for(const lane of this.features.passingLanes)if(p>=lane.start&&p<=lane.end)width+=3.5*smooth((p-lane.start)/45)*smooth((lane.end-p)/45);return width;}
   surfaceAt(s,lateral=0){const p=this.phase(s),roadHalfWidth=this.roadHalfWidthAt(p);
+    if(this.def.practice){const world=this.worldAt(s,lateral);if(onFreestyleDrag(world.x,world.z))return {road:true,mainRoad:true,shortcutId:null,roadHalfWidth:16};}
     const cut=this.features.shortcuts.find(c=>p>=c.start&&p<=c.end&&Math.abs(lateral-this.shortcutOffset(c,p))<=c.halfWidth);
     return {road:Math.abs(lateral)<=roadHalfWidth||!!cut,mainRoad:!this.def.offroad&&(Math.abs(lateral)<=roadHalfWidth||cut?.surface==='paved'),shortcutId:cut?.id||null,roadHalfWidth};}
   tunnelAt(s){const p=this.phase(s);return this.features.tunnels.find(t=>p>=t.start&&p<=t.end)||null;}

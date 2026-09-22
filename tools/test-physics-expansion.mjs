@@ -180,7 +180,7 @@ same(runs[0], runs[1], '30/144 FPS produce bit-identical fixed-step road flight'
   for (const driver of Object.values(DRIVERS).filter(driver => driver.cars.length)) {
     d.state.car = driver.cars[0]; d.state.driverId = 'club'; const base = d.car; d.state.driverId = driver.id;
     for (const [stat, multiplier] of Object.entries(driver.modifiers)) same(d.car[stat], base[stat] * multiplier, `${driver.id}: documented modifier applied once`);
-    same(d.car.topSpeed, CARS[d.state.car].topSpeed, 'drivers preserve top speed');
+    same(d.car.topSpeed, base.topSpeed, 'drivers preserve the neutral installed build top speed, including factory-max cars');
   }
 }
 console.log(`Physics expansion: ${checks} glancing-wall, solid-impact, natural-crest, NPC, reset, driver-cache and frame-rate checks passed; fixture peak ${fast.peak.toFixed(3)} m; real crest peaks ${actualCrests.map(crest => `${crest.course}:${crest.peak}`).join(', ')}.`);

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {directionalCameraPose} from './camera-views.js';
 import { CARS, DRIVE } from './config.js';
 import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage } from './vehicles.js';
 import { buildEnvironment, worldAtExtended, disposeTree } from './world.js';
@@ -64,7 +65,7 @@ export function attachRenderer(host, app) {
   const lighting=createSceneLighting({scene,renderer,bloom,host});
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   const rearView=createRearView({renderer,scene,host});
-  let course, world, loadedCar, player, rival, chickens, ghost, ghostStyle, worldKey;
+  let course, world, loadedCar, loadedRivalCar, player, rival, chickens, ghost, ghostStyle, worldKey;
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
   const vehicleAssets=createVehicleAssets();
   function prepareVehicle(key,{retry=false}={}) {
@@ -126,6 +127,8 @@ export function attachRenderer(host, app) {
     if (!next) {rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
     if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
+    const rivalCarKey=!menu&&st.rival?.car||carKey;
+    if(rivalCarKey!==carKey&&!prepareVehicle(rivalCarKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if (course !== next) {
       if(world&&worldKey===environmentKey(next)){course=next;lighting.apply({course,mood:app.lightingMood});}
       else build(next);
@@ -141,7 +144,8 @@ export function attachRenderer(host, app) {
       scene.add(player); loadedCar = carKey;sceneRevision++;
       ambientShading.refresh();
     }
-    if (!rival) { rival = vehicleAssets.create(carKey,{color:0xbfcace,accent:0x142a36}); scene.add(rival);sceneRevision++;ambientShading.refresh(); }
+    if(rival&&loadedRivalCar!==rivalCarKey){retireObject(rival);rival=null;}
+    if (!rival) { rival = vehicleAssets.create(rivalCarKey,{color:0xbfcace,accent:0x142a36}); loadedRivalCar=rivalCarKey;scene.add(rival);sceneRevision++;ambientShading.refresh(); }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
     const pp = vehicleGroundPoint(course,distance,lateral);
     lighting.apply({course,theme:course.themeAt(distance),mood:app.lightingMood,blend:1-Math.exp(-dt*1.1),tunnel:!!course.tunnelAt(distance)});
@@ -200,6 +204,13 @@ export function attachRenderer(host, app) {
       camTarget.set(cp.x, cp.y + height + groundLift, cp.z);
       const aim = worldAtExtended(course, distance + (mode === 'hood' ? 42 : 26), lateral);
       lookTarget.set(aim.x, aim.y + (tall?1.65:1.05) + groundLift, aim.z);
+      const view=directionalCameraPose(mode,{x:pp.x,y:pp.y+supportLift+(st.airHeight||0),z:pp.z},pp.heading+(st.headingError||0)+(st.slipAngle||0),tall);
+      if(view){
+        camTarget.set(view.position.x,view.position.y,view.position.z);lookTarget.set(view.target.x,view.target.y,view.target.z);
+        const near=course.nearest(camTarget.x,camTarget.z,distance),tunnel=course.tunnelAt(near.s);
+        if(tunnel){const limit=tunnel.width-.65,p=course.worldAt(near.s,Math.max(-limit,Math.min(limit,near.lateral)));camTarget.x=p.x;camTarget.z=p.z;}
+        camTarget.y=Math.max(camTarget.y,course.groundAt(near.s,near.lateral).y+.65);
+      }
       camera.fov = THREE.MathUtils.damp(camera.fov, 55 + Math.min(speed / 200, 1) * 10 + (st.boosting ? 7 : 0) + impact * 7, 4, dt);
       const shake = impact * (st.impactStrength || 0) * .34 + rough * Math.min(speed / 100, 1) * .10;
       camTarget.x += Math.sin(motionTime * 81) * shake;

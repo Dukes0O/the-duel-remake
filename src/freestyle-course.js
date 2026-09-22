@@ -2,13 +2,15 @@
 // rendered terrain and driving physics; no invisible launch impulses.
 export const FREESTYLE_COURSE=Object.freeze({
   id:'titan-freestyle',name:'Titan Freestyle Playground',theme:'arena',stage:15,
-  layout:'freestyle-quarry',layoutVersion:1,layoutSeed:1989,lengthU:1280,
+  layout:'freestyle-quarry',layoutVersion:2,layoutSeed:1989,lengthU:1280,
   closed:true,laps:2,kind:'arena',arena:true,practice:true,offroad:true,airborne:true,
   requiredCar:'titan_monster',hasRival:false,hasRadar:false,speedLimitMph:100,
   defaultMood:'golden',sections:[{theme:'arena',name:'Quarry Playground',share:1}],
 });
 const layouts=new WeakMap();
 const smooth=v=>{const t=Math.max(0,Math.min(1,v));return t*t*(3-2*t);};
+export const FREESTYLE_DRAG=Object.freeze({startX:100,endX:4100,runoutEndX:4700,halfWidth:16,z:0});
+export function onFreestyleDrag(x,z){return x>=0&&x<=FREESTYLE_DRAG.runoutEndX&&Math.abs(z)<=FREESTYLE_DRAG.halfWidth;}
 
 export function freestyleLayout(course){
   if(layouts.has(course))return layouts.get(course);
@@ -68,7 +70,13 @@ export function buildFreestyleFeatures(course){
     f.practiceStructures.push(block);f.obstacles.push(block);
   }
   for(let i=0;i<10;i++){
-    const s=i/10*course.length,off=137+(i%3)*12,p=course.groundAt(s,off),halfX=43+i%3*7,halfZ=78+i%2*12,height=34+i%4*8;
+    let s=i/10*course.length,off=137+(i%3)*12;
+    const p=course.groundAt(s,off),halfX=43+i%3*7,halfZ=78+i%2*12,height=34+i%4*8;
+    // Retain the original climbable training massif, clear of the runway and
+    // neighboring hills. Preserve its orientation and support geometry.
+    if(i===0){p.x=360;p.z=-240;const pose=course.nearest(p.x,p.z);s=pose.s;off=pose.lateral;}
+    // Keep the outward-facing drag-strip entrance and its shoulders open.
+    if(p.x+Math.hypot(halfX,halfZ)>0&&Math.abs(p.z)<Math.hypot(halfX,halfZ)+45)continue;
     const mountain={id:`practice-quarry-${i}`,kind:'mountain',s,off,...p,halfX,halfZ,height,scale:[halfX,height,halfZ],shape:'ellipse',theme:'arena'};
     f.mountains.push(mountain);f.obstacles.push(mountain);
   }

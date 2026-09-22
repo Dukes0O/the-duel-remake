@@ -1,5 +1,26 @@
 # Play-test server and safe retirement plan
 
+## Desktop launcher promotion — September 22, 2026
+
+The user requested retirement of the old desktop-launched game. The desktop
+shortcut at `C:\Users\kyleb\OneDrive\Desktop\The Duel.lnk` targets the primary
+folder's `start-game.bat`. That folder was still at `0c2583c`, 17 commits behind
+the newer release. The primary checkout has now been fast-forwarded to `fc83e41`
+and its production build regenerated. The existing development server serves
+the promoted source at the unchanged `http://localhost:5174/` address.
+
+The launcher now uses Vite's `--open` option, so a failed server start cannot
+open an unrelated or outdated listener after a fixed delay. The user's icon,
+launcher path, and browser saves are preserved.
+
+The user subsequently authorized committing and publishing the camera, rival,
+and freestyle edits from `C:\Users\kyleb\.codex\worktrees\4555\the-duel-remake`.
+Those edits have been copied into the primary checkout, including all four new
+source/test files. The desktop launch now includes custom rival car, driver,
+and upgrade choices, directional cameras, and the freestyle drag strip.
+The older cutover notes below are historical and do not describe the current
+desktop launch path.
+
 ## Current update
 
 The user authorized moving the game server to this updated checkout and committing the work. Keep the same browser address, `http://localhost:5174/`, so the existing local careers remain available. Do not clear browser storage, change the hostname to `127.0.0.1`, or change the port for the live game: each is a different save location.

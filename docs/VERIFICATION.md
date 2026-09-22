@@ -1,6 +1,61 @@
 # Remake verification
 
+## Desktop release promotion — September 22, 2026
+
+Promoted the previously uncommitted rival, camera, and freestyle changes into
+the desktop-launched primary checkout. Production and QA builds pass. The live
+Chrome menu at `localhost:5174` exposes opponent car, driver, and upgrade choices;
+inspection did not change saved selections, credits, or ownership.
+
+Focused checks pass for custom rivals/playground (5,651), camera views (93),
+driver UI (66), drivers (1,669), freestyle geometry (55,080), physics expansion
+(12,371), build updates (194), camera clearance, saved race settings, drift
+leaderboards, and renderer reuse. The core suite with campaign matrices disabled,
+progression, progression integration, terrain, and circuit geometry also pass.
+The broad runner was stopped during the exhaustive shortcut suite after these
+checks; this promotion does not claim a completed full regression run.
+
+Updated the core camera-cycle assertion for all seven supported views and made
+the build-update source inspection tolerate Windows line endings. Kept update
+eligibility synchronization first in the render lifecycle.
+
+## Direct camera keys
+
+C selects front, B back, V right and X left. Directions follow the vehicle's
+heading and height; D remains steering. Camera-button cycling retains hood and
+wide views. Side cameras are kept within tunnel walls and below tunnel roofs.
+`test-camera-views.mjs`: 93 pose and real keyboard-dispatch checks passed.
+Camera clearance (356), App lifecycle (8), rear-view mirror (67), and production
+build also passed. No temporary files were created for this pass.
+
 Checkpoint: 20 September 2026. The latest checked update is described first. Later sections preserve earlier checkpoints; their counts and screenshots are historical evidence.
+
+## Playground nitro, speed strip and custom rivals
+
+- Fast core suite: 504 passed, zero failures (`DUEL_SKIP_CAMPAIGNS=1`).
+- Production and QA builds passed. Live `localhost:5174` serves build
+  `20260921032038-e791ed5ec86a`. Temporary QA output, logs, server and browser tab
+  were removed; production build and the live server were retained.
+
+- `test-playground-rivals.mjs`: 5,651 checks. Held practice nitro, ordinary-race
+  restrictions, input-only 4 km drives, maximum speeds and stopping runout,
+  CPU build/driver arithmetic, player isolation, restart/reload, ownership,
+  record separation and one complete input-only custom-rival race.
+- Stock Titan reached 209 km/h; factory-max Koenigsegg reached 647 km/h.
+  Both stayed on the strip and stopped within its 600 m braking zone.
+  Custom Medium rival race completed in 159.62 seconds with one player crash.
+- Playground geometry: 55,080 checks, 27,516 terrain triangles; scenery remains
+  12 draws / 91,972 submitted triangles. Off-road physics: 8,788 checks, including
+  actual mountain climbs. Physics expansion: 12,371 checks. Its driver assertion
+  now compares against the installed neutral build, including factory-max cars.
+- Existing saved settings, progression, progression integration, driver,
+  Koenigsegg driver, ghost, NPC yielding/routing, race integrity, prepared surface,
+  practice/route maps, course preview, App lifecycle, renderer readiness/reuse and
+  warmup suites passed. Full campaign/expansion matrices were not run for this pass.
+- Browser QA used isolated in-memory careers. Verified Koenigsegg/Axel selection,
+  factory-max UI, distinct live opponent model, drag entrance and sign legibility.
+  Refined the runway edge after screenshot review. No browser warnings/errors.
+  Short static scene sample: 60 FPS at the inspected view; not a whole-game guarantee.
 
 ## Koenigsegg completion driver — Axel Storm
 

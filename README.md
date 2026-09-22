@@ -18,7 +18,7 @@ Open **http://localhost:5174/**. Use Node.js 22.12 or later. Runtime assets are 
 | Steer | A / D or Left / Right | Left stick |
 | Boost | Space | Bottom face button |
 | Shift down / up with manual transmission | Q / E | Left / right bumper |
-| Camera | C | Top face button |
+| Camera | C front · B back · V right · X left | Top face button cycles views |
 | Pause / resume | Escape or P | Start |
 | Restart event | R | Pause menu |
 | Mute | M | Sound control |

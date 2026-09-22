@@ -3,6 +3,7 @@ import {normalizeCosmetics} from './paint-presets.js';
 import {normalizeRaceSettings} from './race-settings.js';
 import {DRIVERS,normalizeDrivers,getDriverState,normalizeDriverId,driverModifierSignature} from './drivers.js';
 import {normalizeCourseAccess} from './course-access.js';
+import {rivalSignature} from './rival-settings.js';
 
 export const PROFILE_KEY = 'the-duel-profile-v1';
 export const PLAYERS_KEY = 'the-duel-players-v2';
@@ -101,7 +102,7 @@ export function stageEventId(index){const stage=COURSE[index];return stage?Strin
 // Only archival validation supplies the second argument. Ordinary callers
 // always key new races against the current layout, regardless of payload extras.
 export function eventKey({stageIndex,seed=1989,laps}={},layoutVersion){const stage=COURSE[stageIndex];return stage?`${stageEventId(stageIndex)}|layout:${layoutVersion??stage.layoutVersion??1}|seed:${seed>>>0}|laps:${laps||stage.laps||2}`:'';}
-export function bestKey(result,layoutVersion,signature=driverModifierSignature(result.driverId,result.car)){return [eventKey(result,layoutVersion),result.car,result.mode||'duel',result.difficulty||'casual',result.cpuDifficulty||'easy',...(signature?[`driver:${signature}`]:[])].join('|');}
+export function bestKey(result,layoutVersion,signature=driverModifierSignature(result.driverId,result.car)){const rival=rivalSignature(result);return [eventKey(result,layoutVersion),result.car,result.mode||'duel',result.difficulty||'casual',result.cpuDifficulty||'easy',...(signature?[`driver:${signature}`]:[]),...(rival?[`rival:${rival}`]:[])].join('|');}
 function isCompletedRace(result){const stage=COURSE[result?.stageIndex];return !!stage&&!stage.practice&&result.completed===true&&result.abandoned!==true&&result.timeout!==true&&Number.isFinite(result.timeSec)&&result.timeSec>0&&Number.isInteger(result.laps)&&result.laps===(stage.laps||2)&&Object.hasOwn(CARS,result.car)&&(result.driverId==null||Object.hasOwn(DRIVERS,result.driverId));}
 export function isValidFinish(result){
   if(!isCompletedRace(result))return false;

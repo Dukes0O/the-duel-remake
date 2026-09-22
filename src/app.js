@@ -1,3 +1,4 @@
+import {CAMERA_KEYS,CAMERA_MODES} from './camera-views.js';
 // app.js — owns the Duel instance, the rAF/step loop, keyboard input, the
 // scripted autopilot, dev hooks, and window.__game. Rendering (render3d.js) and
 // DOM HUD (main.js) are views that read state and call these verbs.
@@ -184,7 +185,8 @@ export class App {
     this.cpuDifficulty=['easy','medium','hard'].includes(options.cpuDifficulty)?options.cpuDifficulty:this.cpuDifficulty;
     const mode=stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':options.mode??this._raceSettings.mode;
     const difficulty=options.difficulty??this.duel.state.difficulty;
-    this._rememberRaceSettings({eventId:stage.id,mode,difficulty,car,cpuDifficulty:this.cpuDifficulty,routeVariant:supportsRouteVariants(stage)?getRouteVariantForSeed(this.seed)?.id??this.menuRouteId:this.menuRouteId});
+    const rival=Object.hasOwn(options,'rival')?options.rival:this._raceSettings.rival;
+    this._rememberRaceSettings({eventId:stage.id,mode,difficulty,car,rival,cpuDifficulty:this.cpuDifficulty,routeVariant:supportsRouteVariants(stage)?getRouteVariantForSeed(this.seed)?.id??this.menuRouteId:this.menuRouteId});
     this.menuStage=stageIndex;this.menuCar=car;
     this.audio.unlock();
     this.audio.setPaused(false);
@@ -192,7 +194,7 @@ export class App {
     this._keyboardSteering.reset();
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
-    this.duel.startCampaign({...options,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
+    this.duel.startCampaign({...options,rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     return true;
   }
   nextStage(){
@@ -227,7 +229,7 @@ export class App {
   }
   restart() {
     const { mode, car, difficulty,cpuDifficulty,driverId } = this.duel.state;
-    this.startCampaign({ mode, car, difficulty,cpuDifficulty,driverId,seed:this.duel.state.seed,startStage:this._campaignStart||0 });
+    this.startCampaign({ mode, car, difficulty,cpuDifficulty,driverId,rival:this.duel.state.rivalSettings,seed:this.duel.state.seed,startStage:this._campaignStart||0 });
   }
   getMenuSeed(stageIndex=this.menuStage){return supportsRouteVariants(COURSE[stageIndex])?(this._customMenuSeed??getRouteVariant(this.menuRouteId).seed):1989;}
   // Menu views share these immutable-by-convention previews; racing always builds its own Course.
@@ -349,7 +351,7 @@ export class App {
     this._refreshPlayer();
     const payload={...result,runId:this.runId,stageIndex:state.stageIndex,won:result.won===true,completed:result.completed===true,
       timeSec:result.timeSec??result.stageTimeSec,laps:result.laps??state.completedLaps,seed:state.seed,car:state.car,driverId:state.driverId,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,
-      upgrades:{...state.upgrades},policeEscapes:result.policeEscapes??state.policeEscapes,
+      upgrades:{...state.upgrades},rival:state.rivalSettings,policeEscapes:result.policeEscapes??state.policeEscapes,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     const awarded=settleRace(this.profile,payload);
     if(awarded.awarded){
@@ -441,11 +443,14 @@ export class App {
     this.audio.setPaused(false);
     this.duel.emit({ menu: true });
   }
-  cycleCamera() {
-    const modes = ['chase', 'hood', 'wide'];
-    this.cameraMode = modes[(modes.indexOf(this.cameraMode) + 1) % modes.length];
+  setCamera(mode) {
+    if(!CAMERA_MODES.includes(mode))return this.cameraMode;
+    this.cameraMode=mode;
     this.duel.emit({ camera: this.cameraMode });
     return this.cameraMode;
+  }
+  cycleCamera() {
+    return this.setCamera(CAMERA_MODES[(CAMERA_MODES.indexOf(this.cameraMode)+1)%CAMERA_MODES.length]);
   }
 
   // Headless fixed-step advance (tests / scripted runs without rAF).
@@ -567,7 +572,7 @@ export class App {
       this.audio.unlock();
       if (!e.repeat) {
         if (e.code === 'Escape' || e.code === 'KeyP') this.togglePause();
-        if (e.code === 'KeyC') this.cycleCamera();
+        if (CAMERA_KEYS[e.code]) this.setCamera(CAMERA_KEYS[e.code]);
         if (e.code === 'KeyM') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
         if (e.code === 'KeyR' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
       }

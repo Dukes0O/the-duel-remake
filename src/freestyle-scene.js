@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {freestyleLayout,freestyleHeightAt} from './freestyle-course.js';
+import {freestyleLayout,freestyleHeightAt,FREESTYLE_DRAG} from './freestyle-course.js';
 import {addMountainLandscape,rockTexture} from './mountain-landscape.js';
+import {createPavedRoadMaterial} from './road-surface.js';
 
 // World-space ground avoids folded inside ribbons when the truck turns around
 // or crosses the oval's open centre. Render and physics sample the same hills.
@@ -51,12 +52,15 @@ export function addFreestyleScenery(world,course){
   if(!course.def.practice)return null;
   const group=new THREE.Group();group.name='Freestyle quarry training areas';
   const materials={wood:new THREE.MeshStandardMaterial({color:0x806142,roughness:.92}),steel:new THREE.MeshStandardMaterial({color:0x46505a,metalness:.55,roughness:.64}),
+    asphalt:createPavedRoadMaterial({asphalt:null}),
     concrete:new THREE.MeshStandardMaterial({color:0xb8aa8f,roughness:.96}),orange:new THREE.MeshStandardMaterial({color:0xd26c2d,roughness:.85}),
     lamp:new THREE.MeshStandardMaterial({color:0xffedc7,emissive:0xffdfa0,emissiveIntensity:1.4,roughness:.4})};
   const batches=new Map();
   const signParts=[];
+  const labels=[['FREESTYLE','NO CLOCK  /  UNLIMITED NITRO'],['CRUSH + CRAWL','SALVAGE CARS  /  ROCK GARDEN'],['BIG AIR','THREE JUMPS  /  SUMMIT CLIMB'],['DRAG STRIP','4 KM STRAIGHT  /  NITRO EVERYWHERE'],['SLOW DOWN','600 M BRAKING RUNOUT'],['1 KM','KEEP IT STRAIGHT'],['2 KM','FULL THROTTLE'],['3 KM','1 KM TO BRAKING ZONE']];
   function box(kind,size,x,y,z,heading=0){
     const geometry=new THREE.BoxGeometry(...size);geometry.rotateY(heading);geometry.translate(x,y,z);
+    if(kind==='asphalt'){const pos=geometry.attributes.position,uv=geometry.attributes.uv;for(let i=0;i<pos.count;i++)uv.setXY(i,pos.getZ(i)/5,pos.getX(i)/10);}
     if(!batches.has(kind))batches.set(kind,[]);batches.get(kind).push(geometry);
   }
   function local(feature,kind,size,across,y,along){
@@ -64,6 +68,25 @@ export function addFreestyleScenery(world,course){
     box(kind,size,feature.x+c*across+s*along,feature.y+y,feature.z-s*across+c*along,feature.heading);
   }
   let standIndex=0;
+  const drag=FREESTYLE_DRAG;
+  // Flat, open-ended speed runway. Thin paint is visual only: no hidden walls.
+  materials.asphalt.color.set(0x343a3d);
+  box('asphalt',[drag.runoutEndX,.02,drag.halfWidth*2],drag.runoutEndX/2,0,0);
+  for(const z of[-drag.halfWidth+1,drag.halfWidth-1])box('concrete',[drag.runoutEndX,.015,.16],drag.runoutEndX/2,.018,z);
+  for(let x=30;x<drag.runoutEndX;x+=40)box('concrete',[15,.015,.16],x,.018,0);
+  for(const x of[drag.startX,drag.endX])for(let row=0;row<2;row++)for(let lane=0;lane<16;lane++)box((lane+row)%2?'asphalt':'concrete',[1,.018,2],x+row,.022,-15+lane*2);
+  for(let x=drag.startX;x<=drag.endX;x+=200)for(const side of[-1,1]){
+    box('orange',[.7,1.2,.7],x,.6,side*(drag.halfWidth+3));
+    box('concrete',[.4,.02,2],x,.022,side*(drag.halfWidth-2));
+  }
+  for(let x=drag.endX+30;x<drag.runoutEndX;x+=30)for(const side of[-1,1])box('orange',[1.2,.018,10],x,.022,side*8);
+  for(const [x,row]of[[drag.startX,3],[drag.endX,4],[drag.startX+1000,5],[drag.startX+2000,6],[drag.startX+3000,7]]){
+    const board=new THREE.PlaneGeometry(32,5),uv=board.attributes.uv;
+    for(let i=0;i<uv.count;i++)uv.setY(i,(uv.getY(i)+labels.length-1-row)/labels.length);
+    board.rotateY(-Math.PI/2);board.translate(x,11,0);signParts.push(board);
+    for(const z of[-20,20])box('steel',[.3,14,.3],x,7,z);
+    box('steel',[.3,.4,40],x,14,0);
+  }
   for(const feature of course.features.practiceStructures){
     if(feature.practiceBlock){local(feature,'concrete',[1.2,1.1,6.4],0,.55,0);local(feature,Math.round(feature.s/40)%2?'orange':'steel',[.025,.5,6.2],-.607,.63,0);continue;}
     for(let row=0;row<6;row++){
@@ -79,7 +102,7 @@ export function addFreestyleScenery(world,course){
     }
     // One three-row atlas keeps the landmark boards legible with one draw.
     const board=new THREE.PlaneGeometry(15,4),uv=board.attributes.uv;
-    for(let i=0;i<uv.count;i++)uv.setY(i,(uv.getY(i)+2-standIndex)/3);
+    for(let i=0;i<uv.count;i++)uv.setY(i,(uv.getY(i)+labels.length-1-standIndex)/labels.length);
     board.rotateY(feature.heading-Math.PI/2);
     board.translate(feature.x-Math.cos(feature.heading)*7,feature.y+7,feature.z+Math.sin(feature.heading)*7);
     signParts.push(board);standIndex++;
@@ -98,8 +121,7 @@ export function addFreestyleScenery(world,course){
     const canvas=typeof document!=='undefined'?document.createElement('canvas'):null;
     let texture=null;
     if(canvas){
-      canvas.width=1024;canvas.height=768;const ctx=canvas.getContext('2d');
-      const labels=[['FREESTYLE','NO CLOCK  /  JUST DRIVE'],['CRUSH + CRAWL','SALVAGE CARS  /  ROCK GARDEN'],['BIG AIR','THREE JUMPS  /  SUMMIT CLIMB']];
+      canvas.width=1024;canvas.height=256*labels.length;const ctx=canvas.getContext('2d');
       for(const [i,[title,detail]]of labels.entries()){
         const y=i*256;ctx.fillStyle='#17292b';ctx.fillRect(0,y,1024,256);ctx.fillStyle='#e88c43';ctx.fillRect(0,y,20,256);ctx.fillRect(1004,y,20,256);
         ctx.textAlign='center';ctx.fillStyle='#fff0cb';ctx.font='bold 86px sans-serif';ctx.fillText(title,512,y+121);

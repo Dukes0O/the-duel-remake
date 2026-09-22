@@ -1,5 +1,23 @@
 # Specialist drivers
 
+## Customize the CPU rival
+
+Rival Duel setup includes a collapsible **Customize your rival** section. Choose
+any opponent car, driver and a shared upgrade level from stock to level 3. The
+Koenigsegg is always factory-maxed. These CPU choices do not grant ownership to
+the player; player car and driver unlock rules are unchanged. Settings survive
+player switching, reloads and race restarts. Time trials, practice and events
+without a rival hide this section and do not spawn an opponent.
+
+The chosen car is rendered and supplies the CPU's collision shell, acceleration,
+brakes and grip. Upgrades and matching driver modifiers affect its build; custom
+rivals can spend nitro on clear straights. CPU difficulty still controls driving
+skill. The default remains a stock matching car and Club Driver with legacy pace.
+Custom rival bests and leaderboard rows are separate from the default matchup.
+Credits follow the existing CPU difficulty rules.
+
+## Player drivers
+
 Every local player starts with **Club Driver**, which changes nothing. Six fictional specialists can be unlocked with earned credits in the garage. A seventh specialist, **Axel Storm**, is earned automatically with the Koenigsegg. Selecting an unlocked driver is a separate, free action. Unlocks and selection belong to that player. Drivers cannot be bought or changed during a race.
 
 | Driver | Cost | Matching cars | Passive skill |

@@ -14,6 +14,18 @@ These capabilities apply outside the playground too. They intentionally change o
 
 ## Untimed practice
 
+The playground now has unlimited nitro for every admitted vehicle. Hold Space
+on the quarry floor, ramps, in the air or on the paved strip. It can launch from
+rest, but does not fire while braking or reversing. Normal races retain their
+existing tank drain, refill and surface rules.
+
+Turn right from the starting area for a 4 km two-lane speed strip, plus a 600 m
+marked braking runout. Distance gantries mark each kilometre; the map indicates
+the entrance and distance along the strip. It is part of the same untimed
+playground, not a separate paid event or a reward-producing drag race. The
+original training massif has moved clear of the entrance; its shape and climb
+limits remain intact. Scene pieces are material-batched (12 scenery draws).
+
 **Titan Freestyle Playground costs 900 CR** in the course garage. Any owned car can enter an owned course; Titan is recommended for crushing and climbing. Course access and drivers remain separate credit purchases. See [course access and save migration](COURSE_ACCESS.md).
 
 The quarry contains three jump sizes, twelve empty salvage cars in three lanes, seven progressively larger rocks, a 44 m summit challenge and a broad mountain perimeter. Stands, zone boards, edge markers and the map identify activities. There is no timer, race finish, lap target, police, rival, credit reward, personal best or leaderboard. Crashes recover and practice cannot farm career milestones. Restart and Main Menu remain single-click actions.

@@ -187,7 +187,7 @@ equal(inert.calls.length,0,'an already-disposed UI installs no active checker');
 
 // Inspect the production markup and execute its actual rendering callback, not
 // a second hand-written UI implementation. No browser or WebGL is required.
-const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8').replaceAll('\r\n','\n');
 const menu=main.slice(main.indexOf('<main id="menu-screen"'),main.indexOf('</main>'));
 const card=menu.match(/<aside id="build-update"[\s\S]*?<\/aside>/)?.[0];
 check(!!card&&/aria-label="Game update" hidden/.test(card),'update card starts hidden inside the menu, not the race HUD');

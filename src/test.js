@@ -299,7 +299,9 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   eq(s.mode, 'timetrial', 'restart retains race mode');
   ok(!s.paused && !app.audio.paused, 'restart exits pause');
   app.cycleCamera(); eq(app.cameraMode, 'hood', 'camera switches to hood');
-  app.cycleCamera(); app.cycleCamera(); eq(app.cameraMode, 'chase', 'camera modes cycle back to chase');
+  for (const mode of ['wide', 'front', 'back', 'right', 'left', 'chase']) {
+    app.cycleCamera(); eq(app.cameraMode, mode, `camera cycles to ${mode}`);
+  }
   app.returnToMenu(); eq(s.status, 'menu', 'return-to-menu stops the campaign');
   eq(app.audio.context, null, 'headless app never creates an audio context');
 }
