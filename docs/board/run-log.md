@@ -1,5 +1,17 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — five-merge full check held for balance
+
+- On exact integration commit `731a075`, `npm ci --offline` and the 160-suite
+  full code gate passed in 327.67 seconds. All 11 available private browser
+  scenarios passed. The 64-player origin budget and short master-versus-
+  integration frame pacing comparison passed.
+- The combat balance `--check` failed: stock/max UFO gains exceed four seconds
+  at every difficulty, and the standard race gives Medium/Hard only one CPU
+  hit each. The art-intake command named in the playbook is absent. No release
+  was made. See `docs/board/checks/2026-09-23-731a075.md` for measurements and
+  fix proposals.
+
 ## 2026-09-23 PDT — RFX-05 input contexts merged
 
 - Reviewed and cherry-picked `8bc9d35` as `881759a`. The exact integration
