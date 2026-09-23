@@ -1,5 +1,20 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — final held-lane reviews
+
+- Audio-forward `2f5e3cc` passed its final 170-suite lane, 162 replay checks,
+  build and all ten measured sound checks in a fresh private browser race.
+  Remaining cues and human listening keep it off integration.
+- The independently reviewed FOOT-00 throwaway spike `4cc9556` supports
+  course-lookup movement. Its code will not merge; FOOT-01/03 still need the
+  production body, car-centered boundary and target-aligned aim.
+- Charged CPU crossbow `8d9bc24` passed independent review, 93-suite lane,
+  build, private browser smoke and the unchanged 162 replay comparisons.
+  Fixed-seed balance retains wins 8/6/2 and CPU hits 1/2/10; only the six
+  existing UFO rows fail. The branch stays held by the balance stop line.
+- A spec review recorded open live-cutover, autonomous-profile and beta-gate
+  wording decisions in `overnight-handoff-2026-09-23.md`.
+
 ## 2026-09-23 PDT — overnight handoff prepared
 
 - The latest exact integration gameplay commit is `a3ad4ee`; docs are at
