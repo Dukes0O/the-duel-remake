@@ -10,9 +10,10 @@ player_facing: yes
 
 ## What changed
 
-- When `duel.featureFlags.enabled('wasteland2')` is true, bombs and crossbow
-  bolts inherit the firing car's forward, reverse and lateral world velocity.
-  Flag-off bomb carry and bolt launch stay on their previous paths.
+- When the race is Wasteland and `duel.featureFlags.enabled('wasteland2')` is
+  true, bombs and crossbow bolts inherit the firing car's forward, reverse
+  and lateral world velocity. Flag-off bomb carry and bolt launch stay on
+  their previous paths.
 - Player and CPU bolts lead their chosen moving target at launch. A flagged
   bolt tracks that same target during flight, turning at most 90 degrees per
   second within 12 degrees of its launch bearing. Bombs fly straight after
@@ -30,16 +31,20 @@ player_facing: yes
 - `node tools/test-combat.mjs`: 66 checks passed.
 - `node tools/test-combat-field-shields.mjs`: passed.
 - `git diff --check` and staged diff check: passed.
-- `node tools/test-combat-projectiles.mjs`: 3/7 pass. The four red cases are
+- `node tools/test-combat-projectiles.mjs`: 4/8 pass. The four red cases are
   player bolt carry, later-CPU bolt carry, player lead and in-flight turn.
   This base does not have CMB-01's `Duel.featureFlags` constructor override
   or the `wasteland2` catalog entry, so the new branch remains disabled even
   when the independent test passes the override to `new Duel`.
+- A direct ordinary-mode control injects an enabled development switch and
+  a stray targeted bolt. It confirms that neither ordinary weapon launch
+  nor in-flight guidance activates. This test passes on the current base
+  without changing either expected replay hash.
 - A test-only command assigned `Duel.prototype.featureFlags` with
   `enabled('wasteland2') === true` and ran the six flagged gameplay cases by
   name. All 6/6 passed, including carry, lead, bounded turn, straight bombs
   and swept collision at 30, 60 and 144 FPS. This did not edit production or
-  test files. The ordinary and flag-off hash case passes in the direct 3/7
+  test files. The ordinary and flag-off hash case passes in the direct 4/8
   run; the approved full replay suite has not run on this branch.
 - The worktree uses an ignored junction to integration's installed
   `node_modules`; no package was installed.

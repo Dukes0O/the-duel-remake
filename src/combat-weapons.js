@@ -182,7 +182,8 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         target.combatWrecking)) return false;
     const count = weapon === 'bomb' ? T.bomb.baseCount + T.bomb.countPerLevel * level : 1;
     if (combat.projectiles.length + count > T.projectileLimit) return false;
-    const modernProjectile = duel.featureFlags?.enabled('wasteland2') === true;
+    const modernProjectile = state.mode === 'wasteland' &&
+      duel.featureFlags?.enabled('wasteland2') === true;
     // Preserve the old bolt launch when the switch is off. Bombs already
     // inherit the thrower's velocity; the new rule extends this to bolts.
     const carry = weapon === 'bomb' || modernProjectile ? velocity(actor, at) : null;

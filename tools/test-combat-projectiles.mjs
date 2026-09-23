@@ -3,7 +3,8 @@ import test from 'node:test';
 import {createHash} from 'node:crypto';
 import {Duel} from '../src/game.js';
 import {DRIVE} from '../src/config.js';
-import {fireWeapon, stepCombat} from '../src/combat.js';
+import {createCombat, fireWeapon, stepCombat} from '../src/combat.js';
+import {stepProjectiles} from '../src/combat-projectiles.js';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
 
 const T = COMBAT_TUNING;
@@ -189,6 +190,29 @@ test('a fast bolt crosses a later CPU car without tunneling at 30, 60 and 144 FP
     assert.equal(state.combat.projectiles.includes(projectile), false,
       `${fps} FPS consumes the bolt on contact`);
   }
+});
+
+test('ordinary races cannot fire or guide a stray bolt with the development switch enabled', () => {
+  const {duel, state} = field({mode: 'duel'});
+  duel.featureFlags = {enabled: name => name === 'wasteland2'};
+  state.combat = createCombat({});
+  place(state.opponents[1], 350);
+  assert.equal(fireWeapon(duel, 'crossbow'), false,
+    'an ordinary race cannot launch a combat bolt');
+  const from = duel.course.groundAt(state.s, state.lateral);
+  const speed = T.crossbow.baseSpeed;
+  const projectile = {kind: 'crossbow', enemy: false, level: 0,
+    x: from.x, y: from.y + 3, z: from.z,
+    vx: Math.sin(from.heading) * speed, vy: 0,
+    vz: Math.cos(from.heading) * speed, age: 0,
+    targetIndex: 1, launchBearing: from.heading};
+  state.opponents[1].lateral = state.opponents[1].prevLateral = 100;
+  state.combat.projectiles.push(projectile);
+  const before = {vx: projectile.vx, vz: projectile.vz};
+  stepProjectiles(duel, 1 / 60);
+  assert.ok(state.combat.projectiles.includes(projectile), 'the stray bolt remains in flight');
+  close(projectile.vx, before.vx, 'ordinary bolt x direction');
+  close(projectile.vz, before.vz, 'ordinary bolt z direction');
 });
 
 function replayDigest(mode, wasteland2) {

@@ -132,7 +132,8 @@ export function stepProjectiles(duel, dt) {
   const state = duel.state;
   const combat = state.combat;
   const live = [];
-  const guidedBolts = duel.featureFlags?.enabled('wasteland2') === true;
+  const guidedBolts = state.mode === 'wasteland' &&
+    duel.featureFlags?.enabled('wasteland2') === true;
   for (const projectile of combat.projectiles) {
     const old = {x: projectile.x, z: projectile.z};
     if (guidedBolts) steerBolt(duel, projectile, dt);
