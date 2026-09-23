@@ -76,7 +76,7 @@ and raises Medium UFO-policy wins to 8/10 against a 6/10 baseline.
 | `codex/wasteland-save-forward` (`be0a552`) | Save-code formatting with identical parsed code, historical save roundtrips, 93-suite lane, build and browser smoke. | Balance stop line. |
 | `codex/hud-contrast` (`39326d9`) | Compact HUD contrast and weapon-label polish; visual review, 168-suite lane, replay/build and private browser checks passed. | Balance stop line. |
 | `codex/wasteland-feel-forward` (`d09c346`) | Real feel and audio diagnostics on current gameplay; 170-suite lane and build passed. | Diagnostic tooling awaits integration review. |
-| `codex/wasteland-audio-forward` (`7e547e1`) | Partial spatial audio, hit placement and corrected QA capture tail; 170-suite lane/build, cue timing and rev tracking pass. | One far blast measures 5.554–5.946 dB over engine against a 6 dB target; remaining sounds and human listening open. |
+| `codex/wasteland-audio-forward` (`2f5e3cc`) | Partial spatial audio and hit placement; corrected QA capture and pitch analysis. Final 170-suite lane/build and all ten measured sound checks pass in a private race. | Remaining weapon and on-foot sounds and headphone/speaker listening open; balance stop line. |
 | `codex/wasteland-cpu-ufo` (`953f77d`) | Physical CPU UFO pickup/use; 169-suite lane and replay/build pass. | Hard no-weapon wins drop below target, and UFO gain remains red. |
 
 All these branches are isolated; a passing lane check does not mean a card is

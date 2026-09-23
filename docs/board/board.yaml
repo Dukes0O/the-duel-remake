@@ -147,7 +147,7 @@ tasks:
     size: M
     needs: [FND-08]
     status: review
-    note: "Forward branch d09c346 measures real feel and audio races on current gameplay; 170-suite lane and build pass. The separate audio-forward branch 7e547e1 passes timed cues but its far-blast contrast remains marginal; integration review awaits the balance stop line."
+    note: "Forward branch d09c346 measures real feel and audio races on current gameplay; 170-suite lane and build pass. Audio-forward 2f5e3cc passes 170-suite lane and all ten measured sound checks in a fresh private race; listening and remaining cues are open. Integration review awaits the balance stop line."
     spec: "SPEC.md, task TOOL-02"
   - id: FND-10
     title: "Save fixtures and storage budget"
