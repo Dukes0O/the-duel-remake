@@ -4,6 +4,17 @@ Read the latest entry before resuming. Add one entry when a card starts,
 reaches review, merges, is parked, or is released. Keep the board status
 in sync with this log.
 
+## 2026-09-22 PDT — Save fixtures integrated; storage target open
+
+- FND-10 fixture commits `716cfc1` and `ff00d7d` were cherry-picked as
+  `d5cc701` and `5a447bd`. Seven historical save shapes passed 246 checks
+  on integration. The decimal budget model uses 3.67 MB for one stated case;
+  four valid archived ghosts project to 4.08 MB. The card stays building.
+- FND-11 backup work started in a separate SAVE lane. No real saves or live
+  folder were read or changed.
+- FND-12 setup audit found an invalid sample profile and unimplemented
+  feel/audio commands. A zero-prompt copy-only dry run is still needed.
+
 ## 2026-09-22 PDT — FND-06 runner merged
 
 - Cherry-picked `d127709` and review fix `77bfbc5` as `ee27207` and

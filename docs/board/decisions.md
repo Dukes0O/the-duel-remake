@@ -4,6 +4,19 @@ Standing decisions D1-D7 are approved in [SPEC.md](../../SPEC.md), section 15.
 This log is for choices the spec does not settle. Record the choice, reason,
 and how to reverse it before continuing.
 
+## 2026-09-22 PDT — FND-10 storage unit and scope
+
+- Decision: Interpret the 4 MB budget as 4,000,000 bytes of localStorage
+  keys and values across the whole game origin. Count UTF-16 storage bytes.
+  Keep gallery images and automatic backups in IndexedDB, as the spec says.
+- Reason: The spec allocates gallery images and backups to IndexedDB and
+  allows up to 60 gallery images per player; a 4 MB limit on every storage
+  system combined would contradict that design. Four valid archived ghosts
+  already push the modeled localStorage origin to 4.08 MB, so the hard budget
+  still needs a lossless storage change after career backup is in place.
+- How to reverse: Change the budget definition and rerun the seven save
+  fixtures and the storage model before moving any production save data.
+
 ## 2026-09-22 PDT — FND-05 base
 
 - Decision: Build the integration branch from the isolated green foundation

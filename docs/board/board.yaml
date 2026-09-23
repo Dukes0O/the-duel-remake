@@ -119,7 +119,8 @@ tasks:
     lane: OPS
     size: S
     needs: [FND-05]
-    status: ready
+    status: building
+    note: "Setup audit found the sample profile invalid, no installed named profile and missing feel/audio tools. A copy-only dry run remains required."
     spec: "SPEC.md, task FND-12"
   - id: TOOL-02
     title: "Feel lab and audio checks"
@@ -135,7 +136,8 @@ tasks:
     lane: SAVE
     size: M
     needs: [FND-05]
-    status: ready
+    status: building
+    note: "Seven historical fixtures and a storage boundary test are integrated at 5a447bd. Four valid archived ghosts exceed 4 MB; a lossless storage design remains required."
     spec: "SPEC.md, task FND-10"
   - id: BUG-01
     title: "Arrow-key driving layout"
