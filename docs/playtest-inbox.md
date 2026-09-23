@@ -13,6 +13,11 @@ with a high-speed hit, then try a car with a different body style. Small trees
 and signposts, along with traffic cars, can be broken after you turn on
 **Menu → Experimental → Enable early features**.
 The desktop shortcut now opens an already running game on a second click.
+Listen on headphones for a rival hit or blast moving across the sound field;
+tell us if a nearby hit feels too quiet or a distant one too loud. If you miss
+a checkpoint in traffic, check whether the retry puts you near the gate with
+space to drive. The normal menu still starts one rival; three-car combat
+support is in progress.
 Please include the car, approximate speed, course, and difficulty with a note.
 
 ## Notes from players

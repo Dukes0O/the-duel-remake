@@ -43,6 +43,9 @@ async function measure(context, quality) {
 }
 
 export async function run(context) {
+  await context.command('Emulation.setDeviceMetricsOverride', {
+    width: 1280, height: 720, deviceScaleFactor: 1, mobile: false,
+  });
   const reports=[];
   for(const quality of ['high','performance'])reports.push(await measure(context,quality));
   await writeFile(join(context.outputDir,'frame-pacing.json'),JSON.stringify({reports},null,2)+'\n');

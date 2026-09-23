@@ -25,11 +25,13 @@ the mix peaked at −1.532 dBFS with no clipping or measured clicks. This
 recording did not include a landing or ordinary crash. The remaining new
 weapon and on-foot cues, plus headphone and speaker review, remain open.
 
-A private browser driving sample used the real HUD and rear-view mirror for
-30 settling frames and 120 measured intervals per quality. High and
+A private browser driving sample at 1280 × 720 used the real HUD and rear-view
+mirror for 30 settling frames and 120 measured intervals per quality. High and
 Performance both measured 16.7 ms median and 16.8 ms p95, with no interval
-over 33 ms. This short sample is a regression check, not a long-session or
-all-hardware performance guarantee.
+over 33 ms, matching the previous live build's p95 on this computer. An
+earlier 1280 × 800 sample during the long browser sweep had six High-mode
+intervals over 33 ms; a separate repeat at that size had one. These short
+samples do not establish long-session or all-hardware performance.
 
 ## Armored duel and tactical UFO — September 23, 2026
 
