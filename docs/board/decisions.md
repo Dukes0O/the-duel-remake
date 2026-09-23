@@ -60,6 +60,17 @@ and how to reverse it before continuing.
 - How to reverse: Tune the two values in `src/wasteland-tuning.js`, update the
   CMB-07 tests, and rerun the crossbow hit-rate and Wasteland balance checks.
 
+## 2026-09-23 PDT — SAVE-01 completed combat loss reward
+
+- Decision: A completed armored Wasteland loss can earn the positive hit and
+  wreck bonus, within the spec's 25% base-win cap. It does not debit saved
+  credits. Abandoned or timed-out events earn no bonus.
+- Reason: The approved design rewards combat actions and says saved credits
+  are never taken by combat. A player who fights well but loses should still
+  see that bounded reward. CMB-03 records actions; SAVE-01 alone changes money.
+- How to reverse: Change SAVE-01 eligibility and rerun save migration,
+  settlement-idempotence, result and balance tests before release.
+
 ## Entry format
 
 - Date and card:

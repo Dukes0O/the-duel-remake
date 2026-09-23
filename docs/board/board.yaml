@@ -551,3 +551,35 @@ tasks:
     behavior_change: no
     note: "Reference and runtime art integrated as 3961bdd and b99216f. All catalog entries pass intake at 15.57/32 MB; 172/172 merge suites, build and private High/Performance smoke pass. Assets are prepared but not yet drawn in game. Review plating UV repetition and effect fade timing when VIS consumes them."
     spec: "SPEC.md sections 3.10 and 12.2, task ART-A"
+  - id: CMB-03
+    title: "Combat scoring and results"
+    wave: 3
+    lane: CMB
+    size: M
+    needs: [CMB-01]
+    status: blocked
+    owns: [src/combat-scoring.js, src/wasteland-tuning.js, tools/test-combat-scoring.mjs, tools/scenarios/combat-results.mjs]
+    hooks: [src/combat-armor.js, src/combat-projectiles.js, src/sim-contacts.js, src/combat-weapons.js, src/game.js, src/sim-results.js, src/screen-results.js, src/screen-results.css]
+    helpers: [test_author, reviewer, browser_qa, balance_analyst]
+    flag: wasteland2
+    behavior_change: yes
+    acceptance:
+      - "Count hits and actual armor removed from player-owned weapon or ram impacts on any of three CPU cars; exclude shielded, traffic, self and CPU-owned damage."
+      - "Count wrecks caused and taken once per incident; do not credit scenery or self wrecks as player-caused."
+      - "Track a bounded combo and combat style score once, reset live counters per stage, and snapshot hitsLanded, wrecksCaused, wrecksTaken, knockdowns, damageDealt, bestCombo and combatStyleScore on finish or timeout."
+      - "Show combat stats on results at desktop and 390x844; ordinary and flag-off modes keep their result, score, credit and replay behavior."
+      - "Focused tests cover overkill, simultaneous bomb victims, all three opponents, ownership, frame-rate parity and one-time wreck recovery; private browser, balance and frame checks pass."
+    note: "Read-only scope proposal completed. CMB-03 records and presents combat results; SAVE-01 owns credit bonus and persistence. Knockdowns stay zero until on-foot combat is implemented."
+    spec: "SPEC.md section 3.2, task CMB-03"
+  - id: SAVE-01
+    title: "Combat credit bonus"
+    wave: 3
+    lane: SAVE
+    size: S
+    needs: [CMB-03]
+    status: blocked
+    helpers: [test_author, save_guardian, reviewer]
+    flag: wasteland2
+    behavior_change: yes
+    note: "Completed combat wins and losses earn a capped positive hit/wreck bonus; neither debits saved credits. Abandonment and timeout earn no bonus. Owns progression, result normalization, idempotence, save fixtures and storage-budget checks after CMB-03 provides validated fields."
+    spec: "SPEC.md section 3.2, task SAVE-01"
