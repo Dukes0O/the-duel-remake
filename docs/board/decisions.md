@@ -49,6 +49,17 @@ and how to reverse it before continuing.
   commit before feature work; preserve the foundation commits as a separate
   branch.
 
+## 2026-09-23 PDT — CMB-07 initial aim bounds
+
+- Decision: For the first aimed-bolt implementation, cap homing at 12 degrees
+  from launch direction and turn at no more than 90 degrees per second.
+  Bombs inherit thrower motion and may lead at launch, but do not steer later.
+- Reason: Section 3.2 calls for a small homing cone but gives no angle or turn
+  rate. These bounds are narrow enough to keep misses and counterplay while
+  allowing a bolt to track a car that changes lane during flight.
+- How to reverse: Tune the two values in `src/wasteland-tuning.js`, update the
+  CMB-07 tests, and rerun the crossbow hit-rate and Wasteland balance checks.
+
 ## Entry format
 
 - Date and card:
