@@ -4,12 +4,13 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ## Play
 
-```sh
-npm install
-npm run dev
-```
-
-Open **http://localhost:5174/**. Use Node.js 22.12 or later. Runtime assets are local: no account, API key or remote audio service is required. The existing Windows launcher remains available.
+On Windows, click **The Duel** desktop icon or run `start-game.bat` from this
+folder. It opens **http://localhost:5174/**. A second click opens the game
+already running there; close the first launcher's console to stop its server.
+Use Node.js 22.12 or later. The launcher installs locked dependencies and
+builds the game if needed. Runtime assets are local: no account, API key or
+remote audio service is required. `npm run dev` is for source development when
+no game server is using port 5174.
 
 | Action | Keyboard | Standard gamepad |
 | --- | --- | --- |
