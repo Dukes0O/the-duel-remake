@@ -53,6 +53,8 @@ removing or relaxing any independent assertion.
 | `node tools/test-armored-vehicle-impact.mjs` | Passed |
 | `node tools/test-contact-damage.mjs` | 195 checks passed |
 | `node tools/test-combat-field-shields.mjs` | Passed |
+| `npm run test:lane` | 187/187 passed in 499.66 s; 162 pinned replay fingerprints and 213 scripted multi-car checks passed |
+| `npm run build` | Passed; existing large-chunk advisory only |
 | `git diff --check` | Passed |
 
 The private `tools/scenarios/combat-ramming.mjs` fixture uses disposable
