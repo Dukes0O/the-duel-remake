@@ -30,3 +30,26 @@ The full TOOL-02 sound loop is still open. Capture more natural landings and pic
 ## Behavior and test changes
 
 No production simulation, audio or save behavior changed. The browser harness gains `record-race`; its parsing test adds the new command. New regression tests cover the feel report and analyzer. Race fingerprints are unchanged.
+
+## Current-source forward port
+
+The isolated `codex/wasteland-feel-forward` branch applies these tools to
+integration `41a6374`, preserving its later browser runner and board status.
+Focused feel and analyzer tests pass. Eight seeded paired Pacific Canyon races
+per difficulty now report Wasteland all-weapon player wins of Easy 8/8,
+Medium 7/8 and Hard 7/8. The tool fires star, bomb, crossbow and UFO on a
+12-second schedule; these wins are **not** the no-weapon balance samples.
+Ordinary Duel win rates were 8/8, 8/8 and 2/8. Mean first combat was 8.03,
+7 and 5 seconds for Easy, Medium and Hard. Hard had 5.13 lead changes and
+5.38 CPU hits on the player per race. The 7/8 Hard all-weapon win rate is a
+further reason to hold the current UFO behavior for redesign. The tool does
+not make that policy win rate an approved acceptance assertion.
+The exact forward-port lane gate passed 170/170 suites in 322.08 seconds and
+the production build passed. A private memory-only browser race recorded 781
+real-time frames, 22 events and six WAV tracks with zero browser warnings or
+errors. The analyzer correctly exited red on the current integration audio:
+shift and hit onset could not be isolated, engine/rev correlation was 0.179,
+28 click samples were found, blast contrast was about 3 dB below the engine,
+and panning, distance and variety targets failed. Peak was −2.481 dBFS with
+zero clipped samples; stress mixing and loop-gap checks passed. This measures
+the old audio implementation, not the separate held AUD-01 polish branch.
