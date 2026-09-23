@@ -49,3 +49,23 @@ trip, including archived rows.
 Independent save and record review is requested before integration. This
 refactor changes presentation of the code only, so any changed race or record
 fingerprint is a blocker.
+
+## Independent review and current-source forward port
+
+An independent reviewer regenerated both changed JavaScript files from their
+parent with cached Prettier 3.9.6 and the recorded options. The outputs match
+this commit byte for byte. Parsed code structures match after removing only
+source positions and formatter metadata; comment text and order also match.
+This covers literal storage keys, exports, control flow and object property
+order. The reviewer reran historical save, progression, leaderboard and OLD-02
+record checks with no findings.
+
+The isolated `codex/wasteland-save-forward` branch applies the same commit to
+current integration `41a6374`. Neither source file changed between the
+original base and that integration source, so cherry-pick was conflict-free.
+On the forward branch, seven historical shapes and 246 load/round-trip checks,
+27 progression checks, 33 drift leaderboard checks, and the 64-player origin
+budget all pass. The 93-suite lane gate passed in 200.73 seconds, production
+build passed, and private High/Performance smoke captured four screenshots
+with zero warnings or errors. This remains an isolated, reviewed lane while
+the combat balance stop line is red.
