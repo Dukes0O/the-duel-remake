@@ -57,6 +57,12 @@ automatic wins. The existing 30 s traffic-crash rule and the later armor/wreck
 model in section 3.2 of the spec should be considered together. BUG-04 and
 CPU UFO use in BUG-07 remain open until that choice is made.
 
+A separate BUG-07 review found that collecting a CPU crossbow only denies the
+player that pickup and adds feedback: the next scheduled bolt is identical to
+an uncharged bolt. Make that charge useful on the existing scheduled attack,
+then compare charged and uncharged shots and rerun hit-rate and win-rate gates.
+Do not add extra attacks outside the 10/7/5-second schedule.
+
 **Proposed direction for discussion, not a passing design:** make the race
 UFO a one-use tactical exchange with a tight forward-progress cap, preserved
 speed and the already-tested safe landing. Keep long forward warps for untimed

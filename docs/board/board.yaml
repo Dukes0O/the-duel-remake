@@ -246,7 +246,7 @@ tasks:
     size: S
     needs: [BUG-06]
     status: building
-    note: "Exact 10/7/5 s attacks and Easy pace/10-degree aim integrated through 2077364. Physical Medium/Hard pickups merged as 505639e; close-range bomb use corrected as a3ad4ee. Wins 8/6/2 and CPU hits 1/2/10 pass; CPU UFO use remains open. Reviewed Wasteland replay, 160-suite exact merge, build and private smoke pass."
+    note: "Exact 10/7/5 s attacks and Easy pace/10-degree aim integrated through 2077364. Physical Medium/Hard pickups merged as 505639e; close-range bomb use corrected as a3ad4ee. Wins 8/6/2 and CPU hits 1/2/10 pass. CPU UFO use remains open; a collected CPU crossbow currently fires the same shot as an uncharged one and needs a meaningful, balance-checked effect. Reviewed Wasteland replay, 160-suite exact merge, build and private smoke pass."
     spec: "SPEC.md, task BUG-07"
   - id: BUG-14
     title: "No legacy police in combat races"
