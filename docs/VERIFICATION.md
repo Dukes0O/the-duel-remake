@@ -1,5 +1,28 @@
 # Remake verification
 
+## Mad Max roadside collisions — September 23, 2026
+
+Player feedback on the live build showed that traffic and signposts stayed in
+place after a hit. CMB-08 makes traffic, cacti, smaller trees, signposts and
+chevrons move out of the road below half the striking car's current upgraded
+top speed. At or above that closing speed, they break apart with pooled debris
+and leave the scene. Both outcomes slow the car by at most 25 mph without
+taking player armor, a crash slot or race time. Large fixed scenery stays
+solid. A traffic hit now calls out `TRAFFIC SHOVED CLEAR` or
+`TRAFFIC OBLITERATED`. The `roadside-destruction` switch is on by default in
+Mad Max Duel after Kyle's play test; Wasteland 2 remains in development.
+
+The independent CMB-08 tests began red against the old behavior. The final
+focused checks pass 23/23, and two lane passes each completed 189/189 suites.
+Private High and Performance screenshots show a low-speed traffic car on the
+nearest shoulder and high-speed traffic and sign debris. A changed browser
+scenario confirms the new HUD message, visible debris and no armor, crash or
+time loss; the old scenario's player-crash assertion no longer applies to the
+approved rule. First debris rendering measured 10.20 ms against a 7.70 ms
+nearby High baseline and 7.10 ms against 7.50 ms in Performance. These short
+measurements do not establish long-session frame pacing. The final combined
+release gate is recorded separately after it runs.
+
 ## Opponent field, checkpoint clearance, and combat sound — September 23, 2026
 
 The simulation now keeps up to three CPU cars in an opponents list. The normal

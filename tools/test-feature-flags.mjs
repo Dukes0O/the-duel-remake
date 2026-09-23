@@ -11,21 +11,23 @@ const storage = {
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 
-check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES['roadside-destruction'] === 'beta'
+check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES['roadside-destruction'] === 'on'
   && FEATURE_STATES.wasteland2 === 'dev' && Object.keys(FEATURE_STATES).length === 3,
-  'career backup and Wasteland 2 stay in QA while roadside destruction is available in Experimental');
+  'career backup and Wasteland 2 stay in QA while roadside destruction is on by default');
 const productionData = new Map();
 const productionStorage = {
   getItem: key => productionData.get(key) ?? null,
   setItem: (key, value) => productionData.set(key, value),
 };
 const productionFlags = createFeatureFlags({ storage: productionStorage, qa: false });
-check(!productionFlags.enabled('roadside-destruction'), 'production starts with roadside destruction switched off');
+check(productionFlags.enabled('roadside-destruction'), 'production starts with roadside destruction switched on');
 check(!productionFlags.enabled('wasteland2'), 'production starts with Wasteland 2 switched off');
-check(productionFlags.betaFeatures().includes('roadside-destruction'), 'Experimental lists roadside destruction');
+check(!productionFlags.betaFeatures().includes('roadside-destruction'), 'Experimental no longer lists released roadside destruction');
 productionFlags.setExperimental(true);
 check(productionFlags.enabled('roadside-destruction') && !productionFlags.enabled('career-backup'),
-  'Experimental enables roadside destruction without enabling QA-only career backup');
+  'Experimental does not alter released roadside destruction or QA-only career backup');
+productionFlags.setExperimental(false);
+check(productionFlags.enabled('roadside-destruction'), 'turning off Experimental does not disable roadside destruction');
 const release = createFeatureFlags({ catalog, storage, search: '?flags=photo,crew', qa: false });
 check(!release.enabled('photo') && !release.enabled('crew'), 'release ignores QA URL switches');
 check(release.enabled('arena') && !release.enabled('unknown'), 'only known on switches are active');

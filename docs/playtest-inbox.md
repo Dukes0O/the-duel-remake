@@ -10,8 +10,9 @@ In Mad Max Duel, try a rear hit on the rival, a traffic collision, falling
 cacti, a missed checkpoint, and a short UFO jump after the first checkpoint.
 The weapon bar previews the UFO landing in metres. Compare a low-speed hit
 with a high-speed hit, then try a car with a different body style. Small trees
-and signposts, along with traffic cars, can be broken after you turn on
-**Menu → Experimental → Enable early features**.
+and signposts, along with traffic cars, now move aside on a lighter hit and
+break apart on a hard hit. The cutoff is half the striking car's upgraded top
+speed; this works without an Experimental setting.
 The desktop shortcut now opens an already running game on a second click.
 Listen on headphones for a rival hit or blast moving across the sound field;
 tell us if a nearby hit feels too quiet or a distant one too loud. If you miss
@@ -25,7 +26,7 @@ Please include the car, approximate speed, course, and difficulty with a note.
 | Date | Player note | Event or screen | Status |
 | --- | --- | --- | --- |
 | 2026-09-23 | Armor felt too fragile; traffic and small roadside objects should break, rear hits should shove rivals, idle off-route bouncing and distant checkpoint resets felt rough, and UFO landing gains were unclear. | Mad Max Duel | Released in the live build on September 23. Human feel review remains, including one Hard race where later traffic contact outweighs the UFO's immediate route gain. |
-| 2026-09-23 | Cars and signposts still look unmoved after a Mad Max collision. Below half the upgraded car's top speed, the hit should slow the car and knock the obstacle clear. At or above that speed, it should destroy the obstacle. | Mad Max Duel, live build on port 5174 | CMB-08 in progress. Independent tests confirm the current build does not meet this rule. CMB-02 separately adds rival shoves and local wrecks. |
+| 2026-09-23 | Cars and signposts still look unmoved after a Mad Max collision. Below half the upgraded car's top speed, the hit should slow the car and knock the obstacle clear. At or above that speed, it should destroy the obstacle. | Mad Max Duel, live build on port 5174 | Fixed on the release branch; awaiting the final release check and live update. CMB-02 separately adds rival shoves and local wrecks behind the Wasteland 2 development switch. |
 
 ## Weekly summary
 

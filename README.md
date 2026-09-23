@@ -56,10 +56,12 @@ events keep their existing rules. Drivers and cars retain their saved upgrades.
 
 Mad Max Duel gives each car an impact limit based on its top speed and armor.
 Closing speed matters: a modest rear hit can shove the rival off line, while a
-hard head-on impact can still wreck both vehicles. Cacti fall on contact.
-Turn on **Menu → Experimental → Enable early features** to wreck traffic cars
-and break smaller trees and signposts. They stay down for the race. Large
-trees, rocks and walls remain solid.
+hard head-on impact can still wreck both vehicles. Traffic cars, cacti, small
+trees, signposts and chevrons move aside when struck below half the striking
+car's upgraded top speed. At or above that closing speed, they break apart.
+Either hit slows the car but does not cost armor, a crash slot or race time.
+Large trees, rocks and walls remain solid. This roadside behavior is on in
+Mad Max Duel without an Experimental setting.
 Combat blasts and hits now pan toward their source and fade with distance.
 Wreck recovery has a short two-second race penalty. A missed checkpoint retries
 near that checkpoint. The UFO jump never moves the rival or skips a checkpoint.

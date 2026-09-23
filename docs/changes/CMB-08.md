@@ -1,6 +1,6 @@
 ---
 task: CMB-08
-status: building
+status: integrated
 kind: feature
 flag: roadside-destruction-or-wasteland2
 player_facing: yes
@@ -42,7 +42,9 @@ keep their separate contact rules.
   it added no objects, materials or collision-time allocations.
 - `game.js` now reads `this.featureFlags` for the existing roadside switch.
   Either `roadside-destruction` or `wasteland2` enables the new path in
-  Wasteland. This branch does not promote either switch to default-on.
+  Wasteland. The integration release preparation promotes
+  `roadside-destruction` to on after Kyle's live play-test feedback;
+  `wasteland2` remains development-only.
 
 ## Tests and review
 
