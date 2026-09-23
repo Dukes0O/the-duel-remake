@@ -11,6 +11,8 @@ still fail, so the composite full check and live release remain held.
 | Exact integration merge gate | 160/160 suites in 166.12 s. |
 | Production build | Passed; existing large render-chunk advisory remains. |
 | Private High/Performance smoke | Four screenshots, zero warnings and zero errors. |
+| Browser scenarios | 11/11 passed; 13 screenshots, zero warnings and zero errors. Archive: `C:\Users\kyleb\AppData\Local\Temp\duel-browser-suite-1s7pJG\summary.json`. |
+| Art intake | Passed; all seven Batch A images remain planned and absent. |
 | Combat balance | 21 policy races and 30 baseline races in 56.79 s; only six UFO gain failures. |
 
 | Measure | Easy | Medium | Hard | Target |

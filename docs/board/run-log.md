@@ -8,7 +8,8 @@
   races. Wins remain 8/6/2 and CPU hits 1/2/10.
 - The changed lane passed 93/93 suites. Exact integration passed 160/160
   merge suites in 166.12 seconds, build and private High/Performance browser
-  smoke with four screenshots and zero console issues. The exact balance run
+  smoke with four screenshots and zero console issues. All 11 private browser
+  scenarios and art intake also pass on this source. The exact balance run
   still fails only the six UFO-gain rows; Hard stock gain returned from 57.87
   to the pre-pickup 22.11 seconds. See
   `checks/2026-09-23-a3ad4ee-balance-hold.md`.
