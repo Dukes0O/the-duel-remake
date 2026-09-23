@@ -28,7 +28,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
  const pickupColors={ufo:0x64ffce,bomb:0xff8c16,crossbow:0x6cbcff,star:0xffe16b};
  const pickupMaterials=Object.fromEntries(Object.entries(pickupColors).map(([key,color])=>[key,new THREE.MeshBasicMaterial({color})]));
  const pickups=Array.from({length:4},()=>{const g=new THREE.Group(),box=new THREE.Mesh(armorGeometry,materials.gold),halo=new THREE.Mesh(ring,materials.gold);box.scale.setScalar(1.8);halo.scale.setScalar(2.3);g.add(box,halo);group.add(g);return {g,box,halo};});
- const rigs = [0, 1].map(index => {
+ const rigs = [0, 1, 2, 3].map(index => {
   const bumper = new THREE.Group();
   bumper.name = `combat-bumper-${index}`;
   const bar = new THREE.Mesh(armorGeometry, materials.iron);
@@ -65,7 +65,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   group.add(bumper, bow, shield);
   return { bumper, bar, spikes, bow, shield, ball, halo };
  });
- const bindings = [null, null];
+ const bindings = [null, null, null, null];
 
  function rigMounts(index, rig) {
   return [
@@ -110,13 +110,13 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   const active = !!c && s.status !== 'menu';
   group.visible = active;
   rigs.forEach((rig, index) => {
-   const actor = index ? s.rival : s;
-   const vehicle = index ? vehicles.rival : vehicles.player;
+   const actor = index ? index === 1 ? s.opponents?.[0] ?? s.rival : s.opponents?.[index-1] : s;
+   const vehicle = index ? index === 1 ? vehicles.rival : vehicles.extraOpponents?.[index-2]?.mesh : vehicles.player;
    bindVehicle(index, vehicle);
    const visible = active && !!actor && !actor.crushed && !!vehicle;
    rig.bumper.visible = visible;
    rig.bow.visible = visible;
-   rig.shield.visible = visible && (index ? c.rivalShield : c.shield) > 0;
+   rig.shield.visible = visible && (index ? index === 1 ? c.rivalShield : actor.combatShield : c.shield) > 0;
    if (rig.shield.visible) rig.shield.rotation.y = s.stageTimeSec * 2;
   });
   if (!active) return;

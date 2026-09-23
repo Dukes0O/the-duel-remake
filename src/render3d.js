@@ -309,7 +309,7 @@ export function attachRenderer(host, app) {
       lamps.children.forEach((lamp, i) => { lamp.visible = Math.floor(now / 130) % 2 === i; });
     }
     effects.update({ p: pp, course, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now });
-    explosion.update(pp,st,st.paused?0:dt);combatScene.update(app.duel,{player,rival});
+    explosion.update(pp,st,st.paused?0:dt);combatScene.update(app.duel,{player,rival,extraOpponents});
     if(!st.paused)chickens.update(menu?{status:'menu',s:172,collectedFlocks:[]}:st,menu?now/1000:st.totalTimeSec);
     animateScene(world,now/1000);
     syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);

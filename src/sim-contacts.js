@@ -8,6 +8,14 @@ import { combatCrashThresholdMph, rearRamResponse } from './vehicle-impact.js';
 import { breakableScenery, sceneryIdentity, trafficDestruction, startTrafficWreck } from './destructibles.js';
 import { GLANCING_WALL_NORMAL_FRACTION, clamp, freshDamageZones } from './sim-common.js';
 
+function combatShieldForActor(state, actor) {
+  if (actor === state) return state.combat?.shield;
+  // The original one-rival rule applied rivalShield to all non-player actors,
+  // including traffic. Preserve that race behavior until a separate fix.
+  if (state.opponents.length <= 1 || actor === state.rival) return state.combat?.rivalShield;
+  return state.opponents.includes(actor) ? actor.combatShield : 0;
+}
+
 export function _vehicleSpec(actor) {
   // Upgrades change handling and power, never the collision shell or mass.
   const car = CARS[actor === this.state ? this.state.car : actor.car || (actor === this.state.rival ? this.state.car : null)] || {};
@@ -353,7 +361,7 @@ export function _scrape(zone, impactMph) {
 }
 
 export function _crushVehicle(actor, reason, impactMph) {
-  if (actor.crushed || (actor===this.state?this.state.combat?.shield:this.state.combat?.rivalShield)>0) return;
+  if (actor.crushed || combatShieldForActor(this.state, actor)>0) return;
   const s = this.state, point = this.course.groundAt(actor.s, actor.lateral);
   actor.crushed = true; actor.crushDamage = clamp(.65 + impactMph / 160, .65, 1);
   actor.speedMph = 0; actor.pushVelocity = 0; actor.braking = true;
@@ -373,7 +381,7 @@ export function _crushVehicle(actor, reason, impactMph) {
 }
 
 export function _dentVehicle(actor, zone, impactMph) {
-  if (impactMph <= 1 || actor.damageCooldown > 0 || (actor===this.state?this.state.combat?.shield:this.state.combat?.rivalShield)>0) return;
+  if (impactMph <= 1 || actor.damageCooldown > 0 || combatShieldForActor(this.state, actor)>0) return;
   actor.damageZones ??= freshDamageZones();
   const combatImpact = this.state.mode === 'wasteland';
   actor.damageZones[zone] = Math.min(5, actor.damageZones[zone] +
