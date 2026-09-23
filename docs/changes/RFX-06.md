@@ -1,6 +1,6 @@
 ---
 task: RFX-06
-status: review
+status: merged
 kind: rendering-refactor
 flag: none
 player_facing: no
@@ -45,3 +45,9 @@ Review follow-up: a scene object now has one registry owner. A second owner
 cannot silently take it from another car. Retiring a car also releases every
 attachment in the shared registry before the car is disposed, including pieces
 owned by systems other than combat. Other cars keep their attachments.
+
+The reviewed commits were cherry-picked as `b9a1c7e` and `b9e40c5`. The exact
+integration state passed 151/151 merge suites in 196.19 seconds and the
+production build. Private High/Performance smoke and the four-pose browser
+scenario each passed with zero warnings or errors. The reviewer and integrator
+both inspected the pose screenshots; no detached rig was visible.

@@ -1,5 +1,18 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — RFX-06 attachment registry merged
+
+- Independent review found duplicate object ownership and incomplete car
+  retirement. Both were fixed and tested before cherry-picking `2f9bfdb` and
+  `c28d919` as `b9a1c7e` and `b9e40c5`.
+- The exact integration state passed 151 merge suites in 196.19 seconds and
+  the production build. Private High/Performance smoke and the focused slide,
+  spin, tumble and jump browser scenario passed with zero warnings or errors.
+  The pose screenshots were inspected for detached rigs.
+- RFX-05 and RFX-07 reached review on isolated branches; FOOT-00 started as a
+  throwaway spike. TOOL-02 reached review with measurement failures filed for
+  later sound and feel work.
+
 ## 2026-09-23 PDT — BUG-05 bomb momentum merged
 
 - Reviewed and cherry-picked `bcb4272` as `660119a`. The exact integration

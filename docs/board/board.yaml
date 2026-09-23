@@ -128,7 +128,8 @@ tasks:
     lane: TOOL
     size: M
     needs: [FND-08]
-    status: ready
+    status: review
+    note: "Tooling branch 45379dc measures real feel and audio races; 157-suite lane gate passes. Audio and balance metrics expose remaining failures; integration review pending."
     spec: "SPEC.md, task TOOL-02"
   - id: FND-10
     title: "Save fixtures and storage budget"
@@ -306,3 +307,39 @@ tasks:
     status: building
     note: "Renderer ghost lifecycle finding merged as 10645f2; 147-suite merge gate, build, private High/Performance smoke and focused ghost-lifecycle browser scenario pass. Discovery continues."
     spec: "SPEC.md, task DISC"
+  - id: RFX-05
+    title: "Input contexts"
+    wave: 2
+    lane: UI
+    size: M
+    needs: [BUG-01, BUG-10]
+    status: review
+    note: "Branch 8bc9d35 passed 61-suite lane gate and build. Exact integration browser smoke pending."
+    spec: "SPEC.md, task RFX-05"
+  - id: RFX-06
+    title: "Car attachments registry"
+    wave: 2
+    lane: VIS
+    size: M
+    needs: [BUG-08]
+    status: merged
+    note: "Merged as b9a1c7e and b9e40c5; 151-suite gate, build, private browser smoke and four-pose scenario pass. Unique attachment ownership and full car retirement tested."
+    spec: "SPEC.md, task RFX-06"
+  - id: RFX-07
+    title: "Unpack save code"
+    wave: 2
+    lane: SAVE
+    size: M
+    needs: [FND-10]
+    status: review
+    note: "Branch 5c71c88 formats progression and leaderboard with no intended logic change; 85-suite lane gate passed. Independent record review pending."
+    spec: "SPEC.md, task RFX-07"
+  - id: FOOT-00
+    title: "On-foot movement spike"
+    wave: 2
+    lane: CMB
+    size: M
+    needs: [FND-05]
+    status: building
+    note: "Throwaway spike in an isolated branch; no production game wiring."
+    spec: "SPEC.md, task FOOT-00"
