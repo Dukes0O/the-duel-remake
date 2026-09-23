@@ -4,10 +4,11 @@
 
 The Wasteland build uses each selected car's top speed,
 armor and target mass to set its combat crash threshold. Closing speed drives
-vehicle damage and rear-hit force. Traffic can wreck and leave the road; a hard
-head-on hit can still crash the player. Cacti fall on contact. The
-`roadside-destruction` switch adds falling small trees and signposts in the
-Experimental build. Broken objects no longer block the car during that race.
+vehicle damage and rear-hit force. With **Menu → Experimental** enabled,
+traffic can wreck and leave the road, though a hard head-on hit can still
+crash the player. Cacti fall on contact in all modes. The
+`roadside-destruction` switch also adds falling small trees and signposts.
+Broken objects no longer block the car during that race.
 The car stops bouncing while stationary beyond the road edge. A missed
 checkpoint now retries just before the missed gate. Combat recovery carries a
 two-second clock penalty and a short control lock; ordinary race rules remain

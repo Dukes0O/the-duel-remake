@@ -56,9 +56,10 @@ events keep their existing rules. Drivers and cars retain their saved upgrades.
 
 Mad Max Duel gives each car an impact limit based on its top speed and armor.
 Closing speed matters: a modest rear hit can shove the rival off line, while a
-hard head-on impact can still wreck both vehicles. Traffic cars can be wrecked.
-Cacti fall on contact; in Experimental mode, smaller trees and signposts also
-break and stay down for the race. Large trees, rocks and walls remain solid.
+hard head-on impact can still wreck both vehicles. Cacti fall on contact.
+Turn on **Menu → Experimental → Enable early features** to wreck traffic cars
+and break smaller trees and signposts. They stay down for the race. Large
+trees, rocks and walls remain solid.
 Wreck recovery has a short two-second race penalty. A missed checkpoint retries
 near that checkpoint. The UFO jump never moves the rival or skips a checkpoint.
 
