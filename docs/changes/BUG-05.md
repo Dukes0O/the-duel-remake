@@ -1,3 +1,11 @@
+---
+task: BUG-05
+status: merged
+kind: combat-fix
+flag: none
+player_facing: yes
+---
+
 # BUG-05 bombs inherit vehicle momentum
 
 Bomb Storm now adds the thrower's forward and sideways vehicle velocity to each bomb in the ring. This applies to player and rival bombs. Blast strength against the thrower is one-quarter of normal, as required by the combat design; damage to rivals and traffic is unchanged.
@@ -7,3 +15,9 @@ The focused probe uses memory-only `Duel` state at exactly 48, 97, 193 and 320 k
 `node tools/test-bomb-momentum.mjs`, `node tools/test-combat.mjs` (67 checks), `node tools/test-weapon-upgrades.mjs`, and `npm run build` pass. No old assertion was weakened. Race rules remain deterministic from seed and inputs; no saves or runtime dependencies changed.
 
 The clean lane gate, `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`, passed all 79 suites in 250.56 s.
+
+The reviewed change was cherry-picked as `660119a`. The exact integration
+state passed 151/151 merge suites in 320.77 seconds and the production build.
+Private High/Performance browser smoke also passed with zero warnings or
+errors. The UFO balance card remains open; this bomb fix is independently
+testable.

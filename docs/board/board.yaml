@@ -207,7 +207,8 @@ tasks:
     lane: CMB
     size: S
     needs: [BUG-04]
-    status: blocked
+    status: merged
+    note: "Merged as 660119a after 151-suite gate, build and private browser smoke. Own-blast speed loss at 48/97/193/320 km/h is 0/0/0/4.36%; UFO balance remains open."
     spec: "SPEC.md, task BUG-05"
   - id: BUG-06
     title: "A crossbow that hits"

@@ -1,5 +1,14 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — BUG-05 bomb momentum merged
+
+- Reviewed and cherry-picked `bcb4272` as `660119a`. The exact integration
+  state passed 151 merge suites in 320.77 seconds and the production build.
+  Private High/Performance smoke passed with zero warnings or errors.
+- Bomb rings inherit the thrower's forward and sideways speed. The quarter
+  strength self-blast leaves 0%, 0%, 0%, and 4.36% speed loss at the four
+  required speeds, below the 15% limit. BUG-04 remains open independently.
+
 ## 2026-09-23 PDT — OLD-02 shared best-time retirement merged
 
 - Independently reviewed the backup-before-delete sequence, durable storage
