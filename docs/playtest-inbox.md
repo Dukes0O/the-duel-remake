@@ -19,7 +19,7 @@ Please include the car, approximate speed, course, and difficulty with a note.
 
 | Date | Player note | Event or screen | Status |
 | --- | --- | --- | --- |
-| 2026-09-23 | Armor felt too fragile; traffic and small roadside objects should break, rear hits should shove rivals, idle off-route bouncing and distant checkpoint resets felt rough, and UFO landing gains were unclear. | Mad Max Duel | Implemented in the isolated integration build. Human feel review remains, including one Hard race where later traffic contact outweighs the UFO's immediate route gain. |
+| 2026-09-23 | Armor felt too fragile; traffic and small roadside objects should break, rear hits should shove rivals, idle off-route bouncing and distant checkpoint resets felt rough, and UFO landing gains were unclear. | Mad Max Duel | Released in the live build on September 23. Human feel review remains, including one Hard race where later traffic contact outweighs the UFO's immediate route gain. |
 
 ## Weekly summary
 
