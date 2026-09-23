@@ -57,11 +57,14 @@ automatic wins. The existing 30 s traffic-crash rule and the later armor/wreck
 model in section 3.2 of the spec should be considered together. BUG-04 and
 CPU UFO use in BUG-07 remain open until that choice is made.
 
-A separate BUG-07 review found that collecting a CPU crossbow only denies the
-player that pickup and adds feedback: the next scheduled bolt is identical to
-an uncharged bolt. Make that charge useful on the existing scheduled attack,
-then compare charged and uncharged shots and rerun hit-rate and win-rate gates.
-Do not add extra attacks outside the 10/7/5-second schedule.
+A separate BUG-07 review found that the integrated CPU crossbow pickup only
+denies the player that box and adds feedback: its scheduled bolt is identical
+to an uncharged one. Isolated branch `codex/wasteland-cpu-charged-bolt`
+(`8d9bc24`) now powers one scheduled bolt after a real pickup, with no extra
+attack. The independent review and 93-suite lane, replay, build, private
+browser and fixed-seed balance checks pass except the same six UFO gain rows.
+It remains held off integration. The test places a bolt at contact to compare
+impact; real-race hit probability needs later play testing.
 
 **Proposed direction for discussion, not a passing design:** make the race
 UFO a one-use tactical exchange with a tight forward-progress cap, preserved
@@ -85,6 +88,7 @@ and raises Medium UFO-policy wins to 8/10 against a 6/10 baseline.
 | `codex/wasteland-feel-forward` (`d09c346`) | Real feel and audio diagnostics on current gameplay; 170-suite lane and build passed. | Diagnostic tooling awaits integration review. |
 | `codex/wasteland-audio-forward` (`2f5e3cc`) | Partial spatial audio and hit placement; corrected QA capture and pitch analysis. Final 170-suite lane/build and all ten measured sound checks pass in a private race. | Remaining weapon and on-foot sounds and headphone/speaker listening open; balance stop line. |
 | `codex/wasteland-cpu-ufo` (`953f77d`) | Physical CPU UFO pickup/use; 169-suite lane and replay/build pass. | Hard no-weapon wins drop below target, and UFO gain remains red. |
+| `codex/wasteland-cpu-charged-bolt` (`8d9bc24`) | A collected CPU crossbow strengthens one scheduled bolt; 93-suite lane, 162 replays, build and private smoke pass. Fixed-seed wins/hits stay 8/6/2 and 1/2/10. | Balance stop line; needs broader play testing for real-race pickup value. |
 
 All these branches are isolated; a passing lane check does not mean a card is
 released or ready to merge. The art reference board is also isolated. The
