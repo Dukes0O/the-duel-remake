@@ -1,5 +1,17 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — OLD-03 and test-debt fixes merged
+
+- Reviewed OLD-03's assertion audit and merged it as `518c99d`. The audit found
+  two tests that could pass without reading a saved record or switching players.
+- Reviewed and merged TST-01/TST-02 as `ed46beb`. The new tests save and reload
+  real route and named-player records. Mutation checks prove the assertions
+  catch dropped and shared best times; production source was not changed.
+- Exact integration state: 152/152 merge suites in 308.44 seconds, production
+  build passed, and private High/Performance browser smoke passed with four
+  screenshots and zero warnings or errors. The prior full-check balance hold
+  remains in force, so only its fix work can merge until that gate is green.
+
 ## 2026-09-23 PDT — five-merge full check held for balance
 
 - On exact integration commit `731a075`, `npm ci --offline` and the 160-suite
