@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "seed": 1989,
+  "stepHz": 120,
+  "durationTicks": 1200,
+  "framesPerSecond": [30, 60, 144],
+  "inputs": [
+    {"atTick": 0, "throttle": 1, "brake": 0, "steer": 0, "boost": false},
+    {"atTick": 420, "throttle": 1, "brake": 0, "steer": 0.12, "boost": true},
+    {"atTick": 540, "throttle": 1, "brake": 0, "steer": 0, "boost": false},
+    {"atTick": 660, "throttle": 1, "brake": 0, "steer": -0.12, "boost": false},
+    {"atTick": 780, "throttle": 1, "brake": 0, "steer": 0, "boost": false},
+    {"atTick": 900, "throttle": 0.6, "brake": 0.3, "steer": 0, "boost": false},
+    {"atTick": 1020, "throttle": 1, "brake": 0, "steer": 0, "boost": false}
+  ],
+  "weaponInputs": [
+    {"atTick": 480, "weapon": "star"},
+    {"atTick": 720, "weapon": "crossbow"}
+  ],
+  "cases": [
+    {"id": "pacific-canyon-duel", "eventId": "pacific-canyon", "category": "duel", "mode": "duel", "car": "falcone_f42"},
+    {"id": "pacific-canyon-time-trial", "eventId": "pacific-canyon", "category": "time trial", "mode": "timetrial", "car": "falcone_f42"},
+    {"id": "pacific-canyon-mad-max", "eventId": "pacific-canyon", "category": "Mad Max", "mode": "wasteland", "car": "falcone_f42"},
+    {"id": "high-country-duel", "eventId": "high-country", "category": "duel", "mode": "duel", "car": "stuttgart_959s"},
+    {"id": "harbor-highlands-duel", "eventId": "harbor-highlands", "category": "duel", "mode": "duel", "car": "falcone_f42"},
+    {"id": "titan-arena-duel", "eventId": "titan-arena", "category": "duel", "mode": "duel", "car": "titan_monster"},
+    {"id": "midnight-chase", "eventId": "midnight-chase", "category": "chase", "mode": "duel", "car": "banshee_muscle"},
+    {"id": "ridge-rally-duel", "eventId": "ridge-rally", "category": "duel", "mode": "duel", "car": "dusthawk_rally"},
+    {"id": "titan-stunt-trial", "eventId": "titan-stunt-trial", "category": "stunt", "mode": "duel", "car": "titan_monster"},
+    {"id": "neon-drift-trial", "eventId": "neon-drift-trial", "category": "drift", "mode": "duel", "car": "banshee_muscle"},
+    {"id": "timberline-rush", "eventId": "timberline-rush", "category": "checkpoint rush", "mode": "duel", "car": "dusthawk_rally"},
+    {"id": "eifel-crown-duel", "eventId": "eifel-crown", "category": "duel", "mode": "duel", "car": "falcone_f42"},
+    {"id": "alpine-serpent-duel", "eventId": "alpine-serpent", "category": "duel", "mode": "duel", "car": "falcone_f42"},
+    {"id": "azure-riviera-duel", "eventId": "azure-riviera", "category": "duel", "mode": "duel", "car": "falcone_f42"},
+    {"id": "red-mesa-duel", "eventId": "red-mesa", "category": "duel", "mode": "duel", "car": "falcone_f42"},
+    {"id": "neon-docks-duel", "eventId": "neon-docks", "category": "duel", "mode": "duel", "car": "falcone_f42"},
+    {"id": "cloudbreak-skyway-duel", "eventId": "cloudbreak-skyway", "category": "duel", "mode": "duel", "car": "falcone_f42"},
+    {"id": "titan-freestyle-practice", "eventId": "titan-freestyle", "category": "practice", "mode": "duel", "car": "titan_monster"}
+  ]
+}

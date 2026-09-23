@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "fixtureVersion": 1,
+  "stepHz": 120,
+  "fingerprints": {
+    "pacific-canyon-duel": {
+      "30": "d33ea7edbfa47cf7eddbf075fcddd91b2f406f238363450cc0afaa2c15eb1977",
+      "60": "d33ea7edbfa47cf7eddbf075fcddd91b2f406f238363450cc0afaa2c15eb1977",
+      "144": "d33ea7edbfa47cf7eddbf075fcddd91b2f406f238363450cc0afaa2c15eb1977"
+    },
+    "pacific-canyon-time-trial": {
+      "30": "004e2b34e6f633e766665364cf53dee982ac94aef0580df648560bd9919ac9db",
+      "60": "004e2b34e6f633e766665364cf53dee982ac94aef0580df648560bd9919ac9db",
+      "144": "004e2b34e6f633e766665364cf53dee982ac94aef0580df648560bd9919ac9db"
+    },
+    "pacific-canyon-mad-max": {
+      "30": "3bd83970b113198294e35c9192c525a639ecf069d2ac2bd86842cb836ef2295c",
+      "60": "3bd83970b113198294e35c9192c525a639ecf069d2ac2bd86842cb836ef2295c",
+      "144": "3bd83970b113198294e35c9192c525a639ecf069d2ac2bd86842cb836ef2295c"
+    },
+    "high-country-duel": {
+      "30": "94383d457b71f3dc0c96801c4297f40c6d3fb8c02e14df6ecfe970c7e9c8814d",
+      "60": "94383d457b71f3dc0c96801c4297f40c6d3fb8c02e14df6ecfe970c7e9c8814d",
+      "144": "94383d457b71f3dc0c96801c4297f40c6d3fb8c02e14df6ecfe970c7e9c8814d"
+    },
+    "harbor-highlands-duel": {
+      "30": "ba02ffcedaa3ec4b1f7781167bc5cd08bd66d1f4b9eeec1b2cf8595d8db429eb",
+      "60": "ba02ffcedaa3ec4b1f7781167bc5cd08bd66d1f4b9eeec1b2cf8595d8db429eb",
+      "144": "ba02ffcedaa3ec4b1f7781167bc5cd08bd66d1f4b9eeec1b2cf8595d8db429eb"
+    },
+    "titan-arena-duel": {
+      "30": "70118ff66807ae808b469f599ef16447bab85231a935a63fcd8ed6555a638628",
+      "60": "70118ff66807ae808b469f599ef16447bab85231a935a63fcd8ed6555a638628",
+      "144": "70118ff66807ae808b469f599ef16447bab85231a935a63fcd8ed6555a638628"
+    },
+    "midnight-chase": {
+      "30": "327af83fea4aabee9b06745adf00ce0046b355843b99182e4c9915583b717926",
+      "60": "327af83fea4aabee9b06745adf00ce0046b355843b99182e4c9915583b717926",
+      "144": "327af83fea4aabee9b06745adf00ce0046b355843b99182e4c9915583b717926"
+    },
+    "ridge-rally-duel": {
+      "30": "58535e5a13d35cd4ef16e35d740c52b4ae3e77666074ea4a16878be8d20eadef",
+      "60": "58535e5a13d35cd4ef16e35d740c52b4ae3e77666074ea4a16878be8d20eadef",
+      "144": "58535e5a13d35cd4ef16e35d740c52b4ae3e77666074ea4a16878be8d20eadef"
+    },
+    "titan-stunt-trial": {
+      "30": "3137351729b8e9efec5ecb5f33f17031ae2d9cc7f3b4b86f12fc59b274eb720f",
+      "60": "3137351729b8e9efec5ecb5f33f17031ae2d9cc7f3b4b86f12fc59b274eb720f",
+      "144": "3137351729b8e9efec5ecb5f33f17031ae2d9cc7f3b4b86f12fc59b274eb720f"
+    },
+    "neon-drift-trial": {
+      "30": "664fa1f675e210191e0779e9d53694390128db204f80a8915919fc5af1f28b7f",
+      "60": "664fa1f675e210191e0779e9d53694390128db204f80a8915919fc5af1f28b7f",
+      "144": "664fa1f675e210191e0779e9d53694390128db204f80a8915919fc5af1f28b7f"
+    },
+    "timberline-rush": {
+      "30": "560f995aac61b61f363171002d4c6bc021dd9c1e7e17d44b86ede405b24acae6",
+      "60": "560f995aac61b61f363171002d4c6bc021dd9c1e7e17d44b86ede405b24acae6",
+      "144": "560f995aac61b61f363171002d4c6bc021dd9c1e7e17d44b86ede405b24acae6"
+    },
+    "eifel-crown-duel": {
+      "30": "4fdced0726292ed17d801c47038ea54c40239d93f4d4fcb57e96ec517d4447f6",
+      "60": "4fdced0726292ed17d801c47038ea54c40239d93f4d4fcb57e96ec517d4447f6",
+      "144": "4fdced0726292ed17d801c47038ea54c40239d93f4d4fcb57e96ec517d4447f6"
+    },
+    "alpine-serpent-duel": {
+      "30": "a3f669f8e05f53ee23749210d813c8de185ce0f54398dcd2fc9a97a57f87757d",
+      "60": "a3f669f8e05f53ee23749210d813c8de185ce0f54398dcd2fc9a97a57f87757d",
+      "144": "a3f669f8e05f53ee23749210d813c8de185ce0f54398dcd2fc9a97a57f87757d"
+    },
+    "azure-riviera-duel": {
+      "30": "ccb07e59e468a69336f92fd1d2791e44692879419b546510f5077a95ce154207",
+      "60": "ccb07e59e468a69336f92fd1d2791e44692879419b546510f5077a95ce154207",
+      "144": "ccb07e59e468a69336f92fd1d2791e44692879419b546510f5077a95ce154207"
+    },
+    "red-mesa-duel": {
+      "30": "3cd67df9d48b6a6ffd7a22dcf8090b5d79576e3aeb5f0b2d81654c799e01cb25",
+      "60": "3cd67df9d48b6a6ffd7a22dcf8090b5d79576e3aeb5f0b2d81654c799e01cb25",
+      "144": "3cd67df9d48b6a6ffd7a22dcf8090b5d79576e3aeb5f0b2d81654c799e01cb25"
+    },
+    "neon-docks-duel": {
+      "30": "e1cb6c6cc8d661f02e98eb5dcd92ee9ed7e7fdbddff63a9d3594b56e4c4e21ec",
+      "60": "e1cb6c6cc8d661f02e98eb5dcd92ee9ed7e7fdbddff63a9d3594b56e4c4e21ec",
+      "144": "e1cb6c6cc8d661f02e98eb5dcd92ee9ed7e7fdbddff63a9d3594b56e4c4e21ec"
+    },
+    "cloudbreak-skyway-duel": {
+      "30": "7d5e3c22c70d8a2677dc33141e3cfa9a89105a951fdeab4a40cdbf95254966ff",
+      "60": "7d5e3c22c70d8a2677dc33141e3cfa9a89105a951fdeab4a40cdbf95254966ff",
+      "144": "7d5e3c22c70d8a2677dc33141e3cfa9a89105a951fdeab4a40cdbf95254966ff"
+    },
+    "titan-freestyle-practice": {
+      "30": "71636a70aea9f0e05cc0bc20c4a20abfcabdc2544667baae458b368391d0f5dc",
+      "60": "71636a70aea9f0e05cc0bc20c4a20abfcabdc2544667baae458b368391d0f5dc",
+      "144": "71636a70aea9f0e05cc0bc20c4a20abfcabdc2544667baae458b368391d0f5dc"
+    }
+  }
+}
