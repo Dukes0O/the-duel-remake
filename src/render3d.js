@@ -267,9 +267,9 @@ export function attachRenderer(host, app) {
     const palette = [0xd9c99c, 0x2c566a, 0x847458, 0xf0e9dc, 0x5e3d2f];
     while (traffic.length < st.traffic.length) { const car = createVehicle({ color: palette[traffic.length % palette.length] }); scene.add(car); traffic.push(car);sceneRevision++;ambientShading.refresh(); }
     traffic.forEach((car, i) => {
-      const d = st.traffic[i]; car.visible = !menu && !!d?.alive && Math.abs(visualGap(d.s)) < 540;
-      updateNpcVehicleDamage(car,!menu&&d?.alive?d:null);
-      if (car.visible) {const turn=(d.dir<0?Math.PI:0)+(d.headingError||0);place(car,vehicleGroundPoint(course,d.s,d.lateral),turn,wheelTravel(d.speedMph));car.position.y+=d.airHeight||0;const slope=groundSlope(course,d.s,d.lateral,turn);car.rotation.x=slope.pitch;car.rotation.z=slope.roll;applyVehicleTerrainPose(car,course,d);}
+      const d = st.traffic[i]; car.visible = !menu && !!(d?.alive || d?.wrecked) && Math.abs(visualGap(d.s)) < 540;
+      updateNpcVehicleDamage(car,!menu&&(d?.alive||d?.wrecked)?d:null);
+      if (car.visible) {const turn=(d.dir<0?Math.PI:0)+(d.headingError||0);place(car,vehicleGroundPoint(course,d.s,d.lateral),turn,wheelTravel(d.speedMph));car.position.y+=d.airHeight||0;const slope=groundSlope(course,d.s,d.lateral,turn);car.rotation.x=slope.pitch;car.rotation.z=slope.roll+(d.wrecked?.roll||0);applyVehicleTerrainPose(car,course,d);}
     });
     const pursuit = st.police.pursuit; police.visible = !menu && !!pursuit?.active && pursuit.distanceU < 250;
     updateNpcVehicleDamage(police,!menu&&pursuit?.active?pursuit:null);

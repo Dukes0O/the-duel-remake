@@ -29,6 +29,9 @@ export function finishVegetationCell(mesh, key, entries) {
 export function addPineTrees(group, trees, course) {
   if (!trees.length) return;
   const assets = pineTreeAssets(), object = new THREE.Object3D();
+  const instances = new Map(), active = new Set(), seen = new Set(), changed = new Set();
+  const axis = new THREE.Vector3(), fall = new THREE.Quaternion(), yaw = new THREE.Quaternion(),
+    rotation = new THREE.Quaternion(), matrix = new THREE.Matrix4();
   for (const { key, entries } of vegetationCells(trees)) {
     const trunks = new THREE.InstancedMesh(assets.trunk, assets.bark, entries.length);
     const leaves = new THREE.InstancedMesh(assets.crown, assets.needles, entries.length);
@@ -37,9 +40,40 @@ export function addPineTrees(group, trees, course) {
       const groundY=course?.def.expansion?renderedGroundHeight(course,tree):tree.y;
       object.position.set(tree.x, groundY - .24, tree.z); object.rotation.set(0, tree.heading, 0); object.scale.setScalar(tree.scale); object.updateMatrix();
       trunks.setMatrixAt(i, object.matrix); leaves.setMatrixAt(i, object.matrix);
+      instances.set(tree.id, {tree, index:i, meshes:[trunks,leaves], root:object.position.clone(), upright:object.matrix.clone(), progress:null});
     });
     group.add(finishVegetationCell(trunks, key, entries), finishVegetationCell(leaves, key, entries));
   }
+  return state => {
+    seen.clear(); changed.clear();
+    const now = Number.isFinite(state?.stageTimeSec) ? state.stageTimeSec : 0;
+    const events = state?.status === 'menu' ? [] : state?.brokenScenery || [];
+    for (const event of events) {
+      if (event.kind !== 'tree' || seen.has(event.id)) continue;
+      const item = instances.get(event.id), length = Math.hypot(event.directionX, event.directionZ);
+      if (!item || !Number.isFinite(event.atTime) || !Number.isFinite(length) || length < 1e-6) continue;
+      seen.add(event.id); active.add(item);
+      const progress = THREE.MathUtils.clamp((now - event.atTime) / .72, 0, 1);
+      if (progress === item.progress) continue;
+      item.progress = progress;
+      const eased = progress * progress * (3 - 2 * progress);
+      axis.set(event.directionZ / length, 0, -event.directionX / length);
+      fall.setFromAxisAngle(axis, eased * 1.38);
+      yaw.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, item.tree.heading);
+      rotation.multiplyQuaternions(fall, yaw);
+      matrix.compose(item.root, rotation, object.scale.setScalar(item.tree.scale));
+      for (const mesh of item.meshes) { mesh.setMatrixAt(item.index, matrix); changed.add(mesh); }
+    }
+    for (const item of active) if (!seen.has(item.tree.id)) {
+      for (const mesh of item.meshes) { mesh.setMatrixAt(item.index, item.upright); changed.add(mesh); }
+      item.progress = null; active.delete(item);
+    }
+    for (const mesh of changed) {
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.computeBoundingBox(); mesh.boundingBox.expandByScalar(.02);
+      mesh.computeBoundingSphere(); mesh.boundingSphere.radius += .02;
+    }
+  };
 }
 
 // Image-generated needle sprays form a full radial crown; roots are placed by

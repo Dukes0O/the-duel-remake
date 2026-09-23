@@ -1,6 +1,6 @@
 // Each new player feature starts here. Release Manager changes dev -> beta -> on
 // only after the checks and play-test rules in SPEC.md section 4.4 are met.
-export const FEATURE_STATES = Object.freeze({ 'career-backup': 'dev' });
+export const FEATURE_STATES = Object.freeze({ 'career-backup': 'dev', 'roadside-destruction': 'dev' });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 
 const states = new Set(['dev', 'beta', 'on']);

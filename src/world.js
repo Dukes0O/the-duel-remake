@@ -19,6 +19,7 @@ import { addFreestyleScenery } from './freestyle-scene.js';
 import { strip, terrainGeometry, farTerrainGeometry, meadowTexture, groundTexture, surfaceTexture, addTrailShoulder } from './world-surfaces.js';
 import { addFurniture, addSign, box, addStation, addTurnSigns, addCoast, addHarbor, addFinish } from './world-props.js';
 import { registerSceneSystem, disposeSceneSystems } from './scene-systems.js';
+import { makeSignFallSystem } from './scenery-fall.js';
 
 // Keep the established scene API for renderer and geometry-focused callers.
 export { worldAtExtended, strip, terrainGeometry, farTerrainGeometry } from './world-surfaces.js';
@@ -64,9 +65,14 @@ export function buildEnvironment(course) {
   for(const lane of course.features.passingLanes){
     for(let s=lane.start+55;s<lane.end-50;s+=18)for(const side of[-1,1])group.add(new THREE.Mesh(strip(course,side*6.45,side*6.6,.07,s,s+7),cream));
   }
-  for(const sign of course.features.signs)addSign(group,sign);
+  const signGroups=new Map();
+  for(const sign of course.features.signs)signGroups.set(sign.id,addSign(group,sign));
+  if(signGroups.size)registerSceneSystem(group,{sync:makeSignFallSystem(signGroups)});
   for(const station of course.features.stations)addStation(group, station);
-  for(const direction of[-1,1])addTurnSigns(group,course.features.chevrons.filter(sign=>sign.direction===direction),direction);
+  for(const direction of[-1,1]){
+    const update=addTurnSigns(group,course.features.chevrons.filter(sign=>sign.direction===direction),direction);
+    if(update)registerSceneSystem(group,{sync:update});
+  }
   if(course.sections.some(s=>s.theme==='coast'))addCoast(group,course);
   if(course.sections.some(s=>s.theme==='city'))addHarbor(group,course);
   addCitySkyline(group,course);
@@ -84,7 +90,7 @@ function addLandscape(group,course){
   addMountainLandscape(group,course);
   const trees=course.features.trees;
   const pine=course.def.theme!=='desert';
-  if(pine)addPineTrees(group,trees,course);
+  if(pine)return addPineTrees(group,trees,course);
   else return addDesertCacti(group,course);
 }
 

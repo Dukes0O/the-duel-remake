@@ -5,6 +5,7 @@ import { addCoastalWater } from './coastal-water.js';
 import { addPacificCoast, isPacificCoast } from './pacific-coast.js';
 import { createCoastLighthouse } from './coast-lighthouse.js';
 import { addHarborCranes } from './harbor-detail.js';
+import { sceneryFallRotation } from './scenery-fall.js';
 
 // Visual shells follow Course's existing feature footprints. Keep direct world
 // children: the later scenery-detail pass refines these base structures.
@@ -29,6 +30,7 @@ export function addFurniture(group,course,metal){
 const turnSignResources=new WeakMap();
 export function addTurnSigns(group,signs,direction){
   if(!signs.length)return;
+  const instances=new Map(),active=new Map(),seen=new Set(),changed=new Set(),tilt=new THREE.Quaternion();
   let assets=turnSignResources.get(group);
   if(!assets){assets={board:new THREE.BoxGeometry(1.2,1.35,.08),post:new THREE.BoxGeometry(.1,1.8,.1),metal:new THREE.MeshStandardMaterial({color:0x8e9393,metalness:.5,roughness:.6}),directions:new Map()};turnSignResources.set(group,assets);}
   let mat=assets.directions.get(direction);
@@ -42,10 +44,38 @@ export function addTurnSigns(group,signs,direction){
   for(const {key,entries}of vegetationCells(signs))for(const [kind,geometry,material,height]of[['boards',assets.board,mat,2.05],['posts',assets.post,assets.metal,.9]]){
     const mesh=new THREE.InstancedMesh(geometry,material,entries.length);mesh.name=`Turn ${kind} ${direction} ${key}`;
     local.makeTranslation(0,height,0);
-    entries.forEach(({feature:p},i)=>{object.position.set(p.x,p.y,p.z);object.rotation.set(0,p.heading,0);object.updateMatrix();worldMatrix.multiplyMatrices(object.matrix,local);mesh.setMatrixAt(i,worldMatrix);});
+    entries.forEach(({feature:p},i)=>{
+      object.position.set(p.x,p.y,p.z);object.rotation.set(0,p.heading,0);object.updateMatrix();worldMatrix.multiplyMatrices(object.matrix,local);mesh.setMatrixAt(i,worldMatrix);
+      if(!instances.has(p.id))instances.set(p.id,{id:p.id,root:new THREE.Vector3(p.x,p.y,p.z),parts:[]});
+      instances.get(p.id).parts.push({mesh,index:i,upright:worldMatrix.clone()});
+    });
     mesh.castShadow=mesh.receiveShadow=true;mesh.computeBoundingBox();mesh.boundingBox.expandByScalar(.02);mesh.computeBoundingSphere();mesh.boundingSphere.radius+=.02;
     mesh.userData.turnSignCell={key,kind,direction,entries};group.add(mesh);
   }
+  const transform=new THREE.Matrix4(),toRoot=new THREE.Matrix4(),fromRoot=new THREE.Matrix4(),matrix=new THREE.Matrix4();
+  return state=>{
+    seen.clear();changed.clear();
+    const now=Number.isFinite(state?.stageTimeSec)?state.stageTimeSec:0;
+    const events=state?.status==='menu'?[]:state?.brokenScenery||[];
+    for(const event of events){
+      if(event.kind!=='chevron'||seen.has(event.id))continue;
+      const item=instances.get(event.id);if(!item||!Number.isFinite(event.atTime))continue;
+      seen.add(event.id);
+      const progress=THREE.MathUtils.clamp((now-event.atTime)/.5,0,1);
+      if(active.get(event.id)===progress)continue;
+      active.set(event.id,progress);
+      sceneryFallRotation(event,progress,tilt);
+      toRoot.makeTranslation(item.root.x,item.root.y,item.root.z);
+      fromRoot.makeTranslation(-item.root.x,-item.root.y,-item.root.z);
+      transform.copy(toRoot).multiply(matrix.makeRotationFromQuaternion(tilt)).multiply(fromRoot);
+      for(const part of item.parts){part.mesh.setMatrixAt(part.index,matrix.multiplyMatrices(transform,part.upright));changed.add(part.mesh);}
+    }
+    for(const id of active.keys())if(!seen.has(id)){
+      for(const part of instances.get(id).parts){part.mesh.setMatrixAt(part.index,part.upright);changed.add(part.mesh);}
+      active.delete(id);
+    }
+    for(const mesh of changed){mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();mesh.boundingBox.expandByScalar(.02);mesh.computeBoundingSphere();mesh.boundingSphere.radius+=.02;}
+  };
 }
 
 function signTexture(top, bottom, bg) {
@@ -60,7 +90,7 @@ export function addSign(group, sign) {
   const g = new THREE.Group();
   const board = new THREE.Mesh(new THREE.BoxGeometry(5.2, 2.6, .12), new THREE.MeshStandardMaterial({ map: signTexture(sign.top,sign.bottom,sign.bg), roughness: .7 })); board.position.y = 4; g.add(board);
   for(const post of sign.posts)box(g,[post.halfX*2,post.height,post.halfZ*2],[post.localX,post.y-sign.y+post.height/2,0],new THREE.MeshStandardMaterial({color:0x646b64,metalness:.4,roughness:.6}));
-  g.position.set(sign.x,sign.y,sign.z);g.rotation.y=sign.heading;group.add(g);
+  g.position.set(sign.x,sign.y,sign.z);g.rotation.y=sign.heading;g.userData.roadSignId=sign.id;group.add(g);return g;
 }
 
 export function box(group, size, position, mat) {

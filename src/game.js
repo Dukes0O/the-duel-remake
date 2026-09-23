@@ -18,6 +18,8 @@ import { combatCrashThresholdMph, rearRamResponse } from './vehicle-impact.js';
 import { sampleMountainSupport } from './mountain-support.js';
 import {normalizeRival} from './rival-settings.js';
 import {upgradedCar} from './progression.js';
+import {featureFlags} from './feature-flags.js';
+import {breakableScenery, sceneryIdentity, stepTrafficWreck} from './destructibles.js';
 
 const BOUNDARY_WARNING = 60, BOUNDARY_RESET = 78;
 const GLANCING_WALL_NORMAL_FRACTION = Math.sin(35 * Math.PI / 180);
@@ -31,6 +33,7 @@ export class Duel {
     this.seed = (opts.seed ?? seedFromUrl()) >>> 0;
     this.difficultyKey = DIFFICULTY[opts.difficulty] ? opts.difficulty : DEFAULT_DIFFICULTY;
     this.carKey = CARS[opts.car] ? opts.car : DEFAULT_CAR;
+    this.destructiblesEnabled = opts.destructiblesEnabled ?? null;
     this.listeners = new Set();
     this.state = this._freshState();
   }
@@ -66,6 +69,7 @@ export class Duel {
       groundHeight: null, terrainPitch: null, terrainRoll: null, tumble: null, rollovers: 0, practice: false,
       crushedProps: [], crushCount: 0, crushScore: 0, crushBurst: null,
       fallenCacti: [],
+      brokenScenery: [],
       score: 0, stageStyleScore: 0, nearMisses: 0, policeEscapes: 0, combo: 0, comboTimer: 0,
       callout: '', calloutTimer: 0,
       // police
@@ -86,6 +90,7 @@ export class Duel {
 
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
   emit(ev) { for (const fn of this.listeners) fn(this.state, ev); }
+  destructionEnabled() { return this.destructiblesEnabled ?? featureFlags.enabled('roadside-destruction'); }
 
   get car() {
     const base = CARS[this.state.car], upgrades = base.factoryMaxed ? FACTORY_MAX_UPGRADES : this.state.upgrades;
@@ -196,6 +201,7 @@ export class Duel {
     s.crushedProps = []; s.crushCount = 0; s.crushScore = 0; s.crushBurst = null;
     this._crushedVehicles = [];
     s.fallenCacti = []; this._fallenCactusIds = new Set();
+    s.brokenScenery = []; this._brokenSceneryIds = new Set();
     s._jumpY = null; s._verticalSpeed = 0; s._jumpOrigin = null; s.prevAirHeight = 0;
     s.crashSite = null; s.impactTimer = 0; s.impactDuration = 0; s.impactStrength = 0; s.impactSide = 1; s.crashSpin = 0;
     s.bombImpactCooldown = 0;
@@ -497,6 +503,7 @@ export class Duel {
   _traffic(dt) {
     const s = this.state;
     for (const c of s.traffic) {
+      if (c.wrecked) { stepTrafficWreck(c, dt); continue; }
       if (!c.alive || c.crushed) continue;
       c.prevS = c.s;
       c.prevLateral = c.lateral;
@@ -567,7 +574,8 @@ export class Duel {
     if (this.course.obstaclesNear) {
       if (this._obstacleArray !== this.course.features.obstacles) { this._obstacleArray = this.course.features.obstacles; this._obstacleQueryCache.clear(); }
       const first = Math.floor((Math.min(fromS, toS) - 10) / 64), last = Math.floor((Math.max(fromS, toS) + 10) / 64), key = `${first}:${last}`;
-      if (!this._obstacleQueryCache.has(key)) this._obstacleQueryCache.set(key, this.course.obstaclesNear(fromS, toS));
+      if (!this._obstacleQueryCache.has(key)) this._obstacleQueryCache.set(key, this.course.obstaclesNear(fromS, toS)
+        .filter(obstacle => !this._brokenSceneryIds?.has(sceneryIdentity(obstacle))));
       return this._obstacleQueryCache.get(key);
     }
     // Keeps older exported courses usable while they acquire world colliders.
@@ -723,6 +731,7 @@ export class Duel {
     for (let attempt = 0; attempt < 4; attempt++) {
       let first = null;
       for (const obstacle of obstacles) {
+        if (this._brokenSceneryIds?.has(sceneryIdentity(obstacle))) continue;
         if (capability && (obstacle.kind === 'rock' && rockHeight(obstacle) <= capability.rockHeight
           || obstacle.kind === 'mountain' && !obstacle.tunnelCover && this.course.features.mountains?.includes(obstacle))) continue;
         const cactus = obstacle.kind === 'tree' && obstacle.theme === 'desert';
@@ -767,6 +776,23 @@ export class Duel {
         this.emit({ cactusHit: fallen });
         // Search the same sweep again: a wall behind the cactus remains solid.
         // Each pass removes one cactus, so this cannot loop on the same plant.
+        attempt--;
+        continue;
+      }
+      const broken = breakableScenery(obstacle, impactMph, {
+        mode: this.state.mode, enabled: this.destructionEnabled(),
+      });
+      if (broken) {
+        const distance = Math.hypot(dx, dz);
+        const event = { id: broken.id, kind: broken.kind, atTime: this.state.stageTimeSec,
+          directionX: distance > .0001 ? dx / distance : -nx,
+          directionZ: distance > .0001 ? dz / distance : -nz };
+        (this._brokenSceneryIds ??= new Set()).add(broken.id);
+        this._obstacleQueryCache.clear();
+        this.state.brokenScenery.push(event);
+        car.speedMph = Math.sign(car.speedMph) * Math.max(0, Math.abs(car.speedMph) - broken.speedLossMph);
+        if (player && this.state.invulnerableSec <= 0 && impactMph > 1) this._scrape(zone, Math.min(impactMph, 18));
+        this.emit({ sceneryBroken: event });
         attempt--;
         continue;
       }
