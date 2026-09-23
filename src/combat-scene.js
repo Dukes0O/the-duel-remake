@@ -115,6 +115,11 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
    bindVehicle(index, vehicle);
    const visible = active && !!actor && !actor.crushed && !!vehicle;
    rig.bumper.visible = visible;
+   // An explicit disabled bumper removes the spike advantage and its teeth
+   // in the flagged combat rules. Existing Wasteland rigs remain unchanged.
+   const spikesVisible = !(s.mode === 'wasteland' && duel.featureFlags?.enabled('wasteland2') &&
+    actor?.combatBumperSpikes === false);
+   rig.spikes.forEach(spike => { spike.visible = spikesVisible; });
    rig.bow.visible = visible;
    rig.shield.visible = visible && (index ? index === 1 ? c.rivalShield : actor.combatShield : c.shield) > 0;
    if (rig.shield.visible) rig.shield.rotation.y = s.stageTimeSec * 2;

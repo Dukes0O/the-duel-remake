@@ -4,10 +4,12 @@ import { sweepBox, sweepObstacle, contactZone, CAR_HALF_WIDTH, CAR_HALF_LENGTH }
 import { vehicleContactEnvelope, npcYieldContactNormal } from './npc-yielding.js';
 import { offroadCapability, rockHeight, rockSupportHeight, canCrushVehicle, crushedVehicleSupport } from './offroad-physics.js';
 import { sampleMountainSupport } from './mountain-support.js';
-import { combatCrashThresholdMph, rearRamResponse } from './vehicle-impact.js';
+import {combatContactCleared, combatCrashThresholdMph, combatFrontSpikes,
+  combatRamResponse, rearRamResponse} from './vehicle-impact.js';
 import { breakableScenery, sceneryIdentity, trafficDestruction, startTrafficWreck } from './destructibles.js';
 import { GLANCING_WALL_NORMAL_FRACTION, clamp, freshDamageZones } from './sim-common.js';
 import {applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled} from './combat-armor.js';
+import {COMBAT_TUNING} from './wasteland-tuning.js';
 
 function combatShieldForActor(state, actor) {
   if (actor === state) return state.combat?.shield;
@@ -15,6 +17,73 @@ function combatShieldForActor(state, actor) {
   // including traffic. Preserve that race behavior until a separate fix.
   if (state.opponents.length <= 1 || actor === state.rival) return state.combat?.rivalShield;
   return state.opponents.includes(actor) ? actor.combatShield : 0;
+}
+
+function armoredVehicleContact(duel, {a,b,nx,nz,end,width,length,specA,specB,
+  impactMph,zoneA,zoneB,pairKey}) {
+  const incidents=duel._combatRamIncidents;
+  const firstImpact=!incidents.has(pairKey);
+  const correction=Math.max(0,nx?width+.04-end.x*nx:length+.04-end.z*nz);
+  const shareA=specB.mass/(specA.mass+specB.mass),shareB=1-shareA;
+  // Continue to separate solid bodies while the incident is latched. Only the
+  // first contact transfers momentum or armor and emits a hit.
+  a.lateral+=nx*correction*shareA;b.lateral-=nx*correction*shareB;
+  a.s+=nz*correction*shareA;b.s-=nz*correction*shareB;
+  a.offRoad=!duel._surface(a.s,a.lateral).mainRoad;
+  b.offRoad=!duel._surface(b.s,b.lateral).mainRoad;
+  if(!firstImpact)return true;
+  incidents.add(pairKey);
+
+  if(a!==duel.state)duel._dentVehicle(a,zoneA,impactMph);
+  if(b!==duel.state)duel._dentVehicle(b,zoneB,impactMph);
+  const response=combatRamResponse({closingMph:impactMph,massA:specA.mass,
+    massB:specB.mass,normalX:nx,normalZ:nz,speedA:a.speedMph,
+    speedB:b.speedMph,zoneA,zoneB,offset:b.lateral-a.lateral,
+    steerA:a.input?.steer||0,steerB:b.input?.steer||0});
+  a.speedMph+=(response.speedDeltaA/(a.dir||1));
+  b.speedMph+=(response.speedDeltaB/(b.dir||1));
+  a.pushVelocity=clamp((a.pushVelocity||0)+response.pushDeltaA,-32,32);
+  b.pushVelocity=clamp((b.pushVelocity||0)+response.pushDeltaB,-32,32);
+  if(response.shovelFromB){
+    a.headingError=clamp((a.headingError||0)+Math.sign(response.shovelFromB)*
+      Math.min(.3,Math.abs(response.shovelFromB)*.014),-.8,.8);
+    a.ramRecoverySec=Math.max(a.ramRecoverySec||0,response.recoverySeconds);
+  }
+  if(response.shovelFromA){
+    b.headingError=clamp((b.headingError||0)+Math.sign(response.shovelFromA)*
+      Math.min(.3,Math.abs(response.shovelFromA)*.014),-.8,.8);
+    b.ramRecoverySec=Math.max(b.ramRecoverySec||0,response.recoverySeconds);
+  }
+  for(const [actor,launch] of [[a,response.launchA],[b,response.launchB]])if(launch>0){
+    actor._ramVerticalSpeed=Math.max(actor._ramVerticalSpeed||0,launch);
+    actor.airborne=true;actor.airHeight=Math.max(actor.airHeight||0,.03);
+  }
+  b.contactCooldown=Math.max(b.contactCooldown||0,.8);
+  if(a===duel.state&&duel.state.invulnerableSec<=0&&impactMph>1)
+    duel._scrape(zoneA,impactMph);
+
+  const closingKph=impactMph*COMBAT_TUNING.armor.kphPerMph;
+  if(closingKph>COMBAT_TUNING.armor.ramThresholdKph){
+    const pointA=duel.course.groundAt(a.s,a.lateral);
+    const pointB=duel.course.groundAt(b.s,b.lateral);
+    const hitPosition={x:(pointA.x+pointB.x)/2,y:(pointA.y+pointB.y)/2,
+      z:(pointA.z+pointB.z)/2};
+    const report=(attacker,victim,face)=>{
+      const attackerIndex=attacker===duel.state?-1:duel.state.opponents.indexOf(attacker);
+      const victimIndex=victim===duel.state?-1:duel.state.opponents.indexOf(victim);
+      const spiked=combatFrontSpikes(attacker,face);
+      const armorRemoved=applyRamArmorDamage(duel,victim,impactMph,{spiked});
+      duel.emit({combatRamHit:true,attacker:attackerIndex<0?'player':'rival',
+        victim:victimIndex<0?'player':'rival',attackerIndex,victimIndex,
+        armorRemoved,closingKph,spiked,hitPosition});
+    };
+    report(b,a,zoneB);
+    report(a,b,zoneA);
+  }
+  if(a===duel.state&&duel.state.opponents.includes(b)&&zoneA==='front'&&zoneB==='rear')
+    duel.emit({vehicleRam:true,victim:'rival',impactMph,
+      lateralKick:response.shovelFromA,launched:response.launchB>0});
+  return true;
 }
 
 export function _vehicleSpec(actor) {
@@ -228,6 +297,12 @@ export function _vehicleContact(a, b, reason) {
   if (a.crushed || b.crushed || a.wrecked || b.wrecked ||
       a.combatWrecking || b.combatWrecking || a.tumble || b.tumble) return false;
   if (b === this.state && a !== this.state) return this._vehicleContact(b, a, reason);
+  const armorContact = combatArmorEnabled(this);
+  const armoredPair = armorContact &&
+    (a === this.state || this.state.opponents.includes(a)) &&
+    (b === this.state || this.state.opponents.includes(b));
+  const pairKey = armoredPair ? [a === this.state ? -1 : this.state.opponents.indexOf(a),
+    b === this.state ? -1 : this.state.opponents.indexOf(b)].sort((left,right)=>left-right).join(':') : null;
   const phase = this.relativeS(b.s, a.s) - b.s;
   const start = { x: (a.prevLateral ?? a.lateral) - (b.prevLateral ?? b.lateral), z: (a.prevS ?? a.s) - (b.prevS ?? b.s) - phase };
   const end = { x: a.lateral - b.lateral, z: a.s - b.s - phase };
@@ -240,6 +315,11 @@ export function _vehicleContact(a, b, reason) {
     if (heightA > heightB + specB.height || heightB > heightA + specA.height) return false;
   }
   const { width, length } = vehicleContactEnvelope(a, b, specA, specB);
+  if (armoredPair && this._combatRamIncidents?.has(pairKey) &&
+      combatContactCleared(end,width,length)) {
+    this._combatRamIncidents.delete(pairKey);
+    return false;
+  }
   const hit = sweepBox(start, end, width, length);
   if (!hit) return false;
   const descendingCrush = a === this.state && a.airborne && a._verticalSpeed < -1 && (a.prevAirHeight || 0) > (a.airHeight || 0)
@@ -285,7 +365,10 @@ export function _vehicleContact(a, b, reason) {
   const vbX = Math.sin(b.headingError || 0) * b.speedMph * (b.dir || 1) * DRIVE.mphToWorld + (b.pushVelocity || 0);
   const vaZ = a.speedMph * Math.cos(a.headingError || 0) * (a.dir || 1), vbZ = b.speedMph * Math.cos(b.headingError || 0) * (b.dir || 1);
   const impactMph = Math.max(0, -(vaX - vbX) / DRIVE.mphToWorld * nx - (vaZ - vbZ) * nz);
-  const armorContact = combatArmorEnabled(this);
+  const zone = contactZone(nx, nz, angleA + (a.dir < 0 ? Math.PI : 0));
+  const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
+  if (armoredPair) return armoredVehicleContact(this,{a,b,nx,nz,end,width,length,
+    specA,specB,impactMph,zoneA:zone,zoneB,pairKey});
   if ((!armorContact || !this.state.opponents.includes(b)) && a === this.state &&
       canCrushVehicle(this.car, specB, { speedMph: a.speedMph,
         impactMph, descending: descendingCrush })) {
@@ -294,8 +377,6 @@ export function _vehicleContact(a, b, reason) {
   const armoredPlayer = a === this.state && this.state.mode === 'wasteland';
   const crashThreshold = armoredPlayer ? combatCrashThresholdMph(this.car, { targetMass: specB.mass }) : 28;
   const rearRam = armoredPlayer && this.state.opponents.includes(b) && nz < 0 && (b.dir || 1) > 0 && a.speedMph >= 0;
-  const zone = contactZone(nx, nz, angleA + (a.dir < 0 ? Math.PI : 0));
-  const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
   if (armoredPlayer && this.state.traffic.includes(b)) {
     const wreck = trafficDestruction({ enabled: this.destructionEnabled(), mode: this.state.mode,
       impactMph, playerTopSpeedMph: this.car.topSpeed, playerMass: specA.mass, targetMass: specB.mass });
