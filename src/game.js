@@ -105,7 +105,7 @@ export class Duel {
       (this.featureFlags.enabled('roadside-destruction') || this.featureFlags.enabled('wasteland2'));
   }
   roadsideKnockAwayEnabled() {
-    return this.state.mode === 'wasteland' &&
+    return this.destructiblesEnabled !== false && this.state.mode === 'wasteland' &&
       (this.featureFlags.enabled('roadside-destruction') || this.featureFlags.enabled('wasteland2'));
   }
 

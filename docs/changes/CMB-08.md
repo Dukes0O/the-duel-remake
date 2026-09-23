@@ -22,7 +22,9 @@ keep their separate contact rules.
   and traffic. The old `trafficDestruction()` helper and the direct
   `destructiblesEnabled` legacy path remain unchanged. The new traffic
   motion uses elapsed time from the impact, so the final position does not
-  depend on the renderer's frame rate.
+  depend on the renderer's frame rate. Knocked traffic exits toward its
+  nearest shoulder and stops beyond the paved road, including outside clips
+  and aligned rear hits in the negative lane.
 - `src/sim-contacts.js` consumes each movable object once and emits one
   `roadsideImpact` with its ID, kind, outcome, closing speed, threshold and
   finite hit position. A traffic event also carries the actor. Each hit
@@ -40,15 +42,18 @@ keep their separate contact rules.
 
 ## Tests and review
 
-- `node tools/test-combat-knockaway.mjs`: 19/19 focused cases pass,
+- `node tools/test-combat-knockaway.mjs`: 23/23 focused cases pass,
   including 30/60/144 FPS contacts, one event per object, physical scene
-  movement/removal and fixed debris resources.
+  movement/removal, the shoulder direction, the direct disable override and
+  fixed debris resources.
 - The direct `test-roadside-destruction`, `test-contact-damage`,
   `test-roadside-visuals`, `test-cactus-fall`,
   `test-armored-vehicle-impact` and `test-combat-ramming` tests pass.
 - `node --check` and `git diff --check` pass on changed files.
-- The High/Performance private browser scenario records the first debris
-  render against a nearby baseline without a hard timing threshold. Its
+- The High/Performance private browser scenario waits for a completed
+  renderer warmup and a frame with actual draw calls after each impact. It
+  records the first debris render against a nearby baseline without a hard
+  timing threshold. Its
   execution, the lane gate, build,
   pinned replay fingerprints and balance/frame checks are pending.
 

@@ -13,7 +13,7 @@ async function qualityPass(context, quality) {
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'`,
     `${quality} renderer ready`, 60_000);
 
-  await context.evaluate(`(() => {
+  await context.evaluate(`(async () => {
     const app=window.__qaApp;
     if(!app.startCampaign({mode:'wasteland',startStage:0,car:'falcone_f42',seed:1989}))
       throw Error('Wasteland race did not start');
@@ -21,18 +21,31 @@ async function qualityPass(context, quality) {
     const duel=app.duel,state=duel.state,render=window.__render;
     if(!duel.roadsideKnockAwayEnabled())throw Error('Flagged knock-away is off');
     Object.assign(state,{status:'racing',paused:false,opponents:[],traffic:[],invulnerableSec:0});
-    render.renderFrame();
-    window.__roadsideQA={app,duel,state,render,frame(s,lateral){
+    const present=async () => {
+      for(let attempt=0;attempt<400;attempt++){
+        render.renderer.info.reset();
+        const started=performance.now();
+        const drawn=render.renderFrame();
+        const renderMs=performance.now()-started;
+        const warmupStatus=document.querySelector('#view3d').dataset.warmupStatus;
+        if(['ready','fallback','off','unsupported-fallback'].includes(warmupStatus)&&
+          drawn.drawCalls>0)return {renderMs,drawCalls:drawn.drawCalls,warmupStatus};
+        await new Promise(resolve=>setTimeout(resolve,50));
+      }
+      throw Error('Roadside inspection never received a presented renderer frame');
+    };
+    window.__roadsideQA={app,duel,state,render,present,async frame(s,lateral){
       const point=duel.course.groundAt(s,lateral);
       app.inspectionCamera={position:[point.x+14,point.y+8,point.z+15],
         target:[point.x,point.y+1,point.z]};
       render.camera.position.fromArray(app.inspectionCamera.position);
-      render.renderFrame();
+      await present();
       return point;
     }};
+    await present();
   })()`);
 
-  const low=await context.evaluate(`(() => {
+  const low=await context.evaluate(`(async () => {
     const {duel,state,render,frame}=window.__roadsideQA;
     const speed=duel.car.topSpeed*.3,armor=state.armor;
     Object.assign(state,{s:107,prevS:100,lateral:0,prevLateral:0,speedMph:speed});
@@ -41,7 +54,7 @@ async function qualityPass(context, quality) {
     state.traffic=[actor];
     if(!duel._vehicleContact(state,actor,'traffic'))throw Error('Low traffic contact missed');
     for(let i=0;i<120;i++)duel._traffic(1/120);
-    const point=frame(actor.s,actor.lateral);
+    const point=await frame(actor.s,actor.lateral);
     const mesh=render.scene.children.find(item=>item.visible&&item.userData?.size&&
       Math.hypot(item.position.x-point.x,item.position.z-point.z)<1.5);
     if(!mesh)throw Error('Displaced traffic has no visible car mesh');
@@ -55,39 +68,35 @@ async function qualityPass(context, quality) {
     throw Error(`${quality} low traffic knock-away failed: ${JSON.stringify(low)}`);
   await context.screenshot(`roadside-traffic-knock-${quality}`);
 
-  const high=await context.evaluate(`(() => {
-    const {duel,state,render,frame,trafficMesh}=window.__roadsideQA;
+  const high=await context.evaluate(`(async () => {
+    const {duel,state,render,frame,present,trafficMesh}=window.__roadsideQA;
     const speed=duel.car.topSpeed*.7,armor=state.armor;
     Object.assign(state,{s:127,prevS:120,lateral:0,prevLateral:0,
       speedMph:speed,stageTimeSec:10});
     const actor={alive:true,s:130,prevS:130,lateral:.6,prevLateral:.6,
       speedMph:0,dir:1,headingError:0,pushVelocity:0};
     state.traffic=[actor];
-    frame(actor.s,actor.lateral);
-    const baselineStart=performance.now();
-    render.renderFrame();
-    const baselineRenderMs=performance.now()-baselineStart;
+    await frame(actor.s,actor.lateral);
+    const {renderMs:baselineRenderMs,drawCalls:baselineDrawCalls}=await present();
     if(!duel._vehicleContact(state,actor,'traffic'))throw Error('High traffic contact missed');
-    const burstStart=performance.now();
-    render.renderFrame();
-    const firstBurstRenderMs=performance.now()-burstStart;
+    const {renderMs:firstBurstRenderMs,drawCalls:burstDrawCalls}=await present();
     const pool=render.scene.children.find(item=>item.name==='Roadside debris pool');
     const burstNow=pool?.children.some(item=>item.visible);
     const carNow=trafficMesh.visible;
     for(let i=0;i<36;i++)duel._traffic(1/120);
     state.stageTimeSec+=.3;
-    frame(actor.s,actor.lateral);
+    await frame(actor.s,actor.lateral);
     return {burstNow,carNow,carAfter:trafficMesh.visible,
       burstAfter:pool?.children.some(item=>item.visible),
       armorDelta:armor-state.armor,crashes:state.stageCrashes,
-      baselineRenderMs,firstBurstRenderMs};
+      baselineRenderMs,firstBurstRenderMs,baselineDrawCalls,burstDrawCalls};
   })()`);
   if(!high.burstNow||!high.carNow||high.carAfter||!high.burstAfter||
       high.armorDelta!==0||high.crashes!==0)
     throw Error(`${quality} high traffic burst/removal failed: ${JSON.stringify(high)}`);
   await context.screenshot(`roadside-traffic-debris-${quality}`);
 
-  const sign=await context.evaluate(`(() => {
+  const sign=await context.evaluate(`(async () => {
     const {duel,state,render,frame}=window.__roadsideQA;
     state.traffic=[];
     const posts=duel.course.features.obstacles.filter(item=>item.signSupport&&
@@ -109,19 +118,19 @@ async function qualityPass(context, quality) {
     state.stageTimeSec=20;
     const low=findHit(duel.car.topSpeed*.3);
     state.stageTimeSec=low.hit.atTime+.7;
-    frame(low.post.s,low.post.off);
+    await frame(low.post.s,low.post.off);
     let lowGroup;
     render.scene.traverse(item=>{if(item.userData?.roadSignId===low.id)lowGroup=item;});
     const lowShift=Math.hypot(lowGroup.position.x-low.post.x,
       lowGroup.position.z-low.post.z);
     state.stageTimeSec=30;
     const high=findHit(duel.car.topSpeed*.7,low.id);
-    frame(high.post.s,high.post.off);
+    await frame(high.post.s,high.post.off);
     let highGroup;
     render.scene.traverse(item=>{if(item.userData?.roadSignId===high.id)highGroup=item;});
     const visibleNow=highGroup.visible;
     state.stageTimeSec+=.3;
-    frame(high.post.s,high.post.off);
+    await frame(high.post.s,high.post.off);
     const hiddenAfter=!highGroup.visible;
     const pool=render.scene.children.find(item=>item.name==='Roadside debris pool');
     return {lowId:low.id,lowShift,highId:high.id,

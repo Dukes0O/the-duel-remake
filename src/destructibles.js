@@ -69,15 +69,15 @@ export function trafficDestruction({enabled = false, mode, impactMph, playerTopS
 }
 
 export function startRoadsideTraffic(actor, {atTime = 0, outcome, side = 1,
-  impactMph = 0} = {}) {
+  impactMph = 0, targetLateral} = {}) {
   if (!actor || actor.roadsideMotion || !actor.alive) return false;
   const direction = Math.sign(side) || 1;
   actor.roadsideMotion = {
     outcome, atTime, age: 0, originS: actor.s, originLateral: actor.lateral,
     originHeading: actor.headingError || 0, direction,
     forwardDrift: (actor.dir || 1) * Math.min(12, Math.abs(actor.speedMph || 0) * .12),
-    lateralDistance: direction * (roadside.trafficKnockDistance +
-      Math.min(2, impactMph * .012)),
+    lateralDistance: Number.isFinite(targetLateral) ? targetLateral - actor.lateral :
+      direction * (roadside.trafficKnockDistance + Math.min(2, impactMph * .012)),
     visible: true,
   };
   actor.alive = false;

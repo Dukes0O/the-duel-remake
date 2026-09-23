@@ -429,9 +429,16 @@ export function _vehicleContact(a, b, reason) {
     const topSpeedMph = roadsideTopSpeedMph(this, a);
     const decision = roadsideTrafficDecision({impactMph, topSpeedMph});
     const outcome = decision.wreck ? 'obliterate' : 'knock';
-    const side = Math.sign(b.lateral - a.lateral) || Math.sign(nx) || 1;
+    // The struck car leaves by its nearest shoulder. An outside clip must
+    // never shove a non-collidable car across the opposite driving lane.
+    const side = Math.sign(b.lateral) || Math.sign(b.lateral - a.lateral) ||
+      Math.sign(nx) || 1;
+    const roadHalfWidth = this.course.roadHalfWidthAt?.(b.s) ?? 7;
+    const clearLateral = Math.max(Math.abs(b.lateral) +
+      COMBAT_TUNING.roadside.trafficKnockDistance,
+      roadHalfWidth + specB.halfWidth + .5);
     if (startRoadsideTraffic(b, {atTime: this.state.stageTimeSec,
-      outcome, side, impactMph})) {
+      outcome, side, impactMph, targetLateral: side * clearLateral})) {
       a.speedMph = Math.sign(a.speedMph) * Math.max(0,
         Math.abs(a.speedMph) - roadsideSpeedCost(impactMph));
       const pointA = this.course.groundAt(a.s, a.lateral);

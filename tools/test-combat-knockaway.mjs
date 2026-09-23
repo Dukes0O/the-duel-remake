@@ -48,6 +48,7 @@ const tree = () => ({ id: 'tree-1', kind: 'tree', theme: 'alpine', shape: 'ellip
   s: 110, off: 0, x: 0, y: 0, z: 110, heading: 0, halfX: .2, halfZ: .2, height: 4.8 });
 const post = () => ({ id: 'road-sign-0-post-0', kind: 'prop', signSupport: true, shape: 'box',
   s: 110, off: 0, x: 0, y: 0, z: 110, heading: 0, halfX: .07, halfZ: .08, height: 4 });
+const chevron = () => ({ ...post(), id: 'turn-chevron-0' });
 
 function staticHit(duel, obstacle, speedMph) {
   duel.course.features.obstacles.push(obstacle);
@@ -82,6 +83,11 @@ test('the two switches activate CMB-08 independently and instance flags work', (
     'the existing roadside switch also enables knock-away');
   assert.equal(fixture({ roadside: false, wasteland2: false }).destructionEnabled(), false,
     'both switches off preserve the old Wasteland path');
+  const forcedOff = new Duel({seed: 1989, destructiblesEnabled: false,
+    featureFlags: {wasteland2: true}});
+  forcedOff.startCampaign({startStage: stageIndex, mode: 'wasteland'});
+  assert.equal(forcedOff.roadsideKnockAwayEnabled(), false,
+    'an explicit destruction-off test override stays off');
 });
 
 test('the boundary is half the striking car current upgraded top speed', () => {
@@ -102,7 +108,9 @@ test('the boundary is half the striking car current upgraded top speed', () => {
   }
 });
 
-for (const [name, kind, make] of [['cactus', 'cactus', cactus], ['road sign', 'sign', post], ['small tree', 'tree', tree]]) {
+for (const [name, kind, make] of [['cactus', 'cactus', cactus],
+  ['road sign', 'sign', post], ['chevron', 'chevron', chevron],
+  ['small tree', 'tree', tree]]) {
   for (const tier of ['knock', 'obliterate']) test(`${name} ${tier} clears its collider once without wrecking the player`, () => {
     const duel = fixture(), speed = duel.car.topSpeed * (tier === 'knock' ? .3 : .7);
     const { state, hits, events, armor, crashes, penalty } = staticHit(duel, make(), speed);
@@ -153,6 +161,35 @@ test('low closing speed shoves traffic visibly clear and leaves it there for the
   assert.ok(entrySpeed < duel.car.topSpeed * .3 && entrySpeed > duel.car.topSpeed * .3 - 25);
   assert.equal(state.armor, armor);
   assert.deepEqual([state.stageCrashes, state.racePenaltySec], [crashes, penalty]);
+});
+
+test('outside clips and aligned rear hits send traffic to its nearest shoulder', () => {
+  for (const [name, playerLateral, trafficLateral, direction] of [
+    ['outside clip', 4.8, 3.8, 1],
+    ['aligned negative-lane rear hit', -3.8, -3.8, -1],
+  ]) {
+    const duel = fixture(), state = duel.state;
+    const traffic = {alive: true, s: 110, prevS: 110,
+      lateral: trafficLateral, prevLateral: trafficLateral,
+      speedMph: 0, dir: 1, headingError: 0, pushVelocity: 0};
+    state.traffic = [traffic];
+    Object.assign(state, {s: 107, prevS: 100,
+      lateral: playerLateral, prevLateral: playerLateral,
+      speedMph: duel.car.topSpeed * .3});
+    const events = [];
+    duel.onChange((_, event) => { if (event.roadsideImpact) events.push(event.roadsideImpact); });
+    assert.equal(duel._vehicleContact(state, traffic, 'traffic'), true, `${name} is a contact`);
+    assert.equal(events.length, 1, `${name} emits once`);
+    assert.equal(events[0].outcome, 'knock');
+    for (let i = 0; i < 120; i++) duel._traffic(1 / 120);
+    assert.equal(Math.sign(traffic.lateral), direction,
+      `${name} remains on the traffic car's original side of the road`);
+    assert.ok(Math.abs(traffic.lateral) > duel.course.roadHalfWidthAt(traffic.s) +
+      duel._vehicleSpec(traffic).halfWidth,
+    `${name} parks the whole car beyond the paved route`);
+    assert.equal(duel._surface(traffic.s, traffic.lateral).road, false,
+      `${name} cannot become a non-collidable ghost in another lane`);
+  }
 });
 
 test('high closing speed removes traffic after its burst and never costs player armor', () => {
@@ -330,6 +367,63 @@ test('real sign scene object moves for a knock and disappears after obliteration
     syncScene(world, { status: 'racing', stageTimeSec: 3, brokenScenery: [high], fallenCacti: [], crushedProps: [] }, 0);
     assert.ok(!group.parent || !group.visible || group.scale.length() < .1 || group.position.distanceTo(original) > 50,
       'the high-tier sign group leaves the rendered scene after its debris burst');
+  } finally {
+    if (world) disposeTree(world);
+    THREE.TextureLoader.prototype.load = oldLoad;
+    if (oldDocument === undefined) delete globalThis.document;
+    else globalThis.document = oldDocument;
+  }
+});
+
+test('real chevron and small-tree instances move and then leave their cells', () => {
+  const oldLoad = THREE.TextureLoader.prototype.load, oldDocument = globalThis.document;
+  THREE.TextureLoader.prototype.load = () => new THREE.Texture();
+  const context = new Proxy({ createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }),
+    measureText: () => ({ width: 40 }), createLinearGradient: () => ({ addColorStop() {} }) },
+  { get: (target, key) => target[key] ?? (() => {}) });
+  globalThis.document = { createElement: () => ({ getContext: () => context }) };
+  let world;
+  try {
+    const course = new Course(COURSE.find(def => def.id === 'high-country'), 1989);
+    world = buildEnvironment(course);
+    const tree = course.features.trees.find(item => item.theme !== 'desert' && item.scale <= 1.1);
+    const chevron = course.features.chevrons[0];
+    const trunks = world.children.filter(mesh => mesh.userData.vegetationCell?.entries.some(
+      ({feature}) => feature.id === tree.id));
+    const turnMesh = world.children.find(mesh => mesh.userData.turnSignCell?.entries.some(
+      ({feature}) => feature.id === chevron.id));
+    assert.equal(trunks.length, 2, 'the pine has a trunk and a crown');
+    assert.ok(turnMesh, 'the chevron has a real instanced board or post');
+    const treeIndex = trunks[0].userData.vegetationCell.entries.findIndex(
+      ({feature}) => feature.id === tree.id);
+    const turnIndex = turnMesh.userData.turnSignCell.entries.findIndex(
+      ({feature}) => feature.id === chevron.id);
+    const matrix = new THREE.Matrix4(), original = [];
+    for (const mesh of [...trunks, turnMesh]) {
+      mesh.getMatrixAt(mesh === turnMesh ? turnIndex : treeIndex, matrix);
+      original.push(new THREE.Vector3().setFromMatrixPosition(matrix));
+    }
+    const events = [
+      {id: tree.id, kind: 'tree', outcome: 'knock', atTime: 1, directionX: 1, directionZ: 0},
+      {id: chevron.id, kind: 'chevron', outcome: 'knock', atTime: 1, directionX: 1, directionZ: 0},
+    ];
+    syncScene(world, {status: 'racing', stageTimeSec: 2, brokenScenery: events,
+      fallenCacti: [], crushedProps: []}, 0);
+    for (const [index, mesh] of [...trunks, turnMesh].entries()) {
+      mesh.getMatrixAt(mesh === turnMesh ? turnIndex : treeIndex, matrix);
+      assert.ok(new THREE.Vector3().setFromMatrixPosition(matrix).distanceTo(original[index]) > 1,
+        `${mesh.name} actually moves in the instance matrix`);
+    }
+    syncScene(world, {status: 'menu', stageTimeSec: 0, brokenScenery: [],
+      fallenCacti: [], crushedProps: []}, 0);
+    syncScene(world, {status: 'racing', stageTimeSec: 2,
+      brokenScenery: events.map(event => ({...event, outcome: 'obliterate'})),
+      fallenCacti: [], crushedProps: []}, 0);
+    for (const mesh of [...trunks, turnMesh]) {
+      mesh.getMatrixAt(mesh === turnMesh ? turnIndex : treeIndex, matrix);
+      assert.ok(Math.abs(matrix.determinant()) < 1e-6,
+        `${mesh.name} instance is removed from its draw cell`);
+    }
   } finally {
     if (world) disposeTree(world);
     THREE.TextureLoader.prototype.load = oldLoad;
