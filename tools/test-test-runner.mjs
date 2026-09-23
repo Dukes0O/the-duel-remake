@@ -122,6 +122,11 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
     'changed selection follows local source references');
   check(suitesForChanges(actual,['tools/test-test-runner.mjs']).includes('tools/test-test-runner.mjs'),
     'changed test files select themselves');
+  const computedRead=suitesForChanges(actual,['tools/menu-check.js','src/game.js']);
+  same(computedRead,actual,
+    'an unmapped computed-URL source selects every suite even when another source has import matches');
+  check(computedRead.includes('tools/test-qa-storage.mjs'),
+    'changed menu-check source retains the source-text QA storage suite');
   same(suitesForChanges(actual,['docs/OPERATIONS.md']),[],'documentation edits do not claim unrelated import coverage');
   same(suitesForChanges(actual,['package.json']),actual,'dependency metadata changes conservatively select every suite');
   const calls=[];
@@ -134,6 +139,13 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   same(changedFiles({git}),['src/game.js','tools/test-test-runner.mjs','tools/test-new.mjs'],
     'changed mode includes branch, working-tree and untracked paths without duplicates');
   check(calls[1].includes('base123'),'changed mode compares with integration merge base');
+  const failedCalls=[];
+  assert.throws(()=>changedFiles({git:(executable,args)=>{
+    failedCalls.push([executable,...args]);
+    return {status:128,stderr:'fatal: no merge base'};
+  }}),/cannot find merge base with integration\/wasteland: fatal: no merge base/,
+  'a missing integration merge base fails clearly instead of comparing only with HEAD');checks++;
+  same(failedCalls.length,1,'missing merge base never proceeds to a misleading HEAD diff');
 }
 {
   const tasks=['one','two','three'].map(name=>({suite:'tools/test-'+name+'.mjs',label:name,args:[]}));

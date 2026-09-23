@@ -15,7 +15,7 @@ player_facing: no
 ## Evidence
 
 - `npm ci --offline`: passed with the locked 16 packages.
-- `node tools/test-test-runner.mjs`: 120 runner checks passed, including fake failing children, bounded jobs, Git changes, import mapping, shard plans, and parseable JSON output.
+- `node tools/test-test-runner.mjs`: 124 runner checks passed, including fake failing children, bounded jobs, Git changes, import mapping, shard plans, and parseable JSON output. Review regressions confirm that a computed-path source still selects its QA suite when another source maps normally, and that a missing integration merge base fails clearly.
 - `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`: 146 jobs passed, none failed or skipped, in 271.62 seconds. This lane changed `package.json`, so changed-file selection conservatively chose every suite.
 - `node tools/run-tests.mjs --tier full --jobs 10 --keep-going`: 146 jobs passed, none failed or skipped, in 241.64 seconds. This is below the 15-minute target.
 - `npm run build`: passed. Vite reported the existing large rendering chunk warning.
@@ -29,4 +29,4 @@ The campaign assertions were moved without changing their physics inputs or expe
 
 ## Limits
 
-`--changed` deliberately selects every suite when package metadata, CSS, or public assets change, or when a changed code file has no resolvable test import. That can make a lane run longer. FND-07 replay fingerprints and FND-08 browser smoke are separate cards; this change note reports the Node suite and production build only.
+`--changed` deliberately selects every suite when package metadata, CSS, or public assets change, or when any changed code file has no resolvable test import. That can make a lane run longer. It fails if the integration merge base is unavailable rather than silently checking only HEAD. FND-07 replay fingerprints and FND-08 browser smoke are separate cards; this change note reports the Node suite and production build only.

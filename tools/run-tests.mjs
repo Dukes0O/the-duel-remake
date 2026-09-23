@@ -199,7 +199,10 @@ export function changedFiles({cwd=PROJECT_ROOT,git=spawnSync}={}){
     return result.stdout.split('\0').filter(Boolean).map(normalized);
   };
   const merge=git('git',['merge-base','HEAD','integration/wasteland'],{cwd,encoding:'utf8',shell:false,windowsHide:true});
-  const base=merge.status===0?merge.stdout.trim():'HEAD';
+  if(merge.error||merge.status!==0||!merge.stdout?.trim())
+    throw Error('Git change lookup failed: cannot find merge base with integration/wasteland: '+
+      (merge.error?.message||merge.stderr?.trim()||merge.status));
+  const base=merge.stdout.trim();
   return [...new Set([
     ...execute(['diff','--name-only','-z',base,'--']),
     ...execute(['ls-files','--others','--exclude-standard','-z'])
@@ -239,12 +242,17 @@ export function suitesForChanges(suites,paths,options={}){
   if(!changed.size)return [];
   if([...changed].some(path=>path==='package.json'||path==='package-lock.json'||path==='vite.config.js'||path.startsWith('public/')||path.endsWith('.css')))
     return [...suites];
+  const mapped=new Set();
   const affected=suites.filter(suite=>{
-    if(changed.has(suite))return true;
+    mapped.add(suite);
     const dependencies=localDependencies(suite,options);
+    for(const path of dependencies)mapped.add(path);
+    if(changed.has(suite))return true;
     return [...dependencies].some(path=>changed.has(path));
   });
-  if(!affected.length&&[...changed].some(path=>path.startsWith('src/')||path.startsWith('tools/')))
+  // A source-text or computed-path test may read a file without importing it.
+  // Fall back per changed path, even if another changed file already found suites.
+  if([...changed].some(path=>(path.startsWith('src/')||path.startsWith('tools/'))&&!mapped.has(path)))
     return [...suites];
   return affected;
 }
