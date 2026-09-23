@@ -81,7 +81,7 @@ export function _movePolice(cruiser, dt) {
   this._staticContacts(cruiser, false); this._boundary(cruiser);
   this._vehicleContact(s, cruiser, 'police');
   for (const car of s.traffic) if (car.alive) this._vehicleContact(cruiser, car, 'traffic');
-  if (s.rival) this._vehicleContact(cruiser, s.rival, 'rival');
+  for (const opponent of s.opponents) this._vehicleContact(cruiser, opponent, 'rival');
   this._staticContacts(cruiser, false); this._boundary(cruiser); this._staticContacts(s, true);
   cruiser.gapU = s.s - cruiser.s;
   const a = this.course.groundAt(s.s, s.lateral), b = this.course.groundAt(cruiser.s, cruiser.lateral);

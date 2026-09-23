@@ -99,7 +99,7 @@ export class NpcRoutePlanner {
     return state.choice;
   }
 
-  _vehicles(context) { return [context.player, ...(context.traffic || [])].filter(v => v && v.alive !== false); }
+  _vehicles(context) { return [context.player, ...(context.traffic || []), ...(context.opponents || [])].filter(v => v && v.alive !== false); }
 
   _blocker(actor, choice, context, entryOnly = false) {
     const { profile, lapBase } = choice;

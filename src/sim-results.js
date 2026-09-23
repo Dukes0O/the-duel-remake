@@ -33,7 +33,9 @@ export function _deadline(atSec) {
     stageTimeSec: +s.stageTimeSec.toFixed(2), timeSec: +(s.stageTimeSec + s.racePenaltySec).toFixed(2),
     laps: s.completedLaps, lapTimes: [...s.lapTimes], assistedLaps: [...s.assistedLaps], lives: s.lives, score: s.stageStyleScore, styleScore: s.stageStyleScore,
     jumpScore: s.jumpScore, jumps: s.jumps, bestJumpMeters: s.bestJumpMeters,
-    crushCount: s.crushCount, crushScore: s.crushScore, ...this._objectiveResult() };
+    crushCount: s.crushCount, crushScore: s.crushScore, ...this._objectiveResult(),
+    ...(s.opponents.length > 1 ? { opponentCount: s.opponents.length,
+      position: 1 + s.opponents.filter(opponent => opponent.finished || opponent.s > s.s).length } : {}) };
   this._callout(s.checkpointRush?'TIME UP  /  CHECKPOINT RUSH ENDED':s.objective ? `TIME UP  /  ${s.drift ? 'DRIFT' : 'STUNT'} TRIAL ENDED` : 'TIME UP  /  THE CAR LIVES TO RACE AGAIN', 3);
   this.emit({ stageResult: s.results });
   return true;
@@ -49,8 +51,10 @@ export function _finishStage() {
   const par = this._parTime();
   const timeBonus = Math.max(0, Math.round((par - timeSec) * SCORING.perSecondUnder));
   const beatRival = s.rival ? (s.rival.finishTime == null || s.stageTimeSec <= s.rival.finishTime) : null;
+  const beatAllOpponents = s.opponents.every(opponent => opponent.finishTime == null || s.stageTimeSec <= opponent.finishTime);
+  const position = 1 + s.opponents.filter(opponent => opponent.finishTime != null && opponent.finishTime < s.stageTimeSec).length;
   const objective = this._objectiveResult();
-  const won = s.objective ? objective.targetsMet && timeSec < s.timeLimitSec : this.stageDef.kind === 'chase' ? timeSec < s.timeLimitSec : s.mode !== 'timetrial' && s.rival ? beatRival === true : timeSec < par;
+  const won = s.objective ? objective.targetsMet && timeSec < s.timeLimitSec : this.stageDef.kind === 'chase' ? timeSec < s.timeLimitSec : s.mode !== 'timetrial' && s.rival ? beatAllOpponents : timeSec < par;
   const recordEligible = !s.objective || objective.targetsMet;
   if (recordEligible) this._awardPoliceEscape('finish');
   // Capture the completed circuit before repairs so repairs cannot create a clean bonus.
@@ -76,6 +80,7 @@ export function _finishStage() {
     cleanStage: s.stageCrashes === 0, stageCrashes: s.stageCrashes, majorCrashesBeforeRepair,
     crashesRepaired, livesRestored, policeEscapes: s.policeEscapes, scoreMultiplier: this.scoreMultiplier,
     lives: s.lives, timeBonus: timeBonus * this.scoreMultiplier, beatRival, score, styleScore: s.stageStyleScore, won,
+    ...(s.opponents.length > 1 ? { opponentCount: s.opponents.length, position, beatAllOpponents } : {}),
     ...objective, ...(s.objective ? { objectiveMissed: !objective.targetsMet } : {}),
   };
   if (s.lives <= 0) { s.status = 'gameover'; s.results.gameover = true; this.emit({ gameover: true }); return; }

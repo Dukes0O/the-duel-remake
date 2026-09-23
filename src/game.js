@@ -34,7 +34,7 @@ export class Duel {
   }
 
   _freshState() {
-    return {
+    const state = {
       seed: this.seed,
       status: 'menu', // menu -> countdown -> racing -> (crashed|ticket) -> stage_result -> ... -> gameover|complete
       paused: false,
@@ -69,8 +69,8 @@ export class Duel {
       callout: '', calloutTimer: 0,
       // police
       police: { beep: 0, triggered: false, pursuit: null, ticket: null, ticketCount: 0, pendingFines: 0 },
-      // rival
-      rival: null,
+      // CPU cars. `rival` remains an alias for the first entry.
+      opponents: [],
       // traffic
       traffic: [],
       // input (set by main.js or autopilot)
@@ -81,6 +81,16 @@ export class Duel {
       lastCrashReason: null,
       crashFlash: 0,
     };
+    Object.defineProperty(state, 'rival', {
+      enumerable: true,
+      get() { return this.opponents[0] || null; },
+      set(actor) {
+        if (!actor) this.opponents = [];
+        else if (this.opponents.length) this.opponents[0] = actor;
+        else this.opponents = [actor];
+      },
+    });
+    return state;
   }
 
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
@@ -116,7 +126,7 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, weaponLevels } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     if (CARS[car]) this.state.car = car;
@@ -125,6 +135,7 @@ export class Duel {
     this.state.playerId = typeof playerId === 'string' ? playerId : null;
     this.state.driverId = normalizeDriverId(driverId);
     this.state.rivalSettings = normalizeRival(rival);this.state.weaponLevels=normalizeWeapons({levels:weaponLevels}).levels;
+    this.state.opponentCount = Number.isSafeInteger(opponentCount) ? Math.max(0, opponentCount) : 1;
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     this.state.mode = mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
@@ -192,13 +203,19 @@ export class Duel {
     const rivalCar=rivalSettings?.car&&rivalSettings.car!=='match'?rivalSettings.car:s.car;
     const rivalLevels=Object.fromEntries(UPGRADE_KEYS.map(key=>[key,CARS[rivalCar].factoryMaxed?3:rivalSettings?.upgradeLevel||0]));
     this.rivalSpec=rivalSettings?applyDriverModifiers(upgradedCar(CARS[rivalCar],rivalLevels),rivalSettings.driverId,rivalCar):CARS[s.car];
-    s.rival = (!s.practice && COURSE[idx].hasRival && s.mode !== 'timetrial')
-      ? { car:rivalCar,driverId:rivalSettings?.driverId||DEFAULT_DRIVER,upgrades:rivalLevels,s: this.course.rivalStartS, lateral: -DRIVE.laneOffset, speedMph: 0, finished: false, finishTime: null,
+    const firstOpponent = (s.opponentCount > 0 && !s.practice && (COURSE[idx].hasRival || s.opponentCount > 1) && s.mode !== 'timetrial')
+      ? { car:rivalCar,driverId:rivalSettings?.driverId||DEFAULT_DRIVER,upgrades:rivalLevels,s: this.course.rivalStartS ?? -20, lateral: -DRIVE.laneOffset, speedMph: 0, finished: false, finishTime: null,
         headingError: 0, yawVelocity: 0, pushVelocity: 0, offRoad: false, contactCooldown: 0, boost:1, boosting:false,
         damageZones: freshDamageZones(), damageCooldown: 0,
         airborne: false, airHeight: 0, _jumpY: null, _verticalSpeed: 0, _jumpOrigin: null,
         completedLaps: 0, nextLapGate: 0, lapTimes: [], lapStartedAt: 0 }
       : null;
+    s.opponents = firstOpponent ? [firstOpponent] : [];
+    for (let index = 1; index < s.opponentCount && firstOpponent; index++) {
+      s.opponents.push({ ...firstOpponent, s: firstOpponent.s - index * 16,
+        lateral: index % 2 ? DRIVE.laneOffset : -DRIVE.laneOffset,
+        damageZones: freshDamageZones(), upgrades: { ...rivalLevels }, lapTimes: [] });
+    }
     // pre-spawn deterministic two-way traffic
     s.traffic = this._spawnTraffic(idx);
     s.combat=s.mode==='wasteland'&&supportsCombat(COURSE[idx])?createCombat(s.weaponLevels):null;
@@ -239,7 +256,7 @@ export class Duel {
     s.invulnerableSec = Math.max(0, s.invulnerableSec - dt);
     s.damageCooldown = Math.max(0, s.damageCooldown - dt);
     stepCombat(this,dt);
-    for (const actor of [s.rival, s.police.pursuit, ...s.traffic]) {
+    for (const actor of [...s.opponents, s.police.pursuit, ...s.traffic]) {
       if (actor?.damageCooldown > 0) actor.damageCooldown = Math.max(0, actor.damageCooldown - dt);
     }
     s.calloutTimer = Math.max(0, s.calloutTimer - dt);
@@ -254,7 +271,7 @@ export class Duel {
       this._impact(dt);
       this._crushProps(s);
       this._traffic(dt);
-      if (s.rival) this._rival(dt);
+      for (const opponent of s.opponents) this._rival(dt, opponent);
       this._collisions();
       this._tickDrift(dt);
       this._police(dt, false);
@@ -269,7 +286,7 @@ export class Duel {
     if (s.status !== 'racing' || s.impactTimer > 0) { this._tickDrift(dt); return; }
     this._jump(s, dt);
     this._traffic(dt);
-    if (s.rival) this._rival(dt);
+    for (const opponent of s.opponents) this._rival(dt, opponent);
     this._collisions();
     this._tickDrift(dt);
     this._flockBonuses();

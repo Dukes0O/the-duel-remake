@@ -17,7 +17,10 @@ export function _vehicleSpec(actor) {
 export function _collisions() {
   const s = this.state;
   this._staticContacts(s, true);
-  if (s.rival) this._vehicleContact(s, s.rival, 'rival');
+  for (const opponent of s.opponents) this._vehicleContact(s, opponent, 'rival');
+  for (let i = 0; i < s.opponents.length; i++) {
+    for (let j = i + 1; j < s.opponents.length; j++) this._vehicleContact(s.opponents[i], s.opponents[j], 'rival');
+  }
   for (const c of s.traffic) {
     if (!c.alive || c.crushed) continue;
     // swept longitudinal test: a head-on closing speed can cross the whole
@@ -28,7 +31,7 @@ export function _collisions() {
     const clearance = Math.abs(c.lateral - s.lateral);
     this._vehicleContact(s, c, c.dir < 0 ? 'head_on' : 'traffic');
     if (!c.alive || c.wrecked) continue;
-    if (s.rival) this._vehicleContact(s.rival, c, 'traffic');
+    for (const opponent of s.opponents) this._vehicleContact(opponent, c, 'traffic');
     // Reward a completed pass once, rather than every frame spent near a car.
     if (c.passedLap !== s.completedLaps && prev > 0 && now <= 0) {
       c.passed = true; c.passedLap = s.completedLaps;
@@ -47,7 +50,7 @@ export function _collisions() {
   // A vehicle pushed sideways may now touch scenery. Resolve that contact
   // again, including when damage is temporarily disabled after a crash.
   this._staticContacts(s, true);
-  if (s.rival) this._staticContacts(s.rival, false);
+  for (const opponent of s.opponents) this._staticContacts(opponent, false);
 }
 
 export function _obstacles(fromS, toS) {
@@ -266,7 +269,7 @@ export function _vehicleContact(a, b, reason) {
   }
   const armoredPlayer = a === this.state && this.state.mode === 'wasteland';
   const crashThreshold = armoredPlayer ? combatCrashThresholdMph(this.car, { targetMass: specB.mass }) : 28;
-  const rearRam = armoredPlayer && b === this.state.rival && nz < 0 && (b.dir || 1) > 0 && a.speedMph >= 0;
+  const rearRam = armoredPlayer && this.state.opponents.includes(b) && nz < 0 && (b.dir || 1) > 0 && a.speedMph >= 0;
   const zone = contactZone(nx, nz, angleA + (a.dir < 0 ? Math.PI : 0));
   const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
   if (armoredPlayer && this.state.traffic.includes(b)) {
@@ -305,7 +308,7 @@ export function _vehicleContact(a, b, reason) {
     a.pushVelocity = clamp((a.pushVelocity || 0) + nx * shove * .6 * shareA, -pushLimit, pushLimit);
     b.pushVelocity = clamp((b.pushVelocity || 0) - nx * shove * 2 * shareB, -pushLimit, pushLimit);
     b.headingError = clamp((b.headingError || 0) - nx * (armoredPlayer ? .07 + Math.min(.16, impactMph / 500) : .07), -.8, .8);
-    if (armoredPlayer && b === this.state.rival) b.ramRecoverySec = Math.max(b.ramRecoverySec || 0, clamp(.35 + impactMph / 250, .35, 1.1));
+    if (armoredPlayer && this.state.opponents.includes(b)) b.ramRecoverySec = Math.max(b.ramRecoverySec || 0, clamp(.35 + impactMph / 250, .35, 1.1));
     a.speedMph *= .992; b.speedMph *= .985;
     if (a === this.state && this.state.invulnerableSec <= 0) {
       if (armoredPlayer && impactMph >= crashThreshold) this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);

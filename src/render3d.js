@@ -76,6 +76,7 @@ export function attachRenderer(host, app) {
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   const rearView=createRearView({renderer,scene,host});
   let course, world, loadedCar, loadedRivalCar, player, rival, chickens, ghost, ghostStyle, worldKey;
+  const extraOpponents = [];
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
   const vehicleAssets=createVehicleAssets();
   function prepareVehicle(key,{retry=false}={}) {
@@ -140,8 +141,10 @@ export function attachRenderer(host, app) {
     if (!next) {rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
     if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
+    const opponents = st.opponents || (st.rival ? [st.rival] : []);
     const rivalCarKey=!menu&&st.rival?.car||carKey;
     if(rivalCarKey!==carKey&&!prepareVehicle(rivalCarKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
+    if(!menu)for(const opponent of opponents.slice(1))if(opponent.car!==carKey&&!prepareVehicle(opponent.car)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if (course !== next) {
       if(world&&worldKey===environmentKey(next)){course=next;lighting.apply({course,mood:app.lightingMood});}
       else build(next);
@@ -153,12 +156,22 @@ export function attachRenderer(host, app) {
       if(ghost){const style=ghostStyle;retireObject(ghost,()=>style.restore());ghost=null;ghostStyle=null;}
       if (player) retireObject(player);
       if(rival){retireObject(rival);rival=null;}
+      for(const entry of extraOpponents)retireObject(entry.mesh);
+      extraOpponents.length=0;
       player = vehicleAssets.create(carKey);
       scene.add(player); loadedCar = carKey;sceneRevision++;
       ambientShading.refresh();
     }
     if(rival&&loadedRivalCar!==rivalCarKey){retireObject(rival);rival=null;}
     if (!rival) { rival = vehicleAssets.create(rivalCarKey,{color:0xbfcace,accent:0x142a36}); loadedRivalCar=rivalCarKey;scene.add(rival);sceneRevision++;ambientShading.refresh(); }
+    while(extraOpponents.length>(menu?0:Math.max(0,opponents.length-1)))retireObject(extraOpponents.pop().mesh);
+    for(let index=1;!menu&&index<opponents.length;index++){
+      const carKey=opponents[index].car||st.car,entry=extraOpponents[index-1];
+      if(entry?.carKey===carKey)continue;
+      if(entry)retireObject(entry.mesh);
+      const mesh=vehicleAssets.create(carKey,{color:index%2?0xb7a479:0x9bb9ba,accent:0x142a36});
+      scene.add(mesh);extraOpponents[index-1]={mesh,carKey};sceneRevision++;ambientShading.refresh();
+    }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
     const pp = vehicleGroundPoint(course,distance,lateral);
     lighting.apply({course,theme:course.themeAt(distance),mood:app.lightingMood,blend:1-Math.exp(-dt*1.1),tunnel:!!course.tunnelAt(distance)});
@@ -264,6 +277,19 @@ export function attachRenderer(host, app) {
     updateNpcVehicleDamage(rival,menu?null:st.rival);
     rival.visible = !menu && !!st.rival && Math.abs(visualGap(st.rival.s)) < 650;
     if (rival.visible) {place(rival, vehicleGroundPoint(course,st.rival.s, st.rival.lateral), st.rival.headingError||0, wheelTravel(st.rival.speedMph));rival.position.y+=st.rival.airHeight||0;const slope=groundSlope(course,st.rival.s,st.rival.lateral,st.rival.headingError||0);rival.rotation.x=slope.pitch;rival.rotation.z=slope.roll;applyVehicleTerrainPose(rival,course,st.rival);updateDriver(rival.userData.driver,Math.max(-1,Math.min(1,(st.rival.pushVelocity||0)*.08)),0,false);for(const lamp of rival.userData.brakeLights||[])lamp.material.emissiveIntensity=st.rival.braking?4:1.4;}
+    extraOpponents.forEach(({mesh},index)=>{
+      const actor=opponents[index+1];
+      updateNpcVehicleDamage(mesh,menu?null:actor);
+      mesh.visible=!menu&&!!actor&&Math.abs(visualGap(actor.s))<650;
+      if(!mesh.visible)return;
+      place(mesh,vehicleGroundPoint(course,actor.s,actor.lateral),actor.headingError||0,wheelTravel(actor.speedMph));
+      mesh.position.y+=actor.airHeight||0;
+      const slope=groundSlope(course,actor.s,actor.lateral,actor.headingError||0);
+      mesh.rotation.x=slope.pitch;mesh.rotation.z=slope.roll;
+      applyVehicleTerrainPose(mesh,course,actor);
+      updateDriver(mesh.userData.driver,Math.max(-1,Math.min(1,(actor.pushVelocity||0)*.08)),0,false);
+      for(const lamp of mesh.userData.brakeLights||[])lamp.material.emissiveIntensity=actor.braking?4:1.4;
+    });
     const palette = [0xd9c99c, 0x2c566a, 0x847458, 0xf0e9dc, 0x5e3d2f];
     while (traffic.length < st.traffic.length) { const car = createVehicle({ color: palette[traffic.length % palette.length] }); scene.add(car); traffic.push(car);sceneRevision++;ambientShading.refresh(); }
     traffic.forEach((car, i) => {

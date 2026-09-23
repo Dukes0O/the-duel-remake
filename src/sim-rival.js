@@ -77,8 +77,9 @@ export function _traffic(dt) {
   }
 }
 
-export function _rival(dt) {
-  const s = this.state, r = s.rival;
+export function _rival(dt, opponent = this.state.rival) {
+  const s = this.state, r = opponent;
+  if (!r) return;
   if (r.crushed) return;
   r.prevS = r.s; r.prevLateral = r.lateral;
   r.prevAirHeight = r.airHeight || 0;
@@ -105,7 +106,7 @@ export function _rival(dt) {
   if (s.cpuDifficulty !== 'easy' && (this._npcRoutePlanner?.course !== this.course || this._npcRoutePlanner?.car !== car)) {
     this._npcRoutePlanner = new NpcRoutePlanner(this.course, { car, surfaceAt: (distance, lateral) => this._drivingSurface(distance, lateral, car) });
   }
-  const route = s.cpuDifficulty === 'easy' ? null : this._npcRoutePlanner.update(r, { difficulty: s.cpuDifficulty, lapsTotal: s.lapsTotal, player: s, traffic: s.traffic });
+  const route = s.cpuDifficulty === 'easy' ? null : this._npcRoutePlanner.update(r, { difficulty: s.cpuDifficulty, lapsTotal: s.lapsTotal, player: s, traffic: s.traffic, opponents: s.opponents });
   r.routeId = route?.routeId || null; r.routeLap = route?.routeLap || null;
   const rivalSurface = this._drivingSurface(r.s, r.lateral, car);
   const mediumCatchup = s.mode === 'wasteland' && s.cpuDifficulty === 'medium' ?
@@ -190,7 +191,11 @@ export function _rival(dt) {
   this._boundary(r);
   this._crushProps(r);
   this._advanceLaps(r, dt);
-  if (r.completedLaps >= s.lapsTotal) { r.finished = true; r.finishTime = s.stageTimeSec; this.emit({ rivalFinished: true }); }
+  if (r.completedLaps >= s.lapsTotal) {
+    r.finished = true; r.finishTime = s.stageTimeSec;
+    const index = s.opponents.indexOf(r);
+    this.emit(index <= 0 ? { rivalFinished: true } : { opponentFinished: index });
+  }
 }
 
 export function _ramFlight(actor, dt) {

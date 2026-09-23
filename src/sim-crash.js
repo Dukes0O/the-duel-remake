@@ -120,7 +120,7 @@ export function _practiceRecoveryPose(car, others, crashSite = null) {
 
 export function _safeReset(car, crashSite = null) {
   if (car === this.state) this._breakDrift('reset');
-  const others = [...this.state.traffic.filter(other => other.alive), this.state.rival, this.state.police.pursuit?.active ? this.state.police.pursuit : null, this.state].filter(other => other && other !== car);
+  const others = [...this.state.traffic.filter(other => other.alive), ...this.state.opponents, this.state.police.pursuit?.active ? this.state.police.pursuit : null, this.state].filter(other => other && other !== car);
   const racer = Number.isFinite(car.completedLaps);
   const lowerBound = this.course.closed ? racer ? car.completedLaps * this.course.length : -Infinity : 0;
   // Recovery replaces prevS, so it must not place a racer beyond a gate whose
