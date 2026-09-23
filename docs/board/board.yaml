@@ -264,7 +264,7 @@ tasks:
     size: S
     needs: [BUG-07]
     status: merged
-    note: "Merged as 1fd711f; physical misses retry immediately. With Q5 police off, 158-suite exact merge, build and private smoke pass."
+    note: "Merged as 1fd711f; physical misses retry immediately. Crowded-reset follow-up a10e22d searches nearby clear gaps before distant spots; focused checkpoint checks and 162 unchanged replays pass. Combined full gate pending."
     spec: "SPEC.md, checkpoint integrity and BUG-07 interaction"
   - id: BUG-08
     title: "Rigs attached to the car"
