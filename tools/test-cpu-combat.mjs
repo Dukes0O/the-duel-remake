@@ -14,7 +14,7 @@ function make(cpuDifficulty='medium'){
   return duel;
 }
 
-for(const [difficulty,seconds] of [['easy',10],['medium',7],['hard',5]]){
+for(const [difficulty,seconds] of [['easy',10],['medium',6.8],['hard',5.3]]){
   const duel=make(difficulty),s=duel.state;
   stepCombat(duel,.1);
   assert.ok(Math.abs(s.combat.aiTimer-(seconds-.1))<.001,
@@ -74,6 +74,17 @@ for(const [difficulty,seconds] of [['easy',10],['medium',7],['hard',5]]){
   stepCombat(duel,.02);
   assert.ok(s.combat.projectiles.some(projectile=>projectile.enemy&&projectile.kind==='bomb'),
     'CPU bombs a player who is close');
+}
+
+{
+  const duel=make('medium'),s=duel.state;
+  s.s=s.prevS=100;s.rival.s=s.rival.prevS=100;s.combat.aiTimer=Infinity;
+  const hits=[];
+  duel.onChange((_,event)=>{if(event.combatHit&&event.enemy&&event.victim==='player')hits.push(event);});
+  assert.ok(fireWeapon(duel,'bomb',true));
+  for(const bomb of s.combat.projectiles)bomb.age=1.5;
+  stepCombat(duel,.02);
+  assert.equal(hits.length,1,'one overlapping bomb volley causes one physical impact per car');
 }
 
 function incoming(duel,distance,front=true){
@@ -149,7 +160,7 @@ function runRace(cpuDifficulty,stageId){
 const races=['easy','medium','hard'].map(difficulty=>runRace(difficulty,'titan-arena'));
 const pacific=['easy','medium','hard'].map(difficulty=>runRace(difficulty,'pacific-canyon'));
 console.log(JSON.stringify({races,pacific}));
-for(const race of races){
+for(const race of [...races,...pacific]){
   assert.ok(race.completed,`${race.cpuDifficulty} race completes`);
   const [min,max]={easy:[0,3],medium:[2,6],hard:[4,10]}[race.cpuDifficulty];
   assert.ok(race.hits>=min&&race.hits<=max,

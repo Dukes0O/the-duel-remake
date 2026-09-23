@@ -197,6 +197,7 @@ export class Duel {
     s.fallenCacti = []; this._fallenCactusIds = new Set();
     s._jumpY = null; s._verticalSpeed = 0; s._jumpOrigin = null; s.prevAirHeight = 0;
     s.crashSite = null; s.impactTimer = 0; s.impactDuration = 0; s.impactStrength = 0; s.impactSide = 1; s.crashSpin = 0;
+    s.bombImpactCooldown = 0;
     s.combo = 0; s.comboTimer = 0; s.stageStyleScore = 0; s.stageCrashes = 0; s.policeEscapes = 0;
     s.callout = ''; s.calloutTimer = 0;
     s.input = { throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false };
@@ -1228,9 +1229,16 @@ export class Duel {
     const route = s.cpuDifficulty === 'easy' ? null : this._npcRoutePlanner.update(r, { difficulty: s.cpuDifficulty, lapsTotal: s.lapsTotal, player: s, traffic: s.traffic });
     r.routeId = route?.routeId || null; r.routeLap = route?.routeLap || null;
     const rivalSurface = this._drivingSurface(r.s, r.lateral, car);
-    const targetPace = car.topSpeed * skill.skill;
+    const targetPace = car.topSpeed * skill.skill + (s.mode === 'wasteland' ?
+      s.cpuDifficulty === 'medium' ? 8 : s.cpuDifficulty === 'hard' ? -15 : 0 : 0);
     const rubber = clamp((s.s - r.s) * .012, -8, 8);
     let target = targetPace + rubber;
+    if (s.mode === 'wasteland' && s.cpuDifficulty === 'hard') {
+      // A Wasteland rival stays near enough to fight instead of driving away
+      // after an impact. It slows through normal braking, then resumes pace.
+      const attackLead = clamp((r.s - s.s - 90) / 90, 0, 1);
+      target = Math.min(target, target * (1 - attackLead) + 140 * attackLead);
+    }
     // Custom rivals spend their chosen nitro build on clear straights. The
     // legacy default rival keeps its original pace and does not gain boost.
     r.boosting=!!s.rivalSettings&&r.boost>.05&&r.speedMph>=BOOST.minSpeedMph&&rivalSurface.boostAllowed&&r.contactCooldown<=0&&[0,40,80,120].every(ahead=>Math.abs(this.course.at(r.s+ahead).curvature)<.0012);

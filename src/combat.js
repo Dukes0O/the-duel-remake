@@ -7,8 +7,8 @@ import {makeRng} from './rng.js';
 export const WEAPONS=Object.freeze({ufo:{name:'UFO SWAP',key:'1',cooldown:18},bomb:{name:'BOMB STORM',key:'2',cooldown:9},crossbow:{name:'CROSSBOW',key:'3',cooldown:4},star:{name:'STAR SHIELD',key:'4',cooldown:16}});
 const CPU_COMBAT=Object.freeze({
  easy:{interval:10,aimError:.12,shieldReaction:.20,visionCos:.5},
- medium:{interval:7,aimError:.055,shieldReaction:.13,visionCos:.26},
- hard:{interval:5,aimError:.018,shieldReaction:.07,visionCos:.09},
+ medium:{interval:6.8,aimError:.055,shieldReaction:.13,visionCos:.26},
+ hard:{interval:5.3,aimError:.03,shieldReaction:.07,visionCos:.09},
 });
 export const supportsCombat=stage=>!!stage?.hasRival&&!stage.practice&&!stage.stuntTrial;
 export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],pickups:[],pickupTimer:4,pickupCount:0,serial:0,aiTimer:null,aiShot:0,aiShieldCooldown:0,hits:0};}
@@ -117,7 +117,8 @@ export function fireWeapon(duel,weapon,enemy=false){
 }
 function hit(duel,actor,p,power,enemy){
  const s=duel.state,c=s.combat;
- if(!actor||actor.finished||actor.crushed||(actor===s?(c.shield>0||s.invulnerableSec>0):c.rivalShield>0))return;
+ if(!actor||actor.finished||actor.crushed||(actor===s?(c.shield>0||s.invulnerableSec>0):c.rivalShield>0)||
+   (p.kind==='bomb'&&actor.bombImpactCooldown>0))return;
  const where=point(duel,actor),normal=Math.sign((where.x-p.x)*Math.cos(where.heading)-(where.z-p.z)*Math.sin(where.heading))||1;
  const renderedTurn=actor===s?(actor.slipAngle||0)+(actor.crashSpin||0):actor!==s.rival&&actor.dir<0?Math.PI:0;
  const heading=where.heading+(actor.headingError||0)+renderedTurn;
@@ -129,6 +130,9 @@ function hit(duel,actor,p,power,enemy){
  actor.speedMph*=1-power*.65;actor.pushVelocity=Math.max(-18,Math.min(18,(actor.pushVelocity||0)+normal*power*14));
  actor.headingError=Math.max(-.65,Math.min(.65,(actor.headingError||0)+normal*power*.25));
  actor.damageZones??={front:0,rear:0,left:0,right:0};actor.damageZones[zone]=Math.min(5,actor.damageZones[zone]+power);
+ // One bomb ring makes one shove; overlapping explosions cannot repeatedly
+ // hit the same car in the same instant.
+ if(p.kind==='bomb')actor.bombImpactCooldown=.3;
  if(actor===s){s.crashFlash=.35;s.impactStrength=power;duel._callout('INCOMING / ARMOR HIT',1.3);}
  else if(actor===s.rival&&!enemy){c.hits++;duel._callout('DIRECT HIT / RIVAL SHOVED',1.3);}
  duel.emit({combatHit:true,strength:power,enemy,victim:actor===s?'player':actor===s.rival?'rival':'traffic'});
@@ -153,6 +157,8 @@ function incomingBolt(duel,cpu){
 }
 export function stepCombat(duel,dt){
  const s=duel.state,c=s.combat;if(!c||s.status!=='racing'||s.paused)return;
+ for(const actor of [s,s.rival,...s.traffic])if(actor)
+  actor.bombImpactCooldown=Math.max(0,(actor.bombImpactCooldown||0)-dt);
  c.pickupTimer-=dt;
  if(c.pickupTimer<=0){
   const n=c.pickupCount++,where=s.s+100+40*(n%3);
