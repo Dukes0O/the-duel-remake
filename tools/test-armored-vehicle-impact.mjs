@@ -80,8 +80,9 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
   const { duel, player } = race();
   duel.destructiblesEnabled = true;
   const traffic = { s: 105, prevS: 115, lateral: .6, prevLateral: .6,
-    speedMph: 60, dir: -1, alive: true };
+    speedMph: 20, dir: -1, alive: true };
   player.traffic = [traffic];
+  player.speedMph = 90;
   const events = [];
   duel.onChange((_, event) => events.push(event));
   const entrySpeed = player.speedMph;
@@ -95,6 +96,31 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
   assert.equal(duel._vehicleContact(player, traffic, 'head_on'), false, 'the same wreck cannot hit again');
   duel._traffic(.2);
   assert.ok(traffic.airHeight > 0, 'the wreck visibly flies after the impact');
+}
+
+{
+  const { duel, player } = race();
+  duel.destructiblesEnabled = true;
+  const traffic = { s: 105, prevS: 115, lateral: .6, prevLateral: .6,
+    speedMph: 60, dir: -1, alive: true };
+  player.traffic = [traffic];
+  duel._vehicleContact(player, traffic, 'head_on');
+  assert.ok(traffic.wrecked, 'a severe impact still destroys light oncoming traffic');
+  assert.equal(player.lastCrashReason, 'head_on', 'extreme closing speed also breaches player armor');
+  assert.ok(player.impactTimer > 0 && player.stageCrashes === 1,
+    'the attacker pays one recovery penalty when its own threshold is exceeded');
+}
+
+{
+  const { duel, player } = race();
+  duel.destructiblesEnabled = true;
+  const traffic = { s: 105, prevS: 105, lateral: .6, prevLateral: .6,
+    speedMph: 20, dir: 1, alive: true };
+  player.traffic = [traffic];
+  player.speedMph = 100;
+  duel._vehicleContact(player, traffic, 'traffic');
+  assert.ok(traffic.wrecked && player.impactTimer === 0,
+    'an armored same-direction rear hit can wreck slower traffic without a player crash');
 }
 
 {

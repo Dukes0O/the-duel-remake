@@ -893,10 +893,14 @@ export class Duel {
         impactMph, playerTopSpeedMph: this.car.topSpeed, playerMass: specA.mass, targetMass: specB.mass });
       if (wreck.wreck && startTrafficWreck(b, { atTime: this.state.stageTimeSec,
         impulse: wreck.impulse, side: Math.sign(b.lateral - a.lateral) || Math.sign(nx) || 1 })) {
-        // The armor absorbs the impact while the lighter body is thrown clear.
-        // Keep a felt loss of speed, without the normal crash recovery penalty.
-        a.speedMph = Math.sign(a.speedMph) * Math.max(0, Math.abs(a.speedMph) - clamp(impactMph * .07, 4, 20));
-        if (this.state.invulnerableSec <= 0) this._scrape(zone, Math.min(impactMph, 22));
+        // Wrecking the lighter car does not make an extreme head-on hit safe
+        // for the attacker. Both outcomes use the same closing-speed measure.
+        if (this.state.invulnerableSec <= 0 && impactMph >= crashThreshold)
+          this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
+        else {
+          a.speedMph = Math.sign(a.speedMph) * Math.max(0, Math.abs(a.speedMph) - clamp(impactMph * .07, 4, 20));
+          if (this.state.invulnerableSec <= 0) this._scrape(zone, Math.min(impactMph, 22));
+        }
         this._callout('TRAFFIC WRECKED', 1.5);
         this.emit({ trafficWrecked: { actor: b, impactMph, thresholdMph: wreck.thresholdMph } });
         return true;
