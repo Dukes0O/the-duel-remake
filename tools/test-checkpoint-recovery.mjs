@@ -30,6 +30,37 @@ for (const mode of ['duel', 'wasteland', 'timetrial']) {
   duel._advanceLaps(state, 1 / 60, true);
   assert.equal(state.s, gate + .5, `${mode}: crash-time noReset leaves recovery to the impact path`);
   assert.equal(resets.length, 1, `${mode}: crash-time noReset sends no checkpoint reset`);
+
+  // A race can still reach the finish after a discontinuity or an earlier
+  // missed gate. A finish reset should put that required crossing nearby.
+  const finish = duel.course.length, missed = duel._lapGates[1];
+  duel._obstacles = () => [];
+  state.rival = null;
+  Object.assign(state, { completedLaps: 0, nextLapGate: 1,
+    prevS: finish - .5, s: finish + .5, prevLateral: 0, lateral: 0, speedMph: 100 });
+  duel._advanceLaps(state, 1 / 60);
+  assert.equal(state.nextLapGate, 1, `${mode}: finish cannot award a missed gate`);
+  assert.ok(state.s >= missed - 12 && state.s < missed,
+    `${mode}: retry is just before the first missed gate`);
+  assert.equal(state.prevS, state.s, `${mode}: recovery cannot sweep through the gate`);
+  Object.assign(state, { prevS: missed - .5, s: missed + .5,
+    prevLateral: 0, lateral: 0, speedMph: 100 });
+  duel._advanceLaps(state, 1 / 60);
+  assert.equal(state.nextLapGate, 2, `${mode}: gate still needs a legal physical crossing`);
+
+  Object.assign(state, { nextLapGate: duel._lapGates.length,
+    prevS: finish - .5, s: finish + .5, prevLateral: 12, lateral: 12, speedMph: 100 });
+  duel._advanceLaps(state, 1 / 60);
+  assert.ok(state.s >= finish - 12 && state.s < finish,
+    `${mode}: off-road finish gets a nearby retry`);
+  assert.equal(state.nextLapGate, duel._lapGates.length,
+    `${mode}: finish retry keeps validated gate history`);
+
+  Object.assign(state, { nextLapGate: 1, prevS: finish - 200, s: finish + .5,
+    prevLateral: 0, lateral: 0, speedMph: 100 });
+  duel._advanceLaps(state, 1 / 60);
+  assert.ok(state.s < missed - 100,
+    `${mode}: an implausible jump does not gain a close recovery`);
 }
 
 globalThis.cancelAnimationFrame ??= () => {};

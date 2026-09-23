@@ -104,7 +104,7 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   for (let i = 0; i < 5 && s.status === 'racing'; i++) d.step(1 / 60);
   eq(s.status, 'racing', 'an off-road finish must be crossed again on the course');
   eq(s.lives, lives0, 'missing a finish gate does not cost a life');
-  ok(s.s < d.raceLength - 100 && s.results === null, 'an invalid finish restores the last checkpoint without awarding results');
+  ok(s.s >= d.raceLength - 12 && s.s < d.raceLength && s.results === null, 'an invalid finish gets a nearby retry without awarding results');
 }
 
 // --- Pursuit: dawdling gets you caught (ticket), outrunning escapes ---
@@ -804,7 +804,7 @@ function crossGate(duel, actor, gate, lateral = 0) {
   const s = d.state; s.status = 'racing'; s.traffic=[];
   crossGate(d,s,d.course.length);
   eq(s.completedLaps,0,'crossing the start alone cannot award a lap');
-  ok(s.s < 20 && s.invulnerableSec > 2,'missing every checkpoint restores the start safely');
+  ok(s.s >= d._lapGates[0] - 12 && s.s < d._lapGates[0] && s.invulnerableSec > 2,'missing every checkpoint restores before the first required gate');
   eq(s.lives,LIVES.start,'invalid lap recovery preserves lives');
   eq(s.majorCrashes,0,'invalid lap recovery does not count as a crash');
   const gate=d._lapGates[0]; crossGate(d,s,gate,65);

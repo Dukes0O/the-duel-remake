@@ -1535,8 +1535,12 @@ export class Duel {
     if (!crossed(finish)) return;
     if (actor.nextLapGate < this._lapGates.length || !legalAt(finish) || !plausibleTravel) {
       if(noReset)return;
-      // Restore the last validated segment; there is no life or damage cost.
-      actor.s = lapBase + (this._lapGates[actor.nextLapGate - 1] || 0) + 1;
+      // Put the missed gate (or the finish line) a short drive ahead. The
+      // recovery still sits before the next unearned crossing, and a large
+      // discontinuous jump does not gain this closer retry position.
+      const lastValid = lapBase + (this._lapGates[actor.nextLapGate - 1] || 0) + 1;
+      const nextRequired = lapBase + (this._lapGates[actor.nextLapGate] ?? this.course.length);
+      actor.s = plausibleTravel ? Math.max(lastValid, nextRequired - 12) : lastValid;
       this._safeReset(actor);
       if (player) { actor.invulnerableSec = Math.max(actor.invulnerableSec, 2.2); this._callout('CHECKPOINT MISSED  /  BACK ON COURSE', 3); this.emit({ checkpointReset: true }); }
       return;

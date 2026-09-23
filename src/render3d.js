@@ -33,6 +33,10 @@ export function detachRetiredVehicleVisuals(object, combatScene, vehicleAttachme
   vehicleAttachments.detachVehicle(object);
 }
 
+export function terrainBounceAmplitude(roughness, speedMph) {
+  return roughness * Math.min(1, Math.abs(speedMph) / 18);
+}
+
 // This layer only reads simulation state. Asset replacement never changes race rules.
 export function attachRenderer(host, app) {
   const rendererAttachedAt=performance.now();let firstPresentation=true;
@@ -171,7 +175,7 @@ export function attachRenderer(host, app) {
     updateDriver(player.userData.driver,steering,menu?0:st.slipAngle,!menu&&st.catastrophic);
     if(player.userData.steeringPivot)player.userData.steeringPivot.rotation.z=steering*.7;
     const impact = menu ? 0 : Math.min(1, (st.impactTimer || 0) / (st.impactDuration || 1.8));
-    const rough = menu ? 0 : st.roughness || 0;
+    const rough = menu ? 0 : terrainBounceAmplitude(st.roughness || 0, speed);
     const motionTime = st.stageTimeSec;
     player.rotation.y += menu ? 0 : (st.headingError || 0) + (st.slipAngle || 0) + (st.crashSpin || 0);
     player.rotation.z = steering * Math.min(speed / 160, 1) * .045;
