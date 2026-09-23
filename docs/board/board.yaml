@@ -238,6 +238,15 @@ tasks:
     status: building
     note: "Exact 10/7/5 s attacks and race pace integrated through a85acad. Medium/Hard hit and win bands pass; Easy wins 10/10 and CPU UFO/pickups remain open."
     spec: "SPEC.md, task BUG-07"
+  - id: BUG-14
+    title: "No legacy police in combat races"
+    wave: 1
+    lane: SIM
+    size: S
+    needs: [BUG-07]
+    status: ready-to-merge
+    note: "Q5 police exclusion passes red/green fixture, ordinary radar, 162 replays, 83-suite lane and build. It restores Pacific CPU hits to 1/2/10 on exact BUG-13 base; UFO balance remains red."
+    spec: "SPEC.md, Q5 and section 3.2"
   - id: BUG-08
     title: "Rigs attached to the car"
     wave: 1

@@ -214,7 +214,7 @@ export class Duel {
     s.parTimeSec = this._parTime();
     if (s.practice) { s.timeLimitSec = s.timeRemaining = s.parTimeSec = s.objective = s.drift = s.checkpointRush = null; }
     s.police = { beep: 0, triggered: false, pursuit: null, ticket: null, ticketCount: 0, pendingFines: 0 };
-    if (this.course.def.kind === 'chase') s.police.pursuit = this._newPursuit(260);
+    if (s.mode !== 'wasteland' && this.course.def.kind === 'chase') s.police.pursuit = this._newPursuit(260);
     s.results = null;
     s.lastCrashReason = null;
     s.crashFlash = 0;
@@ -1127,7 +1127,7 @@ export class Duel {
   }
 
   _police(dt, allowTicket = true) {
-    if (this.course.def.practice) return;
+    if (this.course.def.practice || this.state.mode === 'wasteland') return;
     const s = this.state, p = s.police;
     const chase = this.course.def.kind === 'chase';
     const radar = this.course.nearestRadar(s.s);
@@ -1173,7 +1173,7 @@ export class Duel {
 
   _ticket(radar) {
     const s = this.state;
-    if (s.status !== 'racing' || this.course.def.practice) return;
+    if (s.status !== 'racing' || this.course.def.practice || s.mode === 'wasteland') return;
     const penalty = this.stageDef.kind === 'chase' ? this.stageDef.chaseCatchPenaltySec : POLICE.ticketPenaltySec;
     s.status = 'ticket';
     s.boosting = false;
