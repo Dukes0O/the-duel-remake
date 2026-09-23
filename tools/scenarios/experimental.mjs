@@ -15,10 +15,12 @@ export async function run(context) {
     document.querySelector('#experimental-toggle')`, 'Experimental panel');
   const before = await context.evaluate(`(() => ({
     checked: document.querySelector('#experimental-toggle').checked,
-    empty: document.querySelector('.experimental-list').textContent.includes('No early features are available yet'),
+    roadsideListed: document.querySelector('.experimental-list').textContent.includes('ROADSIDE DESTRUCTION'),
+    careerHidden: !document.querySelector('.experimental-list').textContent.includes('CAREER BACKUP'),
     storageIsMemory: !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value
   }))()`);
-  if (before.checked || !before.empty || !before.storageIsMemory) throw Error('Experimental panel did not start safely off.');
+  if (before.checked || !before.roadsideListed || !before.careerHidden || !before.storageIsMemory)
+    throw Error('Experimental panel did not list only the beta roadside feature while starting safely off.');
   await context.evaluate(`document.querySelector('#experimental-toggle').click()`);
   await context.waitFor(`document.querySelector('#experimental-toggle')?.checked &&
     document.querySelector('#experimental-open')?.textContent.includes('ON')`, 'Experimental choice');

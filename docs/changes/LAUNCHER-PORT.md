@@ -1,6 +1,6 @@
 # LAUNCHER-PORT: reuse the running game
 
-Status: ready-to-merge
+Status: merged into integration; final release check pending
 
 Repeated desktop shortcut clicks now check `localhost:5174` before installing,
 building, or starting another Vite process. If the existing page matches The

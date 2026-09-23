@@ -30,8 +30,24 @@ wreck penalty, and the UFO landing preview. High and Performance browser smoke
 passed. The reviewed save-code refactor later passed its 164-suite merge gate;
 its historical save migration fixtures and production build passed. Art intake
 accepts the original Wasteland direction board as a reference image. Tileable
-textures and flipbooks remain planned, not shipped runtime assets. A second
-full check on the final release commit is recorded below when complete.
+textures and flipbooks remain planned, not shipped runtime assets. The second
+integration full tier passed 173/173 suites in 346.46 seconds after the launcher
+and art reference merged. The roadside browser scenario passed again on that
+commit: a small tree fell, the car still moved at 70.8 mph, and the browser had
+zero warnings or errors. These two consecutive full checks and browser passes
+meet the spec's rule for promoting roadside destruction to Experimental. The
+launcher also passed its focused real-server checks on a private port.
+After promotion, the production switch test confirms roadside destruction is
+off until Experimental is enabled, while the QA-only career-backup switch stays
+off. The Experimental browser scenario shows the roadside entry, starts with
+the toggle off, and switches it on and off with zero console issues. The
+roadside race scenario passed again after promotion with zero console issues.
+The final combat balance command passed on the promoted code: Easy/Medium/Hard
+won 8/6/4 of 10 races, and the largest measured UFO gain was 1.57 seconds.
+The Hard UFO samples were 6.49 and 6.16 seconds slower because of later race
+events. Production and QA builds pass; the production build retains the known
+large renderer-chunk warning. Art intake and the 3.45 MB / 4 MB save budget
+check pass.
 
 ## Armory, road pickups, and camera reset — September 22, 2026
 
