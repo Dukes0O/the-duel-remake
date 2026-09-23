@@ -2,7 +2,7 @@
 // in 200 ms. This shapes keyboard input only, not the vehicle's steering model.
 export const KEYBOARD_STEERING_START = .78;
 export const KEYBOARD_STEERING_RISE_SEC = .2;
-export const keyboardSteeringDirection=keys=>(keys.ArrowRight?1:0)-((keys.ArrowLeft||keys.KeyA)?1:0);
+export const keyboardSteeringDirection=keys=>(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0);
 
 export function createKeyboardSteering(){
   let direction=0,held=0;

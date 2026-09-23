@@ -10,8 +10,8 @@ const equal=(a,b,label)=>{assert.deepEqual(a,b,label);checks++;};
 const near=(a,b,tolerance,label)=>check(Math.abs(a-b)<=tolerance,`${label}: ${a} vs ${b}`);
 const dt=1/120,firstAuthority=.78+.22*(dt/2)/.2;
 equal([KEYBOARD_STEERING_START,KEYBOARD_STEERING_RISE_SEC],[.78,.2],'keyboard-only curve starts at 78% and reaches full in 200 ms');
-for(const [keys,want]of [[{},0],[{KeyA:true},-1],[{ArrowLeft:true},-1],[{KeyD:true},0],[{ArrowRight:true},1],[{KeyD:true,ArrowRight:true},1],[{KeyD:true,KeyA:true},-1],[{KeyD:true,ArrowLeft:true},-1]])
-  equal(keyboardSteeringDirection(keys),want,'driving keys and opposing keys retain their existing direction rules');
+for(const [keys,want]of [[{},0],[{KeyA:true},0],[{ArrowLeft:true},-1],[{KeyD:true},0],[{ArrowRight:true},1],[{KeyA:true,ArrowRight:true},1],[{ArrowLeft:true,ArrowRight:true},0],[{KeyD:true,KeyA:true},0],[{KeyD:true,ArrowLeft:true},-1]])
+  equal(keyboardSteeringDirection(keys),want,'only arrow keys steer; A and D never steer');
 for(const [duration,want]of [[.025,.79375],[.05,.8075],[.1,.835],[.2,.89],[.5,.956]]){
   const steering=createKeyboardSteering();let integral=0;
   for(let i=0;i<Math.round(duration/dt);i++)integral+=steering.update(1,dt)*dt;
@@ -43,6 +43,19 @@ function fixture(){
 }
 const key=(type,code,repeat=false)=>{const event=new Event(type,{cancelable:true});Object.assign(event,{code,repeat});window.dispatchEvent(event);};
 const pose=state=>[state.status,state.stageTimeSec,state.s,state.lateral,state.headingError,state.speedMph,state.steerVisual,state.slipAngle,state.stageCrashes,state.score,state.gear,state.input];
+{
+  const app=fixture();
+  app.setCamera('front');key('keydown','KeyD');app._applyInput(dt);
+  equal(app.cameraMode,'chase','D resets the chase camera through the real key handler');
+  equal(app.duel.state.input.steer,0,'D does not steer in the car');
+  key('keyup','KeyD');key('keydown','KeyA');app._applyInput(dt);
+  equal(app.duel.state.input.steer,0,'A does not steer in the car');
+  key('keyup','KeyA');key('keydown','KeyW');app._applyInput(dt);
+  equal(app.duel.state.input.throttle,1,'W remains the throttle pedal');
+  key('keyup','KeyW');key('keydown','KeyS');app._applyInput(dt);
+  equal(app.duel.state.input.brake,1,'S remains the brake pedal');
+  key('keyup','KeyS');app.dispose();
+}
 function physicalTap({duration=.05,legacy=false,neutral=false,fps=60,keyCode='ArrowRight'}={}){
   const app=fixture();
   if(legacy)app._keyboardSteering={reset(){},update:direction=>direction}; // prior keyboard mapping, comparison only
@@ -67,14 +80,14 @@ for(const duration of [.05,.1]){
   check(lateralRatio>.74&&lateralRatio<.9,'real lateral tap movement is softer by a modest amount');
   physical.push({tapMs:duration*1000,speedMph:+soft.before.speedMph.toFixed(2),inputRatio:+(soft.integral/old.integral).toFixed(4),yawRatio:+yawRatio.toFixed(4),lateralRatio:+lateralRatio.toFixed(4)});
 }
-const arrow=physicalTap({keyCode:'ArrowRight'}),wasd=physicalTap();
-equal(pose(arrow.pressed),pose(wasd.pressed),'arrow-key steering remains deterministic');
+const arrow=physicalTap({keyCode:'ArrowRight'});
+check(arrow.pressed.input.steer>0,'right arrow steers the real car');
 
 function trajectory(fps){
   const app=fixture(),hash=createHash('sha256'),step=app.duel.step.bind(app.duel);
   app.duel.step=seconds=>{const result=step(seconds);hash.update(JSON.stringify(pose(app.duel.state)));return result;};
   key('keydown','KeyW');app.advance(6,1/fps);
-  for(const [code,seconds]of [['ArrowRight',.05],[null,.15],['KeyA',.1],[null,.1],['ArrowRight',.3],[null,.15]]){
+  for(const [code,seconds]of [['ArrowRight',.05],[null,.15],['ArrowLeft',.1],[null,.1],['ArrowRight',.3],[null,.15]]){
     if(code)key('keydown',code);app.advance(seconds,1/fps);if(code)key('keyup',code);
   }
   const result={hash:hash.digest('hex'),pose:pose(app.duel.state)};app.dispose();return result;
@@ -90,7 +103,7 @@ equal(trajectories[0],trajectories[2],'30 and 144 FPS have identical fixed-step 
   const fresh=()=>{app.keys={ArrowRight:true};app._applyInput(dt);near(app.duel.state.input.steer,firstAuthority,1e-12,'lifecycle reset gives the next key a fresh ramp');};
   fill();key('keyup','ArrowRight');key('keydown','ArrowRight');app._applyInput(dt);near(app.duel.state.input.steer,firstAuthority,1e-12,'keyup and re-press between physics steps starts a new tap');
   fill();key('keydown','ArrowRight',true);app._applyInput(dt);equal(app.duel.state.input.steer,1,'OS key-repeat does not restart a sustained hold');
-  fill();key('keydown','KeyA');app._applyInput(dt);equal(app.duel.state.input.steer,0,'opposing keyboard directions cancel immediately');key('keyup','KeyA');app._applyInput(dt);near(app.duel.state.input.steer,firstAuthority,1e-12,'leaving opposed keys starts fresh');
+  fill();key('keydown','ArrowLeft');app._applyInput(dt);equal(app.duel.state.input.steer,0,'opposing arrow directions cancel immediately');key('keyup','ArrowLeft');app._applyInput(dt);near(app.duel.state.input.steer,firstAuthority,1e-12,'leaving opposed arrows starts fresh');
   fill();app.restart();fresh();
   fill();app.returnToMenu();fresh();
   app.startCampaign(options);fill();app.togglePause();app.resume();fresh();
@@ -108,8 +121,9 @@ equal(trajectories[0],trajectories[2],'30 and 144 FPS have identical fixed-step 
     app.keys={};app._applyInput(dt);near(app.duel.state.input.steer,.5,1e-12,'analog steering keeps the existing deadzone mapping without a ramp');
     equal([app.duel.state.input.throttle,app.duel.state.input.brake],[.63,.18],'controller pedal values are unchanged');
   }
-  app.keys={KeyA:true};app._applyInput(dt);near(app.duel.state.input.steer,-firstAuthority,1e-12,'keyboard retains its existing priority over analog while held');
-  key('keyup','KeyA');app._applyInput(dt);near(app.duel.state.input.steer,.5,1e-12,'keyboard release immediately restores analog steering, with no residual keyboard tail');
+  app.keys={ArrowLeft:true};app._applyInput(dt);near(app.duel.state.input.steer,-firstAuthority,1e-12,'left arrow has priority over analog while held');
+  key('keyup','ArrowLeft');app._applyInput(dt);near(app.duel.state.input.steer,.5,1e-12,'arrow release immediately restores analog steering, with no residual keyboard tail');
+  app.keys={KeyA:true,KeyD:true};app._applyInput(dt);near(app.duel.state.input.steer,.5,1e-12,'A and D leave analog steering unchanged');
   app.autopilot=true;app._keyboardSteering.update=()=>{throw Error('Autopilot must not pass through keyboard shaping');};
   app._applyInput(dt);check(Number.isFinite(app.duel.state.input.steer),'autopilot bypasses keyboard shaping');app.dispose();
 }

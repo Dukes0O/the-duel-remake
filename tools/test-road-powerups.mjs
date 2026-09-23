@@ -13,5 +13,8 @@ const timer=c.pickupTimer;stepCombat(d,10);assert.equal(c.pickupTimer,timer);ass
 s.paused=false;stepCombat(d,.05);assert.equal(c.pickups.length,0);assert.equal(c.cooldowns[p.weapon],0,'swept crossing recharges weapon');
 c.pickups.push({s:s.s+50,weapon:'star',age:23.99});stepCombat(d,.05);assert.equal(c.pickups.length,0,'uncollected pickup expires');
 assert.equal(keyboardSteeringDirection({KeyD:true}),0,'camera reset never steers');
+assert.equal(keyboardSteeringDirection({KeyA:true}),0,'A never steers');
+assert.equal(keyboardSteeringDirection({KeyA:true,ArrowRight:true}),1,'A cannot cancel right-arrow steering');
+assert.equal(keyboardSteeringDirection({ArrowLeft:true,ArrowRight:true}),0,'opposing arrows cancel');
 d.startCampaign({mode:'wasteland'});assert.equal(d.state.combat.pickups.length,0,'restart clears pickups');
-console.log('Road power-ups: spawn, miss, collect, pause, expiry, restart and D steering checks passed.');
+console.log('Road power-ups: spawn, miss, collect, pause, expiry, restart and arrow-only steering checks passed.');
