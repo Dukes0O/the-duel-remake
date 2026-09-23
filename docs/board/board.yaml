@@ -278,8 +278,27 @@ tasks:
     lane: Discovery
     size: S
     needs: [FND-05]
-    status: ready
+    status: building
+    note: "Audited 5fbf24f..b9e40c5; two vacuous OLD-02 record assertions filed as TST-01 and TST-02. See docs/changes/OLD-03.md."
     spec: "SPEC.md, task OLD-03"
+  - id: TST-01
+    title: "Prove route best restoration through saved progression"
+    wave: 1
+    lane: SAVE
+    size: S
+    needs: [OLD-03]
+    status: blocked
+    note: "tools/test-race-integrity.mjs:134 compares a record key with itself; exercise saved best retrieval after changing and restoring a route."
+    spec: "docs/changes/OLD-03.md, TST-01"
+  - id: TST-02
+    title: "Prove best-time isolation across named players"
+    wave: 1
+    lane: SAVE
+    size: S
+    needs: [OLD-03]
+    status: blocked
+    note: "src/test.js:423 checks a fresh empty profile instead of switching, saving, and reloading two named players."
+    spec: "docs/changes/OLD-03.md, TST-02"
   - id: FND-11
     title: "Career backup"
     wave: 1
