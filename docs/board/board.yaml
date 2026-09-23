@@ -218,8 +218,8 @@ tasks:
     lane: CMB
     size: S
     needs: [BUG-03]
-    status: blocked
-    note: "Exact-distance, charged, target-only and several once-per-race small-gap trials were measured. None meets the unchanged four-second gain, win-rate, safe-landing and useful-upgrade needs together. Held pending a revised UFO design choice; no branch merged."
+    status: merged
+    note: "Kyle chose a short, predictable tactical jump. Merged through c8b253f: one safe 12-24 m jump per lap after the first checkpoint, with exact preview and callout. 100 seeded landings caused no crashes or resets; the exact balance gate, 172-suite full gate, production build, and 15 private browser scenarios pass. A fixed Hard race finishes about six seconds slower after later traffic contact; this is a human playtest point."
     spec: "SPEC.md, task BUG-04"
   - id: BUG-05
     title: "Bombs carry the car's speed"
