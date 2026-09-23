@@ -6,6 +6,12 @@ flag: none
 player_facing: yes
 ---
 
+This note covers measured combat blast and hit refinement only. It does not
+complete the `AUD-01 Weapon sounds` card in `SPEC.md`: rocket launch and flight,
+bolt release, harpoon and chain, flamethrower, oil splash, and the other listed
+cues still need their own sound work. The recorded measurements below do not
+replace a headphone and speaker listening pass.
+
 ## What changed
 
 Combat blasts and hits now use short, spatial sound paths in `audio.js`.
@@ -170,5 +176,15 @@ with seven WAV stems, zero browser warnings and zero errors. The final changed
 lane passed 170/170 suites in 234.35 s, including 162 unchanged replay
 comparisons; the production build passed. This verifies measured targets for
 this partial audio slice. Subjective listening and remaining AUD-01/02 cues
-are still open, and the branch remains held off integration by the balance
-stop line.
+are still open. That measurement was made on the earlier audio branch; this
+forward port still needs its own lane, merge and browser recording gates.
+
+## Forward port to integration base 5d00eeb
+
+The six audio commits were applied in order to a new isolated branch based on
+`5d00eeb`, after the three-opponent and short tactical UFO changes. No
+conflict resolution or race-rule edit was needed. On this exact branch,
+`node tools/test-audio.mjs` passed 459 checks, `node tools/test-combat.mjs`
+passed 66, `node --test tools/test-audio-analysis.mjs` passed 6/6, and
+`npm run build` passed. `git diff --check` passed. The later lane, merge,
+fresh browser audio recording and listening checks remain pending.

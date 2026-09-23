@@ -6,6 +6,12 @@ flag: none
 player_facing: no
 ---
 
+This historical `AUD-02` note describes audio measurement tooling for the
+current combat slice. It does not implement the spec's `AUD-02 On-foot and new
+weapon sounds` card. Footsteps, doors, plate clangs, turrets, and the other
+new cues remain open. Measured onset and pitch checks do not establish how
+the mix sounds on headphones or speakers.
+
 ## What changed
 
 The private race recorder now captures shift one-shots on a seventh, shift-only
@@ -89,3 +95,8 @@ another QA car voice would need its playback pitch applied to the template.
   three frame rates, and three runs.
 - `npm run build`: passed with the existing large rendering chunk warning.
 - `git diff --check`: passed.
+
+On the forward port based on integration commit `5d00eeb`, the focused audio
+analyzer tests pass 6/6 and the production build passes. The older browser
+recordings above were made before this port; a new recording and the lane and
+merge gates are still needed on the current branch.
