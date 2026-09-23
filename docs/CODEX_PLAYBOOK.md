@@ -2,7 +2,9 @@
 
 This is the operating manual for running the plan in `SPEC.md` with Codex. It covers who does what, where each agent works, how work moves from an idea to the game your players open, and the files to install. The design goal is quality: agents check each other, automatic tests decide what's finished, and nothing reaches the live game unless it passes.
 
-Nothing here is active yet. Installing it is decision D2 in `SPEC.md` section 15.
+The integration worktree and task board are active under Kyle's approval of D2
+on 23 September 2026. The live game still follows the full release gate in
+section 7.
 
 ## 1. The short version
 

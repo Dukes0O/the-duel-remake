@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Draft v2 for Kyle's review. No game code has changed |
+| Status | Approved for implementation by Kyle on 23 September 2026; BUG-04 UFO design remains open for review |
 | Date | 22 September 2026 |
 | Covers | A review of Mad Max Duel and of older code and habits that cause problems today; a way to build continuously with automatic checks instead of stopping between phases; an agent setup for Codex; and the plan for on-foot crews, a bigger arsenal, armor kits, an arena, a warlord ladder, unlocks and image creation |
 | Starting point | Commit `1fd7116` on `master` |

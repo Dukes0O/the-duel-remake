@@ -1,5 +1,14 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — overnight handoff prepared
+
+- The latest exact integration gameplay commit is `a3ad4ee`; docs are at
+  `26a006b` before this handoff. The merge, browser and art partial checks
+  pass, but all six UFO time-gain targets remain red. No live release was made.
+- `overnight-handoff-2026-09-23.md` lists the held, tested branches, the UFO
+  design decision, and the resume order. The audio forward branch also now
+  keeps the final 250 ms cue tail in QA capture; its contrast gate remains red.
+
 ## 2026-09-23 PDT — CPU bomb pickup range corrected
 
 - Reviewed BUG-07 balance fix `40e01a0` and cherry-picked it as `a3ad4ee`.
