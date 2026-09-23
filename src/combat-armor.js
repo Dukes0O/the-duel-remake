@@ -1,4 +1,5 @@
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {initializeCombatScoring, recordCombatHit, recordCombatWreck} from './combat-scoring.js';
 
 const T = COMBAT_TUNING.armor;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -38,6 +39,7 @@ export function initializeCombatArmor(duel) {
   // A new stage starts new unordered car-pair contact incidents.
   duel._combatRamIncidents = combatArmorEnabled(duel) ? new Set() : null;
   if (!duel._combatRamIncidents) return;
+  initializeCombatScoring(duel);
   for (const actor of [duel.state, ...duel.state.opponents]) {
     actor.maxArmor = maxArmorForMass(duel._vehicleSpec(actor).mass);
     actor.armor = actor.maxArmor;
@@ -54,13 +56,14 @@ export function combatShielded(duel, actor) {
   return (actor.combatShield || 0) > 0;
 }
 
-function startCombatWreck(duel, actor, source) {
+function startCombatWreck(duel, actor, source, owner) {
   const state = duel.state;
   const player = actor === state;
   const opponentIndex = player ? -1 : state.opponents.indexOf(actor);
   const point = duel.course.groundAt(actor.s, actor.lateral);
   actor.armor = 0;
   actor.combatWrecking = true;
+  recordCombatWreck(duel, actor, owner);
   actor.combatWreckTimer = T.wreckDuration;
   actor.impactTimer = T.wreckDuration;
   actor.combatWreckSite = {
@@ -96,7 +99,8 @@ export function applyArmorDamage(duel, actor, source, options = {}) {
   if (!(damage > 0)) return 0;
   const removed = Math.min(Math.max(0, actor.armor), damage);
   actor.armor = Math.max(0, actor.armor - damage);
-  if (actor.armor === 0) startCombatWreck(duel, actor, source);
+  if (actor.armor === 0) startCombatWreck(duel, actor, source, options.owner);
+  recordCombatHit(duel, actor, removed, options.owner);
   return removed;
 }
 

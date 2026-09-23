@@ -2,6 +2,7 @@ import {contactZone} from './collision.js';
 import {point, predictedPoint, burst} from './combat-weapons.js';
 import {applyArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {tickCombatScoring} from './combat-scoring.js';
 
 const T = COMBAT_TUNING;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -88,7 +89,7 @@ function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
     hitPosition: {x: where.x, y: where.y, z: where.z},
   });
   applyArmorDamage(duel, actor, projectile.kind === 'bomb' ? 'bomb' : 'crossbow',
-    {level: projectile.level, ...armorOptions});
+    {level: projectile.level, ...armorOptions, owner: enemy ? 'cpu' : 'player'});
 }
 
 function sweptApproach(projectile, old, target, radius) {
@@ -168,6 +169,7 @@ export function tickImpactCooldowns(duel, dt) {
 export function stepProjectiles(duel, dt) {
   const state = duel.state;
   const combat = state.combat;
+  tickCombatScoring(duel);
   const live = [];
   const modernProjectiles = state.mode === 'wasteland' &&
     duel.featureFlags?.enabled('wasteland2') === true;

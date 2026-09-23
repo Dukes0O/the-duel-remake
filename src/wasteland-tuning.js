@@ -66,4 +66,6 @@ export const COMBAT_TUNING=Object.freeze({
   recoverySpeedMph:12,recoveryGraceSeconds:1,
   terrainIncidentDistance:4,terrainIncidentGapSeconds:.75,
  },
+ scoring:{comboWindowSeconds:5,maximumCombo:5,hitStylePoints:100,
+  wreckStylePoints:400},
 });

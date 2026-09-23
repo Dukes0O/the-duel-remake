@@ -95,7 +95,8 @@ function armoredVehicleContact(duel, {a,b,nx,nz,end,width,length,specA,specB,
       const attackerIndex=attacker===duel.state?-1:duel.state.opponents.indexOf(attacker);
       const victimIndex=victim===duel.state?-1:duel.state.opponents.indexOf(victim);
       const spiked=combatFrontSpikes(attacker,face);
-      const armorRemoved=applyRamArmorDamage(duel,victim,impactMph,{spiked});
+      const armorRemoved=applyRamArmorDamage(duel,victim,impactMph,
+        {spiked,owner:attacker===duel.state?'player':'cpu'});
       duel.emit({combatRamHit:true,attacker:attackerIndex<0?'player':'rival',
         victim:victimIndex<0?'player':'rival',attackerIndex,victimIndex,
         armorRemoved,closingKph,spiked,hitPosition});

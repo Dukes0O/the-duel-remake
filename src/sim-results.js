@@ -1,6 +1,7 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, CPU_DIFFICULTY, COURSE, LIVES, DRIVE, SCORING } from './config.js';
 import { finishDrift } from './drift-scoring.js';
+import {combatResultSnapshot} from './combat-scoring.js';
 
 export function _parTime() {
   const car = CARS[this.state.car], skill = CPU_DIFFICULTY[this.state.cpuDifficulty].skill;
@@ -34,6 +35,7 @@ export function _deadline(atSec) {
     laps: s.completedLaps, lapTimes: [...s.lapTimes], assistedLaps: [...s.assistedLaps], lives: s.lives, score: s.stageStyleScore, styleScore: s.stageStyleScore,
     jumpScore: s.jumpScore, jumps: s.jumps, bestJumpMeters: s.bestJumpMeters,
     crushCount: s.crushCount, crushScore: s.crushScore, ...this._objectiveResult(),
+    ...combatResultSnapshot(this),
     ...(s.opponents.length > 1 ? { opponentCount: s.opponents.length,
       position: 1 + s.opponents.filter(opponent => opponent.finished || opponent.s > s.s).length } : {}) };
   this._callout(s.checkpointRush?'TIME UP  /  CHECKPOINT RUSH ENDED':s.objective ? `TIME UP  /  ${s.drift ? 'DRIFT' : 'STUNT'} TRIAL ENDED` : 'TIME UP  /  THE CAR LIVES TO RACE AGAIN', 3);
@@ -82,6 +84,7 @@ export function _finishStage() {
     lives: s.lives, timeBonus: timeBonus * this.scoreMultiplier, beatRival, score, styleScore: s.stageStyleScore, won,
     ...(s.opponents.length > 1 ? { opponentCount: s.opponents.length, position, beatAllOpponents } : {}),
     ...objective, ...(s.objective ? { objectiveMissed: !objective.targetsMet } : {}),
+    ...combatResultSnapshot(this),
   };
   if (s.lives <= 0) { s.status = 'gameover'; s.results.gameover = true; this.emit({ gameover: true }); return; }
   s.status = 'stage_result';
