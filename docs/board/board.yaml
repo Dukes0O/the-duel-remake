@@ -137,8 +137,8 @@ tasks:
     lane: TOOL
     size: S
     needs: [FND-08]
-    status: review
-    note: "Adds the missing full-check command, Batch A image catalog, provenance and credit checks, and negative-control tests. No Batch A images are present yet."
+    status: merged
+    note: "Merged as 6ba035b and 96a8e1f; hardened PNG, alpha, prompt and credit checks. 165-suite lane, 159-suite exact merge, build and private smoke pass. Seven planned images remain absent in integration."
     spec: "SPEC.md, section 3.10 and docs/CODEX_PLAYBOOK.md full check"
   - id: TOOL-02
     title: "Feel lab and audio checks"

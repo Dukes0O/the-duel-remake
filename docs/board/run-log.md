@@ -1,5 +1,17 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — art intake validation merged
+
+- QA-02 `6ba035b` and `96a8e1f` add the missing full-check art command and
+  harden PNG, alpha, prompt and credit validation after independent reviewers
+  found false passes. The actual ART-A reference board validates in its
+  isolated branch; integration reports all seven Batch A images as planned
+  and absent, not delivered.
+- The final lane passed 165/165 suites. Exact integration passed 159/159 merge
+  suites in 261.42 seconds, production build, the art command and private
+  High/Performance browser smoke: four screenshots, zero warnings or errors.
+  The UFO balance stop line still blocks a live release.
+
 ## 2026-09-23 PDT — Easy CPU balance and replay review merged
 
 - BUG-07 Easy tune `a26319a` raises physical Wasteland rival pace and sets
