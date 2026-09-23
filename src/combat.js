@@ -89,7 +89,7 @@ function hit(duel,actor,p,power,enemy){
  actor.damageZones??={front:0,rear:0,left:0,right:0};actor.damageZones[zone]=Math.min(5,actor.damageZones[zone]+power);
  if(actor===s){s.crashFlash=.35;s.impactStrength=power;duel._callout('INCOMING / ARMOR HIT',1.3);}
  else if(actor===s.rival&&!enemy){c.hits++;duel._callout('DIRECT HIT / RIVAL SHOVED',1.3);}
- duel.emit({combatHit:true,strength:power,enemy});
+ duel.emit({combatHit:true,strength:power,enemy,victim:actor===s?'player':actor===s.rival?'rival':'traffic'});
 }
 function sweptDistance(p,old,t){const dx=p.x-old.x,dz=p.z-old.z,d=dx*dx+dz*dz,f=d?Math.max(0,Math.min(1,((t.x-old.x)*dx+(t.z-old.z)*dz)/d)):0;return Math.hypot(old.x+f*dx-t.x,old.z+f*dz-t.z);}
 export function stepCombat(duel,dt){

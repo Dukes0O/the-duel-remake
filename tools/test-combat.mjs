@@ -98,7 +98,21 @@ check(traffic.speedMph===80&&traffic.damageZones.rear===0&&blastHits.length===0,
 traffic.alive=true;blastTraffic();
 check(traffic.speedMph<80&&traffic.damageZones.rear>0&&blastHits.length===1,
   'bomb blasts still damage live traffic at the same position');
-d=make();s=d.state;s.rival.s=120;s.rival.lateral=s.lateral;s.rival.speedMph=100;check(d.fireWeapon('crossbow'),'crossbow fires');for(let i=0;i<10;i++)stepCombat(d,.02);check(s.combat.hits===1&&s.rival.speedMph<100&&Math.abs(s.rival.pushVelocity)>0,'swept arrow hits and shoves the opponent');
+check(blastHits[0].victim==='traffic','combat hit identifies traffic as the bomb victim');
+d=make();s=d.state;s.rival.s=120;s.rival.lateral=s.lateral;s.rival.speedMph=100;
+const arrowHits=[];d.onChange((_,event)=>{if(event.combatHit)arrowHits.push(event);});
+check(d.fireWeapon('crossbow'),'crossbow fires');for(let i=0;i<10;i++)stepCombat(d,.02);check(s.combat.hits===1&&s.rival.speedMph<100&&Math.abs(s.rival.pushVelocity)>0,'swept arrow hits and shoves the opponent');
+check(arrowHits.some(event=>!event.enemy&&event.victim==='rival'),
+  'player arrow hit identifies the rival as its victim');
+{
+ const hits=[];d.onChange((_,event)=>{if(event.combatHit)hits.push(event);});
+ const player=d.course.groundAt(s.s,s.lateral);
+ s.invulnerableSec=0;
+ s.combat.projectiles.push({kind:'bomb',enemy:true,level:0,x:player.x,y:player.y+3,z:player.z,
+   vx:0,vy:0,vz:0,age:1.5});stepCombat(d,.01);
+ check(hits.some(event=>event.enemy&&event.victim==='player'),
+   'enemy bomb hit identifies the player as its victim');
+}
 // Aim each projectile at a rotated car so dents follow the struck body panel,
 // rather than the road axis or a fixed rear-panel fallback.
 for(const kind of ['bomb','crossbow'])for(const zone of ['front','rear','left','right']){
