@@ -1,6 +1,6 @@
 ---
 task: RFX-02
-status: ready-to-merge
+status: integrated
 kind: simulation-refactor
 flag: none
 player_facing: no
@@ -82,4 +82,9 @@ The QA harness used its throwaway Chrome profile and memory-only save storage;
 it did not connect to the live game or port 5174. The integration and live
 checkouts were untouched.
 
-This branch is ready for independent review. It has not been merged or released.
+Independent review found all 47 extracted method bodies and signatures unchanged
+and no import cycle. On integration commit `d6c19a1`, the combined merge tier
+passed 165/165 suites in 252.89 seconds, including 162 unchanged replay
+fingerprints. The production build passed. Private High and Performance browser
+smoke reached active races with four screenshots and zero warnings or errors.
+This structural change is integrated but has not been released.
