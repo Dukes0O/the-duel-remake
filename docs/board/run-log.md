@@ -1,5 +1,20 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — CPU bomb pickup range corrected
+
+- Reviewed BUG-07 balance fix `40e01a0` and cherry-picked it as `a3ad4ee`.
+  A collected bomb replaces a scheduled CPU crossbow only within 35 to under
+  50 m. Real pickup use remains: Medium collected/used 17/8, Hard 4/3 in 30
+  races. Wins remain 8/6/2 and CPU hits 1/2/10.
+- The changed lane passed 93/93 suites. Exact integration passed 160/160
+  merge suites in 166.12 seconds, build and private High/Performance browser
+  smoke with four screenshots and zero console issues. The exact balance run
+  still fails only the six UFO-gain rows; Hard stock gain returned from 57.87
+  to the pre-pickup 22.11 seconds. See
+  `checks/2026-09-23-a3ad4ee-balance-hold.md`.
+- The live game and real saves are unchanged. No full-check success or
+  release is claimed.
+
 ## 2026-09-23 PDT — physical CPU pickups merged; balance hold remains
 
 - Reviewed BUG-07 pickup slice `4bfeb30` and cherry-picked it as `505639e`.
