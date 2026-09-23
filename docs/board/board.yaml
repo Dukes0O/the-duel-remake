@@ -398,8 +398,8 @@ tasks:
     lane: SIM
     size: L
     needs: [RFX-02]
-    status: building
-    note: "Isolated implementation started from the integrated simulation split; multi-opponent simulation, HUD, map and results require verification before merge."
+    status: merged
+    note: "Merged as 66b3cb9 and 5d00eeb. Independent review addressed real three-car completions, lane avoidance and objective HUD priority; 174-suite lane/full, 168-suite exact merge, 162 unchanged replays, build, private High/Performance, three-car and narrow-dialog browser checks pass. Live release pending. Full-field combat effects wait for RFX-04."
     spec: "SPEC.md, task RFX-03"
   - id: RFX-05
     title: "Input contexts"

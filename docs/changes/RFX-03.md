@@ -1,6 +1,6 @@
 ---
 task: RFX-03
-status: ready-for-integration
+status: integrated
 kind: simulation-refactor
 flag: none
 player_facing: no
@@ -57,3 +57,13 @@ Combat scene presentation still attaches its shield and rig effects to the
 first rival. RFX-04 will extend combat weapons and effects across the list.
 The normal menu still starts a one-rival race; larger fields are available to
 the upcoming modes and to QA entry. No save format or player records changed.
+
+## Exact integration
+
+The reviewed commits merged as `66b3cb9` and `5d00eeb`. The combined branch,
+which also contains the crowded-checkpoint follow-up and new diagnostic tools,
+passed the 168-suite merge tier in 215.04 seconds with zero failures. All 162
+replay fingerprints remain unchanged. The production build, private High and
+Performance smoke, three-opponent scene and six narrow-dialog checks passed
+with zero browser warnings or errors. The live release still needs its full
+check on the final commit.
