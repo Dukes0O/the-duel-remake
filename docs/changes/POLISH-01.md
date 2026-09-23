@@ -1,6 +1,6 @@
 ---
 task: POLISH-01
-status: ready-to-merge
+status: merged
 kind: fix
 flag: none
 player_facing: yes
@@ -17,6 +17,9 @@ The menu reserves the title's full height before placing the player and race set
 - `node tools/browser-harness.mjs smoke` passed on private port 45717: High and Performance each reached a race; four screenshots, zero warnings and zero errors.
 - `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going` passed 149/149 jobs in 380.55 seconds. The runner selected all jobs for the CSS change.
 - `npm run build` passed with the existing Vite large-chunk warning.
+- Integration commit `71f2034` passed all 143 merge-gate suites in 181.68
+  seconds, the production build, and private High/Performance browser smoke
+  with four screenshots and zero warnings or errors.
 
 ## Behavior and test changes
 

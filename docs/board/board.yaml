@@ -154,9 +154,9 @@ tasks:
     lane: UI
     size: S
     needs: [FND-06, FND-08]
-    status: ready-to-merge
+    status: merged
     spec: "QA observation, 2026-09-22 browser smoke"
-    note: "Short desktop menus give the title its full row before player controls; narrow desktop footers wrap, and mobile keeps clear spacing."
+    note: "Merged as 71f2034; 143-suite merge gate, production build and private High/Performance browser smoke pass. Short desktop title/player gap is 16 px at 1280x800."
   - id: BUG-12
     title: "Blast target check"
     wave: 1

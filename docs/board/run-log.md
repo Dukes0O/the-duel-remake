@@ -120,3 +120,12 @@ checkout untouched until the final integration commit passes the full gate.
   pedals. The trajectory fingerprint stays `cfe859d2a6aea7e9`.
 - The live `master` checkout is unchanged. README control text will be updated
   in the release documentation pass.
+
+## 2026-09-22 PDT — POLISH-01 menu spacing merged
+
+- Reviewed lane commit `fe1e539` and cherry-picked it as `71f2034`, resolving
+  only the board status conflict. The 143-suite integration merge gate passed
+  in 181.68 seconds. The production build and private High/Performance browser
+  smoke passed with four screenshots and no warnings or errors.
+- At 1280×800, the title and player row have a 16-pixel gap. Phone and short
+  desktop screenshots show the controls remain separate and reachable.
