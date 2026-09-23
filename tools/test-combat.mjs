@@ -34,7 +34,10 @@ s.s=2*length-1;s.prevS=s.s;s.lateral=s.prevLateral=0;s.speedMph=100;s.stageTimeS
 s.nextLapGate=d._lapGates.length;s.s=2*length+1;d._advanceLaps(s,.05,true);
 check(s.lapTimes.length===2&&s.assistedLaps?.[0]===false&&s.assistedLaps[1]===true&&lapEvents.at(-1)?.assisted===true,
   'the next completed lap retains an assisted flag for best-lap eligibility');
-s.status='stage_result';d.nextStage();
+check(d._finishStage(),'the completed swap race produces a result');
+assert.deepEqual(s.results.assistedLaps,[false,true],'finished results retain assisted flags beside both lap times');checks++;
+check(s.results.assistedLaps!==s.assistedLaps,'finished assisted flags are a result snapshot');
+d.nextStage();
 check(d.state===s&&s.stageIndex===1&&s.assistedLaps.length===0&&s.assistedLap===false,
   'a new stage clears the previous stage assisted-lap flags');
 d=make();s=d.state;const cleanLength=d.course.length;

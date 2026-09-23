@@ -41,3 +41,14 @@ current game; `nextLapGate` is the checkpoint progress field.
 
 The lane gate passed. The branch is ready for independent review before
 integration.
+
+## Review fix: result snapshots
+
+Finished, timed-out and game-over results now copy `assistedLaps` beside
+`lapTimes`, so the flag remains available after racing ends. A new
+finished-race assertion failed before this change because the result had no
+`assistedLaps` field. It now checks the values and that the result has its
+own copy. No full-race best or leaderboard rule changed.
+
+- `node tools/test-combat.mjs`: 52 checks passed.
+- `node tools/test-race-integrity.mjs`: 601 checks passed.

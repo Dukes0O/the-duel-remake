@@ -1339,7 +1339,7 @@ export class Duel {
     if (!recoverable && (s.lives <= 0 || s.catastrophic)) {
       s.status = 'gameover';
       s.results = { gameover: true, completed: false, won: false, seed: s.seed, catastrophic: s.catastrophic, majorCrashes: s.majorCrashes,
-        stageIndex: s.stageIndex, timeSec: +(s.stageTimeSec + s.racePenaltySec).toFixed(2), totalTimeSec: Math.round(s.totalTimeSec), lapTimes: [...s.lapTimes],
+        stageIndex: s.stageIndex, timeSec: +(s.stageTimeSec + s.racePenaltySec).toFixed(2), totalTimeSec: Math.round(s.totalTimeSec), lapTimes: [...s.lapTimes], assistedLaps: [...s.assistedLaps],
         jumps: s.jumps, jumpScore: s.jumpScore, crushCount: s.crushCount, crushScore: s.crushScore, ...this._objectiveResult() };
       this.emit({ gameover: true });
       return;
@@ -1573,7 +1573,7 @@ export class Duel {
     s.boosting = false; s.status = 'stage_result';
     s.results = { completed: false, won: false, timeout: true, seed: s.seed, stageIndex: s.stageIndex, stageName: this.stageDef.name,
       stageTimeSec: +s.stageTimeSec.toFixed(2), timeSec: +(s.stageTimeSec + s.racePenaltySec).toFixed(2),
-      laps: s.completedLaps, lapTimes: [...s.lapTimes], lives: s.lives, score: s.stageStyleScore, styleScore: s.stageStyleScore,
+      laps: s.completedLaps, lapTimes: [...s.lapTimes], assistedLaps: [...s.assistedLaps], lives: s.lives, score: s.stageStyleScore, styleScore: s.stageStyleScore,
       isPersonalBest: false, jumpScore: s.jumpScore, jumps: s.jumps, bestJumpMeters: s.bestJumpMeters,
       crushCount: s.crushCount, crushScore: s.crushScore, ...this._objectiveResult() };
     this._callout(s.checkpointRush?'TIME UP  /  CHECKPOINT RUSH ENDED':s.objective ? `TIME UP  /  ${s.drift ? 'DRIFT' : 'STUNT'} TRIAL ENDED` : 'TIME UP  /  THE CAR LIVES TO RACE AGAIN', 3);
@@ -1614,7 +1614,7 @@ export class Duel {
     s.results = {
       stageIndex: s.stageIndex, stageName: this.stageDef.name, seed: s.seed,
       stageTimeSec: +s.stageTimeSec.toFixed(2), timeSec: +timeSec.toFixed(2), missedStation: false,
-      completed: true, laps: s.completedLaps, lapTimes: [...s.lapTimes], isPersonalBest: recordEligible && (previousBest == null || timeSec < previousBest),
+      completed: true, laps: s.completedLaps, lapTimes: [...s.lapTimes], assistedLaps: [...s.assistedLaps], isPersonalBest: recordEligible && (previousBest == null || timeSec < previousBest),
       jumpScore: s.jumpScore, jumps: s.jumps, bestJumpMeters: s.bestJumpMeters,
       crushCount: s.crushCount, crushScore: s.crushScore,
       cleanStage: s.stageCrashes === 0, stageCrashes: s.stageCrashes, majorCrashesBeforeRepair,
