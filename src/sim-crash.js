@@ -3,12 +3,33 @@ import { COURSE, LIVES, DRIVE } from './config.js';
 import { sweepObstacle } from './collision.js';
 import { offroadCapability, wrapHeading, rockHeight, tumbleAttitude } from './offroad-physics.js';
 import { BOUNDARY_WARNING, BOUNDARY_RESET, clamp } from './sim-common.js';
+import {applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled,
+  completeCombatRecovery} from './combat-armor.js';
+import {COMBAT_TUNING} from './wasteland-tuning.js';
 
 const WASTELAND_CRASH_PENALTY_SEC = 2;
 
 export function _startTumble(reason) {
   const s = this.state;
   if (s.tumble || s.impactTimer > 0 || s.status !== 'racing' || s.combat?.shield>0) return;
+  if (combatArmorEnabled(this)) {
+    const point = this.course.worldAt(s.s, s.lateral);
+    const prior = s.combatTerrainIncident;
+    const now = s.stageTimeSec;
+    // A steep face can tip the car again every fixed step while the driver
+    // holds throttle. Charge once until the car has left that face or has
+    // spent enough time without a tip to make the next impact distinct.
+    if (!prior || Math.hypot(point.x - prior.x, point.z - prior.z) >=
+        COMBAT_TUNING.armor.terrainIncidentDistance ||
+        now - prior.lastTipSec >= COMBAT_TUNING.armor.terrainIncidentGapSeconds) {
+      applySceneryArmorDamage(this, s);
+    }
+    s.combatTerrainIncident = {x: point.x, z: point.z, lastTipSec: now};
+    s.speedMph = 0;
+    s._climbGain = 0;
+    s._climbRest = 0;
+    return;
+  }
   const pitch = s.terrainPitch || 0, safe = s._offroadSafe, travelSign = s.speedMph < 0 ? -1 : 1;
   this._crash('rollover', Math.sign(s.terrainRoll) || 1, Math.max(30, Math.abs(s.speedMph)), 'rear');
   s.rollovers++;
@@ -163,6 +184,12 @@ export function _safeReset(car, crashSite = null) {
 export function _crash(reason, side = 0, impactMph = Math.abs(this.state.speedMph), zone = 'front') {
   const s = this.state;
   if (s.impactTimer > 0 || s.status !== 'racing' || s.combat?.shield>0) return;
+  if (combatArmorEnabled(this) && reason !== 'engine_blew') {
+    if (['traffic', 'rival', 'head_on'].includes(reason))
+      applyRamArmorDamage(this, s, impactMph);
+    else applySceneryArmorDamage(this, s, impactMph);
+    return;
+  }
   // Record a real crossing interrupted by impact before prevS is replaced.
   this._advanceLaps(s,.05,true);
   s.crashSite={s:s.s,lateral:s.lateral,headingError:this.course.def.practice?s.headingError:0};
@@ -226,6 +253,7 @@ export function _impact(dt) {
   this._staticContacts(s, true);
   if (s.impactTimer === 0 && s.status === 'racing') {
     this._safeReset(s,s.crashSite||{s:s.s,lateral:s.lateral,headingError:0}); s.crashSite=null; s.crashSpin = 0;
+    completeCombatRecovery(this, s, {alreadyReset: true});
     s.speedMph = 12; s.gear = 0; s.revs = s.speedMph / this.car.gears[0];
     s.offRoad = !this._surface(s.s,s.lateral).road; s.offRoadTime = 0; s.roughness = 0;
     s.input.shiftUp = false; s.input.shiftDown = false;

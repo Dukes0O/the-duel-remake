@@ -129,13 +129,14 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   const combat = state.combat;
   const actor = enemy ? cpuActor : state;
   const target = enemy ? state : state.opponents.length > 1
-    ? state.opponents.filter(opponent => !opponent.finished && !opponent.crushed)
+    ? state.opponents.filter(opponent => !opponent.finished && !opponent.crushed &&
+        !opponent.combatWrecking)
       .reduce((closest, opponent) =>
         !closest || Math.abs(duel.relativeS(opponent.s, state.s) - state.s) <
           Math.abs(duel.relativeS(closest.s, state.s) - state.s) ? opponent : closest, null)
     : state.rival;
   if (!combat || state.mode !== 'wasteland' || state.status !== 'racing' ||
-      state.paused || !actor || actor.finished || actor.crushed ||
+      state.paused || !actor || actor.finished || actor.crushed || actor.combatWrecking ||
       actor.impactTimer > 0 || !WEAPONS[weapon]) return false;
   if (!enemy && combat.cooldowns[weapon] > 0) return false;
 
@@ -177,7 +178,8 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
     }
     burst(combat, at, 'star');
   } else {
-    if (weapon === 'crossbow' && (!target || target.finished || target.crushed)) return false;
+    if (weapon === 'crossbow' && (!target || target.finished || target.crushed ||
+        target.combatWrecking)) return false;
     const count = weapon === 'bomb' ? T.bomb.baseCount + T.bomb.countPerLevel * level : 1;
     if (combat.projectiles.length + count > T.projectileLimit) return false;
     // A moving car throws the bomb ring with its own velocity.

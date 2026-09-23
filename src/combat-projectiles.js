@@ -1,18 +1,20 @@
 import {contactZone} from './collision.js';
 import {point, burst} from './combat-weapons.js';
+import {applyArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 
 const T = COMBAT_TUNING;
 
-function hit(duel, actor, projectile, power, enemy) {
+function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
   const state = duel.state;
   const combat = state.combat;
+  if (!actor) return;
   const shielded = actor === state
     ? combat.shield > 0 || state.invulnerableSec > 0
     : state.opponents.length <= 1 || actor === state.rival
       ? combat.rivalShield > 0
       : state.opponents.includes(actor) && (actor.combatShield || 0) > 0;
-  if (!actor || actor.finished || actor.crushed || shielded ||
+  if (actor.finished || actor.crushed || actor.combatWrecking || shielded ||
       (projectile.kind === 'bomb' && actor.bombImpactCooldown > 0)) return;
 
   const where = point(duel, actor);
@@ -60,6 +62,8 @@ function hit(duel, actor, projectile, power, enemy) {
     victim: actor === state ? 'player' : state.opponents.includes(actor) ? 'rival' : 'traffic',
     hitPosition: {x: where.x, y: where.y, z: where.z},
   });
+  applyArmorDamage(duel, actor, projectile.kind === 'bomb' ? 'bomb' : 'crossbow',
+    {level: projectile.level, ...armorOptions});
 }
 
 function sweptApproach(projectile, old, target, radius) {
@@ -133,6 +137,22 @@ export function stepProjectiles(duel, dt) {
       continue;
     }
 
+    const bombRadius = T.bomb.radius + T.bomb.radiusPerLevel * projectile.level;
+    if (combatArmorEnabled(duel) && projectile.kind === 'bomb' &&
+        projectile.age < T.armor.bombArmingSeconds) {
+      const thrower = projectile.enemy
+        ? state.opponents[projectile.sourceIndex] || state.rival
+        : state;
+      if (thrower) {
+        const at = point(duel, thrower);
+        if (Math.hypot(at.x - projectile.x, at.z - projectile.z) < bombRadius) {
+          projectile.y = Math.max(projectile.y, floor + T.projectileFloorClearance);
+          live.push(projectile);
+          continue;
+        }
+      }
+    }
+
     burst(combat, {
       x: projectile.x,
       y: Math.max(floor + T.projectileBurstFloorClearance, projectile.y),
@@ -151,13 +171,14 @@ export function stepProjectiles(duel, dt) {
         const at = point(duel, actor);
         const distance = Math.hypot(at.x - projectile.x, at.z - projectile.z,
           at.y - projectile.y);
-        const radius = T.bomb.radius + T.bomb.radiusPerLevel * projectile.level;
+        const radius = bombRadius;
         const selfDamage = actor === thrower ? T.bomb.selfDamage : 1;
         if (distance < radius) {
           hit(duel, actor, projectile,
             (1 - distance / radius) * T.bomb.blastPower *
             (1 + projectile.level * T.bomb.powerPerLevel) * selfDamage,
-            projectile.enemy);
+            projectile.enemy, {distanceFraction: distance / radius,
+              self: actor === thrower});
         }
       }
     } else if (contact) {

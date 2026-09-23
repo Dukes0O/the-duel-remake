@@ -1,0 +1,486 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {CARS} from '../src/config.js';
+import {Duel} from '../src/game.js';
+import {FEATURE_STATES} from '../src/feature-flags.js';
+import {stepCombat} from '../src/combat.js';
+import {createHudScreen} from '../src/screen-hud.js';
+import {combatAudioSpace} from '../src/audio.js';
+
+const close = (actual, expected, message, tolerance = 1e-6) =>
+  assert.ok(Number.isFinite(actual) && Math.abs(actual - expected) <= tolerance,
+    `${message}: expected ${expected}, got ${actual}`);
+
+function race({mode = 'wasteland', car = 'falcone_f42', opponentCount = 3,
+  wasteland2 = true, startStage = 0} = {}) {
+  const duel = new Duel({seed: 1989, car, featureFlags: {wasteland2}});
+  duel.startCampaign({mode, car, startStage, opponentCount, cpuDifficulty: 'hard'});
+  const state = duel.state;
+  state.status = 'racing';
+  state.countdown = 0;
+  state.s = state.prevS = 500;
+  state.lateral = state.prevLateral = 0;
+  state.speedMph = 0;
+  state.invulnerableSec = 0;
+  state.traffic = [];
+  if (state.combat) {
+    state.combat.aiTimer = Infinity;
+    state.combat.pickupTimer = Infinity;
+  }
+  state.opponents.forEach((actor, index) => place(actor, 100 + index * 80));
+  return {duel, state};
+}
+
+function place(actor, s, lateral = 0) {
+  Object.assign(actor, {s, prevS: s, lateral, prevLateral: lateral,
+    speedMph: 0, pushVelocity: 0, headingError: 0, impactTimer: 0,
+    bombImpactCooldown: 0});
+}
+
+function boltAt(duel, actor, enemy = false) {
+  const at = duel.course.groundAt(actor.s, actor.lateral);
+  duel.state.combat.projectiles.push({kind: 'crossbow', enemy, level: 0,
+    x: at.x, y: at.y + 2, z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
+}
+
+function bombAt(duel, actor, {enemy = false, age = 1.5, sourceIndex} = {}) {
+  const at = duel.course.groundAt(actor.s, actor.lateral);
+  duel.state.combat.projectiles.push({kind: 'bomb', enemy, level: 0,
+    x: at.x, y: at.y + 1, z: at.z, vx: 0, vy: 0, vz: 0, age,
+    ...(sourceIndex == null ? {} : {sourceIndex})});
+}
+
+function advance(duel, seconds) {
+  const frames = Math.round(seconds * 60);
+  for (let index = 0; index < frames; index++) duel.step(1 / 60);
+}
+
+function seedArmor(state) {
+  // Isolate damage-path assertions from the separate starting-armor test.
+  for (const actor of [state, ...state.opponents]) {
+    actor.maxArmor ??= 100;
+    actor.armor ??= actor.maxArmor;
+  }
+}
+
+test('wasteland2 starts as a dev feature and flag-off races keep their current state', () => {
+  assert.equal(FEATURE_STATES.wasteland2, 'dev');
+  for (const options of [
+    {mode: 'wasteland', wasteland2: false},
+    {mode: 'duel'},
+    {mode: 'timetrial'},
+    {mode: 'duel', startStage: 7},
+  ]) {
+    const {state} = race(options);
+    assert.equal(state.armor, undefined, `${options.mode} player has no new armor`);
+    assert.ok(state.opponents.every(actor => actor.armor === undefined),
+      `${options.mode} CPU cars have no new armor`);
+  }
+});
+
+test('ordinary and flag-off races have no armor before the new feature is enabled', () => {
+  for (const options of [
+    {mode: 'wasteland', wasteland2: false},
+    {mode: 'duel'},
+    {mode: 'timetrial'},
+    {mode: 'duel', startStage: 7},
+  ]) {
+    const {state} = race(options);
+    assert.equal(state.armor, undefined, `${options.mode} player retains prior state`);
+    assert.ok(state.opponents.every(actor => actor.armor === undefined),
+      `${options.mode} opponents retain prior state`);
+  }
+});
+
+test('all nine car masses and both clamps set the exact base maximum armor', async () => {
+  const {maxArmorForMass} = await import('../src/combat-armor.js');
+  const expected = {
+    falcone_f42: 100,
+    stuttgart_959s: 100,
+    falcone_heritage: 100,
+    aurora_gt: 100,
+    dusthawk_rally: 93.95523512235255,
+    banshee_muscle: 111.72626647610515,
+    viper_proto: 80.51557998728975,
+    titan_monster: 160,
+    koenigsegg_jesko: 97.90917677394559,
+  };
+  assert.deepEqual(Object.keys(CARS).sort(), Object.keys(expected).sort(),
+    'every selectable car must have an armor expectation');
+  for (const [key, car] of Object.entries(CARS)) {
+    close(maxArmorForMass(car.mass ?? 1450), expected[key], key);
+  }
+  close(maxArmorForMass(100), 80, 'lightweight clamp');
+  close(maxArmorForMass(10000), 160, 'heavyweight clamp');
+});
+
+test('damage table, upgrades, falloff and the ram threshold have exact values', async () => {
+  const {armorDamageFor} = await import('../src/combat-armor.js');
+  close(armorDamageFor('crossbow'), 12, 'level-zero crossbow');
+  close(armorDamageFor('bomb'), 18, 'bomb center');
+  close(armorDamageFor('rocket'), 10, 'rocket pod');
+  close(armorDamageFor('rpg-direct'), 35, 'RPG direct');
+  close(armorDamageFor('rpg-splash'), 20, 'RPG splash');
+  close(armorDamageFor('scenery'), 20, 'major scenery');
+  close(armorDamageFor('crossbow', {level: 1}), 13.8, 'level-one bolt');
+  close(armorDamageFor('crossbow', {level: 3}), 17.4, 'level-three bolt');
+  close(armorDamageFor('bomb', {level: 1}), 20.7, 'level-one bomb center');
+  const half = armorDamageFor('bomb', {distanceFraction: .5});
+  assert.ok(half > 0 && half < 18, 'bomb damage falls with distance');
+  close(armorDamageFor('bomb', {distanceFraction: 1}), 0, 'bomb radius edge');
+  close(armorDamageFor('ram', {relativeKph: 40}), 0, 'ram threshold is strictly above 40 km/h');
+  close(armorDamageFor('ram', {relativeKph: 50}), 10, '50 km/h ram');
+  close(armorDamageFor('ram', {relativeKph: 50, spiked: true}), 15, 'future spiked bumper');
+});
+
+test('wasteland2 initializes independent armor for the player and three CPU cars', () => {
+  const {state} = race({car: 'viper_proto'});
+  close(state.maxArmor, 80.51557998728975, 'player Viper maximum');
+  close(state.armor, state.maxArmor, 'player starts full');
+  assert.equal(state.opponents.length, 3);
+  for (const [index, actor] of state.opponents.entries()) {
+    assert.ok(Number.isFinite(actor.maxArmor) && actor.maxArmor >= 80 && actor.maxArmor <= 160,
+      `CPU ${index + 1} gets mass-based armor`);
+    close(actor.armor, actor.maxArmor, `CPU ${index + 1} starts full`);
+  }
+  assert.equal(state.rival, state.opponents[0], 'legacy first-rival alias remains');
+});
+
+test('a level-zero bolt removes 12 armor from only the struck later opponent', () => {
+  const {duel, state} = race();
+  seedArmor(state);
+  const [first, second, third] = state.opponents;
+  const before = second.armor;
+  boltAt(duel, second);
+  stepCombat(duel, .01);
+  close(second.armor, before - 12, 'second opponent bolt loss');
+  close(first.armor, first.maxArmor, 'first opponent is untouched');
+  close(third.armor, third.maxArmor, 'third opponent is untouched');
+  close(state.armor, state.maxArmor, 'player is untouched');
+});
+
+test('a centered bomb reaches 18 armor damage and falls off for a farther car', () => {
+  const {duel, state} = race();
+  seedArmor(state);
+  const [first, second, third] = state.opponents;
+  place(first, 300);
+  place(second, 100);
+  place(third, 110);
+  bombAt(duel, second);
+  stepCombat(duel, .01);
+  close(second.maxArmor - second.armor, 18, 'centered level-zero blast');
+  assert.ok(third.maxArmor - third.armor > 0 && third.maxArmor - third.armor < 18,
+    'third car receives smaller blast damage');
+  close(first.armor, first.maxArmor, 'distant car is outside the blast');
+});
+
+test('each actor’s own star blocks bolts, bombs and self damage', () => {
+  const {duel, state} = race();
+  seedArmor(state);
+  const [first, second, third] = state.opponents;
+  state.combat.shield = 2;
+  state.combat.rivalShield = 2;
+  second.combatShield = 2;
+  boltAt(duel, second);
+  bombAt(duel, first);
+  bombAt(duel, state);
+  stepCombat(duel, .01);
+  for (const actor of [state, first, second]) close(actor.armor, actor.maxArmor,
+    'a shielded actor takes no armor damage');
+  close(third.armor, third.maxArmor, 'distant unshielded CPU stays full');
+});
+
+test('a high-relative-speed car ram costs armor, but the target star blocks it', () => {
+  function contact(shielded) {
+    const {duel, state} = race();
+    seedArmor(state);
+    const [target, second, third] = state.opponents;
+    place(state, 102);
+    state.prevS = 98;
+    state.speedMph = 80;
+    place(target, 104);
+    target.speedMph = 20;
+    place(second, 300);
+    place(third, 400);
+    if (shielded) state.combat.rivalShield = 2;
+    assert.equal(duel._vehicleContact(state, target, 'rival'), true,
+      'the fixture makes a real swept car contact');
+    return {target, state};
+  }
+  const clear = contact(false);
+  assert.ok(clear.target.armor < clear.target.maxArmor,
+    'the unshielded target loses armor in a fast ram');
+  const blocked = contact(true);
+  close(blocked.target.armor, blocked.target.maxArmor,
+    'the target star blocks fast ram armor loss');
+});
+
+test('Titan rams a later armored CPU without making a permanent crush wreck', () => {
+  const armored = race({car: 'titan_monster'});
+  seedArmor(armored.state);
+  const [first, second, third] = armored.state.opponents;
+  place(armored.state, 102);
+  armored.state.prevS = 98;
+  armored.state.speedMph = 80;
+  place(first, 300);
+  place(second, 104);
+  second.car = 'viper_proto';
+  second.speedMph = 20;
+  place(third, 400);
+  assert.equal(armored.duel._vehicleContact(armored.state, second, 'rival'), true,
+    'Titan reaches the second CPU through a real swept contact');
+  assert.notEqual(second.crushed, true, 'combat CPU remains recoverable');
+  assert.ok(second.armor < second.maxArmor || second.combatWrecking,
+    'Titan impact costs the second CPU armor or starts a combat wreck');
+
+  const legacy = race({car: 'titan_monster', wasteland2: false});
+  const traffic = {...legacy.state.opponents[1], alive: true, dir: 1};
+  legacy.state.traffic.push(traffic);
+  place(legacy.state, 102);
+  legacy.state.prevS = 98;
+  legacy.state.speedMph = 80;
+  place(traffic, 104);
+  traffic.car = 'viper_proto';
+  traffic.speedMph = 20;
+  assert.equal(legacy.duel._vehicleContact(legacy.state, traffic, 'traffic'), true);
+  assert.equal(traffic.crushed, true, 'flag-off Titan still crushes traffic');
+});
+
+test('one steep-face incident cannot drain Titan armor every 60 Hz step', () => {
+  function face(wasteland2) {
+    const {duel, state} = race({car: 'titan_monster', wasteland2});
+    const point = (s, lateral = 0) => ({x: lateral,
+      y: Math.max(0, s - 25) * 3, z: s, heading: 0, curvature: 0});
+    duel.course = {def: {id: 'armor-face', practice: true, kind: 'arena', theme: 'desert'},
+      closed: false, length: 10000, raceLength: 20000,
+      features: {obstacles: [], mountains: [], ramps: [], crushables: [],
+        shortcuts: [], flocks: []},
+      at: point, worldAt: point, groundAt: point,
+      nearest: (x, z) => ({s: z, lateral: x}), phase: s => s,
+      surfaceAt: (_, lateral) => ({mainRoad: Math.abs(lateral) <= 7,
+        road: Math.abs(lateral) <= 7, roadHalfWidth: 7}),
+      themeAt: () => 'desert', roadHalfWidthAt: () => 7,
+      nearestRadar: () => null, obstaclesNear: () => duel.course.features.obstacles};
+    duel._obstacleArray = duel.course.features.obstacles;
+    duel._obstacleQueryCache.clear();
+    Object.assign(state, {s: 20, prevS: 20, lateral: 30, prevLateral: 30,
+      speedMph: 25});
+    state.opponents.forEach((actor, index) => place(actor, 1000 + index * 80));
+    return {duel, state};
+  }
+  const legacy = face(false);
+  legacy.duel.setInput({throttle: 1});
+  for (let index = 0; index < 600 && !legacy.state.tumble; index++)
+    legacy.duel.step(1 / 60);
+  assert.equal(legacy.state.tumble?.reason, 'climb_limit',
+    'flag-off Titan reaches the real slope and retains its tumble');
+  assert.equal(legacy.state.armor, undefined);
+
+  const armored = face(true);
+  armored.duel.setInput({throttle: 1});
+  let steps = 0;
+  while (armored.state.armor === armored.state.maxArmor && steps++ < 600)
+    armored.duel.step(1 / 60);
+  assert.ok(steps < 600, 'Titan reaches the actual steep-face armor incident');
+  close(armored.state.maxArmor - armored.state.armor, 20,
+    'first terrain incident costs the specified 20 armor');
+  for (let index = 0; index < 12; index++) armored.duel.step(1 / 60);
+  assert.ok(armored.state.armor >= armored.state.maxArmor - 20 - 1e-6 &&
+    !armored.state.combatWrecking,
+  'holding against one face for twelve frames does not repeat the same 20-damage hit');
+  armored.duel.setInput({throttle: 0, brake: 1});
+  Object.assign(armored.state, {s: 20, prevS: 20, lateral: 30,
+    prevLateral: 30, speedMph: 0, _climbGain: 0});
+  advance(armored.duel, 1.2);
+  armored.duel._startTumble('climb_limit');
+  close(armored.state.maxArmor - armored.state.armor, 40,
+    'a later separate steep-face incident can cost armor again');
+  const returnSite = {s: armored.state.s, lateral: armored.state.lateral};
+  Object.assign(armored.state, {s: 0, prevS: 0, lateral: 30,
+    prevLateral: 30, speedMph: 0, _climbGain: 0});
+  armored.duel.setInput({throttle: 0, brake: 0});
+  advance(armored.duel, 1.2);
+  Object.assign(armored.state, {s: returnSite.s, prevS: returnSite.s,
+    lateral: returnSite.lateral, prevLateral: returnSite.lateral,
+    speedMph: 55, _climbGain: 0});
+  armored.duel._startTumble('climb_limit');
+  close(armored.state.maxArmor - armored.state.armor, 60,
+    'returning to the same face after leaving it is a new damaging incident');
+});
+
+test('major scenery costs 20 armor and a star blocks that loss', () => {
+  const clear = race();
+  seedArmor(clear.state);
+  const original = clear.state.armor;
+  clear.duel._crash('rock', 1, 120);
+  close(clear.state.armor, original - 20, 'major rock crash armor cost');
+  assert.equal(clear.state.status, 'racing');
+  assert.equal(clear.state.stageCrashes, 0,
+    'armor-bearing major impact does not spend the ordinary crash slots');
+  const protectedRace = race();
+  seedArmor(protectedRace.state);
+  protectedRace.state.combat.shield = 2;
+  protectedRace.duel._crash('rock', 1, 120);
+  close(protectedRace.state.armor, protectedRace.state.maxArmor,
+    'player star blocks major scenery armor loss');
+});
+
+test('a bomb near its thrower waits 0.35 s to arm and limits self damage', () => {
+  const {duel, state} = race();
+  seedArmor(state);
+  const initial = state.armor;
+  bombAt(duel, state, {age: 0});
+  // A bomb touching ground inside its thrower's footprint is the arming edge.
+  state.combat.projectiles.at(-1).y = duel.course.groundAt(state.s, state.lateral).y + .2;
+  stepCombat(duel, .34);
+  close(state.armor, initial, 'unarmed nearby bomb leaves thrower unharmed');
+  assert.equal(state.combat.projectiles.length, 1,
+    'nearby bomb remains live while unarmed');
+  stepCombat(duel, .02);
+  const selfDamage = initial - state.armor;
+  assert.ok(selfDamage > 0 && selfDamage <= 18 * .25 + 1e-6,
+    `armed bomb self damage is at most one quarter, got ${selfDamage}`);
+
+  const upgraded = race();
+  seedArmor(upgraded.state);
+  const upgradedInitial = upgraded.state.armor;
+  bombAt(upgraded.duel, upgraded.state, {age: 0});
+  const projectile = upgraded.state.combat.projectiles.at(-1);
+  const thrower = upgraded.duel.course.groundAt(upgraded.state.s,
+    upgraded.state.lateral);
+  projectile.level = 3;
+  projectile.x = thrower.x + 24;
+  projectile.z = thrower.z;
+  const nearest = upgraded.duel.course.nearest(projectile.x, projectile.z);
+  projectile.y = upgraded.duel.course.groundAt(nearest.s, nearest.lateral).y + .2;
+  stepCombat(upgraded.duel, .34);
+  close(upgraded.state.armor, upgradedInitial,
+    'level-three bomb is unarmed at 24 m inside its enlarged 28 m radius');
+  assert.equal(upgraded.state.combat.projectiles.length, 1,
+    'upgraded bomb stays live until the same 0.35 s arming time');
+  stepCombat(upgraded.duel, .02);
+  assert.ok(upgraded.state.armor < upgradedInitial,
+    'upgraded bomb can damage its thrower after arming');
+});
+
+test('zero armor wrecks the player once, then restores 60% near the impact', () => {
+  const {duel, state} = race();
+  seedArmor(state);
+  const events = [];
+  duel.onChange((_, event) => { if (event.combatWreck) events.push(event); });
+  const origin = duel.course.worldAt(state.s, state.lateral);
+  const before = {lives: state.lives, stageCrashes: state.stageCrashes,
+    majorCrashes: state.majorCrashes, penalty: state.racePenaltySec,
+    time: state.stageTimeSec};
+  state.armor = 12;
+  boltAt(duel, state, true);
+  stepCombat(duel, .01);
+  close(state.armor, 0, 'exact zero starts the wreck');
+  assert.equal(events.length, 1, 'one wreck emits once');
+  assert.equal(events[0].victim, 'player');
+  assert.ok(['x', 'y', 'z'].every(axis => Number.isFinite(events[0].hitPosition?.[axis])));
+  assert.equal(state.status, 'racing', 'combat wreck does not end the race');
+  assert.equal(state.lives, before.lives);
+  assert.equal(state.stageCrashes, before.stageCrashes);
+  assert.equal(state.majorCrashes, before.majorCrashes);
+  advance(duel, 3.6);
+  close(state.armor, state.maxArmor * .6, 'player refill after recovery');
+  const recovered = duel.course.worldAt(state.s, state.lateral);
+  assert.ok(Math.hypot(recovered.x - origin.x, recovered.z - origin.z) <= 12.1,
+    'player recovers within the existing 12 m clearance search');
+  assert.equal(events.length, 1, 'wreck does not repeat during recovery');
+  assert.equal(state.racePenaltySec, before.penalty,
+    'the 3.5 s loss is the recovery lock, not a second added penalty');
+  assert.ok(state.stageTimeSec - before.time >= 3.45,
+    'the recovery lock consumes about 3.5 s of race time');
+});
+
+test('a later CPU car wrecks separately and returns with its own 60% armor', () => {
+  const {duel, state} = race();
+  seedArmor(state);
+  const [first, second, third] = state.opponents;
+  const events = [];
+  duel.onChange((_, event) => { if (event.combatWreck) events.push(event); });
+  const origin = duel.course.worldAt(second.s, second.lateral);
+  second.armor = 12;
+  boltAt(duel, second);
+  stepCombat(duel, .01);
+  close(second.armor, 0, 'second CPU reaches zero');
+  assert.equal(events.length, 1);
+  assert.equal(events[0].victim, 'rival', 'existing rival event category remains stable');
+  assert.equal(events[0].opponentIndex, 1, 'event identifies the second CPU car');
+  assert.ok(['x', 'y', 'z'].every(axis => Number.isFinite(events[0].hitPosition?.[axis])));
+  close(first.armor, first.maxArmor, 'first CPU owns separate armor');
+  close(third.armor, third.maxArmor, 'third CPU owns separate armor');
+  advance(duel, 3.6);
+  close(second.armor, second.maxArmor * .6, 'second CPU refills its own maximum');
+  const recovered = duel.course.worldAt(second.s, second.lateral);
+  assert.ok(Math.hypot(recovered.x - origin.x, recovered.z - origin.z) <= 12.1,
+    'second CPU recovers near its own crash site');
+  assert.equal(state.status, 'racing');
+});
+
+test('ordinary racing still spends its original crash slot with the new switch on', () => {
+  const {duel, state} = race({mode: 'duel', opponentCount: 1});
+  const before = {lives: state.lives, stageCrashes: state.stageCrashes};
+  duel._crash('rock', 1, 80);
+  assert.equal(state.lives, before.lives - 1);
+  assert.equal(state.stageCrashes, before.stageCrashes + 1);
+  assert.equal(state.armor, undefined);
+});
+
+function hudFor(wasteland2, changes = {}, car = 'falcone_f42') {
+  const {duel, state} = race({wasteland2, car});
+  Object.assign(state, changes);
+  const node = () => ({hidden: false, textContent: '', dataset: {}, style: {},
+    classList: {toggle() {}}, setAttribute() {}});
+  const ui = new Proxy({}, {get: (target, key) => target[key] ??= node()});
+  const text = (id, value) => {ui[id].textContent = String(value);};
+  createHudScreen({app: {duel, cameraMode: 'chase'}, ui, text,
+    time: value => Number(value || 0).toFixed(2),
+    clamp: value => Math.max(0, Math.min(1, Number(value) || 0)),
+    credits: value => Math.floor(value || 0).toLocaleString(),
+    routeMap: {update() {}}})(state);
+  return ui;
+}
+
+test('the active wreck HUD says WRECKED / RECOVERING while flag-off crash wording stays put', () => {
+  assert.equal(hudFor(true, {combatWrecking: true, impactTimer: 3.5,
+    crashFlash: 1.2, callout: 'WRECKED / RECOVERING', calloutTimer: 3.5})['callout-text'].textContent,
+  'WRECKED / RECOVERING');
+  assert.equal(hudFor(false, {impactTimer: 2, crashFlash: 1,
+    lastCrashReason: 'rock', callout: 'WRECKED / RECOVERING', calloutTimer: 2})['callout-text'].textContent,
+  'ROCK IMPACT', 'flag-off Wasteland keeps its ordinary crash wording');
+});
+
+test('armored Wasteland HUD shows current and maximum armor through wreck and refill', () => {
+  const full = hudFor(true, {}, 'titan_monster');
+  assert.match(full['damage-label'].textContent, /160\s*\/\s*160/,
+    'full Titan armor and maximum are visible');
+  const hit = hudFor(true, {armor: 100}, 'titan_monster');
+  assert.match(hit['damage-label'].textContent, /100\s*\/\s*160/,
+    'a survivable hit updates the visible armor value');
+  const wreck = hudFor(true, {armor: 0, combatWrecking: true, impactTimer: 3.5},
+    'titan_monster');
+  assert.match(wreck['damage-label'].textContent, /0\s*\/\s*160/,
+    'zero armor remains visible during recovery');
+  assert.equal(wreck['callout-text'].textContent, 'WRECKED / RECOVERING');
+  const recovered = hudFor(true, {armor: 96}, 'titan_monster');
+  assert.match(recovered['damage-label'].textContent, /96\s*\/\s*160/,
+    'the 60% refill becomes visible');
+  const legacy = hudFor(false, {}, 'titan_monster');
+  assert.equal(legacy['damage-label'].textContent,
+    '0 MAJOR HITS · AUTO RECOVERY', 'flag-off HUD keeps its prior crash readout');
+});
+
+test('wreck blast audio uses its hitPosition while legacy blasts still use the burst', () => {
+  const course = {groundAt: () => ({x: 0, y: 0, z: 0, heading: 0})};
+  const state = {s: 0, lateral: 0, combat: {bursts: [{x: -15, y: 0, z: 0}]}};
+  const wreck = combatAudioSpace({combatExplosion: true,
+    hitPosition: {x: 40, y: 0, z: 0}}, state, course);
+  assert.ok(wreck.pan > .6 && wreck.distance === 40,
+    `wreck blast must follow the actor, not a stale burst: ${JSON.stringify(wreck)}`);
+  const legacy = combatAudioSpace({combatExplosion: true}, state, course);
+  assert.ok(legacy.pan < -.6 && legacy.distance === 15,
+    'legacy blast without a hitPosition still follows its burst');
+});

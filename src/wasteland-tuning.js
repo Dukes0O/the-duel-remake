@@ -37,4 +37,16 @@ export const COMBAT_TUNING=Object.freeze({
  cpu:{boltLookahead:.4,attackRange:180,bombRange:35,pickupBombRange:50,
   aimSeedStageSalt:0x51ed,aimSeedShotSalt:0x9e3779b9},
  effects:{lifetime:1.4},
+ armor:{
+  base:100,referenceMass:1450,minimumMassScale:.8,maximumMassScale:1.6,
+  crossbow:12,bomb:18,rocket:10,rpgDirect:35,rpgSplash:20,
+  ramThresholdKph:40,ramDamagePerKph:.2,spikedRamMultiplier:1.5,
+  kphPerMph:1.609344,
+  scenery:20,
+  upgradePerLevel:.15,maximumWeaponLevel:3,maximumRamDamage:80,maximumHitDamage:80,
+  bombArmingSeconds:.35,maximumSelfDamageFraction:.25,
+  wreckDuration:3.5,wreckFlashSeconds:1.2,recoveryArmorFraction:.6,
+  recoverySpeedMph:12,recoveryGraceSeconds:1,
+  terrainIncidentDistance:4,terrainIncidentGapSeconds:.75,
+ },
 });

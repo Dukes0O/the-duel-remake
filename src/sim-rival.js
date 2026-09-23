@@ -5,6 +5,7 @@ import { NpcRoutePlanner } from './npc-route.js';
 import { stepTrafficWreck } from './destructibles.js';
 import { vehicleContactEnvelope, planNpcYield } from './npc-yielding.js';
 import { clamp, freshDamageZones } from './sim-common.js';
+import {completeCombatRecovery} from './combat-armor.js';
 
 export function _npcYield(actor, targetMph, plannedHeading = actor.headingError || 0) {
   const player = this.state, playerSpec = this._vehicleSpec(player), actorSpec = this._vehicleSpec(actor);
@@ -80,6 +81,12 @@ export function _traffic(dt) {
 export function _rival(dt, opponent = this.state.rival) {
   const s = this.state, r = opponent;
   if (!r) return;
+  if (r.combatWrecking) {
+    r.combatWreckTimer = Math.max(0, r.combatWreckTimer - dt);
+    r.impactTimer = r.combatWreckTimer;
+    if (r.combatWreckTimer === 0) completeCombatRecovery(this, r);
+    return;
+  }
   if (r.crushed) return;
   r.prevS = r.s; r.prevLateral = r.lateral;
   r.prevAirHeight = r.airHeight || 0;
@@ -190,6 +197,7 @@ export function _rival(dt, opponent = this.state.rival) {
   r.pushVelocity *= Math.exp(-(r.offRoad ? .9 : 1.5) * dt);
   if (!this._ramFlight(r, dt)) this._jump(r, dt);
   this._staticContacts(r, false);
+  if (r.combatWrecking) return;
   this._boundary(r);
   this._crushProps(r);
   this._advanceLaps(r, dt);

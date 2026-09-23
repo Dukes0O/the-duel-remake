@@ -14,6 +14,7 @@ function cpuCanUsePickup(state, combat, actor, pickup) {
 }
 
 function crossesPickup(actor, pickup) {
+  if (actor.combatWrecking) return false;
   const start = actor.prevS ?? actor.s;
   const delta = actor.s - start;
   const fraction = delta ? Math.max(0, Math.min(1, (pickup.s - start) / delta)) : 1;
@@ -54,6 +55,7 @@ export function stepPickups(duel, dt) {
 
     for (const opponent of state.opponents) {
       if (!cpuCanUsePickup(state, combat, opponent, pickup) || opponent.finished ||
+          opponent.combatWrecking ||
           opponent.crushed || !crossesPickup(opponent, pickup)) continue;
       cpuPickupCharges(state, combat, opponent)[pickup.weapon]++;
       burst(combat, duel.course.groundAt(pickup.s, 0), 'star');
@@ -64,6 +66,7 @@ export function stepPickups(duel, dt) {
 
     const rivalCanClaim = state.opponents.some(opponent =>
       cpuCanUsePickup(state, combat, opponent, pickup) && !opponent.finished &&
+      !opponent.combatWrecking &&
       !opponent.crushed && pickup.s > opponent.s - T.pickup.retentionBehind);
     return pickup.age < T.pickup.lifetime &&
       (pickup.s > state.s - T.pickup.retentionBehind || rivalCanClaim);

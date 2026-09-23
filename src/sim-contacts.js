@@ -7,6 +7,7 @@ import { sampleMountainSupport } from './mountain-support.js';
 import { combatCrashThresholdMph, rearRamResponse } from './vehicle-impact.js';
 import { breakableScenery, sceneryIdentity, trafficDestruction, startTrafficWreck } from './destructibles.js';
 import { GLANCING_WALL_NORMAL_FRACTION, clamp, freshDamageZones } from './sim-common.js';
+import {applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled} from './combat-armor.js';
 
 function combatShieldForActor(state, actor) {
   if (actor === state) return state.combat?.shield;
@@ -104,7 +105,7 @@ export function _supportAt(distance, lateral, actor = this.state) {
 }
 
 export function _staticContacts(car, player) {
-  if (car.crushed || car.tumble) return;
+  if (car.crushed || car.combatWrecking || car.tumble) return;
   const oldS = car.prevS ?? car.s, oldLateral = car.prevLateral ?? car.lateral;
   let start = this.course.worldAt(oldS, oldLateral), end = this.course.worldAt(car.s, car.lateral);
   if (![start.x, start.z, end.x, end.z].every(Number.isFinite)) return;
@@ -201,9 +202,20 @@ export function _staticContacts(car, player) {
     const road = this._roadPosition(end, car.s);
     if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) { car.s = road.s; car.lateral = road.lateral; }
     car.pushVelocity = (car.pushVelocity || 0) * .25;
-    if (player && this.state.invulnerableSec <= 0 && this.state.impactTimer <= 0) {
-      const crashThreshold = this.state.mode === 'wasteland' ? combatCrashThresholdMph(this.car) : 28;
-      if (impactMph >= crashThreshold && !glancingWall) this._crash(obstacle.kind || 'rock', Math.sign(nx), impactMph, zone);
+    const armorContact = combatArmorEnabled(this) &&
+      (player || this.state.opponents.includes(car));
+    let crashThreshold = 0;
+    if (player || armorContact) {
+      const thresholdCar = player ? this.car : CARS[car.car] || this.car;
+      crashThreshold = this.state.mode === 'wasteland' ?
+        combatCrashThresholdMph(thresholdCar) : 28;
+    }
+    if (armorContact && impactMph >= crashThreshold && !glancingWall) {
+      applySceneryArmorDamage(this, car, impactMph);
+      if (player && !car.combatWrecking) this._scrape(zone, impactMph);
+    } else if (player && this.state.invulnerableSec <= 0 && this.state.impactTimer <= 0) {
+      if (impactMph >= crashThreshold && !glancingWall)
+        this._crash(obstacle.kind || 'rock', Math.sign(nx), impactMph, zone);
       else if (impactMph > 4) this._scrape(zone, impactMph);
     }
     car.speedMph *= Math.max(.08, 1 - incoming * .94);
@@ -213,7 +225,8 @@ export function _staticContacts(car, player) {
 }
 
 export function _vehicleContact(a, b, reason) {
-  if (a.crushed || b.crushed || a.wrecked || b.wrecked || a.tumble || b.tumble) return false;
+  if (a.crushed || b.crushed || a.wrecked || b.wrecked ||
+      a.combatWrecking || b.combatWrecking || a.tumble || b.tumble) return false;
   if (b === this.state && a !== this.state) return this._vehicleContact(b, a, reason);
   const phase = this.relativeS(b.s, a.s) - b.s;
   const start = { x: (a.prevLateral ?? a.lateral) - (b.prevLateral ?? b.lateral), z: (a.prevS ?? a.s) - (b.prevS ?? b.s) - phase };
@@ -272,7 +285,10 @@ export function _vehicleContact(a, b, reason) {
   const vbX = Math.sin(b.headingError || 0) * b.speedMph * (b.dir || 1) * DRIVE.mphToWorld + (b.pushVelocity || 0);
   const vaZ = a.speedMph * Math.cos(a.headingError || 0) * (a.dir || 1), vbZ = b.speedMph * Math.cos(b.headingError || 0) * (b.dir || 1);
   const impactMph = Math.max(0, -(vaX - vbX) / DRIVE.mphToWorld * nx - (vaZ - vbZ) * nz);
-  if (a === this.state && canCrushVehicle(this.car, specB, { speedMph: a.speedMph, impactMph, descending: descendingCrush })) {
+  const armorContact = combatArmorEnabled(this);
+  if ((!armorContact || !this.state.opponents.includes(b)) && a === this.state &&
+      canCrushVehicle(this.car, specB, { speedMph: a.speedMph,
+        impactMph, descending: descendingCrush })) {
     this._crushVehicle(b, reason, impactMph); return true;
   }
   const armoredPlayer = a === this.state && this.state.mode === 'wasteland';
@@ -288,14 +304,22 @@ export function _vehicleContact(a, b, reason) {
       // Wrecking the lighter car does not make an extreme head-on hit safe
       // for the attacker. Both outcomes use the same closing-speed measure.
       const crashesBefore = a.stageCrashes, penaltyBefore = a.racePenaltySec;
-      if (this.state.invulnerableSec <= 0 && impactMph >= crashThreshold)
+      if (armorContact) {
+        applyRamArmorDamage(this, a, impactMph);
+        if (!a.combatWrecking) {
+          a.speedMph = Math.sign(a.speedMph) * Math.max(0,
+            Math.abs(a.speedMph) - clamp(impactMph * .07, 4, 20));
+          if (this.state.invulnerableSec <= 0)
+            this._scrape(zone, Math.min(impactMph, 22));
+        }
+      } else if (this.state.invulnerableSec <= 0 && impactMph >= crashThreshold)
         this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
       else {
         a.speedMph = Math.sign(a.speedMph) * Math.max(0, Math.abs(a.speedMph) - clamp(impactMph * .07, 4, 20));
         if (this.state.invulnerableSec <= 0) this._scrape(zone, Math.min(impactMph, 22));
       }
       const playerCrashed = a.stageCrashes > crashesBefore;
-      this._callout(playerCrashed
+      if (!armorContact || !a.combatWrecking) this._callout(playerCrashed
         ? `TRAFFIC WRECKED / IMPACT +${a.racePenaltySec - penaltyBefore} SECONDS`
         : 'TRAFFIC WRECKED', playerCrashed ? 2.8 : 1.5);
       this.emit({ trafficWrecked: { actor: b, impactMph, thresholdMph: wreck.thresholdMph } });
@@ -319,7 +343,8 @@ export function _vehicleContact(a, b, reason) {
     if (armoredPlayer && this.state.opponents.includes(b)) b.ramRecoverySec = Math.max(b.ramRecoverySec || 0, clamp(.35 + impactMph / 250, .35, 1.1));
     a.speedMph *= .992; b.speedMph *= .985;
     if (a === this.state && this.state.invulnerableSec <= 0) {
-      if (armoredPlayer && impactMph >= crashThreshold) this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
+      if (!armorContact && armoredPlayer && impactMph >= crashThreshold)
+        this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
       else if (impactMph > 1) this._scrape(zone, impactMph);
     }
   } else if (impactMph > 0 || rearRam && Math.abs(a.input?.steer || 0) > .1) {
@@ -343,12 +368,17 @@ export function _vehicleContact(a, b, reason) {
       a.speedMph = (a.dir || 1) > 0 ? combined : Math.abs(combined);
       b.speedMph = backingPlayer ? Math.max(0, combined * (b.dir || 1)) : (b.dir || 1) > 0 ? combined : Math.abs(combined);
     }
-    if (a === this.state && this.state.invulnerableSec <= 0 && impactMph >= crashThreshold) this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
+    if (!armorContact && a === this.state && this.state.invulnerableSec <= 0 && impactMph >= crashThreshold)
+      this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
     else if (a === this.state && this.state.invulnerableSec <= 0 && impactMph > 1) this._scrape(zone, impactMph);
   }
   a.offRoad = !this._surface(a.s, a.lateral).mainRoad;
   b.offRoad = !this._surface(b.s, b.lateral).mainRoad;
   b.contactCooldown = Math.max(b.contactCooldown || 0, .8);
+  if (armorContact) {
+    applyRamArmorDamage(this, a, impactMph);
+    applyRamArmorDamage(this, b, impactMph);
+  }
   return true;
 }
 

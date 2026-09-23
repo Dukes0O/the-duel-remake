@@ -29,12 +29,12 @@ const AMBIENCE = {
   arena:{file:'ambience-stadium.wav',gain:.2,cutoff:4200},
 };
 
-// Hit events carry the struck car's world position. Blasts use their burst.
+// Hit and wreck events carry their world position. Other blasts use their burst.
 // These coordinates do not change simulation state.
 export function combatAudioSpace(event, state, course) {
   let side = Number(event?.qaSide), distance = Number(event?.qaDistance);
   if (!Number.isFinite(side) || !Number.isFinite(distance)) {
-    const hit = event?.combatHit && event.hitPosition;
+    const hit = (event?.combatHit || event?.combatExplosion) && event.hitPosition;
     const source = hit && [hit.x,hit.y,hit.z].every(Number.isFinite)
       ? hit : state?.combat?.bursts?.at(-1);
     const listener = Number.isFinite(state?.s) && course?.groundAt?.(state.s, state.lateral);
