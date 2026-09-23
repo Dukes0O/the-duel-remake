@@ -9,10 +9,11 @@ or hard to repeat. Do not include saved career data.
 In Mad Max Duel, try a rear hit on the rival, a traffic collision, falling
 cacti, a missed checkpoint, and a short UFO jump after the first checkpoint.
 The weapon bar previews the UFO landing in metres. Compare a low-speed hit
-with a high-speed hit in a car with armor upgrades. Small trees and signposts
+with a high-speed hit, then try a car with a different body style. Small trees
+and signposts
 can be broken after you turn on **Menu → Experimental → Enable early features**.
 The desktop shortcut now opens an already running game on a second click.
-Please include the car, armor level, speed, course, and difficulty with a note.
+Please include the car, approximate speed, course, and difficulty with a note.
 
 ## Notes from players
 

@@ -1,8 +1,8 @@
 # Remake verification
 
-## Armored duel and tactical UFO staging — September 23, 2026
+## Armored duel and tactical UFO — September 23, 2026
 
-The isolated Wasteland integration build now uses each selected car's top speed,
+The Wasteland build uses each selected car's top speed,
 armor and target mass to set its combat crash threshold. Closing speed drives
 vehicle damage and rear-hit force. Traffic can wreck and leave the road; a hard
 head-on hit can still crash the player. Cacti fall on contact. The
@@ -48,6 +48,16 @@ The Hard UFO samples were 6.49 and 6.16 seconds slower because of later race
 events. Production and QA builds pass; the production build retains the known
 large renderer-chunk warning. Art intake and the 3.45 MB / 4 MB save budget
 check pass.
+
+The release frame sample compared master `479d857` with the staged runtime
+`fbee332` in private Chrome on the same NVIDIA RTX A1000, at 1280 × 720 and
+device ratio 1. Each condition used the Pacific driving fixture, 30 settling
+frames and 120 measured intervals. High p50/p95 was 16.7/16.8 ms on both
+builds, with zero intervals over 33 ms. Performance p50/p95 was also 16.7/16.8
+ms on both; the old build had one interval over 33 ms, and the candidate had
+zero. This is one short sample per quality. Vsync rounds many intervals to
+16.7 ms, and the Performance scenes began four metres apart, so rare jank and
+long-session performance need more play testing.
 
 ## Armory, road pickups, and camera reset — September 22, 2026
 
