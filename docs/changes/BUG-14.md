@@ -1,6 +1,6 @@
 ---
 task: BUG-14
-status: ready-to-merge
+status: merged
 kind: combat-balance-fix
 flag: none
 player_facing: yes
@@ -31,3 +31,7 @@ wins are Easy/Medium/Hard 10/6/2, while stock UFO gains are 9.55/45.52/22.11
 seconds and max-level gains are 26.27/62.24/76.18 seconds. These are measured
 on the old UFO implementation; BUG-04's exact warp rules remain isolated.
 The live game remains untouched.
+
+Exact integration with BUG-13 passed 158/158 merge suites in 291.74 s,
+production build, and private High/Performance browser smoke with four
+screenshots and zero warnings or errors.

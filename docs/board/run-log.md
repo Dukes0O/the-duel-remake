@@ -1,5 +1,19 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — prompt checkpoint recovery and combat police exclusion merged
+
+- BUG-13 `1fd711f` resets immediately after a physically missed lap gate.
+  Medium Pacific Canyon seed 1989 no longer loses nearly a lap after a
+  crossbow shove. Its exact merge gate exposed a real interaction: CPU hits
+  fell to one, below the required 2–6 band.
+- Q5/BUG-14 `1f6d418` removes legacy radar, pursuit and tickets from Wasteland
+  only. Its focused fixture failed before and passed after; ordinary Duel
+  radar stays active. The combined Pacific CPU hits are Easy 1, Medium 2,
+  Hard 10. Exact integration passed 158/158 merge suites in 291.74 seconds,
+  production build and private High/Performance smoke with four screenshots,
+  zero warnings and zero errors. The balance stop line remains for Easy wins
+  and UFO gains; no live release.
+
 ## 2026-09-23 PDT — exact CPU attack intervals integrated
 
 - BUG-06/BUG-07 combat slices through `a85acad` use the spec's exact 10 / 7 /

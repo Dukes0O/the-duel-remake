@@ -1,6 +1,6 @@
 # BUG-13 Prompt recovery at a missed lap checkpoint
 
-Status: review. This is a separate checkpoint issue discovered while
+Status: merged. This is a separate checkpoint issue discovered while
 investigating the Wasteland combat balance report.
 
 On the pre-balance combat checkpoint `ad28a2d`, Pacific Canyon Medium seed
@@ -32,3 +32,11 @@ and missed-gate consequence.
 Verification: `node tools/test-checkpoint-recovery.mjs` passed; race integrity
 601 checks, checkpoint gates 19,943 checks, replay 162 checks, and the Vite
 build passed. The changed lane gate passed 155/155 suites in 376.9 s.
+
+Exact integration initially failed the CPU combat fixture after prompt
+recovery changed weapon exposure in Pacific Canyon: Medium fell to one hit.
+The spec's separate Q5 police exclusion removed the legacy pursuit and
+restored the combined Medium count to two, without changing CPU aim or
+weakening the test. With BUG-14, exact integration passed 158/158 merge
+suites in 291.74 s, build, and private High/Performance smoke with no console
+issues. The full balance acceptance remains open for BUG-04 and Easy wins.

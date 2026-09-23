@@ -244,9 +244,18 @@ tasks:
     lane: SIM
     size: S
     needs: [BUG-07]
-    status: ready-to-merge
-    note: "Q5 police exclusion passes red/green fixture, ordinary radar, 162 replays, 83-suite lane and build. It restores Pacific CPU hits to 1/2/10 on exact BUG-13 base; UFO balance remains red."
+    status: merged
+    note: "Q5 police exclusion merged as 1f6d418; 83-suite lane, 158-suite exact merge, build and private smoke pass. It restores Pacific CPU hits to 1/2/10; UFO balance remains red."
     spec: "SPEC.md, Q5 and section 3.2"
+  - id: BUG-13
+    title: "Prompt checkpoint recovery"
+    wave: 1
+    lane: SIM
+    size: S
+    needs: [BUG-07]
+    status: merged
+    note: "Merged as 1fd711f; physical misses retry immediately. With Q5 police off, 158-suite exact merge, build and private smoke pass."
+    spec: "SPEC.md, checkpoint integrity and BUG-07 interaction"
   - id: BUG-08
     title: "Rigs attached to the car"
     wave: 1
