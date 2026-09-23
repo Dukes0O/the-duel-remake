@@ -48,6 +48,25 @@ for(const kind of ['bomb','crossbow'])for(const zone of ['front','rear','left','
   check(s.damageZones[zone]>0&&Object.entries(s.damageZones).every(([name,wear])=>name===zone||wear===0),
     `${kind} from ${zone} dents only the struck panel on a rotated car`);
 }
+// NPC render headings omit slip and crash spin; oncoming traffic also faces
+// against the course. Hit zones must use those same displayed orientations.
+d=make();s=d.state;s.rival.headingError=.2;s.rival.slipAngle=.8;s.rival.crashSpin=.8;
+let at=d.course.groundAt(s.rival.s,s.rival.lateral),heading=at.heading+s.rival.headingError;
+s.combat.projectiles.push({kind:'crossbow',enemy:false,level:0,x:at.x+Math.sin(heading),
+  y:at.y+2,z:at.z+Math.cos(heading),vx:0,vy:0,vz:0,age:0});
+stepCombat(d,.01);
+check(s.rival.damageZones.front>0&&Object.entries(s.rival.damageZones).every(([name,wear])=>name==='front'||wear===0),
+  'crossbow dents the rival visible front despite stored slip and crash spin');
+d=make();s=d.state;s.s=500;s.rival.s=550;
+const oncoming={s:100,lateral:0,airHeight:0,speedMph:80,alive:true,crushed:false,dir:-1,
+  damageZones:{front:0,rear:0,left:0,right:0},pushVelocity:0,headingError:.2,slipAngle:.8,crashSpin:.8};
+s.traffic=[oncoming];at=d.course.groundAt(oncoming.s,oncoming.lateral);
+heading=at.heading+Math.PI+oncoming.headingError;
+s.combat.projectiles.push({kind:'bomb',enemy:false,level:0,x:at.x+8*Math.sin(heading),
+  y:at.y+4,z:at.z+8*Math.cos(heading),vx:0,vy:0,vz:0,age:1.5});
+stepCombat(d,.01);
+check(oncoming.damageZones.front>0&&Object.entries(oncoming.damageZones).every(([name,wear])=>name==='front'||wear===0),
+  'bomb dents the oncoming traffic visible front despite stored slip and crash spin');
 d=make();s=d.state;s.rival.s=120;s.rival.lateral=s.lateral;s.speedMph=100;fireWeapon(d,'star');fireWeapon(d,'crossbow',true);for(let i=0;i<10;i++)stepCombat(d,.02);check(s.speedMph===100,'shield blocks incoming arrows');
 d=make();s=d.state;s.combat.aiTimer=0;stepCombat(d,.05);check(s.combat.projectiles.some(p=>p.enemy),'CPU shoots back');
 d=make();s=d.state;for(let i=0;i<200;i++){fireWeapon(d,'bomb',true);stepCombat(d,.05);}check(s.combat.projectiles.length<=40&&s.combat.bursts.length<=32,'pools remain bounded');

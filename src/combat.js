@@ -53,7 +53,8 @@ function hit(duel,actor,p,power,enemy){
  const s=duel.state,c=s.combat;
  if(!actor||actor.finished||actor.crushed||(actor===s?(c.shield>0||s.invulnerableSec>0):c.rivalShield>0))return;
  const where=point(duel,actor),normal=Math.sign((where.x-p.x)*Math.cos(where.heading)-(where.z-p.z)*Math.sin(where.heading))||1;
- const heading=where.heading+(actor.headingError||0)+(actor.slipAngle||0)+(actor.crashSpin||0)+(actor.dir<0?Math.PI:0);
+ const renderedTurn=actor===s?(actor.slipAngle||0)+(actor.crashSpin||0):actor!==s.rival&&actor.dir<0?Math.PI:0;
+ const heading=where.heading+(actor.headingError||0)+renderedTurn;
  let nx=where.x-p.x,nz=where.z-p.z;
  // An exact overlap has no visible side; use travel, then the former rear default.
  if(nx*nx+nz*nz<1e-8){nx=p.vx||0;nz=p.vz||0;}

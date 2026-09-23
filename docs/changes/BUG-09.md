@@ -38,3 +38,24 @@ cooldowns and hit events stay as before.
 ## Review
 
 The branch is ready for independent code review before integration.
+
+## Review fix: rival and traffic facing
+
+The rival renderer uses course heading plus `headingError`. Traffic also
+adds a half-turn when it drives toward the player. Their renderers do not
+use `slipAngle` or `crashSpin`; combat now follows those same headings for
+panel selection. Player dents still include both rotation terms.
+
+- Added a rival crossbow case and an oncoming traffic bomb case. Each checks
+  that only the visible front panel dents even when stored slip and crash
+  spin are nonzero. The rival case failed before the review fix.
+- `node tools/test-combat.mjs`: 39 checks passed.
+- `node tools/test-contact-damage.mjs`: 195 checks passed.
+- `node tools/test-npc-vehicle-damage.mjs`: 1,656 checks passed.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 77 passed,
+  0 failed, 0 not run in 264.82 seconds. Replay fingerprints passed 162
+  checks; expansion driving completed and won all 48 races.
+- `npm run build`: passed with the existing large rendering chunk warning.
+
+The BUG-12 removed-traffic and live-traffic assertions remain unchanged,
+including the rear-panel result for a stationary blast at the actor center.
