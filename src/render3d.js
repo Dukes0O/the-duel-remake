@@ -16,7 +16,7 @@ import { updateDriver } from './driver.js';
 import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
 import { constrainTunnelCamera } from './camera-clearance.js';
-import { applyVehiclePaint } from './vehicle-paint.js';
+import { createVehicleAttachmentRegistry } from './vehicle-attachments.js';
 import { createRenderQuality } from './render-quality.js';
 import { createAdaptiveResolution } from './adaptive-resolution.js';
 import { renderMainView } from './scene-presentation.js';
@@ -95,7 +95,8 @@ export function attachRenderer(host, app) {
   police.add(lamps);police.userData.crushAttachments=[lamps];scene.add(police);
   const effects = createDrivingEffects(); scene.add(effects.group);
   const explosion = createExplosion(); scene.add(explosion.group);
-  const combatScene=createCombatScene();scene.add(combatScene.group);
+  const vehicleAttachments=createVehicleAttachmentRegistry();
+  const combatScene=createCombatScene(vehicleAttachments);scene.add(combatScene.group);
   function retireObject(object,beforeDispose){
     combatScene.detachVehicle(object);
     scene.remove(object);
@@ -157,7 +158,7 @@ export function attachRenderer(host, app) {
     // Keep travel signed for both the live car and recorded reverse ghost poses.
     const wheelTravel = mph => moving ? mph * (DRIVE.mphToWorld || .44704) * dt : 0;
     place(player, pp, 0, wheelTravel(st.speedMph));
-    applyVehiclePaint(player,app.getPaintPreset?.(carKey,{menu})??null);
+    vehicleAttachments.applyPaint(player,app.getPaintPreset?.(carKey,{menu})??null);
     host.dataset.paint=player.userData.paintAppearance?.id||'factory';
     const wreckAge=st.catastrophic ? Math.max(0,(st.impactDuration||0)-(st.impactTimer||0)) : 0;
     updateVehicleDamage(player,menu?0:st.majorCrashes, !menu&&st.catastrophic, wreckAge,menu?null:st.damageZones,menu?0:st.crushDamage);
@@ -353,7 +354,7 @@ export function attachRenderer(host, app) {
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
-    const release=()=>{rearView.dispose();combatScene.dispose();effects.dispose();explosion.dispose();lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
+    const release=()=>{rearView.dispose();combatScene.dispose();vehicleAttachments.clear();effects.dispose();explosion.dispose();lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
     if(warmup)warmup.dispose(release);else release();
   } };
 }

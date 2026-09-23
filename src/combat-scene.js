@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { ensureVehicleSockets } from './vehicle-sockets.js';
+import { createVehicleAttachmentRegistry } from './vehicle-attachments.js';
 
 // Fixed reusable geometry: no mesh allocation or disposal during a firefight.
-export function createCombatScene(){
+export function createCombatScene(attachments = createVehicleAttachmentRegistry()){
  const group=new THREE.Group();group.name='Wasteland weapons and shockwaves';
  const materials={iron:new THREE.MeshStandardMaterial({color:0x342a23,metalness:.8,roughness:.55}),
   fire:new THREE.MeshBasicMaterial({color:0xff8c16,transparent:true,opacity:.85,depthWrite:false}),
@@ -67,20 +67,26 @@ export function createCombatScene(){
  });
  const bindings = [null, null];
 
+ function rigMounts(index, rig) {
+  return [
+   { owner: `combat-bumper-${index}`, socket: 'front', object: rig.bumper },
+   { owner: `combat-bow-${index}`, socket: 'roof', object: rig.bow },
+   { owner: `combat-shield-${index}`, socket: 'shield', object: rig.shield },
+  ];
+ }
+
  function bindVehicle(index, vehicle) {
   if (bindings[index] === vehicle) return;
   const rig = rigs[index];
-  for (const object of [rig.bumper, rig.bow, rig.shield]) {
-   group.add(object);
-   object.visible = false;
+  const mounts = rigMounts(index, rig);
+  for (const mount of mounts) {
+   attachments.detach(mount.owner);
+   mount.object.visible = false;
   }
   bindings[index] = vehicle ?? null;
   if (!vehicle) return;
 
-  const sockets = ensureVehicleSockets(vehicle);
-  sockets.front.add(rig.bumper);
-  sockets.roof.add(rig.bow);
-  sockets.shield.add(rig.shield);
+  for (const mount of mounts) attachments.attach({ ...mount, vehicle, fallback: group });
   const { width, length, height } = vehicle.userData.size;
   rig.bar.scale.set(width * 1.16, height > 2 ? .52 : .35, .48);
   rig.bar.position.set(0, 0, .12);
@@ -133,6 +139,7 @@ export function createCombatScene(){
   detachVehicle,
   dispose(){
    for (const vehicle of [...bindings]) if (vehicle) detachVehicle(vehicle);
+   rigs.forEach((rig, index) => rigMounts(index, rig).forEach(mount => attachments.detach(mount.owner)));
    for(const geometry of [sphere,ring,shaft,tip,armorGeometry,shieldShell,shieldRim])geometry.dispose();
    Object.values({...materials,...pickupMaterials}).forEach(material=>material.dispose());
   },
