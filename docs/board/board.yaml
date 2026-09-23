@@ -278,7 +278,8 @@ tasks:
     lane: SAVE
     size: M
     needs: [FND-10]
-    status: blocked
+    status: merged
+    note: "Merged as 89fb708 and 4ec2815 after seven FND-10 fixtures; 145-suite merge gate, build, High/Performance smoke, career import and blocked-backup browser scenarios pass. Feature remains dev."
     spec: "SPEC.md, task FND-11"
   - id: TOOL-01
     title: "Balance report"

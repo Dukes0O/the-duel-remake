@@ -1,3 +1,11 @@
+---
+task: FND-11
+status: merged
+kind: save-safety
+flag: career-backup
+player_facing: yes
+---
+
 # FND-11 — Career backup
 
 ## What changed
@@ -14,6 +22,12 @@
 - `node tools/browser-harness.mjs scenario career-backup-failure`: a synthetic legacy save and blocked IndexedDB stop startup before any player migration write. The screen gives a next step and its export button produces the untouched legacy data. Screenshot inspected for readable layout and contrast.
 - `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`: 152 passed, 0 failed.
 - `npm run build` passes.
+- Review commit `4ec2815` rejects leaderboard and ghost rows that the real
+  loaders would discard. Invalid car and ghost sample-time fixtures fail
+  before import writes. Integration commits `89fb708` and `4ec2815` passed
+  all 145 merge-gate suites in 209.99 seconds, the production build, private
+  High/Performance browser smoke, and both career browser scenarios. Browser
+  checks reported zero warnings and zero errors.
 
 ## Storage and release notes
 

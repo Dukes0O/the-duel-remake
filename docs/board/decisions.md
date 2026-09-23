@@ -4,6 +4,18 @@ Standing decisions D1-D7 are approved in [SPEC.md](../../SPEC.md), section 15.
 This log is for choices the spec does not settle. Record the choice, reason,
 and how to reverse it before continuing.
 
+## 2026-09-22 PDT — FND-10/FND-11 order
+
+- Decision: Use FND-10's integrated seven historical fixtures as the
+  prerequisite for FND-11, then complete FND-10's storage-budget design with
+  FND-11's verified pre-migration backup in place.
+- Reason: Four valid archived ghosts exceed the 4 MB localStorage budget.
+  Moving them safely requires a recovery copy before changing their storage
+  format. The fixture work is complete; the budget work remains open.
+- How to reverse: Revert the archive migration and keep the unmodified raw
+  localStorage shape; the FND-11 export/import and backup feature can stand
+  independently behind its development switch.
+
 ## 2026-09-22 PDT — BUG-10 D-pad direction map
 
 - Decision: Up fires UFO swap, Right fires bomb storm, Down fires crossbow,

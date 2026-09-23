@@ -150,3 +150,16 @@ checkout untouched until the final integration commit passes the full gate.
 - OLD-03's assertion audit found a rear-only check for a blast placed exactly
   at a traffic car's center. The automatic approval reviewer rejected an
   attempt to change it; the assertion remains intact and is tracked by OLD-03.
+
+## 2026-09-22 PDT — FND-11 career backup merged
+
+- Reviewed SAVE lane commits `e40d2f5` and `910a610`, cherry-picked as
+  `89fb708` and `4ec2815`. The 145-suite merge gate passed in 209.99 seconds.
+  The production build, High/Performance browser smoke, career import, and
+  blocked-backup recovery scenarios passed with zero browser warnings/errors.
+- Seven historical saves export/import byte for byte. Import validates values,
+  makes a verified IndexedDB recovery copy, and restores prior localStorage on
+  quota failure. A blocked backup prevents migration before `App` starts and
+  offers a raw export. The feature stays behind its development switch.
+- FND-10's 4 MB budget remains open. The fixture portion allowed backup to
+  precede the archive migration; this order is recorded in `decisions.md`.
