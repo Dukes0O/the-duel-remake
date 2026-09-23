@@ -246,7 +246,8 @@ tasks:
     lane: UI
     size: S
     needs: [BUG-10]
-    status: ready
+    status: merged
+    note: "Merged as 5cd694e and ebf3af3; 145-suite merge gate, build, private High/Performance smoke and weapon-bar scenario pass. Steady HUD makes zero changes in 500 ms; labels speak D-pad controls."
     spec: "SPEC.md, task BUG-11"
   - id: OLD-01
     title: "One crash counter on the HUD"

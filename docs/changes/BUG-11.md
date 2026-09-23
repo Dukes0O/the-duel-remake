@@ -1,6 +1,6 @@
 ---
 task: BUG-11
-status: review
+status: merged
 kind: hud-fix
 flag: none
 player_facing: yes
@@ -43,3 +43,10 @@ real page mutations and checks the click-then-Space path.
 Independent review found the arrow glyphs lacked reliable spoken D-pad names.
 The buttons now expose Up, Right, Down and Left with their keyboard keys in
 accessible labels. The browser scenario checks all four names.
+
+## Integration gate
+
+Integration commits `5cd694e` and `ebf3af3` passed all 145 merge-gate suites
+in 183.75 seconds. The production build, private High/Performance smoke, and
+weapon-bar scenario passed with zero browser warnings/errors. The scenario
+measured zero DOM changes during a steady 500 ms race interval.

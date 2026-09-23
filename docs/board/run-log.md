@@ -163,3 +163,14 @@ checkout untouched until the final integration commit passes the full gate.
   offers a raw export. The feature stays behind its development switch.
 - FND-10's 4 MB budget remains open. The fixture portion allowed backup to
   precede the archive migration; this order is recorded in `decisions.md`.
+
+## 2026-09-22 PDT — BUG-11 weapon bar merged
+
+- Independently reviewed UI lane commits `8f17473` and `f55f66c`; cherry-
+  picked them as `5cd694e` and `ebf3af3`. The 145-suite merge gate passed
+  in 183.75 seconds. Build, High/Performance smoke, and focused browser QA
+  passed with zero warnings/errors.
+- The bar now updates only changed values: zero DOM changes in a steady
+  500 ms race sample, down from 145. Keyboard 1–4 and gamepad D-pad names are
+  shown and spoken. Browser QA found no click-then-Space repeat after a
+  weapon recharged; no focus change was needed.
