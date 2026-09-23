@@ -258,7 +258,8 @@ tasks:
     lane: UI
     size: S
     needs: [D6, FND-06]
-    status: ready
+    status: merged
+    note: "Merged as 6fc9133; 147-suite gate, build, private High/Performance smoke and crash-counter browser scenario pass. HUD follows five actual race-ending crash slots; Wasteland stays on auto recovery."
     spec: "SPEC.md, task OLD-01"
   - id: OLD-02
     title: "Retire the shared best-time store"

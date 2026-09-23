@@ -1,5 +1,14 @@
 # Wasteland run log
 
+## 2026-09-22 PDT — OLD-01 crash counter merged
+
+- Independently reviewed and cherry-picked `7e55462` as `6fc9133`. The exact
+  integration commit passed 147 merge suites in 350.80 seconds, the production
+  build, private High/Performance smoke and the focused crash-counter browser
+  scenario; both browser runs had zero warnings or errors.
+- Five moderate rock hits use five ordinary-race crash slots and the HUD now
+  counts each one. Wasteland still reports recoverable armor hits.
+
 ## 2026-09-22 PDT — TOOL-01 balance report merged
 
 - Reviewed and cherry-picked `6ed7600` and `215a748` as `5fbf24f` and

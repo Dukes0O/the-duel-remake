@@ -1,6 +1,6 @@
 ---
 task: OLD-01
-status: review
+status: merged
 kind: gameplay-fix
 flag: none
 player_facing: yes
@@ -46,3 +46,10 @@ No race rule, damage threshold, score, or repair amount changed.
 
 Independent review found and resolved the Wasteland wording error and requested
 visual-bar coverage. Ready for integration.
+
+## Integration gate
+
+Cherry-picked as `6fc9133`. The exact integration commit passed 147/147 merge
+suites in 350.80 seconds, the production build, and private High/Performance
+smoke with four screenshots and zero warnings or errors. The `crash-counter`
+scenario passed on private port 48874 with zero warnings or errors.
