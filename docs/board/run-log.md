@@ -109,3 +109,14 @@ in sync with this log.
 Review and merge FND-06..08 one card at a time after their gates. Complete
 FND-01 desktop and save acceptance during the first release. Keep the live
 checkout untouched until the final integration commit passes the full gate.
+
+## 2026-09-22 PDT — BUG-01 arrow-key controls merged
+
+- Independently reviewed UI lane commit `eba94d1` and cherry-picked it as
+  `3221765`. The 143-suite integration merge gate passed in 229.08 seconds;
+  the production build and private High/Performance browser smoke also passed
+  with four screenshots and no warnings or errors.
+- A is neutral for steering. Left/Right Arrow steer; D resets chase; W/S remain
+  pedals. The trajectory fingerprint stays `cfe859d2a6aea7e9`.
+- The live `master` checkout is unchanged. README control text will be updated
+  in the release documentation pass.

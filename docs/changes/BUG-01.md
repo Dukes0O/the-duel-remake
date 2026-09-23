@@ -1,6 +1,6 @@
 ---
 task: BUG-01
-status: review
+status: merged
 kind: fix
 flag: none
 player_facing: yes
@@ -20,6 +20,9 @@ W and S still control the pedals.
   including actual App key dispatch, camera reset, pedals, analog priority,
   releases, and identical 30/60/144 FPS trajectories.
 - `test-road-powerups.mjs` passed. Its power-up behavior checks are intact.
+- The integration commit `3221765` passed all 143 merge-gate suites, the
+  production build, and private High/Performance browser smoke with four
+  screenshots, zero warnings, and zero errors.
 
 ## Behavior and test changes
 

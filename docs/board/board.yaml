@@ -145,7 +145,8 @@ tasks:
     lane: UI
     size: S
     needs: [FND-06]
-    status: ready
+    status: merged
+    note: "Merged as 3221765; 143-suite merge gate, production build and private High/Performance browser smoke pass. Arrow keys alone steer, D resets chase, and W/S remain pedals."
     spec: "SPEC.md, task BUG-01"
   - id: POLISH-01
     title: "Menu title and player row spacing at 1280x800"
