@@ -12,6 +12,8 @@ AudioNode.prototype.connect = function(destination, ...rest) {
   if (recorder && (destination === app.audio.master || destination === app.audio.vehicleBus)) {
     const kind = qa.category || 'ui';
     originalConnect.call(this, recorder.buses[kind]);
+    if (kind === 'engine' && destination === app.audio.vehicleBus)
+      originalConnect.call(this, recorder.buses.shift);
   }
   return originalConnect.call(this, destination, ...rest);
 };
@@ -21,7 +23,7 @@ app.audio.event = (event, state, course) => {
   try { originalEvent(event, state, course); } finally { qa.category = null; }
 };
 
-const TRACKS = ['mix', 'engine', 'tires', 'weapons', 'ambience', 'ui'];
+const TRACKS = ['mix', 'engine', 'tires', 'weapons', 'ambience', 'ui', 'shift'];
 const DIVISOR = 3;
 function createRecorder(audio) {
   const context = audio.context;

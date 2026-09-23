@@ -51,6 +51,36 @@ export function detectOnset(track, timeSec, maxDelaySec = .15) {
   return null;
 }
 
+function detectShiftOnset(track, template, timeSec) {
+  if (!template) return null;
+  // The authored attack has a distinct waveform. Match its first 60 ms so a
+  // prior accent's loud tail cannot masquerade as a rapid second shift.
+  const length = Math.floor(.06 * track.sampleRate), reference = new Float32Array(length);
+  let referencePower = 0;
+  for (let index = 0; index < length; index++) {
+    const elapsed = index / track.sampleRate, position = elapsed * template.sampleRate;
+    const sourceIndex = Math.floor(position), blend = position - sourceIndex;
+    const one = ((template.left[sourceIndex] || 0) + (template.right[sourceIndex] || 0)) / 2;
+    const two = ((template.left[sourceIndex + 1] || 0) + (template.right[sourceIndex + 1] || 0)) / 2;
+    reference[index] = (one * (1 - blend) + two * blend) * Math.min(1, elapsed / .008);
+    referencePower += reference[index] ** 2;
+  }
+  if (!referencePower) return null;
+  for (let delayMs = -30; delayMs <= 150; delayMs++) {
+    const start = Math.round((timeSec + delayMs / 1000 - track.audioStartSec) * track.sampleRate);
+    if (start < 0 || start + length > track.left.length) continue;
+    let dot = 0, trackPower = 0;
+    for (let index = 0; index < length; index++) {
+      const value = (track.left[start + index] + track.right[start + index]) / 2;
+      dot += value * reference[index]; trackPower += value ** 2;
+    }
+    const similarity = trackPower ? dot / Math.sqrt(trackPower * referencePower) : 0;
+    const gain = dot / referencePower;
+    if (similarity >= .9 && gain >= .08) return delayMs / 1000;
+  }
+  return null;
+}
+
 function mean(values) { return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null; }
 function correlation(a, b) {
   if (a.length < 3 || a.length !== b.length) return null;
@@ -91,7 +121,9 @@ function pitchAt(track, timeSec) {
   const lagAtBest = scores.find((entry, index) => entry.score >= best * .94 &&
     entry.score >= (scores[index - 1]?.score ?? -Infinity) && entry.score >= (scores[index + 1]?.score ?? -Infinity))?.lag
     ?? scores.find(entry => entry.score === best)?.lag;
-  return best > .25 ? rate / lagAtBest : null;
+  // Weak periodicity in a band crossfade can seed the wrong octave for the
+  // following steady windows. Keep only windows with a clear tonal peak.
+  return best >= .4 ? rate / lagAtBest : null;
 }
 
 function nearestFrame(frames, timeSec) {
@@ -100,14 +132,28 @@ function nearestFrame(frames, timeSec) {
   return frames[low];
 }
 
-export function engineTracking(track, frames) {
+export function engineTracking(track, frames, shiftEvents = []) {
   const measurements = [];
   const start = Math.max(track.audioStartSec + .1, frames[0]?.audioTimeSec ?? 0);
   const end = Math.min(track.audioStartSec + track.durationSec - .1, frames.at(-1)?.audioTimeSec ?? 0);
   for (let time = start; time < end; time += .12) {
     const frame = nearestFrame(frames, time), pitchHz = pitchAt(track, time);
-    if (frame?.status === 'racing' && !frame.impacting && pitchHz)
-      measurements.push({ timeSec: round(time), pitchHz: round(pitchHz), revs: frame.revs, throttle: frame.throttle, gear: frame.gear });
+    // The shift one-shot and the deliberate engine cut obscure the steady
+    // loop. Measure rev tracking only between these short transitions.
+    if (frame?.status === 'racing' && !frame.impacting && pitchHz &&
+        !shiftEvents.some(event => Math.abs(time - event.audioTimeSec) < .18))
+      measurements.push({ timeSec: round(time), rawPitchHz: round(pitchHz), revs: frame.revs, throttle: frame.throttle, gear: frame.gear });
+  }
+  // Layered recordings can make an autocorrelation window prefer either a
+  // fundamental or its octave. Pick the nearest octave to the previous audio
+  // reading, without consulting revs, so octave flips do not fake a flat tone.
+  let previousPitch = null;
+  for (const row of measurements) {
+    const candidates = [row.rawPitchHz / 2, row.rawPitchHz, row.rawPitchHz * 2]
+      .filter(pitch => pitch >= 45 && pitch <= 220);
+    row.pitchHz = round(previousPitch == null ? row.rawPitchHz : candidates.reduce((best, candidate) =>
+      Math.abs(Math.log2(candidate / previousPitch)) < Math.abs(Math.log2(best / previousPitch)) ? candidate : best));
+    previousPitch = row.pitchHz;
   }
   const pitches = measurements.map(row => row.pitchHz), revs = measurements.map(row => row.revs);
   const coefficient = correlation(pitches, revs);
@@ -169,8 +215,10 @@ export function analyzeRecording(recording, tracks) {
   const events = recording.events || [], frames = recording.frames || [];
   const timedKinds = new Set(['combatExplosion', 'combatHit', 'shift', 'jumpLanded', 'crash', 'propCrushed']);
   const sync = events.filter(event => timedKinds.has(event.kind) && !event.detail?.stress).map(event => {
-    const stem = event.kind === 'shift' ? 'engine' : 'weapons';
-    const delaySec = detectOnset(tracks[stem], event.audioTimeSec);
+    const stem = event.kind === 'shift' ? 'shift' : 'weapons';
+    const delaySec = tracks[stem] ? stem === 'shift'
+      ? detectShiftOnset(tracks[stem], tracks.shiftTemplate, event.audioTimeSec)
+      : detectOnset(tracks[stem], event.audioTimeSec) : null;
     return { kind: event.kind, timeSec: round(event.audioTimeSec), stem,
       delayMs: delaySec == null ? null : Math.round(delaySec * 1000), pass: delaySec != null && delaySec >= -.03 && delaySec <= .03 };
   });
@@ -185,7 +233,7 @@ export function analyzeRecording(recording, tracks) {
       if (clickTimesSec.length < 20) clickTimesSec.push(round(mix.audioStartSec + index / mix.sampleRate));
     }
   }
-  const tracking = engineTracking(tracks.engine, frames);
+  const tracking = engineTracking(tracks.engine, frames, events.filter(event => event.kind === 'shift'));
   const loudness = loudnessSeries(tracks);
   const loopGaps = [];
   const tireGaps = [];
@@ -306,6 +354,8 @@ export async function analyzeFolder(input, { check = false } = {}) {
   const folder = dirname(file), recording = JSON.parse(await readFile(file, 'utf8'));
   const tracks = Object.fromEntries(await Promise.all(TRACK_NAMES.map(async name => [name,
     decodeWav(await readFile(join(folder, recording.tracks[name].file)), recording.tracks[name].audioStartSec)])));
+  if (recording.tracks.shift) tracks.shift = decodeWav(await readFile(join(folder, recording.tracks.shift.file)), recording.tracks.shift.audioStartSec);
+  if (recording.tracks.shift) tracks.shiftTemplate = decodeWav(await readFile(new URL('../public/assets/audio/engine-shift.wav', import.meta.url)));
   const report = analyzeRecording(recording, tracks);
   await writeFile(join(folder, 'audio-analysis.json'), JSON.stringify(report, null, 2) + '\n');
   await writeFile(join(folder, 'spectrogram.svg'), spectrogramSvg(tracks.mix, recording.events));
