@@ -454,13 +454,15 @@ tasks:
     needs: [RFX-03]
     status: building
     owns: [src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat-pickups.js, src/combat-ai.js, src/wasteland-tuning.js, tools/test-combat-modules.mjs, tools/test-combat-opponents.mjs]
-    hooks: [src/combat-scene.js]
+    hooks: [src/combat-scene.js, src/sim-contacts.js, src/render3d.js]
     helpers: [reviewer, browser_qa]
     flag: none
     behavior_change: yes
     acceptance:
       - "Combat facade keeps current public exports and one-rival replay fingerprints."
       - "Weapons, projectiles, pickups and CPU combat work for every opponent in the state list."
+      - "Per-opponent shields protect the correct car and appear on every active shielded car."
+      - "Swept projectiles hit the nearest crossed car before a farther one."
       - "Every combat number moves into wasteland-tuning.js without changing current balance."
       - "A real three-opponent combat scene shows valid effects and finishes with ranked results."
       - "Production build, focused tests, merge gate and private browser scenario pass."
