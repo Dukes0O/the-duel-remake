@@ -14,6 +14,7 @@ import { createDriftState, stepDrift, finishDrift, breakDrift } from './drift-sc
 import { vehicleContactEnvelope, planNpcYield, npcYieldContactNormal } from './npc-yielding.js';
 import { DEFAULT_DRIVER, normalizeDriverId, applyDriverModifiers } from './drivers.js';
 import { offroadCapability, wrapHeading, rockHeight, rockSupportHeight, limitClimb, terrainAttitude, tumbleAttitude, canCrushVehicle, crushedVehicleSupport } from './offroad-physics.js';
+import { combatCrashThresholdMph, rearRamResponse } from './vehicle-impact.js';
 import { sampleMountainSupport } from './mountain-support.js';
 import {normalizeRival} from './rival-settings.js';
 import {upgradedCar} from './progression.js';
@@ -854,6 +855,9 @@ export class Duel {
     if (a === this.state && canCrushVehicle(this.car, specB, { speedMph: a.speedMph, impactMph, descending: descendingCrush })) {
       this._crushVehicle(b, reason, impactMph); return true;
     }
+    const armoredPlayer = a === this.state && this.state.mode === 'wasteland';
+    const crashThreshold = armoredPlayer ? combatCrashThresholdMph(this.car, { targetMass: specB.mass }) : 28;
+    const rearRam = armoredPlayer && b === this.state.rival && nz < 0 && (b.dir || 1) > 0 && a.speedMph >= 0;
     const zone = contactZone(nx, nz, angleA + (a.dir < 0 ? Math.PI : 0));
     const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
     if (a !== this.state) this._dentVehicle(a, zone, impactMph);
@@ -865,19 +869,39 @@ export class Duel {
     a.lateral += nx * correction * shareA; b.lateral -= nx * correction * shareB;
     a.s += nz * correction * shareA; b.s -= nz * correction * shareB;
     if (nx) {
-      const shove = clamp(2.5 + impactMph * DRIVE.mphToWorld * .62, 2.5, 13);
-      a.pushVelocity = clamp((a.pushVelocity || 0) + nx * shove * .6 * shareA, -16, 16);
-      b.pushVelocity = clamp((b.pushVelocity || 0) - nx * shove * 2 * shareB, -16, 16);
-      b.headingError = clamp((b.headingError || 0) - nx * .07, -.8, .8);
+      const shove = clamp(2.5 + impactMph * DRIVE.mphToWorld * .62, 2.5, armoredPlayer ? 28 : 13);
+      const pushLimit = armoredPlayer ? 32 : 16;
+      a.pushVelocity = clamp((a.pushVelocity || 0) + nx * shove * .6 * shareA, -pushLimit, pushLimit);
+      b.pushVelocity = clamp((b.pushVelocity || 0) - nx * shove * 2 * shareB, -pushLimit, pushLimit);
+      b.headingError = clamp((b.headingError || 0) - nx * (armoredPlayer ? .07 + Math.min(.16, impactMph / 500) : .07), -.8, .8);
+      if (armoredPlayer && b === this.state.rival) b.ramRecoverySec = Math.max(b.ramRecoverySec || 0, clamp(.35 + impactMph / 250, .35, 1.1));
       a.speedMph *= .992; b.speedMph *= .985;
-      if (a === this.state && impactMph > 1 && this.state.invulnerableSec <= 0) this._scrape(zone, impactMph);
-    } else if (impactMph > 0) {
+      if (a === this.state && this.state.invulnerableSec <= 0) {
+        if (armoredPlayer && impactMph >= crashThreshold) this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
+        else if (impactMph > 1) this._scrape(zone, impactMph);
+      }
+    } else if (impactMph > 0 || rearRam && Math.abs(a.input?.steer || 0) > .1) {
       const backingPlayer = a === this.state && a.speedMph < 0;
-      const momentum = (vaZ * specA.mass + vbZ * specB.mass) / (specA.mass + specB.mass);
-      const combined = backingPlayer ? momentum : Math.max(0, momentum);
-      a.speedMph = (a.dir || 1) > 0 ? combined : Math.abs(combined);
-      b.speedMph = backingPlayer ? Math.max(0, combined * (b.dir || 1)) : (b.dir || 1) > 0 ? combined : Math.abs(combined);
-      if (a === this.state && this.state.invulnerableSec <= 0 && impactMph >= 28) this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
+      if (rearRam) {
+        const ram = rearRamResponse({ closingMph: impactMph, attackerMph: a.speedMph,
+          attackerMass: specA.mass, targetMass: specB.mass, steer: a.input?.steer || 0, offset: b.lateral - a.lateral });
+        a.speedMph = Math.max(0, a.speedMph - ram.attackerLossMph);
+        b.speedMph = Math.max(0, b.speedMph + ram.targetGainMph);
+        b.pushVelocity = clamp((b.pushVelocity || 0) + ram.lateralKick, -32, 32);
+        b.headingError = clamp((b.headingError || 0) + Math.sign(ram.lateralKick) * Math.min(.3, Math.abs(ram.lateralKick) * .014), -.8, .8);
+        b.ramRecoverySec = Math.max(b.ramRecoverySec || 0, clamp(.4 + impactMph / 230, .4, 1.2));
+        if (ram.launchMps > 0) {
+          b._ramVerticalSpeed = Math.max(b._ramVerticalSpeed || 0, ram.launchMps);
+          b.airborne = true; b.airHeight = Math.max(b.airHeight || 0, .03);
+        }
+        this.emit({ vehicleRam: true, victim: 'rival', impactMph, lateralKick: ram.lateralKick, launched: ram.launchMps > 0 });
+      } else {
+        const momentum = (vaZ * specA.mass + vbZ * specB.mass) / (specA.mass + specB.mass);
+        const combined = backingPlayer ? momentum : Math.max(0, momentum);
+        a.speedMph = (a.dir || 1) > 0 ? combined : Math.abs(combined);
+        b.speedMph = backingPlayer ? Math.max(0, combined * (b.dir || 1)) : (b.dir || 1) > 0 ? combined : Math.abs(combined);
+      }
+      if (a === this.state && this.state.invulnerableSec <= 0 && impactMph >= crashThreshold) this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
       else if (a === this.state && this.state.invulnerableSec <= 0 && impactMph > 1) this._scrape(zone, impactMph);
     }
     a.offRoad = !this._surface(a.s, a.lateral).mainRoad;
@@ -1215,11 +1239,13 @@ export class Duel {
       const nextSpeed = Math.max(0, r.speedMph - DRIVE.brakeAccel * dt), plan = this._npcYield(r, nextSpeed);
       r.speedMph = plan.yielding ? Math.max(plan.targetMph, r.speedMph - plan.braking * dt) : nextSpeed;
       r.s += r.speedMph * DRIVE.mphToWorld * dt;
-      this._jump(r, dt); this._staticContacts(r, false); this._boundary(r); this._crushProps(r);
+      if (!this._ramFlight(r, dt)) this._jump(r, dt);
+      this._staticContacts(r, false); this._boundary(r); this._crushProps(r);
       return;
     }
     r.pushVelocity ||= 0; r.headingError ||= 0;
     r.contactCooldown = Math.max(0, (r.contactCooldown || 0) - dt);
+    r.ramRecoverySec = Math.max(0, (r.ramRecoverySec || 0) - dt);
     r.braking = false; r.yieldingToPlayer = false;
     // CPU pace is independent of the player's manual/automatic gearbox.
     const skill = CPU_DIFFICULTY[s.cpuDifficulty], car = this.rivalSpec || CARS[s.car];
@@ -1290,7 +1316,10 @@ export class Duel {
     if (r.braking) r.speedMph = Math.max(target, r.speedMph - yieldPlan.braking * dt);
     else r.speedMph += clamp(target - r.speedMph, -DRIVE.brakeAccel * car.braking * dt, (car.accel * DRIVE.accelScale * .85+(r.boosting?BOOST.accelMphPerSec*(1+r.upgrades.nitro*.15)*(car.nitroAcceleration||1):0)) * dt);
     if (r.offRoad) r.speedMph *= Math.exp(-rivalSurface.scrub * dt * (rivalSurface.preparedGravel ? .25 : 1));
-    if (route) {
+    if (r.ramRecoverySec > 0) {
+      // Let the ram carry the car before the route planner tries to recenter it.
+      r.headingError *= Math.exp(-.35 * dt);
+    } else if (route) {
       // Follow the physical tangent with the same tire-limited yaw authority
       // as the player. Subtract road-frame rotation to retain relative heading.
       const speed = r.speedMph * DRIVE.mphToWorld, frame = this.course.at(r.s);
@@ -1308,12 +1337,24 @@ export class Duel {
     r.lateral += (Math.sin(r.headingError) * r.speedMph * DRIVE.mphToWorld + r.pushVelocity) * dt;
     r.s += Math.cos(r.headingError) * r.speedMph * DRIVE.mphToWorld * dt / Math.max(.25, 1 - this.course.at(r.s).curvature * r.lateral);
     r.pushVelocity *= Math.exp(-(r.offRoad ? .9 : 1.5) * dt);
-    this._jump(r, dt);
+    if (!this._ramFlight(r, dt)) this._jump(r, dt);
     this._staticContacts(r, false);
     this._boundary(r);
     this._crushProps(r);
     this._advanceLaps(r, dt);
     if (r.completedLaps >= s.lapsTotal) { r.finished = true; r.finishTime = s.stageTimeSec; this.emit({ rivalFinished: true }); }
+  }
+
+  _ramFlight(actor, dt) {
+    if (actor._ramVerticalSpeed == null) return false;
+    actor.airHeight = Math.max(0, (actor.airHeight || 0) + actor._ramVerticalSpeed * dt - 9 * dt * dt);
+    actor._ramVerticalSpeed -= 18 * dt;
+    actor.airborne = actor.airHeight > 0;
+    if (!actor.airborne && actor._ramVerticalSpeed < 0) {
+      actor._ramVerticalSpeed = null; actor.airHeight = 0;
+      actor._jumpY = null; actor._verticalSpeed = 0;
+    }
+    return true;
   }
 
   _crash(reason, side = 0, impactMph = Math.abs(this.state.speedMph), zone = 'front') {
