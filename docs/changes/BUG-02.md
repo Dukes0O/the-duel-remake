@@ -1,6 +1,6 @@
 ---
 task: BUG-02
-status: review
+status: merged
 kind: gameplay-fix
 flag: none
 player_facing: yes
@@ -24,6 +24,7 @@ stage clears these flags.
   an assisted flag. Other cases check an ordinary lap and the next stage.
 - `node tools/test-combat.mjs`: 49 checks passed.
 - `node tools/test-race-integrity.mjs`: 601 checks passed.
+
 - `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 77 passed,
   0 failed, 0 not run in 262.56 seconds. Replay fingerprints passed 162
   checks; expansion driving completed and won all 48 races.
@@ -39,8 +40,8 @@ current game; `nextLapGate` is the checkpoint progress field.
 
 ## Review
 
-The lane gate passed. The branch is ready for independent review before
-integration.
+The lane gate passed. Independent review found that stage results needed their
+own copy of the assisted-lap flags; the review fix below supplied it.
 
 ## Review fix: result snapshots
 
@@ -52,3 +53,10 @@ own copy. No full-race best or leaderboard rule changed.
 
 - `node tools/test-combat.mjs`: 52 checks passed.
 - `node tools/test-race-integrity.mjs`: 601 checks passed.
+
+## Integration
+
+The reviewed changes were cherry-picked as `7f87cae` and `1b0e1e7`.
+All 145 merge-gate suites passed in 162.11 seconds. The production build and
+private High/Performance browser smoke passed with four screenshots and no
+browser warnings or errors.

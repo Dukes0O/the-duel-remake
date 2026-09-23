@@ -174,3 +174,13 @@ checkout untouched until the final integration commit passes the full gate.
   500 ms race sample, down from 145. Keyboard 1–4 and gamepad D-pad names are
   shown and spoken. Browser QA found no click-then-Space repeat after a
   weapon recharged; no focus change was needed.
+
+## 2026-09-22 PDT — BUG-02 lap history merged
+
+- Reviewed CMB lane commits `2a3cf7f` and `5d6059c`; cherry-picked as
+  `7f87cae` and `1b0e1e7`. All 145 merge-gate suites passed in 162.11 seconds.
+  The production build and private High/Performance browser smoke passed with
+  four screenshots and zero warnings or errors.
+- A UFO swap keeps each driver's completed lap history and running lap timer.
+  Both current laps receive assisted flags that survive into stage results.
+  Full-race best and leaderboard rules remain unchanged.

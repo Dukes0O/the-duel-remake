@@ -181,7 +181,8 @@ tasks:
     lane: CMB
     size: S
     needs: [BUG-09]
-    status: building
+    status: merged
+    note: "Merged as 7f87cae and 1b0e1e7; 145-suite merge gate, production build and private High/Performance browser smoke pass. Both drivers retain lap history and assisted-lap flags through a UFO swap and stage result."
     spec: "SPEC.md, task BUG-02"
   - id: BUG-03
     title: "Safe swap landing"
