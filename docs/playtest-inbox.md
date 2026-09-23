@@ -25,6 +25,7 @@ Please include the car, approximate speed, course, and difficulty with a note.
 | Date | Player note | Event or screen | Status |
 | --- | --- | --- | --- |
 | 2026-09-23 | Armor felt too fragile; traffic and small roadside objects should break, rear hits should shove rivals, idle off-route bouncing and distant checkpoint resets felt rough, and UFO landing gains were unclear. | Mad Max Duel | Released in the live build on September 23. Human feel review remains, including one Hard race where later traffic contact outweighs the UFO's immediate route gain. |
+| 2026-09-23 | Cars and signposts still look unmoved after a Mad Max collision. Below half the upgraded car's top speed, the hit should slow the car and knock the obstacle clear. At or above that speed, it should destroy the obstacle. | Mad Max Duel, live build on port 5174 | CMB-08 in progress. Independent tests confirm the current build does not meet this rule. CMB-02 separately adds rival shoves and local wrecks. |
 
 ## Weekly summary
 
