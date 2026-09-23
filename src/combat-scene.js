@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ensureVehicleSockets } from './vehicle-sockets.js';
 
 // Fixed reusable geometry: no mesh allocation or disposal during a firefight.
 export function createCombatScene(){
@@ -23,17 +24,92 @@ export function createCombatScene(){
  const pickupColors={ufo:0x64ffce,bomb:0xff8c16,crossbow:0x6cbcff,star:0xffe16b};
  const pickupMaterials=Object.fromEntries(Object.entries(pickupColors).map(([key,color])=>[key,new THREE.MeshBasicMaterial({color})]));
  const pickups=Array.from({length:4},()=>{const g=new THREE.Group(),box=new THREE.Mesh(armorGeometry,materials.gold),halo=new THREE.Mesh(ring,materials.gold);box.scale.setScalar(1.8);halo.scale.setScalar(2.3);g.add(box,halo);group.add(g);return {g,box,halo};});
- const rigs=[0,1].map(()=>{
-  const g=new THREE.Group(),bumper=new THREE.Mesh(armorGeometry,materials.iron),bow=new THREE.Group();
-  bumper.scale.set(2.7,.35,.5);bumper.position.set(0,.5,2.3);g.add(bumper);
-  for(let i=-2;i<=2;i++){const spike=new THREE.Mesh(tip,materials.iron);spike.rotation.x=Math.PI/2;spike.position.set(i*.5,.5,2.8);g.add(spike);}
-  const rail=new THREE.Mesh(shaft,materials.iron);rail.rotation.x=Math.PI/2;bow.add(rail);
-  for(const side of [-1,1]){const arm=new THREE.Mesh(armorGeometry,materials.iron);arm.scale.set(1.3,.12,.18);arm.position.set(side*.55,0,.5);arm.rotation.y=side*.35;bow.add(arm);}
-  const bolt=new THREE.Mesh(tip,materials.tip);bolt.rotation.x=Math.PI/2;bolt.position.z=1.5;bow.add(bolt);g.add(bow);group.add(g);return {g,bow};
+ const rigs = [0, 1].map(index => {
+  const bumper = new THREE.Group();
+  bumper.name = `combat-bumper-${index}`;
+  const bar = new THREE.Mesh(armorGeometry, materials.iron);
+  bumper.add(bar);
+  const spikes = Array.from({ length: 5 }, () => {
+   const spike = new THREE.Mesh(tip, materials.iron);
+   spike.rotation.x = Math.PI / 2;
+   bumper.add(spike);
+   return spike;
+  });
+
+  const bow = new THREE.Group();
+  bow.name = `combat-bow-${index}`;
+  const rail = new THREE.Mesh(shaft, materials.iron);
+  rail.rotation.x = Math.PI / 2;
+  bow.add(rail);
+  for (const side of [-1, 1]) {
+   const arm = new THREE.Mesh(armorGeometry, materials.iron);
+   arm.scale.set(1.3, .12, .18);
+   arm.position.set(side * .55, 0, .5);
+   arm.rotation.y = side * .35;
+   bow.add(arm);
+  }
+  const bolt = new THREE.Mesh(tip, materials.tip);
+  bolt.rotation.x = Math.PI / 2;
+  bolt.position.z = 1.5;
+  bow.add(bolt);
+
+  const shield = new THREE.Group();
+  shield.name = `combat-shield-${index}`;
+  const ball = new THREE.Mesh(sphere, materials.gold);
+  const halo = new THREE.Mesh(ring, materials.gold);
+  halo.rotation.x = Math.PI / 2;
+  shield.add(ball, halo);
+  group.add(bumper, bow, shield);
+  return { bumper, bar, spikes, bow, shield, ball, halo };
  });
- const shields=[0,1].map(()=>{const g=new THREE.Group(),ball=new THREE.Mesh(sphere,materials.gold),halo=new THREE.Mesh(ring,materials.gold);ball.scale.set(3,2,5);halo.rotation.x=Math.PI/2;halo.scale.setScalar(5);g.add(ball,halo);group.add(g);return g;});
- function update(duel){
-  const s=duel.state,c=s.combat;group.visible=!!c&&s.status!=='menu';if(!group.visible)return;
+ const bindings = [null, null];
+
+ function bindVehicle(index, vehicle) {
+  if (bindings[index] === vehicle) return;
+  const rig = rigs[index];
+  for (const object of [rig.bumper, rig.bow, rig.shield]) {
+   group.add(object);
+   object.visible = false;
+  }
+  bindings[index] = vehicle ?? null;
+  if (!vehicle) return;
+
+  const sockets = ensureVehicleSockets(vehicle);
+  sockets.front.add(rig.bumper);
+  sockets.roof.add(rig.bow);
+  sockets.shield.add(rig.shield);
+  const { width, length, height } = vehicle.userData.size;
+  rig.bar.scale.set(width * 1.16, height > 2 ? .52 : .35, .48);
+  rig.bar.position.set(0, 0, .12);
+  rig.spikes.forEach((spike, spikeIndex) => {
+   spike.position.set((spikeIndex - 2) * width * .21, 0, .45);
+  });
+  rig.bow.scale.setScalar(Math.max(.78, Math.min(1.2, width / 2.3)));
+  // The barrier clears the car without turning into a road-wide wire cage.
+  rig.ball.scale.set(width * .82, height * .65 + .25, length * .67);
+  rig.halo.scale.setScalar(length * .66);
+ }
+
+ function detachVehicle(vehicle) {
+  for (let index = 0; index < bindings.length; index++) {
+   if (bindings[index] === vehicle) bindVehicle(index, null);
+  }
+ }
+ function update(duel, vehicles = {}){
+  const s = duel.state, c = s.combat;
+  const active = !!c && s.status !== 'menu';
+  group.visible = active;
+  rigs.forEach((rig, index) => {
+   const actor = index ? s.rival : s;
+   const vehicle = index ? vehicles.rival : vehicles.player;
+   bindVehicle(index, vehicle);
+   const visible = active && !!actor && !actor.crushed && !!vehicle;
+   rig.bumper.visible = visible;
+   rig.bow.visible = visible;
+   rig.shield.visible = visible && (index ? c.rivalShield : c.shield) > 0;
+   if (rig.shield.visible) rig.shield.rotation.y = s.stageTimeSec * 2;
+  });
+  if (!active) return;
   pickups.forEach(({g,box,halo},i)=>{const p=c.pickups[i];g.visible=!!p;if(!p)return;const at=duel.course.groundAt(p.s,0);g.position.set(at.x,at.y+2+Math.sin(p.age*3)*.4,at.z);box.material=pickupMaterials[p.weapon];box.rotation.set(p.age,p.age*1.5,0);halo.rotation.set(Math.PI/2,p.age,0);});
   projectiles.forEach(({g,bomb,arrow},i)=>{const p=c.projectiles[i];g.visible=!!p;if(!p)return;g.position.set(p.x,p.y,p.z);bomb.visible=p.kind==='bomb';arrow.visible=!bomb.visible;g.rotation.set(0,Math.atan2(p.vx,p.vz),0);bomb.rotation.set(p.age*5,p.age*3,0);});
   bursts.forEach(({g,flame,smoke,wave,saucer,shards},i)=>{
@@ -46,8 +122,15 @@ export function createCombatScene(){
    wave.material=warp?materials.neon:star?materials.gold:materials.fire;wave.scale.setScalar((1+b.age*24)*fade);wave.position.y=warp?b.age*8:.1;
    shards.forEach((m,j)=>{m.visible=!warp&&!star;const a=j*Math.PI/3+b.id;m.position.set(Math.sin(a)*b.age*16,Math.max(0,b.age*12-b.age*b.age*9),Math.cos(a)*b.age*16);m.scale.set(.4*fade,.15*fade,.7*fade);m.rotation.set(b.age*5+j,b.age*3,0);});
   });
-  rigs.forEach(({g,bow},i)=>{const actor=i?s.rival:s;g.visible=!!actor&&!actor.crushed;if(!g.visible)return;const p=duel.course.groundAt(actor.s,actor.lateral),spec=duel._vehicleSpec(actor);g.position.set(p.x,p.y+(actor.airHeight||0),p.z);g.rotation.set(actor.terrainPitch||0,p.heading+(actor.headingError||0),actor.terrainRoll||0);bow.position.y=spec.height+.2;});
-  shields.forEach((g,i)=>{const actor=i?s.rival:s;g.visible=!!actor&&(i?c.rivalShield:c.shield)>0;if(!g.visible)return;const p=duel.course.groundAt(actor.s,actor.lateral);g.position.set(p.x,p.y+1+(actor.airHeight||0),p.z);g.rotation.y=s.stageTimeSec*2;});
  }
- return {group,update,dispose(){for(const g of [sphere,ring,shaft,tip,armorGeometry])g.dispose();Object.values({...materials,...pickupMaterials}).forEach(m=>m.dispose());}};
+ return {
+  group,
+  update,
+  detachVehicle,
+  dispose(){
+   for (const vehicle of [...bindings]) if (vehicle) detachVehicle(vehicle);
+   for(const geometry of [sphere,ring,shaft,tip,armorGeometry])geometry.dispose();
+   Object.values({...materials,...pickupMaterials}).forEach(material=>material.dispose());
+  },
+ };
 }

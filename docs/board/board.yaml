@@ -231,8 +231,9 @@ tasks:
     lane: VIS
     size: S
     needs: [FND-06]
-    status: ready
+    status: ready-to-merge
     spec: "SPEC.md, task BUG-08"
+    note: "Bumper, bow and shield use model-local sockets on all nine cars; slide, spin, tumble and jump transforms are checked for player and rival."
   - id: BUG-10
     title: "Gamepad weapons"
     wave: 1

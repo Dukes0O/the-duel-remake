@@ -97,6 +97,7 @@ export function attachRenderer(host, app) {
   const explosion = createExplosion(); scene.add(explosion.group);
   const combatScene=createCombatScene();scene.add(combatScene.group);
   function retireObject(object,beforeDispose){
+    combatScene.detachVehicle(object);
     scene.remove(object);
     const release=()=>{beforeDispose?.();disposeTree(object);};
     if(warmup)warmup.releaseWhenIdle(release);else release();
@@ -266,7 +267,7 @@ export function attachRenderer(host, app) {
       lamps.children.forEach((lamp, i) => { lamp.visible = Math.floor(now / 130) % 2 === i; });
     }
     effects.update({ p: pp, course, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now });
-    explosion.update(pp,st,st.paused?0:dt);combatScene.update(app.duel);
+    explosion.update(pp,st,st.paused?0:dt);combatScene.update(app.duel,{player,rival});
     if(!st.paused)chickens.update(menu?{status:'menu',s:172,collectedFlocks:[]}:st,menu?now/1000:st.totalTimeSec);
     animateScene(world,now/1000);
     syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);
