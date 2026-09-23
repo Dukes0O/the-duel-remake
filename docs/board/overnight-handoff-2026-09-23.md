@@ -90,6 +90,23 @@ local technical resizing and seam repair may be used after generation.
 The autonomous no-prompt profile was not installed: automatic approval review
 rejected that persistent setup. This does not affect the tested code branches.
 
+## Spec wording to settle
+
+These are review findings, not changes to the approved release rules:
+
+- **Live cutover:** FND-01's launcher change is merged and privately tested,
+  but the desktop shortcut has not been cut over. The spec calls live built
+  serving a Wave 0 finish line while also requiring a green full release check
+  before touching live. Treat cutover as part of the first D3 release.
+- **Autonomous profile:** FND-12 requires a persistent no-prompt profile that
+  automatic approval review rejected on this host. The overnight work used
+  managed, per-operation approval. Keep FND-12 open and define a supported
+  host-specific path; do not mark the profile installed.
+- **Beta promotion:** One section ties a wave finish to one green full check,
+  while the feature-switch rule requires two consecutive green full checks
+  before `dev` moves to `beta`. Apply the two-check rule until Kyle resolves
+  the wording. A wave can be eligible after its first green check.
+
 ## Resume order
 
 1. Review and revise the UFO rule with Kyle, then build a BUG-04 candidate on
