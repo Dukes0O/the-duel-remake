@@ -10,6 +10,7 @@ if(new URLSearchParams(window.location.search).has('career-backup-failure')){
   Object.defineProperty(window,'indexedDB',{value:undefined});
 }
 const {app,refreshRaceSetup}=await import('../src/main.js');
+window.__qaApp=app;
 const {CARS}=await import('../src/config.js');
 const {UPGRADE_TYPES}=await import('../src/progression.js');
 const panel=document.createElement('details');panel.open=true;
