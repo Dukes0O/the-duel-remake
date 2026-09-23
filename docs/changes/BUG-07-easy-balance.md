@@ -4,6 +4,7 @@ status: ready-for-review
 kind: balance-fix
 flag: none
 player_facing: yes
+behavior_change: yes
 ---
 
 # BUG-07 Easy rival balance slice
@@ -30,4 +31,27 @@ An intermediate 0.86/0.88 pace trial won 9/10 but caused seven Easy hits on seed
 
 - `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 63 passed, one failed, 27 not run in 168.28 s. The sole failure is the same pre-existing Medium Pacific CPU-hit count (1 versus 2–6) in `tools/test-cpu-combat.mjs`; the runner stopped at that failure. Completed campaign shards, ordinary driving replays and crossbow tests passed.
 
-No test assertions or replay fingerprints were changed. This branch is ready for integration after Q5 fixes the Medium hit baseline, followed by the exact combined lane and balance gates.
+The original Easy lane did not change test assertions or replay fingerprints.
+It was ready for integration after Q5 fixed the Medium hit baseline.
+
+## Exact Q5 integration and replay review
+
+After Q5/BUG-14 removed legacy police from Wasteland, the combined balance
+check completed all 21 policy and 30 baseline races. No-weapon wins are Easy
+8/10, Medium 6/10 and Hard 2/10, all inside their target bands. CPU hits are
+Easy 1, Medium 2 and Hard 10; controlled crossbow hits are 13/26 and maximum
+own-bomb speed loss is 4.53%. Only the six BUG-04 UFO time-gain comparisons
+remain red.
+
+The Easy driving and aim change intentionally changes the recorded Pacific
+Canyon Wasteland race. Recording the exact combined code changed only the
+`pacific-canyon-mad-max` fingerprint, to the same new hash at 30, 60 and 144
+FPS. The other 17 replay cases, including ordinary races, time trials and
+objective events, are byte-for-byte unchanged. This is a behavior change
+review, not a refactor baseline refresh.
+
+An independent reviewer approved the fingerprint update for exact integration
+`a26319a`: only this Wasteland row changed, all 17 other cases and fixture
+inputs stayed byte-for-byte unchanged, and the reviewer independently passed
+all 162 replay checks. The fixture covers one Wasteland race; it does not
+establish behavior on every combat course.
