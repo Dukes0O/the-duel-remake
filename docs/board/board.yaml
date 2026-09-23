@@ -580,6 +580,26 @@ tasks:
     status: blocked
     note: "Audio timing and pitch tools are integrated; the actual on-foot and new weapon cues await their gameplay systems."
     spec: "SPEC.md, task AUD-02"
+  - id: VIS-01
+    title: "Combat flipbooks and pooled effects"
+    wave: 3
+    lane: VIS
+    size: M
+    needs: [RFX-06, ART-A, CMB-01]
+    status: blocked
+    owns: [src/combat-vfx-atlas.js, src/combat-effects.js, src/combat-scene.js, tools/test-combat-effects.mjs, tools/scenarios/combat-effects.mjs]
+    hooks: [src/explosion.js, src/render3d.js, src/effects.js]
+    helpers: [test_author, reviewer, browser_qa]
+    flag: wasteland2
+    behavior_change: yes
+    acceptance:
+      - "Use the accepted fire, explosion, smoke and muzzle-dust sheets in shared fixed pools with correct frame order, alpha, pause and first-frame appearance."
+      - "Player and all three CPU wrecks draw at their own hit positions; repeated bombs and impacts create no per-hit texture, shader or mesh allocations."
+      - "Preload once, dispose once, and show a procedural combat fallback if an asset is missing; keep ordinary fatal-crash visuals and flag-off behavior unchanged."
+      - "High and Performance screenshots cover muzzle, hit, blast progression, first and paused wreck, recovery and later CPU positioning with memory-only saves."
+      - "Art intake, focused pool/UV tests, lane/build/browser gates and the 10% same-route combat frame-cost check pass."
+    note: "VIS-02 owns persistent low-armor smoke, fire and plate loss. VIS-01 uses CMB-01's separate combat-only explosion pools; it must not reintroduce a changing scene light count or a first-blast freeze."
+    spec: "SPEC.md sections 3.2 and 3.10, task VIS-01"
   - id: ART-A
     title: "Wasteland Batch A runtime images"
     wave: 3
