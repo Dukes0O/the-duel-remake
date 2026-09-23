@@ -1,6 +1,6 @@
 ---
 task: CMB-02
-status: ready-for-review
+status: integrated
 kind: combat-feature
 flag: wasteland2
 player_facing: yes
@@ -86,3 +86,11 @@ player-to-CPU and CPU-to-CPU combat rams only. CMB-05 will add deliberate CPU
 attack decisions; the current accidental cut-in yield guard remains in place.
 The bumper is a current combat-rig feature, not a purchased upgrade or a save
 field. The `wasteland2` switch remains in development state.
+
+## Integration gate
+
+Merged as `c755986` after a separate source review. The exact merge commit
+passed 180/180 suites in 360.98 seconds, including 162 pinned replay
+fingerprints and 213 multi-car checks. The production build passed. Private
+High and Performance smoke passed with four screenshots and zero warnings or
+errors. The live desktop build has not been updated by this merge.

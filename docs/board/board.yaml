@@ -495,7 +495,7 @@ tasks:
     lane: CMB
     size: S
     needs: [CMB-01]
-    status: ready
+      status: integrated
     owns: [src/vehicle-impact.js, src/wasteland-tuning.js, tools/test-combat-ramming.mjs, tools/scenarios/combat-ramming.mjs]
     hooks: [src/sim-contacts.js, src/combat-armor.js, src/game.js, src/combat-scene.js]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
@@ -507,7 +507,7 @@ tasks:
       - "Player and all three CPU cars can shove, launch, wreck and recover without spending ordinary crash slots; a star blocks armor loss but not the physical push."
       - "Ordinary and flag-off Wasteland contacts, traffic destruction and pinned replay fingerprints stay unchanged."
       - "Independent 30/60/144 FPS contact tests, High/Performance three-car browser scene, balance and frame checks pass."
-    note: "The visible front spikes on every flagged Wasteland combat rig count as equipped. Full incident, ownership and event requirements are in docs/changes/CMB-02-plan.md. CMB-01 integrated at 8cf1173."
+      note: "Integrated at c755986 after independent red tests, 187/187 lane suites, 180/180 merge suites, build and private High/Performance smoke. The visible front spikes on every flagged Wasteland combat rig count as equipped. Full incident, ownership and event requirements are in docs/changes/CMB-02-plan.md."
     spec: "SPEC.md section 3.2, task CMB-02"
   - id: CMB-04
     title: "Seeded weapon and armor pickups across the road"
@@ -554,7 +554,7 @@ tasks:
     lane: CMB
     size: M
     needs: [CMB-02]
-    status: blocked
+      status: building
     owns: [src/destructibles.js, src/roadside-debris.js, tools/test-combat-knockaway.mjs, tools/scenarios/combat-knockaway.mjs]
     hooks: [src/sim-contacts.js, src/sim-rival.js, src/game.js, src/world.js, src/scenery-fall.js, src/desert-detail.js, src/vegetation.js, src/world-props.js, src/render3d.js, src/combat-scene.js, src/wasteland-tuning.js]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]

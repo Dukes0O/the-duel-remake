@@ -537,3 +537,15 @@ checkout untouched until the final integration commit passes the full gate.
   Its independent red suite starts with 15 expected failures and 2 controls
   passing. The roadside switch will be considered for normal Wasteland only
   after the full balance and visual gate.
+
+## 2026-09-23 PDT — CMB-02 armored ramming merged
+
+- Reviewed and merged `codex/cmb02-ramming` as `c755986`. The lane passed
+  187/187 suites, including 162 pinned replays, and a production build. Its
+  private High/Performance scene showed an offset Viper ram to 15.42 m off
+  center and 1.18 m airborne, a local wreck and recovery, and no crash slot.
+- The exact merge commit passed 180/180 suites in 360.98 seconds. Its build and
+  private High/Performance smoke passed with four screenshots, zero warnings
+  and zero errors. Wasteland2 remains in development; this is not yet live.
+- CMB-08 is unblocked. Its new impact path preserves the old direct traffic
+  helper and test, while a separate flagged helper enforces the 50% boundary.
