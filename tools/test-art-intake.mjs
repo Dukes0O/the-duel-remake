@@ -25,12 +25,20 @@ function png(width, height, alpha = 0) {
   const raw = Buffer.alloc(height * (width * 4 + 1));
   for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
     const offset = y * (width * 4 + 1) + 1 + x * 4;
-    raw.set([40, 80, 120, alpha], offset);
+    raw.set([40, 80, 120, typeof alpha === 'function' ? alpha(x, y) : alpha], offset);
   }
   return Buffer.concat([
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header),
     chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0)),
   ]);
+}
+function rgbPngWithTransparencyKey() {
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(1); header.writeUInt32BE(1, 4); header[8] = 8; header[9] = 2;
+  const key = Buffer.from([0, 40, 0, 80, 0, 120]);
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk('IHDR', header), chunk('tRNS', key),
+    chunk('IDAT', deflateSync(Buffer.from([0, 40, 80, 120]))), chunk('IEND', Buffer.alloc(0))]);
 }
 
 const root = mkdtempSync(join(tmpdir(), 'duel-art-intake-'));
@@ -56,9 +64,35 @@ try {
   assert.deepEqual(check().failures, [], 'complete transparent asset and provenance pass');
   assert.equal(inspectPng(readFileSync(assetPath)).hasTransparentPixels, true);
 
+  const partial = png(10, 10, 255);
+  const header = partial.subarray(8, 33);
+  const oneClearRaw = Buffer.alloc(10 * (10 * 4 + 1));
+  for (let y = 0; y < 10; y++) for (let x = 0; x < 10; x++) {
+    oneClearRaw.set([40, 80, 120, x === 0 && y === 0 ? 0 : 255], y * 41 + 1 + x * 4);
+  }
+  const oneClear = Buffer.concat([partial.subarray(0, 8), header,
+    chunk('IDAT', deflateSync(oneClearRaw)), chunk('IEND', Buffer.alloc(0))]);
+  writeFileSync(assetPath, oneClear);
+  assert.ok(check({ catalog: [{ ...item, width: 10, height: 10 }] }).failures.some(failure => failure.includes('5% clear pixels')),
+    'one clear pixel cannot make an otherwise opaque effect sprite pass');
+  writeFileSync(assetPath, png(10, 10, 254));
+  assert.ok(check({ catalog: [{ ...item, width: 10, height: 10 }] }).failures.some(failure => failure.includes('5% clear pixels')),
+    'alpha 254 is not a transparent background');
+  writeFileSync(assetPath, png(4, 4, (x, y) => x < 2 && y < 2 ? 0 : 255));
+  assert.ok(check({ catalog: [{ ...item, width: 4, height: 4, grid: [2, 2] }] }).failures.some(failure => failure.includes('every sheet cell')),
+    'one clear cell cannot hide three opaque atlas cells');
+  writeFileSync(assetPath, png(1, 1, 0));
+  assert.ok(check({ catalog: [{ ...item, transparent: false }] }).failures.some(failure => failure.includes('opaque image')),
+    'an opaque catalog item rejects hidden alpha pixels');
+
   writeFileSync(assetPath, png(1, 1, 255));
-  assert.ok(check().failures.some(failure => failure.includes('transparent pixels')),
+  assert.ok(check().failures.some(failure => failure.includes('clear pixels')),
     'an opaque RGBA image is rejected');
+  writeFileSync(assetPath, rgbPngWithTransparencyKey());
+  assert.equal(inspectPng(readFileSync(assetPath)).hasTransparentPixels, true,
+    'RGB tRNS transparency is decoded');
+  assert.ok(check({ catalog: [{ ...item, transparent: false }] }).failures.some(failure => failure.includes('opaque image')),
+    'RGB tRNS transparency cannot pass as an opaque image');
   writeFileSync(assetPath, png(2, 1, 0));
   assert.ok(check().failures.some(failure => failure.includes('dimensions')),
     'wrong atlas dimensions are rejected');
@@ -67,9 +101,30 @@ try {
   assert.ok(check().failures.some(failure => failure.includes('full prompt')),
     'image without its recorded prompt is rejected');
   writeFileSync(provenancePath, provenance);
+  writeFileSync(provenancePath, provenance.replace(prompt,
+    'placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder'));
+  assert.ok(check().failures.some(failure => failure.includes('full prompt')),
+    'repeated placeholder text is not complete provenance');
+  writeFileSync(provenancePath, provenance);
   writeFileSync(creditsPath, '# Credits\n');
   assert.ok(check().failures.some(failure => failure.includes('credit is missing')),
     'uncredited image is rejected');
+  writeFileSync(creditsPath, 'probe.png: original Codex generated sprite.');
+  writeFileSync(creditsPath, 'TODO: Codex must add the credit for probe.png later.');
+  assert.ok(check().failures.some(failure => failure.includes('credit is missing')),
+    'a reminder that mentions the filename is not a credit');
+  writeFileSync(creditsPath, 'probe.png: no credit has been assigned for this Codex image.');
+  assert.ok(check().failures.some(failure => failure.includes('credit is missing')),
+    'a no-credit statement is not a credit');
+  writeFileSync(creditsPath, 'probe.png: Not created by Codex; actual artist withheld.');
+  assert.ok(check().failures.some(failure => failure.includes('credit is missing')),
+    'a negated creator statement cannot count as an image credit');
+  writeFileSync(creditsPath, 'probe.png: Not by Codex; the actual artist is withheld.');
+  assert.ok(check().failures.some(failure => failure.includes('credit is missing')),
+    'a shorter negated creator statement cannot count as an image credit');
+  writeFileSync(creditsPath, 'probe.png: Created by somebody else; source withheld.');
+  assert.ok(check().failures.some(failure => failure.includes('credit is missing')),
+    'an unspecified creator cannot count as a generated-art credit');
   writeFileSync(creditsPath, 'probe.png: original Codex generated sprite.');
   assert.ok(check({ maxTotalBytes: 1 }).failures.some(failure => failure.includes('Batch A total')),
     'total download budget is enforced');
@@ -83,6 +138,27 @@ try {
   writeFileSync(assetPath, badChecksum);
   assert.ok(check().failures.some(failure => failure.includes('checksum failed')),
     'a damaged PNG chunk is rejected');
+  const valid = png(1, 1, 0);
+  const idatLength = valid.readUInt32BE(33);
+  const idat = valid.subarray(33, 33 + 12 + idatLength);
+  const iend = valid.subarray(33 + 12 + idatLength);
+  assert.throws(() => inspectPng(Buffer.concat([valid.subarray(0, 8), idat, valid.subarray(8, 33), iend])),
+    /begin with IHDR/, 'IDAT may not precede the PNG header');
+  assert.throws(() => inspectPng(Buffer.concat([valid, Buffer.from('junk')])),
+    /trailing bytes/, 'trailing data after IEND is rejected');
+  assert.throws(() => inspectPng(Buffer.concat([valid.subarray(0, 33), idat,
+    chunk('tEXt', Buffer.from('probe')), idat, iend])),
+    /contiguous/, 'IDAT chunks cannot be split by other chunks');
+  assert.throws(() => inspectPng(Buffer.concat([valid.subarray(0, 33),
+    chunk('XfAK', Buffer.alloc(0)), idat, iend])),
+    /critical chunk/, 'an unknown critical chunk cannot be silently ignored');
+  assert.throws(() => inspectPng(Buffer.concat([valid.subarray(0, 33),
+    chunk('abce', Buffer.alloc(0)), idat, iend])),
+    /reserved PNG chunk type/, 'the reserved chunk type bit must be valid');
+  const nonAsciiType = Buffer.from(valid);
+  nonAsciiType[37] |= 0x80;
+  assert.throws(() => inspectPng(nonAsciiType), /invalid PNG chunk type/,
+    'a high-bit chunk name is not valid ASCII');
 } finally {
   rmSync(root, { recursive: true, force: true });
 }
