@@ -1,0 +1,277 @@
+# Director-owned task board. Source: SPEC.md section 12.2.
+# Status tracks merge/release progress, not just a passing local test.
+# Approved standing decisions D1-D7 in SPEC.md section 15 satisfy decision needs.
+# Wave 1 dependencies also encode the CMB/UI file order and FND-06 lane gate
+# in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
+# Director assigns owns/hooks before dispatching a card to a lane.
+tasks:
+  - id: FND-01
+    title: "Live game safety"
+    wave: 0
+    lane: OPS
+    size: S
+    needs: [D1]
+    status: building
+    spec: "SPEC.md, task FND-01"
+    note: "Launcher and guide have local edits; desktop acceptance is pending."
+  - id: FND-02
+    title: "One current operations guide"
+    wave: 0
+    lane: OPS
+    size: S
+    needs: []
+    status: building
+    spec: "SPEC.md, task FND-02"
+    note: "Operations guide and history banners have local edits; cold-read check is pending."
+  - id: FND-03
+    title: "Retire the old Codex working copy"
+    wave: 0
+    lane: OPS
+    size: S
+    needs: [D5]
+    status: ready
+    spec: "SPEC.md, task FND-03"
+  - id: FND-04
+    title: "Line endings"
+    wave: 0
+    lane: OPS
+    size: S
+    needs: []
+    status: ready-to-merge
+    spec: "SPEC.md, task FND-04"
+    note: "Committed as b746171 on codex/wasteland-foundation; integration merge is pending."
+  - id: FIX-01
+    title: "Refresh the saved route data"
+    wave: 0
+    lane: SIM
+    size: S
+    needs: []
+    status: ready-to-merge
+    spec: "SPEC.md, task FIX-01"
+    note: "Committed as 215c7e5; focused check and full 138-suite run pass."
+  - id: FIX-02
+    title: "Freestyle scene signature"
+    wave: 0
+    lane: VIS
+    size: S
+    needs: []
+    status: ready-to-merge
+    spec: "SPEC.md, task FIX-02"
+    note: "Committed as 08d467c; focused check and full 138-suite run pass."
+  - id: FIX-03
+    title: "Menu eligibility test"
+    wave: 0
+    lane: UI
+    size: S
+    needs: []
+    status: ready-to-merge
+    spec: "SPEC.md, task FIX-03"
+    note: "Committed as a116397; focused check and full 138-suite run pass."
+  - id: FND-05
+    title: "Integration branch and agent setup"
+    wave: 0
+    lane: OPS
+    size: S
+    needs: [D2, FND-04, FIX-01, FIX-02, FIX-03]
+    status: building
+    spec: "SPEC.md, task FND-05"
+  - id: FND-06
+    title: "Faster, complete test runs"
+    wave: 0
+    lane: TOOL
+    size: M
+    needs: [FND-05]
+    status: blocked
+    spec: "SPEC.md, task FND-06"
+  - id: FND-07
+    title: "Replay fingerprints"
+    wave: 0
+    lane: TOOL
+    size: M
+    needs: [FND-05]
+    status: blocked
+    spec: "SPEC.md, task FND-07"
+  - id: FND-08
+    title: "Browser harness"
+    wave: 0
+    lane: TOOL
+    size: M
+    needs: [FND-05]
+    status: blocked
+    spec: "SPEC.md, task FND-08"
+  - id: FND-09
+    title: "Feature switches"
+    wave: 0
+    lane: TOOL
+    size: S
+    needs: [FND-05]
+    status: blocked
+    spec: "SPEC.md, task FND-09"
+  - id: FND-12
+    title: "Autonomous run setup"
+    wave: 0
+    lane: OPS
+    size: S
+    needs: [FND-05]
+    status: blocked
+    spec: "SPEC.md, task FND-12"
+  - id: TOOL-02
+    title: "Feel lab and audio checks"
+    wave: 0
+    lane: TOOL
+    size: M
+    needs: [FND-08]
+    status: blocked
+    spec: "SPEC.md, task TOOL-02"
+  - id: FND-10
+    title: "Save fixtures and storage budget"
+    wave: 0
+    lane: SAVE
+    size: M
+    needs: [FND-05]
+    status: blocked
+    spec: "SPEC.md, task FND-10"
+  - id: BUG-01
+    title: "Arrow-key driving layout"
+    wave: 1
+    lane: UI
+    size: S
+    needs: [FND-06]
+    status: blocked
+    spec: "SPEC.md, task BUG-01"
+  - id: BUG-12
+    title: "Blast target check"
+    wave: 1
+    lane: CMB
+    size: S
+    needs: [FND-06]
+    status: blocked
+    spec: "SPEC.md, task BUG-12"
+  - id: BUG-09
+    title: "Dents face the hit"
+    wave: 1
+    lane: CMB
+    size: S
+    needs: [BUG-12]
+    status: blocked
+    spec: "SPEC.md, task BUG-09"
+  - id: BUG-02
+    title: "Swaps keep lap history"
+    wave: 1
+    lane: CMB
+    size: S
+    needs: [BUG-09]
+    status: blocked
+    spec: "SPEC.md, task BUG-02"
+  - id: BUG-03
+    title: "Safe swap landing"
+    wave: 1
+    lane: CMB
+    size: S
+    needs: [BUG-02]
+    status: blocked
+    spec: "SPEC.md, task BUG-03"
+  - id: BUG-04
+    title: "UFO rebalance"
+    wave: 1
+    lane: CMB
+    size: S
+    needs: [BUG-03]
+    status: blocked
+    spec: "SPEC.md, task BUG-04"
+  - id: BUG-05
+    title: "Bombs carry the car's speed"
+    wave: 1
+    lane: CMB
+    size: S
+    needs: [BUG-04]
+    status: blocked
+    spec: "SPEC.md, task BUG-05"
+  - id: BUG-06
+    title: "A crossbow that hits"
+    wave: 1
+    lane: CMB
+    size: S
+    needs: [BUG-05]
+    status: blocked
+    spec: "SPEC.md, task BUG-06"
+  - id: BUG-07
+    title: "A CPU that fights back"
+    wave: 1
+    lane: CMB
+    size: S
+    needs: [BUG-06]
+    status: blocked
+    spec: "SPEC.md, task BUG-07"
+  - id: BUG-08
+    title: "Rigs attached to the car"
+    wave: 1
+    lane: VIS
+    size: S
+    needs: [FND-06]
+    status: blocked
+    spec: "SPEC.md, task BUG-08"
+  - id: BUG-10
+    title: "Gamepad weapons"
+    wave: 1
+    lane: UI
+    size: S
+    needs: [BUG-01]
+    status: blocked
+    spec: "SPEC.md, task BUG-10"
+  - id: BUG-11
+    title: "Weapon bar tidy-up"
+    wave: 1
+    lane: UI
+    size: S
+    needs: [BUG-10]
+    status: blocked
+    spec: "SPEC.md, task BUG-11"
+  - id: OLD-01
+    title: "One crash counter on the HUD"
+    wave: 1
+    lane: UI
+    size: S
+    needs: [D6, FND-06]
+    status: blocked
+    spec: "SPEC.md, task OLD-01"
+  - id: OLD-02
+    title: "Retire the shared best-time store"
+    wave: 1
+    lane: SIM
+    size: S
+    needs: [D7, FND-05]
+    status: blocked
+    spec: "SPEC.md, task OLD-02"
+  - id: OLD-03
+    title: "Tests that protect bugs"
+    wave: 1
+    lane: Discovery
+    size: S
+    needs: [FND-05]
+    status: blocked
+    spec: "SPEC.md, task OLD-03"
+  - id: FND-11
+    title: "Career backup"
+    wave: 1
+    lane: SAVE
+    size: M
+    needs: [FND-10]
+    status: blocked
+    spec: "SPEC.md, task FND-11"
+  - id: TOOL-01
+    title: "Balance report"
+    wave: 1
+    lane: TOOL
+    size: M
+    needs: [FND-06]
+    status: blocked
+    spec: "SPEC.md, task TOOL-01"
+  - id: DISC
+    title: "Discovery audits"
+    wave: 1
+    lane: Discovery
+    size: continuous
+    needs: [FND-05]
+    status: blocked
+    spec: "SPEC.md, task DISC"

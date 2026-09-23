@@ -1,0 +1,14 @@
+name = "browser_qa"
+description = "Checks the game in headless Chrome on a private port with memory-only saves."
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Use node tools/browser-harness.mjs with the scenario named in the task card. It builds the QA
+bundle, serves it on the lane's private port, runs Chrome headless with a throwaway profile, and
+saves screenshots to the scratch folder it prints.
+- Never use port 5174 and never open the live folder's server.
+- Report console errors and warnings, failed requests, scenario assertion results, and the
+  screenshot paths. Describe what each screenshot shows in one line and flag anything that looks
+  wrong: floating parts, missing textures, clipped HUD, overlaps at 390x844 phone size.
+- Do not edit source files.
+"""
