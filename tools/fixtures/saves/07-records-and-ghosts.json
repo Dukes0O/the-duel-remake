@@ -13,7 +13,7 @@
         "eventId": "pacific-canyon", "layoutVersion": 4, "seed": 1989, "laps": 2,
         "car": "falcone_f42", "timeSec": 120, "cpuDifficulty": "easy",
         "difficulty": "casual", "mode": "timetrial", "driverId": "club",
-        "driverSignature": "", "lapTimes": [59, 61], "recordedAt": 100
+        "driverSignature": "", "eventName": "Pacific Canyon Circuit", "upgrades": {"engine": 0, "nitro": 0, "handling": 0, "tires": 0, "brakes": 0, "suspension": 0, "tank": 0}, "lapTimes": [59, 61], "recordedAt": 100
       }],
       "archivedEntries": [{
         "playerId": "synthetic-record", "playerName": "Record QA",
@@ -21,7 +21,7 @@
         "eventId": "pacific-canyon", "layoutVersion": 3, "seed": 1989, "laps": 2,
         "car": "falcone_f42", "timeSec": 118, "cpuDifficulty": "easy",
         "difficulty": "casual", "mode": "timetrial", "driverId": "club",
-        "driverSignature": "", "lapTimes": [58, 60], "recordedAt": 90
+        "driverSignature": "", "eventName": "Pacific Canyon Circuit", "upgrades": {"engine": 0, "nitro": 0, "handling": 0, "tires": 0, "brakes": 0, "suspension": 0, "tank": 0}, "lapTimes": [58, 60], "recordedAt": 90
       }]
     },
     "the-duel-ghosts-v1": {
@@ -32,7 +32,7 @@
         "eventId": "pacific-canyon", "layoutVersion": 4, "seed": 1989,
         "laps": 2, "raceLength": 8000, "car": "falcone_f42", "mode": "timetrial",
         "difficulty": "casual", "cpuDifficulty": "easy", "driverId": "club",
-        "driverSignature": "", "timeSec": 120, "recordedAt": 100, "lastUsedAt": 100,
+        "driverSignature": "", "stageIndex": 0, "upgrades": {"engine": 0, "nitro": 0, "handling": 0, "tires": 0, "brakes": 0, "suspension": 0, "tank": 0}, "timeSec": 120, "recordedAt": 100, "lastUsedAt": 100,
         "samples": [[0,0,0,0,0,0,0],[10000,60000,0,0,0,600,0],[20000,130000,0,0,0,700,0],[30000,200000,0,0,0,700,0],[40000,270000,0,0,0,700,0],[50000,340000,0,0,0,700,0],[60000,410000,0,0,0,700,0],[70000,480000,0,0,0,700,0],[80000,550000,0,0,0,700,0],[90000,620000,0,0,0,700,0],[100000,700000,0,0,0,800,0],[120000,800000,0,0,0,800,0]]
       }],
       "archivedRecords": [{
@@ -41,7 +41,7 @@
         "eventId": "pacific-canyon", "layoutVersion": 3, "seed": 1989,
         "laps": 2, "raceLength": 8000, "car": "falcone_f42", "mode": "timetrial",
         "difficulty": "casual", "cpuDifficulty": "easy", "driverId": "club",
-        "driverSignature": "", "timeSec": 118, "recordedAt": 90, "lastUsedAt": 90,
+        "driverSignature": "", "stageIndex": 0, "upgrades": {"engine": 0, "nitro": 0, "handling": 0, "tires": 0, "brakes": 0, "suspension": 0, "tank": 0}, "timeSec": 118, "recordedAt": 90, "lastUsedAt": 90,
         "samples": [[0,0,0,0,0,0,0],[10000,60000,0,0,0,600,0],[20000,130000,0,0,0,700,0],[30000,200000,0,0,0,700,0],[40000,270000,0,0,0,700,0],[50000,340000,0,0,0,700,0],[60000,410000,0,0,0,700,0],[70000,480000,0,0,0,700,0],[80000,550000,0,0,0,700,0],[90000,620000,0,0,0,700,0],[100000,700000,0,0,0,800,0],[118000,800000,0,0,0,800,0]]
       }]
     }

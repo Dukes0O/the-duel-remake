@@ -6,7 +6,7 @@ flag: none
 player_facing: no
 ---
 
-FND-10 remains incomplete until a non-lossy storage design makes the hard 4 MiB whole-origin limit enforceable.
+FND-10 remains incomplete until a non-lossy storage design makes the hard 4 MB (4,000,000-byte) whole-origin limit enforceable.
 
 ## What changed
 
@@ -24,18 +24,22 @@ using a small sample in its place.
 
 ## Evidence
 
-- `node tools/test-save-fixtures.mjs`: seven shapes and 89 load/round-trip
-  checks pass. The archive fixture keeps one current and one old-layout
-  leaderboard entry and ghost.
+- `node tools/test-save-fixtures.mjs`: seven shapes and 246 first-load/round-trip
+  checks pass. The v1 fixture proves awardedWins moves into settledResults.
+  The archive fixture keeps one current and one old-layout
+  leaderboard entry and ghost, with every raw record field and ghost sample
+  checked on first load.
 - `node tools/test-storage-budget.mjs`: the explicit planning envelope uses
-  3.50 MiB of 4.00 MiB. It has eight fully unlocked players, 60 history rows,
+  3.67 MB of 4.00 MB (decimal; 4 MB = about 3.81 MiB). It has eight fully
+  unlocked players, 60 history rows,
   128 personal bests and 128 keys in each settled-key collection per player;
   192 current and 96 archived leaderboard entries; 200 legacy shared bests;
   all current preference keys; the full active-ghost reservation; and one
   archived ghost with 1,800 eleven-field samples.
-- Expected boundary: the same model reaches 4.02 MiB with five valid archived ghosts. The real
-  ghost loader retains all five. Thus the modeled envelope passes, but a
-  literal whole-origin maximum below 4 MiB **does not** hold.
+- Expected boundary: the same model reaches 4.08 MB with four valid archived
+  ghosts. The real
+  ghost loader retains all four. Thus the modeled envelope passes, but a
+  literal whole-origin maximum below 4 MB **does not** hold.
 
 ## Remaining gap and safe follow-on
 

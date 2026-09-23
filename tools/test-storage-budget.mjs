@@ -8,7 +8,7 @@ import { WEAPON_IDS } from '../src/weapon-upgrades.js';
 
 // A measured planning envelope, not a cap on a player's career. The three
 // collections below remain unbounded in production: players, record keys and
-// archived ghosts. The boundary probe proves why a hard 4 MiB claim is unsafe.
+// archived ghosts. The boundary probe proves why a hard 4 MB claim is unsafe.
 const MODEL = Object.freeze({
   players: 8,
   historyPerPlayer: 60, // current profile loader retains the latest 60
@@ -20,7 +20,7 @@ const MODEL = Object.freeze({
   legacySharedBests: 200, // OLD-02 retires this unbounded legacy key
   activeGhostBytes: MAX_GHOST_BYTES, // reserve the real active ghost cap
 });
-const BUDGET = 4 * 1024 * 1024;
+const BUDGET = 4_000_000; // SPEC.md uses decimal MB, not binary MiB
 const cars = Object.keys(CARS);
 const upgradeTypes = Object.keys(UPGRADE_TYPES);
 const recordStages = COURSE.map((stage, index) => ({ stage, index }))
@@ -129,7 +129,7 @@ const otherBytes = origin.entries().reduce((sum, [key, value]) => sum + 2 * (key
 const projectedBytes = count => otherBytes + 2 * (GHOST_KEY.length + MODEL.activeGhostBytes +
   JSON.stringify({ version: 1, records: [], archivedRecords: Array.from({ length: count }, (_, n) => archivedGhost(n)) }).length);
 const modeledBytes = projectedBytes(MODEL.archivedGhosts);
-assert.ok(modeledBytes < BUDGET, `modeled origin uses ${modeledBytes} bytes, over 4 MiB`);
+assert.ok(modeledBytes < BUDGET, `modeled origin uses ${modeledBytes} bytes, over 4 MB`);
 let failingArchives = MODEL.archivedGhosts + 1;
 while (projectedBytes(failingArchives) < BUDGET) failingArchives++;
 const archives = Array.from({ length: failingArchives }, (_, n) => archivedGhost(n));
@@ -138,5 +138,5 @@ assert.equal(loadGhosts(origin).archivedRecords.length, failingArchives,
   'archive loader retained every synthetic old-layout ghost, without a cap');
 assert.ok(projectedBytes(failingArchives) >= BUDGET);
 assert.ok(failingArchives > MODEL.archivedGhosts);
-console.log(`Storage budget model: ${(modeledBytes / 1024 / 1024).toFixed(2)} MiB / 4.00 MiB UTF-16 for ${MODEL.players} full players, ${board.entries.length} current records, ${board.archivedEntries.length} archived records, ${MODEL.archivedGhosts} archived ghost, and the full active-ghost reservation.`);
-console.log(`EXPECTED BOUNDARY — no hard 4 MiB guarantee: ${failingArchives} valid archived ghosts in this same origin project to ${(projectedBytes(failingArchives) / 1024 / 1024).toFixed(2)} MiB; player, record and archive counts remain unbounded.`);
+console.log(`Storage budget model: ${(modeledBytes / 1_000_000).toFixed(2)} MB / 4.00 MB UTF-16 for ${MODEL.players} full players, ${board.entries.length} current records, ${board.archivedEntries.length} archived records, ${MODEL.archivedGhosts} archived ghost, and the full active-ghost reservation.`);
+console.log(`EXPECTED BOUNDARY — no hard 4 MB guarantee: ${failingArchives} valid archived ghosts in this same origin project to ${(projectedBytes(failingArchives) / 1_000_000).toFixed(2)} MB; player, record and archive counts remain unbounded.`);
