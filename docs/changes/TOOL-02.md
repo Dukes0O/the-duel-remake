@@ -53,3 +53,15 @@ shift and hit onset could not be isolated, engine/rev correlation was 0.179,
 and panning, distance and variety targets failed. Peak was −2.481 dBFS with
 zero clipped samples; stress mixing and loop-gap checks passed. This measures
 the old audio implementation, not the separate held AUD-01 polish branch.
+
+## Integration after tactical UFO
+
+The diagnostic-only commits landed on the current integration branch as
+`3c22f41` and `cbea2cd`. Focused feel-lab and audio-analyzer tests pass.
+The earlier all-weapon and audio figures above were recorded before the
+short tactical UFO release, so they are historical evidence rather than a
+current acceptance result. A new feel report, private sound recording,
+analyzer run, and the normal merge/full checks remain open. The independent
+audio review also found that the current recording does not guarantee each
+landing, crash and pickup cue occurs; those coverage checks and listening
+remain part of TOOL-02.
