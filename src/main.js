@@ -74,10 +74,12 @@ root.querySelector('.build-meta').insertAdjacentHTML('beforeend','<button type="
 root.querySelector('.garage-tune').innerHTML='TUNE CAR & DRIVER <span>→</span>';
 root.querySelector('.scene-line').insertAdjacentHTML('beforeend','<button type="button" class="course-store-button" data-action="courses" aria-label="Unlock or select courses">COURSES ↗</button>');
 const weaponHud=document.createElement('section');weaponHud.className='weapon-hud';weaponHud.hidden=true;weaponHud.setAttribute('aria-label','Combat weapons');
-weaponHud.innerHTML=Object.entries(WEAPONS).map(([id,w])=>`<button type="button" data-weapon="${id}" title="${w.name} · Key ${w.key}">${w.key} · ${w.name}</button>`).join('')+'<span class="weapon-status"></span>';
+const gamepadWeaponDirections={ufo:'↑',bomb:'→',crossbow:'↓',star:'←'};
+weaponHud.innerHTML=Object.entries(WEAPONS).map(([id,w])=>`<button type="button" data-weapon="${id}" title="${w.name} · Key ${w.key} · Gamepad D-pad ${gamepadWeaponDirections[id]}">${w.key} ${gamepadWeaponDirections[id]} · ${w.name}</button>`).join('')+'<span class="weapon-status"></span>';
 root.querySelector('#overlay').append(weaponHud);const weaponStatus=weaponHud.querySelector('.weapon-status');
+const weaponButtons=[...weaponHud.querySelectorAll('[data-weapon]')];
 weaponHud.addEventListener('click',e=>{const button=e.target.closest('[data-weapon]');if(button)app.duel.fireWeapon(button.dataset.weapon);});
-const combatHelp=document.createElement('p');combatHelp.className='combat-help';combatHelp.textContent='MAD MAX DUEL: 1 UFO swap · 2 eight-way bombs · 3 crossbow · 4 invincible star (5s). Glowing road power-ups instantly recharge a weapon. The rival fights back. Wrecks recover; finish first.';root.querySelector('.race-setup').append(combatHelp);
+const combatHelp=document.createElement('p');combatHelp.className='combat-help';combatHelp.textContent='MAD MAX DUEL: 1 / D-pad ↑ UFO swap · 2 / → eight-way bombs · 3 / ↓ crossbow · 4 / ← invincible star (5s). Glowing road power-ups instantly recharge a weapon. The rival fights back. Wrecks recover; finish first.';root.querySelector('.race-setup').append(combatHelp);
 root.querySelector('#cpu-target-label').parentElement.insertAdjacentHTML('afterend',`<details id="rival-customization" class="rival-customization"><summary>CUSTOMIZE YOUR RIVAL</summary><div class="setup-line"><label class="field-label" for="rival-car">CAR</label><select id="rival-car"><option value="match">Match my car (default)</option>${Object.entries(CARS).map(([key,car])=>`<option value="${key}">${car.name}</option>`).join('')}</select></div><div class="setup-line"><label class="field-label" for="rival-driver">DRIVER</label><select id="rival-driver">${Object.values(DRIVERS).map(driver=>`<option value="${driver.id}">${driver.name}</option>`).join('')}</select></div><div class="setup-line"><label class="field-label" for="rival-upgrades">UPGRADES</label><select id="rival-upgrades">${['Stock','Level 1','Level 2','Max / Level 3'].map((label,i)=>`<option value="${i}">${label}</option>`).join('')}</select></div><p id="rival-skill-note" class="event-brief"></p><p class="event-brief">CPU difficulty still controls driving skill. Rival choices do not unlock cars or drivers for you. Custom rival bests are tracked separately.</p></details>`);
 root.querySelector('.boost-readout .field-label').id='nitro-label';
 const ui = Object.fromEntries([...root.querySelectorAll('[id]')].map(el => [el.id, el]));
@@ -394,8 +396,18 @@ function syncRendererReadiness(s) {
 }
 function renderState(s) {
   buildUpdates.syncState();
-  const combat=s.combat;weaponHud.hidden=!combat||s.status==='menu';
-  if(combat){for(const button of weaponHud.querySelectorAll('[data-weapon]')){const key=button.dataset.weapon,left=combat.cooldowns[key];button.disabled=s.status!=='racing'||s.paused||left>0;button.textContent=`${WEAPONS[key].key} · ${WEAPONS[key].name} L${combat.levels[key]} · ${left>0?Math.ceil(left)+'s':'READY'}`;}weaponStatus.textContent=combat.shield>0?`INVINCIBLE · ${combat.shield.toFixed(1)}s`:`ARMORED DUEL · ${combat.hits} HITS · CPU WEAPONS ACTIVE`;}
+  const combat=s.combat,hideWeaponHud=!combat||s.status==='menu';
+  if(weaponHud.hidden!==hideWeaponHud)weaponHud.hidden=hideWeaponHud;
+  if(combat){
+    for(const button of weaponButtons){
+      const key=button.dataset.weapon,left=combat.cooldowns[key],disabled=s.status!=='racing'||s.paused||left>0;
+      const label=`${WEAPONS[key].key} ${gamepadWeaponDirections[key]} · ${WEAPONS[key].name} L${combat.levels[key]} · ${left>0?Math.ceil(left)+'s':'READY'}`;
+      if(button.disabled!==disabled)button.disabled=disabled;
+      if(button.textContent!==label)button.textContent=label;
+    }
+    const status=combat.shield>0?`INVINCIBLE · ${combat.shield.toFixed(1)}s`:`ARMORED DUEL · ${combat.hits} HITS · CPU WEAPONS ACTIVE`;
+    if(weaponStatus.textContent!==status)weaponStatus.textContent=status;
+  }
   root.querySelector('#stage').classList.toggle('combat-mode',choices.mode==='wasteland'||s.mode==='wasteland'&&s.status!=='menu');
   text('nitro-label',s.practice?'NITRO ∞':'NITRO');
   syncRendererReadiness(s);
