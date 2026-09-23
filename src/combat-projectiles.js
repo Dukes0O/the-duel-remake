@@ -1,9 +1,34 @@
 import {contactZone} from './collision.js';
-import {point, burst} from './combat-weapons.js';
+import {point, predictedPoint, burst} from './combat-weapons.js';
 import {applyArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 
 const T = COMBAT_TUNING;
+const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
+const angleDifference = (from, to) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
+
+function steerBolt(duel, projectile, dt) {
+  if (projectile.kind !== 'crossbow' || !Number.isInteger(projectile.targetIndex) ||
+      !Number.isFinite(projectile.launchBearing) || !(dt > 0)) return;
+  const state = duel.state;
+  const target = projectile.targetIndex < 0 ? state : state.opponents[projectile.targetIndex];
+  if (!target || target.finished || target.crushed || target.combatWrecking) return;
+  const speed = Math.hypot(projectile.vx, projectile.vz);
+  if (!(speed > 0)) return;
+  const at = point(duel, target);
+  const travel = Math.min(T.crossbow.leadTime,
+    Math.hypot(at.x - projectile.x, at.z - projectile.z) / speed);
+  const future = predictedPoint(duel, target, travel);
+  const desired = Math.atan2(future.x - projectile.x, future.z - projectile.z);
+  const launch = projectile.launchBearing;
+  const goal = launch + clamp(angleDifference(launch, desired),
+    -T.crossbow.homingConeRadians, T.crossbow.homingConeRadians);
+  const current = Math.atan2(projectile.vx, projectile.vz);
+  const step = T.crossbow.homingTurnRadiansPerSecond * dt;
+  const next = current + clamp(angleDifference(current, goal), -step, step);
+  projectile.vx = Math.sin(next) * speed;
+  projectile.vz = Math.cos(next) * speed;
+}
 
 function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
   const state = duel.state;
@@ -92,6 +117,43 @@ function sweptApproach(projectile, old, target, radius) {
   };
 }
 
+function sweptVehicleContact(projectile, old, from, to, radius, height) {
+  // Move both bodies through the frame. Their relative X/Z path must enter
+  // the vehicle's radius while their relative Y enters its hit band.
+  const startX = old.x - from.x, startZ = old.z - from.z;
+  const endX = projectile.x - to.x, endZ = projectile.z - to.z;
+  const dx = endX - startX, dz = endZ - startZ;
+  const a = dx * dx + dz * dz;
+  const c = startX * startX + startZ * startZ - radius * radius;
+  let horizontalStart = 0, horizontalEnd = 1;
+  if (a < 1e-12) {
+    if (c >= 0) return null;
+  } else {
+    const b = 2 * (startX * dx + startZ * dz);
+    const discriminant = b * b - 4 * a * c;
+    if (discriminant < 0) return null;
+    const root = Math.sqrt(discriminant);
+    horizontalStart = Math.max(0, (-b - root) / (2 * a));
+    horizontalEnd = Math.min(1, (-b + root) / (2 * a));
+    if (horizontalStart > horizontalEnd) return null;
+  }
+
+  const startY = old.y - from.y;
+  const dy = projectile.y - to.y - startY;
+  let verticalStart = 0, verticalEnd = 1;
+  if (Math.abs(dy) < 1e-12) {
+    if (Math.abs(startY) >= height) return null;
+  } else {
+    const low = (-height - startY) / dy;
+    const high = (height - startY) / dy;
+    verticalStart = Math.max(0, Math.min(low, high));
+    verticalEnd = Math.min(1, Math.max(low, high));
+    if (verticalStart > verticalEnd) return null;
+  }
+  const fraction = Math.max(horizontalStart, verticalStart);
+  return fraction <= Math.min(horizontalEnd, verticalEnd) ? {fraction} : null;
+}
+
 export function tickImpactCooldowns(duel, dt) {
   const state = duel.state;
   state.bombImpactCooldown = Math.max(0, (state.bombImpactCooldown || 0) - dt);
@@ -107,8 +169,11 @@ export function stepProjectiles(duel, dt) {
   const state = duel.state;
   const combat = state.combat;
   const live = [];
+  const modernProjectiles = state.mode === 'wasteland' &&
+    duel.featureFlags?.enabled('wasteland2') === true;
   for (const projectile of combat.projectiles) {
-    const old = {x: projectile.x, z: projectile.z};
+    const old = {x: projectile.x, y: projectile.y, z: projectile.z};
+    if (modernProjectiles) steerBolt(duel, projectile, dt);
     projectile.age += dt;
     projectile.x += projectile.vx * dt;
     projectile.z += projectile.vz * dt;
@@ -121,10 +186,19 @@ export function stepProjectiles(duel, dt) {
     let firstContact = Infinity;
     for (const actor of projectile.enemy ? [state] : state.opponents) {
       const at = point(duel, actor);
-      if (Math.abs(projectile.y - at.y) >= T.projectileHitHeight) continue;
       const radius = duel._vehicleSpec(actor).halfWidth + T.projectileRadiusPadding;
-      const approach = sweptApproach(projectile, old, at, radius);
-      if (approach.distance < radius && approach.fraction < firstContact) {
+      let approach;
+      if (modernProjectiles) {
+        const from = duel.course.groundAt(actor.prevS ?? actor.s,
+          actor.prevLateral ?? actor.lateral);
+        from.y += T.pointHeight + (actor.prevAirHeight ?? actor.airHeight ?? 0);
+        approach = sweptVehicleContact(projectile, old, from, at, radius,
+          T.projectileHitHeight);
+      } else if (Math.abs(projectile.y - at.y) < T.projectileHitHeight) {
+        const legacy = sweptApproach(projectile, old, at, radius);
+        if (legacy.distance < radius) approach = legacy;
+      }
+      if (approach && approach.fraction < firstContact) {
         firstContact = approach.fraction;
         target = actor;
       }

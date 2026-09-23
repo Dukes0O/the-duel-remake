@@ -45,7 +45,7 @@ export function velocity(actor, at) {
   };
 }
 
-function predictedPoint(duel, actor, seconds) {
+export function predictedPoint(duel, actor, seconds) {
   const frame = duel.course.at(actor.s);
   const speed = (actor.speedMph || 0) * (actor.dir || 1) * DRIVE.mphToWorld;
   const headingError = actor.headingError || 0;
@@ -182,15 +182,13 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         target.combatWrecking)) return false;
     const count = weapon === 'bomb' ? T.bomb.baseCount + T.bomb.countPerLevel * level : 1;
     if (combat.projectiles.length + count > T.projectileLimit) return false;
-    // A moving car throws the bomb ring with its own velocity.
-    const travelHeading = at.heading + (actor.headingError || 0);
-    const travelSpeed = (actor.speedMph || 0) * (actor.dir || 1) * DRIVE.mphToWorld;
-    const carryX = weapon === 'bomb'
-      ? Math.sin(travelHeading) * travelSpeed + Math.cos(at.heading) * (actor.pushVelocity || 0)
-      : 0;
-    const carryZ = weapon === 'bomb'
-      ? Math.cos(travelHeading) * travelSpeed - Math.sin(at.heading) * (actor.pushVelocity || 0)
-      : 0;
+    const modernProjectile = state.mode === 'wasteland' &&
+      duel.featureFlags?.enabled('wasteland2') === true;
+    // Preserve the old bolt launch when the switch is off. Bombs already
+    // inherit the thrower's velocity; the new rule extends this to bolts.
+    const carry = weapon === 'bomb' || modernProjectile ? velocity(actor, at) : null;
+    const carryX = carry?.x || 0;
+    const carryZ = carry?.z || 0;
 
     for (let index = 0; index < count; index++) {
       let dx, dz, speed;
@@ -205,7 +203,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         speed = T.crossbow.baseSpeed + T.crossbow.speedPerLevel * level;
         let aimX = goal.x;
         let aimZ = goal.z;
-        if (enemy) {
+        if (enemy || modernProjectile) {
           const travel = Math.min(T.crossbow.leadTime,
             Math.hypot(goal.x - at.x, goal.z - at.z) / speed);
           const predicted = predictedPoint(duel, target, travel);
@@ -236,6 +234,10 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         vx: dx * speed + carryX,
         vz: dz * speed + carryZ,
         vy, age: 0,
+        ...(modernProjectile && weapon === 'crossbow' ? {
+          targetIndex: enemy ? -1 : state.opponents.indexOf(target),
+          launchBearing: Math.atan2(dx * speed + carryX, dz * speed + carryZ),
+        } : {}),
         ...(enemy && actor !== state.rival ? {sourceIndex: state.opponents.indexOf(actor)} : {}),
       });
     }
