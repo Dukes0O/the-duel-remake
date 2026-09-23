@@ -10,8 +10,8 @@ playbook defines task cards and review roles.
 | --- | --- | --- |
 | Live game | `C:\Users\kyleb\dev\the-duel-remake` | Release work only. Do not edit game source here. |
 | Live browser address | `http://localhost:5174/` | Keep this exact origin so local careers remain available. |
-| Wasteland setup | `C:\Users\kyleb\.codex\worktrees\wasteland-expansion\the-duel-remake` | Isolated worktree while the integration branch is prepared. |
-| Integration | `integration/wasteland` in its own worktree | Combine one reviewed change at a time. |
+| Wasteland setup | `C:\Users\kyleb\.codex\worktrees\wasteland-expansion\the-duel-remake` | Isolated foundation worktree. |
+| Integration | `C:\Users\kyleb\.codex\worktrees\wasteland-integration\the-duel-remake` on `integration/wasteland` | Combine one reviewed change at a time. |
 | Browser QA | Private port, normally 5175 or above 5190 | Use memory-only saves and a throwaway browser profile. |
 
 The live launcher, `start-game.bat`, serves the built `dist` directory with

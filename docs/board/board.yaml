@@ -11,18 +11,18 @@ tasks:
     lane: OPS
     size: S
     needs: [D1]
-    status: review
+    status: merged
     spec: "SPEC.md, task FND-01"
-    note: "Private preview and update tests pass; desktop acceptance follows release."
+    note: "Merged as 96f8852; private preview/build and update tests pass. Desktop and save acceptance follow release."
   - id: FND-02
     title: "One current operations guide"
     wave: 0
     lane: OPS
     size: S
     needs: []
-    status: review
+    status: merged
     spec: "SPEC.md, task FND-02"
-    note: "Cold-read findings corrected; commit and integration are pending."
+    note: "Merged as 4ebc906; cold-read issues corrected."
   - id: FND-03
     title: "Retire the old Codex working copy"
     wave: 0
@@ -37,16 +37,16 @@ tasks:
     lane: OPS
     size: S
     needs: []
-    status: ready-to-merge
+    status: merged
     spec: "SPEC.md, task FND-04"
-    note: "Committed as b746171 on codex/wasteland-foundation; integration merge is pending."
+    note: "Included in the green integration base from b746171."
   - id: FIX-01
     title: "Refresh the saved route data"
     wave: 0
     lane: SIM
     size: S
     needs: []
-    status: ready-to-merge
+    status: merged
     spec: "SPEC.md, task FIX-01"
     note: "Committed as 215c7e5; focused check and full 138-suite run pass."
   - id: FIX-02
@@ -55,7 +55,7 @@ tasks:
     lane: VIS
     size: S
     needs: []
-    status: ready-to-merge
+    status: merged
     spec: "SPEC.md, task FIX-02"
     note: "Committed as 08d467c; focused check and full 138-suite run pass."
   - id: FIX-03
@@ -64,7 +64,7 @@ tasks:
     lane: UI
     size: S
     needs: []
-    status: ready-to-merge
+    status: merged
     spec: "SPEC.md, task FIX-03"
     note: "Committed as a116397; focused check and full 138-suite run pass."
   - id: FND-05
@@ -73,7 +73,8 @@ tasks:
     lane: OPS
     size: S
     needs: [D2, FND-04, FIX-01, FIX-02, FIX-03]
-    status: building
+    status: merged
+    note: "Integration branch opened at d86cf4e; FND-02 completed the lane-to-integrator dry run."
     spec: "SPEC.md, task FND-05"
   - id: FND-06
     title: "Faster, complete test runs"
@@ -81,7 +82,7 @@ tasks:
     lane: TOOL
     size: M
     needs: [FND-05]
-    status: blocked
+    status: building
     spec: "SPEC.md, task FND-06"
   - id: FND-07
     title: "Replay fingerprints"
@@ -89,7 +90,7 @@ tasks:
     lane: TOOL
     size: M
     needs: [FND-05]
-    status: blocked
+    status: building
     spec: "SPEC.md, task FND-07"
   - id: FND-08
     title: "Browser harness"
@@ -97,7 +98,7 @@ tasks:
     lane: TOOL
     size: M
     needs: [FND-05]
-    status: blocked
+    status: building
     spec: "SPEC.md, task FND-08"
   - id: FND-09
     title: "Feature switches"
@@ -105,7 +106,7 @@ tasks:
     lane: TOOL
     size: S
     needs: [FND-05]
-    status: blocked
+    status: ready
     spec: "SPEC.md, task FND-09"
   - id: FND-12
     title: "Autonomous run setup"
@@ -113,7 +114,7 @@ tasks:
     lane: OPS
     size: S
     needs: [FND-05]
-    status: blocked
+    status: ready
     spec: "SPEC.md, task FND-12"
   - id: TOOL-02
     title: "Feel lab and audio checks"
@@ -129,7 +130,7 @@ tasks:
     lane: SAVE
     size: M
     needs: [FND-05]
-    status: blocked
+    status: ready
     spec: "SPEC.md, task FND-10"
   - id: BUG-01
     title: "Arrow-key driving layout"

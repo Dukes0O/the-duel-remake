@@ -1,6 +1,6 @@
 ---
 task: FND-02
-status: review
+status: merged
 kind: docs
 flag: none
 player_facing: no

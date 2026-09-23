@@ -4,6 +4,18 @@ Read the latest entry before resuming. Add one entry when a card starts,
 reaches review, merges, is parked, or is released. Keep the board status
 in sync with this log.
 
+## 2026-09-22 PDT — Integration opened and foundation cards merged
+
+- `integration/wasteland` opened at d86cf4e from the green isolated foundation.
+  FND-04 and FIX-01..03 are included in that base; FND-05 installed the board,
+  change notes and role profiles.
+- FND-02 moved through cold read, correction, commit and cherry-pick to
+  integration as 4ebc906. This served as the first lane-to-integrator dry run.
+- FND-01 was cherry-picked as 96f8852. Its private build passed, as did 194
+  update-notice checks. Desktop and save-continuity acceptance await release.
+- FND-06, FND-07 and FND-08 started in separate lane worktrees. No live release
+  or GitHub push has occurred.
+
 ## 2026-09-22 PDT — First full suite green
 
 - `node tools/run-tests.mjs` passed 138/138 suites in 836.34 seconds on the
@@ -25,6 +37,6 @@ in sync with this log.
 
 ## Handoff
 
-Finish FND-05 setup, create `integration/wasteland` from the green foundation,
-and run its dry-run card. Complete FND-01 and FND-02 acceptance before
-releasing. Do not mark a card merged merely because its local check passed.
+Review and merge FND-06..08 one card at a time after their gates. Complete
+FND-01 desktop and save acceptance during the first release. Keep the live
+checkout untouched until the final integration commit passes the full gate.

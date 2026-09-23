@@ -1,6 +1,6 @@
 ---
 task: FND-05
-status: review
+status: merged
 kind: tooling
 flag: none
 player_facing: no

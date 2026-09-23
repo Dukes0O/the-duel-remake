@@ -1,6 +1,6 @@
 ---
 task: FIX-02
-status: ready-to-merge
+status: merged
 kind: fix
 flag: none
 player_facing: no
