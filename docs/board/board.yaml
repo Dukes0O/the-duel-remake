@@ -468,6 +468,44 @@ tasks:
       - "Production build, focused tests, merge gate and private browser scenario pass."
     note: "Independent red acceptance tests committed as a4316b2; isolated builder started after the audio forward port."
     spec: "SPEC.md, task RFX-04"
+  - id: CMB-01
+    title: "Armor, wrecks, and recovery for every combat car"
+    wave: 3
+    lane: CMB
+    size: M
+    needs: [RFX-04]
+    status: blocked
+    owns: [src/combat-armor.js, src/wasteland-tuning.js, src/combat-projectiles.js, tools/test-combat-armor.mjs, tools/scenarios/combat-armor-wreck.mjs]
+    hooks: [src/combat.js, src/game.js, src/sim-contacts.js, src/sim-rival.js, src/sim-crash.js, src/feature-flags.js, src/render3d.js, src/explosion.js]
+    helpers: [test_author, reviewer, browser_qa, balance_analyst]
+    flag: wasteland2
+    behavior_change: yes
+    acceptance:
+      - "Every combat car starts with max armor 100 × clamp(sqrt(mass/1450), 0.8, 1.6); all nine cars and both clamps have exact tests."
+      - "Level-zero bolt 12, bomb up to 18 with falloff, ram above 40 km/h at 0.2 per relative km/h, and major scenery 20 armor damage; future rocket/RPG/spike values have pure numeric tests."
+      - "Each car's own star blocks projectile, ram, scenery, and self damage; a bomb near its thrower arms after 0.35 seconds and self damage stays at or below 25%."
+      - "At zero armor each car wrecks exactly once, explodes, recovers within 12 m of the impact with 60% of its own max, and pays about 3.5 seconds once."
+      - "Wrecks do not end combat, spend ordinary crash slots, or change ordinary modes or flag-off Wasteland replays."
+      - "A seeded three-opponent browser race shows player and later-CPU wreck, explosion, recovery, and ranked completion in High and Performance with memory-only saves."
+    note: "Read-only acceptance plan completed after RFX-04 second review. CMB-02 owns live spike behavior and CMB-04 owns armor repair pickups."
+    spec: "SPEC.md sections 3.2, 12.2, 12.4, and 13"
+  - id: CMB-07
+    title: "Projectile carry and aim rules"
+    wave: 3
+    lane: CMB
+    size: S
+    needs: [RFX-04]
+    status: blocked
+    owns: [src/combat-projectiles.js, src/wasteland-tuning.js, tools/test-combat-projectiles.mjs]
+    helpers: [test_author, reviewer]
+    flag: wasteland2
+    behavior_change: yes
+    acceptance:
+      - "Every fired projectile inherits its thrower's velocity."
+      - "Aimed projectiles lead moving targets with a bounded homing cone and swept contact at 30, 60, and 144 FPS."
+      - "Ordinary and flag-off Wasteland replays remain unchanged."
+    note: "SPEC 3.2 projectile rules were not covered by the one-line Wave 3 list; added explicitly so the finish line has an owner."
+    spec: "SPEC.md section 3.2, Projectiles"
   - id: BUG-15
     title: "Keep rival shields from protecting traffic"
     wave: 3
