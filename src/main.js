@@ -1,5 +1,5 @@
 import {normalizeWeapons,WEAPON_UPGRADE_COSTS} from './weapon-upgrades.js';
-import {WEAPONS,supportsCombat} from './combat.js';
+import {WEAPONS,supportsCombat,ufoDestination} from './combat.js';
 import './style.css';
 import { App } from './app.js';
 import { LIGHTING_MOODS } from './lighting-moods.js';
@@ -109,6 +109,7 @@ const gamepadWeaponDirections={ufo:'↑',bomb:'→',crossbow:'↓',star:'←'};
 const gamepadWeaponNames={ufo:'Up',bomb:'Right',crossbow:'Down',star:'Left'};
 weaponHud.innerHTML=Object.entries(WEAPONS).map(([id,w])=>`<button type="button" data-weapon="${id}" title="${w.name} · Key ${w.key} · Gamepad D-pad ${gamepadWeaponNames[id]}" aria-label="${w.name}, keyboard ${w.key}, gamepad D-pad ${gamepadWeaponNames[id]}">${w.key} ${gamepadWeaponDirections[id]} · ${w.name}</button>`).join('')+'<span class="weapon-status"></span>';
 root.querySelector('#overlay').append(weaponHud);const weaponStatus=weaponHud.querySelector('.weapon-status');
+let ufoReadout=null,ufoReadoutAt=-Infinity;
 const weaponButtons=[...weaponHud.querySelectorAll('[data-weapon]')];
 weaponHud.addEventListener('click',e=>{const button=e.target.closest('[data-weapon]');if(button)app.duel.fireWeapon(button.dataset.weapon);});
 const combatHelp=document.createElement('p');combatHelp.className='combat-help';combatHelp.textContent='MAD MAX DUEL: 1 / D-pad ↑ UFO swap · 2 / → eight-way bombs · 3 / ↓ crossbow · 4 / ← invincible star (5s). Glowing road power-ups instantly recharge a weapon. The rival fights back. Wrecks recover; finish first.';root.querySelector('.race-setup').append(combatHelp);
@@ -431,15 +432,20 @@ function renderState(s) {
   const combat=s.combat,hideWeaponHud=!combat||s.status==='menu';
   if(weaponHud.hidden!==hideWeaponHud)weaponHud.hidden=hideWeaponHud;
   if(combat){
+    if(combat.cooldowns.ufo<=0&&s.status==='racing'){
+      if(performance.now()-ufoReadoutAt>=1000){ufoReadout=ufoDestination(app.duel);ufoReadoutAt=performance.now();}
+    }else{ufoReadout=null;ufoReadoutAt=-Infinity;}
+    const ufo=ufoReadout;
+    const ufoAction=ufo?.kind==='swap'?`SWAP +${Math.round(ufo.gainMeters)}m`:ufo?.kind==='warp'?`WARP +${Math.round(ufo.gainMeters)}m`:ufo?'GATE BLOCKS':'';
     for(const button of weaponButtons){
-      const key=button.dataset.weapon,left=combat.cooldowns[key],disabled=s.status!=='racing'||s.paused||left>0;
-      const label=`${WEAPONS[key].key} ${gamepadWeaponDirections[key]} · ${WEAPONS[key].name} L${combat.levels[key]} · ${left>0?Math.ceil(left)+'s':'READY'}`;
-      const spokenLabel=`${WEAPONS[key].name}, level ${combat.levels[key]}, keyboard ${WEAPONS[key].key}, gamepad D-pad ${gamepadWeaponNames[key]}, ${left>0?Math.ceil(left)+' seconds to recharge':'ready'}`;
+      const key=button.dataset.weapon,left=combat.cooldowns[key],blocked=key==='ufo'&&ufo?.kind==='blocked',disabled=s.status!=='racing'||s.paused||left>0||blocked;
+      const label=key==='ufo'&&ufo?`${WEAPONS[key].key} ${gamepadWeaponDirections[key]} · ${ufoAction}`:`${WEAPONS[key].key} ${gamepadWeaponDirections[key]} · ${WEAPONS[key].name} L${combat.levels[key]} · ${left>0?Math.ceil(left)+'s':'READY'}`;
+      const spokenLabel=`${WEAPONS[key].name}, level ${combat.levels[key]}, keyboard ${WEAPONS[key].key}, gamepad D-pad ${gamepadWeaponNames[key]}, ${ufo&&key==='ufo'?ufo.kind==='blocked'?'blocked by the next checkpoint':`${ufo.kind} advances ${Math.round(ufo.gainMeters)} metres of route progress`:left>0?Math.ceil(left)+' seconds to recharge':'ready'}`;
       if(button.disabled!==disabled)button.disabled=disabled;
       if(button.textContent!==label)button.textContent=label;
       if(button.getAttribute('aria-label')!==spokenLabel)button.setAttribute('aria-label',spokenLabel);
     }
-    const status=combat.shield>0?`INVINCIBLE · ${combat.shield.toFixed(1)}s`:`ARMORED DUEL · ${combat.hits} HITS · CPU WEAPONS ACTIVE`;
+    const status=(combat.shield>0?`INVINCIBLE · ${combat.shield.toFixed(1)}s`:`ARMORED DUEL · ${combat.hits} HITS`)+(ufo?` · UFO ${ufoAction}`:' · CPU WEAPONS ACTIVE');
     if(weaponStatus.textContent!==status)weaponStatus.textContent=status;
   }
   root.querySelector('#stage').classList.toggle('combat-mode',choices.mode==='wasteland'||s.mode==='wasteland'&&s.status!=='menu');

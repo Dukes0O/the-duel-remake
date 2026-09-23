@@ -11,7 +11,7 @@ const CPU_COMBAT=Object.freeze({
  hard:{interval:5,aimError:.03,shieldReaction:.07,visionCos:.09},
 });
 export const supportsCombat=stage=>!!stage?.hasRival&&!stage.practice&&!stage.stuntTrial;
-export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],pickups:[],pickupTimer:4,pickupCount:0,serial:0,aiTimer:null,aiShot:0,aiShieldCooldown:0,cpuPickupCharges:{bomb:0,crossbow:0,star:0},hits:0};}
+export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],pickups:[],pickupTimer:4,pickupCount:0,serial:0,aiTimer:null,aiShot:0,aiShieldCooldown:0,cpuPickupCharges:{bomb:0,crossbow:0,star:0},hits:0,lastUfo:null};}
 const point=(duel,actor)=>{const p=duel.course.groundAt(actor.s,actor.lateral);return {...p,y:p.y+1+(actor.airHeight||0)};};
 const velocity=(actor,p)=>{
  const heading=p.heading+(actor.headingError||0),speed=(actor.speedMph||0)*(actor.dir||1)*DRIVE.mphToWorld;
@@ -32,6 +32,16 @@ function relocate(actor,pose){
  actor.airborne=false;actor.airHeight=0;actor._jumpY=null;actor._verticalSpeed=0;actor._airOrigin=null;actor._jumpOrigin=null;
  actor.groundHeight=null;actor.terrainPitch=null;actor.terrainRoll=null;actor.tumble=null;
 }
+export function ufoDestination(duel){
+ const s=duel.state,target=s.rival,level=s.combat?.levels.ufo||0;
+ if(target&&!target.finished&&!target.crushed&&target.s>s.s){
+  return {kind:'swap',fromS:s.s,toS:target.s,gainMeters:target.s-s.s,gateLimited:false};
+ }
+ const next=s.completedLaps*duel.course.length+(duel._lapGates[s.nextLapGate]??duel.course.length);
+ const requested=s.s+100+75*level;
+ const toS=Math.max(s.s,Math.min(requested,next-2));
+ return {kind:toS-s.s<1?'blocked':'warp',fromS:s.s,toS,gainMeters:toS-s.s,gateLimited:toS<requested};
+}
 export function fireWeapon(duel,weapon,enemy=false){
  const s=duel.state,c=s.combat,actor=enemy?s.rival:s,target=enemy?s:s.rival;
  if(!c||s.mode!=='wasteland'||s.status!=='racing'||s.paused||!actor||actor.finished||actor.crushed||actor.impactTimer>0||!WEAPONS[weapon])return false;
@@ -39,8 +49,13 @@ export function fireWeapon(duel,weapon,enemy=false){
  const p=point(duel,actor),level=enemy?0:c.levels[weapon];
  if(weapon==='ufo'){
   if(enemy)return false;
+  const destination=ufoDestination(duel);
+  if(destination.kind==='blocked'){
+   duel._callout('UFO / CHECKPOINT BLOCKS WARP',2);
+   return false;
+  }
   let swapped=false;
-  if(target&&!target.finished&&!target.crushed&&target.s>s.s){
+  if(destination.kind==='swap'){
    swapped=true;
    const fields=['s','lateral','headingError','completedLaps','nextLapGate','routeId','routeLap'];
    const a=Object.fromEntries(fields.map(k=>[k,s[k]])),b=Object.fromEntries(fields.map(k=>[k,target[k]]));
@@ -68,12 +83,12 @@ export function fireWeapon(duel,weapon,enemy=false){
     car.assistedLap=true;
    }
    c.shield=Math.max(c.shield,1.2);c.rivalShield=Math.max(c.rivalShield,1.2);
-   duel._callout('UFO / POSITIONS SWAPPED',2);
+   duel._callout(`UFO / SWAP +${Math.round(destination.gainMeters)} m OF ROUTE`,2);
   }else{
-   const next=s.completedLaps*duel.course.length+(duel._lapGates[s.nextLapGate]??duel.course.length);
-   relocate(s,{s:Math.max(s.s,Math.min(s.s+100+75*level,next-2)),lateral:0});
-   duel._callout('UFO / WARP FORWARD',2);
+   relocate(s,{s:destination.toS,lateral:0});
+   duel._callout(`UFO / WARP +${Math.round(destination.gainMeters)} m${destination.gateLimited?' TO GATE':''}`,2);
   }
+  c.lastUfo={...destination};
   s.invulnerableSec=Math.max(s.invulnerableSec,swapped?1.2:1);burst(c,p,'ufo');burst(c,point(duel,s),'ufo');
  }else if(weapon==='star'){
   if(enemy)c.rivalShield=5;else {c.shield=5;s.invulnerableSec=Math.max(s.invulnerableSec,5);}
