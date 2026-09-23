@@ -19,6 +19,8 @@ import {driverMenuMarkup,driverSkillLabel,driverPanel} from './driver-ui.js';
 import {COURSE_PRICES,isCourseUnlocked} from './course-access.js';
 import {courseAccessPanel} from './course-access-ui.js';
 import {speedKph,formatSpeed} from './speed-format.js';
+import {featureFlags} from './feature-flags.js';
+import {experimentalPanel} from './experimental-ui.js';
 
 export const app = new App();
 const jumpHeightReadout = createJumpHeightReadout();
@@ -26,7 +28,7 @@ const root = document.querySelector('#app');
 const arrow = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg>';
 const sound = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5ZM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>';
 const choices = app.getRaceChoices();
-let rendererPromise,rendererHandle,uiDisposed=false,lastScreen, garageOpen = false, armoryOpen = false, garageCar = choices.car, garageMessage = '', playersOpen=false,playerMessage='',leaderboardOpen=false;
+let rendererPromise,rendererHandle,uiDisposed=false,lastScreen, garageOpen = false, armoryOpen = false, garageCar = choices.car, garageMessage = '', playersOpen=false,playerMessage='',leaderboardOpen=false,experimentalOpen=false,experimentalStorageMessage='';
 let lastEventResult=null;
 let coursesOpen=false,courseMessage='';
 const domEvents=new AbortController();
@@ -53,6 +55,7 @@ root.innerHTML = `<div id="stage" class="in-menu"><div id="view3d" aria-label="T
 </div></div>`;
 
 root.querySelector('.garage-tune').insertAdjacentHTML('beforebegin',driverMenuMarkup());
+root.querySelector('.build-meta').insertAdjacentHTML('beforeend','<button type="button" id="experimental-open" class="build-label experimental-open" data-action="experimental" aria-label="Open Experimental features">EXPERIMENTAL</button>');
 root.querySelector('.garage-tune').innerHTML='TUNE CAR & DRIVER <span>→</span>';
 root.querySelector('.scene-line').insertAdjacentHTML('beforeend','<button type="button" class="course-store-button" data-action="courses" aria-label="Unlock or select courses">COURSES ↗</button>');
 const weaponHud=document.createElement('section');weaponHud.className='weapon-hud';weaponHud.hidden=true;weaponHud.setAttribute('aria-label','Combat weapons');
@@ -199,7 +202,7 @@ root.addEventListener('click',e => {
   if(button.closest('form')&&button.type==='submit')return;
   e.preventDefault();
   switch (button.dataset.action) {
-    case 'start': armoryOpen = coursesOpen = garageOpen = playersOpen = leaderboardOpen = false; app.startCampaign(choices); break;
+    case 'start': armoryOpen = coursesOpen = garageOpen = playersOpen = leaderboardOpen = experimentalOpen = false; app.startCampaign(choices); break;
     case 'courses':if(app.duel.state.status!=='menu')return;coursesOpen=true;garageOpen=playersOpen=leaderboardOpen=false;courseMessage='';lastScreen=null;break;
     case 'courses-close':coursesOpen=false;lastScreen=null;break;
     case 'unlock-next':app.returnToMenu();Object.assign(choices,app.getRaceChoices());updateMenuScene();coursesOpen=true;garageOpen=playersOpen=leaderboardOpen=false;courseMessage='Completed race credits are safe. Unlock the next course, then select it.';lastScreen=null;break;
@@ -207,6 +210,8 @@ root.addEventListener('click',e => {
     case 'player-close':playersOpen=false;lastScreen=null;break;
     case 'leaderboard':leaderboardOpen=true;coursesOpen=playersOpen=garageOpen=false;boardFilter.stage=choices.startStage;boardFilter.driverId=getEquippedDriverId(profile());lastScreen=null;break;
     case 'leaderboard-close':leaderboardOpen=false;lastScreen=null;break;
+    case 'experimental': if(app.duel.state.status!=='menu')return;experimentalOpen=true;armoryOpen=coursesOpen=playersOpen=leaderboardOpen=garageOpen=false;experimentalStorageMessage='';lastScreen=null;break;
+    case 'experimental-close':experimentalOpen=false;lastScreen=null;break;
     case 'armory': if(app.duel.state.status!=='menu')return;armoryOpen=true;garageOpen=coursesOpen=playersOpen=leaderboardOpen=false;garageMessage='';lastScreen=null;break;
     case 'armory-close':armoryOpen=false;lastScreen=null;break;
     case 'garage': openGarage(); return;
@@ -219,7 +224,7 @@ root.addEventListener('click',e => {
     case 'pause': app.togglePause(); break;
     case 'resume': app.resume(); break;
     case 'restart': app.requestNavigation('restart'); break;
-    case 'menu': armoryOpen = coursesOpen = garageOpen = playersOpen = leaderboardOpen = false; app.requestNavigation('menu');if(app.duel.state.status==='menu'){Object.assign(choices,app.getRaceChoices());updateMenuScene();}break;
+    case 'menu': armoryOpen = coursesOpen = garageOpen = playersOpen = leaderboardOpen = experimentalOpen = false; app.requestNavigation('menu');if(app.duel.state.status==='menu'){Object.assign(choices,app.getRaceChoices());updateMenuScene();}break;
     case 'next': app.nextStage(); break;
     case 'ticket': app.duel.ackTicket(); break;
     case 'reload-update': buildUpdates.requestReload(); return;
@@ -251,7 +256,17 @@ root.addEventListener('submit',event=>{
   if(result.ok){playersOpen=false;Object.assign(choices,app.getRaceChoices());garageCar=choices.car;updatePlayers();updateMenuScene();}else playerMessage=result.reason;
   lastScreen=null;renderState(app.duel.state);if(!result.ok)root.querySelector('#new-player-name')?.focus();
 },{signal:domEvents.signal});
-root.addEventListener('change',event=>{const key=event.target.dataset.boardFilter;if(!key)return;boardFilter[key]=key==='stage'?Number(event.target.value):event.target.value;lastScreen=null;renderState(app.duel.state);},{signal:domEvents.signal});
+root.addEventListener('change',event=>{
+  if(event.target.id==='experimental-toggle'){
+    if(app.duel.state.status!=='menu'||!experimentalOpen)return;
+    const result=featureFlags.setExperimental(event.target.checked);
+    experimentalStorageMessage=result.saved?'':'Browser storage is unavailable. This choice lasts for this session only.';
+    lastScreen=null;renderState(app.duel.state);
+    root.querySelector('#experimental-toggle')?.focus({preventScroll:true});
+    return;
+  }
+  const key=event.target.dataset.boardFilter;if(!key)return;boardFilter[key]=key==='stage'?Number(event.target.value):event.target.value;lastScreen=null;renderState(app.duel.state);
+},{signal:domEvents.signal});
 function paintPanel(saved,carKey){
   const state=getPaintState(saved,carKey),unlocked=isCarUnlocked(saved,carKey);
   return `<section class="paint-panel" aria-label="Paint finishes"><div class="paint-heading"><h3>PAINT FINISH</h3><span>Appearance only · per car</span></div><div class="paint-options">${Object.values(PAINT_PRESETS).map(preset=>{const owned=state.owned.includes(preset.id),selected=state.selected===preset.id,color=preset.appearance?.color??CARS[carKey].color,disabled=!unlocked||selected||(!owned&&saved.credits<preset.price);return `<button class="paint-choice ${selected?'selected':''} ${preset.id}" data-paint="${preset.id}" ${disabled?'disabled':''} aria-pressed="${selected}" aria-label="${selected?`${preset.name} applied`:owned?`Apply ${preset.name} for free`:`Buy and apply ${preset.name} for ${preset.price} credits`}"><i aria-hidden="true" style="--paint-color:#${color.toString(16).padStart(6,'0')}"></i><span><b>${preset.name}</b><small>${preset.finish}</small></span><strong>${!unlocked?'LOCKED':selected?'APPLIED':owned?'APPLY':`BUY & APPLY · ${credits(preset.price)} CR`}</strong></button>`;}).join('')}</div></section>`;
@@ -355,15 +370,16 @@ function renderState(s) {
   ui.overlay.dataset.status=s.status; ui.overlay.dataset.paused=String(!!s.paused); ui.overlay.dataset.audioState=app.audio?.context?.state||'locked'; ui.overlay.dataset.muted=String(!!app.audio?.muted);
   ui.overlay.dataset.audioSamples=app.audio.sampleStatus;ui.overlay.dataset.majorCrashes=String(s.majorCrashes);ui.overlay.dataset.catastrophic=String(s.catastrophic);
   const showImpact = s.status === 'gameover' && s.impactTimer > 0;
-  const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
+  const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${experimentalOpen}:${coursesOpen}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
   if (screen!==lastScreen) {
     lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu); ui['menu-screen'].hidden=!menu; ui['race-hud'].hidden=menu; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu;});
     ui['garage-open'].hidden = !menu;root.querySelector('#armory-open').hidden=!menu;
-    const modal=menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseAccessPanel(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
+    const modal=menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseAccessPanel(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu&&experimentalOpen?experimentalPanel(featureFlags,experimentalStorageMessage):menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
     const challengeLabel=app.duel.stageDef?.kind==='chase'?'PURSUIT':s.objective||s.mode==='timetrial'?'TARGET':'CPU',routeLabel=supportsRouteVariants(app.duel.stageDef)?` · ${(getRouteVariantForSeed(s.seed)?.label||'Custom route').toUpperCase()}`:'';text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||choices.cpuDifficulty).toUpperCase()} ${challengeLabel}${routeLabel}`); text('stage-name',app.duel.stageDef?.name||'The open road'); text('stage-objective',s.rival?'BEAT YOUR RIVAL OVER TWO LAPS':'CHASE YOUR CAR PERSONAL BEST');
     ui['pause-button'].setAttribute('aria-label',s.paused?'Resume race':'Pause race');
     if(modal) ui['modal-layer'].querySelector('button')?.focus({preventScroll:true});
   }
+  text('experimental-open',featureFlags.experimental()?'EXPERIMENTAL · ON':'EXPERIMENTAL');
   const muted=!!app.audio?.muted; ui['sound-toggle'].classList.toggle('muted',muted); ui['sound-toggle'].setAttribute('aria-label',muted?'Enable sound':'Mute sound'); text('sound-caption',muted?'SOUND OFF':'SOUND ON'); ui['test-driver'].hidden=!app.autopilot;
   const jumpHeight=jumpHeightReadout.update(s,app.duel.course);
   ui['jump-height-panel'].hidden=jumpHeight.phase==='hidden';
@@ -427,5 +443,5 @@ function updateHud(s) {
   }
 }
 
-document.addEventListener('keydown',e=>{if(e.code==='Escape'&&(armoryOpen||coursesOpen||garageOpen||playersOpen||leaderboardOpen)){e.preventDefault();armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;lastScreen=null;updateMenuCar();renderState(app.duel.state);return;}if(e.code!=='Tab'||ui['modal-layer'].hidden)return;const buttons=[...ui['modal-layer'].querySelectorAll('button:not(:disabled),select,input,summary')],first=buttons[0],last=buttons.at(-1);if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}},{signal:domEvents.signal});
+document.addEventListener('keydown',e=>{if(e.code==='Escape'&&(armoryOpen||coursesOpen||garageOpen||playersOpen||leaderboardOpen||experimentalOpen)){e.preventDefault();armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=experimentalOpen=false;lastScreen=null;updateMenuCar();renderState(app.duel.state);return;}if(e.code!=='Tab'||ui['modal-layer'].hidden)return;const buttons=[...ui['modal-layer'].querySelectorAll('button:not(:disabled),select,input,summary')],first=buttons[0],last=buttons.at(-1);if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}},{signal:domEvents.signal});
 app.onFrame=renderState;updatePlayers();updateMenuCar();updateMenuScene();renderState(app.duel.state);ensureRenderer();app.start();
