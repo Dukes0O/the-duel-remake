@@ -1,0 +1,202 @@
+import { PROFILE_KEY, PLAYERS_KEY, loadPlayers, normalizeProfile } from './progression.js';
+import { LEADERBOARD_KEY } from './leaderboard.js';
+import { GHOST_KEY, GHOST_ENABLED_KEY } from './ghost.js';
+
+export const CAREER_FORMAT = 'the-duel-career';
+export const CAREER_KEYS = Object.freeze([
+  PROFILE_KEY, PLAYERS_KEY, LEADERBOARD_KEY, GHOST_KEY, GHOST_ENABLED_KEY,
+  'duel_route_variant', 'duel_graphics_quality', 'duel_lighting_mood',
+  'duel_audio_muted', 'duel_redline_best_v4', 'duel_experimental_v1',
+]);
+const JSON_KEYS = new Set([PROFILE_KEY, PLAYERS_KEY, LEADERBOARD_KEY, GHOST_KEY, 'duel_redline_best_v4']);
+const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const has = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
+function sameEntries(left, right) {
+  const keys = Object.keys(left);
+  return keys.length === Object.keys(right).length && keys.every(key => has(right, key) && left[key] === right[key]);
+}
+function preserved(raw, loaded) {
+  if (Array.isArray(raw)) return Array.isArray(loaded) && raw.every(item => loaded.some(saved => preserved(item, saved)));
+  if (isObject(raw)) return isObject(loaded) && Object.entries(raw).every(([key, value]) => has(loaded, key) && preserved(value, loaded[key]));
+  return Object.is(raw, loaded);
+}
+function validateProfile(profile) {
+  if (!isObject(profile) || ![1, 2].includes(profile.version)) return false;
+  const normalized = normalizeProfile(profile);
+  if (profile.awardedWins && (!Array.isArray(profile.awardedWins) || !profile.awardedWins.every(key => normalized.settledResults.includes(key)))) return false;
+  return Object.entries(profile).every(([key, value]) => key === 'version' || key === 'awardedWins' || has(normalized, key) && preserved(value, normalized[key]));
+}
+const isCareerKey = key => CAREER_KEYS.includes(key) || /^(?:the-duel-|duel_)[\w-]+$/.test(key);
+function allCareerKeys(storage) {
+  const keys = new Set(CAREER_KEYS);
+  if (typeof storage.length === 'number' && typeof storage.key === 'function') {
+    for (let index = 0; index < storage.length; index++) {
+      const key = storage.key(index);
+      if (typeof key === 'string' && isCareerKey(key)) keys.add(key);
+    }
+  }
+  return [...keys];
+}
+function storageOrThrow(storage) {
+  const target = storage ?? globalThis.localStorage;
+  if (!target || !['getItem', 'setItem', 'removeItem'].every(method => typeof target[method] === 'function')) {
+    throw new Error('Browser save storage is unavailable.');
+  }
+  return target;
+}
+export function captureCareer(storage) {
+  const source = storageOrThrow(storage), entries = {};
+  for (const key of allCareerKeys(source)) {
+    const value = source.getItem(key);
+    if (value !== null) entries[key] = value;
+  }
+  return entries;
+}
+export function needsCareerMigration(storage) {
+  const source = storageOrThrow(storage), raw = source.getItem(PLAYERS_KEY);
+  if (raw === null) return [PROFILE_KEY, LEADERBOARD_KEY, GHOST_KEY].some(key => source.getItem(key) !== null);
+  try {
+    const registry = JSON.parse(raw);
+    return registry?.version !== 2 || !Array.isArray(registry.players) || !registry.players.length ||
+      registry.players.some(player => !player?.profile?.raceSettings) ||
+      loadPlayers(source).players.some(player => !player.profile.raceSettings);
+  } catch { return true; }
+}
+function validateEntries(entries) {
+  if (!isObject(entries)) throw new Error('The career file has no save entries.');
+  const keys = Object.keys(entries);
+  if (!keys.length || keys.some(key => !isCareerKey(key))) throw new Error('The career file contains unknown or missing save keys.');
+  if (![PLAYERS_KEY, PROFILE_KEY, LEADERBOARD_KEY, GHOST_KEY].some(key => has(entries, key))) {
+    throw new Error('The career file has no player, record, or ghost data.');
+  }
+  for (const key of keys) {
+    const raw = entries[key];
+    if (typeof raw !== 'string') throw new Error('The career file has an invalid value for ' + key + '.');
+    if (!JSON_KEYS.has(key)) continue;
+    let value;
+    try { value = JSON.parse(raw); } catch { throw new Error('The career file has invalid JSON in ' + key + '.'); }
+    if (key === PROFILE_KEY && !validateProfile(value)) throw new Error('The legacy profile has invalid or unsupported values.');
+    if (key === PLAYERS_KEY) {
+      if (!isObject(value) || value.version !== 2 || !Array.isArray(value.players) || !value.players.length ||
+        !value.players.every(player => isObject(player) && /^[\w-]{1,80}$/.test(player.id) &&
+          typeof player.name === 'string' && !!player.name.trim() &&
+          validateProfile(player.profile)) ||
+        !value.players.some(player => player.id === value.activePlayerId) ||
+        new Set(value.players.map(player => player.id)).size !== value.players.length ||
+        new Set(value.players.map(player => player.name.trim().toLowerCase())).size !== value.players.length) {
+        throw new Error('The player list is invalid or uses an unsupported version.');
+      }
+    }
+    if (key === LEADERBOARD_KEY && (!isObject(value) || value.version !== 1 ||
+      !Array.isArray(value.entries) || !Array.isArray(value.archivedEntries ?? []) ||
+      ![...value.entries, ...(value.archivedEntries ?? [])].every(row => isObject(row) &&
+        typeof row.playerId === 'string' && typeof row.eventKey === 'string' &&
+        typeof row.car === 'string' && Number.isFinite(row.timeSec) && row.timeSec > 0))) {
+      throw new Error('The leaderboard format is unsupported.');
+    }
+    if (key === GHOST_KEY && (!isObject(value) || value.version !== 1 ||
+      !Array.isArray(value.records) || !Array.isArray(value.archivedRecords ?? []) ||
+      ![...value.records, ...(value.archivedRecords ?? [])].every(row => isObject(row) &&
+        typeof row.key === 'string' && typeof row.playerId === 'string' &&
+        Array.isArray(row.samples) && row.samples.every(sample => Array.isArray(sample) && sample.every(Number.isSafeInteger))))) {
+      throw new Error('The ghost format is unsupported.');
+    }
+    if (key === 'duel_redline_best_v4' && !isObject(value)) throw new Error('The legacy best-time format is invalid.');
+  }
+  return entries;
+}
+export function createCareerExport(storage, now = () => new Date()) {
+  return JSON.stringify({ format: CAREER_FORMAT, version: 1, exportedAt: now().toISOString(), entries: captureCareer(storage) }, null, 2);
+}
+export function parseCareerExport(text) {
+  let archive;
+  try { archive = JSON.parse(text); } catch { throw new Error('This is not a valid JSON career file.'); }
+  if (!isObject(archive) || archive.format !== CAREER_FORMAT || archive.version !== 1 ||
+    typeof archive.exportedAt !== 'string' || !Number.isFinite(Date.parse(archive.exportedAt))) {
+    throw new Error('This career file format is unsupported.');
+  }
+  validateEntries(archive.entries);
+  return archive;
+}
+function requestResult(request) {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error('IndexedDB request failed.'));
+  });
+}
+export function createIndexedDbBackupStore(factory = globalThis.indexedDB) {
+  let opened;
+  function open() {
+    if (!factory) return Promise.reject(new Error('IndexedDB backup storage is unavailable.'));
+    if (!opened) opened = new Promise((resolve, reject) => {
+      const request = factory.open('the-duel-career-backups', 1);
+      request.onupgradeneeded = () => {
+        if (!request.result.objectStoreNames.contains('snapshots')) request.result.createObjectStore('snapshots', { keyPath: 'id' });
+      };
+      request.onsuccess = () => { const db = request.result; db.onversionchange = () => db.close(); resolve(db); };
+      request.onerror = () => reject(request.error ?? new Error('Could not open IndexedDB backups.'));
+      request.onblocked = () => reject(new Error('IndexedDB backup is blocked by another game tab.'));
+    }).catch(error => { opened = null; throw error; });
+    return opened;
+  }
+  return {
+    async save(record) {
+      const db = await open();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('snapshots', 'readwrite');
+        tx.objectStore('snapshots').put(record);
+        tx.oncomplete = resolve;
+        tx.onabort = () => reject(tx.error ?? new Error('IndexedDB backup write failed.'));
+        tx.onerror = () => reject(tx.error ?? new Error('IndexedDB backup write failed.'));
+      });
+    },
+    async load(id) {
+      const db = await open();
+      return requestResult(db.transaction('snapshots', 'readonly').objectStore('snapshots').get(id));
+    },
+  };
+}
+export async function backupCareer(storage, backupStore = createIndexedDbBackupStore(), reason = 'migration', now = () => new Date()) {
+  const entries = captureCareer(storage);
+  const id = 'career-' + now().getTime() + '-' + (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
+  const record = { id, reason, createdAt: now().toISOString(), entries };
+  await backupStore.save(record);
+  const saved = await backupStore.load(id);
+  if (!saved || !isObject(saved.entries) || !sameEntries(saved.entries, entries)) throw new Error('The career backup could not be verified.');
+  return record;
+}
+export async function backupBeforeMigration(storage, backupStore) {
+  if (!needsCareerMigration(storage)) return null;
+  const backup = await backupCareer(storage, backupStore, 'migration');
+  if (!sameEntries(captureCareer(storage), backup.entries)) {
+    throw new Error('The career changed while the migration backup was being made. Reload and try again.');
+  }
+  return backup;
+}
+function applyEntries(storage, entries) {
+  for (const key of allCareerKeys(storage)) storage.removeItem(key);
+  for (const [key, value] of Object.entries(entries)) storage.setItem(key, value);
+  if (!sameEntries(captureCareer(storage), entries)) throw new Error('Career storage verification failed.');
+}
+export async function importCareer(text, { storage, backupStore = createIndexedDbBackupStore() } = {}) {
+  const archive = parseCareerExport(text), source = storageOrThrow(storage), prior = captureCareer(source);
+  const backup = await backupCareer(source, backupStore, 'before-import');
+  if (!sameEntries(captureCareer(source), prior)) {
+    throw new Error('The current career changed while its backup was being made. Retry the import.');
+  }
+  try { applyEntries(source, archive.entries); }
+  catch (error) {
+    try { applyEntries(source, prior); }
+    catch (rollbackError) {
+      throw new Error('Import failed and browser storage could not be restored. IndexedDB backup ' + backup.id + ' is available. ' + rollbackError.message, { cause: error });
+    }
+    throw new Error('Import failed; the previous career was restored. ' + error.message, { cause: error });
+  }
+  return { backupId: backup.id, playerCount: has(archive.entries, PLAYERS_KEY) ? JSON.parse(archive.entries[PLAYERS_KEY]).players.length : 1 };
+}
+export async function restoreCareerBackup(id, { storage, backupStore = createIndexedDbBackupStore() } = {}) {
+  const record = await backupStore.load(id);
+  if (!record || !isObject(record.entries)) throw new Error('Career backup was not found.');
+  applyEntries(storageOrThrow(storage), record.entries);
+  return record;
+}

@@ -3,6 +3,12 @@
 import {installIsolatedStorage} from './qa-storage.js';
 import {installPerformanceReview} from './performance-review.js';
 installIsolatedStorage();
+if(new URLSearchParams(window.location.search).has('career-backup-failure')){
+  // Synthetic legacy data and blocked IndexedDB for the startup recovery check.
+  // This page's localStorage has already been replaced with an in-memory store.
+  localStorage.setItem('the-duel-profile-v1',JSON.stringify({version:1,credits:734,awardedWins:['synthetic-win']}));
+  Object.defineProperty(window,'indexedDB',{value:undefined});
+}
 const {app,refreshRaceSetup}=await import('../src/main.js');
 const {CARS}=await import('../src/config.js');
 const {UPGRADE_TYPES}=await import('../src/progression.js');

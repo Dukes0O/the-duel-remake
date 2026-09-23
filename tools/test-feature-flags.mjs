@@ -11,7 +11,7 @@ const storage = {
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 
-check(Object.keys(FEATURE_STATES).length === 0, 'new features must be listed explicitly');
+check(FEATURE_STATES['career-backup'] === 'dev' && Object.keys(FEATURE_STATES).length === 1, 'career backup is the only staged player feature');
 const release = createFeatureFlags({ catalog, storage, search: '?flags=photo,crew', qa: false });
 check(!release.enabled('photo') && !release.enabled('crew'), 'release ignores QA URL switches');
 check(release.enabled('arena') && !release.enabled('unknown'), 'only known on switches are active');

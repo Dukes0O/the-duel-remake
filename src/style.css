@@ -158,3 +158,12 @@
   .in-menu .menu-screen .build-meta{flex:1 1 100%;align-items:flex-start}
   .in-menu .menu-screen .build-version{white-space:normal}
 }
+
+/* Migration stops here if a verified recovery copy cannot be made. */
+.backup-blocked{box-sizing:border-box;width:min(680px,calc(100% - 40px));margin:clamp(48px,12vh,120px) auto;padding:clamp(24px,5vw,48px);border:1px solid #d6c6a94d;background:#16201df2;color:#f7f1e4}
+.backup-blocked .eyebrow{margin:0 0 16px;color:#e3b77b;font-size:11px;letter-spacing:2px}
+.backup-blocked h1{margin:0 0 22px;font-size:clamp(30px,5vw,56px);line-height:1.06;letter-spacing:-.035em}
+.backup-blocked #backup-error{margin:0 0 24px;max-width:55ch;color:#d0d8cb;font-size:14px;line-height:1.65}
+.backup-blocked button{min-height:46px;padding:12px 18px;border:1px solid #e3bd87;background:#e3bd87;color:#15221b;font-size:11px;font-weight:800;letter-spacing:1px;cursor:pointer}
+.backup-blocked button:hover{background:#ffe0a5}
+.backup-blocked button:focus-visible{outline:3px solid #fff;outline-offset:4px}

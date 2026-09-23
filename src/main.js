@@ -21,14 +21,29 @@ import {courseAccessPanel} from './course-access-ui.js';
 import {speedKph,formatSpeed} from './speed-format.js';
 import {featureFlags} from './feature-flags.js';
 import {experimentalPanel} from './experimental-ui.js';
+import {backupBeforeMigration,createCareerExport,importCareer,parseCareerExport} from './career-backup.js';
 
+const root = document.querySelector('#app');
+function downloadCareer(){
+  const content=createCareerExport();
+  const url=URL.createObjectURL(new Blob([content],{type:'application/json'}));
+  const link=document.createElement('a');link.href=url;link.download='the-duel-career-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+await backupBeforeMigration().catch(error=>{
+  root.innerHTML='<section class="backup-blocked" role="alert"><p class="eyebrow">CAREER BACKUP REQUIRED</p><h1>YOUR CAREER IS SAFE.</h1><p id="backup-error"></p><button type="button" id="backup-export">EXPORT YOUR CURRENT SAVE</button></section>';
+  root.querySelector('#backup-error').textContent='The game could not verify an automatic backup before updating this save. '+error.message+' Free browser storage or enable IndexedDB, then reload.';
+  root.querySelector('#backup-export').addEventListener('click',event=>{
+    try{downloadCareer();}catch(exportError){event.target.insertAdjacentText('afterend',' Export failed: '+exportError.message);}
+  });
+  throw error;
+});
 export const app = new App();
 const jumpHeightReadout = createJumpHeightReadout();
-const root = document.querySelector('#app');
 const arrow = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg>';
 const sound = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5ZM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>';
 const choices = app.getRaceChoices();
-let rendererPromise,rendererHandle,uiDisposed=false,lastScreen, garageOpen = false, armoryOpen = false, garageCar = choices.car, garageMessage = '', playersOpen=false,playerMessage='',leaderboardOpen=false,experimentalOpen=false,experimentalStorageMessage='';
+let rendererPromise,rendererHandle,uiDisposed=false,lastScreen, garageOpen = false, armoryOpen = false, garageCar = choices.car, garageMessage = '', playersOpen=false,playerMessage='',backupMessage='',leaderboardOpen=false,experimentalOpen=false,experimentalStorageMessage='';
 let lastEventResult=null;
 let coursesOpen=false,courseMessage='';
 const domEvents=new AbortController();
@@ -206,8 +221,15 @@ root.addEventListener('click',e => {
     case 'courses':if(app.duel.state.status!=='menu')return;coursesOpen=true;garageOpen=playersOpen=leaderboardOpen=false;courseMessage='';lastScreen=null;break;
     case 'courses-close':coursesOpen=false;lastScreen=null;break;
     case 'unlock-next':app.returnToMenu();Object.assign(choices,app.getRaceChoices());updateMenuScene();coursesOpen=true;garageOpen=playersOpen=leaderboardOpen=false;courseMessage='Completed race credits are safe. Unlock the next course, then select it.';lastScreen=null;break;
-    case 'new-player':playersOpen=true;coursesOpen=leaderboardOpen=garageOpen=false;playerMessage='';lastScreen=null;renderState(app.duel.state);root.querySelector('#new-player-name')?.focus();return;
+    case 'new-player':playersOpen=true;coursesOpen=leaderboardOpen=garageOpen=false;playerMessage=backupMessage='';lastScreen=null;renderState(app.duel.state);root.querySelector('#new-player-name')?.focus();return;
     case 'player-close':playersOpen=false;lastScreen=null;break;
+    case 'career-export':
+      if(app.duel.state.status!=='menu'||!playersOpen)return;
+      try{downloadCareer();backupMessage='Career file downloaded. Keep it somewhere safe.';}catch(error){backupMessage='Export failed: '+error.message;}
+      lastScreen=null;renderState(app.duel.state);return;
+    case 'career-import':
+      if(app.duel.state.status!=='menu'||!playersOpen)return;
+      root.querySelector('#career-import-file')?.click();return;
     case 'leaderboard':leaderboardOpen=true;coursesOpen=playersOpen=garageOpen=false;boardFilter.stage=choices.startStage;boardFilter.driverId=getEquippedDriverId(profile());lastScreen=null;break;
     case 'leaderboard-close':leaderboardOpen=false;lastScreen=null;break;
     case 'experimental': if(app.duel.state.status!=='menu')return;experimentalOpen=true;armoryOpen=coursesOpen=playersOpen=leaderboardOpen=garageOpen=false;experimentalStorageMessage='';lastScreen=null;break;
@@ -238,7 +260,7 @@ const metric = (label,value,accent=false) => `<div class="result-metric${accent?
 const action = (label,verb,primary=false) => `<button class="${primary?'start-button':'secondary-button'}" data-action="${verb}"><span>${label}</span>${primary?arrow:''}</button>`;
 function playerScreen(){
   const history=profile().history.slice(-5).reverse();
-  return `<section class="career-panel player-panel" role="dialog" aria-modal="true" aria-labelledby="player-title"><header class="shop-heading"><div><p class="eyebrow">LOCAL PLAYERS</p><h2 id="player-title">A NAME ON THE GRID.</h2></div><button class="shop-close" data-action="player-close" aria-label="Close player setup">×</button></header><p>Each player has their own credits, cars, upgrades and race history. Everyone on this computer shares the leaderboard.</p><form id="new-player-form"><label for="new-player-name">NEW PLAYER NAME</label><div><input id="new-player-name" name="playerName" maxlength="24" autocomplete="off" placeholder="Your racing name" required><button class="secondary-button" type="submit">CREATE PLAYER</button></div><p role="status" class="career-message">${escapeHTML(playerMessage)}</p></form><h3>${escapeHTML(app.player.name)} · RECENT RACES</h3><div class="player-history">${history.length?history.map(row=>`<div><span>${escapeHTML(COURSE.find(scene=>scene.id===row.eventId)?.name||'Race')}<small>${escapeHTML(CARS[row.car]?.name||'Car')} · ${row.won?'WIN':row.completed?'LOSS':'DNF'}</small></span><b>${row.reward<0?'−':'+'}${credits(Math.abs(row.reward))} CR</b></div>`).join(''):'<p>Complete your first race to start your history.</p>'}</div></section>`;
+  return `<section class="career-panel player-panel" role="dialog" aria-modal="true" aria-labelledby="player-title"><header class="shop-heading"><div><p class="eyebrow">LOCAL PLAYERS</p><h2 id="player-title">A NAME ON THE GRID.</h2></div><button class="shop-close" data-action="player-close" aria-label="Close player setup">×</button></header><p>Each player has their own credits, cars, upgrades and race history. Everyone on this computer shares the leaderboard.</p><form id="new-player-form"><label for="new-player-name">NEW PLAYER NAME</label><div><input id="new-player-name" name="playerName" maxlength="24" autocomplete="off" placeholder="Your racing name" required><button class="secondary-button" type="submit">CREATE PLAYER</button></div><p role="status" class="career-message">${escapeHTML(playerMessage)}</p></form>${featureFlags.enabled('career-backup')?`<section aria-label="Career backup"><h3>CAREER BACKUP</h3><p>Export every local player's progress, records, ghosts and settings. Import replaces them after checking the file and saving a recovery copy in this browser.</p><div><button type="button" class="secondary-button" data-action="career-export">EXPORT CAREER</button> <button type="button" class="secondary-button" data-action="career-import">IMPORT CAREER</button><input id="career-import-file" type="file" accept=".json,application/json" hidden></div><p role="status" class="career-message">${escapeHTML(backupMessage)}</p></section>`:''}<h3>${escapeHTML(app.player.name)} · RECENT RACES</h3><div class="player-history">${history.length?history.map(row=>`<div><span>${escapeHTML(COURSE.find(scene=>scene.id===row.eventId)?.name||'Race')}<small>${escapeHTML(CARS[row.car]?.name||'Car')} · ${row.won?'WIN':row.completed?'LOSS':'DNF'}</small></span><b>${row.reward<0?'−':'+'}${credits(Math.abs(row.reward))} CR</b></div>`).join(''):'<p>Complete your first race to start your history.</p>'}</div></section>`;
 }
 function leaderboardScreen(){
   if(COURSE[boardFilter.stage]?.practice)boardFilter.stage=0;
@@ -257,6 +279,19 @@ root.addEventListener('submit',event=>{
   lastScreen=null;renderState(app.duel.state);if(!result.ok)root.querySelector('#new-player-name')?.focus();
 },{signal:domEvents.signal});
 root.addEventListener('change',event=>{
+  if(event.target.id==='career-import-file'){
+    const file=event.target.files?.[0];if(!file||app.duel.state.status!=='menu'||!playersOpen)return;
+    void (async()=>{
+      try{
+        const content=await file.text(),archive=parseCareerExport(content);
+        const count=archive.entries['the-duel-players-v2']?JSON.parse(archive.entries['the-duel-players-v2']).players.length:1;
+        if(!window.confirm('Replace every local player, record and setting with the '+count+' player career in '+file.name+'? The current save will be backed up first.'))return;
+        await importCareer(content);
+        window.location.reload();
+      }catch(error){backupMessage='Import failed: '+error.message;lastScreen=null;renderState(app.duel.state);root.querySelector('[data-action="career-import"]')?.focus();}
+    })();
+    return;
+  }
   if(event.target.id==='experimental-toggle'){
     if(app.duel.state.status!=='menu'||!experimentalOpen)return;
     const result=featureFlags.setExperimental(event.target.checked);
