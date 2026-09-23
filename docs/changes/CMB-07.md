@@ -1,6 +1,6 @@
 ---
 task: CMB-07
-status: building
+status: ready for integration gate
 kind: feature
 flag: wasteland2
 player_facing: yes
@@ -25,7 +25,25 @@ player_facing: yes
   A bolt's target index and launch bearing are stored only for the flagged
   path, so the normal race state and flag-off projectile shape are unchanged.
 
-## Evidence on base `89513d7`
+## Evidence on CMB-01 integration base `fc6cbc7`
+
+- Replayed the six CMB-07 commits onto the isolated `codex/cmb07-forward`
+  branch. The sole source conflict was the `combat-projectiles.js` import list;
+  the resolved file keeps both CMB-01's armor damage hook and CMB-07's target
+  prediction helper.
+- `node tools/test-combat-projectiles.mjs`: 9/9 pass, including player and
+  later-CPU carry and lead, bounded homing, straight bombs, horizontal and
+  vertical sweeps at 30/60/144 FPS, ordinary-mode isolation and flag-off
+  fingerprints.
+- `node tools/test-combat.mjs`: 66 checks passed.
+- `node tools/test-combat-projectile-order.mjs`: passed.
+- `node tools/test-combat-armor.mjs`: 19/19 pass, including bomb arming,
+  self damage, wreck recovery and ordinary-mode controls.
+- `node tools/test-replays.mjs`: 162 checks passed across 18 cases, 16 events,
+  eight categories, three FPS values and three runs.
+- `node --check` passed for both changed source modules.
+
+## Earlier source evidence on base `89513d7`
 
 - Cherry-picked the independent acceptance tests as `6e7055c`, without
   changing any assertion or pinned fingerprint.
@@ -60,16 +78,13 @@ player_facing: yes
 
 ## Behavior and test changes
 
-No existing assertion or replay fingerprint changed. New behavior is gated
-on the `wasteland2` flag. The independent tests still need CMB-01's flag
-wiring to pass as a whole. CMB-01 also edits `combat-projectiles.js` and
-`wasteland-tuning.js`, so the Director should bring this source commit onto
-the integrated CMB-01 baseline and review any conflict there.
+No existing assertion or replay fingerprint changed. New behavior requires
+both Wasteland mode and the `wasteland2` flag. The independent acceptance
+tests pass against the integrated CMB-01 flag wiring.
 
 ## Remaining gates
 
-After CMB-01 integrates, replay this source commit and its independent test
-commit on a fresh branch. Run `node tools/test-combat-projectiles.mjs`, the
-approved replay suite, the changed lane gate, production build and a private
-flag-on combat browser check. Record any balance change to the provisional
-12-degree cone or 90-degree-per-second cap with a reviewed test change.
+Run the changed lane gate, production build and a private flag-on combat
+browser check after the current integration merge gate finishes. Record any
+balance change to the provisional 12-degree cone or 90-degree-per-second cap
+with a reviewed test change.
