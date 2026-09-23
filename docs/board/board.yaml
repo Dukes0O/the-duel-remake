@@ -146,8 +146,8 @@ tasks:
     lane: TOOL
     size: S
     needs: [FND-08]
-    status: merged
-    note: "Private High/Performance driving samples use real HUD and mirror with memory-only saves; both p50/p95 16.7/16.8 ms, zero >33 ms intervals, two screenshots, no browser issues."
+    status: released
+    note: "Released in 34d66fe. Private 1280x720 High/Performance driving samples use real HUD and mirror with memory-only saves; both p50/p95 16.7/16.8 ms, zero >33 ms intervals and no browser issues."
     spec: "docs/CODEX_PLAYBOOK.md, full check frame pacing comparison"
   - id: TOOL-02
     title: "Feel lab and audio checks"
@@ -272,8 +272,8 @@ tasks:
     lane: SIM
     size: S
     needs: [BUG-07]
-    status: merged
-    note: "Merged as 1fd711f; physical misses retry immediately. Crowded-reset follow-up a10e22d searches nearby clear gaps before distant spots; focused checkpoint checks and 162 unchanged replays pass. Combined full gate pending."
+    status: released
+    note: "Released in 34d66fe. Physical misses retry immediately; crowded-reset follow-up a10e22d searches nearby clear gaps before distant spots. Final 176-suite full gate and 162 unchanged replays passed."
     spec: "SPEC.md, checkpoint integrity and BUG-07 interaction"
   - id: BUG-08
     title: "Rigs attached to the car"
@@ -389,8 +389,8 @@ tasks:
     lane: UI
     size: L
     needs: [BUG-01, BUG-10, BUG-11, FIX-03, FND-07, FND-08]
-    status: merged
-    note: "Merged as d9965cd; 165-suite combined gate, unchanged replays, build, High/Performance browser smoke and six narrow dialog checks pass. Live release pending."
+    status: released
+    note: "Released in 34d66fe. Merged as d9965cd; unchanged replays, build, High/Performance smoke and six narrow dialog checks pass."
     spec: "SPEC.md, task RFX-01"
   - id: RFX-02
     title: "Split game simulation into systems"
@@ -398,8 +398,8 @@ tasks:
     lane: SIM
     size: L
     needs: [FND-07, OLD-01, OLD-02, BUG-03]
-    status: merged
-    note: "Merged as d6c19a1; independent method review, 165-suite combined gate, unchanged replays, build and private High/Performance browser smoke pass. Live release pending."
+    status: released
+    note: "Released in 34d66fe. Merged as d6c19a1; independent method review, unchanged replays, build and private High/Performance browser smoke pass."
     spec: "SPEC.md, task RFX-02"
   - id: RFX-03
     title: "Opponents list"
@@ -407,8 +407,8 @@ tasks:
     lane: SIM
     size: L
     needs: [RFX-02]
-    status: merged
-    note: "Merged as 66b3cb9 and 5d00eeb. Independent review addressed real three-car completions, lane avoidance and objective HUD priority; 174-suite lane/full, 168-suite exact merge, 162 unchanged replays, build, private High/Performance, three-car and narrow-dialog browser checks pass. Live release pending. Full-field combat effects wait for RFX-04."
+    status: released
+    note: "Released in 34d66fe. Independent review addressed real three-car completions, lane avoidance and objective HUD priority; final 176-suite full, 162 unchanged replays, build and 19/19 private browser scenarios pass. Full-field combat effects wait for RFX-04."
     spec: "SPEC.md, task RFX-03"
   - id: RFX-05
     title: "Input contexts"

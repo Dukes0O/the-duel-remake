@@ -27,3 +27,16 @@ Feature switches reviewed: `roadside-destruction` stays `beta` and needs
 Experimental; `career-backup` stays `dev`. The normal menu starts one rival.
 The three-opponent combat effects and remaining new weapon/on-foot sounds
 are future cards, so the released runtime makes no claim that they are done.
+
+## Release result
+
+After the report and viewport correction were committed, the exact final
+integration commit `34d66fe` passed the full tier again: 176/176 suites in
+338.73 seconds, zero failures. The Release Manager fast-forwarded clean
+`master`, staged and privately served the production build, checked the page,
+manifest, and all referenced assets over HTTP 200, then copied the previous
+build into `dist-previous`. The new hashed assets were installed before the
+page and manifest. Live `http://localhost:5174/` serves build
+`20260923193614-0b1389a185dd`; its new and old script assets both return
+HTTP 200. Live Git is clean, and approved D4 pushed `34d66fe` to
+`origin/main`.
