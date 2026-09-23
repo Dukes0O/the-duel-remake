@@ -98,3 +98,28 @@ though the combat-specific checks pass.
 - `git diff --check`: passed.
 
 No authored WAVs, credits, or runtime dependencies changed.
+
+## Follow-up: hit positions
+
+Bombs can strike several cars around one blast. Each `combatHit` event now
+carries the struck car's existing world position. The audio mixer pans the
+hit from that position; explosion sounds still use their burst position. The
+private race recorder logs the same source used by the mixer. This changes
+sound placement only, not race state, damage, or replay inputs.
+
+The new audio and combat tests first failed against the prior branch: hits
+still panned from the last burst, and hit events lacked victim coordinates.
+After the fix, the audio test passed 459 checks, the combat test passed 68,
+the analyzer fixture passed 5/5, the lane gate passed 157/157 (including
+162 replay fingerprints), and `npm run build` passed. A private Chrome race
+on port 14603 used memory-only saves and recorded 23 events, seven WAV stems,
+zero browser warnings or errors. Its full analyzer passed all ten checks;
+engine/rev correlation was 0.982, the mix peak was -1.841 dBFS, and there
+were no clipped samples or clicks. The logged player hit had pan 0 at 1 m,
+while the rival hit had pan -0.150 at 21.36 m.
+
+An earlier private recording passed the browser scenario but missed the
+unchanged 6 dB weapon contrast target for one far blast by 0.087 dB
+(5.913 dB). The repeat passed at 7.337 dB. That narrow variation is a
+remaining sound-mix margin risk, separate from the hit-position change.
+Subjective listening and the remaining AUD-01 weapon cues are still open.

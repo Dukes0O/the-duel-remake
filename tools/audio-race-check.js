@@ -78,7 +78,8 @@ window.__audioQaStart = async () => {
       detail: kind === 'combatHit' ? { victim: event.victim, enemy: event.enemy } : event.qaProbe ? { side: event.qaSide, distance: event.qaDistance, stress: !!event.qaStress } : null,
       audioSpatial: ['combatExplosion','combatHit'].includes(kind) ? combatAudioSpace(event,state,app.duel.course) : null,
       audioGeometry: ['combatExplosion','combatHit'].includes(kind) && !event.qaProbe ? {
-        source: state.combat?.bursts?.at(-1) ? Object.fromEntries(['x','y','z'].map(axis => [axis, state.combat.bursts.at(-1)[axis]])) : null,
+        source: kind === 'combatHit' && event.hitPosition ? event.hitPosition :
+          state.combat?.bursts?.at(-1) ? Object.fromEntries(['x','y','z'].map(axis => [axis, state.combat.bursts.at(-1)[axis]])) : null,
         listener: app.duel.course?.groundAt?.(state.s,state.lateral) ?? null,
       } : null,
     });

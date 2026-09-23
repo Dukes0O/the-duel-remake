@@ -141,7 +141,8 @@ function hit(duel,actor,p,power,enemy){
  if(p.kind==='bomb')actor.bombImpactCooldown=.3;
  if(actor===s){s.crashFlash=.35;s.impactStrength=power;duel._callout('INCOMING / ARMOR HIT',1.3);}
  else if(actor===s.rival&&!enemy){c.hits++;duel._callout('DIRECT HIT / RIVAL SHOVED',1.3);}
- duel.emit({combatHit:true,strength:power,enemy,victim:actor===s?'player':actor===s.rival?'rival':'traffic'});
+ duel.emit({combatHit:true,strength:power,enemy,victim:actor===s?'player':actor===s.rival?'rival':'traffic',
+  hitPosition:{x:where.x,y:where.y,z:where.z}});
 }
 function sweptDistance(p,old,t){const dx=p.x-old.x,dz=p.z-old.z,d=dx*dx+dz*dz,f=d?Math.max(0,Math.min(1,((t.x-old.x)*dx+(t.z-old.z)*dz)/d)):0;return Math.hypot(old.x+f*dx-t.x,old.z+f*dz-t.z);}
 function incomingBolt(duel,cpu){

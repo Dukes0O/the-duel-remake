@@ -29,12 +29,14 @@ const AMBIENCE = {
   arena:{file:'ambience-stadium.wav',gain:.2,cutoff:4200},
 };
 
-// Combat events do not change simulation state to carry sound coordinates.
-// The latest burst already exists when the event reaches App's audio hook.
+// Hit events carry the struck car's world position. Blasts use their burst.
+// These coordinates do not change simulation state.
 export function combatAudioSpace(event, state, course) {
   let side = Number(event?.qaSide), distance = Number(event?.qaDistance);
   if (!Number.isFinite(side) || !Number.isFinite(distance)) {
-    const source = state?.combat?.bursts?.at(-1);
+    const hit = event?.combatHit && event.hitPosition;
+    const source = hit && [hit.x,hit.y,hit.z].every(Number.isFinite)
+      ? hit : state?.combat?.bursts?.at(-1);
     const listener = Number.isFinite(state?.s) && course?.groundAt?.(state.s, state.lateral);
     if (!source || !listener) return { pan: 0, gain: 1, distance: null };
     const dx = source.x - listener.x, dz = source.z - listener.z;

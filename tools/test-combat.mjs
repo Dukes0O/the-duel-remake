@@ -86,6 +86,11 @@ traffic.alive=true;blastTraffic();
 check(traffic.speedMph<80&&traffic.damageZones.rear>0&&blastHits.length===1,
   'bomb blasts still damage live traffic at the same position');
 check(blastHits[0].victim==='traffic','combat hit identifies traffic as the bomb victim');
+const trafficPoint=d.course.groundAt(traffic.s,traffic.lateral);
+check(blastHits[0].hitPosition?.x===trafficPoint.x&&
+  blastHits[0].hitPosition?.y===trafficPoint.y+1+(traffic.airHeight||0)&&
+  blastHits[0].hitPosition?.z===trafficPoint.z,
+  'combat hit event carries the struck car world position for spatial sound');
 d=make();s=d.state;s.rival.s=120;s.rival.lateral=s.lateral;s.rival.speedMph=100;
 // A recovering rival cannot raise its new reactive shield before this bolt lands.
 s.rival.impactTimer=1;

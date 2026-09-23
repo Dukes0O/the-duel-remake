@@ -64,6 +64,9 @@ check(leftSpace.pan<-.6&&rightSpace.pan>.6&&20*Math.log10(leftSpace.gain/rightSp
   'real blast positions pan to opposite sides and fade by more than 2 dB over distance');
 const probeSpace=combatAudioSpace({combatExplosion:true,qaSide:1,qaDistance:80},leftBurst,spatialCourse);
 check(probeSpace.pan>.6&&probeSpace.distance===80,'QA probe coordinates override the race burst for calibrated spatial checks');
+const victimSpace=combatAudioSpace({combatHit:true,hitPosition:{x:40,y:0,z:0}},leftBurst,spatialCourse);
+check(victimSpace.pan>.6&&victimSpace.distance===40,
+  'a combat hit sounds at its victim rather than the latest blast center');
 const spatialSource={...leftBurst,combat:{bursts:[...leftBurst.combat.bursts]}};
 audio.event({combatExplosion:true},spatialSource,spatialCourse);
 const firstBlast=[...audio.blastVoices][0];
