@@ -58,6 +58,16 @@ automatic wins. The existing 30 s traffic-crash rule and the later armor/wreck
 model in section 3.2 of the spec should be considered together. BUG-04 and
 CPU UFO use in BUG-07 remain open until that choice is made.
 
+**Proposed direction for discussion, not a passing design:** make the race
+UFO a one-use tactical exchange with a tight forward-progress cap, preserved
+speed and the already-tested safe landing. Keep long forward warps for untimed
+arena objectives, where they do not decide a lap time. Pair the race design
+with the planned armor/wreck model, then require both the unchanged four-second
+gain check and seeded UFO-policy win-rate checks. A progress-neutral lane/phase
+exchange is another option. Neither option has passed the gates yet; the
+apparently green narrow-window trial is not recommended because it slows Hard
+and raises Medium UFO-policy wins to 8/10 against a 6/10 baseline.
+
 ## Tested work held off integration
 
 | Branch | Work and evidence | Reason held |
