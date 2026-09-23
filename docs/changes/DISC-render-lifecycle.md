@@ -1,6 +1,6 @@
 ---
 task: DISC
-status: review
+status: merged
 kind: rendering-lifecycle-fix
 flag: none
 player_facing: no
@@ -17,6 +17,7 @@ The renderer now retires the Time Trial ghost model as soon as playback has no p
 - `node tools/test-render-warmup-passes.mjs`: 143 checks passed.
 - `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`: 152/152 suites passed in 246.39 seconds; replay fingerprints stayed unchanged and all 48 expansion races completed and won.
 - `npm run build`: passed with the existing large-chunk warning.
+- The exact integration commit `10645f2` passed 147/147 merge suites in 237.17 seconds, the production build, and private High/Performance smoke on port 27473 with four screenshots and zero warnings or errors.
 
 ## Behavior and test changes
 

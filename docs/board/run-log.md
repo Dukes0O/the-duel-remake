@@ -1,5 +1,14 @@
 # Wasteland run log
 
+## 2026-09-22 PDT — DISC ghost lifecycle finding merged
+
+- Cherry-picked `aa22498` as `10645f2`. The exact integration commit passed
+  147 merge suites in 237.17 seconds, the production build, and private
+  High/Performance smoke with zero warnings or errors.
+- The focused browser scenario confirmed the Time Trial ghost leaves the
+  production scene after playback, with ambient shading restored. Discovery
+  remains active for later findings.
+
 Read the latest entry before resuming. Add one entry when a card starts,
 reaches review, merges, is parked, or is released. Keep the board status
 in sync with this log.

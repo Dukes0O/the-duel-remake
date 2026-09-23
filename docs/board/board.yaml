@@ -299,5 +299,6 @@ tasks:
     lane: Discovery
     size: continuous
     needs: [FND-05]
-    status: blocked
+    status: building
+    note: "Renderer ghost lifecycle finding merged as 10645f2; 147-suite merge gate, build, private High/Performance smoke and focused ghost-lifecycle browser scenario pass. Discovery continues."
     spec: "SPEC.md, task DISC"
