@@ -5,7 +5,11 @@ import {DRIVE} from './config.js';
 import {makeRng} from './rng.js';
 // Arcade vehicle combat. All timers and projectile motion use simulation time.
 export const WEAPONS=Object.freeze({ufo:{name:'UFO SWAP',key:'1',cooldown:18},bomb:{name:'BOMB STORM',key:'2',cooldown:9},crossbow:{name:'CROSSBOW',key:'3',cooldown:4},star:{name:'STAR SHIELD',key:'4',cooldown:16}});
-const CPU_COMBAT=Object.freeze({easy:{interval:10,aimError:.12},medium:{interval:7,aimError:.055},hard:{interval:5,aimError:.018}});
+const CPU_COMBAT=Object.freeze({
+ easy:{interval:10,aimError:.12,shieldReaction:.20,visionCos:.5},
+ medium:{interval:7,aimError:.055,shieldReaction:.13,visionCos:.26},
+ hard:{interval:5,aimError:.018,shieldReaction:.07,visionCos:.09},
+});
 export const supportsCombat=stage=>!!stage?.hasRival&&!stage.practice&&!stage.stuntTrial;
 export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],pickups:[],pickupTimer:4,pickupCount:0,serial:0,aiTimer:null,aiShot:0,aiShieldCooldown:0,hits:0};}
 const point=(duel,actor)=>{const p=duel.course.groundAt(actor.s,actor.lateral);return {...p,y:p.y+1+(actor.airHeight||0)};};
@@ -130,12 +134,16 @@ function hit(duel,actor,p,power,enemy){
  duel.emit({combatHit:true,strength:power,enemy,victim:actor===s?'player':actor===s.rival?'rival':'traffic'});
 }
 function sweptDistance(p,old,t){const dx=p.x-old.x,dz=p.z-old.z,d=dx*dx+dz*dz,f=d?Math.max(0,Math.min(1,((t.x-old.x)*dx+(t.z-old.z)*dz)/d)):0;return Math.hypot(old.x+f*dx-t.x,old.z+f*dz-t.z);}
-function incomingBolt(duel){
+function incomingBolt(duel,cpu){
  const s=duel.state,c=s.combat,r=s.rival;if(!r||r.finished||r.crushed||c.rivalShield>0)return false;
  const t=point(duel,r),v=velocity(r,t),radius=duel._vehicleSpec(r).halfWidth+1.2;
+ const facing=t.heading+(r.headingError||0),forwardX=Math.sin(facing),forwardZ=Math.cos(facing);
  for(const p of c.projectiles){
   if(p.enemy||p.kind!=='crossbow')continue;
   const dx=t.x-p.x,dz=t.z-p.z,rvx=p.vx-v.x,rvz=p.vz-v.z;
+  const distance=Math.hypot(dx,dz);
+  // The driver needs time to recognize a bolt inside the visible forward cone.
+  if(p.age<cpu.shieldReaction||(-dx*forwardX-dz*forwardZ)<distance*cpu.visionCos)continue;
   const relativeSpeed=rvx*rvx+rvz*rvz;
   const soon=relativeSpeed?Math.max(0,Math.min(.4,(dx*rvx+dz*rvz)/relativeSpeed)):0;
   if(soon<=0||Math.hypot(dx-rvx*soon,dz-rvz*soon)>=radius)continue;
@@ -170,7 +178,7 @@ export function stepCombat(duel,dt){
  const cpu=CPU_COMBAT[s.cpuDifficulty]??CPU_COMBAT.medium;
  if(c.aiTimer==null)c.aiTimer=cpu.interval;
  c.aiTimer-=dt;
- if(c.aiShieldCooldown<=0&&incomingBolt(duel)&&fireWeapon(duel,'star',true))
+ if(c.aiShieldCooldown<=0&&incomingBolt(duel,cpu)&&fireWeapon(duel,'star',true))
   c.aiShieldCooldown=WEAPONS.star.cooldown;
  if(c.aiTimer<=0){
   c.aiTimer=cpu.interval;

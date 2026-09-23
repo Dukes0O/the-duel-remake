@@ -76,23 +76,52 @@ for(const [difficulty,seconds] of [['easy',10],['medium',7],['hard',5]]){
     'CPU bombs a player who is close');
 }
 
-{
-  const duel=make('hard'),s=duel.state;
-  s.s=s.prevS=100;s.rival.s=s.rival.prevS=120;
-  s.combat.aiTimer=Infinity;
-  const r=duel.course.groundAt(s.rival.s,s.rival.lateral);
+function incoming(duel,distance,front=true){
+  const s=duel.state,r=duel.course.groundAt(s.rival.s,s.rival.lateral);
+  const direction=front?1:-1;
+  const origin=duel.course.groundAt(s.rival.s+direction*distance,s.rival.lateral);
+  const span=Math.hypot(r.x-origin.x,r.z-origin.z);
   s.combat.projectiles.push({kind:'crossbow',enemy:false,level:0,
-    x:r.x-2*Math.sin(r.heading),z:r.z-2*Math.cos(r.heading),y:r.y+2,
-    vx:200*Math.sin(r.heading),vz:200*Math.cos(r.heading),vy:0,age:0});
-  stepCombat(duel,.02);
-  assert.ok(s.combat.rivalShield>0,'CPU shields against an imminent player bolt');
+    x:origin.x,z:origin.z,y:origin.y+2,
+    vx:(r.x-origin.x)/span*200,vz:(r.z-origin.z)/span*200,
+    vy:(r.y-origin.y)/span*200,age:0});
+}
+function shieldFixture(difficulty){
+  const duel=make(difficulty),s=duel.state;
+  s.s=s.prevS=100;s.rival.s=s.rival.prevS=120;s.combat.aiTimer=Infinity;
+  return duel;
+}
+{
+  const duel=shieldFixture('hard'),s=duel.state;
+  incoming(duel,50);
+  for(let tick=0;tick<15;tick++)stepCombat(duel,.02);
+  assert.ok(s.combat.rivalShield>0,'Hard CPU sees a front bolt in time to shield');
   assert.equal(s.combat.hits,0,'reactive shield blocks that bolt');
   s.combat.rivalShield=0;s.combat.aiShieldCooldown=8;
-  s.combat.projectiles.push({kind:'crossbow',enemy:false,level:0,
-    x:r.x-2*Math.sin(r.heading),z:r.z-2*Math.cos(r.heading),y:r.y+2,
-    vx:200*Math.sin(r.heading),vz:200*Math.cos(r.heading),vy:0,age:0});
-  stepCombat(duel,.02);
+  incoming(duel,50);
+  for(let tick=0;tick<15;tick++)stepCombat(duel,.02);
   assert.equal(s.combat.rivalShield,0,'CPU shield observes its 16-second cooldown');
+  assert.equal(s.combat.hits,1,'the bolt lands while the shield cools down');
+}
+{
+  const close=shieldFixture('hard');
+  incoming(close,2);
+  stepCombat(close,.02);
+  assert.equal(close.state.combat.rivalShield,0,'a bolt at contact range beats Hard reaction time');
+  assert.equal(close.state.combat.hits,1,'the close front bolt lands');
+  const rear=shieldFixture('hard');
+  incoming(rear,50,false);
+  for(let tick=0;tick<15;tick++)stepCombat(rear,.02);
+  assert.equal(rear.state.combat.rivalShield,0,'CPU cannot see a bolt behind its car');
+  assert.equal(rear.state.combat.hits,1,'the unseen rear bolt lands');
+}
+{
+  const easy=shieldFixture('easy'),hard=shieldFixture('hard');
+  incoming(easy,35);incoming(hard,35);
+  for(let tick=0;tick<12;tick++){stepCombat(easy,.02);stepCombat(hard,.02);}
+  assert.equal(easy.state.combat.hits,1,'Easy reaction is too slow for a 35 m bolt');
+  assert.equal(hard.state.combat.hits,0,'Hard reacts to the same visible bolt');
+  assert.ok(hard.state.combat.rivalShield>0,'Hard shield becomes visible');
 }
 
 globalThis.cancelAnimationFrame=()=>{};
