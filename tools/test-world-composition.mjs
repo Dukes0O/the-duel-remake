@@ -26,7 +26,8 @@ const baseline={
   'red-mesa':{hash:'6bb5b5a400ae2a8b83c7466c81e4c054092dc0fac0e4eac169c3707261b85a33',nodes:522,meshes:494,instances:6732,geometries:211,materials:116,textures:36},
   'neon-docks':{hash:'38b59a97e9ea91d8551719f63eaf272b7a1ca18e015b20ea5fbac2d45a8da451',nodes:1432,meshes:1374,instances:229433,geometries:448,materials:174,textures:44},
   'cloudbreak-skyway':{hash:'d37553f4af313e50f6b24ffbc1d3e0cec0e431362e572b693e4e31d79cff4c4b',nodes:608,meshes:577,instances:15771,geometries:252,materials:142,textures:44},
-  'titan-freestyle':{hash:'b85d7b46c9f386b0afe21b230c5e93382c9827c2fa9fe9db0b91ad386a29fc08',nodes:225,meshes:160,instances:129,geometries:157,materials:36,textures:5},
+  // QA screenshot reviewed: open paved drag entrance, readable gantry and clear training mound; runway adds one mesh, geometry and material.
+  'titan-freestyle':{hash:'19ecd561629f7f4b3aab3709558681fd19ae543450b07081d7a7bddb1248f42f',nodes:226,meshes:161,instances:129,geometries:158,materials:37,textures:5},
 };
 let checks=0;
 const equal=(actual,expected,message)=>{assert.deepEqual(actual,expected,message);checks++;};
