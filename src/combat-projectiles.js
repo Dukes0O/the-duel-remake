@@ -1,9 +1,34 @@
 import {contactZone} from './collision.js';
-import {point, burst} from './combat-weapons.js';
+import {point, predictedPoint, burst} from './combat-weapons.js';
 import {applyArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 
 const T = COMBAT_TUNING;
+const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
+const angleDifference = (from, to) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
+
+function steerBolt(duel, projectile, dt) {
+  if (projectile.kind !== 'crossbow' || !Number.isInteger(projectile.targetIndex) ||
+      !Number.isFinite(projectile.launchBearing) || !(dt > 0)) return;
+  const state = duel.state;
+  const target = projectile.targetIndex < 0 ? state : state.opponents[projectile.targetIndex];
+  if (!target || target.finished || target.crushed || target.combatWrecking) return;
+  const speed = Math.hypot(projectile.vx, projectile.vz);
+  if (!(speed > 0)) return;
+  const at = point(duel, target);
+  const travel = Math.min(T.crossbow.leadTime,
+    Math.hypot(at.x - projectile.x, at.z - projectile.z) / speed);
+  const future = predictedPoint(duel, target, travel);
+  const desired = Math.atan2(future.x - projectile.x, future.z - projectile.z);
+  const launch = projectile.launchBearing;
+  const goal = launch + clamp(angleDifference(launch, desired),
+    -T.crossbow.homingConeRadians, T.crossbow.homingConeRadians);
+  const current = Math.atan2(projectile.vx, projectile.vz);
+  const step = T.crossbow.homingTurnRadiansPerSecond * dt;
+  const next = current + clamp(angleDifference(current, goal), -step, step);
+  projectile.vx = Math.sin(next) * speed;
+  projectile.vz = Math.cos(next) * speed;
+}
 
 function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
   const state = duel.state;
@@ -107,8 +132,10 @@ export function stepProjectiles(duel, dt) {
   const state = duel.state;
   const combat = state.combat;
   const live = [];
+  const guidedBolts = duel.featureFlags?.enabled('wasteland2') === true;
   for (const projectile of combat.projectiles) {
     const old = {x: projectile.x, z: projectile.z};
+    if (guidedBolts) steerBolt(duel, projectile, dt);
     projectile.age += dt;
     projectile.x += projectile.vx * dt;
     projectile.z += projectile.vz * dt;
