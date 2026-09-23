@@ -326,6 +326,15 @@ tasks:
     status: merged
     note: "Merged as 5fbf24f and 5cf591e; 147-suite gate, build and private High/Performance smoke pass. 21 policy and 30 baseline races finish in 100.82s; --check flags real UFO, self-bomb and CPU-hit gaps."
     spec: "SPEC.md, task TOOL-01"
+  - id: TST-03
+    title: "Enforce measured win-rate targets in the balance gate"
+    wave: 1
+    lane: TOOL
+    size: S
+    needs: [TOOL-01]
+    status: review
+    note: "Ten-race win rates were printed but not checked. The gate now enforces the three section 13 ranges and rejects missing samples."
+    spec: "SPEC.md, section 13 and TOOL-01"
   - id: DISC
     title: "Discovery audits"
     wave: 1

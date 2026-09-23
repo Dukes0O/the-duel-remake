@@ -4,6 +4,7 @@ import { Duel } from '../src/game.js';
 import { stepCombat, supportsCombat } from '../src/combat.js';
 import { COURSE, DRIVE } from '../src/config.js';
 import { DEFAULT_DRIVER } from '../src/drivers.js';
+import { winRateFailures } from './balance-targets.mjs';
 
 // Headless runs use the production App, its standard scripted driving line,
 // fixed-step Duel physics, and disposable in-memory saves.
@@ -176,6 +177,7 @@ if (verbose) console.log(JSON.stringify({ policyRaces: runs, baselineRaces: base
 
 if (check) {
   const failures = [];
+  failures.push(...winRateFailures(baselineWins));
   if (firstTwelveSec >= 120) failures.push(`12-run pace ${firstTwelveSec}s exceeds 120s`);
   if (runs.some(run => !run.completed)) failures.push('one or more policy races did not complete');
   if (baselineRuns.some(run => !run.completed)) failures.push('one or more baseline win-rate races did not complete');
