@@ -31,8 +31,11 @@ export function createFeatureFlags({
       for (const name of value.split(',')) if (Object.hasOwn(catalog, name.trim())) requested.add(name.trim());
     }
   }
-  let experimental = false;
-  try { experimental = storage?.getItem(EXPERIMENTAL_KEY) === 'true'; } catch {}
+  let experimental = false,initialized=false;
+  function readExperimental(){
+    if(!initialized){initialized=true;try { experimental = storage?.getItem(EXPERIMENTAL_KEY) === 'true'; } catch {}}
+    return experimental;
+  }
 
   return {
     state(name) { return Object.hasOwn(catalog, name) ? catalog[name] : null; },
@@ -41,12 +44,12 @@ export function createFeatureFlags({
       if (Object.hasOwn(overrides, name)) return overrides[name] === true;
       const state = catalog[name];
       if (state === 'on') return true;
-      if (state === 'beta') return experimental || qa && requested.has(name);
+      if (state === 'beta') return readExperimental() || qa && requested.has(name);
       return qa && requested.has(name);
     },
-    experimental() { return experimental; },
+    experimental() { return readExperimental(); },
     setExperimental(enabled) {
-      experimental = enabled === true;
+      initialized=true;experimental = enabled === true;
       let saved = false;
       try { storage?.setItem(EXPERIMENTAL_KEY, String(experimental)); saved = !!storage; } catch {}
       return { enabled: experimental, saved };
@@ -55,4 +58,8 @@ export function createFeatureFlags({
   };
 }
 
-export const featureFlags = createFeatureFlags();
+// The singleton follows the storage facade installed after migration.
+export const featureFlags = createFeatureFlags({storage:{
+  getItem:key=>browserStorage()?.getItem(key),
+  setItem:(key,value)=>browserStorage()?.setItem(key,value),
+}});

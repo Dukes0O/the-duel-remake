@@ -7,10 +7,11 @@ import { DRIVERS } from '../src/drivers.js';
 import { WEAPON_IDS } from '../src/weapon-upgrades.js';
 import {prepareCareerArchives,ARCHIVE_POINTER_KEY} from '../src/career-archives.js';
 import {backupCareer} from '../src/career-backup.js';
+import {prepareCareerBudget,originStorageBytes} from '../src/career-budget.js';
 
-// A measured planning envelope, not a cap on a player's career. The three
-// collections below remain unbounded in production: players, record keys and
-// archived ghosts. The boundary probe proves why a hard 4 MB claim is unsafe.
+// A measured planning envelope, not a cap on a player's career. Players,
+// record keys and archived ghosts remain unbounded in IndexedDB. The raw
+// boundary probe explains why moving only the old archives was insufficient.
 const MODEL = Object.freeze({
   players: 8,
   historyPerPlayer: 60, // current profile loader retains the latest 60
@@ -177,5 +178,19 @@ do{
 }while(activeOnly.entries().reduce((sum,[key,value])=>sum+2*(key.length+value.length),0)<BUDGET&&activePlayers<1024);
 const activeOnlyBytes=activeOnly.entries().reduce((sum,[key,value])=>sum+2*(key.length+value.length),0);
 assert.ok(activeOnlyBytes>=BUDGET,'unbounded active profiles can still exceed the hard limit');
+const activeRows=new Map(),activeDb={
+  async save(record){activeRows.set(record.id,structuredClone(record));},
+  async load(id){return structuredClone(activeRows.get(id));},
+};
+const bounded=(await prepareCareerBudget({physical:activeOnly,store:activeDb,
+  backup:()=>backupCareer(activeOnly,activeDb,'before-origin-budget-migration')})).storage;
+assert.equal(loadPlayers(bounded).players.length,activePlayers);
+assert.equal(activeOnly.getItem(PLAYERS_KEY),null);
+const boundedBytes=originStorageBytes(activeOnly);
+bounded.setItem(GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
+const futureGhostBytes=originStorageBytes(activeOnly);
+assert.ok(futureGhostBytes<BUDGET,`64-player origin plus future active ghost uses ${futureGhostBytes} bytes`);
+await bounded.flush();
+assert.equal(loadPlayers((await prepareCareerBudget({physical:activeOnly,store:activeDb})).storage).players.length,activePlayers);
 console.log(`Storage budget model after archive move: ${(maximumModelBytes/1_000_000).toFixed(2)} MB / 4.00 MB UTF-16 for ${MODEL.players} full players, ${board.entries.length} current records, ${migrated.leaderboardRows.length} archived records, ${failingArchives} archived ghosts in IndexedDB, and full active-ghost reservation.`);
-console.log(`EXPECTED ACTIVE-DATA BOUNDARY — ${activePlayers} fully populated players use ${(activeOnlyBytes/1_000_000).toFixed(2)} MB localStorage. No hard 4 MB guarantee without moving live data.`);
+console.log(`HARD ACTIVE-DATA BOUNDARY — ${activePlayers} fully populated players use ${(activeOnlyBytes/1_000_000).toFixed(2)} MB before the origin move; ${boundedBytes} UTF-16 bytes after it, or ${futureGhostBytes} with a maximum future ghost journal write. Both fit under 4,000,000 bytes without trimming a career.`);

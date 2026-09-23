@@ -10,7 +10,7 @@ export async function run(context){
     player:JSON.parse(localStorage.getItem('the-duel-players-v2')).players[0].name
   }))()`);
   if(state.title!=='KEEP THIS BROWSER DATA.'||!state.help.includes('Do not clear site data')||
-    !state.help.includes('both stores')||state.pointer!=='archive-missing'||
+    !state.help.includes('every stored part')||state.pointer!=='archive-missing'||
     state.archived!==1||state.player!=='Record QA'){
     throw Error('Missing archive changed the source career or omitted recovery guidance. '+JSON.stringify(state));
   }

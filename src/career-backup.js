@@ -28,7 +28,7 @@ function validateProfile(profile) {
   if (profile.awardedWins && (!Array.isArray(profile.awardedWins) || !profile.awardedWins.every(key => normalized.settledResults.includes(key)))) return false;
   return Object.entries(profile).every(([key, value]) => key === 'version' || key === 'awardedWins' || has(normalized, key) && preserved(value, normalized[key]));
 }
-const isCareerKey = key => CAREER_KEYS.includes(key) || /^(?:the-duel-|duel_)[\w-]+$/.test(key);
+const isCareerKey = key => CAREER_KEYS.includes(key) || key.startsWith('the-duel-') || key.startsWith('duel_');
 function allCareerKeys(storage) {
   const keys = new Set(CAREER_KEYS);
   if (typeof storage.length === 'number' && typeof storage.key === 'function') {

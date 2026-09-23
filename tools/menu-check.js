@@ -4,6 +4,7 @@ import {installIsolatedStorage} from './qa-storage.js';
 import {installPerformanceReview} from './performance-review.js';
 import archiveFixtureText from './fixtures/saves/07-records-and-ghosts.json?raw';
 installIsolatedStorage();
+window.__qaPhysicalStorage=window.localStorage;
 const qaParams=new URLSearchParams(window.location.search);
 if(qaParams.has('career-archive')||qaParams.has('career-archive-missing')){
   // Seed only the disposable QA store before production startup migrates it.
@@ -17,6 +18,9 @@ if(qaParams.has('career-backup-failure')){
   localStorage.setItem('the-duel-profile-v1',JSON.stringify({version:1,credits:734,awardedWins:['synthetic-win']}));
   Object.defineProperty(window,'indexedDB',{value:undefined});
 }
+if(qaParams.has('career-origin-missing')){
+  localStorage.setItem('__the_duel_origin_pointer_v1',JSON.stringify({version:1,id:'origin-primary-v1'}));
+}
 const {app,refreshRaceSetup}=await import('../src/main.js');
 window.__qaApp=app;
 const {CARS}=await import('../src/config.js');
@@ -24,7 +28,7 @@ const {UPGRADE_TYPES}=await import('../src/progression.js');
 const panel=document.createElement('details');panel.open=true;
 panel.style.cssText='position:fixed;left:12px;top:76px;z-index:999;padding:8px 12px;background:#10212cf0;color:white;font:12px/1.5 system-ui;border:1px solid #7198a0;max-width:330px';
 const summary=document.createElement('summary');summary.textContent='MENU QA · TEMPORARY SAVES';panel.append(summary);
-const note=document.createElement('p');note.textContent='Real menu and garage. Reload clears these test players, purchases and settings.';panel.append(note);
+const note=document.createElement('p');note.textContent='Real menu and garage. Test saves stay in this private tab across reloads and disappear when the tab closes.';panel.append(note);
 const fund=document.createElement('button');fund.textContent='Create funded temporary player';fund.onclick=()=>{
   if(app.duel.state.status!=='menu')return;
   app.addPlayer('Menu QA');app.profile={...app.profile,credits:50000};app._saveProfile();
