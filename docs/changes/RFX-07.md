@@ -69,3 +69,10 @@ budget all pass. The 93-suite lane gate passed in 200.73 seconds, production
 build passed, and private High/Performance smoke captured four screenshots
 with zero warnings or errors. This remains an isolated, reviewed lane while
 the combat balance stop line is red.
+
+## Integration
+
+The combat balance gate is green after the tactical UFO revision. The reviewed
+refactor merged as `6aa3da5` and `709faf3`. The exact 164-suite merge gate passed,
+including unchanged replay fingerprints and all historical save fixtures;
+the production build passed. Status: merged on `integration/wasteland`.

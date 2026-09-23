@@ -398,8 +398,8 @@ tasks:
     lane: SAVE
     size: M
     needs: [FND-10]
-    status: review
-    note: "Forward branch be0a552 formats progression and leaderboard with no intended logic change; independent AST review, historical roundtrips, 93-suite lane, build and browser smoke pass. Held by the balance stop line."
+    status: merged
+    note: "Merged as 6aa3da5 and 709faf3 after independent code-structure review. No save assertions or replay fingerprints changed. Seven historical save shapes, 246 load/round-trip checks, focused progression and leaderboard tests, production build, and the exact 164-suite merge gate pass."
     spec: "SPEC.md, task RFX-07"
   - id: FOOT-00
     title: "On-foot movement spike"
