@@ -86,6 +86,13 @@ seven required Batch A source images remain absent, and generated source
 dimensions differ from the spec. The image workflow needs a choice on whether
 local technical resizing and seam repair may be used after generation.
 
+The throwaway FOOT-00 movement spike is complete and independently reviewed.
+It supports the course-lookup approach for FOOT-01, but its code should not be
+merged. Its single-fighter cost and short private browser walk do not prove
+full-route feel or multi-fighter performance. FOOT-03 must also align the
+camera-center reticle with the fighter's aim ray against real targets; the
+spike's offset proxy camera does not establish that alignment.
+
 The autonomous no-prompt profile was not installed: automatic approval review
 rejected that persistent setup. This does not affect the tested code branches.
 

@@ -98,7 +98,7 @@ section 7.
 
 ## 6. How one task flows
 
-1. **Pick.** The lane takes the top `ready` card for its lane from `docs/board/board.yaml` on the integration branch. A card is ready when everything in its `needs` list is merged.
+1. **Pick.** The lane takes the top `ready` card for its lane from `docs/board/board.yaml` on the integration branch. A card is ready when everything in its `needs` list is merged, or marked `spike-complete` for a throwaway research spike that the spec says not to merge.
 2. **Start clean.** New worktree from the latest `integration/wasteland`, branch `lane/<lane>/<task-id>-<short-name>`. Run `npm ci`. Use this lane's private port (section 11).
 3. **Tests first.** Spawn `test_author` with the card. It adds failing tests and reports which fail and why. The lane confirms they fail for the right reason.
 4. **Build.** The lane implements, staying inside the card's `owns` and `hooks` files. If the task needs another file, stop and ask the Director to re-slice.
@@ -412,7 +412,7 @@ tasks:
     helpers: [reviewer]           # add save_guardian, browser_qa, balance_analyst as needed
     flag: none                    # or the feature switch name
     behavior_change: yes          # fingerprints may change, with a reason
-    status: ready                 # blocked | ready | building | review | ready-to-merge | merged | released
+    status: ready                 # blocked | ready | building | review | ready-to-merge | merged | released | spike-complete (throwaway research only)
     spec: "SPEC.md, task BUG-02"
 ```
 

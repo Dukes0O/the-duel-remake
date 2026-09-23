@@ -407,6 +407,6 @@ tasks:
     lane: CMB
     size: M
     needs: [FND-05]
-    status: building
-    note: "Throwaway spike in an isolated branch; no production game wiring."
+    status: spike-complete
+    note: "Throwaway branch 4cc9556 independently reviewed: real Pacific Canyon walking, pointer lock, 13 focused checks, private browser input and 0.0173–0.0257 ms median step cost. Go with course lookups for FOOT-01; do not merge spike code."
     spec: "SPEC.md, task FOOT-00"
