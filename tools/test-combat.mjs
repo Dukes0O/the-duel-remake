@@ -14,7 +14,33 @@ check(s.mode==='wasteland'&&s.rival&&s.combat,'combat mode spawns a rival and we
 check(d.fireWeapon('ufo'),'UFO fires');check(s.s===150&&s.rival.s===100&&s.prevS===150,'UFO swaps and resets sweep origin');
 check(!d.fireWeapon('ufo'),'UFO cannot spam');s.paused=true;const cd=s.combat.cooldowns.ufo;d.step(1);check(cd===s.combat.cooldowns.ufo&&!d.fireWeapon('star'),'pause freezes weapons');s.paused=false;
 d=make();s=d.state;s.rival.s=90;d.fireWeapon('ufo');check(s.s>100&&s.s<d._lapGates[0],'forward warp stops before next checkpoint');
-d=make();s=d.state;const r=s.rival;r.s=d.course.length+500;r.completedLaps=1;r.nextLapGate=1;d.fireWeapon('ufo');check(s.completedLaps===1&&s.nextLapGate===1&&r.completedLaps===0,'swap transfers valid route progress');
+d=make();s=d.state;const r=s.rival;r.s=d.course.length+500;r.completedLaps=1;r.nextLapGate=1;r.lapTimes=[55.2];r.lapStartedAt=55.2;s.stageTimeSec=60;d.fireWeapon('ufo');check(s.completedLaps===1&&s.nextLapGate===1&&r.completedLaps===0,'swap transfers valid route progress');
+assert.deepEqual(r.lapTimes,[55.2],'a rival keeps prior lap history even when the swap transfers its completed-lap progress');checks++;
+// Route position and checkpoints trade places, but each driver keeps the lap
+// times already driven and the start time of the current lap.
+d=make();s=d.state;const rival=s.rival,length=d.course.length;
+s.s=length+100;rival.s=length+150;s.completedLaps=rival.completedLaps=1;
+s.nextLapGate=0;rival.nextLapGate=2;s.lapTimes=[55.2];rival.lapTimes=[53.6];
+s.assistedLaps=[false];rival.assistedLaps=[false];
+s.lapStartedAt=55.2;rival.lapStartedAt=53.6;s.stageTimeSec=70;
+const lapEvents=[];d.onChange((_,event)=>{if(event.lapCompleted)lapEvents.push(event);});
+check(d.fireWeapon('ufo'),'UFO swaps two drivers who have completed a lap');
+check(s.nextLapGate===2&&rival.nextLapGate===0,'UFO exchanges checkpoint progress with route position');
+assert.deepEqual(s.lapTimes,[55.2],'player keeps completed lap history after UFO swap');checks++;
+assert.deepEqual(rival.lapTimes,[53.6],'rival keeps completed lap history after UFO swap');checks++;
+check(s.lapStartedAt===55.2&&rival.lapStartedAt===53.6,'UFO keeps both running lap timers');
+check(s.assistedLap===true&&rival.assistedLap===true,'UFO flags both current laps as assisted');
+s.s=2*length-1;s.prevS=s.s;s.lateral=s.prevLateral=0;s.speedMph=100;s.stageTimeSec=80;
+s.nextLapGate=d._lapGates.length;s.s=2*length+1;d._advanceLaps(s,.05,true);
+check(s.lapTimes.length===2&&s.assistedLaps?.[0]===false&&s.assistedLaps[1]===true&&lapEvents.at(-1)?.assisted===true,
+  'the next completed lap retains an assisted flag for best-lap eligibility');
+s.status='stage_result';d.nextStage();
+check(d.state===s&&s.stageIndex===1&&s.assistedLaps.length===0&&s.assistedLap===false,
+  'a new stage clears the previous stage assisted-lap flags');
+d=make();s=d.state;const cleanLength=d.course.length;
+s.s=cleanLength-1;s.prevS=s.s;s.lateral=s.prevLateral=0;s.speedMph=100;s.stageTimeSec=60;
+s.nextLapGate=d._lapGates.length;s.s=cleanLength+1;d._advanceLaps(s,.05,true);
+check(s.assistedLaps?.[0]===false,'a lap without a swap remains eligible for a best lap');
 d=make();s=d.state;check(d.fireWeapon('star'),'star activates');const speed=s.speedMph=100;d._crash('rock',1,100);check(s.speedMph===speed&&s.stageCrashes===0,'star blocks crash damage');for(let i=0;i<99;i++)stepCombat(d,.05);check(s.combat.shield>0,'star lasts until five seconds');stepCombat(d,.05);check(s.combat.shield<1e-8,'star expires after five seconds');
 d=make();s=d.state;check(d.fireWeapon('bomb')&&s.combat.projectiles.length===8,'bomb storm throws eight bombs');check(new Set(s.combat.projectiles.map(p=>Math.atan2(p.vx,p.vz).toFixed(2))).size===8,'bombs travel in eight directions');for(let i=0;i<40;i++)stepCombat(d,.05);check(s.combat.projectiles.length===0&&s.combat.bursts.length>0,'bombs expire into explosions');
 // A removed traffic car remains in the array for a while. Its old position

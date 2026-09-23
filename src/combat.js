@@ -24,7 +24,11 @@ export function fireWeapon(duel,weapon,enemy=false){
    const a=Object.fromEntries(fields.map(k=>[k,s[k]])),b=Object.fromEntries(fields.map(k=>[k,target[k]]));
    burst(c,point(duel,target),'ufo');relocate(s,b);relocate(target,a);
    // Progress belongs to the stolen position; timing belongs to this driver.
-   for(const car of [s,target]){car.lap=car.currentLap=car.completedLaps+1;car.lapStartedAt=s.stageTimeSec;car.lapTimes=[];}
+   for(const car of [s,target]){
+    car.lap=car.currentLap=car.completedLaps+1;
+    car.assistedLaps??=(car.lapTimes||[]).map(()=>false);
+    car.assistedLap=true;
+   }
    duel._callout('UFO / POSITIONS SWAPPED',2);
   }else{
    const next=s.completedLaps*duel.course.length+(duel._lapGates[s.nextLapGate]??duel.course.length);

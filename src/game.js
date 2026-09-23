@@ -202,7 +202,7 @@ export class Duel {
     s.input = { throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false };
     s.stageTimeSec = 0;
     s.racePenaltySec = 0; s.lap = s.currentLap = 1; s.completedLaps = 0; s.lapsTotal = this.course.def.laps || 1;
-    s.lapTimeSec = 0; s.lapTimes = []; s.lapStartedAt = 0; s.nextLapGate = 0;
+    s.lapTimeSec = 0; s.lapTimes = []; s.lapStartedAt = 0; s.nextLapGate = 0; s.assistedLaps = []; s.assistedLap = false;
     const stunt = this.course.def.stuntTrial, drift = this.course.def.driftTrial, rush = this.course.def.checkpointRush;
     s.timeLimitSec = rush?.initialTimeSec[s.cpuDifficulty] || drift?.timeLimitSec[s.cpuDifficulty] || stunt?.timeLimitSec[s.cpuDifficulty] || this.course.def.chaseTimeLimit?.[s.cpuDifficulty] || null;
     s.timeRemaining = s.timeLimitSec;
@@ -1516,13 +1516,17 @@ export class Duel {
     const fraction = clamp((finish - previous) / (current - previous), 0, 1);
     const elapsed = this.state.stageTimeSec + (player ? this.state.racePenaltySec : 0) - dt * (1 - fraction);
     actor.lapTimes.push(+(elapsed - actor.lapStartedAt).toFixed(3));
+    const assisted = actor.assistedLap === true;
+    actor.assistedLaps ??= [];
+    actor.assistedLaps.push(assisted);
+    actor.assistedLap = false;
     actor.lapStartedAt = elapsed; actor.nextLapGate = 0; actor.completedLaps++;
     actor.lap = actor.currentLap = Math.min(laps, actor.completedLaps + 1);
     actor.lapTimeSec = Math.max(0, this.state.stageTimeSec + (player ? this.state.racePenaltySec : 0) - elapsed);
     if (player) {
       if (!this.state.police.pursuit?.active) this.state.police.triggered = false;
       if (actor.completedLaps < laps) this._callout(`LAP ${actor.currentLap} / ${laps}  /  KEEP PUSHING`, 3);
-      this.emit({ lapCompleted: actor.completedLaps, lapTimeSec: actor.lapTimes.at(-1) });
+      this.emit({ lapCompleted: actor.completedLaps, lapTimeSec: actor.lapTimes.at(-1), assisted });
     }
   }
 
