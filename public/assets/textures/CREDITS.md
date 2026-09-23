@@ -34,6 +34,20 @@ It supplies natural lighting and car reflections. The visible sky and 3D landsca
 ## Granite cliffs
 
 `granite-cliff.png` is original generated artwork made with the built-in image generator on 19 September 2026. It supplies broad fractures and weathering on alpine and coastal mountains. It is a color texture with a small luminance bump effect, not measured scan data. The full prompt and original filename are recorded in `docs/IMAGE_PROMPTS.md`.
+
+## Wasteland Batch A
+
+`scrap-plating.png`: Original Codex built-in image generation, 23 September 2026. Resized and seam-finished locally for car armor albedo. Original, prompt, and operations are documented in `docs/WASTELAND_ART.md`.
+
+`scrapyard-dirt.png`: Original Codex built-in image generation, 23 September 2026. Resized and seam-finished locally for arena ground albedo. Original, prompt, and operations are documented in `docs/WASTELAND_ART.md`.
+
+`muzzle-dust.png`: Original Codex built-in image generation and image edit, 23 September 2026. Cell-isolated and resized locally for the transparent 2×2 effects atlas. Original, prompts, and operations are documented in `docs/WASTELAND_ART.md`.
+
+`fire-flipbook.png`: Original Codex built-in image generation, 23 September 2026. Cell-isolated and resized locally for an 8×8 transparent flame sequence. Original, prompt, and operations are documented in `docs/WASTELAND_ART.md`.
+
+`explosion-flipbook.png`: Original Codex built-in image generation, 23 September 2026. Cell-isolated and resized locally for an 8×8 transparent dusty blast sequence. Original, prompt, and operations are documented in `docs/WASTELAND_ART.md`.
+
+`smoke-flipbook.png`: Original Codex built-in image generation, 23 September 2026. Cell-isolated and resized locally for an 8×8 transparent smoke sequence. Original, prompt, and operations are documented in `docs/WASTELAND_ART.md`.
 # Tire smoke
 
 `tire-smoke.png` was created with the built-in OpenAI image generator on 19 September 2026. It is an original RGBA particle sprite. The exact prompt and original output path are in `docs/IMAGE_PROMPTS.md`.
