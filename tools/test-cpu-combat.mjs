@@ -63,8 +63,31 @@ for(const [difficulty,seconds] of [['easy',10],['medium',6.8],['hard',5.3]]){
   }
   assert.ok(errors.easy>errors.medium&&errors.medium>errors.hard,
     'seeded CPU aim error shrinks from Easy through Hard');
-  assert.ok(errors.easy<=.12+1e-6&&errors.medium<=.055+1e-6&&errors.hard<=.018+1e-6,
+  assert.ok(errors.easy<=.12+1e-6&&errors.medium<=.055+1e-6&&errors.hard<=.03+1e-6,
     'CPU aim error stays inside each difficulty cone');
+}
+
+{
+  let widestHardError=0;
+  for(let seed=1989;seed<2015;seed++){
+    const duel=make('hard'),s=duel.state;
+    duel.seed=seed;s.s=s.prevS=200;s.rival.s=s.rival.prevS=80;
+    s.speedMph=140;s.headingError=.4;s.combat.aiTimer=Infinity;
+    assert.ok(fireWeapon(duel,'crossbow',true));
+    const projectile=s.combat.projectiles.at(-1),target=duel.course.groundAt(s.s,s.lateral),
+      shooter=duel.course.groundAt(s.rival.s,s.rival.lateral);
+    const travel=Math.min(.75,Math.hypot(target.x-shooter.x,target.z-shooter.z)/200);
+    const speed=s.speedMph*DRIVE.mphToWorld,frame=duel.course.at(s.s);
+    const future=duel.course.groundAt(s.s+Math.cos(s.headingError)*speed*travel/
+      Math.max(.25,1-frame.curvature*s.lateral),
+      s.lateral+Math.sin(s.headingError)*speed*travel);
+    const ideal=Math.atan2(future.x-shooter.x,future.z-shooter.z);
+    const actual=Math.atan2(projectile.vx,projectile.vz);
+    const error=Math.abs(Math.atan2(Math.sin(actual-ideal),Math.cos(actual-ideal)));
+    assert.ok(error<=.03+1e-6,`Hard seed ${seed} stays inside its 0.03-radian cone`);
+    widestHardError=Math.max(widestHardError,error);
+  }
+  assert.ok(widestHardError>.018,'seeded Hard shots exercise the widened aim cone');
 }
 
 {

@@ -157,7 +157,9 @@ function incomingBolt(duel,cpu){
 }
 export function stepCombat(duel,dt){
  const s=duel.state,c=s.combat;if(!c||s.status!=='racing'||s.paused)return;
- for(const actor of [s,s.rival,...s.traffic])if(actor)
+ s.bombImpactCooldown=Math.max(0,(s.bombImpactCooldown||0)-dt);
+ if(s.rival)s.rival.bombImpactCooldown=Math.max(0,(s.rival.bombImpactCooldown||0)-dt);
+ for(const actor of s.traffic)if(actor)
   actor.bombImpactCooldown=Math.max(0,(actor.bombImpactCooldown||0)-dt);
  c.pickupTimer-=dt;
  if(c.pickupTimer<=0){

@@ -80,3 +80,9 @@ That gap remains open; this follow-up does not claim full BUG-07 acceptance.
 Focused CPU combat, bomb momentum, 792-case crossbow aim and 162 replay
 checks across 18 cases pass. The production Vite build passes. The changed
 lane gate passes 154/154 suites in 320.5 s.
+
+Review follow-up: blast recovery now decays player, rival and traffic timers
+without allocating an actor array each simulation frame. The Hard aim test
+uses its actual 0.03-radian cone and 26 seeded shots; at least one shot must
+exercise the widened part beyond the old 0.018-radian bound. CPU combat,
+combat lifecycle and the production build pass after this change.
