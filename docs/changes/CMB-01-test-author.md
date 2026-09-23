@@ -67,3 +67,16 @@ scenario only; it does not implement armor.
   flag-off Wasteland fingerprints unchanged. Run it after implementation,
   alongside the direct armor tests, combat tests, browser scenario, lane gate
   and build. No existing assertion was changed.
+
+## Paused wreck visual follow-up
+
+- `tools/test-render-reuse.mjs` now requires the first active wreck update at
+  `dt=0` to seed visible flame and light, then requires repeated frozen frames
+  to leave that blast still. It fails at the first new assertion against the
+  current `src/explosion.js`, which returns before initializing the blast.
+- The private browser scenario renders each wreck twice, 40 ms apart, before
+  pausing. It records the first CPU-wreck render time in High and Performance
+  without a pass/fail limit. After `_finishStage()`, it refreshes the App UI
+  and requires a visible results panel before taking the results screenshot.
+- This follow-up changes only tests and scenario evidence. The browser
+  scenario remains for the builder to run with the production fix.

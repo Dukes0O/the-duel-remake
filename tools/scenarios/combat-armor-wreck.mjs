@@ -13,7 +13,7 @@ async function qualityPass(context, quality) {
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'`,
     `${quality} renderer ready`, 60_000);
 
-  const playerWreck = await context.evaluate(`(() => {
+  const playerWreck = await context.evaluate(`(async () => {
     const app = window.__qaApp;
     if (!app.startCampaign({mode: 'wasteland', startStage: 0,
       opponentCount: 3, seed: 1989})) throw Error('Three-opponent race did not start');
@@ -43,6 +43,8 @@ async function qualityPass(context, quality) {
       target: [focus.x, focus.y + 2, focus.z]};
     app.onFrame?.(state);
     window.__render.renderFrame();
+    await new Promise(resolve => setTimeout(resolve, 40));
+    window.__render.renderFrame();
     state.paused = true;
     document.querySelectorAll('details').forEach(panel => {
       const title = panel.querySelector('summary')?.textContent || '';
@@ -57,7 +59,7 @@ async function qualityPass(context, quality) {
     throw Error(`${quality} player wreck broke combat race: ${JSON.stringify(playerWreck)}`);
   await context.screenshot(`armor-player-wreck-${quality}`);
 
-  const cpuWreck = await context.evaluate(`(() => {
+  const cpuWreck = await context.evaluate(`(async () => {
     const app = window.__qaApp, duel = app.duel, state = duel.state;
     state.paused = false;
     for (let index = 0; index < 216; index++) duel.step(1 / 60);
@@ -77,17 +79,23 @@ async function qualityPass(context, quality) {
     app.inspectionCamera = {position: [focus.x + 14, focus.y + 7, focus.z + 16],
       target: [focus.x, focus.y + 2, focus.z]};
     app.onFrame?.(state);
+    const renderStart = performance.now();
+    window.__render.renderFrame();
+    const firstRenderMs = performance.now() - renderStart;
+    await new Promise(resolve => setTimeout(resolve, 40));
     window.__render.renderFrame();
     state.paused = true;
     return {opponents: state.opponents.length, playerArmor: state.armor,
-      cpuArmor: second.armor, wrecks: wrecks.length, status: state.status};
+      cpuArmor: second.armor, wrecks: wrecks.length, status: state.status,
+      firstRenderMs};
   })()`);
   if (cpuWreck.status !== 'racing' || cpuWreck.opponents !== 3)
     throw Error(`${quality} later-CPU wreck broke the field: ${JSON.stringify(cpuWreck)}`);
+  console.log(`${quality} first CPU-wreck render: ${cpuWreck.firstRenderMs.toFixed(2)} ms`);
   await context.screenshot(`armor-cpu-wreck-${quality}`);
 
   const finish = await context.evaluate(`(() => {
-    const duel = window.__qaApp.duel, state = duel.state;
+    const app = window.__qaApp, duel = app.duel, state = duel.state;
     state.paused = false;
     for (let index = 0; index < 216; index++) duel.step(1 / 60);
     const second = state.opponents[1];
@@ -97,6 +105,11 @@ async function qualityPass(context, quality) {
       stageTimeSec: Math.max(120, state.stageTimeSec),
       lapTimes: Array(state.lapsTotal).fill(60)});
     if (!duel._finishStage()) throw Error('Recovered race could not finish');
+    app.onFrame?.(state);
+    window.__render.renderFrame();
+    const modal = document.querySelector('#modal-layer');
+    if (modal?.hidden || !modal?.querySelector('.result-panel'))
+      throw Error('Recovered race did not render its results view');
     return {status: state.status, position: state.results?.position,
       opponentCount: state.results?.opponentCount,
       wrecks: window.__combatWreckEvents.length};

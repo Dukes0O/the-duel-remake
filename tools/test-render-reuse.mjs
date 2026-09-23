@@ -100,6 +100,25 @@ const effectState=extra=>({status:'racing',car:'titan_monster',s:100,lateral:0,s
 }
 
 {
+  const explosion=createExplosion(),p={x:0,y:0,z:0};
+  const puffs=explosion.group.children.find(child=>child.isPoints);
+  const light=explosion.group.children.find(child=>child.isLight);
+  explosion.update(p,{status:'racing',catastrophic:true},0);
+  const firstPuffs=puffs.geometry.attributes.puff.array;
+  check(explosion.group.visible&&light.intensity>0&&
+    firstPuffs.some((size,index)=>index%4===0&&size>0&&firstPuffs[index+1]>0),
+    'first active wreck frame shows flame and light at zero render delta');
+  const frozenPuffs=firstPuffs.slice(),frozenPositions=puffs.geometry.attributes.position.array.slice();
+  const frozenIntensity=light.intensity;
+  explosion.update(p,{status:'racing',catastrophic:true},0);
+  check(light.intensity===frozenIntensity&&
+    firstPuffs.every((value,index)=>value===frozenPuffs[index])&&
+    puffs.geometry.attributes.position.array.every((value,index)=>value===frozenPositions[index]),
+    'paused wreck frames keep the initialized blast still');
+  explosion.dispose();
+}
+
+{
   const explosion=createExplosion(),p={x:0,y:0,z:0},identity=graphIdentity(explosion.group);
   const puffs=explosion.group.children.find(child=>child.isPoints),light=explosion.group.children.find(child=>child.isLight);
   explosion.update(p,{status:'gameover',catastrophic:true},.05);
