@@ -4,6 +4,14 @@ Read the latest entry before resuming. Add one entry when a card starts,
 reaches review, merges, is parked, or is released. Keep the board status
 in sync with this log.
 
+## 2026-09-22 PDT — BUG-12 blast guard merged
+
+- Independent review found the `alive: false` traffic guard narrow and the
+  new test discriminating. Cherry-picked `2404468` as `558b378`.
+- The exact integration commit passed 143 merge suites in 260.38 seconds,
+  production build and private High/Performance browser smoke with zero
+  warnings/errors. BUG-09 started in the ordered combat lane.
+
 ## 2026-09-22 PDT — FND-12 profile install rejected by auto-review
 
 - The playbook's profile example was corrected to the installed CLI's

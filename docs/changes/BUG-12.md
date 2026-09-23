@@ -1,6 +1,6 @@
 ---
 task: BUG-12
-status: review
+status: merged
 kind: gameplay-fix
 flag: none
 player_facing: yes
@@ -24,6 +24,9 @@ Live traffic at the same position still takes blast damage.
   fingerprint checks across 18 cases, three frame rates and three runs.
 - `npm run build`: passed. Vite reported the existing large rendering chunk
   warning.
+- Integration commit `558b378` passed 143 merge suites in 260.38 seconds,
+  production build and private High/Performance browser smoke with four
+  screenshots and zero warnings/errors.
 
 ## Assertions and race behavior
 
@@ -34,4 +37,6 @@ race change is limited to bomb blasts near removed traffic.
 
 ## Review
 
-The branch is ready for independent code review before integration.
+The Director independently reviewed the removed/live traffic assertions and
+the narrow blast-loop guard before integration. No additional changes were
+requested.
