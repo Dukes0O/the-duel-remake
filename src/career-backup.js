@@ -4,13 +4,14 @@ import { GHOST_KEY, GHOST_ENABLED_KEY, loadGhosts } from './ghost.js';
 import { ARCHIVE_POINTER_KEY, readCareerArchivePointer, installCareerArchive } from './career-archives.js';
 
 export const CAREER_FORMAT = 'the-duel-career';
+export const LEGACY_SHARED_BEST_KEY = 'duel_redline_best_v4';
 export const CAREER_KEYS = Object.freeze([
   PROFILE_KEY, PLAYERS_KEY, LEADERBOARD_KEY, GHOST_KEY, GHOST_ENABLED_KEY,
   ARCHIVE_POINTER_KEY,
   'duel_route_variant', 'duel_graphics_quality', 'duel_lighting_mood',
-  'duel_audio_muted', 'duel_redline_best_v4', 'duel_experimental_v1',
+  'duel_audio_muted', LEGACY_SHARED_BEST_KEY, 'duel_experimental_v1',
 ]);
-const JSON_KEYS = new Set([PROFILE_KEY, PLAYERS_KEY, LEADERBOARD_KEY, GHOST_KEY, 'duel_redline_best_v4']);
+const JSON_KEYS = new Set([PROFILE_KEY, PLAYERS_KEY, LEADERBOARD_KEY, GHOST_KEY, LEGACY_SHARED_BEST_KEY]);
 const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const has = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
 function sameEntries(left, right) {
@@ -115,7 +116,7 @@ function validateEntries(entries) {
         throw new Error('The ghost file contains recordings this game would discard.');
       }
     }
-    if (key === 'duel_redline_best_v4' && !isObject(value)) throw new Error('The legacy best-time format is invalid.');
+    if (key === LEGACY_SHARED_BEST_KEY && !isObject(value)) throw new Error('The legacy best-time format is invalid.');
   }
   return entries;
 }
@@ -216,6 +217,20 @@ export async function backupCareer(storage, backupStore = createIndexedDbBackupS
   if (!saved || !isObject(saved.entries) || !sameEntries(saved.entries, entries) || JSON.stringify(saved.archives)!==JSON.stringify(archives)) throw new Error('The career backup could not be verified.');
   return record;
 }
+export async function retireSharedBest(storage, backupStore = createIndexedDbBackupStore()) {
+  const source=storageOrThrow(storage),oldValue=source.getItem(LEGACY_SHARED_BEST_KEY);
+  if(oldValue===null)return false;
+  const backup=await backupCareer(source,backupStore,'before-shared-best-retirement');
+  if(backup.entries[LEGACY_SHARED_BEST_KEY]!==oldValue||source.getItem(LEGACY_SHARED_BEST_KEY)!==oldValue){
+    throw new Error('The shared best-time data changed during its backup. Reload and try again.');
+  }
+  source.removeItem(LEGACY_SHARED_BEST_KEY);
+  await source.flush?.();
+  if(source.getItem(LEGACY_SHARED_BEST_KEY)!==null){
+    throw new Error('The shared best-time data could not be retired. Reload and try again.');
+  }
+  return true;
+}
 export async function backupBeforeMigration(storage, backupStore) {
   if (!needsCareerMigration(storage)) return null;
   const backup = await backupCareer(storage, backupStore, 'migration');
@@ -237,6 +252,7 @@ export async function importCareer(text, { storage, backupStore = createIndexedD
   }
   try {
     const entries={...archive.entries};
+    delete entries[LEGACY_SHARED_BEST_KEY];
     let importedArchives=null;
     if(archive.version===2){
       importedArchives={...archive.archives,id:'archive-'+Date.now()+'-'+(globalThis.crypto?.randomUUID?.()??Math.random().toString(36).slice(2))};

@@ -1,4 +1,4 @@
-import {normalizeWeapons,weaponSignature} from './weapon-upgrades.js';
+import {normalizeWeapons} from './weapon-upgrades.js';
 import {createCombat,fireWeapon,stepCombat,supportsCombat} from './combat.js';
 // Road-coordinate arcade driving with independent vehicle heading, steering
 // traction, rough shoulders, and timed impact recovery. The simulation also
@@ -12,10 +12,10 @@ import { sweepBox, sweepObstacle, contactZone, segmentCircle, CAR_HALF_WIDTH, CA
 import { NpcRoutePlanner } from './npc-route.js';
 import { createDriftState, stepDrift, finishDrift, breakDrift } from './drift-scoring.js';
 import { vehicleContactEnvelope, planNpcYield, npcYieldContactNormal } from './npc-yielding.js';
-import { DEFAULT_DRIVER, normalizeDriverId, applyDriverModifiers, driverModifierSignature } from './drivers.js';
+import { DEFAULT_DRIVER, normalizeDriverId, applyDriverModifiers } from './drivers.js';
 import { offroadCapability, wrapHeading, rockHeight, rockSupportHeight, limitClimb, terrainAttitude, tumbleAttitude, canCrushVehicle, crushedVehicleSupport } from './offroad-physics.js';
 import { sampleMountainSupport } from './mountain-support.js';
-import {normalizeRival,rivalSignature} from './rival-settings.js';
+import {normalizeRival} from './rival-settings.js';
 import {upgradedCar} from './progression.js';
 
 const BOUNDARY_WARNING = 60, BOUNDARY_RESET = 78;
@@ -1574,7 +1574,7 @@ export class Duel {
     s.results = { completed: false, won: false, timeout: true, seed: s.seed, stageIndex: s.stageIndex, stageName: this.stageDef.name,
       stageTimeSec: +s.stageTimeSec.toFixed(2), timeSec: +(s.stageTimeSec + s.racePenaltySec).toFixed(2),
       laps: s.completedLaps, lapTimes: [...s.lapTimes], assistedLaps: [...s.assistedLaps], lives: s.lives, score: s.stageStyleScore, styleScore: s.stageStyleScore,
-      isPersonalBest: false, jumpScore: s.jumpScore, jumps: s.jumps, bestJumpMeters: s.bestJumpMeters,
+      jumpScore: s.jumpScore, jumps: s.jumps, bestJumpMeters: s.bestJumpMeters,
       crushCount: s.crushCount, crushScore: s.crushScore, ...this._objectiveResult() };
     this._callout(s.checkpointRush?'TIME UP  /  CHECKPOINT RUSH ENDED':s.objective ? `TIME UP  /  ${s.drift ? 'DRIFT' : 'STUNT'} TRIAL ENDED` : 'TIME UP  /  THE CAR LIVES TO RACE AGAIN', 3);
     this.emit({ stageResult: s.results });
@@ -1609,18 +1609,15 @@ export class Duel {
     s.score += stageBaseScore;
     s.boosting = false;
 
-    const previousBest = this._bestFor(this.stageDef.name);
-    if (recordEligible) this._recordBest(this.stageDef.name, timeSec);
     s.results = {
       stageIndex: s.stageIndex, stageName: this.stageDef.name, seed: s.seed,
       stageTimeSec: +s.stageTimeSec.toFixed(2), timeSec: +timeSec.toFixed(2), missedStation: false,
-      completed: true, laps: s.completedLaps, lapTimes: [...s.lapTimes], assistedLaps: [...s.assistedLaps], isPersonalBest: recordEligible && (previousBest == null || timeSec < previousBest),
+      completed: true, laps: s.completedLaps, lapTimes: [...s.lapTimes], assistedLaps: [...s.assistedLaps],
       jumpScore: s.jumpScore, jumps: s.jumps, bestJumpMeters: s.bestJumpMeters,
       crushCount: s.crushCount, crushScore: s.crushScore,
       cleanStage: s.stageCrashes === 0, stageCrashes: s.stageCrashes, majorCrashesBeforeRepair,
       crashesRepaired, livesRestored, policeEscapes: s.policeEscapes, scoreMultiplier: this.scoreMultiplier,
       lives: s.lives, timeBonus: timeBonus * this.scoreMultiplier, beatRival, score, styleScore: s.stageStyleScore, won,
-      best: this._bestFor(this.stageDef.name),
       ...objective, ...(s.objective ? { objectiveMissed: !objective.targetsMet } : {}),
     };
     if (s.lives <= 0) { s.status = 'gameover'; s.results.gameover = true; this.emit({ gameover: true }); return; }
@@ -1641,22 +1638,6 @@ export class Duel {
     this._loadStage(s.stageIndex + 1);
   }
 
-  // ---- best times (localStorage with in-memory fallback) ---------------
-  _recordBest(stageName, timeSec) {
-    const all = loadBest();
-    const key = this._bestKey(stageName);
-    if (all[key] == null || timeSec < all[key]) { all[key] = +timeSec.toFixed(2); saveBest(all); }
-  }
-  _bestKey(stageName) {
-    const s = this.state, upgrades = s.upgrades, event = this.course?.def || this.stageDef;
-    const key = [event.id || stageName, `layout${event.layoutVersion || 1}`, `seed${s.seed}`, `laps${s.lapsTotal}`,
-      stageName, s.car, s.difficulty, s.cpuDifficulty, s.mode, ...UPGRADE_KEYS.map(key => upgrades[key])].join('|');
-    const signature = driverModifierSignature(s.driverId, s.car);
-    const rival=rivalSignature(s);
-    return key+(signature?`|driver:${signature}`:'')+(rival?`|rival:${rival}`:'')+(weaponSignature(s)?`|weapons:${weaponSignature(s)}`:'');
-  }
-  _bestFor(stageName) { return loadBest()[this._bestKey(stageName)] ?? null; }
-
   // ---- input helpers ---------------------------------------------------
   _callout(text, seconds = 2.2) { this.state.callout = text; this.state.calloutTimer = seconds; }
   setInput(partial) {
@@ -1666,23 +1647,4 @@ export class Duel {
     }
     for (const key of ['boost', 'shiftUp', 'shiftDown']) if (partial[key] != null) input[key] = !!partial[key];
   }
-}
-
-let memoryBest = {};
-const BEST_STORAGE_KEY = 'duel_redline_best_v4';
-function loadBest() {
-  try {
-    const raw = typeof localStorage !== 'undefined' && localStorage.getItem(BEST_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        memoryBest = Object.fromEntries(Object.entries(parsed).filter(([, time]) => Number.isFinite(time) && time > 0));
-      }
-    }
-  } catch (_) {}
-  return { ...memoryBest };
-}
-function saveBest(obj) {
-  memoryBest = { ...obj };
-  try { if (typeof localStorage !== 'undefined') localStorage.setItem(BEST_STORAGE_KEY, JSON.stringify(obj)); } catch (_) {}
 }

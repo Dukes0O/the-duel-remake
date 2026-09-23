@@ -4,6 +4,7 @@ import { Duel } from '../src/game.js';
 import { Course } from '../src/course.js';
 import { COURSE, DRIVE, LIVES } from '../src/config.js';
 import { sweepObstacle } from '../src/collision.js';
+import {isValidFinish} from '../src/progression.js';
 
 let checks=0;
 const check=(value,label)=>{assert.ok(value,label);checks++;};
@@ -76,7 +77,8 @@ for(const completeGates of[false,true]){
   s.completedLaps=2;d._finishStage();
   check(s.results.completed&&s.results.won===completeGates&&s.results.targetsMet===completeGates,'winning requires all ordered gates plus both valid laps');
   check(s.results.checkpointRush&&s.results.checkpointsPassed===(completeGates?12:11)&&s.results.checkpointsRequired===12&&s.results.checkpointMisses===(completeGates?0:1),'results expose the exact gate outcome');
-  check(completeGates||(!s.results.isPersonalBest&&s.results.best==null),'a completed missed-goal loss cannot record a competitive time');
+  check(isValidFinish({...s.results,car:s.car,cpuDifficulty:s.cpuDifficulty})===completeGates,
+    'a completed missed-goal loss cannot enter per-player best comparisons');
   d.nextStage();check(s.status==='complete','checkpoint rush remains a standalone event');
 }
 {

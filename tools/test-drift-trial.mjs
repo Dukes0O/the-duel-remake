@@ -3,6 +3,7 @@ import { App } from '../src/app.js';
 import { Duel } from '../src/game.js';
 import { Course } from '../src/course.js';
 import { COURSE, LIVES } from '../src/config.js';
+import {isValidFinish} from '../src/progression.js';
 
 let checks = 0;
 const check = (condition, label) => { assert.ok(condition, label); checks++; };
@@ -39,7 +40,8 @@ for (const meetsTarget of [false, true]) {
   d._finishStage(); const result = s.results;
   check(result.completed && result.won === meetsTarget && result.targetsMet === meetsTarget && result.objectiveMissed === !meetsTarget, 'a valid finish needs both drift score and its deadline to win');
   check(result.driftTrial && result.driftTarget === 6000 && result.driftScore === (meetsTarget ? 6010 : 5990) && result.challengeLimitSec === 110, 'results expose banked score, target and limit accurately');
-  check(meetsTarget || (!result.isPersonalBest && result.best == null), 'a completed score failure cannot record a time-only personal best');
+  check(isValidFinish({...result,car:s.car,cpuDifficulty:s.cpuDifficulty})===meetsTarget,
+    'a completed score failure cannot enter per-player best comparisons');
   check(s.drift.finished && s.drift.chainScore === 0, 'a completed event closes and banks its last active chain once');
   d._finishStage(); check(events.filter(event => event.stageResult).length === 1, 'repeated finish calls emit one result');
   d.nextStage(); check(s.status === 'complete', 'the drift trial is standalone rather than joining the campaign');

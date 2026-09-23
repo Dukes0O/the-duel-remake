@@ -3,6 +3,7 @@ import {ownTestCourses} from './career-fixture.mjs';
 import { Duel } from '../src/game.js';
 import { App } from '../src/app.js';
 import { COURSE, LIVES, ROAD_SHOULDER_WIDTH } from '../src/config.js';
+import {bestKey} from '../src/progression.js';
 
 let checks = 0;
 const check = (condition, label) => { assert.ok(condition, label); checks++; };
@@ -125,15 +126,13 @@ for (const side of [-1, 1]) {
   check(d.state.seed === 17 && d.course.seed === 17, 'legacy direct seed overrides still sync when a new race starts');
   for (const seed of [Infinity, NaN, 2.5, '42', null]) { d.startCampaign({ seed }); check(d.state.seed === 17 && d.course.seed === 17, 'invalid route seeds cannot corrupt race identity'); }
   d.startCampaign({ seed: 0 }); check(d.state.seed === 0 && d.course.seed === 0, 'zero is a valid explicit seed');
-  d._recordBest('route-identity-integrity', 60); d.state.seed = 42;
-  check(d._bestFor('route-identity-integrity') === null, 'local personal-best comparisons do not cross route seeds');
-  d.state.seed = 0; d.state.lapsTotal = 1;
-  check(d._bestFor('route-identity-integrity') === null, 'a one-lap record cannot improve a two-lap personal best');
-  d.state.lapsTotal = 2;
-  check(d._bestFor('route-identity-integrity') === 60, 'returning to the matching route restores its own record');
-  const ordinaryKey = d._bestKey('route-identity-integrity');
-  d.course = { def: { ...d.course.def, layoutVersion: 99 } };
-  check(d._bestKey('route-identity-integrity') !== ordinaryKey, 'changed route geometry has a distinct local timing identity');
+  const result={stageIndex:d.state.stageIndex,seed:0,laps:2,car:d.state.car,mode:d.state.mode,
+    difficulty:d.state.difficulty,cpuDifficulty:d.state.cpuDifficulty,driverId:d.state.driverId};
+  const ordinaryKey=bestKey(result);
+  check(bestKey({...result,seed:42})!==ordinaryKey,'per-player best comparisons do not cross route seeds');
+  check(bestKey({...result,laps:1})!==ordinaryKey,'a one-lap record cannot improve a two-lap personal best');
+  check(bestKey({...result})===ordinaryKey,'returning to the matching route restores its record identity');
+  check(bestKey(result,99)!==ordinaryKey,'changed historical route geometry has a distinct timing identity');
 }
 
 // A skid can physically cross a timing line while lap processing is paused.

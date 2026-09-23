@@ -21,7 +21,7 @@ import {courseAccessPanel} from './course-access-ui.js';
 import {speedKph,formatSpeed} from './speed-format.js';
 import {featureFlags} from './feature-flags.js';
 import {experimentalPanel} from './experimental-ui.js';
-import {backupBeforeMigration,backupCareer,captureCareer,createCompleteCareerExport,createIndexedDbBackupStore,parseCareerExport} from './career-backup.js';
+import {backupBeforeMigration,backupCareer,captureCareer,createCompleteCareerExport,createIndexedDbBackupStore,parseCareerExport,retireSharedBest} from './career-backup.js';
 import {prepareCareerBudget,createBudgetCareerExport,importBudgetCareer,ORIGIN_POINTER_KEY} from './career-budget.js';
 
 const root = document.querySelector('#app');
@@ -55,6 +55,7 @@ await (async()=>{
       notice.textContent='Career save failed. Stop playing and export your career before closing this tab. '+error.message;
     },installGlobal:true});
   await backupBeforeMigration(budgetStorage.storage,backupStore);
+  await retireSharedBest(budgetStorage.storage,backupStore);
 })().catch(error=>{
   const archiveProblem=/archive|snapshot|journal|origin pointer|budget/i.test(error.message);
   root.innerHTML=archiveProblem

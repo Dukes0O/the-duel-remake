@@ -1,4 +1,4 @@
-import {CAREER_FORMAT,captureCareer,parseCareerExport} from './career-backup.js';
+import {CAREER_FORMAT,LEGACY_SHARED_BEST_KEY,captureCareer,parseCareerExport} from './career-backup.js';
 import {ARCHIVE_POINTER_KEY,readCareerArchivePointer} from './career-archives.js';
 import {loadLeaderboard} from './leaderboard.js';
 import {loadGhosts} from './ghost.js';
@@ -290,6 +290,7 @@ export function createBudgetCareerExport(storage,now=()=>new Date()){
 function importedEntries(archive){
   const entries={...archive.entries};
   if(archive.version===2)mergeOldArchives(entries,archive.archives);
+  delete entries[LEGACY_SHARED_BEST_KEY];
   return entries;
 }
 export async function importBudgetCareer(text,{storage,store}={}){

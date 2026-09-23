@@ -4,6 +4,7 @@ import { Duel } from '../src/game.js';
 import { App } from '../src/app.js';
 import { CARS, COURSE, DRIVE, LIVES } from '../src/config.js';
 import { DRIVERS, driverModifierSignature } from '../src/drivers.js';
+import {bestKey} from '../src/progression.js';
 
 let checks = 0;
 const check = (condition, label) => { assert.ok(condition, label); checks++; };
@@ -167,16 +168,19 @@ for (const fps of [30, 144]) {
 same(runs[0], runs[1], '30/144 FPS produce bit-identical fixed-step road flight');
 
 {
-  const d = fixture(), neutral = d.car, neutralKey = d._bestKey('fixture');
+  const d = fixture(), neutral = d.car;
+  const comparison=()=>bestKey({stageIndex:0,seed:d.state.seed,laps:2,car:d.state.car,
+    mode:d.state.mode,difficulty:d.state.difficulty,cpuDifficulty:d.state.cpuDifficulty,driverId:d.state.driverId});
+  const neutralKey=comparison();
   check(d.car === neutral, 'same driver and upgrades reuse the car-stat cache');
   d.state.driverId = 'mara_vale'; const enhanced = d.car;
   same(enhanced.grip, neutral.grip * 1.05, 'matching specialist applies after the ordinary upgraded stats');
-  check(d._bestKey('fixture').endsWith(`|driver:${driverModifierSignature('mara_vale', d.state.car)}`), 'enhanced game bests use the actual modifier signature');
+  check(comparison().endsWith(`|driver:${driverModifierSignature('mara_vale', d.state.car)}`), 'enhanced per-player bests use the actual modifier signature');
   same(d._vehicleSpec(d.state).halfWidth, 1.02, 'specialists never widen the collision shell');
   d.state.driverId = 'iko_ren'; same(d.car, neutral, 'off-class specialist stats remain exactly neutral');
-  same(d._bestKey('fixture'), neutralKey, 'off-class specialists share the exact legacy timing key');
+  same(comparison(), neutralKey, 'off-class specialists share the neutral timing key');
   d.state.driverId = 'unknown'; same(d.car, neutral, 'unknown driver fails to neutral stats');
-  same(d._bestKey('fixture'), neutralKey, 'unknown driver cannot forge an enhanced record class');
+  same(comparison(), neutralKey, 'unknown driver cannot forge an enhanced record class');
   for (const driver of Object.values(DRIVERS).filter(driver => driver.cars.length)) {
     d.state.car = driver.cars[0]; d.state.driverId = 'club'; const base = d.car; d.state.driverId = driver.id;
     for (const [stat, multiplier] of Object.entries(driver.modifiers)) same(d.car[stat], base[stat] * multiplier, `${driver.id}: documented modifier applied once`);

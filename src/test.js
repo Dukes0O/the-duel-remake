@@ -3,6 +3,7 @@ import { CARS, COURSE, LIVES, DIFFICULTY, CPU_DIFFICULTY, DEFAULT_CPU_DIFFICULTY
 import { Course } from './course.js';
 import { Duel } from './game.js';
 import { App } from './app.js';
+import {bestKey,createProfile,loadPlayers,settleRace} from './progression.js';
 import { sweepObstacle, sweepBox, contactZone } from './collision.js';
 
 let pass = 0, fail = 0;
@@ -406,46 +407,25 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   eq(d.state.stageIndex, 0, 'nextStage cannot skip an unfinished stage');
   d.state.status = 'stage_result'; d.nextStage(); d.nextStage();
   eq(d.state.stageIndex, 1, 'double nextStage clicks only advance once');
-  const previous = globalThis.localStorage;
-  try {
-    globalThis.localStorage = { getItem: () => 'null', setItem: () => {} };
-    d._recordBest('storage regression', 12);
-    eq(d._bestFor('storage regression'), 12, 'corrupt storage preserves a usable memory fallback');
-  } finally {
-    if (previous === undefined) delete globalThis.localStorage;
-    else globalThis.localStorage = previous;
-  }
+  eq(loadPlayers({getItem:()=> 'null'}).players.length,1,'corrupt player storage preserves a usable default profile');
   const app = new App(); app.startCampaign();
   app.advance(1, 0); app.advance(Infinity); app.advance(-1);
   eq(app.duel.state.countdown, 3, 'invalid advance arguments cannot hang or corrupt the simulation');
 }
 
-// --- Best times compare the same car, difficulty, mode and physics version ---
+// --- Per-player bests compare the same event, car, difficulty and mode ---
 {
-  const d = new Duel({ seed: 100 }); d.startCampaign();
-  d._recordBest('scoped leaderboard regression', 45);
-  eq(d._bestFor('scoped leaderboard regression'), 45, 'best time is saved for the selected setup');
-  d.state.car = 'stuttgart_959s';
-  eq(d._bestFor('scoped leaderboard regression'), null, 'best times are separate for each car');
-  d.state.car = 'falcone_f42'; d.state.difficulty = 'pro';
-  eq(d._bestFor('scoped leaderboard regression'), null, 'best times are separate for each difficulty');
-  d.state.difficulty = 'casual'; d.state.mode = 'timetrial';
-  eq(d._bestFor('scoped leaderboard regression'), null, 'best times are separate for each race mode');
-  d.state.mode = 'duel'; d.state.upgrades.engine = 1;
-  eq(d._bestFor('scoped leaderboard regression'), null, 'upgraded cars have separate best times from stock cars');
-  d.state.upgrades.engine = 0;
-  const previous = globalThis.localStorage;
-  try {
-    d.state.mode = 'duel';
-    globalThis.localStorage = {
-      getItem: key => key === 'duel_best' ? JSON.stringify({ 'legacy regression|falcone_f42|casual|duel': 1 }) : null,
-      setItem: () => {},
-    };
-    eq(d._bestFor('legacy regression'), null, 'records from the old physics version are ignored');
-  } finally {
-    if (previous === undefined) delete globalThis.localStorage;
-    else globalThis.localStorage = previous;
-  }
+  const race={runId:'scoped-best',stageIndex:0,seed:100,laps:2,car:'falcone_f42',mode:'duel',
+    difficulty:'casual',cpuDifficulty:'easy',driverId:'club',won:true,completed:true,timeSec:45};
+  const key=bestKey(race),awarded=settleRace(createProfile(),race);
+  eq(awarded.profile.personalBests[key],45,'a valid finish updates this player\'s best time');
+  eq(awarded.best,45,'settlement supplies the best time shown in results');
+  eq(createProfile().personalBests[key],undefined,'another player starts with no shared best time');
+  ok(bestKey({...race,car:'stuttgart_959s'})!==key,'best times are separate for each car');
+  ok(bestKey({...race,difficulty:'pro'})!==key,'best times are separate for each difficulty');
+  ok(bestKey({...race,mode:'timetrial'})!==key,'best times are separate for each race mode');
+  ok(bestKey({...race,seed:42})!==key,'best times are separate for each route seed');
+  ok(bestKey(race,99)!==key,'a changed event layout has a distinct historical timing identity');
 }
 
 // --- Untrusted URL/input settings cannot corrupt the driving state ---
