@@ -590,7 +590,7 @@ tasks:
       - "Track a bounded combo and combat style score once, reset live counters per stage, and snapshot hitsLanded, wrecksCaused, wrecksTaken, knockdowns, damageDealt, bestCombo and combatStyleScore on finish or timeout."
       - "Show combat stats on results at desktop and 390x844; ordinary and flag-off modes keep their result, score, credit and replay behavior."
       - "Focused tests cover overkill, simultaneous bomb victims, all three opponents, ownership, frame-rate parity and one-time wreck recovery; private browser, balance and frame checks pass."
-    note: "Read-only scope proposal completed. CMB-03 records and presents combat results; SAVE-01 owns credit bonus and persistence. Knockdowns stay zero until on-foot combat is implemented."
+    note: "Read-only scope proposal completed. CMB-03 records and presents combat results; SAVE-01 owns credit bonus and persistence. Knockdowns stay zero until on-foot combat is implemented. Initial combat style tuning is a separate 5-second, maximum-5 combo, 100 points per positive hit times combo, plus 400 per caused wreck, all times the existing score multiplier."
     spec: "SPEC.md section 3.2, task CMB-03"
   - id: SAVE-01
     title: "Combat credit bonus"

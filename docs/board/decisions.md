@@ -83,6 +83,18 @@ and how to reverse it before continuing.
   purchase, update the rig and CMB-02 contact tests together, then rerun the
   three-car browser scene and ordinary replay controls.
 
+## 2026-09-23 PDT — CMB-03 initial combat style tuning
+
+- Decision: Use a separate combat combo with a five-second window and a
+  maximum multiplier of five. Each positive player-owned armor hit earns
+  100 times the current combat combo in style points. A player-caused wreck
+  earns 400 more, once. Apply the existing score multiplier.
+- Reason: Combat actions should appear in the existing style score without
+  changing the near-miss chain. A five-second window and five-step cap match
+  the familiar near-miss timing, while a wreck earns a larger clear reward.
+- How to reverse: Tune these values in `src/wasteland-tuning.js`, update
+  CMB-03 score tests, and rerun combat balance before the switch leaves dev.
+
 ## Entry format
 
 - Date and card:
