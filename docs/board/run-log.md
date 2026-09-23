@@ -1,5 +1,16 @@
 # Wasteland run log
 
+## 2026-09-22 PDT — TOOL-01 balance report merged
+
+- Reviewed and cherry-picked `6ed7600` and `215a748` as `5fbf24f` and
+  `5cf591e`. The exact integration commit passed 147 merge suites in
+  200.96 seconds, the production build, and private High/Performance smoke
+  with zero warnings or errors.
+- The measured `--check` reports real remaining combat failures: stock and
+  maximum UFO time gains exceed four seconds at all three difficulties,
+  own bombs remove 68.37% of speed, and Medium/Hard CPU hit counts are low.
+  TOOL-01 is complete; these gameplay cards remain open.
+
 ## 2026-09-22 PDT — DISC ghost lifecycle finding merged
 
 - Cherry-picked `aa22498` as `10645f2`. The exact integration commit passed

@@ -291,7 +291,8 @@ tasks:
     lane: TOOL
     size: M
     needs: [FND-06]
-    status: ready
+    status: merged
+    note: "Merged as 5fbf24f and 5cf591e; 147-suite gate, build and private High/Performance smoke pass. 21 policy and 30 baseline races finish in 100.82s; --check flags real UFO, self-bomb and CPU-hit gaps."
     spec: "SPEC.md, task TOOL-01"
   - id: DISC
     title: "Discovery audits"

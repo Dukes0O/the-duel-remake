@@ -1,6 +1,6 @@
 ---
 task: TOOL-01
-status: review
+status: merged
 kind: tooling
 flag: none
 player_facing: no
@@ -55,3 +55,19 @@ average UFO gain could hide an overpowered difficulty, so `--check` now
 compares every difficulty at stock and maximum level. The win-rate output is
 based on ten independent no-weapon seeds per difficulty rather than a fraction
 of wins across weapon policies. No existing assertions changed.
+
+## Integration measurement
+
+On the exact integration commit `5cf591e`, 21 policy races and 30 no-weapon
+baseline races finished in 100.82 seconds. The first 12 took 22.44 seconds.
+No-weapon win rates were 10/10 Easy, 10/10 Medium and 0/10 Hard. Stock UFO
+gained 8.57, 8.58 and 12.45 seconds on Easy, Medium and Hard; maximum UFO
+gained 25.29, 25.30 and 29.17 seconds. Crossbow hit 13/26 moving-target
+shots (50%). Own bombs caused 68.37% maximum speed loss. CPU hits on the
+player were 1, 1 and 3. `--check` correctly exited nonzero for the UFO,
+own-bomb, Medium CPU and Hard CPU targets. These are combat balance gaps,
+not failures of the report tool.
+
+The exact integration commit passed 147/147 merge suites in 200.96 seconds,
+the production build, and private High/Performance browser smoke on port
+48918 with four screenshots and zero warnings or errors.
