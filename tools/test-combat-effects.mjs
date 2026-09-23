@@ -215,9 +215,12 @@ test('the four atlas textures upload once before a visible hit', async () => {
       assert.ok(scene.children.includes(effects.group) &&
         effects.group.children.every(mesh => mesh.visible),
       'the real draw prepares every fixed atlas mesh');
+      assert.equal(scene.fog, parent.fog,
+        'preparation uses the race scene fog shader variant');
     },
   };
-  const parent = new THREE.Group();
+  const parent = new THREE.Scene();
+  parent.fog = new THREE.Fog(0x345678, 100, 800);
   parent.add(effects.group);
   try {
     assert.equal(effects.prewarmTextures(renderer), true);
@@ -251,6 +254,31 @@ test('effect planes face each camera during its render pass', async () => {
         .angleTo(camera.quaternion) < 1e-6,
       'the world matrix faces the current main or rear-view camera');
     }
+  } finally {
+    effects.dispose();
+  }
+});
+
+test('first wreck and impact frames upload their UVs before combat', async () => {
+  const {createCombatEffects} = await import('../src/combat-effects.js');
+  const source = loader();
+  const effects = createCombatEffects({loadTexture: source.loadTexture});
+  try {
+    const names = ['combat-vfx-wreck-0-fire',
+      'combat-vfx-wreck-0-explosion', 'combat-vfx-wreck-2-fire',
+      'combat-vfx-wreck-2-explosion', 'combat-vfx-burst-0-explosion',
+      'combat-vfx-burst-0-impact'];
+    const initial = names.map(name => effects.group.getObjectByName(name)
+      .geometry.getAttribute('uv').version);
+    const current = state({playerWreck: true, laterWreck: true,
+      bursts: [{id: 1, kind: 'blast', x: 40, y: 2, z: 60, age: 0}]});
+    effects.update({state: current, course, dt: 0});
+    current.combat.bursts = [{id: 2, kind: 'spark',
+      x: 40, y: 2, z: 60, age: 0}];
+    effects.update({state: current, course, dt: 0});
+    assert.deepEqual(names.map(name => effects.group.getObjectByName(name)
+      .geometry.getAttribute('uv').version), initial,
+    'first visible blast and wreck do not create a fresh UV upload');
   } finally {
     effects.dispose();
   }

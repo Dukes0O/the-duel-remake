@@ -1,6 +1,6 @@
 ---
 task: VIS-01
-status: focused checks complete; integration gate pending
+status: ready-to-merge
 kind: visual feature
 flag: wasteland2
 player_facing: yes
@@ -27,14 +27,19 @@ player_facing: yes
 ## Evidence
 
 - Independent acceptance commit `ab9398b` supplied nine focused tests.
-  `node tools/test-combat-effects.mjs` passes 11/11, including UV order, fixed
+  `node tools/test-combat-effects.mjs` passes 12/12, including UV order, fixed
   resources, disposal, first paused frame, separate later-CPU position,
   missing-sheet fallback, and ordinary and flag-off controls. Follow-up
   assertions verify that expired sparks stop drawing, planes face the
   current main or rear-view camera, and sheet uploads and an offscreen mesh
-  draw happen once before visible effects.
-- `node tools/test-combat-armor.mjs` passes 19/19;
-  `node tools/test-combat-modules.mjs` passes 5/5.
+  draw happen once before visible effects. First visible UV frames are written
+  when the pool is built, and its preparation draw uses the live scene's fog
+  and environment settings.
+- On rebased integration `d714317`, `node tools/test-combat-armor.mjs`
+  passes 19/19; `node tools/test-combat-ramming.mjs` passes 13/13;
+  `node tools/test-combat-modules.mjs` passes 5/5. The pinned replay command
+  passes 162 checks. The production build passes with the existing Vite
+  large-chunk advisory.
 - `node tools/check-art-intake.mjs` reports all seven accepted art files
   present with zero failures.
 - The private `combat-effects` browser scenario passed High and Performance
@@ -43,22 +48,36 @@ player_facing: yes
   later-CPU wreck position and a constant scene light count. The inspected
   images show the blast and fire at the expected cars with the race HUD
   visible during the paused first-frame shots. The report is under
-  `.qa-dist/browser-output/combat-effects-2026-09-23T22-50-48-343Z/` in this
+  `.qa-dist/browser-output/combat-effects-2026-09-23T23-33-08-188Z/` in this
   isolated worktree. This browser run exited successfully. An earlier
   run wrote a pass report but hit a temporary Chrome profile cleanup error.
 - In the private browser fixture, the first blast initially took 73 ms in
   High and 60 ms in Performance, against nearby 8–10 ms and 5–8 ms frames.
   Uploading the four sheets and drawing the fixed pool offscreen once cut
-  that first blast to 8.4 ms and 7.0 ms. The preparation took 239 ms and
-  211 ms after the sheets loaded in this synthetic race. Player wreck frames
-  still took 59 ms and 52 ms, so the real RAF frame-cost check remains
-  important before integration.
+  the final first blast to 5.2 ms High and 7.6 ms Performance. Final first
+  player wreck draws took 40.7 and 33.1 ms; later-CPU wreck draws took 43.7
+  and 41.8 ms. The active wreck did not add a shader program or texture.
+  The one-time atlas preparation took 172 and 210 ms after loading in this
+  synthetic race, which forces the race past its normal countdown.
+- The exact-current 120-frame real-RAF comparison kept p95 at 16.8 ms in
+  both quality settings. With the atlas, the first armored wreck reached
+  100.1 ms High and 50.0 ms Performance, with one frame over 33 ms in each.
+  A temporary procedural fallback on the same rebased source reached
+  183.4 and 66.5 ms, with one and two frames over 33 ms. The temporary
+  fallback edits were restored before the final tests and build. The atlas
+  improves the inherited first-wreck hitch in this controlled comparison;
+  one outlier frame remains. Reports are under
+  `.qa-dist/browser-output/combat-armor-frame-pacing-2026-09-23T23-31-12-143Z/`
+  and `.qa-dist/browser-output/combat-armor-frame-pacing-2026-09-23T23-32-05-195Z/`.
+- An exact 189-suite lane attempt stopped by request after 91 suites, all
+  green to that point, so it is incomplete. The user asked to avoid another
+  broad lane run; the Director will run one broad gate on the final release
+  candidate.
 - `node --check` on changed JavaScript and `git diff --check` pass.
 
-## Remaining gate
+## Integration check
 
-Run the lane suite, pinned replays, production build and the
-same-route 10% combat frame-cost comparison after CMB-02 releases the heavy
-test lane. Re-run the private browser scenario on the merged CMB-04/CMB-08
-renderer because those cards also touch `src/render3d.js` and CMB-04 touches
-`src/combat-scene.js`.
+Re-run the private browser scenario on the merged CMB-04/CMB-08 renderer
+because those cards also touch `src/render3d.js` and CMB-04 touches
+`src/combat-scene.js`. The final release candidate needs the Director's
+broad gate.

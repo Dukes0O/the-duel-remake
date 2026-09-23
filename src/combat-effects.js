@@ -43,7 +43,12 @@ function makeSlot(group, resources, texture, name, grid) {
   group.add(mesh);
   resources.geometries.push(geometry);
   resources.materials.push(material);
-  return {mesh, grid, frame: -1};
+  const slot = {mesh, grid, frame: -1};
+  const firstFrame = name.endsWith('-fire') ? 8 :
+    name.endsWith('-explosion') ? 5 :
+    name.endsWith('-impact') ? 3 : 0;
+  selectFrame(slot, firstFrame);
+  return slot;
 }
 
 function show(slot, position, {age = 0, duration = 1, size = 1,
@@ -143,6 +148,9 @@ export function createCombatEffects({loadTexture} = {}) {
     });
     const warmScene = new THREE.Scene();
     const parent = group.parent;
+    warmScene.fog = parent?.fog || null;
+    warmScene.environment = parent?.environment || null;
+    warmScene.environmentIntensity = parent?.environmentIntensity ?? 1;
     const priorTarget = renderer.getRenderTarget();
     try {
       withWarmupVisibility(() => {

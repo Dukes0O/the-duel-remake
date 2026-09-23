@@ -74,6 +74,10 @@ async function pass(context, quality) {
     }
     return samples;
   })()`);
+  const resourceBaseline = await context.evaluate(`({
+    programs: window.__render.renderer.info.programs?.length || 0,
+    textures: window.__render.renderer.info.memory.textures,
+  })`);
 
   const muzzle = await context.evaluate(`(() => {
     const app = window.__qaApp, duel = app.duel, state = duel.state;
@@ -108,7 +112,9 @@ async function pass(context, quality) {
     if (!mesh?.visible) throw Error('First blast atlas frame is hidden');
     window.__combatEffectsFirstUV = Array.from(mesh.geometry.getAttribute('uv').array);
     return {position: mesh.position.toArray(), uv: window.__combatEffectsFirstUV,
-      opacity: mesh.material.opacity, renderMs};
+      opacity: mesh.material.opacity, renderMs,
+      programs: window.__render.renderer.info.programs?.length || 0,
+      textures: window.__render.renderer.info.memory.textures};
   })()`);
   await context.evaluate('window.__render.renderFrame()');
   await context.screenshot(`combat-vfx-blast-first-${quality}`);
@@ -161,7 +167,9 @@ async function pass(context, quality) {
     window.__render.scene.traverse(object => { if (object.isLight) lights++; });
     if (lights !== window.__combatEffectsLightCount)
       throw Error('First wreck changed the scene light count');
-    return {armor: state.armor, frame, lights, renderMs};
+    return {armor: state.armor, frame, lights, renderMs,
+      programs: window.__render.renderer.info.programs?.length || 0,
+      textures: window.__render.renderer.info.memory.textures};
   })()`);
   await context.evaluate('window.__render.renderFrame()');
   await context.screenshot(`combat-vfx-player-wreck-paused-${quality}`);
@@ -210,7 +218,9 @@ async function pass(context, quality) {
     if (!mesh?.visible || player?.visible || distance > 5)
       throw Error('Later CPU blast is missing, misplaced or shared with player');
     return {cpuArmor: later.armor, visible: mesh.visible,
-      playerVisible: player.visible, distance, renderMs};
+      playerVisible: player.visible, distance, renderMs,
+      programs: window.__render.renderer.info.programs?.length || 0,
+      textures: window.__render.renderer.info.memory.textures};
   })()`);
   await context.evaluate('window.__render.renderFrame()');
   await context.screenshot(`combat-vfx-cpu-wreck-${quality}`);
@@ -219,7 +229,7 @@ async function pass(context, quality) {
     throw Error(`${quality} effects browser issues: ` +
       JSON.stringify({issues: context.issues, warnings: context.warnings}));
   console.log(`${quality} combat atlas: ` + JSON.stringify({setup, atlasWarmupMs,
-    baseline, muzzle,
+    baseline, resourceBaseline, muzzle,
     blast, aged, playerWreck, recovered, cpuWreck}));
 }
 
