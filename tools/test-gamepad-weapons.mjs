@@ -26,6 +26,9 @@ app.audio.setPaused = () => {};
 app.startCampaign({ mode: 'wasteland', startStage: 0, seed: 1989 });
 app.duel.state.status = 'racing';
 app.duel.state.paused = false;
+// The revised UFO charges at the first checkpoint of each lap.
+app.duel.state.s = app.duel.state.prevS = app.duel._lapGates[0] + 100;
+app.duel.state.nextLapGate = 1;
 const fired = [];
 app.duel.onChange((_, event) => {
   if (event.weaponFired) fired.push(event.weaponFired);
@@ -60,7 +63,15 @@ for (const [button, weapon] of dpad) {
   app.duel.state.combat.cooldowns[weapon] = 0;
   setButton(button, true);
   app._readGamepad();
-  equal(fired.slice(before), [weapon, weapon], `${weapon}: a second press can fire again`);
+  if (weapon === 'ufo') {
+    equal(fired.slice(before), [weapon], 'ufo: a second press cannot exceed the per-lap limit');
+    setButton(button, false);app._readGamepad();
+    app.duel.state.completedLaps = 1;
+    app.duel.state.s = app.duel.state.prevS = app.duel.course.length + app.duel._lapGates[0] + 100;
+    app.duel.state.nextLapGate = 1;
+    setButton(button, true);app._readGamepad();
+    equal(fired.slice(before), [weapon, weapon], 'ufo: a new lap grants a new jump');
+  } else equal(fired.slice(before), [weapon, weapon], `${weapon}: a second press can fire again`);
   setButton(button, false);
   app._readGamepad();
 }

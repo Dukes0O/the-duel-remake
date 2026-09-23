@@ -24,3 +24,13 @@ The release balance target is unchanged: firing whenever ready must save at
 most 4 seconds over two laps at stock and maximum level on each difficulty.
 Each successful use must advance the player by a positive distance. The
 candidate remains subject to that gate and the private browser review.
+
+On the combined Hard pace and short combat recovery candidate, the exact
+fixed-seed balance check passes: stock gains Easy/Medium/Hard are
++0.29/+1.57/−6.49 s; maximum gains are +0.58/+0.97/−6.16 s. Hard's negative
+total-time result is a playtest limit. The two jumps land in the same road
+lane at about 189 mph and cause no crashes. Later traffic and CPU contact
+timing pushes that race off line and costs about six seconds. The preview
+promises route advance, not a guaranteed faster finish in every traffic
+pattern. Test this feel with people rather than tuning a single seed to hide
+the interaction.
