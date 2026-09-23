@@ -11,83 +11,62 @@ const make=()=>{const d=new Duel({seed:1989});d.startCampaign({mode:'wasteland',
 let checks=0;const check=(v,m)=>{assert.ok(v,m);checks++;};
 let d=make(),s=d.state;
 check(s.mode==='wasteland'&&s.rival&&s.combat,'combat mode spawns a rival and weapons');
-check(ufoDestination(d).kind==='swap'&&ufoDestination(d).gainMeters===50,'UFO preview shows the rival swap and exact route gain');
-const rivalAhead=s.rival.s;s.rival.s=s.s-1;
-check(ufoDestination(d).kind==='warp','UFO preview changes to warp as the rival falls behind');
-s.rival.s=rivalAhead;
-check(d.fireWeapon('ufo'),'UFO fires');check(s.s===150&&s.rival.s===100&&s.prevS===150,'UFO swaps and resets sweep origin');
-check(s.combat.lastUfo?.kind==='swap'&&s.combat.lastUfo.gainMeters===50&&s.callout.includes('+50 m'),'UFO reports the actual swap destination');
-check(!d.fireWeapon('ufo'),'UFO cannot spam');s.paused=true;const cd=s.combat.cooldowns.ufo;d.step(1);check(cd===s.combat.cooldowns.ufo&&!d.fireWeapon('star'),'pause freezes weapons');s.paused=false;
-d=make();s=d.state;s.rival.s=90;check(ufoDestination(d).kind==='warp'&&ufoDestination(d).gainMeters===100,'UFO preview shows the forward warp distance');d.fireWeapon('ufo');check(s.s>100&&s.s<d._lapGates[0],'forward warp stops before next checkpoint');
-check(s.combat.lastUfo?.toS===s.s&&s.callout.includes('+100 m'),'UFO reports the actual warp destination');
-d=make();s=d.state;s.rival.s=90;s.s=d._lapGates[0]-2;const blockedCooldown=s.combat.cooldowns.ufo;
-check(ufoDestination(d).kind==='blocked'&&!d.fireWeapon('ufo')&&s.combat.cooldowns.ufo===blockedCooldown,'a checkpoint-blocked UFO remains available');
-d=make();s=d.state;const r=s.rival;r.s=d.course.length+500;r.completedLaps=1;r.nextLapGate=1;r.lapTimes=[55.2];r.lapStartedAt=55.2;s.stageTimeSec=60;d.fireWeapon('ufo');check(s.completedLaps===1&&s.nextLapGate===1&&r.completedLaps===0,'swap transfers valid route progress');
-assert.deepEqual(r.lapTimes,[55.2],'a rival keeps prior lap history even when the swap transfers its completed-lap progress');checks++;
-// Route position and checkpoints trade places, but each driver keeps the lap
-// times already driven and the start time of the current lap.
+check(ufoDestination(d).reason==='charging','UFO charges at the first checkpoint each lap');
+const armUfo=duel=>{duel.state.s=duel.state.prevS=1100;duel.state.nextLapGate=1;duel.state.rival.s=duel.state.rival.prevS=1150;};
+armUfo(d);
+const first=ufoDestination(d),rivalS=s.rival.s;
+check(first.kind==='jump'&&first.gainMeters===12&&first.toS===1112,'stock UFO previews an exact twelve-metre jump');
+check(d.fireWeapon('ufo'),'UFO fires');
+check(s.s===1112&&s.prevS===1112&&s.rival.s===rivalS,'jump moves only the player and resets sweep origin');
+check(s.completedLaps===0&&s.nextLapGate===1&&s.combat.lastUfo?.gainMeters===12&&s.callout.includes('+12 m TO 1112 m'),
+  'jump preserves checkpoint progress and reports its destination');
+check(s.assistedLap===true,'jump marks the current lap assisted');
+check(!d.fireWeapon('ufo'),'UFO cannot fire again in the same lap');
+s.paused=true;const cd=s.combat.cooldowns.ufo;d.step(1);
+check(cd===s.combat.cooldowns.ufo&&!d.fireWeapon('star'),'pause freezes weapons');s.paused=false;
+s.combat.cooldowns.ufo=0;
+check(ufoDestination(d).reason==='lap-used'&&!d.fireWeapon('ufo'),'pickup recharge cannot exceed one jump per lap');
+d=make();s=d.state;s.nextLapGate=1;s.s=d._lapGates[1]-2;
+check(ufoDestination(d).reason==='checkpoint'&&!d.fireWeapon('ufo')&&s.combat.cooldowns.ufo===0,
+  'checkpoint block preserves the charge');
+d=make();s=d.state;armUfo(d);s.combat.levels.ufo=3;
+check(ufoDestination(d).gainMeters===24,'maximum upgrade previews a twenty-four-metre jump');
 d=make();s=d.state;const rival=s.rival,length=d.course.length;
-s.s=length+100;rival.s=length+150;s.completedLaps=rival.completedLaps=1;
-s.nextLapGate=0;rival.nextLapGate=2;s.lapTimes=[55.2];rival.lapTimes=[53.6];
-s.assistedLaps=[false];rival.assistedLaps=[false];
-s.lapStartedAt=55.2;rival.lapStartedAt=53.6;s.stageTimeSec=70;
+s.s=length+1100;s.completedLaps=1;s.nextLapGate=1;s.lapTimes=[55.2];s.assistedLaps=[false];s.lapStartedAt=55.2;
+rival.s=length+150;rival.completedLaps=1;rival.nextLapGate=2;rival.lapTimes=[53.6];rival.lapStartedAt=53.6;
 const lapEvents=[];d.onChange((_,event)=>{if(event.lapCompleted)lapEvents.push(event);});
-check(d.fireWeapon('ufo'),'UFO swaps two drivers who have completed a lap');
-check(s.nextLapGate===2&&rival.nextLapGate===0,'UFO exchanges checkpoint progress with route position');
-assert.deepEqual(s.lapTimes,[55.2],'player keeps completed lap history after UFO swap');checks++;
-assert.deepEqual(rival.lapTimes,[53.6],'rival keeps completed lap history after UFO swap');checks++;
-check(s.lapStartedAt===55.2&&rival.lapStartedAt===53.6,'UFO keeps both running lap timers');
-check(s.assistedLap===true&&rival.assistedLap===true,'UFO flags both current laps as assisted');
+check(d.fireWeapon('ufo'),'UFO fires on second lap');
+check(s.completedLaps===1&&s.nextLapGate===1&&rival.nextLapGate===2&&rival.s===length+150,
+  'jump preserves both drivers checkpoint progress');
+assert.deepEqual(s.lapTimes,[55.2],'player keeps completed lap history');checks++;
+assert.deepEqual(rival.lapTimes,[53.6],'rival keeps completed lap history');checks++;
+check(s.lapStartedAt===55.2&&rival.lapStartedAt===53.6,'jump keeps both running lap timers');
+check(s.assistedLap===true&&rival.assistedLap!==true,'only the player has an assisted lap');
 s.s=2*length-1;s.prevS=s.s;s.lateral=s.prevLateral=0;s.speedMph=100;s.stageTimeSec=80;
 s.nextLapGate=d._lapGates.length;s.s=2*length+1;d._advanceLaps(s,.05,true);
 check(s.lapTimes.length===2&&s.assistedLaps?.[0]===false&&s.assistedLaps[1]===true&&lapEvents.at(-1)?.assisted===true,
-  'the next completed lap retains an assisted flag for best-lap eligibility');
-check(d._finishStage(),'the completed swap race produces a result');
-assert.deepEqual(s.results.assistedLaps,[false,true],'finished results retain assisted flags beside both lap times');checks++;
-check(s.results.assistedLaps!==s.assistedLaps,'finished assisted flags are a result snapshot');
-d.nextStage();
-check(d.state===s&&s.stageIndex===1&&s.assistedLaps.length===0&&s.assistedLap===false,
-  'a new stage clears the previous stage assisted-lap flags');
-d=make();s=d.state;const cleanLength=d.course.length;
-s.s=cleanLength-1;s.prevS=s.s;s.lateral=s.prevLateral=0;s.speedMph=100;s.stageTimeSec=60;
-s.nextLapGate=d._lapGates.length;s.s=cleanLength+1;d._advanceLaps(s,.05,true);
-check(s.assistedLaps?.[0]===false,'a lap without a swap remains eligible for a best lap');
-// A swap must land each car facing the way the previous occupant faced, with
-// speed that suits the destination and a short window free of crash damage.
-d=make();s=d.state;s.traffic=[];s.headingError=.34;s.slipAngle=.12;s.crashSpin=.05;s.speedMph=305;
-s.rival.headingError=-.47;s.rival.speedMph=190;s.rival.lateral=40;
-const landingLimit=d._drivingSurface(s.rival.s,s.rival.lateral,d.rivalSpec).speedLimit;
-check(d.fireWeapon('ufo'),'UFO fires into an off-road rival position');
-check(Math.abs(s.headingError+.47)<1e-9&&Math.abs(s.rival.headingError-.51)<1e-9,
-  'both swapped cars keep the destination heading');
-check(s.speedMph<=landingLimit&&s.rival.speedMph<=d._drivingSurface(s.rival.s,s.rival.lateral).speedLimit,
-  'both swapped cars receive a speed cap for their new surface');
-const landingCrashes=s.stageCrashes,rivalWear=s.rival.damageZones.front;
-d._crash('rock',1,100);d._dentVehicle(s.rival,'front',100);
-check(s.stageCrashes===landingCrashes&&s.rival.damageZones.front===rivalWear,
-  'both cars reject crash damage immediately after landing');
-stepCombat(d,1.19);d._crash('rock',1,100);d._dentVehicle(s.rival,'front',100);
-check(s.stageCrashes===landingCrashes&&s.rival.damageZones.front===rivalWear,
-  'both cars retain crash protection until 1.2 seconds after landing');
-stepCombat(d,.02);d._crash('rock',1,100);d._dentVehicle(s.rival,'front',100);
-check(s.stageCrashes===landingCrashes+1&&s.rival.damageZones.front>rivalWear,
-  'ordinary crash damage resumes after the landing protection expires');
+  'completed jump lap remains assisted');
+check(d._finishStage(),'jump race produces a result');
+assert.deepEqual(s.results.assistedLaps,[false,true],'result retains assisted flags');checks++;
+d.nextStage();check(s.assistedLaps.length===0&&s.assistedLap===false,'next stage resets assisted flags');
+d=make();s=d.state;armUfo(d);s.traffic=[];s.speedMph=305;
+check(d.fireWeapon('ufo'),'UFO fires at high speed');
+check(s.speedMph<=d._drivingSurface(s.s,s.lateral).speedLimit,'landing respects surface speed cap');
+const landingCrashes=s.stageCrashes;d._crash('rock',1,100);
+check(s.stageCrashes===landingCrashes,'brief landing protection prevents immediate crash');
+stepCombat(d,.36);d._crash('rock',1,100);
+check(s.stageCrashes===landingCrashes+1,'crash damage resumes after landing protection');
+d=make();s=d.state;armUfo(d);s.traffic=[{s:1112,lateral:0,alive:true,crushed:false,finished:false}];s.lateral=0;
+const safe=ufoDestination(d);
+check(safe.kind==='jump'&&safe.toS===1112&&Math.abs(safe.lateral)>2.7,'preview selects a clear landing lane');
+check(d.fireWeapon('ufo')&&s.lateral===safe.lateral,'jump uses the previewed clear lane');
 d=new Duel({seed:1989});d.startCampaign({mode:'wasteland',startStage:0,cpuDifficulty:'hard'});
 s=d.state;s.status='racing';s.traffic=[];const cut=d.course.features.shortcuts[0];
-s.s=cut.start-155;s.lateral=-3.4;s.speedMph=140;
-s.rival.s=cut.start-135;s.rival.lateral=-3.4;s.rival.speedMph=140;
-d._rival(1/120);check(s.rival.routeId===cut.id,'hard rival commits to a branch before the swap');
-check(d.fireWeapon('ufo'),'UFO exchanges a committed rival route');
-check(s.routeId===cut.id&&s.routeLap===1,'the player receives the destination route context');
-check(d._npcRoutePlanner.routeFor(s.rival)===null&&s.rival.routeId==null,
-  'the rival abandons its stale branch plan after landing before the entry');
-d=new Duel({seed:1989});d.startCampaign({mode:'wasteland',startStage:0,cpuDifficulty:'hard'});
-s=d.state;s.status='racing';s.traffic=[];const branch=d.course.features.shortcuts[0];
-s.s=(branch.start+branch.end)/2;s.lateral=d.course.shortcutOffset(branch,s.s);s.speedMph=120;
-s.rival.s=s.s+30;s.rival.lateral=-3.4;s.rival.speedMph=120;
-check(d.fireWeapon('ufo'),'UFO swaps a rival onto an occupied shortcut');
-check(s.rival.routeId===branch.id&&d._npcRoutePlanner.routeFor(s.rival)?.routeId===branch.id,
-  'the rival plans along the shortcut it lands on');
+s.s=cut.start+15;s.nextLapGate=1;s.lateral=d.course.shortcutOffset(cut,s.s);s.speedMph=120;
+const shortcutPreview=ufoDestination(d);
+check(shortcutPreview.kind==='jump'&&d._surface(shortcutPreview.toS,shortcutPreview.lateral).shortcutId===cut.id,
+  'jump follows a safe shortcut corridor');
+check(d.fireWeapon('ufo')&&s.routeId===cut.id,'player shortcut context follows the jump');
 d=make();s=d.state;check(d.fireWeapon('star'),'star activates');const speed=s.speedMph=100;d._crash('rock',1,100);check(s.speedMph===speed&&s.stageCrashes===0,'star blocks crash damage');for(let i=0;i<99;i++)stepCombat(d,.05);check(s.combat.shield>0,'star lasts until five seconds');stepCombat(d,.05);check(s.combat.shield<1e-8,'star expires after five seconds');
 d=make();s=d.state;check(d.fireWeapon('bomb')&&s.combat.projectiles.length===8,'bomb storm throws eight bombs');check(new Set(s.combat.projectiles.map(p=>Math.atan2(p.vx,p.vz).toFixed(2))).size===8,'bombs travel in eight directions');for(let i=0;i<40;i++)stepCombat(d,.05);check(s.combat.projectiles.length===0&&s.combat.bursts.length>0,'bombs expire into explosions');
 // A removed traffic car remains in the array for a while. Its old position

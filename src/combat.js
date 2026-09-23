@@ -1,17 +1,16 @@
 import {normalizeWeapons} from './weapon-upgrades.js';
-import {contactZone} from './collision.js';
-import {NpcRoutePlanner} from './npc-route.js';
+import {contactZone,sweepObstacle} from './collision.js';
 import {DRIVE} from './config.js';
 import {makeRng} from './rng.js';
 // Arcade vehicle combat. All timers and projectile motion use simulation time.
-export const WEAPONS=Object.freeze({ufo:{name:'UFO SWAP',key:'1',cooldown:18},bomb:{name:'BOMB STORM',key:'2',cooldown:9},crossbow:{name:'CROSSBOW',key:'3',cooldown:4},star:{name:'STAR SHIELD',key:'4',cooldown:16}});
+export const WEAPONS=Object.freeze({ufo:{name:'UFO JUMP',key:'1',cooldown:18},bomb:{name:'BOMB STORM',key:'2',cooldown:9},crossbow:{name:'CROSSBOW',key:'3',cooldown:4},star:{name:'STAR SHIELD',key:'4',cooldown:16}});
 const CPU_COMBAT=Object.freeze({
  easy:{interval:10,aimError:Math.PI/18,shieldReaction:.20,visionCos:.5},
  medium:{interval:7,aimError:.055,shieldReaction:.13,visionCos:.26},
  hard:{interval:5,aimError:.03,shieldReaction:.07,visionCos:.09},
 });
 export const supportsCombat=stage=>!!stage?.hasRival&&!stage.practice&&!stage.stuntTrial;
-export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],pickups:[],pickupTimer:4,pickupCount:0,serial:0,aiTimer:null,aiShot:0,aiShieldCooldown:0,cpuPickupCharges:{bomb:0,crossbow:0,star:0},hits:0,lastUfo:null};}
+export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},ufoUsedLaps:[],shield:0,rivalShield:0,projectiles:[],bursts:[],pickups:[],pickupTimer:4,pickupCount:0,serial:0,aiTimer:null,aiShot:0,aiShieldCooldown:0,cpuPickupCharges:{bomb:0,crossbow:0,star:0},hits:0,lastUfo:null};}
 const point=(duel,actor)=>{const p=duel.course.groundAt(actor.s,actor.lateral);return {...p,y:p.y+1+(actor.airHeight||0)};};
 const velocity=(actor,p)=>{
  const heading=p.heading+(actor.headingError||0),speed=(actor.speedMph||0)*(actor.dir||1)*DRIVE.mphToWorld;
@@ -33,14 +32,30 @@ function relocate(actor,pose){
  actor.groundHeight=null;actor.terrainPitch=null;actor.terrainRoll=null;actor.tumble=null;
 }
 export function ufoDestination(duel){
- const s=duel.state,target=s.rival,level=s.combat?.levels.ufo||0;
- if(target&&!target.finished&&!target.crushed&&target.s>s.s){
-  return {kind:'swap',fromS:s.s,toS:target.s,gainMeters:target.s-s.s,gateLimited:false};
- }
+ const s=duel.state,c=s.combat,level=c?.levels.ufo||0,fromS=s.s;
+ const blocked=reason=>({kind:'blocked',reason,fromS,toS:fromS,gainMeters:0});
+ if(c?.ufoUsedLaps?.[s.completedLaps])return blocked('lap-used');
+ if(s.nextLapGate===0)return blocked('charging');
+ // A race jump cannot bypass an unearned checkpoint or the finish line.
  const next=s.completedLaps*duel.course.length+(duel._lapGates[s.nextLapGate]??duel.course.length);
- const requested=s.s+100+75*level;
- const toS=Math.max(s.s,Math.min(requested,next-2));
- return {kind:toS-s.s<1?'blocked':'warp',fromS:s.s,toS,gainMeters:toS-s.s,gateLimited:toS<requested};
+ const requested=12+4*level,upper=Math.min(fromS+requested,next-2,duel.raceLength-2);
+ const spec=duel._vehicleSpec(s);
+ const others=[s.rival,...s.traffic,duel.state.police?.pursuit].filter(actor=>actor&&actor!==s&&actor.alive!==false&&!actor.crushed&&!actor.finished);
+ const source=duel._surface(fromS,s.lateral),shortcut=duel.course.features.shortcuts?.find(cut=>cut.id===source.shortcutId);
+ for(let toS=upper;toS>=fromS+2;toS-=2){
+  const phase=duel.course.phase?.(toS)??toS;
+  const branch=shortcut&&phase>=shortcut.start&&phase<=shortcut.end;
+  const preferred=branch?duel.course.shortcutOffset(shortcut,toS):s.lateral;
+  const lanes=[preferred,-DRIVE.laneOffset,DRIVE.laneOffset,0];
+  for(const lateral of [...new Set(lanes)]){
+   if(!duel._surface(toS,lateral).road)continue;
+   if(others.some(actor=>Math.abs(duel.relativeS(actor.s,toS)-toS)<13&&Math.abs(actor.lateral-lateral)<2.7))continue;
+   const point=duel.course.worldAt(toS,lateral);
+   if(duel._obstacles(toS-4,toS+4).some(obstacle=>sweepObstacle(point,point,obstacle,point.heading,spec)))continue;
+   return {kind:'jump',fromS,toS,lateral,gainMeters:toS-fromS,gateLimited:upper<fromS+requested};
+  }
+ }
+ return blocked(upper<fromS+2?'checkpoint':'landing');
 }
 export function fireWeapon(duel,weapon,enemy=false){
  const s=duel.state,c=s.combat,actor=enemy?s.rival:s,target=enemy?s:s.rival;
@@ -51,45 +66,21 @@ export function fireWeapon(duel,weapon,enemy=false){
   if(enemy)return false;
   const destination=ufoDestination(duel);
   if(destination.kind==='blocked'){
-   duel._callout('UFO / CHECKPOINT BLOCKS WARP',2);
+   duel._callout(destination.reason==='lap-used'?'UFO / ONE JUMP PER LAP':destination.reason==='charging'?'UFO / CHARGES AT FIRST GATE':destination.reason==='checkpoint'?'UFO / CHECKPOINT AHEAD':'UFO / NO SAFE LANDING',2);
    return false;
   }
-  let swapped=false;
-  if(destination.kind==='swap'){
-   swapped=true;
-   const fields=['s','lateral','headingError','completedLaps','nextLapGate','routeId','routeLap'];
-   const a=Object.fromEntries(fields.map(k=>[k,s[k]])),b=Object.fromEntries(fields.map(k=>[k,target[k]]));
-   // The player model also turns with slip and crash spin; the rival does not.
-   const facing=(s.headingError||0)+(s.slipAngle||0)+(s.crashSpin||0);
-   a.headingError=Math.atan2(Math.sin(facing),Math.cos(facing));
-   const playerSpeed=s.speedMph,rivalSpeed=target.speedMph;
-   burst(c,point(duel,target),'ufo');relocate(s,b);relocate(target,a);
-   for(const [car,oldSpotSpeed,spec] of [[s,rivalSpeed,duel.car],[target,playerSpeed,duel.rivalSpec||duel.car]]){
-    const surface=duel._drivingSurface(car.s,car.lateral,spec);
-    const landingCap=surface.mainRoad?surface.speedLimit:surface.preparedGravel?Math.min(100,surface.speedLimit):Math.min(68,surface.speedLimit);
-    car.speedMph=Math.sign(car.speedMph)*Math.min(Math.abs(car.speedMph),Math.abs(oldSpotSpeed),landingCap);
-   }
-   if(s.cpuDifficulty!=='easy'){
-    const car=duel.rivalSpec||duel.car;
-    if(duel._npcRoutePlanner?.course!==duel.course||duel._npcRoutePlanner?.car!==car)
-     duel._npcRoutePlanner=new NpcRoutePlanner(duel.course,{car,surfaceAt:(distance,lateral)=>duel._drivingSurface(distance,lateral,car)});
-    const route=duel._npcRoutePlanner.land(target,s.cpuDifficulty);
-    target.routeId=route?.routeId||null;target.routeLap=route?.lap||null;
-   }else{duel._npcRoutePlanner?.reset(target);target.routeId=null;target.routeLap=null;}
-   // Progress belongs to the stolen position; timing belongs to this driver.
-   for(const car of [s,target]){
-    car.lap=car.currentLap=car.completedLaps+1;
-    car.assistedLaps??=(car.lapTimes||[]).map(()=>false);
-    car.assistedLap=true;
-   }
-   c.shield=Math.max(c.shield,1.2);c.rivalShield=Math.max(c.rivalShield,1.2);
-   duel._callout(`UFO / SWAP +${Math.round(destination.gainMeters)} m OF ROUTE`,2);
-  }else{
-   relocate(s,{s:destination.toS,lateral:0});
-   duel._callout(`UFO / WARP +${Math.round(destination.gainMeters)} m${destination.gateLimited?' TO GATE':''}`,2);
-  }
+  c.ufoUsedLaps[s.completedLaps]=true;
+  relocate(s,{s:destination.toS,lateral:destination.lateral});
+  const surface=duel._drivingSurface(s.s,s.lateral,duel.car);
+  s.speedMph=Math.sign(s.speedMph)*Math.min(Math.abs(s.speedMph),surface.speedLimit);
+  s.routeId=duel._surface(s.s,s.lateral).shortcutId||null;
+  s.routeLap=s.routeId?s.completedLaps+1:null;
+  s.assistedLaps??=(s.lapTimes||[]).map(()=>false);
+  s.assistedLap=true;
+  duel._callout(`UFO / JUMP +${Math.round(destination.gainMeters)} m TO ${Math.round(destination.toS)} m`,2);
   c.lastUfo={...destination};
-  s.invulnerableSec=Math.max(s.invulnerableSec,swapped?1.2:1);burst(c,p,'ufo');burst(c,point(duel,s),'ufo');
+  c.shield=Math.max(c.shield,.35);
+  s.invulnerableSec=Math.max(s.invulnerableSec,.35);burst(c,p,'ufo');burst(c,point(duel,s),'ufo');
  }else if(weapon==='star'){
   if(enemy)c.rivalShield=5;else {c.shield=5;s.invulnerableSec=Math.max(s.invulnerableSec,5);}
   burst(c,p,'star');

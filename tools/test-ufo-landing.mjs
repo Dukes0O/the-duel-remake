@@ -1,37 +1,41 @@
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {COURSE,DRIVE,steeringYawAuthority} from '../src/config.js';
-import {supportsCombat} from '../src/combat.js';
+import {supportsCombat,ufoDestination} from '../src/combat.js';
 
 const stages=COURSE.map((stage,index)=>supportsCombat(stage)?index:null).filter(index=>index!==null);
-assert.equal(stages.length,11,'the swap matrix covers all 11 combat courses');
-let shortcutLandings=0;
-for(let n=0;n<100;n++){
-  const stage=stages[n%stages.length],seed=9100+n*37;
+assert.equal(stages.length,11,'the landing matrix covers all 11 combat courses');
+let shortcutLandings=0,landings=0;
+for(let n=0;n<260&&landings<100;n++){
+  const onShortcut=n%4===0,stage=onShortcut?stages[0]:stages[n%stages.length],seed=9100+n*37;
   const duel=new Duel({seed});duel.startCampaign({mode:'wasteland',startStage:stage,cpuDifficulty:'hard'});
   const player=duel.state,rival=player.rival,course=duel.course;
   player.status='racing';player.traffic=[];
-  const cut=course.features.shortcuts?.[0],onShortcut=Boolean(cut&&n%2===0);
-  if(onShortcut){
-    const phase=.08+.84*(n%9)/8,landingS=cut.start+(cut.end-cut.start)*phase;
-    rival.s=landingS;rival.lateral=course.shortcutOffset(cut,landingS);
-    const ahead=course.worldAt(landingS+.5,course.shortcutOffset(cut,landingS+.5));
-    const behind=course.worldAt(landingS-.5,course.shortcutOffset(cut,landingS-.5));
-    const tangent=Math.atan2(ahead.x-behind.x,ahead.z-behind.z);
-    rival.headingError=Math.atan2(Math.sin(tangent-course.at(landingS).heading),Math.cos(tangent-course.at(landingS).heading));
-    player.s=landingS-40;shortcutLandings++;
-  }else{
-    player.s=course.length*(.27+.002*(n%13));rival.s=player.s+40;
-    rival.lateral=-3.4;rival.headingError=0;
-  }
-  player.lateral=-3.4;player.headingError=0;
-  player.speedMph=110+n%5*8;rival.speedMph=100+n%7*7;
-  assert.ok(duel.fireWeapon('ufo'),`swap fires on ${COURSE[stage].id} seed ${seed}`);
+  const cut=course.features.shortcuts?.[0];
+  const sourceS=onShortcut?cut.start+20+(cut.end-cut.start-60)*(n%9)/8
+    :duel._lapGates[0]+50+(n*73)%(course.length-duel._lapGates[0]-250);
+  player.s=player.prevS=sourceS;
+  player.nextLapGate=duel._lapGates.findIndex(gate=>gate>sourceS+1);
+  if(player.nextLapGate<0)player.nextLapGate=duel._lapGates.length;
+  player.lateral=player.prevLateral=onShortcut?course.shortcutOffset(cut,sourceS):-DRIVE.laneOffset;
+  player.speedMph=110+n%5*8;rival.s=sourceS+45;rival.lateral=-DRIVE.laneOffset;
+  rival.speedMph=100+n%7*7;
+  const preview=ufoDestination(duel);
+  if(preview.kind==='blocked')continue;
+  const beforeLap=player.completedLaps,beforeGate=player.nextLapGate,beforeRival=rival.s;
+  assert.ok(duel.fireWeapon('ufo'),'jump fires on '+COURSE[stage].id+' seed '+seed);
+  landings++;if(onShortcut)shortcutLandings++;
+  assert.equal(player.s,preview.toS,'actual route position matches the visible preview');
+  assert.equal(player.lateral,preview.lateral,'actual lane matches the visible preview');
+  assert.equal(player.completedLaps,beforeLap,'jump does not skip a lap');
+  assert.equal(player.nextLapGate,beforeGate,'jump does not skip a checkpoint');
+  assert.equal(rival.s,beforeRival,'jump never relocates the rival');
   const crashes=player.stageCrashes,resets=player.boundaryResets;
   for(let frame=0;frame<120&&player.status==='racing';frame++){
-    // Drive the landing corridor with the same steering model as the game demo.
     const metresPerSec=player.speedMph*DRIVE.mphToWorld;
-    const targetLateral=onShortcut&&player.s<cut.end?course.shortcutOffset(cut,player.s):-3.4;
+    const surface=duel._surface(player.s,player.lateral);
+    const activeCut=course.features.shortcuts?.find(branch=>branch.id===surface.shortcutId);
+    const targetLateral=activeCut&&player.s<activeCut.end?course.shortcutOffset(activeCut,player.s):-DRIVE.laneOffset;
     const headingTarget=Math.atan((targetLateral-player.lateral)*2.5/Math.max(15,metresPerSec));
     const desiredYaw=course.at(player.s+metresPerSec*.18).curvature*metresPerSec+(headingTarget-player.headingError)*6;
     const traction=duel._drivingSurface(player.s,player.lateral).traction;
@@ -39,9 +43,9 @@ for(let n=0;n<100;n++){
     duel.setInput({throttle:0,brake:0,steer:Math.max(-1,Math.min(1,-desiredYaw/authority))});
     duel.step(1/60);
   }
-  assert.equal(player.stageCrashes,crashes,`no landing crash on ${COURSE[stage].id} seed ${seed}`);
-  assert.equal(player.boundaryResets,resets,`no landing reset on ${COURSE[stage].id} seed ${seed}`);
-  assert.ok(!rival.crushed,`rival survives landing on ${COURSE[stage].id} seed ${seed}`);
+  assert.equal(player.stageCrashes,crashes,'no landing crash on '+COURSE[stage].id+' seed '+seed);
+  assert.equal(player.boundaryResets,resets,'no landing reset on '+COURSE[stage].id+' seed '+seed);
 }
-assert.ok(shortcutLandings>=15,'the matrix includes at least 15 shortcut landings');
-console.log(`UFO landing: 100 seeded swaps across ${stages.length} combat courses, ${shortcutLandings} shortcut landings, zero crashes or resets within two seconds.`);
+assert.equal(landings,100,'one hundred seeded safe jumps are available');
+assert.ok(shortcutLandings>=15,'matrix includes at least fifteen shortcut landings');
+console.log('UFO landing: '+landings+' safe jumps across '+stages.length+' combat courses, '+shortcutLandings+' on shortcuts, zero crashes or resets within two seconds.');

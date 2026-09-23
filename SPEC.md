@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Approved for implementation by Kyle on 23 September 2026; BUG-04 UFO design remains open for review |
+| Status | Approved for implementation by Kyle on 23 September 2026; Kyle chose a short, predictable tactical UFO jump for BUG-04 on 23 September 2026. The distance and balance check remain subject to testing. |
 | Date | 22 September 2026 |
 | Covers | A review of Mad Max Duel and of older code and habits that cause problems today; a way to build continuously with automatic checks instead of stopping between phases; an agent setup for Codex; and the plan for on-foot crews, a bigger arsenal, armor kits, an arena, a warlord ladder, unlocks and image creation |
 | Starting point | Commit `1fd7116` on `master` |
@@ -231,10 +231,10 @@ Car-mounted weapons. Recharge times are level 0; each level takes 10–15% off.
 
 | # | Weapon | What it does | Counter | Recharge | Unlock |
 | --- | --- | --- | --- | --- | --- |
-| 1 | UFO Warp *(reworked)* | Swap places with a car 15–400 m ahead, each keeping its lap history, or warp forward 80 m (+30 m per level). Never past the next checkpoint or inside the last 300 m | Star shield blocks being swapped | 24 s | Owned |
+| 1 | UFO Jump *(reworked after playtest)* | After the first checkpoint each lap, jump forward once on that lap. Candidate distance: 12 m + 4 m per level. Show the exact landing before firing; keep the rival, lap history and checkpoint order unchanged. Never pass the next checkpoint or finish line. Only fire if the landing is clear. | First checkpoint, one-use limit, and safe-landing check | 18 s | Owned |
 | 2 | Bomb Storm *(reworked)* | 8 bombs (+2 per level) thrown in a ring, carrying the car's speed | Distance, shield | 9 s | Owned |
 | 3 | Crossbow *(reworked)* | Leading, lightly homing bolt | Smoke, decoy, shield | 4 s | Owned |
-| 4 | Star Shield | Blocks all damage and swaps for 5 s | Wait it out, Tesla Coil | 16 s | Owned |
+| 4 | Star Shield | Blocks damage for 5 s | Wait it out, Tesla Coil | 16 s | Owned |
 | 5 | Oil Slick | Rear pool for 6 s. Cars crossing it spin | Steer around | 10 s | Rank 2 |
 | 6 | Harpoon | Tethers the target for 3 s, slows it and yanks it sideways | Shield, hard opposite steering | 12 s | Rank 3 |
 | 7 | Caltrops | Rear scatter. Grip −25% for 4 s | Steer around | 9 s | Rank 5 |
@@ -925,9 +925,10 @@ CMB tasks all touch `combat.js`, so one CMB lane does them in this order: BUG-12
 - [ ] **BUG-03 Safe swap landing** (F3, H5) · CMB · S · hook `src/npc-route.js`
   - Done when: swaps exchange position, heading and route context; both cars get 1.2 s without crash damage and a speed cap for the new spot; the rival's route planner resets.
   - Check: 100 seeded swaps across all 11 combat courses, including shortcut positions, cause zero crashes in the 2 s after landing.
+  - Historical completion: these swap safeguards were built and tested before Kyle replaced swaps with a short jump. BUG-04 now tests the new landing rule.
 - [ ] **BUG-04 UFO rebalance** (F4, B1) · CMB · S · helpers balance_analyst
-  - Done when: swaps need a 15–400 m gap; warps go 80 m + 30 m per level, never past the next checkpoint or inside the last 300 m; recharge 24 s, −10% per level.
-  - Check: firing the UFO whenever ready gains at most 4 s over two laps, at stock and at max level.
+  - Done when: the UFO is a short, predictable forward jump after the first checkpoint, usable once per lap. The exact route distance and landing are shown before firing and confirmed after. It never skips a gate or lap, moves the rival, erases history, or lands in an occupied or solid spot. Candidate tuning is 12 m + 4 m per level, with 18 s recharge reduced 15% per level.
+  - Check: 100 seeded jumps across all 11 combat courses, including shortcuts, cause zero crashes or resets within 2 s. Firing whenever ready gains at most 4 s over two laps at stock and maximum level, while each successful activation provides a positive route advance.
 - [ ] **BUG-05 Bombs carry the car's speed** (F5) · CMB · S
   - Check: own blasts cut the thrower's speed by at most 15% at 48, 97, 193 and 320 km/h.
 - [ ] **BUG-06 A crossbow that hits** (F6) · CMB · S · helpers balance_analyst
@@ -1141,7 +1142,7 @@ Later cards whose `needs` are met may start before a wave is finished. The finis
 - The full suite is green on `master` and `integration/wasteland`.
 - No page reloads of the live game caused by agents after FND-01.
 - Arrows steer; A and D never steer in the car.
-- Swaps keep lap history and cause zero crashes in 100 seeded swaps across all 11 combat courses.
+- The UFO keeps lap history, shows its exact short jump destination, and causes zero crashes or resets in 100 seeded landings across all 11 combat courses.
 - UFO-whenever-ready gains at most 4 s over two laps (today 8.6 s).
 - Own bombs cut the thrower's speed by at most 15% at any speed (today about 69% at 97 km/h).
 - Crossbow hits 35–60% of shots at a rival within 120 m and in front (today about 4%).
