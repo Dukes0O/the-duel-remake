@@ -452,7 +452,7 @@ tasks:
     lane: CMB
     size: M
     needs: [RFX-03]
-    status: building
+    status: merged
     owns: [src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat-pickups.js, src/combat-ai.js, src/wasteland-tuning.js, tools/test-combat-modules.mjs, tools/test-combat-opponents.mjs]
     hooks: [src/combat-scene.js, src/sim-contacts.js, src/render3d.js]
     helpers: [reviewer, browser_qa]
@@ -466,7 +466,7 @@ tasks:
       - "Every combat number moves into wasteland-tuning.js without changing current balance."
       - "A real three-opponent combat scene shows valid effects and finishes with ranked results."
       - "Production build, focused tests, merge gate and private browser scenario pass."
-    note: "Independent red acceptance tests committed as a4316b2; isolated builder started after the audio forward port."
+    note: "Integrated as 0fdb099 and 9fd42dd. Independent red tests and review, 172/172 merge suites in 319.82 s, 162 unchanged replay fingerprints, build, High/Performance private smoke and three-opponent combat browser scene pass. The normal menu still starts one rival."
     spec: "SPEC.md, task RFX-04"
   - id: CMB-01
     title: "Armor, wrecks, and recovery for every combat car"
@@ -474,7 +474,7 @@ tasks:
     lane: CMB
     size: M
     needs: [RFX-04]
-    status: blocked
+    status: building
     owns: [src/combat-armor.js, src/wasteland-tuning.js, src/combat-projectiles.js, tools/test-combat-armor.mjs, tools/scenarios/combat-armor-wreck.mjs]
     hooks: [src/combat.js, src/game.js, src/sim-contacts.js, src/sim-rival.js, src/sim-crash.js, src/feature-flags.js, src/render3d.js, src/explosion.js]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]

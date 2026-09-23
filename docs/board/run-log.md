@@ -458,3 +458,16 @@ checkout untouched until the final integration commit passes the full gate.
 - CMB commit `0c8eb59` was also cherry-picked as `1d9110f` before this gate:
   combat hit events identify player, rival or traffic without changing physics.
   TOOL-01 will use that identity for accurate CPU hit counts.
+
+## 2026-09-23 PDT — RFX-04 combat field merged
+
+- Integrated independent acceptance tests and the reviewed combat split as
+  `0fdb099` and `9fd42dd`. All 172 merge suites passed in 319.82 seconds,
+  including 162 unchanged replay fingerprints and 213 scripted multi-car
+  checks across all 16 courses. The production build passed.
+- Private High and Performance browser smoke passed with zero warnings or
+  errors. The three-opponent combat scene showed a counted player hit on CPU 2,
+  CPU 3's shield, CPU 2's visible rig and rank 04/04. The normal player menu still
+  starts one opponent; no live release was made for this internal split.
+- CMB-01 armor work started in separate builder and test-author worktrees.
+  ART-A runtime sheets are in final visual and intake review.
