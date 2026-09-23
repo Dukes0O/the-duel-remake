@@ -7,6 +7,9 @@ its charge and says why it did not fire.
 
 The underlying swap and warp distances are unchanged. This is a visibility
 and charge-waste fix while the separate UFO balance gate remains open.
+The live preview now recalculates the destination each frame, so the label
+changes as soon as the rival moves ahead or behind. The browser check still
+shows no needless text writes during a steady state.
 
 Checks: `node tools/test-combat.mjs` passed 72 checks;
 `node tools/run-tests.mjs --tier lane --changed --jobs 8` passed 93 suites;

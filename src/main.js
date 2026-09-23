@@ -109,7 +109,6 @@ const gamepadWeaponDirections={ufo:'↑',bomb:'→',crossbow:'↓',star:'←'};
 const gamepadWeaponNames={ufo:'Up',bomb:'Right',crossbow:'Down',star:'Left'};
 weaponHud.innerHTML=Object.entries(WEAPONS).map(([id,w])=>`<button type="button" data-weapon="${id}" title="${w.name} · Key ${w.key} · Gamepad D-pad ${gamepadWeaponNames[id]}" aria-label="${w.name}, keyboard ${w.key}, gamepad D-pad ${gamepadWeaponNames[id]}">${w.key} ${gamepadWeaponDirections[id]} · ${w.name}</button>`).join('')+'<span class="weapon-status"></span>';
 root.querySelector('#overlay').append(weaponHud);const weaponStatus=weaponHud.querySelector('.weapon-status');
-let ufoReadout=null,ufoReadoutAt=-Infinity;
 const weaponButtons=[...weaponHud.querySelectorAll('[data-weapon]')];
 weaponHud.addEventListener('click',e=>{const button=e.target.closest('[data-weapon]');if(button)app.duel.fireWeapon(button.dataset.weapon);});
 const combatHelp=document.createElement('p');combatHelp.className='combat-help';combatHelp.textContent='MAD MAX DUEL: 1 / D-pad ↑ UFO swap · 2 / → eight-way bombs · 3 / ↓ crossbow · 4 / ← invincible star (5s). Glowing road power-ups instantly recharge a weapon. The rival fights back. Wrecks recover; finish first.';root.querySelector('.race-setup').append(combatHelp);
@@ -432,10 +431,7 @@ function renderState(s) {
   const combat=s.combat,hideWeaponHud=!combat||s.status==='menu';
   if(weaponHud.hidden!==hideWeaponHud)weaponHud.hidden=hideWeaponHud;
   if(combat){
-    if(combat.cooldowns.ufo<=0&&s.status==='racing'){
-      if(performance.now()-ufoReadoutAt>=1000){ufoReadout=ufoDestination(app.duel);ufoReadoutAt=performance.now();}
-    }else{ufoReadout=null;ufoReadoutAt=-Infinity;}
-    const ufo=ufoReadout;
+    const ufo=combat.cooldowns.ufo<=0&&s.status==='racing'?ufoDestination(app.duel):null;
     const ufoAction=ufo?.kind==='swap'?`SWAP +${Math.round(ufo.gainMeters)}m`:ufo?.kind==='warp'?`WARP +${Math.round(ufo.gainMeters)}m`:ufo?'GATE BLOCKS':'';
     for(const button of weaponButtons){
       const key=button.dataset.weapon,left=combat.cooldowns[key],blocked=key==='ufo'&&ufo?.kind==='blocked',disabled=s.status!=='racing'||s.paused||left>0||blocked;
