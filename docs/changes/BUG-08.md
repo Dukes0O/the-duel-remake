@@ -21,3 +21,12 @@ Bumper, crossbow and shield meshes now attach to named mounting points under the
 ## Behavior and test changes
 
 No simulation rules or existing assertions changed. The new test checks the combat rig's world position against each car model's matrix and mount point. Browser QA used temporary storage and a private port; screenshots are in ignored `.qa-dist/browser-output/` until the next QA build.
+
+## Follow-up visual review
+
+The first shield review showed a bright wire cage that spread well beyond the car, especially on the Falcone and Titan. I reduced the shell and rim to the model dimensions, replaced the dense wireframe rim with one thin ellipse near the wheels, and gave the shield its own dim material. The car body remains visible through the effect. This changes appearance only; socket placement and combat timing are unchanged.
+
+- `node tools/test-vehicle-sockets.mjs`: 751 checks passed again.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`: 24/24 affected suites passed in 44.55 seconds.
+- A private, memory-only browser run on port 5574 captured each of the nine cars as the player car with both shields active. I inspected all nine 1280 × 800 screenshots; the shell stays close to each model and the road-wide ring is gone. The run reported zero warnings and zero errors. Evidence: ignored `.qa-dist/browser-output/vehicle-sockets-review-2026-09-23T05-16-47-351Z/`.
+- `npm run build`: passed, with the existing large-chunk warning.

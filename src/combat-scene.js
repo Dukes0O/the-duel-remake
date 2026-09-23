@@ -8,8 +8,12 @@ export function createCombatScene(){
   fire:new THREE.MeshBasicMaterial({color:0xff8c16,transparent:true,opacity:.85,depthWrite:false}),
   smoke:new THREE.MeshBasicMaterial({color:0x322b24,transparent:true,opacity:.6,depthWrite:false}),
   neon:new THREE.MeshBasicMaterial({color:0x64ffce,wireframe:true}),gold:new THREE.MeshBasicMaterial({color:0xffe16b,wireframe:true}),
+  shield:new THREE.MeshBasicMaterial({color:0xffd69b,wireframe:true,transparent:true,opacity:.16,depthWrite:false}),
+  shieldRim:new THREE.LineBasicMaterial({color:0xffd69b,transparent:true,opacity:.32,depthWrite:false}),
   tip:new THREE.MeshBasicMaterial({color:0xffdf89})};
  const sphere=new THREE.IcosahedronGeometry(1,1),ring=new THREE.TorusGeometry(1,.055,6,28),shaft=new THREE.CylinderGeometry(.07,.07,3,5),tip=new THREE.ConeGeometry(.35,.8,5);
+ const shieldShell=new THREE.IcosahedronGeometry(1,0);
+ const shieldRim=new THREE.BufferGeometry().setFromPoints(Array.from({length:64},(_,i)=>new THREE.Vector3(Math.cos(i*Math.PI/32),0,Math.sin(i*Math.PI/32))));
  const projectiles=Array.from({length:40},()=>{
   const g=new THREE.Group(),bomb=new THREE.Mesh(sphere,materials.iron),arrow=new THREE.Group();bomb.scale.setScalar(.65);
   const rod=new THREE.Mesh(shaft,materials.iron),head=new THREE.Mesh(tip,materials.tip);head.position.y=1.7;arrow.add(rod,head);arrow.rotation.x=Math.PI/2;
@@ -55,9 +59,8 @@ export function createCombatScene(){
 
   const shield = new THREE.Group();
   shield.name = `combat-shield-${index}`;
-  const ball = new THREE.Mesh(sphere, materials.gold);
-  const halo = new THREE.Mesh(ring, materials.gold);
-  halo.rotation.x = Math.PI / 2;
+  const ball = new THREE.Mesh(shieldShell, materials.shield);
+  const halo = new THREE.LineLoop(shieldRim, materials.shieldRim);
   shield.add(ball, halo);
   group.add(bumper, bow, shield);
   return { bumper, bar, spikes, bow, shield, ball, halo };
@@ -85,9 +88,10 @@ export function createCombatScene(){
    spike.position.set((spikeIndex - 2) * width * .21, 0, .45);
   });
   rig.bow.scale.setScalar(Math.max(.78, Math.min(1.2, width / 2.3)));
-  // The barrier clears the car without turning into a road-wide wire cage.
-  rig.ball.scale.set(width * .82, height * .65 + .25, length * .67);
-  rig.halo.scale.setScalar(length * .66);
+  // Leave a narrow gap around the body, with a low rim near the wheel line.
+  rig.ball.scale.set(width * .62, height * .58 + .12, length * .57);
+  rig.halo.scale.set(width * .50, 1, length * .44);
+  rig.halo.position.y = -height * .36;
  }
 
  function detachVehicle(vehicle) {
@@ -129,7 +133,7 @@ export function createCombatScene(){
   detachVehicle,
   dispose(){
    for (const vehicle of [...bindings]) if (vehicle) detachVehicle(vehicle);
-   for(const geometry of [sphere,ring,shaft,tip,armorGeometry])geometry.dispose();
+   for(const geometry of [sphere,ring,shaft,tip,armorGeometry,shieldShell,shieldRim])geometry.dispose();
    Object.values({...materials,...pickupMaterials}).forEach(material=>material.dispose());
   },
  };
