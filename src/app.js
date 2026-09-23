@@ -21,6 +21,7 @@ import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as
 import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
 
 const SIMULATION_STEP = 1 / 120;
+const GAMEPAD_WEAPON_BUTTONS = [[12, 'ufo'], [15, 'bomb'], [13, 'crossbow'], [14, 'star']];
 export const ROUTE_PREFERENCE_KEY='duel_route_variant';
 function readRoutePreference(){try{const value=globalThis.localStorage?.getItem(ROUTE_PREFERENCE_KEY);return isRouteVariant(value)?value:DEFAULT_ROUTE_VARIANT;}catch{return DEFAULT_ROUTE_VARIANT;}}
 
@@ -500,6 +501,9 @@ export class App {
     if (edge(3)) this.cycleCamera();
     if (edge(5)) this.duel.setInput({ shiftUp: true });
     if (edge(4)) this.duel.setInput({ shiftDown: true });
+    for (const [index, weapon] of GAMEPAD_WEAPON_BUTTONS) {
+      if (edge(index)) this.duel.fireWeapon(weapon);
+    }
     this._gamepadButtons = pressed;
     const axis = pad.axes[0] || 0;
     return {
