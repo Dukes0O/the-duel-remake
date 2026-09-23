@@ -554,9 +554,9 @@ tasks:
     lane: CMB
     size: M
     needs: [CMB-02]
-      status: building
+    status: building
     owns: [src/destructibles.js, src/roadside-debris.js, tools/test-combat-knockaway.mjs, tools/scenarios/combat-knockaway.mjs]
-    hooks: [src/sim-contacts.js, src/sim-rival.js, src/game.js, src/world.js, src/scenery-fall.js, src/desert-detail.js, src/vegetation.js, src/world-props.js, src/render3d.js, src/combat-scene.js, src/wasteland-tuning.js]
+    hooks: [src/sim-contacts.js, src/sim-rival.js, src/game.js, src/world.js, src/scenery-fall.js, src/desert-detail.js, src/vegetation.js, src/world-props.js, src/render3d.js, src/combat-scene.js, src/wasteland-tuning.js, tools/scenarios/traffic-wreck-callout.mjs]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
     flag: roadside-destruction-or-wasteland2
     behavior_change: yes
@@ -565,7 +565,7 @@ tasks:
       - "One contact creates one indexed roadsideImpact with its outcome and finite hit position; moving scenery and traffic leave collision, and high-tier objects leave the rendered scene after pooled debris."
       - "Movable contacts cost no player armor, crash slot or time penalty. Large trees, rocks and rails stay solid; rivals use CMB-02 local shove, wreck and recovery."
       - "Explicitly flag-off Wasteland and ordinary replay fingerprints remain unchanged. 30/60/144 FPS contacts, High/Performance memory-only browser scenes, balance and frame checks pass."
-    note: "Independent red tests at 57874df: 2 controls pass and 15 new-behavior checks fail on the base. Use the existing roadside switch or wasteland2 in Wasteland only. After full balance and visual gates, promote roadside-destruction from beta to on in the release so normal Mad Max play has this behavior by default."
+    note: "Independent red tests at 57874df: 2 controls pass and 15 new-behavior checks fail on the base. The old traffic-wreck browser scenario must now assert one flagged obliteration, a clear HUD callout and zero crash/armor/time cost; record its changed assertion. Use the existing roadside switch or wasteland2 in Wasteland only. After full balance and visual gates, promote roadside-destruction from beta to on in the release so normal Mad Max play has this behavior by default."
     spec: "SPEC.md section 3.2 and 2026-09-23 play-test feedback"
   - id: BUG-15
     title: "Keep rival shields from protecting traffic"

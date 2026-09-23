@@ -105,6 +105,18 @@ and how to reverse it before continuing.
 - How to reverse: Enable ammo spawn when FOOT-01 provides an on-foot actor,
   then test player and CPU collection, save behavior and road visibility.
 
+## 2026-09-23 PDT — CMB-08 roadside traffic callouts
+
+- Decision: A low-tier traffic hit says `TRAFFIC SHOVED CLEAR`; a high-tier hit
+  says `TRAFFIC OBLITERATED`. The existing traffic-wreck browser scenario now
+  checks the new event, visible debris and no player crash or time penalty.
+- Reason: The new physics replaces the old traffic wreck and crash rule. A
+  short callout confirms the outcome during a fast race, while the old browser
+  assertion describes behavior Kyle asked us to remove.
+- How to reverse: Change the two callouts and the CMB-08 focused and browser
+  assertions together, then rerun the full browser and balance gates. Keep
+  the flagged no-crash rule unless Kyle changes it.
+
 ## Entry format
 
 - Date and card:
