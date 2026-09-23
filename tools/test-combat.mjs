@@ -34,6 +34,20 @@ traffic.alive=true;blastTraffic();
 check(traffic.speedMph<80&&traffic.damageZones.rear>0&&blastHits.length===1,
   'bomb blasts still damage live traffic at the same position');
 d=make();s=d.state;s.rival.s=120;s.rival.lateral=s.lateral;s.rival.speedMph=100;check(d.fireWeapon('crossbow'),'crossbow fires');for(let i=0;i<10;i++)stepCombat(d,.02);check(s.combat.hits===1&&s.rival.speedMph<100&&Math.abs(s.rival.pushVelocity)>0,'swept arrow hits and shoves the opponent');
+// Aim each projectile at a rotated car so dents follow the struck body panel,
+// rather than the road axis or a fixed rear-panel fallback.
+for(const kind of ['bomb','crossbow'])for(const zone of ['front','rear','left','right']){
+  d=make();s=d.state;s.headingError=.4;s.slipAngle=.15;
+  const at=d.course.groundAt(s.s,s.lateral),heading=at.heading+s.headingError+s.slipAngle;
+  const forward={x:Math.sin(heading),z:Math.cos(heading)},left={x:Math.cos(heading),z:-Math.sin(heading)};
+  const direction={front:forward,rear:{x:-forward.x,z:-forward.z},left,right:{x:-left.x,z:-left.z}}[zone];
+  const distance=kind==='bomb'?8:1;
+  s.combat.projectiles.push({kind,enemy:true,level:0,x:at.x+direction.x*distance,
+    y:at.y+1,z:at.z+direction.z*distance,vx:0,vy:0,vz:0,age:kind==='bomb'?1.5:0});
+  stepCombat(d,.01);
+  check(s.damageZones[zone]>0&&Object.entries(s.damageZones).every(([name,wear])=>name===zone||wear===0),
+    `${kind} from ${zone} dents only the struck panel on a rotated car`);
+}
 d=make();s=d.state;s.rival.s=120;s.rival.lateral=s.lateral;s.speedMph=100;fireWeapon(d,'star');fireWeapon(d,'crossbow',true);for(let i=0;i<10;i++)stepCombat(d,.02);check(s.speedMph===100,'shield blocks incoming arrows');
 d=make();s=d.state;s.combat.aiTimer=0;stepCombat(d,.05);check(s.combat.projectiles.some(p=>p.enemy),'CPU shoots back');
 d=make();s=d.state;for(let i=0;i<200;i++){fireWeapon(d,'bomb',true);stepCombat(d,.05);}check(s.combat.projectiles.length<=40&&s.combat.bursts.length<=32,'pools remain bounded');

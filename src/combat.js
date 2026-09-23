@@ -1,4 +1,5 @@
 import {normalizeWeapons} from './weapon-upgrades.js';
+import {contactZone} from './collision.js';
 // Arcade vehicle combat. All timers and projectile motion use simulation time.
 export const WEAPONS=Object.freeze({ufo:{name:'UFO SWAP',key:'1',cooldown:18},bomb:{name:'BOMB STORM',key:'2',cooldown:9},crossbow:{name:'CROSSBOW',key:'3',cooldown:4},star:{name:'STAR SHIELD',key:'4',cooldown:16}});
 export const supportsCombat=stage=>!!stage?.hasRival&&!stage.practice&&!stage.stuntTrial;
@@ -52,9 +53,15 @@ function hit(duel,actor,p,power,enemy){
  const s=duel.state,c=s.combat;
  if(!actor||actor.finished||actor.crushed||(actor===s?(c.shield>0||s.invulnerableSec>0):c.rivalShield>0))return;
  const where=point(duel,actor),normal=Math.sign((where.x-p.x)*Math.cos(where.heading)-(where.z-p.z)*Math.sin(where.heading))||1;
+ const heading=where.heading+(actor.headingError||0)+(actor.slipAngle||0)+(actor.crashSpin||0)+(actor.dir<0?Math.PI:0);
+ let nx=where.x-p.x,nz=where.z-p.z;
+ // An exact overlap has no visible side; use travel, then the former rear default.
+ if(nx*nx+nz*nz<1e-8){nx=p.vx||0;nz=p.vz||0;}
+ if(nx*nx+nz*nz<1e-8){nx=Math.sin(heading);nz=Math.cos(heading);}
+ const zone=contactZone(nx,nz,heading);
  actor.speedMph*=1-power*.65;actor.pushVelocity=Math.max(-18,Math.min(18,(actor.pushVelocity||0)+normal*power*14));
  actor.headingError=Math.max(-.65,Math.min(.65,(actor.headingError||0)+normal*power*.25));
- actor.damageZones??={front:0,rear:0,left:0,right:0};actor.damageZones.rear=Math.min(5,actor.damageZones.rear+power);
+ actor.damageZones??={front:0,rear:0,left:0,right:0};actor.damageZones[zone]=Math.min(5,actor.damageZones[zone]+power);
  if(actor===s){s.crashFlash=.35;s.impactStrength=power;duel._callout('INCOMING / ARMOR HIT',1.3);}
  else if(actor===s.rival&&!enemy){c.hits++;duel._callout('DIRECT HIT / RIVAL SHOVED',1.3);}
  duel.emit({combatHit:true,strength:power,enemy});
