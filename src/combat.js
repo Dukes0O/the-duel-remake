@@ -97,7 +97,11 @@ export function stepCombat(duel,dt){
    burst(c,{x:p.x,y:Math.max(floor+.3,p.y),z:p.z},p.kind==='bomb'?'blast':'spark');
    if(p.kind==='bomb'&&!c.blastSound){duel.emit({combatExplosion:true});c.blastSound=.12;}
    if(p.kind==='bomb'){
-    for(const actor of [s,s.rival,...s.traffic])if(actor){const a=point(duel,actor),distance=Math.hypot(a.x-p.x,a.z-p.z,a.y-p.y);const radius=22+2*p.level;if(distance<radius)hit(duel,actor,p,(1-distance/radius)*1.3*(1+p.level*.15),p.enemy);}
+    for(const actor of [s,s.rival,...s.traffic]){
+     if(!actor||actor.alive===false)continue;
+     const a=point(duel,actor),distance=Math.hypot(a.x-p.x,a.z-p.z,a.y-p.y),radius=22+2*p.level;
+     if(distance<radius)hit(duel,actor,p,(1-distance/radius)*1.3*(1+p.level*.15),p.enemy);
+    }
    }else if(contact)hit(duel,target,p,.9*(1+p.level*.2),p.enemy);
   }else live.push(p);
  }

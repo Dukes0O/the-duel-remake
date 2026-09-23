@@ -17,6 +17,22 @@ d=make();s=d.state;s.rival.s=90;d.fireWeapon('ufo');check(s.s>100&&s.s<d._lapGat
 d=make();s=d.state;const r=s.rival;r.s=d.course.length+500;r.completedLaps=1;r.nextLapGate=1;d.fireWeapon('ufo');check(s.completedLaps===1&&s.nextLapGate===1&&r.completedLaps===0,'swap transfers valid route progress');
 d=make();s=d.state;check(d.fireWeapon('star'),'star activates');const speed=s.speedMph=100;d._crash('rock',1,100);check(s.speedMph===speed&&s.stageCrashes===0,'star blocks crash damage');for(let i=0;i<99;i++)stepCombat(d,.05);check(s.combat.shield>0,'star lasts until five seconds');stepCombat(d,.05);check(s.combat.shield<1e-8,'star expires after five seconds');
 d=make();s=d.state;check(d.fireWeapon('bomb')&&s.combat.projectiles.length===8,'bomb storm throws eight bombs');check(new Set(s.combat.projectiles.map(p=>Math.atan2(p.vx,p.vz).toFixed(2))).size===8,'bombs travel in eight directions');for(let i=0;i<40;i++)stepCombat(d,.05);check(s.combat.projectiles.length===0&&s.combat.bursts.length>0,'bombs expire into explosions');
+// A removed traffic car remains in the array for a while. Its old position
+// must not produce an invisible hit, while a live car there still takes damage.
+d=make();s=d.state;s.s=500;s.rival.s=550;
+const traffic={s:100,lateral:0,airHeight:0,speedMph:80,alive:false,crushed:false,
+  damageZones:{front:0,rear:0,left:0,right:0},pushVelocity:0,headingError:0};
+s.traffic=[traffic];
+const blastHits=[];d.onChange((_,event)=>{if(event.combatHit)blastHits.push(event);});
+const blastTraffic=()=>{const ground=d.course.groundAt(traffic.s,traffic.lateral);
+  s.combat.projectiles.push({kind:'bomb',enemy:false,level:0,x:ground.x,y:ground.y+3,z:ground.z,
+    vx:0,vy:0,vz:0,age:1.5});stepCombat(d,.01);};
+blastTraffic();
+check(traffic.speedMph===80&&traffic.damageZones.rear===0&&blastHits.length===0,
+  'bomb blasts ignore removed traffic without an invisible hit');
+traffic.alive=true;blastTraffic();
+check(traffic.speedMph<80&&traffic.damageZones.rear>0&&blastHits.length===1,
+  'bomb blasts still damage live traffic at the same position');
 d=make();s=d.state;s.rival.s=120;s.rival.lateral=s.lateral;s.rival.speedMph=100;check(d.fireWeapon('crossbow'),'crossbow fires');for(let i=0;i<10;i++)stepCombat(d,.02);check(s.combat.hits===1&&s.rival.speedMph<100&&Math.abs(s.rival.pushVelocity)>0,'swept arrow hits and shoves the opponent');
 d=make();s=d.state;s.rival.s=120;s.rival.lateral=s.lateral;s.speedMph=100;fireWeapon(d,'star');fireWeapon(d,'crossbow',true);for(let i=0;i<10;i++)stepCombat(d,.02);check(s.speedMph===100,'shield blocks incoming arrows');
 d=make();s=d.state;s.combat.aiTimer=0;stepCombat(d,.05);check(s.combat.projectiles.some(p=>p.enemy),'CPU shoots back');
