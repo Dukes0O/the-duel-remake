@@ -267,7 +267,8 @@ tasks:
     lane: SIM
     size: S
     needs: [D7, FND-05]
-    status: ready
+    status: merged
+    note: "Merged as fbe4389 after independent save review; 150-suite gate, build and private browser smoke pass. Legacy shared best is backed up before retirement; per-player bests remain."
     spec: "SPEC.md, task OLD-02"
   - id: OLD-03
     title: "Tests that protect bugs"

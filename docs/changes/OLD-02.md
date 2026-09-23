@@ -1,6 +1,6 @@
 ---
 task: OLD-02
-status: review-needed
+status: merged
 kind: save-cleanup
 flag: none
 player_facing: no
@@ -46,9 +46,11 @@ recovery is restored. Per-player `personalBests` stay intact.
 - `npm run build`: passed; existing large rendering chunk warning remains.
 - `git diff --check`: clean.
 
-## Review
+## Integration
 
-The playbook calls for an independent save guardian when records change.
-The agent pool was full when requested, so this lane remains in review. The
-reviewer should focus on backup verification and FND-10 facade durability
-before integration.
+Independent review found no data-loss or result-settlement blocker. The
+review covered backup verification before deletion, facade journal and
+snapshot durability, both import paths, and the changed record assertions.
+Cherry-picked as `fbe4389`. The exact integration state passed 150/150 merge
+suites in 161.15 seconds, the production build, and private High/Performance
+browser smoke with four screenshots and zero warnings or errors.

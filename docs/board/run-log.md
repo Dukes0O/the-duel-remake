@@ -1,5 +1,15 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — OLD-02 shared best-time retirement merged
+
+- Independently reviewed the backup-before-delete sequence, durable storage
+  flush, both import paths, and per-player result settlement. Cherry-picked
+  `ceb78b0` as `fbe4389`.
+- The exact integration state passed 150 merge suites in 161.15 seconds and
+  the production build. Private High/Performance smoke passed with four
+  screenshots, zero warnings and zero errors. The legacy shared key is removed
+  after a verified backup; player-specific best times remain.
+
 ## 2026-09-22 PDT — FND-10 storage budget merged
 
 - Reviewed and cherry-picked the verified archive prerequisite, origin budget
