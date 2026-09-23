@@ -1,6 +1,6 @@
 import { PROFILE_KEY, PLAYERS_KEY, loadPlayers, normalizeProfile } from './progression.js';
-import { LEADERBOARD_KEY } from './leaderboard.js';
-import { GHOST_KEY, GHOST_ENABLED_KEY } from './ghost.js';
+import { LEADERBOARD_KEY, loadLeaderboard } from './leaderboard.js';
+import { GHOST_KEY, GHOST_ENABLED_KEY, loadGhosts } from './ghost.js';
 
 export const CAREER_FORMAT = 'the-duel-career';
 export const CAREER_KEYS = Object.freeze([
@@ -94,12 +94,26 @@ function validateEntries(entries) {
         typeof row.car === 'string' && Number.isFinite(row.timeSec) && row.timeSec > 0))) {
       throw new Error('The leaderboard format is unsupported.');
     }
+    if (key === LEADERBOARD_KEY) {
+      const loaded = loadLeaderboard({ getItem: requested => requested === key ? raw : null });
+      if (loaded.entries.length + loaded.archivedEntries.length !==
+        value.entries.length + (value.archivedEntries?.length ?? 0)) {
+        throw new Error('The leaderboard contains records this game would discard.');
+      }
+    }
     if (key === GHOST_KEY && (!isObject(value) || value.version !== 1 ||
       !Array.isArray(value.records) || !Array.isArray(value.archivedRecords ?? []) ||
       ![...value.records, ...(value.archivedRecords ?? [])].every(row => isObject(row) &&
         typeof row.key === 'string' && typeof row.playerId === 'string' &&
         Array.isArray(row.samples) && row.samples.every(sample => Array.isArray(sample) && sample.every(Number.isSafeInteger))))) {
       throw new Error('The ghost format is unsupported.');
+    }
+    if (key === GHOST_KEY) {
+      const loaded = loadGhosts({ getItem: requested => requested === key ? raw : null });
+      if (loaded.records.length + loaded.archivedRecords.length !==
+        value.records.length + (value.archivedRecords?.length ?? 0)) {
+        throw new Error('The ghost file contains recordings this game would discard.');
+      }
     }
     if (key === 'duel_redline_best_v4' && !isObject(value)) throw new Error('The legacy best-time format is invalid.');
   }

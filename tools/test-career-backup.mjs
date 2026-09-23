@@ -83,7 +83,13 @@ const badNested=JSON.parse(createCareerExport(current)),badRegistry=JSON.parse(b
 badRegistry.players[0].profile.credits='banana';badNested.entries['the-duel-players-v2']=JSON.stringify(badRegistry);
 const badGhost=JSON.parse(createCareerExport(memoryStorage(Object.fromEntries(Object.entries(JSON.parse(readFileSync(new URL('07-records-and-ghosts.json',dir),'utf8')).storage).map(([key,value])=>[key,JSON.stringify(value)])))));
 const ghosts=JSON.parse(badGhost.entries['the-duel-ghosts-v1']);ghosts.records[0].samples[0][0]='bad';badGhost.entries['the-duel-ghosts-v1']=JSON.stringify(ghosts);
-for(const bad of ['bad json',JSON.stringify({...JSON.parse(file),version:9}),JSON.stringify({...JSON.parse(file),entries:{'the-duel-players-v2':'{}'}}),JSON.stringify(badCredits),JSON.stringify(badNested),JSON.stringify(badGhost)]){
+const archiveFixture=JSON.parse(readFileSync(new URL('07-records-and-ghosts.json',dir),'utf8'));
+const archiveSource=memoryStorage(Object.fromEntries(Object.entries(archiveFixture.storage).map(([key,value])=>[key,JSON.stringify(value)])));
+const badCar=JSON.parse(createCareerExport(archiveSource)),badBoard=JSON.parse(badCar.entries['the-duel-leaderboard-v1']);
+badBoard.entries[0].car='unknown-car';badCar.entries['the-duel-leaderboard-v1']=JSON.stringify(badBoard);
+const badSampleTime=JSON.parse(createCareerExport(archiveSource)),badSamples=JSON.parse(badSampleTime.entries['the-duel-ghosts-v1']);
+badSamples.records[0].samples[1][0]=0;badSampleTime.entries['the-duel-ghosts-v1']=JSON.stringify(badSamples);
+for(const bad of ['bad json',JSON.stringify({...JSON.parse(file),version:9}),JSON.stringify({...JSON.parse(file),entries:{'the-duel-players-v2':'{}'}}),JSON.stringify(badCredits),JSON.stringify(badNested),JSON.stringify(badGhost),JSON.stringify(badCar),JSON.stringify(badSampleTime)]){
   await assert.rejects(importCareer(bad,{storage:current,backupStore:memoryBackups()}));
   assert.deepEqual(captureCareer(current),original,'invalid file left current save alone');
 }
