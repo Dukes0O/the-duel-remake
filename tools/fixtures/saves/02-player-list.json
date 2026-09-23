@@ -1,0 +1,21 @@
+{
+  "shape": "player-list-v2",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2,
+      "activePlayerId": "synthetic-b",
+      "players": [
+        {"id": "synthetic-a", "name": "Avery", "profile": {"version": 2, "credits": 123, "unlockedCars": ["falcone_f42", "stuttgart_959s"]}},
+        {"id": "synthetic-b", "name": "Blair", "profile": {"version": 2, "credits": 456, "unlockedCars": ["falcone_f42", "stuttgart_959s", "dusthawk_rally"], "upgrades": {"dusthawk_rally": {"suspension": 2}}}}
+      ]
+    }
+  },
+  "assertions": [
+    {"path": "activePlayerId", "equals": "synthetic-b"},
+    {"path": "players.0.name", "equals": "Avery"},
+    {"path": "players.0.profile.credits", "equals": 123},
+    {"path": "players.1.profile.credits", "equals": 456},
+    {"path": "players.1.profile.unlockedCars", "includes": "dusthawk_rally"},
+    {"path": "players.1.profile.upgrades.dusthawk_rally.suspension", "equals": 2}
+  ]
+}

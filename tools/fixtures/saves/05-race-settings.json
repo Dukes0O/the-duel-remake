@@ -1,0 +1,24 @@
+{
+  "shape": "race-settings-v1",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2, "activePlayerId": "synthetic-settings",
+      "players": [{"id": "synthetic-settings", "name": "Settings QA", "profile": {
+        "version": 2, "credits": 1100,
+        "unlockedCars": ["falcone_f42", "stuttgart_959s", "aurora_gt"],
+        "courses": {"version": 1, "unlocked": ["pacific-canyon", "harbor-highlands"]},
+        "raceSettings": {"version": 1, "eventId": "harbor-highlands", "mode": "timetrial", "cpuDifficulty": "hard", "difficulty": "pro", "car": "aurora_gt", "routeVariant": "route_b", "lightingMood": "golden", "ghostEnabled": false}
+      }}]
+    }
+  },
+  "assertions": [
+    {"path": "players.0.profile.raceSettings.eventId", "equals": "harbor-highlands"},
+    {"path": "players.0.profile.raceSettings.mode", "equals": "timetrial"},
+    {"path": "players.0.profile.raceSettings.cpuDifficulty", "equals": "hard"},
+    {"path": "players.0.profile.raceSettings.difficulty", "equals": "pro"},
+    {"path": "players.0.profile.raceSettings.car", "equals": "aurora_gt"},
+    {"path": "players.0.profile.raceSettings.routeVariant", "equals": "route_b"},
+    {"path": "players.0.profile.raceSettings.lightingMood", "equals": "golden"},
+    {"path": "players.0.profile.raceSettings.ghostEnabled", "equals": false}
+  ]
+}

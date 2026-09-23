@@ -1,0 +1,17 @@
+{
+  "shape": "courses-v1",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2, "activePlayerId": "synthetic-courses",
+      "players": [{"id": "synthetic-courses", "name": "Course QA", "profile": {
+        "version": 2, "credits": 2400,
+        "courses": {"version": 1, "unlocked": ["pacific-canyon", "high-country", "titan-freestyle"]}
+      }}]
+    }
+  },
+  "assertions": [
+    {"path": "players.0.profile.credits", "equals": 2400},
+    {"path": "players.0.profile.courses.unlocked", "includes": "high-country"},
+    {"path": "players.0.profile.courses.unlocked", "includes": "titan-freestyle"}
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "shape": "weapons-v1",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2, "activePlayerId": "synthetic-weapons",
+      "players": [{"id": "synthetic-weapons", "name": "Weapons QA", "profile": {
+        "version": 2, "credits": 3200,
+        "weapons": {"version": 1, "unlocked": ["ufo", "bomb", "crossbow", "star"], "levels": {"ufo": 2, "bomb": 1, "crossbow": 3, "star": 2}}
+      }}]
+    }
+  },
+  "assertions": [
+    {"path": "players.0.profile.credits", "equals": 3200},
+    {"path": "players.0.profile.weapons.unlocked", "includes": "ufo"},
+    {"path": "players.0.profile.weapons.levels.ufo", "equals": 2},
+    {"path": "players.0.profile.weapons.levels.bomb", "equals": 1},
+    {"path": "players.0.profile.weapons.levels.crossbow", "equals": 3},
+    {"path": "players.0.profile.weapons.levels.star", "equals": 2}
+  ]
+}

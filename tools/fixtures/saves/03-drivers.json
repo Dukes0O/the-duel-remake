@@ -1,0 +1,19 @@
+{
+  "shape": "drivers-v1",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2, "activePlayerId": "synthetic-driver",
+      "players": [{"id": "synthetic-driver", "name": "Driver QA", "profile": {
+        "version": 2, "credits": 900,
+        "unlockedCars": ["falcone_f42", "stuttgart_959s", "falcone_heritage"],
+        "drivers": {"version": 1, "unlocked": ["club", "mara_vale"], "selected": "mara_vale"}
+      }}]
+    }
+  },
+  "assertions": [
+    {"path": "players.0.profile.credits", "equals": 900},
+    {"path": "players.0.profile.drivers.unlocked", "includes": "mara_vale"},
+    {"path": "players.0.profile.drivers.selected", "equals": "mara_vale"},
+    {"path": "players.0.profile.unlockedCars", "includes": "falcone_heritage"}
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "shape": "single-profile-v1",
+  "storage": {
+    "the-duel-profile-v1": {
+      "version": 1,
+      "credits": 734,
+      "unlockedCars": ["falcone_f42", "stuttgart_959s", "aurora_gt", "banshee_muscle"],
+      "upgrades": {"aurora_gt": {"engine": 2, "tires": 1}},
+      "personalBests": {"pacific-canyon|layout:4|seed:1989|laps:2|falcone_f42|duel|casual|easy": 135.2},
+      "settledResults": ["synthetic-legacy-win"],
+      "milestones": ["clean_debut"],
+      "circuitWins": ["pacific-canyon"],
+      "history": [{"key": "synthetic-legacy-win", "eventId": "pacific-canyon", "won": true, "completed": true, "reward": 650}]
+    }
+  },
+  "assertions": [
+    {"path": "activePlayerId", "equals": "player-1"},
+    {"path": "players.0.profile.credits", "equals": 734},
+    {"path": "players.0.profile.unlockedCars", "includes": "aurora_gt"},
+    {"path": "players.0.profile.upgrades.aurora_gt.engine", "equals": 2},
+    {"path": "players.0.profile.personalBests.pacific-canyon|layout:4|seed:1989|laps:2|falcone_f42|duel|casual|easy", "equals": 135.2},
+    {"path": "players.0.profile.settledResults", "includes": "synthetic-legacy-win"},
+    {"path": "players.0.profile.courses.unlocked", "includes": "midnight-chase"},
+    {"path": "players.0.profile.history.0.reward", "equals": 650}
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "shape": "records-and-ghost-archive-v1",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2, "activePlayerId": "synthetic-record",
+      "players": [{"id": "synthetic-record", "name": "Record QA", "profile": {"version": 2, "credits": 600}}]
+    },
+    "the-duel-leaderboard-v1": {
+      "version": 1,
+      "entries": [{
+        "playerId": "synthetic-record", "playerName": "Record QA",
+        "eventKey": "pacific-canyon|layout:4|seed:1989|laps:2",
+        "eventId": "pacific-canyon", "layoutVersion": 4, "seed": 1989, "laps": 2,
+        "car": "falcone_f42", "timeSec": 120, "cpuDifficulty": "easy",
+        "difficulty": "casual", "mode": "timetrial", "driverId": "club",
+        "driverSignature": "", "lapTimes": [59, 61], "recordedAt": 100
+      }],
+      "archivedEntries": [{
+        "playerId": "synthetic-record", "playerName": "Record QA",
+        "eventKey": "pacific-canyon|layout:3|seed:1989|laps:2",
+        "eventId": "pacific-canyon", "layoutVersion": 3, "seed": 1989, "laps": 2,
+        "car": "falcone_f42", "timeSec": 118, "cpuDifficulty": "easy",
+        "difficulty": "casual", "mode": "timetrial", "driverId": "club",
+        "driverSignature": "", "lapTimes": [58, 60], "recordedAt": 90
+      }]
+    },
+    "the-duel-ghosts-v1": {
+      "version": 1,
+      "records": [{
+        "key": "synthetic-record|pacific-canyon|layout:4|seed:1989|laps:2|falcone_f42|timetrial|casual|easy",
+        "playerId": "synthetic-record", "playerName": "Record QA",
+        "eventId": "pacific-canyon", "layoutVersion": 4, "seed": 1989,
+        "laps": 2, "raceLength": 8000, "car": "falcone_f42", "mode": "timetrial",
+        "difficulty": "casual", "cpuDifficulty": "easy", "driverId": "club",
+        "driverSignature": "", "timeSec": 120, "recordedAt": 100, "lastUsedAt": 100,
+        "samples": [[0,0,0,0,0,0,0],[10000,60000,0,0,0,600,0],[20000,130000,0,0,0,700,0],[30000,200000,0,0,0,700,0],[40000,270000,0,0,0,700,0],[50000,340000,0,0,0,700,0],[60000,410000,0,0,0,700,0],[70000,480000,0,0,0,700,0],[80000,550000,0,0,0,700,0],[90000,620000,0,0,0,700,0],[100000,700000,0,0,0,800,0],[120000,800000,0,0,0,800,0]]
+      }],
+      "archivedRecords": [{
+        "key": "synthetic-record|pacific-canyon|layout:3|seed:1989|laps:2|falcone_f42|timetrial|casual|easy",
+        "playerId": "synthetic-record", "playerName": "Record QA",
+        "eventId": "pacific-canyon", "layoutVersion": 3, "seed": 1989,
+        "laps": 2, "raceLength": 8000, "car": "falcone_f42", "mode": "timetrial",
+        "difficulty": "casual", "cpuDifficulty": "easy", "driverId": "club",
+        "driverSignature": "", "timeSec": 118, "recordedAt": 90, "lastUsedAt": 90,
+        "samples": [[0,0,0,0,0,0,0],[10000,60000,0,0,0,600,0],[20000,130000,0,0,0,700,0],[30000,200000,0,0,0,700,0],[40000,270000,0,0,0,700,0],[50000,340000,0,0,0,700,0],[60000,410000,0,0,0,700,0],[70000,480000,0,0,0,700,0],[80000,550000,0,0,0,700,0],[90000,620000,0,0,0,700,0],[100000,700000,0,0,0,800,0],[118000,800000,0,0,0,800,0]]
+      }]
+    }
+  },
+  "assertions": [
+    {"path": "players.0.profile.credits", "equals": 600},
+    {"path": "leaderboard.entries.0.timeSec", "equals": 120},
+    {"path": "leaderboard.archivedEntries.0.timeSec", "equals": 118},
+    {"path": "ghosts.records.0.samples.11.1", "equals": 800000},
+    {"path": "ghosts.archivedRecords.0.samples.11.0", "equals": 118000}
+  ]
+}
