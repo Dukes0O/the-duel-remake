@@ -1,5 +1,16 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — TST-03 balance win-rate gate merged
+
+- The balance report printed ten-race win rates but omitted their target ranges
+  from `--check`. TST-03 `c20e8f0` now enforces Easy 80–95%, Medium 45–65%,
+  and Hard 20–40%, and rejects missing samples. Independent review was clean.
+- The changed lane passed 161/161 suites and build. The exact integration merge
+  passed 153/153 suites in 379.97 seconds, build, and private High/Performance
+  browser smoke with four screenshots and no warnings or errors.
+- The current game measures Easy and Medium 10/10, so the corrected balance
+  gate remains red alongside the known UFO and CPU-hit gaps. No live release.
+
 ## 2026-09-23 PDT — QA-01 browser evidence runner merged
 
 - The full check had no supported all-scenarios command and manual QA rebuilds

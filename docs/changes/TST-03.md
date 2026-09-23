@@ -1,6 +1,6 @@
 ---
 task: TST-03
-status: review
+status: merged
 kind: test-debt-fix
 flag: none
 player_facing: no
@@ -29,3 +29,8 @@ data, or player-facing behavior changed.
 - `node tools/run-tests.mjs --tier lane --changed --jobs 8 --json`: 161/161
   suites passed in 346.51 seconds, including 162 replay fingerprints.
 - `npm run build`: passed with the existing large rendering chunk warning.
+- Exact integration merge `c20e8f0`: 153/153 short suites passed in 379.97
+  seconds, production build passed, and private High/Performance browser smoke
+  passed on port 9381 with four screenshots and zero warnings or errors.
+- Independent read-only review found no actionable issue with the inclusive
+  ranges, input validation, or preservation of the other balance failures.

@@ -332,8 +332,8 @@ tasks:
     lane: TOOL
     size: S
     needs: [TOOL-01]
-    status: review
-    note: "Ten-race win rates were printed but not checked. The gate now enforces the three section 13 ranges and rejects missing samples."
+    status: merged
+    note: "Merged as c20e8f0. The gate enforces all three win-rate ranges and rejects missing samples; 153-suite merge gate, build and private High/Performance smoke passed."
     spec: "SPEC.md, section 13 and TOOL-01"
   - id: DISC
     title: "Discovery audits"
