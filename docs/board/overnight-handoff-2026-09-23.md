@@ -1,11 +1,10 @@
 # Overnight Wasteland handoff — 23 September 2026
 
 **Release decision: hold.** The live `master` checkout and real saves remain
-unchanged. Integration is at `26a006b`. Its latest gameplay commit, `a3ad4ee`,
-passes the exact merge test, production build, private browser smoke and all
-11 browser scenarios. The full release gate is still red on all six UFO
-two-lap time-gain comparisons. No full check was marked green, and no live
-release or push was made.
+unchanged. Integration's latest gameplay commit, `a3ad4ee`, passes the exact
+merge test, production build, private browser smoke and all 11 browser
+scenarios. Release remains blocked by all six UFO two-lap time-gain checks.
+No full check was marked green, and no live release or push was made.
 
 ## Integrated work
 
