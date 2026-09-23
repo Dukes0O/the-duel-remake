@@ -200,6 +200,20 @@ test('a shield blocks armor loss but still allows the physical shove', () => {
     armorRemoved: 0, closingKph: 60 * KPH_PER_MPH, spiked: true});
 });
 
+test('a lower-speed rear contact transfers momentum without armor damage', () => {
+  const field = race();
+  const target = field.state.opponents[1];
+  rearContact(field, field.state, target, {attackerMph: 20,
+    victimMph: 10, lateral: .6});
+  assert.ok(field.state.speedMph < 20, 'the striking car gives up speed');
+  assert.ok(target.speedMph > 10, 'the struck car gains speed');
+  assert.ok(target.pushVelocity > 0, 'the off-centre contact moves the target sideways');
+  close(field.state.armor, field.state.maxArmor, 'striker keeps its armor');
+  close(target.armor, target.maxArmor, 'target keeps its armor');
+  assert.equal(field.state.stageCrashes, 0);
+  assert.equal(ramEvents(field).length, 0, 'sub-threshold contact has no armor-hit event');
+});
+
 test('equal-speed 300 km/h cars can shovel without armor loss or crash recovery', () => {
   const field = race();
   const target = field.state.opponents[1];

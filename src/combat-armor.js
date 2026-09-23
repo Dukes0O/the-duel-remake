@@ -35,7 +35,9 @@ export function combatArmorEnabled(duel) {
 }
 
 export function initializeCombatArmor(duel) {
-  if (!combatArmorEnabled(duel)) return;
+  // A new stage starts new unordered car-pair contact incidents.
+  duel._combatRamIncidents = combatArmorEnabled(duel) ? new Set() : null;
+  if (!duel._combatRamIncidents) return;
   for (const actor of [duel.state, ...duel.state.opponents]) {
     actor.maxArmor = maxArmorForMass(duel._vehicleSpec(actor).mass);
     actor.armor = actor.maxArmor;
@@ -92,9 +94,10 @@ export function applyArmorDamage(duel, actor, source, options = {}) {
   const factor = options.self ? T.maximumSelfDamageFraction : 1;
   const damage = Math.min(T.maximumHitDamage, Math.max(0, base * factor));
   if (!(damage > 0)) return 0;
+  const removed = Math.min(Math.max(0, actor.armor), damage);
   actor.armor = Math.max(0, actor.armor - damage);
   if (actor.armor === 0) startCombatWreck(duel, actor, source);
-  return damage;
+  return removed;
 }
 
 export function applyRamArmorDamage(duel, actor, relativeMph, options = {}) {

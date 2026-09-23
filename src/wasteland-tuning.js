@@ -37,6 +37,12 @@ export const COMBAT_TUNING=Object.freeze({
  cpu:{boltLookahead:.4,attackRange:180,bombRange:35,pickupBombRange:50,
   aimSeedStageSalt:0x51ed,aimSeedShotSalt:0x9e3779b9},
  effects:{lifetime:1.4},
+ ram:{contactClearance:0.35,impulseShare:0.68,maximumClosingMph:220,
+  maximumImpulseMph:130,maximumPushMps:32,shovelPerMph:0.045,
+  shovelPerClosingMph:0.09,maximumShovelMps:25,
+  launchClosingMph:65,launchBaseMps:4,launchPerMph:0.055,
+  maximumLaunchMps:12,recoveryBaseSeconds:0.4,recoveryPerMph:1/230,
+  maximumRecoverySeconds:1.2},
  armor:{
   base:100,referenceMass:1450,minimumMassScale:.8,maximumMassScale:1.6,
   crossbow:12,bomb:18,rocket:10,rpgDirect:35,rpgSplash:20,
