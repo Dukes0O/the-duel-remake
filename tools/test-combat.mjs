@@ -100,6 +100,8 @@ check(traffic.speedMph<80&&traffic.damageZones.rear>0&&blastHits.length===1,
   'bomb blasts still damage live traffic at the same position');
 check(blastHits[0].victim==='traffic','combat hit identifies traffic as the bomb victim');
 d=make();s=d.state;s.rival.s=120;s.rival.lateral=s.lateral;s.rival.speedMph=100;
+// A recovering rival cannot raise its new reactive shield before this bolt lands.
+s.rival.impactTimer=1;
 const arrowHits=[];d.onChange((_,event)=>{if(event.combatHit)arrowHits.push(event);});
 check(d.fireWeapon('crossbow'),'crossbow fires');for(let i=0;i<10;i++)stepCombat(d,.02);check(s.combat.hits===1&&s.rival.speedMph<100&&Math.abs(s.rival.pushVelocity)>0,'swept arrow hits and shoves the opponent');
 check(arrowHits.some(event=>!event.enemy&&event.victim==='rival'),

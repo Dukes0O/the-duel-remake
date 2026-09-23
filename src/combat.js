@@ -2,11 +2,25 @@ import {normalizeWeapons} from './weapon-upgrades.js';
 import {contactZone} from './collision.js';
 import {NpcRoutePlanner} from './npc-route.js';
 import {DRIVE} from './config.js';
+import {makeRng} from './rng.js';
 // Arcade vehicle combat. All timers and projectile motion use simulation time.
 export const WEAPONS=Object.freeze({ufo:{name:'UFO SWAP',key:'1',cooldown:18},bomb:{name:'BOMB STORM',key:'2',cooldown:9},crossbow:{name:'CROSSBOW',key:'3',cooldown:4},star:{name:'STAR SHIELD',key:'4',cooldown:16}});
+const CPU_COMBAT=Object.freeze({easy:{interval:10,aimError:.12},medium:{interval:7,aimError:.055},hard:{interval:5,aimError:.018}});
 export const supportsCombat=stage=>!!stage?.hasRival&&!stage.practice&&!stage.stuntTrial;
-export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],pickups:[],pickupTimer:4,pickupCount:0,serial:0,aiTimer:7,aiShot:0,hits:0};}
+export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],pickups:[],pickupTimer:4,pickupCount:0,serial:0,aiTimer:null,aiShot:0,aiShieldCooldown:0,hits:0};}
 const point=(duel,actor)=>{const p=duel.course.groundAt(actor.s,actor.lateral);return {...p,y:p.y+1+(actor.airHeight||0)};};
+const velocity=(actor,p)=>{
+ const heading=p.heading+(actor.headingError||0),speed=(actor.speedMph||0)*(actor.dir||1)*DRIVE.mphToWorld;
+ return {x:Math.sin(heading)*speed+Math.cos(p.heading)*(actor.pushVelocity||0),
+  z:Math.cos(heading)*speed-Math.sin(p.heading)*(actor.pushVelocity||0)};
+};
+function predictedPoint(duel,actor,seconds){
+ const frame=duel.course.at(actor.s),speed=(actor.speedMph||0)*(actor.dir||1)*DRIVE.mphToWorld;
+ const headingError=actor.headingError||0;
+ const along=Math.cos(headingError)*speed/Math.max(.25,1-frame.curvature*actor.lateral);
+ const lateral=Math.sin(headingError)*speed+(actor.pushVelocity||0);
+ return duel.course.groundAt(actor.s+along*seconds,actor.lateral+lateral*seconds);
+}
 function burst(c,p,kind='blast'){c.bursts.push({...p,kind,id:++c.serial,age:0});if(c.bursts.length>32)c.bursts.shift();}
 function relocate(actor,pose){
  Object.assign(actor,pose);actor.prevS=actor.s;actor.prevLateral=actor.lateral;
@@ -72,7 +86,24 @@ export function fireWeapon(duel,weapon,enemy=false){
   for(let i=0;i<count;i++){
    let dx,dz,speed,vy=13;
    if(weapon==='bomb'){const angle=p.heading+i*Math.PI*2/count;dx=Math.sin(angle);dz=Math.cos(angle);speed=27;}
-   else{const t=point(duel,target);dx=t.x-p.x;dz=t.z-p.z;const length=Math.hypot(dx,dz)||1;dx/=length;dz/=length;speed=200+30*level;vy=(t.y-p.y-1)/length*speed;}
+   else{
+    const t=point(duel,target);speed=200+30*level;
+    let aimX=t.x,aimZ=t.z;
+    if(enemy){
+     const travel=Math.min(.75,Math.hypot(t.x-p.x,t.z-p.z)/speed);
+     const predicted=predictedPoint(duel,target,travel);
+     aimX=predicted.x;aimZ=predicted.z;
+    }
+    dx=aimX-p.x;dz=aimZ-p.z;
+    const length=Math.hypot(dx,dz)||1;dx/=length;dz/=length;
+    if(enemy){
+     const spread=CPU_COMBAT[s.cpuDifficulty]?.aimError??CPU_COMBAT.medium.aimError;
+     const error=makeRng((duel.seed^(s.stageIndex*0x51ed)^(c.aiShot*0x9e3779b9))>>>0).range(-spread,spread);
+     const x=dx*Math.cos(error)+dz*Math.sin(error);
+     dz=dz*Math.cos(error)-dx*Math.sin(error);dx=x;
+    }
+    vy=(t.y-p.y-1)/length*speed;
+   }
    c.projectiles.push({id:++c.serial,kind:weapon,enemy,level,x:p.x+dx*3,y:p.y+1,z:p.z+dz*3,
     vx:dx*speed+carryX,vz:dz*speed+carryZ,vy,age:0});
   }
@@ -99,6 +130,19 @@ function hit(duel,actor,p,power,enemy){
  duel.emit({combatHit:true,strength:power,enemy,victim:actor===s?'player':actor===s.rival?'rival':'traffic'});
 }
 function sweptDistance(p,old,t){const dx=p.x-old.x,dz=p.z-old.z,d=dx*dx+dz*dz,f=d?Math.max(0,Math.min(1,((t.x-old.x)*dx+(t.z-old.z)*dz)/d)):0;return Math.hypot(old.x+f*dx-t.x,old.z+f*dz-t.z);}
+function incomingBolt(duel){
+ const s=duel.state,c=s.combat,r=s.rival;if(!r||r.finished||r.crushed||c.rivalShield>0)return false;
+ const t=point(duel,r),v=velocity(r,t),radius=duel._vehicleSpec(r).halfWidth+1.2;
+ for(const p of c.projectiles){
+  if(p.enemy||p.kind!=='crossbow')continue;
+  const dx=t.x-p.x,dz=t.z-p.z,rvx=p.vx-v.x,rvz=p.vz-v.z;
+  const relativeSpeed=rvx*rvx+rvz*rvz;
+  const soon=relativeSpeed?Math.max(0,Math.min(.4,(dx*rvx+dz*rvz)/relativeSpeed)):0;
+  if(soon<=0||Math.hypot(dx-rvx*soon,dz-rvz*soon)>=radius)continue;
+  if(Math.abs(p.y+p.vy*soon-t.y)<4)return true;
+ }
+ return false;
+}
 export function stepCombat(duel,dt){
  const s=duel.state,c=s.combat;if(!c||s.status!=='racing'||s.paused)return;
  c.pickupTimer-=dt;
@@ -120,10 +164,22 @@ export function stepCombat(duel,dt){
  });
  for(const key of Object.keys(c.cooldowns))c.cooldowns[key]=Math.max(0,c.cooldowns[key]-dt);
  c.shield=Math.max(0,c.shield-dt);c.rivalShield=Math.max(0,c.rivalShield-dt);
+ c.aiShieldCooldown=Math.max(0,(c.aiShieldCooldown||0)-dt);
  c.bursts=c.bursts.filter(b=>(b.age+=dt)<1.4);
  c.blastSound=Math.max(0,(c.blastSound||0)-dt);
+ const cpu=CPU_COMBAT[s.cpuDifficulty]??CPU_COMBAT.medium;
+ if(c.aiTimer==null)c.aiTimer=cpu.interval;
  c.aiTimer-=dt;
- if(c.aiTimer<=0){c.aiTimer=8;const r=s.rival;if(r&&!r.finished&&!r.crushed){const gap=Math.hypot(point(duel,r).x-point(duel,s).x,point(duel,r).z-point(duel,s).z);if(gap<180)fireWeapon(duel,++c.aiShot%3===0?'star':gap<35?'bomb':'crossbow',true);}}
+ if(c.aiShieldCooldown<=0&&incomingBolt(duel)&&fireWeapon(duel,'star',true))
+  c.aiShieldCooldown=WEAPONS.star.cooldown;
+ if(c.aiTimer<=0){
+  c.aiTimer=cpu.interval;
+  const r=s.rival;
+  if(r&&!r.finished&&!r.crushed){
+   const a=point(duel,r),b=point(duel,s),gap=Math.hypot(a.x-b.x,a.z-b.z);
+   if(gap<180){c.aiShot++;fireWeapon(duel,gap<35?'bomb':'crossbow',true);}
+  }
+ }
  const live=[];
  for(const p of c.projectiles){
   const old={x:p.x,z:p.z};p.age+=dt;p.x+=p.vx*dt;p.z+=p.vz*dt;p.y+=p.vy*dt;
