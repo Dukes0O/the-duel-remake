@@ -476,7 +476,7 @@ tasks:
     needs: [RFX-04]
     status: building
     owns: [src/combat-armor.js, src/wasteland-tuning.js, src/combat-projectiles.js, tools/test-combat-armor.mjs, tools/scenarios/combat-armor-wreck.mjs]
-    hooks: [src/combat.js, src/game.js, src/sim-contacts.js, src/sim-rival.js, src/sim-crash.js, src/feature-flags.js, src/render3d.js, src/explosion.js, src/combat-weapons.js, src/combat-ai.js, src/combat-pickups.js, src/screen-hud.js, src/audio.js, tools/test-feature-flags.mjs]
+    hooks: [src/combat.js, src/game.js, src/sim-contacts.js, src/sim-rival.js, src/sim-crash.js, src/feature-flags.js, src/render3d.js, src/explosion.js, src/combat-weapons.js, src/combat-ai.js, src/combat-pickups.js, src/screen-hud.js, src/audio.js, tools/test-feature-flags.mjs, tools/test-render-reuse.mjs]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
     flag: wasteland2
     behavior_change: yes
