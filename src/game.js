@@ -1311,7 +1311,7 @@ export class Duel {
     const mediumCatchup = s.mode === 'wasteland' && s.cpuDifficulty === 'medium' ?
       20 * clamp((s.s - r.s - 120) / 180, 0, 1) : 0;
     const targetPace = car.topSpeed * cruiseSkill + mediumCatchup -
-      (s.mode === 'wasteland' && s.cpuDifficulty === 'hard' ? 18 : 0);
+      (s.mode === 'wasteland' && s.cpuDifficulty === 'hard' ? 14 : 0);
     const rubber = clamp((s.s - r.s) * .012, -8, 8);
     let target = targetPace + rubber;
     if (mediumCatchup) target = Math.min(target, car.topSpeed);
