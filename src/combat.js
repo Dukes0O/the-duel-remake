@@ -6,7 +6,7 @@ import {makeRng} from './rng.js';
 // Arcade vehicle combat. All timers and projectile motion use simulation time.
 export const WEAPONS=Object.freeze({ufo:{name:'UFO SWAP',key:'1',cooldown:18},bomb:{name:'BOMB STORM',key:'2',cooldown:9},crossbow:{name:'CROSSBOW',key:'3',cooldown:4},star:{name:'STAR SHIELD',key:'4',cooldown:16}});
 const CPU_COMBAT=Object.freeze({
- easy:{interval:10,aimError:.12,shieldReaction:.20,visionCos:.5},
+ easy:{interval:10,aimError:Math.PI/18,shieldReaction:.20,visionCos:.5},
  medium:{interval:7,aimError:.055,shieldReaction:.13,visionCos:.26},
  hard:{interval:5,aimError:.03,shieldReaction:.07,visionCos:.09},
 });

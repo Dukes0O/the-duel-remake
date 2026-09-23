@@ -1223,6 +1223,11 @@ export class Duel {
     r.braking = false; r.yieldingToPlayer = false;
     // CPU pace is independent of the player's manual/automatic gearbox.
     const skill = CPU_DIFFICULTY[s.cpuDifficulty], car = this.rivalSpec || CARS[s.car];
+    // On Wasteland's long circuit, Easy needs enough road speed to stay in
+    // combat range. It remains below Medium's cruise and corner pace.
+    const easyWasteland = s.mode === 'wasteland' && s.cpuDifficulty === 'easy';
+    const cruiseSkill = easyWasteland ? .875 : skill.skill;
+    const cornerSkill = easyWasteland ? .895 : skill.cornerSkill;
     if (s.cpuDifficulty !== 'easy' && (this._npcRoutePlanner?.course !== this.course || this._npcRoutePlanner?.car !== car)) {
       this._npcRoutePlanner = new NpcRoutePlanner(this.course, { car, surfaceAt: (distance, lateral) => this._drivingSurface(distance, lateral, car) });
     }
@@ -1231,7 +1236,7 @@ export class Duel {
     const rivalSurface = this._drivingSurface(r.s, r.lateral, car);
     const mediumCatchup = s.mode === 'wasteland' && s.cpuDifficulty === 'medium' ?
       20 * clamp((s.s - r.s - 120) / 180, 0, 1) : 0;
-    const targetPace = car.topSpeed * skill.skill + mediumCatchup -
+    const targetPace = car.topSpeed * cruiseSkill + mediumCatchup -
       (s.mode === 'wasteland' && s.cpuDifficulty === 'hard' ? 18 : 0);
     const rubber = clamp((s.s - r.s) * .012, -8, 8);
     let target = targetPace + rubber;
@@ -1253,7 +1258,7 @@ export class Duel {
     else {
       let curve = 0;
       for (let look = 0; look <= 140; look += 28) curve = Math.max(curve, Math.abs(this.course.at(r.s + look).curvature));
-      if (curve > .0001) target = Math.min(target, Math.sqrt(DRIVE.maxLateralAccel * car.grip * rivalSurface.traction / curve) / DRIVE.mphToWorld * skill.cornerSkill);
+      if (curve > .0001) target = Math.min(target, Math.sqrt(DRIVE.maxLateralAccel * car.grip * rivalSurface.traction / curve) / DRIVE.mphToWorld * cornerSkill);
     }
     // occasional "mistake": brief slow patch keyed deterministically to distance
     if (Math.sin(r.s * 0.01) > 0.96) target *= 0.6;
