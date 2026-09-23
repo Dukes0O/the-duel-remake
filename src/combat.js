@@ -11,7 +11,7 @@ const CPU_COMBAT=Object.freeze({
  hard:{interval:5,aimError:.03,shieldReaction:.07,visionCos:.09},
 });
 export const supportsCombat=stage=>!!stage?.hasRival&&!stage.practice&&!stage.stuntTrial;
-export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],pickups:[],pickupTimer:4,pickupCount:0,serial:0,aiTimer:null,aiShot:0,aiShieldCooldown:0,hits:0};}
+export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],pickups:[],pickupTimer:4,pickupCount:0,serial:0,aiTimer:null,aiShot:0,aiShieldCooldown:0,cpuPickupCharges:{bomb:0,crossbow:0,star:0},hits:0};}
 const point=(duel,actor)=>{const p=duel.course.groundAt(actor.s,actor.lateral);return {...p,y:p.y+1+(actor.airHeight||0)};};
 const velocity=(actor,p)=>{
  const heading=p.heading+(actor.headingError||0),speed=(actor.speedMph||0)*(actor.dir||1)*DRIVE.mphToWorld;
@@ -155,6 +155,24 @@ function incomingBolt(duel,cpu){
  }
  return false;
 }
+const cpuCanUsePickup = (state, combat, pickup) => state.cpuDifficulty !== 'easy' &&
+ pickup.weapon !== 'ufo' && (combat.cpuPickupCharges?.[pickup.weapon] ?? 0) < 1;
+
+function crossesPickup(actor,pickup){
+ const start=actor.prevS??actor.s,delta=actor.s-start;
+ const fraction=delta?Math.max(0,Math.min(1,(pickup.s-start)/delta)):1;
+ const lateral=(actor.prevLateral??actor.lateral)+(actor.lateral-(actor.prevLateral??actor.lateral))*fraction;
+ return (Math.abs(actor.s-pickup.s)<3||(delta>0&&start<=pickup.s&&actor.s>=pickup.s))&&
+  Math.abs(lateral)<2.5&&(actor.airHeight||0)<3&&(actor.impactTimer||0)<=0;
+}
+
+function useCpuPickupShield(duel){
+ const s=duel.state,c=s.combat,r=s.rival;
+ if(!r||r.finished||r.crushed||r.impactTimer>0)return;
+ if(c.cpuPickupCharges.star&&fireWeapon(duel,'star',true)){
+  c.cpuPickupCharges.star--;duel.emit({cpuPickupUsed:'star'});
+ }
+}
 export function stepCombat(duel,dt){
  const s=duel.state,c=s.combat;if(!c||s.status!=='racing'||s.paused)return;
  s.bombImpactCooldown=Math.max(0,(s.bombImpactCooldown||0)-dt);
@@ -169,14 +187,20 @@ export function stepCombat(duel,dt){
  }
  c.pickups=c.pickups.filter(p=>{
   p.age+=dt;
-  const delta=s.s-(s.prevS??s.s),t=delta?Math.max(0,Math.min(1,(p.s-s.prevS)/delta)):1;
-  const lateral=(s.prevLateral??s.lateral)+(s.lateral-(s.prevLateral??s.lateral))*t;
-  const crossed=Math.abs(s.s-p.s)<3||(delta>0&&s.prevS<=p.s&&s.s>=p.s);
-  if(crossed&&Math.abs(lateral)<2.5&&(s.airHeight||0)<3&&s.impactTimer<=0){
+  if(crossesPickup(s,p)){
    c.cooldowns[p.weapon]=0;burst(c,duel.course.groundAt(p.s,0),'star');
    duel._callout(`${WEAPONS[p.weapon].name} / POWER-UP READY`,2);duel.emit({powerupCollected:p.weapon});return false;
   }
-  return p.age<24&&p.s>s.s-30;
+  const rival=s.rival;
+  if(rival&&cpuCanUsePickup(s,c,p)&&!rival.finished&&!rival.crushed&&crossesPickup(rival,p)){
+   c.cpuPickupCharges[p.weapon]++;
+   burst(c,duel.course.groundAt(p.s,0),'star');
+   duel._callout(`RIVAL / ${WEAPONS[p.weapon].name} PICKUP`,2);
+   duel.emit({powerupCollected:p.weapon,collector:'rival'});
+   return false;
+  }
+  const rivalCanClaim=rival&&cpuCanUsePickup(s,c,p)&&!rival.finished&&!rival.crushed;
+  return p.age<24&&(p.s>s.s-30||(rivalCanClaim&&p.s>rival.s-30));
  });
  for(const key of Object.keys(c.cooldowns))c.cooldowns[key]=Math.max(0,c.cooldowns[key]-dt);
  c.shield=Math.max(0,c.shield-dt);c.rivalShield=Math.max(0,c.rivalShield-dt);
@@ -184,6 +208,7 @@ export function stepCombat(duel,dt){
  c.bursts=c.bursts.filter(b=>(b.age+=dt)<1.4);
  c.blastSound=Math.max(0,(c.blastSound||0)-dt);
  const cpu=CPU_COMBAT[s.cpuDifficulty]??CPU_COMBAT.medium;
+ if(s.cpuDifficulty!=='easy')useCpuPickupShield(duel);
  if(c.aiTimer==null)c.aiTimer=cpu.interval;
  c.aiTimer-=dt;
  if(c.aiShieldCooldown<=0&&incomingBolt(duel,cpu)&&fireWeapon(duel,'star',true))
@@ -193,7 +218,19 @@ export function stepCombat(duel,dt){
   const r=s.rival;
   if(r&&!r.finished&&!r.crushed){
    const a=point(duel,r),b=point(duel,s),gap=Math.hypot(a.x-b.x,a.z-b.z);
-   if(gap<180){c.aiShot++;fireWeapon(duel,gap<35?'bomb':'crossbow',true);}
+   if(gap<180){
+    const usual=gap<35?'bomb':'crossbow';
+    let weapon=usual;
+    // A collected weapon selects this scheduled attack. It does not add a
+    // free shot or shorten the difficulty's 10/7/5-second attack interval.
+    if(s.cpuDifficulty!=='easy'){
+     if(gap>=35&&gap<65&&c.cpuPickupCharges.bomb)weapon='bomb';
+    }
+    c.aiShot++;
+    if(fireWeapon(duel,weapon,true)&&c.cpuPickupCharges[weapon]){
+     c.cpuPickupCharges[weapon]--;duel.emit({cpuPickupUsed:weapon});
+    }
+   }
   }
  }
  const live=[];
