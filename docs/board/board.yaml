@@ -100,16 +100,18 @@ tasks:
     lane: TOOL
     size: M
     needs: [FND-05]
-    status: building
+    status: merged
     spec: "SPEC.md, task FND-08"
+    note: "Merged as c8b8ed6; private High/Performance smoke passed with four screenshots and zero console errors."
   - id: FND-09
     title: "Feature switches"
     wave: 0
     lane: TOOL
     size: S
     needs: [FND-05]
-    status: ready
+    status: merged
     spec: "SPEC.md, task FND-09"
+    note: "Merged as f12d7e7; unit and Experimental browser scenario pass. Catalog is empty until features qualify."
   - id: FND-12
     title: "Autonomous run setup"
     wave: 0
@@ -142,6 +144,15 @@ tasks:
     needs: [FND-06]
     status: blocked
     spec: "SPEC.md, task BUG-01"
+  - id: POLISH-01
+    title: "Menu title and player row spacing at 1280x800"
+    wave: 1
+    lane: UI
+    size: S
+    needs: [FND-06, FND-08]
+    status: blocked
+    spec: "QA observation, 2026-09-22 browser smoke"
+    note: "The DUEL title crosses the player controls in the High menu screenshot; fix layout without crowding the race setup or mobile menu."
   - id: BUG-12
     title: "Blast target check"
     wave: 1

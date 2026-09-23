@@ -1,6 +1,6 @@
 ---
 task: FND-09
-status: review
+status: merged
 kind: tooling
 flag: none
 player_facing: yes
@@ -20,7 +20,10 @@ because no Wasteland feature has passed its release gates yet.
   storage and panel checks passed.
 - Production and QA builds passed. The QA Vite config defines the QA marker;
   production builds omit it.
-- Browser panel and persistence check are pending the merged FND-08 harness.
+- `node tools/browser-harness.mjs scenario experimental` passed on a private
+  QA port with memory-only saves and zero browser errors. It opened the panel,
+  switched the choice on and off, closed the panel, and captured a screenshot
+  after hiding the QA controls. The dialog was visually reviewed at 1280×800.
 
 ## Behavior and test changes
 

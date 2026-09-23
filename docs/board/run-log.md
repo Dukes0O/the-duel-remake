@@ -4,6 +4,18 @@ Read the latest entry before resuming. Add one entry when a card starts,
 reaches review, merges, is parked, or is released. Keep the board status
 in sync with this log.
 
+## 2026-09-22 PDT — Browser harness and feature switches merged
+
+- FND-08 was cherry-picked as `c8b8ed6`. The integration smoke reached an
+  active race in High and Performance, saved four screenshots and found zero
+  console errors. The lane's deliberate console error caused the expected
+  failure.
+- FND-09 was cherry-picked as `f12d7e7`. Its 21 unit checks and private
+  Experimental menu scenario passed with memory-only saves and zero browser
+  errors. No Wasteland feature is in the switch catalog yet.
+- A 1280×800 menu screenshot shows the large title crowding the player row.
+  Track this as a UI polish card after the runner gate.
+
 ## 2026-09-22 PDT — FND-07 replay fingerprints merged
 
 - Reviewed and cherry-picked replay lane commit `288645a` as integration
