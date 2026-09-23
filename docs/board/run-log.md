@@ -1,5 +1,18 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — QA-01 browser evidence runner merged
+
+- The full check had no supported all-scenarios command and manual QA rebuilds
+  erased earlier screenshots. QA-01 `a0682b1` now runs every named browser
+  scenario in sequence and archives each report and screenshot outside the
+  rebuilt QA bundle.
+- On its final lane source, 11/11 scenarios passed with zero warnings or
+  errors. All 11 archived reports and 13 screenshots exist. The lane passed
+  160/160 suites in 300.82 seconds and private High/Performance smoke.
+- Exact integration `a0682b1` passed 152/152 merge suites in 171.89 seconds,
+  the production build and private High/Performance smoke: four screenshots,
+  zero warnings or errors. The separate combat balance hold remains.
+
 ## 2026-09-23 PDT — OLD-03 and test-debt fixes merged
 
 - Reviewed OLD-03's assertion audit and merged it as `518c99d`. The audit found

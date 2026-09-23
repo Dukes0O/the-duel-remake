@@ -112,7 +112,7 @@ Nothing here is active yet. Installing it is decision D2 in `SPEC.md` section 15
 | --- | --- | --- | --- |
 | Lane gate | Before review | Tests for the changed files, the quick smoke set, fingerprints, production build | under 5 min |
 | Merge gate | Before each merge into integration | Every suite with the long campaign runs skipped (run in parallel), production build, browser smoke (menu, start a race in both quality settings, zero console errors), fingerprints unchanged unless the card says behavior changes on purpose | under 10 min |
-| Full check | Before every release, and after every five merges into integration | Every suite including the 85 campaign runs, balance report within targets, browser scenarios for each feature switch, frame pacing compared with the last release, art check, storage budget check | under 45 min |
+| Full check | Before every release, and after every five merges into integration | Every suite including the 85 campaign runs, balance report within targets, `node tools/run-browser-scenarios.mjs --all` for browser scenarios, frame pacing compared with the last release, art check, storage budget check | under 45 min |
 | Release gate | Before touching the live folder | Full check green on the exact commit, change notes compiled into `README.md` and `docs/VERIFICATION.md`, feature switch list reviewed | minutes |
 
 **Stop the line.** If the merge gate fails on integration itself, or the full check fails, the Integrator puts a fix card at the top of the board. Only fixes merge until integration is green again. Lanes keep building on their own branches meanwhile, so work doesn't pause.

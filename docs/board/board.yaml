@@ -128,8 +128,8 @@ tasks:
     lane: TOOL
     size: S
     needs: [FND-08]
-    status: review
-    note: "Isolated runner retained 13 screenshots from 11/11 passing scenarios; 160-suite lane gate, build and private smoke pass. Integration review pending."
+    status: merged
+    note: "Merged as a0682b1. Final runner retained 11 reports and 13 screenshots from 11/11 passing scenarios; 160-suite lane and 152-suite merge gates, build and private smoke pass."
     spec: "docs/board/checks/2026-09-23-731a075.md, tooling gap"
   - id: TOOL-02
     title: "Feel lab and audio checks"
