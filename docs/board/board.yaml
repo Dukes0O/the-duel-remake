@@ -489,6 +489,26 @@ tasks:
       - "A seeded three-opponent browser race shows player and later-CPU wreck, explosion, recovery, and ranked completion in High and Performance with memory-only saves."
     note: "Independent acceptance tests committed at 940757c; CMB-01 builder active. Temporary wrecks must block AI, direct firing and pickups; wreck callout and blast position need narrow HUD/audio hooks. CMB-02 owns live spike behavior and CMB-04 owns armor repair pickups."
     spec: "SPEC.md sections 3.2, 12.2, 12.4, and 13"
+  - id: CMB-02
+    title: "Ramming and front bumper spikes"
+    wave: 3
+    lane: CMB
+    size: S
+    needs: [CMB-01]
+    status: blocked
+    owns: [src/vehicle-impact.js, src/wasteland-tuning.js, tools/test-combat-ramming.mjs, tools/scenarios/combat-ramming.mjs]
+    hooks: [src/sim-contacts.js, src/combat-armor.js, src/game.js, src/combat-scene.js]
+    helpers: [test_author, reviewer, browser_qa, balance_analyst]
+    flag: wasteland2
+    behavior_change: yes
+    acceptance:
+      - "An equipped front bumper applies 1.5x ram armor damage only to the struck car above 40 km/h closing speed; side and rear contacts have no spike bonus."
+      - "One continuous actor-pair contact applies one impulse, armor hit and indexed event; physical separation rearms the pair for a later contact."
+      - "Player and all three CPU cars can shove, launch, wreck and recover without spending ordinary crash slots; a star blocks armor loss but not the physical push."
+      - "Ordinary and flag-off Wasteland contacts, traffic destruction and pinned replay fingerprints stay unchanged."
+      - "Independent 30/60/144 FPS contact tests, High/Performance three-car browser scene, balance and frame checks pass."
+    note: "The visible front spikes on every flagged Wasteland combat rig count as equipped. Full incident, ownership and event requirements are in docs/changes/CMB-02-plan.md. CMB-01 must integrate first."
+    spec: "SPEC.md section 3.2, task CMB-02"
   - id: CMB-07
     title: "Projectile carry and aim rules"
     wave: 3
@@ -497,6 +517,7 @@ tasks:
     needs: [RFX-04]
     status: building
     owns: [src/combat-projectiles.js, src/wasteland-tuning.js, tools/test-combat-projectiles.mjs]
+    hooks: [src/combat-weapons.js]
     helpers: [test_author, reviewer]
     flag: wasteland2
     behavior_change: yes

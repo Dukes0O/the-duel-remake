@@ -71,6 +71,18 @@ and how to reverse it before continuing.
 - How to reverse: Change SAVE-01 eligibility and rerun save migration,
   settlement-idempotence, result and balance tests before release.
 
+## 2026-09-23 PDT — CMB-02 active front spikes
+
+- Decision: The front spikes already visible on every Wasteland combat rig
+  count as equipped when `wasteland2` is on. Only a front-face strike applies
+  the 1.5× damage bonus to the other car. A rear or side contact does not.
+- Reason: The art shows the spikes on each combat car, while the armor rule
+  already reserves a 1.5× spike multiplier. The visual and collision rules
+  should agree before kit purchases arrive.
+- How to reverse: Add an explicit equipped-bumper state with its future kit
+  purchase, update the rig and CMB-02 contact tests together, then rerun the
+  three-car browser scene and ordinary replay controls.
+
 ## Entry format
 
 - Date and card:
