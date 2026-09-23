@@ -55,12 +55,25 @@ async function pass(context, quality) {
     window.__combatEffectsLightCount = lightCount();
     return {opponents: state.opponents.length, maxArmor: state.maxArmor,
       memoryOnlySaves: !!Object.getOwnPropertyDescriptor(window,
-        'localStorage')?.value, lights: window.__combatEffectsLightCount};
+        'localStorage')?.value, lights: window.__combatEffectsLightCount,
+      poolBuildMs: Number(document.querySelector('#view3d')?.dataset.opponentExplosionBuildMs),
+      shaderWarmupMs: Number(document.querySelector('#view3d')?.dataset.opponentExplosionWarmupMs)};
   })()`);
   if (!setup.memoryOnlySaves || setup.opponents !== 3)
     throw Error(`${quality} effects setup failed: ${JSON.stringify(setup)}`);
   await context.waitFor(`document.querySelector('#view3d')?.dataset.combatEffectsStatus === 'ready'`,
     `${quality} four runtime sheets loaded`, 60_000);
+  const atlasWarmupMs = await context.evaluate(`Number(
+    document.querySelector('#view3d')?.dataset.combatEffectsWarmupMs)`);
+  const baseline = await context.evaluate(`(() => {
+    const samples = [];
+    for (let frame = 0; frame < 8; frame++) {
+      const started = performance.now();
+      window.__render.renderFrame();
+      samples.push(performance.now() - started);
+    }
+    return samples;
+  })()`);
 
   const muzzle = await context.evaluate(`(() => {
     const app = window.__qaApp, duel = app.duel, state = duel.state;
@@ -88,12 +101,14 @@ async function pass(context, quality) {
     state.combat.bursts = [{kind: 'blast', id: 1, age: 0,
       x: at.x, y: at.y + 1, z: at.z}];
     app.onFrame?.(state);
+    const started = performance.now();
     window.__render.renderFrame();
+    const renderMs = performance.now() - started;
     const mesh = window.__render.scene.getObjectByName('combat-vfx-burst-0-explosion');
     if (!mesh?.visible) throw Error('First blast atlas frame is hidden');
     window.__combatEffectsFirstUV = Array.from(mesh.geometry.getAttribute('uv').array);
     return {position: mesh.position.toArray(), uv: window.__combatEffectsFirstUV,
-      opacity: mesh.material.opacity};
+      opacity: mesh.material.opacity, renderMs};
   })()`);
   await context.evaluate('window.__render.renderFrame()');
   await context.screenshot(`combat-vfx-blast-first-${quality}`);
@@ -130,7 +145,9 @@ async function pass(context, quality) {
     // Keep the race HUD visible while the renderer receives a paused dt=0.
     state.paused = true;
     window.__render.camera.position.fromArray(app.inspectionCamera.position);
+    const started = performance.now();
     window.__render.renderFrame();
+    const renderMs = performance.now() - started;
     const mesh = window.__render.scene.getObjectByName('combat-vfx-wreck-0-explosion');
     if (!mesh?.visible) throw Error('First paused wreck atlas frame is hidden');
     const frame = {uv: Array.from(mesh.geometry.getAttribute('uv').array),
@@ -144,7 +161,7 @@ async function pass(context, quality) {
     window.__render.scene.traverse(object => { if (object.isLight) lights++; });
     if (lights !== window.__combatEffectsLightCount)
       throw Error('First wreck changed the scene light count');
-    return {armor: state.armor, frame, lights};
+    return {armor: state.armor, frame, lights, renderMs};
   })()`);
   await context.evaluate('window.__render.renderFrame()');
   await context.screenshot(`combat-vfx-player-wreck-paused-${quality}`);
@@ -184,14 +201,16 @@ async function pass(context, quality) {
     app.onFrame?.(state);
     state.paused = true;
     window.__render.camera.position.fromArray(app.inspectionCamera.position);
+    const started = performance.now();
     window.__render.renderFrame();
+    const renderMs = performance.now() - started;
     const mesh = window.__render.scene.getObjectByName('combat-vfx-wreck-2-explosion');
     const player = window.__render.scene.getObjectByName('combat-vfx-wreck-0-explosion');
     const distance = mesh?.position.distanceTo(focus) ?? Infinity;
     if (!mesh?.visible || player?.visible || distance > 5)
       throw Error('Later CPU blast is missing, misplaced or shared with player');
     return {cpuArmor: later.armor, visible: mesh.visible,
-      playerVisible: player.visible, distance};
+      playerVisible: player.visible, distance, renderMs};
   })()`);
   await context.evaluate('window.__render.renderFrame()');
   await context.screenshot(`combat-vfx-cpu-wreck-${quality}`);
@@ -199,7 +218,8 @@ async function pass(context, quality) {
   if (context.issues.length || context.warnings.length)
     throw Error(`${quality} effects browser issues: ` +
       JSON.stringify({issues: context.issues, warnings: context.warnings}));
-  console.log(`${quality} combat atlas: ` + JSON.stringify({setup, muzzle,
+  console.log(`${quality} combat atlas: ` + JSON.stringify({setup, atlasWarmupMs,
+    baseline, muzzle,
     blast, aged, playerWreck, recovered, cpuWreck}));
 }
 

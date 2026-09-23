@@ -119,6 +119,46 @@ export function createCombatEffects({loadTexture} = {}) {
     ...muzzles, ...wrecks.flatMap(entry => [entry.fire, entry.explosion,
       entry.smoke])];
   let disposed = false;
+  let texturesWarm = false;
+  let meshesWarm = false;
+
+  function prewarmTextures(renderer) {
+    if (disposed || !resources.available || !resources.ready) return false;
+    if (!texturesWarm) {
+      for (const texture of Object.values(resources.textures)) {
+        renderer.initTexture(texture);
+      }
+      texturesWarm = true;
+    }
+    return true;
+  }
+
+  function prewarm(renderer, camera) {
+    if (!prewarmTextures(renderer)) return false;
+    if (meshesWarm) return true;
+    // A real draw prepares each fixed mesh/material binding before the first
+    // visible hit. Compile alone does not upload geometry to WebGL.
+    const target = new THREE.WebGLRenderTarget(1, 1, {
+      depthBuffer: false, stencilBuffer: false,
+    });
+    const warmScene = new THREE.Scene();
+    const parent = group.parent;
+    const priorTarget = renderer.getRenderTarget();
+    try {
+      withWarmupVisibility(() => {
+        warmScene.add(group);
+        renderer.setRenderTarget(target);
+        renderer.render(warmScene, camera);
+      });
+      meshesWarm = true;
+    } finally {
+      if (parent) parent.add(group);
+      else warmScene.remove(group);
+      renderer.setRenderTarget(priorTarget);
+      target.dispose();
+    }
+    return true;
+  }
 
   function update({state, course, dt = 0}) {
     const enabled = resources.available && resources.ready &&
@@ -217,6 +257,7 @@ export function createCombatEffects({loadTexture} = {}) {
     group.clear();
   }
 
-  return {group, resources, update, withWarmupVisibility, dispose,
+  return {group, resources, update, prewarmTextures, prewarm,
+    withWarmupVisibility, dispose,
     get available() { return resources.available && resources.ready; }};
 }

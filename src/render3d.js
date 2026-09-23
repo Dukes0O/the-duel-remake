@@ -108,7 +108,7 @@ export function attachRenderer(host, app) {
   const effects = createDrivingEffects(); scene.add(effects.group);
   const explosion = createExplosion(); scene.add(explosion.group);
   let combatPlayerExplosion = null, opponentExplosions = null;
-  let combatEffects = null;
+  let combatEffects = null, combatEffectsWarmupMeasured = false;
   host.dataset.opponentExplosionBuildMs='0';
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
@@ -341,7 +341,14 @@ export function attachRenderer(host, app) {
     const effectDt = st.paused ? 0 : dt;
     explosion.update(pp,st.combatWrecking?{...st,catastrophic:false}:st,effectDt);
     combatEffects?.update({state:armoredField?st:null,course,dt:effectDt});
-    const useCombatAtlas=armoredField&&!!combatEffects?.available;
+    const measureCombatWarmup=armoredField&&!combatEffectsWarmupMeasured&&
+      combatEffects?.available;
+    const combatWarmupStart=measureCombatWarmup?performance.now():0;
+    const useCombatAtlas=armoredField&&!!combatEffects?.prewarm(renderer,camera);
+    if(measureCombatWarmup){
+      host.dataset.combatEffectsWarmupMs=(performance.now()-combatWarmupStart).toFixed(2);
+      combatEffectsWarmupMeasured=true;
+    }
     host.dataset.combatEffectsStatus=armoredField?useCombatAtlas?'ready':'fallback':'off';
     combatPlayerExplosion?.update(pp,
       {catastrophic:!useCombatAtlas&&!!st.combatWrecking,status:st.status},effectDt);

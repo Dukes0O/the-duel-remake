@@ -27,11 +27,12 @@ player_facing: yes
 ## Evidence
 
 - Independent acceptance commit `ab9398b` supplied nine focused tests.
-  `node tools/test-combat-effects.mjs` passes 10/10, including UV order, fixed
+  `node tools/test-combat-effects.mjs` passes 11/11, including UV order, fixed
   resources, disposal, first paused frame, separate later-CPU position,
   missing-sheet fallback, and ordinary and flag-off controls. Follow-up
-  assertions verify that expired sparks stop drawing and that planes face
-  the current main or rear-view camera during each pass.
+  assertions verify that expired sparks stop drawing, planes face the
+  current main or rear-view camera, and sheet uploads and an offscreen mesh
+  draw happen once before visible effects.
 - `node tools/test-combat-armor.mjs` passes 19/19;
   `node tools/test-combat-modules.mjs` passes 5/5.
 - `node tools/check-art-intake.mjs` reports all seven accepted art files
@@ -42,9 +43,16 @@ player_facing: yes
   later-CPU wreck position and a constant scene light count. The inspected
   images show the blast and fire at the expected cars with the race HUD
   visible during the paused first-frame shots. The report is under
-  `.qa-dist/browser-output/combat-effects-2026-09-23T22-39-30-907Z/` in this
-  isolated worktree. This final browser run exited successfully. An earlier
+  `.qa-dist/browser-output/combat-effects-2026-09-23T22-50-48-343Z/` in this
+  isolated worktree. This browser run exited successfully. An earlier
   run wrote a pass report but hit a temporary Chrome profile cleanup error.
+- In the private browser fixture, the first blast initially took 73 ms in
+  High and 60 ms in Performance, against nearby 8–10 ms and 5–8 ms frames.
+  Uploading the four sheets and drawing the fixed pool offscreen once cut
+  that first blast to 8.4 ms and 7.0 ms. The preparation took 239 ms and
+  211 ms after the sheets loaded in this synthetic race. Player wreck frames
+  still took 59 ms and 52 ms, so the real RAF frame-cost check remains
+  important before integration.
 - `node --check` on changed JavaScript and `git diff --check` pass.
 
 ## Remaining gate

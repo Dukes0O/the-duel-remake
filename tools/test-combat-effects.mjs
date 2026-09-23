@@ -200,6 +200,43 @@ test('disposing the shared pool releases each dedicated sheet exactly once', asy
   }
 });
 
+test('the four atlas textures upload once before a visible hit', async () => {
+  const {createCombatEffects} = await import('../src/combat-effects.js');
+  const source = loader();
+  const effects = createCombatEffects({loadTexture: source.loadTexture});
+  const uploaded = [];
+  let target = null, warmDraws = 0;
+  const renderer = {
+    initTexture: texture => uploaded.push(texture.uuid),
+    getRenderTarget: () => target,
+    setRenderTarget: next => { target = next; },
+    render: scene => {
+      warmDraws++;
+      assert.ok(scene.children.includes(effects.group) &&
+        effects.group.children.every(mesh => mesh.visible),
+      'the real draw prepares every fixed atlas mesh');
+    },
+  };
+  const parent = new THREE.Group();
+  parent.add(effects.group);
+  try {
+    assert.equal(effects.prewarmTextures(renderer), true);
+    assert.equal(effects.prewarmTextures(renderer), true);
+    assert.deepEqual(uploaded.sort(),
+      [...source.textures.values()].map(texture => texture.uuid).sort(),
+    'each dedicated sheet uploads once, before any effect draw');
+    assert.equal(effects.prewarm(renderer, new THREE.PerspectiveCamera()), true);
+    assert.equal(effects.prewarm(renderer, new THREE.PerspectiveCamera()), true);
+    assert.equal(warmDraws, 1, 'fixed meshes draw once during preparation');
+    assert.equal(effects.group.parent, parent, 'the normal scene parent returns');
+    assert.equal(target, null, 'the normal render target returns');
+    assert.ok(effects.group.children.every(mesh => !mesh.visible),
+      'the preparation draw leaves no flash in the race');
+  } finally {
+    effects.dispose();
+  }
+});
+
 test('effect planes face each camera during its render pass', async () => {
   const {createCombatEffects} = await import('../src/combat-effects.js');
   const source = loader();
