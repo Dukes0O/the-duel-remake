@@ -35,7 +35,7 @@ export const COMBAT_TUNING=Object.freeze({
   interval:10,intervalStep:3,cycle:4,finishMargin:12,limit:4,
   contactDistance:3,lateralClearance:2.5,airClearance:3,
   lifetime:24,retentionBehind:30,chargeLimit:1,calloutSeconds:2,
-  maxSeededCrates:6,seedFractions:[.2,.48,.76],seedJitter:.035,
+  maxSeededCrates:6,seedFractions:[.2,.48,.76],seedJitter:.035,roadEdgeMargin:1.5,
   stageSalt:0x632be5ab,lapSalt:0x7f4a7c15,armorRepair:25},
  cpu:{boltLookahead:.4,attackRange:180,bombRange:35,pickupBombRange:50,
   aimSeedStageSalt:0x51ed,aimSeedShotSalt:0x9e3779b9},

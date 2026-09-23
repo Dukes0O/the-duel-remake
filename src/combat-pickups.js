@@ -26,8 +26,11 @@ export function buildSeededPickupPlan(duel) {
     for (let slot = 0; slot < perLap; slot++) {
       const fraction = T.pickup.seedFractions[slot] + rng.range(-T.pickup.seedJitter, T.pickup.seedJitter);
       const s = lap * duel.course.length + fraction * duel.course.length;
-      const laneOrder = [rng.pick(LANES), ...LANES];
-      const lateral = laneOrder.find(value => duel._surface(s, value).road) ?? 0;
+      const laneOrder = slot === 1 ? [-2.2, -1.5, 0] :
+        slot === 2 ? [2.2, 1.5, 0] : [rng.pick(LANES), ...LANES];
+      const carWidthMargin = duel.course.roadHalfWidthAt(s) - T.pickup.roadEdgeMargin;
+      const lateral = laneOrder.find(value => Math.abs(value) <= carWidthMargin &&
+        duel._surface(s, value).road) ?? 0;
       const kind = slot === 0 ? 'armor' : 'weapon';
       const weapon = kind === 'weapon' ? rng.pick(WEAPON_CRATES) : undefined;
       plan.push({id: `pickup-${lap}-${slot}`, lap, s, lateral, kind, ...(weapon ? {weapon} : {}), age: 0});
@@ -62,6 +65,7 @@ export function sweptPickupFraction(actor, pickup) {
 }
 
 function canCollectSeeded(state, combat, actor, pickup, index) {
+  if (index >= 0 && state.cpuDifficulty === 'easy') return false;
   if (pickup.kind === 'armor') return Number.isFinite(actor.armor) &&
     Number.isFinite(actor.maxArmor) && actor.armor < actor.maxArmor;
   if (pickup.kind !== 'weapon' || !WEAPONS[pickup.weapon]) return false;
@@ -100,7 +104,7 @@ function stepSeededPickups(duel, dt) {
   const combat = state.combat;
   if (!combat.seededPickupPlan) {
     combat.seededPickupPlan = buildSeededPickupPlan(duel);
-    combat.pickups = combat.seededPickupPlan.map(pickup => ({...pickup}));
+    if (!combat.pickups.length) combat.pickups = combat.seededPickupPlan.map(pickup => ({...pickup}));
   }
   combat.pickups = combat.pickups.filter(pickup => {
     pickup.age += dt;

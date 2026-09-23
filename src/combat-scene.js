@@ -27,8 +27,9 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
  const armorGeometry=new THREE.BoxGeometry(1,1,1);
  const pickupColors={ufo:0x64ffce,bomb:0xff8c16,crossbow:0x6cbcff,star:0xffe16b,armor:0x62ff8d};
  const pickupMaterials=Object.fromEntries(Object.entries(pickupColors).map(([key,color])=>[key,new THREE.MeshBasicMaterial({color})]));
- const pickups=Array.from({length:6},()=>{
+ const pickups=Array.from({length:6},(_,index)=>{
   const g=new THREE.Group(),box=new THREE.Mesh(armorGeometry,materials.gold),halo=new THREE.Mesh(ring,materials.gold);
+  g.name=`combat-pickup-${index}`;
   const armorCross=new THREE.Group();
   const crossBar=new THREE.Mesh(armorGeometry,pickupMaterials.armor),crossStem=new THREE.Mesh(armorGeometry,pickupMaterials.armor);
   crossBar.scale.set(2.2,.48,.55);crossStem.scale.set(.48,2.2,.55);armorCross.add(crossBar,crossStem);
