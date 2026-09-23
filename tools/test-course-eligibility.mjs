@@ -5,6 +5,7 @@ import {CARS,COURSE} from '../src/config.js';
 import {normalizeRaceSettings} from '../src/race-settings.js';
 import {createProfile,CAR_PRICES,CPU_REWARDS,isCarUnlocked,bestKey,eventKey,isValidFinish,UPGRADE_TYPES} from '../src/progression.js';
 import {getEquippedDriverId} from '../src/drivers.js';
+import {driverSkillLabel} from '../src/driver-ui.js';
 import {getLeaderboard} from '../src/leaderboard.js';
 import {supportsRouteVariants,getRouteVariantForSeed} from '../src/route-variants.js';
 import {syncRaceChoiceButtons} from '../src/race-settings-ui.js';
@@ -55,9 +56,9 @@ try{
   const reward=source.slice(source.indexOf('function updateEntryReward(){'),source.indexOf('\nfunction updatePlayers()'));
   check(menu.startsWith('function updateMenuScene() {')&&reward.startsWith('function updateEntryReward(){'),'production menu function boundaries exist');
   const values={},choices={...app.getRaceChoices()},node=()=>({hidden:false,disabled:false,value:'',checked:false,title:'',innerHTML:'',classList:{toggle(){}},setAttribute(){}});
-  const ui=Object.fromEntries(['lighting-mood','scene-select','route-choice','menu-biome-legend','menu-elevation','entry-reward','event-brief','ghost-control','ghost-hint','ghost-toggle'].map(id=>[id,node()]));
+  const ui=Object.fromEntries(['lighting-mood','scene-select','route-choice','menu-biome-legend','menu-elevation','entry-reward','event-brief','ghost-control','ghost-hint','ghost-toggle','rival-customization','rival-car','rival-driver','rival-upgrades'].map(id=>[id,node()]));
   ui['scene-select'].options=COURSE.map((event,index)=>({value:String(index),disabled:true,textContent:event.name}));
-  const env={app,choices,ui,COURSE,CARS,CAR_PRICES:{},COURSE_PRICES,isCourseUnlocked,CPU_REWARDS,UPGRADE_TYPES,bestKey,eventKey,getLeaderboard,getEquippedDriverId,isCarUnlocked,supportsRouteVariants,getRouteVariantForSeed,syncRaceChoiceButtons,formatSpeed,
+  const env={app,choices,ui,COURSE,CARS,CAR_PRICES:{},COURSE_PRICES,isCourseUnlocked,CPU_REWARDS,UPGRADE_TYPES,bestKey,eventKey,getLeaderboard,getEquippedDriverId,driverSkillLabel,isCarUnlocked,supportsRouteVariants,getRouteVariantForSeed,syncRaceChoiceButtons,formatSpeed,
     root:{querySelectorAll:()=>[],querySelector:()=>({textContent:''})},profile:()=>app.profile,text:(id,value)=>{values[id]=String(value);},credits:value=>Math.floor(value||0).toLocaleString(),time:value=>String(value),escapeHTML:value=>String(value),
     coursePreview:{update:()=>({distanceKm:4,laps:2,biomes:[],map:{gates:[],branches:[]},showElevation:false,reliefMeters:0})},updateMenuCar(){env.updateEntryReward();}};
   Object.assign(env,new Function('env',`with(env){${reward}\n${menu}\nreturn {updateEntryReward,updateMenuScene};}`)(env));
