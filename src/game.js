@@ -1229,10 +1229,13 @@ export class Duel {
     const route = s.cpuDifficulty === 'easy' ? null : this._npcRoutePlanner.update(r, { difficulty: s.cpuDifficulty, lapsTotal: s.lapsTotal, player: s, traffic: s.traffic });
     r.routeId = route?.routeId || null; r.routeLap = route?.routeLap || null;
     const rivalSurface = this._drivingSurface(r.s, r.lateral, car);
-    const targetPace = car.topSpeed * skill.skill + (s.mode === 'wasteland' ?
-      s.cpuDifficulty === 'medium' ? 8 : s.cpuDifficulty === 'hard' ? -15 : 0 : 0);
+    const mediumCatchup = s.mode === 'wasteland' && s.cpuDifficulty === 'medium' ?
+      20 * clamp((s.s - r.s - 120) / 180, 0, 1) : 0;
+    const targetPace = car.topSpeed * skill.skill + mediumCatchup -
+      (s.mode === 'wasteland' && s.cpuDifficulty === 'hard' ? 18 : 0);
     const rubber = clamp((s.s - r.s) * .012, -8, 8);
     let target = targetPace + rubber;
+    if (mediumCatchup) target = Math.min(target, car.topSpeed);
     if (s.mode === 'wasteland' && s.cpuDifficulty === 'hard') {
       // A Wasteland rival stays near enough to fight instead of driving away
       // after an impact. It slows through normal braking, then resumes pace.

@@ -14,7 +14,7 @@ function make(cpuDifficulty='medium'){
   return duel;
 }
 
-for(const [difficulty,seconds] of [['easy',10],['medium',6.8],['hard',5.3]]){
+for(const [difficulty,seconds] of [['easy',10],['medium',7],['hard',5]]){
   const duel=make(difficulty),s=duel.state;
   stepCombat(duel,.1);
   assert.ok(Math.abs(s.combat.aiTimer-(seconds-.1))<.001,

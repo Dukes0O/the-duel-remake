@@ -1,8 +1,9 @@
 # BUG-07 CPU combat balance follow-up
 
 Status: building. CPU hit bands pass on the standard Pacific Canyon run and
-the contact-heavy Titan Arena run. Medium and Hard ten-seed win rates pass;
-Easy remains 10/10 against the standard autopilot, above its 80–95% target.
+the contact-heavy Titan Arena run with the spec's exact 10/7/5-second repeat
+intervals. Medium and Hard ten-seed win rates pass; Easy remains 10/10
+against the standard autopilot, above its 80–95% target.
 
 ## Cause and physical changes
 
@@ -23,17 +24,18 @@ attack opportunities. The crash is retained. Its existing visible control
 lock and recovery are unchanged. The 30 s crash time penalty does not decide
 the duel's win flag, which compares actual stage time to the rival finish.
 
-The Medium Wasteland rival now cruises 8 mph faster and fires every 6.8 s
-instead of 7 s. The Hard Wasteland rival cruises 15 mph slower, fires every
-5.3 s instead of 5 s, and has a 0.03 radian aim cone instead of 0.018. When
-Hard pulls more than 90 m ahead, it gradually eases its target speed toward
-140 mph by a 180 m lead. Its normal braking, steering, road limits and
+The first balance checkpoint gave the Medium Wasteland rival an 8 mph cruise
+increase and 6.8 s attack interval. It gave the Hard rival a 15 mph cruise
+reduction, 5.3 s attack interval and 0.03 radian aim cone instead of 0.018.
+The two intervals conflicted with the approved 7/5 s specification and are
+corrected below. When Hard pulls more than 90 m ahead, it gradually eases
+its target speed toward 140 mph by a 180 m lead. Its normal braking, steering, road limits and
 traffic still govern the motion. The rule is limited to Wasteland; ordinary
 duel pace and replay behavior stay unchanged. The final seed-1989 Hard trace
 records 13 fires, 10 in-range and 3 close timer opportunities, seven player
 hits, and no crash.
 
-## Measured result
+## First checkpoint measurement
 
 All runs use stock Falcone F42, Casual Wasteland, default driver, memory-only
 storage, a 1/30 s fixed step and no player weapons. Ten-seed results use
@@ -86,3 +88,38 @@ without allocating an actor array each simulation frame. The Hard aim test
 uses its actual 0.03-radian cone and 26 seeded shots; at least one shot must
 exercise the widened part beyond the old 0.018-radian bound. CPU combat,
 combat lifecycle and the production build pass after this change.
+
+## Exact attack intervals and race pace
+
+The repeat intervals are now exactly Easy 10 s, Medium 7 s and Hard 5 s,
+including each CPU's first attack timer. A shorter opening timer was tried
+and removed: it produced Pacific Canyon hits 1/3/12 and Titan Arena hits
+0/7/11, exceeding Hard's 4–10 band on both courses. Exact intervals with
+the old 8 mph Medium cruise and 15 mph Hard reduction produced Pacific hits
+1/1/6, Titan hits 0/7/10 and ten-seed wins 10/7/1.
+
+Medium now adds up to 20 mph only while the player is over 120 m ahead,
+ramping through a further 180 m gap. Its target remains at or below the
+Falcone F42's 201 mph top speed. This is a Wasteland-only chase pace through
+normal acceleration and braking. A 16 mph catch-up trial gave 7/10 Medium
+wins. The 20 mph capped rule gives 6/10 and reaches, but never exceeds,
+201 mph in the sampled races. Hard's Wasteland cruise reduction is 18 mph
+rather than 15; the existing 90–180 m attack-range easing remains.
+
+| Difficulty | Pacific hits, seed 1989 | Titan hits, seed 1989 | Pacific wins, seeds 1989–1998 | Target wins |
+| --- | ---: | ---: | ---: | ---: |
+| Easy | 1 | 0 | 10/10 | 80–95% |
+| Medium | 5 | 5 | 6/10 | 45–65% |
+| Hard | 4 | 10 | 2/10 | 20–40% |
+
+All 30 sampled races complete. Hard's seed-1989 Pacific trace records eight
+fired attacks, four player hits and one oncoming-traffic crash. Across its
+ten Pacific seeds, Hard hit counts are 4, 10, 8, 10, 6, 10, 9, 5, 4 and 6.
+These are observations, not additional acceptance assertions; the spec's
+0–3/2–6/4–10 bands are checked on both named seed-1989 courses.
+
+The Easy win-rate miss remains open, as do CPU UFO use and pickup collection.
+BUG-04's separate UFO two-lap gain check also remains red on this branch.
+With the exact intervals, focused CPU combat, bomb momentum, 792-case
+crossbow aim and 162 replay checks pass. The production build passes. The
+changed lane gate passes 154/154 suites in 277.41 s.

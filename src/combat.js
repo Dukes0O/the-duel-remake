@@ -7,8 +7,8 @@ import {makeRng} from './rng.js';
 export const WEAPONS=Object.freeze({ufo:{name:'UFO SWAP',key:'1',cooldown:18},bomb:{name:'BOMB STORM',key:'2',cooldown:9},crossbow:{name:'CROSSBOW',key:'3',cooldown:4},star:{name:'STAR SHIELD',key:'4',cooldown:16}});
 const CPU_COMBAT=Object.freeze({
  easy:{interval:10,aimError:.12,shieldReaction:.20,visionCos:.5},
- medium:{interval:6.8,aimError:.055,shieldReaction:.13,visionCos:.26},
- hard:{interval:5.3,aimError:.03,shieldReaction:.07,visionCos:.09},
+ medium:{interval:7,aimError:.055,shieldReaction:.13,visionCos:.26},
+ hard:{interval:5,aimError:.03,shieldReaction:.07,visionCos:.09},
 });
 export const supportsCombat=stage=>!!stage?.hasRival&&!stage.practice&&!stage.stuntTrial;
 export function createCombat(levels){return {levels:normalizeWeapons({levels}).levels,cooldowns:{ufo:0,bomb:0,crossbow:0,star:0},shield:0,rivalShield:0,projectiles:[],bursts:[],pickups:[],pickupTimer:4,pickupCount:0,serial:0,aiTimer:null,aiShot:0,aiShieldCooldown:0,hits:0};}
