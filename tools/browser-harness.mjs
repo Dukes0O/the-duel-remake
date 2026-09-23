@@ -16,12 +16,13 @@ const delay = ms => new Promise(done => setTimeout(done, ms));
 
 export function parseArguments(args) {
   const [command, ...rest] = args;
-  if (!['smoke', 'scenario'].includes(command)) throw Error('Usage: node tools/browser-harness.mjs smoke|scenario NAME [--inject-console-error]');
-  let name = command === 'smoke' ? 'smoke' : null;
+  if (!['smoke', 'scenario', 'record-race'].includes(command)) throw Error('Usage: node tools/browser-harness.mjs smoke|scenario NAME|record-race [NAME] [--inject-console-error]');
+  let name = command === 'smoke' ? 'smoke' : command === 'record-race' ? 'audio-race' : null;
   let injectConsoleError = false;
+  let named = false;
   for (const value of rest) {
     if (value === '--inject-console-error') injectConsoleError = true;
-    else if (command === 'scenario' && name === null && /^[a-z][a-z0-9-]*$/.test(value)) name = value;
+    else if (!named && command !== 'smoke' && /^[a-z][a-z0-9-]*$/.test(value)) { name = value; named = true; }
     else throw Error(`Unknown browser harness argument: ${value}`);
   }
   if (!name) throw Error('scenario needs a simple name from tools/scenarios/.');

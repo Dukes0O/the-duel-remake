@@ -5,6 +5,8 @@ import { assertPrivatePort, consoleIssue, parseArguments } from './browser-harne
 test('smoke and named scenarios parse without accepting paths or unknown flags', () => {
   assert.deepEqual(parseArguments(['smoke']), { name: 'smoke', injectConsoleError: false });
   assert.deepEqual(parseArguments(['scenario', 'night-race', '--inject-console-error']), { name: 'night-race', injectConsoleError: true });
+  assert.deepEqual(parseArguments(['record-race']), { name: 'audio-race', injectConsoleError: false });
+  assert.throws(() => parseArguments(['record-race', 'audio-race', 'again']), /Unknown browser harness argument/);
   assert.throws(() => parseArguments(['scenario', '../private']), /Unknown browser harness argument/);
   assert.throws(() => parseArguments(['smoke', '--port', '5174']), /Unknown browser harness argument/);
   assert.throws(() => parseArguments(['scenario']), /scenario needs/);
