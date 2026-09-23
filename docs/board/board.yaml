@@ -231,9 +231,9 @@ tasks:
     lane: VIS
     size: S
     needs: [FND-06]
-    status: ready-to-merge
+    status: merged
     spec: "SPEC.md, task BUG-08"
-    note: "Bumper, bow and shield use model-local sockets on all nine cars; slide, spin, tumble and jump transforms are checked for player and rival."
+    note: "Merged as 6a8b29f, aca188c and 3c2ffd1; 147-suite gate, build, High/Performance smoke and production renderer maneuver scenario pass. Nine car sockets and both actor roles checked."
   - id: BUG-10
     title: "Gamepad weapons"
     wave: 1

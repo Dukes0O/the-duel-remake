@@ -1,6 +1,6 @@
 ---
 task: BUG-08
-status: ready-to-merge
+status: merged
 kind: gameplay-fix
 flag: none
 player_facing: yes
@@ -34,3 +34,11 @@ The first shield review showed a bright wire cage that spread well beyond the ca
 ## Renderer maneuver and ownership check
 
 The headless test now binds both roles at once, checks that each owns its own bumper, bow and shield, and checks all three rigs detach when a car or the scene retires. It passes 813 checks. The private `vehicle-socket-poses` browser scenario runs the production renderer with memory-only saves, places a Falcone player and Titan rival in slide, spin, tumble and jump poses, and checks both cars' model transforms and all six rig mounts after each pose. Four screenshots on private port 56764 show the poses; the browser reported zero warnings and zero errors. Evidence: ignored `.qa-dist/browser-output/vehicle-socket-poses-2026-09-23T05-29-00-428Z/`. `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going` passed 152/152 suites in 332.96 seconds, including unchanged replay fingerprints and 48/48 completed and won expansion races. `npm run build` passed with the existing large-chunk warning. No production behavior or existing assertion changed.
+
+## Integration
+
+The reviewed commits were cherry-picked as `6a8b29f`, `aca188c`, and
+`3c2ffd1`. The 147-suite merge gate passed in 178.40 seconds. The production
+build, High/Performance smoke, and production renderer maneuver scenario
+passed with zero browser warnings or errors. I inspected the integration jump
+screenshot: both car bodies and their mounted rigs follow the raised pose.

@@ -196,3 +196,17 @@ checkout untouched until the final integration commit passes the full gate.
   seconds and rebases the rival's shortcut plan. The seeded 100-swap matrix
   covers all 11 combat courses and 19 shortcut landings with no crash or
   reset in the two seconds after landing.
+
+## 2026-09-22 PDT — BUG-08 vehicle sockets merged
+
+- Independently reviewed VIS commits `b2b27ba`, `214d747` and `f44d1f7`;
+  cherry-picked as `6a8b29f`, `aca188c` and `3c2ffd1`. The 147-suite merge
+  gate passed in 178.40 seconds. The build, High/Performance smoke and
+  production slide/spin/tumble/jump browser scenario passed with zero
+  warnings/errors. The integration jump screenshot was inspected.
+- Bumper, bow and shield now inherit the real model transform for both roles
+  on all nine cars. The follow-up made the shield smaller and checked that
+  each rig detaches before its car retires.
+- CMB commit `0c8eb59` was also cherry-picked as `1d9110f` before this gate:
+  combat hit events identify player, rival or traffic without changing physics.
+  TOOL-01 will use that identity for accurate CPU hit counts.
