@@ -129,3 +129,12 @@ checkout untouched until the final integration commit passes the full gate.
   smoke passed with four screenshots and no warnings or errors.
 - At 1280×800, the title and player row have a 16-pixel gap. Phone and short
   desktop screenshots show the controls remain separate and reachable.
+
+## 2026-09-22 PDT — BUG-10 gamepad weapons merged
+
+- Independently reviewed lane commit `4c6c857` and cherry-picked it as
+  `9ce4bb5`. All 144 merge-gate suites passed in 173.68 seconds. The build
+  and private High/Performance browser smoke passed with four screenshots,
+  zero warnings and zero errors.
+- D-pad Up/Right/Down/Left fires UFO/bomb/crossbow/star on press edges. The
+  direction choice is recorded in `decisions.md`; BUG-11 will show it in HUD.

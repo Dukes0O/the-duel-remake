@@ -1,6 +1,6 @@
 ---
 task: BUG-10
-status: review
+status: merged
 kind: gameplay-fix
 flag: none
 player_facing: yes
@@ -23,6 +23,9 @@ mode, or during cooldown.
   unchanged driving inputs.
 - `test-keyboard-steering.mjs` passed 96 checks with the same
   `cfe859d2a6aea7e9` trajectory fingerprint.
+- Integration commit `9ce4bb5` passed all 144 merge-gate suites in 173.68
+  seconds, the production build, and private High/Performance browser smoke
+  with four screenshots, zero warnings and zero errors.
 
 ## Behavior and test changes
 

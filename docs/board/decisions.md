@@ -4,6 +4,15 @@ Standing decisions D1-D7 are approved in [SPEC.md](../../SPEC.md), section 15.
 This log is for choices the spec does not settle. Record the choice, reason,
 and how to reverse it before continuing.
 
+## 2026-09-22 PDT — BUG-10 D-pad direction map
+
+- Decision: Up fires UFO swap, Right fires bomb storm, Down fires crossbow,
+  Left fires star shield. Each weapon fires once per new press.
+- Reason: This follows keyboard weapon order 1–4 clockwise from Up and leaves
+  analog steering, pedals, camera, and gear controls unchanged.
+- How to reverse: Change the mapping in `src/app.js`, its fake-gamepad test,
+  and the HUD/help text together, then rerun the input and browser gates.
+
 ## 2026-09-22 PDT — FND-10 storage unit and scope
 
 - Decision: Interpret the 4 MB budget as 4,000,000 bytes of localStorage

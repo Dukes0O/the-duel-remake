@@ -236,7 +236,8 @@ tasks:
     lane: UI
     size: S
     needs: [BUG-01]
-    status: blocked
+    status: merged
+    note: "Merged as 9ce4bb5; fake gamepad test, 144-suite merge gate, build and private High/Performance browser smoke pass. D-pad fires on press only."
     spec: "SPEC.md, task BUG-10"
   - id: BUG-11
     title: "Weapon bar tidy-up"
@@ -244,7 +245,7 @@ tasks:
     lane: UI
     size: S
     needs: [BUG-10]
-    status: blocked
+    status: ready
     spec: "SPEC.md, task BUG-11"
   - id: OLD-01
     title: "One crash counter on the HUD"
