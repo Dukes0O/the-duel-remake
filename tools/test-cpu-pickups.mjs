@@ -39,6 +39,13 @@ for (const difficulty of ['medium', 'hard']) {
   stepCombat(duel, .05);
   assert.equal(combat.cpuPickupCharges.bomb, 1, 'bomb waits until the player is close');
   assert.equal(combat.projectiles.length, 0, 'a distant pickup does not invent a hit');
+  state.s = state.prevS = state.rival.s - 57;
+  combat.aiTimer = .01;
+  stepCombat(duel, .05);
+  assert.equal(combat.cpuPickupCharges.bomb, 1, 'a 57 m target leaves the collected bomb in reserve');
+  assert.ok(combat.projectiles.some(projectile => projectile.enemy && projectile.kind === 'crossbow'),
+    'the scheduled attack keeps its ordinary crossbow at 57 m');
+  combat.projectiles = [];
   state.s = state.prevS = state.rival.s - 45;
   combat.aiTimer = .01;
   stepCombat(duel, .05);

@@ -224,7 +224,7 @@ export function stepCombat(duel,dt){
     // A collected weapon selects this scheduled attack. It does not add a
     // free shot or shorten the difficulty's 10/7/5-second attack interval.
     if(s.cpuDifficulty!=='easy'){
-     if(gap>=35&&gap<65&&c.cpuPickupCharges.bomb)weapon='bomb';
+     if(gap>=35&&gap<50&&c.cpuPickupCharges.bomb)weapon='bomb';
     }
     c.aiShot++;
     if(fireWeapon(duel,weapon,true)&&c.cpuPickupCharges[weapon]){
