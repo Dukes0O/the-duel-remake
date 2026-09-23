@@ -1,5 +1,19 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — physical CPU pickups merged; balance hold remains
+
+- Reviewed BUG-07 pickup slice `4bfeb30` and cherry-picked it as `505639e`.
+  Easy ignores pickups; Medium and Hard collect only on physical contact and
+  use a star or a scheduled bomb/crossbow without extra shots or changed
+  attack timers. Ten-seed wins remain 8/6/2; CPU hits remain 1/2/10.
+- The changed lane passed 168/168 suites. Exact integration passed 160/160
+  merge suites in 212.50 seconds, build, private High/Performance smoke, all
+  11 browser scenarios, and art intake. Browser reports contain 13 screenshots
+  and no warnings or errors. The exact balance run fails only the six UFO
+  time-gain targets. See `checks/2026-09-23-505639e-balance-hold.md`.
+- CPU UFO pickup use and BUG-04's design decision remain open. The live game
+  and real saves remain untouched; no full-check success or release is claimed.
+
 ## 2026-09-23 PDT — current integration code tier passed
 
 - On `b48e3cf`, the standalone full code tier passed 167/167 suites in

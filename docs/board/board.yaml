@@ -219,6 +219,7 @@ tasks:
     size: S
     needs: [BUG-03]
     status: blocked
+    note: "Exact-distance branch and a target-only short-range prototype both miss the unchanged four-second gain gate. The target-only trial also makes Medium win 10/10. Held pending a revised UFO design choice; no branch merged."
     spec: "SPEC.md, task BUG-04"
   - id: BUG-05
     title: "Bombs carry the car's speed"
@@ -245,7 +246,7 @@ tasks:
     size: S
     needs: [BUG-06]
     status: building
-    note: "Exact 10/7/5 s attacks and Easy pace/10-degree aim integrated through 2077364. Wins 8/6/2 and CPU hits 1/2/10 pass; CPU UFO/pickups remain open. Reviewed Wasteland replay, 158-suite merge, build and smoke pass."
+    note: "Exact 10/7/5 s attacks and Easy pace/10-degree aim integrated through 2077364. Physical Medium/Hard pickup collection and scheduled use merged as 505639e; wins 8/6/2 and CPU hits 1/2/10 pass. CPU UFO use remains open. Reviewed Wasteland replay, 160-suite exact merge, build and private smoke pass."
     spec: "SPEC.md, task BUG-07"
   - id: BUG-14
     title: "No legacy police in combat races"
