@@ -138,7 +138,7 @@ tasks:
     size: S
     needs: [FND-08]
     status: merged
-    note: "Merged as 6ba035b and 96a8e1f; hardened PNG, alpha, prompt and credit checks. 165-suite lane, 159-suite exact merge, build and private smoke pass. Seven planned images remain absent in integration."
+    note: "Merged as 6ba035b and 96a8e1f; hardened PNG, alpha, prompt and credit checks. ART-A subsequently supplied all seven planned Batch A catalog entries within the 32 MB budget."
     spec: "SPEC.md, section 3.10 and docs/CODEX_PLAYBOOK.md full check"
   - id: QA-03
     title: "Repeatable driving frame sample"
@@ -476,7 +476,7 @@ tasks:
     needs: [RFX-04]
     status: building
     owns: [src/combat-armor.js, src/wasteland-tuning.js, src/combat-projectiles.js, tools/test-combat-armor.mjs, tools/scenarios/combat-armor-wreck.mjs]
-    hooks: [src/combat.js, src/game.js, src/sim-contacts.js, src/sim-rival.js, src/sim-crash.js, src/feature-flags.js, src/render3d.js, src/explosion.js, tools/test-feature-flags.mjs]
+    hooks: [src/combat.js, src/game.js, src/sim-contacts.js, src/sim-rival.js, src/sim-crash.js, src/feature-flags.js, src/render3d.js, src/explosion.js, src/combat-weapons.js, src/combat-ai.js, src/combat-pickups.js, src/screen-hud.js, src/audio.js, tools/test-feature-flags.mjs]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
     flag: wasteland2
     behavior_change: yes
@@ -487,7 +487,7 @@ tasks:
       - "At zero armor each car wrecks exactly once, explodes, recovers within 12 m of the impact with 60% of its own max, and pays about 3.5 seconds once."
       - "Wrecks do not end combat, spend ordinary crash slots, or change ordinary modes or flag-off Wasteland replays."
       - "A seeded three-opponent browser race shows player and later-CPU wreck, explosion, recovery, and ranked completion in High and Performance with memory-only saves."
-    note: "Read-only acceptance plan completed after RFX-04 second review. CMB-02 owns live spike behavior and CMB-04 owns armor repair pickups."
+    note: "Independent acceptance tests committed at 940757c; CMB-01 builder active. Temporary wrecks must block AI, direct firing and pickups; wreck callout and blast position need narrow HUD/audio hooks. CMB-02 owns live spike behavior and CMB-04 owns armor repair pickups."
     spec: "SPEC.md sections 3.2, 12.2, 12.4, and 13"
   - id: CMB-07
     title: "Projectile carry and aim rules"
@@ -538,3 +538,16 @@ tasks:
     status: blocked
     note: "Audio timing and pitch tools are integrated; the actual on-foot and new weapon cues await their gameplay systems."
     spec: "SPEC.md, task AUD-02"
+  - id: ART-A
+    title: "Wasteland Batch A runtime images"
+    wave: 3
+    lane: ART
+    size: M
+    needs: [QA-02]
+    status: merged
+    owns: [public/assets/textures/scrap-plating.png, public/assets/textures/scrapyard-dirt.png, public/assets/textures/fire-flipbook.png, public/assets/textures/explosion-flipbook.png, public/assets/textures/smoke-flipbook.png, public/assets/textures/muzzle-dust.png, docs/WASTELAND_ART.md]
+    helpers: [reviewer]
+    flag: none
+    behavior_change: no
+    note: "Reference and runtime art integrated as 3961bdd and b99216f. All catalog entries pass intake at 15.57/32 MB; 172/172 merge suites, build and private High/Performance smoke pass. Assets are prepared but not yet drawn in game. Review plating UV repetition and effect fade timing when VIS consumes them."
+    spec: "SPEC.md sections 3.10 and 12.2, task ART-A"

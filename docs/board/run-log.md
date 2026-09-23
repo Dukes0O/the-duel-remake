@@ -471,3 +471,20 @@ checkout untouched until the final integration commit passes the full gate.
   starts one opponent; no live release was made for this internal split.
 - CMB-01 armor work started in separate builder and test-author worktrees.
   ART-A runtime sheets are in final visual and intake review.
+
+## 2026-09-23 PDT — ART-A runtime images merged
+
+- Integrated two reference studies and six exact-size runtime images as
+  `3961bdd` and `b99216f`. The seven planned Batch A catalog entries are all
+  present and pass intake at 15,569,098 of 32,000,000 allowed bytes. Originals,
+  prompts and deterministic finishing steps are recorded in WASTELAND_ART.md.
+- Reviewed the repeat previews and each effect sequence. Removed a detached
+  lower shadow from explosion and smoke cells. Plating repeats visibly at tile
+  scale, and the effect sheets contain clear fade tails; both need in-game
+  playback review when the renderer uses them.
+- All 172 exact merge suites passed in 292.33 seconds. The production build
+  and private High/Performance browser smoke passed with zero browser issues.
+  These assets are prepared but are not yet visible in the live game.
+- Expanded CMB-01's owned hooks to cover a temporary wreck's AI, firing and
+  pickup guards, its HUD callout, positional blast audio, and the new dev
+  feature switch assertion. Independent reviewer findings drive those hooks.
