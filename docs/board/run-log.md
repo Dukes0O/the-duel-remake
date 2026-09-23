@@ -501,3 +501,15 @@ checkout untouched until the final integration commit passes the full gate.
   pickup card avoids showing on-foot ammo before fighters exist. The visual
   card consumes the accepted Batch A sheets without changing ordinary crash
   effects or reintroducing a first-blast light-count stall.
+
+## 2026-09-23 PDT — CMB-01 armor and recovery merged
+
+- Integrated the CMB-01 lane at `8cf1173`. Its exact lane gate passed 186/186
+  suites, 162 unchanged replay fingerprints, the production build, and a
+  memory-only High/Performance browser wreck-and-recovery scene.
+- The first combat wreck still has one frame above 33 ms in each quality mode.
+  The separate combat explosion pool avoids the earlier multi-second shader
+  stall and keeps ordinary crash effects unchanged. VIS-01 will retain that
+  pool and measure the first-frame cost again.
+- CMB-02, CMB-03, CMB-04 and VIS-01 are now ready. CMB-07 can be rebased and
+  tested against the integrated armor feature switch.

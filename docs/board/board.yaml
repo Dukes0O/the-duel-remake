@@ -474,7 +474,7 @@ tasks:
     lane: CMB
     size: M
     needs: [RFX-04]
-    status: building
+    status: integrated
     owns: [src/combat-armor.js, src/wasteland-tuning.js, src/combat-projectiles.js, tools/test-combat-armor.mjs, tools/scenarios/combat-armor-wreck.mjs]
     hooks: [src/combat.js, src/game.js, src/sim-contacts.js, src/sim-rival.js, src/sim-crash.js, src/feature-flags.js, src/render3d.js, src/explosion.js, src/combat-weapons.js, src/combat-ai.js, src/combat-pickups.js, src/screen-hud.js, src/audio.js, tools/test-feature-flags.mjs, tools/test-render-reuse.mjs]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
@@ -487,7 +487,7 @@ tasks:
       - "At zero armor each car wrecks exactly once, explodes, recovers within 12 m of the impact with 60% of its own max, and pays about 3.5 seconds once."
       - "Wrecks do not end combat, spend ordinary crash slots, or change ordinary modes or flag-off Wasteland replays."
       - "A seeded three-opponent browser race shows player and later-CPU wreck, explosion, recovery, and ranked completion in High and Performance with memory-only saves."
-    note: "Independent acceptance tests committed at 940757c; CMB-01 builder active. Temporary wrecks must block AI, direct firing and pickups; wreck callout and blast position need narrow HUD/audio hooks. CMB-02 owns live spike behavior and CMB-04 owns armor repair pickups."
+    note: "Integrated at 8cf1173 after 186/186 lane suites, 162 replay fingerprints, build, and High/Performance private wreck browser checks. First wreck still has one frame above 33 ms; VIS-01 will retain prebuilt pools and avoid changing scene-light count. CMB-02 owns live spike behavior and CMB-04 owns armor repair pickups."
     spec: "SPEC.md sections 3.2, 12.2, 12.4, and 13"
   - id: CMB-02
     title: "Ramming and front bumper spikes"
@@ -495,7 +495,7 @@ tasks:
     lane: CMB
     size: S
     needs: [CMB-01]
-    status: blocked
+    status: ready
     owns: [src/vehicle-impact.js, src/wasteland-tuning.js, tools/test-combat-ramming.mjs, tools/scenarios/combat-ramming.mjs]
     hooks: [src/sim-contacts.js, src/combat-armor.js, src/game.js, src/combat-scene.js]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
@@ -507,7 +507,7 @@ tasks:
       - "Player and all three CPU cars can shove, launch, wreck and recover without spending ordinary crash slots; a star blocks armor loss but not the physical push."
       - "Ordinary and flag-off Wasteland contacts, traffic destruction and pinned replay fingerprints stay unchanged."
       - "Independent 30/60/144 FPS contact tests, High/Performance three-car browser scene, balance and frame checks pass."
-    note: "The visible front spikes on every flagged Wasteland combat rig count as equipped. Full incident, ownership and event requirements are in docs/changes/CMB-02-plan.md. CMB-01 must integrate first."
+    note: "The visible front spikes on every flagged Wasteland combat rig count as equipped. Full incident, ownership and event requirements are in docs/changes/CMB-02-plan.md. CMB-01 integrated at 8cf1173."
     spec: "SPEC.md section 3.2, task CMB-02"
   - id: CMB-04
     title: "Seeded weapon and armor pickups across the road"
@@ -515,7 +515,7 @@ tasks:
     lane: CMB
     size: S
     needs: [RFX-04, CMB-01]
-    status: blocked
+    status: ready
     owns: [src/combat-pickups.js, src/wasteland-tuning.js, tools/test-combat-pickups2.mjs, tools/scenarios/combat-pickups2.mjs]
     hooks: [src/combat-weapons.js, src/combat-ai.js, src/combat-scene.js, src/screen-router.js, src/screen-hud.js]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
@@ -586,7 +586,7 @@ tasks:
     lane: VIS
     size: M
     needs: [RFX-06, ART-A, CMB-01]
-    status: blocked
+    status: ready
     owns: [src/combat-vfx-atlas.js, src/combat-effects.js, src/combat-scene.js, tools/test-combat-effects.mjs, tools/scenarios/combat-effects.mjs]
     hooks: [src/explosion.js, src/render3d.js, src/effects.js]
     helpers: [test_author, reviewer, browser_qa]
@@ -619,7 +619,7 @@ tasks:
     lane: CMB
     size: M
     needs: [CMB-01]
-    status: blocked
+    status: ready
     owns: [src/combat-scoring.js, src/wasteland-tuning.js, tools/test-combat-scoring.mjs, tools/scenarios/combat-results.mjs]
     hooks: [src/combat-armor.js, src/combat-projectiles.js, src/sim-contacts.js, src/combat-weapons.js, src/game.js, src/sim-results.js, src/screen-results.js, src/screen-results.css]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
