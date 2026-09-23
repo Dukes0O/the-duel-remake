@@ -5,7 +5,9 @@ its own `## public/assets/...` heading, date, tool, use, and the full prompt
 as a Markdown quote. Add its filename and credit to the `CREDITS.md` beside
 the runtime image. Keep the original image output outside this repository.
 
-Batch A follows `SPEC.md` section 3.10. Only accepted images are checked in.
+Batch A follows `SPEC.md` section 3.10. Only accepted runtime textures are
+checked into `public/assets/textures/`; clearly labeled non-runtime studies
+may be kept in `public/assets/reference/`.
 The intake check reports planned images that are still absent; it fails when a
 present image has invalid dimensions, missing transparency, an excessive file
 size, or incomplete provenance.
@@ -81,6 +83,29 @@ Targeted image edit prompt:
 
 Edited original outside repo: `exec-2473dc95-d136-4282-bf03-793688a8f121.png`. It is still 1254×1254. Edge differences are left/right 22.84 versus neighbor 12.87; top/bottom 22.37 versus neighbor 11.74. It is not a seamless 1024×1024 runtime texture.
 
+## public/assets/reference/wasteland-vfx-progression.png
+
+Date: 2026-09-23
+Tool: Codex built-in image generation
+Use: Non-runtime visual study for the future fire, explosion, and smoke flipbooks. It sets a restrained amber, dusty brown, and charcoal effect language and shows four stages of each effect. It is not one of the final 8×8 transparent textures.
+Prompt:
+> Use case: stylized-concept. Asset type: wide landscape visual reference board for future fire, explosion, and smoke flipbook textures in a realistic 3D arcade combat racing game; this is a concept study, not a production sprite sheet. Primary request: a clean three-row effects progression board, each row showing four distinct successive moments of one original effect. Top row: a small ignition along a damaged car edge growing into a compact amber flame, then thinning and fading. Middle row: a dusty orange blast swelling from a bright core into a wide debris cloud, then dissipating. Bottom row: charcoal and brown smoke rising from a small plume into a broad diffuse cloud, then thinning. Twelve effects total, clearly separated into equal visual cells without labels or text; no effect crosses a cell boundary. Grounded photorealistic game VFX, restrained warm highlights, dark neutral backdrop, consistent scale and light, crisp details and natural transparent-looking feathered silhouettes. Composition: very wide horizontal canvas, clear row and column alignment, enough empty space between effects to read every stage. No vehicles, people, weapons, logos, readable marks, borders, drawn grids, checkerboard, gore, film references or watermarks.
+
+Inspection: 1942×809 opaque RGB PNG, 1,781,630 bytes. The four fire, four explosion, and four smoke stages read in order, with no readable text or logos. It has a dark background and only 12 reference frames, so it must not be treated as a transparent 8×8 runtime atlas. The copy in this repository is byte-identical to retained original `exec-cb8df296-fb8f-4e3a-81b6-1220a8ce2aab.png` in Codex generated images (SHA-256 `d021fa36eb0884f873e9b330b2a206c0ce45e05ac32732edbc8772ca264f5657`).
+
+## public/assets/reference/wasteland-muzzle-dust-study.png
+
+Date: 2026-09-23
+Tool: Codex built-in image generation and built-in image edit
+Use: Non-runtime visual study for the future 2×2 `muzzle-dust.png` sprite sheet. The four cells show a right-facing muzzle flash, muzzle dust, wheel dust, and a metal impact burst.
+Prompt:
+> Use case: stylized-concept. Asset type: final transparent 2×2 VFX sprite sheet for a realistic 3D arcade combat racing game, 1024×1024 pixels overall, four equal 512×512 cells with exact hard boundaries. Primary request: create four original, isolated effects, one centered fully inside each cell: top left a compact warm amber muzzle flash pointing right; top right a short dusty muzzle cloud with a few sparks; bottom left a low ground-hugging tan wheel dust puff; bottom right a brief rust-colored metal impact spark and dust burst. Style: grounded photorealistic game VFX with restrained bloom, sharp interior detail and soft feathered edges. Every cell must have a genuinely transparent alpha background, at least half its pixels fully clear, with no effect crossing cell boundaries. Even scale and lighting across all cells. No drawn checkerboard, background, border, grid lines, car, gun, person, text, numbers, logos, watermark, gore or film references. Output the sprite sheet itself, not a presentation mockup. Exactly 1024 by 1024 PNG if output sizing supports it.
+
+Targeted built-in edit prompt, using that generated image as the edit target:
+> Use case: precise-object-edit. Asset type: final Wasteland 2×2 muzzle and dust VFX sheet. Input image 1 is the edit target. Preserve the four original effects, their cell order, colors, physical texture, clear alpha, and separation. Change only technical canvas layout: output an actual 1024×1024 transparent PNG with four exact 512×512 cells, each effect wholly inside its cell and at least 5% fully clear pixels in every cell. Do not add, remove or redraw content, grids, borders, backgrounds, checkerboards, text or watermarks. This must be the final sprite sheet itself, not a preview.
+
+Inspection: the built-in edit retained a readable four-cell arrangement and genuine alpha. The edited PNG is 1254×1254, 1,228,459 bytes, with 61.86% fully clear pixels and at least 56.57% fully clear pixels in each cell. It still misses the required 1024×1024 size. The original generation was also 1254×1254. This checked-in copy is a reference only, byte-identical to retained edited original `exec-cfb31e09-116a-4c89-999b-d8e9abc4a15a.png` in Codex generated images (SHA-256 `3e4961b10a912c047c511579f26d2e321e8869a6c9f95329c8eb90ce618a72ed`). No local pixel resizing was used.
+
 ## Remaining Batch A work
 
-Create exact-size, demonstrably tileable plating and dirt textures, then the transparent flipbooks. No local pixel alteration was used on these candidates; validation only read their pixels and metadata.
+Six planned runtime images are still absent: exact-size tileable plating and dirt, the three transparent 2048×2048 8×8 flipbooks, and the transparent 1024×1024 2×2 muzzle/dust sheet. The two new reference studies guide their look but do not satisfy those runtime contracts. The built-in generator returned 1254×1254 for both the original and edited 2×2 sheet despite explicit 1024×1024 prompts. Earlier plating and dirt attempts also returned 1254×1254 and had visible seam risk. No local pixel alteration was used on these candidates; validation only read their pixels and metadata.
