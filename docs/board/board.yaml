@@ -509,6 +509,27 @@ tasks:
       - "Independent 30/60/144 FPS contact tests, High/Performance three-car browser scene, balance and frame checks pass."
     note: "The visible front spikes on every flagged Wasteland combat rig count as equipped. Full incident, ownership and event requirements are in docs/changes/CMB-02-plan.md. CMB-01 must integrate first."
     spec: "SPEC.md section 3.2, task CMB-02"
+  - id: CMB-04
+    title: "Seeded weapon and armor pickups across the road"
+    wave: 3
+    lane: CMB
+    size: S
+    needs: [RFX-04, CMB-01]
+    status: blocked
+    owns: [src/combat-pickups.js, src/wasteland-tuning.js, tools/test-combat-pickups2.mjs, tools/scenarios/combat-pickups2.mjs]
+    hooks: [src/combat-weapons.js, src/combat-ai.js, src/combat-scene.js, src/screen-router.js, src/screen-hud.js]
+    helpers: [test_author, reviewer, browser_qa, balance_analyst]
+    flag: wasteland2
+    behavior_change: yes
+    acceptance:
+      - "Seed, stage and lap determine fixed pickup identities, kinds and drivable lateral positions, independent of speed, frame rate and CPU order."
+      - "Swept road and lateral contact gives one crate to the earliest eligible player or CPU car; ties resolve in stable actor order."
+      - "Armor repair restores at most 25 up to that car's own maximum; a full or wrecking car cannot waste the crate."
+      - "Weapon crates recharge a usable player or eligible CPU weapon without bypassing the UFO's once-per-lap rule."
+      - "Distinct pooled crate shapes and HUD feedback identify effects at road speed in High and Performance; ordinary and flag-off replays stay unchanged."
+      - "30/60/144 FPS contact tests, memory-only three-car browser scene, balance and frame checks pass."
+    note: "Define on-foot ammo inventory application now but leave ammo crates unspawned until FOOT-01 supplies fighters; do not display an inert crate. Easy CPU does not use pickups. CMB-01 armor must integrate before implementation."
+    spec: "SPEC.md section 3.2, task CMB-04"
   - id: CMB-07
     title: "Projectile carry and aim rules"
     wave: 3

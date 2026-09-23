@@ -95,6 +95,16 @@ and how to reverse it before continuing.
 - How to reverse: Tune these values in `src/wasteland-tuning.js`, update
   CMB-03 score tests, and rerun combat balance before the switch leaves dev.
 
+## 2026-09-23 PDT — CMB-04 on-foot ammo timing
+
+- Decision: Define the capped ammo pickup effect in CMB-04, but do not spawn
+  ammo crates in car-only races. Activate them when the on-foot inventory
+  and fighter controls exist.
+- Reason: A car cannot use foot ammo yet. Showing crates that nobody can
+  collect would mislead players and consume useful pickup slots.
+- How to reverse: Enable ammo spawn when FOOT-01 provides an on-foot actor,
+  then test player and CPU collection, save behavior and road visibility.
+
 ## Entry format
 
 - Date and card:
