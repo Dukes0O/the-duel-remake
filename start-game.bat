@@ -10,20 +10,31 @@ echo    Closing this window stops the game server.
 echo  ============================================
 echo.
 
-if not exist node_modules (
+if not exist node_modules\vite (
   echo Installing dependencies for the first time...
-  call npm install
+  call npm ci
   if errorlevel 1 (
     echo.
-    echo npm install failed.  Press any key to exit.
+    echo npm ci failed.  Press any key to exit.
     pause >nul
     exit /b 1
   )
 )
 
-rem Vite opens the browser only after this game's server starts successfully.
-rem strictPort in vite.config.js prevents falling back to a different port.
-call npm run dev -- --open
+if not exist dist\index.html (
+  echo Building the game for the first time...
+  call npm run build
+  if errorlevel 1 (
+    echo.
+    echo Build failed.  Press any key to exit.
+    pause >nul
+    exit /b 1
+  )
+)
+
+rem Serve a finished build. Source edits cannot reload a race in progress.
+rem Keep localhost:5174 so existing browser careers remain available.
+node node_modules\vite\bin\vite.js preview --host localhost --port 5174 --strictPort --open
 
 echo.
 echo Server stopped.  Press any key to close.
