@@ -1511,9 +1511,21 @@ export class Duel {
     };
     // A discontinuous position change cannot substitute for driving a circuit.
     const plausibleTravel = current - previous < Math.max(20, actor.speedMph * DRIVE.mphToWorld * dt * 4 + 12);
-    if (gate != null && crossed(lapBase + gate) && plausibleTravel && legalAt(lapBase + gate)) {
-      actor.nextLapGate++;
-      if (player) this.emit({ lapCheckpoint: actor.nextLapGate, lap: actor.completedLaps + 1 });
+    if (gate != null && crossed(lapBase + gate) && plausibleTravel) {
+      if (legalAt(lapBase + gate)) {
+        actor.nextLapGate++;
+        if (player) this.emit({ lapCheckpoint: actor.nextLapGate, lap: actor.completedLaps + 1 });
+      } else if (!noReset) {
+        // A physically missed gate is known at the crossing. Retry it now;
+        // waiting for the finish line can erase an entire otherwise driven lap.
+        this._safeReset(actor);
+        if (player) {
+          actor.invulnerableSec = Math.max(actor.invulnerableSec, 2.2);
+          this._callout('CHECKPOINT MISSED  /  BACK ON COURSE', 3);
+          this.emit({ checkpointReset: true });
+        }
+        return;
+      }
     }
     if (!crossed(finish)) return;
     if (actor.nextLapGate < this._lapGates.length || !legalAt(finish) || !plausibleTravel) {
