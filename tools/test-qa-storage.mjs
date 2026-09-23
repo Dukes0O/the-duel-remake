@@ -14,6 +14,28 @@ storage.setItem(2,3);same(storage.getItem('2'),'3','keys are normalized');storag
 const second={};installIsolatedStorage(second);storage.setItem('wallet',50);same(second.localStorage.getItem('wallet'),null,'test pages have separate memory');
 const blocked={};Object.defineProperty(blocked,'localStorage',{value:{},configurable:false});
 assert.throws(()=>installIsolatedStorage(blocked),TypeError);checks++;
+const opened=[],deleted=[],nativeIdb={
+  open(name,version){opened.push([name,version]);return {name};},
+  deleteDatabase(name){deleted.push(name);return {name};},
+};
+const firstTab={name:'',indexedDB:nativeIdb,crypto:{randomUUID:()=> 'tab-one'}};
+installIsolatedStorage(firstTab);
+firstTab.localStorage.setItem('the-duel-players-v2','career one');
+firstTab.indexedDB.open('the-duel-career-backups',1);
+const restartedTab={name:firstTab.name,indexedDB:nativeIdb};
+installIsolatedStorage(restartedTab);
+same(restartedTab.localStorage.getItem('the-duel-players-v2'),'career one','same-tab restart keeps the disposable career');
+same(restartedTab.__qaIndexedDbName('the-duel-career-backups'),opened[0][0],
+  'same-tab restart keeps its IndexedDB namespace');
+const otherTab={name:'',indexedDB:nativeIdb,crypto:{randomUUID:()=> 'tab-two'}};
+installIsolatedStorage(otherTab);
+same(otherTab.localStorage.getItem('the-duel-players-v2'),null,'second tab starts with a fresh career');
+assert.notEqual(otherTab.__qaIndexedDbName('the-duel-career-backups'),opened[0][0]);checks++;
+otherTab.indexedDB.open('the-duel-career-backups',1);
+same(opened.map(row=>row[0]),['the-duel-career-backups__qa_tab_tab-one','the-duel-career-backups__qa_tab_tab-two'],
+  'both tabs open different physical databases');
+otherTab.indexedDB.deleteDatabase('the-duel-career-backups');
+same(deleted,['the-duel-career-backups__qa_tab_tab-two'],'database deletion stays inside the second tab namespace');
 for(const file of ['visual-check','reward-check','reverse-check','contact-check','jump-height-check','update-check','menu-check']){
   const source=readFileSync(new URL(`./${file}.js`,import.meta.url),'utf8');
   assert.ok(source.includes("from './qa-storage.js'"));checks++;
