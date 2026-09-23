@@ -7,7 +7,7 @@ const T = COMBAT_TUNING;
 function incomingBolt(duel, cpu, opponent) {
   const state = duel.state;
   const combat = state.combat;
-  if (!opponent || opponent.finished || opponent.crushed ||
+  if (!opponent || opponent.finished || opponent.crushed || opponent.combatWrecking ||
       (opponent === state.rival ? combat.rivalShield : opponent.combatShield) > 0) return false;
 
   const target = point(duel, opponent);
@@ -41,7 +41,8 @@ function useCpuPickupShield(duel) {
   const state = duel.state;
   const combat = state.combat;
   for (const opponent of state.opponents) {
-    if (opponent.finished || opponent.crushed || opponent.impactTimer > 0) continue;
+    if (opponent.finished || opponent.crushed || opponent.combatWrecking ||
+        opponent.impactTimer > 0) continue;
     const charges = cpuPickupCharges(state, combat, opponent);
     if (charges.star && fireWeapon(duel, 'star', true, opponent)) {
       charges.star--;
@@ -76,7 +77,7 @@ export function stepCombatAI(duel, dt) {
   if (!(combat.aiTimer <= 0)) return;
   combat.aiTimer = cpu.interval;
   for (const opponent of state.opponents) {
-    if (opponent.finished || opponent.crushed) continue;
+    if (opponent.finished || opponent.crushed || opponent.combatWrecking) continue;
     const attacker = point(duel, opponent);
     const player = point(duel, state);
     const gap = Math.hypot(attacker.x - player.x, attacker.z - player.z);

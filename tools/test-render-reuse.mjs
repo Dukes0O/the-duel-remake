@@ -100,18 +100,19 @@ const effectState=extra=>({status:'racing',car:'titan_monster',s:100,lateral:0,s
 }
 
 {
-  const explosion=createExplosion(),p={x:0,y:0,z:0};
+  const explosion=createExplosion({combat:true}),p={x:0,y:0,z:0};
   const puffs=explosion.group.children.find(child=>child.isPoints);
-  const light=explosion.group.children.find(child=>child.isLight);
+  const ring=explosion.group.children.find(child=>child.isMesh&&child.geometry?.type==='RingGeometry');
+  check(!explosion.group.children.some(child=>child.isLight),'wreck effect does not change the scene light count');
   explosion.update(p,{status:'racing',catastrophic:true},0);
   const firstPuffs=puffs.geometry.attributes.puff.array;
-  check(explosion.group.visible&&light.intensity>0&&
+  check(explosion.group.visible&&ring.material.opacity>0&&
     firstPuffs.some((size,index)=>index%4===0&&size>0&&firstPuffs[index+1]>0),
-    'first active wreck frame shows flame and light at zero render delta');
+    'first active wreck frame shows flame and ring at zero render delta');
   const frozenPuffs=firstPuffs.slice(),frozenPositions=puffs.geometry.attributes.position.array.slice();
-  const frozenIntensity=light.intensity;
+  const frozenRingOpacity=ring.material.opacity;
   explosion.update(p,{status:'racing',catastrophic:true},0);
-  check(light.intensity===frozenIntensity&&
+  check(ring.material.opacity===frozenRingOpacity&&
     firstPuffs.every((value,index)=>value===frozenPuffs[index])&&
     puffs.geometry.attributes.position.array.every((value,index)=>value===frozenPositions[index]),
     'paused wreck frames keep the initialized blast still');
@@ -120,15 +121,18 @@ const effectState=extra=>({status:'racing',car:'titan_monster',s:100,lateral:0,s
 
 {
   const explosion=createExplosion(),p={x:0,y:0,z:0},identity=graphIdentity(explosion.group);
-  const puffs=explosion.group.children.find(child=>child.isPoints),light=explosion.group.children.find(child=>child.isLight);
+  const puffs=explosion.group.children.find(child=>child.isPoints);
+  const light=explosion.group.children.find(child=>child.isLight);
+  const ring=explosion.group.children.find(child=>child.isMesh&&child.geometry?.type==='RingGeometry');
   explosion.update(p,{status:'gameover',catastrophic:true},.05);
-  check(explosion.group.visible&&light.intensity>0,'fatal race activates the explosion pool');
+  check(explosion.group.visible&&ring.material.opacity>0&&light.intensity>0,
+    'legacy fatal race keeps its lit explosion pool');
   explosion.update(p,{status:'menu',catastrophic:true},0);
-  check(!explosion.group.visible&&light.intensity===0&&puffs.geometry.attributes.puff.array.every(v=>v===0),'menu hides and clears a fatal effect even with a frozen simulation clock');
+  check(!explosion.group.visible&&light.intensity===0&&ring.material.opacity===0&&puffs.geometry.attributes.puff.array.every(v=>v===0),'menu hides and clears a fatal effect even with a frozen simulation clock');
   explosion.update(p,{status:'countdown',catastrophic:false},.016);
   check(!explosion.group.visible,'fresh countdown cannot show the previous wreck');
   explosion.update(p,{status:'gameover',catastrophic:true},.05);
-  check(explosion.group.visible&&light.intensity>0&&graphIdentity(explosion.group)===identity,'a later fatal event reuses the same explosion resources');
+  check(explosion.group.visible&&light.intensity>0&&ring.material.opacity>0&&graphIdentity(explosion.group)===identity,'a later fatal event reuses the same explosion resources');
   explosion.dispose();check(explosion.group.children.length===0,'explosion disposal releases all pooled children');
 }
 

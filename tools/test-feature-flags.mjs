@@ -12,7 +12,8 @@ let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 
 check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES['roadside-destruction'] === 'beta'
-  && Object.keys(FEATURE_STATES).length === 2, 'career backup stays in QA and roadside destruction is available in Experimental');
+  && FEATURE_STATES.wasteland2 === 'dev' && Object.keys(FEATURE_STATES).length === 3,
+  'career backup and Wasteland 2 stay in QA while roadside destruction is available in Experimental');
 const productionData = new Map();
 const productionStorage = {
   getItem: key => productionData.get(key) ?? null,
@@ -20,6 +21,7 @@ const productionStorage = {
 };
 const productionFlags = createFeatureFlags({ storage: productionStorage, qa: false });
 check(!productionFlags.enabled('roadside-destruction'), 'production starts with roadside destruction switched off');
+check(!productionFlags.enabled('wasteland2'), 'production starts with Wasteland 2 switched off');
 check(productionFlags.betaFeatures().includes('roadside-destruction'), 'Experimental lists roadside destruction');
 productionFlags.setExperimental(true);
 check(productionFlags.enabled('roadside-destruction') && !productionFlags.enabled('career-backup'),

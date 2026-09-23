@@ -20,8 +20,22 @@ async function qualityPass(context, quality) {
       opponentCount: 3, seed: 1989})) throw Error('Three-opponent race did not start');
     const buildMs = performance.now() - buildStart;
     app.stop();
+    window.__presentCombatFrame = async () => {
+      for (let attempt = 0; attempt < 400; attempt++) {
+        const render = window.__render;
+        render.renderer.info.reset();
+        const started = performance.now();
+        const frame = render.renderFrame();
+        const renderMs = performance.now() - started;
+        const warmupStatus = document.querySelector('#view3d').dataset.warmupStatus;
+        if (['ready', 'fallback', 'off', 'unsupported-fallback'].includes(warmupStatus) &&
+            frame.drawCalls > 0) return {renderMs, drawCalls: frame.drawCalls, warmupStatus};
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      throw Error('Wreck inspection never received a presented renderer frame');
+    };
     const warmupStart = performance.now();
-    window.__render.renderFrame();
+    const firstRaceFrame = await window.__presentCombatFrame();
     const warmupMs = performance.now() - warmupStart;
     const canvasData = document.querySelector('#view3d').dataset;
     canvasData.combatArmorBuildMs = buildMs.toFixed(2);
@@ -37,6 +51,14 @@ async function qualityPass(context, quality) {
     }));
     state.combat.aiTimer = Infinity;
     state.combat.pickupTimer = Infinity;
+    const approach = duel.course.groundAt(state.s, state.lateral);
+    app.inspectionCamera = {position: [approach.x + 14, approach.y + 7, approach.z + 16],
+      target: [approach.x, approach.y + 2, approach.z]};
+    window.__render.camera.position.fromArray(app.inspectionCamera.position);
+    app.onFrame?.(state);
+    state.paused = true;
+    const preImpactFrame = await window.__presentCombatFrame();
+    state.paused = false;
     state.armor = 12;
     const events = window.__combatWreckEvents = [];
     duel.onChange((_, event) => { if (event.combatWreck) events.push(event); });
@@ -50,28 +72,47 @@ async function qualityPass(context, quality) {
     app.inspectionCamera = {position: [focus.x + 14, focus.y + 7, focus.z + 16],
       target: [focus.x, focus.y + 2, focus.z]};
     app.onFrame?.(state);
-    const playerRenderStart = performance.now();
-    window.__render.renderFrame();
-    const playerWreckRenderMs = performance.now() - playerRenderStart;
-    canvasData.combatArmorPlayerWreckRenderMs = playerWreckRenderMs.toFixed(2);
-    await new Promise(resolve => setTimeout(resolve, 40));
-    window.__render.renderFrame();
+    // Both quality passes inspect the same pose despite menu-camera damping.
+    window.__render.camera.position.fromArray(app.inspectionCamera.position);
     state.paused = true;
+    const playerFrame = await window.__presentCombatFrame();
+    const playerWreckRenderMs = playerFrame.renderMs;
+    canvasData.combatArmorPlayerWreckRenderMs = playerWreckRenderMs.toFixed(2);
     document.querySelectorAll('details').forEach(panel => {
       const title = panel.querySelector('summary')?.textContent || '';
       if (title.includes('TEMPORARY SAVES') || title.startsWith('Performance samples'))
         panel.hidden = true;
     });
+    const render = window.__render;
+    const explosions = render.scene.children.filter(group =>
+      group.children?.some(child => child.isPoints && child.geometry?.getAttribute('puff')));
+    const debug = {
+      inspectionCamera: app.inspectionCamera,
+      cameraPosition: render.camera.position.toArray(),
+      cameraRotation: render.camera.rotation.toArray(),
+      statePosition: {s: state.s, lateral: state.lateral},
+      canvasCount: document.querySelectorAll('#view3d canvas').length,
+      pools: explosions.map(group => ({visible: group.visible,
+        ringOpacity: group.children.find(child => child.geometry?.type === 'RingGeometry')?.material.opacity,
+        puffVisible: group.children.find(child => child.isPoints)?.visible})),
+      poolBuildMs: canvasData.opponentExplosionBuildMs,
+      poolWarmupMs: canvasData.opponentExplosionWarmupMs,
+      shaderPrograms: render.renderer.info.programs?.length,
+      warmupStatus: canvasData.warmupStatus,
+      drawCalls: playerFrame.drawCalls,
+    };
     return {opponents: state.opponents.length, armor: state.armor,
       status: state.status, wrecks: events.length, buildMs, warmupMs,
-      playerWreckRenderMs,
+      playerWreckRenderMs, preImpactMs: preImpactFrame.renderMs, firstRaceFrame, debug,
       memoryOnlySaves: !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value};
   })()`);
   if (playerWreck.status !== 'racing' || !playerWreck.memoryOnlySaves)
     throw Error(`${quality} player wreck broke combat race: ${JSON.stringify(playerWreck)}`);
   console.log(`${quality} armor setup: build ${playerWreck.buildMs.toFixed(2)} ms, ` +
-    `first render ${playerWreck.warmupMs.toFixed(2)} ms; ` +
+    `first render ${playerWreck.warmupMs.toFixed(2)} ms, ` +
+    `pre-impact scene ${playerWreck.preImpactMs.toFixed(2)} ms; ` +
     `first player-wreck render ${playerWreck.playerWreckRenderMs.toFixed(2)} ms`);
+  console.log(`${quality} player wreck debug: ${JSON.stringify(playerWreck.debug)}`);
   await context.screenshot(`armor-player-wreck-${quality}`);
 
   const cpuWreck = await context.evaluate(`(async () => {
@@ -94,17 +135,15 @@ async function qualityPass(context, quality) {
     app.inspectionCamera = {position: [focus.x + 14, focus.y + 7, focus.z + 16],
       target: [focus.x, focus.y + 2, focus.z]};
     app.onFrame?.(state);
-    const renderStart = performance.now();
-    window.__render.renderFrame();
-    const cpuWreckRenderMs = performance.now() - renderStart;
+    window.__render.camera.position.fromArray(app.inspectionCamera.position);
+    state.paused = true;
+    const cpuFrame = await window.__presentCombatFrame();
+    const cpuWreckRenderMs = cpuFrame.renderMs;
     document.querySelector('#view3d').dataset.combatArmorCpuWreckRenderMs =
       cpuWreckRenderMs.toFixed(2);
-    await new Promise(resolve => setTimeout(resolve, 40));
-    window.__render.renderFrame();
-    state.paused = true;
     return {opponents: state.opponents.length, playerArmor: state.armor,
       cpuArmor: second.armor, wrecks: wrecks.length, status: state.status,
-      cpuWreckRenderMs};
+      cpuWreckRenderMs, cpuDrawCalls: cpuFrame.drawCalls};
   })()`);
   if (cpuWreck.status !== 'racing' || cpuWreck.opponents !== 3)
     throw Error(`${quality} later-CPU wreck broke the field: ${JSON.stringify(cpuWreck)}`);

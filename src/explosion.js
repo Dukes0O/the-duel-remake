@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // Fixed pools of expanding flame and smoke sprites, metal panels and a ground blast.
-export function createExplosion() {
+export function createExplosion({combat=false}={}) {
   const group=new THREE.Group(), count=180, positions=new Float32Array(count*3), data=new Float32Array(count*4);
   const life=new Float32Array(count), maxLife=new Float32Array(count), velocity=new Float32Array(count*3);
   const geometry=new THREE.BufferGeometry();
@@ -11,8 +11,21 @@ export function createExplosion() {
     uniforms:{time:{value:0}},
     vertexShader:`attribute vec4 puff; varying vec4 vPuff; void main(){vPuff=puff;
       vec4 v=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*v;
-      gl_PointSize=clamp(puff.x*620./max(1.,-v.z),0.,520.);}`,
-    fragmentShader:`uniform float time;varying vec4 vPuff;
+      gl_PointSize=clamp(puff.x*620./max(1.,-v.z),0.,${combat ? '240.' : '520.'});}`,
+    fragmentShader:combat?`uniform float time;varying vec4 vPuff;
+      void main(){vec2 p=gl_PointCoord*2.-1.;float grain=fract(vPuff.w*.618034);
+        float r=length(p),rim=.72+(grain-.5)*.22+p.x*p.y*.08;
+        float mask=1.-smoothstep(rim-.23,rim+.13,r);
+        float age=vPuff.y, alpha=mask*min(1.,age*12.)*pow(1.-age,.75);
+        vec3 c;
+        if(vPuff.z<.5){float heat=clamp((1.-r)*1.7-age*.9+grain*.25,0.,1.);
+          c=mix(vec3(.8,.024,.001),vec3(2.8,.48,.015),smoothstep(.12,.7,heat));
+          c=mix(c,vec3(3.6,1.45,.12),smoothstep(.84,1.,heat));alpha*=.83;
+        } else {c=mix(vec3(.055,.052,.05),vec3(.28,.25,.22),grain*.55+(1.-r)*.22); alpha*=.66;}
+        gl_FragColor=vec4(c,alpha);if(alpha<.012)discard;
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`:`uniform float time;varying vec4 vPuff;
       float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
       float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}
       void main(){vec2 p=gl_PointCoord*2.-1.;float n=noise(p*4.+vPuff.w+time*.4)*.65+noise(p*9.-time*.25)*.35;
@@ -28,7 +41,11 @@ export function createExplosion() {
         #include <colorspace_fragment>
       }`});
   const puffs=new THREE.Points(geometry,material);puffs.frustumCulled=false;puffs.renderOrder=5;group.add(puffs);
-  const light=new THREE.PointLight(0xff7b1b,0,42,1.4);group.add(light);
+  // Armored wrecks use the flame and ring for their flash: adding a new
+  // dynamic light on the first blast recompiles every visible car shader.
+  // Legacy race crashes keep their original PointLight.
+  const light=combat?null:new THREE.PointLight(0xff7b1b,0,42,1.4);
+  if(light)group.add(light);
   const ring=new THREE.Mesh(new THREE.RingGeometry(.8,1,64),new THREE.MeshBasicMaterial({color:0xffbc63,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));
   ring.rotation.x=-Math.PI/2;group.add(ring);
   const panels=new THREE.InstancedMesh(new THREE.BoxGeometry(.5,.055,.75),new THREE.MeshStandardMaterial({color:0x514037,metalness:.7,roughness:.52}),18);
@@ -44,21 +61,37 @@ export function createExplosion() {
     maxLife[i]=smoke?3.5+Math.random()*2.5:.6+Math.random()*.7;life[i]=maxLife[i];
     data[k]=0;data[k+1]=0;data[k+2]=smoke?1:0;data[k+3]=Math.random()*100;
   }
-  function clear(){life.fill(0);data.fill(0);chunks.forEach(c=>c.life=0);light.intensity=0;ring.material.opacity=0;}
+  function clear(){life.fill(0);data.fill(0);chunks.forEach(c=>c.life=0);
+    if(light)light.intensity=0;ring.material.opacity=0;}
   clear();
   function update(p,state,dt){
     const active=!!state.catastrophic&&state.status!=='menu';
     if(!active){if(previous)clear();previous=false;group.visible=false;return;}
     group.visible=true;
-    if(!(dt>0))return; dt=Math.min(.06,dt);clock+=dt;material.uniforms.time.value=clock;
+    if(!combat&&!(dt>0))return;
     if(!previous){clear();age=0;budget=0;ground=p.y;ring.position.set(p.x,p.y+.12,p.z);
-      for(let i=0;i<75;i++)emit(p,i>40,true);
+      for(let i=0;i<(combat?48:75);i++)emit(p,combat?i>28:i>40,true);
       chunks.forEach((c,i)=>{c.p.set(p.x+(Math.random()-.5)*2,p.y+.6,p.z);c.v.set((Math.random()-.5)*16,4+Math.random()*10,(Math.random()-.5)*16);c.life=6;});
       wheels.forEach((c,i)=>{c.p.set(p.x+(i?1:-1),p.y+.5,p.z);c.v.set((i?1:-1)*5,4+i*2,-3+i*5);});
+      // Show the first blast even when the wreck begins on a paused frame.
+      // Seed the visible pose without advancing particle positions or age.
+      if(combat){
+        for(let i=0;i<count;i++)if(life[i]>0){const k=i*4;data[k]=data[k+2]>.5?1.3:1.8;data[k+1]=.08;}
+        geometry.attributes.position.needsUpdate=true;geometry.attributes.puff.needsUpdate=true;
+        ring.scale.setScalar(1);ring.material.opacity=.4;
+        chunks.forEach((c,i)=>{o.position.copy(c.p);o.rotation.set(0,0,0);o.scale.setScalar(1);o.updateMatrix();panels.setMatrixAt(i,o.matrix);});
+        panels.instanceMatrix.needsUpdate=true;
+        wheels.forEach((c,i)=>{o.position.copy(c.p);o.rotation.set(0,0,0);o.scale.setScalar(1);o.updateMatrix();tires.setMatrixAt(i,o.matrix);});
+        tires.instanceMatrix.needsUpdate=true;
+      }
     }
-    previous=true;age+=dt;budget+=dt*22;
+    previous=true;
+    if(!(dt>0))return;
+    dt=Math.min(.06,dt);clock+=dt;material.uniforms.time.value=clock;
+    age+=dt;budget+=dt*22;
     while(budget>=1){budget--;emit(p,Math.random()<.68);}
-    light.position.set(p.x,p.y+2,p.z);light.intensity=(age<.6?65*Math.exp(-age*3):6+Math.sin(clock*19)*1.5);
+    if(light){light.position.set(p.x,p.y+2,p.z);
+      light.intensity=(age<.6?65*Math.exp(-age*3):6+Math.sin(clock*19)*1.5);}
     ring.scale.setScalar(1+Math.min(age,1.5)*18);ring.material.opacity=Math.max(0,.4-age*.48);
     for(let i=0;i<count;i++){const j=i*3,k=i*4;if(life[i]<=0){data[k]=0;data[k+1]=1;continue;}
       life[i]=Math.max(0,life[i]-dt);const t=1-life[i]/maxLife[i],smoke=data[k+2]>.5;

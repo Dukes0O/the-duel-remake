@@ -7,6 +7,7 @@ import * as simCrash from './sim-crash.js';
 import * as simResults from './sim-results.js';
 import {normalizeWeapons} from './weapon-upgrades.js';
 import {createCombat,fireWeapon,stepCombat,supportsCombat} from './combat.js';
+import {initializeCombatArmor} from './combat-armor.js';
 // Duel owns the simulation state, lifecycle and fixed-step call order. The
 // sim-* modules implement each system against this same instance.
 
@@ -17,7 +18,7 @@ import { createDriftState } from './drift-scoring.js';
 import { DEFAULT_DRIVER, normalizeDriverId, applyDriverModifiers } from './drivers.js';
 import {normalizeRival} from './rival-settings.js';
 import {upgradedCar} from './progression.js';
-import {featureFlags} from './feature-flags.js';
+import {createFeatureFlags, featureFlags} from './feature-flags.js';
 import {clamp, freshDamageZones} from './sim-common.js';
 
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
@@ -29,6 +30,8 @@ export class Duel {
     this.difficultyKey = DIFFICULTY[opts.difficulty] ? opts.difficulty : DEFAULT_DIFFICULTY;
     this.carKey = CARS[opts.car] ? opts.car : DEFAULT_CAR;
     this.destructiblesEnabled = opts.destructiblesEnabled ?? null;
+    this.featureFlags = opts.featureFlags?.enabled ? opts.featureFlags :
+      opts.featureFlags ? createFeatureFlags({overrides: opts.featureFlags, storage: null, qa: false}) : featureFlags;
     this.listeners = new Set();
     this.state = this._freshState();
   }
@@ -219,6 +222,7 @@ export class Duel {
     // pre-spawn deterministic two-way traffic
     s.traffic = this._spawnTraffic(idx);
     s.combat=s.mode==='wasteland'&&supportsCombat(COURSE[idx])?createCombat(s.weaponLevels):null;
+    initializeCombatArmor(this);
     this.emit({ stageLoaded: idx, countdown: 3 });
   }
 
