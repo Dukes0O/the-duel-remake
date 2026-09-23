@@ -17,7 +17,10 @@ player_facing: yes
 - Player and CPU bolts lead their chosen moving target at launch. A flagged
   bolt tracks that same target during flight, turning at most 90 degrees per
   second within 12 degrees of its launch bearing. Bombs fly straight after
-  launch. Existing swept hit checks still handle crossings between steps.
+  launch. Flagged hit checks now intersect the projectile and target's
+  horizontal contact window with their vertical hit window over the whole
+  step, so a fast bolt cannot pass through the car between frames. The
+  flag-off endpoint-height rule remains unchanged.
 - The cone and turn rate live in `src/wasteland-tuning.js` for balance work.
   A bolt's target index and launch bearing are stored only for the flagged
   path, so the normal race state and flag-off projectile shape are unchanged.
@@ -31,7 +34,7 @@ player_facing: yes
 - `node tools/test-combat.mjs`: 66 checks passed.
 - `node tools/test-combat-field-shields.mjs`: passed.
 - `git diff --check` and staged diff check: passed.
-- `node tools/test-combat-projectiles.mjs`: 4/8 pass. The four red cases are
+- `node tools/test-combat-projectiles.mjs`: 5/9 pass. The four red cases are
   player bolt carry, later-CPU bolt carry, player lead and in-flight turn.
   This base does not have CMB-01's `Duel.featureFlags` constructor override
   or the `wasteland2` catalog entry, so the new branch remains disabled even
@@ -40,12 +43,18 @@ player_facing: yes
   a stray targeted bolt. It confirms that neither ordinary weapon launch
   nor in-flight guidance activates. This test passes on the current base
   without changing either expected replay hash.
+- The independent swept-height test commit `c28f5df` reproduced a missed
+  30 FPS bolt hit while 60 and 144 FPS hit. With the vertical sweep fix,
+  its 30/60/144 FPS cases all pass. The focused ordinary-mode control also
+  passes.
 - A test-only command assigned `Duel.prototype.featureFlags` with
-  `enabled('wasteland2') === true` and ran the six flagged gameplay cases by
-  name. All 6/6 passed, including carry, lead, bounded turn, straight bombs
-  and swept collision at 30, 60 and 144 FPS. This did not edit production or
-  test files. The ordinary and flag-off hash case passes in the direct 4/8
-  run; the approved full replay suite has not run on this branch.
+  `enabled('wasteland2') === true` and selected the flagged gameplay and
+  ordinary-control cases by name. All 8/8 pass,
+  including carry, lead, bounded turn, straight bombs and horizontal and
+  vertical swept collision at 30, 60 and 144 FPS. This did not edit
+  production or test files. The ordinary and flag-off hash case passes in
+  the direct 5/9 run; the approved full replay suite has not run on this
+  branch.
 - The worktree uses an ignored junction to integration's installed
   `node_modules`; no package was installed.
 
