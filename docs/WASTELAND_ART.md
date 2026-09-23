@@ -5,12 +5,10 @@ its own `## public/assets/...` heading, date, tool, use, and the full prompt
 as a Markdown quote. Add its filename and credit to the `CREDITS.md` beside
 the runtime image. Keep the original image output outside this repository.
 
-The Batch A images are listed in `SPEC.md` section 3.10. The intake check
-reports planned images that are still absent; it fails only when a present
-image has invalid dimensions, missing transparency, an excessive file size,
-or incomplete provenance.
-
-Batch A follows `SPEC.md` section 3.10. Generated originals stay outside this repository. Only accepted runtime images are checked in. Each checked-in image has its own path heading, date, tool, use, and full prompt.
+Batch A follows `SPEC.md` section 3.10. Only accepted images are checked in.
+The intake check reports planned images that are still absent; it fails when a
+present image has invalid dimensions, missing transparency, an excessive file
+size, or incomplete provenance.
 
 ## public/assets/reference/wasteland-art-direction.png
 

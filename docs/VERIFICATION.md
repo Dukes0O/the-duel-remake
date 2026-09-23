@@ -1,5 +1,38 @@
 # Remake verification
 
+## Armored duel and tactical UFO staging — September 23, 2026
+
+The isolated Wasteland integration build now uses each selected car's top speed,
+armor and target mass to set its combat crash threshold. Closing speed drives
+vehicle damage and rear-hit force. Traffic can wreck and leave the road; a hard
+head-on hit can still crash the player. Cacti fall on contact. The
+`roadside-destruction` switch adds falling small trees and signposts in the
+Experimental build. Broken objects no longer block the car during that race.
+The car stops bouncing while stationary beyond the road edge. A missed
+checkpoint now retries just before the missed gate. Combat recovery carries a
+two-second clock penalty and a short control lock; ordinary race rules remain
+separate.
+
+The UFO is a single safe jump of 12/16/20/24 metres by upgrade level. It
+charges after the first checkpoint each lap and can be used once per lap. The
+HUD previews the actual landing and the callout reports the distance and route
+position. It does not move the rival or skip an unearned gate. Across 100
+seeded landings on 11 combat courses and 18 shortcuts, no landing crashed or
+reset the car in the following two seconds. The balance matrix met the spec's
+Easy/Medium/Hard win targets at 8/6/4 of 10 races; the largest measured UFO
+race-time gain was under two seconds. One Hard sample finished slower after a
+later traffic encounter, so that figure is not a guarantee for every race.
+
+The first full integration tier passed 172/172 suites on the tactical UFO
+runtime. Fifteen private browser scenarios passed with memory-only saves,
+including a small tree falling while the car kept moving, a visible traffic
+wreck penalty, and the UFO landing preview. High and Performance browser smoke
+passed. The reviewed save-code refactor later passed its 164-suite merge gate;
+its historical save migration fixtures and production build passed. Art intake
+accepts the original Wasteland direction board as a reference image. Tileable
+textures and flipbooks remain planned, not shipped runtime assets. A second
+full check on the final release commit is recorded below when complete.
+
 ## Armory, road pickups, and camera reset — September 22, 2026
 
 D restores chase view without steering. Weapon upgrades now have a separate

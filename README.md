@@ -44,7 +44,7 @@ separate from ordinary race records. Use the numbered keys or HUD buttons:
 
 | Key | Weapon | Effect | Recharge |
 | --- | --- | --- | --- |
-| 1 | UFO swap | Swap positions and route progress when the rival is ahead; otherwise warp forward up to 100 metres, stopping before the next checkpoint. | 18 sec |
+| 1 | UFO jump | Jump 12 metres ahead on a safe stretch of road after the first checkpoint. One use per lap; each upgrade adds 4 metres. The HUD shows the exact landing point before use. | 18 sec |
 | 2 | Bomb storm | Throw eight gravity-driven bombs in all directions. Blasts slow and shove nearby vehicles, including your own unshielded car. | 9 sec |
 | 3 | Crossbow | Fire an aimed, moving bolt at the rival. A hit slows, dents, and knocks the car sideways. | 4 sec |
 | 4 | Star shield | Block damage for five seconds, with a gold shield around the car. | 16 sec |
@@ -53,10 +53,18 @@ Weapons recharge during racing and freeze while paused. The rival uses bombs,
 arrows, and shields when nearby. Ordinary races, time trials, and objective-only
 events keep their existing rules. Drivers and cars retain their saved upgrades.
 
+Mad Max Duel gives each car an impact limit based on its top speed and armor.
+Closing speed matters: a modest rear hit can shove the rival off line, while a
+hard head-on impact can still wreck both vehicles. Traffic cars can be wrecked.
+Cacti fall on contact; in Experimental mode, smaller trees and signposts also
+break and stay down for the race. Large trees, rocks and walls remain solid.
+Wreck recovery has a short two-second race penalty. A missed checkpoint retries
+near that checkpoint. The UFO jump never moves the rival or skips a checkpoint.
+
 Open **Garage → Weapon Upgrades** to buy levels 1–3 for 350, 700, and 1,200
 credits per weapon. All four base weapons are included. Upgrades belong to the
 player and apply to every car at the next race. Each level cuts recharge by 15%
-of the base time. Max UFO forward range is 325 metres (checkpoint limit still
+of the base time. Max UFO forward range is 24 metres (checkpoint limit still
 applies); max bombs throw 14 charges with 28-metre blasts and 45% stronger force;
 max arrows travel 45% faster with 60% stronger force. The star always lasts five
 seconds; its max recharge is 8.8 seconds. Weapon builds keep separate combat
