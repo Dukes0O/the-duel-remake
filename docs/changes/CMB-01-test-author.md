@@ -46,6 +46,12 @@ scenario only; it does not implement armor.
   armor without spending an ordinary crash slot. The Director confirmed this
   reading because armor should make a hard hit survivable. Ordinary and
   flag-off modes keep their prior crash counts.
+- A later-CPU Titan contact must use recoverable combat armor damage rather
+  than the permanent crush shortcut. The same focused test keeps the flag-off
+  Titan-versus-traffic crush rule intact.
+- The active player wreck must display `WRECKED / RECOVERING`. A wreck blast
+  must pan from its event `hitPosition`; older blasts without one continue to
+  use their burst position. Both have focused flag-off/legacy controls.
 - Existing `tools/test-replays.mjs` must keep the pinned ordinary and
   flag-off Wasteland fingerprints unchanged. Run it after implementation,
   alongside the direct armor tests, combat tests, browser scenario, lane gate

@@ -4,6 +4,8 @@ import {CARS} from '../src/config.js';
 import {Duel} from '../src/game.js';
 import {FEATURE_STATES} from '../src/feature-flags.js';
 import {stepCombat} from '../src/combat.js';
+import {createHudScreen} from '../src/screen-hud.js';
+import {combatAudioSpace} from '../src/audio.js';
 
 const close = (actual, expected, message, tolerance = 1e-6) =>
   assert.ok(Number.isFinite(actual) && Math.abs(actual - expected) <= tolerance,
@@ -213,6 +215,37 @@ test('a high-relative-speed car ram costs armor, but the target star blocks it',
     'the target star blocks fast ram armor loss');
 });
 
+test('Titan rams a later armored CPU without making a permanent crush wreck', () => {
+  const armored = race({car: 'titan_monster'});
+  seedArmor(armored.state);
+  const [first, second, third] = armored.state.opponents;
+  place(armored.state, 102);
+  armored.state.prevS = 98;
+  armored.state.speedMph = 80;
+  place(first, 300);
+  place(second, 104);
+  second.car = 'viper_proto';
+  second.speedMph = 20;
+  place(third, 400);
+  assert.equal(armored.duel._vehicleContact(armored.state, second, 'rival'), true,
+    'Titan reaches the second CPU through a real swept contact');
+  assert.notEqual(second.crushed, true, 'combat CPU remains recoverable');
+  assert.ok(second.armor < second.maxArmor || second.combatWrecking,
+    'Titan impact costs the second CPU armor or starts a combat wreck');
+
+  const legacy = race({car: 'titan_monster', wasteland2: false});
+  const traffic = {...legacy.state.opponents[1], alive: true, dir: 1};
+  legacy.state.traffic.push(traffic);
+  place(legacy.state, 102);
+  legacy.state.prevS = 98;
+  legacy.state.speedMph = 80;
+  place(traffic, 104);
+  traffic.car = 'viper_proto';
+  traffic.speedMph = 20;
+  assert.equal(legacy.duel._vehicleContact(legacy.state, traffic, 'traffic'), true);
+  assert.equal(traffic.crushed, true, 'flag-off Titan still crushes traffic');
+});
+
 test('major scenery costs 20 armor and a star blocks that loss', () => {
   const clear = race();
   seedArmor(clear.state);
@@ -311,4 +344,39 @@ test('ordinary racing still spends its original crash slot with the new switch o
   assert.equal(state.lives, before.lives - 1);
   assert.equal(state.stageCrashes, before.stageCrashes + 1);
   assert.equal(state.armor, undefined);
+});
+
+test('the active wreck HUD says WRECKED / RECOVERING while flag-off crash wording stays put', () => {
+  function calloutFor(wasteland2, changes) {
+    const {duel, state} = race({wasteland2});
+    Object.assign(state, changes);
+    const node = () => ({hidden: false, textContent: '', dataset: {}, style: {},
+      classList: {toggle() {}}, setAttribute() {}});
+    const ui = new Proxy({}, {get: (target, key) => target[key] ??= node()});
+    const text = (id, value) => {ui[id].textContent = String(value);};
+    createHudScreen({app: {duel, cameraMode: 'chase'}, ui, text,
+      time: value => Number(value || 0).toFixed(2),
+      clamp: value => Math.max(0, Math.min(1, Number(value) || 0)),
+      credits: value => Math.floor(value || 0).toLocaleString(),
+      routeMap: {update() {}}})(state);
+    return ui['callout-text'].textContent;
+  }
+  assert.equal(calloutFor(true, {combatWrecking: true, impactTimer: 3.5,
+    crashFlash: 1.2, callout: 'WRECKED / RECOVERING', calloutTimer: 3.5}),
+  'WRECKED / RECOVERING');
+  assert.equal(calloutFor(false, {impactTimer: 2, crashFlash: 1,
+    lastCrashReason: 'rock', callout: 'WRECKED / RECOVERING', calloutTimer: 2}),
+  'ROCK IMPACT', 'flag-off Wasteland keeps its ordinary crash wording');
+});
+
+test('wreck blast audio uses its hitPosition while legacy blasts still use the burst', () => {
+  const course = {groundAt: () => ({x: 0, y: 0, z: 0, heading: 0})};
+  const state = {s: 0, lateral: 0, combat: {bursts: [{x: -15, y: 0, z: 0}]}};
+  const wreck = combatAudioSpace({combatExplosion: true,
+    hitPosition: {x: 40, y: 0, z: 0}}, state, course);
+  assert.ok(wreck.pan > .6 && wreck.distance === 40,
+    `wreck blast must follow the actor, not a stale burst: ${JSON.stringify(wreck)}`);
+  const legacy = combatAudioSpace({combatExplosion: true}, state, course);
+  assert.ok(legacy.pan < -.6 && legacy.distance === 15,
+    'legacy blast without a hitPosition still follows its burst');
 });
