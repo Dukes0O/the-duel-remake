@@ -524,3 +524,16 @@ checkout untouched until the final integration commit passes the full gate.
 - Integrated the reviewed CMB-07 branch. Its limited guidance cone and
   velocity carry remain behind the Wasteland2 development switch until
   flagged combat balance is measured.
+
+## 2026-09-23 PDT — Play-test feedback on movable obstacles
+
+- Kyle reported that traffic and sign posts stay put in the live Mad Max
+  build. The live roadside destruction switch is still Experimental, traffic
+  has one wreck response, and signs and smaller scenery mostly rotate.
+- CMB-08 now owns two clear impact tiers based on closing speed versus half
+  the striking car's upgraded top speed. Lower impacts slow the car and shove
+  traffic or light scenery out of the lane; higher impacts retire them after
+  visible debris. Fixed major obstacles and ordinary racing keep their rules.
+  Its independent red suite starts with 15 expected failures and 2 controls
+  passing. The roadside switch will be considered for normal Wasteland only
+  after the full balance and visual gate.

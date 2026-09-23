@@ -548,6 +548,25 @@ tasks:
       - "Ordinary and flag-off Wasteland replays remain unchanged."
     note: "Forward-ported onto CMB-01 and integrated after 104/104 lane suites, 162 pinned replay fingerprints, build and private High/Performance browser smoke. Provisional aim tuning: 12-degree launch-relative homing cone and 90-degree-per-second turn cap; bombs carry velocity and fly straight thereafter. Revisit after flagged combat balance runs."
     spec: "SPEC.md section 3.2, Projectiles"
+  - id: CMB-08
+    title: "Knock traffic and light roadside scenery clear"
+    wave: 3
+    lane: CMB
+    size: M
+    needs: [CMB-02]
+    status: blocked
+    owns: [src/destructibles.js, src/roadside-debris.js, tools/test-combat-knockaway.mjs, tools/scenarios/combat-knockaway.mjs]
+    hooks: [src/sim-contacts.js, src/sim-rival.js, src/game.js, src/world.js, src/scenery-fall.js, src/desert-detail.js, src/vegetation.js, src/world-props.js, src/render3d.js, src/combat-scene.js, src/wasteland-tuning.js]
+    helpers: [test_author, reviewer, browser_qa, balance_analyst]
+    flag: roadside-destruction-or-wasteland2
+    behavior_change: yes
+    acceptance:
+      - "Closing speed below half the striking car's current upgraded top speed slows it by at most 25 mph and knocks movable traffic, cactus, signs, chevrons and small trees clear; equality or above obliterates them after an observable burst."
+      - "One contact creates one indexed roadsideImpact with its outcome and finite hit position; moving scenery and traffic leave collision, and high-tier objects leave the rendered scene after pooled debris."
+      - "Movable contacts cost no player armor, crash slot or time penalty. Large trees, rocks and rails stay solid; rivals use CMB-02 local shove, wreck and recovery."
+      - "Explicitly flag-off Wasteland and ordinary replay fingerprints remain unchanged. 30/60/144 FPS contacts, High/Performance memory-only browser scenes, balance and frame checks pass."
+    note: "Independent red tests at 57874df: 2 controls pass and 15 new-behavior checks fail on the base. Use the existing roadside switch or wasteland2 in Wasteland only. After full balance and visual gates, promote roadside-destruction from beta to on in the release so normal Mad Max play has this behavior by default."
+    spec: "SPEC.md section 3.2 and 2026-09-23 play-test feedback"
   - id: BUG-15
     title: "Keep rival shields from protecting traffic"
     wave: 3
