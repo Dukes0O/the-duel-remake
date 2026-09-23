@@ -514,7 +514,7 @@ tasks:
     wave: 3
     lane: CMB
     size: S
-    needs: [RFX-04]
+    needs: [RFX-04, CMB-01]
     status: building
     owns: [src/combat-projectiles.js, src/wasteland-tuning.js, tools/test-combat-projectiles.mjs]
     hooks: [src/combat-weapons.js]
@@ -525,7 +525,7 @@ tasks:
       - "Every fired projectile inherits its thrower's velocity."
       - "Aimed projectiles lead moving targets with a bounded homing cone and swept contact at 30, 60, and 144 FPS."
       - "Ordinary and flag-off Wasteland replays remain unchanged."
-    note: "Independent red tests started from 2c88cf1. Provisional aim tuning: a 12-degree launch-relative homing cone and a time-based 90-degree-per-second turn cap for aimed bolts; bombs carry velocity and may lead at launch but fly straight thereafter. Revisit after balance runs."
+    note: "Independent red tests started from 2c88cf1. Source work can proceed in a lane, but green flag-on tests depend on CMB-01's constructor and feature catalog hooks. Provisional aim tuning: a 12-degree launch-relative homing cone and a time-based 90-degree-per-second turn cap for aimed bolts; bombs carry velocity and may lead at launch but fly straight thereafter. Revisit after balance runs."
     spec: "SPEC.md section 3.2, Projectiles"
   - id: BUG-15
     title: "Keep rival shields from protecting traffic"
