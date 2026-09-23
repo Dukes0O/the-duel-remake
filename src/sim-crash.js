@@ -132,13 +132,11 @@ export function _safeReset(car, crashSite = null) {
   const practice = this.course.def.practice === true;
   const local = practice || !!crashSite;
   let chosen = local ? this._practiceRecoveryPose(car, others, crashSite) : { s: clamp(car.s, lowerBound, upperBound), lateral: 0 };
-  // Keep the usual few recovery spots first so ordinary races retain their
-  // established reset pose. If they are all occupied, scan between them for
-  // a nearby gap instead of using the unchecked center fallback.
-  const usualBacks = [0, 10, 22, 40, 70, 110];
-  const recoveryBacks = local ? [] : [...usualBacks,
-    ...Array.from({ length: 55 }, (_, index) => (index + 1) * 2)
-      .filter(back => !usualBacks.includes(back))];
+  // Check the nearest road gaps first. Coarse preset distances could skip a
+  // clear space nearby and send a missed-gate retry over 100 metres back.
+  // Dense traffic is rare, but keep looking a little farther before using
+  // the emergency fallback at the original position.
+  const recoveryBacks = local ? [] : Array.from({ length: 101 }, (_, index) => index * 2);
   search: for (const back of recoveryBacks) {
     for (const lateral of [-DRIVE.laneOffset, DRIVE.laneOffset, 0]) {
       const distance = clamp(car.s - back, lowerBound, upperBound);

@@ -45,9 +45,12 @@ issues. The full balance acceptance remains open for BUG-04 and Easy wins.
 
 A focused congestion probe found that traffic filling all six usual reset
 distances in all three road lanes made `_safeReset` use its unchecked center
-fallback. The player spawned on a traffic car. Recovery now keeps those usual
-spots first, then checks two-metre gaps between them before falling back. In
-the same probe it selects a clear lane 55 metres before the gate instead of
-overlapping traffic at the gate. The expanded checkpoint recovery test passes,
-including the full Medium race and ordered gate recrossing. The full release
-gate remains pending on the integration commit.
+fallback. The player spawned on a traffic car. Recovery now checks road gaps
+from nearest to farthest at two-metre intervals, up to 200 metres back. In
+the original probe it selects a clear lane 55 metres before the gate instead
+of overlapping traffic at the gate. A second probe confirms that a free spot
+110 metres back does not beat a closer gap, and a denser synthetic field also
+finds a clear spot. The focused checkpoint test passes, including the full
+Medium race and ordered gate recrossing. A completely saturated 200-metre
+stretch still uses the emergency fallback; generated traffic is much sparser.
+The full release gate remains pending on the integration commit.

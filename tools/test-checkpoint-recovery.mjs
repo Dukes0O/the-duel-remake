@@ -80,6 +80,22 @@ for (const mode of ['duel', 'wasteland', 'timetrial']) {
     Math.abs(duel.relativeS(car.s, state.s) - state.s) >= 12 ||
     Math.abs(car.lateral - state.lateral) >= 2.5),
   'crowded checkpoint recovery never spawns on a traffic car');
+  // A clear distant preset must not win over a closer gap between presets.
+  state.traffic = state.traffic.filter(car => car.s !== origin - 110);
+  Object.assign(state, { s: origin, prevS: origin, lateral: 0 });
+  duel._safeReset(state);
+  assert.ok(state.s >= origin - 60,
+    'checkpoint recovery prefers a nearby gap to the 110-metre preset');
+  // Even heavier synthetic congestion should not choose the occupied center.
+  state.traffic = [0, 10, 22, 40, 54, 70, 90, 110].flatMap(back =>
+    [-DRIVE.laneOffset, DRIVE.laneOffset, 0].map(lateral => ({ s: origin - back, lateral, alive: true })));
+  Object.assign(state, { s: origin, prevS: origin, lateral: 0 });
+  duel._safeReset(state);
+  assert.ok(state.s >= origin - 150, 'saturated checkpoint recovers within 150 metres');
+  assert.ok(state.traffic.every(car =>
+    Math.abs(duel.relativeS(car.s, state.s) - state.s) >= 12 ||
+    Math.abs(car.lateral - state.lateral) >= 2.5),
+  'saturated checkpoint recovery remains clear of traffic');
 }
 
 globalThis.cancelAnimationFrame ??= () => {};
