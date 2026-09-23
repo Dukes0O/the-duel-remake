@@ -131,6 +131,15 @@ tasks:
     status: merged
     note: "Merged as a0682b1. Final runner retained 11 reports and 13 screenshots from 11/11 passing scenarios; 160-suite lane and 152-suite merge gates, build and private smoke pass."
     spec: "docs/board/checks/2026-09-23-731a075.md, tooling gap"
+  - id: QA-02
+    title: "Validate new Wasteland art at intake"
+    wave: 0
+    lane: TOOL
+    size: S
+    needs: [FND-08]
+    status: review
+    note: "Adds the missing full-check command, Batch A image catalog, provenance and credit checks, and negative-control tests. No Batch A images are present yet."
+    spec: "SPEC.md, section 3.10 and docs/CODEX_PLAYBOOK.md full check"
   - id: TOOL-02
     title: "Feel lab and audio checks"
     wave: 0
