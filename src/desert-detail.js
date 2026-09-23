@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {COMBAT_TUNING} from './wasteland-tuning.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { vegetationCells, finishVegetationCell } from './vegetation.js';
 import { renderedGroundHeight as cactusGroundHeight } from './rendered-ground.js';
@@ -142,17 +143,26 @@ export function addDesertCacti(group, course) {
       const item=instances.get(event?.id),directionLength=Math.hypot(event?.directionX,event?.directionZ);
       if(!item||seen.has(event.id)||!Number.isFinite(event.atTime)||!Number.isFinite(directionLength)||directionLength<1e-6)continue;
       seen.add(event.id);active.add(item);
-      const eventKey=`${event.atTime}:${event.directionX}:${event.directionZ}`;
+      const eventKey=`${event.atTime}:${event.directionX}:${event.directionZ}:${event.outcome||''}`;
       if(item.eventKey!==eventKey){item.pose=cactusFallPose(course,item.tree,item.mesh.geometry,item.upright,event);item.eventKey=eventKey;item.progress=null;}
       const progress=THREE.MathUtils.clamp((now-event.atTime)/CACTUS_FALL_SECONDS,0,1);
-      if(item.progress===progress)continue;
-      item.progress=progress;
-      if(progress===0)matrix.copy(item.upright);
+      const hidden=event.outcome==='obliterate'&&
+        now-event.atTime>=COMBAT_TUNING.roadside.sceneryVisibleSeconds;
+      const progressKey=`${progress}:${hidden}`;
+      if(item.progress===progressKey)continue;
+      item.progress=progressKey;
+      if(hidden)matrix.makeScale(0,0,0);
+      else if(progress===0)matrix.copy(item.upright);
       else{
         const t=progress*progress*(3-2*progress),pose=item.pose;
         rotation.slerpQuaternions(pose.startRotation,pose.endRotation,t);
         delta.copy(pose.startRotation).invert().premultiply(rotation);
         position.copy(pose.position).sub(pose.pivot).applyQuaternion(delta).add(pose.pivot);position.y+=pose.lift*t;
+        if(event.outcome==='knock'){
+          const distance=COMBAT_TUNING.roadside.sceneryKnockDistance*t;
+          position.x+=event.directionX*distance;
+          position.z+=event.directionZ*distance;
+        }
         matrix.compose(position,rotation,pose.scale);
       }
       item.mesh.setMatrixAt(item.index,matrix);changed.add(item.mesh);

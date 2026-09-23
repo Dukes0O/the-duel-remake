@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {COMBAT_TUNING} from './wasteland-tuning.js';
 
 export function sceneryFallRotation(event, progress, target = new THREE.Quaternion()) {
   const length = Math.hypot(event.directionX, event.directionZ);
@@ -9,6 +10,7 @@ export function sceneryFallRotation(event, progress, target = new THREE.Quaterni
 
 export function makeSignFallSystem(signGroups) {
   const rest = new Map([...signGroups].map(([id, group]) => [id, group.quaternion.clone()]));
+  const restPositions = new Map([...signGroups].map(([id, group]) => [id, group.position.clone()]));
   const active = new Map(), seen = new Set(), tilt = new THREE.Quaternion();
   return state => {
     seen.clear();
@@ -20,13 +22,24 @@ export function makeSignFallSystem(signGroups) {
       if (!group || !Number.isFinite(event.atTime)) continue;
       seen.add(event.id);
       const progress = THREE.MathUtils.clamp((now - event.atTime) / .55, 0, 1);
-      if (active.get(event.id) === progress) continue;
-      active.set(event.id, progress);
+      const key = `${progress}:${event.outcome || ''}`;
+      if (active.get(event.id) === key) continue;
+      active.set(event.id, key);
       sceneryFallRotation(event, progress, tilt);
       group.quaternion.copy(tilt).multiply(rest.get(event.id));
+      group.position.copy(restPositions.get(event.id));
+      if (event.outcome === 'knock') {
+        const eased = progress * progress * (3 - 2 * progress);
+        group.position.x += event.directionX * COMBAT_TUNING.roadside.sceneryKnockDistance * eased;
+        group.position.z += event.directionZ * COMBAT_TUNING.roadside.sceneryKnockDistance * eased;
+      }
+      group.visible = event.outcome !== 'obliterate' ||
+        now - event.atTime < COMBAT_TUNING.roadside.sceneryVisibleSeconds;
     }
     for (const id of active.keys()) if (!seen.has(id)) {
       signGroups.get(id).quaternion.copy(rest.get(id));
+      signGroups.get(id).position.copy(restPositions.get(id));
+      signGroups.get(id).visible = true;
       active.delete(id);
     }
   };

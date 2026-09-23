@@ -1,6 +1,9 @@
+import {COMBAT_TUNING} from './wasteland-tuning.js';
+
 // Destruction decisions are deterministic and independent of the renderer.
 // Callers keep course features immutable; a stage records only changed IDs.
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+const roadside = COMBAT_TUNING.roadside;
 
 export function sceneryIdentity(obstacle) {
   return obstacle?.signSupport && obstacle.id?.startsWith('road-sign-')
@@ -20,6 +23,38 @@ export function breakableScenery(obstacle, impactMph, {mode, enabled} = {}) {
   return null;
 }
 
+export function roadsideScenery(obstacle, impactMph, topSpeedMph) {
+  if (!obstacle || !Number.isFinite(impactMph) || !Number.isFinite(topSpeedMph) ||
+      topSpeedMph <= 0 || impactMph < roadside.minimumImpactMph) return null;
+  const cactus = obstacle.kind === 'tree' && obstacle.theme === 'desert';
+  const smallTree = obstacle.kind === 'tree' && obstacle.theme !== 'desert' &&
+    (obstacle.scale ?? 1) <= 1.1;
+  const sign = obstacle.signSupport === true;
+  if (!cactus && !smallTree && !sign) return null;
+  const thresholdMph = topSpeedMph * roadside.thresholdFraction;
+  return {
+    id: sceneryIdentity(obstacle),
+    kind: cactus ? 'cactus' : smallTree ? 'tree' :
+      obstacle.id?.startsWith('turn-chevron-') ? 'chevron' : 'sign',
+    outcome: impactMph >= thresholdMph ? 'obliterate' : 'knock',
+    thresholdMph,
+    speedLossMph: roadsideSpeedCost(impactMph),
+  };
+}
+
+export function roadsideSpeedCost(impactMph) {
+  return clamp(impactMph * roadside.speedCostFraction,
+    roadside.minimumSpeedCostMph, roadside.maximumSpeedCostMph);
+}
+
+export function roadsideTrafficDecision({impactMph, topSpeedMph} = {}) {
+  if (!Number.isFinite(impactMph) || !Number.isFinite(topSpeedMph) ||
+      topSpeedMph <= 0) return {wreck: false, thresholdMph: 0};
+  const thresholdMph = topSpeedMph * roadside.thresholdFraction;
+  const wreck = impactMph >= thresholdMph;
+  return {wreck, outcome: wreck ? 'obliterate' : 'knock', thresholdMph};
+}
+
 // The energy needed to total a traffic car rises with its mass. A heavy player
 // car can send light traffic away at a lower closing speed, but a parking-speed
 // touch remains a shove. This rule never decides the player's own crash.
@@ -31,6 +66,41 @@ export function trafficDestruction({enabled = false, mode, impactMph, playerTopS
   const thresholdMph = clamp(playerTopSpeedMph * .24 * massRatio, 22, 72);
   const wreck = impactMph >= thresholdMph;
   return {wreck, thresholdMph, impulse: wreck ? clamp(4 + (impactMph - thresholdMph) * .075, 4, 19) : 0};
+}
+
+export function startRoadsideTraffic(actor, {atTime = 0, outcome, side = 1,
+  impactMph = 0} = {}) {
+  if (!actor || actor.roadsideMotion || !actor.alive) return false;
+  const direction = Math.sign(side) || 1;
+  actor.roadsideMotion = {
+    outcome, atTime, age: 0, originS: actor.s, originLateral: actor.lateral,
+    originHeading: actor.headingError || 0, direction,
+    forwardDrift: (actor.dir || 1) * Math.min(12, Math.abs(actor.speedMph || 0) * .12),
+    lateralDistance: direction * (roadside.trafficKnockDistance +
+      Math.min(2, impactMph * .012)),
+    visible: true,
+  };
+  actor.alive = false;
+  actor.speedMph = 0;
+  actor.pushVelocity = 0;
+  return true;
+}
+
+export function stepRoadsideTraffic(actor, dt) {
+  const motion = actor?.roadsideMotion;
+  if (!motion || !Number.isFinite(dt) || dt <= 0) return;
+  motion.age += dt;
+  const high = motion.outcome === 'obliterate';
+  const duration = high ? roadside.trafficBurstSeconds : roadside.trafficKnockSeconds;
+  const fraction = clamp(motion.age / duration, 0, 1);
+  const eased = fraction * fraction * (3 - 2 * fraction);
+  actor.prevS = actor.s;
+  actor.prevLateral = actor.lateral;
+  actor.s = motion.originS + motion.forwardDrift * eased;
+  actor.lateral = motion.originLateral + motion.lateralDistance * eased;
+  actor.headingError = motion.originHeading + motion.direction * (high ? .7 : .35) * eased;
+  actor.airHeight = high ? Math.sin(Math.PI * fraction) * 1.3 : 0;
+  motion.visible = !high || motion.age < roadside.trafficVisibleSeconds;
 }
 
 export function startTrafficWreck(actor, {atTime = 0, impulse = 0, side = 1} = {}) {

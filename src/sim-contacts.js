@@ -6,10 +6,33 @@ import { offroadCapability, rockHeight, rockSupportHeight, canCrushVehicle, crus
 import { sampleMountainSupport } from './mountain-support.js';
 import {combatContactCleared, combatCrashThresholdMph, combatFrontSpikes,
   combatRamResponse, rearRamResponse} from './vehicle-impact.js';
-import { breakableScenery, sceneryIdentity, trafficDestruction, startTrafficWreck } from './destructibles.js';
+import { breakableScenery, roadsideScenery, roadsideSpeedCost, roadsideTrafficDecision, sceneryIdentity,
+  trafficDestruction, startRoadsideTraffic, startTrafficWreck } from './destructibles.js';
 import { GLANCING_WALL_NORMAL_FRACTION, clamp, freshDamageZones } from './sim-common.js';
 import {applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {upgradedCar} from './progression.js';
+import {applyDriverModifiers} from './drivers.js';
+
+function roadsideTopSpeedMph(duel, actor) {
+  if (actor === duel.state) return duel.car.topSpeed;
+  const carKey = actor.car || duel.state.car;
+  const base = CARS[carKey] || CARS[duel.state.car];
+  return applyDriverModifiers(upgradedCar(base, actor.upgrades || {}),
+    actor.driverId, carKey).topSpeed;
+}
+
+function emitRoadsideImpact(duel, impact) {
+  duel.emit({roadsideImpact: impact});
+  if (impact.outcome !== 'obliterate') return;
+  const bursts = duel.state.roadsideBursts ??= [];
+  const serial = duel.state.roadsideBurstSerial =
+    (duel.state.roadsideBurstSerial || 0) + 1;
+  bursts.push({id: impact.id, kind: impact.kind, atTime: duel.state.stageTimeSec,
+    x: impact.hitPosition.x, y: impact.hitPosition.y, z: impact.hitPosition.z,
+    impactMph: impact.impactMph, serial});
+  if (bursts.length > COMBAT_TUNING.roadside.burstRecordLimit) bursts.shift();
+}
 
 function combatShieldForActor(state, actor) {
   if (actor === state) return state.combat?.shield;
@@ -136,7 +159,8 @@ export function _obstacles(fromS, toS) {
     if (this._obstacleArray !== this.course.features.obstacles) { this._obstacleArray = this.course.features.obstacles; this._obstacleQueryCache.clear(); }
     const first = Math.floor((Math.min(fromS, toS) - 10) / 64), last = Math.floor((Math.max(fromS, toS) + 10) / 64), key = `${first}:${last}`;
     if (!this._obstacleQueryCache.has(key)) this._obstacleQueryCache.set(key, this.course.obstaclesNear(fromS, toS)
-      .filter(obstacle => !this._brokenSceneryIds?.has(sceneryIdentity(obstacle))));
+      .filter(obstacle => !this._brokenSceneryIds?.has(sceneryIdentity(obstacle)) &&
+        !(this.roadsideKnockAwayEnabled() && this._fallenCactusIds?.has(obstacle.id))));
     return this._obstacleQueryCache.get(key);
   }
   // Keeps older exported courses usable while they acquire world colliders.
@@ -227,6 +251,35 @@ export function _staticContacts(car, player) {
       car.s = oldS; car.lateral = oldLateral;
       this._terrainPose(); this._startTumble('oversized_rock'); return;
     }
+    if (this.roadsideKnockAwayEnabled() &&
+        (player || this.state.opponents.includes(car))) {
+      const topSpeedMph = roadsideTopSpeedMph(this, car);
+      const roadsideHit = roadsideScenery(obstacle, impactMph, topSpeedMph);
+      if (roadsideHit) {
+        const distance = Math.hypot(dx, dz);
+        const event = {id: roadsideHit.id, kind: roadsideHit.kind,
+          outcome: roadsideHit.outcome, atTime: this.state.stageTimeSec,
+          directionX: distance > .0001 ? dx / distance : -nx,
+          directionZ: distance > .0001 ? dz / distance : -nz};
+        if (roadsideHit.kind === 'cactus') {
+          (this._fallenCactusIds ??= new Set()).add(event.id);
+          this.state.fallenCacti.push(event);
+        } else {
+          (this._brokenSceneryIds ??= new Set()).add(event.id);
+          this.state.brokenScenery.push(event);
+        }
+        this._obstacleQueryCache.clear();
+        car.speedMph = Math.sign(car.speedMph) * Math.max(0,
+          Math.abs(car.speedMph) - roadsideHit.speedLossMph);
+        const hitX = start.x + dx * t, hitZ = start.z + dz * t;
+        const ground = this.course.groundAt(obstacle.s, obstacle.off ?? 0);
+        emitRoadsideImpact(this, {id: event.id, kind: event.kind,
+          outcome: event.outcome, impactMph, thresholdMph: roadsideHit.thresholdMph,
+          hitPosition: {x: hitX, y: ground.y, z: hitZ}});
+        attempt--;
+        continue;
+      }
+    }
     if (obstacle.kind === 'tree' && obstacle.theme === 'desert') {
       const distance = Math.hypot(dx, dz);
       const fallen = { id: obstacle.id, atTime: this.state.stageTimeSec,
@@ -295,6 +348,7 @@ export function _staticContacts(car, player) {
 
 export function _vehicleContact(a, b, reason) {
   if (a.crushed || b.crushed || a.wrecked || b.wrecked ||
+      a.roadsideMotion || b.roadsideMotion ||
       a.combatWrecking || b.combatWrecking || a.tumble || b.tumble) return false;
   if (b === this.state && a !== this.state) return this._vehicleContact(b, a, reason);
   const armorContact = combatArmorEnabled(this);
@@ -369,6 +423,28 @@ export function _vehicleContact(a, b, reason) {
   const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
   if (armoredPair) return armoredVehicleContact(this,{a,b,nx,nz,end,width,length,
     specA,specB,impactMph,zoneA:zone,zoneB,pairKey});
+  if (this.roadsideKnockAwayEnabled() && this.state.traffic.includes(b) &&
+      (a === this.state || this.state.opponents.includes(a)) &&
+      impactMph >= COMBAT_TUNING.roadside.minimumImpactMph) {
+    const topSpeedMph = roadsideTopSpeedMph(this, a);
+    const decision = roadsideTrafficDecision({impactMph, topSpeedMph});
+    const outcome = decision.wreck ? 'obliterate' : 'knock';
+    const side = Math.sign(b.lateral - a.lateral) || Math.sign(nx) || 1;
+    if (startRoadsideTraffic(b, {atTime: this.state.stageTimeSec,
+      outcome, side, impactMph})) {
+      a.speedMph = Math.sign(a.speedMph) * Math.max(0,
+        Math.abs(a.speedMph) - roadsideSpeedCost(impactMph));
+      const pointA = this.course.groundAt(a.s, a.lateral);
+      const pointB = this.course.groundAt(b.s, b.lateral);
+      emitRoadsideImpact(this, {id: `traffic-${this.state.traffic.indexOf(b)}`,
+        kind: 'traffic', outcome, impactMph,
+        thresholdMph: decision.thresholdMph,
+        hitPosition: {x: (pointA.x + pointB.x) / 2,
+          y: (pointA.y + pointB.y) / 2, z: (pointA.z + pointB.z) / 2},
+        actor: b});
+      return true;
+    }
+  }
   if ((!armorContact || !this.state.opponents.includes(b)) && a === this.state &&
       canCrushVehicle(this.car, specB, { speedMph: a.speedMph,
         impactMph, descending: descendingCrush })) {

@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import * as THREE from 'three';
-import { COURSE, LIVES } from '../src/config.js';
+import { CARS, COURSE, LIVES } from '../src/config.js';
 import { Duel } from '../src/game.js';
-import { breakableScenery, trafficDestruction } from '../src/destructibles.js';
+import { roadsideTrafficDecision } from '../src/destructibles.js';
 import { Course } from '../src/course.js';
 import { buildEnvironment, disposeTree } from '../src/world.js';
 import { syncScene } from '../src/scene-systems.js';
 import { addDesertCacti, CACTUS_FALL_SECONDS } from '../src/desert-detail.js';
+import { createRoadsideDebris } from '../src/roadside-debris.js';
+import { upgradedCar } from '../src/progression.js';
 
 // CMB-08 emits one flagged-only roadsideImpact per object. The tests also
 // check simulation and scene objects, not just the event payload.
@@ -55,7 +57,7 @@ function staticHit(duel, obstacle, speedMph) {
   const armor = state.armor, crashes = state.stageCrashes, penalty = state.racePenaltySec;
   duel._staticContacts(state, true);
   const hits = events.filter(event => event.roadsideImpact).map(event => event.roadsideImpact);
-  return { state, hits, armor, crashes, penalty };
+  return { state, hits, events, armor, crashes, penalty };
 }
 
 function trafficHit(duel, playerMph, { targetMph = 0, direction = 1 } = {}) {
@@ -90,13 +92,12 @@ test('the boundary is half the striking car current upgraded top speed', () => {
   assert.ok(upgraded > original, 'fixture really changes top speed');
   const threshold = upgraded * .5;
   for (const targetMass of [850, 1450, 3500]) {
-    const input = { enabled: true, mode: 'wasteland', playerTopSpeedMph: upgraded,
-      playerMass: 1450, targetMass };
-    assert.equal(trafficDestruction({ ...input, impactMph: threshold - .01 }).wreck, false,
+    const input = { topSpeedMph: upgraded, targetMass };
+    assert.equal(roadsideTrafficDecision({ ...input, impactMph: threshold - .01 }).wreck, false,
       'below half top speed is a knock for every target mass');
-    assert.equal(trafficDestruction({ ...input, impactMph: threshold }).wreck, true,
+    assert.equal(roadsideTrafficDecision({ ...input, impactMph: threshold }).wreck, true,
       'equality starts the high tier');
-    assert.equal(trafficDestruction({ ...input, impactMph: threshold + .01 }).thresholdMph, threshold,
+    assert.equal(roadsideTrafficDecision({ ...input, impactMph: threshold + .01 }).thresholdMph, threshold,
       'target mass does not move the boundary');
   }
 });
@@ -104,7 +105,7 @@ test('the boundary is half the striking car current upgraded top speed', () => {
 for (const [name, kind, make] of [['cactus', 'cactus', cactus], ['road sign', 'sign', post], ['small tree', 'tree', tree]]) {
   for (const tier of ['knock', 'obliterate']) test(`${name} ${tier} clears its collider once without wrecking the player`, () => {
     const duel = fixture(), speed = duel.car.topSpeed * (tier === 'knock' ? .3 : .7);
-    const { state, hits, armor, crashes, penalty } = staticHit(duel, make(), speed);
+    const { state, hits, events, armor, crashes, penalty } = staticHit(duel, make(), speed);
     assert.equal(hits.length, 1, 'one contact emits one outcome');
     assert.equal(hits[0].outcome, tier, 'outcome is explicit for visuals and audio');
     assert.equal(hits[0].kind, kind);
@@ -124,6 +125,8 @@ for (const [name, kind, make] of [['cactus', 'cactus', cactus], ['road sign', 's
     assert.equal(state.speedMph, speedAfter, 'overlap or repeat crossing cannot apply another speed cost');
     assert.equal((state.fallenCacti?.length || 0) + (state.brokenScenery?.length || 0), 1,
       'one incident creates one persistent visual record');
+    assert.equal(events.filter(event => event.roadsideImpact).length, 1,
+      'a repeat crossing does not emit another impact');
   });
 }
 
@@ -146,6 +149,7 @@ test('low closing speed shoves traffic visibly clear and leaves it there for the
     'traffic does not steer back into the player lane during this stage');
   assert.equal(duel._vehicleContact(state, traffic, 'traffic'), false,
     'the same knocked car cannot be hit every frame');
+  assert.equal(events.filter(event => event.roadsideImpact).length, 1);
   assert.ok(entrySpeed < duel.car.topSpeed * .3 && entrySpeed > duel.car.topSpeed * .3 - 25);
   assert.equal(state.armor, armor);
   assert.deepEqual([state.stageCrashes, state.racePenaltySec], [crashes, penalty]);
@@ -177,6 +181,37 @@ test('an oncoming car uses closing speed, even when player speed is below half t
   assert.equal(impacts[0].actor, traffic);
   assert.equal(impacts[0].outcome, 'obliterate', 'relative 55% top speed enters the high tier');
   assert.ok(impacts[0].impactMph > duel.car.topSpeed * .5);
+});
+
+test('a later CPU uses its own upgraded top speed for traffic and scenery', () => {
+  const duel = fixture(), state = duel.state;
+  const car = 'falcone_f42', upgrades = {engine: 3};
+  const baseTopSpeed = CARS[car].topSpeed;
+  const upgradedTopSpeed = upgradedCar(CARS[car], upgrades).topSpeed;
+  const speedMph = (baseTopSpeed + upgradedTopSpeed) / 4;
+  const cpu = {car, driverId: 'mara_vale', upgrades,
+    s: 107, prevS: 100, lateral: 0, prevLateral: 0,
+    speedMph, dir: 1, headingError: 0, pushVelocity: 0};
+  state.opponents = [{car}, {car}, cpu];
+  const traffic = {alive: true, s: 110, prevS: 110, lateral: .6,
+    prevLateral: .6, speedMph: 0, dir: 1, headingError: 0,
+    pushVelocity: 0};
+  state.traffic = [traffic];
+  const events = [];
+  duel.onChange((_, event) => { if (event.roadsideImpact) events.push(event.roadsideImpact); });
+  assert.equal(duel._vehicleContact(cpu, traffic, 'traffic'), true);
+  assert.equal(events.length, 1);
+  assert.equal(events[0].thresholdMph, upgradedTopSpeed * .5);
+  assert.equal(events[0].outcome, 'knock',
+    'a base-car threshold would have obliterated this traffic car');
+  state.traffic = [];
+  duel.course.features.obstacles.push(post());
+  Object.assign(cpu, {s: 120, prevS: 100, lateral: 0, prevLateral: 0,
+    speedMph});
+  duel._staticContacts(cpu, false);
+  assert.equal(events.length, 2);
+  assert.equal(events[1].thresholdMph, upgradedTopSpeed * .5);
+  assert.equal(events[1].outcome, 'knock');
 });
 
 test('major fixed scenery still costs 20 armor and never enters the knock-away pool', () => {
@@ -301,4 +336,34 @@ test('real sign scene object moves for a knock and disappears after obliteration
     if (oldDocument === undefined) delete globalThis.document;
     else globalThis.document = oldDocument;
   }
+});
+
+test('debris uses a fixed pool and is visible on the first impact frame', () => {
+  const pool = createRoadsideDebris();
+  try {
+    const geometryIds = pool.resources.geometries.map(resource => resource.uuid);
+    const materialIds = pool.resources.materials.map(resource => resource.uuid);
+    let children = 0;
+    pool.group.traverse(() => children++);
+    const event = {serial: 1, id: 'traffic-0', kind: 'traffic', atTime: 5,
+      x: 10, y: 0, z: 20, impactMph: 120};
+    pool.update({status: 'racing', stageTimeSec: 5, roadsideBursts: [event]});
+    assert.equal(pool.resources.slots[1].burst.visible, true,
+      'the first dt=0 frame shows a burst and prebuilt shards');
+    assert.ok(pool.resources.slots[1].shards.every(mesh => mesh.visible));
+    const pose = pool.resources.slots[1].burst.position.toArray();
+    pool.update({status: 'racing', paused: true, stageTimeSec: 5, roadsideBursts: [event]});
+    assert.deepEqual(pool.resources.slots[1].burst.position.toArray(), pose,
+      'a paused stage holds the same effect pose');
+    pool.update({status: 'racing', stageTimeSec: 6, roadsideBursts: [event]});
+    assert.ok(pool.resources.slots.every(slot => !slot.burst.visible),
+      'expired debris disappears without replacing its meshes');
+    pool.update({status: 'racing', stageTimeSec: 5, roadsideBursts: Array.from({length: 24},
+      (_, index) => ({...event, serial: index + 1}))});
+    let after = 0;
+    pool.group.traverse(() => after++);
+    assert.equal(after, children, 'repeated impacts never add scene objects');
+    assert.deepEqual(pool.resources.geometries.map(resource => resource.uuid), geometryIds);
+    assert.deepEqual(pool.resources.materials.map(resource => resource.uuid), materialIds);
+  } finally { disposeTree(pool.group); }
 });

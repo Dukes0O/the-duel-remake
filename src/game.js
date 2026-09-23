@@ -68,6 +68,8 @@ export class Duel {
       crushedProps: [], crushCount: 0, crushScore: 0, crushBurst: null,
       fallenCacti: [],
       brokenScenery: [],
+      roadsideBursts: [],
+      roadsideBurstSerial: 0,
       score: 0, stageStyleScore: 0, nearMisses: 0, policeEscapes: 0, combo: 0, comboTimer: 0,
       callout: '', calloutTimer: 0,
       // police
@@ -98,7 +100,14 @@ export class Duel {
 
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
   emit(ev) { for (const fn of this.listeners) fn(this.state, ev); }
-  destructionEnabled() { return this.destructiblesEnabled ?? featureFlags.enabled('roadside-destruction'); }
+  destructionEnabled() {
+    return this.destructiblesEnabled ??
+      (this.featureFlags.enabled('roadside-destruction') || this.featureFlags.enabled('wasteland2'));
+  }
+  roadsideKnockAwayEnabled() {
+    return this.state.mode === 'wasteland' &&
+      (this.featureFlags.enabled('roadside-destruction') || this.featureFlags.enabled('wasteland2'));
+  }
 
   get car() {
     const base = CARS[this.state.car], upgrades = base.factoryMaxed ? FACTORY_MAX_UPGRADES : this.state.upgrades;
@@ -176,6 +185,8 @@ export class Duel {
     this._crushedVehicles = [];
     s.fallenCacti = []; this._fallenCactusIds = new Set();
     s.brokenScenery = []; this._brokenSceneryIds = new Set();
+    s.roadsideBursts = [];
+    s.roadsideBurstSerial = 0;
     s._jumpY = null; s._verticalSpeed = 0; s._jumpOrigin = null; s.prevAirHeight = 0;
     s.crashSite = null; s.impactTimer = 0; s.impactDuration = 0; s.impactStrength = 0; s.impactSide = 1; s.crashSpin = 0;
     s.bombImpactCooldown = 0;

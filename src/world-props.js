@@ -6,6 +6,7 @@ import { addPacificCoast, isPacificCoast } from './pacific-coast.js';
 import { createCoastLighthouse } from './coast-lighthouse.js';
 import { addHarborCranes } from './harbor-detail.js';
 import { sceneryFallRotation } from './scenery-fall.js';
+import {COMBAT_TUNING} from './wasteland-tuning.js';
 
 // Visual shells follow Course's existing feature footprints. Keep direct world
 // children: the later scenery-detail pass refines these base structures.
@@ -62,13 +63,23 @@ export function addTurnSigns(group,signs,direction){
       const item=instances.get(event.id);if(!item||!Number.isFinite(event.atTime))continue;
       seen.add(event.id);
       const progress=THREE.MathUtils.clamp((now-event.atTime)/.5,0,1);
-      if(active.get(event.id)===progress)continue;
-      active.set(event.id,progress);
+      const hidden=event.outcome==='obliterate'&&
+        now-event.atTime>=COMBAT_TUNING.roadside.sceneryVisibleSeconds;
+      const key=`${progress}:${event.outcome||''}:${hidden}`;
+      if(active.get(event.id)===key)continue;
+      active.set(event.id,key);
       sceneryFallRotation(event,progress,tilt);
-      toRoot.makeTranslation(item.root.x,item.root.y,item.root.z);
+      const eased=progress*progress*(3-2*progress);
+      const distance=event.outcome==='knock'?COMBAT_TUNING.roadside.sceneryKnockDistance*eased:0;
+      toRoot.makeTranslation(item.root.x+event.directionX*distance,item.root.y,
+        item.root.z+event.directionZ*distance);
       fromRoot.makeTranslation(-item.root.x,-item.root.y,-item.root.z);
       transform.copy(toRoot).multiply(matrix.makeRotationFromQuaternion(tilt)).multiply(fromRoot);
-      for(const part of item.parts){part.mesh.setMatrixAt(part.index,matrix.multiplyMatrices(transform,part.upright));changed.add(part.mesh);}
+      for(const part of item.parts){
+        if(hidden)matrix.makeScale(0,0,0);
+        else matrix.multiplyMatrices(transform,part.upright);
+        part.mesh.setMatrixAt(part.index,matrix);changed.add(part.mesh);
+      }
     }
     for(const id of active.keys())if(!seen.has(id)){
       for(const part of instances.get(id).parts){part.mesh.setMatrixAt(part.index,part.upright);changed.add(part.mesh);}

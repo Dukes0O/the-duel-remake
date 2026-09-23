@@ -27,6 +27,7 @@ import { createRenderWarmup, compileWarmupPipeline, compileWarmupScene, isRender
 import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose } from './vehicle-grounding.js';
 import { createFrameMetrics } from './frame-metrics.js';
 import { createRearView } from './rear-view.js';
+import { createRoadsideDebris } from './roadside-debris.js';
 
 export function detachRetiredVehicleVisuals(object, combatScene, vehicleAttachments) {
   combatScene.detachVehicle(object);
@@ -110,6 +111,7 @@ export function attachRenderer(host, app) {
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
   const combatScene=createCombatScene(vehicleAttachments);scene.add(combatScene.group);
+  const roadsideDebris=createRoadsideDebris();scene.add(roadsideDebris.group);
   function retireObject(object,beforeDispose){
     detachRetiredVehicleVisuals(object,combatScene,vehicleAttachments);
     scene.remove(object);
@@ -315,7 +317,9 @@ export function attachRenderer(host, app) {
     const palette = [0xd9c99c, 0x2c566a, 0x847458, 0xf0e9dc, 0x5e3d2f];
     while (traffic.length < st.traffic.length) { const car = createVehicle({ color: palette[traffic.length % palette.length] }); scene.add(car); traffic.push(car);sceneRevision++;ambientShading.refresh(); }
     traffic.forEach((car, i) => {
-      const d = st.traffic[i]; car.visible = !menu && !!(d?.alive || d?.wrecked) && Math.abs(visualGap(d.s)) < 540;
+      const d = st.traffic[i]; car.visible = !menu &&
+        !!(d?.alive || d?.wrecked || d?.roadsideMotion?.visible) &&
+        Math.abs(visualGap(d.s)) < 540;
       if (!menu && d?.wrecked) updateNpcVehicleDamage(car,d);
       else updateNpcVehicleDamage(car,!menu&&d?.alive?d:null);
       if (car.visible) {const turn=(d.dir<0?Math.PI:0)+(d.headingError||0);place(car,vehicleGroundPoint(course,d.s,d.lateral),turn,wheelTravel(d.speedMph));car.position.y+=d.airHeight||0;const slope=groundSlope(course,d.s,d.lateral,turn);car.rotation.x=slope.pitch;car.rotation.z=slope.roll+(d.wrecked?.roll||0);applyVehicleTerrainPose(car,course,d);}
@@ -341,6 +345,7 @@ export function attachRenderer(host, app) {
         {catastrophic:!!actor?.combatWrecking, status:st.status}, effectDt);
     });
     combatScene.update(app.duel,{player,rival,extraOpponents});
+    roadsideDebris.update(st);
     if(!st.paused)chickens.update(menu?{status:'menu',s:172,collectedFlocks:[]}:st,menu?now/1000:st.totalTimeSec);
     animateScene(world,now/1000);
     syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);

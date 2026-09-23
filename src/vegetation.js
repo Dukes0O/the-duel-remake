@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { renderedGroundHeight } from './rendered-ground.js';
+import {COMBAT_TUNING} from './wasteland-tuning.js';
 
 export const VEGETATION_CELL_SIZE = 200;
 
@@ -54,14 +55,22 @@ export function addPineTrees(group, trees, course) {
       if (!item || !Number.isFinite(event.atTime) || !Number.isFinite(length) || length < 1e-6) continue;
       seen.add(event.id); active.add(item);
       const progress = THREE.MathUtils.clamp((now - event.atTime) / .72, 0, 1);
-      if (progress === item.progress) continue;
-      item.progress = progress;
+      const hidden = event.outcome === 'obliterate' &&
+        now - event.atTime >= COMBAT_TUNING.roadside.sceneryVisibleSeconds;
+      const key = `${progress}:${event.outcome || ''}:${hidden}`;
+      if (key === item.progress) continue;
+      item.progress = key;
       const eased = progress * progress * (3 - 2 * progress);
       axis.set(event.directionZ / length, 0, -event.directionX / length);
       fall.setFromAxisAngle(axis, eased * 1.38);
       yaw.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, item.tree.heading);
       rotation.multiplyQuaternions(fall, yaw);
-      matrix.compose(item.root, rotation, object.scale.setScalar(item.tree.scale));
+      const distance = event.outcome === 'knock' ?
+        COMBAT_TUNING.roadside.sceneryKnockDistance * eased : 0;
+      object.position.copy(item.root);
+      object.position.x += (event.directionX || 0) * distance;
+      object.position.z += (event.directionZ || 0) * distance;
+      matrix.compose(object.position, rotation, object.scale.setScalar(hidden ? 0 : item.tree.scale));
       for (const mesh of item.meshes) { mesh.setMatrixAt(item.index, matrix); changed.add(mesh); }
     }
     for (const item of active) if (!seen.has(item.tree.id)) {

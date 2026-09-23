@@ -51,9 +51,10 @@ impactMph, thresholdMph, hitPosition, actor? } }`. `actor` is the traffic
 car object for traffic hits. The existing `cactusHit`, `sceneryBroken` and
 `trafficWrecked` event contracts stay unchanged when both new switches are
 off. A scene record may also carry `outcome`, so sign and cactus systems can
-choose their actual mesh movement or removal. The pure traffic helper keeps
-its `wreck` and `thresholdMph` outputs for compatibility; `wreck` means the
-high tier under this card.
+choose their actual mesh movement or removal. The new pure
+`roadsideTrafficDecision()` helper reports `wreck` and `thresholdMph`;
+`wreck` means the high tier under this card. The older
+`trafficDestruction()` stays unchanged for direct legacy overrides.
 
 ## Acceptance tests
 
@@ -94,3 +95,14 @@ flag-off contacts. Expected reds include the switch isolation defect,
 24% traffic threshold, no flagged outcome events, low traffic returning to
 lane, and unchanged sign/cactus render transforms. No source files, full
 suite, build or heavy browser gate were run on this branch.
+
+## Implementation test API adjustment
+
+The builder switched the new 50% pure assertions from
+`trafficDestruction()` to `roadsideTrafficDecision()`, keeping the same
+below/equal/above checks. This preserves the old direct-override test at
+`tools/test-armored-vehicle-impact.mjs:135`: that older hit must still enter
+its legacy `wrecked` traffic state with both feature switches off. The
+builder also added pool identity/first-frame and later-CPU upgraded-speed
+tests, bringing the focused CMB-08 suite to 19 cases. No outcome
+expectation was relaxed.
