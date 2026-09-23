@@ -1,6 +1,6 @@
 ---
 task: FND-10
-status: review
+status: merged
 kind: save
 flag: none
 player_facing: yes
@@ -65,8 +65,12 @@ remain physical and count toward the budget.
   tab-only saves. The archive scenario verifies that the UI's v2 export
   retains every historical ghost sample. The blocked paths leave legacy
   data intact and refuse incomplete export.
-- `npm run build` passed. The exact-state `npm run test:lane` gate passed
-  **154/154 suites, zero failures**, in 469.43 seconds.
+- The exact integration state `4222720` passed **149/149 merge suites** in
+  152.70 seconds, `npm run build`, private High/Performance smoke, a two-tab
+  career isolation check, and the focused career-backup browser scenario.
+  The browser runs had zero warnings or errors. The two-tab check confirmed
+  that disposable QA storage stays separate between tabs while surviving a
+  reload within each tab.
 
 ## Limits
 

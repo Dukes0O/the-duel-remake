@@ -1,5 +1,17 @@
 # Wasteland run log
 
+## 2026-09-22 PDT — FND-10 storage budget merged
+
+- Reviewed and cherry-picked the verified archive prerequisite, origin budget
+  and QA tab-isolation fix through `4222720`. The exact integration state
+  passed 149 merge suites in 152.70 seconds and the production build.
+- Private High/Performance smoke, two-tab career isolation, and the focused
+  career-backup browser scenario passed with zero warnings or errors. The
+  64-player fixture is 5,515,688 raw UTF-16 bytes; the migrated origin uses
+  230 physical bytes including an unrelated key. A maximum-size future ghost
+  journal peaks at 2,500,604 of the 4,000,000-byte limit. The complete career
+  stays in IndexedDB with verified backup and recovery.
+
 ## 2026-09-22 PDT — OLD-01 crash counter merged
 
 - Independently reviewed and cherry-picked `7e55462` as `6fc9133`. The exact

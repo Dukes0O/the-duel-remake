@@ -136,8 +136,8 @@ tasks:
     lane: SAVE
     size: M
     needs: [FND-05]
-    status: building
-    note: "Seven historical fixtures and a storage boundary test are integrated at 5a447bd. Four valid archived ghosts exceed 4 MB; a lossless storage design remains required."
+    status: merged
+    note: "Lossless IndexedDB snapshot with bounded localStorage journal merged through 4222720. Seven historical fixtures, 4 MB origin budget, 149-suite merge gate, build, private browser smoke, tab isolation and career backup pass."
     spec: "SPEC.md, task FND-10"
   - id: BUG-01
     title: "Arrow-key driving layout"
