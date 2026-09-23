@@ -6,11 +6,13 @@ import { applyVehiclePaint } from './vehicle-paint.js';
 // combat rigs without adding more vehicle-specific code to the renderer.
 export function createVehicleAttachmentRegistry() {
   const bindings = new Map();
+  const objectOwners = new WeakMap();
 
   function detach(owner) {
     const binding = bindings.get(owner);
     if (!binding) return false;
     bindings.delete(owner);
+    objectOwners.delete(binding.object);
     if (binding.fallback) binding.fallback.add(binding.object);
     else binding.object.removeFromParent();
     return true;
@@ -22,11 +24,16 @@ export function createVehicleAttachmentRegistry() {
     }
     const target = ensureVehicleSockets(vehicle)[socket];
     if (!target) throw new Error(`Unknown vehicle attachment socket: ${socket}`);
+    const objectOwner = objectOwners.get(object);
+    if (objectOwner && objectOwner !== owner) {
+      throw new Error(`Vehicle attachment object already belongs to ${objectOwner}.`);
+    }
     const current = bindings.get(owner);
     if (current?.vehicle === vehicle && current.socket === socket && current.object === object) return object;
     detach(owner);
     target.add(object);
     bindings.set(owner, { vehicle, socket, object, fallback });
+    objectOwners.set(object, owner);
     return object;
   }
 

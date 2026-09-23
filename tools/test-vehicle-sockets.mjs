@@ -5,6 +5,7 @@ import { createClassicVehicle } from '../src/classic-vehicles.js';
 import { createCombatScene } from '../src/combat-scene.js';
 import { ensureVehicleSockets, VEHICLE_SOCKET_KEYS, vehicleSocketLayout } from '../src/vehicle-sockets.js';
 import { createVehicleAttachmentRegistry } from '../src/vehicle-attachments.js';
+import { detachRetiredVehicleVisuals } from '../src/render3d.js';
 import { models } from './audit-vehicle-grounding.mjs';
 
 const expectedKeys = Object.keys(CARS).sort();
@@ -132,6 +133,14 @@ assert.equal(kit.parent, ensureVehicleSockets(first).front);
 assert.equal(decal.parent, ensureVehicleSockets(first).hood);
 assert.equal(figure.parent, ensureVehicleSockets(second).roof);
 checks += 4;
+assert.throws(() => registry.attach({ owner: 'duplicate-kit', vehicle: second, socket: 'rear', object: kit, fallback }),
+  /already belongs to kit/, 'one object cannot have two registry owners');
+assert.throws(() => registry.attach({ owner: 'decal', vehicle: second, socket: 'rear', object: kit, fallback }),
+  /already belongs to kit/, 'a failed owner replacement preserves the previous decal');
+assert.equal(registry.size, 3);
+assert.equal(kit.parent, ensureVehicleSockets(first).front);
+assert.equal(decal.parent, ensureVehicleSockets(first).hood);
+checks += 5;
 registry.attach({ owner: 'kit', vehicle: first, socket: 'front', object: kit, fallback });
 assert.equal(registry.size, 3, 'repeated mount does not create another binding');
 assert.throws(() => registry.attach({ owner: 'kit', vehicle: second, socket: 'missing', object: kit, fallback }), /Unknown vehicle attachment socket/);
@@ -164,4 +173,23 @@ assert.equal(kit.parent, ensureVehicleSockets(second).rear,
 assert.equal(registry.size, 1);
 registry.clear();
 checks += 2;
+const retirementRegistry = createVehicleAttachmentRegistry();
+const retirementScene = createCombatScene(retirementRegistry);
+const retiredPlayer = vehicleFor('aurora_gt');
+const activeRival = vehicleFor('banshee_muscle');
+const retiredKit = new THREE.Group(), activeFigure = new THREE.Group();
+const retirementFallback = new THREE.Group();
+retirementScene.update(duel, { player: retiredPlayer, rival: activeRival });
+retirementRegistry.attach({ owner: 'retired-kit', vehicle: retiredPlayer, socket: 'hood', object: retiredKit, fallback: retirementFallback });
+retirementRegistry.attach({ owner: 'active-figure', vehicle: activeRival, socket: 'roof', object: activeFigure, fallback: retirementFallback });
+assert.equal(retirementRegistry.size, 8, 'combat rigs and external attachments share one registry');
+detachRetiredVehicleVisuals(retiredPlayer, retirementScene, retirementRegistry);
+assert.equal(retiredKit.parent, retirementFallback, 'retiring a car releases its non-combat kit');
+assert.equal(retiredPlayer.getObjectByName('combat-bumper-0'), undefined, 'retiring a car releases its combat rig');
+assert.equal(activeFigure.parent, ensureVehicleSockets(activeRival).roof, 'rival figure remains mounted');
+assert.ok(activeRival.getObjectByName('combat-bumper-1'), 'rival combat rig remains mounted');
+assert.equal(retirementRegistry.size, 4, 'no retired-car binding remains');
+checks += 6;
+retirementScene.dispose();
+retirementRegistry.clear();
 console.log(`Vehicle sockets: ${checks} per-car, role, maneuver, visibility and replacement checks passed.`);

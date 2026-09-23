@@ -28,6 +28,11 @@ import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehi
 import { createFrameMetrics } from './frame-metrics.js';
 import { createRearView } from './rear-view.js';
 
+export function detachRetiredVehicleVisuals(object, combatScene, vehicleAttachments) {
+  combatScene.detachVehicle(object);
+  vehicleAttachments.detachVehicle(object);
+}
+
 // This layer only reads simulation state. Asset replacement never changes race rules.
 export function attachRenderer(host, app) {
   const rendererAttachedAt=performance.now();let firstPresentation=true;
@@ -98,7 +103,7 @@ export function attachRenderer(host, app) {
   const vehicleAttachments=createVehicleAttachmentRegistry();
   const combatScene=createCombatScene(vehicleAttachments);scene.add(combatScene.group);
   function retireObject(object,beforeDispose){
-    combatScene.detachVehicle(object);
+    detachRetiredVehicleVisuals(object,combatScene,vehicleAttachments);
     scene.remove(object);
     const release=()=>{beforeDispose?.();disposeTree(object);};
     if(warmup)warmup.releaseWhenIdle(release);else release();
