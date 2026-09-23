@@ -57,8 +57,9 @@ scenario only; it does not implement armor.
   refill. Flag-off Wasteland retains its old major-hit wording.
 - A seeded Titan steep-face fixture drives at 60 Hz. Its first climb-limit
   incident costs 20 armor, continued contact for twelve frames cannot drain
-  more, and a later separate incident can cost another 20. Flag-off still
-  takes the established tumble path.
+  more, a later separate incident costs another 20, and leaving then
+  returning to the same coordinate costs armor again. Flag-off still takes
+  the established tumble path.
 - The bomb arming test also places a level-three bomb 24 m from its thrower:
   inside its enlarged 28 m blast radius but beyond the base 22 m radius. It
   cannot self-damage before 0.35 seconds and can do so afterward.

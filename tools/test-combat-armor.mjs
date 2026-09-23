@@ -295,7 +295,17 @@ test('one steep-face incident cannot drain Titan armor every 60 Hz step', () => 
   armored.duel._startTumble('climb_limit');
   close(armored.state.maxArmor - armored.state.armor, 40,
     'a later separate steep-face incident can cost armor again');
-
+  const returnSite = {s: armored.state.s, lateral: armored.state.lateral};
+  Object.assign(armored.state, {s: 0, prevS: 0, lateral: 30,
+    prevLateral: 30, speedMph: 0, _climbGain: 0});
+  armored.duel.setInput({throttle: 0, brake: 0});
+  advance(armored.duel, 1.2);
+  Object.assign(armored.state, {s: returnSite.s, prevS: returnSite.s,
+    lateral: returnSite.lateral, prevLateral: returnSite.lateral,
+    speedMph: 55, _climbGain: 0});
+  armored.duel._startTumble('climb_limit');
+  close(armored.state.maxArmor - armored.state.armor, 60,
+    'returning to the same face after leaving it is a new damaging incident');
 });
 
 test('major scenery costs 20 armor and a star blocks that loss', () => {
