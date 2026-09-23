@@ -16,8 +16,8 @@ export function createRoadsideDebris() {
     opacity: .92, depthWrite: false});
   const smoke = new THREE.MeshBasicMaterial({color: 0x39312b, transparent: true,
     opacity: .42, depthWrite: false});
-  const scrap = new THREE.MeshStandardMaterial({color: 0x60584c,
-    metalness: .68, roughness: .48});
+  const scrap = new THREE.MeshStandardMaterial({color: 0x9a8065,
+    metalness: .34, roughness: .76});
   const slots = Array.from({length: tuning.burstLimit}, (_, slotIndex) => {
     const burst = new THREE.Group();
     burst.name = `Roadside debris ${slotIndex}`;
@@ -53,8 +53,8 @@ export function createRoadsideDebris() {
       const t = age / tuning.sceneryBurstSeconds;
       slot.burst.visible = true;
       slot.burst.position.set(event.x, event.y, event.z);
-      slot.flash.scale.setScalar(.3 + 2.1 * (1 - t));
-      slot.core.scale.setScalar(.2 + .9 * (1 - t));
+      slot.flash.scale.setScalar(.2 + 1.15 * (1 - t));
+      slot.core.scale.setScalar(.15 + .5 * (1 - t));
       slot.cloud.scale.setScalar(.25 + 1.8 * t);
       slot.cloud.position.y = 1.1 + t * 2.1;
       slot.ring.scale.setScalar(.25 + 3.1 * t);
@@ -62,13 +62,13 @@ export function createRoadsideDebris() {
       for (let index = 0; index < slot.shards.length; index++) {
         const shard = slot.shards[index];
         const angle = index * Math.PI / 3 + event.serial * .71;
-        const radius = (.4 + 3.8 * t) * strength;
+        const radius = (1.35 + 4.2 * t) * strength;
         shard.position.set(Math.cos(angle) * radius,
           .45 + Math.sin(Math.PI * t) * (1.1 + index % 3 * .35),
           Math.sin(angle) * radius);
         shard.rotation.set(t * (index + 1) * 5, t * (index + 2) * 3,
           t * (index + 3) * 4);
-        shard.scale.setScalar((.32 + index % 2 * .15) * (1 - t * .55));
+        shard.scale.setScalar((.58 + index % 3 * .12) * (1 - t * .5));
       }
     }
   }

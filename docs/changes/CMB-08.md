@@ -30,12 +30,16 @@ keep their separate contact rules.
   finite hit position. A traffic event also carries the actor. Each hit
   applies one speed cost, capped at 25 mph. A bounded list of burst records
   gives the renderer stable input without allocating scene assets on impact.
+  Player traffic contacts show `TRAFFIC SHOVED CLEAR` or
+  `TRAFFIC OBLITERATED` in the live HUD. CPU hits do not claim a player hit.
 - The existing sign, chevron, pine and cactus scene systems move the real
   group or instance for a low-tier hit. A high-tier instance or sign leaves
   the scene after a short visible interval. `src/roadside-debris.js` holds
   fixed shared geometry, materials and slots before hits occur. The
   renderer reads this state and keeps a knocked traffic car visible while
-  hiding an obliterated one after the burst starts.
+  hiding an obliterated one after the burst starts. A visual pass reduced
+  the round flash and enlarged the same six contrasting fragments per slot;
+  it added no objects, materials or collision-time allocations.
 - `game.js` now reads `this.featureFlags` for the existing roadside switch.
   Either `roadside-destruction` or `wasteland2` enables the new path in
   Wasteland. This branch does not promote either switch to default-on.
@@ -53,12 +57,34 @@ keep their separate contact rules.
 - The High/Performance private browser scenario waits for a completed
   renderer warmup and a frame with actual draw calls after each impact. It
   records the first debris render against a nearby baseline without a hard
-  timing threshold. Its
-  execution, the lane gate, build,
-  pinned replay fingerprints and balance/frame checks are pending.
+  timing threshold. The final fixed-pool art pass measured 7.70/10.20 ms
+  nearby/first-debris in High and 7.50/7.10 ms in Performance. All six
+  race-view screenshots passed without browser warnings or errors under
+  `.qa-dist/browser-output/combat-knockaway-2026-09-23T23-15-19-805Z`.
+- The first exact lane gate passed 189/189 with no failures in 456.90 s.
+  After the fixed-pool art pass, the exact lane gate passed 189/189 again in
+  463.25 s. `npm run build` also passed on the final art and callout source;
+  integration owns the full balance and frame-pacing checks. Per the user's
+  lighter testing direction, the small callout/scenario change received
+  focused and private browser checks instead of a third 189-suite lane run.
+- After the callout change, focused `test-combat-knockaway` passed 23/23.
+  The private `traffic-wreck-callout` browser scenario passed with 772/553
+  actual draw calls around the high-tier contact, one screenshot, no browser
+  warnings or errors, and unchanged player armor/crash/time state. Its
+  screenshot and report are in
+  `.qa-dist/browser-output/traffic-wreck-callout-2026-09-23T23-28-11-721Z`.
 
 One test API assertion changed after review: the new 50% pure cases now
 call `roadsideTrafficDecision()` instead of the legacy
 `trafficDestruction()` helper. The exact boundary and outcome assertions
 remain; the older direct-override assertions also pass. The reason is
 recorded in `CMB-08-test-author.md`.
+
+The old `traffic-wreck-callout` browser assertion required a wrecked traffic
+actor, one player crash, a two-second penalty and `TRAFFIC WRECKED / IMPACT`.
+That scenario runs with `roadside-destruction`, whose approved CMB-08 rule
+replaces those outcomes. The updated scenario checks a single `roadsideImpact`
+obliteration, visible pooled debris, the traffic car's removal, the new HUD
+message, and unchanged player armor, crash count and time penalty. Under this
+switch alone, armor is not initialized; the scenario checks that native armor
+state stays unchanged rather than subtracting two undefined values.

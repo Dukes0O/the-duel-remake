@@ -21,6 +21,14 @@ async function qualityPass(context, quality) {
     const duel=app.duel,state=duel.state,render=window.__render;
     if(!duel.roadsideKnockAwayEnabled())throw Error('Flagged knock-away is off');
     Object.assign(state,{status:'racing',paused:false,opponents:[],traffic:[],invulnerableSec:0});
+    app.onFrame?.(state);
+    if(!document.querySelector('#menu-screen')?.hidden)
+      throw Error('Roadside inspection still has the garage overlay');
+    document.querySelectorAll('details').forEach(panel => {
+      const title=panel.querySelector('summary')?.textContent||'';
+      if(title.includes('TEMPORARY SAVES')||title.startsWith('Performance samples'))
+        panel.hidden=true;
+    });
     const present=async () => {
       for(let attempt=0;attempt<400;attempt++){
         render.renderer.info.reset();

@@ -147,6 +147,7 @@ test('low closing speed shoves traffic visibly clear and leaves it there for the
   assert.equal(impact[0].actor, traffic);
   assert.equal(impact[0].kind, 'traffic');
   assert.equal(impact[0].outcome, 'knock');
+  assert.equal(state.callout, 'TRAFFIC SHOVED CLEAR');
   const entrySpeed = state.speedMph, startLateral = traffic.lateral;
   for (let i = 0; i < 120; i++) duel._traffic(1 / 120);
   assert.ok(Math.abs(traffic.lateral - startLateral) > 2,
@@ -201,6 +202,7 @@ test('high closing speed removes traffic after its burst and never costs player 
   assert.equal(impact[0].actor, traffic);
   assert.equal(impact[0].kind, 'traffic');
   assert.equal(impact[0].outcome, 'obliterate');
+  assert.equal(state.callout, 'TRAFFIC OBLITERATED');
   for (let i = 0; i < 180; i++) duel._traffic(1 / 120);
   assert.ok(!traffic.alive && !traffic.wrecked,
     'the renderer must no longer show an intact or flying traffic car after the burst');

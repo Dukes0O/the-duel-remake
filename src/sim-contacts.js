@@ -449,6 +449,8 @@ export function _vehicleContact(a, b, reason) {
         hitPosition: {x: (pointA.x + pointB.x) / 2,
           y: (pointA.y + pointB.y) / 2, z: (pointA.z + pointB.z) / 2},
         actor: b});
+      if (a === this.state) this._callout(outcome === 'obliterate'
+        ? 'TRAFFIC OBLITERATED' : 'TRAFFIC SHOVED CLEAR', 1.8);
       return true;
     }
   }
