@@ -23,10 +23,11 @@ reload during a race.
 
 ## Start and stop the live game
 
-Use the desktop shortcut or `start-game.bat` in the live folder. Closing its
-console stops that server. Before starting another server on port 5174, check
-whether one is already listening and inspect its command line. Do not stop a
-server while a race is in progress. Do not use port 5174 for development or QA.
+Use the desktop shortcut or `start-game.bat` in the live folder. A second click
+checks the page already on `localhost:5174` and opens it if it is The Duel.
+If another service owns the port, the launcher stops with a clear message.
+Closing the first launcher's console stops its server. Do not stop a server
+while a race is in progress. Do not use port 5174 for development or QA.
 
 ## Development checks
 
