@@ -147,7 +147,7 @@ tasks:
     size: M
     needs: [FND-08]
     status: review
-    note: "Tooling branch 45379dc measures real feel and audio races; 157-suite lane gate passes. Audio and balance metrics expose remaining failures; integration review pending."
+    note: "Forward branch d09c346 measures real feel and audio races on current gameplay; 170-suite lane and build pass. The separate audio-forward branch 7e547e1 passes timed cues but its far-blast contrast remains marginal; integration review awaits the balance stop line."
     spec: "SPEC.md, task TOOL-02"
   - id: FND-10
     title: "Save fixtures and storage budget"
@@ -219,7 +219,7 @@ tasks:
     size: S
     needs: [BUG-03]
     status: blocked
-    note: "Exact-distance branch and a target-only short-range prototype both miss the unchanged four-second gain gate. The target-only trial also makes Medium win 10/10. Held pending a revised UFO design choice; no branch merged."
+    note: "Exact-distance, charged, target-only and several once-per-race small-gap trials were measured. None meets the unchanged four-second gain, win-rate, safe-landing and useful-upgrade needs together. Held pending a revised UFO design choice; no branch merged."
     spec: "SPEC.md, task BUG-04"
   - id: BUG-05
     title: "Bombs carry the car's speed"
@@ -399,7 +399,7 @@ tasks:
     size: M
     needs: [FND-10]
     status: review
-    note: "Branch 5c71c88 formats progression and leaderboard with no intended logic change; 85-suite lane gate passed. Independent record review pending."
+    note: "Forward branch be0a552 formats progression and leaderboard with no intended logic change; independent AST review, historical roundtrips, 93-suite lane, build and browser smoke pass. Held by the balance stop line."
     spec: "SPEC.md, task RFX-07"
   - id: FOOT-00
     title: "On-foot movement spike"
