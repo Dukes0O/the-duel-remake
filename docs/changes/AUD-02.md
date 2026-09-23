@@ -98,5 +98,12 @@ another QA car voice would need its playback pitch applied to the template.
 
 On the forward port based on integration commit `5d00eeb`, the focused audio
 analyzer tests pass 6/6 and the production build passes. The older browser
-recordings above were made before this port; a new recording and the lane and
-merge gates are still needed on the current branch.
+recordings above were made before this port; at that point a new recording
+and the lane and merge gates were still needed on the current branch.
+
+On clean forward-port source `898835f`, the lane and full code tiers both
+passed 176/176. The new private seven-stem Chrome recording passed the
+unchanged 30 ms cue limit and 0.90 engine/rev correlation target: 14/14
+timed cues, 0.983 correlation over 66 readings, and 0 ms lag. It reported
+no browser warnings or errors. The older Falcone-only shift-template and
+subjective listening limits above still apply.

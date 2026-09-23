@@ -177,7 +177,7 @@ lane passed 170/170 suites in 234.35 s, including 162 unchanged replay
 comparisons; the production build passed. This verifies measured targets for
 this partial audio slice. Subjective listening and remaining AUD-01/02 cues
 are still open. That measurement was made on the earlier audio branch; this
-forward port still needs its own lane, merge and browser recording gates.
+forward port then still needed its own lane, merge and browser recording gates.
 
 ## Forward port to integration base 5d00eeb
 
@@ -186,5 +186,35 @@ The six audio commits were applied in order to a new isolated branch based on
 conflict resolution or race-rule edit was needed. On this exact branch,
 `node tools/test-audio.mjs` passed 459 checks, `node tools/test-combat.mjs`
 passed 66, `node --test tools/test-audio-analysis.mjs` passed 6/6, and
-`npm run build` passed. `git diff --check` passed. The later lane, merge,
-fresh browser audio recording and listening checks remain pending.
+`npm run build` passed. `git diff --check` passed. The later gates and
+listening check had not yet run at that point.
+
+## Current-source gate and sound recording
+
+On clean source commit `898835f`, the lane and full **code** tiers each
+passed 176/176 suites, including 162 unchanged replay fingerprints across
+18 cases, three frame rates, and three runs. The full code tier took
+293.01 seconds; the lane took 300.62 seconds. These are code tests, not the
+separate whole-game balance or release gates.
+
+A fresh private Chrome race used port 61833 and memory-only saves. Engine
+samples and ambience both loaded, and the browser reported zero warnings
+and errors. It recorded 841 frames, 23 events, and seven WAV stems. The
+unchanged analyzer passed all ten sound checks:
+
+- Fourteen explosion, hit, and shift cues began between 9 ms early and
+  13 ms late, within the 30 ms limit.
+- Engine/rev correlation was 0.983 at 0 ms lag over 66 readings.
+- The mix peaked at -1.480 dBFS, with no clipped samples, clicks, engine
+  gaps, or expected tire gaps.
+- The five measured combat hits/blasts stood 6.553–10.766 dB above the
+  engine, above the 6 dB target. The two calibrated blast pans showed
+  12.393 and 12.286 dB side bias; near exceeded far by 3.378 dB.
+- Blast variety and six-blast stress checks passed. During stress, the
+  engine measured -22.820 dBFS against the -14.063 dBFS mix.
+
+The recorded real rival hits had left pan values -0.150 at 21.35 m and
+-0.149 at 47.39 m. No source-specific check failed in this recording.
+This script did not emit a landing or ordinary crash cue, so those sounds
+remain covered by focused tests rather than this race capture. A human
+headphone and speaker check and the remaining spec weapon cues are open.
