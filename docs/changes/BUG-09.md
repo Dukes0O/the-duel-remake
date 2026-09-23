@@ -1,6 +1,6 @@
 ---
 task: BUG-09
-status: review
+status: merged
 kind: gameplay-fix
 flag: none
 player_facing: yes
@@ -59,3 +59,9 @@ panel selection. Player dents still include both rotation terms.
 
 The BUG-12 removed-traffic and live-traffic assertions remain unchanged,
 including the rear-panel result for a stationary blast at the actor center.
+
+## Integration gate
+
+Integration commits `6912ea3` and `cfc1925` passed all 144 merge-gate suites
+in 211.10 seconds. The production build and private High/Performance browser
+smoke passed with four screenshots and zero warnings or errors.

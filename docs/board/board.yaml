@@ -172,7 +172,8 @@ tasks:
     lane: CMB
     size: S
     needs: [BUG-12]
-    status: building
+    status: merged
+    note: "Merged as 6912ea3 and cfc1925; 144-suite merge gate, production build and private High/Performance browser smoke pass. Player, rival and traffic dents match their displayed headings."
     spec: "SPEC.md, task BUG-09"
   - id: BUG-02
     title: "Swaps keep lap history"
@@ -180,7 +181,7 @@ tasks:
     lane: CMB
     size: S
     needs: [BUG-09]
-    status: blocked
+    status: building
     spec: "SPEC.md, task BUG-02"
   - id: BUG-03
     title: "Safe swap landing"

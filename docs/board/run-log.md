@@ -138,3 +138,15 @@ checkout untouched until the final integration commit passes the full gate.
   zero warnings and zero errors.
 - D-pad Up/Right/Down/Left fires UFO/bomb/crossbow/star on press edges. The
   direction choice is recorded in `decisions.md`; BUG-11 will show it in HUD.
+
+## 2026-09-22 PDT — BUG-09 directional dents merged
+
+- Reviewed CMB lane commits `d78e23c` and `cc7747f`; cherry-picked them as
+  `6912ea3` and `cfc1925`. The 144-suite merge gate passed in 211.10 seconds.
+  The production build and private High/Performance browser smoke passed with
+  four screenshots and zero warnings or errors.
+- Front/rear/side dents follow the displayed heading for the player, rival,
+  and oncoming traffic. Existing impact force and replay fingerprints hold.
+- OLD-03's assertion audit found a rear-only check for a blast placed exactly
+  at a traffic car's center. The automatic approval reviewer rejected an
+  attempt to change it; the assertion remains intact and is tracked by OLD-03.
