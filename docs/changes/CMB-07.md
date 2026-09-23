@@ -82,9 +82,12 @@ No existing assertion or replay fingerprint changed. New behavior requires
 both Wasteland mode and the `wasteland2` flag. The independent acceptance
 tests pass against the integrated CMB-01 flag wiring.
 
-## Remaining gates
+## Final lane gate
 
-Run the changed lane gate, production build and a private flag-on combat
-browser check after the current integration merge gate finishes. Record any
-balance change to the provisional 12-degree cone or 90-degree-per-second cap
-with a reviewed test change.
+On the CMB-01 integration base, the forward-port branch passed all 9
+projectile tests, all 19 armor tests, the 162 pinned replay fingerprints,
+and the 104/104 changed lane suites in 408.57 seconds. The production build
+passed with the existing Vite large-chunk advisory. Private High and
+Performance browser smoke passed with four screenshots, zero warnings and
+zero errors. The provisional 12-degree cone and 90-degree-per-second turn
+cap still need combat balance review before the feature switch advances.

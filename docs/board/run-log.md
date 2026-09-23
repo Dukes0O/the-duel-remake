@@ -513,3 +513,14 @@ checkout untouched until the final integration commit passes the full gate.
   pool and measure the first-frame cost again.
 - CMB-02, CMB-03, CMB-04 and VIS-01 are now ready. CMB-07 can be rebased and
   tested against the integrated armor feature switch.
+
+## 2026-09-23 PDT — CMB-07 projectile carry merged
+
+- The independent 30/60/144 FPS swept-height failure was fixed before
+  forward-port. On the CMB-01 base, all 9 projectile tests, 19 armor tests,
+  162 pinned replay fingerprints and 104 changed lane suites passed. The
+  production build and private High/Performance browser smoke also passed,
+  with zero browser warnings or errors.
+- Integrated the reviewed CMB-07 branch. Its limited guidance cone and
+  velocity carry remain behind the Wasteland2 development switch until
+  flagged combat balance is measured.
