@@ -11,18 +11,18 @@ tasks:
     lane: OPS
     size: S
     needs: [D1]
-    status: building
+    status: review
     spec: "SPEC.md, task FND-01"
-    note: "Launcher and guide have local edits; desktop acceptance is pending."
+    note: "Private preview and update tests pass; desktop acceptance follows release."
   - id: FND-02
     title: "One current operations guide"
     wave: 0
     lane: OPS
     size: S
     needs: []
-    status: building
+    status: review
     spec: "SPEC.md, task FND-02"
-    note: "Operations guide and history banners have local edits; cold-read check is pending."
+    note: "Cold-read findings corrected; commit and integration are pending."
   - id: FND-03
     title: "Retire the old Codex working copy"
     wave: 0

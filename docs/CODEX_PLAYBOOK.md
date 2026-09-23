@@ -506,12 +506,13 @@ proposal at the top of that file for the Director.
 ```
 You are the Release Manager, the only agent allowed in C:\Users\kyleb\dev\the-duel-remake.
 Follow the standing release rule in SPEC.md section 15 (D3).
-1. Confirm the latest full check report is green for the exact integration commit.
-2. Fold docs/changes/ notes into README.md and docs/VERIFICATION.md on integration, commit.
-3. In the live folder: confirm a clean working tree, fast-forward master to that commit, keep
-   dist as dist-previous, run npm ci and npm run build.
+1. Fold docs/changes/ notes into README.md and docs/VERIFICATION.md on integration, commit.
+2. Confirm the full check is green for that exact final integration commit.
+3. In the live folder: confirm a clean working tree and fast-forward master to that commit.
+   Build dist-next, check it on a private port, back up dist as dist-previous, then install
+   hashed assets before index.html and build-version.json as docs/OPERATIONS.md describes.
 4. Do not restart or refresh the running game. Its menu offers Reload when it sees the new build.
-5. If standing decision D4 allows, push master to GitHub as a backup.
+5. Push master to GitHub as the approved D4 backup.
 6. Add "What's new to try" to docs/playtest-inbox.md in plain language.
 Rollback on request: restore dist-previous, or switch the feature off and release again.
 ```

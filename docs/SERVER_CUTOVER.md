@@ -1,5 +1,8 @@
 # Play-test server and safe retirement plan
 
+> Historical cutover record. See [OPERATIONS.md](OPERATIONS.md) for the current
+> Wasteland folders, live server, release checks and rollback.
+
 ## Desktop launcher promotion — September 22, 2026
 
 The user requested retirement of the old desktop-launched game. The desktop
@@ -21,11 +24,11 @@ and upgrade choices, directional cameras, and the freestyle drag strip.
 The older cutover notes below are historical and do not describe the current
 desktop launch path.
 
-## Current update
+## Historical update from 22 September 2026
 
 The user authorized moving the game server to this updated checkout and committing the work. Keep the same browser address, `http://localhost:5174/`, so the existing local careers remain available. Do not clear browser storage, change the hostname to `127.0.0.1`, or change the port for the live game: each is a different save location.
 
-Updated checkout: `C:\Users\kyleb\.codex\worktrees\4555\the-duel-remake`.
+Checkout used for that update: `C:\Users\kyleb\.codex\worktrees\4555\the-duel-remake`.
 
 Latest: the off-road / freestyle / course-unlock update is `index-Dv7C28Is.js`, with renderer `render3d-Cp_qaQEv.js` and build ID `20260920193348-71ad5577bde6`. Its footer reads **26.09.20 19:33 UTC · 71ad55**. The live entry, manifest, JavaScript and stylesheet each return HTTP 200 and match disk byte-for-byte. Production and QA builds pass with the known large renderer-chunk warning. All 120 discovered suites have passing coverage across the broad collector and separate focused/long runs. The core campaign block completes 60 campaigns and wins 180 stages; the expansion matrix completes and wins all 48 races. The core upgrade fixture was corrected after the long block and its remaining sections run separately. See `VERIFICATION.md` for exact coverage and limits.
 
@@ -51,7 +54,7 @@ The cutover is complete. The verified old Vite development process (PID 60472) w
 
 The existing Chrome tab was reloaded at the same address. All three named players remained available, the selected player's displayed balance was unchanged, and the new route preview showed 33 m of elevation range instead of 8 m. The prior 959 selection was restored through the menu and survived a second reload. No race, purchase, wallet edit or storage reset was performed on the live career. No browser errors were observed.
 
-This is a local play-test process, not a newly installed background service. The old `start-game.bat` remains untouched and still starts its own older checkout. Use the running localhost link during this play-test; do not relaunch the old script if the preview stops. Restart from the updated checkout with `npm run preview -- --host localhost --port 5174 --strictPort`, after checking that port 5174 is free. Promotion below updates the primary launcher only after acceptance.
+This was a local play-test process, not a newly installed background service. At that time, the old `start-game.bat` remained untouched and still started its own older checkout. The team used the running localhost link rather than relaunching the old script. Restart instructions from that period are obsolete; use `OPERATIONS.md` for the current live server and release process. The promotion described below is historical.
 
 ## Play-test before retirement
 

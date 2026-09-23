@@ -1,5 +1,8 @@
 # Session handoff — 19 September 2026
 
+> Historical handoff. See [OPERATIONS.md](OPERATIONS.md) for the current
+> Wasteland folders, live server, release checks and rollback.
+
 Current work continues the earlier quota-limited checkpoint below. The user authorized more iteration: larger near misses, Manual rewards, police escapes, two-crash stage repairs, clearer car-best rewards, distinct starter models, retired-asset cleanup and more varied natural routes. No reset credit or saved-player reset was used.
 
 ## Latest working update
@@ -56,7 +59,7 @@ Current work continues the earlier quota-limited checkpoint below. The user auth
 - Final credit rule: quitting, restarting or reloading an unfinished race forfeits only its unbanked earnings. Saved credits and completed-stage earnings remain intact, including after Busted. Police fines accrue against the current race and reduce only its positive finish payout; they cannot create debt. Actual completed losses, timeouts and terminal crashes retain the existing half-base loss charge. This replaces the intermediate immediate-debit policy.
 - Each player saves their own event, car, challenge, CPU difficulty, transmission, route, lighting and ghost choice. Menu changes save immediately; switching and reopening restore them. Graphics quality remains device-wide. Legacy browser preferences migrate once, and new players start with defaults.
 
-- Active worktree: `C:\Users\kyleb\.codex\worktrees\4555\the-duel-remake`. The previous audio commit is `4ef6fbf`; this iteration is not pushed.
+- Former worktree for this historical handoff: `C:\Users\kyleb\.codex\worktrees\4555\the-duel-remake`. The previous audio commit was `4ef6fbf`; that iteration was not pushed at the time.
 - Falcone and Stuttgart have separate original bodies. Six original cars build immediately; Heritage and Aurora share one licensed GLB import with distinct sport/GT trim. The old coupe fallback is gone from player, rival and ghost rendering.
 - Retired `cinder-gt.glb`, `desert-service-station.glb`, `tools/export-assets.mjs` and `tools/blender/build_assets.py` were removed. They remain recoverable from Git. Live stations and Aurora's credited source remain.
 - Near-miss lateral range is 6.4 m, with collision and minimum-speed limits unchanged. Pro doubles driving score and positive recurring credits, not milestone awards or loss charges. A police escape gives 500 base points and 10% of the CPU base in credits, up to three credit awards per valid finished stage.
@@ -138,19 +141,14 @@ Two shader-experiment Hard chases each finished in 99.68 seconds. The first paid
 
 Temporary QA tabs were closed and the 5175 QA preview server stopped. The user's game tab and development server on 5174 remain available. No current gameplay defect or half-integrated feature is known. The optional shader-warmup experiment remains disabled by default.
 
-## Resume commands
+## Historical resume commands
 
-```sh
-npm install
-npm run dev
-npm test
-npm run build
-npm run qa:build
-npm run qa:preview
-npm run assets:routes -- --check
-```
-
-Development uses 5174. QA uses 5175 and includes `/tools/visual-check.html` with visible inspection controls; these are excluded from the release build. Do not use a new QA App fixture while another economic race is active on that same origin: an App constructor settles interrupted races.
+The former resume command block was removed because it started a development
+server on port 5174, which is now reserved for the live built game. Use
+[OPERATIONS.md](OPERATIONS.md) for current commands and private QA ports.
+The old QA page `/tools/visual-check.html` had visible inspection controls;
+those controls were excluded from the release build. At the time, starting a
+second QA App on the same origin could settle an interrupted economic race.
 
 Regenerate shortcut tables with `npm run assets:routes` only after route/solver changes, then run `node tools/test-shortcut-presets.mjs --verify-solvers`. Export the four original unlock models with `npm run assets:unlocks`. See `ASSET_PIPELINE.md` for Blender guidance and asset ownership. Use UTF-8 explicitly in Windows scripts.
 

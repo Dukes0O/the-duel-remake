@@ -1,5 +1,10 @@
 # The Duel — decision log
 
+> Historical prototype decisions. See [OPERATIONS.md](docs/OPERATIONS.md)
+> for the current folders and release process, and [SPEC.md](SPEC.md), section
+> 15, for Wasteland decisions. Day-to-day decisions are recorded in
+> `docs/board/decisions.md`.
+
 Each entry: the call, the choice, the rationale. CANON = fixed by the build
 brief; HOUSE = plausible arcade values invented to fill gaps, frozen in
 `src/config.js`.
