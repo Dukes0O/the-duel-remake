@@ -59,6 +59,9 @@ scenario only; it does not implement armor.
   incident costs 20 armor, continued contact for twelve frames cannot drain
   more, and a later separate incident can cost another 20. Flag-off still
   takes the established tumble path.
+- The bomb arming test also places a level-three bomb 24 m from its thrower:
+  inside its enlarged 28 m blast radius but beyond the base 22 m radius. It
+  cannot self-damage before 0.35 seconds and can do so afterward.
 - Existing `tools/test-replays.mjs` must keep the pinned ordinary and
   flag-off Wasteland fingerprints unchanged. Run it after implementation,
   alongside the direct armor tests, combat tests, browser scenario, lane gate

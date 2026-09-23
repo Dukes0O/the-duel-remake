@@ -330,6 +330,27 @@ test('a bomb near its thrower waits 0.35 s to arm and limits self damage', () =>
   const selfDamage = initial - state.armor;
   assert.ok(selfDamage > 0 && selfDamage <= 18 * .25 + 1e-6,
     `armed bomb self damage is at most one quarter, got ${selfDamage}`);
+
+  const upgraded = race();
+  seedArmor(upgraded.state);
+  const upgradedInitial = upgraded.state.armor;
+  bombAt(upgraded.duel, upgraded.state, {age: 0});
+  const projectile = upgraded.state.combat.projectiles.at(-1);
+  const thrower = upgraded.duel.course.groundAt(upgraded.state.s,
+    upgraded.state.lateral);
+  projectile.level = 3;
+  projectile.x = thrower.x + 24;
+  projectile.z = thrower.z;
+  const nearest = upgraded.duel.course.nearest(projectile.x, projectile.z);
+  projectile.y = upgraded.duel.course.groundAt(nearest.s, nearest.lateral).y + .2;
+  stepCombat(upgraded.duel, .34);
+  close(upgraded.state.armor, upgradedInitial,
+    'level-three bomb is unarmed at 24 m inside its enlarged 28 m radius');
+  assert.equal(upgraded.state.combat.projectiles.length, 1,
+    'upgraded bomb stays live until the same 0.35 s arming time');
+  stepCombat(upgraded.duel, .02);
+  assert.ok(upgraded.state.armor < upgradedInitial,
+    'upgraded bomb can damage its thrower after arming');
 });
 
 test('zero armor wrecks the player once, then restores 60% near the impact', () => {
