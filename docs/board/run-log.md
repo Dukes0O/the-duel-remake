@@ -1,5 +1,12 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — current integration code tier passed
+
+- On `b48e3cf`, the standalone full code tier passed 167/167 suites in
+  243.53 seconds. The live checkout remains unchanged. This is a partial
+  check; the six known UFO time-gain failures still hold the composite full
+  check and release.
+
 ## 2026-09-23 PDT — art intake validation merged
 
 - QA-02 `6ba035b` and `96a8e1f` add the missing full-check art command and
