@@ -25,9 +25,18 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   const shards=Array.from({length:6},()=>{const m=new THREE.Mesh(sphere,materials.iron);g.add(m);return m;});group.add(g);return {g,flame,smoke,wave,saucer,shards};
  });
  const armorGeometry=new THREE.BoxGeometry(1,1,1);
- const pickupColors={ufo:0x64ffce,bomb:0xff8c16,crossbow:0x6cbcff,star:0xffe16b};
+ const pickupColors={ufo:0x64ffce,bomb:0xff8c16,crossbow:0x6cbcff,star:0xffe16b,armor:0x62ff8d};
  const pickupMaterials=Object.fromEntries(Object.entries(pickupColors).map(([key,color])=>[key,new THREE.MeshBasicMaterial({color})]));
- const pickups=Array.from({length:4},()=>{const g=new THREE.Group(),box=new THREE.Mesh(armorGeometry,materials.gold),halo=new THREE.Mesh(ring,materials.gold);box.scale.setScalar(1.8);halo.scale.setScalar(2.3);g.add(box,halo);group.add(g);return {g,box,halo};});
+ const pickups=Array.from({length:6},()=>{
+  const g=new THREE.Group(),box=new THREE.Mesh(armorGeometry,materials.gold),halo=new THREE.Mesh(ring,materials.gold);
+  const armorCross=new THREE.Group();
+  const crossBar=new THREE.Mesh(armorGeometry,pickupMaterials.armor),crossStem=new THREE.Mesh(armorGeometry,pickupMaterials.armor);
+  crossBar.scale.set(2.2,.48,.55);crossStem.scale.set(.48,2.2,.55);armorCross.add(crossBar,crossStem);
+  const weaponTip=new THREE.Mesh(tip,materials.tip);weaponTip.position.y=1.45;
+  box.scale.setScalar(1.8);halo.scale.setScalar(2.3);
+  g.add(box,halo,armorCross,weaponTip);group.add(g);
+  return {g,box,halo,armorCross,weaponTip};
+ });
  const rigs = [0, 1, 2, 3].map(index => {
   const bumper = new THREE.Group();
   bumper.name = `combat-bumper-${index}`;
@@ -125,7 +134,18 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
    if (rig.shield.visible) rig.shield.rotation.y = s.stageTimeSec * 2;
   });
   if (!active) return;
-  pickups.forEach(({g,box,halo},i)=>{const p=c.pickups[i];g.visible=!!p;if(!p)return;const at=duel.course.groundAt(p.s,0);g.position.set(at.x,at.y+2+Math.sin(p.age*3)*.4,at.z);box.material=pickupMaterials[p.weapon];box.rotation.set(p.age,p.age*1.5,0);halo.rotation.set(Math.PI/2,p.age,0);});
+  pickups.forEach(({g,box,halo,armorCross,weaponTip},i)=>{
+   const p=c.pickups[i];g.visible=!!p;if(!p)return;
+   const at=duel.course.groundAt(p.s,p.lateral??0);
+   g.position.set(at.x,at.y+2+Math.sin(p.age*3)*.4,at.z);
+   const repair=p.kind==='armor';
+   box.visible=!repair;armorCross.visible=repair;weaponTip.visible=!repair;
+   box.material=pickupMaterials[p.weapon]||pickupMaterials.armor;
+   weaponTip.material=box.material;halo.material=repair?pickupMaterials.armor:materials.gold;
+   box.rotation.set(p.age,p.age*1.5,0);
+   armorCross.rotation.set(0,p.age*1.5,0);
+   halo.rotation.set(Math.PI/2,p.age,0);
+  });
   projectiles.forEach(({g,bomb,arrow},i)=>{const p=c.projectiles[i];g.visible=!!p;if(!p)return;g.position.set(p.x,p.y,p.z);bomb.visible=p.kind==='bomb';arrow.visible=!bomb.visible;g.rotation.set(0,Math.atan2(p.vx,p.vz),0);bomb.rotation.set(p.age*5,p.age*3,0);});
   bursts.forEach(({g,flame,smoke,wave,saucer,shards},i)=>{
    const b=c.bursts[i];g.visible=!!b;if(!b)return;g.position.set(b.x,b.y,b.z);

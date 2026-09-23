@@ -60,7 +60,10 @@ weaponHud.innerHTML=Object.entries(WEAPONS).map(([id,w])=>`<button type="button"
 root.querySelector('#overlay').append(weaponHud);const weaponStatus=weaponHud.querySelector('.weapon-status');
 const weaponButtons=[...weaponHud.querySelectorAll('[data-weapon]')];
 weaponHud.addEventListener('click',e=>{const button=e.target.closest('[data-weapon]');if(button)app.duel.fireWeapon(button.dataset.weapon);});
-const combatHelp=document.createElement('p');combatHelp.className='combat-help';combatHelp.textContent='MAD MAX DUEL: 1 / D-pad ↑ short UFO jump (charges at first checkpoint each lap) · 2 / → eight-way bombs · 3 / ↓ crossbow · 4 / ← invincible star (5s). Glowing road power-ups instantly recharge a weapon. The rival fights back. Wrecks recover; finish first.';root.querySelector('.race-setup').append(combatHelp);
+const combatHelp=document.createElement('p');combatHelp.className='combat-help';
+const legacyCombatHelp='MAD MAX DUEL: 1 / D-pad ↑ short UFO jump (charges at first checkpoint each lap) · 2 / → eight-way bombs · 3 / ↓ crossbow · 4 / ← invincible star (5s). Glowing road power-ups instantly recharge a weapon. The rival fights back. Wrecks recover; finish first.';
+const upgradedCombatHelp='MAD MAX DUEL: 1 / D-pad ↑ short UFO jump (once per lap) · 2 / → eight-way bombs · 3 / ↓ crossbow · 4 / ← invincible star (5s). Colored weapon crates recharge a used weapon; green crosses repair 25 armor. The rivals fight back. Wrecks recover; finish first.';
+combatHelp.textContent=legacyCombatHelp;root.querySelector('.race-setup').append(combatHelp);
 root.querySelector('#cpu-target-label').parentElement.insertAdjacentHTML('afterend',`<details id="rival-customization" class="rival-customization"><summary>CUSTOMIZE YOUR RIVAL</summary><div class="setup-line"><label class="field-label" for="rival-car">CAR</label><select id="rival-car"><option value="match">Match my car (default)</option>${Object.entries(CARS).map(([key,car])=>`<option value="${key}">${car.name}</option>`).join('')}</select></div><div class="setup-line"><label class="field-label" for="rival-driver">DRIVER</label><select id="rival-driver">${Object.values(DRIVERS).map(driver=>`<option value="${driver.id}">${driver.name}</option>`).join('')}</select></div><div class="setup-line"><label class="field-label" for="rival-upgrades">UPGRADES</label><select id="rival-upgrades">${['Stock','Level 1','Level 2','Max / Level 3'].map((label,i)=>`<option value="${i}">${label}</option>`).join('')}</select></div><p id="rival-skill-note" class="event-brief"></p><p class="event-brief">CPU difficulty still controls driving skill. Rival choices do not unlock cars or drivers for you. Custom rival bests are tracked separately.</p></details>`);
 root.querySelector('.boost-readout .field-label').id='nitro-label';
 const ui = Object.fromEntries([...root.querySelectorAll('[id]')].map(el => [el.id, el]));
@@ -196,6 +199,8 @@ root.addEventListener('change',event=>{
 },{signal:domEvents.signal});
 function renderState(s) {
   buildUpdates.syncState();
+  const helpText=app.duel.featureFlags.enabled('wasteland2')?upgradedCombatHelp:legacyCombatHelp;
+  if(combatHelp.textContent!==helpText)combatHelp.textContent=helpText;
   const combat=s.combat,hideWeaponHud=!combat||s.status==='menu';
   if(weaponHud.hidden!==hideWeaponHud)weaponHud.hidden=hideWeaponHud;
   if(combat){
