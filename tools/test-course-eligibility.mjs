@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createMenuScreen} from '../src/screen-menu.js';
 import {App} from '../src/app.js';
 import {CARS,COURSE} from '../src/config.js';
 import {normalizeRaceSettings} from '../src/race-settings.js';
@@ -51,19 +52,15 @@ try{
 
   // Execute production menu functions with DOM property stubs, not a duplicate
   // course-selection implementation. The real App handles preference writes.
-  const source=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
-  const menu=source.slice(source.indexOf('function updateMenuScene() {'),source.indexOf('\nexport function refreshRaceSetup'));
-  const reward=source.slice(source.indexOf('function updateEntryReward(){'),source.indexOf('\nfunction updatePlayers()'));
-  check(menu.startsWith('function updateMenuScene() {')&&reward.startsWith('function updateEntryReward(){'),'production menu function boundaries exist');
+  const source=readFileSync(new URL('../src/screen-menu.js',import.meta.url),'utf8');
   const values={},choices={...app.getRaceChoices()},node=()=>({hidden:false,disabled:false,value:'',checked:false,title:'',innerHTML:'',classList:{toggle(){}},setAttribute(){}});
-  const ui=Object.fromEntries(['lighting-mood','scene-select','route-choice','menu-biome-legend','menu-elevation','entry-reward','event-brief','ghost-control','ghost-hint','ghost-toggle','rival-customization','rival-car','rival-driver','rival-upgrades'].map(id=>[id,node()]));
+  const ui=Object.fromEntries(['lighting-mood','scene-select','route-choice','menu-biome-legend','menu-elevation','entry-reward','event-brief','ghost-control','ghost-hint','ghost-toggle','rival-customization','rival-car','rival-driver','rival-upgrades','car-speed','car-gears','car-character','garage-count','menu-credits','car-select','driver-select','driver-skill-note','cpu-target-label','scene-name','scene-length','menu-route-label','menu-shortcuts','menu-relief','menu-location','route-choice-label','ghost-record-label'].map(id=>[id,node()]));
   ui['scene-select'].options=COURSE.map((event,index)=>({value:String(index),disabled:true,textContent:event.name}));
-  const env={app,choices,ui,COURSE,CARS,CAR_PRICES:{},COURSE_PRICES,isCourseUnlocked,CPU_REWARDS,UPGRADE_TYPES,bestKey,eventKey,getLeaderboard,getEquippedDriverId,driverSkillLabel,isCarUnlocked,supportsRouteVariants,getRouteVariantForSeed,syncRaceChoiceButtons,formatSpeed,
-    root:{querySelectorAll:()=>[],querySelector:()=>({textContent:''})},profile:()=>app.profile,text:(id,value)=>{values[id]=String(value);},credits:value=>Math.floor(value||0).toLocaleString(),time:value=>String(value),escapeHTML:value=>String(value),
-    coursePreview:{update:()=>({distanceKm:4,laps:2,biomes:[],map:{gates:[],branches:[]},showElevation:false,reliefMeters:0})},updateMenuCar(){env.updateEntryReward();}};
-  Object.assign(env,new Function('env',`with(env){${reward}\n${menu}\nreturn {updateEntryReward,updateMenuScene};}`)(env));
+  ui['car-select'].options=Object.keys(CARS).map(value=>({value,textContent:''}));
+  const menu=createMenuScreen({app,choices,ui,root:{querySelectorAll:()=>[],querySelector:()=>({textContent:''})},profile:()=>app.profile,text:(id,value)=>{values[id]=String(value);},credits:value=>Math.floor(value||0).toLocaleString(),time:value=>String(value),escapeHTML:value=>String(value),coursePreview:{update:()=>({distanceKm:4,laps:2,biomes:[],map:{gates:[],branches:[]},showElevation:false,reliefMeters:0})}});
+  check(typeof menu.updateMenuScene==='function'&&typeof menu.updateMenuCar==='function','production menu exports the actual scene and car presenters');
   for(const car of ['falcone_f42','titan_monster'])for(const [startStage,event]of COURSE.entries()){
-    Object.assign(choices,{car,startStage});env.updateMenuScene();same(choices.car,car,'production course menu never forces a different car');same(choices.startStage,startStage,'production vehicle menu never redirects the course');check(ui['scene-select'].options.every(option=>!option.disabled),'every course option remains available');
+    Object.assign(choices,{car,startStage});menu.updateMenuScene();same(choices.car,car,'production course menu never forces a different car');same(choices.startStage,startStage,'production vehicle menu never redirects the course');check(ui['scene-select'].options.every(option=>!option.disabled),'every course option remains available');
     if(event.requiredCar){check(!ui['event-brief'].hidden,'recommendation and objective are visible before Start');check(values['event-brief'].includes('recommended'),'old restriction is described only as a recommendation');}
     if(event.arena&&car!=='titan_monster')check(values['event-brief'].includes('Titan recommended: lighter cars cannot crush wrecks.'),'light-car arena limitation is explicit before Start');
     if(event.stuntTrial)check(values['event-brief'].includes(`crush ${event.stuntTrial.crushes} cars`),'the unchanged stunt target is visible alongside its vehicle limitation');

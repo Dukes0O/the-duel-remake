@@ -117,8 +117,8 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
 }
 {
   const dependencies=localDependencies('tools/test-course-eligibility.mjs');
-  check(dependencies.has('src/main.js'),'source-text UI test still maps to the production module it reads');
-  check(suitesForChanges(actual,['src/main.js']).includes('tools/test-course-eligibility.mjs'),
+  check(dependencies.has('src/screen-menu.js'),'UI test maps to the production menu module it imports');
+  check(suitesForChanges(actual,['src/screen-menu.js']).includes('tools/test-course-eligibility.mjs'),
     'changed selection follows local source references');
   check(suitesForChanges(actual,['tools/test-test-runner.mjs']).includes('tools/test-test-runner.mjs'),
     'changed test files select themselves');

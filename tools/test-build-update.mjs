@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {screenMarkup, updateBuildNotice} from '../src/screen-menu.js';
 import {createBuildUpdateChecker,UPDATE_CHECK_INTERVAL_MS,UPDATE_REQUEST_TIMEOUT_MS} from '../src/build-update.js';
 import {BUILD_VERSION,DEVELOPMENT_BUILD,parseBuildManifest} from '../src/build-version.js';
 import {buildVersionPlugin} from './build-version-plugin.mjs';
@@ -187,20 +188,19 @@ equal(inert.calls.length,0,'an already-disposed UI installs no active checker');
 
 // Inspect the production markup and execute its actual rendering callback, not
 // a second hand-written UI implementation. No browser or WebGL is required.
-const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8').replaceAll('\r\n','\n');
-const menu=main.slice(main.indexOf('<main id="menu-screen"'),main.indexOf('</main>'));
+const main=readFileSync(new URL('../src/screen-router.js',import.meta.url),'utf8').replaceAll('\r\n','\n');
+const menu=screenMarkup({choices:{car:'falcone_f42',cpuDifficulty:'medium',difficulty:'arcade',startStage:0},arrow:'',sound:'',escapeHTML:value=>String(value).replaceAll('<','&lt;')});
 const card=menu.match(/<aside id="build-update"[\s\S]*?<\/aside>/)?.[0];
 check(!!card&&/aria-label="Game update" hidden/.test(card),'update card starts hidden inside the menu, not the race HUD');
 check(/role="status" aria-live="polite" aria-atomic="true"/.test(card),'update message is a polite, atomic live region');
 check(/<button type="button" data-action="reload-update" aria-describedby="build-update-help">RELOAD<\/button>/.test(card),'reload is a native keyboard-accessible button with its help associated');
-check(/id="build-version"/.test(menu)&&/escapeHTML\(BUILD_VERSION.label\)/.test(menu),'menu exposes the immutable, escaped build label');
+check(menu.includes(`BUILD ${BUILD_VERSION.label}`)&&/id="build-version"/.test(menu),'menu exposes the immutable build label');
 check(/case 'reload-update': buildUpdates.requestReload\(\); return;/.test(main),'delegated click uses the menu-guarded controller method');
 check(/function renderState\(s\) \{\s*buildUpdates.syncState\(\);/.test(main),'actual render lifecycle synchronizes menu eligibility');
 check(/signal:domEvents.signal/.test(main)&&/hot.dispose\(\(\)=>\{uiDisposed=true;domEvents.abort\(\)/.test(main),'HMR disposal aborts the update controller with all other DOM listeners');
-const renderBody=main.match(/onChange:\(\{available,version\}\)=>\{([\s\S]*?)\n  \},\n\}\);/)?.[1];
-check(!!renderBody,'production update callback is testable');
+check(main.includes('onChange:change=>updateBuildNotice(ui,uiDisposed,change)'),'production router calls the imported notice renderer');
 const ui={'build-update':{hidden:true},'build-update-message':{textContent:''}};
-const render=new Function('ui','uiDisposed','available','version',renderBody);
+const render=(ui,disposed,available,version)=>updateBuildNotice(ui,disposed,{available,version});
 render(ui,false,true,{label:'<img src=x onerror=bad()> version'});
 equal(ui['build-update-message'].textContent,'Update available · <img src=x onerror=bad()> version','server label is rendered as text, never markup');
 check(!ui['build-update'].hidden,'available notice becomes visible');

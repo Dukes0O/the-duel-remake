@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {createCourseActions} from '../src/screen-courses.js';
+import {createHudScreen} from '../src/screen-hud.js';
+import {createLeaderboardScreen} from '../src/screen-leaderboard.js';
 import {App} from '../src/app.js';
 import {COURSE,DRIVE,LIVES,CARS} from '../src/config.js';
 import {courseAccessPanel} from '../src/course-access-ui.js';
@@ -11,15 +13,15 @@ import {speedKph,formatSpeed} from '../src/speed-format.js';
 let checks=0;
 const check=(ok,label)=>{assert.ok(ok,label);checks++;};
 const same=(a,b,label)=>{assert.deepEqual(a,b,label);checks++;};
-const source=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
-const first=source.indexOf('  if(button.dataset.courseUnlock)'),last=source.indexOf('  if(button.dataset.routeVariant)',first);
-check(first>0&&last>first,'production course action block exists');
+check(typeof createCourseActions==='function','production course action controller exists');
 const originalStorage=globalThis.localStorage,memory=new Map();
 globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value))};
 try{
   const app=new App();app.profile.credits=3000;app._saveProfile();app.setRaceSettings({car:'stuttgart_959s'});
   const choices=app.getRaceChoices();let renders=0,updates=0;
-  const controller=new Function('app','choices','updateMenuScene','renderState',`let courseMessage='',coursesOpen=true,lastScreen=null;return {click(button){${source.slice(first,last)}},get message(){return courseMessage;},get open(){return coursesOpen;}};`)(app,choices,()=>updates++,()=>renders++);
+  let courseMessage='',coursesOpen=true;
+  const actions=createCourseActions({app,choices,setMessage:value=>courseMessage=value,setOpen:value=>coursesOpen=value,updateMenuScene:()=>updates++,invalidate:()=>{},renderState:()=>renders++});
+  const controller={click:button=>actions.handle(button),get message(){return courseMessage;},get open(){return coursesOpen;}};
   controller.click({dataset:{courseSelect:'high-country'}});same(app.menuStage,0,'locked production select cannot enter a course');same(renders,0,'rejected stale action does not redraw or close the shop');
   controller.click({dataset:{courseUnlock:'high-country'}});same(app.profile.credits,2100,'production purchase debits the catalog price');same(app.menuStage,0,'production purchase does not select');check(controller.open&&controller.message.includes('Select it'),'shop remains open with the separate-selection prompt');
   const purchased=courseAccessPanel(app.profile,0,controller.message);check(purchased.includes('data-course-select="high-country"')&&!purchased.includes('data-course-unlock="high-country"'),'purchased card now offers selection, not another debit');
@@ -30,15 +32,14 @@ try{
 
   // Exercise the actual HUD function against a real practice state. DOM
   // property stubs are views only; no duplicate practice rendering logic.
-  const start=source.indexOf('function updateHud(s) {'),end=source.indexOf('\ndocument.addEventListener',start);
-  check(start>0&&end>start,'production HUD boundaries exist');
+  check(typeof createHudScreen==='function','production HUD presenter is exported');
   const node=()=>({hidden:false,textContent:'',dataset:{},style:{},firstChild:{textContent:''},classList:{values:new Map(),toggle(name,on){this.values.set(name,!!on);}},setAttribute(){}});
   const ui=new Proxy({}, {get:(target,key)=>target[key]??(target[key]=node())});
   const text=(id,value)=>ui[id].textContent=String(value),time=value=>Number(value||0).toFixed(2),credits=value=>Math.floor(value||0).toLocaleString(),clamp=value=>Math.max(0,Math.min(1,Number(value)||0));
-  const update=new Function('app','ui','text','time','credits','clamp','DRIVE','LIVES','routeMap','speedKph','formatSpeed',`${source.slice(start,end)};return updateHud;`)(app,ui,text,time,credits,clamp,DRIVE,LIVES,{update(){}},speedKph,formatSpeed);
+  const update=createHudScreen({app,ui,text,time,credits,clamp,routeMap:{update(){}}});
   const practice=COURSE.find(course=>course.practice);check(app.purchaseCourse(practice.id).ok,'UI practice test uses an explicit paid unlock');app.startCampaign({startStage:practice.stage,car:'falcone_f42'});
-  const boardStart=source.indexOf('function leaderboardScreen(){'),boardEnd=source.indexOf("\nroot.addEventListener('submit'",boardStart),boardFilter={stage:practice.stage,car:'',driverId:'club'};
-  const board=new Function('app','COURSE','CARS','DRIVERS','boardFilter','eventKey','getLeaderboard','escapeHTML',`${source.slice(boardStart,boardEnd)};return leaderboardScreen;`)(app,COURSE,CARS,DRIVERS,boardFilter,eventKey,getLeaderboard,String);
+  const boardFilter={stage:practice.stage,car:'',driverId:'club'};
+  const board=createLeaderboardScreen({app,boardFilter,escapeHTML:String,credits,time});
   const boardMarkup=board();same(boardFilter.stage,0,'opening Scores from practice shows the included competitive circuit');check(!boardMarkup.includes(practice.name),'practice never appears as a ranked course choice');
   for(let frame=0;frame<240;frame++)app.advance(1/60);
   const state=app.duel.state,snapshot=JSON.stringify(state);update(state);

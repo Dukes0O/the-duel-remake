@@ -3,18 +3,14 @@ import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import {DRIVE} from '../src/config.js';
 import {placeGroundedVehicle} from '../src/vehicle-grounding.js';
-import {speedKph} from '../src/speed-format.js';
+import {speedGearPresentation} from '../src/screen-hud.js';
 
 let checks=0;
 const check=(value,message)=>{assert.ok(value,message);checks++;};
-const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 const renderer=readFileSync(new URL('../src/render3d.js',import.meta.url),'utf8');
-// Exercise the actual HUD expressions without starting a browser or touching saves.
-const hud=main.match(/text\('speed-value',([^;]+)\); text\('gear-value',([^;]+)\);/);
-check(hud,'HUD speed and gear expressions remain available');
-const readout=new Function('speedKph','s',`return [${hud[1]},${hud[2]}];`);
+check(typeof speedGearPresentation==='function','production HUD speed and gear presenter is available');
 for(const [speedMph,gear,expected]of [[-22,-1,['035','R']],[-.3,-1,['000','R']],[0,-1,['000','R']],[0,0,['000',1]],[137.8,3,['222',4]]]){
-  assert.deepEqual(readout(speedKph,{speedMph,gear}),expected);checks++;
+  assert.deepEqual(speedGearPresentation({speedMph,gear}),expected);checks++;
 }
 const travel=renderer.match(/const wheelTravel = mph => ([^;]+);/);
 check(travel,'renderer wheel travel expression remains available');

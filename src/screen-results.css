@@ -1,0 +1,12 @@
+.result-panel{width:710px;max-width:calc(100% - 112px);margin:auto 0 auto 8%;padding:45px 0}
+.result-panel .eyebrow{color:#ddd3bd}
+.result-panel h2{font-family:'Arial Black','Segoe UI',Arial,sans-serif;font-size:clamp(45px,6.2vw,86px);font-weight:950;font-style:italic;line-height:.97;letter-spacing:-4px;margin:25px 0}
+.result-description{font-size:14px;color:#c4c9b9;line-height:1.6;max-width:460px}
+.result-metrics{display:flex;gap:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:30px 0;padding:21px 0;width:max-content;max-width:100%}
+.result-metric{padding:0 27px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:9px}
+.result-metric:first-child{padding-left:0;border-left:0}
+.result-metric>b{font-size:25px;font-style:italic;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.result-metric.accent>b{color:#ff8150}
+.result-actions{display:flex;flex-wrap:wrap;gap:12px;max-width:540px}
+.result-actions .start-button{margin:0 0 4px;flex-basis:100%;width:100%}
+.pause-help{font-size:7px;color:#aeb6a7;letter-spacing:1px;line-height:1.8;margin-top:24px}

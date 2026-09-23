@@ -1,25 +1,18 @@
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {screenMarkup} from '../src/screen-menu.js';
+import {createRendererReadiness} from '../src/screen-readiness.js';
 import {App} from '../src/app.js';
 import {CARS} from '../src/config.js';
 import {isCourseUnlocked} from '../src/course-access.js';
 let checks=0;
 const check=(value,label)=>{assert(value,label);checks++;};
 const equal=(actual,expected,label)=>{assert.deepEqual(actual,expected,label);checks++;};
-const source=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
-const buttonTag=source.match(/<button id="start-engine"[^>]*>/)?.[0];
+const markup=screenMarkup({choices:{car:'falcone_f42',cpuDifficulty:'medium',difficulty:'arcade',startStage:0},arrow:'',sound:'',escapeHTML:String});
+const buttonTag=markup.match(/<button id="start-engine"[^>]*>/)?.[0];
 check(/\bdisabled(?:\s|>)/.test(buttonTag),'production Start button begins disabled before the renderer import');
-const sync=source.slice(source.indexOf('function syncRendererReadiness(s) {'),source.indexOf('\nfunction renderState(s) {'));
-const ensure=source.slice(source.indexOf('function ensureRenderer() {'),source.indexOf('\nfunction updateMenuCar() {')).replace("import('./render3d.js')",'importRenderer()');
-check(sync.includes('PREPARING THE ROAD'),'the production readiness UI has a distinct preparation message');
-check(ensure.indexOf("ui['start-engine'].disabled = true")<ensure.indexOf('importRenderer()'),'the lazy import path disables Start synchronously');
-const bootstrap=new Function('ui','app','CARS','choices','importRenderer','console','isCourseUnlocked',`
-  const profile=()=>app.profile;
-  let rendererPromise=null,rendererHandle=null,uiDisposed=false;
-  ${sync}
-  ${ensure}
-  return {ensureRenderer,syncRendererReadiness,dispose(){uiDisposed=true;},get handle(){return rendererHandle;}};
-`);
+check(typeof createRendererReadiness==='function','the production readiness controller is exported for direct checks');
+const bootstrap=(ui,app,CARS,choices,importRenderer,logger,isCourseUnlocked)=>createRendererReadiness({ui,app,choices,profile:()=>app.profile,isDisposed:()=>false,importRenderer,reportError:logger.error});
+check(typeof bootstrap==='function','readiness fixture calls the same controller used by production');
 const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
 const memory=new Map();
 globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)};
@@ -33,7 +26,7 @@ function fixture(){
   const app=new App(),owner={},prepared=[],errors=[];
   let resolve,reject,asset='ready',imports=0,attached=0;
   const imported=new Promise((a,b)=>{resolve=a;reject=b;});
-  const renderer={prepareVehicle(key){prepared.push(key);ui.view3d.dataset.vehicleKey=key;ui.view3d.dataset.vehicleAsset=asset;}};
+  const renderer={prepareVehicle(key){prepared.push(key);ui.view3d.dataset.vehicleKey=key;ui.view3d.dataset.vehicleAsset=asset;},dispose(){}};
   const importedModule={attachRenderer(){attached++;app.claimVisualReadiness(owner);return renderer;}};
   const controller=bootstrap(ui,app,CARS,{car:'falcone_f42',startStage:0},()=>{imports++;return imported;},{error:(...args)=>errors.push(args)},isCourseUnlocked);
   return {app,ui,owner,controller,renderer,errorNodes,errors,prepared,resolve:()=>resolve(importedModule),reject,

@@ -5,16 +5,19 @@ import {createProfile,normalizeProfile,completionCarProgress,isCarUnlocked,getUp
 import {DRIVERS,getDriverState,getEquippedDriverId,applyDriverModifiers} from '../src/drivers.js';
 import {driverSkillLabel} from '../src/driver-ui.js';
 import {speedKph,formatSpeed} from '../src/speed-format.js';
+import {createMenuScreen,screenMarkup} from '../src/screen-menu.js';
+import {createGarageScreen,handleGarageUpgrade} from '../src/screen-garage.js';
 
 let checks=0;const same=(a,b,label)=>{assert.deepEqual(a,b,label);checks++;},ok=(value,label)=>{assert.ok(value,label);checks++;};
-const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8'),reward='koenigsegg_jesko',others=Object.keys(CARS).filter(key=>key!==reward),max=Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type=>[type,3]));
+const reward='koenigsegg_jesko',others=Object.keys(CARS).filter(key=>key!==reward),max=Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type=>[type,3]));
 let saved=createProfile(),garageCar=reward,message='';
 const credits=value=>Math.floor(value||0).toLocaleString('en-US'),escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-const choices={car:'falcone_f42'},textValues={},ui={'car-select':{options:Object.keys(CARS).map(value=>({value})),value:''},'driver-select':{innerHTML:'',value:''}},app={duel:{state:{}},profileSaved:true};
-const env={CARS,COURSE,UPGRADE_TYPES,UPGRADE_COSTS,CAR_PRICES,DRIVERS,completionCarProgress,isCarUnlocked,getUpgradeLevels,upgradedCar,getDriverState,getEquippedDriverId,applyDriverModifiers,driverSkillLabel,speedKph,formatSpeed,credits,escapeHTML,choices,ui,app,profile:()=>saved,clamp:value=>Math.max(0,Math.min(1,value)),text:(key,value)=>{textValues[key]=String(value);},updateEntryReward:()=>{},paintPanel:()=>'',driverPanel:()=>'',milestonePanel:()=>'',action:(label,action)=>`<button data-action="${action}">${label}</button>`,arrow:'',garageMessage:''};
-function production(name,next,extra={}){const start=main.indexOf(`function ${name}(`),end=main.indexOf(`\nfunction ${next}(`,start);ok(start>=0&&end>start,`${name}: actual production function located`);const context={...env,...extra};return new Function(...Object.keys(context),`${main.slice(start,end)};return ${name};`)(...Object.values(context));}
-const menu=production('updateMenuCar','updateEntryReward');
-const garage=()=>production('garageScreen','modalScreen',{garageCar})(),tags=html=>[...html.matchAll(/<button\b[^>]*>/g)].map(match=>match[0]);
+const choices={car:'falcone_f42'},textValues={},ui={'car-select':{options:Object.keys(CARS).map(value=>({value})),value:''},'driver-select':{innerHTML:'',value:''},'entry-reward':{}},app={duel:{state:{}},profileSaved:true,player:{name:'Tester'}};
+const menu=createMenuScreen({app,choices,ui,profile:()=>saved,credits,escapeHTML,text:(key,value)=>{textValues[key]=String(value);},root:{},coursePreview:{},time:String,onEntryReward:()=>{}}).updateMenuCar;
+ok(typeof menu==='function','actual production menu painter is exported');
+const garage=createGarageScreen({app,profile:()=>saved,credits,escapeHTML,getGarageCar:()=>garageCar,getGarageMessage:()=>'',arrow:'',action:(label,action)=>`<button data-action="${action}">${label}</button>`,clamp:value=>Math.max(0,Math.min(1,value))});
+ok(typeof garage==='function','actual production garage renderer is exported');
+const tags=html=>[...html.matchAll(/<button\b[^>]*>/g)].map(match=>match[0]);
 menu();same(ui['car-select'].options.find(item=>item.value===reward).textContent,'Koenigsegg Jesko Absolut · LOCKED · MAX OTHER CARS 0/8','Dropdown states achievement progress, not a zero-credit price');same(textValues['car-speed'],String(speedKph(CARS.falcone_f42.topSpeed)),'Main menu converts the selected car speed to km/h');
 let html=garage();ok(html.includes('GARAGE COMPLETION REWARD')&&html.includes('Fully upgrade all 8 other cars in all 7 upgrade categories.'),'Locked garage explains the complete requirement');
 ok(html.includes('Both starter cars and Falcone Heritage count')&&html.includes('this reward does not count toward itself'),'Requirement has no hidden starter or self-referential exception');
@@ -24,13 +27,12 @@ ok(html.includes(`${speedKph(upgradedCar(CARS[reward]).topSpeed)}</b><span>TOP S
 for(const key of others.filter(key=>CAR_PRICES[key])){garageCar=key;const normal=garage();ok(tags(normal).some(tag=>tag.includes('data-action="unlock-car"')),'Credit cars retain their normal purchase button');ok(normal.includes(`${credits(CAR_PRICES[key])}<small> CR</small>`),'Credit cars retain their exact prices');}
 garageCar=reward;saved={...createProfile(),credits:950,unlockedCars:[...others],upgrades:Object.fromEntries(others.map(key=>[key,{...max}]))};saved.upgrades.titan_monster.tank=2;
 menu();ok(ui['car-select'].options.find(item=>item.value===reward).textContent.endsWith('MAX OTHER CARS 7/8'),'One unfinished category displays seven completed cars');html=garage();ok(html.includes('aria-label="Fully tuned cars: 7 of 8"'),'Garage progress matches the same current profile');
-const clickStart=main.indexOf('  if (button.dataset.upgrade)'),clickEnd=main.indexOf('\n',clickStart);ok(clickStart>=0&&clickEnd>clickStart,'Actual upgrade click branch located');
+ok(typeof handleGarageUpgrade==='function','actual production upgrade action is exported');
 app.purchaseUpgrade=(key,type)=>{const result=purchaseUpgrade(saved,key,type);if(result.ok)saved=result.profile;return result;};
-const clickEnv={...env,garageCar:'titan_monster',refreshGarage:value=>{message=value;menu();}},click=new Function('button',...Object.keys(clickEnv),main.slice(clickStart,clickEnd));
-click({dataset:{upgrade:'tank'}},...Object.values(clickEnv));
+handleGarageUpgrade({dataset:{upgrade:'tank'}},{app,garageCar:'titan_monster',refreshGarage:value=>{message=value;menu();},profile:()=>saved,credits});
 ok(message.includes('Koenigsegg Jesko Absolut unlocked!')&&message.includes('All seven upgrades are already maxed.'),'Final real upgrade action announces earned reward and factory build');same(saved.credits,0,'Only the last prerequisite upgrade consumed credits');same(ui['car-select'].options.find(item=>item.value===reward).textContent,CARS[reward].name,'Earned reward immediately loses its locked label');
 html=garage();const upgradeTags=tags(html).filter(tag=>tag.includes('data-upgrade='));same(upgradeTags.length,7,'Owned reward shows all seven upgrade categories');ok(upgradeTags.every(tag=>tag.includes('disabled')),'All reward upgrades are complete and cannot be charged again');same((html.match(/FULLY TUNED<\/span>/g)||[]).length,7,'Each included upgrade is visibly fully tuned');ok(html.includes('No further upgrades are needed.')&&html.includes('DRIVE THIS CAR'),'Owned reward is ready to drive, not an unfinished build');
 choices.car=reward;menu();same(choices.car,reward,'Owned reward remains selected');same(textValues['car-speed'],String(speedKph(upgradedCar(CARS[reward]).topSpeed)),'Selected reward speed matches garage and tuning');
 const owner=saved;saved=createProfile();menu();same(choices.car,'falcone_f42','Switching to a fresh profile restores a valid owned car');ok(ui['car-select'].options.find(item=>item.value===reward).textContent.endsWith('MAX OTHER CARS 0/8'),'Fresh profile displays its own achievement progress');saved=normalizeProfile(owner);choices.car=reward;menu();same(choices.car,reward,'Switching back restores earned reward selection');
-same(Object.values(CARS).filter(car=>car.price>0||car.unlockRequirement).length,7,'Earnable count includes six credit cars and the achievement reward');ok(main.includes('${Object.values(CARS).filter(car=>car.price>0||car.unlockRequirement).length} EARNABLE CARS'),'Actual start-note count includes the reward');
+same(Object.values(CARS).filter(car=>car.price>0||car.unlockRequirement).length,7,'Earnable count includes six credit cars and the achievement reward');ok(screenMarkup({choices:{car:reward,cpuDifficulty:'medium',difficulty:'arcade',startStage:0},arrow:'',sound:'',escapeHTML}).includes('7 EARNABLE CARS'),'Actual start-note count includes the reward');
 console.log(`Koenigsegg UI: ${checks} checks passed for actual menu/garage/action rendering, achievement requirements, prices, maxed upgrades, player isolation and metric speeds.`);

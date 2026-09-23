@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {courseScreen} from '../src/screen-courses.js';
 import {App} from '../src/app.js';
 import {CARS,COURSE} from '../src/config.js';
 import {COURSE_PRICES,normalizeCourseAccess,isCourseUnlocked,purchaseCourse} from '../src/course-access.js';
@@ -85,12 +86,13 @@ try{
   const reopened=new App();same(reopened.profile.credits,practiceBank,'practice reload cannot debit the bank');check(reopened.profile.activeRace===null,'practice leaves no marker to settle on reload');
 }finally{if(originalStorage===undefined)delete globalThis.localStorage;else globalThis.localStorage=originalStorage;}
 
-const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8'),css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+const router=readFileSync(new URL('../src/screen-router.js',import.meta.url),'utf8'),css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8')+readFileSync(new URL('../src/screen-courses.css',import.meta.url),'utf8');
 const zero=courseAccessPanel(fresh,0,'<safe>');
 same((zero.match(/<article\b/g)||[]).length,COURSE.length,'course shop lists every course');
 check(zero.includes('role="dialog"')&&zero.includes('aria-labelledby="courses-title"')&&zero.includes('aria-label="Close course garage"'),'course dialog has accessible title and close action');
 check(zero.includes('&lt;safe&gt;')&&!zero.includes('<safe>'),'course messages are escaped');check(zero.includes('Unlocking a course does not select it'),'purchase-selection distinction is visible');
 for(const tag of zero.match(/<button\b[^>]*data-course-(?:select|unlock)[^>]*>/g)||[])check(tag.includes('disabled')&&tag.includes('aria-label='),'zero wallet actions are disabled and labelled');
 check(css.includes('.course-access-card>button:focus-visible')&&css.includes('.course-access-grid{grid-template-columns:1fr}'),'course cards have focus and mobile layouts');
-check(main.includes('courseAccessPanel(profile(),choices.startStage,courseMessage)')&&main.includes("case 'next': app.nextStage()"),'production UI uses the tested panel and guarded App campaign verb');
+same(courseScreen(fresh,0,'<safe>'),zero,'production course screen uses the tested panel unchanged');
+check(router.includes('courseScreen(profile(),choices.startStage,courseMessage)')&&router.includes("case 'next': app.nextStage()"),'production UI uses the tested panel and guarded App campaign verb');
 console.log(`Course access: ${checks} pricing, migration, App ownership, campaign, practice, persistence and accessible UI checks passed.`);

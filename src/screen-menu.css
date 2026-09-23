@@ -1,0 +1,8 @@
+.event-brief{padding:10px 12px;margin:9px 0 0;border-left:2px solid #bfcc8c;background:#172a21a8;font-size:10px;line-height:1.65;color:#d8e1c0}.event-brief[hidden]{display:none}
+.route-choice[hidden]{display:none}.route-choice .segmented{gap:21px}.route-choice .choice{font-size:8px;white-space:nowrap}.route-choice>.field-label{font-size:7px}@media(max-width:700px){.route-choice .segmented{gap:17px}.route-choice .choice{font-size:7px}}
+.ghost-control{display:flex;align-items:center;gap:9px;margin-top:10px;color:#9ad9d3;cursor:pointer}.ghost-control input{width:14px;height:14px;margin:0;accent-color:#86ded6}.ghost-control>span{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:1;font-size:7px;letter-spacing:.65px}.ghost-control b{font-size:7px;font-weight:550;color:#c7caba;letter-spacing:.2px}.ghost-hint{font-size:8px;line-height:1.5;margin:8px 0 0;color:#9bb7ac}.ghost-saved{color:#91dad3}.ghost-control[hidden],.ghost-hint[hidden]{display:none}
+.rival-customization { margin: 10px 0; border: 1px solid #ffffff24; border-radius: 6px; padding: 10px; }
+.rival-customization summary { cursor: pointer; font-size: 11px; letter-spacing: .08em; }
+.rival-customization .setup-line { margin-top: 10px; }
+.rival-customization select { min-width: 0; width: 100%; background: #172327; color: #fff; padding: 8px; border: 1px solid #ffffff35; border-radius: 4px; }
+.rival-customization[hidden] { display: none; }

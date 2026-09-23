@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {ownTestCourses} from './career-fixture.mjs';
-import {readFile} from 'node:fs/promises';
+import {createResultsScreen} from '../src/screen-results.js';
 import {App} from '../src/app.js';
 import {COURSE,POLICE} from '../src/config.js';
 import {PLAYERS_KEY,loadPlayers,activePlayer} from '../src/progression.js';
@@ -108,12 +108,8 @@ for(const action of ['menu','restart'])for(const resumeFirst of [false,true]){
 }
 
 // Render the production ticket and pause panels, not copied UI logic.
-const main=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
-const modal=main.slice(main.indexOf('function modalScreen(s) {'),main.indexOf('\nfunction renderState(s) {'));
 const app=start(),ticket=bust(app);
-const {formatSpeed}=await import('../src/speed-format.js');
-const render=new Function('COURSE','app','metric','time','credits','action','profile','escapeHTML','formatSpeed',`let lastEventResult=null;${modal};return modalScreen;`)(
-  COURSE,app,(label,value)=>`${label}: ${value}`,String,value=>Number(value||0).toLocaleString('en-US'),label=>label,()=>app.profile,String,formatSpeed);
+const render=createResultsScreen({app,profile:()=>app.profile,metric:(label,value)=>`${label}: ${value}`,time:String,credits:value=>Number(value||0).toLocaleString('en-US'),action:label=>label,escapeHTML:String,arrow:''});
 let html=render(app.duel.state);eq(html.includes('RACE FINE: 150 CR'),true);eq(html.includes('SAVED BALANCE: 2,000 CR'),true);
 eq(html.includes("only this race's earnings"),true);eq(html.includes('$150'),false,'ticket and wallet use the same credit unit');
 eq(html.includes('MAIN MENU'),true,'Busted keeps its direct Main Menu action');
@@ -122,5 +118,5 @@ eq(JSON.parse(memory.get(PLAYERS_KEY)).players[0].profile.credits,2000);
 app.startCampaign();app.advance(4);app.togglePause();html=render(app.duel.state);
 eq(html.includes('MAIN MENU'),true);eq(html.includes('RESTART RUN'),true);eq(html.includes('Saved credits are safe.'),true);
 eq(app.requestNavigation('restart'),true);eq(render(app.duel.state),'','Restart replaces the pause panel with countdown, not another dialog');
-eq(main.includes('confirm-leave'),false,'production UI has no confirmation action');eq(main.includes('keep-racing'),false,'production UI has no obsolete cancel-confirmation action');
+eq(html.includes('confirm-leave'),false,'rendered pause UI has no confirmation action');eq(html.includes('keep-racing'),false,'rendered pause UI has no obsolete cancel-confirmation action');
 console.log(`Busted/quit: ${checks} actual App, physical catch, duplicate, deadline, restart, reload, balance-floor, player-isolation and production UI checks passed.`);

@@ -1,0 +1,13 @@
+.leaderboard-filters{display:flex;gap:17px;margin:25px 0}
+.leaderboard-filters label{display:flex;flex-direction:column;gap:9px;flex:1;min-width:0;font-size:8px;letter-spacing:1.5px;color:#b7bda9}
+.leaderboard-filters select{font-size:12px!important;background:#13231f;border:1px solid #dbd4b638;padding:12px;width:100%}
+.leaderboard-table{overflow-x:auto;border-block:1px solid #d6d0b436}
+.leaderboard-table table{width:100%;border-collapse:collapse;min-width:560px;text-align:left}
+.leaderboard-table th{font-size:8px;letter-spacing:1.3px;color:#a7b09d;padding:15px 12px;background:#101e1a66}
+.leaderboard-table td{padding:18px 12px;border-top:1px solid #c4ceb41c;font-size:12px;color:#dcded0;font-variant-numeric:tabular-nums}
+.leaderboard-table td:first-child{color:#d9a875;font-weight:700;font-size:15px}
+.leaderboard-table td b{font-size:12px;font-weight:650}
+.leaderboard-table td:last-child b{font-size:9px}
+.leaderboard-table small{display:block;color:#9ca995;font-size:8px;letter-spacing:.5px;margin-top:6px}
+.leaderboard-table tr.current-player{background:#dfb57810}
+.leaderboard-table .empty-board{padding:40px 18px;color:#b7beaf!important;font-size:12px!important;text-align:center;font-weight:400!important}

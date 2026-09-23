@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createJumpHeightReadout} from '../src/jump-height.js';
+import {screenMarkup} from '../src/screen-menu.js';
+import {presentJumpHeight} from '../src/screen-hud.js';
 
 let checks=0;
 const check=(value,message)=>{assert.ok(value,message);checks++;};
 const equal=(actual,expected,message)=>{assert.deepEqual(actual,expected,message);checks++;};
-const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
-const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+const main=screenMarkup({choices:{car:'falcone_f42',cpuDifficulty:'medium',difficulty:'arcade',startStage:0},arrow:'',sound:'',escapeHTML:String});
+const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8')+readFileSync(new URL('../src/screen-hud.css',import.meta.url),'utf8');
 const markup=main.match(/<section\b[^>]*\bid="jump-height-panel"[^>]*>[\s\S]*?<\/section>/)?.[0];
 check(markup,'the height readout has its own section');
 check(/^<section\b[^>]*\bhidden(?:\s|>)/.test(markup),'the panel starts hidden before the first frame');
@@ -24,15 +26,11 @@ check(/\.jump-height\s*\{[^}]*position\s*:\s*absolute[^}]*bottom\s*:\s*calc\(100
 check(/\.jump-height-number>b\s*\{[^}]*font-variant-numeric\s*:\s*tabular-nums/.test(css),'changing decimal digits use stable-width numerals');
 check(/\.jump-height\[data-phase="landed"\]/.test(css),'landed phase has a distinct visual treatment');
 check(/@media\([^}]*\)\s*\{\s*\.jump-height\s*\{/.test(css),'the height panel has a small-viewport layout');
-check(/import\s*\{createJumpHeightReadout\}\s*from\s*['"]\.\/jump-height\.js['"]/.test(main),'the production HUD imports the real readout helper');
-equal([...main.matchAll(/\bcreateJumpHeightReadout\(\)/g)].length,1,'the HUD retains one readout instance between frames');
-
-// Execute the actual production presentation block, not a parallel rendering
-// implementation. The real helper supplies height and phase; the DOM is stubbed.
-const renderState=main.slice(main.indexOf('function renderState(s) {'),main.indexOf('\nfunction updateHud(s) {'));
-const block=renderState.match(/const jumpHeight=jumpHeightReadout\.update\(s,app\.duel\.course\);[\s\S]*?(?=\s*if\(s\.status!=='menu'\) updateHud\(s\);)/)?.[0];
-check(block,'height rendering runs before the menu guard so stale jumps can reset');
-const present=new Function('s','app','ui','text','jumpHeightReadout',block);
+check(typeof presentJumpHeight==='function','production HUD exports the jump-height presenter');
+const router=readFileSync(new URL('../src/screen-router.js',import.meta.url),'utf8');
+check(router.includes('const jumpHeightReadout = createJumpHeightReadout();'),'the production router creates one persistent jump readout');
+check(router.includes('presentJumpHeight(jumpHeightReadout,s,app,ui,text)'),'the production render loop reuses that readout each frame');
+const present=(state,app,ui,text,readout)=>presentJumpHeight(readout,state,app,ui,text);
 const ui=Object.fromEntries(['jump-height-panel','jump-height-label','jump-height-value','jump-height-peak','jump-distance'].map(id=>[id,{hidden:true,dataset:{},textContent:''}]));
 const text=(id,value)=>{ui[id].textContent=String(value);};
 const app={duel:{course:{id:'height-ui-course'}}},readout=createJumpHeightReadout();

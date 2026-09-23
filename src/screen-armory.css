@@ -1,0 +1,15 @@
+.upgrade-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.upgrade-card{padding:17px;background:linear-gradient(145deg,#dee8da10,#0a171931);border:1px solid #ddd5bd2d;min-width:0}
+.upgrade-title{display:flex;align-items:center;gap:7px}
+.upgrade-number{font-size:7px;color:#b6a57e}
+.upgrade-title h3{margin:0;font-size:15px;font-weight:650}
+.upgrade-title>b{font-size:8px;color:#b8b8a7;margin-left:auto;font-weight:500}
+.upgrade-card>p{font-size:10px;color:#b5bbaf;line-height:1.7;min-height:34px;margin:14px 0 18px}
+.upgrade-levels{display:flex;gap:5px;height:4px;margin-bottom:18px}
+.upgrade-levels>i{flex:1;background:#eef0d81c}
+.upgrade-levels>i.installed{background:#e58e58;box-shadow:0 0 8px #ff704b30}
+.upgrade-card button{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;border:1px solid #dccdb147;background:#101a18a3;padding:10px 8px}
+.upgrade-card button>span{font-size:6px;font-weight:650;letter-spacing:1px}
+.upgrade-card button>b{font-size:10px;color:#ecc68a;font-weight:650}
+.upgrade-card button:disabled,.unlock-card button:disabled{cursor:default;opacity:.55}
+.upgrade-card button:not(:disabled):hover{border-color:#ff8752;background:#df845015}

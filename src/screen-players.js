@@ -1,0 +1,11 @@
+import {COURSE, CARS} from './config.js';
+import {featureFlags} from './feature-flags.js';
+
+export function createPlayerScreen({app, profile, escapeHTML, credits, getPlayerMessage, getBackupMessage}) {
+function playerScreen(){
+  const playerMessage=getPlayerMessage(),backupMessage=getBackupMessage();
+  const history=profile().history.slice(-5).reverse();
+  return `<section class="career-panel player-panel" role="dialog" aria-modal="true" aria-labelledby="player-title"><header class="shop-heading"><div><p class="eyebrow">LOCAL PLAYERS</p><h2 id="player-title">A NAME ON THE GRID.</h2></div><button class="shop-close" data-action="player-close" aria-label="Close player setup">×</button></header><p>Each player has their own credits, cars, upgrades and race history. Everyone on this computer shares the leaderboard.</p><form id="new-player-form"><label for="new-player-name">NEW PLAYER NAME</label><div><input id="new-player-name" name="playerName" maxlength="24" autocomplete="off" placeholder="Your racing name" required><button class="secondary-button" type="submit">CREATE PLAYER</button></div><p role="status" class="career-message">${escapeHTML(playerMessage)}</p></form>${featureFlags.enabled('career-backup')?`<section aria-label="Career backup"><h3>CAREER BACKUP</h3><p>Export every local player's progress, records, ghosts and settings. Import replaces them after checking the file and saving a recovery copy in this browser.</p><div><button type="button" class="secondary-button" data-action="career-export">EXPORT CAREER</button> <button type="button" class="secondary-button" data-action="career-import">IMPORT CAREER</button><input id="career-import-file" type="file" accept=".json,application/json" hidden></div><p role="status" class="career-message">${escapeHTML(backupMessage)}</p></section>`:''}<h3>${escapeHTML(app.player.name)} · RECENT RACES</h3><div class="player-history">${history.length?history.map(row=>`<div><span>${escapeHTML(COURSE.find(scene=>scene.id===row.eventId)?.name||'Race')}<small>${escapeHTML(CARS[row.car]?.name||'Car')} · ${row.won?'WIN':row.completed?'LOSS':'DNF'}</small></span><b>${row.reward<0?'−':'+'}${credits(Math.abs(row.reward))} CR</b></div>`).join(''):'<p>Complete your first race to start your history.</p>'}</div></section>`;
+}
+  return playerScreen;
+}

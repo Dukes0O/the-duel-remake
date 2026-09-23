@@ -6,11 +6,15 @@ import {DRIVERS,getDriverState,getEquippedDriverId,applyDriverModifiers} from '.
 import {createProfile,CAR_PRICES,isCarUnlocked,upgradedCar,getUpgradeLevels,completionCarProgress} from '../src/progression.js';
 import {driverMenuMarkup,driverPanel,driverSkillLabel} from '../src/driver-ui.js';
 import {speedKph} from '../src/speed-format.js';
+import {createMenuScreen} from '../src/screen-menu.js';
+import {handleDriverAction} from '../src/screen-garage.js';
 
 let checks=0;
 const check=(value,label)=>{assert.ok(value,label);checks++;};
 const same=(actual,expected,label)=>{assert.deepEqual(actual,expected,label);checks++;};
-const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+const menuSource=readFileSync(new URL('../src/screen-menu.js',import.meta.url),'utf8');
+const garageSource=readFileSync(new URL('../src/screen-garage.js',import.meta.url),'utf8');
+const routerSource=readFileSync(new URL('../src/screen-router.js',import.meta.url),'utf8');
 const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
 const credits=value=>Math.floor(value||0).toLocaleString();
 const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -34,24 +38,23 @@ check(!driverSkillLabel('mara_vale','falcone_f42').includes('No skill bonus'),'m
 check(driverSkillLabel('mara_vale','stuttgart_959s').includes('No skill bonus in Stuttgart'),'off-specialty car has an explicit no-effect warning');
 check(css.includes('.driver-card>button:focus-visible')&&css.includes('.driver-panel>summary:focus-visible')&&css.includes('.driver-setup select:focus-visible'),'all new interactive controls have visible focus styles');
 check(css.includes('.driver-cards{grid-template-columns:repeat(2,minmax(0,1fr))}')&&css.includes('.driver-panel .driver-card>button{min-height:38px}'),'mobile roster keeps bounded columns and usable touch targets');
-check(main.includes("driverMenuMarkup()")&&main.includes('${driverPanel(saved,garageCar)}'),'the tested markup is used by the production menu and garage');
-check(main.includes("{signal:domEvents.signal});\nfunction openGarage")||main.includes("{signal:domEvents.signal});\r\nfunction openGarage"),'menu driver listener participates in UI disposal');
+check(routerSource.includes('driverMenuMarkup()')&&garageSource.includes('${driverPanel(saved,garageCar)}'),'the tested markup is used by the production menu and garage');
+check(routerSource.includes("ui['driver-select'].addEventListener")&&routerSource.includes('{signal:domEvents.signal}'),'menu driver listener participates in UI disposal');
 
 // Execute the production menu painter and driver click branches with DOM
 // property stubs and the real App. There is no parallel action implementation.
-const start=main.indexOf('function updateMenuCar() {'),end=main.indexOf('\nfunction updateEntryReward()',start);
-const clickStart=main.indexOf('  if(button.dataset.driverUnlock)'),clickEnd=main.indexOf('  if (button.dataset.upgrade)',clickStart);
-check(start>=0&&end>start&&clickStart>=0&&clickEnd>clickStart,'production menu and action boundaries are found');
+check(typeof createMenuScreen==='function'&&typeof handleDriverAction==='function','production menu and driver actions are exported');
 const originalStorage=globalThis.localStorage,memory=new Map();
 globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value))};
 try{
-  const app=new App(),choices={car:'falcone_f42'},textValues={},ui={'car-select':{options:Object.keys(CARS).map(value=>({value})),value:''},'driver-select':{innerHTML:'',value:''}};
+  const app=new App(),choices={...app.getRaceChoices(),car:'falcone_f42'},textValues={},node=()=>({hidden:false,disabled:false,value:'',checked:false,title:'',innerHTML:'',options:[],classList:{toggle(){}},setAttribute(){}});
+  const ui=Object.fromEntries(['car-select','driver-select','entry-reward','event-brief','ghost-control','ghost-hint','ghost-toggle','cpu-target-label','ghost-record-label'].map(id=>[id,node()]));
+  ui['car-select'].options=Object.keys(CARS).map(value=>({value}));
   let rewardRefreshes=0,opened=0,message='';
-  const profile=()=>app.profile,text=(id,value)=>{textValues[id]=String(value);};
-  const paint=new Function('profile','choices','ui','app','CARS','CAR_PRICES','DRIVERS','getDriverState','getEquippedDriverId','applyDriverModifiers','upgradedCar','getUpgradeLevels','isCarUnlocked','escapeHTML','credits','driverSkillLabel','text','updateEntryReward','completionCarProgress','speedKph',`${main.slice(start,end)};return updateMenuCar;`)(profile,choices,ui,app,CARS,CAR_PRICES,DRIVERS,getDriverState,getEquippedDriverId,applyDriverModifiers,upgradedCar,getUpgradeLevels,isCarUnlocked,escapeHTML,credits,driverSkillLabel,text,()=>rewardRefreshes++,completionCarProgress,speedKph);
+  const profile=()=>app.profile,text=(id,value)=>{textValues[id]=String(value);if(id==='entry-reward')rewardRefreshes++;};
+  const paint=createMenuScreen({app,choices,ui,root:{querySelectorAll:()=>[],querySelector:()=>({textContent:''})},profile,text,credits,escapeHTML,time:String,coursePreview:{update:()=>({distanceKm:4,laps:2,biomes:[],map:{gates:[],branches:[]},showElevation:false,reliefMeters:0})}}).updateMenuCar;
   const root={querySelector:selector=>selector==='.driver-panel'?{setAttribute:(name,value)=>{same([name,value],['open',''],'post-action roster stays open');opened++;}}:null};
-  const click=new Function('button','app','refreshGarage','root','DRIVERS','credits','driverSkillLabel','garageCar',main.slice(clickStart,clickEnd));
-  const activate=dataset=>click({dataset},app,value=>{message=value;paint();},root,DRIVERS,credits,driverSkillLabel,choices.car);
+  const activate=dataset=>handleDriverAction({dataset},{app,refreshGarage:value=>{message=value;paint();},root,garageCar:choices.car,credits});
   paint();same(ui['driver-select'].value,'club','old and new neutral profiles display Club Driver');
   same((ui['driver-select'].innerHTML.match(/<option\b/g)||[]).length,8,'menu lists every catalog driver');
   same((ui['driver-select'].innerHTML.match(/disabled/g)||[]).length,7,'locked menu choices cannot be selected');
@@ -73,6 +76,6 @@ try{
   check(opened===3&&rewardRefreshes>=5,'only menu actions refresh labels and open the roster without duplicate handlers');
   app.returnToMenu();
 }finally{if(originalStorage===undefined)delete globalThis.localStorage;else globalThis.localStorage=originalStorage;}
-check(main.includes('getLeaderboard(app.leaderboard,{event,car:boardFilter.car,driverId:boardFilter.driverId})'),'visible leaderboard requests only the selected compatible class');
-check(main.includes('data-board-filter="driverId" aria-label="Leaderboard driver skill class"'),'leaderboard has an accessible performance-class filter');
+check(readFileSync(new URL('../src/screen-leaderboard.js',import.meta.url),'utf8').includes('getLeaderboard(app.leaderboard,{event,car:boardFilter.car,driverId:boardFilter.driverId})'),'visible leaderboard requests only the selected compatible class');
+check(readFileSync(new URL('../src/screen-leaderboard.js',import.meta.url),'utf8').includes('data-board-filter="driverId" aria-label="Leaderboard driver skill class"'),'leaderboard has an accessible performance-class filter');
 console.log(`Driver UI: ${checks} production action, menu, accessibility, mobile-style and race-guard checks passed.`);
