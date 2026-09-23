@@ -77,6 +77,27 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
 }
 
 {
+  const { duel, player } = race();
+  duel.destructiblesEnabled = true;
+  const traffic = { s: 105, prevS: 115, lateral: .6, prevLateral: .6,
+    speedMph: 60, dir: -1, alive: true };
+  player.traffic = [traffic];
+  const events = [];
+  duel.onChange((_, event) => events.push(event));
+  const entrySpeed = player.speedMph;
+  assert.equal(duel._vehicleContact(player, traffic, 'head_on'), true);
+  assert.ok(traffic.wrecked && !traffic.alive, 'an armored head-on ram can wreck oncoming traffic');
+  assert.equal(player.impactTimer, 0, 'wrecking light traffic does not lock the player in crash recovery');
+  assert.equal(player.stageCrashes, 0, 'a traffic wreck adds no crash penalty');
+  assert.ok(player.speedMph < entrySpeed && player.speedMph > entrySpeed - 25,
+    'the hit has a modest felt speed cost');
+  assert.equal(events.filter(event => event.trafficWrecked).length, 1, 'a traffic wreck emits one event');
+  assert.equal(duel._vehicleContact(player, traffic, 'head_on'), false, 'the same wreck cannot hit again');
+  duel._traffic(.2);
+  assert.ok(traffic.airHeight > 0, 'the wreck visibly flies after the impact');
+}
+
+{
   const ram = rearRamResponse({ closingMph: 0, attackerMph: 300, attackerMass: 1800,
     targetMass: 1800, steer: 0, offset: 0 });
   assert.equal(ram.launchMps, 0);

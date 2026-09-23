@@ -19,7 +19,7 @@ import { sampleMountainSupport } from './mountain-support.js';
 import {normalizeRival} from './rival-settings.js';
 import {upgradedCar} from './progression.js';
 import {featureFlags} from './feature-flags.js';
-import {breakableScenery, sceneryIdentity, stepTrafficWreck} from './destructibles.js';
+import {breakableScenery, sceneryIdentity, trafficDestruction, startTrafficWreck, stepTrafficWreck} from './destructibles.js';
 
 const BOUNDARY_WARNING = 60, BOUNDARY_RESET = 78;
 const GLANCING_WALL_NORMAL_FRACTION = Math.sin(35 * Math.PI / 180);
@@ -548,6 +548,7 @@ export class Duel {
       const prev = (c.prevS ?? c.s) + phase - (s.prevS ?? s.s);
       const clearance = Math.abs(c.lateral - s.lateral);
       this._vehicleContact(s, c, c.dir < 0 ? 'head_on' : 'traffic');
+      if (!c.alive || c.wrecked) continue;
       if (s.rival) this._vehicleContact(s.rival, c, 'traffic');
       // Reward a completed pass once, rather than every frame spent near a car.
       if (c.passedLap !== s.completedLaps && prev > 0 && now <= 0) {
@@ -819,7 +820,7 @@ export class Duel {
   }
 
   _vehicleContact(a, b, reason) {
-    if (a.crushed || b.crushed || a.tumble || b.tumble) return false;
+    if (a.crushed || b.crushed || a.wrecked || b.wrecked || a.tumble || b.tumble) return false;
     if (b === this.state && a !== this.state) return this._vehicleContact(b, a, reason);
     const phase = this.relativeS(b.s, a.s) - b.s;
     const start = { x: (a.prevLateral ?? a.lateral) - (b.prevLateral ?? b.lateral), z: (a.prevS ?? a.s) - (b.prevS ?? b.s) - phase };
@@ -886,6 +887,20 @@ export class Duel {
     const rearRam = armoredPlayer && b === this.state.rival && nz < 0 && (b.dir || 1) > 0 && a.speedMph >= 0;
     const zone = contactZone(nx, nz, angleA + (a.dir < 0 ? Math.PI : 0));
     const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
+    if (armoredPlayer && this.state.traffic.includes(b)) {
+      const wreck = trafficDestruction({ enabled: this.destructionEnabled(), mode: this.state.mode,
+        impactMph, playerTopSpeedMph: this.car.topSpeed, playerMass: specA.mass, targetMass: specB.mass });
+      if (wreck.wreck && startTrafficWreck(b, { atTime: this.state.stageTimeSec,
+        impulse: wreck.impulse, side: Math.sign(b.lateral - a.lateral) || Math.sign(nx) || 1 })) {
+        // The armor absorbs the impact while the lighter body is thrown clear.
+        // Keep a felt loss of speed, without the normal crash recovery penalty.
+        a.speedMph = Math.sign(a.speedMph) * Math.max(0, Math.abs(a.speedMph) - clamp(impactMph * .07, 4, 20));
+        if (this.state.invulnerableSec <= 0) this._scrape(zone, Math.min(impactMph, 22));
+        this._callout('TRAFFIC WRECKED', 1.5);
+        this.emit({ trafficWrecked: { actor: b, impactMph, thresholdMph: wreck.thresholdMph } });
+        return true;
+      }
+    }
     if (a !== this.state) this._dentVehicle(a, zone, impactMph);
     if (b !== this.state) this._dentVehicle(b, zoneB, impactMph);
     // Share the positional correction. Even a protected car remains solid.
