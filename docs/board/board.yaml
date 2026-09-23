@@ -468,6 +468,20 @@ tasks:
       - "Production build, focused tests, merge gate and private browser scenario pass."
     note: "Independent red acceptance tests committed as a4316b2; isolated builder started after the audio forward port."
     spec: "SPEC.md, task RFX-04"
+  - id: BUG-15
+    title: "Keep rival shields from protecting traffic"
+    wave: 3
+    lane: CMB
+    size: S
+    needs: [RFX-04]
+    status: blocked
+    owns: [src/combat-projectiles.js, tools/test-combat.mjs]
+    hooks: [src/sim-contacts.js]
+    helpers: [reviewer]
+    flag: wasteland2
+    behavior_change: yes
+    note: "RFX-04 deliberately preserves the old one-rival shield effect on traffic for replay parity. Remove that borrowed protection as a separate reviewed behavior change after field combat is integrated."
+    spec: "SPEC.md section 3.2: the star shield blocks damage to its own car"
   - id: AUD-01
     title: "Weapon sounds"
     wave: 3
