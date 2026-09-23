@@ -135,7 +135,7 @@ export class Duel {
     this.state.playerId = typeof playerId === 'string' ? playerId : null;
     this.state.driverId = normalizeDriverId(driverId);
     this.state.rivalSettings = normalizeRival(rival);this.state.weaponLevels=normalizeWeapons({levels:weaponLevels}).levels;
-    this.state.opponentCount = Number.isSafeInteger(opponentCount) ? Math.max(0, opponentCount) : 1;
+    this.state.opponentCount = Number.isSafeInteger(opponentCount) ? Math.max(0, Math.min(3, opponentCount)) : 1;
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     this.state.mode = mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;

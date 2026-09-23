@@ -232,7 +232,8 @@ export class App {
   }
   restart() {
     const { mode, car, difficulty,cpuDifficulty,driverId } = this.duel.state;
-    this.startCampaign({ mode, car, difficulty,cpuDifficulty,driverId,rival:this.duel.state.rivalSettings,seed:this.duel.state.seed,startStage:this._campaignStart||0 });
+    this.startCampaign({ mode, car, difficulty,cpuDifficulty,driverId,rival:this.duel.state.rivalSettings,
+      opponentCount:this.duel.state.opponentCount,seed:this.duel.state.seed,startStage:this._campaignStart||0 });
   }
   getMenuSeed(stageIndex=this.menuStage){return supportsRouteVariants(COURSE[stageIndex])?(this._customMenuSeed??getRouteVariant(this.menuRouteId).seed):1989;}
   // Menu views share these immutable-by-convention previews; racing always builds its own Course.
@@ -561,7 +562,8 @@ export class App {
     }
     // Start the pass with enough time to steer, and clear the car's rear
     // before returning. The center offers a safe gap to two-way traffic.
-    const obstacles = st.rival ? [...st.traffic, { ...st.rival, alive: true, dir: 1 }] : st.traffic;
+    const opponents=st.opponents|| (st.rival?[st.rival]:[]);
+    const obstacles=opponents.length?[...st.traffic,...opponents.map(opponent=>({...opponent,alive:true,dir:1}))]:st.traffic;
     for (const c of obstacles) {
       if (!c.alive) continue;
       const ahead = (d.relativeS?d.relativeS(c.s,st.s):c.s)-st.s;

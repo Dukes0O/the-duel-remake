@@ -143,12 +143,14 @@ export function _rival(dt, opponent = this.state.rival) {
   let lane = route?.targetLateral ?? -DRIVE.laneOffset + Math.sin(r.s * .007) * 1.05;
   // A committed shortcut has its own corridor. Its planner brakes for traffic
   // on that path; ordinary main-road lane changes would cut across the gap.
-  if (!route) for (const traffic of s.traffic) {
-    if (!traffic.alive) continue;
+  const laneBlockers=s.opponents.length>1?[...s.traffic,...s.opponents.filter(opponent=>opponent!==r)]:s.traffic;
+  const activeBlocker=actor=>actor.alive || s.opponents.length>1 && s.opponents.includes(actor);
+  if (!route) for (const traffic of laneBlockers) {
+    if (!activeBlocker(traffic)) continue;
     const ahead = this.relativeS(traffic.s, r.s) - r.s;
     if (ahead > -8 && ahead < 85 && Math.abs(traffic.lateral - lane) < 2.8) {
       const otherLane = traffic.lateral > 0 ? -DRIVE.laneOffset : DRIVE.laneOffset;
-      const blocked = s.traffic.some(other => other !== traffic && other.alive && Math.abs(this.relativeS(other.s, r.s) - r.s) < 75 && Math.abs(other.lateral - otherLane) < 2.8);
+      const blocked = laneBlockers.some(other => other !== traffic && activeBlocker(other) && Math.abs(this.relativeS(other.s, r.s) - r.s) < 75 && Math.abs(other.lateral - otherLane) < 2.8);
       if (!blocked) lane = otherLane;
       else target = Math.min(target, traffic.dir < 0 ? 18 : Math.max(12, traffic.speedMph - 8));
     }

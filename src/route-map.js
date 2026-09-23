@@ -114,13 +114,15 @@ export class RouteMap {
       const next=state.checkpointRush.nextGate,total=state.checkpointRush.total,current=next<total?next%map.gates.length:-1;
       for(const gate of map.gates){const {x,y}=gate.marker;ctx.beginPath();ctx.arc(x,y,gate.index===current?8:5,0,Math.PI*2);ctx.fillStyle=gate.index===current?'#ffce75':'#8dcbb9';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#102426';ctx.stroke();}
     }
-    if(state.rival)this._actor(course,map,state.rival,'#f6d768',8,false);
+    const opponents=state.opponents|| (state.rival?[state.rival]:[]);
+    const opponentColors=['#f6d768','#88d4ca','#ef9f75'];
+    opponents.forEach((opponent,index)=>this._actor(course,map,opponent,opponentColors[index%opponentColors.length],8,false));
     const police=state.police?.pursuit;
     if(police?.active&&Number.isFinite(police.s))this._actor(course,map,police,Math.floor(now/380)%2?'#7cbff2':'#ee8588',8,false);
     this._actor(course,map,state,'#fff1d0',11,true);
     if(course.def.practice){const world=course.worldAt(state.s,state.lateral);if(world.x>=FREESTYLE_DRAG.startX){ctx.save();ctx.font='bold 13px Segoe UI, sans-serif';ctx.textAlign='center';ctx.fillStyle='#ffce75';ctx.fillText(world.x>=FREESTYLE_DRAG.endX?'BRAKING AREA':`${Math.max(0,Math.round(world.x-FREESTYLE_DRAG.startX))} / 4000 M`,map.width/2,38);ctx.restore();}}
     const lap=course.def.practice?0:Math.min(course.def.laps||2,state.currentLap||state.lap||1),section=map.sections[sectionIndex].name;
-    const label=course.def.practice?`${course.def.name} quarry practice map. Untimed exploration, with no laps or finish line. Your arrow shows your heading. ${practiceMapLegendText()}`:`${course.def.name} circuit map. Lap ${lap} of ${course.def.laps||2}. ${section}. Your arrow shows your heading.${state.rival?' Yellow is your rival.':''}${police?.active?' Blue and red is the police patrol.':''}${map.branches.length?` Dashed shortcuts ${map.branches.map(branch=>branch.label).join(' and ')}.${branchIndex>=0?` You are on shortcut ${map.branches[branchIndex].label}.`:''}`:''}${state.checkpointRush?` ${state.checkpointRush.passed} of ${state.checkpointRush.total} gates passed. ${state.checkpointRush.nextGate<state.checkpointRush.total?'Gold marks the next gate.':'Finish both laps.'}`:''} Checkered line marks the finish.`;
+    const label=course.def.practice?`${course.def.name} quarry practice map. Untimed exploration, with no laps or finish line. Your arrow shows your heading. ${practiceMapLegendText()}`:`${course.def.name} circuit map. Lap ${lap} of ${course.def.laps||2}. ${section}. Your arrow shows your heading.${opponents.length>1?` Colored markers show ${opponents.length} opponents.`:state.rival?' Yellow is your rival.':''}${police?.active?' Blue and red is the police patrol.':''}${map.branches.length?` Dashed shortcuts ${map.branches.map(branch=>branch.label).join(' and ')}.${branchIndex>=0?` You are on shortcut ${map.branches[branchIndex].label}.`:''}`:''}${state.checkpointRush?` ${state.checkpointRush.passed} of ${state.checkpointRush.total} gates passed. ${state.checkpointRush.nextGate<state.checkpointRush.total?'Gold marks the next gate.':'Finish both laps.'}`:''} Checkered line marks the finish.`;
     if(label!==this.lastLabel){this.canvas.setAttribute('aria-label',label);this.lastLabel=label;}
     this.canvas.dataset.section=section;this.canvas.dataset.lap=String(lap);this.canvas.dataset.shortcuts=String(map.branches.length);
   }

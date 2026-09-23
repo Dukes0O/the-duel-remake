@@ -42,13 +42,28 @@ function updateHud(s) {
     text('drift-notice',notice&&notice.expiresAt>s.stageTimeSec?notice.type==='banked'?`Banked +${credits(notice.points)}`:`Chain lost · ${reason[notice.reason]||'recovery'}`:banked>=target?'Target met. Finish both laps.':chain?'Straighten to bank. Avoid impacts and dirt.':`Slide above ${formatSpeed(45)} to build a chain.`);
   }
   const length=app.duel.course?.raceLength||app.duel.course?.length||1,progress=clamp(s.s/length); text('route-percent',`${Math.floor(progress*100)}%`); text('route-remaining',`${(Math.max(0,length-s.s)/1000).toFixed(1)} KM TO GO`); ui['progress-fill'].style.transform=`scaleX(${progress})`;
-  if(s.rival){
+  const opponents=s.opponents|| (s.rival?[s.rival]:[]);
+  if(opponents.length>1){
+    const settled=s.status==='stage_result'||s.status==='complete';
+    const ahead=opponents.filter(opponent=>opponent.finished||opponent.s>s.s);
+    const position=settled&&Number.isFinite(s.results?.position)?s.results.position:1+ahead.length;
+    const nearest=ahead.length?ahead.reduce((best,opponent)=>opponent.s<best.s?opponent:best):opponents.reduce((best,opponent)=>opponent.s>best.s?opponent:best);
+    const gap=Math.abs(nearest.s-s.s);
+    text('race-position',String(position).padStart(2,'0'));
+    const objectiveDeadline=!!s.objective||app.duel.stageDef?.kind==='chase';
+    text('gap-label',settled?'FINISH POSITION':objectiveDeadline?(s.objective?.kind==='checkpointRush'?'CHECKPOINT CLOCK':s.objective?.kind==='driftTrial'?'DRIFT DEADLINE':s.objective?'STUNT DEADLINE':'ESCAPE THE PURSUIT'):ahead.length?'NEXT OPPONENT':'FIELD BEHIND');
+    text('rival-gap',settled?`${position} / ${opponents.length+1}`:objectiveDeadline?time(Math.max(0,s.timeLimitSec-s.stageTimeSec-(s.racePenaltySec||0))):nearest.finished?'OPPONENT FINISHED':`${(gap/(Math.max(45,s.speedMph,nearest.speedMph||0)*DRIVE.mphToWorld)).toFixed(1)} SEC`);
+    if(ui['rival-legend'].lastChild)ui['rival-legend'].lastChild.textContent=' RIVALS';
+  }else if(s.rival){
     const gap=s.rival.s-s.s, settled=s.status==='stage_result'||s.status==='complete';
     const behind=settled?s.results?.beatRival===false:s.rival.finished||gap>0;
     text('race-position',behind?'02':'01');
     text('gap-label',settled?'FINISH POSITION':s.rival.finished?'RIVAL FINISHED':behind?'RIVAL AHEAD':'RIVAL BEHIND');
     text('rival-gap',settled?(behind?'SECOND PLACE':'FIRST PLACE'):s.rival.finished?'KEEP PUSHING':`${(Math.abs(gap)/(Math.max(45,s.speedMph,s.rival.speedMph||0)*DRIVE.mphToWorld)).toFixed(1)} SEC`);
-  }else{text('race-position',rush?'CP':s.objective?.kind==='driftTrial'?'DR':s.objective?'ST':s.timeLimitSec?'GO':'TT');text('gap-label',rush?'CHECKPOINT CLOCK':s.objective?.kind==='driftTrial'?'DRIFT DEADLINE':s.objective?'STUNT DEADLINE':s.timeLimitSec?'ESCAPE THE PURSUIT':app.ghostRecord?(app.ghostEnabled?'BEST GHOST':'BEST GHOST OFF'):'RACE THE CLOCK');text('rival-gap',s.objective?time(Math.max(0,s.timeLimitSec-s.stageTimeSec-(s.racePenaltySec||0))):s.timeLimitSec?'BEAT THE DEADLINE':app.ghostRecord?time(app.ghostRecord.timeSec):'RECORD YOUR GHOST');} ui['position-total'].hidden=!s.rival; ui['rival-legend'].hidden=!s.rival;
+  }else{text('race-position',rush?'CP':s.objective?.kind==='driftTrial'?'DR':s.objective?'ST':s.timeLimitSec?'GO':'TT');text('gap-label',rush?'CHECKPOINT CLOCK':s.objective?.kind==='driftTrial'?'DRIFT DEADLINE':s.objective?'STUNT DEADLINE':s.timeLimitSec?'ESCAPE THE PURSUIT':app.ghostRecord?(app.ghostEnabled?'BEST GHOST':'BEST GHOST OFF'):'RACE THE CLOCK');text('rival-gap',s.objective?time(Math.max(0,s.timeLimitSec-s.stageTimeSec-(s.racePenaltySec||0))):s.timeLimitSec?'BEAT THE DEADLINE':app.ghostRecord?time(app.ghostRecord.timeSec):'RECORD YOUR GHOST');}
+  if(opponents.length<=1&&ui['rival-legend'].lastChild)ui['rival-legend'].lastChild.textContent=' RIVAL';
+  if(opponents.length)text('position-total',`/${String(opponents.length+1).padStart(2,'0')}`);
+  ui['position-total'].hidden=!s.rival; ui['rival-legend'].hidden=!s.rival;
   const hits=s.combat?s.majorCrashes||0:Math.max(0,LIVES.start-s.lives),limit=s.combat?DRIVE.majorCrashLimit:LIVES.start,persistent=!!app.duel.stageDef.persistentVehicle;ui['lives-display'].hidden=persistent;
   const hitKey=`${s.combat?'combat':'race'}:${hits}`;
   if(ui['lives-display'].dataset.value!==hitKey){ui['lives-display'].dataset.value=hitKey;ui['lives-display'].innerHTML=Array.from({length:limit},(_,i)=>`<i class="${i<limit-hits?'healthy':''}"></i>`).join('');ui['lives-display'].setAttribute('aria-label',s.combat?`${hits} of ${limit} major hits; automatic recovery`:`${hits} of ${limit} crashes`);}
