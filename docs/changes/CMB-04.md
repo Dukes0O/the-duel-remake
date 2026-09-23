@@ -14,8 +14,8 @@ stage and lap fix each crate's road position and identity. Weapon crates are
 placed on both sides of a car-width road margin. The plan does not depend on
 car speed, frame rate, CPU ordering or pickup timers.
 
-Each crate is awarded to the eligible car that first crosses its road
-position and lane in the current simulation step. A tie goes to the player,
+Each crate is awarded to the eligible car that first enters its road and lane
+contact area in the current simulation step. A tie goes to the player,
 then CPU order. Reverse travel misses a forward-road crate. Repair restores
 at most 25 armor up to that car's own maximum, and a full or wrecking car
 cannot consume it. Easy CPU cars ignore crates. A weapon crate recharges a
@@ -34,9 +34,15 @@ timed, center-lane pickup path.
   failures on the pre-feature baseline. A proposed relaxation of two new
   swept-contact assertions was rejected by automatic review; the original
   assertions remain, and implementation meets them.
-- Current focused CMB-04 acceptance: 12/12 pass, including 30/60/144 FPS
+- Current focused CMB-04 acceptance: 14/14 pass, including 30/60/144 FPS
   swept collection, later CPU ownership, repair and future ammo bounds, and
   flag-off parity.
+- Independent review found that comparing road-center crossing times could
+  give a crate to a later arriving CPU, and that legacy flag-off boxes gained
+  a new tip. The pickup sweep now compares first entry into both contact
+  intervals, and the tip appears only on seeded weapon crates. Two focused
+  cases pin the first-entry rule; the legacy render assertion pins the old
+  silhouette. All 14 focused cases pass after these fixes.
 - Existing CPU pickup and CMB-01 armor checks pass. Production build passes
   with the existing Vite large-chunk advisory.
 - The private High and Performance browser scenario passed with memory-only
@@ -44,4 +50,5 @@ timed, center-lane pickup path.
   quality modes showed distinct repair and weapon crates, player armor
   60 to 85 with a matching callout, and CPU 3's indexed bomb collection.
   The six pickup mesh identities stayed fixed before and after collection.
-- Lane gate, frame/balance checks and exact handoff SHA: pending.
+- Combined CMB-08/CMB-04 browser check, frame/balance checks and final handoff
+  SHA: pending.

@@ -33,7 +33,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   const armorCross=new THREE.Group();
   const crossBar=new THREE.Mesh(armorGeometry,pickupMaterials.armor),crossStem=new THREE.Mesh(armorGeometry,pickupMaterials.armor);
   crossBar.scale.set(2.2,.48,.55);crossStem.scale.set(.48,2.2,.55);armorCross.add(crossBar,crossStem);
-  const weaponTip=new THREE.Mesh(tip,materials.tip);weaponTip.position.y=1.45;
+  const weaponTip=new THREE.Mesh(tip,materials.tip);weaponTip.name='seeded-weapon-tip';weaponTip.position.y=1.45;
   box.scale.setScalar(1.8);halo.scale.setScalar(2.3);
   g.add(box,halo,armorCross,weaponTip);group.add(g);
   return {g,box,halo,armorCross,weaponTip};
@@ -140,7 +140,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
    const at=duel.course.groundAt(p.s,p.lateral??0);
    g.position.set(at.x,at.y+2+Math.sin(p.age*3)*.4,at.z);
    const repair=p.kind==='armor';
-   box.visible=!repair;armorCross.visible=repair;weaponTip.visible=!repair;
+   box.visible=!repair;armorCross.visible=repair;weaponTip.visible=p.kind==='weapon';
    box.material=pickupMaterials[p.weapon]||pickupMaterials.armor;
    weaponTip.material=box.material;halo.material=repair?pickupMaterials.armor:materials.gold;
    box.rotation.set(p.age,p.age*1.5,0);

@@ -57,12 +57,18 @@ export function sweptPickupFraction(actor, pickup) {
   const startLateral = actor.prevLateral ?? actor.lateral;
   const ds = actor.s - startS;
   if (ds < 0) return null;
-  const fraction = ds ? Math.max(0, Math.min(1, (pickup.s - startS) / ds)) : 0;
-  const atS = startS + ds * fraction;
-  const atLateral = startLateral + (actor.lateral - startLateral) * fraction;
-  if (Math.abs(atS - pickup.s) > T.pickup.contactDistance ||
-      Math.abs(atLateral - (pickup.lateral ?? 0)) > T.pickup.lateralClearance) return null;
-  return fraction;
+  const roadLow = ds ? (pickup.s - T.pickup.contactDistance - startS) / ds : 0;
+  const roadHigh = ds ? (pickup.s + T.pickup.contactDistance - startS) / ds : 1;
+  if (!ds && Math.abs(startS - pickup.s) > T.pickup.contactDistance) return null;
+  const dl = actor.lateral - startLateral;
+  const targetLateral = pickup.lateral ?? 0;
+  if (!dl && Math.abs(startLateral - targetLateral) > T.pickup.lateralClearance)
+    return null;
+  const lateralA = dl ? (targetLateral - T.pickup.lateralClearance - startLateral) / dl : 0;
+  const lateralB = dl ? (targetLateral + T.pickup.lateralClearance - startLateral) / dl : 1;
+  const first = Math.max(0, roadLow, Math.min(lateralA, lateralB));
+  const last = Math.min(1, roadHigh, Math.max(lateralA, lateralB));
+  return first <= last ? first : null;
 }
 
 function canCollectSeeded(state, combat, actor, pickup, index) {

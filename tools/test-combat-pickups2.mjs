@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {Duel} from '../src/game.js';
 import {fireWeapon} from '../src/combat-weapons.js';
+import {createCombatScene} from '../src/combat-scene.js';
 import * as pickups from '../src/combat-pickups.js';
 
 const {buildSeededPickupPlan, sweptPickupFraction, stepPickups} = pickups;
@@ -119,13 +120,14 @@ test('plan depends on seed and stage, not speed, frame history or CPU list order
     'another stage produces another fixed layout');
 });
 
-test('swept contact uses the lateral position at the road crossing', () => {
+test('swept contact requires road and lateral overlap', () => {
   assert.equal(typeof sweptPickupFraction, 'function',
     'CMB-04 exports the swept contact seam');
   const pickup = crate('weapon', {weapon: 'star'});
   const actor = {prevS: 190, s: 210, prevLateral: -5,
     lateral: 5, airHeight: 0, impactTimer: 0};
-  close(sweptPickupFraction(actor, pickup), .5, 'diagonal midpoint contact');
+  close(sweptPickupFraction(actor, pickup), .35,
+    'diagonal crossing enters the contact box before its midpoint');
   actor.prevLateral = actor.lateral = 5;
   assert.equal(sweptPickupFraction(actor, pickup), null,
     'crossing the same road point in another lane misses');
@@ -134,6 +136,14 @@ test('swept contact uses the lateral position at the road crossing', () => {
   actor.prevLateral = actor.lateral = 0;
   assert.equal(sweptPickupFraction(actor, pickup), null,
     'reverse traversal does not collect a forward-road crate');
+});
+
+test('swept contact begins at the first road and lateral overlap', () => {
+  const pickup = crate('armor');
+  close(sweptPickupFraction({prevS: 196, s: 201, prevLateral: 0,
+    lateral: 0}, pickup), .2, 'road edge entry');
+  close(sweptPickupFraction({prevS: 198, s: 202, prevLateral: 5,
+    lateral: 0}, pickup), .5, 'lateral entry after reaching the road window');
 });
 
 test('one crate goes to the earliest eligible crossing, including later CPU cars', () => {
@@ -148,6 +158,19 @@ test('one crate goes to the earliest eligible crossing, including later CPU cars
   close(later.armor, later.maxArmor - 15, 'earlier CPU gets +25');
   close(state.armor, state.maxArmor - 40, 'later player gets none');
   assert.equal(combat.pickups.length, 0, 'crate is removed once');
+});
+
+test('earlier contact-box entry wins even when its road-center crossing is later', () => {
+  const {duel, state, combat} = race();
+  const later = state.opponents[2];
+  state.armor = state.maxArmor - 40;
+  later.armor = later.maxArmor - 40;
+  cross(state, 196, 201); // enters the road window at .2, center at .8
+  cross(later, 190, 210); // enters at .35, center at .5
+  combat.pickups.push(crate('armor'));
+  stepPickups(duel, 1 / 30);
+  close(state.armor, state.maxArmor - 15, 'player arrives inside first');
+  close(later.armor, later.maxArmor - 40, 'CPU reaches the road center first but loses');
 });
 
 test('equal crossing fractions resolve in player then CPU list order', () => {
@@ -288,6 +311,11 @@ test('flag-off Wasteland keeps the timed center-lane legacy crate', () => {
     'legacy crate has no new lateral field');
   assert.equal(pickup.kind, undefined,
     'legacy crate shape is unchanged');
+  const scene = createCombatScene();
+  scene.update(duel);
+  assert.equal(scene.group.getObjectByName('seeded-weapon-tip').visible, false,
+    'the legacy pickup keeps its old box silhouette');
+  scene.dispose();
   combat.cooldowns.ufo = 10;
   cross(state, pickup.s - 10, pickup.s + 10, 0);
   stepPickups(duel, .05);
