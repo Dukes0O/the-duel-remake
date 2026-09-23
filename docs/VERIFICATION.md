@@ -59,6 +59,11 @@ zero. This is one short sample per quality. Vsync rounds many intervals to
 16.7 ms, and the Performance scenes began four metres apart, so rare jank and
 long-session performance need more play testing.
 
+The final staged runtime passed all 16 memory-only browser scenarios: both
+quality settings reached an active race, and the save, Experimental, impact,
+traffic, roadside, UFO, visual-pose and weapon-bar scenarios reported zero
+warnings and zero errors.
+
 ## Armory, road pickups, and camera reset — September 22, 2026
 
 D restores chase view without steering. Weapon upgrades now have a separate
