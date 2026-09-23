@@ -67,9 +67,11 @@ for (const key of expectedKeys) {
       }
     }
     scene.detachVehicle(vehicle);
-    assert.equal(vehicle.getObjectByName(`combat-bumper-${index}`), undefined,
-      `${key} ${role}: retiring the model removes the shared rig`);
-    checks++;
+    for (const name of ['bumper', 'bow', 'shield']) {
+      assert.equal(vehicle.getObjectByName(`combat-${name}-${index}`), undefined,
+        `${key} ${role}: retiring the model removes its ${name} rig`);
+      checks++;
+    }
   }
 }
 
@@ -82,6 +84,24 @@ replacement.userData.vehicleKey = 'falcone_f42';
 scene.update(duel, { player: replacement });
 assert.ok(replacement.getObjectByName('combat-bumper-0'), 'rig can attach to a replacement model');
 checks++;
+const rivalReplacement = vehicleFor('titan_monster');
+scene.update(duel, { player: replacement, rival: rivalReplacement });
+for (const name of ['bumper', 'bow', 'shield']) {
+  assert.ok(replacement.getObjectByName(`combat-${name}-0`), `player owns its ${name}`);
+  assert.equal(replacement.getObjectByName(`combat-${name}-1`), undefined, `player does not own rival ${name}`);
+  assert.ok(rivalReplacement.getObjectByName(`combat-${name}-1`), `rival owns its ${name}`);
+  assert.equal(rivalReplacement.getObjectByName(`combat-${name}-0`), undefined, `rival does not own player ${name}`);
+  checks += 4;
+}
+assert.ok(replacement.getObjectByName('combat-shield-0').visible, 'player shield visible while both roles are active');
+assert.ok(rivalReplacement.getObjectByName('combat-shield-1').visible, 'rival shield visible while both roles are active');
+checks += 2;
+scene.detachVehicle(replacement);
+for (const name of ['bumper', 'bow', 'shield']) {
+  assert.equal(replacement.getObjectByName(`combat-${name}-0`), undefined, `retired player releases ${name}`);
+  assert.ok(rivalReplacement.getObjectByName(`combat-${name}-1`), `rival keeps ${name} after player retirement`);
+  checks += 2;
+}
 duel.state.status = 'menu';
 scene.update(duel, { player: replacement });
 assert.ok(!replacement.getObjectByName('combat-bumper-0').visible, 'rig hides in the menu');
@@ -91,5 +111,12 @@ duel.state.combat.shield = 0;
 scene.update(duel, { player: replacement });
 assert.ok(!replacement.getObjectByName('combat-shield-0').visible, 'shield follows combat timer');
 checks++;
+duel.state.combat.shield = 4;
+scene.update(duel, { player: replacement, rival: rivalReplacement });
 scene.dispose();
+for (const name of ['bumper', 'bow', 'shield']) {
+  assert.equal(replacement.getObjectByName(`combat-${name}-0`), undefined, `scene disposal releases player ${name}`);
+  assert.equal(rivalReplacement.getObjectByName(`combat-${name}-1`), undefined, `scene disposal releases rival ${name}`);
+  checks += 2;
+}
 console.log(`Vehicle sockets: ${checks} per-car, role, maneuver, visibility and replacement checks passed.`);
