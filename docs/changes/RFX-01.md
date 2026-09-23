@@ -1,6 +1,6 @@
 # RFX-01: Split the game screens
 
-Status: ready for integration review.
+Status: integrated; not yet released.
 
 ## What changed
 
@@ -24,3 +24,15 @@ The old tests evaluated slices of `main.js` with `new Function`. They now import
 ## Remaining source-slicing debt
 
 `tools/test-vehicle-assets.mjs` still evaluates a slice of `tools/vehicle-art-check.js`. That tool is outside this UI task's owned files, so it stays unchanged for a separate tooling card. Other tests that inspect renderer or performance source are also outside the `main.js` screen split. The Wave 2 project-wide no-source-slicing target needs those tool-owned cases before it can be claimed complete.
+
+## Combined integration gate
+
+Independent review found all 127 static UI IDs and 1,039 CSS rules retained,
+with no actionable regression. On integration commit `d9965cd`, the merge
+tier passed 165/165 suites in 248.92 seconds, including 162 unchanged replay
+fingerprints. The production build and private High/Performance menu-to-race
+smoke passed with zero browser warnings or errors. A separate 640-pixel browser
+scenario opened the garage, armory, courses, players, leaderboard and
+Experimental dialogs; each kept its close control visible, placed keyboard
+focus inside, and closed with Escape. Its garage and Experimental screenshots
+were visually inspected without the QA controls covering them.

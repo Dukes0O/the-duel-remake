@@ -374,6 +374,33 @@ tasks:
     status: building
     note: "Renderer ghost lifecycle finding merged as 10645f2; 147-suite merge gate, build, private High/Performance smoke and focused ghost-lifecycle browser scenario pass. Discovery continues."
     spec: "SPEC.md, task DISC"
+  - id: RFX-01
+    title: "Split main UI into screens"
+    wave: 2
+    lane: UI
+    size: L
+    needs: [BUG-01, BUG-10, BUG-11, FIX-03, FND-07, FND-08]
+    status: merged
+    note: "Merged as d9965cd; 165-suite combined gate, unchanged replays, build, High/Performance browser smoke and six narrow dialog checks pass. Live release pending."
+    spec: "SPEC.md, task RFX-01"
+  - id: RFX-02
+    title: "Split game simulation into systems"
+    wave: 2
+    lane: SIM
+    size: L
+    needs: [FND-07, OLD-01, OLD-02, BUG-03]
+    status: merged
+    note: "Merged as d6c19a1; independent method review, 165-suite combined gate, unchanged replays, build and private High/Performance browser smoke pass. Live release pending."
+    spec: "SPEC.md, task RFX-02"
+  - id: RFX-03
+    title: "Opponents list"
+    wave: 2
+    lane: SIM
+    size: L
+    needs: [RFX-02]
+    status: building
+    note: "Isolated implementation started from the integrated simulation split; multi-opponent simulation, HUD, map and results require verification before merge."
+    spec: "SPEC.md, task RFX-03"
   - id: RFX-05
     title: "Input contexts"
     wave: 2
