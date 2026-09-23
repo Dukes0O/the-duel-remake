@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {COURSE, LIVES} from '../src/config.js';
 import {breakableScenery, trafficDestruction, startTrafficWreck, stepTrafficWreck} from '../src/destructibles.js';
+import {combatCrashThresholdMph} from '../src/vehicle-impact.js';
 
 let checks = 0;
 const check = (value, label) => { assert.ok(value, label); checks++; };
@@ -52,6 +53,15 @@ function sweep(duel, speed, from = 100, to = 120) {
   const d=fixture();d.course.features.obstacles.push(tree(1.45));sweep(d,100);
   same(d.state.brokenScenery,[],'large trees remain solid');
   check(d.state.s<110,'large tree does not become a free shortcut');
+}
+{
+  const d=fixture();d.course.features.obstacles.push(tree(1.45));
+  const threshold=combatCrashThresholdMph(d.car);
+  sweep(d,threshold-5);
+  same(d.state.stageCrashes,0,'armor absorbs a solid tree contact below this car’s crash threshold');
+  const hard=fixture();hard.course.features.obstacles.push(tree(1.45));
+  sweep(hard,threshold+5);
+  same(hard.state.stageCrashes,1,'a sufficiently fast solid tree contact still wrecks the car');
 }
 {
   const d=fixture();d.course.features.obstacles.push(post('road-sign-0-post--1.8'),post('road-sign-0-post-1.8',3.6));

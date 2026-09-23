@@ -810,7 +810,8 @@ export class Duel {
       if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) { car.s = road.s; car.lateral = road.lateral; }
       car.pushVelocity = (car.pushVelocity || 0) * .25;
       if (player && this.state.invulnerableSec <= 0 && this.state.impactTimer <= 0) {
-        if (impactMph >= 28 && !glancingWall) this._crash(obstacle.kind || 'rock', Math.sign(nx), impactMph, zone);
+        const crashThreshold = this.state.mode === 'wasteland' ? combatCrashThresholdMph(this.car) : 28;
+        if (impactMph >= crashThreshold && !glancingWall) this._crash(obstacle.kind || 'rock', Math.sign(nx), impactMph, zone);
         else if (impactMph > 4) this._scrape(zone, impactMph);
       }
       car.speedMph *= Math.max(.08, 1 - incoming * .94);
