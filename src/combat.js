@@ -1,6 +1,7 @@
 import {normalizeWeapons} from './weapon-upgrades.js';
 import {contactZone} from './collision.js';
 import {NpcRoutePlanner} from './npc-route.js';
+import {DRIVE} from './config.js';
 // Arcade vehicle combat. All timers and projectile motion use simulation time.
 export const WEAPONS=Object.freeze({ufo:{name:'UFO SWAP',key:'1',cooldown:18},bomb:{name:'BOMB STORM',key:'2',cooldown:9},crossbow:{name:'CROSSBOW',key:'3',cooldown:4},star:{name:'STAR SHIELD',key:'4',cooldown:16}});
 export const supportsCombat=stage=>!!stage?.hasRival&&!stage.practice&&!stage.stuntTrial;
@@ -63,11 +64,17 @@ export function fireWeapon(duel,weapon,enemy=false){
   if(weapon==='crossbow'&&(!target||target.finished||target.crushed))return false;
   const count=weapon==='bomb'?8+2*level:1;
   if(c.projectiles.length+count>40)return false;
+  // A moving car throws the whole bomb ring with its own velocity.
+  const travelHeading=p.heading+(actor.headingError||0);
+  const travelSpeed=(actor.speedMph||0)*(actor.dir||1)*DRIVE.mphToWorld;
+  const carryX=weapon==='bomb'?Math.sin(travelHeading)*travelSpeed+Math.cos(p.heading)*(actor.pushVelocity||0):0;
+  const carryZ=weapon==='bomb'?Math.cos(travelHeading)*travelSpeed-Math.sin(p.heading)*(actor.pushVelocity||0):0;
   for(let i=0;i<count;i++){
    let dx,dz,speed,vy=13;
    if(weapon==='bomb'){const angle=p.heading+i*Math.PI*2/count;dx=Math.sin(angle);dz=Math.cos(angle);speed=27;}
    else{const t=point(duel,target);dx=t.x-p.x;dz=t.z-p.z;const length=Math.hypot(dx,dz)||1;dx/=length;dz/=length;speed=200+30*level;vy=(t.y-p.y-1)/length*speed;}
-   c.projectiles.push({id:++c.serial,kind:weapon,enemy,level,x:p.x+dx*3,y:p.y+1,z:p.z+dz*3,vx:dx*speed,vz:dz*speed,vy,age:0});
+   c.projectiles.push({id:++c.serial,kind:weapon,enemy,level,x:p.x+dx*3,y:p.y+1,z:p.z+dz*3,
+    vx:dx*speed+carryX,vz:dz*speed+carryZ,vy,age:0});
   }
  }
  if(!enemy)c.cooldowns[weapon]=WEAPONS[weapon].cooldown*(1-level*.15);
@@ -129,10 +136,12 @@ export function stepCombat(duel,dt){
    burst(c,{x:p.x,y:Math.max(floor+.3,p.y),z:p.z},p.kind==='bomb'?'blast':'spark');
    if(p.kind==='bomb'&&!c.blastSound){duel.emit({combatExplosion:true});c.blastSound=.12;}
    if(p.kind==='bomb'){
+    const thrower=p.enemy?s.rival:s;
     for(const actor of [s,s.rival,...s.traffic]){
      if(!actor||actor.alive===false)continue;
      const a=point(duel,actor),distance=Math.hypot(a.x-p.x,a.z-p.z,a.y-p.y),radius=22+2*p.level;
-     if(distance<radius)hit(duel,actor,p,(1-distance/radius)*1.3*(1+p.level*.15),p.enemy);
+     const selfDamage=actor===thrower ? .25 : 1;
+     if(distance<radius)hit(duel,actor,p,(1-distance/radius)*1.3*(1+p.level*.15)*selfDamage,p.enemy);
     }
    }else if(contact)hit(duel,target,p,.9*(1+p.level*.2),p.enemy);
   }else live.push(p);
