@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { App } from '../src/app.js';
 import { Duel } from '../src/game.js';
-import { ROAD_SHOULDER_WIDTH } from '../src/config.js';
+import { DRIVE, ROAD_SHOULDER_WIDTH } from '../src/config.js';
 
 for (const mode of ['duel', 'wasteland', 'timetrial']) {
   const duel = new Duel({ seed: 1989 });
@@ -61,6 +61,25 @@ for (const mode of ['duel', 'wasteland', 'timetrial']) {
   duel._advanceLaps(state, 1 / 60);
   assert.ok(state.s < missed - 100,
     `${mode}: an implausible jump does not gain a close recovery`);
+}
+
+// A missed gate can be crowded on all three standard reset lines. Recovery
+// must find an actual gap instead of falling back into one of those cars.
+{
+  const duel = new Duel({ seed: 1989 });
+  duel.startCampaign({ startStage: 0, mode: 'wasteland', cpuDifficulty: 'medium' });
+  const state = duel.state, gate = duel._lapGates[0], origin = gate - 1;
+  state.status = 'racing'; state.rival = null;
+  state.traffic = [0, 10, 22, 40, 70, 110].flatMap(back =>
+    [-DRIVE.laneOffset, DRIVE.laneOffset, 0].map(lateral => ({ s: origin - back, lateral, alive: true })));
+  duel._obstacles = () => [];
+  Object.assign(state, { s: origin, prevS: origin, lateral: 0, speedMph: 0, nextLapGate: 0 });
+  duel._safeReset(state);
+  assert.ok(state.s >= origin - 60, 'crowded checkpoint recovery stays within a short retry');
+  assert.ok(state.traffic.every(car =>
+    Math.abs(duel.relativeS(car.s, state.s) - state.s) >= 12 ||
+    Math.abs(car.lateral - state.lateral) >= 2.5),
+  'crowded checkpoint recovery never spawns on a traffic car');
 }
 
 globalThis.cancelAnimationFrame ??= () => {};

@@ -40,3 +40,14 @@ restored the combined Medium count to two, without changing CPU aim or
 weakening the test. With BUG-14, exact integration passed 158/158 merge
 suites in 291.74 s, build, and private High/Performance smoke with no console
 issues. The full balance acceptance remains open for BUG-04 and Easy wins.
+
+## Crowded checkpoint follow-up — September 23
+
+A focused congestion probe found that traffic filling all six usual reset
+distances in all three road lanes made `_safeReset` use its unchecked center
+fallback. The player spawned on a traffic car. Recovery now keeps those usual
+spots first, then checks two-metre gaps between them before falling back. In
+the same probe it selects a clear lane 54 metres before the gate instead of
+overlapping traffic at the gate. The expanded checkpoint recovery test passes,
+including the full Medium race and ordered gate recrossing. The full release
+gate remains pending on the integration commit.
