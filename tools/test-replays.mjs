@@ -63,7 +63,10 @@ function sample(state, tick) {
 
 function replay(race, fps) {
   const index = COURSE.findIndex(event => event.id === race.eventId);
-  const duel = new Duel({ seed: fixture.seed });
+  // Preserve the recorded pre-CMB-08 baseline. New default-on roadside
+  // contacts have their own 30/60/144 FPS acceptance tests.
+  const duel = new Duel({ seed: fixture.seed,
+    featureFlags: {'roadside-destruction': false} });
   duel.startCampaign({
     startStage: index, seed: fixture.seed, mode: race.mode, car: race.car,
     difficulty: 'casual', cpuDifficulty: 'easy',

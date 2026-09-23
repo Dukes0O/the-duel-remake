@@ -16,11 +16,14 @@ export async function run(context) {
   const before = await context.evaluate(`(() => ({
     checked: document.querySelector('#experimental-toggle').checked,
     roadsideListed: document.querySelector('.experimental-list').textContent.includes('ROADSIDE DESTRUCTION'),
+    noEarlyFeatures: document.querySelector('.experimental-list').textContent.includes('No early features are available yet.'),
+    roadsideEnabled: window.__qaApp.duel.featureFlags.enabled('roadside-destruction'),
     careerHidden: !document.querySelector('.experimental-list').textContent.includes('CAREER BACKUP'),
     storageIsMemory: !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value
   }))()`);
-  if (before.checked || !before.roadsideListed || !before.careerHidden || !before.storageIsMemory)
-    throw Error('Experimental panel did not list only the beta roadside feature while starting safely off.');
+  if (before.checked || before.roadsideListed || !before.noEarlyFeatures ||
+      !before.roadsideEnabled || !before.careerHidden || !before.storageIsMemory)
+    throw Error('Experimental panel did not keep released roadside destruction on and out of the early-feature list.');
   await context.evaluate(`document.querySelector('#experimental-toggle').click()`);
   await context.waitFor(`document.querySelector('#experimental-toggle')?.checked &&
     document.querySelector('#experimental-open')?.textContent.includes('ON')`, 'Experimental choice');
@@ -28,6 +31,8 @@ export async function run(context) {
   await context.evaluate(`document.querySelector('#experimental-toggle').click()`);
   await context.waitFor(`!document.querySelector('#experimental-toggle')?.checked &&
     !document.querySelector('#experimental-open')?.textContent.includes('ON')`, 'Experimental choice off');
+  const releasedAfterToggle = await context.evaluate(`window.__qaApp.duel.featureFlags.enabled('roadside-destruction')`);
+  if (!releasedAfterToggle) throw Error('Turning off Experimental disabled released roadside destruction.');
   await context.evaluate(`document.querySelector('[data-action="experimental-close"]').click()`);
   await context.waitFor(`document.querySelector('#modal-layer').hidden`, 'Experimental panel close');
 }

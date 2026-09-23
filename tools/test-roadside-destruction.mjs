@@ -10,7 +10,10 @@ const same = (actual, expected, label) => { assert.deepEqual(actual, expected, l
 const stageIndex = COURSE.findIndex(stage => !stage.kind && stage.hasRival);
 
 function fixture({mode = 'wasteland', enabled = true} = {}) {
-  const duel = new Duel({seed:1989, destructiblesEnabled:enabled});
+  // Keep the direct legacy destruction override under test even though the
+  // new roadside rule is on by default in released Wasteland races.
+  const duel = new Duel({seed:1989, destructiblesEnabled:enabled,
+    featureFlags:{'roadside-destruction':false}});
   duel.startCampaign({startStage:stageIndex, mode});
   const point = (s, lateral = 0) => ({x:lateral, y:0, z:s, heading:0, curvature:0});
   duel.course = {

@@ -4,7 +4,10 @@ import { Duel } from '../src/game.js';
 import { combatCrashThresholdMph, rearRamResponse } from '../src/vehicle-impact.js';
 
 const race = (mode = 'wasteland', car = 'banshee_muscle') => {
-  const duel = new Duel({ seed: 624 });
+  // This suite pins the earlier armored-contact rules; CMB-08 tests the
+  // released roadside rule separately.
+  const duel = new Duel({ seed: 624,
+    featureFlags: {'roadside-destruction': false} });
   duel.startCampaign({ mode, car, startStage: 0 });
   const player = duel.state;
   player.status = 'racing'; player.invulnerableSec = 0; player.traffic = [];

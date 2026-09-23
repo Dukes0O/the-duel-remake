@@ -96,3 +96,11 @@ test fixtures that had disabled only `wasteland2`. Those fixtures now
 explicitly disable `roadside-destruction` too when checking the old traffic
 crush and wreck path. Their expected outcomes remain unchanged; the focused
 armor and ramming suites pass 19/19 and 13/13.
+
+The full release run then exposed three more old assumptions. The armored
+impact and prior roadside tests now explicitly switch off the new rule when
+checking their original behavior. The recorded 162 replay fingerprints also
+stay pinned to that same flag-off baseline; CMB-08's 30/60/144 FPS tests cover
+the released collisions. No replay hash was regenerated. The Experimental
+browser scenario now expects roadside destruction to be on and absent from
+the beta list, and verifies that turning Experimental off cannot disable it.
