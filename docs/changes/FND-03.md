@@ -1,6 +1,6 @@
 ---
 task: FND-03
-status: review
+status: merged
 kind: cleanup
 flag: none
 player_facing: no
@@ -30,7 +30,9 @@ No old code will be merged into Wasteland from this branch.
 
 - `git diff --cached --check` passed before the archival commit.
 - The old branch now holds commit `4237c2e` and has a clean tracked tree.
-- `git worktree remove` and the final `git worktree list` check are pending.
+- `git worktree remove` succeeded without `--force`. `git worktree list` no
+  longer contains the old path, and that path no longer exists. The branch
+  still points to `4237c2e`.
 
 ## Behavior and test changes
 

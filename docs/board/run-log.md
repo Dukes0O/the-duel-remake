@@ -4,6 +4,14 @@ Read the latest entry before resuming. Add one entry when a card starts,
 reaches review, merges, is parked, or is released. Keep the board status
 in sync with this log.
 
+## 2026-09-22 PDT — FND-03 old worktree retired
+
+- The old worktree's 22 changed paths were preserved as `4237c2e` on its
+  existing branch. Against `7564c7d`, 20 matched and the two differences
+  are recorded in `docs/changes/FND-03.md`.
+- `git worktree remove` succeeded without force. `git worktree list` no longer
+  shows `.codex/worktrees/4555`, and the archival branch remains available.
+
 ## 2026-09-22 PDT — Integration opened and foundation cards merged
 
 - `integration/wasteland` opened at d86cf4e from the green isolated foundation.

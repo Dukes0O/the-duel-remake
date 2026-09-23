@@ -29,9 +29,9 @@ tasks:
     lane: OPS
     size: S
     needs: [D5]
-    status: building
+    status: merged
     spec: "SPEC.md, task FND-03"
-    note: "Old branch archived as 4237c2e; two differing paths recorded; worktree removal pending."
+    note: "Old branch archived as 4237c2e; two differing paths recorded; worktree removed without force."
   - id: FND-04
     title: "Line endings"
     wave: 0
