@@ -184,3 +184,15 @@ checkout untouched until the final integration commit passes the full gate.
 - A UFO swap keeps each driver's completed lap history and running lap timer.
   Both current laps receive assisted flags that survive into stage results.
   Full-race best and leaderboard rules remain unchanged.
+
+## 2026-09-22 PDT — BUG-03 safe swap landing merged
+
+- Reviewed CMB lane commit `456a03e` and cherry-picked it as `26a5795`.
+  The 146-suite integration gate passed in 173.30 seconds. The build and
+  private High/Performance smoke passed with four screenshots, zero warnings
+  and zero errors.
+- A swap carries the destination heading and route context, caps landing
+  speed to the surface and previous occupant, protects both cars for 1.2
+  seconds and rebases the rival's shortcut plan. The seeded 100-swap matrix
+  covers all 11 combat courses and 19 shortcut landings with no crash or
+  reset in the two seconds after landing.

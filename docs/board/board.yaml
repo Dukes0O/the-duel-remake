@@ -190,7 +190,8 @@ tasks:
     lane: CMB
     size: S
     needs: [BUG-02]
-    status: blocked
+    status: merged
+    note: "Merged as 26a5795; 146-suite merge gate, build and private High/Performance smoke pass. 100 seeded swaps across 11 combat courses include 19 shortcut landings with no crashes or resets in two seconds."
     spec: "SPEC.md, task BUG-03"
   - id: BUG-04
     title: "UFO rebalance"

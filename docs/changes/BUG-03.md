@@ -1,6 +1,6 @@
 ---
 task: BUG-03
-status: review
+status: merged
 kind: gameplay-fix
 flag: none
 player_facing: yes
@@ -46,5 +46,8 @@ window. Lap-history and assisted-lap behavior from BUG-02 remain unchanged.
 
 ## Review
 
-The lane gate passed. The branch is ready for independent review before
-integration.
+Independent review checked heading ownership, surface speed caps, route-plan
+rebasing and the 100-swap matrix. The commit was cherry-picked as `26a5795`.
+All 146 integration suites passed in 173.30 seconds; the production build and
+private High/Performance browser smoke passed with four screenshots and no
+browser warnings or errors.
