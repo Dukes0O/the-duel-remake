@@ -238,6 +238,11 @@ export function attachRenderer(host, app) {
     lighting.followCamera(camera,pp,now/1000);
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;
     const ghostPose=!menu&&app.ghostPose?.car===carKey?app.ghostPose:null;
+    if(!ghostPose&&ghost){
+      const style=ghostStyle;
+      retireObject(ghost,()=>style.restore());ghost=null;ghostStyle=null;
+      sceneRevision++;ambientShading.refresh();
+    }
     if(ghostPose&&!ghost){
       ghost=vehicleAssets.create(carKey);
       ghost.name='Personal best ghost';ghostStyle=styleGhostVehicle(ghost);scene.add(ghost);sceneRevision++;ambientShading.refresh();
