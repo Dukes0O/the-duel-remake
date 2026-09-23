@@ -2,6 +2,7 @@
 import { installIsolatedStorage } from './qa-storage.js';
 installIsolatedStorage();
 const { App } = await import('../src/app.js');
+const { combatAudioSpace } = await import('../src/audio.js');
 const app = new App();
 const qa = { limiter: null, recorder: null, category: null };
 const originalConnect = AudioNode.prototype.connect;
@@ -73,6 +74,7 @@ window.__audioQaStart = async () => {
       kind, audioTimeSec: app.audio.context.currentTime - recorder.startTime,
       simTimeSec: state.stageTimeSec, source: event.qaProbe ? 'qa-probe' : 'race',
       detail: kind === 'combatHit' ? { victim: event.victim, enemy: event.enemy } : event.qaProbe ? { side: event.qaSide, distance: event.qaDistance, stress: !!event.qaStress } : null,
+      audioSpatial: ['combatExplosion','combatHit'].includes(kind) ? combatAudioSpace(event,state,app.duel.course) : null,
     });
   });
   app.autopilot = true;

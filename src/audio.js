@@ -29,6 +29,26 @@ const AMBIENCE = {
   arena:{file:'ambience-stadium.wav',gain:.2,cutoff:4200},
 };
 
+// Combat events do not change simulation state to carry sound coordinates.
+// The latest burst already exists when the event reaches App's audio hook.
+export function combatAudioSpace(event, state, course) {
+  let side = Number(event?.qaSide), distance = Number(event?.qaDistance);
+  if (!Number.isFinite(side) || !Number.isFinite(distance)) {
+    const source = state?.combat?.bursts?.at(-1);
+    const listener = Number.isFinite(state?.s) && course?.groundAt?.(state.s, state.lateral);
+    if (!source || !listener) return { pan: 0, gain: 1, distance: null };
+    const dx = source.x - listener.x, dz = source.z - listener.z;
+    distance = Math.hypot(dx, dz, (source.y || 0) - (listener.y || 0));
+    const heading = listener.heading + (state.headingError || 0) + (state.slipAngle || 0) + (state.crashSpin || 0);
+    side = distance > .001 ? (dx * Math.cos(heading) - dz * Math.sin(heading)) / distance : 0;
+  }
+  return {
+    pan: clamp(side * .7, -.7, .7),
+    gain: clamp(1 / (1 + Math.max(0, distance - 15) / 240), .5, 1),
+    distance
+  };
+}
+
 export class EngineAudio {
   constructor() {
     this.context = null;
@@ -43,6 +63,7 @@ export class EngineAudio {
     this.nextThrottle = 0; this.nextLift = 0; this.shiftStarted = 0; this.shiftUntil = 0; this.activeShots = new Set();
     this._samplesPromise = null;
     this.carVoice=CAR_VOICES.falcone_f42;
+    this.blastIndex=0;this.blastVoices=new Set();
   }
 
   unlock() {
@@ -165,17 +186,73 @@ export class EngineAudio {
     }
   }
 
-  _sample(buffer,volume=1,rate=1,destination=this.master,maxDuration=Infinity) {
+  _sample(buffer,volume=1,rate=1,destination=this.master,maxDuration=Infinity,onEnd=null,attack=.008) {
     const ctx=this.context,source=ctx.createBufferSource(),gain=ctx.createGain(),start=ctx.currentTime;
     source.buffer=buffer;source.playbackRate.value=rate;
     const duration=Math.min(buffer.duration/rate,maxDuration);
-    gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(volume,start+.008);
+    gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(volume,start+attack);
     gain.gain.setValueAtTime(volume,start+Math.max(.009,duration-.035));gain.gain.linearRampToValueAtTime(0,start+duration);
     source.connect(gain);gain.connect(destination);source.start();
     if(Number.isFinite(maxDuration))source.stop(start+duration+.01);
     const voice={source,gain,endAt:start+duration+.01};this.activeShots.add(voice);
-    source.onended=()=>{source.disconnect();gain.disconnect();this.activeShots.delete(voice);};
+    source.onended=()=>{source.disconnect();gain.disconnect();this.activeShots.delete(voice);onEnd?.();};
     return voice;
+  }
+
+  _spatialOutput(event,state,course) {
+    const ctx=this.context,space=combatAudioSpace(event,state,course);
+    const level=ctx.createGain(),panner=ctx.createStereoPanner();
+    level.gain.value=space.gain;
+    panner.pan.value=space.pan;
+    level.connect(panner);panner.connect(this.master);
+    return {level,panner,space,disconnect:()=>{level.disconnect();panner.disconnect();}};
+  }
+
+  _balanceBlasts() {
+    const now=this.context.currentTime;
+    // Only fresh attacks add coherently. The four-second recording has a long,
+    // quiet tail that must not make the next isolated blast sound distant.
+    const attacks=[...this.blastVoices].filter(voice=>now-voice.startedAt<.25);
+    const scale=Math.max(1,attacks.length)**-.75;
+    for(const voice of attacks){
+      voice.output.level.gain.cancelScheduledValues(now);
+      voice.output.level.gain.setTargetAtTime(voice.output.space.gain*scale,now,.004);
+    }
+  }
+
+  _combatBlast(event,state,course) {
+    const output=this._spatialOutput(event,state,course);
+    if(!this.samples.explosion){
+      this._tone(65,.45,.4,'sine',0,22,output.level,output.disconnect);
+      return;
+    }
+    const filter=this.context.createBiquadFilter();
+    filter.type='lowpass';filter.frequency.value=2600;filter.Q.value=.7;
+    filter.connect(output.level);
+    const variants=[{rate:.8,attack:.009},{rate:1.2,attack:.018},{rate:1.08,attack:.028}];
+    const variant=variants[this.blastIndex++%variants.length];
+    let voice;
+    voice=this._sample(this.samples.explosion,2.2,variant.rate,filter,Infinity,()=>{
+      this.blastVoices.delete(voice);filter.disconnect();output.disconnect();this._balanceBlasts();
+    },variant.attack);
+    voice.output=output;voice.startedAt=this.context.currentTime;
+    this.blastVoices.add(voice);this._balanceBlasts();
+  }
+
+  _combatImpact(event,state,course) {
+    const output=this._spatialOutput(event,state,course);
+    const ctx=this.context,start=ctx.currentTime;
+    const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+    source.buffer=this.noiseBuffer;
+    filter.type='bandpass';filter.frequency.value=1050;filter.Q.value=.65;
+    gain.gain.setValueAtTime(0,start);
+    gain.gain.linearRampToValueAtTime(2.15,start+.009);
+    gain.gain.exponentialRampToValueAtTime(.001,start+.18);
+    source.connect(filter);filter.connect(gain);gain.connect(output.level);
+    source.start();source.stop(start+.23);
+    const voice={source,gain,endAt:start+.23};this.activeShots.add(voice);
+    source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();output.disconnect();this.activeShots.delete(voice);};
+    this._tone(150,.18,2.5,'triangle',0,45,output.level);
   }
 
   _stopShot(voice) {
@@ -335,7 +412,7 @@ export class EngineAudio {
     }
   }
 
-  event(ev) {
+  event(ev,state,course) {
     // Stage restart must clear old load/cut history even while muted or paused.
     // Keep the decoded sources and graph: a new race does not create new loops.
     if(ev?.stageLoaded!=null){
@@ -367,8 +444,8 @@ export class EngineAudio {
     }
     if (ev.ticket || ev.gameover || ev.stageResult?.won===false) this._tone(110, 0.65, 0.1, 'triangle', 0, 65);
     if(ev.weaponFired){const note={ufo:760,bomb:130,crossbow:440,star:980}[ev.weaponFired]||220;this._tone(note,.22,.12,'triangle',0,note*.4);}
-    if(ev.combatExplosion){if(this.samples.explosion)this._sample(this.samples.explosion,.35);else this._tone(65,.45,.2,'sine',0,22);}
-    if(ev.combatHit)this._tone(90,.16,.12,'triangle',0,35);
+    if(ev.combatExplosion)this._combatBlast(ev,state,course);
+    if(ev.combatHit)this._combatImpact(ev,state,course);
     if(ev.explosion && this.samples.explosion)this._sample(this.samples.explosion,1.15);
     if (ev.crash) {
       const force = .55 + (ev.strength ?? .7) * .45;
@@ -403,7 +480,7 @@ export class EngineAudio {
     this._tone(145,.18,.045*force,'triangle',0,80,this.vehicleBus);
   }
 
-  _tone(frequency, duration, volume, type = 'sine', delay = 0, endFrequency = null,destination=this.master) {
+  _tone(frequency, duration, volume, type = 'sine', delay = 0, endFrequency = null,destination=this.master,onEnd=null) {
     const ctx = this.context, start = ctx.currentTime + delay;
     const oscillator = ctx.createOscillator(), gain = ctx.createGain();
     oscillator.type = type; oscillator.frequency.setValueAtTime(frequency, start);
@@ -413,7 +490,7 @@ export class EngineAudio {
     gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
     oscillator.connect(gain); gain.connect(destination);
     oscillator.start(start); oscillator.stop(start + duration + 0.02);
-    oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+    oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); onEnd?.(); };
   }
 }
 

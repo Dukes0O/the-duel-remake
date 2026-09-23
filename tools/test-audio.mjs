@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
-import {EngineAudio} from '../src/audio.js';
+import {EngineAudio,combatAudioSpace} from '../src/audio.js';
 import {App} from '../src/app.js';
 import {CARS,COURSE} from '../src/config.js';
 
@@ -36,6 +36,7 @@ class MockContext {
   constructor(){this.nodes=[];this.currentTime=0;this.sampleRate=44100;this.state='running';this.destination={};}
   node(type,params){const node=new Node(this,type);for(const [name,value] of Object.entries(params))node[name]=new Param(value);return node;}
   createGain(){return this.node('gain',{gain:1});}
+  createStereoPanner(){return this.node('panner',{pan:0});}
   createBiquadFilter(){return this.node('filter',{frequency:350,Q:1});}
   createDelay(){return this.node('delay',{delayTime:0});}
   createOscillator(){return this.node('oscillator',{frequency:440});}
@@ -54,6 +55,34 @@ async function makeAudio(failed=new Set()){
 }
 const state=(overrides={})=>({car:'falcone_f42',status:'racing',paused:false,impactTimer:0,speedMph:200,revs:1,input:{throttle:1,brake:0},slipAngle:0,steerVisual:0,offRoad:false,roughness:0,airborne:false,airHeight:0,police:{beep:0,pursuit:null},...overrides});
 const {audio,context}=await makeAudio();check(audio.sampleStatus==='ready','all eleven runtime recordings loaded');
+const spatialCourse={groundAt:()=>({x:0,y:0,z:0,heading:0})};
+const leftBurst={s:0,lateral:0,combat:{bursts:[{x:-15,y:0,z:0,kind:'blast'}]}};
+const rightBurst={s:0,lateral:0,combat:{bursts:[{x:80,y:0,z:0,kind:'blast'}]}};
+const leftSpace=combatAudioSpace({combatExplosion:true},leftBurst,spatialCourse);
+const rightSpace=combatAudioSpace({combatExplosion:true},rightBurst,spatialCourse);
+check(leftSpace.pan<-.6&&rightSpace.pan>.6&&20*Math.log10(leftSpace.gain/rightSpace.gain)>2,
+  'real blast positions pan to opposite sides and fade by more than 2 dB over distance');
+const probeSpace=combatAudioSpace({combatExplosion:true,qaSide:1,qaDistance:80},leftBurst,spatialCourse);
+check(probeSpace.pan>.6&&probeSpace.distance===80,'QA probe coordinates override the race burst for calibrated spatial checks');
+const spatialSource={...leftBurst,combat:{bursts:[...leftBurst.combat.bursts]}};
+audio.event({combatExplosion:true},spatialSource,spatialCourse);
+const firstBlast=[...audio.blastVoices][0];
+check(firstBlast.output.panner.pan.value<-.6&&firstBlast.output.level.connections.includes(firstBlast.output.panner),
+  'the real blast source routes through its left panner');
+for(let index=0;index<5;index++)audio.event({combatExplosion:true,qaSide:index%2?1:-1,qaDistance:20},spatialSource,spatialCourse);
+check(audio.blastVoices.size===6&&[...audio.blastVoices].every(voice=>voice.output.level.gain.value<voice.output.space.gain*.3),
+  'six simultaneous blasts retain six voices with bounded combined gain');
+const beforeImpact=context.nodes.length;
+audio.event({combatHit:true},spatialSource,spatialCourse);
+const impactSource=context.nodes.slice(beforeImpact).find(node=>node.type==='source'&&node.buffer===audio.noiseBuffer);
+check(impactSource&&[...audio.activeShots].some(voice=>voice.source===impactSource),
+  'the spatial hit transient is owned by the active-shot lifecycle');
+context.advance(5);
+check(audio.blastVoices.size===0&&firstBlast.output.panner.connections.length===0,
+  'ended blast voices retire and disconnect their spatial nodes');
+check(![...audio.activeShots].some(voice=>voice.source===impactSource),
+  'the hit transient retires after its short envelope');
+check(spatialSource.combat.bursts[0].x===-15,'sound positioning leaves simulation data unchanged');
 check(audio.ambienceStatus==='ready'&&Object.keys(audio.ambience).length===3,'all three local ambience recordings decode');
 const ambientSources=Object.values(audio.ambience).map(layer=>layer.source),sourceCount=context.nodes.length;
 await audio._loadAmbience();check(context.nodes.length===sourceCount&&Object.values(audio.ambience).every((layer,index)=>layer.source===ambientSources[index]),'repeated loading cannot duplicate ambience buffers or loop voices');
@@ -271,5 +300,10 @@ console.log(responseRows.join('\n'));
 const app=new App();const stage=COURSE.findIndex(item=>item.sections?.some(section=>section.theme==='alpine')&&!item.requiredCar);app.duel.startCampaign({startStage:stage});const tunnel=app.duel.course.features.tunnels[0];assert(tunnel);let forwarded;app.audio.update=(_state,environment)=>{forwarded=environment;};app.duel.state.s=tunnel.start+30;app.duel.state.lateral=0;app._updateAudio();check(forwarded.tunnel===1,'App forwards actual tunnel interior');app.duel.state.s+=app.duel.course.length;app._updateAudio();check(forwarded.tunnel===1,'second physical lap keeps tunnel sound');app.duel.state.lateral=tunnel.width+3;app._updateAudio();check(forwarded.tunnel===0,'outside a tunnel wall does not add tunnel sound');
 check(forwarded.biome===app.duel.course.themeAt(app.duel.state.s)&&forwarded.night===false&&forwarded.cameraMode===app.cameraMode,'App forwards actual wrapped section biome, daylight and camera perspective');
 const nightStage=COURSE.findIndex(item=>item.timeOfDay==='night'&&!item.requiredCar);app.duel.startCampaign({startStage:nightStage});app._updateAudio();check(forwarded.night===true&&forwarded.biome===app.duel.course.themeAt(0),'night course forwards its actual ambience metadata');
+let forwardedCombat;
+app.audio.event=(event,raceState,course)=>{forwardedCombat={event,raceState,course};};
+app.duel.emit({combatExplosion:true});
+check(forwardedCombat?.raceState===app.duel.state&&forwardedCombat.course===app.duel.course,
+  'App forwards the current race state and course for real spatial combat audio');
 console.log(seamRows.join('\n'));console.log(`Six-second PCM mixes at three band transitions and full speed across all ${Object.keys(CARS).length} cars: maximum 100ms envelope swing ${maximumBlendSwing.toFixed(2)}dB.`);
 console.log(`Audio/PCM: ${checks} checks passed; ${commands.toLocaleString()} finite automation commands. Actual PCM decoded; no listening claim.`);

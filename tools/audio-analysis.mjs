@@ -197,7 +197,8 @@ export function analyzeRecording(recording, tracks) {
     if (tiresExpected && db(rms(tracks.tires, time, .04)) < -55) tireGaps.push(round(time));
   }
   const explosionEvents = events.filter(event => event.kind === 'combatExplosion' && !event.detail?.stress);
-  const contrast = explosionEvents.map(event => ({ timeSec: round(event.audioTimeSec),
+  const contrastEvents = events.filter(event => ['combatExplosion', 'combatHit'].includes(event.kind) && !event.detail?.stress);
+  const contrast = contrastEvents.map(event => ({ kind: event.kind, timeSec: round(event.audioTimeSec),
     dbOverEngine: round(db(rms(tracks.weapons, event.audioTimeSec, .12)) - db(rms(tracks.engine, event.audioTimeSec, .12))) }));
   const spatial = explosionEvents.filter(event => event.detail?.side).map(event => {
     const left = rms(tracks.weapons, event.audioTimeSec, .18, 'left');

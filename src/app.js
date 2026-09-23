@@ -64,7 +64,7 @@ export class App {
     this.cameraMode = 'chase';
     this.audio = new EngineAudio();
     this.duel.onChange((state, event) => {
-      this.audio.event(event);
+      this.audio.event(event,state,this.duel.course);
       if(event.driftBanked||event.driftChainLost)this.driftNotice={type:event.driftBanked?'banked':'lost',...(event.driftBanked||event.driftChainLost),expiresAt:state.stageTimeSec+2};
       if(event.checkpointRushEvent)this.checkpointNotice={...event.checkpointRushEvent,expiresAt:state.stageTimeSec+2.5};
       if(event.ticket)this._settlePoliceTicket(event.ticket,state);

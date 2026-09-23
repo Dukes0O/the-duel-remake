@@ -24,6 +24,9 @@ export async function run(context) {
     throw Error(`Audio race failed isolation or sample loading: ${recording.sampleStatus}`);
   if (recording.events.filter(event => event.kind === 'combatExplosion').length < 2)
     throw Error('Audio race did not record both explosion probes.');
+  if (!recording.events.some(event => event.kind === 'combatExplosion' && event.source === 'race' &&
+    Number.isFinite(event.audioSpatial?.pan) && Number.isFinite(event.audioSpatial?.distance)))
+    throw Error('Audio race did not capture a real blast with spatial geometry.');
   if (recording.frames.length < 100) throw Error('Audio race did not capture real-time frames.');
   const tracks = {};
   for (const [name, track] of Object.entries(recording.tracks)) {
