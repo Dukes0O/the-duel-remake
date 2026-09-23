@@ -1,5 +1,6 @@
 import {normalizeWeapons} from './weapon-upgrades.js';
 import {contactZone} from './collision.js';
+import {NpcRoutePlanner} from './npc-route.js';
 // Arcade vehicle combat. All timers and projectile motion use simulation time.
 export const WEAPONS=Object.freeze({ufo:{name:'UFO SWAP',key:'1',cooldown:18},bomb:{name:'BOMB STORM',key:'2',cooldown:9},crossbow:{name:'CROSSBOW',key:'3',cooldown:4},star:{name:'STAR SHIELD',key:'4',cooldown:16}});
 export const supportsCombat=stage=>!!stage?.hasRival&&!stage.practice&&!stage.stuntTrial;
@@ -8,7 +9,7 @@ const point=(duel,actor)=>{const p=duel.course.groundAt(actor.s,actor.lateral);r
 function burst(c,p,kind='blast'){c.bursts.push({...p,kind,id:++c.serial,age:0});if(c.bursts.length>32)c.bursts.shift();}
 function relocate(actor,pose){
  Object.assign(actor,pose);actor.prevS=actor.s;actor.prevLateral=actor.lateral;
- actor.headingError=0;actor.yawVelocity=0;actor.pushVelocity=0;actor.slipAngle=0;
+ actor.headingError=pose.headingError||0;actor.yawVelocity=0;actor.pushVelocity=0;actor.slipAngle=0;
  actor.airborne=false;actor.airHeight=0;actor._jumpY=null;actor._verticalSpeed=0;actor._airOrigin=null;actor._jumpOrigin=null;
  actor.groundHeight=null;actor.terrainPitch=null;actor.terrainRoll=null;actor.tumble=null;
 }
@@ -19,23 +20,42 @@ export function fireWeapon(duel,weapon,enemy=false){
  const p=point(duel,actor),level=enemy?0:c.levels[weapon];
  if(weapon==='ufo'){
   if(enemy)return false;
+  let swapped=false;
   if(target&&!target.finished&&!target.crushed&&target.s>s.s){
-   const fields=['s','lateral','completedLaps','nextLapGate'];
+   swapped=true;
+   const fields=['s','lateral','headingError','completedLaps','nextLapGate','routeId','routeLap'];
    const a=Object.fromEntries(fields.map(k=>[k,s[k]])),b=Object.fromEntries(fields.map(k=>[k,target[k]]));
+   // The player model also turns with slip and crash spin; the rival does not.
+   const facing=(s.headingError||0)+(s.slipAngle||0)+(s.crashSpin||0);
+   a.headingError=Math.atan2(Math.sin(facing),Math.cos(facing));
+   const playerSpeed=s.speedMph,rivalSpeed=target.speedMph;
    burst(c,point(duel,target),'ufo');relocate(s,b);relocate(target,a);
+   for(const [car,oldSpotSpeed,spec] of [[s,rivalSpeed,duel.car],[target,playerSpeed,duel.rivalSpec||duel.car]]){
+    const surface=duel._drivingSurface(car.s,car.lateral,spec);
+    const landingCap=surface.mainRoad?surface.speedLimit:surface.preparedGravel?Math.min(100,surface.speedLimit):Math.min(68,surface.speedLimit);
+    car.speedMph=Math.sign(car.speedMph)*Math.min(Math.abs(car.speedMph),Math.abs(oldSpotSpeed),landingCap);
+   }
+   if(s.cpuDifficulty!=='easy'){
+    const car=duel.rivalSpec||duel.car;
+    if(duel._npcRoutePlanner?.course!==duel.course||duel._npcRoutePlanner?.car!==car)
+     duel._npcRoutePlanner=new NpcRoutePlanner(duel.course,{car,surfaceAt:(distance,lateral)=>duel._drivingSurface(distance,lateral,car)});
+    const route=duel._npcRoutePlanner.land(target,s.cpuDifficulty);
+    target.routeId=route?.routeId||null;target.routeLap=route?.lap||null;
+   }else{duel._npcRoutePlanner?.reset(target);target.routeId=null;target.routeLap=null;}
    // Progress belongs to the stolen position; timing belongs to this driver.
    for(const car of [s,target]){
     car.lap=car.currentLap=car.completedLaps+1;
     car.assistedLaps??=(car.lapTimes||[]).map(()=>false);
     car.assistedLap=true;
    }
+   c.shield=Math.max(c.shield,1.2);c.rivalShield=Math.max(c.rivalShield,1.2);
    duel._callout('UFO / POSITIONS SWAPPED',2);
   }else{
    const next=s.completedLaps*duel.course.length+(duel._lapGates[s.nextLapGate]??duel.course.length);
    relocate(s,{s:Math.max(s.s,Math.min(s.s+100+75*level,next-2)),lateral:0});
    duel._callout('UFO / WARP FORWARD',2);
   }
-  s.invulnerableSec=Math.max(s.invulnerableSec,1);burst(c,p,'ufo');burst(c,point(duel,s),'ufo');
+  s.invulnerableSec=Math.max(s.invulnerableSec,swapped?1.2:1);burst(c,p,'ufo');burst(c,point(duel,s),'ufo');
  }else if(weapon==='star'){
   if(enemy)c.rivalShield=5;else {c.shield=5;s.invulnerableSec=Math.max(s.invulnerableSec,5);}
   burst(c,p,'star');

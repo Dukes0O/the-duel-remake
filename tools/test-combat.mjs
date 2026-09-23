@@ -44,6 +44,42 @@ d=make();s=d.state;const cleanLength=d.course.length;
 s.s=cleanLength-1;s.prevS=s.s;s.lateral=s.prevLateral=0;s.speedMph=100;s.stageTimeSec=60;
 s.nextLapGate=d._lapGates.length;s.s=cleanLength+1;d._advanceLaps(s,.05,true);
 check(s.assistedLaps?.[0]===false,'a lap without a swap remains eligible for a best lap');
+// A swap must land each car facing the way the previous occupant faced, with
+// speed that suits the destination and a short window free of crash damage.
+d=make();s=d.state;s.traffic=[];s.headingError=.34;s.slipAngle=.12;s.crashSpin=.05;s.speedMph=305;
+s.rival.headingError=-.47;s.rival.speedMph=190;s.rival.lateral=40;
+const landingLimit=d._drivingSurface(s.rival.s,s.rival.lateral,d.rivalSpec).speedLimit;
+check(d.fireWeapon('ufo'),'UFO fires into an off-road rival position');
+check(Math.abs(s.headingError+.47)<1e-9&&Math.abs(s.rival.headingError-.51)<1e-9,
+  'both swapped cars keep the destination heading');
+check(s.speedMph<=landingLimit&&s.rival.speedMph<=d._drivingSurface(s.rival.s,s.rival.lateral).speedLimit,
+  'both swapped cars receive a speed cap for their new surface');
+const landingCrashes=s.stageCrashes,rivalWear=s.rival.damageZones.front;
+d._crash('rock',1,100);d._dentVehicle(s.rival,'front',100);
+check(s.stageCrashes===landingCrashes&&s.rival.damageZones.front===rivalWear,
+  'both cars reject crash damage immediately after landing');
+stepCombat(d,1.19);d._crash('rock',1,100);d._dentVehicle(s.rival,'front',100);
+check(s.stageCrashes===landingCrashes&&s.rival.damageZones.front===rivalWear,
+  'both cars retain crash protection until 1.2 seconds after landing');
+stepCombat(d,.02);d._crash('rock',1,100);d._dentVehicle(s.rival,'front',100);
+check(s.stageCrashes===landingCrashes+1&&s.rival.damageZones.front>rivalWear,
+  'ordinary crash damage resumes after the landing protection expires');
+d=new Duel({seed:1989});d.startCampaign({mode:'wasteland',startStage:0,cpuDifficulty:'hard'});
+s=d.state;s.status='racing';s.traffic=[];const cut=d.course.features.shortcuts[0];
+s.s=cut.start-155;s.lateral=-3.4;s.speedMph=140;
+s.rival.s=cut.start-135;s.rival.lateral=-3.4;s.rival.speedMph=140;
+d._rival(1/120);check(s.rival.routeId===cut.id,'hard rival commits to a branch before the swap');
+check(d.fireWeapon('ufo'),'UFO exchanges a committed rival route');
+check(s.routeId===cut.id&&s.routeLap===1,'the player receives the destination route context');
+check(d._npcRoutePlanner.routeFor(s.rival)===null&&s.rival.routeId==null,
+  'the rival abandons its stale branch plan after landing before the entry');
+d=new Duel({seed:1989});d.startCampaign({mode:'wasteland',startStage:0,cpuDifficulty:'hard'});
+s=d.state;s.status='racing';s.traffic=[];const branch=d.course.features.shortcuts[0];
+s.s=(branch.start+branch.end)/2;s.lateral=d.course.shortcutOffset(branch,s.s);s.speedMph=120;
+s.rival.s=s.s+30;s.rival.lateral=-3.4;s.rival.speedMph=120;
+check(d.fireWeapon('ufo'),'UFO swaps a rival onto an occupied shortcut');
+check(s.rival.routeId===branch.id&&d._npcRoutePlanner.routeFor(s.rival)?.routeId===branch.id,
+  'the rival plans along the shortcut it lands on');
 d=make();s=d.state;check(d.fireWeapon('star'),'star activates');const speed=s.speedMph=100;d._crash('rock',1,100);check(s.speedMph===speed&&s.stageCrashes===0,'star blocks crash damage');for(let i=0;i<99;i++)stepCombat(d,.05);check(s.combat.shield>0,'star lasts until five seconds');stepCombat(d,.05);check(s.combat.shield<1e-8,'star expires after five seconds');
 d=make();s=d.state;check(d.fireWeapon('bomb')&&s.combat.projectiles.length===8,'bomb storm throws eight bombs');check(new Set(s.combat.projectiles.map(p=>Math.atan2(p.vx,p.vz).toFixed(2))).size===8,'bombs travel in eight directions');for(let i=0;i<40;i++)stepCombat(d,.05);check(s.combat.projectiles.length===0&&s.combat.bursts.length>0,'bombs expire into explosions');
 // A removed traffic car remains in the array for a while. Its old position

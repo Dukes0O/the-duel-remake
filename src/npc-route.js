@@ -83,6 +83,22 @@ export class NpcRoutePlanner {
   // a reset vehicle trying to enter across the gap halfway through a shortcut.
   reset(actor) { const state = this.actors.get(actor); if (state) state.choice = null; }
 
+  // A teleport starts a new decision history at the landing spot. If it lands
+  // on a shortcut, keep following that physical corridor through its exit.
+  land(actor, difficulty = 'hard') {
+    const state = { choice: null, attempted: new Set() };
+    this.actors.set(actor, state);
+    const lap = Math.max(0, Math.floor(actor.s / this.course.length));
+    const lapBase = lap * this.course.length, phase = actor.s - lapBase;
+    const routeId = this.surfaceAt(actor.s, actor.lateral).shortcutId;
+    const cut = this.cuts.find(route => route.id === routeId && phase >= route.start && phase <= route.end);
+    if (!cut) return null;
+    const profile = this.profile(cut.id, difficulty);
+    state.choice = { routeId: cut.id, lap: lap + 1, lapBase, entryS: lapBase + profile.entry, exitS: lapBase + profile.exit, profile };
+    state.attempted.add(`${lap}:${cut.id}`);
+    return state.choice;
+  }
+
   _vehicles(context) { return [context.player, ...(context.traffic || [])].filter(v => v && v.alive !== false); }
 
   _blocker(actor, choice, context, entryOnly = false) {
