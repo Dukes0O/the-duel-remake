@@ -896,13 +896,17 @@ export class Duel {
         impulse: wreck.impulse, side: Math.sign(b.lateral - a.lateral) || Math.sign(nx) || 1 })) {
         // Wrecking the lighter car does not make an extreme head-on hit safe
         // for the attacker. Both outcomes use the same closing-speed measure.
+        const crashesBefore = a.stageCrashes, penaltyBefore = a.racePenaltySec;
         if (this.state.invulnerableSec <= 0 && impactMph >= crashThreshold)
           this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
         else {
           a.speedMph = Math.sign(a.speedMph) * Math.max(0, Math.abs(a.speedMph) - clamp(impactMph * .07, 4, 20));
           if (this.state.invulnerableSec <= 0) this._scrape(zone, Math.min(impactMph, 22));
         }
-        this._callout('TRAFFIC WRECKED', 1.5);
+        const playerCrashed = a.stageCrashes > crashesBefore;
+        this._callout(playerCrashed
+          ? `TRAFFIC WRECKED / IMPACT +${a.racePenaltySec - penaltyBefore} SECONDS`
+          : 'TRAFFIC WRECKED', playerCrashed ? 2.8 : 1.5);
         this.emit({ trafficWrecked: { actor: b, impactMph, thresholdMph: wreck.thresholdMph } });
         return true;
       }

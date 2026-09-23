@@ -8,6 +8,7 @@ Status: ready to merge. This is staged behind the `roadside-destruction` dev swi
 - Hitting one road-sign post drops the whole sign and removes both post colliders. Turn chevrons also fall. A broken object cannot charge another hit on later laps; a new stage restores it. Cacti retain their existing one-time fall and 8% speed scrub.
 - Solid scenery in Wasteland uses the same per-car armor/top-speed crash threshold as vehicle collisions. Ordinary races retain their 28 mph obstacle threshold.
 - The traffic helper computes a mass-aware wreck threshold from closing speed. A wreck moves sideways, lifts, spins, lands, and stays visible using the existing pooled car mesh. The player-to-traffic contact hook and player crash response are owned by the separate armor-impact lane change.
+- A severe traffic hit can wreck the other car and crash the player. The callout now reports both outcomes and the two-second penalty; a protected hit still reports only the wreck.
 - The existing stage-local state drives the animation. Course features, world layout, saves, rewards, and assets remain unchanged. No generated image was needed because the current 3D scenery and car meshes support the fall and wreck states.
 
 ## Checks

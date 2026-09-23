@@ -100,6 +100,7 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
   assert.ok(traffic.wrecked && !traffic.alive, 'an armored head-on ram can wreck oncoming traffic');
   assert.equal(player.impactTimer, 0, 'wrecking light traffic does not lock the player in crash recovery');
   assert.equal(player.stageCrashes, 0, 'a traffic wreck adds no crash penalty');
+  assert.equal(player.callout, 'TRAFFIC WRECKED', 'a protected wreck reports only the traffic outcome');
   assert.ok(player.speedMph < entrySpeed && player.speedMph > entrySpeed - 25,
     'the hit has a modest felt speed cost');
   assert.equal(events.filter(event => event.trafficWrecked).length, 1, 'a traffic wreck emits one event');
@@ -119,6 +120,8 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
   assert.equal(player.lastCrashReason, 'head_on', 'extreme closing speed also breaches player armor');
   assert.ok(player.impactTimer > 0 && player.stageCrashes === 1,
     'the attacker pays one recovery penalty when its own threshold is exceeded');
+  assert.match(player.callout, /TRAFFIC WRECKED \/ IMPACT \+2 SECONDS/,
+    'a severe wreck tells the player about both the traffic wreck and own crash penalty');
 }
 
 {
