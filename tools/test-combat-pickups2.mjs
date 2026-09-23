@@ -88,6 +88,16 @@ test('a seeded two-lap plan has three drivable crates per lap and no inert ammo'
   }
 });
 
+test('future on-foot ammo refill is capped and never debits an existing inventory', () => {
+  const inventory = {shells: 3};
+  assert.equal(pickups.applyAmmoPickup(inventory, 'shells', 4, 5), 2);
+  assert.equal(inventory.shells, 5);
+  assert.equal(pickups.applyAmmoPickup(inventory, 'shells', 4, 5), 0);
+  inventory.shells = 8;
+  assert.equal(pickups.applyAmmoPickup(inventory, 'shells', 4, 5), 0);
+  assert.equal(inventory.shells, 8, 'a lower capacity does not remove earned ammo');
+});
+
 test('plan depends on seed and stage, not speed, frame history or CPU list order', () => {
   const {duel, state} = race();
   const original = buildSeededPickupPlan(duel);

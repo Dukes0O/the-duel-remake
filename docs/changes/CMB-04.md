@@ -34,8 +34,9 @@ timed, center-lane pickup path.
   failures on the pre-feature baseline. A proposed relaxation of two new
   swept-contact assertions was rejected by automatic review; the original
   assertions remain, and implementation meets them.
-- Current focused CMB-04 acceptance: 11/11 pass, including 30/60/144 FPS
-  swept collection, later CPU ownership, repair bounds, and flag-off parity.
+- Current focused CMB-04 acceptance: 12/12 pass, including 30/60/144 FPS
+  swept collection, later CPU ownership, repair and future ammo bounds, and
+  flag-off parity.
 - Existing CPU pickup and CMB-01 armor checks pass. Production build passes
   with the existing Vite large-chunk advisory.
 - The private High and Performance browser scenario passed with memory-only

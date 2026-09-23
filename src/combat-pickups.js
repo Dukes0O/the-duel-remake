@@ -43,8 +43,9 @@ export function buildSeededPickupPlan(duel) {
 // crate is placed until the on-foot actor and its inventory are implemented.
 export function applyAmmoPickup(inventory, ammoType, amount, capacity) {
   if (!inventory || !ammoType || !Number.isFinite(amount) || !Number.isFinite(capacity)) return 0;
-  const before = Math.max(0, inventory[ammoType] || 0);
-  const after = Math.min(Math.max(0, capacity), before + Math.max(0, amount));
+  const before = Number.isFinite(inventory[ammoType]) ? Math.max(0, inventory[ammoType]) : 0;
+  const after = Math.max(before,
+    Math.min(Math.max(0, capacity), before + Math.max(0, amount)));
   inventory[ammoType] = after;
   return after - before;
 }
