@@ -123,3 +123,23 @@ unchanged 6 dB weapon contrast target for one far blast by 0.087 dB
 (5.913 dB). The repeat passed at 7.337 dB. That narrow variation is a
 remaining sound-mix margin risk, separate from the hit-position change.
 Subjective listening and the remaining AUD-01 weapon cues are still open.
+
+## Current integration forward port and recorder tail
+
+The `codex/wasteland-audio-forward` branch applies this partial audio work to
+the current integration gameplay, including the later narrow CPU bomb-use fix.
+The changed lane passed 170/170 suites, the 162 replay comparisons stayed
+unchanged, and the production build passed. A private Chrome race used
+memory-only saves, recorded 22 events and seven WAV stems, and reported no
+browser warnings or errors.
+
+The first two captures ended immediately after stopping the simulation. A
+shift near the 14-second boundary was logged but its sound was cut from the
+recording. The QA recorder now keeps a 250 ms sound tail after simulation stop.
+Two fresh captures detected every one of the 14 timed cues within the
+unchanged 30 ms limit. Engine pitch/rev correlation was 0.979 and 0.982; no
+clicks or clipped samples were measured. Panning, distance, cue variety, and
+six-blast stress mixing passed. The analyzer still exits red: the far blast
+measured 5.554 and 5.946 dB over the engine, below the 6 dB target. This is a
+sound-mix margin issue; the target was not changed. A headphone and speaker
+listening review, as well as the remaining AUD-01/02 sounds, is still open.

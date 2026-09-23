@@ -110,10 +110,13 @@ window.__audioQaStart = async () => {
   return { sampleRate: recorder.sampleRate, storageIsMemory: !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value };
 };
 
-window.__audioQaFinish = () => {
+window.__audioQaFinish = async () => {
   const recorder = qa.recorder;
   if (!recorder) throw Error('Recording was not started.');
   app.stop(); recorder.detach();
+  // Let the final event's sound finish after the simulation stops. A shift
+  // near the capture boundary must be measured rather than cut off by QA.
+  await new Promise(resolve => setTimeout(resolve, 250));
   const tracks = {};
   for (const track of TRACKS) {
     const chunks = recorder.chunks[track], size = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
