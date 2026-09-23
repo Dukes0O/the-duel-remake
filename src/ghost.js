@@ -4,6 +4,7 @@ import {normalizeDriverId,driverModifierSignature,driverRecordMetadata,isCurrent
 import {offroadCapability} from './offroad-physics.js';
 
 export const GHOST_KEY='the-duel-ghosts-v1',GHOST_ENABLED_KEY='duel_ghost_enabled';
+const archiveViews=new WeakMap();
 export const MAX_GHOSTS=12,MAX_GHOST_SAMPLES=1800,MAX_GHOST_BYTES=1_250_000;
 const round=(value,scale)=>Math.round(value*scale),clock=state=>(state.stageTimeSec??0)+(state.racePenaltySec??0);
 const bytes=value=>new TextEncoder().encode(JSON.stringify(value)).length;
@@ -47,8 +48,15 @@ export function normalizeGhostStore(value){
   while(records.length&&bytes({version:1,records,archivedRecords:[]})>MAX_GHOST_BYTES)records.pop();
   return {version:1,records,archivedRecords};
 }
-export function loadGhosts(storage){try{const raw=(storage??globalThis.localStorage)?.getItem(GHOST_KEY);return raw?normalizeGhostStore(JSON.parse(raw)):createGhostStore();}catch{return createGhostStore();}}
-export function saveGhosts(store,storage){try{const target=storage??globalThis.localStorage;if(!target)return false;target.setItem(GHOST_KEY,JSON.stringify(normalizeGhostStore(store)));return true;}catch{return false;}}
+export function setGhostArchive(storage,rows){
+  if(!storage||!Array.isArray(rows))throw new Error('Ghost archive storage is invalid.');
+  const view=normalizeGhostStore({version:1,records:[],archivedRecords:rows});
+  if(view.records.length||view.archivedRecords.length!==rows.length)throw new Error('Ghost archive cannot be loaded without loss.');
+  archiveViews.set(storage,{rows,normalized:view.archivedRecords});
+}
+export function clearGhostArchive(storage){archiveViews.delete(storage);}
+export function loadGhosts(storage){try{const target=storage??globalThis.localStorage,raw=target?.getItem(GHOST_KEY),value=raw?JSON.parse(raw):createGhostStore(),archive=archiveViews.get(target);return normalizeGhostStore(archive?{...value,archivedRecords:[...(value.archivedRecords??[]),...archive.rows]}:value);}catch{return createGhostStore();}}
+export function saveGhosts(store,storage){try{const target=storage??globalThis.localStorage;if(!target)return false;const normalized=normalizeGhostStore(store),archive=archiveViews.get(target);if(archive&&JSON.stringify(normalized.archivedRecords)!==JSON.stringify(archive.normalized))return false;target.setItem(GHOST_KEY,JSON.stringify(archive?{...normalized,archivedRecords:[]}:normalized));return true;}catch{return false;}}
 export function readGhostEnabled(storage){try{return (storage??globalThis.localStorage)?.getItem(GHOST_ENABLED_KEY)!=='false';}catch{return true;}}
 export function saveGhostEnabled(enabled,storage){try{const target=storage??globalThis.localStorage;if(!target)return false;target.setItem(GHOST_ENABLED_KEY,String(!!enabled));return true;}catch{return false;}}
 export function findGhost(store,playerId,options){const key=ghostKey(playerId,options);return key?store.records.find(record=>currentRecord(record)&&record.key===key)||null:null;}

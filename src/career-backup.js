@@ -1,10 +1,12 @@
 import { PROFILE_KEY, PLAYERS_KEY, loadPlayers, normalizeProfile } from './progression.js';
 import { LEADERBOARD_KEY, loadLeaderboard } from './leaderboard.js';
 import { GHOST_KEY, GHOST_ENABLED_KEY, loadGhosts } from './ghost.js';
+import { ARCHIVE_POINTER_KEY, readCareerArchivePointer, installCareerArchive } from './career-archives.js';
 
 export const CAREER_FORMAT = 'the-duel-career';
 export const CAREER_KEYS = Object.freeze([
   PROFILE_KEY, PLAYERS_KEY, LEADERBOARD_KEY, GHOST_KEY, GHOST_ENABLED_KEY,
+  ARCHIVE_POINTER_KEY,
   'duel_route_variant', 'duel_graphics_quality', 'duel_lighting_mood',
   'duel_audio_muted', 'duel_redline_best_v4', 'duel_experimental_v1',
 ]);
@@ -95,9 +97,8 @@ function validateEntries(entries) {
       throw new Error('The leaderboard format is unsupported.');
     }
     if (key === LEADERBOARD_KEY) {
-      const loaded = loadLeaderboard({ getItem: requested => requested === key ? raw : null });
-      if (loaded.entries.length + loaded.archivedEntries.length !==
-        value.entries.length + (value.archivedEntries?.length ?? 0)) {
+      const loaded=loadLeaderboard({getItem:requested=>requested===key?raw:null});
+      if(loaded.entries.length+loaded.archivedEntries.length!==value.entries.length+(value.archivedEntries?.length??0)){
         throw new Error('The leaderboard contains records this game would discard.');
       }
     }
@@ -109,9 +110,8 @@ function validateEntries(entries) {
       throw new Error('The ghost format is unsupported.');
     }
     if (key === GHOST_KEY) {
-      const loaded = loadGhosts({ getItem: requested => requested === key ? raw : null });
-      if (loaded.records.length + loaded.archivedRecords.length !==
-        value.records.length + (value.archivedRecords?.length ?? 0)) {
+      const loaded=loadGhosts({getItem:requested=>requested===key?raw:null});
+      if(loaded.records.length+loaded.archivedRecords.length!==value.records.length+(value.archivedRecords?.length??0)){
         throw new Error('The ghost file contains recordings this game would discard.');
       }
     }
@@ -120,16 +120,49 @@ function validateEntries(entries) {
   return entries;
 }
 export function createCareerExport(storage, now = () => new Date()) {
-  return JSON.stringify({ format: CAREER_FORMAT, version: 1, exportedAt: now().toISOString(), entries: captureCareer(storage) }, null, 2);
+  const entries=captureCareer(storage);
+  if(has(entries,ARCHIVE_POINTER_KEY))throw new Error('This career has IndexedDB archives. Use the complete career export.');
+  return JSON.stringify({ format: CAREER_FORMAT, version: 1, exportedAt: now().toISOString(), entries }, null, 2);
+}
+export async function createCompleteCareerExport(storage, store=createIndexedDbBackupStore(), now=()=>new Date()){
+  const source=storageOrThrow(storage),entries=captureCareer(source),pointer=readCareerArchivePointer(source);
+  if(!pointer)return createCareerExport(source,now);
+  const archives=await store.load(pointer.id);
+  if(!archives||archives.id!==pointer.id||!Array.isArray(archives.leaderboardRows)||!Array.isArray(archives.ghostRows)){
+    throw new Error('The IndexedDB career archives could not be read. No partial export was made.');
+  }
+  if(!sameEntries(captureCareer(source),entries))throw new Error('The career changed during export. Retry.');
+  return JSON.stringify({format:CAREER_FORMAT,version:2,exportedAt:now().toISOString(),entries,archives},null,2);
 }
 export function parseCareerExport(text) {
   let archive;
   try { archive = JSON.parse(text); } catch { throw new Error('This is not a valid JSON career file.'); }
-  if (!isObject(archive) || archive.format !== CAREER_FORMAT || archive.version !== 1 ||
+  if (!isObject(archive) || archive.format !== CAREER_FORMAT || ![1,2].includes(archive.version) ||
     typeof archive.exportedAt !== 'string' || !Number.isFinite(Date.parse(archive.exportedAt))) {
     throw new Error('This career file format is unsupported.');
   }
   validateEntries(archive.entries);
+  const pointer=archive.entries[ARCHIVE_POINTER_KEY];
+  if(archive.version===1&&pointer)throw new Error('The career file omits its IndexedDB archives.');
+  if(archive.version===2){
+    let expected;try{expected=JSON.parse(pointer);}catch{throw new Error('The career archive pointer is invalid.');}
+    if(expected?.version!==1||expected.id!==archive.archives?.id||
+      archive.archives?.version!==1||!Array.isArray(archive.archives.leaderboardRows)||!Array.isArray(archive.archives.ghostRows)){
+      throw new Error('The career file has missing or invalid IndexedDB archives.');
+    }
+    const probe={getItem:key=>archive.entries[key]??null};
+    try{installCareerArchive(probe,archive.archives);}
+    catch{throw new Error('The IndexedDB career archives contain records this game would discard.');}
+    const board=JSON.parse(archive.entries[LEADERBOARD_KEY]??'{"version":1,"entries":[]}');
+    const ghosts=JSON.parse(archive.entries[GHOST_KEY]??'{"version":1,"records":[]}');
+    const loadedBoard=loadLeaderboard(probe),loadedGhosts=loadGhosts(probe);
+    if(loadedBoard.entries.length+loadedBoard.archivedEntries.length!==
+      (board.entries?.length??0)+(board.archivedEntries?.length??0)+archive.archives.leaderboardRows.length||
+      loadedGhosts.records.length+loadedGhosts.archivedRecords.length!==
+      (ghosts.records?.length??0)+(ghosts.archivedRecords?.length??0)+archive.archives.ghostRows.length){
+      throw new Error('The complete career contains duplicate or discarded archive records.');
+    }
+  }
   return archive;
 }
 function requestResult(request) {
@@ -171,12 +204,16 @@ export function createIndexedDbBackupStore(factory = globalThis.indexedDB) {
   };
 }
 export async function backupCareer(storage, backupStore = createIndexedDbBackupStore(), reason = 'migration', now = () => new Date()) {
-  const entries = captureCareer(storage);
+  const source=storageOrThrow(storage),entries = captureCareer(source),pointer=readCareerArchivePointer(source);
+  const archives=pointer?await backupStore.load(pointer.id):null;
+  if(pointer&&(!archives||archives.id!==pointer.id||!Array.isArray(archives.leaderboardRows)||!Array.isArray(archives.ghostRows))){
+    throw new Error('The current IndexedDB career archive cannot be backed up.');
+  }
   const id = 'career-' + now().getTime() + '-' + (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
-  const record = { id, reason, createdAt: now().toISOString(), entries };
+  const record = { id, reason, createdAt: now().toISOString(), entries, archives };
   await backupStore.save(record);
   const saved = await backupStore.load(id);
-  if (!saved || !isObject(saved.entries) || !sameEntries(saved.entries, entries)) throw new Error('The career backup could not be verified.');
+  if (!saved || !isObject(saved.entries) || !sameEntries(saved.entries, entries) || JSON.stringify(saved.archives)!==JSON.stringify(archives)) throw new Error('The career backup could not be verified.');
   return record;
 }
 export async function backupBeforeMigration(storage, backupStore) {
@@ -198,9 +235,21 @@ export async function importCareer(text, { storage, backupStore = createIndexedD
   if (!sameEntries(captureCareer(source), prior)) {
     throw new Error('The current career changed while its backup was being made. Retry the import.');
   }
-  try { applyEntries(source, archive.entries); }
+  try {
+    const entries={...archive.entries};
+    let importedArchives=null;
+    if(archive.version===2){
+      importedArchives={...archive.archives,id:'archive-'+Date.now()+'-'+(globalThis.crypto?.randomUUID?.()??Math.random().toString(36).slice(2))};
+      await backupStore.save(importedArchives);
+      const saved=await backupStore.load(importedArchives.id);
+      if(JSON.stringify(saved)!==JSON.stringify(importedArchives))throw new Error('The imported IndexedDB archives could not be verified.');
+      entries[ARCHIVE_POINTER_KEY]=JSON.stringify({version:1,id:importedArchives.id});
+    }
+    applyEntries(source,entries);
+    installCareerArchive(source,importedArchives);
+  }
   catch (error) {
-    try { applyEntries(source, prior); }
+    try { applyEntries(source, prior);installCareerArchive(source,backup.archives); }
     catch (rollbackError) {
       throw new Error('Import failed and browser storage could not be restored. IndexedDB backup ' + backup.id + ' is available. ' + rollbackError.message, { cause: error });
     }
@@ -211,6 +260,13 @@ export async function importCareer(text, { storage, backupStore = createIndexedD
 export async function restoreCareerBackup(id, { storage, backupStore = createIndexedDbBackupStore() } = {}) {
   const record = await backupStore.load(id);
   if (!record || !isObject(record.entries)) throw new Error('Career backup was not found.');
-  applyEntries(storageOrThrow(storage), record.entries);
+  const source=storageOrThrow(storage);
+  if(record.archives){
+    await backupStore.save(record.archives);
+    const saved=await backupStore.load(record.archives.id);
+    if(JSON.stringify(saved)!==JSON.stringify(record.archives))throw new Error('Recovery archive verification failed.');
+  }
+  applyEntries(source, record.entries);
+  installCareerArchive(source,record.archives);
   return record;
 }

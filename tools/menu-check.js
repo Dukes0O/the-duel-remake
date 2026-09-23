@@ -2,8 +2,16 @@
 // entry from production; it cannot read or modify the origin's saved players.
 import {installIsolatedStorage} from './qa-storage.js';
 import {installPerformanceReview} from './performance-review.js';
+import archiveFixtureText from './fixtures/saves/07-records-and-ghosts.json?raw';
 installIsolatedStorage();
-if(new URLSearchParams(window.location.search).has('career-backup-failure')){
+const qaParams=new URLSearchParams(window.location.search);
+if(qaParams.has('career-archive')||qaParams.has('career-archive-missing')){
+  // Seed only the disposable QA store before production startup migrates it.
+  const fixture=JSON.parse(archiveFixtureText);
+  for(const [key,value] of Object.entries(fixture.storage))localStorage.setItem(key,JSON.stringify(value));
+  if(qaParams.has('career-archive-missing'))localStorage.setItem('the-duel-archive-pointer-v1',JSON.stringify({version:1,id:'archive-missing'}));
+}
+if(qaParams.has('career-backup-failure')){
   // Synthetic legacy data and blocked IndexedDB for the startup recovery check.
   // This page's localStorage has already been replaced with an in-memory store.
   localStorage.setItem('the-duel-profile-v1',JSON.stringify({version:1,credits:734,awardedWins:['synthetic-win']}));

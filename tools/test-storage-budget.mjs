@@ -5,6 +5,8 @@ import { saveLeaderboard, loadLeaderboard, LEADERBOARD_KEY } from '../src/leader
 import { saveGhosts, loadGhosts, ghostKey, GHOST_KEY, MAX_GHOST_BYTES, MAX_GHOST_SAMPLES } from '../src/ghost.js';
 import { DRIVERS } from '../src/drivers.js';
 import { WEAPON_IDS } from '../src/weapon-upgrades.js';
+import {prepareCareerArchives,ARCHIVE_POINTER_KEY} from '../src/career-archives.js';
+import {backupCareer} from '../src/career-backup.js';
 
 // A measured planning envelope, not a cap on a player's career. The three
 // collections below remain unbounded in production: players, record keys and
@@ -31,6 +33,8 @@ assert.equal(MAX_GHOST_SAMPLES, 1800);
 function storage() {
   const map = new Map();
   return {
+    get length(){return map.size;},
+    key:index=>[...map.keys()][index]??null,
     entries: () => [...map],
     getItem: key => map.get(String(key)) ?? null,
     setItem: (key, value) => map.set(String(key), String(value)),
@@ -138,5 +142,40 @@ assert.equal(loadGhosts(origin).archivedRecords.length, failingArchives,
   'archive loader retained every synthetic old-layout ghost, without a cap');
 assert.ok(projectedBytes(failingArchives) >= BUDGET);
 assert.ok(failingArchives > MODEL.archivedGhosts);
-console.log(`Storage budget model: ${(modeledBytes / 1_000_000).toFixed(2)} MB / 4.00 MB UTF-16 for ${MODEL.players} full players, ${board.entries.length} current records, ${board.archivedEntries.length} archived records, ${MODEL.archivedGhosts} archived ghost, and the full active-ghost reservation.`);
-console.log(`EXPECTED BOUNDARY — no hard 4 MB guarantee: ${failingArchives} valid archived ghosts in this same origin project to ${(projectedBytes(failingArchives) / 1_000_000).toFixed(2)} MB; player, record and archive counts remain unbounded.`);
+const records=new Map(),idb={
+  async save(record){records.set(record.id,structuredClone(record));},
+  async load(id){return structuredClone(records.get(id));},
+};
+const rawOrigin=origin.entries();
+const migrated=await prepareCareerArchives({storage:origin,store:idb,backup:()=>backupCareer(origin,idb,'before-archive-migration')});
+assert.equal(migrated.leaderboardRows.length,MODEL.players*MODEL.archivedRecordsPerPlayer);
+assert.equal(migrated.ghostRows.length,failingArchives);
+assert.equal(loadLeaderboard(origin).archivedEntries.length,migrated.leaderboardRows.length);
+assert.equal(loadGhosts(origin).archivedRecords.length,failingArchives);
+assert.ok(origin.getItem(ARCHIVE_POINTER_KEY));
+const interrupted=storage();
+for(const [key,value] of rawOrigin)interrupted.setItem(key,value);
+interrupted.setItem(ARCHIVE_POINTER_KEY,origin.getItem(ARCHIVE_POINTER_KEY));
+await prepareCareerArchives({storage:interrupted,store:idb,backup:()=>backupCareer(interrupted,idb,'resume-archive-migration')});
+assert.equal(loadLeaderboard(interrupted).archivedEntries.length,migrated.leaderboardRows.length,
+  'large pointer-first interrupted migration retains every leaderboard archive');
+assert.equal(loadGhosts(interrupted).archivedRecords.length,migrated.ghostRows.length,
+  'large pointer-first interrupted migration retains every ghost archive');
+const localBytes=origin.entries().reduce((sum,[key,value])=>sum+2*(key.length+value.length),0);
+const activeGhostReservation=2*(GHOST_KEY.length+MAX_GHOST_BYTES+64);
+const maximumModelBytes=localBytes+activeGhostReservation;
+assert.ok(maximumModelBytes<BUDGET,`modeled maximum after archive migration uses ${maximumModelBytes} bytes, over 4 MB`);
+
+const activeOnly=storage();
+let activePlayers=MODEL.players;
+do{
+  activePlayers*=2;
+  const many={version:2,activePlayerId:'budget-player-0',players:Array.from({length:activePlayers},(_,index)=>({
+    id:`budget-player-${index}`,name:`Budget ${index}`,profile:fullProfile(index),
+  }))};
+  assert.ok(savePlayers(many,activeOnly));
+}while(activeOnly.entries().reduce((sum,[key,value])=>sum+2*(key.length+value.length),0)<BUDGET&&activePlayers<1024);
+const activeOnlyBytes=activeOnly.entries().reduce((sum,[key,value])=>sum+2*(key.length+value.length),0);
+assert.ok(activeOnlyBytes>=BUDGET,'unbounded active profiles can still exceed the hard limit');
+console.log(`Storage budget model after archive move: ${(maximumModelBytes/1_000_000).toFixed(2)} MB / 4.00 MB UTF-16 for ${MODEL.players} full players, ${board.entries.length} current records, ${migrated.leaderboardRows.length} archived records, ${failingArchives} archived ghosts in IndexedDB, and full active-ghost reservation.`);
+console.log(`EXPECTED ACTIVE-DATA BOUNDARY — ${activePlayers} fully populated players use ${(activeOnlyBytes/1_000_000).toFixed(2)} MB localStorage. No hard 4 MB guarantee without moving live data.`);

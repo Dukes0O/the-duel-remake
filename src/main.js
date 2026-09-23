@@ -21,20 +21,31 @@ import {courseAccessPanel} from './course-access-ui.js';
 import {speedKph,formatSpeed} from './speed-format.js';
 import {featureFlags} from './feature-flags.js';
 import {experimentalPanel} from './experimental-ui.js';
-import {backupBeforeMigration,createCareerExport,importCareer,parseCareerExport} from './career-backup.js';
+import {backupBeforeMigration,backupCareer,createCompleteCareerExport,createIndexedDbBackupStore,importCareer,parseCareerExport} from './career-backup.js';
+import {prepareCareerArchives} from './career-archives.js';
 
 const root = document.querySelector('#app');
-function downloadCareer(){
-  const content=createCareerExport();
+const backupStore=createIndexedDbBackupStore();
+async function downloadCareer(){
+  const content=await createCompleteCareerExport(undefined,backupStore);
   const url=URL.createObjectURL(new Blob([content],{type:'application/json'}));
   const link=document.createElement('a');link.href=url;link.download='the-duel-career-'+new Date().toISOString().slice(0,10)+'.json';
   document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-await backupBeforeMigration().catch(error=>{
-  root.innerHTML='<section class="backup-blocked" role="alert"><p class="eyebrow">CAREER BACKUP REQUIRED</p><h1>YOUR CAREER IS SAFE.</h1><p id="backup-error"></p><button type="button" id="backup-export">EXPORT YOUR CURRENT SAVE</button></section>';
-  root.querySelector('#backup-error').textContent='The game could not verify an automatic backup before updating this save. '+error.message+' Free browser storage or enable IndexedDB, then reload.';
+await (async()=>{
+  await backupBeforeMigration(undefined,backupStore);
+  await prepareCareerArchives({storage:globalThis.localStorage,store:backupStore,
+    backup:()=>backupCareer(undefined,backupStore,'before-archive-migration')});
+})().catch(error=>{
+  const archiveProblem=/archive/i.test(error.message);
+  root.innerHTML=archiveProblem
+    ?'<section class="backup-blocked" role="alert"><p class="eyebrow">CAREER ARCHIVE NEEDS RECOVERY</p><h1>KEEP THIS BROWSER DATA.</h1><p id="backup-error"></p><button type="button" id="backup-export">TRY COMPLETE EXPORT</button></section>'
+    :'<section class="backup-blocked" role="alert"><p class="eyebrow">CAREER BACKUP REQUIRED</p><h1>YOUR CAREER IS SAFE.</h1><p id="backup-error"></p><button type="button" id="backup-export">EXPORT YOUR CURRENT SAVE</button></section>';
+  root.querySelector('#backup-error').textContent=archiveProblem
+    ?'The game could not read the stored record archive. '+error.message+' Do not clear site data. Restore IndexedDB access and reload. A complete export can download only when both stores are readable.'
+    :'The game could not verify an automatic backup before updating this save. '+error.message+' Free browser storage or enable IndexedDB, then reload.';
   root.querySelector('#backup-export').addEventListener('click',event=>{
-    try{downloadCareer();}catch(exportError){event.target.insertAdjacentText('afterend',' Export failed: '+exportError.message);}
+    void downloadCareer().catch(exportError=>event.target.insertAdjacentText('afterend',' Export failed: '+exportError.message));
   });
   throw error;
 });
@@ -228,8 +239,8 @@ root.addEventListener('click',e => {
     case 'player-close':playersOpen=false;lastScreen=null;break;
     case 'career-export':
       if(app.duel.state.status!=='menu'||!playersOpen)return;
-      try{downloadCareer();backupMessage='Career file downloaded. Keep it somewhere safe.';}catch(error){backupMessage='Export failed: '+error.message;}
-      lastScreen=null;renderState(app.duel.state);return;
+      void downloadCareer().then(()=>{backupMessage='Career file downloaded. Keep it somewhere safe.';lastScreen=null;renderState(app.duel.state);})
+        .catch(error=>{backupMessage='Export failed: '+error.message;lastScreen=null;renderState(app.duel.state);});return;
     case 'career-import':
       if(app.duel.state.status!=='menu'||!playersOpen)return;
       root.querySelector('#career-import-file')?.click();return;

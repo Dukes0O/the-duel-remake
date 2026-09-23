@@ -5,6 +5,7 @@ import {DEFAULT_DRIVER,normalizeDriverId,driverModifierSignature,driverRecordMet
 import {normalizeRival,rivalSignature} from './rival-settings.js';
 
 export const LEADERBOARD_KEY='the-duel-leaderboard-v1';
+const archiveViews=new WeakMap();
 export function createLeaderboard(){return {version:1,entries:[],archivedEntries:[]};}
 const isDriftRow=row=>COURSE.find(stage=>stage.id===row.eventId)?.kind==='drift';
 const currentRow=row=>{const stageIndex=COURSE.findIndex((stage,index)=>stageEventId(index)===row.eventId);return stageIndex>=0&&!COURSE[stageIndex].practice&&row.laps===(COURSE[stageIndex].laps||2)&&row.eventKey===eventKey({...row,stageIndex})&&isCurrentDriverRecord(row);};
@@ -37,8 +38,15 @@ function normalize(value){
   }
   const rows=[...best.values()];return {version:1,entries:rows.filter(currentRow),archivedEntries:rows.filter(row=>!currentRow(row))};
 }
-export function loadLeaderboard(storage){try{const raw=(storage??globalThis.localStorage)?.getItem(LEADERBOARD_KEY);return raw?normalize(JSON.parse(raw)):createLeaderboard();}catch{return createLeaderboard();}}
-export function saveLeaderboard(board,storage){try{const target=storage??globalThis.localStorage;if(!target)return false;target.setItem(LEADERBOARD_KEY,JSON.stringify(normalize(board)));return true;}catch{return false;}}
+export function setLeaderboardArchive(storage,rows){
+  if(!storage||!Array.isArray(rows))throw new Error('Leaderboard archive storage is invalid.');
+  const view=normalize({version:1,entries:[],archivedEntries:rows});
+  if(view.entries.length||view.archivedEntries.length!==rows.length)throw new Error('Leaderboard archive cannot be loaded without loss.');
+  archiveViews.set(storage,{rows,normalized:view.archivedEntries});
+}
+export function clearLeaderboardArchive(storage){archiveViews.delete(storage);}
+export function loadLeaderboard(storage){try{const target=storage??globalThis.localStorage,raw=target?.getItem(LEADERBOARD_KEY),value=raw?JSON.parse(raw):createLeaderboard(),archive=archiveViews.get(target);return normalize(archive?{...value,archivedEntries:[...(value.archivedEntries??[]),...archive.rows]}:value);}catch{return createLeaderboard();}}
+export function saveLeaderboard(board,storage){try{const target=storage??globalThis.localStorage;if(!target)return false;const normalized=normalize(board),archive=archiveViews.get(target);if(archive&&JSON.stringify(normalized.archivedEntries)!==JSON.stringify(archive.normalized))return false;target.setItem(LEADERBOARD_KEY,JSON.stringify(archive?{...normalized,archivedEntries:[]}:normalized));return true;}catch{return false;}}
 export function mergeLeaderboards(...boards){return normalize({version:1,entries:boards.flatMap(board=>board?.entries||[]),archivedEntries:boards.flatMap(board=>board?.archivedEntries||[])});}
 export function recordFinish(board,result,player){
   if(!isValidFinish(result)||!player?.id||!playerName(player.name))return {board,recorded:false};
