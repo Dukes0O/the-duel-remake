@@ -15,9 +15,17 @@ async function qualityPass(context, quality) {
 
   const playerWreck = await context.evaluate(`(async () => {
     const app = window.__qaApp;
+    const buildStart = performance.now();
     if (!app.startCampaign({mode: 'wasteland', startStage: 0,
       opponentCount: 3, seed: 1989})) throw Error('Three-opponent race did not start');
+    const buildMs = performance.now() - buildStart;
     app.stop();
+    const warmupStart = performance.now();
+    window.__render.renderFrame();
+    const warmupMs = performance.now() - warmupStart;
+    const canvasData = document.querySelector('#view3d').dataset;
+    canvasData.combatArmorBuildMs = buildMs.toFixed(2);
+    canvasData.combatArmorWarmupMs = warmupMs.toFixed(2);
     const duel = app.duel, state = duel.state;
     if (state.opponents.length !== 3 || !Number.isFinite(state.maxArmor))
       throw Error('Armored three-opponent field is missing');
@@ -42,7 +50,10 @@ async function qualityPass(context, quality) {
     app.inspectionCamera = {position: [focus.x + 14, focus.y + 7, focus.z + 16],
       target: [focus.x, focus.y + 2, focus.z]};
     app.onFrame?.(state);
+    const playerRenderStart = performance.now();
     window.__render.renderFrame();
+    const playerWreckRenderMs = performance.now() - playerRenderStart;
+    canvasData.combatArmorPlayerWreckRenderMs = playerWreckRenderMs.toFixed(2);
     await new Promise(resolve => setTimeout(resolve, 40));
     window.__render.renderFrame();
     state.paused = true;
@@ -52,11 +63,15 @@ async function qualityPass(context, quality) {
         panel.hidden = true;
     });
     return {opponents: state.opponents.length, armor: state.armor,
-      status: state.status, wrecks: events.length,
+      status: state.status, wrecks: events.length, buildMs, warmupMs,
+      playerWreckRenderMs,
       memoryOnlySaves: !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value};
   })()`);
   if (playerWreck.status !== 'racing' || !playerWreck.memoryOnlySaves)
     throw Error(`${quality} player wreck broke combat race: ${JSON.stringify(playerWreck)}`);
+  console.log(`${quality} armor setup: build ${playerWreck.buildMs.toFixed(2)} ms, ` +
+    `first render ${playerWreck.warmupMs.toFixed(2)} ms; ` +
+    `first player-wreck render ${playerWreck.playerWreckRenderMs.toFixed(2)} ms`);
   await context.screenshot(`armor-player-wreck-${quality}`);
 
   const cpuWreck = await context.evaluate(`(async () => {
@@ -81,17 +96,19 @@ async function qualityPass(context, quality) {
     app.onFrame?.(state);
     const renderStart = performance.now();
     window.__render.renderFrame();
-    const firstRenderMs = performance.now() - renderStart;
+    const cpuWreckRenderMs = performance.now() - renderStart;
+    document.querySelector('#view3d').dataset.combatArmorCpuWreckRenderMs =
+      cpuWreckRenderMs.toFixed(2);
     await new Promise(resolve => setTimeout(resolve, 40));
     window.__render.renderFrame();
     state.paused = true;
     return {opponents: state.opponents.length, playerArmor: state.armor,
       cpuArmor: second.armor, wrecks: wrecks.length, status: state.status,
-      firstRenderMs};
+      cpuWreckRenderMs};
   })()`);
   if (cpuWreck.status !== 'racing' || cpuWreck.opponents !== 3)
     throw Error(`${quality} later-CPU wreck broke the field: ${JSON.stringify(cpuWreck)}`);
-  console.log(`${quality} first CPU-wreck render: ${cpuWreck.firstRenderMs.toFixed(2)} ms`);
+  console.log(`${quality} first later-CPU-wreck render: ${cpuWreck.cpuWreckRenderMs.toFixed(2)} ms`);
   await context.screenshot(`armor-cpu-wreck-${quality}`);
 
   const finish = await context.evaluate(`(() => {

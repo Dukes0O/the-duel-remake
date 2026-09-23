@@ -74,9 +74,14 @@ scenario only; it does not implement armor.
   `dt=0` to seed visible flame and light, then requires repeated frozen frames
   to leave that blast still. It fails at the first new assertion against the
   current `src/explosion.js`, which returns before initializing the blast.
-- The private browser scenario renders each wreck twice, 40 ms apart, before
-  pausing. It records the first CPU-wreck render time in High and Performance
-  without a pass/fail limit. After `_finishStage()`, it refreshes the App UI
+- The private browser scenario renders once immediately after starting the
+  race, then renders each wreck twice, 40 ms apart, before pausing. It records
+  race setup, first render, first player-wreck render, and first later-CPU-wreck
+  render times in High and Performance. These measurements are logged and
+  stored in the canvas data attributes without a pass/fail limit. After
+  `_finishStage()`, it refreshes the App UI
   and requires a visible results panel before taking the results screenshot.
 - This follow-up changes only tests and scenario evidence. The browser
   scenario remains for the builder to run with the production fix.
+- The timing follow-up passed `node --check tools/scenarios/combat-armor-wreck.mjs`
+  and `git diff --check`. The browser scenario was not run in this test branch.
