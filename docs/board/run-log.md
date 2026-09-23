@@ -4,6 +4,17 @@ Read the latest entry before resuming. Add one entry when a card starts,
 reaches review, merges, is parked, or is released. Keep the board status
 in sync with this log.
 
+## 2026-09-22 PDT — FND-12 profile install rejected by auto-review
+
+- The playbook's profile example was corrected to the installed CLI's
+  separate-file syntax and literal Windows paths. The installed CLI confirmed
+  `--profile` reads `$CODEX_HOME/<name>.config.toml`.
+- Automatic approval review rejected creating a persistent profile with
+  `approval_policy = "never"` and network access. It said the overnight work
+  approval did not authorize those exact security-setting changes. No
+  profile file was created. Continue in this managed session; FND-12 remains
+  open for a later explicit authorization and a copy-only dry run.
+
 ## 2026-09-22 PDT — Save fixtures integrated; storage target open
 
 - FND-10 fixture commits `716cfc1` and `ff00d7d` were cherry-picked as

@@ -120,7 +120,7 @@ tasks:
     size: S
     needs: [FND-05]
     status: building
-    note: "Setup audit found the sample profile invalid, no installed named profile and missing feel/audio tools. A copy-only dry run remains required."
+    note: "Playbook profile example corrected, but auto-review rejected installing a persistent no-prompt/network profile without specific user approval. Feel/audio tools and copy-only dry run remain."
     spec: "SPEC.md, task FND-12"
   - id: TOOL-02
     title: "Feel lab and audio checks"

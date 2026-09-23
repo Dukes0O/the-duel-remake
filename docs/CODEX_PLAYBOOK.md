@@ -555,22 +555,31 @@ The separate threads in section 12 still work when you want to watch or steer by
 
 ### 14.2 Setup (task FND-12)
 
-A Codex profile for the run, added to your own `~/.codex/config.toml`. The setting names below are the ones Codex documents today. The FND-12 dry run proves they work on your version before any real run starts.
+A Codex profile is a separate file next to `~/.codex/config.toml` in this
+installed CLI. First create `~/.codex/duel-dry-run.config.toml` with only the
+isolated integration worktree writable. Use TOML literal strings for Windows
+paths so backslashes stay intact:
 
 ```toml
-[profiles.duel-autopilot]
 approval_policy = "never"
 sandbox_mode = "workspace-write"
 
-[profiles.duel-autopilot.sandbox_workspace_write]
-network_access = true                     # npm ci only; the game itself stays offline
+[sandbox_workspace_write]
+network_access = true
 writable_roots = [
-  "C:\Users\kyleb\dev\the-duel-integration",
-  "C:\Users\kyleb\dev\the-duel-remake",   # releases only (Release Manager steps)
+  'C:\Users\kyleb\.codex\worktrees\wasteland-integration\the-duel-remake',
 ]
 ```
 
-Start the run from the integration folder with that profile, for example `codex --profile duel-autopilot`, or pick the profile in the app. Then paste the start prompt.
+Test it with `codex sandbox --profile duel-dry-run -C <integration folder>`:
+prove a write inside the worktree, a rejected write outside it, the locked
+install, and private Chrome QA. Then take a small card through the gates and
+release to a throwaway copy of the live folder. Record every result and any
+approval prompt. Only after that dry run passes, install
+`~/.codex/duel-autopilot.config.toml` with the same settings and the live
+folder added to `writable_roots` for releases. Start from the integration
+folder with `codex --profile duel-autopilot`. Never use the CLI's unrestricted
+sandbox bypass flag.
 
 ### 14.3 The loop
 
