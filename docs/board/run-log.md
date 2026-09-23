@@ -4,6 +4,15 @@ Read the latest entry before resuming. Add one entry when a card starts,
 reaches review, merges, is parked, or is released. Keep the board status
 in sync with this log.
 
+## 2026-09-22 PDT — FND-07 replay fingerprints merged
+
+- Reviewed and cherry-picked replay lane commit `288645a` as integration
+  commit `0881f73`. The integration run passed 162 checks for 18 replay cases
+  across all 16 events, three frame rates and three repeat runs.
+- A disposable physics constant change failed the lane check as expected.
+  The traces pin the first 10 seconds; longer outcomes remain in the existing
+  campaign and event suites.
+
 ## 2026-09-22 PDT — FND-03 old worktree retired
 
 - The old worktree's 22 changed paths were preserved as `4237c2e` on its

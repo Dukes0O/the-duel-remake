@@ -91,8 +91,9 @@ tasks:
     lane: TOOL
     size: M
     needs: [FND-05]
-    status: building
+    status: merged
     spec: "SPEC.md, task FND-07"
+    note: "Merged as 0881f73; 162 fingerprints pass on integration; early 10-second traces cover all 16 events."
   - id: FND-08
     title: "Browser harness"
     wave: 0
