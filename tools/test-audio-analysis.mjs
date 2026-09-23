@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { analyzeRecording, decodeWav } from './audio-analysis.mjs';
+import { analyzeRecording, decodeWav, resolvePitchOctaves } from './audio-analysis.mjs';
 import { wavFromPcm } from './scenarios/audio-race.mjs';
 
 const sampleRate = 16000, seconds = 4;
 const shiftTemplate = decodeWav(readFileSync(new URL('../public/assets/audio/engine-shift.wav', import.meta.url)));
 function fixture({ delaySec = 0, freezePitch = false, impactLevel = null, shiftDelaySec = 0,
-  missingShift = false, priorShift = false } = {}) {
+  missingShift = false, priorShift = false, frozenStepAfterGap = false } = {}) {
   const count = sampleRate * seconds;
   const channels = Object.fromEntries(['mix', 'engine', 'tires', 'weapons', 'ambience', 'ui', 'shift'].map(name => [name, new Float32Array(count)]));
   const frames = [];
@@ -20,8 +20,9 @@ function fixture({ delaySec = 0, freezePitch = false, impactLevel = null, shiftD
   for (let index = 0; index < count; index++) {
     const time = index / sampleRate;
     const revs = freezePitch ? .5 : .2 + .6 * time / seconds;
-    phase += 2 * Math.PI * 52 * 2 ** (revs * 1.55) / sampleRate;
-    channels.engine[index] = Math.sin(phase) * .05;
+    const frequency = frozenStepAfterGap ? (time < 1.5 ? 60 : 120) : 52 * 2 ** (revs * 1.55);
+    phase += 2 * Math.PI * frequency / sampleRate;
+    channels.engine[index] = frozenStepAfterGap && time >= .9 && time < 1.5 ? 0 : Math.sin(phase) * .05;
     for (const eventTime of [1, 3]) {
       const since = time - eventTime - delaySec;
       if (since >= 0 && since < .18) channels.weapons[index] += Math.sin(since * 2 * Math.PI * 120) * .25 * Math.min(1, since * 400) * Math.exp(-since * 12);
@@ -84,6 +85,23 @@ test('frozen engine pitch fails rev tracking', () => {
   assert.equal(moving.checks.engine.pass, true, JSON.stringify(moving.checks.engine));
   assert.equal(frozen.checks.engine.pass, false);
   assert.equal(frozen.passed, false);
+});
+
+test('the launch crossfade gap can start a new octave without using rev telemetry', () => {
+  const trace = [
+    { timeSec: 3.6, rawPitchHz: 58.824, revs: .251 },
+    { timeSec: 4.2, rawPitchHz: 100, revs: .671 },
+    { timeSec: 4.32, rawPitchHz: 55.556, revs: .742 },
+  ];
+  resolvePitchOctaves(trace);
+  assert.deepEqual(trace.map(row => row.pitchHz), [58.824, 100, 111.112]);
+
+  // A silence and one octave step cannot stand in for continuous rev tracking.
+  const stepped = fixture({ frozenStepAfterGap: true });
+  assert.ok(stepped.checks.engine.samples >= 12, JSON.stringify(stepped.checks.engine));
+  assert.ok(Number.isFinite(stepped.checks.engine.correlation));
+  assert.ok(stepped.checks.engine.correlation < .9, JSON.stringify(stepped.checks.engine));
+  assert.equal(stepped.checks.engine.pass, false, JSON.stringify(stepped.checks.engine));
 });
 
 test('repeating the same blast sample is reported as missing variety', () => {

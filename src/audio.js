@@ -234,7 +234,7 @@ export class EngineAudio {
     const variants=[{rate:.8,attack:.009},{rate:1.2,attack:.018},{rate:1.08,attack:.028}];
     const variant=variants[this.blastIndex++%variants.length];
     let voice;
-    voice=this._sample(this.samples.explosion,2.2,variant.rate,filter,Infinity,()=>{
+    voice=this._sample(this.samples.explosion,2.45,variant.rate,filter,Infinity,()=>{
       this.blastVoices.delete(voice);filter.disconnect();output.disconnect();this._balanceBlasts();
     },variant.attack);
     voice.output=output;voice.startedAt=this.context.currentTime;

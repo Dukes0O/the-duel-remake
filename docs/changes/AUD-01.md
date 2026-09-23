@@ -143,3 +143,32 @@ six-blast stress mixing passed. The analyzer still exits red: the far blast
 measured 5.554 and 5.946 dB over the engine, below the 6 dB target. This is a
 sound-mix margin issue; the target was not changed. A headphone and speaker
 listening review, as well as the remaining AUD-01/02 sounds, is still open.
+
+## Far-blast margin and engine measurement follow-up
+
+The recorded far blast missed contrast by up to 0.446 dB. Raising only the
+combat-blast sample gain from 2.2 to 2.45 gave the distant blast room above
+the unchanged 6 dB target. Two private Chrome recordings after that change
+measured far-blast contrast at 6.946 and 7.812 dB, with no clipped samples or
+clicks and the near/far and stress checks still green.
+
+Those recordings exposed an unrelated pitch-check error. After a 0.6 s gap
+in clear tonal readings at launch, the checker sometimes halved a valid
+100 Hz engine reading to 50 Hz and kept the wrong octave for the race. Its
+correlation then fell to 0.681–0.704 although the recorded pitch moved with
+revs. The checker now re-seeds from the audio alone after a long gap and a
+large upward pitch change. It does not use rev telemetry to choose an octave,
+and the 0.90 correlation and 50 ms lag limits are unchanged. A synthetic
+engine that freezes at two notes across a silent gap still fails. All six
+focused analyzer tests pass.
+
+A fresh private browser race then passed all ten analyzer checks: 14 timed
+cues, engine/rev correlation 0.979 at 0 ms lag, far-blast contrast 6.448 dB,
+near/far difference 3.364 dB, zero clipped samples and clicks, and passing
+panning, variety, loop and stress checks. It recorded 783 frames and 23 events
+with seven WAV stems, zero browser warnings and zero errors. The final changed
+lane passed 170/170 suites in 234.35 s, including 162 unchanged replay
+comparisons; the production build passed. This verifies measured targets for
+this partial audio slice. Subjective listening and remaining AUD-01/02 cues
+are still open, and the branch remains held off integration by the balance
+stop line.

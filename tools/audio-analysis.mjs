@@ -132,6 +132,25 @@ function nearestFrame(frames, timeSec) {
   return frames[low];
 }
 
+export function resolvePitchOctaves(measurements) {
+  let previousPitch = null, previousTime = null;
+  for (const row of measurements) {
+    const candidates = [row.rawPitchHz / 2, row.rawPitchHz, row.rawPitchHz * 2]
+      .filter(pitch => pitch >= 45 && pitch <= 220);
+    // A band crossfade can hide the fundamental for several windows. If the
+    // first clear reading afterward is much higher, keep that new octave;
+    // otherwise continuity can halve every later reading in the race.
+    const newOctave = previousPitch != null && row.timeSec - previousTime > .36 &&
+      row.rawPitchHz / previousPitch > 1.5;
+    row.pitchHz = round(previousPitch == null || newOctave ? row.rawPitchHz :
+      candidates.reduce((best, candidate) =>
+        Math.abs(Math.log2(candidate / previousPitch)) < Math.abs(Math.log2(best / previousPitch)) ? candidate : best));
+    previousPitch = row.pitchHz;
+    previousTime = row.timeSec;
+  }
+  return measurements;
+}
+
 export function engineTracking(track, frames, shiftEvents = []) {
   const measurements = [];
   const start = Math.max(track.audioStartSec + .1, frames[0]?.audioTimeSec ?? 0);
@@ -144,17 +163,9 @@ export function engineTracking(track, frames, shiftEvents = []) {
         !shiftEvents.some(event => Math.abs(time - event.audioTimeSec) < .18))
       measurements.push({ timeSec: round(time), rawPitchHz: round(pitchHz), revs: frame.revs, throttle: frame.throttle, gear: frame.gear });
   }
-  // Layered recordings can make an autocorrelation window prefer either a
-  // fundamental or its octave. Pick the nearest octave to the previous audio
-  // reading, without consulting revs, so octave flips do not fake a flat tone.
-  let previousPitch = null;
-  for (const row of measurements) {
-    const candidates = [row.rawPitchHz / 2, row.rawPitchHz, row.rawPitchHz * 2]
-      .filter(pitch => pitch >= 45 && pitch <= 220);
-    row.pitchHz = round(previousPitch == null ? row.rawPitchHz : candidates.reduce((best, candidate) =>
-      Math.abs(Math.log2(candidate / previousPitch)) < Math.abs(Math.log2(best / previousPitch)) ? candidate : best));
-    previousPitch = row.pitchHz;
-  }
+  // Resolve octaves from the audio trace alone; rev telemetry cannot select
+  // the octave that makes this correlation pass.
+  resolvePitchOctaves(measurements);
   const pitches = measurements.map(row => row.pitchHz), revs = measurements.map(row => row.revs);
   const coefficient = correlation(pitches, revs);
   let bestLagMs = 0, bestCorrelation = coefficient ?? -1;
