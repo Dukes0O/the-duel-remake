@@ -488,3 +488,16 @@ checkout untouched until the final integration commit passes the full gate.
 - Expanded CMB-01's owned hooks to cover a temporary wreck's AI, firing and
   pickup guards, its HUD callout, positional blast audio, and the new dev
   feature switch assertion. Independent reviewer findings drive those hooks.
+
+## 2026-09-23 PDT — Combat follow-up cards prepared
+
+- The Director scoped CMB-02 front-spike ramming, CMB-04 seeded weapon and
+  armor pickups, and VIS-01 pooled flipbook effects from independent read-only
+  proposals. All wait for CMB-01 armor to integrate. CMB-07 projectile carry
+  and guidance has an isolated source branch and independent tests; its final
+  flag-on gate also waits for CMB-01's feature-switch wiring.
+- The ramming card latches one contact incident per actor pair until physical
+  separation, so sustained overlap cannot drain armor each frame. The
+  pickup card avoids showing on-foot ammo before fighters exist. The visual
+  card consumes the accepted Batch A sheets without changing ordinary crash
+  effects or reintroducing a first-blast light-count stall.
