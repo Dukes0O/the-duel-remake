@@ -83,7 +83,8 @@ tasks:
     lane: TOOL
     size: M
     needs: [FND-05]
-    status: building
+    status: merged
+    note: "Merged as ee27207 and c434200; 141-suite integration merge gate, production build and private High/Performance browser smoke pass."
     spec: "SPEC.md, task FND-06"
   - id: FND-07
     title: "Replay fingerprints"
@@ -142,7 +143,7 @@ tasks:
     lane: UI
     size: S
     needs: [FND-06]
-    status: blocked
+    status: ready
     spec: "SPEC.md, task BUG-01"
   - id: POLISH-01
     title: "Menu title and player row spacing at 1280x800"
@@ -150,7 +151,7 @@ tasks:
     lane: UI
     size: S
     needs: [FND-06, FND-08]
-    status: blocked
+    status: ready
     spec: "QA observation, 2026-09-22 browser smoke"
     note: "The DUEL title crosses the player controls in the High menu screenshot; fix layout without crowding the race setup or mobile menu."
   - id: BUG-12
@@ -159,7 +160,7 @@ tasks:
     lane: CMB
     size: S
     needs: [FND-06]
-    status: blocked
+    status: ready
     spec: "SPEC.md, task BUG-12"
   - id: BUG-09
     title: "Dents face the hit"

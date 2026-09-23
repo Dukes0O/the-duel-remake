@@ -1,6 +1,6 @@
 ---
 task: FND-06
-status: ready-to-merge
+status: merged
 kind: tooling
 flag: none
 player_facing: no
@@ -20,6 +20,9 @@ player_facing: no
 - `node tools/run-tests.mjs --tier full --jobs 10 --keep-going`: 146 jobs passed, none failed or skipped, in 241.64 seconds. This is below the 15-minute target.
 - `npm run build`: passed. Vite reported the existing large rendering chunk warning.
 - `git diff --check`: passed. Edited text files use LF.
+- On integration commit `c434200`, `npm run test:merge` passed 141 suites
+  in 174.19 seconds; `npm run build` passed; private High/Performance browser
+  smoke reached active races with four screenshots and zero warnings/errors.
 
 ## Coverage and changed assertions
 

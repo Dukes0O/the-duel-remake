@@ -4,6 +4,16 @@ Read the latest entry before resuming. Add one entry when a card starts,
 reaches review, merges, is parked, or is released. Keep the board status
 in sync with this log.
 
+## 2026-09-22 PDT — FND-06 runner merged
+
+- Cherry-picked `d127709` and review fix `77bfbc5` as `ee27207` and
+  `c434200`. The exact integration commit passed 141 merge suites in 174.19
+  seconds, production build, and private High/Performance browser smoke with
+  four screenshots and zero warnings/errors. The lane full tier passed all
+  146 jobs in 241.64 seconds, below the 15-minute limit.
+- BUG-01, POLISH-01 and BUG-12 are now ready. Work is underway in separate
+  lanes; the live checkout remains untouched.
+
 ## 2026-09-22 PDT — Browser harness and feature switches merged
 
 - FND-08 was cherry-picked as `c8b8ed6`. The integration smoke reached an
