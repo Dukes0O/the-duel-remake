@@ -246,6 +246,58 @@ test('Titan rams a later armored CPU without making a permanent crush wreck', ()
   assert.equal(traffic.crushed, true, 'flag-off Titan still crushes traffic');
 });
 
+test('one steep-face incident cannot drain Titan armor every 60 Hz step', () => {
+  function face(wasteland2) {
+    const {duel, state} = race({car: 'titan_monster', wasteland2});
+    const point = (s, lateral = 0) => ({x: lateral,
+      y: Math.max(0, s - 25) * 3, z: s, heading: 0, curvature: 0});
+    duel.course = {def: {id: 'armor-face', practice: true, kind: 'arena', theme: 'desert'},
+      closed: false, length: 10000, raceLength: 20000,
+      features: {obstacles: [], mountains: [], ramps: [], crushables: [],
+        shortcuts: [], flocks: []},
+      at: point, worldAt: point, groundAt: point,
+      nearest: (x, z) => ({s: z, lateral: x}), phase: s => s,
+      surfaceAt: (_, lateral) => ({mainRoad: Math.abs(lateral) <= 7,
+        road: Math.abs(lateral) <= 7, roadHalfWidth: 7}),
+      themeAt: () => 'desert', roadHalfWidthAt: () => 7,
+      nearestRadar: () => null, obstaclesNear: () => duel.course.features.obstacles};
+    duel._obstacleArray = duel.course.features.obstacles;
+    duel._obstacleQueryCache.clear();
+    Object.assign(state, {s: 20, prevS: 20, lateral: 30, prevLateral: 30,
+      speedMph: 25});
+    state.opponents.forEach((actor, index) => place(actor, 1000 + index * 80));
+    return {duel, state};
+  }
+  const legacy = face(false);
+  legacy.duel.setInput({throttle: 1});
+  for (let index = 0; index < 600 && !legacy.state.tumble; index++)
+    legacy.duel.step(1 / 60);
+  assert.equal(legacy.state.tumble?.reason, 'climb_limit',
+    'flag-off Titan reaches the real slope and retains its tumble');
+  assert.equal(legacy.state.armor, undefined);
+
+  const armored = face(true);
+  armored.duel.setInput({throttle: 1});
+  let steps = 0;
+  while (armored.state.armor === armored.state.maxArmor && steps++ < 600)
+    armored.duel.step(1 / 60);
+  assert.ok(steps < 600, 'Titan reaches the actual steep-face armor incident');
+  close(armored.state.maxArmor - armored.state.armor, 20,
+    'first terrain incident costs the specified 20 armor');
+  for (let index = 0; index < 12; index++) armored.duel.step(1 / 60);
+  assert.ok(armored.state.armor >= armored.state.maxArmor - 20 - 1e-6 &&
+    !armored.state.combatWrecking,
+  'holding against one face for twelve frames does not repeat the same 20-damage hit');
+  armored.duel.setInput({throttle: 0, brake: 1});
+  Object.assign(armored.state, {s: 20, prevS: 20, lateral: 30,
+    prevLateral: 30, speedMph: 0, _climbGain: 0});
+  advance(armored.duel, 1.2);
+  armored.duel._startTumble('climb_limit');
+  close(armored.state.maxArmor - armored.state.armor, 40,
+    'a later separate steep-face incident can cost armor again');
+
+});
+
 test('major scenery costs 20 armor and a star blocks that loss', () => {
   const clear = race();
   seedArmor(clear.state);
@@ -346,27 +398,48 @@ test('ordinary racing still spends its original crash slot with the new switch o
   assert.equal(state.armor, undefined);
 });
 
+function hudFor(wasteland2, changes = {}, car = 'falcone_f42') {
+  const {duel, state} = race({wasteland2, car});
+  Object.assign(state, changes);
+  const node = () => ({hidden: false, textContent: '', dataset: {}, style: {},
+    classList: {toggle() {}}, setAttribute() {}});
+  const ui = new Proxy({}, {get: (target, key) => target[key] ??= node()});
+  const text = (id, value) => {ui[id].textContent = String(value);};
+  createHudScreen({app: {duel, cameraMode: 'chase'}, ui, text,
+    time: value => Number(value || 0).toFixed(2),
+    clamp: value => Math.max(0, Math.min(1, Number(value) || 0)),
+    credits: value => Math.floor(value || 0).toLocaleString(),
+    routeMap: {update() {}}})(state);
+  return ui;
+}
+
 test('the active wreck HUD says WRECKED / RECOVERING while flag-off crash wording stays put', () => {
-  function calloutFor(wasteland2, changes) {
-    const {duel, state} = race({wasteland2});
-    Object.assign(state, changes);
-    const node = () => ({hidden: false, textContent: '', dataset: {}, style: {},
-      classList: {toggle() {}}, setAttribute() {}});
-    const ui = new Proxy({}, {get: (target, key) => target[key] ??= node()});
-    const text = (id, value) => {ui[id].textContent = String(value);};
-    createHudScreen({app: {duel, cameraMode: 'chase'}, ui, text,
-      time: value => Number(value || 0).toFixed(2),
-      clamp: value => Math.max(0, Math.min(1, Number(value) || 0)),
-      credits: value => Math.floor(value || 0).toLocaleString(),
-      routeMap: {update() {}}})(state);
-    return ui['callout-text'].textContent;
-  }
-  assert.equal(calloutFor(true, {combatWrecking: true, impactTimer: 3.5,
-    crashFlash: 1.2, callout: 'WRECKED / RECOVERING', calloutTimer: 3.5}),
+  assert.equal(hudFor(true, {combatWrecking: true, impactTimer: 3.5,
+    crashFlash: 1.2, callout: 'WRECKED / RECOVERING', calloutTimer: 3.5})['callout-text'].textContent,
   'WRECKED / RECOVERING');
-  assert.equal(calloutFor(false, {impactTimer: 2, crashFlash: 1,
-    lastCrashReason: 'rock', callout: 'WRECKED / RECOVERING', calloutTimer: 2}),
+  assert.equal(hudFor(false, {impactTimer: 2, crashFlash: 1,
+    lastCrashReason: 'rock', callout: 'WRECKED / RECOVERING', calloutTimer: 2})['callout-text'].textContent,
   'ROCK IMPACT', 'flag-off Wasteland keeps its ordinary crash wording');
+});
+
+test('armored Wasteland HUD shows current and maximum armor through wreck and refill', () => {
+  const full = hudFor(true, {}, 'titan_monster');
+  assert.match(full['damage-label'].textContent, /160\s*\/\s*160/,
+    'full Titan armor and maximum are visible');
+  const hit = hudFor(true, {armor: 100}, 'titan_monster');
+  assert.match(hit['damage-label'].textContent, /100\s*\/\s*160/,
+    'a survivable hit updates the visible armor value');
+  const wreck = hudFor(true, {armor: 0, combatWrecking: true, impactTimer: 3.5},
+    'titan_monster');
+  assert.match(wreck['damage-label'].textContent, /0\s*\/\s*160/,
+    'zero armor remains visible during recovery');
+  assert.equal(wreck['callout-text'].textContent, 'WRECKED / RECOVERING');
+  const recovered = hudFor(true, {armor: 96}, 'titan_monster');
+  assert.match(recovered['damage-label'].textContent, /96\s*\/\s*160/,
+    'the 60% refill becomes visible');
+  const legacy = hudFor(false, {}, 'titan_monster');
+  assert.equal(legacy['damage-label'].textContent,
+    '0 MAJOR HITS · AUTO RECOVERY', 'flag-off HUD keeps its prior crash readout');
 });
 
 test('wreck blast audio uses its hitPosition while legacy blasts still use the burst', () => {
