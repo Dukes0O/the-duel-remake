@@ -3,7 +3,7 @@ import {ownTestCourses} from './career-fixture.mjs';
 import { Duel } from '../src/game.js';
 import { App } from '../src/app.js';
 import { COURSE, LIVES, ROAD_SHOULDER_WIDTH } from '../src/config.js';
-import {bestKey} from '../src/progression.js';
+import {bestKey, createProfile, loadProfile, saveProfile, settleRace} from '../src/progression.js';
 
 let checks = 0;
 const check = (condition, label) => { assert.ok(condition, label); checks++; };
@@ -129,10 +129,33 @@ for (const side of [-1, 1]) {
   const result={stageIndex:d.state.stageIndex,seed:0,laps:2,car:d.state.car,mode:d.state.mode,
     difficulty:d.state.difficulty,cpuDifficulty:d.state.cpuDifficulty,driverId:d.state.driverId};
   const ordinaryKey=bestKey(result);
-  check(bestKey({...result,seed:42})!==ordinaryKey,'per-player best comparisons do not cross route seeds');
-  check(bestKey({...result,laps:1})!==ordinaryKey,'a one-lap record cannot improve a two-lap personal best');
-  check(bestKey({...result})===ordinaryKey,'returning to the matching route restores its record identity');
-  check(bestKey(result,99)!==ordinaryKey,'changed historical route geometry has a distinct timing identity');
+  const finish={...result,runId:'route-best-original',completed:true,won:true,timeSec:60};
+  const original=settleRace(createProfile(),finish);
+  check(original.awarded && original.profile.personalBests[ordinaryKey]===60,
+    'a valid finish saves the first route record');
+  const saved=new Map(),storage={
+    getItem:key=>saved.get(key)??null,
+    setItem:(key,value)=>saved.set(key,String(value))
+  };
+  check(saveProfile(original.profile,storage),'the first route record persists');
+  let profile=loadProfile(storage);
+  const otherSeed=bestKey({...result,seed:42});
+  const otherLaps=bestKey({...result,laps:1});
+  const otherLayout=bestKey(result,99);
+  check(otherSeed!==ordinaryKey && profile.personalBests[otherSeed]===undefined,
+    'per-player best comparisons do not cross route seeds');
+  check(otherLaps!==ordinaryKey && profile.personalBests[otherLaps]===undefined,
+    'a one-lap record cannot improve a two-lap personal best');
+  check(otherLayout!==ordinaryKey && profile.personalBests[otherLayout]===undefined,
+    'changed historical route geometry has a distinct timing identity');
+  const alternate=settleRace(profile,{...finish,runId:'route-best-alternate',seed:42,timeSec:55});
+  check(alternate.personalBestStatus==='baseline' && alternate.profile.personalBests[otherSeed]===55,
+    'another seed records its own baseline without replacing the first route');
+  check(saveProfile(alternate.profile,storage),'both route records persist');
+  profile=loadProfile(storage);
+  const returned=settleRace(profile,{...finish,runId:'route-best-return',timeSec:65});
+  check(returned.previousBest===60 && returned.best===60 && returned.profile.personalBests[ordinaryKey]===60,
+    'returning to the matching route restores its saved 60-second record');
 }
 
 // A skid can physically cross a timing line while lap processing is paused.

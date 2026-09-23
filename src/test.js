@@ -3,7 +3,7 @@ import { CARS, COURSE, LIVES, DIFFICULTY, CPU_DIFFICULTY, DEFAULT_CPU_DIFFICULTY
 import { Course } from './course.js';
 import { Duel } from './game.js';
 import { App } from './app.js';
-import {bestKey,createProfile,loadPlayers,settleRace} from './progression.js';
+import {activePlayer,bestKey,createPlayer,createPlayerRegistry,createProfile,loadPlayers,replacePlayerProfile,savePlayers,selectPlayer,settleRace} from './progression.js';
 import { sweepObstacle, sweepBox, contactZone } from './collision.js';
 
 let pass = 0, fail = 0;
@@ -420,7 +420,26 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
   const key=bestKey(race),awarded=settleRace(createProfile(),race);
   eq(awarded.profile.personalBests[key],45,'a valid finish updates this player\'s best time');
   eq(awarded.best,45,'settlement supplies the best time shown in results');
-  eq(createProfile().personalBests[key],undefined,'another player starts with no shared best time');
+  const saved=new Map(),storage={
+    getItem:key=>saved.get(key)??null,
+    setItem:(key,value)=>saved.set(key,String(value))
+  };
+  let registry=createPlayerRegistry();
+  const firstId=activePlayer(registry).id;
+  const added=createPlayer(registry,'Riley Driver');
+  ok(added.ok,'a second named player can be created for best-time isolation');
+  registry=replacePlayerProfile(added.registry,firstId,awarded.profile);
+  const secondId=added.player.id;
+  ok(savePlayers(registry,storage),'both named players persist with the first player\'s record');
+  registry=selectPlayer(loadPlayers(storage),secondId);
+  eq(activePlayer(registry).id,secondId,'the second named player is selected');
+  eq(activePlayer(registry).profile.personalBests[key],undefined,'another player has no shared best time');
+  ok(savePlayers(registry,storage),'the selected second player persists');
+  registry=loadPlayers(storage);
+  eq(activePlayer(registry).id,secondId,'reload preserves the selected second player');
+  eq(activePlayer(registry).profile.personalBests[key],undefined,'reload does not leak the first player\'s best');
+  registry=selectPlayer(registry,firstId);
+  eq(activePlayer(registry).profile.personalBests[key],45,'switching back restores the first player\'s best');
   ok(bestKey({...race,car:'stuttgart_959s'})!==key,'best times are separate for each car');
   ok(bestKey({...race,difficulty:'pro'})!==key,'best times are separate for each difficulty');
   ok(bestKey({...race,mode:'timetrial'})!==key,'best times are separate for each race mode');
