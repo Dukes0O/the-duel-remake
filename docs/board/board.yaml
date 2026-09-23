@@ -236,7 +236,7 @@ tasks:
     size: S
     needs: [BUG-06]
     status: building
-    note: "Exact 10/7/5 s attacks and race pace integrated through a85acad. Medium/Hard hit and win bands pass; Easy wins 10/10 and CPU UFO/pickups remain open."
+    note: "Exact 10/7/5 s attacks and Easy pace/10-degree aim integrated through 2077364. Wins 8/6/2 and CPU hits 1/2/10 pass; CPU UFO/pickups remain open. Reviewed Wasteland replay, 158-suite merge, build and smoke pass."
     spec: "SPEC.md, task BUG-07"
   - id: BUG-14
     title: "No legacy police in combat races"

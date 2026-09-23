@@ -1,6 +1,6 @@
 ---
 task: BUG-07
-status: ready-for-review
+status: merged
 kind: balance-fix
 flag: none
 player_facing: yes
@@ -55,3 +55,8 @@ An independent reviewer approved the fingerprint update for exact integration
 inputs stayed byte-for-byte unchanged, and the reviewer independently passed
 all 162 replay checks. The fixture covers one Wasteland race; it does not
 establish behavior on every combat course.
+
+Exact integration `2077364` passed 158/158 merge suites in 203.16 seconds,
+production build, and private High/Performance browser smoke with four
+screenshots and zero warnings or errors. The full balance gate still fails
+only the six BUG-04 UFO time-gain comparisons.

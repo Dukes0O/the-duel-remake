@@ -1,5 +1,19 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — Easy CPU balance and replay review merged
+
+- BUG-07 Easy tune `a26319a` raises physical Wasteland rival pace and sets
+  its aim error to the spec's 10°. With Q5 police off, ten no-weapon Pacific
+  races give player wins Easy 8/10, Medium 6/10, Hard 2/10, all inside their
+  bands. CPU hits are 1/2/10; crossbow hits are 13/26 (50%) and own-bomb
+  speed loss peaks at 4.53%. All six UFO time-gain checks remain red.
+- The first exact merge gate caught the expected Pacific Wasteland replay
+  fingerprint change. Independent review approved the one changed case at
+  30/60/144 FPS; 17 other cases and inputs were unchanged. Reviewed update
+  `2077364` passed 158/158 exact merge suites in 203.16 seconds, build and
+  private High/Performance smoke with four screenshots and zero console
+  issues. The balance stop line and live-release hold remain.
+
 ## 2026-09-23 PDT — prompt checkpoint recovery and combat police exclusion merged
 
 - BUG-13 `1fd711f` resets immediately after a physically missed lap gate.
