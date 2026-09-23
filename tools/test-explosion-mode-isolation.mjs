@@ -26,6 +26,10 @@ test('ordinary fatal crashes retain the approved shader and visible PointLight',
     assert.equal(fingerprint,
       '4e0604803a08ed1cc848ecf2775cb515d57a8723b943af5dfc6b2bf7fbe60f58',
       'ordinary crash shader stays visually identical to the approved source');
+    effect.update(position, legacyWreck, 0);
+    assert.equal(light.intensity, 0, 'a paused ordinary crash keeps its legacy activation');
+    assert.ok(puffs.geometry.attributes.puff.array.every((size, index) =>
+      index % 4 !== 0 || size === 0), 'a paused ordinary crash does not seed combat flames');
     effect.update(position, legacyWreck, 1 / 60);
     assert.equal(effect.group.visible, true);
     assert.equal(light.visible, true);
