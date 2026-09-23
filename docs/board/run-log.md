@@ -1,5 +1,17 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — RFX-05 input contexts merged
+
+- Reviewed and cherry-picked `8bc9d35` as `881759a`. The exact integration
+  state passed 152 merge suites in 186.24 seconds and the production build.
+  Private High/Performance smoke passed with four screenshots, zero warnings
+  and zero errors.
+- A branch-only browser smoke failed in its second tab because that branch
+  preceded the FND-10 QA tab-isolation fix. The same browser flow passed on
+  integration with that fix. Menu, foot and photo contexts cannot drive the
+  car or fire car weapons; future foot/photo actions remain mapped for their
+  later features.
+
 ## 2026-09-23 PDT — RFX-06 attachment registry merged
 
 - Independent review found duplicate object ownership and incomplete car

@@ -313,8 +313,8 @@ tasks:
     lane: UI
     size: M
     needs: [BUG-01, BUG-10]
-    status: review
-    note: "Branch 8bc9d35 passed 61-suite lane gate and build. Exact integration browser smoke pending."
+    status: merged
+    note: "Merged as 881759a; 152-suite gate, build and private High/Performance smoke pass. Car, menu, foot and photo bindings are isolated."
     spec: "SPEC.md, task RFX-05"
   - id: RFX-06
     title: "Car attachments registry"

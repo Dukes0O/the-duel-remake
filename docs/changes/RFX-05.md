@@ -1,6 +1,6 @@
 ---
 task: RFX-05
-status: review
+status: merged
 kind: input-refactor
 flag: none
 player_facing: no
@@ -36,6 +36,10 @@ for their later feature cards.
   unmigrated local career`) because this branch predates integration's
   `4222720` tab-isolation fix. The exact integration state needs a fresh
   browser smoke after cherry-picking this card.
+- Cherry-picked as `881759a` onto the QA-fixed integration branch. The exact
+  state passed 152/152 merge suites in 186.24 seconds, the production build,
+  and private High/Performance smoke with four screenshots and zero warnings
+  or errors. This confirms the branch-only second-tab issue is resolved.
 
 ## Limits
 
