@@ -115,7 +115,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
    if (bindings[index] === vehicle) bindVehicle(index, null);
   }
  }
- function update(duel, vehicles = {}){
+ function update(duel, vehicles = {}, useAtlas = false){
   const s = duel.state, c = s.combat;
   const active = !!c && s.status !== 'menu';
   group.visible = active;
@@ -149,7 +149,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   });
   projectiles.forEach(({g,bomb,arrow},i)=>{const p=c.projectiles[i];g.visible=!!p;if(!p)return;g.position.set(p.x,p.y,p.z);bomb.visible=p.kind==='bomb';arrow.visible=!bomb.visible;g.rotation.set(0,Math.atan2(p.vx,p.vz),0);bomb.rotation.set(p.age*5,p.age*3,0);});
   bursts.forEach(({g,flame,smoke,wave,saucer,shards},i)=>{
-   const b=c.bursts[i];g.visible=!!b;if(!b)return;g.position.set(b.x,b.y,b.z);
+   const b=c.bursts[i];g.visible=!!b&&!(useAtlas&&(b.kind==='blast'||b.kind==='spark'));if(!b)return;g.position.set(b.x,b.y,b.z);
    const warp=b.kind==='ufo',star=b.kind==='star',fade=Math.max(0,1-b.age/1.4),size=b.kind==='blast'?1:0.45;
    saucer.visible=warp;saucer.position.y=10+b.age*4;saucer.rotation.y=b.age*4;
    flame.visible=!warp&&!star;smoke.visible=flame.visible;

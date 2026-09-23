@@ -200,6 +200,25 @@ test('disposing the shared pool releases each dedicated sheet exactly once', asy
   }
 });
 
+test('effect planes face each camera during its render pass', async () => {
+  const {createCombatEffects} = await import('../src/combat-effects.js');
+  const source = loader();
+  const effects = createCombatEffects({loadTexture: source.loadTexture});
+  try {
+    const plane = effects.group.getObjectByName('combat-vfx-burst-0-explosion');
+    const camera = new THREE.PerspectiveCamera();
+    for (const yaw of [.6, -.9]) {
+      camera.rotation.set(.2, yaw, 0);
+      plane.onBeforeRender(null, null, camera);
+      assert.ok(plane.getWorldQuaternion(new THREE.Quaternion())
+        .angleTo(camera.quaternion) < 1e-6,
+      'the world matrix faces the current main or rear-view camera');
+    }
+  } finally {
+    effects.dispose();
+  }
+});
+
 test('sheet effects show the first frame, advance, fade and freeze when paused', async () => {
   const {createCombatEffects} = await import('../src/combat-effects.js');
   const source = loader();
@@ -226,6 +245,11 @@ test('sheet effects show the first frame, advance, fade and freeze when paused',
     });
     assert.ok(active.some(material => material.transparent && !material.depthWrite),
       'the atlas is alpha blended without writing depth');
+    current.combat.bursts[0] = {id: 2, kind: 'spark',
+      x: 40, y: 2, z: 60, age: .36};
+    effects.update({state: current, course, dt: 1 / 60});
+    assert.equal(visibleAtlasDrawables(effects.group, source.textures).length, 0,
+      'an expired impact does not keep an invisible draw call alive');
     current.combat.bursts = [];
     effects.update({state: current, course, dt: 1 / 60});
     assert.equal(visibleAtlasDrawables(effects.group, source.textures).length, 0,

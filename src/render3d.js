@@ -1,4 +1,5 @@
 import {createCombatScene} from './combat-scene.js';
+import {createCombatEffects} from './combat-effects.js';
 import * as THREE from 'three';
 import {directionalCameraPose} from './camera-views.js';
 import { CARS, DRIVE } from './config.js';
@@ -107,6 +108,7 @@ export function attachRenderer(host, app) {
   const effects = createDrivingEffects(); scene.add(effects.group);
   const explosion = createExplosion(); scene.add(explosion.group);
   let combatPlayerExplosion = null, opponentExplosions = null;
+  let combatEffects = null;
   host.dataset.opponentExplosionBuildMs='0';
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
@@ -187,13 +189,14 @@ export function attachRenderer(host, app) {
       // Build and compile flagged combat effects during race setup, before
       // the first player or CPU wreck can interrupt a driving frame.
       const buildStart=performance.now();
+      if(!combatEffects){combatEffects=createCombatEffects();scene.add(combatEffects.group);sceneRevision++;}
       combatPlayerExplosion=createExplosion({combat:true});scene.add(combatPlayerExplosion.group);
       opponentExplosions=Array.from({length:opponents.length},()=>createExplosion({combat:true}));
       for(const effect of opponentExplosions)scene.add(effect.group);
       sceneRevision++;
       host.dataset.opponentExplosionBuildMs=(performance.now()-buildStart).toFixed(2);
       const warmupStart=performance.now();
-      renderer.compile(scene,camera);
+      combatEffects.withWarmupVisibility(()=>renderer.compile(scene,camera));
       host.dataset.opponentExplosionWarmupMs=(performance.now()-warmupStart).toFixed(2);
     }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
@@ -337,14 +340,17 @@ export function attachRenderer(host, app) {
     effects.update({ p: pp, course, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now });
     const effectDt = st.paused ? 0 : dt;
     explosion.update(pp,st.combatWrecking?{...st,catastrophic:false}:st,effectDt);
+    combatEffects?.update({state:armoredField?st:null,course,dt:effectDt});
+    const useCombatAtlas=armoredField&&!!combatEffects?.available;
+    host.dataset.combatEffectsStatus=armoredField?useCombatAtlas?'ready':'fallback':'off';
     combatPlayerExplosion?.update(pp,
-      {catastrophic:!!st.combatWrecking,status:st.status},effectDt);
+      {catastrophic:!useCombatAtlas&&!!st.combatWrecking,status:st.status},effectDt);
     opponentExplosions?.forEach((effect, index) => {
       const actor = st.opponents?.[index];
       effect.update(actor ? course.groundAt(actor.s, actor.lateral) : pp,
-        {catastrophic:!!actor?.combatWrecking, status:st.status}, effectDt);
+        {catastrophic:!useCombatAtlas&&!!actor?.combatWrecking, status:st.status}, effectDt);
     });
-    combatScene.update(app.duel,{player,rival,extraOpponents});
+    combatScene.update(app.duel,{player,rival,extraOpponents},useCombatAtlas);
     roadsideDebris.update(st);
     if(!st.paused)chickens.update(menu?{status:'menu',s:172,collectedFlocks:[]}:st,menu?now/1000:st.totalTimeSec);
     animateScene(world,now/1000);
@@ -426,7 +432,7 @@ export function attachRenderer(host, app) {
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
-    const release=()=>{rearView.dispose();combatScene.dispose();vehicleAttachments.clear();effects.dispose();explosion.dispose();combatPlayerExplosion?.dispose();opponentExplosions?.forEach(effect=>effect.dispose());lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
+    const release=()=>{rearView.dispose();combatScene.dispose();combatEffects?.dispose();vehicleAttachments.clear();effects.dispose();explosion.dispose();combatPlayerExplosion?.dispose();opponentExplosions?.forEach(effect=>effect.dispose());lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
     if(warmup)warmup.dispose(release);else release();
   } };
 }
