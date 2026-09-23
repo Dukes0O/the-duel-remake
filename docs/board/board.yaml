@@ -154,9 +154,9 @@ tasks:
     lane: UI
     size: S
     needs: [FND-06, FND-08]
-    status: ready
+    status: ready-to-merge
     spec: "QA observation, 2026-09-22 browser smoke"
-    note: "The DUEL title crosses the player controls in the High menu screenshot; fix layout without crowding the race setup or mobile menu."
+    note: "Short desktop menus give the title its full row before player controls; narrow desktop footers wrap, and mobile keeps clear spacing."
   - id: BUG-12
     title: "Blast target check"
     wave: 1

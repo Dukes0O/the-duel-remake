@@ -139,3 +139,22 @@
 .weapon-hud button:disabled{color:#aa9988;border-color:#625040;cursor:default}.weapon-hud button:focus-visible{outline:3px solid #a1ffdc;outline-offset:2px}.weapon-status{grid-column:1/-1;text-align:center;font:700 10px monospace;letter-spacing:1px;color:#ffe2a4;text-shadow:0 2px 3px #000}
 @media(max-width:700px){.weapon-hud{width:94vw;bottom:8px;grid-template-columns:repeat(4,1fr)}.weapon-hud button{font-size:9px;padding:10px 3px}}
 .combat-mode #style-score-panel{bottom:105px}.combat-mode .race-health #damage-label{color:#ffc68a}
+
+/* Give the title its full grid height before the race controls begin on shorter desktops. */
+@media (min-width:701px) and (max-height:849px){
+  .in-menu .menu-screen{grid-template-rows:max-content max-content max-content;padding-top:80px;gap:16px 6vw}
+  .menu-screen .menu-intro{min-height:max-content}
+  .menu-screen .menu-intro h1{font-size:62px;margin-top:12px}
+  .menu-screen .menu-intro h1>em{margin-top:8px}
+  .menu-screen .setup-line{padding:8px 0}
+  .menu-screen .start-button{margin-top:10px;padding:15px 21px}
+}
+
+/* Keep the build details below the controls when the two desktop columns narrow. */
+@media (min-width:701px) and (max-width:1000px){
+  .in-menu .menu-screen .menu-footer{flex-wrap:wrap}
+  .in-menu .menu-screen .footer-label{display:none}
+  .in-menu .menu-screen .controls-strip{width:auto;min-width:0;flex:1 1 100%}
+  .in-menu .menu-screen .build-meta{flex:1 1 100%;align-items:flex-start}
+  .in-menu .menu-screen .build-version{white-space:normal}
+}
