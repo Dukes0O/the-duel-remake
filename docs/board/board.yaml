@@ -226,7 +226,8 @@ tasks:
     lane: CMB
     size: S
     needs: [BUG-05]
-    status: blocked
+    status: building
+    note: "Crossbow and physical shield slices integrated through a85acad; 156-suite exact merge gate, build and private smoke green. Full balance remains open."
     spec: "SPEC.md, task BUG-06"
   - id: BUG-07
     title: "A CPU that fights back"
@@ -234,7 +235,8 @@ tasks:
     lane: CMB
     size: S
     needs: [BUG-06]
-    status: blocked
+    status: building
+    note: "Exact 10/7/5 s attacks and race pace integrated through a85acad. Medium/Hard hit and win bands pass; Easy wins 10/10 and CPU UFO/pickups remain open."
     spec: "SPEC.md, task BUG-07"
   - id: BUG-08
     title: "Rigs attached to the car"

@@ -1,5 +1,17 @@
 # Wasteland run log
 
+## 2026-09-23 PDT — exact CPU attack intervals integrated
+
+- BUG-06/BUG-07 combat slices through `a85acad` use the spec's exact 10 / 7 /
+  5 second repeat intervals. The changed lane passed 154/154 suites and build;
+  the exact integration state passed 156/156 merge suites in 244.36 seconds,
+  build, and private High/Performance smoke with four screenshots and no
+  warnings or errors.
+- Pacific Canyon seed 1989 CPU hits are Easy 1, Medium 5, Hard 4; Titan Arena
+  hits are 0, 5, 10. Ten Pacific seed wins are 10/10, 6/10, 2/10. Easy's
+  win-rate target, CPU UFO/pickup behavior, and the UFO gain target remain open.
+  The balance stop line and live-release hold remain in force.
+
 ## 2026-09-23 PDT — TST-03 balance win-rate gate merged
 
 - The balance report printed ten-race win rates but omitted their target ranges
