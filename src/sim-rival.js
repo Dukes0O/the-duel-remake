@@ -2,7 +2,7 @@
 import { CARS, CPU_DIFFICULTY, COURSE, DRIVE, TRAFFIC, BOOST, steeringYawAuthority } from './config.js';
 import { makeRng } from './rng.js';
 import { NpcRoutePlanner } from './npc-route.js';
-import { stepTrafficWreck } from './destructibles.js';
+import { stepRoadsideTraffic, stepTrafficWreck } from './destructibles.js';
 import { vehicleContactEnvelope, planNpcYield } from './npc-yielding.js';
 import { clamp, freshDamageZones } from './sim-common.js';
 import {completeCombatRecovery} from './combat-armor.js';
@@ -46,6 +46,7 @@ export function _spawnTraffic(idx) {
 export function _traffic(dt) {
   const s = this.state;
   for (const c of s.traffic) {
+    if (c.roadsideMotion) { stepRoadsideTraffic(c, dt); continue; }
     if (c.wrecked) { stepTrafficWreck(c, dt); continue; }
     if (!c.alive || c.crushed) continue;
     c.prevS = c.s;
