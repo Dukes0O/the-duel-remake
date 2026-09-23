@@ -105,7 +105,7 @@ equal(trajectories[0],trajectories[2],'30 and 144 FPS have identical fixed-step 
   fill();key('keydown','ArrowRight',true);app._applyInput(dt);equal(app.duel.state.input.steer,1,'OS key-repeat does not restart a sustained hold');
   fill();key('keydown','ArrowLeft');app._applyInput(dt);equal(app.duel.state.input.steer,0,'opposing arrow directions cancel immediately');key('keyup','ArrowLeft');app._applyInput(dt);near(app.duel.state.input.steer,firstAuthority,1e-12,'leaving opposed arrows starts fresh');
   fill();app.restart();fresh();
-  fill();app.returnToMenu();fresh();
+  fill();app.returnToMenu();app.startCampaign(options);fresh();
   app.startCampaign(options);fill();app.togglePause();app.resume();fresh();
   fill();window.dispatchEvent(new Event('blur'));app.resume();fresh();
   fill();app.duel.state.paused=true;app._applyInput(dt);app.duel.state.paused=false;fresh();

@@ -1,5 +1,5 @@
 import {purchaseWeaponUpgrade,normalizeWeapons} from './weapon-upgrades.js';
-import {CAMERA_KEYS,CAMERA_MODES} from './camera-views.js';
+import {CAMERA_MODES} from './camera-views.js';
 // app.js — owns the Duel instance, the rAF/step loop, keyboard input, the
 // scripted autopilot, dev hooks, and window.__game. Rendering (render3d.js) and
 // DOM HUD (main.js) are views that read state and call these verbs.
@@ -17,11 +17,11 @@ import {DEFAULT_ROUTE_VARIANT,isRouteVariant,getRouteVariant,getRouteVariantForS
 import {normalizeLightingMood} from './lighting-moods.js';
 import {DEFAULT_RACE_SETTINGS,normalizeRaceSettings,raceSettingsChoices,raceSettingsStage} from './race-settings.js';
 import {createKeyboardSteering,keyboardSteeringDirection} from './keyboard-steering.js';
+import {INPUT_CONTEXTS,keyboardAction,heldInput,gamepadEdgeActions,carGamepadDrive,preventCarKeyDefault} from './input-contexts.js';
 import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as buyDriver,selectDriver as equipDriver} from './drivers.js';
 import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
 
 const SIMULATION_STEP = 1 / 120;
-const GAMEPAD_WEAPON_BUTTONS = [[12, 'ufo'], [15, 'bomb'], [13, 'crossbow'], [14, 'star']];
 export const ROUTE_PREFERENCE_KEY='duel_route_variant';
 function readRoutePreference(){try{const value=globalThis.localStorage?.getItem(ROUTE_PREFERENCE_KEY);return isRouteVariant(value)?value:DEFAULT_ROUTE_VARIANT;}catch{return DEFAULT_ROUTE_VARIANT;}}
 
@@ -77,6 +77,7 @@ export class App {
       if(event.boundaryReset||event.recovered||event.checkpointReset)this.ghostRecorder?.discontinuity();
     });
     this._gamepadButtons = [];
+    this.inputContext = null;
     this._stepAccumulator = 0;
     this.raf = 0;
     this.lastT = null;
@@ -472,18 +473,41 @@ export class App {
   }
 
   // ---- input -----------------------------------------------------------
+  activeInputContext() {
+    return this.inputContext ?? (this.duel.state.status === 'menu' ? 'menu' : 'car');
+  }
+  setInputContext(context = null) {
+    if (context !== null && !INPUT_CONTEXTS[context]) throw new Error(`Unknown input context: ${context}`);
+    this.inputContext = context;
+    this.keys = {};
+    this._keyboardSteering.reset();
+    this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false });
+  }
+  _inputAction(action) {
+    if (!action) return;
+    if (action === 'pause') this.togglePause();
+    else if (action === 'camera-cycle') this.cycleCamera();
+    else if (action.startsWith('camera:')) this.setCamera(action.slice(7));
+    else if (action.startsWith('weapon:')) this.duel.fireWeapon(action.slice(7));
+    else if (action === 'shift-up') this.duel.setInput({ shiftUp: true });
+    else if (action === 'shift-down') this.duel.setInput({ shiftDown: true });
+    else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
+    else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
+  }
   _applyInput(dt) {
     const st = this.duel.state;
     const pad = this._readGamepad();
+    const context = this.activeInputContext();
     if (st.paused) {this._keyboardSteering.reset();return;}
+    if (context !== 'car') {this._keyboardSteering.reset();return;}
     if (this.autopilot) {this._keyboardSteering.reset();this._driveAutopilot(dt);return;}
     const k = this.keys;
     const keyboardSteer = this._keyboardSteering.update(keyboardSteeringDirection(k),dt);
     this.duel.setInput({
-      throttle: (k['ArrowUp'] || k['KeyW']) ? 1 : pad.throttle,
-      brake: (k['ArrowDown'] || k['KeyS']) ? 1 : pad.brake,
+      throttle: heldInput(context, 'throttle', k) ? 1 : pad.throttle,
+      brake: heldInput(context, 'brake', k) ? 1 : pad.brake,
       steer: keyboardSteer || pad.steer,
-      boost: !!k['Space'] || pad.boost,
+      boost: heldInput(context, 'boost', k) || pad.boost,
     });
   }
 
@@ -496,22 +520,9 @@ export class App {
     if (!pad) { this._gamepadButtons = []; return neutral; }
     const pressed = pad.buttons.map(b => b.pressed);
     if (pressed.some(Boolean)) this.audio.unlock();
-    const edge = index => pressed[index] && !this._gamepadButtons[index];
-    if (edge(9)) this.togglePause();
-    if (edge(3)) this.cycleCamera();
-    if (edge(5)) this.duel.setInput({ shiftUp: true });
-    if (edge(4)) this.duel.setInput({ shiftDown: true });
-    for (const [index, weapon] of GAMEPAD_WEAPON_BUTTONS) {
-      if (edge(index)) this.duel.fireWeapon(weapon);
-    }
+    for (const action of gamepadEdgeActions(this.activeInputContext(), pressed, this._gamepadButtons)) this._inputAction(action);
     this._gamepadButtons = pressed;
-    const axis = pad.axes[0] || 0;
-    return {
-      throttle: pad.buttons[7]?.value || 0,
-      brake: pad.buttons[6]?.value || 0,
-      steer: Math.abs(axis) < 0.12 ? 0 : Math.sign(axis) * (Math.abs(axis) - 0.12) / 0.88,
-      boost: !!pressed[0],
-    };
+    return carGamepadDrive(pad, pressed);
   }
 
   // Scripted full-stage driver: floors it, follows the racing line, dodges
@@ -580,18 +591,10 @@ export class App {
     window.addEventListener('keydown', (e) => {
       if (e.target instanceof Element && e.target.closest('input, select, textarea, summary, [contenteditable="true"]')) return;
       this.audio.unlock();
-      if (!e.repeat) {
-        if (e.code === 'Escape' || e.code === 'KeyP') this.togglePause();
-        if (CAMERA_KEYS[e.code]) this.setCamera(CAMERA_KEYS[e.code]);
-        if (['Digit1','Digit2','Digit3','Digit4'].includes(e.code)) this.duel.fireWeapon(['ufo','bomb','crossbow','star'][Number(e.code.slice(-1))-1]);
-        if (e.code === 'KeyM') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
-        if (e.code === 'KeyR' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
-      }
+      if (!e.repeat) this._inputAction(keyboardAction(this.activeInputContext(), e.code));
       this.keys[e.code] = true;
       if(!keyboardSteeringDirection(this.keys))this._keyboardSteering.reset();
-      if (!e.repeat && e.code === 'KeyE') this.duel.setInput({ shiftUp: true });
-      if (!e.repeat && e.code === 'KeyQ') this.duel.setInput({ shiftDown: true });
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code) && !(e.code === 'Space' && e.target instanceof Element && e.target.closest('button'))) e.preventDefault();
+      if (preventCarKeyDefault(e.code, e.target instanceof Element && !!e.target.closest('button'))) e.preventDefault();
     },{signal});
     window.addEventListener('keyup', (e) => { this.keys[e.code] = false;if(!keyboardSteeringDirection(this.keys))this._keyboardSteering.reset(); },{signal});
     window.addEventListener('pointerdown', () => this.audio.unlock(), { passive: true,signal });
