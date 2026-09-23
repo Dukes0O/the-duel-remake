@@ -1,5 +1,36 @@
 # Remake verification
 
+## Opponent field, checkpoint clearance, and combat sound — September 23, 2026
+
+The simulation now keeps up to three CPU cars in an opponents list. The normal
+menu still starts one rival. A scripted three-opponent race completed on every
+finishable course; practice has no finish line. The renderer, route map, HUD,
+results, traffic contacts, and safe resets use the full field. The next combat
+refactor will extend shield and weapon effects beyond the first rival. Splitting
+the game simulation and menu screens preserved all 162 pinned one-rival replay
+fingerprints. Six narrow dialog and keyboard-focus browser checks passed.
+
+After a missed gate, a crowded reset searches nearby clear spaces before
+moving farther back. Focused checks include full 18- and 24-car traffic grids.
+The combined integration merge tier passed **168/168 suites** in 232.68 seconds;
+production build and private High/Performance browser smoke passed with zero
+warnings or errors.
+
+Combat blast and hit sounds now pan from the impact position and fade with
+distance. A fresh private race on the combined build recorded 841 frames,
+23 events and seven sound parts with memory-only saves. All ten analyzer checks
+passed: 14 timed cues were within 30 ms, engine/rev correlation was 0.982 with
+no lag, five measured combat sounds were 6.93–10.45 dB above the engine, and
+the mix peaked at −1.532 dBFS with no clipping or measured clicks. This
+recording did not include a landing or ordinary crash. The remaining new
+weapon and on-foot cues, plus headphone and speaker review, remain open.
+
+A private browser driving sample used the real HUD and rear-view mirror for
+30 settling frames and 120 measured intervals per quality. High and
+Performance both measured 16.7 ms median and 16.8 ms p95, with no interval
+over 33 ms. This short sample is a regression check, not a long-session or
+all-hardware performance guarantee.
+
 ## Armored duel and tactical UFO — September 23, 2026
 
 The Wasteland build uses each selected car's top speed,

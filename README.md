@@ -60,6 +60,7 @@ hard head-on impact can still wreck both vehicles. Cacti fall on contact.
 Turn on **Menu → Experimental → Enable early features** to wreck traffic cars
 and break smaller trees and signposts. They stay down for the race. Large
 trees, rocks and walls remain solid.
+Combat blasts and hits now pan toward their source and fade with distance.
 Wreck recovery has a short two-second race penalty. A missed checkpoint retries
 near that checkpoint. The UFO jump never moves the rival or skips a checkpoint.
 

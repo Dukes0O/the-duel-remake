@@ -446,3 +446,41 @@ tasks:
     status: spike-complete
     note: "Throwaway branch 4cc9556 independently reviewed: real Pacific Canyon walking, pointer lock, 13 focused checks, private browser input and 0.0173–0.0257 ms median step cost. Go with course lookups for FOOT-01; do not merge spike code."
     spec: "SPEC.md, task FOOT-00"
+  - id: RFX-04
+    title: "Split combat into field-aware modules"
+    wave: 2
+    lane: CMB
+    size: M
+    needs: [RFX-03]
+    status: building
+    owns: [src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat-pickups.js, src/combat-ai.js, src/wasteland-tuning.js, tools/test-combat-modules.mjs, tools/test-combat-opponents.mjs]
+    hooks: [src/combat-scene.js]
+    helpers: [reviewer, browser_qa]
+    flag: none
+    behavior_change: yes
+    acceptance:
+      - "Combat facade keeps current public exports and one-rival replay fingerprints."
+      - "Weapons, projectiles, pickups and CPU combat work for every opponent in the state list."
+      - "Every combat number moves into wasteland-tuning.js without changing current balance."
+      - "A real three-opponent combat scene shows valid effects and finishes with ranked results."
+      - "Production build, focused tests, merge gate and private browser scenario pass."
+    note: "Independent red acceptance tests committed as a4316b2; isolated builder started after the audio forward port."
+    spec: "SPEC.md, task RFX-04"
+  - id: AUD-01
+    title: "Weapon sounds"
+    wave: 3
+    lane: ART
+    size: S
+    needs: []
+    status: review
+    note: "Measured spatial blast and hit slice integrated; all ten current-race sound targets pass. Other weapon cues and listening review remain open."
+    spec: "SPEC.md, task AUD-01"
+  - id: AUD-02
+    title: "On-foot and new weapon sounds"
+    wave: 5
+    lane: ART
+    size: M
+    needs: [FOOT-01]
+    status: blocked
+    note: "Audio timing and pitch tools are integrated; the actual on-foot and new weapon cues await their gameplay systems."
+    spec: "SPEC.md, task AUD-02"
