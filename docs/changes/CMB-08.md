@@ -90,3 +90,9 @@ obliteration, visible pooled debris, the traffic car's removal, the new HUD
 message, and unchanged player armor, crash count and time penalty. Under this
 switch alone, armor is not initialized; the scenario checks that native armor
 state stays unchanged rather than subtracting two undefined values.
+
+During release preparation, the default-on switch exposed two older legacy
+test fixtures that had disabled only `wasteland2`. Those fixtures now
+explicitly disable `roadside-destruction` too when checking the old traffic
+crush and wreck path. Their expected outcomes remain unchanged; the focused
+armor and ramming suites pass 19/19 and 13/13.

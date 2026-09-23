@@ -13,7 +13,10 @@ const close = (actual, expected, message, tolerance = 1e-6) =>
 
 function race({mode = 'wasteland', car = 'falcone_f42', opponentCount = 3,
   wasteland2 = true, startStage = 0} = {}) {
-  const duel = new Duel({seed: 1989, car, featureFlags: {wasteland2}});
+  // Legacy comparisons explicitly disable both combat switches now that
+  // roadside destruction is released by default.
+  const duel = new Duel({seed: 1989, car,
+    featureFlags: {wasteland2, 'roadside-destruction': false}});
   duel.startCampaign({mode, car, startStage, opponentCount, cpuDifficulty: 'hard'});
   const state = duel.state;
   state.status = 'racing';

@@ -20,7 +20,9 @@ function place(actor, s, lateral = 0) {
 }
 
 function race({mode = 'wasteland', wasteland2 = true, car = 'falcone_f42'} = {}) {
-  const duel = new Duel({seed: 1989, car, featureFlags: {wasteland2}});
+  // Pin the legacy control even after roadside destruction is on by default.
+  const duel = new Duel({seed: 1989, car,
+    featureFlags: {wasteland2, 'roadside-destruction': false}});
   duel.startCampaign({mode, car, startStage: 0, opponentCount: 3,
     cpuDifficulty: 'hard'});
   const state = duel.state;
