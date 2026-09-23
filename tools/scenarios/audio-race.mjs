@@ -1,5 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { decodeWav, rms } from '../audio-analysis.mjs';
 
 export function wavFromPcm(pcm, sampleRate, channels = 2) {
   if (!Number.isInteger(sampleRate) || sampleRate < 8000 || ![1, 2].includes(channels) || pcm.length % (channels * 2))
@@ -24,9 +25,24 @@ export async function run(context) {
     throw Error(`Audio race failed isolation or sample loading: ${recording.sampleStatus}`);
   if (recording.events.filter(event => event.kind === 'combatExplosion').length < 2)
     throw Error('Audio race did not record both explosion probes.');
-  if (!recording.events.some(event => event.kind === 'combatExplosion' && event.source === 'race' &&
-    Number.isFinite(event.audioSpatial?.pan) && Number.isFinite(event.audioSpatial?.distance)))
+  const realBlast = recording.events.find(event => event.kind === 'combatExplosion' && event.source === 'race' &&
+    Number.isFinite(event.audioSpatial?.pan) && Number.isFinite(event.audioSpatial?.distance) &&
+    Math.abs(event.audioSpatial.pan) > .2);
+  if (!realBlast)
     throw Error('Audio race did not capture a real blast with spatial geometry.');
+  const realHit = recording.events.find(event => event.kind === 'combatHit' && event.source === 'race' &&
+    Number.isFinite(event.audioSpatial?.pan) && Math.abs(event.audioSpatial.pan) > .1 &&
+    !recording.events.some(other => other !== event && ['combatHit', 'combatExplosion'].includes(other.kind) &&
+      Math.abs(other.audioTimeSec - event.audioTimeSec) < .2));
+  if (!realHit) throw Error('Audio race did not capture an isolated real hit with spatial geometry.');
+  const weapons = decodeWav(wavFromPcm(Buffer.from(recording.tracks.weapons.pcmBase64, 'base64'),
+    recording.sampleRate, recording.channels), recording.tracks.weapons.audioStartSec);
+  for (const event of [realBlast, realHit]) {
+    const left = rms(weapons, event.audioTimeSec, .12, 'left');
+    const right = rms(weapons, event.audioTimeSec, .12, 'right');
+    const signedDb = 20 * Math.log10(event.audioSpatial.pan < 0 ? left / right : right / left);
+    if (signedDb < 1) throw Error(`Real ${event.kind} pan was not audible in the recorded weapons stem: ${signedDb.toFixed(2)} dB.`);
+  }
   if (recording.frames.length < 100) throw Error('Audio race did not capture real-time frames.');
   const tracks = {};
   for (const [name, track] of Object.entries(recording.tracks)) {

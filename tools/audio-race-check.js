@@ -16,9 +16,9 @@ AudioNode.prototype.connect = function(destination, ...rest) {
   return originalConnect.call(this, destination, ...rest);
 };
 const originalEvent = app.audio.event.bind(app.audio);
-app.audio.event = event => {
+app.audio.event = (event, state, course) => {
   qa.category = event.crash || event.combatExplosion || event.combatHit || event.explosion || event.weaponFired || event.propCrushed || event.jumpLanded ? 'weapons' : event.shift != null ? 'engine' : 'ui';
-  try { originalEvent(event); } finally { qa.category = null; }
+  try { originalEvent(event, state, course); } finally { qa.category = null; }
 };
 
 const TRACKS = ['mix', 'engine', 'tires', 'weapons', 'ambience', 'ui'];
@@ -75,6 +75,10 @@ window.__audioQaStart = async () => {
       simTimeSec: state.stageTimeSec, source: event.qaProbe ? 'qa-probe' : 'race',
       detail: kind === 'combatHit' ? { victim: event.victim, enemy: event.enemy } : event.qaProbe ? { side: event.qaSide, distance: event.qaDistance, stress: !!event.qaStress } : null,
       audioSpatial: ['combatExplosion','combatHit'].includes(kind) ? combatAudioSpace(event,state,app.duel.course) : null,
+      audioGeometry: ['combatExplosion','combatHit'].includes(kind) && !event.qaProbe ? {
+        source: state.combat?.bursts?.at(-1) ? Object.fromEntries(['x','y','z'].map(axis => [axis, state.combat.bursts.at(-1)[axis]])) : null,
+        listener: app.duel.course?.groundAt?.(state.s,state.lateral) ?? null,
+      } : null,
     });
   });
   app.autopilot = true;

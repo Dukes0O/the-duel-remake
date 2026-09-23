@@ -40,17 +40,30 @@ graphs are under ignored `.qa-dist/browser-output/`.
 | Attack-window pass, `audio-race-2026-09-23T07-50-20-099Z` | 7.10 / 7.94 / 4.85 | about 12.4 dB, 3.32 dB, 0 | No clicks; far blast and cue variety still missed. |
 | Cue-variation pass, `audio-race-2026-09-23T07-53-18-848Z` | 9.23 / 11.10 / 5.68 | about 12.4 dB, 4.25 dB, 0 | Variety passed; far blast missed 6 dB by 0.32 dB. |
 | Final calibration, `audio-race-2026-09-23T07-54-35-037Z` | 9.45 / 11.76 / 6.18 | about 12.4 dB, 3.43 dB, 0 | All measured combat targets passed. |
-| Exact-state repeat, `audio-race-2026-09-23T08-04-25-093Z` | **9.54 / 10.73 / 6.60** | **about 12.4 dB, 3.39 dB, 0** | Combat targets passed again after the final lifecycle change. |
+| Corrected real-race capture, `audio-race-2026-09-23T08-21-23-370Z` | **9.59 / 10.60 / 6.38** | **about 12.3 dB, 3.37 dB, 0** | Combat targets passed with the App state and course forwarded through the QA recorder. |
 
-The exact-state stand-alone combat hit measured **7.19 dB over engine**; the
-hit coincident with a blast measured 10.73 dB. The real blast carried a
-computed pan of +0.617 and source distance of 8.48 m; real hit positions were
-also recorded. Every measured combat cue began within 5 ms of its event. The
-mix peaked at −1.565 dBFS, with zero clipped samples and zero measured clicks.
-The six-blast stress period kept the engine at −23.34 dBFS against a
-−15.00 dBFS mix, well within the analyzer's 18 dB audibility bound.
+The corrected stand-alone combat hit measured **6.87 dB over engine**; the
+hit coincident with a blast measured 10.60 dB. The real blast's source was
+at (−6.97, 16.64, 49.50) and listener at (−12.87, 14.89, 43.57). It carried
+pan +0.612 and distance 8.55 m; the combined blast/hit weapons stem was
+**6.60 dB louder on the right**. The isolated real hit's source was at
+(−2.43, 15.15, −9.05) and listener at (−1.29, 14.10, 10.07). It carried pan
+−0.145, distance 19.18 m, gain 0.983, and a **2.00 dB left bias** in the
+recording. The two injected spatial probes measured 12.39/12.29 dB direction and 3.37 dB
+near-to-far attenuation. The real blast was inside the 15 m full-gain radius,
+so that event alone cannot demonstrate distance falloff. Every measured combat
+cue began within 5 ms of its event. The mix peaked at −1.57 dBFS, with zero
+clipped samples and zero measured clicks. The six-blast stress period kept the
+engine at −23.28 dBFS against a −14.36 dBFS mix, within the analyzer's 18 dB
+audibility bound.
 
-Visual inspection of the final loudness and spectrogram graphs found brief
+The QA recorder initially dropped the new state and course arguments while
+wrapping the App audio hook. Its earlier real-race spatial log therefore did
+not prove the output pan. The corrected wrapper forwards both arguments, and
+the browser scenario now rejects a real blast or isolated hit whose recorded
+left/right levels disagree with its computed pan.
+
+Visual inspection of the calibration loudness and spectrogram graphs found brief
 weapon peaks near the marked events and a continuous engine band without a
 sustained mix-level climb. No human or model listening judgment is claimed:
 the available audio tool could not accept the WAV as input. A headphone and
@@ -58,10 +71,10 @@ speaker check remains useful before a sound release.
 
 ## Remaining analyzer failures
 
-`node tools/audio-analysis.mjs <final-recording> --check` still exits 1.
+`node tools/audio-analysis.mjs <corrected-recording> --check` still exits 1.
 Its shift onset detector cannot isolate most shift accents in the layered
-engine stem (one measured onset was 39 ms, over the 30 ms target), and its
-engine/revs estimator reported correlation 0.224 with a −12.5 ms best lag,
+engine stem (one measured onset was 33 ms, over the 30 ms target), and its
+engine/revs estimator reported correlation 0.343 with a −50 ms best lag,
 below the 0.9 target. Those checks were already red in the TOOL-02 baseline
 and were not weakened. This slice leaves them for a separate engine/audio
 analysis pass. The `--check` failure is an honest whole-sound result even
@@ -74,10 +87,12 @@ though the combat-specific checks pass.
   and blast retirement.
 - `node --test tools/test-audio-analysis.mjs`: four checks passed; a deliberately
   buried combat hit fails the unchanged 6 dB contrast gate.
-- The exact-state browser recorder confirmed a real race blast with finite
-  spatial geometry, six WAV stems, 792 frames, and 23 events.
+- The corrected browser recorder confirmed a real race blast with finite
+  spatial geometry and **6.60 dB measured right bias**, six WAV stems, 791
+  frames, and 23 events. The browser reported zero warnings and errors.
 - `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 157/157 suites
-  passed in 358.32 seconds on the final source. Its replay suite passed all
+  passed in 358.32 seconds on the final production source before the QA wrapper
+  correction. Its replay suite passed all
   162 fingerprints across 18 cases, three frame rates, and three runs.
 - `npm run build`: passed with the existing large rendering chunk warning.
 - `git diff --check`: passed.
