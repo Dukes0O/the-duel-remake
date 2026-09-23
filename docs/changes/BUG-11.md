@@ -10,7 +10,9 @@ player_facing: yes
 
 The weapon bar updates a button, its ready state, or the status line only when
 the displayed value changes. The bar and race setup now show the D-pad mapping:
-Up UFO, Right bomb, Down crossbow, Left star. Keyboard 1–4 still work.
+Up UFO, Right bomb, Down crossbow, Left star. Keyboard 1–4 still work. Each
+button names its keyboard and D-pad control, level, and cooldown for screen
+readers.
 
 ## Evidence
 
@@ -35,3 +37,9 @@ Up UFO, Right bomb, Down crossbow, Left star. Keyboard 1–4 still work.
 No existing assertion changed. The HUD still shows the same cooldown seconds,
 weapon levels, armor hits, and shield time. The new browser scenario measures
 real page mutations and checks the click-then-Space path.
+
+## Review fix
+
+Independent review found the arrow glyphs lacked reliable spoken D-pad names.
+The buttons now expose Up, Right, Down and Left with their keyboard keys in
+accessible labels. The browser scenario checks all four names.

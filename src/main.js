@@ -75,7 +75,8 @@ root.querySelector('.garage-tune').innerHTML='TUNE CAR & DRIVER <span>→</span>
 root.querySelector('.scene-line').insertAdjacentHTML('beforeend','<button type="button" class="course-store-button" data-action="courses" aria-label="Unlock or select courses">COURSES ↗</button>');
 const weaponHud=document.createElement('section');weaponHud.className='weapon-hud';weaponHud.hidden=true;weaponHud.setAttribute('aria-label','Combat weapons');
 const gamepadWeaponDirections={ufo:'↑',bomb:'→',crossbow:'↓',star:'←'};
-weaponHud.innerHTML=Object.entries(WEAPONS).map(([id,w])=>`<button type="button" data-weapon="${id}" title="${w.name} · Key ${w.key} · Gamepad D-pad ${gamepadWeaponDirections[id]}">${w.key} ${gamepadWeaponDirections[id]} · ${w.name}</button>`).join('')+'<span class="weapon-status"></span>';
+const gamepadWeaponNames={ufo:'Up',bomb:'Right',crossbow:'Down',star:'Left'};
+weaponHud.innerHTML=Object.entries(WEAPONS).map(([id,w])=>`<button type="button" data-weapon="${id}" title="${w.name} · Key ${w.key} · Gamepad D-pad ${gamepadWeaponNames[id]}" aria-label="${w.name}, keyboard ${w.key}, gamepad D-pad ${gamepadWeaponNames[id]}">${w.key} ${gamepadWeaponDirections[id]} · ${w.name}</button>`).join('')+'<span class="weapon-status"></span>';
 root.querySelector('#overlay').append(weaponHud);const weaponStatus=weaponHud.querySelector('.weapon-status');
 const weaponButtons=[...weaponHud.querySelectorAll('[data-weapon]')];
 weaponHud.addEventListener('click',e=>{const button=e.target.closest('[data-weapon]');if(button)app.duel.fireWeapon(button.dataset.weapon);});
@@ -402,8 +403,10 @@ function renderState(s) {
     for(const button of weaponButtons){
       const key=button.dataset.weapon,left=combat.cooldowns[key],disabled=s.status!=='racing'||s.paused||left>0;
       const label=`${WEAPONS[key].key} ${gamepadWeaponDirections[key]} · ${WEAPONS[key].name} L${combat.levels[key]} · ${left>0?Math.ceil(left)+'s':'READY'}`;
+      const spokenLabel=`${WEAPONS[key].name}, level ${combat.levels[key]}, keyboard ${WEAPONS[key].key}, gamepad D-pad ${gamepadWeaponNames[key]}, ${left>0?Math.ceil(left)+' seconds to recharge':'ready'}`;
       if(button.disabled!==disabled)button.disabled=disabled;
       if(button.textContent!==label)button.textContent=label;
+      if(button.getAttribute('aria-label')!==spokenLabel)button.setAttribute('aria-label',spokenLabel);
     }
     const status=combat.shield>0?`INVINCIBLE · ${combat.shield.toFixed(1)}s`:`ARMORED DUEL · ${combat.hits} HITS · CPU WEAPONS ACTIVE`;
     if(weaponStatus.textContent!==status)weaponStatus.textContent=status;

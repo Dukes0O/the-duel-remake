@@ -4,6 +4,8 @@ export async function run(context) {
   await context.waitFor("document.querySelector('#stage.in-menu') && !document.querySelector('#start-engine').disabled && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value", 'isolated ready menu', 60_000);
   await context.evaluate("document.querySelector('[data-mode=wasteland]').click(); document.querySelector('#start-engine').click()");
   await context.waitFor("document.querySelector('#overlay').dataset.status==='racing' && !document.querySelector('.weapon-hud').hidden", 'active combat race', 25_000);
+  const directions=await context.evaluate("[...document.querySelectorAll('.weapon-hud [data-weapon]')].map(button=>button.getAttribute('aria-label'))");
+  for(const direction of ['Up','Right','Down','Left'])if(!directions.some(label=>label.includes(`D-pad ${direction}`)))throw Error(`Missing accessible gamepad direction ${direction}.`);
   const changes = await context.evaluate(`new Promise(resolve => {
     const hud=document.querySelector('.weapon-hud');
     const observer=new MutationObserver(records=>{window.__weaponBarWrites=(window.__weaponBarWrites||0)+records.length});
