@@ -140,6 +140,15 @@ tasks:
     status: merged
     note: "Merged as 6ba035b and 96a8e1f; hardened PNG, alpha, prompt and credit checks. 165-suite lane, 159-suite exact merge, build and private smoke pass. Seven planned images remain absent in integration."
     spec: "SPEC.md, section 3.10 and docs/CODEX_PLAYBOOK.md full check"
+  - id: QA-03
+    title: "Repeatable driving frame sample"
+    wave: 0
+    lane: TOOL
+    size: S
+    needs: [FND-08]
+    status: merged
+    note: "Private High/Performance driving samples use real HUD and mirror with memory-only saves; both p50/p95 16.7/16.8 ms, zero >33 ms intervals, two screenshots, no browser issues."
+    spec: "docs/CODEX_PLAYBOOK.md, full check frame pacing comparison"
   - id: TOOL-02
     title: "Feel lab and audio checks"
     wave: 0
