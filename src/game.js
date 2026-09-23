@@ -941,7 +941,9 @@ export class Duel {
   _dentVehicle(actor, zone, impactMph) {
     if (impactMph <= 1 || actor.damageCooldown > 0 || (actor===this.state?this.state.combat?.shield:this.state.combat?.rivalShield)>0) return;
     actor.damageZones ??= freshDamageZones();
-    actor.damageZones[zone] = Math.min(5, actor.damageZones[zone] + clamp(impactMph / 100, .18, 1));
+    const combatImpact = this.state.mode === 'wasteland';
+    actor.damageZones[zone] = Math.min(5, actor.damageZones[zone] +
+      clamp(impactMph / (combatImpact ? 80 : 100), .18, combatImpact ? 2.4 : 1));
     actor.damageCooldown = .65;
   }
 

@@ -23,6 +23,14 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
   'a heavier target lowers the attacker crash threshold');
 
 {
+  const light = race(), heavy = race();
+  light.duel._dentVehicle(light.rival, 'rear', 45);
+  heavy.duel._dentVehicle(heavy.rival, 'rear', 170);
+  assert.ok(heavy.rival.damageZones.rear > light.rival.damageZones.rear * 2,
+    'a faster closing hit visibly damages the opponent more');
+}
+
+{
   const { duel, player, rival } = race();
   const before = { playerSpeed: player.speedMph, rivalSpeed: rival.speedMph };
   assert.equal(duel._vehicleContact(player, rival, 'rival'), true);
