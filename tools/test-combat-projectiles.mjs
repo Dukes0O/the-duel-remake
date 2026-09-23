@@ -192,6 +192,43 @@ test('a fast bolt crosses a later CPU car without tunneling at 30, 60 and 144 FP
   }
 });
 
+test('a flagged bolt hits when its height crosses a later CPU car between frames', () => {
+  const outcomes = [];
+  for (const fps of [30, 60, 144]) {
+    const {duel, state} = field();
+    duel.featureFlags = {enabled: name => name === 'wasteland2'};
+    const target = state.opponents[1];
+    place(target, 140);
+    target.airHeight = target.prevAirHeight = 0;
+    const at = duel.course.groundAt(target.s, target.lateral);
+    const forward = {x: Math.sin(at.heading), z: Math.cos(at.heading)};
+    const speed = T.crossbow.baseSpeed;
+    const span = speed / 30;
+    const projectile = {kind: 'crossbow', enemy: false, level: 0,
+      x: at.x - forward.x * span / 2,
+      y: at.y + T.pointHeight + 2.5,
+      z: at.z - forward.z * span / 2,
+      vx: forward.x * speed, vy: 60, vz: forward.z * speed, age: 0};
+    const hits = [];
+    duel.onChange((_, event) => { if (event.combatHit) hits.push(event); });
+    state.combat.projectiles.push(projectile);
+    for (let frame = 0; frame < Math.ceil(fps * .12) && !hits.length; frame++) {
+      stepCombat(duel, 1 / fps);
+    }
+    assert.equal(state.combat.hits, hits.length, `${fps} FPS records each hit once`);
+    if (hits.length) {
+      assert.equal(state.combat.projectiles.includes(projectile), false,
+        `${fps} FPS consumes the bolt on contact`);
+    }
+    outcomes.push({fps, hits: hits.length});
+  }
+  assert.deepEqual(outcomes, [
+    {fps: 30, hits: 1},
+    {fps: 60, hits: 1},
+    {fps: 144, hits: 1},
+  ], 'the vertical crossing must hit at every frame rate');
+});
+
 test('ordinary races cannot fire or guide a stray bolt with the development switch enabled', () => {
   const {duel, state} = field({mode: 'duel'});
   duel.featureFlags = {enabled: name => name === 'wasteland2'};
