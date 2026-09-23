@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { CARS } from '../src/config.js';
+import { CARS, LIVES } from '../src/config.js';
 import { Duel } from '../src/game.js';
 import { combatCrashThresholdMph, rearRamResponse } from '../src/vehicle-impact.js';
 
@@ -74,6 +74,16 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
   const { duel, player, rival } = race('duel');
   duel._vehicleContact(player, rival, 'rival');
   assert.equal(player.lastCrashReason, 'rival', 'ordinary race collision rules remain unchanged');
+  assert.equal(player.racePenaltySec, 30, 'ordinary race crash keeps its existing time cost');
+}
+
+{
+  const { duel, player } = race();
+  player.speedMph = 160;
+  duel._crash('rock', 1, 160, 'front');
+  assert.equal(player.racePenaltySec, 2, 'a combat wreck has a short time cost instead of the ordinary 30 seconds');
+  assert.ok(player.impactTimer>1.5&&player.impactTimer<2.1, 'visible combat recovery still takes about two seconds');
+  assert.equal(player.lives, LIVES.start, 'a combat wreck does not consume an ordinary race life');
 }
 
 {

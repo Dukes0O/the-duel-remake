@@ -22,6 +22,7 @@ import {featureFlags} from './feature-flags.js';
 import {breakableScenery, sceneryIdentity, trafficDestruction, startTrafficWreck, stepTrafficWreck} from './destructibles.js';
 
 const BOUNDARY_WARNING = 60, BOUNDARY_RESET = 78;
+const WASTELAND_CRASH_PENALTY_SEC = 2;
 const GLANCING_WALL_NORMAL_FRACTION = Math.sin(35 * Math.PI / 180);
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const freshDamageZones = () => ({ front: 0, rear: 0, left: 0, right: 0 });
@@ -1417,7 +1418,8 @@ export class Duel {
     s.combo = 0; s.comboTimer = 0;
     const practice = this.course.def.practice === true;
     const recoverable = practice || s.mode==='wasteland' || this.stageDef.persistentVehicle || this.stageDef.kind === 'chase';
-    const penalty = practice ? 0 : this.stageDef.crashPenaltySec ?? (this.stageDef.kind === 'chase' ? this.stageDef.chaseCrashPenaltySec : LIVES.crashPenaltySec);
+    const penalty = practice ? 0 : s.mode === 'wasteland' ? WASTELAND_CRASH_PENALTY_SEC :
+      this.stageDef.crashPenaltySec ?? (this.stageDef.kind === 'chase' ? this.stageDef.chaseCrashPenaltySec : LIVES.crashPenaltySec);
     if (!recoverable) s.lives -= LIVES.crashLifeCost;
     s.penaltySec += penalty;
     s.racePenaltySec += penalty;
