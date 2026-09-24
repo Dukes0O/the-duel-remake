@@ -87,7 +87,7 @@ tasks:
     size: M
     needs: [TRACK-02]
     merge_after: GFX-00
-    status: ready
+    status: building
     owns: [src/hidden-road.js, src/course.js, src/sim-driving.js, src/sim-crash.js, src/world.js, tools/test-hidden-road.mjs, tools/test-feature-flags.mjs, tools/replays/hidden-road-ordinary.json, tools/scenarios/hidden-road.mjs]
     hooks: [src/feature-flags.js, src/game.js, src/world-surfaces.js]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
@@ -437,7 +437,7 @@ tasks:
     size: S
     needs: [BUG-05]
     status: building
-    owns: [src/combat-projectiles.js, tools/test-combat-projectiles.mjs]
+    owns: [src/combat-projectiles.js, tools/test-combat-projectiles.mjs, tools/replays/projectile-height-controls.json]
     helpers: [test_author, balance_analyst, test_runner, reviewer]
     active_slice: "Use actual moving vehicle height for flagged crossbow body contact."
     acceptance:

@@ -907,3 +907,17 @@ checkout untouched until the final integration commit passes the full gate.
   Builder may correct their trajectories to cross the actual body, retaining
   all hit-count and frame-rate assertions, with exact changes reviewed and
   documented. Separate uphill launch-height error remains a later fix.
+
+- EGG-01 red commit c60faad has 31 bounded groups: six baseline invariants
+  pass and 25 missing-feature checks fail; existing 162 replay checks pass.
+  Builder starts in .lanes/egg01 with the separate corridor API and eight
+  authorized source files. No existing fingerprints changed.
+- BUG-06 collision red commit ae860fb has 23 passes and 12 false-hit failures;
+  builder starts in .lanes/bolt-height. Its small pre-change control fixture
+  is authorized for legacy bolts and unchanged bomb/RPG contact behavior.
+- GFX-00 fix 10daa29 passed independent re-review. Its required lane command
+  selected all 216 suites through the runner's conservative fallback; it is
+  running while browser QA and the other builders continue. No extra broad
+  tier was requested. The next task merge still triggers the scheduled full.
+- Removed the fully merged, clean BAL-01 lane without force after checking
+  ancestry and absence of private QA artifacts. Its branch and note remain.
