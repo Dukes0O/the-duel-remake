@@ -260,7 +260,7 @@ tasks:
     lane: SAVE
     size: M
     needs: [EGG-03]
-    status: review
+    status: merged
     owns: [src/hidden-road-discovery.js, src/hidden-road-hints.js, tools/test-hidden-road-discovery.mjs, tools/test-hidden-road-hints.mjs, tools/scenarios/hidden-road-discovery.mjs, docs/board/looks/hidden-road-discovery/, docs/changes/EGG-04.md]
     hooks: [src/wasteland-progress.js, src/career-backup.js, src/progression.js, src/app.js, src/game.js, src/hidden-road-journey.js, src/hidden-road-ui.js, src/screen-menu.js, src/screen-menu.css, src/screen-router.js, src/screen-garage.js, src/route-map.js, src/course-preview.js, src/world.js, tools/test-wasteland-profile.mjs]
     helpers: [test_author, save_guardian, reviewer, browser_qa]
@@ -276,14 +276,14 @@ tasks:
       - "Retain two scored bounded browser rounds for hidden/discovered menu and map, Turn back persistence, automatic revisit, five/ten-race hints and a phone-size menu. Preserve ordinary and flag-off replay fingerprints. Required lane/build gate and evidence note precede integration."
       - "R1 review authorizes a narrow screen-menu.css rule for the discovered WASTELAND action: full-column secondary button at least 44 pixels high. Move the five-race garage hint above the car list and label the revealed map path clearly, keeping undiscovered and flag-off presentation unchanged. R2 menu images must show settled loading state; do not hide a real loading overlay in the capture."
       - "The independent author may extend test-wasteland-profile's exact default key list with the two approved discovery fields and assert false/zero defaults. Retain every existing key and all legacy, malformed, backup and future-version checks. The Director reviews this precise expected-schema change before the mandatory gate rerun; record and retain the original failure."
-    note: "Final clean a5fe405 is at mandatory lane/build gate. Runtime f0f3ae4 and independent Save Guardian review pass; focused discovery ten groups and hints seven groups pass, with unchanged existing map/preview checks. Two retained visual rounds are accepted; R2 fixes tip visibility, phone action size and revealed map labeling. Counter saturates at ten; migration's sixty-row retained history is only a lower bound. Raw-field backup detection precedes writes and unknown Wasteland data remains preserved. Direct visits clear race/ghost context, preserve choices and create no payable or abandoned result. Source and review limits are in the change note. Hidden Road stays dev for separate wall/wash art debt."
+    note: "Merged 81b268c after 231 passing lane suites and a passing build on clean fdcf7eb; c4edc08 changes evidence only. Three failed attempts and reviewed corrections are retained: existing update ordering, optional menu control, and exact approved discovery-field expectation. Runtime, Save Guardian and presentation reviews pass; two scored browser rounds are retained. Discovery persists by player; direct visits create no race settlement. Raw-field backup detection precedes writes, unknown Wasteland data is preserved, and the bounded counter's history initialization is only a lower bound. Hidden Road stays dev for separate wall/wash art debt."
   - id: CAM-01
     title: "First-person and overhead camera choice"
     priority: 12
     lane: VIS
     size: M
     needs: [EGG-04]
-    status: backlog
+    status: active
     owns: [src/onfoot-camera.js, tools/test-onfoot-camera-choice.mjs, tools/scenarios/onfoot-camera-choice.mjs, docs/board/looks/onfoot-camera-choice/, docs/changes/CAM-01.md]
     hooks: [src/app.js, src/input-contexts.js, src/render3d.js, src/screen-menu.js, src/screen-router.js, src/race-settings.js, src/career-backup.js, src/combat-hud.js, src/combat-hud.css, tools/test-race-settings.mjs]
     helpers: [test_author, reviewer, save_guardian, browser_qa]

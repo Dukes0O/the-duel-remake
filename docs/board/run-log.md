@@ -1302,3 +1302,20 @@ checkout untouched until the final integration commit passes the full gate.
 - Quota at 11:40 UTC: eleven percent remaining; the five-percent floor still
   applies. Zero merges since the 11:20 full pass. Next full by 13:20 UTC or
   five merges, and at run end. No live change, release or push.
+
+## 2026-09-24 12:05 UTC - discovery integrated, camera choice begins
+
+- EGG-04 merged as 81b268c after 231 passing lane suites in 304.54 seconds
+  and a passing build on clean fdcf7eb. Final c4edc08 is evidence only.
+  All three failed attempts are retained with independently reviewed fixes:
+  preserve update synchronization order, guard optional legacy menu controls,
+  and add the two approved fields to the exact expected profile shape.
+- STATUS refreshed on the clean merge commit. One task merge since the
+  11:20 UTC full pass; next full after four more merges or 13:20 UTC, and at end.
+- CAM-01 starts with independent red tests, separate preference/input and
+  camera/presentation owners, then independent save and source review.
+  Known saved-preference assertion changes are scoped before implementation;
+  related existing short checks run before its broad gate.
+- Last quota observation before taking this card: ten percent remaining.
+  Treat this as the final planned card, reserving the end-of-run full check
+  and handoff above the five-percent floor. No live change, release or push.

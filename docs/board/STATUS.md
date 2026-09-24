@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-24T11:21:12.340Z
+Observed at: 2026-09-24T12:04:37.594Z
 
-Observation commit: 016833692d9793e36a8c079a5c2e7204532b51bf
+Observation commit: 81b268c4de7111de6aa91f2261bfd69c82e8a393
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 016833692d9793e36a8c079a5c2e7204532b51bf
+Integration HEAD: 81b268c4de7111de6aa91f2261bfd69c82e8a393
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -14,7 +14,7 @@ Live commit: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 
 Live build version: 20260924002834-86f3e7fb6e36
 
-Full tier: passed; exact HEAD passed: yes.
+Full tier: stale; exact HEAD passed: no.
 
 Last recorded full run: 2026-09-24T11:20:34.319Z; tested commit: 016833692d9793e36a8c079a5c2e7204532b51bf.
 
@@ -68,7 +68,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/egg01-hidden-road | 0 | unknown | true | false | unknown |
 | codex/egg02-rustwall | 0 | unknown | true | false | unknown |
 | codex/egg03-gate-arrival | 0 | unknown | true | false | unknown |
-| codex/egg04-discovery | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/egg04 |
+| codex/egg04-discovery | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/egg04 |
 | codex/foot01-fighter | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/foot01-fighter/the-duel-remake |
 | codex/foot02-car-transition | 0 | unknown | true | false | unknown |
 | codex/foot03-controls-camera | 0 | unknown | true | false | unknown |
@@ -108,7 +108,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/wasteland-aud-hit-location | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-aud-hit-location/the-duel-remake |
 | codex/wasteland-aud01 | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-aud01/the-duel-remake |
 | codex/wasteland-audio-current | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-audio-current/the-duel-remake |
-| codex/wasteland-audio-forward | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-audio-forward/the-duel-remake |
+| codex/wasteland-audio-forward | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-audio-forward/the-duel-remake |
 | codex/wasteland-balance-report | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-balance-report/the-duel-remake |
 | codex/wasteland-browser-harness | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-tool-browser/the-duel-remake |
 | codex/wasteland-career-backup | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-career-backup/the-duel-remake |
@@ -120,7 +120,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/wasteland-combat-bug07 | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-combat-bug12/the-duel-remake |
 | codex/wasteland-combat-bug12 | 1 | unknown | false | false | unknown |
 | codex/wasteland-combat-penalties | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-combat-penalties/the-duel-remake |
-| codex/wasteland-cpu-charged-bolt | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-cpu-charged-bolt/the-duel-remake |
+| codex/wasteland-cpu-charged-bolt | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-cpu-charged-bolt/the-duel-remake |
 | codex/wasteland-cpu-pickups | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-cpu-pickups/the-duel-remake |
 | codex/wasteland-cpu-ufo | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-cpu-ufo/the-duel-remake |
 | codex/wasteland-crash-hud | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-crash-hud/the-duel-remake |
@@ -172,7 +172,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 016833692d9793e36a8c079a5c2e7204532b51bf
+- Local integration/wasteland: 81b268c4de7111de6aa91f2261bfd69c82e8a393
 
 Local rollback build (dist-previous): 20260923193614-0b1389a185dd. Manifest presence does not verify the full rollback build.
 
