@@ -57,6 +57,10 @@ const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;'
 root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML});
 const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
   onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});
+// Presentation-only QA switch, absent from normal production builds.
+const hiddenRoadUiQa=typeof __DUEL_QA__!=='undefined'&&__DUEL_QA__?{skipUpdate:false}:null;
+if(hiddenRoadUiQa)window.__hiddenRoadUiQa=hiddenRoadUiQa;
+let lastHiddenRoadView=null;
 
 root.querySelector('.garage-tune').insertAdjacentHTML('beforebegin',driverMenuMarkup());
 root.querySelector('.build-meta').insertAdjacentHTML('beforeend','<button type="button" id="experimental-open" class="build-label experimental-open" data-action="experimental" aria-label="Open Experimental features">EXPERIMENTAL</button>');
@@ -288,7 +292,8 @@ function renderState(s) {
   presentJumpHeight(jumpHeightReadout,s,app,ui,text);
   if(s.status!=='menu') updateHud(s);
   combatHud.update(s);
-  const journeyView=hiddenRoadUi.update(s,app.duel.course);
+  const journeyView=hiddenRoadUiQa?.skipUpdate?lastHiddenRoadView:hiddenRoadUi.update(s,app.duel.course);
+  lastHiddenRoadView=journeyView;
   ui.stage.classList.toggle('hidden-road-active',!!journeyView?.active);
   const hudOpacity=String(journeyView?.hudOpacity??1);
   if(ui.stage.style.getPropertyValue('--hidden-road-hud-opacity')!==hudOpacity)

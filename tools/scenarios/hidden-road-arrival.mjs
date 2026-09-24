@@ -141,26 +141,32 @@ async function presentationCost() {
   const originalDraw=render.renderer.render;let drawMs=0;
   render.renderer.render=function(...args){const start=performance.now();try{return originalDraw.apply(this,args);}finally{drawMs+=performance.now()-start;}};
   const realRaf=window.requestAnimationFrame.bind(window),dialog=document.querySelector('[data-hidden-road-dialog]');
+  const hudHook=window.__hiddenRoadUiQa;if(!hudHook)throw Error('QA-only gate HUD hook missing');
+  try{
   app.stop();Object.assign(state,structuredClone(qa.costSnapshot));app.onFrame?.(state,0);render.renderFrame();
   // Let the outstanding production renderer callback drain, then make exactly
   // one production presentation draw per ordered RAF. No simulation advances.
   window.requestAnimationFrame=()=>0;await new Promise(resolve=>realRaf(resolve));
   const results={};
   for(const enabled of [false,true]){
+    hudHook.skipUpdate=!enabled;
     rig.userData.updateJourney=enabled?update:()=>{};
     if(!enabled){const sparks=rig.getObjectByName('Gate guide sparks');if(sparks)sparks.visible=false;dialog.hidden=true;}
     const rows=[];let previous=null;
     for(let i=0;i<132;i++){
       const now=await new Promise(resolve=>realRaf(resolve)),start=performance.now();
-      if(enabled)app.onFrame?.(state,0);
+      app.onFrame?.(state,0);
       drawMs=0;const stats=render.renderFrame(),cpuMs=performance.now()-start;
       if(i>=12)rows.push({index:i-12,rafMs:now-previous,cpuPresentationMs:cpuMs,cpuRenderMs:drawMs,...stats});previous=now;
     }
     const percentile=(key,f)=>{const values=rows.map(r=>r[key]).sort((a,b)=>a-b);return values[Math.floor((values.length-1)*f)];};
     results[enabled?'enabled':'disabled']={rows,summary:{samples:rows.length,rafP50:percentile('rafMs',.5),rafP95:percentile('rafMs',.95),cpuP50:percentile('cpuPresentationMs',.5),cpuP95:percentile('cpuPresentationMs',.95),cpuRenderP95:percentile('cpuRenderMs',.95),drawCalls:rows.at(-1).drawCalls,triangles:rows.at(-1).triangles},camera:render.camera.position.toArray()};
   }
-  render.renderer.render=originalDraw;rig.userData.updateJourney=update;window.requestAnimationFrame=realRaf;Object.assign(state,saved);app.onFrame?.(state,0);render.renderFrame();
-  return{scope:'120 ordered stationary RAF frames per condition after 12 warm-up frames. Same real opening pose, camera and scene; disabled removes gate spark update/draw and HUD update. CPU includes presentation and render submission, not GPU time. Opening dialog is correctly hidden. App simulation stopped; no recording/PCM work overlaps this sample.',...results};
+  return{scope:'Corrected pair: 120 ordered stationary RAF frames per condition after 12 warm-up frames. Identical app.onFrame and ordinary HUD work in both conditions. QA-only hook skips only hiddenRoadUi.update; disabled also removes gate spark update/draw. Same stopped opening pose/camera/scene. CPU includes presentation and render submission, not GPU time. Opening dialog is correctly hidden. No recording/PCM work overlaps.',...results};
+  }finally{
+    hudHook.skipUpdate=false;render.renderer.render=originalDraw;rig.userData.updateJourney=update;
+    window.requestAnimationFrame=realRaf;Object.assign(state,saved);app.onFrame?.(state,0);render.renderFrame();
+  }
 }
 
 async function key(context,code,keyValue,number) {
@@ -254,24 +260,34 @@ async function runMotionSupplement(context,round) {
 }
 
 async function runCostRefinement(context,round){
-  await runMotionSupplement(context,round);
-  const directory=join(ROOT,`docs/board/looks/hidden-road-arrival/round-${round}`),results={
+  const corrected=process.env.EGG_ARRIVAL_CORRECTED==='1';
+  if(!corrected)await runMotionSupplement(context,round);
+  const relative=`docs/board/looks/hidden-road-arrival/round-${round}${corrected?'/final-correction':''}`;
+  const directory=join(ROOT,relative),results={
     commit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),
     audioReuse:'Round 2 audio source and assets are unchanged; reuse its PCM/plots, with no new listening claim.',captures:[]};
+  try{await access(join(directory,'cost-and-captures.json'));throw Error('Completed cost evidence is immutable');}catch(error){if(error.code!=='ENOENT')throw error;}
+  await mkdir(directory,{recursive:true});
+  async function shot(name){const path=await context.screenshot(name),bytes=await readFile(path);await writeFile(join(directory,`${name}.png`),bytes);results.captures.push({name,path:`${relative}/${name}.png`,sha256:sha(bytes)});}
   for(const quality of ['high','performance']){
     await context.navigate('/tools/menu-check.html?flags=hidden-road');
     await context.waitFor('!!window.__qaApp?.visualReady&&!!window.__render','cost refinement UI',60000);
     await context.evaluate(`(()=>{const a=window.__qaApp;a.setGraphicsQuality(${JSON.stringify(quality)});a.startCampaign({mode:'duel',startStage:0,seed:1989,car:'falcone_f42',difficulty:'casual'});a.stop();a.audio.setMuted(true);Object.assign(a.duel.state,{status:'racing',paused:false,countdown:0,traffic:[],opponents:[],rival:null});document.querySelectorAll('details').forEach(n=>n.style.display='none');a.onFrame?.(a.duel.state);window.__render.renderFrame();})()`);
     await context.waitFor(READY,'cost refinement gate asset',60000);
-    await context.evaluate(`(()=>{const a=window.__qaApp,d=a.duel,s=d.state;const place=(progress,speed)=>{const p=d.course.hiddenRoad.poseAt(progress);Object.assign(s,{s:p.s,prevS:p.s,lateral:p.lateral,prevLateral:p.lateral,speedMph:speed,headingError:p.heading-d.course.at(p.s).heading,groundHeight:p.y,yawVelocity:0,airHeight:0,airborne:false,pushVelocity:0});d.setInput({throttle:0,brake:0,steer:0});};place(149.9,35);for(let i=0;i<12;i++)d.step(1/120);place(d.course.hiddenRoad.length-59.5,45);let i=0;while(!(s.hiddenRoadJourney.phase==='opening'&&s.hiddenRoadJourney.phaseElapsedSec>.75)&&i++<1600)d.step(1/120);if(i>=1600)throw Error('Opening cost fixture failed');window.__arrivalQa={costSnapshot:structuredClone(s)};a.onFrame?.(s,0);window.__render.renderFrame();})()`);
-    const shot=await context.screenshot(`${quality}-opening-refined`),bytes=await readFile(shot);
-    await writeFile(join(directory,`${quality}-opening-refined.png`),bytes);results.captures.push({name:`${quality}-opening-refined`,path:`docs/board/looks/hidden-road-arrival/round-${round}/${quality}-opening-refined.png`,sha256:sha(bytes)});
+    await context.evaluate(`(()=>{const a=window.__qaApp,d=a.duel,s=d.state;const place=(progress,speed)=>{const p=d.course.hiddenRoad.poseAt(progress);Object.assign(s,{s:p.s,prevS:p.s,lateral:p.lateral,prevLateral:p.lateral,speedMph:speed,headingError:p.heading-d.course.at(p.s).heading,groundHeight:p.y,yawVelocity:0,airHeight:0,airborne:false,pushVelocity:0});d.setInput({throttle:0,brake:0,steer:0});};place(149.9,35);for(let i=0;i<12;i++)d.step(1/120);place(d.course.hiddenRoad.length-59.5,45);let i=0,earlyArrival=null;while(!(s.hiddenRoadJourney.phase==='opening'&&s.hiddenRoadJourney.phaseElapsedSec>.75)&&i++<1600){d.step(1/120);if(!earlyArrival&&s.hiddenRoadJourney.phase==='arriving')earlyArrival=structuredClone(s);}if(i>=1600)throw Error('Opening cost fixture failed');window.__arrivalQa={costSnapshot:structuredClone(s),earlyArrival};a.onFrame?.(s,0);window.__render.renderFrame();})()`);
+    await shot(`${quality}-opening-refined`);
     results[quality]=await context.evaluate(`(${presentationCost.toString()})()`);
+    if(corrected&&quality==='high'){
+      results.transitions=await context.evaluate(`(()=>{const a=window.__qaApp,d=a.duel,s=d.state,q=window.__arrivalQa,opening=structuredClone(s);const snap=()=>{a.onFrame?.(s,0);window.__render.renderFrame();return{phase:s.hiddenRoadJourney.phase,time:s.hiddenRoadJourney.phaseElapsedSec,camera:window.__render.camera.position.toArray(),car:d.course.worldAt(s.s,s.lateral)};};Object.assign(s,q.earlyArrival);const arrival=snap();Object.assign(s,opening);while(s.hiddenRoadJourney.phase!=='choice')d.step(1/120);a.chooseHiddenRoad('turn-back');d.step(1/120);while(s.hiddenRoadJourney.phaseElapsedSec<.79)d.step(1/120);const before=snap();d.step(1/60);const after=snap();const gap=Math.hypot(...before.camera.map((v,i)=>v-after.camera[i]));if(gap>.5)throw Error('Turn-back camera jumped at blend boundary');return{arrival,before,after,gap};})()`);
+      await shot('high-turn-back-transition');
+      await context.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state;Object.assign(s,window.__arrivalQa.earlyArrival);a.onFrame?.(s,0);window.__render.renderFrame();})()`);
+      await shot('high-arrival-transition');
+    }
   }
   await writeFile(join(directory,'cost-and-captures.json'),JSON.stringify(results,null,2)+'\n');
   const rows=await Promise.all(results.captures.map(async row=>({label:row.name,data:'data:image/png;base64,'+(await readFile(join(ROOT,row.path))).toString('base64')})));
-  rows.push({label:'Legacy Mad Max — actual spur camera',data:'data:image/png;base64,'+(await readFile(join(directory,'motion-supplement/legacy-mad-max-departure-settled.png'))).toString('base64')});
-  await imageSheet(context,rows,join(ROOT,`docs/board/looks/hidden-road-arrival/round-${round}.png`),3,480,270,'Arrival refinement · actual presentation and spur camera');
+  if(!corrected)rows.push({label:'Legacy Mad Max — actual spur camera',data:'data:image/png;base64,'+(await readFile(join(directory,'motion-supplement/legacy-mad-max-departure-settled.png'))).toString('base64')});
+  await imageSheet(context,rows,corrected?join(directory,'contact-sheet.png'):join(ROOT,`docs/board/looks/hidden-road-arrival/round-${round}.png`),3,480,270,'Arrival refinement · actual presentation and spur camera');
   console.log(`Bounded round ${round} presentation/camera refinement retained; round 2 audio reused.`);
 }
 
