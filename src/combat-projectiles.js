@@ -17,11 +17,19 @@ function steerBolt(duel, projectile, dt) {
   if (!target || target.finished || target.crushed || target.combatWrecking) return;
   const speed = Math.hypot(projectile.vx, projectile.vz);
   if (!(speed > 0)) return;
+  // Sample biased enemy guidance halfway through the step. At close range,
+  // aiming only from the old position adds a frame-rate-dependent angular lag.
+  const biasedEnemy = projectile.enemy && Number.isFinite(projectile.aimBias);
+  const sampleX = projectile.x + (biasedEnemy ? projectile.vx * dt * .5 : 0);
+  const sampleZ = projectile.z + (biasedEnemy ? projectile.vz * dt * .5 : 0);
   const at = point(duel, target);
   const travel = Math.min(T.crossbow.leadTime,
-    Math.hypot(at.x - projectile.x, at.z - projectile.z) / speed);
+    Math.hypot(at.x - sampleX, at.z - sampleZ) / speed);
   const future = predictedPoint(duel, target, travel);
-  const desired = Math.atan2(future.x - projectile.x, future.z - projectile.z);
+  // Enemy accuracy remains a property of the shot while its target moves.
+  // Re-aiming at the unbiased lead point would erase the difficulty spread.
+  const bias = biasedEnemy ? projectile.aimBias : 0;
+  const desired = Math.atan2(future.x - sampleX, future.z - sampleZ) + bias;
   const launch = projectile.launchBearing;
   const goal = launch + clamp(angleDifference(launch, desired),
     -T.crossbow.homingConeRadians, T.crossbow.homingConeRadians);

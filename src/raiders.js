@@ -1,6 +1,6 @@
 import {makeRng} from './rng.js';
 import {point, predictedPoint} from './combat-weapons.js';
-import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {CPU_COMBAT, COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
 
 // Course geometry is untouched. These three small camps exist only in flagged
@@ -184,11 +184,22 @@ function fire(duel, zone, raider, target) {
     Math.hypot(at.x - raider.x, at.z - raider.z) / speed);
   const future = predictedPoint(duel, target.actor, flight);
   const dx = future.x - raider.x, dz = future.z - raider.z;
-  const bearing = Math.atan2(dx, dz);
+  // Each member gets its own sample per lap. Hash the complete identity so
+  // camp iteration and other actors' shots cannot consume this aim sequence.
+  const state = duel.state;
+  const identity = JSON.stringify([duel.course.seed ?? duel.seed,
+    state.stageIndex, state.currentLap, raider.id]);
+  let aimSeed = RAID_SALT;
+  for (let index = 0; index < identity.length; index++) {
+    aimSeed = Math.imul(aimSeed ^ identity.charCodeAt(index), 16777619);
+  }
+  const spread = CPU_COMBAT[state.cpuDifficulty]?.aimError ?? CPU_COMBAT.medium.aimError;
+  const aimBias = makeRng(aimSeed >>> 0).range(-spread, spread);
+  const bearing = Math.atan2(dx, dz) + aimBias;
   const originY = raider.y + 1.48;
   combat.projectiles.push({id: ++combat.serial, kind: 'crossbow', enemy: true,
     raid: true, raidZone: zone.id, targetIndex: target.targetIndex,
-    launchBearing: bearing, level: 0, age: 0,
+    launchBearing: bearing, aimBias, level: 0, age: 0,
     x: raider.x + Math.sin(bearing), y: originY,
     z: raider.z + Math.cos(bearing),
     vx: Math.sin(bearing) * speed, vz: Math.cos(bearing) * speed,
