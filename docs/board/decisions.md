@@ -119,6 +119,22 @@ and how to reverse it before continuing.
 
 ## Entry format
 
+## 2026-09-23 PDT: GFX-01 presentation and evidence
+
+- Decision: Read crew, pose and action state through a pure presentation
+  selector. Missing visual event windows may be recorded by the simulation,
+  but they cannot delay an action, grant immunity, consume ammo or change
+  movement. Keep the old injected-loader seam for the pipeline controls.
+- Reason: Twelve required animations need reliable successful-action timing;
+  reacting to a held fire key would animate shots that never occurred.
+- How to reverse: Replace the presentation contract and its focused tests
+  together while retaining the existing simulation behavior and fingerprints.
+- Evidence: Test assets and renderer behavior automatically. Independently
+  review each actual reference/Blender/game sheet and measured frame cost.
+  A metadata score or three generated sheets alone cannot prove likeness.
+
+## Entry template
+
 - Date and card:
 - Decision:
 - Reason:
