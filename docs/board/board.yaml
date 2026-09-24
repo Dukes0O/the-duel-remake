@@ -443,10 +443,11 @@ tasks:
     needs: [CAM-01]
     status: building
     owns: [src/wasteland-career.js, src/wasteland-progress.js, src/screen-territory.js, src/screen-territory.css, tools/test-wasteland-career.mjs, tools/test-territory-screen.mjs]
-    hooks: [src/career-backup.js, src/progression.js, src/weapon-upgrades.js, src/armor-kits.js, src/crew.js, src/screen-armory.js, src/screen-router.js, src/app.js, src/crew-ui.js, tools/test-crew-ui.mjs, src/combat-scoring.js, tools/test-combat-scoring.mjs, src/raiders.js, tools/test-raiders.mjs, src/game.js, src/screen-results.js, tools/test-wasteland-results.mjs, tools/scenarios/wasteland-career.mjs, tools/test-wasteland-profile.mjs, tools/test-progression.mjs, tools/test-progression-integration.mjs, tools/test-save-fixtures.mjs, tools/test-weapon-upgrades.mjs, tools/test-armor-kits.mjs, tools/test-crew.mjs, tools/test-career-backup.mjs]
+    hooks: [src/combat-hud.js, tools/test-combat-hud.mjs, src/career-backup.js, src/progression.js, src/weapon-upgrades.js, src/armor-kits.js, src/crew.js, src/screen-armory.js, src/screen-router.js, src/app.js, src/crew-ui.js, tools/test-crew-ui.mjs, src/combat-scoring.js, tools/test-combat-scoring.mjs, src/raiders.js, tools/test-raiders.mjs, src/game.js, src/screen-results.js, tools/test-wasteland-results.mjs, tools/scenarios/wasteland-career.mjs, tools/test-wasteland-profile.mjs, tools/test-progression.mjs, tools/test-progression-integration.mjs, tools/test-save-fixtures.mjs, tools/test-weapon-upgrades.mjs, tools/test-armor-kits.mjs, tools/test-crew.mjs, tools/test-career-backup.mjs]
     helpers: [test_author, save_guardian, reviewer, browser_qa]
     acceptance:
       - "Add separate scrap and eight-warlord territory progression, ranks 1–30 and yard access behind the switch per SPEC 0.4. Preserve old credit-funded weapon levels and ordinary careers through backed-up migration."
+    note: "Current scope earns and spends scrap, builds hold, and shows the territory map. Existing ranks are preserved. GFX-04 connects the yard; WAR-01/02/03/04 own the unbuilt ladder, fights and one-time claim grants. Director approved hiding active combat HUD over result dialogs after actual screenshots proved overlapping controls."
   - id: GFX-03
     title: "Nine war rigs and kits fidelity rounds one to three"
     priority: 14
