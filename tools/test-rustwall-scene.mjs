@@ -192,6 +192,51 @@ check('wash instances stay inside every existing oriented collision box', async 
   } finally {disposeTree(scene.group);}
 });
 
+check('wash half-turns vary deterministically without changing bank geometry or simulation RNG', async () => {
+  const {createRustwallScene} = await api(), course = courseFor(1989);
+  const untouched = courseFor(1989), wallsBefore = JSON.stringify(course.hiddenRoad.walls);
+  const prepared = [];
+  try {
+    for (let pass = 0; pass < 2; pass++) {
+      const models = fixtures();
+      const scene = createRustwallScene(course, {loadAsset: async kind => models[kind]});
+      prepared.push(scene); assert.equal(await scene.ready, true);
+      scene.group.updateMatrixWorld(true);
+      const banks = meshes(scene.group).filter(mesh => mesh.isInstancedMesh);
+      const prototype = models.wash.scene.children[0];
+      assert.equal(banks.length, 1, 'one prototype remains one shared instance batch');
+      assert.equal(banks[0].count, course.hiddenRoad.walls.length, 'bank population is unchanged');
+      assert.equal(banks[0].geometry, prototype.geometry, 'reuse the loaded geometry');
+      assert.equal(banks[0].material, prototype.material, 'reuse the loaded material');
+    }
+    const first = meshes(prepared[0].group).filter(mesh => mesh.isInstancedMesh)[0];
+    const second = meshes(prepared[1].group).filter(mesh => mesh.isInstancedMesh)[0];
+    assert.deepEqual(Array.from(first.instanceMatrix.array), Array.from(second.instanceMatrix.array),
+      'same course identities prepare identical bank matrices');
+    assert.equal(JSON.stringify(course.hiddenRoad.walls), wallsBefore);
+    assert.deepEqual(Array.from({length: 4}, () => course.rng.float()),
+      Array.from({length: 4}, () => untouched.rng.float()), 'presentation never consumes simulation RNG');
+    const orientations = new Set(), matrix = new THREE.Matrix4();
+    for (let index = 0; index < first.count; index++) {
+      const wall = course.hiddenRoad.walls[index];
+      first.getMatrixAt(index, matrix); matrix.premultiply(first.matrixWorld);
+      const inverse = new THREE.Matrix4().compose(new THREE.Vector3(wall.x, wall.y, wall.z),
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), wall.heading),
+        new THREE.Vector3(1, 1, 1)).invert();
+      matrix.premultiply(inverse);
+      const sign = matrix.elements[0] >= 0 ? 1 : -1;
+      orientations.add(sign);
+      const expected = new THREE.Matrix4().makeScale(sign * wall.halfX, wall.height, sign * wall.halfZ);
+      for (let element = 0; element < 16; element++) near(matrix.elements[element],
+        expected.elements[element], 'only a local Y half-turn may change the bank transform',
+        element >= 12 && element <= 14 ? .002 : 1e-5);
+    }
+    assert.deepEqual([...orientations].sort(), [-1, 1], 'both original and half-turned faces must occur');
+    // The existing all-vertex oriented-envelope test also runs on these new
+    // orientations; its tolerance and collision/budget acceptance stay fixed.
+  } finally {for (const scene of prepared) disposeTree(scene.group);}
+});
+
 check('pending gate value survives local asynchronous loading', async () => {
   const {createRustwallScene} = await api(), course = courseFor(1989), models = fixtures();
   const pending = [];
