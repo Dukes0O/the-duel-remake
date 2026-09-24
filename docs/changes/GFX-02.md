@@ -197,3 +197,25 @@ over 33 ms. This measures added held rendering on the same stopped course with
 pose updates in both conditions. It does not isolate total presentation CPU or
 GPU cost. Independent final critique and required lane/build gates remain
 pending. Completing three rounds alone does not establish beta fidelity.
+
+## Final independent review and merge gate
+
+The Director's `round-3-review.md` accepts the initial three-round card for
+development integration. Resemblance, readability, contact and consistency
+remain 3; frame cost is 4 only within the recorded scope. Keep the feature in
+dev. Fingertip cap artifacts, glove anatomy, tailoring, tool detail and continuous
+motion review remain explicit GFX-02-P1 work after the ordered initial cards.
+The new hand texture sets also need a measured memory/reuse review before any
+complete resource-budget claim. No beta approval is implied.
+
+On exact clean `fead24a2425e3cd2ae7647f9f1c852bf0d4e0a74`:
+
+- Required lane tier: **223 passed, zero failed, zero not run in 302.41 s**,
+  including all eight campaign shards.
+- Production build: passed in 517 ms with the existing large-chunk warning.
+- HEAD and source remained unchanged throughout the commands.
+- Logs: `.qa-dist/gfx02-final-lane.log` and `gfx02-final-build.log`.
+
+No save, race rule or fingerprint changed. Runtime source remains the reviewed
+implementation plus the independently tested spent-rocket visibility correction.
+This final handoff update changes only the evidence note.
