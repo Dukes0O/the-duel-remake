@@ -76,7 +76,12 @@ function fixture(name) {
   const evidencePath = join(root, 'docs/board/checks/full-tier.json');
   const statusPath = join(root, 'docs/board/STATUS.md');
   function evidence(overrides = {}) {
-    put(evidencePath, JSON.stringify({ schema: 1, commit: git(root, 'rev-parse', 'HEAD'), time: now, tier: 'full', passed: true, dirty: false, ...overrides }));
+    const commit = git(root, 'rev-parse', 'HEAD');
+    put(evidencePath, JSON.stringify({
+      schema: 1, commit, time: now, tier: 'full', passed: true, dirty: false,
+      startDirty: false, endDirty: false, endCommit: commit, complete: true,
+      total: 213, completed: 213, failures: [], ...overrides,
+    }));
   }
   return { home, root, live, base, evidencePath, statusPath, evidence };
 }
@@ -125,9 +130,9 @@ try {
 
   for (const [label, overrides, expected] of [
     ['missing', null, 'missing'],
-    ['failed', { passed: false }, 'failed'],
-    ['dirty', { dirty: true }, 'dirty'],
-    ['stale', { commit: '0'.repeat(40) }, 'stale'],
+    ['failed', { passed: false, failures: ['tools/test-fixture.mjs'] }, 'failed'],
+    ['dirty', { dirty: true, startDirty: true }, 'dirty'],
+    ['stale', { commit: '0'.repeat(40), endCommit: '0'.repeat(40) }, 'stale'],
     ['wrong tier', { tier: 'lane' }, null],
     ['missing source state', { dirty: undefined }, null],
     ['missing time', { time: undefined }, null],
@@ -138,6 +143,40 @@ try {
     same(result.fullRun.exactHead, false, `${label} evidence does not qualify as exact-HEAD green`);
     check(result.fullRun.status !== 'passed', `${label} evidence does not claim a passing current full run`);
     if (expected) same(result.fullRun.status, expected, `${label} evidence has an honest status`);
+  });
+
+  // Reviewer regression: a passing flag cannot override absent provenance or
+  // contradictory coverage. Keep this fixture aligned with the runner ledger.
+  const ledgerFixture = fixture('ledger-schema');
+  const missingFields = ['complete', 'startDirty', 'endDirty', 'endCommit', 'total', 'completed', 'failures'];
+  for (const [label, overrides] of [
+    ...missingFields.map(field => [`missing ${field}`, { [field]: undefined }]),
+    ['contradictory completion and failures', { completed: 0, failures: ['tools/test-fixture.mjs'] }],
+    ['incomplete suite count', { completed: 212 }],
+    ['failed suite in passing ledger', { failures: ['tools/test-fixture.mjs'] }],
+    ['zero-suite passing ledger', { total: 0, completed: 0 }],
+    ['noninteger suite counts', { total: 1.5, completed: 1.5 }],
+    ['nonboolean completion', { complete: 'true' }],
+    ['nonboolean start state', { startDirty: 'false' }],
+    ['nonboolean end state', { endDirty: 'false' }],
+    ['nonarray failures', { failures: '' }],
+    ['explicitly incomplete passing ledger', { complete: false, completed: 0 }],
+  ]) await test(`${label} cannot certify HEAD`, () => {
+    ledgerFixture.evidence(overrides);
+    const result = report(ledgerFixture);
+    same(result.fullRun.exactHead, false, `${label} cannot certify exact HEAD`);
+    check(result.fullRun.status !== 'passed', `${label} stays visibly unsuccessful`);
+  });
+  await test('valid failed and unfinished ledgers remain unsuccessful', () => {
+    for (const overrides of [
+      { passed: false, failures: ['tools/test-fixture.mjs'] },
+      { passed: false, complete: false, completed: 0 },
+    ]) {
+      ledgerFixture.evidence(overrides);
+      const result = report(ledgerFixture);
+      same(result.fullRun.exactHead, false, 'valid failed or unfinished evidence never certifies HEAD');
+      check(result.fullRun.status !== 'passed', 'failed or unfinished run remains visibly unsuccessful');
+    }
   });
 
   await test('malformed evidence and absent build manifest', () => {
@@ -230,6 +269,9 @@ try {
     same(evidence.tier, 'full', 'evidence names its tier');
     same(evidence.passed, !fail, 'evidence records passing and failing results honestly');
     same(evidence.dirty, false, 'clean fixture source is recorded clean');
+    const status = report(f);
+    same(status.fullRun.exactHead, !fail, 'status accepts complete real writer output only when passed');
+    same(status.fullRun.status, fail ? 'failed' : 'passed', 'real writer ledger retains its pass or fail result');
   });
   for (const timing of ['before', 'during']) await test(`runner captures source edits ${timing} testing`, async () => {
     const f = fixture(`runner-dirty-${timing}`);
