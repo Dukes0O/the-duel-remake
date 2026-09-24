@@ -26,6 +26,10 @@ The full combat balance check after tuning passed its Easy/Medium/Hard win
 targets at 9/10, 6/10 and 2/10, and the focused arena, projectile, collision
 and pinned replay checks passed. The 189-suite lane was not repeated for that
 tune; final browser and production-build checks are recorded separately.
+The final production build passed. All 24 private browser scenarios passed with
+no warnings or errors, including knockaway, traffic callouts, ramming, UFO,
+Experimental settings and frame pacing. The live server returned the staged
+landing page, bundle and build version after the asset-first release.
 
 ## Opponent field, checkpoint clearance, and combat sound — September 23, 2026
 
