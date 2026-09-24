@@ -590,3 +590,16 @@ checkout untouched until the final integration commit passes the full gate.
 - FOOT-02 car transitions and PRG-02 Notoriety are now building in isolated
   worktrees. Each feature gets focused checks; combined checks are reserved
   for meaningful joins and release candidates.
+
+## 2026-09-23 PDT — Shield and rank rules
+
+- BUG-15 corrected the Wasteland2-only shield rule at `32bf195`: a rival's
+  Star shield no longer protects traffic from a bomb or impact. Two focused
+  flag-on/off cases and the production build passed.
+- Combat atlas preparation now finishes before the race clock starts at
+  `24cb4d0`. A private frame sample reduced the High first-wreck maximum
+  from 413.8 ms to 89.8 ms. A residual first-wreck hitch is under review.
+- PRG-02 Notoriety XP and ranks integrated at `632b60b`. Completed combat
+  hits, wrecks and results award XP once; ordinary races and incomplete
+  events award none. Seven focused cases, historical saves and build passed.
+  PRG-04 armor-kit purchases and FOOT-02 car transitions are in progress.

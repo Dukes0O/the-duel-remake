@@ -1,6 +1,6 @@
 ---
 task: BUG-15
-status: lane-complete
+status: integrated
 kind: combat-fix
 flag: wasteland2
 player_facing: yes

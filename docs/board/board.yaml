@@ -554,7 +554,7 @@ tasks:
     lane: CMB
     size: M
     needs: [CMB-02]
-    status: integrated
+    status: released
     owns: [src/destructibles.js, src/roadside-debris.js, tools/test-combat-knockaway.mjs, tools/scenarios/combat-knockaway.mjs]
     hooks: [src/sim-contacts.js, src/sim-rival.js, src/game.js, src/world.js, src/scenery-fall.js, src/desert-detail.js, src/vegetation.js, src/world-props.js, src/render3d.js, src/combat-scene.js, src/wasteland-tuning.js, tools/scenarios/traffic-wreck-callout.mjs]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
@@ -565,7 +565,7 @@ tasks:
       - "One contact creates one indexed roadsideImpact with its outcome and finite hit position; moving scenery and traffic leave collision, and high-tier objects leave the rendered scene after pooled debris."
       - "Movable contacts cost no player armor, crash slot or time penalty. Large trees, rocks and rails stay solid; rivals use CMB-02 local shove, wreck and recovery."
       - "Explicitly flag-off Wasteland and ordinary replay fingerprints remain unchanged. 30/60/144 FPS contacts, High/Performance memory-only browser scenes, balance and frame checks pass."
-    note: "Independent red tests at 57874df: 2 controls pass and 15 new-behavior checks fail on the base. Integrated from d2ea46d after 23/23 focused cases, two 189/189 lane gates, High/Performance visual checks, the changed traffic callout scenario and build. Roadside destruction is on by default for the release candidate after Kyle's live play-test feedback; wasteland2 remains development-only. Full release gate pending."
+    note: "Released on master at eb879e5 and backed up on GitHub. Low-speed objects move clear and high-speed objects obliterate. Focused cases, balance, browser and build checks passed on the final tuning; the 189-suite gate passed before that small tune. Wasteland2 remains development-only."
     spec: "SPEC.md section 3.2 and 2026-09-23 play-test feedback"
   - id: BUG-15
     title: "Keep rival shields from protecting traffic"
@@ -573,13 +573,13 @@ tasks:
     lane: CMB
     size: S
     needs: [RFX-04]
-    status: blocked
+    status: integrated
     owns: [src/combat-projectiles.js, tools/test-combat.mjs]
     hooks: [src/sim-contacts.js]
     helpers: [reviewer]
     flag: wasteland2
     behavior_change: yes
-    note: "RFX-04 deliberately preserves the old one-rival shield effect on traffic for replay parity. Remove that borrowed protection as a separate reviewed behavior change after field combat is integrated."
+    note: "Integrated at 32bf195. In Wasteland2, rival Star shields no longer block bomb or impact damage to traffic; flag-off Wasteland retains its old rule. Two focused cases and a production build passed."
     spec: "SPEC.md section 3.2: the star shield blocks damage to its own car"
   - id: AUD-01
     title: "Weapon sounds"
@@ -725,11 +725,22 @@ tasks:
     lane: SAVE
     size: S
     needs: [PRG-01, CMB-03]
+    status: integrated
+    flag: wasteland2
+    behavior_change: yes
+    note: "Combat-only XP, rank thresholds and duplicate settlement protection integrated at 632b60b. Seven focused cases, historical saves and build passed. On-foot awards require future explicit player-owned events."
+    spec: "SPEC.md sections 3.8 and 12.2, task PRG-02"
+  - id: PRG-04
+    title: "Armor kit purchases and equipping"
+    wave: 4
+    lane: SAVE
+    size: S
+    needs: [PRG-01, PRG-02, VIS-02]
     status: building
     flag: wasteland2
     behavior_change: yes
-    note: "Building combat-only XP and idempotent rank settlement in an isolated worktree."
-    spec: "SPEC.md sections 3.8 and 12.2, task PRG-02"
+    note: "Per-car kit ownership, rank gates, armor bonuses and visual tier hookup are building in an isolated worktree."
+    spec: "SPEC.md sections 3.6 and 12.2, task PRG-04"
   - id: FOOT-01
     title: "Fighter simulation"
     wave: 5
