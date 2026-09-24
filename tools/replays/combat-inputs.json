@@ -43,6 +43,21 @@
         {"atTick": 121, "kind": "pickup", "pickupKind": "weapon", "weapon": "star"}
       ],
       "expect": {"hits": 0, "wrecks": 0, "pickups": 2, "ramHits": 0}
+    },
+    {
+      "id": "staggered-cpu-attack-turns",
+      "eventId": "pacific-canyon",
+      "car": "falcone_f42",
+      "playerS": 500,
+      "opponents": [540, 565, 590],
+      "opponentLateral": [-3, 0, 3],
+      "cpuAttacks": true,
+      "durationTicks": 720,
+      "actions": [
+        {"atTick": 0, "kind": "input", "throttle": 1}
+      ],
+      "expect": {"hits": 3, "wrecks": 0, "pickups": 0, "ramHits": 0,
+        "cpuShots": 3, "shooterOrder": [0, 1, 2]}
     }
   ]
 }

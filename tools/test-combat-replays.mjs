@@ -20,7 +20,7 @@ function validate() {
   assert.equal(fixture.stepHz, 120);
   assert.deepEqual(fixture.framesPerSecond, [30, 60, 144]);
   assert.ok(Number.isSafeInteger(fixture.seed));
-  assert.equal(fixture.cases.length, 3);
+  assert.equal(fixture.cases.length, 4);
   const ids = new Set();
   for (const race of fixture.cases) {
     assert.ok(!ids.has(race.id), `duplicate combat replay ${race.id}`);
@@ -28,8 +28,9 @@ function validate() {
     assert.ok(COURSE.some(event => event.id === race.eventId && event.hasRival));
     assert.equal(race.opponents.length, 3);
     assert.ok(race.actions.length > 0);
+    const durationTicks = race.durationTicks ?? fixture.durationTicks;
     assert.ok(race.actions.every((action, index) => Number.isInteger(action.atTick) &&
-      action.atTick >= 0 && action.atTick < fixture.durationTicks &&
+      action.atTick >= 0 && action.atTick < durationTicks &&
       (index === 0 || action.atTick >= race.actions[index - 1].atTick)),
     `${race.id}: actions must be ordered simulation ticks`);
   }
@@ -59,11 +60,11 @@ function makeRace(race) {
   state.traffic = [];
   place(state, race.playerS);
   state.opponents.forEach((actor, index) => {
-    place(actor, race.opponents[index]);
+    place(actor, race.opponents[index], race.opponentLateral?.[index] ?? 0);
     if (race.armor) actor.armor = race.armor[index];
   });
   if (race.playerArmor) state.armor = race.playerArmor;
-  state.combat.aiTimer = Infinity;
+  state.combat.aiTimer = race.cpuAttacks ? null : Infinity;
   state.combat.pickupTimer = Infinity;
   state.combat.shield = 0;
   state.combat.rivalShield = 0;
@@ -74,6 +75,10 @@ function act(duel, action) {
   const state = duel.state;
   const target = state.opponents[action.targetIndex];
   switch (action.kind) {
+    case 'input':
+      duel.setInput({throttle: action.throttle, brake: action.brake ?? 0,
+        steer: action.steer ?? 0, boost: action.boost ?? false});
+      break;
     case 'bolt': {
       assert.ok(target, 'bolt target exists');
       const at = duel.course.groundAt(target.s, target.lateral);
@@ -105,7 +110,7 @@ function act(duel, action) {
   }
 }
 
-function snapshot(duel, tick) {
+function snapshot(duel, tick, race) {
   const state = duel.state, combat = state.combat;
   return {tick, status: state.status,
     player: fields(state, actorFields),
@@ -113,6 +118,7 @@ function snapshot(duel, tick) {
     progress: fields(state, ['stageTimeSec', 'score', 'stageStyleScore',
       'stageCrashes', 'racePenaltySec', 'boundaryResets']),
     combat: {hits: combat.hits, scoring: fields(combat.scoring, scoreFields),
+      ...(race.cpuAttacks ? {ai: fields(combat, ['aiTurn', 'aiShot', 'aiTimer'])} : {}),
       cooldowns: fields(combat.cooldowns, ['ufo', 'bomb', 'crossbow', 'star']),
       pickups: combat.pickups.map(pickup => pickup.id ?? pickup.weapon),
       projectiles: combat.projectiles.map(projectile => fields(projectile,
@@ -131,29 +137,43 @@ function eventRecord(event, tick) {
 
 function replay(race, fps) {
   const duel = makeRace(race);
-  const events = [], samples = [];
+  const events = [], samples = [], shooters = [];
   let tick = 0, actionIndex = 0;
   duel.onChange((_, event) => {
     const record = eventRecord(event, tick);
     if (record) events.push(record);
+    if (race.cpuAttacks && ['crossbow', 'bomb'].includes(event.weaponFired)) {
+      const projectile = duel.state.combat.projectiles.at(-1);
+      assert.ok(projectile?.enemy, 'recorded CPU attack launches a projectile');
+      const shooter = projectile.sourceIndex ?? 0;
+      shooters.push(shooter);
+      events.push({tick, cpuWeaponFired: event.weaponFired, shooter});
+    }
   });
-  const frames = Math.ceil(fixture.durationTicks * fps / fixture.stepHz);
+  const durationTicks = race.durationTicks ?? fixture.durationTicks;
+  const frames = Math.ceil(durationTicks * fps / fixture.stepHz);
   for (let frame = 1; frame <= frames; frame++) {
-    const targetTick = Math.min(fixture.durationTicks,
+    const targetTick = Math.min(durationTicks,
       Math.floor(frame * fixture.stepHz / fps + 1e-9));
     while (tick < targetTick) {
       while (race.actions[actionIndex]?.atTick === tick) act(duel, race.actions[actionIndex++]);
       duel.step(1 / fixture.stepHz);
       tick++;
-      if (tick % 30 === 0) samples.push(snapshot(duel, tick));
+      if (tick % 30 === 0) samples.push(snapshot(duel, tick, race));
     }
   }
-  assert.equal(tick, fixture.durationTicks, `${race.id}: frame schedule lost ticks`);
+  assert.equal(tick, durationTicks, `${race.id}: frame schedule lost ticks`);
   const count = name => events.filter(event => event[name]).length;
   assert.equal(count('combatHit'), race.expect.hits, `${race.id}: projectile hits`);
   assert.equal(count('combatWreck'), race.expect.wrecks, `${race.id}: wrecks`);
   assert.equal(count('combatRamHit'), race.expect.ramHits, `${race.id}: ram hits`);
   assert.equal(count('powerupCollected'), race.expect.pickups, `${race.id}: pickups`);
+  if (race.cpuAttacks) {
+    assert.equal(shooters.length, race.expect.cpuShots, 'CPU attack count');
+    assert.deepEqual(shooters, race.expect.shooterOrder,
+      'three CPU cars take their scheduled attack turns in order');
+    assert.equal(duel.state.combat.aiShot, race.expect.cpuShots);
+  }
   assert.equal(duel.state.police.ticketCount, 0, 'combat race has no police tickets');
   if (race.id === 'three-opponent-bolt-order') {
     assert.deepEqual(events.filter(event => event.combatHit || event.combatWreck)
