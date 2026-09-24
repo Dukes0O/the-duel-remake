@@ -710,3 +710,9 @@ checkout untouched until the final integration commit passes the full gate.
   shots have distinct short cues. Bomb audio remains its own sound. Focused
   audio/weapon/raider checks and build passed; the whole-race mix and future
   weapon sounds remain open.
+- RAID-02 integrated at `0ced0a1`: RPGs can knock raiders down, with one
+  Notoriety award per raider per race. Each camp has a solid raised crate
+  that a fighter can collect once for ammo and armor; Wren can reach it from
+  four metres. Eleven focused cases, one private memory-only visual scene
+  and build passed. The bounded FOOT-08 stop check also passed after this
+  join. Raider movement, frame pacing and broader balance remain open.

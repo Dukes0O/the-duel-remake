@@ -882,7 +882,7 @@ tasks:
     status: building
     flag: wasteland2
     behavior_change: yes
-    note: "Roster, per-player selection, pooled figures and five current-mechanic perks are integrated at 68bbb8a, ce12e38 and 0154121. Jax boarding, Cinder fire immunity, Wren crate reach and Tusk shove await their mechanics, so the full card remains building. Four focused cases, one private Armory/Garage/race scene and build passed."
+    note: "Roster, per-player selection, pooled figures and five perks integrated at 68bbb8a, ce12e38 and 0154121. RAID-02 connects Wren's crate reach at 0ced0a1. Jax boarding, Cinder fire immunity and Tusk shove await their mechanics, so the full card remains building. Focused checks, one private Armory/Garage/race scene and build passed."
     spec: "SPEC.md sections 3.5 and 12.2, task CREW-01"
   - id: RAID-01
     title: "Seeded roadside ambush zones"
@@ -895,3 +895,14 @@ tasks:
     behavior_change: yes
     note: "Three seeded three-raider camps on each combat course, warning posts, capped bolts and separate raider ownership integrated at 9565ed5. Four focused cases, one private scene and build passed. Invulnerable stationary raiders and salvage are RAID-02 work; lap-shot allocation needs balance review."
     spec: "SPEC.md sections 3.4 and 12.2, task RAID-01"
+  - id: RAID-02
+    title: "Raider knockdowns and ledge salvage"
+    wave: 6
+    lane: CMB
+    size: M
+    needs: [RAID-01, FOOT-05]
+    status: integrated
+    flag: wasteland2
+    behavior_change: yes
+    note: "Player RPG direct/splash knocks down raiders with one 25-XP Notoriety award per raider per race. Each camp has one solid, foot-only salvage ledge for a rocket and armor. Integrated at 0ced0a1; focused 11 cases, private visual scene, build and joined FOOT-08 check passed. Frame pacing and broad balance remain unmeasured."
+    spec: "SPEC.md sections 3.4 and 12.2, task RAID-02"

@@ -1,5 +1,7 @@
 # RAID-02 — raider knockdowns and ledge salvage
 
+Integrated at `0ced0a1` in the Wasteland development branch.
+
 ## Behavior
 
 - In flagged Wasteland combat, the player's on-foot RPG can directly hit a raider or hurt nearby raiders with its blast. A direct hit knocks down a full-health raider. Raiders recover at their camp after three race seconds and cannot shoot while down.
