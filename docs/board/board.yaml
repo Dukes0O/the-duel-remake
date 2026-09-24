@@ -109,10 +109,17 @@ tasks:
     priority: 6
     lane: ART
     size: S
-    needs: [EGG-01]
-    status: backlog
+    needs: [TRACK-02]
+    merge_after: EGG-01
+    status: building
+    owns: [public/assets/reference/rustwall-gate.png, public/assets/reference/wasteland-rpg.png, public/assets/reference/wasteland-wrench.png, public/assets/reference/CREDITS.md, docs/WASTELAND_ART.md]
+    helpers: [art_critic, test_runner]
     acceptance:
       - "Generate original Rustwall/gate, RPG and wrench references with prompts and provenance retained; no gore; use crew and Wasteland art direction."
+      - "Use the built-in image tool with the existing direction and crew sheets as visual references. Retain unmodified originals outside the repository and copy chosen PNGs into the lane; document tool, date, full prompts, dimensions, hashes, source and reference-only use."
+      - "Rustwall reference shows a coherent 35 m tall, at least 400 m wide salvage wall with a drive-through lifting gate, towers, cranes, banners, barrels, searchlights and figures for scale. Include an approach view and useful modeling views; original design without film likenesses or gore."
+      - "RPG and wrench references use consistent orthographic and first-person views, readable silhouettes, physically coherent grips and the crew palette. They guide real Blender geometry; no menu/poster art or runtime image substitution."
+      - "Independent visual review checks consistency and modeling usefulness. PNG validation and provenance checks pass; required lane/build gate applies. Merge after EGG-01 even if independent art preparation finishes earlier."
   - id: GFX-01
     title: "Crew family fidelity rounds one to three"
     priority: 7
@@ -437,7 +444,7 @@ tasks:
     size: S
     needs: [BUG-05]
     status: building
-    owns: [src/combat-projectiles.js, tools/test-combat-projectiles.mjs, tools/test-combat-replays.mjs, tools/replays/projectile-height-controls.json]
+    owns: [src/combat-projectiles.js, tools/test-combat-projectiles.mjs, tools/test-combat-replays.mjs, tools/replays/projectile-height-controls.json, tools/replays/combat-inputs.json, tools/replays/combat-fingerprints.json]
     helpers: [test_author, balance_analyst, test_runner, reviewer]
     active_slice: "Use actual moving vehicle height for flagged crossbow body contact."
     acceptance:
