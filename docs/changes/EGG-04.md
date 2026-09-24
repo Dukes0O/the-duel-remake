@@ -53,3 +53,40 @@ The optional map parameters and provider leave old callers unchanged. Actual
 menu/garage wiring, dotted drawing and rendered dust placement remain source
 review and the two scored browser rounds; these headless groups do not replace
 visual evidence. No existing assertion or replay fingerprint changed here.
+## Runtime implementation
+
+Runtime source commit: `f0f3ae4`. The independent discovery suite passes all
+10 checks after the initial red handoff. No existing or new assertions changed.
+The final focused run took under one second. Independent review, presentation
+checks, browser rounds and the required lane/build gate remain pending.
+
+- Version-one Wasteland data now includes a strict discovery boolean and a
+  Pacific finish count capped at ten. Existing unknown Wasteland fields remain
+  intact; newer Wasteland schemas stay opaque. Outer profile normalization is
+  unchanged. There is no scrap or territory progression in this card.
+- A missing or invalid counter may use distinct valid completed Pacific wins
+  and losses in the last sixty retained history rows. Rows require a valid car,
+  finite positive time and reward, and must not be abandoned or timed out. This
+  is a conservative lower bound, not a lifetime total. A valid saved count
+  takes precedence. New settlements increment only after the existing duplicate
+  guard and completed-race validation, regardless of a win or loss.
+- Raw missing or invalid discovery fields trigger the existing verified startup
+  backup before normalization is written. The existing backup-failure and
+  future-schema protections remain responsible for blocking startup writes.
+- The actual invitation saves discovery before either choice. App validates the
+  current state, journey, player and run owner; repeated callbacks cannot save
+  again. The immutable presentation snapshot is replaced only when its values
+  change and is mirrored by App. Renderers do not write it.
+- A discovered scenic driver keeps the existing safe takeover and opening,
+  then automatically enters. All movement and clocks stay in Duel.step.
+- Direct visits use a dedicated identity, start twelve metres outside the gate,
+  open for three simulation seconds and enter for three more. They create no
+  payable run, departure settlement, countdown cue or ghost recorder. Restart
+  repeats the visit. Menu clears its identity and restores the saved race
+  choices. The arrived endpoint remains a safe hold until the yard exists.
+- Menu preview courses now include actual hidden-road geometry only when the
+  feature is enabled; the course cache includes that flag. Presentation owns
+  the separate player/discovery cache keys and dotted-path visibility.
+
+Only the seven assigned runtime/persistence files changed. No dependencies,
+storage keys, real saves, live folder, release files or ports were touched.
