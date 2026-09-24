@@ -100,6 +100,27 @@ function widestShot(launch, difficulty) {
     .sort((a, b) => Math.abs(b.bias) - Math.abs(a.bias))[0];
 }
 
+check('measured raider tuning uses separate 20 / 10 degree cones without changing CPU aim', () => {
+  // Authorized after the retained-bias report measured 6/10/6 enemy hits;
+  // owner traces attributed 5 Easy and 4 Medium hits to raiders. Hard stays
+  // unchanged. This is one measured candidate, not a relaxation of hit targets.
+  const approved = {easy: Math.PI / 9, medium: Math.PI / 18, hard: .03};
+  assert.deepEqual(T.raider.aimError, approved,
+    'raider aim must use the approved separate 20-degree / 10-degree / .03-radian map');
+  assert.deepEqual(Object.fromEntries(Object.entries(CPU_COMBAT).map(
+    ([difficulty, settings]) => [difficulty, settings.aimError])),
+  {easy: Math.PI / 18, medium: .055, hard: .03}, 'CPU aim settings stay unchanged');
+  for (const difficulty of ['easy', 'medium', 'hard']) {
+    const errors = Array.from({length: 12}, (_, index) =>
+      Math.abs(raiderShot({difficulty, seed: 1989 + index}).bias));
+    assert.ok(errors.every(error => error <= approved[difficulty] + 1e-9),
+      `${difficulty} launched raiders stay inside their approved separate cone`);
+    if (difficulty !== 'hard') assert.ok(errors.some(error =>
+      error > CPU_COMBAT[difficulty].aimError),
+    `${difficulty} raider launches must exercise their wider cone, not the CPU cone`);
+  }
+});
+
 check('raider spread uses the current difficulty cones', () => {
   const rms = {};
   for (const difficulty of ['easy', 'medium', 'hard']) {
