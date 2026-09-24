@@ -303,3 +303,34 @@ Contact sheets exist for all rounds; each round's provenance names source
 commits, capture corrections and limits. The Director owns independent scores,
 acceptance and final lane/build/integration gates. No further optional capture
 or testing is planned by the presentation builder.
+
+## Independent audio review and final development approval
+
+The independent audio reviewer found no concrete defect in the retained round
+2 gate recordings. All six WAV hashes and measured levels matched the saved
+evidence. There were zero clipped samples; High/Performance mix peaks were
+-12.47/-13.34 dBFS. Both 24-cue phase logs were correct, and all eight isolated
+onsets were within 11 ms of their recorded cue times. High pause produced
+digital silence; Performance Turn back restored vehicle-bus output.
+
+Keep the review's limits explicit: the recorded pause occurred at choice after
+chains had ended. Cancellation during an active chain, mute, menu and a new
+journey is established by the focused ownership tests and source review, not
+that pause recording. Recording ended before menu navigation. Round 1's engine
+tap and round 2's vehicle-bus tap differ. No subjective listening or whole-race
+audio quality claim is made. Later source changes do not alter the recorded
+round 2 audio implementation.
+
+Director reviews `55847e8` and `7b34c10` accept the final visuals, motion and
+bounded corrected total CPU/RAF cost for development integration. Independent
+runtime, Save Guardian, presentation source and audio reviews are complete.
+The source tree remains `aaeb4ee4dec3868a1333aca4290dab1775be6aeb` (production
+`bc60aa4`). Reviewed the final scenario-only validation reorder: the QA hook
+is now checked before wrapping the renderer, closing the failed-setup cleanup
+issue without changing the measured comparison loop. No further source defect
+was found, and no additional assertion or fingerprint changed.
+
+The lane is ready for its required clean-commit tests and build. Hidden-road
+remains in dev because separate Rustwall/wash fidelity debt persists. The
+Performance render-only CPU increase and other measurement limits above remain
+part of the evidence. This approval grants no beta promotion, merge or release.
