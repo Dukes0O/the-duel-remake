@@ -61,6 +61,9 @@ async function pass(context, quality) {
     if (!Number.isFinite(state.armor))throw Error('Armored race is missing armor');
     await ready();
     await new Promise(done=>setTimeout(done,700));
+    const atlasStatusBeforeWreck=document.querySelector('#view3d').dataset.combatEffectsStatus;
+    if(atlasStatusBeforeWreck!=='ready')
+      throw Error('Combat sheets were not prepared before the race became visually ready');
     state.armor=12;
     const at=app.duel.course.groundAt(state.s,state.lateral);
     state.combat.projectiles.push({kind:'crossbow',enemy:true,level:0,
@@ -72,7 +75,8 @@ async function pass(context, quality) {
     return {quality:${JSON.stringify(quality)},width:innerWidth,height:innerHeight,
       memoryOnlySaves:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value,
       ordinary,armoredWreck,armor:state.armor,wrecking:state.combatWrecking,
-      warmupStatus:document.querySelector('#view3d').dataset.warmupStatus};
+      warmupStatus:document.querySelector('#view3d').dataset.warmupStatus,
+      atlasStatusBeforeWreck};
   })()`);
   if (report.width!==1280 || report.height!==720 || !report.memoryOnlySaves ||
       report.ordinary.frames!==120 || report.armoredWreck.frames!==120 ||

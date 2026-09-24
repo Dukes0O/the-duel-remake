@@ -139,6 +139,7 @@ export function attachRenderer(host, app) {
   const explosion = createExplosion(); scene.add(explosion.group);
   let combatPlayerExplosion = null, opponentExplosions = null;
   let combatEffects = null, combatEffectsWarmupMeasured = false;
+  let combatEffectsPrepared = false;
   host.dataset.opponentExplosionBuildMs='0';
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
@@ -220,6 +221,12 @@ export function attachRenderer(host, app) {
       // the first player or CPU wreck can interrupt a driving frame.
       const buildStart=performance.now();
       if(!combatEffects){combatEffects=createCombatEffects();scene.add(combatEffects.group);sceneRevision++;}
+      // Sheet decode and the real first draw can finish after the world shader
+      // warmup. Keep the race clock held until that one-time work is done.
+      if(!combatEffectsPrepared){
+        if(!readinessClaimed){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
+        app.holdVisualReadiness?.(readinessOwner);
+      }
       combatPlayerExplosion=createExplosion({combat:true});scene.add(combatPlayerExplosion.group);
       opponentExplosions=Array.from({length:opponents.length},()=>createExplosion({combat:true}));
       for(const effect of opponentExplosions)scene.add(effect.group);
@@ -375,11 +382,17 @@ export function attachRenderer(host, app) {
       combatEffects?.available;
     const combatWarmupStart=measureCombatWarmup?performance.now():0;
     const useCombatAtlas=armoredField&&!!combatEffects?.prewarm(renderer,camera);
+    if(armoredField&&combatEffects?.resources.ready)combatEffectsPrepared=true;
     if(measureCombatWarmup){
       host.dataset.combatEffectsWarmupMs=(performance.now()-combatWarmupStart).toFixed(2);
       combatEffectsWarmupMeasured=true;
     }
     host.dataset.combatEffectsStatus=armoredField?useCombatAtlas?'ready':'fallback':'off';
+    if(armoredField&&!combatEffectsPrepared){
+      host.dataset.combatEffectsStatus='loading';
+      renderer.domElement.style.visibility='hidden';
+      rearView.hide();frameMetrics.suspend();return;
+    }
     combatPlayerExplosion?.update(pp,
       {catastrophic:!useCombatAtlas&&!!st.combatWrecking,status:st.status},effectDt);
     opponentExplosions?.forEach((effect, index) => {
