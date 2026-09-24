@@ -87,7 +87,7 @@ tasks:
     size: M
     needs: [TRACK-02]
     merge_after: GFX-00
-    status: building
+    status: reviewing
     owns: [src/hidden-road.js, src/course.js, src/sim-driving.js, src/sim-crash.js, src/world.js, tools/test-hidden-road.mjs, tools/test-feature-flags.mjs, tools/replays/hidden-road-ordinary.json, tools/scenarios/hidden-road.mjs]
     hooks: [src/feature-flags.js, src/game.js, src/world-surfaces.js, src/environment-key.js, tools/test-render-reuse.mjs]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
@@ -111,7 +111,7 @@ tasks:
     size: S
     needs: [TRACK-02]
     merge_after: EGG-01
-    status: building
+    status: reviewing
     owns: [public/assets/reference/rustwall-gate.png, public/assets/reference/wasteland-rpg.png, public/assets/reference/wasteland-wrench.png, public/assets/reference/CREDITS.md, docs/WASTELAND_ART.md]
     helpers: [art_critic, test_runner]
     acceptance:

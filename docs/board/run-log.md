@@ -957,3 +957,23 @@ checkout untouched until the final integration commit passes the full gate.
   generated proportions are not a measuring guide. Merge remains after EGG-01.
 - Quota at ART-W start: 41 percent remaining. D8 remains unapproved; no push
   or live release has occurred in this run.
+
+## 2026-09-23 PDT — scheduled full tier passed
+
+- Full tier passed on exact clean 653e442: 217 suites, zero failures and zero
+  not run in 334.73 seconds. All eight campaign shards passed. HEAD stayed
+  unchanged and the runner ledger records clean start/end source state.
+  Completed at 2026-09-24 05:39:12 UTC. STATUS was regenerated while that
+  commit was still current, before this later metadata update.
+- Reset the task-merge counter to zero. The next full tier is due after five
+  more task merges or 07:39 UTC, whichever comes first, and at run end.
+  A release still needs its own exact-final-commit full and composite evidence.
+- EGG-01 e36a44f is in independent code and visual review. Its final private
+  scenario retained 33 ABC High/Performance captures with zero warnings/errors;
+  physical outbound drive is 33.92 seconds. Terrain patch is 10,000 triangles.
+- BUG-06 final reviewed candidate 24108dd is running its required lane/build
+  gate. No further balance matrix is needed for that unchanged source.
+- ART-W 062ab83 has three accepted references and a passing targeted intake
+  check (7,221,395 bytes). Its lane/build gate and merge wait behind EGG-01.
+  GFX-01 read-only scoping identifies existing crew IDs and required narrow
+  animation-state hooks; no simulation or renderer work has begun there yet.
