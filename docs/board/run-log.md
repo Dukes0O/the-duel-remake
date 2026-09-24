@@ -1168,26 +1168,26 @@ checkout untouched until the final integration commit passes the full gate.
 ## 2026-09-24 PDT - Rustwall refinement and scheduled full checkpoint
 
 - EGG-02 independent red contract ca7234c preceded runtime d19c027 and
-  first assets bb31758. Independent scene17/17 and actual-asset8/8 checks
+  first assets bb31758. Independent scene 17/17 and actual-asset 8/8 checks
   pass; review found no geometry, placement or disposal defect.
-- R1 game capture on private port63305 retained20 PNGs and raw frame samples.
-  Wall scores2/3/4/2 and wash1/3/3/2 for resemblance/readability/grounding/fit.
+- R1 game capture on private port 63305 retained 20 PNGs and raw frame samples.
+  Wall scores 2/3/4/2 and wash 1/3/3/2 for resemblance/readability/grounding/fit.
   Model cost stayed within ten percent in the recorded stopped-course views.
   The comparison uses greybox models on widened ground, not the previous
-  commit's complete scene. The fitted ground patch adds832 triangles.
-- An isolated Performance wash image was blank despite144 submitted triangles.
+  commit's complete scene. The fitted ground patch adds 832 triangles.
+- An isolated Performance wash image was blank despite 144 submitted triangles.
   Preserve it as a capture failure. The reviewer traced a Three instance-upload
   cache effect during QA relocation; prepare a frame before capturing. Check
   restored course views too. R2 remains in progress until actual images pass.
-- R2 assets522c39d reduce the wall to51020 triangles and13 draws while adding
+- R2 assets 522c39d reduce the wall to 51,020 triangles and 13 draws while adding
   coherent rock strata, directional steel wear, irregular salvage, torn banners
   and stronger gate machinery. The planned R2 capture is being corrected;
   no runtime source change or extra balance report is involved.
-- One final read-only BUG-06 launch-angle probe takes8.99s on unchanged c3efb1f.
-  All24 hits are within11.94 degrees of car yaw; a12-degree initial limit would
-  not remove any of them. The larger34.83-degree outlier already misses. The
+- One final read-only BUG-06 launch-angle probe takes 8.99 s on unchanged c3efb1f.
+  All 24 hits are within 11.94 degrees of car yaw; a 12-degree initial limit would
+  not remove any of them. The larger 34.83-degree outlier already misses. The
   evidence and note-only a341cdd remain on the held launch-height branch.
   No further aim-cone probe, tuning, source change or merge is authorized.
-- Two task merges since the07:36 UTC full pass. Reserve the next full run
-  around09:31 UTC, before the09:36 deadline, while the next art round is planned.
-  Latest quota observation:22 percent remaining. No live change, release or push.
+- Two task merges since the 07:36 UTC full pass. Reserve the next full run
+  around 09:31 UTC, before the 09:36 deadline, while the next art round is planned.
+  Latest quota observation: 22 percent remaining. No live change, release or push.
