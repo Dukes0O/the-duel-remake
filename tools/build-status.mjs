@@ -58,16 +58,23 @@ function fullRun(root, integration, now) {
   const { value, issue } = jsonFile(join(root, FULL_TIER_FILE));
   let status = issue;
   if (!status) {
+    const isCommit = commit => typeof commit === 'string' && /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(commit);
     const valid = value && value.schema === 1 && value.tier === 'full' &&
-      /^[0-9a-f]{40,64}$/.test(value.commit) && typeof value.passed === 'boolean' &&
+      isCommit(value.commit) && isCommit(value.endCommit) && typeof value.passed === 'boolean' &&
       typeof value.dirty === 'boolean' && typeof value.time === 'string' &&
+      typeof value.startDirty === 'boolean' && typeof value.endDirty === 'boolean' &&
+      typeof value.complete === 'boolean' && Number.isSafeInteger(value.total) && value.total > 0 &&
+      Number.isSafeInteger(value.completed) && value.completed >= 0 && value.completed <= value.total &&
+      Array.isArray(value.failures) && value.failures.every(failure => typeof failure === 'string') &&
       Number.isFinite(Date.parse(value.time)) && Date.parse(value.time) <= Date.parse(now);
     if (!valid) status = 'invalid';
     else if (value.commit !== integration.commit) status = 'stale';
     else if (!value.passed) status = 'failed';
     else if (value.dirty || integration.dirty) status = 'dirty';
-    else if (value.complete === false || value.startDirty === true || value.endDirty === true ||
-      (value.endCommit && value.endCommit !== value.commit)) status = 'invalid';
+    // A passing flag alone never grants green: require all writer provenance
+    // and consistent, complete coverage, including explicit clean endpoints.
+    else if (!value.complete || value.completed !== value.total || value.failures.length !== 0 ||
+      value.startDirty || value.endDirty || value.endCommit !== value.commit) status = 'invalid';
     else status = 'passed';
   }
   return { status, exactHead: status === 'passed', commit: value?.commit ?? null,

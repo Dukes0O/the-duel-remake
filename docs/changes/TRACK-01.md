@@ -22,8 +22,10 @@ remove worktrees, access player saves or contact a browser/server. Output paths
 that resolve into the live checkout are rejected.
 
 The runner hook records full-tier evidence before and after a complete unfiltered
-full-tier attempt. A crash leaves failed/incomplete evidence. A pass requires
-every selected test result, clean source at both ends and an unchanged commit.
+full-tier attempt. A crash leaves failed/incomplete evidence. A passing status
+requires every selected test result, clean source at both ends and an unchanged
+commit. The reader requires every ledger field with its expected type, positive
+whole-number suite counts, completed coverage equal to the total and no failures.
 Only the ledger itself is excluded from source dirt. Filtered runs, listing
 commands and other tiers preserve the previous ledger. Injected runner tests
 can record only when given an explicit fixture project root.
@@ -36,7 +38,8 @@ that needs its own full run; no document changes inherit a passing check.
 - Independent acceptance tests committed first as `6b570be`. The red baseline
   had 18 failing scenarios: the status tool and persistent runner evidence were
   missing.
-- `node tools/test-build-status.mjs`: 117 checks, zero failing scenarios.
+- `node tools/test-build-status.mjs`: 201 checks, zero failing scenarios after
+  the reviewed schema regressions (the original set passed 117 checks).
   Throwaway repositories cover stale/missing/failed/dirty evidence, current
   source edits, metadata commits, missing manifests/remotes, lane cleanup
   eligibility, full-run source/HEAD changes, ledger exclusion and partial runs.
@@ -49,6 +52,13 @@ that needs its own full run; no document changes inherit a passing check.
 
 ## Behavior and test changes
 
-No gameplay changes, race fingerprint changes or existing assertion changes.
-New independent acceptance tests use temporary repositories and fictional
-build metadata. No runtime dependencies were added.
+No gameplay changes or race fingerprint changes. New independent acceptance
+tests use temporary repositories and fictional build metadata. No runtime
+dependencies were added.
+
+Review found that the first reader accepted passing evidence with missing
+provenance fields or contradictory completion and failure counts. Independent
+regressions in `f4aa57d` strengthen the evidence fixtures to match the actual
+writer and reject missing, mistyped and contradictory fields. The reviewer
+approved those test changes; no assertion was weakened. The reader now validates
+the full ledger schema and all passing conditions before granting exact HEAD.
