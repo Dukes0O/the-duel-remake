@@ -1323,3 +1323,22 @@ checkout untouched until the final integration commit passes the full gate.
 - EGG-04's three failed logs, passing rerun and build log were copied with
   matching hashes into .lanes/evidence/egg04/. Its clean fully merged worktree
   was removed after checking normal local dependencies; branch retained.
+
+## 2026-09-24 12:28 UTC - camera choice reviewed, final gate begins
+
+- CAM-01 preference/runtime e3ae8ac and final presentation 670f81f pass
+  independent source and Save Guardian review. Eight focused groups cover
+  all eleven combat courses, defaults, player isolation and aim projection.
+  Independent red 30481d5 exposed a 21.476-metre remote-tunnel camera pull;
+  reviewed fix 1b76d26 preserves the bounded camera and normal first person.
+- Affected short checks caught the current-format backup fixture before the
+  broad gate. Its one added default and the saved-preference expectation were
+  independently approved; existing assertions and historical fixtures remain.
+- Two private browser rounds retain eleven matched images each, plus the
+  failed initial resume-script attempt. R2 fixes phone minimap obstruction
+  and hides only specific QA panels. Real controls remain visible. Director
+  review 45ec1e8 accepts the result with explicit timing and art limitations.
+- Required clean lane tier/build is next. After this final planned card,
+  run the integration full tier, refresh STATUS and write the handoff. Latest
+  quota at 12:22 UTC: seven percent remaining; floor five percent. No new
+  card, live change, release or push is planned.
