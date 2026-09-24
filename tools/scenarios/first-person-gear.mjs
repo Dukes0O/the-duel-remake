@@ -120,7 +120,9 @@ export async function run(context) {
         if(${JSON.stringify(quality)}==='high')r.composer.render(0);else r.renderer.render(r.scene,r.camera);
         return {png:r.renderer.domElement.toDataURL('image/png'),triangles,draws,presentation:{...review.rig.userData.presentation},errors:review.rig.userData.loadErrors};
       })()`);
-      const path=`${relative}/game-${quality}-${hands.id}-${sample.clip}.png`,bytes=Buffer.from(result.png.split(',')[1],'base64');
+      const phase=hands.captures.filter(item=>item.clip===sample.clip).length>1
+        ? `-time-${String(sample.time).replace('.','p')}` : '';
+      const path=`${relative}/game-${quality}-${hands.id}-${sample.clip}${phase}.png`,bytes=Buffer.from(result.png.split(',')[1],'base64');
       await writeFile(join(root,path),bytes);context.screenshots.push(join(root,path));
       evidence.captures.push({crew:hands.id,quality,clip:sample.clip,time:sample.time,tool:sample.tool,path,sha256:sha(bytes),presentation:result.presentation});
       counts.push({crew:hands.id,clip:sample.clip,triangles:result.triangles,draws:result.draws});

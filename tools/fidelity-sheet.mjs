@@ -10,7 +10,9 @@ function value(name, fallback) {
   const index = args.indexOf(name);
   return index < 0 ? fallback : args[index + 1];
 }
-if (args.includes('--first-person-round')) {
+if (args.includes('--first-person-tools-round')) {
+  await firstPersonSheet(Number(value('--first-person-tools-round')),true);
+} else if (args.includes('--first-person-round')) {
   await firstPersonSheet(Number(value('--first-person-round')));
 } else if (args.includes('--crew-round')) {
   await crewSheet(Number(value('--crew-round')));
@@ -111,7 +113,7 @@ async function crewSheet(round) {
   console.log('Crew fidelity sheet: '+output);
 }
 
-async function firstPersonSheet(round) {
+async function firstPersonSheet(round, toolsOnly=false) {
   if (!Number.isInteger(round) || round < 1 || round > 10) throw Error('First-person round must be 1..10');
   const base = `docs/board/looks/first-person/round-${round}`;
   const captures = JSON.parse(await readFile(join(root,base,'captures.json'),'utf8'));
@@ -125,8 +127,10 @@ async function firstPersonSheet(round) {
   };
   for (const asset of [...blender.tools,...blender.hands]) {
     const path = `public/assets/models/wasteland/first-person/${blender.hands.includes(asset) ? 'hands/' : ''}${asset.id}.glb`;
-    await verify(path,asset.files[`${asset.id}.glb`]);
-    if (captures.assets[path] !== sources[path]) throw Error('Browser used a different asset: '+path);
+    // A supplement compares retained evidence, even after later assets change.
+    // The original full sheet already verified the actual frozen GLBs.
+    if (!toolsOnly) await verify(path,asset.files[`${asset.id}.glb`]);
+    if (captures.assets[path] !== asset.files[`${asset.id}.glb`]) throw Error('Browser used a different asset: '+path);
   }
   for (const hands of blender.hands) {
     await verify(hands.reference.path,hands.reference.sha256);
@@ -136,17 +140,31 @@ async function firstPersonSheet(round) {
       const high=matches('high'),performance=matches('performance');
       if (!high || !performance) throw Error('Missing matched first-person sample '+source.crew+'/'+source.clip);
       await verify(source.path,source.sha256);await verify(high.path,high.sha256);await verify(performance.path,performance.sha256);
-      rows.push({crew:source.crew,clip:source.clip,time:source.time,view:source.tool,
+      if (!toolsOnly) rows.push({crew:source.crew,clip:source.clip,time:source.time,view:source.tool,
         crop:hands.reference.crop,reference:hands.reference.path,blender:source.path,high:high.path,performance:performance.path});
     }
   }
   for (const reference of blender.toolReferences || []) await verify(reference.path,reference.sha256);
+  for (const [tool,clip,crops] of [
+    ['rpg','idle',[[0,0,770,390],[790,360,1536,1024]]],
+    ['wrench','wrench-idle',[[0,0,345,1024],[930,0,1536,1024]]],
+  ]) {
+    const reference=blender.toolReferences?.find(item=>item.path.endsWith(`wasteland-${tool}.png`));
+    const source=blender.hands.find(item=>item.id==='rook')?.captures.find(item=>item.clip===clip);
+    const matches=quality=>captures.captures.find(item=>item.crew==='rook'&&item.clip===clip&&item.tool===tool&&item.time===source?.time&&item.quality===quality);
+    const high=matches('high'),performance=matches('performance');
+    if(!reference||!source||!high||!performance)throw Error('Missing retained tool comparison: '+tool);
+    for(const [index,crop] of crops.entries()) rows.push({crew:'rook',clip,time:source.time,
+      view:`${tool} ${index===0?'shape':'held'} - reference pose differs`,crop,
+      reference:reference.path,blender:source.path,high:high.path,performance:performance.path});
+  }
   if (blender.hands.length!==8) throw Error('All eight crew are required');
-  const output=resolve(root,`${base}.png`),manifest=resolve(root,`${base}.json`);
+  const outputBase=toolsOnly?`${base}-tools`:base;
+  const output=resolve(root,`${outputBase}.png`),manifest=resolve(root,`${outputBase}.json`);
   await writeFile(manifest,JSON.stringify({round,observationCommit:captures.observationCommit,
     camera:captures.camera,assets:captures.assets,counts:captures.counts,qualities:captures.qualities,
-    tile:{width:384,height:216},sources,rows,output:`${base}.png`,
-    status:'Matched first-person evidence. References show crew identity, not first-person pose ground truth; independent review decides fidelity.'},null,2)+'\n',{flag:'wx'});
+    tile:{width:384,height:216},sources,rows,output:`${outputBase}.png`,
+    status:'Blender and game poses match. Original crew and tool references use different poses; compare identity, shape, materials and grip only. Independent review decides fidelity.'},null,2)+'\n',{flag:'wx'});
   const executable=value('--blender',process.env.BLENDER_PATH || 'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe');
   execFileSync(executable,['-b','--python',join(root,'tools/blender/fidelity-sheet.py'),
     '--','--root',root,'--manifest',manifest,'--output',output],{cwd:root,stdio:'inherit',windowsHide:true});
