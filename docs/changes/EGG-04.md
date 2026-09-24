@@ -237,3 +237,20 @@ courses. A bounded review of the other new menu/router/preview accesses found
 no further concrete partial-UI compatibility issue. No assertions changed,
 no speculative source fixes were added and no browser recapture was needed.
 The next clean required run uses a third log filename and preserves both failures.
+## Reviewed additive profile-shape expectation
+
+The third required gate on clean `eeb7959` finished with 229 passed, 1 failed
+and 1 not run in 297.04 seconds. The retained log is
+`.qa-dist/egg04-final-lane-recheck2.log`. The only failure was the old exact
+Wasteland default-key assertion, which predated the approved discovery fields.
+Its other five subtests passed. HEAD/source/tools remained unchanged throughout;
+no build followed the failure.
+
+The Director authorized adding only `discoveredGate` and `pacificFinishes` to
+that exact expected key list and explicit defaults `false` and `0`. The test
+still rejects extra or missing default fields. All five other profile subtests
+and every legacy/malformed/backup/future-schema assertion are unchanged.
+`node tools/test-wasteland-profile.mjs` now passes 6/6 subtests in 0.22 seconds
+(process wall time). This is an intentional additive saved-shape expectation,
+not a runtime fix. The exact diff goes to independent Director review before
+the required clean gate rerun; all three failed logs remain intact.
