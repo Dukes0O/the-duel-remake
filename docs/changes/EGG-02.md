@@ -300,3 +300,26 @@ scales and simulation RNG remain unchanged.
 The three initial measured rounds are complete. Independent final visual
 review and the required lane/build gate remain pending. This evidence does
 not promote the feature to beta or approve a release.
+
+## Final independent review before the lane gate
+
+Reviewed final asset revision `8889a4a`, the retained third-round evidence
+`59ee16a`, and Director critique `cb788e0`. The authoring diff preserves the
+measured wall, gate and human-scale contracts. The latest actual GLB checks
+pass **8/8** (0.32 seconds), covering real geometry, gate clearance, retained
+Blender sources, embedded 1024 textures, draw counts and the instanced wash
+budget. No assertion or acceptance limit changed for this review.
+
+The production diff since the first asset freeze contains only the already
+reviewed deterministic local half-turn hook `34bfd6c`. It changes prepared
+bank orientation, with no new per-frame work, position, scale, collision or
+simulation RNG change. The earlier all-route support and asynchronous resource
+ownership review still applies. No new source defect was found.
+
+This handoff accepts the initial three rounds for **development integration
+only**, subject to the following lane tier and build. Director resemblance
+scores remain wall 3 and wash 2. Repeated ledges, exposed ground wedges, dark
+wall materials and insufficient salvage detail remain explicit polish debt.
+Round 2's 12 percent High wash CPU p95 increase remains documented; the third
+round does not establish a general optimization or a complete performance
+claim. Keep `hidden-road` in dev. This is not beta or release approval.
