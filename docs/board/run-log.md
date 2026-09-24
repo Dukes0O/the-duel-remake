@@ -1028,3 +1028,11 @@ checkout untouched until the final integration commit passes the full gate.
 - The approved raider cone candidate reduced short-probe hits from 6 to 5 on Easy and 10 to 4 on Medium. Its unchanged common-time guidance check exposed a close-range error at the wider angle. The full balance report waits for a bounded correction and independent review; no assertion tolerance or target band changed.
 - Read-only CPU UFO preparation is in checks/2026-09-24-cpu-ufo-scope.md. Implementation waits for the enemy-aim slice because both own weapons. No new feature card started out of order.
 - Last quota check: 34 percent remaining. Three task merges since the 05:39 UTC full pass; next full remains due by 07:39 UTC or after two more task merges. No release or push.
+
+## 2026-09-24 PDT - enemy aim merged (4 since full)
+
+- Integrated a1bc113 after independent review and the required gate on clean fceff63: 169 passed, zero failed/not run, all eight campaign shards, 276.75 s; build passed. Final evidence note is 73c3887. STATUS refreshed immediately after merge.
+- Final flagged balance is wins 9/5/3, enemy hits 6/4/6 and crossbow 12/26. Only Easy hit ceiling remains red. The rejected wide Easy candidate stays recorded; Medium improvement remains. No balance target or legacy behavior changed.
+- Crew round 3 assets are frozen at 98fb529. No runtime source changed since independent review 0d8c37d. Private game capture starts after the gate; its initial attempt stopped before capture because the redirected log was inside Vite's cleared QA folder. Retry keeps the log outside that folder.
+- Existing CPU UFO work has an isolated lane based on fceff63. Independent red tests precede the separate builder; physical collection, own checkpoints/laps and safe actor-local relocation are the scope.
+- Four task merges since the 05:39 UTC full pass. Run the full tier after one more task merge or by 07:39 UTC. Quota is 33 percent remaining; no release or push.

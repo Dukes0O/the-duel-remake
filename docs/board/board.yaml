@@ -482,7 +482,7 @@ tasks:
       - "Measure one controlled crossbow probe and one complete flagged report after the geometric fix. Record win rates, enemy hits, UFO gains and wrecks without promising a pass. Retain lead, thrower velocity, meaningful homing, 10/7/5-second cadence and all balance limits."
       - "Ordinary and flag-off rules must remain unchanged. Existing projectile/replay checks and required lane/build gate pass; any changed expected fingerprint or assertion needs independent review and a written reason."
     merge_after: BAL-01
-    note: "Actual vehicle body contact merged 9139575 after reviewed fixtures, 216-suite lane gate, build and private wreck/results checks. Probe is now 12/26 within target. Seven flagged balance rows remain red; full BUG-06 stays open. Prior 3-degree guidance candidate dfe157e remains held. Raider difficulty/guidance and uphill launch geometry need separate measured corrections."
+    note: "Actual vehicle body contact merged 9139575 after reviewed fixtures, 216-suite lane gate, build and private wreck/results checks. Probe remains 12/26 within target. The later enemy-aim merge a1bc113 reduces flagged balance failures to the Easy enemy-hit ceiling. Full BUG-06 stays open for remaining measured issues, including uphill launch geometry. Prior 3-degree guidance candidate dfe157e remains held."
     spec: "SPEC.md, task BUG-06"
   - id: BUG-07
     title: "A CPU that fights back"
@@ -502,7 +502,7 @@ tasks:
       - "After the rule correction, run one complete flagged balance report and compare the recorded body-contact baseline: wins 5/4/3, enemy hits 10/11/4, crossbow 12/26. Preserve every target; no numeric tuning until the measured result identifies a reason. Record remaining UFO and CPU-UFO work separately."
       - "Required lane/build gate and review apply before this slice merges. The full BUG-07 card stays open for CPU UFO use and unmet balance targets."
       - "The measured 20/10-degree raider candidate regressed Easy wins to 10/10. Revert only Easy to its prior 10 degrees; retain Medium 10 degrees and Hard 0.03 radians. CPU spread, cadence, damage and limits remain fixed. Independent review covers the exact config assertion, explicit raider-cone bound and equal Easy/Medium RMS for identical seeded samples; Medium remains wider than Hard. Run one final report after the justified steering correction and Easy reversion, with all balance targets unchanged."
-    note: "Rule candidate 61a5e9 is independently reviewed: wins 9/5/3, enemy hits 6/10/6, crossbow 12/26. Remaining Easy/Medium hits split CPU/raider as 1/5 and 6/4. Targeted raider tuning is in progress. Only the staggered CPU encounter hash has approval to change; events/actors are identical. CPU UFO use remains open."
+    note: "Aim slice merged a1bc113 after independent source/replay review, 169-suite lane gate and build on fceff63. Final wins 9/5/3, enemy hits 6/4/6, crossbow 12/26; only Easy hit ceiling remains red. Rejected Easy tuning and exact assertion changes are documented. Only the staggered CPU encounter hash changed; events/actors are identical. CPU UFO independent tests are next in a separate lane; full card stays open."
     spec: "SPEC.md, task BUG-07"
   - id: BUG-14
     title: "No legacy police in combat races"
