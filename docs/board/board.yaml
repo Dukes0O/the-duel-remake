@@ -64,7 +64,7 @@ tasks:
     size: M
     needs: [TRACK-02]
     merge_after: BAL-01
-    status: reviewing
+    status: merged
     owns: [tools/blender/test-fighter.py, public/assets/models/wasteland/test-fighter.blend, public/assets/models/wasteland/test-fighter.glb, src/rigged-fighter.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py, tools/test-rigged-fighter.mjs, tools/scenarios/rigged-fighter.mjs, tools/scenarios/onfoot-figures.mjs, docs/board/looks/test-fighter/]
     hooks: [src/combat-scene.js, src/onfoot.js]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
@@ -79,7 +79,7 @@ tasks:
       - "Independent tests verify GLB structure/animations and renderer lifetime/clock/fallback controls; ordinary replay fingerprints stay unchanged. Review the actual contact sheet for alignment, deformation and grounding. Crew fidelity rounds belong to GFX-01, and this pipeline card cannot promote beta."
     shots: [reference-front-side-back, blender-idle-walk-knockdown, game-high-matched-poses, game-performance-matched-poses]
     sound: "No new sounds; keep existing cue behavior."
-    note: "Director-approved pipeline scope spans five implementation files plus generated assets/tests/evidence. Review adds a narrow onfoot.js hook for simulation-authored movement speed; animation must not infer it from rendered frame history. Existing course-landmarks exports mesh JSON, so preserve GLTF skin attributes rather than copying vehicle flattening."
+    note: "Merged 0389eea after independent code, browser and art review, 216-suite lane gate and build. Narrow onfoot.js hook records simulation-authored movement speed. Prototype resemblance is 2; full crew fidelity remains GFX-01. No beta promotion."
   - id: EGG-01
     title: "Hidden Road geometry and protected driving"
     priority: 5
@@ -87,9 +87,9 @@ tasks:
     size: M
     needs: [TRACK-02]
     merge_after: GFX-00
-    status: building
+    status: reviewing
     owns: [src/hidden-road.js, src/course.js, src/sim-driving.js, src/sim-crash.js, src/world.js, tools/test-hidden-road.mjs, tools/test-feature-flags.mjs, tools/replays/hidden-road-ordinary.json, tools/scenarios/hidden-road.mjs]
-    hooks: [src/feature-flags.js, src/game.js, src/world-surfaces.js]
+    hooks: [src/feature-flags.js, src/game.js, src/world-surfaces.js, src/environment-key.js, tools/test-render-reuse.mjs]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
     flag: hidden-road
     behavior_change: yes
@@ -103,7 +103,7 @@ tasks:
       - "Private memory-only High/Performance captures show racing-line concealment, entrance, wash, salt flat, wall contact and return. Review actual screenshots before any scene-signature change; no silent signature regeneration. EGG-02 owns final Rustwall assets, EGG-03 the 150 m departure and gate sequence, EGG-04 discovery persistence."
     shots: [racing-line-concealment, entrance-abc, wash-drive, salt-flat-approach, wall-contact, road-car-return]
     sound: "Existing dirt/engine audio; gate ceremony belongs to EGG-03."
-    note: "Director permits eight source files: five substantive modules and three narrow hooks, plus tests/scenario/evidence. Separate geometry, driving, reset and rendering responsibilities. Independent preparation overlaps GFX-00; completion order is preserved."
+    note: "Director permits nine source files: five substantive modules and four narrow hooks, plus tests/scenario/evidence. The environment key must distinguish the flagged corridor from the menu world; two additive cache checks are authorized. Separate geometry, driving, reset and rendering responsibilities. Independent preparation overlaps GFX-00; completion order is preserved."
   - id: ART-W
     title: "Rustwall gate and first-person gear reference art"
     priority: 6
@@ -111,7 +111,7 @@ tasks:
     size: S
     needs: [TRACK-02]
     merge_after: EGG-01
-    status: building
+    status: reviewing
     owns: [public/assets/reference/rustwall-gate.png, public/assets/reference/wasteland-rpg.png, public/assets/reference/wasteland-wrench.png, public/assets/reference/CREDITS.md, docs/WASTELAND_ART.md]
     helpers: [art_critic, test_runner]
     acceptance:
@@ -120,15 +120,30 @@ tasks:
       - "Rustwall reference shows a coherent 35 m tall, at least 400 m wide salvage wall with a drive-through lifting gate, towers, cranes, banners, barrels, searchlights and figures for scale. Include an approach view and useful modeling views; original design without film likenesses or gore."
       - "RPG and wrench references use consistent orthographic and first-person views, readable silhouettes, physically coherent grips and the crew palette. They guide real Blender geometry; no menu/poster art or runtime image substitution."
       - "Independent visual review checks consistency and modeling usefulness. PNG validation and provenance checks pass; required lane/build gate applies. Merge after EGG-01 even if independent art preparation finishes earlier."
-  - id: GFX-01
-    title: "Crew family fidelity rounds one to three"
-    priority: 7
-    lane: VIS
-    size: L
-    needs: [ART-W]
-    status: backlog
-    acceptance:
-      - "Eight rigged crew models and SPEC 0.3 animations undergo three matched reference/Blender/game rounds. Save every contact sheet and score; honor triangle, draw-call and texture budgets. Minimum beta score is four in every category."
+    - id: GFX-01
+      title: "Crew family fidelity rounds one to three"
+      priority: 7
+      lane: VIS
+      size: L
+      needs: [GFX-00]
+      merge_after: ART-W
+      status: building
+      owns: [tools/blender/crew-fighters.py, public/assets/models/wasteland/crew/, src/fighter-presentation.js, src/rigged-fighter.js, tools/test-crew-fighters.mjs, tools/test-fighter-presentation.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, docs/board/looks/crew/]
+      hooks: [src/combat-scene.js, src/onfoot.js, src/onfoot-weapons.js, src/onfoot-transition.js]
+      helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
+      flag: wasteland2
+      behavior_change: no
+      acceptance:
+        - "Eight rigged crew models and SPEC 0.3 animations undergo three matched reference/Blender/game rounds. Save every contact sheet and score; honor triangle, draw-call and texture budgets. Minimum beta score is four in every category."
+        - "Use Blender headless with the documented --root convention. Retain reproducible Python and .blend sources plus self-contained GLBs for rook, nell, jax, odessa, cinder, dune, wren and tusk. Each must match the existing crew sheets through distinct silhouettes, faces, hair and outfits, rather than recoloring the prototype."
+        - "All eight models have bound skeletons and meaningful idle, walk, sprint, jump, knockdown, get-up, aim, fire, reload, repair, enter and exit clips. At most 8000 near triangles, 2000 distant triangles, two visible material primitives and one 1024-square texture set per member; twelve visible fighters stay within 24 color draw calls. Retain the GFX-00 test asset and evidence."
+        - "Runtime selects the actual crew ID and near/distant detail, caches asset requests by crew, keeps independent skeletons and preserves pending/failed primitive fallback, late-load cleanup and first-person body hiding. Meshes, materials and animation actions are prepared outside the frame update. No flag-off asset requests, simulation mutation, new dependencies or network services."
+        - "A pure presentation selector reads simulation-authored movement and action state. Narrow on-foot hooks may record timestamps, duration and pose snapshots for successful shots, knockdown/recovery and car transitions. Preserve all movement, weapon, repair and enter/exit timings, health, ammunition, rewards and saves. Failed shots do not animate fire; animation cannot delay or cause an action."
+        - "Independent acceptance checks cover actual GLB budgets and clip deformation, crew selection, LOD visibility, independent rigs, deterministic presentation time and lifecycle/fallback behavior. Existing ordinary fingerprints remain unchanged. Browser captures use private ports and memory-only saves, with matched front/side/back and action views in High and Performance."
+        - "Save immutable round-1, round-2 and round-3 contact sheets and provenance under docs/board/looks/crew with reference, Blender and actual game captures. Each round independently scores all five SPEC 0.3 items, names five differences and fixes the lowest scores next. Measure twelve-fighter frame cost. If resemblance stalls twice, change the approach. Three rounds alone never imply beta readiness."
+      shots: [all-eight-front-side-back, twelve-action-poses, high-performance-matches, distant-detail, twelve-fighter-cost]
+      sound: "Retain existing on-foot cues and timing."
+      note: "Independent preparation overlaps EGG-01 and ART-W; completion remains after ART-W. Split builder ownership into Blender assets and runtime presentation only after independent failing tests. No broad on-foot gameplay rewrite or save edits."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8
@@ -444,8 +459,8 @@ tasks:
     size: S
     needs: [BUG-05]
     status: building
-    owns: [src/combat-projectiles.js, tools/test-combat-projectiles.mjs, tools/test-combat-replays.mjs, tools/replays/projectile-height-controls.json, tools/replays/combat-inputs.json, tools/replays/combat-fingerprints.json]
-    helpers: [test_author, balance_analyst, test_runner, reviewer]
+    owns: [src/combat-projectiles.js, tools/test-combat-projectiles.mjs, tools/test-combat-replays.mjs, tools/replays/projectile-height-controls.json, tools/replays/combat-inputs.json, tools/replays/combat-fingerprints.json, tools/test-combat-armor.mjs, tools/test-combat-scoring.mjs, tools/test-combat-opponents.mjs, tools/scenarios/combat-armor-frame-pacing.mjs, tools/scenarios/combat-armor-wreck.mjs, tools/scenarios/combat-effects.mjs, tools/scenarios/combat-results.mjs]
+    helpers: [test_author, balance_analyst, test_runner, reviewer, browser_qa]
     active_slice: "Use actual moving vehicle height for flagged crossbow body contact."
     acceptance:
       - "Independent swept-contact tests show a bolt passing above the actual roof misses while body intersections, including vertically moving cars between steps, hit. Flagged crossbows use vehicle height instead of the current plus/minus 4 m band around ground plus 1 m. Preserve legacy/off and other weapon behavior."

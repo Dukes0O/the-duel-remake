@@ -84,11 +84,12 @@ export function createFighter(course, car, options = {}) {
     health: T.maximumHealth, maxHealth: T.maximumHealth,
     knockedDown: false, knockdownRemaining: 0,
     respawns: 0, contacts: 0, slopeStops: 0, boundaryStops: 0,
-    steps: 0,
+    steps: 0, speed: 0,
   };
 }
 
 export function knockdownFighter(fighter) {
+  fighter.speed = 0;
   if (fighter.knockedDown) return false;
   fighter.health = 0;
   fighter.knockedDown = true;
@@ -118,7 +119,7 @@ export function respawnFighter(course, car, fighter) {
     yaw: point.heading, pitch: 0, airHeight: 0, verticalSpeed: 0,
     jumpHeld: false, health: fighter.maxHealth || T.maximumHealth,
     knockedDown: false,
-    knockdownRemaining: 0});
+    knockdownRemaining: 0, speed: 0});
   fighter.respawns++;
   return fighter;
 }
@@ -155,6 +156,7 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
   if (!Number.isFinite(dt) || Math.abs(dt - FIGHTER_STEP_SECONDS) > 1e-10)
     throw new Error('Fighter movement needs the fixed 120 Hz simulation step.');
   fighter.steps++;
+  fighter.speed = 0;
   if (fighter.knockedDown) {
     fighter.knockdownRemaining = fighter.knockdownRemaining <= dt + 1e-9
       ? 0 : fighter.knockdownRemaining - dt;
@@ -162,6 +164,7 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
     return fighter;
   }
 
+  const startX = fighter.x, startZ = fighter.z;
   fighter.yaw += (Number(input.lookX) || 0) * .0022;
   fighter.pitch = clamp(fighter.pitch - (Number(input.lookY) || 0) * .0022,
     -1.25, 1.25);
@@ -202,5 +205,7 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
     fighter.airHeight = 0;
     fighter.verticalSpeed = 0;
   }
+  // Observed planar movement from this fixed step, including collision sliding.
+  fighter.speed = Math.hypot(fighter.x - startX, fighter.z - startZ) / dt;
   return fighter;
 }

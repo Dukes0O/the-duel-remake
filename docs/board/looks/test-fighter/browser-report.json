@@ -1,0 +1,28 @@
+{
+  "scenario": "rigged-fighter",
+  "passed": true,
+  "port": 58742,
+  "memoryOnlySaves": true,
+  "issues": [],
+  "warnings": [],
+  "screenshots": [
+    "docs/board/looks/test-fighter/game-high-idle-front.png",
+    "docs/board/looks/test-fighter/game-high-idle-side.png",
+    "docs/board/looks/test-fighter/game-high-idle-back.png",
+    "docs/board/looks/test-fighter/game-high-walk-front.png",
+    "docs/board/looks/test-fighter/game-high-walk-side.png",
+    "docs/board/looks/test-fighter/game-high-walk-back.png",
+    "docs/board/looks/test-fighter/game-high-knockdown-front.png",
+    "docs/board/looks/test-fighter/game-high-knockdown-side.png",
+    "docs/board/looks/test-fighter/game-high-knockdown-back.png",
+    "docs/board/looks/test-fighter/game-performance-idle-front.png",
+    "docs/board/looks/test-fighter/game-performance-idle-side.png",
+    "docs/board/looks/test-fighter/game-performance-idle-back.png",
+    "docs/board/looks/test-fighter/game-performance-walk-front.png",
+    "docs/board/looks/test-fighter/game-performance-walk-side.png",
+    "docs/board/looks/test-fighter/game-performance-walk-back.png",
+    "docs/board/looks/test-fighter/game-performance-knockdown-front.png",
+    "docs/board/looks/test-fighter/game-performance-knockdown-side.png",
+    "docs/board/looks/test-fighter/game-performance-knockdown-back.png"
+  ]
+}

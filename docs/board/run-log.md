@@ -932,3 +932,56 @@ checkout untouched until the final integration commit passes the full gate.
   correction to the actual body centre, retaining all assertions. One real
   CPU attack replay changes from three hits to one. Its expectation remains
   untouched pending a before/after geometry trace and independent review.
+
+## 2026-09-23 PDT — GFX-00 merged (run merge 5; full tier due now)
+
+- Integrated 0389eea. Final independent gate on df81d39 passed 216 suites
+  in 320.32 seconds and build in 0.93 seconds. Code, loaded-rig browser and
+  visual reviews passed their scoped requirements. The stale primitive-only
+  browser assertion was replaced with reviewed bound-skin behavior checks.
+- STATUS refreshed after merge. Commit this metadata, then start the full
+  tier on the clean resulting integration commit. No further task merge
+  until this scheduled run completes; a failure stops feature merges.
+- BUG-06 candidate 24108dd is reviewed and awaiting its lane/build gate.
+  Its crossbow probe is 12/26; independent review approved only the real CPU
+  encounter's three-to-one hit correction and its matching FPS hashes.
+- Three follow-up races separate the remaining enemy hits into CPU/raider:
+  Easy 3/7, Medium 6/5, Hard 3/1. Raider accuracy lacks difficulty input and
+  CPU guidance can erase seeded aiming error. Preserve these findings for
+  a bounded BUG-07 correction after the body-bound fix, without changing bands.
+- EGG-01 passes its headless checks and actual all-car turnaround/return;
+  browser work fixes a menu-world cache reuse defect before review.
+- ART-W prepared three reference sheets with the imagegen skill and built-in
+  tool. Independent critic accepts them for modeling. Rustwall scale must be
+  authored numerically: 35 m wall, at least 400 m span, 9 by 7 m opening;
+  generated proportions are not a measuring guide. Merge remains after EGG-01.
+- Quota at ART-W start: 41 percent remaining. D8 remains unapproved; no push
+  or live release has occurred in this run.
+
+## 2026-09-23 PDT — scheduled full tier passed
+
+- Full tier passed on exact clean 653e442: 217 suites, zero failures and zero
+  not run in 334.73 seconds. All eight campaign shards passed. HEAD stayed
+  unchanged and the runner ledger records clean start/end source state.
+  Completed at 2026-09-24 05:39:12 UTC. STATUS was regenerated while that
+  commit was still current, before this later metadata update.
+- Reset the task-merge counter to zero. The next full tier is due after five
+  more task merges or 07:39 UTC, whichever comes first, and at run end.
+  A release still needs its own exact-final-commit full and composite evidence.
+- EGG-01 e36a44f is in independent code and visual review. Its final private
+  scenario retained 33 ABC High/Performance captures with zero warnings/errors;
+  physical outbound drive is 33.92 seconds. Terrain patch is 10,000 triangles.
+- BUG-06 final reviewed candidate 24108dd is running its required lane/build
+  gate. No further balance matrix is needed for that unchanged source.
+- ART-W 062ab83 has three accepted references and a passing targeted intake
+  check (7,221,395 bytes). Its lane/build gate and merge wait behind EGG-01.
+  GFX-01 read-only scoping identifies existing crew IDs and required narrow
+  animation-state hooks; no simulation or renderer work has begun there yet.
+
+## 2026-09-23 PDT - GFX-01 preparation and targeted corrections
+
+- Expand GFX-01 into explicit Blender asset, runtime presentation and fidelity evidence ownership. Independent tests start from the merged GFX-00 pipeline; completion remains after ART-W.
+- EGG-01 return sinking was stale synthetic support height in the browser fixture. Corrected wheel clearance is about 10 mm. Honest replacement views exposed fitted ground crossing the asphalt; authorize a narrow patch clip and additive ABC road-ray regression in its owned render test.
+- BUG-06 candidate 280b25d corrects ten reviewed direct-hit fixture positions without changing assertions or runtime. Its 42 repaired unit checks pass; representative wreck/results browser checks and the final required lane/build gate follow.
+- Budget before GFX-01: 39 percent remaining; no push or release. Scheduled full remains due at 07:39 UTC or after five further task merges.
+
