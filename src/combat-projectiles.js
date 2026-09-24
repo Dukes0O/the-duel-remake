@@ -35,7 +35,9 @@ function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
   const state = duel.state;
   const combat = state.combat;
   if (!actor) return;
-  const shielded = actor === state
+  const trafficInModernCombat = state.mode === 'wasteland' &&
+    duel.featureFlags?.enabled('wasteland2') === true && state.traffic.includes(actor);
+  const shielded = trafficInModernCombat ? false : actor === state
     ? combat.shield > 0 || state.invulnerableSec > 0
     : state.opponents.length <= 1 || actor === state.rival
       ? combat.rivalShield > 0
