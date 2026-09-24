@@ -655,3 +655,8 @@ checkout untouched until the final integration commit passes the full gate.
   are recorded. One intake check verified both opaque wide PNGs, their
   provenance and the 4.44 MB total; no game build was needed for reference
   files.
+- Four distinct current-weapon fire cues integrated at `09e9353`. UFO,
+  bomb, crossbow and Star now have separate short sounds in Wasteland2,
+  with the legacy tone retained outside the switch. A focused sound
+  check, build and one private waveform capture passed. Full-mix
+  listening and later arsenal cues remain for AUD-01.

@@ -1,6 +1,6 @@
 # AUD-01: current weapon fire cues
 
-status: ready-to-merge
+status: integrated
 
 ## Change
 

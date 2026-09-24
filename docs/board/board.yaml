@@ -588,7 +588,7 @@ tasks:
     size: S
     needs: []
     status: review
-    note: "Measured spatial blast and hit slice integrated; all ten current-race sound targets pass. Other weapon cues and listening review remain open."
+    note: "Measured spatial blast/hit slice and four distinct current-weapon fire cues integrated through 09e9353. Focused sound checks, private waveform capture and build passed. Full-mix listening and future arsenal cues remain."
     spec: "SPEC.md, task AUD-01"
   - id: AUD-02
     title: "On-foot and new weapon sounds"
