@@ -256,12 +256,23 @@ tasks:
     title: "Gate discovery save and return entry"
     priority: 11
     lane: SAVE
-    size: S
+    size: M
     needs: [EGG-03]
     status: backlog
+    owns: [src/hidden-road-discovery.js, src/hidden-road-hints.js, tools/test-hidden-road-discovery.mjs, tools/test-hidden-road-hints.mjs, tools/scenarios/hidden-road-discovery.mjs, docs/board/looks/hidden-road-discovery/, docs/changes/EGG-04.md]
+    hooks: [src/wasteland-progress.js, src/career-backup.js, src/progression.js, src/app.js, src/game.js, src/hidden-road-journey.js, src/hidden-road-ui.js, src/screen-menu.js, src/screen-router.js, src/screen-garage.js, src/route-map.js, src/course-preview.js, src/world.js]
     helpers: [test_author, save_guardian, reviewer, browser_qa]
+    flag: hidden-road
     acceptance:
       - "Back up before migration, persist discovery even after Turn back, reveal WASTELAND menu/map only after discovery, revisit automatically, give the five-race hint and ten-race dust devil. Existing careers and credits survive."
+      - "Extend the existing Wasteland profile with a validated discoveredGate boolean and a bounded Pacific completion count sufficient for the five/ten-race hints. Retain unknown fields and future-version protections. Existing valid completion history may initialize the count conservatively; document its limited history window. Back up and verify before changing stored shape, and block writes if backup fails. Do not introduce scrap or territory progression before CAR-01."
+      - "Mark discovery once when this player's actual EGG-03 invitation is ready, including if Turn back follows. Validate current state, journey and run owner. Reject stale and wrong-player events. Count only completed Pacific Canyon races, at most once per settlement, and exclude abandonment, timeout and other courses."
+      - "Show a WASTELAND menu action only for the current discovered player while hidden-road is enabled. It opens a safe visit through the gate without creating a payable race, pending fines, a new race record or an abandoned-race history entry. An already discovered driver using the scenic road gets the normal safe takeover and automatic passage without the invitation. Use the existing arrived endpoint until the yard card connects it; expose no unbuilt career actions."
+      - "Reveal the hidden road as a dotted map path only after discovery, in the live map and course preview. Cache keys must include discovery so switching named players cannot leak the path. Flag-off and undiscovered map geometry stays identical to the recorded controls."
+      - "After five completed Pacific races without discovery, show the garage tip about the dry wash. After ten, draw a bounded dust devil near the entrance during races using presentation time and no simulation RNG. Remove both hints after discovery. These hints do not change collision, race timing, NPC routes or outcomes."
+      - "Independent save review loads every historical fixture, checks malformed/partial data and backup failure, and preserves credits, cars, upgrades, drivers, courses, paint, old weapon levels, records and ghosts. Test named-player isolation, duplicate discovery/finish events, reload, direct visit and interrupted navigation using memory-only storage."
+      - "Retain two scored bounded browser rounds for hidden/discovered menu and map, Turn back persistence, automatic revisit, five/ten-race hints and a phone-size menu. Preserve ordinary and flag-off replay fingerprints. Required lane/build gate and evidence note precede integration."
+    note: "Expanded while EGG-03 builds; no implementation before its merge. The completion counter saturates at ten because hints need no larger total. Existing history retains only sixty rows, so migration cannot claim a lifetime count beyond the evidence available. Additive fields may retain schema version one only if backup detection explicitly recognizes their absence before any save write."
   - id: CAM-01
     title: "First-person and overhead camera choice"
     priority: 12
