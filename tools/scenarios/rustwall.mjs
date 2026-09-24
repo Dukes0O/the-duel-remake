@@ -6,6 +6,7 @@ import {execFileSync} from 'node:child_process';
 import {Course} from '../../src/course.js';
 import {COURSE} from '../../src/config.js';
 import {hiddenRoadGroundGeometry} from '../../src/world-surfaces.js';
+import {renderMainView} from '../../src/scene-presentation.js';
 
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
@@ -61,15 +62,16 @@ export async function run(context) {
       evidence.cost[quality][view]=await context.evaluate(`(async () => {
         const r=window.__render,q=window.__rustwallReview;
         const measure=async()=>{
-          const frames=[],cpu=[];let last=0,metrics;
+          const frames=[],cpu=[],draws=[],triangles=[];let last=0,metrics;
           for(let i=0;i<141;i++){
             const now=await new Promise(q.raf),begin=performance.now();metrics=r.renderFrame();
             const elapsed=performance.now()-begin;
-            if(i>20){frames.push(now-last);cpu.push(elapsed);}last=now;
+            if(i>20){frames.push(now-last);cpu.push(elapsed);draws.push(metrics.drawCalls);triangles.push(metrics.triangles);}last=now;
           }
           const summary=values=>{const list=[...values].sort((a,b)=>a-b);return{samples:list.length,p50:list[59],p95:list[113],max:list.at(-1),over33:list.filter(n=>n>33).length};};
           return{raf:summary(frames),renderCpu:summary(cpu),rafSamplesMs:frames,renderCpuSamplesMs:cpu,
-            drawCalls:metrics.drawCalls,triangles:metrics.triangles};
+            drawCalls:metrics.drawCalls,triangles:metrics.triangles,drawCallSamples:draws,triangleSamples:triangles,
+            drawCallRange:[Math.min(...draws),Math.max(...draws)],triangleRange:[Math.min(...triangles),Math.max(...triangles)]};
         };
         q.rig.visible=false;q.greybox.visible=true;const baseline=await measure();
         q.rig.visible=true;q.greybox.visible=false;const loaded=await measure();
@@ -144,7 +146,7 @@ function wallPicture(sample,quality) {
     r.renderer.setPixelRatio(1);r.renderer.setSize(c.width,c.height,false);r.composer.setSize(c.width,c.height);
     r.camera.position.fromArray(window.__qaApp.inspectionCamera.position);r.camera.lookAt(...window.__qaApp.inspectionCamera.target);
     r.camera.fov=c.verticalFov;r.camera.aspect=c.width/c.height;r.camera.near=c.near;r.camera.updateProjectionMatrix();
-    r.renderer.info.reset();if(${JSON.stringify(quality)}==='high')r.composer.render(0);else r.renderer.render(r.scene,r.camera);
+    r.renderer.info.reset();(${renderMainView.toString()})(r.renderer,r.composer,${quality==='high'});
     const counts={drawCalls:r.renderer.info.render.calls,triangles:r.renderer.info.render.triangles};
     return{png:r.renderer.domElement.toDataURL('image/png'),counts};
   })()`;
@@ -156,7 +158,7 @@ function washPicture(sample,quality) {
     const visibility=r.scene.children.map(n=>[n,n.visible]),background=r.scene.background,environment=r.scene.environment,fog=r.scene.fog;
     const lights=[];r.scene.traverse(n=>{if(n.isLight)lights.push(n.clone());});
     const records=[];wash.traverse(mesh=>{if(!mesh.isInstancedMesh)return;
-      const matrix=mesh.matrix.clone();mesh.getMatrixAt(0,matrix);records.push({mesh,count:mesh.count,matrix,box:mesh.boundingBox,sphere:mesh.boundingSphere});
+      const matrix=mesh.matrix.clone();mesh.getMatrixAt(0,matrix);records.push({mesh,count:mesh.count,matrix,box:mesh.boundingBox?.clone(),sphere:mesh.boundingSphere?.clone()});
       mesh.count=1;mesh.setMatrixAt(0,mesh.matrix.clone().makeScale(...${JSON.stringify(sample.moduleScale)}));
       mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();mesh.computeBoundingSphere();
     });
@@ -164,8 +166,16 @@ function washPicture(sample,quality) {
     r.scene.add(wash,...lights);wash.visible=true;r.scene.background=null;r.scene.environment=null;r.scene.fog=null;
     r.renderer.setClearColor(0x777777,1);r.renderer.setPixelRatio(1);r.renderer.setSize(c.width,c.height,false);r.composer.setSize(c.width,c.height);
     r.camera.position.fromArray(c.position);r.camera.lookAt(...c.target);r.camera.fov=c.verticalFov;r.camera.aspect=c.width/c.height;r.camera.near=c.near;r.camera.updateProjectionMatrix();
-    r.renderer.info.reset();if(${JSON.stringify(quality)}==='high')r.composer.render(0);else r.renderer.render(r.scene,r.camera);
-    const result={png:r.renderer.domElement.toDataURL('image/png'),counts:{drawCalls:r.renderer.info.render.calls,triangles:r.renderer.info.render.triangles}};
+    r.scene.updateMatrixWorld(true);r.camera.updateMatrixWorld(true);
+    r.renderer.info.reset();(${renderMainView.toString()})(r.renderer,r.composer,${quality==='high'});
+    const gl=r.renderer.getContext(),pixels=new Uint8Array(c.width*c.height*4);
+    gl.readPixels(0,0,c.width,c.height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+    let nonBackgroundSamples=0;
+    for(let y=0;y<c.height;y+=8)for(let x=0;x<c.width;x+=8){const index=(y*c.width+x)*4;
+      if(Math.abs(pixels[index]-pixels[0])+Math.abs(pixels[index+1]-pixels[1])+Math.abs(pixels[index+2]-pixels[2])>12)nonBackgroundSamples++;
+    }
+    if(nonBackgroundSamples<100)throw Error('Isolated wash module did not produce enough non-background pixels');
+    const result={png:r.renderer.domElement.toDataURL('image/png'),counts:{drawCalls:r.renderer.info.render.calls,triangles:r.renderer.info.render.triangles,nonBackgroundSamples}};
     for(const record of records){record.mesh.count=record.count;record.mesh.setMatrixAt(0,record.matrix);record.mesh.instanceMatrix.needsUpdate=true;record.mesh.boundingBox=record.box;record.mesh.boundingSphere=record.sphere;}
     parent.add(wash);for(const light of lights)light.removeFromParent();for(const [node,visible] of visibility)node.visible=visible;
     r.scene.background=background;r.scene.environment=environment;r.scene.fog=fog;return result;

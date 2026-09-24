@@ -122,6 +122,40 @@ and the original preservation controls. Syntax and whitespace checks pass.
 Real asset checks, browser captures, independent source review and lane/build
 gates remain pending. No existing assertion or fingerprint changed.
 
+## Round 1 browser evidence and capture limitation
+
+Source `6d16f8e` and frozen assets `bb31758` completed the private scenario on
+port 63305 with zero browser warnings or errors. The round retains twelve
+matched-view files, eight actual-course views, its browser report and contact
+sheet. All six route/quality placement checks confirm the gate endpoint and
+level support beneath both wall ends. The full-span game view shows that support.
+
+The independent visual review found one invalid isolated image: Performance
+wash-module is blank despite reporting one draw and 144 triangles. The original
+image and sheet remain unchanged. Actual-course wash views remain available for
+round 1 review. This is a capture limitation, not a proven runtime defect.
+
+Before round 2, the isolated fixture now uses the production `renderMainView`
+path in both qualities, explicitly updates scene/camera matrices, and verifies
+non-background pixels rather than trusting draw counts. It restores cloned
+instance bounds; the original references were mutated during bounds calculation.
+The planned next round will verify this correction without repeating round 1.
+
+Each cost condition retains its ordered 120 RAF intervals and 120 full-render
+CPU submission times. RAF p95 stays at 18.2 ms in High and changes from
+18.3 ms to 18.2/18.1 ms in Performance wash/approach. CPU p95 changes are
+High wash 2.7 to 2.7 ms, High approach 2.5 to 2.6 ms, Performance wash
+1.9 to 2.0 ms and Performance approach 1.7 to 1.7 ms. No interval exceeds
+33 ms. The largest positive measured CPU p95 change is about 5.3 percent.
+
+These paired views compare EGG-01 greybox scenery on the newly widened flat
+with loaded scenery. They isolate model cost, not the entire EGG-02 change.
+The separately derived prepared-ground patch grows from 9824 to 10656 triangles,
+a delta of 832; this does not reconstruct an earlier whole world. Recorded
+draws/triangles include render passes and shadow refresh, not fixed asset budgets.
+Round 2 also retains their per-sample values and ranges. CPU submission timing
+does not measure GPU time. Independent art review and later rounds remain open.
+
 ## Independent runtime and first-round asset review
 
 The independent test author reviewed runtime source **d19c027** and the frozen
