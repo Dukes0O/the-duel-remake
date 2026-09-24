@@ -31,9 +31,10 @@ export function getCarLoadout(profile){
 }
 
 export function equipCarWeapon(profile,slot,id){
-  if(Number.isSafeInteger(profile?.wasteland?.version)&&
-      profile.wasteland.version>1)
-    return {ok:false,profile,reason:'This career needs a newer game build.'};
+  // PRG-01 verifies a backup before migration. This menu action cannot create
+  // version 1 from an older profile or rewrite a future schema.
+  if(profile?.wasteland?.version!==1)
+    return {ok:false,profile,reason:'This career is not ready for Wasteland loadout changes.'};
   if(!Number.isInteger(slot)||slot<0||slot>=4||
       !availableCarWeapons(profile).includes(id))
     return {ok:false,profile,reason:'That weapon is not available.'};
@@ -44,5 +45,5 @@ export function equipCarWeapon(profile,slot,id){
   loadout[slot]=id;
   return {ok:true,changed:true,loadout,
     profile:{...profile,wasteland:{...profile.wasteland,
-      version:profile.wasteland?.version??1,loadout}}};
+      loadout}}};
 }

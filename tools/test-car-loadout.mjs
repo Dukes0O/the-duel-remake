@@ -31,6 +31,11 @@ test('unimplemented, locked and future-save weapons cannot enter the loadout',()
     assert.equal(result.profile,saved);
   }
   assert.equal(equipCarWeapon(saved,4,'ufo').ok,false);
+  const unmigrated={credits:1000,weapons:{levels:{ufo:2}}};
+  const rejected=equipCarWeapon(unmigrated,0,'star');
+  assert.equal(rejected.ok,false);
+  assert.equal(rejected.profile,unmigrated,
+    'an Armory action cannot skip the verified migration backup');
   assert.equal(equipCarWeapon({...saved,wasteland:{...saved.wasteland,version:2}},
     0,'star').ok,false);
 });
