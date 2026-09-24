@@ -1430,3 +1430,8 @@ percent remaining. All helpers are finished. No lane has an active builder.
 - `.gitignore` now blocks `.blend`, `.evidence/`, `art-build/` and raw images
   and videos under `docs/board/looks/`. CLEAN-01 to CLEAN-08 remain for the
   cleanup run; CLEAN-02 and CLEAN-03 now cover tools and compressed sheets only.
+- Follow-up `b56dbfb`: four asset tests updated to the SPEC 0.7 rule and the
+  pre-existing `course-landmarks.blend` restored from `master` (see
+  `docs/changes/CLEAN-09.md`). Full tier on `b56dbfb`: 232 passed, 0 failed,
+  297.2 s. Build 303 MB with no `.blend` (was 487 MB). The filter-branch
+  backup ref was removed; the bundle in the backup folder is the rollback.
