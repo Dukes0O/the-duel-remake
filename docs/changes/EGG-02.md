@@ -323,3 +323,25 @@ wall materials and insufficient salvage detail remain explicit polish debt.
 Round 2's 12 percent High wash CPU p95 increase remains documented; the third
 round does not establish a general optimization or a complete performance
 claim. Keep `hidden-road` in dev. This is not beta or release approval.
+## Final required gate and handoff
+
+Both required gates passed on the exact clean commit
+`84459137006538f0cc9aed43936071922b14af49`:
+
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8`: **226 passed,
+  0 failed, 0 not run**, 301.17 seconds (301.35 seconds including the wrapper).
+- `npm run build`: **passed**, 1.00 second including the wrapper; Vite reports
+  524 ms. The existing large-chunk warning remains informational.
+
+Complete logs are retained locally in `.qa-dist/egg02-final-lane.log` and
+`.qa-dist/egg02-final-build.log`. HEAD and the clean working tree were checked
+before and after these gates. Source, Rustwall asset and tools tree identities
+remain `299797aa4749341ada255a6cb33fb102d9328edc`,
+`b0f2c8c70b033996d4ec5f987840621417a30556` and
+`09eac1774d3a26c737eeb61bbe69732ad4862afb`, respectively.
+
+This final addition records evidence only; it changes no tested source, asset,
+test, acceptance limit or race fingerprint. The lane is ready for the Director
+to integrate under the recorded development-only approval. The visual polish
+debt and performance limits above remain open. No merge, board change or
+release was performed by this reviewer.
