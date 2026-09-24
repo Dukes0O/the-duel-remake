@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {existsSync} from 'node:fs';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
+import {createFighter, FIGHTER_STEP_SECONDS} from '../src/onfoot.js';
+import {stepFootTransition} from '../src/onfoot-transition.js';
 
 // GFX-01 public presentation contract. These are simulation snapshots, not
 // animation commands from input or wall-clock time. The renderer owns no rules.
@@ -95,6 +97,49 @@ check('presentation repeats and rewinds from simulation time without mutable his
   assert.notEqual(later.clipTime, first.clipTime);
   assert.deepEqual(await select(entry, .25), first);
   assert.equal(JSON.stringify(entry), before);
+});
+
+check('optional output and pose are reused across ordinary and event presentation', async () => {
+  const {selectFighterPresentation} = await import('../src/fighter-presentation.js');
+  const pose = {}, output = {pose}, clock = {time: 10.25};
+  for (const entry of [freeze({fighter: fighter()}), freeze({fighter: fighter(),
+    presentation: {clip: 'exit', startedAt: 10, duration: .65,
+      pose: {x: 4, y: 3, z: 2, yaw: .6}}})]) {
+    const before = JSON.stringify(entry);
+    const expected = selectFighterPresentation(entry, clock);
+    const result = selectFighterPresentation(entry, clock, output);
+    assert.equal(result, output, 'selector must return the supplied reusable output');
+    assert.equal(result.pose, pose, 'event snapshots must reuse the supplied pose object');
+    assert.deepEqual(result, expected);
+    assert.equal(JSON.stringify(entry), before, 'output reuse must not mutate simulation inputs');
+  }
+});
+
+check('recovery presentation starts on the same fixed tick at 30, 60 and 144 Hz', async () => {
+  const observations = [];
+  for (const fps of [30, 60, 144]) {
+    const course = {def: {}, obstaclesNear: () => [],
+      groundAt: (s, lateral) => ({x: lateral, y: 0, z: s, heading: 0})};
+    const state = {mode: 'wasteland', combat: {}, status: 'racing', paused: false,
+      s: 0, lateral: 0, stageTimeSec: 0, onFoot: true, input: {}, fighterInput: {},
+      footTransition: {heldSeconds: 0, needsRelease: false, fighterStepRemainder: 0}};
+    state.fighter = createFighter(course, state);
+    Object.assign(state.fighter, {knockedDown: true, knockdownRemaining: FIGHTER_STEP_SECONDS,
+      health: 0, bailTumbleSeconds: 0});
+    const duel = {state, course, stageDef: {}, featureFlags: {enabled: () => true}};
+    while (state.stageTimeSec < .1 - 1e-10) {
+      const dt = Math.min(1 / fps, .1 - state.stageTimeSec);
+      state.stageTimeSec += dt;
+      stepFootTransition(duel, dt);
+    }
+    assert.equal(state.fighter.respawns, 1, 'presentation must not postpone gameplay recovery');
+    assert.equal(state.fighter.health, state.fighter.maxHealth);
+    observations.push({fps, startedAt: state.fighter.presentation.startedAt,
+      clipTime: (await select(state.fighter, .1)).clipTime});
+  }
+  assert.ok(observations.every(item => Math.abs(item.startedAt - observations[0].startedAt) < 1e-10 &&
+    Math.abs(item.clipTime - observations[0].clipTime) < 1e-10),
+  `same fixed recovery tick produced different animation timestamps: ${JSON.stringify(observations)}`);
 });
 
 let failures = 0;

@@ -246,6 +246,48 @@ check('first-person hiding applies to the selected local crew at either detail',
   } finally {view.dispose();}
 });
 
+const bonePose = group => meshes(group).filter(mesh => detailOf(mesh) === 'near' && visible(mesh))
+  .flatMap(mesh => mesh.skeleton.bones.flatMap(bone => [...bone.position.toArray(),
+    ...bone.quaternion.toArray(), ...bone.scale.toArray()]));
+
+check('an airborne jump late in the race advances the actual authored bone pose', async () => {
+  const asset = await parseAsset(readGlb('rook').bytes);
+  const entry = {fighter: fighter('rook', {airHeight: .2, verticalSpeed: 4, y: .2})};
+  const view = await ready([entry], async () => asset);
+  try {
+    view.update([entry], options('near', 10)); const first = bonePose(view.group);
+    Object.assign(entry.fighter, {airHeight: .8, verticalSpeed: 2, y: .8});
+    view.update([entry], options('near', 10.2)); const later = bonePose(view.group);
+    assert.ok(first.some((value, index) => Math.abs(value - later[index]) > .001),
+      'jump at 10 and 10.2 seconds must not stay clamped at the authored clip endpoint');
+  } finally {view.dispose();}
+});
+
+for (const [clip, duration] of [['get-up', .8], ['enter', .65], ['exit', .65]]) {
+  check(`${clip} reaches the authored endpoint within its simulation event window`, async () => {
+    const asset = await parseAsset(readGlb('rook').bytes);
+    const authored = asset.animations.find(item => item.name === clip);
+    assert.ok(authored?.duration > 0);
+    const entry = {fighter: fighter('rook'), presentation: {clip, startedAt: 10, duration}};
+    const view = await ready([entry], async () => asset);
+    try {
+      const progress = .999;
+      view.update([entry], options('near', 10 + duration * progress));
+      const actual = bonePose(view.group);
+      const mixer = new THREE.AnimationMixer(asset.scene);
+      const action = mixer.clipAction(authored);
+      action.setLoop(THREE.LoopOnce, 1); action.clampWhenFinished = true; action.play();
+      mixer.setTime(authored.duration * progress); asset.scene.updateMatrixWorld(true);
+      const expected = bonePose(asset.scene);
+      assert.equal(actual.length, expected.length);
+      const error = Math.max(...actual.map((value, index) => Math.abs(value - expected[index])));
+      mixer.stopAllAction(); mixer.uncacheRoot(asset.scene);
+      assert.ok(error < .002,
+        `${clip} ends mid-pose: maximum bone component error ${error} at 99.9% of its event window`);
+    } finally {view.dispose();}
+  });
+}
+
 let failures = 0;
 for (const {name, run} of checks) {
   try { await run(); } catch (error) { failures++; console.error(`FAIL ${name}: ${error.message}`); }
