@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -65,6 +65,10 @@ function fixture(name) {
   put(join(root, 'package.json'), '{"type":"module"}\n');
   put(join(root, 'src/feature-flags.js'), "export const FEATURE_STATES = Object.freeze({ 'hidden-road': 'dev', crew: 'beta', arena: 'on' });\n");
   put(join(root, 'source.txt'), 'unchanged source\n');
+  put(join(root, 'tools/size-targets.json'), JSON.stringify({ buildBytes: 100, wastelandAssetBytes: 100, runtimeFileBytes: 100, ordinaryTrackedFileBytes: 100, lookSheetBytes: 100, lookDirectoryBytes: 100, mergeAddedBytes: 100 }));
+  put(join(root, 'public/assets/models/wasteland/rustwall/wall.glb'), 'fixture wall');
+  put(join(root, 'docs/board/looks/fixture.jpg'), 'fixture review sheet');
+  put(join(root, 'dist/fixture.bin'), '12345');
   git(root, 'add', '.');
   git(root, 'commit', '-m', 'fixture baseline');
   const base = git(root, 'rev-parse', 'HEAD');
@@ -126,6 +130,70 @@ try {
     }
     check(/observ/i.test(result.markdown), 'page labels its observation commit explicitly');
     check(/backup/i.test(result.markdown), 'page includes backup state');
+    same(result.sizes.rows.find(row => row.key === 'buildBytes').current, 5, 'build size is measured in bytes');
+    check(result.markdown.includes('## Size targets'), 'status reports size targets');
+  });
+
+  await test('size changes compare with the previous observation', () => {
+    const f = fixture('size-delta'); f.evidence();
+    const first = report(f);
+    same(first.sizes.rows.find(row => row.key === 'buildBytes').previous, null, 'first observation has no invented baseline');
+    put(join(f.root, 'dist/fixture.bin'), '123456789');
+    const second = report(f);
+    const build = second.sizes.rows.find(row => row.key === 'buildBytes');
+    same(build.current, 9, 'growth is measured');
+    same(build.previous, 5, 'previous observation is retained');
+    check(second.markdown.includes('+4 B'), 'growth appears as a signed delta');
+    const third = report(f);
+    same(third.sizes.rows.find(row => row.key === 'buildBytes').previous, 9, 'repeated observation uses the immediately preceding measurement');
+    check(third.markdown.includes('+0 B'), 'an unchanged repeated observation reports zero change');
+    rmSync(join(f.root, 'dist/fixture.bin'));
+    const missing = report(f);
+    same(missing.sizes.rows.find(row => row.key === 'buildBytes').current, 0, 'empty build folder measures zero bytes');
+    check(missing.markdown.includes('-9 B'), 'shrinkage appears as a signed delta');
+    rmSync(join(f.root, 'dist'), { recursive: true });
+    same(report(f).sizes.rows.find(row => row.key === 'buildBytes').current, null, 'missing build folder is unavailable');
+    put(f.statusPath, '| Item | Current | Change | Target |\n| Build `dist/` | 999999999999999999999999 B | +0 B | 100 B |\n');
+    same(report(f).sizes.rows.find(row => row.key === 'buildBytes').previous, null, 'invalid prior measurement is rejected');
+  });
+
+  await test('default status collection does not inspect live metadata', () => {
+    const f = fixture('offline-live'); f.evidence();
+    const child = spawnSync(process.execPath, [statusTool, '--root', f.root, '--now', now, '--json'], {
+      cwd: f.root, encoding: 'utf8', shell: false, windowsHide: true, timeout: 15000,
+      env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
+    });
+    same(child.status, 0, 'status runs without a live-root argument');
+    const result = JSON.parse(child.stdout);
+    same(result.live.commit, null, 'default status does not claim a live commit');
+    same(result.live.version, null, 'default status does not claim a live build version');
+  });
+
+  await test('Git storage includes loose objects and a replacement binary counts as added', () => {
+    const f = fixture('git-growth');
+    const before = report(f).sizes.rows.find(row => row.key === 'gitObjectBytes').current;
+    put(join(f.root, 'large.txt'), randomBytes(16384).toString('hex'));
+    git(f.root, 'add', 'large.txt'); git(f.root, 'commit', '-m', 'grow loose object storage');
+    const after = report(f).sizes.rows.find(row => row.key === 'gitObjectBytes').current;
+    check(after > before, 'Git storage grows when new loose objects are committed');
+    put(join(f.root, 'source.bin'), 'A'.repeat(200));
+    git(f.root, 'add', 'source.bin'); git(f.root, 'commit', '-m', 'old binary');
+    git(f.root, 'checkout', '-b', 'lane/sim/binary-replacement');
+    put(join(f.root, 'source.bin'), 'B'.repeat(150));
+    git(f.root, 'add', 'source.bin'); git(f.root, 'commit', '-m', 'replace binary');
+    git(f.root, 'checkout', 'integration/wasteland');
+    git(f.root, 'merge', '--no-ff', 'lane/sim/binary-replacement', '-m', 'merge replacement');
+    const added = report(f).sizes.rows.find(row => row.key === 'mergeAddedBytes').current;
+    check(added >= 150, 'new replacement blob counts despite a smaller tip tree');
+    git(f.root, 'checkout', '-b', 'lane/sim/transient-binary');
+    put(join(f.root, 'transient.bin'), randomBytes(8192).toString('hex'));
+    git(f.root, 'add', 'transient.bin'); git(f.root, 'commit', '-m', 'add temporary binary');
+    rmSync(join(f.root, 'transient.bin'));
+    git(f.root, 'add', '-u'); git(f.root, 'commit', '-m', 'remove temporary binary');
+    git(f.root, 'checkout', 'integration/wasteland');
+    git(f.root, 'merge', '--no-ff', 'lane/sim/transient-binary', '-m', 'merge transient history');
+    const transient = report(f).sizes.rows.find(row => row.key === 'mergeAddedBytes').current;
+    check(transient >= 16384, 'binary added and removed in lane history still counts toward merge');
   });
 
   for (const [label, overrides, expected] of [
@@ -220,6 +288,7 @@ try {
     git(f.root, 'worktree', 'add', '-b', 'codex/pending', pending);
     put(join(pending, 'pending.txt'), 'unmerged work\n');
     git(pending, 'add', '.'); git(pending, 'commit', '-m', 'pending fixture work');
+    put(join(pending, 'fresh-work.txt'), 'new uncommitted work\n');
     git(f.root, 'branch', 'codex/parked', git(pending, 'rev-parse', 'HEAD'));
     const before = snapshot(f.home);
     const result = report(f);
@@ -228,6 +297,12 @@ try {
     same(lane('codex/pending').merged, false, 'pending lane is not merged');
     same(lane('codex/pending').removable, false, 'pending lane cannot be removed');
     same(lane('codex/pending').ageDays, 3, 'lane age uses last branch commit and observation time');
+    check(lane('codex/pending').lastCommit?.includes('2026-09-20'), 'unmerged branch reports last commit time');
+    check(lane('codex/pending').holds.includes('pending.txt'), 'unmerged branch reports retained committed work');
+    same(lane('codex/pending').card, 'unknown', 'branch without a card ID is marked unknown');
+    check(result.markdown.includes('## Unmerged branches for idle review'), 'status presents unmerged branch review list');
+    check(lane('codex/pending').activity.includes('exact activity time unknown'), 'dirty worktree is not falsely dated by its last commit');
+    check(lane('codex/pending').holds.includes('fresh-work.txt'), 'uncommitted file is named in retained work');
     check(lane('codex/parked'), 'unmerged branch without a worktree is still listed');
     same(lane('codex/merged-clean').removable, true, 'clean merged lane can be removed');
     same(lane('codex/merged-dirty').merged, true, 'dirty lane can still have merged commits');

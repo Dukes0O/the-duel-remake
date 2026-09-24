@@ -113,7 +113,7 @@ rewrite or release. D4 permits pushing `master` after an approved release.
 6. **Refine.** If the card changes anything seen or heard, run its browser, look and/or sound checks. For the eight asset families in SPEC 0.3, use that Blender fidelity loop (at least 3 rounds before beta); elsewhere use the look and sound loops in SPEC 10.1 (two to five rounds). Gameplay cards run the feel lab with `balance_analyst`.
 7. **Review.** Spawn `reviewer`, plus `save_guardian`, `browser_qa` or `balance_analyst` when the card lists them. Fix every finding or answer it with evidence. Repeat review until clean. After three rounds without a clean result, stop and hand the card back to the Director.
 8. **Hand off.** Write `docs/changes/<task-id>.md` with `status: ready-to-merge` and the evidence. Commit on the lane branch. The thread's final message is the change note.
-9. **Merge.** The Integrator verifies the current lane/build gate and independent review before each merge, then merges one lane at a time. Changes or conflict fixes need the gate again before completion. Refresh STATUS after every merge and follow the full-tier schedule in section 7. A failed gate returns the branch to its lane with the failure.
+9. **Merge and clean.** The Integrator verifies the current lane/build gate and independent review before each merge, then merges one lane at a time. Changes or conflict fixes need the gate again before completion. After the merge verdict is recorded, delete that card's used evidence, unlink its integration-only dependency junction, remove its clean worktree with ordinary `git worktree remove`, and delete its merged lane branch. Run `node tools/build-status.mjs` and record sizes after every merge. A failed gate returns the branch to its lane with the failure.
 
 ## 7. Gates
 
@@ -140,6 +140,18 @@ before the release full run. Committing a generated status page or other
 metadata creates a new commit that needs its own full run before release.
 Keep the last full-run time and merge count in the run log so a resumed
 session preserves the 5-merge / 2-hour deadline.
+
+**End-of-run janitor sweep.** At the end of every run and after every ten
+merges, list idle unmerged branches with their card, last commit and retained
+work; leave those branches in place. Fold needed facts from old notes and
+handoffs into current docs, then delete the old files. Run `node
+tools/repo-audit.mjs`; remove only proven-unused code and assets through a
+gated cleanup lane with unchanged replay fingerprints, and turn uncertain
+findings into cards. Compare current sizes with `tools/size-targets.json`,
+explain real growth and write one before/after janitor line in `run-log.md`.
+Never force-remove a worktree or rewrite history without Kyle's written
+approval. Status generation is read-only outside `STATUS.md` and does not
+inspect the live checkout unless an explicit `--live-root` is supplied.
 
 **Stop the line.** A failing pre-merge gate blocks that merge. If integration
 itself is red or a full run fails, the Integrator puts a fix card first and
@@ -546,13 +558,16 @@ Loop:
    otherwise send the branch back to its lane with the conflict described.
    Changes or conflict fixes need the lane/build gate again before completing the merge.
    Failed gate: return the branch to its lane. Green: set the note to merged.
-4. Run node tools/build-status.mjs after every merge. Record the merge count and full-run time.
+4. Commit the merge verdict, delete that card's used evidence, unlink its integration-only
+   dependency junction, remove its clean lane worktree without force, and delete its merged
+   lane branch. Run node tools/build-status.mjs and record sizes, merge count and full-run time.
 5. Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going after 5 merges or 2 hours
    of merging, whichever comes first, and at every session and overnight-run end.
    If integration or full is red, stop feature merges; only fixes merge until full is green.
 6. Before release, run full on the exact final integration commit and collect section 7's
-   full release evidence. Refresh STATUS at session end. D8 is awaiting approval: no
-   integration push or GitHub main alignment; D4 permits master pushes after release.
+   full release evidence. Refresh STATUS at session end. D8 permits an integration push
+   only after a passing full tier and approved binary compaction. History rewrite and
+   release still require Kyle's written approval.
 ```
 
 ### Full tier and release evidence (run by the Integrator)
