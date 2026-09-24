@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-24T06:25:17.314Z
+Observed at: 2026-09-24T06:34:11.232Z
 
-Observation commit: c7361502151a49ae04d17b87ca02a28e53b56e1b
+Observation commit: d9550845dab0edc4af2fa4586f9f69bab1427ee2
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: c7361502151a49ae04d17b87ca02a28e53b56e1b
+Integration HEAD: d9550845dab0edc4af2fa4586f9f69bab1427ee2
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -33,13 +33,14 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/artw-model-references | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/artw |
+| codex/artw-model-references | 0 | unknown | true | false | unknown |
 | codex/aud01-current-weapons | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/aud01-current-weapons/the-duel-remake |
 | codex/aud02-foot-sounds | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/aud02-foot-sounds/the-duel-remake |
 | codex/aud02-waveforms | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/aud02-verify |
 | codex/bal01-flagged-report | 0 | unknown | true | false | unknown |
-| codex/bug06-bolt-height | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bolt-height |
+| codex/bug06-bolt-height | 0 | unknown | true | false | unknown |
 | codex/bug06-flagged-homing | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/flagged-balance |
+| codex/bug07-enemy-aim | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/enemy-aim |
 | codex/bug15-shield-traffic | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/bug15-shield-traffic/the-duel-remake |
 | codex/cmb01-armor | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-cmb01-armor/the-duel-remake |
 | codex/cmb01-mode-isolation-test | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/cmb01-test-author/the-duel-remake |
@@ -62,7 +63,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/combat-wreck-residual | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/combat-wreck-residual/the-duel-remake |
 | codex/crew01-active-perks | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-crew01/the-duel-remake |
 | codex/crew01-roster | 0 | unknown | false | false | unknown |
-| codex/egg01-hidden-road | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/egg01 |
+| codex/egg01-hidden-road | 0 | unknown | true | false | unknown |
 | codex/foot01-fighter | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/foot01-fighter/the-duel-remake |
 | codex/foot02-car-transition | 0 | unknown | true | false | unknown |
 | codex/foot03-controls-camera | 0 | unknown | true | false | unknown |
@@ -140,7 +141,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/wasteland-sim-split | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-sim-split/the-duel-remake |
 | codex/wasteland-test-debt-fix | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-test-debt-fix/the-duel-remake |
 | codex/wasteland-test-runner | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-tool-runner/the-duel-remake |
-| codex/wasteland-tool-feel | 0 | unknown | false | false | unknown |
+| codex/wasteland-tool-feel | 1 | unknown | false | false | unknown |
 | codex/wasteland-ufo-charge | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-ufo-charge/the-duel-remake |
 | codex/wasteland-ufo-combined-probe | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-ufo-combined-probe/the-duel-remake |
 | codex/wasteland-ufo-options | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-ufo-options/the-duel-remake |
@@ -165,7 +166,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: c7361502151a49ae04d17b87ca02a28e53b56e1b
+- Local integration/wasteland: d9550845dab0edc4af2fa4586f9f69bab1427ee2
 
 Local rollback build (dist-previous): 20260923193614-0b1389a185dd. Manifest presence does not verify the full rollback build.
 
