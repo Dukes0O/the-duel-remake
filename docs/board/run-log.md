@@ -1543,3 +1543,9 @@ Cleanup order: CLEAN-01 and CLEAN-02 merged. CLEAN-03 is ready; CLEAN-04, CLEAN-
   CREW-01, AUD-01, AUD-02 and TOOL-02), then CAR-01, GFX-01-P1, EGG-02-P1 and
   BAL-02 in parallel, each settling its design question in writing first.
   AGENTS.md, `docs/README.md` and SPEC 0.6 no longer say cleanup comes first.
+
+## 2026-09-24 PDT – phase 2 board triage
+
+- PHASE2-BOARD merged at 5192cc4 after six passing lane suites (518 source checks) and a passing build. Removed three false GFX-04 art dependencies. BUG-06/07 now point to BAL-02; CREW-01 and TOOL-02 are backlog; AUD-01/02 are marked merged for their implemented slices. No game source, save or asset changed.
+- After-merge janitor deleted the merged branch; it had no separate lane folder or review evidence. No idle lane branch was removed. No feature lane has started. Full tier is due at session end on the final metadata commit.
+- Handoff: begin the four phase-2 lanes after the full tier passes. Each must record its open design choice before tests and code. The user will refresh quota before a longer run. No history rewrite or release was made.
