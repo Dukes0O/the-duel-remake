@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "capturedFrom": "33f3ed842edcb58e432b4fc3169923ae994e2467",
+  "description": "Flat-course production crossbow trajectories at 60 FPS before BUG-07 aim correction. The target moves 8 m sideways at 1/6 s. Samples at 1/60 and 1/2 s contain x, y, z, vx, vy, vz, age. Preserve player guidance and flag-off CPU/player behavior; no enemy metadata is fingerprinted.",
+  "outcomes": [
+    {
+      "flagged": true,
+      "enemy": false,
+      "samples": [
+        [0.11872913, 1.97917033, 6.33222035, 3.74934099, -1.24978033, 199.96485302, 0.01666667],
+        [6.14213274, 1.37510983, 102.76685744, 16.91489263, -1.24978033, 199.28343235, 0.5]
+      ],
+      "live": true
+    },
+    {
+      "flagged": false,
+      "enemy": false,
+      "samples": [
+        [0.11872913, 1.97917033, 6.33222035, 3.74934099, -1.24978033, 199.96485302, 0.01666667],
+        [1.93091061, 1.37510983, 102.9818993, 3.74934099, -1.24978033, 199.96485302, 0.5]
+      ],
+      "live": true
+    },
+    {
+      "flagged": false,
+      "enemy": true,
+      "samples": [
+        [2.75283846, 1.97917033, 6.32850869, -7.8051013, -1.24978033, 199.84764295, 0.01666667],
+        [-1.01962717, 1.37510983, 102.92153612, -7.8051013, -1.24978033, 199.84764295, 0.5]
+      ],
+      "live": true
+    }
+  ],
+  "sha256": "1825920138c51017969c3e9c5df12e2dd9ae7ae33a8fc336fb50b9acc58dba0d"
+}

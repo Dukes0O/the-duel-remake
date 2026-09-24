@@ -194,6 +194,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
 
     for (let index = 0; index < count; index++) {
       let dx, dz, speed;
+      let aimBias = 0;
       let vy = T.projectileInitialVerticalSpeed;
       if (weapon === 'bomb') {
         const angle = at.heading + index * Math.PI * 2 / count;
@@ -225,6 +226,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
           const error = makeRng((duel.seed ^
             (state.stageIndex * T.cpu.aimSeedStageSalt) ^
             (combat.aiShot * T.cpu.aimSeedShotSalt)) >>> 0).range(-spread, spread);
+          aimBias = error;
           const x = dx * Math.cos(error) + dz * Math.sin(error);
           dz = dz * Math.cos(error) - dx * Math.sin(error);
           dx = x;
@@ -242,6 +244,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         ...(modernProjectile && weapon === 'crossbow' ? {
           targetIndex: enemy ? -1 : state.opponents.indexOf(target),
           launchBearing: Math.atan2(dx * speed + carryX, dz * speed + carryZ),
+          ...(enemy ? {aimBias} : {}),
         } : {}),
         ...(enemy && actor !== state.rival ? {sourceIndex: state.opponents.indexOf(actor)} : {}),
       });
