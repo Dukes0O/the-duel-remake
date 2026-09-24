@@ -31,13 +31,14 @@ does not already answer it. Then tests, then code.
   perks that wait for boarding, fire and shove mechanics, as backlog), AUD-01,
   AUD-02 and TOOL-02 (finish what is left or close them with a note).
 
-### Then these lanes, in parallel (at most four at once)
+### Then these lanes, in parallel (at most five at once; the fifth is audio)
 
 | Lane | Card | The open question to settle first | Done when |
 | --- | --- | --- | --- |
 | SAVE, UI | **CAR-01** Wasteland career, scrap and territory map (SPEC 0.4) | Scrap earn rates and prices; which courses form each warlord's territory; how a "hold" on a territory grows and what full hold unlocks; the `profile.wasteland` save shape and migration | A new player's career works end to end behind `wasteland2`: earn scrap, spend it, see territory progress on the map; every historical save fixture migrates without loss after a backup |
 | ART, VIS | **GFX-01-P1** Crew, changed technique (SPEC 0.3) | Whether continuous body meshes with baked textures in Blender beat the round-3 approach. Prove it on one crew member (Rook) first, compared with round 3, before converting all eight | Heads joined to necks, no stretched textures, real hair and faces; likeness 4 of 5 in game for all eight, or the remaining gap and the next approach recorded |
 | ART, VIS | **EGG-02-P1** Rustwall and wash polish | How to replace the repeated rock columns with natural banks, and richer wall materials without blowing the frame budget | Resemblance 4 of 5, frame cost held; `wall.glb` closer to its size target |
+| AUDIO | **AUD-10** first, then the audio cards in SPEC 0.9 order | How to move every sound into a data-driven sound bank and mixer with no audible change, so later sounds are a file plus one data entry | As SPEC 0.9 AUD-10; then AUD-11 onward in order |
 | CMB | **BAL-02** Combat that pays off (replaces the rest of BUG-06 and BUG-07) | Why the player wrecked no CPU car in 30 scripted races, and why the Easy CPU lands 6 hits (target 0 to 3) with `wasteland2` on | With `wasteland2` on: win rates stay in their bands, Easy CPU hits 0 to 3, and a strong scripted policy wrecks CPU cars |
 
 ### After those
@@ -70,7 +71,8 @@ the janitor, then docs/board/next-run.md, SPEC.md section 0 (especially 0.2, 0.3
 0.4 and 0.6), docs/board/STATUS.md and docs/board/decisions.md.
 First tidy the board as next-run.md says: remove the false dependency of the art
 polish cards on GFX-04, and close or re-slice the stale cards. Then run CAR-01,
-GFX-01-P1, EGG-02-P1 and BAL-02 as parallel lanes (at most four). For each card,
+GFX-01-P1, EGG-02-P1 and BAL-02 as parallel lanes, plus the audio lane from
+SPEC 0.9 starting with AUD-10 (at most five lanes). For each card,
 settle its open design question in writing before code, log choices the spec does
 not settle in decisions.md, write tests first, then build. For GFX-01-P1, prove the
 new technique on Rook before converting the whole crew.

@@ -101,6 +101,11 @@ small context matter. These rules win over habit:
   and its review note under `docs/board/looks/<family>/`.
 - Lane folders may link `node_modules` only to the integration folder's copy,
   never the live folder's. Unlink the link before removing a lane folder.
+- Audio (SPEC 0.9): compressed runtime sounds in `public/assets/audio/`;
+  takes that cannot be regenerated in `audio-src/` (FLAC, one version);
+  library sounds as recipes in `tools/audio/catalog.json`, with the libraries
+  outside the repository. API keys only in Kyle's environment, never in files
+  or logs. Every card that adds a game event names its sound cue.
 - Scratch output stays in `.qa-dist/`. Nothing new in the repository root
   unless it is on the root allow-list in `tools/test-repo-hygiene.mjs`.
 - `tools/test-repo-hygiene.mjs` checks placement in every lane tier: a file in

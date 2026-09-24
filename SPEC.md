@@ -366,6 +366,119 @@ in the wrong home) fails a check. Starting targets:
 | 8 | **CLEAN-08** The janitor | OPS, TOOL | S | The playbook's Integrator steps include the after-merge janitor and its end-of-run steps include the sweep, exactly as `AGENTS.md` defines them; the status page shows Git size, build size, `public/` size and lane folders against the targets and their change since the last run, plus idle branches with their card and last activity; a full tier passes |
 | done | **CLEAN-09** Shrink Git history | OPS | M | Done by Kyle's decision on 24 September 2026. `integration/wasteland` history after `master` was rewritten (351 commits) to drop every `.blend` file and all non-`.md`/`.json` files under `docs/board/looks/`. `master` was not touched. Old-to-new commit IDs: `docs/history/history-rewrite-2026-09-24-map.txt`. Full backup (all refs) and copies of the latest dropped files: `C:\Users\kyleb\dev\duel-backups\2026-09-24-before-history-rewrite\`. Local lane branches still point at the old commits; rebase a held lane with `git rebase --onto <new> <old base>` using the map, and never merge an old-history branch directly |
 
+### 0.9 Audio (Kyle, 24 September 2026)
+
+Audio matters as much as graphics. It gets the same kind of process: a brief,
+sourcing, a build recipe, measurement, listening rounds and cleanup.
+
+**Where audio stands (review of `2be8b4a`).** Licensing records, the
+processing script and the race-recording analysis (sync, loudness, clipping,
+panning, spectrograms) are a good base. But all nine cars share one engine:
+three recordings from three different vehicles, pitch-shifted per car, all
+taken from Freesound's compressed MP3 previews rather than the originals.
+Nearly everything else is synthesized tones and filtered noise: every weapon,
+crashes, landings, boost, RPG, wrench, raiders, the gate arrival and the music.
+Rivals and traffic make no engine sound, there are no footsteps or voices, no
+location reverb (a tunnel is two fixed echoes), no 3D positioning beyond
+stereo panning, no doppler and no ducking. About 15 MB of raw source
+recordings ship in `public/assets/audio/`, and a test requires them there.
+
+**Kyle's decisions.**
+
+| Topic | Decision |
+| --- | --- |
+| Paid services | None. Use free sources only. This is a personal, non-commercial project |
+| ElevenLabs | The free plan: 10,000 credits a month, sound effects, voices and music included, non-commercial use, credit ElevenLabs on the in-game credits page. If the free plan has no API access, generate on the website from prompts the agents write |
+| Voices | Yes: the gatekeeper, raiders and crew get spoken lines (reverses Q4). Text callouts stay as subtitles |
+| Adaptive music | Later, and only if it proves easy (AUD-20) |
+| Engine simulator | Try it: a one-car spike first (AUD-18) |
+| Scheduling | Audio is its own lane in phase 2, a fifth lane beside the four already running |
+| Manual steps | Agents may use computer use to drive websites and desktop tools (ElevenLabs, Audacity, the engine simulator). Kyle creates accounts and signs in himself; agents never create accounts or type passwords or API keys. Keys live only in Kyle's environment variables, never in the repository or logs |
+
+**Sourcing, in this order.**
+
+1. Free professional libraries: the Sonniss GDC bundles (royalty-free, no
+   attribution, not for AI training) and Freesound CC0 originals (full-quality
+   files, not previews).
+2. ElevenLabs free credits, for what libraries lack: voices first, then sound
+   effects such as the UFO jump or Tesla coil. Plan each month's lines and
+   prompts to fit the 10,000 credits and log the credits each take used.
+3. The engine simulator (MIT licence, Windows) for per-car engines, if AUD-18
+   shows it beats the current engine.
+4. Synthesis for interface sounds and layers the game drives directly.
+5. Kyle's own recordings for foley when useful.
+
+**Where audio files live.**
+
+| Kind | Home | In Git |
+| --- | --- | --- |
+| Runtime sounds the game loads | `public/assets/audio/`, compressed (Opus or Vorbis for one-shots; seamless-loop-safe format for loops) | Yes |
+| Sounds that cannot be regenerated identically: chosen ElevenLabs takes, engine simulator captures, Kyle's recordings | `audio-src/`, FLAC, one version; rejected takes deleted | Yes |
+| Library sounds (Sonniss, Freesound) | Only the recipe in `tools/audio/catalog.json`: library, path or URL, checksum, licence, cut points, processing. The downloaded libraries live outside the repository in `C:\Users\kyleb\dev\audio-library\`; keep only bundles in use | Recipe only |
+| Raw race recordings, stems, spectrograms | `.evidence/`, deleted after the verdict | No |
+| Listening verdicts | `docs/board/listening/<family>/round-<n>.md`: scores, notes, what changes next | Yes |
+| Credits | Every catalogued sound on the in-game credits page, including ElevenLabs | Yes |
+
+The janitor applies: raw sources leave `public/`, rejected takes and used
+evidence are deleted, and unused catalog entries are removed.
+
+**The sound bank and mixer.** All sounds move out of hand-written code into
+one data file, `src/sound-bank.js`. Each cue names its sources and variations,
+volume, random pitch and volume range, bus, priority, voice limit, 3D settings
+(distance and doppler) and ducking. Game events map to cue ids. From then on,
+adding or upgrading a sound means a file plus one data entry, not code
+surgery. **Every card that adds a game event names its sound cue** (a
+placeholder cue is fine); the audio lane fills it in. Buses: engine, vehicle
+(tires, wind, scrapes), weapons, impacts, ambience, music, voice and interface,
+with blasts and voices briefly ducking music and ambience, and a master limiter.
+Moving sources (rivals, traffic, projectiles) get distance, direction and
+doppler. Locations get convolution reverb (canyon, tunnel, city, stadium,
+Rustwall) from generated or CC0 impulse responses.
+
+**Starting targets (advisory, like size targets).** The full mix around −16
+LUFS over a race, true peak at or below −1 dBTP. Weapons and impacts stand
+6 dB above the engine when they fire (10.1). Voices stay intelligible over the
+engine at full throttle. Ambience sits under the engine.
+
+**The listening loop, every round.**
+
+1. **Brief:** what the sound is, how it should feel, references, layers,
+   variation count, distance and priority. Briefs live in `docs/audio/briefs.md`.
+2. **Source** as above, logging the recipe or the kept take.
+3. **Build** with scripted processing (FFmpeg, already installed): trim, clean,
+   loudness-match per category, loop points, variations, compression.
+4. **Measure** on a recorded scripted race: loudness in LUFS, true peak,
+   clicks and loop seams, event sync, masking against the engine, repetition.
+5. **Listen** in the listening booth: a QA page that plays each cue in context
+   (over engine and ambience beds, near and far, A/B/C variants) and saves
+   Kyle's and his son's 1–5 ratings and notes as the round's verdict. Agents
+   cannot hear; they work from measurements and spectrograms, and human ears
+   are the final judge. A round without ratings proceeds on measurements and
+   is flagged for listening.
+6. **Refine:** at least three rounds for key sounds (engines, main weapons,
+   explosions, the gate arrival, the gatekeeper's voice). Change the approach
+   after two rounds without a better rating.
+
+**Cards (audio lane, in order).**
+
+| Order | Card | Done when |
+| --- | --- | --- |
+| 1 | **AUD-10** Sound bank and mixer foundation | Every existing sound plays through `src/sound-bank.js` and the buses with no audible change, proven against a recorded baseline race; ducking, voice limits and 3D for moving sources work; raw sources leave `public/` (recipes kept) and the placement check covers audio sources; runtime audio is compressed |
+| 2 | **AUD-11** Listening booth and audio measurements | The booth page plays cues in context with A/B/C variants and saves verdict files; the analysis adds LUFS, true peak, loop-seam and repetition checks |
+| 3 | **AUD-12** Sound library | Kyle downloads the Sonniss GDC 2026 bundle to `C:\Users\kyleb\dev\audio-library\`; an index script builds a searchable list (name, folder, duration, loudness) outside the repository |
+| 4 | **AUD-13** Briefs | A short brief for every cue family below, in priority order |
+| 5 | **AUD-14** Combat and impacts | The four car weapons, RPG and raider shots, near and far explosions, metal crunch, debris and fire, through three rounds |
+| 6 | **AUD-17** Voices | Stock ElevenLabs voices cast for the gatekeeper, raiders and eight crew; gritty lines with no gore, written to fit the credits; voice bus; subtitles kept; attribution on the credits page |
+| 7 | **AUD-15** Vehicles and world | Rival and traffic engines with doppler, tires by surface, scrapes, landings, wind, location reverb, ambience one-shots and the gate arrival, through three rounds |
+| 8 | **AUD-16** On foot | Footsteps by surface, gear foley, first-person RPG and wrench, knockdowns |
+| 9 | **AUD-18** Engine simulator spike | Kyle downloads the official MIT release; one engine (Banshee's big-block V8) is built, its RPM sweep and steady on- and off-throttle steps are captured with Audacity recording the PC's output (computer use may drive it), and the booth compares it with today's engine. Decide go or no-go for all nine cars (AUD-19) |
+| backlog | **AUD-20** Adaptive score | Only if easy: music that rises with combat, a menu theme and a gate reveal cue, from ElevenLabs music credits or CC0 sources |
+
+**Kyle's one-time steps.** Create a free ElevenLabs account and, if the API is
+available, set `ELEVENLABS_API_KEY` in your own environment. Download the
+Sonniss GDC 2026 bundle when AUD-12 asks. Download the engine simulator
+release when AUD-18 asks.
+
 ---
 
 ## 1. Objective
@@ -1551,7 +1664,7 @@ Answers (23 September 2026): D1, D2, D3, D4, D5 and D7 agreed as recommended. D6
 | --- | --- | --- |
 | Q2 | Combat records: exact weapon levels, or build tiers (Stock / Tuned / Maxed)? | Build tiers |
 | Q3 | Credits only, or a separate combat currency? | **Answered in v3:** a separate Wasteland career with scrap (0.4) |
-| Q4 | Crew lines as text only, or recorded voice? | Text only |
+| Q4 | Crew lines as text only, or recorded voice? | **Answered in 0.9:** spoken lines (ElevenLabs free plan), with text subtitles kept |
 | Q5 | Radar traps and police in Mad Max Duel? | Off in combat events; raiders replace them |
 | Q6 | Keep the "Mad Max Duel" name? | Keep it in this private build |
 | Q7 | Keep the four original weapons free for new players? | Yes |
