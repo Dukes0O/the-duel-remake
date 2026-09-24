@@ -184,6 +184,7 @@ export const CAMPAIGN_SUITE='tools/test-campaigns.mjs';
 export const CAMPAIGN_SHARDS=8;
 export const SMOKE_SUITES=Object.freeze([
   CORE_SUITE,
+  'tools/test-repo-hygiene.mjs',
   'tools/test-test-runner.mjs',
   'tools/test-app-lifecycle.mjs',
   'tools/test-progression.mjs',
