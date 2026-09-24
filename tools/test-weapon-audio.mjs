@@ -25,6 +25,7 @@ class Context {
   createOscillator() { return this.make('oscillator',{frequency:440}); }
   createBufferSource() { return this.make('noise',{playbackRate:1}); }
   createBiquadFilter() { return this.make('filter',{frequency:350,Q:1}); }
+  createStereoPanner() { return this.make('panner',{pan:0}); }
 }
 const makeAudio=()=>{
   const audio=new EngineAudio(),context=new Context();
@@ -65,4 +66,47 @@ for(const blocked of ['muted','paused']){
   audio.event({weaponFired:'bomb'},{mode:'wasteland',maxArmor:100});
   assert.equal(context.nodes.length,1,`${blocked} suppresses weapon fire`);
 }
-console.log('Weapon audio: four distinct bounded fire cues; legacy, mute and pause paths pass.');
+
+const footState={mode:'wasteland',maxArmor:100,s:0,lateral:0,headingError:0};
+const course={groundAt:()=>({x:0,y:0,z:0,heading:0})};
+const footCue=event=>{
+  const {audio,context}=makeAudio();
+  audio.event(event,footState,course);
+  const voices=context.nodes.filter(node=>['oscillator','noise'].includes(node.kind));
+  return {context,voices,signature:voices.map(node=>
+    `${node.kind}:${node.type||''}:${node.frequency?.events[0]?.[1]||0}:${node.stopped.toFixed(3)}`).join('|')};
+};
+const footEvents={
+  launch:{weaponFired:'rpg',footWeaponFired:'rpg'},
+  impact:{combatExplosion:true,audioWeapon:'rpg',audioImpact:'direct',hitPosition:{x:20,y:0,z:10}},
+  splash:{combatExplosion:true,audioWeapon:'rpg',audioImpact:'splash',hitPosition:{x:20,y:0,z:10}},
+  repairStart:{footRepairStarted:true},
+  repairComplete:{footRepairCompleted:true},
+  repairInterrupt:{footRepairInterrupted:true},
+  raiderWarning:{raiderWarning:true},
+  raiderShot:{raiderShot:true,hitPosition:{x:-20,y:0,z:10}},
+};
+const footCues=Object.fromEntries(Object.entries(footEvents).map(([name,event])=>[name,footCue(event)]));
+assert.equal(new Set(Object.values(footCues).map(item=>item.signature)).size,8,
+  'foot combat and ambush cues have distinct source, pitch and duration patterns');
+for(const [name,{context,voices}] of Object.entries(footCues)){
+  assert.ok(voices.length>0&&voices.some(node=>node.started===0),`${name} starts with its event`);
+  assert.ok(voices.every(node=>Number.isFinite(node.stopped)&&node.stopped<=.3),
+    `${name} is short and releases its sources`);
+  assert.ok(context.nodes.filter(node=>node.kind==='gain').every(node=>
+    node.gain.events.every(([,value])=>Number.isFinite(value)&&value>=0&&value<=.17)),
+    `${name} has a bounded, click-free gain envelope`);
+}
+assert.ok(footCues.impact.context.nodes.some(node=>node.kind==='panner'&&node.pan.value>0),
+  'RPG impact pans toward the hit');
+assert.ok(footCues.raiderShot.context.nodes.some(node=>node.kind==='panner'&&node.pan.value<0),
+  'raider shot pans toward the shooter');
+for(const event of Object.values(footEvents)){
+  const {audio,context}=makeAudio();
+  audio.event(event,{mode:'duel',maxArmor:100,s:0,lateral:0},course);
+  if(event.weaponFired)assert.equal(context.nodes.filter(node=>node.kind==='oscillator').length,1,
+    'ordinary weapon identity remains a single legacy tone');
+  else if(!event.combatExplosion)assert.equal(context.nodes.length,1,
+    'Wasteland-only foot and raider events stay silent in ordinary racing');
+}
+console.log('Weapon audio: eight foot/raider cue variants and four car cues are distinct and bounded; ordinary, mute and pause paths pass.');

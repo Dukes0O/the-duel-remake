@@ -107,3 +107,7 @@ unchanged 30 ms cue limit and 0.90 engine/rev correlation target: 14/14
 timed cues, 0.983 correlation over 66 readings, and 0 ms lag. It reported
 no browser warnings or errors. The older Falcone-only shift-template and
 subjective listening limits above still apply.
+
+The current RPG, wrench and roadside raider sound slice is recorded in
+`AUD-02-current-actions.md`. Its focused checks do not replace the full
+race-mix and listening work required by `SPEC.md` sections 3.11 and 12.2.

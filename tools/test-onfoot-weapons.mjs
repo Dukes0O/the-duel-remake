@@ -105,6 +105,10 @@ test('RPG locks after 0.8 s, fires three 55 m/s rockets with a 2.2 s reload', ()
 
 test('swept RPG direct and splash damage armor once and records owned direct XP', () => {
   const duel = race({opponents: 2}), state = duel.state;
+  const impactKinds = [];
+  duel.onChange((_, event) => {
+    if (event.audioWeapon === 'rpg') impactKinds.push(event.audioImpact);
+  });
   const [target, neighbor] = state.opponents;
   target.s = state.s + 55;
   target.lateral = 3;
@@ -124,11 +128,14 @@ test('swept RPG direct and splash damage armor once and records owned direct XP'
   const events = combatResultSnapshot(duel).notorietyEvents;
   assert.equal(events.length, 1);
   assert.equal(events[0].type, 'rpgDirectHit');
+  assert.deepEqual(impactKinds, ['direct'], 'the impact event selects the direct-hit sound');
   assert.equal(state.combat.scoring.hitsLanded, 2);
 });
 
 test('wrench repairs 40 over four race seconds and a hit interrupts until release', () => {
   const duel = race({opponents: 0}), state = duel.state;
+  let interruptions = 0;
+  duel.onChange((_, event) => {if (event.footRepairInterrupted) interruptions++;});
   state.armor = 30;
   leaveCar(duel);
   assert.equal(duel.selectFootGear(2), true);
@@ -139,6 +146,7 @@ test('wrench repairs 40 over four race seconds and a hit interrupts until releas
   assert.ok(state.stageTimeSec >= raceTime + 2 - 1e-8);
   damageFighter(state.fighter, 5);
   ticks(duel, 120);
+  assert.equal(interruptions, 1, 'a disrupted repair sounds once');
   assert.ok(Math.abs(state.armor - 50) < 1e-6,
     'damage interrupts repair rather than finishing it');
   duel.setFighterInput({fire: false});

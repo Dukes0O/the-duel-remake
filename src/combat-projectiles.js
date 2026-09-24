@@ -294,7 +294,10 @@ export function stepProjectiles(duel, dt) {
       z: projectile.z,
     }, projectile.kind === 'bomb' || projectile.kind === 'rpg' ? 'blast' : 'spark');
     if (projectile.kind === 'rpg' || projectile.kind === 'bomb' && !combat.blastSound) {
-      duel.emit({combatExplosion: true, hitPosition: {
+      duel.emit({combatExplosion: true,
+        ...(projectile.kind === 'rpg' ? {
+          audioWeapon: 'rpg', audioImpact: contact ? 'direct' : 'splash'} : {}),
+        hitPosition: {
         x: projectile.x, y: projectile.y, z: projectile.z}});
       combat.blastSound = T.bomb.soundCooldown;
     }

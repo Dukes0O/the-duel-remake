@@ -34,7 +34,7 @@ const AMBIENCE = {
 export function combatAudioSpace(event, state, course) {
   let side = Number(event?.qaSide), distance = Number(event?.qaDistance);
   if (!Number.isFinite(side) || !Number.isFinite(distance)) {
-    const hit = (event?.combatHit || event?.combatExplosion) && event.hitPosition;
+    const hit = (event?.combatHit || event?.combatExplosion || event?.raiderShot) && event.hitPosition;
     const source = hit && [hit.x,hit.y,hit.z].every(Number.isFinite)
       ? hit : state?.combat?.bursts?.at(-1);
     const listener = Number.isFinite(state?.s) && course?.groundAt?.(state.s, state.lateral);
@@ -257,10 +257,37 @@ export class EngineAudio {
     this._tone(150,.18,2.5,'triangle',0,45,output.level);
   }
 
+  _rpgImpact(event,state,course) {
+    const output=this._spatialOutput(event,state,course);
+    // Short metal-and-dust strike; the bomb keeps its larger blast recording.
+    const direct=event.audioImpact==='direct';
+    this._weaponNoise(direct?620:420,.2,direct?.17:.13,'lowpass',output.level);
+    this._tone(direct?128:96,.24,direct?.16:.12,'triangle',0,
+      direct?46:35,output.level,output.disconnect);
+  }
+
+  _raiderShot(event,state,course) {
+    const output=this._spatialOutput(event,state,course);
+    this._weaponNoise(2250,.085,.115,'bandpass',output.level);
+    this._tone(470,.13,.065,'triangle',0,205,output.level,output.disconnect);
+  }
+
+  _repairCue(phase) {
+    if(phase==='start') {
+      this._weaponNoise(1650,.075,.075);
+      this._tone(410,.13,.075,'triangle',0,220);
+    } else if(phase==='complete') {
+      this._tone(530,.16,.09,'triangle',0,760);
+      this._tone(820,.14,.055,'sine',.065,1040);
+    } else {
+      this._tone(240,.15,.055,'triangle',0,110);
+    }
+  }
+
   // A short shaped slice of the existing noise buffer gives a launch or
   // string release some physical texture without a new recording or network
   // request. The active-shot lifecycle still owns pause, mute and cleanup.
-  _weaponNoise(frequency, duration, volume, type = 'bandpass') {
+  _weaponNoise(frequency, duration, volume, type = 'bandpass', destination=this.master) {
     const ctx=this.context,start=ctx.currentTime;
     const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
     source.buffer=this.noiseBuffer;
@@ -268,7 +295,7 @@ export class EngineAudio {
     gain.gain.setValueAtTime(0,start);
     gain.gain.linearRampToValueAtTime(volume,start+.005);
     gain.gain.exponentialRampToValueAtTime(.001,start+duration);
-    source.connect(filter);filter.connect(gain);gain.connect(this.master);
+    source.connect(filter);filter.connect(gain);gain.connect(destination);
     source.start(start);source.stop(start+duration+.01);
     const voice={source,gain,endAt:start+duration+.01};this.activeShots.add(voice);
     source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();this.activeShots.delete(voice);};
@@ -297,6 +324,12 @@ export class EngineAudio {
         for(const [note,delay] of [[392,0],[587.33,.055],[783.99,.11]])
           this._tone(note,.34,.105,'sine',delay,note*1.18);
         this._tone(1320,.38,.045,'sine',0,1680);
+        break;
+      case 'rpg':
+        // A compact launcher thump with a rising motor tail.
+        this._weaponNoise(820,.14,.14,'lowpass');
+        this._tone(100,.22,.14,'triangle',0,54);
+        this._tone(280,.2,.045,'sawtooth',.018,480);
         break;
       default:
         this._tone(220,.22,.12,'triangle',0,88);
@@ -468,6 +501,8 @@ export class EngineAudio {
       this.smoothedLoad=0;this.lastThrottle=0;this.nextThrottle=this.nextLift=0;this.shiftStarted=this.shiftUntil=0;
     }
     if (!this.context || this.context.state !== 'running' || this.muted || this.paused || !ev) return;
+    const wastelandAudio=state?.mode==='wasteland'&&
+      Number.isFinite(state.maxArmor)&&state.maxArmor>0;
     if (ev.countdown) this._tone(440, 0.12, 0.16, 'sine');
     if (ev.go) { this._tone(880, 0.32, 0.16); this._tone(1320, 0.22, 0.055); }
     if (ev.shift != null) {
@@ -492,14 +527,27 @@ export class EngineAudio {
     }
     if (ev.ticket || ev.gameover || ev.stageResult?.won===false) this._tone(110, 0.65, 0.1, 'triangle', 0, 65);
     if(ev.weaponFired){
-      if(state?.mode==='wasteland'&&Number.isFinite(state.maxArmor)&&state.maxArmor>0)
+      if(wastelandAudio)
         this._weaponCue(ev.weaponFired);
       else {
         const note={ufo:760,bomb:130,crossbow:440,star:980}[ev.weaponFired]||220;
         this._tone(note,.22,.12,'triangle',0,note*.4);
       }
     }
-    if(ev.combatExplosion)this._combatBlast(ev,state,course);
+    if(wastelandAudio){
+      if(ev.footRepairStarted)this._repairCue('start');
+      if(ev.footRepairCompleted)this._repairCue('complete');
+      if(ev.footRepairInterrupted)this._repairCue('interrupted');
+      if(ev.raiderWarning){
+        this._tone(630,.11,.055,'sine');
+        this._tone(475,.15,.06,'sine',.11);
+      }
+      if(ev.raiderShot)this._raiderShot(ev,state,course);
+    }
+    if(ev.combatExplosion){
+      if(wastelandAudio&&ev.audioWeapon==='rpg')this._rpgImpact(ev,state,course);
+      else this._combatBlast(ev,state,course);
+    }
     if(ev.combatHit)this._combatImpact(ev,state,course);
     if(ev.explosion && this.samples.explosion)this._sample(this.samples.explosion,1.15);
     if (ev.crash) {

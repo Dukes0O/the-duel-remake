@@ -157,6 +157,7 @@ function stepWrench(duel, weapons, fighter, input, dt, hit) {
   const repairSeconds=T.wrenchRepairSeconds /
     (crewPerks(fighter.crewId).repairRateMultiplier || 1);
   if (!input.fire) {
+    if (weapons.repairing) duel.emit({footRepairInterrupted: true});
     weapons.repairing = false;
     weapons.repairSeconds = weapons.repairAmount = 0;
     weapons.repairBlockedUntilRelease = false;
@@ -164,6 +165,7 @@ function stepWrench(duel, weapons, fighter, input, dt, hit) {
   }
   if (hit || fighter.knockedDown || state.combatWrecking ||
       carDistance(duel, fighter) > T.repairRangeMeters) {
+    if (weapons.repairing) duel.emit({footRepairInterrupted: true});
     weapons.repairing = false;
     weapons.repairBlockedUntilRelease = true;
     return;

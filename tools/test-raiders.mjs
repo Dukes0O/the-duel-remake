@@ -60,8 +60,11 @@ test('flag-off and ordinary races have no raiders or route change', () => {
 
 test('warning precedes a bounded volley, and raider hits give no player credit', () => {
   const duel = race(), state = duel.state, zone = state.raids.zones[0];
-  const hits = [];
-  duel.onChange((_, event) => {if (event.combatHit) hits.push(event);});
+  const hits = [], shots = [];
+  duel.onChange((_, event) => {
+    if (event.combatHit) hits.push(event);
+    if (event.raiderShot) shots.push(event);
+  });
   state.opponents = [];
   state.s = state.prevS = zone.s - 140;
   state.speedMph = 80;
@@ -71,6 +74,9 @@ test('warning precedes a bounded volley, and raider hits give no player credit',
   state.s = state.prevS = zone.s;
   stepRaiders(duel);
   assert.equal(state.raids.shots, 1);
+  assert.ok(shots[0] && [shots[0].hitPosition.x,shots[0].hitPosition.y,
+    shots[0].hitPosition.z].every(Number.isFinite),
+  'raider shot carries its sound position');
   const shot = state.combat.projectiles[0];
   assert.equal(shot.raid, true);
   assert.equal(shot.targetIndex, -1);

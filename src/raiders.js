@@ -104,7 +104,8 @@ function fire(duel, zone, raider, target) {
   zone.shotCount++;
   duel.state.raids.shots++;
   duel.emit({raiderShot: true, zone: zone.id,
-    target: target.targetIndex < 0 ? 'player' : 'opponent'});
+    target: target.targetIndex < 0 ? 'player' : 'opponent',
+    hitPosition: {x: raider.x, y: originY, z: raider.z}});
   return true;
 }
 
