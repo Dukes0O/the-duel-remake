@@ -7,16 +7,24 @@ import json
 import math
 import sys
 from pathlib import Path
-import bpy
-from mathutils import Vector
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
+parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 asset_dir = root / 'public/assets/models/wasteland'
+blend_path = root / 'art-build/test-fighter.blend'
+glb_path = asset_dir / 'test-fighter.glb'
+if args.paths_only:
+    print(json.dumps({'blend': [str(blend_path)], 'glb': [str(glb_path)]}))
+    sys.exit(0)
+
+import bpy
+from mathutils import Vector
+
 shots = root / 'docs/board/looks/test-fighter'
 asset_dir.mkdir(parents=True, exist_ok=True)
+blend_path.parent.mkdir(parents=True, exist_ok=True)
 shots.mkdir(parents=True, exist_ok=True)
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete(use_global=False)
@@ -276,7 +284,7 @@ bpy.ops.object.select_all(action='DESELECT')
 rig.select_set(True)
 body.select_set(True)
 bpy.context.view_layer.objects.active = rig
-bpy.ops.export_scene.gltf(filepath=str(asset_dir/'test-fighter.glb'),
+bpy.ops.export_scene.gltf(filepath=str(glb_path),
     export_format='GLB', use_selection=True, export_yup=True,
     export_animations=True, export_animation_mode='NLA_TRACKS',
     export_force_sampling=True, export_skins=True, export_materials='EXPORT')
@@ -308,7 +316,7 @@ for name, location, energy, size in [
     light.rotation_euler = (Vector((0,0,1))-light.location).to_track_quat('-Z','Y').to_euler()
 rig.animation_data.action = actions['idle']
 scene.frame_set(7)
-bpy.ops.wm.save_as_mainfile(filepath=str(asset_dir/'test-fighter.blend'))
+bpy.ops.wm.save_as_mainfile(filepath=str(blend_path))
 views = [('front',0),('side',math.pi/2),('back',math.pi)]
 for clip, time in [('idle',.25),('walk',.25),('knockdown',1)]:
     rig.animation_data.action = actions[clip]
@@ -324,7 +332,7 @@ for clip, time in [('idle',.25),('walk',.25),('knockdown',1)]:
 rig.rotation_euler.z = 0
 rig.animation_data.action = actions['idle']
 scene.frame_set(7)
-bpy.ops.wm.save_as_mainfile(filepath=str(asset_dir/'test-fighter.blend'))
+bpy.ops.wm.save_as_mainfile(filepath=str(blend_path))
 body.data.calc_loop_triangles()
 (shots/'blender.json').write_text(json.dumps({
     'blender': bpy.app.version_string,

@@ -13,21 +13,42 @@ import sys
 import time
 from pathlib import Path
 
-import bpy
-import numpy as np
-from mathutils import Vector, Matrix, Euler
-
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--round', type=int, required=True)
 p.add_argument('--crew', default='all')
 p.add_argument('--skip-renders', action='store_true')
+p.add_argument('--paths-only', action='store_true')
 args = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/first-person'
+blend_dir = root / 'art-build/first-person'
+crew_names = ('rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk')
+selected_names = [name for name in crew_names if args.crew in ('all', name)]
+def tool_glb(name):
+    return out / f'{name}.glb'
+def tool_blend(name):
+    return blend_dir / f'{name}.blend'
+def hands_glb(name):
+    return out / 'hands' / f'{name}.glb'
+def hands_blend(name):
+    return blend_dir / 'hands' / f'{name}.blend'
+if args.paths_only:
+    print(json.dumps({'blend': [str(tool_blend(name)) for name in ('rpg', 'wrench')]
+                               + [str(hands_blend(name)) for name in selected_names],
+                      'glb': [str(tool_glb(name)) for name in ('rpg', 'wrench')]
+                             + [str(hands_glb(name)) for name in selected_names]}))
+    sys.exit(0)
+
+import bpy
+import numpy as np
+from mathutils import Vector, Matrix, Euler
+
 shots = root / f'docs/board/looks/first-person/round-{args.round}'
 out.mkdir(parents=True, exist_ok=True)
 (out/'hands').mkdir(exist_ok=True)
+blend_dir.mkdir(parents=True, exist_ok=True)
+(blend_dir/'hands').mkdir(exist_ok=True)
 shots.mkdir(parents=True, exist_ok=True)
 
 CREW = {
@@ -338,10 +359,10 @@ def build_tool(name):
         g,r=rpg_geometry();objects=[g.build('rpg-body',mat,rig,bevel=.002),r.build('loaded-rocket',mat,rig)]
         actions={'reload':add_action(rig,'reload',2.2,lambda phase:rocket_pose(rig,phase))}
     else:objects=[wrench_geometry().build('wrench-body',mat,rig,bevel=.0025)];actions={}
-    export(rig,objects,out/f'{name}.glb')
-    bpy.ops.wm.save_as_mainfile(filepath=str(out/f'{name}.blend'))
+    export(rig,objects,tool_glb(name))
+    bpy.ops.wm.save_as_mainfile(filepath=str(tool_blend(name)))
     return {'id':name,'triangles':sum(triangles(o) for o in objects),'draws':len(objects),
-        'seconds':time.perf_counter()-started,'files':{p.name:digest(p) for p in [out/f'{name}.glb',out/f'{name}.blend',out/f'{name}-color.png',out/f'{name}-surface.png',out/f'{name}-normal.png']}}
+        'seconds':time.perf_counter()-started,'files':{p.name:digest(p) for p in [tool_glb(name),tool_blend(name),out/f'{name}-color.png',out/f'{name}-surface.png',out/f'{name}-normal.png']}}
 
 def triangles(obj):
     obj.data.calc_loop_triangles();return len(obj.data.loop_triangles)
@@ -473,7 +494,7 @@ def camera_lights(scene):
 
 def import_tool(name):
     before=set(bpy.data.objects)
-    bpy.ops.import_scene.gltf(filepath=str(out/f'{name}.glb'))
+    bpy.ops.import_scene.gltf(filepath=str(tool_glb(name)))
     new=list(set(bpy.data.objects)-before)
     roots=[obj for obj in new if obj.parent is None]
     rig=next(obj for obj in new if obj.type=='ARMATURE')
@@ -485,7 +506,7 @@ def build_hands(name,cfg):
     g,definitions=hand_geometry(name,cfg);rig=armature(name+' first-person hands',definitions)
     mesh=g.build(name+' sleeves gloves fingers',mat,rig)
     actions={label:add_action(rig,label,duration,lambda phase,label=label:hands_pose(rig,label,phase),32 if label=='repair' else 16) for label,duration in CLIPS.items()}
-    export(rig,[mesh],out/'hands'/f'{name}.glb')
+    export(rig,[mesh],hands_glb(name))
     camera_lights(scene)
     imported={tool:import_tool(tool) for tool in ['rpg','wrench']}
     captures=[]
@@ -513,18 +534,18 @@ def build_hands(name,cfg):
             bpy.ops.render.render(write_still=True)
             captures.append(dict(path=path.relative_to(root).as_posix(),sha256=digest(path),crew=name,clip=clip,time=t,tool=tool))
     rig.animation_data.action=actions['idle'];scene.frame_set(16)
-    bpy.ops.wm.save_as_mainfile(filepath=str(out/'hands'/f'{name}.blend'))
+    bpy.ops.wm.save_as_mainfile(filepath=str(hands_blend(name)))
     source=root/f'public/assets/reference/wasteland-crew-{cfg["sheet"]}.png'
     report=dict(id=name,triangles=triangles(mesh),draws=1,seconds=time.perf_counter()-started,clips=CLIPS,
         reference=dict(path=source.relative_to(root).as_posix(),sha256=digest(source),crop=cfg['crop']),
-        files={p.name:digest(p) for p in [out/'hands'/f'{name}.glb',out/'hands'/f'{name}.blend',out/'hands'/f'{name}-color.png',out/'hands'/f'{name}-surface.png',out/'hands'/f'{name}-normal.png']},captures=captures)
+        files={p.name:digest(p) for p in [hands_glb(name),hands_blend(name),out/'hands'/f'{name}-color.png',out/'hands'/f'{name}-surface.png',out/'hands'/f'{name}-normal.png']},captures=captures)
     (shots/f'blender-{name}.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf8',newline='\n')
     print('HANDS_ASSET '+json.dumps({'id':name,'triangles':report['triangles'],'seconds':report['seconds']}),flush=True)
     return report
 
 started=time.perf_counter()
 tools=[build_tool(name) for name in ['rpg','wrench']]
-hands=[build_hands(name,cfg) for name,cfg in CREW.items() if args.crew in ['all',name]]
+hands=[build_hands(name,CREW[name]) for name in selected_names]
 manifest=dict(round=args.round,blender=bpy.app.version_string,seconds=time.perf_counter()-started,
     command='blender -b --python tools/blender/first-person-gear.py -- --root REPO --round '+str(args.round)+' --crew '+args.crew,
     scriptSha256=digest(__file__),axis='Camera-local glTF: +X right, +Y up, -Z forward. Identity camera attachment; socket axes identity in rest pose.',

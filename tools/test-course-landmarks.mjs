@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {statSync} from 'node:fs';
+import {existsSync,statSync} from 'node:fs';
 import * as THREE from 'three';
 import meshes from '../src/generated/course-landmarks.json' with {type:'json'};
 import {SET_PIECE_BOUNDS} from '../src/course-set-pieces.js';
@@ -12,7 +12,8 @@ let checks=0,triangles=0;
 const check=(condition,message)=>{assert.ok(condition,message);checks++;};
 assert.deepEqual(Object.keys(meshes.assets).sort(),Object.keys(SET_PIECE_BOUNDS).sort());checks++;
 check(meshes.revision>=3,'inspected Blender revision, including outward-facing custom meshes');
-check(statSync(new URL('../public/assets/models/course-landmarks.blend',import.meta.url)).size>100000,'editable native source retained');
+check(statSync(new URL('./build-course-landmarks.py',import.meta.url)).size>10000,'rebuildable Blender recipe retained');
+check(!existsSync(new URL('../public/assets/models/course-landmarks.blend',import.meta.url)),'native Blender output is absent from public runtime assets');
 for(const [name,groups] of Object.entries(meshes.assets)){
   const bounds=SET_PIECE_BOUNDS[name];let assetTriangles=0;
   check(Object.keys(groups).length<=10,`${name}: material-batched landmark`);

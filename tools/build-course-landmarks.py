@@ -11,15 +11,22 @@ import os
 import sys
 from pathlib import Path
 
+args = argparse.ArgumentParser()
+args.add_argument('--root', required=True)
+args.add_argument('--revision', type=int, default=1)
+args.add_argument('--paths-only', action='store_true')
+options = args.parse_args(sys.argv[sys.argv.index('--') + 1:])
+root = Path(options.root).resolve()
+destination = root / 'src/generated/course-landmarks.json'
+native = root / 'art-build/course-landmarks.blend'
+if options.paths_only:
+    print(json.dumps({'blend': [str(native)], 'glb': [], 'json': [str(destination)]}))
+    sys.exit(0)
+
 import bpy
 import bmesh
 from mathutils import Vector
 
-args = argparse.ArgumentParser()
-args.add_argument('--root', required=True)
-args.add_argument('--revision', type=int, default=1)
-options = args.parse_args(sys.argv[sys.argv.index('--') + 1:])
-root = Path(options.root)
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete(use_global=False)
 bpy.context.scene.render.engine = 'CYCLES'
@@ -261,7 +268,6 @@ for name, collection in assets.items():
                 group['normals'].extend(round(value,5) for value in (n.x,n.z,-n.y))
         evaluated.to_mesh_clear()
     export['assets'][name]=groups
-destination=root/'src/generated/course-landmarks.json'
 destination.parent.mkdir(parents=True,exist_ok=True)
 destination.write_text(json.dumps(export,separators=(',',':')),encoding='utf-8')
 
@@ -284,7 +290,6 @@ for name, collection in assets.items():
 # Open the native source on the first model, not six overlapping landmarks.
 # The named collections let an artist switch to any of the other five assets.
 for name, collection in assets.items():collection.hide_render=name!='lodge';collection.hide_viewport=name!='lodge'
-native=root/'public/assets/models/course-landmarks.blend'
 native.parent.mkdir(parents=True,exist_ok=True)
 bpy.context.preferences.filepaths.save_version=0
 bpy.ops.wm.save_as_mainfile(filepath=str(native))
