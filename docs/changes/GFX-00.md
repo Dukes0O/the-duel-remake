@@ -20,8 +20,7 @@ the crew family to beta.
   Pending/failed loads retain the primitive fallback. Late loads are disposed.
   Each visible fighter has its own skeleton and AnimationMixer.
 - The mixer samples simulation time rather than render-frame elapsed time.
-  Walk selection observes position changes between simulation snapshots,
-  retaining the selected clip on repeated same-time renders. Knockdown uses
+  Walk selection uses simulation-authored planar speed. Knockdown uses
   simulation knockdownRemaining when available.
 - The local body is omitted at its first-person eye and is retained for a
   distant camera. No race, career, reward or save values are written.
@@ -32,22 +31,24 @@ the crew family to beta.
 
 ## Evidence
 
-Implementation observation commit: `bba96c7`.
+Implementation observation commit: `a76d79d`.
 Contact sheet: `docs/board/looks/test-fighter/round-1.png`.
 Provenance: `docs/board/looks/test-fighter/round-1.json`.
 Raw images, capture counts and browser report are retained in the same folder.
 
 - Independent red acceptance suite was committed first at `ed739a3`.
-- `node tools/test-rigged-fighter.mjs`: 12 checks passed after final export.
+- `node tools/test-rigged-fighter.mjs`: 14 checks passed after the review fixes and final capture.
   It checks the actual bound geometry and visibly deforming clips, budgets,
   clock, independent skeletons, fallback, gating, first-person hiding,
-  resource cleanup, combat hook and contact-sheet provenance.
+  resource cleanup, combat hook and contact-sheet provenance. Review regressions
+  added at `2e066bd` also prove stopped production fighters select identical
+  GLB bones at 30/60/144 FPS and evidence images survive checkout relocation.
 - `node tools/test-onfoot-figures.mjs`: passed; no assertions changed.
 - `node tools/test-replays.mjs`: 162 checks passed across 18 cases,
   16 events, eight categories, three FPS settings and three runs.
   Ordinary replay fingerprints are unchanged.
 - `node tools/browser-harness.mjs scenario rigged-fighter`: passed on
-  private port 33182, memory-only saves, 18 captures, zero warnings/errors.
+  private port 58742, memory-only saves, 18 captures, zero warnings/errors.
   It uses the production combat hook and loaded body, then captures matched
   front/side/back poses with the actual High compositor and Performance draw.
 - Camera: 576 × 640, 28-degree vertical FOV, five metres, target Y=0.9.
@@ -57,12 +58,35 @@ Raw images, capture counts and browser report are retained in the same folder.
   the fighter-only colour pass in both settings. This excludes floor,
   shadow passes and post-processing; per-capture totals are also retained.
 - No world signatures were regenerated. No assertion was weakened.
-- Required lane/build gate and independent browser/art/code review are
-  pending the Director's assigned checkers.
+- The four existing on-foot suites passed: core movement (9), transitions (8),
+  race interactions (3), and primitive figure checks. Test assertions are unchanged.
+- Required lane/build gate and independent code re-review are pending the
+  Director's assigned checkers. The independent art review remains on integration
+  as round-1-review.md; the visual asset is unchanged by these review fixes.
 
 Visual checks found and corrected cropped prone views and raised walk
 keyframes. The final authored keyframes plant the lowest deformed vertex at
 ground; the matched captures were regenerated after both corrections.
+
+## Review corrections
+
+The original renderer inferred locomotion from the last rendered position.
+Moving two simulation steps and stopping could therefore show walk at 30 FPS
+while showing idle at 60 FPS. The authorized narrow onfoot.js hook now records
+actual planar displacement divided by the fixed step. Speed starts at zero and
+resets on stop, blocked movement, knockdown and respawn; existing movement rules
+and ordinary replay fingerprints are unchanged.
+
+All twelve independent rigs and animation actions are prepared once on asset
+load. Renderer and combat hook reuse fixed rosters, options and the local-player
+wrapper; the ready renderer no longer updates hidden fallback figures or creates
+position-history objects per frame.
+
+Capture paths and the retained browser report are repository-relative. The
+compositor resolves them against its current checkout. Browser sample poses now
+come from production createFighter/stepFighter/knockdownFighter calls on a neutral
+flat course. The reviewed asset hash is unchanged. High/Performance captures and
+the sheet were rebuilt once after these fixes.
 
 ## GFX-01 gaps
 

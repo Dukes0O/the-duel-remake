@@ -1,4 +1,5 @@
 {
+  "movementSource": "Production createFighter/stepFighter: 30 fixed steps idle/walk, knockdownFighter then 120 fixed steps down",
   "qualities": [
     "high",
     "performance"
@@ -10,7 +11,7 @@
       "time": 0.25,
       "view": "front",
       "yaw": 0,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-high-idle-front.png",
+      "path": "docs/board/looks/test-fighter/game-high-idle-front.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 26,
@@ -29,7 +30,7 @@
       "time": 0.25,
       "view": "side",
       "yaw": 1.5707963267948966,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-high-idle-side.png",
+      "path": "docs/board/looks/test-fighter/game-high-idle-side.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 26,
@@ -48,7 +49,7 @@
       "time": 0.25,
       "view": "back",
       "yaw": 3.141592653589793,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-high-idle-back.png",
+      "path": "docs/board/looks/test-fighter/game-high-idle-back.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 26,
@@ -67,7 +68,7 @@
       "time": 0.25,
       "view": "front",
       "yaw": 0,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-high-walk-front.png",
+      "path": "docs/board/looks/test-fighter/game-high-walk-front.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 26,
@@ -86,7 +87,7 @@
       "time": 0.25,
       "view": "side",
       "yaw": 1.5707963267948966,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-high-walk-side.png",
+      "path": "docs/board/looks/test-fighter/game-high-walk-side.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 26,
@@ -105,7 +106,7 @@
       "time": 0.25,
       "view": "back",
       "yaw": 3.141592653589793,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-high-walk-back.png",
+      "path": "docs/board/looks/test-fighter/game-high-walk-back.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 26,
@@ -124,7 +125,7 @@
       "time": 1,
       "view": "front",
       "yaw": 0,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-high-knockdown-front.png",
+      "path": "docs/board/looks/test-fighter/game-high-knockdown-front.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 26,
@@ -134,7 +135,7 @@
         "materials": 1,
         "meshes": 1,
         "clip": "knockdown",
-        "time": 1
+        "time": 0.9999999999999964
       }
     },
     {
@@ -143,7 +144,7 @@
       "time": 1,
       "view": "side",
       "yaw": 1.5707963267948966,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-high-knockdown-side.png",
+      "path": "docs/board/looks/test-fighter/game-high-knockdown-side.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 26,
@@ -153,7 +154,7 @@
         "materials": 1,
         "meshes": 1,
         "clip": "knockdown",
-        "time": 1
+        "time": 0.9999999999999964
       }
     },
     {
@@ -162,7 +163,7 @@
       "time": 1,
       "view": "back",
       "yaw": 3.141592653589793,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-high-knockdown-back.png",
+      "path": "docs/board/looks/test-fighter/game-high-knockdown-back.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 26,
@@ -172,7 +173,7 @@
         "materials": 1,
         "meshes": 1,
         "clip": "knockdown",
-        "time": 1
+        "time": 0.9999999999999964
       }
     },
     {
@@ -181,26 +182,7 @@
       "time": 0.25,
       "view": "front",
       "yaw": 0,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-performance-idle-front.png",
-      "metrics": {
-        "allPasses": {
-          "drawCalls": 2,
-          "triangles": 7720
-        },
-        "triangles": 7708,
-        "materials": 1,
-        "meshes": 1,
-        "clip": "idle",
-        "time": 0.25
-      }
-    },
-    {
-      "quality": "performance",
-      "clip": "idle",
-      "time": 0.25,
-      "view": "side",
-      "yaw": 1.5707963267948966,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-performance-idle-side.png",
+      "path": "docs/board/looks/test-fighter/game-performance-idle-front.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 2,
@@ -217,9 +199,28 @@
       "quality": "performance",
       "clip": "idle",
       "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/test-fighter/game-performance-idle-side.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 2,
+          "triangles": 7720
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "idle",
+        "time": 0.25
+      }
+    },
+    {
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
       "view": "back",
       "yaw": 3.141592653589793,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-performance-idle-back.png",
+      "path": "docs/board/looks/test-fighter/game-performance-idle-back.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 2,
@@ -238,7 +239,7 @@
       "time": 0.25,
       "view": "front",
       "yaw": 0,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-performance-walk-front.png",
+      "path": "docs/board/looks/test-fighter/game-performance-walk-front.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 2,
@@ -257,7 +258,7 @@
       "time": 0.25,
       "view": "side",
       "yaw": 1.5707963267948966,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-performance-walk-side.png",
+      "path": "docs/board/looks/test-fighter/game-performance-walk-side.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 2,
@@ -276,7 +277,7 @@
       "time": 0.25,
       "view": "back",
       "yaw": 3.141592653589793,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-performance-walk-back.png",
+      "path": "docs/board/looks/test-fighter/game-performance-walk-back.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 2,
@@ -295,7 +296,7 @@
       "time": 1,
       "view": "front",
       "yaw": 0,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-performance-knockdown-front.png",
+      "path": "docs/board/looks/test-fighter/game-performance-knockdown-front.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 2,
@@ -305,7 +306,7 @@
         "materials": 1,
         "meshes": 1,
         "clip": "knockdown",
-        "time": 1
+        "time": 0.9999999999999964
       }
     },
     {
@@ -314,7 +315,7 @@
       "time": 1,
       "view": "side",
       "yaw": 1.5707963267948966,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-performance-knockdown-side.png",
+      "path": "docs/board/looks/test-fighter/game-performance-knockdown-side.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 2,
@@ -324,7 +325,7 @@
         "materials": 1,
         "meshes": 1,
         "clip": "knockdown",
-        "time": 1
+        "time": 0.9999999999999964
       }
     },
     {
@@ -333,7 +334,7 @@
       "time": 1,
       "view": "back",
       "yaw": 3.141592653589793,
-      "path": "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\gfx00\\docs\\board\\looks\\test-fighter\\game-performance-knockdown-back.png",
+      "path": "docs/board/looks/test-fighter/game-performance-knockdown-back.png",
       "metrics": {
         "allPasses": {
           "drawCalls": 2,
@@ -343,7 +344,7 @@
         "materials": 1,
         "meshes": 1,
         "clip": "knockdown",
-        "time": 1
+        "time": 0.9999999999999964
       }
     }
   ],
