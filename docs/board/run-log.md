@@ -993,3 +993,8 @@ checkout untouched until the final integration commit passes the full gate.
 - GFX-01 red tests 8cb51d6 are committed. Blender and runtime builders now share a lane with separate file ownership. Approved a narrow render3d camera-reference hook so distant models follow actual camera distance. Three fidelity rounds remain required.
 - Full cadence: one task merge since 05:39 UTC; next full by 07:39 UTC or four more task merges.
 
+
+- EGG-01 lane stopped at 51 passed, one failed and 165 not run: the existing shortcut freshness check detected the course source edit. Authorized generated-shortcut-presets.js stamp refresh only. Generator output is byte-identical apart from sourceFingerprint; 241 checks with all 15 fresh solver comparisons pass. Corrected candidate 5ec61ad awaits the repeated required gate after ART-W's gate frees the runner.
+- GFX-01 independent test-author corrected its new draw-count helper after inspecting Three: geometry groups produce separate draws only with material arrays. Budget assertions remain unchanged; runtime 5/5 and presentation 10/10 pass. Historical GFX-00 browser scenario may explicitly load its retained test asset; new crew scenario covers production models.
+- Quota check: 38 percent remaining. No release or push.
+

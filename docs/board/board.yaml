@@ -89,7 +89,7 @@ tasks:
     merge_after: GFX-00
     status: reviewing
     owns: [src/hidden-road.js, src/course.js, src/sim-driving.js, src/sim-crash.js, src/world.js, tools/test-hidden-road.mjs, tools/test-feature-flags.mjs, tools/replays/hidden-road-ordinary.json, tools/scenarios/hidden-road.mjs]
-    hooks: [src/feature-flags.js, src/game.js, src/world-surfaces.js, src/environment-key.js, tools/test-render-reuse.mjs]
+      hooks: [src/feature-flags.js, src/game.js, src/world-surfaces.js, src/environment-key.js, tools/test-render-reuse.mjs, src/generated-shortcut-presets.js]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
     flag: hidden-road
     behavior_change: yes
@@ -129,7 +129,7 @@ tasks:
       merge_after: ART-W
       status: building
       owns: [tools/blender/crew-fighters.py, public/assets/models/wasteland/crew/, src/fighter-presentation.js, src/rigged-fighter.js, tools/test-crew-fighters.mjs, tools/test-fighter-presentation.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, docs/board/looks/crew/]
-      hooks: [src/combat-scene.js, src/onfoot.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/render3d.js, tools/blender/fidelity-sheet.py]
+      hooks: [src/combat-scene.js, src/onfoot.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/render3d.js, tools/blender/fidelity-sheet.py, tools/scenarios/rigged-fighter.mjs]
       helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
       flag: wasteland2
       behavior_change: no
