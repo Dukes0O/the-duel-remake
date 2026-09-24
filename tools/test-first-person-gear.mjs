@@ -277,6 +277,32 @@ check('last rocket hides its loaded mesh without hiding the empty launcher', asy
     }
   } finally {view.dispose();}
 });
+check('spent rocket is hidden through recoil and reserve appears only at reload insertion', async () => {
+  const snapshot = entry(), {view, camera} = await ready(snapshot);
+  try {
+    const showRocket = () => meshes(view.group).filter(mesh => /loaded[-_ ]rocket/i.test(mesh.name));
+    assert.ok(showRocket().length, 'fixture has a separately visible loaded rocket');
+    const recoilEnds = 10.22, reloadDuration = snapshot.weapons.nextFireAt - recoilEnds;
+    for (const time of [10, 10.05, 10.219, recoilEnds, recoilEnds + reloadDuration * .119]) {
+      view.update(snapshot, options(camera, time));
+      assert.ok(showRocket().every(mesh => !visible(mesh)),
+        `spent rocket remains absent before replacement insertion at simulation time ${time}`);
+    }
+    for (const phase of [.121, .5, .99]) {
+      view.update(snapshot, options(camera, recoilEnds + reloadDuration * phase));
+      assert.ok(showRocket().some(visible), 'available replacement appears during authored insertion');
+    }
+    view.update(snapshot, options(camera, snapshot.weapons.nextFireAt));
+    assert.ok(showRocket().some(visible), 'loaded replacement remains ready after reload');
+    snapshot.weapons.ammo = 0;
+    for (const time of [10, 10.1, 10.219, 10.5, 11.5, 12.2]) {
+      view.update(snapshot, options(camera, time));
+      assert.ok(showRocket().every(mesh => !visible(mesh)), 'last rocket never creates a replacement');
+      assert.ok(meshes(view.group).some(mesh => mesh.name === 'rpg' && visible(mesh)),
+        'empty launcher remains visible');
+    }
+  } finally {view.dispose();}
+});
 check('failed loads remain bounded and cannot mutate the playable snapshot', async () => {
   const snapshot = freeze(entry()), before = JSON.stringify(snapshot), calls = [];
   const {view, camera} = await ready(snapshot, async (kind, id) => {calls.push(`${kind}:${id}`); throw Error('controlled load failure');});
