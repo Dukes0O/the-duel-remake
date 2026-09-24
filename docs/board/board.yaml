@@ -164,7 +164,7 @@ tasks:
     lane: VIS
     size: M
     needs: [GFX-01]
-    status: building
+    status: merged
     owns: [tools/blender/first-person-gear.py, public/assets/models/wasteland/first-person/, src/first-person-gear.js, src/first-person-presentation.js, tools/test-first-person-gear.mjs, tools/test-first-person-presentation.mjs, tools/scenarios/first-person-gear.mjs, docs/board/looks/first-person/]
     hooks: [src/render3d.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [test_author, reviewer, test_runner, browser_qa, art_critic]
@@ -180,7 +180,7 @@ tasks:
       - "Independent tests precede implementation. One private memory-only interaction covers exit, aim, successful shot, reload, wrench repair and re-entry in both qualities. Review actual grip, aim alignment, clipping and HUD clearance. Retain three immutable reference/Blender/game rounds with scores and five differences; beta needs every score at least four and the measured budget."
     shots: [eight-crew-hands, aim-recoil-reload, wrench-repair, last-rocket, course-view-high-performance]
     sound: "Retain existing action cues and timing."
-    note: "Independent acceptance tests start after GFX-01 merge. No mandatory new simulation field. Smooth aim transitions need a simulation clock if later required; otherwise use a deliberate immediate aim pose. A separate first-person selector composes actions instead of copying the full-body clip priority."
+    note: "Merged f626618 after three immutable fidelity rounds, independent runtime/art review, 223-suite lane gate and build on fead24a. Final maximum is 6932 triangles/three draws; both qualities show p95 18.1/18.2 ms hidden/visible in the scoped rendering sample. Resemblance remains three; GFX-02-P1 carries anatomy, materials and continuous-motion review. Feature stays dev."
   - id: GFX-02-P1
     title: "Polish first-person anatomy, materials and motion"
     lane: VIS
@@ -201,9 +201,20 @@ tasks:
     lane: VIS
     size: L
     needs: [GFX-02]
-    status: backlog
+    status: building
+    owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, src/rustwall-scene.js, tools/test-rustwall-scene.mjs, tools/test-rustwall-assets.mjs, tools/scenarios/rustwall.mjs, docs/board/looks/rustwall/]
+    hooks: [src/world.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    helpers: [test_author, reviewer, browser_qa, art_critic]
+    flag: hidden-road
     acceptance:
       - "Model the 35 m by at least 400 m Rustwall, moving gate, towers, fires and figures with three saved fidelity rounds; wall/yard adds at most ten percent frame cost."
+      - "Use rustwall-gate.png lower-left elevation for architecture, lower-right for depth and top for atmosphere. Its humans imply the wrong height: keep the wall at 35 m, span at least 400 m, gate opening 9 by 7 m and adult figures at human scale. Retain Blender source, scripts, GLBs and three immutable reference/Blender/High/Performance sheets."
+      - "Place the gate at hiddenRoad.poseAt(length), facing the final 300 m approach. Replace the wash greybox appearance with Blender rock modules fitted to existing wall collision bounds; retain current path, ground support, ordinary racing and all route A/B/C behavior. No new collision, discovery, save, reward or arrival-sequence behavior in this card."
+      - "Expose a pure clamped gate-opening presentation control for EGG-03. The closed panel and full raised clearance must match the physical opening; the renderer never changes race state. Wall includes layered steel, stacked hulks, braces, scaffold towers, cranes, unlettered banners, fire barrels, searchlights and torch figures."
+      - "Initial allocation: at most 60000 wall/gate triangles and 24 material draws, plus at most 30000 triangles/two draws for wash modules; at most three 1024 texture sets for the wall and one for rocks. The measured ten-percent frame limit remains authoritative. Reuse resources and prepare instances once."
+      - "Use existing scene-system disposal for local asynchronous assets: retired scenes cannot resurrect, failed loads keep the route playable, and shared resources dispose once. No asset request when hiddenRoad is absent. Tests cover loading, gate pose, placement, bounds, immutability and cleanup before implementation."
+      - "One bounded private scenario per round covers approach, front/depth/open-gate views and wash on both qualities, with clear all-route placement controls. Compare EGG-01 greybox baseline and loaded scenery in the same course views; retain frame distributions, render timing, triangle/draw counts and measurement limits. No beta until SPEC 0.3 scores pass."
+    note: "Begins after GFX-02 integration. Test author and separate Blender/runtime builders agree the asset/runtime contract before implementation. Gate invitation and discovery remain the following cards."
   - id: EGG-03
     title: "Gate arrival and invitation"
     priority: 10
