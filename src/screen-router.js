@@ -109,6 +109,7 @@ const modalScreen = createResultsScreen({app, profile, credits, escapeHTML, time
 const updateHud = createHudScreen({app, ui, text, time, clamp, credits, routeMap});
 const readiness = createRendererReadiness({app, ui, choices, profile, isDisposed:()=>uiDisposed});
 const combatHud = createCombatHud({root, app,
+  projectFootAim:()=>readiness.handle?.projectFootAim?.() || null,
   projectOpponents:()=>readiness.handle?.projectOpponents?.() || []});
 const {ensureRenderer, syncRendererReadiness} = readiness;
 const courseActions = createCourseActions({app, choices, setMessage:value=>courseMessage=value, setOpen:value=>coursesOpen=value, updateMenuScene, invalidate:()=>lastScreen=null, renderState:()=>renderState(app.duel.state)});
@@ -123,6 +124,7 @@ for(const id of ['rival-car','rival-driver','rival-upgrades'])ui[id].addEventLis
 },{signal:domEvents.signal});
 ui['lighting-mood'].addEventListener('change',event=>{app.setLightingMood(event.target.value);ui['lighting-mood'].value=app.lightingMood;});
 ui['graphics-quality'].value=app.ambientOcclusionEnabled?'high':'performance';
+ui['foot-camera']?.addEventListener('change',event=>{event.target.value=app.setFootCamera(event.target.value);},{signal:domEvents.signal});
 ui['graphics-quality'].addEventListener('change',event=>app.setGraphicsQuality(event.target.value));
 ui['car-select'].addEventListener('change',event=>{const car=event.target.value;if(!isCarUnlocked(profile(),car)){ui['car-select'].value=choices.car;openGarage(car);return;}choices.car=car;updateMenuScene();});
 ui['scene-select'].addEventListener('change', e => { choices.startStage = Math.max(0, Math.min(COURSE.length-1, Number(e.target.value) || 0)); updateMenuScene(); });
@@ -193,7 +195,7 @@ root.addEventListener('click',e => {
     case 'arena':choices.startStage=COURSE.findIndex(scene=>scene.arena);choices.car='titan_monster';updateMenuScene();closeGarage();return;
     case 'garage-select': choices.car = garageCar;updateMenuScene();closeGarage(); return;
     case 'sound': app.audio.unlock(); app.audio.toggleMute(); break;
-    case 'camera': app.cycleCamera(); break;
+    case 'camera': if(app.duel.state.onFoot)app.cycleFootCamera();else app.cycleCamera(); break;
     case 'pause': app.togglePause(); break;
     case 'resume': app.resume(); break;
     case 'restart': app.requestNavigation('restart'); break;

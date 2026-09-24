@@ -111,7 +111,7 @@ function createOpponentMarker(index) {
   return marker;
 }
 
-export function createCombatHud({root, app, projectOpponents = () => []}) {
+export function createCombatHud({root, app, projectOpponents = () => [], projectFootAim = () => null}) {
   const overlay = root.querySelector('#overlay');
   const host = document.createElement('section');
   host.className = 'combat-upgraded-hud';
@@ -218,6 +218,11 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
       const action = footActionPresentation(state);
       setText(footAction, action.text);
       footReticle.classList.toggle('is-locked', action.locked);
+      const aim=projectFootAim();
+      footReticle.hidden=aim?.visible===false;
+      const left=`${((aim?.x??.5)*100).toFixed(3)}%`,top=`${((aim?.y??.5)*100).toFixed(3)}%`;
+      if(footReticle.style.left!==left)footReticle.style.left=left;
+      if(footReticle.style.top!==top)footReticle.style.top=top;
     }
 
     const combat = state.combat;

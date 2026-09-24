@@ -242,6 +242,7 @@ export class App {
     this._applyRaceSettings(normalizeRaceSettings({...saved,...overrides},this.profile),customSeed);
   }
   _applyRaceSettings(settings,customSeed=this._customMenuSeed){
+    this._footCameraMode=settings.footCamera;
     this._raceSettings=settings;this.menuStage=raceSettingsStage(settings);this.menuCar=settings.car;this.menuRouteId=settings.routeVariant;this._customMenuSeed=customSeed;
     this.cpuDifficulty=settings.cpuDifficulty;this.ghostEnabled=settings.ghostEnabled;this.lightingMood=settings.lightingMood;
     this.seed=this.getMenuSeed();this.duel.seed=this.seed;this.duel.carKey=settings.car;this.duel.difficultyKey=settings.difficulty;
@@ -558,6 +559,8 @@ export class App {
     const st = this.duel.state;
     if (!['racing', 'countdown', 'exploring'].includes(st.status)) return;
     st.paused = !st.paused;
+    this._footPointer.lookX = this._footPointer.lookY = 0;
+    this._footPointer.fire = this._footPointer.aim = false;
     if(st.paused && st.onFoot && typeof document!=='undefined' &&
         document.pointerLockElement) document.exitPointerLock();
     this.keys = {};
@@ -582,6 +585,10 @@ export class App {
   resume() { if (this.duel.state.paused) this.togglePause(); }
   returnToMenu() {
     this._settleAbandoned();
+    this._footPointer.lookX = this._footPointer.lookY = 0;
+    this._footPointer.fire = this._footPointer.aim = false;
+    if (this.duel.state.onFoot && typeof document !== 'undefined' &&
+        document.pointerLockElement) document.exitPointerLock();
     this.keys = {};
     this._keyboardSteering.reset();
     const st = this.duel.state;
@@ -597,6 +604,24 @@ export class App {
     this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false });
     this.audio.setPaused(false);
     this.duel.emit({ menu: true });
+  }
+  get footCameraMode() {
+    return this.duel.featureFlags.enabled('wasteland2') && this._footCameraMode === 'overhead'
+      ? 'overhead' : 'first-person';
+  }
+  setFootCamera(mode) {
+    if (!['first-person', 'overhead'].includes(mode) ||
+        !this.duel.featureFlags.enabled('wasteland2')) return this.footCameraMode;
+    this._refreshPlayer();
+    if (this.profile.wasteland?.version !== 1) return this.footCameraMode;
+    if (mode === this._footCameraMode) return this.footCameraMode;
+    this._footCameraMode = mode;
+    this._rememberRaceSettings({footCamera: mode});
+    this.duel.emit({footCamera: mode});
+    return this.footCameraMode;
+  }
+  cycleFootCamera() {
+    return this.setFootCamera(this.footCameraMode === 'first-person' ? 'overhead' : 'first-person');
   }
   setCamera(mode) {
     if(!CAMERA_MODES.includes(mode))return this.cameraMode;
@@ -635,6 +660,7 @@ export class App {
   _inputAction(action) {
     if (!action) return;
     if (action === 'pause') this.togglePause();
+    else if (action === 'foot-camera-cycle') this.cycleFootCamera();
     else if (action === 'camera-cycle') this.cycleCamera();
     else if (action.startsWith('camera:')) this.setCamera(action.slice(7));
     else if (action.startsWith('weapon:')) {

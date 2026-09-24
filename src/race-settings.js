@@ -5,7 +5,7 @@ import {normalizeLightingMood} from './lighting-moods.js';
 import {isCourseUnlocked} from './course-access.js';
 import {normalizeRival} from './rival-settings.js';
 
-export const DEFAULT_RACE_SETTINGS=Object.freeze({version:1,eventId:COURSE[0].id,mode:'duel',cpuDifficulty:DEFAULT_CPU_DIFFICULTY,difficulty:DEFAULT_DIFFICULTY,car:DEFAULT_CAR,routeVariant:DEFAULT_ROUTE_VARIANT,lightingMood:'clear',ghostEnabled:true});
+export const DEFAULT_RACE_SETTINGS=Object.freeze({version:1,eventId:COURSE[0].id,mode:'duel',cpuDifficulty:DEFAULT_CPU_DIFFICULTY,difficulty:DEFAULT_DIFFICULTY,car:DEFAULT_CAR,routeVariant:DEFAULT_ROUTE_VARIANT,lightingMood:'clear',ghostEnabled:true,footCamera:'first-person'});
 const owned=(profile,key)=>Object.hasOwn(CARS,key)&&(!(CARS[key].price>0)&&!CARS[key].unlockRequirement||profile?.unlockedCars?.includes(key));
 export const raceSettingsStage=settings=>Math.max(0,COURSE.findIndex(stage=>stage.id===settings?.eventId));
 
@@ -17,7 +17,8 @@ export function normalizeRaceSettings(value,profile) {
   const car=owned(profile,v.car)?v.car:DEFAULT_CAR,rival=normalizeRival(v.rival);
   return {version:1,eventId:stage.id,mode:stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':v.mode==='wasteland'&&supportsCombat(stage)?'wasteland':v.mode==='timetrial'?'timetrial':'duel',
     cpuDifficulty:Object.hasOwn(CPU_DIFFICULTY,v.cpuDifficulty)?v.cpuDifficulty:DEFAULT_CPU_DIFFICULTY,difficulty:Object.hasOwn(DIFFICULTY,v.difficulty)?v.difficulty:DEFAULT_DIFFICULTY,
-    car,...(rival?{rival}:{}),routeVariant:isRouteVariant(v.routeVariant)?v.routeVariant:DEFAULT_ROUTE_VARIANT,lightingMood:normalizeLightingMood(v.lightingMood),ghostEnabled:typeof v.ghostEnabled==='boolean'?v.ghostEnabled:true};
+    car,...(rival?{rival}:{}),routeVariant:isRouteVariant(v.routeVariant)?v.routeVariant:DEFAULT_ROUTE_VARIANT,lightingMood:normalizeLightingMood(v.lightingMood),ghostEnabled:typeof v.ghostEnabled==='boolean'?v.ghostEnabled:true,
+    footCamera:v.footCamera==='overhead'?'overhead':'first-person'};
 }
 
 export function raceSettingsChoices(settings) {

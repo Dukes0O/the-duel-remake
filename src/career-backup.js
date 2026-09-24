@@ -66,6 +66,7 @@ export function needsCareerMigration(storage) {
     const registry = JSON.parse(raw);
     return registry?.version !== 2 || !Array.isArray(registry.players) || !registry.players.length ||
       registry.players.some(player => !player?.profile?.raceSettings ||
+        !['first-person', 'overhead'].includes(player.profile.raceSettings.footCamera) ||
         !isObject(player.profile.wasteland) || player.profile.wasteland.version !== 1 ||
         typeof player.profile.wasteland.discoveredGate !== 'boolean' ||
         !Number.isSafeInteger(player.profile.wasteland.pacificFinishes) ||
