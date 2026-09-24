@@ -10,7 +10,9 @@ function value(name, fallback) {
   const index = args.indexOf(name);
   return index < 0 ? fallback : args[index + 1];
 }
-if (args.includes('--first-person-tools-round')) {
+if (args.includes('--rustwall-round')) {
+  await rustwallSheet(Number(value('--rustwall-round')));
+} else if (args.includes('--first-person-tools-round')) {
   await firstPersonSheet(Number(value('--first-person-tools-round')),true);
 } else if (args.includes('--first-person-round')) {
   await firstPersonSheet(Number(value('--first-person-round')));
@@ -169,4 +171,46 @@ async function firstPersonSheet(round, toolsOnly=false) {
   execFileSync(executable,['-b','--python',join(root,'tools/blender/fidelity-sheet.py'),
     '--','--root',root,'--manifest',manifest,'--output',output],{cwd:root,stdio:'inherit',windowsHide:true});
   console.log('First-person fidelity sheet: '+output);
+}
+
+async function rustwallSheet(round) {
+  if(!Number.isInteger(round)||round<1||round>10)throw Error('Rustwall round must be 1..10');
+  const base=`docs/board/looks/rustwall/round-${round}`;
+  const captures=JSON.parse(await readFile(join(root,base,'captures.json'),'utf8'));
+  const blender=JSON.parse(await readFile(join(root,base,'blender-manifest.json'),'utf8'));
+  const rows=[],sources={};
+  const verify=async(path,expected)=>{
+    const actual=createHash('sha256').update(await readFile(join(root,path))).digest('hex');
+    if(actual!==expected)throw Error('Evidence source changed: '+path);sources[path]=actual;
+  };
+  await verify(blender.reference.path,blender.reference.sha256);
+  for(const [kind,asset] of Object.entries(blender.assets)) {
+    await verify(asset.path,asset.sha256);
+    if(captures.assets[kind]?.sha256!==asset.sha256)throw Error('Rustwall asset mismatch: '+kind);
+  }
+  for(const sample of blender.captures) {
+    const high=captures.captures.find(item=>item.id===sample.id&&item.quality==='high');
+    const performance=captures.captures.find(item=>item.id===sample.id&&item.quality==='performance');
+    if(!high||!performance)throw Error('Missing Rustwall quality: '+sample.id);
+    for(const game of [high,performance]) {
+      if(JSON.stringify(game.camera)!==JSON.stringify(sample.camera)||game.cameraSpace!==sample.cameraSpace||
+        game.gateOpen!==(sample.gateOpen||0)||JSON.stringify(game.moduleScale)!==JSON.stringify(sample.moduleScale))
+        throw Error('Rustwall matched-pose mismatch: '+sample.id);
+      await verify(game.path,game.sha256);
+    }
+    await verify(sample.path,sample.sha256);
+    rows.push({clip:sample.kind,time:sample.gateOpen||0,
+      view:sample.id+(sample.kind==='wash'?' - reference context only':''),
+      label:`${sample.id} - gate ${(sample.gateOpen||0)*100} percent${sample.kind==='wash'?' - no matching rock reference':''}`,
+      crop:sample.referenceCrop,reference:blender.reference.path,blender:sample.path,high:high.path,performance:performance.path});
+  }
+  const output=resolve(root,`${base}.png`),manifest=resolve(root,`${base}.json`);
+  await writeFile(manifest,JSON.stringify({round,observationCommit:captures.observationCommit,
+    assets:captures.assets,reference:blender.reference,tile:{width:384,height:216},rows,sources,
+    baseline:captures.baseline,cost:captures.cost,preparedGroundTriangles:captures.preparedGroundTriangles,
+    output:`${base}.png`,status:'Recorded model/camera comparisons. Reference people do not establish scale; wash reference provides context only. Independent review and measured cost decide fidelity.'},null,2)+'\n',{flag:'wx'});
+  const executable=value('--blender',process.env.BLENDER_PATH||'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe');
+  execFileSync(executable,['-b','--python',join(root,'tools/blender/fidelity-sheet.py'),
+    '--','--root',root,'--manifest',manifest,'--output',output],{cwd:root,stdio:'inherit',windowsHide:true});
+  console.log('Rustwall fidelity sheet: '+output);
 }

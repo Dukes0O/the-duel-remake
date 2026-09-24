@@ -97,7 +97,7 @@ for column,name in enumerate(['Reference','Blender','High','Performance']):
     label(name,column*tile_w+12,15)
 for index,row in enumerate(manifest['rows']):
     y=header+index*(tile_h+row_label)
-    label((row.get('crew','')+' '+row['clip']+' '+row['view']+' '+str(row['time'])+' S').strip(),12,y+7)
+    label(row.get('label') or (row.get('crew','')+' '+row['clip']+' '+row['view']+' '+str(row['time'])+' S').strip(),12,y+7)
     for column,key in enumerate(['reference','blender','high','performance']):
         image=picture(row[key],row['crop'] if key=='reference' else None)
         h,w=image.shape[:2]
