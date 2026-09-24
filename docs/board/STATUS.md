@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-24T19:55:54.648Z
+Observed at: 2026-09-24T20:31:34.453Z
 
-Observation commit: 0e10dd48724b6f5c26c6156050a6ef11e03c6235
+Observation commit: ac13644a91d369995db952fae1d208a66928a2cb
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 0e10dd48724b6f5c26c6156050a6ef11e03c6235
+Integration HEAD: ac13644a91d369995db952fae1d208a66928a2cb
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-09-24T18:26:31.812Z; tested commit: eff5744d4585738fdbdba9c015c566b7bff5c03f.
+Last recorded full run: 2026-09-24T20:02:45.575Z; tested commit: 658a35c5d39762a49bbae0794160e4a287526d8c.
 
 ## Feature switches
 
@@ -52,9 +52,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 101,396 B | +0 B | 500,000 B |
 | Review `looks/` | 158,118 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 98,367 B | -270,325 B | 5,000,000 B |
+| Added bytes in last merge | 41,638 B | -56,729 B | 5,000,000 B |
 | All `public/` | 250,741,595 B | +0 B | unavailable |
-| Git objects | 262,809,600 B | +136,192 B | unavailable |
+| Git objects | 262,885,376 B | +75,776 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -63,7 +63,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 0e10dd48724b6f5c26c6156050a6ef11e03c6235
+- Local integration/wasteland: ac13644a91d369995db952fae1d208a66928a2cb
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

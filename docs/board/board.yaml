@@ -122,7 +122,8 @@ tasks:
     lane: TOOL
     size: S
     needs: [CLEAN-08]
-    status: backlog
+    status: merged
+    note: "Merged as ac13644 after 238 passing lane suites, build, 632 throwaway Git checks, 162 unchanged replay fingerprints and independent review. No project history was rewritten; a real run still requires Kyle's written approval."
     owns: [tools/compact-binaries.mjs, tools/test-compact-binaries.mjs]
     helpers: [test_author, reviewer, test_runner]
     acceptance:
