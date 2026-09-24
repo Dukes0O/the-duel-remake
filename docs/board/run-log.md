@@ -880,3 +880,30 @@ checkout untouched until the final integration commit passes the full gate.
   EGG-01 read-only route/bounds scoping has begun; it merges after GFX-00.
 - Quota check: 44 percent remains. The next task merge triggers the full
   tier; the time deadline remains 06:02 UTC if no fifth merge happens first.
+
+## 2026-09-23 PDT — targeted review fixes and Hidden Road preparation
+
+- GFX-00 art review accepts the pipeline evidence, with resemblance 2 and
+  grounding 2-3. Scores and five concrete crew-round fixes are retained in
+  docs/board/looks/test-fighter/round-1-review.md. No beta promotion.
+- Code review found frame-rate-dependent walk selection, temporary roster
+  allocations and capture paths tied to the lane folder. Independent red
+  regressions 2e066bd reproduce the movement and relocation failures. Builder
+  now fixes these, including a narrow simulation-authored movement-speed field.
+- EGG-01 is scoped and tests start in .lanes/egg01. The candidate mouth is
+  s=1408 m, right lateral +8.5 m, outside a Mojave bend on A/B/C. Full footprint
+  clearance and driving still require verification. A separate corridor keeps
+  it out of NPC shortcuts and the undiscovered map. Its merge follows GFX-00.
+- Approved test maintenance for EGG-01: expand the exact feature catalog from
+  three to four entries, retaining existing states and requiring hidden-road
+  dev. Builder owns that existing assertion change. Test author may add a new
+  pre-change ABC baseline fixture; no existing fingerprints may change.
+- One bounded crossbow probe pair found eight gained and three lost hits
+  under flagged rules. Some accepted bolts pass above the actual roof because
+  collision uses a plus/minus 4 m vertical band. BUG-06 now scopes real swept
+  vehicle-height bounds, with independent red tests in .lanes/bolt-height.
+  Preserve lead, velocity inheritance, homing and the existing balance bands.
+- Two old projectile test fixtures aim above real roofs but expect hits.
+  Builder may correct their trajectories to cross the actual body, retaining
+  all hit-count and frame-rate assertions, with exact changes reviewed and
+  documented. Separate uphill launch-height error remains a later fix.

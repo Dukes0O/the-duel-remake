@@ -88,7 +88,7 @@ tasks:
     needs: [TRACK-02]
     merge_after: GFX-00
     status: ready
-    owns: [src/hidden-road.js, src/course.js, src/sim-driving.js, src/sim-crash.js, src/world.js, tools/test-hidden-road.mjs, tools/test-feature-flags.mjs, tools/scenarios/hidden-road.mjs]
+    owns: [src/hidden-road.js, src/course.js, src/sim-driving.js, src/sim-crash.js, src/world.js, tools/test-hidden-road.mjs, tools/test-feature-flags.mjs, tools/replays/hidden-road-ordinary.json, tools/scenarios/hidden-road.mjs]
     hooks: [src/feature-flags.js, src/game.js, src/world-surfaces.js]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
     flag: hidden-road
