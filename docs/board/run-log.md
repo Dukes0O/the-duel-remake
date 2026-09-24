@@ -756,3 +756,38 @@ checkout untouched until the final integration commit passes the full gate.
 - Enforce lane jobs 8 plus build before every task merge. Count task merges
   from this run; full jobs 8 keep-going after five merges or two hours, and
   at run end. Read-only review of existing open cards may use spare lanes.
+
+## 2026-09-23 PDT — first v3 lanes and worktree cleanup
+
+- TRACK-01 independent tests and builder preparation started in
+  .lanes/track01. Implementation waits for the committed failing tests.
+- Existing AUD-02 uses a spare lane for eight foot/raider waveform checks.
+  This is evidence for implemented sounds, not a claim that the full mix or
+  future arsenal cues are finished. Independent tests precede the scenario.
+- Blender 4.5.13 LTS is available at the specified headless executable path.
+- Removed three clean, ancestor-proven worktrees without force:
+  wasteland-win-rate-gate, wasteland-checkpoint-cpu, and cmb05-cpu.
+  Their branches remain. Kept merged folders containing local QA evidence.
+
+- TRACK-01 red tests committed as 6b570be: 24 checks, 18 expected missing-tool
+  or missing-evidence failures. The builder has started implementation.
+- AUD-02 waveform red tests committed as 8e51328: 30 acceptance checks;
+  initial run fails because the validator module is absent. Builder started.
+- Expanded BAL-01 acceptance before dispatch: selected flags must reach all
+  real probes, both complete reports retain targets, and diagnostic failures
+  become combat work rather than weakened checks.
+
+## 2026-09-23 PDT — AUD-02 verification merged (run merge 1)
+
+- Merged existing audio verification slice as ff5d63b at 04:26 UTC. Eight
+  stereo foot/raider cues and four prior car cues have private browser WAVs.
+  Clean-source capture, independent code review and independent PCM checks
+  pass; no subjective listening or whole-race mix pass is claimed.
+- Required lane tier: 214/214 in 307.16 seconds; production build passed.
+  The exact lane command selected all campaign shards through its fallback.
+- TRACK-01 review found a false-green case for contradictory full evidence.
+  Independent regression tests f4aa57d failed before builder fix 3c20dce;
+  201 acceptance checks now pass. Review confirmation and lane gate follow.
+- Full-tier cadence: one task merge this run. Full due by merge five or
+  06:02 UTC (conservative two-hour run checkpoint), and again at run end.
+  STATUS refresh starts when TRACK-01 is integrated.

@@ -18,7 +18,7 @@ tasks:
     lane: TOOL
     size: S
     needs: [FIX-04]
-    status: ready
+    status: building
     owns: [tools/build-status.mjs, tools/test-build-status.mjs, docs/board/STATUS.md, docs/board/checks/full-tier.json]
     hooks: [tools/run-tests.mjs]
     helpers: [test_author, test_runner, reviewer]
@@ -50,6 +50,9 @@ tasks:
     helpers: [test_author, test_runner, reviewer, balance_analyst]
     acceptance:
       - "Support --flags wasteland2; report actual flags, win rates, hits and wrecks by difficulty. Check the existing targets for both flag-on and flag-off runs and record measured gaps without relaxing limits."
+      - "Every baseline, weapon-policy, crossbow and own-bomb probe receives the selected flags. Wrecks report actor ownership and distinguish player, opponent and traffic; flag-off is the backward-compatible default."
+      - "CLI rejects unsupported flags and malformed values. A small independent test proves that selected flags reach the real simulation and that the report's check failures retain the existing target bands."
+      - "Run both complete --check reports once, save summaries and timings in the change note. Report a red gameplay target as an open combat fix; a correct diagnostic need not falsify a pass to merge. No gameplay tuning in this tooling card."
   - id: GFX-00
     title: "Blender to game fighter pipeline"
     priority: 4
@@ -753,7 +756,15 @@ tasks:
     size: M
     needs: [FOOT-01]
     status: building
-    note: "Existing on-foot RPG and wrench actions plus roadside raiders have distinct short cues at 6898579. Focused audio/weapon/raider checks and build passed. Future weapon cues and a full-race mix/listening check remain open."
+    owns: [tools/scenarios/weapon-audio.mjs, tools/test-weapon-audio-waveforms.mjs, tools/weapon-audio-waveforms.mjs, docs/changes/AUD-02-current-actions.md]
+    helpers: [test_author, test_runner, reviewer, audio_qa]
+    active_slice: "Verify the eight implemented foot and raider cues in real Web Audio."
+    acceptance:
+      - "The private memory-only waveform scenario retains its four car-weapon checks and records eight named stereo WAVs for RPG launch, direct impact, splash impact, wrench start/completion/interruption, raider warning and shot."
+      - "Finite, audible, unclipped and bounded-duration signals are measured; spatial impacts and raider shots audibly favor the expected channel. Silence, clipping and missing cues fail."
+      - "Capture summary names the tested source commit. Direct offline cue calls do not claim live routing or full-race mix coverage. Existing production event-routing tests still pass."
+      - "Audio QA and independent review inspect the measurements and limits; full AUD-02 stays open for future cues and whole-race listening."
+    note: "Current-action cues integrated at 6898579; real browser waveform verification merged at ff5d63b after 214/214 lane suites, build, clean-source capture, code review and independent PCM checks. Full-race mixing, listening and future weapon cues remain open."
     spec: "SPEC.md, task AUD-02"
   - id: VIS-01
     title: "Combat flipbooks and pooled effects"
