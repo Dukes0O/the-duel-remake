@@ -274,14 +274,14 @@ tasks:
     lane: CMB
     size: M
     needs: [BAL-01]
-    status: building
+    status: merged
     flag: wasteland2
     owns: [src/combat-weapons.js, src/combat-projectiles.js, src/combat-ai.js, src/raiders.js, src/wasteland-tuning.js, tools/combat-balance.mjs, tools/test-combat-payoff.mjs, tools/test-combat-balance.mjs, tools/test-raiders.mjs, tools/test-enemy-aim.mjs]
     helpers: [test_author, balance_analyst, reviewer]
     acceptance:
       - "Trace why strong scripted play wrecks no CPU car in 30 races and why Easy CPU hits six times with wasteland2 on; record a design choice before code."
       - "With wasteland2 on, preserve win-rate bands, Easy CPU hits zero to three, and make a strong scripted policy wreck CPU cars. Keep flag-off and ordinary replay controls unchanged."
-    note: "Re-sliced from the unmerged remainder of BUG-06 and BUG-07; prior integrated fixes remain."
+    note: "Merged e72b6ed after 134 passing lane suites, build and independent review. Flagged wins8/5/3 and enemy hits3/4/6 pass. Separate pursuit causes2/2/0 player-owned CPU wrecks; 162 replay fingerprints unchanged."
   - id: GFX-01-P1
     title: "Crew topology and baked textures after initial family cards"
     lane: ART
@@ -443,7 +443,7 @@ tasks:
     needs: [CAM-01]
     status: building
     owns: [src/wasteland-career.js, src/wasteland-progress.js, src/screen-territory.js, src/screen-territory.css, tools/test-wasteland-career.mjs, tools/test-territory-screen.mjs]
-    hooks: [src/progression.js, src/weapon-upgrades.js, src/armor-kits.js, src/crew.js, src/screen-armory.js, src/screen-router.js, src/app.js, src/crew-ui.js, tools/test-crew-ui.mjs, src/screen-results.js, tools/test-wasteland-results.mjs, tools/scenarios/wasteland-career.mjs, tools/test-wasteland-profile.mjs, tools/test-progression.mjs, tools/test-progression-integration.mjs, tools/test-save-fixtures.mjs, tools/test-weapon-upgrades.mjs, tools/test-armor-kits.mjs, tools/test-crew.mjs, tools/test-career-backup.mjs]
+    hooks: [src/progression.js, src/weapon-upgrades.js, src/armor-kits.js, src/crew.js, src/screen-armory.js, src/screen-router.js, src/app.js, src/crew-ui.js, tools/test-crew-ui.mjs, src/combat-scoring.js, tools/test-combat-scoring.mjs, src/raiders.js, tools/test-raiders.mjs, src/game.js, src/screen-results.js, tools/test-wasteland-results.mjs, tools/scenarios/wasteland-career.mjs, tools/test-wasteland-profile.mjs, tools/test-progression.mjs, tools/test-progression-integration.mjs, tools/test-save-fixtures.mjs, tools/test-weapon-upgrades.mjs, tools/test-armor-kits.mjs, tools/test-crew.mjs, tools/test-career-backup.mjs]
     helpers: [test_author, save_guardian, reviewer, browser_qa]
     acceptance:
       - "Add separate scrap and eight-warlord territory progression, ranks 1–30 and yard access behind the switch per SPEC 0.4. Preserve old credit-funded weapon levels and ordinary careers through backed-up migration."
