@@ -549,3 +549,24 @@ checkout untouched until the final integration commit passes the full gate.
   and zero errors. Wasteland2 remains in development; this is not yet live.
 - CMB-08 is unblocked. Its new impact path preserves the old direct traffic
   helper and test, while a separate flagged helper enforces the 50% boundary.
+
+## 2026-09-23 PDT — Roadside release and next combat core
+
+- CMB-08 is live on `master` at `eb879e5` and backed up on GitHub. The live
+  build version is `20260924002834-86f3e7fb6e36`; the previous build is kept
+  in `dist-previous`. Low-speed traffic and light scenery move clear; high
+  closing-speed hits remove them with debris. The exact 189-suite integration
+  lane passed before a small balance tune. After that tune, focused combat,
+  replay and full balance checks passed, the production build passed, and
+  all 24 private browser scenarios passed with no warnings or errors. Kyle
+  asked for proportional testing, so the 189-suite lane was not repeated for
+  the final tuning-only change. The live race tab was not refreshed.
+- CMB-04 pickups, VIS-01 pooled effects, CMB-03 scoring, CMB-05 CPU decisions,
+  SAVE-01 credit bonus, CMB-06 deterministic combat replays and VIS-02 armor
+  visuals are integrated behind the `wasteland2` development switch. Focused
+  checks and each feature's private browser scenario passed where visual
+  review applies. The 162 old replay fingerprints remain unchanged.
+- UI-01 combat HUD, PRG-01 versioned save migration and FOOT-01 fighter
+  simulation are being built in isolated worktrees. The development switch
+  stays closed in the live build while those cards finish and the combat
+  balance and frame budget are reviewed.
