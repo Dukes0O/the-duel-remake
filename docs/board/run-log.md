@@ -1117,3 +1117,27 @@ checkout untouched until the final integration commit passes the full gate.
   change. Future cleanup detaches only the verified lane junction first;
   docs/OPERATIONS.md now records this step. Existing source/gate evidence is
   unchanged. No live folder or save was involved.
+
+## 2026-09-24 PDT - hands round 3 and uphill launch diagnosis
+
+- GFX-02 round 2 improved likeness from 2 to 3; its 46 matched and 10 input
+  images remain committed in 752416a. The largest RPG combination's 120-frame
+  sample is p95 18.1/18.2 ms hidden/visible in both qualities, with no frame
+  over 33 ms. Director review lists five specific round-3 refinements.
+- Final initial assets 14a51e3 reduce the largest combination to 6,932
+  triangles and three draws. Round-3 private capture is running. The capture
+  fixture now refreshes the HUD from the same state as the rendered pose;
+  older images' stale labels remain documented instead of replaced.
+- A bounded BUG-06 probe proves that a 50 m uphill crossbow shot from two
+  cars moving at 80 mph hits the road after 0.15 s, 17 m short. Flat/moving
+  and uphill/stationary controls hit. Scoped an isolated launch-height lane.
+  Independent red tests 96f13ad give 11 passes and nine geometric failures;
+  an initial CPU hit-counter fixture mistake was corrected and documented.
+- Root source 5cf533e fixes all 20 geometric checks and passes 35 existing
+  projectile checks. Horizontal launch/guidance, legacy bolts, bombs and RPG
+  trajectories stay unchanged. Independent source review finds no defect.
+- Hold this candidate: the bounded accuracy probe rises to 24/26, above the
+  unchanged 35–60 percent band. Misses are case indices 10 and 25. Authorize
+  one diagnostic guidance-off probe with launch components unchanged to
+  distinguish initial aim from later steering. This is not a shipping rule;
+  no broad report, gate, merge or target change is authorized by that result.
