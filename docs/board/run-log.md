@@ -1092,3 +1092,20 @@ checkout untouched until the final integration commit passes the full gate.
   Later rounds measure the largest hands with RPG. No beta claim.
 - No task merge since the 07:36 UTC full pass. The next full remains due after
   five task merges or 09:36 UTC, and at run end. No release or push.
+
+## 2026-09-24 PDT - defensive CPU UFO merged (1 since full)
+
+- Integrated c15026d after independent review and the final off/on reports.
+  Exact clean 479643a passed 127 lane suites, including all eight campaign
+  shards, in 249.13 s; build passed in 352 ms. Evidence-only note d2d4c5d
+  followed. STATUS refreshed immediately after merge.
+- The remaining Easy six hits are one CPU and five raider hits. Four raider
+  hits come from camp 1. The rejected wider-spread trace removes only one;
+  it cannot identify the extra winning seed. Retain current tuning rather
+  than select an unsupported number. BUG-07 stays open.
+- All thirteen CPU UFO QA files were archived with matching hashes under
+  .lanes/evidence/cpu-ufo. Removed the clean merged lane without force;
+  its branch remains. GFX-02 round 2 modeling is underway.
+- One task merge since the 07:36 UTC full pass; next full after four more
+  merges or 09:36 UTC, and at run end. Quota is 27 percent remaining.
+  No live change, release or push.

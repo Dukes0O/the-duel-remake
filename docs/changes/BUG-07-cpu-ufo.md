@@ -203,3 +203,10 @@ The AI capability, safe landings and defensive policy are accepted for
 integration. BUG-07 remains open for Easy balance. This does not qualify
 the current integration for release, and no live game or save was accessed.
 This final commit changes only the evidence note.
+
+## Integration and evidence archive
+
+Merged as `c15026d`. The clean merged lane was removed without force and its
+branch retained. All thirteen QA logs, probes and diagnostics were copied
+with matching hashes to `.lanes/evidence/cpu-ufo/` in integration. References
+above to the former lane's `.qa-dist/` now resolve to that archive.
