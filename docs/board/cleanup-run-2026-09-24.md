@@ -27,8 +27,9 @@ You are the Director in autonomous mode for a cleanup-only run. Work in this fol
 (integration/wasteland). Read AGENTS.md, SPEC.md section 0.7, then section 0.5,
 docs/board/cleanup-run-2026-09-24.md and docs/board/STATUS.md.
 Add CLEAN-01 to CLEAN-08 from SPEC 0.7 to board.yaml and do them in order.
-Start no feature, art-fidelity or balance work in this run. CLEAN-09 stays
-parked until Kyle approves it in writing; do not rewrite Git history.
+Start no feature, art-fidelity or balance work in this run. CLEAN-09 is done;
+do not rewrite Git history again
+without Kyle; rebase any held lane onto the rewritten branch using docs/history/history-rewrite-2026-09-24-map.txt.
 Every change must keep all replay fingerprints unchanged and pass the lane tier
 and build before merge. Copy and hash-check anything before removing it from the
 tree. Never force-remove a worktree, never touch the live folder, port 5174 or

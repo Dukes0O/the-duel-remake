@@ -85,3 +85,6 @@ See playbook section 7 for the gate and evidence workflow.
   `node tools/repo-audit.mjs`, remove what it proves unused, file cards for
   the rest, and remove merged lane folders with `git worktree remove` after the
   hash check. Never force-remove a worktree or rewrite history without Kyle.
+- History was rewritten on 24 September 2026 (SPEC 0.7, CLEAN-09). Never merge
+  a branch that still contains pre-rewrite commits; rebase it first using
+  `docs/history/history-rewrite-2026-09-24-map.txt`.

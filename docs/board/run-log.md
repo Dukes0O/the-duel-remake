@@ -1412,3 +1412,21 @@ percent remaining. All helpers are finished. No lane has an active builder.
   removal as part of done, and the ordered cards CLEAN-01 to CLEAN-08. CLEAN-09
   (rewriting development history to drop the large files) is parked until
   Kyle approves it. SPEC 0.6 cards 13 to 15 resume after CLEAN-08.
+
+## 2026-09-24 PDT – CLEAN-09 history rewrite (Kyle approved)
+
+- Kyle approved rewriting unpushed development history so GitHub (5 GB) never
+  holds the bloat. Full backup first: `git bundle --all` (960 MB, verified) and
+  copies of the latest 827 dropped files, both in
+  `C:\Users\kyleb\dev\duel-backups\2026-09-24-before-history-rewrite\`.
+- `git filter-branch` rewrote the 351 commits in `master..integration/wasteland`,
+  removing every `.blend` file and all non-`.md`/`.json` files under
+  `docs/board/looks/`. The new tip differs from the old tip only by those 827
+  deletions; `master` is unchanged. Unpushed history dropped from about
+  1.24 GB to about 327 MB of file contents (the game's models and textures).
+- Old-to-new commit IDs: `docs/history/history-rewrite-2026-09-24-map.txt`
+  (all 351 pairs checked by commit message). Older log entries keep old IDs;
+  use the map. Held lane branches still sit on old history; rebase before merge.
+- `.gitignore` now blocks `.blend`, `.evidence/`, `art-build/` and raw images
+  and videos under `docs/board/looks/`. CLEAN-01 to CLEAN-08 remain for the
+  cleanup run; CLEAN-02 and CLEAN-03 now cover tools and compressed sheets only.

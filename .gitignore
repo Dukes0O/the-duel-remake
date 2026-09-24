@@ -29,3 +29,13 @@ dist-previous/
 .qa-dist/
 .qa-blender/
 .qa-art/
+
+# SPEC 0.7: sources and evidence stay out of Git.
+.evidence/
+art-build/
+*.blend
+*.blend1
+docs/board/looks/**/*.png
+docs/board/looks/**/*.webm
+docs/board/looks/**/*.wav
+docs/board/looks/**/*.mp4
