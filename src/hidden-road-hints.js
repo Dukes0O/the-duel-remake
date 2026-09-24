@@ -15,13 +15,15 @@ export function hiddenRoadMapKey(snapshot){
 }
 
 /** Reconstruct a small visual swirl without consuming any random generator. */
-export function dustDevilFrame(seconds){
+export function dustDevilFrame(seconds,output=[]){
   const time=Number.isFinite(seconds)?Math.max(0,seconds):0;
-  return Array.from({length:48},(_,i)=>{
+  for(let i=0;i<48;i++){
     const height=(i/48+time*.13)%1,angle=i*2.399963+time*2.6+height*2,radius=.35+height*1.9;
-    return{x:Math.cos(angle)*radius,y:height*9,z:Math.sin(angle)*radius,
-      opacity:.32*Math.sin(Math.PI*height),size:.5+height*.5};
-  });
+    const point=output[i]||(output[i]={});
+    point.x=Math.cos(angle)*radius;point.y=height*9;point.z=Math.sin(angle)*radius;
+    point.opacity=.32*Math.sin(Math.PI*height);point.size=.5+height*.5;
+  }
+  return output;
 }
 
 export function createHiddenRoadHint(course){
@@ -37,6 +39,7 @@ export function createHiddenRoadHint(course){
     fragmentShader:'varying float alpha; void main(){float r=length(gl_PointCoord-vec2(.5))*2.0;float soft=1.0-smoothstep(.1,1.0,r);gl_FragColor=vec4(.79,.58,.32,soft*alpha);}'
   });
   const points=new THREE.Points(geometry,material);points.frustumCulled=false;group.add(points);
+  const frame=dustDevilFrame(0);
   let active=false,lastTime=null,elapsed=0,disposed=false;
   function sync(state){
     active=!disposed&&state?.status==='racing'&&!state.paused&&
@@ -46,7 +49,7 @@ export function createHiddenRoadHint(course){
   function animate(seconds){
     if(!active||!Number.isFinite(seconds))return;
     if(lastTime!==null)elapsed+=Math.max(0,Math.min(.1,seconds-lastTime));lastTime=seconds;
-    const frame=dustDevilFrame(elapsed);
+    dustDevilFrame(elapsed,frame);
     for(let i=0;i<frame.length;i++){const p=frame[i];geometry.attributes.position.setXYZ(i,p.x,p.y,p.z);geometry.attributes.opacity.setX(i,p.opacity);}
     geometry.attributes.position.needsUpdate=geometry.attributes.opacity.needsUpdate=true;
   }
