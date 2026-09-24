@@ -30,3 +30,26 @@ review after implementation, rather than duplicating them in this red suite.
 Map, menu and hint acceptance is a separately owned red group so its builder
 can start after that contract is committed. Browser acceptance remains two
 bounded scored rounds; no broad gate has run for this card.
+
+## Independent hint and map red evidence
+
+`tools/test-hidden-road-hints.mjs` ran before presentation edits: 0/7 groups
+passed in 0.48 seconds. Expected failures identify absent pure hint/dust APIs,
+revealed map geometry and named-player cache invalidation. Initial test setup
+used a nonexistent disposal-module import; this was corrected to the existing
+`world.js` export before recording this behavioral red result.
+
+The agreed presentation contract includes player-aware menu/path eligibility,
+five- and ten-completion thresholds, removal after discovery, unchanged default
+and flag-off map geometry, and actual spur-to-gate projection. Live map and
+preview caches must switch identity without exposing the prior player's path.
+The dust hint uses at most 64 finite local points within a 3 m radius and 9 m
+height (the authored plan uses 48), pure presentation-time reconstruction,
+one Points draw and the existing scene disposal path. Pause, menu, discovery,
+ineligible count and mismatched player immediately hide it. Tests prohibit
+random consumption in the pure frame helper and preserve snapshot data.
+
+The optional map parameters and provider leave old callers unchanged. Actual
+menu/garage wiring, dotted drawing and rendered dust placement remain source
+review and the two scored browser rounds; these headless groups do not replace
+visual evidence. No existing assertion or replay fingerprint changed here.
