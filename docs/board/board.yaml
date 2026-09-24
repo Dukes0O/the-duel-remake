@@ -761,7 +761,7 @@ tasks:
     status: integrated
     flag: wasteland2
     behavior_change: yes
-    note: "Car exit/bail/re-entry and parked-car combat/recovery integrated at 7240e57. Six focused transition checks, fighter baseline and build passed. FOOT-03 owns walking controls and camera."
+    note: "Car exit/bail/re-entry and parked-car combat/recovery integrated at 7240e57. A reverse-gear parked-car drift was fixed at 39b5e85 after the FOOT-08 sample exposed it; focused transition checks and build passed. FOOT-03 owns walking controls and camera."
     spec: "SPEC.md sections 3.4 and 12.2, task FOOT-02"
   - id: FOOT-03
     title: "On-foot controls and camera"
@@ -827,7 +827,7 @@ tasks:
     status: integrated
     flag: wasteland2
     behavior_change: yes
-    note: "Traffic slows for fighters; Easy avoids, Medium makes a seeded attack choice, and Hard aims. Swept hits above 30 km/h knock down. Integrated at 937926e after focused race/transition/opponent checks and build."
+    note: "Traffic slows for fighters; Easy avoids, Medium makes a seeded attack choice, and Hard aims. Swept hits above 30 km/h knock down. Integrated at 937926e. Hard pace no longer artificially slows to stay near the player while they are on foot (4121dfc). Focused checks and build passed."
     spec: "SPEC.md sections 3.4 and 12.2, task FOOT-07"
   - id: PRG-03
     title: "Armory loadout slots"
@@ -862,3 +862,14 @@ tasks:
     behavior_change: no
     note: "A small deterministic comparison of clean driving, one RPG ambush and one repair stop is being built after FOOT-05."
     spec: "SPEC.md sections 3.4 and 12.2, task FOOT-08"
+  - id: UI-02
+    title: "Notoriety award feedback"
+    wave: 5
+    lane: UI
+    size: S
+    needs: [UI-01, PRG-02]
+    status: integrated
+    flag: wasteland2
+    behavior_change: yes
+    note: "Player-owned rival wrecks show a pending +150 Notoriety cue; settled results show the exact earned XP and rank. Integrated at 31a571a with toast placement at e45b5fd. Focused feedback/HUD checks and build passed; joined visual check remains."
+    spec: "SPEC.md sections 3.8 and 12.2, task UI-02"

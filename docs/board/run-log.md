@@ -666,3 +666,17 @@ checkout untouched until the final integration commit passes the full gate.
   a production build, and one private memory-only interaction passed.
   The screenshots show the walking HUD without car gauges or mirror.
   FOOT-08 is assessing whether the stops repay their time cost.
+
+## 2026-09-23 PDT — Focused fixes from the first stop sample
+
+- UI-02 player-owned wrecks now show a pending Notoriety cue; the result
+  scorecard shows settled XP and rank. Integrated at `31a571a`, with
+  clear toast placement at `e45b5fd`. Focused feedback/HUD checks and build
+  passed; a joined private visual check remains.
+- The first small FOOT-08 stop sample exposed two independent simulation
+  problems. Hard CPU pace had an artificial near-player cap while the player
+  was walking; `4121dfc` removes that cap on foot. An unattended car held in
+  reverse drove itself away from the fighter; `39b5e85` opposes signed speed
+  and selects neutral at rest. A focused seven-case transition check and
+  production build passed. FOOT-08 is rerunning one paired sample with
+  normal roadside destruction before any weapon tuning.
