@@ -49,7 +49,9 @@ The runtime factory returns wheel groups in `userData.wheels` for X-axis spin. S
 
 Import a current car GLB through **File → Import → glTF 2.0**. The Heritage/Aurora loader is `src/hero-vehicle.js`; it loads `car-concept.glb`, recentres and scales to 4.8 m, straightens the source's posed wheels, omits badges, replaces the plate artwork, and creates independent steering/spin groups. Preserve wheel, driver and damage contracts when editing. Inspect the relevant car and its damage in `/tools/visual-check.html` or the eight-car showroom after exporting. Keep source credits with derived assets.
 
-Blender was not found on PATH or in the checked standard Windows install locations during earlier work. Current GLBs are built with Three.js and can be imported into Blender without a build script. No Blender rendering is claimed.
+The car exporters above use Three.js. Wasteland crew, RPG, wrench, test-fighter and Rustwall assets also have five committed Blender 4.5.13 recipes under `tools/blender/`. Their source `.blend` files are regenerated in ignored `art-build/`, outside the public build. CLEAN-02 confirmed the recipes rebuild their sources, but repeated exports for crew, RPG, wrench and test-fighter can produce different GLB bytes. The reviewed runtime GLBs were kept while visual equivalence was checked. A byte difference from those rebuilds alone is not approval to replace a runtime model.
+
+CLEAN-04 removed 59 external PNGs (61,868,771 bytes) from Wasteland runtime asset folders after verifying each was byte-identical to an image already embedded in the retained GLBs. The GLBs did not change. The remaining Wasteland model folder measured 73,978,288 bytes against a 60,000,000-byte advisory target. `rustwall/wall.glb` measured 15,394,464 bytes against 8,000,000: about 11.3 MB is embedded imagery and about 4 MB is geometry. Further reduction requires a reviewed visual change, not deletion of a runtime source.
 
 ## Model loading and retired prototypes
 

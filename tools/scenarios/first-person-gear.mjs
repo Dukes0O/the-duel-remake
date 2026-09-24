@@ -23,7 +23,7 @@ export async function run(context) {
   try { blenderText=await readFile(join(directory,'blender-manifest.json'),'utf8'); }
   catch(error) {
     if(error.code!=='ENOENT')throw error;
-    blenderText=await readFile(join(root,`docs/board/looks/first-person/round-${round}/blender-manifest.json`),'utf8');
+    blenderText=await readFile(join(root,`tools/fixtures/art-review/first-person/round-${round}/blender-manifest.json`),'utf8');
   }
   const blender=JSON.parse(blenderText);
   if(blender.hands.length!==8)throw Error('Freeze all eight hands before capture');

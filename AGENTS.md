@@ -1,6 +1,7 @@
 # The Duel: rules for every agent
 
-Read `SPEC.md` section 0 first; it wins over conflicting later text.
+Read `SPEC.md` section 0 first; it wins over conflicting later text. Use
+`docs/README.md` to find current instructions and supporting references.
 **Cleanup comes first (SPEC 0.7, Kyle, 24 September 2026): do the CLEAN cards
 in order and start no feature work until they are done.** After that, the
 ordered work in section 0.6 resumes. The current plan and start prompt are in
@@ -111,8 +112,8 @@ small context matter. These rules win over habit:
 - Every change note has a **Removed** section. When work replaces something
   (a model, code path, test, doc or tool), remove the old one in the same task,
   or name the task that will remove it when its switch turns fully on.
-- Read only `docs/README.md`, your task card and the files it names. Anything
-  not listed in `docs/README.md` is history, not instructions.
+- Start from `docs/README.md`, your task card and the files they name. The
+  index labels historical evidence; history is not a new instruction.
 - **The janitor** keeps the repository clean by deleting, not by moving
   things into a closet. It has two parts.
 - **After every successful merge** (and whenever a card is dropped or replaced
