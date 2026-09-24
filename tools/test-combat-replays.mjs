@@ -44,9 +44,9 @@ function place(actor, s, lateral = 0) {
 }
 
 function makeRace(race) {
-  // These explicit flags make the fixture independent of the release switch.
+  // This fixture checks current Wasteland combat and roadside behavior.
   const duel = new Duel({seed: fixture.seed,
-    featureFlags: {wasteland2: true, 'roadside-destruction': true}});
+    featureFlags: {wasteland2: true}});
   duel.startCampaign({mode: 'wasteland', seed: fixture.seed, car: race.car,
     startStage: COURSE.findIndex(event => event.id === race.eventId),
     opponentCount: 3, cpuDifficulty: 'hard'});

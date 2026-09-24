@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {Duel} from '../src/game.js';
+import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
 import {footControlInput, footGamepadInput} from '../src/input-contexts.js';
 import {onFootCameraPose} from '../src/onfoot-camera.js';
 
@@ -8,8 +8,7 @@ const STEP=1/120;
 const ticks=(duel,count)=>{for(let i=0;i<count;i++)duel.step(STEP);};
 
 test('WASD and gamepad feed fixed-step fighter movement and terrain-safe camera',()=>{
-  const duel=new Duel({seed:1989,featureFlags:{wasteland2:true},
-    destructiblesEnabled:false});
+  const duel=new LegacyRoadsideDuel({seed:1989,featureFlags:{wasteland2:true}});
   duel.startCampaign({mode:'wasteland',car:'falcone_f42',seed:1989,
     startStage:0});
   const state=duel.state;

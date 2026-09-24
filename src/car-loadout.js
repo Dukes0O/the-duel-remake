@@ -1,7 +1,6 @@
 import {WEAPONS} from './combat.js';
 import {WEAPON_IDS} from './weapon-upgrades.js';
 
-export const CAR_SLOT_KEYS=Object.freeze(['1','2','3','4']);
 export const CAR_SLOT_DIRECTIONS=Object.freeze(['↑','→','↓','←']);
 export const CAR_SLOT_PAD=Object.freeze(['Up','Right','Down','Left']);
 

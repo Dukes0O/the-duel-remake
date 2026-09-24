@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import test from 'node:test';
 import {DRIVE} from '../src/config.js';
-import {Duel} from '../src/game.js';
+import {LegacyRoadsideDuel, ClassicDestructionDuel} from './legacy-roadside-duel.mjs';
 import {armorDamageFor} from '../src/combat-armor.js';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
 
@@ -19,10 +19,10 @@ function place(actor, s, lateral = 0) {
     airborne: false, airHeight: 0, prevAirHeight: 0});
 }
 
-function race({mode = 'wasteland', wasteland2 = true, car = 'falcone_f42'} = {}) {
+function race({mode = 'wasteland', wasteland2 = true, car = 'falcone_f42', classicDestruction = false} = {}) {
   // Pin the legacy control even after roadside destruction is on by default.
-  const duel = new Duel({seed: 1989, car,
-    featureFlags: {wasteland2, 'roadside-destruction': false}});
+  const duel = new (classicDestruction ? ClassicDestructionDuel : LegacyRoadsideDuel)({seed: 1989, car,
+    featureFlags: {wasteland2}});
   duel.startCampaign({mode, car, startStage: 0, opponentCount: 3,
     cpuDifficulty: 'hard'});
   const state = duel.state;
@@ -358,8 +358,7 @@ test('ordinary and flag-off Wasteland preserve their pinned contact replay', () 
 
 test('ordinary traffic stays solid while flag-off Wasteland still wrecks it', () => {
   for (const mode of ['duel', 'wasteland']) {
-    const field = race({mode, wasteland2: false});
-    field.duel.destructiblesEnabled = true;
+    const field = race({mode, wasteland2: false, classicDestruction: true});
     const traffic = {s: 105, prevS: 115, lateral: .6, prevLateral: .6,
       speedMph: 20, dir: -1, alive: true};
     field.state.traffic.push(traffic);

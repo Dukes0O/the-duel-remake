@@ -39,7 +39,6 @@ export class Duel {
     this.seed = (opts.seed ?? seedFromUrl()) >>> 0;
     this.difficultyKey = DIFFICULTY[opts.difficulty] ? opts.difficulty : DEFAULT_DIFFICULTY;
     this.carKey = CARS[opts.car] ? opts.car : DEFAULT_CAR;
-    this.destructiblesEnabled = opts.destructiblesEnabled ?? null;
     this.featureFlags = opts.featureFlags?.enabled ? opts.featureFlags :
       opts.featureFlags ? createFeatureFlags({overrides: opts.featureFlags, storage: null, qa: false}) : featureFlags;
     this.listeners = new Set();
@@ -111,12 +110,10 @@ export class Duel {
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
   emit(ev) { for (const fn of this.listeners) fn(this.state, ev); }
   destructionEnabled() {
-    return this.destructiblesEnabled ??
-      (this.featureFlags.enabled('roadside-destruction') || this.featureFlags.enabled('wasteland2'));
+    return true;
   }
   roadsideKnockAwayEnabled() {
-    return this.destructiblesEnabled !== false && this.state.mode === 'wasteland' &&
-      (this.featureFlags.enabled('roadside-destruction') || this.featureFlags.enabled('wasteland2'));
+    return this.state.mode === 'wasteland';
   }
 
   get car() {

@@ -124,6 +124,12 @@ try {
     const root = fixture('audit');
     put(root, 'public/assets/models/orphan.glb', 'unreferenced runtime asset');
     put(root, 'src/orphan.js', 'export const unusedThing = true;\n');
+    put(root, 'src/tool-used.js', 'export const usedThing = true;\n');
+    put(root, 'tools/consumer.mjs', "import {usedThing} from '../src/tool-used.js';\n");
+    put(root, 'src/core-entry.js', 'export const coreEntry = true;\n');
+    put(root, 'tools/run-suite.mjs', "const CORE_SUITE = 'src/core-entry.js';\n");
+    put(root, 'src/comment-only.js', 'export const trulyUnused = true;\n');
+    put(root, 'tools/comment.mjs', '// src/comment-only.js has no import or entry\n');
     put(root, 'src/feature-flags.js', "export const FEATURE_STATES = Object.freeze({ 'old-switch': 'on' });\n");
     put(root, 'tests/legacy-removed.test.js', 'export const removedBehavior = true;\n');
     put(root, 'docs/README.md', '# Current docs\n\n- [Index](README.md)\n');
@@ -140,7 +146,12 @@ try {
     check(JSON.stringify(report.folderSizes).includes('public'), 'folder sizes include public assets');
     check(JSON.stringify(report.runtimeAssetCandidates).includes('orphan.glb'), 'unreferenced runtime asset is flagged');
     check(JSON.stringify(report.moduleCandidates).includes('orphan.js'), 'unimported module is flagged');
+    check(!JSON.stringify(report.moduleCandidates).includes('tool-used.js'), 'module imported only by a tool is retained');
+    check(!JSON.stringify(report.moduleCandidates).includes('core-entry.js'), 'named test entry is retained');
+    check(report.moduleCandidates.some(row => row.path === 'src/comment-only.js'),
+      'a comment mentioning a module does not prove it is used');
     check(JSON.stringify(report.exportCandidates).includes('unusedThing'), 'unreferenced export is flagged');
+    check(!report.exportCandidates.some(row => row.name === 'usedThing'), 'export imported only by a tool is retained');
     check(JSON.stringify(report.removedFeatureTestCandidates).includes('legacy-removed.test.js'),
       'test for removed behavior is flagged');
     check(JSON.stringify(report.unindexedDocs).includes('extra.md'), 'unindexed document is flagged');
