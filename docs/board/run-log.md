@@ -13,15 +13,17 @@
   Fixed-seed balance retains wins 8/6/2 and CPU hits 1/2/10; only the six
   existing UFO rows fail. The branch stays held by the balance stop line.
 - A spec review recorded open live-cutover, autonomous-profile and beta-gate
-  wording decisions in `overnight-handoff-2026-09-23.md`.
+  wording at that checkpoint. Current decisions are in `SPEC.md` section 0
+  and `docs/board/decisions.md`; the superseded handoff was deleted.
 
 ## 2026-09-23 PDT — overnight handoff prepared
 
 - The latest exact integration gameplay commit is `a3ad4ee`; docs are at
   `26a006b` before this handoff. The merge, browser and art partial checks
   pass, but all six UFO time-gain targets remain red. No live release was made.
-- `overnight-handoff-2026-09-23.md` lists the held, tested branches, the UFO
-  design decision, and the resume order. Audio-forward `2f5e3cc` now keeps
+- The then-current handoff listed held, tested branches, the UFO design
+  decision and the resume order. Later board decisions supersede that handoff.
+  Audio-forward `2f5e3cc` now keeps
   the final 250 ms cue tail, corrects a pitch-check octave error, and passes
   all ten measured sound checks in a fresh private race. It remains held for
   unfinished cues, human listening and the balance stop line.
@@ -317,7 +319,7 @@ in sync with this log.
 
 - The old worktree's 22 changed paths were preserved as `4237c2e` on its
   existing branch. Against `7564c7d`, 20 matched and the two differences
-  are recorded in `docs/changes/FND-03.md`.
+  remain in the FND-03 task note in Git history.
 - `git worktree remove` succeeded without force. `git worktree list` no longer
   shows `.codex/worktrees/4555`, and the archival branch remains available.
 
@@ -721,7 +723,7 @@ checkout untouched until the final integration commit passes the full gate.
 
 - An outside review (Claude Code, at Kyle's request) ran the full tier on
   `91187af`: 200 passed, 13 failed. Four causes, none affecting play; see
-  `docs/changes/FIX-04.md` and `docs/board/review-2026-09-23.md`. Integration
+  `docs/board/review-2026-09-23.md` (the FIX-04 task note is in Git history). Integration
   had been failing since FOOT-03 `e34f2cc` at 18:38.
 - FIX-04 merged by fast-forward as `6d827dc`. On that commit the full tier
   passed 213/213 in 411.6 s (`--jobs 8 --keep-going`), the production build
@@ -1432,7 +1434,7 @@ percent remaining. All helpers are finished. No lane has an active builder.
   cleanup run; CLEAN-02 and CLEAN-03 now cover tools and compressed sheets only.
 - Follow-up `b56dbfb`: four asset tests updated to the SPEC 0.7 rule and the
   pre-existing `course-landmarks.blend` restored from `master` (see
-  `docs/changes/CLEAN-09.md`). Full tier on `b56dbfb`: 232 passed, 0 failed,
+  the CLEAN-09 task note in Git history). Full tier on `b56dbfb`: 232 passed, 0 failed,
   297.2 s. Build 303 MB with no `.blend` (was 487 MB). The filter-branch
   backup ref was removed; the bundle in the backup folder is the rollback.
 
@@ -1509,11 +1511,11 @@ percent remaining. All helpers are finished. No lane has an active builder.
 
 ### Handoff at quota limit
 
-Cleanup order: CLEAN-01 and CLEAN-02 merged. CLEAN-03 is ready; CLEAN-04, CLEAN-05, CLEAN-06, CLEAN-08 and CLEAN-10 remain. No feature, art polish or balance card was started. Both merged cards passed lane tier and build with 162 unchanged replay checks. CLEAN-02 kept the current GLBs; its Blender recipe rebuilds some GLBs differently between runs, as documented in `docs/changes/CLEAN-02.md`. Full tier on the final integration commit is the remaining end-of-run gate. No branch is idle, no lane folder or review evidence remains, and no history rewrite, release or push was done. Size before → after: public 315,969,513 → 312,610,366 bytes; Wasteland models 135,847,059 → 135,847,059; built lane dist 320,030,739 → 316,671,592 bytes.
+Cleanup order: CLEAN-01 and CLEAN-02 merged. CLEAN-03 is ready; CLEAN-04, CLEAN-05, CLEAN-06, CLEAN-08 and CLEAN-10 remain. No feature, art polish or balance card was started. Both merged cards passed lane tier and build with 162 unchanged replay checks. CLEAN-02 kept the current GLBs; its Blender recipe rebuilds some GLBs differently between runs, as documented in the current asset pipeline guide. Full tier on the final integration commit is the remaining end-of-run gate. No branch is idle, no lane folder or review evidence remains, and no history rewrite, release or push was done. Size before → after: public 315,969,513 → 312,610,366 bytes; Wasteland models 135,847,059 → 135,847,059; built lane dist 320,030,739 → 316,671,592 bytes.
 
 ## 2026-09-24 PDT – cleanup resumed
 
 - The previous run's final full tier passed 235/235 on exact commit `e207735` at 16:30 UTC; the handoff above was written before that gate. Kyle asked to continue until quota reaches zero and will reset it then.
 - CLEAN-03 merged as `9d5544b` after a final 236/236 lane tier (398.80 seconds), build, 162 unchanged replay checks, private browser smoke, camera review, rigged-fighter review and audio race. Independent review cleared two path handoff bugs and the duplicate arrival JPG publisher. The after-merge janitor verified and unlinked the integration-only dependency junction, deleted used `.evidence`, removed the clean lane worktree normally and deleted its merged branch. No idle branches or lane folders remain. Merge count since the last full tier: 1. Public remains 312,610,366 bytes; Wasteland models remain 135,847,059; built lane dist remains 316,671,592; looks remains 2,723,829.
-- CLEAN-04 merged as `9dd269f` after a final 237/237 lane tier (506.21 seconds), build, 162 unchanged replay checks, matched private browser images and independent art/code review. All 59 removed PNGs were exact duplicates of images embedded in unchanged GLBs. The janitor unlinked the integration-only dependency junction, deleted the used raw evidence, removed the clean lane worktree normally and deleted its merged branch. No idle lane remains. Public size fell 312,610,366 → 250,741,595 bytes; Wasteland models 135,847,059 → 73,978,288; built dist 316,671,592 → 254,802,821; looks grew 2,723,829 → 2,826,636 with a 101,396-byte comparison sheet. The build, Wasteland and wall targets remain above target for measured GLB texture/geometry reasons in `docs/changes/CLEAN-04.md`. Historical Rustwall round manifests no longer match current wall GLB, so direct old-round QA cannot serve as a CLEAN-04 comparison; the passing hidden-road scenario did. CLEAN-05 will preserve needed frozen QA facts before deleting old looks JSON. Merge count since last full tier: 2.
+- CLEAN-04 merged as `9dd269f` after a final 237/237 lane tier (506.21 seconds), build, 162 unchanged replay checks, matched private browser images and independent art/code review. All 59 removed PNGs were exact duplicates of images embedded in unchanged GLBs. The janitor unlinked the integration-only dependency junction, deleted the used raw evidence, removed the clean lane worktree normally and deleted its merged branch. No idle lane remains. Public size fell 312,610,366 → 250,741,595 bytes; Wasteland models 135,847,059 → 73,978,288; built dist 316,671,592 → 254,802,821; looks grew 2,723,829 → 2,826,636 with a 101,396-byte comparison sheet. The build, Wasteland and wall targets remain above target for measured GLB texture/geometry reasons in the current asset pipeline guide. Historical Rustwall round manifests no longer match current wall GLB, so direct old-round QA cannot serve as a CLEAN-04 comparison; the passing hidden-road scenario did. CLEAN-05 will preserve needed frozen QA facts before deleting old looks JSON. Merge count since last full tier: 2.
 - Two-hour full-tier checkpoint on integration commit `eff5744` passed 237/237 suites in 393.98 seconds, including 162 unchanged replay checks and 48/48 completed expansion races. This is a tested checkpoint, not a release. No push or history rewrite was made. CLEAN-05 ownership now includes the stale operations page and the frozen first-person/Rustwall QA fixture readers, so the old looks JSON can be deleted without losing their needed facts.

@@ -6,12 +6,12 @@ The integration worktree and task board are active under Kyle's approval of D2
 on 23 September 2026. The live game still follows the full release gate in
 section 7.
 
-Read `SPEC.md` section 0 first. It takes precedence over conflicting later
-text and examples. Finish the ordered cards in section 0.6 before other new
-work; its listed existing cards continue when a lane is free. Section 7 here
-implements the minimum gate in SPEC 0.5. D8 is still awaiting Kyle's approval:
-do not push `integration/wasteland` or align GitHub `main` under that proposal.
-D4 already permits pushing `master` after a release.
+Read `SPEC.md` section 0 first, then use `docs/README.md` to find current
+instructions. The cleanup cards in `docs/board/next-run.md` come before the
+feature order in SPEC 0.6. Section 7 here implements the minimum gate in SPEC
+0.5. D8 permits pushing `integration/wasteland` after a passing full tier and
+approved compaction. Kyle's written approval is still required for a history
+rewrite or release. D4 permits pushing `master` after an approved release.
 
 ## 1. The short version
 
@@ -31,7 +31,7 @@ D4 already permits pushing `master` after a release.
 | Feature switch | A setting that keeps unfinished features hidden in the player build and visible in test builds |
 | Fingerprint | A short code computed from a replayed race. If code changes and the fingerprint doesn't, the race behaved exactly the same |
 | Integration branch | `integration/wasteland`, where finished lane work is combined and tested together before release |
-| Change note | A small file per task in `docs/changes/` describing what changed and the evidence. Notes are folded into `README.md` and `docs/VERIFICATION.md` at release, so lanes never edit those two files at the same time |
+| Change note | A small file per task in `docs/changes/` describing what changed and the evidence. The Release Manager folds needed facts into release notes, then the janitor deletes superseded task notes. Lanes never edit root `README.md` or `docs/VERIFICATION.md`. |
 
 ## 3. How the team is arranged
 
@@ -224,8 +224,9 @@ Your task card is in docs/board/board.yaml. Stay inside its `owns` and `hooks` f
 - After every merge and session end: node tools/build-status.mjs updates docs/board/STATUS.md.
   A later metadata commit does not inherit an earlier full pass.
 - List suites: node tools/run-tests.mjs --list
-- D8 is unapproved: do not push integration/wasteland or align GitHub main.
-  D4 permits pushing master after release.
+- D8 permits an `integration/wasteland` push only after a passing full tier and
+  approved binary-history compaction. Do not rewrite history or release without
+  Kyle's written approval. D4 permits pushing master after an approved release.
 
 ## Done means
 - The card's acceptance lines are shown by tests or independent review for docs-only work.
@@ -495,17 +496,20 @@ Paste these to start each thread. Replace the parts in angle brackets.
 
 ```
 You are the Director for the Wasteland expansion. Read SPEC.md section 0 first; it wins
-over conflicting later text. Read docs/CODEX_PLAYBOOK.md,
-docs/board/board.yaml and docs/playtest-inbox.md.
+over conflicting later text. Read docs/README.md, docs/board/next-run.md,
+docs/CODEX_PLAYBOOK.md and your task card in docs/board/board.yaml.
 You plan; you do not write game code. Keep at most four builder lanes busy.
-Finish the ordered SPEC 0.6 cards before other new work; its listed existing cards may
-continue when a lane is free. Enforce section 7: before EVERY integration merge,
+Finish the cleanup cards in `docs/board/next-run.md` before SPEC 0.6 features;
+its listed existing cards may continue when a lane is free. Enforce section 7:
+before EVERY integration merge,
 node tools/run-tests.mjs --tier lane --changed --jobs 8 and npm run build.
 Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going after 5 merges
 or 2 hours of merging, whichever comes first, and at every session and overnight-run end.
 Failed full runs stop feature merges until fixed and green. Release needs full on the exact
 final commit and the complete section 7 release evidence. Run node tools/build-status.mjs
-after every merge and at session end. D8 remains unapproved; D4 permits master pushes after release.
+after every merge and at session end. D8 requires a passing full tier and
+approved compaction before an integration push. D4 permits master pushes after
+an approved release.
 Each time a lane finishes or a note arrives:
 1. Update board statuses from merged branches and change notes.
 2. Mark cards ready when everything in `needs` is merged.
@@ -572,7 +576,7 @@ Run node tools/build-status.mjs at session end. Later commits need their own ful
 ```
 You are the Release Manager, the only agent allowed in C:\Users\kyleb\dev\the-duel-remake.
 Follow the standing release rule in SPEC.md section 15 (D3).
-1. Fold docs/changes/ notes into README.md and docs/VERIFICATION.md on integration, commit.
+1. Summarize the current indexed docs, board, run log and exact gate evidence in README.md and docs/VERIFICATION.md on integration. Fold any still-present new task notes into those sources before the janitor deletes them, then commit.
 2. Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going on that exact final
    integration commit. Confirm all section 7 release evidence is green; no exception for
    small or tuning-only releases. Refresh STATUS after merges and at session end.
@@ -580,8 +584,9 @@ Follow the standing release rule in SPEC.md section 15 (D3).
    Build dist-next, check it on a private port, back up dist as dist-previous, then install
    hashed assets before index.html and build-version.json as docs/OPERATIONS.md describes.
 4. Do not restart or refresh the running game. Its menu offers Reload when it sees the new build.
-5. Push master to GitHub as the approved D4 backup. D8 remains unapproved: do not push
-   integration/wasteland or align GitHub main under that proposal.
+5. Push master to GitHub as the approved D4 backup after an approved release.
+   D8 allows an integration push only after a passing full tier and approved
+   compaction; never rewrite history without Kyle's written approval.
 6. Add "What's new to try" to docs/playtest-inbox.md in plain language.
 Rollback on request: restore dist-previous, or switch the feature off and release again.
 ```
@@ -597,8 +602,8 @@ Never edit files.
 
 ## 13. First day
 
-Historical foundation sequence. For current work, follow SPEC 0.6's ordered
-cards before other new work, with its named existing cards continuing.
+Historical foundation sequence. For current work, follow
+`docs/board/next-run.md`: finish cleanup before SPEC 0.6 features.
 
 1. You answer the standing decisions in `SPEC.md` section 15.
 2. OPS lane: FND-01 (live game safety) and FND-02 (operations doc).
@@ -658,8 +663,8 @@ sandbox bypass flag.
 ```
 repeat until: no card is ready, the budget is nearly spent, or Kyle says stop
   1. Read SPEC section 0, board.yaml, run-log.md, decisions.md, playtest-inbox.md
-  2. Follow the ordered SPEC 0.6 cards before other new work; its listed existing cards
-     may continue. Turn notes into cards; expand one-line cards; mark ready cards
+  2. Follow the cleanup order in docs/board/next-run.md before SPEC 0.6
+     features. Turn notes into cards; expand one-line cards; mark ready cards
   3. Fill free lanes (at most 4) with the top ready card each
   4. For each lane with a card, next step of section 6:
        tests as needed → builder → test_runner → refine loops → reviewer (+ helpers) → change note
@@ -681,13 +686,14 @@ repeat until: no card is ready, the budget is nearly spent, or Kyle says stop
 ```
 You are the Director in autonomous mode for the Wasteland expansion. Work in this folder
 (integration/wasteland). Read SPEC.md section 0 first; it wins over later text (4.7, 10.1,
-12 and 12.4). Read docs/CODEX_PLAYBOOK.md
-(especially 6, 7 and 14), AGENTS.md and everything in docs/board/.
+12 and 12.4). Read AGENTS.md, docs/README.md, docs/board/next-run.md,
+docs/CODEX_PLAYBOOK.md (especially 6, 7 and 14), and your task card.
 Budget for this run: <for example "until milestone M2" or "about 30% of my Codex usage">.
-Follow playbook 14.3 and finish the ordered SPEC 0.6 cards before other new work, allowing
-its listed existing cards when lanes are free. Follow the approved standing decisions.
-D8 is still unapproved: no integration push or GitHub main alignment. D4 permits pushing
-master after release. Before EVERY merge require
+Follow playbook 14.3 and finish the cleanup cards in docs/board/next-run.md
+before SPEC 0.6 features. Follow the approved standing decisions. D8 permits
+an integration push only after a passing full tier and approved compaction;
+history rewrite or release still needs Kyle's written approval. Before EVERY
+merge require
 node tools/run-tests.mjs --tier lane --changed --jobs 8 and npm run build.
 Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going after 5 merges or 2 hours of merging, whichever
 comes first, and at every session and overnight-run end. Failed full stops feature merges
@@ -716,6 +722,6 @@ with this budget: <budget>.
 - `docs/playtest-inbox.md`: "What's new to try" after each release, and the weekly summary.
 - `docs/board/STATUS.md`: build, full-run, feature, lane and backup state after each merge and session end.
 - `docs/board/decisions.md`: every choice the Director made that the spec didn't cover, with how to reverse it.
-- `docs/board/looks/<card>/`: before and after pictures from every look loop.
+- `docs/board/looks/<card>/`: one compact JPG and its review verdict per look round.
 - `docs/board/waves/`: evidence that each wave met its finish line.
 - `docs/board/parked.md`: anything waiting for you, with the reason. It never blocks the run.

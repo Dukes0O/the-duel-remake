@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -144,6 +144,13 @@ test('Git ignores raw evidence and the looks folder stays below 20 MB', () => {
     }, 0);
   }
   check(bytes(looks) < 20_000_000, 'docs/board/looks must total less than 20 MB');
+  function jsonFiles(folder) {
+    return readdirSync(folder, { withFileTypes: true }).flatMap(entry => {
+      const path = join(folder, entry.name);
+      return entry.isDirectory() ? jsonFiles(path) : entry.isFile() && entry.name.endsWith('.json') ? [path] : [];
+    });
+  }
+  check(jsonFiles(looks).length === 0, 'historical raw looks JSON belongs outside the review folder');
   const tracked = spawnSync('git', ['ls-files', '-z', '--', 'docs/board/looks'],
     { cwd: root, encoding: 'utf8', windowsHide: true });
   check(tracked.status === 0, `Git must list retained review files: ${tracked.stderr}`);
@@ -152,6 +159,26 @@ test('Git ignores raw evidence and the looks folder stays below 20 MB', () => {
     if (!/^docs\/board\/looks\/[^/]+\/round-\d+\.jpg$/.test(name)) continue;
     check(statSync(join(root, name)).size <= 500_000, `${name} must be at most 500 KB`);
     check(names.has(name.replace(/\.jpg$/, '-review.md')), `${name} needs a matching review note`);
+  }
+});
+
+test('frozen first-person and Rustwall QA manifests keep their needed facts', () => {
+  for (const round of [1, 2, 3]) {
+    const firstPerson = JSON.parse(readFileSync(join(root, 'tools', 'fixtures', 'art-review',
+      'first-person', `round-${round}`, 'blender-manifest.json'), 'utf8'));
+    check(firstPerson.round === round && firstPerson.hands.length === 8 && firstPerson.tools.length === 2,
+      `first-person round ${round} must retain eight hands and two tools`);
+    check(firstPerson.camera && firstPerson.hands.every(asset =>
+      typeof asset.files?.[`${asset.id}.glb`] === 'string'),
+    `first-person round ${round} must retain camera and frozen GLB hashes`);
+
+    const rustwall = JSON.parse(readFileSync(join(root, 'tools', 'fixtures', 'art-review',
+      'rustwall', `round-${round}`, 'blender-manifest.json'), 'utf8'));
+    check(rustwall.round === round && rustwall.reference && rustwall.captures?.length > 0,
+      `Rustwall round ${round} must retain reference and capture plans`);
+    check(['wall', 'wash'].every(kind => rustwall.assets?.[kind]?.path &&
+      typeof rustwall.assets[kind].sha256 === 'string'),
+    `Rustwall round ${round} must retain frozen wall and wash hashes`);
   }
 });
 

@@ -28,7 +28,7 @@ export async function run(context) {
   try{blenderText=await readFile(join(directory,'blender-manifest.json'),'utf8');}
   catch(error){
     if(error.code!=='ENOENT')throw error;
-    blenderText=await readFile(join(ROOT,`docs/board/looks/rustwall/round-${round}/blender-manifest.json`),'utf8');
+    blenderText=await readFile(join(ROOT,`tools/fixtures/art-review/rustwall/round-${round}/blender-manifest.json`),'utf8');
   }
   const blender=JSON.parse(blenderText);
   const evidence={round,observationCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),

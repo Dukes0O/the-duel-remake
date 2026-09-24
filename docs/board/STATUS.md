@@ -48,7 +48,7 @@ Measured on this integration source after CLEAN-04. Targets are advisory.
 
 The remaining model excess is embedded texture and geometry data. The
 byte-preserving duplicate removal and reasons for the target gaps are recorded
-in `docs/changes/CLEAN-04.md`.
+in `docs/ASSET_PIPELINE.md`.
 
 ## Backups
 

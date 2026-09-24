@@ -10,7 +10,6 @@ playbook defines task cards and review roles.
 | --- | --- | --- |
 | Live game | `C:\Users\kyleb\dev\the-duel-remake` | Release work only. Do not edit game source here. |
 | Live browser address | `http://localhost:5174/` | Keep this exact origin so local careers remain available. |
-| Wasteland setup | `C:\Users\kyleb\.codex\worktrees\wasteland-expansion\the-duel-remake` | Isolated foundation worktree. |
 | Integration | `C:\Users\kyleb\.codex\worktrees\wasteland-integration\the-duel-remake` on `integration/wasteland` | Combine one reviewed change at a time. |
 | Browser QA | Private port, normally 5175 or above 5190 | Use memory-only saves and a throwaway browser profile. |
 
@@ -45,7 +44,9 @@ Before `git worktree remove`, inspect the lane's `node_modules`. If it is a
 junction, verify its absolute path is inside that exact lane and record its
 target. Remove only the junction with PowerShell `Remove-Item -LiteralPath`
 without `-Recurse`; verify the target still exists. Then remove the clean,
-fully merged worktree without force and retain its branch and evidence.
+fully merged worktree without force. Delete its merged lane branch and that
+card's used raw evidence after the review verdict is committed. Never delete
+a branch merely because it is idle or because an agent does not recognize it.
 
 Git's recursive lane cleanup emptied the shared integration dependency folder
 through a junction on 24 September. The exact locked dependencies were restored
@@ -85,6 +86,5 @@ reset or migrate real player careers during QA. Export and automatic backup
 rules are in `SPEC.md`, section 3.14. Test save migrations against fixtures
 before a release.
 
-The old worktree at `.codex\worktrees\4555` is historical. Record its two
-non-identical files and remove it through `git worktree remove` only after
-the FND-03 check. Never delete it directly or force removal.
+Old cutover worktree details are in Git history. The current integration and
+live paths are listed above; do not resume work from a historical handoff.

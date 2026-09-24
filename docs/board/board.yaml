@@ -65,11 +65,12 @@ tasks:
     size: M
     needs: [CLEAN-04]
     status: ready
-    owns: [docs/README.md, docs/changes/, docs/board/, docs/OPERATIONS.md, docs/REMAKE_PLAN.md, docs/SESSION_HANDOFF.md, docs/SERVER_CUTOVER.md, AGENTS.md, docs/CODEX_PLAYBOOK.md, tools/scenarios/first-person-gear.mjs, tools/scenarios/rustwall.mjs, tools/fixtures/art-review/, tools/test-review-evidence.mjs]
+    owns: [docs/README.md, docs/changes/, docs/board/, docs/OPERATIONS.md, docs/ASSET_PIPELINE.md, docs/AUDIO_ITERATION.md, docs/WASTELAND_ART.md, docs/REMAKE_PLAN.md, docs/SESSION_HANDOFF.md, docs/SERVER_CUTOVER.md, SPEC.md, AGENTS.md, docs/CODEX_PLAYBOOK.md, tools/scenarios/first-person-gear.mjs, tools/scenarios/rustwall.mjs, tools/fixtures/art-review/, tools/test-review-evidence.mjs, tools/test-rigged-fighter.mjs]
     helpers: [reviewer, test_runner]
     acceptance:
       - "Index current docs, preserve still-needed facts, delete superseded notes and handoffs, and retain seven days of run log."
       - "Preserve the first-person and Rustwall browser QA Blender-manifest fixture facts before deleting historical looks JSON that CLEAN-03 still reads as a fallback."
+      - "Preserve the rigged-fighter provenance and capture fixtures used by its test before removing raw looks JSON."
       - "Agent instructions point to the index; replay fingerprints stay unchanged."
   - id: CLEAN-06
     title: "Remove proven unused code, tests and switches"
@@ -129,7 +130,7 @@ tasks:
     size: S
     needs: []
     status: merged
-    note: "Outside review fix 6d827dc passed 213/213 full suites, build and private smoke. See docs/changes/FIX-04.md."
+    note: "Outside review fix 6d827dc passed 213/213 full suites, build and private smoke; the historical task note remains in Git history."
   - id: TRACK-01
     title: "Generate an honest build status page"
     priority: 1
@@ -355,7 +356,7 @@ tasks:
     size: M
     needs: [EGG-02]
     status: merged
-    owns: [src/hidden-road-journey.js, src/hidden-road-ui.js, src/hidden-road-ui.css, tools/test-hidden-road-journey.mjs, tools/test-hidden-road-departure.mjs, tools/test-hidden-road-presentation.mjs, tools/scenarios/hidden-road-arrival.mjs, docs/board/looks/hidden-road-arrival/, docs/changes/EGG-03.md]
+    owns: [src/hidden-road-journey.js, src/hidden-road-ui.js, src/hidden-road-ui.css, tools/test-hidden-road-journey.mjs, tools/test-hidden-road-departure.mjs, tools/test-hidden-road-presentation.mjs, tools/scenarios/hidden-road-arrival.mjs, docs/board/looks/hidden-road-arrival/]
     hooks: [src/game.js, src/app.js, src/screen-router.js, src/render3d.js, src/rustwall-scene.js, src/audio.js, src/sim-contacts.js, src/sim-driving.js, tools/test-hidden-road.mjs, tools/test-scene-presentation.mjs]
     helpers: [test_author, reviewer, save_guardian, browser_qa, audio_qa]
     flag: hidden-road
@@ -379,7 +380,7 @@ tasks:
     size: M
     needs: [EGG-03]
     status: merged
-    owns: [src/hidden-road-discovery.js, src/hidden-road-hints.js, tools/test-hidden-road-discovery.mjs, tools/test-hidden-road-hints.mjs, tools/scenarios/hidden-road-discovery.mjs, docs/board/looks/hidden-road-discovery/, docs/changes/EGG-04.md]
+    owns: [src/hidden-road-discovery.js, src/hidden-road-hints.js, tools/test-hidden-road-discovery.mjs, tools/test-hidden-road-hints.mjs, tools/scenarios/hidden-road-discovery.mjs, docs/board/looks/hidden-road-discovery/]
     hooks: [src/wasteland-progress.js, src/career-backup.js, src/progression.js, src/app.js, src/game.js, src/hidden-road-journey.js, src/hidden-road-ui.js, src/screen-menu.js, src/screen-menu.css, src/screen-router.js, src/screen-garage.js, src/route-map.js, src/course-preview.js, src/world.js, tools/test-wasteland-profile.mjs]
     helpers: [test_author, save_guardian, reviewer, browser_qa]
     flag: hidden-road
@@ -402,7 +403,7 @@ tasks:
     size: M
     needs: [EGG-04]
     status: merged
-    owns: [src/onfoot-camera.js, tools/test-onfoot-camera-choice.mjs, tools/scenarios/onfoot-camera-choice.mjs, docs/board/looks/onfoot-camera-choice/, docs/changes/CAM-01.md]
+    owns: [src/onfoot-camera.js, tools/test-onfoot-camera-choice.mjs, tools/scenarios/onfoot-camera-choice.mjs, docs/board/looks/onfoot-camera-choice/]
     hooks: [src/app.js, src/input-contexts.js, src/render3d.js, src/screen-menu.js, src/screen-router.js, src/race-settings.js, src/career-backup.js, src/combat-hud.js, src/combat-hud.css, tools/test-race-settings.mjs, tools/test-career-backup.mjs]
     helpers: [test_author, reviewer, save_guardian, browser_qa]
     flag: wasteland2
@@ -688,7 +689,7 @@ tasks:
     owns: [src/combat-projectiles.js, tools/test-combat-projectiles.mjs, tools/test-combat-replays.mjs, tools/replays/projectile-height-controls.json, tools/replays/combat-inputs.json, tools/replays/combat-fingerprints.json, tools/test-combat-armor.mjs, tools/test-combat-scoring.mjs, tools/test-combat-opponents.mjs, tools/scenarios/combat-armor-frame-pacing.mjs, tools/scenarios/combat-armor-wreck.mjs, tools/scenarios/combat-effects.mjs, tools/scenarios/combat-results.mjs]
     helpers: [test_author, balance_analyst, test_runner, reviewer, browser_qa]
     active_slice: "Uphill launch candidate 5cf533e is held on codex/bug06-launch-height. All 20 geometric checks pass, but accuracy rises to 24/26; guidance-off diagnostic still gives 18/26. Complete flagged report has six failures: wins 1/2/2 and enemy hits 10/7/13. Evidence note c3efb1f retains the result. No further tuning or merge until a jointly reviewed aim/balance approach is scoped."
-    launch_owns: [src/combat-weapons.js, tools/test-crossbow-launch-height.mjs, docs/changes/BUG-06-launch-height.md]
+    launch_owns: [src/combat-weapons.js, tools/test-crossbow-launch-height.mjs]
     launch_acceptance:
       - "Use actual muzzle position, predicted target body height and a consistent horizontal flight time that includes inherited velocity. Preserve horizontal lead, enemy bias, homing, cadence, damage and collision bounds."
       - "Independent geometric tests cover flat, uphill and downhill moving targets, unequal car speeds, airborne height and legacy/bomb/RPG controls. No balance limit or fingerprint changes without a concrete trace and independent review."
@@ -791,7 +792,7 @@ tasks:
     size: S
     needs: [FND-05]
     status: merged
-    note: "Audited 5fbf24f..b9e40c5; two vacuous OLD-02 record assertions filed and repaired as TST-01 and TST-02. See docs/changes/OLD-03.md."
+    note: "Audited 5fbf24f..b9e40c5; two vacuous OLD-02 record assertions were repaired as TST-01 and TST-02. The historical audit remains in Git history."
     spec: "SPEC.md, task OLD-03"
   - id: TST-01
     title: "Prove route best restoration through saved progression"
@@ -801,7 +802,7 @@ tasks:
     needs: [OLD-03]
     status: merged
     note: "Merged as ed46beb. Route best survives a changed seed and save/reload; mutation dropping personalBests fails."
-    spec: "docs/changes/OLD-03.md, TST-01"
+    spec: "SPEC.md, OLD-03 and TST-01; board acceptance and current save tests"
   - id: TST-02
     title: "Prove best-time isolation across named players"
     wave: 1
@@ -810,7 +811,7 @@ tasks:
     needs: [OLD-03]
     status: merged
     note: "Merged as ed46beb. Two named players keep separate bests across selection and reload; a cross-player copy mutation fails."
-    spec: "docs/changes/OLD-03.md, TST-02"
+    spec: "SPEC.md, OLD-03 and TST-02; board acceptance and current save tests"
   - id: FND-11
     title: "Career backup"
     wave: 1
@@ -971,7 +972,9 @@ tasks:
       - "Player and all three CPU cars can shove, launch, wreck and recover without spending ordinary crash slots; a star blocks armor loss but not the physical push."
       - "Ordinary and flag-off Wasteland contacts, traffic destruction and pinned replay fingerprints stay unchanged."
       - "Independent 30/60/144 FPS contact tests, High/Performance three-car browser scene, balance and frame checks pass."
-    note: "Integrated at c755986 after independent red tests, 187/187 lane suites, 180/180 merge suites, build and private High/Performance smoke. The visible front spikes on every flagged Wasteland combat rig count as equipped. Full incident, ownership and event requirements are in docs/changes/CMB-02-plan.md."
+      - "The deterministic incident latch uses an unordered actor pair and rearms only after separation beyond the contact envelope plus margin; time spent overlapped cannot rearm it. The indexed event records attacker, victim, actual post-shield damage, closing speed, spike use and finite hit position."
+      - "Closing speed is converted from mph to km/h along the contact normal. Ram armor damage is zero at or below 40 km/h; above that, level-0 base is relative km/h times 0.2 with the existing cap, and front spikes multiply damage to the other car by 1.5. Stars block armor loss but not physical separation. No save field or bumper purchase was added."
+    note: "Integrated at c755986 after independent red tests, 187/187 lane suites, 180/180 merge suites, build and private High/Performance smoke. The visible front spikes on every flagged Wasteland combat rig count as equipped."
     spec: "SPEC.md section 3.2, task CMB-02"
   - id: CMB-04
     title: "Seeded weapon and armor pickups across the road"
@@ -1061,7 +1064,7 @@ tasks:
     size: M
     needs: [FOOT-01]
     status: building
-    owns: [tools/scenarios/weapon-audio.mjs, tools/test-weapon-audio-waveforms.mjs, tools/weapon-audio-waveforms.mjs, docs/changes/AUD-02-current-actions.md]
+    owns: [tools/scenarios/weapon-audio.mjs, tools/test-weapon-audio-waveforms.mjs, tools/weapon-audio-waveforms.mjs, docs/AUDIO_ITERATION.md]
     helpers: [test_author, test_runner, reviewer, audio_qa]
     active_slice: "Verify the eight implemented foot and raider cues in real Web Audio."
     acceptance:

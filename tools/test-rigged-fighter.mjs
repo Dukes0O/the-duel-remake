@@ -245,14 +245,15 @@ check('combat scene gates loading by mode and switch and passes simulation time'
 
 check('matched-sheet provenance retains asset, camera, pose and cost evidence', () => {
   const root = 'docs/board/looks/test-fighter/round-1';
+  const fixture = 'tools/fixtures/art-review/test-fighter/round-1.json';
   // SPEC 0.7: raw sheets live outside Git. When a local copy exists, it must still be a real image.
   if (existsSync(file(`${root}.png`))) {
     const png = readFileSync(file(`${root}.png`));
     assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
     assert.ok(png.readUInt32BE(16) >= 400 && png.readUInt32BE(20) >= 200, 'contact sheet must contain useful image evidence');
   }
-  assert.ok(existsSync(file(`${root}.json`)), 'contact sheet provenance is missing');
-  const evidence = JSON.parse(readFileSync(file(`${root}.json`), 'utf8'));
+  assert.ok(existsSync(file(fixture)), 'contact sheet provenance fixture is missing');
+  const evidence = JSON.parse(readFileSync(file(fixture), 'utf8'));
   const hash = createHash('sha256').update(readFileSync(file('public/assets/models/wasteland/test-fighter.glb'))).digest('hex');
   assert.equal(evidence.assetHash, hash, 'provenance hash must identify the checked-in fighter');
   assert.match(evidence.observationCommit, /^[a-f0-9]{7,40}$/);
@@ -309,8 +310,8 @@ check('production movement selects the same GLB clip and pose at 30/60/144 FPS',
 
 check('retained capture and contact-sheet paths survive checkout relocation', () => {
   const repository = fileURLToPath(file(''));
-  const captures = JSON.parse(readFileSync(file('docs/board/looks/test-fighter/captures.json'), 'utf8'));
-  const evidence = JSON.parse(readFileSync(file('docs/board/looks/test-fighter/round-1.json'), 'utf8'));
+  const captures = JSON.parse(readFileSync(file('tools/fixtures/art-review/test-fighter/captures.json'), 'utf8'));
+  const evidence = JSON.parse(readFileSync(file('tools/fixtures/art-review/test-fighter/round-1.json'), 'utf8'));
   const paths = [...captures.captures.map(capture => capture.path), evidence.reference.path,
     ...evidence.blender, ...evidence.high, ...evidence.performance, evidence.output];
   assert.ok(paths.length > 18, 'retained evidence must include both game quality modes and source images');
