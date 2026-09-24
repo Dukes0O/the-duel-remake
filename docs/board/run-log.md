@@ -737,3 +737,22 @@ checkout untouched until the final integration commit passes the full gate.
   scrap, and a minimum test floor with a status page (0.5). The Director adds
   the SPEC 0.6 cards to the board and works them in order. The overnight start
   prompt is in the review note. D8 (push integration to GitHub) waits for Kyle.
+
+## 2026-09-23 PDT — v3 autonomous run starts
+
+- Read SPEC section 0 first, then the complete specification, playbook,
+  operations guide and board history. Section 0 supersedes the earlier
+  focused-only testing policy and image/poster work.
+- Added FIX-04 and all fifteen ordered section 0.6 cards; TRACK-01 is ready.
+  Later cards stay backlog until expanded into owned files, checks and shots.
+  Corrected two CMB-02 YAML indentation errors found while reading the board.
+- This run starts from beff383. Last full result is 213/213 on 6d827dc,
+  not a claim of an exact-head full pass. No live update is planned until
+  the release gate passes. D8 remains pending; integration stays local.
+- Kyle left the percentage placeholder unspecified. Use the overnight window
+  through approximately 07:00 PDT September 24 and the previously authorized
+  5 percent quota floor. At start, weekly quota has 50 percent remaining.
+  Stop new cards early enough to finish active cards and the final full tier.
+- Enforce lane jobs 8 plus build before every task merge. Count task merges
+  from this run; full jobs 8 keep-going after five merges or two hours, and
+  at run end. Read-only review of existing open cards may use spare lanes.

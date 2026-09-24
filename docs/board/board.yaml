@@ -5,6 +5,162 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: FIX-04
+    title: "Restore the full test tier"
+    lane: TOOL
+    size: S
+    needs: []
+    status: merged
+    note: "Outside review fix 6d827dc passed 213/213 full suites, build and private smoke. See docs/changes/FIX-04.md."
+  - id: TRACK-01
+    title: "Generate an honest build status page"
+    priority: 1
+    lane: TOOL
+    size: S
+    needs: [FIX-04]
+    status: ready
+    owns: [tools/build-status.mjs, tools/test-build-status.mjs, docs/board/STATUS.md, docs/board/checks/full-tier.json]
+    hooks: [tools/run-tests.mjs]
+    helpers: [test_author, test_runner, reviewer]
+    spec: "SPEC.md 0.5 and 0.6"
+    acceptance:
+      - "Read-only inspection writes STATUS.md with live Git commit/build version, integration HEAD, feature switches, lane branches and ages, clean merged worktrees eligible for removal, and local/remote backup state. No live writes, HTTP requests or save access."
+      - "Full-tier evidence records commit, time, tier, pass/fail and dirty-source state. A missing, failed, dirty or different-commit result never reports the current exact HEAD as green."
+      - "Temporary fixture repositories cover stale and missing evidence, failed full runs, unmerged branches, dirty merged lanes, absent remote and absent build manifest. The tool never removes worktrees or pushes."
+      - "Run and commit STATUS.md on integration; subsequent merges and end-of-run refresh it. State its observation commit explicitly so a later metadata commit cannot silently inherit a green check."
+  - id: TRACK-02
+    title: "Align agent instructions with the minimum test floor"
+    priority: 2
+    lane: OPS
+    size: S
+    needs: [TRACK-01]
+    status: backlog
+    owns: [docs/CODEX_PLAYBOOK.md, AGENTS.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Integrator and Director prompts, workflow and gates specify lane tier jobs 8 plus build before every merge, full tier jobs 8 keep-going after five merges or two hours and at run end, exact-commit full before release, STATUS after each merge. SPEC 0 wins over older text."
+  - id: BAL-01
+    title: "Measure combat with Wasteland enabled"
+    priority: 3
+    lane: TOOL
+    size: S
+    needs: [TRACK-02]
+    status: backlog
+    owns: [tools/combat-balance.mjs, tools/test-combat-balance.mjs]
+    helpers: [test_author, test_runner, reviewer, balance_analyst]
+    acceptance:
+      - "Support --flags wasteland2; report actual flags, win rates, hits and wrecks by difficulty. Check the existing targets for both flag-on and flag-off runs and record measured gaps without relaxing limits."
+  - id: GFX-00
+    title: "Blender to game fighter pipeline"
+    priority: 4
+    lane: VIS
+    size: M
+    needs: [BAL-01]
+    status: backlog
+    acceptance:
+      - "Headless Blender 4.5 script creates, rigs, animates and exports a test fighter GLB; retained blend and script regenerate it; the game loads it with existing Three addons. A tool builds matched reference, Blender and High/Performance game contact sheets."
+  - id: EGG-01
+    title: "Hidden Road geometry and protected driving"
+    priority: 5
+    lane: SIM
+    size: M
+    needs: [GFX-00]
+    status: backlog
+    flag: hidden-road
+    acceptance:
+      - "Pacific Canyon routes A/B/C share a subtle player-only spur, protected wash and salt-flat approach per SPEC 0.2. All road cars can drive it; AI ignores it and map stays hidden. Ordinary replay fingerprints remain unchanged."
+  - id: ART-W
+    title: "Rustwall gate and first-person gear reference art"
+    priority: 6
+    lane: ART
+    size: S
+    needs: [EGG-01]
+    status: backlog
+    acceptance:
+      - "Generate original Rustwall/gate, RPG and wrench references with prompts and provenance retained; no gore; use crew and Wasteland art direction."
+  - id: GFX-01
+    title: "Crew family fidelity rounds one to three"
+    priority: 7
+    lane: VIS
+    size: L
+    needs: [ART-W]
+    status: backlog
+    acceptance:
+      - "Eight rigged crew models and SPEC 0.3 animations undergo three matched reference/Blender/game rounds. Save every contact sheet and score; honor triangle, draw-call and texture budgets. Minimum beta score is four in every category."
+  - id: GFX-02
+    title: "First-person hands and gear fidelity rounds one to three"
+    priority: 8
+    lane: VIS
+    size: M
+    needs: [GFX-01]
+    status: backlog
+    acceptance:
+      - "Crew hands, gloves, sleeves, RPG and wrench animate aim, recoil, reload and repair. Three saved fidelity rounds meet SPEC 0.3 with High/Performance views."
+  - id: EGG-02
+    title: "Rustwall gate and salt-flat fidelity rounds one to three"
+    priority: 9
+    lane: VIS
+    size: L
+    needs: [GFX-02]
+    status: backlog
+    acceptance:
+      - "Model the 35 m by at least 400 m Rustwall, moving gate, towers, fires and figures with three saved fidelity rounds; wall/yard adds at most ten percent frame cost."
+  - id: EGG-03
+    title: "Gate arrival and invitation"
+    priority: 10
+    lane: UI
+    size: M
+    needs: [EGG-02]
+    status: backlog
+    acceptance:
+      - "After the point of no return end the race as left-the-course with no saved-credit loss or record. At 60 m stop for the cinematic gate and Enter/Turn back invitation. Private browser coverage verifies the sequence."
+  - id: EGG-04
+    title: "Gate discovery save and return entry"
+    priority: 11
+    lane: SAVE
+    size: S
+    needs: [EGG-03]
+    status: backlog
+    helpers: [test_author, save_guardian, reviewer, browser_qa]
+    acceptance:
+      - "Back up before migration, persist discovery even after Turn back, reveal WASTELAND menu/map only after discovery, revisit automatically, give the five-race hint and ten-race dust devil. Existing careers and credits survive."
+  - id: CAM-01
+    title: "First-person and overhead camera choice"
+    priority: 12
+    lane: VIS
+    size: M
+    needs: [EGG-04]
+    status: backlog
+    acceptance:
+      - "First person remains default; setting and key toggle an overhead behind-and-above view with ground-safe placement on all eleven combat courses."
+  - id: CAR-01
+    title: "Separate Wasteland career and territory map"
+    priority: 13
+    lane: SAVE
+    size: L
+    needs: [CAM-01]
+    status: backlog
+    helpers: [test_author, save_guardian, reviewer, browser_qa]
+    acceptance:
+      - "Add separate scrap and eight-warlord territory progression, ranks 1–30 and yard access behind the switch per SPEC 0.4. Preserve old credit-funded weapon levels and ordinary careers through backed-up migration."
+  - id: GFX-03
+    title: "Nine war rigs and kits fidelity rounds one to three"
+    priority: 14
+    lane: VIS
+    size: L
+    needs: [CAR-01]
+    status: backlog
+    acceptance:
+      - "All nine cars have intact, damaged, burning and wrecked kits; three matched saved fidelity rounds meet SPEC 0.3 and frame budgets."
+  - id: GFX-04
+    title: "Yard home and arena fidelity rounds one to three"
+    priority: 15
+    lane: VIS
+    size: L
+    needs: [GFX-03]
+    status: backlog
+    acceptance:
+      - "Three saved fidelity rounds for the yard home and arena family; connect career/map/armory/crew choices and the ARENA-01/06 framework without granting unbuilt modes."
   - id: FND-01
     title: "Live game safety"
     wave: 0
@@ -495,7 +651,7 @@ tasks:
     lane: CMB
     size: S
     needs: [CMB-01]
-      status: integrated
+    status: integrated
     owns: [src/vehicle-impact.js, src/wasteland-tuning.js, tools/test-combat-ramming.mjs, tools/scenarios/combat-ramming.mjs]
     hooks: [src/sim-contacts.js, src/combat-armor.js, src/game.js, src/combat-scene.js]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
@@ -507,7 +663,7 @@ tasks:
       - "Player and all three CPU cars can shove, launch, wreck and recover without spending ordinary crash slots; a star blocks armor loss but not the physical push."
       - "Ordinary and flag-off Wasteland contacts, traffic destruction and pinned replay fingerprints stay unchanged."
       - "Independent 30/60/144 FPS contact tests, High/Performance three-car browser scene, balance and frame checks pass."
-      note: "Integrated at c755986 after independent red tests, 187/187 lane suites, 180/180 merge suites, build and private High/Performance smoke. The visible front spikes on every flagged Wasteland combat rig count as equipped. Full incident, ownership and event requirements are in docs/changes/CMB-02-plan.md."
+    note: "Integrated at c755986 after independent red tests, 187/187 lane suites, 180/180 merge suites, build and private High/Performance smoke. The visible front spikes on every flagged Wasteland combat rig count as equipped. Full incident, ownership and event requirements are in docs/changes/CMB-02-plan.md."
     spec: "SPEC.md section 3.2, task CMB-02"
   - id: CMB-04
     title: "Seeded weapon and armor pickups across the road"
