@@ -38,7 +38,8 @@ tasks:
     lane: TOOL
     size: M
     needs: [CLEAN-02]
-    status: ready
+    status: merged
+    note: "Merged 24 September 2026 after 236 passing lane suites, build, unchanged 162 replay checks, private browser/audio checks and independent review."
     owns: [tools/fidelity-sheet.mjs, tools/browser-harness.mjs, tools/run-browser-scenarios.mjs, tools/audio-analysis.mjs, tools/scenarios/, tools/blender/, tools/test-browser-harness.mjs, tools/test-review-evidence.mjs, docs/board/looks/, .gitignore]
     helpers: [reviewer, test_runner]
     acceptance:
@@ -50,7 +51,7 @@ tasks:
     lane: ART
     size: M
     needs: [CLEAN-03]
-    status: backlog
+    status: ready
     owns: [public/assets/models/wasteland/, tools/blender/, docs/board/looks/]
     helpers: [reviewer, art_critic, browser_qa]
     acceptance:
@@ -67,6 +68,7 @@ tasks:
     helpers: [reviewer, test_runner]
     acceptance:
       - "Index current docs, preserve still-needed facts, delete superseded notes and handoffs, and retain seven days of run log."
+      - "Preserve the first-person and Rustwall browser QA Blender-manifest fixture facts before deleting historical looks JSON that CLEAN-03 still reads as a fallback."
       - "Agent instructions point to the index; replay fingerprints stay unchanged."
   - id: CLEAN-06
     title: "Remove proven unused code, tests and switches"

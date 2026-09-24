@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-09-24T16:25:00.934Z
+Observed at: 2026-09-24T17:48:47.727Z
 
-Observation commit: d4172da88a4b97a0b6194ea1736ae2f5a8a27f2c
+Observation commit: 9d5544bcf5c5fd04171c2aec64c90fb55260b015
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: d4172da88a4b97a0b6194ea1736ae2f5a8a27f2c
+Integration HEAD: 9d5544bcf5c5fd04171c2aec64c90fb55260b015
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 
@@ -16,7 +16,7 @@ Live build version: 20260924002834-86f3e7fb6e36
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-09-24T12:40:53.275Z; tested commit: 4264cf087e50b8b7d2dac48a54502ad7773bb4f8.
+Last recorded full run: 2026-09-24T16:30:46.600Z; tested commit: e2077357f4c95479edd1c455fc85be76f3f42c10.
 
 ## Feature switches
 
@@ -40,7 +40,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: d4172da88a4b97a0b6194ea1736ae2f5a8a27f2c
+- Local integration/wasteland: 9d5544bcf5c5fd04171c2aec64c90fb55260b015
 
 Local rollback build (dist-previous): 20260923193614-0b1389a185dd. Manifest presence does not verify the full rollback build.
 
