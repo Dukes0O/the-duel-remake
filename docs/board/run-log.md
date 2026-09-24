@@ -813,3 +813,13 @@ checkout untouched until the final integration commit passes the full gate.
   continue in spare lanes. This avoids idle lanes without changing priority.
 - TRACK-02 started in .lanes/track02. BAL-01 starts in .lanes/bal01.
   Quota check before dispatch: 47 percent remains; keep the 5 percent floor.
+
+## 2026-09-23 PDT — TRACK-02 merged (run merge 3)
+
+- Integrated f57ceda after independent review, five-suite lane gate
+  (37.11 seconds) and build. Gates and active prompts now match SPEC 0.5.
+  STATUS refreshed after merge. Release-specific evidence remains required.
+- BAL-01 is building after its independent red tests99c7795. GFX-00 is ready
+  for independent test preparation; its merge must follow BAL-01.
+- Quota before GFX dispatch: 46 percent remaining. Full tier is due after
+  two more task merges or 06:02 UTC, whichever comes first.
