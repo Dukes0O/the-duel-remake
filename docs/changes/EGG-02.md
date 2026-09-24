@@ -263,3 +263,40 @@ per-frame counts include other scenery, extra passes and shadow refresh.
 The independent round-two visual critique and final fidelity round are next.
 No existing test assertion, race fingerprint or runtime behavior changed for
 these capture corrections.
+
+## Round 3 browser evidence
+
+Frozen source and assets `8889a4a` completed the single planned private,
+memory-only scenario on port 32153. It retained twelve matched images, eight
+actual-course images, all six route/quality placement results, the browser
+report and the adjacent round-three contact sheet. There were zero browser
+warnings or errors. Both isolated wash images and all course images passed
+the visible-pixel checks. Earlier rounds remain unchanged.
+
+| View | RAF p95, baseline to loaded | CPU median | CPU p95 |
+| --- | --- | --- | --- |
+| High wash | 18.1 to 18.2 ms | 2.2 to 2.2 ms | 2.7 to 2.8 ms |
+| High approach | 18.2 to 18.2 ms | 2.0 to 2.0 ms | 2.5 to 2.4 ms |
+| Performance wash | 18.3 to 18.1 ms | 1.5 to 1.5 ms | 2.0 to 2.1 ms |
+| Performance approach | 18.2 to 18.2 ms | 1.3 to 1.4 ms | 1.7 to 1.8 ms |
+
+No measured RAF interval exceeds 33 ms. All paired round-three RAF p95, CPU
+median and CPU p95 changes are within ten percent; the largest positive CPU
+p95 change is about 5.9 percent. Ordered arrays of 120 samples per condition
+and draw/triangle ranges remain in the capture manifest.
+
+The round-two High wash CPU p95 increase of 12 percent remains part of the
+evidence. Loaded High wash p95 is 2.8 ms in both rounds; the baseline changed
+from 2.5 to 2.7 ms. Thus the improved paired ratio does not prove an equivalent
+optimization. This remains a bounded scenery comparison on the widened flat,
+not GPU timing or a replay of the complete previous integration scene.
+
+The frozen model counts are 53634 wall triangles in 13 material draws and
+25776 wash triangles across 179 instances in one draw. The independently tested
+half-turn variation changes only prepared bank orientation and gives the
+asymmetric rock profile two facing directions. Collision envelopes, positions,
+scales and simulation RNG remain unchanged.
+
+The three initial measured rounds are complete. Independent final visual
+review and the required lane/build gate remain pending. This evidence does
+not promote the feature to beta or approve a release.
