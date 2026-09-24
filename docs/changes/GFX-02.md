@@ -119,3 +119,25 @@ Its frame comparison uses the same stopped course and pose updates with held
 materials hidden or visible. That measures added held rendering cost, not the
 total CPU cost of presentation updates. The recorded scope prevents treating a
 refresh-limited frame result as a complete performance guarantee.
+
+## Round 1 browser evidence
+
+The frozen assets at `c92e8fc` were captured through runtime and tooling at
+`fb27582`. Private port 36720 used memory-only storage. The completed harness
+reports zero warnings and errors. Evidence contains 42 matched game images,
+21 Blender images and 10 actual-input context images. The latter cover aim,
+fire, reload, repair and completed re-entry in both qualities. All game images
+and the browser report are retained under `docs/board/looks/first-person/round-1`.
+The contact sheet and source hashes are retained beside that directory.
+
+Visible snapshots use at most 4060 triangles and three material draws. For each
+quality, 120 RAF intervals measured 18.1 ms baseline p95 and 18.2 ms held p95,
+with no interval over 33 ms. This round measured Rook holding the wrench after
+the input interaction, on a stopped course. It is not a worst-case RPG or total
+presentation CPU measurement. Later rounds should include the larger RPG view.
+
+Two fixture errors were fixed before the completed capture: a readiness check
+returned the renderer object instead of a boolean, and the manually advanced
+re-entry state needed an explicit render before checking visibility. Neither
+failure required runtime, asset or acceptance changes. Independent visual review
+and rounds 2 and 3 remain pending. This evidence does not establish beta status.
