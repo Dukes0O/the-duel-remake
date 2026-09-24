@@ -660,3 +660,9 @@ checkout untouched until the final integration commit passes the full gate.
   with the legacy tone retained outside the switch. A focused sound
   check, build and one private waveform capture passed. Full-mix
   listening and later arsenal cues remain for AUD-01.
+- FOOT-05 RPG and wrench integrated at `9911602`. Review kept the
+  PRG-03 car loadout input mapping and the new on-foot gear mapping
+  separate. Thirty focused weapon/transition/race/projectile/HUD cases,
+  a production build, and one private memory-only interaction passed.
+  The screenshots show the walking HUD without car gauges or mirror.
+  FOOT-08 is assessing whether the stops repay their time cost.

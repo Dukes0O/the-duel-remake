@@ -813,10 +813,10 @@ tasks:
     lane: CMB
     size: M
     needs: [FOOT-02, FOOT-03]
-    status: building
+    status: integrated
     flag: wasteland2
     behavior_change: yes
-    note: "RPG and wrench simulation, controls and HUD connection are building in an isolated worktree."
+    note: "Three-shot RPG with lock, reload, direct/splash damage, pooled rocket and a four-second +40 armor wrench integrated at 9911602. Focused 30-case check, one private exit/fire/repair interaction and build passed."
     spec: "SPEC.md sections 3.4 and 12.2, task FOOT-05"
   - id: FOOT-07
     title: "Race rules on foot"
@@ -851,3 +851,14 @@ tasks:
     behavior_change: no
     note: "Two original opaque front/side/back crew sheets for eight characters added as reference art. Provenance and credits recorded; focused intake found both files valid at 4.44 MB total."
     spec: "SPEC.md sections 3.5, 3.10 and 12.2, task ART-C"
+  - id: FOOT-08
+    title: "On-foot stop balance"
+    wave: 5
+    lane: TOOL
+    size: S
+    needs: [FOOT-05]
+    status: building
+    flag: wasteland2
+    behavior_change: no
+    note: "A small deterministic comparison of clean driving, one RPG ambush and one repair stop is being built after FOOT-05."
+    spec: "SPEC.md sections 3.4 and 12.2, task FOOT-08"
