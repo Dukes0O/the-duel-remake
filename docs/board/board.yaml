@@ -64,7 +64,7 @@ tasks:
     size: M
     needs: [TRACK-02]
     merge_after: BAL-01
-    status: reviewing
+    status: merged
     owns: [tools/blender/test-fighter.py, public/assets/models/wasteland/test-fighter.blend, public/assets/models/wasteland/test-fighter.glb, src/rigged-fighter.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py, tools/test-rigged-fighter.mjs, tools/scenarios/rigged-fighter.mjs, tools/scenarios/onfoot-figures.mjs, docs/board/looks/test-fighter/]
     hooks: [src/combat-scene.js, src/onfoot.js]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
@@ -79,7 +79,7 @@ tasks:
       - "Independent tests verify GLB structure/animations and renderer lifetime/clock/fallback controls; ordinary replay fingerprints stay unchanged. Review the actual contact sheet for alignment, deformation and grounding. Crew fidelity rounds belong to GFX-01, and this pipeline card cannot promote beta."
     shots: [reference-front-side-back, blender-idle-walk-knockdown, game-high-matched-poses, game-performance-matched-poses]
     sound: "No new sounds; keep existing cue behavior."
-    note: "Director-approved pipeline scope spans five implementation files plus generated assets/tests/evidence. Review adds a narrow onfoot.js hook for simulation-authored movement speed; animation must not infer it from rendered frame history. Existing course-landmarks exports mesh JSON, so preserve GLTF skin attributes rather than copying vehicle flattening."
+    note: "Merged 0389eea after independent code, browser and art review, 216-suite lane gate and build. Narrow onfoot.js hook records simulation-authored movement speed. Prototype resemblance is 2; full crew fidelity remains GFX-01. No beta promotion."
   - id: EGG-01
     title: "Hidden Road geometry and protected driving"
     priority: 5

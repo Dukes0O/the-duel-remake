@@ -932,3 +932,28 @@ checkout untouched until the final integration commit passes the full gate.
   correction to the actual body centre, retaining all assertions. One real
   CPU attack replay changes from three hits to one. Its expectation remains
   untouched pending a before/after geometry trace and independent review.
+
+## 2026-09-23 PDT — GFX-00 merged (run merge 5; full tier due now)
+
+- Integrated 0389eea. Final independent gate on df81d39 passed 216 suites
+  in 320.32 seconds and build in 0.93 seconds. Code, loaded-rig browser and
+  visual reviews passed their scoped requirements. The stale primitive-only
+  browser assertion was replaced with reviewed bound-skin behavior checks.
+- STATUS refreshed after merge. Commit this metadata, then start the full
+  tier on the clean resulting integration commit. No further task merge
+  until this scheduled run completes; a failure stops feature merges.
+- BUG-06 candidate 24108dd is reviewed and awaiting its lane/build gate.
+  Its crossbow probe is 12/26; independent review approved only the real CPU
+  encounter's three-to-one hit correction and its matching FPS hashes.
+- Three follow-up races separate the remaining enemy hits into CPU/raider:
+  Easy 3/7, Medium 6/5, Hard 3/1. Raider accuracy lacks difficulty input and
+  CPU guidance can erase seeded aiming error. Preserve these findings for
+  a bounded BUG-07 correction after the body-bound fix, without changing bands.
+- EGG-01 passes its headless checks and actual all-car turnaround/return;
+  browser work fixes a menu-world cache reuse defect before review.
+- ART-W prepared three reference sheets with the imagegen skill and built-in
+  tool. Independent critic accepts them for modeling. Rustwall scale must be
+  authored numerically: 35 m wall, at least 400 m span, 9 by 7 m opening;
+  generated proportions are not a measuring guide. Merge remains after EGG-01.
+- Quota at ART-W start: 41 percent remaining. D8 remains unapproved; no push
+  or live release has occurred in this run.
