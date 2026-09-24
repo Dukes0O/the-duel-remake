@@ -1,8 +1,9 @@
 # The Duel: rules for every agent
 
-Read `SPEC.md` section 0 first; it wins over conflicting later text. Complete
-the ordered work in section 0.6 before other new work, with its listed existing
-cards continuing when lanes are free. Read `docs/CODEX_PLAYBOOK.md`
+Read `SPEC.md` section 0 first; it wins over conflicting later text.
+**Cleanup comes first (SPEC 0.7, Kyle, 24 September 2026): do the CLEAN cards
+in order and start no feature work until they are done.** After that, the
+ordered work in section 0.6 resumes. Read `docs/CODEX_PLAYBOOK.md`
 for the workflow, and `docs/board/board.yaml` for task ownership. Use
 `docs/OPERATIONS.md` for current folders, ports and release steps.
 
@@ -55,3 +56,32 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
   after a release.
 
 See playbook section 7 for the gate and evidence workflow.
+
+## Where files live (SPEC 0.7)
+
+- `public/`: only files the game loads at runtime. Never Blender files,
+  videos, raw captures or other sources.
+- Blender `.blend` files are rebuilt by the scripts in `tools/blender/` and are
+  not committed. Commit the script and its small inputs instead.
+- Review evidence (screenshots, videos, audio captures, gate logs) goes in
+  `.evidence/<date>/<card>/` in the integration folder, which Git ignores.
+  Commit only one compressed comparison sheet per round (JPG, 500 KB at most)
+  and its review note under `docs/board/looks/<family>/`.
+- Scratch output stays in `.qa-dist/`. Nothing new in the repository root
+  unless it is on the root allow-list in `tools/test-repo-hygiene.mjs`.
+- Limits, checked by `tools/test-repo-hygiene.mjs` in every lane tier: a merge
+  adds at most 5 MB to Git (20 MB for an art card that states its budget); no
+  committed file over 2 MB outside approved art files; shipped build and
+  per-model budgets as in SPEC 0.7.
+
+## Clean up as you go (SPEC 0.7)
+
+- Every change note has a **Removed** section. When work replaces something
+  (a model, code path, test, doc or tool), remove the old one in the same task,
+  or name the task that will remove it when its switch turns fully on.
+- Read only `docs/README.md`, your task card and the files it names. Anything
+  not listed in `docs/README.md` is history, not instructions.
+- At the end of every run and after every 10 merges: run
+  `node tools/repo-audit.mjs`, remove what it proves unused, file cards for
+  the rest, and remove merged lane folders with `git worktree remove` after the
+  hash check. Never force-remove a worktree or rewrite history without Kyle.

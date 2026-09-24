@@ -128,8 +128,9 @@ family and allows up to 10 per wave.
 `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Run it
 headless with Python scripts, the way `tools/build-course-landmarks.py` already
 does: `blender -b --python tools/blender/<family>.py -- --root <repo>`. Keep
-the `.blend` source and the script in the repository; export GLB models to
-`public/assets/models/wasteland/`. Rigged characters use Three.js's own
+the script and its small inputs in the repository; the script rebuilds the
+`.blend`, which is not committed (0.7). Export GLB models to
+`public/assets/models/wasteland/` within the 0.7 budgets. Rigged characters use Three.js's own
 `GLTFLoader`, `SkinnedMesh` and `AnimationMixer` from `three/addons`: no new
 dependency. The image tool still makes reference images and textures.
 
@@ -153,7 +154,8 @@ dependency. The image tool still makes reference images and textures.
    the wall and the yard). Capture the same views in the browser game through
    the harness, in High and Performance. The in-game picture is what counts.
 2. **Contact sheet.** Reference, Blender render and in-game capture side by
-   side, saved as `docs/board/looks/<family>/round-<n>.png`.
+   side, saved as `docs/board/looks/<family>/round-<n>.jpg` (500 KB at most).
+   Raw captures and videos go to `.evidence/` (0.7).
 3. **Score** each item from 1 to 5: resemblance to the reference (silhouette,
    proportions, materials, color, detail, wear), readability at racing speed,
    grounding, consistency with the scene, and frame cost. List the five
@@ -229,6 +231,9 @@ on:
 
 ### 0.6 New and changed cards, in order for the next run
 
+> **Paused (Kyle, 24 September 2026):** cleanup in 0.7 comes first. Cards 13
+> to 15 and the open cards below resume only after CLEAN-08 is merged.
+
 Finish in this order before starting other new work. Existing open cards
 (BUG-06, BUG-07, CREW-01, TOOL-02, AUD-01, AUD-02) continue whenever a lane is free.
 
@@ -260,6 +265,68 @@ unlock records with rendered model images (family 8).
 2.0, challenges, bounties, the Wasteland career, and families 1–3 at round 3.
 A new milestone, **M-EGG**, moves `hidden-road` to `beta` when EGG-01 to EGG-04
 are merged and family 3 has passed round 3.
+
+### 0.7 Cleanup first (Kyle, 24 September 2026)
+
+**Why.** The first v3 run added about 745 MB to Git in one night: about 420 MB
+of review screenshots, videos and audio captures under `docs/board/looks/`,
+and about 318 MB of models, including 22 Blender `.blend` files (185 MB)
+inside `public/`, which Vite copies into every build. The build grew from
+176 MB (live) to 487 MB; `rustwall/wall.glb` alone is 15 MB. There are about
+100 lane folders, 121 change notes and a 1,400-line run log. The spec said
+where to put new files but never when to remove old ones. This section fixes
+that. Nothing in it changes gameplay; every replay fingerprint must stay the
+same.
+
+**Where every kind of file lives.**
+
+| Kind | Home | In Git |
+| --- | --- | --- |
+| Files the game loads | `public/` | Yes, within the budgets below |
+| Blender sources | Rebuilt by `tools/blender/<family>.py`; output to `.evidence/` or an ignored `art-build/` folder | Script and small inputs only; no `.blend` files |
+| Review evidence: screenshots, videos, audio, spectrograms, gate logs | `.evidence/<date>/<card>/` in the integration folder, ignored by Git | No |
+| Round summary | `docs/board/looks/<family>/round-<n>.jpg` (one sheet, 500 KB at most) and `round-<n>-review.md` | Yes |
+| Scratch output | `.qa-dist/` | No |
+
+This replaces the 0.3 wording that kept `.blend` files in the repository and
+full-resolution sheets and captures in `docs/board/looks/`.
+
+**Budgets, enforced by a test, not by memory.**
+
+- A merge adds at most 5 MB to Git; an art card may declare up to 20 MB.
+- No committed file over 2 MB outside a short, reviewed list of runtime art.
+- Shipped build (`dist`) at most 250 MB; all Wasteland models and textures
+  together at most 60 MB; any single runtime file at most 8 MB.
+- Compress with what Three.js and Blender already provide (Draco or meshopt
+  geometry in the Blender glTF exporter, `DRACOLoader`/`MeshoptDecoder` from
+  `three/addons`, smaller or shared textures). No new dependency.
+- Nothing new in the repository root unless it is on the root allow-list.
+
+**Cleanup is part of done.**
+
+- Every change note gets a **Removed** section: what the task deleted, or which
+  task will delete the thing it replaced once its switch is fully on.
+- Reviewers reject a replacement that leaves its predecessor behind without
+  a named removal task.
+- `docs/README.md` lists the current documents. Agents read that index, their
+  card and the files it names. Anything not in the index is history.
+- At the end of every run and after every 10 merges, a cleanup pass runs
+  `tools/repo-audit.mjs`, removes what it proves unused, files cards for the
+  rest and records sizes on the status page.
+
+**Cards. Do these in order and start no feature work until CLEAN-08 merges.**
+
+| Order | Card | Lane | Size | Done when |
+| --- | --- | --- | --- | --- |
+| 1 | **CLEAN-01** Hygiene check and audit report | TOOL | M | `tools/test-repo-hygiene.mjs` runs in the lane tier and enforces the homes and budgets above. It starts from a recorded list of today's violations that may only shrink; any new violation fails. `tools/repo-audit.mjs` reports the largest files, per-folder sizes, runtime assets nothing loads, modules and exports nothing imports, tests for removed features, docs not in the index, switches fully on for a release, and merged or stale lane folders |
+| 2 | **CLEAN-02** Blender files out of the build | ART, TOOL | M | No `.blend` or other source file under `public/`; `.gitignore` covers them; every `tools/blender/` script rebuilds its `.blend` and GLB from committed inputs; a rebuilt GLB matches the committed one or the difference is explained; the build contains no `.blend` |
+| 3 | **CLEAN-03** Evidence out of Git | TOOL, VIS | M | Existing raw captures, videos and audio analysis images move from `docs/board/looks/` to `.evidence/` (copied first, hash-checked, then removed from the tree); each round keeps one JPG sheet of 500 KB or less and its review; `tools/fidelity-sheet.mjs`, the browser harness and the audio tools write raw output to `.evidence/` by default; `docs/board/looks/` totals under 20 MB |
+| 4 | **CLEAN-04** Runtime asset budgets | ART, VIS | M | Wasteland models and textures meet the budgets; `wall.glb` under 8 MB; the same fidelity shots before and after show no visible loss (reviewed side by side); load and frame time recorded; build at most 250 MB |
+| 5 | **CLEAN-05** Docs and logs | OPS | M | `docs/README.md` indexes current docs; the 121 change notes roll up into one summary per wave in `docs/history/` and are removed; `run-log.md` keeps 7 days with older entries moved to `docs/history/run-log-2026-09.md`; handoff files older than the latest move to history; docs marked "history only" move to `docs/history/`; `AGENTS.md` and the playbook point at the index |
+| 6 | **CLEAN-06** Dead code, tests and switches | SIM, UI, VIS | M | Items `repo-audit` proves unused are removed (for example the replaced box-figure path, unused exports, tests of removed behavior); `roadside-destruction` has been `on` for a release, so its switch and flag-off path go, per REL-03; each removal passes the lane tier with all replay fingerprints unchanged; anything uncertain becomes a card instead |
+| 7 | **CLEAN-07** Branches and lane folders | OPS | S | Every merged lane folder removed with `git worktree remove` after the hash check (never forced); merged branches older than 7 days deleted; each unmerged branch listed on the status page with a reason and an expiry date, or deleted if it is a finished probe; `.lanes/evidence/` moved to `.evidence/` |
+| 8 | **CLEAN-08** Keep it clean | OPS, TOOL | S | The status page shows Git size, build size, `public/` size, lane-folder count and their change since the last run; the hygiene list of old violations is empty; the playbook's end-of-run steps include the cleanup pass; a full tier passes |
+| parked | **CLEAN-09** Shrink Git history | OPS | M | **Waits for Kyle's explicit approval.** Removing files does not shrink history: the 745 MB stays until the development history is rewritten. Plan: a full backup (`git bundle` of all refs plus a copy of `.git`), then drop the moved `.blend` and evidence files from `integration/wasteland` and lane branches only (never `master`), then re-point lane folders and verify every commit hash map. Integration has never been pushed, so this is the cheapest moment |
 
 ---
 

@@ -1399,3 +1399,16 @@ percent remaining. All helpers are finished. No lane has an active builder.
   full. If work resumes continuously, next full is due after five task merges
   or by 14:40 UTC, and at the next run end. Budget must be checked before
   starting another card. Do not recreate completed work or discard held lanes.
+
+## 2026-09-24 PDT – Kyle: cleanup before features
+
+- An outside review (Claude Code) of `463eac0` independently confirmed the
+  full tier (232 passed, 0 failed) and build, and found the repository and
+  build bloated: about 745 MB added to Git overnight, 417 MB of evidence in
+  `docs/board/looks/`, 22 `.blend` files (185 MB) under `public/`, and a 487 MB
+  build against 176 MB live. Details: `docs/board/cleanup-run-2026-09-24.md`.
+- Kyle directed cleanup only before further feature work. SPEC.md section 0.7
+  and AGENTS.md now define where files live, size limits enforced by a test,
+  removal as part of done, and the ordered cards CLEAN-01 to CLEAN-08. CLEAN-09
+  (rewriting development history to drop the large files) is parked until
+  Kyle approves it. SPEC 0.6 cards 13 to 15 resume after CLEAN-08.
