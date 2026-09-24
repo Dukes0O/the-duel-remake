@@ -19,6 +19,97 @@ function resourcesOf(root, resources = new Set()) {
   return resources;
 }
 
+function joinedWash(road, material) {
+  const walls = road.walls;
+  const wash = new THREE.Group();
+  wash.name = 'Rustwall wash';
+  wash.userData.joinedSeams = 0;
+  for (const side of [-1, 1]) {
+    const ordered = walls.filter(wall => {
+      const center = road.poseAt(wall.progress);
+      return Math.sign((wall.x - center.x) * Math.cos(wall.heading)
+        - (wall.z - center.z) * Math.sin(wall.heading)) === side;
+    });
+    const positions = [], uvs = [];
+    let distance = 0;
+    const point = (wall, along) => {
+      const h = wall.heading, across = -side * (wall.halfX - .04);
+      return {x: wall.x + Math.cos(h) * across + Math.sin(h) * along,
+        z: wall.z - Math.sin(h) * across + Math.cos(h) * along,
+        y: wall.y, height: wall.height};
+    };
+    const between = (a, b) => ({x: (a.x + b.x) / 2, z: (a.z + b.z) / 2,
+      y: (a.y + b.y) / 2, height: Math.min(a.height, b.height)});
+    const inside = (wall, position) => {
+      const dx = position.x - wall.x, dz = position.z - wall.z;
+      return Math.abs(Math.cos(wall.heading) * dx - Math.sin(wall.heading) * dz) <= wall.halfX - .002
+        && Math.abs(Math.sin(wall.heading) * dx + Math.cos(wall.heading) * dz) <= wall.halfZ - .002;
+    };
+    const join = (a, b) => {
+      if (!a || !b || b.progress - a.progress > 8.01) return null;
+      const station = {...between(point(a, a.halfZ), point(b, -b.halfZ)),
+        heading: Math.atan2(Math.sin(a.heading) + Math.sin(b.heading),
+          Math.cos(a.heading) + Math.cos(b.heading)),
+        width: 2 * Math.min(a.halfX, b.halfX) - .08};
+      const far = {x: station.x + Math.cos(station.heading) * side * station.width,
+        z: station.z - Math.sin(station.heading) * side * station.width};
+      return inside(a, station) && inside(b, station) && inside(a, far) && inside(b, far)
+        ? station : null;
+    };
+    const emit = (a, b, c) => {
+      for (const vertex of [a, b, c]) {
+        positions.push(vertex.x, vertex.y, vertex.z);
+        uvs.push(vertex.u, vertex.v);
+      }
+    };
+    const contour = (station, t, u) => {
+      // The visible slope occupies the physical box: low at the track-side
+      // foot, broad near the ridge, without identical vertical column ends.
+      const spread = station.width * t;
+      const h = station.heading;
+      const profile = t === 0 ? 0 : t < .5 ? .67 : t < 1 ? .91 : .88;
+      const variation = .025 * Math.sin(u * .47 + side * 1.3) * (t > 0 ? 1 : 0);
+      return {x: station.x + Math.cos(h) * side * spread,
+        y: station.y + station.height * Math.min(1, profile + variation),
+        z: station.z - Math.sin(h) * side * spread, u: u / 12, v: t};
+    };
+    for (let index = 0; index < ordered.length; index++) {
+      const wall = ordered[index], previous = ordered[index - 1], next = ordered[index + 1];
+      const before = join(previous, wall), after = join(wall, next);
+      if (after) wash.userData.joinedSeams++;
+      const start = before
+        ? before
+        : point(wall, -wall.halfZ);
+      const end = after
+        ? after
+        : point(wall, wall.halfZ);
+      const center = point(wall, 0);
+      const stations = [start, center, end].map(station => ({...station,
+        heading: station.heading ?? wall.heading,
+        width: station.width ?? 2 * (wall.halfX - .04)}));
+      for (let segment = 0; segment < 2; segment++) {
+        const a = stations[segment], b = stations[segment + 1];
+        for (const [lo, hi] of [[0,.38],[.38,.72],[.72,1]]) {
+          const p = contour(a,lo,distance), q = contour(a,hi,distance);
+          const r = contour(b,hi,distance + 1), s = contour(b,lo,distance + 1);
+          if (side < 0) { emit(p,q,r); emit(p,r,s); }
+          else { emit(p,r,q); emit(p,s,r); }
+        }
+        distance++;
+      }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    geometry.computeVertexNormals();
+    const bank = new THREE.Mesh(geometry, material);
+    bank.name = side < 0 ? 'Joined left wash bank' : 'Joined right wash bank';
+    bank.castShadow = true; bank.receiveShadow = true;
+    wash.add(bank);
+  }
+  return wash;
+}
+
 export function createRustwallScene(course, {loadAsset = kind =>
   new GLTFLoader().loadAsync(`/assets/models/wasteland/rustwall/${kind}.glb`)} = {}) {
   const group = new THREE.Group();
@@ -118,30 +209,12 @@ export function createRustwallScene(course, {loadAsset = kind =>
     }
     const walls = course.hiddenRoad.walls;
     if (draws > 2 || triangles * walls.length > 30000) throw Error('Wash asset exceeds its prepared instance budget.');
-    const wash = new THREE.Group(), transform = new THREE.Object3D();
-    wash.name = 'Rustwall wash';
-    for (const mesh of meshes) {
-      const banks = new THREE.InstancedMesh(mesh.geometry, mesh.material, walls.length);
-      banks.name = 'Blender wash banks';
-      banks.castShadow = true;
-      banks.receiveShadow = true;
-      for (let index = 0; index < walls.length; index++) {
-        const wall = walls[index];
-        transform.position.set(wall.x, wall.y, wall.z);
-        // Stable bank order varies the two asymmetric faces without consuming
-        // simulation randomness or changing the normalized collision envelope.
-        const halfTurn = (Math.imul(index + 1, 0x9e3779b1) >>> 30) & 1;
-        transform.rotation.set(0, wall.heading + halfTurn * Math.PI, 0);
-        transform.scale.set(wall.halfX, wall.height, wall.halfZ);
-        transform.updateMatrix();
-        banks.setMatrixAt(index, transform.matrix);
-      }
-      banks.instanceMatrix.needsUpdate = true;
-      banks.computeBoundingBox();
-      banks.computeBoundingSphere();
-      wash.add(banks);
-    }
+    const wash = joinedWash(course.hiddenRoad, meshes[0].material);
+    const joinedTriangles = wash.children.reduce((sum, mesh) =>
+      sum + mesh.geometry.attributes.position.count / 3, 0);
+    if (joinedTriangles > 30000) throw Error('Joined wash exceeds its prepared triangle budget.');
     group.add(wash);
+    releaseUnused(asset);
   }
 
   async function request(kind) {

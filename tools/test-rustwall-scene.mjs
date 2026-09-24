@@ -160,39 +160,75 @@ for (const route of ROUTE_VARIANTS) check(`${route.label}: exact gate placement 
   } finally {disposeTree(scene.group);}
 });
 
-check('wash instances stay inside every existing oriented collision box', async () => {
-  const {createRustwallScene} = await api(), course = courseFor(1989), models = fixtures();
+for (const route of ROUTE_VARIANTS) check(`${route.label}: joined wash triangles stay inside existing oriented collision boxes`, async () => {
+  const {createRustwallScene} = await api(), course = courseFor(route.seed), models = fixtures();
   const before = JSON.stringify(course.hiddenRoad.walls);
   const scene = createRustwallScene(course, {loadAsset: async kind => models[kind]});
   try {
     assert.equal(await scene.ready, true); scene.group.updateMatrixWorld(true);
-    const banks = meshes(scene.group).filter(mesh => mesh.isInstancedMesh);
-    assert.ok(banks.length > 0 && banks.length <= 2, 'one or two shared wash batches');
-    const matrix = new THREE.Matrix4(), vertex = new THREE.Vector3();
+    const banks = meshes(scene.group.getObjectByName('Rustwall wash'));
+    assert.ok(banks.length > 0 && banks.length <= 2, 'one joined mesh per side');
+    const vertex = new THREE.Vector3();
+    const supported = point => course.hiddenRoad.walls.some(wall => {
+      const dx = point.x - wall.x, dz = point.z - wall.z;
+      const across = Math.cos(wall.heading) * dx - Math.sin(wall.heading) * dz;
+      const along = Math.sin(wall.heading) * dx + Math.cos(wall.heading) * dz;
+      return Math.abs(across) <= wall.halfX + .002 &&
+        Math.abs(along) <= wall.halfZ + .002 && point.y >= wall.y - .002 &&
+        point.y <= wall.y + wall.height + .002;
+    });
     for (const bank of banks) {
-      assert.equal(bank.count, course.hiddenRoad.walls.length);
-      for (let index = 0; index < bank.count; index++) {
-        bank.getMatrixAt(index, matrix); matrix.premultiply(bank.matrixWorld);
-        const wall = course.hiddenRoad.walls[index];
-        const inverse = new THREE.Matrix4().compose(new THREE.Vector3(wall.x, wall.y, wall.z),
-          new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), wall.heading),
-          new THREE.Vector3(1, 1, 1)).invert();
-        const positions = bank.geometry.attributes.position;
-        for (let point = 0; point < positions.count; point++) {
-          vertex.fromBufferAttribute(positions, point).applyMatrix4(matrix).applyMatrix4(inverse);
-          // InstancedMesh stores transforms in Float32 at kilometre-scale
-          // coordinates; 2 mm allows that representation's roundoff only.
-          assert.ok(Math.abs(vertex.x) <= wall.halfX + .002 &&
-            Math.abs(vertex.z) <= wall.halfZ + .002 && vertex.y >= -.002 &&
-            vertex.y <= wall.height + .002, 'rendered rock cannot protrude beyond its physical bank');
-        }
+      const positions = bank.geometry.attributes.position;
+      assert.ok(positions.count / 3 <= 30000, 'triangle budget');
+      for (let point = 0; point < positions.count; point += 3) {
+        const triangle = [0, 1, 2].map(index => new THREE.Vector3()
+          .fromBufferAttribute(positions, point + index));
+        for (const corner of triangle)
+          assert.ok(supported(corner), `rendered rock vertex cannot protrude beyond a physical bank: ${corner.toArray()}`);
+        vertex.copy(triangle[0]).add(triangle[1]).add(triangle[2]).divideScalar(3);
+        assert.ok(supported(vertex), 'visual triangle cannot bridge open playable space');
       }
     }
     assert.equal(JSON.stringify(course.hiddenRoad.walls), before);
   } finally {disposeTree(scene.group);}
 });
 
-check('wash half-turns vary deterministically without changing bank geometry or simulation RNG', async () => {
+for (const route of ROUTE_VARIANTS) check(`${route.label}: visual wash is joined across adjacent physical bank boxes`, async () => {
+  const {createRustwallScene} = await api(), course = courseFor(route.seed), models = fixtures();
+  const scene = createRustwallScene(course, {loadAsset: async kind => models[kind]});
+  try {
+    assert.equal(await scene.ready, true);
+    const wash = scene.group.getObjectByName('Rustwall wash');
+    const banks = meshes(wash);
+    assert.ok(banks.length <= 2 && banks.every(mesh => !mesh.isInstancedMesh),
+      'each wash side is one joined visual mesh');
+    assert.ok(banks.every(mesh => mesh.geometry.attributes.position.count > 300),
+      'joined bank spans many physical boxes with authored slope points');
+    assert.ok(wash.userData.joinedSeams >= 100, 'most adjacent physical bank boxes share a visual seam');
+    let matched = 0;
+    for (const bank of banks) {
+      const positions = bank.geometry.attributes.position;
+      assert.equal(positions.count % 36, 0, 'two six-triangle sections per bank box');
+      const same = (a, b) => [0,1,2].every(axis =>
+        Math.abs(positions.getComponent(a,axis) - positions.getComponent(b,axis)) < .00001);
+      for (let box = 0; box + 1 < positions.count / 36; box++) {
+        const oldEnd = box * 36 + 18, newStart = (box + 1) * 36;
+        if ([0,1,2].every(band => same(oldEnd + band*6 + (bank.name.includes('right') ? 1 : 2),
+          newStart + band*6 + (bank.name.includes('right') ? 2 : 1)))) matched++;
+      }
+      for (let point = 0; point < positions.count; point += 3) {
+        const a = new THREE.Vector3().fromBufferAttribute(positions,point);
+        const b = new THREE.Vector3().fromBufferAttribute(positions,point+1);
+        const c = new THREE.Vector3().fromBufferAttribute(positions,point+2);
+        const normal = b.sub(a).cross(c.sub(a));
+        assert.ok(normal.y >= -.00001, 'both bank sides face upward toward daylight');
+      }
+    }
+    assert.ok(matched >= 100, 'joined seams share exact rendered edge vertices');
+  } finally {disposeTree(scene.group);}
+});
+
+check('joined wash prepares deterministically without changing bank geometry or simulation RNG', async () => {
   const {createRustwallScene} = await api(), course = courseFor(1989);
   const untouched = courseFor(1989), wallsBefore = JSON.stringify(course.hiddenRoad.walls);
   const prepared = [];
@@ -202,38 +238,24 @@ check('wash half-turns vary deterministically without changing bank geometry or 
       const scene = createRustwallScene(course, {loadAsset: async kind => models[kind]});
       prepared.push(scene); assert.equal(await scene.ready, true);
       scene.group.updateMatrixWorld(true);
-      const banks = meshes(scene.group).filter(mesh => mesh.isInstancedMesh);
+      const banks = meshes(scene.group.getObjectByName('Rustwall wash'));
       const prototype = models.wash.scene.children[0];
-      assert.equal(banks.length, 1, 'one prototype remains one shared instance batch');
-      assert.equal(banks[0].count, course.hiddenRoad.walls.length, 'bank population is unchanged');
-      assert.equal(banks[0].geometry, prototype.geometry, 'reuse the loaded geometry');
-      assert.equal(banks[0].material, prototype.material, 'reuse the loaded material');
+      assert.ok(banks.length > 0 && banks.length <= 2, 'at most one joined draw per side');
+      assert.ok(banks.every(bank => bank.material === prototype.material), 'reuse the loaded rock material');
+      assert.ok(banks.reduce((sum, bank) => sum + bank.geometry.attributes.position.count / 3, 0) <= 30000,
+        'complete wash stays within its triangle budget');
     }
-    const first = meshes(prepared[0].group).filter(mesh => mesh.isInstancedMesh)[0];
-    const second = meshes(prepared[1].group).filter(mesh => mesh.isInstancedMesh)[0];
-    assert.deepEqual(Array.from(first.instanceMatrix.array), Array.from(second.instanceMatrix.array),
-      'same course identities prepare identical bank matrices');
+    const first = meshes(prepared[0].group.getObjectByName('Rustwall wash'));
+    const second = meshes(prepared[1].group.getObjectByName('Rustwall wash'));
+    for (const field of ['position', 'uv']) assert.deepEqual(
+      first.map(bank => Array.from(bank.geometry.attributes[field].array)),
+      second.map(bank => Array.from(bank.geometry.attributes[field].array)),
+      `same course identities prepare identical ${field} data`);
     assert.equal(JSON.stringify(course.hiddenRoad.walls), wallsBefore);
     assert.deepEqual(Array.from({length: 4}, () => course.rng.float()),
       Array.from({length: 4}, () => untouched.rng.float()), 'presentation never consumes simulation RNG');
-    const orientations = new Set(), matrix = new THREE.Matrix4();
-    for (let index = 0; index < first.count; index++) {
-      const wall = course.hiddenRoad.walls[index];
-      first.getMatrixAt(index, matrix); matrix.premultiply(first.matrixWorld);
-      const inverse = new THREE.Matrix4().compose(new THREE.Vector3(wall.x, wall.y, wall.z),
-        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), wall.heading),
-        new THREE.Vector3(1, 1, 1)).invert();
-      matrix.premultiply(inverse);
-      const sign = matrix.elements[0] >= 0 ? 1 : -1;
-      orientations.add(sign);
-      const expected = new THREE.Matrix4().makeScale(sign * wall.halfX, wall.height, sign * wall.halfZ);
-      for (let element = 0; element < 16; element++) near(matrix.elements[element],
-        expected.elements[element], 'only a local Y half-turn may change the bank transform',
-        element >= 12 && element <= 14 ? .002 : 1e-5);
-    }
-    assert.deepEqual([...orientations].sort(), [-1, 1], 'both original and half-turned faces must occur');
-    // The existing all-vertex oriented-envelope test also runs on these new
-    // orientations; its tolerance and collision/budget acceptance stay fixed.
+    // The preceding vertex and centroid test retains the original physical
+    // envelope, with the same 2 mm representation tolerance.
   } finally {for (const scene of prepared) disposeTree(scene.group);}
 });
 
