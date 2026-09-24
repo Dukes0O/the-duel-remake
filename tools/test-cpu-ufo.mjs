@@ -266,17 +266,49 @@ for (const flagged of [false, true]) {
     assert.equal(f.state.routeId, null);
   });
 
-  check(`${flagged}: CPU pickup jump leaves scheduled attacks alone`, () => {
+  check(`${flagged}: CPU holds UFO without a recognized player-bolt threat and preserves attack cadence`, () => {
     for (const difficulty of ['medium', 'hard']) {
       const f = field(flagged, difficulty), actor = charge(f, 2);
       const start = actor.s;
       f.combat.aiTimer = 3;
       const shots = f.combat.aiShot;
       stepCombatAI(f.duel, .1);
-      assert.equal(actor.s, start + T.ufo.baseDistance);
-      near(f.combat.aiTimer, 2.9, 'UFO neither resets nor spends the attack timer');
+      assert.equal(actor.s, start, 'a collected UFO is not a free racing boost');
+      assert.equal(cpuPickupCharges(f.state, f.combat, actor).ufo, 1);
+      near(f.combat.aiTimer, 2.9, 'holding a UFO leaves the attack timer alone');
       assert.equal(f.combat.aiShot, shots);
       assert.equal(f.combat.projectiles.length, 0);
+      const incoming = () => ({kind: 'crossbow', enemy: false, age: 1,
+        x: actor.lateral, y: T.pointHeight, z: actor.s + 40,
+        vx: 0, vy: 0, vz: -200});
+      const controls = [
+        ['enemy projectile', {enemy: true}], ['different weapon', {kind: 'bomb'}],
+        ['reaction too early', {age: 0}], ['behind vision cone', {z: actor.s - 40, vz: 200}],
+        ['above car', {y: 100}], ['receding', {vz: 200}],
+        ['lateral miss', {x: actor.lateral + 50}],
+      ];
+      for (const [label, overrides] of controls) {
+        f.combat.projectiles = [{...incoming(), ...overrides}];
+        stepCombatAI(f.duel, .01);
+        assert.equal(actor.s, start, `${label} does not spend a defensive UFO`);
+        assert.equal(cpuPickupCharges(f.state, f.combat, actor).ufo, 1);
+      }
+      actor.combatShield = 1;
+      f.combat.projectiles = [incoming()];
+      stepCombatAI(f.duel, .01);
+      assert.equal(actor.s, start, 'already shielded rival retains its UFO');
+      assert.equal(cpuPickupCharges(f.state, f.combat, actor).ufo, 1);
+      actor.combatShield = 0;
+      const attackTimer = f.combat.aiTimer, attackShots = f.combat.aiShot;
+      stepCombatAI(f.duel, .01);
+      assert.equal(actor.s, start + T.ufo.baseDistance, 'recognized incoming player bolt triggers defense');
+      assert.equal(cpuPickupCharges(f.state, f.combat, actor).ufo, 0);
+      near(f.combat.aiTimer, attackTimer - .01, 'defense does not reset or spend an attack');
+      assert.equal(f.combat.aiShot, attackShots);
+      assert.equal(f.combat.projectiles.length, 1, 'defense does not invent another projectile');
+      assert.equal(f.events.filter(event => event.cpuPickupUsed === 'ufo').length, 1);
+      stepCombatAI(f.duel, .01);
+      assert.equal(actor.s, start + T.ufo.baseDistance, 'same threat cannot reuse the lap charge');
       const control = field(flagged, difficulty);
       control.combat.aiTimer = null;
       stepCombatAI(control.duel, .1);
@@ -285,12 +317,25 @@ for (const flagged of [false, true]) {
     }
   });
 
-  check(`${flagged}: all rival identities agree at common time 30/60/144`, () => {
+  check(`${flagged}: all rival identities hold then defend once at common time 30/60/144`, () => {
     for (let index = 0; index < 3; index++) {
       const outcomes = [30, 60, 144].map(fps => {
         const f = field(flagged), actor = charge(f, index), start = actor.s;
-        for (let frame = 0; frame < fps / 2; frame++) stepCombatAI(f.duel, 1 / fps);
-        assert.equal(actor.s, start + T.ufo.baseDistance, 'exactly one jump at common time');
+        const advance = seconds => {
+          let elapsed = 0;
+          while (elapsed < seconds - 1e-10) {
+            const dt = Math.min(1 / fps, seconds - elapsed);
+            stepCombatAI(f.duel, dt); elapsed += dt;
+          }
+        };
+        advance(.25);
+        assert.equal(actor.s, start, 'common-time no-threat phase never adds free race progress');
+        assert.equal(cpuPickupCharges(f.state, f.combat, actor).ufo, 1);
+        f.combat.projectiles = [{kind: 'crossbow', enemy: false, age: 1,
+          x: actor.lateral, y: T.pointHeight, z: actor.s + 40,
+          vx: 0, vy: 0, vz: -200}];
+        advance(.25);
+        assert.equal(actor.s, start + T.ufo.baseDistance, 'exactly one defensive jump at common time');
         assert.equal(jump(f, actor), false, 'cannot reuse the spent lap');
         return {pose: pose(actor), charges: cpuPickupCharges(f.state, f.combat, actor),
           playerHistory: f.combat.ufoUsedLaps, shots: f.combat.aiShot,
