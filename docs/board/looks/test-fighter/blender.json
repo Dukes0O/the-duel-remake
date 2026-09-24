@@ -1,0 +1,52 @@
+{
+  "blender": "4.5.13 LTS",
+  "camera": {
+    "position": [
+      0,
+      0.9,
+      5
+    ],
+    "target": [
+      0,
+      0.9,
+      0
+    ],
+    "verticalFov": 28,
+    "width": 576,
+    "height": 640,
+    "distanceMetres": 5
+  },
+  "poses": [
+    {
+      "clip": "idle",
+      "time": 0.25,
+      "views": [
+        "front",
+        "side",
+        "back"
+      ]
+    },
+    {
+      "clip": "walk",
+      "time": 0.25,
+      "views": [
+        "front",
+        "side",
+        "back"
+      ]
+    },
+    {
+      "clip": "knockdown",
+      "time": 1,
+      "views": [
+        "front",
+        "side",
+        "back"
+      ]
+    }
+  ],
+  "triangles": 7708,
+  "materials": 1,
+  "axis": "Blender Z-up/-Y-forward; export_yup converts once to Three Y-up/+Z-forward",
+  "reference": "public/assets/reference/wasteland-crew-1.png; left Rook figure triplet"
+}
