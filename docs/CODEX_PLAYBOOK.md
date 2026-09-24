@@ -6,11 +6,18 @@ The integration worktree and task board are active under Kyle's approval of D2
 on 23 September 2026. The live game still follows the full release gate in
 section 7.
 
+Read `SPEC.md` section 0 first. It takes precedence over conflicting later
+text and examples. Finish the ordered cards in section 0.6 before other new
+work; its listed existing cards continue when a lane is free. Section 7 here
+implements the minimum gate in SPEC 0.5. D8 is still awaiting Kyle's approval:
+do not push `integration/wasteland` or align GitHub `main` under that proposal.
+D4 already permits pushing `master` after a release.
+
 ## 1. The short version
 
 - **One planner, several builders, independent checkers.** A Director thread plans and assigns. Up to four builder threads ("lanes") work at the same time, each in its own copy of the project. The agent that writes code never grades its own work: separate agents write the tests, review the change and check the game in a browser.
 - **Nobody works in the live folder.** `C:\Users\kyleb\dev\the-duel-remake` is what the desktop shortcut runs. Only the Release Manager touches it, and only to install a finished, tested build.
-- **Automatic checks replace phase sign-offs.** Every change passes the same gates: its own tests, a merge check, and a full check before every release. Unfinished features ship switched off (behind a feature switch), so work never has to wait for a phase to finish.
+- **Automatic checks replace phase sign-offs.** Every merge needs the lane tier and build. Full tests run after 5 merges or 2 hours of merging, whichever comes first, at session end, and on the exact release commit. Card-specific checks and the full release evidence in section 7 still apply. Unfinished features ship behind a feature switch.
 - **You steer without blocking.** You answer the standing decisions once, play the "Experimental" builds when you like, and drop notes in the play-test inbox. Agents turn notes into tasks.
 
 ## 2. Words used here
@@ -46,8 +53,8 @@ section 7.
  Integrator thread (own worktree on integration/wasteland)
   merge queue, one change at a time, merge gate
   ▼
- Full check (Integrator, before each release and after every five merges)
-  full suite, balance report, browser scenarios, frame pacing, art checks
+ Full tier (Integrator, 5 merges or 2 hours, session end, exact release commit)
+  release also needs balance, browser, frame pacing, art and save evidence
   ▼
  Release Manager thread
   under your standing release rule: master + build + live game
@@ -100,24 +107,44 @@ section 7.
 
 1. **Pick.** The lane takes the top `ready` card for its lane from `docs/board/board.yaml` on the integration branch. A card is ready when everything in its `needs` list is merged, or marked `spike-complete` for a throwaway research spike that the spec says not to merge.
 2. **Start clean.** New worktree from the latest `integration/wasteland`, branch `lane/<lane>/<task-id>-<short-name>`. Run `npm ci`. Use this lane's private port (section 11).
-3. **Tests first.** Spawn `test_author` with the card. It adds failing tests and reports which fail and why. The lane confirms they fail for the right reason.
+3. **Tests first.** Spawn `test_author` with the card. It adds failing tests and reports which fail and why. The lane confirms they fail for the right reason. Docs-only cards need independent review and the lane/build gate, without new tests that merely check wording.
 4. **Build.** The lane implements, staying inside the card's `owns` and `hooks` files. If the task needs another file, stop and ask the Director to re-slice.
-5. **Check.** Spawn `test_runner` for tier 1 (`node tools/run-tests.mjs --tier lane --changed`). Fix until green.
-6. **Refine.** If the card changes anything seen or heard, run the look loop (`browser_qa` shots, then `art_critic`) and/or the sound loop (`audio_qa`) from SPEC.md 10.1. At least two rounds, at most five. Gameplay cards run the feel lab with `balance_analyst`.
+5. **Check.** Spawn `test_runner` for `node tools/run-tests.mjs --tier lane --changed --jobs 8` and `npm run build`. Fix until green. These are required before every merge, including docs-only, tuning-only and doc-plus-code changes.
+6. **Refine.** If the card changes anything seen or heard, run its browser, look and/or sound checks. For the eight asset families in SPEC 0.3, use that Blender fidelity loop (at least 3 rounds before beta); elsewhere use the look and sound loops in SPEC 10.1 (two to five rounds). Gameplay cards run the feel lab with `balance_analyst`.
 7. **Review.** Spawn `reviewer`, plus `save_guardian`, `browser_qa` or `balance_analyst` when the card lists them. Fix every finding or answer it with evidence. Repeat review until clean. After three rounds without a clean result, stop and hand the card back to the Director.
 8. **Hand off.** Write `docs/changes/<task-id>.md` with `status: ready-to-merge` and the evidence. Commit on the lane branch. The thread's final message is the change note.
-9. **Merge.** The Integrator finds branches whose change note says `ready-to-merge`, merges them one at a time and runs the merge gate. If the gate fails, the branch goes back to its lane with the failure.
+9. **Merge.** The Integrator verifies the current lane/build gate and independent review before each merge, then merges one lane at a time. Changes or conflict fixes need the gate again before completion. Refresh STATUS after every merge and follow the full-tier schedule in section 7. A failed gate returns the branch to its lane with the failure.
 
 ## 7. Gates
 
 | Gate | When | What must pass | Time target |
 | --- | --- | --- | --- |
-| Lane gate | Before review | Tests for the changed files, the quick smoke set, fingerprints, production build | under 5 min |
-| Merge gate | Before each merge into integration | Every suite with the long campaign runs skipped (run in parallel), production build, browser smoke (menu, start a race in both quality settings, zero console errors), fingerprints unchanged unless the card says behavior changes on purpose | under 10 min |
-| Full check | Before every release, and after every five merges into integration | Every suite including the 85 campaign runs, balance report within targets, `node tools/run-browser-scenarios.mjs --all` for browser scenarios, frame pacing compared with the last release, art check, storage budget check | under 45 min |
-| Release gate | Before touching the live folder | Full check green on the exact commit, change notes compiled into `README.md` and `docs/VERIFICATION.md`, feature switch list reviewed | minutes |
+| Lane / merge floor | Before review and every merge, including docs-only, tuning-only and doc-plus-code changes | `node tools/run-tests.mjs --tier lane --changed --jobs 8` and `npm run build`; current evidence for the reviewed change | about 5 min |
+| Full tier | After every 5 merges or 2 hours of merging, whichever comes first; also at every session and overnight-run end | `node tools/run-tests.mjs --tier full --jobs 8 --keep-going`, with all suites including campaigns | about 6 min |
+| Release gate | Before every release and before touching the live folder | Full tier green on the exact final integration commit, including small and tuning-only releases; full release evidence below; change notes compiled into `README.md` and `docs/VERIFICATION.md`; feature switch list reviewed | depends on checks |
 
-**Stop the line.** If the merge gate fails on integration itself, or the full check fails, the Integrator puts a fix card at the top of the board. Only fixes merge until integration is green again. Lanes keep building on their own branches meanwhile, so work doesn't pause.
+**Feature and release evidence.** The minimum merge floor does not replace
+card-specific browser, visual, audio, gameplay, fingerprint or save checks.
+Before release, retain the full check: production build, combat balance within
+targets with `wasteland2` both off and on, all browser scenarios, frame pacing
+against the last release, art checks and save/storage budgets as applicable.
+Record results or a reason a check does not apply; unmeasured evidence is not
+a pass. The older merge tier is available for a specific concern, but is not
+an additional mandatory gate for every merge.
+
+**Status and provenance.** Run `node tools/build-status.mjs` on integration
+after every merge and at the end of every session. It updates
+`docs/board/STATUS.md`; the full runner records its commit and result in
+`docs/board/checks/full-tier.json`. Finish source and release-note commits
+before the release full run. Committing a generated status page or other
+metadata creates a new commit that needs its own full run before release.
+Keep the last full-run time and merge count in the run log so a resumed
+session preserves the 5-merge / 2-hour deadline.
+
+**Stop the line.** A failing pre-merge gate blocks that merge. If integration
+itself is red or a full run fails, the Integrator puts a fix card first and
+stops feature merges. Only fixes merge until the full tier passes again.
+Lanes may keep building on their own branches.
 
 **Fingerprint changes are behavior changes.** A card that changes how races behave must say so. The reviewer approves the new fingerprint with a written reason in the change note. A refactor card must leave every fingerprint unchanged.
 
@@ -152,14 +179,17 @@ Rollback: restore `dist-previous`, or switch the feature off and release again.
 
 ## 10. Files to install
 
-Install these on the integration branch as task FND-05. Nothing is active until then.
+FND-05 installed these on integration. Keep examples aligned with the current
+root `AGENTS.md` and SPEC section 0; they are not a second set of gates.
 
 ### 10.1 `AGENTS.md` (repository root)
 
 ```markdown
 # The Duel: rules for every agent
 
-Read SPEC.md for what we are building and docs/CODEX_PLAYBOOK.md for how work flows.
+Read SPEC.md section 0 first; it wins over conflicting later text. Finish the ordered
+0.6 cards before other new work, allowing its listed existing cards when lanes are free.
+Read docs/CODEX_PLAYBOOK.md for how work flows.
 Your task card is in docs/board/board.yaml. Stay inside its `owns` and `hooks` files.
 
 ## Never
@@ -183,13 +213,22 @@ Your task card is in docs/board/board.yaml. Stay inside its `owns` and `hooks` f
 - Docs use plain language: short sentences, common words, no em dashes.
 
 ## Commands
-- Lane gate:   node tools/run-tests.mjs --tier lane --changed --jobs 8
-- Merge gate:  node tools/run-tests.mjs --tier merge --jobs 12 && npm run build && node tools/browser-harness.mjs smoke
-- Full check:  node tools/run-tests.mjs --tier full --jobs 10 && node tools/combat-balance.mjs --check
+- Before every merge: node tools/run-tests.mjs --tier lane --changed --jobs 8
+  and npm run build, including docs-only, tuning-only and doc-plus-code changes.
+- Full tier: node tools/run-tests.mjs --tier full --jobs 8 --keep-going
+  after 5 merges or 2 hours of merging, whichever comes first, and at every session
+  and overnight-run end. A failed full run stops feature merges until fixed and green.
+- Release: full tier on the exact final commit, plus the full release evidence in
+  playbook section 7 (build, balance off/on, browser, frame pacing, art and save checks).
+  Card-specific checks still apply.
+- After every merge and session end: node tools/build-status.mjs updates docs/board/STATUS.md.
+  A later metadata commit does not inherit an earlier full pass.
 - List suites: node tools/run-tests.mjs --list
+- D8 is unapproved: do not push integration/wasteland or align GitHub main.
+  D4 permits pushing master after release.
 
 ## Done means
-- The card's acceptance lines are true and shown by tests.
+- The card's acceptance lines are shown by tests or independent review for docs-only work.
 - The lane gate passes. Reviewer findings are fixed or answered with evidence.
 - docs/changes/<task-id>.md lists what changed, commands run with results, and any
   fingerprint or test changes with reasons.
@@ -455,9 +494,18 @@ Paste these to start each thread. Replace the parts in angle brackets.
 ### Director
 
 ```
-You are the Director for the Wasteland expansion. Read SPEC.md, docs/CODEX_PLAYBOOK.md,
+You are the Director for the Wasteland expansion. Read SPEC.md section 0 first; it wins
+over conflicting later text. Read docs/CODEX_PLAYBOOK.md,
 docs/board/board.yaml and docs/playtest-inbox.md.
 You plan; you do not write game code. Keep at most four builder lanes busy.
+Finish the ordered SPEC 0.6 cards before other new work; its listed existing cards may
+continue when a lane is free. Enforce section 7: before EVERY integration merge,
+node tools/run-tests.mjs --tier lane --changed --jobs 8 and npm run build.
+Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going after 5 merges
+or 2 hours of merging, whichever comes first, and at every session and overnight-run end.
+Failed full runs stop feature merges until fixed and green. Release needs full on the exact
+final commit and the complete section 7 release evidence. Run node tools/build-status.mjs
+after every merge and at session end. D8 remains unapproved; D4 permits master pushes after release.
 Each time a lane finishes or a note arrives:
 1. Update board statuses from merged branches and change notes.
 2. Mark cards ready when everything in `needs` is merged.
@@ -473,7 +521,8 @@ Once a week, write a one-page plain-language summary to docs/playtest-inbox.md.
 ```
 You are the <LANE> lane. Work only in this worktree, on port <PORT>.
 Take the top ready card for <LANE> from docs/board/board.yaml on integration/wasteland.
-Follow docs/CODEX_PLAYBOOK.md section 6 exactly: branch, npm ci, test_author first, build inside
+Read SPEC section 0 first and follow docs/CODEX_PLAYBOOK.md section 6: branch, npm ci,
+test_author first except for docs-only cards, build inside
 the card's files, test_runner lane gate, reviewer plus the card's helpers, fix until clean,
 write docs/changes/<id>.md with status ready-to-merge, commit. Then take the next ready card.
 If you need a file outside the card, stop and ask the Director.
@@ -483,24 +532,39 @@ If you need a file outside the card, stop and ask the Director.
 
 ```
 You are the Integrator. Work in the integration worktree on integration/wasteland, port 5176.
+Read SPEC section 0 first; it wins. Respect the ordered cards in 0.6 and section 7's gates.
 Loop:
 1. List lane branches whose docs/changes/<id>.md says ready-to-merge, oldest first.
-2. Merge one. Resolve conflicts only when the resolution is obvious from both change notes;
+2. Before EVERY merge, verify current passing independent evidence for
+   node tools/run-tests.mjs --tier lane --changed --jobs 8 and npm run build, including
+   docs-only, tuning-only and doc-plus-code changes. Keep the card's specific checks.
+3. Merge one. Resolve conflicts only when the resolution is obvious from both change notes;
    otherwise send the branch back to its lane with the conflict described.
-3. Run the merge gate from AGENTS.md. Green: keep the merge and set the note to merged.
-   Red: undo the merge and send the failure to the lane.
-4. If integration itself is red, stop the line: put a fix card at the top of the board and merge
-   only fixes until green.
+   Changes or conflict fixes need the lane/build gate again before completing the merge.
+   Failed gate: return the branch to its lane. Green: set the note to merged.
+4. Run node tools/build-status.mjs after every merge. Record the merge count and full-run time.
+5. Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going after 5 merges or 2 hours
+   of merging, whichever comes first, and at every session and overnight-run end.
+   If integration or full is red, stop feature merges; only fixes merge until full is green.
+6. Before release, run full on the exact final integration commit and collect section 7's
+   full release evidence. Refresh STATUS at session end. D8 is awaiting approval: no
+   integration push or GitHub main alignment; D4 permits master pushes after release.
 ```
 
-### Full check (run by the Integrator before each release and after every five merges)
+### Full tier and release evidence (run by the Integrator)
 
 ```
-Check out the latest integration/wasteland. Run npm ci, then the full check from AGENTS.md,
-then node tools/browser-harness.mjs scenarios --all and node tools/check-art-intake.mjs.
-Write docs/board/checks/<date>-<commit>.md with pass/fail per gate, timings, balance table, frame pacing
-compared with the last release, and screenshot paths. If anything failed, add a fix card
-proposal at the top of that file for the Director.
+In integration/wasteland, run node tools/run-tests.mjs --tier full --jobs 8 --keep-going
+after 5 merges or 2 hours of merging, whichever comes first, and at every session and
+overnight-run end. Before every release run it on the exact final commit. Install locked
+dependencies with npm ci if needed. Record the commit, timings and pass/fail; the runner
+writes docs/board/checks/full-tier.json. A failed full run stops feature merges until fixed
+and a full rerun passes.
+For release, also collect section 7's full evidence: build, combat balance off and on,
+node tools/run-browser-scenarios.mjs --all, frame pacing against the last release,
+node tools/check-art-intake.mjs, and save/storage checks as applicable. Record evidence in
+docs/board/checks/<date>-<commit>.md, including screenshots and any fix proposals.
+Run node tools/build-status.mjs at session end. Later commits need their own full run.
 ```
 
 ### Release Manager
@@ -509,12 +573,15 @@ proposal at the top of that file for the Director.
 You are the Release Manager, the only agent allowed in C:\Users\kyleb\dev\the-duel-remake.
 Follow the standing release rule in SPEC.md section 15 (D3).
 1. Fold docs/changes/ notes into README.md and docs/VERIFICATION.md on integration, commit.
-2. Confirm the full check is green for that exact final integration commit.
+2. Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going on that exact final
+   integration commit. Confirm all section 7 release evidence is green; no exception for
+   small or tuning-only releases. Refresh STATUS after merges and at session end.
 3. In the live folder: confirm a clean working tree and fast-forward master to that commit.
    Build dist-next, check it on a private port, back up dist as dist-previous, then install
    hashed assets before index.html and build-version.json as docs/OPERATIONS.md describes.
 4. Do not restart or refresh the running game. Its menu offers Reload when it sees the new build.
-5. Push master to GitHub as the approved D4 backup.
+5. Push master to GitHub as the approved D4 backup. D8 remains unapproved: do not push
+   integration/wasteland or align GitHub main under that proposal.
 6. Add "What's new to try" to docs/playtest-inbox.md in plain language.
 Rollback on request: restore dist-previous, or switch the feature off and release again.
 ```
@@ -530,6 +597,9 @@ Never edit files.
 
 ## 13. First day
 
+Historical foundation sequence. For current work, follow SPEC 0.6's ordered
+cards before other new work, with its named existing cards continuing.
+
 1. You answer the standing decisions in `SPEC.md` section 15.
 2. OPS lane: FND-01 (live game safety) and FND-02 (operations doc).
 3. OPS lane: FND-04 (line endings), the first commit on the new base.
@@ -542,7 +612,7 @@ Never edit files.
 
 ## 14. Autonomous mode: one session that keeps going
 
-Use this when you want Codex to work through wave after wave with nobody at the keyboard. The rules behind it are in `SPEC.md` section 4.7.
+Use this when you want Codex to work through wave after wave with nobody at the keyboard. SPEC section 0 takes precedence over section 4.7 and the older wave plan.
 
 ### 14.1 Why one session
 
@@ -587,39 +657,55 @@ sandbox bypass flag.
 
 ```
 repeat until: no card is ready, the budget is nearly spent, or Kyle says stop
-  1. Read board.yaml, run-log.md, decisions.md, playtest-inbox.md
-  2. Turn new notes into cards; expand one-line cards (SPEC 12.4); mark ready cards
+  1. Read SPEC section 0, board.yaml, run-log.md, decisions.md, playtest-inbox.md
+  2. Follow the ordered SPEC 0.6 cards before other new work; its listed existing cards
+     may continue. Turn notes into cards; expand one-line cards; mark ready cards
   3. Fill free lanes (at most 4) with the top ready card each
   4. For each lane with a card, next step of section 6:
-       test_author → builder → test_runner → refine loops → reviewer (+ helpers) → change note
-  5. Merge ready-to-merge lanes one at a time through the merge gate
-  6. After every five merges, or when a wave's cards are all merged: run the full check
+       tests as needed → builder → test_runner → refine loops → reviewer (+ helpers) → change note
+  5. Before EVERY merge, verify node tools/run-tests.mjs --tier lane --changed --jobs 8
+     and npm run build, then merge one
+     lane at a time. Run node tools/build-status.mjs after every merge
+  6. Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going after 5 merges or 2 hours of merging,
+     whichever comes first. Failed full stops feature merges until fixed and full is green
   7. Wave finish line met? Write docs/board/waves/<wave>.md; start its polish wave;
-     after its polish wave, move the milestone's switches to beta and release
+     move switches only under SPEC section 0 and section 8, then release only after the
+     exact-final-commit full tier and all section 7 release evidence pass
   8. Append one line per event to run-log.md (card started, merged, parked, decision, release)
-  9. Check the budget before taking a new card
+  9. Check the budget before taking a new card. At every session and overnight-run end,
+     run node tools/run-tests.mjs --tier full --jobs 8 --keep-going and node tools/build-status.mjs
 ```
 
 ### 14.4 Start prompt
 
 ```
 You are the Director in autonomous mode for the Wasteland expansion. Work in this folder
-(integration/wasteland). Read SPEC.md (especially 4.7, 10.1, 12 and 12.4), docs/CODEX_PLAYBOOK.md
+(integration/wasteland). Read SPEC.md section 0 first; it wins over later text (4.7, 10.1,
+12 and 12.4). Read docs/CODEX_PLAYBOOK.md
 (especially 6, 7 and 14), AGENTS.md and everything in docs/board/.
 Budget for this run: <for example "until milestone M2" or "about 30% of my Codex usage">.
-Follow the loop in playbook 14.3 without asking me anything. Everything in SPEC.md is approved.
+Follow playbook 14.3 and finish the ordered SPEC 0.6 cards before other new work, allowing
+its listed existing cards when lanes are free. Follow the approved standing decisions.
+D8 is still unapproved: no integration push or GitHub main alignment. D4 permits pushing
+master after release. Before EVERY merge require
+node tools/run-tests.mjs --tier lane --changed --jobs 8 and npm run build.
+Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going after 5 merges or 2 hours of merging, whichever
+comes first, and at every session and overnight-run end. Failed full stops feature merges
+until fixed and full is green. Run node tools/build-status.mjs after each merge and session end.
 When the spec has no answer, decide, log it in docs/board/decisions.md, and continue. Park only
 what SPEC.md 4.7 says to park, and keep going with other cards. Run helpers yourself, one lane
 folder each under .lanes/, at most four lanes at once. Never touch port 5174 or real saves.
-Release only under D3 with a green full check. Keep run-log.md current so a fresh session can
-resume. When the budget is nearly spent: finish cards in progress, run a full check, write a
+Release only under D3 with full green on the exact final commit and all section 7 release
+evidence. Keep run-log.md current, including the full-run time and merge count. When the
+budget is nearly spent: finish cards in progress, run full and refresh STATUS, write a
 handoff at the end of run-log.md and stop.
 ```
 
 ### 14.5 Resume prompt
 
 ```
-Resume the autonomous Wasteland run. Read docs/board/run-log.md from the last handoff, then
+Resume the autonomous Wasteland run. Read SPEC section 0 first, then docs/board/run-log.md
+from the last handoff and preserve its merge count and full-run deadline. Then read
 board.yaml, decisions.md and waves/. Check each .lanes/ worktree: finish or discard half-done
 work as the log describes, never losing committed work. Then continue the loop in playbook 14.3
 with this budget: <budget>.
@@ -628,6 +714,7 @@ with this budget: <budget>.
 ### 14.6 What you'll see without asking
 
 - `docs/playtest-inbox.md`: "What's new to try" after each release, and the weekly summary.
+- `docs/board/STATUS.md`: build, full-run, feature, lane and backup state after each merge and session end.
 - `docs/board/decisions.md`: every choice the Director made that the spec didn't cover, with how to reverse it.
 - `docs/board/looks/<card>/`: before and after pictures from every look loop.
 - `docs/board/waves/`: evidence that each wave met its finish line.
