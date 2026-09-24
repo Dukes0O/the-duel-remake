@@ -1,0 +1,133 @@
+{
+  "crew": "cinder",
+  "round": 1,
+  "blender": "4.5.13 LTS",
+  "seconds": 6.814047299994854,
+  "triangles": {
+    "near": 4696,
+    "far": 1880
+  },
+  "materials": 1,
+  "texture": [
+    1024,
+    1024
+  ],
+  "height": 1.76,
+  "clips": [
+    "idle",
+    "walk",
+    "sprint",
+    "jump",
+    "knockdown",
+    "get-up",
+    "aim",
+    "fire",
+    "reload",
+    "repair",
+    "enter",
+    "exit"
+  ],
+  "axis": "Blender Z-up/-Y-forward; export_yup once to glTF Y-up/+Z-forward",
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-2.png",
+    "sha256": "34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9",
+    "crops": [
+      {
+        "view": "front",
+        "crop": [
+          0,
+          29,
+          233,
+          664
+        ],
+        "atlas": [
+          0,
+          0,
+          341,
+          1024
+        ],
+        "centre": 111
+      },
+      {
+        "view": "side",
+        "crop": [
+          178,
+          29,
+          372,
+          664
+        ],
+        "atlas": [
+          341,
+          0,
+          683,
+          1024
+        ],
+        "centre": 275
+      },
+      {
+        "view": "back",
+        "crop": [
+          323,
+          29,
+          567,
+          664
+        ],
+        "atlas": [
+          683,
+          0,
+          1024,
+          1024
+        ],
+        "centre": 445
+      }
+    ],
+    "process": "Bilinear three-view crop atlas; deterministic horizontal neutral-background edge extension. Originals untouched."
+  },
+  "camera": {
+    "position": [
+      0,
+      0.96,
+      5
+    ],
+    "target": [
+      0,
+      0.96,
+      0
+    ],
+    "verticalFov": 28,
+    "width": 432,
+    "height": 576,
+    "distanceMetres": 5
+  },
+  "files": {
+    "cinder.glb": "20029810a5949bae7d36406c0bb3c067a92e0e714b9a0dfa0e33fa76cf80b4ef",
+    "cinder.blend": "f029f06e597417fcc7f47e890945224d57843696eb7b3f3a8fb12f253950175b",
+    "cinder-color.png": "6e9f78701540ff4c31d77f4c7e0fd0d073762aac1518b17c40b0cc39fdb44229"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/crew/round-1/blender-cinder-idle-front.png",
+      "sha256": "713f2180e1c4bfef3e622591f0b8ab807b3370dcff9182670a57a5a5ce52f4ee",
+      "view": "front",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 0
+    },
+    {
+      "path": "docs/board/looks/crew/round-1/blender-cinder-idle-side.png",
+      "sha256": "5ae1df454c9326ce09ba39e69ac1bd73d57b4b9bba56b331718c169551890fec",
+      "view": "side",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 1.5707963267948966
+    },
+    {
+      "path": "docs/board/looks/crew/round-1/blender-cinder-idle-back.png",
+      "sha256": "bfed7542e5a52b53b433fb2eb41dfc424cd8c3141a1faaf1d9464161ecf892c2",
+      "view": "back",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 3.141592653589793
+    }
+  ]
+}

@@ -1,0 +1,647 @@
+{
+  "round": 2,
+  "observationCommit": "53e32ee55360308926a454c0ac39a0c8bc1331c3",
+  "assets": {
+    "rook": {
+      "path": "public/assets/models/wasteland/crew/rook.glb",
+      "sha256": "7e1a5953b17d070fc7df41ed834b6a1f6a85260cdc45ec65899f8abaacd6fa3b"
+    },
+    "nell": {
+      "path": "public/assets/models/wasteland/crew/nell.glb",
+      "sha256": "61666cd0a54218d082ae2a4511d025787cbfa30789a1435d4bc8c05a9f524ab1"
+    },
+    "jax": {
+      "path": "public/assets/models/wasteland/crew/jax.glb",
+      "sha256": "bcc4684cc5dfa987d91e5eadd210e48e379d1252a1af7c40ecddc84a8c941720"
+    },
+    "odessa": {
+      "path": "public/assets/models/wasteland/crew/odessa.glb",
+      "sha256": "4bb75ce75fbf8b3d839f9b2121cf2f2a8f1e552ede7074e84c9d8804f419d800"
+    },
+    "cinder": {
+      "path": "public/assets/models/wasteland/crew/cinder.glb",
+      "sha256": "a3479123d8ea7919fdb7e5e05655a03a6900255ca536dfb57bf257918a5bea2c"
+    },
+    "dune": {
+      "path": "public/assets/models/wasteland/crew/dune.glb",
+      "sha256": "f75893bd47435925732629cea10b467f1e82372a650e5fd4fa32e9c28012df2a"
+    },
+    "wren": {
+      "path": "public/assets/models/wasteland/crew/wren.glb",
+      "sha256": "b2731b08e0a7804782bb4d7140ab5c5914071b80887e72d4a662c5006fc7fe34"
+    },
+    "tusk": {
+      "path": "public/assets/models/wasteland/crew/tusk.glb",
+      "sha256": "fcec515684e564ea4ecb7b4f092aba54f5dd71779df26cc7deb3d79f3203cb26"
+    }
+  },
+  "sources": {
+    "public/assets/models/wasteland/crew/rook.glb": "7e1a5953b17d070fc7df41ed834b6a1f6a85260cdc45ec65899f8abaacd6fa3b",
+    "public/assets/reference/wasteland-crew-1.png": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058",
+    "docs/board/looks/crew/round-2/blender-rook-idle-front.png": "487d50e845b804cdfa5e0033c13ba9d3e9687236d1a31b6e7469e066843e1b49",
+    "docs/board/looks/crew/round-2/game-high-rook-idle-front.png": "cb52924b47038f8defd3f0773ca20fdf6a70322c13414810d0d0d90152dddabf",
+    "docs/board/looks/crew/round-2/game-performance-rook-idle-front.png": "1f5b464e0b21ea0060d28dc742b4351e4df9264ee6391d1a87d623dd4eae0e83",
+    "docs/board/looks/crew/round-2/blender-rook-idle-side.png": "f6007f3a5f6dc65e97821e723d4c35e77744ad8f1da48bafd3cfc7f6130325de",
+    "docs/board/looks/crew/round-2/game-high-rook-idle-side.png": "27400453cd65fbeb8dbdb537199ce1d20cd48d6f99759f6e46d0015c815f34ce",
+    "docs/board/looks/crew/round-2/game-performance-rook-idle-side.png": "25d88ec0344b6efe3197fe933c30eb837ccdd272161411ff0b0596576b43334f",
+    "docs/board/looks/crew/round-2/blender-rook-idle-back.png": "9c72125ef3390a6fd0bfa26e7e344666db5dec26c665be203dc3204eedec28fc",
+    "docs/board/looks/crew/round-2/game-high-rook-idle-back.png": "b9d2252c2b2b9fbb12f5462ab1c26b1092fcd5af2e0f7049b12298800325a96d",
+    "docs/board/looks/crew/round-2/game-performance-rook-idle-back.png": "0ef30c8768c744b885c9689bf01e620da7dc148393c8b3063ba68cf21521be99",
+    "public/assets/models/wasteland/crew/nell.glb": "61666cd0a54218d082ae2a4511d025787cbfa30789a1435d4bc8c05a9f524ab1",
+    "docs/board/looks/crew/round-2/blender-nell-idle-front.png": "1ca603511a3d89ef447565cdc8250f0d0d76fcbfb9dd69e49b24b73fc45565c1",
+    "docs/board/looks/crew/round-2/game-high-nell-idle-front.png": "fbc57c6cb2dfe23de6c6e7d859bf54ede9d80ad6dc7a04f7434feadb2c0c6c38",
+    "docs/board/looks/crew/round-2/game-performance-nell-idle-front.png": "9ed9a9635250f68cbf33485ae096132cb998b82d6778edb34d38cbcd8744aa56",
+    "docs/board/looks/crew/round-2/blender-nell-idle-side.png": "8bb4b1d3fd89f8e69dfdd4d5c3834aa7bafdca064bf2a9779f228898ce8001a9",
+    "docs/board/looks/crew/round-2/game-high-nell-idle-side.png": "c51025757fbba51ad53540251446a3e67aa63f40a3b05da251292c2e60a13710",
+    "docs/board/looks/crew/round-2/game-performance-nell-idle-side.png": "68c4c0d0f3250f116f492e1ac7ff74fb314df616ac043f470a3a43a4b192e5c6",
+    "docs/board/looks/crew/round-2/blender-nell-idle-back.png": "afbf4c793631bda8688036ae72cc18172b581a419058be4baf4b0036efa7ba01",
+    "docs/board/looks/crew/round-2/game-high-nell-idle-back.png": "10c13810d57affa872af977d6251b614d41f8a77e05d438c36971a04b4847ecc",
+    "docs/board/looks/crew/round-2/game-performance-nell-idle-back.png": "38d9daa5560d9a49ec2e8f83bf1328e80e6a02885081e7d936792a5e58eb836b",
+    "public/assets/models/wasteland/crew/jax.glb": "bcc4684cc5dfa987d91e5eadd210e48e379d1252a1af7c40ecddc84a8c941720",
+    "docs/board/looks/crew/round-2/blender-jax-idle-front.png": "a53ffdb35cdf4630ed683d22bc9b2c87ecfe6324ded7ce948e26299497d4979c",
+    "docs/board/looks/crew/round-2/game-high-jax-idle-front.png": "e45c2329f024e90147a4b017f70740183ebfd534e39201bd81bc39ada4700756",
+    "docs/board/looks/crew/round-2/game-performance-jax-idle-front.png": "dbe468adb9eda064883383b739fadd84ebc47e72fd467f0a9a5256ab6019d255",
+    "docs/board/looks/crew/round-2/blender-jax-idle-side.png": "53bee80088ab872b6d19f3059da1a887fb7824b877a9f2770ba57bbf2f7d693d",
+    "docs/board/looks/crew/round-2/game-high-jax-idle-side.png": "e0df959288185ca9edeaf1771956fc5ef7499a0f31d1341389ee2d5001dd47bf",
+    "docs/board/looks/crew/round-2/game-performance-jax-idle-side.png": "1ebe4f51eed005c22071bd38fa1a78e301d964728be8d9b86ef2af2709d78de2",
+    "docs/board/looks/crew/round-2/blender-jax-idle-back.png": "04c7b452354166d838fcc73c312f2f56229e8590c2ba185e0c5700cc34c56f7f",
+    "docs/board/looks/crew/round-2/game-high-jax-idle-back.png": "7d5e9fb12340000b25521b6d6b4a3296b876af48bba9b765e4895aac3d9ba040",
+    "docs/board/looks/crew/round-2/game-performance-jax-idle-back.png": "db939d762db49fc3024240977d5d44be22af2512f1290b1309c0f4563d33445e",
+    "public/assets/models/wasteland/crew/odessa.glb": "4bb75ce75fbf8b3d839f9b2121cf2f2a8f1e552ede7074e84c9d8804f419d800",
+    "docs/board/looks/crew/round-2/blender-odessa-idle-front.png": "4dc7e0cba72cd24f47ae97020d35e678c1e4c79dc11d550c75e1d734ac736174",
+    "docs/board/looks/crew/round-2/game-high-odessa-idle-front.png": "f1dc660f5c3121fa072496fdd1004f20b7d1c83357c597249b6c20706b6f4392",
+    "docs/board/looks/crew/round-2/game-performance-odessa-idle-front.png": "55b4388c2a75c569d7d1d3c7930fe6e7abdda94ec5e9344131c621062d36002a",
+    "docs/board/looks/crew/round-2/blender-odessa-idle-side.png": "5599332a39030b9e146d79de7de208e1f832cafe6f713493d06df22260988d1b",
+    "docs/board/looks/crew/round-2/game-high-odessa-idle-side.png": "7ec30780545052e7b2a239c38f822b198a106894752921643cb1fbe709bdc158",
+    "docs/board/looks/crew/round-2/game-performance-odessa-idle-side.png": "2f5418177b212e8f1f6e741ae51d74dda2e20d8251e83f0cddc0fdd5883eff85",
+    "docs/board/looks/crew/round-2/blender-odessa-idle-back.png": "b7a42aaca30a4a33b04beab408ad369c563ed01b959c7af7eb49d81303f31579",
+    "docs/board/looks/crew/round-2/game-high-odessa-idle-back.png": "4702a4fcabc81c5ee913b141b62754ae4c49b06eba193f5ef413a8cc5292f6f8",
+    "docs/board/looks/crew/round-2/game-performance-odessa-idle-back.png": "c211f8ee3ee367f521bf7bdb1ff5ddc2e4ab694bda95169de3334e2867085181",
+    "public/assets/models/wasteland/crew/cinder.glb": "a3479123d8ea7919fdb7e5e05655a03a6900255ca536dfb57bf257918a5bea2c",
+    "public/assets/reference/wasteland-crew-2.png": "34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9",
+    "docs/board/looks/crew/round-2/blender-cinder-idle-front.png": "f7bf98a7e71a1c009c179307ac1238c10bdbe6d02c85b9585ea89d70f4aafca5",
+    "docs/board/looks/crew/round-2/game-high-cinder-idle-front.png": "99d539961e988a44b662fc1c2223e5692997fac61b93a55182c4fad058488567",
+    "docs/board/looks/crew/round-2/game-performance-cinder-idle-front.png": "9bf6d40b9c9549bd848ba38d3242f2929fab5fba6d7180cfb2cc8d4b093fac29",
+    "docs/board/looks/crew/round-2/blender-cinder-idle-side.png": "e82d363da8c8f43c529edb930d4f90d1c2917abea4fceccc1ec49d7b78d6c47f",
+    "docs/board/looks/crew/round-2/game-high-cinder-idle-side.png": "aca094e4913fe83d3d49f8ea45645b38995b6fd8e5e41a83f46e3b07adaac8b7",
+    "docs/board/looks/crew/round-2/game-performance-cinder-idle-side.png": "814f4922b492c545068d61456df42c51d5fa6e679941b21cd29a2c612ace7f7a",
+    "docs/board/looks/crew/round-2/blender-cinder-idle-back.png": "ea8768a997574b1b4061a990a06dd91efccc1d05935185e4509a1f6a3cc47042",
+    "docs/board/looks/crew/round-2/game-high-cinder-idle-back.png": "1383a4fb658e25d13a4452b8d85bd3e5a6acab18d5857590832b13aeff8c03c3",
+    "docs/board/looks/crew/round-2/game-performance-cinder-idle-back.png": "103410ca4cf4831fce7b1b90245021fe92a64288f9bd0420ffc5139b1734f0b6",
+    "public/assets/models/wasteland/crew/dune.glb": "f75893bd47435925732629cea10b467f1e82372a650e5fd4fa32e9c28012df2a",
+    "docs/board/looks/crew/round-2/blender-dune-idle-front.png": "b220a6957ef85593b5ecf5979fff08405cdc671b011c2550d9ad6de9b214dc3e",
+    "docs/board/looks/crew/round-2/game-high-dune-idle-front.png": "8884d6aecf8fdf41ecd6421049bbd54c69859499cb05f28c5a6aff1f24c546b8",
+    "docs/board/looks/crew/round-2/game-performance-dune-idle-front.png": "e66adb5ff45024dfc02ebb69754a2edc37a51f1242d748f3d3b1c4d134f379d5",
+    "docs/board/looks/crew/round-2/blender-dune-idle-side.png": "d2110442ee6ee3ed9ae0539196c9920cad49194d3fa2b7a152b5c4575ab47f41",
+    "docs/board/looks/crew/round-2/game-high-dune-idle-side.png": "be0dadbc321316d98ff00f7e1f974b805912ffdd943b7de80231ad036059e96b",
+    "docs/board/looks/crew/round-2/game-performance-dune-idle-side.png": "b992f7a914fd7ac4faac445d1a1c8b48e7cdbbee0f7acfabaa189e07b9fcb452",
+    "docs/board/looks/crew/round-2/blender-dune-idle-back.png": "446999609714e9a81114dd3f387149ef81437d353dad7c58af52aa0ad40e71f8",
+    "docs/board/looks/crew/round-2/game-high-dune-idle-back.png": "0cd8811620c1bb0cce3dace6375f99fe77a6a3eadb55f8699e68b8bc3a6ccecb",
+    "docs/board/looks/crew/round-2/game-performance-dune-idle-back.png": "706cd31aefa3ead089784a4a94c1cda72c3b9e631030eda425743ce4374b17fa",
+    "public/assets/models/wasteland/crew/wren.glb": "b2731b08e0a7804782bb4d7140ab5c5914071b80887e72d4a662c5006fc7fe34",
+    "docs/board/looks/crew/round-2/blender-wren-idle-front.png": "2ef0f321b3452e83533d3b3c61f4781a2e9bd6e85ca179640b53d9c5f8d3f63e",
+    "docs/board/looks/crew/round-2/game-high-wren-idle-front.png": "74bcac393382e60e13b70bad6f5241d468f868a384e7ee7618a5722765f4e557",
+    "docs/board/looks/crew/round-2/game-performance-wren-idle-front.png": "9a1dae6f341070042d41fec2a1c96715a3fc437fbd470e1881b3c4366684a585",
+    "docs/board/looks/crew/round-2/blender-wren-idle-side.png": "6b969e630f0eb48c33c71235687955eb6c2969e459c76b2bd5a7d86a2f329db5",
+    "docs/board/looks/crew/round-2/game-high-wren-idle-side.png": "a47d0ff4e53054d14c68d20be31700ef9bf44c5e70c5318beaee68804eb1aa6d",
+    "docs/board/looks/crew/round-2/game-performance-wren-idle-side.png": "ffd6168ff3ca9e56ea953fe6b4fe7660b6fda9cbf1a9b6118cfab1e54759c081",
+    "docs/board/looks/crew/round-2/blender-wren-idle-back.png": "0d967f9b5788bb76d0e0801df9af2a4f756e0701ea2d789a3e0de64a6ddb0787",
+    "docs/board/looks/crew/round-2/game-high-wren-idle-back.png": "54d61a5131a86b161bfbb8ac000f2b9a71ec727def552f8b4f52046ee98f088f",
+    "docs/board/looks/crew/round-2/game-performance-wren-idle-back.png": "439a5d109bed6b3f09354cbf680c20ea4d114bb86077729c807b701ed4a97d64",
+    "public/assets/models/wasteland/crew/tusk.glb": "fcec515684e564ea4ecb7b4f092aba54f5dd71779df26cc7deb3d79f3203cb26",
+    "docs/board/looks/crew/round-2/blender-tusk-idle-front.png": "8f54855cd00f913b6deb669f38c5d7f83a6d4d3f4f0cd31094592cb3fc995879",
+    "docs/board/looks/crew/round-2/game-high-tusk-idle-front.png": "0e5fdb9f7aa2d94109fc8db0f9a12fe1132f05d0f3cc07e47ff96d765ad9c469",
+    "docs/board/looks/crew/round-2/game-performance-tusk-idle-front.png": "181a6a74bb3599ce01123b2a7592737442f1e409dd35569d58dc7df92776b16c",
+    "docs/board/looks/crew/round-2/blender-tusk-idle-side.png": "d570a105fd2f4ce8fde47301277c24fef079e8280362ada9d060a4415c92f8af",
+    "docs/board/looks/crew/round-2/game-high-tusk-idle-side.png": "52ff4a8efaef13372bb34d3a0e565efd4b7148d84a60231fd6fa38caf57b545f",
+    "docs/board/looks/crew/round-2/game-performance-tusk-idle-side.png": "441b8df9b391e6fde214b950050f43e28602b4c836fe0848c9929d02c778a5db",
+    "docs/board/looks/crew/round-2/blender-tusk-idle-back.png": "29ab1b7f0f8b606dd331a70ca4612fa000c8b319cdf056c3d16a343701411d7d",
+    "docs/board/looks/crew/round-2/game-high-tusk-idle-back.png": "db8e681aab10ba8d64794afe5d8c1cd717ae293a48f290966f43d7e40f7ccb04",
+    "docs/board/looks/crew/round-2/game-performance-tusk-idle-back.png": "77435b1d3cad869f203d7a1a00e49ac03c820e555ec9e868ca68b4fe8e62b037"
+  },
+  "camera": {
+    "position": [
+      0,
+      0.96,
+      5
+    ],
+    "target": [
+      0,
+      0.96,
+      0
+    ],
+    "fov": 28,
+    "width": 432,
+    "height": 576
+  },
+  "qualities": [
+    "high",
+    "performance"
+  ],
+  "counts": {
+    "high": {
+      "near": {
+        "drawCalls": 12,
+        "triangles": 65716
+      },
+      "lod": {
+        "distant": 11,
+        "nearLocal": 1
+      },
+      "firstPerson": {
+        "hiddenAtEye": true,
+        "visibleOutside": true
+      },
+      "independentSkeletons": 12,
+      "cpuFrameMs": {
+        "median": 2.4000000059604645,
+        "p95": 4.799999982118607,
+        "samples": 40,
+        "scope": "production update plus extra isolated colour render; CPU submission, not GPU time"
+      },
+      "loadErrors": [],
+      "course": {
+        "crowded": {
+          "frames": 120,
+          "p50": 17.699999999999818,
+          "p95": 18.199999999999818,
+          "max": 20.900000000000546,
+          "over33ms": 0
+        },
+        "visible": 12,
+        "quality": "high",
+        "width": 1280,
+        "height": 720,
+        "scope": "real course production RAF; one local fighter baseline versus twelve staged crew; full scene/composer/shadows; walking snapshots move at 4.5m/s along course ground, not raider AI",
+        "baseline": {
+          "frames": 120,
+          "p50": 17.59999999999991,
+          "p95": 18.199999999999818,
+          "max": 19.099999999999454,
+          "over33ms": 0
+        },
+        "frameRatio": 1,
+        "png": "docs/board/looks/crew/round-2/course-high-twelve.png",
+        "motion": "docs/board/looks/crew/round-2/course-high-motion.webm"
+      }
+    },
+    "performance": {
+      "near": {
+        "drawCalls": 12,
+        "triangles": 65716
+      },
+      "lod": {
+        "distant": 11,
+        "nearLocal": 1
+      },
+      "firstPerson": {
+        "hiddenAtEye": true,
+        "visibleOutside": true
+      },
+      "independentSkeletons": 12,
+      "cpuFrameMs": {
+        "median": 1.4000000059604645,
+        "p95": 1.699999988079071,
+        "samples": 40,
+        "scope": "production update plus extra isolated colour render; CPU submission, not GPU time"
+      },
+      "loadErrors": [],
+      "course": {
+        "crowded": {
+          "frames": 120,
+          "p50": 17.600000000000364,
+          "p95": 18.100000000000364,
+          "max": 18.400000000000546,
+          "over33ms": 0
+        },
+        "visible": 12,
+        "quality": "performance",
+        "width": 1280,
+        "height": 720,
+        "scope": "real course production RAF; one local fighter baseline versus twelve staged crew; full scene/composer/shadows; walking snapshots move at 4.5m/s along course ground, not raider AI",
+        "baseline": {
+          "frames": 120,
+          "p50": 17.700000000000273,
+          "p95": 18.199999999999818,
+          "max": 18.40000000000009,
+          "over33ms": 0
+        },
+        "frameRatio": 0.9945054945055244,
+        "png": "docs/board/looks/crew/round-2/course-performance-twelve.png",
+        "motion": "docs/board/looks/crew/round-2/course-performance-motion.webm"
+      }
+    }
+  },
+  "rows": [
+    {
+      "crew": "rook",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "crop": [
+        0,
+        47,
+        234,
+        662
+      ],
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "blender": "docs/board/looks/crew/round-2/blender-rook-idle-front.png",
+      "high": "docs/board/looks/crew/round-2/game-high-rook-idle-front.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-rook-idle-front.png"
+    },
+    {
+      "crew": "rook",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "crop": [
+        190,
+        47,
+        384,
+        662
+      ],
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "blender": "docs/board/looks/crew/round-2/blender-rook-idle-side.png",
+      "high": "docs/board/looks/crew/round-2/game-high-rook-idle-side.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-rook-idle-side.png"
+    },
+    {
+      "crew": "rook",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "crop": [
+        319,
+        47,
+        563,
+        662
+      ],
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "blender": "docs/board/looks/crew/round-2/blender-rook-idle-back.png",
+      "high": "docs/board/looks/crew/round-2/game-high-rook-idle-back.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-rook-idle-back.png"
+    },
+    {
+      "crew": "nell",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "crop": [
+        511,
+        62,
+        755,
+        662
+      ],
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "blender": "docs/board/looks/crew/round-2/blender-nell-idle-front.png",
+      "high": "docs/board/looks/crew/round-2/game-high-nell-idle-front.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-nell-idle-front.png"
+    },
+    {
+      "crew": "nell",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "crop": [
+        679,
+        62,
+        873,
+        662
+      ],
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "blender": "docs/board/looks/crew/round-2/blender-nell-idle-side.png",
+      "high": "docs/board/looks/crew/round-2/game-high-nell-idle-side.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-nell-idle-side.png"
+    },
+    {
+      "crew": "nell",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "crop": [
+        800,
+        62,
+        1044,
+        662
+      ],
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "blender": "docs/board/looks/crew/round-2/blender-nell-idle-back.png",
+      "high": "docs/board/looks/crew/round-2/game-high-nell-idle-back.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-nell-idle-back.png"
+    },
+    {
+      "crew": "jax",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "crop": [
+        1016,
+        53,
+        1260,
+        662
+      ],
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "blender": "docs/board/looks/crew/round-2/blender-jax-idle-front.png",
+      "high": "docs/board/looks/crew/round-2/game-high-jax-idle-front.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-jax-idle-front.png"
+    },
+    {
+      "crew": "jax",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "crop": [
+        1180,
+        53,
+        1374,
+        662
+      ],
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "blender": "docs/board/looks/crew/round-2/blender-jax-idle-side.png",
+      "high": "docs/board/looks/crew/round-2/game-high-jax-idle-side.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-jax-idle-side.png"
+    },
+    {
+      "crew": "jax",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "crop": [
+        1329,
+        53,
+        1573,
+        662
+      ],
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "blender": "docs/board/looks/crew/round-2/blender-jax-idle-back.png",
+      "high": "docs/board/looks/crew/round-2/game-high-jax-idle-back.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-jax-idle-back.png"
+    },
+    {
+      "crew": "odessa",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "crop": [
+        1538,
+        61,
+        1782,
+        662
+      ],
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "blender": "docs/board/looks/crew/round-2/blender-odessa-idle-front.png",
+      "high": "docs/board/looks/crew/round-2/game-high-odessa-idle-front.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-odessa-idle-front.png"
+    },
+    {
+      "crew": "odessa",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "crop": [
+        1713,
+        61,
+        1907,
+        662
+      ],
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "blender": "docs/board/looks/crew/round-2/blender-odessa-idle-side.png",
+      "high": "docs/board/looks/crew/round-2/game-high-odessa-idle-side.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-odessa-idle-side.png"
+    },
+    {
+      "crew": "odessa",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "crop": [
+        1848,
+        61,
+        2067,
+        662
+      ],
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "blender": "docs/board/looks/crew/round-2/blender-odessa-idle-back.png",
+      "high": "docs/board/looks/crew/round-2/game-high-odessa-idle-back.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-odessa-idle-back.png"
+    },
+    {
+      "crew": "cinder",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "crop": [
+        0,
+        29,
+        233,
+        664
+      ],
+      "reference": "public/assets/reference/wasteland-crew-2.png",
+      "blender": "docs/board/looks/crew/round-2/blender-cinder-idle-front.png",
+      "high": "docs/board/looks/crew/round-2/game-high-cinder-idle-front.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-cinder-idle-front.png"
+    },
+    {
+      "crew": "cinder",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "crop": [
+        178,
+        29,
+        372,
+        664
+      ],
+      "reference": "public/assets/reference/wasteland-crew-2.png",
+      "blender": "docs/board/looks/crew/round-2/blender-cinder-idle-side.png",
+      "high": "docs/board/looks/crew/round-2/game-high-cinder-idle-side.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-cinder-idle-side.png"
+    },
+    {
+      "crew": "cinder",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "crop": [
+        317,
+        29,
+        561,
+        664
+      ],
+      "reference": "public/assets/reference/wasteland-crew-2.png",
+      "blender": "docs/board/looks/crew/round-2/blender-cinder-idle-back.png",
+      "high": "docs/board/looks/crew/round-2/game-high-cinder-idle-back.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-cinder-idle-back.png"
+    },
+    {
+      "crew": "dune",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "crop": [
+        542,
+        39,
+        786,
+        664
+      ],
+      "reference": "public/assets/reference/wasteland-crew-2.png",
+      "blender": "docs/board/looks/crew/round-2/blender-dune-idle-front.png",
+      "high": "docs/board/looks/crew/round-2/game-high-dune-idle-front.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-dune-idle-front.png"
+    },
+    {
+      "crew": "dune",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "crop": [
+        698,
+        39,
+        892,
+        664
+      ],
+      "reference": "public/assets/reference/wasteland-crew-2.png",
+      "blender": "docs/board/looks/crew/round-2/blender-dune-idle-side.png",
+      "high": "docs/board/looks/crew/round-2/game-high-dune-idle-side.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-dune-idle-side.png"
+    },
+    {
+      "crew": "dune",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "crop": [
+        805,
+        39,
+        1049,
+        664
+      ],
+      "reference": "public/assets/reference/wasteland-crew-2.png",
+      "blender": "docs/board/looks/crew/round-2/blender-dune-idle-back.png",
+      "high": "docs/board/looks/crew/round-2/game-high-dune-idle-back.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-dune-idle-back.png"
+    },
+    {
+      "crew": "wren",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "crop": [
+        1008,
+        55,
+        1252,
+        664
+      ],
+      "reference": "public/assets/reference/wasteland-crew-2.png",
+      "blender": "docs/board/looks/crew/round-2/blender-wren-idle-front.png",
+      "high": "docs/board/looks/crew/round-2/game-high-wren-idle-front.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-wren-idle-front.png"
+    },
+    {
+      "crew": "wren",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "crop": [
+        1169,
+        55,
+        1363,
+        664
+      ],
+      "reference": "public/assets/reference/wasteland-crew-2.png",
+      "blender": "docs/board/looks/crew/round-2/blender-wren-idle-side.png",
+      "high": "docs/board/looks/crew/round-2/game-high-wren-idle-side.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-wren-idle-side.png"
+    },
+    {
+      "crew": "wren",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "crop": [
+        1268,
+        55,
+        1512,
+        664
+      ],
+      "reference": "public/assets/reference/wasteland-crew-2.png",
+      "blender": "docs/board/looks/crew/round-2/blender-wren-idle-back.png",
+      "high": "docs/board/looks/crew/round-2/game-high-wren-idle-back.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-wren-idle-back.png"
+    },
+    {
+      "crew": "tusk",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "crop": [
+        1486,
+        22,
+        1730,
+        664
+      ],
+      "reference": "public/assets/reference/wasteland-crew-2.png",
+      "blender": "docs/board/looks/crew/round-2/blender-tusk-idle-front.png",
+      "high": "docs/board/looks/crew/round-2/game-high-tusk-idle-front.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-tusk-idle-front.png"
+    },
+    {
+      "crew": "tusk",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "crop": [
+        1695,
+        22,
+        1889,
+        664
+      ],
+      "reference": "public/assets/reference/wasteland-crew-2.png",
+      "blender": "docs/board/looks/crew/round-2/blender-tusk-idle-side.png",
+      "high": "docs/board/looks/crew/round-2/game-high-tusk-idle-side.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-tusk-idle-side.png"
+    },
+    {
+      "crew": "tusk",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "crop": [
+        1820,
+        22,
+        2056,
+        664
+      ],
+      "reference": "public/assets/reference/wasteland-crew-2.png",
+      "blender": "docs/board/looks/crew/round-2/blender-tusk-idle-back.png",
+      "high": "docs/board/looks/crew/round-2/game-high-tusk-idle-back.png",
+      "performance": "docs/board/looks/crew/round-2/game-performance-tusk-idle-back.png"
+    }
+  ],
+  "output": "docs/board/looks/crew/round-2.png",
+  "status": "Fidelity review evidence; scores and beta eligibility require independent review"
+}

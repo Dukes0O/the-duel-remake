@@ -1,0 +1,1390 @@
+{
+  "round": 2,
+  "observationCommit": "53e32ee55360308926a454c0ac39a0c8bc1331c3",
+  "camera": {
+    "position": [
+      0,
+      0.96,
+      5
+    ],
+    "target": [
+      0,
+      0.96,
+      0
+    ],
+    "fov": 28,
+    "width": 432,
+    "height": 576
+  },
+  "qualities": [
+    "high",
+    "performance"
+  ],
+  "assets": {
+    "rook": {
+      "path": "public/assets/models/wasteland/crew/rook.glb",
+      "sha256": "7e1a5953b17d070fc7df41ed834b6a1f6a85260cdc45ec65899f8abaacd6fa3b"
+    },
+    "nell": {
+      "path": "public/assets/models/wasteland/crew/nell.glb",
+      "sha256": "61666cd0a54218d082ae2a4511d025787cbfa30789a1435d4bc8c05a9f524ab1"
+    },
+    "jax": {
+      "path": "public/assets/models/wasteland/crew/jax.glb",
+      "sha256": "bcc4684cc5dfa987d91e5eadd210e48e379d1252a1af7c40ecddc84a8c941720"
+    },
+    "odessa": {
+      "path": "public/assets/models/wasteland/crew/odessa.glb",
+      "sha256": "4bb75ce75fbf8b3d839f9b2121cf2f2a8f1e552ede7074e84c9d8804f419d800"
+    },
+    "cinder": {
+      "path": "public/assets/models/wasteland/crew/cinder.glb",
+      "sha256": "a3479123d8ea7919fdb7e5e05655a03a6900255ca536dfb57bf257918a5bea2c"
+    },
+    "dune": {
+      "path": "public/assets/models/wasteland/crew/dune.glb",
+      "sha256": "f75893bd47435925732629cea10b467f1e82372a650e5fd4fa32e9c28012df2a"
+    },
+    "wren": {
+      "path": "public/assets/models/wasteland/crew/wren.glb",
+      "sha256": "b2731b08e0a7804782bb4d7140ab5c5914071b80887e72d4a662c5006fc7fe34"
+    },
+    "tusk": {
+      "path": "public/assets/models/wasteland/crew/tusk.glb",
+      "sha256": "fcec515684e564ea4ecb7b4f092aba54f5dd71779df26cc7deb3d79f3203cb26"
+    }
+  },
+  "captures": [
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-idle-front.png",
+      "sha256": "cb52924b47038f8defd3f0773ca20fdf6a70322c13414810d0d0d90152dddabf",
+      "detail": "near"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-idle-side.png",
+      "sha256": "27400453cd65fbeb8dbdb537199ce1d20cd48d6f99759f6e46d0015c815f34ce",
+      "detail": "near"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-idle-back.png",
+      "sha256": "b9d2252c2b2b9fbb12f5462ab1c26b1092fcd5af2e0f7049b12298800325a96d",
+      "detail": "near"
+    },
+    {
+      "crew": "nell",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-nell-idle-front.png",
+      "sha256": "fbc57c6cb2dfe23de6c6e7d859bf54ede9d80ad6dc7a04f7434feadb2c0c6c38",
+      "detail": "near"
+    },
+    {
+      "crew": "nell",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-high-nell-idle-side.png",
+      "sha256": "c51025757fbba51ad53540251446a3e67aa63f40a3b05da251292c2e60a13710",
+      "detail": "near"
+    },
+    {
+      "crew": "nell",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-high-nell-idle-back.png",
+      "sha256": "10c13810d57affa872af977d6251b614d41f8a77e05d438c36971a04b4847ecc",
+      "detail": "near"
+    },
+    {
+      "crew": "jax",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-jax-idle-front.png",
+      "sha256": "e45c2329f024e90147a4b017f70740183ebfd534e39201bd81bc39ada4700756",
+      "detail": "near"
+    },
+    {
+      "crew": "jax",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-high-jax-idle-side.png",
+      "sha256": "e0df959288185ca9edeaf1771956fc5ef7499a0f31d1341389ee2d5001dd47bf",
+      "detail": "near"
+    },
+    {
+      "crew": "jax",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-high-jax-idle-back.png",
+      "sha256": "7d5e9fb12340000b25521b6d6b4a3296b876af48bba9b765e4895aac3d9ba040",
+      "detail": "near"
+    },
+    {
+      "crew": "odessa",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-odessa-idle-front.png",
+      "sha256": "f1dc660f5c3121fa072496fdd1004f20b7d1c83357c597249b6c20706b6f4392",
+      "detail": "near"
+    },
+    {
+      "crew": "odessa",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-high-odessa-idle-side.png",
+      "sha256": "7ec30780545052e7b2a239c38f822b198a106894752921643cb1fbe709bdc158",
+      "detail": "near"
+    },
+    {
+      "crew": "odessa",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-high-odessa-idle-back.png",
+      "sha256": "4702a4fcabc81c5ee913b141b62754ae4c49b06eba193f5ef413a8cc5292f6f8",
+      "detail": "near"
+    },
+    {
+      "crew": "cinder",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-cinder-idle-front.png",
+      "sha256": "99d539961e988a44b662fc1c2223e5692997fac61b93a55182c4fad058488567",
+      "detail": "near"
+    },
+    {
+      "crew": "cinder",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-high-cinder-idle-side.png",
+      "sha256": "aca094e4913fe83d3d49f8ea45645b38995b6fd8e5e41a83f46e3b07adaac8b7",
+      "detail": "near"
+    },
+    {
+      "crew": "cinder",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-high-cinder-idle-back.png",
+      "sha256": "1383a4fb658e25d13a4452b8d85bd3e5a6acab18d5857590832b13aeff8c03c3",
+      "detail": "near"
+    },
+    {
+      "crew": "dune",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-dune-idle-front.png",
+      "sha256": "8884d6aecf8fdf41ecd6421049bbd54c69859499cb05f28c5a6aff1f24c546b8",
+      "detail": "near"
+    },
+    {
+      "crew": "dune",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-high-dune-idle-side.png",
+      "sha256": "be0dadbc321316d98ff00f7e1f974b805912ffdd943b7de80231ad036059e96b",
+      "detail": "near"
+    },
+    {
+      "crew": "dune",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-high-dune-idle-back.png",
+      "sha256": "0cd8811620c1bb0cce3dace6375f99fe77a6a3eadb55f8699e68b8bc3a6ccecb",
+      "detail": "near"
+    },
+    {
+      "crew": "wren",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-wren-idle-front.png",
+      "sha256": "74bcac393382e60e13b70bad6f5241d468f868a384e7ee7618a5722765f4e557",
+      "detail": "near"
+    },
+    {
+      "crew": "wren",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-high-wren-idle-side.png",
+      "sha256": "a47d0ff4e53054d14c68d20be31700ef9bf44c5e70c5318beaee68804eb1aa6d",
+      "detail": "near"
+    },
+    {
+      "crew": "wren",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-high-wren-idle-back.png",
+      "sha256": "54d61a5131a86b161bfbb8ac000f2b9a71ec727def552f8b4f52046ee98f088f",
+      "detail": "near"
+    },
+    {
+      "crew": "tusk",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-tusk-idle-front.png",
+      "sha256": "0e5fdb9f7aa2d94109fc8db0f9a12fe1132f05d0f3cc07e47ff96d765ad9c469",
+      "detail": "near"
+    },
+    {
+      "crew": "tusk",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-high-tusk-idle-side.png",
+      "sha256": "52ff4a8efaef13372bb34d3a0e565efd4b7148d84a60231fd6fa38caf57b545f",
+      "detail": "near"
+    },
+    {
+      "crew": "tusk",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-high-tusk-idle-back.png",
+      "sha256": "db8e681aab10ba8d64794afe5d8c1cd717ae293a48f290966f43d7e40f7ccb04",
+      "detail": "near"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "walk",
+      "time": 10,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-walk-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "sprint",
+      "time": 10,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-sprint-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "jump",
+      "time": 0.39871955331653697,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-jump-front.png",
+      "camera": {
+        "position": [
+          0,
+          1.65,
+          7
+        ],
+        "target": [
+          0,
+          1.65,
+          0
+        ]
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "knockdown",
+      "time": 1,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-knockdown-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "knockdown",
+      "time": 1,
+      "view": "side",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-knockdown-side.png",
+      "camera": {
+        "position": [
+          5,
+          0.65,
+          0.6
+        ],
+        "target": [
+          0,
+          0.65,
+          0.6
+        ]
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "get-up",
+      "time": 0.390625,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-get-up-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "get-up",
+      "time": 0.390625,
+      "view": "side",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-get-up-side.png",
+      "camera": {
+        "position": [
+          5,
+          0.65,
+          0.6
+        ],
+        "target": [
+          0,
+          0.65,
+          0.6
+        ]
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "aim",
+      "time": 10,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-aim-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "fire",
+      "time": 0.09999999999999964,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-fire-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "reload",
+      "time": 0.78,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-reload-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "repair",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-repair-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "enter",
+      "time": 0.32051281287119937,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-enter-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "exit",
+      "time": 0.32051281287119937,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-high-rook-exit-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-idle-front.png",
+      "sha256": "1f5b464e0b21ea0060d28dc742b4351e4df9264ee6391d1a87d623dd4eae0e83",
+      "detail": "near"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-idle-side.png",
+      "sha256": "25d88ec0344b6efe3197fe933c30eb837ccdd272161411ff0b0596576b43334f",
+      "detail": "near"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-idle-back.png",
+      "sha256": "0ef30c8768c744b885c9689bf01e620da7dc148393c8b3063ba68cf21521be99",
+      "detail": "near"
+    },
+    {
+      "crew": "nell",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-nell-idle-front.png",
+      "sha256": "9ed9a9635250f68cbf33485ae096132cb998b82d6778edb34d38cbcd8744aa56",
+      "detail": "near"
+    },
+    {
+      "crew": "nell",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-performance-nell-idle-side.png",
+      "sha256": "68c4c0d0f3250f116f492e1ac7ff74fb314df616ac043f470a3a43a4b192e5c6",
+      "detail": "near"
+    },
+    {
+      "crew": "nell",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-performance-nell-idle-back.png",
+      "sha256": "38d9daa5560d9a49ec2e8f83bf1328e80e6a02885081e7d936792a5e58eb836b",
+      "detail": "near"
+    },
+    {
+      "crew": "jax",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-jax-idle-front.png",
+      "sha256": "dbe468adb9eda064883383b739fadd84ebc47e72fd467f0a9a5256ab6019d255",
+      "detail": "near"
+    },
+    {
+      "crew": "jax",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-performance-jax-idle-side.png",
+      "sha256": "1ebe4f51eed005c22071bd38fa1a78e301d964728be8d9b86ef2af2709d78de2",
+      "detail": "near"
+    },
+    {
+      "crew": "jax",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-performance-jax-idle-back.png",
+      "sha256": "db939d762db49fc3024240977d5d44be22af2512f1290b1309c0f4563d33445e",
+      "detail": "near"
+    },
+    {
+      "crew": "odessa",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-odessa-idle-front.png",
+      "sha256": "55b4388c2a75c569d7d1d3c7930fe6e7abdda94ec5e9344131c621062d36002a",
+      "detail": "near"
+    },
+    {
+      "crew": "odessa",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-performance-odessa-idle-side.png",
+      "sha256": "2f5418177b212e8f1f6e741ae51d74dda2e20d8251e83f0cddc0fdd5883eff85",
+      "detail": "near"
+    },
+    {
+      "crew": "odessa",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-performance-odessa-idle-back.png",
+      "sha256": "c211f8ee3ee367f521bf7bdb1ff5ddc2e4ab694bda95169de3334e2867085181",
+      "detail": "near"
+    },
+    {
+      "crew": "cinder",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-cinder-idle-front.png",
+      "sha256": "9bf6d40b9c9549bd848ba38d3242f2929fab5fba6d7180cfb2cc8d4b093fac29",
+      "detail": "near"
+    },
+    {
+      "crew": "cinder",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-performance-cinder-idle-side.png",
+      "sha256": "814f4922b492c545068d61456df42c51d5fa6e679941b21cd29a2c612ace7f7a",
+      "detail": "near"
+    },
+    {
+      "crew": "cinder",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-performance-cinder-idle-back.png",
+      "sha256": "103410ca4cf4831fce7b1b90245021fe92a64288f9bd0420ffc5139b1734f0b6",
+      "detail": "near"
+    },
+    {
+      "crew": "dune",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-dune-idle-front.png",
+      "sha256": "e66adb5ff45024dfc02ebb69754a2edc37a51f1242d748f3d3b1c4d134f379d5",
+      "detail": "near"
+    },
+    {
+      "crew": "dune",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-performance-dune-idle-side.png",
+      "sha256": "b992f7a914fd7ac4faac445d1a1c8b48e7cdbbee0f7acfabaa189e07b9fcb452",
+      "detail": "near"
+    },
+    {
+      "crew": "dune",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-performance-dune-idle-back.png",
+      "sha256": "706cd31aefa3ead089784a4a94c1cda72c3b9e631030eda425743ce4374b17fa",
+      "detail": "near"
+    },
+    {
+      "crew": "wren",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-wren-idle-front.png",
+      "sha256": "9a1dae6f341070042d41fec2a1c96715a3fc437fbd470e1881b3c4366684a585",
+      "detail": "near"
+    },
+    {
+      "crew": "wren",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-performance-wren-idle-side.png",
+      "sha256": "ffd6168ff3ca9e56ea953fe6b4fe7660b6fda9cbf1a9b6118cfab1e54759c081",
+      "detail": "near"
+    },
+    {
+      "crew": "wren",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-performance-wren-idle-back.png",
+      "sha256": "439a5d109bed6b3f09354cbf680c20ea4d114bb86077729c807b701ed4a97d64",
+      "detail": "near"
+    },
+    {
+      "crew": "tusk",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-tusk-idle-front.png",
+      "sha256": "181a6a74bb3599ce01123b2a7592737442f1e409dd35569d58dc7df92776b16c",
+      "detail": "near"
+    },
+    {
+      "crew": "tusk",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/round-2/game-performance-tusk-idle-side.png",
+      "sha256": "441b8df9b391e6fde214b950050f43e28602b4c836fe0848c9929d02c778a5db",
+      "detail": "near"
+    },
+    {
+      "crew": "tusk",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/round-2/game-performance-tusk-idle-back.png",
+      "sha256": "77435b1d3cad869f203d7a1a00e49ac03c820e555ec9e868ca68b4fe8e62b037",
+      "detail": "near"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "walk",
+      "time": 10,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-walk-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "sprint",
+      "time": 10,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-sprint-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "jump",
+      "time": 0.39871955331653697,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-jump-front.png",
+      "camera": {
+        "position": [
+          0,
+          1.65,
+          7
+        ],
+        "target": [
+          0,
+          1.65,
+          0
+        ]
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "knockdown",
+      "time": 1,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-knockdown-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "knockdown",
+      "time": 1,
+      "view": "side",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-knockdown-side.png",
+      "camera": {
+        "position": [
+          5,
+          0.65,
+          0.6
+        ],
+        "target": [
+          0,
+          0.65,
+          0.6
+        ]
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "get-up",
+      "time": 0.390625,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-get-up-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "get-up",
+      "time": 0.390625,
+      "view": "side",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-get-up-side.png",
+      "camera": {
+        "position": [
+          5,
+          0.65,
+          0.6
+        ],
+        "target": [
+          0,
+          0.65,
+          0.6
+        ]
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "aim",
+      "time": 10,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-aim-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "fire",
+      "time": 0.09999999999999964,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-fire-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "reload",
+      "time": 0.78,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-reload-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "repair",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-repair-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "enter",
+      "time": 0.32051281287119937,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-enter-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "exit",
+      "time": 0.32051281287119937,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/round-2/game-performance-rook-exit-front.png",
+      "camera": {
+        "position": [
+          0,
+          0.96,
+          5
+        ],
+        "target": [
+          0,
+          0.96,
+          0
+        ],
+        "fov": 28,
+        "width": 432,
+        "height": 576
+      },
+      "source": "representative simulation snapshot"
+    }
+  ],
+  "counts": {
+    "high": {
+      "near": {
+        "drawCalls": 12,
+        "triangles": 65716
+      },
+      "lod": {
+        "distant": 11,
+        "nearLocal": 1
+      },
+      "firstPerson": {
+        "hiddenAtEye": true,
+        "visibleOutside": true
+      },
+      "independentSkeletons": 12,
+      "cpuFrameMs": {
+        "median": 2.4000000059604645,
+        "p95": 4.799999982118607,
+        "samples": 40,
+        "scope": "production update plus extra isolated colour render; CPU submission, not GPU time"
+      },
+      "loadErrors": [],
+      "course": {
+        "crowded": {
+          "frames": 120,
+          "p50": 17.699999999999818,
+          "p95": 18.199999999999818,
+          "max": 20.900000000000546,
+          "over33ms": 0
+        },
+        "visible": 12,
+        "quality": "high",
+        "width": 1280,
+        "height": 720,
+        "scope": "real course production RAF; one local fighter baseline versus twelve staged crew; full scene/composer/shadows; walking snapshots move at 4.5m/s along course ground, not raider AI",
+        "baseline": {
+          "frames": 120,
+          "p50": 17.59999999999991,
+          "p95": 18.199999999999818,
+          "max": 19.099999999999454,
+          "over33ms": 0
+        },
+        "frameRatio": 1,
+        "png": "docs/board/looks/crew/round-2/course-high-twelve.png",
+        "motion": "docs/board/looks/crew/round-2/course-high-motion.webm"
+      }
+    },
+    "performance": {
+      "near": {
+        "drawCalls": 12,
+        "triangles": 65716
+      },
+      "lod": {
+        "distant": 11,
+        "nearLocal": 1
+      },
+      "firstPerson": {
+        "hiddenAtEye": true,
+        "visibleOutside": true
+      },
+      "independentSkeletons": 12,
+      "cpuFrameMs": {
+        "median": 1.4000000059604645,
+        "p95": 1.699999988079071,
+        "samples": 40,
+        "scope": "production update plus extra isolated colour render; CPU submission, not GPU time"
+      },
+      "loadErrors": [],
+      "course": {
+        "crowded": {
+          "frames": 120,
+          "p50": 17.600000000000364,
+          "p95": 18.100000000000364,
+          "max": 18.400000000000546,
+          "over33ms": 0
+        },
+        "visible": 12,
+        "quality": "performance",
+        "width": 1280,
+        "height": 720,
+        "scope": "real course production RAF; one local fighter baseline versus twelve staged crew; full scene/composer/shadows; walking snapshots move at 4.5m/s along course ground, not raider AI",
+        "baseline": {
+          "frames": 120,
+          "p50": 17.700000000000273,
+          "p95": 18.199999999999818,
+          "max": 18.40000000000009,
+          "over33ms": 0
+        },
+        "frameRatio": 0.9945054945055244,
+        "png": "docs/board/looks/crew/round-2/course-performance-twelve.png",
+        "motion": "docs/board/looks/crew/round-2/course-performance-motion.webm"
+      }
+    }
+  },
+  "selection": [
+    {
+      "quality": "high",
+      "selection": [
+        {
+          "id": "rook",
+          "selected": "rook"
+        },
+        {
+          "id": "nell",
+          "selected": "nell"
+        },
+        {
+          "id": "jax",
+          "selected": "jax"
+        },
+        {
+          "id": "odessa",
+          "selected": "odessa"
+        },
+        {
+          "id": "cinder",
+          "selected": "cinder"
+        },
+        {
+          "id": "dune",
+          "selected": "dune"
+        },
+        {
+          "id": "wren",
+          "selected": "wren"
+        },
+        {
+          "id": "tusk",
+          "selected": "tusk"
+        }
+      ]
+    },
+    {
+      "quality": "performance",
+      "selection": [
+        {
+          "id": "rook",
+          "selected": "rook"
+        },
+        {
+          "id": "nell",
+          "selected": "nell"
+        },
+        {
+          "id": "jax",
+          "selected": "jax"
+        },
+        {
+          "id": "odessa",
+          "selected": "odessa"
+        },
+        {
+          "id": "cinder",
+          "selected": "cinder"
+        },
+        {
+          "id": "dune",
+          "selected": "dune"
+        },
+        {
+          "id": "wren",
+          "selected": "wren"
+        },
+        {
+          "id": "tusk",
+          "selected": "tusk"
+        }
+      ]
+    }
+  ],
+  "loadErrors": []
+}

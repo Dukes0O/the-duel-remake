@@ -1,0 +1,134 @@
+{
+  "crew": "wren",
+  "round": 2,
+  "blender": "4.5.13 LTS",
+  "seconds": 4.202829999994719,
+  "triangles": {
+    "near": 5560,
+    "far": 1880
+  },
+  "materials": 1,
+  "texture": [
+    1024,
+    1024
+  ],
+  "height": 1.65,
+  "clips": [
+    "idle",
+    "walk",
+    "sprint",
+    "jump",
+    "knockdown",
+    "get-up",
+    "aim",
+    "fire",
+    "reload",
+    "repair",
+    "enter",
+    "exit"
+  ],
+  "axis": "Blender Z-up/-Y-forward; export_yup once to glTF Y-up/+Z-forward",
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-2.png",
+    "sha256": "34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9",
+    "crops": [
+      {
+        "view": "front",
+        "crop": [
+          1008,
+          55,
+          1252,
+          664
+        ],
+        "atlas": [
+          0,
+          0,
+          341,
+          1024
+        ],
+        "centre": 1130
+      },
+      {
+        "view": "side",
+        "crop": [
+          1169,
+          55,
+          1363,
+          664
+        ],
+        "atlas": [
+          341,
+          0,
+          683,
+          1024
+        ],
+        "centre": 1266
+      },
+      {
+        "view": "back",
+        "crop": [
+          1268,
+          55,
+          1512,
+          664
+        ],
+        "atlas": [
+          683,
+          0,
+          1024,
+          1024
+        ],
+        "centre": 1390
+      }
+    ],
+    "process": "Bilinear three-view crop atlas; deterministic horizontal neutral-background edge extension. Originals untouched."
+  },
+  "camera": {
+    "position": [
+      0,
+      0.96,
+      5
+    ],
+    "target": [
+      0,
+      0.96,
+      0
+    ],
+    "verticalFov": 28,
+    "width": 432,
+    "height": 576,
+    "distanceMetres": 5
+  },
+  "files": {
+    "wren.glb": "b2731b08e0a7804782bb4d7140ab5c5914071b80887e72d4a662c5006fc7fe34",
+    "wren.blend": "2fe154b1f1da5d7b16850ac0db3f41a5485d192fa1f05162bf8aa303a5906089",
+    "wren-color.png": "80ef9460b72710264d27187a41f7dc573eeb47bef99f1fd5079aeb3c5cea103e",
+    "wren-surface.png": "9e3ea83c17608325976c74d9db5a5869dad9dfae21d41dc589e8df5588fad854"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/crew/round-2/blender-wren-idle-front.png",
+      "sha256": "2ef0f321b3452e83533d3b3c61f4781a2e9bd6e85ca179640b53d9c5f8d3f63e",
+      "view": "front",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 0
+    },
+    {
+      "path": "docs/board/looks/crew/round-2/blender-wren-idle-side.png",
+      "sha256": "6b969e630f0eb48c33c71235687955eb6c2969e459c76b2bd5a7d86a2f329db5",
+      "view": "side",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 1.5707963267948966
+    },
+    {
+      "path": "docs/board/looks/crew/round-2/blender-wren-idle-back.png",
+      "sha256": "0d967f9b5788bb76d0e0801df9af2a4f756e0701ea2d789a3e0de64a6ddb0787",
+      "view": "back",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 3.141592653589793
+    }
+  ]
+}

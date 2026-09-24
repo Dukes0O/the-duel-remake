@@ -141,6 +141,7 @@ function launchRpg(duel, weapons, fighter, dt, direction) {
       : T.rpgLifetimeSeconds * lockRangeMultiplier,
   });
   weapons.ammo--;
+  weapons.lastFireAt = state.stageTimeSec;
   weapons.nextFireAt = state.stageTimeSec + T.rpgReloadSeconds;
   showGear(state);
   duel.emit({weaponFired: 'rpg', footWeaponFired: 'rpg'});

@@ -417,7 +417,7 @@ export function attachRenderer(host, app) {
       effect.update(actor ? course.groundAt(actor.s, actor.lateral) : pp,
         {catastrophic:!useCombatAtlas&&!!actor?.combatWrecking, status:st.status}, effectDt);
     });
-    combatScene.update(app.duel,{player,rival,extraOpponents},useCombatAtlas);
+    combatScene.update(app.duel,{player,rival,extraOpponents,camera},useCombatAtlas);
     roadsideDebris.update(st);
     if(!st.paused)chickens.update(menu?{status:'menu',s:172,collectedFlocks:[]}:st,menu?now/1000:st.totalTimeSec);
     animateScene(world,now/1000);

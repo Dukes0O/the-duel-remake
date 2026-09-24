@@ -1,0 +1,133 @@
+{
+  "crew": "jax",
+  "round": 1,
+  "blender": "4.5.13 LTS",
+  "seconds": 7.0695067000051495,
+  "triangles": {
+    "near": 5192,
+    "far": 1880
+  },
+  "materials": 1,
+  "texture": [
+    1024,
+    1024
+  ],
+  "height": 1.86,
+  "clips": [
+    "idle",
+    "walk",
+    "sprint",
+    "jump",
+    "knockdown",
+    "get-up",
+    "aim",
+    "fire",
+    "reload",
+    "repair",
+    "enter",
+    "exit"
+  ],
+  "axis": "Blender Z-up/-Y-forward; export_yup once to glTF Y-up/+Z-forward",
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-1.png",
+    "sha256": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058",
+    "crops": [
+      {
+        "view": "front",
+        "crop": [
+          1021,
+          53,
+          1265,
+          662
+        ],
+        "atlas": [
+          0,
+          0,
+          341,
+          1024
+        ],
+        "centre": 1143
+      },
+      {
+        "view": "side",
+        "crop": [
+          1180,
+          53,
+          1374,
+          662
+        ],
+        "atlas": [
+          341,
+          0,
+          683,
+          1024
+        ],
+        "centre": 1277
+      },
+      {
+        "view": "back",
+        "crop": [
+          1320,
+          53,
+          1564,
+          662
+        ],
+        "atlas": [
+          683,
+          0,
+          1024,
+          1024
+        ],
+        "centre": 1442
+      }
+    ],
+    "process": "Bilinear three-view crop atlas; deterministic horizontal neutral-background edge extension. Originals untouched."
+  },
+  "camera": {
+    "position": [
+      0,
+      0.96,
+      5
+    ],
+    "target": [
+      0,
+      0.96,
+      0
+    ],
+    "verticalFov": 28,
+    "width": 432,
+    "height": 576,
+    "distanceMetres": 5
+  },
+  "files": {
+    "jax.glb": "7b47e185d0934d58a902b79fd274e506356625625f552a7fb8ef43bb1483c228",
+    "jax.blend": "b0c0fb5b53ae69bfe40e3f753d148e9b5b560c146706ec8ab98cadb13b929cf5",
+    "jax-color.png": "a7de41f054caa9de3275afc21600504b7a633b422d024db25d7665b9606d2c44"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/crew/round-1/blender-jax-idle-front.png",
+      "sha256": "92c9d84c0999f2fb6818c759f16662c259e6119e104d2cb9756e0e16e3176a1a",
+      "view": "front",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 0
+    },
+    {
+      "path": "docs/board/looks/crew/round-1/blender-jax-idle-side.png",
+      "sha256": "c4e1fcd4945741c8d25a7341d2ff593cebe74c68f4fb32a9bcc75ed029757582",
+      "view": "side",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 1.5707963267948966
+    },
+    {
+      "path": "docs/board/looks/crew/round-1/blender-jax-idle-back.png",
+      "sha256": "b33d0aa7748f055f4df46e989ac76f8017f78da2659439e11e1bdbc0256a54b5",
+      "view": "back",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 3.141592653589793
+    }
+  ]
+}

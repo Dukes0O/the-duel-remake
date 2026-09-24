@@ -1,0 +1,134 @@
+{
+  "crew": "rook",
+  "round": 2,
+  "blender": "4.5.13 LTS",
+  "seconds": 4.351594900013879,
+  "triangles": {
+    "near": 6108,
+    "far": 1880
+  },
+  "materials": 1,
+  "texture": [
+    1024,
+    1024
+  ],
+  "height": 1.83,
+  "clips": [
+    "idle",
+    "walk",
+    "sprint",
+    "jump",
+    "knockdown",
+    "get-up",
+    "aim",
+    "fire",
+    "reload",
+    "repair",
+    "enter",
+    "exit"
+  ],
+  "axis": "Blender Z-up/-Y-forward; export_yup once to glTF Y-up/+Z-forward",
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-1.png",
+    "sha256": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058",
+    "crops": [
+      {
+        "view": "front",
+        "crop": [
+          0,
+          47,
+          234,
+          662
+        ],
+        "atlas": [
+          0,
+          0,
+          341,
+          1024
+        ],
+        "centre": 112
+      },
+      {
+        "view": "side",
+        "crop": [
+          190,
+          47,
+          384,
+          662
+        ],
+        "atlas": [
+          341,
+          0,
+          683,
+          1024
+        ],
+        "centre": 287
+      },
+      {
+        "view": "back",
+        "crop": [
+          319,
+          47,
+          563,
+          662
+        ],
+        "atlas": [
+          683,
+          0,
+          1024,
+          1024
+        ],
+        "centre": 441
+      }
+    ],
+    "process": "Bilinear three-view crop atlas; deterministic horizontal neutral-background edge extension. Originals untouched."
+  },
+  "camera": {
+    "position": [
+      0,
+      0.96,
+      5
+    ],
+    "target": [
+      0,
+      0.96,
+      0
+    ],
+    "verticalFov": 28,
+    "width": 432,
+    "height": 576,
+    "distanceMetres": 5
+  },
+  "files": {
+    "rook.glb": "7e1a5953b17d070fc7df41ed834b6a1f6a85260cdc45ec65899f8abaacd6fa3b",
+    "rook.blend": "32fa1ed210f942e76d5f978ebdb89d70c06c67e9f6d2a1b91e814fd816771d20",
+    "rook-color.png": "9c36280b3058d12424026147b00cd7af376c85d420ad5d7c567fa9a9e880f16d",
+    "rook-surface.png": "9e3ea83c17608325976c74d9db5a5869dad9dfae21d41dc589e8df5588fad854"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/crew/round-2/blender-rook-idle-front.png",
+      "sha256": "487d50e845b804cdfa5e0033c13ba9d3e9687236d1a31b6e7469e066843e1b49",
+      "view": "front",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 0
+    },
+    {
+      "path": "docs/board/looks/crew/round-2/blender-rook-idle-side.png",
+      "sha256": "f6007f3a5f6dc65e97821e723d4c35e77744ad8f1da48bafd3cfc7f6130325de",
+      "view": "side",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 1.5707963267948966
+    },
+    {
+      "path": "docs/board/looks/crew/round-2/blender-rook-idle-back.png",
+      "sha256": "9c72125ef3390a6fd0bfa26e7e344666db5dec26c665be203dc3204eedec28fc",
+      "view": "back",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 3.141592653589793
+    }
+  ]
+}

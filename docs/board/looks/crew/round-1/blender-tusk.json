@@ -1,0 +1,133 @@
+{
+  "crew": "tusk",
+  "round": 1,
+  "blender": "4.5.13 LTS",
+  "seconds": 6.796471200010274,
+  "triangles": {
+    "near": 4456,
+    "far": 1880
+  },
+  "materials": 1,
+  "texture": [
+    1024,
+    1024
+  ],
+  "height": 1.94,
+  "clips": [
+    "idle",
+    "walk",
+    "sprint",
+    "jump",
+    "knockdown",
+    "get-up",
+    "aim",
+    "fire",
+    "reload",
+    "repair",
+    "enter",
+    "exit"
+  ],
+  "axis": "Blender Z-up/-Y-forward; export_yup once to glTF Y-up/+Z-forward",
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-2.png",
+    "sha256": "34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9",
+    "crops": [
+      {
+        "view": "front",
+        "crop": [
+          1511,
+          22,
+          1755,
+          664
+        ],
+        "atlas": [
+          0,
+          0,
+          341,
+          1024
+        ],
+        "centre": 1633
+      },
+      {
+        "view": "side",
+        "crop": [
+          1695,
+          22,
+          1889,
+          664
+        ],
+        "atlas": [
+          341,
+          0,
+          683,
+          1024
+        ],
+        "centre": 1792
+      },
+      {
+        "view": "back",
+        "crop": [
+          1843,
+          22,
+          2056,
+          664
+        ],
+        "atlas": [
+          683,
+          0,
+          1024,
+          1024
+        ],
+        "centre": 1965
+      }
+    ],
+    "process": "Bilinear three-view crop atlas; deterministic horizontal neutral-background edge extension. Originals untouched."
+  },
+  "camera": {
+    "position": [
+      0,
+      0.96,
+      5
+    ],
+    "target": [
+      0,
+      0.96,
+      0
+    ],
+    "verticalFov": 28,
+    "width": 432,
+    "height": 576,
+    "distanceMetres": 5
+  },
+  "files": {
+    "tusk.glb": "8b0c9261455b5d19ad43dc2bcc112d3b2fa776d766e2ef68c19de1855f3f8853",
+    "tusk.blend": "4c872b95bdeb65c0c0ffff83d02c8f3560cc5061ed84b27f080c8cc1f73a7dbc",
+    "tusk-color.png": "665d3850d697ac280281ac579eaec0cc880f853ea8b1d859518ac79d482303aa"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/crew/round-1/blender-tusk-idle-front.png",
+      "sha256": "ec82e21726c37e97e8146db637c61a626d9f06e818954b424767956259294657",
+      "view": "front",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 0
+    },
+    {
+      "path": "docs/board/looks/crew/round-1/blender-tusk-idle-side.png",
+      "sha256": "2e0fd268721bd09474d0bd79997c81de617bbc655f725ed5790c909fe2afe95a",
+      "view": "side",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 1.5707963267948966
+    },
+    {
+      "path": "docs/board/looks/crew/round-1/blender-tusk-idle-back.png",
+      "sha256": "47f0b36a2478c2910eb3d66a201826842b6567a2eee1c2738fa58ff81a368f80",
+      "view": "back",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 3.141592653589793
+    }
+  ]
+}

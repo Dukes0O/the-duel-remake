@@ -90,10 +90,12 @@ export function createFighter(course, car, options = {}) {
 
 export function knockdownFighter(fighter) {
   fighter.speed = 0;
+  fighter.locomotion = 'idle';
   if (fighter.knockedDown) return false;
   fighter.health = 0;
   fighter.knockedDown = true;
   fighter.knockdownRemaining = T.knockdownSeconds;
+  fighter.knockdownDuration = T.knockdownSeconds;
   fighter.verticalSpeed = 0;
   fighter.airHeight = 0;
   fighter.y = fighter.groundY;
@@ -157,6 +159,7 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
     throw new Error('Fighter movement needs the fixed 120 Hz simulation step.');
   fighter.steps++;
   fighter.speed = 0;
+  fighter.locomotion = 'idle';
   if (fighter.knockedDown) {
     fighter.knockdownRemaining = fighter.knockdownRemaining <= dt + 1e-9
       ? 0 : fighter.knockdownRemaining - dt;
@@ -207,5 +210,6 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
   }
   // Observed planar movement from this fixed step, including collision sliding.
   fighter.speed = Math.hypot(fighter.x - startX, fighter.z - startZ) / dt;
+  fighter.locomotion = fighter.speed > .01 ? input.sprint ? 'sprint' : 'walk' : 'idle';
   return fighter;
 }

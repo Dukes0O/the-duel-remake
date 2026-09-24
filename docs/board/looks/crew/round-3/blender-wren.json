@@ -1,0 +1,274 @@
+{
+  "crew": "wren",
+  "round": 3,
+  "blender": "4.5.13 LTS",
+  "seconds": 4.499201500002528,
+  "triangles": {
+    "near": 5560,
+    "far": 1880
+  },
+  "materials": 1,
+  "texture": [
+    1024,
+    1024
+  ],
+  "height": 1.65,
+  "clips": [
+    "idle",
+    "walk",
+    "sprint",
+    "jump",
+    "knockdown",
+    "get-up",
+    "aim",
+    "fire",
+    "reload",
+    "repair",
+    "enter",
+    "exit"
+  ],
+  "axis": "Blender Z-up/-Y-forward; export_yup once to glTF Y-up/+Z-forward",
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-2.png",
+    "sha256": "34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9",
+    "crops": [
+      {
+        "view": "front",
+        "crop": [
+          1008,
+          55,
+          1252,
+          664
+        ],
+        "atlas": [
+          0,
+          0,
+          341,
+          1024
+        ],
+        "centre": 1130
+      },
+      {
+        "view": "side",
+        "crop": [
+          1169,
+          55,
+          1363,
+          664
+        ],
+        "atlas": [
+          341,
+          0,
+          683,
+          1024
+        ],
+        "centre": 1266
+      },
+      {
+        "view": "back",
+        "crop": [
+          1268,
+          55,
+          1512,
+          664
+        ],
+        "atlas": [
+          683,
+          0,
+          1024,
+          1024
+        ],
+        "centre": 1390
+      }
+    ],
+    "process": "Bilinear three-view crop atlas; deterministic horizontal neutral-background edge extension. Originals untouched."
+  },
+  "camera": {
+    "position": [
+      0,
+      0.96,
+      5
+    ],
+    "target": [
+      0,
+      0.96,
+      0
+    ],
+    "verticalFov": 28,
+    "width": 432,
+    "height": 576,
+    "distanceMetres": 5
+  },
+  "files": {
+    "wren.glb": "5e98ef99656e8065ff1d7726791538c6bc84c2938e0509c0385b484add8a9216",
+    "wren.blend": "e7bef0e983dc7ed60068f457a0f15074517bfb6ed300e3392f93898a29336047",
+    "wren-color.png": "80ef9460b72710264d27187a41f7dc573eeb47bef99f1fd5079aeb3c5cea103e",
+    "wren-surface.png": "9e3ea83c17608325976c74d9db5a5869dad9dfae21d41dc589e8df5588fad854"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/crew/round-3/blender-wren-idle-front.png",
+      "sha256": "5b9ad9b32a9b44093ceb206fcaa8d4ec178902bd7e970f067021b2d46221731b",
+      "view": "front",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 0
+    },
+    {
+      "path": "docs/board/looks/crew/round-3/blender-wren-idle-side.png",
+      "sha256": "b0923db6245aad4c97fc7d77be1b1598e57e2f4f48a0d755f0ebf04adf4abddd",
+      "view": "side",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 1.5707963267948966
+    },
+    {
+      "path": "docs/board/looks/crew/round-3/blender-wren-idle-back.png",
+      "sha256": "3315092ad907500e31219bd1e67c1c8e0359c5ecac77850bc3cbe3e5ffda4248",
+      "view": "back",
+      "clip": "idle",
+      "time": 0.25,
+      "yaw": 3.141592653589793
+    }
+  ],
+  "groundSupportSamples": [
+    {
+      "clip": "knockdown",
+      "time": 1.0,
+      "minimumWorldHeightByWeightedRegion": {
+        "chest": 0.03763,
+        "pelvis": 0.00342,
+        "thigh.L": 0.02574,
+        "shin.L": 0.00535,
+        "foot.L": 0.00877,
+        "upper_arm.L": 0.06368,
+        "forearm.L": 0.01584,
+        "hand.L": 0.0,
+        "thigh.R": 0.02574,
+        "shin.R": 0.00593,
+        "foot.R": 0.02249,
+        "upper_arm.R": 0.06593,
+        "forearm.R": 0.02148,
+        "hand.R": 0.00622,
+        "neck": 0.08966,
+        "head": 0.07147
+      },
+      "method": "Minimum deformed vertex world Z, vertices with region weight >0.65; metres."
+    },
+    {
+      "clip": "get-up",
+      "time": 0.0,
+      "minimumWorldHeightByWeightedRegion": {
+        "chest": 0.03402,
+        "pelvis": -0.0,
+        "thigh.L": 0.02238,
+        "shin.L": 0.00218,
+        "foot.L": 0.0058,
+        "upper_arm.L": 0.06467,
+        "forearm.L": 0.0232,
+        "hand.L": 0.00796,
+        "thigh.R": 0.02238,
+        "shin.R": 0.00274,
+        "foot.R": 0.01952,
+        "upper_arm.R": 0.06422,
+        "forearm.R": 0.02222,
+        "hand.R": 0.00701,
+        "neck": 0.08597,
+        "head": 0.06767
+      },
+      "method": "Minimum deformed vertex world Z, vertices with region weight >0.65; metres."
+    },
+    {
+      "clip": "get-up",
+      "time": 0.2916666666666667,
+      "minimumWorldHeightByWeightedRegion": {
+        "chest": 0.2946,
+        "pelvis": 0.18219,
+        "thigh.L": 0.19581,
+        "shin.L": 0.16678,
+        "foot.L": 0.02429,
+        "upper_arm.L": 0.29572,
+        "forearm.L": 0.09915,
+        "hand.L": 0.00586,
+        "thigh.R": 0.1954,
+        "shin.R": 0.11556,
+        "foot.R": -0.0,
+        "upper_arm.R": 0.29465,
+        "forearm.R": 0.0988,
+        "hand.R": 0.0055,
+        "neck": 0.42637,
+        "head": 0.4748
+      },
+      "method": "Minimum deformed vertex world Z, vertices with region weight >0.65; metres."
+    },
+    {
+      "clip": "get-up",
+      "time": 0.5833333333333334,
+      "minimumWorldHeightByWeightedRegion": {
+        "chest": 0.46877,
+        "pelvis": 0.29476,
+        "thigh.L": 0.1453,
+        "shin.L": 0.00661,
+        "foot.L": 0.05022,
+        "upper_arm.L": 0.43954,
+        "forearm.L": 0.21325,
+        "hand.L": 0.10349,
+        "thigh.R": 0.32201,
+        "shin.R": 0.17059,
+        "foot.R": -0.0,
+        "upper_arm.R": 0.43895,
+        "forearm.R": 0.21498,
+        "hand.R": 0.10632,
+        "neck": 0.58726,
+        "head": 0.6248
+      },
+      "method": "Minimum deformed vertex world Z, vertices with region weight >0.65; metres."
+    },
+    {
+      "clip": "get-up",
+      "time": 0.9166666666666666,
+      "minimumWorldHeightByWeightedRegion": {
+        "chest": 1.05502,
+        "pelvis": 0.71794,
+        "thigh.L": 0.54056,
+        "shin.L": 0.19385,
+        "foot.L": -0.0,
+        "upper_arm.L": 1.05476,
+        "forearm.L": 0.85125,
+        "hand.L": 0.76202,
+        "thigh.R": 0.54056,
+        "shin.R": 0.19385,
+        "foot.R": 1e-05,
+        "upper_arm.R": 1.05479,
+        "forearm.R": 0.85551,
+        "hand.R": 0.7676,
+        "neck": 1.2679,
+        "head": 1.3782
+      },
+      "method": "Minimum deformed vertex world Z, vertices with region weight >0.65; metres."
+    },
+    {
+      "clip": "get-up",
+      "time": 1.2083333333333333,
+      "minimumWorldHeightByWeightedRegion": {
+        "chest": 1.1018,
+        "pelvis": 0.75016,
+        "thigh.L": 0.56984,
+        "shin.L": 0.20016,
+        "foot.L": -0.0,
+        "upper_arm.L": 1.08211,
+        "forearm.L": 0.85061,
+        "hand.L": 0.73971,
+        "thigh.R": 0.56984,
+        "shin.R": 0.20016,
+        "foot.R": -0.0,
+        "upper_arm.R": 1.0808,
+        "forearm.R": 0.85462,
+        "hand.R": 0.74625,
+        "neck": 1.30918,
+        "head": 1.42196
+      },
+      "method": "Minimum deformed vertex world Z, vertices with region weight >0.65; metres."
+    }
+  ]
+}
