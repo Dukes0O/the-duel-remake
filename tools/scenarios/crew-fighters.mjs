@@ -79,7 +79,8 @@ export async function run(context) {
       review.draw=(action=null,view='front')=>{
         review.show();
         if(action==='jump'){r.camera.position.set(0,1.65,7);r.camera.lookAt(0,1.65,0);}
-        if(view==='side'){r.camera.position.set(5,.65,.6);r.camera.lookAt(0,.65,.6);}
+        // Keep the entire prone body in frame, including its forward head.
+        if(view==='side'){r.camera.position.set(7,.65,.75);r.camera.lookAt(0,.65,.75);}
         r.camera.updateProjectionMatrix();r.renderer.info.reset();
         if('${quality}'==='high')r.composer.render(0);else r.renderer.render(r.scene,r.camera);
         return r.renderer.domElement.toDataURL('image/png');
@@ -102,7 +103,9 @@ export async function run(context) {
         window.__render.renderFrame();
       })()`);
       await context.waitFor(`window.__render.scene.getObjectByName('Rigged on-foot fighters').userData.crews['${id}']==='ready'`,'crew '+id,60000);
-      for (const [view,yaw] of VIEWS) {
+      for (const [view,baseYaw] of VIEWS) {
+        // Tusk's reference profile faces left; the other seven face right.
+        const yaw = id==='tusk' && view==='side' ? -Math.PI/2 : baseYaw;
         const result=await context.evaluate(`(() => {
           const r=window.__render,s=window.__qaApp.duel.state,review=window.__crewReview;
           s.fighter.yaw=${yaw};r.renderFrame();const png=review.draw();
@@ -144,7 +147,7 @@ export async function run(context) {
         const path=`${relative}/game-${quality}-rook-${clip}-${view}.png`;
         await writeFile(join(root,path),Buffer.from(result.png.split(',')[1],'base64'));
         context.screenshots.push(join(root,path));
-        evidence.captures.push({crew:'rook',quality,clip,time:result.time,view,yaw:0,path,camera:clip==='jump'?{position:[0,1.65,7],target:[0,1.65,0]}:view==='side'?{position:[5,.65,.6],target:[0,.65,.6]}:evidence.camera,source:'representative simulation snapshot'});
+        evidence.captures.push({crew:'rook',quality,clip,time:result.time,view,yaw:0,path,camera:clip==='jump'?{position:[0,1.65,7],target:[0,1.65,0]}:view==='side'?{position:[7,.65,.75],target:[0,.65,.75]}:evidence.camera,source:'representative simulation snapshot'});
       }
     }
     evidence.counts[quality]=await context.evaluate(`(() => {
