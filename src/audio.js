@@ -257,6 +257,52 @@ export class EngineAudio {
     this._tone(150,.18,2.5,'triangle',0,45,output.level);
   }
 
+  // A short shaped slice of the existing noise buffer gives a launch or
+  // string release some physical texture without a new recording or network
+  // request. The active-shot lifecycle still owns pause, mute and cleanup.
+  _weaponNoise(frequency, duration, volume, type = 'bandpass') {
+    const ctx=this.context,start=ctx.currentTime;
+    const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+    source.buffer=this.noiseBuffer;
+    filter.type=type;filter.frequency.value=frequency;filter.Q.value=.65;
+    gain.gain.setValueAtTime(0,start);
+    gain.gain.linearRampToValueAtTime(volume,start+.005);
+    gain.gain.exponentialRampToValueAtTime(.001,start+duration);
+    source.connect(filter);filter.connect(gain);gain.connect(this.master);
+    source.start(start);source.stop(start+duration+.01);
+    const voice={source,gain,endAt:start+duration+.01};this.activeShots.add(voice);
+    source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();this.activeShots.delete(voice);};
+  }
+
+  _weaponCue(weapon) {
+    switch (weapon) {
+      case 'ufo':
+        // A rising, uneven warble reads as a short tactical jump.
+        this._tone(210,.32,.075,'triangle',0,390);
+        for(let i=0;i<4;i++)this._tone(520+i*95,.12,.085,'sine',i*.057,700+i*125);
+        break;
+      case 'bomb':
+        // Low launcher thump and a brief air push; the impact has its own blast.
+        this._weaponNoise(460,.17,.16,'lowpass');
+        this._tone(138,.22,.19,'triangle',0,52);
+        break;
+      case 'crossbow':
+        // Taut snap followed by a short falling string resonance.
+        this._weaponNoise(2450,.075,.17);
+        this._tone(1050,.16,.12,'triangle',0,260);
+        this._tone(340,.11,.045,'sine',.016,175);
+        break;
+      case 'star':
+        // Shield activation rises into a bright, held three-note ring.
+        for(const [note,delay] of [[392,0],[587.33,.055],[783.99,.11]])
+          this._tone(note,.34,.105,'sine',delay,note*1.18);
+        this._tone(1320,.38,.045,'sine',0,1680);
+        break;
+      default:
+        this._tone(220,.22,.12,'triangle',0,88);
+    }
+  }
+
   _stopShot(voice) {
     if(!voice||voice.stopping||!this.activeShots.has(voice))return;
     voice.stopping=true;
@@ -445,7 +491,14 @@ export class EngineAudio {
       [440, 554.37, 659.25, 880].forEach((f, i) => this._tone(f, 0.35, 0.08, 'triangle', i * 0.08));
     }
     if (ev.ticket || ev.gameover || ev.stageResult?.won===false) this._tone(110, 0.65, 0.1, 'triangle', 0, 65);
-    if(ev.weaponFired){const note={ufo:760,bomb:130,crossbow:440,star:980}[ev.weaponFired]||220;this._tone(note,.22,.12,'triangle',0,note*.4);}
+    if(ev.weaponFired){
+      if(state?.mode==='wasteland'&&Number.isFinite(state.maxArmor)&&state.maxArmor>0)
+        this._weaponCue(ev.weaponFired);
+      else {
+        const note={ufo:760,bomb:130,crossbow:440,star:980}[ev.weaponFired]||220;
+        this._tone(note,.22,.12,'triangle',0,note*.4);
+      }
+    }
     if(ev.combatExplosion)this._combatBlast(ev,state,course);
     if(ev.combatHit)this._combatImpact(ev,state,course);
     if(ev.explosion && this.samples.explosion)this._sample(this.samples.explosion,1.15);
