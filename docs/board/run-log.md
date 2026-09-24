@@ -612,3 +612,11 @@ checkout untouched until the final integration commit passes the full gate.
   at `7240e57`. Its six focused transition cases, FOOT-01 baseline and build
   passed. FOOT-03 walking controls and camera are now underway; on-foot play
   is not yet usable in a browser without them.
+- FOOT-06 on-foot HUD integrated at `c8c20e5`. It shows fighter health,
+  reticle and distance/direction to the parked car while hiding car weapons;
+  the ammo area states that no foot weapon is equipped until that card exists.
+- PERF-01 dent preparation integrated at `85ca3ef`. A single private frame
+  sample reduced first-wreck maxima from 71 to 53 ms on High and 89 to 72 ms
+  on Performance, with p95 near 18 ms. Two frames still exceeded 33 ms.
+  The cache adds about 6 MiB per detailed F42 and 0.36 MiB per generic traffic
+  car; this remains a development-only tradeoff to review before beta.

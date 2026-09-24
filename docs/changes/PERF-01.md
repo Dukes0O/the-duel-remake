@@ -1,6 +1,6 @@
 # PERF-01: first armored wreck frame
 
-status: ready-to-merge
+status: integrated
 
 ## Change
 

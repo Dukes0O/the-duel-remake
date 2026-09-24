@@ -1,6 +1,6 @@
 ---
 task: FOOT-06
-status: lane-complete
+status: integrated
 kind: combat-ui
 flag: wasteland2
 player_facing: yes

@@ -780,8 +780,19 @@ tasks:
     lane: VIS
     size: S
     needs: [VIS-01, VIS-02]
-    status: building
+    status: integrated
     flag: wasteland2
     behavior_change: no
-    note: "Combat atlas warmup is integrated. Residual 70–90 ms first-wreck frame combines damage geometry/normals and first-visible effect program/texture work; a bounded fix is underway."
+    note: "Precomputed dent bases and hidden fracture shader preparation integrated at 85ca3ef. Focused visual checks and one private frame sample passed; first-wreck max fell from 71 to 53 ms High and 89 to 72 ms Performance. Remaining two long frames and cache cost are documented."
     spec: "SPEC.md sections 2 and 12.2 frame budget; 2026-09-23 frame sample"
+  - id: FOOT-06
+    title: "On-foot HUD"
+    wave: 5
+    lane: UI
+    size: S
+    needs: [UI-01, FOOT-01, FOOT-02]
+    status: integrated
+    flag: wasteland2
+    behavior_change: yes
+    note: "Fighter health, reticle, car bearing/distance and honest unavailable-ammo state integrated at c8c20e5. Six focused HUD cases and build passed; first browser review joins FOOT-03."
+    spec: "SPEC.md sections 3.12 and 12.2, task FOOT-06"
