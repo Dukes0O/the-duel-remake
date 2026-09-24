@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-24T21:24:31.087Z
+Observed at: 2026-09-24T21:30:39.371Z
 
-Observation commit: d0a7f8ec69d44d6159946ff222c4e4f96026eee8
+Observation commit: 7b2d8fcdb72484d90c044e3751329e0ec506bc2e
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: d0a7f8ec69d44d6159946ff222c4e4f96026eee8
+Integration HEAD: 7b2d8fcdb72484d90c044e3751329e0ec506bc2e
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -14,9 +14,9 @@ Live commit: not checked
 
 Live build version: not checked
 
-Full tier: stale; exact HEAD passed: no.
+Full tier: passed; exact HEAD passed: yes.
 
-Last recorded full run: 2026-09-24T21:17:57.880Z; tested commit: b2e938021e2c733f6aba36d3e79d1e71be4fdbf9.
+Last recorded full run: 2026-09-24T21:30:11.482Z; tested commit: 7b2d8fcdb72484d90c044e3751329e0ec506bc2e.
 
 ## Feature switches
 
@@ -58,7 +58,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 158,118 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 103,188 B | +0 B | 5,000,000 B |
 | All `public/` | 250,741,595 B | +0 B | unavailable |
-| Git objects | 263,272,448 B | +95,232 B | unavailable |
+| Git objects | 263,276,544 B | +4,096 B | unavailable |
 | Lane folders | 4 | +0 | unavailable |
 
 ## Backups
@@ -67,7 +67,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: d0a7f8ec69d44d6159946ff222c4e4f96026eee8
+- Local integration/wasteland: 7b2d8fcdb72484d90c044e3751329e0ec506bc2e
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -75,4 +75,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: behind local; cached commit 6bb5644b349bc96f6a460a4bd3227b7edf8089eb.
+- Remote origin/integration/wasteland: matches local; cached commit 7b2d8fcdb72484d90c044e3751329e0ec506bc2e.

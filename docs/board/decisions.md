@@ -251,3 +251,10 @@ and how to reverse it before continuing.
 ## 2026-09-24 PDT: BAL-02 proof before tuning
 
 - Decision: Add a legal deterministic strong-player policy to measure CPU wrecks before changing weapon damage. The current `all` policy fired no crossbows, landed one rival hit and caused no wreck in a flagged Easy seed-1989 trace. Trace Easy raider hits by owner and shot before choosing a narrow correction; earlier retained sample attributes five of six Easy hits to raiders. Preserve the flag-off path and existing win bands. Reverse by removing the new policy or restoring the prior seeded aim parameters.
+
+
+## 2026-09-24 PDT: BAL-02 accepted candidate for review
+
+- Decision: Extend only Easy camp shot spacing from 0.8 to 1.6 seconds. The pinned trace showed paired raider hits about 0.8 seconds apart. Medium/Hard retain 0.8; aim, damage and CPU cadence retain their existing values. The first candidate passes flagged wins 8/5/3 and enemy hits 3/4/6, crossbow 12/26 and UFO/own-bomb limits. Revert the spacing if independent review or the lane gate finds a regression.
+- Decision: Keep a separate legal-input pursuit sample that follows normal steering and adjusts throttle/brake to remain about 30 m behind the rival. It causes 2/2/0 player-owned CPU wrecks on Easy/Medium/Hard without changing damage. It does not replace the original seven policy runs or ten-seed no-weapon balance samples.
+- Board completion: retired old BUG-06/07 active-slice instructions, named AUD-03 for residual full-race listening, and made first-person art wait for GFX-01-P1's technique while the yard depends directly on CAR-01. These complete the phase-2 board triage; old integrated work is preserved.
