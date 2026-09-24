@@ -70,7 +70,7 @@ export const COMBAT_TUNING=Object.freeze({
  },
  scoring:{comboWindowSeconds:5,maximumCombo:5,hitStylePoints:100,
   wreckStylePoints:400},
- foot:{stepOutBelowKph:40,stepOutHoldSeconds:.4,bailHoldSeconds:1,
+  foot:{stepOutBelowKph:40,stepOutHoldSeconds:.4,bailHoldSeconds:1,
   bailHealthLoss:25,bailTumbleSeconds:.8,reentryRangeMeters:3.5,
   reentryHoldSeconds:.6,parkedWreckSeconds:3,
   rpgAmmo:3,rpgSpeed:55,rpgReloadSeconds:2.2,rpgLockSeconds:.8,
@@ -78,5 +78,8 @@ export const COMBAT_TUNING=Object.freeze({
   rpgTurnRadiansPerSecond:1.5,rpgLifetimeSeconds:4,
   rpgSplashRadius:8,rpgMuzzleOffset:.7,rpgEyeHeight:1.62,
   wrenchRepairAmount:40,wrenchRepairSeconds:4,repairRangeMeters:3.5},
+ raider:{health:70,directDamage:80,splashDamage:55,
+  hitRadius:.6,hitHeight:1.15,knockdownSeconds:3,
+  salvageReachMeters:2.5,salvageArmor:15,salvageRockets:1},
  creditBonus:{perHit:10,perWreck:100,maximumBaseFraction:.25},
 });

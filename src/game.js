@@ -290,7 +290,7 @@ export class Duel {
     s.invulnerableSec = Math.max(0, s.invulnerableSec - dt);
     s.damageCooldown = Math.max(0, s.damageCooldown - dt);
     stepCombat(this,dt);
-    stepRaiders(this);
+    stepRaiders(this, dt);
     for (const actor of [...s.opponents, s.police.pursuit, ...s.traffic]) {
       if (actor?.damageCooldown > 0) actor.damageCooldown = Math.max(0, actor.damageCooldown - dt);
     }

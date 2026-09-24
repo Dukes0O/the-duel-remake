@@ -3,6 +3,7 @@ import {point, predictedPoint, burst} from './combat-weapons.js';
 import {applyArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {tickCombatScoring} from './combat-scoring.js';
+import {damageRaider} from './raiders.js';
 
 const T = COMBAT_TUNING;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -224,8 +225,9 @@ export function stepProjectiles(duel, dt) {
     if (projectile.kind === 'bomb') projectile.vy -= T.bomb.gravity * dt;
 
     const nearest = duel.course.nearest(projectile.x, projectile.z);
-    const floor = duel.course.groundAt(nearest.s, nearest.lateral).y;
+    let floor = duel.course.groundAt(nearest.s, nearest.lateral).y;
     let target = null;
+    let raiderTarget = null;
     let firstContact = Infinity;
     for (const actor of projectile.raid ? [state, ...state.opponents]
       : projectile.enemy ? [state] : state.opponents) {
@@ -247,7 +249,22 @@ export function stepProjectiles(duel, dt) {
         target = actor;
       }
     }
-    const contact = !!target;
+    if (modernProjectiles && projectile.kind === 'rpg') {
+      for (const zone of state.raids?.zones || []) {
+        for (const raider of zone.raiders) {
+          if (raider.knockedDown) continue;
+          const center = {x: raider.x, y: raider.y + .9, z: raider.z};
+          const approach = sweptVehicleContact(projectile, old, center,
+            center, T.raider.hitRadius, T.raider.hitHeight);
+          if (approach && approach.fraction < firstContact) {
+            firstContact = approach.fraction;
+            target = null;
+            raiderTarget = raider;
+          }
+        }
+      }
+    }
+    const contact = !!target || !!raiderTarget;
     const rpgLifetime = Number.isInteger(projectile.targetIndex) &&
       Number.isFinite(projectile.lifetimeSeconds)
       ? clamp(projectile.lifetimeSeconds, T.foot.rpgLifetimeSeconds,
@@ -288,6 +305,14 @@ export function stepProjectiles(duel, dt) {
       continue;
     }
 
+    if (raiderTarget) {
+      projectile.x = old.x + (projectile.x - old.x) * firstContact;
+      projectile.y = old.y + (projectile.y - old.y) * firstContact;
+      projectile.z = old.z + (projectile.z - old.z) * firstContact;
+      const impactGround = duel.course.nearest(projectile.x, projectile.z);
+      floor = duel.course.groundAt(impactGround.s, impactGround.lateral).y;
+    }
+
     burst(combat, {
       x: projectile.x,
       y: Math.max(floor + T.projectileBurstFloorClearance, projectile.y),
@@ -321,8 +346,9 @@ export function stepProjectiles(duel, dt) {
         }
       }
     } else if (projectile.kind === 'rpg') {
+      if (raiderTarget) damageRaider(duel, raiderTarget, T.raider.directDamage);
       if (contact) {
-        const removed = hit(duel, target, projectile, 1.35, false);
+        const removed = target && hit(duel, target, projectile, 1.35, false);
         if (removed > 0 && state.opponents.includes(target)) {
           combat.notorietyEvents ??= [];
           if (combat.notorietyEvents.length < 256) combat.notorietyEvents.push({
@@ -338,6 +364,15 @@ export function stepProjectiles(duel, dt) {
         if (distance < rpgSplashRadius) hit(duel, actor, projectile,
           1 - distance / rpgSplashRadius, false,
           {splash: true, self: actor === state});
+      }
+      for (const zone of state.raids?.zones || []) {
+        for (const raider of zone.raiders) {
+          if (raider === raiderTarget || raider.knockedDown) continue;
+          const distance = Math.hypot(raider.x - projectile.x,
+            raider.y + .9 - projectile.y, raider.z - projectile.z);
+          if (distance < rpgSplashRadius) damageRaider(duel, raider,
+            T.raider.splashDamage * (1 - distance / rpgSplashRadius));
+        }
       }
     } else if (contact) {
       hit(duel, target, projectile,

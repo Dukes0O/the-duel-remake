@@ -6,6 +6,8 @@ import {supportsCombat} from '../src/combat-weapons.js';
 import {stepRaiders} from '../src/raiders.js';
 import {stepProjectiles} from '../src/combat-projectiles.js';
 import {createRaiderMarkers} from '../src/raider-markers.js';
+import {createSalvageMarkers} from '../src/salvage-markers.js';
+import {sweepObstacle} from '../src/collision.js';
 
 function race(stageIndex = 0, flagged = true, seed = 1989) {
   const duel = new Duel({seed, featureFlags: {wasteland2: flagged}});
@@ -25,6 +27,17 @@ test('all 11 combat courses get three seeded, roadside three-raider camps', () =
     assert.equal(zones.length, 3);
     for (const zone of zones) {
       assert.equal(zone.raiders.length, 3);
+      assert.ok(zone.salvage, `${duel.stageDef.id}: camp needs a salvage crate`);
+      assert.equal(duel.course.surfaceAt(zone.salvage.s,
+        zone.salvage.lateral).road, false);
+      const ledge = duel.course.raidLedges.find(item =>
+        item.id === `ledge-${zone.salvage.id}`);
+      assert.ok(ledge && duel.course.obstaclesNear(ledge.s)
+        .includes(ledge), 'ledge must be in the stage collision index');
+      assert.ok(sweepObstacle({x: ledge.x + 4, y: ledge.y,
+        z: ledge.z}, {x: ledge.x, y: ledge.y, z: ledge.z},
+      ledge, 0, {halfWidth: 1, halfLength: 2, height: 1.4}),
+      'car must not be able to drive through the salvage ledge');
       assert.ok(zone.s > 0 && zone.s < duel.course.length);
       assert.ok(zone.raiders.every(raider =>
         Number.isFinite(raider.x) && Number.isFinite(raider.y) &&
@@ -43,6 +56,63 @@ test('all 11 combat courses get three seeded, roadside three-raider camps', () =
   assert.deepEqual(first.state.raids, repeated.state.raids);
   assert.notDeepEqual(first.state.raids.zones.map(zone => zone.s),
     changed.state.raids.zones.map(zone => zone.s));
+});
+
+test('RPG direct hit drops a raider, nearby splash hurts another, and XP is once', () => {
+  const duel = race(), state = duel.state, zone = state.raids.zones[0];
+  state.opponents = [];
+  state.speedMph = 0;
+  const first = zone.raiders[0], second = zone.raiders[1];
+  second.x = first.x + 2;
+  second.z = first.z;
+  second.y = first.y;
+  function rocket(id) {
+    state.combat.projectiles.push({kind: 'rpg', owner: 'player', id,
+      x: first.x - 12, y: first.y + 1, z: first.z,
+      launchX: first.x - 12, launchZ: first.z,
+      vx: 55, vy: 0, vz: 0, age: .4, targetIndex: null});
+    stepProjectiles(duel, .3);
+  }
+  rocket('raid-rpg-1');
+  assert.equal(first.knockedDown, true);
+  assert.ok(second.health < second.maxHealth, 'the neighboring raider took splash');
+  assert.equal(state.combat.scoring.knockdowns, 1);
+  assert.deepEqual(state.combat.notorietyEvents.filter(event =>
+    event.type === 'raiderKnockdown').map(event => event.id), ['raider-0-0']);
+  stepRaiders(duel, 3);
+  assert.equal(first.knockedDown, false);
+  second.x = first.x + 30;
+  rocket('raid-rpg-2');
+  assert.equal(first.knockedDown, true);
+  assert.equal(state.combat.scoring.knockdowns, 1,
+    'recovering the same raider cannot farm score or Notoriety');
+  assert.equal(state.combat.notorietyEvents.length, 1);
+});
+
+test('ledge salvage is visible, foot-only, and collected at most once', () => {
+  const duel = race(), state = duel.state, crate = state.raids.zones[0].salvage;
+  const markers = createSalvageMarkers();
+  markers.update(duel);
+  assert.equal(markers.group.visible, true);
+  assert.deepEqual(markers.meshes.map(mesh => mesh.count), [3, 3, 3]);
+  state.fighter = {x: crate.x + 2.2, y: crate.y, z: crate.z,
+    crewId: 'rook', knockedDown: false};
+  state.armor = state.maxArmor - 20;
+  state.footWeapons.ammo = 2;
+  stepRaiders(duel, 1 / 120);
+  assert.equal(crate.collected, false, 'fighter must actually be on foot');
+  state.onFoot = true;
+  stepRaiders(duel, 1 / 120);
+  assert.equal(crate.collected, true);
+  assert.equal(state.armor, state.maxArmor - 5);
+  assert.equal(state.footWeapons.ammo, 3);
+  stepRaiders(duel, 1 / 120);
+  assert.equal(state.armor, state.maxArmor - 5);
+  markers.update(duel);
+  assert.deepEqual(markers.meshes.map(mesh => mesh.count), [2, 2, 2]);
+  markers.update(race(0, false));
+  assert.equal(markers.group.visible, false);
+  markers.dispose();
 });
 
 test('flag-off and ordinary races have no raiders or route change', () => {
