@@ -1,5 +1,7 @@
 # BUG-06: crossbow contact uses the real vehicle height
 
+status: ready-to-merge (body-contact slice only; balance follow-ups remain)
+
 ## Change
 
 Flagged Wasteland crossbows now intersect the moving vehicle body from its
@@ -126,3 +128,23 @@ The three repaired unit suites pass **42/42 tests**, with none skipped, in
 1.22 s. Only those suites were rerun. The balance matrix was not repeated.
 Representative armor-wreck/results browser checks and the final independent
 lane/build gate remain pending.
+
+## Final independent gate
+
+Candidate 280b25d1a99d53c8d75652ff0d349830d07d7c7d was clean before and
+after verification. Review confirmed exactly the ten authorized fixture
+positions and note changed since 24108dd; runtime and assertions stayed fixed.
+
+- Private memory-only armor-wreck: passed in 13.68 s, port 41024, six images.
+- Private memory-only combat-results: passed in 16.99 s, port 59057, four images.
+- Both browser scenarios reported zero errors and warnings.
+- Required lane tier: 216 passed, zero failed or not run, 305.90 s.
+  All eight campaign shards passed; DUEL_SKIP_CAMPAIGNS was unset.
+- Production build: passed in 0.90 s, with the existing chunk-size warning.
+
+Logs are retained in .qa-dist/bolt-final-{armor-wreck,results,lane,build}.log.
+Screenshots are in the combat-armor-wreck-2026-09-24T05-52-58-897Z and
+combat-results-2026-09-24T05-53-45-616Z browser-output directories.
+The first logging setup held a file during the harness build and caused
+EBUSY; correcting log capture allowed both checks to pass without source edits.
+The passing gate covers unchanged source; this final note adds evidence only.
