@@ -345,3 +345,12 @@ test, acceptance limit or race fingerprint. The lane is ready for the Director
 to integrate under the recorded development-only approval. The visual polish
 debt and performance limits above remain open. No merge, board change or
 release was performed by this reviewer.
+
+## Integration and local evidence retention
+
+Director merged the lane as `7f8d43f` and refreshed STATUS on that clean
+integration commit. Both gate logs were copied with matching SHA-256 hashes
+to `.lanes/evidence/egg02/` before the clean, fully merged worktree was
+removed. The lane had its own dependency folder, with no junction. Its branch
+and all committed fidelity evidence remain. Integration dependencies were
+verified after removal. No live game or release was changed.
