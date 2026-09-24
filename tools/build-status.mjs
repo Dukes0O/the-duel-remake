@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -32,6 +32,106 @@ export function sourceState(root) {
 function jsonFile(path) {
   try { return { value: JSON.parse(readFileSync(path, 'utf8')), issue: null }; }
   catch (error) { return { value: null, issue: error.code === 'ENOENT' ? 'missing' : 'invalid' }; }
+}
+
+function directoryBytes(path) {
+  if (!existsSync(path)) return null;
+  let total = 0;
+  for (const entry of readdirSync(path, { withFileTypes: true })) {
+    const child = join(path, entry.name);
+    if (entry.isSymbolicLink()) continue;
+    if (entry.isDirectory()) total += directoryBytes(child) ?? 0;
+    else if (entry.isFile()) total += statSync(child).size;
+  }
+  return total;
+}
+
+const SIZE_ROWS = [
+  ['Build `dist/`', 'buildBytes', 'dist'],
+  ['Wasteland models', 'wastelandAssetBytes', 'public/assets/models/wasteland'],
+  ['Largest runtime file', 'runtimeFileBytes', null],
+  ['Largest ordinary tracked file', 'ordinaryTrackedFileBytes', null],
+  ['Largest review sheet', 'lookSheetBytes', null],
+  ['Review `looks/`', 'lookDirectoryBytes', 'docs/board/looks'],
+  ['Added bytes in last merge', 'mergeAddedBytes', null],
+  ['All `public/`', 'publicBytes', 'public'],
+  ['Git objects', 'gitObjectBytes', null],
+  ['Lane folders', 'laneCount', null],
+];
+function largestFile(path, predicate = () => true) {
+  if (!existsSync(path)) return null;
+  let max = 0;
+  function visit(folder) {
+    for (const entry of readdirSync(folder, { withFileTypes: true })) {
+      const child = join(folder, entry.name);
+      if (entry.isSymbolicLink()) continue;
+      if (entry.isDirectory()) visit(child);
+      else if (entry.isFile() && predicate(child)) max = Math.max(max, statSync(child).size);
+    }
+  }
+  visit(path);
+  return max;
+}
+function lastMergeAddedBytes(root) {
+  const merge = git(root, ['log', '-1', '--merges', '--format=%H'], true)?.trim();
+  if (!merge) return null;
+  const parent = git(root, ['rev-parse', `${merge}^1`], true)?.trim();
+  if (!parent) return null;
+  // Include blobs created and later removed on the lane. They remain reachable
+  // through its commits and consume Git storage even if the merge tip omits them.
+  const objects = [...new Set((git(root, ['rev-list', '--objects', merge, `^${parent}`], true) ?? '')
+    .split('\n').filter(Boolean).map(line => line.split(' ', 1)[0]))];
+  if (!objects.length) return 0;
+  const result = spawnSync('git', ['-C', root, 'cat-file', '--batch-check=%(objectname) %(objecttype) %(objectsize)'], {
+    input: objects.join('\n') + '\n', encoding: 'utf8', shell: false, windowsHide: true,
+    env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
+  });
+  if (result.error || result.status !== 0) return null;
+  return result.stdout.split('\n').reduce((sum, line) => {
+    const match = line.match(/^[0-9a-f]+ blob (\d+)$/);
+    return sum + (match ? Number(match[1]) : 0);
+  }, 0);
+}
+function sizes(root) {
+  const targets = jsonFile(join(root, 'tools/size-targets.json')).value ?? {};
+  const previous = {};
+  try {
+    const oldStatus = readFileSync(join(root, 'docs/board/STATUS.md'), 'utf8');
+    const oldFormat = /\| Item \| Before CLEAN-/.test(oldStatus);
+    for (const [label, key] of SIZE_ROWS) {
+      const row = oldStatus.split(/\r?\n/).find(line => line.startsWith(`| ${label} |`));
+      const cells = row?.split('|').map(cell => cell.trim()) ?? [];
+      const value = cells[oldFormat ? 3 : 2]?.match(/^([\d,]+)(?: B)?$/);
+      if (value) {
+        const measured = Number(value[1].replaceAll(',', ''));
+        if (Number.isSafeInteger(measured)) previous[key] = measured;
+      }
+    }
+  } catch { /* A first status has no prior measurement. */ }
+  const tracked = (git(root, ['ls-files', '-z'], true) ?? '').split('\0').filter(Boolean);
+  const ordinary = tracked.filter(path => !path.startsWith('public/') && !path.startsWith('docs/board/looks/'));
+  const ordinaryMax = ordinary.reduce((max, path) => {
+    const full = join(root, path);
+    return existsSync(full) && !lstatSync(full).isSymbolicLink() ? Math.max(max, statSync(full).size) : max;
+  }, 0);
+  const gitCount = git(root, ['count-objects', '-v'], true);
+  const packKiB = Number(gitCount?.match(/^size-pack:\s*(\d+)$/m)?.[1]);
+  const looseKiB = Number(gitCount?.match(/^size:\s*(\d+)$/m)?.[1]);
+  const lanePath = join(root, '.lanes');
+  const laneCount = existsSync(lanePath) ? readdirSync(lanePath, { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.isSymbolicLink()).length : 0;
+  const rows = SIZE_ROWS.map(([label, key, path]) => {
+    const full = path ? join(root, path) : null;
+    let current = full && existsSync(full) && !lstatSync(full).isSymbolicLink()
+      ? (lstatSync(full).isDirectory() ? directoryBytes(full) : statSync(full).size) : null;
+    if (key === 'runtimeFileBytes') current = largestFile(join(root, 'public'));
+    if (key === 'ordinaryTrackedFileBytes') current = ordinaryMax;
+    if (key === 'lookSheetBytes') current = largestFile(join(root, 'docs/board/looks'), file => /\.(jpg|jpeg)$/i.test(file));
+    if (key === 'mergeAddedBytes') current = lastMergeAddedBytes(root);
+    if (key === 'gitObjectBytes') current = Number.isFinite(packKiB) && Number.isFinite(looseKiB) ? (packKiB + looseKiB) * 1024 : null;
+    if (key === 'laneCount') current = laneCount;
+    return { label, key, current, previous: previous[key] ?? null, target: targets[key] ?? null };
+  });
+  return { rows, targetIssue: jsonFile(join(root, 'tools/size-targets.json')).issue };
 }
 
 export function writeFullTierEvidence(root, start, { result = null, plan = [], now = () => new Date() } = {}) {
@@ -115,16 +215,22 @@ function lanes(root, liveRoot, commit, now) {
     .filter(([branch]) => /^(codex|lane)\//.test(branch)).map(([branch, head, date]) => {
       const tree = trees.find(row => row.branch === branch);
       const merged = git(root, ['merge-base', '--is-ancestor', head, commit], true) !== null;
-      let dirty = null, issue = null;
+      const changed = merged ? [] : (git(root, ['diff', '--name-only', `${commit}...${head}`], true) ?? '').trim().split('\n').filter(Boolean);
+      let dirty = null, issue = null, dirtyPaths = [];
       if (tree) {
         try {
           // Lane cleanup must also preserve uncommitted evidence.
-          dirty = git(tree.path, ['status', '--porcelain=v1', '--untracked-files=all']).trim().length > 0;
+          const status = git(tree.path, ['status', '--porcelain=v1', '--untracked-files=all']);
+          dirtyPaths = status.split('\n').filter(Boolean).map(line => line.slice(3).trim());
+          dirty = dirtyPaths.length > 0;
         } catch (error) { issue = error.message; }
       }
-      const protectedRoot = tree && [root, liveRoot].some(path => resolve(path) === resolve(tree.path));
+      const protectedRoot = tree && [root, liveRoot].filter(Boolean).some(path => resolve(path) === resolve(tree.path));
+      const card = branch.match(/(?:^|\/)([a-z]+-\d+)(?:-|$)/i)?.[1].toUpperCase() ?? 'unknown';
       return { branch, commit: head, ageDays: Math.max(0, Math.floor((Date.parse(now) - Date.parse(date)) / 86400000)),
-        path: tree?.path ?? null, dirty, merged,
+        path: tree?.path ?? null, dirty, merged, card, lastCommit: date,
+        activity: dirty ? 'uncommitted changes; exact activity time unknown' : `last commit ${date}`,
+        holds: [...new Set([...changed, ...dirtyPaths])].slice(0, 5).join(', ') || 'no file difference',
         removable: Boolean(tree && !protectedRoot && !tree.locked && !tree.prunable && merged && dirty === false), issue };
     });
 }
@@ -144,20 +250,22 @@ function backups(root, liveRoot) {
     }
     return { remote, branch, commit, status };
   }));
-  const rollback = jsonFile(join(liveRoot, 'dist-previous/build-version.json'));
+  const rollback = liveRoot ? jsonFile(join(liveRoot, 'dist-previous/build-version.json')) : { value: null, issue: 'not checked' };
   return { local, remotes, remoteTracking,
     rollback: { version: rollback.value?.id ?? null, status: rollback.issue ?? 'manifest present' },
     freshness: 'Remote-tracking refs are cached locally; no fetch or remote verification was performed.' };
 }
 
 const cell = value => String(value ?? 'unknown').replaceAll('|', '\\|').replace(/[\r\n]/g, ' ');
+const bytes = (value, unit = 'B') => value === null ? 'unavailable' : `${value.toLocaleString('en-US')}${unit ? ` ${unit}` : ''}`;
 export function renderStatus(report) {
   const lines = ['# Build status', '', `Observed at: ${report.time}`, '',
     `Observation commit: ${report.observationCommit}`, '',
     'This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.', '',
     `Integration HEAD: ${report.integration.commit}`, '',
     `Integration source: ${report.integration.dirty ? 'dirty' : 'clean'} (only the full-tier evidence ledger is excluded).`, '',
-    `Live commit: ${report.live.commit ?? 'unknown'}`, '', `Live build version: ${report.live.version ?? 'missing or invalid manifest'}`, '',
+    `Live commit: ${report.live.commit ?? (report.live.checked ? 'unknown' : 'not checked')}`, '',
+    `Live build version: ${report.live.version ?? (report.live.checked ? 'missing or invalid manifest' : 'not checked')}`, '',
     `Full tier: ${report.fullRun.status}; exact HEAD passed: ${report.fullRun.exactHead ? 'yes' : 'no'}.`, '',
     `Last recorded full run: ${report.fullRun.time ?? 'unknown'}; tested commit: ${report.fullRun.commit ?? 'unknown'}.`, '',
     '## Feature switches', '', '| Switch | State |', '| --- | --- |',
@@ -165,6 +273,17 @@ export function renderStatus(report) {
     '## Lane branches', '', 'Age is whole days since the last branch commit. Removal candidates are suggestions only; this tool never removes a worktree.', '',
     '| Branch | Age (days) | Dirty | Merged | Removable | Folder |', '| --- | --- | --- | --- | --- | --- |',
     ...report.lanes.map(row => `| ${cell(row.branch)} | ${row.ageDays} | ${cell(row.dirty)} | ${row.merged} | ${row.removable} | ${cell(row.path)} |`), '',
+    '## Unmerged branches for idle review', '', 'These branches stay in place. Uncommitted changes may be newer than the last commit, so their exact activity time is unknown. This tool never deletes a branch.', '',
+    '| Branch | Card | Last commit | Age (days) | Activity | Holds |', '| --- | --- | --- | ---: | --- | --- |',
+    ...report.lanes.filter(row => !row.merged).map(row => `| ${cell(row.branch)} | ${cell(row.card)} | ${cell(row.lastCommit)} | ${row.ageDays} | ${cell(row.activity)} | ${cell(row.holds)} |`), '',
+    '## Size targets', '', 'Targets are advisory. Change compares with the previous status observation when available. Git object storage uses Git\'s KiB estimate.', '',
+    '| Item | Current | Change | Target |', '| --- | ---: | ---: | ---: |',
+    ...report.sizes.rows.map(row => {
+      const unit = row.key === 'laneCount' ? '' : 'B';
+      const delta = row.current === null || row.previous === null ? 'unavailable' :
+        `${row.current - row.previous >= 0 ? '+' : ''}${(row.current - row.previous).toLocaleString('en-US')}${unit ? ` ${unit}` : ''}`;
+      return `| ${row.label} | ${bytes(row.current, unit)} | ${delta} | ${bytes(row.target, unit)} |`;
+    }), '',
     '## Backups', '', 'Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.', '',
     ...Object.entries(report.backups.local).map(([branch, commit]) => `- Local ${branch}: ${commit ?? 'missing'}`), '',
     `Local rollback build (dist-previous): ${report.backups.rollback.version ?? report.backups.rollback.status}. Manifest presence does not verify the full rollback build.`, '',
@@ -172,22 +291,25 @@ export function renderStatus(report) {
     ...(report.backups.remotes.length ? report.backups.remoteTracking.map(row =>
       `- Remote ${row.remote}/${row.branch}: ${row.status}; cached commit ${row.commit ?? 'missing'}.`) : ['Remote backup: none configured.']), '',
     ...report.issues.map(issue => `Issue: ${cell(issue)}`), ''];
-  return lines.join('\n');
+  return lines.join('\n').replace(/\n*$/, '\n');
 }
 
-export function collectStatus({ root = ROOT, liveRoot = LIVE_ROOT, now = new Date().toISOString() } = {}) {
+export function collectStatus({ root = ROOT, liveRoot = null, now = new Date().toISOString() } = {}) {
   const integration = sourceState(root), issues = [];
-  const manifest = jsonFile(join(liveRoot, 'dist/build-version.json'));
-  const live = { commit: git(liveRoot, ['rev-parse', 'HEAD'], true)?.trim() ?? null,
+  const manifest = liveRoot ? jsonFile(join(liveRoot, 'dist/build-version.json')) : { value: null };
+  const live = { checked: Boolean(liveRoot), commit: liveRoot ? git(liveRoot, ['rev-parse', 'HEAD'], true)?.trim() ?? null : null,
     version: typeof manifest.value?.id === 'string' ? manifest.value.id : null };
-  if (!live.commit) issues.push('Live Git commit unavailable.');
-  if (!live.version) issues.push('Live build manifest missing or invalid.');
+  if (liveRoot && !live.commit) issues.push('Live Git commit unavailable.');
+  if (liveRoot && !live.version) issues.push('Live build manifest missing or invalid.');
   let features = {};
   try { features = featureStates(root); } catch (error) { issues.push(error.message); }
   const laneRows = lanes(root, liveRoot, integration.commit, now);
   issues.push(...laneRows.filter(row => row.issue).map(row => `${row.branch}: ${row.issue}`));
+  const sizeReport = sizes(root);
+  if (sizeReport.targetIssue) issues.push(`Size targets ${sizeReport.targetIssue}.`);
   return { schema: 1, time: now, observationCommit: integration.commit, integration, live,
-    fullRun: fullRun(root, integration, now), features, lanes: laneRows, backups: backups(root, liveRoot), issues };
+    fullRun: fullRun(root, integration, now), features, lanes: laneRows, sizes: sizeReport,
+    backups: backups(root, liveRoot), issues };
 }
 
 export function main(args = process.argv.slice(2)) {
@@ -203,9 +325,12 @@ export function main(args = process.argv.slice(2)) {
     } else throw Error('Unknown argument: ' + arg);
   }
   const root = realpathSync(resolve(options.root ?? ROOT));
-  let liveRoot = resolve(options.liveRoot ?? LIVE_ROOT);
-  try { liveRoot = realpathSync(liveRoot); } catch { /* Missing live roots remain unknown. */ }
-  const insideLive = path => { const rel = relative(liveRoot, path); return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel)); };
+  let liveRoot = options.liveRoot ? resolve(options.liveRoot) : null;
+  if (liveRoot) try { liveRoot = realpathSync(liveRoot); } catch { /* Missing live roots remain unknown. */ }
+  const insideLive = path => [LIVE_ROOT, liveRoot].filter(Boolean).some(protectedRoot => {
+    const rel = relative(protectedRoot, path);
+    return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel));
+  });
   if (insideLive(root)) throw Error('Status output must be outside the live checkout.');
   const now = new Date(options.now ?? Date.now()).toISOString();
   const target = join(root, 'docs/board/STATUS.md');
