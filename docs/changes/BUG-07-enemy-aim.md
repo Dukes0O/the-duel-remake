@@ -288,3 +288,7 @@ The lane was clean before and after both commands, and HEAD stayed unchanged.
 
 This section was added after the gate in a documentation-only evidence commit;
 it does not claim that a later commit inherited the tested commit's exact gate.
+
+## Evidence after lane cleanup
+
+The merged worktree was removed without force. Its branch remains, and all thirteen QA logs, diagnostic scripts and traces were copied with matching hashes to .lanes/evidence/enemy-aim/ under the integration worktree. Earlier .qa-dist paths in this note refer to that archived directory now.

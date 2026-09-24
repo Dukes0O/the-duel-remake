@@ -1044,3 +1044,10 @@ checkout untouched until the final integration commit passes the full gate.
 - Five task merges since the 05:39 UTC full pass: run the scheduled full now on the next clean integration commit before further feature merges. GFX-02 independent tests can start in its own lane while the full runs.
 - CPU UFO source9c519fd has 37 focused checks, pickup controls, 100 player landing controls and 12 unchanged combat replay checks. Independent author and Director source review found no defect; balance reports and required lane/build still pending.
 - Removed the clean fully merged enemy-aim lane without force; branch retained. All thirteen QA logs, diagnostics and traces were copied with matching hashes to .lanes/evidence/enemy-aim/. No release or push.
+
+## 2026-09-24 PDT - second scheduled full passed
+
+- Exact clean integration b6b9677a4c0e4ad3cbc7b00cdef3acd01fd138ae passed all 221 full-tier suites, zero failures/not run, in 305.27 s. All eight campaign shards passed. Ledger records clean start/end and unchanged HEAD; completed 07:36:36 UTC. STATUS was refreshed against that exact commit before this metadata update.
+- Reset the task-merge counter to zero. Next full is due after five more task merges or 09:36 UTC, whichever comes first, and at run end. This later metadata commit does not inherit an exact-HEAD pass.
+- GFX-02 has its own lane, independent test author and separate runtime/Blender ownership. Public API and camera-local asset contract agreed; builders wait for the red test commit before implementation. Quota before this card: 31 percent remaining.
+- CPU UFO9c519fd is undergoing its first actual off/on balance reports. Initial command stopped before simulation because the new lane had no QA log directory; created that directory and retried. Required lane/build and merge remain pending. No release or push.
