@@ -1209,3 +1209,10 @@ checkout untouched until the final integration commit passes the full gate.
   Only visual instance yaw changes. Round 3 Blender rendering is released.
 - Preserved all five launch-height diagnostic files with matching hashes at
   .lanes/evidence/launch-height/. Its clean unmerged worktree and branch remain.
+
+## 2026-09-24 09:55 UTC - Rustwall integrated, arrival begins
+
+- EGG-02 merged as 7f8d43f after 226 passing lane suites in 301.17 s and a passing build on clean 8445913. Final 2308bd8 changes evidence only. All three fidelity rounds remain committed; wall and wash stay in development with explicit polish cards.
+- STATUS refreshed on the clean merge commit. One task merge since the 09:36 UTC full pass; next full after four more merges or 11:36 UTC, and at run end.
+- EGG-03 begins with independent tests, separate simulation/App and presentation owners, then independent save review. Arrival state remains a safe temporary endpoint until discovery and yard cards land.
+- Latest quota observation: 20 percent remaining. No live change, release or push.

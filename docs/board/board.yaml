@@ -201,7 +201,7 @@ tasks:
     lane: VIS
     size: L
     needs: [GFX-02]
-    status: review
+    status: merged
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, src/rustwall-scene.js, tools/test-rustwall-scene.mjs, tools/test-rustwall-assets.mjs, tools/scenarios/rustwall.mjs, docs/board/looks/rustwall/]
     hooks: [src/world.js, src/hidden-road.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [test_author, reviewer, browser_qa, art_critic]
@@ -214,7 +214,7 @@ tasks:
       - "Initial allocation: at most 60000 wall/gate triangles and 24 material draws, plus at most 30000 triangles/two draws for wash modules; at most three 1024 texture sets for the wall and one for rocks. The measured ten-percent frame limit remains authoritative. Reuse resources and prepare instances once."
       - "Use existing scene-system disposal for local asynchronous assets: retired scenes cannot resurrect, failed loads keep the route playable, and shared resources dispose once. No asset request when hiddenRoad is absent. Tests cover loading, gate pose, placement, bounds, immutability and cleanup before implementation."
       - "One bounded private scenario per round covers approach, front/depth/open-gate views and wash on both qualities, with clear all-route placement controls. Compare EGG-01 greybox baseline and loaded scenery in the same course views; retain frame distributions, render timing, triangle/draw counts and measurement limits. No beta until SPEC 0.3 scores pass."
-    note: "Three immutable rounds complete: final assets 8889a4a, capture 59ee16a and Director critique cb788e0. Independent runtime and asset review passes. Wall resemblance is three, wash two; no beta. Final lane/build gate is pending. EGG-02-P1 records remaining visual work; arrival and discovery remain the next ordered cards."
+    note: "Merged as 7f8d43f after 226 passing lane suites in 301.17 s and a passing build on clean 8445913; final evidence-only note 2308bd8. Three immutable rounds complete: final assets 8889a4a, capture 59ee16a and Director critique cb788e0. Independent runtime and asset review passes. Wall resemblance is three, wash two; no beta. EGG-02-P1 records remaining visual work; arrival and discovery remain the next ordered cards."
   - id: EGG-02-P1
     title: "Rustwall materials, natural wash and contact polish"
     lane: VIS
@@ -236,9 +236,9 @@ tasks:
     lane: UI
     size: M
     needs: [EGG-02]
-    status: backlog
-    owns: [src/hidden-road-journey.js, src/hidden-road-ui.js, src/hidden-road-ui.css, tools/test-hidden-road-journey.mjs, tools/test-hidden-road-departure.mjs, tools/scenarios/hidden-road-arrival.mjs, docs/changes/EGG-03.md]
-    hooks: [src/game.js, src/app.js, src/screen-router.js, src/render3d.js, src/rustwall-scene.js, src/audio.js, tools/test-hidden-road.mjs]
+    status: building
+    owns: [src/hidden-road-journey.js, src/hidden-road-ui.js, src/hidden-road-ui.css, tools/test-hidden-road-journey.mjs, tools/test-hidden-road-departure.mjs, tools/test-hidden-road-presentation.mjs, tools/scenarios/hidden-road-arrival.mjs, docs/board/looks/hidden-road-arrival/, docs/changes/EGG-03.md]
+    hooks: [src/game.js, src/app.js, src/screen-router.js, src/render3d.js, src/rustwall-scene.js, src/audio.js, src/sim-contacts.js, tools/test-hidden-road.mjs]
     helpers: [test_author, reviewer, save_guardian, browser_qa, audio_qa]
     flag: hidden-road
     acceptance:
@@ -247,6 +247,7 @@ tasks:
       - "Use synthetic memory-only profiles to prove banked credits, records, unlocks and saved ghosts survive. Discard only unbanked race earnings and pending fines, exactly as quitting does. Repeated events, restart, menu navigation and player identity guards must not settle twice or affect another player. Save Guardian review is required even though this card introduces no discovery schema."
       - "At 60 m from the gate take over smoothly, align and stop the car outside the opening, fade racing HUD, use a low readable camera angle, play original drums/chains and bounded sparks, then lift the actual EGG-02 panel. Gatekeeper text and Enter the Wasteland/Turn back controls appear only when ready. Frame rate and renderer calls never determine journey outcomes. Pausing and navigation clean up the sequence and held input."
       - "Turn back restores driving outside the wall. Enter moves the car through the clear opening and exposes a clean arrival event/state for EGG-04 discovery and GFX-04 yard home. Do not grant unbuilt career modes. Keep all work in dev; persistent discovery, menu entry, hints and automatic revisits belong to EGG-04."
+      - "Exploration contacts keep solid wash walls but cannot cause a new combat result or debit after abandonment; the narrow sim-contacts hook is resolve-only for an active departed journey. Check gate stop and passage clearance for all nine cars on routes A/B/C. Until yard integration, arrived holds safely inside with a return-to-menu action."
       - "Use one bounded private memory-only browser scenario for both choices, the before-departure return, the cinematic and navigation cleanup. Retain actual images and audio evidence, ordinary/flag-off replay controls and a focused common-time journey test. Gate and car contact must agree with the EGG-02 geometry on routes A/B/C."
     note: "Expanded for the next ordered card while EGG-02 builds. No implementation starts before EGG-02 integration. Reuse existing abandon settlement; no progression schema or real-save access. Independent test author may replace EGG-01's whole-spur racing-status assertion with pre-150-m racing and post-departure exploration, because this card introduces departure. Preserve the geometry, driving, return and ordinary replay controls; record and review the changed assertion."
   - id: EGG-04
