@@ -48,7 +48,8 @@ tasks:
     size: S
     needs: [TRACK-01]
     merge_after: TRACK-02
-    status: building
+    status: merged
+    note: "Merged e84f299 after clean independent review, 6-suite/1303-check lane gate and build. Corrected off/on reports are in the change note; seven flagged gameplay targets remain open under combat cards."
     owns: [tools/combat-balance.mjs, tools/test-combat-balance.mjs]
     helpers: [test_author, test_runner, reviewer, balance_analyst]
     acceptance:
@@ -63,7 +64,7 @@ tasks:
     size: M
     needs: [TRACK-02]
     merge_after: BAL-01
-    status: building
+    status: reviewing
     owns: [tools/blender/test-fighter.py, public/assets/models/wasteland/test-fighter.blend, public/assets/models/wasteland/test-fighter.glb, src/rigged-fighter.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py, tools/test-rigged-fighter.mjs, tools/scenarios/rigged-fighter.mjs, docs/board/looks/test-fighter/]
     hooks: [src/combat-scene.js]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]

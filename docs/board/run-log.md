@@ -870,3 +870,13 @@ checkout untouched until the final integration commit passes the full gate.
   git worktree remove after checking paths, ancestry and absence of QA
   artifacts. Their branches remain. The AUD-02 lane keeps its WAV evidence.
 - Merge count remains 3; full tier is due at merge 5 or 06:02 UTC.
+
+## 2026-09-23 PDT — BAL-01 merged (run merge 4)
+
+- Integrated e84f299 after independent clean re-review and six-suite lane
+  gate: 1,303 checks in 38.18 seconds; build passed in 1.03 seconds.
+  STATUS regenerated on the merge. Reported gameplay failures remain visible.
+- GFX-00 candidate ac722a8 is in independent code and visual review.
+  EGG-01 read-only route/bounds scoping has begun; it merges after GFX-00.
+- Quota check: 44 percent remains. The next task merge triggers the full
+  tier; the time deadline remains 06:02 UTC if no fifth merge happens first.
