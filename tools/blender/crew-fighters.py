@@ -60,6 +60,11 @@ LANDMARKS = {
     'cinder': (111, 136, 79, 42, 79), 'dune': (660, 130, 79, 46, 78),
     'wren': (1132, 143, 72, 43, 95), 'tusk': (1617, 127, 104, 60, 40),
 }
+HEAD_SHAPES = {
+    'rook': (1.04,.98), 'nell': (1.14,.83), 'jax': (1.02,.97),
+    'odessa': (1.13,.84), 'cinder': (1.13,.83), 'dune': (1.02,.97),
+    'wren': (1.15,.84), 'tusk': (1.16,1.08),
+}
 
 
 def digest(path):
@@ -180,6 +185,20 @@ def build(name, cfg):
         flip=1 if view==0 else -1
         low=label.lower()
         pixel_y=cfg['floor']-(z/1.83)*photo_height
+        if 'hood' in low:
+            pixel_x=center+side*(36+min(1,abs(x)/.12)*7)*flip
+            pixel_y=cfg['crown']+max(12,min(112,(1.83-z)*350))
+            return pixel_x,pixel_y
+        if any(word in low for word in ['boot','sole']):
+            # Padded interior boot island. Both boots share the photographed
+            # left boot; neither can sample grey beside the toe/heel outline.
+            pixel_x=cfg['centres'][0]-leg_x-12+max(-1,min(1,(abs(x)-.175)/.09))*7
+            pixel_y=cfg['floor']-19-max(0,min(1,z/.255))*74
+            return pixel_x,pixel_y
+        if any(word in low for word in ['hand','finger','thumb']):
+            pixel_x=cfg['centres'][0]-arm_x+max(-1,min(1,(abs(x)-.294)/.045))*5
+            pixel_y=cfg['crown']+(.20+(1.45-z)/.62*.32)*photo_height
+            return pixel_x,pixel_y
         if bone=='head':
             head_center=face_x if view==0 else center
             pixel_x=head_center+max(-1,min(1,x/.091))*29*flip
@@ -212,9 +231,6 @@ def build(name, cfg):
         # limits keep side-facing polygons inside cloth rather than grey gaps.
         across=max(-.205,min(.205,x))
         pixel_x=center+across*(photo_height/1.83)*flip
-        if 'hood' in low:
-            pixel_x=center+side*(34+min(1,abs(x)/.12)*7)*flip
-            pixel_y=cfg['crown']+max(12,min(100,(1.83-z)*350))
         return pixel_x,pixel_y
 
     def finish(obj, label, bone, projection=None):
@@ -222,9 +238,15 @@ def build(name, cfg):
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
         # Every component is shaped in a common body coordinate frame before
         # texturing and weighting. Projection remains attached during animation.
+        logical=[]
         for vertex in obj.data.vertices:
             vertex.co.x *= wide
             vertex.co *= scale
+            logical.append(vertex.co.copy())
+            if bone=='head' and 'hood' not in label.lower():
+                head_width,head_height=HEAD_SHAPES[name]
+                vertex.co.x*=head_width
+                vertex.co.z=1.68*scale+(vertex.co.z-1.68*scale)*head_height
         obj.data.materials.clear()
         obj.data.materials.append(material)
         obj.data.update()
@@ -232,11 +254,12 @@ def build(name, cfg):
         for polygon in obj.data.polygons:
             normal = polygon.normal
             view = 2 if projection==2 or (projection is None and normal.y>.20) else 0
+            if any(word in label.lower() for word in ['boot','sole','hand','finger','thumb']):view=0
             crop = crops[view]
             x0,y0,x1,y1 = crop['crop']
             left,_,right,_ = crop['atlas']
             for index in polygon.loop_indices:
-                co = obj.data.vertices[obj.data.loops[index].vertex_index].co
+                co = logical[obj.data.loops[index].vertex_index]
                 pixel_x,pixel_y=part_pixel(co,label,bone,view)
                 u = max(.002,min(.998,(pixel_x-x0)/(x1-x0)))
                 v = max(.002,min(.998,1-(pixel_y-y0)/(y1-y0)))
@@ -355,11 +378,23 @@ def build(name, cfg):
     hair=cfg['hair']
     if hair!='bald':
         if hair=='hood':
-            # Open face: a back shell and side strips, not a closed sphere.
-            surface('Hood back',[(0,.061,1.49,.11,.055),(0,.06,1.68,.107,.061),
-                 (0,.027,1.81,.092,.072),(0,.008,1.836,.063,.059)],'head',14,2)
-            for side in [-1,1]:
-                ellipsoid('Hood edge '+str(side),(side*.082,-.02,1.694),(.025,.045,.127),'head',10,8)
+            # Thin cloth follows an open face arc and falls onto the shoulders.
+            vertices,faces=[],[]
+            for row,y in enumerate([-.091,-.042,.035,.084]):
+                for n in range(21):
+                    a=-.22*math.pi+n/20*1.44*math.pi
+                    rx=.111 if row<2 else .102
+                    rz=.143 if row<2 else .132
+                    vertices.append((rx*math.cos(a),y,1.681+rz*math.sin(a)-.01*row))
+            for row in range(3):
+                for n in range(20):
+                    a=row*21+n;faces.append((a,a+1,a+22,a+21))
+            mesh=bpy.data.meshes.new('Draped open hood');mesh.from_pydata(vertices,[],faces);mesh.update()
+            hood=bpy.data.objects.new('Draped cloth hood',mesh);bpy.context.collection.objects.link(hood)
+            bpy.context.view_layer.objects.active=hood;hood.select_set(True)
+            solid=hood.modifiers.new('Cloth edge thickness','SOLIDIFY');solid.thickness=.004
+            bpy.ops.object.modifier_apply(modifier=solid.name)
+            finish(hood,'Draped cloth hood','head')
         else:
             surface('Fitted hair crown',[(0,.013,1.737,.087,.075),(0,.015,1.776,.088,.075),
                 (0,.019,1.802,.057,.05),(0,.021,1.811,.017,.018)],'head',18)
@@ -383,10 +418,28 @@ def build(name, cfg):
             for z in [1.31,1.115]:
                 patch('Rectangular sewn pocket',(side*.115,-.133,z),(.081,.023,.086),'chest',.008,0)
     if cfg.get('coat'):
+        vertices,faces=[],[]
+        for row,(z,rx,ry) in enumerate([(1.02,.188,.116),(.9,.21,.131),(.72,.234,.146),(.52,.249,.156),(.43,.255,.16)]):
+            for n in range(21):
+                a=-2.78+n/20*5.56
+                fold=1+.035*math.sin(a*7+row*.6)
+                vertices.append((rx*math.sin(a)*fold,ry*math.cos(a)*fold,z+(.024*math.sin(a*5) if row==4 else 0)))
+        for row in range(4):
+            for n in range(20):
+                a=row*21+n;faces.append((a,a+21,a+22,a+1))
+        mesh=bpy.data.meshes.new('Split coat cloth');mesh.from_pydata(vertices,[],faces);mesh.update()
+        coat=bpy.data.objects.new('Open articulated coat tails',mesh);bpy.context.collection.objects.link(coat)
+        bpy.context.view_layer.objects.active=coat;coat.select_set(True)
+        solid=coat.modifiers.new('Coat hem thickness','SOLIDIFY');solid.thickness=.006
+        bpy.ops.object.modifier_apply(modifier=solid.name)
+        finish(coat,'Open articulated coat tails','pelvis')
+        for suffix in ['L','R']:coat.vertex_groups.new(name='thigh.'+suffix)
+        for vertex in coat.data.vertices:
+            w=max(0,min(.8,(.98-vertex.co.z/scale)/.5))
+            suffix='L' if vertex.co.x<0 else 'R'
+            coat.vertex_groups['pelvis'].add([vertex.index],1-w,'REPLACE')
+            coat.vertex_groups['thigh.'+suffix].add([vertex.index],w,'REPLACE')
         for side,suffix in [(-1,'L'),(1,'R')]:
-            surface('Long split coat '+suffix,[(side*.124,.052,1.02,.115,.105),
-                (side*.15,.045,.85,.117,.116),(side*.172,.056,.64,.114,.124),
-                (side*.19,.069,.46,.117,.12)],'thigh.'+suffix,12)
             patch('Coat lapel '+suffix,(side*.109,-.119,1.365),(.07,.022,.20),'chest',.008,0)
         # Distinct coiled grapple line on the back and wrist launcher.
         for n in range(3):
@@ -396,10 +449,21 @@ def build(name, cfg):
     if cfg.get('armor'):
         for side in [-1,1]:
             for layer in range(3):
-                plate=surface('Angular pauldron plate '+str(side)+str(layer),
-                    [(side*(.225+layer*.024),0,1.44-layer*.034,.108,.115),
-                     (side*(.225+layer*.024),0,1.468-layer*.034,.105,.12),
-                     (side*(.225+layer*.024),0,1.48-layer*.034,.078,.092)],'chest',8)
+                vertices,faces=[],[]
+                for row,y in enumerate([-.118,0,.118]):
+                    for n in range(7):
+                        a=n/6*math.pi*.52
+                        vertices.append((side*(.20+.117*math.sin(a)+layer*.008),y,
+                            1.42+.105*math.cos(a)-layer*.027-(.015 if row!=1 else 0)))
+                for row in range(2):
+                    for n in range(6):
+                        a=row*7+n;faces.append((a,a+1,a+8,a+7))
+                mesh=bpy.data.meshes.new('Curved deltoid plate');mesh.from_pydata(vertices,[],faces);mesh.update()
+                plate=bpy.data.objects.new('Curved layered pauldron',mesh);bpy.context.collection.objects.link(plate)
+                bpy.context.view_layer.objects.active=plate;plate.select_set(True)
+                solid=plate.modifiers.new('Steel plate thickness','SOLIDIFY');solid.thickness=.007
+                bpy.ops.object.modifier_apply(modifier=solid.name)
+                finish(plate,'Curved pauldron plate '+str(side)+str(layer),'chest')
                 for polygon in plate.data.polygons: polygon.use_smooth=False
         patch('Rusted back plate',(0,.136,1.267),(.30,.033,.285),'chest',.012,2)
     if cfg.get('mechanic'):
@@ -477,6 +541,52 @@ def build(name, cfg):
     rig.animation_data_create()
     for pb in rig.pose.bones:pb.rotation_mode='XYZ'
     actions={}
+    ground_samples=[]
+    support_indices={}
+    for vertex in body.data.vertices:
+        for group in vertex.groups:
+            if group.weight>.65:
+                support_indices.setdefault(body.vertex_groups[group.group].name,[]).append(vertex.index)
+
+    def support_heights():
+        bpy.context.view_layer.update()
+        evaluated=body.evaluated_get(bpy.context.evaluated_depsgraph_get())
+        return {group:min((evaluated.matrix_world@evaluated.data.vertices[index].co).z for index in indices)
+                for group,indices in support_indices.items()}
+
+    def plant_recovery_hands():
+        # Offline pose authoring only. Find shoulder pitch that makes each hand
+        # share the body/leg support plane. The exported keys contain the result;
+        # no simulation or runtime camera/offset correction is involved.
+        heights=support_heights()
+        floor=min(value for group,value in heights.items()
+                  if not any(word in group for word in ['arm','hand']))
+        for suffix in ['L','R']:
+            pb=rig.pose.bones['upper_arm.'+suffix]
+            def distance(angle):
+                pb.rotation_euler.x=angle;bpy.context.view_layer.update()
+                evaluated=body.evaluated_get(bpy.context.evaluated_depsgraph_get())
+                height=min((evaluated.matrix_world@evaluated.data.vertices[index].co).z
+                           for index in support_indices['hand.'+suffix])
+                return abs(height-(floor+.006))
+            best=min([-.1*i for i in range(-8,19)],key=distance)
+            best=min([best+(i-5)*.012 for i in range(11)],key=distance)
+            pb.rotation_euler.x=best
+
+    def plant_sole(suffix):
+        """Bake ankle pitch with a level, downward-facing sole at this key."""
+        indices=support_indices['foot.'+suffix]
+        sole=[index for index in indices if body.data.vertices[index].co.z<.04*scale]
+        pb=rig.pose.bones['foot.'+suffix];authored=pb.rotation_euler.x
+        def error(angle):
+            pb.rotation_euler.x=angle;bpy.context.view_layer.update()
+            evaluated=body.evaluated_get(bpy.context.evaluated_depsgraph_get())
+            zs=[evaluated.data.vertices[index].co.z for index in sole]
+            boot=[evaluated.data.vertices[index].co.z for index in indices]
+            return max(zs)-min(zs)+max(0,sum(zs)/len(zs)-sum(boot)/len(boot))*5+.002*abs(angle-authored)
+        best=min([i*.1 for i in range(-25,26)],key=error)
+        best=min([best+(i-5)*.012 for i in range(11)],key=error)
+        pb.rotation_euler.x=best
     for clip in CLIPS:
         duration={'idle':2,'walk':1,'sprint':.65,'jump':.8,'knockdown':1,
                   'get-up':1.2,'aim':1,'fire':.3,'reload':2.2,'repair':1.2,'enter':.8,'exit':.8}[clip]
@@ -508,19 +618,34 @@ def build(name, cfg):
                 for suffix in ['L','R']:
                     rot('thigh.'+suffix,.45*lift);rot('shin.'+suffix,-.7*lift)
                     rot('upper_arm.'+suffix,-.4*lift);rot('forearm.'+suffix,-.5*lift)
-            elif clip in ['knockdown','get-up']:
-                fall=min(1,p*1.5) if clip=='knockdown' else max(0,1-p*1.25)
-                rot('root',math.pi*.49*fall)
-                rot('chest',-.05*fall)
-                rot('upper_arm.L',-.08*fall,0,-.55*fall)
-                rot('upper_arm.R',-.05*fall,0,.62*fall)
+            elif clip=='knockdown':
+                fall=min(1,p*1.5)
+                rot('root',math.pi*.49*fall);rot('chest',-.05*fall)
+                rot('upper_arm.L',-.19*fall,0,-.55*fall)
+                rot('upper_arm.R',-.19*fall,0,.62*fall)
                 rot('shin.L',-.08*fall);rot('shin.R',-.04*fall)
-                if clip=='get-up':
-                    push=math.sin(p*math.pi)
-                    rot('chest',-.4*push)
-                    rot('forearm.L',-1.0*push);rot('forearm.R',-.8*push)
-                    rot('thigh.L',.8*push);rot('shin.L',-1.25*push)
-                    rot('thigh.R',.30*push);rot('shin.R',-.55*push)
+                rot('foot.L',1.0*fall);rot('foot.R',1.0*fall)
+            elif clip=='get-up':
+                # Prone -> palms and knee -> one planted boot -> crouch -> rise.
+                # Each row is an authored support phase, not one diagonal lift.
+                stages=[
+                    (1.54,-.05,0,-.08,0,-.04,1.0,-.19,0),
+                    (1.50,-.10,.1,-.3,.08,-.2,.95,-.3,-.15),
+                    (1.38,-.30,.5,-1.0,.25,-.6,.85,-.6,-.3),
+                    (1.10,.20,-.9,-1.9,.5,-1.3,.6,-.9,-.3),
+                    (.90,.25,-.8,-2.0,.8,-1.2,.4,-.9,-.15),
+                    (.55,.15,-.4,-1.4,.6,-1.0,.3,-.7,-.4),
+                    (.20,.05,.2,-.5,.2,-.5,.08,-.4,-.3),
+                    (.05,0,.1,-.2,.1,-.2,.02,-.1,-.1),
+                    (0,0,0,0,0,0,0,0,0)]
+                root_pitch,chest_pitch,thigh_l,knee_l,thigh_r,knee_r,ankle,arm,elbow=stages[i]
+                rot('root',root_pitch);rot('chest',chest_pitch)
+                rot('thigh.L',thigh_l);rot('shin.L',knee_l)
+                rot('thigh.R',thigh_r);rot('shin.R',knee_r)
+                for suffix in ['L','R']:
+                    rot('foot.'+suffix,ankle)
+                    rot('upper_arm.'+suffix,arm,0,-.35 if suffix=='L' else .4)
+                    rot('forearm.'+suffix,elbow)
             elif clip in ['aim','fire','reload']:
                 recoil=math.sin(p*math.pi)*.16 if clip=='fire' else .015*wave
                 rot('upper_arm.R',-1.12-recoil,0,-.2)
@@ -553,10 +678,24 @@ def build(name, cfg):
         # Grounded samples. Jump adds no root rise: simulation owns airHeight.
         for frame in frames:
             scene.frame_set(frame);bpy.context.view_layer.update()
+            if clip=='get-up' and frame>=frames[3]:
+                sides=['L','R'] if frame>=frames[6] else ['R']
+                for suffix in sides:
+                    plant_sole(suffix)
+                    rig.pose.bones['foot.'+suffix].keyframe_insert(data_path='rotation_euler',frame=frame)
+            if clip=='get-up' and frame<=frames[4]:
+                plant_recovery_hands()
+                for suffix in ['L','R']:
+                    rig.pose.bones['upper_arm.'+suffix].keyframe_insert(data_path='rotation_euler',frame=frame)
+                bpy.context.view_layer.update()
             evaluated=body.evaluated_get(bpy.context.evaluated_depsgraph_get())
             floor=min((evaluated.matrix_world@v.co).z for v in evaluated.data.vertices)
             rig.pose.bones['root'].location.y-=floor
             rig.pose.bones['root'].keyframe_insert(data_path='location',frame=frame)
+            if (clip=='knockdown' and frame==frames[-1]) or (clip=='get-up' and frame in frames[::2]):
+                ground_samples.append(dict(clip=clip,time=(frame-1)/24,
+                    minimumWorldHeightByWeightedRegion={group:round(height,5) for group,height in support_heights().items()},
+                    method='Minimum deformed vertex world Z, vertices with region weight >0.65; metres.'))
         actions[clip]=action
         track=rig.animation_data.nla_tracks.new();track.name=clip
         track.strips.new(clip,1,action);track.mute=True
@@ -589,13 +728,31 @@ def build(name, cfg):
     bpy.ops.wm.save_as_mainfile(filepath=str(out/f'{name}.blend'))
     captures=[]
     if not args.skip_renders:
-        for view,yaw in [('front',0),('side',math.pi/2),('back',math.pi)]:
+        for view,yaw in [('front',0),('side',-math.pi/2 if name=='tusk' else math.pi/2),('back',math.pi)]:
             rig.rotation_euler.z=yaw
             path=shots/f'blender-{name}-idle-{view}.png'
             scene.render.filepath=str(path);bpy.ops.render.render(write_still=True)
             captures.append(dict(path=path.relative_to(root).as_posix(),sha256=digest(path),
                                  view=view,clip='idle',time=.25,yaw=yaw))
+        if name=='rook':
+            for clip,sample_time in [('knockdown',1),('get-up',.3),('get-up',.6),('get-up',.9)]:
+                rig.animation_data.action=actions[clip];scene.frame_set(round(sample_time*24)+1)
+                rig.rotation_euler.z=math.pi/2;bpy.context.view_layer.update()
+                evaluated=body.evaluated_get(bpy.context.evaluated_depsgraph_get())
+                points=[evaluated.matrix_world@v.co for v in evaluated.data.vertices]
+                target=Vector(((min(v.x for v in points)+max(v.x for v in points))/2,0,
+                    max(.55,(min(v.z for v in points)+max(v.z for v in points))/2)))
+                camera.location=target+Vector((0,-6,0))
+                camera.rotation_euler=(target-camera.location).to_track_quat('-Z','Y').to_euler()
+                path=shots/f'blender-{name}-{clip}-{sample_time:.2f}-support.png'
+                scene.render.filepath=str(path);bpy.ops.render.render(write_still=True)
+                captures.append(dict(path=path.relative_to(root).as_posix(),sha256=digest(path),
+                    view='side-support',clip=clip,time=sample_time,yaw=math.pi/2,
+                    cameraBlenderPosition=list(camera.location),cameraBlenderTarget=list(target),distanceMetres=6))
     rig.rotation_euler.z=0
+    rig.animation_data.action=actions['idle'];scene.frame_set(7)
+    camera.location=(0,-5,.96)
+    camera.rotation_euler=(Vector((0,0,.96))-camera.location).to_track_quat('-Z','Y').to_euler()
     bpy.ops.wm.save_as_mainfile(filepath=str(out/f'{name}.blend'))
     counts={}
     for level,mesh in [('near',body),('far',far)]:
@@ -607,7 +764,7 @@ def build(name, cfg):
         process='Bilinear three-view crop atlas; deterministic horizontal neutral-background edge extension. Originals untouched.'),
         camera=dict(position=[0,.96,5],target=[0,.96,0],verticalFov=28,width=432,height=576,distanceMetres=5),
         files={p.name:digest(p) for p in [out/f'{name}.glb',out/f'{name}.blend',out/f'{name}-color.png',out/f'{name}-surface.png']},
-        captures=captures)
+        captures=captures,groundSupportSamples=ground_samples)
     (shots/f'blender-{name}.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print('CREW_ASSET '+json.dumps(dict(crew=name,triangles=counts,seconds=report['seconds'])))
     return report
