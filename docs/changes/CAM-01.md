@@ -41,3 +41,33 @@ metrics invalidation and navigation remain independent source/browser review.
 The Director independently reviewed `8f73859` and approved the exact existing
 race-settings assertion change: only `footCamera: 'first-person'` was added,
 with every previous value and assertion retained. No other old test changed.
+## Preference and input implementation
+
+Runtime source is `e3ae8ac`. The four independent runtime groups pass.
+The affected existing controls ran once before review:
+
+- Race settings: 42 checks passed.
+- Input contexts: passed.
+- Existing first-person controls/camera: 1 test passed.
+- Career backup: stopped at its current-format fixture on line 67. That fixture
+  writes an empty raceSettings object, which now correctly requires backup for
+  the missing footCamera field. The independent author and Director are
+  reviewing an exact fixture addition; no assertion was changed by the builder.
+
+The additive named-player preference defaults to first-person and accepts only
+first-person or overhead. Old or malformed raw values trigger the existing
+verified pre-write migration backup. No new schema version or storage key is
+used. Future Wasteland profiles retain their existing startup protection, and
+this setter rejects them. Flag-off uses first-person without overwriting a
+stored preference.
+
+Foot KeyC changes only the presentation preference. Car cameraMode, car keys,
+gamepad mappings, race choices and fighter input stay unchanged. Switching the
+view does not clear held actions; pause and menu explicitly clear held mouse
+look, fire and aim, including when pointer lock is already released. Menu also
+releases an active on-foot pointer lock. Existing re-entry cleanup remains.
+
+The independent author's approved exact saved-preference expectation adds only
+footCamera: first-person; the old values remain. This matches the additive
+schema rather than relaxing validation. Renderer, UI, camera geometry, browser
+evidence and the final gate are separate pending work.
