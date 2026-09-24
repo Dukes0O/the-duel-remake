@@ -201,7 +201,7 @@ tasks:
     lane: VIS
     size: L
     needs: [GFX-02]
-    status: building
+    status: review
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, src/rustwall-scene.js, tools/test-rustwall-scene.mjs, tools/test-rustwall-assets.mjs, tools/scenarios/rustwall.mjs, docs/board/looks/rustwall/]
     hooks: [src/world.js, src/hidden-road.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [test_author, reviewer, browser_qa, art_critic]
@@ -214,7 +214,22 @@ tasks:
       - "Initial allocation: at most 60000 wall/gate triangles and 24 material draws, plus at most 30000 triangles/two draws for wash modules; at most three 1024 texture sets for the wall and one for rocks. The measured ten-percent frame limit remains authoritative. Reuse resources and prepare instances once."
       - "Use existing scene-system disposal for local asynchronous assets: retired scenes cannot resurrect, failed loads keep the route playable, and shared resources dispose once. No asset request when hiddenRoad is absent. Tests cover loading, gate pose, placement, bounds, immutability and cleanup before implementation."
       - "One bounded private scenario per round covers approach, front/depth/open-gate views and wash on both qualities, with clear all-route placement controls. Compare EGG-01 greybox baseline and loaded scenery in the same course views; retain frame distributions, render timing, triangle/draw counts and measurement limits. No beta until SPEC 0.3 scores pass."
-    note: "Begins after GFX-02 integration. Test author and separate Blender/runtime builders agree the asset/runtime contract before implementation. Gate invitation and discovery remain the following cards."
+    note: "Three immutable rounds complete: final assets 8889a4a, capture 59ee16a and Director critique cb788e0. Independent runtime and asset review passes. Wall resemblance is three, wash two; no beta. Final lane/build gate is pending. EGG-02-P1 records remaining visual work; arrival and discovery remain the next ordered cards."
+  - id: EGG-02-P1
+    title: "Rustwall materials, natural wash and contact polish"
+    lane: VIS
+    size: M
+    needs: [EGG-02, GFX-04]
+    status: backlog
+    owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall/]
+    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs]
+    helpers: [art_critic, reviewer, browser_qa]
+    flag: hidden-road
+    acceptance:
+      - "Continue from the three immutable initial rounds. Replace repeated rock columns with a natural bank treatment, resolve exposed terrain wedges and foot contact, improve steel/soot/wreck material response, and enrich gate/tower connections as recorded in round-3-review.md. Preserve measured collision and ground support; any extra terrain hook needs a Director re-slice."
+      - "Retain matched High/Performance views and add a short continuous approach/gate review once EGG-03 exists. Keep the geometry and material allocations and measure frame cost without discarding earlier unfavorable samples. The model toggle comparison alone does not measure the whole terrain change or GPU time."
+      - "Wall resemblance reaches three in round 2 and stays three in round 3; wash rises from one to two, then stays two. Each has one stagnant round. Apply SPEC 0.3's approach-change rule if another round fails to improve resemblance. Keep dev until all scores reach four and the budget holds."
+    note: "Initial card is accepted for development only. Start after the ordered initial cards; three rounds alone do not grant beta."
   - id: EGG-03
     title: "Gate arrival and invitation"
     priority: 10
