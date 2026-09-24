@@ -1,3 +1,4 @@
+import {hiddenRoadHints,hiddenRoadMapKey} from './hidden-road-hints.js';
 import {createRendererReadiness} from './screen-readiness.js';
 import {screenMarkup, createMenuScreen, updateBuildNotice} from './screen-menu.js';
 import {createPlayerScreen} from './screen-players.js';
@@ -85,7 +86,8 @@ const buildUpdates=createBuildUpdateChecker({
   signal:domEvents.signal,
   onChange:change=>updateBuildNotice(ui,uiDisposed,change),
 });
-const routeMap=new RouteMap(ui['route-map']);
+const routeMap=new RouteMap(ui['route-map'],{getDiscovery:()=>app.getHiddenRoadDiscovery?.()});
+let menuDiscoveryKey=null;
 const coursePreview=new CoursePreview(ui['menu-course-map'],ui['menu-elevation-profile']);
 if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();hiddenRoadUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
 const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textContent = v; };
@@ -165,6 +167,7 @@ root.addEventListener('click',e => {
   if(button.closest('form')&&button.type==='submit')return;
   e.preventDefault();
   switch (button.dataset.action) {
+    case 'wasteland-visit': if(app.duel.state.status!=='menu'||!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu)return;armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=experimentalOpen=false;app.visitWasteland();lastScreen=null;break;
     case 'start': armoryOpen = coursesOpen = garageOpen = playersOpen = leaderboardOpen = experimentalOpen = false; app.startCampaign(choices); break;
     case 'courses':if(app.duel.state.status!=='menu')return;coursesOpen=true;garageOpen=playersOpen=leaderboardOpen=false;courseMessage='';lastScreen=null;break;
     case 'courses-close':coursesOpen=false;lastScreen=null;break;
@@ -247,6 +250,8 @@ root.addEventListener('change',event=>{
   const key=event.target.dataset.boardFilter;if(!key)return;boardFilter[key]=key==='stage'?Number(event.target.value):event.target.value;lastScreen=null;renderState(app.duel.state);
 },{signal:domEvents.signal});
 function renderState(s) {
+  const discovery=app.getHiddenRoadDiscovery?.(),discoveryKey=hiddenRoadMapKey(discovery)+':'+(discovery?.pacificFinishes||0);
+  if(s.status==='menu'&&discoveryKey!==menuDiscoveryKey){menuDiscoveryKey=discoveryKey;updateMenuScene();lastScreen=null;}
   buildUpdates.syncState();
   const helpText=app.duel.featureFlags.enabled('wasteland2')?upgradedCombatHelp:legacyCombatHelp;
   if(combatHelp.textContent!==helpText)combatHelp.textContent=helpText;
