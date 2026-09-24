@@ -85,11 +85,25 @@ tasks:
     priority: 5
     lane: SIM
     size: M
-    needs: [GFX-00]
-    status: backlog
+    needs: [TRACK-02]
+    merge_after: GFX-00
+    status: ready
+    owns: [src/hidden-road.js, src/course.js, src/sim-driving.js, src/sim-crash.js, src/world.js, tools/test-hidden-road.mjs, tools/scenarios/hidden-road.mjs]
+    hooks: [src/feature-flags.js, src/game.js, src/world-surfaces.js]
+    helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
     flag: hidden-road
+    behavior_change: yes
     acceptance:
       - "Pacific Canyon routes A/B/C share a subtle player-only spur, protected wash and salt-flat approach per SPEC 0.2. All road cars can drive it; AI ignores it and map stays hidden. Ordinary replay fingerprints remain unchanged."
+      - "Add hidden-road as a dev switch and explicitly pass it into course construction. Build a separate deterministic corridor, not a features.shortcuts entry; preserve original RNG consumption, racing centerline, route plans, gates and ordinary map geometry."
+      - "Start at course s=1408 m, positive/right lateral side, mouth near +8.5 m on each curated route. Initial samples place all three outside a Mojave Canyon bend. Verify full vehicle/wall/scenery footprints before fixing the final coordinates; record any justified adjustment."
+      - "Corridor length is 900-1200 m, final 300 m straight toward the terminal gate pose; prepared dirt admits every road car, including unrestricted steering for turning around. Solid wash walls contain the player. Render ruts, a gap in rocks, text-free rusted post and dead cacti; hide the destination from the racing line."
+      - "Only the actual player corridor exempts boundary and water resets; outside positions retain normal rules and NPCs receive no immunity or route branch. Keep corridor travel from advancing checkpoints or triggering missed-gate resets. Expose corridor progress/arrival poses for later EGG-03 without settlement or save changes."
+      - "Focused tests cover all routes, continuous ground and swept centerline clearance, all-car entry/turnaround/return, walls and corridor edges, outside reset controls, unchanged AI/map, and shared-time 30/60/144 outcomes. Run unchanged ordinary replay fingerprints, including flag-on road-following comparison."
+      - "Private memory-only High/Performance captures show racing-line concealment, entrance, wash, salt flat, wall contact and return. Review actual screenshots before any scene-signature change; no silent signature regeneration. EGG-02 owns final Rustwall assets, EGG-03 the 150 m departure and gate sequence, EGG-04 discovery persistence."
+    shots: [racing-line-concealment, entrance-abc, wash-drive, salt-flat-approach, wall-contact, road-car-return]
+    sound: "Existing dirt/engine audio; gate ceremony belongs to EGG-03."
+    note: "Director permits eight source files: five substantive modules and three narrow hooks, plus tests/scenario/evidence. Separate geometry, driving, reset and rendering responsibilities. Independent preparation overlaps GFX-00; completion order is preserved."
   - id: ART-W
     title: "Rustwall gate and first-person gear reference art"
     priority: 6
