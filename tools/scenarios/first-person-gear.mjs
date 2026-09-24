@@ -34,10 +34,27 @@ export async function run(context) {
     await setup(context,quality);
     const interactionCaptures=[];
     const interactionContext={...context,screenshot:async name=>{
+      const hud=await context.evaluate(`(() => {
+        const app=window.__qaApp,s=app.duel.state;
+        // advance() runs simulation only after app.stop(). Present that exact
+        // snapshot through the production HUD hook before capturing the page.
+        app.onFrame?.(s);window.__render.renderFrame();
+        const raceTime=document.querySelector('#race-time')?.textContent;
+        const gear=document.querySelector('.combat-foot-gear')?.textContent || '';
+        const action=document.querySelector('.combat-foot-action')?.textContent || '';
+        const ticks=Math.floor(Math.max(0,s.stageTimeSec)*100);
+        const expected=String(Math.floor(ticks/6000)).padStart(2,'0')+':'+
+          String(Math.floor(ticks/100)%60).padStart(2,'0')+'.'+String(ticks%100).padStart(2,'0');
+        if(raceTime!==expected)throw Error('Captured race clock is stale');
+        if(s.onFoot&&!gear.includes(s.footGear.name))throw Error('Captured held-weapon HUD is stale');
+        if(s.onFoot&&s.footWeapons.repairing&&!action.includes('REPAIRING '+Math.round(s.footWeapons.repairAmount)+' / 40'))
+          throw Error('Captured repair HUD is stale');
+        return{stageTimeSec:s.stageTimeSec,onFoot:s.onFoot,raceTime,gear,action};
+      })()`);
       const temporary=await context.screenshot(name),bytes=await readFile(temporary);
       const path=`${relative}/${name}.png`;
       await writeFile(join(root,path),bytes);context.screenshots.push(join(root,path));
-      interactionCaptures.push({path,sha256:sha(bytes)});return path;
+      interactionCaptures.push({path,sha256:sha(bytes),hud});return path;
     }};
     evidence.interactions[quality]={...await interaction(interactionContext,quality),captures:interactionCaptures};
     // Re-entered car is covered above. Fresh exit supplies the actual renderer

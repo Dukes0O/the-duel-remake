@@ -160,3 +160,19 @@ with baseline p95 18.1 ms and held p95 18.2 ms, and no interval over 33 ms. This
 remains a stopped-course rendering comparison with pose updates active in both
 conditions, not a complete presentation CPU or GPU benchmark. Independent round
 2 review and the final fidelity round remain pending.
+
+## Private HUD capture correction before round 3
+
+Round 2 review found stale HUD labels in the actual-input screenshots. The private
+scenario stops the app and calls `advance()`, which runs simulation without the
+normal app frame callback. The renderer still showed the updated held tool, but
+the HUD retained an earlier weapon and race time. This limits the HUD evidence in
+rounds 1 and 2; those images remain unchanged. It is not evidence of a production
+HUD defect.
+
+Before every future actual-input screenshot, the fixture now calls the existing
+`app.onFrame(state)` hook, which is assigned to `renderState` and updates the HUD,
+then renders the view. It verifies the displayed race time, selected foot weapon
+and active repair amount against that snapshot, and records the displayed labels
+beside the image hash. No production, simulation or HUD source changed. This
+correction will be exercised in the already planned round 3 scenario.
