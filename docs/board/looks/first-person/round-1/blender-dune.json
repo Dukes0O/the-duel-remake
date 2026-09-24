@@ -1,0 +1,50 @@
+{
+  "id": "dune",
+  "triangles": 1664,
+  "draws": 1,
+  "seconds": 7.221132699982263,
+  "clips": {
+    "idle": 2.0,
+    "aim": 1.0,
+    "fire": 0.35,
+    "reload": 2.2,
+    "repair": 4.0,
+    "wrench-idle": 2.0,
+    "aim-fire": 0.35,
+    "aim-reload": 2.2
+  },
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-2.png",
+    "sha256": "34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9",
+    "crop": [
+      510,
+      20,
+      1010,
+      680
+    ]
+  },
+  "files": {
+    "dune.glb": "ec9bb874423f505c123b207c46c4a938ba33e5827ccf8c85f85d35db64264c2f",
+    "dune.blend": "584289d58825b60cf030b4392bba1166f3a6c047c444402e8f12660efd481bdb",
+    "dune-color.png": "a577d03888bfccb47d1420cdd7570be5bf294eb82d314a1e7c83e8f29d6944ba",
+    "dune-surface.png": "08b680aa5dfce96d71126144d7fc4c0f40989ceca5436bba34218c9c84bb1401"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/first-person/round-1/blender-dune-idle.png",
+      "sha256": "e2d53f20813c6318ab9169570d9206ed1a98ecc0becd6ff365aecad2ec1c7b66",
+      "crew": "dune",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-1/blender-dune-wrench-idle.png",
+      "sha256": "2d134a4a1a7a3b81c7234e0eff64e401d92048b3129f608020bfdeceac574f50",
+      "crew": "dune",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench"
+    }
+  ]
+}
