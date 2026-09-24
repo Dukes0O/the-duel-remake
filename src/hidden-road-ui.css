@@ -1,0 +1,22 @@
+.hidden-road-dialog {
+  position: absolute; z-index: 24; bottom: 7%; left: 50%; transform: translateX(-50%);
+  width: min(560px, calc(100% - 40px)); padding: 24px 28px;
+  color: #eee4cc; background: linear-gradient(120deg, #151d1cf5, #20221ff5);
+  border: 1px solid #827454; border-top: 3px solid #b89a60;
+  box-shadow: 0 10px 36px #0008; text-align: left;
+}
+.hidden-road-dialog[hidden] { display: none; }
+.hidden-road-eyebrow { margin: 0 0 8px; color: #c3a76d; font-size: 11px; letter-spacing: .22em; }
+.hidden-road-dialog h2 { margin: 0 0 10px; font-size: clamp(25px, 3vw, 36px); line-height: 1.1; }
+.hidden-road-copy { margin: 0 0 22px; color: #d1c6ad; font-size: 15px; line-height: 1.5; }
+.hidden-road-actions { display: flex; gap: 12px; }
+.hidden-road-actions button { min-height: 46px; padding: 12px 18px; border: 1px solid #827454; background: #242b27; color: #eee4cc; cursor: pointer; font: inherit; font-size: 14px; }
+.hidden-road-actions .hidden-road-enter { background: #ba9d65; color: #131c1b; font-weight: 700; border-color: #d1b67c; }
+.hidden-road-actions button:focus-visible { outline: 3px solid #f0dc9c; outline-offset: 4px; }
+.hidden-road-active #race-hud, .hidden-road-active #weapon-hud,
+.hidden-road-active .combat-hud { opacity: var(--hidden-road-hud-opacity, 0); pointer-events: none; }
+@media (max-width: 520px) {
+  .hidden-road-dialog { bottom: 4%; width: calc(100% - 28px); padding: 20px; }
+  .hidden-road-actions { flex-direction: column; gap: 10px; }
+  .hidden-road-actions button { width: 100%; }
+}
