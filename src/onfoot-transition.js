@@ -56,7 +56,8 @@ function stepFighterInFixedTime(duel, dt) {
       fighter.bailTumbleSeconds > 0 ? {} : state.fighterInput,
       FIGHTER_STEP_SECONDS);
     if (fighter.respawns !== previousRespawns) fighter.presentation = {
-      clip: 'get-up', startedAt: state.stageTimeSec, duration: .8};
+      clip: 'get-up', startedAt: Math.max(0, state.stageTimeSec -
+        (transition.fighterStepRemainder - FIGHTER_STEP_SECONDS)), duration: .8};
     stepFootWeapons(duel, FIGHTER_STEP_SECONDS);
     state.fighterInput.lookX = state.fighterInput.lookY = 0;
     transition.fighterStepRemainder = Math.max(0,

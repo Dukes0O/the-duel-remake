@@ -1,16 +1,25 @@
+import {FIGHTER_RULES} from './onfoot.js';
+
+const EMPTY = Object.freeze({});
+const EVENT_CLIPS = new Set(['get-up', 'enter', 'exit']);
+const JUMP_SPEED = Math.sqrt(2 * FIGHTER_RULES.gravity * FIGHTER_RULES.jumpMeters);
+const JUMP_SECONDS = 2 * JUMP_SPEED / FIGHTER_RULES.gravity;
 const finite = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
 
 // A read-only projection of a simulation snapshot. Repeated renders and replay
 // rewinds select the same pose; input alone never proves that an action happened.
-export function selectFighterPresentation(entry, {time = 0} = {}) {
-  const fighter = entry?.fighter || entry || {};
-  const input = entry?.input || {};
-  const weapons = entry?.weapons || {};
+export function selectFighterPresentation(entry, {time = 0} = EMPTY, output) {
+  const fighter = entry?.fighter || entry || EMPTY;
+  const input = entry?.input || EMPTY;
+  const weapons = entry?.weapons || EMPTY;
   const event = entry?.presentation || fighter.presentation;
   const now = Math.max(0, finite(time));
-  const pose = {x: finite(fighter.x), y: finite(fighter.y),
-    z: finite(fighter.z), yaw: finite(fighter.yaw)};
-  const result = {crewId: fighter.crewId || 'rook', clip: 'idle', clipTime: now, pose};
+  const result = output || {pose: {}};
+  const pose = result.pose;
+  pose.x = finite(fighter.x); pose.y = finite(fighter.y);
+  pose.z = finite(fighter.z); pose.yaw = finite(fighter.yaw);
+  result.crewId = fighter.crewId || 'rook';
+  result.clip = 'idle'; result.clipTime = now; result.clipProgress = null;
   if (fighter.knockedDown) {
     result.clip = 'knockdown';
     const duration = finite(entry?.knockdownDuration, finite(fighter.knockdownDuration));
@@ -20,16 +29,25 @@ export function selectFighterPresentation(entry, {time = 0} = {}) {
         ? Math.max(0, duration - fighter.knockdownRemaining) : now;
     return result;
   }
-  if (event && ['get-up', 'enter', 'exit'].includes(event.clip) &&
+  if (event && EVENT_CLIPS.has(event.clip) &&
       Number.isFinite(event.startedAt) && Number.isFinite(event.duration) &&
       now >= event.startedAt && now < event.startedAt + event.duration) {
     result.clip = event.clip;
     result.clipTime = now - event.startedAt;
-    if (event.pose) result.pose = {...event.pose};
+    result.clipProgress = result.clipTime / event.duration;
+    if (event.pose) {
+      pose.x = finite(event.pose.x); pose.y = finite(event.pose.y);
+      pose.z = finite(event.pose.z); pose.yaw = finite(event.pose.yaw);
+    }
     return result;
   }
   if (fighter.airHeight > .001 || Math.abs(finite(fighter.verticalSpeed)) > .001) {
     result.clip = 'jump';
+    // Vertical velocity is simulation-authored and identifies the flight phase
+    // without a render clock or a second vertical displacement.
+    result.clipTime = Math.max(0, Math.min(JUMP_SECONDS,
+      (JUMP_SPEED - finite(fighter.verticalSpeed)) / FIGHTER_RULES.gravity));
+    result.clipProgress = result.clipTime / JUMP_SECONDS;
   } else if (weapons.selected === 'wrench' && weapons.repairing) {
     result.clip = 'repair';
     result.clipTime = Math.max(0, finite(weapons.repairSeconds));

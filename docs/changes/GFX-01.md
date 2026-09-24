@@ -29,3 +29,9 @@ Round 1 capture/review is in progress. No beta promotion, broad lane gate or rel
 - CPU submission sample, 40 warmed frames: High median 2.7 ms / p95 3.0 ms; Performance median 1.5 ms / p95 2.0 ms. This includes production update plus an extra isolated color render; it is not a GPU frame-time claim.
 - Contact sheet: docs/board/looks/crew/round-1.png. Its manifest validates exact Blender/game cameras, idle clip/time/yaw, all eight asset hashes, reference crops and input image hashes. Raw game frames, captures.json and private browser report are retained in the round-1 folder.
 - Initial harness probe compared two disposable storage wrappers by identity and failed before capture; corrected it to verify the installed own-property memory store and QA tab namespace. The successful run used no physical player saves.
+
+## Reviewed runtime timing fixes
+
+Independent red tests in 08c747d reproduced six failures across four findings. Jump now derives its authored clip fraction from simulation vertical velocity and the configured flight arc. Bounded get-up, enter and exit events map their elapsed fraction to the full authored clip duration. Recovery timestamps use the fixed fighter substep boundary after accounting for the accumulator remainder. Each prepared figure reuses its selector result, pose and clock; the event clip set and empty inputs are constants.
+
+Focused verification: selector 12/12, crew 26/26, retained rig 14/14 and transition 8/8. Existing gameplay assertions and timing are unchanged; no save fields or progression changes.

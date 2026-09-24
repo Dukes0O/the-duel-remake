@@ -61,6 +61,7 @@ export function createRiggedFighterFigures({
   const fallbackRoster = new Array(MAX_FIGHTER_FIGURES);
   const fallbackOptions = {active: false};
   const eye = new THREE.Vector3();
+  const presentationClock = {time: 0};
   let disposed = false;
   group.userData.assetStatus = 'unrequested';
   group.userData.loadErrors = [];
@@ -122,7 +123,7 @@ export function createRiggedFighterFigures({
     root.add(model);
     const mixer = new THREE.AnimationMixer(model);
     const actions = Object.fromEntries(loaded.animations.map(clip => [clip.name, mixer.clipAction(clip)]));
-    const figure = {root, model, mixer, actions, meshes: [], fighter: null, local: false, clip: null};
+    const figure = {root, model, mixer, actions, meshes: [], fighter: null, local: false, clip: null, presentation: {pose: {}}};
     model.traverse(mesh => {
       if (!mesh.isMesh) return;
       figure.meshes.push({mesh, detail: detailOf(mesh)});
@@ -142,7 +143,8 @@ export function createRiggedFighterFigures({
   }
 
   function pose(figure, entry, time, options, index) {
-    const selected = selectFighterPresentation(entry, {time});
+    presentationClock.time = time;
+    const selected = selectFighterPresentation(entry, presentationClock, figure.presentation);
     // The old injected three-clip pipeline remains a useful loader control.
     const clip = figure.actions[selected.clip] ? selected.clip
       : selected.clip === 'sprint' ? 'walk' : 'idle';
@@ -156,7 +158,10 @@ export function createRiggedFighterFigures({
       figure.clip = clip;
     }
     const action = figure.actions[clip];
-    const clipTime = ONCE.has(clip) ? Math.min(action.getClip().duration, selected.clipTime) : selected.clipTime;
+    const duration = action.getClip().duration;
+    const clipTime = selected.clipProgress !== null && selected.clip === clip
+      ? Math.max(0, Math.min(1, selected.clipProgress)) * duration
+      : ONCE.has(clip) ? Math.min(duration, selected.clipTime) : selected.clipTime;
     action.paused = false;
     action.enabled = true;
     figure.mixer.setTime(clipTime);
