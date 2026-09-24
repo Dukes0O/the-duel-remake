@@ -1,5 +1,28 @@
 # EGG-02: Rustwall and wash scenery
 
+## Round-three wash orientation: independent red proof
+
+The Director authorized only a deterministic local-Y half-turn per existing
+bank, choosing 0 or pi from its existing identity/index. Positions, scales,
+collision geometry, prototype count, budgets and simulation RNG stay fixed.
+The purpose is to show both asymmetric faces without adding another prototype.
+
+Independent test commit **034430b** adds one focused scene group. It inspects
+the actual instance matrices in each bank's local collision frame, permits
+only the original or half-turned orientation, and requires both to occur.
+Two preparations of the same course must produce identical matrix arrays.
+Bank count, source geometry/material reuse, collision records and the course
+RNG stream must remain unchanged. The existing all-vertex collision-envelope
+test and all acceptance limits are retained without alteration.
+
+Before the runtime edit, `node tools/test-rustwall-scene.mjs` reports
+**18 checks, 17 passed, 1 failed**, exit 1, **1.23 s** tool wall time.
+The only failure is the observed orientation set `[1]` instead of `[-1, 1]`:
+every bank still shows its original face. All other new controls pass before
+that final assertion. No render, broad gate, asset or production edit was
+performed by the test author. The runtime builder received the red commit
+before implementing this narrowly approved presentation change.
+
 Status: independent acceptance tests are red, before runtime or asset work.
 Baseline: **1420849**. The Director owns scope and board changes.
 
