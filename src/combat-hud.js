@@ -158,7 +158,9 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
     if (host.hidden === active) host.hidden = !active;
     if (playerArmor.hidden === (active && !onFoot)) playerArmor.hidden = !active || onFoot;
     if (footHealth.hidden === onFoot) footHealth.hidden = !onFoot;
-    root.querySelector('#stage').classList.toggle('combat-upgraded', active);
+    const stage = root.querySelector('#stage');
+    stage.classList.toggle('combat-upgraded', active);
+    stage.classList.toggle('on-foot', onFoot);
     host.classList.toggle('on-foot', onFoot);
     if (!active) return;
 

@@ -8,6 +8,7 @@ const equal = (a, b, label) => { assert.deepEqual(a, b, label); checks++; };
 const near = (a, b, tolerance, label) => ok(Math.abs(a - b) < tolerance, `${label}: ${a}/${b}`);
 for (const status of ['countdown', 'racing', 'crashed', 'ticket']) ok(rearViewActive({ status }), `${status}: mirror visible`);
 for (const status of ['menu', 'results', 'gameover', 'finished', undefined]) ok(!rearViewActive({ status }), `${status}: mirror hidden`);
+ok(!rearViewActive({ status: 'racing', onFoot: true }), 'Walking hides the mirror and skips its render pass');
 equal(rearViewRect({ left: 20, top: 10, width: 1280, height: 720 }, { left: 1020, top: 110, width: 256, height: 80 }), { x: 1000, y: 540, width: 256, height: 80 }, 'Frame and canvas offsets align');
 equal(rearViewRect({ left: 0, top: 0, width: 100, height: 60 }, { left: -20, top: -10, width: 80, height: 40 }), { x: 0, y: 30, width: 60, height: 30 }, 'Small viewport safely clips negative edges');
 equal(rearViewRect({ left: 0, top: 0, width: 100, height: 60 }, { left: 80, top: 45, width: 80, height: 40 }), { x: 80, y: 0, width: 20, height: 15 }, 'Small viewport safely clips far edges');

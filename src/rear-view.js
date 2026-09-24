@@ -3,7 +3,7 @@ import { constrainTunnelCamera } from './camera-clearance.js';
 
 export const REAR_VIEW_FAR = 220;
 export const REAR_VIEW_INTERVAL_MS = 1000 / 30;
-export const rearViewActive = state => ['countdown', 'racing', 'crashed', 'ticket'].includes(state?.status);
+export const rearViewActive = state => !state?.onFoot && ['countdown', 'racing', 'crashed', 'ticket'].includes(state?.status);
 
 // CSS owns the frame placement; WebGL uses the same measured interior. The
 // rectangle is clipped in logical canvas pixels, not device-resolution pixels.
