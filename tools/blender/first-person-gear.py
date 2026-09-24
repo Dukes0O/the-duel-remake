@@ -35,6 +35,10 @@ def hands_glb(name):
     return out / 'hands' / f'{name}.glb'
 def hands_blend(name):
     return blend_dir / 'hands' / f'{name}.blend'
+def tool_texture(name, label):
+    return blend_dir / f'{name}-{label}.png'
+def hands_texture(name, label):
+    return blend_dir / 'hands' / f'{name}-{label}.png'
 shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / 'first-person' / f'round-{args.round}')
 if not shots.is_absolute():
     shots = root / shots
@@ -43,6 +47,10 @@ if args.paths_only:
                                + [str(hands_blend(name)) for name in selected_names],
                       'glb': [str(tool_glb(name)) for name in ('rpg', 'wrench')]
                              + [str(hands_glb(name)) for name in selected_names],
+                      'textures': [str(tool_texture(name, label)) for name in ('rpg', 'wrench')
+                                   for label in ('color', 'surface', 'normal')]
+                                  + [str(hands_texture(name, label)) for name in selected_names
+                                     for label in ('color', 'surface', 'normal')],
                       'evidence': [str(shots)]}))
     sys.exit(0)
 
@@ -358,7 +366,7 @@ def rocket_pose(rig,phase):
 def build_tool(name):
     started=time.perf_counter();scene=fresh()
     cfg=dict(sleeve=(.24,.33,.33) if name=='rpg' else (.43,.29,.105),leather=(.23,.16,.10),skin=(.30,.28,.22))
-    mat=texture_material(name,cfg,out,True)
+    mat=texture_material(name,cfg,blend_dir,True)
     rig=armature(name+' rig',[('base',(0,0,0),None)]+([('rocket',(0,0,0),'base')] if name=='rpg' else []))
     if name=='rpg':
         g,r=rpg_geometry();objects=[g.build('rpg-body',mat,rig,bevel=.002),r.build('loaded-rocket',mat,rig)]
@@ -367,7 +375,8 @@ def build_tool(name):
     export(rig,objects,tool_glb(name))
     bpy.ops.wm.save_as_mainfile(filepath=str(tool_blend(name)))
     return {'id':name,'triangles':sum(triangles(o) for o in objects),'draws':len(objects),
-        'seconds':time.perf_counter()-started,'files':{p.name:digest(p) for p in [tool_glb(name),tool_blend(name),out/f'{name}-color.png',out/f'{name}-surface.png',out/f'{name}-normal.png']}}
+        'seconds':time.perf_counter()-started,'files':{p.name:digest(p) for p in [tool_glb(name),tool_blend(name),
+            tool_texture(name, 'color'),tool_texture(name, 'surface'),tool_texture(name, 'normal')]}}
 
 def triangles(obj):
     obj.data.calc_loop_triangles();return len(obj.data.loop_triangles)
@@ -507,7 +516,7 @@ def import_tool(name):
 
 def build_hands(name,cfg):
     started=time.perf_counter();scene=fresh()
-    mat=texture_material(name,cfg,out/'hands')
+    mat=texture_material(name,cfg,blend_dir/'hands')
     g,definitions=hand_geometry(name,cfg);rig=armature(name+' first-person hands',definitions)
     mesh=g.build(name+' sleeves gloves fingers',mat,rig)
     actions={label:add_action(rig,label,duration,lambda phase,label=label:hands_pose(rig,label,phase),32 if label=='repair' else 16) for label,duration in CLIPS.items()}
@@ -543,7 +552,8 @@ def build_hands(name,cfg):
     source=root/f'public/assets/reference/wasteland-crew-{cfg["sheet"]}.png'
     report=dict(id=name,triangles=triangles(mesh),draws=1,seconds=time.perf_counter()-started,clips=CLIPS,
         reference=dict(path=source.relative_to(root).as_posix(),sha256=digest(source),crop=cfg['crop']),
-        files={p.name:digest(p) for p in [hands_glb(name),hands_blend(name),out/'hands'/f'{name}-color.png',out/'hands'/f'{name}-surface.png',out/'hands'/f'{name}-normal.png']},captures=captures)
+        files={p.name:digest(p) for p in [hands_glb(name),hands_blend(name),
+            hands_texture(name, 'color'),hands_texture(name, 'surface'),hands_texture(name, 'normal')]},captures=captures)
     (shots/f'blender-{name}.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf8',newline='\n')
     print('HANDS_ASSET '+json.dumps({'id':name,'triangles':report['triangles'],'seconds':report['seconds']}),flush=True)
     return report

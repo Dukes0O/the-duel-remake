@@ -30,12 +30,16 @@ def glb_path(name):
     return out / f'{name}.glb'
 def blend_path(name):
     return blend_dir / f'{name}.blend'
+def texture_path(name, label):
+    return blend_dir / f'{name}-{label}.png'
 shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / 'crew' / f'round-{args.round}')
 if not shots.is_absolute():
     shots = root / shots
 if args.paths_only:
     print(json.dumps({'blend': [str(blend_path(name)) for name in selected_names],
                       'glb': [str(glb_path(name)) for name in selected_names],
+                      'textures': [str(texture_path(name, label)) for name in selected_names
+                                   for label in ('color', 'surface')],
                       'evidence': [str(shots)]}))
     sys.exit(0)
 
@@ -128,7 +132,7 @@ def atlas_for(name, cfg):
                            atlas=[left,0,right,1024], centre=centre))
     image = bpy.data.images.new(name+'-reference-atlas', width=1024, height=1024, alpha=False)
     image.pixels.foreach_set(atlas[::-1].reshape(-1))
-    image.filepath_raw = str(out / f'{name}-color.png')
+    image.filepath_raw = str(texture_path(name, 'color'))
     image.file_format = 'PNG'
     image.save()
     image.pack()
@@ -149,7 +153,7 @@ def atlas_for(name, cfg):
     finish=bpy.data.images.new(name+'-surface-atlas',width=1024,height=1024,alpha=False)
     finish.colorspace_settings.name='Non-Color'
     finish.pixels.foreach_set(surface[::-1].reshape(-1))
-    finish.filepath_raw=str(out/f'{name}-surface.png');finish.file_format='PNG'
+    finish.filepath_raw=str(texture_path(name, 'surface'));finish.file_format='PNG'
     finish.save();finish.pack()
     return image, finish, bounds, source_path
 
@@ -782,7 +786,8 @@ def build(name, cfg):
         reference=dict(path=source.relative_to(root).as_posix(),sha256=digest(source),crops=crops,
         process='Bilinear three-view crop atlas; deterministic horizontal neutral-background edge extension. Originals untouched.'),
         camera=dict(position=[0,.96,5],target=[0,.96,0],verticalFov=28,width=432,height=576,distanceMetres=5),
-        files={p.name:digest(p) for p in [glb_path(name),blend_path(name),out/f'{name}-color.png',out/f'{name}-surface.png']},
+        files={p.name:digest(p) for p in [glb_path(name),blend_path(name),
+                                       texture_path(name, 'color'),texture_path(name, 'surface')]},
         captures=captures,groundSupportSamples=ground_samples)
     (shots/f'blender-{name}.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print('CREW_ASSET '+json.dumps(dict(crew=name,triangles=counts,seconds=report['seconds'])))
