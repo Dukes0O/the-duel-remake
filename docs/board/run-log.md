@@ -1495,3 +1495,8 @@ percent remaining. All helpers are finished. No lane has an active builder.
   (delete finished work, list idle branches, delete used evidence, fold and
   delete old notes, remove proven-unused code and assets, watch sizes, log it).
   SPEC 0.7, CLEAN-01, CLEAN-04, CLEAN-08 and `next-run.md` updated to match.
+- Janitor timing (Kyle): the cleanup for a merge happens right after that
+  merge succeeds: delete its lane branch, folder and used evidence, and update
+  the status page. The slower repo-wide sweep (unused code and assets, old
+  notes, idle-branch list, size review) runs at the end of every run and after
+  every 10 merges.

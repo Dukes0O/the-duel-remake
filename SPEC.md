@@ -343,11 +343,13 @@ in the wrong home) fails a check. Starting targets:
   a named removal task.
 - `docs/README.md` lists the current documents. Agents read that index, their
   card and the files it names. Anything not in the index is history.
-- At the end of every run and after every 10 merges, **the janitor** runs as
-  its own step (its seven duties are in `AGENTS.md`): delete finished lane
-  branches and folders, list idle ones without deleting them, delete used
-  evidence, fold old notes into current docs and delete them, remove what
-  `repo-audit` proves unused, compare sizes with the targets, and log it.
+- **The janitor** (details in `AGENTS.md`) has two parts. After every
+  successful merge, or when a card is dropped or replaced, it deletes that
+  lane's branch, folder and used evidence and updates the status page. At the
+  end of every run and after every 10 merges, a sweep lists idle branches
+  without deleting them, folds old notes into current docs and deletes them,
+  removes what `repo-audit` proves unused, compares sizes with the targets,
+  and logs it.
 
 **Cards. Do these in order and start no feature work until CLEAN-08 merges.** CLEAN-09 is already done.
 
@@ -360,7 +362,7 @@ in the wrong home) fails a check. Starting targets:
 | 5 | **CLEAN-05** Docs and logs | OPS | M | *(0.8: delete, don't archive.)* `docs/README.md` indexes current docs; facts still needed from the 121 change notes go into the current docs, then the notes are deleted; `run-log.md` keeps 7 days and older entries are deleted; only the latest handoff is kept; docs marked "history only" are deleted; `AGENTS.md` and the playbook point at the index |
 | 6 | **CLEAN-06** Dead code, tests and switches | SIM, UI, VIS | M | Items `repo-audit` proves unused are removed (for example the replaced box-figure path, unused exports, tests of removed behavior); `roadside-destruction` has been `on` for a release, so its switch and flag-off path go, per REL-03; each removal passes the lane tier with all replay fingerprints unchanged; anything uncertain becomes a card instead |
 | done | **CLEAN-07** Branches and lane folders | OPS | S | Done on 24 September 2026: all 95 lane folders and 135 branches removed (one-line notes for the 17 with unmerged work are in `run-log.md`), backups and scratch output deleted, Git storage 1 GB to 250 MB. From now on the janitor deletes a branch only when its work is merged, replaced or dropped, never for being idle (AGENTS.md rule 7). |
-| 8 | **CLEAN-08** The janitor | OPS, TOOL | S | The playbook defines the janitor step exactly as `AGENTS.md` does, at the end of every run and after every 10 merges; the status page shows Git size, build size, `public/` size and lane folders against the targets and their change since the last run, plus idle branches with their card and last activity; a full tier passes |
+| 8 | **CLEAN-08** The janitor | OPS, TOOL | S | The playbook's Integrator steps include the after-merge janitor and its end-of-run steps include the sweep, exactly as `AGENTS.md` defines them; the status page shows Git size, build size, `public/` size and lane folders against the targets and their change since the last run, plus idle branches with their card and last activity; a full tier passes |
 | done | **CLEAN-09** Shrink Git history | OPS | M | Done by Kyle's decision on 24 September 2026. `integration/wasteland` history after `master` was rewritten (351 commits) to drop every `.blend` file and all non-`.md`/`.json` files under `docs/board/looks/`. `master` was not touched. Old-to-new commit IDs: `docs/history/history-rewrite-2026-09-24-map.txt`. Full backup (all refs) and copies of the latest dropped files: `C:\Users\kyleb\dev\duel-backups\2026-09-24-before-history-rewrite\`. Local lane branches still point at the old commits; rebase a held lane with `git rebase --onto <new> <old base>` using the map, and never merge an old-history branch directly |
 
 ---

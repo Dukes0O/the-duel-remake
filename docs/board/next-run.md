@@ -40,8 +40,9 @@ Do these in order. No feature, art or balance work until step 1 is done.
      facts from the change notes and old handoffs into current docs, then
      delete them; keep 7 days of `run-log.md`.
    - **CLEAN-06** dead code, tests and switches, including `roadside-destruction`.
-   - **CLEAN-08** the janitor: its step in the playbook, and sizes against
-     targets plus idle branches on the status page.
+   - **CLEAN-08** the janitor: the after-merge cleanup and the end-of-run sweep
+     in the playbook, and sizes against targets plus idle branches on the
+     status page.
    - **CLEAN-10** tested compaction routine for future pushes.
 2. **Then resume features (SPEC 0.6), in this order:**
    - **CAR-01** Wasteland career, scrap and territory map.
@@ -80,12 +81,13 @@ them in the order given: finish the cleanup cards before any feature, art or
 balance work. Keep every replay fingerprint unchanged during cleanup.
 Gates: lane tier and build before every merge; full tier after every 5 merges or
 2 hours and at the end of the run; update STATUS.md after every merge.
-Delete, do not archive. Remove a lane folder and branch when its work is merged,
-replaced or dropped, unlinking any dependency link first; never for being idle. Never link to or touch the
+Delete, do not archive. After every successful merge, run the after-merge
+janitor from AGENTS.md: delete that lane's branch, folder and used evidence,
+unlinking any dependency link first. Never delete a branch for being idle. Never link to or touch the
 live folder, port 5174 or real saves. Do not rewrite history, release or push
 unless Kyle approves it in writing.
 Budget for this run: <for example "until morning" or "about X% of my usage">.
 When the budget is nearly spent: finish cards in progress, run the full tier,
-run the janitor (AGENTS.md), update STATUS.md, write a short handoff at the end of
+run the janitor sweep (AGENTS.md), update STATUS.md, write a short handoff at the end of
 run-log.md with before and after sizes, and stop.
 ```

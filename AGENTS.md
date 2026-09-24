@@ -114,24 +114,27 @@ small context matter. These rules win over habit:
   or name the task that will remove it when its switch turns fully on.
 - Read only `docs/README.md`, your task card and the files it names. Anything
   not listed in `docs/README.md` is history, not instructions.
-- **The janitor** runs at the end of every run and after every 10 merges, as
-  its own step, never squeezed into a feature card. It keeps the repository
-  clean by deleting, not by moving things into a closet:
-  1. Delete lane folders and branches whose work is merged, replaced or
-     dropped. Unlink dependency links first, then `git worktree remove`
-     (never forced).
-  2. List idle unmerged branches on the status page with their card, last
+- **The janitor** keeps the repository clean by deleting, not by moving
+  things into a closet. It has two parts.
+- **After every successful merge** (and whenever a card is dropped or replaced
+  instead of merged), as part of that merge:
+  1. Delete that lane's branch and folder. Unlink dependency links first, then
+     `git worktree remove` (never forced).
+  2. Delete that card's review evidence once its verdict is committed.
+  3. Update the status page, including sizes against `tools/size-targets.json`.
+- **The sweep**, at the end of every run and after every 10 merges, as its own
+  step, never squeezed into a feature card:
+  1. List idle unmerged branches on the status page with their card, last
      activity and what they hold. Leave them in place.
-  3. Delete review evidence once its verdict is committed.
-  4. Fold still-needed facts from old notes, handoffs and log entries into
+  2. Fold still-needed facts from old notes, handoffs and log entries into
      the current docs, then delete the originals. No "history" folders.
-  5. Remove what `node tools/repo-audit.mjs` proves unused: assets nothing
+  3. Remove what `node tools/repo-audit.mjs` proves unused: assets nothing
      loads, code nothing imports, tests of removed behavior, switches fully on
      for a release. Each removal passes the lane tier with unchanged replay
      fingerprints. Anything uncertain becomes a card instead.
-  6. Compare sizes with `tools/size-targets.json`. Delete waste, record why any
-     real growth happened, and propose new targets when the game has grown.
-  7. Write one janitor line in `run-log.md`: what went, what was flagged,
+  4. Compare sizes with the targets. Delete waste, record why any real growth
+     happened, and propose new targets when the game has grown.
+  5. Write one janitor line in `run-log.md`: what went, what was flagged,
      sizes before and after.
 - Never force-remove a worktree or rewrite history without Kyle.
 - History was rewritten on 24 September 2026 (SPEC 0.7, CLEAN-09). Never merge
