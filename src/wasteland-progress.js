@@ -1,11 +1,12 @@
 import {normalizeWeapons, WEAPON_IDS} from './weapon-upgrades.js';
+import {rankForXp} from './notoriety.js';
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const bounded = (value, minimum, maximum, fallback = minimum) =>
   Number.isSafeInteger(value) ? Math.min(maximum, Math.max(minimum, value)) : fallback;
-const ids = (value, limit = 100) => [...new Set(
+const ids = (value, limit = 100, maxLength = 80) => [...new Set(
   (Array.isArray(value) ? value : [])
-    .filter(id => typeof id === 'string' && id.length > 0 && id.length <= 80)
+    .filter(id => typeof id === 'string' && id.length > 0 && id.length <= maxLength)
     .slice(0, limit),
 )];
 const entries = value => record(value) ? Object.entries(value)
@@ -49,13 +50,14 @@ export function normalizeWasteland(value, legacyWeapons) {
       (typeof item.earnedAt === 'string' || Number.isFinite(item.earnedAt)))
     .slice(0, 200)
     .map(item => ({id: item.id, kind: item.kind, earnedAt: item.earnedAt}));
+  const xp = bounded(source.xp, 0, 1_000_000_000);
   return {
     // Unknown future fields remain intact until their owning feature understands
     // them. Known fields are validated so old or damaged saves remain playable.
     ...source,
     version: 1,
-    xp: bounded(source.xp, 0, 1_000_000_000),
-    rank: bounded(source.rank, 1, 30),
+    xp,
+    rank: rankForXp(xp),
     weapons,
     loadout,
     crew: {unlocked: crewUnlocked,
@@ -71,6 +73,6 @@ export function normalizeWasteland(value, legacyWeapons) {
     },
     warlords: {defeated: ids(warlordSource.defeated)},
     cards,
-    settledResults: ids(source.settledResults, 1000),
+    settledResults: ids(source.settledResults, 1000, 180),
   };
 }

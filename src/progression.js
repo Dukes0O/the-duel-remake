@@ -13,6 +13,7 @@ import { normalizeCourseAccess } from './course-access.js';
 import { rivalSignature } from './rival-settings.js';
 import { COMBAT_TUNING } from './wasteland-tuning.js';
 import { normalizeWasteland } from './wasteland-progress.js';
+import { combatNotoriety, MAX_NOTORIETY_XP, rankForXp } from './notoriety.js';
 
 export const PROFILE_KEY = 'the-duel-profile-v1';
 export const PLAYERS_KEY = 'the-duel-players-v2';
@@ -520,7 +521,9 @@ export function settleRace(profile, result = {}) {
     !!COURSE[result.stageIndex] &&
     typeof result.won === 'boolean';
   const key = `${result.runId}:${result.stageIndex}`;
-  if (!valid || COURSE[result.stageIndex]?.practice || profile.settledResults.includes(key))
+  if (!valid || COURSE[result.stageIndex]?.practice ||
+    profile.settledResults.includes(key) ||
+    profile.wasteland?.settledResults?.includes(key))
     return { profile, reward: 0, awarded: false, personalBest: false, breakdown: {} };
   // Race earnings are deferred until the finish. Leaving discards that attempt
   // and its pending fines without touching any credits already in the bank.
@@ -586,6 +589,13 @@ export function settleRace(profile, result = {}) {
     combatRace = result.mode === 'wasteland' && result.combatRewardsEnabled === true,
     recordEligible = isValidFinish(result),
     won = result.won && recordEligible;
+  const notoriety = profile.wasteland?.version === 1
+    ? combatNotoriety(result, { finished, won }) : null;
+  const previousXp = integer(profile.wasteland?.xp, MAX_NOTORIETY_XP);
+  const notorietyEarned = notoriety
+    ? Math.min(MAX_NOTORIETY_XP - previousXp, notoriety.total) : 0;
+  const totalXp = previousXp + notorietyEarned;
+  const notorietyRank = notoriety ? rankForXp(totalXp) : null;
   const comparison = bestKey({ ...result, cpuDifficulty: cpu }),
     previous = profile.personalBests[comparison],
     personalBest = recordEligible && (previous == null || result.timeSec < previous - 0.005);
@@ -649,6 +659,12 @@ export function settleRace(profile, result = {}) {
     reward = balance - profile.credits;
   const updated = {
     ...profile,
+    ...(notoriety ? { wasteland: {
+      ...profile.wasteland,
+      xp: totalXp,
+      rank: notorietyRank,
+      settledResults: [...(profile.wasteland.settledResults || []), key].slice(-1000),
+    } } : {}),
     credits: balance,
     winStreak: streak,
     settledResults: [...profile.settledResults, key],
@@ -676,6 +692,7 @@ export function settleRace(profile, result = {}) {
         charge,
         policeFineCharge,
         breakdown,
+        ...(notoriety ? { notorietyXp: notorietyEarned, notorietyRank } : {}),
         milestones: milestones.awards.map(award => award.id),
         at: Date.now()
       }
@@ -692,6 +709,8 @@ export function settleRace(profile, result = {}) {
     previousBest: previous ?? null,
     best: updated.personalBests[comparison] ?? null,
     breakdown,
+    ...(notoriety ? { notorietyEarned, notorietyRank,
+      notorietyBreakdown: notoriety.breakdown } : {}),
     winStreak: streak,
     milestones: milestones.awards
   };
