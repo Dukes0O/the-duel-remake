@@ -55,13 +55,23 @@ export function stepCombatAI(duel, dt) {
   const state = duel.state;
   const combat = state.combat;
   const cpu = CPU_COMBAT[state.cpuDifficulty] ?? CPU_COMBAT.medium;
+  const modernField = duel.featureFlags?.enabled('wasteland2') === true;
   for (let index = 1; index < state.opponents.length; index++) {
     const opponent = state.opponents[index];
     opponent.aiShieldCooldown = Math.max(0, (opponent.aiShieldCooldown || 0) - dt);
   }
 
   if (state.cpuDifficulty !== 'easy') useCpuPickupShield(duel);
-  if (combat.aiTimer == null) combat.aiTimer = cpu.interval;
+  // A multi-car field keeps the same total attack rate, but distributes
+  // decisions across the cars instead of firing a synchronized volley.
+  let liveOpponents = 0;
+  if (modernField) for (const opponent of state.opponents) {
+    if (!opponent.finished && !opponent.crushed && !opponent.combatWrecking)
+      liveOpponents++;
+  }
+  const attackInterval = modernField
+    ? cpu.interval / Math.max(1, liveOpponents) : cpu.interval;
+  if (combat.aiTimer == null) combat.aiTimer = attackInterval;
   combat.aiTimer -= dt;
 
   for (const opponent of state.opponents) {
@@ -75,9 +85,14 @@ export function stepCombatAI(duel, dt) {
   }
 
   if (!(combat.aiTimer <= 0)) return;
-  combat.aiTimer = cpu.interval;
-  for (const opponent of state.opponents) {
-    if (opponent.finished || opponent.crushed || opponent.combatWrecking) continue;
+  combat.aiTimer = attackInterval;
+  const opponents = state.opponents;
+  const first = modernField ? (combat.aiTurn || 0) % Math.max(1, opponents.length) : 0;
+  for (let offset = 0; offset < opponents.length; offset++) {
+    const index = modernField ? (first + offset) % opponents.length : offset;
+    const opponent = opponents[index];
+    if (opponent.finished || opponent.crushed || opponent.combatWrecking ||
+        opponent.impactTimer > 0) continue;
     const attacker = point(duel, opponent);
     const player = point(duel, state);
     const gap = Math.hypot(attacker.x - player.x, attacker.z - player.z);
@@ -95,6 +110,10 @@ export function stepCombatAI(duel, dt) {
     if (fireWeapon(duel, weapon, true, opponent) && charges[weapon]) {
       charges[weapon]--;
       duel.emit({cpuPickupUsed: weapon});
+    }
+    if (modernField) {
+      combat.aiTurn = (index + 1) % opponents.length;
+      break;
     }
   }
 }

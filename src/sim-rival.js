@@ -171,8 +171,26 @@ export function _rival(dt, opponent = this.state.rival) {
       else target = Math.min(target, traffic.dir < 0 ? 18 : Math.max(12, traffic.speedMph - 8));
     }
   }
-  const plannedHeading = route?.headingTarget ?? clamp((lane - r.lateral) * .095, -.55, .55);
-  const yieldPlan = this._npcYield(r, Math.max(0, target), plannedHeading);
+  const ramGap = this.relativeS(s.s, r.s) - r.s;
+  const ramAttack = this.featureFlags?.enabled('wasteland2') === true &&
+    s.mode === 'wasteland' && s.cpuDifficulty !== 'easy' &&
+    !s.combatWrecking && r.ramRecoverySec <= 0 &&
+    ramGap > COMBAT_TUNING.cpu.ramMinimumGap &&
+    ramGap < COMBAT_TUNING.cpu.ramApproachDistance &&
+    Math.abs(s.lateral - r.lateral) < COMBAT_TUNING.cpu.ramLateralReach &&
+    s.speedMph >= COMBAT_TUNING.cpu.ramMinimumSpeedMph &&
+    Math.abs(this.course.at(r.s).curvature) < COMBAT_TUNING.cpu.ramMaximumCurvature &&
+    this._surface(r.s, s.lateral).road;
+  if (ramAttack) {
+    lane = s.lateral;
+    target = Math.max(target, Math.min(car.topSpeed,
+      s.speedMph + COMBAT_TUNING.cpu.ramSpeedMarginMph));
+  }
+  const plannedHeading = ramAttack ? clamp((lane - r.lateral) * .095, -.55, .55)
+    : route?.headingTarget ?? clamp((lane - r.lateral) * .095, -.55, .55);
+  const yieldPlan = ramAttack
+    ? {yielding:false,targetMph:Math.max(0,target),braking:DRIVE.brakeAccel}
+    : this._npcYield(r, Math.max(0, target), plannedHeading);
   target = yieldPlan.targetMph;
   if (route?.mustYield) { r.yieldingToPlayer = route.yieldingToPlayer; r.braking = r.speedMph > target; }
   if (yieldPlan.yielding) {
@@ -186,7 +204,7 @@ export function _rival(dt, opponent = this.state.rival) {
   if (r.ramRecoverySec > 0) {
     // Let the ram carry the car before the route planner tries to recenter it.
     r.headingError *= Math.exp(-.35 * dt);
-  } else if (route) {
+  } else if (route && !ramAttack) {
     // Follow the physical tangent with the same tire-limited yaw authority
     // as the player. Subtract road-frame rotation to retain relative heading.
     const speed = r.speedMph * DRIVE.mphToWorld, frame = this.course.at(r.s);
