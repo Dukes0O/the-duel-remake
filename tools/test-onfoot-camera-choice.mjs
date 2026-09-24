@@ -95,6 +95,15 @@ await check('all eleven combat courses retain final terrain and tunnel clearance
   }
   assert.ok(tunnels>0,'real tunnel poses were exercised');
 });
+await check('a fighter outside the tunnel is not pulled into its distant lateral corridor',()=>{
+  const course=new Course(COURSE.find(def=>def.id==='high-country'),1989),tunnel=course.features.tunnels[0];
+  const s=(tunnel.start+tunnel.end)/2,p=course.groundAt(s,tunnel.width+20);
+  const fighter=Object.freeze({x:p.x,y:p.y,z:p.z,s,yaw:course.at(s).heading,pitch:0});
+  const pose=cameraChoice.onFootCameraPose(course,fighter,'overhead');
+  assert.ok(Math.hypot(pose.position.x-fighter.x,pose.position.z-fighter.z)<=8,'unrelated tunnel must not teleport the eye');
+  const near=course.nearest(pose.position.x,pose.position.z,s);
+  assert.ok(pose.position.y>=course.groundAt(near.s,near.lateral).y+.65-1e-8);
+});
 await check('reticle projects the fighter aim ray from each actual camera, including overhead parallax',()=>{
   assert.equal(typeof cameraChoice.onFootAimPoint,'function');assert.equal(typeof cameraChoice.projectOnFootAim,'function');
   const course={nearest:()=>({s:0,lateral:0}),groundAt:()=>({y:0}),features:{tunnels:[]},tunnelAt:()=>null};
