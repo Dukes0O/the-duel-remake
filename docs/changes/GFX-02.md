@@ -141,3 +141,22 @@ returned the renderer object instead of a boolean, and the manually advanced
 re-entry state needed an explicit render before checking visibility. Neither
 failure required runtime, asset or acceptance changes. Independent visual review
 and rounds 2 and 3 remain pending. This evidence does not establish beta status.
+
+## Round 2 browser evidence
+
+Frozen source and assets `7cc267b` passed the same private input interaction and
+matched capture on port 47865, with zero browser warnings or errors. The retained
+round contains 46 game pose images and 10 actual-input images. Two added samples
+show reload at authored time 1.65 s and Odessa repair at 2.8 s. Exact time labels
+keep them separate from the earlier samples. The contact sheet now also includes
+canonical RPG and wrench shape and held-view references, clearly labelled as
+different poses. The original round 1 sheet is unchanged; its tool comparisons
+are a separate `round-1-tools.png` supplement.
+
+Round 2 snapshots use at most 7340 triangles and three material draws. The frame
+comparison selects the largest hands plus a loaded RPG; Rook ties six other crew
+for the largest hands mesh. Both qualities measured 120 intervals per condition,
+with baseline p95 18.1 ms and held p95 18.2 ms, and no interval over 33 ms. This
+remains a stopped-course rendering comparison with pose updates active in both
+conditions, not a complete presentation CPU or GPU benchmark. Independent round
+2 review and the final fidelity round remain pending.

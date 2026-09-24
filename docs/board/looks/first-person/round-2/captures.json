@@ -1,0 +1,1345 @@
+{
+  "round": 2,
+  "observationCommit": "7cc267ba3f178b71dbda030a0a0b105142c2a24c",
+  "camera": {
+    "position": [
+      0,
+      0,
+      0
+    ],
+    "target": [
+      0,
+      0,
+      -1
+    ],
+    "verticalFov": 72,
+    "near": 0.15,
+    "width": 1280,
+    "height": 720
+  },
+  "qualities": [
+    "high",
+    "performance"
+  ],
+  "assets": {
+    "public/assets/models/wasteland/first-person/rpg.glb": "ad5740b0c155facabdef3be4f8205884c64cab0ef116ad95b62e060e8cdd0e36",
+    "public/assets/models/wasteland/first-person/wrench.glb": "98c07eac8cc890ba0d768d2d9f852113b9db7665ce7db9dfa5d0f13a25d1a16e",
+    "public/assets/models/wasteland/first-person/hands/rook.glb": "3811be318dd5fabf31a5d866a708924d6b29986d5d1f3b5e9a7822dc89174e31",
+    "public/assets/models/wasteland/first-person/hands/nell.glb": "f8cee43b7222aa65178530ffa6430b7942524242a92d6d19426c4c66fd23ba75",
+    "public/assets/models/wasteland/first-person/hands/jax.glb": "6100544e5866b8a353003846866cbd29a4abefc92dbdf833d4fdf39542cf9e96",
+    "public/assets/models/wasteland/first-person/hands/odessa.glb": "839b2a0ee18628884511e1df53c9924271a7fd0de921039db02bc453670d4fe0",
+    "public/assets/models/wasteland/first-person/hands/cinder.glb": "c50082fb8e31038d34f3101ebe7e0d1f33b47c8f9dcdbd40aaffd1e406217eff",
+    "public/assets/models/wasteland/first-person/hands/dune.glb": "2efdc201857b983e01b6126ced443f5932f3c22224de8584efd7fcffe10744e6",
+    "public/assets/models/wasteland/first-person/hands/wren.glb": "9a7fee93ccc5e57beb776681f5c4dc98f3236381552a7ee2fde59d2789b1106a",
+    "public/assets/models/wasteland/first-person/hands/tusk.glb": "68c48c085d9458388eefe7449f6e40233b43e276d41ee0901895a1fe693b091a"
+  },
+  "captures": [
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-high-rook-idle.png",
+      "sha256": "a25a673f97de97128d52e57d446bb652eeb41dc873435cef7148aa028e9eda9a",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-high-rook-wrench-idle.png",
+      "sha256": "5066445166c5f55e1f63fce4d4056d4752a745575af3e07cd125a1e11260047c",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "aim",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-high-rook-aim.png",
+      "sha256": "1118c828a676e6cbf39e00899b159d2f53de8bc98822da6e8c0d8e54aeb357c9",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "rpg",
+        "aim": true,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "fire",
+      "time": 0.1,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-high-rook-fire.png",
+      "sha256": "cf3048fd4beac8446056c093110da1281e2afef0566f77f5f004c4ad485231b8",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "fire",
+        "actionTime": 0.06285714285714228,
+        "actionProgress": 0.2857142857142831,
+        "motionTime": 10,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "reload",
+      "time": 1.1,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-high-rook-reload-time-1p1.png",
+      "sha256": "a4eb9bcbbddd0acb6acaf3df0c73a01b92baaf90f7c83681c4ca1a10bf2be349",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "reload",
+        "actionTime": 0.9900000000000009,
+        "actionProgress": 0.5000000000000007,
+        "motionTime": 10,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "reload",
+      "time": 1.65,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-high-rook-reload-time-1p65.png",
+      "sha256": "dd98e6139bf4f7963cf4f7301590ab0257b0fdfec4c98b96c9f6ecaa101c3f37",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "reload",
+        "actionTime": 1.485,
+        "actionProgress": 0.7499999999999997,
+        "motionTime": 10,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "rook",
+      "quality": "high",
+      "clip": "aim-reload",
+      "time": 1.1,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-high-rook-aim-reload.png",
+      "sha256": "13a49f93fce97527186aa9760b2635ef9707d6d0878a9216bd93179f3cf0d02a",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "rpg",
+        "aim": true,
+        "loaded": true,
+        "action": "reload",
+        "actionTime": 0.9900000000000009,
+        "actionProgress": 0.5000000000000007,
+        "motionTime": 10,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "nell",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-high-nell-idle.png",
+      "sha256": "e959e04e93ba8412b7f29cc8a54e4ba3d250d6cdd4bc264455abff0eb72282e0",
+      "presentation": {
+        "crewId": "nell",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "nell",
+      "quality": "high",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-high-nell-wrench-idle.png",
+      "sha256": "2bc5ac869cbcf59477c758c151b73ea740e36848704cdfd1c15742603cbbfff7",
+      "presentation": {
+        "crewId": "nell",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "jax",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-high-jax-idle.png",
+      "sha256": "81662ea2169e48df383e388089fd639134ebdf466fff90a385e3f229fea4628d",
+      "presentation": {
+        "crewId": "jax",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "jax",
+      "quality": "high",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-high-jax-wrench-idle.png",
+      "sha256": "36718afe603dafccb7099d6d04d123f53bcbe9aad2449696d9bb0499a52c150e",
+      "presentation": {
+        "crewId": "jax",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "odessa",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-high-odessa-idle.png",
+      "sha256": "724bc6ba7c2efa27430b5341767aae45adf73734167534f83d2b7909084d419b",
+      "presentation": {
+        "crewId": "odessa",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "odessa",
+      "quality": "high",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-high-odessa-wrench-idle.png",
+      "sha256": "a9e63df593b2312dc452b6ce8ed33739b9e418524d9dbb6455f52f3beea48ec8",
+      "presentation": {
+        "crewId": "odessa",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "odessa",
+      "quality": "high",
+      "clip": "repair",
+      "time": 1.12,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-high-odessa-repair-time-1p12.png",
+      "sha256": "352b20739d1593bc81862a930f244b58cbb83250a305d375686a8bb00ea5c12f",
+      "presentation": {
+        "crewId": "odessa",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "repair",
+        "actionTime": 0.56,
+        "actionProgress": 0.28,
+        "motionTime": 10,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "odessa",
+      "quality": "high",
+      "clip": "repair",
+      "time": 2.8,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-high-odessa-repair-time-2p8.png",
+      "sha256": "5d01c45b196defc868f92ebee0b1235fa1ef545eebadde7858309d31173996b4",
+      "presentation": {
+        "crewId": "odessa",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "repair",
+        "actionTime": 1.4,
+        "actionProgress": 0.7,
+        "motionTime": 10,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "cinder",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-high-cinder-idle.png",
+      "sha256": "a47b65084ba059f6df7c53f627c9a07a8f1951edc74e87339d3f72fda4ed3a9d",
+      "presentation": {
+        "crewId": "cinder",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "cinder",
+      "quality": "high",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-high-cinder-wrench-idle.png",
+      "sha256": "bef2eb2d8f5471c034143b2af2550fc1d0927d1512b59885855a0b13ad5d4bd1",
+      "presentation": {
+        "crewId": "cinder",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "dune",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-high-dune-idle.png",
+      "sha256": "c238c7d9f16aff7241ef067203de5ea3ba11ba3b4fdde930fcfbc01cdba1db67",
+      "presentation": {
+        "crewId": "dune",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "dune",
+      "quality": "high",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-high-dune-wrench-idle.png",
+      "sha256": "f64664ddc88b0f9873bdeb2d563934689c7f5f998fc388ef60c1d126acef820f",
+      "presentation": {
+        "crewId": "dune",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "wren",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-high-wren-idle.png",
+      "sha256": "0b4a4fac8bf522ffbab39f02c0ecd4674607d8f4843a72474af46474055118f9",
+      "presentation": {
+        "crewId": "wren",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "wren",
+      "quality": "high",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-high-wren-wrench-idle.png",
+      "sha256": "488dc62ff851f1b421ae9bf6fc5ff80ba9fb1fd65fa561696b264adec5025de9",
+      "presentation": {
+        "crewId": "wren",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "tusk",
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-high-tusk-idle.png",
+      "sha256": "8098eb65204e9379f24e00182f0c43e5643e228cafbfde972fd024f4b09a214c",
+      "presentation": {
+        "crewId": "tusk",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "tusk",
+      "quality": "high",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-high-tusk-wrench-idle.png",
+      "sha256": "1b5b6d9f0589b962a65f4fbe6612a33c9c991e5d314e293f8f22adfc3192d0e3",
+      "presentation": {
+        "crewId": "tusk",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-performance-rook-idle.png",
+      "sha256": "1c826eb096c7274ba29cb179f7263209ca94bc07d729205057caa28c9a04b175",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-performance-rook-wrench-idle.png",
+      "sha256": "9184a3a4853bcf68645ad7c90de3222327ae29cc066da897305b5ddad7462507",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "aim",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-performance-rook-aim.png",
+      "sha256": "a17c8bd7ffd4d5bc0a567af34c4540032833b270b327c0f876c5bc20058d5fd1",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "rpg",
+        "aim": true,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "fire",
+      "time": 0.1,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-performance-rook-fire.png",
+      "sha256": "cf210712cf754bb6820ffb991811db6ed29daecd0b46819a668722bb0f715ee5",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "fire",
+        "actionTime": 0.06285714285714228,
+        "actionProgress": 0.2857142857142831,
+        "motionTime": 10,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "reload",
+      "time": 1.1,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-performance-rook-reload-time-1p1.png",
+      "sha256": "0924a49af796ead7653f46afff29c35b9e683fef04fd9c4e8894e8e874effd81",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "reload",
+        "actionTime": 0.9900000000000009,
+        "actionProgress": 0.5000000000000007,
+        "motionTime": 10,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "reload",
+      "time": 1.65,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-performance-rook-reload-time-1p65.png",
+      "sha256": "eead8c96f59faeddd539736327bac2c1638b8c67fbfd31761a0117878d168847",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "reload",
+        "actionTime": 1.485,
+        "actionProgress": 0.7499999999999997,
+        "motionTime": 10,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "rook",
+      "quality": "performance",
+      "clip": "aim-reload",
+      "time": 1.1,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-performance-rook-aim-reload.png",
+      "sha256": "f0cecb59406f68c06dd2b2e0bc01e36faa0dc919e63aff2c08f4411444be7aee",
+      "presentation": {
+        "crewId": "rook",
+        "weapon": "rpg",
+        "aim": true,
+        "loaded": true,
+        "action": "reload",
+        "actionTime": 0.9900000000000009,
+        "actionProgress": 0.5000000000000007,
+        "motionTime": 10,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "nell",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-performance-nell-idle.png",
+      "sha256": "ad3d26e01d2a9850b5f0bb3c45300afa81fb910df3e7c89cb3834bc79371a855",
+      "presentation": {
+        "crewId": "nell",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "nell",
+      "quality": "performance",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-performance-nell-wrench-idle.png",
+      "sha256": "0787a112b7a37522c5fe14ccfb194639aea49bd98a7df3c445fd03c12616eea5",
+      "presentation": {
+        "crewId": "nell",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "jax",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-performance-jax-idle.png",
+      "sha256": "c99dc34be19aa231cf53846c74fad034873ea7fddcfa8de3d3bf481dff8e0ec8",
+      "presentation": {
+        "crewId": "jax",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "jax",
+      "quality": "performance",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-performance-jax-wrench-idle.png",
+      "sha256": "4e05fa9f47bc61b72fe0d1dbd29b0cc789feccaed3e2fc2aa06d00abea4e90a2",
+      "presentation": {
+        "crewId": "jax",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "odessa",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-performance-odessa-idle.png",
+      "sha256": "62f924f4e55631790ecf9ffd2df371b801386bf63c1a2aad6197eee97f82cee5",
+      "presentation": {
+        "crewId": "odessa",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "odessa",
+      "quality": "performance",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-performance-odessa-wrench-idle.png",
+      "sha256": "c8c0a40f752eaa720b1654ad07b6b7eac3d46d7f3b1303a082d90c1c1724303d",
+      "presentation": {
+        "crewId": "odessa",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "odessa",
+      "quality": "performance",
+      "clip": "repair",
+      "time": 1.12,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-performance-odessa-repair-time-1p12.png",
+      "sha256": "c7eedfc250d00b7ef69ed3ff48f7dcca2f76abcf234c4baccd33e75c2617d10c",
+      "presentation": {
+        "crewId": "odessa",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "repair",
+        "actionTime": 0.56,
+        "actionProgress": 0.28,
+        "motionTime": 10,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "odessa",
+      "quality": "performance",
+      "clip": "repair",
+      "time": 2.8,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-performance-odessa-repair-time-2p8.png",
+      "sha256": "499afa268492ea3213ce4d2cf273320eedd51021caeac680c147233e5c95ec16",
+      "presentation": {
+        "crewId": "odessa",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "repair",
+        "actionTime": 1.4,
+        "actionProgress": 0.7,
+        "motionTime": 10,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "cinder",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-performance-cinder-idle.png",
+      "sha256": "c2b6d6eb415ffc91957f41bd9f0e6c61abb64c4896098eddea8415d4d76ec937",
+      "presentation": {
+        "crewId": "cinder",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "cinder",
+      "quality": "performance",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-performance-cinder-wrench-idle.png",
+      "sha256": "9a17147e1178af94f7beac8e187ca0b78983518d58de2d796824fe37f86e3fa2",
+      "presentation": {
+        "crewId": "cinder",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "dune",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-performance-dune-idle.png",
+      "sha256": "b8423e571276cdc7830d328190c27a9cb1f877245b43cd43ab03951f4b5f164c",
+      "presentation": {
+        "crewId": "dune",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "dune",
+      "quality": "performance",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-performance-dune-wrench-idle.png",
+      "sha256": "f964115da10e7f911bde2152af251aec60d98e4329b772f6c82bcd349bbb8ad5",
+      "presentation": {
+        "crewId": "dune",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "wren",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-performance-wren-idle.png",
+      "sha256": "6c5d012a2054d5296a3dc47e1a3080de1b607b7eab110de79ea0a3885a80cbbd",
+      "presentation": {
+        "crewId": "wren",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "wren",
+      "quality": "performance",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-performance-wren-wrench-idle.png",
+      "sha256": "e9073f2b50d966a6102dfe12838024238d107de3c0bcbc50dd8ba40c839bba2f",
+      "presentation": {
+        "crewId": "wren",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "tusk",
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg",
+      "path": "docs/board/looks/first-person/round-2/game-performance-tusk-idle.png",
+      "sha256": "f8ee3097033377019c2e09b75a0eaaad36cd20f097c7b8f9e5268ea0976fbe01",
+      "presentation": {
+        "crewId": "tusk",
+        "weapon": "rpg",
+        "aim": false,
+        "loaded": true,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    },
+    {
+      "crew": "tusk",
+      "quality": "performance",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench",
+      "path": "docs/board/looks/first-person/round-2/game-performance-tusk-wrench-idle.png",
+      "sha256": "ffd67481a3826bf88e7990609a901fc42d215add6e52ecd3fced29db30193a47",
+      "presentation": {
+        "crewId": "tusk",
+        "weapon": "wrench",
+        "aim": false,
+        "loaded": false,
+        "action": "idle",
+        "actionTime": 0,
+        "actionProgress": 0,
+        "motionTime": 0.25,
+        "locomotion": "idle"
+      }
+    }
+  ],
+  "counts": {
+    "high": [
+      {
+        "crew": "rook",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "rook",
+        "clip": "aim",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "fire",
+        "triangles": 7080,
+        "draws": 2
+      },
+      {
+        "crew": "rook",
+        "clip": "reload",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "reload",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "aim-reload",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "nell",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "nell",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "jax",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "jax",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "odessa",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "odessa",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "odessa",
+        "clip": "repair",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "odessa",
+        "clip": "repair",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "cinder",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "cinder",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "dune",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "dune",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "wren",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "wren",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "tusk",
+        "clip": "idle",
+        "triangles": 7220,
+        "draws": 3
+      },
+      {
+        "crew": "tusk",
+        "clip": "wrench-idle",
+        "triangles": 5992,
+        "draws": 2
+      }
+    ],
+    "performance": [
+      {
+        "crew": "rook",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "rook",
+        "clip": "aim",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "fire",
+        "triangles": 7080,
+        "draws": 2
+      },
+      {
+        "crew": "rook",
+        "clip": "reload",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "reload",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "aim-reload",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "nell",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "nell",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "jax",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "jax",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "odessa",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "odessa",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "odessa",
+        "clip": "repair",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "odessa",
+        "clip": "repair",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "cinder",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "cinder",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "dune",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "dune",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "wren",
+        "clip": "idle",
+        "triangles": 7340,
+        "draws": 3
+      },
+      {
+        "crew": "wren",
+        "clip": "wrench-idle",
+        "triangles": 6112,
+        "draws": 2
+      },
+      {
+        "crew": "tusk",
+        "clip": "idle",
+        "triangles": 7220,
+        "draws": 3
+      },
+      {
+        "crew": "tusk",
+        "clip": "wrench-idle",
+        "triangles": 5992,
+        "draws": 2
+      }
+    ]
+  },
+  "interactions": {
+    "high": {
+      "shot": {
+        "ammo": 2,
+        "action": "fire"
+      },
+      "reload": "reload",
+      "armor": 79.99999999999974,
+      "reentered": true,
+      "captures": [
+        {
+          "path": "docs/board/looks/first-person/round-2/first-person-high-aim.png",
+          "sha256": "1773c8101fef3360c66f70ccdd9012cfb722e8397fc29187a34f213f5df934f9"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/first-person-high-fire.png",
+          "sha256": "b39ef2828207c6b347899cb34ad5f64e9094c0acd01f01c17282761bb84d1a8a"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/first-person-high-reload.png",
+          "sha256": "9ec49403d371b9e163169933d39060a03997d52fb7f50bdbecc692bfaa827f8f"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/first-person-high-repair.png",
+          "sha256": "2fc8b6587022033174fd9a3e7255d53a6f4a6fdd494d85a76d87f6d063cfad30"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/first-person-high-reentered.png",
+          "sha256": "bbb667e934ca6854a90f3d0b96c2bb153802f132d606b2a34a8ae24aa65b287f"
+        }
+      ]
+    },
+    "performance": {
+      "shot": {
+        "ammo": 2,
+        "action": "fire"
+      },
+      "reload": "reload",
+      "armor": 79.99999999999974,
+      "reentered": true,
+      "captures": [
+        {
+          "path": "docs/board/looks/first-person/round-2/first-person-performance-aim.png",
+          "sha256": "c540b07bae579f247d180c7111b64e8caca21839a9cd743f19c9111b7ca0d527"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/first-person-performance-fire.png",
+          "sha256": "680757d746d5d9404a91ebfa69026a0320f5c82753037e633612464e20cc8c81"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/first-person-performance-reload.png",
+          "sha256": "0a54140affe6e945dfa648d3644b9b73ba5cbf8b42b39130eadd060c85a323ff"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/first-person-performance-repair.png",
+          "sha256": "bb71257adbb77e9b04fe3a13da20d80fb3e2aa873df7c14c8b63245605a5aabc"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/first-person-performance-reentered.png",
+          "sha256": "4ee529820a9910609a7dbbe10e96745fb337acfaa3f312203fdef42aeea6e44a"
+        }
+      ]
+    }
+  },
+  "frameCost": {
+    "high": {
+      "baseline": {
+        "count": 120,
+        "p50": 17.600000000000364,
+        "p95": 18.100000000000364,
+        "max": 18.5,
+        "over33": 0
+      },
+      "held": {
+        "count": 120,
+        "p50": 17.799999999999272,
+        "p95": 18.19999999999891,
+        "max": 18.600000000000364,
+        "over33": 0
+      },
+      "crew": "rook",
+      "tool": "rpg",
+      "scope": "Same stopped course, camera, quality and pose updates; baseline hides held materials. Measures added held rendering cost, not total presentation CPU overhead."
+    },
+    "performance": {
+      "baseline": {
+        "count": 120,
+        "p50": 17.599999999999454,
+        "p95": 18.100000000000364,
+        "max": 18.599999999999454,
+        "over33": 0
+      },
+      "held": {
+        "count": 120,
+        "p50": 17.69999999999891,
+        "p95": 18.200000000000728,
+        "max": 18.899999999999636,
+        "over33": 0
+      },
+      "crew": "rook",
+      "tool": "rpg",
+      "scope": "Same stopped course, camera, quality and pose updates; baseline hides held materials. Measures added held rendering cost, not total presentation CPU overhead."
+    }
+  },
+  "loadErrors": []
+}
