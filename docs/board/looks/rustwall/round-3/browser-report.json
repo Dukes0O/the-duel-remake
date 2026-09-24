@@ -1,0 +1,30 @@
+{
+  "scenario": "rustwall",
+  "passed": true,
+  "port": 32153,
+  "memoryOnlySaves": true,
+  "issues": [],
+  "warnings": [],
+  "screenshots": [
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\course-high-wash.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\course-high-approach.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\game-high-front.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\game-high-depth.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\game-high-driver-approach.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\game-high-open-gate.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\game-high-full-span.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\game-high-wash-module.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\course-high-b-approach.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\course-high-c-approach.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\course-performance-wash.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\course-performance-approach.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\game-performance-front.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\game-performance-depth.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\game-performance-driver-approach.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\game-performance-open-gate.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\game-performance-full-span.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\game-performance-wash-module.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\course-performance-b-approach.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg02\\docs\\board\\looks\\rustwall\\round-3\\course-performance-c-approach.png"
+  ]
+}
