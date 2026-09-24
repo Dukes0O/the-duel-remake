@@ -39,6 +39,19 @@ test results, browser scenarios, balance, frame pacing, art checks and save
 checks. A check marked not measured must be run before claiming that measure
 passed.
 
+## Removing completed lanes on Windows
+
+Before `git worktree remove`, inspect the lane's `node_modules`. If it is a
+junction, verify its absolute path is inside that exact lane and record its
+target. Remove only the junction with PowerShell `Remove-Item -LiteralPath`
+without `-Recurse`; verify the target still exists. Then remove the clean,
+fully merged worktree without force and retain its branch and evidence.
+
+Git's recursive lane cleanup emptied the shared integration dependency folder
+through a junction on 24 September. The exact locked dependencies were restored
+from the local cache with `npm ci --offline --no-audit --no-fund`. No package
+version or game source changed. Detaching the junction first prevents a repeat.
+
 ## Release
 
 The Release Manager is the only role that updates the live folder. It first

@@ -1109,3 +1109,11 @@ checkout untouched until the final integration commit passes the full gate.
 - One task merge since the 07:36 UTC full pass; next full after four more
   merges or 09:36 UTC, and at run end. Quota is 27 percent remaining.
   No live change, release or push.
+
+- Cleanup follow-up: Git traversed the removed CPU lane's node_modules junction
+  and emptied integration's shared dependency directory. GFX-02's focused check
+  caught the missing Three package before capture. Restored all 16 locked
+  packages offline in two seconds (Three 171, Vite 8.0.16), with no tracked
+  change. Future cleanup detaches only the verified lane junction first;
+  docs/OPERATIONS.md now records this step. Existing source/gate evidence is
+  unchanged. No live folder or save was involved.
