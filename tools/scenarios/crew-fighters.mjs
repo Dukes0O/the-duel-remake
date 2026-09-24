@@ -129,7 +129,12 @@ export async function run(context) {
       ['enter',{presentation:{clip:'enter',startedAt:9.75,duration:.65}},{}],
       ['exit',{presentation:{clip:'exit',startedAt:9.75,duration:.65}},{}],
     ];
-    for(const [clip,fields,input] of actionCases) {
+    // Recovery must show the support sequence, not just one flattering frame.
+    for (const fraction of [.08,.48,.8]) actionCases.push([
+      'get-up',{presentation:{clip:'get-up',startedAt:10-.8*fraction,duration:.8}},
+      {},`-phase-${Math.round(fraction*100)}`,
+    ]);
+    for(const [clip,fields,input,sample=''] of actionCases) {
       for(const view of ['knockdown','get-up'].includes(clip) ? ['front','side'] : ['front']) {
         const result=await context.evaluate(`(() => {
           const r=window.__render,s=window.__qaApp.duel.state,review=window.__crewReview;
@@ -144,7 +149,7 @@ export async function run(context) {
           if(rig?.userData.clip!=='${clip}')throw Error('Wrong representative action '+rig?.userData.clip);
           return {png,time:rig.userData.clipTime};
         })()`);
-        const path=`${relative}/game-${quality}-rook-${clip}-${view}.png`;
+        const path=`${relative}/game-${quality}-rook-${clip}${sample}-${view}.png`;
         await writeFile(join(root,path),Buffer.from(result.png.split(',')[1],'base64'));
         context.screenshots.push(join(root,path));
         evidence.captures.push({crew:'rook',quality,clip,time:result.time,view,yaw:0,path,camera:clip==='jump'?{position:[0,1.65,7],target:[0,1.65,0]}:view==='side'?{position:[7,.65,.75],target:[0,.65,.75]}:evidence.camera,source:'representative simulation snapshot'});
