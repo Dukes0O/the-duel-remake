@@ -119,3 +119,8 @@ decoded all twelve WAVs. Their measurements match the summary within PCM
 rounding, with no saturated samples and the intended 3.307:1 channel ratios.
 No listening tool was available; this is measured verification, not a claim
 about perceived quality or whole-race mixing. Full AUD-02 remains building.
+
+The clean merged verification lane was later removed without force, retaining
+its branch. All fourteen browser evidence files, including the twelve WAVs,
+were copied with matching hashes to `.lanes/evidence/aud02-verify/browser-output/`.
+The former `.qa-dist/browser-output/` reference above now resolves there.

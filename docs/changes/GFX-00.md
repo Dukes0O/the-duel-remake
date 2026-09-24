@@ -156,3 +156,7 @@ Independent visual review accepts the pipeline evidence, with resemblance 2
 and grounding 2-3. Full scores and next fixes are retained on integration in
 `docs/board/looks/test-fighter/round-1-review.md`. This is a prototype, not a
 crew-family beta approval. This last handoff update changes only this note.
+
+After integration, the clean merged lane was removed without force and its
+branch retained. Five gate/browser evidence files were copied with matching
+hashes to `.lanes/evidence/gfx00/`; committed contact sheets remain in the repo.
