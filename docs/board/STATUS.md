@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-24T04:29:36.739Z
+Observed at: 2026-09-24T04:38:58.498Z
 
-Observation commit: 06e378c7368e1659f8e7fe5713663880ab45128a
+Observation commit: f57ceda5e0a126256312715556d188e593e68026
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 06e378c7368e1659f8e7fe5713663880ab45128a
+Integration HEAD: f57ceda5e0a126256312715556d188e593e68026
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -35,6 +35,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/aud01-current-weapons | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/aud01-current-weapons/the-duel-remake |
 | codex/aud02-foot-sounds | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/aud02-foot-sounds/the-duel-remake |
 | codex/aud02-waveforms | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/aud02-verify |
+| codex/bal01-flagged-report | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bal01 |
 | codex/bug15-shield-traffic | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/bug15-shield-traffic/the-duel-remake |
 | codex/cmb01-armor | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-cmb01-armor/the-duel-remake |
 | codex/cmb01-mode-isolation-test | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/cmb01-test-author/the-duel-remake |
@@ -80,6 +81,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/rfx04-test-author | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/rfx04-test-author/the-duel-remake |
 | codex/save01-bonus | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/save01-bonus/the-duel-remake |
 | codex/track01-build-status | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/track01 |
+| codex/track02-test-floor | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/track02 |
 | codex/ui01-combat-hud | 0 | unknown | true | false | unknown |
 | codex/vis01-effects | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-vis01-effects/the-duel-remake |
 | codex/vis01-test-author | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/vis01-test-author/the-duel-remake |
@@ -115,7 +117,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/wasteland-feel-forward | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-feel-forward/the-duel-remake |
 | codex/wasteland-foot-spike | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-foot-spike/the-duel-remake |
 | codex/wasteland-foundation | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-expansion/the-duel-remake |
-| codex/wasteland-gamepad-weapons | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-gamepad-weapons/the-duel-remake |
+| codex/wasteland-gamepad-weapons | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-gamepad-weapons/the-duel-remake |
 | codex/wasteland-input-contexts | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-input-contexts/the-duel-remake |
 | codex/wasteland-old-best | 0 | unknown | false | false | unknown |
 | codex/wasteland-old03-audit | 0 | unknown | false | false | unknown |
@@ -156,7 +158,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 06e378c7368e1659f8e7fe5713663880ab45128a
+- Local integration/wasteland: f57ceda5e0a126256312715556d188e593e68026
 
 Local rollback build (dist-previous): 20260923193614-0b1389a185dd. Manifest presence does not verify the full rollback build.
 

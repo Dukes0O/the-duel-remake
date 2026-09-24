@@ -1,6 +1,8 @@
 # The Duel: rules for every agent
 
-Read `SPEC.md` for the approved Wasteland design, `docs/CODEX_PLAYBOOK.md`
+Read `SPEC.md` section 0 first; it wins over conflicting later text. Complete
+the ordered work in section 0.6 before other new work, with its listed existing
+cards continuing when lanes are free. Read `docs/CODEX_PLAYBOOK.md`
 for the workflow, and `docs/board/board.yaml` for task ownership. Use
 `docs/OPERATIONS.md` for current folders, ports and release steps.
 
@@ -30,14 +32,26 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
 - Record tests, browser checks, changed assertions and race fingerprints in
   `docs/changes/<task-id>.md` before a lane hands work to integration.
 
-## Gates after FND-06 and FND-08
+## Gates (SPEC 0.5)
 
-- Lane: `node tools/run-tests.mjs --tier lane --changed --jobs 8` and
-  `npm run build`.
-- Merge: `node tools/run-tests.mjs --tier merge --jobs 12`, `npm run build`,
-  and `node tools/browser-harness.mjs smoke`.
-- Full: `node tools/run-tests.mjs --tier full --jobs 10`, the combat balance
-  check, browser scenarios, frame pacing, art and save budget checks.
+- Before **every** merge into integration, including docs-only, tuning-only
+  and doc-plus-code changes: `node tools/run-tests.mjs --tier lane --changed --jobs 8`
+  and `npm run build`. Run these in the lane before review and verify current
+  passing evidence before merging; rerun after changes or conflict fixes.
+- Full tier: `node tools/run-tests.mjs --tier full --jobs 8 --keep-going`
+  after every 5 merges or 2 hours of merging, whichever comes first, and at
+  the end of every session and overnight run. A failed full run stops feature
+  merges until a fix lands and the full tier passes again.
+- Release: full tier must pass on the exact final integration commit before
+  every release, including small and tuning-only changes. Keep the full
+  release evidence: build, combat balance (with `wasteland2` off and on),
+  browser scenarios, frame pacing, art and save budget checks as applicable.
+  Card-specific visual, audio, gameplay and save checks still apply.
+- Run `node tools/build-status.mjs` after every merge and at every session end
+  to update `docs/board/STATUS.md`. A later commit needs its own full-tier pass;
+  a status snapshot never grants a pass to another commit.
+- D8 is awaiting Kyle's approval: do not push `integration/wasteland` or
+  align GitHub `main` under that proposal. D4 already permits pushing `master`
+  after a release.
 
-Until those tools exist, run the current direct tests and full suite. A full
-check must pass on the exact integration commit before a release.
+See playbook section 7 for the gate and evidence workflow.
