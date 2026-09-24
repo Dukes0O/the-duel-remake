@@ -51,10 +51,12 @@ function useCpuPickupShield(duel) {
   }
 }
 
-function useCpuPickupUfo(duel) {
+function useCpuPickupUfo(duel, cpu) {
   const {state} = duel;
   for (const opponent of state.opponents) {
-    if (cpuPickupCharges(state, state.combat, opponent).ufo > 0) {
+    if (cpuPickupCharges(state, state.combat, opponent).ufo > 0 &&
+        incomingBolt(duel, cpu, opponent)) {
+      // Hold the charge until the existing defensive reaction sees a threat.
       // UFO use has its own per-lap limit. It never spends or resets the
       // shared scheduled-attack timer, shot seed or alternating CPU turn.
       fireWeapon(duel, 'ufo', true, opponent);
@@ -74,7 +76,7 @@ export function stepCombatAI(duel, dt) {
 
   if (state.cpuDifficulty !== 'easy') {
     useCpuPickupShield(duel);
-    useCpuPickupUfo(duel);
+    useCpuPickupUfo(duel, cpu);
   }
   // A multi-car field keeps the same total attack rate, but distributes
   // decisions across the cars instead of firing a synchronized volley.
