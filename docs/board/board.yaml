@@ -181,6 +181,20 @@ tasks:
     shots: [eight-crew-hands, aim-recoil-reload, wrench-repair, last-rocket, course-view-high-performance]
     sound: "Retain existing action cues and timing."
     note: "Independent acceptance tests start after GFX-01 merge. No mandatory new simulation field. Smooth aim transitions need a simulation clock if later required; otherwise use a deliberate immediate aim pose. A separate first-person selector composes actions instead of copying the full-body clip priority."
+  - id: GFX-02-P1
+    title: "Polish first-person anatomy, materials and motion"
+    lane: VIS
+    size: M
+    needs: [GFX-02, GFX-04]
+    status: backlog
+    owns: [tools/blender/first-person-gear.py, public/assets/models/wasteland/first-person/, docs/board/looks/first-person/]
+    helpers: [art_critic, reviewer, browser_qa]
+    flag: wasteland2
+    acceptance:
+      - "Continue from the three immutable initial rounds. Fix fingertip cap/normal artifacts, mitten-like palms, generic sleeve construction, simplified tool fittings and continuous grip/animation contact as recorded in round-3-review.md."
+      - "Retain meaningful matched High/Performance comparisons, short motion evidence, at most 8000 visible triangles and three draws. Measure texture memory and evaluate shared crew materials before making a resource-budget claim."
+      - "Keep the family in dev until all SPEC 0.3 scores reach four and the measured budget holds. Follow its approach-change rule if another round fails to improve likeness."
+    note: "Initial resemblance improves from two to three in round 2 and remains three in round 3. One stagnant round so far; no beta approval. Start after the ordered initial family cards."
   - id: EGG-02
     title: "Rustwall gate and salt-flat fidelity rounds one to three"
     priority: 9
