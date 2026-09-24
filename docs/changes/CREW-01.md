@@ -22,7 +22,10 @@ behavior.
 Rook has 110 on-foot health, including after a respawn. Wren sprints 20% faster.
 Nell's RPG splash reaches 20% farther (9.6 m), Odessa repairs the same 40
 armor in two seconds instead of four, and Dune locks onto cars 25% farther
-away (275 m). These five perks run in the fixed-step combat simulation. Each
+away (275 m). A locked Dune rocket can fly for five seconds, enough to reach
+that range; an unlocked shot and every other crew member keep four seconds.
+Projectile expiry also caps the extension at five seconds. These five perks
+run in the fixed-step combat simulation. Each
 crew member has
 different code-built colors and a small silhouette variation in the existing
 four pooled figure meshes, so the draw-call budget remains four.
@@ -35,7 +38,8 @@ still refuses unmigrated and future profiles.
 
 - `node tools/test-crew.mjs`: four focused checks pass for roster and rank
   gates, per-player selection, migration safety, fixed-step Rook/Wren perks,
-  Nell's splash, Odessa's repair time, Dune's lock range, Armory copy,
+  Nell's splash, Odessa's repair time, Dune's lock range and a direct RPG hit
+  past 250 m after more than four seconds of flight, Armory copy,
   figure colors and the four-draw-call budget.
 - `node tools/browser-harness.mjs scenario crew-selection`: one private,
   memory-only browser flow selected Wren in the Armory, confirmed the Garage,

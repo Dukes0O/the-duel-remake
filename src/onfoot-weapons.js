@@ -120,6 +120,10 @@ function launchRpg(duel, weapons, fighter, dt, direction) {
   const movingX = weapons.lastX == null ? 0 : (fighter.x - weapons.lastX) / dt;
   const movingZ = weapons.lastZ == null ? 0 : (fighter.z - weapons.lastZ) / dt;
   const serial = ++weapons.serial;
+  const targetIndex = weapons.lockSeconds + EPSILON >= T.rpgLockSeconds
+    ? weapons.lockTargetIndex : null;
+  const lockRangeMultiplier = Math.min(1.25, Math.max(1,
+    crewPerks(fighter.crewId).lockRangeMultiplier || 1));
   state.combat.projectiles.push({
     kind: 'rpg', owner: 'player', id: `rpg-${state.stageIndex}-${serial}`,
     x: fighter.x + direction.x * T.rpgMuzzleOffset,
@@ -132,8 +136,9 @@ function launchRpg(duel, weapons, fighter, dt, direction) {
     age: 0,
     splashRadius: T.rpgSplashRadius *
       (crewPerks(fighter.crewId).blastRadiusMultiplier || 1),
-    targetIndex: weapons.lockSeconds + EPSILON >= T.rpgLockSeconds
-      ? weapons.lockTargetIndex : null,
+    targetIndex,
+    lifetimeSeconds: targetIndex === null ? T.rpgLifetimeSeconds
+      : T.rpgLifetimeSeconds * lockRangeMultiplier,
   });
   weapons.ammo--;
   weapons.nextFireAt = state.stageTimeSec + T.rpgReloadSeconds;

@@ -14,13 +14,13 @@ import {resetFootWeaponUser} from '../src/onfoot-weapons.js';
 const profile=xp=>({credits:0,wasteland:normalizeWasteland({xp})});
 const STEP=1/120;
 const ticks=(duel,count)=>{for(let i=0;i<count;i++)duel.step(STEP);};
-function crewRace(id){
+function crewRace(id,startS=500){
   const duel=new Duel({seed:1989,featureFlags:{wasteland2:true},
     destructiblesEnabled:false});
   duel.startCampaign({mode:'wasteland',car:'falcone_f42',startStage:0,
     seed:1989,crewId:id,opponentCount:1});
   const state=duel.state;
-  Object.assign(state,{status:'racing',countdown:0,s:500,prevS:500,
+  Object.assign(state,{status:'racing',countdown:0,s:startS,prevS:startS,
     lateral:0,prevLateral:0,traffic:[]});
   state.combat.aiTimer=Infinity;
   state.combat.pickupTimer=Infinity;
@@ -146,15 +146,15 @@ test('Nell splash, Odessa repair, and Dune lock range affect current weapons',()
   assert.ok(Math.abs(odessa.state.armor-70)<1e-6);
   assert.ok(Math.abs(standard.state.armor-50)<1e-6);
   assert.equal(odessa.state.footWeapons.repairBlockedUntilRelease,true);
-  const dune=crewRace('dune'),normal=crewRace('rook');
+  const dune=crewRace('dune',50),normal=crewRace('rook',50);
   for(const duel of [dune,normal]){
     const fighter=duel.state.fighter,target=duel.state.opponents[0];
     const candidate=Array.from({length:500},(_,i)=>fighter.s+i+1)
       .map(s=>({s,point:duel.course.groundAt(s,0)}))
       .find(({point})=>Math.hypot(point.x-fighter.x,
         point.y+1-fighter.y-COMBAT_TUNING.foot.rpgEyeHeight,
-        point.z-fighter.z)>230 && Math.hypot(point.x-fighter.x,
-        point.z-fighter.z)<250);
+        point.z-fighter.z)>252 && Math.hypot(point.x-fighter.x,
+        point.z-fighter.z)<265);
     assert.ok(candidate,'course offers a target beyond base lock range');
     target.s=target.prevS=candidate.s;
     target.lateral=target.prevLateral=0;
@@ -169,4 +169,26 @@ test('Nell splash, Odessa repair, and Dune lock range affect current weapons',()
   assert.equal(crewPerks('dune').lockRangeMultiplier,1.25);
   assert.equal(dune.state.footWeapons.lockTargetIndex,0);
   assert.equal(normal.state.footWeapons.lockTargetIndex,null);
+  normal.setFighterInput({fire:true});ticks(normal,1);
+  assert.equal(normal.state.combat.projectiles.find(p=>p.kind==='rpg')
+    ?.lifetimeSeconds,4,'ordinary crew keeps the four-second RPG');
+  ticks(dune,95);
+  assert.ok(dune.state.footWeapons.lockSeconds>=
+    COMBAT_TUNING.foot.rpgLockSeconds-1e-8);
+  const distant=dune.state.opponents[0];
+  const origin=dune.state.fighter;
+  const targetPoint=dune.course.groundAt(distant.s,distant.lateral);
+  assert.ok(Math.hypot(targetPoint.x-origin.x,targetPoint.z-origin.z)>250);
+  const armorBefore=distant.armor;
+  dune.setFighterInput({aim:true,fire:true});ticks(dune,1);
+  const lockedRocket=dune.state.combat.projectiles.find(p=>p.kind==='rpg');
+  assert.ok(lockedRocket);
+  assert.equal(lockedRocket.targetIndex,0);
+  assert.equal(lockedRocket.lifetimeSeconds,5);
+  dune.setFighterInput({aim:false,fire:false});
+  for(let i=0;i<600&&distant.armor===armorBefore;i++)ticks(dune,1);
+  assert.ok(lockedRocket.age>4,'rocket needed travel beyond the standard lifetime');
+  assert.ok(distant.armor<armorBefore,'locked Dune rocket hits beyond 220 m');
+  assert.ok(dune.state.combat.notorietyEvents?.some(event=>
+    event.type==='rpgDirectHit'),'the distant impact is a direct hit');
 });

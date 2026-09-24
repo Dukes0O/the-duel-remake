@@ -248,9 +248,14 @@ export function stepProjectiles(duel, dt) {
       }
     }
     const contact = !!target;
+    const rpgLifetime = Number.isInteger(projectile.targetIndex) &&
+      Number.isFinite(projectile.lifetimeSeconds)
+      ? clamp(projectile.lifetimeSeconds, T.foot.rpgLifetimeSeconds,
+        T.foot.rpgLifetimeSeconds * 1.25)
+      : T.foot.rpgLifetimeSeconds;
     const expired = projectile.age > (projectile.kind === 'bomb'
       ? T.bomb.lifetime : projectile.kind === 'rpg'
-        ? T.foot.rpgLifetimeSeconds : T.crossbow.lifetime);
+        ? rpgLifetime : T.crossbow.lifetime);
     if (!contact && projectile.y > floor + T.projectileFloorClearance && !expired) {
       live.push(projectile);
       continue;
