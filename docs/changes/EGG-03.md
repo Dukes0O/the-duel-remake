@@ -250,3 +250,56 @@ remain unchanged since `5776623`, so the recorded runtime and Save Guardian
 review still applies. No heavy check or build ran during the capture windows.
 Final lane/build gates remain on hold until the Director accepts the retained
 visual, motion, audio and corrected cost evidence.
+
+## Presentation builder handoff
+
+The presentation consumes simulation-owned journey clocks, gate fraction and
+choice readiness. It adds the original drum/chain/latch cues, a bounded
+24-point spark pool, faded race/combat HUD, keyboard-focus-safe choices, camera
+arrival/inside travel and menu cleanup. Renderer, UI and audio do not advance
+the journey or settle race results. Arrival holds safely inside with only the
+approved return-to-menu action. Normal driving audio is unchanged outside the
+cinematic vehicle-bus duck.
+
+Focused checks: presentation **11/11**, existing audio **459 checks**, and
+Rustwall scene **18/18** passed during this slice. No existing assertion was
+changed. The independent additional camera group first failed at 10/11, then
+passed after the physical spur fix. No fingerprint, save, dependency, model or
+live-server change was made. The final fixture setup cleanup is now complete:
+missing-hook validation precedes renderer wrapping (`d9b5342`).
+
+Retained evidence is under `docs/board/looks/hidden-road-arrival/`:
+
+- Round 1: ten actual images, actual PCM, cue/event logs, spectrogram/loudness
+  plots and browser report. Private port 24178, zero warnings/errors.
+- Round 2: eleven images and refined actual PCM/plots; private port 28790,
+  zero warnings/errors. Desktop/phone framing, inside camera, sparks, sound
+  duck and both review fixes are visible. Initial missing-video and failed
+  legacy camera evidence remain in the round, with explicit provenance.
+- Round 3: actual corrected wash camera, continuous canvas-only gate/Enter
+  WebM and time-labeled frame strip. Private port 10785, zero warnings/errors.
+  The original cost baseline is retained but invalid for gate-specific
+  attribution because it excluded ordinary HUD work.
+- `round-3/final-correction`: one fair gate-only stationary pair per quality
+  plus actual arrival/Turn-back transition views on `bc60aa4`. Private port
+  49199, four images, zero warnings/errors. Normal HUD runs in both conditions;
+  only the gate UI update and spark presentation are disabled in the baseline.
+
+Corrected total CPU p95 is High 2.6→2.5 ms and Performance 1.6→1.7 ms (+6.25%).
+RAF p95 is 18.2→18.1 and 18.3→18.2 ms. Each pair adds one draw with unchanged
+triangles. Performance render-call CPU alone is 1.1→1.3 ms (+18.2%), retained
+as a limitation rather than claiming every metric passed. Each sample has
+120 ordered frames after 12 warm-up frames. This is CPU submission evidence,
+not GPU timing or a whole-course performance matrix. The measured Turn-back
+camera movement across its blend boundary is 0.00399 m.
+
+Audio peaks are -12.47/-13.34 dBFS without clipping. Gate RMS exceeds the
+ducked vehicle bus in these sequences. R2 measures the actual vehicle bus
+(engine plus tire/accent layers), while R1's engine-only stem was before that
+bus; they are not directly comparable. R3 reuses unchanged R2 audio source
+and evidence. There is no subjective listening or whole-race sound claim.
+
+Contact sheets exist for all rounds; each round's provenance names source
+commits, capture corrections and limits. The Director owns independent scores,
+acceptance and final lane/build/integration gates. No further optional capture
+or testing is planned by the presentation builder.
