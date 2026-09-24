@@ -195,3 +195,28 @@ by presentation; independent runtime controls cover ordinary/flag-off rules.
 
 Required final lane/build and Director visual acceptance remain integration
 steps; this note does not claim those gates have already passed.
+
+## R2 review and first required gate correction
+
+The Director accepted round 2 in `fd73bf5`. Independent review of `77aa6ce`
+confirmed the garage hint moved intact below the header; the scoped WASTELAND
+style is full width and at least 44 px high, respects global hidden handling,
+and uses the existing border-box layout. The map label appears only after
+reveal. The scenario waits for actual renderer readiness and measures visible
+hint/action bounds. No persistence or dust logic changed in round 2.
+
+The first required lane gate on clean `a5fe405` finished with 91 passed,
+1 failed and 139 not run in 92.08 seconds. Retained log:
+`.qa-dist/egg04-final-lane.log`. The sole failure was
+`test-build-update.mjs:199`, which requires `buildUpdates.syncState()` first in
+`renderState`. EGG-04 had inserted discovery refresh immediately before it.
+HEAD, source and tools remained unchanged through that failed gate; no build
+was run afterward.
+
+The Director authorized restoring the existing call order rather than changing
+the assertion. Source owner commit `1852c47` moves only that synchronization
+call back before the order-independent discovery snapshot refresh. Independent
+review confirmed this exact diff; the unchanged focused build-update suite
+passes all 194 checks. No assertion or browser evidence changed, and no new
+capture is needed for this ordering repair. The next clean gate retains the
+failed log and uses a separate rerun filename.
