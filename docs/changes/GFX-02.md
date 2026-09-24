@@ -74,3 +74,27 @@ The three fidelity rounds, true scene frame cost, grip alignment, camera
 clipping, local body hiding and HUD clearance still require the prescribed
 private browser interaction and independent visual review. Structural tests
 alone cannot promote this family to beta.
+
+## Initial runtime implementation
+
+After independent red commit `07af83c`, the selector and cached view model were
+implemented. Focused selector checks pass 7/7, and all seven injected runtime
+groups pass. Eighteen actual-asset groups still fail because the Blender assets
+are being authored; those are not reported as a passing asset gate.
+
+The renderer creates the view model beside the combat scene and updates it
+after the final camera pose, including any inspection override. Its reusable
+entry/options objects read existing simulation fields. Main-camera first-person
+selection is explicit, and hidden views make no asset requests. Camera-pass
+filtering restores geometry draw ranges after each pass. Full-body local hiding,
+cockpit hands and flying projectiles are unchanged.
+
+Crew rigs have independent cloned bones and prepared actions. Shared tools attach
+to authored grip sockets; aim-fire and aim-reload preserve aimed grips during
+weapon actions. Simulation snapshots determine all pose times, action fractions
+and movement sway. Repair follows actual work, including Odessa's faster rate.
+The empty launcher stays visible after the last rocket, with no fabricated reload.
+Failed requests are bounded, and disposed or stale loads cannot become visible.
+
+No browser, fidelity, frame-cost or broad merge gate has run for this initial
+runtime implementation. Those checks follow the first frozen asset round.

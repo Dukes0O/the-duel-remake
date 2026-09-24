@@ -1,5 +1,6 @@
 import {createCombatScene} from './combat-scene.js';
 import {createCombatEffects} from './combat-effects.js';
+import {createFirstPersonGear} from './first-person-gear.js';
 import * as THREE from 'three';
 import {directionalCameraPose} from './camera-views.js';
 import {onFootCameraPose} from './onfoot-camera.js';
@@ -145,6 +146,9 @@ export function attachRenderer(host, app) {
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
   const combatScene=createCombatScene(vehicleAttachments);scene.add(combatScene.group);
+  const firstPersonGear=createFirstPersonGear();scene.add(firstPersonGear.group);
+  const firstPersonEntry={fighter:null,input:null,weapons:null};
+  const firstPersonOptions={enabled:false,active:false,firstPerson:false,camera,time:0};
   const roadsideDebris=createRoadsideDebris();scene.add(roadsideDebris.group);
   function retireObject(object,beforeDispose){
     detachRetiredVehicleVisuals(object,combatScene,vehicleAttachments);
@@ -288,6 +292,7 @@ export function attachRenderer(host, app) {
     for (const flame of player.userData.boostFlames || []) { flame.visible = !!st.boosting && !menu; flame.scale.z = .7 + Math.sin(now * .052) * .3; }
     for (const pivot of player.userData.wheelPivots || []) if (pivot.userData.front) pivot.rotation.y = -steering * .22;
     player.visible = menu || st.onFoot || app.cameraMode !== 'hood' || st.catastrophic;
+    let firstPersonView=false;
     if (menu) {
       const cp = worldAtExtended(course, distance + 6.4, lateral + 7.7 + Math.sin(now * .00009) * .6);
       camTarget.set(cp.x, cp.y + (tall?4.35:2.85), cp.z);
@@ -296,6 +301,7 @@ export function attachRenderer(host, app) {
       const compact=host.clientHeight<850;
       lookTarget.set(aim.x, pp.y + (tall ? (compact ? .95 : 1.8) : compact ? -1.1 : .95), aim.z); camera.fov = 48;
     } else if(st.onFoot && st.fighter){
+      firstPersonView=true;
       const pose=onFootCameraPose(course,st.fighter);
       camTarget.set(pose.position.x,pose.position.y,pose.position.z);
       lookTarget.set(pose.target.x,pose.target.y,pose.target.z);
@@ -328,7 +334,7 @@ export function attachRenderer(host, app) {
       }
       constrainTunnelCamera(course,camTarget,distance+back);
     }
-    if(!menu&&app.inspectionCamera){camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
+    if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
     if (!ready || menu || st.onFoot) camera.position.copy(camTarget);
     else {
       camera.position.lerp(camTarget, 1 - Math.exp(-14 * dt));
@@ -418,6 +424,14 @@ export function attachRenderer(host, app) {
         {catastrophic:!useCombatAtlas&&!!actor?.combatWrecking, status:st.status}, effectDt);
     });
     combatScene.update(app.duel,{player,rival,extraOpponents,camera},useCombatAtlas);
+    firstPersonEntry.fighter=st.fighter;
+    firstPersonEntry.input=st.fighterInput;
+    firstPersonEntry.weapons=st.footWeapons;
+    firstPersonOptions.enabled=armoredField;
+    firstPersonOptions.active=!menu&&st.onFoot&&st.status==='racing';
+    firstPersonOptions.firstPerson=firstPersonView;
+    firstPersonOptions.time=st.stageTimeSec;
+    firstPersonGear.update(firstPersonEntry,firstPersonOptions);
     roadsideDebris.update(st);
     if(!st.paused)chickens.update(menu?{status:'menu',s:172,collectedFlocks:[]}:st,menu?now/1000:st.totalTimeSec);
     animateScene(world,now/1000);
@@ -507,7 +521,7 @@ export function attachRenderer(host, app) {
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
-    const release=()=>{rearView.dispose();combatScene.dispose();combatEffects?.dispose();vehicleAttachments.clear();effects.dispose();explosion.dispose();combatPlayerExplosion?.dispose();opponentExplosions?.forEach(effect=>effect.dispose());lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
+    const release=()=>{rearView.dispose();firstPersonGear.dispose();combatScene.dispose();combatEffects?.dispose();vehicleAttachments.clear();effects.dispose();explosion.dispose();combatPlayerExplosion?.dispose();opponentExplosions?.forEach(effect=>effect.dispose());lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
     if(warmup)warmup.dispose(release);else release();
   } };
 }
