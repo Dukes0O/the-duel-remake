@@ -14,6 +14,7 @@ import { rivalSignature } from './rival-settings.js';
 import { COMBAT_TUNING } from './wasteland-tuning.js';
 import { normalizeWasteland } from './wasteland-progress.js';
 import { combatNotoriety, MAX_NOTORIETY_XP, rankForXp } from './notoriety.js';
+import { applyWastelandResult } from './wasteland-career.js';
 
 export const PROFILE_KEY = 'the-duel-profile-v1';
 export const PLAYERS_KEY = 'the-duel-players-v2';
@@ -587,6 +588,8 @@ export function settleRace(profile, result = {}) {
     base = CPU_REWARDS[cpu],
     finished = isCompletedRace(result),
     combatRace = result.mode === 'wasteland' && result.combatRewardsEnabled === true,
+    separateCareer = combatRace && profile.wasteland?.version === 1 &&
+      profile.wasteland.discoveredGate === true,
     recordEligible = isValidFinish(result),
     won = result.won && recordEligible;
   const notoriety = profile.wasteland?.version === 1
@@ -620,7 +623,9 @@ export function settleRace(profile, result = {}) {
       : !improved
         ? 'not-improved'
         : 'improved';
-  const milestones = finishMilestones(profile, result, { finished, won, improved });
+  const milestones = separateCareer
+    ? {earned: profile.milestones, circuitWins: profile.circuitWins, awards: [], reward: 0}
+    : finishMilestones(profile, result, { finished, won, improved });
   const breakdown = {
     base: won ? base : combatRace ? 0 : -Math.round(base * 0.5),
     clean: won && result.clean === true ? Math.round(base * 0.1) : 0,
@@ -646,6 +651,7 @@ export function settleRace(profile, result = {}) {
     breakdown.police +
     (breakdown.combat || 0);
   breakdown.manual = result.difficulty === 'pro' ? (won ? base : 0) + recurringBonus : 0;
+  if (separateCareer) for (const name of Object.keys(breakdown)) breakdown[name] = 0;
   const charge = won || combatRace ? 0 : Math.min(profile.credits, -breakdown.base),
     bonus = recurringBonus + breakdown.manual + breakdown.milestones;
   const grossReward = (won ? base : -charge) + bonus;
@@ -653,16 +659,20 @@ export function settleRace(profile, result = {}) {
     profile.activeRace?.key === key
       ? integer(profile.activeRace.pendingPoliceFineCount, 1_000_000) * POLICE.ticketBaseFine
       : 0;
-  const policeFineCharge = recordEligible ? Math.min(pendingFines, Math.max(0, grossReward)) : 0;
+  const policeFineCharge = separateCareer ? 0 : recordEligible
+    ? Math.min(pendingFines, Math.max(0, grossReward)) : 0;
   breakdown.policeFines = -policeFineCharge;
-  const balance = integer(profile.credits + grossReward - policeFineCharge, 1_000_000_000),
+  const balance = separateCareer ? profile.credits :
+    integer(profile.credits + grossReward - policeFineCharge, 1_000_000_000),
     reward = balance - profile.credits;
   const pacificFinish = finished && stageEventId(result.stageIndex) === 'pacific-canyon' &&
     profile.wasteland?.version === 1;
+  const career = applyWastelandResult(profile.wasteland, result,
+    stageEventId(result.stageIndex), {finished, won});
   const updated = {
     ...profile,
-    ...(notoriety || pacificFinish ? {wasteland: {
-      ...profile.wasteland,
+    ...(notoriety || pacificFinish || career.wasteland !== profile.wasteland ? {wasteland: {
+      ...career.wasteland,
       ...(notoriety ? {xp: totalXp, rank: notorietyRank,
         settledResults: [...(profile.wasteland.settledResults || []), key].slice(-1000)} : {}),
       ...(pacificFinish ? {
@@ -670,10 +680,10 @@ export function settleRace(profile, result = {}) {
       } : {}),
     }} : {}),
     credits: balance,
-    winStreak: streak,
+    winStreak: separateCareer ? profile.winStreak : streak,
     settledResults: [...profile.settledResults, key],
     activeRace: profile.activeRace?.key === key ? null : profile.activeRace,
-    pbBonusRuns:
+    pbBonusRuns: separateCareer ? profile.pbBonusRuns :
       breakdown.personalBest && !profile.pbBonusRuns.includes(result.runId)
         ? [...profile.pbBonusRuns, result.runId]
         : profile.pbBonusRuns,
@@ -693,6 +703,7 @@ export function settleRace(profile, result = {}) {
         timeSec: finished ? result.timeSec : null,
         cpuDifficulty: cpu,
         reward,
+        ...(separateCareer ? {scrapEarned: career.scrapEarned} : {}),
         charge,
         policeFineCharge,
         breakdown,
@@ -705,6 +716,7 @@ export function settleRace(profile, result = {}) {
   return {
     profile: updated,
     reward,
+    ...(separateCareer ? {scrapEarned: career.scrapEarned} : {}),
     charge,
     policeFineCharge,
     awarded: true,
@@ -715,7 +727,7 @@ export function settleRace(profile, result = {}) {
     breakdown,
     ...(notoriety ? { notorietyEarned, notorietyRank,
       notorietyBreakdown: notoriety.breakdown } : {}),
-    winStreak: streak,
+    winStreak: updated.winStreak,
     milestones: milestones.awards
   };
 }

@@ -53,6 +53,8 @@ export function combatResultSnapshot(duel) {
   const scoring = duel.state.combat?.scoring;
   if (!scoring) return {};
   const snapshot = Object.fromEntries(RESULT_FIELDS.map(key => [key, scoring[key]]));
+  snapshot.salvageCollected = Math.min(3, duel.state.raids?.zones?.filter(
+    zone => zone.salvage?.collected === true).length || 0);
   const events = duel.state.combat.notorietyEvents;
   if (Array.isArray(events) && events.length) snapshot.notorietyEvents = events.slice(0, 256);
   return snapshot;

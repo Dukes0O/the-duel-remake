@@ -148,14 +148,16 @@ function collectSalvage(duel, zone) {
     Math.max(0, COMBAT_TUNING.foot.rpgAmmo - weapons.ammo)) : 0;
   const armor = Math.min(T.salvageArmor,
     Math.max(0, state.maxArmor - state.armor));
-  if (!rockets && !armor) return;
+  const scrapCareer = state.wastelandGateDiscovered === true &&
+    duel.featureFlags?.enabled('wasteland2') === true;
+  if (!rockets && !armor && !scrapCareer) return;
   crate.collected = true;
   if (weapons && rockets) {
     weapons.ammo += rockets;
     if (state.footGear?.name === 'LONGHORN RPG') state.footGear.ammo = weapons.ammo;
   }
   state.armor += armor;
-  duel._callout(`LEDGE SALVAGE / +${rockets} ROCKET +${Math.round(armor)} ARMOR`, 2);
+  duel._callout(`LEDGE SALVAGE / +${rockets} ROCKET +${Math.round(armor)} ARMOR${scrapCareer?' / +25 SCRAP AT FINISH':''}`, 2);
   duel.emit({salvageCollected: true, zone: zone.id, rockets, armor,
     hitPosition: {x: crate.x, y: crate.y + 1, z: crate.z}});
 }

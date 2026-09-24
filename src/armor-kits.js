@@ -51,11 +51,13 @@ export function purchaseArmorKit(profile, car, id) {
   if (rank < kit.rank) return result(profile, `Reach Notoriety rank ${kit.rank} first.`);
   if (id === 'warlord' && wasteland.warlords.defeated.length === 0)
     return result(profile, 'Defeat a warlord first.');
-  if (!Number.isSafeInteger(profile.credits) || profile.credits < kit.price)
-    return result(profile, `You need ${Math.max(0, kit.price - (profile.credits || 0))} more credits.`);
+  const scrapCareer = wasteland.discoveredGate === true;
+  const balance = scrapCareer ? wasteland.scrap : profile.credits;
+  if (!Number.isSafeInteger(balance) || balance < kit.price)
+    return result(profile, `You need ${Math.max(0, kit.price - (balance || 0))} more ${scrapCareer ? 'scrap' : 'credits'}.`);
   return {
-    profile: {...profile, credits: profile.credits - kit.price,
-      wasteland: {...wasteland, kits: {...wasteland.kits,
+    profile: {...profile, credits: scrapCareer ? profile.credits : profile.credits - kit.price,
+      wasteland: {...wasteland, ...(scrapCareer ? {scrap: balance - kit.price} : {}), kits: {...wasteland.kits,
         [car]: {owned: [...installed.owned, id], equipped: id}}}},
     ok: true, reason: '', cost: kit.price, equipped: id,
   };

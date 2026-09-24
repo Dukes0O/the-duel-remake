@@ -115,6 +115,25 @@ test('ledge salvage is visible, foot-only, and collected at most once', () => {
   markers.dispose();
 });
 
+test('full-resource salvage requires a discovered Wasteland career', () => {
+  const duel = race(), state = duel.state, crate = state.raids.zones[0].salvage;
+  state.onFoot = true;
+  state.fighter = {x: crate.x, y: crate.y, z: crate.z,
+    crewId: 'rook', knockedDown: false};
+  state.armor = state.maxArmor;
+  state.footWeapons.ammo = 3;
+  stepRaiders(duel, 1 / 120);
+  assert.equal(crate.collected, false, 'pre-gate pickup still needs missing resources');
+  duel.startCampaign({mode: 'wasteland', discoveredGate: true});
+  assert.equal(duel.state.wastelandGateDiscovered, true);
+  duel.startCampaign({mode: 'wasteland', discoveredGate: false});
+  assert.equal(duel.state.wastelandGateDiscovered, false,
+    'a later player cannot inherit the previous gate snapshot');
+  const legacy = race(0, false);
+  assert.equal(legacy.state.raids, undefined,
+    'flag-off play retains no Wasteland salvage crates');
+});
+
 test('flag-off and ordinary races have no raiders or route change', () => {
   const modern = race(), legacy = race(0, false);
   assert.equal(Object.hasOwn(legacy.state, 'raids'), false);

@@ -13,6 +13,10 @@ export function createResultsScreen({app, profile, credits, escapeHTML, time, ar
   let lastEventResult=null;
   const metric=metricView;
   const action=actionView||((label,verb,primary=false)=>screenAction(label,verb,primary,arrow));
+  const rewardMetric=result=>Number.isSafeInteger(result.scrapEarned)
+    ? metric('SCRAP EARNED',`+${credits(result.scrapEarned)}`,true)
+    : metric(result.creditReward<0?'CREDITS LOST':'CREDITS EARNED',
+      `${result.creditReward<0?'−':'+'}${credits(Math.abs(result.creditReward||0))}`,true);
 function modalScreen(s) {
   const r = s.results || {}; let eyebrow='',title='',description='',metrics='',combatMetrics='',actions='';
   if (s.paused) { const practice=!!COURSE[s.stageIndex]?.practice;eyebrow=practice?'FREE PRACTICE':'TAKE A BREATH'; title='ROAD<br>ON HOLD.'; description=practice?'Explore at your own pace. Practice has no timer, records or rewards.':'The clock is paused. Pick up where you left off.'; metrics=metric('EVENT',COURSE[s.stageIndex].name)+(practice?'':metric('TIME',time(s.stageTimeSec))); actions=action('BACK TO THE ROAD','resume',true)+action(practice?'RESTART PRACTICE':'RESTART RUN','restart')+action('MAIN MENU','menu'); }
@@ -30,7 +34,7 @@ function modalScreen(s) {
     else if(r.personalBestStatus==='improved')description+=` Car best beaten by ${time(r.previousBest-r.best)}. The car-best bonus is included below.`;
     else if(r.personalBestStatus==='not-improved')description+=` Beat your matching car best of ${time(r.best)} to earn the car-best bonus.`;
     if(!r.won)description+=Object.hasOwn(r.creditBreakdown||{},'combat')?' Combat runs never debit saved credits.':' The loss charge is half the CPU base reward, down to zero credits.';
-    metrics=(rush?metric('GATES PASSED',`${r.checkpointsPassed||0} / ${r.checkpointsRequired||12}`,true)+metric('RACE TIME',time(r.timeSec??r.stageTimeSec)):drift?metric('BANKED POINTS',credits(r.driftScore),true)+metric('TARGET',credits(r.driftTarget||s.objective?.targetScore)):metric('RACE TIME',time(r.timeSec??r.stageTimeSec),true)+metric('CAR BEST',r.best==null?'—':time(r.best)))+metric(r.creditReward<0?'CREDITS LOST':'CREDITS EARNED',`${r.creditReward<0?'−':'+'}${credits(Math.abs(r.creditReward||0))}`,true);
+    metrics=(rush?metric('GATES PASSED',`${r.checkpointsPassed||0} / ${r.checkpointsRequired||12}`,true)+metric('RACE TIME',time(r.timeSec??r.stageTimeSec)):drift?metric('BANKED POINTS',credits(r.driftScore),true)+metric('TARGET',credits(r.driftTarget||s.objective?.targetScore)):metric('RACE TIME',time(r.timeSec??r.stageTimeSec),true)+metric('CAR BEST',r.best==null?'—':time(r.best)))+rewardMetric(r);
     if(r.opponentCount>1)metrics+=metric('FINISH POSITION',`${r.position} / ${r.opponentCount+1}`);
     if(Number.isFinite(r.hitsLanded)){
       const damage=Number(r.damageDealt.toFixed(1)).toLocaleString();
@@ -48,7 +52,7 @@ function modalScreen(s) {
     actions=r.timeout?action('TRY AGAIN','restart',true)+action('MAIN MENU','menu'):action(atEnd?'FINISH THE RUN':'NEXT CIRCUIT','next',true)+action('RESTART RUN','restart')+action('MAIN MENU','menu');
     if(!r.timeout&&!atEnd&&!isCourseUnlocked(profile(),s.stageIndex+1)){description+=` Completed race credits are safe. Unlock ${escapeHTML(COURSE[s.stageIndex+1].name)} for ${credits(COURSE_PRICES[COURSE[s.stageIndex+1].id])} CR in the course garage to continue.`;actions=action('UNLOCK NEXT COURSE','unlock-next',true)+action('RESTART RUN','restart')+action('MAIN MENU','menu');}
   }
-  else if (s.status==='gameover') { eyebrow=s.catastrophic?'CATASTROPHIC DAMAGE':'END OF THE ROAD'; title=s.catastrophic?'TOTALLED.':'ONE MORE<br>RUN?'; const combatReward=Object.hasOwn(r.creditBreakdown||{},'combat');description=(s.catastrophic?'Five major crashes. The car is destroyed.':'Five crashes used every slot. This race is over.')+(combatReward?' Saved credits are safe.':' The loss costs half the CPU base reward, down to zero credits.');metrics=metric('RACE TIME',time(s.stageTimeSec))+metric(combatReward?'CREDITS EARNED':'CREDITS LOST',`${combatReward?'+':'−'}${credits(Math.abs(r.creditReward||0))}`,true)+metric('BALANCE',`${credits(profile().credits)} CR`);actions=action('RUN IT BACK','restart',true)+action('MAIN MENU','menu'); }
+  else if (s.status==='gameover') { eyebrow=s.catastrophic?'CATASTROPHIC DAMAGE':'END OF THE ROAD'; title=s.catastrophic?'TOTALLED.':'ONE MORE<br>RUN?'; const combatReward=Object.hasOwn(r.creditBreakdown||{},'combat');description=(s.catastrophic?'Five major crashes. The car is destroyed.':'Five crashes used every slot. This race is over.')+(combatReward?' Saved credits are safe.':' The loss costs half the CPU base reward, down to zero credits.');metrics=metric('RACE TIME',time(s.stageTimeSec))+rewardMetric(r)+metric(Number.isSafeInteger(r.scrapEarned)?'SCRAP BALANCE':'BALANCE',Number.isSafeInteger(r.scrapEarned)?`${credits(r.scrapBalance||0)} SCRAP`:`${credits(profile().credits)} CR`);actions=action('RUN IT BACK','restart',true)+action('MAIN MENU','menu'); }
   else if (s.status==='complete') {
     const stage=COURSE[s.stageIndex];
     if(stage?.kind){
@@ -62,7 +66,7 @@ function modalScreen(s) {
       metrics=metric('RACE TIME',time(result.timeSec??s.stageTimeSec+(s.racePenaltySec||0)),true);
       metrics+=rush?metric('GATES PASSED',`${result.checkpointsPassed??s.checkpointRush?.passed??0} / ${result.checkpointsRequired??s.checkpointRush?.total??12}`):drift?metric('BANKED POINTS',credits(result.driftScore??s.drift?.bankedScore??0)):stunt?metric('LANDED JUMPS',result.jumps??s.jumps??0)+metric('CARS CRUSHED',result.crushCount??s.crushCount??0):metric('LAPS COMPLETE',`${s.completedLaps} / ${s.lapsTotal}`);
       if(result.opponentCount>1)metrics+=metric('FINISH POSITION',`${result.position} / ${result.opponentCount+1}`);
-      if(Number.isFinite(result.creditReward))metrics+=metric(result.creditReward<0?'CREDITS LOST':'CREDITS EARNED',`${result.creditReward<0?'−':'+'}${credits(Math.abs(result.creditReward))}`,true);
+      if(Number.isFinite(result.creditReward))metrics+=rewardMetric(result);
       actions=action('RUN IT AGAIN','restart',true)+action('MAIN MENU','menu');
     }else{
       eyebrow='ALL STAGES COMPLETE';title='HORIZON<br>CONQUERED.';description='From desert heat to mountain air. You made it all the way.';

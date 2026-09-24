@@ -19,6 +19,7 @@ import './screen-players.css';
 import './screen-leaderboard.css';
 import './screen-garage.css';
 import './screen-armory.css';
+import './screen-territory.css';
 import './crew-ui.css';
 import './screen-courses.css';
 import './screen-results.css';

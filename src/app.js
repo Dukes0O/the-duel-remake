@@ -404,6 +404,10 @@ export class App {
         result.notorietyEarned = awarded.notorietyEarned;
         result.notorietyRank = awarded.notorietyRank;
       }
+      if (Number.isSafeInteger(awarded.scrapEarned)) {
+        result.scrapEarned = awarded.scrapEarned;
+        result.scrapBalance = this.profile.wasteland.scrap;
+      }
     }else if(result.creditReward==null)result.creditReward=0;
     this._finishGhost(payload,state,awarded,result);
     result.creditBalance=this.profile.credits;
@@ -509,7 +513,8 @@ export class App {
   }
   purchaseWeapon(id){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the Armory to upgrade weapons.'};
-    this._refreshPlayer();const result=purchaseWeaponUpgrade(this.profile,id);
+    this._refreshPlayer();const result=purchaseWeaponUpgrade(this.profile,id,
+      {wastelandEnabled:this.duel.featureFlags.enabled('wasteland2')});
     if(result.ok){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true});}return result;
   }
   equipCarWeapon(slot,id){
