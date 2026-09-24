@@ -1,6 +1,6 @@
 # CLEAN-08: after-merge janitor and status sweep
 
-Status: ready to merge.
+Status: merged as `118fa06`; janitor pending.
 
 ## Changed
 
@@ -41,3 +41,7 @@ Status: ready to merge.
 - Independent review found and then cleared the loose-object, transient-blob
   and dirty-branch reporting cases. No production source, replay fixture,
   runtime asset or save changed.
+- Integration merge tier passed 229/229 in 226.07 seconds with all 162 replay
+  hashes unchanged and 48/48 expansion drives. Integration build passed.
+  Private memory-only browser smoke passed on port 13338 with four screenshots,
+  zero warnings and zero errors.

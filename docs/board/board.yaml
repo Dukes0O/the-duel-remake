@@ -101,7 +101,8 @@ tasks:
     lane: OPS
     size: S
     needs: [CLEAN-06]
-    status: backlog
+    status: merged
+    note: "Merged as 118fa06 after 8 passing lane suites, build, 162 unchanged replay fingerprints, independent review, 229 merge suites, build and private smoke. Status now reports advisory sizes and unmerged branch work."
     owns: [docs/CODEX_PLAYBOOK.md, tools/build-status.mjs, tools/test-build-status.mjs, docs/board/STATUS.md]
     helpers: [reviewer, test_runner]
     acceptance:
