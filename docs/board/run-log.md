@@ -921,3 +921,14 @@ checkout untouched until the final integration commit passes the full gate.
   tier was requested. The next task merge still triggers the scheduled full.
 - Removed the fully merged, clean BAL-01 lane without force after checking
   ancestry and absence of private QA artifacts. Its branch and note remain.
+
+- Independent GFX browser scenario passed at 10daa29 on private port 50991:
+  18 captures, no errors/warnings, loaded-body eye hiding and independent
+  skeletons. The older onfoot-figures scenario failed on its primitive-only
+  query at port 6132. Add that scenario to GFX ownership; its assertions must
+  still prove visible body, eye hiding and outside view using the loaded rig.
+- BUG-06 body-bound tests now pass. A third injected fixture in the combat
+  replay also placed bolts above real roofs; authorize only its position
+  correction to the actual body centre, retaining all assertions. One real
+  CPU attack replay changes from three hits to one. Its expectation remains
+  untouched pending a before/after geometry trace and independent review.
