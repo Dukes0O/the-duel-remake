@@ -14,6 +14,9 @@ const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 export async function run(context) {
   const round = Number(process.env.GFX_CREW_ROUND || 1);
   if (!Number.isInteger(round) || round < 1 || round > 10) throw Error('Crew round must be 1..10');
+  const only = process.env.GFX_CREW_ONLY || '';
+  if (only && only !== 'rook') throw Error('GFX_CREW_ONLY currently supports rook');
+  const crew = only ? [only] : CREW;
   const root = fileURLToPath(new URL('../../', import.meta.url));
   const directory = context.outputDir;
   const relative = pathRelative(root, directory).replaceAll('\\', '/');
@@ -21,14 +24,14 @@ export async function run(context) {
   const manifestPath = join(directory,'captures.json');
   try { await access(manifestPath); throw Error('Completed crew evidence is immutable; use the next round'); }
   catch (error) { if (error.code !== 'ENOENT') throw error; }
-  const evidence = {round, observationCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
+  const evidence = {round, only:only || null, observationCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
     camera:{position:[0,.96,5],target:[0,.96,0],fov:28,width:432,height:576},
     qualities:['high','performance'],assets:{},captures:[],counts:{},selection:[],loadErrors:[]};
-  for (const id of CREW) evidence.assets[id] = {
+  for (const id of crew) evidence.assets[id] = {
     path:`public/assets/models/wasteland/crew/${id}.glb`,
     sha256:sha(await readFile(join(root,`public/assets/models/wasteland/crew/${id}.glb`)))};
   const profile={wasteland:{version:1,xp:1000000,crew:{selected:'rook',unlocked:CREW}}};
-  const selected=CREW.map(id=>{
+  const selected=crew.map(id=>{
     const choice=selectCrew(profile,id);
     if(!choice.ok||selectedCrewId(choice.profile)!==id)throw Error('Crew selection failed '+id);
     return {id,selected:selectedCrewId(choice.profile)};
@@ -88,10 +91,10 @@ export async function run(context) {
       return {selection:review.selected};
     })()`);
     evidence.selection.push({quality,...setup});
-    for (const id of CREW) {
+    for (const id of crew) {
       // The successful transition receives the selected crew ID, just as a new
       // campaign does. Reuse this isolated course to avoid eight world rebuilds.
-      await context.evaluate(`(() => {
+      if (!only) await context.evaluate(`(() => {
         const app=window.__qaApp,s=app.duel.state;
         s.onFoot=false;s.fighter=null;s.crewId='${id}';s.input.interact=true;
         s.footTransition.needsRelease=false;s.footTransition.heldSeconds=0;
@@ -101,6 +104,13 @@ export async function run(context) {
         Object.assign(s.fighter,{x:0,y:0,z:0,yaw:0,groundY:0,speed:0});
         s.fighterInput={};s.footWeapons.lastFireAt=undefined;
         window.__render.renderFrame();
+      })()`);
+      else await context.evaluate(`(() => {
+        const s=window.__qaApp.duel.state;
+        if (!s.onFoot || s.fighter?.crewId!=='rook')throw Error('Rook transition lost');
+        s.stageTimeSec=.25;s.fighter.presentation=null;
+        Object.assign(s.fighter,{x:0,y:0,z:0,yaw:0,groundY:0,speed:0});
+        s.fighterInput={};s.footWeapons.lastFireAt=undefined;
       })()`);
       await context.waitFor(`window.__render.scene.getObjectByName('Rigged on-foot fighters').userData.crews['${id}']==='ready'`,'crew '+id,60000);
       for (const [view,baseYaw] of VIEWS) {
@@ -155,6 +165,12 @@ export async function run(context) {
         evidence.captures.push({crew:'rook',quality,clip,time:result.time,view,yaw:0,path,camera:clip==='jump'?{position:[0,1.65,7],target:[0,1.65,0]}:view==='side'?{position:[7,.65,.75],target:[0,.65,.75]}:evidence.camera,source:'representative simulation snapshot'});
       }
     }
+    if (only) {
+      const count=evidence.captures.filter(capture=>capture.quality===quality).length;
+      if (count!==22) throw Error(`Rook-only capture count was ${count}, expected 22`);
+      evidence.counts[quality]={captureCount:count,scope:'one selected crew, matched views and Rook actions'};
+      continue;
+    }
     evidence.counts[quality]=await context.evaluate(`(() => {
       const r=window.__render,s=window.__qaApp.duel.state,review=window.__crewReview;
       const ids=${JSON.stringify(CREW)};
@@ -201,6 +217,8 @@ export async function run(context) {
     evidence.loadErrors.push(...evidence.counts[quality].loadErrors);
     if(round>=2)evidence.counts[quality].course=await courseContext(context,quality,root,relative);
   }
+  if (only && (evidence.captures.length!==44 || evidence.captures.some(capture=>capture.crew!==only)))
+    throw Error('Selected crew capture scope is incomplete');
   await writeFile(manifestPath,JSON.stringify(evidence,null,2)+'\n');
   console.log('Crew captured evidence: '+manifestPath);
 }
