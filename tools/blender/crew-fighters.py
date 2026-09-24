@@ -18,7 +18,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--crew', default='all')
 parser.add_argument('--round', type=int, default=1)
-parser.add_argument('--rook-technique', choices=('legacy', 'trial'), default='legacy')
 parser.add_argument('--skip-renders', action='store_true')
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
@@ -47,7 +46,6 @@ if args.paths_only:
 import bpy
 import numpy as np
 from mathutils import Vector
-from mathutils.kdtree import KDTree
 
 out.mkdir(parents=True, exist_ok=True)
 blend_dir.mkdir(parents=True, exist_ok=True)
@@ -97,8 +95,6 @@ def digest(path):
 
 
 def atlas_for(name, cfg):
-    if name == 'rook' and args.rook_technique == 'trial':
-        return painted_rook_atlas(cfg)
     source_path = root / f'public/assets/reference/wasteland-crew-{cfg["sheet"]}.png'
     source = bpy.data.images.load(str(source_path), check_existing=True)
     width, height = source.size
@@ -162,87 +158,7 @@ def atlas_for(name, cfg):
     return image, finish, bounds, source_path
 
 
-ROOK_PAINT = {
-    'skin': ((.40,.28,.21), .91, 0),
-    'hair': ((.16,.13,.11), .82, 0),
-    'jacket': ((.17,.24,.23), .91, 0),
-    'vest': ((.39,.35,.28), .82, 0),
-    'trousers': ((.22,.20,.18), .92, 0),
-    'boots': ((.19,.15,.12), .76, 0),
-    'gloves': ((.25,.20,.15), .77, 0),
-    'metal': ((.38,.36,.32), .53, .58),
-}
-ROOK_CROPS = {
-    'skin': (86, 100, 136, 172),
-    'hair': (88, 68, 135, 104),
-    'jacket': (38, 228, 73, 388),
-    'vest': (80, 211, 143, 367),
-    'trousers': (62, 423, 98, 572),
-    'boots': (61, 573, 97, 648),
-    'gloves': (20, 370, 43, 458),
-    'metal': (86, 379, 130, 428),
-}
-ROOK_HEIGHTS = {
-    'skin': (1.46, 1.81), 'hair': (1.68, 1.85),
-    'jacket': (.94, 1.5), 'vest': (.96, 1.56),
-    'trousers': (.22, 1.01), 'boots': (0, .30),
-    'gloves': (.80, 1.02), 'metal': (.45, 1.55),
-}
-
-
-def painted_rook_atlas(cfg):
-    """Bake authored color and wear regions into padded UV cells for Rook."""
-    source_path = root / f'public/assets/reference/wasteland-crew-{cfg["sheet"]}.png'
-    source = bpy.data.images.load(str(source_path), check_existing=True)
-    sw, sh = source.size
-    source_pixels = np.empty(sw*sh*4, dtype=np.float32)
-    source.pixels.foreach_get(source_pixels)
-    source_pixels = source_pixels.reshape(sh, sw, 4)[::-1]
-    yy, xx = np.indices((1024, 1024))
-    color = np.ones((1024, 1024, 4), dtype=np.float32)
-    surface = np.ones((1024, 1024, 4), dtype=np.float32)
-    cells = {}
-    for index, (label, (rgb, rough, metal)) in enumerate(ROOK_PAINT.items()):
-        col, row = index % 4, index // 4
-        x0, y0 = col * 256, row * 512
-        x1, y1 = x0 + 256, y0 + 512
-        cells[label] = (x0 + 12, y0 + 12, x1 - 12, y1 - 12)
-        # The face/hair use their isolated reference details. Clothing, leather
-        # and steel are painted as materials, avoiding source-photo background
-        # and its horizontal bands around cylindrical anatomy.
-        if label == 'skin':
-            sx0, sy0, sx1, sy1 = ROOK_CROPS[label]
-            patch = source_pixels[sy0:sy1, sx0:sx1, :3]
-            xi = np.rint(np.linspace(0, patch.shape[1]-1, 256)).astype(int)
-            yi = np.rint(np.linspace(0, patch.shape[0]-1, 512)).astype(int)
-            painted = patch[yi[:,None], xi[None,:]]
-        else:
-            painted = np.empty((512,256,3), dtype=np.float32)
-            painted[:] = rgb
-            px,py = xx[y0:y1,x0:x1], yy[y0:y1,x0:x1]
-            grain = .045*np.sin(px*.31+py*.071)*np.sin(px*.137-py*.193)
-            seams = -.055*(np.sin(px*.047)**24)
-            dust = .025*np.sin(px*.019+py*.013)
-            painted = np.clip(painted*(1+grain[:,:,None]+seams[:,:,None]
-                +dust[:,:,None]), 0, 1)
-        color[y0:y1,x0:x1,:3] = painted
-        surface[y0:y1,x0:x1,1] = rough
-        surface[y0:y1,x0:x1,2] = metal
-    images = []
-    for label, pixels in [('color', color), ('surface', surface)]:
-        image = bpy.data.images.new('rook-painted-'+label, width=1024, height=1024, alpha=False)
-        if label == 'surface': image.colorspace_settings.name = 'Non-Color'
-        image.pixels.foreach_set(pixels[::-1].reshape(-1))
-        image.filepath_raw = str(texture_path('rook', label))
-        image.file_format = 'PNG'
-        image.save()
-        image.pack()
-        images.append(image)
-    return images[0], images[1], cells, source_path
-
-
 def build(name, cfg):
-    trial_rook = name == 'rook' and args.rook_technique == 'trial'
     started = time.perf_counter()
     # A fresh database, not merely deleted scene objects: packed images and
     # animation datablocks from another crew must never enter this .blend.
@@ -350,55 +266,27 @@ def build(name, cfg):
             vertex.co.x *= wide
             vertex.co *= scale
             logical.append(vertex.co.copy())
-            if trial_rook and bone.startswith('upper_arm.'):
-                vertex.co.x *= .91
-            if trial_rook and 'facial anatomy' in label.lower() and vertex.co.z/scale>1.56:
-                vertex.co.x *= 1.12
             if bone=='head' and 'hood' not in label.lower():
                 head_width,head_height=HEAD_SHAPES[name]
-                if trial_rook: head_width = 1.16
                 vertex.co.x*=head_width
                 vertex.co.z=1.68*scale+(vertex.co.z-1.68*scale)*head_height
-            if trial_rook and (bone=='head' or 'facial anatomy' in label.lower()):
-                t=max(0,min(1,(vertex.co.z/scale-1.56)/.18))
-                vertex.co.z-=.023*scale*t
         obj.data.materials.clear()
         obj.data.materials.append(material)
         obj.data.update()
-        uv = obj.data.uv_layers.new(name='PaintedIslands' if trial_rook else 'ReferenceProjection')
+        uv = obj.data.uv_layers.new(name='ReferenceProjection')
         for polygon in obj.data.polygons:
             normal = polygon.normal
             view = 2 if projection==2 or (projection is None and normal.y>.20) else 0
             if any(word in label.lower() for word in ['boot','sole','hand','finger','thumb']):view=0
-            if trial_rook:
-                low = label.lower()
-                role = ('hair' if 'hair' in low else
-                    'skin' if any(word in low for word in ['face','neck','nose','lip','ear','cheek']) else
-                    'vest' if 'lace' in low else
-                    'boots' if any(word in low for word in ['boot','sole']) else
-                    'gloves' if any(word in low for word in ['hand','finger','thumb']) else
-                    'metal' if any(word in low for word in ['steel','buckle','knee pad']) else
-                    'trousers' if any(word in low for word in ['leg','trouser']) else
-                    'vest' if any(word in low for word in ['vest','scarf','belt','pouch','cuff']) else 'jacket')
-                x0,y0,x1,y1 = crops[role]
-            else:
-                crop = crops[view]
-                x0,y0,x1,y1 = crop['crop']
-                left,_,right,_ = crop['atlas']
+            crop = crops[view]
+            x0,y0,x1,y1 = crop['crop']
+            left,_,right,_ = crop['atlas']
             for index in polygon.loop_indices:
                 co = logical[obj.data.loops[index].vertex_index]
-                if trial_rook:
-                    # Coordinates stay inside the twelve-pixel cell padding.
-                    u = .5 + .47*math.sin(math.atan2(co.x, -co.y))
-                    lo, hi = ROOK_HEIGHTS[role]
-                    v = .03 + .94*(1-max(0,min(1,(co.z-lo)/(hi-lo))))
-                    uv.data[index].uv = ((x0+u*(x1-x0))/1024,
-                        1-(y0+v*(y1-y0))/1024)
-                else:
-                    pixel_x,pixel_y=part_pixel(co,label,bone,view)
-                    u = max(.002,min(.998,(pixel_x-x0)/(x1-x0)))
-                    v = max(.002,min(.998,1-(pixel_y-y0)/(y1-y0)))
-                    uv.data[index].uv = ((left+u*(right-left))/1024,v)
+                pixel_x,pixel_y=part_pixel(co,label,bone,view)
+                u = max(.002,min(.998,(pixel_x-x0)/(x1-x0)))
+                v = max(.002,min(.998,1-(pixel_y-y0)/(y1-y0)))
+                uv.data[index].uv = ((left+u*(right-left))/1024,v)
             polygon.use_smooth = True
         group = obj.vertex_groups.new(name=bone)
         group.add(list(range(len(obj.data.vertices))),1,'REPLACE')
@@ -442,10 +330,10 @@ def build(name, cfg):
 
     female=cfg['female']
     waist=.145 if female else .175
-    shoulder=.214 if trial_rook else .224 if female else .243
+    shoulder=.224 if female else .243
     hem=1.08 if cfg.get('cropped') else .98
     surface('Tailored torso',[(0,0,hem,.178,.111),(0,0,1.10,waist,.105),
-        (0,0,1.23,.183 if female else .204,.119),(0,-.006,1.34,.204 if female or trial_rook else .225,.124),
+        (0,0,1.23,.183 if female else .204,.119),(0,-.006,1.34,.204 if female else .225,.124),
         (0,0,1.40,shoulder,.115),(0,0,1.435,.216,.105),
         (0,0,1.466,.16,.084),(0,0,1.49,.083,.066)],'chest',20)
     surface('Pelvis and trouser seat',[(0,0,.84,.185,.113),(0,.004,.95,.196,.131),
@@ -467,37 +355,13 @@ def build(name, cfg):
             leg.vertex_groups['thigh.'+suffix].add([vertex.index],1-w,'REPLACE')
             shin.add([vertex.index],w,'REPLACE')
         # Angular toe box, defined instep and a flat sole instead of round feet.
-        boot_rings = ([(side*.175,-.052,.025,.080,.155),
-            (side*.175,-.052,.068,.081,.151),(side*.174,-.046,.115,.069,.128),
-            (side*.174,-.020,.19,.056,.078),(side*.174,0,.31,.057,.066),
-            (side*.174,0,.365,.061,.068)] if trial_rook else
-            [(side*.175,-.052,.025,.086,.156),(side*.175,-.052,.068,.088,.157),
+        surface('Boot '+suffix,[(side*.175,-.052,.025,.086,.156),(side*.175,-.052,.068,.088,.157),
             (side*.174,-.056,.108,.085,.145),(side*.174,-.024,.165,.074,.095),
-            (side*.173,.0,.255,.065,.068)])
-        surface('Boot '+suffix,boot_rings,'foot.'+suffix,16)
+            (side*.173,.0,.255,.065,.068)],'foot.'+suffix,16)
         surface('Flat rubber sole '+suffix,[(side*.175,-.052,.008,.089,.156),
             (side*.175,-.052,.033,.092,.159)],'foot.'+suffix,16)
-        if trial_rook:
-            patch('Trouser cargo pouch '+suffix,(side*.229,-.008,.75),
-                (.080,.085,.145),'thigh.'+suffix,.010)
-            surface('Boot shaft cuff '+suffix,[(side*.174,0,.345,.064,.070),
-                (side*.174,0,.37,.066,.071)],'foot.'+suffix,16)
-            patch('Boot toe cap '+suffix,(side*.175,-.176,.057),
-                (.119,.079,.048),'foot.'+suffix,.013)
-            patch('Boot heel '+suffix,(side*.175,.083,.043),
-                (.112,.060,.063),'foot.'+suffix,.006)
-            patch('Boot tongue '+suffix,(side*.175,-.105,.255),
-                (.062,.011,.125),'foot.'+suffix,.006)
-            for lace in range(4):
-                patch('Leather lace '+suffix+str(lace),(side*.175,-.117,.16+lace*.041),
-                    (.057,.008,.007),'foot.'+suffix,.002)
-        else:
-            patch('Flat cargo pocket '+suffix,(side*.195,-.006,.785),(.045,.115,.145),'thigh.'+suffix,.01)
-        if trial_rook:
-            patch('Tailored knee cloth '+suffix,(side*.15,-.108,.568),
-                (.106,.018,.112),'shin.'+suffix,.015,0)
-        else:
-            ellipsoid('Molded knee pad '+suffix,(side*.15,-.108,.568),(.064,.021,.074),'shin.'+suffix,10,6,0)
+        patch('Flat cargo pocket '+suffix,(side*.195,-.006,.785),(.045,.115,.145),'thigh.'+suffix,.01)
+        ellipsoid('Molded knee pad '+suffix,(side*.15,-.108,.568),(.064,.021,.074),'shin.'+suffix,10,6,0)
         sx=side*.235
         skin=cfg.get('sleeveless',False)
         arm=surface(('Continuous bare arm ' if skin else 'Continuous sleeve ')+suffix,
@@ -523,24 +387,11 @@ def build(name, cfg):
         ellipsoid('Thumb '+suffix,(side*.26,-.07,.914),(.019,.025,.034),'hand.'+suffix,8,5)
         patch('Hip utility pouch '+suffix,(side*.184,-.068,.98),(.077,.049,.105),'pelvis',.009)
     # A continuous neck and deliberately tapered face, plus nose/ears and lips.
-    if trial_rook:
-        jaw = surface('Continuous neck and facial anatomy',[(0,0,1.46,.063,.061),
-            (0,0,1.525,.059,.059),(0,-.012,1.54,.054,.052),
-            (0,-.018,1.575,.047,.043),(0,-.024,1.596,.064,.054),
-            (0,-.015,1.63,.078,.068),(0,-.009,1.68,.090,.079),
-            (0,-.001,1.73,.087,.079),(0,.005,1.777,.069,.064),
-            (0,.009,1.795,.034,.039)],'neck',20)
-        head_group = jaw.vertex_groups.new(name='head')
-        for vertex in jaw.data.vertices:
-            weight = max(0,min(1,(vertex.co.z/scale-1.525)/.07))
-            jaw.vertex_groups['neck'].add([vertex.index],1-weight,'REPLACE')
-            head_group.add([vertex.index],weight,'REPLACE')
-    else:
-        surface('Neck',[(0,0,1.46,.063,.061),(0,0,1.56,.057,.058)],'neck',12)
-        surface('Facial anatomy',[(0,-.018,1.567,.043,.039),(0,-.024,1.596,.064,.054),
-            (0,-.015,1.63,.078,.068),(0,-.009,1.68,.087,.079),
-            (0,-.001,1.73,.084,.079),(0,.005,1.777,.067,.064),
-            (0,.009,1.795,.034,.039)],'head',20)
+    surface('Neck',[(0,0,1.46,.063,.061),(0,0,1.56,.057,.058)],'neck',12)
+    surface('Facial anatomy',[(0,-.018,1.567,.043,.039),(0,-.024,1.596,.064,.054),
+        (0,-.015,1.63,.078,.068),(0,-.009,1.68,.087,.079),
+        (0,-.001,1.73,.084,.079),(0,.005,1.777,.067,.064),
+        (0,.009,1.795,.034,.039)],'head',20)
     ellipsoid('Nose bridge',(0,-.085,1.676),(.014,.018,.034),'head',10,6,0)
     ellipsoid('Nose tip',(0,-.105,1.658),(.020,.014,.013),'head',10,6,0)
     ellipsoid('Lower lip',(0,-.082,1.625),(.026,.009,.008),'head',10,4,0)
@@ -585,61 +436,10 @@ def build(name, cfg):
         ellipsoid('Shaped beard',(0,-.041,1.603),(.067,.047,.043 if hair!='bald' else .071),'head',12,7,0)
     # Distinct layered clothing and silhouette details, with flat sewn panels.
     if cfg.get('vest'):
-        if trial_rook:
-            # High-resolution draped shell follows the chest instead of two
-            # flat straps. Pockets sit on the shell, with an open central seam.
-            for side in [-1,1]:
-                vertices=[];faces=[]
-                for row,z in enumerate([1.08,1.16,1.25,1.34,1.42,1.47]):
-                    width=[.187,.195,.201,.197,.177,.135][row]
-                    for col in range(9):
-                        x=side*(.008+(width-.008)*col/8)
-                        y=-.140-.012*math.sin(math.pi*col/8)
-                        y-=.006*math.sin(row*1.3+col*.8)
-                        vertices.append((x,y,z+.006*math.sin(col*1.4+row)))
-                for row in range(5):
-                    for col in range(8):
-                        a=row*9+col;faces.append((a,a+1,a+10,a+9))
-                mesh=bpy.data.meshes.new('Sculpted vest shell')
-                mesh.from_pydata(vertices,[],faces);mesh.update()
-                cloth=bpy.data.objects.new('Draped vest shell '+str(side),mesh)
-                bpy.context.collection.objects.link(cloth)
-                bpy.context.view_layer.objects.active=cloth;cloth.select_set(True)
-                solid=cloth.modifiers.new('Vest cloth thickness','SOLIDIFY')
-                solid.thickness=.005
-                bpy.ops.object.modifier_apply(modifier=solid.name)
-                finish(cloth,'Draped vest shell '+str(side),'chest')
-                for z in [1.35,1.16]:
-                    patch('Vest sewn pocket',(side*.113,-.160,z),
-                        (.084,.018,.067),'chest',.006,0)
-            back_vertices=[(-.18,.145,1.12),(.18,.145,1.12),
-                (.175,.161,1.41),(-.175,.161,1.41)]
-            back_mesh=bpy.data.meshes.new('Draped rear vest canvas')
-            back_mesh.from_pydata(back_vertices,[],[(0,1,2,3)]);back_mesh.update()
-            back=bpy.data.objects.new('Draped rear vest canvas',back_mesh)
-            bpy.context.collection.objects.link(back)
-            bpy.context.view_layer.objects.active=back;back.select_set(True)
-            solid=back.modifiers.new('Rear canvas thickness','SOLIDIFY')
-            solid.thickness=.006
-            bpy.ops.object.modifier_apply(modifier=solid.name)
-            finish(back,'Draped rear vest canvas','chest')
-            for side in [-1,1]:
-                corners=[(side*.165,.173,1.42),(side*.122,.18,1.42),
-                    (-side*.139,.184,1.15),(-side*.18,.18,1.15)]
-                mesh=bpy.data.meshes.new('Rear crossed vest strap')
-                mesh.from_pydata(corners,[],[(0,1,2,3)]);mesh.update()
-                strap=bpy.data.objects.new('Rear crossed vest strap',mesh)
-                bpy.context.collection.objects.link(strap)
-                bpy.context.view_layer.objects.active=strap;strap.select_set(True)
-                solid=strap.modifiers.new('Strap thickness','SOLIDIFY')
-                solid.thickness=.004
-                bpy.ops.object.modifier_apply(modifier=solid.name)
-                finish(strap,'Rear crossed vest strap','chest')
-        else:
-            for side in [-1,1]:
-                patch('Open vest panel '+str(side),(side*.116,-.11,1.253),(.117,.023,.326),'chest',.012,0)
-                for z in [1.31,1.115]:
-                    patch('Rectangular sewn pocket',(side*.115,-.133,z),(.081,.023,.086),'chest',.008,0)
+        for side in [-1,1]:
+            patch('Open vest panel '+str(side),(side*.116,-.11,1.253),(.117,.023,.326),'chest',.012,0)
+            for z in [1.31,1.115]:
+                patch('Rectangular sewn pocket',(side*.115,-.133,z),(.081,.023,.086),'chest',.008,0)
     if cfg.get('coat'):
         vertices,faces=[],[]
         for row,(z,rx,ry) in enumerate([(1.02,.188,.116),(.9,.21,.131),(.72,.234,.146),(.52,.249,.156),(.43,.255,.16)]):
@@ -696,25 +496,9 @@ def build(name, cfg):
         for side in [-1,1]:
             ellipsoid('Goggle or filter '+str(side),(side*.043,-.089,z),(.031,.018,.027),'head' if cfg.get('goggles') else 'neck',10,6,0)
     if name in ['rook','nell','cinder','dune','wren','tusk']:
-        scarf_rings = ([(0,0,1.47,.111,.091),(0,-.004,1.515,.094,.080),
-            (0,-.008,1.56,.075,.071)]
-            if trial_rook else [(0,0,1.48,.092,.084),(0,-.004,1.514,.084,.077),
-            (0,0,1.544,.074,.07)])
-        surface('Layered scarf',scarf_rings,'neck',14)
-        if trial_rook:
-            vertices=[(-.102,-.125,1.545),(.103,-.125,1.545),
-                (.052,-.158,1.43),(.008,-.173,1.23),(-.060,-.154,1.395)]
-            mesh=bpy.data.meshes.new('Draped scarf front')
-            mesh.from_pydata(vertices,[],[(0,1,2,4),(4,2,3)]);mesh.update()
-            cloth=bpy.data.objects.new('Draped scarf front',mesh)
-            bpy.context.collection.objects.link(cloth)
-            bpy.context.view_layer.objects.active=cloth;cloth.select_set(True)
-            solid=cloth.modifiers.new('Scarf cloth thickness','SOLIDIFY')
-            solid.thickness=.005
-            bpy.ops.object.modifier_apply(modifier=solid.name)
-            finish(cloth,'Draped scarf front','chest')
-        else:
-            ellipsoid('Scarf front folds',(0,-.092,1.455),(.09,.023,.064),'chest',12,6,0)
+        surface('Layered scarf',[(0,0,1.48,.092,.084),(0,-.004,1.514,.084,.077),
+            (0,0,1.544,.074,.07)],'neck',14)
+        ellipsoid('Scarf front folds',(0,-.092,1.455),(.09,.023,.064),'chest',12,6,0)
     if name=='dune':
         patch('Sniper supply pack',(0,.166,1.261),(.234,.096,.265),'chest',.024,2)
     if name=='nell':
@@ -722,98 +506,6 @@ def build(name, cfg):
             for n in range(2):
                 surface('Demolition canister',[(side*(.065+n*.048),.14,1.16,.02,.022),
                     (side*(.065+n*.048),.14,1.32,.02,.022)],'chest',8,2)
-
-    if trial_rook:
-        # Join overlapping anatomical pieces into one connected body surface.
-        # Gear, scarf, hair and boot shells remain separate garment details.
-        core_labels = ('Tailored torso', 'Pelvis and trouser seat',
-            'Continuous trouser leg', 'Continuous sleeve',
-            'Continuous neck and facial anatomy')
-        core_parts = [obj for obj in parts if obj.name.startswith(core_labels)]
-        samples = []
-        for obj in core_parts:
-            role = ('skin' if 'facial anatomy' in obj.name else
-                'trousers' if 'trouser' in obj.name or 'pelvis' in obj.name else 'jacket')
-            for vertex in obj.data.vertices:
-                weights = [(obj.vertex_groups[item.group].name, item.weight)
-                    for item in vertex.groups]
-                samples.append((vertex.co.copy(), weights, role))
-        search = KDTree(len(samples))
-        for index, (position, _, _) in enumerate(samples): search.insert(position, index)
-        search.balance()
-        bpy.ops.object.select_all(action='DESELECT')
-        for obj in core_parts: obj.select_set(True)
-        bpy.context.view_layer.objects.active = core_parts[0]
-        bpy.ops.object.join()
-        core = bpy.context.object
-        core.name = 'Rook connected anatomical core'
-        modifier = core.modifiers.new('Connected body voxel union', 'REMESH')
-        modifier.mode = 'VOXEL'
-        modifier.voxel_size = .012
-        bpy.ops.object.modifier_apply(modifier=modifier.name)
-        # Sculpt the dense unified volume before retopology. The folds are
-        # localized by body region and follow the reference's loose clothing;
-        # they are geometry, not bright stripes painted across the texture.
-        sculpt = core.modifiers.new('Dense sculpt working mesh','SUBSURF')
-        sculpt.levels = 1
-        bpy.ops.object.modifier_apply(modifier=sculpt.name)
-        for vertex in core.data.vertices:
-            co = vertex.co
-            z = co.z/scale
-            _, sample_index, _ = search.find(co)
-            role = samples[sample_index][2]
-            if role == 'jacket':
-                center = .257*math.copysign(1,co.x)
-                if abs(co.x) > .19:
-                    angle = math.atan2(co.y,co.x-center)
-                    fold = .010*math.sin(z*45+angle*2.5)
-                    fold += .006*math.sin(z*83-angle*3)
-                    co.x += fold*math.cos(angle)
-                    co.y += fold*math.sin(angle)
-                else:
-                    waist = math.exp(-((z-1.13)/.14)**2)
-                    co.x *= 1+.055*waist
-                    co.y += .004*math.sin(z*39+co.x*18)
-            elif role == 'trousers':
-                leg_center = .15*math.copysign(1,co.x)
-                angle = math.atan2(co.y,co.x-leg_center)
-                side_phase = .5 if co.x>0 else -.7
-                folds = (.020*math.exp(-((z-.70)/.060)**2)*math.sin(angle*1.7+side_phase)
-                    +.015*math.exp(-((z-.42)/.055)**2)*math.sin(angle*2.1-side_phase))
-                co.x += folds*math.cos(angle)
-                co.y += folds*math.sin(angle)
-        core.data.update()
-        # Quadriflow is the retained low-poly topology; the high-resolution
-        # sculpt is rebuilt from this recipe, never checked in as a .blend.
-        bpy.ops.object.quadriflow_remesh(mode='FACES',target_faces=3200,
-            use_mesh_symmetry=True,use_preserve_boundary=False,
-            use_preserve_sharp=False,smooth_normals=True)
-        for layer in list(core.data.uv_layers): core.data.uv_layers.remove(layer)
-        for group in list(core.vertex_groups): core.vertex_groups.remove(group)
-        uv = core.data.uv_layers.new(name='PaintedIslands')
-        roles = []
-        for vertex in core.data.vertices:
-            _, sample_index, _ = search.find(vertex.co)
-            _, weights, role = samples[sample_index]
-            roles.append(role)
-            for label, weight in weights:
-                group = core.vertex_groups.get(label) or core.vertex_groups.new(name=label)
-                group.add([vertex.index], weight, 'REPLACE')
-        for polygon in core.data.polygons:
-            for loop_index in polygon.loop_indices:
-                co = core.data.vertices[core.data.loops[loop_index].vertex_index].co
-                role = roles[core.data.loops[loop_index].vertex_index]
-                if role == 'skin' and polygon.normal.y>-.25 and co.z/scale>1.56:
-                    # The rear skull is hair, never a repeated front face.
-                    role = 'hair'
-                x0,y0,x1,y1 = crops[role]
-                lo,hi = ROOK_HEIGHTS[role]
-                u = .5+.47*math.sin(math.atan2(co.x,-co.y))
-                v = .03+.94*(1-max(0,min(1,(co.z/scale-lo)/(hi-lo))))
-                uv.data[loop_index].uv = ((x0+u*(x1-x0))/1024,
-                    1-(y0+v*(y1-y0))/1024)
-            polygon.use_smooth = True
-        parts = [obj for obj in parts if obj not in core_parts] + [core]
 
     bpy.ops.object.select_all(action='DESELECT')
     for obj in parts: obj.select_set(True)

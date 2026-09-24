@@ -1,6 +1,6 @@
 ---
 task: GFX-01-P1
-status: building
+status: reviewed
 kind: art
 flag: wasteland2
 player_facing: yes
@@ -34,18 +34,18 @@ Round 9 will test the full changed method on Rook alone. Round 10, if needed, wi
 
 Round 9 still scored likeness two in independent review. Round 10 is the final trial in this wave and must be judged from matched game views before any acceptance. If its independent score remains below four, do not ship its Rook GLB or leave the default generator silently rebuilding a worse model. First retain the Blender trial recipe and the red-then-green connected-core test in a text-only Git checkpoint. Then restore the reviewed round-3 Rook GLB and generator and remove the trial-only test in the same follow-up change. Keep the scored compact sheets and the precise next approach in this note. This removes a rejected experiment and its test together; it does not weaken an accepted runtime assertion. The reviewed round-3 Rook GLB has SHA-256 `9dfa853187b707d30e7cd19f029efc3b1219e914d13ce68029d30eedeb8b911a`; its generator has SHA-256 `661eb808f94c338ba913b0fc8efdb9118d12984d0ba0669bc2e1de932d391857` before this lane. Full runtime crew checks continue to cover the restored asset.
 
-## What changed
+Round 6 was an internal connected-topology and UV-layer build, rejected before an in-game capture. Its Blender front showed the wrong active UV channel and a grey body. It was not a completed fidelity round, has no scored verdict or compact sheet, and contributes no acceptance claim. Completed matched reviews are rounds 4, 5, 7, 8, 9 and, once captured, 10.
 
-Rook-only technique trial is built. The source now exports one continuous neck and face skin for Rook, with bone weights blended across the jaw. Rook uses eight painted and padded UV regions instead of the old reference projection. The other seven crew still take the round-3 source path and their GLBs were not rebuilt.
+## Final disposition
 
-## Evidence
+The Rook-only trial did not clear the SPEC 0.3 likeness gate. [Round 10's matched sheet and review](../board/looks/crew/round-10-review.md) score likeness two against the required four; independent review found the head and neck proportions, vest, floating rear pack, trouser and boot shapes, and in-game face and material definition still weak. Round 9 was also two. The rear-head UV defect was fixed, and the connected sculpt, retopology and painted padded UVs passed structural checks, but neither made Rook recognizable enough to replace the reviewed asset. Rounds 4, 5, 7, 8, 9 and 10 each have a compact scored review and sheet. Round 6 was a failed technical build before game capture, as recorded above.
 
-The new `tools/test-crew-assets.mjs` failed on round-3 Rook with zero triangles bridging the neck/jaw seam. After the Rook-only build, it passes with 40 bridging triangles. Headless Blender 4.5.13 exported Rook at 6,184 near and 1,880 far triangles, one material, with `--crew rook --round 4 --skip-renders`. The generated GLB is 924,916 bytes. Matched Blender and game captures, visual scores, frame comparison, independent review, lane tier and build are still pending. This is a technical checkpoint, not a fidelity verdict.
+The experiment's exact generator recipe and red-then-green structural test are retained in text-only checkpoint `107bb21`. After the negative round-10 verdict, the Rook GLB and generator were restored from `107bb21^`, with the SHA-256 values recorded above. The rejected trial-only `tools/test-crew-assets.mjs` was removed with its source implementation. The existing runtime crew validation remains in place. The other seven crew GLBs were never rebuilt. No continuous-body technique is shipped and no beta promotion follows.
 
-## Behavior and test changes
+The `GFX_CREW_ONLY=rook` scenario filter remains as a review aid. Its default still captures all eight crew; the focused mode produces 44 Rook action and view captures in both qualities and checks their count. It excludes the twelve-fighter scene and frame and course checks, so it cannot establish full frame cost. Round-10 browser capture used a private memory-only QA run with 44 screenshots and zero warnings or errors.
 
-None so far. Race fingerprints must remain unchanged.
+The next art card should use an artist-directed sculpt with fixed reference silhouette landmarks, separate tailored garment shells, and a full-size neutral front/profile/back comparison before rigging or baking. First-person hands must wait until a Rook technique independently reaches likeness four. No race behavior, save format, or race fingerprints changed in this lane.
 
-## Removed
+## Final gates
 
-When a new Rook GLB is accepted, it replaces the current Rook GLB in place. The projected atlas path for Rook must be removed from the generator in the same change. No old binary copy will be retained.
+On the restored source, `node tools/run-tests.mjs --tier lane --changed --jobs 8` passed 238/238 tests in 500.79 seconds, including 26/26 existing crew fighter checks, 162 replay fingerprints and 48/48 expansion driving runs. `npm run build` passed. The accepted runtime Rook GLB is byte-identical to the reviewed round-3 baseline; no binary change is proposed for merge. The build reported its existing large-chunk advisory.
