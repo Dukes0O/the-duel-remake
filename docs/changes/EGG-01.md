@@ -1,6 +1,6 @@
 # EGG-01: Hidden Road geometry and protected driving
 
-Status: ready for independent review and lane/build gate.
+Status: independently reviewed; required lane/build gate pending.
 
 ## Changes
 
@@ -19,7 +19,7 @@ Status: ready for independent review and lane/build gate.
 - `node tools/test-feature-flags.mjs`: 26 checks pass.
 - `node tools/test-render-reuse.mjs`: 174 checks pass, including the additive ABC patch/road raycast regression.
 - All nine cars physically completed the production-input U-turn at 95 m and drove back onto asphalt in the scenario helper. Turn times were 7.61–11.53 s; the return was 13.86–14.17 s. Zero boundary resets, major crashes or residual impacts.
-- Full private browser scenario: `.qa-dist/browser-output/hidden-road-2026-09-24T05-37-55-272Z/report.json`, port 38841, memory-only storage, 33 ABC High/Performance screenshots, zero console warnings/errors. It verifies the actual Hidden Road scene replaces the ordinary menu scene, solid wall contact, a complete outbound drive, and an actual steered turn/return on every route. The nine images named below are superseded by corrected review captures; the remaining valid views are retained.
+- Full private browser scenario ran at `.qa-dist/browser-output/hidden-road-2026-09-24T05-37-55-272Z/report.json`, port 38841, memory-only storage, 33 ABC High/Performance screenshots, zero console warnings/errors. It verified the actual Hidden Road scene replaces the ordinary menu scene, solid wall contact, a complete outbound drive, and an actual steered turn/return on every route. The first critic inspected all 33 images. A subsequent harness build removed that scratch directory, so those originals cannot be reopened. The nine images named below replace the rejected views and are now retained durably.
 - Outbound production drive: 1,030 m from initial placement at 15 m to 5 m before the end, 33.92 s on each route. The driver used 45 mph through the first bend and 75 mph thereafter; maximum centreline deviation 1.057 m, zero resets/crashes.
 - Earlier browser rounds exposed a stale cached menu world and coarse terrain faces crossing the wash. Both were corrected. The builder inspected the corrected wash, salt flat, entrance and racing-line pictures. Independent visual review is pending.
 - `git diff --check` passes. The independent runner owns the required lane tier and production build; neither is claimed here yet.
@@ -53,6 +53,15 @@ The broad grey bands in B/C racing-line images are existing gravel shortcut merg
 ## Review limits and follow-up
 
 - The wash banks are visibly repeated geometry, and the salt-flat soil is a development placeholder. EGG-02 owns the authored Blender wash/wall/gate family and measured fidelity rounds. This card does not claim a final art score or beta readiness.
-- The fitted ground patch and the entrance shoulder need independent seam review. No existing scene signature was regenerated.
+- Independent targeted re-review of 575294a found no source blocker or road overlap. All nine replacement pictures were inspected: returned wheels and bumpers are visible above asphalt, current racing-line frames conceal the destination, and wall contact is clearly framed. Existing gravel shortcut merges remain visible. No existing scene signature was regenerated.
 - The corridor exposes `length`, `entrance`, `poseAt(progress, perpendicularOffset)`, `contains(x,z)` and `nearest(x,z)` for later gate/departure work. It does not end races, unlock a menu, bank rewards or write saves.
 - The Director approved nine source modules/hooks: the original five modules, feature flag/game/ground hooks, and the environment-key hook. Work stayed in the isolated EGG-01 lane. No live folder, port 5174, player save, dependency or network request was touched.
+
+## Durable review evidence
+
+The nine replacement PNGs, their browser report and driving measurements are
+copied without modification to docs/board/looks/hidden-road/review-fixes/.
+This is geometry/capture review evidence, not a Blender fidelity round.
+The earlier valid entrance, wash and salt-flat views have a recorded prior
+critic review but no remaining image files. No full recapture was run merely
+to recreate them. Final family fidelity rounds remain EGG-02 work.
