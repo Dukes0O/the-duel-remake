@@ -39,7 +39,9 @@ export async function run(c){
     if(!await c.evaluate('Math.abs(window.__qaApp.duel.state.armor-80)<.01'))throw Error('Overhead repair failed');
     await c.command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await capture(`${quality}-phone-overhead`);
     await tap(c,'Escape','Escape',27);await c.waitFor('window.__qaApp.duel.state.paused&&!document.pointerLockElement','pause cleanup',10000);
-    await tap(c,'Escape','Escape',27);await c.waitFor('!window.__qaApp.duel.state.paused','resume',10000);
+    await refresh(c);const resume=await c.evaluate(`(()=>{const b=document.querySelector('[data-action="resume"]');b.scrollIntoView({block:'center'});const r=b.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};})()`);
+    for(const type of ['mousePressed','mouseReleased'])await c.command('Input.dispatchMouseEvent',{type,button:'left',clickCount:1,...resume});
+    await c.waitFor('!window.__qaApp.duel.state.paused','resume button',10000);
     await key(c,'keyDown','KeyF','f',70);await c.evaluate('window.__qaApp.advance(.62)');await key(c,'keyUp','KeyF','f',70);await c.evaluate('window.__qaApp.advance(1/120)');await refresh(c);
     report.checks[quality].reentry=await c.evaluate(`(()=>{const a=window.__qaApp;if(a.duel.state.onFoot||a.cameraMode!=='wide'||document.pointerLockElement||window.__render.scene.getObjectByName('First-person hands and gear').visible)throw Error('Car camera/reentry cleanup failed');return{carCamera:a.cameraMode,footCamera:a.footCameraMode,pausedCleanup:true};})()`);
   }

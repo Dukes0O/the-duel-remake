@@ -1,0 +1,17 @@
+{
+  "scenario": "onfoot-camera-choice",
+  "passed": false,
+  "port": 27669,
+  "memoryOnlySaves": true,
+  "error": "Timed out waiting for resume.",
+  "issues": [],
+  "warnings": [],
+  "screenshots": [
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\cam01\\.qa-dist\\browser-output\\onfoot-camera-choice-2026-09-24T12-16-36-149Z\\desktop-camera-setting.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\cam01\\.qa-dist\\browser-output\\onfoot-camera-choice-2026-09-24T12-16-36-149Z\\high-first-person.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\cam01\\.qa-dist\\browser-output\\onfoot-camera-choice-2026-09-24T12-16-36-149Z\\high-overhead-aim.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\cam01\\.qa-dist\\browser-output\\onfoot-camera-choice-2026-09-24T12-16-36-149Z\\high-overhead-fire.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\cam01\\.qa-dist\\browser-output\\onfoot-camera-choice-2026-09-24T12-16-36-149Z\\high-overhead-repair.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\cam01\\.qa-dist\\browser-output\\onfoot-camera-choice-2026-09-24T12-16-36-149Z\\high-phone-overhead.png"
+  ]
+}
