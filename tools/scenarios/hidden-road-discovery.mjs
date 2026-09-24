@@ -1,8 +1,9 @@
 import {access,mkdir,readFile,writeFile} from 'node:fs/promises';
-import {join} from 'node:path';
+import {join,relative as pathRelative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
+import {publishReviewSheet} from './review-sheet.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -35,11 +36,11 @@ async function sheet(context,rows,path){
   await writeFile(path,Buffer.from(png.split(',')[1],'base64'));
 }
 export async function run(context){
-  const round=Number(process.env.EGG_DISCOVERY_ROUND||1),relative=`docs/board/looks/hidden-road-discovery/round-${round}`,directory=join(ROOT,relative);
+  const round=Number(process.env.EGG_DISCOVERY_ROUND||1),directory=context.outputDir,relative=pathRelative(ROOT,directory).replaceAll('\\','/');
   try{await access(join(directory,'captures.json'));throw Error('Completed discovery round is immutable');}catch(e){if(e.code!=='ENOENT')throw e;}
   await mkdir(directory,{recursive:true});
   const report={round,commit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),captures:[],checks:{},frames:{},scope:'Private memory-only saves. Finish counts5/10 are explicit profile fixtures; discovery, choices and visits use production simulation/App. Pose fixtures shorten driving. No real saves.'};
-  const capture=async name=>{const p=await context.screenshot(name),bytes=await readFile(p);await writeFile(join(directory,`${name}.png`),bytes);report.captures.push({name,path:`${relative}/${name}.png`,sha256:hash(bytes)});};
+  const capture=async name=>{const p=await context.screenshot(name),bytes=await readFile(p);report.captures.push({name,path:`${relative}/${name}.png`,sha256:hash(bytes)});};
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
   await context.navigate('/tools/menu-check.html?flags=hidden-road');await context.waitFor(READY,'discovery menu',60000);await context.evaluate(`(${fixture.toString()})()`);
   report.checks.initial=await context.evaluate(`(()=>{const a=window.__qaApp;window.__playerA=a.player.id;const d=a.getHiddenRoadDiscovery();if(d.discoveredGate||!document.querySelector('#wasteland-visit').hidden||document.querySelector('#menu-course-map').dataset.hiddenRoad!=='false')throw Error('Undiscovered menu leaked');return d;})()`);
@@ -74,6 +75,9 @@ export async function run(context){
   report.checks.scenic=await context.evaluate(`(()=>{const a=window.__qaApp,q=window.__discoveryQa;if(document.querySelector('#route-map').dataset.hiddenRoad!=='true')throw Error('Live dotted path missing');q.place(149.9,35);q.advance(.1);q.place(a.duel.course.hiddenRoad.length-59.5,45);let choice=false;for(let i=0;i<1600&&a.duel.state.hiddenRoadJourney.phase!=='arrived';i++){a.duel.step(1/120);choice ||= a.duel.state.hiddenRoadJourney.choiceReady;}q.refresh();if(choice||a.duel.state.hiddenRoadJourney.phase!=='arrived')throw Error('Scenic revisit failed automatic entry');a.requestNavigation('menu');q.refresh();return{automatic:true};})()`);
   await context.navigate('/tools/menu-check.html');await context.waitFor(READY,'flag-off control',60000);await context.evaluate(`(${fixture.toString()})()`);
   report.checks.flagOff=await context.evaluate(`(()=>{const a=window.__qaApp;if(a.getHiddenRoadDiscovery().enabled||!document.querySelector('#wasteland-visit').hidden||document.querySelector('#menu-course-map').dataset.hiddenRoad!=='false')throw Error('Flag-off presentation leaked');return true;})()`);
-  await writeFile(join(directory,'captures.json'),JSON.stringify(report,null,2)+'\n');await sheet(context,report.captures,join(ROOT,`docs/board/looks/hidden-road-discovery/round-${round}.png`));
+  await writeFile(join(directory,'captures.json'),JSON.stringify(report,null,2)+'\n');
+  const sheetPath=join(directory,'contact-sheet.png');
+  await sheet(context,report.captures,sheetPath);
+  await publishReviewSheet(context,sheetPath,'hidden-road-discovery',round);
   console.log(`Discovery round ${round}: ${report.captures.length} actual images, memory-only lifecycle controls and bounded dust frame checks retained.`);
 }

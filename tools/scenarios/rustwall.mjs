@@ -1,6 +1,6 @@
 import {readFile, writeFile, mkdir, access} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
-import {join} from 'node:path';
+import {join, relative as pathRelative} from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {Course} from '../../src/course.js';
@@ -20,11 +20,17 @@ const READY=`(() => {
 export async function run(context) {
   const round=Number(process.env.EGG_RUSTWALL_ROUND || 1);
   if(!Number.isInteger(round)||round<1||round>10)throw Error('Rustwall round must be 1..10');
-  const relative=`docs/board/looks/rustwall/round-${round}`,directory=join(ROOT,relative);
+  const directory=context.outputDir,relative=pathRelative(ROOT,directory).replaceAll('\\','/');
   const path=join(directory,'captures.json');
   try{await access(path);throw Error('Completed Rustwall evidence is immutable');}
   catch(error){if(error.code!=='ENOENT')throw error;}
-  const blender=JSON.parse(await readFile(join(directory,'blender-manifest.json'),'utf8'));
+  let blenderText;
+  try{blenderText=await readFile(join(directory,'blender-manifest.json'),'utf8');}
+  catch(error){
+    if(error.code!=='ENOENT')throw error;
+    blenderText=await readFile(join(ROOT,`docs/board/looks/rustwall/round-${round}/blender-manifest.json`),'utf8');
+  }
+  const blender=JSON.parse(blenderText);
   const evidence={round,observationCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),
     assets:blender.assets,reference:blender.reference,captures:[],context:[],placement:[],cost:{},loadErrors:[],
     baseline:'EGG-01 greybox scenery on the newly widened salt-flat geometry. Visibility toggles isolate model cost, not the complete EGG-02 change.'};

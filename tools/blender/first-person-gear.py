@@ -9,8 +9,10 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import sys
 import time
+from datetime import date
 from pathlib import Path
 
 p = argparse.ArgumentParser()
@@ -33,18 +35,21 @@ def hands_glb(name):
     return out / 'hands' / f'{name}.glb'
 def hands_blend(name):
     return blend_dir / 'hands' / f'{name}.blend'
+shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / 'first-person' / f'round-{args.round}')
+if not shots.is_absolute():
+    shots = root / shots
 if args.paths_only:
     print(json.dumps({'blend': [str(tool_blend(name)) for name in ('rpg', 'wrench')]
                                + [str(hands_blend(name)) for name in selected_names],
                       'glb': [str(tool_glb(name)) for name in ('rpg', 'wrench')]
-                             + [str(hands_glb(name)) for name in selected_names]}))
+                             + [str(hands_glb(name)) for name in selected_names],
+                      'evidence': [str(shots)]}))
     sys.exit(0)
 
 import bpy
 import numpy as np
 from mathutils import Vector, Matrix, Euler
 
-shots = root / f'docs/board/looks/first-person/round-{args.round}'
 out.mkdir(parents=True, exist_ok=True)
 (out/'hands').mkdir(exist_ok=True)
 blend_dir.mkdir(parents=True, exist_ok=True)

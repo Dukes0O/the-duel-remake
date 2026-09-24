@@ -10,6 +10,26 @@ function value(name, fallback) {
   const index = args.indexOf(name);
   return index < 0 ? fallback : args[index + 1];
 }
+function evidenceDir(family, round) {
+  const now = new Date();
+  const day = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  return resolve(root, process.env.DUEL_EVIDENCE_DIR || join('.evidence', day, family, `round-${round}`));
+}
+function summaryPath(family, round) {
+  return join(root,'docs','board','looks',family,`round-${round}.jpg`);
+}
+const family = args.includes('--crew-round') ? 'crew' : args.includes('--rustwall-round') ? 'rustwall'
+  : args.includes('--first-person-round') || args.includes('--first-person-tools-round') ? 'first-person' : 'test-fighter';
+const round = Number(value('--crew-round', value('--rustwall-round',
+  value('--first-person-round', value('--first-person-tools-round', 1)))));
+if (args.includes('--paths-only')) {
+  const directory = evidenceDir(family, round);
+  const name = args.includes('--first-person-tools-round') ? 'sheet-tools' : 'sheet';
+  console.log(JSON.stringify({directory, output:join(directory,`${name}.png`),
+    manifest:join(directory,`${name}.json`),
+    summary:args.includes('--first-person-tools-round') ? null : summaryPath(family,round)}));
+  process.exit(0);
+}
 if (args.includes('--rustwall-round')) {
   await rustwallSheet(Number(value('--rustwall-round')));
 } else if (args.includes('--first-person-tools-round')) {
@@ -19,10 +39,10 @@ if (args.includes('--rustwall-round')) {
 } else if (args.includes('--crew-round')) {
   await crewSheet(Number(value('--crew-round')));
 } else {
-const output = resolve(value('--output', join(root,'docs/board/looks/test-fighter/round-1.png')));
-const capturesPath = resolve(value('--captures', join(root,'docs/board/looks/test-fighter/captures.json')));
+const output = resolve(value('--output', join(evidenceDir('test-fighter',1),'sheet.png')));
+const capturesPath = resolve(value('--captures', join(evidenceDir('test-fighter',1),'captures.json')));
 const captures = JSON.parse(await readFile(capturesPath,'utf8'));
-const blender = JSON.parse(await readFile(join(root,'docs/board/looks/test-fighter/blender.json'),'utf8'));
+const blender = JSON.parse(await readFile(join(evidenceDir('test-fighter',1),'blender.json'),'utf8'));
 const rel = path => relative(root, resolve(root, path)).replaceAll('\\','/');
 const directory = dirname(output);
 await mkdir(directory,{recursive:true});
@@ -33,7 +53,7 @@ const rows = captures.captures.filter(item => item.quality === 'high').map(item 
   // The source shows standing front, side and back only. It is deliberately
   // repeated beside motion samples, never presented as motion ground truth.
   crop: {front:[0,40,207,710],side:[210,40,340,710],back:[343,40,534,710]}[item.view],
-  blender:'docs/board/looks/test-fighter/blender-'+item.clip+'-'+item.view+'.png',
+  blender:rel(join(evidenceDir('test-fighter',1),'blender-'+item.clip+'-'+item.view+'.png')),
   high:rel(item.path),
   performance:rel(captures.captures.find(other => other.quality === 'performance' &&
     other.clip === item.clip && other.view === item.view).path),
@@ -60,16 +80,17 @@ await writeFile(manifest,JSON.stringify(provenance,null,2)+'\n');
 const executable=value('--blender',process.env.BLENDER_PATH ||
   'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe');
 execFileSync(executable,['-b','--python',join(root,'tools/blender/fidelity-sheet.py'),
-  '--','--root',root,'--manifest',manifest,'--output',output],{cwd:root,stdio:'inherit',windowsHide:true});
+  '--','--root',root,'--manifest',manifest,'--output',output,
+  '--summary',summaryPath('test-fighter',1)],{cwd:root,stdio:'inherit',windowsHide:true});
 console.log('Fidelity sheet: '+output);
 }
 
 
 async function crewSheet(round) {
   if (!Number.isInteger(round) || round < 1 || round > 10) throw Error('Crew round must be 1..10');
-  const base = `docs/board/looks/crew/round-${round}`;
-  const output = resolve(root, `${base}.png`), manifest = resolve(root, `${base}.json`);
-  const captures = JSON.parse(await readFile(join(root,base,'captures.json'),'utf8'));
+  const base = evidenceDir('crew',round);
+  const output = join(base,'sheet.png'), manifest = join(base,'sheet.json');
+  const captures = JSON.parse(await readFile(join(base,'captures.json'),'utf8'));
   const hash = async path => createHash('sha256').update(await readFile(join(root,path))).digest('hex');
   const rows = [], sources = {}, assets = {}, crews = ['rook','nell','jax','odessa','cinder','dune','wren','tusk'];
   const verify = async (path, expected) => {
@@ -78,7 +99,7 @@ async function crewSheet(round) {
     sources[path] = actual;
   };
   for (const id of crews) {
-    const blender = JSON.parse(await readFile(join(root,base,`blender-${id}.json`),'utf8'));
+    const blender = JSON.parse(await readFile(join(base,`blender-${id}.json`),'utf8'));
     const asset = captures.assets[id];
     await verify(asset.path,asset.sha256);
     if (blender.files[`${id}.glb`] !== asset.sha256) throw Error(`${id}: Blender/browser asset mismatch`);
@@ -105,21 +126,23 @@ async function crewSheet(round) {
   }
   const provenance = {round,observationCommit:captures.observationCommit,assets,sources,
     camera:captures.camera,qualities:captures.qualities,counts:captures.counts,
-    rows,output:`${base}.png`,status:'Fidelity review evidence; scores and beta eligibility require independent review'};
+    rows,output:relative(root,output).replaceAll('\\','/'),status:'Fidelity review evidence; scores and beta eligibility require independent review'};
   // Exclusive output prevents later rounds from silently replacing evidence.
   await writeFile(manifest,JSON.stringify(provenance,null,2)+'\n',{flag:'wx'});
   const executable=value('--blender',process.env.BLENDER_PATH ||
     'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe');
+  await mkdir(dirname(summaryPath('crew',round)),{recursive:true});
   execFileSync(executable,['-b','--python',join(root,'tools/blender/fidelity-sheet.py'),
-    '--','--root',root,'--manifest',manifest,'--output',output],{cwd:root,stdio:'inherit',windowsHide:true});
+    '--','--root',root,'--manifest',manifest,'--output',output,
+    '--summary',summaryPath('crew',round)],{cwd:root,stdio:'inherit',windowsHide:true});
   console.log('Crew fidelity sheet: '+output);
 }
 
 async function firstPersonSheet(round, toolsOnly=false) {
   if (!Number.isInteger(round) || round < 1 || round > 10) throw Error('First-person round must be 1..10');
-  const base = `docs/board/looks/first-person/round-${round}`;
-  const captures = JSON.parse(await readFile(join(root,base,'captures.json'),'utf8'));
-  const blender = JSON.parse(await readFile(join(root,base,'blender-manifest.json'),'utf8'));
+  const base = evidenceDir('first-person',round);
+  const captures = JSON.parse(await readFile(join(base,'captures.json'),'utf8'));
+  const blender = JSON.parse(await readFile(join(base,'blender-manifest.json'),'utf8'));
   if (JSON.stringify(captures.camera) !== JSON.stringify(blender.camera)) throw Error('First-person cameras differ');
   const sources = {}, rows = [];
   const verify = async (path, expected) => {
@@ -161,23 +184,25 @@ async function firstPersonSheet(round, toolsOnly=false) {
       reference:reference.path,blender:source.path,high:high.path,performance:performance.path});
   }
   if (blender.hands.length!==8) throw Error('All eight crew are required');
-  const outputBase=toolsOnly?`${base}-tools`:base;
-  const output=resolve(root,`${outputBase}.png`),manifest=resolve(root,`${outputBase}.json`);
+  const outputBase=toolsOnly?'sheet-tools':'sheet';
+  const output=join(base,`${outputBase}.png`),manifest=join(base,`${outputBase}.json`);
   await writeFile(manifest,JSON.stringify({round,observationCommit:captures.observationCommit,
     camera:captures.camera,assets:captures.assets,counts:captures.counts,qualities:captures.qualities,
-    tile:{width:384,height:216},sources,rows,output:`${outputBase}.png`,
+    tile:{width:384,height:216},sources,rows,output:relative(root,output).replaceAll('\\','/'),
     status:'Blender and game poses match. Original crew and tool references use different poses; compare identity, shape, materials and grip only. Independent review decides fidelity.'},null,2)+'\n',{flag:'wx'});
   const executable=value('--blender',process.env.BLENDER_PATH || 'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe');
+  if (!toolsOnly) await mkdir(dirname(summaryPath('first-person',round)),{recursive:true});
   execFileSync(executable,['-b','--python',join(root,'tools/blender/fidelity-sheet.py'),
-    '--','--root',root,'--manifest',manifest,'--output',output],{cwd:root,stdio:'inherit',windowsHide:true});
+    '--','--root',root,'--manifest',manifest,'--output',output,
+    ...(toolsOnly ? [] : ['--summary',summaryPath('first-person',round)])],{cwd:root,stdio:'inherit',windowsHide:true});
   console.log('First-person fidelity sheet: '+output);
 }
 
 async function rustwallSheet(round) {
   if(!Number.isInteger(round)||round<1||round>10)throw Error('Rustwall round must be 1..10');
-  const base=`docs/board/looks/rustwall/round-${round}`;
-  const captures=JSON.parse(await readFile(join(root,base,'captures.json'),'utf8'));
-  const blender=JSON.parse(await readFile(join(root,base,'blender-manifest.json'),'utf8'));
+  const base=evidenceDir('rustwall',round);
+  const captures=JSON.parse(await readFile(join(base,'captures.json'),'utf8'));
+  const blender=JSON.parse(await readFile(join(base,'blender-manifest.json'),'utf8'));
   const rows=[],sources={};
   const verify=async(path,expected)=>{
     const actual=createHash('sha256').update(await readFile(join(root,path))).digest('hex');
@@ -204,13 +229,15 @@ async function rustwallSheet(round) {
       label:`${sample.id} - gate ${(sample.gateOpen||0)*100} percent${sample.kind==='wash'?' - no matching rock reference':''}`,
       crop:sample.referenceCrop,reference:blender.reference.path,blender:sample.path,high:high.path,performance:performance.path});
   }
-  const output=resolve(root,`${base}.png`),manifest=resolve(root,`${base}.json`);
+  const output=join(base,'sheet.png'),manifest=join(base,'sheet.json');
   await writeFile(manifest,JSON.stringify({round,observationCommit:captures.observationCommit,
     assets:captures.assets,reference:blender.reference,tile:{width:384,height:216},rows,sources,
     baseline:captures.baseline,cost:captures.cost,preparedGroundTriangles:captures.preparedGroundTriangles,
-    output:`${base}.png`,status:'Recorded model/camera comparisons. Reference people do not establish scale; wash reference provides context only. Independent review and measured cost decide fidelity.'},null,2)+'\n',{flag:'wx'});
+    output:relative(root,output).replaceAll('\\','/'),status:'Recorded model/camera comparisons. Reference people do not establish scale; wash reference provides context only. Independent review and measured cost decide fidelity.'},null,2)+'\n',{flag:'wx'});
   const executable=value('--blender',process.env.BLENDER_PATH||'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe');
+  await mkdir(dirname(summaryPath('rustwall',round)),{recursive:true});
   execFileSync(executable,['-b','--python',join(root,'tools/blender/fidelity-sheet.py'),
-    '--','--root',root,'--manifest',manifest,'--output',output],{cwd:root,stdio:'inherit',windowsHide:true});
+    '--','--root',root,'--manifest',manifest,'--output',output,
+    '--summary',summaryPath('rustwall',round)],{cwd:root,stdio:'inherit',windowsHide:true});
   console.log('Rustwall fidelity sheet: '+output);
 }

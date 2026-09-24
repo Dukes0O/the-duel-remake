@@ -1,6 +1,6 @@
 import {writeFile, mkdir, readFile, access} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
-import {join} from 'node:path';
+import {join, relative as pathRelative} from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {selectCrew, selectedCrewId} from '../../src/crew.js';
@@ -15,8 +15,8 @@ export async function run(context) {
   const round = Number(process.env.GFX_CREW_ROUND || 1);
   if (!Number.isInteger(round) || round < 1 || round > 10) throw Error('Crew round must be 1..10');
   const root = fileURLToPath(new URL('../../', import.meta.url));
-  const relative = `docs/board/looks/crew/round-${round}`;
-  const directory = join(root, relative);
+  const directory = context.outputDir;
+  const relative = pathRelative(root, directory).replaceAll('\\', '/');
   await mkdir(directory, {recursive:true});
   const manifestPath = join(directory,'captures.json');
   try { await access(manifestPath); throw Error('Completed crew evidence is immutable; use the next round'); }

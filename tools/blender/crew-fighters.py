@@ -8,8 +8,10 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import sys
 import time
+from datetime import date
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
@@ -28,16 +30,19 @@ def glb_path(name):
     return out / f'{name}.glb'
 def blend_path(name):
     return blend_dir / f'{name}.blend'
+shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / 'crew' / f'round-{args.round}')
+if not shots.is_absolute():
+    shots = root / shots
 if args.paths_only:
     print(json.dumps({'blend': [str(blend_path(name)) for name in selected_names],
-                      'glb': [str(glb_path(name)) for name in selected_names]}))
+                      'glb': [str(glb_path(name)) for name in selected_names],
+                      'evidence': [str(shots)]}))
     sys.exit(0)
 
 import bpy
 import numpy as np
 from mathutils import Vector
 
-shots = root / f'docs/board/looks/crew/round-{args.round}'
 out.mkdir(parents=True, exist_ok=True)
 blend_dir.mkdir(parents=True, exist_ok=True)
 shots.mkdir(parents=True, exist_ok=True)

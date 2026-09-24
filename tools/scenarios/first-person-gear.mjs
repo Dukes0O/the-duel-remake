@@ -1,6 +1,6 @@
 import {writeFile, mkdir, readFile, access} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
-import {join} from 'node:path';
+import {join, relative as pathRelative} from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 
@@ -15,11 +15,17 @@ export async function run(context) {
   const round=Number(process.env.GFX_FIRST_PERSON_ROUND || 1);
   if (!Number.isInteger(round)||round<1||round>10) throw Error('First-person round must be 1..10');
   const root=fileURLToPath(new URL('../../',import.meta.url));
-  const relative=`docs/board/looks/first-person/round-${round}`,directory=join(root,relative);
+  const directory=context.outputDir,relative=pathRelative(root,directory).replaceAll('\\','/');
   const manifestPath=join(directory,'captures.json');
   try { await access(manifestPath);throw Error('Completed first-person evidence is immutable'); }
   catch(error) { if(error.code!=='ENOENT')throw error; }
-  const blender=JSON.parse(await readFile(join(directory,'blender-manifest.json'),'utf8'));
+  let blenderText;
+  try { blenderText=await readFile(join(directory,'blender-manifest.json'),'utf8'); }
+  catch(error) {
+    if(error.code!=='ENOENT')throw error;
+    blenderText=await readFile(join(root,`docs/board/looks/first-person/round-${round}/blender-manifest.json`),'utf8');
+  }
+  const blender=JSON.parse(blenderText);
   if(blender.hands.length!==8)throw Error('Freeze all eight hands before capture');
   const evidence={round,observationCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
     camera:blender.camera,qualities:['high','performance'],assets:{},captures:[],counts:{},interactions:{},frameCost:{},loadErrors:[]};
@@ -53,7 +59,6 @@ export async function run(context) {
       })()`);
       const temporary=await context.screenshot(name),bytes=await readFile(temporary);
       const path=`${relative}/${name}.png`;
-      await writeFile(join(root,path),bytes);context.screenshots.push(join(root,path));
       interactionCaptures.push({path,sha256:sha(bytes),hud});return path;
     }};
     evidence.interactions[quality]={...await interaction(interactionContext,quality),captures:interactionCaptures};

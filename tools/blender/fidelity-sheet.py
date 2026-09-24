@@ -13,6 +13,7 @@ parser=argparse.ArgumentParser()
 parser.add_argument('--root',required=True)
 parser.add_argument('--manifest',required=True)
 parser.add_argument('--output',required=True)
+parser.add_argument('--summary')
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
 root=Path(args.root)
 manifest=json.loads(Path(args.manifest).read_text())
@@ -114,3 +115,23 @@ png+=chunk(b'IDAT',zlib.compress(raw,9))+chunk(b'IEND',b'')
 with Path(args.output).open('xb' if manifest.get('round') else 'wb') as output:
     output.write(png)
 print('Composed recorded PNG evidence:',args.output)
+if args.summary:
+    summary=Path(args.summary)
+    if summary.exists():
+        raise ValueError('Published round JPG is immutable: ' + str(summary))
+    summary.parent.mkdir(parents=True,exist_ok=True)
+    image=bpy.data.images.load(str(Path(args.output).resolve()),check_existing=False)
+    settings=bpy.context.scene.render.image_settings
+    settings.file_format='JPEG'
+    settings.quality=75
+    for max_width in (1200,960,768,600,480,360):
+        scale=min(1,max_width/width)
+        image.scale(max(1,round(width*scale)),max(1,round(height*scale)))
+        image.save_render(str(summary))
+        if summary.stat().st_size<=500_000:
+            break
+    else:
+        summary.unlink()
+        raise ValueError('Published round JPG exceeds 500 KB after compression')
+    bpy.data.images.remove(image)
+    print('Published review JPG:',summary,summary.stat().st_size,'bytes')

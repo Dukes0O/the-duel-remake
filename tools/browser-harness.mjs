@@ -4,12 +4,11 @@ import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
-import { join, resolve, sep } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const PROJECT_ROOT = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const VITE_CLI = join(PROJECT_ROOT, 'node_modules', 'vite', 'bin', 'vite.js');
-const QA_OUTPUT = join(PROJECT_ROOT, '.qa-dist', 'browser-output');
 const PRIVATE_PORT_MIN = 5191;
 const TIMEOUT_MS = 45_000;
 const delay = ms => new Promise(done => setTimeout(done, ms));
@@ -20,13 +19,55 @@ export function parseArguments(args) {
   let name = command === 'smoke' ? 'smoke' : command === 'record-race' ? 'audio-race' : null;
   let injectConsoleError = false;
   let named = false;
-  for (const value of rest) {
+  let outputDir;
+  for (let index = 0; index < rest.length; index++) {
+    const value = rest[index];
     if (value === '--inject-console-error') injectConsoleError = true;
+    else if (value === '--output-dir') {
+      if (outputDir || !rest[index + 1]) throw Error('--output-dir needs one path.');
+      outputDir = rest[++index];
+    }
+    else if (value.startsWith('--output-dir=')) {
+      if (outputDir || !value.slice('--output-dir='.length)) throw Error('--output-dir needs one path.');
+      outputDir = value.slice('--output-dir='.length);
+    }
     else if (!named && command !== 'smoke' && /^[a-z][a-z0-9-]*$/.test(value)) { name = value; named = true; }
     else throw Error(`Unknown browser harness argument: ${value}`);
   }
   if (!name) throw Error('scenario needs a simple name from tools/scenarios/.');
-  return { name, injectConsoleError };
+  return { name, injectConsoleError, ...(outputDir ? { outputDir } : {}) };
+}
+
+export function evidenceOutputDir(name, date = new Date(), root = PROJECT_ROOT) {
+  if (!/^[a-z][a-z0-9-]*$/.test(name)) throw Error('Evidence scenario name must be simple.');
+  const timestamp = date.toISOString().replace(/[:.]/g, '-');
+  return join(root, '.evidence', timestamp.slice(0, 10), `${name}-${timestamp}`);
+}
+
+export function resolveEvidenceDir(path, root = PROJECT_ROOT) {
+  const evidenceRoot = resolve(root, '.evidence');
+  const target = resolve(root, path);
+  const part = relative(evidenceRoot, target);
+  if (!part || part === '..' || part.startsWith('..' + sep) || part.includes(':'))
+    throw Error('Raw browser output must stay below .evidence/.');
+  return target;
+}
+
+export function reviewRoundOutputDir(name, date = new Date(), root = PROJECT_ROOT, env = process.env) {
+  const review = {
+    'crew-fighters': ['crew', 'GFX_CREW_ROUND'],
+    'first-person-gear': ['first-person', 'GFX_FIRST_PERSON_ROUND'],
+    rustwall: ['rustwall', 'EGG_RUSTWALL_ROUND'],
+    'rigged-fighter': ['test-fighter', null],
+  }[name];
+  if (!review) return null;
+  const [family, roundKey] = review;
+  const round = Number(roundKey ? env[roundKey] || 1 : 1);
+  if (!Number.isInteger(round) || round < 1 || round > 10)
+    throw Error(`${roundKey} must be a round from 1 to 10.`);
+  if (env.DUEL_EVIDENCE_DIR) return resolveEvidenceDir(env.DUEL_EVIDENCE_DIR, root);
+  const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return join(root, '.evidence', day, family, `round-${round}`);
 }
 
 export function assertPrivatePort(port) {
@@ -220,8 +261,9 @@ export async function main(args = process.argv.slice(2)) {
   const qaHtml = await readFile(qaHtmlPath, 'utf8');
   if (!qaHtml.includes('<meta charset=')) throw Error('QA bundle is missing its menu entry.');
   await writeFile(qaHtmlPath, qaHtml.replace('<meta charset=', '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E"><meta charset='));
-  await mkdir(QA_OUTPUT, { recursive: true });
-  const outputDir = join(QA_OUTPUT, `${options.name}-${new Date().toISOString().replace(/[:.]/g, '-')}`);
+  const outputDir = options.outputDir
+    ? resolveEvidenceDir(options.outputDir)
+    : reviewRoundOutputDir(options.name) ?? evidenceOutputDir(options.name);
   await mkdir(outputDir, { recursive: true });
   const profile = await mkdtemp(join(tmpdir(), 'the-duel-browser-'));
   let preview, chrome, cdp, report;

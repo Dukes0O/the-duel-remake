@@ -1,15 +1,21 @@
 import {access, mkdir, readFile, writeFile} from 'node:fs/promises';
-import {join} from 'node:path';
+import {join,relative as pathRelative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {wavFromPcm} from './audio-race.mjs';
 import {decodeWav, rms, detectOnset} from '../audio-analysis.mjs';
+import {publishReviewSheet} from './review-sheet.mjs';
 
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const READY="!!window.__qaApp?.visualReady&&window.__render?.scene.getObjectByName('Rustwall')?.userData.assetStatus==='ready'";
+
+export function shouldPublishArrivalReview(round,{costOnly=false,corrected=false}={}){
+  if(costOnly)return (round===2&&!corrected)||(round===3&&corrected);
+  return round===1||round===4||round===5;
+}
 
 // Test-only fixture and recorder. Production state owns every phase after the
 // explicitly recorded placement fixtures; choices use actual DOM controls.
@@ -224,8 +230,8 @@ async function saveAudio(context,directory,quality,recording) {
 }
 
 async function runMotionSupplement(context,round) {
-  const directory=join(ROOT,`docs/board/looks/hidden-road-arrival/round-${round}/motion-supplement`);
-  try{await access(join(directory,'report.json'));throw Error('Completed supplement is immutable');}
+  const directory=context.outputDir;
+  try{await access(join(directory,'motion-supplement.json'));throw Error('Completed supplement is immutable');}
   catch(error){if(error.code!=='ENOENT')throw error;}
   await mkdir(directory,{recursive:true});
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
@@ -254,21 +260,20 @@ async function runMotionSupplement(context,round) {
   await pause(600);
   report.legacy=await context.evaluate(`(()=>{const a=window.__qaApp,strip=document.querySelector('.weapon-hud'),r={hiddenRoad:a.duel.featureFlags.enabled('hidden-road'),wasteland2:a.duel.featureFlags.enabled('wasteland2'),opacity:Number(getComputedStyle(strip).opacity)};if(!r.hiddenRoad||r.wasteland2||r.opacity>.01)throw Error('Legacy HUD fade failed');return r;})()`);
   const shot=await context.screenshot('legacy-mad-max-departure-settled');
-  await writeFile(join(directory,'legacy-mad-max-departure-settled.png'),await readFile(shot));
-  await writeFile(join(directory,'report.json'),JSON.stringify(report,null,2)+'\n');
+  report.legacyScreenshot=pathRelative(ROOT,shot).replaceAll('\\','/');
+  await writeFile(join(directory,'motion-supplement.json'),JSON.stringify(report,null,2)+'\n');
   console.log('Bounded R2 motion and settled legacy supplement retained.');
 }
 
 async function runCostRefinement(context,round){
   const corrected=process.env.EGG_ARRIVAL_CORRECTED==='1';
   if(!corrected)await runMotionSupplement(context,round);
-  const relative=`docs/board/looks/hidden-road-arrival/round-${round}${corrected?'/final-correction':''}`;
-  const directory=join(ROOT,relative),results={
+  const directory=context.outputDir,relative=pathRelative(ROOT,directory).replaceAll('\\','/'),results={
     commit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),
     audioReuse:'Round 2 audio source and assets are unchanged; reuse its PCM/plots, with no new listening claim.',captures:[]};
   try{await access(join(directory,'cost-and-captures.json'));throw Error('Completed cost evidence is immutable');}catch(error){if(error.code!=='ENOENT')throw error;}
   await mkdir(directory,{recursive:true});
-  async function shot(name){const path=await context.screenshot(name),bytes=await readFile(path);await writeFile(join(directory,`${name}.png`),bytes);results.captures.push({name,path:`${relative}/${name}.png`,sha256:sha(bytes)});}
+  async function shot(name){const path=await context.screenshot(name),bytes=await readFile(path);results.captures.push({name,path:`${relative}/${name}.png`,sha256:sha(bytes)});}
   for(const quality of ['high','performance']){
     await context.navigate('/tools/menu-check.html?flags=hidden-road');
     await context.waitFor('!!window.__qaApp?.visualReady&&!!window.__render','cost refinement UI',60000);
@@ -286,8 +291,11 @@ async function runCostRefinement(context,round){
   }
   await writeFile(join(directory,'cost-and-captures.json'),JSON.stringify(results,null,2)+'\n');
   const rows=await Promise.all(results.captures.map(async row=>({label:row.name,data:'data:image/png;base64,'+(await readFile(join(ROOT,row.path))).toString('base64')})));
-  if(!corrected)rows.push({label:'Legacy Mad Max — actual spur camera',data:'data:image/png;base64,'+(await readFile(join(directory,'motion-supplement/legacy-mad-max-departure-settled.png'))).toString('base64')});
-  await imageSheet(context,rows,corrected?join(directory,'contact-sheet.png'):join(ROOT,`docs/board/looks/hidden-road-arrival/round-${round}.png`),3,480,270,'Arrival refinement · actual presentation and spur camera');
+  if(!corrected)rows.push({label:'Legacy Mad Max — actual spur camera',data:'data:image/png;base64,'+(await readFile(join(directory,'legacy-mad-max-departure-settled.png'))).toString('base64')});
+  const sheetPath=join(directory,'contact-sheet.png');
+  await imageSheet(context,rows,sheetPath,3,480,270,'Arrival refinement · actual presentation and spur camera');
+  if(shouldPublishArrivalReview(round,{costOnly:true,corrected}))
+    await publishReviewSheet(context,sheetPath,'hidden-road-arrival',round);
   console.log(`Bounded round ${round} presentation/camera refinement retained; round 2 audio reused.`);
 }
 
@@ -296,7 +304,7 @@ export async function run(context) {
   if(process.env.EGG_ARRIVAL_COST_ONLY==='1')return runCostRefinement(context,round);
   if(process.env.EGG_ARRIVAL_SUPPLEMENT==='1')return runMotionSupplement(context,round);
   if(![1,2,3,4,5].includes(round))throw Error('Arrival refinement round must be1..5');
-  const relative=`docs/board/looks/hidden-road-arrival/round-${round}`,directory=join(ROOT,relative);
+  const directory=context.outputDir,relative=pathRelative(ROOT,directory).replaceAll('\\','/');
   try{await access(join(directory,'captures.json'));throw Error('Completed arrival evidence is immutable');}
   catch(error){if(error.code!=='ENOENT')throw error;}
   await mkdir(directory,{recursive:true});
@@ -304,8 +312,8 @@ export async function run(context) {
     captures:[],audio:{},controls:[],scope:'One private memory-only scenario. Three named pose fixtures shorten the otherwise unchanged approach. Production simulation, UI and audio run the cinematic.'};
   async function capture(name,quality) {
     const state=await context.evaluate('structuredClone(window.__qaApp.duel.state.hiddenRoadJourney)');
-    const path=await context.screenshot(name),bytes=await readFile(path),target=join(directory,`${name}.png`);
-    await writeFile(target,bytes);evidence.captures.push({name,quality,path:`${relative}/${name}.png`,sha256:sha(bytes),journey:state});
+    const path=await context.screenshot(name),bytes=await readFile(path);
+    evidence.captures.push({name,quality,path:`${relative}/${name}.png`,sha256:sha(bytes),journey:state});
   }
   for(const quality of ['high','performance']){
     await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
@@ -366,10 +374,9 @@ export async function run(context) {
     }
   }
   await writeFile(join(directory,'captures.json'),JSON.stringify(evidence,null,2)+'\n');
-  for(const sheetRound of round===2?[1,2]:[round]){
-    const folder=join(ROOT,`docs/board/looks/hidden-road-arrival/round-${sheetRound}`),report=JSON.parse(await readFile(join(folder,'captures.json'),'utf8'));
-    const rows=await Promise.all(report.captures.map(async row=>({label:row.name,data:'data:image/png;base64,'+(await readFile(join(ROOT,row.path))).toString('base64')})));
-    await imageSheet(context,rows,join(ROOT,`docs/board/looks/hidden-road-arrival/round-${sheetRound}.png`),3,480,270,`Hidden road arrival · round ${sheetRound} · actual browser captures`);
-  }
+  const rows=await Promise.all(evidence.captures.map(async row=>({label:row.name,data:'data:image/png;base64,'+(await readFile(join(ROOT,row.path))).toString('base64')})));
+  const sheetPath=join(directory,'contact-sheet.png');
+  await imageSheet(context,rows,sheetPath,3,480,270,`Hidden road arrival · round ${round} · actual browser captures`);
+  if(shouldPublishArrivalReview(round))await publishReviewSheet(context,sheetPath,'hidden-road-arrival',round);
   console.log(`Hidden Road arrival round${round}: ${evidence.captures.length} images and two real-time PCM recordings retained in ${relative}`);
 }

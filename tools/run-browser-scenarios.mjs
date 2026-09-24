@@ -1,9 +1,9 @@
-// Run every named browser scenario and keep its evidence across QA rebuilds.
+// Run every named browser scenario into one ignored evidence directory.
 import { spawn } from 'node:child_process';
-import { cp, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { basename, dirname, join, resolve } from 'node:path';
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { evidenceOutputDir, resolveEvidenceDir } from './browser-harness.mjs';
 
 const root = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const harness = join(root, 'tools', 'browser-harness.mjs');
@@ -11,14 +11,15 @@ const scenarioDir = join(root, 'tools', 'scenarios');
 
 export async function namedScenarios() {
   return (await readdir(scenarioDir))
-    .filter(file => /^[a-z][a-z0-9-]*\.mjs$/.test(file) && file !== 'smoke.mjs')
+    .filter(file => /^[a-z][a-z0-9-]*\.mjs$/.test(file) && !['smoke.mjs', 'review-sheet.mjs'].includes(file))
     .map(file => file.slice(0, -4))
     .sort();
 }
 
-async function runScenario(name) {
-  const child = spawn(process.execPath, [harness, 'scenario', name], {
+async function runScenario(name, outputDir) {
+  const child = spawn(process.execPath, [harness, 'scenario', name, '--output-dir', outputDir], {
     cwd: root, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, DUEL_PUBLISH_REVIEW: '0' },
   });
   let output = '';
   for (const stream of [child.stdout, child.stderr]) {
@@ -34,26 +35,24 @@ async function runScenario(name) {
 }
 
 export async function main(args = process.argv.slice(2)) {
-  if (args.length !== 1 || args[0] !== '--all')
-    throw Error('Usage: node tools/run-browser-scenarios.mjs --all');
+  if (args[0] !== '--all' || (args.length !== 1 && !(args.length === 3 && args[1] === '--output-dir' && args[2])))
+    throw Error('Usage: node tools/run-browser-scenarios.mjs --all [--output-dir .evidence/PATH]');
   const names = await namedScenarios();
   if (!names.length) throw Error('No named browser scenarios were found.');
-  const archive = await mkdtemp(join(tmpdir(), 'duel-browser-suite-'));
+  const archive = args[2] ? resolveEvidenceDir(args[2]) : evidenceOutputDir('browser-suite');
+  await mkdir(archive, { recursive: true });
   const rows = [];
   for (const name of names) {
-    const run = await runScenario(name);
+    const run = await runScenario(name, join(archive, name));
     let report = null, evidenceDir = null, error = null;
     try {
       if (!run.reportPath) throw Error('The browser harness did not write a report path.');
       report = JSON.parse(await readFile(run.reportPath, 'utf8'));
-      const destination = join(archive, name);
-      await cp(dirname(run.reportPath), destination, { recursive: true });
-      evidenceDir = destination;
+      evidenceDir = join(archive, name);
     } catch (cause) {
       error = cause.message;
     }
-    const screenshots = report && evidenceDir
-      ? (report.screenshots ?? []).map(file => join(evidenceDir, basename(file))) : [];
+    const screenshots = report && evidenceDir ? (report.screenshots ?? []) : [];
     const warnings = report?.warnings?.length ?? 0;
     const issues = report?.issues?.length ?? 0;
     const passed = run.exitCode === 0 && report?.passed === true &&

@@ -1,8 +1,9 @@
 import {mkdir,readFile,writeFile,access} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
-import {join} from 'node:path';
+import {join,relative as pathRelative} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
+import {publishReviewSheet} from './review-sheet.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const key=(c,type,code,name,virtual)=>c.command('Input.dispatchKeyEvent',{type,code,key:name,windowsVirtualKeyCode:virtual});
 const tap=async(c,code,name,virtual)=>{await key(c,'keyDown',code,name,virtual);await key(c,'keyUp',code,name,virtual);};
@@ -13,10 +14,10 @@ async function sheet(c,rows,path,title){
   await writeFile(path,Buffer.from(png.split(',')[1],'base64'));
 }
 export async function run(c){
-  const round=Number(process.env.CAM_CHOICE_ROUND||1),relative=`docs/board/looks/onfoot-camera-choice/round-${round}`,directory=join(ROOT,relative);
+  const round=Number(process.env.CAM_CHOICE_ROUND||1),directory=c.outputDir,relative=pathRelative(ROOT,directory).replaceAll('\\','/');
   try{await access(join(directory,'captures.json'));throw Error('Completed camera round is immutable');}catch(e){if(e.code!=='ENOENT')throw e;}
   await mkdir(directory,{recursive:true});const report={round,commit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),captures:[],checks:{},frames:{},scope:'Memory-only actual input flow; stationary course position, rival aim direction and damaged armor are explicit fixtures. Absolute frame samples do not establish overhead cost.'};
-  const capture=async name=>{await refresh(c);const bytes=await readFile(await c.screenshot(name)),path=`${relative}/${name}.png`;await writeFile(join(ROOT,path),bytes);report.captures.push({name,path,sha256:createHash('sha256').update(bytes).digest('hex')});};
+  const capture=async name=>{await refresh(c);const bytes=await readFile(await c.screenshot(name)),path=`${relative}/${name}.png`;report.captures.push({name,path,sha256:createHash('sha256').update(bytes).digest('hex')});};
   for(const quality of ['high','performance']){
     await c.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
     await c.navigate('/tools/menu-check.html?flags=wasteland2');await c.waitFor('!!window.__qaApp?.visualReady&&!!window.__render','camera menu',60000);
@@ -46,6 +47,8 @@ export async function run(c){
     report.checks[quality].reentry=await c.evaluate(`(()=>{const a=window.__qaApp;if(a.duel.state.onFoot||a.cameraMode!=='wide'||document.pointerLockElement||window.__render.scene.getObjectByName('First-person hands and gear').visible)throw Error('Car camera/reentry cleanup failed');return{carCamera:a.cameraMode,footCamera:a.footCameraMode,pausedCleanup:true};})()`);
   }
   await writeFile(join(directory,'captures.json'),JSON.stringify(report,null,2)+'\n');
-  for(const form of ['desktop','phone'])await sheet(c,report.captures.filter(r=>r.name.includes('phone')===(form==='phone')),join(ROOT,`docs/board/looks/onfoot-camera-choice/round-${round}-${form}.png`),`On-foot camera choice · round ${round} · ${form}`);
+  const sheetPath=join(directory,'contact-sheet.png');
+  await sheet(c,report.captures,sheetPath,`On-foot camera choice · round ${round}`);
+  await publishReviewSheet(c,sheetPath,'onfoot-camera-choice',round);
   console.log(`Camera choice round ${round}: ${report.captures.length} actual images; both-quality setting/switch/aim/fire/repair/pause/reentry passed.`);
 }
