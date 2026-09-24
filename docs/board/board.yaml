@@ -873,3 +873,14 @@ tasks:
     behavior_change: yes
     note: "Player-owned rival wrecks show a pending +150 Notoriety cue; settled results show the exact earned XP and rank. Integrated at 31a571a with toast placement at e45b5fd. Focused feedback/HUD checks and build passed; joined visual check remains."
     spec: "SPEC.md sections 3.8 and 12.2, task UI-02"
+  - id: CREW-01
+    title: "Selectable Wasteland crew roster"
+    wave: 5
+    lane: UI
+    size: M
+    needs: [ART-C, FOOT-01, FOOT-04, PRG-02]
+    status: integrated
+    flag: wasteland2
+    behavior_change: yes
+    note: "Eight rank-gated crew with per-player selection, Rook health and Wren sprint perks, and distinct pooled figure colors/silhouettes integrated at 68bbb8a. Future perks and signature gear are labelled. Focused three-case check, private Armory/Garage/race browser scene and build passed."
+    spec: "SPEC.md sections 3.5 and 12.2, task CREW-01"

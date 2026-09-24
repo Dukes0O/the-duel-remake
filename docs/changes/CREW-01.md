@@ -1,12 +1,15 @@
 ---
 task: CREW-01
-status: lane-complete
+status: integrated
 kind: crew-roster
 flag: wasteland2
 player_facing: yes
 ---
 
 # Wasteland crew roster and selection
+
+Integrated at `68bbb8a` after review of the profile guard, live perks,
+future perk labels, and pooled figure update.
 
 The Armory and Garage show the eight named crew members from SPEC 3.5, their
 rank gates, perks and signature gear. Rook is free. Once a player reaches a

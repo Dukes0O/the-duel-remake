@@ -680,3 +680,9 @@ checkout untouched until the final integration commit passes the full gate.
   and selects neutral at rest. A focused seven-case transition check and
   production build passed. FOOT-08 is rerunning one paired sample with
   normal roadside destruction before any weapon tuning.
+- CREW-01 integrated at `68bbb8a`: eight rank-gated crew choices are saved
+  per player. Rook's health and Wren's sprint perks work in the fixed-step
+  fighter simulation; the remaining perks and signature gear are clearly
+  marked as later work. Four pooled figure meshes keep the same draw-call
+  budget. Three focused checks, one private memory-only
+  Armory→Garage→race flow and build passed.
