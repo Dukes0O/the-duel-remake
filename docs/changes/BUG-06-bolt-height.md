@@ -13,8 +13,9 @@ launch lead, inherited velocity, weapon cadence and tuning are unchanged.
 
 ## Fixture corrections for review
 
-The Director approved three fixture geometry corrections. No assertions or
-recorded fingerprints have been changed in this implementation commit.
+The Director approved three fixture geometry corrections. Implementation
+commit `8fec17a` changed no assertions or recorded fingerprints. The later
+reviewed expectation correction is documented below.
 
 - Fast-bolt test: ground + 2 m becomes ground + half the target's actual height.
   Its purpose is horizontal tunneling through the body; 2 m clears this roof.
@@ -36,12 +37,12 @@ recorded fingerprints have been changed in this implementation commit.
   `fa2c7711be34f5eddfeb7ed8273b0169a2e29a71645d1335e80d3443631886a9`.
 - Combined focused command: 38/39 groups passed in 86.05 s. The one failure
   was the combat replay fixture. After its approved geometry correction, the
-  first three encounters retain their hashes; the fourth still expects the
-  old broad-band CPU hits. It is held for independent review below.
+  first three encounters retain their hashes; the fourth initially expected
+  the old broad-band CPU hits. Its reviewed correction is documented below.
 - No browser, lane tier, build or full tier is claimed here. Independent lane
   and build gates are still required before integration. No real saves used.
 
-## CPU replay difference awaiting review
+## Reviewed CPU replay difference
 
 The flagged `staggered-cpu-attack-turns` replay produces one hit instead of
 three. A bounded before/after trace used production modules with in-memory
@@ -57,9 +58,22 @@ are identical at the existing 30, 60 and 144 FPS schedules.
 
 The bomb hit at tick 368 remains. All three CPU shots still fire at ticks
 200, 401 and 602, in the same order. Removing the first false shove changes
-the later encounter time. Proposed review change: this flagged encounter's
-hit expectation from 3 to 1 and its three matching fingerprints only. No
-blind fingerprint regeneration or expected-result edit has been performed.
+the later encounter time. The independent reviewer reproduced the result
+and approved this flagged encounter's hit expectation from 3 to 1 and its
+three matching fingerprints only. The Director authorized that exact change.
+All CPU shot-count/order assertions and all other encounter expectations and
+fingerprints remain unchanged.
+
+The reviewer reproduced the new fingerprint at 30, 60 and 144 FPS:
+`0ded9e86dafade32a8dd973b3e6ac0f161b844e98d5fe3085797046c540a4938`.
+It replaces `47f70d68c5c2a311e85db494cdca8015df5202a52b20af9925b87594eb130095`
+only for `staggered-cpu-attack-turns`, reflecting the removal of the two proven
+above-roof false hits. This is a reviewed gameplay correction, not a relaxed
+balance target. No bulk fingerprint regeneration was used.
+
+After this precise correction, `node tools/test-combat-replays.mjs` passes
+all 12 checks across four encounters in 1.43 s. The balance matrix was not
+repeated. Required independent lane and build gates remain pending.
 
 ## One complete flagged balance measurement
 
