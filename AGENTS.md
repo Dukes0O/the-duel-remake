@@ -78,9 +78,13 @@ small context matter. These rules win over habit:
 5. **Replace means remove,** in the same change.
 6. **Delete, don't archive.** Once a note's facts live in the current docs,
    delete the note. Git text history holds it if anyone ever asks.
-7. **Branches are short-lived.** A lane branch is merged or deleted within two
-   days. Unmerged work gets a one-line note of what it tried, then goes.
-8. **Budgets, not good intentions.** Size limits are checked by tests.
+7. **A branch lives as long as its work.** Delete a lane branch and its folder
+   when its card is merged, replaced by other work, or dropped with a written
+   reason. Never delete a branch for being idle. Branches Kyle creates are his:
+   the janitor lists them but never deletes them.
+8. **Targets, watched by the janitor.** Sizes are targets kept in one place
+   (`tools/size-targets.json`), not merge blockers; they change as the game
+   grows. Only a file in the wrong home fails a check.
 9. **Never discard what can't be regenerated:** real player saves and their
    backups, Kyle's decisions and notes, licensed third-party files and their
    credits, and the current game assets.
@@ -99,22 +103,37 @@ small context matter. These rules win over habit:
   never the live folder's. Unlink the link before removing a lane folder.
 - Scratch output stays in `.qa-dist/`. Nothing new in the repository root
   unless it is on the root allow-list in `tools/test-repo-hygiene.mjs`.
-- Limits, checked by `tools/test-repo-hygiene.mjs` in every lane tier: a merge
-  adds at most 5 MB to Git (20 MB for an art card that states its budget); no
-  committed file over 2 MB outside approved art files; shipped build and
-  per-model budgets as in SPEC 0.7.
+- `tools/test-repo-hygiene.mjs` checks placement in every lane tier: a file in
+  the wrong home fails. Sizes are targets in `tools/size-targets.json`,
+  reported on the status page and handled by the janitor, not merge blockers.
 
-## Clean up as you go (SPEC 0.7)
+## The janitor (SPEC 0.7)
 
 - Every change note has a **Removed** section. When work replaces something
   (a model, code path, test, doc or tool), remove the old one in the same task,
   or name the task that will remove it when its switch turns fully on.
 - Read only `docs/README.md`, your task card and the files it names. Anything
   not listed in `docs/README.md` is history, not instructions.
-- At the end of every run and after every 10 merges: run
-  `node tools/repo-audit.mjs`, remove what it proves unused, file cards for
-  the rest, and remove merged lane folders with `git worktree remove` after the
-  hash check. Never force-remove a worktree or rewrite history without Kyle.
+- **The janitor** runs at the end of every run and after every 10 merges, as
+  its own step, never squeezed into a feature card. It keeps the repository
+  clean by deleting, not by moving things into a closet:
+  1. Delete lane folders and branches whose work is merged, replaced or
+     dropped. Unlink dependency links first, then `git worktree remove`
+     (never forced).
+  2. List idle unmerged branches on the status page with their card, last
+     activity and what they hold. Leave them in place.
+  3. Delete review evidence once its verdict is committed.
+  4. Fold still-needed facts from old notes, handoffs and log entries into
+     the current docs, then delete the originals. No "history" folders.
+  5. Remove what `node tools/repo-audit.mjs` proves unused: assets nothing
+     loads, code nothing imports, tests of removed behavior, switches fully on
+     for a release. Each removal passes the lane tier with unchanged replay
+     fingerprints. Anything uncertain becomes a card instead.
+  6. Compare sizes with `tools/size-targets.json`. Delete waste, record why any
+     real growth happened, and propose new targets when the game has grown.
+  7. Write one janitor line in `run-log.md`: what went, what was flagged,
+     sizes before and after.
+- Never force-remove a worktree or rewrite history without Kyle.
 - History was rewritten on 24 September 2026 (SPEC 0.7, CLEAN-09). Never merge
   a branch that still contains pre-rewrite commits; rebase it first using
   `docs/history/history-rewrite-2026-09-24-map.txt`.

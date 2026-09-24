@@ -274,7 +274,7 @@ cheap to fix and art is cheap to redo; speed, capacity and storage matter
 more. The nine working rules are in `AGENTS.md` ("How we work with AI-written
 code") and win over habit. In short: fix forward; keep the recipe, not the
 output; one version of every binary; evidence is used once; replace means
-remove; delete, don't archive; short-lived branches; budgets checked by tests;
+remove; delete, don't archive; a branch lives as long as its work; size targets watched by a janitor;
 never discard what can't be regenerated (player saves, Kyle's decisions,
 licensed files, current assets).
 
@@ -321,12 +321,15 @@ same.
 This replaces the 0.3 wording that kept `.blend` files in the repository and
 full-resolution sheets and captures in `docs/board/looks/`.
 
-**Budgets, enforced by a test, not by memory.**
+**Size targets, watched by the janitor, not enforced (Kyle, 24 September 2026).**
+Sizes will change as the game grows, so they are targets in one file,
+`tools/size-targets.json`, reported on the status page. Only placement (a file
+in the wrong home) fails a check. Starting targets:
 
-- A merge adds at most 5 MB to Git; an art card may declare up to 20 MB.
-- No committed file over 2 MB outside a short, reviewed list of runtime art.
-- Shipped build (`dist`) at most 250 MB; all Wasteland models and textures
-  together at most 60 MB; any single runtime file at most 8 MB.
+- A merge adds about 5 MB to Git or less; an art card states its own figure.
+- Committed files stay under about 2 MB outside reviewed runtime art.
+- Shipped build (`dist`) about 250 MB; Wasteland models and textures together
+  about 60 MB; single runtime files about 8 MB.
 - Compress with what Three.js and Blender already provide (Draco or meshopt
   geometry in the Blender glTF exporter, `DRACOLoader`/`MeshoptDecoder` from
   `three/addons`, smaller or shared textures). No new dependency.
@@ -340,22 +343,24 @@ full-resolution sheets and captures in `docs/board/looks/`.
   a named removal task.
 - `docs/README.md` lists the current documents. Agents read that index, their
   card and the files it names. Anything not in the index is history.
-- At the end of every run and after every 10 merges, a cleanup pass runs
-  `tools/repo-audit.mjs`, removes what it proves unused, files cards for the
-  rest and records sizes on the status page.
+- At the end of every run and after every 10 merges, **the janitor** runs as
+  its own step (its seven duties are in `AGENTS.md`): delete finished lane
+  branches and folders, list idle ones without deleting them, delete used
+  evidence, fold old notes into current docs and delete them, remove what
+  `repo-audit` proves unused, compare sizes with the targets, and log it.
 
 **Cards. Do these in order and start no feature work until CLEAN-08 merges.** CLEAN-09 is already done.
 
 | Order | Card | Lane | Size | Done when |
 | --- | --- | --- | --- | --- |
-| 1 | **CLEAN-01** Hygiene check and audit report | TOOL | M | `tools/test-repo-hygiene.mjs` runs in the lane tier and enforces the homes and budgets above. It starts from a recorded list of today's violations that may only shrink; any new violation fails. `tools/repo-audit.mjs` reports the largest files, per-folder sizes, runtime assets nothing loads, modules and exports nothing imports, tests for removed features, docs not in the index, switches fully on for a release, and merged or stale lane folders |
+| 1 | **CLEAN-01** Hygiene check and audit report | TOOL | M | `tools/test-repo-hygiene.mjs` runs in the lane tier and fails only when a file is in the wrong home. `tools/size-targets.json` holds the starting targets above. `tools/repo-audit.mjs` reports the largest files, per-folder sizes, runtime assets nothing loads, modules and exports nothing imports, tests for removed features, docs not in the index, switches fully on for a release, and merged or stale lane folders |
 | 2 | **CLEAN-02** Blender files out of the build | ART, TOOL | M | *(The history rewrite already removed the committed `.blend` files, and `.gitignore` covers them.)* No source file under `public/`; every `tools/blender/` script rebuilds its `.blend` and GLB from committed inputs; a rebuilt GLB matches the committed one or the difference is explained; the build contains no `.blend` |
 | 3 | **CLEAN-03** Evidence out of Git | TOOL, VIS | M | *(The history rewrite already removed them; copies are in the backup folder named under CLEAN-09.)* Each round keeps one JPG sheet of 500 KB or less and its review; `tools/fidelity-sheet.mjs`, the browser harness and the audio tools write raw output to `.evidence/` by default; `docs/board/looks/` totals under 20 MB |
-| 4 | **CLEAN-04** Runtime asset budgets | ART, VIS | M | Wasteland models and textures meet the budgets; `wall.glb` under 8 MB; the same fidelity shots before and after show no visible loss (reviewed side by side); load and frame time recorded; build at most 250 MB |
+| 4 | **CLEAN-04** Runtime asset sizes | ART, VIS | M | Wasteland models and textures brought to the targets, or the reason they can't be is recorded; `wall.glb` under 8 MB; the same fidelity shots before and after show no visible loss (reviewed side by side); load and frame time recorded; build at most 250 MB |
 | 5 | **CLEAN-05** Docs and logs | OPS | M | *(0.8: delete, don't archive.)* `docs/README.md` indexes current docs; facts still needed from the 121 change notes go into the current docs, then the notes are deleted; `run-log.md` keeps 7 days and older entries are deleted; only the latest handoff is kept; docs marked "history only" are deleted; `AGENTS.md` and the playbook point at the index |
 | 6 | **CLEAN-06** Dead code, tests and switches | SIM, UI, VIS | M | Items `repo-audit` proves unused are removed (for example the replaced box-figure path, unused exports, tests of removed behavior); `roadside-destruction` has been `on` for a release, so its switch and flag-off path go, per REL-03; each removal passes the lane tier with all replay fingerprints unchanged; anything uncertain becomes a card instead |
-| done | **CLEAN-07** Branches and lane folders | OPS | S | Done on 24 September 2026: all 95 lane folders and 135 branches removed (one-line notes for the 17 with unmerged work are in `run-log.md`), backups and scratch output deleted, Git storage 1 GB to 250 MB. Original card text: | Every merged lane folder removed with `git worktree remove` after the hash check (never forced); *(0.8)* merged branches deleted; unmerged branches older than two days deleted after a one-line note of what each tried (held BUG-06 candidates included; their ideas can be redone on the current branch); `.lanes/evidence/` moved to `.evidence/` |
-| 8 | **CLEAN-08** Keep it clean | OPS, TOOL | S | The status page shows Git size, build size, `public/` size, lane-folder count and their change since the last run; the hygiene list of old violations is empty; the playbook's end-of-run steps include the cleanup pass; a full tier passes |
+| done | **CLEAN-07** Branches and lane folders | OPS | S | Done on 24 September 2026: all 95 lane folders and 135 branches removed (one-line notes for the 17 with unmerged work are in `run-log.md`), backups and scratch output deleted, Git storage 1 GB to 250 MB. From now on the janitor deletes a branch only when its work is merged, replaced or dropped, never for being idle (AGENTS.md rule 7). |
+| 8 | **CLEAN-08** The janitor | OPS, TOOL | S | The playbook defines the janitor step exactly as `AGENTS.md` does, at the end of every run and after every 10 merges; the status page shows Git size, build size, `public/` size and lane folders against the targets and their change since the last run, plus idle branches with their card and last activity; a full tier passes |
 | done | **CLEAN-09** Shrink Git history | OPS | M | Done by Kyle's decision on 24 September 2026. `integration/wasteland` history after `master` was rewritten (351 commits) to drop every `.blend` file and all non-`.md`/`.json` files under `docs/board/looks/`. `master` was not touched. Old-to-new commit IDs: `docs/history/history-rewrite-2026-09-24-map.txt`. Full backup (all refs) and copies of the latest dropped files: `C:\Users\kyleb\dev\duel-backups\2026-09-24-before-history-rewrite\`. Local lane branches still point at the old commits; rebase a held lane with `git rebase --onto <new> <old base>` using the map, and never merge an old-history branch directly |
 
 ---

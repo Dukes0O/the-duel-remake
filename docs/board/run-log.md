@@ -1480,3 +1480,18 @@ percent remaining. All helpers are finished. No lane has an active builder.
 - `docs/board/next-run.md` is now the single current plan and start prompt;
   the earlier review and cleanup notes were deleted. AGENTS.md now forbids
   linking lane dependencies to the live folder.
+
+## 2026-09-24 PDT – Kyle: janitor, not age limits or hard caps
+
+- Kyle can leave a branch idle for weeks while working elsewhere, so branches
+  are never deleted for being idle. AGENTS.md rule 7: a lane branch and folder
+  go when the work is merged, replaced or dropped with a reason; branches Kyle
+  creates are never deleted by agents.
+- Sizes will change, so they are targets in `tools/size-targets.json`, reported
+  on the status page, not merge blockers (rule 8). Only a file in the wrong home
+  fails a check.
+- What matters is hygiene: AGENTS.md now defines **the janitor**, a separate
+  step at the end of every run and after every 10 merges with seven duties
+  (delete finished work, list idle branches, delete used evidence, fold and
+  delete old notes, remove proven-unused code and assets, watch sizes, log it).
+  SPEC 0.7, CLEAN-01, CLEAN-04, CLEAN-08 and `next-run.md` updated to match.

@@ -26,20 +26,22 @@ Do these in order. No feature, art or balance work until step 1 is done.
 
 1. **Finish the cleanup (SPEC 0.7 and 0.8).** CLEAN-07 (branches and lane
    folders) and CLEAN-09 (history) are done. Do, in order:
-   - **CLEAN-01** hygiene test and `repo-audit` report, starting from today's
-     recorded violations, which may only shrink.
+   - **CLEAN-01** placement check (fails only for a file in the wrong home),
+     `tools/size-targets.json`, and the `repo-audit` report.
    - **CLEAN-02** Blender scripts write `.blend` output to `art-build/`, never
      `public/`; move `public/assets/models/course-landmarks.blend` out the same
      way.
    - **CLEAN-03** tools write raw screenshots, videos and audio captures to
      `.evidence/` by default. Nothing needs moving: the old evidence is gone.
-   - **CLEAN-04** runtime asset budgets: build 250 MB or less, Wasteland models
-     and textures 60 MB or less, `wall.glb` under 8 MB, no visible loss.
+   - **CLEAN-04** bring runtime assets toward the targets (build about 250 MB,
+     Wasteland models and textures about 60 MB, `wall.glb` about 8 MB) with no
+     visible loss, or record why not.
    - **CLEAN-05** docs and logs: build `docs/README.md`; move still-needed
      facts from the change notes and old handoffs into current docs, then
      delete them; keep 7 days of `run-log.md`.
    - **CLEAN-06** dead code, tests and switches, including `roadside-destruction`.
-   - **CLEAN-08** sizes and their change on the status page.
+   - **CLEAN-08** the janitor: its step in the playbook, and sizes against
+     targets plus idle branches on the status page.
    - **CLEAN-10** tested compaction routine for future pushes.
 2. **Then resume features (SPEC 0.6), in this order:**
    - **CAR-01** Wasteland career, scrap and territory map.
@@ -60,7 +62,9 @@ Do these in order. No feature, art or balance work until step 1 is done.
   `node_modules`, never to the live folder's. Unlink the link before removing
   a lane folder. On 24 September, 7 lane folders linked to the live game's
   dependencies, where a careless delete could have broken the live game.
-- Delete each lane folder and branch when its card merges or is abandoned.
+- Delete a lane folder and branch when its work is merged, replaced or
+  dropped with a reason. Never delete a branch for being idle, and never touch
+  a branch Kyle created. Sizes are targets for the janitor, not merge blockers.
 - Raw evidence goes to `.evidence/` and is deleted after its review.
 
 ## Start prompt
@@ -76,12 +80,12 @@ them in the order given: finish the cleanup cards before any feature, art or
 balance work. Keep every replay fingerprint unchanged during cleanup.
 Gates: lane tier and build before every merge; full tier after every 5 merges or
 2 hours and at the end of the run; update STATUS.md after every merge.
-Delete, do not archive. Remove each lane folder and branch when its card merges
-or is abandoned, unlinking any dependency link first. Never link to or touch the
+Delete, do not archive. Remove a lane folder and branch when its work is merged,
+replaced or dropped, unlinking any dependency link first; never for being idle. Never link to or touch the
 live folder, port 5174 or real saves. Do not rewrite history, release or push
 unless Kyle approves it in writing.
 Budget for this run: <for example "until morning" or "about X% of my usage">.
 When the budget is nearly spent: finish cards in progress, run the full tier,
-update STATUS.md, write a short handoff at the end of run-log.md with before and
-after sizes, delete every lane folder and merged branch, and stop.
+run the janitor (AGENTS.md), update STATUS.md, write a short handoff at the end of
+run-log.md with before and after sizes, and stop.
 ```
