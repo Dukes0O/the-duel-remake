@@ -154,3 +154,44 @@ no persistence change followed it, so those suites were not repeated.
 
 Source is clear for the two bounded browser rounds. Visual scoring and the
 required clean lane/build gate still precede development integration.
+## Presentation implementation and two browser rounds
+
+Presentation source commits: 9464c9a, 9eb499d, e26e1cd and final refinement
+77aa6ce. No existing acceptance assertion changed. The default map geometry and
+ordinary preview consumers remain intact; optional dataset writes tolerate the
+existing lightweight canvas fixture. Focused checks passed: hints 7/7,
+route-map 149 and course-preview 117. Final UI-only refinement repeated hints
+7/7 and scenario syntax. No persistence changes followed the Save Guardian
+review above, so historical save fixtures were not repeated.
+
+The menu delegates WASTELAND to App.visitWasteland. Garage hints use the cached
+validated snapshot. Both map caches include player/flag/discovery identity and
+project the real spur. The world hint forwards presentation lifecycle, uses a
+single pooled 48-point draw and never changes simulation or invokes its RNG.
+Independent review found and closed one temporary per-frame point allocation;
+the existing numeric effect was preserved in reused records and attributes.
+
+Actual browser evidence is under docs/board/looks/hidden-road-discovery, with
+immutable round-1 and round-2 PNGs, contact sheets, hashes and copied reports.
+Both private memory-only scenarios retained eight shots and reported zero
+warnings/errors (ports 5431 and 45800). Invitation discovery, Turn back, reload,
+player isolation, direct visit without profile/run changes, automatic scenic
+entry, paused dust and flag-off controls passed. Counts 5/10 and shortened
+travel positions are explicit fixtures, not claimed complete races.
+
+Round 1 exposed a below-fold garage hint, a small WASTELAND action and a menu
+capture taken before readiness settled. Round 2 moves the hint below the
+header (visible y133–152), makes the phone action full-width 344 by44 pixels,
+labels the revealed dotted route and waits for real loading/readiness. It does
+not hide the loading overlay. Independent source review cleared 77aa6ce before
+capture; Director scored visual evidence separately. Dust motion is unchanged.
+
+Both rounds recorded bounded absolute RAF samples: High p95 18.1 ms,
+Performance 18.2 ms, 120 ordered intervals per quality. There is no paired
+baseline or percent overhead claim. This checks limited smoothness around the
+hint only. Full-scene calls/triangles are487/1,867,343 High and243/721,162
+Performance, including existing scene passes. No simulation source was touched
+by presentation; independent runtime controls cover ordinary/flag-off rules.
+
+Required final lane/build and Director visual acceptance remain integration
+steps; this note does not claim those gates have already passed.
