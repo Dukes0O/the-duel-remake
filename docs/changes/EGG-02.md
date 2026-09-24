@@ -94,3 +94,30 @@ fingerprints or saves were changed for this handoff.
 No broad gate or browser matrix was run. Three immutable matched fidelity
 rounds and the actual ten-percent frame-cost limit remain separate required
 browser and art checks. Structural tests alone do not grant beta or release.
+
+## Initial runtime and supported wall footprint
+
+After red commit `ca7234c`, the runtime loads only the two local GLBs when a
+Hidden Road exists. The wall follows the final road pose with its front toward
+the approach. The explicit gate control moves only the panel, including when
+the requested fraction arrives before loading. Wash meshes are prepared as
+shared instances inside the existing oriented collision boxes. The EGG-01
+greybox banks remain available as a loading fallback and cost baseline.
+
+The factory registers its retirement hook on its own scene group. Ready
+geometry, materials and textures remain owned by `disposeTree`; late unattached
+resources are released once, excluding identities already owned by the retired
+graph. Gate updates reuse prepared objects and do not read or write race state.
+
+An early read-only placement probe found that the original 120 m salt-flat
+half-width buried the outer wall by 28 to 39 m. The Director authorized widening
+only the final prepared flat to 225 m, leaving 15 m beyond each wall end. The
+existing support and rendered terrain both derive from that width. A 5 m grid
+over the added area on routes A, B and C found no protected-road overlap; its
+nearest sampled road edge was over 697 m away. Entrance, centerline, height,
+wash widths, collision banks and ordinary-road geometry remain unchanged.
+
+The independent scene checks now pass **17/17**, including all-route grounding
+and the original preservation controls. Syntax and whitespace checks pass.
+Real asset checks, browser captures, independent source review and lane/build
+gates remain pending. No existing assertion or fingerprint changed.

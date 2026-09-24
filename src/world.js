@@ -20,6 +20,7 @@ import { strip, terrainGeometry, farTerrainGeometry, hiddenRoadGroundGeometry, m
 import { addFurniture, addSign, box, addStation, addTurnSigns, addCoast, addHarbor, addFinish } from './world-props.js';
 import { registerSceneSystem, disposeSceneSystems } from './scene-systems.js';
 import { makeSignFallSystem } from './scenery-fall.js';
+import { createRustwallScene } from './rustwall-scene.js';
 
 // Keep the established scene API for renderer and geometry-focused callers.
 export { worldAtExtended, strip, terrainGeometry, farTerrainGeometry } from './world-surfaces.js';
@@ -87,8 +88,8 @@ export function buildEnvironment(course) {
   return group;
 }
 
-// EGG-01 playable greybox: authored geometry is shared with collision and
-// support. Final Blender wash/ Rustwall assets belong to the graphics cards.
+// The prepared bed and collision-aligned greybox remain playable while local
+// Blender scenery loads, and are retained for an exact EGG-01 cost comparison.
 function addHiddenRoad(group, course) {
   const road = course.hiddenRoad, root = new THREE.Group(); root.name = 'Hidden Road';
   const dirt = new THREE.MeshStandardMaterial({ color: 0x9d8463, roughness: 1,
@@ -127,6 +128,11 @@ function addHiddenRoad(group, course) {
     transform.updateMatrix(); banks.setMatrixAt(i, transform.matrix);
   });
   root.add(banks);
+  const rustwall = createRustwallScene(course);
+  root.add(rustwall.group);
+  rustwall.ready.then(() => {
+    if (rustwall.group.getObjectByName('Rustwall wash')) banks.visible = false;
+  });
   const rust = new THREE.MeshStandardMaterial({ color: 0x69442d, roughness: .94 });
   const postPose = road.poseAt(13, 4.2), post = new THREE.Mesh(new THREE.BoxGeometry(.17, 1.8, .16), rust);
   post.position.set(postPose.x, postPose.y + .8, postPose.z); post.rotation.z = .18; root.add(post);

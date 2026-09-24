@@ -23,7 +23,7 @@ export function createHiddenRoad(course) {
   // A natural widening before the later 150 m departure point leaves room
   // to reverse direction without committing to the Wasteland approach.
   const widthAt = progress => 9 + 9 * smooth((progress - 65) / 20) * (1 - smooth((progress - 125) / 20))
-    + 111 * smooth((progress - washEnd) / 90);
+    + 216 * smooth((progress - washEnd) / 90);
   function nearest(x, z) {
     const hit = index.query(x, z), b = samples[hit.index], a = samples[hit.index - 1];
     const progress = a.progress + (b.progress - a.progress) * hit.t;
