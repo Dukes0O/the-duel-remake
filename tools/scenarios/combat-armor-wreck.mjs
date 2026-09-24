@@ -64,7 +64,8 @@ async function qualityPass(context, quality) {
     duel.onChange((_, event) => { if (event.combatWreck) events.push(event); });
     const at = duel.course.groundAt(state.s, state.lateral);
     state.combat.projectiles.push({kind: 'crossbow', enemy: true, level: 0,
-      x: at.x, y: at.y + 2, z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
+      x: at.x, y: at.y + (state.airHeight || 0) + duel._vehicleSpec(state).height / 2,
+      z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
     duel.step(1 / 120);
     if (events.length !== 1 || events[0].victim !== 'player' || state.armor !== 0)
       throw Error('Player did not enter one visible armor wreck');
@@ -126,7 +127,8 @@ async function qualityPass(context, quality) {
       lateral: 3.1, prevLateral: 3.1, speedMph: 0, impactTimer: 0, armor: 12});
     const at = duel.course.groundAt(second.s, second.lateral);
     state.combat.projectiles.push({kind: 'crossbow', enemy: false, level: 0,
-      x: at.x, y: at.y + 2, z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
+      x: at.x, y: at.y + (second.airHeight || 0) + duel._vehicleSpec(second).height / 2,
+      z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
     duel.step(1 / 120);
     const wrecks = window.__combatWreckEvents;
     if (wrecks.length !== 2 || wrecks[1].opponentIndex !== 1 || second.armor !== 0)

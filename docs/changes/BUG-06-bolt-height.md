@@ -98,3 +98,31 @@ Seven balance failures remain: Easy and Medium wins, Easy and Medium enemy
 hits, stock UFO gains on Easy and Medium, and maximum UFO gain on Medium.
 This geometric correction does not establish release balance. No tuning or
 balance limit changed.
+
+## Additional reviewed direct-hit fixtures
+
+The first independent lane gate stopped with 59 suites passed, 1 failed and
+64 not run. The armor suite still injected direct-hit bolts at ground + 2 m,
+above the target roof. An independent reviewer approved the same geometry
+correction in these exact sites and reproduced all 42 unit tests passing in
+memory before the Director expanded file ownership:
+
+- `tools/test-combat-armor.mjs`: `boltAt`, targeting `actor`.
+- `tools/test-combat-scoring.mjs`: `bolt`, targeting `actor`, and the scripted
+  frame-rate test shot targeting `victim`.
+- `tools/test-combat-opponents.mjs`: the later-opponent shot targeting `target`.
+- `tools/scenarios/combat-armor-frame-pacing.mjs`: the player wreck injection.
+- `tools/scenarios/combat-armor-wreck.mjs`: player and second-opponent injections.
+- `tools/scenarios/combat-effects.mjs`: player and later-opponent wreck injections.
+- `tools/scenarios/combat-results.mjs`: the results encounter's victim injection.
+
+All ten injection sites now use ground + target air height + half the actual
+vehicle height. They intend direct body hits to exercise armor, scoring and
+wreck presentation. Every assertion and hash is preserved. The effects muzzle
+sample stays at ground + 2 m; legacy-only fixtures and runtime source are
+unchanged by this follow-up.
+
+The three repaired unit suites pass **42/42 tests**, with none skipped, in
+1.22 s. Only those suites were rerun. The balance matrix was not repeated.
+Representative armor-wreck/results browser checks and the final independent
+lane/build gate remain pending.

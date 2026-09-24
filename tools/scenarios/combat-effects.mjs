@@ -142,7 +142,9 @@ async function pass(context, quality) {
     state.armor = 12;
     const at = duel.course.groundAt(state.s, state.lateral);
     state.combat.projectiles.push({kind: 'crossbow', enemy: true,
-      level: 0, x: at.x, y: at.y + 2, z: at.z,
+      level: 0, x: at.x,
+      y: at.y + (state.airHeight || 0) + duel._vehicleSpec(state).height / 2,
+      z: at.z,
       vx: 0, vy: 0, vz: 0, age: 0});
     duel.step(1 / 120);
     if (!state.combatWrecking || state.armor !== 0)
@@ -198,7 +200,9 @@ async function pass(context, quality) {
       impactTimer: 0, armor: 12});
     const at = duel.course.groundAt(later.s, later.lateral);
     state.combat.projectiles.push({kind: 'crossbow', enemy: false,
-      level: 0, x: at.x, y: at.y + 2, z: at.z,
+      level: 0, x: at.x,
+      y: at.y + (later.airHeight || 0) + duel._vehicleSpec(later).height / 2,
+      z: at.z,
       vx: 0, vy: 0, vz: 0, age: 0});
     duel.step(1 / 120);
     if (!later.combatWrecking || later.armor !== 0)

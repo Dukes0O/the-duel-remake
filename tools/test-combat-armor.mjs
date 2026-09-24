@@ -43,7 +43,8 @@ function place(actor, s, lateral = 0) {
 function boltAt(duel, actor, enemy = false) {
   const at = duel.course.groundAt(actor.s, actor.lateral);
   duel.state.combat.projectiles.push({kind: 'crossbow', enemy, level: 0,
-    x: at.x, y: at.y + 2, z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
+    x: at.x, y: at.y + (actor.airHeight || 0) + duel._vehicleSpec(actor).height / 2,
+    z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
 }
 
 function bombAt(duel, actor, {enemy = false, age = 1.5, sourceIndex} = {}) {
