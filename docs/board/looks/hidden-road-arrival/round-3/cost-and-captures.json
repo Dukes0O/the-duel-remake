@@ -1,0 +1,3938 @@
+{
+  "commit": "7ad8a323327b87fc57b235141a42eff3259ccbd2",
+  "audioReuse": "Round 2 audio source and assets are unchanged; reuse its PCM/plots, with no new listening claim.",
+  "captures": [
+    {
+      "name": "high-opening-refined",
+      "path": "docs/board/looks/hidden-road-arrival/round-3/high-opening-refined.png",
+      "sha256": "04492346e3873e5833c447e6420bb36e1127e60ea9da18927497e86e97164869"
+    },
+    {
+      "name": "performance-opening-refined",
+      "path": "docs/board/looks/hidden-road-arrival/round-3/performance-opening-refined.png",
+      "sha256": "5aa2fbc2cc7082b8f1c362a3e6eaf4442254b639daf8dade5a8eba0fe2233408"
+    }
+  ],
+  "high": {
+    "scope": "120 ordered stationary RAF frames per condition after 12 warm-up frames. Same real opening pose, camera and scene; disabled removes gate spark update/draw and HUD update. CPU includes presentation and render submission, not GPU time. Opening dialog is correctly hidden. App simulation stopped; no recording/PCM work overlaps this sample.",
+    "disabled": {
+      "rows": [
+        {
+          "index": 0,
+          "rafMs": 18,
+          "cpuPresentationMs": 2.2000000178813934,
+          "cpuRenderMs": 1.4000000357627869,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 1,
+          "rafMs": 18.399999999999636,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 2,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 3,
+          "rafMs": 17.59999999999991,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.399999976158142,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 4,
+          "rafMs": 17.90000000000009,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.4999999701976776,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 5,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 6,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 2.5,
+          "cpuRenderMs": 2.199999988079071,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 7,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 8,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 9,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 10,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 11,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 12,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.5000000298023224,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 13,
+          "rafMs": 17.90000000000009,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 14,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 2.2999999821186066,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 15,
+          "rafMs": 17.90000000000009,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.1999999582767487,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 16,
+          "rafMs": 18.09999999999991,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.2999999821186066,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 17,
+          "rafMs": 17.59999999999991,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.3000000417232513,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 18,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 19,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 20,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 21,
+          "rafMs": 18.5,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 22,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 23,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 24,
+          "rafMs": 18.399999999999636,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 25,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.2999999821186066,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 26,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1.600000023841858,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 27,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.3999999463558197,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 28,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 1.7000000178813934,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 29,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.2000000476837158,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 30,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.5,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 31,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 32,
+          "rafMs": 17.900000000000546,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 33,
+          "rafMs": 18.399999999999636,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.699999988079071,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 34,
+          "rafMs": 18.5,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 35,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 36,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.7000000178813934,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 37,
+          "rafMs": 18.199999999999818,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 38,
+          "rafMs": 18,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 39,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 40,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 2.100000023841858,
+          "cpuRenderMs": 1.699999988079071,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 41,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.0999999642372131,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 42,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.399999976158142,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 43,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.5000000298023224,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 44,
+          "rafMs": 18.599999999999454,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 45,
+          "rafMs": 18.400000000000546,
+          "cpuPresentationMs": 2.100000023841858,
+          "cpuRenderMs": 1.600000023841858,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 46,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.600000023841858,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 47,
+          "rafMs": 18.300000000000182,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 48,
+          "rafMs": 18,
+          "cpuPresentationMs": 2.2999999821186066,
+          "cpuRenderMs": 1.800000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 49,
+          "rafMs": 17.299999999999272,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.5000000298023224,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 50,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 2.199999988079071,
+          "cpuRenderMs": 1.7999999821186066,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 51,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.4999999701976776,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 52,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 53,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 2.300000011920929,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 54,
+          "rafMs": 18.300000000000182,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 55,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 56,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.4000000357627869,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 57,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.7000000178813934,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 58,
+          "rafMs": 17.900000000000546,
+          "cpuPresentationMs": 1.600000023841858,
+          "cpuRenderMs": 1.100000023841858,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 59,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 60,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 61,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 62,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.5000000298023224,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 63,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 64,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.100000023841858,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 65,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 66,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 67,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 2.199999988079071,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 68,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.399999976158142,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 69,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.5,
+          "cpuRenderMs": 1,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 70,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 2.199999988079071,
+          "cpuRenderMs": 1.800000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 71,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.5000000298023224,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 72,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.4999999701976776,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 73,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.600000023841858,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 74,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 75,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 76,
+          "rafMs": 17.299999999999272,
+          "cpuPresentationMs": 1.7000000178813934,
+          "cpuRenderMs": 1.1999999582767487,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 77,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.5000000298023224,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 78,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.600000023841858,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 79,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 2.199999988079071,
+          "cpuRenderMs": 1.899999976158142,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 80,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 81,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 82,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 83,
+          "rafMs": 18.5,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.699999988079071,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 84,
+          "rafMs": 24.5,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 85,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 2.199999988079071,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 86,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.399999976158142,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 87,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 88,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 89,
+          "rafMs": 18,
+          "cpuPresentationMs": 2.2000000178813934,
+          "cpuRenderMs": 1.5000000298023224,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 90,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 91,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 92,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 93,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 2.2000000178813934,
+          "cpuRenderMs": 1.7000000178813934,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 94,
+          "rafMs": 17.400000000000546,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.7999999821186066,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 95,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.3999999463558197,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 96,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 97,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 98,
+          "rafMs": 17.099999999999454,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 99,
+          "rafMs": 17.900000000000546,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.4000000357627869,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 100,
+          "rafMs": 17.799999999999272,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.2999999821186066,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 101,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 102,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 2.399999976158142,
+          "cpuRenderMs": 1.9999999701976776,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 103,
+          "rafMs": 18.399999999999636,
+          "cpuPresentationMs": 1.7000000178813934,
+          "cpuRenderMs": 1.2999999821186066,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 104,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.0999999642372131,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 105,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 106,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 107,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.100000023841858,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 108,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.2000000476837158,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 109,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1.7000000178813934,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 110,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 2.399999976158142,
+          "cpuRenderMs": 1.7000000178813934,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 111,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 112,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 113,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.2999999821186066,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 114,
+          "rafMs": 18.199999999999818,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 115,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 1.7000000178813934,
+          "cpuRenderMs": 1.2999999821186066,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 116,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 117,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.4000000357627869,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 118,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 207,
+          "triangles": 438165
+        },
+        {
+          "index": 119,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 207,
+          "triangles": 438165
+        }
+      ],
+      "summary": {
+        "samples": 120,
+        "rafP50": 17.799999999999272,
+        "rafP95": 18.399999999999636,
+        "cpuP50": 1.899999976158142,
+        "cpuP95": 2.2000000178813934,
+        "cpuRenderP95": 1.7999999821186066,
+        "drawCalls": 207,
+        "triangles": 438165
+      },
+      "camera": [
+        -1940.4047919338934,
+        36.642259603457646,
+        1086.3464637153295
+      ]
+    },
+    "enabled": {
+      "rows": [
+        {
+          "index": 0,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 2.600000023841858,
+          "cpuRenderMs": 1.5000000298023224,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 1,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.3000000417232513,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 2,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 2.7000000178813934,
+          "cpuRenderMs": 1.9000000357627869,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 3,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 2.2999999821186066,
+          "cpuRenderMs": 1.4999999701976776,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 4,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 2.2999999821186066,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 5,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.1999999582767487,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 6,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.399999976158142,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 7,
+          "rafMs": 17.900000000000546,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.100000023841858,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 8,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 9,
+          "rafMs": 18,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 10,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 11,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.100000023841858,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 12,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 2.199999988079071,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 13,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 14,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 15,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 16,
+          "rafMs": 17.900000000000546,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.0000000298023224,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 17,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 2.100000023841858,
+          "cpuRenderMs": 1.5000000298023224,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 18,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.399999976158142,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 19,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 2.4000000059604645,
+          "cpuRenderMs": 1.699999988079071,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 20,
+          "rafMs": 18,
+          "cpuPresentationMs": 2.300000011920929,
+          "cpuRenderMs": 1.3000000417232513,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 21,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 2.5,
+          "cpuRenderMs": 1.9000000357627869,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 22,
+          "rafMs": 17.400000000000546,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 23,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 2.300000011920929,
+          "cpuRenderMs": 1.5999999642372131,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 24,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 25,
+          "rafMs": 17.900000000000546,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 26,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 27,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.600000023841858,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 28,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 2.300000011920929,
+          "cpuRenderMs": 1.3000000417232513,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 29,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 30,
+          "rafMs": 17.400000000000546,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 31,
+          "rafMs": 17.099999999999454,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 32,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 2.100000023841858,
+          "cpuRenderMs": 1.4000000357627869,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 33,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 2.2999999821186066,
+          "cpuRenderMs": 1.699999988079071,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 34,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.100000023841858,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 35,
+          "rafMs": 18.5,
+          "cpuPresentationMs": 2.2000000178813934,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 36,
+          "rafMs": 17.099999999999454,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 37,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 38,
+          "rafMs": 18.300000000000182,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.3000000417232513,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 39,
+          "rafMs": 18,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.3999999463558197,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 40,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.2000000476837158,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 41,
+          "rafMs": 18.199999999999818,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.100000023841858,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 42,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.5000000298023224,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 43,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 2.5,
+          "cpuRenderMs": 1.7000000178813934,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 44,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 45,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 2.699999988079071,
+          "cpuRenderMs": 1.899999976158142,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 46,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 47,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 2.100000023841858,
+          "cpuRenderMs": 1.5000000298023224,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 48,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 2.300000011920929,
+          "cpuRenderMs": 1.5999999642372131,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 49,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 2.5,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 50,
+          "rafMs": 17.700000000000728,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 51,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 2.2000000178813934,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 52,
+          "rafMs": 18.399999999999636,
+          "cpuPresentationMs": 2.5,
+          "cpuRenderMs": 1.600000023841858,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 53,
+          "rafMs": 17.900000000000546,
+          "cpuPresentationMs": 2.2999999821186066,
+          "cpuRenderMs": 1.699999988079071,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 54,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 55,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 56,
+          "rafMs": 18,
+          "cpuPresentationMs": 2.100000023841858,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 57,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 2.2999999821186066,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 58,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 2.2999999821186066,
+          "cpuRenderMs": 1.7000000178813934,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 59,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 60,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 61,
+          "rafMs": 18.199999999999818,
+          "cpuPresentationMs": 2.2000000178813934,
+          "cpuRenderMs": 1.5000000298023224,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 62,
+          "rafMs": 18.699999999999818,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 63,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.399999976158142,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 64,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 65,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.2999999821186066,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 66,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 67,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.2999999821186066,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 68,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 0.9999999701976776,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 69,
+          "rafMs": 17.799999999999272,
+          "cpuPresentationMs": 2.2999999821186066,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 70,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.2999999821186066,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 71,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 72,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 2.199999988079071,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 73,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 74,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 75,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 2.2000000178813934,
+          "cpuRenderMs": 1.5000000298023224,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 76,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 2.5999999940395355,
+          "cpuRenderMs": 1.7999999821186066,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 77,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 2.199999988079071,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 78,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5999999642372131,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 79,
+          "rafMs": 17.099999999999454,
+          "cpuPresentationMs": 2.300000011920929,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 80,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 2.199999988079071,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 81,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.600000023841858,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 82,
+          "rafMs": 17.400000000000546,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1.2999999821186066,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 83,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 2.2000000178813934,
+          "cpuRenderMs": 1.4000000357627869,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 84,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.100000023841858,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 85,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.399999976158142,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 86,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 2.5,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 87,
+          "rafMs": 18.200000000000728,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.1999999582767487,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 88,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 2.4000000059604645,
+          "cpuRenderMs": 1.800000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 89,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 90,
+          "rafMs": 17.099999999999454,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 91,
+          "rafMs": 17.900000000000546,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 92,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 93,
+          "rafMs": 17.099999999999454,
+          "cpuPresentationMs": 2.399999976158142,
+          "cpuRenderMs": 1.600000023841858,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 94,
+          "rafMs": 17.400000000000546,
+          "cpuPresentationMs": 3.2999999821186066,
+          "cpuRenderMs": 2.0999999940395355,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 95,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.899999976158142,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 96,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 97,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.399999976158142,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 98,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 99,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 100,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 2.5999999940395355,
+          "cpuRenderMs": 1.7000000178813934,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 101,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 102,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 2.300000011920929,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 103,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 104,
+          "rafMs": 18,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 105,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 106,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 107,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 108,
+          "rafMs": 18.600000000000364,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 109,
+          "rafMs": 17.099999999999454,
+          "cpuPresentationMs": 2.4000000059604645,
+          "cpuRenderMs": 1.6999999582767487,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 110,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.9000000059604645,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 111,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 2.4000000059604645,
+          "cpuRenderMs": 2,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 112,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 2.2999999821186066,
+          "cpuRenderMs": 1.5,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 113,
+          "rafMs": 17.400000000000546,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 114,
+          "rafMs": 18.300000000000182,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.4000000357627869,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 115,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.2999999821186066,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 116,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 2.100000023841858,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 117,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 2.699999988079071,
+          "cpuRenderMs": 1.8999999463558197,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 118,
+          "rafMs": 17.799999999999272,
+          "cpuPresentationMs": 2.0999999940395355,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        },
+        {
+          "index": 119,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 2.2000000178813934,
+          "cpuRenderMs": 1.4000000059604645,
+          "drawCalls": 208,
+          "triangles": 438165
+        }
+      ],
+      "summary": {
+        "samples": 120,
+        "rafP50": 17.600000000000364,
+        "rafP95": 18.200000000000728,
+        "cpuP50": 2.0999999940395355,
+        "cpuP95": 2.5999999940395355,
+        "cpuRenderP95": 1.800000011920929,
+        "drawCalls": 208,
+        "triangles": 438165
+      },
+      "camera": [
+        -1940.4047919338934,
+        36.642259603457646,
+        1086.3464637153295
+      ]
+    }
+  },
+  "performance": {
+    "scope": "120 ordered stationary RAF frames per condition after 12 warm-up frames. Same real opening pose, camera and scene; disabled removes gate spark update/draw and HUD update. CPU includes presentation and render submission, not GPU time. Opening dialog is correctly hidden. App simulation stopped; no recording/PCM work overlaps this sample.",
+    "disabled": {
+      "rows": [
+        {
+          "index": 0,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 1,
+          "rafMs": 17.400000000000546,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 2,
+          "rafMs": 18.300000000000182,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 3,
+          "rafMs": 18.199999999999818,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 1.100000023841858,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 4,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 5,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 6,
+          "rafMs": 17.299999999999272,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 7,
+          "rafMs": 17.900000000000546,
+          "cpuPresentationMs": 1.5,
+          "cpuRenderMs": 1.2999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 8,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 9,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.5,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 10,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 11,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 12,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 13,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 14,
+          "rafMs": 17.099999999999454,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 15,
+          "rafMs": 17.400000000000546,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 16,
+          "rafMs": 18.299999999999272,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 17,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 18,
+          "rafMs": 17.900000000000546,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 19,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 20,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 21,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.100000023841858,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 22,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 23,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 24,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 25,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 26,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 27,
+          "rafMs": 18.199999999999818,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 28,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 29,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 30,
+          "rafMs": 17.299999999999272,
+          "cpuPresentationMs": 1.100000023841858,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 31,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 32,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 0.8999999761581421,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 33,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 34,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 0.9000000059604645,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 35,
+          "rafMs": 18.399999999999636,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 36,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 37,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 38,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 39,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 40,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 41,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 0.9000000059604645,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 42,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 2.2999999821186066,
+          "cpuRenderMs": 1.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 43,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 44,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 45,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 46,
+          "rafMs": 17.299999999999272,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 47,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 48,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 49,
+          "rafMs": 18.300000000000182,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 50,
+          "rafMs": 17.400000000000546,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 51,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 52,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 53,
+          "rafMs": 18.300000000000182,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 54,
+          "rafMs": 18,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 55,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 1.100000023841858,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 56,
+          "rafMs": 19.600000000000364,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 57,
+          "rafMs": 18.399999999999636,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 58,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 59,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 60,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 61,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 0.9000000059604645,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 62,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 63,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 64,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 65,
+          "rafMs": 18.199999999999818,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 66,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.100000023841858,
+          "cpuRenderMs": 0.7000000178813934,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 67,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 68,
+          "rafMs": 17.799999999999272,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 69,
+          "rafMs": 17.900000000000546,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 70,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 71,
+          "rafMs": 18,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 72,
+          "rafMs": 17.799999999999272,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 73,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 74,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 75,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 76,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 77,
+          "rafMs": 17.400000000000546,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 78,
+          "rafMs": 18.199999999999818,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 79,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 80,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 81,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 82,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 83,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.100000023841858,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 84,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 85,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 86,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 1.100000023841858,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 87,
+          "rafMs": 17.700000000000728,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 88,
+          "rafMs": 17.799999999999272,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 89,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 90,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 91,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.5,
+          "cpuRenderMs": 1.100000023841858,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 92,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 93,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 1.300000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 94,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 95,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 96,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 97,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 98,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 0.9000000059604645,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 99,
+          "rafMs": 18,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 100,
+          "rafMs": 17.800000000000182,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 101,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 0.8999999761581421,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 102,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 103,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 104,
+          "rafMs": 18.600000000000364,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 105,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 11.099999994039536,
+          "cpuRenderMs": 10.899999976158142,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 106,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 0.9000000059604645,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 107,
+          "rafMs": 17.700000000000728,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 1.100000023841858,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 108,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 109,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 0.9000000059604645,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 110,
+          "rafMs": 17.900000000000546,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 111,
+          "rafMs": 18.599999999999454,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 112,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 113,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 114,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 115,
+          "rafMs": 17.300000000000182,
+          "cpuPresentationMs": 1.5,
+          "cpuRenderMs": 1,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 116,
+          "rafMs": 18.300000000000182,
+          "cpuPresentationMs": 1.5,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 117,
+          "rafMs": 18.099999999999454,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 118,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 0.8999999761581421,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 122,
+          "triangles": 280817
+        },
+        {
+          "index": 119,
+          "rafMs": 17.400000000000546,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 122,
+          "triangles": 280817
+        }
+      ],
+      "summary": {
+        "samples": 120,
+        "rafP50": 17.600000000000364,
+        "rafP95": 18.300000000000182,
+        "cpuP50": 1.0999999940395355,
+        "cpuP95": 1.5,
+        "cpuRenderP95": 1.2000000178813934,
+        "drawCalls": 122,
+        "triangles": 280817
+      },
+      "camera": [
+        -1940.4047919338934,
+        36.642259603457646,
+        1086.3464637153295
+      ]
+    },
+    "enabled": {
+      "rows": [
+        {
+          "index": 0,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 1,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 1.5,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 2,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 3,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 4,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 1.800000011920929,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 5,
+          "rafMs": 17.099999999999454,
+          "cpuPresentationMs": 1.399999976158142,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 6,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 7,
+          "rafMs": 17.599999999999454,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 8,
+          "rafMs": 18.199999999999818,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 9,
+          "rafMs": 17.900000000000546,
+          "cpuPresentationMs": 1.399999976158142,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 10,
+          "rafMs": 17.699999999999818,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 11,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 1.100000023841858,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 12,
+          "rafMs": 17.199999999999818,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 13,
+          "rafMs": 17.50000000000091,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 14,
+          "rafMs": 17.799999999999272,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 15,
+          "rafMs": 17.299999999999272,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 16,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.399999976158142,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 17,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 18,
+          "rafMs": 17.299999999999272,
+          "cpuPresentationMs": 1.5,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 19,
+          "rafMs": 17.80000000000109,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 20,
+          "rafMs": 17.599999999998545,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 21,
+          "rafMs": 18.30000000000109,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 22,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 23,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 24,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 25,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 1.100000023841858,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 26,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 27,
+          "rafMs": 17.700000000000728,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 28,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 29,
+          "rafMs": 17.700000000000728,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 30,
+          "rafMs": 17.19999999999891,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 31,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 32,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 33,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 34,
+          "rafMs": 18.200000000000728,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 35,
+          "rafMs": 17.299999999999272,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 36,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 37,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 38,
+          "rafMs": 18.200000000000728,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 39,
+          "rafMs": 17.799999999999272,
+          "cpuPresentationMs": 1.100000023841858,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 40,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 41,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 42,
+          "rafMs": 17.19999999999891,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 43,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 44,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 45,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.7999999821186066,
+          "cpuRenderMs": 1.2999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 46,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 47,
+          "rafMs": 17.599999999998545,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 48,
+          "rafMs": 17.900000000001455,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 49,
+          "rafMs": 17.599999999998545,
+          "cpuPresentationMs": 1.600000023841858,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 50,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 51,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 52,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 53,
+          "rafMs": 18.399999999999636,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 54,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.7000000178813934,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 55,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 56,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 57,
+          "rafMs": 17.299999999999272,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 58,
+          "rafMs": 17.700000000000728,
+          "cpuPresentationMs": 1.100000023841858,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 59,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 60,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.399999976158142,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 61,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 62,
+          "rafMs": 17.299999999999272,
+          "cpuPresentationMs": 1.399999976158142,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 63,
+          "rafMs": 18.5,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 64,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 65,
+          "rafMs": 17.299999999999272,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 66,
+          "rafMs": 17.700000000000728,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 67,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 68,
+          "rafMs": 17.69999999999891,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 69,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 70,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 71,
+          "rafMs": 17.80000000000109,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 72,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 73,
+          "rafMs": 18.19999999999891,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 74,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 75,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.7000000178813934,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 76,
+          "rafMs": 18.200000000000728,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 77,
+          "rafMs": 17.19999999999891,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 78,
+          "rafMs": 17.700000000000728,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 79,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.100000023841858,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 80,
+          "rafMs": 17,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 81,
+          "rafMs": 17.700000000000728,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 82,
+          "rafMs": 17.299999999999272,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 83,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 84,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 85,
+          "rafMs": 17.19999999999891,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 86,
+          "rafMs": 18.200000000000728,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 87,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 88,
+          "rafMs": 17.399999999999636,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 89,
+          "rafMs": 17.30000000000109,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 90,
+          "rafMs": 17.799999999999272,
+          "cpuPresentationMs": 1,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 91,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.100000023841858,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 92,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.399999976158142,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 93,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 94,
+          "rafMs": 17.899999999999636,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 95,
+          "rafMs": 17.19999999999891,
+          "cpuPresentationMs": 1.100000023841858,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 96,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 97,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.7999999821186066,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 98,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 99,
+          "rafMs": 17.799999999999272,
+          "cpuPresentationMs": 1.100000023841858,
+          "cpuRenderMs": 0.7000000178813934,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 100,
+          "rafMs": 17.80000000000109,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 101,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.699999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 102,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 103,
+          "rafMs": 18.5,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 104,
+          "rafMs": 17.5,
+          "cpuPresentationMs": 2,
+          "cpuRenderMs": 1.5999999940395355,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 105,
+          "rafMs": 18.099999999998545,
+          "cpuPresentationMs": 1.5,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 106,
+          "rafMs": 17.700000000000728,
+          "cpuPresentationMs": 1.5,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 107,
+          "rafMs": 17.100000000000364,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.199999988079071,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 108,
+          "rafMs": 18,
+          "cpuPresentationMs": 1.5,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 109,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 0.8999999761581421,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 110,
+          "rafMs": 17.099999999998545,
+          "cpuPresentationMs": 1.2999999821186066,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 111,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.0999999940395355,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 112,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 0.9000000059604645,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 113,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.300000011920929,
+          "cpuRenderMs": 1,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 114,
+          "rafMs": 18.299999999999272,
+          "cpuPresentationMs": 1.2000000178813934,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 115,
+          "rafMs": 17.600000000000364,
+          "cpuPresentationMs": 1.5,
+          "cpuRenderMs": 1.2000000178813934,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 116,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.4000000059604645,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 117,
+          "rafMs": 17.19999999999891,
+          "cpuPresentationMs": 1.199999988079071,
+          "cpuRenderMs": 0.800000011920929,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 118,
+          "rafMs": 18.100000000000364,
+          "cpuPresentationMs": 1.699999988079071,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 123,
+          "triangles": 280817
+        },
+        {
+          "index": 119,
+          "rafMs": 17.200000000000728,
+          "cpuPresentationMs": 1.5999999940395355,
+          "cpuRenderMs": 1.0999999940395355,
+          "drawCalls": 123,
+          "triangles": 280817
+        }
+      ],
+      "summary": {
+        "samples": 120,
+        "rafP50": 17.600000000000364,
+        "rafP95": 18.200000000000728,
+        "cpuP50": 1.2999999821186066,
+        "cpuP95": 1.699999988079071,
+        "cpuRenderP95": 1.199999988079071,
+        "drawCalls": 123,
+        "triangles": 280817
+      },
+      "camera": [
+        -1940.4047919338934,
+        36.642259603457646,
+        1086.3464637153295
+      ]
+    }
+  }
+}

@@ -138,10 +138,10 @@ async function presentationCost() {
   const app=window.__qaApp,render=window.__render,qa=window.__arrivalQa,state=app.duel.state;
   if(!qa.costSnapshot)throw Error('No actual opening snapshot for stationary paired cost');
   const saved=structuredClone(state),rig=render.scene.getObjectByName('Rustwall'),update=rig.userData.updateJourney;
+  const hudHook=window.__hiddenRoadUiQa;if(!hudHook)throw Error('QA-only gate HUD hook missing');
   const originalDraw=render.renderer.render;let drawMs=0;
   render.renderer.render=function(...args){const start=performance.now();try{return originalDraw.apply(this,args);}finally{drawMs+=performance.now()-start;}};
   const realRaf=window.requestAnimationFrame.bind(window),dialog=document.querySelector('[data-hidden-road-dialog]');
-  const hudHook=window.__hiddenRoadUiQa;if(!hudHook)throw Error('QA-only gate HUD hook missing');
   try{
   app.stop();Object.assign(state,structuredClone(qa.costSnapshot));app.onFrame?.(state,0);render.renderFrame();
   // Let the outstanding production renderer callback drain, then make exactly
