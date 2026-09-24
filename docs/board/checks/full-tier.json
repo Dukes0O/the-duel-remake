@@ -1,15 +1,17 @@
 {
   "schema": 1,
-  "commit": "7b2d8fcdb72484d90c044e3751329e0ec506bc2e",
-  "time": "2026-09-24T21:30:11.482Z",
+  "commit": "85fe35f0d0537539ec9813c51be31b59292f74a3",
+  "time": "2026-09-24T23:21:06.652Z",
   "tier": "full",
-  "passed": true,
+  "passed": false,
   "dirty": false,
   "startDirty": false,
   "endDirty": false,
-  "endCommit": "7b2d8fcdb72484d90c044e3751329e0ec506bc2e",
+  "endCommit": "85fe35f0d0537539ec9813c51be31b59292f74a3",
   "complete": true,
-  "total": 238,
-  "completed": 238,
-  "failures": []
+  "total": 242,
+  "completed": 242,
+  "failures": [
+    "tools/test-review-evidence.mjs"
+  ]
 }
