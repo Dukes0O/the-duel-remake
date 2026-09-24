@@ -1,22 +1,22 @@
 # Build status
 
-Observed at: 2026-09-24T08:45:54.781Z
+Observed at: 2026-09-24T09:37:46.883Z
 
-Observation commit: f626618d39e368f9961c5e70678fd33417ca002e
+Observation commit: c66386d566d52c4a7838c0e1554d45bcbbccc306
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: f626618d39e368f9961c5e70678fd33417ca002e
+Integration HEAD: c66386d566d52c4a7838c0e1554d45bcbbccc306
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 
 Live build version: 20260924002834-86f3e7fb6e36
 
-Full tier: stale; exact HEAD passed: no.
+Full tier: dirty; exact HEAD passed: no.
 
-Last recorded full run: 2026-09-24T07:36:36.450Z; tested commit: b6b9677a4c0e4ad3cbc7b00cdef3acd01fd138ae.
+Last recorded full run: 2026-09-24T09:36:17.115Z; tested commit: c66386d566d52c4a7838c0e1554d45bcbbccc306.
 
 ## Feature switches
 
@@ -66,6 +66,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/crew01-active-perks | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-crew01/the-duel-remake |
 | codex/crew01-roster | 0 | unknown | false | false | unknown |
 | codex/egg01-hidden-road | 0 | unknown | true | false | unknown |
+| codex/egg02-rustwall | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/egg02 |
 | codex/foot01-fighter | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/foot01-fighter/the-duel-remake |
 | codex/foot02-car-transition | 0 | unknown | true | false | unknown |
 | codex/foot03-controls-camera | 0 | unknown | true | false | unknown |
@@ -76,7 +77,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/foot08-balance | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/foot08-balance/the-duel-remake |
 | codex/gfx00-character-pipeline | 0 | unknown | true | false | unknown |
 | codex/gfx01-crew-fidelity | 0 | unknown | true | false | unknown |
-| codex/gfx02-first-person | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx02 |
+| codex/gfx02-first-person | 0 | unknown | true | false | unknown |
 | codex/hud-contrast | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/hud-contrast/the-duel-remake |
 | codex/madmax-destructibles | 0 | unknown | false | false | unknown |
 | codex/perf01-wreck | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/perf01-wreck/the-duel-remake |
@@ -98,31 +99,31 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/vis01-test-author | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/vis01-test-author/the-duel-remake |
 | codex/vis02-damage | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/vis02-damage/the-duel-remake |
 | codex/wasteland-arrow-controls | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-arrow-controls/the-duel-remake |
-| codex/wasteland-art-a | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-art-a/the-duel-remake |
+| codex/wasteland-art-a | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-art-a/the-duel-remake |
 | codex/wasteland-art-batch-a-next | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-art-batch-a-next/the-duel-remake |
 | codex/wasteland-art-intake | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-art-intake/the-duel-remake |
 | codex/wasteland-attachments | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-attachments/the-duel-remake |
 | codex/wasteland-aud-hit-location | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-aud-hit-location/the-duel-remake |
-| codex/wasteland-aud01 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-aud01/the-duel-remake |
+| codex/wasteland-aud01 | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-aud01/the-duel-remake |
 | codex/wasteland-audio-current | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-audio-current/the-duel-remake |
 | codex/wasteland-audio-forward | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-audio-forward/the-duel-remake |
 | codex/wasteland-balance-report | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-balance-report/the-duel-remake |
 | codex/wasteland-browser-harness | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-tool-browser/the-duel-remake |
 | codex/wasteland-career-backup | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-career-backup/the-duel-remake |
-| codex/wasteland-checkpoint-cpu | 0 | unknown | true | false | unknown |
-| codex/wasteland-checkpoint-fix | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-checkpoint-repro/the-duel-remake |
+| codex/wasteland-checkpoint-cpu | 1 | unknown | true | false | unknown |
+| codex/wasteland-checkpoint-fix | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-checkpoint-repro/the-duel-remake |
 | codex/wasteland-combat-bug03-followup | 1 | unknown | false | false | unknown |
 | codex/wasteland-combat-bug05 | 1 | unknown | false | false | unknown |
-| codex/wasteland-combat-bug06 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-combat-bug06/the-duel-remake |
+| codex/wasteland-combat-bug06 | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-combat-bug06/the-duel-remake |
 | codex/wasteland-combat-bug07 | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-combat-bug12/the-duel-remake |
 | codex/wasteland-combat-bug12 | 1 | unknown | false | false | unknown |
-| codex/wasteland-combat-penalties | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-combat-penalties/the-duel-remake |
+| codex/wasteland-combat-penalties | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-combat-penalties/the-duel-remake |
 | codex/wasteland-cpu-charged-bolt | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-cpu-charged-bolt/the-duel-remake |
 | codex/wasteland-cpu-pickups | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-cpu-pickups/the-duel-remake |
 | codex/wasteland-cpu-ufo | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-cpu-ufo/the-duel-remake |
 | codex/wasteland-crash-hud | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-crash-hud/the-duel-remake |
 | codex/wasteland-crash-penalty-probe | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-crash-penalty-probe/the-duel-remake |
-| codex/wasteland-easy-balance | 0 | unknown | false | false | unknown |
+| codex/wasteland-easy-balance | 1 | unknown | false | false | unknown |
 | codex/wasteland-easy-replay | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-easy-replay/the-duel-remake |
 | codex/wasteland-feature-flags | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-feature-flags/the-duel-remake |
 | codex/wasteland-feel-forward | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-feel-forward/the-duel-remake |
@@ -145,7 +146,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/wasteland-test-debt-fix | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-test-debt-fix/the-duel-remake |
 | codex/wasteland-test-runner | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-tool-runner/the-duel-remake |
 | codex/wasteland-tool-feel | 1 | unknown | false | false | unknown |
-| codex/wasteland-ufo-charge | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-ufo-charge/the-duel-remake |
+| codex/wasteland-ufo-charge | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-ufo-charge/the-duel-remake |
 | codex/wasteland-ufo-combined-probe | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-ufo-combined-probe/the-duel-remake |
 | codex/wasteland-ufo-options | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-ufo-options/the-duel-remake |
 | codex/wasteland-ufo-partial | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-ufo-partial/the-duel-remake |
@@ -169,7 +170,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: f626618d39e368f9961c5e70678fd33417ca002e
+- Local integration/wasteland: c66386d566d52c4a7838c0e1554d45bcbbccc306
 
 Local rollback build (dist-previous): 20260923193614-0b1389a185dd. Manifest presence does not verify the full rollback build.
 

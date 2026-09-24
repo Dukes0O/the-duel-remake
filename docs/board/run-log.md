@@ -1191,3 +1191,21 @@ checkout untouched until the final integration commit passes the full gate.
 - Two task merges since the 07:36 UTC full pass. Reserve the next full run
   around 09:31 UTC, before the 09:36 deadline, while the next art round is planned.
   Latest quota observation: 22 percent remaining. No live change, release or push.
+
+## 2026-09-24 09:36 UTC - scheduled full tier passed
+
+- Exact clean c66386d566d52c4a7838c0e1554d45bcbbccc306 passed all 224 suites,
+  zero failed and zero not run, in 305.99 s. All eight campaign shards passed.
+  Ledger completion: 2026-09-24T09:36:17.115Z. Log:
+  .qa-dist/scheduled-full-03.log. HEAD stayed unchanged during the run.
+- Merge count resets to zero. Next full is due after five task merges or
+  11:36 UTC, and at the end of the run. This does not grant a release pass to
+  any later commit. No live change or push.
+- EGG-02 round 2 improves wall resemblance to three and wash to two. All
+  corrected images are valid, but High wash CPU p95 is 2.5 to 2.8 ms (+12%)
+  while RAF p95 stays 18.1 ms. The planned third round will assess cost again.
+- Independent red 034430b preceded the prepared-bank half-turn variation
+  34bfd6c. All 18 scene checks pass; independent review 27c6b95 finds no defect.
+  Only visual instance yaw changes. Round 3 Blender rendering is released.
+- Preserved all five launch-height diagnostic files with matching hashes at
+  .lanes/evidence/launch-height/. Its clean unmerged worktree and branch remain.
