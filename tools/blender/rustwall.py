@@ -123,11 +123,20 @@ def material(name):
                 flow += stream*np.clip((start-yy)/12,0,1)*np.clip((yy-(start-length))/30,0,1)
             chip=np.maximum(0,np.sin(xx*.017+tile)+np.sin(yy*.021+tile*.7)-.5)*.15
             rust=np.clip(flow*.65+chip,0,.82)
-            pixels=pixels*(1-rust[:,:,None])+np.array((.25,.13,.06))*rust[:,:,None]
+            # Broad, irregular old paint survives between rubbed seams. Keep
+            # soot dark and matte around the lower contact edges, while rust
+            # follows cracks rather than a uniform speckle on every plate.
+            paint=np.array((.29,.38,.34) if name=='hulks' else (.30,.34,.31))
+            paintmask=np.clip((coarse+.18)*1.5,0,.65)
+            if tile in [1,4,6,10,14]:
+                pixels=pixels*(1-paintmask[:,:,None])+paint*paintmask[:,:,None]
+            soot=np.clip((yy-205)/51,0,1)*np.clip((coarse+.45)*.38,0,.34)
+            pixels=pixels*(1-rust[:,:,None])+np.array((.29,.14,.065))*rust[:,:,None]
+            pixels*=1-soot[:,:,None]
             edge=(xx<9)|(xx>247)|(yy<9)|(yy>247)
-            pixels[edge]*=.54
+            pixels[edge]*=.70
             worn=((abs(xx-11)<1)|(abs(xx-245)<1)|(abs(yy-11)<1)|(abs(yy-245)<1))&(fine>.1)
-            pixels[worn]=(.34,.33,.28)
+            pixels[worn]=(.29,.30,.27)
         if name == 'rock':
             strata = np.sin(yy*.115 + np.sin(xx*.025)*1.8)
             pixels *= (1 + strata[:,:,None]*.095)
@@ -139,6 +148,9 @@ def material(name):
         color[sl][:,:,:3] = np.clip(pixels,0,1)
         orm[sl][:,:,1] = np.clip(.8+coarse*.12,.55,.98)
         orm[sl][:,:,2] = .58 if name in ['steel','hulks'] and tile not in [3,8,12] else 0
+        if name in ['steel','hulks'] and tile not in [3,8,12]:
+            orm[sl][:,:,1]=np.clip(.72+coarse*.10+rust*.23+soot*.23,.53,.98)
+            orm[sl][:,:,2]=np.clip(.68-rust*.48-soot*.65,0,.68)
         dy,dx = np.gradient(coarse*.12 + fine*.018)
         v = np.stack([-dx*3,-dy*3,np.ones_like(dx)],axis=-1)
         v /= np.linalg.norm(v,axis=-1,keepdims=True)
@@ -153,7 +165,8 @@ def material(name):
         erosion=np.sin(rx*.038+np.sin(ry*.006)*.9)*.028
         grain=rng.uniform(-.045,.045,(1024,1024))
         rockheight=strata+erosion+grain
-        color[:,:,:3]=np.array((.40,.31,.23))*(1+rockheight[:,:,None])
+        weather=np.sin((ry+np.sin(rx*.011)*32)*.021)*.10 + np.sin((ry-rx*.31)*.047)*.055
+        color[:,:,:3]=np.array((.38,.29,.22))*(1+rockheight[:,:,None]+weather[:,:,None])
         bands=np.exp(-(np.sin((ry+ripple)*.038)/.055)**2)
         cracks=np.zeros((1024,1024))
         for _ in range(32):
@@ -171,17 +184,21 @@ def material(name):
         vectors=np.stack([-dx*4,-dy*4,np.ones_like(dx)],axis=-1)
         vectors/=np.linalg.norm(vectors,axis=-1,keepdims=True)
         normal[:,:,:3]=vectors*.5+.5
+    atlas_size = 1024 if name == 'rock' else 512
+    def atlas_pixels(pixels):
+        if atlas_size == 1024: return pixels
+        return pixels.reshape(512,2,512,2,4).mean(axis=(1,3)).astype(np.float32)
     images = {}
     for label,pixels in [('color',color),('surface',orm),('normal',normal)]:
-        image = bpy.data.images.new(f'{name}-{label}',1024,1024,alpha=True)
+        image = bpy.data.images.new(f'{name}-{label}',atlas_size,atlas_size,alpha=True)
         if label != 'color': image.colorspace_settings.name = 'Non-Color'
-        image.pixels.foreach_set(pixels.ravel())
+        image.pixels.foreach_set(atlas_pixels(pixels).ravel())
         image.filepath_raw = str(texture_path(name, label))
         image.file_format = 'PNG'
         image.save(); image.pack(); images[label] = image
     if name == 'details':
-        image = bpy.data.images.new('details-emissive',1024,1024,alpha=True)
-        image.pixels.foreach_set(emissive.ravel())
+        image = bpy.data.images.new('details-emissive',atlas_size,atlas_size,alpha=True)
+        image.pixels.foreach_set(atlas_pixels(emissive).ravel())
         image.filepath_raw = str(texture_path('details', 'emissive')); image.file_format = 'PNG'
         image.save(); image.pack(); images['emissive'] = image
     mat = bpy.data.materials.new(name + ' authored padded atlas')
@@ -362,7 +379,18 @@ def wall():
             widths=[4.2,4.6,4.1]
             for col in range(3):
                 cx=x+(col-1)*4.45;h=min(4.95+float(rng.uniform(-.3,.3)),2*yy,2*(35-yy))
-                body.box((cx,yy,.38+float(rng.uniform(-.12,.12))),(widths[col],h,.35),int(rng.choice([0,1,2,4,8,9,10])))
+                facez=.20+float(rng.uniform(-.14,.08))
+                region=[2,5,9,13,0,4][(bay//3+row//2)%6]
+                if (bay+row+col)%3:
+                    # Salvaged facing is cut, buckled and overlapped, rather
+                    # than another rectangular tile in a regular grid.
+                    half=widths[col]/2;low=yy-h/2;high=yy+h/2
+                    outline=[(cx-half,low+.17),(cx-half-.08,high-.35),
+                             (cx-half*.23,min(35,high+.09)),(cx+half*.64,high-.13),
+                             (cx+half+.08,high-.48),(cx+half,low+.12)]
+                    body.profile(outline,[facez,facez+.36],region if (bay+row+col)%5 else 10)
+                else:
+                    body.box((cx,yy,facez+.18),(widths[col],h,.36),region)
                 for dx in [-1.86,1.86]:
                     for dy in [-h*.40,0,h*.40]:
                         frames.rivet(cx+dx,yy+dy,.11)
@@ -378,7 +406,7 @@ def wall():
             for row in range(9):
                 yy=5.4+row*3.05
                 for col in [-1,1]:
-                    car(wrecks,x+col*2.65+float(rng.uniform(-.5,.5)),yy+float(rng.uniform(-.45,.45)),.75+float(rng.uniform(-.3,.3)),int(rng.integers(0,7)),row+bay)
+                    car(wrecks,x+col*2.65+float(rng.uniform(-.5,.5)),yy+float(rng.uniform(-.45,.45)),.25+float(rng.uniform(-.3,.3)),int(rng.integers(0,7)),row+bay)
                 # Short bent crosspieces and crumpled scrap fill the gaps;
                 # uninterrupted horizontal showroom platforms are removed.
                 for col in [-1,1]:
@@ -418,6 +446,23 @@ def wall():
     for yy in [8,13,19,25,31,34.5]:frames.box((0,yy,1.29),(8.9,.22,.3),5)
     for x in [-175,-119,-63,-21,21,77,133,189]:
         tower(frames,props,x,height=7 if abs(x)<80 else 5)
+        # The watch platforms need visible load paths into the wall, not
+        # detached silhouettes perched above its top edge.
+        frames.tube((x-2.2,35,1.3),(x-2.2,39.2,1.3),.12,5,6)
+        frames.tube((x+2.2,35,1.3),(x+2.2,39.2,1.3),.12,5,6)
+        frames.tube((x-3.4,33.8,1.5),(x-1.8,39.2,1.3),.085,5,5)
+        frames.tube((x+3.4,33.8,1.5),(x+1.8,39.2,1.3),.085,5,5)
+        if abs(x)<80:
+            for side in [-1,1]:
+                frames.tube((x+side*2.0,36,1.4),(x+side*7.5,.3,-.8),.13,5,6)
+    # Uneven roof salvage interrupts the structural core's straight top line.
+    for bay in range(30):
+        x=-203+bay*14
+        if abs(x)<10:continue
+        rise=[.9,1.6,.55,2.1,1.2][bay%5]
+        frames.profile([(x-5.8,34.95),(x-4.9,35.3+rise*.55),
+                        (x-2.1,35.1+rise),(x+1.1,35.3+rise*.68),
+                        (x+5.5,34.95)],[-.32,.16],[2,5,9,13][bay%4])
     # Open lattice cranes with visible hook/cable, never a solid silhouette block.
     for x,direction in [(-77,1),(91,-1)]:
         a=Vector((x,38,3));b=Vector((x+direction*18,51,3))
@@ -443,6 +488,13 @@ def wall():
         if abs(x)<7:continue
         h=.4+float(rng.uniform(0,.55));z=-1.4-float(rng.uniform(0,.9))
         props.box((x,h/2,z),(1.4+float(rng.uniform(0,1.2)),h,.65),11)
+    # Low broken cars give the facing a salvage foot and human-scale depth.
+    # They stay outside the full vehicle opening and use the existing hulk draw.
+    for i in range(28):
+        x=-198+i*14.65+float(rng.uniform(-1.0,1.0))
+        if abs(x)<12:continue
+        car(wrecks,x,-.22,-1.80-float(rng.uniform(0,.65)),
+            int(rng.choice([0,1,2,4,5,6,9,13])),i+41)
     for side in [-1,1]:
         for i in range(4):
             x=side*(8.2+i*2.1);z=-2.8-float(rng.uniform(0,.8))
@@ -481,30 +533,34 @@ def wall():
 
 
 def wash():
-    fresh();mat=material('rock');g=Geometry();rings=[]
-    # 8 rings, 9 corners, 126 side triangles plus18 cap triangles =144.
-    for row in range(8):
-        y=[0,.13,.24,.38,.52,.67,.84,1][row];ring=[]
-        for j in range(9):
-            a=j*math.tau/9
-            c,s=math.cos(a),math.sin(a)
-            # Both exposed sides have staggered shelves and fractured ledges.
-            ledge=[1,.84,.93,.70,.81,.64,.73,.55][row]
-            width=ledge+.065*math.sin(j*2.7+row*.7)
-            xx=math.copysign(abs(c)**.45,c)*width+.075*math.sin(row*1.7)
-            zz=math.copysign(abs(s)**.23,s)*(.995-.025*math.sin(j+row)**2)
-            yy=0 if row==0 else max(0,min(1,y*(.82+.17*(.5+.5*math.sin(j*2.2)))+.024*math.sin(row+j*1.7)))
-            ring.append(g.vertex((max(-1,min(1,xx)),yy,zz)))
-        rings.append(ring)
-    for row in range(7):
-        for j in range(9):
-            k=(j+1)%9
-            g.face([rings[row][j],rings[row][k],rings[row+1][k],rings[row+1][j]],0,
-                   [(j/9,row/7),((j+1)/9,row/7),((j+1)/9,(row+1)/7),(j/9,(row+1)/7)],atlas=False)
-    for ring,y in [(rings[0],0),(rings[-1],.90)]:
-        mid=g.vertex((0,y,0))
-        for j in range(9):g.face([mid,ring[j],ring[(j+1)%9]],2,[(.5,.5),(0,0),(1,0)])
-    return [g.build('wash-rock-module',mat)]
+    fresh();mat=material('rock');g=Geometry();sections=[]
+    # One joined eroded slope replaces a stack of polygonal columns. Nine
+    # cross-sections and nine points across each section use 128 face triangles;
+    # the two end fans add 16, preserving the 144-triangle instance budget.
+    across=(-1,-.86,-.68,-.42,0,.42,.68,.86,1)
+    heights=(0,.70,.88,.94,.91,.94,.88,.70,0)
+    for station in range(9):
+        z=-1+station*.25
+        ridge=.90+.055*math.sin(station*1.91)+.035*math.sin(station*3.47)
+        section=[]
+        for j,(x,height) in enumerate(zip(across,heights)):
+            shoulder=.045*math.sin(station*1.47+j*.83) if 0<j<8 else 0
+            lateral=.028*math.sin(station*1.13+j*.75) if 0<j<8 else 0
+            y=max(0,min(1,height*ridge/.90+shoulder)) if height else 0
+            section.append(g.vertex((x+lateral,y,z)))
+        sections.append(section)
+    for station in range(8):
+        for j in range(8):
+            g.face([sections[station][j],sections[station][j+1],
+                    sections[station+1][j+1],sections[station+1][j]],0,
+                   [(station/8,j/8),(station/8,(j+1)/8),
+                    ((station+1)/8,(j+1)/8),((station+1)/8,j/8)],atlas=False)
+    for section in (sections[0],sections[-1]):
+        center=g.vertex((0,0,-1 if section is sections[0] else 1))
+        for j in range(8):
+            g.face([center,section[j],section[j+1]],0,
+                   [(.5,0),(j/8,.5),((j+1)/8,.5)],atlas=False)
+    return [g.build('wash-eroded-bank',mat)]
 
 
 def stats(objects):

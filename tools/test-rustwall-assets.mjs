@@ -157,6 +157,21 @@ check('normalized wash modules fit collision boxes and the complete instanced bu
   assert.ok(count <= 30000, `${maxBanks} actual banks require ${count} triangles`);
   assert.ok(parts.reduce((sum, mesh) => sum + draws(mesh), 0) <= 2, 'two instanced material draws maximum');
 });
+check('wash has a continuous, varied ridge through the module', async () => {
+  const {gltf} = await asset('wash');
+  const ridge = [];
+  for (const mesh of meshes(gltf.scene)) {
+    const positions = mesh.geometry.attributes.position;
+    for (let index = 0; index < positions.count; index++) {
+      const x = positions.getX(index), y = positions.getY(index), z = positions.getZ(index);
+      if (Math.abs(x) < .08 && y > .65) ridge.push({y, z});
+    }
+  }
+  const stations = [...new Set(ridge.map(point => point.z.toFixed(3)))];
+  assert.ok(stations.length >= 9, 'authored bank ridge continues along the wash');
+  assert.ok(Math.max(...ridge.map(point => point.y)) - Math.min(...ridge.map(point => point.y)) >= .09,
+    'ridge height has visible authored variation');
+});
 for (const [kind, maximumSets] of [['wall', 3], ['wash', 1]]) check(`${kind}: local 1024 texture-set allocation`, async () => {
   const {json, binary} = await asset(kind);
   assert.ok(json.images?.length, 'authored textures are present');
@@ -169,7 +184,8 @@ for (const [kind, maximumSets] of [['wall', 3], ['wash', 1]]) check(`${kind}: lo
     const view = json.bufferViews[image.bufferView];
     const bytes = image.uri ? Buffer.from(image.uri.split(',')[1], 'base64') :
       binary.subarray(view.byteOffset || 0, (view.byteOffset || 0) + view.byteLength);
-    assert.deepEqual(imageSize(bytes), [1024, 1024], 'every texture in each set is 1024 square');
+    assert.deepEqual(imageSize(bytes), kind === 'wall' ? [512, 512] : [1024, 1024],
+      `${kind} embedded atlas has its reviewed square allocation`);
   }
 });
 

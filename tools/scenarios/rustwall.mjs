@@ -68,14 +68,19 @@ export async function run(context) {
       evidence.cost[quality][view]=await context.evaluate(`(async () => {
         const r=window.__render,q=window.__rustwallReview;
         const measure=async()=>{
-          const frames=[],cpu=[],draws=[],triangles=[];let last=0,metrics;
+          const frames=[],cpu=[],draws=[],triangles=[],mirror=[];let last=0,metrics;
           for(let i=0;i<141;i++){
             const now=await new Promise(q.raf),begin=performance.now();metrics=r.renderFrame();
             const elapsed=performance.now()-begin;
-            if(i>20){frames.push(now-last);cpu.push(elapsed);draws.push(metrics.drawCalls);triangles.push(metrics.triangles);}last=now;
+            if(i>20){frames.push(now-last);cpu.push(elapsed);draws.push(metrics.drawCalls);triangles.push(metrics.triangles);
+              mirror.push(document.querySelector('[data-rear-view-refreshed]')?.dataset.rearViewRefreshed==='true');}last=now;
           }
           const summary=values=>{const list=[...values].sort((a,b)=>a-b);return{samples:list.length,p50:list[59],p95:list[113],max:list.at(-1),over33:list.filter(n=>n>33).length};};
+          const bucket=refreshed=>{const list=cpu.filter((_,index)=>mirror[index]===refreshed).sort((a,b)=>a-b);
+            return{samples:list.length,p50:list[Math.floor((list.length-1)*.5)]??null,
+              p95:list[Math.floor((list.length-1)*.95)]??null};};
           return{raf:summary(frames),renderCpu:summary(cpu),rafSamplesMs:frames,renderCpuSamplesMs:cpu,
+            mirrorRefreshSamples:mirror,renderCpuByMirror:{refreshed:bucket(true),reused:bucket(false)},
             drawCalls:metrics.drawCalls,triangles:metrics.triangles,drawCallSamples:draws,triangleSamples:triangles,
             drawCallRange:[Math.min(...draws),Math.max(...draws)],triangleRange:[Math.min(...triangles),Math.max(...triangles)]};
         };
@@ -90,9 +95,11 @@ export async function run(context) {
     }
     for(const sample of blender.captures) {
       if(sample.cameraSpace==='gate-local')await gateView(context,sample);
-      else if(sample.cameraSpace!=='wash-module')throw Error('Unknown matched camera space');
-      const result=await context.evaluate(sample.cameraSpace==='wash-module'
-        ? washPicture(sample,quality) : wallPicture(sample,quality));
+      else if(sample.cameraSpace==='wash-module')await courseView(context,350);
+      else throw Error('Unknown matched camera space');
+      const result=sample.cameraSpace==='wash-module'
+        ? {png:await context.evaluate(coursePicture()),counts:{scope:'joined bank in the actual wash course'}}
+        : await context.evaluate(wallPicture(sample,quality));
       const shot=await save(context,relative,`game-${quality}-${sample.id}`,result.png,
         {id:sample.id,quality,kind:sample.kind,cameraSpace:sample.cameraSpace,camera:sample.camera,
           gateOpen:sample.gateOpen||0,moduleScale:sample.moduleScale,counts:result.counts});
@@ -155,40 +162,6 @@ function wallPicture(sample,quality) {
     r.renderer.info.reset();(${renderMainView.toString()})(r.renderer,r.composer,${quality==='high'});
     const counts={drawCalls:r.renderer.info.render.calls,triangles:r.renderer.info.render.triangles};
     return{png:r.renderer.domElement.toDataURL('image/png'),counts};
-  })()`;
-}
-
-function washPicture(sample,quality) {
-  return `(() => {
-    const r=window.__render,c=${JSON.stringify(sample.camera)},wash=r.scene.getObjectByName('Rustwall wash'),parent=wash.parent;
-    const visibility=r.scene.children.map(n=>[n,n.visible]),background=r.scene.background,environment=r.scene.environment,fog=r.scene.fog;
-    const lights=[];r.scene.traverse(n=>{if(n.isLight)lights.push(n.clone());});
-    const records=[];wash.traverse(mesh=>{if(!mesh.isInstancedMesh)return;
-      const matrix=mesh.matrix.clone();mesh.getMatrixAt(0,matrix);records.push({mesh,count:mesh.count,matrix,box:mesh.boundingBox?.clone(),sphere:mesh.boundingSphere?.clone()});
-      mesh.count=1;mesh.setMatrixAt(0,mesh.matrix.clone().makeScale(...${JSON.stringify(sample.moduleScale)}));
-      mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();mesh.computeBoundingSphere();
-    });
-    for(const [node] of visibility)node.visible=false;
-    r.scene.add(wash,...lights);wash.visible=true;r.scene.background=null;r.scene.environment=null;r.scene.fog=null;
-    r.renderer.setClearColor(0x777777,1);r.renderer.setPixelRatio(1);r.renderer.setSize(c.width,c.height,false);r.composer.setSize(c.width,c.height);
-    r.camera.position.fromArray(c.position);r.camera.lookAt(...c.target);r.camera.fov=c.verticalFov;r.camera.aspect=c.width/c.height;r.camera.near=c.near;r.camera.updateProjectionMatrix();
-    r.scene.updateMatrixWorld(true);r.camera.updateMatrixWorld(true);
-    // A shadow pass may have stamped Three's instance-upload cache with the
-    // next render frame. Prepare once after this QA-only instance relocation.
-    (${renderMainView.toString()})(r.renderer,r.composer,${quality==='high'});
-    r.renderer.info.reset();(${renderMainView.toString()})(r.renderer,r.composer,${quality==='high'});
-    const gl=r.renderer.getContext(),pixels=new Uint8Array(c.width*c.height*4);
-    gl.readPixels(0,0,c.width,c.height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
-    let nonBackgroundSamples=0;
-    for(let y=0;y<c.height;y+=8)for(let x=0;x<c.width;x+=8){const index=(y*c.width+x)*4;
-      if(Math.abs(pixels[index]-pixels[0])+Math.abs(pixels[index+1]-pixels[1])+Math.abs(pixels[index+2]-pixels[2])>12)nonBackgroundSamples++;
-    }
-    if(nonBackgroundSamples<100)throw Error('Isolated wash module did not produce enough non-background pixels');
-    const result={png:r.renderer.domElement.toDataURL('image/png'),counts:{drawCalls:r.renderer.info.render.calls,triangles:r.renderer.info.render.triangles,nonBackgroundSamples}};
-    for(const record of records){record.mesh.count=record.count;record.mesh.setMatrixAt(0,record.matrix);record.mesh.instanceMatrix.needsUpdate=true;record.mesh.boundingBox=record.box;record.mesh.boundingSphere=record.sphere;}
-    parent.add(wash);for(const light of lights)light.removeFromParent();for(const [node,visible] of visibility)node.visible=visible;
-    r.scene.background=background;r.scene.environment=environment;r.scene.fog=fog;
-    r.renderFrame();return result;
   })()`;
 }
 
