@@ -109,3 +109,19 @@ node tools/test-rigged-fighter.mjs
 The compositor also accepts `--captures PATH`, `--output PATH.png` and
 `--blender PATH`. It uses Blender's installed NumPy and standard PNG encoding;
 no dependency was added.
+## Existing browser scenario assertion update
+
+The Director added `tools/scenarios/onfoot-figures.mjs` to this card after
+independent QA found its old checks required the visible primitive fallback:
+four InstancedMeshes and exactly twelve plate instances for the local figure.
+Those implementation-specific counts are superseded when the bound GLB loads.
+
+The scenario still exits the car with F, verifies the local body is hidden at
+the actual first-person eye, verifies it is visible from the inspection camera,
+and retains standing/knockdown screenshots. It now waits for the loaded rig,
+requires a skeleton with skin indices/weights, requires the fallback to be
+hidden, and checks zero/positive skin draw range at the two cameras. It finds
+the local root by position so roadside raiders cannot satisfy its checks.
+The knockdown shot samples one second into the fall (remaining time 2 seconds)
+and explicitly requires the knockdown clip. Primitive unit assertions remain
+unchanged. Independent approval of these assertion changes is pending.
