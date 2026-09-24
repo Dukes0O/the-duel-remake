@@ -212,3 +212,41 @@ flag-off controls return null so their existing camera path is retained.
 No existing assertion was weakened. This is one bounded regression group,
 not a new render or balance matrix. The source fix and subsequent actual
 browser verification remain pending.
+## Final bounded source review
+
+Reviewed `7ad8a32` and the final narrow production correction `bc60aa4`.
+Production source tree: `aaeb4ee4dec3868a1333aca4290dab1775be6aeb`.
+The physical-spur helper uses actual world position, heading/slip and ground
+support before or after departure. Its bank margin shortens unsafe side views.
+Menu, flag-off and returned-to-main-road cases retain the existing camera path.
+The renderer skips unrelated tunnel constraints only for the physical spur or
+cinematic view. The immutable gate pose is cached by road identity in a WeakMap;
+HUD-only selection avoids building unused cameras and spark arrays. Neither
+path mutates course or race state.
+
+The first renderer hook still suppressed the physical base throughout a
+cinematic. A 0.18 second geometry probe exposed the transition mismatch:
+route A arrival at age 0.01 had a camera distance of 17.84 metres versus the
+physical base's 8.70 metres, and Turn back at age 0.79 had 18.24 versus 8.70.
+`bc60aa4` retains the physical base for every partial blend, then omits its work
+only when the cinematic fully replaces it. This closes that source finding.
+The builder's actual final capture reports a 0.004 metre Turn-back boundary
+movement; its visual acceptance remains the Director's decision.
+
+The performance-fixture hook is gated by `__DUEL_QA__`, defined true only in
+`tools/vite-qa.config.js`; normal configuration does not create the window hook
+or take the skip branch. Both corrected comparison conditions execute the
+same App frame and ordinary HUD work. Only gate UI updating and spark update/
+draw are removed from the disabled condition. The fixture restores the QA
+switch, renderer method, gate updater, RAF function and saved state in finally.
+A small failed-setup cleanup issue was reported: missing-hook validation must
+precede installing the renderer wrapper. The builder is moving that check;
+it does not change the measured loop or production source.
+
+No further production defect was found in this bounded review. The camera
+regression is the only additional assertion group; no previous assertion or
+fingerprint was weakened. Journey, App settlement, contact and driving files
+remain unchanged since `5776623`, so the recorded runtime and Save Guardian
+review still applies. No heavy check or build ran during the capture windows.
+Final lane/build gates remain on hold until the Director accepts the retained
+visual, motion, audio and corrected cost evidence.
