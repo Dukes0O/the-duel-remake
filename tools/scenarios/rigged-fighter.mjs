@@ -1,6 +1,6 @@
 import {writeFile, mkdir} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
-import {join} from 'node:path';
+import {join, relative} from 'node:path';
 import {createFighter, stepFighter, knockdownFighter} from '../../src/onfoot.js';
 
 function productionPoses() {
@@ -24,7 +24,9 @@ function productionPoses() {
 // Uses the production combat hook, loaded skin and quality pipelines. The
 // private harness installs memory-only storage before production code starts.
 export async function run(context) {
-  const directory = fileURLToPath(new URL('../../docs/board/looks/test-fighter/', import.meta.url));
+  const root = fileURLToPath(new URL('../../', import.meta.url));
+  const directory = join(context.outputDir, 'gfx00-control');
+  const captureBase = relative(root,directory).replaceAll('\\','/');
   await mkdir(directory, {recursive:true});
   const samples = productionPoses();
   const evidence = {movementSource:'Production createFighter/stepFighter: 30 fixed steps idle/walk, knockdownFighter then 120 fixed steps down', qualities: ['high','performance'], captures: [], counts: {}, loadErrors: []};
@@ -40,7 +42,8 @@ export async function run(context) {
       const originalFetch = window.fetch.bind(window);
       window.fetch = (input, init) => {
         const url = typeof input === 'string' ? input : input.url;
-        return /\/assets\/models\/wasteland\/crew\/[^/]+\.glb$/.test(url)
+        const path = new URL(url, location.href).pathname;
+        return path.startsWith('/assets/models/wasteland/crew/') && path.endsWith('.glb')
           ? originalFetch('/assets/models/wasteland/test-fighter.glb', init)
           : originalFetch(input, init);
       };
@@ -138,7 +141,7 @@ export async function run(context) {
         await writeFile(path,Buffer.from(result.png.split(',')[1],'base64'));
         context.screenshots.push(path);
         const {png,...metrics}=result;
-        evidence.captures.push({quality,clip,time,view,yaw,path:`docs/board/looks/test-fighter/game-${quality}-${clip}-${view}.png`,metrics});
+        evidence.captures.push({quality,clip,time,view,yaw,path:`${captureBase}/game-${quality}-${clip}-${view}.png`,metrics});
       }
     }
     const twelve=await context.evaluate(`(() => {
