@@ -30,6 +30,36 @@ import { createFrameMetrics } from './frame-metrics.js';
 import { createRearView } from './rear-view.js';
 import { createRoadsideDebris } from './roadside-debris.js';
 
+const markerWorld = new THREE.Vector3();
+const markerView = new THREE.Vector3();
+
+// Read-only projection for HUD markers. The positions come from rendered cars,
+// so slides, jumps and camera modes all use the same pose as the main view.
+export function projectVehicleMarkers(camera, vehicles) {
+  camera.updateWorldMatrix(true, false);
+  const markers = [];
+  for (let index = 0; index < vehicles.length; index++) {
+    const vehicle = vehicles[index];
+    if (!vehicle?.visible) {
+      markers.push({index, x: 0.5, y: 0.5, visible: false});
+      continue;
+    }
+    vehicle.updateWorldMatrix(true, false);
+    vehicle.getWorldPosition(markerWorld);
+    markerWorld.y += 2;
+    markerView.copy(markerWorld).applyMatrix4(camera.matrixWorldInverse);
+    markerWorld.project(camera);
+    const x = (markerWorld.x + 1) * 0.5;
+    const y = (1 - markerWorld.y) * 0.5;
+    const visible = markerView.z < 0 && markerWorld.z >= -1 &&
+      markerWorld.z <= 1 && x >= 0 && x <= 1 && y >= 0 && y <= 1;
+    markers.push({index, x: Number.isFinite(x) ? THREE.MathUtils.clamp(x, 0, 1) : 0.5,
+      y: Number.isFinite(y) ? THREE.MathUtils.clamp(y, 0, 1) : 0.5,
+      visible});
+  }
+  return markers;
+}
+
 export function detachRetiredVehicleVisuals(object, combatScene, vehicleAttachments) {
   combatScene.detachVehicle(object);
   vehicleAttachments.detachVehicle(object);
@@ -434,7 +464,15 @@ export function attachRenderer(host, app) {
     const colors = new Set(); for (let i = 0; i < data.length; i += 4) colors.add(`${data[i] >> 4},${data[i + 1] >> 4},${data[i + 2] >> 4}`);
     return { distinctColors: colors.size, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles };
   } };
-  return { prepareVehicle, retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); }, dispose() {
+  return { prepareVehicle, retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); },
+    projectOpponents() {
+      if (disposed || app.duel.state.status === 'menu') return [];
+      const opponents = app.duel.state.opponents || [];
+      const meshes = opponents.map((_, index) => index === 0 ? rival :
+        extraOpponents[index - 1]?.mesh);
+      return projectVehicleMarkers(camera, meshes);
+    },
+    dispose() {
     if(disposed)return;disposed=true;lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
