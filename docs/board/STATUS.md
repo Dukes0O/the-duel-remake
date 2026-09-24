@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-09-24T19:47:49.997Z
+Observed at: 2026-09-24T19:55:54.648Z
 
-Observation commit: 41c75b9091df1987bb6266c3e84606308473b38b
+Observation commit: 0e10dd48724b6f5c26c6156050a6ef11e03c6235
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 41c75b9091df1987bb6266c3e84606308473b38b
+Integration HEAD: 0e10dd48724b6f5c26c6156050a6ef11e03c6235
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-09-24T12:40:53.275Z; tested commit: 4264cf087e50b8b7d2dac48a54502ad7773bb4f8.
+Last recorded full run: 2026-09-24T18:26:31.812Z; tested commit: eff5744d4585738fdbdba9c015c566b7bff5c03f.
 
 ## Feature switches
 
@@ -32,7 +32,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| lane/ops/clean-08-janitor | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/clean-08-janitor |
 
 ## Unmerged branches for idle review
 
@@ -53,9 +52,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 101,396 B | +0 B | 500,000 B |
 | Review `looks/` | 158,118 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 368,692 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 98,367 B | -270,325 B | 5,000,000 B |
 | All `public/` | 250,741,595 B | +0 B | unavailable |
-| Git objects | 262,673,408 B | +0 B | unavailable |
+| Git objects | 262,809,600 B | +136,192 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -64,7 +63,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 41c75b9091df1987bb6266c3e84606308473b38b
+- Local integration/wasteland: 0e10dd48724b6f5c26c6156050a6ef11e03c6235
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
