@@ -3,7 +3,7 @@ import {createCombatEffects} from './combat-effects.js';
 import {createFirstPersonGear} from './first-person-gear.js';
 import * as THREE from 'three';
 import {directionalCameraPose} from './camera-views.js';
-import {onFootCameraPose} from './onfoot-camera.js';
+import {onFootCameraPose, projectOnFootAim} from './onfoot-camera.js';
 import {hiddenRoadPresentation,hiddenRoadDrivingCamera} from './hidden-road-ui.js';
 import { CARS, DRIVE } from './config.js';
 import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage } from './vehicles.js';
@@ -78,7 +78,7 @@ export function attachRenderer(host, app) {
   let disposed=false,raf,sceneRevision=0,warmupTicket=null,warmupKey=null,readinessClaimed=false;
   const frameMetrics=createFrameMetrics();
   const adaptiveResolution=createAdaptiveResolution();
-  let metricRevision=-1,metricEnvironment=null,metricQuality=null,metricRatio=null,metricMenu=null,metricCamera=null,metricMood=null,metricInspection=null,metricCar=null;
+  let metricRevision=-1,metricEnvironment=null,metricQuality=null,metricRatio=null,metricMenu=null,metricCamera=null,metricFootCamera=null,metricMood=null,metricInspection=null,metricCar=null;
   function resetFrameMetrics(){
     frameMetrics.reset();
     // Clear stale readings on a real configuration change, not every frame.
@@ -308,8 +308,9 @@ export function attachRenderer(host, app) {
       const compact=host.clientHeight<850;
       lookTarget.set(aim.x, pp.y + (tall ? (compact ? .95 : 1.8) : compact ? -1.1 : .95), aim.z); camera.fov = 48;
     } else if(st.onFoot && st.fighter){
-      firstPersonView=true;
-      const pose=onFootCameraPose(course,st.fighter);
+      const footMode=app.duel.featureFlags?.enabled('wasteland2')?app.footCameraMode:'first-person';
+      firstPersonView=footMode!=='overhead';
+      const pose=onFootCameraPose(course,st.fighter,footMode);
       camTarget.set(pose.position.x,pose.position.y,pose.position.z);
       lookTarget.set(pose.target.x,pose.target.y,pose.target.z);
       camera.fov=pose.fov;
@@ -361,7 +362,7 @@ export function attachRenderer(host, app) {
       // adds a speed-dependent camera gap and makes the car shrink at speed.
       camera.position.x = camTarget.x; camera.position.z = camTarget.z;
     }
-    if(!menu&&!journeyView.camera&&!spurCamera)constrainTunnelCamera(course,camera.position,
+    if(!menu&&!journeyView.camera&&!spurCamera&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,now/1000);
@@ -460,9 +461,9 @@ export function attachRenderer(host, app) {
     const high=app.ambientOcclusionEnabled!==false;
     quality.update(high,adaptiveResolution.scale);host.dataset.ambientShading=String(ambientShading.enabled);
     const ratio=renderer.getPixelRatio();
-    const metricsChanged=metricRevision!==sceneRevision||metricEnvironment!==scene.environment||metricQuality!==ambientShading.enabled||metricRatio!==ratio||metricMenu!==menu||metricCamera!==app.cameraMode||metricMood!==app.lightingMood||metricInspection!==app.inspectionCamera||metricCar!==carKey;
+    const metricsChanged=metricRevision!==sceneRevision||metricEnvironment!==scene.environment||metricQuality!==ambientShading.enabled||metricRatio!==ratio||metricMenu!==menu||metricCamera!==app.cameraMode||metricFootCamera!==`${!!st.onFoot}:${app.footCameraMode}`||metricMood!==app.lightingMood||metricInspection!==app.inspectionCamera||metricCar!==carKey;
     if(metricsChanged){
-      resetFrameMetrics();metricRevision=sceneRevision;metricEnvironment=scene.environment;metricQuality=ambientShading.enabled;metricRatio=ratio;metricMenu=menu;metricCamera=app.cameraMode;metricMood=app.lightingMood;metricInspection=app.inspectionCamera;metricCar=carKey;
+      resetFrameMetrics();metricRevision=sceneRevision;metricEnvironment=scene.environment;metricQuality=ambientShading.enabled;metricRatio=ratio;metricMenu=menu;metricCamera=app.cameraMode;metricFootCamera=`${!!st.onFoot}:${app.footCameraMode}`;metricMood=app.lightingMood;metricInspection=app.inspectionCamera;metricCar=carKey;
     }
     if(warmup){
       // Preparation gates structural changes only. New traffic, ghosts, damage,
@@ -528,6 +529,10 @@ export function attachRenderer(host, app) {
     return { distinctColors: colors.size, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles };
   } };
   return { prepareVehicle, retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); },
+    projectFootAim() {
+      const state=app.duel.state;
+      return !disposed&&state.onFoot&&state.status!=='menu'?projectOnFootAim(camera,state.fighter):null;
+    },
     projectOpponents() {
       if (disposed || app.duel.state.status === 'menu') return [];
       const opponents = app.duel.state.opponents || [];
