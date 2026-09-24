@@ -7,6 +7,7 @@ import {createArmoryScreen} from './screen-armory.js';
 import {courseScreen, createCourseActions} from './screen-courses.js';
 import {createResultsScreen, screenAction} from './screen-results.js';
 import {createHudScreen, presentJumpHeight} from './screen-hud.js';
+import {createCombatHud, combatHudEnabled} from './combat-hud.js';
 import {WEAPONS, ufoDestination} from './combat.js';
 import './screen-menu.css';
 import './screen-players.css';
@@ -16,6 +17,7 @@ import './screen-armory.css';
 import './screen-courses.css';
 import './screen-results.css';
 import './screen-hud.css';
+import './combat-hud.css';
 import './style.css';
 import {CARS, COURSE} from './config.js';
 import {createProfile, isCarUnlocked} from './progression.js';
@@ -74,7 +76,7 @@ const buildUpdates=createBuildUpdateChecker({
 });
 const routeMap=new RouteMap(ui['route-map']);
 const coursePreview=new CoursePreview(ui['menu-course-map'],ui['menu-elevation-profile']);
-if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
+if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
 const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textContent = v; };
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
@@ -88,6 +90,8 @@ const armoryScreen = createArmoryScreen({profile, credits, escapeHTML, getGarage
 const modalScreen = createResultsScreen({app, profile, credits, escapeHTML, time, arrow});
 const updateHud = createHudScreen({app, ui, text, time, clamp, credits, routeMap});
 const readiness = createRendererReadiness({app, ui, choices, profile, isDisposed:()=>uiDisposed});
+const combatHud = createCombatHud({root, app,
+  projectOpponents:()=>readiness.handle?.projectOpponents?.() || []});
 const {ensureRenderer, syncRendererReadiness} = readiness;
 const courseActions = createCourseActions({app, choices, setMessage:value=>courseMessage=value, setOpen:value=>coursesOpen=value, updateMenuScene, invalidate:()=>lastScreen=null, renderState:()=>renderState(app.duel.state)});
 
@@ -201,9 +205,9 @@ function renderState(s) {
   buildUpdates.syncState();
   const helpText=app.duel.featureFlags.enabled('wasteland2')?upgradedCombatHelp:legacyCombatHelp;
   if(combatHelp.textContent!==helpText)combatHelp.textContent=helpText;
-  const combat=s.combat,hideWeaponHud=!combat||s.status==='menu';
+  const combat=s.combat,upgradedCombat=combatHudEnabled(app.duel,s),hideWeaponHud=!combat||s.status==='menu'||upgradedCombat;
   if(weaponHud.hidden!==hideWeaponHud)weaponHud.hidden=hideWeaponHud;
-  if(combat){
+  if(combat&&!upgradedCombat){
     const ufo=combat.cooldowns.ufo<=0&&s.status==='racing'?ufoDestination(app.duel):null;
     const ufoAction=ufo?.kind==='jump'?`JUMP +${Math.round(ufo.gainMeters)}m → ${Math.round(ufo.toS)}m`:ufo?.reason==='lap-used'?'USED THIS LAP':ufo?.reason==='charging'?'CHARGES AT GATE 1':ufo?.reason==='checkpoint'?'GATE AHEAD':ufo?'NO SAFE LANDING':'';
     for(const button of weaponButtons){
@@ -239,6 +243,7 @@ function renderState(s) {
   const muted=!!app.audio?.muted; ui['sound-toggle'].classList.toggle('muted',muted); ui['sound-toggle'].setAttribute('aria-label',muted?'Enable sound':'Mute sound'); text('sound-caption',muted?'SOUND OFF':'SOUND ON'); ui['test-driver'].hidden=!app.autopilot;
   presentJumpHeight(jumpHeightReadout,s,app,ui,text);
   if(s.status!=='menu') updateHud(s);
+  combatHud.update(s);
 }
 document.addEventListener('keydown',e=>{if(e.code==='Escape'&&(armoryOpen||coursesOpen||garageOpen||playersOpen||leaderboardOpen||experimentalOpen)){e.preventDefault();armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=experimentalOpen=false;lastScreen=null;updateMenuCar();renderState(app.duel.state);return;}if(e.code!=='Tab'||ui['modal-layer'].hidden)return;const buttons=[...ui['modal-layer'].querySelectorAll('button:not(:disabled),select,input,summary')],first=buttons[0],last=buttons.at(-1);if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}},{signal:domEvents.signal});
 app.onFrame=renderState;updatePlayers();updateMenuCar();updateMenuScene();renderState(app.duel.state);ensureRenderer();app.start();

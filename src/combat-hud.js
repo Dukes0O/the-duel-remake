@@ -1,0 +1,181 @@
+import {WEAPONS, ufoDestination} from './combat.js';
+import {COMBAT_TUNING} from './wasteland-tuning.js';
+
+const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
+const directions = {ufo:'↑', bomb:'→', crossbow:'↓', star:'←'};
+const padDirections = {ufo:'Up', bomb:'Right', crossbow:'Down', star:'Left'};
+const zones = ['front', 'right', 'rear', 'left'];
+
+export function combatHudEnabled(duel, state) {
+  return state.mode === 'wasteland' && !!state.combat &&
+    duel.featureFlags?.enabled('wasteland2') === true && state.status !== 'menu';
+}
+
+export function armorPresentation(actor) {
+  const max = Math.max(0, Number(actor?.maxArmor) || 0);
+  const armor = Math.max(0, Math.min(max, Number(actor?.armor) || 0));
+  return {value: Math.round(armor), max: Math.round(max), fraction: max ? clamp(armor / max) : 0};
+}
+
+export function damageZoneFromChange(previous, current) {
+  let direction = null, change = 0;
+  for (const zone of zones) {
+    const increase = (Number(current?.[zone]) || 0) - (Number(previous?.[zone]) || 0);
+    if (increase > change) {direction = zone; change = increase;}
+  }
+  return direction;
+}
+
+export function fallbackOpponentPosition(course, player, opponent, index) {
+  const at = course?.worldAt?.(player.s, player.lateral || 0);
+  const target = course?.worldAt?.(opponent.s, opponent.lateral || 0);
+  const heading = (at?.heading || 0) + (player.headingError || 0);
+  const x = (target?.x || 0) - (at?.x || 0);
+  const z = (target?.z || 0) - (at?.z || 0);
+  const right = x * Math.cos(heading) - z * Math.sin(heading);
+  const forward = x * Math.sin(heading) + z * Math.cos(heading);
+  return {
+    x: right < -5 ? .12 : right > 5 ? .88 : .5,
+    y: forward < 0 ? .68 + index * .065 : .29 + index * .065,
+    direction: forward < 0 ? 'BEHIND' : right < -5 ? 'LEFT' : right > 5 ? 'RIGHT' : 'AHEAD',
+  };
+}
+
+function setText(node, value) {
+  const next = String(value);
+  if (node.textContent !== next) node.textContent = next;
+}
+
+function setAttribute(node, name, value) {
+  if (node.getAttribute(name) !== value) node.setAttribute(name, value);
+}
+
+function setFraction(node, fraction) {
+  const next = `scaleX(${(Math.round(clamp(fraction) * 100) / 100).toFixed(2)})`;
+  if (node.style.transform !== next) node.style.transform = next;
+}
+
+function createOpponentMarker(index) {
+  const marker = document.createElement('div');
+  marker.className = 'combat-opponent-marker';
+  marker.dataset.opponentIndex = String(index);
+  marker.innerHTML = `<span class="combat-marker-pointer" aria-hidden="true">⌄</span><span class="combat-marker-heading"></span><span class="combat-marker-value"></span><span class="combat-marker-track"><i></i></span>`;
+  return marker;
+}
+
+export function createCombatHud({root, app, projectOpponents = () => []}) {
+  const overlay = root.querySelector('#overlay');
+  const host = document.createElement('section');
+  host.className = 'combat-upgraded-hud';
+  host.hidden = true;
+  host.setAttribute('aria-label', 'Combat information');
+  host.innerHTML = `<div class="combat-opponent-layer" aria-label="Opponent armor and positions"></div>
+    <div class="combat-hit-marker" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="combat-damage-direction" aria-hidden="true"><span>▲</span></div>
+    <div class="combat-slot-bar" role="group" aria-label="Combat weapons">
+      ${Object.entries(WEAPONS).map(([id, weapon]) => `<button type="button" data-combat-weapon="${id}" title="${weapon.name} · Key ${weapon.key} · Gamepad D-pad ${padDirections[id]}"><span class="combat-slot-ring" aria-hidden="true"></span><span class="combat-slot-key">${weapon.key} ${directions[id]}</span><span class="combat-slot-name">${weapon.name}</span><span class="combat-slot-state"></span></button>`).join('')}
+    </div>`;
+  overlay.append(host);
+  const playerArmor = document.createElement('div');
+  playerArmor.className = 'combat-player-armor';
+  playerArmor.hidden = true;
+  playerArmor.innerHTML = `<span><b>PLAYER ARMOR</b><strong></strong></span><div class="combat-armor-track"><i></i></div>`;
+  root.querySelector('.race-health').append(playerArmor);
+
+  const layer = host.querySelector('.combat-opponent-layer');
+  const markers = [];
+  const buttons = [...host.querySelectorAll('[data-combat-weapon]')];
+  const hitMarker = host.querySelector('.combat-hit-marker');
+  const damageArrow = host.querySelector('.combat-damage-direction');
+  const armorValue = playerArmor.querySelector('strong');
+  const armorFill = playerArmor.querySelector('i');
+  let hitUntil = -1, damageUntil = -1, damageDirection = 'front';
+  let previousZones = null;
+
+  host.addEventListener('click', event => {
+    const button = event.target.closest('[data-combat-weapon]');
+    if (button && !button.disabled) app.duel.fireWeapon(button.dataset.combatWeapon);
+  });
+
+  const off = app.duel.onChange((state, event) => {
+    if (event.stageLoaded != null || event.menu) {
+      hitUntil = damageUntil = -1;
+      previousZones = {...state.damageZones};
+      return;
+    }
+    if (!combatHudEnabled(app.duel, state)) return;
+    if (event.combatHit && event.victim === 'rival' && !event.enemy ||
+        event.combatRamHit && event.attacker === 'player' && event.victim === 'rival') {
+      hitUntil = state.stageTimeSec + .32;
+    }
+    if (event.combatHit && event.victim === 'player' ||
+        event.combatRamHit && event.victim === 'player') {
+      damageDirection = damageZoneFromChange(previousZones, state.damageZones) ||
+        (state.impactSide < 0 ? 'left' : 'right');
+      damageUntil = state.stageTimeSec + .75;
+      previousZones = {...state.damageZones};
+    }
+  });
+
+  function update(state) {
+    const active = combatHudEnabled(app.duel, state);
+    if (host.hidden === active) host.hidden = !active;
+    if (playerArmor.hidden === active) playerArmor.hidden = !active;
+    root.querySelector('#stage').classList.toggle('combat-upgraded', active);
+    if (!active) return;
+
+    const combat = state.combat;
+    const armor = armorPresentation(state);
+    setText(armorValue, `${armor.value} / ${armor.max}`);
+    setFraction(armorFill, armor.fraction);
+    playerArmor.classList.toggle('is-critical', armor.fraction <= .25);
+    playerArmor.classList.toggle('is-wrecked', !!state.combatWrecking);
+
+    const ufo = combat.cooldowns.ufo <= 0 && state.status === 'racing' ? ufoDestination(app.duel) : null;
+    for (const button of buttons) {
+      const id = button.dataset.combatWeapon;
+      const left = Math.max(0, combat.cooldowns[id] || 0);
+      const blocked = id === 'ufo' && ufo?.kind === 'blocked';
+      const disabled = state.status !== 'racing' || state.paused || left > 0 || blocked;
+      const full = WEAPONS[id].cooldown * (1 - (combat.levels[id] || 0) * COMBAT_TUNING.cooldownUpgradeDiscount);
+      const angle = `${Math.round(360 * (1 - clamp(left / Math.max(.01, full))))}deg`;
+      if (button.style.getPropertyValue('--ready-angle') !== angle) button.style.setProperty('--ready-angle', angle);
+      if (button.disabled !== disabled) button.disabled = disabled;
+      const label = left > 0 ? `${Math.ceil(left)}s` : blocked ? ufo.reason === 'lap-used' ? 'LAP USED' : 'CHARGING' : 'READY';
+      setText(button.querySelector('.combat-slot-state'), label);
+      setAttribute(button, 'aria-label', `${WEAPONS[id].name}, level ${combat.levels[id] || 0}, keyboard ${WEAPONS[id].key}, gamepad D-pad ${padDirections[id]}, ${label.toLowerCase()}`);
+    }
+
+    const opponents = state.opponents || [];
+    const projected = projectOpponents();
+    while (markers.length < opponents.length) {
+      const marker = createOpponentMarker(markers.length);
+      markers.push(marker);
+      layer.append(marker);
+    }
+    for (let index = 0; index < markers.length; index++) {
+      const marker = markers[index], opponent = opponents[index];
+      if (!opponent) {marker.hidden = true; continue;}
+      const projection = projected.find(item => item.index === index);
+      const exact = projection?.visible === true;
+      const position = exact ? projection : fallbackOpponentPosition(app.duel.course, state, opponent, index);
+      marker.hidden = !!opponent.finished || !!opponent.crushed;
+      marker.dataset.placement = exact ? 'over-car' : 'direction';
+      marker.style.left = `${(clamp(position.x) * 100).toFixed(1)}%`;
+      marker.style.top = `${(clamp(position.y) * 100).toFixed(1)}%`;
+      const opponentArmor = armorPresentation(opponent);
+      setText(marker.querySelector('.combat-marker-heading'), index ? `OPPONENT ${index + 1}` : 'RIVAL');
+      setText(marker.querySelector('.combat-marker-value'), exact ? `${opponentArmor.value} / ${opponentArmor.max}` : `${position.direction} · ${Math.round(Math.abs(opponent.s - state.s))} m · ${opponentArmor.value} / ${opponentArmor.max}`);
+      setFraction(marker.querySelector('.combat-marker-track i'), opponentArmor.fraction);
+      marker.classList.toggle('is-critical', opponentArmor.fraction <= .25);
+      marker.classList.toggle('is-wrecked', !!opponent.combatWrecking);
+      setAttribute(marker, 'aria-label', `${index ? `Opponent ${index + 1}` : 'Rival'} armor ${opponentArmor.value} of ${opponentArmor.max}${exact ? '' : `, ${position.direction.toLowerCase()}, ${Math.round(Math.abs(opponent.s - state.s))} metres away`}`);
+    }
+    hitMarker.classList.toggle('is-visible', hitUntil > state.stageTimeSec && !state.paused);
+    damageArrow.classList.toggle('is-visible', damageUntil > state.stageTimeSec && !state.paused);
+    if (damageArrow.dataset.direction !== damageDirection) damageArrow.dataset.direction = damageDirection;
+    if (!previousZones) previousZones = {...state.damageZones};
+  }
+
+  return {update, dispose() {off(); host.remove(); playerArmor.remove();}};
+}
