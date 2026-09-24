@@ -692,3 +692,9 @@ checkout untouched until the final integration commit passes the full gate.
   so it cannot grant player combat credit. Four focused cases, one private
   memory-only scene and build passed. Stationary, invulnerable raiders and
   salvage crates are next-card limits; frame pacing has not been sampled.
+- FOOT-08 bounded balance report integrated at `d38f37d`. In one seed and
+  three paired route/difficulty cases with roadside raiders, routine RPG
+  and wrench stops lost ground against continuous driving. A constructed
+  clear RPG shot on a wounded rival and an emergency repair before a wreck
+  each repaid their stop. The focused check and build passed. No weapon
+  numbers changed; actual aiming and broader win rates remain to be played.

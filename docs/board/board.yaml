@@ -857,10 +857,10 @@ tasks:
     lane: TOOL
     size: S
     needs: [FOOT-05]
-    status: building
+    status: integrated
     flag: wasteland2
     behavior_change: no
-    note: "A small deterministic comparison of clean driving, one RPG ambush and one repair stop is being built after FOOT-05."
+    note: "One seed and three paired route/difficulty cases show routine RPG and wrench stops lose ground; constructed ambush and pre-wreck repair can repay the stop. Bounded report/check integrated at d38f37d after parked-car and Hard pace fixes, including RAID-01 camps. No numeric tuning justified; broader play balance remains open."
     spec: "SPEC.md sections 3.4 and 12.2, task FOOT-08"
   - id: UI-02
     title: "Notoriety award feedback"
