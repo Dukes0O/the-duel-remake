@@ -54,4 +54,4 @@ Audio source is unchanged from the valid round 2 recording. Reuse its actual
 PCM, cue/event logs and plots instead of recording the same mix again. Keep
 the distinction between the round 1 engine stem and round 2 ducked vehicle
 bus, and retain the sample-rate and whole-race limitations already recorded.
-Independent audio review is recorded in the card change note.
+The card change note must record independent audio review before handoff.
