@@ -1,0 +1,50 @@
+{
+  "id": "jax",
+  "triangles": 1664,
+  "draws": 1,
+  "seconds": 7.128351699997438,
+  "clips": {
+    "idle": 2.0,
+    "aim": 1.0,
+    "fire": 0.35,
+    "reload": 2.2,
+    "repair": 4.0,
+    "wrench-idle": 2.0,
+    "aim-fire": 0.35,
+    "aim-reload": 2.2
+  },
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-1.png",
+    "sha256": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058",
+    "crop": [
+      1015,
+      40,
+      1517,
+      675
+    ]
+  },
+  "files": {
+    "jax.glb": "ca6f3a1f305cce5062bd4c86ab16f386d8fa20d2b5a0a3f4c0c5ee24738d34d9",
+    "jax.blend": "137a1d58c11b53df3549402c3f46ade01de477324f177ec89e3ef77c9524fe0e",
+    "jax-color.png": "49e9d6312529c6d07f46c8bb373ad7244489ef4f70c5bc614c0cf87f4fbeb9a0",
+    "jax-surface.png": "c7d906660b5656b2a56baf86e1b0557daef96f3509d303503d3164a5205c540b"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/first-person/round-1/blender-jax-idle.png",
+      "sha256": "b3b1c7539b691fd4fbce93af0f3e750baafe9cad812db28e2aa4584a8164cef0",
+      "crew": "jax",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-1/blender-jax-wrench-idle.png",
+      "sha256": "41dc16be3373dbc5198ec21b08703f653d36ff5cb00535e95179a83cba66b41f",
+      "crew": "jax",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench"
+    }
+  ]
+}

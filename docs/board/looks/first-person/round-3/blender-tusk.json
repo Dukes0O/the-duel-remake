@@ -1,0 +1,51 @@
+{
+  "id": "tusk",
+  "triangles": 3536,
+  "draws": 1,
+  "seconds": 7.495502300007502,
+  "clips": {
+    "idle": 2.0,
+    "aim": 1.0,
+    "fire": 0.35,
+    "reload": 2.2,
+    "repair": 4.0,
+    "wrench-idle": 2.0,
+    "aim-fire": 0.35,
+    "aim-reload": 2.2
+  },
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-2.png",
+    "sha256": "34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9",
+    "crop": [
+      1490,
+      20,
+      2056,
+      680
+    ]
+  },
+  "files": {
+    "tusk.glb": "d341b0ed8851ec3dfd38bffb84dfa878f2ad32d34adffd145190081e802e8044",
+    "tusk.blend": "08f33a8dec85b94b9e29d3f891075c32e5509b24549bbfba4cdc9091e68be1e2",
+    "tusk-color.png": "18464e738d35145c50c634b2dd04ebb7193a6dfccd79b362f33df86d557f1b82",
+    "tusk-surface.png": "fce5abe2bff5c21038427b20f8a6b5e6f07cd5f2c3a738715734a2548940b12a",
+    "tusk-normal.png": "e893405249afca292282070b1e47020b755fd190f8605292268c7b1cf3484685"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/first-person/round-3/blender-tusk-idle-0.25.png",
+      "sha256": "dfd3f74c56ece584810772e353e60cd611026623ef42c8b9a78b7dd1e218cc31",
+      "crew": "tusk",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-3/blender-tusk-wrench-idle-0.25.png",
+      "sha256": "cfff25791885423eb7551e2d6d2ba7d8e9ab489f495e116028474c048ad4e43c",
+      "crew": "tusk",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench"
+    }
+  ]
+}

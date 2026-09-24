@@ -1,0 +1,67 @@
+{
+  "id": "odessa",
+  "triangles": 3656,
+  "draws": 1,
+  "seconds": 13.051527800009353,
+  "clips": {
+    "idle": 2.0,
+    "aim": 1.0,
+    "fire": 0.35,
+    "reload": 2.2,
+    "repair": 4.0,
+    "wrench-idle": 2.0,
+    "aim-fire": 0.35,
+    "aim-reload": 2.2
+  },
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-1.png",
+    "sha256": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058",
+    "crop": [
+      1517,
+      40,
+      2067,
+      675
+    ]
+  },
+  "files": {
+    "odessa.glb": "37ac48919164bb802cae0e86f17d73100bea55fe012c76b5e8627dda0a1d3656",
+    "odessa.blend": "d4a3cebd96197667a572d0702aff0a782a71732f911cbceeadd1a19ad1b6dd99",
+    "odessa-color.png": "47594d62bdb213fbfff8a032a74419e91775f32d99d1151775147bf44fb59e0f",
+    "odessa-surface.png": "90fa4666a7cd4156e7fbd99af8e71f33f14657934bd5fd8c1b4776479bc3d2ea",
+    "odessa-normal.png": "2eb57430d502dbbbcf74cdcd77aedb5fb85253b054960f8b971c3d1c8b4d7e2a"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/first-person/round-3/blender-odessa-idle-0.25.png",
+      "sha256": "8eff0864a6642d38465625142c61eb3a0ecc85e5d56725f933282a8b208555b7",
+      "crew": "odessa",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-3/blender-odessa-wrench-idle-0.25.png",
+      "sha256": "73ecae73f5207fbe0b4cd058774f861360d04e9a7c0b561ce6cb82eb9e9df7f1",
+      "crew": "odessa",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-3/blender-odessa-repair-1.12.png",
+      "sha256": "40942eb81724f0e12563f9d843f2b21e3bfc925e3403eff1277357d084d80e5b",
+      "crew": "odessa",
+      "clip": "repair",
+      "time": 1.12,
+      "tool": "wrench"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-3/blender-odessa-repair-2.80.png",
+      "sha256": "dff25282034f670cc342de4fa61253904d14d1774212d6d710b5490ffff70359",
+      "crew": "odessa",
+      "clip": "repair",
+      "time": 2.8,
+      "tool": "wrench"
+    }
+  ]
+}

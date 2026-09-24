@@ -1,0 +1,50 @@
+{
+  "id": "nell",
+  "triangles": 3320,
+  "draws": 1,
+  "seconds": 7.435235499986447,
+  "clips": {
+    "idle": 2.0,
+    "aim": 1.0,
+    "fire": 0.35,
+    "reload": 2.2,
+    "repair": 4.0,
+    "wrench-idle": 2.0,
+    "aim-fire": 0.35,
+    "aim-reload": 2.2
+  },
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-1.png",
+    "sha256": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058",
+    "crop": [
+      510,
+      40,
+      1012,
+      675
+    ]
+  },
+  "files": {
+    "nell.glb": "f8cee43b7222aa65178530ffa6430b7942524242a92d6d19426c4c66fd23ba75",
+    "nell.blend": "966a7ccba156c45d14c573989b7428f1d0a7fcd5ccd3b22c15e43e23421a9357",
+    "nell-color.png": "23c496193611195c310b02486e5f0c4f9dc2825029780fda222dd65b2a0f7766",
+    "nell-surface.png": "54694fc7234d1cc197a7f23a776e85bc4183c0e76f216c4fe3b787bf4ad2223d"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/first-person/round-2/blender-nell-idle-0.25.png",
+      "sha256": "6c8e5b8c311ec99396ee560511666945ea57a72fd1fc5235a5a0e9b4de8ab3c4",
+      "crew": "nell",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-2/blender-nell-wrench-idle-0.25.png",
+      "sha256": "cdbde55a4d4100218ef555d3be3c34e6b855f77d7ec5a90f259bafb2b7c08246",
+      "crew": "nell",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench"
+    }
+  ]
+}

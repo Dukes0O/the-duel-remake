@@ -1,0 +1,50 @@
+{
+  "id": "cinder",
+  "triangles": 1856,
+  "draws": 1,
+  "seconds": 7.197851700009778,
+  "clips": {
+    "idle": 2.0,
+    "aim": 1.0,
+    "fire": 0.35,
+    "reload": 2.2,
+    "repair": 4.0,
+    "wrench-idle": 2.0,
+    "aim-fire": 0.35,
+    "aim-reload": 2.2
+  },
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-2.png",
+    "sha256": "34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9",
+    "crop": [
+      0,
+      20,
+      510,
+      680
+    ]
+  },
+  "files": {
+    "cinder.glb": "c320ecc6bb7e61004aa85ffcc31aaee386a6f202011569473929d70db155bc07",
+    "cinder.blend": "898481255dfa5d46d8d229b2915f9c50a586915ea3e70d77bbe6f53d1007fdb2",
+    "cinder-color.png": "857af4fa04b64986a28a4d21eb3c5e628d21f5c181efe31055032f9f77754dda",
+    "cinder-surface.png": "ae2c3c3205f6ecb02f6febb087fb58269a284f0bf77a0e5b38d94d0721f930fe"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/first-person/round-1/blender-cinder-idle.png",
+      "sha256": "6c3dfe5ed722b4ae82c2612e0d4f955dc84ba9e60167a9960467c8012bc70c8a",
+      "crew": "cinder",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-1/blender-cinder-wrench-idle.png",
+      "sha256": "26707148495a84f21c106cd000de88a68a29908b5596e99887a0c6a63e0f0b29",
+      "crew": "cinder",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench"
+    }
+  ]
+}

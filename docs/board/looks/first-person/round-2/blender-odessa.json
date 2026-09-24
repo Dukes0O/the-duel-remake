@@ -1,0 +1,66 @@
+{
+  "id": "odessa",
+  "triangles": 3320,
+  "draws": 1,
+  "seconds": 12.828207899990957,
+  "clips": {
+    "idle": 2.0,
+    "aim": 1.0,
+    "fire": 0.35,
+    "reload": 2.2,
+    "repair": 4.0,
+    "wrench-idle": 2.0,
+    "aim-fire": 0.35,
+    "aim-reload": 2.2
+  },
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-1.png",
+    "sha256": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058",
+    "crop": [
+      1517,
+      40,
+      2067,
+      675
+    ]
+  },
+  "files": {
+    "odessa.glb": "839b2a0ee18628884511e1df53c9924271a7fd0de921039db02bc453670d4fe0",
+    "odessa.blend": "8f8c9ecea635d689bf2c3206054368dd0f64140a94f29132682352b09fb10165",
+    "odessa-color.png": "cb49113d3e9dc554d15bb943d3fa3b6e3b9d2c4959e976228b7150ad7bad231a",
+    "odessa-surface.png": "90fa4666a7cd4156e7fbd99af8e71f33f14657934bd5fd8c1b4776479bc3d2ea"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/first-person/round-2/blender-odessa-idle-0.25.png",
+      "sha256": "1d769b63df2ed70bacdfd870c07b6585c8ff0c7f7e552394e1e1c200365cd308",
+      "crew": "odessa",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-2/blender-odessa-wrench-idle-0.25.png",
+      "sha256": "a9324098a34824524efeeb06093061ded1a60e197a253d38cf1f9c7066c6c161",
+      "crew": "odessa",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-2/blender-odessa-repair-1.12.png",
+      "sha256": "6f3f782d7067751c6b0bd9eb42a7e9c56aa320b824cf7e6d07d57cafab723d7b",
+      "crew": "odessa",
+      "clip": "repair",
+      "time": 1.12,
+      "tool": "wrench"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-2/blender-odessa-repair-2.80.png",
+      "sha256": "bf8fd96d66af64057e7d82b053e7ccaa3f5c99024b1e77c4ac4e55765064c9a8",
+      "crew": "odessa",
+      "clip": "repair",
+      "time": 2.8,
+      "tool": "wrench"
+    }
+  ]
+}

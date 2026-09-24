@@ -1,0 +1,91 @@
+{
+  "id": "rook",
+  "triangles": 3656,
+  "draws": 1,
+  "seconds": 21.195016299985582,
+  "clips": {
+    "idle": 2.0,
+    "aim": 1.0,
+    "fire": 0.35,
+    "reload": 2.2,
+    "repair": 4.0,
+    "wrench-idle": 2.0,
+    "aim-fire": 0.35,
+    "aim-reload": 2.2
+  },
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-1.png",
+    "sha256": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058",
+    "crop": [
+      0,
+      40,
+      510,
+      675
+    ]
+  },
+  "files": {
+    "rook.glb": "34de29dd6a2fb446cd9b8ac2f48ba5ffa3a0171ce40a331eb427763cd702c02c",
+    "rook.blend": "1d8930ee8f319880c30301f775760bc82cf3c96d8335c2eba6a63f747f0a0628",
+    "rook-color.png": "ee54d3204260af4926cf125ff016cdf65fb25195f362bea88de8a19579b36744",
+    "rook-surface.png": "e627c2ed5e78610f67214b98fd8d172a80bf8584cf233f6d27c3c180f1355788",
+    "rook-normal.png": "987637ffe2a0ea6eedfd2091515e904eacf3fb3557cdde194f6e466ca68c66c5"
+  },
+  "captures": [
+    {
+      "path": "docs/board/looks/first-person/round-3/blender-rook-idle-0.25.png",
+      "sha256": "398fc19f02859bb440d3a86cd3c545a9a98f1921625b57b7cad677f175d0bcbd",
+      "crew": "rook",
+      "clip": "idle",
+      "time": 0.25,
+      "tool": "rpg"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-3/blender-rook-wrench-idle-0.25.png",
+      "sha256": "0ff9e018db4b76ab8cb259a6d7b60aea2a0862ebfb5a622c0806a268d66ff53b",
+      "crew": "rook",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "tool": "wrench"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-3/blender-rook-aim-0.25.png",
+      "sha256": "e5ced10ff734ca242bf0170b39662ebde112c45315c7bfffbcd3934cd9ef990a",
+      "crew": "rook",
+      "clip": "aim",
+      "time": 0.25,
+      "tool": "rpg"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-3/blender-rook-fire-0.10.png",
+      "sha256": "f7320d740fbf037a878d7dc2602bdfd11bdb58bddd3ac9a76aa59c8d5d4a0ad1",
+      "crew": "rook",
+      "clip": "fire",
+      "time": 0.1,
+      "tool": "rpg"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-3/blender-rook-reload-1.10.png",
+      "sha256": "74c9f28a8326135f2470b8c99f244eccf8cfe0dbaace8ac87ebdf9ab23201bcf",
+      "crew": "rook",
+      "clip": "reload",
+      "time": 1.1,
+      "tool": "rpg"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-3/blender-rook-reload-1.65.png",
+      "sha256": "2c0030942c6f72990c48743ac72c63410849dc34f48e9f3d3c1d841b91da3adf",
+      "crew": "rook",
+      "clip": "reload",
+      "time": 1.65,
+      "tool": "rpg"
+    },
+    {
+      "path": "docs/board/looks/first-person/round-3/blender-rook-aim-reload-1.10.png",
+      "sha256": "64da1b2f0063d93f0de4baa472ee865104fe6efbfee2194ef8502cf97ef69bfa",
+      "crew": "rook",
+      "clip": "aim-reload",
+      "time": 1.1,
+      "tool": "rpg"
+    }
+  ]
+}

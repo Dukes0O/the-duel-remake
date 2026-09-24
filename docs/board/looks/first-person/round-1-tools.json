@@ -1,0 +1,435 @@
+{
+  "round": 1,
+  "observationCommit": "fb27582c76e933d26467b4b43378efb09c9bcd8a",
+  "camera": {
+    "position": [
+      0,
+      0,
+      0
+    ],
+    "target": [
+      0,
+      0,
+      -1
+    ],
+    "verticalFov": 72,
+    "near": 0.15,
+    "width": 1280,
+    "height": 720
+  },
+  "assets": {
+    "public/assets/models/wasteland/first-person/rpg.glb": "144cb67a50ea1822df6a939031e5f0d585f73cb0745c83fabb2248159f13a0bc",
+    "public/assets/models/wasteland/first-person/wrench.glb": "763841bcbe43aa43f8b04db08b61f37567bb1b0d8c1898ba6e51a5678152ab97",
+    "public/assets/models/wasteland/first-person/hands/rook.glb": "6d0c92ebdd43c789c53662c6c376fb569ca40d460978846d31cef3838249cd90",
+    "public/assets/models/wasteland/first-person/hands/nell.glb": "e24edd887181e1f515d2b09162329c3334dcd41771f67443a4b3012689605e63",
+    "public/assets/models/wasteland/first-person/hands/jax.glb": "ca6f3a1f305cce5062bd4c86ab16f386d8fa20d2b5a0a3f4c0c5ee24738d34d9",
+    "public/assets/models/wasteland/first-person/hands/odessa.glb": "deb06ce272fae27800fc40cb6975d42ad28216fdd9d275b1f6909d135662f1a4",
+    "public/assets/models/wasteland/first-person/hands/cinder.glb": "c320ecc6bb7e61004aa85ffcc31aaee386a6f202011569473929d70db155bc07",
+    "public/assets/models/wasteland/first-person/hands/dune.glb": "ec9bb874423f505c123b207c46c4a938ba33e5827ccf8c85f85d35db64264c2f",
+    "public/assets/models/wasteland/first-person/hands/wren.glb": "46d911d634303df4923e5049c4d642b1b17dc83fbb12ee2a97e86543c608eacd",
+    "public/assets/models/wasteland/first-person/hands/tusk.glb": "d68af18b08956a3b6815082bf43e4ec03b311b2d46a1015a47ac3309be24a6f3"
+  },
+  "counts": {
+    "high": [
+      {
+        "crew": "rook",
+        "clip": "idle",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "wrench-idle",
+        "triangles": 2812,
+        "draws": 2
+      },
+      {
+        "crew": "rook",
+        "clip": "aim",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "fire",
+        "triangles": 3608,
+        "draws": 2
+      },
+      {
+        "crew": "rook",
+        "clip": "reload",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "aim-reload",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "nell",
+        "clip": "idle",
+        "triangles": 4060,
+        "draws": 3
+      },
+      {
+        "crew": "nell",
+        "clip": "wrench-idle",
+        "triangles": 3004,
+        "draws": 2
+      },
+      {
+        "crew": "jax",
+        "clip": "idle",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "jax",
+        "clip": "wrench-idle",
+        "triangles": 2812,
+        "draws": 2
+      },
+      {
+        "crew": "odessa",
+        "clip": "idle",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "odessa",
+        "clip": "wrench-idle",
+        "triangles": 2812,
+        "draws": 2
+      },
+      {
+        "crew": "odessa",
+        "clip": "repair",
+        "triangles": 2812,
+        "draws": 2
+      },
+      {
+        "crew": "cinder",
+        "clip": "idle",
+        "triangles": 4060,
+        "draws": 3
+      },
+      {
+        "crew": "cinder",
+        "clip": "wrench-idle",
+        "triangles": 3004,
+        "draws": 2
+      },
+      {
+        "crew": "dune",
+        "clip": "idle",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "dune",
+        "clip": "wrench-idle",
+        "triangles": 2812,
+        "draws": 2
+      },
+      {
+        "crew": "wren",
+        "clip": "idle",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "wren",
+        "clip": "wrench-idle",
+        "triangles": 2812,
+        "draws": 2
+      },
+      {
+        "crew": "tusk",
+        "clip": "idle",
+        "triangles": 3940,
+        "draws": 3
+      },
+      {
+        "crew": "tusk",
+        "clip": "wrench-idle",
+        "triangles": 2884,
+        "draws": 2
+      }
+    ],
+    "performance": [
+      {
+        "crew": "rook",
+        "clip": "idle",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "wrench-idle",
+        "triangles": 2812,
+        "draws": 2
+      },
+      {
+        "crew": "rook",
+        "clip": "aim",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "fire",
+        "triangles": 3608,
+        "draws": 2
+      },
+      {
+        "crew": "rook",
+        "clip": "reload",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "rook",
+        "clip": "aim-reload",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "nell",
+        "clip": "idle",
+        "triangles": 4060,
+        "draws": 3
+      },
+      {
+        "crew": "nell",
+        "clip": "wrench-idle",
+        "triangles": 3004,
+        "draws": 2
+      },
+      {
+        "crew": "jax",
+        "clip": "idle",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "jax",
+        "clip": "wrench-idle",
+        "triangles": 2812,
+        "draws": 2
+      },
+      {
+        "crew": "odessa",
+        "clip": "idle",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "odessa",
+        "clip": "wrench-idle",
+        "triangles": 2812,
+        "draws": 2
+      },
+      {
+        "crew": "odessa",
+        "clip": "repair",
+        "triangles": 2812,
+        "draws": 2
+      },
+      {
+        "crew": "cinder",
+        "clip": "idle",
+        "triangles": 4060,
+        "draws": 3
+      },
+      {
+        "crew": "cinder",
+        "clip": "wrench-idle",
+        "triangles": 3004,
+        "draws": 2
+      },
+      {
+        "crew": "dune",
+        "clip": "idle",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "dune",
+        "clip": "wrench-idle",
+        "triangles": 2812,
+        "draws": 2
+      },
+      {
+        "crew": "wren",
+        "clip": "idle",
+        "triangles": 3868,
+        "draws": 3
+      },
+      {
+        "crew": "wren",
+        "clip": "wrench-idle",
+        "triangles": 2812,
+        "draws": 2
+      },
+      {
+        "crew": "tusk",
+        "clip": "idle",
+        "triangles": 3940,
+        "draws": 3
+      },
+      {
+        "crew": "tusk",
+        "clip": "wrench-idle",
+        "triangles": 2884,
+        "draws": 2
+      }
+    ]
+  },
+  "qualities": [
+    "high",
+    "performance"
+  ],
+  "tile": {
+    "width": 384,
+    "height": 216
+  },
+  "sources": {
+    "public/assets/reference/wasteland-crew-1.png": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058",
+    "docs/board/looks/first-person/round-1/blender-rook-idle.png": "400639135b6cb26bdb6c5ab25f2d43994ad158c770558e956cb94cd3177ed122",
+    "docs/board/looks/first-person/round-1/game-high-rook-idle.png": "07af217942795fc396fcee1f965fab7b06a88ce4d8d3b64527a71de4cf4a333c",
+    "docs/board/looks/first-person/round-1/game-performance-rook-idle.png": "65c17f2a91c839c427f63428f8d05ac0c2def31cc3269d962198bd16450e86a5",
+    "docs/board/looks/first-person/round-1/blender-rook-wrench-idle.png": "d3c6ddd9ce3df85a330aedd94ab1493457b4124a7ef7b7ca704db59937f372d9",
+    "docs/board/looks/first-person/round-1/game-high-rook-wrench-idle.png": "6bad91e753d852e5e70fd6c7e614230b2c851aacf4830d726c8793434bdc55f7",
+    "docs/board/looks/first-person/round-1/game-performance-rook-wrench-idle.png": "f5eff661d7df97b415174e40eb04c34d1dcc69b7a3b6f10d27d78b3be95bcfeb",
+    "docs/board/looks/first-person/round-1/blender-rook-aim.png": "097ed3e597c069a2b519fb54b841ea1cbc37ce5e19d747c91e26464b4fd4b057",
+    "docs/board/looks/first-person/round-1/game-high-rook-aim.png": "ca56bd83ee9b64ebee08283e30d1d1dd9b1c9b17aa8f527e64e87ff5542a9a04",
+    "docs/board/looks/first-person/round-1/game-performance-rook-aim.png": "06679a4bcd3bfa691c4a56c3299609d2ec8020f0e91120eab74ccd1ee01e4818",
+    "docs/board/looks/first-person/round-1/blender-rook-fire.png": "a6473dc081de1cefe9d36ba1b161ac7fd4f4a618d9c4330a390cf592019a7827",
+    "docs/board/looks/first-person/round-1/game-high-rook-fire.png": "c7d7c5473a6c5bd38c5c698efc7b9c106234d85b6766d4296460962d490e0503",
+    "docs/board/looks/first-person/round-1/game-performance-rook-fire.png": "d773dd5334f250254d47a45c538fae27d444288ce042e4d4e9c65d61f47930f8",
+    "docs/board/looks/first-person/round-1/blender-rook-reload.png": "b9b4a5fc738555328cca46addc6d2489ca1fd82485dcdc2de09eb8bfd0c5b433",
+    "docs/board/looks/first-person/round-1/game-high-rook-reload.png": "5ba9827b8c8fd4d287e6f6a17b14df79811b3b31e87cc8585881038c75739260",
+    "docs/board/looks/first-person/round-1/game-performance-rook-reload.png": "67fcd819b07a7ab2a88b546a1557e5740c17b4bad24d028e703dadb300fa42dd",
+    "docs/board/looks/first-person/round-1/blender-rook-aim-reload.png": "aa8b925e0e9569b60789ae4641ec3d60df01edce26114f3ba11f98f848fb0b55",
+    "docs/board/looks/first-person/round-1/game-high-rook-aim-reload.png": "a8fb34f8c19c2d5a07e54d47ffa3e41b7fecdc381b70f1ea4fb90f565f8f5ae9",
+    "docs/board/looks/first-person/round-1/game-performance-rook-aim-reload.png": "35b61f3b1508d3f95587566c053ca18fbbbbb0a28b3c957b7508935cacb095a3",
+    "docs/board/looks/first-person/round-1/blender-nell-idle.png": "da62c3009011830780495ee88d504531132b94bf90af84456e45f2941d7a941b",
+    "docs/board/looks/first-person/round-1/game-high-nell-idle.png": "029c4496cd2cfd01ce568e9420ce435b2ec8d69952022a6475b73645c8d6e86b",
+    "docs/board/looks/first-person/round-1/game-performance-nell-idle.png": "861af7ad3d399da772c14e7a690c608806b9b3ac8aefb54394a09708e9378595",
+    "docs/board/looks/first-person/round-1/blender-nell-wrench-idle.png": "f9b0909f63383e1a6e901cc900048ad75505726dcc56cafba626ac605f73b03e",
+    "docs/board/looks/first-person/round-1/game-high-nell-wrench-idle.png": "bdbbca774905dbdcb0b61b717d92316d624318ff72a60cccb07091a6f087b4e8",
+    "docs/board/looks/first-person/round-1/game-performance-nell-wrench-idle.png": "323d414036e20ab7c0f0620dec585c388185585aadc5fc1c7fb4052564650003",
+    "docs/board/looks/first-person/round-1/blender-jax-idle.png": "b3b1c7539b691fd4fbce93af0f3e750baafe9cad812db28e2aa4584a8164cef0",
+    "docs/board/looks/first-person/round-1/game-high-jax-idle.png": "2b1b9ed2f0c8da28a69adde6739e3d2474bbe69c65825ca582f015ca3c086929",
+    "docs/board/looks/first-person/round-1/game-performance-jax-idle.png": "866adfb3e0d7b01ddbb0994527b18f804f69ee59c4be60c5e352ecc9bd9b0af9",
+    "docs/board/looks/first-person/round-1/blender-jax-wrench-idle.png": "41dc16be3373dbc5198ec21b08703f653d36ff5cb00535e95179a83cba66b41f",
+    "docs/board/looks/first-person/round-1/game-high-jax-wrench-idle.png": "68046d29ff6f429728c0cea420320826d25c1dc65143bd917f15c3f5b09a7e82",
+    "docs/board/looks/first-person/round-1/game-performance-jax-wrench-idle.png": "13339461024b529998fbd6c4253405ea96bd51ba2ed606e137f544bd75e140ba",
+    "docs/board/looks/first-person/round-1/blender-odessa-idle.png": "134bf1ee120f624a11abf5c7541df9ca74620e094243737fc80a85bac1a237a9",
+    "docs/board/looks/first-person/round-1/game-high-odessa-idle.png": "59d2bf8485232725f782345d2a55da6f26545eef03875ce43189b179065f5a79",
+    "docs/board/looks/first-person/round-1/game-performance-odessa-idle.png": "b81d94894990b46b69b5b4601a0dbf6ac6d6f1ecd958276f232325cf583790ad",
+    "docs/board/looks/first-person/round-1/blender-odessa-wrench-idle.png": "fbdf0cd0586e00c35c156a4162b9f060a3a5e79542ac68394b743d4aecb881ca",
+    "docs/board/looks/first-person/round-1/game-high-odessa-wrench-idle.png": "31c5cb2ee0c1fc20a2345908cb581e7e860d47eccc32a7a600f2d9d14c37c3c8",
+    "docs/board/looks/first-person/round-1/game-performance-odessa-wrench-idle.png": "93d696e80926538965928ea3b099c37347e8d922ac1027dcd4e2355b9fd5bd43",
+    "docs/board/looks/first-person/round-1/blender-odessa-repair.png": "d4d986cc56e33dc13830cd7dd604db8c247c36cebe7ec1ad2f9efa5d79176661",
+    "docs/board/looks/first-person/round-1/game-high-odessa-repair.png": "b090fc45bcff8f4a13eab97a51a3517c4b31452b99f39b457acaa17386aac8ba",
+    "docs/board/looks/first-person/round-1/game-performance-odessa-repair.png": "935e015139069fa7a4bf165b19c9177e0f3e03ca459d1d9e5b430fb783f8ba65",
+    "public/assets/reference/wasteland-crew-2.png": "34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9",
+    "docs/board/looks/first-person/round-1/blender-cinder-idle.png": "6c3dfe5ed722b4ae82c2612e0d4f955dc84ba9e60167a9960467c8012bc70c8a",
+    "docs/board/looks/first-person/round-1/game-high-cinder-idle.png": "d2f215c912bfc944c17a6815d17ef94509cc05ada26996c2d0a737fcd3123566",
+    "docs/board/looks/first-person/round-1/game-performance-cinder-idle.png": "179764b9658484d36c48038c07ce23c46cf87ea96c2a1c4b387258cb8bdde0d4",
+    "docs/board/looks/first-person/round-1/blender-cinder-wrench-idle.png": "26707148495a84f21c106cd000de88a68a29908b5596e99887a0c6a63e0f0b29",
+    "docs/board/looks/first-person/round-1/game-high-cinder-wrench-idle.png": "8d599cc12c7231d4eb88ef02d693f2fd39c122a24fb90b67a92ffbc998b2d938",
+    "docs/board/looks/first-person/round-1/game-performance-cinder-wrench-idle.png": "e9eff63b9ac76975ee120f32ae4448e27965027d3bd882406fa928a773e02ea8",
+    "docs/board/looks/first-person/round-1/blender-dune-idle.png": "e2d53f20813c6318ab9169570d9206ed1a98ecc0becd6ff365aecad2ec1c7b66",
+    "docs/board/looks/first-person/round-1/game-high-dune-idle.png": "3b3d1e276cc4e1577bac55213eaa00144cc74bccb5046bf9297ee30aba354ed6",
+    "docs/board/looks/first-person/round-1/game-performance-dune-idle.png": "d4b55648dcd0635690b842bb7be97e43590b39f7b0bd53206104b91a284faa42",
+    "docs/board/looks/first-person/round-1/blender-dune-wrench-idle.png": "2d134a4a1a7a3b81c7234e0eff64e401d92048b3129f608020bfdeceac574f50",
+    "docs/board/looks/first-person/round-1/game-high-dune-wrench-idle.png": "c80282db6456cd4aee6bbe4cd220aef6bb3f16b35a0e9f4a624906dc57c99bd8",
+    "docs/board/looks/first-person/round-1/game-performance-dune-wrench-idle.png": "904e243e2a52037ba0ab28d98ebfe7150eb39f6c36fd604f3ade1466b4b97769",
+    "docs/board/looks/first-person/round-1/blender-wren-idle.png": "6220d1be517bc176774304182712dd0f52f281155de45617b7d52894924c93f2",
+    "docs/board/looks/first-person/round-1/game-high-wren-idle.png": "4ac8801f1c685a2e24738409a8fe170ccd287fce46f5ece41a1d62123a6ef844",
+    "docs/board/looks/first-person/round-1/game-performance-wren-idle.png": "8feae682db1163059f79ee08eec043ab18b0799e01759275902ae426ebe86125",
+    "docs/board/looks/first-person/round-1/blender-wren-wrench-idle.png": "c90807edfa63722875fb8fa8d69ef911f9668539f19e770a55a385d186412e18",
+    "docs/board/looks/first-person/round-1/game-high-wren-wrench-idle.png": "988c2836760a40904405c235667ce7b6731fb7a70b82c01fef738cca56005778",
+    "docs/board/looks/first-person/round-1/game-performance-wren-wrench-idle.png": "6984c0d55d3fe22e0eb561c3b2a7a6eefccfc35234e5cb5a5b17b471355bcc0d",
+    "docs/board/looks/first-person/round-1/blender-tusk-idle.png": "d05b4943a811b3680515bf0ce6b731b6991acdb3d956b280a5d47ef7cc1d2a8d",
+    "docs/board/looks/first-person/round-1/game-high-tusk-idle.png": "6cd9088ac1f3d72da27035998290cca5c023e6c36285847ac61f460f3e008776",
+    "docs/board/looks/first-person/round-1/game-performance-tusk-idle.png": "7a4cc4c317dc07ebaa4ec62dfd5179dbba35aeeed60233c3b15fade6ea2defa9",
+    "docs/board/looks/first-person/round-1/blender-tusk-wrench-idle.png": "636754bf81f7fee70942a041b6b47c657047cac93740003fc16d4a564989adc6",
+    "docs/board/looks/first-person/round-1/game-high-tusk-wrench-idle.png": "94dfa1f64f8610cfca8094c94df80fea54f5c1cd5ed8f6f589d51d6f1d02ef97",
+    "docs/board/looks/first-person/round-1/game-performance-tusk-wrench-idle.png": "995c6aba4a81f3fc4997d33ffef30f3983fb67289e042cab5e65658d0d5b3535",
+    "public/assets/reference/wasteland-rpg.png": "5b03e9598c972b44e556e6bea6fcb3e1971a89bd2b9380c25b39b6df17c09bea",
+    "public/assets/reference/wasteland-wrench.png": "fb1c7e39a5319195e77ca444a2753750f24704970500835625398dd332d0f0c3"
+  },
+  "rows": [
+    {
+      "crew": "rook",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "rpg shape - reference pose differs",
+      "crop": [
+        0,
+        0,
+        770,
+        390
+      ],
+      "reference": "public/assets/reference/wasteland-rpg.png",
+      "blender": "docs/board/looks/first-person/round-1/blender-rook-idle.png",
+      "high": "docs/board/looks/first-person/round-1/game-high-rook-idle.png",
+      "performance": "docs/board/looks/first-person/round-1/game-performance-rook-idle.png"
+    },
+    {
+      "crew": "rook",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "rpg held - reference pose differs",
+      "crop": [
+        790,
+        360,
+        1536,
+        1024
+      ],
+      "reference": "public/assets/reference/wasteland-rpg.png",
+      "blender": "docs/board/looks/first-person/round-1/blender-rook-idle.png",
+      "high": "docs/board/looks/first-person/round-1/game-high-rook-idle.png",
+      "performance": "docs/board/looks/first-person/round-1/game-performance-rook-idle.png"
+    },
+    {
+      "crew": "rook",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "view": "wrench shape - reference pose differs",
+      "crop": [
+        0,
+        0,
+        345,
+        1024
+      ],
+      "reference": "public/assets/reference/wasteland-wrench.png",
+      "blender": "docs/board/looks/first-person/round-1/blender-rook-wrench-idle.png",
+      "high": "docs/board/looks/first-person/round-1/game-high-rook-wrench-idle.png",
+      "performance": "docs/board/looks/first-person/round-1/game-performance-rook-wrench-idle.png"
+    },
+    {
+      "crew": "rook",
+      "clip": "wrench-idle",
+      "time": 0.25,
+      "view": "wrench held - reference pose differs",
+      "crop": [
+        930,
+        0,
+        1536,
+        1024
+      ],
+      "reference": "public/assets/reference/wasteland-wrench.png",
+      "blender": "docs/board/looks/first-person/round-1/blender-rook-wrench-idle.png",
+      "high": "docs/board/looks/first-person/round-1/game-high-rook-wrench-idle.png",
+      "performance": "docs/board/looks/first-person/round-1/game-performance-rook-wrench-idle.png"
+    }
+  ],
+  "output": "docs/board/looks/first-person/round-1-tools.png",
+  "status": "Blender and game poses match. Original crew and tool references use different poses; compare identity, shape, materials and grip only. Independent review decides fidelity."
+}
