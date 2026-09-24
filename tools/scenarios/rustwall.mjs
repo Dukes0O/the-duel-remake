@@ -79,7 +79,7 @@ export async function run(context) {
           cpuP50Ratio:loaded.renderCpu.p50/baseline.renderCpu.p50,cpuP95Ratio:loaded.renderCpu.p95/baseline.renderCpu.p95,
           scope:'120 measured RAF intervals and full production renderFrame CPU submissions, after 20 warm frames; same stopped course/camera/quality/support, greybox versus loaded models. CPU submission is not GPU time.'};
       })()`);
-      const png=await context.evaluate(`(() => {window.__qaApp.onFrame?.(window.__qaApp.duel.state);window.__render.renderFrame();return window.__render.renderer.domElement.toDataURL('image/png');})()`);
+      const png=await context.evaluate(coursePicture());
       evidence.context.push(await save(context,relative,`course-${quality}-${view}`,png,{quality,view,route:'a'}));
     }
     for(const sample of blender.captures) {
@@ -97,7 +97,7 @@ export async function run(context) {
       await start(context,quality,seed);
       await courseView(context,960);
       evidence.placement.push(await placement(context,route,quality));
-      const png=await context.evaluate('window.__render.renderer.domElement.toDataURL("image/png")');
+      const png=await context.evaluate(coursePicture());
       evidence.context.push(await save(context,relative,`course-${quality}-${route}-approach`,png,{quality,route,view:'approach'}));
     }
   }
@@ -167,6 +167,9 @@ function washPicture(sample,quality) {
     r.renderer.setClearColor(0x777777,1);r.renderer.setPixelRatio(1);r.renderer.setSize(c.width,c.height,false);r.composer.setSize(c.width,c.height);
     r.camera.position.fromArray(c.position);r.camera.lookAt(...c.target);r.camera.fov=c.verticalFov;r.camera.aspect=c.width/c.height;r.camera.near=c.near;r.camera.updateProjectionMatrix();
     r.scene.updateMatrixWorld(true);r.camera.updateMatrixWorld(true);
+    // A shadow pass may have stamped Three's instance-upload cache with the
+    // next render frame. Prepare once after this QA-only instance relocation.
+    (${renderMainView.toString()})(r.renderer,r.composer,${quality==='high'});
     r.renderer.info.reset();(${renderMainView.toString()})(r.renderer,r.composer,${quality==='high'});
     const gl=r.renderer.getContext(),pixels=new Uint8Array(c.width*c.height*4);
     gl.readPixels(0,0,c.width,c.height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
@@ -178,7 +181,8 @@ function washPicture(sample,quality) {
     const result={png:r.renderer.domElement.toDataURL('image/png'),counts:{drawCalls:r.renderer.info.render.calls,triangles:r.renderer.info.render.triangles,nonBackgroundSamples}};
     for(const record of records){record.mesh.count=record.count;record.mesh.setMatrixAt(0,record.matrix);record.mesh.instanceMatrix.needsUpdate=true;record.mesh.boundingBox=record.box;record.mesh.boundingSphere=record.sphere;}
     parent.add(wash);for(const light of lights)light.removeFromParent();for(const [node,visible] of visibility)node.visible=visible;
-    r.scene.background=background;r.scene.environment=environment;r.scene.fog=fog;return result;
+    r.scene.background=background;r.scene.environment=environment;r.scene.fog=fog;
+    r.renderFrame();return result;
   })()`;
 }
 
@@ -197,4 +201,18 @@ async function save(context,relative,name,png,metadata) {
   const path=`${relative}/${name}.png`,bytes=Buffer.from(png.split(',')[1],'base64');
   await writeFile(join(ROOT,path),bytes);context.screenshots.push(join(ROOT,path));
   return{...metadata,path,sha256:sha(bytes)};
+}
+
+function coursePicture() {
+  return `(() => {
+    const r=window.__render;window.__qaApp.onFrame?.(window.__qaApp.duel.state);
+    r.renderFrame();r.renderFrame();
+    const gl=r.renderer.getContext(),width=r.renderer.domElement.width,height=r.renderer.domElement.height;
+    const pixels=new Uint8Array(width*height*4);gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+    let distinct=0;for(let y=0;y<height;y+=8)for(let x=0;x<width;x+=8){const i=(y*width+x)*4;
+      if(Math.abs(pixels[i]-pixels[0])+Math.abs(pixels[i+1]-pixels[1])+Math.abs(pixels[i+2]-pixels[2])>12)distinct++;
+    }
+    if(distinct<100)throw Error('Actual-course capture is blank');
+    return r.renderer.domElement.toDataURL('image/png');
+  })()`;
 }
