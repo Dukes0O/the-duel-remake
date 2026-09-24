@@ -2,6 +2,7 @@ import {readdirSync,statSync,readFileSync} from 'node:fs';
 import {spawnSync,spawn} from 'node:child_process';
 import {resolve,join,dirname,relative} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
+import {sourceState,writeFullTierEvidence} from './build-status.mjs';
 
 export const PROJECT_ROOT=resolve(fileURLToPath(new URL('../',import.meta.url)));
 export const CORE_SUITE='src/test.js';
@@ -322,14 +323,16 @@ export async function runSuitesConcurrent(tasks,{cwd=PROJECT_ROOT,execPath=proce
 }
 
 export async function main(args=process.argv.slice(2),{discover=discoverSuites,run=runSuitesConcurrent,
-  getChanges=changedFiles,affected=suitesForChanges,log=console.log,error=console.error}={}){
+  getChanges=changedFiles,affected=suitesForChanges,log=console.log,error=console.error,
+  projectRoot,now=()=>new Date()}={}){
   let options;
   try{
     options=parseArguments(args);
     if(options.help){log(HELP);return 0;}
-    const suites=discover();
-    const paths=options.tier==='lane'||options.changed?getChanges():[];
-    const impacted=paths.length?affected(suites,paths):[];
+    const root=projectRoot??PROJECT_ROOT;
+    const suites=discover({projectRoot:root});
+    const paths=options.tier==='lane'||options.changed?getChanges({cwd:root}):[];
+    const impacted=paths.length?affected(suites,paths,{projectRoot:root}):[];
     const plan=selectPlan(suites,{...options,affected:impacted});
     if(!plan.length)throw Error('No test suites match: '+(options.filters.join(', ')||'(none)'));
     if(options.list){
@@ -338,8 +341,14 @@ export async function main(args=process.argv.slice(2),{discover=discoverSuites,r
       else plan.forEach(task=>log(task.label));
       return 0;
     }
+    // Injected unit-test runners cannot write real project evidence. A fixture
+    // must explicitly supply its own root before recording is enabled.
+    const record=options.tier==='full'&&!options.filters.length&&
+      (projectRoot!==undefined||(discover===discoverSuites&&run===runSuitesConcurrent));
+    const start=record?sourceState(root):null;
+    if(record)writeFullTierEvidence(root,start,{plan,now});
     const env=options.tier==='full'?{...process.env,DUEL_SKIP_CAMPAIGNS:''}:process.env;
-    const result=await run(plan,{jobs:options.jobs,keepGoing:options.keepGoing,env,
+    const result=await run(plan,{cwd:root,jobs:options.jobs,keepGoing:options.keepGoing,env,
       onStart:options.json?()=>{}:(task,index,total)=>log('\n['+(index+1)+'/'+total+'] '+task.label),
       onResult:options.json?()=>{}:(row)=>{
         if(row.stdout.trim())log(row.stdout.trimEnd());
@@ -347,6 +356,7 @@ export async function main(args=process.argv.slice(2),{discover=discoverSuites,r
         const line=(row.passed?'PASS ':'FAIL ')+row.label+' ('+seconds(row.durationMs)+')';
         if(row.passed)log(line);else error(line+(row.error?' '+row.error:''));
       }});
+    if(record)writeFullTierEvidence(root,start,{result,plan,now});
     if(options.json)log(JSON.stringify({schema:1,kind:'result',tier:options.tier||'default',
       jobs:options.jobs,keepGoing:options.keepGoing,changedFiles:paths,...result}));
     else{
