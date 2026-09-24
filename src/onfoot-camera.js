@@ -37,6 +37,8 @@ function overheadPose(course, fighter) {
   for(const scale of [1,.8,.6,.4,.2,0]) {
     position={x:fighter.x-forwardX*6*scale,y:fighter.y+5,z:fighter.z-forwardZ*6*scale};
     let near=course.nearest(position.x,position.z,fighter.s), tunnel=course.tunnelAt?.(near.s);
+    // A shared route coordinate does not put a hillside camera inside a tunnel.
+    if(tunnel&&Math.abs(near.lateral)>tunnel.width+.65)tunnel=null;
     if(tunnel) {
       const lateral=Math.max(-tunnel.width+.65,Math.min(tunnel.width-.65,near.lateral));
       const point=course.worldAt(near.s,lateral);position.x=point.x;position.z=point.z;
