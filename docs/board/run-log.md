@@ -1216,3 +1216,17 @@ checkout untouched until the final integration commit passes the full gate.
 - STATUS refreshed on the clean merge commit. One task merge since the 09:36 UTC full pass; next full after four more merges or 11:36 UTC, and at run end.
 - EGG-03 begins with independent tests, separate simulation/App and presentation owners, then independent save review. Arrival state remains a safe temporary endpoint until discovery and yard cards land.
 - Latest quota observation: 20 percent remaining. No live change, release or push.
+
+## 2026-09-24 10:14 UTC - arrival runtime reviewed
+
+- EGG-03 core red contract b74d51f precedes runtime 5776623. All 37 journey
+  and seven synthetic-save departure checks pass. The presentation red
+  contract 6c91568 separately precedes the camera, dialog and sound work.
+- Independent runtime and Save Guardian review finds no defect. All seven
+  historical save shapes and 247 preservation checks pass, with backup,
+  archive and storage-budget suites. Evidence-only review note: cdf9e03.
+- Presentation and two bounded visual/audio rounds remain in progress. The
+  card has not merged. One task merge since the 09:36 UTC full pass; the next
+  full remains due after four more merges or 11:36 UTC, and at run end.
+- EGG-04 has concrete discovery, named-player isolation, backup, map and hint
+  acceptance lines. It waits for EGG-03 integration. No live change or push.
