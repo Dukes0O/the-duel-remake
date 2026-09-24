@@ -173,6 +173,47 @@ check('both reports retain every existing target band and failure', () => {
     assert.match(validate(report, [{ ...input.runs[0], unattributedEnemyHits: 1 }], input.baselineRuns).join('\n'), /victim identity/);
   }
 });
+// A current roadsideImpact carries the struck traffic actor, not the attacker.
+// Exercise production contacts so reporting cannot silently depend on the older
+// trafficWrecked event or label every traffic incident as player-owned.
+for (const flags of [[], ['wasteland2']]) for (const attacker of ['player', 'cpu']) {
+  for (const outcome of ['knock', 'obliterate']) {
+    check(`${flags.length ? 'flag-on' : 'flag-off'} ${attacker} traffic ${outcome} accounting`, () => {
+      const run = required('run');
+      const original = App.prototype.advance;
+      const impacts = [];
+      App.prototype.advance = function (...args) {
+        const duel = this.duel, state = duel.state;
+        const striking = attacker === 'player' ? state : state.rival;
+        Object.assign(striking, { car: 'falcone_f42', s: 107, prevS: 100,
+          lateral: 0, prevLateral: 0, speedMph: duel.car.topSpeed * (outcome === 'obliterate' ? .7 : .3),
+          headingError: 0, slipAngle: 0, pushVelocity: 0, dir: 1,
+          airborne: false, groundHeight: undefined, airHeight: 0 });
+        const traffic = { alive: true, s: 110, prevS: 110,
+          lateral: .6, prevLateral: .6, speedMph: 0, dir: 1,
+          headingError: 0, slipAngle: 0, pushVelocity: 0 };
+        state.traffic = [traffic];
+        duel.onChange((_, event) => { if (event.roadsideImpact) impacts.push(event.roadsideImpact); });
+        assert.equal(duel._vehicleContact(striking, traffic, 'traffic'), true,
+          'the production swept contact reaches traffic');
+        assert.equal(impacts.length, 1, 'one real contact emits one roadside impact');
+        assert.equal(impacts[0].kind, 'traffic');
+        assert.equal(impacts[0].outcome, outcome, 'fixture reaches the intended contact tier');
+        assert.equal(impacts[0].actor, traffic, 'event actor identifies the victim');
+        assert.equal(impacts[0].owner, undefined, 'current event supplies no attacker ownership');
+        return original.apply(this, args);
+      };
+      try {
+        const row = run('none', 'medium', 1989, { flags, maxFrames: 1 });
+        const expected = wrecks();
+        expected.traffic = expected.byOwner.unknown = outcome === 'obliterate' ? 1 : 0;
+        assert.deepEqual(row.wrecks, expected,
+          outcome === 'obliterate' ? 'real traffic obliteration counts once with unknown ownership' :
+            'traffic knocked clear is not a wreck');
+      } finally { App.prototype.advance = original; }
+    });
+  }
+}
 for (const failure of failures) console.error(`FAIL ${failure}`);
 console.log(`Combat balance acceptance: ${checks} checks, ${checks - failures.length} passed, ${failures.length} failed.`);
 if (failures.length) process.exitCode = 1;
