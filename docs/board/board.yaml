@@ -506,8 +506,8 @@ tasks:
     status: building
     owns: [src/raiders.js, src/combat-weapons.js, src/combat-projectiles.js, src/wasteland-tuning.js, tools/test-enemy-aim.mjs, tools/replays/enemy-aim-controls.json, tools/replays/combat-inputs.json, tools/replays/combat-fingerprints.json, src/combat-pickups.js, src/combat-ai.js, tools/test-cpu-ufo.mjs, tools/test-cpu-pickups.mjs]
     helpers: [test_author, reviewer, balance_analyst, test_runner]
-    active_slice: "Difficulty-aware raider aiming and persistent enemy aim error during crossbow guidance."
-    next_slice: "Independent CPU UFO tests in .lanes/cpu-ufo based on the final aim candidate. See docs/board/checks/2026-09-24-cpu-ufo-scope.md. Implementation and merge follow the aim slice; separate file ownership applies."
+    active_slice: "CPU UFO collection and safe defensive use in .lanes/cpu-ufo. Source f8b5b06 passes 37 focused groups; four affected race probes restore baseline outcomes. Independent review 479643a is clear. Final balance pair and lane/build are pending."
+    next_slice: "The flagged Easy enemy-hit ceiling remains open after this slice. Use a bounded trace before selecting any further change."
     cpu_ufo_policy: "Measured immediate-use candidate regresses Medium wins in both flag paths. AI must hold its collected charge without a threat and use it only for an incoming player bolt recognized by the existing incomingBolt reaction/cone/height/closing rules. Safe direct-use API, own gate/lap limits, attack cadence and balance targets remain unchanged. Root owns this narrow combat-ai.js correction after independent red tests."
     acceptance:
       - "The body-contact prerequisite for this slice is merged 9139575. Raider bolts receive deterministic difficulty-dependent aim error from a separate seed keyed by course/stage, lap and raider identity; do not consume world RNG or another actor's random sequence. Reuse current CPU difficulty spread initially."

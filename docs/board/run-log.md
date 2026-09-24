@@ -1070,3 +1070,25 @@ checkout untouched until the final integration commit passes the full gate.
 - Removed the clean merged GFX-01 lane without force. All three fidelity
   rounds remain committed under integration docs/board/looks/crew; gate logs
   are in .lanes/evidence/gfx01 and its branch remains. No release or push.
+
+## 2026-09-24 PDT - defensive UFO restored; hands round 1 reviewed
+
+- Independent defensive red tests febfe5e preceded Root's narrow AI guard
+  f8b5b06. All 37 focused groups and existing pickup checks pass. Independent
+  review 479643a found no defect; four affected probes exactly restore the
+  pinned baseline results and hit timing, with no free CPU jump.
+- Final reports on 479643a: flag off passes all targets in 68.81 s, wins
+  9/6/2 and enemy hits 1/3/7. Flag on takes 69.43 s, wins 9/5/3 and hits
+  6/4/6. Its only failure is the pre-existing Easy hit ceiling. Stock/max UFO
+  gains remain within limits. Required lane/build is running before merge.
+- GFX-02 round 1 assets c92e8fc and actual game evidence 8577a49 are frozen.
+  Private port 36720, memory-only storage, zero browser warnings/errors;
+  42 matched PNGs and 10 durable input-action PNGs. The largest combination
+  is 4,060 triangles and three draws. The 120-frame sample covers the wrench,
+  not the largest RPG; both qualities show p95 18.1/18.2 ms hidden/visible.
+- Director review scores likeness 2. Round 2 addresses thin forearms, glove
+  volume and grip, tool silhouettes, material identity and action contact.
+  A supplementary weapon-reference sheet will preserve the original sheet.
+  Later rounds measure the largest hands with RPG. No beta claim.
+- No task merge since the 07:36 UTC full pass. The next full remains due after
+  five task merges or 09:36 UTC, and at run end. No release or push.
