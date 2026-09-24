@@ -1252,3 +1252,18 @@ checkout untouched until the final integration commit passes the full gate.
 - Latest quota observation at 10:23 UTC: 17 percent remaining. One task merge
   since the 09:36 UTC full pass; next full by 11:36 UTC or four more merges,
   and at run end. No live change, release or push.
+
+## 2026-09-24 11:12 UTC - arrival integrated, discovery begins
+
+- EGG-03 merged as be75f60 after 229 passing lane suites in 301.17 seconds
+  and a passing build on clean 8b3cb80. Final 0ab0ce8 records evidence only.
+  The earlier failed gate and precise reviewed assertion correction remain
+  recorded. All three visual rounds and measured audio evidence are retained.
+- STATUS refreshed on the clean merge commit. Two task merges since the
+  09:36 UTC full pass; next full by 11:36 UTC or three more merges, and at end.
+- EGG-04 begins with independent red tests, then separate persistence/runtime
+  and menu/map/hint owners. Synthetic saves and independent Save Guardian
+  review are required. Direct visits cannot create a payable or abandoned race.
+- Quota check at 11:11 UTC: 14 percent remaining. Reserve enough to finish
+  active work and the final full tier before the five-percent floor.
+- No live change, release, beta promotion or push.

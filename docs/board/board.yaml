@@ -236,7 +236,7 @@ tasks:
     lane: UI
     size: M
     needs: [EGG-02]
-    status: review
+    status: merged
     owns: [src/hidden-road-journey.js, src/hidden-road-ui.js, src/hidden-road-ui.css, tools/test-hidden-road-journey.mjs, tools/test-hidden-road-departure.mjs, tools/test-hidden-road-presentation.mjs, tools/scenarios/hidden-road-arrival.mjs, docs/board/looks/hidden-road-arrival/, docs/changes/EGG-03.md]
     hooks: [src/game.js, src/app.js, src/screen-router.js, src/render3d.js, src/rustwall-scene.js, src/audio.js, src/sim-contacts.js, src/sim-driving.js, tools/test-hidden-road.mjs, tools/test-scene-presentation.mjs]
     helpers: [test_author, reviewer, save_guardian, browser_qa, audio_qa]
@@ -253,14 +253,14 @@ tasks:
       - "Correct the confirmed hidden-spur driving camera defect: use actual car heading and support height while physically on the spur, including before departure, and avoid unrelated main-road tunnel constraints. Preserve normal camera modes and ordinary, flag-off and returned-to-main-road camera behavior. An independent red regression precedes the narrow presentation/helper fix; actual settled gameplay images must confirm the view."
       - "The independent author may update the obsolete racing-only moving assertion in test-scene-presentation to require racing or exploring and exclude paused states. Keep all other scene/adaptive lifecycle checks. Record and independently review this intentional presentation behavior change, preserve the failed gate log, then rerun the mandatory lane/build gate."
       - "Use one bounded private memory-only browser scenario for both choices, the before-departure return, the cinematic and navigation cleanup. Retain actual images and audio evidence, ordinary/flag-off replay controls and a focused common-time journey test. Gate and car contact must agree with the EGG-02 geometry on routes A/B/C."
-    note: "Runtime 5776623 passes 37 journey and seven synthetic departure groups; independent runtime and Save Guardian review passes. Three retained presentation rounds repair framing, sound balance, physical-spur camera and handover. Final production bc60aa4 is independently reviewed; audio review confirms recorded gate cues with explicit limits. Corrected total CPU/RAF samples pass the bounded ten-percent comparison. Required lane/build gate is running on clean 624393a. No discovery schema in this card. The reviewed EGG-01 status assertion now distinguishes pre-150-m racing from exploration while preserving geometry, return and ordinary replay controls."
+    note: "Merged be75f60 after 229 passing lane suites and a passing build on clean 8b3cb80; final 0ab0ce8 changes evidence only. Runtime, Save Guardian, presentation and audio reviews pass with recorded limits. Three retained presentation rounds repair framing, sound balance, physical-spur camera and handover. Corrected total CPU/RAF comparison passes. The failed first gate and reviewed scene-presentation assertion correction remain recorded. No discovery schema in this card. Hidden Road stays dev while separate Rustwall/wash fidelity debt persists."
   - id: EGG-04
     title: "Gate discovery save and return entry"
     priority: 11
     lane: SAVE
     size: M
     needs: [EGG-03]
-    status: backlog
+    status: active
     owns: [src/hidden-road-discovery.js, src/hidden-road-hints.js, tools/test-hidden-road-discovery.mjs, tools/test-hidden-road-hints.mjs, tools/scenarios/hidden-road-discovery.mjs, docs/board/looks/hidden-road-discovery/, docs/changes/EGG-04.md]
     hooks: [src/wasteland-progress.js, src/career-backup.js, src/progression.js, src/app.js, src/game.js, src/hidden-road-journey.js, src/hidden-road-ui.js, src/screen-menu.js, src/screen-router.js, src/screen-garage.js, src/route-map.js, src/course-preview.js, src/world.js]
     helpers: [test_author, save_guardian, reviewer, browser_qa]
