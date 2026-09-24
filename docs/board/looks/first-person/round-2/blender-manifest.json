@@ -1,0 +1,519 @@
+{
+  "round": 2,
+  "blender": "4.5.13 LTS",
+  "seconds": 80.11045770000783,
+  "command": "blender -b --python tools/blender/first-person-gear.py -- --root REPO --round 2 --crew all",
+  "scriptSha256": "946c12c0dff723516577f540bfa3fd27df0e3f9eb5dcd921dede63c3b84ccc5a",
+  "axis": "Camera-local glTF: +X right, +Y up, -Z forward. Identity camera attachment; socket axes identity in rest pose.",
+  "camera": {
+    "position": [
+      0,
+      0,
+      0
+    ],
+    "target": [
+      0,
+      0,
+      -1
+    ],
+    "verticalFov": 72,
+    "near": 0.15,
+    "width": 1280,
+    "height": 720
+  },
+  "materials": "Authored padded 1024 islands for cloth, leather, skin and steel; seeded grain and localized wear. No reference image projection. Original sheets untouched.",
+  "tools": [
+    {
+      "id": "rpg",
+      "triangles": 4020,
+      "draws": 2,
+      "seconds": 0.4126275999878999,
+      "files": {
+        "rpg.glb": "ad5740b0c155facabdef3be4f8205884c64cab0ef116ad95b62e060e8cdd0e36",
+        "rpg.blend": "fdc2fed5100d983e9095437ed279b688a077a357e981f24576110616a717079f",
+        "rpg-color.png": "9bea4c6f259a68441fd007b1e9563e0667a6141b33fed30e44c8da6399d74700",
+        "rpg-surface.png": "8b83769da636751b0b2e0480a7fb7975c920cbb75c3e0e91cbf53c22ce4a986f"
+      }
+    },
+    {
+      "id": "wrench",
+      "triangles": 2792,
+      "draws": 1,
+      "seconds": 0.256664999993518,
+      "files": {
+        "wrench.glb": "98c07eac8cc890ba0d768d2d9f852113b9db7665ce7db9dfa5d0f13a25d1a16e",
+        "wrench.blend": "55aafd64e869f4d7301bb13031a844ba32299143cf792b53be9839f013f38703",
+        "wrench-color.png": "bb4a71208a22fd34d77e0ad49f9219804c3d80d8704711eb88d53d4d5d1cced3",
+        "wrench-surface.png": "09fa5b482b199ee974cd6e5193273eebdd16ad0fecdd2b5bcf088d503b1c39fb"
+      }
+    }
+  ],
+  "hands": [
+    {
+      "id": "rook",
+      "triangles": 3320,
+      "draws": 1,
+      "seconds": 20.952912600012496,
+      "clips": {
+        "idle": 2.0,
+        "aim": 1.0,
+        "fire": 0.35,
+        "reload": 2.2,
+        "repair": 4.0,
+        "wrench-idle": 2.0,
+        "aim-fire": 0.35,
+        "aim-reload": 2.2
+      },
+      "reference": {
+        "path": "public/assets/reference/wasteland-crew-1.png",
+        "sha256": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058",
+        "crop": [
+          0,
+          40,
+          510,
+          675
+        ]
+      },
+      "files": {
+        "rook.glb": "3811be318dd5fabf31a5d866a708924d6b29986d5d1f3b5e9a7822dc89174e31",
+        "rook.blend": "fc5614362549a2bc8d34ab6dc46a2176edfc9a3ce5fd48896f05de7d1f010b47",
+        "rook-color.png": "57b46754c1b6ae1bad76cea2eccca096a90e526a3efbfab5bf876b1407c56863",
+        "rook-surface.png": "e627c2ed5e78610f67214b98fd8d172a80bf8584cf233f6d27c3c180f1355788"
+      },
+      "captures": [
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-rook-idle-0.25.png",
+          "sha256": "e718c6ddaa099f540da33b68e144d4c74ac1d77bbcf8a8d4c2127208afd79d48",
+          "crew": "rook",
+          "clip": "idle",
+          "time": 0.25,
+          "tool": "rpg"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-rook-wrench-idle-0.25.png",
+          "sha256": "b04ae086ba95d0ee38e51565f73716a646216d26b71be93db075c398453ea352",
+          "crew": "rook",
+          "clip": "wrench-idle",
+          "time": 0.25,
+          "tool": "wrench"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-rook-aim-0.25.png",
+          "sha256": "f4dc225f22c4fc38aa3827a3d7e5a9e698bd25d2d8eb0136269d39359fcf7738",
+          "crew": "rook",
+          "clip": "aim",
+          "time": 0.25,
+          "tool": "rpg"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-rook-fire-0.10.png",
+          "sha256": "44bd0f95e33ed0140f3299b58fc95787458ec6c4cca753692e8a4c987a52df31",
+          "crew": "rook",
+          "clip": "fire",
+          "time": 0.1,
+          "tool": "rpg"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-rook-reload-1.10.png",
+          "sha256": "afd97bbbffa1fc2eb9013c737f1460f1282e47d86e1db5cb1fa91eb1ab61445f",
+          "crew": "rook",
+          "clip": "reload",
+          "time": 1.1,
+          "tool": "rpg"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-rook-reload-1.65.png",
+          "sha256": "93cdd47ae61c26bae648d4005df46cd6ceb90f7a9c09aba3551e6769c89586a5",
+          "crew": "rook",
+          "clip": "reload",
+          "time": 1.65,
+          "tool": "rpg"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-rook-aim-reload-1.10.png",
+          "sha256": "31201722b442a6d746533810ea5d92e4532810595efeccffc0719293fd4601ec",
+          "crew": "rook",
+          "clip": "aim-reload",
+          "time": 1.1,
+          "tool": "rpg"
+        }
+      ]
+    },
+    {
+      "id": "nell",
+      "triangles": 3320,
+      "draws": 1,
+      "seconds": 7.435235499986447,
+      "clips": {
+        "idle": 2.0,
+        "aim": 1.0,
+        "fire": 0.35,
+        "reload": 2.2,
+        "repair": 4.0,
+        "wrench-idle": 2.0,
+        "aim-fire": 0.35,
+        "aim-reload": 2.2
+      },
+      "reference": {
+        "path": "public/assets/reference/wasteland-crew-1.png",
+        "sha256": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058",
+        "crop": [
+          510,
+          40,
+          1012,
+          675
+        ]
+      },
+      "files": {
+        "nell.glb": "f8cee43b7222aa65178530ffa6430b7942524242a92d6d19426c4c66fd23ba75",
+        "nell.blend": "966a7ccba156c45d14c573989b7428f1d0a7fcd5ccd3b22c15e43e23421a9357",
+        "nell-color.png": "23c496193611195c310b02486e5f0c4f9dc2825029780fda222dd65b2a0f7766",
+        "nell-surface.png": "54694fc7234d1cc197a7f23a776e85bc4183c0e76f216c4fe3b787bf4ad2223d"
+      },
+      "captures": [
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-nell-idle-0.25.png",
+          "sha256": "6c8e5b8c311ec99396ee560511666945ea57a72fd1fc5235a5a0e9b4de8ab3c4",
+          "crew": "nell",
+          "clip": "idle",
+          "time": 0.25,
+          "tool": "rpg"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-nell-wrench-idle-0.25.png",
+          "sha256": "cdbde55a4d4100218ef555d3be3c34e6b855f77d7ec5a90f259bafb2b7c08246",
+          "crew": "nell",
+          "clip": "wrench-idle",
+          "time": 0.25,
+          "tool": "wrench"
+        }
+      ]
+    },
+    {
+      "id": "jax",
+      "triangles": 3320,
+      "draws": 1,
+      "seconds": 7.396076700009871,
+      "clips": {
+        "idle": 2.0,
+        "aim": 1.0,
+        "fire": 0.35,
+        "reload": 2.2,
+        "repair": 4.0,
+        "wrench-idle": 2.0,
+        "aim-fire": 0.35,
+        "aim-reload": 2.2
+      },
+      "reference": {
+        "path": "public/assets/reference/wasteland-crew-1.png",
+        "sha256": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058",
+        "crop": [
+          1015,
+          40,
+          1517,
+          675
+        ]
+      },
+      "files": {
+        "jax.glb": "6100544e5866b8a353003846866cbd29a4abefc92dbdf833d4fdf39542cf9e96",
+        "jax.blend": "0bf4f1e3df0c46c401946e30096f7f7ff9c21ba5092da228f2ba9fbd2331a835",
+        "jax-color.png": "2bc420d584f9c2ff9ec3afad13c3af55d6f7011f61b18aa814504732706bcb5d",
+        "jax-surface.png": "bc1318d19809234897cecb67ddf95eee98679b2541f3e36784466fbb389ee9aa"
+      },
+      "captures": [
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-jax-idle-0.25.png",
+          "sha256": "615962a51940ed107df6f8ff8cbaf51b878576aa7e48c0226d22f19a9e34f21b",
+          "crew": "jax",
+          "clip": "idle",
+          "time": 0.25,
+          "tool": "rpg"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-jax-wrench-idle-0.25.png",
+          "sha256": "6624a9c494c933a427fd44f0114074d9566f240daebec437099f5b7b8ab6cae7",
+          "crew": "jax",
+          "clip": "wrench-idle",
+          "time": 0.25,
+          "tool": "wrench"
+        }
+      ]
+    },
+    {
+      "id": "odessa",
+      "triangles": 3320,
+      "draws": 1,
+      "seconds": 12.828207899990957,
+      "clips": {
+        "idle": 2.0,
+        "aim": 1.0,
+        "fire": 0.35,
+        "reload": 2.2,
+        "repair": 4.0,
+        "wrench-idle": 2.0,
+        "aim-fire": 0.35,
+        "aim-reload": 2.2
+      },
+      "reference": {
+        "path": "public/assets/reference/wasteland-crew-1.png",
+        "sha256": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058",
+        "crop": [
+          1517,
+          40,
+          2067,
+          675
+        ]
+      },
+      "files": {
+        "odessa.glb": "839b2a0ee18628884511e1df53c9924271a7fd0de921039db02bc453670d4fe0",
+        "odessa.blend": "8f8c9ecea635d689bf2c3206054368dd0f64140a94f29132682352b09fb10165",
+        "odessa-color.png": "cb49113d3e9dc554d15bb943d3fa3b6e3b9d2c4959e976228b7150ad7bad231a",
+        "odessa-surface.png": "90fa4666a7cd4156e7fbd99af8e71f33f14657934bd5fd8c1b4776479bc3d2ea"
+      },
+      "captures": [
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-odessa-idle-0.25.png",
+          "sha256": "1d769b63df2ed70bacdfd870c07b6585c8ff0c7f7e552394e1e1c200365cd308",
+          "crew": "odessa",
+          "clip": "idle",
+          "time": 0.25,
+          "tool": "rpg"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-odessa-wrench-idle-0.25.png",
+          "sha256": "a9324098a34824524efeeb06093061ded1a60e197a253d38cf1f9c7066c6c161",
+          "crew": "odessa",
+          "clip": "wrench-idle",
+          "time": 0.25,
+          "tool": "wrench"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-odessa-repair-1.12.png",
+          "sha256": "6f3f782d7067751c6b0bd9eb42a7e9c56aa320b824cf7e6d07d57cafab723d7b",
+          "crew": "odessa",
+          "clip": "repair",
+          "time": 1.12,
+          "tool": "wrench"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-odessa-repair-2.80.png",
+          "sha256": "bf8fd96d66af64057e7d82b053e7ccaa3f5c99024b1e77c4ac4e55765064c9a8",
+          "crew": "odessa",
+          "clip": "repair",
+          "time": 2.8,
+          "tool": "wrench"
+        }
+      ]
+    },
+    {
+      "id": "cinder",
+      "triangles": 3320,
+      "draws": 1,
+      "seconds": 7.419203799974639,
+      "clips": {
+        "idle": 2.0,
+        "aim": 1.0,
+        "fire": 0.35,
+        "reload": 2.2,
+        "repair": 4.0,
+        "wrench-idle": 2.0,
+        "aim-fire": 0.35,
+        "aim-reload": 2.2
+      },
+      "reference": {
+        "path": "public/assets/reference/wasteland-crew-2.png",
+        "sha256": "34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9",
+        "crop": [
+          0,
+          20,
+          510,
+          680
+        ]
+      },
+      "files": {
+        "cinder.glb": "c50082fb8e31038d34f3101ebe7e0d1f33b47c8f9dcdbd40aaffd1e406217eff",
+        "cinder.blend": "adf11f8b3e5eeea4136e227f5df0a8af8240a2e31b15e6ca9ca83280fb98940c",
+        "cinder-color.png": "eebeb2bfbe5bc5aec9b1b3928fc68e4caf54599a9cf59ce1f8f1ab3d278fe510",
+        "cinder-surface.png": "d26ee2d471fa54c031af85fec17757f51c1f637c5d4ff3a9e6c2bedac0db1403"
+      },
+      "captures": [
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-cinder-idle-0.25.png",
+          "sha256": "047c83ef92536569f66ee7fb0130e9ead93e9ac31f7fe208e2164f826ced71e5",
+          "crew": "cinder",
+          "clip": "idle",
+          "time": 0.25,
+          "tool": "rpg"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-cinder-wrench-idle-0.25.png",
+          "sha256": "5e5126444c8c9e89aec02647d52b5406a3e648822c5a15e7946e7177f15ab012",
+          "crew": "cinder",
+          "clip": "wrench-idle",
+          "time": 0.25,
+          "tool": "wrench"
+        }
+      ]
+    },
+    {
+      "id": "dune",
+      "triangles": 3320,
+      "draws": 1,
+      "seconds": 7.425592399988091,
+      "clips": {
+        "idle": 2.0,
+        "aim": 1.0,
+        "fire": 0.35,
+        "reload": 2.2,
+        "repair": 4.0,
+        "wrench-idle": 2.0,
+        "aim-fire": 0.35,
+        "aim-reload": 2.2
+      },
+      "reference": {
+        "path": "public/assets/reference/wasteland-crew-2.png",
+        "sha256": "34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9",
+        "crop": [
+          510,
+          20,
+          1010,
+          680
+        ]
+      },
+      "files": {
+        "dune.glb": "2efdc201857b983e01b6126ced443f5932f3c22224de8584efd7fcffe10744e6",
+        "dune.blend": "5f8a6edf5e54c8359192ae4d00407bead1de2f40fcfa982fef704a3bd4d0b8e4",
+        "dune-color.png": "0a66ce5de7e352aeeaa080616dce0d080e07d0e8a6ddf7d3797d9ad5e9f0a1d7",
+        "dune-surface.png": "fcda1ed40673e6c45806871914455c624669067abe429e75663254aabc4ee3f7"
+      },
+      "captures": [
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-dune-idle-0.25.png",
+          "sha256": "8f78512de934be77cadbfc494921fdbca01bdd5f3b197e964bf2f746e6d3bec6",
+          "crew": "dune",
+          "clip": "idle",
+          "time": 0.25,
+          "tool": "rpg"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-dune-wrench-idle-0.25.png",
+          "sha256": "54f203758445619ac556646119455541afce527ba616c721d97e6c07d4863a49",
+          "crew": "dune",
+          "clip": "wrench-idle",
+          "time": 0.25,
+          "tool": "wrench"
+        }
+      ]
+    },
+    {
+      "id": "wren",
+      "triangles": 3320,
+      "draws": 1,
+      "seconds": 7.327065000019502,
+      "clips": {
+        "idle": 2.0,
+        "aim": 1.0,
+        "fire": 0.35,
+        "reload": 2.2,
+        "repair": 4.0,
+        "wrench-idle": 2.0,
+        "aim-fire": 0.35,
+        "aim-reload": 2.2
+      },
+      "reference": {
+        "path": "public/assets/reference/wasteland-crew-2.png",
+        "sha256": "34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9",
+        "crop": [
+          1010,
+          20,
+          1490,
+          680
+        ]
+      },
+      "files": {
+        "wren.glb": "9a7fee93ccc5e57beb776681f5c4dc98f3236381552a7ee2fde59d2789b1106a",
+        "wren.blend": "9cb99a9fc68210befb3fa41fe69e1e3c72c9533972d4eb2187a87e565b09d778",
+        "wren-color.png": "1138eccbe48f13e2702964bfecd15a8db2db8f9655bb8b6cdc52344c7f337a16",
+        "wren-surface.png": "4567ae00c7bf89d77bc16a39a7df1f869f5ba9b0ccddfdf1901d0999d17877bb"
+      },
+      "captures": [
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-wren-idle-0.25.png",
+          "sha256": "fdae04d9ec916f18d323fb0974dcc6c1dd60753cf879ecaa6b2f802063712671",
+          "crew": "wren",
+          "clip": "idle",
+          "time": 0.25,
+          "tool": "rpg"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-wren-wrench-idle-0.25.png",
+          "sha256": "c74e571ab0f651d346d5ca9e5757054fcefa8e1ad63eb436c6c79ed0e8d24f61",
+          "crew": "wren",
+          "clip": "wrench-idle",
+          "time": 0.25,
+          "tool": "wrench"
+        }
+      ]
+    },
+    {
+      "id": "tusk",
+      "triangles": 3200,
+      "draws": 1,
+      "seconds": 7.494012099981774,
+      "clips": {
+        "idle": 2.0,
+        "aim": 1.0,
+        "fire": 0.35,
+        "reload": 2.2,
+        "repair": 4.0,
+        "wrench-idle": 2.0,
+        "aim-fire": 0.35,
+        "aim-reload": 2.2
+      },
+      "reference": {
+        "path": "public/assets/reference/wasteland-crew-2.png",
+        "sha256": "34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9",
+        "crop": [
+          1490,
+          20,
+          2056,
+          680
+        ]
+      },
+      "files": {
+        "tusk.glb": "68c48c085d9458388eefe7449f6e40233b43e276d41ee0901895a1fe693b091a",
+        "tusk.blend": "da6e4a0d33101b16be76bd0f1df2a1f13f97f77a6809f9b1229f505eeb1cc639",
+        "tusk-color.png": "e7594fba838ed3566ef9b1caaf21b16b39b3412c641275a985a5f5faae1e3583",
+        "tusk-surface.png": "fce5abe2bff5c21038427b20f8a6b5e6f07cd5f2c3a738715734a2548940b12a"
+      },
+      "captures": [
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-tusk-idle-0.25.png",
+          "sha256": "d09c3cef59c281196f290451e41d4e8d45785ac531eeb44b8334eb3696e25aa3",
+          "crew": "tusk",
+          "clip": "idle",
+          "time": 0.25,
+          "tool": "rpg"
+        },
+        {
+          "path": "docs/board/looks/first-person/round-2/blender-tusk-wrench-idle-0.25.png",
+          "sha256": "414e474033f0b9324bfb5f45d568787bb9529d6cec8a935dc220adfc8b733f05",
+          "crew": "tusk",
+          "clip": "wrench-idle",
+          "time": 0.25,
+          "tool": "wrench"
+        }
+      ]
+    }
+  ],
+  "toolReferences": [
+    {
+      "path": "public/assets/reference/wasteland-rpg.png",
+      "sha256": "5b03e9598c972b44e556e6bea6fcb3e1971a89bd2b9380c25b39b6df17c09bea"
+    },
+    {
+      "path": "public/assets/reference/wasteland-wrench.png",
+      "sha256": "fb1c7e39a5319195e77ca444a2753750f24704970500835625398dd332d0f0c3"
+    }
+  ]
+}

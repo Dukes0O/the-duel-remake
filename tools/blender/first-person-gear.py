@@ -15,7 +15,7 @@ from pathlib import Path
 
 import bpy
 import numpy as np
-from mathutils import Vector, Matrix
+from mathutils import Vector, Matrix, Euler
 
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
@@ -76,28 +76,33 @@ def texture_material(name, cfg, folder, tool=False):
            (.24,.27,.27),(.51,.29,.12),(.12,.105,.08),(.64,.58,.43),
            cfg['sleeve'],cfg['leather'],cfg['skin'],(.48,.46,.40),
            (.12,.14,.14),(.35,.21,.12),(.28,.27,.22),(.70,.63,.46)]
+    if tool:
+        bases[3]=(.13,.14,.14);bases[4]=(.075,.085,.085)
+        bases[11]=(.34,.35,.33);bases[12]=(.018,.021,.020)
+        bases[13]=(.23,.12,.055)
     yy,xx=np.mgrid[0:256,0:256]
     for tile,base in enumerate(bases):
         noise=rng.uniform(-1,1,(256,256))
         coarse=np.repeat(np.repeat(rng.uniform(-1,1,(16,16)),16,axis=0),16,axis=1)
         for _ in range(5):coarse=(coarse+np.roll(coarse,1,0)+np.roll(coarse,-1,0)+np.roll(coarse,1,1)+np.roll(coarse,-1,1))/5
         cloth=tile in [0,8,7,15] and not tool
-        grain=(np.sin(xx*2.7)*np.sin(yy*2.3))*.035 if cloth else np.sin(xx*.27+np.sin(yy*.12))*.025
-        variation=1+noise*.11+coarse*.24+grain
+        grain=(np.sin(xx*2.7)*np.sin(yy*2.3))*.018 if cloth else 0
+        variation=1+noise*.045+coarse*.13+grain
         if tile in [2,10]:variation=1+noise*.025+coarse*.065
         rgba=np.zeros((256,256,4),np.float32);rgba[:,:,:3]=np.array(base)[None,None,:]*variation[:,:,None];rgba[:,:,3]=1
         # Patina chips are localized clusters, not pale source-background streaks.
-        worn=(coarse>.34)&(noise>.10)
+        worn=(coarse>.20)&(noise>.20)
         if tool or tile in [3,4,5,11,12,13,14]:
-            rgba[worn,:3]=np.array((.30,.23,.16))*(1+noise[worn,None]*.2)
-            scratch=(np.sin(xx*.095+yy*.013)>.994)&(coarse>-.25)
-            rgba[scratch,:3]=(.55,.52,.43)
+            rgba[worn,:3]=np.array((.12,.13,.125) if tile in [0,8] else (.23,.15,.085))*(1+noise[worn,None]*.10)
+            scratch=(noise>.94)&(coarse>.23)
+            rgba[scratch,:3]=(.39,.40,.37)
+            if tile==12:rgba[:,:,:3]=np.array(base)*(1+noise[:,:,None]*.02)
         if cloth:
             seam=(abs(xx-16)<2)|(abs(xx-240)<2)
             stitch=seam&((yy%12)<5)
             rgba[stitch,:3]=np.array(base)*1.4
         y,x=divmod(tile,4);color[y*256:(y+1)*256,x*256:(x+1)*256]=np.clip(rgba,0,1)
-        rough=.87 if cloth else (.78 if tile in [1,2,6,9,10] else .55)
+        rough=.90 if cloth else (.82 if tile in [1,2,6,9,10] else .65)
         surface[y*256:(y+1)*256,x*256:(x+1)*256,1]=np.clip(rough+coarse*.13,.30,.98)
         surface[y*256:(y+1)*256,x*256:(x+1)*256,2]=.72 if tool and tile not in [1,6,9] else (.55 if tile in [3,11] else 0)
     images=[]
@@ -153,7 +158,7 @@ class Geometry:
         c=Vector(centre);s=Vector(size)/2
         ids=[self.vertex(c+Vector((x*s.x,y*s.y,z*s.z)),{bone:1}) for x,y,z in [(-1,-1,-1),(1,-1,-1),(1,1,-1),(-1,1,-1),(-1,-1,1),(1,-1,1),(1,1,1),(-1,1,1)]]
         for face in [(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]:self.face([ids[i] for i in face],tile)
-    def build(self,name,material,rig=None):
+    def build(self,name,material,rig=None,bevel=0):
         mesh=bpy.data.meshes.new(name);mesh.from_pydata(self.vertices,[],self.faces);mesh.update()
         obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj);mesh.materials.append(material)
         uv=mesh.uv_layers.new(name='Padded authored material islands')
@@ -167,6 +172,15 @@ class Geometry:
             for bone in rig.data.bones:obj.vertex_groups.new(name=bone.name)
             for i,weights in enumerate(self.weights):
                 for bone,w in weights.items():obj.vertex_groups[bone].add([i],w,'REPLACE')
+            if bevel:
+                bpy.context.view_layer.objects.active=obj;obj.select_set(True)
+                edge=obj.modifiers.new('Small forged edge radii','BEVEL')
+                edge.width=bevel;edge.segments=1;edge.limit_method='ANGLE';edge.angle_limit=.55
+                bpy.ops.object.modifier_apply(modifier=edge.name)
+                normal=obj.modifiers.new('Weighted forged face normals','WEIGHTED_NORMAL')
+                normal.keep_sharp=True;normal.weight=50
+                bpy.ops.object.modifier_apply(modifier=normal.name)
+                obj.select_set(False)
             modifier=obj.modifiers.new('Bound deforming hands or gear','ARMATURE');modifier.object=rig
             obj.parent=rig
         return obj
@@ -207,13 +221,15 @@ def export(rig,objects,path):
 def rpg_geometry():
     g=Geometry();r=Geometry()
     # Canonical upper-left reference: rear padded bell, weathered tube, two grips.
-    z=[-.665,-.65,-.635,-.58,-.56,-.53,-.15,-.13,.17,.19,.235,.255]
-    radius=[.064,.064,.050,.050,.055,.050,.050,.054,.050,.062,.066,.058]
+    z=[-.665,-.65,-.635,-.58,-.56,-.53,-.15,-.13,.15,.17,.195,.215]
+    radius=[.060,.060,.050,.050,.055,.050,.050,.054,.050,.057,.059,.052]
     g.loft([(0,.16,v) for v in z],radius,[4,11,4,0,11,0,11,0,11,6,6],[{'base':1}]*len(z),24,axes=((1,0,0),(0,1,0)),closed=False)
     # Inner muzzle lip gives a genuine open bore instead of a flat end cap.
     g.loft([(0,.16,-.665),(0,.16,-.665),(0,.16,-.57)],[.064,.041,.041],12,[{'base':1}]*3,24,axes=((1,0,0),(0,1,0)),closed=False)
+    g.loft([(0,.16,.215),(0,.16,.208),(0,.16,.04),(0,.16,-.05)],
+        [.052,.040,.032,.027],12,[{'base':1}]*4,24,axes=((1,0,0),(0,1,0)),closed=False)
     for zc in [-.47,-.07,.12]:
-        g.loft([(0,.16,zc-.012),(0,.16,zc+.012)],[.055,.055],3,[{'base':1}]*2,20,axes=((1,0,0),(0,1,0)))
+        g.loft([(0,.16,zc-.012),(0,.16,zc+.012)],[.055,.055],3,[{'base':1}]*2,20,axes=((1,0,0),(0,1,0)),closed=False)
         for a in [0,math.pi/2,math.pi,math.pi*1.5]:
             g.box((.057*math.cos(a),.16+.057*math.sin(a),zc),(.012,.012,.012),11)
     for zc in [0,-.34]:
@@ -237,7 +253,7 @@ def wrench_geometry():
     g=Geometry()
     # Extruded open adjustable jaw, rather than a closed block around the opening.
     outlines=[([(-.032,-.14),(.032,-.14),(.028,.205),(-.026,.205)],0),
-        ([(-.025,.19),(.028,.19),(.052,.235),(.083,.275),(.069,.35),(.038,.372),(.033,.298),(-.026,.285),(-.041,.348),(-.063,.331),(-.072,.273),(-.044,.217)],11)]
+        ([(-.025,.19),(.028,.19),(.048,.222),(.071,.258),(.076,.284),(.069,.342),(.061,.353),(.037,.354),(.033,.298),(-.026,.285),(-.039,.342),(-.060,.335),(-.069,.311),(-.073,.282),(-.065,.256),(-.044,.217)],11)]
     for outline,tile in outlines:
         # Retain the concave n-gon for Blender tessellation; no invalid fan fill.
         ids=[]
@@ -247,7 +263,8 @@ def wrench_geometry():
         for i in range(len(outline)):g.face([ids[0][i],ids[0][(i+1)%len(outline)],ids[1][(i+1)%len(outline)],ids[1][i]],11)
     # Distinct sliding jaw and knurled worm wheel against the steel neck.
     g.box((.045,.287,-.002),(.049,.03,.043),11)
-    g.box((.004,.226,.025),(.041,.025,.018),12)
+    g.box((.004,.226,.020),(.060,.044,.012),12)
+    for yy in [.247,.259,.271]:g.box((.036,yy,.022),(.020,.006,.010),11)
     g.loft([(-.020,.226,.035),(.020,.226,.035)],[.017,.017],11,[{'base':1}]*2,16,axes=((0,1,0),(0,0,1)))
     for x in [-.016,-.008,0,.008,.016]:g.loft([(x-.0015,.226,.035),(x+.0015,.226,.035)],[.019,.019],4,[{'base':1}]*2,12,axes=((0,1,0),(0,0,1)))
     g.loft([(0,y,0) for y in [-.10,-.08,.04,.06]],[(.032,.022),(.034,.024),(.032,.024),(.028,.022)],1,[{'base':1}]*4,16,axes=((1,0,0),(0,0,1)))
@@ -264,6 +281,14 @@ def reload_hand_delta(phase):
         if a[0]<=phase<=b[0]:return Vector(a[1]).lerp(Vector(b[1]),(phase-a[0])/(b[0]-a[0]))
     return Vector((0,0,0))
 
+def grip_rotation(rig,side,rotation,delta):
+    # Rotate around the actual grasp point rather than the wrist joint, so
+    # fingers stay in contact with the handle/rocket while the wrist turns.
+    offset=Vector((-.07 if side=='R' else .07,.065,-.095))
+    q=Euler(rotation).to_matrix()
+    bone=rig.pose.bones['wrist_'+side]
+    bone.rotation_euler=rotation;bone.location=Vector(delta)+offset-q@offset
+
 def rocket_pose(rig,phase):
     pb=rig.pose.bones['rocket']
     # The rocket's middle follows the same grip path as the support hand. At
@@ -279,9 +304,9 @@ def build_tool(name):
     mat=texture_material(name,cfg,out,True)
     rig=armature(name+' rig',[('base',(0,0,0),None)]+([('rocket',(0,0,0),'base')] if name=='rpg' else []))
     if name=='rpg':
-        g,r=rpg_geometry();objects=[g.build('rpg-body',mat,rig),r.build('loaded-rocket',mat,rig)]
+        g,r=rpg_geometry();objects=[g.build('rpg-body',mat,rig,bevel=.002),r.build('loaded-rocket',mat,rig)]
         actions={'reload':add_action(rig,'reload',2.2,lambda phase:rocket_pose(rig,phase))}
-    else:objects=[wrench_geometry().build('wrench-body',mat,rig)];actions={}
+    else:objects=[wrench_geometry().build('wrench-body',mat,rig,bevel=.0025)];actions={}
     export(rig,objects,out/f'{name}.glb')
     bpy.ops.wm.save_as_mainfile(filepath=str(out/f'{name}.blend'))
     return {'id':name,'triangles':sum(triangles(o) for o in objects),'draws':len(objects),
@@ -296,39 +321,70 @@ def hand_geometry(name,cfg):
         hand='wrist_'+side;s=cfg['scale']
         wrist=grip+Vector((sign*.07,-.065,.095))
         definitions.append((hand,wrist,'root'))
-        centres=[(sign*.42,-.63,-.20),(sign*.38,-.45,-.27),tuple(wrist+Vector((sign*.028,-.02,.025))),tuple(wrist),tuple(grip+Vector((sign*.048,-.015,.008))),tuple(grip+Vector((sign*.045,.025,-.015)))]
-        radii=[(.074*s,.059*s),(.066*s,.052*s),(.038*s,.031*s),(.031*s,.027*s),(.046*s,.026*s),(.058*s,.024*s)]
-        weights=[{'root':1},{'root':.55,hand:.45},{hand:1},{hand:1},{hand:1},{hand:1}]
-        sleeve=cfg['roll']>.4
-        tiles=[0 if sleeve else 2,0 if cfg['roll']>.4 else 2,2,1,1]
+        # A shaped forearm has a muscle belly, a tapered wrist and asymmetric
+        # rolled folds. Several rings replace the previous long straight cone.
+        elbow=Vector((sign*.35,-.43,-.27 if side=='R' else -.39))
+        start=Vector((sign*.46,-.63,-.18 if side=='R' else -.28))
+        sleeve_end={'rook':.82,'nell':0,'jax':.95,'odessa':.60,
+                    'cinder':0,'dune':.84,'wren':.60,'tusk':0}[name]
+        centres=[start];radii=[(.088*s,.076*s)];weights=[{'root':1}];tiles=[]
+        samples=[0,.15,.28,.40,.52,.60,.69,.77,.82,.88,.94,1]
+        for i,t in enumerate(samples):
+            centre=elbow.lerp(wrist,t)+Vector((sign*.015*math.sin(t*math.pi),.012*math.sin(t*math.pi),0))
+            base=.079*(1-t)+.035*t+.009*math.sin(t*math.pi)
+            fold=(.006 if i%2==0 else -.003)*math.sin(t*math.pi) if t<sleeve_end else 0
+            centres.append(centre);radii.append(((base+fold)*s,(base*.82+fold*.7)*s))
+            w=min(1,.25+t*.95);weights.append({hand:w,'root':1-w})
+            tiles.append(0 if t<=sleeve_end and sleeve_end else 2)
+        centres.extend([grip+Vector((sign*.053,-.020,.030)),grip+Vector((sign*.050,.006,.003)),grip+Vector((sign*.043,.027,-.014))])
+        radii.extend([(.046*s,.034*s),(.061*s,.033*s),(.055*s,.028*s)])
+        weights.extend([{hand:1}]*3);tiles.extend([1,1,1])
         g.loft(centres,radii,tiles,weights,16,axes=((0,1,0),(1,0,0)))
-        # Roll/cuff and leather wrist fastening sit on the continuous wrist mesh.
-        cuff=Vector(centres[2 if cfg['roll']>.7 else 1])
-        cr=.042 if cfg['roll']>.7 else .064
-        g.loft([cuff+Vector((0,0,.012)),cuff-Vector((0,0,.01))],[(cr*s,cr*.78*s)]*2,7 if name in ['rook','odessa','dune','wren'] else 1,[{hand:1}]*2,16,axes=((0,1,0),(1,0,0)))
+        if sleeve_end:
+            cuff=elbow.lerp(wrist,sleeve_end)+Vector((sign*.015*math.sin(sleeve_end*math.pi),.012*math.sin(sleeve_end*math.pi),0))
+            radius=(.079*(1-sleeve_end)+.035*sleeve_end+.009*math.sin(sleeve_end*math.pi))*s
+            tangent=(wrist-elbow).normalized()
+            cw=min(1,.25+sleeve_end*.95)
+            g.loft([cuff-tangent*.015,cuff-tangent*.010,cuff+tangent*.007,cuff+tangent*.014],
+                [(radius+.008,radius*.82+.005),(radius+.012,radius*.82+.009),
+                 (radius+.012,radius*.82+.009),(radius+.005,radius*.82+.004)],
+                7 if name in ['rook','odessa','wren'] else 8,[{hand:cw,'root':1-cw}]*4,16,
+                axes=((0,1,0),(1,0,0)),closed=False)
+        # Fitted glove cuff has open ends over the continuous wrist.
+        g.loft([wrist+Vector((0,0,.012)),wrist-Vector((0,0,.010))],
+            [(.041*s,.037*s)]*2,9,[{hand:1}]*2,16,axes=((0,1,0),(1,0,0)),closed=False)
         for digit,yy,length in [('index',.040,1.),('middle',.013,1.06),('ring',-.014,.99),('pinky',-.040,.84)]:
             angles=[0,.38,.82,1.26,1.72,2.22,2.60]
             path=[grip+Vector((sign*(.038*math.cos(a)),yy*s,-.006-.035*math.sin(a)*length)) for a in angles]
             labels=[f'finger_{digit}_{i}_{side}' for i in range(3)]
             for i,label in enumerate(labels):definitions.append((label,path[i*2],hand if i==0 else labels[i-1]))
             ws=[{labels[min(2,i//2)]:1} for i in range(len(path))]
-            rr=[.012*s,.013*s,.012*s,.0115*s,.010*s,.009*s,.007*s]
+            rr=[.014*s,.015*s,.0135*s,.013*s,.0115*s,.0105*s,.009*s]
             # Fingerless glove ends reveal small natural fingertips, as on crew sheets.
-            g.loft(path,rr,[1,1,1,1,2,2],ws,8)
-        path=[grip+Vector((sign*.044,-.036,.032)),grip+Vector((sign*.041,-.018,.043)),grip+Vector((sign*.026,.012,.042)),grip+Vector((sign*.007,.033,.018))]
+            g.loft(path,rr,[1,1,1,1,2,2],ws,12)
+        path=[grip+Vector((sign*.048,-.036,.028)),grip+Vector((sign*.046,-.017,.036)),grip+Vector((sign*.026,.008,.039)),grip+Vector((sign*.007,.026,.020))]
         labels=[f'finger_thumb_{i}_{side}' for i in range(3)]
         for i,label in enumerate(labels):definitions.append((label,path[i],hand if i==0 else labels[i-1]))
-        g.loft(path,[.017*s,.016*s,.014*s,.01*s],[1,1,2],[{labels[min(i,2)]:1} for i in range(4)],10)
+        g.loft(path,[.022*s,.020*s,.017*s,.012*s],[1,1,2],[{labels[min(i,2)]:1} for i in range(4)],12)
         # Raised stitched knuckle pads, not separate unbound mitten shapes.
         for yy in [.038,.012,-.015,-.04]:
-            pad=grip+Vector((sign*.052,yy*s,-.008))
-            g.box(pad,(.012,.018*s,.024),9,hand)
+            pad=grip+Vector((sign*.073,yy*s,-.001))
+            g.loft([pad-Vector((sign*.006,0,0)),pad,pad+Vector((sign*.007,0,0))],
+                [(.012*s,.018),(.014*s,.020),(.006*s,.012)],9,[{hand:1}]*3,8,axes=((0,1,0),(0,0,1)))
         if name=='tusk':
             g.box(wrist+Vector((sign*.042,.005,.01)),(.018,.078,.075),13,hand)
             for yy in [-.024,.026]:g.box(wrist+Vector((sign*.053,yy,.01)),(.009,.009,.065),11,hand)
+        for yy in [-.048,.047]:
+            seam=[grip+Vector((sign*.077,yy,.015)),grip+Vector((sign*.079,yy,-.003)),grip+Vector((sign*.064,yy,-.020))]
+            g.loft(seam,[.0018]*3,7,[{hand:1}]*3,5)
         if name in ['nell','cinder']:
-            for dz in [.02,.075]:
-                g.loft([wrist+Vector((0,0,dz)),wrist+Vector((0,0,dz+.017))],[(.041*s,.035*s)]*2,6,[{hand:1}]*2,12,axes=((0,1,0),(1,0,0)))
+            for t in [.57,.69,.81]:
+                at=elbow.lerp(wrist,t)+Vector((sign*.015*math.sin(t*math.pi),.012*math.sin(t*math.pi),0));tangent=(wrist-elbow).normalized()
+                radius=(.079*(1-t)+.035*t+.009*math.sin(t*math.pi))*s
+                wrap_weight=min(1,.25+t*.95)
+                g.loft([at-tangent*.010,at+tangent*.010],[(radius+.004,radius*.83+.004)]*2,
+                    6 if name=='cinder' else 1,[{hand:wrap_weight,'root':1-wrap_weight}]*2,16,
+                    axes=((0,1,0),(1,0,0)),closed=False)
     return g,definitions
 
 def hands_pose(rig,label,p):
@@ -344,18 +400,20 @@ def hands_pose(rig,label,p):
         rig.pose.bones['finger_index_0_R'].rotation_euler.y=.18*math.sin(p*math.pi)
     if label in ['reload','aim-reload']:
         # Support hand releases, retrieves below frame, then guides a new rocket.
-        rig.pose.bones['wrist_L'].location=reload_hand_delta(p)
+        turn=min(1,max(0,(p-.08)/.18),max(0,(1-p)/.18))*math.pi/2
+        grip_rotation(rig,'L',(turn,0,0),reload_hand_delta(p))
         for bone in rig.pose.bones:
             if bone.name.startswith('finger_') and bone.name.endswith('_L'):bone.rotation_euler.y=-.18*math.sin(p*math.pi)
     if label in ['repair','wrench-idle']:
         delta=WRENCH_GRIP-RPG_GRIP
-        rig.pose.bones['wrist_R'].location=delta
+        grip_rotation(rig,'R',(-.14,0,0),delta)
+        rig.pose.bones['wrench-mount'].rotation_euler.x=-.14
         rig.pose.bones['wrist_L'].location=(-.32,-.36,.2)
         if label=='repair':
             stroke=math.sin(p*math.tau*4)
-            rig.pose.bones['wrist_R'].rotation_euler.z=.20*stroke
-            rig.pose.bones['wrist_R'].location.y+=.027*stroke
-            rig.pose.bones['wrench-mount'].rotation_euler.z=.20*stroke
+            rotation=(-.14+.06*stroke,0,.27*stroke)
+            grip_rotation(rig,'R',rotation,delta+Vector((0,.027*stroke,0)))
+            rig.pose.bones['wrench-mount'].rotation_euler=rotation
             rig.pose.bones['wrench-mount'].location.y+=.027*stroke
     for bone in rig.pose.bones:
         if bone.name.startswith('finger_') and 'index_0_R' not in bone.name:
@@ -393,8 +451,8 @@ def build_hands(name,cfg):
     captures=[]
     if not args.skip_renders:
         samples=[('idle',.25,'rpg'),('wrench-idle',.25,'wrench')]
-        if name=='rook':samples += [('aim',.25,'rpg'),('fire',.10,'rpg'),('reload',1.1,'rpg'),('aim-reload',1.1,'rpg')]
-        if name=='odessa':samples += [('repair',1.12,'wrench')]
+        if name=='rook':samples += [('aim',.25,'rpg'),('fire',.10,'rpg'),('reload',1.1,'rpg'),('reload',1.65,'rpg'),('aim-reload',1.1,'rpg')]
+        if name=='odessa':samples += [('repair',1.12,'wrench'),('repair',2.8,'wrench')]
         for clip,t,tool in samples:
             rig.animation_data.action=actions[clip];scene.frame_set(1,subframe=0)
             scene.frame_set(int(1+t*60),subframe=(t*60)%1);bpy.context.view_layer.update()
@@ -411,7 +469,7 @@ def build_hands(name,cfg):
                     # while placing its GLTF camera-local origin on the socket.
                     basis=Matrix.Rotation(-math.pi/2,4,'X')
                     for obj in roots:obj.matrix_world=socket@basis
-            path=shots/f'blender-{name}-{clip}.png';scene.render.filepath=str(path)
+            path=shots/f'blender-{name}-{clip}-{t:.2f}.png';scene.render.filepath=str(path)
             bpy.ops.render.render(write_still=True)
             captures.append(dict(path=path.relative_to(root).as_posix(),sha256=digest(path),crew=name,clip=clip,time=t,tool=tool))
     rig.animation_data.action=actions['idle'];scene.frame_set(16)
@@ -420,7 +478,7 @@ def build_hands(name,cfg):
     report=dict(id=name,triangles=triangles(mesh),draws=1,seconds=time.perf_counter()-started,clips=CLIPS,
         reference=dict(path=source.relative_to(root).as_posix(),sha256=digest(source),crop=cfg['crop']),
         files={p.name:digest(p) for p in [out/'hands'/f'{name}.glb',out/'hands'/f'{name}.blend',out/'hands'/f'{name}-color.png',out/'hands'/f'{name}-surface.png']},captures=captures)
-    (shots/f'blender-{name}.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf8')
+    (shots/f'blender-{name}.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf8',newline='\n')
     print('HANDS_ASSET '+json.dumps({'id':name,'triangles':report['triangles'],'seconds':report['seconds']}),flush=True)
     return report
 
@@ -433,5 +491,5 @@ manifest=dict(round=args.round,blender=bpy.app.version_string,seconds=time.perf_
     camera=dict(position=[0,0,0],target=[0,0,-1],verticalFov=72,near=.15,width=1280,height=720),
     materials='Authored padded 1024 islands for cloth, leather, skin and steel; seeded grain and localized wear. No reference image projection. Original sheets untouched.',
     tools=tools,hands=hands,toolReferences=[dict(path='public/assets/reference/wasteland-'+name+'.png',sha256=digest(root/'public/assets/reference'/('wasteland-'+name+'.png'))) for name in ['rpg','wrench']])
-(shots/'blender-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf8')
+(shots/'blender-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf8',newline='\n')
 print('GFX-02 FIRST PERSON EXPORT COMPLETE',flush=True)
