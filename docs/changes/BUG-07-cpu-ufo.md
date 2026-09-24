@@ -175,3 +175,31 @@ baseline hash and requires the current simulation/report source to match
 `f8b5b06` before rerunning. No production edit, new matrix or balance report
 was made by the test author. The Director retains the final balance pair and
 required merge gate.
+
+## Final balance and merge gate
+
+Measured on clean `479643a11dda8ae83f3b5b1d0dca47366e3e5943`, with gameplay
+source unchanged since the independent defensive review of `f8b5b06`.
+
+| Rules | Time | Wins out of 10, Easy/Medium/Hard | Enemy hits | Result |
+| --- | --- | --- | --- | --- |
+| Flag off | 68.81 s | 9/6/2 | 1/3/7 | All balance targets pass |
+| Wasteland2 | 69.43 s | 9/5/3 | 6/4/6 | Only the pre-existing Easy 0–3 hit limit fails |
+
+Flag-off stock UFO gains are 0.28/0.36/0.16 s; maximum gains are
+0.57/0.07/-0.72 s. Flagged stock gains are 0.29/-0.73/1.20 s; maximum
+gains are 0.55/2.72/3.31 s. All remain within the existing limits.
+Crossbow contact is 13/26 off and 12/26 on. Own-bomb speed loss is 4.53%
+in both paths. Flagged player wrecks are 0/2/4. No target was changed.
+
+Required gate on the same clean commit:
+
+- Lane tier: **127 passed, zero failed, zero not run in 249.13 s**.
+- Build: passed, Vite 352 ms; existing large-chunk warning only.
+- HEAD and tracked source stayed unchanged through both commands.
+- Logs: `.qa-dist/cpu-ufo-final-{off,on,lane,build}.log`.
+
+The AI capability, safe landings and defensive policy are accepted for
+integration. BUG-07 remains open for Easy balance. This does not qualify
+the current integration for release, and no live game or save was accessed.
+This final commit changes only the evidence note.
