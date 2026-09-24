@@ -46,6 +46,15 @@ export async function run(context) {
     await context.evaluate('window.__qaApp.advance(.42)');
     await key(context,'keyUp','KeyF','f',70);
     await context.waitFor(READY,'loaded first-person hands',60000);
+    if(round>=2) {
+      const largest=blender.hands.reduce((a,b)=>b.triangles>a.triangles?b:a);
+      await context.evaluate(`(() => {
+        const s=window.__qaApp.duel.state;s.fighter.crewId=${JSON.stringify(largest.id)};
+        Object.assign(s.footWeapons,{selected:'rpg',ammo:3,serial:0,lastFireAt:undefined,repairing:false});
+        s.fighterInput={};window.__render.renderFrame();
+      })()`);
+      await context.waitFor(`(() => {window.__render.renderFrame();return ${READY};})()`,'largest hands and loaded RPG',60000);
+    }
     evidence.frameCost[quality]=await context.evaluate(`(async () => {
       const rig=window.__render.scene.getObjectByName('First-person hands and gear'),materials=new Set();
       rig.traverse(n=>{if(n.isMesh)for(const material of [].concat(n.material))materials.add(material);});
@@ -62,7 +71,8 @@ export async function run(context) {
       for(const [material] of original)material.visible=false;
       const baseline=await measure();for(const [material,visible] of original)material.visible=visible;
       const held=await measure();
-      return{baseline,held,scope:'Same stopped course, camera, quality and pose updates; baseline hides held materials. Measures added held rendering cost, not total presentation CPU overhead.'};
+      return{baseline,held,crew:rig.userData.presentation.crewId,tool:rig.userData.presentation.weapon,
+        scope:'Same stopped course, camera, quality and pose updates; baseline hides held materials. Measures added held rendering cost, not total presentation CPU overhead.'};
     })()`);
     await context.evaluate(`(() => {
       const r=window.__render;
