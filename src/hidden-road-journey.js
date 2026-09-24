@@ -41,6 +41,7 @@ export function initializeHiddenRoadJourney(duel) {
   s.hiddenRoadJourney = {id: duel._hiddenRoadJourneySerial, phase: 'racing',
     elapsedSec: 0, phaseElapsedSec: 0, progress: 0, gateOpen: 0,
     departed: false, controlsLocked: false, choiceReady: false,
+    automaticEntry: duel._hiddenRoadAutomaticEntry === true,
     _choice: null, _gate: gate, _motion: null,
     _colliders: [
       collider('left', -bounds.halfWidth, -bounds.openingHalfWidth, 0, bounds.height, bounds.wallFront, bounds.wallBack),
@@ -48,6 +49,19 @@ export function initializeHiddenRoadJourney(duel) {
       collider('header', -bounds.openingHalfWidth, bounds.openingHalfWidth, bounds.openingHeight, bounds.height, 2.5, bounds.wallBack),
       collider('panel', -bounds.openingHalfWidth, bounds.openingHalfWidth, 0, bounds.openingHeight, bounds.panelFront, bounds.panelBack),
     ]};
+}
+
+export function prepareHiddenRoadVisit(duel) {
+  const s = duel.state, j = s.hiddenRoadJourney;
+  if (!j) return false;
+  j.departed = true; j.automaticEntry = true;
+  s.hiddenRoadVisit = Object.freeze({playerId: s.playerId, journeyId: j.id});
+  s.status = 'exploring'; s.countdown = 0;
+  const gate = j._gate, distance = HIDDEN_ROAD_GATE.stopDistance;
+  place(duel, gate.x - Math.sin(gate.heading) * distance,
+    gate.z - Math.cos(gate.heading) * distance, gate.heading, 0);
+  phase(duel, 'opening');
+  return true;
 }
 
 export function checkHiddenRoadDeparture(duel) {
@@ -160,7 +174,11 @@ export function stepHiddenRoadJourney(duel, dt) {
     } else if (j.phase === 'opening') j.gateOpen = smooth(j.phaseElapsedSec / duration);
     if (j.phaseElapsedSec + 1e-9 < duration) break;
     if (j.phase === 'arriving') { s.speedMph = 0; phase(duel, 'opening'); }
-    else if (j.phase === 'opening') { j.gateOpen = 1; phase(duel, 'choice'); }
+    else if (j.phase === 'opening') {
+      j.gateOpen = 1;
+      if (j.automaticEntry) beginMotion(duel, 'entering', HIDDEN_ROAD_GATE.enterDistance, 3);
+      else phase(duel, 'choice');
+    }
     else if (j.phase === 'entering') {
       s.speedMph = 0; phase(duel, 'arrived');
       duel.emit({hiddenRoadArrived: {journeyId: j.id}});
