@@ -643,3 +643,15 @@ checkout untouched until the final integration commit passes the full gate.
   the change is visual or spans controls and simulation. One combined
   playthrough will check the joined walking/RPG/loadout flow. The exact
   release-candidate gate still applies before Wasteland2 is enabled live.
+
+## 2026-09-23 PDT — Armory loadout and crew art
+
+- PRG-03 four car weapon slots integrated at `0cbdca0`. Review found a save
+  write that could create a version 1 profile before verified migration;
+  `77127bd` now refuses that edit. The focused loadout cases, private
+  memory-only Armory flow and build passed.
+- ART-C added two front/side/back sheets for all eight original crew
+  members as non-runtime reference art. The original prompts and credits
+  are recorded. One intake check verified both opaque wide PNGs, their
+  provenance and the 4.44 MB total; no game build was needed for reference
+  files.

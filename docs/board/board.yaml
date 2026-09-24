@@ -835,8 +835,19 @@ tasks:
     lane: UI
     size: M
     needs: [RFX-01, PRG-01]
-    status: building
+    status: integrated
     flag: wasteland2
     behavior_change: yes
-    note: "Four weapon slots and Armory swap UI are building in an isolated worktree."
+    note: "Four per-player saved car weapon slots, Armory swap UI, HUD and key/D-pad routing integrated at 0cbdca0. Save guard at 77127bd requires verified version 1 migration. Focused checks, one private Armory flow and build passed."
     spec: "SPEC.md sections 3.8 and 12.2, task PRG-03"
+  - id: ART-C
+    title: "Crew turnaround reference sheets"
+    wave: 5
+    lane: ART
+    size: M
+    needs: []
+    status: integrated
+    flag: none
+    behavior_change: no
+    note: "Two original opaque front/side/back crew sheets for eight characters added as reference art. Provenance and credits recorded; focused intake found both files valid at 4.44 MB total."
+    spec: "SPEC.md sections 3.5, 3.10 and 12.2, task ART-C"
