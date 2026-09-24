@@ -1,5 +1,6 @@
 import {WEAPONS, ufoDestination} from './combat.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {NOTORIETY_XP} from './notoriety.js';
 import {WEAPON_IDS} from './weapon-upgrades.js';
 import {CAR_SLOT_DIRECTIONS,CAR_SLOT_PAD} from './car-loadout.js';
 
@@ -63,6 +64,12 @@ export function footAmmoPresentation(state) {
   return {name: gear.name, ammo: `AMMO ${ammo}`};
 }
 
+export function combatXpCue(event) {
+  return event?.combatWreck && event.victim === 'rival' &&
+    event.owner === 'player'
+    ? `+${NOTORIETY_XP.wreck} NOTORIETY · FINISH TO KEEP` : null;
+}
+
 export function footActionPresentation(state) {
   const gear = state?.footGear, weapons = state?.footWeapons;
   if (!gear || !weapons) return {text: '', locked: false};
@@ -113,6 +120,7 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
   host.innerHTML = `<div class="combat-opponent-layer" aria-label="Opponent armor and positions"></div>
     <div class="combat-hit-marker" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-damage-direction" aria-hidden="true"><span>▲</span></div>
+    <div class="combat-xp-toast" role="status" aria-live="polite"></div>
     <div class="combat-foot-reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-foot-action"></div>
     <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b>YOUR CAR</b><strong></strong></div>
@@ -137,6 +145,7 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
   const buttons = [...host.querySelectorAll('[data-combat-weapon]')];
   const hitMarker = host.querySelector('.combat-hit-marker');
   const damageArrow = host.querySelector('.combat-damage-direction');
+  const xpToast = host.querySelector('.combat-xp-toast');
   const armorValue = playerArmor.querySelector('strong');
   const armorFill = playerArmor.querySelector('i');
   const footHealthValue = footHealth.querySelector('strong');
@@ -147,7 +156,7 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
   const footGearAmmo = host.querySelector('.combat-foot-gear strong');
   const footAction = host.querySelector('.combat-foot-action');
   const footReticle = host.querySelector('.combat-foot-reticle');
-  let hitUntil = -1, damageUntil = -1, damageDirection = 'front';
+  let hitUntil = -1, damageUntil = -1, xpUntil = -1, damageDirection = 'front';
   let previousZones = null;
 
   host.addEventListener('click', event => {
@@ -157,11 +166,16 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
 
   const off = app.duel.onChange((state, event) => {
     if (event.stageLoaded != null || event.menu) {
-      hitUntil = damageUntil = -1;
+      hitUntil = damageUntil = xpUntil = -1;
       previousZones = {...state.damageZones};
       return;
     }
     if (!combatHudEnabled(app.duel, state)) return;
+    const xpCue = combatXpCue(event);
+    if (xpCue) {
+      setText(xpToast, xpCue);
+      xpUntil = state.stageTimeSec + 2.2;
+    }
     if (event.combatHit && event.victim === 'rival' && !event.enemy ||
         event.combatRamHit && event.attacker === 'player' && event.victim === 'rival') {
       hitUntil = state.stageTimeSec + .32;
@@ -261,6 +275,7 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
     }
     hitMarker.classList.toggle('is-visible', hitUntil > state.stageTimeSec && !state.paused);
     damageArrow.classList.toggle('is-visible', damageUntil > state.stageTimeSec && !state.paused);
+    xpToast.classList.toggle('is-visible', xpUntil > state.stageTimeSec && !state.paused);
     if (damageArrow.dataset.direction !== damageDirection) damageArrow.dataset.direction = damageDirection;
     previousZones = {...state.damageZones};
   }

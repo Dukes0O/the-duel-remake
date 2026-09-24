@@ -85,7 +85,7 @@ function startCombatWreck(duel, actor, source, owner) {
     duel._callout('WRECKED / RECOVERING', actor.combatWreckTimer);
   }
   const hitPosition = {x: point.x, y: point.y, z: point.z};
-  duel.emit({combatWreck: true, victim: player ? 'player' : 'rival',
+  duel.emit({combatWreck: true, victim: player ? 'player' : 'rival', owner,
     ...(player ? {} : {opponentIndex}), source, hitPosition});
   if (source !== 'bomb') duel.emit({combatExplosion: true, hitPosition});
 }

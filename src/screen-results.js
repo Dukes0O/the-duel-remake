@@ -4,6 +4,11 @@ import {formatSpeed} from './speed-format.js';
 
 export const screenMetric = (label,value,accent=false) => `<div class="result-metric${accent?' accent':''}"><span class="field-label">${label}</span><b>${value}</b></div>`;
 export const screenAction = (label,verb,primary=false,arrow='') => `<button class="${primary?'start-button':'secondary-button'}" data-action="${verb}"><span>${label}</span>${primary?arrow:''}</button>`;
+export function notorietyResultPresentation(result) {
+  return Number.isSafeInteger(result?.notorietyEarned) &&
+    Number.isSafeInteger(result?.notorietyRank)
+    ? {xp: result.notorietyEarned, rank: result.notorietyRank} : null;
+}
 export function createResultsScreen({app, profile, credits, escapeHTML, time, arrow, metric:metricView=screenMetric, action:actionView}) {
   let lastEventResult=null;
   const metric=metricView;
@@ -33,7 +38,11 @@ function modalScreen(s) {
         metric('HITS LANDED',r.hitsLanded,true)+metric('WRECKS CAUSED',r.wrecksCaused)+
         metric('WRECKS TAKEN',r.wrecksTaken)+metric('KNOCKDOWNS',r.knockdowns)+
         metric('DAMAGE DEALT',damage)+metric('BEST COMBO',r.bestCombo)+
-        metric('COMBAT STYLE',credits(r.combatStyleScore),true)+'</div></section>';
+        metric('COMBAT STYLE',credits(r.combatStyleScore),true)+
+        (notorietyResultPresentation(r)
+          ? metric('NOTORIETY',`+${credits(r.notorietyEarned)} XP`,true)+
+            metric('NOTORIETY RANK',r.notorietyRank)
+          : '')+'</div></section>';
     }
     const atEnd=!!stage.kind||!COURSE[s.stageIndex+1]||!!COURSE[s.stageIndex+1].kind;
     actions=r.timeout?action('TRY AGAIN','restart',true)+action('MAIN MENU','menu'):action(atEnd?'FINISH THE RUN':'NEXT CIRCUIT','next',true)+action('RESTART RUN','restart')+action('MAIN MENU','menu');

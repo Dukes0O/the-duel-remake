@@ -382,6 +382,10 @@ export class App {
       if(recorded.recorded)this.leaderboardSaved=saveLeaderboard(this.leaderboard);
       if(recorded.scoreBest!=null){result.driftScoreBest=recorded.scoreBest;result.driftScoreImproved=recorded.scoreImproved;}
       Object.assign(result,{creditReward:awarded.reward,creditCharge:awarded.charge,policeFineCharge:awarded.policeFineCharge||0,creditBreakdown:awarded.breakdown,personalBest:awarded.personalBest,personalBestStatus:awarded.personalBestStatus,previousBest:awarded.previousBest,best:awarded.best,winStreak:awarded.winStreak,milestoneAwards:awarded.milestones});
+      if (Number.isSafeInteger(awarded.notorietyEarned)) {
+        result.notorietyEarned = awarded.notorietyEarned;
+        result.notorietyRank = awarded.notorietyRank;
+      }
     }else if(result.creditReward==null)result.creditReward=0;
     this._finishGhost(payload,state,awarded,result);
     result.creditBalance=this.profile.credits;
