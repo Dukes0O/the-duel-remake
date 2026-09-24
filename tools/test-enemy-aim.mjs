@@ -100,13 +100,14 @@ function widestShot(launch, difficulty) {
     .sort((a, b) => Math.abs(b.bias) - Math.abs(a.bias))[0];
 }
 
-check('measured raider tuning uses separate 20 / 10 degree cones without changing CPU aim', () => {
+check('measured raider tuning uses 10 / 10 degree cones without changing CPU aim', () => {
   // Authorized after the retained-bias report measured 6/10/6 enemy hits;
   // owner traces attributed 5 Easy and 4 Medium hits to raiders. Hard stays
-  // unchanged. This is one measured candidate, not a relaxation of hit targets.
-  const approved = {easy: Math.PI / 9, medium: Math.PI / 18, hard: .03};
+  // unchanged. The 20-degree Easy candidate won all ten seeds, so its cone
+  // returned to 10 degrees. The measured Medium correction remains separate.
+  const approved = {easy: Math.PI / 18, medium: Math.PI / 18, hard: .03};
   assert.deepEqual(T.raider.aimError, approved,
-    'raider aim must use the approved separate 20-degree / 10-degree / .03-radian map');
+    'raider aim must use the approved 10-degree / 10-degree / .03-radian map');
   assert.deepEqual(Object.fromEntries(Object.entries(CPU_COMBAT).map(
     ([difficulty, settings]) => [difficulty, settings.aimError])),
   {easy: Math.PI / 18, medium: .055, hard: .03}, 'CPU aim settings stay unchanged');
@@ -115,7 +116,7 @@ check('measured raider tuning uses separate 20 / 10 degree cones without changin
       Math.abs(raiderShot({difficulty, seed: 1989 + index}).bias));
     assert.ok(errors.every(error => error <= approved[difficulty] + 1e-9),
       `${difficulty} launched raiders stay inside their approved separate cone`);
-    if (difficulty !== 'hard') assert.ok(errors.some(error =>
+    if (difficulty === 'medium') assert.ok(errors.some(error =>
       error > CPU_COMBAT[difficulty].aimError),
     `${difficulty} raider launches must exercise their wider cone, not the CPU cone`);
   }
@@ -126,14 +127,15 @@ check('raider spread uses the current difficulty cones', () => {
   for (const difficulty of ['easy', 'medium', 'hard']) {
     const errors = Array.from({length: 12}, (_, index) =>
       raiderShot({difficulty, seed: 1989 + index}).bias);
-    assert.ok(errors.every(error => Math.abs(error) <= CPU_COMBAT[difficulty].aimError + 1e-9),
-      `${difficulty} raiders remain inside the existing CPU aim cone`);
+    assert.ok(errors.every(error => Math.abs(error) <= T.raider.aimError[difficulty] + 1e-9),
+      `${difficulty} raiders remain inside their explicit aim cone`);
     assert.ok(errors.some(error => error < -.0001) && errors.some(error => error > .0001),
       `${difficulty} raiders must have seeded error on both sides of the lead point`);
     rms[difficulty] = Math.sqrt(errors.reduce((sum, value) => sum + value * value, 0) / errors.length);
   }
-  assert.ok(rms.easy > rms.medium && rms.medium > rms.hard,
-    'raider aim tightens from Easy through Medium to Hard');
+  near(rms.easy, rms.medium, 1e-12,
+    'equal Easy/Medium cones retain equal spread for identical seeded samples');
+  assert.ok(rms.medium > rms.hard, 'Hard raider aim remains tighter than Medium');
 });
 
 check('raider aim is repeatable from seed and identity', () => {
@@ -331,6 +333,46 @@ check('player guidance and flag-off CPU/player trajectories preserve their finge
   const expected = JSON.parse(readFileSync(new URL('./replays/enemy-aim-controls.json', import.meta.url), 'utf8'));
   assert.deepEqual(outcomes, expected.outcomes);
   assert.equal(createHash('sha256').update(JSON.stringify(outcomes)).digest('hex'), expected.sha256);
+});
+
+check('enemy guidance keeps one turn budget and its launch cone when targets reverse', () => {
+  for (const launch of [cpuShot, raiderShot]) {
+    for (const difficulty of ['easy', 'medium', 'hard']) {
+      for (const fps of [30, 60, 144]) {
+        const {duel, bolt} = launch({difficulty});
+        const speed = Math.hypot(bolt.vx, bolt.vz);
+        // Keep this steering probe away from ground and body contact. Moving
+        // the target across the far field demands both maximum-rate turns.
+        bolt.y = 10;
+        bolt.vy = 0;
+        Object.assign(duel.state, actor(1000));
+        let leftEdge = false, rightEdge = false;
+        let leftTurn = false, rightTurn = false;
+        for (let frame = 0; frame < fps; frame++) {
+          const side = Math.floor(frame * 3 / fps) % 2 ? -1 : 1;
+          duel.state.lateral = duel.state.prevLateral = side * 1000;
+          const before = heading(bolt);
+          stepProjectiles(duel, 1 / fps);
+          assert.ok(duel.state.combat.projectiles.includes(bolt),
+            'the turn-limit probe remains in flight');
+          const turn = wrap(heading(bolt) - before);
+          const fromLaunch = wrap(heading(bolt) - bolt.launchBearing);
+          assert.ok(Math.abs(turn) <= T.crossbow.homingTurnRadiansPerSecond / fps + 1e-10,
+            `${launch.name} ${difficulty} ${fps} FPS exceeded one step's turn budget`);
+          assert.ok(Math.abs(fromLaunch) <= T.crossbow.homingConeRadians + 1e-10,
+            'guidance never leaves the original launch cone');
+          near(Math.hypot(bolt.vx, bolt.vz), speed, 1e-9,
+            'steering preserves horizontal speed');
+          leftTurn ||= turn < -.001;
+          rightTurn ||= turn > .001;
+          leftEdge ||= fromLaunch < -T.crossbow.homingConeRadians + 1e-8;
+          rightEdge ||= fromLaunch > T.crossbow.homingConeRadians - 1e-8;
+        }
+        assert.ok(leftTurn && rightTurn && leftEdge && rightEdge,
+          'the probe exercises both turn directions and both launch-cone edges');
+      }
+    }
+  }
 });
 
 check('CPU and raider aim has comparable common-time outcomes at 30 / 60 / 144 FPS', () => {
