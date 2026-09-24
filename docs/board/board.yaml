@@ -119,7 +119,7 @@ tasks:
       - "Use the built-in image tool with the existing direction and crew sheets as visual references. Retain unmodified originals outside the repository and copy chosen PNGs into the lane; document tool, date, full prompts, dimensions, hashes, source and reference-only use."
       - "Rustwall reference shows a coherent 35 m tall, at least 400 m wide salvage wall with a drive-through lifting gate, towers, cranes, banners, barrels, searchlights and figures for scale. Include an approach view and useful modeling views; original design without film likenesses or gore."
       - "RPG and wrench references use consistent orthographic and first-person views, readable silhouettes, physically coherent grips and the crew palette. They guide real Blender geometry; no menu/poster art or runtime image substitution."
-        - "Independent visual review checks consistency and modeling usefulness. PNG validation and provenance checks pass; required lane/build gate applies. Merge after EGG-01 even if independent art preparation finishes earlier."
+      - "Independent visual review checks consistency and modeling usefulness. PNG validation and provenance checks pass; required lane/build gate applies. Merge after EGG-01 even if independent art preparation finishes earlier."
     note: "Merged c736150 after accepted modeling review, intake validation, 217-suite lane gate and build. Originals and full prompts retained. Model Rustwall numerically at 35 m by at least 400 m; no runtime or beta claim."
   - id: GFX-01
     title: "Crew family fidelity rounds one to three"
@@ -477,7 +477,7 @@ tasks:
     size: S
     needs: [BUG-06]
     status: building
-    owns: [src/raiders.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-enemy-aim.mjs]
+    owns: [src/raiders.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-enemy-aim.mjs, tools/replays/enemy-aim-controls.json]
     helpers: [test_author, reviewer, balance_analyst, test_runner]
     active_slice: "Difficulty-aware raider aiming and persistent enemy aim error during crossbow guidance."
     acceptance:
