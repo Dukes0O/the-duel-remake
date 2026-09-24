@@ -697,3 +697,58 @@ tasks:
     behavior_change: yes
     note: "Socket-mounted plates, pooled critical smoke/fire, and a read-only opponent projection hook integrated at 37850ad after focused checks, build and private High/Performance visual review. PRG-04 still owns kit purchases and armor bonuses."
     spec: "SPEC.md sections 3.6 and 12.2, task VIS-02"
+  - id: UI-01
+    title: "Combat HUD"
+    wave: 3
+    lane: UI
+    size: M
+    needs: [RFX-01, CMB-01, VIS-02]
+    status: integrated
+    flag: wasteland2
+    behavior_change: yes
+    note: "Weapon cooldown rings, armor bars, projected opponent markers and directional hit feedback integrated at 43295ea. Focused HUD checks and private desktop/mobile High/Performance review passed."
+    spec: "SPEC.md sections 3.12 and 12.2, task UI-01"
+  - id: PRG-01
+    title: "Versioned Wasteland save data and migration"
+    wave: 4
+    lane: SAVE
+    size: M
+    needs: [FND-10, FND-11, RFX-07]
+    status: integrated
+    flag: wasteland2
+    behavior_change: yes
+    note: "Versioned Wasteland profile and verified backup-before-migration integrated at bcca621. Historical save, purchase, budget and App checks passed. Release still requires migration review on the exact candidate."
+    spec: "SPEC.md sections 3.8 and 12.2, task PRG-01"
+  - id: PRG-02
+    title: "Notoriety XP and ranks"
+    wave: 4
+    lane: SAVE
+    size: S
+    needs: [PRG-01, CMB-03]
+    status: building
+    flag: wasteland2
+    behavior_change: yes
+    note: "Building combat-only XP and idempotent rank settlement in an isolated worktree."
+    spec: "SPEC.md sections 3.8 and 12.2, task PRG-02"
+  - id: FOOT-01
+    title: "Fighter simulation"
+    wave: 5
+    lane: CMB
+    size: L
+    needs: [FOOT-00, RFX-04]
+    status: integrated
+    flag: wasteland2
+    behavior_change: no
+    note: "Headless fixed-step movement, ground/scenery limits, health and knockdown integrated at b21b9b8. Nine focused cases and a production build passed. FOOT-02 owns player-facing attachment."
+    spec: "SPEC.md sections 3.4 and 12.2, task FOOT-01"
+  - id: FOOT-02
+    title: "Car exit, bailout, re-entry and parked car"
+    wave: 5
+    lane: CMB
+    size: M
+    needs: [FOOT-01, CMB-01]
+    status: building
+    flag: wasteland2
+    behavior_change: yes
+    note: "Building in an isolated worktree; FOOT-03 owns walking controls and camera."
+    spec: "SPEC.md sections 3.4 and 12.2, task FOOT-02"

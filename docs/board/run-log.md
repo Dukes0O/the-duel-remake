@@ -570,3 +570,23 @@ checkout untouched until the final integration commit passes the full gate.
   simulation are being built in isolated worktrees. The development switch
   stays closed in the live build while those cards finish and the combat
   balance and frame budget are reviewed.
+
+## 2026-09-23 PDT — HUD, profile and fighter core
+
+- UI-01 combat HUD integrated at `43295ea`. Focused HUD and armor checks
+  passed; the private browser scenario covered desktop and mobile in High and
+  Performance with four screenshots and no browser errors.
+- FOOT-01 fixed-step fighter simulation integrated at `b21b9b8`. Its nine
+  focused movement, collision, knockdown and replay cases passed. It is
+  headless until FOOT-02 and FOOT-03 connect car transitions and controls.
+- PRG-01 versioned Wasteland profile integrated at `bcca621`. The existing
+  weapon levels migrate into the nested profile after a verified career
+  backup. Historical save, backup, purchase, budget and App checks passed;
+  no real career was opened.
+- One combined armor visual frame sample found ordinary play at about 18 ms
+  p95 in High and Performance. The first armored wreck had a 414 ms maximum
+  in High and 89 ms in Performance, so its one-time hitch is under review.
+  This development feature remains off in the live build.
+- FOOT-02 car transitions and PRG-02 Notoriety are now building in isolated
+  worktrees. Each feature gets focused checks; combined checks are reserved
+  for meaningful joins and release candidates.
