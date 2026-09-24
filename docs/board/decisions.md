@@ -236,9 +236,40 @@ and how to reverse it before continuing.
 
 ## 2026-09-24 PDT: CAR-01 scrap, hold and migration
 
-- Decision: Earn 80 scrap for a completed Wasteland event, plus 120 for a win, 15 per player-owned hit capped at ten, and 60 per player-caused wreck capped at four. Existing salvage crates pay 25 each, capped at three, through the completed event settlement identity; abandoned runs bank none. Weapon upgrades cost 150/300/600 scrap; new weapons 400; crew 300; armor kit tiers 350/950/2500. Credit and scrap never convert. Before gate discovery, Mad Max Duel retains its existing economy.
-- Decision: Assign each of the eleven existing combat courses once across eight warlords as listed in CAR-01's change note. A win adds 25 hold, capped at 100; full hold opens an implemented warlord fight, and beating it claims the territory and kit parts. An unbuilt fight cannot be started from the map.
-- Decision: Add scrap and territories to the existing profile.wasteland v1 object, preserving unknown fields, historical levels and future-version data. Use backup-first migration and stable settlement identity. These values are tuning choices, not already fixed by SPEC 0.4. Reverse price or hold tuning in the catalog; preserve earned player data through any later migration.
+### Economy
+
+Scrap belongs to each named player's Wasteland career. It never converts to or from racing credits. After that player has discovered the gate, a completed Wasteland event awards 80 scrap for finishing, another 120 for winning, 15 per player-owned armor hit (at most 10), and 60 per player-caused wreck (at most 4). Before discovery, the existing Mad Max Duel keeps its current reward rules. A completed loss keeps its earned scrap. An abandoned event earns none. Each settled run key pays once, including after reload. Existing ledge salvage crates award 25 scrap each, capped at three in a completed event. The simulation records collection; scrap stays unbanked until event settlement. The settled-run identity prevents duplicate payment after reload, with no new pickup journal in the save. No difficulty or Pro multiplier changes scrap.
+
+At full rockets and armor, the current ledge crate refuses collection. Once the player has discovered the gate with `wasteland2` enabled, collecting on foot and in reach may take the crate for scrap even when those resources are full. Keep the old resource-only rule before the gate and with the switch off. This is a small change to the existing pickup, not a new spawn or currency event.
+
+The four starter weapons stay free. Levels bought with credits before migration keep their levels. A later upgrade costs 150, 300, or 600 scrap for levels 1, 2, or 3. A new weapon costs 400 scrap; crew costs 300 at its rank gate; each car's Scrapper, Raider, and Warlord armor kits cost 350, 950, and 2,500 scrap. Content without a working purchase or grant action remains unavailable rather than charging for a placeholder. The shop shows scrap and prices when `wasteland2` is enabled; the ordinary garage still shows credits. Post-gate Wasteland events add no racing credits or racing milestones. These prices let a player buy an early upgrade after one or two wins while keeping the top kit a long goal.
+
+### Territory map
+
+The eleven existing combat courses are assigned exactly once. Warlord order is the order in SPEC 3.9:
+
+| Warlord | Courses or arena |
+| --- | --- |
+| Sawtooth Sal | Pacific Canyon, Red Mesa |
+| The Dustmonger | High Country, Ridge Rally |
+| Mother Mirage | Azure Riviera |
+| Gearhead Gunn | Eifel Crown |
+| Kettle Kingpin | Titan Monster Arena, Scrapdome events |
+| The Twin Vultures | Alpine Serpent |
+| The Tollkeeper | Neon Docks, Salt Flats Convoy Raid |
+| Baron Blackiron | Harbor & Highlands, Cloudbreak Skyway |
+
+The Scrapdome and Salt Flats entries are future event venues, not extra copies of a course. Only playable, completed Wasteland events after gate discovery can add hold. A win adds 25 hold to its territory, capped at 100; a loss adds none. Four wins, including repeats on an available course, fill it. This avoids locking progress behind racing garage purchases. Full hold opens that warlord's fight once its event exists. Beating that fight once claims the territory, adds the banner and grants its specified kit parts. Full hold does not itself grant the parts. A claimed territory cannot lose hold. Future venue and boss events must use stable event IDs and the same settlement rule.
+
+The map is available after this named player discovers the gate. It shows the eight territories, assigned courses, hold out of 100, locked or available warlord fight, and claimed banner. It does not let a player start an unbuilt event.
+
+### Save and migration
+
+Keep `profile.wasteland.version` at 1 and add `scrap: 0` and one default entry for each of the eight territories to the existing versioned object. Each territory value is `{hold: 0, claimed: false}`. Keep existing `discoveredGate` and every other established field. Normalize missing or damaged scrap and hold to bounded nonnegative integers; preserve unknown fields. For any future version, preserve the nested object without modification and block writes. Existing `profile.weapons.levels` moves to `profile.wasteland.weapons.levels` unchanged through the established backup-first migration. Additive defaults never erase levels, credits, cars, records, gate discovery, or other existing player data. Use the existing `settledResults` identity for race payouts including collected salvage. Later warlord grants must share their completed event identity. Each historical fixture must load through memory-only storage, with a verified pre-migration backup when a write is needed.
+
+### Why and reversal
+
+The event rates reward a finish and visible combat without making repeated hits unlimited income. Four wins make hold legible and reachable on the first free course. Reusing version 1 fits the existing additive normalization and backup gate. To reverse the tuning, change the pure economy catalog and tests; do not remove earned scrap or claimed territories from saves. To change territory allocation or hold thresholds after players have progress, write a migration that preserves each named player's earned hold and claims.
 
 ## 2026-09-24 PDT: GFX-01-P1 Rook technique trial
 

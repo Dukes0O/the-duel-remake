@@ -295,6 +295,18 @@ tasks:
       - "Follow round-3-review.md. Replace the stalled primitive/projection approach with continuous anatomical meshes and authored padded UV/baked textures. Join necks to adjusted jaws, eliminate pale streaks/profile bands, and build distinct faces/hair and reference clothing silhouettes."
       - "Author tool/car actions around actual grip, sill, seat and support-foot contacts. Preserve simulation timing and all runtime lifecycle controls. Run further immutable fidelity rounds within SPEC 0.3 budgets; do not promote beta until every score is at least four."
     note: "Active Rook-only trial uses a continuous anatomical body and authored painted UVs. Other crew wait for the written Rook likeness gate."
+  - id: GFX-01-P2
+    title: "Rook likeness before full crew conversion"
+    lane: ART
+    size: L
+    needs: [GFX-01-P1]
+    status: backlog
+    flag: wasteland2
+    helpers: [art_critic, reviewer, browser_qa]
+    acceptance:
+      - "Start from the negative round-10 trial verdict and its text recipe. Build a reference-matched head, hair, collar, thin vest and asymmetric clothing folds. Prove likeness at least four on Rook in both game qualities before converting any of the other seven. Keep the existing runtime until that gate passes."
+      - "Use a separate polish-wave review folder so previous round sheets remain immutable. Follow the ten-round limit, connected topology, padded UV, animation contact and measured frame budgets. A count of triangles never substitutes for a visual score."
+    note: "The phase-2 Rook trial did not establish a winning technique. GFX-02-P1 waits for this card. The rejected experiment recipe and tests remain in Git text history."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8
@@ -322,7 +334,7 @@ tasks:
     title: "Polish first-person anatomy, materials and motion"
     lane: VIS
     size: M
-    needs: [GFX-02, GFX-01-P1]
+    needs: [GFX-02, GFX-01-P2]
     status: backlog
     owns: [tools/blender/first-person-gear.py, public/assets/models/wasteland/first-person/, docs/board/looks/first-person/]
     helpers: [art_critic, reviewer, browser_qa]
@@ -359,7 +371,7 @@ tasks:
     needs: [EGG-02]
     status: building
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall/]
-    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs]
+    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/scenarios/hidden-road-arrival.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs]
     helpers: [art_critic, reviewer, browser_qa]
     flag: hidden-road
     acceptance:
@@ -367,6 +379,18 @@ tasks:
       - "Retain matched High/Performance views and add a short continuous approach/gate review once EGG-03 exists. Keep the geometry and material allocations and measure frame cost without discarding earlier unfavorable samples. The model toggle comparison alone does not measure the whole terrain change or GPU time."
       - "Wall resemblance reaches three in round 2 and stays three in round 3; wash rises from one to two, then stays two. Each has one stagnant round. Apply SPEC 0.3's approach-change rule if another round fails to improve resemblance. Keep dev until all scores reach four and the budget holds."
     note: "Active phase-2 lane replaces repeated columns and refines wall materials. Three rounds alone do not grant beta."
+  - id: EGG-02-P2
+    title: "Rustwall salvage depth and natural canyon strata"
+    lane: VIS
+    size: L
+    needs: [EGG-02-P1]
+    status: backlog
+    flag: hidden-road
+    helpers: [art_critic, reviewer, browser_qa]
+    acceptance:
+      - "Continue the round-10 gaps: replace the regular flat facade with deeper irregular salvage, grounded supports and a varied roofline; make canyon strata follow the slope without repeated broad bands. Reach resemblance four and preserve the measured frame budget."
+      - "Retain the physical route, collision envelopes, gate clearance, joined-bank safety tests and smaller reviewed atlases. Use a separate next-wave review folder and immutable reference/Blender/High/Performance sheets."
+    note: "The phase-2 slice improves the wash and asset size, but wall and wash resemblance remain three. Hidden Road stays in development."
   - id: EGG-03
     title: "Gate arrival and invitation"
     priority: 10
@@ -441,13 +465,13 @@ tasks:
     lane: SAVE
     size: L
     needs: [CAM-01]
-    status: building
+    status: merged
     owns: [src/wasteland-career.js, src/wasteland-progress.js, src/screen-territory.js, src/screen-territory.css, tools/test-wasteland-career.mjs, tools/test-territory-screen.mjs]
     hooks: [src/combat-hud.js, tools/test-combat-hud.mjs, src/career-backup.js, src/progression.js, src/weapon-upgrades.js, src/armor-kits.js, src/crew.js, src/screen-armory.js, src/screen-router.js, src/app.js, src/crew-ui.js, tools/test-crew-ui.mjs, src/combat-scoring.js, tools/test-combat-scoring.mjs, src/raiders.js, tools/test-raiders.mjs, src/game.js, src/screen-results.js, tools/test-wasteland-results.mjs, tools/scenarios/wasteland-career.mjs, tools/test-wasteland-profile.mjs, tools/test-progression.mjs, tools/test-progression-integration.mjs, tools/test-save-fixtures.mjs, tools/test-weapon-upgrades.mjs, tools/test-armor-kits.mjs, tools/test-crew.mjs, tools/test-career-backup.mjs]
     helpers: [test_author, save_guardian, reviewer, browser_qa]
     acceptance:
       - "Add separate scrap and eight-warlord territory progression, ranks 1–30 and yard access behind the switch per SPEC 0.4. Preserve old credit-funded weapon levels and ordinary careers through backed-up migration."
-    note: "Current scope earns and spends scrap, builds hold, and shows the territory map. Existing ranks are preserved. GFX-04 connects the yard; WAR-01/02/03/04 own the unbuilt ladder, fights and one-time claim grants. Director approved hiding active combat HUD over result dialogs after actual screenshots proved overlapping controls."
+    note: "Merged ac79e63 after 242/242 final lane suites, build, private browser review and independent Save Guardian clearance. Earns and spends scrap, builds hold, and shows the territory map. Existing ranks are preserved. GFX-04 connects the yard; WAR-01/02/03/04 own the unbuilt ladder, fights and one-time claim grants. Director approved hiding active combat HUD over result dialogs after actual screenshots proved overlapping controls."
   - id: GFX-03
     title: "Nine war rigs and kits fidelity rounds one to three"
     priority: 14
