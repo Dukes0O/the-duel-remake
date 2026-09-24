@@ -1,6 +1,6 @@
 ---
 task: AUD-02
-status: integrated-slice
+status: ready-to-merge
 kind: sound-refinement
 flag: wasteland2
 player_facing: yes
@@ -103,3 +103,19 @@ Independent audio QA, review and lane/build gates belong to the handoff.
 Race fingerprints were not measured in this tools-only builder check; no
 simulation source changed. The full AUD-02 card remains open for future cues
 and whole-race listening.
+
+### Independent verification handoff
+
+On committed `660e352`, the required lane command passed 214/214 suites in
+307.16 seconds and the production build passed. The lane command selected
+the campaign shards too; this was its dependency fallback, not an extra run.
+Independent code review found no blockers or changed existing assertions.
+
+The fresh private capture at
+`.qa-dist/browser-output/weapon-audio-2026-09-24T04-20-36-783Z/` reports
+`sourceCommit: 660e3521ca677f32ec3470df14ba9a9211113216`, a clean worktree,
+memory-only saves, and zero browser warnings/errors. Independent audio QA
+decoded all twelve WAVs. Their measurements match the summary within PCM
+rounding, with no saturated samples and the intended 3.307:1 channel ratios.
+No listening tool was available; this is measured verification, not a claim
+about perceived quality or whole-race mixing. Full AUD-02 remains building.
