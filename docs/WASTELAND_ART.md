@@ -206,3 +206,58 @@ Prompt:
 > Use case: stylized-concept. Asset type: production character design reference sheet for an original offline 3D arcade combat racing game, Wasteland crew batch C, sheet 2 of 2. Create FOUR clearly distinct original adult crew members, ordered left to right: Cinder Ruiz, a flame specialist in charcoal heat-resistant workwear with a small orange scarf and compact protective mask at the neck; Dune Marek, a patient marksman in faded blue-grey field clothing with a light hood and narrow utility straps; Wren Ashby, a nimble scout with a cropped sand-colored jacket, lightweight packs and trail boots; Tusk Brannigan, a broad heavy fighter with practical scrap-metal shoulder protection, thick gloves and dark rust-brown workwear. For EACH character show a coherent full-body FRONT, SIDE and BACK orthographic turnaround directly adjacent, same clothing and silhouette across all three views, neutral standing pose, fully visible from head to boots. Arrange four character groups across one extra-wide clean sheet with enough space between groups for design reference. Neutral warm-grey studio backdrop, even lighting, grounded realistic game-production concept art, physically plausible layered fabric, leather and small scrap-metal protection, dust and wear, muted rust, charcoal, faded teal and ochre palette consistent with the companion sheet. Strong distinct readable silhouettes, adult proportions, no glamour or gore. Original world only: no franchise likenesses, real brands, logos, readable text, captions, labels, numbers, panel borders, grid, weapons aimed at viewer, dramatic perspective, vehicles, watermarks or extra people. This image is a reference sheet, not a game screenshot.
 
 Inspection: 2056×765 opaque PNG, 2,253,334 bytes. All twelve views are visible in four groups. This is a design reference, not a runtime sprite sheet or exact model texture. The copy in this repository is byte-identical to retained original `exec-3a77f30e-5d68-4ce8-85d2-4e3fde85bfe6.png` (SHA-256 `34e1a95a7b1a7984e2ba00db55740a3dc437b48174b521513dd4d673932b80a9`).
+
+
+## ART-W reference process
+
+The Director inspected the existing art-direction board and crew sheet 1 and
+translated their palette, materials and clothing into the three prompts below.
+The built-in calls generated new images without passing an edit target. These
+are modeling references only. No runtime code consumes them. Originals remain
+unchanged under Codex generated_images/01a0cc3f-15a5-7b73-9dbf-849ae16bbb56.
+
+## public/assets/reference/rustwall-gate.png
+
+Date: 2026-09-23 PDT (2026-09-24 UTC)
+Tool: Codex built-in image generation, using the imagegen skill
+Use: Rustwall architecture, gate mechanism, salvage materials and approach composition for EGG-02 Blender modeling. Reference only, not a runtime texture or menu image.
+Prompt:
+> Use case: stylized-concept. Asset type: original game-production environment reference sheet for Blender modeling, not a poster or a finished game screenshot. Create the Rustwall and lifting gate for an original gritty desert combat-racing world. A 35-metre-tall salvage wall extends at least 400 metres across a salt flat, built from stacked car hulks behind riveted steel facing, huge structural frames, scaffold watchtowers, cranes, fabric banners without lettering, fire barrels and searchlights. Tiny adult guards with torches and a small road car establish credible scale. Central gate has a clear 9-metre-wide by 7-metre-high vehicle opening and a heavy vertically lifting panel on readable side guides with overhead winches; keep these features consistent in all views. Top half: a low driver's approach view down a straight, empty 300-metre salt-flat track, wall growing across horizon, dry canyon wash receding behind camera, warm desert daylight, slight heat haze but crisp legible structures. Bottom half: two modeling views of the SAME gate and adjacent wall, one straight frontal elevation on neutral warm grey showing the full 35-metre wall height, one three-quarter view showing frame depth, lifting clearance and stacked hulk construction. Original practical industrial design, not a castle or film likeness. Physically plausible worn iron, oxidized rust, dusty charcoal steel, faded blue-green paint, tan salt and ochre dust, restrained amber fire. Match a realistic weathered salvage-yard game art direction, natural human scale, strong silhouettes, layered material wear. Wide landscape sheet with clear separation of views; fully frame objects, consistent design and proportions. No labels, text, logo, UI, watermark, gore, injury or franchise symbols. This is modeling reference art for actual 3D geometry.
+
+Inspection: 1536×1024 opaque PNG, 2,961,831 bytes. PNG signature, chunk checksums and pixel structure pass inspectPng. The repository copy is byte-identical to retained original `exec-f88449f3-c420-4968-a372-6782ad0c70ec.png`, SHA-256 `305c4c991cfdcf44a5590486d91165a1357357ae295508a1710fe99edf04113f`. No local resizing, cropping or image editing was performed.
+
+Canonical modeling guidance from independent art review: Use the lower-left elevation as architecture authority, lower-right for depth and bracing, and top for atmosphere. Generated figures suggest only about 18-22 m of height. Build a metric blockout with a 35 m main wall, at least 400 m span and a separate 9 m wide by 7 m high opening. Add wall height above the opening and repeat modules laterally; do not uniformly enlarge people, cars or doorway. Provide explicit gate travel clearance.
+
+## public/assets/reference/wasteland-rpg.png
+
+Date: 2026-09-23 PDT (2026-09-24 UTC)
+Tool: Codex built-in image generation, using the imagegen skill
+Use: RPG exterior geometry, materials, reload prop and first-person grip for GFX-02 Blender modeling. Reference only, not a runtime texture or menu image.
+Prompt:
+> Use case: stylized-concept. Asset type: original RPG launcher production reference for Blender modeling and first-person game animation. Create one coherent fictional shoulder-fired rocket launcher for a gritty, realistic desert combat-racing world. A practical roughly one-metre charcoal steel tube with a worn faded blue-green protective housing, leather-wrapped front support grip, distinct rear trigger grip, simple folding iron sight, shoulder pad and a visibly separate inert fictional rocket for reload animation. Readable functional silhouette, battered but maintained, believable rivets and joined parts, localized rust and chipped paint, dusty leather, restrained ochre details. Wide landscape sheet with four clean separated views of the SAME design: full left-side orthographic, full right-side orthographic, top orthographic, and a first-person three-quarter held view. First-person view shows only gloved hands and forearms: weathered dark brown work gloves, faded teal field-jacket sleeves and tan cuff/scarf palette matching an adult desert drifter crew. Weapon points away from camera toward upper centre, leaves central aiming area readable, grip anatomy plausible. Neutral warm-grey studio background, even readable lighting, physically plausible realistic game-production concept art; small wear details without noisy silhouette. Same proportions, grips, sight, colors and rocket shape in every view. Keep entire orthographic weapon in frame with space around it. No technical manufacturing dimensions or assembly diagram, no text, logos, brands, ammunition labels, HUD, watermark, dramatic smoke, firing, blood, injury, gore or franchise likeness. This is a reusable modeling and animation reference, not a poster or runtime bitmap substitute.
+
+Inspection: 1536×1024 opaque PNG, 2,101,572 bytes. PNG signature, chunk checksums and pixel structure pass inspectPng. The repository copy is byte-identical to retained original `exec-540cb299-d470-4bce-835b-4c821840e906.png`, SHA-256 `5b03e9598c972b44e556e6bea6fcb3e1971a89bd2b9380c25b39b6df17c09bea`. No local resizing, cropping or image editing was performed.
+
+Canonical modeling guidance from independent art review: Use the upper-left side as geometry authority. Opposite side/top have small collar, sight and attachment differences; resolve one coherent model and render all later views from it. First-person arms are a Rook pose reference only. Verify actual finger contact, trigger alignment and wrist angles; each other crew member needs their own sleeves and gloves.
+
+## public/assets/reference/wasteland-wrench.png
+
+Date: 2026-09-23 PDT (2026-09-24 UTC)
+Tool: Codex built-in image generation, using the imagegen skill
+Use: Repair wrench shape, materials and held repair pose for GFX-02 Blender modeling. Reference only, not a runtime texture or menu image.
+Prompt:
+> Use case: stylized-concept. Asset type: original repair wrench production reference for Blender modeling and first-person animation in a realistic desert combat-racing game. Create one coherent heavy adjustable mechanic's wrench, approximately forearm length, with a practical open jaw and visible adjustment wheel, worn oxidized steel head, chipped ochre-painted shank, leather-wrapped lower grip and a simple hanging hole. Weathered but serviceable, credible thickness and comfortable hand clearance, strong recognizable tool silhouette, fine scratches, rubbed bright metal edges, dust and localized grease. Wide landscape sheet with four separated views of the SAME wrench: front orthographic, back orthographic, edge/side orthographic, and a first-person three-quarter held repair pose showing only an adult mechanic's gloved hand and forearm. In that view the hand grips the lower leather wrap and holds the tool toward the upper-centre work area, plausible grip anatomy. Sleeve is rolled patched ochre workwear with a dark brown protective work glove, consistent with a practical older desert mechanic crew character. Neutral warm-grey studio background, soft even lighting, realistic game-production concept art, consistent jaw/adjustment wheel/proportions/materials in all views. Entire wrench fully framed in each orthographic view; generous clear margins. No extra tools, mechanical assembly instructions, labels, lettering, logos, brands, HUD, watermark, blood, injury, gore, aggressive pose or film/franchise references. This is a modeling and repair-motion reference for actual 3D assets, not a poster or runtime bitmap.
+
+Inspection: 1536×1024 opaque PNG, 2,157,992 bytes. PNG signature, chunk checksums and pixel structure pass inspectPng. The repository copy is byte-identical to retained original `exec-40067e19-c9f4-4cf3-9e56-29c552b308ff.png`, SHA-256 `fb1c7e39a5319195e77ca444a2753750f24704970500835625398dd332d0f0c3`. No local resizing, cropping or image editing was performed.
+
+Canonical modeling guidance from independent art review: Use the leftmost front as shape authority, the second view for reverse detail and the edge view for thickness. The mechanic sleeve is a pose reference, not a shared arm for every crew member. Preserve the adjustable jaw, worm screw and comfortable hand clearance in the actual model.
+
+## ART-W independent review
+
+All three sheets are accepted as modeling references. Art direction scores 4;
+materials score 5. Shape readability is 4-5. Wall proportions score 3 because
+its apparent height differs from the metric brief; weapon proportions score 4.
+No image regeneration is needed before the explicit metric blockout. Preserve
+painted steel, exposed metal, leather and cloth contrast after texture reduction.
+Runtime resemblance, animation, HUD clearance and frame cost remain unmeasured;
+these references do not count as completed Blender fidelity rounds.
