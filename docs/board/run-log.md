@@ -1036,3 +1036,11 @@ checkout untouched until the final integration commit passes the full gate.
 - Crew round 3 assets are frozen at 98fb529. No runtime source changed since independent review 0d8c37d. Private game capture starts after the gate; its initial attempt stopped before capture because the redirected log was inside Vite's cleared QA folder. Retry keeps the log outside that folder.
 - Existing CPU UFO work has an isolated lane based on fceff63. Independent red tests precede the separate builder; physical collection, own checkpoints/laps and safe actor-local relocation are the scope.
 - Four task merges since the 05:39 UTC full pass. Run the full tier after one more task merge or by 07:39 UTC. Quota is 33 percent remaining; no release or push.
+
+## 2026-09-24 PDT - crew initial rounds merged (5 since full)
+
+- Integrated c040e69 after independent runtime/art review, three immutable contact sheets, 219 passing lane suites in 317.58 s and build on exact clean c603646. Final review/evidence note d45f944 changes documentation only. STATUS refreshed immediately.
+- Family stays dev. Likeness is 2 or 3; recovery improves to 3. Visible neck gaps, texture projection bands and functional action poses remain recorded. Five crew trigger the SPEC approach-change rule; GFX-01-P1 requires continuous meshes and authored UV/baked textures after the ordered initial family cards. No beta claim.
+- Five task merges since the 05:39 UTC full pass: run the scheduled full now on the next clean integration commit before further feature merges. GFX-02 independent tests can start in its own lane while the full runs.
+- CPU UFO source9c519fd has 37 focused checks, pickup controls, 100 player landing controls and 12 unchanged combat replay checks. Independent author and Director source review found no defect; balance reports and required lane/build still pending.
+- Removed the clean fully merged enemy-aim lane without force; branch retained. All thirteen QA logs, diagnostics and traces were copied with matching hashes to .lanes/evidence/enemy-aim/. No release or push.

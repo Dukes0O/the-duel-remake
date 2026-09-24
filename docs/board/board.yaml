@@ -128,7 +128,7 @@ tasks:
     size: L
     needs: [GFX-00]
     merge_after: ART-W
-    status: building
+    status: merged
     owns: [tools/blender/crew-fighters.py, public/assets/models/wasteland/crew/, src/fighter-presentation.js, src/rigged-fighter.js, tools/test-crew-fighters.mjs, tools/test-fighter-presentation.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, docs/board/looks/crew/]
     hooks: [src/combat-scene.js, src/onfoot.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/render3d.js, tools/blender/fidelity-sheet.py, tools/scenarios/rigged-fighter.mjs, .gitattributes]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
@@ -144,14 +144,27 @@ tasks:
       - "Save immutable round-1, round-2 and round-3 contact sheets and provenance under docs/board/looks/crew with reference, Blender and actual game captures. Each round independently scores all five SPEC 0.3 items, names five differences and fixes the lowest scores next. Measure twelve-fighter frame cost. If resemblance stalls twice, change the approach. Three rounds alone never imply beta readiness."
     shots: [all-eight-front-side-back, twelve-action-poses, high-performance-matches, distant-detail, twelve-fighter-cost]
     sound: "Retain existing on-foot cues and timing."
-    note: "Independent preparation overlaps EGG-01 and ART-W; completion remains after ART-W. Split builder ownership into Blender assets and runtime presentation only after independent failing tests. No broad on-foot gameplay rewrite or save edits."
+    note: "Merged c040e69 after three immutable rounds, independent runtime/art review, 219-suite lane gate and build. Likeness remains 2 or 3; family stays dev. Neck gaps, projected texture bands and contact poses are explicit GFX-01-P1 debt. Five crew require a changed modeling/UV approach after two stagnant rounds."
+  - id: GFX-01-P1
+    title: "Crew topology and baked textures after initial family cards"
+    lane: ART
+    size: L
+    needs: [GFX-01, GFX-04]
+    status: backlog
+    owns: [tools/blender/crew-fighters.py, public/assets/models/wasteland/crew/, docs/board/looks/crew/]
+    helpers: [reviewer, art_critic, browser_qa]
+    flag: wasteland2
+    acceptance:
+      - "Follow round-3-review.md. Replace the stalled primitive/projection approach with continuous anatomical meshes and authored padded UV/baked textures. Join necks to adjusted jaws, eliminate pale streaks/profile bands, and build distinct faces/hair and reference clothing silhouettes."
+      - "Author tool/car actions around actual grip, sill, seat and support-foot contacts. Preserve simulation timing and all runtime lifecycle controls. Run further immutable fidelity rounds within SPEC 0.3 budgets; do not promote beta until every score is at least four."
+    note: "Tracked visual debt, not a beta waiver. Initial ordered SPEC 0.6 work continues first."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8
     lane: VIS
     size: M
     needs: [GFX-01]
-    status: backlog
+    status: building
     owns: [tools/blender/first-person-gear.py, public/assets/models/wasteland/first-person/, src/first-person-gear.js, src/first-person-presentation.js, tools/test-first-person-gear.mjs, tools/test-first-person-presentation.mjs, tools/scenarios/first-person-gear.mjs, docs/board/looks/first-person/]
     hooks: [src/render3d.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [test_author, reviewer, test_runner, browser_qa, art_critic]
@@ -167,7 +180,7 @@ tasks:
       - "Independent tests precede implementation. One private memory-only interaction covers exit, aim, successful shot, reload, wrench repair and re-entry in both qualities. Review actual grip, aim alignment, clipping and HUD clearance. Retain three immutable reference/Blender/game rounds with scores and five differences; beta needs every score at least four and the measured budget."
     shots: [eight-crew-hands, aim-recoil-reload, wrench-repair, last-rocket, course-view-high-performance]
     sound: "Retain existing action cues and timing."
-    note: "Read-only scope completed; no implementation yet. No mandatory new simulation field. Smooth aim transitions need a simulation clock if later required; otherwise use a deliberate immediate aim pose. A separate first-person selector composes actions instead of copying the full-body clip priority."
+    note: "Independent acceptance tests start after GFX-01 merge. No mandatory new simulation field. Smooth aim transitions need a simulation clock if later required; otherwise use a deliberate immediate aim pose. A separate first-person selector composes actions instead of copying the full-body clip priority."
   - id: EGG-02
     title: "Rustwall gate and salt-flat fidelity rounds one to three"
     priority: 9
