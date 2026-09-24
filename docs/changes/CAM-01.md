@@ -101,3 +101,31 @@ format checks. Combined process time was 1.24 seconds. All storage was memory
 only. The original verified startup backup barrier still precedes App creation.
 Presentation review, bounded visual evidence and the required lane/build gate
 remain pending; no broad gate has run yet.
+## Independent presentation review and remote-tunnel regression
+
+The Director independently approved exact backup-fixture correction `1f333b0`:
+only the new default was added to the current-format row; existing false/null
+and preservation assertions stayed intact.
+
+Reviewed presentation `c264692`. The old first-person pose is preserved, the
+car camera stays separate and optional menu controls preserve partial consumers.
+Overhead suppresses first-person gear while reusing the local fighter's existing
+rig/fallback. Pose is copied directly, so smoothing cannot undo its final ground
+check. The renderer skips its later car-roof constraint for overhead. Foot mode
+invalidates presentation metrics. Reticle projection uses the existing fighter
+origin/direction and actual camera; it neither snaps to targets nor changes aim.
+
+One concrete defect was found before capture: High Country seed 1989, first
+tunnel midpoint s2245.6, actual-ground fighter at lateral28.3 with tunnel width
+8.3. A route-coordinate-only tunnel constraint pulled the camera 21.476 m away
+into the unrelated tunnel. Independent regression `30481d5` reproduced it:
+7/8 groups passed, only this outside-tunnel case failed (1.09 seconds).
+
+Source fix `1b76d26` rejects tunnel correction when the candidate eye is outside
+the tunnel width plus its existing clearance margin. Independent review confirms
+the nearby-wall, inside-roof and final terrain checks remain, with first person
+unchanged. The combined suite now passes 8/8; existing on-foot and combat HUD
+checks also passed per the source author. Final reviewed source tree is
+`cb889c14b761db3a3e1c328e131fe2140e4fee69`. No concrete source defect remains;
+R1 capture is cleared. No additional save rerun is needed after these visual
+changes. Two scored compact rounds and the required lane/build gate remain.
