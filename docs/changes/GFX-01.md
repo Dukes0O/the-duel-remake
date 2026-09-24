@@ -37,3 +37,20 @@ Independent red tests in 08c747d reproduced six failures across four findings. J
 Focused verification: selector 12/12, crew 26/26, retained rig 14/14 and transition 8/8. Existing gameplay assertions and timing are unchanged; no save fields or progression changes.
 
 The original GFX-00 injected browser control also passed after the timing fixes: private port 27634, 18 captures, zero warnings/errors. Fresh relocated evidence is in docs/board/looks/crew/gfx00-control; original test-fighter evidence remains unchanged.
+
+## Round 2 browser evidence
+
+Frozen authored assets: 53e32ee. Private port 31663, memory-only saves; 76 PNGs and two short WebM motion clips, zero warnings/errors. Wider jump framing keeps the entire body visible; side knockdown/get-up views expose contact with the ground. R1 evidence remains untouched.
+
+Both quality modes use 12 color draws for 12 prepared figures, 65,716 near triangles, independent skeletons, correct first-person hiding, and eleven far raiders with one near local body in the distance check.
+
+Real-course full-render RAF samples at 1280x720 (120 frames per condition):
+
+| Quality | One-fighter baseline p95 | Twelve-fighter p95 | Frames over 33 ms |
+| --- | --- | --- | --- |
+| High | 18.2 ms | 18.2 ms | 0 |
+| Performance | 18.2 ms | 18.1 ms | 0 |
+
+These are one controlled headless-browser sample per quality, including the real scene, compositor and shadows. The crowd uses staged walking snapshots moving at 4.5 m/s along course ground; it does not model raider AI, all combat effects or every device. The result supports the fighter budget for this scene, not a general GPU or worst-case combat guarantee. Neutral CPU p95 was 4.8 ms High and 1.7 ms Performance and is retained separately.
+
+Matched contact sheet and hash/camera manifest: docs/board/looks/crew/round-2.png and round-2.json. Raw frames, side action views, course PNGs, motion clips and browser report are retained in round-2/. Ready for independent art critique; no beta or release claim.
