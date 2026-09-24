@@ -271,7 +271,7 @@ export class App {
   getMenuSeed(stageIndex=this.menuStage){return supportsRouteVariants(COURSE[stageIndex])?(this._customMenuSeed??getRouteVariant(this.menuRouteId).seed):1989;}
   // Menu views share these immutable-by-convention previews; racing always builds its own Course.
   getMenuCourse(stageIndex=this.menuStage){
-    const index=Number.isInteger(stageIndex)&&COURSE[stageIndex]?stageIndex:0,seed=this.getMenuSeed(index),hiddenRoad=this.duel.featureFlags.enabled('hidden-road'),key=`${index}:${seed}:${hiddenRoad}`;
+    const index=Number.isInteger(stageIndex)&&COURSE[stageIndex]?stageIndex:0,seed=this.getMenuSeed(index),hiddenRoad=this.duel.featureFlags.enabled('hidden-road'),key=`${index}:${seed}${hiddenRoad ? ':hidden-road' : ''}`;
     let course=this._menuCourses.get(key);
     if(course)this._menuCourses.delete(key);else course=new Course(COURSE[index],seed,{hiddenRoad});
     this._menuCourses.set(key,course);
