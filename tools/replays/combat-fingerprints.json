@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "fixtureVersion": 1,
+  "stepHz": 120,
+  "fingerprints": {
+    "three-opponent-bolt-order": {
+      "30": "e5df3bbb963058aa303929bec8a3d681a8f3ea575222d99cab7abc2e6bd1a95b",
+      "60": "e5df3bbb963058aa303929bec8a3d681a8f3ea575222d99cab7abc2e6bd1a95b",
+      "144": "e5df3bbb963058aa303929bec8a3d681a8f3ea575222d99cab7abc2e6bd1a95b"
+    },
+    "rear-ram-wreck-recovery": {
+      "30": "698fd519951a67973e0c491d1e9b6ab9c1614baaf4b82d2bc778acbe4b1e53b6",
+      "60": "698fd519951a67973e0c491d1e9b6ab9c1614baaf4b82d2bc778acbe4b1e53b6",
+      "144": "698fd519951a67973e0c491d1e9b6ab9c1614baaf4b82d2bc778acbe4b1e53b6"
+    },
+    "armor-and-weapon-crates": {
+      "30": "411886f3bfe12c70a96e7a983b72e0a80b923965a374d7da906ca907be186aec",
+      "60": "411886f3bfe12c70a96e7a983b72e0a80b923965a374d7da906ca907be186aec",
+      "144": "411886f3bfe12c70a96e7a983b72e0a80b923965a374d7da906ca907be186aec"
+    }
+  }
+}

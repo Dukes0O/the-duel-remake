@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "seed": 1989,
+  "stepHz": 120,
+  "framesPerSecond": [30, 60, 144],
+  "durationTicks": 480,
+  "cases": [
+    {
+      "id": "three-opponent-bolt-order",
+      "eventId": "pacific-canyon",
+      "car": "falcone_f42",
+      "playerS": 500,
+      "opponents": [100, 200, 300],
+      "armor": [100, 5, 100],
+      "actions": [
+        {"atTick": 0, "kind": "bolt", "targetIndex": 2},
+        {"atTick": 0, "kind": "bolt", "targetIndex": 1}
+      ],
+      "expect": {"hits": 2, "wrecks": 1, "pickups": 0, "ramHits": 0}
+    },
+    {
+      "id": "rear-ram-wreck-recovery",
+      "eventId": "pacific-canyon",
+      "car": "falcone_f42",
+      "playerS": 500,
+      "opponents": [100, 200, 300],
+      "armor": [100, 100, 5],
+      "actions": [
+        {"atTick": 0, "kind": "rearRam", "targetIndex": 2}
+      ],
+      "expect": {"hits": 0, "wrecks": 1, "pickups": 0, "ramHits": 2}
+    },
+    {
+      "id": "armor-and-weapon-crates",
+      "eventId": "pacific-canyon",
+      "car": "falcone_f42",
+      "playerS": 500,
+      "opponents": [100, 200, 300],
+      "playerArmor": 50,
+      "actions": [
+        {"atTick": 0, "kind": "pickup", "pickupKind": "armor"},
+        {"atTick": 120, "kind": "fire", "weapon": "star"},
+        {"atTick": 121, "kind": "pickup", "pickupKind": "weapon", "weapon": "star"}
+      ],
+      "expect": {"hits": 0, "wrecks": 0, "pickups": 2, "ramHits": 0}
+    }
+  ]
+}
