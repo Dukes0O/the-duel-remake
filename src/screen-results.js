@@ -13,24 +13,37 @@ export function createResultsScreen({app, profile, credits, escapeHTML, time, ar
   let lastEventResult=null;
   const metric=metricView;
   const action=actionView||((label,verb,primary=false)=>screenAction(label,verb,primary,arrow));
+  const rewardMetric=result=>Number.isSafeInteger(result.scrapEarned)
+    ? metric('SCRAP EARNED',`+${credits(result.scrapEarned)}`,true)
+    : metric(result.creditReward<0?'CREDITS LOST':'CREDITS EARNED',
+      `${result.creditReward<0?'−':'+'}${credits(Math.abs(result.creditReward||0))}`,true);
 function modalScreen(s) {
-  const r = s.results || {}; let eyebrow='',title='',description='',metrics='',combatMetrics='',actions='';
+  const r = s.results || {};
+  const scrapResult = Number.isSafeInteger(r.scrapEarned);
+  let eyebrow='',title='',description='',metrics='',combatMetrics='',actions='';
   if (s.paused) { const practice=!!COURSE[s.stageIndex]?.practice;eyebrow=practice?'FREE PRACTICE':'TAKE A BREATH'; title='ROAD<br>ON HOLD.'; description=practice?'Explore at your own pace. Practice has no timer, records or rewards.':'The clock is paused. Pick up where you left off.'; metrics=metric('EVENT',COURSE[s.stageIndex].name)+(practice?'':metric('TIME',time(s.stageTimeSec))); actions=action('BACK TO THE ROAD','resume',true)+action(practice?'RESTART PRACTICE':'RESTART RUN','restart')+action('MAIN MENU','menu'); }
   else if (s.status==='ticket') { const t=s.police.ticket; eyebrow='HIGHWAY PATROL'; title='BUSTED.'; description=`${formatSpeed(t.speedMph)} in a ${formatSpeed(t.limitMph)} zone. The fine reduces only this race's earnings when you finish. Your saved credits are untouched. Quitting forfeits the race earnings, not your saved balance.${app.profileSaved===false?' Storage is unavailable; progress lasts for this session.':''}`; metrics=metric('TIME PENALTY',`+${t.penaltySec} SEC`,true)+metric('RACE FINE',`${credits(t.fine)} CR`,true)+metric('SAVED BALANCE',`${credits(profile().credits)} CR`); actions=action('GET BACK OUT THERE','ticket',true)+action('MAIN MENU','menu'); }
   else if (s.status==='stage_result') {
     lastEventResult={state:s,stageIndex:s.stageIndex,runId:app.runId,result:r};
     const stage=COURSE[s.stageIndex],drift=stage.kind==='drift',rush=stage.kind==='checkpoint',stunt=r.objective==='stuntTrial',kind=rush?'CHECKPOINT RUSH':drift?'DRIFT TRIAL':stunt?'STUNT TRIAL':stage.kind==='chase'?'PURSUIT':stage.arena?'ARENA':stage.kind==='rally'?'RALLY':'CIRCUIT';
     eyebrow=`${kind} / ${r.won?'VICTORY':r.completed?'COMPLETE':'DNF'}`;title=r.timeout?'TIME RAN<br>OUT.':r.objectiveMissed?(rush?'GATES<br>MISSED.':drift?'TARGET<br>MISSED.':'STUNTS NOT<br>DONE.'):r.won?'OWN THE<br>FINISH.':'SO CLOSE.';
-    description=r.won?`${r.winStreak>=3?`${r.winStreak} wins in a row. Streak bonus earned.`:'Both laps are in the books.'}`:r.timeout?'The pursuit deadline passed. The car survives, but this run does not enter the leaderboard.':s.mode==='timetrial'?'You finished both laps but missed the target time.':'Your rival took this one.';
+    description=r.won?`${!scrapResult&&r.winStreak>=3?`${r.winStreak} wins in a row. Streak bonus earned.`:'Both laps are in the books.'}`:r.timeout?'The pursuit deadline passed. The car survives, but this run does not enter the leaderboard.':s.mode==='timetrial'?'You finished both laps but missed the target time.':'Your rival took this one.';
     if(stunt)description=`${r.timeout?'The stunt deadline passed.':r.objectiveMissed?'Both laps finished, but the stunt targets were missed.':'Both laps and the stunt targets are complete.'} ${r.jumps||0} / ${r.targets?.jumps||s.objective?.targetJumps||4} landed jumps · ${r.crushCount||0} / ${r.targets?.crushes||s.objective?.targetCrushes||4} cars crushed.`;
     if(drift)description=`${r.timeout?'The deadline passed.':r.objectiveMissed?'Both laps finished, but the drift target was missed.':'Both laps and the drift target are complete.'} Banked ${credits(r.driftScore)} / ${credits(r.driftTarget||s.objective?.targetScore)} points. Best chain ${credits(r.driftBestChain)}. Time ${time(r.timeSec??r.stageTimeSec)}.${r.driftScoreImproved?' A new car score best.':''}${r.won?'':' Only successful trials set a car best.'}`;
     if(rush)description=`${r.timeout?'The checkpoint clock ran out.':r.objectiveMissed?'Both laps finished, but some gates were missed.':'Every gate cleared. Both laps complete.'} ${r.checkpointsPassed||0} / ${r.checkpointsRequired||s.checkpointRush?.total||12} gates passed. ${r.checkpointMisses||0} missed. Time ${time(r.timeSec??r.stageTimeSec)}.${r.won?'':' Only successful runs set a car best.'}`;
     if(r.opponentCount>1&&!s.objective&&!r.timeout&&!r.won&&s.mode!=='timetrial')description=`You finished ${r.position} of ${r.opponentCount+1}. Win by finishing ahead of every opponent.`;
-    if(r.personalBestStatus==='baseline')description+=` First ${s.cpuDifficulty.toUpperCase()} / ${s.difficulty==='pro'?'Manual':'Auto'} time for this car and route. This sets the baseline; beat ${time(r.best)} next time for the car-best bonus.`;
-    else if(r.personalBestStatus==='improved')description+=` Car best beaten by ${time(r.previousBest-r.best)}. The car-best bonus is included below.`;
-    else if(r.personalBestStatus==='not-improved')description+=` Beat your matching car best of ${time(r.best)} to earn the car-best bonus.`;
-    if(!r.won)description+=Object.hasOwn(r.creditBreakdown||{},'combat')?' Combat runs never debit saved credits.':' The loss charge is half the CPU base reward, down to zero credits.';
-    metrics=(rush?metric('GATES PASSED',`${r.checkpointsPassed||0} / ${r.checkpointsRequired||12}`,true)+metric('RACE TIME',time(r.timeSec??r.stageTimeSec)):drift?metric('BANKED POINTS',credits(r.driftScore),true)+metric('TARGET',credits(r.driftTarget||s.objective?.targetScore)):metric('RACE TIME',time(r.timeSec??r.stageTimeSec),true)+metric('CAR BEST',r.best==null?'—':time(r.best)))+metric(r.creditReward<0?'CREDITS LOST':'CREDITS EARNED',`${r.creditReward<0?'−':'+'}${credits(Math.abs(r.creditReward||0))}`,true);
+    if (scrapResult) {
+      if (r.personalBestStatus === 'baseline') description += ' First recorded time for this car and route.';
+      else if (r.personalBestStatus === 'improved') description += ` Car best beaten by ${time(r.previousBest-r.best)}.`;
+      else if (r.personalBestStatus === 'not-improved') description += ` Your matching car best is ${time(r.best)}.`;
+      if (!r.won) description += ' Your earned scrap is banked when the event is completed.';
+    } else {
+      if(r.personalBestStatus==='baseline')description+=` First ${s.cpuDifficulty.toUpperCase()} / ${s.difficulty==='pro'?'Manual':'Auto'} time for this car and route. This sets the baseline; beat ${time(r.best)} next time for the car-best bonus.`;
+      else if(r.personalBestStatus==='improved')description+=` Car best beaten by ${time(r.previousBest-r.best)}. The car-best bonus is included below.`;
+      else if(r.personalBestStatus==='not-improved')description+=` Beat your matching car best of ${time(r.best)} to earn the car-best bonus.`;
+      if(!r.won)description+=Object.hasOwn(r.creditBreakdown||{},'combat')?' Combat runs never debit saved credits.':' The loss charge is half the CPU base reward, down to zero credits.';
+    }
+    metrics=(rush?metric('GATES PASSED',`${r.checkpointsPassed||0} / ${r.checkpointsRequired||12}`,true)+metric('RACE TIME',time(r.timeSec??r.stageTimeSec)):drift?metric('BANKED POINTS',credits(r.driftScore),true)+metric('TARGET',credits(r.driftTarget||s.objective?.targetScore)):metric('RACE TIME',time(r.timeSec??r.stageTimeSec),true)+metric('CAR BEST',r.best==null?'—':time(r.best)))+rewardMetric(r);
     if(r.opponentCount>1)metrics+=metric('FINISH POSITION',`${r.position} / ${r.opponentCount+1}`);
     if(Number.isFinite(r.hitsLanded)){
       const damage=Number(r.damageDealt.toFixed(1)).toLocaleString();
@@ -46,9 +59,9 @@ function modalScreen(s) {
     }
     const atEnd=!!stage.kind||!COURSE[s.stageIndex+1]||!!COURSE[s.stageIndex+1].kind;
     actions=r.timeout?action('TRY AGAIN','restart',true)+action('MAIN MENU','menu'):action(atEnd?'FINISH THE RUN':'NEXT CIRCUIT','next',true)+action('RESTART RUN','restart')+action('MAIN MENU','menu');
-    if(!r.timeout&&!atEnd&&!isCourseUnlocked(profile(),s.stageIndex+1)){description+=` Completed race credits are safe. Unlock ${escapeHTML(COURSE[s.stageIndex+1].name)} for ${credits(COURSE_PRICES[COURSE[s.stageIndex+1].id])} CR in the course garage to continue.`;actions=action('UNLOCK NEXT COURSE','unlock-next',true)+action('RESTART RUN','restart')+action('MAIN MENU','menu');}
+    if(!r.timeout&&!atEnd&&!isCourseUnlocked(profile(),s.stageIndex+1)){description+=`${scrapResult ? ' Your earned scrap is safe.' : ' Completed race credits are safe.'} Unlock ${escapeHTML(COURSE[s.stageIndex+1].name)} for ${credits(COURSE_PRICES[COURSE[s.stageIndex+1].id])} CR in the course garage to continue.`;actions=action('UNLOCK NEXT COURSE','unlock-next',true)+action('RESTART RUN','restart')+action('MAIN MENU','menu');}
   }
-  else if (s.status==='gameover') { eyebrow=s.catastrophic?'CATASTROPHIC DAMAGE':'END OF THE ROAD'; title=s.catastrophic?'TOTALLED.':'ONE MORE<br>RUN?'; const combatReward=Object.hasOwn(r.creditBreakdown||{},'combat');description=(s.catastrophic?'Five major crashes. The car is destroyed.':'Five crashes used every slot. This race is over.')+(combatReward?' Saved credits are safe.':' The loss costs half the CPU base reward, down to zero credits.');metrics=metric('RACE TIME',time(s.stageTimeSec))+metric(combatReward?'CREDITS EARNED':'CREDITS LOST',`${combatReward?'+':'−'}${credits(Math.abs(r.creditReward||0))}`,true)+metric('BALANCE',`${credits(profile().credits)} CR`);actions=action('RUN IT BACK','restart',true)+action('MAIN MENU','menu'); }
+  else if (s.status==='gameover') { eyebrow=s.catastrophic?'CATASTROPHIC DAMAGE':'END OF THE ROAD'; title=s.catastrophic?'TOTALLED.':'ONE MORE<br>RUN?'; const combatReward=Object.hasOwn(r.creditBreakdown||{},'combat');description=(s.catastrophic?'Five major crashes. The car is destroyed.':'Five crashes used every slot. This race is over.')+(combatReward?' Saved credits are safe.':' The loss costs half the CPU base reward, down to zero credits.');metrics=metric('RACE TIME',time(s.stageTimeSec))+rewardMetric(r)+metric(Number.isSafeInteger(r.scrapEarned)?'SCRAP BALANCE':'BALANCE',Number.isSafeInteger(r.scrapEarned)?`${credits(r.scrapBalance||0)} SCRAP`:`${credits(profile().credits)} CR`);actions=action('RUN IT BACK','restart',true)+action('MAIN MENU','menu'); }
   else if (s.status==='complete') {
     const stage=COURSE[s.stageIndex];
     if(stage?.kind){
@@ -62,7 +75,7 @@ function modalScreen(s) {
       metrics=metric('RACE TIME',time(result.timeSec??s.stageTimeSec+(s.racePenaltySec||0)),true);
       metrics+=rush?metric('GATES PASSED',`${result.checkpointsPassed??s.checkpointRush?.passed??0} / ${result.checkpointsRequired??s.checkpointRush?.total??12}`):drift?metric('BANKED POINTS',credits(result.driftScore??s.drift?.bankedScore??0)):stunt?metric('LANDED JUMPS',result.jumps??s.jumps??0)+metric('CARS CRUSHED',result.crushCount??s.crushCount??0):metric('LAPS COMPLETE',`${s.completedLaps} / ${s.lapsTotal}`);
       if(result.opponentCount>1)metrics+=metric('FINISH POSITION',`${result.position} / ${result.opponentCount+1}`);
-      if(Number.isFinite(result.creditReward))metrics+=metric(result.creditReward<0?'CREDITS LOST':'CREDITS EARNED',`${result.creditReward<0?'−':'+'}${credits(Math.abs(result.creditReward))}`,true);
+      if(Number.isFinite(result.creditReward))metrics+=rewardMetric(result);
       actions=action('RUN IT AGAIN','restart',true)+action('MAIN MENU','menu');
     }else{
       eyebrow='ALL STAGES COMPLETE';title='HORIZON<br>CONQUERED.';description='From desert heat to mountain air. You made it all the way.';

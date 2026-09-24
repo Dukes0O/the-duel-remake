@@ -75,7 +75,13 @@ export function selectCrew(profile,id){
   if(selectedCrewId(profile)===id)
     return {ok:true,changed:false,profile,id};
   const current=profile.wasteland.crew||{};
+  const scrapCareer=profile.wasteland.discoveredGate===true;
+  const owned=Array.isArray(current.unlocked)&&current.unlocked.includes(id);
+  const cost=scrapCareer&&id!=='rook'&&!owned?300:0;
+  if(cost&&(!Number.isSafeInteger(profile.wasteland.scrap)||profile.wasteland.scrap<cost))
+    return {ok:false,changed:false,profile,id,reason:`You need ${cost} scrap for this crew member.`};
   const unlocked=[...new Set([...(Array.isArray(current.unlocked)?current.unlocked:[]),'rook',id])];
   return {ok:true,changed:true,id,profile:{...profile,wasteland:{...profile.wasteland,
+    ...(cost?{scrap:profile.wasteland.scrap-cost}:{}),
     crew:{...current,unlocked,selected:id}}}};
 }

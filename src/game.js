@@ -149,6 +149,7 @@ export class Duel {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     this._hiddenRoadAutomaticEntry = discoveredGate === true;
+    this.state.wastelandGateDiscovered = discoveredGate === true;
     this.state.hiddenRoadVisit = _hiddenRoadVisit ? {playerId} : null;
     if (CARS[car]) this.state.car = car;
     if (DIFFICULTY[difficulty]) this.state.difficulty = difficulty;

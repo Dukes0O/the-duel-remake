@@ -12,6 +12,11 @@ export function combatHudEnabled(duel, state) {
     duel.featureFlags?.enabled('wasteland2') === true && state.status !== 'menu';
 }
 
+export function combatHudVisible(duel, state) {
+  return combatHudEnabled(duel, state) && !state.paused &&
+    ['racing', 'countdown', 'exploring'].includes(state.status);
+}
+
 export function armorPresentation(actor) {
   const max = Math.max(0, Number(actor?.maxArmor) || 0);
   const armor = Math.max(0, Math.min(max, Number(actor?.armor) || 0));
@@ -190,7 +195,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   });
 
   function update(state) {
-    const active = combatHudEnabled(app.duel, state);
+    const active = combatHudVisible(app.duel, state);
     const onFoot = active && state.onFoot && !!state.fighter;
     if (host.hidden === active) host.hidden = !active;
     if (playerArmor.hidden === (active && !onFoot)) playerArmor.hidden = !active || onFoot;

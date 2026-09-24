@@ -1,0 +1,9 @@
+.territory-map { margin: 1rem 0; padding: 1rem; border: 1px solid #8a7049; background: #201d18; color: #f2e9d7; }
+.territory-map h3 { margin: 0 0 .4rem; letter-spacing: .08em; }
+.territory-map > p { margin: 0 0 .8rem; }
+.territory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: .6rem; }
+.territory-card { padding: .7rem; border: 1px solid #685a43; background: #2b271f; }
+.territory-card h4 { margin: 0 0 .3rem; }
+.territory-card p { min-height: 2.5em; margin: 0 0 .5rem; font-size: .82rem; }
+.territory-card b { display: block; margin-bottom: .3rem; color: #e7bb75; }
+.territory-card progress { display: block; width: 100%; accent-color: #dc9a4e; }

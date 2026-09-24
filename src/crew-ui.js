@@ -5,13 +5,15 @@ function perkStatus(member) {
   return member.active ? 'PASSIVE READY' : 'PASSIVE HOOK · LATER CARD';
 }
 
-function crewCard(member, {rank, selected, ready, escapeHTML}) {
+function crewCard(member, {rank, selected, ready, scrapCareer, owned, scrap, escapeHTML}) {
   const unlocked = rank >= member.rank;
   const chosen = ready && selected === member.id;
   const accent = `#${member.appearance.accent.toString(16).padStart(6, '0')}`;
+  const price = scrapCareer && member.id !== 'rook' && !owned.includes(member.id) ? 300 : 0;
   const buttonText = !ready ? 'CAREER NOT READY' : chosen ? 'SELECTED'
-    : unlocked ? 'SELECT CREW' : `UNLOCKS AT RANK ${member.rank}`;
-  const disabled = !ready || chosen || !unlocked ? 'disabled' : '';
+    : !unlocked ? `UNLOCKS AT RANK ${member.rank}`
+    : price ? `HIRE · ${price} SCRAP` : 'SELECT CREW';
+  const disabled = !ready || chosen || !unlocked || price > scrap ? 'disabled' : '';
 
   return `<article class="crew-card${chosen ? ' is-selected' : ''}"
       style="--crew-accent:${accent}">
@@ -33,14 +35,17 @@ export function crewPanel(profile, escapeHTML) {
   const rank = crewRank(profile);
   const selected = selectedCrewId(profile);
   const ready = profile?.wasteland?.version === 1;
+  const scrapCareer = profile?.wasteland?.discoveredGate === true;
   const intro = ready ? '' :
     ' Crew selection is unavailable until this player’s Wasteland career is ready.';
-  const context = {rank, selected, ready, escapeHTML};
+  const context = {rank, selected, ready, scrapCareer,
+    owned: profile?.wasteland?.crew?.unlocked || [],
+    scrap: profile?.wasteland?.scrap || 0, escapeHTML};
 
   return `<details class="crew-panel" open>
     <summary>CREW · WHO GETS OUT</summary>
     <p class="crew-intro">Your driver still controls the car. Your selected crew
-      member fights on foot. Rank unlocks are free.${intro}</p>
+      member fights on foot. ${scrapCareer?'Reach their rank, then hire them with scrap.':'Rank unlocks are free.'}${intro}</p>
     <div class="crew-grid">${Object.values(CREW)
       .map(member => crewCard(member, context)).join('')}</div>
   </details>`;

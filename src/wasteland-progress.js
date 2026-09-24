@@ -1,6 +1,7 @@
 import {normalizeWeapons, WEAPON_IDS} from './weapon-upgrades.js';
 import {normalizeGateDiscovery} from './hidden-road-discovery.js';
 import {rankForXp} from './notoriety.js';
+import {TERRITORIES} from './wasteland-career.js';
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const bounded = (value, minimum, maximum, fallback = minimum) =>
@@ -52,6 +53,11 @@ export function normalizeWasteland(value, legacyWeapons, history = []) {
     .slice(0, 200)
     .map(item => ({id: item.id, kind: item.kind, earnedAt: item.earnedAt}));
   const xp = bounded(source.xp, 0, 1_000_000_000);
+  const territories = {...(record(source.territories) ? source.territories : {}),
+    ...Object.fromEntries(Object.entries(TERRITORIES).map(([id]) => {
+    const item = record(source.territories?.[id]) ? source.territories[id] : {};
+    return [id, {...item, hold: bounded(item.hold, 0, 100), claimed: item.claimed === true}];
+  }))};
   return {
     // Unknown future fields remain intact until their owning feature understands
     // them. Known fields are validated so old or damaged saves remain playable.
@@ -60,6 +66,8 @@ export function normalizeWasteland(value, legacyWeapons, history = []) {
     ...normalizeGateDiscovery(source, history),
     xp,
     rank: rankForXp(xp),
+    scrap: bounded(source.scrap, 0, 1_000_000_000),
+    territories,
     weapons,
     loadout,
     crew: {unlocked: crewUnlocked,
