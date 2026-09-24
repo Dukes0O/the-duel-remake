@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { createVehicleAttachmentRegistry } from './vehicle-attachments.js';
 import { createArmorKitMeshes } from './armor-kit-meshes.js';
+import { createOnFootFigures } from './onfoot-figures.js';
 
 // Fixed reusable geometry: no mesh allocation or disposal during a firefight.
 export function createCombatScene(attachments = createVehicleAttachmentRegistry()){
  const group=new THREE.Group();group.name='Wasteland weapons and shockwaves';
+ const onFootFigures=createOnFootFigures();group.add(onFootFigures.group);
  const materials={iron:new THREE.MeshStandardMaterial({color:0x342a23,metalness:.8,roughness:.55}),
   fire:new THREE.MeshBasicMaterial({color:0xff8c16,transparent:true,opacity:.85,depthWrite:false}),
   smoke:new THREE.MeshBasicMaterial({color:0x322b24,transparent:true,opacity:.6,depthWrite:false}),
@@ -123,6 +125,9 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   const s = duel.state, c = s.combat;
   const active = !!c && s.status !== 'menu';
   group.visible = active;
+  const showFighter=active&&s.mode==='wasteland'&&
+   duel.featureFlags?.enabled('wasteland2')&&s.onFoot&&!!s.fighter;
+  onFootFigures.update(showFighter?[{fighter:s.fighter,local:true}]:[],{active:showFighter});
   rigs.forEach((rig, index) => {
    const actor = index ? index === 1 ? s.opponents?.[0] ?? s.rival : s.opponents?.[index-1] : s;
    const vehicle = index ? index === 1 ? vehicles.rival : vehicles.extraOpponents?.[index-2]?.mesh : vehicles.player;
@@ -166,9 +171,11 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
  }
  return {
   group,
+  onFootFigures,
   update,
   detachVehicle,
   dispose(){
+   onFootFigures.dispose();
    armorKits.dispose();
    for (const vehicle of [...bindings]) if (vehicle) detachVehicle(vehicle);
    rigs.forEach((rig, index) => rigMounts(index, rig).forEach(mount => attachments.detach(mount.owner)));
