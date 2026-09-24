@@ -49,7 +49,7 @@ export class CoursePreview {
       }
     }
     this.canvas.setAttribute('aria-label',data.practice?`${course.def.name}. ${label}. Quarry playground. Untimed exploration, with no laps or finish line. ${practiceMapLegendText()}`:`${course.def.name}. ${label}. ${data.laps} laps, ${data.distanceKm.toFixed(1)} kilometers. ${biomes.map(b=>b.label).join(', ')}. ${map.branches.length} dashed shortcut${map.branches.length===1?'':'s'}.${map.gates.length?` ${map.gates.length} gold gate markers per lap.`:''} Checkered line marks the start and finish.${data.showElevation?` Elevation changes by ${data.reliefMeters} meters.`:''}${map.hiddenRoad?' Dotted road leads to the Rustwall.':''}`);
-    this.canvas.dataset.hiddenRoad=String(!!map.hiddenRoad);
+    if(this.canvas.dataset)this.canvas.dataset.hiddenRoad=String(!!map.hiddenRoad);
     return data;
   }
   dispose(){this.context?.clearRect(0,0,this.canvas.width,this.canvas.height);this.elevationContext?.clearRect(0,0,this.elevationCanvas.width,this.elevationCanvas.height);this.cache=new WeakMap();this.canvas=this.context=this.elevationCanvas=this.elevationContext=this.current=this.course=null;}
