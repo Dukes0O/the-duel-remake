@@ -126,3 +126,31 @@ The three fixture/backup/archive processes took 0.35 seconds together; both
 budget processes took 1.49 seconds together. The extra ownership probe took
 0.22 seconds. No ordinary credit, record, ghost or storage-key rule changed.
 Presentation source, browser evidence and final lane/build review remain pending.
+## Independent presentation source review
+
+Reviewed frozen presentation `9eb499d` and the narrow dust correction `e26e1cd`.
+The final source tree is `7a1cf834e256309c4d9e43ff18b342d4c53b25fa`.
+No concrete correctness defect remains in this bounded review. Menu entry
+checks current discovery and delegates to the App visit action. Garage hints
+use validated completion thresholds. Map and preview keys include player,
+flag and discovery; default and undiscovered geometry remain unchanged.
+The live cache refreshes a changed identity before the usual draw throttle.
+Dotted paths project the real spur and gate rather than a separate route model.
+
+The dust scene uses one bounded Points draw, forwards presentation lifecycle
+through the existing world registry and hides for pause, menu, discovery or
+wrong ownership. Disposal stays graph-owned. The initial animate path allocated
+an array and 48 point records every visible frame. The builder fixed this in
+`e26e1cd` by preparing records once and filling them in place, preserving the
+same numeric motion and existing assertions. No simulation RNG or race-state
+write was introduced. The builder reports the unchanged hint suite at 7/7.
+
+Also reviewed runtime compatibility correction `ab19a06`: flag-off menu course
+keys keep their existing `index:seed` form; enabled Hidden Road adds a suffix.
+The lightweight canvas compatibility fix checks for optional dataset support.
+Neither fix changes acceptance assertions. Builder-reported existing route-map
+149 and course-preview 117 checks pass. Historical save review remains valid;
+no persistence change followed it, so those suites were not repeated.
+
+Source is clear for the two bounded browser rounds. Visual scoring and the
+required clean lane/build gate still precede development integration.
