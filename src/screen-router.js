@@ -290,7 +290,9 @@ function renderState(s) {
   combatHud.update(s);
   const journeyView=hiddenRoadUi.update(s,app.duel.course);
   ui.stage.classList.toggle('hidden-road-active',!!journeyView?.active);
-  ui.stage.style.setProperty('--hidden-road-hud-opacity',String(journeyView?.hudOpacity??1));
+  const hudOpacity=String(journeyView?.hudOpacity??1);
+  if(ui.stage.style.getPropertyValue('--hidden-road-hud-opacity')!==hudOpacity)
+    ui.stage.style.setProperty('--hidden-road-hud-opacity',hudOpacity);
 }
 document.addEventListener('keydown',e=>{if(e.code==='Escape'&&(armoryOpen||coursesOpen||garageOpen||playersOpen||leaderboardOpen||experimentalOpen)){e.preventDefault();armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=experimentalOpen=false;lastScreen=null;updateMenuCar();renderState(app.duel.state);return;}if(e.code!=='Tab'||ui['modal-layer'].hidden)return;const buttons=[...ui['modal-layer'].querySelectorAll('button:not(:disabled),select,input,summary')],first=buttons[0],last=buttons.at(-1);if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}},{signal:domEvents.signal});
 app.onFrame=renderState;updatePlayers();updateMenuCar();updateMenuScene();renderState(app.duel.state);ensureRenderer();app.start();

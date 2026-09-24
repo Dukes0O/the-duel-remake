@@ -13,14 +13,14 @@ const READY="!!window.__qaApp?.visualReady&&window.__render?.scene.getObjectByNa
 
 // Test-only fixture and recorder. Production state owns every phase after the
 // explicitly recorded placement fixtures; choices use actual DOM controls.
-function installCapture() {
+function installCapture(round) {
   const app=window.__qaApp, audio=app.audio, ctx=audio.context;
   if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value||
       !window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only storage is required');
   const qa={events:[],frames:[],cues:[],tracks:{},start:ctx.currentTime,originalFrame:app.onFrame,
     originalFactory:audio.hiddenRoadVoiceFactory,quality:app.graphicsQuality};
   const silent=ctx.createGain();silent.gain.value=0;silent.connect(ctx.destination);qa.silent=silent;
-  for(const name of ['mix','engine','gate']) {
+  for(const name of ['mix','vehicle','gate']) {
     const bus=ctx.createGain(),processor=ctx.createScriptProcessor(1024,2,2);
     bus.gain.value=name==='mix'?1:.42;bus.connect(processor);processor.connect(silent);
     const record=qa.tracks[name]={bus,processor,chunks:[],firstPlayback:null,sources:[],sampleOffset:0};
@@ -34,10 +34,7 @@ function installCapture() {
     };
   }
   const tap=(name,node)=>{if(node){node.connect(qa.tracks[name].bus);qa.tracks[name].sources.push(node);}};
-  tap('mix',audio.output||audio.master);tap('gate',audio.hiddenRoadBus);tap('engine',audio.engineGain);
-  for(const key of ['idle','loadLow','loadMid','loadHigh','coast','engine']){
-    const layer=audio.samples[key];for(const node of [layer?.gain,layer?.body?.gain,layer?.intake?.gain])tap('engine',node);
-  }
+  tap('mix',audio.output||audio.master);tap('gate',audio.hiddenRoadBus);tap('vehicle',audio.vehicleBus);
   if(!qa.tracks.gate.sources.length)throw Error('Production gate audio bus missing');
   audio.hiddenRoadVoiceFactory=cue=>{
     qa.cues.push({...cue,audioTimeSec:ctx.currentTime-qa.start});
@@ -53,7 +50,35 @@ function installCapture() {
     const j=state.hiddenRoadJourney;
     qa.frames.push({audioTimeSec:ctx.currentTime-qa.start,phase:j?.phase,phaseElapsedSec:j?.phaseElapsedSec,
       elapsedSec:j?.elapsedSec,gateOpen:j?.gateOpen,speedMph:state.speedMph,revs:state.revs,paused:!!state.paused});
+    if(j?.phase==='opening'&&j.phaseElapsedSec>.7&&!qa.costSnapshot)qa.costSnapshot=structuredClone(state);
   };
+  qa.motionFrames=[];
+  if(round>=2&&app.graphicsQuality==='high'){
+    const canvas=window.__render.renderer.domElement,stream=canvas.captureStream(30),chunks=[];
+    qa.recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp8',videoBitsPerSecond:2500000});
+    qa.videoDone=new Promise(resolve=>{qa.recorder.onstop=async()=>{
+      const bytes=new Uint8Array(await new Blob(chunks,{type:'video/webm'}).arrayBuffer());let binary='';
+      for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+      stream.getTracks().forEach(track=>track.stop());resolve(btoa(binary));
+    };});
+    qa.recorder.ondataavailable=event=>{if(event.data.size)chunks.push(event.data);};qa.recorder.start(250);
+    const thumb=document.createElement('canvas');thumb.width=480;thumb.height=270;
+    let lastPhase='',lastTime=-1;
+    qa.motionTimer=setInterval(()=>{
+      const j=app.duel.state.hiddenRoadJourney;if(!j)return;
+      const interval=['entering','arrived'].includes(j.phase)?.5:1;
+      if(j.phase===lastPhase&&j.phaseElapsedSec-lastTime<interval)return;
+      if(j.phase==='arrived'&&j.phaseElapsedSec>1.6)return;
+      if(!['opening','entering','arrived'].includes(j.phase))return;
+      lastPhase=j.phase;lastTime=j.phaseElapsedSec;thumb.getContext('2d').drawImage(canvas,0,0,480,270);
+      const cam=window.__render.camera,gate=app.duel.course.hiddenRoad.poseAt(app.duel.course.hiddenRoad.length);
+      const dx=cam.position.x-gate.x,dz=cam.position.z-gate.z,c=Math.cos(gate.heading),s=Math.sin(gate.heading);
+      const local={x:dx*c-dz*s,y:cam.position.y-gate.y,z:dx*s+dz*c};
+      if(local.z>=-1.575&&local.z<=5.5&&(Math.abs(local.x)>=4.5||local.y>=7))throw Error('Camera intersects gate structural envelope');
+      qa.motionFrames.push({phase:j.phase,phaseElapsedSec:j.phaseElapsedSec,simulationTime:j.elapsedSec,
+        recordingTimeSec:ctx.currentTime-qa.start,cameraLocal:local,png:thumb.toDataURL('image/png')});
+    },100);
+  }
   qa.place=(progress,speed=35,reverse=false)=>{
     const d=app.duel,p=d.course.hiddenRoad.poseAt(progress),angle=p.heading+(reverse?Math.PI:0)-d.course.at(p.s).heading;
     Object.assign(d.state,{s:p.s,prevS:p.s,lateral:p.lateral,prevLateral:p.lateral,speedMph:speed,
@@ -62,8 +87,10 @@ function installCapture() {
     d.setInput({throttle:0,brake:0,steer:0,boost:false});
   };
   qa.advance=seconds=>{for(let n=0;n<Math.round(seconds*120);n++)app.duel.step(1/120);app.onFrame?.(app.duel.state,seconds);};
-  qa.finish=()=>{
+  qa.finish=async()=>{
     app.stop();qa.detach();app.onFrame=qa.originalFrame;audio.hiddenRoadVoiceFactory=qa.originalFactory;
+    clearInterval(qa.motionTimer);let videoBase64=null;
+    if(qa.recorder){qa.recorder.stop();videoBase64=await qa.videoDone;}
     const tracks={};
     for(const [name,record] of Object.entries(qa.tracks)){
       const size=record.chunks.reduce((sum,c)=>sum+c.length,0),all=new Int16Array(size);let offset=0;
@@ -75,7 +102,8 @@ function installCapture() {
       record.processor.disconnect();record.bus.disconnect();record.processor.onaudioprocess=null;
     }
     silent.disconnect();return{sampleRate:ctx.sampleRate/3,channels:2,tracks,events:qa.events,cues:qa.cues,frames:qa.frames,
-      memoryOnly:true,mixPostLimiter:!!audio.output,note:'Real-time production App audio; gate/engine stems are pre-limiter at master gain .42. Explicit pose fixtures skip the long wash drive.'};
+      videoBase64,motionFrames:qa.motionFrames,memoryOnly:true,mixPostLimiter:!!audio.output,
+      note:'Real-time production App audio. Vehicle stem taps the actual ducked vehicle bus (engine plus tires and vehicle accents); gate/vehicle stems are pre-limiter at master gain .42. R1 engine-only stem is not directly comparable. Explicit pose fixtures skip the long wash drive.'};
   };
   window.__arrivalQa=qa;
 }
@@ -84,6 +112,49 @@ async function click(context,text) {
   const point=await context.evaluate(`(() => {const button=[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${JSON.stringify(text)}&&!b.hidden&&!b.disabled&&b.getBoundingClientRect().width);if(!button)throw Error('Visible button missing: '+${JSON.stringify(text)});const r=button.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};})()`);
   await context.command('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...point});
   await context.command('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...point});
+}
+
+async function imageSheet(context,rows,path,columns,width,height,title) {
+  const data=await context.evaluate(`(async()=>{
+    const rows=${JSON.stringify(rows)},columns=${columns},w=${width},h=${height};
+    const canvas=document.createElement('canvas');canvas.width=columns*w;canvas.height=44+Math.ceil(rows.length/columns)*(h+30);
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#111b20';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#f1e5cd';ctx.font='18px sans-serif';ctx.fillText(${JSON.stringify(title)},14,28);
+    for(let i=0;i<rows.length;i++){const image=new Image();image.src=rows[i].data;await image.decode();
+      const x=i%columns*w,y=44+Math.floor(i/columns)*(h+30),scale=Math.min(w/image.width,h/image.height);
+      ctx.drawImage(image,x+(w-image.width*scale)/2,y,image.width*scale,image.height*scale);
+      ctx.fillStyle='#eee';ctx.font='15px sans-serif';ctx.fillText(rows[i].label,x+10,y+h+21);
+    }return canvas.toDataURL('image/png');})()`);
+  await writeFile(path,Buffer.from(data.split(',')[1],'base64'));
+}
+
+async function presentationCost() {
+  const app=window.__qaApp,render=window.__render,qa=window.__arrivalQa,state=app.duel.state;
+  if(!qa.costSnapshot)throw Error('No actual opening snapshot for stationary paired cost');
+  const saved=structuredClone(state),rig=render.scene.getObjectByName('Rustwall'),update=rig.userData.updateJourney;
+  const originalDraw=render.renderer.render;let drawMs=0;
+  render.renderer.render=function(...args){const start=performance.now();try{return originalDraw.apply(this,args);}finally{drawMs+=performance.now()-start;}};
+  const realRaf=window.requestAnimationFrame.bind(window),dialog=document.querySelector('[data-hidden-road-dialog]');
+  app.stop();Object.assign(state,structuredClone(qa.costSnapshot));app.onFrame?.(state,0);render.renderFrame();
+  // Let the outstanding production renderer callback drain, then make exactly
+  // one production presentation draw per ordered RAF. No simulation advances.
+  window.requestAnimationFrame=()=>0;await new Promise(resolve=>realRaf(resolve));
+  const results={};
+  for(const enabled of [false,true]){
+    rig.userData.updateJourney=enabled?update:()=>{};
+    if(!enabled){const sparks=rig.getObjectByName('Gate guide sparks');if(sparks)sparks.visible=false;dialog.hidden=true;}
+    const rows=[];let previous=null;
+    for(let i=0;i<132;i++){
+      const now=await new Promise(resolve=>realRaf(resolve)),start=performance.now();
+      if(enabled)app.onFrame?.(state,0);
+      drawMs=0;const stats=render.renderFrame(),cpuMs=performance.now()-start;
+      if(i>=12)rows.push({index:i-12,rafMs:now-previous,cpuPresentationMs:cpuMs,cpuRenderMs:drawMs,...stats});previous=now;
+    }
+    const percentile=(key,f)=>{const values=rows.map(r=>r[key]).sort((a,b)=>a-b);return values[Math.floor((values.length-1)*f)];};
+    results[enabled?'enabled':'disabled']={rows,summary:{samples:rows.length,rafP50:percentile('rafMs',.5),rafP95:percentile('rafMs',.95),cpuP50:percentile('cpuPresentationMs',.5),cpuP95:percentile('cpuPresentationMs',.95),cpuRenderP95:percentile('cpuRenderMs',.95),drawCalls:rows.at(-1).drawCalls,triangles:rows.at(-1).triangles},camera:render.camera.position.toArray()};
+  }
+  render.renderer.render=originalDraw;rig.userData.updateJourney=update;window.requestAnimationFrame=realRaf;Object.assign(state,saved);app.onFrame?.(state,0);render.renderFrame();
+  return{scope:'120 ordered stationary RAF frames per condition after 12 warm-up frames. Same real opening pose, camera and scene; disabled removes gate spark update/draw and HUD update. CPU includes presentation and render submission, not GPU time. Opening dialog is correctly hidden. App simulation stopped; no recording/PCM work overlaps this sample.',...results};
 }
 
 async function key(context,code,keyValue,number) {
@@ -115,7 +186,7 @@ async function saveAudio(context,directory,quality,recording) {
     const file=`${quality}-${name}.wav`;await writeFile(join(directory,file),wav);
     decoded[name]=decodeWav(wav);tracks[name]={file,sha256:sha(wav),frames:entry.frames,firstPlaybackSec:entry.firstPlaybackSec};
   }
-  const {tracks:raw,...metadata}=recording;
+  const {tracks:raw,videoBase64,motionFrames,...metadata}=recording;
   const metrics=Object.fromEntries(Object.entries(decoded).map(([name,track])=>{
     let peak=0;for(const channel of [track.left,track.right])for(const value of channel)peak=Math.max(peak,Math.abs(value));
     return[name,{peak,peakDb:20*Math.log10(Math.max(1e-9,peak)),rms:rms(track,0,track.durationSec),durationSec:track.durationSec}];
@@ -124,9 +195,9 @@ async function saveAudio(context,directory,quality,recording) {
     .map(cue=>({...cue,onsetOffsetSec:detectOnset(decoded.gate,cue.audioTimeSec,.12)}));
   const loudness=[];
   for(let t=0;t<decoded.mix.durationSec;t+=.4)loudness.push({timeSec:t,...Object.fromEntries(Object.entries(decoded).map(([name,track])=>[name,20*Math.log10(Math.max(1e-9,rms(track,t,.4)))]))});
-  const colors={mix:'#fff',engine:'#6bd4ee',gate:'#f5ba63'};
+  const colors={mix:'#fff',vehicle:'#6bd4ee',gate:'#f5ba63'};
   const paths=Object.keys(colors).map(name=>`<polyline fill="none" stroke="${colors[name]}" points="${loudness.map(row=>`${40+row.timeSec/decoded.mix.durationSec*920},${25+Math.min(80,Math.max(0,-row[name]))/80*270}`).join(' ')}"/>`).join('');
-  const plots={loudness:`<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="340"><rect width="100%" height="100%" fill="#101820"/><text x="40" y="18" fill="white" font-family="sans-serif">400 ms RMS · white mix · blue engine · amber gate · 0 to -80 dBFS</text>${paths}</svg>`,
+  const plots={loudness:`<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="340"><rect width="100%" height="100%" fill="#101820"/><text x="40" y="18" fill="white" font-family="sans-serif">400 ms RMS · white mix · blue vehicle bus · amber gate · 0 to -80 dBFS</text>${paths}</svg>`,
     spectrogram:spectralSvg(decoded.gate,recording.cues)};
   for(const [name,svg] of Object.entries(plots)){
     await writeFile(join(directory,`${quality}-${name}.svg`),svg);
@@ -161,7 +232,7 @@ export async function run(context) {
     await context.evaluate(`(() => {const app=window.__qaApp;app.setGraphicsQuality(${JSON.stringify(quality)});app.startCampaign({mode:'duel',startStage:0,seed:1989,car:'falcone_f42',difficulty:'casual'});app.stop();Object.assign(app.duel.state,{status:'racing',paused:false,countdown:0,traffic:[],opponents:[],rival:null});document.querySelectorAll('details').forEach(n=>n.style.display='none');app.onFrame?.(app.duel.state);window.__render.renderFrame();})()`);
     await context.waitFor(READY,'loaded gate model',60000);
     await context.evaluate(`(async()=>{const a=window.__qaApp.audio;a.unlock();a.setMuted(false);await Promise.all([a._samplesPromise,a._ambiencePromise]);})()`);
-    await context.evaluate(`(${installCapture.toString()})()`);
+    await context.evaluate(`(${installCapture.toString()})(${round})`);
     const controls=await context.evaluate(`(() => {const q=window.__arrivalQa,a=window.__qaApp,d=a.duel;q.place(100,25,true);q.advance(.5);if(d.state.status!=='racing'||d.state.hiddenRoadJourney.departed)throw Error('Before-departure return failed');const beforeReturn={status:d.state.status,progress:d.state.hiddenRoadJourney.progress};q.place(149.9,35);q.advance(.1);if(d.state.status!=='exploring')throw Error('Departure fixture did not cross');q.place(d.course.hiddenRoad.length-59.5,45);a.start();return{beforeReturn,fixtures:[100,149.9,d.course.hiddenRoad.length-59.5]};})()`);
     evidence.controls.push({quality,...controls});
     await context.waitFor("window.__qaApp.duel.state.hiddenRoadJourney.phase==='arriving'",'arrival braking',10000);
@@ -181,7 +252,7 @@ export async function run(context) {
       await capture('phone-choice','high');
       await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
       await click(context,'Enter the Wasteland');
-      await context.waitFor("window.__qaApp.duel.state.hiddenRoadJourney.phase==='arrived'",'inside gate hold',8000);
+      await context.waitFor("window.__qaApp.duel.state.hiddenRoadJourney.phase==='arrived'&&window.__qaApp.duel.state.hiddenRoadJourney.phaseElapsedSec>1.4",'inside gate hold',8000);
       await capture('high-arrived','high');
     }else{
       await click(context,'Turn back');
@@ -191,12 +262,32 @@ export async function run(context) {
     await pause(250);
     const recording=await context.evaluate('window.__arrivalQa.finish()');
     evidence.audio[quality]=await saveAudio(context,directory,quality,recording);
+    if(recording.videoBase64){
+      await writeFile(join(directory,'high-gate-enter-canvas.webm'),Buffer.from(recording.videoBase64,'base64'));
+      const frames=recording.motionFrames;
+      await imageSheet(context,frames.map(f=>({label:`${f.recordingTimeSec.toFixed(2)}s · ${f.phase} +${f.phaseElapsedSec.toFixed(2)}s`,data:f.png})),join(directory,'high-motion-strip.png'),3,480,270,
+        'Continuous gate / Enter recording · canvas only; DOM dialog excluded');
+      await writeFile(join(directory,'high-motion.json'),JSON.stringify({note:'Frames sampled during the same continuous canvas WebM; DOM dialog is excluded.',frames:frames.map(({png,...f})=>f)},null,2)+'\n');
+    }
+    if(round>=2)evidence[`${quality}PresentationCost`]=await context.evaluate(`(${presentationCost.toString()})()`);
     await context.evaluate("window.__qaApp.requestNavigation('menu');window.__qaApp.onFrame?.(window.__qaApp.duel.state)");
     await context.waitFor("window.__qaApp.duel.state.status==='menu'",'navigation cleanup',3000);
     const cleaned=await context.evaluate("!window.__qaApp.duel.state.hiddenRoadJourney&&[...document.querySelectorAll('[data-hidden-road-dialog]')].every(n=>n.hidden)");
     if(!cleaned)throw Error('Journey UI survived navigation');
     evidence.controls.push({quality,navigationClean:true});
+    if(round>=2&&quality==='high'){
+      await context.evaluate(`(()=>{const a=window.__qaApp;a.startCampaign({mode:'wasteland',startStage:0,seed:1989,car:'falcone_f42',difficulty:'casual'});a.stop();Object.assign(a.duel.state,{status:'racing',paused:false,countdown:0,traffic:[],opponents:[],rival:null});a.onFrame?.(a.duel.state);window.__render.renderFrame();})()`);
+      await context.waitFor(READY,'legacy Mad Max departure scene',60000);
+      const legacy=await context.evaluate(`(()=>{const a=window.__qaApp,q=window.__arrivalQa;q.place(149.9,35);q.advance(.1);q.advance(1.3);a.onFrame?.(a.duel.state);window.__render.renderFrame();const strip=document.querySelector('.weapon-hud');const result={hiddenRoad:a.duel.featureFlags.enabled('hidden-road'),wasteland2:a.duel.featureFlags.enabled('wasteland2'),phase:a.duel.state.hiddenRoadJourney.phase,opacity:Number(getComputedStyle(strip).opacity)};if(!result.hiddenRoad||result.wasteland2||result.opacity>.01)throw Error('Legacy combat strip did not fade with departure');return result;})()`);
+      await capture('legacy-mad-max-departure','high');evidence.controls.push({legacyMadMax:legacy});
+      await context.evaluate("window.__qaApp.requestNavigation('menu');window.__qaApp.onFrame?.(window.__qaApp.duel.state)");
+    }
   }
   await writeFile(join(directory,'captures.json'),JSON.stringify(evidence,null,2)+'\n');
+  for(const sheetRound of round===2?[1,2]:[round]){
+    const folder=join(ROOT,`docs/board/looks/hidden-road-arrival/round-${sheetRound}`),report=JSON.parse(await readFile(join(folder,'captures.json'),'utf8'));
+    const rows=await Promise.all(report.captures.map(async row=>({label:row.name,data:'data:image/png;base64,'+(await readFile(join(ROOT,row.path))).toString('base64')})));
+    await imageSheet(context,rows,join(ROOT,`docs/board/looks/hidden-road-arrival/round-${sheetRound}.png`),3,480,270,`Hidden road arrival · round ${sheetRound} · actual browser captures`);
+  }
   console.log(`Hidden Road arrival round${round}: ${evidence.captures.length} images and two real-time PCM recordings retained in ${relative}`);
 }

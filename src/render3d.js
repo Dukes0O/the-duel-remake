@@ -256,7 +256,7 @@ export function attachRenderer(host, app) {
     }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
     const pp = vehicleGroundPoint(course,distance,lateral);
-    const journeyView=hiddenRoadPresentation(st,course);
+    const journeyView=hiddenRoadPresentation(st,course,{aspect:camera.aspect});
     rustwallPresentation?.updateJourney?.(journeyView);
     lighting.apply({course,theme:course.themeAt(distance),mood:app.lightingMood,blend:1-Math.exp(-dt*1.1),tunnel:!!course.tunnelAt(distance)});
     const tall=carKey==='titan_monster';

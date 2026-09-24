@@ -64,8 +64,8 @@ export function createRustwallScene(course, {loadAsset = kind =>
     if(points.length&&!sparks){
       const geometry=new THREE.BufferGeometry();
       geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(24*3),3));
-      const material=new THREE.PointsMaterial({color:0xffb344,size:.11,sizeAttenuation:true,
-        transparent:true,opacity:.8,depthWrite:false,blending:THREE.AdditiveBlending});
+      const material=new THREE.PointsMaterial({color:0xffd18a,size:.19,sizeAttenuation:true,
+        transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending});
       sparks=new THREE.Points(geometry,material);sparks.name='Gate guide sparks';sparks.frustumCulled=false;group.add(sparks);
     }
     if(!sparks)return;

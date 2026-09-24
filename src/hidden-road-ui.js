@@ -3,7 +3,7 @@ const smooth=value=>{const t=clamp(value);return t*t*(3-2*t);};
 const CINEMATIC=new Set(['arriving','opening','choice','entering','arrived']);
 
 /** Read-only presentation. Repeated or rewound snapshots produce the same view. */
-export function hiddenRoadPresentation(state,course) {
+export function hiddenRoadPresentation(state,course,{aspect=16/9}={}) {
   const journey=state?.hiddenRoadJourney,road=course?.hiddenRoad;
   const inactive={active:false,phase:null,hudOpacity:1,controlsLocked:false,choiceReady:false,
     gateOpen:0,camera:null,sparks:[],arrivalReady:false};
@@ -12,10 +12,26 @@ export function hiddenRoadPresentation(state,course) {
   const gate=road.poseAt(road.length),c=Math.cos(gate.heading),s=Math.sin(gate.heading);
   const world=(x,y,z)=>({x:gate.x+x*c+z*s,y:gate.y+y,z:gate.z-x*s+z*c});
   const returning=phase==='turned-back'&&age<.8;
+  const narrow=aspect<.85;
   const camera=CINEMATIC.has(phase)||returning?{
-    position:world(8,2.2,-30),target:world(0,10,0),fov:64,
+    position:world(narrow?6:8,narrow?3.4:2.2,-30),target:world(0,narrow?2.6:10,narrow?-2:0),fov:64,
     blend:phase==='arriving'?smooth(age/1.25):returning?1-smooth(age/.8):1
   }:null;
+  if(camera&&(phase==='entering'||phase==='arrived')){
+    const point=course.worldAt(state.s,state.lateral);
+    const carZ=(point.x-gate.x)*s+(point.z-gate.z)*c;
+    const follow=world(0,2.6,carZ-9),target=world(0,1.5,carZ);
+    const blend=phase==='entering'?smooth(age/.9):1;
+    for(const axis of ['x','y','z']){
+      camera.position[axis]+=(follow[axis]-camera.position[axis])*blend;
+      camera.target[axis]+=(target[axis]-camera.target[axis])*blend;
+    }
+    if(phase==='arrived'){
+      const orbit=smooth(age/1.3),end=world(7,3.2,21);
+      for(const axis of ['x','y','z'])camera.position[axis]+=(end[axis]-camera.position[axis])*orbit;
+    }
+    camera.fov=60;
+  }
   const gateOpen=clamp(journey.gateOpen),sparks=[];
   if(phase==='opening'&&!state.paused&&gateOpen>0&&gateOpen<1){
     for(let i=0;i<24;i++){
@@ -60,16 +76,18 @@ export function createHiddenRoadUi({host,onChoose,onMenu}) {
     }else if(['Enter',' '].includes(event.key))event.stopPropagation();
   });
   function restoreFocus(){if(priorFocus?.isConnected)priorFocus.focus({preventScroll:true});}
+  const set=(node,key,value)=>{if(node[key]!==value)node[key]=value;};
   return{
     update(state,course){
       if(disposed)return;
       const previousPhase=view?.phase;
       view=hiddenRoadPresentation(state,course);
       const visible=(view.choiceReady||view.arrivalReady)&&!state.paused;
-      section.hidden=!visible;enter.hidden=back.hidden=!view.choiceReady;menu.hidden=!view.arrivalReady;
-      enter.disabled=back.disabled=!view.choiceReady;menu.disabled=!visible||!view.arrivalReady;
-      title.textContent=view.arrivalReady?'Beyond the wall.':'Come in, driver.';
-      copy.textContent=view.arrivalReady?'The Rustwall stands behind you.':"Outsiders don’t find this road by accident. Come in, driver.";
+      set(section,'hidden',!visible);
+      for(const button of [enter,back]){set(button,'hidden',!view.choiceReady);set(button,'disabled',!view.choiceReady);}
+      set(menu,'hidden',!view.arrivalReady);set(menu,'disabled',!visible||!view.arrivalReady);
+      set(title,'textContent',view.arrivalReady?'Beyond the wall.':'Come in, driver.');
+      set(copy,'textContent',view.arrivalReady?'The Rustwall stands behind you.':"Outsiders don’t find this road by accident. Come in, driver.");
       if(visible&&!wasVisible){
         if(!priorFocus||!section.contains(doc.activeElement))priorFocus=doc.activeElement;
         (view.choiceReady?enter:menu).focus({preventScroll:true});

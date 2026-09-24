@@ -389,7 +389,8 @@ export class EngineAudio {
     const grounded=!st.airborne&&(st.airHeight||0)<.12,looseSurface=!!st.offRoad||!!environment.looseSurface;
     const voice=this.carVoice=CAR_VOICES[st.car]||CAR_VOICES.falcone_f42;
     const perspective=environment.cameraMode==='hood'?{gain:1,brightness:1.08,exhaust:.58,intake:1.38}:environment.cameraMode==='wide'?{gain:.72,brightness:.82,exhaust:.78,intake:.62}:{gain:1,brightness:1,exhaust:1,intake:1};
-    this.vehicleBus.gain.setTargetAtTime(perspective.gain,t,.12);
+    const gateCinematic=st.status==='exploring'&&st.hiddenRoadJourney?.controlsLocked;
+    this.vehicleBus.gain.setTargetAtTime(perspective.gain*(gateCinematic?.32:1),t,.18);
     const wet=clamp(Number(environment.tunnel)||0,0,1);
     this.tunnelWet.gain.setTargetAtTime(running?wet*.09:0,t,.12);
     const speed = Math.min(1.2, Math.abs(st.speedMph) / 200);
@@ -624,7 +625,7 @@ export class EngineAudio {
     if(!ctx||ctx.state!=='running'||!this.hiddenRoadBus)return null;
     const start=ctx.currentTime,duration=cue.kind==='drum'?.55:cue.kind==='latch'?.35:.14;
     const gain=ctx.createGain();gain.gain.setValueAtTime(0,start);
-    gain.gain.linearRampToValueAtTime(cue.kind==='drum'?.24:cue.kind==='latch'?.17:.095,start+.008);
+    gain.gain.linearRampToValueAtTime(cue.kind==='drum'?.34:cue.kind==='latch'?.23:.16,start+.005);
     gain.gain.exponentialRampToValueAtTime(.0001,start+duration);gain.connect(this.hiddenRoadBus);
     const nodes=[],sources=[];
     const tones=cue.kind==='drum'?[70,108]:cue.kind==='latch'?[155,463,917]:[510+(cue.index%3)*37,1130+(cue.index%4)*81];
@@ -633,6 +634,13 @@ export class EngineAudio {
       source.frequency.setValueAtTime(tones[i],start);
       source.frequency.exponentialRampToValueAtTime(tones[i]*(cue.kind==='drum'?.42:.86),start+duration);
       source.connect(level);level.connect(gain);source.start(start);source.stop(start+duration+.02);sources.push(source);nodes.push(source,level);
+    }
+    if(cue.kind!=='drum'&&this.noiseBuffer){
+      const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),level=ctx.createGain();
+      source.buffer=this.noiseBuffer;filter.type='bandpass';filter.frequency.value=1900+(cue.index%3)*230;filter.Q.value=1.2;
+      level.gain.setValueAtTime(.35,start);level.gain.exponentialRampToValueAtTime(.001,start+.055);
+      source.connect(filter);filter.connect(level);level.connect(gain);source.start(start,(cue.index*.071)%1);source.stop(start+.08);
+      sources.push(source);nodes.push(source,filter,level);
     }
     let stopped=false,finished=false;
     const release=()=>{if(finished)return;finished=true;for(const node of [...nodes,gain])node.disconnect();this.hiddenRoadVoices.delete(voice);};
