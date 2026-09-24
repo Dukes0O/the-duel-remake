@@ -1,6 +1,6 @@
 # ART-W: wall, gate and tool references
 
-status: art-reviewed-awaiting-gate
+status: ready-to-merge after EGG-01
 
 Three original opaque PNG references guide the upcoming Blender work:
 Rustwall/gate, RPG and repair wrench. The existing art-direction and crew
@@ -29,4 +29,16 @@ Minor multi-view details must be resolved in one coherent Blender model.
 
 These are references, not completed runtime assets or fidelity rounds.
 No beta claim is made. No world signature or replay fingerprint changed.
-Required lane/build gate remains pending, and merge must follow EGG-01.
+Merge must follow EGG-01.
+
+## Independent gate
+
+Clean candidate b3fcd5668a2b5244983be216195d88dda3ef9eb0 passed the required
+lane tier: 217 suites, zero failures and zero not run, 338.18 s runner time
+(338.40 s command). All eight campaign shards passed; no skip environment
+was set. The production build passed in 1.26 s command time with only the
+existing chunk-size warning. HEAD and clean state stayed unchanged.
+Logs remain in .qa-dist/artw-lane.log and .qa-dist/artw-build.log.
+The first log setup found the directory absent and ran no tests; the runner
+created that ignored directory and then completed the gate successfully.
+This final note adds evidence only to the tested source.
