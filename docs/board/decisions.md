@@ -117,8 +117,6 @@ and how to reverse it before continuing.
   assertions together, then rerun the full browser and balance gates. Keep
   the flagged no-crash rule unless Kyle changes it.
 
-## Entry format
-
 ## 2026-09-23 PDT: GFX-01 presentation and evidence
 
 - Decision: Read crew, pose and action state through a pure presentation
@@ -132,8 +130,6 @@ and how to reverse it before continuing.
 - Evidence: Test assets and renderer behavior automatically. Independently
   review each actual reference/Blender/game sheet and measured frame cost.
   A metadata score or three generated sheets alone cannot prove likeness.
-
-## Entry template
 
 ## 2026-09-23 PDT: GFX-02 first-person allocation
 
@@ -151,6 +147,24 @@ and how to reverse it before continuing.
   that is absent. Overhead/inspection views explicitly suppress the model.
 
 ## Decision template
+
+## 2026-09-23 PDT: BUG-07 raider accuracy candidate
+
+- Decision: After preserving enemy aim error, try a separate raider cone of
+  20 degrees on Easy and 10 on Medium. Keep Hard at 0.03 radians and leave
+  CPU accuracy, firing cadence, damage, target selection and limits fixed.
+- Reason: The corrected report meets win and crossbow targets, but Easy has
+  one CPU plus five raider hits and Medium has six CPU plus four raider hits.
+  These two excess-hit rows justify testing less accurate raiders; they do
+  not justify weakening target bands or changing the rival's working rules.
+- Verification: Two short owner-hit probes first, then one complete candidate
+  report. The shared CPU-cone test expectation changes to the explicit raider
+  cone only because these are now separate approved settings. Independent
+  review must retain all other behavior checks and exact player/legacy controls.
+- How to reverse: Restore the reviewed 61a5e9 rule candidate's shared spread
+  if the measured tradeoff is worse, retaining its correct seeded guidance.
+
+## New decision format
 
 - Date and card:
 - Decision:

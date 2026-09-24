@@ -1016,3 +1016,8 @@ checkout untouched until the final integration commit passes the full gate.
 - Removed the clean, fully merged ART-W, EGG-01 and body-contact worktrees without force after verifying each absolute path and branch ancestry. Kept their branches. Copied all QA logs and browser evidence to .lanes/evidence/{artw,egg01,bolt-height}/ first; committed Hidden Road PNGs remain in looks/.
 - The board parses as valid YAML with 100 unique cards. GFX-02 receives read-only scope preparation while crew round 2 builds; implementation still waits for GFX-01 completion.
 
+
+- Enemy aim rule candidate 61a5e9 passed independent source review. Its one report improves wins to 9/5/3, keeps crossbow12/26, and leaves only Easy/Medium hit ceilings red. Owner traces are CPU/raider1/5 and6/4. Independent replay reproduction approves only the affected encounter's three hashes plus metadata; no events or actor samples changed.
+- Authorize one raider-only spread candidate at20/10 degrees, Hard unchanged .03rad. CPU settings and all target bands remain fixed. Independent author adds a config regression; builder may update the single reviewed shared-cone assertion to the separate raider bound. Two short probes precede the one complete candidate report.
+- Crew R2 eac8dcd has76PNG/twoWebM, zero browser issues, and one controlled course frame comparison with no p95 increase. WebM binary attributes repaired the stored blobs to match retained originals. Critic is assessing R2 against R1; no broad gate yet.
+

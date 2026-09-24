@@ -130,7 +130,7 @@ tasks:
     merge_after: ART-W
     status: building
     owns: [tools/blender/crew-fighters.py, public/assets/models/wasteland/crew/, src/fighter-presentation.js, src/rigged-fighter.js, tools/test-crew-fighters.mjs, tools/test-fighter-presentation.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, docs/board/looks/crew/]
-    hooks: [src/combat-scene.js, src/onfoot.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/render3d.js, tools/blender/fidelity-sheet.py, tools/scenarios/rigged-fighter.mjs]
+    hooks: [src/combat-scene.js, src/onfoot.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/render3d.js, tools/blender/fidelity-sheet.py, tools/scenarios/rigged-fighter.mjs, .gitattributes]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
     flag: wasteland2
     behavior_change: no
@@ -491,7 +491,7 @@ tasks:
     size: S
     needs: [BUG-06]
     status: building
-    owns: [src/raiders.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-enemy-aim.mjs, tools/replays/enemy-aim-controls.json]
+    owns: [src/raiders.js, src/combat-weapons.js, src/combat-projectiles.js, src/wasteland-tuning.js, tools/test-enemy-aim.mjs, tools/replays/enemy-aim-controls.json, tools/replays/combat-inputs.json, tools/replays/combat-fingerprints.json]
     helpers: [test_author, reviewer, balance_analyst, test_runner]
     active_slice: "Difficulty-aware raider aiming and persistent enemy aim error during crossbow guidance."
     acceptance:
@@ -500,7 +500,8 @@ tasks:
       - "Independent bounded tests prove difficulty spread, identity/order independence, retained bias, player/legacy controls and common-time 30/60/144 outcomes. No existing assertion or fingerprint changes without a concrete before/after trace and independent review."
       - "After the rule correction, run one complete flagged balance report and compare the recorded body-contact baseline: wins 5/4/3, enemy hits 10/11/4, crossbow 12/26. Preserve every target; no numeric tuning until the measured result identifies a reason. Record remaining UFO and CPU-UFO work separately."
       - "Required lane/build gate and review apply before this slice merges. The full BUG-07 card stays open for CPU UFO use and unmet balance targets."
-    note: "Exact 10/7/5 s attacks and Easy pace/10-degree aim integrated through 2077364. Physical Medium/Hard pickups merged as 505639e; close-range bomb use corrected as a3ad4ee. Wins 8/6/2 and CPU hits 1/2/10 pass. CPU UFO use remains open. A meaningful charged crossbow shot is independently reviewed on held branch 8d9bc24: 93-suite lane, replay/build/browser and fixed-seed balance pass except the same six UFO rows. Reviewed Wasteland replay, 160-suite exact merge, build and private smoke pass on integration."
+      - "Measured follow-up authorizes one separate raider spread candidate: Easy 20 degrees, Medium 10 degrees, Hard unchanged at 0.03 radians. CPU spread and every cadence/damage/limit remain fixed. The old test's shared CPU upper bound must change only to the explicit raider bound, with independent review; all other assertions remain. Run two short owner-hit probes before one complete candidate report."
+    note: "Rule candidate 61a5e9 is independently reviewed: wins 9/5/3, enemy hits 6/10/6, crossbow 12/26. Remaining Easy/Medium hits split CPU/raider as 1/5 and 6/4. Targeted raider tuning is in progress. Only the staggered CPU encounter hash has approval to change; events/actors are identical. CPU UFO use remains open."
     spec: "SPEC.md, task BUG-07"
   - id: BUG-14
     title: "No legacy police in combat races"
