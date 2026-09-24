@@ -79,9 +79,9 @@ tasks:
     lane: SIM
     size: M
     needs: [CLEAN-05]
-    status: building
+    status: merged
     owns: [src/, tools/, docs/board/board.yaml, docs/changes/CLEAN-06.md]
-    note: "A direct removal probe changed the frozen Pacific Canyon Mad Max hash. A test-only legacy Duel adapter now preserves the old replay, while the released production roadside rule has no switch or off override."
+    note: "Merged as e5b7013 after 237 lane and 229 merge suites, builds, private smoke, independent review, and 162 unchanged replay fingerprints. A tools-only legacy Duel adapter preserves historical replays while the production roadside rule has no switch or off override."
     helpers: [test_author, reviewer, test_runner]
     acceptance:
       - "Remove only dead paths confirmed against all source and tool references; correct audit false positives from tool-only imports."

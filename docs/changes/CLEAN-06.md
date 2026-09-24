@@ -1,6 +1,6 @@
 # CLEAN-06: Proven dead code only
 
-Status: ready to merge.
+Status: merged as `e5b7013`; janitor pending.
 
 ## Changed
 
@@ -55,3 +55,7 @@ Status: ready to merge.
   Private memory-only browser scenarios `experimental`, `roadside-destruction`
   and `traffic-wreck-callout` passed with no console warnings or errors.
   Independent review found no actionable defects.
+- Integration merge tier passed 229/229 in 205.91 seconds, including all 162
+  unchanged replay fingerprints and 48/48 expansion drives. Integration build
+  passed. Private memory-only smoke passed on port 53770 with four screenshots,
+  zero warnings and zero errors.
