@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createVehicleAttachmentRegistry } from './vehicle-attachments.js';
+import { createArmorKitMeshes } from './armor-kit-meshes.js';
 
 // Fixed reusable geometry: no mesh allocation or disposal during a firefight.
 export function createCombatScene(attachments = createVehicleAttachmentRegistry()){
@@ -76,6 +77,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   return { bumper, bar, spikes, bow, shield, ball, halo };
  });
  const bindings = [null, null, null, null];
+ const armorKits = createArmorKitMeshes(attachments);
+ group.add(armorKits.group);
 
  function rigMounts(index, rig) {
   return [
@@ -111,6 +114,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
  }
 
  function detachVehicle(vehicle) {
+  armorKits.detachVehicle(vehicle);
   for (let index = 0; index < bindings.length; index++) {
    if (bindings[index] === vehicle) bindVehicle(index, null);
   }
@@ -134,6 +138,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
    rig.shield.visible = visible && (index ? index === 1 ? c.rivalShield : actor.combatShield : c.shield) > 0;
    if (rig.shield.visible) rig.shield.rotation.y = s.stageTimeSec * 2;
   });
+  armorKits.update(duel, vehicles, useAtlas);
   if (!active) return;
   pickups.forEach(({g,box,halo,armorCross,weaponTip},i)=>{
    const p=c.pickups[i];g.visible=!!p;if(!p)return;
@@ -164,6 +169,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   update,
   detachVehicle,
   dispose(){
+   armorKits.dispose();
    for (const vehicle of [...bindings]) if (vehicle) detachVehicle(vehicle);
    rigs.forEach((rig, index) => rigMounts(index, rig).forEach(mount => attachments.detach(mount.owner)));
    for(const geometry of [sphere,ring,shaft,tip,armorGeometry,shieldShell,shieldRim])geometry.dispose();

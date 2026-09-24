@@ -120,9 +120,15 @@ export function createCombatEffects({loadTexture} = {}) {
     age: 0,
     active: false,
   }));
+  const damage = Array.from({length: WRECK_LIMIT}, (_, index) => ({
+    smoke: makeSlot(group, resources, resources.textures.smoke,
+      `combat-vfx-damage-${index}-smoke`, grid8),
+    fire: makeSlot(group, resources, resources.textures.fire,
+      `combat-vfx-damage-${index}-fire`, grid8),
+  }));
   const everySlot = [...bursts.flatMap(entry => Object.values(entry)),
     ...muzzles, ...wrecks.flatMap(entry => [entry.fire, entry.explosion,
-      entry.smoke])];
+      entry.smoke]), ...damage.flatMap(entry => [entry.smoke, entry.fire])];
   let disposed = false;
   let texturesWarm = false;
   let meshesWarm = false;
@@ -214,6 +220,28 @@ export function createCombatEffects({loadTexture} = {}) {
         startFrame: projectile.age < .05 ? 0 : 1, frameCount: 2});
     });
     const actors = [state, ...(state.opponents || [])];
+    damage.forEach((entry, index) => {
+      const actor = actors[index];
+      const fraction = actor?.armor / actor?.maxArmor;
+      const damaged = Number.isFinite(fraction) && fraction >= 0 &&
+        !actor.combatWrecking && !actor.crushed;
+      if (!damaged || fraction >= 0.3) {
+        hide(entry.smoke);
+        hide(entry.fire);
+        return;
+      }
+      const ground = course.groundAt(actor.s, actor.lateral);
+      const phase = (state.stageTimeSec + index * 0.37) % 1.35;
+      show(entry.smoke, ground, {age: phase, duration: 1.35,
+        size: 4.2 + (0.3 - fraction) * 4,
+        rise: 2.6 + phase * 1.2, alpha: 0.54});
+      if (fraction < 0.1) show(entry.fire, ground, {
+        age: (state.stageTimeSec * 1.8 + index * 0.43) % 1.35,
+        duration: 1.35, startFrame: 8, size: 3.2, rise: 1.55,
+        alpha: 0.82,
+      });
+      else hide(entry.fire);
+    });
     wrecks.forEach((entry, index) => {
       const actor = actors[index];
       if (!actor?.combatWrecking) {
