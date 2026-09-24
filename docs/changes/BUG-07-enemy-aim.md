@@ -46,7 +46,7 @@ gate after the fingerprint decision.
 
 An uncommitted diagnostic harness imports the production replay setup, retains
 its semantic assertions, and returns its trace before hashing. It compared the
-pre-change source from lane HEAD with this candidate without modifying tests.
+pre-change source pinned to `baae11e` with this candidate without modifying tests.
 Evidence is retained under `.qa-dist/`:
 
 - `trace-enemy-aim.mjs`
@@ -101,3 +101,27 @@ gain checks pass for this sample. No target was relaxed and no further tuning
 experiment was run. Negative UFO gains reflect whole-race outcomes, not a
 claim that the jump moved backward. CPU UFO functionality remains absent and
 needs its separate slice even though these player-UFO balance rows pass.
+
+## Owner diagnosis and replay review
+
+After the full report, the Director authorized two short no-weapon traces at
+seed 1989. They call the report's exported `run` function and observe events
+without changing state; the pair took 2.67 s. Evidence:
+`.qa-dist/trace-enemy-aim-owners.mjs` and
+`.qa-dist/enemy-aim-owner-traces.json`.
+
+| Difficulty | CPU hits on player | Raider hits on player | Result |
+| --- | --- | --- | --- |
+| Easy | 1 | 5 | Win in 105.47 s, no wreck |
+| Medium | 6 | 4 | Loss in 109.28 s versus 108.83 s, no wreck |
+
+Each race has 18 raider shots. Their targets are player/opponent 15/3 on Easy
+and 10/8 on Medium. CPU attacks are seven crossbows and one bomb on Easy,
+six crossbows and nine bombs on Medium. The remaining combined hit excess is
+roadside pressure in this sample: CPU hits alone remain within their bands.
+This identifies a next investigation; no tuning numbers were changed.
+
+The independent reviewer reproduced the affected CPU replay in 0.51 s and
+approved only its three frame-rate hash replacements. All semantic assertions,
+hit and shot counts, shooter order and other encounter hashes must stay exact.
+The implementation author did not change those fixtures.
