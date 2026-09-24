@@ -13,7 +13,7 @@ let app=new App();const first=app.player.id;
 same(app.getRaceChoices(),raceSettingsChoices(DEFAULT_RACE_SETTINGS),'Fresh player uses canonical defaults');
 ownTestCourses(app);app.setRaceSettings(setup);app.setRouteVariant('route_b');app.setLightingMood('golden');app.setGhostEnabled(false);
 const saved=JSON.parse(memory.get(PLAYERS_KEY)).players[0].profile.raceSettings;
-same(saved,{version:1,eventId:COURSE[1].id,car:'stuttgart_959s',difficulty:'pro',cpuDifficulty:'medium',mode:'timetrial',routeVariant:'route_b',lightingMood:'golden',ghostEnabled:false},'Every setup change saves before starting a race');
+same(saved,{version:1,eventId:COURSE[1].id,car:'stuttgart_959s',difficulty:'pro',cpuDifficulty:'medium',mode:'timetrial',routeVariant:'route_b',lightingMood:'golden',ghostEnabled:false,footCamera:'first-person'},'Every setup change saves before starting a race');
 same(new App().getRaceChoices(),setup,'Reload restores full race choices');
 const added=app.addPlayer('Second Driver');ok(added.ok,'Second player created');const second=app.player.id;
 same(app.getRaceChoices(),raceSettingsChoices(DEFAULT_RACE_SETTINGS),'New player does not inherit another setup');same([app.menuRouteId,app.lightingMood,app.ghostEnabled],['route_a','clear',true],'New route and visual defaults are independent');
