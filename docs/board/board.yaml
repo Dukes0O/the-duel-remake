@@ -25,7 +25,8 @@ tasks:
     lane: ART
     size: M
     needs: [CLEAN-01]
-    status: ready
+    status: merged
+    note: "Merged 24 September 2026 after 235 passing lane suites, build, unchanged 162 replay checks and independent review."
     owns: [tools/blender/, tools/build-course-landmarks.py, public/assets/models/, .gitignore, tools/test-course-landmarks.mjs, tools/test-repo-hygiene.mjs, docs/COURSE_EXPANSION.md]
     helpers: [reviewer, test_runner]
     acceptance:
@@ -37,7 +38,7 @@ tasks:
     lane: TOOL
     size: M
     needs: [CLEAN-02]
-    status: backlog
+    status: ready
     owns: [tools/fidelity-sheet.mjs, tools/browser-harness.mjs, tools/audio/, docs/board/looks/, .gitignore]
     helpers: [reviewer, test_runner]
     acceptance:
