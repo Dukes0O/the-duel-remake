@@ -236,7 +236,7 @@ and how to reverse it before continuing.
 
 ## 2026-09-24 PDT: CAR-01 scrap, hold and migration
 
-- Decision: Earn 80 scrap for a completed Wasteland event, plus 120 for a win, 15 per player-owned hit capped at ten, and 60 per player-caused wreck capped at four. Salvage crates will pay 25 once by stable event ID when implemented. Weapon upgrades cost 150/300/600 scrap; new weapons 400; crew 300; armor kit tiers 350/950/2500. Credit and scrap never convert. Before gate discovery, Mad Max Duel retains its existing economy.
+- Decision: Earn 80 scrap for a completed Wasteland event, plus 120 for a win, 15 per player-owned hit capped at ten, and 60 per player-caused wreck capped at four. Existing salvage crates pay 25 each, capped at three, through the completed event settlement identity; abandoned runs bank none. Weapon upgrades cost 150/300/600 scrap; new weapons 400; crew 300; armor kit tiers 350/950/2500. Credit and scrap never convert. Before gate discovery, Mad Max Duel retains its existing economy.
 - Decision: Assign each of the eleven existing combat courses once across eight warlords as listed in CAR-01's change note. A win adds 25 hold, capped at 100; full hold opens an implemented warlord fight, and beating it claims the territory and kit parts. An unbuilt fight cannot be started from the map.
 - Decision: Add scrap and territories to the existing profile.wasteland v1 object, preserving unknown fields, historical levels and future-version data. Use backup-first migration and stable settlement identity. These values are tuning choices, not already fixed by SPEC 0.4. Reverse price or hold tuning in the catalog; preserve earned player data through any later migration.
 
@@ -258,3 +258,15 @@ and how to reverse it before continuing.
 - Decision: Extend only Easy camp shot spacing from 0.8 to 1.6 seconds. The pinned trace showed paired raider hits about 0.8 seconds apart. Medium/Hard retain 0.8; aim, damage and CPU cadence retain their existing values. The first candidate passes flagged wins 8/5/3 and enemy hits 3/4/6, crossbow 12/26 and UFO/own-bomb limits. Revert the spacing if independent review or the lane gate finds a regression.
 - Decision: Keep a separate legal-input pursuit sample that follows normal steering and adjusts throttle/brake to remain about 30 m behind the rival. It causes 2/2/0 player-owned CPU wrecks on Easy/Medium/Hard without changing damage. It does not replace the original seven policy runs or ten-seed no-weapon balance samples.
 - Board completion: retired old BUG-06/07 active-slice instructions, named AUD-03 for residual full-race listening, and made first-person art wait for GFX-01-P1's technique while the yard depends directly on CAR-01. These complete the phase-2 board triage; old integrated work is preserved.
+
+## 2026-09-24 PDT: CAR-01 migration and result review
+
+- Decision: Validate the new scrap value and all eight territory entries in the raw startup migration check before any normalization write. Existing current-v1 careers also need a verified backup when those fields are absent. The failing regression reproduced the omission; failed and unverified backups preserve the original bytes.
+- Decision: Results describe the currency actually settled. Post-gate Wasteland shows no racing-credit bonus or loss-charge promise. Course purchases still follow the existing racing garage, and the map labels future warlord fights as unavailable. Later warlord event work owns the boss fight and claim grant; CAR-01 only earns hold and presents progress.
+- Reversal: Keep backup protection and earned balances. Any later reward or territory schema change needs its own backed-up migration and result copy.
+
+## 2026-09-24 PDT: EGG-02-P1 joined canyon and smaller wall atlas
+
+- Decision: Build two continuous presentation ribbons from existing collision bounds instead of repeating standalone bank modules. Preserve route, collision, RNG and floor; tests require bounded geometry, deterministic UVs, material/disposal safety and continuity. The documented replacement of instancing assertions must retain their geometric safety contracts.
+- Decision: Trial 512-pixel wall atlases while retaining the wash atlas at 1024. Wall output falls from 15,394,464 to 7,236,656 bytes. Matched round-7 views preserve visible texture detail, but likeness remains three and needs changed salvage geometry. Texture size alone is not an art approval.
+- Reversal: Rebuild with the previous recipe or atlas resolution if visual or frame review fails; keep the physical road unchanged.
