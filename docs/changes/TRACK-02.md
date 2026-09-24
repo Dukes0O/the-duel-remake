@@ -1,6 +1,6 @@
 ---
 task: TRACK-02
-status: review
+status: ready-to-merge
 kind: tooling
 flag: none
 player_facing: no
@@ -39,3 +39,11 @@ cards use independent review without adding tests that just check wording.
 
 No game code, test assertions, race fingerprints or security profile settings
 changed. Only the two owned instruction files and this change note changed.
+
+## Independent handoff
+
+Review of 4b6131f..7d8a011 found no blockers. On clean HEAD 7d8a011,
+`node tools/run-tests.mjs --tier lane --changed --jobs 8` passed all five
+selected suites in 37.11 seconds. The production build passed in 1.30 seconds
+with the existing chunk-size advisory. Campaigns were not selected by this
+docs-only lane check; no extra broad or browser run was needed.
