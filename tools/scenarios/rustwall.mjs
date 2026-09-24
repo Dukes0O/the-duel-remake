@@ -67,8 +67,9 @@ export async function run(context) {
             const elapsed=performance.now()-begin;
             if(i>20){frames.push(now-last);cpu.push(elapsed);}last=now;
           }
-          const summary=list=>{list.sort((a,b)=>a-b);return{samples:list.length,p50:list[59],p95:list[113],max:list.at(-1),over33:list.filter(n=>n>33).length};};
-          return{raf:summary(frames),renderCpu:summary(cpu),drawCalls:metrics.drawCalls,triangles:metrics.triangles};
+          const summary=values=>{const list=[...values].sort((a,b)=>a-b);return{samples:list.length,p50:list[59],p95:list[113],max:list.at(-1),over33:list.filter(n=>n>33).length};};
+          return{raf:summary(frames),renderCpu:summary(cpu),rafSamplesMs:frames,renderCpuSamplesMs:cpu,
+            drawCalls:metrics.drawCalls,triangles:metrics.triangles};
         };
         q.rig.visible=false;q.greybox.visible=true;const baseline=await measure();
         q.rig.visible=true;q.greybox.visible=false;const loaded=await measure();
