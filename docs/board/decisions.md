@@ -187,6 +187,31 @@ and how to reverse it before continuing.
   Restore prior reviewed configuration if the final report shows a regression;
   do not relax target bands to claim completion.
 
+## 2026-09-24 PDT: CPU UFO is a defensive AI action
+
+- Decision: Keep physical CPU pickup and the safe actor-specific jump API,
+  but reject immediate automatic use. Medium/Hard AI holds a collected UFO
+  until an incoming player crossbow bolt meets the existing defensive threat
+  check. Preserve its reaction time, cone, height, closing-path and shield
+  rules, as well as all checkpoint/lap limits and attack scheduling.
+- Evidence: Candidate 9c519fd changes Medium wins from 6 to 4 with the flag
+  off, and 5 to 4 with it on. Both fall below the 45-percent lower limit.
+  Flagged seed 1989 enemy hits rise from 4 to 7. Forty pinned Medium races
+  identify the lost winning seeds as off 1989/1995 and on 1992; their jumps
+  began about 130/184/82 m behind. A simple minimum deficit would not prevent
+  those regressions. The original immediate-use candidate remains committed.
+- Verification: Independent tests first prove holding without a threat,
+  ignoring a harmless bolt, defensive use, unchanged attack cadence and
+  common-time outcomes. The two previous AI-immediate-use test groups change
+  to the explicitly selected policy; direct safe-use assertions stay intact.
+  Then run short affected probes before final off/on reports and lane/build.
+- Scope: Root takes the narrow combat-ai.js implementation hook. This does
+  not change the player's UFO, stock range, collected charges, damage, aim
+  tuning, saves or target bands. It does not claim defense against every
+  weapon type. Broader tactical choices remain future AI work.
+- How to reverse: Restore 9c519fd's immediate-use policy for comparison;
+  keep the candidate out of integration if its measured regression remains.
+
 ## New decision format
 
 - Date and card:

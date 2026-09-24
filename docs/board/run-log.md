@@ -1051,3 +1051,10 @@ checkout untouched until the final integration commit passes the full gate.
 - Reset the task-merge counter to zero. Next full is due after five more task merges or 09:36 UTC, whichever comes first, and at run end. This later metadata commit does not inherit an exact-HEAD pass.
 - GFX-02 has its own lane, independent test author and separate runtime/Blender ownership. Public API and camera-local asset contract agreed; builders wait for the red test commit before implementation. Quota before this card: 31 percent remaining.
 - CPU UFO9c519fd is undergoing its first actual off/on balance reports. Initial command stopped before simulation because the new lane had no QA log directory; created that directory and retried. Required lane/build and merge remain pending. No release or push.
+
+## 2026-09-24 PDT - defensive CPU UFO policy after measured regression
+
+- Initial CPU UFO reports9c519fd: off70.26s wins9/4/2,hits1/3/7; on71.62s wins9/4/3,hits6/7/6. Off Mediumwins and on Mediumwins/hits regress; Easyhits6ispre-existing. Hold this candidate fromintegration.
+- Forty pinned Mediumraces61.51s against1900297 show baselineoff6wins, not5; changedwinningseeds are off1989/1995 andon1992. Their jumpsbegan130/184/82mbehind, soaminimumdeficit rulewouldnotfixwins. Authorize threat-based defensiveAI usingexistingincomingBolt rules, withindependentredtests beforeRoot'snarrowAIedit.
+- GFX02red07af83c precedesassets/runtime. Runtimee0a394d passesfocusedsyntheticchecks. Independentreviewfoundreserveammunition keepsa firedrocketvisible duringrecoil; authorwilladdredcoverage beforethebuilderfixesit.
+- RemovedcleanmergedGFX01lanewithoutforce. Allthreefidelityrounds remaincommittedunderintegrationdocs/board/looks/crew; gatelogsarein.lanes/evidence/gfx01, branchretained. No releaseorpush.
