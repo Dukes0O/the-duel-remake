@@ -13,12 +13,12 @@ const READY="!!window.__qaApp?.visualReady&&window.__render?.scene.getObjectByNa
 
 // Test-only fixture and recorder. Production state owns every phase after the
 // explicitly recorded placement fixtures; choices use actual DOM controls.
-function installCapture(round) {
+function installCapture(round,quality) {
   const app=window.__qaApp, audio=app.audio, ctx=audio.context;
   if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value||
       !window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only storage is required');
   const qa={events:[],frames:[],cues:[],tracks:{},start:ctx.currentTime,originalFrame:app.onFrame,
-    originalFactory:audio.hiddenRoadVoiceFactory,quality:app.graphicsQuality};
+    originalFactory:audio.hiddenRoadVoiceFactory,quality};
   const silent=ctx.createGain();silent.gain.value=0;silent.connect(ctx.destination);qa.silent=silent;
   for(const name of ['mix','vehicle','gate']) {
     const bus=ctx.createGain(),processor=ctx.createScriptProcessor(1024,2,2);
@@ -53,7 +53,7 @@ function installCapture(round) {
     if(j?.phase==='opening'&&j.phaseElapsedSec>.7&&!qa.costSnapshot)qa.costSnapshot=structuredClone(state);
   };
   qa.motionFrames=[];
-  if(round>=2&&app.graphicsQuality==='high'){
+  if(round>=2&&quality==='high'){
     const canvas=window.__render.renderer.domElement,stream=canvas.captureStream(30),chunks=[];
     qa.recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp8',videoBitsPerSecond:2500000});
     qa.videoDone=new Promise(resolve=>{qa.recorder.onstop=async()=>{
@@ -211,8 +211,45 @@ async function saveAudio(context,directory,quality,recording) {
   return{tracks,metrics,cues:recording.cues.length,events:recording.events.length,onsets};
 }
 
+async function runMotionSupplement(context,round) {
+  const directory=join(ROOT,`docs/board/looks/hidden-road-arrival/round-${round}/motion-supplement`);
+  try{await access(join(directory,'report.json'));throw Error('Completed supplement is immutable');}
+  catch(error){if(error.code!=='ENOENT')throw error;}
+  await mkdir(directory,{recursive:true});
+  await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
+  await context.navigate('/tools/menu-check.html?flags=hidden-road');
+  await context.waitFor('!!window.__qaApp?.visualReady&&!!window.__render','private supplement UI',60000);
+  await context.evaluate(`(()=>{const a=window.__qaApp;a.setGraphicsQuality('high');a.startCampaign({mode:'duel',startStage:0,seed:1989,car:'falcone_f42',difficulty:'casual'});a.stop();Object.assign(a.duel.state,{status:'racing',paused:false,countdown:0,traffic:[],opponents:[],rival:null});document.querySelectorAll('details').forEach(n=>n.style.display='none');a.onFrame?.(a.duel.state);window.__render.renderFrame();})()`);
+  await context.waitFor(READY,'supplement gate asset',60000);
+  await context.evaluate(`(async()=>{const a=window.__qaApp.audio;a.unlock();a.setMuted(false);await Promise.all([a._samplesPromise,a._ambiencePromise]);})()`);
+  await context.evaluate(`(${installCapture.toString()})(${round},'high')`);
+  await context.evaluate(`(()=>{const q=window.__arrivalQa,a=window.__qaApp;q.place(149.9,35);q.advance(.1);q.place(a.duel.course.hiddenRoad.length-59.5,45);a.start();})()`);
+  await context.waitFor('window.__qaApp.duel.state.hiddenRoadJourney.choiceReady','supplement gate choice',20000);
+  await click(context,'Enter the Wasteland');
+  await context.waitFor("window.__qaApp.duel.state.hiddenRoadJourney.phase==='arrived'&&window.__qaApp.duel.state.hiddenRoadJourney.phaseElapsedSec>1.45",'supplement inside orbit',10000);
+  const recording=await context.evaluate('window.__arrivalQa.finish()');
+  if(!recording.videoBase64||recording.motionFrames.length<8)throw Error('Continuous motion evidence missing');
+  const video=Buffer.from(recording.videoBase64,'base64');
+  await writeFile(join(directory,'high-gate-enter-canvas.webm'),video);
+  await imageSheet(context,recording.motionFrames.map(f=>({label:`${f.recordingTimeSec.toFixed(2)}s · ${f.phase} +${f.phaseElapsedSec.toFixed(2)}s`,data:f.png})),join(directory,'high-motion-strip.png'),3,480,270,
+    'Continuous gate / Enter recording · canvas only; DOM dialog excluded');
+  const report={commit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),
+    note:'Only the missing continuous High motion capture and settled legacy HUD view. Original R2 stills, PCM, cost and failed legacy camera image remain unchanged. WebM excludes the DOM dialog. No cost or audio acceptance rerun.',
+    video:{path:'high-gate-enter-canvas.webm',sha256:sha(video)},frames:recording.motionFrames.map(({png,...f})=>f)};
+  await context.evaluate(`(()=>{const a=window.__qaApp;a.requestNavigation('menu');a.startCampaign({mode:'wasteland',startStage:0,seed:1989,car:'falcone_f42',difficulty:'casual'});a.stop();Object.assign(a.duel.state,{status:'racing',paused:false,countdown:0,traffic:[],opponents:[],rival:null});a.onFrame?.(a.duel.state);window.__render.renderFrame();})()`);
+  await context.waitFor(READY,'settled legacy scene',60000);
+  await context.evaluate(`(()=>{const q=window.__arrivalQa;q.place(149.9,35);q.advance(.1);q.advance(1.3);})()`);
+  await pause(600);
+  report.legacy=await context.evaluate(`(()=>{const a=window.__qaApp,strip=document.querySelector('.weapon-hud'),r={hiddenRoad:a.duel.featureFlags.enabled('hidden-road'),wasteland2:a.duel.featureFlags.enabled('wasteland2'),opacity:Number(getComputedStyle(strip).opacity)};if(!r.hiddenRoad||r.wasteland2||r.opacity>.01)throw Error('Legacy HUD fade failed');return r;})()`);
+  const shot=await context.screenshot('legacy-mad-max-departure-settled');
+  await writeFile(join(directory,'legacy-mad-max-departure-settled.png'),await readFile(shot));
+  await writeFile(join(directory,'report.json'),JSON.stringify(report,null,2)+'\n');
+  console.log('Bounded R2 motion and settled legacy supplement retained.');
+}
+
 export async function run(context) {
   const round=Number(process.env.EGG_ARRIVAL_ROUND||1);
+  if(process.env.EGG_ARRIVAL_SUPPLEMENT==='1')return runMotionSupplement(context,round);
   if(![1,2,3,4,5].includes(round))throw Error('Arrival refinement round must be1..5');
   const relative=`docs/board/looks/hidden-road-arrival/round-${round}`,directory=join(ROOT,relative);
   try{await access(join(directory,'captures.json'));throw Error('Completed arrival evidence is immutable');}
@@ -232,7 +269,7 @@ export async function run(context) {
     await context.evaluate(`(() => {const app=window.__qaApp;app.setGraphicsQuality(${JSON.stringify(quality)});app.startCampaign({mode:'duel',startStage:0,seed:1989,car:'falcone_f42',difficulty:'casual'});app.stop();Object.assign(app.duel.state,{status:'racing',paused:false,countdown:0,traffic:[],opponents:[],rival:null});document.querySelectorAll('details').forEach(n=>n.style.display='none');app.onFrame?.(app.duel.state);window.__render.renderFrame();})()`);
     await context.waitFor(READY,'loaded gate model',60000);
     await context.evaluate(`(async()=>{const a=window.__qaApp.audio;a.unlock();a.setMuted(false);await Promise.all([a._samplesPromise,a._ambiencePromise]);})()`);
-    await context.evaluate(`(${installCapture.toString()})(${round})`);
+    await context.evaluate(`(${installCapture.toString()})(${round},${JSON.stringify(quality)})`);
     const controls=await context.evaluate(`(() => {const q=window.__arrivalQa,a=window.__qaApp,d=a.duel;q.place(100,25,true);q.advance(.5);if(d.state.status!=='racing'||d.state.hiddenRoadJourney.departed)throw Error('Before-departure return failed');const beforeReturn={status:d.state.status,progress:d.state.hiddenRoadJourney.progress};q.place(149.9,35);q.advance(.1);if(d.state.status!=='exploring')throw Error('Departure fixture did not cross');q.place(d.course.hiddenRoad.length-59.5,45);a.start();return{beforeReturn,fixtures:[100,149.9,d.course.hiddenRoad.length-59.5]};})()`);
     evidence.controls.push({quality,...controls});
     await context.waitFor("window.__qaApp.duel.state.hiddenRoadJourney.phase==='arriving'",'arrival braking',10000);
