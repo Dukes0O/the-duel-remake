@@ -480,7 +480,7 @@ tasks:
     needs: [CAR-01]
     status: building
     owns: [tools/blender/armor-kits.py, public/assets/models/wasteland/kits/, src/armor-kit-meshes.js, docs/board/looks/kits/]
-    hooks: [src/combat-scene.js, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-visuals.mjs, tools/scenarios/armor-kit-visuals.mjs]
+    hooks: [src/combat-scene.js, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-resource-lifecycle.mjs, tools/test-armor-kit-visuals.mjs, tools/scenarios/armor-kit-visuals.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
     flag: wasteland2
     note: "Active codex/gfx-03 from 85fe35f. Written design and independent red tests precede code. Crew builder owns fitted authored kits; measured four-car frame cost and three scored rounds required."
@@ -494,7 +494,7 @@ tasks:
     needs: [CAR-01]
     status: building
     owns: [src/app.js, src/screen-router.js, src/screen-yard-home.js, src/screen-yard-home.css, src/hidden-road-ui.js, src/hidden-road-ui.css, src/scrapdome-yard.js, tools/blender/scrapdome-yard.py, public/assets/models/wasteland/scrapdome/, docs/board/looks/yard/]
-    hooks: [src/world.js, src/render3d.js, tools/test-yard-home.mjs, tools/test-scrapdome-yard.mjs, tools/test-scrapdome-yard-assets.mjs, tools/scenarios/yard-home.mjs]
+    hooks: [src/screen-armory.js, src/world-surfaces.js, src/world.js, src/render3d.js, tools/test-yard-home.mjs, tools/test-scrapdome-yard.mjs, tools/test-scrapdome-yard-assets.mjs, tools/scenarios/yard-home.mjs, tools/scenarios/scrapdome-review.mjs, tools/test-yard-ground-render.mjs]
     helpers: [test_author, reviewer, save_guardian, art_critic, browser_qa]
     flag: hidden-road
     note: "Active codex/gfx-04 from 85fe35f. Career owns App/router/panels; Rustwall owns yard model/scene/world/render hooks. Written design and independent red tests precede each implementation. Guarded arrived yard permits scrap operations and rechecks ownership after refresh. No unbuilt arena modes."
