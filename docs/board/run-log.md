@@ -1316,6 +1316,10 @@ checkout untouched until the final integration commit passes the full gate.
   camera/presentation owners, then independent save and source review.
   Known saved-preference assertion changes are scoped before implementation;
   related existing short checks run before its broad gate.
-- Last quota observation before taking this card: ten percent remaining.
+- Fresh quota observation before taking this card: nine percent remaining.
   Treat this as the final planned card, reserving the end-of-run full check
   and handoff above the five-percent floor. No live change, release or push.
+
+- EGG-04's three failed logs, passing rerun and build log were copied with
+  matching hashes into .lanes/evidence/egg04/. Its clean fully merged worktree
+  was removed after checking normal local dependencies; branch retained.
