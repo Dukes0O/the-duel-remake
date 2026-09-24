@@ -125,14 +125,24 @@ def material(name):
     if name=='rock':
         # One continuous 1024 map for the complete rock, with winding strata.
         ry,rx=np.mgrid[:1024,:1024]
-        ripple=np.sin(rx*.009)*9+np.sin(rx*.027)*2
-        strata=np.sin((ry+ripple)*.075)*.055+np.sin((ry+ripple)*.022)*.05
-        erosion=np.sin(rx*.038+np.sin(ry*.006)*.9)*.016
-        grain=rng.uniform(-.012,.012,(1024,1024))
+        ripple=np.sin(rx*.009)*13+np.sin(rx*.027+ry*.002)*4
+        strata=np.sin((ry+ripple)*.075)*.026+np.sin((ry+ripple)*.022)*.027
+        erosion=np.sin(rx*.038+np.sin(ry*.006)*.9)*.028
+        grain=rng.uniform(-.045,.045,(1024,1024))
         rockheight=strata+erosion+grain
         color[:,:,:3]=np.array((.40,.31,.23))*(1+rockheight[:,:,None])
-        bands=np.exp(-(np.sin((ry+ripple)*.017)/.12)**2)
-        color[:,:,:3]*=1-bands[:,:,None]*.20
+        bands=np.exp(-(np.sin((ry+ripple)*.038)/.055)**2)
+        cracks=np.zeros((1024,1024))
+        for _ in range(32):
+            x0,y0=rng.uniform(0,1024,2);length=rng.uniform(22,140);slope=rng.uniform(-.7,.7)
+            distance=rx-x0-(ry-y0)*slope-np.sin(ry*.05+x0)*1.4
+            crack=np.exp(-(distance/rng.uniform(.6,1.5))**2)
+            crack*=np.clip((ry-y0)/4,0,1)*np.clip((y0+length-ry)/8,0,1)
+            cracks=np.maximum(cracks,crack)
+        color[:,:,:3]*=1-bands[:,:,None]*.18-cracks[:,:,None]*.31
+        grit=(np.sin(rx*.43+ry*.19)*np.sin(ry*.61-rx*.14))*.02
+        color[:,:,:3]*=1+grit[:,:,None]
+        rockheight-=cracks*.10+bands*.05
         orm[:,:,1]=.96;orm[:,:,2]=0
         dy,dx=np.gradient(rockheight)
         vectors=np.stack([-dx*4,-dy*4,np.ones_like(dx)],axis=-1)
@@ -224,9 +234,9 @@ class Geometry:
             row=[]
             for ix in range(5):
                 u=ix/4;v=iy/6
-                rag=([.15,1.2,.3,2.1,.65][ix]) if iy==6 else 0
+                rag=([.18,1.6,.35,2.65,.75][ix]) if iy==6 else 0
                 taper=1-.11*v
-                row.append(self.vertex((x+(u-.5)*w*taper,y-v*h+rag,z+math.sin(u*math.tau*1.8+v*2)*(.3+v*.22)+v*.38)))
+                row.append(self.vertex((x+(u-.5)*w*taper,y-v*h+rag,z+math.sin(u*math.tau*1.8+v*2)*(.4+v*.38)+v*.40)))
             rows.append(row)
         for iy in range(6):
             for ix in range(4):
@@ -234,6 +244,12 @@ class Geometry:
                 self.face(ids,tile,[(ix/4,1-iy/6),(ix/4,1-(iy+1)/6),((ix+1)/4,1-(iy+1)/6),((ix+1)/4,1-iy/6)])
                 # Give exposed ragged hems a real reverse face, with one draw.
                 self.face(ids[::-1],tile,[(ix/4,1-iy/6),((ix+1)/4,1-iy/6),((ix+1)/4,1-(iy+1)/6),(ix/4,1-(iy+1)/6)])
+        for ix in [0,2,3]:
+            point=self.vertices[rows[-1][ix]]
+            # A small split strip hangs below the uneven hem.
+            tip=self.vertex((point.x+.07,point.z-.85,-point.y+.12))
+            other=self.vertex((point.x+.13,point.z-.05,-point.y+.04))
+            self.face([rows[-1][ix],tip,other],tile,[(0,0),(.1,.2),(.2,0)])
     def build(self,name,mat):
         mesh=bpy.data.meshes.new(name);mesh.from_pydata(self.vertices,[],self.faces);mesh.update()
         uv=mesh.uv_layers.new(name='Authored material islands')
@@ -297,6 +313,9 @@ def guard(name,mat,position):
     g.tube((0,.79,0),(0,1.43,0),.20,4,8,r2=.24)
     g.tube((0,1.43,0),(0,1.51,0),.09,3,6)
     g.tube((0,1.51,0),(0,1.80,0),.12,3,8,r2=.10)
+    g.box((0,1.55,-.10),(.26,.15,.16),2)
+    g.box((-.24,1.32,0),(.18,.14,.31),14)
+    g.box((.24,1.32,0),(.18,.14,.31),14)
     obj=g.build(name,mat);obj.location=bv(position)
     return obj
 
@@ -324,6 +343,14 @@ def wall():
                 for dx in [-1.86,1.86]:
                     for dy in [-h*.40,0,h*.40]:
                         frames.rivet(cx+dx,yy+dy,.11)
+                if (bay+row+col)%4==0 and row>0:
+                    # Irregular overlapping repair sheets break large clean fields.
+                    panelx=cx-.2;panely=yy+.2
+                    outline=[(panelx-2.0,panely-2.4),(panelx-2.1,panely+2.2),
+                             (panelx+1.3,panely+2.5),(panelx+2.0,panely+1.65),
+                             (panelx+1.98,panely-.4),(panelx+1.73,panely-.56),
+                             (panelx+2.0,panely-.8),(panelx+1.95,panely-2.3)]
+                    frames.profile(outline,[-.04,-.015],[8,9,2][row%3])
         if salvage:
             for row in range(9):
                 yy=5.4+row*3.05
@@ -357,9 +384,14 @@ def wall():
     frames.tube((-6,36.6,-.2),(6,36.6,-.2),.22,6,8)
     for x in [-5.15,5.15]:
         frames.tube((x-.6,36.6,-.2),(x+.6,36.6,-.2),.95,5,12)
+        for offset in [-.68,.68]:
+            frames.tube((x+offset-.06,36.6,-.2),(x+offset+.06,36.6,-.2),1.08,6,12)
+        for dx in [-.19,.19]:
+            frames.tube((x+dx,7.1,-1.43),(x+dx,36.4,-1.43),.045,3,5)
         for yy in [7.6,16,25,34.5]:
             frames.box((x,yy,-1.4),(1.8,.45,.45),6)
         frames.box((x,35.8,-.2),(2.5,1.0,2.7),7)
+        frames.tube((x,33.5,-.2),(x,35.8,-1.6),.15,5,6)
     for yy in [8,13,19,25,31,34.5]:frames.box((0,yy,1.29),(8.9,.22,.3),5)
     for x in [-175,-119,-63,-21,21,77,133,189]:
         tower(frames,props,x,height=7 if abs(x)<80 else 5)
@@ -379,13 +411,24 @@ def wall():
     for x in [-9,9,-24,24,-70,70]:
         props.tube((x,0,-2),(x,1.0,-2),.36,11,10)
         for yy in [.2,.8]:frames.tube((x,yy,-2),(x,yy+.07,-2),.38,6,10)
-        for k in range(3):props.tube((x+(k-1)*.12,1,-2),(x+.06*math.sin(k),1.6+k*.12,-2),.12,8+k%2,5,r2=.01)
+        props.profile([(x-.23,1),(x-.29,1.48),(x-.10,1.34),(x+.04,1.96),
+                       (x+.12,1.48),(x+.24,1.65),(x+.20,1.06)],[-2.12,-1.9],8)
+        props.profile([(x-.12,1),(x-.13,1.31),(x+.04,1.68),(x+.11,1.06)],[-2.14,-2.13],9)
     # Grounded practical clutter leaves the entire vehicle opening clear.
     for i in range(40):
         x=-202+i*10.3
         if abs(x)<7:continue
         h=.4+float(rng.uniform(0,.55));z=-1.4-float(rng.uniform(0,.9))
         props.box((x,h/2,z),(1.4+float(rng.uniform(0,1.2)),h,.65),11)
+    for side in [-1,1]:
+        for i in range(4):
+            x=side*(8.2+i*2.1);z=-2.8-float(rng.uniform(0,.8))
+            h=.50+float(rng.uniform(0,.4))
+            frames.profile([(x-.65,0),(x-.8,h*.8),(x-.3,h),(x+.7,h*.55),(x+.8,0)],[z,z+.7],9)
+        # Hollow tire piles and a small axle stay outside the clear passage.
+        for i in range(3):
+            x=side*(14.5+i*.55)
+            frames.tube((x,.35,-3.6),(x,.35,-3.3),.32,12,8)
     for x in [-42,49,-133,154]:
         tower(frames,props,x,height=9,canopy=False)
         for dx in [-.7,.7]:
@@ -405,7 +448,8 @@ def wall():
     torch=Geometry()
     for x,y,z in places:
         torch.tube((x+.34,y+.94,z-.1),(x+.34,y+2.15,z-.1),.035,2)
-        torch.tube((x+.34,y+2.05,z-.1),(x+.38,y+2.65,z-.1),.115,8,5,r2=.01)
+        torch.profile([(x+.23,y+2.05),(x+.20,y+2.38),(x+.32,y+2.29),
+                       (x+.40,y+2.77),(x+.49,y+2.29),(x+.44,y+2.06)],[z-.16,z-.04],8)
     # Reuse detail material but merge torch triangles into the same draw object.
     t=torch.build('torch-props',details)
     bpy.ops.object.select_all(action='DESELECT');t.select_set(True);objects[3].select_set(True)
@@ -417,14 +461,16 @@ def wash():
     fresh();mat=material('rock');g=Geometry();rings=[]
     # 8 rings, 9 corners, 126 side triangles plus18 cap triangles =144.
     for row in range(8):
-        y=row/7;ring=[]
+        y=[0,.13,.24,.38,.52,.67,.84,1][row];ring=[]
         for j in range(9):
             a=j*math.tau/9
             c,s=math.cos(a),math.sin(a)
-            width=(.97-.29*y)+.05*math.sin(j*2.7+row*1.1)
-            xx=math.copysign(abs(c)**.45,c)*width+.045*math.sin(row*1.7)
-            zz=math.copysign(abs(s)**.23,s)*.995
-            yy=y if row==0 else y*(.91+.09*(.5+.5*math.sin(j*2.2)))
+            # Both exposed sides have staggered shelves and fractured ledges.
+            ledge=[1,.84,.93,.70,.81,.64,.73,.55][row]
+            width=ledge+.065*math.sin(j*2.7+row*.7)
+            xx=math.copysign(abs(c)**.45,c)*width+.075*math.sin(row*1.7)
+            zz=math.copysign(abs(s)**.23,s)*(.995-.025*math.sin(j+row)**2)
+            yy=0 if row==0 else max(0,min(1,y*(.82+.17*(.5+.5*math.sin(j*2.2)))+.024*math.sin(row+j*1.7)))
             ring.append(g.vertex((max(-1,min(1,xx)),yy,zz)))
         rings.append(ring)
     for row in range(7):
@@ -432,7 +478,7 @@ def wash():
             k=(j+1)%9
             g.face([rings[row][j],rings[row][k],rings[row+1][k],rings[row+1][j]],0,
                    [(j/9,row/7),((j+1)/9,row/7),((j+1)/9,(row+1)/7),(j/9,(row+1)/7)],atlas=False)
-    for ring,y in [(rings[0],0),(rings[-1],1)]:
+    for ring,y in [(rings[0],0),(rings[-1],.90)]:
         mid=g.vertex((0,y,0))
         for j in range(9):g.face([mid,ring[j],ring[(j+1)%9]],2,[(.5,.5),(0,0),(1,0)])
     return [g.build('wash-rock-module',mat)]
