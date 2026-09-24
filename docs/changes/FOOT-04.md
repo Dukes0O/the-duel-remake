@@ -1,6 +1,6 @@
 # FOOT-04: on-foot fighter figures
 
-status: ready-to-merge
+status: integrated
 
 ## Change
 

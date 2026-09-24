@@ -736,10 +736,10 @@ tasks:
     lane: SAVE
     size: S
     needs: [PRG-01, PRG-02, VIS-02]
-    status: building
+    status: integrated
     flag: wasteland2
     behavior_change: yes
-    note: "Per-car kit ownership, rank gates, armor bonuses and visual tier hookup are building in an isolated worktree."
+    note: "Per-car kit ownership, rank gates, 10/20/30 armor bonuses and equipped visual tier integrated at 8d5eb3b. Focused purchase/save/visual checks, private Armory scene and build passed."
     spec: "SPEC.md sections 3.6 and 12.2, task PRG-04"
   - id: FOOT-01
     title: "Fighter simulation"
@@ -769,10 +769,10 @@ tasks:
     lane: UI
     size: M
     needs: [RFX-05, FOOT-01, FOOT-02]
-    status: building
+    status: integrated
     flag: wasteland2
     behavior_change: yes
-    note: "Building player movement input and follow camera in an isolated worktree."
+    note: "WASD, mouse, gamepad and first-person camera integrated at e34f2cc. Focused controls/transition checks, private exit/walk/re-entry scene and build passed."
     spec: "SPEC.md sections 3.12 and 12.2, task FOOT-03"
   - id: PERF-01
     title: "First armored wreck frame pacing"
@@ -794,5 +794,49 @@ tasks:
     status: integrated
     flag: wasteland2
     behavior_change: yes
-    note: "Fighter health, reticle, car bearing/distance and honest unavailable-ammo state integrated at c8c20e5. Six focused HUD cases and build passed; first browser review joins FOOT-03."
+    note: "Fighter health, reticle, car bearing/distance and unavailable-ammo state integrated at c8c20e5. Car gauges and the mirror are hidden while walking at 345838c after first-person visual review. Focused HUD/mirror checks and build passed."
     spec: "SPEC.md sections 3.12 and 12.2, task FOOT-06"
+  - id: FOOT-04
+    title: "On-foot fighter figures"
+    wave: 5
+    lane: VIS
+    size: M
+    needs: [RFX-06, FOOT-01, FOOT-03]
+    status: integrated
+    flag: wasteland2
+    behavior_change: yes
+    note: "Four instanced meshes draw up to twelve fighters within the sixteen-call budget. Integrated at 45b586c after focused figure checks, private standing/knockdown screenshots and build."
+    spec: "SPEC.md sections 3.4 and 12.2, task FOOT-04"
+  - id: FOOT-05
+    title: "On-foot RPG and wrench"
+    wave: 5
+    lane: CMB
+    size: M
+    needs: [FOOT-02, FOOT-03]
+    status: building
+    flag: wasteland2
+    behavior_change: yes
+    note: "RPG and wrench simulation, controls and HUD connection are building in an isolated worktree."
+    spec: "SPEC.md sections 3.4 and 12.2, task FOOT-05"
+  - id: FOOT-07
+    title: "Race rules on foot"
+    wave: 5
+    lane: CMB
+    size: S
+    needs: [FOOT-02]
+    status: integrated
+    flag: wasteland2
+    behavior_change: yes
+    note: "Traffic slows for fighters; Easy avoids, Medium makes a seeded attack choice, and Hard aims. Swept hits above 30 km/h knock down. Integrated at 937926e after focused race/transition/opponent checks and build."
+    spec: "SPEC.md sections 3.4 and 12.2, task FOOT-07"
+  - id: PRG-03
+    title: "Armory loadout slots"
+    wave: 4
+    lane: UI
+    size: M
+    needs: [RFX-01, PRG-01]
+    status: building
+    flag: wasteland2
+    behavior_change: yes
+    note: "Four weapon slots and Armory swap UI are building in an isolated worktree."
+    spec: "SPEC.md sections 3.8 and 12.2, task PRG-03"

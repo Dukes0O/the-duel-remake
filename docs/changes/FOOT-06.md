@@ -21,3 +21,8 @@ rotation update only when their values change.
 `node tools/test-combat-hud.mjs` passes 6/6 focused cases; `npm run build` and
 `git diff --check` pass. FOOT-03 owns the walking camera and first combined
 private browser review. No real career or live build was touched.
+
+The first-person scene review found the car speed, nitro, radar, lives and
+rear-view mirror still visible while walking. The follow-up at `345838c`
+hides those car-only displays and skips the mirror render pass until re-entry.
+The six focused HUD cases, 68 mirror checks and production build pass.

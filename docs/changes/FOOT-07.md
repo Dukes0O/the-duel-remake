@@ -1,6 +1,6 @@
 ---
 task: FOOT-07
-status: lane-complete
+status: integrated
 kind: combat-feature
 flag: wasteland2
 player_facing: yes

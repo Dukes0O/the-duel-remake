@@ -620,3 +620,26 @@ checkout untouched until the final integration commit passes the full gate.
   on Performance, with p95 near 18 ms. Two frames still exceeded 33 ms.
   The cache adds about 6 MiB per detailed F42 and 0.36 MiB per generic traffic
   car; this remains a development-only tradeoff to review before beta.
+
+## 2026-09-23 PDT — Walking flow and lean feature checks
+
+- FOOT-03 first-person walking controls/camera integrated at `e34f2cc`.
+  The focused control/transition checks, one private exit/walk/re-entry
+  browser flow and build passed. No broad suite was run for this isolated
+  feature.
+- PRG-04 per-car armor kit purchases and equip state integrated at
+  `8d5eb3b`. Focused save/armor/replay checks, one private Armory scene
+  and build passed.
+- FOOT-07 traffic and rival behavior around a fighter integrated at
+  `937926e`. Focused race/transition/opponent cases and build passed.
+- FOOT-04 fighter figures integrated at `45b586c`. One figure check and
+  private standing/knockdown screenshots confirmed four shared instanced
+  meshes, first-person hiding and zero browser errors. The screenshots
+  revealed car-only HUD panels while walking; `345838c` hides those
+  displays and skips the rear-view render pass on foot. Focused HUD and
+  mirror checks plus build passed.
+- Kyle asked for a baby bear testing approach. Development cards now get
+  one focused check and a build, with a private browser scenario only when
+  the change is visual or spans controls and simulation. One combined
+  playthrough will check the joined walking/RPG/loadout flow. The exact
+  release-candidate gate still applies before Wasteland2 is enabled live.
