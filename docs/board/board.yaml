@@ -758,8 +758,30 @@ tasks:
     lane: CMB
     size: M
     needs: [FOOT-01, CMB-01]
+    status: integrated
+    flag: wasteland2
+    behavior_change: yes
+    note: "Car exit/bail/re-entry and parked-car combat/recovery integrated at 7240e57. Six focused transition checks, fighter baseline and build passed. FOOT-03 owns walking controls and camera."
+    spec: "SPEC.md sections 3.4 and 12.2, task FOOT-02"
+  - id: FOOT-03
+    title: "On-foot controls and camera"
+    wave: 5
+    lane: UI
+    size: M
+    needs: [RFX-05, FOOT-01, FOOT-02]
     status: building
     flag: wasteland2
     behavior_change: yes
-    note: "Building in an isolated worktree; FOOT-03 owns walking controls and camera."
-    spec: "SPEC.md sections 3.4 and 12.2, task FOOT-02"
+    note: "Building player movement input and follow camera in an isolated worktree."
+    spec: "SPEC.md sections 3.12 and 12.2, task FOOT-03"
+  - id: PERF-01
+    title: "First armored wreck frame pacing"
+    wave: 5
+    lane: VIS
+    size: S
+    needs: [VIS-01, VIS-02]
+    status: building
+    flag: wasteland2
+    behavior_change: no
+    note: "Combat atlas warmup is integrated. Residual 70–90 ms first-wreck frame combines damage geometry/normals and first-visible effect program/texture work; a bounded fix is underway."
+    spec: "SPEC.md sections 2 and 12.2 frame budget; 2026-09-23 frame sample"

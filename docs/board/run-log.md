@@ -603,3 +603,12 @@ checkout untouched until the final integration commit passes the full gate.
   hits, wrecks and results award XP once; ordinary races and incomplete
   events award none. Seven focused cases, historical saves and build passed.
   PRG-04 armor-kit purchases and FOOT-02 car transitions are in progress.
+- One bounded frame diagnostic found the remaining first-wreck delay in
+  rendering, not game simulation: about 32 ms in damage geometry/normals and
+  the first visible damaged-effect draw up to 83 ms. High and Performance
+  maxima were 71 and 89 ms in that run. PERF-01 is trying a small measured
+  improvement without changing the visible dents.
+- FOOT-02 car exit, bailout, re-entry and parked-car combat/recovery integrated
+  at `7240e57`. Its six focused transition cases, FOOT-01 baseline and build
+  passed. FOOT-03 walking controls and camera are now underway; on-foot play
+  is not yet usable in a browser without them.
