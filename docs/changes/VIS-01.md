@@ -1,6 +1,6 @@
 ---
 task: VIS-01
-status: ready-to-merge
+status: integrated
 kind: visual feature
 flag: wasteland2
 player_facing: yes
@@ -77,7 +77,7 @@ player_facing: yes
 
 ## Integration check
 
-Re-run the private browser scenario on the merged CMB-04/CMB-08 renderer
-because those cards also touch `src/render3d.js` and CMB-04 touches
-`src/combat-scene.js`. The final release candidate needs the Director's
-broad gate.
+The private browser scenario passed on the merged CMB-04/CMB-08 renderer in
+High and Performance: 12 screenshots, memory-only saves and no browser issues.
+The combined production build passed. A later release that enables
+`wasteland2` still needs its balance and frame acceptance check.

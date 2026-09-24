@@ -1,6 +1,6 @@
 ---
 task: CMB-03
-status: ready-to-merge
+status: integrated
 kind: combat-feature
 flag: wasteland2
 player_facing: yes
@@ -46,3 +46,6 @@ and narrow screens. SAVE-01 owns the later credit bonus and persistence work.
 - Broad release, balance, and frame checks: reserved for the single final
   release candidate gate. This lane ran focused checks by the Director's
   instruction to keep testing proportional.
+- After the combined pickup and effects merge, the focused 15/15 scoring
+  checks and private High/Performance desktop/mobile results scenario passed
+  again. The combined production build passed.

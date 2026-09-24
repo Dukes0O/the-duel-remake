@@ -515,7 +515,7 @@ tasks:
     lane: CMB
     size: S
     needs: [RFX-04, CMB-01]
-    status: ready
+    status: integrated
     owns: [src/combat-pickups.js, src/wasteland-tuning.js, tools/test-combat-pickups2.mjs, tools/scenarios/combat-pickups2.mjs]
     hooks: [src/combat-weapons.js, src/combat-ai.js, src/combat-scene.js, src/screen-router.js, src/screen-hud.js]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
@@ -605,7 +605,7 @@ tasks:
     lane: VIS
     size: M
     needs: [RFX-06, ART-A, CMB-01]
-    status: ready
+    status: integrated
     owns: [src/combat-vfx-atlas.js, src/combat-effects.js, src/combat-scene.js, tools/test-combat-effects.mjs, tools/scenarios/combat-effects.mjs]
     hooks: [src/explosion.js, src/render3d.js, src/effects.js]
     helpers: [test_author, reviewer, browser_qa]
@@ -638,7 +638,7 @@ tasks:
     lane: CMB
     size: M
     needs: [CMB-01]
-    status: ready
+    status: integrated
     owns: [src/combat-scoring.js, src/wasteland-tuning.js, tools/test-combat-scoring.mjs, tools/scenarios/combat-results.mjs]
     hooks: [src/combat-armor.js, src/combat-projectiles.js, src/sim-contacts.js, src/combat-weapons.js, src/game.js, src/sim-results.js, src/screen-results.js, src/screen-results.css]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]

@@ -1,6 +1,6 @@
 ---
 task: CMB-04
-status: building
+status: integrated
 kind: feature
 flag: wasteland2
 player_facing: yes
@@ -50,5 +50,7 @@ timed, center-lane pickup path.
   quality modes showed distinct repair and weapon crates, player armor
   60 to 85 with a matching callout, and CPU 3's indexed bomb collection.
   The six pickup mesh identities stayed fixed before and after collection.
-- Combined CMB-08/CMB-04 browser check, frame/balance checks and final handoff
-  SHA: pending.
+- Combined CMB-08/CMB-04 browser check passed in High and Performance after
+  integration, with six screenshots, memory-only saves and no browser issues.
+  The combined production build passed. Broader balance and frame checks are
+  reserved for a release that enables `wasteland2`.
