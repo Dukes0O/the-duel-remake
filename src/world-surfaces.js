@@ -100,13 +100,24 @@ function cutHiddenRoadGround(geometry, course) {
       const x = (position.getX(a) + position.getX(b) + position.getX(c)) / 3;
       const z = (position.getZ(a) + position.getZ(b) + position.getZ(c)) / 3;
       const near = road.nearest(x, z);
-      if (near.progress > 40 && near.distance < road.widthAt(near.progress) + 32) continue;
+      if (near.progress > 40 && near.distance < road.widthAt(near.progress) + 32
+        && !touchesRaceRoad(position.array, [a, b, c], course)) continue;
       indices.push(a, b, c);
     }
     groups.push({ start, count: indices.length - start, materialIndex: group.materialIndex });
   }
   geometry.setIndex(indices); geometry.clearGroups();
   for (const group of groups) geometry.addGroup(group.start, group.count, group.materialIndex);
+}
+
+function touchesRaceRoad(positions, vertices, course) {
+  const lateral = vertices.map(index => {
+    const pose = course.nearest(positions[index * 3], positions[index * 3 + 2]);
+    const edge = course.roadHalfWidthAt(pose.s) + 4;
+    return Math.abs(pose.lateral) <= edge ? 0 : Math.sign(pose.lateral);
+  });
+  // Include edges crossing the road even when all vertices lie outside it.
+  return lateral.includes(0) || lateral.includes(-1) && lateral.includes(1);
 }
 
 export function hiddenRoadGroundGeometry(course) {
@@ -124,7 +135,9 @@ export function hiddenRoadGroundGeometry(course) {
       positions.push(x, ground.y + .035, z); uv.push(x / 8, z / 8);
       if (row && j) {
         const a = row * columns + j;
-        indices.push(a - columns - 1, a - 1, a - columns, a - columns, a - 1, a);
+        for (const triangle of [[a - columns - 1, a - 1, a - columns], [a - columns, a - 1, a]]) {
+          if (!touchesRaceRoad(positions, triangle, course)) indices.push(...triangle);
+        }
       }
     });
   }

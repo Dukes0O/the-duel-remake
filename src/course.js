@@ -143,7 +143,7 @@ export class Course {
       const ds=angleDiff((this.phase(s)-station.s)/this.length*TAU,0)*this.length/TAU,dl=off-station.off,c=Math.cos(station.angle),sn=Math.sin(station.angle),x=c*dl-sn*ds,z=sn*dl+c*ds;
       const weight=(1-smooth((Math.abs(x)-11)/4))*(1-smooth((Math.abs(z)-9.5)/4.5));
       if(weight>0)p.y+=(station.y-p.y)*weight;}
-    if(this.hiddenRoad && Math.abs(off)>this.roadHalfWidthAt(s)+1){
+    if(this.hiddenRoad && Math.abs(off)>this.roadHalfWidthAt(s)+1 && !this.surfaceAt(s,off).road){
       const hidden=this.hiddenRoad.nearest(p.x,p.z),width=this.hiddenRoad.widthAt(hidden.progress);
       const blend=1-smooth((hidden.distance-width)/8);
       p.y=lerp(p.y,hidden.y,blend);

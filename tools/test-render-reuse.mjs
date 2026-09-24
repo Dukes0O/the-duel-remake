@@ -8,6 +8,7 @@ import { addArenaCrushables } from '../src/arena-props.js';
 import { createDrivingEffects } from '../src/effects.js';
 import { createExplosion } from '../src/explosion.js';
 import { disposeTree } from '../src/world.js';
+import { hiddenRoadGroundGeometry } from '../src/world-surfaces.js';
 
 // Exercise the production state readers with retained Three objects. The real
 // WebGL renderer's worldBuilds counter is checked separately in browser QA.
@@ -32,6 +33,22 @@ const canyonDef=COURSE.find(def=>def.id==='pacific-canyon');
 const ordinaryCanyon=new Course(canyonDef,1989),hiddenCanyon=new Course(canyonDef,1989,{hiddenRoad:true});
 check(environmentKey(ordinaryCanyon)!==environmentKey(hiddenCanyon),'an ordinary menu world cannot satisfy a Hidden Road race');
 check(environmentKey(hiddenCanyon)===environmentKey(new Course(canyonDef,1989,{hiddenRoad:true})),'equivalent Hidden Road courses reuse the same world');
+{
+  const ray = new THREE.Raycaster(), down = new THREE.Vector3(0,-1,0);
+  let roadClear = true;
+  for(const seed of [1989,42,17]){
+    const course = new Course(canyonDef,seed,{hiddenRoad:true});
+    const patch = new THREE.Mesh(hiddenRoadGroundGeometry(course),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));
+    patch.updateMatrixWorld(true);
+    for(let s=1320;s<=1500;s+=10)for(const lateral of [-5,0,5]){
+      const point=course.worldAt(s,lateral);
+      ray.set(new THREE.Vector3(point.x,point.y+200,point.z),down);
+      if(ray.intersectObject(patch,false).length)roadClear=false;
+    }
+    disposeTree(patch);
+  }
+  check(roadClear,'ABC fitted wash ground cannot overlap either racing lane near the entrance');
+}
 for(const s of[0,natural.length*.23,natural.length*.76,natural.raceLength]){
   check(JSON.stringify(natural.groundAt(s,17))===JSON.stringify(rerun.groundAt(s,17)),'the retained original ground sampler agrees with the new equivalent Course');
 }
