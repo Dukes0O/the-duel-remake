@@ -52,3 +52,33 @@ animation cancellation stub because no browser animation loop runs.
 
 Presentation/audio acceptance follows as a separate red handoff. No lane or
 build gate has been run yet; this note makes no integration or release claim.
+
+## Independent presentation and audio red handoff
+
+`tools/test-hidden-road-presentation.mjs` has **0/10 groups passing** before
+implementation (0.20 seconds). All failures identify the absent agreed selector,
+DOM wrapper or audio update method. Core red tests were committed separately
+as `b74d51f` so simulation work could proceed while this bounded suite was built.
+
+The DOM-free `hiddenRoadPresentation(state, course)` contract returns active,
+phase, hudOpacity, controlsLocked, choiceReady, gateOpen, camera, sparks and
+arrivalReady. Repeated or rewound frozen snapshots must produce the same view;
+rendering cannot advance the simulation. Gate fraction follows state, the low
+camera uses finite world-space coordinates, sparks have a maximum of 64
+presentation particles, and pause hides sparks and disables choice input while
+holding the gate/camera. Turn back allows an agreed 0.8 second camera return
+blend, then restores the normal camera. This is a presentation transition,
+not another journey or gameplay timer.
+
+`createHiddenRoadUi({host,onChoose,onMenu})` is checked with a small semantic
+DOM fixture for clear Enter/Turn back/Return to menu buttons, eligible callback
+dispatch, focus restoration and listener/container disposal. Actual renderer
+panel linkage, cinematic readability and sound quality still require the
+planned private browser/audio scenario; these headless checks do not claim it.
+
+`EngineAudio({hiddenRoadVoiceFactory})` accepts an injected local voice factory
+for bounded ownership checks. `updateHiddenRoad(state)` deduplicates simulation
+cues, preserves state and cancels its voices once on pause, mute, menu or a new
+journey. Resume may play current cues but cannot replay a queue of missed beats.
+The production default remains local Web Audio and requires normal audio unlock.
+No new dependency, browser storage or network access was used.
