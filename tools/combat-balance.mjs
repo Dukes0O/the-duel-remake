@@ -112,6 +112,15 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
     const shots = { ufo: 0, bomb: 0, crossbow: 0, star: 0 };
     let cpuHits = 0, unattributedEnemyHits = 0;
     const wrecks = emptyWrecks();
+    const wreckedTraffic = new WeakSet();
+    const recordTrafficWreck = (actor, owner) => {
+      if (actor && typeof actor === 'object') {
+        if (wreckedTraffic.has(actor)) return;
+        wreckedTraffic.add(actor);
+      }
+      wrecks.traffic++;
+      wrecks.byOwner[Object.hasOwn(wrecks.byOwner, owner) ? owner : 'unknown']++;
+    };
     duel.onChange((_, event) => {
       if (event.combatWreck) {
         const victim = event.victim === 'rival' ? 'opponent' : event.victim;
@@ -123,8 +132,12 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
       }
       if (event.trafficWrecked) {
         // sim-contacts emits this event only for the player's traffic collision.
-        wrecks.traffic++;
-        wrecks.byOwner.player++;
+        recordTrafficWreck(event.trafficWrecked.actor, 'player');
+      }
+      const impact = event.roadsideImpact;
+      if (impact?.kind === 'traffic' && impact.outcome === 'obliterate') {
+        // actor is the traffic victim. Current events do not identify its attacker.
+        recordTrafficWreck(impact.actor, impact.owner);
       }
       if (!event.combatHit || !event.enemy) return;
       if (!event.victim) unattributedEnemyHits++;
@@ -257,7 +270,7 @@ export function buildReport({ flags = [], runs, baselineRuns, firstTwelveSec, el
       winRateByDifficulty: 'No-weapon policy, ten seeds 1989-1998 per difficulty; seed 1989 reused from policy runs.',
       cpuHitsByDifficulty: 'No-weapon policy, seed 1989 only per difficulty; existing CPU-hit target sample.',
       hitsByDifficulty: 'All seven policies at seed 1989 plus nine additional no-weapon seeds per difficulty (16 unique races). CPU hits count enemy combatHit events whose victim is player; rivalHits uses the existing combat hit counter.',
-      wrecksByDifficulty: 'Same 16 races per difficulty; combatWreck events for player/opponents and trafficWrecked collision events. byOwner counts the attacker; unknown means the event supplies no identifiable owner. Legacy traffic crushes are not combat wreck events.',
+      wrecksByDifficulty: 'Same 16 races per difficulty; combatWreck events for player/opponents, trafficWrecked collisions and roadsideImpact traffic obliterations. Traffic victims count once; knocks are excluded. byOwner counts the attacker; current roadsideImpact events supply no attacker, so their owner is unknown. Legacy vehicleCrushed events are excluded.',
       weaponProbes: 'Crossbow: 26 moving-target cases across combat courses. Own bombs: ten speeds from 20 to 200 mph.',
       gainSec: 'Policy time compared with no-weapon time at seed 1989, averaged across three difficulties.'
     },

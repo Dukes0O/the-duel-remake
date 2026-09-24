@@ -22,27 +22,36 @@ The App uses disposable memory storage, restored after each call.
 Reports identify selected flags, sample scopes, win rates, hits and wrecks by
 difficulty. Wrecks separate player, opponent and traffic victims, with attacker
 counts for player, CPU, raider, environment and unknown. The tool observes
-combatWreck and trafficWrecked events. Legacy vehicleCrushed events are outside
-that stated scope. TrafficWrecked currently identifies a player collision;
-missing armor-wreck ownership remains unknown, except scenery is environment.
+combatWreck and trafficWrecked events, plus roadsideImpact events for traffic
+obliteration. Knocks are excluded. A traffic-victim identity guard prevents
+counting the same destroyed traffic actor more than once. Legacy vehicleCrushed
+events remain outside that stated scope. TrafficWrecked identifies a player
+collision. Current roadsideImpact events identify the victim but omit the
+attacker; their owner is unknown. Missing armor-wreck ownership remains unknown,
+except scenery is environment.
 
 ## Evidence
 
 Independent acceptance tests were committed first at `99c7795`; all 13 failed
-before implementation. `node tools/test-combat-balance.mjs` now passes all 13.
-It verifies real armor activation for every race policy and both weapon probes,
+before implementation. The first implementation passed all 13. Independent
+review then found omitted modern traffic obliterations. Regression commit
+`59e3e81` expanded the suite to 21 checks and reproduced four failures for real
+player and CPU obliterations with flags on and off; knock cases passed.
+The corrected `node tools/test-combat-balance.mjs` now passes all 21. It verifies real armor activation for every race policy and both weapon probes,
 flag-off defaults, genuine victim/owner wreck events, aggregation, strict CLI
 validation and every retained target boundary. `git diff --check` passes.
 
-Each complete report below was run exactly once, sequentially, on the implemented
-BAL-01 tool and the lane's existing game code. Each covers 21 policy races and
+The original report pair took 69.72 seconds (off, passed) and 72.93 seconds
+(on, seven target failures). Its zero traffic totals were incomplete and are
+superseded below. After the review fix, each complete report was refreshed once,
+sequentially, on the corrected tool and the lane's existing game code. Each covers 21 policy races and
 30 baseline samples (three baseline races are reused from the policy set), for
 48 unique races. No short frame limit was supplied.
 
 | Command | Exit | Total seconds | First 12 races, seconds |
 | --- | ---: | ---: | ---: |
-| `node tools/combat-balance.mjs --check` | 0 | 69.72 | 13.02 |
-| `node tools/combat-balance.mjs --flags wasteland2 --check` | 1 | 72.93 | 13.77 |
+| `node tools/combat-balance.mjs --check` | 0 | 74.43 | 17.05 |
+| `node tools/combat-balance.mjs --flags wasteland2 --check` | 1 | 97.02 | 21.68 |
 
 ### Baseline targets
 
@@ -80,16 +89,20 @@ UFO / max UFO / bomb / crossbow / star / all:
 
 Each difficulty below covers 16 unique races: seven policies at seed 1989 and
 nine additional no-weapon seeds. These are totals, not per-race target samples.
-All enemy hits have victim identities; all observed wrecks have known owners.
+All enemy hits have victim identities. Unknown wreck owners are the traffic
+obliterations whose runtime events omit attacker identity.
 
 | Mode | Difficulty | Rival hits | Enemy hits on player | Wreck victims: player / opponent / traffic | Wreck owners: player / CPU / raider / environment / unknown |
 | --- | --- | ---: | ---: | --- | --- |
-| Off | Easy | 5 | 18 | 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 |
-| Off | Medium | 8 | 61 | 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 |
-| Off | Hard | 6 | 123 | 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 |
-| wasteland2 | Easy | 14 | 213 | 17 / 5 / 0 | 1 / 5 / 16 / 0 / 0 |
-| wasteland2 | Medium | 14 | 207 | 19 / 2 / 0 | 1 / 6 / 14 / 0 / 0 |
-| wasteland2 | Hard | 11 | 155 | 12 / 6 / 0 | 2 / 5 / 11 / 0 / 0 |
+| Off | Easy | 5 | 18 | 0 / 0 / 5 | 0 / 0 / 0 / 0 / 5 |
+| Off | Medium | 8 | 61 | 0 / 0 / 5 | 0 / 0 / 0 / 0 / 5 |
+| Off | Hard | 6 | 123 | 0 / 0 / 2 | 0 / 0 / 0 / 0 / 2 |
+| wasteland2 | Easy | 14 | 213 | 17 / 5 / 14 | 1 / 5 / 16 / 0 / 14 |
+| wasteland2 | Medium | 14 | 207 | 19 / 2 / 24 | 1 / 6 / 14 / 0 / 24 |
+| wasteland2 | Hard | 11 | 155 | 12 / 6 / 6 | 2 / 5 / 11 / 0 / 6 |
+
+All gameplay measurements apart from traffic counts match the original report
+pair exactly. Timings are fresh wall-clock measurements.
 
 ### Open gameplay gaps
 
