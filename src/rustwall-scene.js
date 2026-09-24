@@ -107,7 +107,10 @@ export function createRustwallScene(course, {loadAsset = kind =>
       for (let index = 0; index < walls.length; index++) {
         const wall = walls[index];
         transform.position.set(wall.x, wall.y, wall.z);
-        transform.rotation.set(0, wall.heading, 0);
+        // Stable bank order varies the two asymmetric faces without consuming
+        // simulation randomness or changing the normalized collision envelope.
+        const halfTurn = (Math.imul(index + 1, 0x9e3779b1) >>> 30) & 1;
+        transform.rotation.set(0, wall.heading + halfTurn * Math.PI, 0);
         transform.scale.set(wall.halfX, wall.height, wall.halfZ);
         transform.updateMatrix();
         banks.setMatrixAt(index, transform.matrix);
