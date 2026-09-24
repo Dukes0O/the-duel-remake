@@ -220,3 +220,20 @@ review confirmed this exact diff; the unchanged focused build-update suite
 passes all 194 checks. No assertion or browser evidence changed, and no new
 capture is needed for this ordering repair. The next clean gate retains the
 failed log and uses a separate rerun filename.
+## Legacy partial-menu compatibility correction
+
+The second required gate on clean `39ad2d0` reached 169 passed, 1 failed and
+61 not run in 279.90 seconds. Log `.qa-dist/egg04-final-lane-recheck.log` is
+retained. All Hidden Road suites passed. The later course-eligibility suite
+uses the actual menu presenter with a legacy partial UI lacking the new
+WASTELAND button; its unguarded hidden-property write threw. No build followed
+that failure. HEAD/source/tools stayed unchanged until the gate fully drained.
+
+The Director authorized a narrow optional-element guard. Commit `48b248a`
+only checks the button exists before the same visibility write. Independent
+review confirms full production markup behaves identically. The unchanged
+course-eligibility suite passes 2,066 checks across nine cars and sixteen
+courses. A bounded review of the other new menu/router/preview accesses found
+no further concrete partial-UI compatibility issue. No assertions changed,
+no speculative source fixes were added and no browser recapture was needed.
+The next clean required run uses a third log filename and preserves both failures.
