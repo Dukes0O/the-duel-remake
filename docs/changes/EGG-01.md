@@ -1,6 +1,6 @@
 # EGG-01: Hidden Road geometry and protected driving
 
-Status: independently reviewed; required lane/build gate pending.
+Status: ready-to-merge.
 
 ## Changes
 
@@ -79,3 +79,13 @@ solver comparisons over 18 selectable layouts. The source stamp alone moved
 from ca2e1c54cf1d3c0929b825b5498be91d22fc789dc3065b1db913b35bcb160e2c
 to 148a3dfda0113aecf30c849a253c4daf5ebff0ae9829fbb2f9591d7ce247b1af.
 The required lane/build gate must now be repeated on the corrected candidate.
+
+## Final independent gate
+
+Clean candidate 5ec61ade62741dbeee72bef3c311ccd443c3b0ca passed the required
+lane tier: 217 suites, zero failures and zero not run in 314.89 s. All eight
+campaign shards passed, with no campaign skip environment set. The production
+build passed in 375 ms reported build time with the existing chunk-size warning.
+Logs remain in .qa-dist/egg01-final-lane-retry.log and egg01-final-build.log.
+The Director ran this verification independently of the builder. No source
+edits occurred during it; this final note records evidence only.
