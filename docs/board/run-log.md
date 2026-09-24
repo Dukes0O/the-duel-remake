@@ -1500,3 +1500,7 @@ percent remaining. All helpers are finished. No lane has an active builder.
   the status page. The slower repo-wide sweep (unused code and assets, old
   notes, idle-branch list, size review) runs at the end of every run and after
   every 10 merges.
+
+## 2026-09-24 PDT – cleanup run
+
+- CLEAN-01 merged as `2b355fd` after 234 passing lane suites, build and unchanged replay fingerprints. Independent review cleared the placement and lane-audit fixes. The after-merge janitor unlinked the integration dependency junction, removed the clean CLEAN-01 worktree and branch, and found no used evidence to remove. STATUS refreshed. Merge count since full tier: 1; full tier remains due at five merges, two hours, or session end. Sizes: public 315,969,513 bytes, Wasteland models 135,847,059 bytes, built lane dist 320,030,739 bytes; no asset-size change in CLEAN-01.

@@ -11,7 +11,8 @@ tasks:
     lane: TOOL
     size: M
     needs: []
-    status: ready
+    status: merged
+    note: "Merged 24 September 2026 after 234 passing lane suites, build, unchanged 162 replay checks and independent review."
     owns: [tools/test-repo-hygiene.mjs, tools/size-targets.json, tools/repo-audit.mjs, tools/run-tests.mjs]
     helpers: [test_author, reviewer, test_runner]
     acceptance:
@@ -24,7 +25,7 @@ tasks:
     lane: ART
     size: M
     needs: [CLEAN-01]
-    status: backlog
+    status: ready
     owns: [tools/blender/, public/assets/models/, .gitignore]
     helpers: [reviewer, test_runner]
     acceptance:
