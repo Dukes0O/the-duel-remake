@@ -1054,7 +1054,19 @@ checkout untouched until the final integration commit passes the full gate.
 
 ## 2026-09-24 PDT - defensive CPU UFO policy after measured regression
 
-- Initial CPU UFO reports9c519fd: off70.26s wins9/4/2,hits1/3/7; on71.62s wins9/4/3,hits6/7/6. Off Mediumwins and on Mediumwins/hits regress; Easyhits6ispre-existing. Hold this candidate fromintegration.
-- Forty pinned Mediumraces61.51s against1900297 show baselineoff6wins, not5; changedwinningseeds are off1989/1995 andon1992. Their jumpsbegan130/184/82mbehind, soaminimumdeficit rulewouldnotfixwins. Authorize threat-based defensiveAI usingexistingincomingBolt rules, withindependentredtests beforeRoot'snarrowAIedit.
-- GFX02red07af83c precedesassets/runtime. Runtimee0a394d passesfocusedsyntheticchecks. Independentreviewfoundreserveammunition keepsa firedrocketvisible duringrecoil; authorwilladdredcoverage beforethebuilderfixesit.
-- RemovedcleanmergedGFX01lanewithoutforce. Allthreefidelityrounds remaincommittedunderintegrationdocs/board/looks/crew; gatelogsarein.lanes/evidence/gfx01, branchretained. No releaseorpush.
+- Initial CPU UFO reports on 9c519fd: flag off, 70.26 s, wins 9/4/2 and hits
+  1/3/7; flag on, 71.62 s, wins 9/4/3 and hits 6/7/6. Medium wins regress in
+  both paths, as do flagged Medium hits. Easy's six hits are pre-existing.
+  Hold this candidate out of integration.
+- Forty pinned Medium races in 61.51 s against 1900297 show six baseline
+  wins with the flag off, not five. Changed winning seeds are off 1989/1995
+  and on 1992. Their jumps began 130/184/82 m behind, so a minimum deficit
+  rule would not fix wins. Authorize defensive AI using existing incomingBolt
+  rules, with independent red tests before Root's narrow AI edit.
+- GFX-02 red tests 07af83c precede assets/runtime. Runtime e0a394d passes
+  focused synthetic checks. Independent review found reserve ammunition keeps
+  a fired rocket visible during recoil; the author adds red coverage before
+  the builder fixes it.
+- Removed the clean merged GFX-01 lane without force. All three fidelity
+  rounds remain committed under integration docs/board/looks/crew; gate logs
+  are in .lanes/evidence/gfx01 and its branch remains. No release or push.

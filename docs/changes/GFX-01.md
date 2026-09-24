@@ -84,3 +84,10 @@ The repository forced LF conversion on new WebM files. The intact working record
   eight campaign shards. Build passed (Vite 403 ms; existing chunk warning).
   HEAD and source stayed unchanged throughout. Logs: .qa-dist/final-lane.log
   and final-build.log. The subsequent commit adds this evidence and review only.
+
+## Lane cleanup
+
+After integration, the clean merged lane was removed with `git worktree remove`
+without force. Its branch remains. Gate and browser logs were copied with
+matching hashes to `.lanes/evidence/gfx01/`. All three contact sheets and their
+images remain committed under `docs/board/looks/crew/` in integration.
