@@ -698,3 +698,10 @@ checkout untouched until the final integration commit passes the full gate.
   clear RPG shot on a wounded rival and an emergency repair before a wreck
   each repaid their stop. The focused check and build passed. No weapon
   numbers changed; actual aiming and broader win rates remain to be played.
+- CREW-01 follow-up at `ce12e38` activates Nell's wider RPG blast,
+  Odessa's faster wrench, and Dune's longer lock range. Review found the
+  extended lock outran the four-second rocket lifetime; `0154121` grants a
+  fully locked Dune rocket five seconds and proves a direct hit beyond
+  250 m. A migration guard now disables crew selection when the career is
+  not ready. Four focused cases and build passed. The full crew card remains
+  open for perks tied to boarding, fire, salvage and parked-car shoves.

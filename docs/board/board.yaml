@@ -879,10 +879,10 @@ tasks:
     lane: UI
     size: M
     needs: [ART-C, FOOT-01, FOOT-04, PRG-02]
-    status: integrated
+    status: building
     flag: wasteland2
     behavior_change: yes
-    note: "Eight rank-gated crew with per-player selection, Rook health and Wren sprint perks, and distinct pooled figure colors/silhouettes integrated at 68bbb8a. Future perks and signature gear are labelled. Focused three-case check, private Armory/Garage/race browser scene and build passed."
+    note: "Roster, per-player selection, pooled figures and five current-mechanic perks are integrated at 68bbb8a, ce12e38 and 0154121. Jax boarding, Cinder fire immunity, Wren crate reach and Tusk shove await their mechanics, so the full card remains building. Four focused cases, one private Armory/Garage/race scene and build passed."
     spec: "SPEC.md sections 3.5 and 12.2, task CREW-01"
   - id: RAID-01
     title: "Seeded roadside ambush zones"
