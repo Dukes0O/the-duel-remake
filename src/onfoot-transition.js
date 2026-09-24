@@ -2,6 +2,7 @@ import {combatArmorEnabled, completeCombatRecovery} from './combat-armor.js';
 import {createFighter, damageFighter, FIGHTER_STEP_SECONDS,
   stepFighter} from './onfoot.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {strikeFighterFromVehicles} from './onfoot-race.js';
 
 const T = COMBAT_TUNING.foot;
 
@@ -153,6 +154,7 @@ export function stepParkedRace(duel, dt) {
   duel._traffic(dt);
   for (const opponent of state.opponents) duel._rival(dt, opponent);
   duel._collisions();
+  strikeFighterFromVehicles(duel);
   duel._crushProps(state);
   duel._police(dt);
   if (state.status !== 'racing') return;

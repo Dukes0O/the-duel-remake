@@ -7,6 +7,7 @@ import { vehicleContactEnvelope, planNpcYield } from './npc-yielding.js';
 import { clamp, freshDamageZones } from './sim-common.js';
 import {completeCombatRecovery} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {trafficSpeedNearFighter, opponentFighterIntent} from './onfoot-race.js';
 
 export function _npcYield(actor, targetMph, plannedHeading = actor.headingError || 0) {
   const player = this.state, playerSpec = this._vehicleSpec(player), actorSpec = this._vehicleSpec(actor);
@@ -54,7 +55,8 @@ export function _traffic(dt) {
     c.prevLateral = c.lateral;
     c.prevAirHeight = c.airHeight || 0;
     c.cruiseSpeedMph ??= Math.max(0, c.speedMph);
-    const yieldPlan = this._npcYield(c, c.cruiseSpeedMph);
+    const fighterPace = trafficSpeedNearFighter(this, c, c.cruiseSpeedMph);
+    const yieldPlan = this._npcYield(c, fighterPace);
     c.braking = c.speedMph > yieldPlan.targetMph;
     c.speedMph += clamp(yieldPlan.targetMph - c.speedMph, -yieldPlan.braking * dt, 18 * dt);
     if (Number.isFinite(c.lateral)) {
@@ -174,6 +176,7 @@ export function _rival(dt, opponent = this.state.rival) {
   const ramGap = this.relativeS(s.s, r.s) - r.s;
   const ramAttack = this.featureFlags?.enabled('wasteland2') === true &&
     s.mode === 'wasteland' && s.cpuDifficulty !== 'easy' &&
+    !s.onFoot &&
     !s.combatWrecking && r.ramRecoverySec <= 0 &&
     ramGap > COMBAT_TUNING.cpu.ramMinimumGap &&
     ramGap < COMBAT_TUNING.cpu.ramApproachDistance &&
@@ -186,9 +189,15 @@ export function _rival(dt, opponent = this.state.rival) {
     target = Math.max(target, Math.min(car.topSpeed,
       s.speedMph + COMBAT_TUNING.cpu.ramSpeedMarginMph));
   }
-  const plannedHeading = ramAttack ? clamp((lane - r.lateral) * .095, -.55, .55)
+  const fighterIntent = opponentFighterIntent(this, r, target, lane);
+  if (fighterIntent) {
+    lane = fighterIntent.lane;
+    target = fighterIntent.targetMph;
+  }
+  const deliberateAttack = ramAttack || fighterIntent?.attack;
+  const plannedHeading = deliberateAttack ? clamp((lane - r.lateral) * .095, -.55, .55)
     : route?.headingTarget ?? clamp((lane - r.lateral) * .095, -.55, .55);
-  const yieldPlan = ramAttack
+  const yieldPlan = deliberateAttack
     ? {yielding:false,targetMph:Math.max(0,target),braking:DRIVE.brakeAccel}
     : this._npcYield(r, Math.max(0, target), plannedHeading);
   target = yieldPlan.targetMph;
