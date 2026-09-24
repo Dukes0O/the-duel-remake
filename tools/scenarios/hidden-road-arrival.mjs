@@ -70,7 +70,13 @@ function installCapture(round,quality) {
       if(j.phase===lastPhase&&j.phaseElapsedSec-lastTime<interval)return;
       if(j.phase==='arrived'&&j.phaseElapsedSec>1.6)return;
       if(!['opening','entering','arrived'].includes(j.phase))return;
-      lastPhase=j.phase;lastTime=j.phaseElapsedSec;thumb.getContext('2d').drawImage(canvas,0,0,480,270);
+      lastPhase=j.phase;lastTime=j.phaseElapsedSec;
+      // The WebGL drawing buffer is discarded after presentation. Read in the
+      // same task as this production draw; timing samples run after recording.
+      window.__render.renderFrame();thumb.getContext('2d').drawImage(canvas,0,0,480,270);
+      const pixels=thumb.getContext('2d').getImageData(0,0,480,270).data;
+      let visible=0;for(let p=3;p<pixels.length;p+=4)if(pixels[p])visible++;
+      if(visible<1000)throw Error('Motion thumbnail is blank');
       const cam=window.__render.camera,gate=app.duel.course.hiddenRoad.poseAt(app.duel.course.hiddenRoad.length);
       const dx=cam.position.x-gate.x,dz=cam.position.z-gate.z,c=Math.cos(gate.heading),s=Math.sin(gate.heading);
       const local={x:dx*c-dz*s,y:cam.position.y-gate.y,z:dx*s+dz*c};
@@ -226,7 +232,7 @@ async function runMotionSupplement(context,round) {
   await context.evaluate(`(()=>{const q=window.__arrivalQa,a=window.__qaApp;q.place(149.9,35);q.advance(.1);q.place(a.duel.course.hiddenRoad.length-59.5,45);a.start();})()`);
   await context.waitFor('window.__qaApp.duel.state.hiddenRoadJourney.choiceReady','supplement gate choice',20000);
   await click(context,'Enter the Wasteland');
-  await context.waitFor("window.__qaApp.duel.state.hiddenRoadJourney.phase==='arrived'&&window.__qaApp.duel.state.hiddenRoadJourney.phaseElapsedSec>1.45",'supplement inside orbit',10000);
+  await context.waitFor("window.__qaApp.duel.state.hiddenRoadJourney.phase==='arrived'&&window.__qaApp.duel.state.hiddenRoadJourney.phaseElapsedSec>1.65",'supplement inside orbit',10000);
   const recording=await context.evaluate('window.__arrivalQa.finish()');
   if(!recording.videoBase64||recording.motionFrames.length<8)throw Error('Continuous motion evidence missing');
   const video=Buffer.from(recording.videoBase64,'base64');
@@ -247,8 +253,31 @@ async function runMotionSupplement(context,round) {
   console.log('Bounded R2 motion and settled legacy supplement retained.');
 }
 
+async function runCostRefinement(context,round){
+  await runMotionSupplement(context,round);
+  const directory=join(ROOT,`docs/board/looks/hidden-road-arrival/round-${round}`),results={
+    commit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),
+    audioReuse:'Round 2 audio source and assets are unchanged; reuse its PCM/plots, with no new listening claim.',captures:[]};
+  for(const quality of ['high','performance']){
+    await context.navigate('/tools/menu-check.html?flags=hidden-road');
+    await context.waitFor('!!window.__qaApp?.visualReady&&!!window.__render','cost refinement UI',60000);
+    await context.evaluate(`(()=>{const a=window.__qaApp;a.setGraphicsQuality(${JSON.stringify(quality)});a.startCampaign({mode:'duel',startStage:0,seed:1989,car:'falcone_f42',difficulty:'casual'});a.stop();a.audio.setMuted(true);Object.assign(a.duel.state,{status:'racing',paused:false,countdown:0,traffic:[],opponents:[],rival:null});document.querySelectorAll('details').forEach(n=>n.style.display='none');a.onFrame?.(a.duel.state);window.__render.renderFrame();})()`);
+    await context.waitFor(READY,'cost refinement gate asset',60000);
+    await context.evaluate(`(()=>{const a=window.__qaApp,d=a.duel,s=d.state;const place=(progress,speed)=>{const p=d.course.hiddenRoad.poseAt(progress);Object.assign(s,{s:p.s,prevS:p.s,lateral:p.lateral,prevLateral:p.lateral,speedMph:speed,headingError:p.heading-d.course.at(p.s).heading,groundHeight:p.y,yawVelocity:0,airHeight:0,airborne:false,pushVelocity:0});d.setInput({throttle:0,brake:0,steer:0});};place(149.9,35);for(let i=0;i<12;i++)d.step(1/120);place(d.course.hiddenRoad.length-59.5,45);let i=0;while(!(s.hiddenRoadJourney.phase==='opening'&&s.hiddenRoadJourney.phaseElapsedSec>.75)&&i++<1600)d.step(1/120);if(i>=1600)throw Error('Opening cost fixture failed');window.__arrivalQa={costSnapshot:structuredClone(s)};a.onFrame?.(s,0);window.__render.renderFrame();})()`);
+    const shot=await context.screenshot(`${quality}-opening-refined`),bytes=await readFile(shot);
+    await writeFile(join(directory,`${quality}-opening-refined.png`),bytes);results.captures.push({name:`${quality}-opening-refined`,path:`docs/board/looks/hidden-road-arrival/round-${round}/${quality}-opening-refined.png`,sha256:sha(bytes)});
+    results[quality]=await context.evaluate(`(${presentationCost.toString()})()`);
+  }
+  await writeFile(join(directory,'cost-and-captures.json'),JSON.stringify(results,null,2)+'\n');
+  const rows=await Promise.all(results.captures.map(async row=>({label:row.name,data:'data:image/png;base64,'+(await readFile(join(ROOT,row.path))).toString('base64')})));
+  rows.push({label:'Legacy Mad Max — actual spur camera',data:'data:image/png;base64,'+(await readFile(join(directory,'motion-supplement/legacy-mad-max-departure-settled.png'))).toString('base64')});
+  await imageSheet(context,rows,join(ROOT,`docs/board/looks/hidden-road-arrival/round-${round}.png`),3,480,270,'Arrival refinement · actual presentation and spur camera');
+  console.log(`Bounded round ${round} presentation/camera refinement retained; round 2 audio reused.`);
+}
+
 export async function run(context) {
   const round=Number(process.env.EGG_ARRIVAL_ROUND||1);
+  if(process.env.EGG_ARRIVAL_COST_ONLY==='1')return runCostRefinement(context,round);
   if(process.env.EGG_ARRIVAL_SUPPLEMENT==='1')return runMotionSupplement(context,round);
   if(![1,2,3,4,5].includes(round))throw Error('Arrival refinement round must be1..5');
   const relative=`docs/board/looks/hidden-road-arrival/round-${round}`,directory=join(ROOT,relative);

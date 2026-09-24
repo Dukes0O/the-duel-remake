@@ -4,7 +4,7 @@ import {createFirstPersonGear} from './first-person-gear.js';
 import * as THREE from 'three';
 import {directionalCameraPose} from './camera-views.js';
 import {onFootCameraPose} from './onfoot-camera.js';
-import {hiddenRoadPresentation} from './hidden-road-ui.js';
+import {hiddenRoadPresentation,hiddenRoadDrivingCamera} from './hidden-road-ui.js';
 import { CARS, DRIVE } from './config.js';
 import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage } from './vehicles.js';
 import { buildEnvironment, worldAtExtended, disposeTree } from './world.js';
@@ -257,6 +257,7 @@ export function attachRenderer(host, app) {
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
     const pp = vehicleGroundPoint(course,distance,lateral);
     const journeyView=hiddenRoadPresentation(st,course,{aspect:camera.aspect});
+    const spurCamera=!menu&&!journeyView.camera?hiddenRoadDrivingCamera(st,course,app.cameraMode||'chase'):null;
     rustwallPresentation?.updateJourney?.(journeyView);
     lighting.apply({course,theme:course.themeAt(distance),mood:app.lightingMood,blend:1-Math.exp(-dt*1.1),tunnel:!!course.tunnelAt(distance)});
     const tall=carKey==='titan_monster';
@@ -311,6 +312,10 @@ export function attachRenderer(host, app) {
       camTarget.set(pose.position.x,pose.position.y,pose.position.z);
       lookTarget.set(pose.target.x,pose.target.y,pose.target.z);
       camera.fov=pose.fov;
+    } else if(spurCamera){
+      camTarget.set(spurCamera.position.x,spurCamera.position.y,spurCamera.position.z);
+      lookTarget.set(spurCamera.target.x,spurCamera.target.y,spurCamera.target.z);
+      camera.fov=THREE.MathUtils.damp(camera.fov,55+Math.min(speed/200,1)*10+(st.boosting?7:0)+impact*7,4,dt);
     } else {
       const mode = app.cameraMode || 'chase';
       const back = mode === 'hood' ? .8 : mode === 'wide' ? -16 : tall?-12:-8.7;
@@ -348,14 +353,14 @@ export function attachRenderer(host, app) {
       firstPersonView=false;
     }
     if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
-    if (!ready || menu || st.onFoot || journeyView.camera) camera.position.copy(camTarget);
+    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera) camera.position.copy(camTarget);
     else {
       camera.position.lerp(camTarget, 1 - Math.exp(-14 * dt));
       // Follow longitudinal motion immediately: world-space damping otherwise
       // adds a speed-dependent camera gap and makes the car shrink at speed.
       camera.position.x = camTarget.x; camera.position.z = camTarget.z;
     }
-    if(!menu&&!journeyView.camera)constrainTunnelCamera(course,camera.position,
+    if(!menu&&!journeyView.camera&&!spurCamera)constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,now/1000);

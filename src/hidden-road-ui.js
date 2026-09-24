@@ -1,19 +1,53 @@
+import {onHiddenRoad} from './hidden-road.js';
+import {directionalCameraPose} from './camera-views.js';
+
 const clamp=value=>Math.max(0,Math.min(1,Number(value)||0));
 const smooth=value=>{const t=clamp(value);return t*t*(3-2*t);};
 const CINEMATIC=new Set(['arriving','opening','choice','entering','arrived']);
+const gatePoses=new WeakMap();
+function gatePose(road){
+  let pose=gatePoses.get(road);
+  if(!pose){pose=road.poseAt(road.length);gatePoses.set(road,pose);}
+  return pose;
+}
+
+/** The spur has its own world-space tangent and floor, even before departure. */
+export function hiddenRoadDrivingCamera(state,course,mode='chase'){
+  if(!['racing','exploring'].includes(state?.status)||state.onFoot||!onHiddenRoad(course,state))return null;
+  const road=course.hiddenRoad,point=course.worldAt(state.s,state.lateral),near=road.nearest(point.x,point.z);
+  const tall=state.car==='titan_monster',heading=point.heading+(state.headingError||0)+(state.slipAngle||0);
+  const sin=Math.sin(heading),cos=Math.cos(heading);
+  const floor=Number.isFinite(state.groundHeight)?state.groundHeight:near.y;
+  const car={x:point.x,y:floor+(state.airHeight||0),z:point.z};
+  let view=directionalCameraPose(mode,car,heading,tall);
+  if(!view){
+    const back=mode==='hood'?.8:mode==='wide'?-16:tall?-12:-8.7;
+    const height=mode==='hood'?(tall?3.2:1.38):mode==='wide'?(tall?7.5:5.6):tall?5.8:3.65;
+    const look=mode==='hood'?42:26;
+    view={position:{x:car.x+sin*back,y:car.y+height,z:car.z+cos*back},
+      target:{x:car.x+sin*look,y:car.y+(tall?1.65:1.05),z:car.z+cos*look}};
+  }
+  // Shorten side/wide views at the inner bank edge. The immutable bank boxes
+  // start 0.2 m inside widthAt; this margin also clears their corner overlap.
+  const camera=view.position,bank=road.nearest(camera.x,camera.z),safe=Math.max(1,road.widthAt(bank.progress)-1.5);
+  if(bank.distance>safe){const scale=safe/bank.distance;camera.x=bank.x+(camera.x-bank.x)*scale;camera.z=bank.z+(camera.z-bank.z)*scale;}
+  const support=course.nearest(camera.x,camera.z,state.s);
+  camera.y=Math.max(camera.y,course.groundAt(support.s,support.lateral).y+.65);
+  return view;
+}
 
 /** Read-only presentation. Repeated or rewound snapshots produce the same view. */
-export function hiddenRoadPresentation(state,course,{aspect=16/9}={}) {
+export function hiddenRoadPresentation(state,course,{aspect=16/9,includeScene=true}={}) {
   const journey=state?.hiddenRoadJourney,road=course?.hiddenRoad;
   const inactive={active:false,phase:null,hudOpacity:1,controlsLocked:false,choiceReady:false,
     gateOpen:0,camera:null,sparks:[],arrivalReady:false};
   if(!road||!journey?.departed||state.status!=='exploring')return inactive;
   const phase=journey.phase,age=Math.max(0,Number(journey.phaseElapsedSec)||0);
-  const gate=road.poseAt(road.length),c=Math.cos(gate.heading),s=Math.sin(gate.heading);
+  const gate=includeScene?gatePose(road):null,c=gate?Math.cos(gate.heading):0,s=gate?Math.sin(gate.heading):0;
   const world=(x,y,z)=>({x:gate.x+x*c+z*s,y:gate.y+y,z:gate.z-x*s+z*c});
   const returning=phase==='turned-back'&&age<.8;
   const narrow=aspect<.85;
-  const camera=CINEMATIC.has(phase)||returning?{
+  const camera=includeScene&&(CINEMATIC.has(phase)||returning)?{
     position:world(narrow?6:8,narrow?3.4:2.2,-30),target:world(0,narrow?2.6:10,narrow?-2:0),fov:64,
     blend:phase==='arriving'?smooth(age/1.25):returning?1-smooth(age/.8):1
   }:null;
@@ -33,7 +67,7 @@ export function hiddenRoadPresentation(state,course,{aspect=16/9}={}) {
     camera.fov=60;
   }
   const gateOpen=clamp(journey.gateOpen),sparks=[];
-  if(phase==='opening'&&!state.paused&&gateOpen>0&&gateOpen<1){
+  if(includeScene&&phase==='opening'&&!state.paused&&gateOpen>0&&gateOpen<1){
     for(let i=0;i<24;i++){
       const life=(age*2.6+i*.137)%1,side=i%2?-1:1;
       const point=world(side*(4.7+life*(.35+.17*Math.sin(i*4.3))),
@@ -81,7 +115,7 @@ export function createHiddenRoadUi({host,onChoose,onMenu}) {
     update(state,course){
       if(disposed)return;
       const previousPhase=view?.phase;
-      view=hiddenRoadPresentation(state,course);
+      view=hiddenRoadPresentation(state,course,{includeScene:false});
       const visible=(view.choiceReady||view.arrivalReady)&&!state.paused;
       set(section,'hidden',!visible);
       for(const button of [enter,back]){set(button,'hidden',!view.choiceReady);set(button,'disabled',!view.choiceReady);}
