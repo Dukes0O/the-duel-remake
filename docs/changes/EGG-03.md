@@ -334,3 +334,24 @@ The lane is ready for its required clean-commit tests and build. Hidden-road
 remains in dev because separate Rustwall/wash fidelity debt persists. The
 Performance render-only CPU increase and other measurement limits above remain
 part of the evidence. This approval grants no beta promotion, merge or release.
+## Required lane gate: reviewed presentation assertion correction
+
+The first required lane gate on clean `624393ace39ff45bf1b6372efa0fef2745623ad0`
+finished with 211 passed, 1 failed and 17 not run in 291.89 seconds. Its retained
+log is `.qa-dist/egg03-final-lane.log`. The only failure was the older
+`test-scene-presentation.mjs` assertion requiring the renderer's moving condition
+to be exactly racing and unpaused. EGG-03 intentionally also presents unpaused
+exploration. The four Hidden Road suites passed in that gate; no build was run
+after its failure.
+
+The Director approved replacing only this obsolete status assertion. The new
+check extracts the actual production condition and evaluates nine statuses in
+both paused states. Only unpaused racing and exploring may train presentation;
+menu, countdown, ticket, stage_result, gameover, complete, unknown and all paused
+states must be excluded. Adjacent adaptive-resolution and lifecycle assertions
+are unchanged. This checks the approved expanded behavior without dropping the
+paused or inactive-state controls. No runtime or fingerprint changed.
+
+The focused scene-presentation suite passed in 0.146 seconds. The Director
+reviewed this exact truth-table diff and authorized the required clean lane/build
+rerun. The failed log will remain intact; rerun evidence uses new filenames.
