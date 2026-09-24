@@ -12,20 +12,32 @@ import sys
 import time
 from pathlib import Path
 
+p = argparse.ArgumentParser()
+p.add_argument('--root', required=True)
+p.add_argument('--round', type=int, required=True)
+p.add_argument('--skip-renders', action='store_true')
+p.add_argument('--paths-only', action='store_true')
+args = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
+root = Path(args.root).resolve()
+out = root / 'public/assets/models/wasteland/rustwall'
+blend_dir = root / 'art-build/rustwall'
+def glb_path(kind):
+    return out / f'{kind}.glb'
+def blend_path(kind):
+    return blend_dir / f'{kind}.blend'
+if args.paths_only:
+    print(json.dumps({'blend': [str(blend_path(kind)) for kind in ('wall', 'wash')],
+                      'glb': [str(glb_path(kind)) for kind in ('wall', 'wash')]}))
+    sys.exit(0)
+
 import bpy
 import bmesh
 import numpy as np
 from mathutils import Vector
 
-p = argparse.ArgumentParser()
-p.add_argument('--root', required=True)
-p.add_argument('--round', type=int, required=True)
-p.add_argument('--skip-renders', action='store_true')
-args = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
-root = Path(args.root).resolve()
-out = root / 'public/assets/models/wasteland/rustwall'
 shots = root / f'docs/board/looks/rustwall/round-{args.round}'
 out.mkdir(parents=True, exist_ok=True)
+blend_dir.mkdir(parents=True, exist_ok=True)
 shots.mkdir(parents=True, exist_ok=True)
 started = time.perf_counter()
 
@@ -496,9 +508,9 @@ def export(objects,kind):
     bpy.ops.object.select_all(action='DESELECT')
     for obj in objects:obj.select_set(True)
     bpy.context.view_layer.objects.active=objects[0]
-    bpy.ops.export_scene.gltf(filepath=str(out/f'{kind}.glb'),export_format='GLB',use_selection=True,
+    bpy.ops.export_scene.gltf(filepath=str(glb_path(kind)),export_format='GLB',use_selection=True,
         export_yup=True,export_animations=False,export_materials='EXPORT',export_extras=True)
-    bpy.ops.wm.save_as_mainfile(filepath=str(out/f'{kind}.blend'))
+    bpy.ops.wm.save_as_mainfile(filepath=str(blend_path(kind)))
 
 
 def stage():
@@ -538,7 +550,7 @@ for kind,builder in [('wall',wall),('wash',wash)]:
         assert budgets[kind]['triangles']<=60000 and budgets[kind]['materialDraws']<=24,budgets[kind]
     else:assert budgets[kind]['triangles']==144
     export(objects,kind)
-    assets[kind]=dict(path=f'public/assets/models/wasteland/rustwall/{kind}.glb',sha256=digest(out/f'{kind}.glb'))
+    assets[kind]=dict(path=glb_path(kind).relative_to(root).as_posix(),sha256=digest(glb_path(kind)))
     if args.skip_renders:continue
     camera=stage()
     for capture in captures:

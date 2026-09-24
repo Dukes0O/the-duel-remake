@@ -72,7 +72,7 @@ No system install was made.
 Retained source and runtime files:
 
 - `tools/build-course-landmarks.py`: reproducible native Blender authoring and export.
-- `public/assets/models/course-landmarks.blend`: six named editable collections.
+- `art-build/course-landmarks.blend`: rebuildable local output with six named editable collections, excluded from Git and the game build.
 - `src/generated/course-landmarks.json`: evaluated, bevelled, material-batched triangles.
 - `src/course-landmarks.js`: runtime placement and materials, using those exact meshes.
 - `src/course-set-pieces.js`: small collision/placement contract, without importing the mesh data into physics.

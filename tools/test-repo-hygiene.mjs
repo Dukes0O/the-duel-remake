@@ -58,8 +58,7 @@ export function inspectRepository(root = PROJECT_ROOT, files = projectFiles(root
     if (!name.includes('/') && !ROOT_FILES.has(name)) failures.push(`${name}: unexpected repository-root file`);
     if (name.startsWith('.evidence/') || name.startsWith('art-build/') || name.startsWith('.qa-dist/'))
       failures.push(`${name}: generated or review output must stay out of Git`);
-    if (name.startsWith('public/') && (SOURCE_ASSETS.has(extension) || ['.mp4', '.webm'].includes(extension)) &&
-      name !== 'public/assets/models/course-landmarks.blend')
+    if (name.startsWith('public/') && (SOURCE_ASSETS.has(extension) || ['.mp4', '.webm'].includes(extension)))
       failures.push(`${name}: source or review asset is in the runtime public folder`);
     const roundSheet = extension === '.jpg' && /^docs\/board\/looks\/[^/]+\/round-\d+\.jpg$/.test(name);
     if (!name.startsWith('public/') && !roundSheet && (RAW_EVIDENCE.has(extension) || IMAGE_EVIDENCE.has(extension)))

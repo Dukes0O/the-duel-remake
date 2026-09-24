@@ -12,20 +12,34 @@ import sys
 import time
 from pathlib import Path
 
-import bpy
-import numpy as np
-from mathutils import Vector
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--crew', default='all')
 parser.add_argument('--round', type=int, default=1)
 parser.add_argument('--skip-renders', action='store_true')
+parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/crew'
+blend_dir = root / 'art-build/crew'
+crew_names = ('rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk')
+selected_names = [name for name in crew_names if args.crew in ('all', name)]
+def glb_path(name):
+    return out / f'{name}.glb'
+def blend_path(name):
+    return blend_dir / f'{name}.blend'
+if args.paths_only:
+    print(json.dumps({'blend': [str(blend_path(name)) for name in selected_names],
+                      'glb': [str(glb_path(name)) for name in selected_names]}))
+    sys.exit(0)
+
+import bpy
+import numpy as np
+from mathutils import Vector
+
 shots = root / f'docs/board/looks/crew/round-{args.round}'
 out.mkdir(parents=True, exist_ok=True)
+blend_dir.mkdir(parents=True, exist_ok=True)
 shots.mkdir(parents=True, exist_ok=True)
 bpy.context.preferences.filepaths.save_version = 0
 
@@ -705,7 +719,7 @@ def build(name, cfg):
     bpy.ops.object.select_all(action='DESELECT')
     for obj in [rig,body,far]:obj.select_set(True)
     bpy.context.view_layer.objects.active=rig
-    bpy.ops.export_scene.gltf(filepath=str(out/f'{name}.glb'),export_format='GLB',
+    bpy.ops.export_scene.gltf(filepath=str(glb_path(name)),export_format='GLB',
         use_selection=True,export_yup=True,export_animations=True,
         export_animation_mode='NLA_TRACKS',export_force_sampling=True,
         export_skins=True,export_materials='EXPORT',export_extras=True)
@@ -725,7 +739,7 @@ def build(name, cfg):
         light=bpy.context.object;light.name=label;light.data.energy=energy;light.data.size=size
         light.rotation_euler=(Vector((0,0,1))-light.location).to_track_quat('-Z','Y').to_euler()
     rig.animation_data.action=actions['idle'];scene.frame_set(7)
-    bpy.ops.wm.save_as_mainfile(filepath=str(out/f'{name}.blend'))
+    bpy.ops.wm.save_as_mainfile(filepath=str(blend_path(name)))
     captures=[]
     if not args.skip_renders:
         for view,yaw in [('front',0),('side',-math.pi/2 if name=='tusk' else math.pi/2),('back',math.pi)]:
@@ -753,7 +767,7 @@ def build(name, cfg):
     rig.animation_data.action=actions['idle'];scene.frame_set(7)
     camera.location=(0,-5,.96)
     camera.rotation_euler=(Vector((0,0,.96))-camera.location).to_track_quat('-Z','Y').to_euler()
-    bpy.ops.wm.save_as_mainfile(filepath=str(out/f'{name}.blend'))
+    bpy.ops.wm.save_as_mainfile(filepath=str(blend_path(name)))
     counts={}
     for level,mesh in [('near',body),('far',far)]:
         mesh.data.calc_loop_triangles();counts[level]=len(mesh.data.loop_triangles)
@@ -763,7 +777,7 @@ def build(name, cfg):
         reference=dict(path=source.relative_to(root).as_posix(),sha256=digest(source),crops=crops,
         process='Bilinear three-view crop atlas; deterministic horizontal neutral-background edge extension. Originals untouched.'),
         camera=dict(position=[0,.96,5],target=[0,.96,0],verticalFov=28,width=432,height=576,distanceMetres=5),
-        files={p.name:digest(p) for p in [out/f'{name}.glb',out/f'{name}.blend',out/f'{name}-color.png',out/f'{name}-surface.png']},
+        files={p.name:digest(p) for p in [glb_path(name),blend_path(name),out/f'{name}-color.png',out/f'{name}-surface.png']},
         captures=captures,groundSupportSamples=ground_samples)
     (shots/f'blender-{name}.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print('CREW_ASSET '+json.dumps(dict(crew=name,triangles=counts,seconds=report['seconds'])))
@@ -771,8 +785,8 @@ def build(name, cfg):
 
 
 reports=[]
-for crew,cfg in CREW.items():
-    if args.crew in ['all',crew]:reports.append(build(crew,cfg))
+for crew in selected_names:
+    reports.append(build(crew, CREW[crew]))
 (shots/'blender-manifest.json').write_text(json.dumps(dict(round=args.round,
     command='blender -b --python tools/blender/crew-fighters.py -- --root REPO --round '+str(args.round),
     scriptSha256=digest(Path(__file__)),assets=reports),indent=2)+'\n',encoding='utf-8')
