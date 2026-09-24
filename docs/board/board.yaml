@@ -753,6 +753,14 @@ tasks:
     size: M
     needs: [FOOT-01]
     status: building
+    owns: [tools/scenarios/weapon-audio.mjs, tools/test-weapon-audio-waveforms.mjs, tools/weapon-audio-waveforms.mjs, docs/changes/AUD-02-current-actions.md]
+    helpers: [test_author, test_runner, reviewer, audio_qa]
+    active_slice: "Verify the eight implemented foot and raider cues in real Web Audio."
+    acceptance:
+      - "The private memory-only waveform scenario retains its four car-weapon checks and records eight named stereo WAVs for RPG launch, direct impact, splash impact, wrench start/completion/interruption, raider warning and shot."
+      - "Finite, audible, unclipped and bounded-duration signals are measured; spatial impacts and raider shots audibly favor the expected channel. Silence, clipping and missing cues fail."
+      - "Capture summary names the tested source commit. Direct offline cue calls do not claim live routing or full-race mix coverage. Existing production event-routing tests still pass."
+      - "Audio QA and independent review inspect the measurements and limits; full AUD-02 stays open for future cues and whole-race listening."
     note: "Existing on-foot RPG and wrench actions plus roadside raiders have distinct short cues at 6898579. Focused audio/weapon/raider checks and build passed. Future weapon cues and a full-race mix/listening check remain open."
     spec: "SPEC.md, task AUD-02"
   - id: VIS-01
