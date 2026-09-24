@@ -107,3 +107,43 @@ No browser, lane/build gate or balance matrix was run in this slice. The
 Director reserved the broad gate slot for GFX-01. Flag-off/on balance reports,
 the required lane/build gate and integration review remain before merge.
 All checks used isolated lane state without live port 5174 or real saves.
+
+## Reviewed defensive AI strategy
+
+After the initial source author completed `9c519fd`, the Director rejected
+automatic racing use of every safely collected charge. A bounded comparison
+of 40 Medium no-weapon races against pinned integration `1900297` showed
+flag-off wins falling from 6 to 4 (seeds 1989 and 1995), and flagged wins
+falling from 5 to 4 (seed 1992). All three changed-win activations began more
+than 12 m behind the player, so a minimum 12 m deficit rule would not prevent
+those regressions. Full per-seed evidence is retained in
+`.qa-dist/cpu-ufo-medium-before-after.json` and its adjacent summary.
+
+The approved strategy keeps the safe direct CPU firing API intact but makes
+AI use defensive: spend a collected charge only when the existing
+`incomingBolt` helper recognizes an incoming player crossbow. The existing
+reaction delay, vision cone, vertical/closing checks and shield rejection
+remain authoritative. A no-weapon opponent therefore does not grant the CPU
+a free racing boost. No numeric tuning or balance target was relaxed.
+
+Independent test commit `febfe5e` changes only the two AI decision groups in
+`test-cpu-ufo.mjs`, each exercised with the flag off and on. Their former
+immediate-jump expectation is replaced with stronger requirements:
+
+- Hold the collected charge and position without a threat.
+- Ignore enemy bolts, other weapons, unrecognized young bolts, rear-cone
+  shots, high shots, receding shots, lateral misses and threats while shielded.
+- Use the charge exactly once for a recognized incoming player bolt, without
+  consuming/resetting scheduled attacks or inventing a projectile.
+- All three rivals first hold, then defend once, with equal common-time
+  outcomes at 30/60/144 FPS.
+
+The direct firing API, physical pickup, safety, history and player-control
+groups remain unchanged. Red proof against the automatic-use implementation:
+**37 groups, 33 passed, 4 failed**, 3.79 s. All four failures were the newly
+required hold-without-threat behavior; no other check regressed.
+
+The Director implemented the narrow existing-helper guard in `f8b5b06` after
+that red-test commit. This note records the independent assertion rationale;
+subsequent green checks and the required merge gate are recorded separately
+by the Director. The test author made no production edits or extra reports.
