@@ -126,7 +126,7 @@ export async function run(context) {
 async function setup(context,quality) {
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
   await context.navigate('/tools/menu-check.html?flags=wasteland2');
-  await context.waitFor('window.__qaApp?.visualReady && window.__render','private first-person menu',60000);
+  await context.waitFor('!!window.__qaApp?.visualReady && !!window.__render','private first-person menu',60000);
   await context.evaluate(`(() => {
     if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value || !window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only storage missing');
     const select=document.querySelector('#graphics-quality');select.value=${JSON.stringify(quality)};select.dispatchEvent(new Event('change',{bubbles:true}));
