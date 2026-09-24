@@ -4,6 +4,7 @@ import { createArmorKitMeshes } from './armor-kit-meshes.js';
 import { createRiggedFighterFigures } from './rigged-fighter.js';
 import { createRaiderMarkers } from './raider-markers.js';
 import { createSalvageMarkers } from './salvage-markers.js';
+import {COMBAT_TUNING} from './wasteland-tuning.js';
 
 // Reusable effects geometry; the flagged fighter pool is prepared on asset load.
 export function createCombatScene(attachments = createVehicleAttachmentRegistry(), {loadFighterAsset} = {}){
@@ -130,31 +131,44 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   }
  }
  const fighterRoster = new Array(12).fill(null);
- const localFighterEntry = {fighter:null, local:true};
+ const localFighterEntry = {fighter:null, local:true, input:null, weapons:null, presentation:null};
+ const raiderEntries = Array.from({length:12}, () => ({fighter:null,
+  knockdownDuration:COMBAT_TUNING.raider.knockdownSeconds}));
  const fighterOptions = {active:false, enabled:false, time:0};
  function update(duel, vehicles = {}, useAtlas = false){
   const s = duel.state, c = s.combat;
   const active = !!c && s.status !== 'menu';
   group.visible = active;
+  const departed = s.footPresentation;
+  const showDeparted = !s.onFoot && departed &&
+   s.stageTimeSec >= departed.presentation.startedAt &&
+   s.stageTimeSec < departed.presentation.startedAt + departed.presentation.duration;
   const showFighter=active&&s.mode==='wasteland'&&
-   duel.featureFlags?.enabled('wasteland2')&&s.onFoot&&!!s.fighter;
+   duel.featureFlags?.enabled('wasteland2')&&((s.onFoot&&!!s.fighter)||showDeparted);
   let fighterCount = 0;
   const fighterCapacity = showFighter ? 11 : 12;
   if (active && s.raids) {
    for (let zoneIndex = 0; zoneIndex < s.raids.zones.length && fighterCount < fighterCapacity; zoneIndex++) {
     const raiders = s.raids.zones[zoneIndex].raiders;
-    for (let index = 0; index < raiders.length && fighterCount < fighterCapacity; index++)
-     fighterRoster[fighterCount++] = raiders[index];
+    for (let index = 0; index < raiders.length && fighterCount < fighterCapacity; index++) {
+     const entry = raiderEntries[fighterCount];
+     entry.fighter = raiders[index];
+     fighterRoster[fighterCount++] = entry;
+    }
    }
   }
   if (showFighter) {
-   localFighterEntry.fighter = s.fighter;
+   localFighterEntry.fighter = showDeparted ? departed.fighter : s.fighter;
+   localFighterEntry.presentation = showDeparted ? departed.presentation : s.fighter.presentation;
+   localFighterEntry.input = s.fighterInput;
+   localFighterEntry.weapons = showDeparted ? null : s.footWeapons;
    fighterRoster[fighterCount++] = localFighterEntry;
   }
   for (let index = fighterCount; index < fighterRoster.length; index++) fighterRoster[index] = null;
   fighterOptions.active = fighterCount > 0;
   fighterOptions.enabled = s.mode === 'wasteland' && !!duel.featureFlags?.enabled('wasteland2');
   fighterOptions.time = s.stageTimeSec ?? 0;
+  fighterOptions.cameraPosition = vehicles.camera?.position || null;
   onFootFigures.update(fighterRoster, fighterOptions);
   raiderMarkers.update(duel);
   salvageMarkers.update(duel);

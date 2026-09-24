@@ -22,10 +22,12 @@ export function initializeFootTransition(duel) {
     delete state.fighter;
     delete state.fighterInput;
     delete state.footTransition;
+    delete state.footPresentation;
     return;
   }
   state.onFoot = false;
   state.fighter = null;
+  state.footPresentation = null;
   state.fighterInput = {};
   state.input.interact = false;
   state.footTransition = {heldSeconds: 0, needsRelease: false,
@@ -49,9 +51,12 @@ function stepFighterInFixedTime(duel, dt) {
       fighter.bailTumbleSeconds = Math.max(0,
         fighter.bailTumbleSeconds - FIGHTER_STEP_SECONDS);
     }
+    const previousRespawns = fighter.respawns;
     stepFighter(duel.course, state, fighter,
       fighter.bailTumbleSeconds > 0 ? {} : state.fighterInput,
       FIGHTER_STEP_SECONDS);
+    if (fighter.respawns !== previousRespawns) fighter.presentation = {
+      clip: 'get-up', startedAt: state.stageTimeSec, duration: .8};
     stepFootWeapons(duel, FIGHTER_STEP_SECONDS);
     state.fighterInput.lookX = state.fighterInput.lookY = 0;
     transition.fighterStepRemainder = Math.max(0,
@@ -80,6 +85,11 @@ export function stepFootTransition(duel, dt) {
     }
     transition.heldSeconds += dt;
     if (transition.heldSeconds + 1e-9 < T.reentryHoldSeconds) return true;
+    const departing = state.fighter;
+    state.footPresentation = {fighter: {crewId: departing.crewId,
+      x: departing.x, y: departing.y, z: departing.z, yaw: departing.yaw},
+      presentation: {clip: 'enter', startedAt: state.stageTimeSec, duration: .65,
+        pose: {x: departing.x, y: departing.y, z: departing.z, yaw: departing.yaw}}};
     state.onFoot = false;
     state.fighter = null;
     state.fighterInput = {};
@@ -116,6 +126,9 @@ export function stepFootTransition(duel, dt) {
     damageFighter(fighter, T.bailHealthLoss);
     fighter.bailTumbleSeconds = T.bailTumbleSeconds;
   } else fighter.bailTumbleSeconds = 0;
+  fighter.presentation = {clip: 'exit', startedAt: state.stageTimeSec,
+    duration: bailout ? T.bailTumbleSeconds : .65, bailout};
+  state.footPresentation = null;
   state.fighter = fighter;
   state.onFoot = true;
   state.fighterInput = {};

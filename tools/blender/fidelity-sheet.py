@@ -1,6 +1,7 @@
 """Compose recorded evidence only. No new dependencies; Blender supplies NumPy."""
 import argparse
 import json
+import hashlib
 import struct
 import sys
 import zlib
@@ -15,6 +16,11 @@ parser.add_argument('--output',required=True)
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
 root=Path(args.root)
 manifest=json.loads(Path(args.manifest).read_text())
+for path, expected in manifest.get('sources', {}).items():
+    if hashlib.sha256((root/path).read_bytes()).hexdigest() != expected:
+        raise ValueError('Evidence source changed: ' + path)
+if manifest.get('round') and Path(args.output).exists():
+    raise ValueError('Fidelity round PNG is immutable')
 tile_w,tile_h=256,320
 header,row_label=48,28
 width=tile_w*4
@@ -74,6 +80,8 @@ def picture(path,crop=None):
     bpy.data.images.remove(image)
     if crop:
         left,top,right,bottom=crop
+        if not (0 <= left < right <= w and 0 <= top < bottom <= h):
+            raise ValueError('Reference crop leaves the source image')
         image_data=image_data[top:bottom,left:right]
     h,w=image_data.shape[:2]
     scale=min(tile_w/w,tile_h/h)
@@ -87,7 +95,7 @@ for column,name in enumerate(['Reference','Blender','High','Performance']):
     label(name,column*tile_w+12,15)
 for index,row in enumerate(manifest['rows']):
     y=header+index*(tile_h+row_label)
-    label(row['clip']+' '+row['view']+' '+str(row['time'])+' S',12,y+7)
+    label((row.get('crew','')+' '+row['clip']+' '+row['view']+' '+str(row['time'])+' S').strip(),12,y+7)
     for column,key in enumerate(['reference','blender','high','performance']):
         image=picture(row[key],row['crop'] if key=='reference' else None)
         h,w=image.shape[:2]
@@ -101,5 +109,6 @@ raw=b''.join(b'\x00'+row.tobytes() for row in canvas)
 png=b'\x89PNG\r\n\x1a\n'
 png+=chunk(b'IHDR',struct.pack('!2I5B',width,height,8,2,0,0,0))
 png+=chunk(b'IDAT',zlib.compress(raw,9))+chunk(b'IEND',b'')
-Path(args.output).write_bytes(png)
+with Path(args.output).open('xb' if manifest.get('round') else 'wb') as output:
+    output.write(png)
 print('Composed recorded PNG evidence:',args.output)

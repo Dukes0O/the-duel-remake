@@ -36,6 +36,14 @@ export async function run(context) {
       'private fighter scene', 60_000);
     await context.evaluate(`(() => {
       if (!Object.getOwnPropertyDescriptor(window,'localStorage')?.value) throw Error('Memory storage missing');
+      // GFX-00 remains a retained single-asset loader control after GFX-01.
+      const originalFetch = window.fetch.bind(window);
+      window.fetch = (input, init) => {
+        const url = typeof input === 'string' ? input : input.url;
+        return /\/assets\/models\/wasteland\/crew\/[^/]+\.glb$/.test(url)
+          ? originalFetch('/assets/models/wasteland/test-fighter.glb', init)
+          : originalFetch(input, init);
+      };
       const select=document.querySelector('#graphics-quality');
       select.value='${quality}';select.dispatchEvent(new Event('change',{bubbles:true}));
       const app=window.__qaApp;
