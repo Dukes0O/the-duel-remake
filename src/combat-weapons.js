@@ -138,6 +138,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   if (!combat || state.mode !== 'wasteland' || state.status !== 'racing' ||
       state.paused || !actor || actor.finished || actor.crushed || actor.combatWrecking ||
       actor.impactTimer > 0 || !WEAPONS[weapon]) return false;
+  if (!enemy && state.onFoot) return false;
   if (!enemy && combat.cooldowns[weapon] > 0) return false;
 
   const at = point(duel, actor);

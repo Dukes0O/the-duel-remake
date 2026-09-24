@@ -75,6 +75,12 @@ export class App {
       if(event.stageLoaded!=null){this._keyboardSteering.reset();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;this._startGhostStage(state);}
       if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);}
       if(event.boundaryReset||event.recovered||event.checkpointReset)this.ghostRecorder?.discontinuity();
+      if(event.fighterExited||event.fighterEntered){
+        this.inputContext=null;
+        this.keys={};
+        this._keyboardSteering.reset();
+        this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,interact:false});
+      }
     });
     this._gamepadButtons = [];
     this.inputContext = null;
@@ -476,14 +482,16 @@ export class App {
 
   // ---- input -----------------------------------------------------------
   activeInputContext() {
-    return this.inputContext ?? (this.duel.state.status === 'menu' ? 'menu' : 'car');
+    return this.inputContext ?? (this.duel.state.status === 'menu' ? 'menu' :
+      this.duel.state.onFoot ? 'foot' : 'car');
   }
   setInputContext(context = null) {
     if (context !== null && !INPUT_CONTEXTS[context]) throw new Error(`Unknown input context: ${context}`);
     this.inputContext = context;
     this.keys = {};
     this._keyboardSteering.reset();
-    this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false });
+    this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false,
+      shiftUp: false, shiftDown: false, interact: false });
   }
   _inputAction(action) {
     if (!action) return;
@@ -501,6 +509,12 @@ export class App {
     const pad = this._readGamepad();
     const context = this.activeInputContext();
     if (st.paused) {this._keyboardSteering.reset();return;}
+    if (context === 'foot') {
+      this._keyboardSteering.reset();
+      this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,
+        interact:heldInput('foot','interact',this.keys)||pad.interact});
+      return;
+    }
     if (context !== 'car') {this._keyboardSteering.reset();return;}
     if (this.autopilot) {this._keyboardSteering.reset();this._driveAutopilot(dt);return;}
     const k = this.keys;
@@ -510,6 +524,7 @@ export class App {
       brake: heldInput(context, 'brake', k) ? 1 : pad.brake,
       steer: keyboardSteer || pad.steer,
       boost: heldInput(context, 'boost', k) || pad.boost,
+      interact: heldInput(context, 'interact', k) || pad.interact,
     });
   }
 

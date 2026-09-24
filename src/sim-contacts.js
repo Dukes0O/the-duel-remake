@@ -382,7 +382,8 @@ export function _vehicleContact(a, b, reason) {
   if (!hit) return false;
   const descendingCrush = a === this.state && a.airborne && a._verticalSpeed < -1 && (a.prevAirHeight || 0) > (a.airHeight || 0)
     && canCrushVehicle(this.car, specB, { descending: true });
-  const yieldNormal = a === this.state && !descendingCrush ? npcYieldContactNormal(a, b, hit, start.z) : null;
+  const yieldNormal = a === this.state && !this.state.onFoot && !descendingCrush ?
+    npcYieldContactNormal(a, b, hit, start.z) : null;
   if (yieldNormal) {
     // A late cut-in or numerical overlap is not permission for an NPC to
     // damage/shove the player. Rewind only that NPC to the contact side.

@@ -70,5 +70,8 @@ export const COMBAT_TUNING=Object.freeze({
  },
  scoring:{comboWindowSeconds:5,maximumCombo:5,hitStylePoints:100,
   wreckStylePoints:400},
+ foot:{stepOutBelowKph:40,stepOutHoldSeconds:.4,bailHoldSeconds:1,
+  bailHealthLoss:25,bailTumbleSeconds:.8,reentryRangeMeters:3.5,
+  reentryHoldSeconds:.6,parkedWreckSeconds:3},
  creditBonus:{perHit:10,perWreck:100,maximumBaseFraction:.25},
 });

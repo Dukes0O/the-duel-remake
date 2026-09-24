@@ -64,8 +64,9 @@ function startCombatWreck(duel, actor, source, owner) {
   actor.armor = 0;
   actor.combatWrecking = true;
   recordCombatWreck(duel, actor, owner);
-  actor.combatWreckTimer = T.wreckDuration;
-  actor.impactTimer = T.wreckDuration;
+  actor.combatWreckTimer = player && state.onFoot ?
+    COMBAT_TUNING.foot.parkedWreckSeconds : T.wreckDuration;
+  actor.impactTimer = actor.combatWreckTimer;
   actor.combatWreckSite = {
     s: actor.s, lateral: actor.lateral, headingError: actor.headingError || 0,
   };
@@ -73,13 +74,13 @@ function startCombatWreck(duel, actor, source, owner) {
   actor.pushVelocity = 0;
   actor.boosting = false;
   if (player) {
-    state.impactTimer = state.impactDuration = T.wreckDuration;
+    state.impactTimer = state.impactDuration = actor.combatWreckTimer;
     state.impactStrength = 1;
     state.impactSide = Math.sign(state.lateral) || 1;
     state.crashFlash = T.wreckFlashSeconds;
     state.invulnerableSec = Math.max(state.invulnerableSec,
-      T.wreckDuration + T.recoveryGraceSeconds);
-    duel._callout('WRECKED / RECOVERING', T.wreckDuration);
+      actor.combatWreckTimer + T.recoveryGraceSeconds);
+    duel._callout('WRECKED / RECOVERING', actor.combatWreckTimer);
   }
   const hitPosition = {x: point.x, y: point.y, z: point.z};
   duel.emit({combatWreck: true, victim: player ? 'player' : 'rival',

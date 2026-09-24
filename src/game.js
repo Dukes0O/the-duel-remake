@@ -8,6 +8,8 @@ import * as simResults from './sim-results.js';
 import {normalizeWeapons} from './weapon-upgrades.js';
 import {createCombat,fireWeapon,stepCombat,supportsCombat} from './combat.js';
 import {initializeCombatArmor} from './combat-armor.js';
+import {initializeFootTransition, stepFootTransition,
+  stepParkedRace} from './onfoot-transition.js';
 // Duel owns the simulation state, lifecycle and fixed-step call order. The
 // sim-* modules implement each system against this same instance.
 
@@ -234,6 +236,7 @@ export class Duel {
     s.traffic = this._spawnTraffic(idx);
     s.combat=s.mode==='wasteland'&&supportsCombat(COURSE[idx])?createCombat(s.weaponLevels):null;
     initializeCombatArmor(this);
+    initializeFootTransition(this);
     this.emit({ stageLoaded: idx, countdown: 3 });
   }
 
@@ -282,7 +285,7 @@ export class Duel {
       this._driftHit = false; this._driftReset = false;
     }
 
-    if (s.impactTimer > 0) {
+    if (s.impactTimer > 0 && !s.onFoot) {
       this._impact(dt);
       this._crushProps(s);
       this._traffic(dt);
@@ -293,6 +296,11 @@ export class Duel {
       return; // A crash must play out before a ticket or finish can replace it.
     }
     if (this._deadline(s.checkpointRush ? s.stageTimeSec+s.racePenaltySec-dt : undefined)) return;
+
+    if (stepFootTransition(this, dt)) {
+      stepParkedRace(this, dt);
+      return;
+    }
 
     // each sub-step can end the run (gameover crash, ticket); once the status
     // leaves 'racing' the rest of the frame must not keep simulating, or a
@@ -408,5 +416,18 @@ export class Duel {
       if (Number.isFinite(partial[key])) input[key] = Math.max(key === 'steer' ? -1 : 0, Math.min(1, partial[key]));
     }
     for (const key of ['boost', 'shiftUp', 'shiftDown']) if (partial[key] != null) input[key] = !!partial[key];
+    if (partial.interact != null && this.state.footTransition)
+      input.interact = !!partial.interact;
+  }
+
+  // FOOT-03 supplies walking controls here; the car still owns race progress.
+  setFighterInput(partial = {}) {
+    if (!this.state.onFoot || !this.state.fighter) return false;
+    const input = this.state.fighterInput;
+    for (const key of ['forward', 'back', 'left', 'right', 'sprint', 'jump'])
+      if (partial[key] != null) input[key] = !!partial[key];
+    for (const key of ['lookX', 'lookY'])
+      if (Number.isFinite(partial[key])) input[key] = partial[key];
+    return true;
   }
 }

@@ -16,6 +16,7 @@ const carHeld = Object.freeze({
   steerLeft: Object.freeze(['ArrowLeft']),
   steerRight: Object.freeze(['ArrowRight']),
   boost: Object.freeze(['Space']),
+  interact: Object.freeze(['KeyF']),
 });
 
 // Foot and photo controls are reserved here before those modes are built.
@@ -29,7 +30,8 @@ export const INPUT_CONTEXTS = Object.freeze({
     gamepad: Object.freeze([[9, 'pause'], [2, 'enter-car'], [0, 'jump'], [7, 'fire'], [6, 'aim'],
       [12, 'gear:1'], [15, 'gear:2'], [13, 'gear:3']]),
     held: Object.freeze({ forward: Object.freeze(['KeyW']), back: Object.freeze(['KeyS']),
-      left: Object.freeze(['KeyA']), right: Object.freeze(['KeyD']), sprint: Object.freeze(['ShiftLeft']) }) }),
+      left: Object.freeze(['KeyA']), right: Object.freeze(['KeyD']), sprint: Object.freeze(['ShiftLeft']),
+      interact: Object.freeze(['KeyF']) }) }),
   photo: Object.freeze({ keyboard: Object.freeze({ Escape: 'photo-exit', Space: 'photo-capture',
     ArrowUp: 'photo-forward', ArrowDown: 'photo-back', ArrowLeft: 'photo-left', ArrowRight: 'photo-right' }),
     gamepad: Object.freeze([[1, 'photo-exit'], [0, 'photo-capture']]), held: Object.freeze({}) }),
@@ -56,6 +58,7 @@ export function carGamepadDrive(pad, pressed) {
     brake: pad.buttons[6]?.value || 0,
     steer: Math.abs(axis) < 0.12 ? 0 : Math.sign(axis) * (Math.abs(axis) - 0.12) / 0.88,
     boost: !!pressed[0],
+    interact: !!pressed[2],
   };
 }
 
