@@ -823,3 +823,18 @@ checkout untouched until the final integration commit passes the full gate.
   for independent test preparation; its merge must follow BAL-01.
 - Quota before GFX dispatch: 46 percent remaining. Full tier is due after
   two more task merges or 06:02 UTC, whichever comes first.
+
+## 2026-09-23 PDT — flagged balance measured; Blender build started
+
+- BAL-01 candidate4b50311 passed its thirteen acceptance groups and six-suite
+  lane gate/build. Its full flag-off report passes: wins9/6/2, hits1/3/7,
+  crossbow50 percent, maximum own-bomb slowdown4.53 percent.
+- Flag-on report fails seven gameplay targets: wins2/2/4, enemy hits12/10/9,
+  crossbow69 percent, stock UFO Easy gain4.75 s and max UFO Hard5.27 s.
+  Both complete reports finished all races, in about70 and73 seconds.
+- Independent review proved modern traffic obliteration was missing from
+  wreck totals. Focused regression tests precede that reporting fix. A
+  separate read-only analyst is tracing the gameplay failures before tuning.
+- GFX-00 red suiteed739a3 has twelve expected missing-pipeline failures;
+  unchanged ordinary replay fingerprints pass all162 checks. The Blender
+  builder now implements the owned rig, loader and matched contact sheet.
