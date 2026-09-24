@@ -9,6 +9,7 @@ import {normalizeWeapons} from './weapon-upgrades.js';
 import {normalizeCarLoadout} from './car-loadout.js';
 import {WEAPONS,createCombat,fireWeapon,stepCombat,supportsCombat} from './combat.js';
 import {initializeCombatArmor} from './combat-armor.js';
+import {initializeRaiders, stepRaiders} from './raiders.js';
 import {initializeFootTransition, stepFootTransition,
   stepParkedRace} from './onfoot-transition.js';
 import {validArmorKit} from './armor-kits.js';
@@ -248,6 +249,7 @@ export class Duel {
     s.traffic = this._spawnTraffic(idx);
     s.combat=s.mode==='wasteland'&&supportsCombat(COURSE[idx])?createCombat(s.weaponLevels):null;
     initializeCombatArmor(this);
+    initializeRaiders(this);
     initializeFootTransition(this);
     initializeFootWeapons(this);
     this.emit({ stageLoaded: idx, countdown: 3 });
@@ -288,6 +290,7 @@ export class Duel {
     s.invulnerableSec = Math.max(0, s.invulnerableSec - dt);
     s.damageCooldown = Math.max(0, s.damageCooldown - dt);
     stepCombat(this,dt);
+    stepRaiders(this);
     for (const actor of [...s.opponents, s.police.pursuit, ...s.traffic]) {
       if (actor?.damageCooldown > 0) actor.damageCooldown = Math.max(0, actor.damageCooldown - dt);
     }

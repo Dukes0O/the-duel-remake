@@ -119,13 +119,15 @@ function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
     combatHit: true,
     strength: power,
     enemy,
+    ...(projectile.raid ? {owner: 'raider', raidZone: projectile.raidZone} : {}),
     victim: actor === state ? 'player' : state.opponents.includes(actor) ? 'rival' : 'traffic',
     hitPosition: {x: where.x, y: where.y, z: where.z},
   });
   return applyArmorDamage(duel, actor, projectile.kind === 'rpg'
     ? armorOptions.splash ? 'rpg-splash' : 'rpg-direct'
     : projectile.kind === 'bomb' ? 'bomb' : 'crossbow',
-    {level: projectile.level, ...armorOptions, owner: enemy ? 'cpu' : 'player'});
+    {level: projectile.level, ...armorOptions,
+      owner: projectile.raid ? 'raider' : enemy ? 'cpu' : 'player'});
 }
 
 function sweptApproach(projectile, old, target, radius) {
@@ -225,7 +227,8 @@ export function stepProjectiles(duel, dt) {
     const floor = duel.course.groundAt(nearest.s, nearest.lateral).y;
     let target = null;
     let firstContact = Infinity;
-    for (const actor of projectile.enemy ? [state] : state.opponents) {
+    for (const actor of projectile.raid ? [state, ...state.opponents]
+      : projectile.enemy ? [state] : state.opponents) {
       const at = point(duel, actor);
       const radius = duel._vehicleSpec(actor).halfWidth + T.projectileRadiusPadding;
       let approach;
@@ -328,7 +331,8 @@ export function stepProjectiles(duel, dt) {
       }
     } else if (contact) {
       hit(duel, target, projectile,
-        T.crossbow.power * (1 + projectile.level * T.crossbow.powerPerLevel),
+        projectile.raid ? .32 :
+          T.crossbow.power * (1 + projectile.level * T.crossbow.powerPerLevel),
         projectile.enemy);
     }
   }
