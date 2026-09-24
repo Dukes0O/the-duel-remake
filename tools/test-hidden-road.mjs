@@ -246,7 +246,8 @@ check('corridor travel cannot earn gates or cause missed-gate recovery', () => {
     assert.equal(duel.state.nextLapGate, 1, 'exploration does not earn a racing checkpoint');
     assert.equal(duel.state.completedLaps, 0, 'exploration does not finish a lap');
     assert.equal(duel.state.boundaryResets, 0, 'exploration stays protected along the entire path');
-    assert.equal(duel.state.status, 'racing', 'EGG-01 does not settle or abandon a race');
+    assert.equal(duel.state.status, progress < 150 ? 'racing' : 'exploring',
+      'EGG-03 preserves the return window, then leaves the race after 150 physical corridor metres');
   }
   // If the real corridor projects across a racing gate, drive through that
   // exact projection in production step(), rather than skipping over it with

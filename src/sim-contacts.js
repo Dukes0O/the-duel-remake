@@ -201,12 +201,12 @@ export function _supportAt(distance, lateral, actor = this.state) {
   return ground;
 }
 
-export function _staticContacts(car, player) {
+export function _staticContacts(car, player, journeyColliders = null) {
   if (car.crushed || car.combatWrecking || car.tumble) return;
   const oldS = car.prevS ?? car.s, oldLateral = car.prevLateral ?? car.lateral;
   let start = this.course.worldAt(oldS, oldLateral), end = this.course.worldAt(car.s, car.lateral);
   if (![start.x, start.z, end.x, end.z].every(Number.isFinite)) return;
-  if (car.airborne || car.airHeight > 0 || car.prevAirHeight > 0 || car.groundHeight != null) {
+  if (journeyColliders || car.airborne || car.airHeight > 0 || car.prevAirHeight > 0 || car.groundHeight != null) {
     start.y = (car.prevGroundHeight ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0);
     end.y = (car.groundHeight ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0);
   } else {
@@ -221,7 +221,8 @@ export function _staticContacts(car, player) {
   const capability = player ? offroadCapability(this.car) : null;
   for (let attempt = 0; attempt < 4; attempt++) {
     let first = null;
-    for (const obstacle of obstacles) {
+    for (let index = 0; index < obstacles.length + (journeyColliders?.length || 0); index++) {
+      const obstacle = index < obstacles.length ? obstacles[index] : journeyColliders[index - obstacles.length];
       if (this._brokenSceneryIds?.has(sceneryIdentity(obstacle))) continue;
       if (capability && (obstacle.kind === 'rock' && rockHeight(obstacle) <= capability.rockHeight
         || obstacle.kind === 'mountain' && !obstacle.tunnelCover && this.course.features.mountains?.includes(obstacle))) continue;
@@ -235,7 +236,7 @@ export function _staticContacts(car, player) {
       if (hit && (!first || hit.t < first.t)) first = hit;
     }
     if (!first) break;
-    if (player) this._breakDrift('hit');
+    if (player && !journeyColliders) this._breakDrift('hit');
     const { nx, nz, t, penetration, obstacle } = first;
     const dx = end.x - start.x, dz = end.z - start.z;
     const incoming = Math.max(0, -(Math.sin(travelHeading) * nx + Math.cos(travelHeading) * nz) * (car.speedMph < 0 ? -1 : 1));
@@ -251,11 +252,11 @@ export function _staticContacts(car, player) {
     const normalFraction = Math.max(0, -(velocityX * nx + velocityZ * nz)) / Math.max(.000001, Math.hypot(velocityX, velocityZ));
     const glancingWall = !obstacle.arenaWall && (obstacle.tunnelWall || obstacle.barrier) && normalFraction < GLANCING_WALL_NORMAL_FRACTION - 1e-10;
     const zone = contactZone(nx, nz, heading);
-    if (capability && obstacle.kind === 'rock' && rockHeight(obstacle) > capability.rockHeight && impactMph >= capability.tipSpeed) {
+    if (!journeyColliders && capability && obstacle.kind === 'rock' && rockHeight(obstacle) > capability.rockHeight && impactMph >= capability.tipSpeed) {
       car.s = oldS; car.lateral = oldLateral;
       this._terrainPose(); this._startTumble('oversized_rock'); return;
     }
-    if (this.roadsideKnockAwayEnabled() &&
+    if (!journeyColliders && this.roadsideKnockAwayEnabled() &&
         (player || this.state.opponents.includes(car))) {
       const topSpeedMph = roadsideTopSpeedMph(this, car);
       const roadsideHit = roadsideScenery(obstacle, impactMph, topSpeedMph);
@@ -284,7 +285,7 @@ export function _staticContacts(car, player) {
         continue;
       }
     }
-    if (obstacle.kind === 'tree' && obstacle.theme === 'desert') {
+    if (!journeyColliders && obstacle.kind === 'tree' && obstacle.theme === 'desert') {
       const distance = Math.hypot(dx, dz);
       const fallen = { id: obstacle.id, atTime: this.state.stageTimeSec,
         directionX: distance > .0001 ? dx / distance : -nx,
@@ -299,7 +300,7 @@ export function _staticContacts(car, player) {
       attempt--;
       continue;
     }
-    const broken = breakableScenery(obstacle, impactMph, {
+    const broken = !journeyColliders && breakableScenery(obstacle, impactMph, {
       mode: this.state.mode, enabled: this.destructionEnabled(),
     });
     if (broken) {
@@ -328,6 +329,10 @@ export function _staticContacts(car, player) {
     const road = this._roadPosition(end, car.s);
     if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) { car.s = road.s; car.lateral = road.lateral; }
     car.pushVelocity = (car.pushVelocity || 0) * .25;
+    if (journeyColliders) {
+      car.speedMph *= Math.max(.08, 1 - incoming * .94);
+      continue;
+    }
     const armorContact = combatArmorEnabled(this) &&
       (player || this.state.opponents.includes(car));
     let crashThreshold = 0;

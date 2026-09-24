@@ -21,6 +21,8 @@ import {CREW} from './crew.js';
 import { CARS, DEFAULT_CAR, DIFFICULTY, DEFAULT_DIFFICULTY, CPU_DIFFICULTY, DEFAULT_CPU_DIFFICULTY, COURSE, LIVES, DRIVE, SCORING } from './config.js';
 import { Course } from './course.js';
 import { onHiddenRoad } from './hidden-road.js';
+import {initializeHiddenRoadJourney, checkHiddenRoadDeparture, stepHiddenRoadJourney,
+  queueHiddenRoadChoice, hiddenRoadColliders} from './hidden-road-journey.js';
 import { seedFromUrl } from './rng.js';
 import { createDriftState } from './drift-scoring.js';
 import { DEFAULT_DRIVER, normalizeDriverId, applyDriverModifiers } from './drivers.js';
@@ -253,6 +255,7 @@ export class Duel {
     initializeRaiders(this);
     initializeFootTransition(this);
     initializeFootWeapons(this);
+    initializeHiddenRoadJourney(this);
     this.emit({ stageLoaded: idx, countdown: 3 });
   }
 
@@ -261,6 +264,7 @@ export class Duel {
   // ---- the core step ---------------------------------------------------
   fireWeapon(weapon){return fireWeapon(this,weapon);}
   selectFootGear(slot){return selectFootGear(this,slot);}
+  chooseHiddenRoad(choice) { return queueHiddenRoadChoice(this, choice); }
 
   step(dt) {
     const s = this.state;
@@ -278,11 +282,22 @@ export class Duel {
       else if (Math.ceil(s.countdown) !== beat) this.emit({ countdown: Math.ceil(s.countdown) });
       return;
     }
+    if (checkHiddenRoadDeparture(this) || s.status === 'exploring') {
+      stepHiddenRoadJourney(this, dt);
+      return;
+    }
     if (s.status !== 'racing') {
       if (s.status === 'gameover' && s.impactTimer > 0) this._impact(dt);
       return;
     }
 
+    // Within the actual spur, motion decides departure before race outcomes.
+    // Ordinary and flag-off racing retain their established call order.
+    const droveSpur = !!s.hiddenRoadJourney && !s.onFoot && s.impactTimer <= 0 && onHiddenRoad(this.course, s);
+    if (droveSpur) {
+      this._drive(dt);
+      if (checkHiddenRoadDeparture(this) || s.status !== 'racing') return;
+    }
     s.stageTimeSec += dt;
     if (s.timeLimitSec) s.timeRemaining = Math.max(0, s.timeLimitSec - s.stageTimeSec - s.racePenaltySec);
     s.lapTimeSec = s.stageTimeSec + s.racePenaltySec - s.lapStartedAt;
@@ -323,7 +338,8 @@ export class Duel {
     // each sub-step can end the run (gameover crash, ticket); once the status
     // leaves 'racing' the rest of the frame must not keep simulating, or a
     // finish-line crossing could overwrite the gameover/ticket state
-    this._drive(dt);
+    if (!droveSpur) this._drive(dt);
+    if (checkHiddenRoadDeparture(this)) return;
     if (s.status !== 'racing' || s.impactTimer > 0) { this._tickDrift(dt); return; }
     this._jump(s, dt);
     this._traffic(dt);
@@ -368,7 +384,10 @@ export class Duel {
 
   _rollover(...args) { return simCrash._rollover.apply(this, args); }
 
-  _staticContacts(...args) { return simContacts._staticContacts.apply(this, args); }
+  _staticContacts(car, player) {
+    const colliders = car === this.state ? hiddenRoadColliders(this) : null;
+    return simContacts._staticContacts.call(this, car, player, colliders);
+  }
 
   _vehicleContact(...args) { return simContacts._vehicleContact.apply(this, args); }
 

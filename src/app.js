@@ -71,6 +71,9 @@ export class App {
     this.audio = new EngineAudio();
     this.duel.onChange((state, event) => {
       this.audio.event(event,state,this.duel.course);
+      if (event.hiddenRoadDeparted) this._settleHiddenRoadDeparture(event.hiddenRoadDeparted, state);
+      if (event.hiddenRoadPhase && (state.hiddenRoadJourney?.controlsLocked ||
+          state.hiddenRoadJourney?.phase === 'turned-back')) this._clearHiddenRoadInput();
       if(event.driftBanked||event.driftChainLost)this.driftNotice={type:event.driftBanked?'banked':'lost',...(event.driftBanked||event.driftChainLost),expiresAt:state.stageTimeSec+2};
       if(event.checkpointRushEvent)this.checkpointNotice={...event.checkpointRushEvent,expiresAt:state.stageTimeSec+2.5};
       if(event.ticket)this._settlePoliceTicket(event.ticket,state);
@@ -154,6 +157,7 @@ export class App {
     return !gate||gate.ready&&gate.state===this.duel.state&&gate.course===this.duel.course;
   }
   dispose(){
+    this.duel.state.hiddenRoadJourney = null;
     this.stop();this._inputEvents?.abort();this.keys={};this._keyboardSteering.reset();this.onFrame=null;
     this.frameDiagnostics?.stop();this.frameDiagnostics=null;
     this._visualReadiness=null;
@@ -396,6 +400,32 @@ export class App {
     const state=this.duel.state;
     if(this.runId&&['racing','ticket','countdown'].includes(state.status)&&(state.stageTimeSec>0||this.profile.activeRace?.key===`${this.runId}:${state.stageIndex}`))this._settleResult({won:false,completed:false,abandoned:true},state);
   }
+  _settleHiddenRoadDeparture(event, state) {
+    const journey = state?.hiddenRoadJourney;
+    if (!this.runId || state !== this.duel.state || state.status !== 'exploring' ||
+        !journey?.departed || event?.journeyId !== journey.id ||
+        state.playerId !== this._runPlayerId || this._runPlayerId !== this.player.id ||
+        this._settledHiddenRoadJourney === journey) return false;
+    this._settleResult({won: false, completed: false, abandoned: true}, state);
+    this._settledHiddenRoadJourney = journey;
+    this.driftNotice = this.checkpointNotice = null;
+    return true;
+  }
+  _clearHiddenRoadInput() {
+    this.keys = {};
+    this._keyboardSteering.reset();
+    this._footPointer.lookX = this._footPointer.lookY = 0;
+    this._footPointer.fire = this._footPointer.aim = false;
+    this.duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false,
+      shiftUp: false, shiftDown: false, interact: false});
+  }
+  chooseHiddenRoad(choice) {
+    const state = this.duel.state;
+    if (!this.runId || state.playerId !== this._runPlayerId ||
+        this._runPlayerId !== this.player.id || !this.duel.chooseHiddenRoad(choice)) return false;
+    this._clearHiddenRoadInput();
+    return true;
+  }
   _markActiveRace(state){
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;
     const key=`${this.runId}:${state.stageIndex}`;
@@ -470,7 +500,7 @@ export class App {
   }
   togglePause() {
     const st = this.duel.state;
-    if (!['racing', 'countdown'].includes(st.status)) return;
+    if (!['racing', 'countdown', 'exploring'].includes(st.status)) return;
     st.paused = !st.paused;
     if(st.paused && st.onFoot && typeof document!=='undefined' &&
         document.pointerLockElement) document.exitPointerLock();
@@ -500,6 +530,7 @@ export class App {
     this._keyboardSteering.reset();
     const st = this.duel.state;
     st.paused = false; st.status = 'menu'; st.boosting = false;
+    st.hiddenRoadJourney = null;
     st.driverId=getEquippedDriverId(this.profile);
     this.ghostRecorder=null;this.ghostRecord=null;this.ghostPose=null;this.ghostStatus='none';
     this._racePaint=null;this._racePaintCar=null;
@@ -564,6 +595,12 @@ export class App {
     const pad = this._readGamepad(dt);
     const context = this.activeInputContext();
     if (st.paused) {this._keyboardSteering.reset();return;}
+    if (st.status === 'exploring' && st.hiddenRoadJourney?.controlsLocked) {
+      this.duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false,
+        shiftUp: false, shiftDown: false, interact: false});
+      this._keyboardSteering.reset();
+      return;
+    }
     if (context === 'foot') {
       this._keyboardSteering.reset();
       const foot=footControlInput(this.keys,pad,this._footPointer);
@@ -710,7 +747,7 @@ export class App {
       this.keys = {};
       this._footPointer.fire=this._footPointer.aim=false;
       this._keyboardSteering.reset();
-      if (!this.duel.state.paused && ['racing', 'countdown'].includes(this.duel.state.status)) this.togglePause();
+      if (!this.duel.state.paused && ['racing', 'countdown', 'exploring'].includes(this.duel.state.status)) this.togglePause();
     },{signal});
   }
 
@@ -731,6 +768,7 @@ export class App {
       // verbs
       startCampaign: (o) => a.startCampaign(o),
       nextStage: () => a.nextStage(),
+      chooseHiddenRoad: choice => a.chooseHiddenRoad(choice),
       setInput: (i) => a.duel.setInput(i),
       advance: (sec) => a.advance(sec),
       autopilotOn: () => { a.autopilot = true; a._scriptedCrashDone = false; },

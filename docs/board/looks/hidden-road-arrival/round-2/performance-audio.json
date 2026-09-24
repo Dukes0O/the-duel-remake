@@ -1,0 +1,5562 @@
+{
+  "sampleRate": 16000,
+  "channels": 2,
+  "events": [
+    {
+      "kind": "hiddenRoadPhase",
+      "detail": {
+        "journeyId": 1,
+        "phase": "exploring"
+      },
+      "audioTimeSec": 0.010666666666666824,
+      "simulationTime": 0
+    },
+    {
+      "kind": "hiddenRoadDeparted",
+      "detail": {
+        "journeyId": 1
+      },
+      "audioTimeSec": 0.010666666666666824,
+      "simulationTime": 0
+    },
+    {
+      "kind": "hiddenRoadPhase",
+      "detail": {
+        "journeyId": 1,
+        "phase": "arriving"
+      },
+      "audioTimeSec": 0.45066666666666677,
+      "simulationTime": 0.09999999999999999
+    },
+    {
+      "kind": "hiddenRoadPhase",
+      "detail": {
+        "journeyId": 1,
+        "phase": "opening"
+      },
+      "audioTimeSec": 5.08,
+      "simulationTime": 4.816666666666696
+    },
+    {
+      "kind": "hiddenRoadPhase",
+      "detail": {
+        "journeyId": 1,
+        "phase": "choice"
+      },
+      "audioTimeSec": 8.08,
+      "simulationTime": 7.816666666666845
+    },
+    {
+      "kind": "hiddenRoadChoice",
+      "detail": {
+        "journeyId": 1,
+        "choice": "turn-back"
+      },
+      "audioTimeSec": 8.52,
+      "simulationTime": 8.250000000000172
+    },
+    {
+      "kind": "hiddenRoadPhase",
+      "detail": {
+        "journeyId": 1,
+        "phase": "turned-back"
+      },
+      "audioTimeSec": 8.52,
+      "simulationTime": 8.250000000000172
+    }
+  ],
+  "cues": [
+    {
+      "journeyId": 1,
+      "phase": "arriving",
+      "kind": "drum",
+      "index": 0,
+      "simulationTime": 0.19166666666666665,
+      "audioTimeSec": 0.45066666666666677
+    },
+    {
+      "journeyId": 1,
+      "phase": "arriving",
+      "kind": "drum",
+      "index": 1,
+      "simulationTime": 0.8999999999999992,
+      "audioTimeSec": 1.1600000000000001
+    },
+    {
+      "journeyId": 1,
+      "phase": "arriving",
+      "kind": "drum",
+      "index": 2,
+      "simulationTime": 1.6999999999999964,
+      "audioTimeSec": 1.96
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 0,
+      "simulationTime": 4.8250000000000295,
+      "audioTimeSec": 5.08
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "drum",
+      "index": 0,
+      "simulationTime": 4.8250000000000295,
+      "audioTimeSec": 5.08
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 1,
+      "simulationTime": 5.000000000000038,
+      "audioTimeSec": 5.258666666666667
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 2,
+      "simulationTime": 5.175000000000047,
+      "audioTimeSec": 5.44
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 3,
+      "simulationTime": 5.366666666666723,
+      "audioTimeSec": 5.629333333333333
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 4,
+      "simulationTime": 5.541666666666732,
+      "audioTimeSec": 5.800000000000001
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 5,
+      "simulationTime": 5.7166666666667405,
+      "audioTimeSec": 5.978666666666667
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 6,
+      "simulationTime": 5.9166666666667505,
+      "audioTimeSec": 6.170666666666667
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "drum",
+      "index": 1,
+      "simulationTime": 6.016666666666755,
+      "audioTimeSec": 6.279999999999999
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 7,
+      "simulationTime": 6.075000000000092,
+      "audioTimeSec": 6.3306666666666676
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 8,
+      "simulationTime": 6.266666666666768,
+      "audioTimeSec": 6.530666666666667
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 9,
+      "simulationTime": 6.441666666666777,
+      "audioTimeSec": 6.698666666666666
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 10,
+      "simulationTime": 6.616666666666785,
+      "audioTimeSec": 6.880000000000001
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 11,
+      "simulationTime": 6.800000000000128,
+      "audioTimeSec": 7.058666666666667
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 12,
+      "simulationTime": 6.975000000000136,
+      "audioTimeSec": 7.229333333333333
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 13,
+      "simulationTime": 7.166666666666813,
+      "audioTimeSec": 7.429333333333334
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "drum",
+      "index": 2,
+      "simulationTime": 7.216666666666815,
+      "audioTimeSec": 7.48
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 14,
+      "simulationTime": 7.341666666666821,
+      "audioTimeSec": 7.605333333333334
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 15,
+      "simulationTime": 7.51666666666683,
+      "audioTimeSec": 7.778666666666666
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 16,
+      "simulationTime": 7.7000000000001725,
+      "audioTimeSec": 7.960000000000001
+    },
+    {
+      "journeyId": 1,
+      "phase": "choice",
+      "kind": "latch",
+      "index": 0,
+      "simulationTime": 7.816666666666845,
+      "audioTimeSec": 8.08
+    }
+  ],
+  "frames": [
+    {
+      "audioTimeSec": 0.010666666666666824,
+      "phase": "racing",
+      "phaseElapsedSec": 0,
+      "elapsedSec": 0,
+      "gateOpen": 0,
+      "speedMph": 24.591530116767277,
+      "revs": 0.4471187293957687,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.010666666666666824,
+      "phase": "exploring",
+      "phaseElapsedSec": 0.09166666666666666,
+      "elapsedSec": 0.09166666666666666,
+      "gateOpen": 0,
+      "speedMph": 34.909416823392576,
+      "revs": 0.6347166695162286,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.45066666666666677,
+      "phase": "exploring",
+      "phaseElapsedSec": 0.09166666666666666,
+      "elapsedSec": 0.09166666666666666,
+      "gateOpen": 0,
+      "speedMph": 45,
+      "revs": 0.6347166695162286,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.45066666666666677,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.09999999999999999,
+      "elapsedSec": 0.19166666666666665,
+      "gateOpen": 0,
+      "speedMph": 44.04709894736884,
+      "revs": 0.8008563444976152,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.4693333333333336,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.11666666666666665,
+      "elapsedSec": 0.20833333333333331,
+      "gateOpen": 0,
+      "speedMph": 43.88828210526364,
+      "revs": 0.797968765550248,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.48,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.13333333333333333,
+      "elapsedSec": 0.22499999999999998,
+      "gateOpen": 0,
+      "speedMph": 43.72946526315844,
+      "revs": 0.7950811866028807,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.4986666666666668,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.15,
+      "elapsedSec": 0.24166666666666664,
+      "gateOpen": 0,
+      "speedMph": 43.57064842105325,
+      "revs": 0.7921936076555136,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.52,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.16666666666666666,
+      "elapsedSec": 0.2583333333333333,
+      "gateOpen": 0,
+      "speedMph": 43.41183157894805,
+      "revs": 0.7893060287081465,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.5386666666666668,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.18333333333333332,
+      "elapsedSec": 0.275,
+      "gateOpen": 0,
+      "speedMph": 43.25301473684286,
+      "revs": 0.7864184497607792,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.56,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.19999999999999998,
+      "elapsedSec": 0.29166666666666674,
+      "gateOpen": 0,
+      "speedMph": 43.09419789473767,
+      "revs": 0.7835308708134121,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.5706666666666669,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.21666666666666665,
+      "elapsedSec": 0.30833333333333346,
+      "gateOpen": 0,
+      "speedMph": 42.93538105263247,
+      "revs": 0.780643291866045,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.5893333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.24166666666666664,
+      "elapsedSec": 0.33333333333333354,
+      "gateOpen": 0,
+      "speedMph": 42.697155789474685,
+      "revs": 0.7763119234449942,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.6106666666666669,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.2583333333333333,
+      "elapsedSec": 0.35000000000000026,
+      "gateOpen": 0,
+      "speedMph": 42.538338947369475,
+      "revs": 0.7734243444976269,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.6293333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.275,
+      "elapsedSec": 0.366666666666667,
+      "gateOpen": 0,
+      "speedMph": 42.379522105264286,
+      "revs": 0.7705367655502597,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.6400000000000001,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.29166666666666674,
+      "elapsedSec": 0.3833333333333337,
+      "gateOpen": 0,
+      "speedMph": 42.22070526315909,
+      "revs": 0.7676491866028925,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.658666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.30833333333333346,
+      "elapsedSec": 0.4000000000000004,
+      "gateOpen": 0,
+      "speedMph": 42.061888421053894,
+      "revs": 0.7647616076555254,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.6800000000000002,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.3250000000000002,
+      "elapsedSec": 0.41666666666666713,
+      "gateOpen": 0,
+      "speedMph": 41.903071578948705,
+      "revs": 0.7618740287081582,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.698666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.3416666666666669,
+      "elapsedSec": 0.43333333333333385,
+      "gateOpen": 0,
+      "speedMph": 41.744254736843516,
+      "revs": 0.7589864497607912,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.7200000000000002,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.366666666666667,
+      "elapsedSec": 0.4583333333333339,
+      "gateOpen": 0,
+      "speedMph": 41.506029473685714,
+      "revs": 0.7546550813397402,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.730666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.3833333333333337,
+      "elapsedSec": 0.47500000000000064,
+      "gateOpen": 0,
+      "speedMph": 41.34721263158053,
+      "revs": 0.7517675023923733,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.7493333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.4000000000000004,
+      "elapsedSec": 0.49166666666666736,
+      "gateOpen": 0,
+      "speedMph": 41.18839578947532,
+      "revs": 0.7488799234450059,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.7706666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.41666666666666713,
+      "elapsedSec": 0.508333333333334,
+      "gateOpen": 0,
+      "speedMph": 41.02957894737013,
+      "revs": 0.7459923444976387,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.7893333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.43333333333333385,
+      "elapsedSec": 0.5250000000000006,
+      "gateOpen": 0,
+      "speedMph": 40.87076210526494,
+      "revs": 0.7431047655502716,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.8000000000000003,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.45000000000000057,
+      "elapsedSec": 0.5416666666666672,
+      "gateOpen": 0,
+      "speedMph": 40.71194526315974,
+      "revs": 0.7402171866029044,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.8186666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.4666666666666673,
+      "elapsedSec": 0.5583333333333338,
+      "gateOpen": 0,
+      "speedMph": 40.553128421054545,
+      "revs": 0.7373296076555372,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.8400000000000003,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.483333333333334,
+      "elapsedSec": 0.5750000000000004,
+      "gateOpen": 0,
+      "speedMph": 40.39431157894935,
+      "revs": 0.73444202870817,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.8586666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.5000000000000007,
+      "elapsedSec": 0.591666666666667,
+      "gateOpen": 0,
+      "speedMph": 40.23549473684416,
+      "revs": 0.7315544497608029,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.8693333333333335,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.5250000000000006,
+      "elapsedSec": 0.6166666666666669,
+      "gateOpen": 0,
+      "speedMph": 39.99726947368637,
+      "revs": 0.7272230813397522,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.8906666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.5416666666666672,
+      "elapsedSec": 0.6333333333333335,
+      "gateOpen": 0,
+      "speedMph": 39.83845263158116,
+      "revs": 0.7243355023923848,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.9093333333333335,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.5583333333333338,
+      "elapsedSec": 0.6500000000000001,
+      "gateOpen": 0,
+      "speedMph": 39.679635789475974,
+      "revs": 0.7214479234450177,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.9306666666666668,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.5750000000000004,
+      "elapsedSec": 0.6666666666666667,
+      "gateOpen": 0,
+      "speedMph": 39.520818947370785,
+      "revs": 0.7185603444976506,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.9493333333333336,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.591666666666667,
+      "elapsedSec": 0.6833333333333333,
+      "gateOpen": 0,
+      "speedMph": 39.36200210526559,
+      "revs": 0.7156727655502835,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.96,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.6083333333333336,
+      "elapsedSec": 0.7,
+      "gateOpen": 0,
+      "speedMph": 39.2031852631604,
+      "revs": 0.7127851866029163,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 0.9786666666666668,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.6250000000000002,
+      "elapsedSec": 0.7166666666666666,
+      "gateOpen": 0,
+      "speedMph": 39.044368421055204,
+      "revs": 0.7098976076555491,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.6500000000000001,
+      "elapsedSec": 0.7416666666666665,
+      "gateOpen": 0,
+      "speedMph": 38.80614315789741,
+      "revs": 0.7055662392344983,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.0186666666666668,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.6666666666666667,
+      "elapsedSec": 0.7583333333333331,
+      "gateOpen": 0,
+      "speedMph": 38.64732631579221,
+      "revs": 0.7026786602871311,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.04,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.6833333333333333,
+      "elapsedSec": 0.7749999999999997,
+      "gateOpen": 0,
+      "speedMph": 38.488509473687024,
+      "revs": 0.6997910813397641,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.0506666666666669,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.7,
+      "elapsedSec": 0.7916666666666663,
+      "gateOpen": 0,
+      "speedMph": 38.32969263158182,
+      "revs": 0.6969035023923967,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.0693333333333337,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.7166666666666666,
+      "elapsedSec": 0.8083333333333329,
+      "gateOpen": 0,
+      "speedMph": 38.17087578947663,
+      "revs": 0.6940159234450297,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.090666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.7333333333333332,
+      "elapsedSec": 0.8249999999999995,
+      "gateOpen": 0,
+      "speedMph": 38.012058947371436,
+      "revs": 0.6911283444976625,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.1093333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.7499999999999998,
+      "elapsedSec": 0.8416666666666661,
+      "gateOpen": 0,
+      "speedMph": 37.85324210526625,
+      "revs": 0.6882407655502955,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.130666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.7749999999999997,
+      "elapsedSec": 0.866666666666666,
+      "gateOpen": 0,
+      "speedMph": 37.61501684210846,
+      "revs": 0.6839093971292447,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.138666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.7916666666666663,
+      "elapsedSec": 0.8833333333333326,
+      "gateOpen": 0,
+      "speedMph": 37.456200000003264,
+      "revs": 0.6810218181818776,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.1600000000000001,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.8083333333333329,
+      "elapsedSec": 0.8999999999999992,
+      "gateOpen": 0,
+      "speedMph": 37.29738315789806,
+      "revs": 0.6781342392345102,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.178666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.8249999999999995,
+      "elapsedSec": 0.9166666666666659,
+      "gateOpen": 0,
+      "speedMph": 37.13856631579287,
+      "revs": 0.6752466602871431,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.2000000000000002,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.8416666666666661,
+      "elapsedSec": 0.9333333333333325,
+      "gateOpen": 0,
+      "speedMph": 36.979749473687676,
+      "revs": 0.672359081339776,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.218666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.866666666666666,
+      "elapsedSec": 0.9583333333333324,
+      "gateOpen": 0,
+      "speedMph": 36.74152421052988,
+      "revs": 0.6680277129187251,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.2293333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.8833333333333326,
+      "elapsedSec": 0.974999999999999,
+      "gateOpen": 0,
+      "speedMph": 36.58270736842469,
+      "revs": 0.6651401339713581,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.2506666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.8999999999999992,
+      "elapsedSec": 0.9916666666666656,
+      "gateOpen": 0,
+      "speedMph": 36.4238905263195,
+      "revs": 0.6622525550239908,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.2693333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.9166666666666659,
+      "elapsedSec": 1.0083333333333322,
+      "gateOpen": 0,
+      "speedMph": 36.26507368421431,
+      "revs": 0.6593649760766238,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.2906666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.9333333333333325,
+      "elapsedSec": 1.0249999999999988,
+      "gateOpen": 0,
+      "speedMph": 36.10625684210911,
+      "revs": 0.6564773971292566,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.2986666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.9499999999999991,
+      "elapsedSec": 1.0416666666666654,
+      "gateOpen": 0,
+      "speedMph": 35.947440000003915,
+      "revs": 0.6535898181818893,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.3200000000000003,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.9666666666666657,
+      "elapsedSec": 1.058333333333332,
+      "gateOpen": 0,
+      "speedMph": 35.78862315789872,
+      "revs": 0.6507022392345222,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.3386666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.9833333333333323,
+      "elapsedSec": 1.0749999999999986,
+      "gateOpen": 0,
+      "speedMph": 35.62980631579352,
+      "revs": 0.647814660287155,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.3600000000000003,
+      "phase": "arriving",
+      "phaseElapsedSec": 0.9999999999999989,
+      "elapsedSec": 1.0916666666666652,
+      "gateOpen": 0,
+      "speedMph": 35.470989473688334,
+      "revs": 0.6449270813397879,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.3706666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.0249999999999988,
+      "elapsedSec": 1.1166666666666651,
+      "gateOpen": 0,
+      "speedMph": 35.23276421053054,
+      "revs": 0.6405957129187371,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.3893333333333335,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.0416666666666654,
+      "elapsedSec": 1.1333333333333317,
+      "gateOpen": 0,
+      "speedMph": 35.07394736842535,
+      "revs": 0.63770813397137,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.4106666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.058333333333332,
+      "elapsedSec": 1.1499999999999984,
+      "gateOpen": 0,
+      "speedMph": 34.915130526320155,
+      "revs": 0.6348205550240028,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.4293333333333336,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.0749999999999986,
+      "elapsedSec": 1.166666666666665,
+      "gateOpen": 0,
+      "speedMph": 34.75631368421496,
+      "revs": 0.6319329760766356,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.4506666666666668,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.0916666666666652,
+      "elapsedSec": 1.1833333333333316,
+      "gateOpen": 0,
+      "speedMph": 34.59749684210977,
+      "revs": 0.6290453971292685,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.4586666666666668,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.1083333333333318,
+      "elapsedSec": 1.1999999999999982,
+      "gateOpen": 0,
+      "speedMph": 34.43868000000457,
+      "revs": 0.6261578181819012,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.48,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.1249999999999984,
+      "elapsedSec": 1.2166666666666648,
+      "gateOpen": 0,
+      "speedMph": 34.27986315789938,
+      "revs": 0.6232702392345342,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.4986666666666668,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.1499999999999984,
+      "elapsedSec": 1.2416666666666647,
+      "gateOpen": 0,
+      "speedMph": 34.04163789474159,
+      "revs": 0.6189388708134834,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.5200000000000005,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.166666666666665,
+      "elapsedSec": 1.2583333333333313,
+      "gateOpen": 0,
+      "speedMph": 33.88282105263639,
+      "revs": 0.6160512918661162,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.5333333333333332,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.1833333333333316,
+      "elapsedSec": 1.274999999999998,
+      "gateOpen": 0,
+      "speedMph": 33.7240042105312,
+      "revs": 0.613163712918749,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.5493333333333332,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.1999999999999982,
+      "elapsedSec": 1.2916666666666645,
+      "gateOpen": 0,
+      "speedMph": 33.565187368426,
+      "revs": 0.6102761339713819,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.5706666666666669,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.2166666666666648,
+      "elapsedSec": 1.3083333333333311,
+      "gateOpen": 0,
+      "speedMph": 33.40637052632081,
+      "revs": 0.6073885550240148,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.5893333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.2333333333333314,
+      "elapsedSec": 1.3249999999999977,
+      "gateOpen": 0,
+      "speedMph": 33.24755368421562,
+      "revs": 0.6045009760766475,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.610666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.249999999999998,
+      "elapsedSec": 1.3416666666666643,
+      "gateOpen": 0,
+      "speedMph": 33.08873684211043,
+      "revs": 0.6016133971292805,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.618666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.2666666666666646,
+      "elapsedSec": 1.358333333333331,
+      "gateOpen": 0,
+      "speedMph": 32.92992000000523,
+      "revs": 0.5987258181819133,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.6400000000000006,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.2833333333333312,
+      "elapsedSec": 1.3749999999999976,
+      "gateOpen": 0,
+      "speedMph": 32.771103157900036,
+      "revs": 0.5958382392345462,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.658666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.3083333333333311,
+      "elapsedSec": 1.3999999999999975,
+      "gateOpen": 0,
+      "speedMph": 32.53287789474225,
+      "revs": 0.5915068708134954,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.6693333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.3249999999999977,
+      "elapsedSec": 1.416666666666664,
+      "gateOpen": 0,
+      "speedMph": 32.374061052637046,
+      "revs": 0.5886192918661282,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.690666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.3416666666666643,
+      "elapsedSec": 1.4333333333333307,
+      "gateOpen": 0,
+      "speedMph": 32.21524421053186,
+      "revs": 0.585731712918761,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.7093333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.358333333333331,
+      "elapsedSec": 1.4499999999999973,
+      "gateOpen": 0,
+      "speedMph": 32.05642736842666,
+      "revs": 0.5828441339713938,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.730666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.3749999999999976,
+      "elapsedSec": 1.466666666666664,
+      "gateOpen": 0,
+      "speedMph": 31.89761052632147,
+      "revs": 0.5799565550240267,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.746666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.3916666666666642,
+      "elapsedSec": 1.4833333333333305,
+      "gateOpen": 0,
+      "speedMph": 31.738793684216272,
+      "revs": 0.5770689760766595,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.7599999999999998,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.4083333333333308,
+      "elapsedSec": 1.4999999999999971,
+      "gateOpen": 0,
+      "speedMph": 31.579976842111076,
+      "revs": 0.5741813971292923,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.778666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.4249999999999974,
+      "elapsedSec": 1.5166666666666637,
+      "gateOpen": 0,
+      "speedMph": 31.421160000005887,
+      "revs": 0.5712938181819253,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.7999999999999998,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.4499999999999973,
+      "elapsedSec": 1.5416666666666636,
+      "gateOpen": 0,
+      "speedMph": 31.18293473684809,
+      "revs": 0.5669624497608744,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.818666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.466666666666664,
+      "elapsedSec": 1.5583333333333302,
+      "gateOpen": 0,
+      "speedMph": 31.024117894742893,
+      "revs": 0.5640748708135072,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.8293333333333335,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.4833333333333305,
+      "elapsedSec": 1.5749999999999968,
+      "gateOpen": 0,
+      "speedMph": 30.8653010526377,
+      "revs": 0.56118729186614,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.8506666666666671,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.4999999999999971,
+      "elapsedSec": 1.5916666666666635,
+      "gateOpen": 0,
+      "speedMph": 30.706484210532516,
+      "revs": 0.558299712918773,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.8693333333333335,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.5166666666666637,
+      "elapsedSec": 1.60833333333333,
+      "gateOpen": 0,
+      "speedMph": 30.54766736842731,
+      "revs": 0.5554121339714057,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.8906666666666672,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.5333333333333303,
+      "elapsedSec": 1.6249999999999967,
+      "gateOpen": 0,
+      "speedMph": 30.388850526322123,
+      "revs": 0.5525245550240386,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.9093333333333335,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.5583333333333302,
+      "elapsedSec": 1.6499999999999966,
+      "gateOpen": 0,
+      "speedMph": 30.15062526316433,
+      "revs": 0.5481931866029878,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.9306666666666672,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.5749999999999968,
+      "elapsedSec": 1.6666666666666632,
+      "gateOpen": 0,
+      "speedMph": 29.991808421059133,
+      "revs": 0.5453056076556206,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.9386666666666672,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.5916666666666635,
+      "elapsedSec": 1.6833333333333298,
+      "gateOpen": 0,
+      "speedMph": 29.832991578953937,
+      "revs": 0.5424180287082534,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.96,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.60833333333333,
+      "elapsedSec": 1.6999999999999964,
+      "gateOpen": 0,
+      "speedMph": 29.67417473684875,
+      "revs": 0.5395304497608864,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 1.9786666666666672,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.6249999999999967,
+      "elapsedSec": 1.716666666666663,
+      "gateOpen": 0,
+      "speedMph": 29.515357894743556,
+      "revs": 0.5366428708135192,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.6499999999999966,
+      "elapsedSec": 1.741666666666663,
+      "gateOpen": 0,
+      "speedMph": 29.27713263158577,
+      "revs": 0.5323115023924685,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.0186666666666664,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.6666666666666632,
+      "elapsedSec": 1.7583333333333295,
+      "gateOpen": 0,
+      "speedMph": 29.118315789480572,
+      "revs": 0.5294239234451014,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.04,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.6833333333333298,
+      "elapsedSec": 1.7749999999999961,
+      "gateOpen": 0,
+      "speedMph": 28.959498947375373,
+      "revs": 0.526536344497734,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.0586666666666664,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.7083333333333297,
+      "elapsedSec": 1.799999999999996,
+      "gateOpen": 0,
+      "speedMph": 28.721273684217586,
+      "revs": 0.5222049760766834,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.0693333333333337,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.7249999999999963,
+      "elapsedSec": 1.8166666666666627,
+      "gateOpen": 0,
+      "speedMph": 28.56245684211239,
+      "revs": 0.5193173971293161,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.0906666666666665,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.741666666666663,
+      "elapsedSec": 1.8333333333333293,
+      "gateOpen": 0,
+      "speedMph": 28.403640000007197,
+      "revs": 0.516429818181949,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.1093333333333337,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.7583333333333295,
+      "elapsedSec": 1.8499999999999959,
+      "gateOpen": 0,
+      "speedMph": 28.244823157902,
+      "revs": 0.5135422392345819,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.1306666666666665,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.7749999999999961,
+      "elapsedSec": 1.8666666666666625,
+      "gateOpen": 0,
+      "speedMph": 28.08600631579681,
+      "revs": 0.5106546602872147,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.1493333333333338,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.7916666666666627,
+      "elapsedSec": 1.883333333333329,
+      "gateOpen": 0,
+      "speedMph": 27.92718947369162,
+      "revs": 0.5077670813398476,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.16,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.8083333333333294,
+      "elapsedSec": 1.8999999999999957,
+      "gateOpen": 0,
+      "speedMph": 27.76837263158642,
+      "revs": 0.5048795023924804,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.1786666666666665,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.8333333333333293,
+      "elapsedSec": 1.9249999999999956,
+      "gateOpen": 0,
+      "speedMph": 27.53014736842863,
+      "revs": 0.5005481339714296,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.2,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.8499999999999959,
+      "elapsedSec": 1.9416666666666622,
+      "gateOpen": 0,
+      "speedMph": 27.371330526323426,
+      "revs": 0.4976605550240623,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.2186666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.8666666666666625,
+      "elapsedSec": 1.9583333333333288,
+      "gateOpen": 0,
+      "speedMph": 27.21251368421824,
+      "revs": 0.4947729760766953,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.237333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.883333333333329,
+      "elapsedSec": 1.9749999999999954,
+      "gateOpen": 0,
+      "speedMph": 27.053696842113045,
+      "revs": 0.4918853971293281,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.2506666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.8999999999999957,
+      "elapsedSec": 1.991666666666662,
+      "gateOpen": 0,
+      "speedMph": 26.894880000007856,
+      "revs": 0.48899781818196103,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.269333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.9166666666666623,
+      "elapsedSec": 2.008333333333329,
+      "gateOpen": 0,
+      "speedMph": 26.736063157902663,
+      "revs": 0.4861102392345939,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.2906666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.933333333333329,
+      "elapsedSec": 2.0249999999999955,
+      "gateOpen": 0,
+      "speedMph": 26.57724631579746,
+      "revs": 0.48322266028722655,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.309333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.9499999999999955,
+      "elapsedSec": 2.041666666666662,
+      "gateOpen": 0,
+      "speedMph": 26.41842947369227,
+      "revs": 0.48033508133985947,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.3200000000000003,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.9666666666666621,
+      "elapsedSec": 2.0583333333333287,
+      "gateOpen": 0,
+      "speedMph": 26.25961263158708,
+      "revs": 0.47744750239249234,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.3386666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 1.991666666666662,
+      "elapsedSec": 2.0833333333333286,
+      "gateOpen": 0,
+      "speedMph": 26.021387368429284,
+      "revs": 0.47311613397144153,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.3600000000000003,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.008333333333329,
+      "elapsedSec": 2.099999999999995,
+      "gateOpen": 0,
+      "speedMph": 25.862570526324085,
+      "revs": 0.4702285550240743,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.3786666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.0249999999999955,
+      "elapsedSec": 2.116666666666662,
+      "gateOpen": 0,
+      "speedMph": 25.7037536842189,
+      "revs": 0.46734097607670727,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.389333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.041666666666662,
+      "elapsedSec": 2.1333333333333284,
+      "gateOpen": 0,
+      "speedMph": 25.544936842113707,
+      "revs": 0.46445339712934014,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.4106666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.0583333333333287,
+      "elapsedSec": 2.149999999999995,
+      "gateOpen": 0,
+      "speedMph": 25.38612000000851,
+      "revs": 0.4615658181819729,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.429333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.0749999999999953,
+      "elapsedSec": 2.1666666666666616,
+      "gateOpen": 0,
+      "speedMph": 25.227303157903314,
+      "revs": 0.4586782392346057,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.4506666666666668,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.091666666666662,
+      "elapsedSec": 2.1833333333333282,
+      "gateOpen": 0,
+      "speedMph": 25.068486315798125,
+      "revs": 0.45579066028723864,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.469333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.116666666666662,
+      "elapsedSec": 2.208333333333328,
+      "gateOpen": 0,
+      "speedMph": 24.830261052640324,
+      "revs": 0.4514592918661877,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.4800000000000004,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.1333333333333284,
+      "elapsedSec": 2.2249999999999948,
+      "gateOpen": 0,
+      "speedMph": 24.671444210535128,
+      "revs": 0.44857171291882053,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.498666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.149999999999995,
+      "elapsedSec": 2.2416666666666614,
+      "gateOpen": 0,
+      "speedMph": 24.51262736842994,
+      "revs": 0.44568413397145346,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.5200000000000005,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.1666666666666616,
+      "elapsedSec": 2.258333333333328,
+      "gateOpen": 0,
+      "speedMph": 24.353810526324754,
+      "revs": 0.44279655502408644,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.538666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.1833333333333282,
+      "elapsedSec": 2.2749999999999946,
+      "gateOpen": 0,
+      "speedMph": 24.194993684219558,
+      "revs": 0.43990897607671925,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.5493333333333332,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.199999999999995,
+      "elapsedSec": 2.291666666666661,
+      "gateOpen": 0,
+      "speedMph": 24.03617684211435,
+      "revs": 0.43702139712935184,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.570666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.2166666666666615,
+      "elapsedSec": 2.308333333333328,
+      "gateOpen": 0,
+      "speedMph": 23.877360000009162,
+      "revs": 0.43413381818198477,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.5893333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.233333333333328,
+      "elapsedSec": 2.3249999999999944,
+      "gateOpen": 0,
+      "speedMph": 23.718543157903973,
+      "revs": 0.4312462392346177,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.610666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.2499999999999947,
+      "elapsedSec": 2.341666666666661,
+      "gateOpen": 0,
+      "speedMph": 23.559726315798773,
+      "revs": 0.42835866028725045,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.618666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.2749999999999946,
+      "elapsedSec": 2.366666666666661,
+      "gateOpen": 0,
+      "speedMph": 23.321501052640983,
+      "revs": 0.4240272918661997,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.6400000000000006,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.291666666666661,
+      "elapsedSec": 2.3833333333333275,
+      "gateOpen": 0,
+      "speedMph": 23.16268421053579,
+      "revs": 0.42113971291883256,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.658666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.308333333333328,
+      "elapsedSec": 2.399999999999994,
+      "gateOpen": 0,
+      "speedMph": 23.0038673684306,
+      "revs": 0.4182521339714655,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.6799999999999997,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.3249999999999944,
+      "elapsedSec": 2.4166666666666607,
+      "gateOpen": 0,
+      "speedMph": 22.84505052632541,
+      "revs": 0.41536455502409836,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.690666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.341666666666661,
+      "elapsedSec": 2.4333333333333274,
+      "gateOpen": 0,
+      "speedMph": 22.686233684220205,
+      "revs": 0.412476976076731,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.7093333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.3583333333333276,
+      "elapsedSec": 2.449999999999994,
+      "gateOpen": 0,
+      "speedMph": 22.527416842115013,
+      "revs": 0.4095893971293639,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.730666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.3749999999999942,
+      "elapsedSec": 2.4666666666666606,
+      "gateOpen": 0,
+      "speedMph": 22.36860000000982,
+      "revs": 0.40670181818199674,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.7413333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.391666666666661,
+      "elapsedSec": 2.483333333333327,
+      "gateOpen": 0,
+      "speedMph": 22.20978315790462,
+      "revs": 0.40381423923462945,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.76,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.4083333333333274,
+      "elapsedSec": 2.499999999999994,
+      "gateOpen": 0,
+      "speedMph": 22.05096631579943,
+      "revs": 0.4009266602872623,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.778666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.424999999999994,
+      "elapsedSec": 2.5166666666666604,
+      "gateOpen": 0,
+      "speedMph": 21.89214947369424,
+      "revs": 0.39803908133989524,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.8,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.4416666666666607,
+      "elapsedSec": 2.533333333333327,
+      "gateOpen": 0,
+      "speedMph": 21.733332631589047,
+      "revs": 0.3951515023925281,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.818666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.4666666666666606,
+      "elapsedSec": 2.558333333333327,
+      "gateOpen": 0,
+      "speedMph": 21.49510736843126,
+      "revs": 0.39082013397147747,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.8293333333333335,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.483333333333327,
+      "elapsedSec": 2.5749999999999935,
+      "gateOpen": 0,
+      "speedMph": 21.336290526326053,
+      "revs": 0.38793255502411006,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.850666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.499999999999994,
+      "elapsedSec": 2.59166666666666,
+      "gateOpen": 0,
+      "speedMph": 21.177473684220864,
+      "revs": 0.385044976076743,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.8693333333333335,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.5166666666666604,
+      "elapsedSec": 2.6083333333333267,
+      "gateOpen": 0,
+      "speedMph": 21.018656842115657,
+      "revs": 0.3821573971293756,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.890666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.533333333333327,
+      "elapsedSec": 2.6249999999999933,
+      "gateOpen": 0,
+      "speedMph": 20.85984000001047,
+      "revs": 0.3792698181820085,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.904,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.5499999999999936,
+      "elapsedSec": 2.64166666666666,
+      "gateOpen": 0,
+      "speedMph": 20.70102315790528,
+      "revs": 0.3763822392346414,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.92,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.56666666666666,
+      "elapsedSec": 2.6583333333333266,
+      "gateOpen": 0,
+      "speedMph": 20.542206315800094,
+      "revs": 0.37349466028727446,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.938666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.583333333333327,
+      "elapsedSec": 2.674999999999993,
+      "gateOpen": 0,
+      "speedMph": 20.383389473694898,
+      "revs": 0.3706070813399072,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.96,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.6083333333333267,
+      "elapsedSec": 2.699999999999993,
+      "gateOpen": 0,
+      "speedMph": 20.14516421053711,
+      "revs": 0.3662757129188566,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.9786666666666672,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.6249999999999933,
+      "elapsedSec": 2.7166666666666597,
+      "gateOpen": 0,
+      "speedMph": 19.986347368431908,
+      "revs": 0.3633881339714892,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 2.9893333333333336,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.64166666666666,
+      "elapsedSec": 2.7333333333333263,
+      "gateOpen": 0,
+      "speedMph": 19.827530526326715,
+      "revs": 0.3605005550241221,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.0106666666666664,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.6583333333333266,
+      "elapsedSec": 2.749999999999993,
+      "gateOpen": 0,
+      "speedMph": 19.668713684221515,
+      "revs": 0.35761297607675485,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.0293333333333337,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.674999999999993,
+      "elapsedSec": 2.7666666666666595,
+      "gateOpen": 0,
+      "speedMph": 19.50989684211632,
+      "revs": 0.3547253971293876,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.0506666666666664,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.6916666666666598,
+      "elapsedSec": 2.783333333333326,
+      "gateOpen": 0,
+      "speedMph": 19.35108000001113,
+      "revs": 0.35183781818202053,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.0586666666666664,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.7083333333333264,
+      "elapsedSec": 2.7999999999999927,
+      "gateOpen": 0,
+      "speedMph": 19.19226315790594,
+      "revs": 0.34895023923465346,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.08,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.724999999999993,
+      "elapsedSec": 2.8166666666666593,
+      "gateOpen": 0,
+      "speedMph": 19.03344631580075,
+      "revs": 0.34606266028728633,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.0986666666666665,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.749999999999993,
+      "elapsedSec": 2.8416666666666592,
+      "gateOpen": 0,
+      "speedMph": 18.795221052642948,
+      "revs": 0.3417312918662354,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.12,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.7666666666666595,
+      "elapsedSec": 2.858333333333326,
+      "gateOpen": 0,
+      "speedMph": 18.636404210537755,
+      "revs": 0.3388437129188683,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.1306666666666665,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.783333333333326,
+      "elapsedSec": 2.8749999999999925,
+      "gateOpen": 0,
+      "speedMph": 18.47758736843256,
+      "revs": 0.3359561339715011,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.1493333333333338,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.7999999999999927,
+      "elapsedSec": 2.891666666666659,
+      "gateOpen": 0,
+      "speedMph": 18.318770526327366,
+      "revs": 0.33306855502413396,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.1706666666666665,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.8166666666666593,
+      "elapsedSec": 2.9083333333333257,
+      "gateOpen": 0,
+      "speedMph": 18.15995368422217,
+      "revs": 0.3301809760767667,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.189333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.833333333333326,
+      "elapsedSec": 2.9249999999999923,
+      "gateOpen": 0,
+      "speedMph": 18.001136842116978,
+      "revs": 0.3272933971293996,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.2,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.8499999999999925,
+      "elapsedSec": 2.941666666666659,
+      "gateOpen": 0,
+      "speedMph": 17.84232000001179,
+      "revs": 0.3244058181820325,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.2186666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.866666666666659,
+      "elapsedSec": 2.9583333333333255,
+      "gateOpen": 0,
+      "speedMph": 17.6835031579066,
+      "revs": 0.32151823923466544,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.24,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.8833333333333258,
+      "elapsedSec": 2.974999999999992,
+      "gateOpen": 0,
+      "speedMph": 17.524686315801407,
+      "revs": 0.3186306602872983,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.2586666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.9083333333333257,
+      "elapsedSec": 2.999999999999992,
+      "gateOpen": 0,
+      "speedMph": 17.28646105264361,
+      "revs": 0.31429929186624744,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.269333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.9249999999999923,
+      "elapsedSec": 3.0166666666666586,
+      "gateOpen": 0,
+      "speedMph": 17.127644210538406,
+      "revs": 0.3114117129188801,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.2906666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.941666666666659,
+      "elapsedSec": 3.033333333333325,
+      "gateOpen": 0,
+      "speedMph": 16.968827368433217,
+      "revs": 0.30852413397151307,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.309333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.9583333333333255,
+      "elapsedSec": 3.049999999999992,
+      "gateOpen": 0,
+      "speedMph": 16.81001052632802,
+      "revs": 0.30563655502414583,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.3306666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.974999999999992,
+      "elapsedSec": 3.0666666666666584,
+      "gateOpen": 0,
+      "speedMph": 16.651193684222832,
+      "revs": 0.30274897607677875,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.349333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 2.9916666666666587,
+      "elapsedSec": 3.083333333333325,
+      "gateOpen": 0,
+      "speedMph": 16.49237684211764,
+      "revs": 0.2998613971294116,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.3600000000000003,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.0083333333333253,
+      "elapsedSec": 3.0999999999999917,
+      "gateOpen": 0,
+      "speedMph": 16.333560000012447,
+      "revs": 0.2969738181820445,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.3786666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.024999999999992,
+      "elapsedSec": 3.1166666666666583,
+      "gateOpen": 0,
+      "speedMph": 16.17474315790725,
+      "revs": 0.2940862392346773,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.4000000000000004,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.049999999999992,
+      "elapsedSec": 3.141666666666658,
+      "gateOpen": 0,
+      "speedMph": 15.936517894749459,
+      "revs": 0.2897548708136265,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.4186666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.0666666666666584,
+      "elapsedSec": 3.1583333333333248,
+      "gateOpen": 0,
+      "speedMph": 15.777701052644257,
+      "revs": 0.2868672918662592,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.429333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.083333333333325,
+      "elapsedSec": 3.1749999999999914,
+      "gateOpen": 0,
+      "speedMph": 15.618884210539065,
+      "revs": 0.28397971291889207,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.4506666666666668,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.0999999999999917,
+      "elapsedSec": 3.191666666666658,
+      "gateOpen": 0,
+      "speedMph": 15.460067368433876,
+      "revs": 0.281092133971525,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.469333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.1166666666666583,
+      "elapsedSec": 3.2083333333333246,
+      "gateOpen": 0,
+      "speedMph": 15.301250526328682,
+      "revs": 0.27820455502415786,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.490666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.133333333333325,
+      "elapsedSec": 3.224999999999991,
+      "gateOpen": 0,
+      "speedMph": 15.14243368422349,
+      "revs": 0.27531697607679073,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.498666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.1499999999999915,
+      "elapsedSec": 3.241666666666658,
+      "gateOpen": 0,
+      "speedMph": 14.9836168421183,
+      "revs": 0.27242939712942366,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.5200000000000005,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.166666666666658,
+      "elapsedSec": 3.2583333333333244,
+      "gateOpen": 0,
+      "speedMph": 14.82480000001311,
+      "revs": 0.2695418181820565,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.538666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.191666666666658,
+      "elapsedSec": 3.2833333333333243,
+      "gateOpen": 0,
+      "speedMph": 14.586574736855301,
+      "revs": 0.2652104497610055,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.5600000000000005,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.2083333333333246,
+      "elapsedSec": 3.299999999999991,
+      "gateOpen": 0,
+      "speedMph": 14.42775789475011,
+      "revs": 0.26232287081363836,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.5760000000000005,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.224999999999991,
+      "elapsedSec": 3.3166666666666575,
+      "gateOpen": 0,
+      "speedMph": 14.268941052644918,
+      "revs": 0.25943529186627123,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.5893333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.241666666666658,
+      "elapsedSec": 3.333333333333324,
+      "gateOpen": 0,
+      "speedMph": 14.110124210539727,
+      "revs": 0.2565477129189041,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.610666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.2583333333333244,
+      "elapsedSec": 3.3499999999999908,
+      "gateOpen": 0,
+      "speedMph": 13.951307368434536,
+      "revs": 0.253660133971537,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.6293333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.274999999999991,
+      "elapsedSec": 3.3666666666666574,
+      "gateOpen": 0,
+      "speedMph": 13.792490526329342,
+      "revs": 0.25077255502416984,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.650666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.2916666666666576,
+      "elapsedSec": 3.383333333333324,
+      "gateOpen": 0,
+      "speedMph": 13.633673684224151,
+      "revs": 0.24788497607680274,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.658666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.3083333333333242,
+      "elapsedSec": 3.3999999999999906,
+      "gateOpen": 0,
+      "speedMph": 13.47485684211896,
+      "revs": 0.24499739712943563,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.6799999999999997,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.324999999999991,
+      "elapsedSec": 3.416666666666657,
+      "gateOpen": 0,
+      "speedMph": 13.316040000013768,
+      "revs": 0.2421098181820685,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.698666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.3499999999999908,
+      "elapsedSec": 3.441666666666657,
+      "gateOpen": 0,
+      "speedMph": 13.077814736855961,
+      "revs": 0.23777844976101747,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.7199999999999998,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.3666666666666574,
+      "elapsedSec": 3.4583333333333237,
+      "gateOpen": 0,
+      "speedMph": 12.918997894750769,
+      "revs": 0.23489087081365034,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.730666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.383333333333324,
+      "elapsedSec": 3.4749999999999903,
+      "gateOpen": 0,
+      "speedMph": 12.760181052645578,
+      "revs": 0.23200329186628324,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.7493333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.3999999999999906,
+      "elapsedSec": 3.491666666666657,
+      "gateOpen": 0,
+      "speedMph": 12.601364210540387,
+      "revs": 0.22911571291891614,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.770666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.416666666666657,
+      "elapsedSec": 3.5083333333333235,
+      "gateOpen": 0,
+      "speedMph": 12.442547368435193,
+      "revs": 0.22622813397154895,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.7893333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.433333333333324,
+      "elapsedSec": 3.52499999999999,
+      "gateOpen": 0,
+      "speedMph": 12.283730526330002,
+      "revs": 0.22334055502418185,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.810666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.4499999999999904,
+      "elapsedSec": 3.5416666666666567,
+      "gateOpen": 0,
+      "speedMph": 12.124913684224811,
+      "revs": 0.22045297607681474,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.818666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.466666666666657,
+      "elapsedSec": 3.5583333333333234,
+      "gateOpen": 0,
+      "speedMph": 11.9660968421196,
+      "revs": 0.21756539712944725,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.84,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.491666666666657,
+      "elapsedSec": 3.5833333333333233,
+      "gateOpen": 0,
+      "speedMph": 11.727871578961812,
+      "revs": 0.21323402870839658,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.858666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.5083333333333235,
+      "elapsedSec": 3.59999999999999,
+      "gateOpen": 0,
+      "speedMph": 11.56905473685662,
+      "revs": 0.21034644976102945,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.88,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.52499999999999,
+      "elapsedSec": 3.6166666666666565,
+      "gateOpen": 0,
+      "speedMph": 11.410237894751429,
+      "revs": 0.20745887081366235,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.890666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.5416666666666567,
+      "elapsedSec": 3.633333333333323,
+      "gateOpen": 0,
+      "speedMph": 11.251421052646238,
+      "revs": 0.20457129186629525,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.9093333333333335,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.5583333333333234,
+      "elapsedSec": 3.6499999999999897,
+      "gateOpen": 0,
+      "speedMph": 11.092604210541044,
+      "revs": 0.20168371291892806,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.930666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.57499999999999,
+      "elapsedSec": 3.6666666666666563,
+      "gateOpen": 0,
+      "speedMph": 10.933787368435853,
+      "revs": 0.19879613397156096,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.9493333333333336,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.5916666666666566,
+      "elapsedSec": 3.683333333333323,
+      "gateOpen": 0,
+      "speedMph": 10.774970526330662,
+      "revs": 0.19590855502419385,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.96,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.608333333333323,
+      "elapsedSec": 3.6999999999999895,
+      "gateOpen": 0,
+      "speedMph": 10.61615368422545,
+      "revs": 0.19302097607682636,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 3.9786666666666672,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.62499999999999,
+      "elapsedSec": 3.716666666666656,
+      "gateOpen": 0,
+      "speedMph": 10.457336842120258,
+      "revs": 0.19013339712945923,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.6499999999999897,
+      "elapsedSec": 3.741666666666656,
+      "gateOpen": 0,
+      "speedMph": 10.219111578962469,
+      "revs": 0.18580202870840853,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.018666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.6666666666666563,
+      "elapsedSec": 3.7583333333333226,
+      "gateOpen": 0,
+      "speedMph": 10.06029473685728,
+      "revs": 0.18291444976104146,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.029333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.683333333333323,
+      "elapsedSec": 3.7749999999999893,
+      "gateOpen": 0,
+      "speedMph": 9.90147789475209,
+      "revs": 0.18002687081367436,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.050666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.6999999999999895,
+      "elapsedSec": 3.791666666666656,
+      "gateOpen": 0,
+      "speedMph": 9.742661052646895,
+      "revs": 0.17713929186630717,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.069333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.716666666666656,
+      "elapsedSec": 3.8083333333333225,
+      "gateOpen": 0,
+      "speedMph": 9.583844210541704,
+      "revs": 0.17425171291894007,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.0906666666666665,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.7333333333333227,
+      "elapsedSec": 3.824999999999989,
+      "gateOpen": 0,
+      "speedMph": 9.425027368436513,
+      "revs": 0.17136413397157296,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.109333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.7499999999999893,
+      "elapsedSec": 3.8416666666666557,
+      "gateOpen": 0,
+      "speedMph": 9.266210526331301,
+      "revs": 0.16847655502420547,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.12,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.7749999999999893,
+      "elapsedSec": 3.8666666666666556,
+      "gateOpen": 0,
+      "speedMph": 9.027985263173512,
+      "revs": 0.16414518660315477,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.1386666666666665,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.791666666666656,
+      "elapsedSec": 3.883333333333322,
+      "gateOpen": 0,
+      "speedMph": 8.86916842106832,
+      "revs": 0.16125760765578764,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.16,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.8083333333333225,
+      "elapsedSec": 3.899999999999989,
+      "gateOpen": 0,
+      "speedMph": 8.71035157896313,
+      "revs": 0.15837002870842054,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.1786666666666665,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.824999999999989,
+      "elapsedSec": 3.9166666666666554,
+      "gateOpen": 0,
+      "speedMph": 8.551534736857937,
+      "revs": 0.15548244976105338,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.2,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.8416666666666557,
+      "elapsedSec": 3.933333333333322,
+      "gateOpen": 0,
+      "speedMph": 8.392717894752748,
+      "revs": 0.15259487081368633,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.210666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.8583333333333223,
+      "elapsedSec": 3.9499999999999886,
+      "gateOpen": 0,
+      "speedMph": 8.233901052647555,
+      "revs": 0.14970729186631918,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.229333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.874999999999989,
+      "elapsedSec": 3.9666666666666552,
+      "gateOpen": 0,
+      "speedMph": 8.075084210542343,
+      "revs": 0.14681971291895168,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.250666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.899999999999989,
+      "elapsedSec": 3.991666666666655,
+      "gateOpen": 0,
+      "speedMph": 7.836858947384555,
+      "revs": 0.14248834449790101,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.269333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.9166666666666554,
+      "elapsedSec": 4.008333333333322,
+      "gateOpen": 0,
+      "speedMph": 7.6780421052793635,
+      "revs": 0.13960076555053388,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.28,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.933333333333322,
+      "elapsedSec": 4.02499999999999,
+      "gateOpen": 0,
+      "speedMph": 7.519225263174173,
+      "revs": 0.13671318660316678,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.298666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.9499999999999886,
+      "elapsedSec": 4.041666666666657,
+      "gateOpen": 0,
+      "speedMph": 7.360408421068981,
+      "revs": 0.13382560765579965,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.32,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.9666666666666552,
+      "elapsedSec": 4.058333333333325,
+      "gateOpen": 0,
+      "speedMph": 7.2015915789637885,
+      "revs": 0.13093802870843252,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.338666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.983333333333322,
+      "elapsedSec": 4.074999999999992,
+      "gateOpen": 0,
+      "speedMph": 7.042774736858598,
+      "revs": 0.12805044976106542,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.36,
+      "phase": "arriving",
+      "phaseElapsedSec": 3.9999999999999885,
+      "elapsedSec": 4.09166666666666,
+      "gateOpen": 0,
+      "speedMph": 6.883957894753405,
+      "revs": 0.12516287081369828,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.370666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.02499999999999,
+      "elapsedSec": 4.116666666666661,
+      "gateOpen": 0,
+      "speedMph": 6.645732631595598,
+      "revs": 0.12083150239264723,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.389333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.041666666666657,
+      "elapsedSec": 4.133333333333328,
+      "gateOpen": 0,
+      "speedMph": 6.486915789490387,
+      "revs": 0.11794392344527975,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.410666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.058333333333325,
+      "elapsedSec": 4.149999999999996,
+      "gateOpen": 0,
+      "speedMph": 6.328098947385175,
+      "revs": 0.11505634449791229,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.429333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.074999999999992,
+      "elapsedSec": 4.166666666666663,
+      "gateOpen": 0,
+      "speedMph": 6.169282105279983,
+      "revs": 0.11216876555054514,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.450666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.09166666666666,
+      "elapsedSec": 4.183333333333331,
+      "gateOpen": 0,
+      "speedMph": 6.010465263174791,
+      "revs": 0.10928118660317802,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.458666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.108333333333327,
+      "elapsedSec": 4.199999999999998,
+      "gateOpen": 0,
+      "speedMph": 5.851648421069579,
+      "revs": 0.10639360765581053,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.48,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.124999999999995,
+      "elapsedSec": 4.216666666666666,
+      "gateOpen": 0,
+      "speedMph": 5.692831578964368,
+      "revs": 0.10350602870844305,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.498666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.149999999999996,
+      "elapsedSec": 4.241666666666667,
+      "gateOpen": 0,
+      "speedMph": 5.4546063158065605,
+      "revs": 0.09917466028739201,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.5200000000000005,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.166666666666663,
+      "elapsedSec": 4.258333333333335,
+      "gateOpen": 0,
+      "speedMph": 5.295789473701369,
+      "revs": 0.0962870813400249,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.530666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.183333333333331,
+      "elapsedSec": 4.275000000000002,
+      "gateOpen": 0,
+      "speedMph": 5.136972631596177,
+      "revs": 0.09339950239265776,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.549333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.199999999999998,
+      "elapsedSec": 4.29166666666667,
+      "gateOpen": 0,
+      "speedMph": 4.978155789490966,
+      "revs": 0.09051192344529028,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.570666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.216666666666666,
+      "elapsedSec": 4.308333333333337,
+      "gateOpen": 0,
+      "speedMph": 4.819338947385755,
+      "revs": 0.08762434449792282,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.589333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.233333333333333,
+      "elapsedSec": 4.325000000000005,
+      "gateOpen": 0,
+      "speedMph": 4.660522105280562,
+      "revs": 0.08473676555055568,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.6000000000000005,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.250000000000001,
+      "elapsedSec": 4.341666666666672,
+      "gateOpen": 0,
+      "speedMph": 4.501705263175351,
+      "revs": 0.0818491866031882,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.618666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.266666666666668,
+      "elapsedSec": 4.35833333333334,
+      "gateOpen": 0,
+      "speedMph": 4.342888421070159,
+      "revs": 0.07896160765582107,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.640000000000001,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.29166666666667,
+      "elapsedSec": 4.383333333333341,
+      "gateOpen": 0,
+      "speedMph": 4.104663157912352,
+      "revs": 0.07463023923477004,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.658666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.308333333333337,
+      "elapsedSec": 4.400000000000008,
+      "gateOpen": 0,
+      "speedMph": 3.9458463158071404,
+      "revs": 0.07174266028740255,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.68,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.325000000000005,
+      "elapsedSec": 4.416666666666676,
+      "gateOpen": 0,
+      "speedMph": 3.7870294737019488,
+      "revs": 0.06885508134003543,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.690666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.341666666666672,
+      "elapsedSec": 4.433333333333343,
+      "gateOpen": 0,
+      "speedMph": 3.6282126315967367,
+      "revs": 0.06596750239266794,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.709333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.35833333333334,
+      "elapsedSec": 4.450000000000011,
+      "gateOpen": 0,
+      "speedMph": 3.469395789491545,
+      "revs": 0.06307992344530082,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.730666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.375000000000007,
+      "elapsedSec": 4.466666666666678,
+      "gateOpen": 0,
+      "speedMph": 3.310578947386334,
+      "revs": 0.06019234449793334,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.749333333333333,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.391666666666675,
+      "elapsedSec": 4.483333333333346,
+      "gateOpen": 0,
+      "speedMph": 3.151762105281142,
+      "revs": 0.057304765550566225,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.76,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.408333333333342,
+      "elapsedSec": 4.500000000000013,
+      "gateOpen": 0,
+      "speedMph": 2.9929452631759306,
+      "revs": 0.05441718660319874,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.778666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.433333333333343,
+      "elapsedSec": 4.525000000000015,
+      "gateOpen": 0,
+      "speedMph": 2.7547200000181227,
+      "revs": 0.05008581818214768,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.8,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.450000000000011,
+      "elapsedSec": 4.541666666666682,
+      "gateOpen": 0,
+      "speedMph": 2.595903157912931,
+      "revs": 0.047198239234780566,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.818666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.466666666666678,
+      "elapsedSec": 4.55833333333335,
+      "gateOpen": 0,
+      "speedMph": 2.43708631580772,
+      "revs": 0.04431066028741309,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.84,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.483333333333346,
+      "elapsedSec": 4.575000000000017,
+      "gateOpen": 0,
+      "speedMph": 2.2782694737025277,
+      "revs": 0.04142308134004596,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.850666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.500000000000013,
+      "elapsedSec": 4.5916666666666845,
+      "gateOpen": 0,
+      "speedMph": 2.119452631597316,
+      "revs": 0.03853550239267847,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.8693333333333335,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.516666666666681,
+      "elapsedSec": 4.608333333333352,
+      "gateOpen": 0,
+      "speedMph": 1.9606357894921043,
+      "revs": 0.03564792344531099,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.890666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.533333333333348,
+      "elapsedSec": 4.6250000000000195,
+      "gateOpen": 0,
+      "speedMph": 1.801818947386913,
+      "revs": 0.03276034449794387,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.9093333333333335,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.55833333333335,
+      "elapsedSec": 4.650000000000021,
+      "gateOpen": 0,
+      "speedMph": 1.5635936842291054,
+      "revs": 0.028428976076892824,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.925333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.575000000000017,
+      "elapsedSec": 4.666666666666688,
+      "gateOpen": 0,
+      "speedMph": 1.404776842123914,
+      "revs": 0.02554139712952571,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.938666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.5916666666666845,
+      "elapsedSec": 4.683333333333356,
+      "gateOpen": 0,
+      "speedMph": 1.2459600000187023,
+      "revs": 0.022653818182158225,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.96,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.608333333333352,
+      "elapsedSec": 4.700000000000023,
+      "gateOpen": 0,
+      "speedMph": 1.0871431579134907,
+      "revs": 0.01976623923479074,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 4.978666666666667,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.6250000000000195,
+      "elapsedSec": 4.716666666666691,
+      "gateOpen": 0,
+      "speedMph": 0.9283263158082989,
+      "revs": 0.016878660287423616,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.641666666666687,
+      "elapsedSec": 4.733333333333358,
+      "gateOpen": 0,
+      "speedMph": 0.7695094737031072,
+      "revs": 0.013991081340056494,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.010666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.6583333333333545,
+      "elapsedSec": 4.750000000000026,
+      "gateOpen": 0,
+      "speedMph": 0.6106926315978956,
+      "revs": 0.01110350239268901,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.029333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.675000000000022,
+      "elapsedSec": 4.766666666666693,
+      "gateOpen": 0,
+      "speedMph": 0.451875789492684,
+      "revs": 0.008215923445321526,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.050666666666666,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.700000000000023,
+      "elapsedSec": 4.7916666666666945,
+      "gateOpen": 0,
+      "speedMph": 0.2136505263348765,
+      "revs": 0.003884555024270482,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.069333333333334,
+      "phase": "arriving",
+      "phaseElapsedSec": 4.716666666666691,
+      "elapsedSec": 4.808333333333362,
+      "gateOpen": 0,
+      "speedMph": 0.05483368422968483,
+      "revs": 0.0009969760769033605,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.08,
+      "phase": "opening",
+      "phaseElapsedSec": 0.010912272327582132,
+      "elapsedSec": 4.8250000000000295,
+      "gateOpen": 0.00003959630999469631,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.109333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 0.0275789389942488,
+      "elapsedSec": 4.841666666666697,
+      "gateOpen": 0.0002519788118367066,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.12,
+      "phase": "opening",
+      "phaseElapsedSec": 0.04424560566091546,
+      "elapsedSec": 4.8583333333333645,
+      "gateOpen": 0.0006461416915806615,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.1386666666666665,
+      "phase": "opening",
+      "phaseElapsedSec": 0.060912272327582125,
+      "elapsedSec": 4.875000000000032,
+      "gateOpen": 0.0012200273360578368,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.149333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 0.0775789389942488,
+      "elapsedSec": 4.8916666666666995,
+      "gateOpen": 0.0019715781320995083,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.1706666666666665,
+      "phase": "opening",
+      "phaseElapsedSec": 0.09424560566091546,
+      "elapsedSec": 4.908333333333367,
+      "gateOpen": 0.002898736466536951,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.189333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 0.11091227232758212,
+      "elapsedSec": 4.9250000000000345,
+      "gateOpen": 0.003999444726201441,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.210666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.1275789389942488,
+      "elapsedSec": 4.941666666666702,
+      "gateOpen": 0.005271645297924256,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.218666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.1525789389942488,
+      "elapsedSec": 4.966666666666703,
+      "gateOpen": 0.007496993211811247,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.24,
+      "phase": "opening",
+      "phaseElapsedSec": 0.16924560566091545,
+      "elapsedSec": 4.983333333333371,
+      "gateOpen": 0.0091889225060667,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.258666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.18591227232758212,
+      "elapsedSec": 5.000000000000038,
+      "gateOpen": 0.011045142466289938,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.28,
+      "phase": "opening",
+      "phaseElapsedSec": 0.20257893899424878,
+      "elapsedSec": 5.016666666666706,
+      "gateOpen": 0.013063595479312243,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.290666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.21924560566091544,
+      "elapsedSec": 5.033333333333373,
+      "gateOpen": 0.015242223931964886,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.309333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 0.2359122723275821,
+      "elapsedSec": 5.050000000000041,
+      "gateOpen": 0.01757897021107915,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.330666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.25257893899424877,
+      "elapsedSec": 5.066666666666708,
+      "gateOpen": 0.0200717767034863,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.349333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 0.2692456056609155,
+      "elapsedSec": 5.083333333333376,
+      "gateOpen": 0.022718585796017626,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.36,
+      "phase": "opening",
+      "phaseElapsedSec": 0.2859122723275822,
+      "elapsedSec": 5.100000000000043,
+      "gateOpen": 0.02551733987550439,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.378666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.3025789389942489,
+      "elapsedSec": 5.116666666666711,
+      "gateOpen": 0.028465981328777885,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.4,
+      "phase": "opening",
+      "phaseElapsedSec": 0.327578938994249,
+      "elapsedSec": 5.141666666666712,
+      "gateOpen": 0.03316548130573163,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.418666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.3442456056609157,
+      "elapsedSec": 5.158333333333379,
+      "gateOpen": 0.03647983913585875,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.44,
+      "phase": "opening",
+      "phaseElapsedSec": 0.36091227232758244,
+      "elapsedSec": 5.175000000000047,
+      "gateOpen": 0.03993688269368204,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.450666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.37757893899424916,
+      "elapsedSec": 5.191666666666714,
+      "gateOpen": 0.04353455436603281,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.469333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 0.3942456056609159,
+      "elapsedSec": 5.208333333333382,
+      "gateOpen": 0.0472707965397423,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.490666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.4109122723275826,
+      "elapsedSec": 5.225000000000049,
+      "gateOpen": 0.051143551601641815,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.509333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 0.4275789389942493,
+      "elapsedSec": 5.241666666666717,
+      "gateOpen": 0.05515076193856261,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.52,
+      "phase": "opening",
+      "phaseElapsedSec": 0.4525789389942494,
+      "elapsedSec": 5.266666666666718,
+      "gateOpen": 0.06140918005580214,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.538666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 0.4692456056609161,
+      "elapsedSec": 5.283333333333386,
+      "gateOpen": 0.06574352652266298,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.5600000000000005,
+      "phase": "opening",
+      "phaseElapsedSec": 0.48591227232758283,
+      "elapsedSec": 5.300000000000053,
+      "gateOpen": 0.07020512661845459,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.578666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.5025789389942495,
+      "elapsedSec": 5.316666666666721,
+      "gateOpen": 0.0747919227300082,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.589333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 0.5192456056609162,
+      "elapsedSec": 5.333333333333388,
+      "gateOpen": 0.07950185724415511,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.610666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.5359122723275828,
+      "elapsedSec": 5.350000000000056,
+      "gateOpen": 0.08433287254772658,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.629333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 0.5525789389942494,
+      "elapsedSec": 5.366666666666723,
+      "gateOpen": 0.0892829110275539,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.650666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 0.569245605660916,
+      "elapsedSec": 5.383333333333391,
+      "gateOpen": 0.09434991507046835,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.658666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.5859122723275826,
+      "elapsedSec": 5.400000000000058,
+      "gateOpen": 0.09953182706330121,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.68,
+      "phase": "opening",
+      "phaseElapsedSec": 0.6025789389942492,
+      "elapsedSec": 5.416666666666726,
+      "gateOpen": 0.10482658939288376,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.698666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 0.6275789389942491,
+      "elapsedSec": 5.441666666666727,
+      "gateOpen": 0.11297582623985662,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.720000000000001,
+      "phase": "opening",
+      "phaseElapsedSec": 0.6442456056609157,
+      "elapsedSec": 5.458333333333394,
+      "gateOpen": 0.1185437123537002,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.730666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 0.6609122723275823,
+      "elapsedSec": 5.475000000000062,
+      "gateOpen": 0.12421724715820293,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.749333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 0.6775789389942489,
+      "elapsedSec": 5.491666666666729,
+      "gateOpen": 0.12999437304019607,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.770666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.6942456056609155,
+      "elapsedSec": 5.508333333333397,
+      "gateOpen": 0.1358730323865109,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.789333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 0.7109122723275821,
+      "elapsedSec": 5.525000000000064,
+      "gateOpen": 0.1418511675839787,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.800000000000001,
+      "phase": "opening",
+      "phaseElapsedSec": 0.7275789389942487,
+      "elapsedSec": 5.541666666666732,
+      "gateOpen": 0.14792672101943077,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.818666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.7442456056609154,
+      "elapsedSec": 5.558333333333399,
+      "gateOpen": 0.15409763507969834,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.84,
+      "phase": "opening",
+      "phaseElapsedSec": 0.760912272327582,
+      "elapsedSec": 5.575000000000067,
+      "gateOpen": 0.16036185215161272,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.858666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 0.7859122723275819,
+      "elapsedSec": 5.600000000000068,
+      "gateOpen": 0.16992861987751548,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.8693333333333335,
+      "phase": "opening",
+      "phaseElapsedSec": 0.8025789389942485,
+      "elapsedSec": 5.6166666666667355,
+      "gateOpen": 0.1764170924209337,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.890666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 0.8192456056609151,
+      "elapsedSec": 5.633333333333403,
+      "gateOpen": 0.18299166632990815,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.909333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 0.8359122723275817,
+      "elapsedSec": 5.6500000000000705,
+      "gateOpen": 0.18965028399127015,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.930666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.8525789389942483,
+      "elapsedSec": 5.666666666666738,
+      "gateOpen": 0.19639088779185102,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.949333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 0.8692456056609149,
+      "elapsedSec": 5.6833333333334055,
+      "gateOpen": 0.20321142011848195,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.960000000000001,
+      "phase": "opening",
+      "phaseElapsedSec": 0.8859122723275815,
+      "elapsedSec": 5.700000000000073,
+      "gateOpen": 0.21010982335799422,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 5.978666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 0.9025789389942481,
+      "elapsedSec": 5.7166666666667405,
+      "gateOpen": 0.21708403989721917,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6,
+      "phase": "opening",
+      "phaseElapsedSec": 0.927578938994248,
+      "elapsedSec": 5.741666666666742,
+      "gateOpen": 0.2276830136142112,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.018666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 0.9442456056609146,
+      "elapsedSec": 5.758333333333409,
+      "gateOpen": 0.23483776134510456,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.029333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 0.9609122723275813,
+      "elapsedSec": 5.775000000000077,
+      "gateOpen": 0.24206112072962008,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.050666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 0.9775789389942479,
+      "elapsedSec": 5.791666666666744,
+      "gateOpen": 0.24935103415458892,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.069333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 0.9942456056609145,
+      "elapsedSec": 5.808333333333412,
+      "gateOpen": 0.2567054440068425,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.090666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.0109122723275812,
+      "elapsedSec": 5.825000000000079,
+      "gateOpen": 0.26412229267321197,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.109333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 1.0275789389942478,
+      "elapsedSec": 5.841666666666747,
+      "gateOpen": 0.27159952254052866,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.120000000000001,
+      "phase": "opening",
+      "phaseElapsedSec": 1.0442456056609144,
+      "elapsedSec": 5.858333333333414,
+      "gateOpen": 0.2791350759956238,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.138666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.060912272327581,
+      "elapsedSec": 5.875000000000082,
+      "gateOpen": 0.28672689542532875,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.16,
+      "phase": "opening",
+      "phaseElapsedSec": 1.0775789389942476,
+      "elapsedSec": 5.891666666666749,
+      "gateOpen": 0.2943729232164747,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.170666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.1025789389942475,
+      "elapsedSec": 5.9166666666667505,
+      "gateOpen": 0.30593910455208906,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.189333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 1.1192456056609141,
+      "elapsedSec": 5.933333333333418,
+      "gateOpen": 0.31371165118922445,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.210666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.1359122723275807,
+      "elapsedSec": 5.950000000000085,
+      "gateOpen": 0.32153120454171036,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.229333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 1.1525789389942473,
+      "elapsedSec": 5.966666666666753,
+      "gateOpen": 0.32939570699637805,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.2506666666666675,
+      "phase": "opening",
+      "phaseElapsedSec": 1.169245605660914,
+      "elapsedSec": 5.98333333333342,
+      "gateOpen": 0.3373031009400588,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.258666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.1859122723275806,
+      "elapsedSec": 6.000000000000088,
+      "gateOpen": 0.34525132875958386,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.279999999999999,
+      "phase": "opening",
+      "phaseElapsedSec": 1.2025789389942472,
+      "elapsedSec": 6.016666666666755,
+      "gateOpen": 0.3532383328417845,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.2986666666666675,
+      "phase": "opening",
+      "phaseElapsedSec": 1.2192456056609138,
+      "elapsedSec": 6.033333333333423,
+      "gateOpen": 0.36126205557349206,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.32,
+      "phase": "opening",
+      "phaseElapsedSec": 1.2442456056609137,
+      "elapsedSec": 6.058333333333424,
+      "gateOpen": 0.3733619861100722,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.3306666666666676,
+      "phase": "opening",
+      "phaseElapsedSec": 1.2609122723275803,
+      "elapsedSec": 6.075000000000092,
+      "gateOpen": 0.3814685034079338,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.349333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 1.277578938994247,
+      "elapsedSec": 6.091666666666759,
+      "gateOpen": 0.3896045377092118,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.370666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.2942456056609135,
+      "elapsedSec": 6.108333333333427,
+      "gateOpen": 0.39776803140073735,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.389333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 1.3109122723275801,
+      "elapsedSec": 6.125000000000094,
+      "gateOpen": 0.4059569268693418,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.4,
+      "phase": "opening",
+      "phaseElapsedSec": 1.3275789389942467,
+      "elapsedSec": 6.141666666666762,
+      "gateOpen": 0.4141691665018565,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.418666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.3442456056609133,
+      "elapsedSec": 6.158333333333429,
+      "gateOpen": 0.42240269268511255,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.4399999999999995,
+      "phase": "opening",
+      "phaseElapsedSec": 1.36091227232758,
+      "elapsedSec": 6.175000000000097,
+      "gateOpen": 0.4306554478059414,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.458666666666668,
+      "phase": "opening",
+      "phaseElapsedSec": 1.3859122723275799,
+      "elapsedSec": 6.200000000000098,
+      "gateOpen": 0.4430661337163269,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.469333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 1.4025789389942465,
+      "elapsedSec": 6.216666666666765,
+      "gateOpen": 0.4513579591234744,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.490666666666668,
+      "phase": "opening",
+      "phaseElapsedSec": 1.419245605660913,
+      "elapsedSec": 6.233333333333433,
+      "gateOpen": 0.459661811822104,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.509333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 1.4359122723275797,
+      "elapsedSec": 6.2500000000001,
+      "gateOpen": 0.46797563419904714,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.530666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.4525789389942463,
+      "elapsedSec": 6.266666666666768,
+      "gateOpen": 0.476297368641135,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.549333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 1.469245605660913,
+      "elapsedSec": 6.283333333333435,
+      "gateOpen": 0.4846249575351989,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.5600000000000005,
+      "phase": "opening",
+      "phaseElapsedSec": 1.4859122723275795,
+      "elapsedSec": 6.300000000000103,
+      "gateOpen": 0.4929563432680701,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.578666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.502578938994246,
+      "elapsedSec": 6.31666666666677,
+      "gateOpen": 0.5012894682265798,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.6,
+      "phase": "opening",
+      "phaseElapsedSec": 1.527578938994246,
+      "elapsedSec": 6.341666666666772,
+      "gateOpen": 0.5137879156836102,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.618666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 1.5442456056609126,
+      "elapsedSec": 6.358333333333439,
+      "gateOpen": 0.5221163866486032,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.629333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 1.5609122723275792,
+      "elapsedSec": 6.375000000000107,
+      "gateOpen": 0.5304393951931442,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.650666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 1.5775789389942458,
+      "elapsedSec": 6.391666666666774,
+      "gateOpen": 0.5387548837040645,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.669333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 1.5942456056609124,
+      "elapsedSec": 6.408333333333442,
+      "gateOpen": 0.5470607945681956,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.690666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.610912272327579,
+      "elapsedSec": 6.425000000000109,
+      "gateOpen": 0.5553550701723684,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.698666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 1.6275789389942457,
+      "elapsedSec": 6.441666666666777,
+      "gateOpen": 0.5636356529034143,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.720000000000001,
+      "phase": "opening",
+      "phaseElapsedSec": 1.6442456056609123,
+      "elapsedSec": 6.458333333333444,
+      "gateOpen": 0.5719004851481647,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.738666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.6609122723275789,
+      "elapsedSec": 6.4750000000001116,
+      "gateOpen": 0.5801475092934507,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.76,
+      "phase": "opening",
+      "phaseElapsedSec": 1.6775789389942455,
+      "elapsedSec": 6.491666666666779,
+      "gateOpen": 0.5883746677261038,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.770666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.7025789389942454,
+      "elapsedSec": 6.51666666666678,
+      "gateOpen": 0.6006736561350897,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.789333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 1.719245605660912,
+      "elapsedSec": 6.533333333333448,
+      "gateOpen": 0.608842148228547,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.810666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 1.7359122723275786,
+      "elapsedSec": 6.550000000000115,
+      "gateOpen": 0.6169835729632807,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.829333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 1.7525789389942452,
+      "elapsedSec": 6.566666666666783,
+      "gateOpen": 0.6250958727261221,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.84,
+      "phase": "opening",
+      "phaseElapsedSec": 1.7692456056609118,
+      "elapsedSec": 6.58333333333345,
+      "gateOpen": 0.6331769899039025,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.858666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 1.7859122723275784,
+      "elapsedSec": 6.600000000000118,
+      "gateOpen": 0.6412248668834531,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.880000000000001,
+      "phase": "opening",
+      "phaseElapsedSec": 1.802578938994245,
+      "elapsedSec": 6.616666666666785,
+      "gateOpen": 0.6492374460516053,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.898666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.8192456056609116,
+      "elapsedSec": 6.633333333333453,
+      "gateOpen": 0.6572126697951903,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.92,
+      "phase": "opening",
+      "phaseElapsedSec": 1.8442456056609116,
+      "elapsedSec": 6.658333333333454,
+      "gateOpen": 0.6691009629606977,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.930666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.8609122723275782,
+      "elapsedSec": 6.6750000000001215,
+      "gateOpen": 0.6769737960852514,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.949333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 1.8775789389942448,
+      "elapsedSec": 6.691666666666789,
+      "gateOpen": 0.6848020721391476,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.970666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 1.8942456056609114,
+      "elapsedSec": 6.7083333333334565,
+      "gateOpen": 0.6925837335092173,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 6.989333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 1.910912272327578,
+      "elapsedSec": 6.725000000000124,
+      "gateOpen": 0.7003167225822918,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7,
+      "phase": "opening",
+      "phaseElapsedSec": 1.9275789389942446,
+      "elapsedSec": 6.7416666666667915,
+      "gateOpen": 0.7079989817452024,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.018666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 1.9442456056609112,
+      "elapsedSec": 6.758333333333459,
+      "gateOpen": 0.7156284533847803,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.040000000000001,
+      "phase": "opening",
+      "phaseElapsedSec": 1.9609122723275778,
+      "elapsedSec": 6.7750000000001265,
+      "gateOpen": 0.723203079887857,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.058666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 1.9859122723275777,
+      "elapsedSec": 6.800000000000128,
+      "gateOpen": 0.7344576839827254,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.069333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 2.0025789389942443,
+      "elapsedSec": 6.816666666666795,
+      "gateOpen": 0.7418861955869355,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.090666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 2.019245605660911,
+      "elapsedSec": 6.833333333333463,
+      "gateOpen": 0.7492526604085535,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.109333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 2.0359122723275775,
+      "elapsedSec": 6.85000000000013,
+      "gateOpen": 0.7565550208344112,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.1306666666666665,
+      "phase": "opening",
+      "phaseElapsedSec": 2.052578938994244,
+      "elapsedSec": 6.866666666666798,
+      "gateOpen": 0.7637912192513395,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.149333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 2.0692456056609108,
+      "elapsedSec": 6.883333333333465,
+      "gateOpen": 0.7709591980461697,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.16,
+      "phase": "opening",
+      "phaseElapsedSec": 2.0859122723275774,
+      "elapsedSec": 6.900000000000133,
+      "gateOpen": 0.7780568996057332,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.1786666666666665,
+      "phase": "opening",
+      "phaseElapsedSec": 2.102578938994244,
+      "elapsedSec": 6.9166666666668,
+      "gateOpen": 0.7850822663168611,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.199999999999999,
+      "phase": "opening",
+      "phaseElapsedSec": 2.127578938994244,
+      "elapsedSec": 6.941666666666801,
+      "gateOpen": 0.7954801875139299,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.2186666666666675,
+      "phase": "opening",
+      "phaseElapsedSec": 2.1442456056609105,
+      "elapsedSec": 6.958333333333469,
+      "gateOpen": 0.8023157150463559,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.229333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 2.160912272327577,
+      "elapsedSec": 6.975000000000136,
+      "gateOpen": 0.8090717060842557,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.2506666666666675,
+      "phase": "opening",
+      "phaseElapsedSec": 2.1775789389942437,
+      "elapsedSec": 6.991666666666804,
+      "gateOpen": 0.815746103014461,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.269333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 2.1942456056609103,
+      "elapsedSec": 7.008333333333471,
+      "gateOpen": 0.8223368482238027,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.290666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 2.210912272327577,
+      "elapsedSec": 7.025000000000139,
+      "gateOpen": 0.8288418840991123,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.2986666666666675,
+      "phase": "opening",
+      "phaseElapsedSec": 2.2275789389942435,
+      "elapsedSec": 7.041666666666806,
+      "gateOpen": 0.8352591530272208,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.32,
+      "phase": "opening",
+      "phaseElapsedSec": 2.2525789389942434,
+      "elapsedSec": 7.066666666666808,
+      "gateOpen": 0.8447159923645754,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.338666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 2.26924560566091,
+      "elapsedSec": 7.083333333333475,
+      "gateOpen": 0.8509048418670685,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.359999999999999,
+      "phase": "opening",
+      "phaseElapsedSec": 2.2859122723275767,
+      "elapsedSec": 7.100000000000143,
+      "gateOpen": 0.8569987227762701,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.378666666666668,
+      "phase": "opening",
+      "phaseElapsedSec": 2.3025789389942433,
+      "elapsedSec": 7.11666666666681,
+      "gateOpen": 0.8629955774790115,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.389333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 2.31924560566091,
+      "elapsedSec": 7.133333333333478,
+      "gateOpen": 0.868893348362124,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.410666666666668,
+      "phase": "opening",
+      "phaseElapsedSec": 2.3359122723275765,
+      "elapsedSec": 7.150000000000145,
+      "gateOpen": 0.8746899778124388,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.429333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 2.352578938994243,
+      "elapsedSec": 7.166666666666813,
+      "gateOpen": 0.8803834082167872,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.4399999999999995,
+      "phase": "opening",
+      "phaseElapsedSec": 2.3692456056609097,
+      "elapsedSec": 7.18333333333348,
+      "gateOpen": 0.8859715819620007,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.458666666666668,
+      "phase": "opening",
+      "phaseElapsedSec": 2.3859122723275763,
+      "elapsedSec": 7.200000000000148,
+      "gateOpen": 0.8914524414349102,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.48,
+      "phase": "opening",
+      "phaseElapsedSec": 2.402578938994243,
+      "elapsedSec": 7.216666666666815,
+      "gateOpen": 0.8968239290223473,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.498666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 2.4192456056609095,
+      "elapsedSec": 7.233333333333483,
+      "gateOpen": 0.9020839871111431,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.52,
+      "phase": "opening",
+      "phaseElapsedSec": 2.4442456056609094,
+      "elapsedSec": 7.258333333333484,
+      "gateOpen": 0.9097606429055777,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.530666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 2.460912272327576,
+      "elapsedSec": 7.275000000000151,
+      "gateOpen": 0.9147331251901573,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.549333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 2.4775789389942426,
+      "elapsedSec": 7.291666666666819,
+      "gateOpen": 0.9195869763300049,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.570666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 2.4942456056609092,
+      "elapsedSec": 7.308333333333486,
+      "gateOpen": 0.9243201387119521,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.589333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 2.510912272327576,
+      "elapsedSec": 7.325000000000154,
+      "gateOpen": 0.9289305547228298,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.610666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 2.5275789389942425,
+      "elapsedSec": 7.341666666666821,
+      "gateOpen": 0.9334161667494698,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.618666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 2.544245605660909,
+      "elapsedSec": 7.358333333333489,
+      "gateOpen": 0.937774917178703,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.640000000000001,
+      "phase": "opening",
+      "phaseElapsedSec": 2.569245605660909,
+      "elapsedSec": 7.38333333333349,
+      "gateOpen": 0.9440706762986087,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.658666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 2.5859122723275756,
+      "elapsedSec": 7.400000000000158,
+      "gateOpen": 0.948103270676712,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.677333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 2.602578938994242,
+      "elapsedSec": 7.416666666666825,
+      "gateOpen": 0.952001801811318,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.690666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 2.619245605660909,
+      "elapsedSec": 7.4333333333334926,
+      "gateOpen": 0.9557642120892581,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.709333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 2.6359122723275754,
+      "elapsedSec": 7.45000000000016,
+      "gateOpen": 0.9593884438973636,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.730666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 2.652578938994242,
+      "elapsedSec": 7.4666666666668275,
+      "gateOpen": 0.9628724396224656,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.749333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 2.6692456056609086,
+      "elapsedSec": 7.483333333333495,
+      "gateOpen": 0.9662141416513954,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.76,
+      "phase": "opening",
+      "phaseElapsedSec": 2.6859122723275752,
+      "elapsedSec": 7.5000000000001625,
+      "gateOpen": 0.9694114923709846,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.778666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 2.702578938994242,
+      "elapsedSec": 7.51666666666683,
+      "gateOpen": 0.9724624341680641,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.800000000000001,
+      "phase": "opening",
+      "phaseElapsedSec": 2.7275789389942418,
+      "elapsedSec": 7.541666666666831,
+      "gateOpen": 0.9767598291051711,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.818666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 2.7442456056609084,
+      "elapsedSec": 7.558333333333499,
+      "gateOpen": 0.9794357465383635,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.829333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 2.760912272327575,
+      "elapsedSec": 7.575000000000166,
+      "gateOpen": 0.9819580534029558,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.850666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 2.7775789389942416,
+      "elapsedSec": 7.591666666666834,
+      "gateOpen": 0.9843246920857793,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.8693333333333335,
+      "phase": "opening",
+      "phaseElapsedSec": 2.794245605660908,
+      "elapsedSec": 7.608333333333501,
+      "gateOpen": 0.9865336049736652,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.890666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 2.810912272327575,
+      "elapsedSec": 7.625000000000169,
+      "gateOpen": 0.9885827344534447,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.898666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 2.8275789389942414,
+      "elapsedSec": 7.641666666666836,
+      "gateOpen": 0.9904700229119492,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.92,
+      "phase": "opening",
+      "phaseElapsedSec": 2.844245605660908,
+      "elapsedSec": 7.658333333333504,
+      "gateOpen": 0.9921934127360101,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.938666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 2.8609122723275746,
+      "elapsedSec": 7.675000000000171,
+      "gateOpen": 0.9937508463124585,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.960000000000001,
+      "phase": "opening",
+      "phaseElapsedSec": 2.8859122723275745,
+      "elapsedSec": 7.7000000000001725,
+      "gateOpen": 0.9957713276840511,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.970666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 2.902578938994241,
+      "elapsedSec": 7.71666666666684,
+      "gateOpen": 0.9969048685838552,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 7.989333333333333,
+      "phase": "opening",
+      "phaseElapsedSec": 2.9192456056609077,
+      "elapsedSec": 7.7333333333335075,
+      "gateOpen": 0.9978652515899563,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.010666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 2.9359122723275743,
+      "elapsedSec": 7.750000000000175,
+      "gateOpen": 0.9986504190891856,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.029333333333334,
+      "phase": "opening",
+      "phaseElapsedSec": 2.952578938994241,
+      "elapsedSec": 7.7666666666668425,
+      "gateOpen": 0.9992583134683746,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.050666666666666,
+      "phase": "opening",
+      "phaseElapsedSec": 2.9692456056609076,
+      "elapsedSec": 7.78333333333351,
+      "gateOpen": 0.9996868771143543,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.058666666666667,
+      "phase": "opening",
+      "phaseElapsedSec": 2.985912272327574,
+      "elapsedSec": 7.8000000000001775,
+      "gateOpen": 0.9999340524139562,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.08,
+      "phase": "choice",
+      "phaseElapsedSec": 0.0025789389942408054,
+      "elapsedSec": 7.816666666666845,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.098666666666666,
+      "phase": "choice",
+      "phaseElapsedSec": 0.027578938994240805,
+      "elapsedSec": 7.841666666666846,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.120000000000001,
+      "phase": "choice",
+      "phaseElapsedSec": 0.04424560566090747,
+      "elapsedSec": 7.858333333333514,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.138666666666667,
+      "phase": "choice",
+      "phaseElapsedSec": 0.06091227232757413,
+      "elapsedSec": 7.875000000000181,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.149333333333333,
+      "phase": "choice",
+      "phaseElapsedSec": 0.0775789389942408,
+      "elapsedSec": 7.891666666666849,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.170666666666667,
+      "phase": "choice",
+      "phaseElapsedSec": 0.09424560566090746,
+      "elapsedSec": 7.908333333333516,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.189333333333334,
+      "phase": "choice",
+      "phaseElapsedSec": 0.11091227232757413,
+      "elapsedSec": 7.925000000000184,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.210666666666667,
+      "phase": "choice",
+      "phaseElapsedSec": 0.1275789389942408,
+      "elapsedSec": 7.941666666666851,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.218666666666667,
+      "phase": "choice",
+      "phaseElapsedSec": 0.1525789389942408,
+      "elapsedSec": 7.966666666666852,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.24,
+      "phase": "choice",
+      "phaseElapsedSec": 0.16924560566090746,
+      "elapsedSec": 7.98333333333352,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.258666666666667,
+      "phase": "choice",
+      "phaseElapsedSec": 0.18591227232757412,
+      "elapsedSec": 8.000000000000187,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.28,
+      "phase": "choice",
+      "phaseElapsedSec": 0.2025789389942408,
+      "elapsedSec": 8.016666666666852,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.290666666666667,
+      "phase": "choice",
+      "phaseElapsedSec": 0.21924560566090745,
+      "elapsedSec": 8.033333333333518,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.309333333333333,
+      "phase": "choice",
+      "phaseElapsedSec": 0.2359122723275741,
+      "elapsedSec": 8.050000000000184,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.330666666666668,
+      "phase": "choice",
+      "phaseElapsedSec": 0.2525789389942408,
+      "elapsedSec": 8.06666666666685,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.349333333333334,
+      "phase": "choice",
+      "phaseElapsedSec": 0.2692456056609075,
+      "elapsedSec": 8.083333333333515,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.36,
+      "phase": "choice",
+      "phaseElapsedSec": 0.2859122723275742,
+      "elapsedSec": 8.10000000000018,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.378666666666668,
+      "phase": "choice",
+      "phaseElapsedSec": 0.30257893899424093,
+      "elapsedSec": 8.116666666666847,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.4,
+      "phase": "choice",
+      "phaseElapsedSec": 0.327578938994241,
+      "elapsedSec": 8.141666666666845,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.418666666666667,
+      "phase": "choice",
+      "phaseElapsedSec": 0.3442456056609077,
+      "elapsedSec": 8.15833333333351,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.429333333333334,
+      "phase": "choice",
+      "phaseElapsedSec": 0.36091227232757445,
+      "elapsedSec": 8.175000000000177,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.450666666666667,
+      "phase": "choice",
+      "phaseElapsedSec": 0.37757893899424116,
+      "elapsedSec": 8.191666666666842,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.469333333333333,
+      "phase": "choice",
+      "phaseElapsedSec": 0.3942456056609079,
+      "elapsedSec": 8.208333333333508,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.490666666666668,
+      "phase": "choice",
+      "phaseElapsedSec": 0.4109122723275746,
+      "elapsedSec": 8.225000000000174,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.509333333333334,
+      "phase": "choice",
+      "phaseElapsedSec": 0.4275789389942413,
+      "elapsedSec": 8.24166666666684,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.52,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.008333333333333333,
+      "elapsedSec": 8.258333333333505,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.538666666666666,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.025,
+      "elapsedSec": 8.27500000000017,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.56,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.049999999999999996,
+      "elapsedSec": 8.30000000000017,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.578666666666667,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.06666666666666667,
+      "elapsedSec": 8.316666666666835,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.589333333333334,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.08333333333333333,
+      "elapsedSec": 8.333333333333501,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.610666666666667,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.09999999999999999,
+      "elapsedSec": 8.350000000000167,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.629333333333333,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.11666666666666665,
+      "elapsedSec": 8.366666666666832,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.650666666666666,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.13333333333333333,
+      "elapsedSec": 8.383333333333498,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.658666666666667,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.15,
+      "elapsedSec": 8.400000000000164,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.68,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.16666666666666666,
+      "elapsedSec": 8.41666666666683,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.698666666666666,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.19166666666666665,
+      "elapsedSec": 8.441666666666828,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.72,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.20833333333333331,
+      "elapsedSec": 8.458333333333494,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.730666666666666,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.22499999999999998,
+      "elapsedSec": 8.47500000000016,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.749333333333334,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.24166666666666664,
+      "elapsedSec": 8.491666666666825,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.770666666666667,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.2583333333333333,
+      "elapsedSec": 8.508333333333491,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.789333333333333,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.275,
+      "elapsedSec": 8.525000000000157,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.810666666666666,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.29166666666666674,
+      "elapsedSec": 8.541666666666822,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.818666666666667,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.30833333333333346,
+      "elapsedSec": 8.558333333333488,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.84,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.33333333333333354,
+      "elapsedSec": 8.583333333333487,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.858666666666666,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.35000000000000026,
+      "elapsedSec": 8.600000000000152,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.88,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.366666666666667,
+      "elapsedSec": 8.616666666666818,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.890666666666666,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.3833333333333337,
+      "elapsedSec": 8.633333333333484,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.909333333333333,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.4000000000000004,
+      "elapsedSec": 8.65000000000015,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.930666666666667,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.41666666666666713,
+      "elapsedSec": 8.666666666666815,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.949333333333334,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.43333333333333385,
+      "elapsedSec": 8.683333333333481,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.968,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.4583333333333339,
+      "elapsedSec": 8.70833333333348,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 8.978666666666667,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.47500000000000064,
+      "elapsedSec": 8.725000000000145,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.49166666666666736,
+      "elapsedSec": 8.741666666666811,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.018666666666666,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.508333333333334,
+      "elapsedSec": 8.758333333333477,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.040000000000001,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.5250000000000006,
+      "elapsedSec": 8.775000000000142,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.050666666666666,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.5416666666666672,
+      "elapsedSec": 8.791666666666808,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.069333333333333,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.5583333333333338,
+      "elapsedSec": 8.808333333333474,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.090666666666667,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.5750000000000004,
+      "elapsedSec": 8.82500000000014,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.109333333333334,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.591666666666667,
+      "elapsedSec": 8.841666666666805,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.120000000000001,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.6166666666666669,
+      "elapsedSec": 8.866666666666804,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.138666666666667,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.6333333333333335,
+      "elapsedSec": 8.88333333333347,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.16,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.6500000000000001,
+      "elapsedSec": 8.900000000000135,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.178666666666667,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.6666666666666667,
+      "elapsedSec": 8.916666666666801,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.2,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.6833333333333333,
+      "elapsedSec": 8.933333333333467,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.210666666666667,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.7,
+      "elapsedSec": 8.950000000000133,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.229333333333333,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.7249999999999999,
+      "elapsedSec": 8.975000000000131,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.250666666666667,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.7416666666666665,
+      "elapsedSec": 8.991666666666797,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.269333333333334,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.7583333333333331,
+      "elapsedSec": 9.008333333333463,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.285333333333334,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.7749999999999997,
+      "elapsedSec": 9.025000000000128,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.298666666666668,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.7916666666666663,
+      "elapsedSec": 9.041666666666794,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.32,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.8083333333333329,
+      "elapsedSec": 9.05833333333346,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.338666666666667,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.8249999999999995,
+      "elapsedSec": 9.075000000000125,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    },
+    {
+      "audioTimeSec": 9.36,
+      "phase": "turned-back",
+      "phaseElapsedSec": 0.8416666666666661,
+      "elapsedSec": 9.091666666666791,
+      "gateOpen": 1,
+      "speedMph": 0,
+      "revs": 0,
+      "paused": false
+    }
+  ],
+  "memoryOnly": true,
+  "mixPostLimiter": true,
+  "note": "Real-time production App audio. Vehicle stem taps the actual ducked vehicle bus (engine plus tires and vehicle accents); gate/vehicle stems are pre-limiter at master gain .42. R1 engine-only stem is not directly comparable. Explicit pose fixtures skip the long wash drive.",
+  "tracks": {
+    "mix": {
+      "file": "performance-mix.wav",
+      "sha256": "adc5d88d2d7b42681bde44ef5f4652ce55503f7118d60f617126a60bb9a8ce95",
+      "frames": 149504,
+      "firstPlaybackSec": 0.472
+    },
+    "vehicle": {
+      "file": "performance-vehicle.wav",
+      "sha256": "213afb0c7ffb6fb5fd8fd24d1b8c6b6db80397a3cf197bbcb75ad8a298092ce0",
+      "frames": 149504,
+      "firstPlaybackSec": 0.472
+    },
+    "gate": {
+      "file": "performance-gate.wav",
+      "sha256": "58d08bcb6cde16a5198f628fc1eee0875658fe28647a0d52145cdb0ceece54a2",
+      "frames": 149504,
+      "firstPlaybackSec": 0.472
+    }
+  },
+  "metrics": {
+    "mix": {
+      "peak": 0.215362548828125,
+      "peakDb": -13.33659635051168,
+      "rms": 0.02496542483975593,
+      "durationSec": 9.344
+    },
+    "vehicle": {
+      "peak": 0.056793212890625,
+      "peakDb": -24.91407123657902,
+      "rms": 0.009046066298183367,
+      "durationSec": 9.344
+    },
+    "gate": {
+      "peak": 0.1304931640625,
+      "peakDb": -17.68824476845955,
+      "rms": 0.012205855781644518,
+      "durationSec": 9.344
+    }
+  },
+  "onsets": [
+    {
+      "journeyId": 1,
+      "phase": "arriving",
+      "kind": "drum",
+      "index": 0,
+      "simulationTime": 0.19166666666666665,
+      "audioTimeSec": 0.45066666666666677,
+      "onsetOffsetSec": -0.003
+    },
+    {
+      "journeyId": 1,
+      "phase": "arriving",
+      "kind": "drum",
+      "index": 1,
+      "simulationTime": 0.8999999999999992,
+      "audioTimeSec": 1.1600000000000001,
+      "onsetOffsetSec": -0.003
+    },
+    {
+      "journeyId": 1,
+      "phase": "arriving",
+      "kind": "drum",
+      "index": 2,
+      "simulationTime": 1.6999999999999964,
+      "audioTimeSec": 1.96,
+      "onsetOffsetSec": -0.003
+    },
+    {
+      "journeyId": 1,
+      "phase": "opening",
+      "kind": "chain",
+      "index": 0,
+      "simulationTime": 4.8250000000000295,
+      "audioTimeSec": 5.08,
+      "onsetOffsetSec": -0.003
+    }
+  ],
+  "loudness400ms": [
+    {
+      "timeSec": 0,
+      "mix": -180,
+      "vehicle": -180,
+      "gate": -180
+    },
+    {
+      "timeSec": 0.4,
+      "mix": -28.382254488517763,
+      "vehicle": -40.82447139955797,
+      "gate": -33.37214842134486
+    },
+    {
+      "timeSec": 0.8,
+      "mix": -30.2538645222649,
+      "vehicle": -42.275305920613526,
+      "gate": -35.21860873773062
+    },
+    {
+      "timeSec": 1.2000000000000002,
+      "mix": -32.05524861139307,
+      "vehicle": -43.842676860419196,
+      "gate": -37.97074315096711
+    },
+    {
+      "timeSec": 1.6,
+      "mix": -30.557082855758175,
+      "vehicle": -44.15457456620253,
+      "gate": -35.22182016996334
+    },
+    {
+      "timeSec": 2,
+      "mix": -32.33329908063074,
+      "vehicle": -44.8528403157681,
+      "gate": -37.97074315096711
+    },
+    {
+      "timeSec": 2.4,
+      "mix": -40.38768331855947,
+      "vehicle": -44.6672447791415,
+      "gate": -89.67378870229446
+    },
+    {
+      "timeSec": 2.8,
+      "mix": -41.096673750958544,
+      "vehicle": -45.46425520194532,
+      "gate": -180
+    },
+    {
+      "timeSec": 3.1999999999999997,
+      "mix": -41.24541735184826,
+      "vehicle": -45.514234418468156,
+      "gate": -180
+    },
+    {
+      "timeSec": 3.5999999999999996,
+      "mix": -40.21679498448342,
+      "vehicle": -44.61983763438276,
+      "gate": -180
+    },
+    {
+      "timeSec": 3.9999999999999996,
+      "mix": -39.89635209200084,
+      "vehicle": -44.15363187351523,
+      "gate": -180
+    },
+    {
+      "timeSec": 4.3999999999999995,
+      "mix": -41.105052139246254,
+      "vehicle": -45.53105443612903,
+      "gate": -180
+    },
+    {
+      "timeSec": 4.8,
+      "mix": -28.84293854126163,
+      "vehicle": -41.79395775667807,
+      "gate": -33.202081605846686
+    },
+    {
+      "timeSec": 5.2,
+      "mix": -33.68258501222781,
+      "vehicle": -42.11643535110011,
+      "gate": -40.93408767684928
+    },
+    {
+      "timeSec": 5.6000000000000005,
+      "mix": -33.486208058457414,
+      "vehicle": -41.27835426721184,
+      "gate": -40.25247619525846
+    },
+    {
+      "timeSec": 6.000000000000001,
+      "mix": -27.971135505256804,
+      "vehicle": -42.368774059470276,
+      "gate": -32.87387813431766
+    },
+    {
+      "timeSec": 6.400000000000001,
+      "mix": -34.232537387434206,
+      "vehicle": -42.66518393754711,
+      "gate": -40.93869441682999
+    },
+    {
+      "timeSec": 6.800000000000002,
+      "mix": -33.642893768933284,
+      "vehicle": -40.357847921133924,
+      "gate": -41.81128575534865
+    },
+    {
+      "timeSec": 7.200000000000002,
+      "mix": -28.0530246012939,
+      "vehicle": -41.42040331834729,
+      "gate": -32.91215505837225
+    },
+    {
+      "timeSec": 7.600000000000002,
+      "mix": -33.53228644041114,
+      "vehicle": -42.49128674095046,
+      "gate": -39.67269832541811
+    },
+    {
+      "timeSec": 8.000000000000002,
+      "mix": -32.16307264671345,
+      "vehicle": -41.83976135379868,
+      "gate": -37.82611021912181
+    },
+    {
+      "timeSec": 8.400000000000002,
+      "mix": -31.029738451806907,
+      "vehicle": -35.3229198066213,
+      "gate": -99.4728597585704
+    },
+    {
+      "timeSec": 8.800000000000002,
+      "mix": -29.131727855917777,
+      "vehicle": -33.48605526429826,
+      "gate": -180
+    },
+    {
+      "timeSec": 9.200000000000003,
+      "mix": -30.17900115695065,
+      "vehicle": -34.636956006138234,
+      "gate": -180
+    }
+  ],
+  "scope": "Actual gate sequence, not a whole-race engine/combat sound acceptance. Onsets exclude overlapping cue tails. No subjective listening claim."
+}

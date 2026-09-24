@@ -52,7 +52,7 @@ export function combatAudioSpace(event, state, course) {
 }
 
 export class EngineAudio {
-  constructor() {
+  constructor({hiddenRoadVoiceFactory} = {}) {
     this.context = null;
     this.muted = readMuted();
     this.paused = false;
@@ -66,6 +66,8 @@ export class EngineAudio {
     this._samplesPromise = null;
     this.carVoice=CAR_VOICES.falcone_f42;
     this.blastIndex=0;this.blastVoices=new Set();
+    this.hiddenRoadVoiceFactory=hiddenRoadVoiceFactory||((cue)=>this._createHiddenRoadVoice(cue));
+    this.hiddenRoadVoices=new Set();this.hiddenRoadCueKeys=new Set();this.hiddenRoadId=null;
   }
 
   unlock() {
@@ -85,6 +87,8 @@ export class EngineAudio {
     const limiter = ctx.createDynamicsCompressor();
     limiter.threshold.value = -18; limiter.knee.value = 16; limiter.ratio.value = 4;
     this.master.connect(limiter); limiter.connect(ctx.destination);
+    this.output=limiter;
+    this.hiddenRoadBus=ctx.createGain();this.hiddenRoadBus.gain.value=1;this.hiddenRoadBus.connect(this.master);
     this.vehicleBus=ctx.createGain();this.vehicleBus.gain.value=1;this.vehicleBus.connect(this.master);
     // Two quiet, fixed early reflections. No feedback or moving delay times.
     this.tunnelWet=ctx.createGain();this.tunnelWet.gain.value=0;this.tunnelWet.connect(this.master);
@@ -359,30 +363,34 @@ export class EngineAudio {
     try { localStorage.setItem('duel_audio_muted', String(this.muted)); } catch (_) {}
     this._volume();
     if(this.muted)for(const voice of this.activeShots)this._stopShot(voice);
+    if(this.muted)this._stopHiddenRoadVoices();
   }
   toggleMute() { this.unlock(); this.setMuted(!this.muted); return this.muted; }
   setPaused(paused) {
     this.paused = !!paused; this._volume();
     if(this.paused){for(const voice of this.activeShots)this._stopShot(voice);this.lastThrottle=0;this.shiftStarted=this.shiftUntil=0;}
+    if(this.paused)this._stopHiddenRoadVoices();
   }
   _volume() {
     if (this.context) this.master.gain.setTargetAtTime(this.muted || this.paused ? 0 : 0.42, this.context.currentTime, 0.025);
   }
 
   update(st,environment={}) {
+    this.updateHiddenRoad(st);
     const ctx = this.context;
     if (!ctx || ctx.state !== 'running') return;
     if (this.paused !== st.paused) this.setPaused(st.paused);
     const t = ctx.currentTime;
     this._updateAmbience(st,environment,t);
     const dt=clamp(t-this.lastUpdateTime,0,.1);this.lastUpdateTime=t;
-    const racing = st.status === 'racing' && !st.paused;
+    const racing = (st.status === 'racing'||st.status==='exploring') && !st.paused;
     const impacting = st.impactTimer > 0;
     const running = (racing && !impacting) || (st.status === 'countdown' && !st.paused);
     const grounded=!st.airborne&&(st.airHeight||0)<.12,looseSurface=!!st.offRoad||!!environment.looseSurface;
     const voice=this.carVoice=CAR_VOICES[st.car]||CAR_VOICES.falcone_f42;
     const perspective=environment.cameraMode==='hood'?{gain:1,brightness:1.08,exhaust:.58,intake:1.38}:environment.cameraMode==='wide'?{gain:.72,brightness:.82,exhaust:.78,intake:.62}:{gain:1,brightness:1,exhaust:1,intake:1};
-    this.vehicleBus.gain.setTargetAtTime(perspective.gain,t,.12);
+    const gateCinematic=st.status==='exploring'&&st.hiddenRoadJourney?.controlsLocked;
+    this.vehicleBus.gain.setTargetAtTime(perspective.gain*(gateCinematic?.32:1),t,.18);
     const wet=clamp(Number(environment.tunnel)||0,0,1);
     this.tunnelWet.gain.setTargetAtTime(running?wet*.09:0,t,.12);
     const speed = Math.min(1.2, Math.abs(st.speedMph) / 200);
@@ -476,12 +484,12 @@ export class EngineAudio {
     this.boost.gain.gain.setTargetAtTime(st.boosting && racing ? 0.1 : 0, t, 0.07);
     const proximity=clamp(1-(st.police.pursuit?.distanceU??st.police.pursuit?.gapU??650)/650,0,1),wail=710+Math.sin(t*2.2)*300;
     this.siren.frequency.setTargetAtTime(wail,t,.04);this.sirenHarmony.frequency.setTargetAtTime(wail*1.5,t,.04);
-    this.sirenGain.gain.setTargetAtTime(racing&&st.police.pursuit?.active ? .012+.052*proximity*proximity : 0,t,.15);
-    if (racing && st.police.beep > 0.2 && !st.police.triggered && t >= this.nextRadar) {
+    this.sirenGain.gain.setTargetAtTime(st.status==='racing'&&racing&&st.police.pursuit?.active ? .012+.052*proximity*proximity : 0,t,.15);
+    if (st.status==='racing'&&racing && st.police.beep > 0.2 && !st.police.triggered && t >= this.nextRadar) {
       this._tone(1200, 0.045, 0.025);
       this.nextRadar = t + 1.2 - st.police.beep * 1.05;
     }
-    if (st.paused || this.muted) { this.nextBeat = t + 0.15; return; }
+    if (st.paused || this.muted || st.hiddenRoadJourney?.controlsLocked) { this.nextBeat = t + 0.15; return; }
     if (t >= this.nextBeat) {
       // A quiet original minor-key sequencer sits behind the engine.
       const pattern = [110, 164.81, 220, 261.63, 98, 146.83, 196, 246.94];
@@ -494,6 +502,7 @@ export class EngineAudio {
   }
 
   event(ev,state,course) {
+    if(ev?.stageLoaded!=null){this._stopHiddenRoadVoices();this.hiddenRoadId=null;this.hiddenRoadCueKeys.clear();}
     // Stage restart must clear old load/cut history even while muted or paused.
     // Keep the decoded sources and graph: a new race does not create new loops.
     if(ev?.stageLoaded!=null){
@@ -581,6 +590,63 @@ export class EngineAudio {
     source.connect(filter);filter.connect(gain);gain.connect(this.vehicleBus);source.start();source.stop(start+.26);
     const voice={source,gain};this.activeShots.add(voice);source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();this.activeShots.delete(voice);};
     this._tone(145,.18,.045*force,'triangle',0,80,this.vehicleBus);
+  }
+
+  _stopHiddenRoadVoices() {
+    for(const voice of this.hiddenRoadVoices){this.hiddenRoadVoices.delete(voice);voice.stop?.();}
+  }
+
+  updateHiddenRoad(state) {
+    const j=state?.hiddenRoadJourney;
+    const enabled=state?.status==='exploring'&&j?.departed;
+    const id=enabled?j.id:null;
+    if(id!==this.hiddenRoadId){this._stopHiddenRoadVoices();this.hiddenRoadCueKeys.clear();this.hiddenRoadId=id;}
+    if(!enabled){this._stopHiddenRoadVoices();return;}
+    const phase=j.phase,age=Math.max(0,Number(j.phaseElapsedSec)||0),cues=[];
+    if(phase==='arriving'&&age<2.4)cues.push({kind:'drum',index:Math.floor(age/.8)});
+    if(phase==='opening'&&age<3){
+      cues.push({kind:'chain',index:Math.floor(age/.18)});
+      if(age<.3||age>=1.2&&age<1.5||age>=2.4&&age<2.7)cues.push({kind:'drum',index:Math.floor(age/1.2)});
+    }
+    if(phase==='choice'&&age<.2)cues.push({kind:'latch',index:0});
+    if(state.paused||this.paused||this.muted){this._stopHiddenRoadVoices();
+      for(const cue of cues)this.hiddenRoadCueKeys.add(`${phase}/${cue.kind}/${cue.index}`);return;}
+    for(const cue of cues){
+      const key=`${phase}/${cue.kind}/${cue.index}`;
+      if(this.hiddenRoadCueKeys.has(key))continue;
+      this.hiddenRoadCueKeys.add(key);
+      const voice=this.hiddenRoadVoiceFactory({journeyId:id,phase,...cue,simulationTime:Number(j.elapsedSec)||0});
+      if(voice){this.hiddenRoadVoices.add(voice);if(this.hiddenRoadVoices.size>8){const first=this.hiddenRoadVoices.values().next().value;this.hiddenRoadVoices.delete(first);first.stop?.();}}
+    }
+  }
+
+  _createHiddenRoadVoice(cue) {
+    const ctx=this.context;
+    if(!ctx||ctx.state!=='running'||!this.hiddenRoadBus)return null;
+    const start=ctx.currentTime,duration=cue.kind==='drum'?.55:cue.kind==='latch'?.35:.14;
+    const gain=ctx.createGain();gain.gain.setValueAtTime(0,start);
+    gain.gain.linearRampToValueAtTime(cue.kind==='drum'?.34:cue.kind==='latch'?.23:.16,start+.005);
+    gain.gain.exponentialRampToValueAtTime(.0001,start+duration);gain.connect(this.hiddenRoadBus);
+    const nodes=[],sources=[];
+    const tones=cue.kind==='drum'?[70,108]:cue.kind==='latch'?[155,463,917]:[510+(cue.index%3)*37,1130+(cue.index%4)*81];
+    for(let i=0;i<tones.length;i++){
+      const source=ctx.createOscillator(),level=ctx.createGain();source.type='sine';level.gain.value=i===0?.7:.22;
+      source.frequency.setValueAtTime(tones[i],start);
+      source.frequency.exponentialRampToValueAtTime(tones[i]*(cue.kind==='drum'?.42:.86),start+duration);
+      source.connect(level);level.connect(gain);source.start(start);source.stop(start+duration+.02);sources.push(source);nodes.push(source,level);
+    }
+    if(cue.kind!=='drum'&&this.noiseBuffer){
+      const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),level=ctx.createGain();
+      source.buffer=this.noiseBuffer;filter.type='bandpass';filter.frequency.value=1900+(cue.index%3)*230;filter.Q.value=1.2;
+      level.gain.setValueAtTime(.35,start);level.gain.exponentialRampToValueAtTime(.001,start+.055);
+      source.connect(filter);filter.connect(level);level.connect(gain);source.start(start,(cue.index*.071)%1);source.stop(start+.08);
+      sources.push(source);nodes.push(source,filter,level);
+    }
+    let stopped=false,finished=false;
+    const release=()=>{if(finished)return;finished=true;for(const node of [...nodes,gain])node.disconnect();this.hiddenRoadVoices.delete(voice);};
+    const voice={stop:()=>{if(stopped||finished)return;stopped=true;const now=ctx.currentTime;gain.gain.cancelScheduledValues(now);gain.gain.setTargetAtTime(.0001,now,.006);for(const source of sources){try{source.stop(now+.035);}catch{}}}};
+    sources[0].onended=release;
+    return voice;
   }
 
   _tone(frequency, duration, volume, type = 'sine', delay = 0, endFrequency = null,destination=this.master,onEnd=null) {

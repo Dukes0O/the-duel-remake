@@ -10,6 +10,8 @@ import {courseScreen, createCourseActions} from './screen-courses.js';
 import {createResultsScreen, screenAction} from './screen-results.js';
 import {createHudScreen, presentJumpHeight} from './screen-hud.js';
 import {createCombatHud, combatHudEnabled} from './combat-hud.js';
+import {createHiddenRoadUi} from './hidden-road-ui.js';
+import './hidden-road-ui.css';
 import {WEAPONS, ufoDestination} from './combat.js';
 import './screen-menu.css';
 import './screen-players.css';
@@ -53,6 +55,12 @@ const credits = value => Math.floor(value || 0).toLocaleString();
 const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
 root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML});
+const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
+  onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});
+// Presentation-only QA switch, absent from normal production builds.
+const hiddenRoadUiQa=typeof __DUEL_QA__!=='undefined'&&__DUEL_QA__?{skipUpdate:false}:null;
+if(hiddenRoadUiQa)window.__hiddenRoadUiQa=hiddenRoadUiQa;
+let lastHiddenRoadView=null;
 
 root.querySelector('.garage-tune').insertAdjacentHTML('beforebegin',driverMenuMarkup());
 root.querySelector('.build-meta').insertAdjacentHTML('beforeend','<button type="button" id="experimental-open" class="build-label experimental-open" data-action="experimental" aria-label="Open Experimental features">EXPERIMENTAL</button>');
@@ -79,7 +87,7 @@ const buildUpdates=createBuildUpdateChecker({
 });
 const routeMap=new RouteMap(ui['route-map']);
 const coursePreview=new CoursePreview(ui['menu-course-map'],ui['menu-elevation-profile']);
-if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
+if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();hiddenRoadUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
 const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textContent = v; };
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
@@ -284,6 +292,12 @@ function renderState(s) {
   presentJumpHeight(jumpHeightReadout,s,app,ui,text);
   if(s.status!=='menu') updateHud(s);
   combatHud.update(s);
+  const journeyView=hiddenRoadUiQa?.skipUpdate?lastHiddenRoadView:hiddenRoadUi.update(s,app.duel.course);
+  lastHiddenRoadView=journeyView;
+  ui.stage.classList.toggle('hidden-road-active',!!journeyView?.active);
+  const hudOpacity=String(journeyView?.hudOpacity??1);
+  if(ui.stage.style.getPropertyValue('--hidden-road-hud-opacity')!==hudOpacity)
+    ui.stage.style.setProperty('--hidden-road-hud-opacity',hudOpacity);
 }
 document.addEventListener('keydown',e=>{if(e.code==='Escape'&&(armoryOpen||coursesOpen||garageOpen||playersOpen||leaderboardOpen||experimentalOpen)){e.preventDefault();armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=experimentalOpen=false;lastScreen=null;updateMenuCar();renderState(app.duel.state);return;}if(e.code!=='Tab'||ui['modal-layer'].hidden)return;const buttons=[...ui['modal-layer'].querySelectorAll('button:not(:disabled),select,input,summary')],first=buttons[0],last=buttons.at(-1);if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}},{signal:domEvents.signal});
 app.onFrame=renderState;updatePlayers();updateMenuCar();updateMenuScene();renderState(app.duel.state);ensureRenderer();app.start();

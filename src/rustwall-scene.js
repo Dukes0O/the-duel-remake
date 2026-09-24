@@ -56,6 +56,27 @@ export function createRustwallScene(course, {loadAsset = kind =>
   }
   registerSceneSystem(group, {dispose});
   group.userData.setGateOpen = setGateOpen;
+  let sparks=null;
+  function updateJourney(view) {
+    if(retired)return;
+    setGateOpen(view?.gateOpen??0);
+    const points=view?.sparks||[];
+    if(points.length&&!sparks){
+      const geometry=new THREE.BufferGeometry();
+      geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(24*3),3));
+      const material=new THREE.PointsMaterial({color:0xffd18a,size:.19,sizeAttenuation:true,
+        transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending});
+      sparks=new THREE.Points(geometry,material);sparks.name='Gate guide sparks';sparks.frustumCulled=false;group.add(sparks);
+    }
+    if(!sparks)return;
+    sparks.visible=points.length>0;
+    for(let i=0;i<Math.min(24,points.length);i++){
+      const point=points[i];sparks.geometry.attributes.position.setXYZ(i,point.x,point.y,point.z);
+    }
+    sparks.geometry.setDrawRange(0,Math.min(24,points.length));
+    sparks.geometry.attributes.position.needsUpdate=true;
+  }
+  group.userData.updateJourney=updateJourney;
 
   function prepareWall(asset) {
     const gate = asset.scene.getObjectByName('gate-panel');

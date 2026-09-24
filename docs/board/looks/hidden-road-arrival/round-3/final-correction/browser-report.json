@@ -1,0 +1,14 @@
+{
+  "scenario": "hidden-road-arrival",
+  "passed": true,
+  "port": 49199,
+  "memoryOnlySaves": true,
+  "issues": [],
+  "warnings": [],
+  "screenshots": [
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg03\\.qa-dist\\browser-output\\hidden-road-arrival-2026-09-24T10-48-03-163Z\\high-opening-refined.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg03\\.qa-dist\\browser-output\\hidden-road-arrival-2026-09-24T10-48-03-163Z\\high-turn-back-transition.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg03\\.qa-dist\\browser-output\\hidden-road-arrival-2026-09-24T10-48-03-163Z\\high-arrival-transition.png",
+    "C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\the-duel-remake\\.lanes\\egg03\\.qa-dist\\browser-output\\hidden-road-arrival-2026-09-24T10-48-03-163Z\\performance-opening-refined.png"
+  ]
+}
