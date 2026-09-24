@@ -203,13 +203,13 @@ tasks:
     needs: [GFX-02]
     status: building
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, src/rustwall-scene.js, tools/test-rustwall-scene.mjs, tools/test-rustwall-assets.mjs, tools/scenarios/rustwall.mjs, docs/board/looks/rustwall/]
-    hooks: [src/world.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    hooks: [src/world.js, src/hidden-road.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [test_author, reviewer, browser_qa, art_critic]
     flag: hidden-road
     acceptance:
       - "Model the 35 m by at least 400 m Rustwall, moving gate, towers, fires and figures with three saved fidelity rounds; wall/yard adds at most ten percent frame cost."
       - "Use rustwall-gate.png lower-left elevation for architecture, lower-right for depth and top for atmosphere. Its humans imply the wrong height: keep the wall at 35 m, span at least 400 m, gate opening 9 by 7 m and adult figures at human scale. Retain Blender source, scripts, GLBs and three immutable reference/Blender/High/Performance sheets."
-      - "Place the gate at hiddenRoad.poseAt(length), facing the final 300 m approach. Replace the wash greybox appearance with Blender rock modules fitted to existing wall collision bounds; retain current path, ground support, ordinary racing and all route A/B/C behavior. No new collision, discovery, save, reward or arrival-sequence behavior in this card."
+      - "Place the gate at hiddenRoad.poseAt(length), facing the final 300 m approach. Replace the wash greybox appearance with Blender rock modules fitted to existing wall collision bounds. The Director authorizes widening only the final salt-flat support from 120 to 225 m half-width so the 420 m wall stands on level ground. Independently test this on all routes; retain the centerline, ground height, entrance, wash, ordinary road and shortcut behavior. No new collision, discovery, save, reward or arrival-sequence behavior in this card."
       - "Expose a pure clamped gate-opening presentation control for EGG-03. The closed panel and full raised clearance must match the physical opening; the renderer never changes race state. Wall includes layered steel, stacked hulks, braces, scaffold towers, cranes, unlettered banners, fire barrels, searchlights and torch figures."
       - "Initial allocation: at most 60000 wall/gate triangles and 24 material draws, plus at most 30000 triangles/two draws for wash modules; at most three 1024 texture sets for the wall and one for rocks. The measured ten-percent frame limit remains authoritative. Reuse resources and prepare instances once."
       - "Use existing scene-system disposal for local asynchronous assets: retired scenes cannot resurrect, failed loads keep the route playable, and shared resources dispose once. No asset request when hiddenRoad is absent. Tests cover loading, gate pose, placement, bounds, immutability and cleanup before implementation."
@@ -514,7 +514,7 @@ tasks:
     status: building
     owns: [src/combat-projectiles.js, tools/test-combat-projectiles.mjs, tools/test-combat-replays.mjs, tools/replays/projectile-height-controls.json, tools/replays/combat-inputs.json, tools/replays/combat-fingerprints.json, tools/test-combat-armor.mjs, tools/test-combat-scoring.mjs, tools/test-combat-opponents.mjs, tools/scenarios/combat-armor-frame-pacing.mjs, tools/scenarios/combat-armor-wreck.mjs, tools/scenarios/combat-effects.mjs, tools/scenarios/combat-results.mjs]
     helpers: [test_author, balance_analyst, test_runner, reviewer, browser_qa]
-    active_slice: "Flagged crossbow uphill launch geometry. A 10-percent uphill, 80-mph, 50-metre probe hits the ground short while flat/moving and uphill/stationary controls hit. Independently test before correcting only the vertical launch in src/combat-weapons.js."
+    active_slice: "Uphill launch candidate 5cf533e is held on codex/bug06-launch-height. All 20 geometric checks pass, but accuracy rises to 24/26; guidance-off diagnostic still gives 18/26. Complete flagged report has six failures: wins 1/2/2 and enemy hits 10/7/13. Evidence note c3efb1f retains the result. No further tuning or merge until a jointly reviewed aim/balance approach is scoped."
     launch_owns: [src/combat-weapons.js, tools/test-crossbow-launch-height.mjs, docs/changes/BUG-06-launch-height.md]
     launch_acceptance:
       - "Use actual muzzle position, predicted target body height and a consistent horizontal flight time that includes inherited velocity. Preserve horizontal lead, enemy bias, homing, cadence, damage and collision bounds."

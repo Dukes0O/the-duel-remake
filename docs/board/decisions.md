@@ -218,3 +218,18 @@ and how to reverse it before continuing.
 - Decision:
 - Reason:
 - How to reverse:
+
+## 2026-09-24 - EGG-02 wall grounding
+
+- Decision: Widen only the final salt-flat half-width from 120 to 225 metres.
+  Keep the hidden road centerline, floor height, entrance and wash unchanged.
+  Existing ground support and fitted rendering derive from the same width.
+- Reason: All three route probes place terrain at 62 to 73 metres beside a
+  gate floor near 34.44 metres. A 420-metre wall on the current flat would have
+  its outer sections buried by 28 to 39 metres. The wider flat leaves a
+  15-metre ground margin beside the required wall.
+- Verification: Independent red tests first cover outer wall support on all
+  routes and unchanged wash, ordinary road and shortcuts. Actual browser
+  fidelity images must confirm grounding. No visual-only terrain workaround.
+- How to reverse: Restore the previous final width in hidden-road.js and keep
+  the wall feature in development until another measured placement is ready.

@@ -219,3 +219,12 @@ On exact clean `fead24a2425e3cd2ae7647f9f1c852bf0d4e0a74`:
 No save, race rule or fingerprint changed. Runtime source remains the reviewed
 implementation plus the independently tested spent-rocket visibility correction.
 This final handoff update changes only the evidence note.
+
+## Integration and cleanup
+
+Merged as `f626618`; STATUS was refreshed immediately. The two final gate logs
+were copied to `.lanes/evidence/gfx02/` and verified by SHA-256 before cleanup.
+All three rounds and browser reports are committed under the fidelity folder.
+Removed the clean merged worktree without force after detaching only its
+verified dependency junction; integration dependencies remained intact. The
+lane branch remains as a local history reference.

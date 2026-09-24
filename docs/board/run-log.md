@@ -1141,3 +1141,26 @@ checkout untouched until the final integration commit passes the full gate.
   one diagnostic guidance-off probe with launch components unchanged to
   distinguish initial aim from later steering. This is not a shipping rule;
   no broad report, gate, merge or target change is authorized by that result.
+
+## 2026-09-24 PDT - first-person integration and Rustwall start
+
+- GFX-02 merged as f626618 after 223 passing lane suites in 302.41 s and
+  a passing build. Three immutable Blender/game fidelity rounds are retained.
+  Likeness improved from two to three, then stayed three. Development only;
+  GFX-02-P1 records anatomy, materials, contact and texture-budget work.
+- STATUS refreshed after the merge. Two task merges since the 07:36 UTC full
+  pass; next full after three more merges or 09:36 UTC, and at run end.
+- Removed the clean merged GFX-02 worktree after preserving its two gate logs
+  with matching hashes and safely detaching its dependency junction. The
+  branch and committed fidelity evidence remain. No integration dependency loss.
+- BUG-06 launch candidate is held at 5cf533e, evidence c3efb1f. It passes all
+  20 geometric checks, but the accuracy probe is 24/26. A diagnostic with only
+  guidance disabled gives 18/26. The final flagged report has six failures:
+  wins 1/2/2 and enemy hits 10/7/13. No parameter grid or further merge gate.
+- EGG-02 now has an independent test author and separate runtime and Blender
+  builders. Contract: 420 by 35 m wall, 9 by 7 m opening, 7.25 m gate lift,
+  eight 1.8 m figures, bounded wash modules and four 1024 texture sets total.
+- The placement probe found high terrain burying outer wall sections. Scoped
+  only a final salt-flat widening from 120 to 225 m half-width, with independent
+  all-route grounding checks and unchanged path, wash and racing controls.
+- Last quota observation: 25 percent remaining. No live change, release or push.
