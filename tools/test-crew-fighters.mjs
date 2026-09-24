@@ -31,7 +31,9 @@ const detailOf = node => {
   }
   return null;
 };
-const primitiveCount = mesh => mesh.geometry.groups.length || 1;
+// WebGLRenderer submits geometry groups only for material arrays. A mesh with
+// one material draws once, even when BoxGeometry retains its six face groups.
+const primitiveCount = mesh => Array.isArray(mesh.material) ? mesh.geometry.groups.length : 1;
 function readGlb(id) {
   const path = file(`public/assets/models/wasteland/crew/${id}.glb`);
   assert.ok(existsSync(path), `${id}: exported crew GLB is missing`);
