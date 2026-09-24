@@ -2,6 +2,7 @@ import {combatArmorEnabled, completeCombatRecovery} from './combat-armor.js';
 import {createFighter, damageFighter, FIGHTER_STEP_SECONDS,
   stepFighter} from './onfoot.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {crewPerks} from './crew.js';
 import {strikeFighterFromVehicles} from './onfoot-race.js';
 import {resetFootWeaponUser, stepFootWeapons} from './onfoot-weapons.js';
 
@@ -106,6 +107,11 @@ export function stepFootTransition(duel, dt) {
     duel._callout('NO ROOM TO LEAVE THE CAR', 1.5);
     return false;
   }
+  const perks=crewPerks(state.crewId);
+  fighter.crewId=state.crewId||'rook';
+  fighter.maxHealth=Math.round(fighter.health*(perks.healthMultiplier||1));
+  fighter.health=fighter.maxHealth;
+  fighter.sprintMultiplier=perks.sprintMultiplier||1;
   if (bailout) {
     damageFighter(fighter, T.bailHealthLoss);
     fighter.bailTumbleSeconds = T.bailTumbleSeconds;

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {crewAppearance} from './crew.js';
 
 export const MAX_FIGHTER_FIGURES = 12;
 
@@ -46,8 +47,22 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES} = {}) {
       'gloves', 'gloves', 'armor', 'armor', 'pack'],
     limbs: ['coat', 'coat', 'coat', 'coat', 'trousers', 'trousers', 'trousers', 'trousers'],
     joints: ['skin', 'helmet', 'armor', 'armor', 'vest'],
-    lights: ['light', 'light'],
+    lights: ['accent', 'accent'],
   };
+  const paintedCrew=[];
+  function paint(actor,id){
+    if(paintedCrew[actor]===id)return;
+    const appearance=crewAppearance(id);
+    for(const [kind,mesh] of Object.entries(meshes)){
+      for(let index=0;index<PARTS[kind];index++){
+        const key=colorParts[kind][index];
+        color.setHex(appearance[key]??COLORS[key]??COLORS.light);
+        mesh.setColorAt(actor*PARTS[kind]+index,color);
+      }
+      mesh.instanceColor.needsUpdate=true;
+    }
+    paintedCrew[actor]=id;
+  }
   for (const [kind, mesh] of Object.entries(meshes)) {
     for (let actor = 0; actor < capacity; actor++) {
       for (let part = 0; part < PARTS[kind]; part++) {
@@ -96,6 +111,7 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES} = {}) {
     store('limbs', actor, index);
   }
   function pose(fighter, actor) {
+    const appearance=crewAppearance(fighter.crewId);
     const last = lastPositions.get(fighter);
     const distance = last ? Math.hypot(fighter.x - last.x, fighter.z - last.z) : 0;
     if (last) { last.x = fighter.x; last.z = fighter.z; }
@@ -107,16 +123,22 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES} = {}) {
     root.rotation.set(down ? -Math.PI / 2 : 0, fighter.yaw || 0, 0, 'YXZ');
     root.updateMatrix();
 
-    block('plates', actor, 0, 0, 1.12, 0, .53, .55, .29);
+    block('plates', actor, 0, 0, 1.12, 0,
+      .53*appearance.shoulder, .55, .29);
     block('plates', actor, 1, 0, 1.13, .17, .45, .42, .06);
     block('plates', actor, 2, 0, .76, 0, .41, .23, .28);
     block('plates', actor, 3, 0, .73, .02, .45, .09, .29);
-    block('plates', actor, 4, 0, 1.08, -.23, .37, .48, .18);
-    block('plates', actor, 9, -.2, 1.16, .19, .075, .43, .05, -.25);
-    block('plates', actor, 10, .2, 1.16, .19, .075, .43, .05, .25);
+    block('plates', actor, 4, 0, 1.08, -.23,
+      .37*appearance.pack, .48*appearance.pack, .18);
+    block('plates', actor, 9, -.2*appearance.shoulder, 1.16,
+      .19, .075*appearance.shoulder, .43, .05, -.25);
+    block('plates', actor, 10, .2*appearance.shoulder, 1.16,
+      .19, .075*appearance.shoulder, .43, .05, .25);
     block('plates', actor, 11, .31, .62, -.05, .12, .26, .17);
     block('joints', actor, 0, 0, 1.56, .025, .39, .45, .36);
-    block('joints', actor, 1, 0, 1.73, 0, .43, .18, .39);
+    block('joints', actor, 1, 0, appearance.hood?1.68:1.73,
+      0, appearance.hood?.48:.43, appearance.hood?.30:.18,
+      appearance.hood?.44:.39);
     block('joints', actor, 2, -.31, 1.36, 0, .27, .19, .31);
     block('joints', actor, 3, .31, 1.36, 0, .27, .19, .31);
     block('joints', actor, 4, 0, 1.38, 0, .21, .20, .20);
@@ -159,7 +181,11 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES} = {}) {
     group.visible = actorCount > 0;
     for (const [kind, mesh] of Object.entries(meshes)) mesh.count = actorCount * PARTS[kind];
     if (!group.visible) return 0;
-    ordered.forEach((entry, index) => pose(entry.fighter || entry, index));
+    ordered.forEach((entry, index) => {
+      const fighter=entry.fighter||entry;
+      paint(index,fighter.crewId||entry.crewId||'rook');
+      pose(fighter,index);
+    });
     for (const mesh of Object.values(meshes)) mesh.instanceMatrix.needsUpdate = true;
     return actorCount;
   }

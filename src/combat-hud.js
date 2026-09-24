@@ -202,10 +202,11 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
     if (!active) return;
 
     if (onFoot) {
-      const health = Math.max(0, Math.min(100, Number(state.fighter.health) || 0));
-      setText(footHealthValue, `${Math.round(health)} / 100`);
-      setFraction(footHealthFill, health / 100);
-      footHealth.classList.toggle('is-critical', health <= 25);
+      const maxHealth=Math.max(1,Number(state.fighter.maxHealth)||100);
+      const health = Math.max(0, Math.min(maxHealth, Number(state.fighter.health) || 0));
+      setText(footHealthValue, `${Math.round(health)} / ${Math.round(maxHealth)}`);
+      setFraction(footHealthFill, health / maxHealth);
+      footHealth.classList.toggle('is-critical', health <= maxHealth*.25);
       footHealth.classList.toggle('is-knocked-down', !!state.fighter.knockedDown);
       const direction = footCarDirection(app.duel.course, state);
       setText(carDistance, `${direction.distance} m`);

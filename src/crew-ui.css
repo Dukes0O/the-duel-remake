@@ -1,0 +1,20 @@
+.crew-panel{margin:18px 0;border-top:1px solid #e8c4955e;padding-top:15px}
+.crew-panel>summary{font-size:14px;color:#eadbc5;cursor:pointer}
+.crew-intro{font-size:12px;color:#c7c6ba;line-height:1.5;margin:10px 0 16px}
+.crew-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.crew-card{min-width:0;display:flex;flex-direction:column;gap:10px;padding:14px;background:#14211fe8;border:1px solid #baa37e55}
+.crew-card.is-selected{border-color:var(--crew-accent);box-shadow:inset 0 0 0 1px var(--crew-accent)}
+.crew-card-head{display:flex;align-items:center;gap:9px;min-height:48px}
+.crew-initial{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:50%;background:var(--crew-accent);color:#101816;font-size:20px;font-weight:900}
+.crew-card h3{font-size:14px;line-height:1.2;margin:0;color:#fff2dd}
+.crew-card-head span:not(.crew-initial){font-size:11px;color:#bdb7a9}
+.crew-card p{margin:0;font-size:12px;line-height:1.45;color:#d9d4c6}
+.crew-card .crew-perk{font-weight:700;color:#f0d5af}
+.crew-card .crew-gear{color:#c5c4ba}
+.crew-card .crew-gear small{display:block;color:#a8aba4;font-size:11px}
+.crew-card .crew-perk-status{font-size:10px;letter-spacing:.08em;color:#d6ad77}
+.crew-card button{margin-top:auto;min-height:38px;border:1px solid var(--crew-accent);background:#101817;color:#f6e4cd;font-size:11px;font-weight:800}
+.crew-card button:disabled{opacity:.65;cursor:default}
+.crew-card button:not(:disabled):hover{background:#f3d2a51c}
+@media(max-width:1050px){.crew-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:580px){.crew-grid{grid-template-columns:1fr}}

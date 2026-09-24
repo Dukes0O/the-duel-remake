@@ -81,7 +81,8 @@ export function createFighter(course, car, options = {}) {
     s: initial.s, lateral: initial.lateral, groundY: initial.y,
     yaw: options.yaw ?? initial.heading, pitch: 0,
     airHeight: 0, verticalSpeed: 0, jumpHeld: false,
-    health: T.maximumHealth, knockedDown: false, knockdownRemaining: 0,
+    health: T.maximumHealth, maxHealth: T.maximumHealth,
+    knockedDown: false, knockdownRemaining: 0,
     respawns: 0, contacts: 0, slopeStops: 0, boundaryStops: 0,
     steps: 0,
   };
@@ -115,7 +116,8 @@ export function respawnFighter(course, car, fighter) {
   Object.assign(fighter, {x: point.x, y: point.y, z: point.z,
     s: point.s, lateral: point.lateral, groundY: point.y,
     yaw: point.heading, pitch: 0, airHeight: 0, verticalSpeed: 0,
-    jumpHeld: false, health: T.maximumHealth, knockedDown: false,
+    jumpHeld: false, health: fighter.maxHealth || T.maximumHealth,
+    knockedDown: false,
     knockdownRemaining: 0});
   fighter.respawns++;
   return fighter;
@@ -178,8 +180,8 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
   const right = (input.right ? 1 : 0) - (input.left ? 1 : 0);
   const length = Math.hypot(forward, right);
   if (length) {
-    const distance = (input.sprint ? T.sprintMetersPerSecond :
-      T.walkMetersPerSecond) * dt / length;
+    const distance = (input.sprint ? T.sprintMetersPerSecond *
+      (fighter.sprintMultiplier || 1) : T.walkMetersPerSecond) * dt / length;
     const dx = (Math.sin(fighter.yaw) * forward +
       Math.cos(fighter.yaw) * right) * distance;
     const dz = (Math.cos(fighter.yaw) * forward -

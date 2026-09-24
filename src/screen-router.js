@@ -4,6 +4,8 @@ import {createPlayerScreen} from './screen-players.js';
 import {createLeaderboardScreen} from './screen-leaderboard.js';
 import {createGarageScreen, handleDriverAction, handleGarageUpgrade} from './screen-garage.js';
 import {createArmoryScreen} from './screen-armory.js';
+import {crewPanel} from './crew-ui.js';
+import {CREW} from './crew.js';
 import {courseScreen, createCourseActions} from './screen-courses.js';
 import {createResultsScreen, screenAction} from './screen-results.js';
 import {createHudScreen, presentJumpHeight} from './screen-hud.js';
@@ -14,6 +16,7 @@ import './screen-players.css';
 import './screen-leaderboard.css';
 import './screen-garage.css';
 import './screen-armory.css';
+import './crew-ui.css';
 import './screen-courses.css';
 import './screen-results.css';
 import './screen-hud.css';
@@ -90,6 +93,7 @@ const armoryScreen = createArmoryScreen({profile, credits, escapeHTML,
   getGarageMessage:()=>garageMessage, getArmoryCar:()=>armoryCar,
   kitsEnabled:()=>app.duel.featureFlags.enabled('wasteland2'),
   loadoutsEnabled:()=>app.duel.featureFlags.enabled('wasteland2'),
+  crewEnabled:()=>app.duel.featureFlags.enabled('wasteland2'),
   action:(label,verb,primary)=>screenAction(label,verb,primary,arrow)});
 const modalScreen = createResultsScreen({app, profile, credits, escapeHTML, time, arrow});
 const updateHud = createHudScreen({app, ui, text, time, clamp, credits, routeMap});
@@ -137,6 +141,12 @@ root.addEventListener('click',e => {
   if (button.dataset.car && !isCarUnlocked(profile(), button.dataset.car)) { openGarage(button.dataset.car); return; }
   for (const key of ['car','difficulty','mode','cpuDifficulty']) if (button.dataset[key]) { choices[key] = button.dataset[key];updateMenuScene();return; }
   if(button.dataset.weaponUpgrade){const result=app.purchaseWeapon(button.dataset.weaponUpgrade);refreshGarage(result.ok?'Weapon upgraded.':result.reason);return;}
+  if(button.dataset.crewSelect){
+    const result=app.selectCrewMember(button.dataset.crewSelect);
+    const message=result.ok?`${CREW[result.id].name} selected for on-foot play.`:result.reason;
+    if(armoryOpen)refreshArmory(message);else refreshGarage(message);
+    return;
+  }
   if(button.dataset.kitAction && app.duel.featureFlags.enabled('wasteland2')){
     const id=button.dataset.kitTier||null;
     const result=button.dataset.kitAction==='buy'?app.purchaseArmorKit(armoryCar,id):
@@ -262,6 +272,9 @@ function renderState(s) {
     lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu); ui['menu-screen'].hidden=!menu; ui['race-hud'].hidden=menu; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu;});
     ui['garage-open'].hidden = !menu;root.querySelector('#armory-open').hidden=!menu;
     const modal=menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu&&experimentalOpen?experimentalPanel(featureFlags,experimentalStorageMessage):menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
+    if(menu&&garageOpen&&app.duel.featureFlags.enabled('wasteland2'))
+      ui['modal-layer'].querySelector('.driver-panel')?.insertAdjacentHTML(
+        'afterend',crewPanel(profile(),escapeHTML));
     const challengeLabel=app.duel.stageDef?.kind==='chase'?'PURSUIT':s.objective||s.mode==='timetrial'?'TARGET':'CPU',routeLabel=supportsRouteVariants(app.duel.stageDef)?` · ${(getRouteVariantForSeed(s.seed)?.label||'Custom route').toUpperCase()}`:'';text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||choices.cpuDifficulty).toUpperCase()} ${challengeLabel}${routeLabel}`); text('stage-name',app.duel.stageDef?.name||'The open road'); text('stage-objective',s.opponents?.length>1?(s.objective?.kind==='checkpointRush'?'PASS THE LIT CHECKPOINTS':s.objective?.kind==='driftTrial'?'BANK THE DRIFT TARGET':s.objective?.kind==='stuntTrial'?'COMPLETE THE STUNT TARGETS':app.duel.stageDef?.kind==='chase'?'ESCAPE THE PURSUIT':`BEAT ${s.opponents.length} OPPONENTS OVER TWO LAPS`):s.rival?'BEAT YOUR RIVAL OVER TWO LAPS':'CHASE YOUR CAR PERSONAL BEST');
     ui['pause-button'].setAttribute('aria-label',s.paused?'Resume race':'Pause race');
     if(modal) ui['modal-layer'].querySelector('button')?.focus({preventScroll:true});

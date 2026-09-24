@@ -1,5 +1,6 @@
 import {purchaseWeaponUpgrade,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
+import {selectedCrewId,selectCrew as chooseCrew} from './crew.js';
 import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit} from './armor-kits.js';
 import {CAMERA_MODES} from './camera-views.js';
 // app.js — owns the Duel instance, the rAF/step loop, keyboard input, the
@@ -214,6 +215,7 @@ export class App {
     this.duel.startCampaign({...options,weaponLevels:getProfileWeapons(this.profile).levels,
       weaponLoadout:this.duel.featureFlags.enabled('wasteland2')?getCarLoadout(this.profile):undefined,
       combatArmorKit:this.duel.featureFlags.enabled('wasteland2') ? getEquippedArmorKit(this.profile,car) : null,
+      crewId:this.duel.featureFlags.enabled('wasteland2')?selectedCrewId(this.profile):undefined,
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     return true;
   }
@@ -429,6 +431,15 @@ export class App {
     this._refreshPlayer();
     const result=equipCarWeaponSlot(this.profile,slot,id);
     if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,loadoutChanged:true});}
+    return result;
+  }
+  selectCrewMember(id){
+    if(this.duel.state.status!=='menu'||!this.duel.featureFlags.enabled('wasteland2'))
+      return {ok:false,reason:'Return to the Wasteland Armory to choose crew.'};
+    this._refreshPlayer();
+    const result=chooseCrew(this.profile,id);
+    if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();
+      this.duel.emit({garage:true,crewChanged:true});}
     return result;
   }
   purchaseArmorKit(car,id){
