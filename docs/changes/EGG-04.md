@@ -90,3 +90,39 @@ checks, browser rounds and the required lane/build gate remain pending.
 
 Only the seven assigned runtime/persistence files changed. No dependencies,
 storage keys, real saves, live folder, release files or ports were touched.
+
+## Independent runtime and Save Guardian review
+
+Read and applied the repository reviewer and Save Guardian roles to runtime
+`f0f3ae4`. No concrete defect was found. Discovery requires the current state,
+actual ready invitation, matching journey, current named player and run owner.
+A separate memory-only probe used the current state and current journey while
+changing the run owner, then the state player: both callbacks were rejected
+without a profile mutation. This is distinct from the stale-state controls in
+the committed acceptance suite. Five damaged or partial profile shapes also
+normalized without throwing.
+
+Verified that startup awaits the existing physical and logical career backup
+gates before constructing App. Raw missing/invalid additive fields trigger
+migration detection; backup failure blocks startup writes. Unknown nested
+Wasteland data and future-schema protections remain intact. Direct visits
+clear payable run and ghost context, exclude settlement, restore saved race
+settings on exit and restart as another visit. Scenic auto-entry remains in
+simulation stepping and does not skip the safe takeover/opening sequence.
+
+Existing save checks ran once on the completed runtime, using memory storage:
+
+- `test-save-fixtures.mjs`: seven historical shapes, 247 preservation checks.
+- `test-career-backup.mjs`: all seven fixtures, migration gate, recovery,
+  validation and quota rollback passed.
+- `test-career-archives.mjs`: records/ghost hydration and failure preservation
+  passed.
+- `test-career-budget.mjs`: 64 full players, 5,556,392 raw UTF-16 bytes reduced
+  to 230 physical bytes; maximum ghost journal 2,500,604 / 4,000,000 passed.
+- `test-storage-budget.mjs`: 3.46 MB / 4.00 MB model and active-data boundary
+  passed without career trimming.
+
+The three fixture/backup/archive processes took 0.35 seconds together; both
+budget processes took 1.49 seconds together. The extra ownership probe took
+0.22 seconds. No ordinary credit, record, ghost or storage-key rule changed.
+Presentation source, browser evidence and final lane/build review remain pending.
