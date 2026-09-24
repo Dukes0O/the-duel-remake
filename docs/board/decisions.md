@@ -164,6 +164,29 @@ and how to reverse it before continuing.
 - How to reverse: Restore the reviewed 61a5e9 rule candidate's shared spread
   if the measured tradeoff is worse, retaining its correct seeded guidance.
 
+## 2026-09-24 PDT: retain Medium improvement and revert Easy regression
+
+- Decision: Reject the measured Easy 20-degree raider setting. Restore its
+  previous 10 degrees, retain Medium at 10 degrees and keep Hard at 0.03
+  radians. This reverts the setting that worsened the result; it does not
+  introduce another guessed value. Rival accuracy and all target bands stay
+  unchanged.
+- Evidence: The wide candidate has wins 10/5/3 and enemy hits 5/4/6. Medium
+  hits now pass, but Easy wins exceed the 95-percent upper limit and its hits
+  still exceed three. A final report is required for the retained settings.
+- Guidance: Wider bias exposed a numerical error: midpoint velocity was
+  retained as endpoint velocity. Independent diagnosis supports steering with
+  half the budget before movement and half from the actual endpoint after
+  movement. The total turn limit and player/legacy paths remain unchanged.
+- Tests: Independent checks retain all timing and control tolerances. Because
+  Easy and Medium now share the same cone and seed, the strict RMS ordering
+  becomes equality within 1e-12 for those two, with Medium still above Hard.
+  The explicit map and wider-than-CPU check follow the selected settings.
+  An added turn-budget regression rejects a deliberately doubled budget.
+- How to reverse: The rejected wider candidate remains committed as d61a2d3.
+  Restore prior reviewed configuration if the final report shows a regression;
+  do not relax target bands to claim completion.
+
 ## New decision format
 
 - Date and card:
