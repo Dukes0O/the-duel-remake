@@ -26,7 +26,7 @@ tasks:
     size: M
     needs: [CLEAN-01]
     status: ready
-    owns: [tools/blender/, public/assets/models/, .gitignore]
+    owns: [tools/blender/, tools/build-course-landmarks.py, public/assets/models/, .gitignore, tools/test-course-landmarks.mjs, tools/test-repo-hygiene.mjs, docs/COURSE_EXPANSION.md]
     helpers: [reviewer, test_runner]
     acceptance:
       - "Blender scripts write reproducible sources to ignored art-build, never public; explain any rebuilt GLB difference."
