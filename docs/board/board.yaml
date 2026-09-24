@@ -152,8 +152,22 @@ tasks:
     size: M
     needs: [GFX-01]
     status: backlog
+    owns: [tools/blender/first-person-gear.py, public/assets/models/wasteland/first-person/, src/first-person-gear.js, src/first-person-presentation.js, tools/test-first-person-gear.mjs, tools/test-first-person-presentation.mjs, tools/scenarios/first-person-gear.mjs, docs/board/looks/first-person/]
+    hooks: [src/render3d.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    helpers: [test_author, reviewer, test_runner, browser_qa, art_critic]
+    flag: wasteland2
+    behavior_change: no
     acceptance:
       - "Crew hands, gloves, sleeves, RPG and wrench animate aim, recoil, reload and repair. Three saved fidelity rounds meet SPEC 0.3 with High/Performance views."
+      - "Add a new on-foot view model; there is no existing held-weapon renderer. Leave cockpit steering hands and flying projectiles alone. Use the eight crew sheets and accepted ART-W modeling views; RPG-reference arms belong to Rook and wrench-reference sleeves to Odessa, not every crew."
+      - "Headless Blender retains script, sources and GLBs. Director allocation: at most 8000 visible triangles and three material draws for hands plus selected tool. Reuse each crew's 1024 texture set where practical; shared RPG and wrench may each use one 1024 texture set. Measure their added frame cost in the real scene."
+      - "Use existing successful-shot lastFireAt/serial, reload deadline, repair state and crew ID. A pure selector composes aim/weapon motion with locomotion so moving or jumping never suppresses recoil. Empty or rejected shots cannot restart fire; the last rocket recoils without visibly loading nonexistent ammo. Odessa's repair animation follows her actual faster repair."
+      - "Create/update/dispose through a narrow renderer hook after the final camera pose. Show only for an explicit active first-person on-foot view; no flag-off requests, car/menu/inspection/overhead drawing or gameplay mutation. Hide from other camera passes and preserve local full-body hiding. Current near plane is 0.15 m and on-foot FOV 72 degrees; authored geometry must fit."
+      - "Prepare meshes, actions and reusable presentation state on load. Cache crew assets; failed loads remain playable and late loads cannot resurrect disposed models. Check crew switches during loading, cleanup, paused/rewound simulation snapshots and immutable race state. Do not introduce renderer wall-clock animation or change gameplay timing."
+      - "Independent tests precede implementation. One private memory-only interaction covers exit, aim, successful shot, reload, wrench repair and re-entry in both qualities. Review actual grip, aim alignment, clipping and HUD clearance. Retain three immutable reference/Blender/game rounds with scores and five differences; beta needs every score at least four and the measured budget."
+    shots: [eight-crew-hands, aim-recoil-reload, wrench-repair, last-rocket, course-view-high-performance]
+    sound: "Retain existing action cues and timing."
+    note: "Read-only scope completed; no implementation yet. No mandatory new simulation field. Smooth aim transitions need a simulation clock if later required; otherwise use a deliberate immediate aim pose. A separate first-person selector composes actions instead of copying the full-body clip priority."
   - id: EGG-02
     title: "Rustwall gate and salt-flat fidelity rounds one to three"
     priority: 9

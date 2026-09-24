@@ -135,6 +135,23 @@ and how to reverse it before continuing.
 
 ## Entry template
 
+## 2026-09-23 PDT: GFX-02 first-person allocation
+
+- Decision: Allocate at most 8,000 visible triangles and three material draws
+  to the hands and selected first-person tool. Reuse the crew's 1024-square
+  texture set where practical; RPG and wrench may each share one additional
+  1024-square set across crews. Measure added cost in the real course scene.
+- Reason: SPEC 0.3 defines fighter budgets but gives no separate allowance
+  for the new held-gear view. This is a Director allocation, not a quoted
+  spec limit. Existing steering hands and flying projectiles are separate.
+- How to reverse: Adjust this allowance with measured course-frame evidence
+  before implementation exceeds it; retain the overall combat frame target.
+- First-person motion uses the simulation's existing successful-action clocks.
+  Empty last-rocket recoil remains visible, while reload must not insert ammo
+  that is absent. Overhead/inspection views explicitly suppress the model.
+
+## Decision template
+
 - Date and card:
 - Decision:
 - Reason:
