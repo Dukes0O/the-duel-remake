@@ -756,3 +756,15 @@ checkout untouched until the final integration commit passes the full gate.
 - Enforce lane jobs 8 plus build before every task merge. Count task merges
   from this run; full jobs 8 keep-going after five merges or two hours, and
   at run end. Read-only review of existing open cards may use spare lanes.
+
+## 2026-09-23 PDT — first v3 lanes and worktree cleanup
+
+- TRACK-01 independent tests and builder preparation started in
+  .lanes/track01. Implementation waits for the committed failing tests.
+- Existing AUD-02 uses a spare lane for eight foot/raider waveform checks.
+  This is evidence for implemented sounds, not a claim that the full mix or
+  future arsenal cues are finished. Independent tests precede the scenario.
+- Blender 4.5.13 LTS is available at the specified headless executable path.
+- Removed three clean, ancestor-proven worktrees without force:
+  wasteland-win-rate-gate, wasteland-checkpoint-cpu, and cmb05-cpu.
+  Their branches remain. Kept merged folders containing local QA evidence.
