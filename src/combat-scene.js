@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 import { createVehicleAttachmentRegistry } from './vehicle-attachments.js';
 import { createArmorKitMeshes } from './armor-kit-meshes.js';
-import { createOnFootFigures } from './onfoot-figures.js';
+import { createRiggedFighterFigures } from './rigged-fighter.js';
 import { createRaiderMarkers } from './raider-markers.js';
 import { createSalvageMarkers } from './salvage-markers.js';
 
 // Fixed reusable geometry: no mesh allocation or disposal during a firefight.
-export function createCombatScene(attachments = createVehicleAttachmentRegistry()){
+export function createCombatScene(attachments = createVehicleAttachmentRegistry(), {loadFighterAsset} = {}){
  const group=new THREE.Group();group.name='Wasteland weapons and shockwaves';
- const onFootFigures=createOnFootFigures();group.add(onFootFigures.group);
+ const onFootFigures=createRiggedFighterFigures({loadAsset:loadFighterAsset});group.add(onFootFigures.group);
  const raiderMarkers=createRaiderMarkers();group.add(raiderMarkers.group);
  const salvageMarkers=createSalvageMarkers();group.add(salvageMarkers.group);
  const materials={iron:new THREE.MeshStandardMaterial({color:0x342a23,metalness:.8,roughness:.55}),
@@ -137,7 +137,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
    duel.featureFlags?.enabled('wasteland2')&&s.onFoot&&!!s.fighter;
   const raiders=active&&s.raids?.zones.flatMap(zone=>zone.raiders)||[];
   onFootFigures.update([...raiders,...(showFighter?[{fighter:s.fighter,local:true}]:[])],
-   {active:!!raiders.length||showFighter});
+   {active:!!raiders.length||showFighter, enabled:s.mode==='wasteland'&&
+    !!duel.featureFlags?.enabled('wasteland2'), time:s.stageTimeSec??0});
   raiderMarkers.update(duel);
   salvageMarkers.update(duel);
   rigs.forEach((rig, index) => {
