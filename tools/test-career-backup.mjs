@@ -62,7 +62,7 @@ const oldRaw=captureCareer(old),backups=memoryBackups();
 assert.equal(needsCareerMigration(old),true);
 const migration=await backupBeforeMigration(old,backups);
 assert.equal(migration.reason,'migration');
-old.setItem('the-duel-players-v2',JSON.stringify({version:2,activePlayerId:'new',players:[{id:'new',name:'New',profile:{...createProfile(),raceSettings:{}}}]}));
+old.setItem('the-duel-players-v2',JSON.stringify({version:2,activePlayerId:'new',players:[{id:'new',name:'New',profile:{...createProfile(),raceSettings:{footCamera:'first-person'}}}]}));
 assert.deepEqual((await backups.load(migration.id)).entries,oldRaw,'migration backup predates write');
 assert.equal(needsCareerMigration(old),false);
 assert.equal(await backupBeforeMigration(old,backups),null,'no backup for unchanged format');
