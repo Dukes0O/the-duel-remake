@@ -121,3 +121,36 @@ The independent scene checks now pass **17/17**, including all-route grounding
 and the original preservation controls. Syntax and whitespace checks pass.
 Real asset checks, browser captures, independent source review and lane/build
 gates remain pending. No existing assertion or fingerprint changed.
+
+## Independent runtime and first-round asset review
+
+The independent test author reviewed runtime source **d19c027** and the frozen
+round-one Blender source/assets **bb31758**. No concrete contract defect was
+found. The gate placement and pending/clamped presentation control, prepared
+wash instances, default local loader and existing world disposal hook match
+the agreed interface. No race, discovery, reward or save behavior was added.
+
+The mixed ready/late resource path was inspected specifically: retirement
+records resource identities already owned by the graph before `disposeTree`
+frees them. A late asset skips those identities and releases its own unused
+resources. Failed unattached records wait for both load outcomes, then skip
+resources used by a successful attached asset. Thus one failed file can leave
+the other usable without freeing shared resources prematurely.
+
+Independently repeated focused checks:
+
+- Scene: **17/17 passed**, 0.76 s tool wall time. This includes all-route
+  endpoint support, exact pre-change wash/path and ordinary geometry controls,
+  actual transformed bank containment, gate movement and asynchronous cleanup.
+- Assets: **8/8 passed**, 0.34 s tool wall time, after the reserved round-one
+  browser frame-capture window was released. Actual installed-Three geometry
+  passes the 35 m core, >=400 m span, 9 by 7 m raycast opening, raised clearance,
+  adult figure bounds, baked rock envelope, instance-adjusted triangle/draw
+  limits and local 1024 texture-set checks.
+
+The asset author records 57632 wall triangles / 13 draws and a 144-triangle
+rock prototype; the independent checks establish the approved upper bounds
+against the actual GLBs. No assertion, fingerprint or production file was
+changed during this review. No broad gate was repeated. Remaining fidelity
+rounds, measured frame cost and the planned final lane/build gate still apply;
+this structural review grants no beta or release approval.
