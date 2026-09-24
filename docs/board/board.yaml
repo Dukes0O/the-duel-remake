@@ -88,7 +88,7 @@ tasks:
     needs: [TRACK-02]
     merge_after: GFX-00
     status: ready
-    owns: [src/hidden-road.js, src/course.js, src/sim-driving.js, src/sim-crash.js, src/world.js, tools/test-hidden-road.mjs, tools/scenarios/hidden-road.mjs]
+    owns: [src/hidden-road.js, src/course.js, src/sim-driving.js, src/sim-crash.js, src/world.js, tools/test-hidden-road.mjs, tools/test-feature-flags.mjs, tools/scenarios/hidden-road.mjs]
     hooks: [src/feature-flags.js, src/game.js, src/world-surfaces.js]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
     flag: hidden-road
@@ -437,15 +437,15 @@ tasks:
     size: S
     needs: [BUG-05]
     status: building
-    owns: [src/wasteland-tuning.js]
-    helpers: [balance_analyst, test_runner, reviewer]
-    active_slice: "Narrow flagged crossbow guidance to preserve aiming error and reduce excessive accuracy."
+    owns: [src/combat-projectiles.js, tools/test-combat-projectiles.mjs]
+    helpers: [test_author, balance_analyst, test_runner, reviewer]
+    active_slice: "Use actual moving vehicle height for flagged crossbow body contact."
     acceptance:
-      - "Use the unchanged real balance checker as the failing acceptance gate: flagged crossbow is currently 18/26, above 35–60 percent. First candidate narrows the homing cone from 12 to 3 degrees; no other tuning changes in this slice."
-      - "Measure one controlled crossbow probe and one complete flagged report. Record effects on win rates, enemy hits, UFO gains and wrecks without promising or fabricating a pass. Keep the 10/7/5-second cadence and all balance limits."
+      - "Independent swept-contact tests show a bolt passing above the actual roof misses while body intersections, including vertically moving cars between steps, hit. Flagged crossbows use vehicle height instead of the current plus/minus 4 m band around ground plus 1 m. Preserve legacy/off and other weapon behavior."
+      - "Measure one controlled crossbow probe and one complete flagged report after the geometric fix. Record win rates, enemy hits, UFO gains and wrecks without promising a pass. Retain lead, thrower velocity, meaningful homing, 10/7/5-second cadence and all balance limits."
       - "Ordinary and flag-off rules must remain unchanged. Existing projectile/replay checks and required lane/build gate pass; any changed expected fingerprint or assertion needs independent review and a written reason."
     merge_after: BAL-01
-    note: "Crossbow and physical shield slices integrated through a85acad; 156-suite exact merge gate, build and private smoke green. Full balance remains open."
+    note: "Prior 3-degree guidance candidate dfe157e is held, not merged: Easy improved but Hard regressed and probe stayed 18/26. Bounded traces found eight gained and three lost hits; several flagged hits occur well above the roof. Fix that concrete collision defect before further numeric tuning. Separate uphill launch geometry issue is recorded for later."
     spec: "SPEC.md, task BUG-06"
   - id: BUG-07
     title: "A CPU that fights back"
