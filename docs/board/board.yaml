@@ -489,7 +489,12 @@ tasks:
     status: building
     owns: [src/combat-projectiles.js, tools/test-combat-projectiles.mjs, tools/test-combat-replays.mjs, tools/replays/projectile-height-controls.json, tools/replays/combat-inputs.json, tools/replays/combat-fingerprints.json, tools/test-combat-armor.mjs, tools/test-combat-scoring.mjs, tools/test-combat-opponents.mjs, tools/scenarios/combat-armor-frame-pacing.mjs, tools/scenarios/combat-armor-wreck.mjs, tools/scenarios/combat-effects.mjs, tools/scenarios/combat-results.mjs]
     helpers: [test_author, balance_analyst, test_runner, reviewer, browser_qa]
-    active_slice: "Use actual moving vehicle height for flagged crossbow body contact."
+    active_slice: "Flagged crossbow uphill launch geometry. A 10-percent uphill, 80-mph, 50-metre probe hits the ground short while flat/moving and uphill/stationary controls hit. Independently test before correcting only the vertical launch in src/combat-weapons.js."
+    launch_owns: [src/combat-weapons.js, tools/test-crossbow-launch-height.mjs, docs/changes/BUG-06-launch-height.md]
+    launch_acceptance:
+      - "Use actual muzzle position, predicted target body height and a consistent horizontal flight time that includes inherited velocity. Preserve horizontal lead, enemy bias, homing, cadence, damage and collision bounds."
+      - "Independent geometric tests cover flat, uphill and downhill moving targets, unequal car speeds, airborne height and legacy/bomb/RPG controls. No balance limit or fingerprint changes without a concrete trace and independent review."
+      - "Run a bounded accuracy probe before one final flagged balance report. Required lane/build and independent source review precede merge. A geometric fix does not imply every balance target passes."
     acceptance:
       - "Independent swept-contact tests show a bolt passing above the actual roof misses while body intersections, including vertically moving cars between steps, hit. Flagged crossbows use vehicle height instead of the current plus/minus 4 m band around ground plus 1 m. Preserve legacy/off and other weapon behavior."
       - "Measure one controlled crossbow probe and one complete flagged report after the geometric fix. Record win rates, enemy hits, UFO gains and wrecks without promising a pass. Retain lead, thrower velocity, meaningful homing, 10/7/5-second cadence and all balance limits."
