@@ -51,7 +51,8 @@ tasks:
     lane: ART
     size: M
     needs: [CLEAN-03]
-    status: ready
+    status: merged
+    note: "Merged 24 September 2026 after 237 passing lane suites, build, unchanged 162 replay checks, matched browser visuals and independent review; size target gaps measured."
     owns: [public/assets/models/wasteland/, tools/blender/, tools/test-runtime-art-sources.mjs, tools/test-repo-hygiene.mjs, src/rustwall-scene.js, src/first-person-gear.js, src/rigged-fighter.js, docs/WASTELAND_ART.md, docs/board/looks/]
     helpers: [reviewer, art_critic, browser_qa]
     acceptance:
@@ -63,7 +64,7 @@ tasks:
     lane: OPS
     size: M
     needs: [CLEAN-04]
-    status: backlog
+    status: ready
     owns: [docs/README.md, docs/changes/, docs/board/, AGENTS.md, docs/CODEX_PLAYBOOK.md]
     helpers: [reviewer, test_runner]
     acceptance:
