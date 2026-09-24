@@ -1,0 +1,303 @@
+{
+  "assetHash": "bf65a1c3eb07b5c23cd196901783cfe2e397b9fe90b332e6e0027f7af102c6c8",
+  "observationCommit": "bba96c7876d8160811b57b16ba1b130ddfa3e16e",
+  "reference": {
+    "path": "public/assets/reference/wasteland-crew-1.png",
+    "subject": "left Rook triplet",
+    "motionReference": false
+  },
+  "blender": [
+    "docs/board/looks/test-fighter/blender-idle-front.png",
+    "docs/board/looks/test-fighter/blender-idle-side.png",
+    "docs/board/looks/test-fighter/blender-idle-back.png",
+    "docs/board/looks/test-fighter/blender-walk-front.png",
+    "docs/board/looks/test-fighter/blender-walk-side.png",
+    "docs/board/looks/test-fighter/blender-walk-back.png",
+    "docs/board/looks/test-fighter/blender-knockdown-front.png",
+    "docs/board/looks/test-fighter/blender-knockdown-side.png",
+    "docs/board/looks/test-fighter/blender-knockdown-back.png"
+  ],
+  "high": [
+    "docs/board/looks/test-fighter/game-high-idle-front.png",
+    "docs/board/looks/test-fighter/game-high-idle-side.png",
+    "docs/board/looks/test-fighter/game-high-idle-back.png",
+    "docs/board/looks/test-fighter/game-high-walk-front.png",
+    "docs/board/looks/test-fighter/game-high-walk-side.png",
+    "docs/board/looks/test-fighter/game-high-walk-back.png",
+    "docs/board/looks/test-fighter/game-high-knockdown-front.png",
+    "docs/board/looks/test-fighter/game-high-knockdown-side.png",
+    "docs/board/looks/test-fighter/game-high-knockdown-back.png"
+  ],
+  "performance": [
+    "docs/board/looks/test-fighter/game-performance-idle-front.png",
+    "docs/board/looks/test-fighter/game-performance-idle-side.png",
+    "docs/board/looks/test-fighter/game-performance-idle-back.png",
+    "docs/board/looks/test-fighter/game-performance-walk-front.png",
+    "docs/board/looks/test-fighter/game-performance-walk-side.png",
+    "docs/board/looks/test-fighter/game-performance-walk-back.png",
+    "docs/board/looks/test-fighter/game-performance-knockdown-front.png",
+    "docs/board/looks/test-fighter/game-performance-knockdown-side.png",
+    "docs/board/looks/test-fighter/game-performance-knockdown-back.png"
+  ],
+  "camera": {
+    "position": [
+      0,
+      0.9,
+      5
+    ],
+    "target": [
+      0,
+      0.9,
+      0
+    ],
+    "verticalFov": 28,
+    "width": 576,
+    "height": 640,
+    "distanceMetres": 5,
+    "knockdownTarget": "[sin(yaw)*0.90, 0.9, cos(yaw)*0.90]; camera offset [0,0,5]"
+  },
+  "clip": "idle",
+  "time": 0.25,
+  "poses": [
+    {
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0
+    },
+    {
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966
+    },
+    {
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793
+    },
+    {
+      "clip": "walk",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0
+    },
+    {
+      "clip": "walk",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966
+    },
+    {
+      "clip": "walk",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793
+    },
+    {
+      "clip": "knockdown",
+      "time": 1,
+      "view": "front",
+      "yaw": 0
+    },
+    {
+      "clip": "knockdown",
+      "time": 1,
+      "view": "side",
+      "yaw": 1.5707963267948966
+    },
+    {
+      "clip": "knockdown",
+      "time": 1,
+      "view": "back",
+      "yaw": 3.141592653589793
+    }
+  ],
+  "counts": {
+    "assetTriangles": 7708,
+    "materials": 1,
+    "textureSets": 0,
+    "high": {
+      "firstPerson": {
+        "hiddenAtEye": true,
+        "visibleOutside": true,
+        "loadErrors": []
+      },
+      "twelve": {
+        "drawCalls": 12,
+        "triangles": 92496,
+        "figures": 12,
+        "skeletons": 12,
+        "scope": "fighter-only colour pass; no floor, shadows or compositor"
+      }
+    },
+    "performance": {
+      "firstPerson": {
+        "hiddenAtEye": true,
+        "visibleOutside": true,
+        "loadErrors": []
+      },
+      "twelve": {
+        "drawCalls": 12,
+        "triangles": 92496,
+        "figures": 12,
+        "skeletons": 12,
+        "scope": "fighter-only colour pass; no floor, shadows or compositor"
+      }
+    }
+  },
+  "qualities": [
+    "high",
+    "performance"
+  ],
+  "loadErrors": [],
+  "rows": [
+    {
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "crop": [
+        0,
+        40,
+        207,
+        710
+      ],
+      "blender": "docs/board/looks/test-fighter/blender-idle-front.png",
+      "high": "docs/board/looks/test-fighter/game-high-idle-front.png",
+      "performance": "docs/board/looks/test-fighter/game-performance-idle-front.png"
+    },
+    {
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "crop": [
+        210,
+        40,
+        340,
+        710
+      ],
+      "blender": "docs/board/looks/test-fighter/blender-idle-side.png",
+      "high": "docs/board/looks/test-fighter/game-high-idle-side.png",
+      "performance": "docs/board/looks/test-fighter/game-performance-idle-side.png"
+    },
+    {
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "crop": [
+        343,
+        40,
+        534,
+        710
+      ],
+      "blender": "docs/board/looks/test-fighter/blender-idle-back.png",
+      "high": "docs/board/looks/test-fighter/game-high-idle-back.png",
+      "performance": "docs/board/looks/test-fighter/game-performance-idle-back.png"
+    },
+    {
+      "clip": "walk",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "crop": [
+        0,
+        40,
+        207,
+        710
+      ],
+      "blender": "docs/board/looks/test-fighter/blender-walk-front.png",
+      "high": "docs/board/looks/test-fighter/game-high-walk-front.png",
+      "performance": "docs/board/looks/test-fighter/game-performance-walk-front.png"
+    },
+    {
+      "clip": "walk",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "crop": [
+        210,
+        40,
+        340,
+        710
+      ],
+      "blender": "docs/board/looks/test-fighter/blender-walk-side.png",
+      "high": "docs/board/looks/test-fighter/game-high-walk-side.png",
+      "performance": "docs/board/looks/test-fighter/game-performance-walk-side.png"
+    },
+    {
+      "clip": "walk",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "crop": [
+        343,
+        40,
+        534,
+        710
+      ],
+      "blender": "docs/board/looks/test-fighter/blender-walk-back.png",
+      "high": "docs/board/looks/test-fighter/game-high-walk-back.png",
+      "performance": "docs/board/looks/test-fighter/game-performance-walk-back.png"
+    },
+    {
+      "clip": "knockdown",
+      "time": 1,
+      "view": "front",
+      "yaw": 0,
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "crop": [
+        0,
+        40,
+        207,
+        710
+      ],
+      "blender": "docs/board/looks/test-fighter/blender-knockdown-front.png",
+      "high": "docs/board/looks/test-fighter/game-high-knockdown-front.png",
+      "performance": "docs/board/looks/test-fighter/game-performance-knockdown-front.png"
+    },
+    {
+      "clip": "knockdown",
+      "time": 1,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "crop": [
+        210,
+        40,
+        340,
+        710
+      ],
+      "blender": "docs/board/looks/test-fighter/blender-knockdown-side.png",
+      "high": "docs/board/looks/test-fighter/game-high-knockdown-side.png",
+      "performance": "docs/board/looks/test-fighter/game-performance-knockdown-side.png"
+    },
+    {
+      "clip": "knockdown",
+      "time": 1,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "reference": "public/assets/reference/wasteland-crew-1.png",
+      "crop": [
+        343,
+        40,
+        534,
+        710
+      ],
+      "blender": "docs/board/looks/test-fighter/blender-knockdown-back.png",
+      "high": "docs/board/looks/test-fighter/game-high-knockdown-back.png",
+      "performance": "docs/board/looks/test-fighter/game-performance-knockdown-back.png"
+    }
+  ],
+  "output": "docs/board/looks/test-fighter/round-1.png",
+  "status": "GFX-00 pipeline evidence only; no crew fidelity score or beta promotion"
+}
