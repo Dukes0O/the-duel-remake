@@ -7,10 +7,30 @@ import {normalizeWasteland} from '../src/wasteland-progress.js';
 import {Duel} from '../src/game.js';
 import {respawnFighter} from '../src/onfoot.js';
 import {createOnFootFigures} from '../src/onfoot-figures.js';
+import {stepProjectiles} from '../src/combat-projectiles.js';
+import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
+import {resetFootWeaponUser} from '../src/onfoot-weapons.js';
 
 const profile=xp=>({credits:0,wasteland:normalizeWasteland({xp})});
 const STEP=1/120;
 const ticks=(duel,count)=>{for(let i=0;i<count;i++)duel.step(STEP);};
+function crewRace(id){
+  const duel=new Duel({seed:1989,featureFlags:{wasteland2:true},
+    destructiblesEnabled:false});
+  duel.startCampaign({mode:'wasteland',car:'falcone_f42',startStage:0,
+    seed:1989,crewId:id,opponentCount:1});
+  const state=duel.state;
+  Object.assign(state,{status:'racing',countdown:0,s:500,prevS:500,
+    lateral:0,prevLateral:0,traffic:[]});
+  state.combat.aiTimer=Infinity;
+  state.combat.pickupTimer=Infinity;
+  duel._rival=()=>{};
+  duel._traffic=()=>{};
+  duel.setInput({interact:true});ticks(duel,48);
+  assert.equal(state.onFoot,true);
+  duel.setInput({interact:false});ticks(duel,1);
+  return duel;
+}
 
 test('eight exact roster entries, free Rook, rank gates and per-player save',()=>{
   assert.deepEqual(Object.keys(CREW),['rook','nell','jax','odessa','cinder',
@@ -77,6 +97,9 @@ test('Armory copy and pooled figure colors distinguish the roster',()=>{
   assert.match(locked,/UNLOCKS AT RANK 25/);
   assert.match(locked,/PASSIVE HOOK · LATER CARD/);
   assert.match(crewPanel(profile(100_000),escape),/SELECT CREW/);
+  const unmigrated=crewPanel({credits:0},escape);
+  assert.equal((unmigrated.match(/CAREER NOT READY/g)||[]).length,8);
+  assert.equal((unmigrated.match(/disabled/g)||[]).length,8);
   const figures=createOnFootFigures();
   const fighter=(crewId,x)=>({crewId,x,y:0,z:0,yaw:0,steps:0,
     airHeight:0,knockedDown:false});
@@ -88,4 +111,62 @@ test('Armory copy and pooled figure colors distinguish the roster',()=>{
   assert.notEqual(first.getHex(),second.getHex());
   assert.equal(figures.drawCallBudget,4);
   figures.dispose();
+});
+
+test('Nell splash, Odessa repair, and Dune lock range affect current weapons',()=>{
+  const rook=crewRace('rook'),nell=crewRace('nell');
+  for(const duel of [rook,nell]){
+    const state=duel.state,target=state.opponents[0];
+    target.s=state.s+55;target.prevS=target.s;target.lateral=3;
+    target.prevLateral=3;
+    duel.setFighterInput({fire:true});ticks(duel,1);
+    const rocket=state.combat.projectiles.find(p=>p.kind==='rpg');
+    assert.ok(rocket);
+    const ground=duel.course.groundAt(target.s,target.lateral);
+    rocket.x=ground.x+8.7;rocket.z=ground.z;
+    rocket.y=ground.y+1;rocket.vx=rocket.vy=rocket.vz=0;
+    rocket.age=COMBAT_TUNING.foot.rpgLifetimeSeconds;
+    const before=target.armor;
+    stepProjectiles(duel,STEP);
+    if(state.crewId==='nell'){
+      assert.equal(rocket.splashRadius,9.6);
+      assert.ok(target.armor<before,'Nell hits beyond the normal eight-metre radius');
+    }else{
+      assert.equal(rocket.splashRadius,8);
+      assert.equal(target.armor,before);
+    }
+  }
+  const odessa=crewRace('odessa'),standard=crewRace('rook');
+  for(const duel of [odessa,standard]){
+    duel.state.armor=30;
+    resetFootWeaponUser(duel);
+    assert.equal(duel.selectFootGear(2),true);
+    duel.setFighterInput({fire:true});ticks(duel,240);
+  }
+  assert.ok(Math.abs(odessa.state.armor-70)<1e-6);
+  assert.ok(Math.abs(standard.state.armor-50)<1e-6);
+  assert.equal(odessa.state.footWeapons.repairBlockedUntilRelease,true);
+  const dune=crewRace('dune'),normal=crewRace('rook');
+  for(const duel of [dune,normal]){
+    const fighter=duel.state.fighter,target=duel.state.opponents[0];
+    const candidate=Array.from({length:500},(_,i)=>fighter.s+i+1)
+      .map(s=>({s,point:duel.course.groundAt(s,0)}))
+      .find(({point})=>Math.hypot(point.x-fighter.x,
+        point.y+1-fighter.y-COMBAT_TUNING.foot.rpgEyeHeight,
+        point.z-fighter.z)>230 && Math.hypot(point.x-fighter.x,
+        point.z-fighter.z)<250);
+    assert.ok(candidate,'course offers a target beyond base lock range');
+    target.s=target.prevS=candidate.s;
+    target.lateral=target.prevLateral=0;
+    fighter.yaw=Math.atan2(candidate.point.x-fighter.x,
+      candidate.point.z-fighter.z);
+    fighter.pitch=Math.atan2(candidate.point.y+1-fighter.y-
+      COMBAT_TUNING.foot.rpgEyeHeight,
+      Math.hypot(candidate.point.x-fighter.x,
+        candidate.point.z-fighter.z));
+    duel.setFighterInput({aim:true});ticks(duel,1);
+  }
+  assert.equal(crewPerks('dune').lockRangeMultiplier,1.25);
+  assert.equal(dune.state.footWeapons.lockTargetIndex,0);
+  assert.equal(normal.state.footWeapons.lockTargetIndex,null);
 });

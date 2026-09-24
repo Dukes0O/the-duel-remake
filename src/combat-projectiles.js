@@ -257,6 +257,8 @@ export function stepProjectiles(duel, dt) {
     }
 
     const bombRadius = T.bomb.radius + T.bomb.radiusPerLevel * projectile.level;
+    const rpgSplashRadius = Number.isFinite(projectile.splashRadius) &&
+      projectile.splashRadius > 0 ? projectile.splashRadius : T.foot.rpgSplashRadius;
     if (combatArmorEnabled(duel) && projectile.kind === 'bomb' &&
         projectile.age < T.armor.bombArmingSeconds) {
       const thrower = projectile.enemy
@@ -275,7 +277,7 @@ export function stepProjectiles(duel, dt) {
     if (combatArmorEnabled(duel) && projectile.kind === 'rpg' &&
         projectile.age < T.armor.bombArmingSeconds &&
         Math.hypot(projectile.x - projectile.launchX,
-          projectile.z - projectile.launchZ) < T.foot.rpgSplashRadius) {
+          projectile.z - projectile.launchZ) < rpgSplashRadius) {
       projectile.y = Math.max(projectile.y, floor + T.projectileFloorClearance);
       live.push(projectile);
       continue;
@@ -325,8 +327,8 @@ export function stepProjectiles(duel, dt) {
         const at = point(duel, actor);
         const distance = Math.hypot(at.x - projectile.x, at.y - projectile.y,
           at.z - projectile.z);
-        if (distance < T.foot.rpgSplashRadius) hit(duel, actor, projectile,
-          1 - distance / T.foot.rpgSplashRadius, false,
+        if (distance < rpgSplashRadius) hit(duel, actor, projectile,
+          1 - distance / rpgSplashRadius, false,
           {splash: true, self: actor === state});
       }
     } else if (contact) {

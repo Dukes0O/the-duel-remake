@@ -1,5 +1,6 @@
 import {combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {crewPerks} from './crew.js';
 
 const T = COMBAT_TUNING.foot;
 const EPSILON = 1e-8;
@@ -81,17 +82,19 @@ function viableTarget(actor) {
 function aimedCar(duel, fighter, direction) {
   let chosen = null, best = Infinity;
   const eyeY = fighter.y + T.rpgEyeHeight;
+  const lockRange=T.rpgLockRange *
+    (crewPerks(fighter.crewId).lockRangeMultiplier || 1);
   duel.state.opponents.forEach((actor, index) => {
     if (!viableTarget(actor)) return;
     const point = duel.course.groundAt(actor.s, actor.lateral);
     const dx = point.x - fighter.x, dy = point.y + 1 - eyeY,
       dz = point.z - fighter.z;
     const distance = length(dx, dy, dz);
-    if (!(distance > 0) || distance > T.rpgLockRange) return;
+    if (!(distance > 0) || distance > lockRange) return;
     const alignment = (dx * direction.x + dy * direction.y +
       dz * direction.z) / distance;
     if (alignment < Math.cos(T.rpgLockConeRadians)) return;
-    const score = (1 - alignment) * T.rpgLockRange + distance * 0.001;
+    const score = (1 - alignment) * lockRange + distance * 0.001;
     if (score < best) {best = score; chosen = index;}
   });
   return chosen;
@@ -127,6 +130,8 @@ function launchRpg(duel, weapons, fighter, dt, direction) {
     vy: direction.y * T.rpgSpeed,
     vz: direction.z * T.rpgSpeed + movingZ,
     age: 0,
+    splashRadius: T.rpgSplashRadius *
+      (crewPerks(fighter.crewId).blastRadiusMultiplier || 1),
     targetIndex: weapons.lockSeconds + EPSILON >= T.rpgLockSeconds
       ? weapons.lockTargetIndex : null,
   });
@@ -144,6 +149,8 @@ function carDistance(duel, fighter) {
 
 function stepWrench(duel, weapons, fighter, input, dt, hit) {
   const state = duel.state;
+  const repairSeconds=T.wrenchRepairSeconds /
+    (crewPerks(fighter.crewId).repairRateMultiplier || 1);
   if (!input.fire) {
     weapons.repairing = false;
     weapons.repairSeconds = weapons.repairAmount = 0;
@@ -164,14 +171,14 @@ function stepWrench(duel, weapons, fighter, input, dt, hit) {
     duel.emit({footRepairStarted: true});
   }
   const restored = Math.min(T.wrenchRepairAmount - weapons.repairAmount,
-    T.wrenchRepairAmount / T.wrenchRepairSeconds * dt,
+    T.wrenchRepairAmount / repairSeconds * dt,
     state.maxArmor - state.armor);
   if (restored > 0) {
     state.armor += restored;
     weapons.repairAmount += restored;
   }
   weapons.repairSeconds += dt;
-  if (weapons.repairSeconds + EPSILON >= T.wrenchRepairSeconds ||
+  if (weapons.repairSeconds + EPSILON >= repairSeconds ||
       weapons.repairAmount + EPSILON >= T.wrenchRepairAmount ||
       state.armor + EPSILON >= state.maxArmor) {
     weapons.repairing = false;
