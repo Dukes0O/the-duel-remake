@@ -71,3 +71,33 @@ The independent author's approved exact saved-preference expectation adds only
 footCamera: first-person; the old values remain. This matches the additive
 schema rather than relaxing validation. Renderer, UI, camera geometry, browser
 evidence and the final gate are separate pending work.
+
+## Independent runtime and save review
+
+Reviewed `e3ae8ac` against the reviewer and Save Guardian requirements. No
+concrete runtime defect was found. The stored preference is separate from car
+cameraMode and race start choices; set/cycle does not change fighter inputs,
+aim, movement or weapon rules. Flag-off exposes first person without overwriting
+the stored choice. Named-player restore and the existing session-only save
+failure handling remain intact. Pause/menu clear pointer actions; menu releases
+foot pointer lock. No gamepad mapping or storage key was added.
+
+The source author ran the required existing short controls once: race-settings
+42 checks, input-contexts and onfoot-controls-camera passed. The backup test
+caught its old current-format fixture at line 65, which wrote raceSettings:{}
+and then asserted migration was unnecessary. The new raw enum guard correctly
+requires a backup for a missing footCamera value. The Director approved only
+adding footCamera:'first-person' to that one migrated fixture. `1f333b0` makes
+that exact change; all historical/damaged fixtures and false/null no-migration
+assertions remain unchanged. The focused backup suite then passed all seven
+fixtures, migration, validation, recovery and quota checks (0.27 seconds).
+The exact diff was sent back for independent Director review.
+
+Independent existing save checks also passed once because the saved settings
+shape changed: seven historical shapes/247 preservation checks, the 64-player
+career budget (5,559,976 raw UTF-16 bytes, 230 physical bytes, maximum ghost
+journal 2,500,604 / 4,000,000), and all six Wasteland profile migration/future
+format checks. Combined process time was 1.24 seconds. All storage was memory
+only. The original verified startup backup barrier still precedes App creation.
+Presentation review, bounded visual evidence and the required lane/build gate
+remain pending; no broad gate has run yet.
