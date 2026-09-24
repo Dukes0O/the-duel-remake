@@ -1002,14 +1002,13 @@ checkout untouched until the final integration commit passes the full gate.
 ## 2026-09-23 PDT - EGG-01 merged (2 since full)
 
 - Integrated 3dab9cd after clean 5ec61ad passed all 217 lane suites in 314.89 s and build in 375 ms. Source and nine replacement images independently reviewed; required STATUS refreshed immediately. Hidden-road stays dev, with final Rustwall art, departure/invitation and discovery still separate.
-- ART-W is ready next: independent gate on b3fcd56 passed 217 suites in 338.18 s and build. No source changes since; final note82d29f8 adds evidence only.
-- Crew R1 evidence and independent scores retained in its lane. Runtime review found four timing/allocation defects; six independent red checks reproduce them. Fix0d8c37d passes re-review, selector12/12 andcrew26/26; originalassetprivatecontrol passes18images, zeroerrors. R2 now corrects bodyshape, UVs and weightedposes.
+- ART-W is ready next: independent gate on b3fcd56 passed 217 suites in 338.18 s and build. No source changes since; final note 82d29f8 adds evidence only.
+- Crew R1 evidence and independent scores remain in its lane. Runtime review found four timing/allocation defects; six independent red checks reproduce them. Fix 0d8c37d passes re-review, selector 12/12 and crew 26/26. The private original-asset control passed with 18 images and zero errors. R2 now corrects body shape, texture mapping and weighted poses.
 
 
 ## 2026-09-23 PDT - ART-W merged (3 since full)
 
-- Integrated c736150 in the required order after EGG-01. Accepted references, provenance/intake and independent217-suite lane/build gate are recorded. STATUS refreshed immediately. Runtime assets remain separateBlendercards.
-- Full cadence nowthree taskmerges since05:39UTC: dueaftertwomore or07:39UTC. No activebroadtest. Allfourcrew runtimefindingsresolvedat0d8c37d andindependentlyre-reviewed; R2assets/capturesinprogress.
-- Expand existingBUG-07's bounded aim-error slice afterbody-contact9139575. Three baseline traces separated CPU/raider hits asEasy3/7,Medium6/5,Hard3/1. Raideraccuracy ignoresdifficulty andcrossbowguidance eraseslauncherror. Fixthose ruleswithindependenttests beforefurthernumbers. CPUUFOremainsseparate.
-- BudgetbeforeBUG-07:36percentremaining. D8stillunapproved; nopushorrelease. CorrectedGFX-01boardindentationto matchothercards.
-
+- Integrated c736150 in the required order after EGG-01. Accepted references, provenance/intake and the independent 217-suite lane/build gate are recorded. STATUS refreshed immediately. Runtime assets remain separate Blender cards.
+- Full cadence is now three task merges since 05:39 UTC: due after two more or at 07:39 UTC. No broad test is active. All four crew runtime findings are resolved at 0d8c37d and independently re-reviewed; R2 assets/captures are in progress.
+- Expand existing BUG-07's bounded aim-error slice after body-contact fix 9139575. Three baseline traces separated CPU/raider hits as Easy 3/7, Medium 6/5 and Hard 3/1. Raider accuracy ignores difficulty, and crossbow guidance erases launch error. Fix those rules with independent tests before further numeric tuning. CPU UFO use remains separate.
+- Budget before BUG-07: 36 percent remaining. D8 is still unapproved; no push or release. Corrected the GFX-01 board indentation to match the other cards.

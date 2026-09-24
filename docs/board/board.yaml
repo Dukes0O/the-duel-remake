@@ -86,10 +86,10 @@ tasks:
     lane: SIM
     size: M
     needs: [TRACK-02]
-      merge_after: GFX-00
-      status: merged
+    merge_after: GFX-00
+    status: merged
     owns: [src/hidden-road.js, src/course.js, src/sim-driving.js, src/sim-crash.js, src/world.js, tools/test-hidden-road.mjs, tools/test-feature-flags.mjs, tools/replays/hidden-road-ordinary.json, tools/scenarios/hidden-road.mjs]
-      hooks: [src/feature-flags.js, src/game.js, src/world-surfaces.js, src/environment-key.js, tools/test-render-reuse.mjs, src/generated-shortcut-presets.js]
+    hooks: [src/feature-flags.js, src/game.js, src/world-surfaces.js, src/environment-key.js, tools/test-render-reuse.mjs, src/generated-shortcut-presets.js]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
     flag: hidden-road
     behavior_change: yes
@@ -103,15 +103,15 @@ tasks:
       - "Private memory-only High/Performance captures show racing-line concealment, entrance, wash, salt flat, wall contact and return. Review actual screenshots before any scene-signature change; no silent signature regeneration. EGG-02 owns final Rustwall assets, EGG-03 the 150 m departure and gate sequence, EGG-04 discovery persistence."
     shots: [racing-line-concealment, entrance-abc, wash-drive, salt-flat-approach, wall-contact, road-car-return]
     sound: "Existing dirt/engine audio; gate ceremony belongs to EGG-03."
-      note: "Merged 3dab9cd after independent source/image reviews, 217-suite lane gate and build. Nine source modules/hooks plus derived shortcut source stamp; all generated paths and ordinary fingerprints unchanged. Durable replacement review images retained. Hidden-road stays dev; EGG-02/03/04 own final art, departure/invitation and discovery."
+    note: "Merged 3dab9cd after independent source/image reviews, 217-suite lane gate and build. Nine source modules/hooks plus derived shortcut source stamp; all generated paths and ordinary fingerprints unchanged. Durable replacement review images retained. Hidden-road stays dev; EGG-02/03/04 own final art, departure/invitation and discovery."
   - id: ART-W
     title: "Rustwall gate and first-person gear reference art"
     priority: 6
     lane: ART
     size: S
     needs: [TRACK-02]
-      merge_after: EGG-01
-      status: merged
+    merge_after: EGG-01
+    status: merged
     owns: [public/assets/reference/rustwall-gate.png, public/assets/reference/wasteland-rpg.png, public/assets/reference/wasteland-wrench.png, public/assets/reference/CREDITS.md, docs/WASTELAND_ART.md]
     helpers: [art_critic, test_runner]
     acceptance:
@@ -120,7 +120,7 @@ tasks:
       - "Rustwall reference shows a coherent 35 m tall, at least 400 m wide salvage wall with a drive-through lifting gate, towers, cranes, banners, barrels, searchlights and figures for scale. Include an approach view and useful modeling views; original design without film likenesses or gore."
       - "RPG and wrench references use consistent orthographic and first-person views, readable silhouettes, physically coherent grips and the crew palette. They guide real Blender geometry; no menu/poster art or runtime image substitution."
         - "Independent visual review checks consistency and modeling usefulness. PNG validation and provenance checks pass; required lane/build gate applies. Merge after EGG-01 even if independent art preparation finishes earlier."
-      note: "Merged c736150 after accepted modeling review, intake validation, 217-suite lane gate and build. Originals and full prompts retained. Model Rustwall numerically at 35 m by at least 400 m; no runtime or beta claim."
+    note: "Merged c736150 after accepted modeling review, intake validation, 217-suite lane gate and build. Originals and full prompts retained. Model Rustwall numerically at 35 m by at least 400 m; no runtime or beta claim."
   - id: GFX-01
     title: "Crew family fidelity rounds one to three"
     priority: 7
@@ -468,7 +468,7 @@ tasks:
       - "Measure one controlled crossbow probe and one complete flagged report after the geometric fix. Record win rates, enemy hits, UFO gains and wrecks without promising a pass. Retain lead, thrower velocity, meaningful homing, 10/7/5-second cadence and all balance limits."
       - "Ordinary and flag-off rules must remain unchanged. Existing projectile/replay checks and required lane/build gate pass; any changed expected fingerprint or assertion needs independent review and a written reason."
     merge_after: BAL-01
-      note: "Actual vehicle body contact merged 9139575 after reviewed fixtures, 216-suite lane gate, build and private wreck/results checks. Probe is now 12/26 within target. Seven flagged balance rows remain red; full BUG-06 stays open. Prior 3-degree guidance candidate dfe157e remains held. Raider difficulty/guidance and uphill launch geometry need separate measured corrections."
+    note: "Actual vehicle body contact merged 9139575 after reviewed fixtures, 216-suite lane gate, build and private wreck/results checks. Probe is now 12/26 within target. Seven flagged balance rows remain red; full BUG-06 stays open. Prior 3-degree guidance candidate dfe157e remains held. Raider difficulty/guidance and uphill launch geometry need separate measured corrections."
     spec: "SPEC.md, task BUG-06"
   - id: BUG-07
     title: "A CPU that fights back"
