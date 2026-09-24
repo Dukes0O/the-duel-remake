@@ -42,3 +42,6 @@ Logs remain in .qa-dist/artw-lane.log and .qa-dist/artw-build.log.
 The first log setup found the directory absent and ran no tests; the runner
 created that ignored directory and then completed the gate successfully.
 This final note adds evidence only to the tested source.
+
+After integration, the clean merged lane was removed without force and its
+branch retained. Gate logs are now in .lanes/evidence/artw/ under integration.

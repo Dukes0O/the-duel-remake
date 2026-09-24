@@ -148,3 +148,7 @@ combat-results-2026-09-24T05-53-45-616Z browser-output directories.
 The first logging setup held a file during the harness build and caused
 EBUSY; correcting log capture allowed both checks to pass without source edits.
 The passing gate covers unchanged source; this final note adds evidence only.
+
+After integration, the clean merged lane was removed without force and its
+branch retained. Logs and both browser evidence folders are now archived in
+.lanes/evidence/bolt-height/ under integration.

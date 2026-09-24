@@ -89,3 +89,8 @@ build passed in 375 ms reported build time with the existing chunk-size warning.
 Logs remain in .qa-dist/egg01-final-lane-retry.log and egg01-final-build.log.
 The Director ran this verification independently of the builder. No source
 edits occurred during it; this final note records evidence only.
+
+After integration, the clean merged lane was removed without force and its
+branch retained. Scratch logs and browser output were copied to
+.lanes/evidence/egg01/ under integration; the committed review PNGs remain
+in docs/board/looks/hidden-road/review-fixes/.

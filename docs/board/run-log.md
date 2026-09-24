@@ -1012,3 +1012,7 @@ checkout untouched until the final integration commit passes the full gate.
 - Full cadence is now three task merges since 05:39 UTC: due after two more or at 07:39 UTC. No broad test is active. All four crew runtime findings are resolved at 0d8c37d and independently re-reviewed; R2 assets/captures are in progress.
 - Expand existing BUG-07's bounded aim-error slice after body-contact fix 9139575. Three baseline traces separated CPU/raider hits as Easy 3/7, Medium 6/5 and Hard 3/1. Raider accuracy ignores difficulty, and crossbow guidance erases launch error. Fix those rules with independent tests before further numeric tuning. CPU UFO use remains separate.
 - Budget before BUG-07: 36 percent remaining. D8 is still unapproved; no push or release. Corrected the GFX-01 board indentation to match the other cards.
+
+- Removed the clean, fully merged ART-W, EGG-01 and body-contact worktrees without force after verifying each absolute path and branch ancestry. Kept their branches. Copied all QA logs and browser evidence to .lanes/evidence/{artw,egg01,bolt-height}/ first; committed Hidden Road PNGs remain in looks/.
+- The board parses as valid YAML with 100 unique cards. GFX-02 receives read-only scope preparation while crew round 2 builds; implementation still waits for GFX-01 completion.
+
