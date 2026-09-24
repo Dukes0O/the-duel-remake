@@ -768,3 +768,11 @@ checkout untouched until the final integration commit passes the full gate.
 - Removed three clean, ancestor-proven worktrees without force:
   wasteland-win-rate-gate, wasteland-checkpoint-cpu, and cmb05-cpu.
   Their branches remain. Kept merged folders containing local QA evidence.
+
+- TRACK-01 red tests committed as 6b570be: 24 checks, 18 expected missing-tool
+  or missing-evidence failures. The builder has started implementation.
+- AUD-02 waveform red tests committed as 8e51328: 30 acceptance checks;
+  initial run fails because the validator module is absent. Builder started.
+- Expanded BAL-01 acceptance before dispatch: selected flags must reach all
+  real probes, both complete reports retain targets, and diagnostic failures
+  become combat work rather than weakened checks.
