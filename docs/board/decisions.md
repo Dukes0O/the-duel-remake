@@ -233,3 +233,21 @@ and how to reverse it before continuing.
   fidelity images must confirm grounding. No visual-only terrain workaround.
 - How to reverse: Restore the previous final width in hidden-road.js and keep
   the wall feature in development until another measured placement is ready.
+
+## 2026-09-24 PDT: CAR-01 scrap, hold and migration
+
+- Decision: Earn 80 scrap for a completed Wasteland event, plus 120 for a win, 15 per player-owned hit capped at ten, and 60 per player-caused wreck capped at four. Salvage crates will pay 25 once by stable event ID when implemented. Weapon upgrades cost 150/300/600 scrap; new weapons 400; crew 300; armor kit tiers 350/950/2500. Credit and scrap never convert. Before gate discovery, Mad Max Duel retains its existing economy.
+- Decision: Assign each of the eleven existing combat courses once across eight warlords as listed in CAR-01's change note. A win adds 25 hold, capped at 100; full hold opens an implemented warlord fight, and beating it claims the territory and kit parts. An unbuilt fight cannot be started from the map.
+- Decision: Add scrap and territories to the existing profile.wasteland v1 object, preserving unknown fields, historical levels and future-version data. Use backup-first migration and stable settlement identity. These values are tuning choices, not already fixed by SPEC 0.4. Reverse price or hold tuning in the catalog; preserve earned player data through any later migration.
+
+## 2026-09-24 PDT: GFX-01-P1 Rook technique trial
+
+- Decision: Trial one continuous skinned body with connected jaw and neck on Rook, with padded painted UV islands for skin, hair, clothing, gloves and boots in the existing texture/draw budget. Compare matched round-3 and trial views in Blender and game. Convert the other seven only if Rook likeness rises from three to at least four without another score or budget regression. If it fails, keep the round-3 GLB and try a retopologized sculpt. Two stalled rounds and visible projection seams require the approach change.
+
+## 2026-09-24 PDT: EGG-02-P1 wash banks and Rustwall materials
+
+- Decision: Trial a continuous eroded bank inside the existing collision box and instanced placement, with asymmetric slope variation and an overlapping foot. Paint distinct steel, soot, hulk paint and localized rust within the existing wall draw and texture allocation. Round-3 wall and wash resemblance remained three and two. Reverse by rebuilding prior GLBs from the previous rustwall.py revision while retaining collision and scene contracts.
+
+## 2026-09-24 PDT: BAL-02 proof before tuning
+
+- Decision: Add a legal deterministic strong-player policy to measure CPU wrecks before changing weapon damage. The current `all` policy fired no crossbows, landed one rival hit and caused no wreck in a flagged Easy seed-1989 trace. Trace Easy raider hits by owner and shot before choosing a narrow correction; earlier retained sample attributes five of six Easy hits to raiders. Preserve the flag-off path and existing win bands. Reverse by removing the new policy or restoring the prior seeded aim parameters.
