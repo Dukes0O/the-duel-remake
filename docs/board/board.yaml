@@ -285,7 +285,7 @@ tasks:
     needs: [EGG-04]
     status: active
     owns: [src/onfoot-camera.js, tools/test-onfoot-camera-choice.mjs, tools/scenarios/onfoot-camera-choice.mjs, docs/board/looks/onfoot-camera-choice/, docs/changes/CAM-01.md]
-    hooks: [src/app.js, src/input-contexts.js, src/render3d.js, src/screen-menu.js, src/screen-router.js, src/race-settings.js, src/career-backup.js, src/combat-hud.js, src/combat-hud.css, tools/test-race-settings.mjs]
+    hooks: [src/app.js, src/input-contexts.js, src/render3d.js, src/screen-menu.js, src/screen-router.js, src/race-settings.js, src/career-backup.js, src/combat-hud.js, src/combat-hud.css, tools/test-race-settings.mjs, tools/test-career-backup.mjs]
     helpers: [test_author, reviewer, save_guardian, browser_qa]
     flag: wasteland2
     acceptance:
@@ -296,6 +296,7 @@ tasks:
       - "Store an additive validated footCamera preference in named-player raceSettings only if the existing normalization and pre-write backup seam can safely support it. Default old and malformed values to first person, preserve other settings and player isolation, and require independent Save Guardian review. Do not introduce a new storage key or version solely for this preference."
       - "Independent focused red tests precede implementation. Retain ordinary camera/input controls, use one compact memory-only browser scenario for setting/key switching, aim/fire/repair, pause and re-entry in High and Performance, and keep scored desktop/phone contact sheets. Required lane/build gate precedes merge; do not repeat unrelated save suites unless their source changed."
       - "Independent author may add only footCamera: first-person to the existing exact saved-preference expectation in test-race-settings, with all previous values retained. Record and review this approved additive-schema assertion change. Before the broad gate, run affected existing race-settings, input-context, on-foot camera and backup tests once to catch changed contracts early. No new gamepad mapping is needed in this card."
+      - "The migrated current-format fixture in test-career-backup may receive only its new footCamera: first-person default. Preserve the existing no-migration/no-backup assertions and all historical/damaged fixtures. This fixture correction reflects the approved raw missing-field migration guard; it must not weaken that guard. Record and independently review the exact fixture diff."
     note: "Read-only scope planned while EGG-04 builds; no implementation before its merge. Existing local-figure distance suppression should allow overhead without new assets. Fixed-center foot reticle needs explicit review because the weapon aims from the fighter, not from an offset camera."
   - id: CAR-01
     title: "Separate Wasteland career and territory map"
