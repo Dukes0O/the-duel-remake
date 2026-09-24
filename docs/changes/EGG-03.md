@@ -171,3 +171,44 @@ fixture or fingerprint was rewritten. The builder reports journey 37/37 and
 departure 7/7 passing without assertion changes; this review did not repeat
 those suites without a concrete reproduction need. Combined presentation,
 browser/audio review and the final lane/build gate remain outstanding.
+## Combined presentation review and physical spur camera regression
+
+The independent review of `0d54300` found two presentation defects: the fade
+selector named an absent weapon-HUD id instead of its actual class, and the
+inactive dialog rewrote its title/copy every frame. A tiny read-only semantic
+host probe counted 20 text writes for ten identical inactive snapshots.
+Revision `a7f6aac` fixes both with `.weapon-hud` and change-guarded DOM writes;
+the opacity custom property is also updated only when changed. The actual
+legacy-combat capture verifies the corrected fade.
+
+The revised gate cinematic camera reads the car's physical world position.
+Its centered follow and final orbit clear the structural opening and Titan:
+the orbit crosses the wall backplane at about x=0.97 metres, within the
+4.5 metre half-opening, and the Titan rear extent at about x=2.49 metres,
+outside its 1.4 metre half-width. The low camera stays below the seven metre
+header. Renderer and UI still read simulation state only. Gate spark resources
+remain graph-owned and bounded; original audio voices cancel on pause, mute,
+menu and new journey. Cinematic bus ducking resets on normal/menu snapshots.
+Pause silences the master and cancels voices while retaining the cinematic bus
+target for resume. No heavy check ran during either recording window.
+
+The later **settled legacy image exposed a production defect** outside that
+cinematic path. After the 149.9 metre departure fixture and 1.4 seconds of
+simulation, the normal driving camera remained underground/inside scenery even
+after 600 ms of rendered settling. This supersedes the initial stale-fixture
+assumption. Normal chase/back/aim positions still used main-road coordinates,
+and a main-road tunnel constraint could pull the remote spur camera into its
+unrelated tunnel. Preserve the original failed image as evidence.
+
+The Director authorized a narrow `hiddenRoadDrivingCamera(state, course, mode)`
+helper and renderer hook. The new independent acceptance group is red:
+**presentation 10/11 passes**, with only the missing helper failing (0.18
+seconds). It checks actual 100/150 metre poses on A/B/C, before and after
+departure, all seven existing camera modes, actual car heading plus slip,
+local ground support and clearance against real wash-bank geometry. The mode
+must keep its intended side while safely shortening a view that would enter a
+bank. Repeated frozen snapshots are identical. Menu, ordinary racing-lane and
+flag-off controls return null so their existing camera path is retained.
+No existing assertion was weakened. This is one bounded regression group,
+not a new render or balance matrix. The source fix and subsequent actual
+browser verification remain pending.

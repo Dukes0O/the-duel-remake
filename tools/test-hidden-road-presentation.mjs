@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import { Course } from '../src/course.js';
 import { COURSE } from '../src/config.js';
 import { EngineAudio } from '../src/audio.js';
+import { ROUTE_VARIANTS } from '../src/route-variants.js';
+import { CAMERA_MODES } from '../src/camera-views.js';
+import { sweepObstacle } from '../src/collision.js';
 
 const ui = await import('../src/hidden-road-ui.js').catch(error => {
   if (error.code === 'ERR_MODULE_NOT_FOUND') return {};
@@ -91,6 +94,47 @@ check('pause holds gate and camera but suppresses sparks and invitation input', 
   assert.equal(present(freeze(state('choice'))).choiceReady, true);
   const notReady = state('choice'); notReady.hiddenRoadJourney.choiceReady = false;
   assert.equal(present(freeze(notReady)).choiceReady, false);
+});
+
+check('physical spur driving camera clears ground and wash banks before and after departure on ABC', () => {
+  assert.equal(typeof ui.hiddenRoadDrivingCamera, 'function', 'physical spur camera helper is exported');
+  for (const route of ROUTE_VARIANTS) {
+    const c = new Course(COURSE[0], route.seed, { hiddenRoad: true });
+    const road = c.hiddenRoad;
+    for (const progress of [100, 150]) {
+      const p = road.poseAt(progress), heading = p.heading + .35, slip = .07;
+      const s = freeze({ status: progress < 150 ? 'racing' : 'exploring', paused: false,
+        car: 'falcone_f42', s: p.s, lateral: p.lateral, groundHeight: p.y, airHeight: 0,
+        headingError: heading - c.at(p.s).heading, slipAngle: slip,
+        hiddenRoadJourney: progress < 150 ? { departed: false, phase: 'racing' } : { departed: true, phase: 'exploring' } });
+      const before = JSON.stringify(s), car = c.worldAt(s.s, s.lateral), actualHeading = heading + slip;
+      for (const mode of CAMERA_MODES) {
+        const view = ui.hiddenRoadDrivingCamera(s, c, mode);
+        assert.ok(view, `${route.id}/${progress}/${mode}: actual spur gets a physical camera`);
+        for (const point of [view.position, view.target]) for (const value of Object.values(point)) assert.ok(Number.isFinite(value));
+        const camera = view.position, near = c.nearest(camera.x, camera.z, p.s);
+        assert.ok(camera.y >= c.groundAt(near.s, near.lateral).y + .3,
+          `${route.id}/${mode}: camera is above actual local support, not an unrelated tunnel`);
+        for (const wall of road.walls) assert.equal(sweepObstacle(camera, camera, wall, actualHeading,
+          { halfWidth: .15, halfLength: .15, height: .3 }), null,
+        `${route.id}/${mode}: camera near-plane clearance from actual wash bank`);
+        const dx = camera.x - car.x, dz = camera.z - car.z;
+        const forward = dx * Math.sin(actualHeading) + dz * Math.cos(actualHeading);
+        const side = dx * Math.cos(actualHeading) - dz * Math.sin(actualHeading);
+        if (['chase', 'wide', 'back'].includes(mode)) assert.ok(forward < -.1, `${mode} stays behind actual car heading`);
+        if (['front', 'hood'].includes(mode)) assert.ok(forward > .1, `${mode} stays ahead of actual car heading`);
+        if (mode === 'right') assert.ok(side > .1, 'right view stays to the car right');
+        if (mode === 'left') assert.ok(side < -.1, 'left view stays to the car left');
+        assert.deepEqual(ui.hiddenRoadDrivingCamera(s, c, mode), view, 'camera depends only on the snapshot');
+      }
+      assert.equal(JSON.stringify(s), before, 'camera helper cannot mutate simulation');
+      assert.equal(ui.hiddenRoadDrivingCamera({ ...s, status: 'menu' }, c, 'chase'), null);
+      assert.equal(ui.hiddenRoadDrivingCamera({ ...s, lateral: 0 }, c, 'chase'), null,
+        'return to the racing lane restores the existing ordinary camera path');
+      assert.equal(ui.hiddenRoadDrivingCamera(s, { ...c, hiddenRoad: null }, 'chase'), null,
+        'flag-off course retains ordinary camera behavior');
+    }
+  }
 });
 
 // A small semantic DOM fixture: no HTML parser, renderer, timers or browser globals.
