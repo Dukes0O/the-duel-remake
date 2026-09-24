@@ -218,7 +218,8 @@ unchanged under Codex generated_images/01a0cc3f-15a5-7b73-9dbf-849ae16bbb56.
 
 ## public/assets/reference/rustwall-gate.png
 
-Date: 2026-09-23 PDT (2026-09-24 UTC)
+Date: 2026-09-23
+Timezone: PDT (2026-09-24 UTC)
 Tool: Codex built-in image generation, using the imagegen skill
 Use: Rustwall architecture, gate mechanism, salvage materials and approach composition for EGG-02 Blender modeling. Reference only, not a runtime texture or menu image.
 Prompt:
@@ -230,7 +231,8 @@ Canonical modeling guidance from independent art review: Use the lower-left elev
 
 ## public/assets/reference/wasteland-rpg.png
 
-Date: 2026-09-23 PDT (2026-09-24 UTC)
+Date: 2026-09-23
+Timezone: PDT (2026-09-24 UTC)
 Tool: Codex built-in image generation, using the imagegen skill
 Use: RPG exterior geometry, materials, reload prop and first-person grip for GFX-02 Blender modeling. Reference only, not a runtime texture or menu image.
 Prompt:
@@ -242,7 +244,8 @@ Canonical modeling guidance from independent art review: Use the upper-left side
 
 ## public/assets/reference/wasteland-wrench.png
 
-Date: 2026-09-23 PDT (2026-09-24 UTC)
+Date: 2026-09-23
+Timezone: PDT (2026-09-24 UTC)
 Tool: Codex built-in image generation, using the imagegen skill
 Use: Repair wrench shape, materials and held repair pose for GFX-02 Blender modeling. Reference only, not a runtime texture or menu image.
 Prompt:
