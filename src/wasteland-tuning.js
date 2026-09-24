@@ -40,6 +40,8 @@ export const COMBAT_TUNING=Object.freeze({
  effects:{lifetime:1.4},
  roadside:{thresholdFraction:.5,minimumImpactMph:2,speedCostFraction:.1,
   minimumSpeedCostMph:2,maximumSpeedCostMph:25,
+  easyRivalPaceBonusMph:12,mediumRivalPaceBonusMph:8,
+  mediumAimErrorMultiplier:.6,
   trafficKnockDistance:4.5,trafficKnockSeconds:.7,
   trafficBurstSeconds:.8,trafficVisibleSeconds:.2,
   sceneryKnockDistance:2.5,sceneryBurstSeconds:.8,

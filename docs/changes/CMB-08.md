@@ -104,3 +104,13 @@ stay pinned to that same flag-off baseline; CMB-08's 30/60/144 FPS tests cover
 the released collisions. No replay hash was regenerated. The Experimental
 browser scenario now expects roadside destruction to be on and absent from
 the beta list, and verifies that turning Experimental off cannot disable it.
+
+The combined integration lane then passed 189/189 suites. Its first combat
+balance run found that the easier CPU rivals fell too far behind after roadside
+contacts. Road races now give Easy and Medium rivals 12 and 8 mph more target
+pace, and Medium CPU shots use 60% of their former aim spread. The arena is
+excluded from both adjustments. The full balance check passes with 9/10,
+6/10 and 2/10 player wins on Easy, Medium and Hard, with 1/3/7 CPU hits.
+The focused arena, projectile, roadside and 162 pinned replay checks pass after
+this small tuning change. Per Kyle's request to spend more time building, the
+189-suite lane was not repeated for the tuning-only change.

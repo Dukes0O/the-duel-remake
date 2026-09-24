@@ -216,7 +216,10 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         dx /= length;
         dz /= length;
         if (enemy) {
-          const spread = CPU_COMBAT[state.cpuDifficulty]?.aimError ?? CPU_COMBAT.medium.aimError;
+          const baseSpread = CPU_COMBAT[state.cpuDifficulty]?.aimError ?? CPU_COMBAT.medium.aimError;
+          const spread = state.cpuDifficulty === 'medium' && !duel.stageDef.arena &&
+            duel.roadsideKnockAwayEnabled()
+            ? baseSpread * T.roadside.mediumAimErrorMultiplier : baseSpread;
           const error = makeRng((duel.seed ^
             (state.stageIndex * T.cpu.aimSeedStageSalt) ^
             (combat.aiShot * T.cpu.aimSeedShotSalt)) >>> 0).range(-spread, spread);

@@ -12,9 +12,13 @@ const policies = ['none', 'ufo', 'ufo-max', 'bomb', 'crossbow', 'star', 'all'];
 const difficulties = ['easy', 'medium', 'hard'];
 const check = process.argv.includes('--check');
 const verbose = process.argv.includes('--verbose');
+const baselineOnly = process.argv.includes('--baseline-only');
+const probe = process.argv.find(argument => argument.startsWith('--probe='));
 globalThis.cancelAnimationFrame ??= () => {};
-if (process.argv.slice(2).some(argument => !['--check', '--verbose'].includes(argument))) {
-  throw Error('Usage: node tools/combat-balance.mjs [--check] [--verbose]');
+if (process.argv.slice(2).some(argument => !['--check', '--verbose', '--baseline-only'].includes(argument) &&
+      !argument.startsWith('--probe=')) ||
+    baselineOnly && (check || verbose || probe) || probe && (check || verbose)) {
+  throw Error('Usage: node tools/combat-balance.mjs [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED');
 }
 const rounded = value => Math.round(value * 100) / 100;
 const average = values => values.reduce((sum, value) => sum + value, 0) / Math.max(1, values.length);
@@ -75,6 +79,7 @@ function run(policy, cpuDifficulty, seed = 1989) {
     completed: state.results?.completed === true,
     won: state.results?.won === true,
     timeSec: rounded(state.results?.timeSec ?? state.stageTimeSec),
+    rivalTimeSec: state.rival?.finishTime == null ? null : rounded(state.rival.finishTime),
     shots, rivalHits: state.combat?.hits ?? 0,
     cpuHits: unattributedEnemyHits ? null : cpuHits, unattributedEnemyHits,
     majorCrashes: state.stageCrashes,
@@ -136,6 +141,28 @@ function bombSpeedProbe() {
     cases.push({ speedMph, speedLossPct: rounded(100 * (1 - minimum / speedMph)) });
   }
   return { maxSpeedLossPct: Math.max(...cases.map(item => item.speedLossPct)), cases };
+}
+
+if (probe) {
+  const [cpuDifficulty, seedText] = probe.slice('--probe='.length).split(',');
+  const seed = Number(seedText);
+  if (!difficulties.includes(cpuDifficulty) || !Number.isSafeInteger(seed))
+    throw Error('Probe needs easy, medium or hard and an integer seed.');
+  console.log(JSON.stringify(run('none', cpuDifficulty, seed), null, 2));
+  process.exit(0);
+}
+
+if (baselineOnly) {
+  const seeds = [1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998];
+  const races = difficulties.flatMap(cpuDifficulty => seeds.map(seed => run('none', cpuDifficulty, seed)));
+  const summary = Object.fromEntries(difficulties.map(cpuDifficulty => {
+    const rows = races.filter(race => race.cpuDifficulty === cpuDifficulty);
+    return [cpuDifficulty, {wins: rows.filter(race => race.won).length,
+      races: rows.length, results: rows.map(({seed, won, timeSec, rivalTimeSec, cpuHits, majorCrashes}) =>
+        ({seed, won, timeSec, rivalTimeSec, cpuHits, majorCrashes}))}];
+  }));
+  console.log(JSON.stringify(summary, null, 2));
+  process.exit(0);
 }
 
 const started = performance.now();

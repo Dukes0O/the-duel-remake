@@ -21,7 +21,11 @@ time loss; the old scenario's player-crash assertion no longer applies to the
 approved rule. First debris rendering measured 10.20 ms against a 7.70 ms
 nearby High baseline and 7.10 ms against 7.50 ms in Performance. These short
 measurements do not establish long-session frame pacing. The final combined
-release gate is recorded separately after it runs.
+integration lane passed 189/189 suites before a small road-race balance tune.
+The full combat balance check after tuning passed its Easy/Medium/Hard win
+targets at 9/10, 6/10 and 2/10, and the focused arena, projectile, collision
+and pinned replay checks passed. The 189-suite lane was not repeated for that
+tune; final browser and production-build checks are recorded separately.
 
 ## Opponent field, checkpoint clearance, and combat sound — September 23, 2026
 

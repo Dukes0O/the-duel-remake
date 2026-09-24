@@ -6,6 +6,7 @@ import { stepRoadsideTraffic, stepTrafficWreck } from './destructibles.js';
 import { vehicleContactEnvelope, planNpcYield } from './npc-yielding.js';
 import { clamp, freshDamageZones } from './sim-common.js';
 import {completeCombatRecovery} from './combat-armor.js';
+import {COMBAT_TUNING} from './wasteland-tuning.js';
 
 export function _npcYield(actor, targetMph, plannedHeading = actor.headingError || 0) {
   const player = this.state, playerSpec = this._vehicleSpec(player), actorSpec = this._vehicleSpec(actor);
@@ -119,7 +120,14 @@ export function _rival(dt, opponent = this.state.rival) {
   const rivalSurface = this._drivingSurface(r.s, r.lateral, car);
   const mediumCatchup = s.mode === 'wasteland' && s.cpuDifficulty === 'medium' ?
     20 * clamp((s.s - r.s - 120) / 180, 0, 1) : 0;
-  const targetPace = car.topSpeed * cruiseSkill + mediumCatchup -
+  let roadsidePace = 0;
+  if (!this.stageDef.arena && this.roadsideKnockAwayEnabled()) {
+    if (s.cpuDifficulty === 'easy')
+      roadsidePace = COMBAT_TUNING.roadside.easyRivalPaceBonusMph;
+    else if (s.cpuDifficulty === 'medium')
+      roadsidePace = COMBAT_TUNING.roadside.mediumRivalPaceBonusMph;
+  }
+  const targetPace = car.topSpeed * cruiseSkill + mediumCatchup + roadsidePace -
     (s.mode === 'wasteland' && s.cpuDifficulty === 'hard' ? 14 : 0);
   const rubber = clamp((s.s - r.s) * .012, -8, 8);
   let target = targetPace + rubber;
