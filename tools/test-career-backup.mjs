@@ -67,6 +67,30 @@ assert.deepEqual((await backups.load(migration.id)).entries,oldRaw,'migration ba
 assert.equal(needsCareerMigration(old),false);
 assert.equal(await backupBeforeMigration(old,backups),null,'no backup for unchanged format');
 assert.equal(needsCareerMigration(memoryStorage({'the-duel-leaderboard-v1':'{"version":1,"entries":[]}'})),true,'orphaned records are copied before a new player registry is written');
+// CAR-01 must back up saves that already have valid discovery fields but lack
+// the new currency and territory shape. All storage here is memory-only.
+for (const missing of ['scrap', 'territories', 'territory-entry']) {
+  const profile = {...createProfile(), raceSettings: {footCamera: 'first-person'}};
+  if (missing === 'territory-entry') delete profile.wasteland.territories.sal;
+  else delete profile.wasteland[missing];
+  const source = memoryStorage({'the-duel-players-v2': JSON.stringify({
+    version: 2, activePlayerId: 'phase-one',
+    players: [{id: 'phase-one', name: 'Phase One', profile}],
+  })});
+  const before = captureCareer(source), store = memoryBackups();
+  assert.equal(needsCareerMigration(source), true, missing + ' requires backup');
+  await assert.rejects(backupBeforeMigration(source, {
+    save: async () => { throw new Error('backup unavailable'); },
+  }), /backup unavailable/);
+  assert.deepEqual(captureCareer(source), before, missing + ' failed backup leaves bytes unchanged');
+  await assert.rejects(backupBeforeMigration(source, {
+    save: async () => {}, load: async () => null,
+  }), /could not be verified/);
+  assert.deepEqual(captureCareer(source), before, missing + ' unverified backup leaves bytes unchanged');
+  const saved = await backupBeforeMigration(source, store);
+  assert.deepEqual((await store.load(saved.id)).entries, before, missing + ' verified original bytes');
+}
+
 const malformed=memoryStorage({'the-duel-players-v2':JSON.stringify({version:2,activePlayerId:'broken',players:[{id:'broken',name:'Broken',profile:{version:9,raceSettings:{}}}]})});
 assert.equal(needsCareerMigration(malformed),true,'normalization that would rewrite a damaged profile is backed up');
 const changing=memoryStorage({'the-duel-profile-v1':JSON.stringify(legacy.storage['the-duel-profile-v1'])});

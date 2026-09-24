@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {armorPresentation, combatHudEnabled, damageZoneFromChange,
+import {armorPresentation, combatHudEnabled, combatHudVisible, damageZoneFromChange,
   fallbackOpponentPosition, footCarDirection, footAmmoPresentation,
   footActionPresentation} from '../src/combat-hud.js';
 
@@ -11,6 +11,20 @@ test('combat HUD requires the Wasteland 2 switch and an active combat race', () 
   assert.equal(combatHudEnabled(duel, {...state, mode: 'duel'}), false);
   assert.equal(combatHudEnabled(duel, {...state, status: 'menu'}), false);
   assert.equal(combatHudEnabled({featureFlags: {enabled: () => false}}, state), false);
+});
+
+test('combat HUD stays eligible for legacy suppression but only displays during active play', () => {
+  const duel = {featureFlags: {enabled: key => key === 'wasteland2'}};
+  const state = {mode: 'wasteland', status: 'racing', combat: {}, paused: false};
+  for (const status of ['racing', 'countdown', 'exploring']) {
+    assert.equal(combatHudVisible(duel, {...state, status}), true, status);
+  }
+  for (const status of ['stage_result', 'complete', 'gameover', 'menu']) {
+    assert.equal(combatHudVisible(duel, {...state, status}), false, status);
+  }
+  assert.equal(combatHudEnabled(duel, {...state, status: 'stage_result'}), true);
+  assert.equal(combatHudVisible(duel, {...state, paused: true}), false);
+  assert.equal(combatHudVisible({featureFlags: {enabled: () => false}}, state), false);
 });
 
 test('armor presentation clamps damaged, wrecked, and missing armor', () => {

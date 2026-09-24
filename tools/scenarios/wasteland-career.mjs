@@ -2,6 +2,9 @@
 export async function run(context) {
   await context.navigate('/tools/menu-check.html?flags=wasteland2');
   await context.waitFor("!!window.__qaApp && !!window.__render && document.querySelector('#stage.in-menu') && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value", 'isolated Wasteland menu', 60_000);
+  await context.waitFor("[...document.querySelectorAll('details')].some(panel => panel.querySelector('summary')?.textContent.includes('MENU QA'))", 'QA control ready');
+  const hideQaControl = () => context.evaluate("document.querySelectorAll('details').forEach(panel => { if (panel.querySelector('summary')?.textContent.includes('MENU QA')) panel.style.display = 'none'; })");
+  await hideQaControl();
   const first = await context.evaluate(`(() => {
     const app=window.__qaApp;
     app.addPlayer('Career QA One');
@@ -22,6 +25,8 @@ export async function run(context) {
   if(first.earned!==200||first.scrap!==200||first.hold!==25||first.credits!==0||
       !first.results.includes('SCRAP EARNED')||first.results.includes('CREDITS EARNED'))
     throw Error('Post-gate result or settlement wrong: '+JSON.stringify(first));
+  await hideQaControl();
+  await context.screenshot('wasteland-career-results');
   const shop = await context.evaluate(`(() => {
     const app=window.__qaApp;
     app.returnToMenu();app.onFrame?.(app.duel.state);
@@ -38,6 +43,8 @@ export async function run(context) {
       shop.scrap!==50||shop.level!==1||shop.credits!==0||
       !shop.after.includes('50 SCRAP'))
     throw Error('Scrap purchase or map wrong: '+JSON.stringify(shop));
+  await hideQaControl();
+  await context.screenshot('wasteland-career-map');
   const second = await context.evaluate(`(() => {
     const app=window.__qaApp;
     document.querySelector('[data-action="armory-close"]').click();
@@ -50,6 +57,7 @@ export async function run(context) {
   if(second.scrap!==0||second.hold!==0||second.gate!==false||
       second.text.includes('TERRITORY MAP')||!second.text.includes('CR'))
     throw Error('Named player isolation failed: '+JSON.stringify(second));
+  await hideQaControl();
   await context.screenshot('wasteland-career');
   await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && document.querySelector('#stage.in-menu') && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value", 'flag-off isolated menu', 60_000);

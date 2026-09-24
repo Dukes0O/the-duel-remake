@@ -1,3 +1,4 @@
+import { TERRITORIES } from './wasteland-career.js';
 import { PROFILE_KEY, PLAYERS_KEY, loadPlayers, normalizeProfile } from './progression.js';
 import { LEADERBOARD_KEY, loadLeaderboard } from './leaderboard.js';
 import { GHOST_KEY, GHOST_ENABLED_KEY, loadGhosts } from './ghost.js';
@@ -71,6 +72,14 @@ export function needsCareerMigration(storage) {
         typeof player.profile.wasteland.discoveredGate !== 'boolean' ||
         !Number.isSafeInteger(player.profile.wasteland.pacificFinishes) ||
         player.profile.wasteland.pacificFinishes < 0 || player.profile.wasteland.pacificFinishes > 10 ||
+        !Number.isSafeInteger(player.profile.wasteland.scrap) ||
+        player.profile.wasteland.scrap < 0 || player.profile.wasteland.scrap > 1_000_000_000 ||
+        !isObject(player.profile.wasteland.territories) ||
+        Object.keys(TERRITORIES).some(id => {
+          const territory = player.profile.wasteland.territories[id];
+          return !isObject(territory) || !Number.isSafeInteger(territory.hold) ||
+            territory.hold < 0 || territory.hold > 100 || typeof territory.claimed !== 'boolean';
+        }) ||
         has(player.profile, 'weapons')) ||
       loadPlayers(source).players.some(player => !player.profile.raceSettings);
   } catch { return true; }
