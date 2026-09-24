@@ -764,7 +764,7 @@ tasks:
       - "Finite, audible, unclipped and bounded-duration signals are measured; spatial impacts and raider shots audibly favor the expected channel. Silence, clipping and missing cues fail."
       - "Capture summary names the tested source commit. Direct offline cue calls do not claim live routing or full-race mix coverage. Existing production event-routing tests still pass."
       - "Audio QA and independent review inspect the measurements and limits; full AUD-02 stays open for future cues and whole-race listening."
-    note: "Existing on-foot RPG and wrench actions plus roadside raiders have distinct short cues at 6898579. Focused audio/weapon/raider checks and build passed. Future weapon cues and a full-race mix/listening check remain open."
+    note: "Current-action cues integrated at 6898579; real browser waveform verification merged at ff5d63b after 214/214 lane suites, build, clean-source capture, code review and independent PCM checks. Full-race mixing, listening and future weapon cues remain open."
     spec: "SPEC.md, task AUD-02"
   - id: VIS-01
     title: "Combat flipbooks and pooled effects"

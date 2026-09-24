@@ -776,3 +776,18 @@ checkout untouched until the final integration commit passes the full gate.
 - Expanded BAL-01 acceptance before dispatch: selected flags must reach all
   real probes, both complete reports retain targets, and diagnostic failures
   become combat work rather than weakened checks.
+
+## 2026-09-23 PDT — AUD-02 verification merged (run merge 1)
+
+- Merged existing audio verification slice as ff5d63b at 04:26 UTC. Eight
+  stereo foot/raider cues and four prior car cues have private browser WAVs.
+  Clean-source capture, independent code review and independent PCM checks
+  pass; no subjective listening or whole-race mix pass is claimed.
+- Required lane tier: 214/214 in 307.16 seconds; production build passed.
+  The exact lane command selected all campaign shards through its fallback.
+- TRACK-01 review found a false-green case for contradictory full evidence.
+  Independent regression tests f4aa57d failed before builder fix 3c20dce;
+  201 acceptance checks now pass. Review confirmation and lane gate follow.
+- Full-tier cadence: one task merge this run. Full due by merge five or
+  06:02 UTC (conservative two-hour run checkpoint), and again at run end.
+  STATUS refresh starts when TRACK-01 is integrated.

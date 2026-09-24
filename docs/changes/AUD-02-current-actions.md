@@ -1,6 +1,6 @@
 ---
 task: AUD-02
-status: ready-to-merge
+status: integrated-slice
 kind: sound-refinement
 flag: wasteland2
 player_facing: yes
