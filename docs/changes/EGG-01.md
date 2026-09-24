@@ -65,3 +65,17 @@ This is geometry/capture review evidence, not a Blender fidelity round.
 The earlier valid entrance, wash and salt-flat views have a recorded prior
 critic review but no remaining image files. No full recapture was run merely
 to recreate them. Final family fidelity rounds remain EGG-02 work.
+
+## Generated shortcut freshness
+
+The first lane run stopped after 51 passing suites, one failure and 165 not
+run in 62.35 s. The existing shortcut freshness check hashes the whole course
+source, so the reviewed hidden-corridor hook invalidated its source stamp.
+The Director authorized the existing generator for this derived artifact.
+After regeneration, all path data is byte-identical once the sourceFingerprint
+field is excluded. No path, world signature, test assertion or replay changed.
+The normal --verify-solvers audit passed 241 checks, including all 15 fresh
+solver comparisons over 18 selectable layouts. The source stamp alone moved
+from ca2e1c54cf1d3c0929b825b5498be91d22fc789dc3065b1db913b35bcb160e2c
+to 148a3dfda0113aecf30c849a253c4daf5ebff0ae9829fbb2f9591d7ce247b1af.
+The required lane/build gate must now be repeated on the corrected candidate.
