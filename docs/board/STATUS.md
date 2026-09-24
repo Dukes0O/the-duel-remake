@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-24T18:18:41.938Z
+Observed at: 2026-09-24T18:59:41.695Z
 
-Observation commit: c3d5c8cf718d70dbe555112cff3596905600e703
+Observation commit: f8925eddb0d379bb1e3eeb3420e0dfc78f75afbf
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: c3d5c8cf718d70dbe555112cff3596905600e703
+Integration HEAD: f8925eddb0d379bb1e3eeb3420e0dfc78f75afbf
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -16,7 +16,7 @@ Live build version: 20260924002834-86f3e7fb6e36
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-09-24T16:30:46.600Z; tested commit: e2077357f4c95479edd1c455fc85be76f3f42c10.
+Last recorded full run: 2026-09-24T18:26:31.812Z; tested commit: eff5744d4585738fdbdba9c015c566b7bff5c03f.
 
 ## Feature switches
 
@@ -36,19 +36,23 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 ## Size targets
 
-Measured on this integration source after CLEAN-04. Targets are advisory.
+Measured after CLEAN-05. Targets are advisory; the next status generation may
+replace this manual table until CLEAN-08 adds it to the generator.
 
-| Item | Bytes | Target | Difference |
+| Item | Before CLEAN-05 | After CLEAN-05 | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 254,802,821 | 250,000,000 | 4,802,821 over |
-| Wasteland models | 73,978,288 | 60,000,000 | 13,978,288 over |
-| `rustwall/wall.glb` | 15,394,464 | 8,000,000 | 7,394,464 over |
-| `docs/board/looks/` | 2,826,636 | 20,000,000 | 17,173,364 under |
-| All `public/` | 250,741,595 | — | — |
+| Build `dist/` | 254,802,821 B | 254,802,821 B | 250,000,000 B |
+| Wasteland models | 73,978,288 B | 73,978,288 B | 60,000,000 B |
+| Rustwall wall GLB | 15,394,464 B | 15,394,464 B | 8,000,000 B |
+| Review `looks/` | 2,826,636 B | 158,118 B | 20,000,000 B |
+| All `public/` | 250,741,595 B | 250,741,595 B | — |
+| All `docs/` | 4,033,821 B | 833,458 B | — |
+| Git pack | — | 248.63 MiB | — |
+| Lane folders | 1 | 0 | — |
 
-The remaining model excess is embedded texture and geometry data. The
-byte-preserving duplicate removal and reasons for the target gaps are recorded
-in `docs/ASSET_PIPELINE.md`.
+The retained GLB imagery and geometry explain the three asset/build target
+gaps in `docs/ASSET_PIPELINE.md`. Git reported one zero-byte stale worktree-ref
+garbage entry; no forced cleanup was attempted.
 
 ## Backups
 
@@ -56,7 +60,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: c3d5c8cf718d70dbe555112cff3596905600e703
+- Local integration/wasteland: f8925eddb0d379bb1e3eeb3420e0dfc78f75afbf
 
 Local rollback build (dist-previous): 20260923193614-0b1389a185dd. Manifest presence does not verify the full rollback build.
 

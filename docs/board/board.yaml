@@ -64,7 +64,8 @@ tasks:
     lane: OPS
     size: M
     needs: [CLEAN-04]
-    status: ready
+    status: merged
+    note: "Merged as f8925ed after 237/237 lane suites, build, unchanged 162 replay checks, independent review, 229/229 merge suites and private High/Performance smoke. Superseded notes and raw looks JSON deleted after needed facts moved to current docs and QA fixtures."
     owns: [docs/README.md, docs/changes/, docs/board/, docs/OPERATIONS.md, docs/ASSET_PIPELINE.md, docs/AUDIO_ITERATION.md, docs/WASTELAND_ART.md, docs/REMAKE_PLAN.md, docs/SESSION_HANDOFF.md, docs/SERVER_CUTOVER.md, SPEC.md, AGENTS.md, docs/CODEX_PLAYBOOK.md, tools/scenarios/first-person-gear.mjs, tools/scenarios/rustwall.mjs, tools/fixtures/art-review/, tools/test-review-evidence.mjs, tools/test-rigged-fighter.mjs]
     helpers: [reviewer, test_runner]
     acceptance:
