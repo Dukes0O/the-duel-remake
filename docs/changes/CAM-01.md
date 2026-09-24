@@ -163,3 +163,26 @@ Bounded120frame absolute samples: R1High18.2ms/Performance18.1ms p95;
 R2both18.2ms. No paired feature-offbaseline orpercentage overhead is claimed.
 Scene draws/triangles749/2,229,271 High,426/1,231,808 Performance include
 existingpasses. Required lane/build remains the final independent gate.
+
+## Final independent review and required gate
+
+Independent review cleared R2 source `670f81f`: the 116 px route HUD adjustment
+is limited to on-foot screens at 600 px or narrower. Desktop and car views are
+unchanged. The capture fixture hides only the two identified private QA panels;
+production controls remain visible. Camera, aim and art values did not change.
+Director acceptance `45ec1e8` follows final retained evidence `ad83b91`.
+
+The required gate ran on clean commit
+`45ec1e85979cb37f98e4471998d79f2840be7596`:
+
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`:
+  232 passed, 0 failed, 0 not run; 302.18 seconds (302.36 seconds wall time).
+- `npm run build`: passed in 0.98 seconds; Vite completed in 497 ms. Its existing
+  large-chunk advisory remains; no build error occurred.
+- Logs: `.qa-dist/cam01-final-lane.log` and `.qa-dist/cam01-final-build.log`.
+- HEAD and working tree stayed unchanged and clean through both commands.
+  Source tree `0f559a26003c5625d58b946ea1565985b281d562` and tools tree
+  `4688c96a49edcf88740bc4c9ddcefe11b9d5019a` match before and after.
+
+This final note is evidence only. CAM-01 is ready for development integration;
+this is not a release claim. No further optional tests or captures were run.
