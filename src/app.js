@@ -17,7 +17,8 @@ import {DEFAULT_ROUTE_VARIANT,isRouteVariant,getRouteVariant,getRouteVariantForS
 import {normalizeLightingMood} from './lighting-moods.js';
 import {DEFAULT_RACE_SETTINGS,normalizeRaceSettings,raceSettingsChoices,raceSettingsStage} from './race-settings.js';
 import {createKeyboardSteering,keyboardSteeringDirection} from './keyboard-steering.js';
-import {INPUT_CONTEXTS,keyboardAction,heldInput,gamepadEdgeActions,carGamepadDrive,preventCarKeyDefault} from './input-contexts.js';
+import {INPUT_CONTEXTS,keyboardAction,heldInput,gamepadEdgeActions,carGamepadDrive,
+  footGamepadInput,footControlInput,preventCarKeyDefault} from './input-contexts.js';
 import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as buyDriver,selectDriver as equipDriver} from './drivers.js';
 import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
 
@@ -38,6 +39,8 @@ export class App {
       car: url.get('car') || undefined,
     });
     this.keys = {};
+    this._footPointer={lookX:0,lookY:0,fire:false,aim:false};
+    this._footPointerReleasedAt=-Infinity;
     this._keyboardSteering=createKeyboardSteering();
     this.players=loadPlayers();this.player=activePlayer(this.players);this.profile=this.player.profile;
     this._legacyRaceDefaults={...DEFAULT_RACE_SETTINGS,routeVariant:readRoutePreference(),lightingMood:readLightingMood(),ghostEnabled:readGhostEnabled()};
@@ -78,6 +81,9 @@ export class App {
       if(event.fighterExited||event.fighterEntered){
         this.inputContext=null;
         this.keys={};
+        this._footPointer={lookX:0,lookY:0,fire:false,aim:false};
+        if(event.fighterEntered && typeof document!=='undefined' &&
+            document.pointerLockElement) document.exitPointerLock();
         this._keyboardSteering.reset();
         this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,interact:false});
       }
@@ -424,6 +430,8 @@ export class App {
     const st = this.duel.state;
     if (!['racing', 'countdown'].includes(st.status)) return;
     st.paused = !st.paused;
+    if(st.paused && st.onFoot && typeof document!=='undefined' &&
+        document.pointerLockElement) document.exitPointerLock();
     this.keys = {};
     this._keyboardSteering.reset();
     this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false });
@@ -506,13 +514,16 @@ export class App {
   }
   _applyInput(dt) {
     const st = this.duel.state;
-    const pad = this._readGamepad();
+    const pad = this._readGamepad(dt);
     const context = this.activeInputContext();
     if (st.paused) {this._keyboardSteering.reset();return;}
     if (context === 'foot') {
       this._keyboardSteering.reset();
+      const foot=footControlInput(this.keys,pad,this._footPointer);
       this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,
-        interact:heldInput('foot','interact',this.keys)||pad.interact});
+        interact:foot.interact});
+      this.duel.setFighterInput(foot);
+      this._footPointer.lookX=this._footPointer.lookY=0;
       return;
     }
     if (context !== 'car') {this._keyboardSteering.reset();return;}
@@ -528,7 +539,7 @@ export class App {
     });
   }
 
-  _readGamepad() {
+  _readGamepad(dt = 1 / 120) {
     const neutral = { throttle: 0, brake: 0, steer: 0, boost: false };
     if (typeof navigator === 'undefined' || !navigator.getGamepads) return neutral;
     let pad;
@@ -539,7 +550,8 @@ export class App {
     if (pressed.some(Boolean)) this.audio.unlock();
     for (const action of gamepadEdgeActions(this.activeInputContext(), pressed, this._gamepadButtons)) this._inputAction(action);
     this._gamepadButtons = pressed;
-    return carGamepadDrive(pad, pressed);
+    return this.activeInputContext()==='foot' ?
+      footGamepadInput(pad,pressed,dt) : carGamepadDrive(pad, pressed);
   }
 
   // Scripted full-stage driver: floors it, follows the racing line, dodges
@@ -608,6 +620,10 @@ export class App {
     this._inputEvents=new AbortController();const signal=this._inputEvents.signal;
     window.addEventListener('keydown', (e) => {
       if (e.target instanceof Element && e.target.closest('input, select, textarea, summary, [contenteditable="true"]')) return;
+      if(e.code==='Escape' && this.duel.state.onFoot){
+        if(document.pointerLockElement){document.exitPointerLock();e.preventDefault();return;}
+        if(performance.now()-this._footPointerReleasedAt<250){e.preventDefault();return;}
+      }
       this.audio.unlock();
       if (!e.repeat) this._inputAction(keyboardAction(this.activeInputContext(), e.code));
       this.keys[e.code] = true;
@@ -616,8 +632,35 @@ export class App {
     },{signal});
     window.addEventListener('keyup', (e) => { this.keys[e.code] = false;if(!keyboardSteeringDirection(this.keys))this._keyboardSteering.reset(); },{signal});
     window.addEventListener('pointerdown', () => this.audio.unlock(), { passive: true,signal });
+    window.addEventListener('pointerdown', e=>{
+      if(!this.duel.state.onFoot || this.duel.state.paused ||
+          !(e.target instanceof Element) || !e.target.closest('#view3d canvas'))return;
+      if(!document.pointerLockElement)e.target.requestPointerLock?.();
+      if(e.button===0)this._footPointer.fire=true;
+      if(e.button===2)this._footPointer.aim=true;
+    },{signal});
+    window.addEventListener('pointerup',e=>{
+      if(e.button===0)this._footPointer.fire=false;
+      if(e.button===2)this._footPointer.aim=false;
+    },{signal});
+    window.addEventListener('mousemove',e=>{
+      if(!this.duel.state.onFoot || document.pointerLockElement==null)return;
+      this._footPointer.lookX+=Math.max(-300,Math.min(300,e.movementX||0));
+      this._footPointer.lookY+=Math.max(-300,Math.min(300,e.movementY||0));
+    },{signal});
+    window.addEventListener('contextmenu',e=>{
+      if(this.duel.state.onFoot && e.target instanceof Element &&
+          e.target.closest('#view3d canvas'))e.preventDefault();
+    },{signal});
+    document.addEventListener('pointerlockchange',()=>{
+      if(document.pointerLockElement || !this.duel.state.onFoot)return;
+      this._footPointer.fire=this._footPointer.aim=false;
+      this._footPointerReleasedAt=performance.now();
+      if(!this.duel.state.paused)this.togglePause();
+    },{signal});
     window.addEventListener('blur', () => {
       this.keys = {};
+      this._footPointer.fire=this._footPointer.aim=false;
       this._keyboardSteering.reset();
       if (!this.duel.state.paused && ['racing', 'countdown'].includes(this.duel.state.status)) this.togglePause();
     },{signal});

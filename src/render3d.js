@@ -2,6 +2,7 @@ import {createCombatScene} from './combat-scene.js';
 import {createCombatEffects} from './combat-effects.js';
 import * as THREE from 'three';
 import {directionalCameraPose} from './camera-views.js';
+import {onFootCameraPose} from './onfoot-camera.js';
 import { CARS, DRIVE } from './config.js';
 import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage } from './vehicles.js';
 import { buildEnvironment, worldAtExtended, disposeTree } from './world.js';
@@ -286,7 +287,7 @@ export function attachRenderer(host, app) {
     for (const lamp of player.userData.brakeLights || []) lamp.material.emissiveIntensity = braking ? 4 : 1.4;
     for (const flame of player.userData.boostFlames || []) { flame.visible = !!st.boosting && !menu; flame.scale.z = .7 + Math.sin(now * .052) * .3; }
     for (const pivot of player.userData.wheelPivots || []) if (pivot.userData.front) pivot.rotation.y = -steering * .22;
-    player.visible = menu || app.cameraMode !== 'hood' || st.catastrophic;
+    player.visible = menu || st.onFoot || app.cameraMode !== 'hood' || st.catastrophic;
     if (menu) {
       const cp = worldAtExtended(course, distance + 6.4, lateral + 7.7 + Math.sin(now * .00009) * .6);
       camTarget.set(cp.x, cp.y + (tall?4.35:2.85), cp.z);
@@ -294,6 +295,11 @@ export function attachRenderer(host, app) {
       const aim = worldAtExtended(course, distance + 2.6 * composition, lateral - 2.8 * composition);
       const compact=host.clientHeight<850;
       lookTarget.set(aim.x, pp.y + (tall ? (compact ? .95 : 1.8) : compact ? -1.1 : .95), aim.z); camera.fov = 48;
+    } else if(st.onFoot && st.fighter){
+      const pose=onFootCameraPose(course,st.fighter);
+      camTarget.set(pose.position.x,pose.position.y,pose.position.z);
+      lookTarget.set(pose.target.x,pose.target.y,pose.target.z);
+      camera.fov=pose.fov;
     } else {
       const mode = app.cameraMode || 'chase';
       const back = mode === 'hood' ? .8 : mode === 'wide' ? -16 : tall?-12:-8.7;
@@ -323,16 +329,17 @@ export function attachRenderer(host, app) {
       constrainTunnelCamera(course,camTarget,distance+back);
     }
     if(!menu&&app.inspectionCamera){camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
-    if (!ready || menu) camera.position.copy(camTarget);
+    if (!ready || menu || st.onFoot) camera.position.copy(camTarget);
     else {
       camera.position.lerp(camTarget, 1 - Math.exp(-14 * dt));
       // Follow longitudinal motion immediately: world-space damping otherwise
       // adds a speed-dependent camera gap and makes the car shrink at speed.
       camera.position.x = camTarget.x; camera.position.z = camTarget.z;
     }
-    if(!menu)constrainTunnelCamera(course,camera.position,distance);
+    if(!menu)constrainTunnelCamera(course,camera.position,
+      st.onFoot&&st.fighter?st.fighter.s:distance);
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
-    lighting.followCamera(camera,pp,now/1000);
+    lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,now/1000);
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;
     const ghostPose=!menu&&app.ghostPose?.car===carKey?app.ghostPose:null;
     if(!ghostPose&&ghost){

@@ -62,6 +62,38 @@ export function carGamepadDrive(pad, pressed) {
   };
 }
 
+const stick = value => Math.abs(value || 0) >= .18 ? value : 0;
+
+export function footGamepadInput(pad, pressed, dt = 1 / 120) {
+  const moveX = stick(pad.axes[0]), moveY = stick(pad.axes[1]);
+  const lookX = stick(pad.axes[2]), lookY = stick(pad.axes[3]);
+  return {
+    forward: moveY < 0, back: moveY > 0,
+    left: moveX < 0, right: moveX > 0,
+    sprint: !!pressed[10], jump: !!pressed[0], interact: !!pressed[2],
+    // Fighter look values are mouse-pixel equivalents consumed at 120 Hz.
+    lookX: lookX * 850 * dt, lookY: lookY * 850 * dt,
+    fire: (pad.buttons[7]?.value || 0) > .2,
+    aim: (pad.buttons[6]?.value || 0) > .2,
+  };
+}
+
+export function footControlInput(keys, pad, pointer = {}) {
+  return {
+    forward: heldInput('foot', 'forward', keys) || !!pad.forward,
+    back: heldInput('foot', 'back', keys) || !!pad.back,
+    left: heldInput('foot', 'left', keys) || !!pad.left,
+    right: heldInput('foot', 'right', keys) || !!pad.right,
+    sprint: heldInput('foot', 'sprint', keys) || !!pad.sprint,
+    jump: !!keys.Space || !!pad.jump,
+    interact: heldInput('foot', 'interact', keys) || !!pad.interact,
+    lookX: (pointer.lookX || 0) + (pad.lookX || 0),
+    lookY: (pointer.lookY || 0) + (pad.lookY || 0),
+    fire: !!pointer.fire || !!pad.fire,
+    aim: !!pointer.aim || !!pad.aim,
+  };
+}
+
 export function preventCarKeyDefault(code, targetIsButton = false) {
   return ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(code)
     && !(code === 'Space' && targetIsButton);
