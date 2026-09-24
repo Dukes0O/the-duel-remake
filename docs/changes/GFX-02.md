@@ -176,3 +176,24 @@ then renders the view. It verifies the displayed race time, selected foot weapon
 and active repair amount against that snapshot, and records the displayed labels
 beside the image hash. No production, simulation or HUD source changed. This
 correction will be exercised in the already planned round 3 scenario.
+
+## Round 3 browser evidence
+
+Frozen source and assets `14a51e3` passed the final planned private scenario on
+port 62795 with zero browser warnings or errors. The round retains 46 matched
+game images, 10 actual-input images, the browser report and a 27-row contact
+sheet that includes crew and canonical weapon references. Earlier rounds remain
+unchanged. The existing additional reload and repair phases are included.
+
+The synchronized HUD checks pass in both qualities. The High aim image reads
+00:01.22 with three rockets; the repair image reads 00:03.22, WRENCH and
+REPAIRING 10 / 40. Re-entry at 00:06.87 hides the held view and foot HUD. Recorded
+labels and exact simulation times accompany each actual-input image hash.
+
+The largest visible combination is 6932 triangles and three material draws.
+The largest hands plus loaded RPG comparison again measured 120 intervals per
+condition in each quality: baseline p95 18.1 ms, held p95 18.2 ms, and no interval
+over 33 ms. This measures added held rendering on the same stopped course with
+pose updates in both conditions. It does not isolate total presentation CPU or
+GPU cost. Independent final critique and required lane/build gates remain
+pending. Completing three rounds alone does not establish beta fidelity.
