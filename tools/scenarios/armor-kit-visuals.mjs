@@ -15,6 +15,10 @@ async function qualityPass(context, quality) {
 
   const initial = await context.evaluate(`(() => {
     const app = window.__qaApp;
+    app.profile = {...app.profile, wasteland: {...app.profile.wasteland,
+      kits: {...app.profile.wasteland.kits,
+        falcone_f42: {owned: ['scrapper'], equipped: 'scrapper'}}}};
+    app._saveProfile();
     if (!app.startCampaign({mode: 'wasteland', startStage: 0,
       opponentCount: 3, seed: 1989})) throw Error('Combat field did not start');
     app.stop();

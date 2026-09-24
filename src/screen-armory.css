@@ -13,3 +13,15 @@
 .upgrade-card button>b{font-size:10px;color:#ecc68a;font-weight:650}
 .upgrade-card button:disabled,.unlock-card button:disabled{cursor:default;opacity:.55}
 .upgrade-card button:not(:disabled):hover{border-color:#ff8752;background:#df845015}
+.kit-shop{margin-top:18px}
+.kit-car-label{display:block;margin:15px 0 6px;font-size:9px;letter-spacing:1.5px;color:#c8bc9a}
+.kit-shop select{width:min(100%,360px);padding:10px;background:#15201e;color:#f2eee2;border:1px solid #dccdb147}
+.kit-equipped{color:#f2c58e;font-size:11px;letter-spacing:.7px}
+.kit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.kit-card{padding:15px;background:linear-gradient(145deg,#dee8da10,#0a171931);border:1px solid #ddd5bd2d}
+.kit-card h3{margin:0 0 7px;font-size:15px}.kit-card>b{color:#eab887;font-size:11px}
+.kit-card p{min-height:30px;font-size:10px;color:#b5bbaf;line-height:1.5}
+.kit-card button,.kit-remove{width:100%;padding:10px;background:#101a18a3;border:1px solid #dccdb147;font-size:9px;letter-spacing:.5px}
+.kit-card button:disabled{opacity:.55;cursor:default}.kit-card button:not(:disabled):hover,.kit-remove:hover{border-color:#ff8752;background:#df845015}
+.kit-remove{margin-top:10px;width:auto}
+@media(max-width:650px){.kit-grid{grid-template-columns:1fr}.kit-card p{min-height:0}}

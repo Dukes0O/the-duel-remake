@@ -41,7 +41,7 @@ const jumpHeightReadout = createJumpHeightReadout();
 const arrow = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg>';
 const sound = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5ZM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>';
 const choices = app.getRaceChoices();
-let uiDisposed=false,lastScreen, garageOpen = false, armoryOpen = false, garageCar = choices.car, garageMessage = '', playersOpen=false,playerMessage='',backupMessage='',leaderboardOpen=false,experimentalOpen=false,experimentalStorageMessage='';
+let uiDisposed=false,lastScreen, garageOpen = false, armoryOpen = false, garageCar = choices.car, armoryCar = choices.car, garageMessage = '', playersOpen=false,playerMessage='',backupMessage='',leaderboardOpen=false,experimentalOpen=false,experimentalStorageMessage='';
 let coursesOpen=false,courseMessage='';
 const domEvents=new AbortController();
 const boardFilter={stage:choices.startStage,car:'',driverId:getEquippedDriverId(app.profile)};
@@ -86,7 +86,10 @@ const {updateMenuCar, updateMenuScene, updatePlayers} = menuScreen;
 const playerScreen = createPlayerScreen({app, profile, escapeHTML, credits, getPlayerMessage:()=>playerMessage, getBackupMessage:()=>backupMessage});
 const leaderboardScreen = createLeaderboardScreen({app, boardFilter, escapeHTML, credits, time});
 const garageScreen = createGarageScreen({app, profile, credits, escapeHTML, getGarageCar:()=>garageCar, getGarageMessage:()=>garageMessage, arrow, action:(label,verb,primary)=>screenAction(label,verb,primary,arrow), clamp});
-const armoryScreen = createArmoryScreen({profile, credits, escapeHTML, getGarageMessage:()=>garageMessage, action:(label,verb,primary)=>screenAction(label,verb,primary,arrow)});
+const armoryScreen = createArmoryScreen({profile, credits, escapeHTML,
+  getGarageMessage:()=>garageMessage, getArmoryCar:()=>armoryCar,
+  kitsEnabled:()=>app.duel.featureFlags.enabled('wasteland2'),
+  action:(label,verb,primary)=>screenAction(label,verb,primary,arrow)});
 const modalScreen = createResultsScreen({app, profile, credits, escapeHTML, time, arrow});
 const updateHud = createHudScreen({app, ui, text, time, clamp, credits, routeMap});
 const readiness = createRendererReadiness({app, ui, choices, profile, isDisposed:()=>uiDisposed});
@@ -118,6 +121,9 @@ function closeGarage() { garageOpen = false; lastScreen = null; updateMenuCar();
 function refreshGarage(message) {
   garageMessage = message || ''; lastScreen = null; updateMenuCar(); app.menuCar = garageCar; renderState(app.duel.state);
 }
+function refreshArmory(message) {
+  garageMessage = message || ''; lastScreen = null; renderState(app.duel.state);
+}
 root.addEventListener('click',e => {
   const button = e.target.closest('button,[data-action]'); if (!button) return;
   if(courseActions.handle(button))return;
@@ -130,6 +136,13 @@ root.addEventListener('click',e => {
   if (button.dataset.car && !isCarUnlocked(profile(), button.dataset.car)) { openGarage(button.dataset.car); return; }
   for (const key of ['car','difficulty','mode','cpuDifficulty']) if (button.dataset[key]) { choices[key] = button.dataset[key];updateMenuScene();return; }
   if(button.dataset.weaponUpgrade){const result=app.purchaseWeapon(button.dataset.weaponUpgrade);refreshGarage(result.ok?'Weapon upgraded.':result.reason);return;}
+  if(button.dataset.kitAction && app.duel.featureFlags.enabled('wasteland2')){
+    const id=button.dataset.kitTier||null;
+    const result=button.dataset.kitAction==='buy'?app.purchaseArmorKit(armoryCar,id):
+      app.equipArmorKit(armoryCar,button.dataset.kitAction==='unequip'?null:id);
+    refreshArmory(result.ok?(result.cost?'Armor kit purchased and equipped.':id?'Armor kit equipped.':'Armor kit removed.'):result.reason);
+    return;
+  }
   if(button.closest('form')&&button.type==='submit')return;
   e.preventDefault();
   switch (button.dataset.action) {
@@ -150,7 +163,7 @@ root.addEventListener('click',e => {
     case 'leaderboard-close':leaderboardOpen=false;lastScreen=null;break;
     case 'experimental': if(app.duel.state.status!=='menu')return;experimentalOpen=true;armoryOpen=coursesOpen=playersOpen=leaderboardOpen=garageOpen=false;experimentalStorageMessage='';lastScreen=null;break;
     case 'experimental-close':experimentalOpen=false;lastScreen=null;break;
-    case 'armory': if(app.duel.state.status!=='menu')return;armoryOpen=true;garageOpen=coursesOpen=playersOpen=leaderboardOpen=false;garageMessage='';lastScreen=null;break;
+    case 'armory': if(app.duel.state.status!=='menu')return;armoryOpen=true;armoryCar=choices.car;garageOpen=coursesOpen=playersOpen=leaderboardOpen=false;garageMessage='';lastScreen=null;break;
     case 'armory-close':armoryOpen=false;lastScreen=null;break;
     case 'garage': openGarage(); return;
     case 'garage-close': closeGarage(); return;
@@ -178,6 +191,10 @@ root.addEventListener('submit',event=>{
   lastScreen=null;renderState(app.duel.state);if(!result.ok)root.querySelector('#new-player-name')?.focus();
 },{signal:domEvents.signal});
 root.addEventListener('change',event=>{
+  if(event.target.matches('[data-kit-car]')){
+    if(!armoryOpen||!app.duel.featureFlags.enabled('wasteland2'))return;
+    armoryCar=event.target.value;garageMessage='';lastScreen=null;renderState(app.duel.state);return;
+  }
   if(event.target.id==='career-import-file'){
     const file=event.target.files?.[0];if(!file||app.duel.state.status!=='menu'||!playersOpen)return;
     void (async()=>{

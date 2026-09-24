@@ -10,6 +10,7 @@ import {createCombat,fireWeapon,stepCombat,supportsCombat} from './combat.js';
 import {initializeCombatArmor} from './combat-armor.js';
 import {initializeFootTransition, stepFootTransition,
   stepParkedRace} from './onfoot-transition.js';
+import {validArmorKit} from './armor-kits.js';
 // Duel owns the simulation state, lifecycle and fixed-step call order. The
 // sim-* modules implement each system against this same instance.
 
@@ -140,7 +141,7 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, combatArmorKit = null } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     if (CARS[car]) this.state.car = car;
@@ -154,6 +155,8 @@ export class Duel {
     this.state.mode = mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
+    this.state.combatArmorKit = this.state.mode === 'wasteland' &&
+      this.featureFlags.enabled('wasteland2') ? validArmorKit(combatArmorKit) : null;
     this.state.lives = LIVES.start;
     this.state.totalTimeSec = 0;
     this.state.penaltySec = 0;

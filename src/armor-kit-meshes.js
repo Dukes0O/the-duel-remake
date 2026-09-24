@@ -4,10 +4,10 @@ const clamp = value => Math.max(0, Math.min(1, value));
 const KIT_TIERS = Object.freeze({scrapper: 1, raider: 2, warlord: 3});
 const BREAK_POINTS = [0.75, 0.55, 0.35, 0.15];
 
-// These are appearance tiers. The combat simulation remains the sole owner of
-// armor values; the future garage can pass an equipped tier on an actor.
-export function armorKitTier(actor) {
-  return KIT_TIERS[actor?.combatArmorKit] || KIT_TIERS[actor?.armorKit] || 1;
+// Appearance follows the equipped kit. CPU opponents retain their authored
+// Scrapper baseline until their own kit loadouts are introduced.
+export function armorKitTier(actor, cpu = false) {
+  return KIT_TIERS[actor?.combatArmorKit] || KIT_TIERS[actor?.armorKit] || (cpu ? 1 : 0);
 }
 
 export function armorCondition(actor) {
@@ -180,15 +180,15 @@ export function createArmorKitMeshes(attachments) {
       const vehicle = index ? index === 1 ? vehicles.rival :
         vehicles.extraOpponents?.[index - 2]?.mesh : vehicles.player;
       bind(rig, enabled ? vehicle : null);
+      const tier = armorKitTier(actor, index > 0);
       const visible = enabled && !!actor && !actor.crushed && !!vehicle &&
-        Number.isFinite(actor.maxArmor);
+        Number.isFinite(actor.maxArmor) && tier > 0;
       for (const root of Object.values(rig.roots)) root.visible = visible;
       if (!visible) {
         rig.loose.forEach(part => { part.mesh.visible = false; });
         return;
       }
       const condition = armorCondition(actor);
-      const tier = armorKitTier(actor);
       const wrecked = !!actor.combatWrecking;
       rig.plateMaterial.color.setHex(condition < 0.3 ? 0x383733 :
         condition < 0.6 ? 0x555047 : 0x69645a);

@@ -1,5 +1,6 @@
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {initializeCombatScoring, recordCombatHit, recordCombatWreck} from './combat-scoring.js';
+import {armorKitBonus} from './armor-kits.js';
 
 const T = COMBAT_TUNING.armor;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -41,7 +42,8 @@ export function initializeCombatArmor(duel) {
   if (!duel._combatRamIncidents) return;
   initializeCombatScoring(duel);
   for (const actor of [duel.state, ...duel.state.opponents]) {
-    actor.maxArmor = maxArmorForMass(duel._vehicleSpec(actor).mass);
+    actor.maxArmor = maxArmorForMass(duel._vehicleSpec(actor).mass) +
+      armorKitBonus(actor.combatArmorKit);
     actor.armor = actor.maxArmor;
     actor.combatWrecking = false;
     actor.combatWreckTimer = 0;

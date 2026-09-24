@@ -54,6 +54,8 @@ function fullProfile(index) {
   profile.raceSettings = { version: 1, eventId: 'pacific-canyon', mode: 'wasteland', car: 'falcone_f42',
     difficulty: 'pro', cpuDifficulty: 'hard', routeVariant: 'route_c', lightingMood: 'golden', ghostEnabled: true };
   profile.weapons = { version: 1, unlocked: [...WEAPON_IDS], levels: Object.fromEntries(WEAPON_IDS.map(id => [id, 3])) };
+  profile.wasteland.kits = Object.fromEntries(cars.map(car => [car,
+    {owned: ['scrapper', 'raider', 'warlord'], equipped: 'warlord'}]));
   profile.personalBests = Object.fromEntries(Array.from({ length: MODEL.personalBestsPerPlayer },
     (_, n) => [`synthetic-best-player-${index}-seed-${n}|layout:4|falcone_f42|duel`, 100 + n / 10]));
   for (const field of ['settledResults', 'settledPoliceFines', 'pbBonusRuns']) {

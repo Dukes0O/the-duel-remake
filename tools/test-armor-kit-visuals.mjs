@@ -35,6 +35,7 @@ test('four socket-mounted kits lose plates and show tiers without changing armor
   const kits = createArmorKitMeshes(registry);
   const {actors, vehicles, duel, meshes} = fixture();
   try {
+    duel.state.combatArmorKit = 'scrapper';
     kits.update(duel, meshes, true);
     assert.equal(registry.size, 20);
     vehicles.forEach((car, index) => {
@@ -61,6 +62,23 @@ test('four socket-mounted kits lose plates and show tiers without changing armor
     kits.dispose();
   }
   assert.equal(registry.size, 0);
+});
+
+test('stock player has no kit plates while CPU cars keep their authored Scrapper look', () => {
+  const registry = createVehicleAttachmentRegistry();
+  const kits = createArmorKitMeshes(registry);
+  const {vehicles, duel, meshes} = fixture();
+  try {
+    kits.update(duel, meshes, true);
+    assert.equal(vehicles[0].getObjectByName('armor-kit-0-front').visible, false);
+    assert.equal(vehicles[1].getObjectByName('armor-kit-1-front').visible, true);
+    duel.state.combatArmorKit = 'raider';
+    kits.update(duel, meshes, true);
+    assert.equal(vehicles[0].getObjectByName('armor-kit-0-front').visible, true);
+    assert.equal(vehicles[0].getObjectByName('armor-kit-0-cage-0').visible, true);
+  } finally {
+    kits.dispose();
+  }
 });
 
 test('flag-off and ordinary races leave kits unmounted', () => {
