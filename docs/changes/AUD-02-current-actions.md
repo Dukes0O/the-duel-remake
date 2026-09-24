@@ -1,6 +1,6 @@
 ---
 task: AUD-02
-status: ready-to-merge
+status: integrated-slice
 kind: sound-refinement
 flag: wasteland2
 player_facing: yes
@@ -10,6 +10,7 @@ scope: current foot weapons and roadside raiders
 This is a bounded implementation slice of the sound direction in `SPEC.md`
 sections 3.11 and 12.2. The earlier `AUD-02.md` measurement note remains
 separate and unchanged. This slice does not complete the full sound card.
+Integrated at `6898579`.
 
 ## What changed
 

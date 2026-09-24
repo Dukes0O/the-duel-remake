@@ -596,8 +596,8 @@ tasks:
     lane: ART
     size: M
     needs: [FOOT-01]
-    status: blocked
-    note: "Audio timing and pitch tools are integrated; the actual on-foot and new weapon cues await their gameplay systems."
+    status: building
+    note: "Existing on-foot RPG and wrench actions plus roadside raiders have distinct short cues at 6898579. Focused audio/weapon/raider checks and build passed. Future weapon cues and a full-race mix/listening check remain open."
     spec: "SPEC.md, task AUD-02"
   - id: VIS-01
     title: "Combat flipbooks and pooled effects"

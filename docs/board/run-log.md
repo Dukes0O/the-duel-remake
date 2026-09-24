@@ -705,3 +705,8 @@ checkout untouched until the final integration commit passes the full gate.
   250 m. A migration guard now disables crew selection when the career is
   not ready. Four focused cases and build passed. The full crew card remains
   open for perks tied to boarding, fire, salvage and parked-car shoves.
+- AUD-02 current-action sound slice integrated at `6898579`. RPG launch
+  and impact, wrench start/completion/interruption, and raider warnings and
+  shots have distinct short cues. Bomb audio remains its own sound. Focused
+  audio/weapon/raider checks and build passed; the whole-race mix and future
+  weapon sounds remain open.
