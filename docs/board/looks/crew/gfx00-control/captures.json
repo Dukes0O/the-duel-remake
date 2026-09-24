@@ -1,0 +1,382 @@
+{
+  "movementSource": "Production createFighter/stepFighter: 30 fixed steps idle/walk, knockdownFighter then 120 fixed steps down",
+  "qualities": [
+    "high",
+    "performance"
+  ],
+  "captures": [
+    {
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/gfx00-control/game-high-idle-front.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 26,
+          "triangles": 23169
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "idle",
+        "time": 0.25
+      }
+    },
+    {
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/gfx00-control/game-high-idle-side.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 26,
+          "triangles": 23169
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "idle",
+        "time": 0.25
+      }
+    },
+    {
+      "quality": "high",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/gfx00-control/game-high-idle-back.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 26,
+          "triangles": 23169
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "idle",
+        "time": 0.25
+      }
+    },
+    {
+      "quality": "high",
+      "clip": "walk",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/gfx00-control/game-high-walk-front.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 26,
+          "triangles": 23169
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "walk",
+        "time": 0.25
+      }
+    },
+    {
+      "quality": "high",
+      "clip": "walk",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/gfx00-control/game-high-walk-side.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 26,
+          "triangles": 23169
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "walk",
+        "time": 0.25
+      }
+    },
+    {
+      "quality": "high",
+      "clip": "walk",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/gfx00-control/game-high-walk-back.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 26,
+          "triangles": 23169
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "walk",
+        "time": 0.25
+      }
+    },
+    {
+      "quality": "high",
+      "clip": "knockdown",
+      "time": 1,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/gfx00-control/game-high-knockdown-front.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 26,
+          "triangles": 23169
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "knockdown",
+        "time": 0.9999999999999964
+      }
+    },
+    {
+      "quality": "high",
+      "clip": "knockdown",
+      "time": 1,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/gfx00-control/game-high-knockdown-side.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 26,
+          "triangles": 23169
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "knockdown",
+        "time": 0.9999999999999964
+      }
+    },
+    {
+      "quality": "high",
+      "clip": "knockdown",
+      "time": 1,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/gfx00-control/game-high-knockdown-back.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 26,
+          "triangles": 23169
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "knockdown",
+        "time": 0.9999999999999964
+      }
+    },
+    {
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/gfx00-control/game-performance-idle-front.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 2,
+          "triangles": 7720
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "idle",
+        "time": 0.25
+      }
+    },
+    {
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/gfx00-control/game-performance-idle-side.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 2,
+          "triangles": 7720
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "idle",
+        "time": 0.25
+      }
+    },
+    {
+      "quality": "performance",
+      "clip": "idle",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/gfx00-control/game-performance-idle-back.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 2,
+          "triangles": 7720
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "idle",
+        "time": 0.25
+      }
+    },
+    {
+      "quality": "performance",
+      "clip": "walk",
+      "time": 0.25,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/gfx00-control/game-performance-walk-front.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 2,
+          "triangles": 7720
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "walk",
+        "time": 0.25
+      }
+    },
+    {
+      "quality": "performance",
+      "clip": "walk",
+      "time": 0.25,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/gfx00-control/game-performance-walk-side.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 2,
+          "triangles": 7720
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "walk",
+        "time": 0.25
+      }
+    },
+    {
+      "quality": "performance",
+      "clip": "walk",
+      "time": 0.25,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/gfx00-control/game-performance-walk-back.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 2,
+          "triangles": 7720
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "walk",
+        "time": 0.25
+      }
+    },
+    {
+      "quality": "performance",
+      "clip": "knockdown",
+      "time": 1,
+      "view": "front",
+      "yaw": 0,
+      "path": "docs/board/looks/crew/gfx00-control/game-performance-knockdown-front.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 2,
+          "triangles": 7720
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "knockdown",
+        "time": 0.9999999999999964
+      }
+    },
+    {
+      "quality": "performance",
+      "clip": "knockdown",
+      "time": 1,
+      "view": "side",
+      "yaw": 1.5707963267948966,
+      "path": "docs/board/looks/crew/gfx00-control/game-performance-knockdown-side.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 2,
+          "triangles": 7720
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "knockdown",
+        "time": 0.9999999999999964
+      }
+    },
+    {
+      "quality": "performance",
+      "clip": "knockdown",
+      "time": 1,
+      "view": "back",
+      "yaw": 3.141592653589793,
+      "path": "docs/board/looks/crew/gfx00-control/game-performance-knockdown-back.png",
+      "metrics": {
+        "allPasses": {
+          "drawCalls": 2,
+          "triangles": 7720
+        },
+        "triangles": 7708,
+        "materials": 1,
+        "meshes": 1,
+        "clip": "knockdown",
+        "time": 0.9999999999999964
+      }
+    }
+  ],
+  "counts": {
+    "high": {
+      "firstPerson": {
+        "hiddenAtEye": true,
+        "visibleOutside": true,
+        "loadErrors": []
+      },
+      "twelve": {
+        "drawCalls": 12,
+        "triangles": 92496,
+        "figures": 12,
+        "skeletons": 12,
+        "scope": "fighter-only colour pass; no floor, shadows or compositor"
+      }
+    },
+    "performance": {
+      "firstPerson": {
+        "hiddenAtEye": true,
+        "visibleOutside": true,
+        "loadErrors": []
+      },
+      "twelve": {
+        "drawCalls": 12,
+        "triangles": 92496,
+        "figures": 12,
+        "skeletons": 12,
+        "scope": "fighter-only colour pass; no floor, shadows or compositor"
+      }
+    }
+  },
+  "loadErrors": []
+}

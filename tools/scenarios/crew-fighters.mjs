@@ -76,8 +76,11 @@ export async function run(context) {
         r.camera.position.set(0,.96,5);r.camera.lookAt(0,.96,0);
         r.camera.fov=28;r.camera.aspect=432/576;r.camera.near=.05;r.camera.far=250;r.camera.updateProjectionMatrix();
       };
-      review.draw=()=>{
-        review.show();r.renderer.info.reset();
+      review.draw=(action=null,view='front')=>{
+        review.show();
+        if(action==='jump'){r.camera.position.set(0,1.65,7);r.camera.lookAt(0,1.65,0);}
+        if(view==='side'){r.camera.position.set(5,.65,.6);r.camera.lookAt(0,.65,.6);}
+        r.camera.updateProjectionMatrix();r.renderer.info.reset();
         if('${quality}'==='high')r.composer.render(0);else r.renderer.render(r.scene,r.camera);
         return r.renderer.domElement.toDataURL('image/png');
       };
@@ -124,23 +127,25 @@ export async function run(context) {
       ['exit',{presentation:{clip:'exit',startedAt:9.75,duration:.65}},{}],
     ];
     for(const [clip,fields,input] of actionCases) {
-      const result=await context.evaluate(`(() => {
-        const r=window.__render,s=window.__qaApp.duel.state,review=window.__crewReview;
-        Object.assign(s.fighter,{crewId:'rook',x:0,y:0,z:0,yaw:0,groundY:0,speed:0,
-          locomotion:'idle',airHeight:0,verticalSpeed:0,knockedDown:false,presentation:null},${JSON.stringify(fields)});
-        s.fighterInput=${JSON.stringify(input)};s.stageTimeSec=10;
-        Object.assign(s.footWeapons,{selected:'rpg',serial:0,repairing:false,lastFireAt:undefined,nextFireAt:0});
-        if('${clip}'==='fire'||'${clip}'==='reload')Object.assign(s.footWeapons,{serial:1,lastFireAt:'${clip}'==='fire'?9.9:9,nextFireAt:11.2});
-        if('${clip}'==='repair')Object.assign(s.footWeapons,{selected:'wrench',repairing:true,repairSeconds:.25});
-        r.renderFrame();const png=review.draw();
-        const rig=review.rig.children.find(n=>n.visible&&n.userData.clip);
-        if(rig?.userData.clip!=='${clip}')throw Error('Wrong representative action '+rig?.userData.clip);
-        return {png,time:rig.userData.clipTime};
-      })()`);
-      const path=`${relative}/game-${quality}-rook-${clip}-front.png`;
-      await writeFile(join(root,path),Buffer.from(result.png.split(',')[1],'base64'));
-      context.screenshots.push(join(root,path));
-      evidence.captures.push({crew:'rook',quality,clip,time:result.time,view:'front',yaw:0,path,source:'representative simulation snapshot'});
+      for(const view of ['knockdown','get-up'].includes(clip) ? ['front','side'] : ['front']) {
+        const result=await context.evaluate(`(() => {
+          const r=window.__render,s=window.__qaApp.duel.state,review=window.__crewReview;
+          Object.assign(s.fighter,{crewId:'rook',x:0,y:0,z:0,yaw:0,groundY:0,speed:0,
+            locomotion:'idle',airHeight:0,verticalSpeed:0,knockedDown:false,presentation:null},${JSON.stringify(fields)});
+          s.fighterInput=${JSON.stringify(input)};s.stageTimeSec=10;
+          Object.assign(s.footWeapons,{selected:'rpg',serial:0,repairing:false,lastFireAt:undefined,nextFireAt:0});
+          if('${clip}'==='fire'||'${clip}'==='reload')Object.assign(s.footWeapons,{serial:1,lastFireAt:'${clip}'==='fire'?9.9:9,nextFireAt:11.2});
+          if('${clip}'==='repair')Object.assign(s.footWeapons,{selected:'wrench',repairing:true,repairSeconds:.25});
+          r.renderFrame();const png=review.draw('${clip}','${view}');
+          const rig=review.rig.children.find(n=>n.visible&&n.userData.clip);
+          if(rig?.userData.clip!=='${clip}')throw Error('Wrong representative action '+rig?.userData.clip);
+          return {png,time:rig.userData.clipTime};
+        })()`);
+        const path=`${relative}/game-${quality}-rook-${clip}-${view}.png`;
+        await writeFile(join(root,path),Buffer.from(result.png.split(',')[1],'base64'));
+        context.screenshots.push(join(root,path));
+        evidence.captures.push({crew:'rook',quality,clip,time:result.time,view,yaw:0,path,camera:clip==='jump'?{position:[0,1.65,7],target:[0,1.65,0]}:view==='side'?{position:[5,.65,.6],target:[0,.65,.6]}:evidence.camera,source:'representative simulation snapshot'});
+      }
     }
     evidence.counts[quality]=await context.evaluate(`(() => {
       const r=window.__render,s=window.__qaApp.duel.state,review=window.__crewReview;
@@ -181,12 +186,88 @@ export async function run(context) {
       }
       frames.sort((a,b)=>a-b);
       return {near,lod:{distant,nearLocal},firstPerson:{hiddenAtEye,visibleOutside},independentSkeletons:new Set(shown.map(n=>n.skeleton)).size,
-        cpuFrameMs:{median:frames[Math.floor(frames.length*.5)],p95:frames[Math.floor(frames.length*.96)],samples:frames.length,
+        cpuFrameMs:{median:frames[Math.floor(frames.length*.5)],p95:frames[Math.floor(frames.length*.95)],samples:frames.length,
           scope:'production update plus extra isolated colour render; CPU submission, not GPU time'},
         loadErrors:review.rig.userData.loadErrors};
     })()`);
     evidence.loadErrors.push(...evidence.counts[quality].loadErrors);
+    if(round>=2)evidence.counts[quality].course=await courseContext(context,quality,root,relative);
   }
   await writeFile(manifestPath,JSON.stringify(evidence,null,2)+'\n');
   console.log('Crew captured evidence: '+manifestPath);
+}
+
+
+async function courseContext(context,quality,root,relative) {
+  await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
+  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.waitFor("window.__qaApp?.visualReady && !document.querySelector('#start-engine')?.disabled",'course context menu',60000);
+  await context.evaluate(`(() => {
+    const app=window.__qaApp,select=document.querySelector('#graphics-quality');
+    select.value='${quality}';select.dispatchEvent(new Event('change',{bubbles:true}));
+    app.startCampaign({mode:'wasteland',startStage:0,seed:1989});app.stop();
+    const s=app.duel.state;
+    Object.assign(s,{status:'racing',countdown:0,paused:false,s:500,prevS:500,lateral:0,speedMph:0,traffic:[],opponents:[],stageTimeSec:10,crewId:'rook'});
+    s.raids=null;s.combat.aiTimer=Infinity;s.combat.pickupTimer=Infinity;
+    s.input.interact=true;for(let i=0;i<50&&!s.onFoot;i++)app.duel.step(1/120);
+    s.input.interact=false;s.fighter.presentation=null;s.fighterInput={};
+    app.cameraMode='chase';
+    window.__courseCrew={};
+    window.__render.renderFrame();
+  })()`);
+  await context.waitFor("window.__qaApp.visualReady && window.__render.scene.getObjectByName('Rigged on-foot fighters')?.userData.crews.rook==='ready'",'course fighter ready',60000);
+  const baseline=await context.evaluate(`(async()=>{
+    const sample=(animate=false)=>new Promise(resolve=>{
+      const intervals=[];let previous=null,warm=15;
+      const tick=now=>{if(previous!==null){
+        const dt=Math.min(.05,(now-previous)/1000);
+        if(animate){
+          const app=window.__qaApp,s=app.duel.state;s.stageTimeSec+=dt;
+          for(const actor of s.raids.zones[0].raiders){
+            actor.s+=actor.speed*dt;const p=app.duel.course.groundAt(actor.s,actor.lateral);
+            actor.x=p.x;actor.y=p.y;actor.z=p.z;actor.yaw=p.heading;
+          }
+        }
+        if(warm>0)warm--;else intervals.push(now-previous);
+      }previous=now;
+        if(intervals.length<120){requestAnimationFrame(tick);return;}
+        intervals.sort((a,b)=>a-b);resolve({frames:120,p50:intervals[59],p95:intervals[113],max:intervals[119],over33ms:intervals.filter(x=>x>33).length});};
+      requestAnimationFrame(tick);
+    });window.__courseCrew.sample=sample;return await sample();
+  })()`);
+  await context.evaluate(`(()=>{
+    const app=window.__qaApp,s=app.duel.state,ids=${JSON.stringify(CREW)};
+    const raiders=Array.from({length:11},(_,i)=>{
+      const atS=s.s+8+Math.floor(i/4)*2.2,off=(i%4-1.5)*1.6;
+      const p=app.duel.course.groundAt(atS,off);
+      return {crewId:ids[i%8],s:atS,lateral:off,x:p.x,y:p.y,z:p.z,yaw:p.heading,speed:i%2?4.5:0,knockedDown:false};
+    });
+    s.raids={zones:[{warning:{x:0,y:0,z:0},salvage:null,raiders}]};
+    window.__render.renderFrame();
+  })()`);
+  await context.waitFor(`${JSON.stringify(CREW)}.every(id=>window.__render.scene.getObjectByName('Rigged on-foot fighters').userData.crews[id]==='ready')`,'all course crew assets',60000);
+  const report=await context.evaluate(`(async()=>{
+    const r=window.__render,s=window.__qaApp.duel.state;
+    // Capture the real production scene and its normal lighting/composer.
+    // The renderer RAF remains active throughout both matched interval samples.
+    const stream=r.renderer.domElement.captureStream(30),chunks=[];
+    const recorder=new MediaRecorder(stream,{mimeType:'video/webm'});
+    recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};recorder.start();
+    const crowded=await window.__courseCrew.sample(true);
+    const png=r.renderer.domElement.toDataURL('image/png');
+    const clip=await new Promise(resolve=>{recorder.onstop=async()=>{
+      const blob=new Blob(chunks,{type:'video/webm'}),reader=new FileReader();
+      reader.onload=()=>resolve(reader.result);reader.readAsDataURL(blob);};recorder.stop();});
+    stream.getTracks().forEach(track=>track.stop());
+    let visible=0;const rig=r.scene.getObjectByName('Rigged on-foot fighters');
+    rig.traverse(n=>{if(n.isSkinnedMesh){let shown=true;for(let p=n;p;p=p.parent)if(!p.visible)shown=false;if(shown)visible++;}});
+    return {crowded,png,clip,visible,quality:'${quality}',width:innerWidth,height:innerHeight,
+      scope:'real course production RAF; one local fighter baseline versus twelve staged crew; full scene/composer/shadows; walking snapshots move at 4.5m/s along course ground, not raider AI'};
+  })()`);
+  const pngPath=`${relative}/course-${quality}-twelve.png`,videoPath=`${relative}/course-${quality}-motion.webm`;
+  await writeFile(join(root,pngPath),Buffer.from(report.png.split(',')[1],'base64'));
+  await writeFile(join(root,videoPath),Buffer.from(report.clip.split(',')[1],'base64'));
+  context.screenshots.push(join(root,pngPath));
+  const {png,clip,...metrics}=report;
+  return {...metrics,baseline,frameRatio:report.crowded.p95/baseline.p95,png:pngPath,motion:videoPath};
 }

@@ -35,3 +35,5 @@ Round 1 capture/review is in progress. No beta promotion, broad lane gate or rel
 Independent red tests in 08c747d reproduced six failures across four findings. Jump now derives its authored clip fraction from simulation vertical velocity and the configured flight arc. Bounded get-up, enter and exit events map their elapsed fraction to the full authored clip duration. Recovery timestamps use the fixed fighter substep boundary after accounting for the accumulator remainder. Each prepared figure reuses its selector result, pose and clock; the event clip set and empty inputs are constants.
 
 Focused verification: selector 12/12, crew 26/26, retained rig 14/14 and transition 8/8. Existing gameplay assertions and timing are unchanged; no save fields or progression changes.
+
+The original GFX-00 injected browser control also passed after the timing fixes: private port 27634, 18 captures, zero warnings/errors. Fresh relocated evidence is in docs/board/looks/crew/gfx00-control; original test-fighter evidence remains unchanged.
