@@ -1,0 +1,320 @@
+{
+  "round": 2,
+  "blender": "4.5.13 LTS",
+  "seconds": 32.28201259998605,
+  "reference": {
+    "path": "public/assets/reference/rustwall-gate.png",
+    "sha256": "305c4c991cfdcf44a5590486d91165a1357357ae295508a1710fe99edf04113f"
+  },
+  "assets": {
+    "wall": {
+      "path": "public/assets/models/wasteland/rustwall/wall.glb",
+      "sha256": "8ad6cfb91d2fcf9239edb87fb6ddc1e6d81959231a5410f6debbbe46a1c9f461"
+    },
+    "wash": {
+      "path": "public/assets/models/wasteland/rustwall/wash.glb",
+      "sha256": "f1cdb85f5369daabb575d128e06f211e40ec626050bfc2f5dea8ded7a5cecdcb"
+    }
+  },
+  "captures": [
+    {
+      "id": "front",
+      "kind": "wall",
+      "cameraSpace": "gate-local",
+      "camera": {
+        "position": [
+          0,
+          21,
+          -95
+        ],
+        "target": [
+          0,
+          19,
+          0
+        ],
+        "verticalFov": 32,
+        "near": 0.1,
+        "width": 1280,
+        "height": 720
+      },
+      "gateOpen": 0,
+      "moduleScale": null,
+      "referenceCrop": [
+        0,
+        422,
+        865,
+        1024
+      ],
+      "path": "docs/board/looks/rustwall/round-2/blender-front.png",
+      "sha256": "b7a8f3b9cfcd93dcfe3a048133ebb3035cd39cb33e3b613b41bfdc07b2da0f5f"
+    },
+    {
+      "id": "depth",
+      "kind": "wall",
+      "cameraSpace": "gate-local",
+      "camera": {
+        "position": [
+          65,
+          25,
+          -90
+        ],
+        "target": [
+          0,
+          17,
+          3
+        ],
+        "verticalFov": 38,
+        "near": 0.1,
+        "width": 1280,
+        "height": 720
+      },
+      "gateOpen": 0,
+      "moduleScale": null,
+      "referenceCrop": [
+        865,
+        422,
+        1536,
+        1024
+      ],
+      "path": "docs/board/looks/rustwall/round-2/blender-depth.png",
+      "sha256": "948baa184ba5ffda344116b391920654126ba2de6602b27b051eae75c2f8ec67"
+    },
+    {
+      "id": "driver-approach",
+      "kind": "wall",
+      "cameraSpace": "gate-local",
+      "camera": {
+        "position": [
+          0,
+          1.4,
+          -90
+        ],
+        "target": [
+          0,
+          17,
+          0
+        ],
+        "verticalFov": 60,
+        "near": 0.1,
+        "width": 1280,
+        "height": 720
+      },
+      "gateOpen": 0,
+      "moduleScale": null,
+      "referenceCrop": [
+        0,
+        0,
+        1536,
+        422
+      ],
+      "path": "docs/board/looks/rustwall/round-2/blender-driver-approach.png",
+      "sha256": "7a8724375813dd0bc14841fff89f05486ed06dad84c199b2c67a53926e4399a9"
+    },
+    {
+      "id": "open-gate",
+      "kind": "wall",
+      "cameraSpace": "gate-local",
+      "camera": {
+        "position": [
+          0,
+          21,
+          -95
+        ],
+        "target": [
+          0,
+          19,
+          0
+        ],
+        "verticalFov": 32,
+        "near": 0.1,
+        "width": 1280,
+        "height": 720
+      },
+      "gateOpen": 1,
+      "moduleScale": null,
+      "referenceCrop": [
+        0,
+        422,
+        865,
+        1024
+      ],
+      "path": "docs/board/looks/rustwall/round-2/blender-open-gate.png",
+      "sha256": "9a03ff3b8282e60f07a5b763a66d963084b3237f1d20735d089dc6729764d6ad"
+    },
+    {
+      "id": "full-span",
+      "kind": "wall",
+      "cameraSpace": "gate-local",
+      "camera": {
+        "position": [
+          0,
+          60,
+          -320
+        ],
+        "target": [
+          0,
+          17,
+          0
+        ],
+        "verticalFov": 45,
+        "near": 0.1,
+        "width": 1280,
+        "height": 720
+      },
+      "gateOpen": 0,
+      "moduleScale": null,
+      "referenceCrop": [
+        0,
+        0,
+        1536,
+        422
+      ],
+      "path": "docs/board/looks/rustwall/round-2/blender-full-span.png",
+      "sha256": "8295aa5a0dc0ed61a05ded9899dd6de21fe4988bac276a794ab3cfb3f00eb1f5"
+    },
+    {
+      "id": "wash-module",
+      "kind": "wash",
+      "cameraSpace": "wash-module",
+      "camera": {
+        "position": [
+          18,
+          9,
+          -26
+        ],
+        "target": [
+          0,
+          9,
+          0
+        ],
+        "verticalFov": 42,
+        "near": 0.1,
+        "width": 1280,
+        "height": 720
+      },
+      "gateOpen": 0,
+      "moduleScale": [
+        3.2,
+        19,
+        4.5
+      ],
+      "referenceCrop": null,
+      "path": "docs/board/looks/rustwall/round-2/blender-wash-module.png",
+      "sha256": "89d68d21adf49a265766db50ce2574c70aaa5e31b1907523795fce14f59554b6"
+    }
+  ],
+  "budgets": {
+    "wall": {
+      "triangles": 51020,
+      "materialDraws": 13,
+      "meshes": [
+        {
+          "name": "wall-body",
+          "triangles": 4512,
+          "materialDraws": 1
+        },
+        {
+          "name": "scaffold-steel",
+          "triangles": 25332,
+          "materialDraws": 1
+        },
+        {
+          "name": "hulk-stacks",
+          "triangles": 17280,
+          "materialDraws": 1
+        },
+        {
+          "name": "wall-details",
+          "triangles": 2112,
+          "materialDraws": 1
+        },
+        {
+          "name": "gate-panel",
+          "triangles": 120,
+          "materialDraws": 1
+        },
+        {
+          "name": "guard-01",
+          "triangles": 208,
+          "materialDraws": 1
+        },
+        {
+          "name": "guard-02",
+          "triangles": 208,
+          "materialDraws": 1
+        },
+        {
+          "name": "guard-03",
+          "triangles": 208,
+          "materialDraws": 1
+        },
+        {
+          "name": "guard-04",
+          "triangles": 208,
+          "materialDraws": 1
+        },
+        {
+          "name": "guard-05",
+          "triangles": 208,
+          "materialDraws": 1
+        },
+        {
+          "name": "guard-06",
+          "triangles": 208,
+          "materialDraws": 1
+        },
+        {
+          "name": "guard-07",
+          "triangles": 208,
+          "materialDraws": 1
+        },
+        {
+          "name": "guard-08",
+          "triangles": 208,
+          "materialDraws": 1
+        }
+      ]
+    },
+    "wash": {
+      "triangles": 144,
+      "materialDraws": 1,
+      "meshes": [
+        {
+          "name": "wash-rock-module",
+          "triangles": 144,
+          "materialDraws": 1
+        }
+      ]
+    }
+  },
+  "source": {
+    "path": "tools/blender/rustwall.py",
+    "sha256": "52bd2e00c323c3dac5dc7ffaac2fbf965dc5b3d6907f47745933389ef7cb5319"
+  },
+  "dimensions": {
+    "coreWidth": 420,
+    "coreHeight": 35,
+    "gateWidth": 9,
+    "gateHeight": 7,
+    "gateLift": 7.25,
+    "guardHeight": 1.8
+  },
+  "wash": {
+    "prototypeTriangles": 144,
+    "observedBanks": 179,
+    "observedTriangles": 25776,
+    "normalizedBounds": [
+      [
+        -1,
+        0,
+        -1
+      ],
+      [
+        1,
+        1,
+        1
+      ]
+    ],
+    "referenceNote": "No wash close-up in reference; isolated module is a geometry review, actual course placement is captured separately."
+  }
+}

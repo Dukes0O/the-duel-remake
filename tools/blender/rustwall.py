@@ -88,14 +88,23 @@ def material(name):
         for _ in range(5):
             coarse = (coarse + np.roll(coarse,1,0) + np.roll(coarse,-1,0)
                       + np.roll(coarse,1,1) + np.roll(coarse,-1,1)) / 5
-        rust = (coarse > .09) & (fine > -.35)
-        pixels = np.array(base)[None,None,:] * (1 + coarse[:,:,None]*.30 + fine[:,:,None]*.035)
+        pixels = np.array(base)[None,None,:] * (1 + coarse[:,:,None]*.16 + fine[:,:,None]*.018)
         if name in ['steel','hulks'] and tile not in [3,8,12]:
-            pixels[rust] = np.array((.28,.145,.06)) * (1 + coarse[rust,None]*.40)
-            streak = np.maximum(0, np.sin(xx*.12 + tile)*.3) * (yy/256)**.5
-            pixels *= 1 - streak[:,:,None]*.35
-            edge = (xx < 5) | (xx > 250) | (yy < 5) | (yy > 250)
-            pixels[edge] *= .60
+            # Continuous oxidation runs descend from chips and seams, rather
+            # than a thresholded fine-noise checker scattered over every plate.
+            flow=np.zeros_like(coarse)
+            for _ in range(16):
+                cx=rng.uniform(0,256);start=rng.uniform(20,255)
+                width=rng.uniform(.8,4);length=rng.uniform(22,170)
+                stream=np.exp(-((xx-cx-np.sin(yy*.019+cx)*.8)/width)**2)
+                flow += stream*np.clip((start-yy)/12,0,1)*np.clip((yy-(start-length))/30,0,1)
+            chip=np.maximum(0,np.sin(xx*.017+tile)+np.sin(yy*.021+tile*.7)-.5)*.15
+            rust=np.clip(flow*.65+chip,0,.82)
+            pixels=pixels*(1-rust[:,:,None])+np.array((.25,.13,.06))*rust[:,:,None]
+            edge=(xx<9)|(xx>247)|(yy<9)|(yy>247)
+            pixels[edge]*=.54
+            worn=((abs(xx-11)<1)|(abs(xx-245)<1)|(abs(yy-11)<1)|(abs(yy-245)<1))&(fine>.1)
+            pixels[worn]=(.34,.33,.28)
         if name == 'rock':
             strata = np.sin(yy*.115 + np.sin(xx*.025)*1.8)
             pixels *= (1 + strata[:,:,None]*.095)
@@ -113,6 +122,22 @@ def material(name):
         normal[sl][:,:,:3] = v*.5+.5
         if name == 'details' and tile in [8,9]:
             emissive[sl][:,:,:3] = np.array(base)*(.6 if tile == 8 else 1)
+    if name=='rock':
+        # One continuous 1024 map for the complete rock, with winding strata.
+        ry,rx=np.mgrid[:1024,:1024]
+        ripple=np.sin(rx*.009)*9+np.sin(rx*.027)*2
+        strata=np.sin((ry+ripple)*.075)*.055+np.sin((ry+ripple)*.022)*.05
+        erosion=np.sin(rx*.038+np.sin(ry*.006)*.9)*.016
+        grain=rng.uniform(-.012,.012,(1024,1024))
+        rockheight=strata+erosion+grain
+        color[:,:,:3]=np.array((.40,.31,.23))*(1+rockheight[:,:,None])
+        bands=np.exp(-(np.sin((ry+ripple)*.017)/.12)**2)
+        color[:,:,:3]*=1-bands[:,:,None]*.20
+        orm[:,:,1]=.96;orm[:,:,2]=0
+        dy,dx=np.gradient(rockheight)
+        vectors=np.stack([-dx*4,-dy*4,np.ones_like(dx)],axis=-1)
+        vectors/=np.linalg.norm(vectors,axis=-1,keepdims=True)
+        normal[:,:,:3]=vectors*.5+.5
     images = {}
     for label,pixels in [('color',color),('surface',orm),('normal',normal)]:
         image = bpy.data.images.new(f'{name}-{label}',1024,1024,alpha=True)
@@ -148,21 +173,24 @@ def material(name):
 
 
 class Geometry:
-    def __init__(self): self.vertices=[]; self.faces=[]; self.uvs=[]
+    def __init__(self,cap_tubes=True): self.vertices=[]; self.faces=[]; self.uvs=[]; self.cap_tubes=cap_tubes
     def vertex(self, p):
         self.vertices.append(bv(p)); return len(self.vertices)-1
-    def face(self, ids, tile, uv=None):
+    def face(self, ids, tile, uv=None, atlas=True):
         self.faces.append(ids)
         if uv is None:
             uv = [(0,0),(1,0),(1,1),(0,1)][:len(ids)]
         x,y = tile%4,tile//4
-        self.uvs.append([((x+.035+u*.93)/4,(y+.035+v*.93)/4) for u,v in uv])
+        self.uvs.append([((x+.035+u*.93)/4,(y+.035+v*.93)/4) for u,v in uv] if atlas else uv)
     def box(self,c,s,tile):
         c,s = Vector(c),Vector(s)/2
         ids = [self.vertex(c+Vector((x*s.x,y*s.y,z*s.z))) for x,y,z in
                [(-1,-1,-1),(1,-1,-1),(1,1,-1),(-1,1,-1),(-1,-1,1),(1,-1,1),(1,1,1),(-1,1,1)]]
-        for f in [(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]:
-            self.face([ids[i] for i in f],tile)
+        for fi,f in enumerate([(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]):
+            faceids=[ids[i] for i in f]
+            # Front/back atlas V is world height, so oxidation runs downward.
+            uv=[(0,0),(0,1),(1,1),(1,0)] if fi==0 else None
+            self.face(faceids,tile,uv)
     def tube(self,a,b,r,tile,segments=6,r2=None):
         a,b = Vector(a),Vector(b); tangent=(b-a).normalized()
         u=tangent.cross(Vector((0,1,0)))
@@ -173,7 +201,8 @@ class Geometry:
         for j in range(segments):
             k=(j+1)%segments
             self.face([rings[0][j],rings[0][k],rings[1][k],rings[1][j]],tile)
-        for ring,c,flip in [(rings[0],a,True),(rings[1],b,False)]:
+        caps=[(rings[0],a,True),(rings[1],b,False)] if self.cap_tubes or r>.3 else []
+        for ring,c,flip in caps:
             mid=self.vertex(c)
             for j in range(segments):
                 ids=[mid,ring[j],ring[(j+1)%segments]]
@@ -195,11 +224,16 @@ class Geometry:
             row=[]
             for ix in range(5):
                 u=ix/4;v=iy/6
-                rag=(.22+.13*math.sin(ix*6+x)) if iy==6 else 0
-                row.append(self.vertex((x+(u-.5)*w,y-v*h+rag,z+math.sin(u*math.tau*1.4+v*2)*.22+v*.23)))
+                rag=([.15,1.2,.3,2.1,.65][ix]) if iy==6 else 0
+                taper=1-.11*v
+                row.append(self.vertex((x+(u-.5)*w*taper,y-v*h+rag,z+math.sin(u*math.tau*1.8+v*2)*(.3+v*.22)+v*.38)))
             rows.append(row)
         for iy in range(6):
-            for ix in range(4):self.face([rows[iy][ix],rows[iy+1][ix],rows[iy+1][ix+1],rows[iy][ix+1]],tile)
+            for ix in range(4):
+                ids=[rows[iy][ix],rows[iy+1][ix],rows[iy+1][ix+1],rows[iy][ix+1]]
+                self.face(ids,tile,[(ix/4,1-iy/6),(ix/4,1-(iy+1)/6),((ix+1)/4,1-(iy+1)/6),((ix+1)/4,1-iy/6)])
+                # Give exposed ragged hems a real reverse face, with one draw.
+                self.face(ids[::-1],tile,[(ix/4,1-iy/6),((ix+1)/4,1-iy/6),((ix+1)/4,1-(iy+1)/6),(ix/4,1-(iy+1)/6)])
     def build(self,name,mat):
         mesh=bpy.data.meshes.new(name);mesh.from_pydata(self.vertices,[],self.faces);mesh.update()
         uv=mesh.uv_layers.new(name='Authored material islands')
@@ -212,6 +246,7 @@ class Geometry:
 
 def car(g,x,y,z,tile,variant):
     # Real 4.4 m wreck profile: crushed hood, cabin pillars and wheel silhouettes.
+    start=len(g.vertices)
     pts=[(-2.2,.25),(-2.1,.85),(-1.1,.99),(-.65,1.52),(.65,1.43),(1.13,.91),(2.05,.76),(2.2,.27)]
     pts=[(x+a,y+b*(.84 if variant%3==0 else 1)) for a,b in pts]
     g.profile(pts,[z-.79,z+.79],tile)
@@ -224,6 +259,13 @@ def car(g,x,y,z,tile,variant):
             for axle in [-1.43,1.42]:
                 g.tube((x+axle,y+.36,z+side*.72),(x+axle,y+.36,z+side*.91),.36,12,6)
     g.box((x,y+.3,z-.825),(2.4,.14,.05),11)
+    # Lean and squash the whole hulk coherently, including its windows/wheels.
+    angle=math.sin(variant*4.2+x)*.17
+    compression=.78+.18*(.5+.5*math.sin(variant*2.4))
+    for i in range(start,len(g.vertices)):
+        v=g.vertices[i];dx=v.x-x;dy=v.z-y
+        g.vertices[i]=Vector((x+dx*math.cos(angle)-dy*math.sin(angle),v.y,
+                              y+dx*math.sin(angle)+dy*math.cos(angle)*compression))
 
 
 def tower(g,d,x,y=35,z=2,height=7,canopy=True):
@@ -261,7 +303,7 @@ def guard(name,mat,position):
 
 def wall():
     fresh();steel=material('steel');hulks=material('hulks');details=material('details')
-    body,frames,wrecks,props,panel=Geometry(),Geometry(),Geometry(),Geometry(),Geometry()
+    body,frames,wrecks,props,panel=Geometry(),Geometry(cap_tubes=False),Geometry(),Geometry(),Geometry()
     # Exact structural mass with a real empty 9 by 7 m passage all the way through.
     body.box((-107.25,17.5,4),(205.5,35,3),3)
     body.box((107.25,17.5,4),(205.5,35,3),3)
@@ -284,9 +326,16 @@ def wall():
                         frames.rivet(cx+dx,yy+dy,.11)
         if salvage:
             for row in range(9):
-                yy=5.4+row*3.1
-                for col in [-1,1]:car(wrecks,x+col*2.8+float(rng.uniform(-.3,.3)),yy,.95+float(rng.uniform(-.12,.12)),int(rng.integers(0,7)),row+bay)
-                frames.box((x,yy-.12,.24),(12.4,.18,2.5),5)
+                yy=5.4+row*3.05
+                for col in [-1,1]:
+                    car(wrecks,x+col*2.65+float(rng.uniform(-.5,.5)),yy+float(rng.uniform(-.45,.45)),.75+float(rng.uniform(-.3,.3)),int(rng.integers(0,7)),row+bay)
+                # Short bent crosspieces and crumpled scrap fill the gaps;
+                # uninterrupted horizontal showroom platforms are removed.
+                for col in [-1,1]:
+                    frames.tube((x+col*2.9-2,yy+1.3,.8),(x+col*2.9+1.8,yy+1.8,.95),.12,5,4)
+                    frames.profile([(x+col*2.6-2.1,yy+.85),(x+col*2.6-2.2,yy+1.8),
+                                    (x+col*2.6-.6,yy+2.25),(x+col*2.6+1.8,yy+2.5),
+                                    (x+col*2.6+2.05,yy+1.3)], [.40,2], [2,9,7][row%3])
         for dx in [-6.65,6.65]:
             frames.box((x+dx,17.5,-.08),(.32,35,.72),6)
         for lo in [0,11.6,23.2]:
@@ -308,6 +357,10 @@ def wall():
     frames.tube((-6,36.6,-.2),(6,36.6,-.2),.22,6,8)
     for x in [-5.15,5.15]:
         frames.tube((x-.6,36.6,-.2),(x+.6,36.6,-.2),.95,5,12)
+        for yy in [7.6,16,25,34.5]:
+            frames.box((x,yy,-1.4),(1.8,.45,.45),6)
+        frames.box((x,35.8,-.2),(2.5,1.0,2.7),7)
+    for yy in [8,13,19,25,31,34.5]:frames.box((0,yy,1.29),(8.9,.22,.3),5)
     for x in [-175,-119,-63,-21,21,77,133,189]:
         tower(frames,props,x,height=7 if abs(x)<80 else 5)
     # Open lattice cranes with visible hook/cable, never a solid silhouette block.
@@ -327,6 +380,12 @@ def wall():
         props.tube((x,0,-2),(x,1.0,-2),.36,11,10)
         for yy in [.2,.8]:frames.tube((x,yy,-2),(x,yy+.07,-2),.38,6,10)
         for k in range(3):props.tube((x+(k-1)*.12,1,-2),(x+.06*math.sin(k),1.6+k*.12,-2),.12,8+k%2,5,r2=.01)
+    # Grounded practical clutter leaves the entire vehicle opening clear.
+    for i in range(40):
+        x=-202+i*10.3
+        if abs(x)<7:continue
+        h=.4+float(rng.uniform(0,.55));z=-1.4-float(rng.uniform(0,.9))
+        props.box((x,h/2,z),(1.4+float(rng.uniform(0,1.2)),h,.65),11)
     for x in [-42,49,-133,154]:
         tower(frames,props,x,height=9,canopy=False)
         for dx in [-.7,.7]:
@@ -361,13 +420,18 @@ def wash():
         y=row/7;ring=[]
         for j in range(9):
             a=j*math.tau/9
-            radius=.83+.10*math.sin(j*4.17+row*.94)+.04*math.sin(row*2.8)
-            ring.append(g.vertex((max(-1,min(1,math.cos(a)*radius)),y,max(-1,min(1,math.sin(a)*radius)))))
+            c,s=math.cos(a),math.sin(a)
+            width=(.97-.29*y)+.05*math.sin(j*2.7+row*1.1)
+            xx=math.copysign(abs(c)**.45,c)*width+.045*math.sin(row*1.7)
+            zz=math.copysign(abs(s)**.23,s)*.995
+            yy=y if row==0 else y*(.91+.09*(.5+.5*math.sin(j*2.2)))
+            ring.append(g.vertex((max(-1,min(1,xx)),yy,zz)))
         rings.append(ring)
     for row in range(7):
         for j in range(9):
             k=(j+1)%9
-            g.face([rings[row][j],rings[row][k],rings[row+1][k],rings[row+1][j]],row%4)
+            g.face([rings[row][j],rings[row][k],rings[row+1][k],rings[row+1][j]],0,
+                   [(j/9,row/7),((j+1)/9,row/7),((j+1)/9,(row+1)/7),(j/9,(row+1)/7)],atlas=False)
     for ring,y in [(rings[0],0),(rings[-1],1)]:
         mid=g.vertex((0,y,0))
         for j in range(9):g.face([mid,ring[j],ring[(j+1)%9]],2,[(.5,.5),(0,0),(1,0)])
