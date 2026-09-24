@@ -62,8 +62,21 @@ tasks:
     size: M
     needs: [BAL-01]
     status: backlog
+    owns: [tools/blender/test-fighter.py, public/assets/models/wasteland/test-fighter.blend, public/assets/models/wasteland/test-fighter.glb, src/rigged-fighter.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py, tools/test-rigged-fighter.mjs, tools/scenarios/rigged-fighter.mjs, docs/board/looks/test-fighter/]
+    hooks: [src/combat-scene.js]
+    helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
+    flag: wasteland2
+    behavior_change: no
     acceptance:
       - "Headless Blender 4.5 script creates, rigs, animates and exports a test fighter GLB; retained blend and script regenerate it; the game loads it with existing Three addons. A tool builds matched reference, Blender and High/Performance game contact sheets."
+      - "Use the installed Blender executable and --root convention. Retain .blend and self-contained GLB; bound skeleton and named idle/walk/knockdown clips visibly deform the model. Ground is Y=0 and forward +Z in Three; apply axis conversion once."
+      - "The flagged renderer loads once, uses AnimationMixer at simulation-derived time, retains primitive fallback until ready or on failure, cleans up late loads, and preserves first-person body hiding. Multiple figures have independent skeletons; no renderer writes race state or triggers flag-off asset requests."
+      - "A private memory-only browser scenario captures matched front/side/back poses in High and Performance. tools/fidelity-sheet.mjs accepts recorded images and writes a labeled reference/Blender/High/Performance PNG with a provenance JSON under docs/board/looks/test-fighter/round-1.png."
+      - "Record asset hash, observation commit, camera, clip/time, triangle/material/draw-call counts and load errors. Keep the test model within 8000 near triangles and at most two materials; record twelve-figure cost rather than claiming the crew family is finished."
+      - "Independent tests verify GLB structure/animations and renderer lifetime/clock/fallback controls; ordinary replay fingerprints stay unchanged. Review the actual contact sheet for alignment, deformation and grounding. Crew fidelity rounds belong to GFX-01, and this pipeline card cannot promote beta."
+    shots: [reference-front-side-back, blender-idle-walk-knockdown, game-high-matched-poses, game-performance-matched-poses]
+    sound: "No new sounds; keep existing cue behavior."
+    note: "Director-approved pipeline scope spans five implementation files plus generated assets/tests/evidence. Existing course-landmarks exports mesh JSON, so preserve GLTF skin attributes rather than copying vehicle flattening."
   - id: EGG-01
     title: "Hidden Road geometry and protected driving"
     priority: 5
