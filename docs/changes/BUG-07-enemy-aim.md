@@ -8,13 +8,13 @@ has one remaining failure: Easy enemy hits 6 against a maximum of 3. Wins are
 BUG-07 and its CPU UFO slice stay open. The history below records the measured
 candidate and the reverted Easy regression.
 
-## Scope
+## Initial rule correction
 
 This slice makes flagged raider accuracy depend on difficulty and keeps CPU and
 raider aim error during crossbow guidance. It does not finish BUG-07 or qualify
 the expansion for release. CPU UFO use and remaining balance targets stay open.
 
-- Raider shots use the existing CPU difficulty spreads. A separate `makeRng`
+- Raider shots initially used the existing CPU difficulty spreads. A separate `makeRng`
   sample hashes course seed, stage, lap and raider identity. Camp and member
   order do not change the sample, and firing consumes no shared random stream.
 - CPU crossbows retain their existing sampled signed error. Both enemy launch
@@ -265,3 +265,26 @@ UFO gain limits and weapon probes pass. Only Easy's six enemy hits exceed the
 0-3 target. The Director retains this useful development improvement with the
 full BUG-07 card open; release balance is not claimed. Required lane/build
 checks remain for the Director's serialized merge gate.
+
+## Final independent review and merge gate
+
+Reviewed and tested source commit:
+`fceff635838b831a974f0846a32a3de62b1281ff`.
+The lane was clean before and after both commands, and HEAD stayed unchanged.
+
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 169 passed,
+  0 failed, 0 not run in 276.75 s (278.38 s measured process wall time).
+  All eight campaign shards passed; `DUEL_SKIP_CAMPAIGNS` was unset.
+- `npm run build`: passed in 1.25 s process wall time, with Vite reporting
+  640 ms. The existing large-chunk warning remains; there was no build error.
+- Logs: `.qa-dist/final-lane.log` and `.qa-dist/final-build.log`.
+- Independent source review found no remaining defect in this bounded slice.
+  Signed bias, independent seeded raider samples, split steering budgets and
+  unchanged player/legacy behavior match the reviewed contract. No save,
+  reward, storage, dependency, network, renderer or HUD code changed.
+- No additional browser check or balance matrix was run for this gate.
+  Easy enemy hits and CPU UFO functionality remain open on BUG-07. This is
+  development integration evidence, not release approval.
+
+This section was added after the gate in a documentation-only evidence commit;
+it does not claim that a later commit inherited the tested commit's exact gate.
