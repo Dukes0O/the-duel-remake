@@ -1342,3 +1342,16 @@ checkout untouched until the final integration commit passes the full gate.
   run the integration full tier, refresh STATUS and write the handoff. Latest
   quota at 12:22 UTC: seven percent remaining; floor five percent. No new
   card, live change, release or push is planned.
+
+## 2026-09-24 12:35 UTC - camera integrated, end full tier starts
+
+- CAM-01 merged as c1ff020 after 232 passing lane suites in 302.18 seconds
+  and a passing build on clean 45ec1e8. Final 39c34e8 changes evidence only.
+  STATUS refreshed on the clean merge commit. Two task merges since the
+  11:20 UTC full pass; the mandatory end-of-run full follows now.
+- Its lane and build logs were copied with matching hashes into
+  .lanes/evidence/cam01/. The clean fully merged worktree was removed after
+  verifying normal local dependencies; branch and committed visual evidence
+  remain. All helper agents have finished; no new card is starting.
+- CAR-01 is next in the ordered plan, followed by GFX-03 and GFX-04. This run
+  stops after the final full/status/handoff to preserve the quota floor.

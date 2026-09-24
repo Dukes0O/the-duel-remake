@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-24T12:04:37.594Z
+Observed at: 2026-09-24T12:34:21.320Z
 
-Observation commit: 81b268c4de7111de6aa91f2261bfd69c82e8a393
+Observation commit: c1ff02027228a1c9c78c382f9d1b030641701156
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 81b268c4de7111de6aa91f2261bfd69c82e8a393
+Integration HEAD: c1ff02027228a1c9c78c382f9d1b030641701156
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -44,6 +44,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/bug07-cpu-ufo | 0 | unknown | true | false | unknown |
 | codex/bug07-enemy-aim | 0 | unknown | true | false | unknown |
 | codex/bug15-shield-traffic | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/bug15-shield-traffic/the-duel-remake |
+| codex/cam01-camera-choice | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/cam01 |
 | codex/cmb01-armor | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-cmb01-armor/the-duel-remake |
 | codex/cmb01-mode-isolation-test | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/cmb01-test-author/the-duel-remake |
 | codex/cmb01-test-author | 0 | unknown | false | false | unknown |
@@ -68,7 +69,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/egg01-hidden-road | 0 | unknown | true | false | unknown |
 | codex/egg02-rustwall | 0 | unknown | true | false | unknown |
 | codex/egg03-gate-arrival | 0 | unknown | true | false | unknown |
-| codex/egg04-discovery | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/egg04 |
+| codex/egg04-discovery | 0 | unknown | true | false | unknown |
 | codex/foot01-fighter | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/foot01-fighter/the-duel-remake |
 | codex/foot02-car-transition | 0 | unknown | true | false | unknown |
 | codex/foot03-controls-camera | 0 | unknown | true | false | unknown |
@@ -172,7 +173,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 81b268c4de7111de6aa91f2261bfd69c82e8a393
+- Local integration/wasteland: c1ff02027228a1c9c78c382f9d1b030641701156
 
 Local rollback build (dist-previous): 20260923193614-0b1389a185dd. Manifest presence does not verify the full rollback build.
 
