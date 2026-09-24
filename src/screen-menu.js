@@ -91,7 +91,7 @@ function updateMenuScene() {
   text('menu-shortcuts',preview.map.gates.length?`${preview.map.gates.length} GATES PER LAP`:preview.map.branches.length?`${preview.map.branches.length} DASHED SHORTCUT${preview.map.branches.length===1?'':'S'}`:'CLOSED CIRCUIT');ui['menu-elevation'].hidden=!preview.showElevation;text('menu-relief',`${preview.reliefMeters} M HEIGHT RANGE`);
   if(stage.practice)text('menu-shortcuts','JUMPS · CRUSH LANES · 4 KM DRAG STRIP');
   if(preview.map.hiddenRoad)text('menu-shortcuts','DOTTED ROAD TO RUSTWALL');
-  ui['wasteland-visit'].hidden=!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu;
+  if(ui['wasteland-visit'])ui['wasteland-visit'].hidden=!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu;
   text('menu-location', {desert:'MOJAVE COUNTY, USA',alpine:'THE HIGH ALPINE PASS',coast:'PACIFIC COAST, USA',city:'HARBOR DISTRICT · AFTER DARK'}[stage.theme] || stage.name.toUpperCase());
   updateMenuCar();
 }
