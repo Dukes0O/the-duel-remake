@@ -73,7 +73,10 @@ for (const difficulty of ['medium', 'hard']) {
   combat.pickups.push({ s: 380, weapon: 'ufo', age: 0 });
   crossRival(state, combat.pickups[0], 0);
   stepCombat(duel, .05);
-  assert.equal(combat.pickups.length, 1, 'unsupported CPU UFO pickup stays visible for the player');
+  assert.equal(combat.pickups.length, 0, 'a CPU collects the UFO through physical swept contact');
+  assert.equal(combat.cpuPickupCharges.ufo, 1, 'the collected UFO waits for its owner first gate');
+  assert.equal(state.rival.s, 386, 'the rival cannot jump before its own first gate');
+  assert.equal(state.rival.nextLapGate, 0, 'collecting a UFO does not advance the rival checkpoint');
 }
 
 const easy = race('easy'), state = easy.state, combat = state.combat;
@@ -83,4 +86,4 @@ stepCombat(easy, .05);
 assert.equal(combat.pickups.length, 1, 'Easy never collects a pickup it crosses');
 assert.equal(combat.cpuPickupCharges.crossbow, 0, 'Easy receives no bonus weapon');
 
-console.log('CPU pickups: Easy ignores; Medium/Hard require swept contact, use real shields and scheduled projectiles, and leave unsupported UFOs.');
+console.log('CPU pickups: Easy ignores; Medium/Hard require swept contact, use real shields and scheduled projectiles, and hold collected UFOs until their own first gate.');

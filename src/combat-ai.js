@@ -51,6 +51,17 @@ function useCpuPickupShield(duel) {
   }
 }
 
+function useCpuPickupUfo(duel) {
+  const {state} = duel;
+  for (const opponent of state.opponents) {
+    if (cpuPickupCharges(state, state.combat, opponent).ufo > 0) {
+      // UFO use has its own per-lap limit. It never spends or resets the
+      // shared scheduled-attack timer, shot seed or alternating CPU turn.
+      fireWeapon(duel, 'ufo', true, opponent);
+    }
+  }
+}
+
 export function stepCombatAI(duel, dt) {
   const state = duel.state;
   const combat = state.combat;
@@ -61,7 +72,10 @@ export function stepCombatAI(duel, dt) {
     opponent.aiShieldCooldown = Math.max(0, (opponent.aiShieldCooldown || 0) - dt);
   }
 
-  if (state.cpuDifficulty !== 'easy') useCpuPickupShield(duel);
+  if (state.cpuDifficulty !== 'easy') {
+    useCpuPickupShield(duel);
+    useCpuPickupUfo(duel);
+  }
   // A multi-car field keeps the same total attack rate, but distributes
   // decisions across the cars instead of firing a synchronized volley.
   let liveOpponents = 0;

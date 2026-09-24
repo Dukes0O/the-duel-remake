@@ -9,7 +9,7 @@ const WEAPON_CRATES = ['bomb', 'crossbow', 'star', 'ufo'];
 
 export function cpuPickupCharges(state, combat, actor) {
   if (actor === state.rival) return combat.cpuPickupCharges;
-  return actor.cpuPickupCharges ??= {bomb: 0, crossbow: 0, star: 0};
+  return actor.cpuPickupCharges ??= {bomb: 0, crossbow: 0, star: 0, ufo: 0};
 }
 
 // The complete plan is fixed before any car reaches a crate. Speed, frame
@@ -93,7 +93,8 @@ function collectSeeded(duel, pickup, actor, index) {
     amount = combat.cooldowns[pickup.weapon];
     combat.cooldowns[pickup.weapon] = 0;
   } else {
-    cpuPickupCharges(state, combat, actor)[pickup.weapon]++;
+    const charges = cpuPickupCharges(state, combat, actor);
+    charges[pickup.weapon] = (charges[pickup.weapon] || 0) + 1;
     amount = 1;
   }
   burst(combat, duel.course.groundAt(pickup.s, pickup.lateral), 'star');
@@ -127,7 +128,8 @@ function stepSeededPickups(duel, dt) {
 }
 
 function cpuCanUsePickup(state, combat, actor, pickup) {
-  return state.cpuDifficulty !== 'easy' && pickup.weapon !== 'ufo' &&
+  return state.cpuDifficulty !== 'easy' &&
+    !(pickup.weapon === 'ufo' && actor.ufoUsedLaps?.[actor.completedLaps]) &&
     (cpuPickupCharges(state, combat, actor)?.[pickup.weapon] ?? 0) < T.pickup.chargeLimit;
 }
 
@@ -176,7 +178,8 @@ export function stepPickups(duel, dt) {
       if (!cpuCanUsePickup(state, combat, opponent, pickup) || opponent.finished ||
           opponent.combatWrecking ||
           opponent.crushed || !crossesPickup(opponent, pickup)) continue;
-      cpuPickupCharges(state, combat, opponent)[pickup.weapon]++;
+      const charges = cpuPickupCharges(state, combat, opponent);
+      charges[pickup.weapon] = (charges[pickup.weapon] || 0) + 1;
       burst(combat, duel.course.groundAt(pickup.s, 0), 'star');
       duel._callout(`RIVAL / ${WEAPONS[pickup.weapon].name} PICKUP`, T.pickup.calloutSeconds);
       duel.emit({powerupCollected: pickup.weapon, collector: 'rival'});

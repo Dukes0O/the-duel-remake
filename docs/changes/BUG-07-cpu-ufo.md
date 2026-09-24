@@ -56,3 +56,54 @@ No production file, existing pickup assertion, replay fingerprint or balance
 target was edited. No broad matrix, build, browser or lane gate was run. The
 implementation author owns the next source changes and appends measured
 results here after the red-test commit.
+## Implementation
+
+Medium and Hard rivals can now physically collect UFO crates in both pickup
+paths. Each rival holds its own charge and lap history. After its own first
+checkpoint, it may make one stock 12 m tactical jump per validated lap.
+Player upgrades do not change CPU range. Blocked jumps keep the charge and
+leave the actor unchanged. Easy still ignores pickups.
+
+The existing destination scan now accepts an optional actor. CPU landings use
+that actor's footprint, checkpoint, lap and route, and include the player among
+occupied positions. Relocation clears that rival's air and collision motion,
+clamps speed to its car and surface, updates its route planner, and grants the
+existing short UFO protection. Departure and arrival bursts plus indexed
+CPU-use events expose the action. The player UFO callout, assisted-lap state,
+usage history and existing player firing path are preserved.
+
+CPU UFO use runs separately from scheduled attacks. It does not spend or reset
+the shared attack timer, shot seed or alternating CPU turn. The integrated enemy
+aim correction and tuning remain unchanged. No save, reward, dependency or
+feature-flag default changed.
+
+### Reviewed existing assertion change
+
+Before: the final Medium/Hard UFO check in `test-cpu-pickups.mjs` required the
+unsupported crate to remain visible after CPU contact.
+
+After: the same physical crossing must remove the crate, hold exactly one UFO
+charge, retain rival position 386 m and retain its first-gate index 0. This
+proves collection without an early jump. All other shield, bomb, crossbow and
+Easy assertions remain unchanged. The independent new suite separately checks
+safe use after the first gate, both flag paths and all three rival identities.
+
+Independent test author `/root/enemy_aim_builder` approved this replacement
+and reviewed the runtime diff without finding a defect. They independently
+ran the existing CPU pickup test successfully and made no source changes.
+
+### Focused green evidence
+
+- `node tools/test-cpu-ufo.mjs`: 37/37 groups pass.
+- `node tools/test-cpu-pickups.mjs`: pass, including the reviewed replacement.
+- `node tools/test-combat-pickups2.mjs`: 14/14 pass.
+- `node tools/test-ufo-landing.mjs`: 100 safe player jumps across all 11 combat
+  courses, including 18 shortcut landings; no crash or reset within two seconds.
+- `node tools/test-combat-replays.mjs`: all 12 fingerprints across four
+  encounters pass unchanged. No fingerprint file was regenerated.
+- `git diff --check`: pass.
+
+No browser, lane/build gate or balance matrix was run in this slice. The
+Director reserved the broad gate slot for GFX-01. Flag-off/on balance reports,
+the required lane/build gate and integration review remain before merge.
+All checks used isolated lane state without live port 5174 or real saves.
