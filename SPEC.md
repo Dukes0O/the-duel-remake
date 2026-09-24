@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Approved for implementation by Kyle on 23 September 2026; Kyle chose a short, predictable tactical UFO jump for BUG-04 on 23 September 2026. The distance and balance check remain subject to testing. |
+| Status | Approved for implementation by Kyle on 23 September 2026; Kyle chose a short, predictable tactical UFO jump for BUG-04 on 23 September 2026. The distance and balance check remain subject to testing. **v3 direction from Kyle on the evening of 23 September 2026 is in section 0 and takes precedence over anything later in this spec that disagrees with it.** |
 | Date | 22 September 2026 |
 | Covers | A review of Mad Max Duel and of older code and habits that cause problems today; a way to build continuously with automatic checks instead of stopping between phases; an agent setup for Codex; and the plan for on-foot crews, a bigger arsenal, armor kits, an arena, a warlord ladder, unlocks and image creation |
 | Starting point | Commit `1fd7116` on `master` |
@@ -18,6 +18,7 @@
 
 ## How to read this
 
+0. v3 direction (23 September 2026, evening): read first
 1. Objective
 2. Review
 3. Design
@@ -29,6 +30,236 @@
 14. Risks
 15. Decisions for Kyle
 16. Out of scope
+
+---
+
+## 0. v3 direction (Kyle, 23 September 2026, evening)
+
+This section records Kyle's direction after a review of the integration branch
+at `91187af` (see [`docs/board/review-2026-09-23.md`](docs/board/review-2026-09-23.md)).
+Where it disagrees with a later section, this section wins. The Director turns
+section 0.6 into board cards before starting other new work.
+
+### 0.1 Kyle's decisions
+
+| Topic | Decision | Replaces |
+| --- | --- | --- |
+| How the Wasteland is introduced | As an **easter egg**: a hidden dirt road on a course leads to a huge wall and a gate that invites the player in (0.2) | Mad Max features appearing directly in the menu |
+| What "image creation" means | **In-game graphics.** Kyle: "I don't care about posters. I want graphics." Generated images are references and textures for the 3D work only | 3.10 B (war paint studio, photo mode, rewind, wanted posters, trophy cards, gallery), and the UI-only images in 3.10 A |
+| How graphics improve | **Blender**, in many measured rounds against the reference images (0.3) | Code-built primitive figures and kits as the final look |
+| On-foot camera | **First person by default**, with an **overhead option**: behind and above the fighter, looking down at an angle. Both stay playable until Kyle picks after trying them | First person only |
+| Tone | **Gritty, no blood.** Heavier explosions, scorched and burning wrecks, tumbling knockdowns. Fighters get back up or respawn. No blood, injuries or gore | Assumption 5, cartoon arcade tone |
+| Career | **A separate Wasteland career** with its own currency, **scrap**, and a **territory map** held by the warlords (0.4) | Assumption 8 and Q3, credits only |
+| Build tracking | Proportionate testing, but never blind: a minimum check before every merge, a full run on a schedule and before every release, one status page, and backups (0.5) | Focused checks only after `e34f2cc` |
+
+### 0.2 The Hidden Road: how players find the Wasteland
+
+**The idea.** On Pacific Canyon Circuit, the free first course, a faint dirt
+track leaves the road in the Mojave canyon section. It is easy to miss at racing
+speed. A player who follows it drives for about 30 seconds without knowing where
+it goes. The track winds through a narrow dry wash between canyon walls, then
+opens onto a salt flat. A huge wall stands on the horizon in the heat haze. It
+grows as the player drives straight at it. At the gate, the car stops, the gate
+opens, and the player is invited into the Wasteland.
+
+**Rules.**
+
+- **Where.** Pacific Canyon Circuit, every route (A, B and C), at one spot in the
+  canyon section on the outside of a bend. The Director picks the exact spot
+  and records it. The entrance is subtle but fair: tire ruts, a gap in the rock
+  line, a leaning rusted post with no text, a line of dead cacti. It is not
+  visible as a road from the racing line.
+- **Who.** The player only. Rivals, traffic and police never turn onto it, and
+  their routes ignore it. The live course map does not show it until this player
+  has found the gate; after that it shows as a dotted track.
+- **Protected, not out of bounds.** The track, the wash and the salt flat
+  approach are inside the playable area for every car, including ordinary road
+  cars. No boundary reset, water reset or out-of-bounds warning fires there.
+  The surface is prepared dirt, like the existing gravel shortcuts, so any car
+  can drive it. Solid canyon walls line the wash so the player cannot get lost.
+- **Leaving the race.** Turning onto the track and back again costs only time.
+  Past a point of no return about 150 m in, the race ends as "left the course":
+  the same as quitting (unbanked earnings forfeited, saved credits untouched,
+  no loss charge, no records). The HUD fades out so the drive feels like
+  exploring, not racing.
+- **The drive.** About 30 seconds at a comfortable speed, roughly 0.9 to 1.2 km.
+  The wash hides the destination. On the salt flat the last 300 m run straight
+  at the gate so the wall fills the view.
+- **The wall.** The Rustwall: about 35 m tall and at least 400 m wide, built from
+  stacked car hulks, riveted sheet steel, cranes and scaffold towers, banners,
+  fire barrels and searchlights. Original design; nothing from the films.
+- **The gate.** About 60 m out, the game takes over. The car slows to a stop,
+  the camera moves to a low cinematic angle, drums and chains sound, sparks fly
+  and the gate lifts. Figures with torches stand on the wall. A gatekeeper's
+  line appears as text (no recorded voice), for example: "Outsiders don't find
+  this road by accident. Come in, driver." Two choices: **Enter the Wasteland**
+  or **Turn back**.
+- **Enter.** The Wasteland unlocks for this player and is saved. The car rolls
+  through the gate into the Scrapdome yard, which is the Wasteland's home
+  screen: career, territory map, armory and crew over a live view of the yard.
+  **Turn back** leaves the player parked outside; the discovery still counts.
+- **After discovery.** A **WASTELAND** entry appears on this player's main menu.
+  The Hidden Road stays drivable as a scenic way in; the gate now opens without
+  the invitation. Each named player finds it for themselves.
+- **Hints.** After 5 finished Pacific Canyon races without finding it, a garage
+  tip mentions "a dry wash road off the canyon that truckers won't take". After
+  10, a dust devil turns near the entrance during races.
+- **Existing Mad Max Duel.** Until discovery, the current live Mad Max Duel stays
+  exactly as it is. After discovery, Mad Max Duel races use the full Wasteland
+  rules (armor, on foot, crew, raiders) and count toward the Wasteland career.
+  (Default; see Q9 in section 15.)
+- **No change to ordinary racing.** Ordinary races, time trials and objective
+  events keep identical results for the same seeds and inputs; all replay
+  fingerprints stay unchanged. The Pacific Canyon scene signature changes only
+  with reviewed screenshots. This course change is pre-approved by Kyle.
+- **Switch.** `hidden-road`, starting in `dev`. It moves to `beta` when the wash,
+  wall and gate reach fidelity round 3 (0.3) and the drive feels right in play.
+
+### 0.3 Graphics: the Blender fidelity loop
+
+**Goal.** In-game assets that are clearly the same characters, machines and
+places as the reference images, with the same materials, color and wear, seen
+at game camera distances in both quality settings. Exact photographic
+matches are not the target; a real-time browser game will not reach them.
+Getting close takes **many rounds**. The plan expects 5 to 8 rounds per asset
+family and allows up to 10 per wave.
+
+**Tools.** Blender 4.5 LTS is installed at
+`C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Run it
+headless with Python scripts, the way `tools/build-course-landmarks.py` already
+does: `blender -b --python tools/blender/<family>.py -- --root <repo>`. Keep
+the `.blend` source and the script in the repository; export GLB models to
+`public/assets/models/wasteland/`. Rigged characters use Three.js's own
+`GLTFLoader`, `SkinnedMesh` and `AnimationMixer` from `three/addons`: no new
+dependency. The image tool still makes reference images and textures.
+
+**Asset families, in priority order.**
+
+| # | Family | Reference | Must include |
+| --- | --- | --- | --- |
+| 1 | Crew and fighters | `public/assets/reference/wasteland-crew-1.png`, `-2.png` | Rigged bodies per crew member, outfits as drawn, readable faces at 5 m; idle, walk, sprint, jump, knockdown, get up, aim, fire, reload, repair, enter and exit car |
+| 2 | First-person view | Crew sheets and a new RPG and wrench reference | Hands, gloves and sleeves per crew member, the RPG and the wrench, with aim, recoil, reload and repair motion |
+| 3 | Hidden Road, Rustwall and gate | A new generated reference, plus the art direction board | Canyon wash, salt flat, wall, gate, towers, fires, figures on the wall |
+| 4 | Scrapdome yard and arena | `wasteland-art-direction.png`, middle panel | Car-hulk stacks, cranes, fences, arena bowl, lights |
+| 5 | War rigs and armor kits on all nine cars | Top panel of the board, `scrap-plating.png` | Plates, cages, spikes, saws, turret mount; intact, damaged, burning and wrecked states |
+| 6 | Raiders, camps and salvage | Crew sheets and board | Raider outfits, tents, barrels, fire, crates |
+| 7 | Wrecks, fire, smoke and blasts | Existing flipbooks and effect studies | Burned paint, scorched metal, lingering smoke |
+| 8 | Menu and unlock images | None: rendered from the real models | Crew, kit and weapon views rendered in Blender from the in-game models, so what you unlock looks like what you get |
+
+**The loop, per family, every round.**
+
+1. **Matched shots.** Render the reference's own views in Blender (front, side
+   and back on neutral grey for characters; the board's camera angle for cars,
+   the wall and the yard). Capture the same views in the browser game through
+   the harness, in High and Performance. The in-game picture is what counts.
+2. **Contact sheet.** Reference, Blender render and in-game capture side by
+   side, saved as `docs/board/looks/<family>/round-<n>.png`.
+3. **Score** each item from 1 to 5: resemblance to the reference (silhouette,
+   proportions, materials, color, detail, wear), readability at racing speed,
+   grounding, consistency with the scene, and frame cost. List the five
+   biggest differences from the reference.
+4. **Next round** fixes those differences first.
+5. **Rules.** At least 3 rounds before a family can reach `beta`. Pass when
+   in-game resemblance and every other item score 4 or better and the frame
+   budget holds. If two rounds in a row don't raise the resemblance score,
+   change the approach (more geometry, baked textures, a better reference),
+   not just the numbers. After 10 rounds in a wave, remaining differences
+   become cards for the next polish wave.
+6. Kyle can look through the contact sheets at any time. His notes feed the
+   next round and never block it.
+
+**Budgets.** Up to 12 fighters on screen within 24 draw calls, 8,000
+triangles per fighter up close with a 2,000-triangle distant version, one
+1024² texture set per crew member, and the existing combat frame budget. The
+wall and yard must keep Pacific Canyon and the arena within 10% of their
+current frame time.
+
+This loop replaces the look loop in 10.1 for these eight families. The look
+loop still applies to everything else.
+
+### 0.4 The Wasteland career
+
+- **Separate from racing.** Each named player has a Wasteland career next to
+  the racing career. Cars come from the racing garage; everything else in the
+  Wasteland is its own.
+- **Scrap.** The Wasteland's currency, earned in Wasteland events, from salvage
+  and from wrecks. It buys weapons, weapon upgrades, armor kits and crew.
+  Credits and scrap never convert, so the racing economy doesn't change.
+  Weapon levels already bought with credits carry over.
+- **Notoriety ranks 1–30** stay as the Wasteland's level and decide what can
+  be bought (3.8).
+- **Territory map.** The 11 combat courses, the Scrapdome and the Salt Flats
+  are grouped into territories held by the eight warlords (3.9). Winning events
+  in a territory raises your hold on it. A full hold opens that warlord's fight.
+  Beating the warlord claims the territory: a banner on the map and the
+  warlord's kit parts.
+- **Save.** `profile.wasteland` (3.8) gains `scrap`, `territories` and
+  `discoveredGate`. Migration follows the existing rules: backup first, never
+  lose or throw.
+
+### 0.5 Keeping track of the build
+
+On 23 September, 13 of 213 test files failed on integration for about two
+hours while about 15 features merged on top, and the last live release shipped
+with one failing test. Nothing in normal play broke, but nobody knew. From now
+on:
+
+- **Before every merge into integration:** the lane tier
+  (`node tools/run-tests.mjs --tier lane --changed --jobs 8`, about 5 minutes)
+  and `npm run build`. Always, including tuning-only and doc-plus-code changes.
+- **Full tier** (`--tier full --jobs 8 --keep-going`, about 6 minutes on this
+  PC): after every 5 merges or every 2 hours of merging, whichever comes first,
+  and at the end of every session and overnight run. A failing full run stops
+  feature merges until a fix lands (4.5).
+- **Before every release:** the full tier on the exact commit being released.
+  No exception for small or tuning-only changes.
+- **One status page.** `tools/build-status.mjs` writes `docs/board/STATUS.md`:
+  the live commit and build version, the integration head, the last full run
+  on that exact commit (passed, failed, when), each switch and its state,
+  lane branches with unmerged work and their age, merged lane folders that
+  can be removed, and backup state. Update it after every merge and at the end
+  of every session.
+- **Balance with the new rules on.** `tools/combat-balance.mjs` also runs with
+  `wasteland2` on. Its win-rate and hit targets apply to both.
+- **Backups.** Push `integration/wasteland` as well as `master` to GitHub after
+  each green full run, and bring GitHub's `main` in line with `master` (it is 60
+  commits behind). Waits for Kyle's OK (D8).
+- **Tidy lane folders.** Remove merged lane worktrees with `git worktree remove`
+  (never forced), keeping their branches.
+
+### 0.6 New and changed cards, in order for the next run
+
+Finish in this order before starting other new work. Existing open cards
+(BUG-06, BUG-07, CREW-01, TOOL-02, AUD-01, AUD-02) continue whenever a lane is free.
+
+| Order | Card | Lane | Size | Done when |
+| --- | --- | --- | --- | --- |
+| done | **FIX-04** Restore a passing full run | TOOL | S | Merged; see `docs/changes/FIX-04.md` |
+| 1 | **TRACK-01** Status page | TOOL | S | `tools/build-status.mjs` writes `docs/board/STATUS.md` as in 0.5, with a test; run once and committed |
+| 2 | **TRACK-02** Gate floor in the playbook | OPS | S | Playbook Integrator and Director prompts and `AGENTS.md` gates say exactly what 0.5 says |
+| 3 | **BAL-01** Balance with `wasteland2` on | TOOL | S | `combat-balance.mjs --flags wasteland2` reports win rates, hits and wrecks per difficulty; results recorded in the change note |
+| 4 | **GFX-00** Blender character pipeline and contact sheets | VIS, ART | M | One script builds, rigs, animates and exports a test fighter GLB; the game loads it; `tools/fidelity-sheet.mjs` makes the reference, Blender and in-game contact sheet |
+| 5 | **EGG-01** Hidden Road route and bounds | SIM | M | The spur, wash and salt flat exist on all three Pacific Canyon routes as in 0.2; road cars can drive it; no resets; CPU, traffic and police never enter; map hides it; every replay fingerprint unchanged |
+| 6 | **ART-W** Wall, gate and weapon references | ART | S | Generated references for the Rustwall and gate, the RPG and the wrench, with prompts recorded in `docs/WASTELAND_ART.md` |
+| 7 | **GFX-01** Crew and fighters, rounds 1–3 | ART, VIS | L | Family 1 through three fidelity rounds with contact sheets and scores |
+| 8 | **GFX-02** First-person hands, RPG and wrench | ART, VIS | M | Family 2 through three rounds |
+| 9 | **EGG-02** Rustwall, gate and salt flat, rounds 1–3 | ART, VIS | L | Family 3 through three rounds; frame budget held |
+| 10 | **EGG-03** Gate arrival and invitation | UI, VIS, SIM | M | The arrival sequence, choices and "left the course" result in 0.2, with a browser scenario |
+| 11 | **EGG-04** Discovery save, menu entry and hints | SAVE, UI | S | Per-player discovery saved and migrated safely; WASTELAND menu entry; the two hints |
+| 12 | **CAM-01** Overhead on-foot view | UI, VIS | M | A setting and on-foot key switch between first person and the overhead view; the camera never enters the ground on all 11 combat courses |
+| 13 | **CAR-01** Wasteland career, scrap and territory map | SAVE, UI | L | As in 0.4, behind `wasteland2` |
+| 14 | **GFX-03** War rigs and kits on nine cars, rounds 1–3 | ART, VIS | L | Family 5 through three rounds |
+| 15 | **GFX-04** Scrapdome yard as the Wasteland home screen | VIS, UI | L | Family 4 through three rounds; ties in ARENA-01 and ARENA-06 |
+
+**Removed from the plan (Kyle, 23 September 2026):** IMG-01 to IMG-06 and
+ART-B's UI images (card frames, poster paper, rank emblems, painted portraits,
+weapon card art). Trophy cards as saved records (PRG-07) stay only as simple
+unlock records with rendered model images (family 8).
+
+**Milestone change.** M2 is now "Unlocks and graphics round 3": ranks, Armory
+2.0, challenges, bounties, the Wasteland career, and families 1–3 at round 3.
+A new milestone, **M-EGG**, moves `hidden-road` to `beta` when EGG-01 to EGG-04
+are merged and family 3 has passed round 3.
 
 ---
 
@@ -47,7 +278,8 @@ This spec fixes those first. Then it turns the mode into the biggest part of the
 - **A wasteland arena** with four battle modes, up to three CPU cars at once, and a convoy boss.
 - **A warlord ladder** of eight named bosses.
 - **Unlocks everywhere.** Notoriety ranks, challenges, a daily bounty board, crew members, kits, war paint stencils and trophy cards.
-- **Image creation.** Generated art for characters, weapons and textures, plus player-made images: a war paint studio, a photo mode that can rewind ten seconds, automatic wanted posters, trophy cards and a gallery.
+- **Graphics that match the reference art** *(v3, replaces image creation)*. Characters, first-person weapons, war rigs, the Rustwall and the Scrapdome refined in Blender over many measured rounds (0.3).
+- **A secret way in** *(v3)*. The Wasteland is found through the Hidden Road on Pacific Canyon (0.2).
 
 ### Who plays
 
@@ -58,7 +290,8 @@ Kyle and the other named local players on this computer, through the desktop sho
 1. Something explodes about every ten seconds.
 2. Getting out of the car is a gamble worth taking, never a chore.
 3. Everything you unlock shows on your car, your crew or your wall.
-4. You leave every event with a picture worth keeping.
+4. Everything on screen looks like the reference art at game distance *(v3; replaces "a picture worth keeping")*.
+5. Finding the gate feels like discovering a secret *(v3)*.
 
 ### User stories
 
@@ -77,17 +310,17 @@ Kyle and the other named local players on this computer, through the desktop sho
 
 Confirmed by Kyle on 22 September 2026:
 
-1. **Image creation means both** generated game art and in-game creation tools.
+1. ~~Image creation means both generated game art and in-game creation tools.~~ **v3: image creation means in-game graphics**, refined in Blender; generated images serve as references and textures only (0.1, 0.3).
 2. **On foot happens in races and in a new arena.** CPU crews get out too.
 3. **Arrow keys drive.** The left hand handles camera, weapons and getting out. A stops steering. On foot, WASD walks and the mouse aims.
 4. **No pausing between phases.** Work continues while quality is enforced by automatic checks (requested in the second pass).
 
 Defaults, which Kyle can change by editing this spec:
 
-5. **Cartoon arcade tone.** No blood or gore. Knocked-down fighters dust off and respawn. Wrecks explode and recover.
+5. **v3: Gritty, no blood** (Kyle, 23 September). Heavier explosions, scorched and burning wrecks, tumbling knockdowns. Fighters get back up or respawn. No blood, injuries or gore. Wrecks explode and recover.
 6. **Same stack.** Three.js 0.171 and Vite 8, plain JavaScript modules. No physics engine, no animation library, no new runtime dependency.
 7. **Offline.** No network requests, accounts or API keys at runtime.
-8. **Credits stay the only currency.** Notoriety rank decides what you may buy.
+8. **v3: A separate Wasteland career with scrap as its currency** and a territory map (0.4). Credits stay the racing currency; the two never convert. Notoriety rank decides what you may buy.
 9. **The name.** "Mad Max Duel" stays as the menu label in this private build. The internal id stays `wasteland`. All characters, vehicles and art are original.
 10. **Codex does the building.** The art lane generates images with Codex's built-in image tool, which made the existing textures (see `docs/IMAGE_PROMPTS.md`).
 11. **Existing weapon levels carry over.** Rebalanced numbers apply to levels already bought.
@@ -425,7 +658,9 @@ Made by the art lane with Codex's built-in image tool, following `docs/IMAGE_PRO
 
 `src/wasteland-art.js` lists each image with its size, transparency and a code-drawn stand-in, so a missing image never breaks the build or the tests. `tools/check-art-intake.mjs` checks size, transparency, file budget and recorded prompt for every image present.
 
-#### B. Player-made images
+> **v3 (Kyle, 23 September 2026):** part A now covers only images used as references and textures for 3D work (rows 1–11, 13, 19 and new references in 0.6). Rows 12 and 15–18 are dropped; menu and unlock images are rendered from the real models (0.3, family 8). **Part B below is removed from the plan** and kept only as history.
+
+#### B. Player-made images *(removed in v3)*
 
 **War Paint Studio** (garage). Up to 12 layers per car: stencil, color, panel, position, size, rotation, mirror. Projected onto the body with Three.js decal geometry, so it works on every car without new texture layouts. Saved as a small list of layers per player and car. A text **share code** exports and imports designs offline. Paint never changes performance or records.
 
@@ -1014,7 +1249,7 @@ Unlocks track:
 - [ ] **PRG-07 Card records and backfill** · SAVE · needs PRG-01 · S
 - [ ] **PRG-08 Daily bounty board** · SAVE, UI · needs PRG-02 · M
 
-Image creation track:
+Image creation track *(removed in v3; replaced by the GFX and EGG cards in 0.6)*:
 
 - [ ] **IMG-01 Gallery store and screen** · SAVE, UI · needs FND-10, RFX-01 · M
 - [ ] **IMG-02 Photo mode** · VIS, UI · needs RFX-05, RFX-06 · M · helpers browser_qa
@@ -1098,7 +1333,8 @@ Milestones are switch changes, not pauses. Each one moves a set of features to `
 | --- | --- |
 | M0 | Green suite, safe live game, all Mad Max bugs fixed (these ship as normal fixes) |
 | M1 | Combat 2.0: armor, wrecks, scoring, smarter CPU, kits, effects, sounds |
-| M2 | Unlocks and Studio: ranks, Armory 2.0, challenges, daily bounties, photo mode, war paint, posters, cards |
+| M2 | *(v3)* Unlocks and graphics round 3: ranks, Armory 2.0, challenges, daily bounties, the Wasteland career, and graphics families 1–3 at fidelity round 3 |
+| M-EGG | *(v3)* The Hidden Road: `hidden-road` to beta when EGG-01 to EGG-04 are merged and family 3 has passed round 3 |
 | M3 | Get out of the car: on foot, RPG, wrench, figures |
 | M4 | Full arsenal, crew, boarding, raiders |
 | M5 | The Scrapdome |
@@ -1164,7 +1400,9 @@ Later cards whose `needs` are met may start before a wave is finished. The finis
 - Ordinary races, time trials and objective events give identical results to today for the same seeds and inputs (fingerprints).
 - Combat events replay identically at 30, 60 and 144 FPS.
 - A combat race stays within 10% of an ordinary race's average frame time on the same route and settings, in both quality modes. Budgets: 64 projectiles, 48 blasts, 12 fighters, 6 pickups, 8 crates at once.
-- Photo capture works in both quality settings; war paint survives reload; posters and cards appear in the gallery; downloads produce PNG files; blocked storage is explained.
+- *(v3, replaces the photo and gallery line)* Graphics families 1–5 pass the Blender fidelity loop (0.3): in-game resemblance 4 or better against their references, with contact sheets for every round in `docs/board/looks/`.
+- *(v3)* A new player can find the Hidden Road without being told, drive it with any car without a reset, reach the gate and enter; ordinary race fingerprints are unchanged.
+- *(v3)* `docs/board/STATUS.md` is current after every merge, and no release ships without a full run on its exact commit.
 - Every shipped image has a recorded prompt and passes the art check.
 
 ## 14. Risks
@@ -1200,18 +1438,22 @@ Answers (23 September 2026): D1, D2, D3, D4, D5 and D7 agreed as recommended. D6
 | D5 | Remove the old Codex working copy at `.codex\worktrees\4555` (nothing unique in it) | Yes |
 | D6 | Crash rule for ordinary races: (a) keep today's rule, where any crash of 45 km/h or more uses one of five slots, and make the HUD count that; or (b) change the rule so only major crashes (72 km/h or more) count, as the README describes | (a): fixes the confusion without changing race balance |
 | D7 | Delete the unused shared best-time data (`duel_redline_best_v4`) from browser storage | Yes. Nothing reads it |
+| D8 *(v3, waiting for Kyle)* | Also push `integration/wasteland` to GitHub after each green full run, and bring GitHub's `main` in line with `master` | Yes. Today the on-foot, crew and raider work exists only on this PC |
 
 ### Open questions (agents use the recommendation until you say otherwise)
 
 | # | Question | Default |
 | --- | --- | --- |
 | Q2 | Combat records: exact weapon levels, or build tiers (Stock / Tuned / Maxed)? | Build tiers |
-| Q3 | Credits only, or a separate combat currency? | Credits only, gated by rank |
+| Q3 | Credits only, or a separate combat currency? | **Answered in v3:** a separate Wasteland career with scrap (0.4) |
 | Q4 | Crew lines as text only, or recorded voice? | Text only |
 | Q5 | Radar traps and police in Mad Max Duel? | Off in combat events; raiders replace them |
 | Q6 | Keep the "Mad Max Duel" name? | Keep it in this private build |
 | Q7 | Keep the four original weapons free for new players? | Yes |
 | Q8 | Split-screen two-player mode someday? | Not in this plan |
+| Q9 *(v3)* | Before a player finds the gate, does the live Mad Max Duel stay in the menu? | Yes, unchanged. After discovery it uses the full Wasteland rules (0.2) |
+| Q10 *(v3)* | Which on-foot camera is the default? | First person, with the overhead view as an option, until Kyle tries both |
+| Q11 *(v3)* | Which course hosts the Hidden Road? | Pacific Canyon, the free first course, so every player can find it |
 
 ## 16. Out of scope
 
@@ -1219,5 +1461,6 @@ Answers (23 September 2026): D1, D2, D3, D4, D5 and D7 agreed as recommended. D6
 - In-game AI image generation (needs a network service).
 - A physics engine, animation library or second game engine.
 - Gore or blood.
+- *(v3, Kyle declined on 23 September 2026)* War Paint Studio, photo mode, rewind, wanted posters, trophy card frames, the gallery and painted UI art.
 - Changing ordinary race, time trial or objective event rules, except as D6 decides.
 - Touch controls.

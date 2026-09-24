@@ -716,3 +716,24 @@ checkout untouched until the final integration commit passes the full gate.
   four metres. Eleven focused cases, one private memory-only visual scene
   and build passed. The bounded FOOT-08 stop check also passed after this
   join. Raider movement, frame pacing and broader balance remain open.
+
+## 2026-09-23 PDT – Outside review, FIX-04 and Kyle's v3 direction
+
+- An outside review (Claude Code, at Kyle's request) ran the full tier on
+  `91187af`: 200 passed, 13 failed. Four causes, none affecting play; see
+  `docs/changes/FIX-04.md` and `docs/board/review-2026-09-23.md`. Integration
+  had been failing since FOOT-03 `e34f2cc` at 18:38.
+- FIX-04 merged by fast-forward as `6d827dc`. On that commit the full tier
+  passed 213/213 in 411.6 s (`--jobs 8 --keep-going`), the production build
+  passed, and browser smoke passed on a private port with four screenshots,
+  zero warnings and zero errors. No replay fingerprint changed.
+- The same checkpoint test also fails on live `master` (`eb879e5`) since the
+  17:23 balance release `0cdf190`, which shipped without a full run. Not a
+  play problem: recovery still lands 1 m before the missed gate. The fix
+  reaches `master` with the next release.
+- Kyle's v3 direction is in SPEC.md section 0: the Hidden Road easter egg,
+  graphics refined in Blender over many measured rounds, first person with an
+  overhead option, gritty with no blood, a separate Wasteland career with
+  scrap, and a minimum test floor with a status page (0.5). The Director adds
+  the SPEC 0.6 cards to the board and works them in order. The overnight start
+  prompt is in the review note. D8 (push integration to GitHub) waits for Kyle.
