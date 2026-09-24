@@ -260,7 +260,7 @@ tasks:
     lane: SAVE
     size: M
     needs: [EGG-03]
-    status: active
+    status: review
     owns: [src/hidden-road-discovery.js, src/hidden-road-hints.js, tools/test-hidden-road-discovery.mjs, tools/test-hidden-road-hints.mjs, tools/scenarios/hidden-road-discovery.mjs, docs/board/looks/hidden-road-discovery/, docs/changes/EGG-04.md]
     hooks: [src/wasteland-progress.js, src/career-backup.js, src/progression.js, src/app.js, src/game.js, src/hidden-road-journey.js, src/hidden-road-ui.js, src/screen-menu.js, src/screen-menu.css, src/screen-router.js, src/screen-garage.js, src/route-map.js, src/course-preview.js, src/world.js]
     helpers: [test_author, save_guardian, reviewer, browser_qa]
@@ -275,7 +275,7 @@ tasks:
       - "Independent save review loads every historical fixture, checks malformed/partial data and backup failure, and preserves credits, cars, upgrades, drivers, courses, paint, old weapon levels, records and ghosts. Test named-player isolation, duplicate discovery/finish events, reload, direct visit and interrupted navigation using memory-only storage."
       - "Retain two scored bounded browser rounds for hidden/discovered menu and map, Turn back persistence, automatic revisit, five/ten-race hints and a phone-size menu. Preserve ordinary and flag-off replay fingerprints. Required lane/build gate and evidence note precede integration."
       - "R1 review authorizes a narrow screen-menu.css rule for the discovered WASTELAND action: full-column secondary button at least 44 pixels high. Move the five-race garage hint above the car list and label the revealed map path clearly, keeping undiscovered and flag-off presentation unchanged. R2 menu images must show settled loading state; do not hide a real loading overlay in the capture."
-    note: "Expanded while EGG-03 builds; no implementation before its merge. The completion counter saturates at ten because hints need no larger total. Existing history retains only sixty rows, so migration cannot claim a lifetime count beyond the evidence available; count validated completed wins and losses with distinct keys. Additive fields may retain schema version one only if backup detection explicitly recognizes their absence before any save write. Unknown-field preservation means the existing Wasteland object contract, not a redesign of outer registry/profile normalization. Dedicated direct visits clear prior run/ghost context, preserve saved race settings and carry explicit visit identity for restart/menu guards."
+    note: "Final clean a5fe405 is at mandatory lane/build gate. Runtime f0f3ae4 and independent Save Guardian review pass; focused discovery ten groups and hints seven groups pass, with unchanged existing map/preview checks. Two retained visual rounds are accepted; R2 fixes tip visibility, phone action size and revealed map labeling. Counter saturates at ten; migration's sixty-row retained history is only a lower bound. Raw-field backup detection precedes writes and unknown Wasteland data remains preserved. Direct visits clear race/ghost context, preserve choices and create no payable or abandoned result. Source and review limits are in the change note. Hidden Road stays dev for separate wall/wash art debt."
   - id: CAM-01
     title: "First-person and overhead camera choice"
     priority: 12

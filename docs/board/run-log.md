@@ -1286,3 +1286,19 @@ checkout untouched until the final integration commit passes the full gate.
   Runtime f0f3ae4 passes ten focused groups and independent Save Guardian
   review, including seven historical shapes and 247 preservation checks.
   Presentation and two bounded visual rounds remain before its required gate.
+
+## 2026-09-24 11:41 UTC - discovery ready for gate
+
+- EGG-04 final clean a5fe405 is frozen for its mandatory lane tier and build.
+  Independent runtime/save and presentation reviews pass. Two retained actual
+  browser rounds cover player isolation, Turn-back/reload, automatic scenic
+  entry, direct visits, hints, map reveal and phone controls with memory-only saves.
+- R1 found a buried garage hint and small menu action. Reviewed R2 source
+  77aa6ce makes the hint visible on opening, provides a 344 by 44 pixel phone
+  action and labels the dotted route. Both rounds and Director scores remain.
+  Short absolute frame samples are not a percentage-overhead measurement.
+- CAM-01 is expanded with concrete scope and waits for EGG-04 merge. It will
+  retain car cameras and weapon rules while adding the requested overhead view.
+- Quota at 11:40 UTC: eleven percent remaining; the five-percent floor still
+  applies. Zero merges since the 11:20 full pass. Next full by 13:20 UTC or
+  five merges, and at run end. No live change, release or push.
