@@ -179,7 +179,7 @@ test('a fast bolt crosses a later CPU car without tunneling at 30, 60 and 144 FP
     const forward = {x: Math.sin(at.heading), z: Math.cos(at.heading)};
     const projectile = {kind: 'crossbow', enemy: false, level: 0,
       x: at.x - forward.x * speed * dt * .55,
-      y: at.y + 2,
+      y: at.y + duel._vehicleSpec(target).height / 2,
       z: at.z - forward.z * speed * dt * .55,
       vx: forward.x * speed, vy: 0, vz: forward.z * speed, age: 0};
     const hits = [];
@@ -207,9 +207,10 @@ test('a flagged bolt hits when its height crosses a later CPU car between frames
     const span = speed / 30;
     const projectile = {kind: 'crossbow', enemy: false, level: 0,
       x: at.x - forward.x * span / 2,
-      y: at.y + T.pointHeight + 2.5,
+      // Descend through the body centre as the horizontal path crosses it.
+      y: at.y + duel._vehicleSpec(target).height / 2 + 1,
       z: at.z - forward.z * span / 2,
-      vx: forward.x * speed, vy: 60, vz: forward.z * speed, age: 0};
+      vx: forward.x * speed, vy: -60, vz: forward.z * speed, age: 0};
     const hits = [];
     duel.onChange((_, event) => { if (event.combatHit) hits.push(event); });
     state.combat.projectiles.push(projectile);

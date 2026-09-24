@@ -1,0 +1,86 @@
+# BUG-06: crossbow contact uses the real vehicle height
+
+## Change
+
+Flagged Wasteland crossbows now intersect the moving vehicle body from its
+ground/air base to its actual roof. The existing relative-motion sweep checks
+that horizontal and vertical overlap happen at the same time. Previous and
+current air heights remain part of the sweep. Vehicle height comes from
+`_vehicleSpec`, including the short Viper and tall Titan.
+
+Legacy crossbows, bombs and RPGs retain their existing hit bands. Guidance,
+launch lead, inherited velocity, weapon cadence and tuning are unchanged.
+
+## Fixture corrections for review
+
+The Director approved three fixture geometry corrections. No assertions or
+recorded fingerprints have been changed in this implementation commit.
+
+- Fast-bolt test: ground + 2 m becomes ground + half the target's actual height.
+  Its purpose is horizontal tunneling through the body; 2 m clears this roof.
+- Vertical-crossing test: ground + 3.5 m with upward velocity +60 m/s becomes
+  ground + half the body height + 1 m with downward velocity -60 m/s. The bolt
+  now crosses the body's centre while its horizontal path crosses the car.
+  Hit-count and consumption assertions remain at 30, 60 and 144 FPS.
+- Combat replay's injected `bolt` action: ground + 2 m becomes ground + current
+  air height + half the body height. This restores the intended direct hit and
+  preserves all existing fingerprints for the first three replay encounters.
+
+## Checks
+
+- Independent projectile tests: all 35 pass, including 26 body/control cases.
+  The new cases had 12 failures before the fix.
+- Projectile ordering passes. Legacy moving-target probe remains 420/792 (53%).
+- Ordinary replays: all 162 approved fingerprints pass unchanged.
+- Legacy crossbow and modern bomb/RPG control hash remains
+  `fa2c7711be34f5eddfeb7ed8273b0169a2e29a71645d1335e80d3443631886a9`.
+- Combined focused command: 38/39 groups passed in 86.05 s. The one failure
+  was the combat replay fixture. After its approved geometry correction, the
+  first three encounters retain their hashes; the fourth still expects the
+  old broad-band CPU hits. It is held for independent review below.
+- No browser, lane tier, build or full tier is claimed here. Independent lane
+  and build gates are still required before integration. No real saves used.
+
+## CPU replay difference awaiting review
+
+The flagged `staggered-cpu-attack-turns` replay produces one hit instead of
+three. A bounded before/after trace used production modules with in-memory
+logging, before source at `ae860fb`, and the same 120 Hz simulation. Results
+are identical at the existing 30, 60 and 144 FPS schedules.
+
+| Path | CPU source | Tick | Bolt Y | Body roof Y | Result |
+| --- | --- | --- | --- | --- | --- |
+| Before | 1 | 429 | 30.974315 | 30.816779 | False hit 0.157536 m above roof |
+| Before | 2 | 704 | 30.927752 | 27.789792 | False hit 3.137960 m above roof |
+| After | 1 | 429 | 30.974315 | 30.816779 | Miss; remains above through tick 431 |
+| After | 2 | 657 | 28.381378 | 25.561259 | Miss; remains above through tick 660 |
+
+The bomb hit at tick 368 remains. All three CPU shots still fire at ticks
+200, 401 and 602, in the same order. Removing the first false shove changes
+the later encounter time. Proposed review change: this flagged encounter's
+hit expectation from 3 to 1 and its three matching fingerprints only. No
+blind fingerprint regeneration or expected-result edit has been performed.
+
+## One complete flagged balance measurement
+
+Command: `node tools/combat-balance.mjs --flags wasteland2 --check`.
+One run, including the controlled probe. CPU contention with the graphics
+lane gate affected timing: 140.26 s total, 32.21 s for the first 12 races.
+
+| Measure | Easy | Medium | Hard |
+| --- | --- | --- | --- |
+| No-weapon wins / 10 | 5 | 4 | 3 |
+| Enemy hits in the target sample | 10 | 11 | 4 |
+| Player wrecks across 16 races | 6 | 6 | 3 |
+| Opponent wrecks across 16 races | 0 | 1 | 2 |
+| Traffic wrecks across 16 races | 6 | 15 | 6 |
+| Stock UFO gain, seconds | 6.93 | 7.55 | 1.11 |
+| Maximum UFO gain, seconds | 2.50 | 8.55 | 1.29 |
+
+Crossbow probe: **12/26 (46%)**, within the unchanged 35–60% target, compared
+with 18/26 before the fix. Own-bomb maximum slowdown remains 4.53%.
+
+Seven balance failures remain: Easy and Medium wins, Easy and Medium enemy
+hits, stock UFO gains on Easy and Medium, and maximum UFO gain on Medium.
+This geometric correction does not establish release balance. No tuning or
+balance limit changed.
