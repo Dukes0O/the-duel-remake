@@ -29,7 +29,8 @@ export function damageZoneFromChange(previous, current) {
 export function fallbackOpponentPosition(course, player, opponent, index) {
   const at = course?.worldAt?.(player.s, player.lateral || 0);
   const target = course?.worldAt?.(opponent.s, opponent.lateral || 0);
-  const heading = (at?.heading || 0) + (player.headingError || 0);
+  const heading = Number.isFinite(player.yaw) ? player.yaw :
+    (at?.heading || 0) + (player.headingError || 0);
   const x = (target?.x || 0) - (at?.x || 0);
   const z = (target?.z || 0) - (at?.z || 0);
   const right = x * Math.cos(heading) - z * Math.sin(heading);
@@ -39,6 +40,26 @@ export function fallbackOpponentPosition(course, player, opponent, index) {
     y: forward < 0 ? .68 + index * .065 : .29 + index * .065,
     direction: forward < 0 ? 'BEHIND' : right < -5 ? 'LEFT' : right > 5 ? 'RIGHT' : 'AHEAD',
   };
+}
+
+export function footCarDirection(course, state) {
+  const fighter = state?.fighter;
+  if (!fighter) return {distance: 0, angle: 0};
+  const car = course?.groundAt?.(state.s, state.lateral || 0);
+  if (!car) return {distance: 0, angle: 0};
+  const dx = car.x - fighter.x, dz = car.z - fighter.z;
+  const bearing = Math.atan2(dx, dz) - (fighter.yaw || 0);
+  return {distance: Math.round(Math.hypot(dx, dz)),
+    angle: Math.round(Math.atan2(Math.sin(bearing), Math.cos(bearing)) * 180 / Math.PI)};
+}
+
+export function footAmmoPresentation(state) {
+  const gear = state?.footGear;
+  if (!gear || typeof gear.name !== 'string')
+    return {name: 'NO FOOT WEAPON', ammo: 'AMMO —'};
+  const ammo = Number.isSafeInteger(gear.ammo) && gear.ammo >= 0
+    ? String(gear.ammo) : '—';
+  return {name: gear.name, ammo: `AMMO ${ammo}`};
 }
 
 function setText(node, value) {
@@ -72,6 +93,9 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
   host.innerHTML = `<div class="combat-opponent-layer" aria-label="Opponent armor and positions"></div>
     <div class="combat-hit-marker" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-damage-direction" aria-hidden="true"><span>▲</span></div>
+    <div class="combat-foot-reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b>YOUR CAR</b><strong></strong></div>
+    <div class="combat-foot-gear" aria-label="On-foot weapon and ammunition"><b></b><strong></strong></div>
     <div class="combat-slot-bar" role="group" aria-label="Combat weapons">
       ${Object.entries(WEAPONS).map(([id, weapon]) => `<button type="button" data-combat-weapon="${id}" title="${weapon.name} · Key ${weapon.key} · Gamepad D-pad ${padDirections[id]}"><span class="combat-slot-ring" aria-hidden="true"></span><span class="combat-slot-key">${weapon.key} ${directions[id]}</span><span class="combat-slot-name">${weapon.name}</span><span class="combat-slot-state"></span></button>`).join('')}
     </div>`;
@@ -81,6 +105,11 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
   playerArmor.hidden = true;
   playerArmor.innerHTML = `<span><b>PLAYER ARMOR</b><strong></strong></span><div class="combat-armor-track"><i></i></div>`;
   root.querySelector('.race-health').append(playerArmor);
+  const footHealth = document.createElement('div');
+  footHealth.className = 'combat-foot-health';
+  footHealth.hidden = true;
+  footHealth.innerHTML = `<span><b>FIGHTER HEALTH</b><strong></strong></span><div class="combat-armor-track"><i></i></div>`;
+  root.querySelector('.race-health').append(footHealth);
 
   const layer = host.querySelector('.combat-opponent-layer');
   const markers = [];
@@ -89,6 +118,12 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
   const damageArrow = host.querySelector('.combat-damage-direction');
   const armorValue = playerArmor.querySelector('strong');
   const armorFill = playerArmor.querySelector('i');
+  const footHealthValue = footHealth.querySelector('strong');
+  const footHealthFill = footHealth.querySelector('i');
+  const carDistance = host.querySelector('.combat-foot-car strong');
+  const carArrow = host.querySelector('.combat-foot-car-arrow');
+  const footGearName = host.querySelector('.combat-foot-gear b');
+  const footGearAmmo = host.querySelector('.combat-foot-gear strong');
   let hitUntil = -1, damageUntil = -1, damageDirection = 'front';
   let previousZones = null;
 
@@ -119,10 +154,28 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
 
   function update(state) {
     const active = combatHudEnabled(app.duel, state);
+    const onFoot = active && state.onFoot && !!state.fighter;
     if (host.hidden === active) host.hidden = !active;
-    if (playerArmor.hidden === active) playerArmor.hidden = !active;
+    if (playerArmor.hidden === (active && !onFoot)) playerArmor.hidden = !active || onFoot;
+    if (footHealth.hidden === onFoot) footHealth.hidden = !onFoot;
     root.querySelector('#stage').classList.toggle('combat-upgraded', active);
+    host.classList.toggle('on-foot', onFoot);
     if (!active) return;
+
+    if (onFoot) {
+      const health = Math.max(0, Math.min(100, Number(state.fighter.health) || 0));
+      setText(footHealthValue, `${Math.round(health)} / 100`);
+      setFraction(footHealthFill, health / 100);
+      footHealth.classList.toggle('is-critical', health <= 25);
+      footHealth.classList.toggle('is-knocked-down', !!state.fighter.knockedDown);
+      const direction = footCarDirection(app.duel.course, state);
+      setText(carDistance, `${direction.distance} m`);
+      const rotation = `rotate(${direction.angle}deg)`;
+      if (carArrow.style.transform !== rotation) carArrow.style.transform = rotation;
+      const gear = footAmmoPresentation(state);
+      setText(footGearName, gear.name);
+      setText(footGearAmmo, gear.ammo);
+    }
 
     const combat = state.combat;
     const armor = armorPresentation(state);
@@ -136,7 +189,7 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
       const id = button.dataset.combatWeapon;
       const left = Math.max(0, combat.cooldowns[id] || 0);
       const blocked = id === 'ufo' && ufo?.kind === 'blocked';
-      const disabled = state.status !== 'racing' || state.paused || left > 0 || blocked;
+      const disabled = onFoot || state.status !== 'racing' || state.paused || left > 0 || blocked;
       const full = WEAPONS[id].cooldown * (1 - (combat.levels[id] || 0) * COMBAT_TUNING.cooldownUpgradeDiscount);
       const angle = `${Math.round(360 * (1 - clamp(left / Math.max(.01, full))))}deg`;
       if (button.style.getPropertyValue('--ready-angle') !== angle) button.style.setProperty('--ready-angle', angle);
@@ -158,7 +211,8 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
       if (!opponent) {marker.hidden = true; continue;}
       const projection = projected.find(item => item.index === index);
       const exact = projection?.visible === true;
-      const position = exact ? projection : fallbackOpponentPosition(app.duel.course, state, opponent, index);
+      const position = exact ? projection : fallbackOpponentPosition(app.duel.course,
+        onFoot ? state.fighter : state, opponent, index);
       marker.hidden = !!opponent.finished || !!opponent.crushed;
       marker.dataset.placement = exact ? 'over-car' : 'direction';
       // Keep the whole label on screen when the car reaches the camera edge.
@@ -178,5 +232,5 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
     previousZones = {...state.damageZones};
   }
 
-  return {update, dispose() {off(); host.remove(); playerArmor.remove();}};
+  return {update, dispose() {off(); host.remove(); playerArmor.remove(); footHealth.remove();}};
 }

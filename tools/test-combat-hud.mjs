@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {armorPresentation, combatHudEnabled, damageZoneFromChange,
-  fallbackOpponentPosition} from '../src/combat-hud.js';
+  fallbackOpponentPosition, footCarDirection, footAmmoPresentation} from '../src/combat-hud.js';
 
 test('combat HUD requires the Wasteland 2 switch and an active combat race', () => {
   const state = {mode: 'wasteland', status: 'racing', combat: {}};
@@ -32,4 +32,22 @@ test('offscreen marker distinguishes a car ahead from one behind', () => {
   const player = {s: 100, lateral: 0};
   assert.equal(fallbackOpponentPosition(course, player, {s: 140, lateral: -8}, 0).direction, 'LEFT');
   assert.equal(fallbackOpponentPosition(course, player, {s: 80, lateral: 0}, 0).direction, 'BEHIND');
+});
+
+test('on-foot car pointer follows fighter position and facing', () => {
+  const course = {groundAt: (s, lateral) => ({x: lateral, z: s})};
+  const state = {s: 100, lateral: 0, fighter: {x: 0, z: 90, yaw: 0}};
+  assert.deepEqual(footCarDirection(course, state), {distance: 10, angle: 0});
+  state.fighter.x = 10;
+  state.fighter.z = 100;
+  assert.deepEqual(footCarDirection(course, state), {distance: 10, angle: -90});
+  state.fighter.yaw = -Math.PI / 2;
+  assert.deepEqual(footCarDirection(course, state), {distance: 10, angle: 0});
+});
+
+test('on-foot ammo does not imply an unbuilt weapon is ready', () => {
+  assert.deepEqual(footAmmoPresentation({onFoot: true}),
+    {name: 'NO FOOT WEAPON', ammo: 'AMMO —'});
+  assert.deepEqual(footAmmoPresentation({footGear: {name: 'RPG', ammo: 3}}),
+    {name: 'RPG', ammo: 'AMMO 3'});
 });
