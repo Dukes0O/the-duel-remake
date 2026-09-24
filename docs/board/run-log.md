@@ -819,24 +819,24 @@ checkout untouched until the final integration commit passes the full gate.
 - Integrated f57ceda after independent review, five-suite lane gate
   (37.11 seconds) and build. Gates and active prompts now match SPEC 0.5.
   STATUS refreshed after merge. Release-specific evidence remains required.
-- BAL-01 is building after its independent red tests99c7795. GFX-00 is ready
+- BAL-01 is building after its independent red tests 99c7795. GFX-00 is ready
   for independent test preparation; its merge must follow BAL-01.
 - Quota before GFX dispatch: 46 percent remaining. Full tier is due after
   two more task merges or 06:02 UTC, whichever comes first.
 
 ## 2026-09-23 PDT — flagged balance measured; Blender build started
 
-- BAL-01 candidate4b50311 passed its thirteen acceptance groups and six-suite
-  lane gate/build. Its full flag-off report passes: wins9/6/2, hits1/3/7,
-  crossbow50 percent, maximum own-bomb slowdown4.53 percent.
-- Flag-on report fails seven gameplay targets: wins2/2/4, enemy hits12/10/9,
-  crossbow69 percent, stock UFO Easy gain4.75 s and max UFO Hard5.27 s.
-  Both complete reports finished all races, in about70 and73 seconds.
+- BAL-01 candidate 4b50311 passed its thirteen acceptance groups and six-suite
+  lane gate/build. Its full flag-off report passes: wins 9/6/2, hits 1/3/7,
+  crossbow 50 percent, maximum own-bomb slowdown 4.53 percent.
+- Flag-on report fails seven gameplay targets: wins 2/2/4, enemy hits 12/10/9,
+  crossbow 69 percent, stock UFO Easy gain 4.75 s and max UFO Hard 5.27 s.
+  Both complete reports finished all races, in about 70 and 73 seconds.
 - Independent review proved modern traffic obliteration was missing from
   wreck totals. Focused regression tests precede that reporting fix. A
   separate read-only analyst is tracing the gameplay failures before tuning.
-- GFX-00 red suiteed739a3 has twelve expected missing-pipeline failures;
-  unchanged ordinary replay fingerprints pass all162 checks. The Blender
+- GFX-00 red suite ed739a3 has twelve expected missing-pipeline failures;
+  unchanged ordinary replay fingerprints pass all 162 checks. The Blender
   builder now implements the owned rig, loader and matched contact sheet.
 
 ## 2026-09-23 PDT — existing BUG-06 tuning slice authorized
@@ -852,3 +852,21 @@ checkout untouched until the final integration commit passes the full gate.
 - Existing BUG-06 continues in a spare lane and cannot merge before BAL-01.
   It temporarily uses the BAL-01 tool candidate whose missing traffic count
   is under repair; that omission does not affect these accuracy/win targets.
+
+## 2026-09-23 PDT — reporting fix and held tuning candidate
+
+- BAL-01 traffic fix 052bf76 passes 21 acceptance checks. Refreshed reports
+  retain all gameplay results; traffic wrecks now count 5/5/2 off and 14/24/6
+  on. Independent re-review and the required lane/build gate are running.
+- Hold BUG-06 candidate dfe157e. The 3-degree cone improves Easy wins from
+  2/10 to 5/10 but drops Hard from 4/10 to 1/10; Medium stays 2/10.
+  Crossbow accuracy stays 18/26. Six flagged targets still fail. All UFO
+  samples now pass, showing their measured gains depend on combat outcomes.
+  No integration merge or threshold change is justified by this candidate.
+- GFX-00 has a complete matched contact sheet and unchanged ordinary replay
+  fingerprints. The builder is correcting floating boots in the walk clip
+  before independent visual and code review.
+- Removed clean, fully merged TRACK-01 and TRACK-02 lane folders with
+  git worktree remove after checking paths, ancestry and absence of QA
+  artifacts. Their branches remain. The AUD-02 lane keeps its WAV evidence.
+- Merge count remains 3; full tier is due at merge 5 or 06:02 UTC.
