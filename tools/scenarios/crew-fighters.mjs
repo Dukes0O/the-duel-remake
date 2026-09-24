@@ -3,6 +3,7 @@ import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
+import {selectCrew, selectedCrewId} from '../../src/crew.js';
 
 const CREW = ['rook','nell','jax','odessa','cinder','dune','wren','tusk'];
 const VIEWS = [['front',0],['side',Math.PI/2],['back',Math.PI]];
@@ -26,50 +27,50 @@ export async function run(context) {
   for (const id of CREW) evidence.assets[id] = {
     path:`public/assets/models/wasteland/crew/${id}.glb`,
     sha256:sha(await readFile(join(root,`public/assets/models/wasteland/crew/${id}.glb`)))};
+  const profile={wasteland:{version:1,xp:1000000,crew:{selected:'rook',unlocked:CREW}}};
+  const selected=CREW.map(id=>{
+    const choice=selectCrew(profile,id);
+    if(!choice.ok||selectedCrewId(choice.profile)!==id)throw Error('Crew selection failed '+id);
+    return {id,selected:selectedCrewId(choice.profile)};
+  });
   for (const quality of evidence.qualities) {
     await context.navigate('/tools/menu-check.html?flags=wasteland2');
     await context.waitFor("window.__qaApp?.visualReady && window.__render && !document.querySelector('#start-engine')?.disabled", 'ready private menu',60000);
     await context.evaluate(`(async () => {
-      if (window.localStorage !== window.__qaPhysicalStorage) throw Error('Private memory store missing');
+      if (!Object.getOwnPropertyDescriptor(window,'localStorage')?.value || !window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Private memory store missing');
       const app=window.__qaApp;
       const select=document.querySelector('#graphics-quality');
       select.value='${quality}';select.dispatchEvent(new Event('change',{bubbles:true}));
-      const THREE=await import('/node_modules/three/build/three.module.js');
-      const foot=await import('/src/onfoot.js');
-      const transition=await import('/src/onfoot-transition.js');
-      const crew=await import('/src/crew.js');
-      const profile={wasteland:{version:1,xp:1000000,crew:{selected:'rook',unlocked:${JSON.stringify(CREW)}}}};
-      const selected=${JSON.stringify(CREW)}.map(id=>{
-        const choice=crew.selectCrew(profile,id);
-        if(!choice.ok||crew.selectedCrewId(choice.profile)!==id)throw Error('Crew selection failed '+id);
-        return {id,selected:crew.selectedCrewId(choice.profile)};
-      });
       app.startCampaign({mode:'wasteland',startStage:0,seed:1989});app.stop();
       const s=app.duel.state;
       Object.assign(s,{status:'racing',countdown:0,paused:false,s:500,prevS:500,speedMph:0,traffic:[],opponents:[],stageTimeSec:10,crewId:'rook'});
       s.raids=null;s.combat.aiTimer=Infinity;s.combat.pickupTimer=Infinity;
       s.input.interact=true;
-      for(let i=0;i<50&&!s.onFoot;i++)transition.stepFootTransition(app.duel,1/120);
+      for(let i=0;i<50&&!s.onFoot;i++)app.duel.step(1/120);
       if(!s.onFoot||s.fighter.crewId!=='rook')throw Error('Production crew exit did not create fighter');
       s.input.interact=false;s.fighter.presentation=null;
-      window.__crewReview={THREE,foot,transition,selected};
+      window.__crewReview={selected:${JSON.stringify(selected)}};
       window.__render.renderFrame();
     })()`);
     await context.waitFor("window.__qaApp.visualReady && window.__render.scene.getObjectByName('Rigged on-foot fighters')?.userData.crews.rook==='ready'",'ready crew world',60000);
     const setup = await context.evaluate(`(() => {
-      const r=window.__render,s=window.__qaApp.duel.state,review=window.__crewReview,THREE=review.THREE;
+      const r=window.__render,s=window.__qaApp.duel.state,review=window.__crewReview;
       window.requestAnimationFrame=()=>0;r.renderFrame();
       review.rig=r.scene.getObjectByName('Rigged on-foot fighters');
       review.lights=[];r.scene.traverse(n=>{if(n.isLight)review.lights.push(n.clone());});
-      review.floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:0x777777,roughness:1}));
-      review.floor.rotation.x=-Math.PI/2;review.floor.position.y=-.012;review.floor.receiveShadow=true;
+      const skin=review.rig.getObjectByProperty('isSkinnedMesh',true);
+      const box=review.rig.getObjectByName('fighter-plates').geometry;
+      let plain;r.scene.traverse(n=>{if(!plain&&n.type==='Mesh')plain=n;});
+      const material=skin.material.clone();material.map=null;material.vertexColors=false;material.color.setHex(0x777777);material.roughness=1;
+      review.floor=new plain.constructor(new box.constructor(200,.02,200),material);
+      review.floor.position.y=-.022;review.floor.receiveShadow=true;
       r.scene.add(review.floor,...review.lights);
       review.show=()=>{
         for(const child of r.scene.children)child.visible=false;
         // Move the existing production fighter group under the same scene.
         r.scene.add(review.rig);review.rig.visible=true;review.floor.visible=true;
         for(const light of review.lights)light.visible=true;
-        r.scene.background=new THREE.Color(0x777777);r.scene.fog=null;r.scene.environment=null;
+        r.scene.background=material.color.clone();r.scene.fog=null;r.scene.environment=null;
         r.renderer.setPixelRatio(1);r.renderer.setSize(432,576,false);r.composer.setSize(432,576);
         r.renderer.shadowMap.enabled='${quality}'==='high';
         r.camera.position.set(0,.96,5);r.camera.lookAt(0,.96,0);
@@ -87,10 +88,10 @@ export async function run(context) {
       // The successful transition receives the selected crew ID, just as a new
       // campaign does. Reuse this isolated course to avoid eight world rebuilds.
       await context.evaluate(`(() => {
-        const app=window.__qaApp,s=app.duel.state,t=window.__crewReview.transition;
+        const app=window.__qaApp,s=app.duel.state;
         s.onFoot=false;s.fighter=null;s.crewId='${id}';s.input.interact=true;
         s.footTransition.needsRelease=false;s.footTransition.heldSeconds=0;
-        for(let i=0;i<50&&!s.onFoot;i++)t.stepFootTransition(app.duel,1/120);
+        for(let i=0;i<50&&!s.onFoot;i++)app.duel.step(1/120);
         if(s.fighter?.crewId!=='${id}')throw Error('Wrong selected crew after exit');
         s.input.interact=false;s.fighter.presentation=null;s.stageTimeSec=.25;
         Object.assign(s.fighter,{x:0,y:0,z:0,yaw:0,groundY:0,speed:0});
@@ -165,13 +166,21 @@ export async function run(context) {
       // Drive the actual camera far away before the production update reads it.
       // RenderFrame may restore its camera, so distance behavior is also recorded
       // against the public view in a separate independent Node acceptance test.
+      for(const raider of s.raids.zones[0].raiders)raider.z+=65;
+      r.renderFrame();
+      let distant=0,nearLocal=0;
+      review.rig.traverse(n=>{if(n.visible&&n.userData.clip){
+        if(n.userData.detail==='far')distant++;else nearLocal++;
+      }});
+      if(distant!==11||nearLocal!==1)throw Error('Production camera distance did not choose eleven far rigs and one local near rig');
+      for(const raider of s.raids.zones[0].raiders)raider.z-=65;
       const frames=[];
       for(let i=0;i<45;i++){
         const started=performance.now();r.renderFrame();review.show();r.renderer.render(r.scene,r.camera);
         if(i>=5)frames.push(performance.now()-started);
       }
       frames.sort((a,b)=>a-b);
-      return {near,firstPerson:{hiddenAtEye,visibleOutside},independentSkeletons:new Set(shown.map(n=>n.skeleton)).size,
+      return {near,lod:{distant,nearLocal},firstPerson:{hiddenAtEye,visibleOutside},independentSkeletons:new Set(shown.map(n=>n.skeleton)).size,
         cpuFrameMs:{median:frames[Math.floor(frames.length*.5)],p95:frames[Math.floor(frames.length*.96)],samples:frames.length,
           scope:'production update plus extra isolated colour render; CPU submission, not GPU time'},
         loadErrors:review.rig.userData.loadErrors};

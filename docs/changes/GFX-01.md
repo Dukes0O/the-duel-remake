@@ -21,3 +21,11 @@ Independent test author corrected the synthetic draw-call helper in cd9faab. A B
 ## Evidence and remaining work
 
 Round 1 capture/review is in progress. No beta promotion, broad lane gate or release claim yet. GFX-00 browser control now substitutes only crew GLB requests with the retained test fighter, preserving its original single-skin assertions; historical evidence remains untouched.
+
+## Round 1 browser evidence
+
+- Private port 51989, memory-only saves. 70 retained PNGs: 24 matched crew views per quality and 11 representative action poses per quality. No warnings or errors.
+- Both qualities: 12 visible near fighters, 12 independent skeletons, 12 color draw calls, 61,044 triangles. Moving raiders 65 m away selected eleven far LODs while the local fighter stayed near. First-person eye hiding and outside visibility passed.
+- CPU submission sample, 40 warmed frames: High median 2.7 ms / p95 3.0 ms; Performance median 1.5 ms / p95 2.0 ms. This includes production update plus an extra isolated color render; it is not a GPU frame-time claim.
+- Contact sheet: docs/board/looks/crew/round-1.png. Its manifest validates exact Blender/game cameras, idle clip/time/yaw, all eight asset hashes, reference crops and input image hashes. Raw game frames, captures.json and private browser report are retained in the round-1 folder.
+- Initial harness probe compared two disposable storage wrappers by identity and failed before capture; corrected it to verify the installed own-property memory store and QA tab namespace. The successful run used no physical player saves.
