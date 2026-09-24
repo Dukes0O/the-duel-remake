@@ -355,3 +355,24 @@ paused or inactive-state controls. No runtime or fingerprint changed.
 The focused scene-presentation suite passed in 0.146 seconds. The Director
 reviewed this exact truth-table diff and authorized the required clean lane/build
 rerun. The failed log will remain intact; rerun evidence uses new filenames.
+## Final required gate and development handoff
+
+The required gate passed on exact clean commit
+`8b3cb80ff984c50c323df9dc0c23fa8b1dc76e36`:
+
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 229 passed,
+  0 failed, 0 not run in 301.17 seconds (301.35 seconds including the wrapper).
+  Log: `.qa-dist/egg03-final-lane-recheck.log`.
+- `npm run build`: passed in 1.01 seconds (Vite build 520 ms). The existing
+  large-chunk advisory remains informational. Log: `.qa-dist/egg03-final-build.log`.
+
+HEAD was unchanged and the working tree was clean before and after both gates.
+The source tree stayed `aaeb4ee4dec3868a1333aca4290dab1775be6aeb`; the tools tree
+stayed `841c2778c8cea2593b954b25d62178729cd18cba`. The earlier failed gate log
+remains retained, together with the reviewed assertion correction above.
+
+This final append records evidence only. Runtime, Save Guardian, presentation,
+audio and Director reviews plus the clean required lane/build gate are complete.
+EGG-03 is ready for development integration, subject to the Director's merge
+process. No merge, board change, beta promotion or release was performed here.
+The documented Rustwall/wash polish debt and capture limits remain unchanged.
