@@ -70,4 +70,5 @@ export const COMBAT_TUNING=Object.freeze({
  },
  scoring:{comboWindowSeconds:5,maximumCombo:5,hitStylePoints:100,
   wreckStylePoints:400},
+ creditBonus:{perHit:10,perWreck:100,maximumBaseFraction:.25},
 });

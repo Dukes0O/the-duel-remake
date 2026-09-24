@@ -11,6 +11,7 @@ import {
 } from './drivers.js';
 import { normalizeCourseAccess } from './course-access.js';
 import { rivalSignature } from './rival-settings.js';
+import { COMBAT_TUNING } from './wasteland-tuning.js';
 
 export const PROFILE_KEY = 'the-duel-profile-v1';
 export const PLAYERS_KEY = 'the-duel-players-v2';
@@ -68,6 +69,14 @@ const completionCars = () =>
 const maxUpgradeLevels = () =>
   Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type => [type, 3]));
 const integer = (value, max) => Math.min(max, Math.max(0, Math.floor(Number(value) || 0)));
+const combatCount = value => Number.isSafeInteger(value) && value > 0 ? value : 0;
+function combatCreditBonus(result, base) {
+  const tuning = COMBAT_TUNING.creditBonus;
+  const cap = Math.round(base * tuning.maximumBaseFraction);
+  const hits = Math.min(combatCount(result.hitsLanded), Math.ceil(cap / tuning.perHit));
+  const wrecks = Math.min(combatCount(result.wrecksCaused), Math.ceil(cap / tuning.perWreck));
+  return Math.min(cap, hits * tuning.perHit + wrecks * tuning.perWreck);
+}
 const upgradeLevel = value =>
   ['number', 'string'].includes(typeof value) && Number.isFinite(Number(value))
     ? integer(value, 3)
@@ -571,6 +580,7 @@ export function settleRace(profile, result = {}) {
   const cpu = Object.hasOwn(CPU_REWARDS, result.cpuDifficulty) ? result.cpuDifficulty : 'easy',
     base = CPU_REWARDS[cpu],
     finished = isCompletedRace(result),
+    combatRace = result.mode === 'wasteland' && result.combatRewardsEnabled === true,
     recordEligible = isValidFinish(result),
     won = result.won && recordEligible;
   const comparison = bestKey({ ...result, cpuDifficulty: cpu }),
@@ -599,7 +609,7 @@ export function settleRace(profile, result = {}) {
         : 'improved';
   const milestones = finishMilestones(profile, result, { finished, won, improved });
   const breakdown = {
-    base: won ? base : -Math.round(base * 0.5),
+    base: won ? base : combatRace ? 0 : -Math.round(base * 0.5),
     clean: won && result.clean === true ? Math.round(base * 0.1) : 0,
     personalBest: personalBestStatus === 'improved' ? Math.round(base * 0.2) : 0,
     streak: won && streak >= 3 ? Math.round(base * 0.2) : 0,
@@ -607,6 +617,7 @@ export function settleRace(profile, result = {}) {
     crush: Math.round(base * 0.05 * crushed),
     drift: Math.round(base * driftBonus),
     police: Math.round(base * 0.1 * policeEscapes),
+    ...(combatRace ? { combat: finished ? combatCreditBonus(result, base) : 0 } : {}),
     manual: 0,
     milestones: milestones.reward
   };
@@ -619,9 +630,10 @@ export function settleRace(profile, result = {}) {
     breakdown.jumps +
     breakdown.crush +
     breakdown.drift +
-    breakdown.police;
+    breakdown.police +
+    (breakdown.combat || 0);
   breakdown.manual = result.difficulty === 'pro' ? (won ? base : 0) + recurringBonus : 0;
-  const charge = won ? 0 : Math.min(profile.credits, -breakdown.base),
+  const charge = won || combatRace ? 0 : Math.min(profile.credits, -breakdown.base),
     bonus = recurringBonus + breakdown.manual + breakdown.milestones;
   const grossReward = (won ? base : -charge) + bonus;
   const pendingFines =

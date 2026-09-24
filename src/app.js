@@ -356,6 +356,7 @@ export class App {
     const payload={...result,runId:this.runId,stageIndex:state.stageIndex,won:result.won===true,completed:result.completed===true,
       timeSec:result.timeSec??result.stageTimeSec,laps:result.laps??state.completedLaps,seed:state.seed,car:state.car,driverId:state.driverId,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,
       upgrades:{...state.upgrades},rival:state.rivalSettings,weaponLevels:state.weaponLevels,policeEscapes:result.policeEscapes??state.policeEscapes,
+      combatRewardsEnabled:state.mode==='wasteland'&&this.duel.featureFlags.enabled('wasteland2'),
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     const awarded=settleRace(this.profile,payload);
     if(awarded.awarded){
