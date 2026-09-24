@@ -1,6 +1,6 @@
 ---
 task: TRACK-01
-status: review
+status: ready-to-merge
 kind: tooling
 flag: none
 player_facing: no
@@ -62,3 +62,13 @@ regressions in `f4aa57d` strengthen the evidence fixtures to match the actual
 writer and reject missing, mistyped and contradictory fields. The reviewer
 approved those test changes; no assertion was weakened. The reader now validates
 the full ledger schema and all passing conditions before granting exact HEAD.
+
+## Independent gate and review
+
+The reviewer confirmed the P1 fix in 3c20dce and approved the stronger
+fixtures in f4aa57d; no blocker remains. On combined lane HEAD 3da6c9f,
+`node tools/run-tests.mjs --tier lane --changed --jobs 8` passed six selected
+suites (1,483 checks) in 39.25 seconds. The production build passed in 1.66
+seconds with the existing chunk-size advisory. The tree stayed clean.
+The changed-file gate did not select campaigns or replay suites; game and
+fingerprint files are unchanged. No extra broad run is claimed.
