@@ -1,5 +1,7 @@
 # RAID-01 — roadside ambush zones
 
+Integrated at `9565ed5` in the Wasteland development branch.
+
 ## Behavior
 
 - The 11 combat courses each have three seeded ambush zones. Each zone has three raiders standing beyond the road edge. Positions vary by seed and avoid tunnels, stations and nearby obstacles. Arena raiders stand inside the perimeter wall.

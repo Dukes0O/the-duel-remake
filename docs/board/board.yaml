@@ -884,3 +884,14 @@ tasks:
     behavior_change: yes
     note: "Eight rank-gated crew with per-player selection, Rook health and Wren sprint perks, and distinct pooled figure colors/silhouettes integrated at 68bbb8a. Future perks and signature gear are labelled. Focused three-case check, private Armory/Garage/race browser scene and build passed."
     spec: "SPEC.md sections 3.5 and 12.2, task CREW-01"
+  - id: RAID-01
+    title: "Seeded roadside ambush zones"
+    wave: 6
+    lane: SIM
+    size: M
+    needs: [RFX-03]
+    status: integrated
+    flag: wasteland2
+    behavior_change: yes
+    note: "Three seeded three-raider camps on each combat course, warning posts, capped bolts and separate raider ownership integrated at 9565ed5. Four focused cases, one private scene and build passed. Invulnerable stationary raiders and salvage are RAID-02 work; lap-shot allocation needs balance review."
+    spec: "SPEC.md sections 3.4 and 12.2, task RAID-01"

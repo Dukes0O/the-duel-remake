@@ -686,3 +686,9 @@ checkout untouched until the final integration commit passes the full gate.
   marked as later work. Four pooled figure meshes keep the same draw-call
   budget. Three focused checks, one private memory-only
   Armory→Garage→race flow and build passed.
+- RAID-01 integrated at `9565ed5`: each of the 11 combat courses has three
+  seeded roadside camps of three raiders. Warning posts and callouts precede
+  bounded crossbow fire at passing cars. Raider damage has separate ownership
+  so it cannot grant player combat credit. Four focused cases, one private
+  memory-only scene and build passed. Stationary, invulnerable raiders and
+  salvage crates are next-card limits; frame pacing has not been sampled.
