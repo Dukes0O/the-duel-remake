@@ -161,7 +161,8 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
       const position = exact ? projection : fallbackOpponentPosition(app.duel.course, state, opponent, index);
       marker.hidden = !!opponent.finished || !!opponent.crushed;
       marker.dataset.placement = exact ? 'over-car' : 'direction';
-      marker.style.left = `${(clamp(position.x) * 100).toFixed(1)}%`;
+      // Keep the whole label on screen when the car reaches the camera edge.
+      marker.style.left = `${(Math.max(.11, Math.min(.89, clamp(position.x))) * 100).toFixed(1)}%`;
       marker.style.top = `${(clamp(position.y) * 100).toFixed(1)}%`;
       const opponentArmor = armorPresentation(opponent);
       setText(marker.querySelector('.combat-marker-heading'), index ? `OPPONENT ${index + 1}` : 'RIVAL');
@@ -174,7 +175,7 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
     hitMarker.classList.toggle('is-visible', hitUntil > state.stageTimeSec && !state.paused);
     damageArrow.classList.toggle('is-visible', damageUntil > state.stageTimeSec && !state.paused);
     if (damageArrow.dataset.direction !== damageDirection) damageArrow.dataset.direction = damageDirection;
-    if (!previousZones) previousZones = {...state.damageZones};
+    previousZones = {...state.damageZones};
   }
 
   return {update, dispose() {off(); host.remove(); playerArmor.remove();}};
