@@ -977,3 +977,11 @@ checkout untouched until the final integration commit passes the full gate.
   check (7,221,395 bytes). Its lane/build gate and merge wait behind EGG-01.
   GFX-01 read-only scoping identifies existing crew IDs and required narrow
   animation-state hooks; no simulation or renderer work has begun there yet.
+
+## 2026-09-23 PDT - GFX-01 preparation and targeted corrections
+
+- Expand GFX-01 into explicit Blender asset, runtime presentation and fidelity evidence ownership. Independent tests start from the merged GFX-00 pipeline; completion remains after ART-W.
+- EGG-01 return sinking was stale synthetic support height in the browser fixture. Corrected wheel clearance is about 10 mm. Honest replacement views exposed fitted ground crossing the asphalt; authorize a narrow patch clip and additive ABC road-ray regression in its owned render test.
+- BUG-06 candidate 280b25d corrects ten reviewed direct-hit fixture positions without changing assertions or runtime. Its 42 repaired unit checks pass; representative wreck/results browser checks and the final required lane/build gate follow.
+- Budget before GFX-01: 39 percent remaining; no push or release. Scheduled full remains due at 07:39 UTC or after five further task merges.
+
