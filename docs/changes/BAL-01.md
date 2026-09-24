@@ -1,6 +1,6 @@
 ---
 task: BAL-01
-status: review
+status: ready-for-integration
 kind: tooling
 flag: none
 player_facing: no
@@ -128,6 +128,14 @@ race fingerprints were regenerated. The independent short flag-off comparison
 passes; a separate fingerprint suite was not run by the builder. Browser checks
 are not applicable to this headless tool. No live server or real saves were used.
 
-Independent runner and reviewer results, the required lane/build gate, and
-TRACK-02 completion remain required before integration. The Director coordinates
-those checks; the builder did not repeat a broad gate.
+Independent re-review of `052bf76` found no remaining blocker. The traffic
+identity guard matches the current lifecycle: destroyed actors never respawn,
+stages create new objects and each measured race gets a new guard. Existing
+assertions were not weakened.
+
+The independent runner verified clean `052bf76` before and after:
+`node tools/run-tests.mjs --tier lane --changed --jobs 8` passed all six selected
+suites and 1,303 checks in 38.18 seconds. `npm run build` passed in 1.03 seconds
+with the existing chunk-size warning. No selected suite was skipped. This
+handoff update changes only the note after those code gates; it does not claim
+an exact-commit full tier. TRACK-02 is already integrated.
