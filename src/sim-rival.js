@@ -134,9 +134,10 @@ export function _rival(dt, opponent = this.state.rival) {
   const rubber = clamp((s.s - r.s) * .012, -8, 8);
   let target = targetPace + rubber;
   if (mediumCatchup) target = Math.min(target, car.topSpeed);
-  if (s.mode === 'wasteland' && s.cpuDifficulty === 'hard') {
+  if (s.mode === 'wasteland' && s.cpuDifficulty === 'hard' && !s.onFoot) {
     // A Wasteland rival stays near enough to fight instead of driving away
-    // after an impact. It slows through normal braking, then resumes pace.
+    // after an impact. A parked player is an ambush, not a pace target:
+    // slowing to match the stopped car would make every on-foot stop a free win.
     const attackLead = clamp((r.s - s.s - 90) / 90, 0, 1);
     target = Math.min(target, target * (1 - attackLead) + 140 * attackLead);
   }
