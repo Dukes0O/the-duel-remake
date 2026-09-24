@@ -14,7 +14,7 @@ const output = resolve(value('--output', join(root,'docs/board/looks/test-fighte
 const capturesPath = resolve(value('--captures', join(root,'docs/board/looks/test-fighter/captures.json')));
 const captures = JSON.parse(await readFile(capturesPath,'utf8'));
 const blender = JSON.parse(await readFile(join(root,'docs/board/looks/test-fighter/blender.json'),'utf8'));
-const rel = path => relative(root, path).replaceAll('\\','/');
+const rel = path => relative(root, resolve(root, path)).replaceAll('\\','/');
 const directory = dirname(output);
 await mkdir(directory,{recursive:true});
 const sourceReference = 'public/assets/reference/wasteland-crew-1.png';

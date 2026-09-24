@@ -1,13 +1,33 @@
 import {writeFile, mkdir} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
+import {createFighter, stepFighter, knockdownFighter} from '../../src/onfoot.js';
+
+function productionPoses() {
+  const course = {def:{}, groundAt:(s,lateral)=>({x:lateral,y:0,z:s,heading:0}),
+    nearest:(x,z)=>({s:z,lateral:x}), obstaclesNear:()=>[]};
+  const car = {s:0,lateral:0};
+  const idle = createFighter(course,car,{s:0,lateral:0});
+  const walk = createFighter(course,car,{s:0,lateral:0});
+  const knockdown = createFighter(course,car,{s:0,lateral:0});
+  for (let tick=0;tick<30;tick++) {
+    stepFighter(course,car,idle,{});
+    stepFighter(course,car,walk,{forward:true});
+  }
+  knockdownFighter(knockdown);
+  for (let tick=0;tick<120;tick++) stepFighter(course,car,knockdown,{});
+  if (!(walk.speed>0) || idle.speed!==0 || knockdown.speed!==0)
+    throw Error('Production pose movement state is invalid');
+  return {idle,walk,knockdown};
+}
 
 // Uses the production combat hook, loaded skin and quality pipelines. The
 // private harness installs memory-only storage before production code starts.
 export async function run(context) {
   const directory = fileURLToPath(new URL('../../docs/board/looks/test-fighter/', import.meta.url));
   await mkdir(directory, {recursive:true});
-  const evidence = {qualities: ['high','performance'], captures: [], counts: {}, loadErrors: []};
+  const samples = productionPoses();
+  const evidence = {movementSource:'Production createFighter/stepFighter: 30 fixed steps idle/walk, knockdownFighter then 120 fixed steps down', qualities: ['high','performance'], captures: [], counts: {}, loadErrors: []};
   for (const quality of evidence.qualities) {
     await context.command('Emulation.setDeviceMetricsOverride',
       {width:900,height:800,deviceScaleFactor:1,mobile:false});
@@ -24,8 +44,7 @@ export async function run(context) {
       Object.assign(s,{status:'racing',countdown:0,paused:false,s:500,prevS:500,
         speedMph:0,traffic:[],opponents:[],onFoot:true,stageTimeSec:.25});
       const p=app.duel.course.groundAt(500,3);
-      s.fighter={x:p.x,y:p.y,z:p.z,s:500,lateral:3,yaw:0,pitch:0,
-        groundY:p.y,airHeight:0,steps:30,health:100,maxHealth:100,knockedDown:false};
+      s.fighter={...${JSON.stringify(samples.idle)},x:p.x,y:p.y,z:p.z,s:500,lateral:3,groundY:p.y};
       s.raids=null;s.combat.aiTimer=Infinity;s.combat.pickupTimer=Infinity;
       window.__render.renderFrame();
     })()`);
@@ -79,8 +98,7 @@ export async function run(context) {
       for (const [view,yaw] of [['front',0],['side',Math.PI/2],['back',Math.PI]]) {
         const result = await context.evaluate(`(() => {
           const r=window.__render,app=window.__qaApp,s=app.duel.state;
-          Object.assign(s.fighter,{x:0,y:0,z:0,yaw:${yaw},speed:${clip === 'walk' ? 1 : 0},
-            knockedDown:${clip === 'knockdown'},knockdownRemaining:${3-time}});
+          Object.assign(s.fighter,${JSON.stringify(samples[clip])},{x:0,y:0,z:0,yaw:${yaw}});
           s.stageTimeSec=${time};
           // Only the combat hook updates the actual rig; use an explicit frame,
           // then restore the matched review camera and neutral scene.
@@ -112,15 +130,15 @@ export async function run(context) {
         await writeFile(path,Buffer.from(result.png.split(',')[1],'base64'));
         context.screenshots.push(path);
         const {png,...metrics}=result;
-        evidence.captures.push({quality,clip,time,view,yaw,path,metrics});
+        evidence.captures.push({quality,clip,time,view,yaw,path:`docs/board/looks/test-fighter/game-${quality}-${clip}-${view}.png`,metrics});
       }
     }
     const twelve=await context.evaluate(`(() => {
       const r=window.__render,s=window.__qaApp.duel.state,review=window.__fighterReview;
       s.raids={zones:[{warning:{x:0,y:0,z:0,heading:0},raiders:Array.from({length:11},(_,i)=>({
-        ...s.fighter,x:(i%4-1.5)*1.05,z:-Math.floor(i/4)*1.05,yaw:0,
-        knockedDown:false,speed:0})),salvage:null}]};
-      Object.assign(s.fighter,{x:1.6,z:-2.1,yaw:0,knockedDown:false,speed:0});
+        ...${JSON.stringify(samples.idle)},x:(i%4-1.5)*1.05,z:-Math.floor(i/4)*1.05,yaw:0,
+        knockedDown:false})),salvage:null}]};
+      Object.assign(s.fighter,${JSON.stringify(samples.idle)},{x:1.6,z:-2.1,yaw:0,knockedDown:false});
       r.renderFrame();
       for(const child of r.scene.children)child.visible=false;
       review.rig.visible=true;

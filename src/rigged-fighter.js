@@ -5,6 +5,8 @@ import {createOnFootFigures, MAX_FIGHTER_FIGURES} from './onfoot-figures.js';
 
 const ASSET_URL = '/assets/models/wasteland/test-fighter.glb';
 const CLIPS = ['idle', 'walk', 'knockdown'];
+const EMPTY = Object.freeze([]);
+const DEFAULT_OPTIONS = Object.freeze({active: false, enabled: false, time: 0});
 
 function releaseAsset(asset) {
   const geometries = new Set(), materials = new Set(), textures = new Set(), skeletons = new Set();
@@ -26,8 +28,14 @@ function validateAsset(asset) {
     throw new Error('Fighter asset needs a bound skin and idle, walk and knockdown clips.');
 }
 
-// All animation time comes from the simulation snapshot, never the render clock.
-// The existing pooled figures remain visible until the complete rig is ready.
+function validEntry(entry) {
+  const fighter = entry?.fighter || entry;
+  return Number.isFinite(fighter?.x) && Number.isFinite(fighter?.y) &&
+    Number.isFinite(fighter?.z) && Number.isFinite(fighter?.yaw);
+}
+
+// Clip selection and animation time both come from the simulation snapshot.
+// The fallback remains available until the complete fixed rig pool is ready.
 export function createRiggedFighterFigures({
   loadAsset = () => new GLTFLoader().loadAsync(ASSET_URL),
 } = {}) {
@@ -36,10 +44,23 @@ export function createRiggedFighterFigures({
   const fallback = createOnFootFigures();
   group.add(fallback.group);
   const figures = [];
+  const roster = new Array(MAX_FIGHTER_FIGURES);
+  const fallbackOptions = {active: false};
   const eye = new THREE.Vector3();
   let asset = null, attempted = false, disposed = false;
   group.userData.assetStatus = 'unrequested';
   group.userData.loadErrors = [];
+
+  function releaseFigures() {
+    for (let index = 0; index < figures.length; index++) {
+      const figure = figures[index];
+      figure.mixer.stopAllAction();
+      figure.mixer.uncacheRoot(figure.model);
+      figure.model.traverse(node => { if (node.isSkinnedMesh) node.skeleton.dispose(); });
+      figure.root.removeFromParent();
+    }
+    figures.length = 0;
+  }
 
   function loadOnce() {
     if (attempted) return;
@@ -47,7 +68,15 @@ export function createRiggedFighterFigures({
     group.userData.assetStatus = 'loading';
     Promise.resolve().then(loadAsset).then(loaded => {
       if (disposed) { releaseAsset(loaded); return; }
-      try { validateAsset(loaded); } catch (error) { releaseAsset(loaded); throw error; }
+      try {
+        validateAsset(loaded);
+        // Prepare all skeletons and actions once, outside the update loop.
+        for (let index = 0; index < MAX_FIGHTER_FIGURES; index++) makeFigure(index, loaded);
+      } catch (error) {
+        releaseFigures();
+        releaseAsset(loaded);
+        throw error;
+      }
       asset = loaded;
       group.userData.assetStatus = 'ready';
     }).catch(error => {
@@ -57,21 +86,19 @@ export function createRiggedFighterFigures({
     });
   }
 
-  function makeFigure(index) {
+  function makeFigure(index, loaded) {
     const root = new THREE.Group();
     root.name = 'rigged-fighter-' + index;
-    const model = cloneSkeleton(asset.scene);
+    root.visible = false;
+    const model = cloneSkeleton(loaded.scene);
     root.add(model);
-    group.add(root);
     const mixer = new THREE.AnimationMixer(model);
-    const actions = Object.fromEntries(asset.animations.map(clip => [clip.name, mixer.clipAction(clip)]));
-    const figure = {root, model, mixer, actions, fighter: null, local: false, last: null, clip: null};
+    const actions = Object.fromEntries(loaded.animations.map(clip => [clip.name, mixer.clipAction(clip)]));
+    const figure = {root, model, mixer, actions, fighter: null, local: false, clip: null};
     model.traverse(mesh => {
       if (!mesh.isMesh) return;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-      // Animated bounds can leave the rest-pose bounds. Twelve bounded figures
-      // are cheaper and safer than rebuilding their skinned bounds every frame.
       mesh.frustumCulled = false;
       const range = {...mesh.geometry.drawRange};
       mesh.onBeforeRender = (_renderer, _scene, camera) => {
@@ -83,19 +110,11 @@ export function createRiggedFighterFigures({
       mesh.onAfterRender = () => mesh.geometry.setDrawRange(range.start, range.count);
     });
     figures.push(figure);
-    return figure;
   }
 
   function pose(figure, entry, time) {
     const fighter = entry.fighter || entry;
-    const last = figure.last;
-    // Position history is sampled once per simulation time, so rendering the
-    // same snapshot twice cannot change a walking fighter into an idle fighter.
-    const sameActor = last?.fighter === fighter;
-    let moving = sameActor && last.time === time ? last.moving : false;
-    if (sameActor && time > last.time)
-      moving = Math.hypot(fighter.x - last.x, fighter.z - last.z) > .0001;
-    if (Number.isFinite(fighter.speed)) moving = Math.abs(fighter.speed) > .01;
+    const moving = Number.isFinite(fighter.speed) && fighter.speed > .01;
     const clip = fighter.knockedDown ? 'knockdown' : moving ? 'walk' : 'idle';
     if (figure.clip !== clip) {
       figure.mixer.stopAllAction();
@@ -111,7 +130,6 @@ export function createRiggedFighterFigures({
       ? Math.min(action.getClip().duration, Math.max(0,
         Number.isFinite(fighter.knockdownRemaining) ? 3 - fighter.knockdownRemaining : time))
       : time;
-    // Re-enable a clamped action when replay time moves backwards.
     action.paused = false;
     action.enabled = true;
     figure.mixer.setTime(clipTime);
@@ -122,39 +140,52 @@ export function createRiggedFighterFigures({
     figure.root.userData.clipTime = clipTime;
     figure.fighter = fighter;
     figure.local = entry.local === true;
-    figure.last = {fighter, time, moving, x: fighter.x, z: fighter.z};
+    if (!figure.root.parent) group.add(figure.root);
     figure.root.updateMatrixWorld(true);
   }
 
-  function update(fighters = [], {active = false, enabled = false, time = 0} = {}) {
+  function update(fighters = EMPTY, options = DEFAULT_OPTIONS) {
     if (disposed) return 0;
-    const valid = (Array.isArray(fighters) ? fighters : []).filter(entry => {
-      const f = entry?.fighter || entry;
-      return ['x', 'y', 'z', 'yaw'].every(key => Number.isFinite(f?.[key]));
-    });
-    const local = valid.find(entry => entry.local);
-    const roster = valid.filter(entry => !entry.local).slice(0, MAX_FIGHTER_FIGURES - (local ? 1 : 0));
-    if (local) roster.push(local);
-    const show = active && roster.length > 0;
+    const active = options.active === true, enabled = options.enabled === true;
+    const time = Number.isFinite(options.time) ? Math.max(0, options.time) : 0;
+    const entries = Array.isArray(fighters) ? fighters : EMPTY;
+    let local = null, count = 0;
+    // Reserve the final slot for the local fighter without temporary arrays.
+    if (active) {
+      for (let index = 0; index < entries.length; index++) {
+        const entry = entries[index];
+        if (entry?.local && validEntry(entry)) { local = entry; break; }
+      }
+      const capacity = MAX_FIGHTER_FIGURES - (local ? 1 : 0);
+      for (let index = 0; index < entries.length && count < capacity; index++) {
+        const entry = entries[index];
+        if (!entry?.local && validEntry(entry)) roster[count++] = entry;
+      }
+      if (local) roster[count++] = local;
+    }
+    for (let index = count; index < MAX_FIGHTER_FIGURES; index++) roster[index] = null;
+    const show = count > 0;
     group.visible = show;
     if (show && enabled) loadOnce();
     const useRig = show && enabled && asset !== null;
-    fallback.update(roster, {active: show && !useRig});
-    for (const figure of figures) figure.root.visible = false;
-    if (useRig) roster.forEach((entry, index) =>
-      pose(figures[index] || makeFigure(index), entry, Number.isFinite(time) ? Math.max(0, time) : 0));
-    return show ? roster.length : 0;
+    for (let index = 0; index < figures.length; index++) figures[index].root.visible = false;
+    if (useRig) {
+      fallback.group.visible = false;
+      for (let index = 0; index < count; index++) pose(figures[index], roster[index], time);
+    } else if (show) {
+      fallbackOptions.active = true;
+      fallback.update(roster, fallbackOptions);
+    } else {
+      fallback.group.visible = false;
+    }
+    return count;
   }
 
   return {group, update, dispose() {
     if (disposed) return;
     disposed = true;
     fallback.dispose();
-    for (const figure of figures) {
-      figure.mixer.stopAllAction();
-      figure.mixer.uncacheRoot(figure.model);
-      figure.model.traverse(node => { if (node.isSkinnedMesh) node.skeleton.dispose(); });
-    }
+    releaseFigures();
     releaseAsset(asset);
     group.removeFromParent();
     group.clear();
