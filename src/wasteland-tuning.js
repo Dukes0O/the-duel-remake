@@ -79,7 +79,7 @@ export const COMBAT_TUNING=Object.freeze({
   rpgSplashRadius:8,rpgMuzzleOffset:.7,rpgEyeHeight:1.62,
   wrenchRepairAmount:40,wrenchRepairSeconds:4,repairRangeMeters:3.5},
  raider:{health:70,directDamage:80,splashDamage:55,
-   aimError:{easy:Math.PI/9,medium:Math.PI/18,hard:.03},
+   aimError:{easy:Math.PI/18,medium:Math.PI/18,hard:.03},
   hitRadius:.6,hitHeight:1.15,knockdownSeconds:3,
   salvageReachMeters:2.5,salvageArmor:15,salvageRockets:1},
  creditBonus:{perHit:10,perWreck:100,maximumBaseFraction:.25},

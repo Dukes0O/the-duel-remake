@@ -1,5 +1,13 @@
 # BUG-07: retain enemy aim error
 
+Final candidate: separate raider cones of 10 degrees / 10 degrees / `.03`
+radians, retained CPU/raider shot bias and reviewed split-budget steering.
+Focused checks pass 23/23 and combat replays 12/12. The final balance report
+has one remaining failure: Easy enemy hits 6 against a maximum of 3. Wins are
+9/5/3, with all other report targets passing. This remains development work;
+BUG-07 and its CPU UFO slice stay open. The history below records the measured
+candidate and the reverted Easy regression.
+
 ## Scope
 
 This slice makes flagged raider accuracy depend on difficulty and keeps CPU and
@@ -199,3 +207,61 @@ exceed the 95% upper limit. Thus there are two remaining failures, including
 an Easy win-rate regression. No second numeric candidate or parameter grid
 was tried. This measured candidate remains subject to the Director's decision;
 it is not a claim that balance passes.
+
+### Final selection and independent review
+
+The wide numeric candidate is preserved at `d61a2d3`. Its measured Easy win
+regression led the Director to revert only the Easy spread to the previously
+reviewed `Math.PI / 18`. Medium retains `Math.PI / 18`; Hard retains `.03`.
+The split-budget integration correction remains. This reverses a measured
+regression; no additional guessed tuning value was introduced.
+
+The independent reviewer committed tests and replay updates as `f84975f`:
+
+- Focused aim checks: 23/23 pass. The builder repeated this focused run before
+  the final full report, also 23/23 pass.
+- Added 18 source/difficulty/frame-rate combinations for CPU and raider bolts
+  at 30/60/144 FPS, exercising both turn directions and cone edges. Each step
+  respects its turn cap, launch cone and speed. A mutation that doubled the
+  budget fails the new check.
+- The exact cone assertion now records 10 degrees / 10 degrees / `.03`
+  radians. The prior strict Easy-greater-than-Medium RMS assertion is replaced
+  with equality within `1e-12`: these modes now share the same cone and the
+  same deterministic samples. Medium remains strictly wider than Hard; sign
+  and all other spread, seed and guidance assertions remain.
+- The split-steering replay hash is
+  `7a29abd5bad52b659d8d9e53263f9fcaeb30cc7b5af3565ad9970b270d65b4e7`
+  at all three frame rates. Only the same 28 bolt X/Z samples change; events,
+  actor/progress state, semantic assertions and other encounter hashes are
+  unchanged. Combat replay checks pass 12/12. Only the affected three hash
+  entries changed; no matching metadata hash exists in `combat-inputs.json`.
+
+Independent evidence is `.qa-dist/enemy-aim-split-review.json`.
+
+### Final complete balance report
+
+The Director authorized one final complete report after the Easy revert,
+because the reviewed steering integration had also changed since the original
+10-degree report. No further numeric tuning followed.
+
+Command: `node tools/combat-balance.mjs --flags wasteland2 --check`.
+Wall time 71.69 s; tool time 71.56 s; first twelve races 13.83 s. Exit 1.
+Evidence: `.qa-dist/enemy-aim-final-balance.log`.
+
+| Measure | Final E/M/H |
+| --- | --- |
+| Wins, ten no-weapon seeds each | 9/5/3 |
+| Enemy hits on player, no-weapon seed 1989 | 6/4/6 |
+| Player wrecks, sixteen policy/seed races each | 0/2/4 |
+| Opponent wrecks, same sample | 0/0/1 |
+| Traffic wrecks, same sample | 2/17/7 |
+| Stock UFO gain, seconds | 0.29/-0.73/1.20 |
+| Max UFO gain, seconds | 0.55/2.72/3.31 |
+
+Player crossbow accuracy is 12/26 (46%); own-bomb maximum speed loss is 4.53%.
+Sixteen-race enemy-hit totals are 88/104/110; player hits on rivals are 2/4/11.
+Easy win rate is restored to its band. Medium/Hard hit bands, all win bands,
+UFO gain limits and weapon probes pass. Only Easy's six enemy hits exceed the
+0-3 target. The Director retains this useful development improvement with the
+full BUG-07 card open; release balance is not claimed. Required lane/build
+checks remain for the Director's serialized merge gate.
