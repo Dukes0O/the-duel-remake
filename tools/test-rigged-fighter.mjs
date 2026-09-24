@@ -1,3 +1,8 @@
+import {mkdtempSync, mkdirSync, copyFileSync, rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join, dirname, resolve, relative, isAbsolute, win32} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createFighter, stepFighter, FIGHTER_STEP_SECONDS} from '../src/onfoot.js';
 import assert from 'node:assert/strict';
 import {readFileSync, existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -254,6 +259,85 @@ check('matched-sheet PNG and provenance retain asset, camera, pose and cost evid
   assert.ok(evidence.camera && evidence.clip && Number.isFinite(evidence.time), 'provenance must identify camera and clip/time');
   for (const kind of ['reference', 'blender', 'high', 'performance']) assert.ok(evidence[kind], `provenance needs ${kind} image sources`);
   assert.ok(evidence.counts && evidence.qualities, 'provenance must record triangle/material/draw-call counts and quality modes');
+});
+
+check('production movement selects the same GLB clip and pose at 30/60/144 FPS', async () => {
+  const create = await factory();
+  const bytes = readFileSync(file('public/assets/models/wasteland/test-fighter.glb'));
+  const course = {def: {},
+    groundAt: (s, lateral) => ({x: lateral, y: 0, z: s, heading: 0}),
+    nearest: (x, z) => ({s: z, lateral: x}), obstaclesNear: () => []};
+  const car = {s: 0, lateral: 0}, results = [];
+  for (const fps of [30, 60, 144]) {
+    // Each renderer receives the same production simulation, sampled at its
+    // own display rate. No speed, displacement or clip is supplied by the test.
+    const actor = createFighter(course, car, {s: 0, lateral: 0});
+    const asset = await new GLTFLoader().parseAsync(
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+    const view = create({loadAsset: async () => asset});
+    const roster = [actor];
+    let tick = 0, frame = 1;
+    const render = () => view.update(roster, options(tick * FIGHTER_STEP_SECONDS));
+    const advance = target => {
+      while (tick < target) {
+        stepFighter(course, car, actor, {forward: tick < 2});
+        tick++;
+      }
+    };
+    try {
+      render(); await settle(); render();
+      const samples = [];
+      for (const sharedTick of [4, 8]) {
+        while (Math.floor(frame * 120 / fps + 1e-9) <= sharedTick) {
+          advance(Math.floor(frame * 120 / fps + 1e-9)); render(); frame++;
+        }
+        advance(sharedTick); render();
+        const rig = view.group.children.find(node => node.userData.clip);
+        assert.ok(rig, 'loaded GLB must report its selected animation');
+        samples.push({tick: sharedTick, clip: rig.userData.clip, bones: pose(view.group)});
+      }
+      assert.ok(Math.abs(actor.z - .075) < 1e-10, 'production movement must run only the first two steps');
+      results.push({fps, samples});
+    } finally { view.dispose(); }
+  }
+  const choices = results.map(({fps, samples}) => ({fps, clips: samples.map(sample => sample.clip)}));
+  assert.deepEqual(choices, [30, 60, 144].map(fps => ({fps, clips: ['idle', 'idle']})),
+    'stopped production fighter must be idle at shared ticks 4 and 8 regardless of render FPS');
+  for (const result of results.slice(1))
+    assert.deepEqual(result.samples, results[0].samples, `${result.fps} FPS must reproduce the same GLB bone pose as 30 FPS`);
+});
+
+check('retained capture and contact-sheet paths survive checkout relocation', () => {
+  const repository = fileURLToPath(file(''));
+  const captures = JSON.parse(readFileSync(file('docs/board/looks/test-fighter/captures.json'), 'utf8'));
+  const evidence = JSON.parse(readFileSync(file('docs/board/looks/test-fighter/round-1.json'), 'utf8'));
+  const paths = [...captures.captures.map(capture => capture.path), evidence.reference.path,
+    ...evidence.blender, ...evidence.high, ...evidence.performance, evidence.output];
+  assert.ok(paths.length > 18, 'retained evidence must include both game quality modes and source images');
+  const relocated = mkdtempSync(join(tmpdir(), 'duel-gfx00-relocated-'));
+  try {
+    for (const path of new Set(paths)) {
+      assert.equal(typeof path, 'string');
+      assert.ok(!isAbsolute(path) && !win32.isAbsolute(path) && !/^[a-z]+:/i.test(path),
+        `retained capture path must be repository-relative: ${path}`);
+      const target = resolve(relocated, path);
+      const inside = relative(relocated, target);
+      assert.ok(inside && !inside.startsWith('..') && !isAbsolute(inside),
+        `retained capture path must stay inside the relocated checkout: ${path}`);
+      mkdirSync(dirname(target), {recursive: true});
+      copyFileSync(resolve(repository, path), target);
+    }
+    // Resolve only against the new checkout: no original-lane fallback is used.
+    for (const path of paths) {
+      const retained = readFileSync(resolve(relocated, path));
+      assert.ok(retained.length > 8, `relocated image must be readable: ${path}`);
+      assert.equal(retained.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+    }
+  } finally {
+    const withinTemp = relative(resolve(tmpdir()), resolve(relocated));
+    assert.ok(withinTemp.startsWith('duel-gfx00-relocated-') && !isAbsolute(withinTemp));
+    rmSync(relocated, {recursive: true, force: true});
+  }
 });
 
 let failures = 0;
