@@ -444,8 +444,8 @@ tasks:
     size: S
     needs: [BUG-05]
     status: building
-    owns: [src/combat-projectiles.js, tools/test-combat-projectiles.mjs, tools/test-combat-replays.mjs, tools/replays/projectile-height-controls.json, tools/replays/combat-inputs.json, tools/replays/combat-fingerprints.json]
-    helpers: [test_author, balance_analyst, test_runner, reviewer]
+    owns: [src/combat-projectiles.js, tools/test-combat-projectiles.mjs, tools/test-combat-replays.mjs, tools/replays/projectile-height-controls.json, tools/replays/combat-inputs.json, tools/replays/combat-fingerprints.json, tools/test-combat-armor.mjs, tools/test-combat-scoring.mjs, tools/test-combat-opponents.mjs, tools/scenarios/combat-armor-frame-pacing.mjs, tools/scenarios/combat-armor-wreck.mjs, tools/scenarios/combat-effects.mjs, tools/scenarios/combat-results.mjs]
+    helpers: [test_author, balance_analyst, test_runner, reviewer, browser_qa]
     active_slice: "Use actual moving vehicle height for flagged crossbow body contact."
     acceptance:
       - "Independent swept-contact tests show a bolt passing above the actual roof misses while body intersections, including vertically moving cars between steps, hit. Flagged crossbows use vehicle height instead of the current plus/minus 4 m band around ground plus 1 m. Preserve legacy/off and other weapon behavior."
