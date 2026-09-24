@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-24T12:34:21.320Z
+Observed at: 2026-09-24T12:42:19.243Z
 
-Observation commit: c1ff02027228a1c9c78c382f9d1b030641701156
+Observation commit: 4264cf087e50b8b7d2dac48a54502ad7773bb4f8
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: c1ff02027228a1c9c78c382f9d1b030641701156
+Integration HEAD: 4264cf087e50b8b7d2dac48a54502ad7773bb4f8
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -14,9 +14,9 @@ Live commit: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 
 Live build version: 20260924002834-86f3e7fb6e36
 
-Full tier: stale; exact HEAD passed: no.
+Full tier: passed; exact HEAD passed: yes.
 
-Last recorded full run: 2026-09-24T11:20:34.319Z; tested commit: 016833692d9793e36a8c079a5c2e7204532b51bf.
+Last recorded full run: 2026-09-24T12:40:53.275Z; tested commit: 4264cf087e50b8b7d2dac48a54502ad7773bb4f8.
 
 ## Feature switches
 
@@ -44,7 +44,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/bug07-cpu-ufo | 0 | unknown | true | false | unknown |
 | codex/bug07-enemy-aim | 0 | unknown | true | false | unknown |
 | codex/bug15-shield-traffic | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/bug15-shield-traffic/the-duel-remake |
-| codex/cam01-camera-choice | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/cam01 |
+| codex/cam01-camera-choice | 0 | unknown | true | false | unknown |
 | codex/cmb01-armor | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-cmb01-armor/the-duel-remake |
 | codex/cmb01-mode-isolation-test | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/cmb01-test-author/the-duel-remake |
 | codex/cmb01-test-author | 0 | unknown | false | false | unknown |
@@ -173,7 +173,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: c1ff02027228a1c9c78c382f9d1b030641701156
+- Local integration/wasteland: 4264cf087e50b8b7d2dac48a54502ad7773bb4f8
 
 Local rollback build (dist-previous): 20260923193614-0b1389a185dd. Manifest presence does not verify the full rollback build.
 

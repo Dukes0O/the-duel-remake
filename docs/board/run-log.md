@@ -1355,3 +1355,47 @@ checkout untouched until the final integration commit passes the full gate.
   remain. All helper agents have finished; no new card is starting.
 - CAR-01 is next in the ordered plan, followed by GFX-03 and GFX-04. This run
   stops after the final full/status/handoff to preserve the quota floor.
+
+## 2026-09-24 12:42 UTC - end-of-run handoff
+
+**Stopped above Kyle's five-percent quota floor.** Latest observation: six
+percent remaining. All helpers are finished. No lane has an active builder.
+
+- Final full tier: **232 passed, zero failed, zero skipped**, 299.74 seconds,
+  all eight campaign shards. Exact clean tested commit:
+  `4264cf087e50b8b7d2dac48a54502ad7773bb4f8`. Completed at
+  `2026-09-24T12:40:53.275Z`; log `.qa-dist/end-of-run-full-05.log`.
+  STATUS was generated on that commit before this handoff edit. The following
+  documentation commit does not inherit an exact-commit release pass.
+- Ordered work reached CAM-01. This run integrated tracking, the flagged
+  balance report, Blender tooling, initial crew/first-person/Rustwall assets,
+  Hidden Road geometry, gate arrival, saved discovery and on-foot camera choice.
+  Recent merges: EGG-02 `7f8d43f`, EGG-03 `be75f60`, EGG-04 `81b268c`,
+  CAM-01 `c1ff020`. Related enemy-aim, projectile-height and defensive CPU UFO
+  slices are also integrated; their exact reviews and limits are recorded above.
+- **Next: CAR-01**, then GFX-03 and GFX-04, before the recorded art polish
+  cards. CAR-01 still needs a concrete file slice and independent save tests.
+  Scrap, territory progression and the live Scrapdome yard home are unfinished;
+  entering the gate currently reaches the safe temporary inside endpoint.
+- Keep `hidden-road` and `wasteland2` in development. Initial asset rounds do
+  not meet every fidelity target. GFX-01-P1, GFX-02-P1 and EGG-02-P1 retain
+  the remaining work; use the exact board IDs and their recorded approach rules.
+  Contact sheets and reviews are committed under `docs/board/looks/`.
+- BUG-06 and BUG-07 remain unfinished, with no active builder. The launch-height
+  candidate `5cf533e` is held in `.lanes/launch-height` (latest note `a341cdd`):
+  its accuracy and balance regressions prevent merge. The earlier flagged
+  guidance candidate in `.lanes/flagged-balance` is also held. Preserve both.
+  Current integrated flagged balance still exceeds the Easy enemy-hit ceiling;
+  do not relax target bands or restart an unbounded tuning grid.
+- Clean merged lanes were removed only after archive/hash checks. Their
+  branches remain, and gate logs are in `.lanes/evidence/`. EGG-04 retains
+  all three failed gates and precise reviewed corrections. No assertions or
+  fingerprints were silently weakened. Visual/PCM limitations remain explicit.
+- **No release or push occurred.** Live remains `eb879e5`, build
+  `20260924002834-86f3e7fb6e36`. No live race, port 5174 or real save was used.
+  D8 is unapproved. D3 release still requires every release gate and a fresh
+  full pass on the exact release commit; this handoff grants no release.
+- Resume with SPEC 0 and this handoff. Merge count resets to zero at the final
+  full. If work resumes continuously, next full is due after five task merges
+  or by 14:40 UTC, and at the next run end. Budget must be checked before
+  starting another card. Do not recreate completed work or discard held lanes.
