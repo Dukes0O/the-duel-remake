@@ -538,6 +538,7 @@ export class App {
       this.duel.fireWeapon(slot>=0&&this.duel.state.weaponLoadout?
         this.duel.state.weaponLoadout[slot]:baseId);
     }
+    else if (action.startsWith('gear:')) this.duel.selectFootGear(Number(action.slice(5)));
     else if (action === 'shift-up') this.duel.setInput({ shiftUp: true });
     else if (action === 'shift-down') this.duel.setInput({ shiftDown: true });
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }

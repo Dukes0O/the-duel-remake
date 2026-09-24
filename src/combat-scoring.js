@@ -51,5 +51,9 @@ export function recordCombatWreck(duel, victim, owner) {
 
 export function combatResultSnapshot(duel) {
   const scoring = duel.state.combat?.scoring;
-  return scoring ? Object.fromEntries(RESULT_FIELDS.map(key => [key, scoring[key]])) : {};
+  if (!scoring) return {};
+  const snapshot = Object.fromEntries(RESULT_FIELDS.map(key => [key, scoring[key]]));
+  const events = duel.state.combat.notorietyEvents;
+  if (Array.isArray(events) && events.length) snapshot.notorietyEvents = events.slice(0, 256);
+  return snapshot;
 }

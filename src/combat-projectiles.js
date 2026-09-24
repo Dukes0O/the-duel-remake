@@ -31,6 +31,38 @@ function steerBolt(duel, projectile, dt) {
   projectile.vz = Math.cos(next) * speed;
 }
 
+function steerRpg(duel, projectile, dt) {
+  if (projectile.kind !== 'rpg' || !Number.isInteger(projectile.targetIndex)) return;
+  const actor = duel.state.opponents[projectile.targetIndex];
+  if (!actor || actor.finished || actor.crushed || actor.combatWrecking) return;
+  const speed = Math.hypot(projectile.vx, projectile.vy, projectile.vz);
+  if (!(speed > 0)) return;
+  const at = point(duel, actor);
+  const travel = Math.min(1, Math.hypot(at.x - projectile.x, at.z - projectile.z) / speed);
+  const future = predictedPoint(duel, actor, travel);
+  const dx = future.x - projectile.x, dy = future.y + T.pointHeight - projectile.y,
+    dz = future.z - projectile.z;
+  const distance = Math.hypot(dx, dy, dz);
+  if (!(distance > 0)) return;
+  const current = {x: projectile.vx / speed, y: projectile.vy / speed,
+    z: projectile.vz / speed};
+  const target = {x: dx / distance, y: dy / distance, z: dz / distance};
+  const dot = clamp(current.x * target.x + current.y * target.y +
+    current.z * target.z, -1, 1);
+  const angle = Math.acos(dot);
+  const fraction = angle > 0
+    ? Math.min(1, T.foot.rpgTurnRadiansPerSecond * dt / angle) : 1;
+  const x = current.x + (target.x - current.x) * fraction;
+  const y = current.y + (target.y - current.y) * fraction;
+  const z = current.z + (target.z - current.z) * fraction;
+  const magnitude = Math.hypot(x, y, z);
+  if (magnitude < 1e-6) return;
+  const scale = speed / magnitude;
+  projectile.vx = x * scale;
+  projectile.vy = y * scale;
+  projectile.vz = z * scale;
+}
+
 function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
   const state = duel.state;
   const combat = state.combat;
@@ -90,7 +122,9 @@ function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
     victim: actor === state ? 'player' : state.opponents.includes(actor) ? 'rival' : 'traffic',
     hitPosition: {x: where.x, y: where.y, z: where.z},
   });
-  applyArmorDamage(duel, actor, projectile.kind === 'bomb' ? 'bomb' : 'crossbow',
+  return applyArmorDamage(duel, actor, projectile.kind === 'rpg'
+    ? armorOptions.splash ? 'rpg-splash' : 'rpg-direct'
+    : projectile.kind === 'bomb' ? 'bomb' : 'crossbow',
     {level: projectile.level, ...armorOptions, owner: enemy ? 'cpu' : 'player'});
 }
 
@@ -177,7 +211,10 @@ export function stepProjectiles(duel, dt) {
     duel.featureFlags?.enabled('wasteland2') === true;
   for (const projectile of combat.projectiles) {
     const old = {x: projectile.x, y: projectile.y, z: projectile.z};
-    if (modernProjectiles) steerBolt(duel, projectile, dt);
+    if (modernProjectiles) {
+      steerBolt(duel, projectile, dt);
+      steerRpg(duel, projectile, dt);
+    }
     projectile.age += dt;
     projectile.x += projectile.vx * dt;
     projectile.z += projectile.vz * dt;
@@ -208,8 +245,9 @@ export function stepProjectiles(duel, dt) {
       }
     }
     const contact = !!target;
-    const expired = projectile.age >
-      (projectile.kind === 'bomb' ? T.bomb.lifetime : T.crossbow.lifetime);
+    const expired = projectile.age > (projectile.kind === 'bomb'
+      ? T.bomb.lifetime : projectile.kind === 'rpg'
+        ? T.foot.rpgLifetimeSeconds : T.crossbow.lifetime);
     if (!contact && projectile.y > floor + T.projectileFloorClearance && !expired) {
       live.push(projectile);
       continue;
@@ -231,13 +269,23 @@ export function stepProjectiles(duel, dt) {
       }
     }
 
+    if (combatArmorEnabled(duel) && projectile.kind === 'rpg' &&
+        projectile.age < T.armor.bombArmingSeconds &&
+        Math.hypot(projectile.x - projectile.launchX,
+          projectile.z - projectile.launchZ) < T.foot.rpgSplashRadius) {
+      projectile.y = Math.max(projectile.y, floor + T.projectileFloorClearance);
+      live.push(projectile);
+      continue;
+    }
+
     burst(combat, {
       x: projectile.x,
       y: Math.max(floor + T.projectileBurstFloorClearance, projectile.y),
       z: projectile.z,
-    }, projectile.kind === 'bomb' ? 'blast' : 'spark');
-    if (projectile.kind === 'bomb' && !combat.blastSound) {
-      duel.emit({combatExplosion: true});
+    }, projectile.kind === 'bomb' || projectile.kind === 'rpg' ? 'blast' : 'spark');
+    if (projectile.kind === 'rpg' || projectile.kind === 'bomb' && !combat.blastSound) {
+      duel.emit({combatExplosion: true, hitPosition: {
+        x: projectile.x, y: projectile.y, z: projectile.z}});
       combat.blastSound = T.bomb.soundCooldown;
     }
     if (projectile.kind === 'bomb') {
@@ -258,6 +306,25 @@ export function stepProjectiles(duel, dt) {
             projectile.enemy, {distanceFraction: distance / radius,
               self: actor === thrower});
         }
+      }
+    } else if (projectile.kind === 'rpg') {
+      if (contact) {
+        const removed = hit(duel, target, projectile, 1.35, false);
+        if (removed > 0 && state.opponents.includes(target)) {
+          combat.notorietyEvents ??= [];
+          if (combat.notorietyEvents.length < 256) combat.notorietyEvents.push({
+            id: projectile.id, type: 'rpgDirectHit', owner: 'player', source: 'onFoot',
+          });
+        }
+      }
+      for (const actor of [state, ...state.opponents, ...state.traffic]) {
+        if (!actor || actor === target || actor.alive === false) continue;
+        const at = point(duel, actor);
+        const distance = Math.hypot(at.x - projectile.x, at.y - projectile.y,
+          at.z - projectile.z);
+        if (distance < T.foot.rpgSplashRadius) hit(duel, actor, projectile,
+          1 - distance / T.foot.rpgSplashRadius, false,
+          {splash: true, self: actor === state});
       }
     } else if (contact) {
       hit(duel, target, projectile,

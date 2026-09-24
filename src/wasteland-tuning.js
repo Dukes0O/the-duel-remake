@@ -72,6 +72,11 @@ export const COMBAT_TUNING=Object.freeze({
   wreckStylePoints:400},
  foot:{stepOutBelowKph:40,stepOutHoldSeconds:.4,bailHoldSeconds:1,
   bailHealthLoss:25,bailTumbleSeconds:.8,reentryRangeMeters:3.5,
-  reentryHoldSeconds:.6,parkedWreckSeconds:3},
+  reentryHoldSeconds:.6,parkedWreckSeconds:3,
+  rpgAmmo:3,rpgSpeed:55,rpgReloadSeconds:2.2,rpgLockSeconds:.8,
+  rpgLockRange:220,rpgLockConeRadians:Math.PI/18,
+  rpgTurnRadiansPerSecond:1.5,rpgLifetimeSeconds:4,
+  rpgSplashRadius:8,rpgMuzzleOffset:.7,rpgEyeHeight:1.62,
+  wrenchRepairAmount:40,wrenchRepairSeconds:4,repairRangeMeters:3.5},
  creditBonus:{perHit:10,perWreck:100,maximumBaseFraction:.25},
 });

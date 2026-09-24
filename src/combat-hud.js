@@ -57,9 +57,29 @@ export function footAmmoPresentation(state) {
   const gear = state?.footGear;
   if (!gear || typeof gear.name !== 'string')
     return {name: 'NO FOOT WEAPON', ammo: 'AMMO —'};
+  if (gear.name === 'WRENCH') return {name: gear.name, ammo: 'REPAIR +40'};
   const ammo = Number.isSafeInteger(gear.ammo) && gear.ammo >= 0
     ? String(gear.ammo) : '—';
   return {name: gear.name, ammo: `AMMO ${ammo}`};
+}
+
+export function footActionPresentation(state) {
+  const gear = state?.footGear, weapons = state?.footWeapons;
+  if (!gear || !weapons) return {text: '', locked: false};
+  if (gear.name === 'WRENCH') {
+    if (weapons.repairing)
+      return {text: `REPAIRING ${Math.round(weapons.repairAmount || 0)} / 40`, locked: false};
+    return {text: weapons.repairBlockedUntilRelease
+      ? 'RELEASE FIRE TO REPAIR AGAIN' : 'HOLD FIRE NEAR YOUR CAR', locked: false};
+  }
+  if (gear.ammo === 0) return {text: 'OUT OF ROCKETS', locked: false};
+  const reload = Math.max(0, (weapons.nextFireAt || 0) - (state.stageTimeSec || 0));
+  if (reload > 0) return {text: `RELOADING ${reload.toFixed(1)}s`, locked: false};
+  if (weapons.lockTargetIndex === null || weapons.lockTargetIndex === undefined)
+    return {text: 'HOLD AIM ON A CAR', locked: false};
+  if ((weapons.lockSeconds || 0) < COMBAT_TUNING.foot.rpgLockSeconds)
+    return {text: 'LOCKING TARGET', locked: false};
+  return {text: 'TARGET LOCKED', locked: true};
 }
 
 function setText(node, value) {
@@ -94,6 +114,7 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
     <div class="combat-hit-marker" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-damage-direction" aria-hidden="true"><span>▲</span></div>
     <div class="combat-foot-reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="combat-foot-action"></div>
     <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b>YOUR CAR</b><strong></strong></div>
     <div class="combat-foot-gear" aria-label="On-foot weapon and ammunition"><b></b><strong></strong></div>
     <div class="combat-slot-bar" role="group" aria-label="Combat weapons">
@@ -124,6 +145,8 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
   const carArrow = host.querySelector('.combat-foot-car-arrow');
   const footGearName = host.querySelector('.combat-foot-gear b');
   const footGearAmmo = host.querySelector('.combat-foot-gear strong');
+  const footAction = host.querySelector('.combat-foot-action');
+  const footReticle = host.querySelector('.combat-foot-reticle');
   let hitUntil = -1, damageUntil = -1, damageDirection = 'front';
   let previousZones = null;
 
@@ -177,6 +200,9 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
       const gear = footAmmoPresentation(state);
       setText(footGearName, gear.name);
       setText(footGearAmmo, gear.ammo);
+      const action = footActionPresentation(state);
+      setText(footAction, action.text);
+      footReticle.classList.toggle('is-locked', action.locked);
     }
 
     const combat = state.combat;

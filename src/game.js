@@ -12,6 +12,7 @@ import {initializeCombatArmor} from './combat-armor.js';
 import {initializeFootTransition, stepFootTransition,
   stepParkedRace} from './onfoot-transition.js';
 import {validArmorKit} from './armor-kits.js';
+import {initializeFootWeapons, selectFootGear} from './onfoot-weapons.js';
 // Duel owns the simulation state, lifecycle and fixed-step call order. The
 // sim-* modules implement each system against this same instance.
 
@@ -244,6 +245,7 @@ export class Duel {
     s.combat=s.mode==='wasteland'&&supportsCombat(COURSE[idx])?createCombat(s.weaponLevels):null;
     initializeCombatArmor(this);
     initializeFootTransition(this);
+    initializeFootWeapons(this);
     this.emit({ stageLoaded: idx, countdown: 3 });
   }
 
@@ -251,6 +253,7 @@ export class Duel {
 
   // ---- the core step ---------------------------------------------------
   fireWeapon(weapon){return fireWeapon(this,weapon);}
+  selectFootGear(slot){return selectFootGear(this,slot);}
 
   step(dt) {
     const s = this.state;

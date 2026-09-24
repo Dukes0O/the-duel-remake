@@ -15,12 +15,16 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   shieldRim:new THREE.LineBasicMaterial({color:0xffd69b,transparent:true,opacity:.32,depthWrite:false}),
   tip:new THREE.MeshBasicMaterial({color:0xffdf89})};
  const sphere=new THREE.IcosahedronGeometry(1,1),ring=new THREE.TorusGeometry(1,.055,6,28),shaft=new THREE.CylinderGeometry(.07,.07,3,5),tip=new THREE.ConeGeometry(.35,.8,5);
+ const rocketBody=new THREE.CylinderGeometry(.16,.16,1.25,8),rocketNose=new THREE.ConeGeometry(.21,.38,8);
  const shieldShell=new THREE.IcosahedronGeometry(1,0);
  const shieldRim=new THREE.BufferGeometry().setFromPoints(Array.from({length:64},(_,i)=>new THREE.Vector3(Math.cos(i*Math.PI/32),0,Math.sin(i*Math.PI/32))));
- const projectiles=Array.from({length:40},()=>{
+ const projectiles=Array.from({length:40},(_,index)=>{
   const g=new THREE.Group(),bomb=new THREE.Mesh(sphere,materials.iron),arrow=new THREE.Group();bomb.scale.setScalar(.65);
   const rod=new THREE.Mesh(shaft,materials.iron),head=new THREE.Mesh(tip,materials.tip);head.position.y=1.7;arrow.add(rod,head);arrow.rotation.x=Math.PI/2;
-  const fuse=new THREE.Mesh(sphere,materials.tip);fuse.scale.setScalar(.17);fuse.position.y=.7;bomb.add(fuse);g.add(bomb,arrow);group.add(g);return {g,bomb,arrow};
+  const rocket=new THREE.Group();rocket.name=`combat-rpg-${index}`;
+  const casing=new THREE.Mesh(rocketBody,materials.iron),nose=new THREE.Mesh(rocketNose,materials.tip),exhaust=new THREE.Mesh(sphere,materials.fire);
+  nose.position.y=.8;exhaust.position.y=-.73;exhaust.scale.set(.12,.27,.12);rocket.add(casing,nose,exhaust);
+  const fuse=new THREE.Mesh(sphere,materials.tip);fuse.scale.setScalar(.17);fuse.position.y=.7;bomb.add(fuse);g.add(bomb,arrow,rocket);group.add(g);return {g,bomb,arrow,rocket};
  });
  const bursts=Array.from({length:32},()=>{
   const g=new THREE.Group(),flame=new THREE.Mesh(sphere,materials.fire),smoke=new THREE.Mesh(sphere,materials.smoke),wave=new THREE.Mesh(ring,materials.fire),saucer=new THREE.Mesh(sphere,materials.neon);
@@ -157,7 +161,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
    armorCross.rotation.set(0,p.age*1.5,0);
    halo.rotation.set(Math.PI/2,p.age,0);
   });
-  projectiles.forEach(({g,bomb,arrow},i)=>{const p=c.projectiles[i];g.visible=!!p;if(!p)return;g.position.set(p.x,p.y,p.z);bomb.visible=p.kind==='bomb';arrow.visible=!bomb.visible;g.rotation.set(0,Math.atan2(p.vx,p.vz),0);bomb.rotation.set(p.age*5,p.age*3,0);});
+  projectiles.forEach(({g,bomb,arrow,rocket},i)=>{const p=c.projectiles[i];g.visible=!!p;if(!p)return;g.position.set(p.x,p.y,p.z);bomb.visible=p.kind==='bomb';arrow.visible=p.kind==='crossbow';rocket.visible=p.kind==='rpg';g.rotation.set(0,Math.atan2(p.vx,p.vz),0);rocket.rotation.x=Math.PI/2-Math.atan2(p.vy,Math.hypot(p.vx,p.vz));bomb.rotation.set(p.age*5,p.age*3,0);});
   bursts.forEach(({g,flame,smoke,wave,saucer,shards},i)=>{
    const b=c.bursts[i];g.visible=!!b&&!(useAtlas&&(b.kind==='blast'||b.kind==='spark'));if(!b)return;g.position.set(b.x,b.y,b.z);
    const warp=b.kind==='ufo',star=b.kind==='star',fade=Math.max(0,1-b.age/1.4),size=b.kind==='blast'?1:0.45;
@@ -179,7 +183,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
    armorKits.dispose();
    for (const vehicle of [...bindings]) if (vehicle) detachVehicle(vehicle);
    rigs.forEach((rig, index) => rigMounts(index, rig).forEach(mount => attachments.detach(mount.owner)));
-   for(const geometry of [sphere,ring,shaft,tip,armorGeometry,shieldShell,shieldRim])geometry.dispose();
+   for(const geometry of [sphere,ring,shaft,tip,rocketBody,rocketNose,armorGeometry,shieldShell,shieldRim])geometry.dispose();
    Object.values({...materials,...pickupMaterials}).forEach(material=>material.dispose());
   },
  };

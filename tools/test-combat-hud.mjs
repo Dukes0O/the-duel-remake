@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {armorPresentation, combatHudEnabled, damageZoneFromChange,
-  fallbackOpponentPosition, footCarDirection, footAmmoPresentation} from '../src/combat-hud.js';
+  fallbackOpponentPosition, footCarDirection, footAmmoPresentation,
+  footActionPresentation} from '../src/combat-hud.js';
 
 test('combat HUD requires the Wasteland 2 switch and an active combat race', () => {
   const state = {mode: 'wasteland', status: 'racing', combat: {}};
@@ -50,4 +51,23 @@ test('on-foot ammo does not imply an unbuilt weapon is ready', () => {
     {name: 'NO FOOT WEAPON', ammo: 'AMMO —'});
   assert.deepEqual(footAmmoPresentation({footGear: {name: 'RPG', ammo: 3}}),
     {name: 'RPG', ammo: 'AMMO 3'});
+});
+
+test('on-foot status gives clear lock, reload and repair cues', () => {
+  const state = {stageTimeSec: 4, footGear: {name: 'LONGHORN RPG', ammo: 3},
+    footWeapons: {lockTargetIndex: null, lockSeconds: 0, nextFireAt: 0}};
+  assert.deepEqual(footActionPresentation(state),
+    {text: 'HOLD AIM ON A CAR', locked: false});
+  state.footWeapons.lockTargetIndex = 0;
+  state.footWeapons.lockSeconds = .8;
+  assert.deepEqual(footActionPresentation(state),
+    {text: 'TARGET LOCKED', locked: true});
+  state.footWeapons.nextFireAt = 5.2;
+  assert.deepEqual(footActionPresentation(state),
+    {text: 'RELOADING 1.2s', locked: false});
+  state.footGear = {name: 'WRENCH', ammo: null};
+  state.footWeapons.repairing = true;
+  state.footWeapons.repairAmount = 10;
+  assert.deepEqual(footActionPresentation(state),
+    {text: 'REPAIRING 10 / 40', locked: false});
 });

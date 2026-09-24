@@ -126,6 +126,7 @@ export function ufoDestination(duel) {
 
 export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.rival) {
   const state = duel.state;
+  if (state.onFoot && !enemy) return false;
   const combat = state.combat;
   const actor = enemy ? cpuActor : state;
   const target = enemy ? state : state.opponents.length > 1

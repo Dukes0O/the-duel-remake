@@ -3,6 +3,7 @@ import {createFighter, damageFighter, FIGHTER_STEP_SECONDS,
   stepFighter} from './onfoot.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {strikeFighterFromVehicles} from './onfoot-race.js';
+import {resetFootWeaponUser, stepFootWeapons} from './onfoot-weapons.js';
 
 const T = COMBAT_TUNING.foot;
 
@@ -50,6 +51,7 @@ function stepFighterInFixedTime(duel, dt) {
     stepFighter(duel.course, state, fighter,
       fighter.bailTumbleSeconds > 0 ? {} : state.fighterInput,
       FIGHTER_STEP_SECONDS);
+    stepFootWeapons(duel, FIGHTER_STEP_SECONDS);
     state.fighterInput.lookX = state.fighterInput.lookY = 0;
     transition.fighterStepRemainder = Math.max(0,
       transition.fighterStepRemainder - FIGHTER_STEP_SECONDS);
@@ -111,6 +113,7 @@ export function stepFootTransition(duel, dt) {
   state.fighter = fighter;
   state.onFoot = true;
   state.fighterInput = {};
+  resetFootWeaponUser(duel);
   state.input.throttle = state.input.steer = 0;
   state.input.boost = false;
   state.boosting = false;

@@ -1,10 +1,12 @@
 .combat-upgraded-hud{position:absolute;inset:0;z-index:12;pointer-events:none;color:#f9e8cf;font-family:'Segoe UI',Arial,sans-serif;text-shadow:0 2px 5px #090b0de8}
 .combat-upgraded-hud[hidden],.combat-player-armor[hidden],.combat-foot-health[hidden]{display:none}
-.combat-foot-reticle,.combat-foot-car,.combat-foot-gear{display:none}
+.combat-foot-reticle,.combat-foot-action,.combat-foot-car,.combat-foot-gear{display:none}
 .combat-upgraded-hud.on-foot .combat-slot-bar{display:none}
 #stage.on-foot .speedometer,#stage.on-foot .rear-view-frame,#stage.on-foot #lives-display,#stage.on-foot #radar-label,#stage.on-foot #radar-meter{display:none}
 .combat-upgraded-hud.on-foot .combat-foot-reticle{display:block;position:absolute;left:50%;top:50%;width:24px;height:24px;transform:translate(-50%,-50%);filter:drop-shadow(0 1px 3px #111)}
 .combat-foot-reticle i{position:absolute;background:#fff2d4}.combat-foot-reticle i:nth-child(1){left:11px;top:0;width:2px;height:6px}.combat-foot-reticle i:nth-child(2){left:11px;bottom:0;width:2px;height:6px}.combat-foot-reticle i:nth-child(3){left:0;top:11px;width:6px;height:2px}.combat-foot-reticle i:nth-child(4){right:0;top:11px;width:6px;height:2px}
+.combat-foot-reticle.is-locked i{background:#8dffc6;box-shadow:0 0 6px #4de898}
+.combat-upgraded-hud.on-foot .combat-foot-action{display:block;position:absolute;left:50%;top:calc(50% + 20px);transform:translateX(-50%);padding:3px 7px;border:1px solid #8cb9a780;background:#142126d9;color:#d8ffe5;font-size:10px;font-weight:800;letter-spacing:.7px;white-space:nowrap}
 .combat-upgraded-hud.on-foot .combat-foot-car,.combat-upgraded-hud.on-foot .combat-foot-gear{position:absolute;left:50%;display:flex;align-items:center;justify-content:center;gap:9px;transform:translateX(-50%);border:1px solid #ffc283a8;background:#142126e8;padding:7px 12px;white-space:nowrap;box-shadow:0 3px 12px #000a}
 .combat-upgraded-hud.on-foot .combat-foot-car{bottom:91px;min-width:156px}.combat-foot-car-arrow{display:inline-block;color:#ffbc72;font-size:16px;line-height:1}.combat-foot-car b,.combat-foot-gear b{font-size:9px;letter-spacing:1px}.combat-foot-car strong,.combat-foot-gear strong{font-size:12px;font-variant-numeric:tabular-nums;color:#fff1d4}
 .combat-upgraded-hud.on-foot .combat-foot-gear{bottom:24px;min-width:156px;flex-direction:column;gap:2px;padding:6px 10px}.combat-foot-gear strong{font-size:10px;color:#ffd098}
