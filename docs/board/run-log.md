@@ -1267,3 +1267,22 @@ checkout untouched until the final integration commit passes the full gate.
 - Quota check at 11:11 UTC: 14 percent remaining. Reserve enough to finish
   active work and the final full tier before the five-percent floor.
 - No live change, release, beta promotion or push.
+
+## 2026-09-24 11:21 UTC - scheduled full tier passes
+
+- Scheduled full tier passed all 229 suites in 306.60 seconds on exact clean
+  016833692d9793e36a8c079a5c2e7204532b51bf, completed at 11:20:34 UTC.
+  All eight campaign shards ran. Log: .qa-dist/scheduled-full-04.log.
+  STATUS was refreshed before changing metadata; its full-pass observation
+  belongs to that commit, not the following documentation commit.
+- This was the scheduled check moved into the lane's initial test-writing
+  window, replacing the planned 11:30 start. No second run is due at 11:36.
+  Reset merge count to zero; next full after five merges or 13:20 UTC, and
+  at run end.
+- EGG-03's failed gate, passing rerun and build logs were copied with matching
+  hashes into .lanes/evidence/egg03/. Its clean fully merged worktree was
+  removed after verifying normal local dependencies; the branch is retained.
+- EGG-04 independent red contracts b17ca69 and 991b963 precede implementation.
+  Runtime f0f3ae4 passes ten focused groups and independent Save Guardian
+  review, including seven historical shapes and 247 preservation checks.
+  Presentation and two bounded visual rounds remain before its required gate.

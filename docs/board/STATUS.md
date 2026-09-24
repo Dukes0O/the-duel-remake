@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-24T11:11:18.705Z
+Observed at: 2026-09-24T11:21:12.340Z
 
-Observation commit: be75f60b0068456b6d40720496d24fb63a601a70
+Observation commit: 016833692d9793e36a8c079a5c2e7204532b51bf
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: be75f60b0068456b6d40720496d24fb63a601a70
+Integration HEAD: 016833692d9793e36a8c079a5c2e7204532b51bf
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -14,9 +14,9 @@ Live commit: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 
 Live build version: 20260924002834-86f3e7fb6e36
 
-Full tier: stale; exact HEAD passed: no.
+Full tier: passed; exact HEAD passed: yes.
 
-Last recorded full run: 2026-09-24T09:36:17.115Z; tested commit: c66386d566d52c4a7838c0e1554d45bcbbccc306.
+Last recorded full run: 2026-09-24T11:20:34.319Z; tested commit: 016833692d9793e36a8c079a5c2e7204532b51bf.
 
 ## Feature switches
 
@@ -67,7 +67,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/crew01-roster | 0 | unknown | false | false | unknown |
 | codex/egg01-hidden-road | 0 | unknown | true | false | unknown |
 | codex/egg02-rustwall | 0 | unknown | true | false | unknown |
-| codex/egg03-gate-arrival | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/egg03 |
+| codex/egg03-gate-arrival | 0 | unknown | true | false | unknown |
+| codex/egg04-discovery | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/egg04 |
 | codex/foot01-fighter | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/foot01-fighter/the-duel-remake |
 | codex/foot02-car-transition | 0 | unknown | true | false | unknown |
 | codex/foot03-controls-camera | 0 | unknown | true | false | unknown |
@@ -171,7 +172,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: be75f60b0068456b6d40720496d24fb63a601a70
+- Local integration/wasteland: 016833692d9793e36a8c079a5c2e7204532b51bf
 
 Local rollback build (dist-previous): 20260923193614-0b1389a185dd. Manifest presence does not verify the full rollback build.
 
