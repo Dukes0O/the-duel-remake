@@ -6,7 +6,8 @@ import * as simLaps from './sim-laps.js';
 import * as simCrash from './sim-crash.js';
 import * as simResults from './sim-results.js';
 import {normalizeWeapons} from './weapon-upgrades.js';
-import {createCombat,fireWeapon,stepCombat,supportsCombat} from './combat.js';
+import {normalizeCarLoadout} from './car-loadout.js';
+import {WEAPONS,createCombat,fireWeapon,stepCombat,supportsCombat} from './combat.js';
 import {initializeCombatArmor} from './combat-armor.js';
 import {initializeFootTransition, stepFootTransition,
   stepParkedRace} from './onfoot-transition.js';
@@ -141,7 +142,7 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, combatArmorKit = null } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, weaponLoadout, combatArmorKit = null } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     if (CARS[car]) this.state.car = car;
@@ -153,6 +154,9 @@ export class Duel {
     this.state.opponentCount = Number.isSafeInteger(opponentCount) ? Math.max(0, Math.min(3, opponentCount)) : 1;
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     this.state.mode = mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
+    this.state.weaponLoadout=this.state.mode==='wasteland'&&
+      this.featureFlags.enabled('wasteland2')?
+      normalizeCarLoadout(weaponLoadout,Object.keys(WEAPONS)):null;
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
     this.state.combatArmorKit = this.state.mode === 'wasteland' &&

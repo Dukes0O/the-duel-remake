@@ -1,9 +1,9 @@
 import {WEAPONS, ufoDestination} from './combat.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {WEAPON_IDS} from './weapon-upgrades.js';
+import {CAR_SLOT_DIRECTIONS,CAR_SLOT_PAD} from './car-loadout.js';
 
 const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
-const directions = {ufo:'↑', bomb:'→', crossbow:'↓', star:'←'};
-const padDirections = {ufo:'Up', bomb:'Right', crossbow:'Down', star:'Left'};
 const zones = ['front', 'right', 'rear', 'left'];
 
 export function combatHudEnabled(duel, state) {
@@ -97,7 +97,7 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
     <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b>YOUR CAR</b><strong></strong></div>
     <div class="combat-foot-gear" aria-label="On-foot weapon and ammunition"><b></b><strong></strong></div>
     <div class="combat-slot-bar" role="group" aria-label="Combat weapons">
-      ${Object.entries(WEAPONS).map(([id, weapon]) => `<button type="button" data-combat-weapon="${id}" title="${weapon.name} · Key ${weapon.key} · Gamepad D-pad ${padDirections[id]}"><span class="combat-slot-ring" aria-hidden="true"></span><span class="combat-slot-key">${weapon.key} ${directions[id]}</span><span class="combat-slot-name">${weapon.name}</span><span class="combat-slot-state"></span></button>`).join('')}
+      ${WEAPON_IDS.map((id,slot) => `<button type="button" data-combat-weapon="${id}" data-combat-slot="${slot}" title="${WEAPONS[id].name} · Key ${slot+1} · Gamepad D-pad ${CAR_SLOT_PAD[slot]}"><span class="combat-slot-ring" aria-hidden="true"></span><span class="combat-slot-key">${slot+1} ${CAR_SLOT_DIRECTIONS[slot]}</span><span class="combat-slot-name">${WEAPONS[id].name}</span><span class="combat-slot-state"></span></button>`).join('')}
     </div>`;
   overlay.append(host);
   const playerArmor = document.createElement('div');
@@ -188,17 +188,22 @@ export function createCombatHud({root, app, projectOpponents = () => []}) {
 
     const ufo = combat.cooldowns.ufo <= 0 && state.status === 'racing' ? ufoDestination(app.duel) : null;
     for (const button of buttons) {
-      const id = button.dataset.combatWeapon;
+      const slot=Number(button.dataset.combatSlot);
+      const id=state.weaponLoadout?.[slot]||WEAPON_IDS[slot];
+      const weapon=WEAPONS[id];
+      if(button.dataset.combatWeapon!==id)button.dataset.combatWeapon=id;
+      setText(button.querySelector('.combat-slot-name'),weapon.name);
+      setAttribute(button,'title',`${weapon.name} · Key ${slot+1} · Gamepad D-pad ${CAR_SLOT_PAD[slot]}`);
       const left = Math.max(0, combat.cooldowns[id] || 0);
       const blocked = id === 'ufo' && ufo?.kind === 'blocked';
       const disabled = onFoot || state.status !== 'racing' || state.paused || left > 0 || blocked;
-      const full = WEAPONS[id].cooldown * (1 - (combat.levels[id] || 0) * COMBAT_TUNING.cooldownUpgradeDiscount);
+      const full = weapon.cooldown * (1 - (combat.levels[id] || 0) * COMBAT_TUNING.cooldownUpgradeDiscount);
       const angle = `${Math.round(360 * (1 - clamp(left / Math.max(.01, full))))}deg`;
       if (button.style.getPropertyValue('--ready-angle') !== angle) button.style.setProperty('--ready-angle', angle);
       if (button.disabled !== disabled) button.disabled = disabled;
       const label = left > 0 ? `${Math.ceil(left)}s` : blocked ? ufo.reason === 'lap-used' ? 'LAP USED' : 'CHARGING' : 'READY';
       setText(button.querySelector('.combat-slot-state'), label);
-      setAttribute(button, 'aria-label', `${WEAPONS[id].name}, level ${combat.levels[id] || 0}, keyboard ${WEAPONS[id].key}, gamepad D-pad ${padDirections[id]}, ${label.toLowerCase()}`);
+      setAttribute(button, 'aria-label', `${weapon.name}, level ${combat.levels[id] || 0}, keyboard ${slot+1}, gamepad D-pad ${CAR_SLOT_PAD[slot]}, ${label.toLowerCase()}`);
     }
 
     const opponents = state.opponents || [];

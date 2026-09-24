@@ -89,6 +89,7 @@ const garageScreen = createGarageScreen({app, profile, credits, escapeHTML, getG
 const armoryScreen = createArmoryScreen({profile, credits, escapeHTML,
   getGarageMessage:()=>garageMessage, getArmoryCar:()=>armoryCar,
   kitsEnabled:()=>app.duel.featureFlags.enabled('wasteland2'),
+  loadoutsEnabled:()=>app.duel.featureFlags.enabled('wasteland2'),
   action:(label,verb,primary)=>screenAction(label,verb,primary,arrow)});
 const modalScreen = createResultsScreen({app, profile, credits, escapeHTML, time, arrow});
 const updateHud = createHudScreen({app, ui, text, time, clamp, credits, routeMap});
@@ -191,6 +192,15 @@ root.addEventListener('submit',event=>{
   lastScreen=null;renderState(app.duel.state);if(!result.ok)root.querySelector('#new-player-name')?.focus();
 },{signal:domEvents.signal});
 root.addEventListener('change',event=>{
+  if(event.target.matches('[data-loadout-slot]')){
+    if(!armoryOpen)return;
+    const slot=Number(event.target.dataset.loadoutSlot);
+    const result=app.equipCarWeapon(slot,event.target.value);
+    garageMessage=result.ok?'Car weapon slots saved.':result.reason;
+    lastScreen=null;renderState(app.duel.state);
+    root.querySelector(`[data-loadout-slot="${slot}"]`)?.focus({preventScroll:true});
+    return;
+  }
   if(event.target.matches('[data-kit-car]')){
     if(!armoryOpen||!app.duel.featureFlags.enabled('wasteland2'))return;
     armoryCar=event.target.value;garageMessage='';lastScreen=null;renderState(app.duel.state);return;

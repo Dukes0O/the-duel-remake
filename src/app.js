@@ -1,4 +1,5 @@
-import {purchaseWeaponUpgrade,getProfileWeapons} from './weapon-upgrades.js';
+import {purchaseWeaponUpgrade,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
+import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
 import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit} from './armor-kits.js';
 import {CAMERA_MODES} from './camera-views.js';
 // app.js — owns the Duel instance, the rAF/step loop, keyboard input, the
@@ -211,6 +212,7 @@ export class App {
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
     this.duel.startCampaign({...options,weaponLevels:getProfileWeapons(this.profile).levels,
+      weaponLoadout:this.duel.featureFlags.enabled('wasteland2')?getCarLoadout(this.profile):undefined,
       combatArmorKit:this.duel.featureFlags.enabled('wasteland2') ? getEquippedArmorKit(this.profile,car) : null,
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     return true;
@@ -417,6 +419,14 @@ export class App {
     this._refreshPlayer();const result=purchaseWeaponUpgrade(this.profile,id);
     if(result.ok){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true});}return result;
   }
+  equipCarWeapon(slot,id){
+    if(this.duel.state.status!=='menu'||!this.duel.featureFlags.enabled('wasteland2'))
+      return {ok:false,reason:'Return to the Wasteland Armory to change weapons.'};
+    this._refreshPlayer();
+    const result=equipCarWeaponSlot(this.profile,slot,id);
+    if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,loadoutChanged:true});}
+    return result;
+  }
   purchaseArmorKit(car,id){
     if(this.duel.state.status!=='menu'||!this.duel.featureFlags.enabled('wasteland2'))
       return {ok:false,reason:'Return to the Armory with Wasteland enabled.'};
@@ -523,7 +533,11 @@ export class App {
     if (action === 'pause') this.togglePause();
     else if (action === 'camera-cycle') this.cycleCamera();
     else if (action.startsWith('camera:')) this.setCamera(action.slice(7));
-    else if (action.startsWith('weapon:')) this.duel.fireWeapon(action.slice(7));
+    else if (action.startsWith('weapon:')) {
+      const baseId=action.slice(7),slot=WEAPON_IDS.indexOf(baseId);
+      this.duel.fireWeapon(slot>=0&&this.duel.state.weaponLoadout?
+        this.duel.state.weaponLoadout[slot]:baseId);
+    }
     else if (action === 'shift-up') this.duel.setInput({ shiftUp: true });
     else if (action === 'shift-down') this.duel.setInput({ shiftDown: true });
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
