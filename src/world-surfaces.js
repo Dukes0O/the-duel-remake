@@ -57,7 +57,7 @@ export function terrainGeometry(course) {
     });
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3)); setMaterialGroups(g,groups); g.computeVertexNormals(); return g;
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3)); setMaterialGroups(g,groups); cutHiddenRoadGround(g,course); g.computeVertexNormals(); return g;
 }
 
 export function farTerrainGeometry(course) {
@@ -83,7 +83,55 @@ export function farTerrainGeometry(course) {
       if(quad.every(k=>distances[k]>(course.def.arena?18:course.def.expansion?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80)))groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(quad[0],quad[1],quad[2],quad[2],quad[1],quad[3]);
     }
   }
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);g.computeVertexNormals();return g;
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);g.computeVertexNormals();return g;
+}
+
+// Coarse radial/grid triangles bridge across a narrow wash. Replace only
+// intersecting ground with a fitted patch, keeping flag-off geometry identical.
+function cutHiddenRoadGround(geometry, course) {
+  const road = course.hiddenRoad;
+  if (!road) return;
+  const position = geometry.attributes.position, source = geometry.index.array;
+  const indices = [], groups = [];
+  for (const group of geometry.groups) {
+    const start = indices.length;
+    for (let i = group.start; i < group.start + group.count; i += 3) {
+      const a = source[i], b = source[i + 1], c = source[i + 2];
+      const x = (position.getX(a) + position.getX(b) + position.getX(c)) / 3;
+      const z = (position.getZ(a) + position.getZ(b) + position.getZ(c)) / 3;
+      const near = road.nearest(x, z);
+      if (near.progress > 40 && near.distance < road.widthAt(near.progress) + 32) continue;
+      indices.push(a, b, c);
+    }
+    groups.push({ start, count: indices.length - start, materialIndex: group.materialIndex });
+  }
+  geometry.setIndex(indices); geometry.clearGroups();
+  for (const group of groups) geometry.addGroup(group.start, group.count, group.materialIndex);
+}
+
+export function hiddenRoadGroundGeometry(course) {
+  const road = course.hiddenRoad, positions = [], uv = [], indices = [];
+  const columns = 9;
+  const patchEnd = road.length + road.widthAt(road.length) + 80;
+  for (let progress = 0, row = 0; progress <= patchEnd; progress += 2, row++) {
+    const center = road.poseAt(progress), endExtra = Math.max(0, progress - road.length);
+    const width = road.widthAt(Math.min(progress, road.length));
+    const offsets = [-width - 80, -width - 32, -width - 8, -width, 0, width, width + 8, width + 32, width + 80];
+    offsets.forEach((offset, j) => {
+      const x = center.x + Math.sin(center.heading) * endExtra + Math.cos(center.heading) * offset;
+      const z = center.z + Math.cos(center.heading) * endExtra - Math.sin(center.heading) * offset;
+      const nearest = course.nearest(x, z), ground = course.groundAt(nearest.s, nearest.lateral);
+      positions.push(x, ground.y + .035, z); uv.push(x / 8, z / 8);
+      if (row && j) {
+        const a = row * columns + j;
+        indices.push(a - columns - 1, a - 1, a - columns, a - columns, a - 1, a);
+      }
+    });
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geometry.setIndex(indices); geometry.computeVertexNormals(); return geometry;
 }
 
 function setMaterialGroups(geometry,groups){const indices=[];groups.forEach((group,material)=>{geometry.addGroup(indices.length,group.length,material);for(const index of group)indices.push(index);});geometry.setIndex(indices);}

@@ -12,8 +12,8 @@ let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 
 check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES['roadside-destruction'] === 'on'
-  && FEATURE_STATES.wasteland2 === 'dev' && Object.keys(FEATURE_STATES).length === 3,
-  'career backup and Wasteland 2 stay in QA while roadside destruction is on by default');
+  && FEATURE_STATES.wasteland2 === 'dev' && FEATURE_STATES['hidden-road'] === 'dev' && Object.keys(FEATURE_STATES).length === 4,
+  'career backup, Wasteland 2 and Hidden Road stay in QA while roadside destruction is on by default');
 const productionData = new Map();
 const productionStorage = {
   getItem: key => productionData.get(key) ?? null,

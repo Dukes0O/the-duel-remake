@@ -16,7 +16,7 @@ import { addCitySkyline } from './city-skyline.js';
 import { addCityParking } from './city-parking.js';
 import { addFreestyleScenery } from './freestyle-scene.js';
 
-import { strip, terrainGeometry, farTerrainGeometry, meadowTexture, groundTexture, surfaceTexture, addTrailShoulder } from './world-surfaces.js';
+import { strip, terrainGeometry, farTerrainGeometry, hiddenRoadGroundGeometry, meadowTexture, groundTexture, surfaceTexture, addTrailShoulder } from './world-surfaces.js';
 import { addFurniture, addSign, box, addStation, addTurnSigns, addCoast, addHarbor, addFinish } from './world-props.js';
 import { registerSceneSystem, disposeSceneSystems } from './scene-systems.js';
 import { makeSignFallSystem } from './scenery-fall.js';
@@ -62,6 +62,7 @@ export function buildEnvironment(course) {
     if(paved)for(const side of[-1,1])group.add(new THREE.Mesh(strip(course,s=>course.shortcutOffset(cut,s)+side*(cut.halfWidth-.35),s=>course.shortcutOffset(cut,s)+side*(cut.halfWidth-.2),.078,cut.start,cut.end,true),cream));
     for(let s=cut.start+25;s<cut.end-20;s+=40)for(const side of[-1,1]){const p=course.groundAt(s,course.shortcutOffset(cut,s)+side*(cut.halfWidth+.7));box(group,[.13,1.25,.13],[p.x,p.y+.625,p.z],yellow);}
   }
+  if(course.hiddenRoad)addHiddenRoad(group,course);
   for(const lane of course.features.passingLanes){
     for(let s=lane.start+55;s<lane.end-50;s+=18)for(const side of[-1,1])group.add(new THREE.Mesh(strip(course,side*6.45,side*6.6,.07,s,s+7),cream));
   }
@@ -84,6 +85,61 @@ export function buildEnvironment(course) {
   if(!course.def.practice)addFinish(group, course);
   addCheckpointGates(group,course);
   return group;
+}
+
+// EGG-01 playable greybox: authored geometry is shared with collision and
+// support. Final Blender wash/ Rustwall assets belong to the graphics cards.
+function addHiddenRoad(group, course) {
+  const road = course.hiddenRoad, root = new THREE.Group(); root.name = 'Hidden Road';
+  const dirt = new THREE.MeshStandardMaterial({ color: 0x9d8463, roughness: 1,
+    map: surfaceTexture('gravel'), bumpMap: surfaceTexture('gravel'), bumpScale: .035 });
+  const rut = new THREE.MeshStandardMaterial({ color: 0x716348, roughness: 1 });
+  const preparedGround = new THREE.Mesh(hiddenRoadGroundGeometry(course), dirt);
+  preparedGround.receiveShadow = true; root.add(preparedGround);
+  const ribbon = (left, right, start, end, lift, material) => {
+    const vertices = [], uv = [], indices = [];
+    for (let progress = start, row = 0; progress <= end; progress += 2, row++) {
+      for (const side of [left, right]) {
+        const offset = typeof side === 'function' ? side(progress) : side;
+        const pose = road.poseAt(progress, offset);
+        const ground = course.groundAt(pose.s, pose.lateral);
+        vertices.push(pose.x, ground.y + lift, pose.z); uv.push(offset / 4, progress / 8);
+      }
+      if (row) { const n = row * 2; indices.push(n - 2, n, n - 1, n, n + 1, n - 1); }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geometry.setIndex(indices); geometry.computeVertexNormals();
+    const mesh = new THREE.Mesh(geometry, material); mesh.receiveShadow = true; root.add(mesh);
+  };
+  // Two worn tracks at the mouth; the broad prepared bed starts behind the bend.
+  ribbon(p => -road.widthAt(p), p => road.widthAt(p), 54, road.length, .09, dirt);
+  for (const side of [-1, 1]) ribbon(side * 1.15 - .23, side * 1.15 + .23, 0, 180, .10, rut);
+  const bankMaterial = new THREE.MeshStandardMaterial({ color: 0xa5825b,
+    map: rockTexture('desert'), roughness: 1 });
+  const banks = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), bankMaterial, road.walls.length);
+  banks.name = 'Dry wash banks'; banks.castShadow = true; banks.receiveShadow = true;
+  const transform = new THREE.Object3D();
+  road.walls.forEach((wall, i) => {
+    transform.position.set(wall.x, wall.y + wall.height * .42, wall.z);
+    transform.rotation.set(0, wall.heading, 0); transform.scale.set(5, wall.height * .7, 7);
+    transform.updateMatrix(); banks.setMatrixAt(i, transform.matrix);
+  });
+  root.add(banks);
+  const rust = new THREE.MeshStandardMaterial({ color: 0x69442d, roughness: .94 });
+  const postPose = road.poseAt(13, 4.2), post = new THREE.Mesh(new THREE.BoxGeometry(.17, 1.8, .16), rust);
+  post.position.set(postPose.x, postPose.y + .8, postPose.z); post.rotation.z = .18; root.add(post);
+  const dead = new THREE.MeshStandardMaterial({ color: 0x756347, roughness: 1 });
+  const cactusGeometry = new THREE.CylinderGeometry(.11, .16, 1.7, 5);
+  for (let progress = 20; progress <= 60; progress += 10) {
+    const pose = road.poseAt(progress, 5.6), cactus = new THREE.Mesh(cactusGeometry, dead);
+    cactus.position.set(pose.x, pose.y + .75, pose.z); cactus.rotation.z = .12 * Math.sin(progress);
+    root.add(cactus);
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(.065, .09, .65, 5), dead);
+    arm.position.set(pose.x + .27, pose.y + .9, pose.z); arm.rotation.z = -.9; root.add(arm);
+  }
+  group.add(root);
 }
 
 function addLandscape(group,course){

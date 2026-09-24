@@ -28,6 +28,10 @@ for(const def of COURSE){
 const naturalDef=COURSE.find(def=>!def.kind),arenaDef=COURSE.find(def=>def.kind==='arena');
 const natural=new Course(naturalDef,1989),rerun=new Course(structuredClone(naturalDef),1989);
 check(natural!==rerun&&environmentKey(natural)===environmentKey(rerun),'new simulation Course instances can retain a compatible rendered world');
+const canyonDef=COURSE.find(def=>def.id==='pacific-canyon');
+const ordinaryCanyon=new Course(canyonDef,1989),hiddenCanyon=new Course(canyonDef,1989,{hiddenRoad:true});
+check(environmentKey(ordinaryCanyon)!==environmentKey(hiddenCanyon),'an ordinary menu world cannot satisfy a Hidden Road race');
+check(environmentKey(hiddenCanyon)===environmentKey(new Course(canyonDef,1989,{hiddenRoad:true})),'equivalent Hidden Road courses reuse the same world');
 for(const s of[0,natural.length*.23,natural.length*.76,natural.raceLength]){
   check(JSON.stringify(natural.groundAt(s,17))===JSON.stringify(rerun.groundAt(s,17)),'the retained original ground sampler agrees with the new equivalent Course');
 }

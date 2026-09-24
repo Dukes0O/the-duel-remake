@@ -20,6 +20,7 @@ import {CREW} from './crew.js';
 
 import { CARS, DEFAULT_CAR, DIFFICULTY, DEFAULT_DIFFICULTY, CPU_DIFFICULTY, DEFAULT_CPU_DIFFICULTY, COURSE, LIVES, DRIVE, SCORING } from './config.js';
 import { Course } from './course.js';
+import { onHiddenRoad } from './hidden-road.js';
 import { seedFromUrl } from './rng.js';
 import { createDriftState } from './drift-scoring.js';
 import { DEFAULT_DRIVER, normalizeDriverId, applyDriverModifiers } from './drivers.js';
@@ -182,7 +183,7 @@ export class Duel {
   _loadStage(idx) {
     const s = this.state;
     s.stageIndex = idx;
-    this.course = new Course(COURSE[idx], this.seed);
+    this.course = new Course(COURSE[idx], this.seed, { hiddenRoad: this.featureFlags.enabled('hidden-road') });
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     const rawGates = this.course.features.lapGates?.map(gate => typeof gate === 'number' ? gate : gate.s) || [this.course.length * .25, this.course.length * .5, this.course.length * .75];
     this._lapGates = [...new Set(rawGates.filter(distance => distance > 0 && distance < this.course.length))].sort((a, b) => a - b);
@@ -413,7 +414,10 @@ export class Duel {
 
   _jump(...args) { return simDriving._jump.apply(this, args); }
 
-  _advanceLaps(...args) { return simLaps._advanceLaps.apply(this, args); }
+  _advanceLaps(...args) {
+    if (args[0] === this.state && onHiddenRoad(this.course, this.state)) return;
+    return simLaps._advanceLaps.apply(this, args);
+  }
 
   _advanceRushGates(...args) { return simLaps._advanceRushGates.apply(this, args); }
 
