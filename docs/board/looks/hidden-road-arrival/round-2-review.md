@@ -56,3 +56,19 @@ Round 3 is limited to a confirmed repeated-work optimization, the corresponding
 small visual/cost sample, and the corrected motion and legacy-camera evidence.
 Unchanged audio source may reuse the recorded round 2 sound evidence. No new
 asset family round or broad race matrix is needed.
+
+## Follow-up: the legacy camera failure is a production defect
+
+A settled supplementary capture still places the legacy exploration camera
+inside terrain after 600 ms. This supersedes the initial stale-fixture
+explanation above. The normal driving camera uses main-road coordinates and
+an unrelated tunnel constraint at this distant spur position. The Director
+authorized a narrow helper using the car's real world heading and supported
+height only while physically on the hidden road, including its return window.
+Ordinary and flag-off views remain unchanged. Independent regression tests
+must precede the fix, and round 3 must show the actual settled driving view.
+
+The supplementary WebM exists, but its first thumbnail strip read a cleared
+WebGL backbuffer. Preserve that failed strip; synchronously render before
+reading each thumbnail. The continuous recording and still-frame extraction
+have separate verification requirements.
