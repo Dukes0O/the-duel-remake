@@ -274,27 +274,27 @@ tasks:
     lane: CMB
     size: M
     needs: [BAL-01]
-    status: backlog
+    status: merged
     flag: wasteland2
-    owns: [src/combat-weapons.js, src/combat-projectiles.js, src/combat-ai.js, src/raiders.js, src/wasteland-tuning.js, tools/combat-balance.mjs]
+    owns: [src/combat-weapons.js, src/combat-projectiles.js, src/combat-ai.js, src/raiders.js, src/wasteland-tuning.js, tools/combat-balance.mjs, tools/test-combat-payoff.mjs, tools/test-combat-balance.mjs, tools/test-raiders.mjs, tools/test-enemy-aim.mjs]
     helpers: [test_author, balance_analyst, reviewer]
     acceptance:
       - "Trace why strong scripted play wrecks no CPU car in 30 races and why Easy CPU hits six times with wasteland2 on; record a design choice before code."
       - "With wasteland2 on, preserve win-rate bands, Easy CPU hits zero to three, and make a strong scripted policy wreck CPU cars. Keep flag-off and ordinary replay controls unchanged."
-    note: "Re-sliced from the unmerged remainder of BUG-06 and BUG-07; prior integrated fixes remain."
+    note: "Merged e72b6ed after 134 passing lane suites, build and independent review. Flagged wins8/5/3 and enemy hits3/4/6 pass. Separate pursuit causes2/2/0 player-owned CPU wrecks; 162 replay fingerprints unchanged."
   - id: GFX-01-P1
     title: "Crew topology and baked textures after initial family cards"
     lane: ART
     size: L
     needs: [GFX-01]
-    status: backlog
-    owns: [tools/blender/crew-fighters.py, public/assets/models/wasteland/crew/, docs/board/looks/crew/]
+    status: building
+    owns: [tools/blender/crew-fighters.py, public/assets/models/wasteland/crew/, docs/board/looks/crew/, tools/test-crew-assets.mjs, tools/scenarios/crew-fighters.mjs]
     helpers: [reviewer, art_critic, browser_qa]
     flag: wasteland2
     acceptance:
       - "Follow round-3-review.md. Replace the stalled primitive/projection approach with continuous anatomical meshes and authored padded UV/baked textures. Join necks to adjusted jaws, eliminate pale streaks/profile bands, and build distinct faces/hair and reference clothing silhouettes."
       - "Author tool/car actions around actual grip, sill, seat and support-foot contacts. Preserve simulation timing and all runtime lifecycle controls. Run further immutable fidelity rounds within SPEC 0.3 budgets; do not promote beta until every score is at least four."
-    note: "Tracked visual debt, not a beta waiver. Initial ordered SPEC 0.6 work continues first."
+    note: "Active Rook-only trial uses a continuous anatomical body and authored painted UVs. Other crew wait for the written Rook likeness gate."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8
@@ -322,7 +322,7 @@ tasks:
     title: "Polish first-person anatomy, materials and motion"
     lane: VIS
     size: M
-    needs: [GFX-02]
+    needs: [GFX-02, GFX-01-P1]
     status: backlog
     owns: [tools/blender/first-person-gear.py, public/assets/models/wasteland/first-person/, docs/board/looks/first-person/]
     helpers: [art_critic, reviewer, browser_qa]
@@ -331,7 +331,7 @@ tasks:
       - "Continue from the three immutable initial rounds. Fix fingertip cap/normal artifacts, mitten-like palms, generic sleeve construction, simplified tool fittings and continuous grip/animation contact as recorded in round-3-review.md."
       - "Retain meaningful matched High/Performance comparisons, short motion evidence, at most 8000 visible triangles and three draws. Measure texture memory and evaluate shared crew materials before making a resource-budget claim."
       - "Keep the family in dev until all SPEC 0.3 scores reach four and the measured budget holds. Follow its approach-change rule if another round fails to improve likeness."
-    note: "Initial resemblance improves from two to three in round 2 and remains three in round 3. One stagnant round so far; no beta approval. Start after the ordered initial family cards."
+    note: "Initial resemblance improves from two to three in round 2 and remains three in round 3. One stagnant round so far; no beta approval. Follow the winning GFX-01-P1 technique."
   - id: EGG-02
     title: "Rustwall gate and salt-flat fidelity rounds one to three"
     priority: 9
@@ -357,16 +357,16 @@ tasks:
     lane: VIS
     size: M
     needs: [EGG-02]
-    status: backlog
+    status: building
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall/]
-    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs]
+    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs]
     helpers: [art_critic, reviewer, browser_qa]
     flag: hidden-road
     acceptance:
       - "Continue from the three immutable initial rounds. Replace repeated rock columns with a natural bank treatment, resolve exposed terrain wedges and foot contact, improve steel/soot/wreck material response, and enrich gate/tower connections as recorded in round-3-review.md. Preserve measured collision and ground support; any extra terrain hook needs a Director re-slice."
       - "Retain matched High/Performance views and add a short continuous approach/gate review once EGG-03 exists. Keep the geometry and material allocations and measure frame cost without discarding earlier unfavorable samples. The model toggle comparison alone does not measure the whole terrain change or GPU time."
       - "Wall resemblance reaches three in round 2 and stays three in round 3; wash rises from one to two, then stays two. Each has one stagnant round. Apply SPEC 0.3's approach-change rule if another round fails to improve resemblance. Keep dev until all scores reach four and the budget holds."
-    note: "Initial card is accepted for development only. Start after the ordered initial cards; three rounds alone do not grant beta."
+    note: "Active phase-2 lane replaces repeated columns and refines wall materials. Three rounds alone do not grant beta."
   - id: EGG-03
     title: "Gate arrival and invitation"
     priority: 10
@@ -441,7 +441,9 @@ tasks:
     lane: SAVE
     size: L
     needs: [CAM-01]
-    status: backlog
+    status: building
+    owns: [src/wasteland-career.js, src/wasteland-progress.js, src/screen-territory.js, src/screen-territory.css, tools/test-wasteland-career.mjs, tools/test-territory-screen.mjs]
+    hooks: [src/progression.js, src/weapon-upgrades.js, src/armor-kits.js, src/crew.js, src/screen-armory.js, src/screen-router.js, src/app.js, src/crew-ui.js, tools/test-crew-ui.mjs, src/combat-scoring.js, tools/test-combat-scoring.mjs, src/raiders.js, tools/test-raiders.mjs, src/game.js, src/screen-results.js, tools/test-wasteland-results.mjs, tools/scenarios/wasteland-career.mjs, tools/test-wasteland-profile.mjs, tools/test-progression.mjs, tools/test-progression-integration.mjs, tools/test-save-fixtures.mjs, tools/test-weapon-upgrades.mjs, tools/test-armor-kits.mjs, tools/test-crew.mjs, tools/test-career-backup.mjs]
     helpers: [test_author, save_guardian, reviewer, browser_qa]
     acceptance:
       - "Add separate scrap and eight-warlord territory progression, ranks 1–30 and yard access behind the switch per SPEC 0.4. Preserve old credit-funded weapon levels and ordinary careers through backed-up migration."
@@ -459,7 +461,7 @@ tasks:
     priority: 15
     lane: VIS
     size: L
-    needs: [GFX-03]
+    needs: [CAR-01]
     status: backlog
     acceptance:
       - "Three saved fidelity rounds for the yard home and arena family; connect career/map/armory/crew choices and the ARENA-01/06 framework without granting unbuilt modes."
@@ -614,7 +616,7 @@ tasks:
     size: M
     needs: [FND-08]
     status: backlog
-    note: "Diagnostic tools merged as 3c22f41 and cbea2cd; focused feel/analyzer tests pass. Full integration gate, exact-source feel report and fresh audio recording remain. All-weapon Medium/Hard win rates, guaranteed event coverage, listening and remaining cues keep full TOOL-02 in review."
+    note: "Diagnostic tools merged as 3c22f41 and cbea2cd; focused feel/analyzer tests pass. Residual scope: exact-source feel report and guaranteed event coverage after BAL-02. Full-mix listening belongs to AUD-03. Future weapon checks belong to the cards implementing those weapons. No current branch or review is active."
     spec: "SPEC.md, task TOOL-02"
   - id: FND-10
     title: "Save fixtures and storage budget"
@@ -698,47 +700,24 @@ tasks:
     note: "Merged as 660119a after 151-suite gate, build and private browser smoke. Own-blast speed loss at 48/97/193/320 km/h is 0/0/0/4.36%; UFO balance remains open."
     spec: "SPEC.md, task BUG-05"
   - id: BUG-06
-    title: "A crossbow that hits"
+    title: "Crossbow body-contact correction"
     wave: 1
     lane: CMB
     size: S
     needs: [BUG-05]
     status: replaced
-    owns: [src/combat-projectiles.js, tools/test-combat-projectiles.mjs, tools/test-combat-replays.mjs, tools/replays/projectile-height-controls.json, tools/replays/combat-inputs.json, tools/replays/combat-fingerprints.json, tools/test-combat-armor.mjs, tools/test-combat-scoring.mjs, tools/test-combat-opponents.mjs, tools/scenarios/combat-armor-frame-pacing.mjs, tools/scenarios/combat-armor-wreck.mjs, tools/scenarios/combat-effects.mjs, tools/scenarios/combat-results.mjs]
-    helpers: [test_author, balance_analyst, test_runner, reviewer, browser_qa]
-    active_slice: "Uphill launch candidate 5cf533e is held on codex/bug06-launch-height. All 20 geometric checks pass, but accuracy rises to 24/26; guidance-off diagnostic still gives 18/26. Complete flagged report has six failures: wins 1/2/2 and enemy hits 10/7/13. Evidence note c3efb1f retains the result. No further tuning or merge until a jointly reviewed aim/balance approach is scoped."
-    launch_owns: [src/combat-weapons.js, tools/test-crossbow-launch-height.mjs]
-    launch_acceptance:
-      - "Use actual muzzle position, predicted target body height and a consistent horizontal flight time that includes inherited velocity. Preserve horizontal lead, enemy bias, homing, cadence, damage and collision bounds."
-      - "Independent geometric tests cover flat, uphill and downhill moving targets, unequal car speeds, airborne height and legacy/bomb/RPG controls. No balance limit or fingerprint changes without a concrete trace and independent review."
-      - "Run a bounded accuracy probe before one final flagged balance report. Required lane/build and independent source review precede merge. A geometric fix does not imply every balance target passes."
-    acceptance:
-      - "Independent swept-contact tests show a bolt passing above the actual roof misses while body intersections, including vertically moving cars between steps, hit. Flagged crossbows use vehicle height instead of the current plus/minus 4 m band around ground plus 1 m. Preserve legacy/off and other weapon behavior."
-      - "Measure one controlled crossbow probe and one complete flagged report after the geometric fix. Record win rates, enemy hits, UFO gains and wrecks without promising a pass. Retain lead, thrower velocity, meaningful homing, 10/7/5-second cadence and all balance limits."
-      - "Ordinary and flag-off rules must remain unchanged. Existing projectile/replay checks and required lane/build gate pass; any changed expected fingerprint or assertion needs independent review and a written reason."
-    merge_after: BAL-01
-    note: "Actual vehicle body contact merged 9139575 after reviewed fixtures, 216-suite lane gate, build and private wreck/results checks. Probe remains 12/26 within target. The later enemy-aim merge a1bc113 reduces flagged balance failures to the Easy enemy-hit ceiling. Remaining measured balance work is BAL-02, including uphill launch geometry. Prior 3-degree guidance candidate dfe157e remains held."
+    replaced_by: BAL-02
+    note: "Body contact merged at 9139575. Remaining measured balance work belongs to BAL-02. The former uphill-launch candidate was rejected after accuracy rose to 24/26 and six flagged balance targets failed; no candidate branch remains and none should be recreated without a new trace."
     spec: "SPEC.md, task BUG-06"
   - id: BUG-07
-    title: "A CPU that fights back"
+    title: "CPU and raider aim, defensive UFO"
     wave: 1
     lane: CMB
     size: S
     needs: [BUG-06]
     status: replaced
-    owns: [src/raiders.js, src/combat-weapons.js, src/combat-projectiles.js, src/wasteland-tuning.js, tools/test-enemy-aim.mjs, tools/replays/enemy-aim-controls.json, tools/replays/combat-inputs.json, tools/replays/combat-fingerprints.json, src/combat-pickups.js, src/combat-ai.js, tools/test-cpu-ufo.mjs, tools/test-cpu-pickups.mjs]
-    helpers: [test_author, reviewer, balance_analyst, test_runner]
-    active_slice: "CPU UFO merged c15026d after 127 passing lane suites, build and independent review. Flag-off balance passes; flagged Easy enemy hits remain above target. No current builder for the remaining Easy tuning issue."
-    next_slice: "The flagged Easy enemy-hit ceiling remains open after this slice. Use a bounded trace before selecting any further change."
-    cpu_ufo_policy: "Measured immediate-use candidate regresses Medium wins in both flag paths. AI must hold its collected charge without a threat and use it only for an incoming player bolt recognized by the existing incomingBolt reaction/cone/height/closing rules. Safe direct-use API, own gate/lap limits, attack cadence and balance targets remain unchanged. Root owns this narrow combat-ai.js correction after independent red tests."
-    acceptance:
-      - "The body-contact prerequisite for this slice is merged 9139575. Raider bolts receive deterministic difficulty-dependent aim error from a separate seed keyed by course/stage, lap and raider identity; do not consume world RNG or another actor's random sequence. Reuse current CPU difficulty spread initially."
-      - "Flagged enemy crossbow guidance retains the shot's chosen aim bias rather than steering it away. Cover both CPU and raider shots while leaving player guidance, flag-off behavior, existing firing cadence, target selection, projectile limits and weapon damage unchanged."
-      - "Independent bounded tests prove difficulty spread, identity/order independence, retained bias, player/legacy controls and common-time 30/60/144 outcomes. No existing assertion or fingerprint changes without a concrete before/after trace and independent review."
-      - "After the rule correction, run one complete flagged balance report and compare the recorded body-contact baseline: wins 5/4/3, enemy hits 10/11/4, crossbow 12/26. Preserve every target; no numeric tuning until the measured result identifies a reason. Record remaining UFO and CPU-UFO work separately."
-      - "Required lane/build gate and review apply before this slice merges. The full BUG-07 card stays open for CPU UFO use and unmet balance targets."
-      - "The measured 20/10-degree raider candidate regressed Easy wins to 10/10. Revert only Easy to its prior 10 degrees; retain Medium 10 degrees and Hard 0.03 radians. CPU spread, cadence, damage and limits remain fixed. Independent review covers the exact config assertion, explicit raider-cone bound and equal Easy/Medium RMS for identical seeded samples; Medium remains wider than Hard. Run one final report after the justified steering correction and Easy reversion, with all balance targets unchanged."
-    note: "Aim merged a1bc113; defensive CPU UFO merged c15026d. Final off/on wins 9/6/2 and 9/5/3; hits 1/3/7 and 6/4/6. Only flagged Easy hit ceiling remains red. Its trace contains one CPU and five raider hits; widening Easy spread reduced one hit but raised wins to 10/10, so that candidate remains rejected. No further numeric change is justified by the retained single-seed trace. Remaining work is BAL-02."
+    replaced_by: BAL-02
+    note: "Aim merged at a1bc113 and defensive CPU UFO at c15026d. Remaining Easy hit balance belongs to BAL-02. Baseline off/on wins were 9/6/2 and 9/5/3; hits 1/3/7 and 6/4/6. The Easy sample had one CPU and five raider hits. No active slice or candidate branch remains."
     spec: "SPEC.md, task BUG-07"
   - id: BUG-14
     title: "No legacy police in combat races"
@@ -1073,7 +1052,7 @@ tasks:
     size: S
     needs: []
     status: merged
-    note: "Measured spatial blast/hit slice and four distinct current-weapon fire cues integrated through 09e9353. Focused sound checks, private waveform capture and build passed. Full-mix listening and future arsenal cues remain."
+    note: "Measured spatial blast/hit slice and four distinct current-weapon fire cues integrated through 09e9353. Focused sound checks, private waveform capture and build passed. Current cues are complete. Full-mix listening is AUD-03; future cues belong to their weapon cards."
     spec: "SPEC.md, task AUD-01"
   - id: AUD-02
     title: "On-foot and new weapon sounds"
@@ -1090,8 +1069,18 @@ tasks:
       - "Finite, audible, unclipped and bounded-duration signals are measured; spatial impacts and raider shots audibly favor the expected channel. Silence, clipping and missing cues fail."
       - "Capture summary names the tested source commit. Direct offline cue calls do not claim live routing or full-race mix coverage. Existing production event-routing tests still pass."
       - "Audio QA and independent review inspect the measurements and limits; full AUD-02 stays open for future cues and whole-race listening."
-    note: "Current-action cues integrated at 6898579; real browser waveform verification merged at ff5d63b after 214/214 lane suites, build, clean-source capture, code review and independent PCM checks. Future weapon cues and full-race listening remain separate follow-up work."
+    note: "Current-action cues integrated at 6898579; real browser waveform verification merged at ff5d63b after 214/214 lane suites, build, clean-source capture, code review and independent PCM checks. Full-race listening is AUD-03; future cues belong to their weapon cards."
     spec: "SPEC.md, task AUD-02"
+  - id: AUD-03
+    title: "Full-race sound mix and listening review"
+    lane: ART
+    size: S
+    needs: [AUD-01, AUD-02, BAL-02]
+    status: backlog
+    helpers: [audio_qa, reviewer]
+    acceptance:
+      - "Record a private memory-only race with current vehicle, foot and raider cues. Compare the heard mix with actual events; record missing, masked or clipped cues and fix or re-slice proven findings."
+    note: "Residual listening work from AUD-01, AUD-02 and TOOL-02. Existing cue and waveform work remains merged; this card has no active branch."
   - id: VIS-01
     title: "Combat flipbooks and pooled effects"
     wave: 3
@@ -1367,7 +1356,7 @@ tasks:
     note: "Player-owned rival wrecks show a pending +150 Notoriety cue; settled results show the exact earned XP and rank. Integrated at 31a571a with toast placement at e45b5fd. Focused feedback/HUD checks and build passed; joined visual check remains."
     spec: "SPEC.md sections 3.8 and 12.2, task UI-02"
   - id: CREW-01
-    title: "Selectable Wasteland crew roster"
+    title: "Remaining Jax, Cinder and Tusk perks after their mechanics"
     wave: 5
     lane: UI
     size: M

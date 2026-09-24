@@ -236,28 +236,31 @@ check('biased enemy bolts still guide toward a changing target', () => {
 });
 
 check('raiders keep nearest moving target selection and one shot per member per lap', () => {
-  const duel = field();
-  Object.assign(duel.state, actor(60, 0, 20));
-  Object.assign(duel.state.rival, actor(30, 0, 25));
-  const zone = camp(duel, ['0-0', '0-1', '0-2']);
-  stepRaiders(duel);
-  assert.equal(duel.state.combat.projectiles[0].targetIndex, 0);
-  duel.state.stageTimeSec = .799;
-  stepRaiders(duel);
-  assert.equal(zone.shotCount, 1, 'the .8-second camp gap is unchanged');
-  duel.state.stageTimeSec = .8;
-  duel.state.rival.speedMph = 0;
-  stepRaiders(duel);
-  assert.equal(duel.state.combat.projectiles[1].targetIndex, -1, 'stationary rival is ignored');
-  duel.state.stageTimeSec = 1.6;
-  stepRaiders(duel);
-  duel.state.stageTimeSec = 2.4;
-  stepRaiders(duel);
-  assert.equal(zone.shotCount, 3, 'three members make exactly three shots per lap');
-  duel.state.currentLap++;
-  duel.state.stageTimeSec = zone.nextShotAt;
-  stepRaiders(duel);
-  assert.equal(zone.shotCount, 4, 'a new lap renews eligibility');
+  for (const difficulty of ['easy', 'medium', 'hard']) {
+    const duel = field({difficulty});
+    const gap = difficulty === 'easy' ? 1.6 : .8;
+    Object.assign(duel.state, actor(60, 0, 20));
+    Object.assign(duel.state.rival, actor(30, 0, 25));
+    const zone = camp(duel, ['0-0', '0-1', '0-2']);
+    stepRaiders(duel);
+    assert.equal(duel.state.combat.projectiles[0].targetIndex, 0);
+    duel.state.stageTimeSec = gap - .001;
+    stepRaiders(duel);
+    assert.equal(zone.shotCount, 1, 'no second shot before the difficulty gap');
+    duel.state.stageTimeSec = gap;
+    duel.state.rival.speedMph = 0;
+    stepRaiders(duel);
+    assert.equal(duel.state.combat.projectiles[1].targetIndex, -1, 'stationary rival is ignored');
+    duel.state.stageTimeSec = gap * 2;
+    stepRaiders(duel);
+    duel.state.stageTimeSec = gap * 3;
+    stepRaiders(duel);
+    assert.equal(zone.shotCount, 3, 'three members make exactly three shots per lap');
+    duel.state.currentLap++;
+    duel.state.stageTimeSec = zone.nextShotAt;
+    stepRaiders(duel);
+    assert.equal(zone.shotCount, 4, 'a new lap renews eligibility');
+  }
 });
 
 check('CPU attack cadence stays 10 / 7 / 5 seconds', () => {

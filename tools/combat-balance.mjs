@@ -79,7 +79,7 @@ function eligibleWeapons(policy, duel) {
   const { state } = duel;
   if (state.status !== 'racing' || !state.combat || !state.rival) return [];
   const gap = duel.relativeS(state.rival.s, state.s) - state.s;
-  const keys = policy === 'all' ? ['ufo', 'bomb', 'crossbow', 'star'] : [policy === 'ufo-max' ? 'ufo' : policy];
+  const keys = ['all', 'pursuit'].includes(policy) ? ['ufo', 'bomb', 'crossbow', 'star'] : [policy === 'ufo-max' ? 'ufo' : policy];
   return keys.filter(key => state.combat.cooldowns[key] <= 0 &&
     (key !== 'crossbow' || gap >= 0 && gap <= 120) &&
     (key !== 'star' || state.combat.shield <= 0));
@@ -87,7 +87,7 @@ function eligibleWeapons(policy, duel) {
 
 export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames = 30 * 600 } = {}) {
   flags = selectedFlags(flags);
-  if (!policies.includes(policy) || !difficulties.includes(cpuDifficulty) ||
+  if (!(policies.includes(policy) || policy === 'pursuit') || !difficulties.includes(cpuDifficulty) ||
       !Number.isSafeInteger(seed) || !Number.isSafeInteger(maxFrames) || maxFrames < 0)
     throw Error('Invalid race policy, difficulty, seed or frame limit.');
   const previousStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
@@ -104,13 +104,29 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
     }
     app.autopilot = true;
     app._scriptedCrashDone = true;
+    if (policy === 'pursuit') {
+      const drive = app._driveAutopilot.bind(app);
+      app._driveAutopilot = dt => {
+        drive(dt);
+        const duel = app.duel, state = duel.state;
+        if (state.status !== 'racing' || state.impactTimer > 0 ||
+            !state.rival || state.rival.finished) return;
+        const gap = duel.relativeS(state.rival.s, state.s) - state.s;
+        const targetSpeed = Math.max(15, state.rival.speedMph +
+          Math.max(-45, Math.min(35, (gap - 30) * .4)));
+        // Follow the normal steering controller; use only legal driver inputs
+        // to keep firing opportunities after hits slow the target down.
+        duel.setInput({throttle: state.speedMph < targetSpeed ? 1 : 0,
+          brake: state.speedMph > targetSpeed + 3 ? .45 : 0, boost: false});
+      };
+    }
     const duel = app.duel;
     if (policy === 'ufo-max') {
       duel.state.combat.levels.ufo = 3;
       duel.state.weaponLevels.ufo = 3;
     }
     const shots = { ufo: 0, bomb: 0, crossbow: 0, star: 0 };
-    let cpuHits = 0, unattributedEnemyHits = 0;
+    let cpuHits = 0, unattributedEnemyHits = 0, playerOpponentWrecks = 0;
     const wrecks = emptyWrecks();
     const wreckedTraffic = new WeakSet();
     const recordTrafficWreck = (actor, owner) => {
@@ -127,6 +143,7 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
         if (['player', 'opponent', 'traffic'].includes(victim)) {
           wrecks[victim]++;
           const owner = event.owner ?? (event.source === 'scenery' ? 'environment' : 'unknown');
+          if (victim === 'opponent' && owner === 'player') playerOpponentWrecks++;
           wrecks.byOwner[Object.hasOwn(wrecks.byOwner, owner) ? owner : 'unknown']++;
         }
       }
@@ -152,7 +169,7 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
     }
     const state = duel.state;
     const result = {
-      policy, cpuDifficulty, seed, flags, wrecks, status: state.status,
+      policy, cpuDifficulty, seed, flags, wrecks, playerOpponentWrecks, status: state.status,
       completed: state.results?.completed === true,
       won: state.results?.won === true,
       timeSec: rounded(state.results?.timeSec ?? state.stageTimeSec),
@@ -335,11 +352,21 @@ function main(args) {
   const ownBombs = bombSpeedProbe(options);
   const report = buildReport({ flags, runs, baselineRuns, firstTwelveSec,
     elapsedSec: rounded((performance.now() - started) / 1000), crossbowAim, ownBombs });
+  const pursuitRuns = flags.includes('wasteland2')
+    ? difficulties.map(difficulty => run('pursuit', difficulty, 1989, options)) : [];
+  if (pursuitRuns.length) report.strongPolicy = {
+    scope: 'Separate legal-input pursuit, seed 1989 per difficulty; does not replace historical win or hit samples.',
+    races: pursuitRuns,
+  };
+  report.elapsedSec = rounded((performance.now() - started) / 1000);
   console.log(JSON.stringify(report, null, 2));
   if (verbose) console.log(JSON.stringify({ policyRaces: runs, baselineRaces: baselineRuns,
     crossbowCases: crossbowAim.cases, bombCases: ownBombs.cases }, null, 2));
   if (check) {
     const failures = reportFailures(report, runs, baselineRuns);
+    if (pursuitRuns.some(race => !race.completed)) failures.push('strong pursuit race did not complete');
+    if (pursuitRuns.length && !pursuitRuns.some(race => race.playerOpponentWrecks > 0))
+      failures.push('strong pursuit caused no player-owned opponent wreck');
     if (failures.length) { console.error(failures.join('\n')); process.exitCode = 1; }
   }
 }
