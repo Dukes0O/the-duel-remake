@@ -32,25 +32,34 @@ bpy.context.preferences.filepaths.save_version = 0
 # Crop centres in the original, full-resolution sheets. The figures' floor and
 # crown pixels are recorded, so UV projection and evidence are reproducible.
 CREW = {
-    'rook': dict(sheet=1, centres=[112, 287, 443], floor=650, crown=62, height=1.83,
+    'rook': dict(sheet=1, centres=[112, 287, 441], floor=650, crown=62, height=1.83,
                  width=1.00, female=False, hair='rough', vest=True),
-    'nell': dict(sheet=1, centres=[633, 776, 925], floor=650, crown=77, height=1.73,
+    'nell': dict(sheet=1, centres=[633, 776, 922], floor=650, crown=77, height=1.73,
                  width=.91, female=True, hair='curls', sleeveless=True, goggles=True),
-    'jax': dict(sheet=1, centres=[1143, 1277, 1442], floor=650, crown=68, height=1.86,
+    'jax': dict(sheet=1, centres=[1138, 1277, 1451], floor=650, crown=68, height=1.86,
                 width=.98, female=False, hair='knot', coat=True),
-    'odessa': dict(sheet=1, centres=[1648, 1810, 1968], floor=650, crown=76, height=1.77,
+    'odessa': dict(sheet=1, centres=[1660, 1810, 1970], floor=650, crown=76, height=1.77,
                    width=.98, female=True, hair='grey-knot', mechanic=True),
-    'cinder': dict(sheet=2, centres=[111, 275, 445], floor=652, crown=44, height=1.76,
+    'cinder': dict(sheet=2, centres=[111, 275, 439], floor=652, crown=44, height=1.76,
                    width=.91, female=True, hair='high-knot', sleeveless=True, respirator=True),
-    'dune': dict(sheet=2, centres=[640, 795, 933], floor=652, crown=54, height=1.85,
+    'dune': dict(sheet=2, centres=[664, 795, 927], floor=652, crown=54, height=1.85,
                  width=.96, female=False, hair='hood', hood=True),
-    'wren': dict(sheet=2, centres=[1155, 1305, 1443], floor=652, crown=74, height=1.65,
+    'wren': dict(sheet=2, centres=[1130, 1266, 1390], floor=652, crown=70, height=1.65,
                  width=.88, female=True, hair='short', cropped=True, goggles=True),
-    'tusk': dict(sheet=2, centres=[1633, 1792, 1965], floor=652, crown=37, height=1.94,
+    'tusk': dict(sheet=2, centres=[1608, 1792, 1942], floor=652, crown=37, height=1.94,
                  width=1.24, female=False, hair='bald', armor=True),
 }
 CLIPS = ['idle', 'walk', 'sprint', 'jump', 'knockdown', 'get-up',
          'aim', 'fire', 'reload', 'repair', 'enter', 'exit']
+
+# Per-part landmarks replace the broad world-space projection used in round 1.
+# Head bottom is the chin/beard, not the neck scarf. These are source pixels.
+LANDMARKS = {
+    'rook': (116, 145, 80, 44, 77), 'nell': (640, 160, 62, 34, 98),
+    'jax': (1136, 149, 78, 44, 77), 'odessa': (1660, 160, 72, 36, 96),
+    'cinder': (111, 136, 79, 42, 79), 'dune': (660, 130, 79, 46, 78),
+    'wren': (1132, 143, 72, 43, 95), 'tusk': (1617, 127, 104, 60, 40),
+}
 
 
 def digest(path):
@@ -99,17 +108,36 @@ def atlas_for(name, cfg):
     image.file_format = 'PNG'
     image.save()
     image.pack()
-    return image, bounds, source_path
+    # The same UV set has a surface map: cloth is dry, leather smoother, and
+    # Tusk's plate regions reflect more strongly. Deterministic woven variation
+    # is roughness only; it does not paint artificial highlights into albedo.
+    yy,xx=np.indices((1024,1024))
+    rough=np.full((1024,1024),.89,dtype=np.float32)
+    rough[(yy>460)&(yy<560)]=.69
+    rough[yy>870]=.70
+    metal=np.zeros((1024,1024),dtype=np.float32)
+    if name=='tusk':
+        plated=(yy>210)&(yy<415)
+        rough[plated]=.53;metal[plated]=.55
+    rough+=.025*np.sin(xx*1.9+yy*.4)*np.sin(yy*2.1)
+    surface=np.ones((1024,1024,4),dtype=np.float32)
+    surface[:,:,1]=rough;surface[:,:,2]=metal
+    finish=bpy.data.images.new(name+'-surface-atlas',width=1024,height=1024,alpha=False)
+    finish.colorspace_settings.name='Non-Color'
+    finish.pixels.foreach_set(surface[::-1].reshape(-1))
+    finish.filepath_raw=str(out/f'{name}-surface.png');finish.file_format='PNG'
+    finish.save();finish.pack()
+    return image, finish, bounds, source_path
 
 
 def build(name, cfg):
     started = time.perf_counter()
-    bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.object.delete(use_global=False)
-    # Each .blend retains only this crew, not orphaned packed textures/actions
-    # from the previous iteration of the eight-asset generation process.
-    bpy.data.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
+    # A fresh database, not merely deleted scene objects: packed images and
+    # animation datablocks from another crew must never enter this .blend.
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    bpy.context.preferences.filepaths.save_version = 0
     scene = bpy.context.scene
+    scene.world = bpy.data.worlds.new('Neutral crew review world')
     scene.render.engine = 'CYCLES'
     scene.cycles.samples = 16
     scene.render.resolution_x = 432
@@ -120,7 +148,7 @@ def build(name, cfg):
     scene.view_settings.view_transform = 'Standard'
     scene.view_settings.look = 'Medium High Contrast'
     scene.world.color = (.23,.23,.23)
-    texture, crops, source = atlas_for(name,cfg)
+    texture, surface_texture, crops, source = atlas_for(name,cfg)
     material = bpy.data.materials.new(name+' worn cloth leather and steel')
     material.use_nodes = True
     shader = material.node_tree.nodes.get('Principled BSDF')
@@ -128,9 +156,66 @@ def build(name, cfg):
     node = material.node_tree.nodes.new('ShaderNodeTexImage')
     node.image = texture
     material.node_tree.links.new(node.outputs['Color'],shader.inputs['Base Color'])
+    surface_node=material.node_tree.nodes.new('ShaderNodeTexImage');surface_node.image=surface_texture
+    channels=material.node_tree.nodes.new('ShaderNodeSeparateColor')
+    material.node_tree.links.new(surface_node.outputs['Color'],channels.inputs['Color'])
+    material.node_tree.links.new(channels.outputs['Green'],shader.inputs['Roughness'])
+    material.node_tree.links.new(channels.outputs['Blue'],shader.inputs['Metallic'])
     parts = []
     scale = cfg['height']/1.83
     wide = cfg['width']
+    face_x, chin, arm_x, leg_x, head_top = LANDMARKS[name]
+    photo_height = cfg['floor']-cfg['crown']
+
+    def part_pixel(co, label, bone, view):
+        """Each body island maps to its own photographed part, never a neighbor.
+
+        Front/back projections meet along the rear side seam. Side photos are
+        retained as references but are no longer stretched across front faces.
+        In particular Tusk's left-facing profile cannot mirror his face here.
+        """
+        x,y,z=co.x/scale/wide,co.y/scale,co.z/scale
+        side=-1 if x<0 else 1
+        center=cfg['centres'][view]
+        flip=1 if view==0 else -1
+        low=label.lower()
+        pixel_y=cfg['floor']-(z/1.83)*photo_height
+        if bone=='head':
+            head_center=face_x if view==0 else center
+            pixel_x=head_center+max(-1,min(1,x/.091))*29*flip
+            crown=head_top+(12 if name=='tusk' and view==2 else 0)
+            pixel_y=chin-(z-1.565)/.237*(chin-crown)
+            if 'hair' in low:
+                # A dedicated hair island prevents ears, eyes and background
+                # from being repeated across the hair silhouette.
+                pixel_x=head_center+max(-1,min(1,x/.09))*18
+                pixel_y=cfg['crown']+12+max(0,min(1,(1.81-z)/.12))*12
+            return pixel_x,pixel_y
+        if any(word in low for word in ['arm','sleeve','cuff','hand','finger','thumb']):
+            local_center=side*(.255 if z>1.30 else .28 if z>1.1 else .294)
+            half=10 if z>1.19 else 8
+            offset=max(-1,min(1,(x-local_center)/(.075 if z>1.18 else .055)))
+            shoulder_to_wrist=max(.66,min(1,1-(z-.99)*.74))
+            pixel_x=center+side*arm_x*shoulder_to_wrist*flip+offset*half*flip
+            # Photo shoulders are ~21%, fingers ~51% down the standing body.
+            pixel_y=cfg['crown']+(.20+(1.45-z)/.62*.32)*photo_height
+            return pixel_x,pixel_y
+        if any(word in low for word in ['thigh','calf','trouser leg','boot','sole','knee']):
+            local_center=side*(.115 if z>.8 else .15 if z>.5 else .17)
+            offset=max(-1,min(1,(x-local_center)/(.11 if z>.5 else .09)))
+            half=22 if z>.30 else 21
+            spread=leg_x+(12 if z<.3 else 0)
+            pixel_x=center+side*spread*flip+offset*half*flip
+            pixel_y=cfg['crown']+(.48+(.96-z)/.96*.52)*photo_height
+            return pixel_x,pixel_y
+        # Torso panels keep the recognizable tailored reference. Tight lateral
+        # limits keep side-facing polygons inside cloth rather than grey gaps.
+        across=max(-.205,min(.205,x))
+        pixel_x=center+across*(photo_height/1.83)*flip
+        if 'hood' in low:
+            pixel_x=center+side*(34+min(1,abs(x)/.12)*7)*flip
+            pixel_y=cfg['crown']+max(12,min(100,(1.83-z)*350))
+        return pixel_x,pixel_y
 
     def finish(obj, label, bone, projection=None):
         obj.name = label
@@ -146,24 +231,13 @@ def build(name, cfg):
         uv = obj.data.uv_layers.new(name='ReferenceProjection')
         for polygon in obj.data.polygons:
             normal = polygon.normal
-            view = projection if projection is not None else (1 if abs(normal.x) > abs(normal.y)*1.45 else (0 if normal.y < 0 else 2))
+            view = 2 if projection==2 or (projection is None and normal.y>.20) else 0
             crop = crops[view]
             x0,y0,x1,y1 = crop['crop']
             left,_,right,_ = crop['atlas']
-            ppm = (cfg['floor']-cfg['crown'])/cfg['height']
             for index in polygon.loop_indices:
                 co = obj.data.vertices[obj.data.loops[index].vertex_index].co
-                if view == 1:
-                    # Every reference side view faces right. Forward -Y must
-                    # therefore project right, not mirror the profile.
-                    pixel_x = crop['centre'] - co.y*ppm
-                else:
-                    arm = any(word in label.lower() for word in ['arm','sleeve','cuff','hand','finger','thumb'])
-                    across = co.x * (.82 if arm else 1)
-                    if 'hair' in label.lower(): across *= .75
-                    pixel_x = crop['centre'] + across*ppm*(1 if view==0 else -1)
-                pixel_y = cfg['floor']-co.z*ppm
-                if 'hair' in label.lower(): pixel_y = max(cfg['crown']+14,pixel_y)
+                pixel_x,pixel_y=part_pixel(co,label,bone,view)
                 u = max(.002,min(.998,(pixel_x-x0)/(x1-x0)))
                 v = max(.002,min(.998,1-(pixel_y-y0)/(y1-y0)))
                 uv.data[index].uv = ((left+u*(right-left))/1024,v)
@@ -187,6 +261,9 @@ def build(name, cfg):
                 a=level*count+n;b=level*count+(n+1)%count
                 faces.append((a,b,b+count,a+count))
         faces.extend([tuple(reversed(range(count))),tuple((len(rings)-1)*count+n for n in range(count))])
+        # The anatomy is authored both ankle-up and shoulder-down. Preserve
+        # outward normals in either direction before choosing front/back UVs.
+        if rings[-1][2] < rings[0][2]: faces=[tuple(reversed(face)) for face in faces]
         mesh=bpy.data.meshes.new(label);mesh.from_pydata(vertices,[],faces);mesh.update()
         obj=bpy.data.objects.new(label,mesh);bpy.context.collection.objects.link(obj)
         bpy.context.view_layer.objects.active=obj;obj.select_set(True)
@@ -207,11 +284,12 @@ def build(name, cfg):
 
     female=cfg['female']
     waist=.145 if female else .175
-    shoulder=.218 if female else .237
+    shoulder=.224 if female else .243
     hem=1.08 if cfg.get('cropped') else .98
     surface('Tailored torso',[(0,0,hem,.178,.111),(0,0,1.10,waist,.105),
         (0,0,1.23,.183 if female else .204,.119),(0,-.006,1.34,.204 if female else .225,.124),
-        (0,0,1.425,shoulder,.112),(0,0,1.46,.19,.095),(0,0,1.49,.083,.066)],'chest',16)
+        (0,0,1.40,shoulder,.115),(0,0,1.435,.216,.105),
+        (0,0,1.466,.16,.084),(0,0,1.49,.083,.066)],'chest',20)
     surface('Pelvis and trouser seat',[(0,0,.84,.185,.113),(0,.004,.95,.196,.131),
         (0,0,1.035,.17,.107)],'pelvis',16)
     surface('Utility belt',[(0,0,.984,.199,.132),(0,0,1.025,.19,.12)],'pelvis')
@@ -219,29 +297,39 @@ def build(name, cfg):
     if cfg.get('cropped'):
         surface('Exposed midriff',[(0,0,1.02,.166,.104),(0,0,1.095,.148,.10)],'chest')
     for side,suffix in [(-1,'L'),(1,'R')]:
-        x=side*.106
-        surface('Thigh '+suffix,[(x,0,.96,.095,.111),(side*.118,0,.86,.103,.107),
-            (side*.128,.003,.73,.088,.095),(side*.13,-.006,.60,.07,.077),
-            (side*.13,-.013,.545,.071,.079)],'thigh.'+suffix,12)
-        surface('Calf '+suffix,[(side*.13,-.013,.57,.072,.08),(side*.137,.014,.48,.077,.085),
-            (side*.143,.018,.37,.065,.073),(side*.145,.012,.28,.058,.061),
-            (side*.146,.005,.205,.06,.063)],'shin.'+suffix,12)
+        x=side*.108
+        leg=surface('Continuous trouser leg '+suffix,[(x,0,.96,.105,.12),
+            (side*.12,.006,.88,.114,.122),(side*.138,0,.77,.108,.107),
+            (side*.148,-.022,.64,.084,.085),(side*.15,-.033,.56,.077,.08),
+            (side*.157,-.015,.49,.083,.094),(side*.166,.007,.4,.081,.093),
+            (side*.171,.008,.31,.063,.075),(side*.173,.004,.23,.062,.067)],'thigh.'+suffix,16)
+        shin=leg.vertex_groups.new(name='shin.'+suffix)
+        for vertex in leg.data.vertices:
+            w=max(0,min(1,(.64-vertex.co.z/scale)/.13))
+            leg.vertex_groups['thigh.'+suffix].add([vertex.index],1-w,'REPLACE')
+            shin.add([vertex.index],w,'REPLACE')
         # Angular toe box, defined instep and a flat sole instead of round feet.
-        surface('Boot '+suffix,[(side*.146,-.048,.025,.074,.132),(side*.146,-.047,.068,.078,.135),
-            (side*.146,-.057,.115,.071,.122),(side*.146,-.026,.165,.066,.089),
-            (side*.146,.0,.255,.061,.065)],'foot.'+suffix,12)
-        surface('Flat rubber sole '+suffix,[(side*.146,-.048,.008,.076,.132),
-            (side*.146,-.048,.033,.078,.134)],'foot.'+suffix,12)
+        surface('Boot '+suffix,[(side*.175,-.052,.025,.086,.156),(side*.175,-.052,.068,.088,.157),
+            (side*.174,-.056,.108,.085,.145),(side*.174,-.024,.165,.074,.095),
+            (side*.173,.0,.255,.065,.068)],'foot.'+suffix,16)
+        surface('Flat rubber sole '+suffix,[(side*.175,-.052,.008,.089,.156),
+            (side*.175,-.052,.033,.092,.159)],'foot.'+suffix,16)
         patch('Flat cargo pocket '+suffix,(side*.195,-.006,.785),(.045,.115,.145),'thigh.'+suffix,.01)
-        ellipsoid('Molded knee pad '+suffix,(side*.132,-.084,.568),(.064,.021,.074),'shin.'+suffix,10,6,0)
+        ellipsoid('Molded knee pad '+suffix,(side*.15,-.108,.568),(.064,.021,.074),'shin.'+suffix,10,6,0)
         sx=side*.235
         skin=cfg.get('sleeveless',False)
-        surface(('Bare upper arm ' if skin else 'Sleeve ')+suffix,
-            [(sx,0,1.43,.069,.077),(side*.257,0,1.35,.068 if skin else .077,.076),
-             (side*.275,-.004,1.24,.054 if skin else .065,.063),
-             (side*.279,-.014,1.17,.05 if skin else .06,.061)],'upper_arm.'+suffix,12)
-        surface('Forearm '+suffix,[(side*.279,-.014,1.19,.053,.061),(side*.286,-.023,1.10,.055,.06),
-             (side*.292,-.037,1.015,.043,.049),(side*.293,-.043,.953,.035,.039)],'forearm.'+suffix,12)
+        arm=surface(('Continuous bare arm ' if skin else 'Continuous sleeve ')+suffix,
+            [(side*.20,0,1.475,.025,.041),(sx,0,1.45,.067,.077),
+             (side*.252,0,1.405,.080,.087),(side*.264,-.003,1.32,.073 if skin else .081,.078),
+             (side*.279,-.011,1.23,.055 if skin else .067,.065),
+             (side*.281,-.017,1.175,.051 if skin else .059,.061),
+             (side*.286,-.024,1.10,.060,.065),(side*.292,-.037,1.015,.046,.051),
+             (side*.293,-.043,.953,.035,.039)],'upper_arm.'+suffix,16)
+        forearm=arm.vertex_groups.new(name='forearm.'+suffix)
+        for vertex in arm.data.vertices:
+            w=max(0,min(1,(1.245-vertex.co.z/scale)/.115))
+            arm.vertex_groups['upper_arm.'+suffix].add([vertex.index],1-w,'REPLACE')
+            forearm.add([vertex.index],w,'REPLACE')
         if not skin:
             surface('Rolled cuff '+suffix,[(side*.282,-.022,1.12,.06,.063),
                 (side*.286,-.023,1.075,.058,.063)],'forearm.'+suffix)
@@ -273,13 +361,14 @@ def build(name, cfg):
             for side in [-1,1]:
                 ellipsoid('Hood edge '+str(side),(side*.082,-.02,1.694),(.025,.045,.127),'head',10,8)
         else:
-            ellipsoid('Hair crown',(0,.017,1.781),(.09,.074,.044),'head',14,8)
-            count=18 if hair in ['rough','curls','short'] else 9
+            surface('Fitted hair crown',[(0,.013,1.737,.087,.075),(0,.015,1.776,.088,.075),
+                (0,.019,1.802,.057,.05),(0,.021,1.811,.017,.018)],'head',18)
+            count=15 if hair in ['rough','curls','short'] else 7
             for n in range(count):
                 a=n*2.399963
-                rad=.074 if hair!='curls' else .084
+                rad=.078 if hair!='curls' else .084
                 ellipsoid('Broken hair lock '+str(n),(math.cos(a)*rad,.014+math.sin(a)*.063,
-                    1.765+.035*math.sin(n*1.7)),(.026,.026,.035),'head',6,4)
+                    1.755+.025*math.sin(n*1.7)),(.017,.024,.035),'head',6,4)
             if 'knot' in hair:
                 ellipsoid('Tied hair',(0,.085 if hair!='high-knot' else .025,1.795),(.044,.044,.051),'head',10,6)
             if hair in ['rough','short']:
@@ -306,7 +395,12 @@ def build(name, cfg):
         patch('Wrist grapple housing',(-.29,-.085,1.07),(.06,.047,.16),'forearm.L',.01)
     if cfg.get('armor'):
         for side in [-1,1]:
-            ellipsoid('Riveted layered pauldron '+str(side),(side*.242,0,1.425),(.119,.129,.086),'chest',12,6)
+            for layer in range(3):
+                plate=surface('Angular pauldron plate '+str(side)+str(layer),
+                    [(side*(.225+layer*.024),0,1.44-layer*.034,.108,.115),
+                     (side*(.225+layer*.024),0,1.468-layer*.034,.105,.12),
+                     (side*(.225+layer*.024),0,1.48-layer*.034,.078,.092)],'chest',8)
+                for polygon in plate.data.polygons: polygon.use_smooth=False
         patch('Rusted back plate',(0,.136,1.267),(.30,.033,.285),'chest',.012,2)
     if cfg.get('mechanic'):
         patch('Mechanic chest bib',(0,-.134,1.29),(.246,.018,.18),'chest',.007,0)
@@ -361,9 +455,9 @@ def build(name, cfg):
     bone('neck',(0,0,1.47),(0,0,1.56),'chest')
     bone('head',(0,0,1.56),(0,0,1.8),'neck')
     for side,suffix in [(-1,'L'),(1,'R')]:
-        bone('thigh.'+suffix,(side*.106,0,.94),(side*.13,-.013,.56),'pelvis')
-        bone('shin.'+suffix,(side*.13,-.013,.56),(side*.146,0,.20),'thigh.'+suffix)
-        bone('foot.'+suffix,(side*.146,0,.20),(side*.146,-.16,.06),'shin.'+suffix)
+        bone('thigh.'+suffix,(side*.108,0,.94),(side*.15,-.033,.56),'pelvis')
+        bone('shin.'+suffix,(side*.15,-.033,.56),(side*.173,0,.20),'thigh.'+suffix)
+        bone('foot.'+suffix,(side*.173,0,.20),(side*.175,-.18,.06),'shin.'+suffix)
         bone('upper_arm.'+suffix,(side*.235,0,1.425),(side*.279,-.014,1.18),'chest')
         bone('forearm.'+suffix,(side*.279,-.014,1.18),(side*.293,-.043,.95),'upper_arm.'+suffix)
         bone('hand.'+suffix,(side*.293,-.043,.95),(side*.298,-.05,.82),'forearm.'+suffix)
@@ -392,17 +486,22 @@ def build(name, cfg):
             p=i/8;wave=math.sin(p*math.tau)
             for pb in rig.pose.bones:pb.rotation_euler=(0,0,0);pb.location=(0,0,0)
             def rot(label,x=0,y=0,z=0):rig.pose.bones[label].rotation_euler=(x,y,z)
-            if clip=='idle':rot('chest',.012*wave);rot('head',0,.035*wave)
+            if clip=='idle':
+                rot('chest',.012*wave);rot('head',0,.035*wave)
+                rot('thigh.L',.035);rot('shin.L',-.07)
+                rot('thigh.R',.02);rot('shin.R',-.04)
             elif clip in ['walk','sprint']:
                 stride=.46 if clip=='walk' else .78
                 rot('chest',-.04 if clip=='walk' else -.15,0,.035*wave)
                 for side,suffix in [(-1,'L'),(1,'R')]:
                     leg=side*wave
                     rot('thigh.'+suffix,stride*leg)
-                    rot('shin.'+suffix,-(.12+.48*max(0,-leg)))
-                    rot('foot.'+suffix,.10+.18*max(0,leg))
+                    rot('shin.'+suffix,-(.08+.72*max(0,-leg)))
+                    rot('foot.'+suffix,.04+.22*max(0,leg)-.10*max(0,-leg))
                     rot('upper_arm.'+suffix,-side*stride*.7*wave)
                     rot('forearm.'+suffix,-.25 if clip=='walk' else -.85)
+                rig.pose.bones['pelvis'].location.x=.018*wave
+                rot('pelvis',0,.025*wave,-.04*wave)
             elif clip=='jump':
                 lift=math.sin(p*math.pi)
                 rot('chest',-.12*lift)
@@ -410,12 +509,18 @@ def build(name, cfg):
                     rot('thigh.'+suffix,.45*lift);rot('shin.'+suffix,-.7*lift)
                     rot('upper_arm.'+suffix,-.4*lift);rot('forearm.'+suffix,-.5*lift)
             elif clip in ['knockdown','get-up']:
-                fall=min(1,p*1.5) if clip=='knockdown' else 1-p
+                fall=min(1,p*1.5) if clip=='knockdown' else max(0,1-p*1.25)
                 rot('root',math.pi*.49*fall)
-                rot('chest',-.14*fall)
-                rot('upper_arm.L',-.2*fall,0,-.5*fall)
-                rot('upper_arm.R',-.25*fall,0,.6*fall)
-                rot('shin.L',-.25*fall);rot('shin.R',-.15*fall)
+                rot('chest',-.05*fall)
+                rot('upper_arm.L',-.08*fall,0,-.55*fall)
+                rot('upper_arm.R',-.05*fall,0,.62*fall)
+                rot('shin.L',-.08*fall);rot('shin.R',-.04*fall)
+                if clip=='get-up':
+                    push=math.sin(p*math.pi)
+                    rot('chest',-.4*push)
+                    rot('forearm.L',-1.0*push);rot('forearm.R',-.8*push)
+                    rot('thigh.L',.8*push);rot('shin.L',-1.25*push)
+                    rot('thigh.R',.30*push);rot('shin.R',-.55*push)
             elif clip in ['aim','fire','reload']:
                 recoil=math.sin(p*math.pi)*.16 if clip=='fire' else .015*wave
                 rot('upper_arm.R',-1.12-recoil,0,-.2)
@@ -428,15 +533,20 @@ def build(name, cfg):
                     rot('forearm.L',-.4-1.0*math.sin(p*math.pi),0,.15)
                 rot('head',.025*wave)
             elif clip=='repair':
-                rot('chest',-.32)
+                rot('chest',-.32+.045*wave)
+                rot('thigh.L',.12);rot('shin.L',-.25)
+                rot('head',.12)
                 rot('upper_arm.R',-.85+.22*wave,0,-.1);rot('forearm.R',-.7-.2*wave)
                 rot('upper_arm.L',-.65,0,.1);rot('forearm.L',-.5)
             elif clip in ['enter','exit']:
                 t=p if clip=='enter' else 1-p
-                rot('chest',-.28*math.sin(t*math.pi),0,-.16*t)
-                rot('thigh.L',.65*math.sin(t*math.pi));rot('shin.L',-.95*math.sin(t*math.pi))
-                rot('upper_arm.R',-.85*math.sin(t*math.pi),0,-.35*t)
-                rot('forearm.R',-.6*math.sin(t*math.pi))
+                crouch=math.sin(t*math.pi*.75)
+                rot('chest',-.5*crouch,0,-.25*t)
+                rot('thigh.L',.8*crouch);rot('shin.L',-1.15*crouch)
+                rot('thigh.R',.36*crouch);rot('shin.R',-.58*crouch)
+                rot('upper_arm.R',-1.12*crouch,0,-.45*t)
+                rot('forearm.R',-.45*crouch)
+                rot('upper_arm.L',-.5*crouch,0,.2*t)
             for pb in rig.pose.bones:
                 pb.keyframe_insert(data_path='rotation_euler',frame=frame)
                 pb.keyframe_insert(data_path='location',frame=frame)
@@ -496,7 +606,7 @@ def build(name, cfg):
         reference=dict(path=source.relative_to(root).as_posix(),sha256=digest(source),crops=crops,
         process='Bilinear three-view crop atlas; deterministic horizontal neutral-background edge extension. Originals untouched.'),
         camera=dict(position=[0,.96,5],target=[0,.96,0],verticalFov=28,width=432,height=576,distanceMetres=5),
-        files={p.name:digest(p) for p in [out/f'{name}.glb',out/f'{name}.blend',out/f'{name}-color.png']},
+        files={p.name:digest(p) for p in [out/f'{name}.glb',out/f'{name}.blend',out/f'{name}-color.png',out/f'{name}-surface.png']},
         captures=captures)
     (shots/f'blender-{name}.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print('CREW_ASSET '+json.dumps(dict(crew=name,triangles=counts,seconds=report['seconds'])))
