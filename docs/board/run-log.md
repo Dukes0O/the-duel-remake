@@ -1230,3 +1230,25 @@ checkout untouched until the final integration commit passes the full gate.
   full remains due after four more merges or 11:36 UTC, and at run end.
 - EGG-04 has concrete discovery, named-player isolation, backup, map and hint
   acceptance lines. It waits for EGG-03 integration. No live change or push.
+
+## 2026-09-24 10:45 UTC - bounded arrival refinement
+
+- EGG-03 R1 exposes a covered car, unclear inside endpoint and masked gate
+  sounds. R2 improves desktop/phone framing and the inside camera, with
+  actual PCM and clear drum/chain transients. Source review fixes the legacy
+  weapon-strip selector and repeated dialog text writes.
+- A settled legacy view reveals a real main-road tunnel camera constraint
+  pulling the hidden-spur view into terrain. Independent red b16de98 precedes
+  the physical-spur helper in 7ad8a32; all 11 presentation groups pass.
+  Actual R3 driving and gate-passage images are now readable.
+- R3 source review identifies a remaining handover jump from using the old
+  main-road base during the cinematic blend. Its narrow repair is in progress.
+  Earlier CPU comparisons skipped ordinary HUD work in the baseline, so they
+  cannot attribute the whole difference to this feature. Preserve them and
+  run one corrected comparison with ordinary work equal in both conditions.
+- R1/R2 recordings, capture failures, R3 canvas video and the real frame strip
+  remain under the lane's docs/board/looks/hidden-road-arrival directory. No
+  subjective audio-listening or full-race performance claim is made.
+- Latest quota observation at 10:23 UTC: 17 percent remaining. One task merge
+  since the 09:36 UTC full pass; next full by 11:36 UTC or four more merges,
+  and at run end. No live change, release or push.
