@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-24T14:57:04.299Z
+Observed at: 2026-09-24T15:07:41.370Z
 
-Observation commit: 0ad285af680a96e9b5580200b806388d6a7ea576
+Observation commit: 63682bec535940dd819641a973f8728ca31f6ab3
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 0ad285af680a96e9b5580200b806388d6a7ea576
+Integration HEAD: 63682bec535940dd819641a973f8728ca31f6ab3
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -40,7 +40,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 0ad285af680a96e9b5580200b806388d6a7ea576
+- Local integration/wasteland: 63682bec535940dd819641a973f8728ca31f6ab3
 
 Local rollback build (dist-previous): 20260923193614-0b1389a185dd. Manifest presence does not verify the full rollback build.
 
