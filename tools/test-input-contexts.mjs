@@ -34,7 +34,11 @@ const buttons = Array.from({ length: 16 }, () => ({ value: 0 }));
 buttons[7].value = .63;
 buttons[6].value = .18;
 assert.deepEqual(carGamepadDrive({ axes: [.12], buttons }, pressed),
-  { throttle: .63, brake: .18, steer: 0, boost: false });
+  { throttle: .63, brake: .18, steer: 0, boost: false, interact: false });
+const xPressed = [...pressed];
+xPressed[2] = true;
+assert.equal(carGamepadDrive({ axes: [0], buttons }, xPressed).interact, true,
+  'the X button asks to leave the car');
 assert.ok(Math.abs(carGamepadDrive({ axes: [.56], buttons }, pressed).steer - .5) < 1e-12);
 assert.equal(preventCarKeyDefault('Space', true), false, 'focused buttons keep their Space click');
 assert.equal(preventCarKeyDefault('Space', false), true);

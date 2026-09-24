@@ -699,7 +699,8 @@ export class App {
       if(this.duel.state.onFoot && e.target instanceof Element &&
           e.target.closest('#view3d canvas'))e.preventDefault();
     },{signal});
-    document.addEventListener('pointerlockchange',()=>{
+    // Headless tests provide a window without a document; pointer lock needs both.
+    if(typeof document!=='undefined')document.addEventListener('pointerlockchange',()=>{
       if(document.pointerLockElement || !this.duel.state.onFoot)return;
       this._footPointer.fire=this._footPointer.aim=false;
       this._footPointerReleasedAt=performance.now();

@@ -50,7 +50,7 @@ for (const [button, weapon] of dpad) {
   app.duel.state.combat.cooldowns[weapon] = 0;
   const before = fired.length;
   setButton(button, true);
-  equal(app._readGamepad(), { throttle: 0, brake: 0, steer: 0, boost: false },
+  equal(app._readGamepad(), { throttle: 0, brake: 0, steer: 0, boost: false, interact: false },
     `${weapon}: D-pad does not alter driving inputs`);
   equal(fired.slice(before), [weapon], `${weapon}: D-pad fires once on press`);
   for (let poll = 0; poll < 4; poll++) {

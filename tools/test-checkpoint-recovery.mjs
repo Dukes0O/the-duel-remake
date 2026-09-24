@@ -112,9 +112,9 @@ try {
   app.startCampaign({ startStage: 0, seed: 1989, mode: 'wasteland',
     car: 'falcone_f42', difficulty: 'casual', cpuDifficulty: 'medium' });
   app.autopilot = true; app._scriptedCrashDone = true;
-  const gate = app.duel._lapGates[0];
   app.duel.onChange((state, event) => {
-    if (event.checkpointReset) events.push({ type: 'reset', time: state.stageTimeSec, s: state.s });
+    if (event.checkpointReset) events.push({ type: 'reset', time: state.stageTimeSec, s: state.s,
+      completedLaps: state.completedLaps, nextLapGate: state.nextLapGate });
     if (event.lapCheckpoint) events.push({ type: 'checkpoint', gate: event.lapCheckpoint });
     if (event.lapCompleted) events.push({ type: 'lap', lap: event.lapCompleted });
   });
@@ -124,8 +124,13 @@ try {
   }
   const state = app.duel.state, resets = events.filter(event => event.type === 'reset');
   assert.equal(state.results?.completed, true, 'the full Medium race completes');
-  assert.equal(resets.length, 1, 'the real crossbow shove causes one missed first gate');
-  assert.ok(resets[0].time < 20 && resets[0].s >= gate - 2 && resets[0].s < gate,
+  assert.equal(resets.length, 1, 'the real crossbow shove causes one missed gate');
+  // Balance changes decide where the shove lands, so measure the retry against
+  // the gate actually missed, on its own lap, rather than assuming lap one.
+  const lapStart = resets[0].completedLaps * app.duel.course.length;
+  const missedGate = lapStart + app.duel._lapGates[resets[0].nextLapGate];
+  assert.ok(Number.isFinite(missedGate), 'the reset names a real lap gate');
+  assert.ok(resets[0].s >= missedGate - 2 && resets[0].s < missedGate,
     'the race retries the missed gate promptly instead of losing a full lap');
   assert.deepEqual(events.filter(event => event.type === 'checkpoint').map(event => event.gate),
     [1, 2, 3, 1, 2, 3], 'both laps still cross every checkpoint in order');

@@ -4,17 +4,21 @@ import {Duel} from '../src/game.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
 import {COURSE} from '../src/config.js';
+import {CREW} from '../src/crew.js';
 
 const STEP = 1 / 120;
+// Rook is the free default crew member; his perk adds 10% on-foot health.
+const BASE_HEALTH = 100;
+const ROOK_HEALTH = Math.round(BASE_HEALTH * CREW.rook.perks.healthMultiplier);
 function ticks(duel, count) {
   for (let index = 0; index < count; index++) duel.step(STEP);
 }
 
-function race(mode = 'wasteland', wasteland2 = true, keepOpponent = false) {
+function race(mode = 'wasteland', wasteland2 = true, keepOpponent = false, crewId = 'rook') {
   const duel = new Duel({seed: 1989, featureFlags: {wasteland2},
     destructiblesEnabled: false});
   duel.startCampaign({mode, car: 'falcone_f42', startStage: 0,
-    seed: 1989});
+    seed: 1989, crewId});
   const state = duel.state;
   state.status = 'racing';
   state.countdown = 0;
@@ -38,7 +42,8 @@ test('a low-speed hold exits at 0.4 s; walking leaves the race clock and car pro
   assert.equal(state.onFoot, false);
   ticks(duel, 1);
   assert.equal(state.onFoot, true);
-  assert.equal(state.fighter.health, 100);
+  assert.equal(ROOK_HEALTH, 110);
+  assert.equal(state.fighter.health, ROOK_HEALTH);
   assert.equal(duel.setFighterInput({forward: true}), true);
   const fighterStart = {x: state.fighter.x, z: state.fighter.z};
   duel.setInput({interact: false});
@@ -50,6 +55,16 @@ test('a low-speed hold exits at 0.4 s; walking leaves the race clock and car pro
   assert.ok(state.stageTimeSec >= 1.4 - 1e-9);
 });
 
+test('a crew member without a health perk steps out with the base 100 health', () => {
+  assert.equal(CREW.nell.perks.healthMultiplier, undefined);
+  const duel = race('wasteland', true, false, 'nell'), state = duel.state;
+  duel.setInput({interact: true});
+  ticks(duel, 48);
+  assert.equal(state.onFoot, true);
+  assert.equal(state.fighter.health, BASE_HEALTH);
+  assert.equal(state.fighter.maxHealth, BASE_HEALTH);
+});
+
 test('high-speed bail needs 1 s, costs 25 health, and the car coasts then brakes', () => {
   const duel = race(), state = duel.state;
   state.speedMph = 80;
@@ -59,7 +74,9 @@ test('high-speed bail needs 1 s, costs 25 health, and the car coasts then brakes
   const exitSpeed = state.speedMph;
   ticks(duel, 1);
   assert.equal(state.onFoot, true);
-  assert.equal(state.fighter.health, 75);
+  assert.equal(state.fighter.health,
+    ROOK_HEALTH - COMBAT_TUNING.foot.bailHealthLoss);
+  assert.equal(COMBAT_TUNING.foot.bailHealthLoss, 25);
   assert.ok(state.fighter.bailTumbleSeconds > 0);
   assert.ok(state.speedMph < exitSpeed);
   const carAtExit = state.s;
