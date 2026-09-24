@@ -65,7 +65,7 @@ tasks:
     size: M
     needs: [CLEAN-04]
     status: ready
-    owns: [docs/README.md, docs/changes/, docs/board/, AGENTS.md, docs/CODEX_PLAYBOOK.md]
+    owns: [docs/README.md, docs/changes/, docs/board/, docs/OPERATIONS.md, docs/REMAKE_PLAN.md, docs/SESSION_HANDOFF.md, docs/SERVER_CUTOVER.md, AGENTS.md, docs/CODEX_PLAYBOOK.md, tools/scenarios/first-person-gear.mjs, tools/scenarios/rustwall.mjs, tools/fixtures/art-review/, tools/test-review-evidence.mjs]
     helpers: [reviewer, test_runner]
     acceptance:
       - "Index current docs, preserve still-needed facts, delete superseded notes and handoffs, and retain seven days of run log."
