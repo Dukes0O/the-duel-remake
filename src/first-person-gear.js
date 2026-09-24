@@ -143,7 +143,8 @@ export function createFirstPersonGear({loadAsset = (kind, id) => new GLTFLoader(
       tool.clip = null;
     }
     for (let index = 0; index < tool.rockets.length; index++) tool.rockets[index].visible =
-      selected.loaded && (selected.action !== 'reload' || selected.actionProgress >= .12);
+      selected.loaded && selected.action !== 'fire' &&
+      (selected.action !== 'reload' || selected.actionProgress >= .12);
     const moving = selected.locomotion === 'walk' || selected.locomotion === 'sprint';
     const amount = moving ? selected.locomotion === 'sprint' ? .013 : .007 : 0;
     const phase = selected.motionTime * (selected.locomotion === 'sprint' ? 12 : 8);

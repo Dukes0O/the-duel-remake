@@ -21,7 +21,9 @@ for path, expected in manifest.get('sources', {}).items():
         raise ValueError('Evidence source changed: ' + path)
 if manifest.get('round') and Path(args.output).exists():
     raise ValueError('Fidelity round PNG is immutable')
-tile_w,tile_h=256,320
+tile_w,tile_h=manifest.get('tile',{}).get('width',256),manifest.get('tile',{}).get('height',320)
+if not (128 <= tile_w <= 1024 and 128 <= tile_h <= 1024):
+    raise ValueError('Invalid contact-sheet tile size')
 header,row_label=48,28
 width=tile_w*4
 height=header+len(manifest['rows'])*(tile_h+row_label)

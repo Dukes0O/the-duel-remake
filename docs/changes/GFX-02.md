@@ -98,3 +98,24 @@ Failed requests are bounded, and disposed or stale loads cannot become visible.
 
 No browser, fidelity, frame-cost or broad merge gate has run for this initial
 runtime implementation. Those checks follow the first frozen asset round.
+
+## Recoil correction and capture tooling
+
+Independent regression commit `4105691` proved that a spent rocket remained
+visible during recoil when reserve ammunition was available. The view model now
+hides that mesh throughout fire. Its existing reload visibility gate and the
+authored rocket insertion track control when the replacement appears. The pure
+selector still reports available ammunition. The independent focused regression
+passes 1/1 after the correction; selector checks remain 7/7. No assertion changed.
+
+The private first-person scenario now prepares matched captures from each frozen
+Blender manifest and validates the asset hashes before starting. It also exercises
+actual input for exit, aim, successful fire, reload, repair and re-entry in both
+qualities. The contact-sheet extension retains each source hash, matched camera,
+pose time and selected tool. Crew references establish identity, not first-person
+pose ground truth. Capture execution and independent visual scores remain pending.
+
+Its frame comparison uses the same stopped course and pose updates with held
+materials hidden or visible. That measures added held rendering cost, not the
+total CPU cost of presentation updates. The recorded scope prevents treating a
+refresh-limited frame result as a complete performance guarantee.
