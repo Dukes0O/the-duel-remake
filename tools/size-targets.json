@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "mergeAddedBytes": 5000000,
+  "ordinaryTrackedFileBytes": 2000000,
+  "buildBytes": 250000000,
+  "wastelandAssetBytes": 60000000,
+  "runtimeFileBytes": 8000000,
+  "lookSheetBytes": 500000,
+  "lookDirectoryBytes": 20000000
+}
