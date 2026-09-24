@@ -1,6 +1,6 @@
 # EGG-01: Hidden Road geometry and protected driving
 
-Status: ready-to-merge.
+Status: merged in 3dab9cd.
 
 ## Changes
 

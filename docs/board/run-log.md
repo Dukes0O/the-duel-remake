@@ -998,3 +998,10 @@ checkout untouched until the final integration commit passes the full gate.
 - GFX-01 independent test-author corrected its new draw-count helper after inspecting Three: geometry groups produce separate draws only with material arrays. Budget assertions remain unchanged; runtime 5/5 and presentation 10/10 pass. Historical GFX-00 browser scenario may explicitly load its retained test asset; new crew scenario covers production models.
 - Quota check: 38 percent remaining. No release or push.
 
+
+## 2026-09-23 PDT - EGG-01 merged (2 since full)
+
+- Integrated 3dab9cd after clean 5ec61ad passed all 217 lane suites in 314.89 s and build in 375 ms. Source and nine replacement images independently reviewed; required STATUS refreshed immediately. Hidden-road stays dev, with final Rustwall art, departure/invitation and discovery still separate.
+- ART-W is ready next: independent gate on b3fcd56 passed 217 suites in 338.18 s and build. No source changes since; final note82d29f8 adds evidence only.
+- Crew R1 evidence and independent scores retained in its lane. Runtime review found four timing/allocation defects; six independent red checks reproduce them. Fix0d8c37d passes re-review, selector12/12 andcrew26/26; originalassetprivatecontrol passes18images, zeroerrors. R2 now corrects bodyshape, UVs and weightedposes.
+

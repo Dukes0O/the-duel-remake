@@ -86,8 +86,8 @@ tasks:
     lane: SIM
     size: M
     needs: [TRACK-02]
-    merge_after: GFX-00
-    status: reviewing
+      merge_after: GFX-00
+      status: merged
     owns: [src/hidden-road.js, src/course.js, src/sim-driving.js, src/sim-crash.js, src/world.js, tools/test-hidden-road.mjs, tools/test-feature-flags.mjs, tools/replays/hidden-road-ordinary.json, tools/scenarios/hidden-road.mjs]
       hooks: [src/feature-flags.js, src/game.js, src/world-surfaces.js, src/environment-key.js, tools/test-render-reuse.mjs, src/generated-shortcut-presets.js]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
@@ -103,7 +103,7 @@ tasks:
       - "Private memory-only High/Performance captures show racing-line concealment, entrance, wash, salt flat, wall contact and return. Review actual screenshots before any scene-signature change; no silent signature regeneration. EGG-02 owns final Rustwall assets, EGG-03 the 150 m departure and gate sequence, EGG-04 discovery persistence."
     shots: [racing-line-concealment, entrance-abc, wash-drive, salt-flat-approach, wall-contact, road-car-return]
     sound: "Existing dirt/engine audio; gate ceremony belongs to EGG-03."
-    note: "Director permits nine source files: five substantive modules and four narrow hooks, plus tests/scenario/evidence. The environment key must distinguish the flagged corridor from the menu world; two additive cache checks are authorized. Separate geometry, driving, reset and rendering responsibilities. Independent preparation overlaps GFX-00; completion order is preserved."
+      note: "Merged 3dab9cd after independent source/image reviews, 217-suite lane gate and build. Nine source modules/hooks plus derived shortcut source stamp; all generated paths and ordinary fingerprints unchanged. Durable replacement review images retained. Hidden-road stays dev; EGG-02/03/04 own final art, departure/invitation and discovery."
   - id: ART-W
     title: "Rustwall gate and first-person gear reference art"
     priority: 6

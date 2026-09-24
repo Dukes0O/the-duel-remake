@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-24T06:02:11.485Z
+Observed at: 2026-09-24T06:23:56.615Z
 
-Observation commit: 91395757673838caf1254fb6ba3027a8e1c2346e
+Observation commit: 3dab9cd949183ba7bedd87d0fc8c5dcf2cbba753
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 91395757673838caf1254fb6ba3027a8e1c2346e
+Integration HEAD: 3dab9cd949183ba7bedd87d0fc8c5dcf2cbba753
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -25,6 +25,7 @@ Last recorded full run: 2026-09-24T05:39:12.065Z; tested commit: 653e442d7f8a543
 | career-backup | dev |
 | roadside-destruction | on |
 | wasteland2 | dev |
+| hidden-road | dev |
 
 ## Lane branches
 
@@ -61,7 +62,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/combat-wreck-residual | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/combat-wreck-residual/the-duel-remake |
 | codex/crew01-active-perks | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-crew01/the-duel-remake |
 | codex/crew01-roster | 0 | unknown | false | false | unknown |
-| codex/egg01-hidden-road | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/egg01 |
+| codex/egg01-hidden-road | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/egg01 |
 | codex/foot01-fighter | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/foot01-fighter/the-duel-remake |
 | codex/foot02-car-transition | 0 | unknown | true | false | unknown |
 | codex/foot03-controls-camera | 0 | unknown | true | false | unknown |
@@ -164,7 +165,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 91395757673838caf1254fb6ba3027a8e1c2346e
+- Local integration/wasteland: 3dab9cd949183ba7bedd87d0fc8c5dcf2cbba753
 
 Local rollback build (dist-previous): 20260923193614-0b1389a185dd. Manifest presence does not verify the full rollback build.
 
