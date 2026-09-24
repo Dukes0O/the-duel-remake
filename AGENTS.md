@@ -3,7 +3,8 @@
 Read `SPEC.md` section 0 first; it wins over conflicting later text.
 **Cleanup comes first (SPEC 0.7, Kyle, 24 September 2026): do the CLEAN cards
 in order and start no feature work until they are done.** After that, the
-ordered work in section 0.6 resumes. Read `docs/CODEX_PLAYBOOK.md`
+ordered work in section 0.6 resumes. The current plan and start prompt are in
+`docs/board/next-run.md`. Read `docs/CODEX_PLAYBOOK.md`
 for the workflow, and `docs/board/board.yaml` for task ownership. Use
 `docs/OPERATIONS.md` for current folders, ports and release steps.
 
@@ -94,6 +95,8 @@ small context matter. These rules win over habit:
   `.evidence/<date>/<card>/` in the integration folder, which Git ignores.
   Commit only one compressed comparison sheet per round (JPG, 500 KB at most)
   and its review note under `docs/board/looks/<family>/`.
+- Lane folders may link `node_modules` only to the integration folder's copy,
+  never the live folder's. Unlink the link before removing a lane folder.
 - Scratch output stays in `.qa-dist/`. Nothing new in the repository root
   unless it is on the root allow-list in `tools/test-repo-hygiene.mjs`.
 - Limits, checked by `tools/test-repo-hygiene.mjs` in every lane tier: a merge

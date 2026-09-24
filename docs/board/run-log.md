@@ -1448,3 +1448,35 @@ percent remaining. All helpers are finished. No lane has an active builder.
   never discard what can't be regenerated). SPEC 0.8 records them and adds
   CLEAN-10, a tested compaction routine before every push. CLEAN-05 and
   CLEAN-07 now delete instead of archiving. Pushing still waits for D8.
+
+## 2026-09-24 PDT – Disk cleanup and next plan
+
+- Kyle wants no detritus on disk either. Removed all 95 lane folders with
+  `git worktree remove` after unlinking 32 dependency links (7 pointed at the
+  live folder's `node_modules`, 24 at integration's; both targets verified
+  intact), 107 empty lane shells, 135 branches, reflogs, the 1.6 GB rewrite
+  backup, both `.qa-dist` folders, `.lanes`, the live `dist-next` staging build,
+  14 stale live-root logs and old temp probes. `dist-previous` kept for
+  rollback. `git gc`: `.git` 998 MB to 250 MB; `git fsck` clean. Codex
+  conversation snapshot refs (`refs/codex/...`, about 32 MB) left alone.
+- Deleted branches with work not in `master` or integration, one line each:
+  - `codex/bug06-flagged-homing` (09-23): test combat balance with three-degree flagged bolt guidance.
+  - `codex/bug06-launch-height` (09-24): docs: retain crossbow launch-angle diagnostic conclusion.
+  - `codex/hud-contrast` (09-23): docs: independently review HUD contrast.
+  - `codex/race-refinements-and-player-settings` (09-22): Archive pre-expansion worktree state.
+  - `codex/wasteland-combat-bug12` (09-22): Keep UFO demo landings on shortcut corridor.
+  - `codex/wasteland-cpu-charged-bolt` (09-23): Give collected CPU crossbows a stronger scheduled bolt.
+  - `codex/wasteland-cpu-ufo` (09-23): Prototype CPU UFO pickup swap on held branch.
+  - `codex/wasteland-crash-penalty-probe` (09-23): docs: measure legacy crash penalty impact on UFO balance.
+  - `codex/wasteland-foot-spike` (09-23): FOOT-00 Spike on-foot movement on Pacific Canyon.
+  - `codex/wasteland-opponents` (09-23): Fix secondary opponent shield and asset retry.
+  - `codex/wasteland-opponents-forward` (09-23): docs: verify opponent port with bomb fix.
+  - `codex/wasteland-sim-split` (09-23): refactor: split Duel simulation systems.
+  - `codex/wasteland-ufo-charge` (09-23): prototype visible UFO charge as held balance option.
+  - `codex/wasteland-ufo-options` (09-23): Record combined UFO balance experiment.
+  - `codex/wasteland-ufo-partial` (09-23): docs: record held BUG-04 Q5 balance gate.
+  - `codex/wasteland-ufo-small-target` (09-23): Document smaller UFO target research and hold design.
+  - `codex/wasteland-ufo-target-only` (09-23): Prototype target-only UFO swap option.
+- `docs/board/next-run.md` is now the single current plan and start prompt;
+  the earlier review and cleanup notes were deleted. AGENTS.md now forbids
+  linking lane dependencies to the live folder.
