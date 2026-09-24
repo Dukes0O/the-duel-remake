@@ -126,3 +126,48 @@ both choices, pause/navigation, saved-content preservation and identical
 common-time states under 30/60/144 Hz presentation schedules. No independent
 assertion was changed by the runtime builder. Independent source/Save Guardian
 review, presentation checks, browser/audio evidence and final gates remain.
+
+## Independent runtime and Save Guardian review
+
+Reviewed runtime commit `5776623826f25cea5f72a02ed98fa0523fcb689c` under the
+repository's reviewer and Save Guardian role instructions. No concrete defect
+was found in the completed journey, App settlement, contact or Pro limiter
+changes. This review precedes the separate presentation/audio handoff.
+
+The App settlement guard checks current state identity, exploring status,
+departed journey identity, run ownership and current player before invoking
+existing abandoned-race settlement. The existing settlement key and journey
+object guard prevent repeat awards or charges. Race clocks and outcomes stop
+at departure; physical driving remains in simulation steps. The early drive
+used for deadline priority is restricted to an actual spur position, preserving
+ordinary and flag-off call order. Choices are queued, and navigation retires
+the journey and held controls. The limiter exception only applies to departed
+exploration and leaves normal speed/gear calculations in place.
+
+Swept contacts retain vehicle dimensions and vertical clearance. Reviewed wall,
+header and panel bounds against `tools/blender/rustwall.py`: the actual structural
+body is 420 by 35 metres, header starts at seven metres, and panel lift is 7.25
+metres. The facade depth is deliberately conservative, as described above.
+Prepared colliders are local to the journey and do not alter course obstacles.
+Collision response suppresses race damage/reward effects after departure.
+
+The following existing suites each ran once against this runtime, using only
+synthetic memory fixtures:
+
+- `test-save-fixtures.mjs`: seven historical shapes and 247 first-load and
+  round-trip checks passed (0.15 seconds).
+- `test-career-backup.mjs`: seven historical fixtures, migration gate, damaged
+  input validation, recovery and quota rollback passed (0.16 seconds).
+- `test-career-archives.mjs`: historical records/ghost samples and storage
+  failure preservation passed (0.15 seconds).
+- `test-career-budget.mjs`: 64 full players, maximum ghost journal,
+  restart/export/import and rollback checks passed (1.09 seconds).
+- `test-storage-budget.mjs`: active-data model stayed within the 4,000,000-byte
+  budget after the existing archive move (0.45 seconds).
+
+No save schema, storage key, dependency or network behavior changed. The
+existing migration backup path is unchanged and its gate passed. No historical
+fixture or fingerprint was rewritten. The builder reports journey 37/37 and
+departure 7/7 passing without assertion changes; this review did not repeat
+those suites without a concrete reproduction need. Combined presentation,
+browser/audio review and the final lane/build gate remain outstanding.
