@@ -160,7 +160,8 @@ async function interaction(context,quality) {
   await context.evaluate('window.__qaApp.advance(1);window.__render.renderFrame()');await context.screenshot(`first-person-${quality}-repair`);
   await context.evaluate('window.__qaApp.advance(3.02);window.__render.renderFrame()');await mouse('mouseReleased','left');
   const armor=await context.evaluate('window.__qaApp.duel.state.armor');if(Math.abs(armor-80)>.01)throw Error('Repair did not restore 40 armor');
-  await key(context,'keyDown','KeyF','f',70);await context.evaluate('window.__qaApp.advance(.42)');await key(context,'keyUp','KeyF','f',70);
+  await key(context,'keyDown','KeyF','f',70);await context.evaluate('window.__qaApp.advance(.62)');await key(context,'keyUp','KeyF','f',70);
+  await context.evaluate('window.__qaApp.advance(1/120)');
   const reentered=await context.evaluate("!window.__qaApp.duel.state.onFoot&&!window.__render.scene.getObjectByName('First-person hands and gear').visible");
   if(!reentered)throw Error('Re-entry left first-person hands visible');await context.screenshot(`first-person-${quality}-reentered`);
   return{shot,reload:action,armor,reentered};
