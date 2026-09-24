@@ -52,7 +52,7 @@ tasks:
     size: M
     needs: [CLEAN-03]
     status: ready
-    owns: [public/assets/models/wasteland/, tools/blender/, docs/board/looks/]
+    owns: [public/assets/models/wasteland/, tools/blender/, tools/test-runtime-art-sources.mjs, tools/test-repo-hygiene.mjs, src/rustwall-scene.js, src/first-person-gear.js, src/rigged-fighter.js, docs/WASTELAND_ART.md, docs/board/looks/]
     helpers: [reviewer, art_critic, browser_qa]
     acceptance:
       - "Reach the 250 MB build, 60 MB Wasteland assets and 8 MB wall targets, or record measured reasons."
