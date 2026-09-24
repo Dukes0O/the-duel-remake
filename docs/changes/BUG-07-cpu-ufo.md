@@ -147,3 +147,31 @@ The Director implemented the narrow existing-helper guard in `f8b5b06` after
 that red-test commit. This note records the independent assertion rationale;
 subsequent green checks and the required merge gate are recorded separately
 by the Director. The test author made no production edits or extra reports.
+
+### Independent defensive follow-up
+
+The independent test author reviewed `febfe5e..f8b5b06` and found no defect:
+the only AI policy change passes the existing difficulty settings into UFO
+selection and requires the unchanged `incomingBolt` helper. Pickup shields
+still run first; an already shielded rival therefore retains its UFO charge.
+The Director reports 37/37 focused UFO checks and the existing pickup suite
+passing after this source change.
+
+The Director authorized exactly four affected no-weapon probes, not another
+40-race comparison. They took 7.11 s. All four match the complete result
+objects and enemy-hit event timing/ownership of the saved pinned `1900297`
+baseline, with zero CPU UFO activations:
+
+| Flags | Seed | Outcome | Player time s | Enemy hits |
+| --- | --- | --- | --- | --- |
+| Off | 1989 | Win | 110.80 | 3 |
+| Off | 1995 | Win | 109.88 | 6 |
+| Wasteland2 | 1992 | Win | 110.78 | 9 |
+| Wasteland2 | 1989 | Loss, rival 106.78 s | 108.08 | 4 |
+
+Evidence: `.qa-dist/trace-cpu-ufo-defensive.mjs` and
+`.qa-dist/cpu-ufo-defensive-probes.json`. The reproducer checks the retained
+baseline hash and requires the current simulation/report source to match
+`f8b5b06` before rerunning. No production edit, new matrix or balance report
+was made by the test author. The Director retains the final balance pair and
+required merge gate.
