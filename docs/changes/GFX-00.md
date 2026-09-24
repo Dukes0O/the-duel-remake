@@ -1,6 +1,6 @@
 # GFX-00 — Blender to game fighter pipeline
 
-status: ready-for-independent-review
+status: ready-to-merge
 
 The dev-only Wasteland renderer now loads a retained Blender fighter through
 Three's GLTFLoader and plays its bound idle, walk and knockdown clips. The
@@ -124,7 +124,8 @@ hidden, and checks zero/positive skin draw range at the two cameras. It finds
 the local root by position so roadside raiders cannot satisfy its checks.
 The knockdown shot samples one second into the fall (remaining time 2 seconds)
 and explicitly requires the knockdown clip. Primitive unit assertions remain
-unchanged. Independent approval of these assertion changes is pending.
+unchanged. Independent review approved these assertion replacements at
+`df81d39`, preserving the behavior requirements and adding the clip check.
 Validation on scenario commit `2b8522e`: the corrected onfoot-figures browser
 scenario passed once on private port 34394 with memory-only saves, two retained
 screenshots, zero warnings and zero errors. Bound skin, hidden fallback, eye
@@ -133,3 +134,25 @@ and two screenshots are retained as `onfoot-browser-report.json`,
 `onfoot-standing-figure.png` and `onfoot-knocked-down-figure.png` in the existing
 GFX-00 evidence folder. No runtime files changed, and the matched rig captures
 and broader suites were not rerun for this scenario-only correction.
+
+## Final independent gate
+
+Independent code re-review cleared all three findings at `10daa29`; the final
+scenario assertion review cleared `df81d39`. Independent browser QA at
+`10daa29` passed 18 matched captures on port 50991 with zero errors/warnings,
+loaded-skin eye hiding, outside visibility and twelve independent skeletons.
+The stale older scenario was then corrected and reviewed as described above.
+
+The final independent runner tested clean `df81d39` before and after:
+`node tools/run-tests.mjs --tier lane --changed --jobs 8` passed 216 suites,
+zero failures and zero not run in 320.32 seconds. New assets caused the
+conservative full-suite lane selection. Campaigns were enabled. Build passed
+in 0.93 seconds with the existing chunk-size warning. Logs are retained in
+`.qa-dist/gfx00-final-gate.log` and `.qa-dist/gfx00-final-build.log`.
+The earlier runtime candidate also passed 216 suites in 342.38 seconds;
+the final gate was repeated after the browser scenario changed.
+
+Independent visual review accepts the pipeline evidence, with resemblance 2
+and grounding 2-3. Full scores and next fixes are retained on integration in
+`docs/board/looks/test-fighter/round-1-review.md`. This is a prototype, not a
+crew-family beta approval. This last handoff update changes only this note.
