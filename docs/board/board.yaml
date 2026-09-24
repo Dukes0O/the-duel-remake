@@ -18,7 +18,8 @@ tasks:
     lane: TOOL
     size: S
     needs: [FIX-04]
-    status: building
+    status: merged
+    note: "Merged 06e378c after independent red tests, strict evidence-schema review fix, six-suite lane gate and build. STATUS generated on integration; first current full ledger awaits scheduled cadence."
     owns: [tools/build-status.mjs, tools/test-build-status.mjs, docs/board/STATUS.md, docs/board/checks/full-tier.json]
     hooks: [tools/run-tests.mjs]
     helpers: [test_author, test_runner, reviewer]
@@ -34,7 +35,7 @@ tasks:
     lane: OPS
     size: S
     needs: [TRACK-01]
-    status: backlog
+    status: ready
     owns: [docs/CODEX_PLAYBOOK.md, AGENTS.md]
     helpers: [reviewer, test_runner]
     acceptance:

@@ -1,6 +1,6 @@
 ---
 task: TRACK-01
-status: ready-to-merge
+status: merged
 kind: tooling
 flag: none
 player_facing: no

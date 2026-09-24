@@ -791,3 +791,14 @@ checkout untouched until the final integration commit passes the full gate.
 - Full-tier cadence: one task merge this run. Full due by merge five or
   06:02 UTC (conservative two-hour run checkpoint), and again at run end.
   STATUS refresh starts when TRACK-01 is integrated.
+
+## 2026-09-23 PDT — TRACK-01 merged (run merge 2)
+
+- Integrated 06e378c after independent review, stronger false-green regression
+  tests, six selected lane suites (1,483 checks, 39.25 s) and build.
+- Ran tools/build-status.mjs on integration and committed its first snapshot.
+  It reports the live build and local branches, cached remote refs, and no
+  current exact-head full ledger. The historical 6d827dc pass is not reused.
+- The page explicitly names its observation commit. Committing the snapshot
+  makes a later metadata commit; that commit does not inherit a test pass.
+- TRACK-02 is ready. Full cadence remains merge five or 06:02 UTC, then run end.
