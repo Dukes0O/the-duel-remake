@@ -125,3 +125,77 @@ The independent reviewer reproduced the affected CPU replay in 0.51 s and
 approved only its three frame-rate hash replacements. All semantic assertions,
 hit and shot counts, shooter order and other encounter hashes must stay exact.
 The implementation author did not change those fixtures.
+
+## Authorized raider-only numeric candidate
+
+The Director approved one wider raider spread after reviewing the owner split:
+Easy `Math.PI / 9` (20 degrees), Medium `Math.PI / 18` (10 degrees), and Hard
+`.03` radians. It lives in `COMBAT_TUNING.raider.aimError`; `CPU_COMBAT` remains
+10 degrees / `.055` / `.03` radians. No damage, attack cadence, homing cone,
+projectile speed or balance target changes are part of this candidate.
+
+The independent author added an exact configuration and launch-spread test.
+The only existing assertion changed by the builder is the old requirement
+that raider samples fit inside the CPU spread. It now checks the explicit
+raider spread. That change reflects the approved separate tuning; sign,
+RMS ordering, seed isolation, guidance, control hashes and every other
+assertion remain unchanged.
+
+The first focused run with this numeric candidate passed 21/22. The existing
+common-time check exposed wider-bias steering lag: `.172697377` selected
+radians became `.182726215` measured radians at 30 FPS. The assertion remains
+intact; the full balance report is held pending independent review of a
+bounded integration correction.
+
+Two short production-policy owner probes (2.58 s total) measured:
+
+| Difficulty | CPU / raider hits before | Wider spread candidate | Result |
+| --- | --- | --- | --- |
+| Easy | 1 / 5 | 1 / 4 | Win in 105.21 s, no player wreck |
+| Medium | 6 / 4 | 3 / 1 | Loss in 108.08 s versus 106.78 s, no player wreck |
+
+The earlier owner trace is retained as
+`.qa-dist/enemy-aim-owner-traces-before-tuning.json`; the numeric candidate's
+trace is `.qa-dist/enemy-aim-owner-traces.json`. These fixed-step probes
+diagnose the candidate; they do not substitute for the pending cross-frame
+check or complete balance matrix.
+
+### Reviewed integration correction and complete candidate report
+
+The independent reviewer found that replacing midpoint prediction with an
+endpoint sample alone repaired angular error but broke the position tolerance.
+The reviewed correction instead splits the turn allowance around the existing
+single position advance: steer toward the midpoint with half the turn budget,
+move once, then update velocity from the actual endpoint with the other half.
+This preserves the full-step angular limit while making stored velocity an
+endpoint direction. Only flagged enemy crossbows carrying an aim bias use this
+path. Player and flag-off paths, RPG steering and collision sweeps are unchanged.
+
+All 22 existing focused checks passed after this correction. The two production
+owner probes repeated their exact numeric-candidate outcomes above. The
+intermediate midpoint-only owner evidence is retained as
+`.qa-dist/enemy-aim-owner-traces-wide-midpoint.json`. The reviewer separately
+owns additive turn-cap tests and any reviewed replay hash update.
+
+The one complete report for this numeric candidate used
+`node tools/combat-balance.mjs --flags wasteland2 --check`, taking 71.62 s wall
+time (tool 71.47 s, first twelve 13.30 s). Exit 1. Evidence:
+`.qa-dist/enemy-aim-wide-balance.log`.
+
+| Measure | Initial retained-bias rule E/M/H | Wider raider candidate E/M/H |
+| --- | --- | --- |
+| Wins, ten no-weapon seeds each | 9/5/3 | 10/5/3 |
+| Seed-1989 enemy hits on player | 6/10/6 | 5/4/6 |
+| Player wrecks, sixteen races each | 0/8/5 | 0/2/4 |
+| Opponent wrecks, same sample | 0/0/1 | 0/0/1 |
+| Traffic wrecks, same sample | 2/12/7 | 2/17/7 |
+| Stock UFO gain, seconds | 0.29/-5.66/1.20 | 0.28/-0.73/1.20 |
+| Max UFO gain, seconds | 0.55/-3.15/-5.85 | 0.55/2.72/3.31 |
+
+Crossbow remains 12/26 (46%); own-bomb maximum speed loss remains 4.53%.
+Sixteen-race enemy-hit totals are 71/104/110. Medium's hit target now passes,
+but Easy still has five hits against its maximum of three, and its ten wins
+exceed the 95% upper limit. Thus there are two remaining failures, including
+an Easy win-rate regression. No second numeric candidate or parameter grid
+was tried. This measured candidate remains subject to the Director's decision;
+it is not a claim that balance passes.

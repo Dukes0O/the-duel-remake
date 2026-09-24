@@ -1,6 +1,6 @@
 import {makeRng} from './rng.js';
 import {point, predictedPoint} from './combat-weapons.js';
-import {CPU_COMBAT, COMBAT_TUNING} from './wasteland-tuning.js';
+import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
 
 // Course geometry is untouched. These three small camps exist only in flagged
@@ -193,7 +193,7 @@ function fire(duel, zone, raider, target) {
   for (let index = 0; index < identity.length; index++) {
     aimSeed = Math.imul(aimSeed ^ identity.charCodeAt(index), 16777619);
   }
-  const spread = CPU_COMBAT[state.cpuDifficulty]?.aimError ?? CPU_COMBAT.medium.aimError;
+  const spread = T.aimError[state.cpuDifficulty] ?? T.aimError.medium;
   const aimBias = makeRng(aimSeed >>> 0).range(-spread, spread);
   const bearing = Math.atan2(dx, dz) + aimBias;
   const originY = raider.y + 1.48;

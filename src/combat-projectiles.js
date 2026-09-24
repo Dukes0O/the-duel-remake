@@ -9,7 +9,7 @@ const T = COMBAT_TUNING;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
 const angleDifference = (from, to) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
 
-function steerBolt(duel, projectile, dt) {
+function steerBolt(duel, projectile, dt, sampleSeconds = dt * .5) {
   if (projectile.kind !== 'crossbow' || !Number.isInteger(projectile.targetIndex) ||
       !Number.isFinite(projectile.launchBearing) || !(dt > 0)) return;
   const state = duel.state;
@@ -20,8 +20,8 @@ function steerBolt(duel, projectile, dt) {
   // Sample biased enemy guidance halfway through the step. At close range,
   // aiming only from the old position adds a frame-rate-dependent angular lag.
   const biasedEnemy = projectile.enemy && Number.isFinite(projectile.aimBias);
-  const sampleX = projectile.x + (biasedEnemy ? projectile.vx * dt * .5 : 0);
-  const sampleZ = projectile.z + (biasedEnemy ? projectile.vz * dt * .5 : 0);
+  const sampleX = projectile.x + (biasedEnemy ? projectile.vx * sampleSeconds : 0);
+  const sampleZ = projectile.z + (biasedEnemy ? projectile.vz * sampleSeconds : 0);
   const at = point(duel, target);
   const travel = Math.min(T.crossbow.leadTime,
     Math.hypot(at.x - sampleX, at.z - sampleZ) / speed);
@@ -222,14 +222,19 @@ export function stepProjectiles(duel, dt) {
     duel.featureFlags?.enabled('wasteland2') === true;
   for (const projectile of combat.projectiles) {
     const old = {x: projectile.x, y: projectile.y, z: projectile.z};
+    const biasedEnemyBolt = modernProjectiles && projectile.kind === 'crossbow' &&
+      projectile.enemy && Number.isFinite(projectile.aimBias);
     if (modernProjectiles) {
-      steerBolt(duel, projectile, dt);
+      steerBolt(duel, projectile, biasedEnemyBolt ? dt / 2 : dt, dt / 2);
       steerRpg(duel, projectile, dt);
     }
     projectile.age += dt;
     projectile.x += projectile.vx * dt;
     projectile.z += projectile.vz * dt;
     projectile.y += projectile.vy * dt;
+    // Travel with the midpoint direction, then retain the endpoint direction
+    // for the next step. Two half-turn budgets preserve the full-step cap.
+    if (biasedEnemyBolt) steerBolt(duel, projectile, dt / 2, 0);
     if (projectile.kind === 'bomb') projectile.vy -= T.bomb.gravity * dt;
 
     const nearest = duel.course.nearest(projectile.x, projectile.z);
