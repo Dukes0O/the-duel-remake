@@ -254,3 +254,29 @@ and every legacy/malformed/backup/future-schema assertion are unchanged.
 (process wall time). This is an intentional additive saved-shape expectation,
 not a runtime fix. The exact diff goes to independent Director review before
 the required clean gate rerun; all three failed logs remain intact.
+## Final required gate and development handoff
+
+The Director independently reviewed and approved the exact additive profile
+assertion diff in `fdcf7eb` before the final gate. The complete expected key list
+and five other subtests remain intact; no production source changed for it.
+
+Required gates passed on exact clean commit
+`fdcf7eb4e9783a741740a445baf01d4a9399a4d2`:
+
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`:
+  231 passed, 0 failed, 0 not run in 304.54 seconds (304.73 including wrapper).
+  Log: `.qa-dist/egg04-final-lane-recheck3.log`.
+- `npm run build`: passed in 1.01 seconds, Vite build 510 ms. The existing
+  large-chunk advisory remains informational. Log: `.qa-dist/egg04-final-build.log`.
+
+HEAD stayed unchanged and the working tree was clean before and after both
+commands. Source tree: `e4d13288ab1378695083e43b8b82909e378c53fe`.
+Tools tree: `cfe48ce4b6b1d88c83fa007a07cffad9b11d3c11`.
+The three failed logs remain alongside the final pass, with each correction and
+its independent review documented above. No replay fingerprints were changed.
+
+This append records evidence only. Independent runtime, Save Guardian and
+presentation reviews are complete; the Director accepted round 2 visuals in
+`fd73bf5`. EGG-04 is ready for development integration through the Director's
+merge process. Hidden Road remains dev while existing Rustwall/wash fidelity
+debt persists. No merge, board edit, beta promotion or release was done here.
