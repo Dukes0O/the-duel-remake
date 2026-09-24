@@ -5,7 +5,9 @@ Blender uses Z up / -Y forward; glTF export converts once to Y up / +Z.
 import argparse
 import json
 import math
+import os
 import sys
+from datetime import date
 from pathlib import Path
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
@@ -15,14 +17,16 @@ root = Path(args.root).resolve()
 asset_dir = root / 'public/assets/models/wasteland'
 blend_path = root / 'art-build/test-fighter.blend'
 glb_path = asset_dir / 'test-fighter.glb'
+shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / 'test-fighter' / 'round-1')
+if not shots.is_absolute():
+    shots = root / shots
 if args.paths_only:
-    print(json.dumps({'blend': [str(blend_path)], 'glb': [str(glb_path)]}))
+    print(json.dumps({'blend': [str(blend_path)], 'glb': [str(glb_path)], 'evidence': [str(shots)]}))
     sys.exit(0)
 
 import bpy
 from mathutils import Vector
 
-shots = root / 'docs/board/looks/test-fighter'
 asset_dir.mkdir(parents=True, exist_ok=True)
 blend_path.parent.mkdir(parents=True, exist_ok=True)
 shots.mkdir(parents=True, exist_ok=True)

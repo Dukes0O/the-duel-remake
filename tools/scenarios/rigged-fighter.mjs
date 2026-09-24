@@ -25,7 +25,7 @@ function productionPoses() {
 // private harness installs memory-only storage before production code starts.
 export async function run(context) {
   const root = fileURLToPath(new URL('../../', import.meta.url));
-  const directory = join(context.outputDir, 'gfx00-control');
+  const directory = context.outputDir;
   const captureBase = relative(root,directory).replaceAll('\\','/');
   await mkdir(directory, {recursive:true});
   const samples = productionPoses();
