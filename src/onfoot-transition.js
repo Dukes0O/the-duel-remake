@@ -146,8 +146,12 @@ export function stepParkedRace(duel, dt) {
   const state = duel.state;
   if (state.combatWrecking) recoverParkedWreck(duel, dt);
   else {
-    state.input.throttle = 0;
-    state.input.brake = Math.abs(state.speedMph) > .1 ? 1 : 0;
+    // The occupied car uses brake to enter reverse after a hold. Once the
+    // driver exits, oppose whichever way it is moving and never engage reverse.
+    state.reverseHoldSec = 0;
+    if (Math.abs(state.speedMph) <= .1) state.gear = 0;
+    state.input.throttle = state.speedMph < -.1 ? 1 : 0;
+    state.input.brake = state.speedMph > .1 ? 1 : 0;
     state.input.steer = 0;
     state.input.boost = false;
     state.input.shiftUp = state.input.shiftDown = false;

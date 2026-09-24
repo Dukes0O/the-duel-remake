@@ -70,6 +70,22 @@ test('high-speed bail needs 1 s, costs 25 health, and the car coasts then brakes
     'parked car brakes itself instead of holding cruising speed');
 });
 
+test('a car left in reverse brakes to a stop instead of driving away from its fighter', () => {
+  const duel = race(), state = duel.state;
+  duel.setInput({interact: true});
+  ticks(duel, 48);
+  assert.equal(state.onFoot, true);
+  state.gear = -1;
+  state.speedMph = -6;
+  const carAtExit = state.s;
+  duel.setInput({interact: false});
+  ticks(duel, 120);
+  assert.equal(state.speedMph, 0);
+  assert.equal(state.gear, 0);
+  assert.ok(carAtExit - state.s < 3.5,
+    'the stopped car remains close enough to re-enter');
+});
+
 test('re-entry requires release, proximity, and a fresh 0.6 s hold', () => {
   const duel = race(), state = duel.state;
   duel.setInput({interact: true});
