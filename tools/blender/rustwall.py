@@ -27,12 +27,18 @@ def glb_path(kind):
     return out / f'{kind}.glb'
 def blend_path(kind):
     return blend_dir / f'{kind}.blend'
+def texture_path(name, label):
+    return blend_dir / f'{name}-{label}.png'
 shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / 'rustwall' / f'round-{args.round}')
 if not shots.is_absolute():
     shots = root / shots
 if args.paths_only:
     print(json.dumps({'blend': [str(blend_path(kind)) for kind in ('wall', 'wash')],
                       'glb': [str(glb_path(kind)) for kind in ('wall', 'wash')],
+                      'textures': [str(texture_path(name, label))
+                                   for name in ('steel', 'hulks', 'details', 'rock')
+                                   for label in (('color', 'surface', 'normal', 'emissive')
+                                                 if name == 'details' else ('color', 'surface', 'normal'))],
                       'evidence': [str(shots)]}))
     sys.exit(0)
 
@@ -170,13 +176,13 @@ def material(name):
         image = bpy.data.images.new(f'{name}-{label}',1024,1024,alpha=True)
         if label != 'color': image.colorspace_settings.name = 'Non-Color'
         image.pixels.foreach_set(pixels.ravel())
-        image.filepath_raw = str(out/f'{name}-{label}.png')
+        image.filepath_raw = str(texture_path(name, label))
         image.file_format = 'PNG'
         image.save(); image.pack(); images[label] = image
     if name == 'details':
         image = bpy.data.images.new('details-emissive',1024,1024,alpha=True)
         image.pixels.foreach_set(emissive.ravel())
-        image.filepath_raw = str(out/'details-emissive.png'); image.file_format = 'PNG'
+        image.filepath_raw = str(texture_path('details', 'emissive')); image.file_format = 'PNG'
         image.save(); image.pack(); images['emissive'] = image
     mat = bpy.data.materials.new(name + ' authored padded atlas')
     mat.use_nodes = True
