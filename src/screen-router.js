@@ -250,9 +250,9 @@ root.addEventListener('change',event=>{
   const key=event.target.dataset.boardFilter;if(!key)return;boardFilter[key]=key==='stage'?Number(event.target.value):event.target.value;lastScreen=null;renderState(app.duel.state);
 },{signal:domEvents.signal});
 function renderState(s) {
+  buildUpdates.syncState();
   const discovery=app.getHiddenRoadDiscovery?.(),discoveryKey=hiddenRoadMapKey(discovery)+':'+(discovery?.pacificFinishes||0);
   if(s.status==='menu'&&discoveryKey!==menuDiscoveryKey){menuDiscoveryKey=discoveryKey;updateMenuScene();lastScreen=null;}
-  buildUpdates.syncState();
   const helpText=app.duel.featureFlags.enabled('wasteland2')?upgradedCombatHelp:legacyCombatHelp;
   if(combatHelp.textContent!==helpText)combatHelp.textContent=helpText;
   const combat=s.combat,upgradedCombat=combatHudEnabled(app.duel,s),hideWeaponHud=!combat||s.status==='menu'||upgradedCombat;
