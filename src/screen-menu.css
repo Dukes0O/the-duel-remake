@@ -6,3 +6,5 @@
 .rival-customization .setup-line { margin-top: 10px; }
 .rival-customization select { min-width: 0; width: 100%; background: #172327; color: #fff; padding: 8px; border: 1px solid #ffffff35; border-radius: 4px; }
 .rival-customization[hidden] { display: none; }
+
+.race-setup .wasteland-entry { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; margin-top: 12px; padding: 12px 16px; border: 1px solid #bcaa7659; background: #172724; color: #ddc99b; }

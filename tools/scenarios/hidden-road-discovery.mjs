@@ -8,6 +8,11 @@ const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const READY="!!window.__qaApp?.visualReady&&!!window.__render";
 
+async function settleMenu(context){
+  await context.waitFor(`(()=>{const a=window.__qaApp;if(!a?.visualReady||a.duel.state.status!=='menu')return false;a.onFrame?.(a.duel.state,0);return document.querySelector('#renderer-loading')?.hidden&&document.querySelector('#renderer-error')?.hidden;})()`,'settled menu presentation',60000);
+  await context.evaluate('(async()=>{await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);})()');
+}
+
 async function click(context,selector){
   const p=await context.evaluate(`(()=>{const b=document.querySelector(${JSON.stringify(selector)});if(!b||b.hidden||b.disabled)throw Error('Control unavailable');const r=b.getBoundingClientRect();if(!r.width)throw Error('Control not visible');return{x:r.x+r.width/2,y:r.y+r.height/2};})()`);
   for(const type of ['mousePressed','mouseReleased'])await context.command('Input.dispatchMouseEvent',{type,button:'left',clickCount:1,...p});
@@ -38,8 +43,8 @@ export async function run(context){
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
   await context.navigate('/tools/menu-check.html?flags=hidden-road');await context.waitFor(READY,'discovery menu',60000);await context.evaluate(`(${fixture.toString()})()`);
   report.checks.initial=await context.evaluate(`(()=>{const a=window.__qaApp;window.__playerA=a.player.id;const d=a.getHiddenRoadDiscovery();if(d.discoveredGate||!document.querySelector('#wasteland-visit').hidden||document.querySelector('#menu-course-map').dataset.hiddenRoad!=='false')throw Error('Undiscovered menu leaked');return d;})()`);
-  await capture('undiscovered-menu');await context.evaluate('window.__discoveryQa.count(5)');await click(context,'#garage-open');await capture('five-finish-garage-tip');
-  if(!await context.evaluate("document.querySelector('#hidden-road-tip')?.textContent.includes('dry wash')"))throw Error('Five-finish garage tip missing');
+  await settleMenu(context);await capture('undiscovered-menu');await context.evaluate('window.__discoveryQa.count(5)');await click(context,'#garage-open');await capture('five-finish-garage-tip');
+  report.checks.garageTip=await context.evaluate(`(()=>{const n=document.querySelector('#hidden-road-tip'),r=n?.getBoundingClientRect();if(!n?.textContent.includes('dry wash')||r.top<0||r.bottom>innerHeight)throw Error('Five-finish garage tip not visible on opening');return{top:r.top,bottom:r.bottom};})()`);
   await click(context,'[data-action="garage-close"]');await context.evaluate('window.__discoveryQa.count(10);window.__discoveryQa.race()');
   await context.waitFor("window.__render.scene.getObjectByName('Rustwall')?.userData.assetStatus==='ready'",'loaded hint scene',60000);
   await context.evaluate(`(()=>{const a=window.__qaApp,q=window.__discoveryQa;q.place(2);const p=a.duel.course.hiddenRoad.poseAt(14),s=Math.sin(p.heading),c=Math.cos(p.heading);a.inspectionCamera={position:[p.x-s*23,p.y+5,p.z-c*23],target:[p.x,p.y+4,p.z]};q.refresh();})()`);
@@ -51,11 +56,12 @@ export async function run(context){
   report.checks.pause=await context.evaluate(`(()=>{const a=window.__qaApp,g=window.__render.scene.getObjectByName('Hidden Road dust hint');a.duel.state.paused=true;window.__render.renderFrame();if(g.visible)throw Error('Paused hint remained visible');a.duel.state.paused=false;a.inspectionCamera=null;a.setGraphicsQuality('high');return true;})()`);
   await context.evaluate(`(()=>{const a=window.__qaApp,q=window.__discoveryQa;q.place(149.9,35);q.advance(.1);q.place(a.duel.course.hiddenRoad.length-59.5,45);let i=0;while(!a.duel.state.hiddenRoadJourney.choiceReady&&i++<1600)a.duel.step(1/120);q.refresh();if(!a.getHiddenRoadDiscovery().discoveredGate)throw Error('Actual invitation did not discover');})()`);
   await click(context,'.hidden-road-actions button:nth-child(2)');await context.evaluate('window.__discoveryQa.advance(.05);window.__qaApp.requestNavigation("menu");window.__discoveryQa.refresh()');
-  await capture('discovered-menu-and-map');
+  await settleMenu(context);await capture('discovered-menu-and-map');
   report.checks.turnBack=await context.evaluate(`(()=>{const a=window.__qaApp;if(!a.getHiddenRoadDiscovery().discoveredGate||document.querySelector('#wasteland-visit').hidden||document.querySelector('#menu-course-map').dataset.hiddenRoad!=='true')throw Error('Turn-back discovery/menu/map lost');return a.getHiddenRoadDiscovery();})()`);
   await context.navigate('/tools/menu-check.html?flags=hidden-road');await context.waitFor(READY,'discovery reload',60000);await context.evaluate(`(${fixture.toString()})()`);
   if(!await context.evaluate('window.__qaApp.getHiddenRoadDiscovery().discoveredGate'))throw Error('Discovery did not survive private reload');
-  await context.command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await pause(150);await capture('phone-discovered-menu');
+  await context.command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await settleMenu(context);await capture('phone-discovered-menu');
+  report.checks.phoneAction=await context.evaluate(`(()=>{const b=document.querySelector('#wasteland-visit'),r=b.getBoundingClientRect(),start=document.querySelector('#start-engine').getBoundingClientRect();if(r.height<44||Math.abs(r.width-start.width)>1)throw Error('Wasteland action target is too small');return{height:r.height,width:r.width,previewLabel:document.querySelector('#menu-shortcuts').textContent};})()`);
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
   await context.evaluate('window.__playerA=window.__qaApp.player.id');await click(context,'[data-action="new-player"]');
   await context.evaluate("document.querySelector('#new-player-name').value='Discovery B';document.querySelector('#new-player-form').requestSubmit()");
