@@ -20,7 +20,7 @@ Independent test author corrected the synthetic draw-call helper in cd9faab. A B
 
 ## Evidence and remaining work
 
-Round 1 capture/review is in progress. No beta promotion, broad lane gate or release claim yet. GFX-00 browser control now substitutes only crew GLB requests with the retained test fighter, preserving its original single-skin assertions; historical evidence remains untouched.
+All three fidelity rounds are now retained and independently scored. The family stays dev because likeness and other categories remain below four. GFX-00 browser control substitutes only crew GLB requests with the retained test fighter, preserving its original single-skin assertions; historical evidence remains untouched.
 
 ## Round 1 browser evidence
 
@@ -56,3 +56,31 @@ These are one controlled headless-browser sample per quality, including the real
 Matched contact sheet and hash/camera manifest: docs/board/looks/crew/round-2.png and round-2.json. Raw frames, side action views, course PNGs, motion clips and browser report are retained in round-2/. Ready for independent art critique; no beta or release claim.
 
 The repository forced LF conversion on new WebM files. The intact working recordings were retained, `*.webm binary` was added with Director approval, and only the two motion files were renormalized. Their final Git blobs were checked byte-for-byte against the original recordings. No images or video content were edited or recaptured.
+
+## Round 3 and final gate
+
+- Frozen assets: 98fb529. Actual evidence and matched contact sheet: c603646.
+  Private port 53827, memory-only saves, 88 game PNGs and two WebMs, zero
+  warnings or errors. The first attempt stopped before capture because its
+  log was locked inside Vite's cleared QA directory; the retry kept the log
+  outside that directory. No game source change or weakened assertion followed.
+- Twelve fighters: 12 color draws, 66,340 near triangles, independent rigs,
+  eleven far raiders and one near local body, with first-person hiding intact.
+  Real-course baseline/crowd p95: High 18.2/18.2 ms, Performance 18.1/18.2 ms;
+  120 samples per condition and no frames over 33 ms. This is a controlled
+  course measurement, not a worst-case combat or GPU claim.
+- Recovery now shows prone, palm support, kneel and rise; extra .08/.48/.80
+  game phases expose the sequence. The side camera keeps the whole body in
+  frame, and Tusk's profile matches the reference direction. Both qualities
+  use the same recorded views. Earlier rounds remain unchanged.
+- Independent critique is in round-3-review.md. Likeness remains 2 or 3;
+  recovery improves to 3. Visible neck gaps, texture bands and functional
+  action poses remain follow-up work. Five crew have stalled for two rounds,
+  requiring continuous anatomical meshes and authored UV/baked textures in
+  the next approach. Three rounds do not qualify this family for beta.
+- Runtime source is unchanged since the independent 0d8c37d timing/lifetime
+  review. Final lane gate on clean c60364646b15afb8933980c20581ef9d04ef80c5:
+  **219 passed, zero failed, zero not run in 317.58 seconds**, including all
+  eight campaign shards. Build passed (Vite 403 ms; existing chunk warning).
+  HEAD and source stayed unchanged throughout. Logs: .qa-dist/final-lane.log
+  and final-build.log. The subsequent commit adds this evidence and review only.
