@@ -110,8 +110,8 @@ tasks:
     lane: ART
     size: S
     needs: [TRACK-02]
-    merge_after: EGG-01
-    status: reviewing
+      merge_after: EGG-01
+      status: merged
     owns: [public/assets/reference/rustwall-gate.png, public/assets/reference/wasteland-rpg.png, public/assets/reference/wasteland-wrench.png, public/assets/reference/CREDITS.md, docs/WASTELAND_ART.md]
     helpers: [art_critic, test_runner]
     acceptance:
@@ -119,31 +119,32 @@ tasks:
       - "Use the built-in image tool with the existing direction and crew sheets as visual references. Retain unmodified originals outside the repository and copy chosen PNGs into the lane; document tool, date, full prompts, dimensions, hashes, source and reference-only use."
       - "Rustwall reference shows a coherent 35 m tall, at least 400 m wide salvage wall with a drive-through lifting gate, towers, cranes, banners, barrels, searchlights and figures for scale. Include an approach view and useful modeling views; original design without film likenesses or gore."
       - "RPG and wrench references use consistent orthographic and first-person views, readable silhouettes, physically coherent grips and the crew palette. They guide real Blender geometry; no menu/poster art or runtime image substitution."
-      - "Independent visual review checks consistency and modeling usefulness. PNG validation and provenance checks pass; required lane/build gate applies. Merge after EGG-01 even if independent art preparation finishes earlier."
-    - id: GFX-01
-      title: "Crew family fidelity rounds one to three"
-      priority: 7
-      lane: VIS
-      size: L
-      needs: [GFX-00]
-      merge_after: ART-W
-      status: building
-      owns: [tools/blender/crew-fighters.py, public/assets/models/wasteland/crew/, src/fighter-presentation.js, src/rigged-fighter.js, tools/test-crew-fighters.mjs, tools/test-fighter-presentation.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, docs/board/looks/crew/]
-      hooks: [src/combat-scene.js, src/onfoot.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/render3d.js, tools/blender/fidelity-sheet.py, tools/scenarios/rigged-fighter.mjs]
-      helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
-      flag: wasteland2
-      behavior_change: no
-      acceptance:
-        - "Eight rigged crew models and SPEC 0.3 animations undergo three matched reference/Blender/game rounds. Save every contact sheet and score; honor triangle, draw-call and texture budgets. Minimum beta score is four in every category."
-        - "Use Blender headless with the documented --root convention. Retain reproducible Python and .blend sources plus self-contained GLBs for rook, nell, jax, odessa, cinder, dune, wren and tusk. Each must match the existing crew sheets through distinct silhouettes, faces, hair and outfits, rather than recoloring the prototype."
-        - "All eight models have bound skeletons and meaningful idle, walk, sprint, jump, knockdown, get-up, aim, fire, reload, repair, enter and exit clips. At most 8000 near triangles, 2000 distant triangles, two visible material primitives and one 1024-square texture set per member; twelve visible fighters stay within 24 color draw calls. Retain the GFX-00 test asset and evidence."
-        - "Runtime selects the actual crew ID and near/distant detail, caches asset requests by crew, keeps independent skeletons and preserves pending/failed primitive fallback, late-load cleanup and first-person body hiding. Meshes, materials and animation actions are prepared outside the frame update. No flag-off asset requests, simulation mutation, new dependencies or network services."
-        - "A pure presentation selector reads simulation-authored movement and action state. Narrow on-foot hooks may record timestamps, duration and pose snapshots for successful shots, knockdown/recovery and car transitions. Preserve all movement, weapon, repair and enter/exit timings, health, ammunition, rewards and saves. Failed shots do not animate fire; animation cannot delay or cause an action."
-        - "Independent acceptance checks cover actual GLB budgets and clip deformation, crew selection, LOD visibility, independent rigs, deterministic presentation time and lifecycle/fallback behavior. Existing ordinary fingerprints remain unchanged. Browser captures use private ports and memory-only saves, with matched front/side/back and action views in High and Performance."
-        - "Save immutable round-1, round-2 and round-3 contact sheets and provenance under docs/board/looks/crew with reference, Blender and actual game captures. Each round independently scores all five SPEC 0.3 items, names five differences and fixes the lowest scores next. Measure twelve-fighter frame cost. If resemblance stalls twice, change the approach. Three rounds alone never imply beta readiness."
-      shots: [all-eight-front-side-back, twelve-action-poses, high-performance-matches, distant-detail, twelve-fighter-cost]
-      sound: "Retain existing on-foot cues and timing."
-      note: "Independent preparation overlaps EGG-01 and ART-W; completion remains after ART-W. Split builder ownership into Blender assets and runtime presentation only after independent failing tests. No broad on-foot gameplay rewrite or save edits."
+        - "Independent visual review checks consistency and modeling usefulness. PNG validation and provenance checks pass; required lane/build gate applies. Merge after EGG-01 even if independent art preparation finishes earlier."
+      note: "Merged c736150 after accepted modeling review, intake validation, 217-suite lane gate and build. Originals and full prompts retained. Model Rustwall numerically at 35 m by at least 400 m; no runtime or beta claim."
+  - id: GFX-01
+    title: "Crew family fidelity rounds one to three"
+    priority: 7
+    lane: VIS
+    size: L
+    needs: [GFX-00]
+    merge_after: ART-W
+    status: building
+    owns: [tools/blender/crew-fighters.py, public/assets/models/wasteland/crew/, src/fighter-presentation.js, src/rigged-fighter.js, tools/test-crew-fighters.mjs, tools/test-fighter-presentation.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, docs/board/looks/crew/]
+    hooks: [src/combat-scene.js, src/onfoot.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/render3d.js, tools/blender/fidelity-sheet.py, tools/scenarios/rigged-fighter.mjs]
+    helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
+    flag: wasteland2
+    behavior_change: no
+    acceptance:
+      - "Eight rigged crew models and SPEC 0.3 animations undergo three matched reference/Blender/game rounds. Save every contact sheet and score; honor triangle, draw-call and texture budgets. Minimum beta score is four in every category."
+      - "Use Blender headless with the documented --root convention. Retain reproducible Python and .blend sources plus self-contained GLBs for rook, nell, jax, odessa, cinder, dune, wren and tusk. Each must match the existing crew sheets through distinct silhouettes, faces, hair and outfits, rather than recoloring the prototype."
+      - "All eight models have bound skeletons and meaningful idle, walk, sprint, jump, knockdown, get-up, aim, fire, reload, repair, enter and exit clips. At most 8000 near triangles, 2000 distant triangles, two visible material primitives and one 1024-square texture set per member; twelve visible fighters stay within 24 color draw calls. Retain the GFX-00 test asset and evidence."
+      - "Runtime selects the actual crew ID and near/distant detail, caches asset requests by crew, keeps independent skeletons and preserves pending/failed primitive fallback, late-load cleanup and first-person body hiding. Meshes, materials and animation actions are prepared outside the frame update. No flag-off asset requests, simulation mutation, new dependencies or network services."
+      - "A pure presentation selector reads simulation-authored movement and action state. Narrow on-foot hooks may record timestamps, duration and pose snapshots for successful shots, knockdown/recovery and car transitions. Preserve all movement, weapon, repair and enter/exit timings, health, ammunition, rewards and saves. Failed shots do not animate fire; animation cannot delay or cause an action."
+      - "Independent acceptance checks cover actual GLB budgets and clip deformation, crew selection, LOD visibility, independent rigs, deterministic presentation time and lifecycle/fallback behavior. Existing ordinary fingerprints remain unchanged. Browser captures use private ports and memory-only saves, with matched front/side/back and action views in High and Performance."
+      - "Save immutable round-1, round-2 and round-3 contact sheets and provenance under docs/board/looks/crew with reference, Blender and actual game captures. Each round independently scores all five SPEC 0.3 items, names five differences and fixes the lowest scores next. Measure twelve-fighter frame cost. If resemblance stalls twice, change the approach. Three rounds alone never imply beta readiness."
+    shots: [all-eight-front-side-back, twelve-action-poses, high-performance-matches, distant-detail, twelve-fighter-cost]
+    sound: "Retain existing on-foot cues and timing."
+    note: "Independent preparation overlaps EGG-01 and ART-W; completion remains after ART-W. Split builder ownership into Blender assets and runtime presentation only after independent failing tests. No broad on-foot gameplay rewrite or save edits."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8
@@ -476,6 +477,15 @@ tasks:
     size: S
     needs: [BUG-06]
     status: building
+    owns: [src/raiders.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-enemy-aim.mjs]
+    helpers: [test_author, reviewer, balance_analyst, test_runner]
+    active_slice: "Difficulty-aware raider aiming and persistent enemy aim error during crossbow guidance."
+    acceptance:
+      - "The body-contact prerequisite for this slice is merged 9139575. Raider bolts receive deterministic difficulty-dependent aim error from a separate seed keyed by course/stage, lap and raider identity; do not consume world RNG or another actor's random sequence. Reuse current CPU difficulty spread initially."
+      - "Flagged enemy crossbow guidance retains the shot's chosen aim bias rather than steering it away. Cover both CPU and raider shots while leaving player guidance, flag-off behavior, existing firing cadence, target selection, projectile limits and weapon damage unchanged."
+      - "Independent bounded tests prove difficulty spread, identity/order independence, retained bias, player/legacy controls and common-time 30/60/144 outcomes. No existing assertion or fingerprint changes without a concrete before/after trace and independent review."
+      - "After the rule correction, run one complete flagged balance report and compare the recorded body-contact baseline: wins 5/4/3, enemy hits 10/11/4, crossbow 12/26. Preserve every target; no numeric tuning until the measured result identifies a reason. Record remaining UFO and CPU-UFO work separately."
+      - "Required lane/build gate and review apply before this slice merges. The full BUG-07 card stays open for CPU UFO use and unmet balance targets."
     note: "Exact 10/7/5 s attacks and Easy pace/10-degree aim integrated through 2077364. Physical Medium/Hard pickups merged as 505639e; close-range bomb use corrected as a3ad4ee. Wins 8/6/2 and CPU hits 1/2/10 pass. CPU UFO use remains open. A meaningful charged crossbow shot is independently reviewed on held branch 8d9bc24: 93-suite lane, replay/build/browser and fixed-seed balance pass except the same six UFO rows. Reviewed Wasteland replay, 160-suite exact merge, build and private smoke pass on integration."
     spec: "SPEC.md, task BUG-07"
   - id: BUG-14

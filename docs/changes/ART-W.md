@@ -1,6 +1,6 @@
 # ART-W: wall, gate and tool references
 
-status: ready-to-merge after EGG-01
+status: merged in c736150 after EGG-01
 
 Three original opaque PNG references guide the upcoming Blender work:
 Rustwall/gate, RPG and repair wrench. The existing art-direction and crew

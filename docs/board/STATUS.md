@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-24T06:23:56.615Z
+Observed at: 2026-09-24T06:25:17.314Z
 
-Observation commit: 3dab9cd949183ba7bedd87d0fc8c5dcf2cbba753
+Observation commit: c7361502151a49ae04d17b87ca02a28e53b56e1b
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 3dab9cd949183ba7bedd87d0fc8c5dcf2cbba753
+Integration HEAD: c7361502151a49ae04d17b87ca02a28e53b56e1b
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -33,7 +33,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/artw-model-references | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/artw |
+| codex/artw-model-references | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/artw |
 | codex/aud01-current-weapons | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/aud01-current-weapons/the-duel-remake |
 | codex/aud02-foot-sounds | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/aud02-foot-sounds/the-duel-remake |
 | codex/aud02-waveforms | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/aud02-verify |
@@ -111,7 +111,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/wasteland-combat-bug05 | 0 | unknown | false | false | unknown |
 | codex/wasteland-combat-bug06 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-combat-bug06/the-duel-remake |
 | codex/wasteland-combat-bug07 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-combat-bug12/the-duel-remake |
-| codex/wasteland-combat-bug12 | 0 | unknown | false | false | unknown |
+| codex/wasteland-combat-bug12 | 1 | unknown | false | false | unknown |
 | codex/wasteland-combat-penalties | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-combat-penalties/the-duel-remake |
 | codex/wasteland-cpu-charged-bolt | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-cpu-charged-bolt/the-duel-remake |
 | codex/wasteland-cpu-pickups | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-cpu-pickups/the-duel-remake |
@@ -165,7 +165,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 3dab9cd949183ba7bedd87d0fc8c5dcf2cbba753
+- Local integration/wasteland: c7361502151a49ae04d17b87ca02a28e53b56e1b
 
 Local rollback build (dist-previous): 20260923193614-0b1389a185dd. Manifest presence does not verify the full rollback build.
 

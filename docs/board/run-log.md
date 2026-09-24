@@ -1005,3 +1005,11 @@ checkout untouched until the final integration commit passes the full gate.
 - ART-W is ready next: independent gate on b3fcd56 passed 217 suites in 338.18 s and build. No source changes since; final note82d29f8 adds evidence only.
 - Crew R1 evidence and independent scores retained in its lane. Runtime review found four timing/allocation defects; six independent red checks reproduce them. Fix0d8c37d passes re-review, selector12/12 andcrew26/26; originalassetprivatecontrol passes18images, zeroerrors. R2 now corrects bodyshape, UVs and weightedposes.
 
+
+## 2026-09-23 PDT - ART-W merged (3 since full)
+
+- Integrated c736150 in the required order after EGG-01. Accepted references, provenance/intake and independent217-suite lane/build gate are recorded. STATUS refreshed immediately. Runtime assets remain separateBlendercards.
+- Full cadence nowthree taskmerges since05:39UTC: dueaftertwomore or07:39UTC. No activebroadtest. Allfourcrew runtimefindingsresolvedat0d8c37d andindependentlyre-reviewed; R2assets/capturesinprogress.
+- Expand existingBUG-07's bounded aim-error slice afterbody-contact9139575. Three baseline traces separated CPU/raider hits asEasy3/7,Medium6/5,Hard3/1. Raideraccuracy ignoresdifficulty andcrossbowguidance eraseslauncherror. Fixthose ruleswithindependenttests beforefurthernumbers. CPUUFOremainsseparate.
+- BudgetbeforeBUG-07:36percentremaining. D8stillunapproved; nopushorrelease. CorrectedGFX-01boardindentationto matchothercards.
+
