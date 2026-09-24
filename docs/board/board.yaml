@@ -236,7 +236,7 @@ tasks:
     lane: UI
     size: M
     needs: [EGG-02]
-    status: building
+    status: review
     owns: [src/hidden-road-journey.js, src/hidden-road-ui.js, src/hidden-road-ui.css, tools/test-hidden-road-journey.mjs, tools/test-hidden-road-departure.mjs, tools/test-hidden-road-presentation.mjs, tools/scenarios/hidden-road-arrival.mjs, docs/board/looks/hidden-road-arrival/, docs/changes/EGG-03.md]
     hooks: [src/game.js, src/app.js, src/screen-router.js, src/render3d.js, src/rustwall-scene.js, src/audio.js, src/sim-contacts.js, src/sim-driving.js, tools/test-hidden-road.mjs]
     helpers: [test_author, reviewer, save_guardian, browser_qa, audio_qa]
@@ -252,7 +252,7 @@ tasks:
       - "Journey-owned analytic Rustwall bounds stop a freely driven explorer who approaches outside the cinematic trigger. Derive wall, header and moving panel bounds from the approved EGG-02 geometry; resolve swept car contacts without damage. Do not mutate ordinary course obstacles or use an invisible approach fence. Test the side wall, closed panel and largest-car passage when fully open; document any irregular-salvage approximation."
       - "Correct the confirmed hidden-spur driving camera defect: use actual car heading and support height while physically on the spur, including before departure, and avoid unrelated main-road tunnel constraints. Preserve normal camera modes and ordinary, flag-off and returned-to-main-road camera behavior. An independent red regression precedes the narrow presentation/helper fix; actual settled gameplay images must confirm the view."
       - "Use one bounded private memory-only browser scenario for both choices, the before-departure return, the cinematic and navigation cleanup. Retain actual images and audio evidence, ordinary/flag-off replay controls and a focused common-time journey test. Gate and car contact must agree with the EGG-02 geometry on routes A/B/C."
-    note: "Expanded for the next ordered card while EGG-02 builds. No implementation starts before EGG-02 integration. Reuse existing abandon settlement; no progression schema or real-save access. Independent test author may replace EGG-01's whole-spur racing-status assertion with pre-150-m racing and post-departure exploration, because this card introduces departure. Preserve the geometry, driving, return and ordinary replay controls; record and review the changed assertion."
+    note: "Runtime 5776623 passes 37 journey and seven synthetic departure groups; independent runtime and Save Guardian review passes. Three retained presentation rounds repair framing, sound balance, physical-spur camera and handover. Final production bc60aa4 is independently reviewed; audio review confirms recorded gate cues with explicit limits. Corrected total CPU/RAF samples pass the bounded ten-percent comparison. Required lane/build gate is running on clean 624393a. No discovery schema in this card. The reviewed EGG-01 status assertion now distinguishes pre-150-m racing from exploration while preserving geometry, return and ordinary replay controls."
   - id: EGG-04
     title: "Gate discovery save and return entry"
     priority: 11
