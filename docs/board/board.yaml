@@ -39,7 +39,7 @@ tasks:
     size: M
     needs: [CLEAN-02]
     status: ready
-    owns: [tools/fidelity-sheet.mjs, tools/browser-harness.mjs, tools/audio/, docs/board/looks/, .gitignore]
+    owns: [tools/fidelity-sheet.mjs, tools/browser-harness.mjs, tools/run-browser-scenarios.mjs, tools/audio-analysis.mjs, tools/scenarios/, tools/blender/, tools/test-browser-harness.mjs, tools/test-review-evidence.mjs, docs/board/looks/, .gitignore]
     helpers: [reviewer, test_runner]
     acceptance:
       - "Raw captures default to ignored .evidence; each review round keeps one JPG under 500 KB and its review."
