@@ -1,6 +1,6 @@
 ---
 task: CMB-05
-status: ready-to-merge
+status: integrated
 kind: combat-feature
 flag: wasteland2
 player_facing: yes

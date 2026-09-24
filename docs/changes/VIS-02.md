@@ -1,3 +1,11 @@
+---
+task: VIS-02
+status: integrated
+kind: visual-feature
+flag: wasteland2
+player_facing: yes
+---
+
 # VIS-02 — Armor kits and wreck visuals
 
 ## Changed

@@ -1,6 +1,6 @@
 ---
 task: CMB-06
-status: lane-complete
+status: integrated
 kind: test-coverage
 flag: wasteland2
 player_facing: no

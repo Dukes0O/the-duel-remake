@@ -658,9 +658,42 @@ tasks:
     lane: SAVE
     size: S
     needs: [CMB-03]
-    status: blocked
+    status: integrated
     helpers: [test_author, save_guardian, reviewer]
     flag: wasteland2
     behavior_change: yes
     note: "Completed combat wins and losses earn a capped positive hit/wreck bonus; neither debits saved credits. Abandonment and timeout earn no bonus. Owns progression, result normalization, idempotence, save fixtures and storage-budget checks after CMB-03 provides validated fields."
     spec: "SPEC.md section 3.2, task SAVE-01"
+  - id: CMB-05
+    title: "CPU combat decisions"
+    wave: 3
+    lane: CMB
+    size: M
+    needs: [CMB-01, CMB-02]
+    status: integrated
+    flag: wasteland2
+    behavior_change: yes
+    note: "Separate seeded attack turns across the field and a short deliberate rear-ram approach are integrated at 47d5489. Five focused brain checks, nearby CPU/ram checks and production build pass. The older one-rival schedule is unchanged."
+    spec: "SPEC.md sections 3.2, 3.13, task CMB-05"
+  - id: CMB-06
+    title: "Combat replay fingerprints"
+    wave: 3
+    lane: TOOL
+    size: S
+    needs: [CMB-01, CMB-05]
+    status: integrated
+    flag: wasteland2
+    behavior_change: no
+    note: "Four flagged combat encounters replay at 30, 60 and 144 FPS; 12/12 new checks and the 162 unchanged older fingerprints pass. Integrated at 695b221."
+    spec: "SPEC.md section 12.2, task CMB-06"
+  - id: VIS-02
+    title: "Armor kit and wreck visuals"
+    wave: 3
+    lane: VIS
+    size: M
+    needs: [RFX-06, CMB-01, VIS-01]
+    status: integrated
+    flag: wasteland2
+    behavior_change: yes
+    note: "Socket-mounted plates, pooled critical smoke/fire, and a read-only opponent projection hook integrated at 37850ad after focused checks, build and private High/Performance visual review. PRG-04 still owns kit purchases and armor bonuses."
+    spec: "SPEC.md sections 3.6 and 12.2, task VIS-02"
