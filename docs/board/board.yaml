@@ -287,14 +287,14 @@ tasks:
     lane: ART
     size: L
     needs: [GFX-01]
-    status: building
+    status: merged
     owns: [tools/blender/crew-fighters.py, public/assets/models/wasteland/crew/, docs/board/looks/crew/, tools/test-crew-assets.mjs, tools/scenarios/crew-fighters.mjs]
     helpers: [reviewer, art_critic, browser_qa]
     flag: wasteland2
     acceptance:
       - "Follow round-3-review.md. Replace the stalled primitive/projection approach with continuous anatomical meshes and authored padded UV/baked textures. Join necks to adjusted jaws, eliminate pale streaks/profile bands, and build distinct faces/hair and reference clothing silhouettes."
       - "Author tool/car actions around actual grip, sill, seat and support-foot contacts. Preserve simulation timing and all runtime lifecycle controls. Run further immutable fidelity rounds within SPEC 0.3 budgets; do not promote beta until every score is at least four."
-    note: "Active Rook-only trial uses a continuous anatomical body and authored painted UVs. Other crew wait for the written Rook likeness gate."
+    note: "Merged 54259b2 as a rejected-trial closure: round-10 Rook likeness two, round-3 runtime and generator restored, other seven unchanged. Final lane238/238 and build pass. GFX-01-P2 owns the next approach; no beta promotion."
   - id: GFX-01-P2
     title: "Rook likeness before full crew conversion"
     lane: ART
@@ -369,7 +369,7 @@ tasks:
     lane: VIS
     size: M
     needs: [EGG-02]
-    status: building
+    status: merged
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall/]
     hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/scenarios/hidden-road-arrival.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs]
     helpers: [art_critic, reviewer, browser_qa]
@@ -378,7 +378,7 @@ tasks:
       - "Continue from the three immutable initial rounds. Replace repeated rock columns with a natural bank treatment, resolve exposed terrain wedges and foot contact, improve steel/soot/wreck material response, and enrich gate/tower connections as recorded in round-3-review.md. Preserve measured collision and ground support; any extra terrain hook needs a Director re-slice."
       - "Retain matched High/Performance views and add a short continuous approach/gate review once EGG-03 exists. Keep the geometry and material allocations and measure frame cost without discarding earlier unfavorable samples. The model toggle comparison alone does not measure the whole terrain change or GPU time."
       - "Wall resemblance reaches three in round 2 and stays three in round 3; wash rises from one to two, then stays two. Each has one stagnant round. Apply SPEC 0.3's approach-change rule if another round fails to improve resemblance. Keep dev until all scores reach four and the budget holds."
-    note: "Active phase-2 lane replaces repeated columns and refines wall materials. Three rounds alone do not grant beta."
+    note: "Merged 5da8179 for development: joined canyon ribbons and wall7,777,248 bytes. Round-10 wall/wash likeness three; measured CPU cost at most1.077x. Lane238/238 and build pass; full arrival passed. EGG-02-P2 owns remaining likeness work; hidden-road stays dev."
   - id: EGG-02-P2
     title: "Rustwall salvage depth and natural canyon strata"
     lane: VIS

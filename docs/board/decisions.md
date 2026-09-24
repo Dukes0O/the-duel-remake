@@ -301,3 +301,9 @@ The event rates reward a finish and visible combat without making repeated hits 
 - Decision: Build two continuous presentation ribbons from existing collision bounds instead of repeating standalone bank modules. Preserve route, collision, RNG and floor; tests require bounded geometry, deterministic UVs, material/disposal safety and continuity. The documented replacement of instancing assertions must retain their geometric safety contracts.
 - Decision: Trial 512-pixel wall atlases while retaining the wash atlas at 1024. Wall output falls from 15,394,464 to 7,236,656 bytes. Matched round-7 views preserve visible texture detail, but likeness remains three and needs changed salvage geometry. Texture size alone is not an art approval.
 - Reversal: Rebuild with the previous recipe or atlas resolution if visual or frame review fails; keep the physical road unchanged.
+
+## 2026-09-24 PDT: first art polish wave verdicts
+
+- Rook round10 likeness remains2. Restore the reviewed round3 asset and generator; remove the rejected experiment and its test together. Keep the text recipe in107bb21, six compact scored rounds, and the next approach on GFX-01-P2. Hands wait for a winning Rook technique. No other crew conversion or beta promotion.
+- Rustwall round10 and wash each score3. Accept the joined banks and smaller wall as a development improvement only. Final wall7,777,248 bytes and wash3,898,584 bytes; quiet render-CPU cost at most1.077 times baseline, under1.10. EGG-02-P2 owns the remaining facade depth, repetition, strata and grounding. Hidden Road stays dev.
+- Arrival QA needs a new temporary memory-only player for each quality's first invitation. Reusing the discovered player correctly auto-enters and invalidates the old second invitation setup. Preserve all invitation and navigation assertions.
