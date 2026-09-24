@@ -54,3 +54,5 @@ Real-course full-render RAF samples at 1280x720 (120 frames per condition):
 These are one controlled headless-browser sample per quality, including the real scene, compositor and shadows. The crowd uses staged walking snapshots moving at 4.5 m/s along course ground; it does not model raider AI, all combat effects or every device. The result supports the fighter budget for this scene, not a general GPU or worst-case combat guarantee. Neutral CPU p95 was 4.8 ms High and 1.7 ms Performance and is retained separately.
 
 Matched contact sheet and hash/camera manifest: docs/board/looks/crew/round-2.png and round-2.json. Raw frames, side action views, course PNGs, motion clips and browser report are retained in round-2/. Ready for independent art critique; no beta or release claim.
+
+The repository forced LF conversion on new WebM files. The intact working recordings were retained, `*.webm binary` was added with Director approval, and only the two motion files were renormalized. Their final Git blobs were checked byte-for-byte against the original recordings. No images or video content were edited or recaptured.
