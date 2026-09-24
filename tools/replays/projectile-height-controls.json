@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "capturedFrom": "a1cc0f1",
+  "description": "Flat-course production projectile outcomes before BUG-06 body-height correction; legacy bolts and modern bombs/RPGs at 2 m. Null armor means armor is disabled.",
+  "outcomes": [
+    {
+      "options": {"wasteland2": false, "height": 2},
+      "result": {"hits": 1, "armorLost": null, "consumed": true, "bodyHeight": 1.35}
+    },
+    {
+      "options": {"wasteland2": false, "height": 2, "enemy": true},
+      "result": {"hits": 1, "armorLost": null, "consumed": true, "bodyHeight": 1.35}
+    },
+    {
+      "options": {"kind": "bomb", "height": 2},
+      "result": {"hits": 1, "armorLost": 9.77737, "consumed": true, "bodyHeight": 1.35}
+    },
+    {
+      "options": {"kind": "rpg", "height": 2},
+      "result": {"hits": 1, "armorLost": 35, "consumed": true, "bodyHeight": 1.35}
+    }
+  ],
+  "sha256": "fa2c7711be34f5eddfeb7ed8273b0169a2e29a71645d1335e80d3443631886a9"
+}
