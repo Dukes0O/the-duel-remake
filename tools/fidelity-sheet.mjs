@@ -140,6 +140,7 @@ async function firstPersonSheet(round) {
         crop:hands.reference.crop,reference:hands.reference.path,blender:source.path,high:high.path,performance:performance.path});
     }
   }
+  for (const reference of blender.toolReferences || []) await verify(reference.path,reference.sha256);
   if (blender.hands.length!==8) throw Error('All eight crew are required');
   const output=resolve(root,`${base}.png`),manifest=resolve(root,`${base}.json`);
   await writeFile(manifest,JSON.stringify({round,observationCommit:captures.observationCommit,

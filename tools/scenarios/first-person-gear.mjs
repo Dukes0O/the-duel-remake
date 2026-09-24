@@ -32,7 +32,14 @@ export async function run(context) {
   await mkdir(directory,{recursive:true});
   for(const quality of evidence.qualities) {
     await setup(context,quality);
-    evidence.interactions[quality]=await interaction(context,quality);
+    const interactionCaptures=[];
+    const interactionContext={...context,screenshot:async name=>{
+      const temporary=await context.screenshot(name),bytes=await readFile(temporary);
+      const path=`${relative}/${name}.png`;
+      await writeFile(join(root,path),bytes);context.screenshots.push(join(root,path));
+      interactionCaptures.push({path,sha256:sha(bytes)});return path;
+    }};
+    evidence.interactions[quality]={...await interaction(interactionContext,quality),captures:interactionCaptures};
     // Re-entered car is covered above. Fresh exit supplies the actual renderer
     // hook for every crew/tool snapshot without creating a second view model.
     await key(context,'keyDown','KeyF','f',70);
@@ -117,6 +124,7 @@ export async function run(context) {
 }
 
 async function setup(context,quality) {
+  await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
   await context.navigate('/tools/menu-check.html?flags=wasteland2');
   await context.waitFor('window.__qaApp?.visualReady && window.__render','private first-person menu',60000);
   await context.evaluate(`(() => {
