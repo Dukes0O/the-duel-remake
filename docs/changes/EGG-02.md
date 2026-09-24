@@ -188,3 +188,45 @@ against the actual GLBs. No assertion, fingerprint or production file was
 changed during this review. No broad gate was repeated. Remaining fidelity
 rounds, measured frame cost and the planned final lane/build gate still apply;
 this structural review grants no beta or release approval.
+
+## Round 2 browser evidence and remaining cost gap
+
+Corrected capture source `a4854e6` and frozen assets `522c39d` completed the
+private memory-only scenario on port 50425. The retained report records zero
+browser warnings or errors, twelve matched images and eight course images.
+Both isolated wash views contain 2322 sampled non-background pixels; every
+course image also passes the visible-pixel check. All six route/quality gate
+placement checks pass. The contact sheet and ordered timing/count arrays are
+retained under `docs/board/looks/rustwall/round-2/` and its adjacent sheet files.
+
+The first round-two attempt failed the new Performance wash pixel assertion.
+The fixture changed instance matrices immediately after a shadow render, while
+Three's instance upload cache still marked that render frame as current. A
+preparation render before the captured frame, and another after restoring the
+instances and scene, correct this fixture timing. Course shots also prepare
+the restored scene and check visible pixels. No production renderer changed.
+The original round-one images and sheet remain untouched. Its route B/C course
+images are also gray, so round one proves their placement mathematically but
+does not establish their visual grounding. Round two supplies valid images.
+
+The round-two frame measurements are:
+
+| View | RAF p95, baseline to loaded | CPU median | CPU p95 |
+| --- | --- | --- | --- |
+| High wash | 18.1 to 18.1 ms | 2.1 to 2.3 ms | 2.5 to 2.8 ms |
+| High approach | 18.1 to 18.1 ms | 2.1 to 2.1 ms | 2.6 to 2.6 ms |
+| Performance wash | 18.2 to 18.3 ms | 1.5 to 1.5 ms | 1.9 to 2.0 ms |
+| Performance approach | 18.2 to 18.2 ms | 1.3 to 1.3 ms | 1.7 to 1.7 ms |
+
+High wash CPU p95 rises **12 percent**, beyond the 10 percent target. Its median
+rises about 9.5 percent. Stable RAF timing does not erase that cost concern;
+round two is not a complete performance pass. Each condition retains all 120
+ordered RAF, CPU, draw and triangle samples, plus count ranges. The baseline
+still uses the widened salt flat and isolates scenery cost. CPU submission
+timing is not a GPU measurement. The artist reports 51020 wall triangles with
+13 draws and 179 wash instances totaling 25776 triangles in one draw. Measured
+per-frame counts include other scenery, extra passes and shadow refresh.
+
+The independent round-two visual critique and final fidelity round are next.
+No existing test assertion, race fingerprint or runtime behavior changed for
+these capture corrections.
