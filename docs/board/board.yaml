@@ -422,6 +422,14 @@ tasks:
     size: S
     needs: [BUG-05]
     status: building
+    owns: [src/wasteland-tuning.js]
+    helpers: [balance_analyst, test_runner, reviewer]
+    active_slice: "Narrow flagged crossbow guidance to preserve aiming error and reduce excessive accuracy."
+    acceptance:
+      - "Use the unchanged real balance checker as the failing acceptance gate: flagged crossbow is currently 18/26, above 35–60 percent. First candidate narrows the homing cone from 12 to 3 degrees; no other tuning changes in this slice."
+      - "Measure one controlled crossbow probe and one complete flagged report. Record effects on win rates, enemy hits, UFO gains and wrecks without promising or fabricating a pass. Keep the 10/7/5-second cadence and all balance limits."
+      - "Ordinary and flag-off rules must remain unchanged. Existing projectile/replay checks and required lane/build gate pass; any changed expected fingerprint or assertion needs independent review and a written reason."
+    merge_after: BAL-01
     note: "Crossbow and physical shield slices integrated through a85acad; 156-suite exact merge gate, build and private smoke green. Full balance remains open."
     spec: "SPEC.md, task BUG-06"
   - id: BUG-07

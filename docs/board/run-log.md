@@ -838,3 +838,17 @@ checkout untouched until the final integration commit passes the full gate.
 - GFX-00 red suiteed739a3 has twelve expected missing-pipeline failures;
   unchanged ordinary replay fingerprints pass all162 checks. The Blender
   builder now implements the owned rig, loader and matched contact sheet.
+
+## 2026-09-23 PDT — existing BUG-06 tuning slice authorized
+
+- Three bounded flagged traces split the seed-1989 enemy hits into rival /
+  raider counts: Easy 6/6, Medium 6/4, Hard 9/0. Each player wrecks once;
+  no opponent wrecks in those baseline traces. Raider targeting follows the
+  nearest moving car; the faster Hard opponent absorbs its camp shots.
+- The 12-degree guidance cone can correct Easy's 10-degree aiming error.
+  Authorize one 3-degree candidate in wasteland-tuning.js only, followed by
+  one controlled accuracy probe and a complete flagged report. Do not change
+  armor, pace, UFO distance or attack cadence in this first slice.
+- Existing BUG-06 continues in a spare lane and cannot merge before BAL-01.
+  It temporarily uses the BAL-01 tool candidate whose missing traffic count
+  is under repair; that omission does not affect these accuracy/win targets.
