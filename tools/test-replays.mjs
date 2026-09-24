@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { COURSE } from '../src/config.js';
-import { Duel } from '../src/game.js';
+import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
 
 const fixturePath = fileURLToPath(new URL('./replays/recorded-inputs.json', import.meta.url));
 const expectedPath = fileURLToPath(new URL('./replays/expected-fingerprints.json', import.meta.url));
@@ -65,8 +65,7 @@ function replay(race, fps) {
   const index = COURSE.findIndex(event => event.id === race.eventId);
   // Preserve the recorded pre-CMB-08 baseline. New default-on roadside
   // contacts have their own 30/60/144 FPS acceptance tests.
-  const duel = new Duel({ seed: fixture.seed,
-    featureFlags: {'roadside-destruction': false} });
+  const duel = new LegacyRoadsideDuel({ seed: fixture.seed });
   duel.startCampaign({
     startStage: index, seed: fixture.seed, mode: race.mode, car: race.car,
     difficulty: 'casual', cpuDifficulty: 'easy',

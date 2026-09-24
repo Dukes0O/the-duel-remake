@@ -13,7 +13,7 @@ function check(name, run) {
   try { run(); } catch (error) { failures.push(`${name}: ${error.message}`); }
 }
 function race(seed = 1989, car = 'falcone_f42', difficulty = 'casual', enabled = true) {
-  const duel = new Duel({ seed, featureFlags: { 'hidden-road': enabled, 'roadside-destruction': false } });
+  const duel = new Duel({ seed, featureFlags: { 'hidden-road': enabled } });
   duel.startCampaign({ startStage: 0, seed, car, difficulty, mode: 'duel' });
   Object.assign(duel.state, { status: 'racing', traffic: [], opponents: [], rival: null });
   return duel;

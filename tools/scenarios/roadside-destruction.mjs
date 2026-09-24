@@ -1,13 +1,13 @@
-// A real private QA page must turn the staged switch on before loading the game.
+// The released roadside rule is on in Wasteland without a feature switch.
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=roadside-destruction');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && !!window.__render && !document.querySelector('#start-engine').disabled", 'isolated menu and renderer', 60_000);
   const result = await context.evaluate(`(() => {
     const app=window.__qaApp;
     if(!app.startCampaign({mode:'wasteland',startStage:0,car:'falcone_f42',seed:1989}))throw Error('Wasteland race did not start');
     app.stop();
     const duel=app.duel,state=duel.state;
-    if(!duel.destructionEnabled())throw Error('Private roadside destruction switch did not enable');
+    if(!duel.destructionEnabled())throw Error('Released roadside destruction is unavailable');
     const candidates=duel.course.features.obstacles.filter(item=>item.kind==='tree'&&item.theme!=='desert'&&(item.scale??1)<=1.1);
     if(!candidates.length)throw Error('No small roadside tree found');
     let tree=null,fallen=null;

@@ -68,9 +68,9 @@ function sizeReport(files) {
   };
 }
 
-function references(root, files) {
+function references(root, files, includeTools = false) {
   return files.filter(row => TEXT.has(extname(row.path).toLowerCase()) &&
-    !row.path.startsWith('docs/') && !row.path.startsWith('tools/'))
+    !row.path.startsWith('docs/') && (includeTools || !row.path.startsWith('tools/')))
     .map(row => ({ path: row.path, text: readText(root, row.path) }));
 }
 
@@ -97,9 +97,12 @@ function moduleCandidates(root, files, texts) {
   const modules = files.filter(row => row.path.startsWith('src/') && SOURCE.has(extname(row.path)));
   const specs = texts.flatMap(row => importSpecifiers(row.text).map(spec => ({ from: row.path, spec })));
   const htmlEntries = texts.filter(row => row.path.endsWith('.html')).map(row => row.text).join('\n');
+  const coreEntries = texts.flatMap(row => [...row.text.matchAll(/\bCORE_SUITE\s*=\s*['"]([^'"]+)['"]/g)]
+    .map(match => match[1]));
   return modules.filter(row => {
     const path = row.path;
     if (htmlEntries.includes(path) || htmlEntries.includes('/' + path)) return false;
+    if (coreEntries.includes(path)) return false;
     return !specs.some(({ from, spec }) => {
       if (!spec.startsWith('.')) return false;
       const target = norm(resolve(root, dirname(from), spec));
@@ -107,7 +110,7 @@ function moduleCandidates(root, files, texts) {
       return target === candidate || target + '.js' === candidate || target + '.mjs' === candidate ||
         target + '/index.js' === candidate;
     });
-  }).map(row => ({ path: row.path, reason: 'No literal import or HTML entry found; dynamic loading may exist.' }));
+  }).map(row => ({ path: row.path, reason: 'No literal import, HTML entry or named core-suite entry found; dynamic loading may exist.' }));
 }
 
 function exportCandidates(root, files, texts) {
@@ -221,14 +224,15 @@ export function audit(root = DEFAULT_ROOT) {
   const warnings = ['Candidates are advisory. Literal-reference scans cannot resolve generated paths, imports, or reflection.'];
   const files = inventory(root, warnings);
   const texts = references(root, files);
+  const codeAndToolTexts = references(root, files, true);
   const flags = featureStates(readText(root, 'src/feature-flags.js'));
   return {
     root, trackedFiles: files.length, totalBytes: files.reduce((sum, row) => sum + row.bytes, 0),
     ...sizeReport(files),
     runtimeAssetCandidates: assetCandidates(files, texts),
-    moduleCandidates: moduleCandidates(root, files, texts),
-    exportCandidates: exportCandidates(root, files, texts),
-    removedFeatureTestCandidates: removedFeatureTests(files, texts, flags),
+    moduleCandidates: moduleCandidates(root, files, codeAndToolTexts),
+    exportCandidates: exportCandidates(root, files, codeAndToolTexts),
+    removedFeatureTestCandidates: removedFeatureTests(files, codeAndToolTexts, flags),
     unindexedDocs: unindexedDocs(root, files, warnings),
     fullyOnSwitches: flags,
     lanes: laneState(root, warnings),

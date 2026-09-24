@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {Duel} from '../src/game.js';
+import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
 import {COURSE} from '../src/config.js';
@@ -15,8 +16,7 @@ function ticks(duel, count) {
 }
 
 function race(mode = 'wasteland', wasteland2 = true, keepOpponent = false, crewId = 'rook') {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2},
-    destructiblesEnabled: false});
+  const duel = new LegacyRoadsideDuel({seed: 1989, featureFlags: {wasteland2}});
   duel.startCampaign({mode, car: 'falcone_f42', startStage: 0,
     seed: 1989, crewId});
   const state = duel.state;

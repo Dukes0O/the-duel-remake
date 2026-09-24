@@ -1,13 +1,12 @@
 import assert from 'node:assert/strict';
 import { CARS, LIVES } from '../src/config.js';
-import { Duel } from '../src/game.js';
+import {LegacyRoadsideDuel, ClassicDestructionDuel} from './legacy-roadside-duel.mjs';
 import { combatCrashThresholdMph, rearRamResponse } from '../src/vehicle-impact.js';
 
-const race = (mode = 'wasteland', car = 'banshee_muscle') => {
+const race = (mode = 'wasteland', car = 'banshee_muscle', classicDestruction = false) => {
   // This suite pins the earlier armored-contact rules; CMB-08 tests the
   // released roadside rule separately.
-  const duel = new Duel({ seed: 624,
-    featureFlags: {'roadside-destruction': false} });
+  const duel = new (classicDestruction ? ClassicDestructionDuel : LegacyRoadsideDuel)({ seed: 624 });
   duel.startCampaign({ mode, car, startStage: 0 });
   const player = duel.state;
   player.status = 'racing'; player.invulnerableSec = 0; player.traffic = [];
@@ -90,8 +89,7 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
 }
 
 {
-  const { duel, player } = race();
-  duel.destructiblesEnabled = true;
+  const { duel, player } = race('wasteland', 'banshee_muscle', true);
   const traffic = { s: 105, prevS: 115, lateral: .6, prevLateral: .6,
     speedMph: 20, dir: -1, alive: true };
   player.traffic = [traffic];
@@ -113,8 +111,7 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
 }
 
 {
-  const { duel, player } = race();
-  duel.destructiblesEnabled = true;
+  const { duel, player } = race('wasteland', 'banshee_muscle', true);
   const traffic = { s: 105, prevS: 115, lateral: .6, prevLateral: .6,
     speedMph: 60, dir: -1, alive: true };
   player.traffic = [traffic];
@@ -128,8 +125,7 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
 }
 
 {
-  const { duel, player } = race();
-  duel.destructiblesEnabled = true;
+  const { duel, player } = race('wasteland', 'banshee_muscle', true);
   const traffic = { s: 105, prevS: 105, lateral: .6, prevLateral: .6,
     speedMph: 20, dir: 1, alive: true };
   player.traffic = [traffic];

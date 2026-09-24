@@ -719,7 +719,6 @@ export function settleRace(profile, result = {}) {
     milestones: milestones.awards
   };
 }
-export const awardCourseWin = settleRace;
 export function purchaseUpgrade(profile, car, type) {
   const failure = reason => ({ profile, ok: false, reason, cost: 0 });
   if (!isCarUnlocked(profile, car)) return failure('Unlock this car first.');

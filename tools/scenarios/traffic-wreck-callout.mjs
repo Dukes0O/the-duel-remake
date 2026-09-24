@@ -1,7 +1,7 @@
-// The flagged roadside switch now retires oncoming traffic without charging
+// The released roadside rule retires oncoming traffic without charging
 // player armor, a crash slot, or race time. Inspect the live HUD and scene.
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=roadside-destruction');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && !!window.__render && !document.querySelector('#start-engine').disabled && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value",
     'memory-only roadside menu', 60_000);
   const result = await context.evaluate(`(async () => {
@@ -10,7 +10,7 @@ export async function run(context) {
       throw Error('Wasteland race did not start');
     app.stop();
     const duel = app.duel, player = duel.state, render = window.__render;
-    if (!duel.roadsideKnockAwayEnabled()) throw Error('Private roadside switch did not enable');
+    if (!duel.roadsideKnockAwayEnabled()) throw Error('Released roadside rule is unavailable');
     Object.assign(player, {status:'racing',paused:false,invulnerableSec:0,impactTimer:0,
       s:100,prevS:80,lateral:0,prevLateral:0,speedMph:130});
     const traffic = {s:105,prevS:115,lateral:.6,prevLateral:.6,

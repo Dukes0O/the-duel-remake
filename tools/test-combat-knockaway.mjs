@@ -3,6 +3,7 @@ import test from 'node:test';
 import * as THREE from 'three';
 import { CARS, COURSE, LIVES } from '../src/config.js';
 import { Duel } from '../src/game.js';
+import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
 import { roadsideTrafficDecision } from '../src/destructibles.js';
 import { Course } from '../src/course.js';
 import { buildEnvironment, disposeTree } from '../src/world.js';
@@ -16,10 +17,10 @@ import { upgradedCar } from '../src/progression.js';
 const stageIndex = COURSE.findIndex(stage => !stage.kind && stage.hasRival);
 const zeroDamage = () => ({ front: 0, rear: 0, left: 0, right: 0 });
 
-function fixture({ mode = 'wasteland', roadside = false, wasteland2 = true } = {}) {
-  const duel = new Duel({
+function fixture({ mode = 'wasteland', legacy = false, wasteland2 = true } = {}) {
+  const duel = new (legacy ? LegacyRoadsideDuel : Duel)({
     seed: 1989,
-    featureFlags: { 'roadside-destruction': roadside, wasteland2 },
+    featureFlags: { wasteland2 },
   });
   duel.startCampaign({ startStage: stageIndex, mode, car: 'falcone_f42' });
   const point = (s, lateral = 0) => ({ x: lateral, y: 0, z: s, heading: 0, curvature: 0 });
@@ -76,18 +77,15 @@ function trafficHit(duel, playerMph, { targetMph = 0, direction = 1 } = {}) {
   return { state, traffic, events, armor, crashes, penalty };
 }
 
-test('the two switches activate CMB-08 independently and instance flags work', () => {
-  assert.equal(fixture({ roadside: false, wasteland2: true }).destructionEnabled(), true,
-    'wasteland2 alone enables knock-away');
-  assert.equal(fixture({ roadside: true, wasteland2: false }).destructionEnabled(), true,
-    'the existing roadside switch also enables knock-away');
-  assert.equal(fixture({ roadside: false, wasteland2: false }).destructionEnabled(), false,
-    'both switches off preserve the old Wasteland path');
-  const forcedOff = new Duel({seed: 1989, destructiblesEnabled: false,
-    featureFlags: {wasteland2: true}});
-  forcedOff.startCampaign({startStage: stageIndex, mode: 'wasteland'});
-  assert.equal(forcedOff.roadsideKnockAwayEnabled(), false,
-    'an explicit destruction-off test override stays off');
+test('released roadside behavior is on in Wasteland and legacy isolation stays test-only', () => {
+  assert.equal(fixture({wasteland2: true}).destructionEnabled(), true,
+    'Wasteland 2 uses released roadside destruction');
+  assert.equal(fixture({wasteland2: false}).roadsideKnockAwayEnabled(), true,
+    'released roadside destruction does not depend on Wasteland 2');
+  assert.equal(fixture({mode: 'duel', wasteland2: false}).roadsideKnockAwayEnabled(), false,
+    'ordinary races keep their old contact rules');
+  assert.equal(fixture({legacy: true, wasteland2: false}).roadsideKnockAwayEnabled(), false,
+    'historical contact isolation exists only in the test adapter');
 });
 
 test('the boundary is half the striking car current upgraded top speed', () => {
@@ -263,12 +261,12 @@ test('major fixed scenery still costs 20 armor and never enters the knock-away p
   assert.equal(duel._obstacles(100, 120).some(obstacle => obstacle.id === rock.id), true);
 });
 
-test('ordinary and explicitly flag-off Wasteland keep their established contacts', () => {
-  const ordinary = fixture({ mode: 'duel', roadside: false, wasteland2: false });
+test('ordinary and test-only legacy Wasteland keep their established contacts', () => {
+  const ordinary = fixture({ mode: 'duel', wasteland2: false });
   const old = staticHit(ordinary, cactus(), 25);
   assert.equal(old.state.fallenCacti.length, 1, 'ordinary cactus fall remains enabled');
   assert.equal(old.state.speedMph, 23, 'ordinary cactus retains its 8% speed loss');
-  const off = fixture({ roadside: false, wasteland2: false });
+  const off = fixture({ legacy: true, wasteland2: false });
   const sign = staticHit(off, post(), 45);
   assert.equal(sign.state.brokenScenery.length, 0, 'flag-off Wasteland sign stays solid');
   assert.ok(sign.state.s < 110, 'old contact wall remains in place');

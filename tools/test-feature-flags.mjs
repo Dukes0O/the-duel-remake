@@ -11,23 +11,24 @@ const storage = {
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 
-check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES['roadside-destruction'] === 'on'
-  && FEATURE_STATES.wasteland2 === 'dev' && FEATURE_STATES['hidden-road'] === 'dev' && Object.keys(FEATURE_STATES).length === 4,
-  'career backup, Wasteland 2 and Hidden Road stay in QA while roadside destruction is on by default');
+check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES.wasteland2 === 'dev'
+  && FEATURE_STATES['hidden-road'] === 'dev' && !Object.hasOwn(FEATURE_STATES, 'roadside-destruction')
+  && Object.keys(FEATURE_STATES).length === 3,
+  'career backup, Wasteland 2 and Hidden Road stay in QA; roadside destruction has no switch');
 const productionData = new Map();
 const productionStorage = {
   getItem: key => productionData.get(key) ?? null,
   setItem: (key, value) => productionData.set(key, value),
 };
 const productionFlags = createFeatureFlags({ storage: productionStorage, qa: false });
-check(productionFlags.enabled('roadside-destruction'), 'production starts with roadside destruction switched on');
+check(!productionFlags.enabled('roadside-destruction'), 'retired roadside switch is no longer recognized');
 check(!productionFlags.enabled('wasteland2'), 'production starts with Wasteland 2 switched off');
-check(!productionFlags.betaFeatures().includes('roadside-destruction'), 'Experimental no longer lists released roadside destruction');
+check(!productionFlags.betaFeatures().includes('roadside-destruction'), 'Experimental cannot list the retired switch');
 productionFlags.setExperimental(true);
-check(productionFlags.enabled('roadside-destruction') && !productionFlags.enabled('career-backup'),
-  'Experimental does not alter released roadside destruction or QA-only career backup');
+check(!productionFlags.enabled('roadside-destruction') && !productionFlags.enabled('career-backup'),
+  'Experimental cannot restore the retired switch or QA-only career backup');
 productionFlags.setExperimental(false);
-check(productionFlags.enabled('roadside-destruction'), 'turning off Experimental does not disable roadside destruction');
+check(!productionFlags.enabled('roadside-destruction'), 'turning off Experimental does not restore the retired switch');
 const release = createFeatureFlags({ catalog, storage, search: '?flags=photo,crew', qa: false });
 check(!release.enabled('photo') && !release.enabled('crew'), 'release ignores QA URL switches');
 check(release.enabled('arena') && !release.enabled('unknown'), 'only known on switches are active');

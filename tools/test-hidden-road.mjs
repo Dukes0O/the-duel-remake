@@ -35,7 +35,7 @@ function corridor(course) {
   return course.hiddenRoad;
 }
 function race(seed = 1989, car = 'falcone_f42', enabled = true) {
-  const duel = new Duel({ seed, featureFlags: { 'hidden-road': enabled, 'roadside-destruction': false } });
+  const duel = new Duel({ seed, featureFlags: { 'hidden-road': enabled } });
   duel.startCampaign({ startStage: 0, seed, car, mode: 'duel', difficulty: 'casual', cpuDifficulty: 'medium' });
   duel.state.status = 'racing';
   return duel;

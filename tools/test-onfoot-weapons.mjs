@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {Duel} from '../src/game.js';
+import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
 import {damageFighter} from '../src/onfoot.js';
 import {resetFootWeaponUser} from '../src/onfoot-weapons.js';
 import {combatResultSnapshot} from '../src/combat-scoring.js';
@@ -10,8 +10,7 @@ const STEP = 1 / 120;
 const ticks = (duel, count) => {for (let index = 0; index < count; index++) duel.step(STEP);};
 
 function race({mode = 'wasteland', enabled = true, opponents = 1} = {}) {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2: enabled},
-    destructiblesEnabled: false});
+  const duel = new LegacyRoadsideDuel({seed: 1989, featureFlags: {wasteland2: enabled}});
   duel.startCampaign({mode, car: 'falcone_f42', startStage: 0, seed: 1989,
     opponentCount: opponents});
   const state = duel.state;

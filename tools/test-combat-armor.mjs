@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {CARS} from '../src/config.js';
-import {Duel} from '../src/game.js';
+import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
 import {FEATURE_STATES} from '../src/feature-flags.js';
 import {stepCombat} from '../src/combat.js';
 import {createHudScreen} from '../src/screen-hud.js';
@@ -13,10 +13,9 @@ const close = (actual, expected, message, tolerance = 1e-6) =>
 
 function race({mode = 'wasteland', car = 'falcone_f42', opponentCount = 3,
   wasteland2 = true, startStage = 0} = {}) {
-  // Legacy comparisons explicitly disable both combat switches now that
-  // roadside destruction is released by default.
-  const duel = new Duel({seed: 1989, car,
-    featureFlags: {wasteland2, 'roadside-destruction': false}});
+  // Legacy comparison stays in the test adapter; production roadside is on.
+  const duel = new LegacyRoadsideDuel({seed: 1989, car,
+    featureFlags: {wasteland2}});
   duel.startCampaign({mode, car, startStage, opponentCount, cpuDifficulty: 'hard'});
   const state = duel.state;
   state.status = 'racing';

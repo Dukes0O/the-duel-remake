@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import {CREW,availableCrew,crewPerks,selectCrew,selectedCrewId} from '../src/crew.js';
 import {crewPanel} from '../src/crew-ui.js';
 import {normalizeWasteland} from '../src/wasteland-progress.js';
-import {Duel} from '../src/game.js';
+import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
 import {respawnFighter} from '../src/onfoot.js';
 import {createOnFootFigures} from '../src/onfoot-figures.js';
 import {stepProjectiles} from '../src/combat-projectiles.js';
@@ -15,8 +15,7 @@ const profile=xp=>({credits:0,wasteland:normalizeWasteland({xp})});
 const STEP=1/120;
 const ticks=(duel,count)=>{for(let i=0;i<count;i++)duel.step(STEP);};
 function crewRace(id,startS=500){
-  const duel=new Duel({seed:1989,featureFlags:{wasteland2:true},
-    destructiblesEnabled:false});
+  const duel=new LegacyRoadsideDuel({seed:1989,featureFlags:{wasteland2:true}});
   duel.startCampaign({mode:'wasteland',car:'falcone_f42',startStage:0,
     seed:1989,crewId:id,opponentCount:1});
   const state=duel.state;
@@ -54,8 +53,7 @@ test('eight exact roster entries, free Rook, rank gates and per-player save',()=
 
 test('Rook health and Wren sprint are real fixed-step perks; future hooks stay metadata',()=>{
   const make=id=>{
-    const duel=new Duel({seed:1989,featureFlags:{wasteland2:true},
-      destructiblesEnabled:false});
+    const duel=new LegacyRoadsideDuel({seed:1989,featureFlags:{wasteland2:true}});
     duel.startCampaign({mode:'wasteland',car:'falcone_f42',startStage:0,
       seed:1989,crewId:id});
     const s=duel.state;
