@@ -122,6 +122,7 @@ check('real combat wrecks retain victim and owner identity', () => {
   try {
     const row = run('none', 'medium', 1989, { flags: ['wasteland2'], maxFrames: 1 });
     assert.deepEqual(row.wrecks, wrecks(1, 1, 0), 'two real wrecks count once with separate owners');
+    assert.equal(row.playerOpponentWrecks, 1, 'the payoff count requires player ownership and opponent victim');
   } finally { App.prototype.advance = original; }
 });
 check('report includes flags and separate difficulty win, hit and wreck totals', () => {

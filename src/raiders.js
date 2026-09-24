@@ -8,7 +8,7 @@ import {crewPerks} from './crew.js';
 const ZONE_FRACTIONS = [.29, .55, .81];
 const WARNING_METERS = 190;
 const FIRE_METERS = 82;
-const SHOT_GAP_SECONDS = .8;
+const SHOT_GAP_SECONDS = {easy: 1.6, medium: .8, hard: .8};
 const RAID_SALT = 0x7a1d0b5e;
 const T = COMBAT_TUNING.raider;
 
@@ -205,7 +205,8 @@ function fire(duel, zone, raider, target) {
     vx: Math.sin(bearing) * speed, vz: Math.cos(bearing) * speed,
     vy: (at.y - originY) / Math.max(1, Math.hypot(dx, dz)) * speed});
   raider.firedLap = duel.state.currentLap;
-  zone.nextShotAt = duel.state.stageTimeSec + SHOT_GAP_SECONDS;
+  zone.nextShotAt = duel.state.stageTimeSec +
+    (SHOT_GAP_SECONDS[state.cpuDifficulty] ?? SHOT_GAP_SECONDS.medium);
   zone.shotCount++;
   duel.state.raids.shots++;
   duel.emit({raiderShot: true, zone: zone.id,
