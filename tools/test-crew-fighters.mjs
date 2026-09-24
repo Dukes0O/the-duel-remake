@@ -60,15 +60,17 @@ async function parseAsset(bytes) {
 }
 
 check('headless regeneration source and original GFX-00 source remain available', () => {
+  // SPEC 0.7: the Blender scripts are the committed source; .blend files are rebuilt, not shipped.
+  assert.ok(!existsSync(file('public/assets/models/wasteland/test-fighter.blend')), 'SPEC 0.7: Blender files are rebuilt by the script and never shipped in public/');
   for (const path of ['tools/blender/crew-fighters.py', 'tools/blender/test-fighter.py',
-    'public/assets/models/wasteland/test-fighter.blend', 'public/assets/models/wasteland/test-fighter.glb']) {
+    'public/assets/models/wasteland/test-fighter.glb']) {
     assert.ok(existsSync(file(path)), `${path} is missing`);
     assert.ok(readFileSync(file(path)).length > 100, `${path} is empty`);
   }
 });
 for (const id of CREW) {
   check(`${id}: self-contained rig, both geometry budgets and 1024 texture set`, async () => {
-    assert.ok(existsSync(file(`public/assets/models/wasteland/crew/${id}.blend`)), `${id}: editable Blender source is missing`);
+    assert.ok(!existsSync(file(`public/assets/models/wasteland/crew/${id}.blend`)), `${id}: SPEC 0.7: Blender files are rebuilt by the script and never shipped in public/`);
     const {bytes, json, binary} = readGlb(id);
     for (const item of [...(json.buffers || []), ...(json.images || [])])
       assert.ok(!item.uri || item.uri.startsWith('data:'), `${id}: asset requires an external resource`);

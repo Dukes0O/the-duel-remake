@@ -74,9 +74,10 @@ async function asset(path) {
 const modelPath = id => `public/assets/models/wasteland/first-person/${id}.glb`;
 
 check('headless source and both retained shared tool sources exist', () => {
-  for (const path of ['tools/blender/first-person-gear.py',
-    'public/assets/models/wasteland/first-person/rpg.blend',
-    'public/assets/models/wasteland/first-person/wrench.blend']) {
+  // SPEC 0.7: the Blender script is the committed source; .blend files are rebuilt, not shipped.
+  for (const tool of ['rpg', 'wrench'])
+    assert.ok(!existsSync(file(`public/assets/models/wasteland/first-person/${tool}.blend`)), 'SPEC 0.7: Blender files are rebuilt by the script and never shipped in public/');
+  for (const path of ['tools/blender/first-person-gear.py']) {
     assert.ok(existsSync(file(path)), `${path} is missing`);
     assert.ok(readFileSync(file(path)).length > 100, `${path} is empty`);
   }
@@ -90,7 +91,7 @@ check('shared tools are textured and RPG has an independently hideable loaded ro
 });
 for (const id of CREW) {
   check(`${id}: retained bound hands and actual combined geometry/material budget`, async () => {
-    assert.ok(existsSync(file(`public/assets/models/wasteland/first-person/hands/${id}.blend`)));
+    assert.ok(!existsSync(file(`public/assets/models/wasteland/first-person/hands/${id}.blend`)), 'SPEC 0.7: Blender files are rebuilt by the script and never shipped in public/');
     const hands = await asset(modelPath(`hands/${id}`));
     const skins = meshes(hands.scene).filter(mesh => mesh.isSkinnedMesh);
     assert.ok(skins.length, 'hands need actual bound skin');

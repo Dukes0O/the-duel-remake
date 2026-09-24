@@ -71,8 +71,11 @@ function asset(kind) {
   return cache.get(kind);
 }
 
-check('headless script and both Blender source files are retained', () => {
-  for (const path of ['tools/blender/rustwall.py', `${base}wall.blend`, `${base}wash.blend`]) {
+check('headless script is retained and Blender files stay out of the build', () => {
+  // SPEC 0.7: the script is the committed source; .blend files are rebuilt, not shipped.
+  for (const name of ['wall', 'wash'])
+    assert.ok(!existsSync(file(`${base}${name}.blend`)), 'SPEC 0.7: Blender files are rebuilt by the script and never shipped in public/');
+  for (const path of ['tools/blender/rustwall.py']) {
     assert.ok(existsSync(file(path)), `${path} is missing`);
     assert.ok(readFileSync(file(path)).length > 100, `${path} is empty`);
   }

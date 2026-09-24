@@ -78,10 +78,8 @@ function pose(group) {
   return skins(group).flatMap(mesh => mesh.skeleton.bones.flatMap(bone => bone.matrixWorld.toArray()));
 }
 
-check('retained Blender source and self-contained GLB', () => {
-  const blend = file('public/assets/models/wasteland/test-fighter.blend');
-  assert.ok(existsSync(blend), 'retained test-fighter.blend is missing');
-  assert.ok(readFileSync(blend).length > 100, 'retained blend is empty');
+check('regeneration script and self-contained GLB', () => {
+  assert.ok(!existsSync(file('public/assets/models/wasteland/test-fighter.blend')), 'SPEC 0.7: Blender files are rebuilt by the script and never shipped in public/');
   const script = file('tools/blender/test-fighter.py');
   assert.ok(existsSync(script) && readFileSync(script).length > 100, 'regeneration script is missing or empty');
   const bytes = readFileSync(file('public/assets/models/wasteland/test-fighter.glb'));
@@ -245,12 +243,14 @@ check('combat scene gates loading by mode and switch and passes simulation time'
   assert.notDeepEqual(pose(scene.group), first, 'combat hook must pass simulation time to the rig'); scene.dispose();
 });
 
-check('matched-sheet PNG and provenance retain asset, camera, pose and cost evidence', () => {
+check('matched-sheet provenance retains asset, camera, pose and cost evidence', () => {
   const root = 'docs/board/looks/test-fighter/round-1';
-  assert.ok(existsSync(file(`${root}.png`)), 'matched reference/Blender/High/Performance contact sheet is missing');
-  const png = readFileSync(file(`${root}.png`));
-  assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
-  assert.ok(png.readUInt32BE(16) >= 400 && png.readUInt32BE(20) >= 200, 'contact sheet must contain useful image evidence');
+  // SPEC 0.7: raw sheets live outside Git. When a local copy exists, it must still be a real image.
+  if (existsSync(file(`${root}.png`))) {
+    const png = readFileSync(file(`${root}.png`));
+    assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+    assert.ok(png.readUInt32BE(16) >= 400 && png.readUInt32BE(20) >= 200, 'contact sheet must contain useful image evidence');
+  }
   assert.ok(existsSync(file(`${root}.json`)), 'contact sheet provenance is missing');
   const evidence = JSON.parse(readFileSync(file(`${root}.json`), 'utf8'));
   const hash = createHash('sha256').update(readFileSync(file('public/assets/models/wasteland/test-fighter.glb'))).digest('hex');
@@ -324,11 +324,14 @@ check('retained capture and contact-sheet paths survive checkout relocation', ()
       const inside = relative(relocated, target);
       assert.ok(inside && !inside.startsWith('..') && !isAbsolute(inside),
         `retained capture path must stay inside the relocated checkout: ${path}`);
+      // SPEC 0.7: raw captures are no longer committed; copy only local copies that exist.
+      if (!existsSync(resolve(repository, path))) continue;
       mkdirSync(dirname(target), {recursive: true});
       copyFileSync(resolve(repository, path), target);
     }
     // Resolve only against the new checkout: no original-lane fallback is used.
     for (const path of paths) {
+      if (!existsSync(resolve(repository, path))) continue;
       const retained = readFileSync(resolve(relocated, path));
       assert.ok(retained.length > 8, `relocated image must be readable: ${path}`);
       assert.equal(retained.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
