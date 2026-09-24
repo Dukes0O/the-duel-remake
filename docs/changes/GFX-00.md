@@ -125,3 +125,11 @@ the local root by position so roadside raiders cannot satisfy its checks.
 The knockdown shot samples one second into the fall (remaining time 2 seconds)
 and explicitly requires the knockdown clip. Primitive unit assertions remain
 unchanged. Independent approval of these assertion changes is pending.
+Validation on scenario commit `2b8522e`: the corrected onfoot-figures browser
+scenario passed once on private port 34394 with memory-only saves, two retained
+screenshots, zero warnings and zero errors. Bound skin, hidden fallback, eye
+hiding, inspection visibility and knockdown clip assertions passed. Its report
+and two screenshots are retained as `onfoot-browser-report.json`,
+`onfoot-standing-figure.png` and `onfoot-knocked-down-figure.png` in the existing
+GFX-00 evidence folder. No runtime files changed, and the matched rig captures
+and broader suites were not rerun for this scenario-only correction.
