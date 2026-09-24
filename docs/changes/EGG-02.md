@@ -23,7 +23,17 @@ that final assertion. No render, broad gate, asset or production edit was
 performed by the test author. The runtime builder received the red commit
 before implementing this narrowly approved presentation change.
 
-Status: independent acceptance tests are red, before runtime or asset work.
+Runtime commit **34bfd6c** selects the half-turn with a stable integer mix of
+the existing bank index and applies it only to the prepared Y rotation. An
+independent source review found no defect: position, scale, geometry, material,
+population, collision data and per-frame work are unchanged; no simulation RNG
+is read. The same index also keeps multiple primitives of one bank aligned.
+The builder reports **18/18 scene checks passing in 0.88 s** with the new
+assertion unchanged. The reviewer did not repeat a broad or focused suite
+during the integration full-tier window. Round-three visual evidence and the
+planned final lane/build gate remain required.
+
+Initial handoff: independent acceptance tests were red before runtime or asset work.
 Baseline: **1420849**. The Director owns scope and board changes.
 
 ## Agreed scene contract
