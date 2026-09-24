@@ -140,7 +140,7 @@ export function normalizeProfile(value) {
   // A previously earned reward stays owned if the roster grows in a later update.
   profile = grantCompletionCars(profile);
   profile.cosmetics = normalizeCosmetics(value.cosmetics);
-  profile.wasteland = normalizeWasteland(value.wasteland, value.weapons);
+  profile.wasteland = normalizeWasteland(value.wasteland, value.weapons, value.history);
   profile.drivers = getDriverState({ ...profile, drivers: value.drivers });
   profile.courses = normalizeCourseAccess(value.courses, value);
   profile.raceSettings =
@@ -657,14 +657,18 @@ export function settleRace(profile, result = {}) {
   breakdown.policeFines = -policeFineCharge;
   const balance = integer(profile.credits + grossReward - policeFineCharge, 1_000_000_000),
     reward = balance - profile.credits;
+  const pacificFinish = finished && stageEventId(result.stageIndex) === 'pacific-canyon' &&
+    profile.wasteland?.version === 1;
   const updated = {
     ...profile,
-    ...(notoriety ? { wasteland: {
+    ...(notoriety || pacificFinish ? {wasteland: {
       ...profile.wasteland,
-      xp: totalXp,
-      rank: notorietyRank,
-      settledResults: [...(profile.wasteland.settledResults || []), key].slice(-1000),
-    } } : {}),
+      ...(notoriety ? {xp: totalXp, rank: notorietyRank,
+        settledResults: [...(profile.wasteland.settledResults || []), key].slice(-1000)} : {}),
+      ...(pacificFinish ? {
+        pacificFinishes: Math.min(10, integer(profile.wasteland.pacificFinishes, 10) + 1),
+      } : {}),
+    }} : {}),
     credits: balance,
     winStreak: streak,
     settledResults: [...profile.settledResults, key],

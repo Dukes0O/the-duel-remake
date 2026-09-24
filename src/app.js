@@ -7,6 +7,7 @@ import {CAMERA_MODES} from './camera-views.js';
 // scripted autopilot, dev hooks, and window.__game. Rendering (render3d.js) and
 // DOM HUD (main.js) are views that read state and call these verbs.
 
+import {hiddenRoadDiscoverySnapshot} from './hidden-road-discovery.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
 import { seedFromUrl } from './rng.js';
@@ -70,7 +71,9 @@ export class App {
     this.cameraMode = 'chase';
     this.audio = new EngineAudio();
     this.duel.onChange((state, event) => {
+      this._syncHiddenRoadDiscovery();
       this.audio.event(event,state,this.duel.course);
+      if (event.hiddenRoadPhase) this._discoverHiddenRoadGate(event.hiddenRoadPhase, state);
       if (event.hiddenRoadDeparted) this._settleHiddenRoadDeparture(event.hiddenRoadDeparted, state);
       if (event.hiddenRoadPhase && (state.hiddenRoadJourney?.controlsLocked ||
           state.hiddenRoadJourney?.phase === 'turned-back')) this._clearHiddenRoadInput();
@@ -101,6 +104,7 @@ export class App {
     this.lastT = null;
     this.running = false;
     this._scriptedCrashDone = false;
+    this._syncHiddenRoadDiscovery();
     this._bindKeys();
     this._exposeGlobals();
   }
@@ -174,6 +178,7 @@ export class App {
   }
 
   _simulate(seconds) {
+    this._syncHiddenRoadDiscovery();
     if(!this.visualReady){this._stepAccumulator=0;this._keyboardSteering.reset();return;}
     this._stepAccumulator += seconds;
     while (this._stepAccumulator + 1e-10 >= SIMULATION_STEP) {
@@ -220,6 +225,7 @@ export class App {
       weaponLoadout:this.duel.featureFlags.enabled('wasteland2')?getCarLoadout(this.profile):undefined,
       combatArmorKit:this.duel.featureFlags.enabled('wasteland2') ? getEquippedArmorKit(this.profile,car) : null,
       crewId:this.duel.featureFlags.enabled('wasteland2')?selectedCrewId(this.profile):undefined,
+      discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     return true;
   }
@@ -254,6 +260,10 @@ export class App {
     this._applyRaceSettings(settings,customSeed);this.duel.emit({raceSettingsChanged:true});return this.getRaceChoices();
   }
   restart() {
+    if (this.duel.state.hiddenRoadVisit) {
+      this.returnToMenu();
+      return this.visitWasteland();
+    }
     const { mode, car, difficulty,cpuDifficulty,driverId } = this.duel.state;
     this.startCampaign({ mode, car, difficulty,cpuDifficulty,driverId,rival:this.duel.state.rivalSettings,
       opponentCount:this.duel.state.opponentCount,seed:this.duel.state.seed,startStage:this._campaignStart||0 });
@@ -261,9 +271,9 @@ export class App {
   getMenuSeed(stageIndex=this.menuStage){return supportsRouteVariants(COURSE[stageIndex])?(this._customMenuSeed??getRouteVariant(this.menuRouteId).seed):1989;}
   // Menu views share these immutable-by-convention previews; racing always builds its own Course.
   getMenuCourse(stageIndex=this.menuStage){
-    const index=Number.isInteger(stageIndex)&&COURSE[stageIndex]?stageIndex:0,seed=this.getMenuSeed(index),key=`${index}:${seed}`;
+    const index=Number.isInteger(stageIndex)&&COURSE[stageIndex]?stageIndex:0,seed=this.getMenuSeed(index),hiddenRoad=this.duel.featureFlags.enabled('hidden-road'),key=`${index}:${seed}${hiddenRoad ? ':hidden-road' : ''}`;
     let course=this._menuCourses.get(key);
-    if(course)this._menuCourses.delete(key);else course=new Course(COURSE[index],seed);
+    if(course)this._menuCourses.delete(key);else course=new Course(COURSE[index],seed,{hiddenRoad});
     this._menuCourses.set(key,course);
     if(this._menuCourses.size>12)this._menuCourses.delete(this._menuCourses.keys().next().value);
     return course;
@@ -326,7 +336,7 @@ export class App {
     for(const p of fresh.players)players.set(p.id,p);
     this.players=replacePlayerProfile({...this.players,players:[...players.values()]},this.player.id,this.profile);
     this.player=activePlayer(this.players);this.profile=this.player.profile;
-    this.profileSaved=savePlayers(this.players);return this.profileSaved;
+    this.profileSaved=savePlayers(this.players);this._syncHiddenRoadDiscovery();return this.profileSaved;
   }
   _refreshPlayer(){
     if(this.profileSaved===false)return;
@@ -373,6 +383,7 @@ export class App {
     return result;
   }
   _settleResult(result,state){
+    if(state.hiddenRoadVisit)return;
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;
     if(this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return;
     this._refreshPlayer();
@@ -410,6 +421,51 @@ export class App {
     this._settledHiddenRoadJourney = journey;
     this.driftNotice = this.checkpointNotice = null;
     return true;
+  }
+  getHiddenRoadDiscovery() {
+    const old = this._hiddenRoadDiscovery, value = this.profile?.wasteland;
+    const enabled = this.duel.featureFlags.enabled('hidden-road');
+    const discovered = value?.version === 1 && value.discoveredGate === true;
+    const count = value?.version === 1 && Number.isSafeInteger(value.pacificFinishes)
+      ? Math.max(0, Math.min(10, value.pacificFinishes)) : 0;
+    if (!old || old.playerId !== this.player.id || old.enabled !== enabled ||
+        old.discoveredGate !== discovered || old.pacificFinishes !== count)
+      this._hiddenRoadDiscovery = hiddenRoadDiscoverySnapshot(this.profile, this.player.id, enabled);
+    return this._hiddenRoadDiscovery;
+  }
+  _syncHiddenRoadDiscovery() {
+    this.duel.state.hiddenRoadDiscovery = this.getHiddenRoadDiscovery();
+  }
+  _discoverHiddenRoadGate(event, state) {
+    const j = state?.hiddenRoadJourney;
+    if (state !== this.duel.state || state.status !== 'exploring' || state.hiddenRoadVisit ||
+        !this.runId || state.playerId !== this._runPlayerId || this._runPlayerId !== this.player.id ||
+        !j?.departed || j.phase !== 'choice' || !j.choiceReady ||
+        event?.phase !== 'choice' || event.journeyId !== j.id ||
+        !this.duel.featureFlags.enabled('hidden-road') || this.profile.wasteland?.version !== 1 ||
+        this.profile.wasteland.discoveredGate === true) return false;
+    this._refreshPlayer();
+    if (this.profile.wasteland?.version !== 1 || this.profile.wasteland.discoveredGate === true) return false;
+    this.profile = {...this.profile, wasteland: {...this.profile.wasteland, discoveredGate: true}};
+    this._saveProfile();
+    return true;
+  }
+  visitWasteland() {
+    if (this.duel.state.status !== 'menu') return false;
+    this._refreshPlayer();
+    const discovery = this.getHiddenRoadDiscovery();
+    if (!discovery.enabled || !discovery.discoveredGate) return false;
+    const car = this.menuCar, driverId = getEquippedDriverId(this.profile);
+    this.runId = this._runPlayerId = this._markedRaceKey = null;
+    this._settledHiddenRoadJourney = null;
+    this.ghostRecorder = this.ghostRecord = this.ghostPose = null; this.ghostStatus = 'none';
+    this.driftNotice = this.checkpointNotice = null;
+    this._clearHiddenRoadInput(); this._stepAccumulator = 0;
+    this._racePaint = getPaintAppearance(this.profile, car); this._racePaintCar = car;
+    this.audio.unlock(); this.audio.setPaused(false);
+    return this.duel.startHiddenRoadVisit({playerId: this.player.id, car, driverId,
+      upgrades: getUpgradeLevels(this.profile, car), seed: this.getMenuSeed(0),
+      difficulty: this._raceSettings.difficulty});
   }
   _clearHiddenRoadInput() {
     this.keys = {};
@@ -530,7 +586,9 @@ export class App {
     this._keyboardSteering.reset();
     const st = this.duel.state;
     st.paused = false; st.status = 'menu'; st.boosting = false;
-    st.hiddenRoadJourney = null;
+    const wasVisit = !!st.hiddenRoadVisit;
+    st.hiddenRoadJourney = null; st.hiddenRoadVisit = null;
+    if (wasVisit) this._applyRaceSettings(this._raceSettings);
     st.driverId=getEquippedDriverId(this.profile);
     this.ghostRecorder=null;this.ghostRecord=null;this.ghostPose=null;this.ghostStatus='none';
     this._racePaint=null;this._racePaintCar=null;

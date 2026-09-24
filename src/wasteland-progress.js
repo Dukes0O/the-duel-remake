@@ -1,4 +1,5 @@
 import {normalizeWeapons, WEAPON_IDS} from './weapon-upgrades.js';
+import {normalizeGateDiscovery} from './hidden-road-discovery.js';
 import {rankForXp} from './notoriety.js';
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -13,7 +14,7 @@ const entries = value => record(value) ? Object.entries(value)
   .filter(([id]) => id.length > 0 && id.length <= 80)
   .slice(0, 100) : [];
 
-export function normalizeWasteland(value, legacyWeapons) {
+export function normalizeWasteland(value, legacyWeapons, history = []) {
   const source = record(value) ? value : {};
   // An older build cannot interpret a newer schema. Keep every byte of the
   // nested object; the startup backup gate blocks writes to that career.
@@ -56,6 +57,7 @@ export function normalizeWasteland(value, legacyWeapons) {
     // them. Known fields are validated so old or damaged saves remain playable.
     ...source,
     version: 1,
+    ...normalizeGateDiscovery(source, history),
     xp,
     rank: rankForXp(xp),
     weapons,

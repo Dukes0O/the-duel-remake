@@ -41,10 +41,12 @@ test('the versioned default profile has the full Wasteland shape', () => {
   const profile = createProfile();
   assert.equal(Object.hasOwn(profile, 'weapons'), false);
   assert.deepEqual(Object.keys(profile.wasteland), [
-    'version', 'xp', 'rank', 'weapons', 'loadout', 'crew', 'kits',
+    'version', 'discoveredGate', 'pacificFinishes', 'xp', 'rank', 'weapons', 'loadout', 'crew', 'kits',
     'warPaint', 'challenges', 'bounties', 'warlords', 'cards', 'settledResults',
   ]);
   assert.equal(profile.wasteland.version, 1);
+  assert.equal(profile.wasteland.discoveredGate, false);
+  assert.equal(profile.wasteland.pacificFinishes, 0);
   assert.deepEqual(profile.wasteland.weapons.levels,
     {ufo: 0, bomb: 0, crossbow: 0, star: 0});
   assert.deepEqual(profile.wasteland.crew, {unlocked: ['rook'], selected: 'rook'});

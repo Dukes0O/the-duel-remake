@@ -1,3 +1,4 @@
+import {createHiddenRoadHint} from './hidden-road-hints.js';
 import * as THREE from 'three';
 import { ROAD_SHOULDER_WIDTH } from './config.js';
 import { addCourseLandmarks } from './course-landmarks.js';
@@ -63,7 +64,10 @@ export function buildEnvironment(course) {
     if(paved)for(const side of[-1,1])group.add(new THREE.Mesh(strip(course,s=>course.shortcutOffset(cut,s)+side*(cut.halfWidth-.35),s=>course.shortcutOffset(cut,s)+side*(cut.halfWidth-.2),.078,cut.start,cut.end,true),cream));
     for(let s=cut.start+25;s<cut.end-20;s+=40)for(const side of[-1,1]){const p=course.groundAt(s,course.shortcutOffset(cut,s)+side*(cut.halfWidth+.7));box(group,[.13,1.25,.13],[p.x,p.y+.625,p.z],yellow);}
   }
-  if(course.hiddenRoad)addHiddenRoad(group,course);
+  if(course.hiddenRoad){
+    addHiddenRoad(group,course);const hint=createHiddenRoadHint(course);group.add(hint);
+    registerSceneSystem(group,{sync:hint.userData.sync,animate:hint.userData.animate});
+  }
   for(const lane of course.features.passingLanes){
     for(let s=lane.start+55;s<lane.end-50;s+=18)for(const side of[-1,1])group.add(new THREE.Mesh(strip(course,side*6.45,side*6.6,.07,s,s+7),cream));
   }

@@ -1,0 +1,282 @@
+# EGG-04: discovery, return visit and hints
+
+## Independent acceptance contract and runtime red evidence
+
+The expanded board card owns additive Wasteland discovery fields, guarded
+invitation discovery, nonpayable visits and presentation hints. No scrap,
+territory progression or unbuilt yard actions are included.
+
+The runtime contract uses strict `discoveredGate` and bounded `pacificFinishes`
+(0 through 10), preserving unknown Wasteland fields and opaque future versions.
+Only distinct valid completed Pacific history rows may initialize an absent or
+invalid count; the existing retained history window is not a lifetime total.
+Missing additive fields must trigger the existing verified backup gate before
+stored migration. The App exposes a frozen player-specific discovery snapshot,
+guards actual invitation callbacks, and offers `visitWasteland()` only from the
+eligible player's menu. Direct visits have explicit visit identity and no run,
+ghost recording, payable race or saved race-setting changes. Scenic repeat
+visits still use the safe gate takeover, then pass through automatically.
+
+`tools/test-hidden-road-discovery.mjs` ran before production edits on base
+`0168336`: 0/10 groups passed in 0.67 seconds. Failures establish missing field
+validation, history initialization, migration detection, completion counting,
+invitation persistence, guarded App APIs and automatic scenic passage. Tests
+exercise actual App journeys and production settlement with synthetic memory
+storage. They retain duplicate, wrong-player, stale-event, flag-off, inactive
+entry and interrupted-navigation controls. No real saves or browser origin
+were read. Existing historical fixtures will run once during independent save
+review after implementation, rather than duplicating them in this red suite.
+
+Map, menu and hint acceptance is a separately owned red group so its builder
+can start after that contract is committed. Browser acceptance remains two
+bounded scored rounds; no broad gate has run for this card.
+
+## Independent hint and map red evidence
+
+`tools/test-hidden-road-hints.mjs` ran before presentation edits: 0/7 groups
+passed in 0.48 seconds. Expected failures identify absent pure hint/dust APIs,
+revealed map geometry and named-player cache invalidation. Initial test setup
+used a nonexistent disposal-module import; this was corrected to the existing
+`world.js` export before recording this behavioral red result.
+
+The agreed presentation contract includes player-aware menu/path eligibility,
+five- and ten-completion thresholds, removal after discovery, unchanged default
+and flag-off map geometry, and actual spur-to-gate projection. Live map and
+preview caches must switch identity without exposing the prior player's path.
+The dust hint uses at most 64 finite local points within a 3 m radius and 9 m
+height (the authored plan uses 48), pure presentation-time reconstruction,
+one Points draw and the existing scene disposal path. Pause, menu, discovery,
+ineligible count and mismatched player immediately hide it. Tests prohibit
+random consumption in the pure frame helper and preserve snapshot data.
+
+The optional map parameters and provider leave old callers unchanged. Actual
+menu/garage wiring, dotted drawing and rendered dust placement remain source
+review and the two scored browser rounds; these headless groups do not replace
+visual evidence. No existing assertion or replay fingerprint changed here.
+## Runtime implementation
+
+Runtime source commit: `f0f3ae4`. The independent discovery suite passes all
+10 checks after the initial red handoff. No existing or new assertions changed.
+The final focused run took under one second. Independent review, presentation
+checks, browser rounds and the required lane/build gate remain pending.
+
+- Version-one Wasteland data now includes a strict discovery boolean and a
+  Pacific finish count capped at ten. Existing unknown Wasteland fields remain
+  intact; newer Wasteland schemas stay opaque. Outer profile normalization is
+  unchanged. There is no scrap or territory progression in this card.
+- A missing or invalid counter may use distinct valid completed Pacific wins
+  and losses in the last sixty retained history rows. Rows require a valid car,
+  finite positive time and reward, and must not be abandoned or timed out. This
+  is a conservative lower bound, not a lifetime total. A valid saved count
+  takes precedence. New settlements increment only after the existing duplicate
+  guard and completed-race validation, regardless of a win or loss.
+- Raw missing or invalid discovery fields trigger the existing verified startup
+  backup before normalization is written. The existing backup-failure and
+  future-schema protections remain responsible for blocking startup writes.
+- The actual invitation saves discovery before either choice. App validates the
+  current state, journey, player and run owner; repeated callbacks cannot save
+  again. The immutable presentation snapshot is replaced only when its values
+  change and is mirrored by App. Renderers do not write it.
+- A discovered scenic driver keeps the existing safe takeover and opening,
+  then automatically enters. All movement and clocks stay in Duel.step.
+- Direct visits use a dedicated identity, start twelve metres outside the gate,
+  open for three simulation seconds and enter for three more. They create no
+  payable run, departure settlement, countdown cue or ghost recorder. Restart
+  repeats the visit. Menu clears its identity and restores the saved race
+  choices. The arrived endpoint remains a safe hold until the yard exists.
+- Menu preview courses now include actual hidden-road geometry only when the
+  feature is enabled; the course cache includes that flag. Presentation owns
+  the separate player/discovery cache keys and dotted-path visibility.
+
+Only the seven assigned runtime/persistence files changed. No dependencies,
+storage keys, real saves, live folder, release files or ports were touched.
+
+## Independent runtime and Save Guardian review
+
+Read and applied the repository reviewer and Save Guardian roles to runtime
+`f0f3ae4`. No concrete defect was found. Discovery requires the current state,
+actual ready invitation, matching journey, current named player and run owner.
+A separate memory-only probe used the current state and current journey while
+changing the run owner, then the state player: both callbacks were rejected
+without a profile mutation. This is distinct from the stale-state controls in
+the committed acceptance suite. Five damaged or partial profile shapes also
+normalized without throwing.
+
+Verified that startup awaits the existing physical and logical career backup
+gates before constructing App. Raw missing/invalid additive fields trigger
+migration detection; backup failure blocks startup writes. Unknown nested
+Wasteland data and future-schema protections remain intact. Direct visits
+clear payable run and ghost context, exclude settlement, restore saved race
+settings on exit and restart as another visit. Scenic auto-entry remains in
+simulation stepping and does not skip the safe takeover/opening sequence.
+
+Existing save checks ran once on the completed runtime, using memory storage:
+
+- `test-save-fixtures.mjs`: seven historical shapes, 247 preservation checks.
+- `test-career-backup.mjs`: all seven fixtures, migration gate, recovery,
+  validation and quota rollback passed.
+- `test-career-archives.mjs`: records/ghost hydration and failure preservation
+  passed.
+- `test-career-budget.mjs`: 64 full players, 5,556,392 raw UTF-16 bytes reduced
+  to 230 physical bytes; maximum ghost journal 2,500,604 / 4,000,000 passed.
+- `test-storage-budget.mjs`: 3.46 MB / 4.00 MB model and active-data boundary
+  passed without career trimming.
+
+The three fixture/backup/archive processes took 0.35 seconds together; both
+budget processes took 1.49 seconds together. The extra ownership probe took
+0.22 seconds. No ordinary credit, record, ghost or storage-key rule changed.
+Presentation source, browser evidence and final lane/build review remain pending.
+## Independent presentation source review
+
+Reviewed frozen presentation `9eb499d` and the narrow dust correction `e26e1cd`.
+The final source tree is `7a1cf834e256309c4d9e43ff18b342d4c53b25fa`.
+No concrete correctness defect remains in this bounded review. Menu entry
+checks current discovery and delegates to the App visit action. Garage hints
+use validated completion thresholds. Map and preview keys include player,
+flag and discovery; default and undiscovered geometry remain unchanged.
+The live cache refreshes a changed identity before the usual draw throttle.
+Dotted paths project the real spur and gate rather than a separate route model.
+
+The dust scene uses one bounded Points draw, forwards presentation lifecycle
+through the existing world registry and hides for pause, menu, discovery or
+wrong ownership. Disposal stays graph-owned. The initial animate path allocated
+an array and 48 point records every visible frame. The builder fixed this in
+`e26e1cd` by preparing records once and filling them in place, preserving the
+same numeric motion and existing assertions. No simulation RNG or race-state
+write was introduced. The builder reports the unchanged hint suite at 7/7.
+
+Also reviewed runtime compatibility correction `ab19a06`: flag-off menu course
+keys keep their existing `index:seed` form; enabled Hidden Road adds a suffix.
+The lightweight canvas compatibility fix checks for optional dataset support.
+Neither fix changes acceptance assertions. Builder-reported existing route-map
+149 and course-preview 117 checks pass. Historical save review remains valid;
+no persistence change followed it, so those suites were not repeated.
+
+Source is clear for the two bounded browser rounds. Visual scoring and the
+required clean lane/build gate still precede development integration.
+## Presentation implementation and two browser rounds
+
+Presentation source commits: 9464c9a, 9eb499d, e26e1cd and final refinement
+77aa6ce. No existing acceptance assertion changed. The default map geometry and
+ordinary preview consumers remain intact; optional dataset writes tolerate the
+existing lightweight canvas fixture. Focused checks passed: hints 7/7,
+route-map 149 and course-preview 117. Final UI-only refinement repeated hints
+7/7 and scenario syntax. No persistence changes followed the Save Guardian
+review above, so historical save fixtures were not repeated.
+
+The menu delegates WASTELAND to App.visitWasteland. Garage hints use the cached
+validated snapshot. Both map caches include player/flag/discovery identity and
+project the real spur. The world hint forwards presentation lifecycle, uses a
+single pooled 48-point draw and never changes simulation or invokes its RNG.
+Independent review found and closed one temporary per-frame point allocation;
+the existing numeric effect was preserved in reused records and attributes.
+
+Actual browser evidence is under docs/board/looks/hidden-road-discovery, with
+immutable round-1 and round-2 PNGs, contact sheets, hashes and copied reports.
+Both private memory-only scenarios retained eight shots and reported zero
+warnings/errors (ports 5431 and 45800). Invitation discovery, Turn back, reload,
+player isolation, direct visit without profile/run changes, automatic scenic
+entry, paused dust and flag-off controls passed. Counts 5/10 and shortened
+travel positions are explicit fixtures, not claimed complete races.
+
+Round 1 exposed a below-fold garage hint, a small WASTELAND action and a menu
+capture taken before readiness settled. Round 2 moves the hint below the
+header (visible y133–152), makes the phone action full-width 344 by44 pixels,
+labels the revealed dotted route and waits for real loading/readiness. It does
+not hide the loading overlay. Independent source review cleared 77aa6ce before
+capture; Director scored visual evidence separately. Dust motion is unchanged.
+
+Both rounds recorded bounded absolute RAF samples: High p95 18.1 ms,
+Performance 18.2 ms, 120 ordered intervals per quality. There is no paired
+baseline or percent overhead claim. This checks limited smoothness around the
+hint only. Full-scene calls/triangles are487/1,867,343 High and243/721,162
+Performance, including existing scene passes. No simulation source was touched
+by presentation; independent runtime controls cover ordinary/flag-off rules.
+
+Required final lane/build and Director visual acceptance remain integration
+steps; this note does not claim those gates have already passed.
+
+## R2 review and first required gate correction
+
+The Director accepted round 2 in `fd73bf5`. Independent review of `77aa6ce`
+confirmed the garage hint moved intact below the header; the scoped WASTELAND
+style is full width and at least 44 px high, respects global hidden handling,
+and uses the existing border-box layout. The map label appears only after
+reveal. The scenario waits for actual renderer readiness and measures visible
+hint/action bounds. No persistence or dust logic changed in round 2.
+
+The first required lane gate on clean `a5fe405` finished with 91 passed,
+1 failed and 139 not run in 92.08 seconds. Retained log:
+`.qa-dist/egg04-final-lane.log`. The sole failure was
+`test-build-update.mjs:199`, which requires `buildUpdates.syncState()` first in
+`renderState`. EGG-04 had inserted discovery refresh immediately before it.
+HEAD, source and tools remained unchanged through that failed gate; no build
+was run afterward.
+
+The Director authorized restoring the existing call order rather than changing
+the assertion. Source owner commit `1852c47` moves only that synchronization
+call back before the order-independent discovery snapshot refresh. Independent
+review confirmed this exact diff; the unchanged focused build-update suite
+passes all 194 checks. No assertion or browser evidence changed, and no new
+capture is needed for this ordering repair. The next clean gate retains the
+failed log and uses a separate rerun filename.
+## Legacy partial-menu compatibility correction
+
+The second required gate on clean `39ad2d0` reached 169 passed, 1 failed and
+61 not run in 279.90 seconds. Log `.qa-dist/egg04-final-lane-recheck.log` is
+retained. All Hidden Road suites passed. The later course-eligibility suite
+uses the actual menu presenter with a legacy partial UI lacking the new
+WASTELAND button; its unguarded hidden-property write threw. No build followed
+that failure. HEAD/source/tools stayed unchanged until the gate fully drained.
+
+The Director authorized a narrow optional-element guard. Commit `48b248a`
+only checks the button exists before the same visibility write. Independent
+review confirms full production markup behaves identically. The unchanged
+course-eligibility suite passes 2,066 checks across nine cars and sixteen
+courses. A bounded review of the other new menu/router/preview accesses found
+no further concrete partial-UI compatibility issue. No assertions changed,
+no speculative source fixes were added and no browser recapture was needed.
+The next clean required run uses a third log filename and preserves both failures.
+## Reviewed additive profile-shape expectation
+
+The third required gate on clean `eeb7959` finished with 229 passed, 1 failed
+and 1 not run in 297.04 seconds. The retained log is
+`.qa-dist/egg04-final-lane-recheck2.log`. The only failure was the old exact
+Wasteland default-key assertion, which predated the approved discovery fields.
+Its other five subtests passed. HEAD/source/tools remained unchanged throughout;
+no build followed the failure.
+
+The Director authorized adding only `discoveredGate` and `pacificFinishes` to
+that exact expected key list and explicit defaults `false` and `0`. The test
+still rejects extra or missing default fields. All five other profile subtests
+and every legacy/malformed/backup/future-schema assertion are unchanged.
+`node tools/test-wasteland-profile.mjs` now passes 6/6 subtests in 0.22 seconds
+(process wall time). This is an intentional additive saved-shape expectation,
+not a runtime fix. The exact diff goes to independent Director review before
+the required clean gate rerun; all three failed logs remain intact.
+## Final required gate and development handoff
+
+The Director independently reviewed and approved the exact additive profile
+assertion diff in `fdcf7eb` before the final gate. The complete expected key list
+and five other subtests remain intact; no production source changed for it.
+
+Required gates passed on exact clean commit
+`fdcf7eb4e9783a741740a445baf01d4a9399a4d2`:
+
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`:
+  231 passed, 0 failed, 0 not run in 304.54 seconds (304.73 including wrapper).
+  Log: `.qa-dist/egg04-final-lane-recheck3.log`.
+- `npm run build`: passed in 1.01 seconds, Vite build 510 ms. The existing
+  large-chunk advisory remains informational. Log: `.qa-dist/egg04-final-build.log`.
+
+HEAD stayed unchanged and the working tree was clean before and after both
+commands. Source tree: `e4d13288ab1378695083e43b8b82909e378c53fe`.
+Tools tree: `cfe48ce4b6b1d88c83fa007a07cffad9b11d3c11`.
+The three failed logs remain alongside the final pass, with each correction and
+its independent review documented above. No replay fingerprints were changed.
+
+This append records evidence only. Independent runtime, Save Guardian and
+presentation reviews are complete; the Director accepted round 2 visuals in
+`fd73bf5`. EGG-04 is ready for development integration through the Director's
+merge process. Hidden Road remains dev while existing Rustwall/wash fidelity
+debt persists. No merge, board edit, beta promotion or release was done here.

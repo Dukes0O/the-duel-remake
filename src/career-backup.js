@@ -67,6 +67,9 @@ export function needsCareerMigration(storage) {
     return registry?.version !== 2 || !Array.isArray(registry.players) || !registry.players.length ||
       registry.players.some(player => !player?.profile?.raceSettings ||
         !isObject(player.profile.wasteland) || player.profile.wasteland.version !== 1 ||
+        typeof player.profile.wasteland.discoveredGate !== 'boolean' ||
+        !Number.isSafeInteger(player.profile.wasteland.pacificFinishes) ||
+        player.profile.wasteland.pacificFinishes < 0 || player.profile.wasteland.pacificFinishes > 10 ||
         has(player.profile, 'weapons')) ||
       loadPlayers(source).players.some(player => !player.profile.raceSettings);
   } catch { return true; }

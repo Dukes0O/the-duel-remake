@@ -22,7 +22,7 @@ import { CARS, DEFAULT_CAR, DIFFICULTY, DEFAULT_DIFFICULTY, CPU_DIFFICULTY, DEFA
 import { Course } from './course.js';
 import { onHiddenRoad } from './hidden-road.js';
 import {initializeHiddenRoadJourney, checkHiddenRoadDeparture, stepHiddenRoadJourney,
-  queueHiddenRoadChoice, hiddenRoadColliders} from './hidden-road-journey.js';
+  queueHiddenRoadChoice, hiddenRoadColliders, prepareHiddenRoadVisit} from './hidden-road-journey.js';
 import { seedFromUrl } from './rng.js';
 import { createDriftState } from './drift-scoring.js';
 import { DEFAULT_DRIVER, normalizeDriverId, applyDriverModifiers } from './drivers.js';
@@ -148,9 +148,11 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, weaponLoadout, combatArmorKit = null, crewId = 'rook' } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, weaponLoadout, combatArmorKit = null, crewId = 'rook', discoveredGate = false, _hiddenRoadVisit = false } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
+    this._hiddenRoadAutomaticEntry = discoveredGate === true;
+    this.state.hiddenRoadVisit = _hiddenRoadVisit ? {playerId} : null;
     if (CARS[car]) this.state.car = car;
     if (DIFFICULTY[difficulty]) this.state.difficulty = difficulty;
     this.state.cpuDifficulty = CPU_DIFFICULTY[cpuDifficulty] ? cpuDifficulty : DEFAULT_CPU_DIFFICULTY;
@@ -180,6 +182,14 @@ export class Duel {
     this.state.damageZones = { front: 0, rear: 0, left: 0, right: 0 };
     this.state.boundaryResets = 0;
     this._loadStage(this.state.stageIndex);
+  }
+
+  startHiddenRoadVisit(options = {}) {
+    if (!this.featureFlags.enabled('hidden-road')) return false;
+    const startStage = COURSE.findIndex(course => course.id === 'pacific-canyon');
+    this.startCampaign({...options, startStage, mode: 'duel', opponentCount: 0,
+      discoveredGate: true, _hiddenRoadVisit: true});
+    return !!this.state.hiddenRoadVisit;
   }
 
   _loadStage(idx) {
@@ -256,7 +266,9 @@ export class Duel {
     initializeFootTransition(this);
     initializeFootWeapons(this);
     initializeHiddenRoadJourney(this);
-    this.emit({ stageLoaded: idx, countdown: 3 });
+    if (s.hiddenRoadVisit) prepareHiddenRoadVisit(this);
+    this.emit(s.hiddenRoadVisit ? {stageLoaded: idx, hiddenRoadVisit: true}
+      : {stageLoaded: idx, countdown: 3});
   }
 
   _spawnTraffic(...args) { return simRival._spawnTraffic.apply(this, args); }
