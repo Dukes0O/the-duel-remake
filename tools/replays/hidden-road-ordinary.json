@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "capturedCommit": "6592c43",
+  "scope": "Pre-EGG-01 ordinary ABC map, racing/NPC route geometry and eight seconds of road following past the entrance; fixed 120 Hz simulation.",
+  "routes": {
+    "route_a": {
+      "seed": 1989,
+      "geometry": "b40e332a456e5513ca943b7670170dac0421b854ec4ecf27c86e0835991efca0",
+      "roadFollowing": "6fc633efb47b5e3f14c258585fa8ed6fb4310593e60c5cc9b9b1d16173e55397"
+    },
+    "route_b": {
+      "seed": 42,
+      "geometry": "ab61e8b85af973d49638167cb36b7f727fadbc87550ac0fb7178a7b335d9557c",
+      "roadFollowing": "b9a80a0d53d855bcc435ac9e52fe3e16bde10d7efec292dacc5c49196d04326d"
+    },
+    "route_c": {
+      "seed": 17,
+      "geometry": "0af72e736a9ae2e0637cc5fe87396278c5874696203abdc0c3919a519b7c21f2",
+      "roadFollowing": "b442df2e03b3f7edc14f29e974dd3d03667d25b4153b90ce3d96e03c13246f4b"
+    }
+  }
+}

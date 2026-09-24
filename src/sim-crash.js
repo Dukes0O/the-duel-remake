@@ -6,6 +6,7 @@ import { BOUNDARY_WARNING, BOUNDARY_RESET, clamp } from './sim-common.js';
 import {applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled,
   completeCombatRecovery} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import { onHiddenRoad } from './hidden-road.js';
 
 const WASTELAND_CRASH_PENALTY_SEC = 2;
 
@@ -71,6 +72,10 @@ export function _rollover(dt) {
 }
 
 export function _boundary(car) {
+  if (car === this.state && onHiddenRoad(this.course, car)) {
+    car.boundaryWarning = false;
+    return;
+  }
   if (car.crushed || car === this.state && (offroadCapability(this.car) || this.course.def.practice)) {
     if (car === this.state) car.boundaryWarning = false;
     return;
@@ -192,7 +197,7 @@ export function _crash(reason, side = 0, impactMph = Math.abs(this.state.speedMp
   }
   // Record a real crossing interrupted by impact before prevS is replaced.
   this._advanceLaps(s,.05,true);
-  s.crashSite={s:s.s,lateral:s.lateral,headingError:this.course.def.practice?s.headingError:0};
+  s.crashSite={s:s.s,lateral:s.lateral,headingError:this.course.def.practice||onHiddenRoad(this.course,s)?s.headingError:0};
   this._breakDrift('hit');
   s.stageCrashes++;
   s.boosting = false;

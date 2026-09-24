@@ -3,6 +3,7 @@ import { DRIVE, BOOST, steeringYawAuthority } from './config.js';
 import { stepDrift, breakDrift } from './drift-scoring.js';
 import { offroadCapability, wrapHeading, limitClimb, terrainAttitude } from './offroad-physics.js';
 import { clamp } from './sim-common.js';
+import { onHiddenRoad } from './hidden-road.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -11,8 +12,9 @@ export function _surface(distance, lateral) {
 }
 
 export function _drivingSurface(distance, lateral, car = this.car) {
-  const surface = this._surface(distance, lateral);
-  const preparedGravel = surface.road && !surface.mainRoad && (this.course.def.offroad || !!surface.shortcutId);
+  const hidden = car === this.car && onHiddenRoad(this.course, { s: distance, lateral });
+  const surface = hidden ? { ...this._surface(distance, lateral), road: true, mainRoad: false } : this._surface(distance, lateral);
+  const preparedGravel = hidden || surface.road && !surface.mainRoad && (this.course.def.offroad || !!surface.shortcutId);
   const rally = car.kind === 'rally', roughnessScale = car.roughnessScale ?? 1;
   return { ...surface, preparedGravel, boostAllowed: surface.road || this.course.def.practice,
     traction: surface.mainRoad ? 1 : preparedGravel ? clamp(.6 + .4 * (car.offRoadGrip ?? DRIVE.offRoadGrip), .82, .995) : car.offRoadGrip ?? DRIVE.offRoadGrip,
@@ -154,7 +156,11 @@ export function _drive(dt) {
   s.speedMph = Math.max(-DRIVE.reverseMaxMph, Math.min(car.topSpeed * boostTopSpeed, s.speedMph));
   s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[s.gear]);
   const metresPerSec = s.speedMph * DRIVE.mphToWorld;
-  const freeHeading = this.course.def.practice || offroadCapability(car) && (!surface.road || Math.abs(s.headingError) > 1.45);
+  if (onHiddenRoad(this.course, s)) s.hiddenRoadDriving = true;
+  else if (s.hiddenRoadDriving && surface.mainRoad && Math.abs(s.headingError) < 1.3) s.hiddenRoadDriving = false;
+  // A returning road car may join the asphalt facing back along the circuit.
+  // Keep its physical heading until the driver has steered into the race lane.
+  const freeHeading = this.course.hiddenRoad && s.hiddenRoadDriving || this.course.def.practice || offroadCapability(car) && (!surface.road || Math.abs(s.headingError) > 1.45);
   if (freeHeading) {
     const heading = frame.heading + s.headingError + s.yawVelocity * dt;
     const old = this.course.worldAt(s.s, s.lateral);
