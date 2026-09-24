@@ -129,7 +129,7 @@ tasks:
       merge_after: ART-W
       status: building
       owns: [tools/blender/crew-fighters.py, public/assets/models/wasteland/crew/, src/fighter-presentation.js, src/rigged-fighter.js, tools/test-crew-fighters.mjs, tools/test-fighter-presentation.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, docs/board/looks/crew/]
-      hooks: [src/combat-scene.js, src/onfoot.js, src/onfoot-weapons.js, src/onfoot-transition.js, tools/blender/fidelity-sheet.py]
+      hooks: [src/combat-scene.js, src/onfoot.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/render3d.js, tools/blender/fidelity-sheet.py]
       helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
       flag: wasteland2
       behavior_change: no
@@ -467,7 +467,7 @@ tasks:
       - "Measure one controlled crossbow probe and one complete flagged report after the geometric fix. Record win rates, enemy hits, UFO gains and wrecks without promising a pass. Retain lead, thrower velocity, meaningful homing, 10/7/5-second cadence and all balance limits."
       - "Ordinary and flag-off rules must remain unchanged. Existing projectile/replay checks and required lane/build gate pass; any changed expected fingerprint or assertion needs independent review and a written reason."
     merge_after: BAL-01
-    note: "Prior 3-degree guidance candidate dfe157e is held, not merged: Easy improved but Hard regressed and probe stayed 18/26. Bounded traces found eight gained and three lost hits; several flagged hits occur well above the roof. Fix that concrete collision defect before further numeric tuning. Separate uphill launch geometry issue is recorded for later."
+      note: "Actual vehicle body contact merged 9139575 after reviewed fixtures, 216-suite lane gate, build and private wreck/results checks. Probe is now 12/26 within target. Seven flagged balance rows remain red; full BUG-06 stays open. Prior 3-degree guidance candidate dfe157e remains held. Raider difficulty/guidance and uphill launch geometry need separate measured corrections."
     spec: "SPEC.md, task BUG-06"
   - id: BUG-07
     title: "A CPU that fights back"

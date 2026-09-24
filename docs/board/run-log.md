@@ -985,3 +985,11 @@ checkout untouched until the final integration commit passes the full gate.
 - BUG-06 candidate 280b25d corrects ten reviewed direct-hit fixture positions without changing assertions or runtime. Its 42 repaired unit checks pass; representative wreck/results browser checks and the final required lane/build gate follow.
 - Budget before GFX-01: 39 percent remaining; no push or release. Scheduled full remains due at 07:39 UTC or after five further task merges.
 
+
+## 2026-09-23 PDT - BUG-06 body contact merged (1 since full)
+
+- Integrated 9139575 after clean 280b25d passed 216 lane suites in 305.90 s, build in 0.90 s and private armor-wreck/results checks with zero warnings/errors. STATUS refreshed immediately. Full BUG-06 remains open for the seven flagged balance failures; no tuning threshold changed.
+- EGG-01 source and nine replacement images pass targeted independent review. The earlier 33-image scratch directory was removed by a harness rebuild; its prior critic review remains, but its images cannot be reopened. Correct the note and commit the nine current PNGs and measurements under looks/hidden-road/review-fixes before the required gate. No redundant full screenshot sweep.
+- GFX-01 red tests 8cb51d6 are committed. Blender and runtime builders now share a lane with separate file ownership. Approved a narrow render3d camera-reference hook so distant models follow actual camera distance. Three fidelity rounds remain required.
+- Full cadence: one task merge since 05:39 UTC; next full by 07:39 UTC or four more task merges.
+

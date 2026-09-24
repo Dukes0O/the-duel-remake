@@ -1,6 +1,6 @@
 # BUG-06: crossbow contact uses the real vehicle height
 
-status: ready-to-merge (body-contact slice only; balance follow-ups remain)
+status: merged in 9139575 (body-contact slice only; balance follow-ups remain)
 
 ## Change
 
