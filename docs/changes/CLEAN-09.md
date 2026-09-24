@@ -48,3 +48,12 @@ tests asserted the old rule that Blender files and raw evidence stay in Git:
 - CLEAN-02 must change the Blender scripts to write `.blend` output to
   `art-build/` or `.evidence/`; the updated tests fail if a rebuild writes
   one under `public/` again.
+
+## Second rewrite: current binaries only (Kyle, 24 September 2026)
+
+Kyle decided that superseded art is never needed again. A second rewrite of
+`master..integration/wasteland` replaced every older version of the 86 binary
+assets changed since `master` with its current version. The tip tree is
+byte-identical before and after. Each binary now has one version in the
+unpushed history, and a push sends about 131 MB. The commit map now maps the
+original IDs to the current ones across both rewrites.

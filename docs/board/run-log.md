@@ -1435,3 +1435,16 @@ percent remaining. All helpers are finished. No lane has an active builder.
   `docs/changes/CLEAN-09.md`). Full tier on `b56dbfb`: 232 passed, 0 failed,
   297.2 s. Build 303 MB with no `.blend` (was 487 MB). The filter-branch
   backup ref was removed; the bundle in the backup folder is the rollback.
+
+## 2026-09-24 PDT – Current binaries only; AI working rules
+
+- Kyle: superseded assets and history are not kept "just in case"; redoing is
+  cheap. A second rewrite kept only the current version of each of the 86
+  binaries changed since `master`. Tip tree identical; one version per binary;
+  push size about 131 MB. Commit map updated to original -> current IDs.
+- AGENTS.md gains nine working rules for AI-written code (fix forward, keep the
+  recipe, one version of every binary, evidence used once, replace means
+  remove, delete don't archive, short-lived branches, budgets checked by tests,
+  never discard what can't be regenerated). SPEC 0.8 records them and adds
+  CLEAN-10, a tested compaction routine before every push. CLEAN-05 and
+  CLEAN-07 now delete instead of archiving. Pushing still waits for D8.

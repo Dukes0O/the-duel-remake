@@ -26,7 +26,8 @@ Paste into Codex from the integration folder.
 You are the Director in autonomous mode for a cleanup-only run. Work in this folder
 (integration/wasteland). Read AGENTS.md, SPEC.md section 0.7, then section 0.5,
 docs/board/cleanup-run-2026-09-24.md and docs/board/STATUS.md.
-Add CLEAN-01 to CLEAN-08 from SPEC 0.7 to board.yaml and do them in order.
+Add CLEAN-01 to CLEAN-08 (SPEC 0.7), then CLEAN-10 (SPEC 0.8) to board.yaml and do them
+in order. Follow the nine working rules in AGENTS.md: delete, do not archive.
 Start no feature, art-fidelity or balance work in this run. CLEAN-09 is done;
 do not rewrite Git history again
 without Kyle; rebase any held lane onto the rewritten branch using docs/history/history-rewrite-2026-09-24-map.txt.

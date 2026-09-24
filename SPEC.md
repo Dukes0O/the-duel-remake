@@ -266,6 +266,36 @@ unlock records with rendered model images (family 8).
 A new milestone, **M-EGG**, moves `hidden-road` to `beta` when EGG-01 to EGG-04
 are merged and family 3 has passed round 3.
 
+### 0.8 How we work with AI-written code (Kyle, 24 September 2026)
+
+Kyle: the old practices of keeping everything so hand-written code could be
+rolled back came from code being expensive to write. With AI, mistakes are
+cheap to fix and art is cheap to redo; speed, capacity and storage matter
+more. The nine working rules are in `AGENTS.md` ("How we work with AI-written
+code") and win over habit. In short: fix forward; keep the recipe, not the
+output; one version of every binary; evidence is used once; replace means
+remove; delete, don't archive; short-lived branches; budgets checked by tests;
+never discard what can't be regenerated (player saves, Kyle's decisions,
+licensed files, current assets).
+
+**Done on 24 September 2026.** A second rewrite of the unpushed
+`integration/wasteland` history kept only the current version of each of the
+86 binary assets changed since `master`. The branch tip is identical; a push
+now sends about 131 MB instead of about 1.2 GB. The commit map covers both
+rewrites.
+
+**Compaction before every push (CLEAN-10).** `tools/compact-binaries.mjs`
+repeats this: take a verified `git bundle --all` backup (kept 7 days), rewrite
+`master..integration/wasteland` so every binary keeps only its current version
+and deleted binaries disappear, confirm the tip tree is unchanged, update the
+commit map, then push with `--force-with-lease`. Only this PC writes to GitHub,
+so a forced push loses nothing. Pushing `integration/wasteland` still waits for
+Kyle's approval (D8). Compacting `master` history is a later option for Kyle.
+
+| Order | Card | Lane | Size | Done when |
+| --- | --- | --- | --- | --- |
+| after CLEAN-08 | **CLEAN-10** Compaction routine | OPS, TOOL | S | The script above with a test on a throwaway repository: the tip tree never changes, every binary has one version, the backup verifies, and it refuses to run on a dirty folder or on `master` |
+
 ### 0.7 Cleanup first (Kyle, 24 September 2026)
 
 **Why.** The first v3 run added about 745 MB to Git in one night: about 420 MB
@@ -322,9 +352,9 @@ full-resolution sheets and captures in `docs/board/looks/`.
 | 2 | **CLEAN-02** Blender files out of the build | ART, TOOL | M | *(The history rewrite already removed the committed `.blend` files, and `.gitignore` covers them.)* No source file under `public/`; every `tools/blender/` script rebuilds its `.blend` and GLB from committed inputs; a rebuilt GLB matches the committed one or the difference is explained; the build contains no `.blend` |
 | 3 | **CLEAN-03** Evidence out of Git | TOOL, VIS | M | *(The history rewrite already removed them; copies are in the backup folder named under CLEAN-09.)* Each round keeps one JPG sheet of 500 KB or less and its review; `tools/fidelity-sheet.mjs`, the browser harness and the audio tools write raw output to `.evidence/` by default; `docs/board/looks/` totals under 20 MB |
 | 4 | **CLEAN-04** Runtime asset budgets | ART, VIS | M | Wasteland models and textures meet the budgets; `wall.glb` under 8 MB; the same fidelity shots before and after show no visible loss (reviewed side by side); load and frame time recorded; build at most 250 MB |
-| 5 | **CLEAN-05** Docs and logs | OPS | M | `docs/README.md` indexes current docs; the 121 change notes roll up into one summary per wave in `docs/history/` and are removed; `run-log.md` keeps 7 days with older entries moved to `docs/history/run-log-2026-09.md`; handoff files older than the latest move to history; docs marked "history only" move to `docs/history/`; `AGENTS.md` and the playbook point at the index |
+| 5 | **CLEAN-05** Docs and logs | OPS | M | *(0.8: delete, don't archive.)* `docs/README.md` indexes current docs; facts still needed from the 121 change notes go into the current docs, then the notes are deleted; `run-log.md` keeps 7 days and older entries are deleted; only the latest handoff is kept; docs marked "history only" are deleted; `AGENTS.md` and the playbook point at the index |
 | 6 | **CLEAN-06** Dead code, tests and switches | SIM, UI, VIS | M | Items `repo-audit` proves unused are removed (for example the replaced box-figure path, unused exports, tests of removed behavior); `roadside-destruction` has been `on` for a release, so its switch and flag-off path go, per REL-03; each removal passes the lane tier with all replay fingerprints unchanged; anything uncertain becomes a card instead |
-| 7 | **CLEAN-07** Branches and lane folders | OPS | S | Every merged lane folder removed with `git worktree remove` after the hash check (never forced); merged branches older than 7 days deleted; each unmerged branch listed on the status page with a reason and an expiry date, or deleted if it is a finished probe; `.lanes/evidence/` moved to `.evidence/` |
+| 7 | **CLEAN-07** Branches and lane folders | OPS | S | Every merged lane folder removed with `git worktree remove` after the hash check (never forced); *(0.8)* merged branches deleted; unmerged branches older than two days deleted after a one-line note of what each tried (held BUG-06 candidates included; their ideas can be redone on the current branch); `.lanes/evidence/` moved to `.evidence/` |
 | 8 | **CLEAN-08** Keep it clean | OPS, TOOL | S | The status page shows Git size, build size, `public/` size, lane-folder count and their change since the last run; the hygiene list of old violations is empty; the playbook's end-of-run steps include the cleanup pass; a full tier passes |
 | done | **CLEAN-09** Shrink Git history | OPS | M | Done by Kyle's decision on 24 September 2026. `integration/wasteland` history after `master` was rewritten (351 commits) to drop every `.blend` file and all non-`.md`/`.json` files under `docs/board/looks/`. `master` was not touched. Old-to-new commit IDs: `docs/history/history-rewrite-2026-09-24-map.txt`. Full backup (all refs) and copies of the latest dropped files: `C:\Users\kyleb\dev\duel-backups\2026-09-24-before-history-rewrite\`. Local lane branches still point at the old commits; rebase a held lane with `git rebase --onto <new> <old base>` using the map, and never merge an old-history branch directly |
 
@@ -1505,7 +1535,7 @@ Answers (23 September 2026): D1, D2, D3, D4, D5 and D7 agreed as recommended. D6
 | D5 | Remove the old Codex working copy at `.codex\worktrees\4555` (nothing unique in it) | Yes |
 | D6 | Crash rule for ordinary races: (a) keep today's rule, where any crash of 45 km/h or more uses one of five slots, and make the HUD count that; or (b) change the rule so only major crashes (72 km/h or more) count, as the README describes | (a): fixes the confusion without changing race balance |
 | D7 | Delete the unused shared best-time data (`duel_redline_best_v4`) from browser storage | Yes. Nothing reads it |
-| D8 *(v3, waiting for Kyle)* | Also push `integration/wasteland` to GitHub after each green full run, and bring GitHub's `main` in line with `master` | Yes. Today the on-foot, crew and raider work exists only on this PC |
+| D8 *(v3, waiting for Kyle)* | Also push `integration/wasteland` to GitHub after each green full run and compaction (0.8), using `--force-with-lease`, and bring GitHub's `main` in line with `master` | Yes. Today the on-foot, crew and raider work exists only on this PC |
 
 ### Open questions (agents use the recommendation until you say otherwise)
 

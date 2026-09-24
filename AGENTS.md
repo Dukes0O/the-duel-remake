@@ -57,6 +57,33 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
 
 See playbook section 7 for the gate and evidence workflow.
 
+## How we work with AI-written code (Kyle, 24 September 2026; SPEC 0.8)
+
+Old best practices assumed code was expensive to write, so everything was kept
+in case it had to be rolled back. Here, redoing is cheap and storage, speed and
+small context matter. These rules win over habit:
+
+1. **Fix forward.** A mistake is a failing test, a fix and a pass. Rollback
+   exists only for the live game (the previous build, kept for one release).
+2. **Keep the recipe, not the output.** Commit scripts, prompts and settings.
+   Rebuild models, renders, textures, reports and screenshots from them. Commit
+   generated output only when the game loads it.
+3. **One version of every binary.** Text history (code, tests, docs) stays: it
+   is small and shows when a problem started. Binary assets keep only their
+   current version; superseded versions are compacted out of history before
+   every push (SPEC 0.8).
+4. **Evidence is used once.** Screenshots, videos, recordings and logs serve a
+   review and are then deleted. Keep the verdict: scores, findings, numbers.
+5. **Replace means remove,** in the same change.
+6. **Delete, don't archive.** Once a note's facts live in the current docs,
+   delete the note. Git text history holds it if anyone ever asks.
+7. **Branches are short-lived.** A lane branch is merged or deleted within two
+   days. Unmerged work gets a one-line note of what it tried, then goes.
+8. **Budgets, not good intentions.** Size limits are checked by tests.
+9. **Never discard what can't be regenerated:** real player saves and their
+   backups, Kyle's decisions and notes, licensed third-party files and their
+   credits, and the current game assets.
+
 ## Where files live (SPEC 0.7)
 
 - `public/`: only files the game loads at runtime. Never Blender files,
