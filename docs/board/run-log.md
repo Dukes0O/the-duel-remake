@@ -802,3 +802,14 @@ checkout untouched until the final integration commit passes the full gate.
 - The page explicitly names its observation commit. Committing the snapshot
   makes a later metadata commit; that commit does not inherit a test pass.
 - TRACK-02 is ready. Full cadence remains merge five or 06:02 UTC, then run end.
+
+## 2026-09-23 PDT — overlap independent preparation, preserve finish order
+
+- SPEC 0.6 says finish the listed cards in order. Independent preparation
+  within that list may overlap: BAL-01 tests start while TRACK-02 docs are
+  built and reviewed, but BAL-01 cannot merge before TRACK-02. The board
+  records merge_after separately from actual implementation dependencies.
+  Other new work remains behind the ordered list; existing open work can
+  continue in spare lanes. This avoids idle lanes without changing priority.
+- TRACK-02 started in .lanes/track02. BAL-01 starts in .lanes/bal01.
+  Quota check before dispatch: 47 percent remains; keep the 5 percent floor.

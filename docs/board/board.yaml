@@ -35,7 +35,7 @@ tasks:
     lane: OPS
     size: S
     needs: [TRACK-01]
-    status: ready
+    status: building
     owns: [docs/CODEX_PLAYBOOK.md, AGENTS.md]
     helpers: [reviewer, test_runner]
     acceptance:
@@ -45,8 +45,9 @@ tasks:
     priority: 3
     lane: TOOL
     size: S
-    needs: [TRACK-02]
-    status: backlog
+    needs: [TRACK-01]
+    merge_after: TRACK-02
+    status: ready
     owns: [tools/combat-balance.mjs, tools/test-combat-balance.mjs]
     helpers: [test_author, test_runner, reviewer, balance_analyst]
     acceptance:
