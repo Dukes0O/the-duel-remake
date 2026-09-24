@@ -37,7 +37,8 @@ async function pass(context, quality, {width, height, name, mobile}) {
     victim.armor = 5;
     const at = duel.course.groundAt(victim.s, victim.lateral);
     state.combat.projectiles.push({kind: 'crossbow', enemy: false, level: 0,
-      x: at.x, y: at.y + 2, z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
+      x: at.x, y: at.y + (victim.airHeight || 0) + duel._vehicleSpec(victim).height / 2,
+      z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
     duel.step(1 / 120);
     if (!victim.combatWrecking || state.combat.hits !== 1)
       throw Error('The real player bolt did not wreck CPU 2');

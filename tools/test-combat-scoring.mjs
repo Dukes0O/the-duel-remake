@@ -43,7 +43,8 @@ function race({mode = 'wasteland', wasteland2 = true, difficulty = 'casual',
 function bolt(field, actor, {enemy = false, level = 0, step = false} = {}) {
   const at = field.duel.course.groundAt(actor.s, actor.lateral);
   field.state.combat.projectiles.push({kind: 'crossbow', enemy, level,
-    x: at.x, y: at.y + 2, z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
+    x: at.x, y: at.y + (actor.airHeight || 0) + field.duel._vehicleSpec(actor).height / 2,
+    z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
   if (step) field.duel.step(1 / 60);
   else stepCombat(field.duel, .01);
 }
@@ -362,7 +363,9 @@ test('scripted player hits have the same score at 30, 60 and 144 FPS', () => {
         place(victim, 100);
         const at = field.duel.course.groundAt(victim.s, victim.lateral);
         field.state.combat.projectiles.push({kind: 'crossbow', enemy: false,
-          level: 0, x: at.x, y: at.y + 2, z: at.z,
+          level: 0, x: at.x,
+          y: at.y + (victim.airHeight || 0) + field.duel._vehicleSpec(victim).height / 2,
+          z: at.z,
           vx: 0, vy: 0, vz: 0, age: 0});
       }
       field.duel.step(1 / fps);

@@ -71,7 +71,8 @@ test('a player bolt can strike an opponent beyond the first', () => {
   const target = state.opponents[1];
   const at = duel.course.groundAt(target.s, target.lateral);
   combat.projectiles.push({kind: 'crossbow', enemy: false, level: 0,
-    x: at.x, y: at.y + 2, z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
+    x: at.x, y: at.y + (target.airHeight || 0) + duel._vehicleSpec(target).height / 2,
+    z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
   stepCombat(duel, .01);
   assert.ok(target.speedMph < 80, 'swept bolt shoves the second opponent');
   assert.equal(combat.hits, 1, 'bolt hit counts against the full field');

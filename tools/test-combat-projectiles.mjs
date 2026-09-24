@@ -6,6 +6,7 @@ import {DRIVE} from '../src/config.js';
 import {createCombat, fireWeapon, stepCombat} from '../src/combat.js';
 import {stepProjectiles} from '../src/combat-projectiles.js';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
+import {readFileSync} from 'node:fs';
 
 const T = COMBAT_TUNING;
 const radians = degrees => degrees * Math.PI / 180;
@@ -178,7 +179,7 @@ test('a fast bolt crosses a later CPU car without tunneling at 30, 60 and 144 FP
     const forward = {x: Math.sin(at.heading), z: Math.cos(at.heading)};
     const projectile = {kind: 'crossbow', enemy: false, level: 0,
       x: at.x - forward.x * speed * dt * .55,
-      y: at.y + 2,
+      y: at.y + duel._vehicleSpec(target).height / 2,
       z: at.z - forward.z * speed * dt * .55,
       vx: forward.x * speed, vy: 0, vz: forward.z * speed, age: 0};
     const hits = [];
@@ -206,9 +207,10 @@ test('a flagged bolt hits when its height crosses a later CPU car between frames
     const span = speed / 30;
     const projectile = {kind: 'crossbow', enemy: false, level: 0,
       x: at.x - forward.x * span / 2,
-      y: at.y + T.pointHeight + 2.5,
+      // Descend through the body centre as the horizontal path crosses it.
+      y: at.y + duel._vehicleSpec(target).height / 2 + 1,
       z: at.z - forward.z * span / 2,
-      vx: forward.x * speed, vy: 60, vz: forward.z * speed, age: 0};
+      vx: forward.x * speed, vy: -60, vz: forward.z * speed, age: 0};
     const hits = [];
     duel.onChange((_, event) => { if (event.combatHit) hits.push(event); });
     state.combat.projectiles.push(projectile);
@@ -297,3 +299,92 @@ test('ordinary and flag-off Wasteland projectiles keep the approved replay finge
   assert.equal(replayDigest('wasteland', false), '9453a92c428b5194f5768392e2d1e76a0162de6f36429c39bd18bd02fc3bfd34',
     'flag-off Wasteland keeps the approved source behavior');
 });
+
+// BUG-06: exercise production projectile stepping on a flat, deterministic
+// course. Vehicle sizes, armor, hit events and damage still use Duel rules.
+function bodyContact({wasteland2 = true, kind = 'crossbow', enemy = false,
+  car = 'falcone_f42', fps = 60, startAir = 0, endAir = startAir,
+  height, endHeight = height, startZ = 130, endZ = 150} = {}) {
+  const {duel, state} = field({wasteland2});
+  duel.course = {
+    groundAt: (s, lateral) => ({x: lateral, y: 0, z: s, heading: 0}),
+    nearest: (x, z) => ({s: z, lateral: x}),
+  };
+  const target = enemy ? state : state.opponents[1];
+  place(target, 140);
+  target.car = car;
+  target.airHeight = endAir;
+  target.prevAirHeight = startAir;
+  const bodyHeight = duel._vehicleSpec(target).height;
+  const shotHeight = height ?? bodyHeight / 2;
+  const nextHeight = endHeight ?? shotHeight;
+  const projectile = {kind, enemy, sourceIndex: 0, level: 0,
+    x: 0, y: shotHeight, z: startZ,
+    vx: 0, vy: (nextHeight - shotHeight) * fps,
+    vz: (endZ - startZ) * fps, age: 1};
+  const beforeArmor = target.armor;
+  const events = [];
+  duel.onChange((_, event) => { if (event.combatHit) events.push(event); });
+  state.combat.projectiles.push(projectile);
+  stepProjectiles(duel, 1 / fps);
+  return {hits: events.filter(event => event.victim === (enemy ? 'player' : 'rival')).length,
+    armorLost: Number.isFinite(beforeArmor) ? round(beforeArmor - target.armor) : null,
+    consumed: !state.combat.projectiles.includes(projectile), bodyHeight};
+}
+
+let bodyChecks = 0;
+function bodyCase(name, options, hitExpected) {
+  test(name, () => {
+    bodyChecks++;
+    const result = bodyContact(options);
+    assert.equal(result.hits, hitExpected ? 1 : 0, name);
+    assert.equal(result.consumed, hitExpected, `${name}: bolt consumption`);
+    assert.equal(result.armorLost, hitExpected ? T.armor.crossbow : 0,
+      `${name}: armor changes only on actual body contact`);
+  });
+}
+
+for (const enemy of [false, true]) {
+  const target = enemy ? 'player' : 'later CPU';
+  for (const fps of [30, 60, 144]) {
+    bodyCase(`flagged bolt at 2 m clears the ${target} roof at ${fps} FPS`,
+      {enemy, fps, height: 2}, false);
+    bodyCase(`flagged bolt through the ${target} body hits at ${fps} FPS`,
+      {enemy, fps}, true);
+    // Neither end overlaps in Y: the car rises through a stationary-height
+    // bolt while their horizontal paths cross in the middle of this step.
+    bodyCase(`flagged bolt hits a vertically crossing ${target} at ${fps} FPS`,
+      {enemy, fps, startAir: 0, endAir: 8, height: 4.5}, true);
+  }
+  bodyCase(`flagged bolt below an airborne ${target} misses`,
+    {enemy, startAir: 3, height: 2}, false);
+  // Horizontal overlap is around t=.5, but vertical overlap only near t=1.
+  // Independent XZ and Y hits at different times must not count as contact.
+  bodyCase(`flagged bolt misses the ${target} when horizontal and vertical overlaps occur at different times`,
+    {enemy, startAir: 0, endAir: 8, height: 8}, false);
+}
+
+bodyCase('flagged bolt at 1.5 m clears the Viper roof',
+  {car: 'viper_proto', height: 1.5}, false);
+bodyCase('flagged bolt at 3 m hits the taller Titan body',
+  {car: 'titan_monster', height: 3}, true);
+bodyCase('flagged bolt at 4 m clears the Titan roof',
+  {car: 'titan_monster', height: 4}, false);
+
+test('legacy bolts and other weapon outcomes keep the body-height control fingerprint', () => {
+  bodyChecks++;
+  const controls = [
+    {wasteland2: false, height: 2},
+    {wasteland2: false, height: 2, enemy: true},
+    {kind: 'bomb', height: 2},
+    {kind: 'rpg', height: 2},
+  ].map(options => ({options, result: bodyContact(options)}));
+  const expected = JSON.parse(readFileSync(new URL(
+    './replays/projectile-height-controls.json', import.meta.url), 'utf8'));
+  assert.deepEqual(controls, expected.outcomes,
+    'height correction must preserve legacy bolts and other weapons');
+  assert.equal(createHash('sha256').update(JSON.stringify(controls)).digest('hex'),
+    expected.sha256, 'unchanged weapon control fingerprint');
+});
+
+test.after(() => console.log(`Projectile body bounds: ${bodyChecks} checks executed.`));

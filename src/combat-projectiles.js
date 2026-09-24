@@ -232,14 +232,22 @@ export function stepProjectiles(duel, dt) {
     for (const actor of projectile.raid ? [state, ...state.opponents]
       : projectile.enemy ? [state] : state.opponents) {
       const at = point(duel, actor);
-      const radius = duel._vehicleSpec(actor).halfWidth + T.projectileRadiusPadding;
+      const vehicle = duel._vehicleSpec(actor);
+      const radius = vehicle.halfWidth + T.projectileRadiusPadding;
       let approach;
       if (modernProjectiles) {
         const from = duel.course.groundAt(actor.prevS ?? actor.s,
           actor.prevLateral ?? actor.lateral);
-        from.y += T.pointHeight + (actor.prevAirHeight ?? actor.airHeight ?? 0);
+        // Bolts must cross the car's body, from its base to its actual roof.
+        // Keep the existing hit band for bombs and RPGs.
+        const halfHeight = projectile.kind === 'crossbow'
+          ? vehicle.height / 2 : T.projectileHitHeight;
+        const centerHeight = projectile.kind === 'crossbow'
+          ? halfHeight : T.pointHeight;
+        from.y += centerHeight + (actor.prevAirHeight ?? actor.airHeight ?? 0);
+        at.y += centerHeight - T.pointHeight;
         approach = sweptVehicleContact(projectile, old, from, at, radius,
-          T.projectileHitHeight);
+          halfHeight);
       } else if (Math.abs(projectile.y - at.y) < T.projectileHitHeight) {
         const legacy = sweptApproach(projectile, old, at, radius);
         if (legacy.distance < radius) approach = legacy;

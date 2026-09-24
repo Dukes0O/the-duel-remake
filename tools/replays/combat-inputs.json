@@ -56,7 +56,7 @@
       "actions": [
         {"atTick": 0, "kind": "input", "throttle": 1}
       ],
-      "expect": {"hits": 3, "wrecks": 0, "pickups": 0, "ramHits": 0,
+      "expect": {"hits": 1, "wrecks": 0, "pickups": 0, "ramHits": 0,
         "cpuShots": 3, "shooterOrder": [0, 1, 2]}
     }
   ]

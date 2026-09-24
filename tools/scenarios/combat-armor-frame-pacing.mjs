@@ -67,7 +67,8 @@ async function pass(context, quality) {
     state.armor=12;
     const at=app.duel.course.groundAt(state.s,state.lateral);
     state.combat.projectiles.push({kind:'crossbow',enemy:true,level:0,
-      x:at.x,y:at.y+2,z:at.z,vx:0,vy:0,vz:0,age:0});
+      x:at.x,y:at.y+(state.airHeight||0)+app.duel._vehicleSpec(state).height/2,
+      z:at.z,vx:0,vy:0,vz:0,age:0});
     app.duel.step(1/120);
     if (!state.combatWrecking || state.armor!==0)
       throw Error('First player wreck was not triggered for the RAF sample');

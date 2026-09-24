@@ -83,7 +83,8 @@ function act(duel, action) {
       assert.ok(target, 'bolt target exists');
       const at = duel.course.groundAt(target.s, target.lateral);
       state.combat.projectiles.push({kind: 'crossbow', enemy: false, level: 0,
-        x: at.x, y: at.y + 2, z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
+        x: at.x, y: at.y + (target.airHeight || 0) + duel._vehicleSpec(target).height / 2,
+        z: at.z, vx: 0, vy: 0, vz: 0, age: 0});
       break;
     }
     case 'rearRam':
