@@ -116,7 +116,9 @@ export function _drive(dt) {
 
   // engine blow if you ride the limiter on a Pro manual — the threshold sits
   // below the gear ceiling so holding throttle without upshifting gets there
-  if (!reversing && !d.autoShift && d.engineBlow && s.revs > DRIVE.overRevFrac && s.input.throttle > 0) {
+  if (s.status === 'exploring' && s.hiddenRoadJourney?.departed) {
+    s.overrevSec = 0;
+  } else if (!reversing && !d.autoShift && d.engineBlow && s.revs > DRIVE.overRevFrac && s.input.throttle > 0) {
     s.overrevSec += dt;
     if (s.overrevSec > DRIVE.overRevBlowSec) { this._crash('engine_blew'); return; }
   } else {

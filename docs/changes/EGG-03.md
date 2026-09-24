@@ -82,3 +82,47 @@ cues, preserves state and cancels its voices once on pause, mute, menu or a new
 journey. Resume may play current cues but cannot replay a queue of missed beats.
 The production default remains local Web Audio and requires normal audio unlock.
 No new dependency, browser storage or network access was used.
+# Runtime implementation and focused checks
+
+The headless journey now owns departure, exploration, arrival, opening, the
+queued choice and passage. Only an actual player position in the Hidden Road
+corridor at or beyond 150 m departs. The same race coordinate on the asphalt
+does not. Within the pre-departure spur, motion checks departure before race
+clocks and deadline settlement; ordinary and flag-off race order is unchanged.
+After departure, the dedicated exploring status skips race clocks, opponents,
+combat, police, checkpoints and results while retaining car controls.
+
+App reuses the existing abandoned-result settlement. Current state, journey,
+run and player ownership checks reject stale callbacks. The existing settled
+result key and the current journey guard prevent duplicate settlement. Prior
+credits, records, ghosts and unlocks stay intact; unbanked earnings and pending
+fines are discarded. No profile schema, storage key or discovery flag is added.
+
+Within 60 physical metres of the gate, a simulation-time trajectory aligns and
+stops the car 12 m outside it. A three-second lift precedes the invitation.
+Enter queues a simulation choice, rolls through the clear opening over three
+seconds and stops 12 m inside. Turn back restores driving outside without
+reopening the abandoned race. The arrived state holds safely for later yard
+and discovery integration. Pause freezes the journey; phase locks, choices and
+navigation clear driving input. Renderer or audio callbacks do not advance it.
+
+The Director authorized two narrow extra hooks. The driving hook prevents the
+Pro overrev branch from returning forever after its terminal crash has become
+ineligible during exploration; existing speed and gear limits remain. The
+contact hook resolves departed-player scenery contacts without damage,
+destruction or race earnings. Prepared analytic Rustwall piers, header and
+moving panel also stop side approaches that miss the gate takeover. Constants
+match the 420 by 35 m structural envelope, 9 by 7 m opening and 7.25 m lift.
+The front wall plane conservatively includes the jambs at local Z -1.575 m;
+the structural back is 5.5 m. The panel spans Z -0.845 to -0.09 m. This is a
+structural approximation, not exact collision for every decorative scrap.
+The headless collision contract has no Three dependency and never changes
+course obstacles or consumes the simulation random generator.
+
+Initial focused results: **37/37 journey checks** and **7/7 synthetic-memory
+departure checks** pass. They include all nine cars on routes A/B/C, closed
+and open swept contacts, the crossing/deadline edge, sustained Pro overrev,
+both choices, pause/navigation, saved-content preservation and identical
+common-time states under 30/60/144 Hz presentation schedules. No independent
+assertion was changed by the runtime builder. Independent source/Save Guardian
+review, presentation checks, browser/audio evidence and final gates remain.
