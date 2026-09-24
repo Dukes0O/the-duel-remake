@@ -231,8 +231,10 @@ on:
 
 ### 0.6 New and changed cards, in order for the next run
 
-> **Paused (Kyle, 24 September 2026):** cleanup in 0.7 comes first. Cards 13
-> to 15 and the open cards below resume only after CLEAN-08 is merged.
+> **Resumed (24 September 2026):** the cleanup in 0.7 is finished. The current
+> order, parallel lanes and open design questions for the remaining cards are in
+> `docs/board/next-run.md`; art polish no longer waits for GFX-04, and BAL-02
+> replaces the rest of BUG-06 and BUG-07.
 
 Finish in this order before starting other new work. Existing open cards
 (BUG-06, BUG-07, CREW-01, TOOL-02, AUD-01, AUD-02) continue whenever a lane is free.

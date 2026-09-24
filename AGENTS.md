@@ -2,10 +2,10 @@
 
 Read `SPEC.md` section 0 first; it wins over conflicting later text. Use
 `docs/README.md` to find current instructions and supporting references.
-**Cleanup comes first (SPEC 0.7, Kyle, 24 September 2026): do the CLEAN cards
-in order and start no feature work until they are done.** After that, the
-ordered work in section 0.6 resumes. The current plan and start prompt are in
-`docs/board/next-run.md`. Read `docs/CODEX_PLAYBOOK.md`
+The cleanup phase (SPEC 0.7) finished on 24 September 2026. Phase 2 builds
+features on that clean base: the current plan and start prompt are in
+`docs/board/next-run.md`. Settle each card's open design question in writing
+before its code. Read `docs/CODEX_PLAYBOOK.md`
 for the workflow, and `docs/board/board.yaml` for task ownership. Use
 `docs/OPERATIONS.md` for current folders, ports and release steps.
 

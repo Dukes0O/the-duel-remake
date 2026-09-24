@@ -2,7 +2,7 @@
 
 Start with [AGENTS.md](../AGENTS.md), then [SPEC.md](../SPEC.md) section 0.
 The spec settles game rules. [Next run](board/next-run.md) gives the current
-cleanup order. [Board](board/board.yaml) assigns files and records card state.
+phase 2 plan. [Board](board/board.yaml) assigns files and records card state.
 [STATUS](board/STATUS.md) reports the last observed build, tests, lanes and
 sizes. A status snapshot applies only to its stated commit.
 
@@ -19,7 +19,7 @@ sizes. A status snapshot applies only to its stated commit.
 
 The live game is the separate `master` checkout. Development merges into
 `integration/wasteland`; only a written release approval permits work in the
-live checkout. Cleanup cards finish before feature, art polish or balance work.
+live checkout. The cleanup phase is finished; `next-run.md` sets the current order.
 The active plan and board take priority over older prompts in the playbook.
 
 ## Technical reference

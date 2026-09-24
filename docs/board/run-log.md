@@ -1530,3 +1530,16 @@ Cleanup order: CLEAN-01 and CLEAN-02 merged. CLEAN-03 is ready; CLEAN-04, CLEAN-
 - The sweep found only `master` and `integration/wasteland`, with no idle lane branch or folder. The empty `.evidence` folders were deleted. `docs/changes/CLEAN-10.md` was folded into this log and the board, then deleted. The audit reports 52 runtime-asset and 15 export candidates, all uncertain; zero module, removed-test, fully-on-switch or lane candidates. No unproven file was removed. One zero-byte stale Git worktree-ref garbage entry remains; no forced cleanup was attempted.
 - Before/after cleanup sizes: built output 320,030,739 → 254,802,461 bytes; `public/` 315,969,513 → 250,741,595 bytes; Wasteland models 135,847,059 → 73,978,288 bytes. CLEAN-05 reduced `docs/` from 4,033,821 bytes to about 0.84 MB after CLEAN-10, and review `looks/` from 2,826,636 → 158,118 bytes. Git object storage is about 262.9 MB, with current binary assets preserved. The build, Wasteland and Rustwall wall remain above advisory targets for the reviewed geometry and texture reasons in `docs/ASSET_PIPELINE.md`.
 - CLEAN-01, CLEAN-02, CLEAN-03, CLEAN-04, CLEAN-05, CLEAN-06, CLEAN-08 and CLEAN-10 are merged. No feature, art polish or balance card was started. The final full tier must run on the exact handoff/status commit; its ledger is `docs/board/checks/full-tier.json`. No push, release or real history rewrite was made. Kyle's written approval remains required for a real compaction or release.
+
+## 2026-09-24 PDT – Cleanup verified; phase 2 plan
+
+- An outside check (Claude Code) of cleanup handoff `2a9ee9e` independently
+  passed the full tier 238/238 (431.5 s) and the build (about 244 MB, no
+  `.blend`), matching Codex's uncommitted ledger, now committed. Only `master`
+  and `integration/wasteland` remain; no lane folders. `.git/worktrees/the-duel-remake2`
+  is the integration folder's own registration, not garbage; leave it.
+- `docs/board/next-run.md` now holds the phase 2 plan: tidy the board (drop the
+  art polish dependency on GFX-04; close or re-slice stale BUG-06, BUG-07,
+  CREW-01, AUD-01, AUD-02 and TOOL-02), then CAR-01, GFX-01-P1, EGG-02-P1 and
+  BAL-02 in parallel, each settling its design question in writing first.
+  AGENTS.md, `docs/README.md` and SPEC 0.6 no longer say cleanup comes first.
