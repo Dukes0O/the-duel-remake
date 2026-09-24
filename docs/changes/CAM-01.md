@@ -129,3 +129,37 @@ checks also passed per the source author. Final reviewed source tree is
 `cb889c14b761db3a3e1c328e131fe2140e4fee69`. No concrete source defect remains;
 R1 capture is cleared. No additional save rerun is needed after these visual
 changes. Two scored compact rounds and the required lane/build gate remain.
+## Presentation handoff and retained look rounds
+
+Source c264692 adds a pure overhead pose, real-camera-XZ terrain clearance,
+bounded tunnel correction, projected existing aim ray, menu setting and
+foot-aware camera action. First-person remains the exact default selector path;
+existing body rendering is visible overhead and first-person gear is suppressed.
+Frame metric invalidation includes foot mode. No simulation or weapon behavior
+is changed by presentation. Existing optional menu fixtures remain supported.
+
+Independent review found a remote hillside pose sharing a tunnel route
+coordinate could pull the camera21.476m. A new red control preceded1b76d26,
+which applies tunnel limits only near its physical width. Combined acceptance
+8/8 passes, including11combatcourses and frozen pose/aim controls. Existing
+onfoot-controls-camera1 andcombat-hud7 passed on presentation source. No
+acceptance assertions were weakened by this owner.
+
+Two scored look rounds retain11actual images each, separate desktop/phone
+sheets, copied browser reports and hashes under looks/onfoot-camera-choice.
+Private ports25211/50514, zero warnings/errors. Actual setting/KeyC/aim/fire,
+repair40→80, pause/pointer release, real resume button and re-entry towide car
+view passed inbothqualities. R1 failed attempt27669 usedEscape toresume;
+its images/report are preserved. The corrected fixture uses the production
+resume control; no production change was needed for that failure.
+
+R2 source670f81f changes only thephone onfoot minimap sizing/placement. Its
+fixture hides the exactMENU QA summary's directbodydetails andthe
+#performance-results details ancestor, preserving all production overlays.
+Author cleared this narrow source before capture. Camera/aim/modeldata remain
+unchanged; original R1 evidence is immutable. Director scores separately.
+
+Bounded120frame absolute samples: R1High18.2ms/Performance18.1ms p95;
+R2both18.2ms. No paired feature-offbaseline orpercentage overhead is claimed.
+Scene draws/triangles749/2,229,271 High,426/1,231,808 Performance include
+existingpasses. Required lane/build remains the final independent gate.
