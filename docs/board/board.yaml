@@ -5,6 +5,119 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: CLEAN-01
+    title: "Repository placement check, size targets and audit"
+    priority: 1
+    lane: TOOL
+    size: M
+    needs: []
+    status: ready
+    owns: [tools/test-repo-hygiene.mjs, tools/size-targets.json, tools/repo-audit.mjs, tools/run-tests.mjs]
+    helpers: [test_author, reviewer, test_runner]
+    acceptance:
+      - "Lane tier rejects files in the wrong home, but size targets only report."
+      - "Audit reports large files, folder sizes, unused candidates, unindexed docs, switches and stale lane folders."
+      - "All replay fingerprints stay unchanged."
+  - id: CLEAN-02
+    title: "Keep Blender sources out of the build"
+    priority: 2
+    lane: ART
+    size: M
+    needs: [CLEAN-01]
+    status: backlog
+    owns: [tools/blender/, public/assets/models/, .gitignore]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Blender scripts write reproducible sources to ignored art-build, never public; explain any rebuilt GLB difference."
+      - "Build contains no .blend files and replay fingerprints stay unchanged."
+  - id: CLEAN-03
+    title: "Route raw review evidence outside Git"
+    priority: 3
+    lane: TOOL
+    size: M
+    needs: [CLEAN-02]
+    status: backlog
+    owns: [tools/fidelity-sheet.mjs, tools/browser-harness.mjs, tools/audio/, docs/board/looks/, .gitignore]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Raw captures default to ignored .evidence; each review round keeps one JPG under 500 KB and its review."
+      - "docs/board/looks totals under 20 MB; replay fingerprints stay unchanged."
+  - id: CLEAN-04
+    title: "Reduce runtime asset and build size"
+    priority: 4
+    lane: ART
+    size: M
+    needs: [CLEAN-03]
+    status: backlog
+    owns: [public/assets/models/wasteland/, tools/blender/, docs/board/looks/]
+    helpers: [reviewer, art_critic, browser_qa]
+    acceptance:
+      - "Reach the 250 MB build, 60 MB Wasteland assets and 8 MB wall targets, or record measured reasons."
+      - "Review matched images for visible loss and record load/frame cost; replay fingerprints stay unchanged."
+  - id: CLEAN-05
+    title: "Consolidate current docs and trim old logs"
+    priority: 5
+    lane: OPS
+    size: M
+    needs: [CLEAN-04]
+    status: backlog
+    owns: [docs/README.md, docs/changes/, docs/board/, AGENTS.md, docs/CODEX_PLAYBOOK.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Index current docs, preserve still-needed facts, delete superseded notes and handoffs, and retain seven days of run log."
+      - "Agent instructions point to the index; replay fingerprints stay unchanged."
+  - id: CLEAN-06
+    title: "Remove proven unused code, tests and switches"
+    priority: 6
+    lane: SIM
+    size: M
+    needs: [CLEAN-05]
+    status: backlog
+    owns: [src/, tools/]
+    helpers: [test_author, reviewer, test_runner]
+    acceptance:
+      - "Remove only repo-audit proven dead paths, including the released roadside-destruction switch and flag-off path."
+      - "Give uncertain removals new cards; every replay fingerprint stays unchanged."
+  - id: CLEAN-07
+    title: "Remove completed lane branches and folders"
+    priority: 7
+    lane: OPS
+    size: S
+    needs: []
+    status: merged
+    note: "Completed 24 September 2026 as recorded in SPEC 0.7."
+  - id: CLEAN-08
+    title: "Install the after-merge janitor and end-of-run sweep"
+    priority: 8
+    lane: OPS
+    size: S
+    needs: [CLEAN-06]
+    status: backlog
+    owns: [docs/CODEX_PLAYBOOK.md, tools/build-status.mjs, tools/test-build-status.mjs, docs/board/STATUS.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Playbook names both janitor steps; status reports sizes, deltas and idle unmerged branches without deleting them."
+      - "Full tier and replay fingerprints pass."
+  - id: CLEAN-09
+    title: "Remove superseded binaries from development history"
+    priority: 9
+    lane: OPS
+    size: M
+    needs: []
+    status: merged
+    note: "Completed 24 September 2026 as recorded in SPEC 0.7 and 0.8."
+  - id: CLEAN-10
+    title: "Test the future binary compaction routine"
+    priority: 10
+    lane: TOOL
+    size: S
+    needs: [CLEAN-08]
+    status: backlog
+    owns: [tools/compact-binaries.mjs, tools/test-compact-binaries.mjs]
+    helpers: [test_author, reviewer, test_runner]
+    acceptance:
+      - "Throwaway-repo test proves verified bundle, same tip tree, one version per binary and refusal on dirty trees or master."
+      - "Do not rewrite this repository's history without Kyle's written approval."
   - id: FIX-04
     title: "Restore the full test tier"
     lane: TOOL
