@@ -18,7 +18,8 @@ SPEC.md sections 0.5, 0.7 and 0.8.
   temporary probe file was deleted. Git storage went from 1 GB to 250 MB.
   Codex's own conversation snapshot records (`refs/codex/...`, about 32 MB)
   were left alone.
-- **Not pushed.** Pushing `integration/wasteland` waits for Kyle (D8).
+- **Backed up:** `integration/wasteland` is on GitHub (D8 approved). Push after
+  each passing full tier and compaction.
 
 ## Order of work
 
@@ -84,8 +85,8 @@ Gates: lane tier and build before every merge; full tier after every 5 merges or
 Delete, do not archive. After every successful merge, run the after-merge
 janitor from AGENTS.md: delete that lane's branch, folder and used evidence,
 unlinking any dependency link first. Never delete a branch for being idle. Never link to or touch the
-live folder, port 5174 or real saves. Do not rewrite history, release or push
-unless Kyle approves it in writing.
+live folder, port 5174 or real saves. Do not rewrite history or release unless Kyle
+approves it in writing; push only after a passing full tier (D8).
 Budget for this run: <for example "until morning" or "about X% of my usage">.
 When the budget is nearly spent: finish cards in progress, run the full tier,
 run the janitor sweep (AGENTS.md), update STATUS.md, write a short handoff at the end of

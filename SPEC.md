@@ -289,8 +289,7 @@ repeats this: take a verified `git bundle --all` backup (kept 7 days), rewrite
 `master..integration/wasteland` so every binary keeps only its current version
 and deleted binaries disappear, confirm the tip tree is unchanged, update the
 commit map, then push with `--force-with-lease`. Only this PC writes to GitHub,
-so a forced push loses nothing. Pushing `integration/wasteland` still waits for
-Kyle's approval (D8). Compacting `master` history is a later option for Kyle.
+so a forced push loses nothing. Kyle approved pushing `integration/wasteland` (D8) on 24 September 2026. Compacting `master` history is a later option for Kyle.
 
 | Order | Card | Lane | Size | Done when |
 | --- | --- | --- | --- | --- |
@@ -1542,7 +1541,7 @@ Answers (23 September 2026): D1, D2, D3, D4, D5 and D7 agreed as recommended. D6
 | D5 | Remove the old Codex working copy at `.codex\worktrees\4555` (nothing unique in it) | Yes |
 | D6 | Crash rule for ordinary races: (a) keep today's rule, where any crash of 45 km/h or more uses one of five slots, and make the HUD count that; or (b) change the rule so only major crashes (72 km/h or more) count, as the README describes | (a): fixes the confusion without changing race balance |
 | D7 | Delete the unused shared best-time data (`duel_redline_best_v4`) from browser storage | Yes. Nothing reads it |
-| D8 *(v3, waiting for Kyle)* | Also push `integration/wasteland` to GitHub after each green full run and compaction (0.8), using `--force-with-lease`, and bring GitHub's `main` in line with `master` | Yes. Today the on-foot, crew and raider work exists only on this PC |
+| D8 *(approved by Kyle, 24 September 2026)* | Also push `integration/wasteland` to GitHub after each green full run and compaction (0.8), using `--force-with-lease`, and bring GitHub's `main` in line with `master` | Yes. Today the on-foot, crew and raider work exists only on this PC |
 
 ### Open questions (agents use the recommendation until you say otherwise)
 

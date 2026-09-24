@@ -52,9 +52,8 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
 - Run `node tools/build-status.mjs` after every merge and at every session end
   to update `docs/board/STATUS.md`. A later commit needs its own full-tier pass;
   a status snapshot never grants a pass to another commit.
-- D8 is awaiting Kyle's approval: do not push `integration/wasteland` or
-  align GitHub `main` under that proposal. D4 already permits pushing `master`
-  after a release.
+- D8 approved by Kyle on 24 September 2026: after a passing full tier and
+  compaction (SPEC 0.8), push `integration/wasteland`. D4 still covers `master`.
 
 See playbook section 7 for the gate and evidence workflow.
 
