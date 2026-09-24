@@ -25,9 +25,13 @@ function preserved(raw, loaded) {
 }
 function validateProfile(profile) {
   if (!isObject(profile) || ![1, 2].includes(profile.version)) return false;
+  if (Number.isSafeInteger(profile.wasteland?.version) && profile.wasteland.version > 1) return false;
   const normalized = normalizeProfile(profile);
   if (profile.awardedWins && (!Array.isArray(profile.awardedWins) || !profile.awardedWins.every(key => normalized.settledResults.includes(key)))) return false;
-  return Object.entries(profile).every(([key, value]) => key === 'version' || key === 'awardedWins' || has(normalized, key) && preserved(value, normalized[key]));
+  return Object.entries(profile).every(([key, value]) =>
+    key === 'version' || key === 'awardedWins' ||
+    key === 'weapons' && preserved(value, normalized.wasteland.weapons) ||
+    has(normalized, key) && preserved(value, normalized[key]));
 }
 const isCareerKey = key => CAREER_KEYS.includes(key) || key.startsWith('the-duel-') || key.startsWith('duel_');
 function allCareerKeys(storage) {
@@ -61,7 +65,9 @@ export function needsCareerMigration(storage) {
   try {
     const registry = JSON.parse(raw);
     return registry?.version !== 2 || !Array.isArray(registry.players) || !registry.players.length ||
-      registry.players.some(player => !player?.profile?.raceSettings) ||
+      registry.players.some(player => !player?.profile?.raceSettings ||
+        !isObject(player.profile.wasteland) || player.profile.wasteland.version !== 1 ||
+        has(player.profile, 'weapons')) ||
       loadPlayers(source).players.some(player => !player.profile.raceSettings);
   } catch { return true; }
 }
@@ -236,6 +242,15 @@ export async function backupBeforeMigration(storage, backupStore) {
   const backup = await backupCareer(storage, backupStore, 'migration');
   if (!sameEntries(captureCareer(storage), backup.entries)) {
     throw new Error('The career changed while the migration backup was being made. Reload and try again.');
+  }
+  const raw = backup.entries[PLAYERS_KEY];
+  if (raw) {
+    let registry;
+    try { registry = JSON.parse(raw); } catch {}
+    if (Array.isArray(registry?.players) && registry.players.some(player => Number.isSafeInteger(player?.profile?.wasteland?.version) &&
+      player.profile.wasteland.version > 1)) {
+      throw new Error('This career uses a newer Wasteland save format. Keep the verified backup and open it with a newer game build.');
+    }
   }
   return backup;
 }

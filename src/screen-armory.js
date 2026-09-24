@@ -1,9 +1,9 @@
-import {normalizeWeapons, WEAPON_UPGRADE_COSTS} from './weapon-upgrades.js';
+import {getProfileWeapons, WEAPON_UPGRADE_COSTS} from './weapon-upgrades.js';
 import {WEAPONS} from './combat.js';
 
 export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessage, action}) {
 function weaponUpgradePanel(saved){
- const weapons=normalizeWeapons(saved.weapons),details={ufo:'Adds four metres to your one safe forward jump per lap.',bomb:'More bombs, wider blasts and stronger knockback.',crossbow:'Faster arrows, stronger knockback and quicker reloads.',star:'Faster recharge. Invincibility always lasts five seconds.'};
+ const weapons=getProfileWeapons(saved),details={ufo:'Adds four metres to your one safe forward jump per lap.',bomb:'More bombs, wider blasts and stronger knockback.',crossbow:'Faster arrows, stronger knockback and quicker reloads.',star:'Faster recharge. Invincibility always lasts five seconds.'};
  return `<details class="weapon-shop" open><summary>WEAPON UPGRADES · MAD MAX DUEL</summary><p>All four base weapons are included. Upgrades apply to every car next race.</p><div class="upgrade-grid">${Object.entries(WEAPONS).map(([id,w])=>{const level=weapons.levels[id],cost=WEAPON_UPGRADE_COSTS[level];return `<article class="upgrade-card"><h3>${w.name}</h3><b>LEVEL ${level} / 3</b><p>${details[id]}</p><button data-weapon-upgrade="${id}" ${level===3||saved.credits<cost?'disabled':''}>${level===3?'MAXED':`UPGRADE · ${cost} CR`}</button></article>`;}).join('')}</div></details>`;
 }
 function armoryScreen(){

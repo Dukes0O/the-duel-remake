@@ -61,8 +61,9 @@ function preserveProfile(raw, loaded, label) {
     }
   }
   if (raw.weapons) {
-    for (const id of raw.weapons.unlocked) includes(loaded.weapons.unlocked, id, `${label}: weapon ${id}`);
-    for (const [id, level] of Object.entries(raw.weapons.levels)) equal(loaded.weapons.levels[id], level, `${label}: weapon level ${id}`);
+    for (const id of raw.weapons.unlocked) includes(loaded.wasteland.weapons.unlocked, id, `${label}: migrated weapon ${id}`);
+    for (const [id, level] of Object.entries(raw.weapons.levels)) equal(loaded.wasteland.weapons.levels[id], level, `${label}: migrated weapon level ${id}`);
+    equal(Object.hasOwn(loaded, 'weapons'), false, `${label}: legacy weapon field moved`);
   }
   for (const [car, paint] of Object.entries(raw.cosmetics ?? {})) {
     equal(loaded.cosmetics[car]?.selected, paint.selected, `${label}: selected paint ${car}`);
@@ -103,7 +104,10 @@ for (const file of files) {
     preserveProfile(rawPlayer.profile, loaded.profile, `${fixture.shape}/${rawPlayer.id}`);
   }
   for (const assertion of fixture.assertions) {
-    const actual = atPath(state, assertion.path);
+    // Historical fixture paths name the old root field. Check the same owned
+    // levels at their new location without rewriting the fixture itself.
+    const migratedPath = assertion.path.replace('.profile.weapons.', '.profile.wasteland.weapons.');
+    const actual = atPath(state, migratedPath);
     if (Object.hasOwn(assertion, 'equals')) equal(actual, assertion.equals, `${fixture.shape}: ${assertion.path} changed on load`);
     if (Object.hasOwn(assertion, 'includes')) includes(actual, assertion.includes, `${fixture.shape}: ${assertion.path} lost ${assertion.includes}`);
   }

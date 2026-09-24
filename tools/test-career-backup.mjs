@@ -5,7 +5,7 @@ import {
   backupBeforeMigration,backupCareer,captureCareer,createCareerExport,
   importCareer,needsCareerMigration,parseCareerExport,restoreCareerBackup,
 } from '../src/career-backup.js';
-import {loadPlayers} from '../src/progression.js';
+import {createProfile,loadPlayers} from '../src/progression.js';
 import {loadLeaderboard} from '../src/leaderboard.js';
 import {loadGhosts} from '../src/ghost.js';
 
@@ -62,7 +62,7 @@ const oldRaw=captureCareer(old),backups=memoryBackups();
 assert.equal(needsCareerMigration(old),true);
 const migration=await backupBeforeMigration(old,backups);
 assert.equal(migration.reason,'migration');
-old.setItem('the-duel-players-v2',JSON.stringify({version:2,activePlayerId:'new',players:[{id:'new',name:'New',profile:{version:2,raceSettings:{}}}]}));
+old.setItem('the-duel-players-v2',JSON.stringify({version:2,activePlayerId:'new',players:[{id:'new',name:'New',profile:{...createProfile(),raceSettings:{}}}]}));
 assert.deepEqual((await backups.load(migration.id)).entries,oldRaw,'migration backup predates write');
 assert.equal(needsCareerMigration(old),false);
 assert.equal(await backupBeforeMigration(old,backups),null,'no backup for unchanged format');
@@ -76,7 +76,7 @@ await assert.rejects(backupBeforeMigration(changing,{
   load:id=>changingBackups.load(id),
 }),/changed while/);
 
-const current=memoryStorage({'the-duel-players-v2':JSON.stringify({version:2,activePlayerId:'current',players:[{id:'current',name:'Current',profile:{version:2,raceSettings:{}}}]})});
+const current=memoryStorage({'the-duel-players-v2':JSON.stringify({version:2,activePlayerId:'current',players:[{id:'current',name:'Current',profile:{...createProfile(),raceSettings:{}}}]})});
 const original=captureCareer(current),file=createCareerExport(memoryStorage({'the-duel-profile-v1':JSON.stringify(legacy.storage['the-duel-profile-v1'])}));
 const badCredits=JSON.parse(file);badCredits.entries['the-duel-profile-v1']=JSON.stringify({...legacy.storage['the-duel-profile-v1'],credits:'banana'});
 const badNested=JSON.parse(createCareerExport(current)),badRegistry=JSON.parse(badNested.entries['the-duel-players-v2']);

@@ -1,4 +1,4 @@
-import { normalizeWeapons, weaponSignature } from './weapon-upgrades.js';
+import { weaponSignature } from './weapon-upgrades.js';
 import { CARS, COURSE, DEFAULT_CAR, DRIVE, CPU_DIFFICULTY, POLICE } from './config.js';
 import { normalizeCosmetics } from './paint-presets.js';
 import { normalizeRaceSettings } from './race-settings.js';
@@ -12,6 +12,7 @@ import {
 import { normalizeCourseAccess } from './course-access.js';
 import { rivalSignature } from './rival-settings.js';
 import { COMBAT_TUNING } from './wasteland-tuning.js';
+import { normalizeWasteland } from './wasteland-progress.js';
 
 export const PROFILE_KEY = 'the-duel-profile-v1';
 export const PLAYERS_KEY = 'the-duel-players-v2';
@@ -102,7 +103,7 @@ export function createProfile() {
   return {
     version: 2,
     credits: 0,
-    weapons: normalizeWeapons(),
+    wasteland: normalizeWasteland(),
     unlockedCars: [...FREE_CARS],
     upgrades: {},
     cosmetics: normalizeCosmetics(),
@@ -138,7 +139,7 @@ export function normalizeProfile(value) {
   // A previously earned reward stays owned if the roster grows in a later update.
   profile = grantCompletionCars(profile);
   profile.cosmetics = normalizeCosmetics(value.cosmetics);
-  profile.weapons = normalizeWeapons(value.weapons);
+  profile.wasteland = normalizeWasteland(value.wasteland, value.weapons);
   profile.drivers = getDriverState({ ...profile, drivers: value.drivers });
   profile.courses = normalizeCourseAccess(value.courses, value);
   profile.raceSettings =
@@ -246,6 +247,8 @@ export function savePlayers(registry, storage) {
     const target = storage ?? globalThis.localStorage,
       normalized = normalizeRegistry(registry);
     if (!target || !normalized) return false;
+    if (normalized.players.some(player => Number.isSafeInteger(player.profile.wasteland?.version) &&
+      player.profile.wasteland.version > 1)) return false;
     target.setItem(PLAYERS_KEY, JSON.stringify(normalized));
     return true;
   } catch {

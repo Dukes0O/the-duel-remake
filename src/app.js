@@ -1,4 +1,4 @@
-import {purchaseWeaponUpgrade,normalizeWeapons} from './weapon-upgrades.js';
+import {purchaseWeaponUpgrade,getProfileWeapons} from './weapon-upgrades.js';
 import {CAMERA_MODES} from './camera-views.js';
 // app.js — owns the Duel instance, the rAF/step loop, keyboard input, the
 // scripted autopilot, dev hooks, and window.__game. Rendering (render3d.js) and
@@ -197,7 +197,7 @@ export class App {
     this._keyboardSteering.reset();
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
-    this.duel.startCampaign({...options,weaponLevels:normalizeWeapons(this.profile.weapons).levels,rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
+    this.duel.startCampaign({...options,weaponLevels:getProfileWeapons(this.profile).levels,rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     return true;
   }
   nextStage(){
