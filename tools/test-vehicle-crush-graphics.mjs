@@ -33,6 +33,13 @@ for(const {key,vehicle:v}of actors){
   if(d.driver)check(d.driver.visible,`${key}: restored driver visible`);
   check(d.fractures.every(({mesh})=>!mesh.visible),`${key}: fractures clear for next stage/menu actor`);
   updateVehicleDamage(v,1,false,0,{...clean,front:1});const normal=d.damageMeshes.map(({mesh})=>mesh.geometry.attributes.position.array.slice());
+  let dented=0;
+  for(const {mesh,rest,damageBasis} of d.damageMeshes){
+    check(damageBasis?.length===rest.length/3*15,`${key}: each body has a prepared damage basis`);
+    const position=mesh.geometry.attributes.position.array;
+    for(let i=0;i<position.length;i++)if(Math.abs(position[i]-rest[i])>.004)dented++;
+  }
+  check(dented>100,`${key}: prepared front influence retains a visible hit-zone dent`);
   updateVehicleDamage(v,1,false,0,{...clean,front:1},0);equal(d.damageMeshes.map(({mesh})=>mesh.geometry.attributes.position.array),normal,`${key}: zero crush preserves normal impact deformation`);
   updateNpcVehicleDamage(v,null);
 }

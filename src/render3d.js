@@ -233,7 +233,17 @@ export function attachRenderer(host, app) {
       sceneRevision++;
       host.dataset.opponentExplosionBuildMs=(performance.now()-buildStart).toFixed(2);
       const warmupStart=performance.now();
-      combatEffects.withWarmupVisibility(()=>renderer.compile(scene,camera));
+      // Fracture lines stay hidden on intact cars, so the regular scene
+      // preparation cannot compile their first-visible wreck programs.
+      const fractures=[player,rival,...extraOpponents.map(entry=>entry.mesh)]
+        .flatMap(car=>car?.userData.fractures||[]);
+      const visibility=fractures.map(({mesh})=>mesh.visible);
+      try {
+        fractures.forEach(({mesh})=>{mesh.visible=true;});
+        combatEffects.withWarmupVisibility(()=>renderer.compile(scene,camera));
+      } finally {
+        fractures.forEach(({mesh},index)=>{mesh.visible=visibility[index];});
+      }
       host.dataset.opponentExplosionWarmupMs=(performance.now()-warmupStart).toFixed(2);
     }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;

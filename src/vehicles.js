@@ -212,6 +212,7 @@ export function prepareVehicleDamage(vehicle) {
       mesh.material = privateMaterials.get(mesh.material);
     }
     item.normals = mesh.geometry.attributes.normal?.array.slice();
+    item.damageBasis = buildDamageBasis(item.rest, damageSpace);
     const wear = new THREE.Float32BufferAttribute(new Float32Array(mesh.geometry.attributes.position.count), 1);
     mesh.geometry.setAttribute('panelWear', wear);
     installWearShader(mesh.material);
@@ -278,7 +279,44 @@ function weightsAt(x, y, z, strengths) {
   damageWeights[3] = strengths[3] * THREE.MathUtils.smoothstep(-x, .32, .99) * door;
   return damageWeights;
 }
-function deformGeometry(mesh, rest, strengths, wear, space, roofCrush = 0) {
+// Panel influence depends only on the intact mesh. Calculate its expensive
+// curves when the car is built, before the race clock starts. Each hit then
+// combines five displacement bases without exponentials or trigonometry.
+function buildDamageBasis(rest, space) {
+  const scale = space?.scale || [1, 1, 1], offset = space?.offset || [0, 0, 0];
+  const basis = new Float32Array(rest.length / 3 * 15);
+  for (let i = 0; i < rest.length / 3; i++) {
+    const x = (rest[i * 3] - offset[0]) / scale[0];
+    const y = (rest[i * 3 + 1] - offset[1]) / scale[1];
+    const z = (rest[i * 3 + 2] - offset[2]) / scale[2];
+    const [front, rear, left, right] = weightsAt(x, y, z, [1, 1, 1, 1]);
+    const crease = Math.sin(z * 24 + x * 19) * .005 + Math.sin(y * 51 + z * 11) * .002;
+    const frontBuckle = Math.exp(-(((z - 1.65) * 7 + x * .7) ** 2)) * .10;
+    const rearBuckle = Math.exp(-(((z + 1.67) * 7 - x * .7) ** 2)) * .10;
+    const sideRipple = Math.sin(z * 7) * .012;
+    const roof = .42 + .58 * Math.exp(-((z + .12) ** 2) * .48);
+    const upper = Math.max(0, y - .43);
+    const fold = Math.sin(z * 8 + x * 3.5) * .025 * THREE.MathUtils.smoothstep(y, .45, .9);
+    const at = i * 15;
+    basis[at] = front * (-.18 + frontBuckle + crease) * scale[1];
+    basis[at + 1] = front * (-.39 + crease * 1.2) * scale[2];
+    basis[at + 2] = rear * (-.18 + rearBuckle + crease) * scale[1];
+    basis[at + 3] = rear * (.38 - crease * 1.2) * scale[2];
+    basis[at + 4] = left * (-.34 - crease * 1.4) * scale[0];
+    basis[at + 5] = left * (crease + sideRipple) * scale[1];
+    basis[at + 6] = right * (.34 + crease * 1.4) * scale[0];
+    basis[at + 7] = right * (crease + sideRipple) * scale[1];
+    basis[at + 8] = Math.sign(x) * roof * upper * .10 * scale[0];
+    basis[at + 9] = roof * (-upper * .79 + fold) * scale[1];
+    basis[at + 10] = front;
+    basis[at + 11] = rear;
+    basis[at + 12] = left;
+    basis[at + 13] = right;
+    basis[at + 14] = roof * THREE.MathUtils.smoothstep(y, .35, .85);
+  }
+  return basis;
+}
+function deformGeometry(mesh, rest, strengths, wear, space, roofCrush = 0, basis = null) {
   const a = mesh.geometry.attributes.position;
   // The default preserves existing cars; tall bodies use canonical panel space.
   const scale = space?.scale || [1, 1, 1], offset = space?.offset || [0, 0, 0];
@@ -286,6 +324,23 @@ function deformGeometry(mesh, rest, strengths, wear, space, roofCrush = 0) {
     a.array.set(rest); a.needsUpdate = true;
     if (wear) { wear.array.fill(0); wear.needsUpdate = true; }
     mesh.geometry.computeBoundingSphere(); return;
+  }
+  if (basis) {
+    const [front, rear, left, right] = strengths;
+    const positions = a.array, panelWear = wear?.array;
+    for (let i = 0, at = 0; i < a.count; i++, at += 15) {
+      const xyz = i * 3;
+      positions[xyz] = rest[xyz] + left * basis[at + 4] + right * basis[at + 6] + roofCrush * basis[at + 8];
+      positions[xyz + 1] = rest[xyz + 1] + front * basis[at] + rear * basis[at + 2]
+        + left * basis[at + 5] + right * basis[at + 7] + roofCrush * basis[at + 9];
+      positions[xyz + 2] = rest[xyz + 2] + front * basis[at + 1] + rear * basis[at + 3];
+      if (panelWear) panelWear[i] = Math.min(1, Math.max(front * basis[at + 10],
+        rear * basis[at + 11], left * basis[at + 12], right * basis[at + 13],
+        roofCrush * basis[at + 14]));
+    }
+    a.needsUpdate = true; if (wear) wear.needsUpdate = true;
+    mesh.geometry.computeBoundingSphere();
+    return;
   }
   for (let i = 0; i < a.count; i++) {
     const x = (rest[i * 3] - offset[0]) / scale[0], y = (rest[i * 3 + 1] - offset[1]) / scale[1], z = (rest[i * 3 + 2] - offset[2]) / scale[2];
@@ -340,8 +395,8 @@ export function updateVehicleDamage(vehicle, count, catastrophic, age = 0, damag
     paint.color.copy(data.originalColor).lerp(new THREE.Color(0x191a1b), catastrophic ? .88 : total * .018);
     paint.roughness = catastrophic ? .94 : data.damageBase?.roughness ?? .22;
     paint.clearcoat = catastrophic ? .05 : data.damageBase?.clearcoat ?? 1;
-    for (const { mesh, rest, normals } of data.damageMeshes || []) {
-      deformGeometry(mesh, rest, strengths, mesh.geometry.attributes.panelWear, data.damageSpace, roofCrush);
+    for (const { mesh, rest, normals, damageBasis } of data.damageMeshes || []) {
+      deformGeometry(mesh, rest, strengths, mesh.geometry.attributes.panelWear, data.damageSpace, roofCrush, damageBasis);
       if (roofCrush || strengths.some(Boolean)) mesh.geometry.computeVertexNormals();
       else if (normals) { mesh.geometry.attributes.normal.array.set(normals); mesh.geometry.attributes.normal.needsUpdate = true; }
     }
