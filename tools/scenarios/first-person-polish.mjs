@@ -73,6 +73,86 @@ export function rookCandidateFetchInstallScript(base64,origin) {
   })();`;
 }
 
+/** Assess raw native-frame evidence; browser collection is kept separate. */
+export function assessFirstPersonP1FrameCost({reports,candidateSha256,productionSha256}) {
+  const failures=[],qualities={};
+  const expected=['A1','B','A2'];
+  const summarize=values=>{
+    const sorted=[...values].sort((a,b)=>a-b);
+    return {mean:values.reduce((sum,value)=>sum+value,0)/values.length,
+      p50:sorted[Math.ceil(sorted.length*.5)-1],
+      p95:sorted[Math.ceil(sorted.length*.95)-1],max:sorted.at(-1)};
+  };
+  if(!/^[0-9a-f]{64}$/i.test(candidateSha256||'')||
+      !/^[0-9a-f]{64}$/i.test(productionSha256||''))
+    failures.push('Asset SHA-256 evidence missing');
+  if(!Array.isArray(reports)||reports.length!==2||
+      reports.map(row=>row.quality).join(',')!=='high,performance')
+    failures.push('Expected High and Performance reports in order');
+  for(const row of reports||[]) {
+    if(!['high','performance'].includes(row.quality))continue;
+    if(!Array.isArray(row.branches)||row.branches.map(item=>item.branch).join(',')!==expected.join(',')) {
+      failures.push(row.quality+': missing A1/B/A2');continue;
+    }
+    const summaries={};
+    const course=row.branches[0].courseSignature,pose=row.branches[0].poseSignature;
+    for(const branch of row.branches) {
+      const tag=row.quality+'/'+branch.branch,selected=branch.branch==='B';
+      const path=branch.asset?.path?.replaceAll('\\','/');
+      const badPath=selected ? !path?.startsWith('art-build/first-person-p1/')||
+        !path.endsWith('/hands/rook.glb')||path.includes('../') :
+        path!=='public/assets/models/wasteland/first-person/hands/rook.glb';
+      if(branch.asset?.kind!==(selected?'candidate':'production')||
+          branch.asset?.sha256!==(selected?candidateSha256:productionSha256)||
+          badPath)
+        failures.push(tag+': wrong source asset');
+      if(branch.candidateRequests!==(selected?1:0)||branch.observedQuality!==row.quality)
+        failures.push(tag+': wrong swap count or observed quality');
+      if(!course||!pose||branch.courseSignature!==course||branch.poseSignature!==pose)
+        failures.push(tag+': course or pose changed');
+      if(branch.warmFrames!==30||branch.renderFrameCalls!==630||branch.nativeRafTicks!==630)
+        failures.push(tag+': expected 30 warm and 600 full native frames');
+      for(const [name,positive] of [['rafSamplesMs',true],['renderCpuSamplesMs',true],
+        ['drawCallSamples',true],['triangleSamples',true],['textureCountSamples',false]]) {
+        const samples=branch[name];
+        if(!Array.isArray(samples)||samples.length!==600||samples.some(value=>
+          !Number.isFinite(value)||(positive?value<=0:value<0)))
+          failures.push(tag+': invalid '+name);
+      }
+      for(const name of ['handsVisibleSamples','toolVisibleSamples'])if(!Array.isArray(branch[name])||
+          branch[name].length!==600||branch[name].some(value=>value!==true))
+        failures.push(tag+': hidden or missing '+name);
+      if(['rafSamplesMs','renderCpuSamplesMs','drawCallSamples','triangleSamples',
+        'textureCountSamples'].every(name=>Array.isArray(branch[name])&&
+          branch[name].length===600&&branch[name].every(Number.isFinite))&&
+          Array.isArray(branch.rafSamplesMs)&&branch.rafSamplesMs.length===600&&
+          branch.rafSamplesMs.every(value=>Number.isFinite(value)&&value>0)&&
+          Array.isArray(branch.renderCpuSamplesMs)&&branch.renderCpuSamplesMs.length===600&&
+          branch.renderCpuSamplesMs.every(value=>Number.isFinite(value)&&value>0))
+        summaries[branch.branch]={raf:summarize(branch.rafSamplesMs),
+          renderCpu:summarize(branch.renderCpuSamplesMs),
+          draws:summarize(branch.drawCallSamples),triangles:summarize(branch.triangleSamples),
+          textures:summarize(branch.textureCountSamples)};
+    }
+    if(expected.every(branch=>summaries[branch])) {
+      const ratios={};
+      for(const baseline of ['A1','A2']) {
+        ratios[baseline]={cpuMean:summaries.B.renderCpu.mean/summaries[baseline].renderCpu.mean,
+          cpuP95:summaries.B.renderCpu.p95/summaries[baseline].renderCpu.p95,
+          rafP95:summaries.B.raf.p95/summaries[baseline].raf.p95};
+        if(Object.values(ratios[baseline]).some(value=>!Number.isFinite(value)||value>1.10))
+          failures.push(row.quality+': candidate exceeds 1.10 versus '+baseline);
+      }
+      qualities[row.quality]={summaries,ratios,baselineDrift:{
+        cpuMean:summaries.A2.renderCpu.mean/summaries.A1.renderCpu.mean,
+        cpuP95:summaries.A2.renderCpu.p95/summaries.A1.renderCpu.p95,
+        rafP95:summaries.A2.raf.p95/summaries.A1.raf.p95}};
+    }
+  }
+  return {passed:failures.length===0,failures,qualities,
+    scope:'Native RAF plus one full production renderFrame CPU submission per frame; not GPU time'};
+}
+
 export async function run(context) {
   const root = fileURLToPath(new URL('../../',import.meta.url));
   const round = Number(process.env.GFX_FIRST_PERSON_P1_ROUND || 1);
@@ -83,6 +163,8 @@ export async function run(context) {
   const candidate = await validateFirstPersonCandidatePath({root,candidatePath,productionPath});
   const candidateBytes = await readFile(candidate.absolute);
   const contactOnly = process.env.GFX_FIRST_PERSON_CONTACT_ONLY === '1';
+  const costOnly = process.env.GFX_FIRST_PERSON_P1_FRAME_COST === '1';
+  if(contactOnly&&costOnly)throw Error('Choose contact or frame-cost diagnostic, not both');
   const blender = JSON.parse(await readFile(join(root,
     'art-build/first-person-p1/candidate/evidence/blender-manifest.json'),'utf8'));
   if (blender.family !== 'first-person-p1' || blender.round !== round ||
@@ -90,13 +172,36 @@ export async function run(context) {
     throw Error('Frozen Blender source module does not match selected Rook candidate');
   const camera = {position:[0,0,0],target:[0,0,-1],verticalFov:72,near:.15,width:1280,height:720};
   if (JSON.stringify(blender.camera) !== JSON.stringify(camera)) throw Error('Blender camera changed');
-  const manifestPath = join(context.outputDir,contactOnly?'contact.json':'captures.json');
+  const manifestPath = join(context.outputDir,costOnly?'cost.json':contactOnly?'contact.json':'captures.json');
   try {await access(manifestPath);throw Error('Completed first-person P1 evidence is immutable');}
   catch (error) {if (error.code !== 'ENOENT') throw error;}
   const relativePath = path => relative(root,path).replaceAll('\\','/');
   const handHashes = async () => Object.fromEntries(await Promise.all(IDS.map(async id =>
     [id,sha(await readFile(join(root,`public/assets/models/wasteland/first-person/hands/${id}.glb`)))])));
   const productionBefore = await handHashes();
+  if(costOnly) {
+    const reports=[];
+    for(const quality of ['high','performance']) {
+      const branches=[];
+      for(const branch of ['A1','B','A2'])branches.push(await measureProductionHandFrameCost({
+        context,root,quality,branch,candidateBytes,originPath:ASSET,
+        productionSha256:productionBefore.rook,candidateSha256:candidate.sha256,
+        candidatePath:relativePath(candidate.absolute)}));
+      reports.push({quality,branches});
+    }
+    const assessment=assessFirstPersonP1FrameCost({reports,
+      candidateSha256:candidate.sha256,productionSha256:productionBefore.rook});
+    const productionAfter=await handHashes();
+    if(IDS.some(id=>productionAfter[id]!==productionBefore[id]))
+      throw Error('Production hand asset changed during frame-cost measurement');
+    await writeFile(manifestPath,JSON.stringify({family:'first-person-p1-frame-cost',round,
+      observationCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
+      candidate:{path:relativePath(candidate.absolute),sha256:candidate.sha256},
+      productionBefore,productionAfter,reports,assessment},null,2)+'\n',{flag:'wx'});
+    console.log('First-person P1 native A1/B/A2 cost: '+JSON.stringify({passed:assessment.passed,
+      failures:assessment.failures,qualities:assessment.qualities}));
+    return;
+  }
   const evidence = {family:'first-person-p1',round,
     observationCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
     candidate:{path:relativePath(candidate.absolute),sha256:candidate.sha256},camera,
@@ -310,6 +415,116 @@ async function matchedPose(context,source,quality) {
       actualCamera:{position:r.camera.position.toArray(),quaternion:r.camera.quaternion.toArray(),
         fov:r.camera.fov,near:r.camera.near,far:r.camera.far,aspect:r.camera.aspect}};
   })()`);
+}
+
+async function measureProductionHandFrameCost({context,root,quality,branch,candidateBytes,
+  originPath,productionSha256,candidateSha256,candidatePath}) {
+  await context.command('Emulation.setDeviceMetricsOverride',
+    {width:1280,height:720,deviceScaleFactor:1,mobile:false});
+  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.waitFor('!!window.__qaApp?.visualReady && !!window.__render && window.__qaP1CostPage===undefined',
+    'fresh private first-person cost page',60000);
+  const origin=await context.evaluate('window.location.origin');
+  await context.evaluate(`(() => {
+    const storage=Object.getOwnPropertyDescriptor(window,'localStorage');
+    if(!storage?.value||!window.name.startsWith('__duel_qa_tab_v2:'))
+      throw Error('First-person cost needs verified memory-only storage');
+    window.__QA_MEMORY_STORAGE__=true;
+    window.__qaP1CostPage=${JSON.stringify(quality+'/'+branch)};
+    window.__rookProductionRequests=0;window.__rookCandidateSwapCount=0;
+    const fetch=window.fetch;
+    window.fetch=function(input,init) {
+      const value=typeof input==='string'?input:input?.url;
+      const u=new URL(value,window.location.origin);
+      if((value===${JSON.stringify(originPath)}||value===u.href)&&
+        u.origin===window.location.origin&&u.pathname===${JSON.stringify(originPath)}&&
+        !u.search&&!u.hash)window.__rookProductionRequests++;
+      return fetch.call(window,input,init);
+    };
+  })()`);
+  if(branch==='B')await context.evaluate(rookCandidateFetchInstallScript(
+    candidateBytes.toString('base64'),origin));
+  await context.evaluate(`(() => {
+    const select=document.querySelector('#graphics-quality');
+    select.value=${JSON.stringify(quality)};select.dispatchEvent(new Event('change',{bubbles:true}));
+    const app=window.__qaApp;
+    if(!app.startCampaign({mode:'wasteland',startStage:0,seed:1989}))
+      throw Error('First-person cost course did not start');
+    app.stop();const s=app.duel.state;
+    Object.assign(s,{status:'racing',countdown:0,paused:false,s:500,prevS:500,
+      lateral:0,prevLateral:0,speedMph:0,traffic:[]});
+    s.rival.s=s.s+55;s.rival.lateral=3;s.raids=null;
+    s.combat.aiTimer=Infinity;s.combat.pickupTimer=Infinity;
+    app.duel._rival=()=>{};app.duel._traffic=()=>{};
+    app.onFrame?.(s);window.__render.renderFrame();
+  })()`);
+  await context.waitFor('window.__qaApp.visualReady','cost course visual ready',60000);
+  await key(context,'keyDown','KeyF','f',70);
+  await context.evaluate('window.__qaApp.advance(.42)');
+  await key(context,'keyUp','KeyF','f',70);
+  await context.waitFor(`(() => {window.__render.renderFrame();return (
+    window.__qaApp.duel.state.onFoot &&
+    window.__render.scene.getObjectByName('First-person hands and gear')?.userData.assetStatus==='ready');})()`,
+    'native hand cost pose loaded',60000);
+  await context.evaluate(`(() => {
+    const app=window.__qaApp,s=app.duel.state;
+    Object.assign(s.fighter,{crewId:'rook',speed:0,airHeight:0,verticalSpeed:0,knockedDown:false});
+    s.stageTimeSec=.25;s.fighterInput={aim:false};
+    Object.assign(s.footWeapons,{selected:'rpg',ammo:3,serial:0,lastFireAt:undefined,
+      nextFireAt:0,repairing:false,repairSeconds:0,repairAmount:0});
+    app.onFrame?.(s);window.__render.renderFrame();
+  })()`);
+  const observed=await context.evaluate(`(async()=>{
+    const app=window.__qaApp,s=app.duel.state,r=window.__render;
+    const rig=r.scene.getObjectByName('First-person hands and gear');
+    if(!rig?.visible||rig.userData.assetStatus!=='ready')throw Error('Hand cost rig not visible');
+    const savedRaf=window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame=()=>0;
+    const signature=()=>JSON.stringify({course:app.duel.course?.def?.id,seed:1989,
+      status:s.status,onFoot:s.onFoot,s:s.s,lateral:s.lateral,
+      fighter:[s.fighter?.x,s.fighter?.y,s.fighter?.z,s.fighter?.yaw,s.fighter?.pitch],
+      camera:r.camera.position.toArray(),quaternion:r.camera.quaternion.toArray()});
+    const courseSignature=signature();
+    const poseSignature=JSON.stringify({crew:rig.userData.presentation.crewId,
+      weapon:rig.userData.presentation.weapon,action:rig.userData.presentation.action,
+      aim:rig.userData.presentation.aim,progress:rig.userData.presentation.actionProgress,
+      motion:rig.userData.presentation.motionTime});
+    const rafSamplesMs=[],renderCpuSamplesMs=[],drawCallSamples=[],triangleSamples=[],
+      textureCountSamples=[],handsVisibleSamples=[],toolVisibleSamples=[];
+    const visible=node=>{for(let p=node;p;p=p.parent)if(!p.visible)return false;return true;};
+    let last=0,renderFrameCalls=0,nativeRafTicks=0;
+    for(let i=0;i<630;i++){
+      const now=await new Promise(savedRaf);nativeRafTicks++;
+      const started=performance.now(),metrics=r.renderFrame(),cpu=performance.now()-started;
+      renderFrameCalls++;
+      if(i>=30){
+        const hands=[];rig.traverse(node=>{if(node.isSkinnedMesh&&node.userData.handRegions)hands.push(node);});
+        const tool=rig.getObjectByName('rpg-body');
+        rafSamplesMs.push(now-last);renderCpuSamplesMs.push(cpu);
+        drawCallSamples.push(metrics.drawCalls);triangleSamples.push(metrics.triangles);
+        textureCountSamples.push(r.renderer.info.memory.textures);
+        handsVisibleSamples.push(hands.length===1&&visible(hands[0]));
+        toolVisibleSamples.push(!!tool&&visible(tool));
+      }
+      last=now;
+    }
+    window.requestAnimationFrame=savedRaf;
+    if(signature()!==courseSignature)throw Error('Course or camera drifted during hand cost sample');
+    return{courseSignature,poseSignature,rafSamplesMs,renderCpuSamplesMs,
+      drawCallSamples,triangleSamples,textureCountSamples,handsVisibleSamples,
+      toolVisibleSamples,renderFrameCalls,nativeRafTicks,
+      observedQuality:document.querySelector('#graphics-quality')?.value,
+      candidateRequests:window.__rookCandidateSwapCount,
+      productionRequests:window.__rookProductionRequests,
+      assetStatus:rig.userData.assetStatus,textureCount:r.renderer.info.memory.textures};
+  })()`);
+  if(branch==='B'&&observed.candidateRequests!==1||branch!=='B'&&
+      (observed.candidateRequests!==0||observed.productionRequests!==1))
+    throw Error(quality+'/'+branch+': wrong actual Rook fetch counts');
+  return {branch,asset:branch==='B'?{kind:'candidate',path:candidatePath,
+    sha256:candidateSha256}:{kind:'production',
+    path:'public/assets/models/wasteland/first-person/hands/rook.glb',
+    sha256:productionSha256},warmFrames:30,...observed};
 }
 
 // This diagnostic samples the production renderer after each pose. The bind
