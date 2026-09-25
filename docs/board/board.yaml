@@ -1170,6 +1170,7 @@ tasks:
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
     owns: [tools/audio/, tools/audio-analysis.mjs, tools/audio-race-check.js, tools/test-audio-listening.mjs, tools/scenarios/audio-listening.mjs, docs/audio/, docs/board/listening/, docs/changes/AUD-11.md]
+    hooks: [tools/vite-qa.config.js]
     helpers: [test_author, reviewer, audio_qa]
     acceptance:
       - "Play cues over engine and ambience with A/B/C variants; save human ratings and notes as verdict files."
