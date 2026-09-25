@@ -1780,3 +1780,16 @@ tasks:
     needs: []
     owns: [tools/build-status.mjs, tools/test-build-status.mjs, docs/changes/FIX-STATUS-SCOPE.md]
     done_when: "Exact branch exclusions retain ref-only status with dirty unknown and removable false; no skipped-folder access; normal inspection unchanged; independent tests then lane and build."
+
+  - id: JANITOR-AUDIO-NOTES
+    title: Fold completed audio recipes and verdicts into current docs
+    lane: OPS
+    size: S
+    status: in-progress
+    branch: codex/janitor-audio-notes
+    needs: [AUD-10, AUD-11, AUD-GATEKEEPER, AUD-14]
+    owns: [docs/AUDIO_ITERATION.md, docs/changes/AUD-10.md, docs/changes/AUD-11.md, docs/changes/AUD-GATEKEEPER.md, docs/changes/AUD-14.md, docs/changes/JANITOR-AUDIO-NOTES.md]
+    acceptance:
+      - "Replace stale public WAV/source instructions with current compressed runtime/catalog/source recipes; retain current engine behavior, strict comparison, routing, booth and measurements, kept gatekeeper, combat build/flight policy and pending listening caveats."
+      - "Delete the four consumed task notes only after fact preservation review. Preserve Kyle's AUD-12 picks, pending AUD-17 note/auditions, licenses, runtime assets and external branch/folder."
+      - "Docs only: independent review and normal lane/build gate; no source, test, credit, runtime or external-folder changes."
