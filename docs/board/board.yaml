@@ -1770,3 +1770,12 @@ tasks:
       - "Independent tests cover moving listener/actors, left/right, approach/recede, nearest selection, voice stealing, wreck/despawn/respawn, pause/menu/stage/flag-off cleanup and restart. Audio must not mutate simulation or saves."
       - "Keep the original flag-off waveform comparator unchanged. Record a private memory-only full-throttle near/far browser mix, resource/frame measurements and at least three measured listening rounds; mark missing human ratings explicitly."
     note: "Read-only preparation only. Kyle limited the current external session to AUD-10, AUD-11, kept gatekeeper, AUD-14 and optional AUD-17 candidates; it will stop after its final gate. Do not start this slice tonight or create another audio lane. Surface tires, scrapes/landings, convolution reverb, ambience one-shots and remaining arrival work need later AUD-15 slices. No new source downloads or credits are authorized by this card."
+
+  - id: FIX-STATUS-SCOPE
+    title: Exclude protected lane folders from status inspection
+    lane: TOOL
+    status: in-progress
+    branch: codex/fix-status-scope
+    needs: []
+    owns: [tools/build-status.mjs, tools/test-build-status.mjs, docs/changes/FIX-STATUS-SCOPE.md]
+    done_when: "Exact branch exclusions retain ref-only status with dirty unknown and removable false; no skipped-folder access; normal inspection unchanged; independent tests then lane and build."
