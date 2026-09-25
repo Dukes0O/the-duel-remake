@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {existsSync, readFileSync} from 'node:fs';
+import {existsSync, readFileSync, mkdirSync, rmSync, writeFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
+import {runInNewContext} from 'node:vm';
 import {createHash} from 'node:crypto';
 import {inflateSync} from 'node:zlib';
 import * as THREE from 'three';
@@ -458,4 +459,104 @@ test('Rook exported palm and all five digits on each side form one welded deform
         `${digit} is a disconnected tube/shell rather than part of the ${side} palm`);
     }
   }
+});
+
+test('private review resolves only an existing ignored Rook hand GLB, never production or outside paths', async () => {
+  const scenario = await import('./scenarios/first-person-polish.mjs');
+  assert.equal(typeof scenario.validateFirstPersonCandidatePath, 'function');
+  const privateDir = join(root, 'art-build/first-person-p1/test-private-review');
+  const privatePath = join(privateDir, 'rook.glb');
+  const outsideDir = join(root, 'art-build/first-person');
+  const outsidePath = join(outsideDir, 'test-private-outside.glb');
+  mkdirSync(privateDir, {recursive: true});
+  mkdirSync(outsideDir, {recursive: true});
+  const bytes = readFileSync(baseline);
+  writeFileSync(privatePath, bytes);
+  writeFileSync(outsidePath, bytes);
+  const args = {root, productionPath: baseline};
+  try {
+    const selected = await scenario.validateFirstPersonCandidatePath({...args, candidatePath: privatePath});
+    assert.equal(selected.absolute, privatePath);
+    assert.equal(selected.sha256, sha256(bytes));
+    for (const bad of [baseline, outsidePath, join(root, '..', 'outside-rook.glb'),
+      join(root, 'art-build/first-person-p1/test-private-review/missing.glb')])
+      await assert.rejects(() => scenario.validateFirstPersonCandidatePath({...args, candidatePath: bad}),
+        /public|production|outside|missing|exist|ENOENT|ignored/i);
+    const wrongExt = join(privateDir, 'rook.txt');
+    writeFileSync(wrongExt, bytes);
+    try {await assert.rejects(() => scenario.validateFirstPersonCandidatePath({...args, candidatePath: wrongExt}),
+      /glb|extension|asset/i);} finally {rmSync(wrongExt, {force: true});}
+  } finally {rmSync(privatePath, {force: true}); rmSync(outsidePath, {force: true});}
+});
+
+test('private review recognizes only the exact same-origin Rook hands request', async () => {
+  const scenario = await import('./scenarios/first-person-polish.mjs');
+  assert.equal(typeof scenario.rookAssetUrl, 'function');
+  const origin = 'http://127.0.0.1:42371';
+  const path = '/assets/models/wasteland/first-person/hands/rook.glb';
+  assert.equal(scenario.rookAssetUrl(path, origin), true);
+  assert.equal(scenario.rookAssetUrl(`${origin}${path}`, origin), true);
+  for (const other of [`${path}?v=1`, `${path}#copy`, `${path}/extra`,
+    '/assets/models/wasteland/first-person/hands/nell.glb',
+    '/assets/models/wasteland/crew/rook.glb',
+    `https://example.net${path}`, `http://127.0.0.1:42372${path}`])
+    assert.equal(scenario.rookAssetUrl(other, origin), false, `${other} must not be substituted`);
+});
+
+test('private review verifies one real Rook substitution and all eight production hashes', async () => {
+  const scenario = await import('./scenarios/first-person-polish.mjs');
+  assert.equal(typeof scenario.verifyCandidateSwap, 'function');
+  const origin = 'http://127.0.0.1:42371';
+  const requestedUrl = `${origin}/assets/models/wasteland/first-person/hands/rook.glb`;
+  const candidateBytes = readFileSync(baseline);
+  const productionBefore = {...baselineHashes}, productionAfter = {...baselineHashes};
+  const valid = {requestedUrl, origin, candidateBytes, productionBefore, productionAfter, swapCount: 1};
+  assert.doesNotThrow(() => scenario.verifyCandidateSwap(valid));
+  for (const swapCount of [0, 2])
+    assert.throws(() => scenario.verifyCandidateSwap({...valid, swapCount}), /substitut|swap|count|once/i);
+  assert.throws(() => scenario.verifyCandidateSwap({...valid,
+    requestedUrl: `${origin}/assets/models/wasteland/first-person/hands/nell.glb`}), /rook|url|request/i);
+  assert.throws(() => scenario.verifyCandidateSwap({...valid,
+    candidateBytes: Buffer.from([1, 2, 3, 4])}), /glb|asset|magic|candidate/i);
+  const changed = {...productionAfter, nell: '0'.repeat(64)};
+  assert.throws(() => scenario.verifyCandidateSwap({...valid, productionAfter: changed}),
+    /hash|production|baseline|changed/i);
+  const incomplete = {...productionAfter}; delete incomplete.tusk;
+  assert.throws(() => scenario.verifyCandidateSwap({...valid, productionAfter: incomplete}),
+    /eight|missing|production|baseline|crew/i);
+});
+
+test('the actual browser fetch wrapper substitutes Rook once only after private memory setup', async () => {
+  const scenario = await import('./scenarios/first-person-polish.mjs');
+  assert.equal(typeof scenario.rookCandidateFetchInstallScript, 'function');
+  const origin = 'http://127.0.0.1:42371';
+  const bytes = Buffer.from([103, 108, 84, 70, 2, 0, 0, 0, 12, 0, 0, 0]);
+  const script = scenario.rookCandidateFetchInstallScript(bytes.toString('base64'), origin);
+  assert.equal(typeof script, 'string');
+  const delegated = [];
+  const original = async (input, init) => {delegated.push({input, init}); return {delegated: true};};
+  class ResponseStub {
+    constructor(body, init) {this.body = body; this.init = init;}
+    async arrayBuffer() {return Uint8Array.from(this.body).buffer;}
+  }
+  const window = {location: {origin, href: `${origin}/qa.html`},
+    __QA_MEMORY_STORAGE__: true, fetch: original};
+  const globals = {window, Response: ResponseStub, URL, Uint8Array, atob, Buffer};
+  runInNewContext(script, globals);
+  const path = '/assets/models/wasteland/first-person/hands/rook.glb';
+  const swapped = await window.fetch(path, {cache: 'no-store'});
+  assert.deepEqual(Buffer.from(await swapped.arrayBuffer()), bytes, 'actual wrapper returned candidate bytes');
+  assert.match(String(swapped.init?.headers?.['Content-Type'] ||
+    swapped.init?.headers?.['content-type']), /model\/gltf-binary/i);
+  assert.equal(window.__rookCandidateSwapCount, 1);
+  for (const other of [`${path}?v=1`, `${path}/extra`,
+    '/assets/models/wasteland/first-person/hands/nell.glb',
+    '/assets/models/wasteland/crew/rook.glb', `https://example.net${path}`]) {
+    const init = {signal: 'sentinel'};
+    assert.equal((await window.fetch(other, init)).delegated, true);
+    assert.deepEqual(delegated.at(-1), {input: other, init}, 'delegation preserves input and init');
+  }
+  const unsafe = {location: window.location, fetch: original};
+  assert.throws(() => runInNewContext(script, {...globals, window: unsafe}), /memory|private|guard/i);
+  assert.equal(unsafe.fetch, original, 'failed memory guard cannot replace fetch');
 });
