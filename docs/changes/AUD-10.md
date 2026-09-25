@@ -9,8 +9,8 @@ player_facing: yes
 # Sound bank and mixer
 
 AUD-10 is not ready to merge. The sound-bank migration, compression and mixer
-are implemented. A strict new waveform comparison remains unresolved. Later
-audio cards have not started and no ElevenLabs credits have been spent.
+are implemented. A strict new waveform comparison remains unresolved. AUD-11, gatekeeper and AUD-14 are implemented in separate in-progress notes.
+AUD-17 produced ten candidates using 400 credits, with none kept.
 
 ## Design
 
@@ -20,7 +20,8 @@ Unity-gain buses feed the existing master compressor. Engine and vehicle
 sounds retain the old perspective and tunnel path; originally dry vehicle
 sounds retain a dry branch. Lossless FLAC preserves every decoded runtime
 sample and loop boundary. This avoids a lossy-codec change in the foundation
-card. New ducking and moving-source playback require wasteland2.
+card. Combat ducking and moving-source playback require wasteland2. The new
+gatekeeper voice independently permits voice ducking under hidden-road.
 
 The mixer has per-cue limits and a 64-cue total budget, with priority when
 full. Retired cues fade. Music and ambience duck for blasts or voice requests.
@@ -181,3 +182,17 @@ and 0.000001774 after it. Diagnostic run: audio-baseline at
 The independent AUD-12-R1 fix is now ready in its own note. Full tier on
 9268cb9 passed 254/254 with clean start and end. This does not resolve the
 AUD-10 card-specific comparison.
+
+## Final baseline recheck
+
+After the later feature-switch regressions were fixed, the unchanged strict
+comparison still fails only the 14-second race: peak .000016466, RMS
+.0000000890, reference-control peak .000001788. Pre-limiter peak difference
+is .000000179. The other four cases pass below .000000269. This agrees with
+the prior diagnostic, not a newly audible mismatch. It still does not meet
+the authored strict assertion, so no readiness claim is made.
+
+The Director suggested preserving the exact old summation graph when switches
+are off. That remains a possible design change, but it must be reconciled with
+the card's named-bus contract before bypassing bus nodes. No graph bypass or
+threshold change was applied. Kyle's explicit tolerance decision is pending.
