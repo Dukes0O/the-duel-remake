@@ -146,9 +146,9 @@ files are exact, including the selected Callum take. Both licensed source
 FLACs also decode to the exact original PCM. Do not merge this card until the baseline finding and remaining gates
 are resolved and this note explicitly says ready-to-merge.
 
-AUD-11, gatekeeper wiring, AUD-14 and AUD-17 have not started. Before any future
-voice generation, complete the Director's AUD-12-R1 fake-only regression for
-preserving returned takes when the later subscription query fails.
+AUD-11 and gatekeeper wiring are implemented in their own in-progress notes.
+AUD-14 and AUD-17 are next. AUD-12-R1 was independently integrated by the
+Director at d355b9a after fake-only validation; no credits were used.
 
 ## Baseline follow-up
 
