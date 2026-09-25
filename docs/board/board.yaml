@@ -302,7 +302,7 @@ tasks:
     needs: [GFX-01-P1]
     status: building
     owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, docs/board/looks/crew-p2/]
-    hooks: [tools/test-rook-p2-source.mjs, tools/test-blender-output.mjs]
+    hooks: [tools/test-rook-p2-source.mjs, tools/test-rook-p2-candidate.mjs, tools/test-blender-output.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: wasteland2
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
@@ -388,7 +388,7 @@ tasks:
     needs: [EGG-02-P1]
     status: building
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall-p2/]
-    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-sheet.mjs, tools/test-rustwall-p2-relief.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: hidden-road
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
