@@ -25,9 +25,24 @@ p.add_argument('--p2-section-probe', action='store_true', help='Build only one o
 p.add_argument('--p2-wheel-probe', action='store_true', help='Export one isolated cheap source-car tire measurement in ignored art-build')
 p.add_argument('--p2-relief-probe', action='store_true', help='Export one offline source-car relief and atlas packing proof')
 p.add_argument('--output-dir', help='Ignored isolated P2 QA output under art-build/rustwall-p2 only')
+p.add_argument('--steel-paint', help='Explicit ignored P2 steel paint PNG input')
+p.add_argument('--steel-paint-sha256', help='Required SHA-256 of explicit steel paint input')
 args = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 qa_root=(root / 'art-build/rustwall-p2').resolve()
+steel_paint_path=None
+if bool(args.steel_paint)!=bool(args.steel_paint_sha256):
+    raise ValueError('--steel-paint and --steel-paint-sha256 are required together')
+if args.steel_paint:
+    if not args.p2:raise ValueError('--steel-paint is for P2 only')
+    steel_paint_path=(root / args.steel_paint).resolve()
+    if qa_root not in steel_paint_path.parents or steel_paint_path.suffix.lower()!='.png':
+        raise ValueError('--steel-paint must be an ignored P2 art-build PNG')
+    supplied=args.steel_paint_sha256.lower()
+    if len(supplied)!=64 or any(ch not in '0123456789abcdef' for ch in supplied):
+        raise ValueError('--steel-paint-sha256 must be 64 hexadecimal characters')
+    if not steel_paint_path.is_file() or hashlib.sha256(steel_paint_path.read_bytes()).hexdigest()!=supplied:
+        raise ValueError('--steel-paint source hash does not match')
 if args.output_dir:
     if not (args.p2 or args.p2_relief_probe):raise ValueError('--output-dir is for isolated P2 QA only')
     requested=(root / args.output_dir).resolve()
@@ -150,6 +165,33 @@ PALETTES = {
 }
 
 
+def p2_steel_paint_source():
+    """Three full-height fields for the unused steel atlas quadrant."""
+    if steel_paint_path is not None:
+        image=bpy.data.images.load(str(steel_paint_path),check_existing=False)
+        try:
+            image.scale(216,232)
+            raw=np.empty(216*232*4,np.float32)
+            image.pixels.foreach_get(raw)
+            return raw.reshape((232,216,4))
+        finally:
+            bpy.data.images.remove(image)
+    # Clean-checkout test fixture. The approved trial PNG is an ignored input;
+    # this fixed-seed field makes the packing/UV contract reproducible without it.
+    seed=np.random.default_rng(240925)
+    yy,xx=np.mgrid[:232,:216]
+    grain=seed.uniform(-.018,.018,(232,216))
+    vertical=np.sin(xx*.11+np.sin(yy*.043)*.8)*.025
+    oxide=np.clip(np.sin(xx*.09+yy*.037)*.20+np.sin(yy*.06)*.10,0,.31)
+    bases=np.array(((.26,.27,.25),(.27,.29,.23),(.31,.24,.19)))
+    image=np.ones((232,216,4),np.float32)
+    for part in range(3):
+        region=slice(part*72,(part+1)*72)
+        rgb=bases[part][None,None,:]*(1+grain[:,region,None]+vertical[:,region,None])
+        image[:,region,:3]=rgb*(1-oxide[:,region,None])+np.array((.32,.18,.10))*oxide[:,region,None]
+    return image
+
+
 def material(name):
     rng = np.random.default_rng(int(hashlib.sha256(name.encode()).hexdigest()[:8], 16))
     color = np.ones((1024,1024,4), np.float32)
@@ -251,10 +293,33 @@ def material(name):
         if atlas_size == 1024: return pixels
         return pixels.reshape(512,2,512,2,4).mean(axis=(1,3)).astype(np.float32)
     images = {}
+    paint=p2_steel_paint_source() if name=='steel' and args.p2 else None
     for label,pixels in [('color',color),('surface',orm),('normal',normal)]:
+        atlas=atlas_pixels(pixels)
+        if paint is not None:
+            for part,x0 in enumerate((264,344,424)):
+                patch=paint[:,part*72:(part+1)*72,:3]
+                # Blender image pixels start at the bottom; exported PNG scan
+                # lines start at the top. Raw y268..499 lands in the actual
+                # unused PNG upper-right block, y12..243.
+                target=atlas[268:500,x0:x0+72]
+                if label=='color':
+                    target[:,:,:3]=patch
+                elif label=='surface':
+                    grey=patch.mean(axis=2)
+                    target[:,:,0]=1
+                    target[:,:,1]=np.clip(.78+(grey-.28)*.43,.63,.92)
+                    target[:,:,2]=np.clip(.40+(grey-.28)*.52,.18,.64)
+                else:
+                    grey=patch.mean(axis=2)
+                    dy,dx=np.gradient(grey)
+                    vec=np.stack((-dx*3.2,-dy*3.2,np.ones_like(dx)),axis=-1)
+                    vec/=np.linalg.norm(vec,axis=-1,keepdims=True)
+                    target[:,:,:3]=vec*.5+.5
+                target[:,:,3]=1
         image = bpy.data.images.new(f'{name}-{label}',atlas_size,atlas_size,alpha=True)
         if label != 'color': image.colorspace_settings.name = 'Non-Color'
-        image.pixels.foreach_set(atlas_pixels(pixels).ravel())
+        image.pixels.foreach_set(atlas.ravel())
         image.filepath_raw = str(texture_path(name, label))
         image.file_format = 'PNG'
         image.save(); image.pack(); images[label] = image
@@ -583,12 +648,35 @@ def p2_facade(body,frames,relief):
                 panel_width=right_end-left_end
                 # Irregular adjacent steel sheets retain broad painted regions.
                 body.box(((left_end+right_end)/2,y,face),(panel_width,5.50,.36),
-                         [4,9,2,5,8,13,1][(row+index*2)%7])
+                         [9,3,6,9,3,9][(row+index)%6])
                 frames.box(((left_end+right_end)/2,y+2.79,face-.22),
-                           (panel_width+.2,.18,.38),6)
+                           (panel_width+.2,.18,.38),9)
+        if index in (2,4,7,9):
+            # Two physically scaled full-height plates interrupt the former
+            # six-color sheet bands. A narrow third mass remains broken iron.
+            for plate_index,(x0,x1) in enumerate(((left+1.4,left+11.0),
+                                                   (right-11.0,right-1.4))):
+                plate_z=front-1.18-.18*plate_index
+                frames.box(((x0+x1)/2,17.5,plate_z+.62),
+                           (x1-x0,35,1.22),9 if plate_index else 3)
+                atlas_x=(264,344,424)[(index+plate_index)%3]
+                face=[frames.vertex((x0,0,plate_z-.012)),
+                      frames.vertex((x0,35,plate_z-.012)),
+                      frames.vertex((x1,35,plate_z-.012)),
+                      frames.vertex((x1,0,plate_z-.012))]
+                uv=[((atlas_x+71*(px-x0)/(x1-x0))/512,
+                     (270+228*py/35)/512)
+                    for px,py in ((x0,0),(x0,35),(x1,35),(x1,0))]
+                frames.face(face,0,uv,atlas=False)
+            center_gap=(left+11.5+right-11.5)/2
+            gap_width=(right-left)-23.0
+            for level,(low,top) in enumerate(((0,9.1),(10.0,19.6),(20.7,34.7))):
+                frames.box((center_gap,(low+top)/2,front-1.0-.24*(level%2)),
+                           (gap_width-.9,top-low,.9),[9,3,6][(index+level)%3])
         # Steel loads reach the ground in each section, including the upper crown.
-        frames.tube((left+1.3,.05,front-1.15),(right-1.5,30.8,front+.13),.24,6,6)
-        frames.tube((right-1.4,.05,front-.75),(left+2.0,34.8,front+.45),.19,6,6)
+        if index not in (5,6):
+            frames.tube((left+1.3,.05,front-1.15),(right-1.5,30.8,front+.13),.24,6,6)
+            frames.tube((right-1.4,.05,front-.75),(left+2.0,34.8,front+.45),.19,6,6)
         crown=crowns[index]
         # Separate uneven salvage ledges replace broad triangular roof sheets.
         for ledge,(a,b) in enumerate(((.04,.29),(.34,.62),(.67,.96))):
@@ -602,10 +690,12 @@ def p2_facade(body,frames,relief):
             for x in (left+1.2,right-1.2):
                 frames.box((x,16,front-.75),(.55,32,1.0),6)
             # Upper shelves transfer loads into vertical posts reaching y=0.
-            for y in (13.72,26.72):
-                frames.box((center,y,front-1.05),(width-2.6,.35,1.25),6)
-                frames.tube((left+1.2,.05,front-.82),(center,y,front-.95),.21,6,6)
+            if index not in (5,6):
+                for y in (13.72,26.72):
+                    frames.box((center,y,front-1.05),(width-2.6,.35,1.25),6)
+                    frames.tube((left+1.2,.05,front-.82),(center,y,front-.95),.21,6,6)
             for row,y in enumerate((.05,1.62,13.9,27.0)):
+                if index in (5,6) and row>=2:continue
                 for col in range(3):
                     variant=(row+col+index)%2
                     cx=center+(col-1)*min(7.3,(width-6)/3)+.38*math.sin(row*1.9+index)
@@ -617,7 +707,21 @@ def p2_facade(body,frames,relief):
                                      [0,4,5,2,13][(row+3*col+index)%5],
                                      (row+col+index)%4!=0)
                     placed+=1
-            if index in (5,6,10):
+            if index in (5,6):
+                # A few complete bodies interrupt the baked car face. Each
+                # short perch meets the bay's grounded side upright.
+                for tier,(height_y,fraction) in enumerate(((9.2,.28),(20.1,.69),(28.0,.43))):
+                    cx=left+width*fraction
+                    side_post=left+1.2 if fraction<.5 else right-1.2
+                    cz=front-2.30-.35*(tier%2)
+                    frames.box(((cx+side_post)/2,height_y-.10,cz+.22),
+                               (abs(cx-side_post)+.8,.23,1.15),6)
+                    frames.box((side_post,height_y/2,cz+.35),(.42,height_y,1.05),6)
+                    stamp_welded_car(car_mesh,high[(index+tier)%2][0],cx,height_y,cz,
+                                     5.15,2.2,.98,-.07 if tier%2 else .09,
+                                     [-.27,.18,.35][tier],[0,4,5][tier],True)
+                    placed+=1
+            if index==10:
                 # Detailed cars break the upper line, supported by steel below.
                 top_y=35.35
                 frames.box((center,35.2,front-.8),(6.3,.36,1.8),6)
@@ -631,6 +735,28 @@ def p2_facade(body,frames,relief):
                              5.5,2.3,1.03,.04,.12 if index%3==0 else -.08,
                              [0,4,5,2,13][index%5],index%3!=0)
             placed+=1
+    # The central portal is a grounded, layered salvage mass rather than two
+    # more identical shelf bays. Its irregular crown stays below the towers.
+    for side in (-1,1):
+        frames.box((side*15.4,20.7,-4.0),(1.35,41.4,2.1),6)
+        frames.box((side*5.55,25.5,-4.15),(1.15,37.0,2.0),6)
+        frames.tube((side*15.4,.15,-4.3),(side*13.0,24.0,-4.55),.44,6,6)
+        frames.tube((side*13.0,19.0,-4.3),(side*10.7,37.0,-4.55),.38,6,6)
+    # The plated bridge sits on the two existing full-height piers. Separate
+    # tower tops leave open sky over the bridge rather than a single roof sign.
+    # Short face spans keep the center plate visible in each actual projected
+    # zone; the pieces share edges and still form one deep lintel.
+    for bridge_index in range(6):
+        frames.box(((bridge_index-2.5)*5.0,38.5,-3.7),
+                   (5.02,7.0,3.5),3)
+    frames.box((0,35.2,-5.25),(30.8,.44,1.1),6)
+    frames.box((0,42.0,-5.30),(30.8,.38,1.0),6)
+    for side in (-1,1):
+        frames.box((side*10.1,38.5,-3.55),(8.1,7.0,3.6),3)
+        frames.box((side*10.1,43.75,-3.55),(8.1,3.5,3.6),9)
+        frames.box((side*10.1,45.4,-3.65),(9.2,.46,4.1),6)
+        frames.box((side*7.3,42.2,-5.6),(.42,5.5,.55),6)
+        frames.box((side*12.9,42.2,-5.6),(.42,5.5,.55),6)
     return car_mesh,[info for _,info in high],placed
 
 
@@ -707,14 +833,55 @@ def wall():
             frames.tube((x-6.5,lo,.04),(x+6.5,min(35,lo+11.6),.04),.16,5,4)
     # Extra tall steel above the human-scale gate, rather than enlarged people.
     for side in [-1,1]:
-        for row in range(7):
-            body.box((side*9.9,2.5+row*5,.54),(9.75,4.94,.42),[9,0,4,2,8,1,10][row])
-        frames.tube((side*5.7,.3,-.02),(side*14,16.5,-.02),.13,5,4)
-        frames.tube((side*14,17,-.02),(side*5.7,34.5,-.02),.13,5,4)
+        if args.p2:
+            # Four staggered height bands make one massive vertical pier. The
+            # deep side faces show in the oblique view; rear salvage stays inset.
+            bands=((0,8,10.0,9.9,3),(8,16,9.7,9.75,9),
+                   (16,25,9.3,9.6,3),(25,35,9.0,9.45,9))
+            for low,top,width,cx,tile in bands:
+                for strip in range(4):
+                    strip_width=width/4
+                    strip_x=side*cx+(strip-1.5)*strip_width
+                    frames.box((strip_x,(low+top)/2,-3.25),
+                               (strip_width+.025,top-low,3.3),tile)
+                    # The visible front uses one continuous physical-height UV
+                    # field, independent of these structural face divisions.
+                    x0=strip_x-strip_width/2;x1=strip_x+strip_width/2
+                    source_x0=-14.9 if side<0 else 4.9
+                    atlas_x=264 if side<0 else 344
+                    plate=[frames.vertex((x0,low,-4.918)),frames.vertex((x0,top,-4.918)),
+                           frames.vertex((x1,top,-4.918)),frames.vertex((x1,low,-4.918))]
+                    plate_uv=[((atlas_x+71*(px-source_x0)/10)/512,
+                               (270+228*py/35)/512)
+                              for px,py in ((x0,low),(x0,top),(x1,top),(x1,low))]
+                    frames.face(plate,0,plate_uv,atlas=False)
+            # Irregular continuous face straps interrupt the horizontal joints.
+            frames.box((side*6.2,17.5,-5.02),(.78,35,.28),6)
+            frames.box((side*12.8,17.5,-4.99),(.62,35,.22),2)
+            frames.profile([(side*5.3,35),(side*5.6,40.5),
+                            (side*8.1,42.3),(side*10.7,40.8),
+                            (side*13.7,41.7),(side*14.1,35)],[-4.9,-1.6],3)
+        else:
+            for row in range(7):
+                body.box((side*9.9,2.5+row*5,.54),(9.75,4.94,.42),[9,0,4,2,8,1,10][row])
+        if not args.p2:
+            frames.tube((side*5.7,.3,-.02),(side*14,16.5,-.02),.13,5,4)
+            frames.tube((side*14,17,-.02),(side*5.7,34.5,-.02),.13,5,4)
         frames.box((side*5.15,18,-.45),(1.3,36,1.5),6)
         frames.box((side*5.15,18,-1.25),(.28,36,.28),2)
         frames.tube((side*4.73,7,-1.05),(side*4.73,36,-1.05),.065,6)
     for row in range(5):body.box((0,10+row*5.5,1.65),(8.95,5.4,.45),[8,0,9,4,1][row])
+    if args.p2:
+        # Deep sill and lintel join both piers above the moving gate panel.
+        for strip in range(10):
+            frames.box(((strip-4.5)*2.9,10,-3.28),(2.92,6.0,3.45),3)
+            frames.box(((strip-4.5)*2.6,13.6,-4.7),(2.62,1.25,1.0),6)
+            x0=(strip-5)*2.9;x1=x0+2.9
+            face=[frames.vertex((x0,7,-5.025)),frames.vertex((x0,13,-5.025)),
+                  frames.vertex((x1,13,-5.025)),frames.vertex((x1,7,-5.025))]
+            uv=[((424+71*(py-7)/6)/512,(270+228*(px+14.5)/29)/512)
+                for px,py in ((x0,7),(x0,13),(x1,13),(x1,7))]
+            frames.face(face,0,uv,atlas=False)
     panel.box((0,3.5,-.40),(9,7,.62),0)
     for y in [0.3,2.35,4.65,6.7]:panel.box((0,y,-.77),(9,.18,.15),6)
     for x in [-4.25,-2.1,0,2.1,4.25]:
@@ -730,7 +897,8 @@ def wall():
             frames.box((x,yy,-1.4),(1.8,.45,.45),6)
         frames.box((x,35.8,-.2),(2.5,1.0,2.7),7)
         frames.tube((x,33.5,-.2),(x,35.8,-1.6),.15,5,6)
-    for yy in [8,13,19,25,31,34.5]:frames.box((0,yy,1.29),(8.9,.22,.3),5)
+    if not args.p2:
+        for yy in [8,13,19,25,31,34.5]:frames.box((0,yy,1.29),(8.9,.22,.3),5)
     tower_positions=[-175,-119,-63,-21,21,77,133,189]
     tower_heights=[5.0,6.4,5.8,7.0,7.6,6.1,5.4,6.8] if args.p2 else [7 if abs(x)<80 else 5 for x in tower_positions]
     for x,tower_height in zip(tower_positions,tower_heights):
@@ -810,7 +978,14 @@ def wall():
     if args.p2:
         hulk_object['sources']=p2_sources
         hulk_object['placedHulks']=p2_placed
-    objects=[body.build('wall-body',steel),frames.build('scaffold-steel',steel),hulk_object,
+    steel_object=frames.build('scaffold-steel',steel)
+    if args.p2:
+        steel_object['steelPaintInput']='generated-source' if steel_paint_path else 'procedural-fixture'
+        if steel_paint_path:
+            steel_object['steelPaintSourcePath']=str(steel_paint_path.relative_to(root)).replace('\\','/')
+            steel_object['steelPaintSourceSha256']=args.steel_paint_sha256.lower()
+        steel_object['steelPaintAtlasRects']=[[264,12,335,243],[344,12,415,243],[424,12,495,243]]
+    objects=[body.build('wall-body',steel),steel_object,hulk_object,
              props.build('wall-details',details),panel.build('gate-panel',steel)]
     if args.p2:
         relief_object=relief_mesh.build('source-car-relief',hulks,recalculate_normals=False)

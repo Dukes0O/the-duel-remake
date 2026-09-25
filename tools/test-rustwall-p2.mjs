@@ -40,6 +40,150 @@ function point(attribute, index) {
   return new THREE.Vector3().fromBufferAttribute(attribute, index);
 }
 
+test('P2 exported central portal has a raised armored crown and grounded clear gate', async () => {
+  const wall=await actualWall();wall.updateMatrixWorld(true);
+  const zones={upperLeft:0,upperRight:0,lintel:0,leftFoot:0,rightFoot:0,
+    leftUpper:0,rightUpper:0,gateIntrusion:0};
+  const longBraces=new Set();
+  const frontArea=(a,b,c)=>Math.abs((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x))*.5;
+  wall.traverse(node=>{
+    if(!node.isMesh||node.name==='gate-panel'||/^guard-/.test(node.name))return;
+    const geometry=node.geometry,pos=geometry.attributes.position;
+    const at=corner=>geometry.index?geometry.index.getX(corner):corner;
+    for(let corner=0;corner<(geometry.index?.count??pos.count);corner+=3){
+      const p=[0,1,2].map(k=>point(pos,at(corner+k)).applyMatrix4(node.matrixWorld));
+      const x=(p[0].x+p[1].x+p[2].x)/3,y=(p[0].y+p[1].y+p[2].y)/3;
+      const area=frontArea(...p);
+      if(node.name==='scaffold-steel')for(const [a,b] of [[p[0],p[1]],[p[1],p[2]],[p[2],p[0]]]){
+        if(Math.abs(a.x)>30||Math.abs(b.x)>30||a.y<2||b.y<2||a.y>35||b.y>35||
+          Math.abs(a.x-b.x)<3||Math.abs(a.y-b.y)<3)continue;
+        const endpoint=v=>`${Math.round(v.x)}:${Math.round(v.y)}`;
+        longBraces.add([endpoint(a),endpoint(b)].sort().join('/'));
+      }
+      if(area<.0001)continue;
+      if(x>-15&&x<-5&&y>35&&y<46)zones.upperLeft+=area;
+      if(x>5&&x<15&&y>35&&y<46)zones.upperRight+=area;
+      if(Math.abs(x)<5&&y>35&&y<46)zones.lintel+=area;
+      if(x>-15&&x<-5&&y<2)zones.leftFoot+=area;
+      if(x>5&&x<15&&y<2)zones.rightFoot+=area;
+      if(x>-15&&x<-5&&y>28&&y<35)zones.leftUpper+=area;
+      if(x>5&&x<15&&y>28&&y<35)zones.rightUpper+=area;
+      if(Math.abs(x)<4.4&&y>.2&&y<6.8)zones.gateIntrusion+=area;
+    }
+  });
+  assert.ok(zones.upperLeft>60&&zones.upperRight>60&&zones.lintel>60,
+    `central portal needs visible armored upper mass on both sides and above gate: ${JSON.stringify(zones)}`);
+  assert.ok(zones.leftFoot>3&&zones.rightFoot>3&&zones.leftUpper>3&&zones.rightUpper>3,
+    `portal tower mass needs grounded flanks: ${JSON.stringify(zones)}`);
+  assert.ok(zones.gateIntrusion<8,
+    `fixed 9×7m gate opening remains clear outside gate-panel: ${JSON.stringify(zones)}`);
+  assert.ok(longBraces.size<=2,
+    `central x±30m frame should not repeat long X braces; measured ${longBraces.size} distinct spans`);
+});
+
+test('P2 central gate has two broad deep grounded pylons instead of thin display uprights', async () => {
+  const wall=await actualWall();wall.updateMatrixWorld(true);
+  const areas=[Array(4).fill(0),Array(4).fill(0)];
+  const depths=[{min:Infinity,max:-Infinity},{min:Infinity,max:-Infinity}];
+  const shelves=new Set();
+  wall.traverse(node=>{
+    if(!node.isMesh||!['wall-body','scaffold-steel'].includes(node.name))return;
+    const geo=node.geometry,pos=geo.attributes.position;
+    const at=corner=>geo.index?geo.index.getX(corner):corner;
+    for(let corner=0;corner<(geo.index?.count??pos.count);corner+=3){
+      const p=[0,1,2].map(k=>point(pos,at(corner+k)).applyMatrix4(node.matrixWorld));
+      const x=(p[0].x+p[1].x+p[2].x)/3,y=(p[0].y+p[1].y+p[2].y)/3;
+      const z=(p[0].z+p[1].z+p[2].z)/3;
+      const side=x<0?0:1,flank=Math.abs(x)>5&&Math.abs(x)<15;
+      if(flank&&y>=1&&y<35&&z>=-5&&z<=1){
+        depths[side].min=Math.min(depths[side].min,...p.map(v=>v.z));
+        depths[side].max=Math.max(depths[side].max,...p.map(v=>v.z));
+        if(z<-1.8){
+          const band=y<8?0:y<16?1:y<25?2:3;
+          areas[side][band]+=Math.abs((p[1].x-p[0].x)*(p[2].y-p[0].y)-
+            (p[1].y-p[0].y)*(p[2].x-p[0].x))*.5;
+        }
+      }
+      if(node.name==='scaffold-steel')for(const [a,b] of [[p[0],p[1]],[p[1],p[2]],[p[2],p[0]]]){
+        if(Math.abs(a.x)>30||Math.abs(b.x)>30||a.y<7||b.y<7||a.y>35||b.y>35||
+          Math.abs(a.x-b.x)<5||Math.abs(a.y-b.y)>.4||Math.abs(a.z)>2||Math.abs(b.z)>2)continue;
+        shelves.add(Math.round((a.y+b.y)/2));
+      }
+    }
+  });
+  for(let side=0;side<2;side++){
+    assert.ok(areas[side].every(area=>area>65),
+      `${side?'right':'left'} pylon has broad visible front metal in every grounded height band: ${JSON.stringify(areas)}`);
+    assert.ok(depths[side].max-depths[side].min>=2,
+      `${side?'right':'left'} pylon has 2–4m structural depth: ${JSON.stringify(depths)}`);
+  }
+  assert.ok(shelves.size<=4,
+    `central wall should not read as repeated horizontal shelves: ${shelves.size} distinct long levels`);
+});
+
+test('P2 gate crown resolves as two upper towers and a deep plated bridge', async () => {
+  const wall=await actualWall();wall.updateMatrixWorld(true);
+  const clipped=(triangle,[left,right,bottom,top])=>{
+    let polygon=triangle;
+    for(const [axis,bound,greater] of [['x',left,true],['x',right,false],
+      ['y',bottom,true],['y',top,false]]){
+      const inside=point=>greater?point[axis]>=bound:point[axis]<=bound;
+      const next=[];
+      for(let i=0;i<polygon.length;i++){
+        const a=polygon[i],b=polygon[(i+1)%polygon.length];
+        if(inside(a))next.push(a);
+        if(inside(a)!==inside(b))next.push(a.clone().lerp(b,
+          (bound-a[axis])/(b[axis]-a[axis])));
+      }
+      polygon=next;
+      if(polygon.length<3)return {area:0,minZ:Infinity,maxZ:-Infinity};
+    }
+    let twiceArea=0;
+    for(let i=0;i<polygon.length;i++){
+      const a=polygon[i],b=polygon[(i+1)%polygon.length];
+      twiceArea+=a.x*b.y-b.x*a.y;
+    }
+    return {area:Math.abs(twiceArea)/2,minZ:Math.min(...polygon.map(p=>p.z)),
+      maxZ:Math.max(...polygon.map(p=>p.z))};
+  };
+  const rectangle=[new THREE.Vector3(-15,35,-2),new THREE.Vector3(15,35,-2),
+    new THREE.Vector3(15,42,-2),new THREE.Vector3(-15,42,-2)];
+  const region=[-5,5,36,41];
+  const splitA=clipped([rectangle[0],rectangle[1],rectangle[2]],region).area+
+    clipped([rectangle[0],rectangle[2],rectangle[3]],region).area;
+  const splitB=clipped([rectangle[0],rectangle[1],rectangle[3]],region).area+
+    clipped([rectangle[1],rectangle[2],rectangle[3]],region).area;
+  assert.ok(Math.abs(splitA-50)<1e-6&&Math.abs(splitB-50)<1e-6,
+    'same bridge coverage is measured for both triangulations');
+  const tops=[{front:0,minZ:Infinity,maxZ:-Infinity},
+    {front:0,minZ:Infinity,maxZ:-Infinity}];
+  const bridge={front:0,minZ:Infinity,maxZ:-Infinity};
+  let centerTopFront=0;
+  wall.traverse(node=>{
+    if(!node.isMesh||node.name==='gate-panel'||/^guard-/.test(node.name))return;
+    const geo=node.geometry,pos=geo.attributes.position;
+    const at=corner=>geo.index?geo.index.getX(corner):corner;
+    for(let corner=0;corner<(geo.index?.count??pos.count);corner+=3){
+      const p=[0,1,2].map(k=>point(pos,at(corner+k)).applyMatrix4(node.matrixWorld));
+      for(const [target,region] of [[tops[0],[-15,-5,43,46]],
+        [tops[1],[5,15,43,46]],[bridge,[-15,15,35,42]]]){
+        const part=clipped(p,region);
+        if(part.area<.001)continue;
+        target.front+=part.area;
+        target.minZ=Math.min(target.minZ,part.minZ);
+        target.maxZ=Math.max(target.maxZ,part.maxZ);
+      }
+      centerTopFront+=clipped(p,[-5,5,43,46]).area;
+    }
+  });
+  assert.ok(tops.every(top=>top.front>20&&top.maxZ-top.minZ>1.5),
+    `two separate upper tower tops rise above 43m with real depth: ${JSON.stringify(tops)}`);
+  assert.ok(bridge.front>100&&bridge.maxZ-bridge.minZ>2,
+    `central y35..42 plated bridge has broad frontage and visible depth: ${JSON.stringify(bridge)}`);
+  assert.ok(centerTopFront<Math.min(tops[0].front,tops[1].front)*.5,
+    `two tower tops dominate the central silhouette instead of one peaked roof: center ${centerTopFront.toFixed(1)} m², flanks ${tops[0].front.toFixed(1)}/${tops[1].front.toFixed(1)} m²`);
+});
+
 test('P2 wash uses varied physical contour levels', async () => {
   const course = courseFor(ROUTE_VARIANTS[0].seed), models = fakeAssets();
   const scene = createRustwallScene(course, {loadAsset: async kind => models[kind]});
@@ -175,7 +319,7 @@ test('P2 full wall has source-rendered car relief across eight substantial bays 
   const hulks = wall.getObjectByName('welded-car-hulks');
   assert.ok(relief?.isMesh && hulks?.isMesh, 'relief complements actual source-derived car geometry');
   const provenance = relief.userData;
-  assert.equal(provenance.sourceRenderPath, 'art-build/rustwall-p2/relief-source.png');
+  assert.equal(provenance.sourceRenderPath, 'art-build/rustwall-p2/wall-relief-source.png');
   assert.match(provenance.sourceRenderSha256 || '', /^[a-f0-9]{64}$/);
   assert.equal(createHash('sha256').update(readFileSync(new URL(`../${provenance.sourceRenderPath}`, import.meta.url))).digest('hex'),
     provenance.sourceRenderSha256, 'full-wall relief maps the recorded local source-car render');
