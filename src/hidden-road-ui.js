@@ -112,11 +112,11 @@ export function createHiddenRoadUi({host,onChoose,onMenu}) {
   function restoreFocus(){if(priorFocus?.isConnected)priorFocus.focus({preventScroll:true});}
   const set=(node,key,value)=>{if(node[key]!==value)node[key]=value;};
   return{
-    update(state,course){
+    update(state,course,yardHomeActive=false){
       if(disposed)return;
       const previousPhase=view?.phase;
       view=hiddenRoadPresentation(state,course,{includeScene:false});
-      const visible=(view.choiceReady||view.arrivalReady)&&!state.paused;
+      const visible=(view.choiceReady||view.arrivalReady&&!yardHomeActive)&&!state.paused;
       set(section,'hidden',!visible);
       for(const button of [enter,back]){set(button,'hidden',!view.choiceReady);set(button,'disabled',!view.choiceReady);}
       set(menu,'hidden',!view.arrivalReady);set(menu,'disabled',!visible||!view.arrivalReady);

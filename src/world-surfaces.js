@@ -124,10 +124,20 @@ export function hiddenRoadGroundGeometry(course) {
   const road = course.hiddenRoad, positions = [], uv = [], indices = [];
   const columns = 9;
   const patchEnd = road.length + road.widthAt(road.length) + 80;
-  for (let progress = 0, row = 0; progress <= patchEnd; progress += 2, row++) {
+  const tip = road.length + road.widthAt(road.length);
+  const rows = [];
+  for (let progress = 0; progress <= patchEnd; progress += 2) rows.push(progress);
+  if (!rows.includes(tip)) rows.push(tip);
+  rows.sort((a, b) => a - b);
+  rows.forEach((progress, row) => {
     const center = road.poseAt(progress), endExtra = Math.max(0, progress - road.length);
     const width = road.widthAt(Math.min(progress, road.length));
-    const offsets = [-width - 80, -width - 32, -width - 8, -width, 0, width, width + 8, width + 32, width + 80];
+    // Past the gate the physical flat support has a circular edge. Place an
+    // actual vertex on that edge so outside slopes cannot span the flat yard.
+    const flatEdge = endExtra > 0 ?
+      Math.max(.01, Math.sqrt(Math.max(0, width * width - endExtra * endExtra))) : width;
+    const offsets = [-flatEdge - 80, -flatEdge - 32, -flatEdge - 8, -flatEdge,
+      0, flatEdge, flatEdge + 8, flatEdge + 32, flatEdge + 80];
     offsets.forEach((offset, j) => {
       const x = center.x + Math.sin(center.heading) * endExtra + Math.cos(center.heading) * offset;
       const z = center.z + Math.cos(center.heading) * endExtra - Math.sin(center.heading) * offset;
@@ -140,7 +150,7 @@ export function hiddenRoadGroundGeometry(course) {
         }
       }
     });
-  }
+  });
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
