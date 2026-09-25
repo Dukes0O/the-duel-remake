@@ -1,6 +1,6 @@
-import {writeFile, mkdir, readFile, access} from 'node:fs/promises';
+import {writeFile, mkdir, readFile, access, realpath} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
-import {join, relative as pathRelative} from 'node:path';
+import {join, relative as pathRelative, resolve, isAbsolute, extname, sep} from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {selectCrew, selectedCrewId} from '../../src/crew.js';
@@ -8,6 +8,50 @@ import {selectCrew, selectedCrewId} from '../../src/crew.js';
 const CREW = ['rook','nell','jax','odessa','cinder','dune','wren','tusk'];
 const VIEWS = [['front',0],['side',Math.PI/2],['back',Math.PI]];
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+
+// These same helpers are exercised independently before the browser scenario.
+export async function prepareRookCandidate({candidatePath, crewOnly, root}) {
+  if (!candidatePath) return null;
+  if (crewOnly !== 'rook') throw Error('Candidate review requires GFX_CREW_ONLY=rook');
+  const laneRoot = await realpath(root);
+  const allowed = join(laneRoot, 'art-build', 'crew', 'rook-p2');
+  const inside = path => {
+    const part = pathRelative(allowed, path);
+    return part && part !== '..' && !part.startsWith('..' + sep) && !isAbsolute(part);
+  };
+  const requested = resolve(laneRoot, candidatePath);
+  if (!inside(requested) || extname(requested).toLowerCase() !== '.glb')
+    throw Error('Candidate path must be a GLB inside ignored art-build/crew/rook-p2');
+  const actual = await realpath(requested);
+  if (!inside(actual)) throw Error('Candidate real path leaves ignored art-build/crew/rook-p2');
+  const bytes = await readFile(actual);
+  const baseline = await readFile(join(laneRoot, 'public/assets/models/wasteland/crew/rook.glb'));
+  return {path:pathRelative(laneRoot, actual).replaceAll('\\', '/'),
+    sha256:sha(bytes), baselineSha256:sha(baseline), bytes};
+}
+
+export function rookCandidateFetchInstallScript(base64) {
+  return `(() => {
+    if (!Object.getOwnPropertyDescriptor(window,'localStorage')?.value ||
+        !window.name.startsWith('__duel_qa_tab_v2:'))
+      throw Error('Private memory guard required for Rook candidate');
+    const bytes = Uint8Array.from(atob(${JSON.stringify(base64)}), char => char.charCodeAt(0));
+    const originalFetch = window.fetch.bind(window);
+    const review = window.__rookCandidateReview = {substitutions:0};
+    window.fetch = (input, init) => {
+      const address = typeof input === 'string' ? input : input?.url || String(input);
+      const url = new URL(address, window.location.href);
+      if (url.origin === window.location.origin &&
+          url.pathname === '/assets/models/wasteland/crew/rook.glb') {
+        review.substitutions++;
+        return Promise.resolve(new Response(bytes, {
+          status:200, headers:{'Content-Type':'model/gltf-binary'},
+        }));
+      }
+      return originalFetch(input, init);
+    };
+  })()`;
+}
 
 // Private, memory-only fixture: production crew selection, transition and render
 // hook; matched cameras then isolate its scene for legible comparison images.
@@ -18,6 +62,7 @@ export async function run(context) {
   if (only && only !== 'rook') throw Error('GFX_CREW_ONLY currently supports rook');
   const crew = only ? [only] : CREW;
   const root = fileURLToPath(new URL('../../', import.meta.url));
+  const candidate = await prepareRookCandidate({candidatePath:process.env.GFX_ROOK_CANDIDATE, crewOnly:only, root});
   const directory = context.outputDir;
   const relative = pathRelative(root, directory).replaceAll('\\', '/');
   await mkdir(directory, {recursive:true});
@@ -30,6 +75,11 @@ export async function run(context) {
   for (const id of crew) evidence.assets[id] = {
     path:`public/assets/models/wasteland/crew/${id}.glb`,
     sha256:sha(await readFile(join(root,`public/assets/models/wasteland/crew/${id}.glb`)))};
+  if (candidate) {
+    evidence.assets.rook = {path:candidate.path, sha256:candidate.sha256};
+    evidence.candidate = {path:candidate.path, sha256:candidate.sha256, baselineRookSha256:candidate.baselineSha256};
+    evidence.qa = {baselineRookSha256:candidate.baselineSha256, candidateSha256:candidate.sha256, substitutionRequests:{}};
+  }
   const profile={wasteland:{version:1,xp:1000000,crew:{selected:'rook',unlocked:CREW}}};
   const selected=crew.map(id=>{
     const choice=selectCrew(profile,id);
@@ -39,6 +89,7 @@ export async function run(context) {
   for (const quality of evidence.qualities) {
     await context.navigate('/tools/menu-check.html?flags=wasteland2');
     await context.waitFor("window.__qaApp?.visualReady && window.__render && !document.querySelector('#start-engine')?.disabled", 'ready private menu',60000);
+    if (candidate) await context.evaluate(rookCandidateFetchInstallScript(candidate.bytes.toString('base64')));
     await context.evaluate(`(async () => {
       if (!Object.getOwnPropertyDescriptor(window,'localStorage')?.value || !window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Private memory store missing');
       const app=window.__qaApp;
@@ -169,6 +220,13 @@ export async function run(context) {
       const count=evidence.captures.filter(capture=>capture.quality===quality).length;
       if (count!==22) throw Error(`Rook-only capture count was ${count}, expected 22`);
       evidence.counts[quality]={captureCount:count,scope:'one selected crew, matched views and Rook actions'};
+      if (candidate) {
+        const substitutions = await context.evaluate('window.__rookCandidateReview?.substitutions || 0');
+        if (!Number.isInteger(substitutions) || substitutions < 1)
+          throw Error('Rook candidate was not loaded in ' + quality);
+        evidence.qa.substitutionRequests[quality] = substitutions;
+        evidence.counts[quality].scope = 'private Rook candidate, matched views and actions; no crowd or frame gate';
+      }
       continue;
     }
     evidence.counts[quality]=await context.evaluate(`(() => {
@@ -219,6 +277,8 @@ export async function run(context) {
   }
   if (only && (evidence.captures.length!==44 || evidence.captures.some(capture=>capture.crew!==only)))
     throw Error('Selected crew capture scope is incomplete');
+  if (candidate && sha(await readFile(join(root,'public/assets/models/wasteland/crew/rook.glb'))) !== candidate.baselineSha256)
+    throw Error('Production Rook changed during candidate review');
   await writeFile(manifestPath,JSON.stringify(evidence,null,2)+'\n');
   console.log('Crew captured evidence: '+manifestPath);
 }
