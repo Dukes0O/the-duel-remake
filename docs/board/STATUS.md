@@ -1,20 +1,20 @@
 # Build status
 
-Observed at: 2026-09-25T09:08:00.560Z
+Observed at: 2026-09-25T09:22:36.832Z
 
-Observation commit: e3579f1e5a415079856720f38fa332eb359b355e
+Observation commit: bb708c193f986e7aae0d90c8b339551fe271b3dc
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e3579f1e5a415079856720f38fa332eb359b355e
+Integration HEAD: bb708c193f986e7aae0d90c8b339551fe271b3dc
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
 Live build version: not checked
 
-Full tier: passed; exact HEAD passed: yes.
+Full tier: stale; exact HEAD passed: no.
 
 Last recorded full run: 2026-09-25T09:03:19.987Z; tested commit: e3579f1e5a415079856720f38fa332eb359b355e.
 
@@ -32,7 +32,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/gfx-01-p2 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-01-p2 |
+| codex/gfx-01-p2 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-01-p2 |
 | lane/audio/aud-10 | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/audio/aud-12 | 0 | unknown | true | false | unknown |
 
@@ -42,7 +42,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/gfx-01-p2 | GFX-01-P2 | 2026-09-25T02:06:37-07:00 | 0 | last commit 2026-09-25T02:06:37-07:00 | docs/board/looks/crew-p2/round-1-review.md, docs/board/looks/crew-p2/round-1.jpg, docs/board/looks/crew-p2/round-2-review.md, docs/board/looks/crew-p2/round-2.jpg, docs/board/looks/crew-p2/round-3-review.md |
+| codex/gfx-01-p2 | GFX-01-P2 | 2026-09-25T02:12:30-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/crew-p2/round-1-review.md, docs/board/looks/crew-p2/round-1.jpg, docs/board/looks/crew-p2/round-2-review.md, docs/board/looks/crew-p2/round-2.jpg, docs/board/looks/crew-p2/round-3-review.md |
 
 ## Size targets
 
@@ -50,16 +50,16 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 239,923,961 B | -19,851,879 B | 250,000,000 B |
+| Build `dist/` | 239,923,961 B | +0 B | 250,000,000 B |
 | Wasteland models | 78,930,708 B | +0 B | 60,000,000 B |
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 210,328 B | +0 B | 500,000 B |
 | Review `looks/` | 5,665,862 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 10,214,408 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 22,168 B | +0 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 317,136,896 B | +167,936 B | unavailable |
-| Lane folders | 1 | +0 | unavailable |
+| Git objects | 317,560,832 B | +0 B | unavailable |
+| Lane folders | 1 | -1 | unavailable |
 
 ## Backups
 
@@ -67,7 +67,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: e3579f1e5a415079856720f38fa332eb359b355e
+- Local integration/wasteland: bb708c193f986e7aae0d90c8b339551fe271b3dc
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -75,4 +75,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: behind local; cached commit 6c5d7dd129696ecc1f1a3823d54526292572e6d7.
+- Remote origin/integration/wasteland: behind local; cached commit 02e182adf16031cd7d383aafdcc847b5f250eb16.
