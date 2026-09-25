@@ -114,6 +114,15 @@ test('Rustwall A1/B/A2 compares both exact baselines in every quality and camera
     assert.deepEqual(row.triangles.delta,[1200,1200]);
     assert.ok(Math.abs(row.baselineDrift.cpuP95-
       a2.quality[quality][view].renderCpu.p95/a1.quality[quality][view].renderCpu.p95)<.001);
+    for(const stratum of ['refreshed','reused'])for(const percentile of ['p50','p95']){
+      const expected=[a1,a2].map(base=>b.quality[quality][view].renderCpuByMirror[stratum][percentile]/
+        base.quality[quality][view].renderCpuByMirror[stratum][percentile]);
+      assert.equal(row.mirrorCpu[stratum][percentile].length,2,
+        `${quality}/${view}/${stratum} keeps both baseline comparisons`);
+      expected.forEach((ratio,index)=>assert.ok(
+        Math.abs(row.mirrorCpu[stratum][percentile][index]-ratio)<.001,
+        `${quality}/${view}/${stratum} ${percentile} B/A${index?2:1}`));
+    }
   }
   const incompatible=clone(b);
   incompatible.quality.high.wash.camera.position[0]=25;
@@ -124,7 +133,29 @@ test('Rustwall A1/B/A2 compares both exact baselines in every quality and camera
   skew.renderCpuByMirror={refreshed:summary(skew.renderCpuSamplesMs.slice(0,1)),
     reused:summary(skew.renderCpuSamplesMs.slice(1))};
   assert.throws(()=>compareRustwallFrameRuns(a1,mirrorSkew,a2),
-    'A/B/A cannot compare different mirror refresh workloads');
+    'A/B/A cannot compare a one-refresh run with a 300-refresh baseline');
+  const phaseShift=clone(b),shift=phaseShift.quality.performance.wash;
+  shift.mirrorRefreshSamples=shift.mirrorRefreshSamples.map(value=>!value);
+  shift.renderCpuByMirror={refreshed:summary(shift.renderCpuSamplesMs.filter((_,i)=>shift.mirrorRefreshSamples[i])),
+    reused:summary(shift.renderCpuSamplesMs.filter((_,i)=>!shift.mirrorRefreshSamples[i]))};
+  assert.doesNotThrow(()=>compareRustwallFrameRuns(a1,phaseShift,a2),
+    'native 30 Hz mirror phase may invert with the same 300 refreshed and 300 reused frames');
+  const countSkew=clone(b),countRow=countSkew.quality.performance.wash;
+  for(let i=1;i<14;i+=2)countRow.mirrorRefreshSamples[i]=true;
+  countRow.renderCpuByMirror={
+    refreshed:summary(countRow.renderCpuSamplesMs.filter((_,i)=>countRow.mirrorRefreshSamples[i])),
+    reused:summary(countRow.renderCpuSamplesMs.filter((_,i)=>!countRow.mirrorRefreshSamples[i]))};
+  assert.throws(()=>compareRustwallFrameRuns(a1,countSkew,a2),
+    'seven extra refreshed mirrors exceed the measured one-percent workload tolerance');
+  const sparse=[clone(a1),clone(b),clone(a2)];
+  for(const item of sparse){
+    const row=item.quality.performance.wash;
+    row.mirrorRefreshSamples.fill(false);row.mirrorRefreshSamples[0]=true;
+    row.renderCpuByMirror={refreshed:summary(row.renderCpuSamplesMs.slice(0,1)),
+      reused:summary(row.renderCpuSamplesMs.slice(1))};
+  }
+  assert.throws(()=>compareRustwallFrameRuns(...sparse),
+    'matching one-refresh runs still lack enough refreshed samples for a p95 cost gate');
   const wrongBaselineAsset=clone(a2);
   wrongBaselineAsset.hashes.wallGlb='9'.repeat(64);
   assert.throws(()=>compareRustwallFrameRuns(a1,b,wrongBaselineAsset),

@@ -61,7 +61,8 @@ export function validateRustwallFrameReport(report,{role,run,commit}) {
     exactSummary(row.renderCpuSamplesMs,row.renderCpu,`${tag} CPU`);
     const refreshed=row.renderCpuSamplesMs.filter((_,i)=>row.mirrorRefreshSamples[i]);
     const reused=row.renderCpuSamplesMs.filter((_,i)=>!row.mirrorRefreshSamples[i]);
-    insist(refreshed.length>0&&reused.length>0,`${tag} mirror strata unavailable`);
+    insist(refreshed.length>=240&&reused.length>=240,
+      `${tag} mirror strata need substantial samples`);
     exactSummary(refreshed,row.renderCpuByMirror?.refreshed,`${tag} refreshed mirror`);
     exactSummary(reused,row.renderCpuByMirror?.reused,`${tag} reused mirror`);
     insist(Array.isArray(row.camera?.position)&&row.camera.position.length===3&&
@@ -112,14 +113,20 @@ export function compareRustwallFrameRuns(a1,b,a2) {
         base1.canvasPixelSamples[0]===base2.canvasPixelSamples[0]&&
         same(base1.canvas,candidate.canvas)&&same(base1.canvas,base2.canvas),
         `${quality}/${view} canvas pixels differ across A/B/A`);
-      insist(same(base1.mirrorRefreshSamples,candidate.mirrorRefreshSamples)&&
-        same(base1.mirrorRefreshSamples,base2.mirrorRefreshSamples),
-        `${quality}/${view} mirror refresh schedule differs across A/B/A`);
+      const refreshedCount=row=>row.mirrorRefreshSamples.filter(Boolean).length;
+      const mirrorCounts=[base1,candidate,base2].map(refreshedCount);
+      insist(Math.max(...mirrorCounts)-Math.min(...mirrorCounts)<=6,
+        `${quality}/${view} mirror refreshed/reused workload differs across A/B/A`);
       const ratio=(key,percentile)=>[base1,base2].map(base=>
         candidate[key][percentile]/base[key][percentile]);
+      const mirrorRatio=(stratum,percentile)=>[base1,base2].map(base=>
+        candidate.renderCpuByMirror[stratum][percentile]/
+        base.renderCpuByMirror[stratum][percentile]);
       result.quality[quality][view]={
         cpu:{p50:ratio('renderCpu','p50'),p95:ratio('renderCpu','p95')},
         raf:{p50:ratio('raf','p50'),p95:ratio('raf','p95')},
+        mirrorCpu:{refreshed:{p50:mirrorRatio('refreshed','p50'),p95:mirrorRatio('refreshed','p95')},
+          reused:{p50:mirrorRatio('reused','p50'),p95:mirrorRatio('reused','p95')}},
         drawCalls:{delta:[base1,base2].map(base=>median(candidate.drawCallSamples)-median(base.drawCallSamples))},
         triangles:{delta:[base1,base2].map(base=>median(candidate.triangleSamples)-median(base.triangleSamples))},
         baselineDrift:{cpuP95:base2.renderCpu.p95/base1.renderCpu.p95,
