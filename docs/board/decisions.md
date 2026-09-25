@@ -623,3 +623,27 @@ The builder's inferred construction replaces each monotone sleeve loft with a we
 Independent tests compare actual exported P1/P2 contours at the same approved camera and hand/tool landmarks, connected seam incidence, meaningful broad contour inflections, cuff overlap, actual UV/material sampling, unchanged hand anatomy/rig/clips and8000 loaded-triangle/three-draw limits. Reallocate hidden uniform detail before using the remaining464 triangles. Tests distinguish this construction from the P1 tube but do not supply its likeness score; matched High/Performance game views decide that.
 
 Contact remains a separate open question. Fixed barycentric points on a connected actual palm patch may replace the sparse-vertex restriction after an explicit method contract, area/spread calibration and independent deformation/gap reds. Skin each triangle corner first and interpolate afterward. Do not widen the15mm selection region or choose a farther tool component for closure. Read-only exported topology shows closed main RPG grips and wrench handle, but open decorative bands and an intentionally hollow RPG barrel; no prior live selected-component IDs survived the early patch failure. Record those IDs before any tool topology change. No proxy, runtime tool edit or contact pass is approved by this sleeve decision.
+
+## 2026-09-25 PDT: P2 sleeve export keeps the independent shape threshold
+
+The first actual P2 export passes protected hand/skin/wrap records, frozen
+sleeve ends, connected cloth topology, rig/clips/sockets and the loaded triangle
+budget. Its second measured right outer azimuth reaches11.963mm beyond P1,
+just below the independently fixed12mm threshold. A test selector first needed
+correction because it classified left sleeve vertices as right frozen records;
+that correction does not relax protection of either real sleeve.
+
+Before the next source change, approve increasing only the t=.40 outer node
+from18 to20mm on R and21 to23mm on L, within the existing15–25mm construction
+envelope. Remove an unapproved hard-coded2mm Gaussian crest from the candidate
+implementation and use the written linear seam-angle interpolation. Other
+exact nodes and the12mm threshold stay fixed. This creates a measurable broad
+contour; only matched game views can grant a likeness score.
+
+Contact method remains design work only. Whole-face area can overstate the
+surface inside the15mm selection sphere, so future calibration must measure
+the clipped actual facing patch. A valid two-triangle surface may support six
+well-spread barycentric samples; minimum triangle count is not a substitute
+for physical area and spread. No new area threshold, measurement code or tool
+geometry change is approved until actual clipped-patch calibration and its
+independent fixtures are reviewed.
