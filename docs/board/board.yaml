@@ -1774,7 +1774,7 @@ tasks:
   - id: FIX-STATUS-SCOPE
     title: Exclude protected lane folders from status inspection
     lane: TOOL
-    status: in-progress
+    status: merged
     branch: codex/fix-status-scope
     needs: []
     owns: [tools/build-status.mjs, tools/test-build-status.mjs, docs/changes/FIX-STATUS-SCOPE.md]
