@@ -101,20 +101,28 @@ test('P2 review paths are separate, read-only, and reject mixed round selectors'
   const tool=join(root,'tools/fidelity-sheet.mjs');
   const before=existsSync(join(root,'docs/board/looks/first-person-p1/round-1.jpg'))
     ?hash(readFileSync(join(root,'docs/board/looks/first-person-p1/round-1.jpg'))):null;
+  const ownDir=join(root,'.evidence/first-person-p2/test-path-planning');
+  mkdirSync(ownDir,{recursive:true});
+  const existing=join(ownDir,'sheet.png');
+  writeFileSync(existing,Buffer.from('preexisting ignored review output'));
+  const existingHash=hash(readFileSync(existing));
   const result=spawnSync(process.execPath,[tool,'--first-person-p2-round','1','--paths-only'],
-    {cwd:root,encoding:'utf8',timeout:10000});
+    {cwd:root,encoding:'utf8',timeout:10000,
+      env:{...process.env,DUEL_EVIDENCE_DIR:ownDir}});
   assert.equal(result.status,0,result.stderr||result.stdout);
   const plan=JSON.parse(result.stdout);
-  assert.match(plan.directory.replaceAll('\\','/'),/\/\.evidence\/[^/]+\/first-person-p2\/round-1$/);
+  assert.equal(plan.directory,ownDir);
   assert.equal(plan.output,join(plan.directory,'sheet.png'));
   assert.equal(plan.manifest,join(plan.directory,'sheet.json'));
   assert.equal(plan.summary,join(root,'docs/board/looks/first-person-p2/round-1.jpg'));
-  assert.equal(existsSync(plan.output),false);
+  assert.equal(hash(readFileSync(plan.output)),existingHash,
+    'paths-only must preserve a preexisting ignored review image');
   const mixed=spawnSync(process.execPath,[tool,'--first-person-p1-round','1',
     '--first-person-p2-round','1','--paths-only'],{cwd:root,encoding:'utf8',timeout:10000});
   assert.notEqual(mixed.status,0,'mixed P1/P2 selectors must reject before any write');
   assert.equal(existsSync(join(root,'docs/board/looks/first-person-p1/round-1.jpg'))
     ?hash(readFileSync(join(root,'docs/board/looks/first-person-p1/round-1.jpg'))):null,before);
+  rmSync(ownDir,{recursive:true,force:true});
 });
 
 test('P2 sheet joins eight exact Rook poses with separate source and game provenance', async () => {
@@ -238,6 +246,12 @@ async function loadMesh(path) {
   assert.ok(mesh,'actual Rook skinned hand mesh is required');
   return mesh;
 }
+async function loadAsset(path) {
+  const bytes=readFileSync(path),loader=new GLTFLoader();
+  loader.register(()=>({name:'TEST_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  return loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,
+    bytes.byteOffset+bytes.byteLength),'');
+}
 const centerlines={
   R:{elbow:[.35,-.43,-.27],wrist:[.205,-.285,-.48]},
   L:{elbow:[-.35,-.43,-.39],wrist:[.075,-.285,-.82]},
@@ -303,10 +317,14 @@ function protectedRecords(mesh) {
 }
 function frozenClothRecords(mesh,side) {
   const {elbow,wrist}=centerlines[side],axis=wrist.map((v,i)=>v-elbow[i]);
+  const other=centerlines[side==='R'?'L':'R'];
   const {position,uv,skinIndex,skinWeight}=mesh.geometry.attributes,records=new Set();
   for(let i=0;i<position.count;i++) {
     if(!clothUv(uv,i))continue;
     const point=[position.getX(i),position.getY(i),position.getZ(i)];
+    const ownDistance=Math.hypot(...point.map((v,j)=>v-elbow[j]));
+    const otherDistance=Math.hypot(...point.map((v,j)=>v-other.elbow[j]));
+    if(ownDistance>=otherDistance)continue;
     const t=(point[2]-elbow[2])/axis[2];
     if(!(t<.015||Math.abs(t-.28)<.02||t>=.81))continue;
     records.add([...point.map(v=>Math.round(v*100000)),
@@ -316,22 +334,50 @@ function frozenClothRecords(mesh,side) {
   }
   return [...records].sort();
 }
-function clothEdgeIncidence(mesh) {
+function clothTopology(mesh,side) {
   const {position,uv}=mesh.geometry.attributes,index=mesh.geometry.index;
-  const edges=new Map();
+  const {elbow,wrist}=centerlines[side],axis=wrist[2]-elbow[2];
+  const other=centerlines[side==='R'?'L':'R'];
+  const edges=new Map(),faces=[];
   for(let f=0;f<index.count;f+=3) {
     const ids=[index.getX(f),index.getX(f+1),index.getX(f+2)];
     if(!ids.every(id=>clothUv(uv,id)))continue;
+    const centre=[0,1,2].map(k=>ids.reduce((sum,id)=>sum+position.getComponent(id,k),0)/3);
+    const ownDistance=Math.hypot(...centre.map((v,k)=>v-elbow[k]));
+    const otherDistance=Math.hypot(...centre.map((v,k)=>v-other.elbow[k]));
+    if(ownDistance>=otherDistance)continue;
+    const faceId=faces.length;faces.push(ids);
     for(let j=0;j<3;j++) {
       const a=ids[j],b=ids[(j+1)%3];
       const ak=keyPoint([position.getX(a),position.getY(a),position.getZ(a)]);
       const bk=keyPoint([position.getX(b),position.getY(b),position.getZ(b)]);
       const key=[ak,bk].sort().join('|');
-      edges.set(key,(edges.get(key)||0)+1);
+      if(!edges.has(key))edges.set(key,[]);
+      edges.get(key).push({faceId,a,b});
     }
   }
-  assert.ok(edges.size>100,'cloth seam check needs actual exported sleeve faces');
-  return edges;
+  assert.ok(edges.size>100,`${side} cloth seam check needs actual exported sleeve faces`);
+  const adjacency=Array.from({length:faces.length},()=>new Set());
+  let boundary=0;
+  for(const uses of edges.values()) {
+    assert.ok(uses.length<=2,`${side} sewn seam has >2 incident faces`);
+    if(uses.length===2) {
+      adjacency[uses[0].faceId].add(uses[1].faceId);
+      adjacency[uses[1].faceId].add(uses[0].faceId);
+    } else {
+      boundary++;
+      const t=[uses[0].a,uses[0].b].map(id=>
+        (position.getZ(id)-elbow[2])/axis);
+      assert.ok(t.every(v=>v<.03||v>.80),
+        `${side} cloth has an interior open boundary at t=${t.map(v=>v.toFixed(3))}`);
+    }
+  }
+  const seen=new Set([0]),queue=[0];
+  while(queue.length)for(const next of adjacency[queue.shift()])if(!seen.has(next)){
+    seen.add(next);queue.push(next);
+  }
+  assert.equal(seen.size,faces.length,`${side} cloth is separate overlapping shells`);
+  assert.ok(boundary>=20,`${side} sleeve lost its intentional end opening`);
 }
 function assertSleeveShape(old,next,side,outer,boundary,inner) {
   const p1samples=sleeveSamples(old,side),p2samples=sleeveSamples(next,side);
@@ -382,15 +428,35 @@ test('actual P2 sleeves form broad localized sewn volume versus the P1 recipe', 
     `public/assets/models/wasteland/first-person/hands/${id}.glb`))),before[id],
     `P2 proof changed production ${id}`);
   const next=await loadMesh(join(p2out,'hands/rook.glb'));
+  const oldAsset=await loadAsset(join(p1out,'hands/rook.glb'));
+  const newAsset=await loadAsset(join(p2out,'hands/rook.glb'));
+  const clips=asset=>asset.animations.map(clip=>[clip.name,+clip.duration.toFixed(5)]).sort();
+  assert.deepEqual(clips(newAsset),clips(oldAsset),'P2 changed P1 clip names or durations');
+  assert.equal(newAsset.animations.length,8,'P2 must retain eight action clips');
+  assert.deepEqual(next.skeleton.bones.map(b=>b.name),old.skeleton.bones.map(b=>b.name),
+    'P2 changed hand rig bones');
+  const socket=asset=>Object.fromEntries(['rpg-mount','wrench-mount'].map(name=>{
+    const node=asset.scene.getObjectByName(name);
+    assert.ok(node,`missing ${name} socket`);
+    return [name,{position:node.position.toArray(),quaternion:node.quaternion.toArray()}];
+  }));
+  assert.deepEqual(socket(newAsset),socket(oldAsset),'P2 moved tool sockets');
+  const handTriangles=next.geometry.index.count/3;
+  assert.ok(handTriangles+3276<=8000,
+    `P2 Rook plus unchanged RPG uses ${handTriangles+3276} triangles`);
+  assert.ok(!Array.isArray(next.material)||next.material.length===1,
+    'P2 hand split into multiple material draws');
   assert.deepEqual(protectedRecords(next),protectedRecords(old),
     'P2 sleeve construction changed protected hand, wrap, glove, skin UV or weights');
-  const edges=clothEdgeIncidence(next);
-  assert.equal([...edges.values()].filter(n=>n>2).length,0,
-    'shared sewn seam or mixed ring transition has more than two incident faces');
   for(const [side,outer,boundary,inner] of [
     ['R',120,40,300],['L',40,125,220]]) {
+    clothTopology(next,side);
     assert.deepEqual(frozenClothRecords(next,side),frozenClothRecords(old,side),
       `${side} first/.28/.82 and later cloth positions, UV or skin weights changed`);
     assertSleeveShape(old,next,side,outer,boundary,inner);
+    const secondary=radial(sleeveSamples(next,side),.40,outer+25)-
+      radial(sleeveSamples(old,side),.40,outer+25);
+    assert.ok(secondary>=.012,
+      `${side} elbow broadening only appears at one narrow outer azimuth: ${(secondary*1000).toFixed(3)} mm at ${outer+25}°`);
   }
 });
