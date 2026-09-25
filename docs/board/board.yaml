@@ -1785,7 +1785,7 @@ tasks:
     title: Fold completed audio recipes and verdicts into current docs
     lane: OPS
     size: S
-    status: in-progress
+    status: merged
     branch: codex/janitor-audio-notes
     needs: [AUD-10, AUD-11, AUD-GATEKEEPER, AUD-14]
     owns: [docs/AUDIO_ITERATION.md, docs/changes/AUD-10.md, docs/changes/AUD-11.md, docs/changes/AUD-GATEKEEPER.md, docs/changes/AUD-14.md, docs/changes/JANITOR-AUDIO-NOTES.md]
