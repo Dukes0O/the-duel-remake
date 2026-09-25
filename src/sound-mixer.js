@@ -38,6 +38,8 @@ export class SoundMixer {
     this.ducks = [];
     this.dryVehicle = context.createGain();
     this.dryVehicle.connect(master);
+    this.dryEngine = context.createGain();
+    this.dryEngine.connect(master);
     this.buses = Object.fromEntries(
       BUS_NAMES.map((name) => {
         const bus = context.createGain();
@@ -46,6 +48,12 @@ export class SoundMixer {
         return [name, bus];
       }),
     );
+  }
+  output(id) {
+    const cue = SOUND_BANK[id];
+    if (!cue) throw Error('Unknown audio cue: ' + id);
+    if (cue.dry) return cue.bus === 'engine' ? this.dryEngine : this.dryVehicle;
+    return this.buses[cue.bus];
   }
   duck(kind, duration) {
     if (!this.enabled || !DUCKING[kind]) return;

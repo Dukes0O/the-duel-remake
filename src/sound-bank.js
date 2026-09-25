@@ -90,6 +90,7 @@ export const SOUND_BANK = {
     limit: 1,
   }),
   'engine.shift-fallback': cue('engine', {
+    dry: true,
     layers: [tone(95, 0.085, 0.075, 'triangle')],
   }),
   'vehicle.tires': cue('vehicle', {

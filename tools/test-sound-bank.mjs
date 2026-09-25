@@ -197,3 +197,17 @@ assert(
   'higher-priority blast displaces a low-priority voice at budget',
 );
 console.log('Sound bank and mixer acceptance passed.');
+
+assert.equal(
+  mixer.output('combat.blast'),
+  mixer.buses.impacts,
+  'impacts route through their bus',
+);
+assert(
+  mixer.output('engine.shift-fallback').connections.includes(master),
+  'missing-sample shift fallback retains its original dry path',
+);
+assert(
+  !mixer.output('engine.shift-fallback').connections.includes(vehicle),
+  'fallback must not gain camera attenuation or tunnel echoes',
+);

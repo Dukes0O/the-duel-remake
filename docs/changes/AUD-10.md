@@ -8,35 +8,142 @@ player_facing: yes
 
 # Sound bank and mixer
 
+AUD-10 is not ready to merge. The sound-bank migration, compression and mixer
+are implemented. A strict new waveform comparison remains unresolved. Later
+audio cards have not started and no ElevenLabs credits have been spent.
+
 ## Design
 
-Keep existing synthesis envelopes and engine automation unchanged. Put cue
-recipes, bus routing and sample declarations in sound-bank.js. Unity-gain
-buses feed the existing limiter. The engine and vehicle buses share the
-existing perspective and tunnel return. FLAC compresses the current runtime
-PCM losslessly, preserving loop boundaries and the baseline mix. New ducking
-and moving-source processing use wasteland2. Cue limits retire old voices
-with short fades. These choices can be reversed by changing bank entries.
+Keep the existing synthesis envelopes and engine automation. Cue recipes,
+source declarations, routing, priorities and limits live in sound-bank.js.
+Unity-gain buses feed the existing master compressor. Engine and vehicle
+sounds retain the old perspective and tunnel path; originally dry vehicle
+sounds retain a dry branch. Lossless FLAC preserves every decoded runtime
+sample and loop boundary. This avoids a lossy-codec change in the foundation
+card. New ducking and moving-source playback require wasteland2.
 
-Work alone as Kyle requested; tests precede implementation. The requested
-scope covers audio modules, audio QA/build tools, runtime audio and source
-placement checks. No board, status, run log or simulation edits.
+The mixer has per-cue limits and a 64-cue total budget, with priority when
+full. Retired cues fade. Music and ambience duck for blasts or voice requests.
+Moving buffers use HRTF direction, inverse distance and bounded physical
+doppler. This card provides moving-source playback; the later weapon and
+vehicle cards connect their specific moving entities.
+
+Kyle requested this lane work alone. The bank/mixer, placement, moving-source
+and Git-byte tests each failed before their corresponding implementation.
+Self-review is recorded here; no independent listening claim is made.
+
+## What changed
+
+- Existing cue definitions and recordings now use the bank and named buses.
+- Added mixer tests for overlapping duck requests, release, voice limits,
+  priority, source movement, doppler, cleanup and read-only spatial inputs.
+- Compressed 14 runtime recordings from 6,108,572 to 3,575,193 bytes. All
+  decoded signed-16-bit PCM hashes and sample counts match the original WAVs.
+- The audio build tool rebuilds from catalog recipes and the external cache.
+  Rebuilding all 14 samples passed the same PCM identity test.
+- Freesound downloads and decoded source excerpts moved to
+  C:/Users/kyleb/dev/audio-library/legacy/. The catalog keeps their recipes,
+  provenance and original checksums. Nothing is fetched during gameplay.
+- Preserved the two licensed OpenGameArt originals as lossless FLAC under
+  audio-src/library/. Their old credits did not provide verified direct
+  download URLs, so they are not discarded as replaceable cache files.
+- Added *.flac binary to .gitattributes after a failing regression test proved
+  that the repository's text default corrupts staged FLAC bytes. Fixed forward
+  in be129b0; history was not rewritten. Runtime and kept-source staged bytes
+  now equal the working originals and the source catalog checksums.
+- Director approved the extra audio test/build hooks and .gitattributes on
+  25 September. The implementation keeps src/sound-mixer.js as approved.
 
 ## Evidence
 
-Before code: private browser baseline recorded 841 frames, 23 events and seven
-PCM tracks on port 36196, zero warnings/errors, memory-only saves. Temporary
-recording: .evidence/2026-09-25/audio-race-2026-09-25T05-21-25-666Z/.
+Preliminary lane tier: 254 passed, 0 failed in 397.45 seconds. All 162 replay
+fingerprint checks passed. The 48 expansion drives completed and won. This
+was before the final integration merge and is not the final lane gate.
+
+Focused audio suite: 459 checks and 598,707 finite automation commands passed.
+Compression checks: all 14 decoded PCM hashes and loop lengths unchanged.
+Repository placement tests: 101 checks passed, including new raw-audio cases.
+Existing analyzer fault tests and weapon-cue tests passed.
+
+Two real-time browser races used private ports, memory-only saves, seed 1989,
+841 captured frames, 23 events and seven PCM tracks. Neither had browser
+warnings or errors. Both pass all ten existing race-analysis checks:
+
+| Measure | Before | After |
+| --- | ---: | ---: |
+| Engine/revs correlation | 0.978 | 0.977 |
+| Engine tracking lag | 0 ms | 0 ms |
+| Peak | -1.740 dBFS | -1.599 dBFS |
+| Clipped samples | 0 | 0 |
+| Detected clicks / loop gaps | 0 / 0 | 0 / 0 |
+| Minimum measured hit/blast over engine | 7.155 dB | 6.940 dB |
+| Near/far level difference | 3.371 dB | 3.388 dB |
+
+The moving-source browser scenario passed on private port 26348 with no
+warnings or errors. A 440 Hz source measured 483 Hz approaching and 404 Hz
+receding. Right/left RMS was 0.106/0.056 approaching on the right; left/right
+RMS was 0.103/0.064 receding on the left. Both voices released their budgets.
+
+Commands:
+
+- node tools/test-sound-bank.mjs
+- node tools/test-audio.mjs
+- node tools/test-audio-compression.mjs
+- node tools/test-repo-hygiene-rules.mjs
+- node tools/test-audio-analysis.mjs
+- node tools/test-weapon-audio.mjs
+- node tools/prepare-audio.mjs
+- node tools/browser-harness.mjs record-race
+- node tools/audio-analysis.mjs <recording-directory>
+- node tools/browser-harness.mjs scenario audio-moving
+- node tools/browser-harness.mjs scenario audio-baseline
+- node tools/run-tests.mjs --tier lane --changed --jobs 8
+
+## Unresolved baseline comparison
+
+The reference is reconstructed from cf72d9c using Git text history. The
+comparison schedules identical inputs into native OfflineAudioContext graphs
+for a race, wide camera, hood/tunnel, events and gate arrival. It uses the same
+noise seed and the lossless decoded runtime assets. No live browser is used.
+
+The new comparator requires peak difference at most 0.000002. It currently
+fails: maximum before/after difference is about 0.0000317, with RMS at most
+0.000000329 across measured runs. Crucially, two renders of the unchanged old
+engine also differ by up to 0.0000317. Serial decoding and prefetching did not
+remove that variance. Repeated reads of the same rendered buffer are exact.
+The cause is still unresolved; do not call this proof of an unchanged mix.
+
+Automatic approval review rejected changing the comparison tolerance because
+it would weaken a failing test. The threshold remains unchanged. Keep this
+failure visible. Either resolve render repeatability or obtain Kyle's
+explicit approval for a reviewed comparison rule supported by this control.
+Human ratings are not available; the round remains flagged for listening.
 
 ## Removed
 
-Pending: raw public sources and uncompressed runtime WAVs, once recipes and
-lossless compression checks pass.
+Removed 12 raw source downloads/excerpts and 14 uncompressed runtime WAVs from
+public/. Runtime FLACs replace the WAVs. Source recipes remain in tools/audio/;
+licensed originals and credits remain. The old inline weapon/interface/music
+recipes were removed when the bank entries replaced them. The kept Callum MP3
+is unchanged, as Kyle specifically selected those exact bytes.
 
 ## Behavior and test changes
 
-No simulation change intended. No existing assertion changed yet.
+No simulation source or real save was changed. The 162 replay checks remain
+unchanged. Source-preservation assertions now check exact catalog hashes and
+external-cache recipes instead of requiring downloads in public/. Graph
+assertions follow named unity buses to the same reflection bus. Existing loop,
+headroom, seam, pitch, envelope, missing-file, weapon and analyzer fault targets
+are unchanged. FLAC decoding feeds the existing PCM assertions. The new strict
+baseline comparison is failing, not skipped or relaxed.
 
-## Assertion review
+## Handoff
 
-Source-preservation assertions now require the exact catalog hash and external-cache recipe instead of raw downloads in public/. The original loop, headroom, seam, pitch, envelope and missing-file assertions remain. Graph assertions follow named unity buses to the same reflection bus. No existing audio quality target is relaxed. A new strict waveform comparator currently fails; its threshold is unchanged. Investigation and review are pending.
+Integration was merged into the audio branch at 7393d07. The final lane tier
+and production build after that merge are still pending. Latest source fix:
+be129b0. Do not merge this card until the baseline finding and remaining gates
+are resolved and this note explicitly says ready-to-merge.
+
+AUD-11, gatekeeper wiring, AUD-14 and AUD-17 have not started. Before any future
+voice generation, complete the Director's AUD-12-R1 fake-only regression for
+preserving returned takes when the later subscription query fails.

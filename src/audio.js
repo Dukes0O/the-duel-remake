@@ -588,11 +588,7 @@ export class EngineAudio {
       previousSources = this._cueSources;
     const output = this.context.createGain();
     output.gain.value = 1;
-    output.connect(
-      destination ||
-        (def.dry ? this.dryVehicleBus : this.buses?.[def.bus]) ||
-        this.master,
-    );
+    output.connect(destination || this.mixer?.output(id) || this.master);
     this._cueOutput = output;
     this._cueSources = [];
     let sources;
@@ -617,7 +613,12 @@ export class EngineAudio {
         for (const source of sources)
           if (!source._cueEnd || source._cueEnd > this.context.currentTime)
             try {
-              source.stop(this.context.currentTime + 0.04);
+              source.stop(
+                Math.min(
+                  source._cueEnd ?? Infinity,
+                  this.context.currentTime + 0.04,
+                ),
+              );
             } catch {}
       },
     };
