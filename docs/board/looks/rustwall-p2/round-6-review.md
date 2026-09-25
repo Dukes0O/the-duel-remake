@@ -1,0 +1,5 @@
+# Rustwall P2 round 6 review
+
+Director score: wall likeness 2/5, readability 3/5, grounding 3/5, scene consistency 3/5; wash 3/3/3/3. Frame unmeasured. The two deep pylons are more grounded, but large blank dark strips and a cap still sit over regular car-grid bays. This is a structural improvement without a likeness gain; do not propagate it across the wall.
+
+The recorded `round-6.jpg` and ignored `.evidence/2026-09-24/rustwall-p2/round-6` show matched Blender/High/Performance and six all-route placements. Private memory-only browser: 20 screenshots, zero warnings/errors. Exported wall 48,223 triangles / 14 draws, wash source module 144 / 1. Crew's red-first broad-pylon and unchanged portal tests pass; the old asset/core, scene/route and sheet tests also pass. Subdividing wide pylon faces prevented their invisible triangulation edges from being classified by the edge-based test as X braces. Those edges were never visible rods; the subdivision is geometrically harmless but should not be mistaken for a visual improvement. Next proof targets dedicated painted pylon surfaces in unused steel-atlas tiles, with protected tiles and the exact gate unchanged.

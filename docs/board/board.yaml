@@ -402,15 +402,31 @@ tasks:
     lane: VIS
     size: L
     needs: [EGG-02-P1]
-    status: building
+    status: merged
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall-p2/]
     hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/scenarios/rustwall-frame.mjs, tools/test-rustwall-frame.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-sheet.mjs, tools/test-rustwall-p2-relief.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: hidden-road
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
-      - "Continue the round-10 gaps: replace the regular flat facade with deeper irregular salvage, grounded supports and a varied roofline; make canyon strata follow the slope without repeated broad bands. Reach resemblance four and preserve the measured frame budget."
+      - "Complete the ten-round P2 wave against the original likeness-four target, preserving every review verdict. Final wall and wash remain likeness three. Accept only a measured development improvement after frame and lane/build gates; EGG-02-P3 owns the unmet visual target under SPEC 0.3. This closure does not grant visual acceptance or a release."
       - "Retain the physical route, collision envelopes, gate clearance, joined-bank safety tests and smaller reviewed atlases. Use a separate next-wave review folder and immutable reference/Blender/High/Performance sheets."
-    note: "Active next-wave codex/egg-02-p2. Written design uses welded source-car salvage and unequal facade depth, funded by removing repeated microdetail within original limits. Wash follows measured contour strata using the approved art-direction background crop. Independent tests precede code. Physical route, gate and collision union remain fixed."
+    note: "Merged 78cfffe as a ten-round development improvement: 256/256 lane suites in 375.19 seconds, build and independent art/source/frame reviews passed. Wall and wash visual scores remain 3/3/3/3; scoped frame four, worst required CPU ratio 1.0833. EGG-02-P3 retains likeness-four and paint-recovery work. Hidden-road stays dev."
+  - id: EGG-02-P3
+    title: "Interlocked Rustwall salvage and natural canyon strata"
+    lane: VIS
+    size: L
+    needs: [EGG-02-P2]
+    status: backlog
+    owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall-p3/]
+    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/scenarios/rustwall-frame.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-relief.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    flag: hidden-road
+    helpers: [test_author, art_critic, reviewer, browser_qa]
+    acceptance:
+      - "Settle a changed construction method in writing and prove one representative bay before extending it: interlocked 3D salvage rather than regular rectangular display bays, irregular grounded tower tops, and car bodies with convincing load paths. Preserve the actual moving gate and nine-by-seven-metre opening."
+      - "Make joined canyon strata follow natural slope and contour without the current broad repeated bands. Preserve the exact physical route, collision-box union and shared bank seams."
+      - "Before changing the accepted steel paint, provide an explicit hashed embedded-atlas extraction and reapplication recipe from the committed GLB. The P2 no-input procedural fixture is not a reproduction of the selected generated paint. Preserve the original image-generation output and record source provenance."
+      - "Reach likeness, readability, grounding and consistency of at least four in matched High/Performance views, retain immutable sheets and independent verdicts, and hold whole-scene frame cost within ten percent. Preserve the 60,000 wall triangles, 24 draws, three 512 texture sets and existing wash allocation."
+    note: "Residual from the ten-round P2 wave: final wall and wash score 3/3/3/3. P2 is a development improvement only; this card keeps the original unmet art target visible. Do not erase failed rounds or infer visual acceptance from a performance pass."
   - id: EGG-03
     title: "Gate arrival and invitation"
     priority: 10
@@ -1154,11 +1170,13 @@ tasks:
     status: backlog
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
-    owns: [tools/audio/, docs/audio/, docs/board/listening/, docs/changes/AUD-11.md]
+    owns: [tools/audio/, tools/audio-analysis.mjs, tools/audio-race-check.js, tools/test-audio-listening.mjs, tools/scenarios/audio-listening.mjs, docs/audio/, docs/board/listening/, docs/changes/AUD-11.md]
+    hooks: [tools/vite-qa.config.js]
     helpers: [test_author, reviewer, audio_qa]
     acceptance:
       - "Play cues over engine and ambience with A/B/C variants; save human ratings and notes as verdict files."
       - "Measure LUFS, true peak, loop seams, repetition and full-mix masking. Unrated rounds are flagged for human listening."
+    note: "Same audio owner may prepare independent measurement and booth tools against the unmerged foundation while AUD-10 baseline review remains open. AUD-11 cannot be marked ready or merged before AUD-10. Full-rate capture is required for true-peak measurements; existing comparator limits are unchanged."
   - id: AUD-12
     title: "On-demand sound sourcing and Kyle's kept picks"
     lane: AUDIO
@@ -1175,7 +1193,7 @@ tasks:
     lane: AUDIO
     size: S
     needs: [AUD-12]
-    status: ready
+    status: merged
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
     owns: [tools/audio/elevenlabs.mjs, tools/test-audio-sourcing.mjs, docs/changes/AUD-12-R1.md]
@@ -1183,7 +1201,7 @@ tasks:
     acceptance:
       - "With fake responses only, a successful generation followed by a credit-query HTTP 503 still leaves the exact generated bytes available; accounting failure is explicit and must not trigger another generation."
       - "Write the failure regression before changing persistence order; preserve the kept gatekeeper take and use no real credits for tests."
-    note: "Director reproduced on a1d0dd6: generation returned ID3 fixture bytes, subsequent subscription query failed HTTP 503, say rejected and no output take existed. Non-runtime sourcing follow-up belongs to the external audio owner before further voice generation."
+    note: "Isolated fix merged d355b9a after seven lane suites in 82.62 seconds, build and 51 fake-only checks. Successful bytes persist before accounting; HTTP/network/JSON failures report estimates without regeneration. Exact kept Callum MP3 unchanged; zero credits. Unfinished AUD-10 and its branch remain separate."
   - id: AUD-GATEKEEPER
     title: "Wire Kyle's kept gatekeeper welcome"
     priority: 3
@@ -1593,3 +1611,40 @@ tasks:
     behavior_change: no
     owns: [tools/build-status.mjs, tools/test-build-status.mjs, docs/changes/FIX-STATUS-CARD.md]
     note: "Merged 7b901c4 after independent red/green fixtures, 250 focused checks, eight lane suites and build. Optional numeric P suffixes remain in card labels; branch safety and evidence validity are unchanged."
+
+  - id: ARENA-01
+    title: "Scrapdome bounded arena framework"
+    priority: 2
+    lane: CMB
+    size: L
+    needs: [BETA-01, GFX-04, CAR-01]
+    status: backlog
+    flag: wasteland2
+    owns: [src/scrapdome.js, src/arena-driving.js, src/arena-ai.js, src/screen-arena.js, src/screen-arena.css, tools/test-scrapdome.mjs, tools/test-arena-driving.mjs, tools/scenarios/scrapdome.mjs, docs/changes/ARENA-01.md]
+    hooks: [src/game.js, src/app.js, src/screen-router.js, src/screen-yard-home.js, src/sim-driving.js, src/sim-contacts.js, src/sim-results.js, src/render3d.js, src/combat-ai.js, src/combat.js]
+    helpers: [test_author, reviewer, save_guardian, browser_qa, balance_analyst]
+    acceptance:
+      - "Before code, write the event-state contract, physical Titan stadium bounds, free-driving coordinates, player and CPU spawn selection, round lifecycle and return-to-yard behavior. Separate simulation decisions from rendering and reuse the existing opponents list. Up to three CPU cars must be supported from the first implementation."
+      - "Seed and inputs reproduce positions, contacts and outcomes without graphics. Arena boundaries must be physical and keep every supported car playable; ordinary course progress, checkpoints, police and race records retain their existing behavior. Keep on-foot support within the same bounded event."
+      - "A discovered player's yard can enter the implemented arena flow and return safely. Navigation, restart, pause and player changes clean up event state and input. No unbuilt mode is offered. Keep the new flow behind wasteland2 and preserve flag-off behavior."
+      - "Independent red tests cover seeds, one to three CPU cars, all nine player cars, bounds, spawn overlap, cleanup and ordinary replay controls. Review actual High/Performance driving with memory-only saves and measure complete-scene frame cost against the Titan stadium baseline."
+    sound: "Name arena.countdown, arena.round-start and arena.results events for the existing audio owner; use placeholder bank cues until that lane supplies assets."
+    note: "Phase 3 order two. Planning only until BETA-01 is complete; no audio lane or credit use is delegated here. Results and reward ownership must be settled with Save Guardian before persistence changes."
+  - id: ARENA-02
+    title: "Last Car Rolling with up to three CPU cars"
+    priority: 3
+    lane: CMB
+    size: M
+    needs: [ARENA-01]
+    status: backlog
+    flag: wasteland2
+    owns: [src/scrapdome-last-car.js, tools/test-last-car-rolling.mjs, tools/scenarios/last-car-rolling.mjs, docs/changes/ARENA-02.md]
+    hooks: [src/scrapdome.js, src/arena-ai.js, src/screen-arena.js, src/combat.js, src/wasteland-career.js, src/app.js]
+    helpers: [test_author, reviewer, save_guardian, browser_qa, balance_analyst]
+    acceptance:
+      - "Settle time limit, scoring, ties, respawn timing and protection in writing before code. Follow SPEC 3.7: wreck the others more times than they wreck you within the time limit. Attribution must distinguish player, CPU, environment and self damage; repeated collision or wreck events cannot score twice."
+      - "Use the bounded framework for one, two and three CPU cars at all three difficulties. Test deterministic round completion, simultaneous timer/wreck boundaries, fair respawn positions, pause and abandonment. Ordinary races and their fingerprints stay unchanged."
+      - "Integrate completed results with the existing scrap and territory contracts for the Scrapdome venue. Save Guardian proves idempotent settlement, owner identity, abandonment and historical-save preservation using fixtures only. New rank, price or reward choices require a recorded decision."
+      - "Private browser review shows actual free driving, a credited wreck, respawn, timer completion, results and return to yard. Record frame pacing, balance and the lane/build gate before readiness."
+    sound: "Reuse combat impact/wreck cues and arena.countdown, arena.round-start and arena.results through the external audio owner's bank."
+    note: "Phase 3 order two, after the framework. No implementation has begun. The owned mode filename is provisional until the framework design settles module boundaries."

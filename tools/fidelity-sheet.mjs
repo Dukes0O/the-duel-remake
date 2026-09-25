@@ -18,10 +18,11 @@ function evidenceDir(family, round) {
 function summaryPath(family, round) {
   return join(root,'docs','board','looks',family,`round-${round}.jpg`);
 }
-const family = args.includes('--crew-round') ? 'crew' : args.includes('--rustwall-round') ? 'rustwall'
+const family = args.includes('--crew-round') ? 'crew' : args.includes('--rustwall-p2-round') ? 'rustwall-p2'
+  : args.includes('--rustwall-round') ? 'rustwall'
   : args.includes('--first-person-round') || args.includes('--first-person-tools-round') ? 'first-person' : 'test-fighter';
-const round = Number(value('--crew-round', value('--rustwall-round',
-  value('--first-person-round', value('--first-person-tools-round', 1)))));
+const round = Number(value('--crew-round', value('--rustwall-p2-round', value('--rustwall-round',
+  value('--first-person-round', value('--first-person-tools-round', 1))))));
 if (args.includes('--paths-only')) {
   const directory = evidenceDir(family, round);
   const name = args.includes('--first-person-tools-round') ? 'sheet-tools' : 'sheet';
@@ -30,7 +31,9 @@ if (args.includes('--paths-only')) {
     summary:args.includes('--first-person-tools-round') ? null : summaryPath(family,round)}));
   process.exit(0);
 }
-if (args.includes('--rustwall-round')) {
+if (args.includes('--rustwall-p2-round')) {
+  await rustwallP2Sheet(Number(value('--rustwall-p2-round')));
+} else if (args.includes('--rustwall-round')) {
   await rustwallSheet(Number(value('--rustwall-round')));
 } else if (args.includes('--first-person-tools-round')) {
   await firstPersonSheet(Number(value('--first-person-tools-round')),true);
@@ -240,4 +243,101 @@ async function rustwallSheet(round) {
     '--','--root',root,'--manifest',manifest,'--output',output,
     '--summary',summaryPath('rustwall',round)],{cwd:root,stdio:'inherit',windowsHide:true});
   console.log('Rustwall fidelity sheet: '+output);
+}
+
+async function rustwallP2Sheet(round) {
+  if(!Number.isInteger(round)||round<1||round>10)throw Error('Rustwall P2 round must be 1..10');
+  const base=evidenceDir('rustwall-p2',round);
+  const captures=JSON.parse(await readFile(join(base,'captures.json'),'utf8'));
+  const blender=JSON.parse(await readFile(join(base,'blender-manifest.json'),'utf8'));
+  const rows=[],sources={};
+  const verify=async(path,expected)=>{
+    if(!/^[a-f0-9]{64}$/i.test(expected||''))throw Error('Missing evidence source sha256: '+path);
+    const actual=createHash('sha256').update(await readFile(join(root,path))).digest('hex');
+    if(actual!==expected)throw Error('Evidence source changed: '+path);
+    sources[path]=actual;
+    return actual;
+  };
+  await verify(blender.reference.path,blender.reference.sha256);
+  for(const [kind,asset] of Object.entries(blender.assets)) {
+    await verify(asset.path,asset.sha256);
+    if(captures.assets[kind]?.sha256!==asset.sha256)throw Error('Rustwall P2 asset mismatch: '+kind);
+  }
+  const contextPath='public/assets/reference/wasteland-art-direction.png';
+  const contextCrop=[1010,15,1470,310];
+  const contextSha=createHash('sha256').update(await readFile(join(root,contextPath))).digest('hex');
+  sources[contextPath]=contextSha;
+  const contextReference={path:contextPath,sha256:contextSha,
+    crop:contextCrop,scope:'environment-context'};
+  if(blender.contextReference && (blender.contextReference.path!==contextPath ||
+    blender.contextReference.sha256!==contextReference.sha256 ||
+    JSON.stringify(blender.contextReference.crop)!==JSON.stringify(contextCrop)))
+    throw Error('Rustwall P2 canyon context provenance mismatch');
+  const qualities=['high','performance'],routes=['a','b','c'];
+  const pairs=new Set(routes.flatMap(route=>qualities.map(quality=>`${route}:${quality}`)));
+  const placement=new Map(),routeCaptures=new Map();
+  for(const item of captures.placement||[]) {
+    const key=`${item.route}:${item.quality}`;
+    if(!pairs.has(key)||placement.has(key))throw Error('Duplicate or unknown route placement: '+key);
+    if(!Array.isArray(item.gate)||item.gate.length!==3||!Number.isFinite(item.bankCount))
+      throw Error('Invalid route placement: '+key);
+    placement.set(key,item);
+  }
+  if(placement.size!==pairs.size)throw Error('Missing A/B/C route placement');
+  for(const item of captures.context||[]) {
+    if(item.view!=='approach')continue;
+    const key=`${item.route}:${item.quality}`;
+    if(!pairs.has(key)||routeCaptures.has(key))throw Error('Duplicate or unknown route context capture: '+key);
+    routeCaptures.set(key,item);
+  }
+  if(routeCaptures.size!==pairs.size)throw Error('Missing A/B/C route context capture');
+  for(const item of routeCaptures.values())await verify(item.path,item.sha256);
+  const wallIds=['front','depth','driver-approach','open-gate','full-span'];
+  if(blender.captures.length!==6 || blender.captures.filter(item=>item.kind==='wall').length!==5 ||
+    blender.captures[5]?.id!=='wash-module' || wallIds.some(id=>!blender.captures.some(item=>item.id===id)))
+    throw Error('Rustwall P2 requires five matched wall views and one wash context view');
+  for(const sample of blender.captures) {
+    const high=captures.captures.filter(item=>item.id===sample.id&&item.quality==='high');
+    const performance=captures.captures.filter(item=>item.id===sample.id&&item.quality==='performance');
+    if(high.length!==1||performance.length!==1)throw Error('Missing or duplicate Rustwall P2 quality: '+sample.id);
+    for(const game of [high[0],performance[0]]) {
+      if(sample.kind==='wall') {
+        if(JSON.stringify(game.camera)!==JSON.stringify(sample.camera)||
+          game.cameraSpace!==sample.cameraSpace||game.gateOpen!==(sample.gateOpen||0)||
+          JSON.stringify(game.moduleScale)!==JSON.stringify(sample.moduleScale))
+          throw Error('Rustwall P2 matched wall pose mismatch: '+sample.id);
+      } else if(game.counts?.scope!=='joined bank in the actual wash course') {
+        throw Error('Rustwall P2 wash game capture lacks joined-bank scope: '+game.quality);
+      }
+      await verify(game.path,game.sha256);
+    }
+    await verify(sample.path,sample.sha256);
+    rows.push(sample.kind==='wall'
+      ? {clip:'wall',time:sample.gateOpen||0,view:sample.id,
+        label:`WALL ${sample.id.toUpperCase()} CAMERA MATCH`,comparisonScope:'numeric-camera-match',
+        crop:sample.referenceCrop,reference:blender.reference.path,
+        blender:sample.path,high:high[0].path,performance:performance[0].path}
+      : {clip:'wash',time:0,view:'wash-module',
+        label:'WASH SOURCE MODULE AND GAME JOINED BANK NO CAMERA MATCH',
+        comparisonScope:'source-module-vs-runtime-bank',
+        columnLabels:['REFERENCE ENVIRONMENT CONTEXT','BLENDER SOURCE MODULE',
+          'HIGH GAME JOINED BANK','PERFORMANCE GAME JOINED BANK'],
+        crop:contextCrop,reference:contextPath,
+        blender:sample.path,high:high[0].path,performance:performance[0].path});
+  }
+  const output=join(base,'sheet.png'),manifest=join(base,'sheet.json');
+  await writeFile(manifest,JSON.stringify({round,observationCommit:captures.observationCommit,
+    assets:captures.assets,reference:blender.reference,contextReference,
+    tile:{width:384,height:216},rows,sources,
+    placement:[...pairs].map(key=>placement.get(key)),
+    routeCaptures:[...pairs].map(key=>routeCaptures.get(key)),
+    baseline:captures.baseline,cost:captures.cost,preparedGroundTriangles:captures.preparedGroundTriangles,
+    output:relative(root,output).replaceAll('\\','/'),
+    status:'Five wall views share numeric cameras. Wash reference is environment context; Blender is a source module and game views are joined runtime banks. Visual review and measured cost decide fidelity.'},null,2)+'\n',{flag:'wx'});
+  const executable=value('--blender',process.env.BLENDER_PATH||'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe');
+  await mkdir(dirname(summaryPath('rustwall-p2',round)),{recursive:true});
+  execFileSync(executable,['-b','--python',join(root,'tools/blender/fidelity-sheet.py'),
+    '--','--root',root,'--manifest',manifest,'--output',output,
+    '--summary',summaryPath('rustwall-p2',round)],{cwd:root,stdio:'inherit',windowsHide:true});
+  console.log('Rustwall P2 fidelity sheet: '+output);
 }
