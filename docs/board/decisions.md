@@ -522,3 +522,10 @@ Approve translating each complete boot, trim and sole with its ankle contact to 
 ## 2026-09-25 PDT: status inspection scope
 
 Kyle excluded the external audio worktree from this Director's access. The current status helper calls Git status inside every registered lane. FIX-STATUS-SCOPE adds repeatable --skip-lane exact-branch arguments and an equivalent collectStatus skipLanes array. Skipped branches remain listed using integration Git refs, with unknown dirty state, explicitly skipped inspection and removable false. The helper must make no filesystem or Git call inside a skipped lane. Default behavior and normal lane inspection remain unchanged. Independent throwaway-repository tests precede code; no real external folder is used. This small QA fix precedes the next required status update.
+
+
+## 2026-09-25 PDT: measured rear trouser contour
+
+The independent back-view check resolves the apparent pose conflict. At native y500 the visible legs are370–414 and463–507; y490 and510 stay within1–2pixels. The old back band359–406/464–510 was approximate. Using the existing back center439 gives the first leg world x+.079..+.219m, compatible with the corrected front opposite leg+.098..+.231m. The current rear surface+.160..+.278m is displaced outward, not evidence that the reference poses are incompatible.
+
+Approve correcting the y500 back band to those independently measured native intervals, preserving the10pixel geometry tolerance. An independent corrected-reference/source red precedes a depth-dependent rear calf contour adjustment that keeps the accepted front surface fixed and tapers toward knee/cuff. Check connected cross-sections, unchanged sewnUVs, boot contact and poses. Do not change other back bands without independent visible-reference evidence.
