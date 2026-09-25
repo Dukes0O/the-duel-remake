@@ -386,13 +386,15 @@ tasks:
     lane: VIS
     size: L
     needs: [EGG-02-P1]
-    status: backlog
+    status: building
+    owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall-p2/]
+    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: hidden-road
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
       - "Continue the round-10 gaps: replace the regular flat facade with deeper irregular salvage, grounded supports and a varied roofline; make canyon strata follow the slope without repeated broad bands. Reach resemblance four and preserve the measured frame budget."
       - "Retain the physical route, collision envelopes, gate clearance, joined-bank safety tests and smaller reviewed atlases. Use a separate next-wave review folder and immutable reference/Blender/High/Performance sheets."
-    note: "The phase-2 slice improves the wash and asset size, but wall and wash resemblance remain three. Hidden Road stays in development."
+    note: "Active next-wave codex/egg-02-p2. Written design uses welded source-car salvage and unequal facade depth, funded by removing repeated microdetail within original limits. Wash follows measured contour strata using the approved art-direction background crop. Independent tests precede code. Physical route, gate and collision union remain fixed."
   - id: EGG-03
     title: "Gate arrival and invitation"
     priority: 10
@@ -480,12 +482,12 @@ tasks:
     lane: VIS
     size: L
     needs: [CAR-01]
-    status: building
+    status: merged
     owns: [tools/blender/armor-kits.py, tools/blender/kit-review.py, tools/blender/kit-sheet.py, public/assets/models/wasteland/kits/, src/armor-kit-meshes.js, docs/board/looks/kits/]
     hooks: [src/combat-scene.js, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-resource-lifecycle.mjs, tools/test-armor-kit-fit.mjs, tools/test-armor-kit-visuals.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/audit-armor-kit-fit.mjs, tools/test-blender-output.mjs, src/vehicles.js, src/render3d.js, tools/test-combat-vehicle-wear.mjs, tools/test-npc-vehicle-damage.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
     flag: wasteland2
-    note: "Active codex/gfx-03 from 85fe35f. Written design and independent red tests precede code. Crew builder owns fitted authored kits; measured four-car frame cost and three scored rounds required."
+    note: "Merged31dfd13 after251/251 lane suites, build, independent fit/resource/wear review,44 all-car/state captures and600-frame four-car A/B/A. Final art3/4/4/3/frame4 remains dev; GFX-03-P1 owns distinct plate fidelity. Source family4,383,060B,3,440–5,094 triangles/car and18 named primitives; measured p95 overhead<=6.8%."
     acceptance:
       - "All nine cars have intact, damaged, burning and wrecked kits; three matched saved fidelity rounds meet SPEC 0.3 and frame budgets."
   - id: GFX-03-P1
