@@ -330,7 +330,7 @@ tasks:
     lane: TOOL
     size: M
     needs: [GFX-01-P2, EGG-02-P2, GFX-02-P1]
-    status: backlog
+    status: building
     owns: [src/feature-flags.js, tools/test-feature-flags.mjs, tools/scenarios/experimental.mjs, tools/scenarios/wasteland-beta.mjs, tools/test-wasteland-beta.mjs, docs/playtest-inbox.md, docs/changes/BETA-01.md]
     helpers: [test_author, reviewer, browser_qa, save_guardian, test_runner]
     acceptance:
@@ -339,7 +339,7 @@ tasks:
       - "Run a private production-menu path from Experimental opt-in through Hidden Road departure, gate invitation, yard and a Wasteland race. Record fixture placement separately from actual driving and UI actions; do not force completion or discovery to claim journey coverage."
       - "Record full tier on the exact candidate commit, production build, complete combat checks off/on, applicable frame pacing, art and save budget results, and a short What to try note. Later commits require fresh exact evidence."
       - "Prepare only: BETA-01 does not authorize master, the live folder, port 5174, a release or history rewrite. Kyle must approve release in writing."
-    note: "First phase-3 card under Kyle's overnight direction. Pending the explicit SPEC0.3 art-gate exception question recorded in parked.md; the requested phase-2 research cards merged without runtime art promotion and P2 sleeve polish continues. Existing Experimental scenario expects no beta entries; changing that expectation is the intended promotion, not a reason to remove isolation or released-feature checks."
+    note: "Kyle explicitly approved Experimental beta with current art on 25 September. Prepare with unfinished polish listed; retain art follow-on gates and current runtime assets. No release approval. This is the final active card before the morning handoff. Existing beta-empty test expectations must change with reviewed reasons while isolation protections remain."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8
@@ -553,7 +553,7 @@ tasks:
     hooks: [src/combat-hud.js, tools/test-combat-hud.mjs, src/career-backup.js, src/progression.js, src/weapon-upgrades.js, src/armor-kits.js, src/crew.js, src/screen-armory.js, src/screen-router.js, src/app.js, src/crew-ui.js, tools/test-crew-ui.mjs, src/combat-scoring.js, tools/test-combat-scoring.mjs, src/raiders.js, tools/test-raiders.mjs, src/game.js, src/screen-results.js, tools/test-wasteland-results.mjs, tools/scenarios/wasteland-career.mjs, tools/test-wasteland-profile.mjs, tools/test-progression.mjs, tools/test-progression-integration.mjs, tools/test-save-fixtures.mjs, tools/test-weapon-upgrades.mjs, tools/test-armor-kits.mjs, tools/test-crew.mjs, tools/test-career-backup.mjs]
     helpers: [test_author, save_guardian, reviewer, browser_qa]
     acceptance:
-      - "Add separate scrap and eight-warlord territory progression, ranks 1–30 and yard access behind the switch per SPEC 0.4. Preserve old credit-funded weapon levels and ordinary careers through backed-up migration."
+      - "Add separate scrap and eight-warlord territory progression, ranks 1â€“30 and yard access behind the switch per SPEC 0.4. Preserve old credit-funded weapon levels and ordinary careers through backed-up migration."
     note: "Merged ac79e63 after 242/242 final lane suites, build, private browser review and independent Save Guardian clearance. Earns and spends scrap, builds hold, and shows the territory map. Existing ranks are preserved. GFX-04 connects the yard; WAR-01/02/03/04 own the unbuilt ladder, fights and one-time claim grants. Director approved hiding active combat HUD over result dialogs after actual screenshots proved overlapping controls."
   - id: GFX-03
     title: "Nine war rigs and kits fidelity rounds one to three"
@@ -566,7 +566,7 @@ tasks:
     hooks: [src/combat-scene.js, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-resource-lifecycle.mjs, tools/test-armor-kit-fit.mjs, tools/test-armor-kit-visuals.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/audit-armor-kit-fit.mjs, tools/test-blender-output.mjs, src/vehicles.js, src/render3d.js, tools/test-combat-vehicle-wear.mjs, tools/test-npc-vehicle-damage.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
     flag: wasteland2
-    note: "Merged31dfd13 after251/251 lane suites, build, independent fit/resource/wear review,44 all-car/state captures and600-frame four-car A/B/A. Final art3/4/4/3/frame4 remains dev; GFX-03-P1 owns distinct plate fidelity. Source family4,383,060B,3,440–5,094 triangles/car and18 named primitives; measured p95 overhead<=6.8%."
+    note: "Merged31dfd13 after251/251 lane suites, build, independent fit/resource/wear review,44 all-car/state captures and600-frame four-car A/B/A. Final art3/4/4/3/frame4 remains dev; GFX-03-P1 owns distinct plate fidelity. Source family4,383,060B,3,440â€“5,094 triangles/car and18 named primitives; measured p95 overhead<=6.8%."
     acceptance:
       - "All nine cars have intact, damaged, burning and wrecked kits; three matched saved fidelity rounds meet SPEC 0.3 and frame budgets."
   - id: GFX-03-P1
@@ -1052,7 +1052,7 @@ tasks:
     size: M
     needs: [FND-05]
     status: spike-complete
-    note: "Throwaway branch 4cc9556 independently reviewed: real Pacific Canyon walking, pointer lock, 13 focused checks, private browser input and 0.0173–0.0257 ms median step cost. Go with course lookups for FOOT-01; do not merge spike code."
+    note: "Throwaway branch 4cc9556 independently reviewed: real Pacific Canyon walking, pointer lock, 13 focused checks, private browser input and 0.0173â€“0.0257 ms median step cost. Go with course lookups for FOOT-01; do not merge spike code."
     spec: "SPEC.md, task FOOT-00"
   - id: RFX-04
     title: "Split combat into field-aware modules"
@@ -1089,7 +1089,7 @@ tasks:
     flag: wasteland2
     behavior_change: yes
     acceptance:
-      - "Every combat car starts with max armor 100 × clamp(sqrt(mass/1450), 0.8, 1.6); all nine cars and both clamps have exact tests."
+      - "Every combat car starts with max armor 100 Ã— clamp(sqrt(mass/1450), 0.8, 1.6); all nine cars and both clamps have exact tests."
       - "Level-zero bolt 12, bomb up to 18 with falloff, ram above 40 km/h at 0.2 per relative km/h, and major scenery 20 armor damage; future rocket/RPG/spike values have pure numeric tests."
       - "Each car's own star blocks projectile, ram, scenery, and self damage; a bomb near its thrower arms after 0.35 seconds and self damage stays at or below 25%."
       - "At zero armor each car wrecks exactly once, explodes, recovers within 12 m of the impact with 60% of its own max, and pays about 3.5 seconds once."

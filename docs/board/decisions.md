@@ -702,3 +702,18 @@ Morning is approaching. Finish the current measured slice and final run gates;
 do not begin a new 35–45 minute construction slice. Preserve both original
 material images outside the disposable lane. Reversal is a separately designed
 P3 recipe, never replacement of current runtime assets without acceptance.
+
+
+## 2026-09-25 PDT: Kyle approves Experimental beta with current art
+
+Kyle answered the pending gate question: **Allow Experimental beta with current
+art.** This explicitly permits BETA-01 to put wasteland2 and hidden-road under
+Experimental despite current visual scores below four. Keep the unfinished
+polish visible in the What to try note; preserve the art follow-on cards and
+their acceptance gates. The exception does not select the research hand/body
+assets and does not grant release approval. Keep career-backup in dev.
+
+Prepare BETA-01 as the last active card before the morning handoff. Tests first,
+then the flag change and real private menu/journey checks, ordinary lane/build,
+exact integration full and supporting checks. After this card finish the run;
+do not start the arena or warlord cards tonight. Release still waits for Kyle.

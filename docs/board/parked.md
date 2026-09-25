@@ -1,15 +1,5 @@
 # Work awaiting a decision
 
-## BETA-01: Experimental promotion
-
-Recorded 25 September 2026. Kyle requested the phase-3 beta preparation, but
-SPEC0.3 still requires every art score to reach four before beta. Current crew
-and first-person likeness remains three; Rustwall, yard and kit polish also
-retain their recorded gaps. The Director has asked whether to keep that gate
-or allow an explicitly unfinished-art Experimental beta. The answer is pending.
-Do not infer an exception from elapsed time. Phase-2 art work continues; no
-release is authorized.
-
 ## First three warlord rewards
 
 Recorded 25 September 2026. Phase3 orders the first three warlord fights before
