@@ -1610,3 +1610,40 @@ tasks:
     behavior_change: no
     owns: [tools/build-status.mjs, tools/test-build-status.mjs, docs/changes/FIX-STATUS-CARD.md]
     note: "Merged 7b901c4 after independent red/green fixtures, 250 focused checks, eight lane suites and build. Optional numeric P suffixes remain in card labels; branch safety and evidence validity are unchanged."
+
+  - id: ARENA-01
+    title: "Scrapdome bounded arena framework"
+    priority: 2
+    lane: CMB
+    size: L
+    needs: [BETA-01, GFX-04, CAR-01]
+    status: backlog
+    flag: wasteland2
+    owns: [src/scrapdome.js, src/arena-driving.js, src/arena-ai.js, src/screen-arena.js, src/screen-arena.css, tools/test-scrapdome.mjs, tools/test-arena-driving.mjs, tools/scenarios/scrapdome.mjs, docs/changes/ARENA-01.md]
+    hooks: [src/game.js, src/app.js, src/screen-router.js, src/screen-yard-home.js, src/sim-driving.js, src/sim-contacts.js, src/sim-results.js, src/render3d.js, src/combat-ai.js, src/combat.js]
+    helpers: [test_author, reviewer, save_guardian, browser_qa, balance_analyst]
+    acceptance:
+      - "Before code, write the event-state contract, physical Titan stadium bounds, free-driving coordinates, player and CPU spawn selection, round lifecycle and return-to-yard behavior. Separate simulation decisions from rendering and reuse the existing opponents list. Up to three CPU cars must be supported from the first implementation."
+      - "Seed and inputs reproduce positions, contacts and outcomes without graphics. Arena boundaries must be physical and keep every supported car playable; ordinary course progress, checkpoints, police and race records retain their existing behavior. Keep on-foot support within the same bounded event."
+      - "A discovered player's yard can enter the implemented arena flow and return safely. Navigation, restart, pause and player changes clean up event state and input. No unbuilt mode is offered. Keep the new flow behind wasteland2 and preserve flag-off behavior."
+      - "Independent red tests cover seeds, one to three CPU cars, all nine player cars, bounds, spawn overlap, cleanup and ordinary replay controls. Review actual High/Performance driving with memory-only saves and measure complete-scene frame cost against the Titan stadium baseline."
+    sound: "Name arena.countdown, arena.round-start and arena.results events for the existing audio owner; use placeholder bank cues until that lane supplies assets."
+    note: "Phase 3 order two. Planning only until BETA-01 is complete; no audio lane or credit use is delegated here. Results and reward ownership must be settled with Save Guardian before persistence changes."
+  - id: ARENA-02
+    title: "Last Car Rolling with up to three CPU cars"
+    priority: 3
+    lane: CMB
+    size: M
+    needs: [ARENA-01]
+    status: backlog
+    flag: wasteland2
+    owns: [src/scrapdome-last-car.mjs, tools/test-last-car-rolling.mjs, tools/scenarios/last-car-rolling.mjs, docs/changes/ARENA-02.md]
+    hooks: [src/scrapdome.js, src/arena-ai.js, src/screen-arena.js, src/combat.js, src/wasteland-career.js, src/app.js]
+    helpers: [test_author, reviewer, save_guardian, browser_qa, balance_analyst]
+    acceptance:
+      - "Settle time limit, scoring, ties, respawn timing and protection in writing before code. Follow SPEC 3.7: wreck the others more times than they wreck you within the time limit. Attribution must distinguish player, CPU, environment and self damage; repeated collision or wreck events cannot score twice."
+      - "Use the bounded framework for one, two and three CPU cars at all three difficulties. Test deterministic round completion, simultaneous timer/wreck boundaries, fair respawn positions, pause and abandonment. Ordinary races and their fingerprints stay unchanged."
+      - "Integrate completed results with the existing scrap and territory contracts for the Scrapdome venue. Save Guardian proves idempotent settlement, owner identity, abandonment and historical-save preservation using fixtures only. New rank, price or reward choices require a recorded decision."
+      - "Private browser review shows actual free driving, a credited wreck, respawn, timer completion, results and return to yard. Record frame pacing, balance and the lane/build gate before readiness."
+    sound: "Reuse combat impact/wreck cues and arena.countdown, arena.round-start and arena.results through the external audio owner's bank."
+    note: "Phase 3 order two, after the framework. No implementation has begun. The owned mode filename is provisional until the framework design settles module boundaries."
