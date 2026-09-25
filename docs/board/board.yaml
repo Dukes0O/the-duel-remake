@@ -404,7 +404,7 @@ tasks:
     needs: [EGG-02-P1]
     status: building
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall-p2/]
-    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-sheet.mjs, tools/test-rustwall-p2-relief.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/scenarios/rustwall-frame.mjs, tools/test-rustwall-frame.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-sheet.mjs, tools/test-rustwall-p2-relief.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: hidden-road
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
