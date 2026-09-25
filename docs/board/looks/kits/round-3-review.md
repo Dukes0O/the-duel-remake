@@ -1,0 +1,9 @@
+# GFX-03 round 3: fitted arch sheets
+
+The [matched sheet](round-3.jpg) compares the approved top-panel reference, a Blender render of the actual Falcone and kit GLBs, and isolated game views in High and Performance. The browser scenario also saved intact four-car, critical and wreck views in both qualities under ignored `.evidence/2026-09-24/armor-kit-visuals-2026-09-24T23-44-02-322Z/`.
+
+The method changed after round 2: side sheets now follow the real axle centers with wheel arch cutouts; hood metal is two narrow vents; roof bars use measured skin contact. All nine assets were rebuilt. The red authored-critical regression now passes: finish materials belong to each actor, critical armor darkens them, and a wreck removes crown/cage/saws while keeping a scorched shell.
+
+Independent score: likeness 2, readability 3, grounding 3 and scene consistency 2. Frame cost remains unscored. Wheel openings improve fit, but the sheet still reads as rectangular fences attached to a bright stock car. The door and rear body remain exposed; vertical quarter panels stand away from the curved body; metal has flat printed wear without edge wear or rivets; roof bars look added on; the wreck leaves a largely pristine body. A raw 492 draw-call count is recorded for the four-car scene, but frame cost awaits a quiet timing window. This round fails the art gate.
+
+Before round 4 code, change the construction method: derive thin conforming hood, door and rear-quarter surfaces from actual loaded body/roof/axle landmarks. Split them into overlapping bent sheets with grounded fasteners, preserve glass and wheel clearance, and reserve bulky parts for Warlord. Sharpen the painted metal atlas within the current byte budget. Give the wreck retained kit sheets a visible scorched/deformed presentation. Do not change the base car, simulation or combat weapon geometry.

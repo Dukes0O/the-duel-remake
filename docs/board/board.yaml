@@ -300,7 +300,9 @@ tasks:
     lane: ART
     size: L
     needs: [GFX-01-P1]
-    status: backlog
+    status: building
+    owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, docs/board/looks/crew-p2/]
+    hooks: [tools/test-rook-p2-source.mjs, tools/test-blender-output.mjs]
     flag: wasteland2
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
@@ -384,13 +386,15 @@ tasks:
     lane: VIS
     size: L
     needs: [EGG-02-P1]
-    status: backlog
+    status: building
+    owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall-p2/]
+    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: hidden-road
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
       - "Continue the round-10 gaps: replace the regular flat facade with deeper irregular salvage, grounded supports and a varied roofline; make canyon strata follow the slope without repeated broad bands. Reach resemblance four and preserve the measured frame budget."
       - "Retain the physical route, collision envelopes, gate clearance, joined-bank safety tests and smaller reviewed atlases. Use a separate next-wave review folder and immutable reference/Blender/High/Performance sheets."
-    note: "The phase-2 slice improves the wash and asset size, but wall and wash resemblance remain three. Hidden Road stays in development."
+    note: "Active next-wave codex/egg-02-p2. Written design uses welded source-car salvage and unequal facade depth, funded by removing repeated microdetail within original limits. Wash follows measured contour strata using the approved art-direction background crop. Independent tests precede code. Physical route, gate and collision union remain fixed."
   - id: EGG-03
     title: "Gate arrival and invitation"
     priority: 10
@@ -478,28 +482,56 @@ tasks:
     lane: VIS
     size: L
     needs: [CAR-01]
-    status: building
-    owns: [tools/blender/armor-kits.py, public/assets/models/wasteland/kits/, src/armor-kit-meshes.js, docs/board/looks/kits/]
-    hooks: [src/combat-scene.js, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-resource-lifecycle.mjs, tools/test-armor-kit-visuals.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/audit-armor-kit-fit.mjs]
+    status: merged
+    owns: [tools/blender/armor-kits.py, tools/blender/kit-review.py, tools/blender/kit-sheet.py, public/assets/models/wasteland/kits/, src/armor-kit-meshes.js, docs/board/looks/kits/]
+    hooks: [src/combat-scene.js, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-resource-lifecycle.mjs, tools/test-armor-kit-fit.mjs, tools/test-armor-kit-visuals.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/audit-armor-kit-fit.mjs, tools/test-blender-output.mjs, src/vehicles.js, src/render3d.js, tools/test-combat-vehicle-wear.mjs, tools/test-npc-vehicle-damage.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
     flag: wasteland2
-    note: "Active codex/gfx-03 from 85fe35f. Written design and independent red tests precede code. Crew builder owns fitted authored kits; measured four-car frame cost and three scored rounds required."
+    note: "Merged31dfd13 after251/251 lane suites, build, independent fit/resource/wear review,44 all-car/state captures and600-frame four-car A/B/A. Final art3/4/4/3/frame4 remains dev; GFX-03-P1 owns distinct plate fidelity. Source family4,383,060B,3,440–5,094 triangles/car and18 named primitives; measured p95 overhead<=6.8%."
     acceptance:
       - "All nine cars have intact, damaged, burning and wrecked kits; three matched saved fidelity rounds meet SPEC 0.3 and frame budgets."
+  - id: GFX-03-P1
+    title: "Armor kits with distinct fitted steel plates"
+    priority: 16
+    lane: VIS
+    size: M
+    needs: [GFX-03]
+    status: backlog
+    owns: [tools/blender/armor-kits.py, public/assets/models/wasteland/kits/, docs/board/looks/kits/]
+    hooks: [tools/blender/kit-review.py, tools/blender/kit-sheet.py, tools/audit-armor-kit-fit.mjs, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-fit.mjs, tools/scenarios/armor-kit-visuals.mjs]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    flag: wasteland2
+    note: "Round8 scores likeness3/readability4/grounding4/consistency3/frame4. Replace the continuous mottled wrap with distinct fitted steel plates and stronger edge wear at game distance. Settle the geometry trade in writing before code; preserve named breakable parts and resource ownership."
+    acceptance:
+      - "Reach all art scores of four, prove all nine cars and three tiers in game, and keep the four-car whole-scene cost within ten percent. Keep wheels, lamps and glass clear and existing purchases unchanged."
   - id: GFX-04
     title: "Yard home and arena fidelity rounds one to three"
     priority: 15
     lane: VIS
     size: L
     needs: [CAR-01]
-    status: building
+    status: merged
     owns: [src/app.js, src/screen-router.js, src/screen-yard-home.js, src/screen-yard-home.css, src/hidden-road-ui.js, src/hidden-road-ui.css, src/scrapdome-yard.js, tools/blender/scrapdome-yard.py, public/assets/models/wasteland/scrapdome/, docs/board/looks/yard/]
-    hooks: [src/screen-armory.js, src/world-surfaces.js, src/world.js, src/render3d.js, tools/test-yard-home.mjs, tools/test-scrapdome-yard.mjs, tools/test-scrapdome-yard-assets.mjs, tools/scenarios/yard-home.mjs, tools/scenarios/scrapdome-review.mjs, tools/test-yard-ground-render.mjs]
+    hooks: [src/screen-armory.js, src/world-surfaces.js, src/world.js, src/render3d.js, tools/test-yard-home.mjs, tools/test-scrapdome-yard.mjs, tools/test-scrapdome-yard-assets.mjs, tools/scenarios/yard-home.mjs, tools/scenarios/scrapdome-review.mjs, tools/test-yard-ground-render.mjs, tools/test-blender-output.mjs]
     helpers: [test_author, reviewer, save_guardian, art_critic, browser_qa]
     flag: hidden-road
-    note: "Active codex/gfx-04 from 85fe35f. Career owns App/router/panels; Rustwall owns yard model/scene/world/render hooks. Written design and independent red tests precede each implementation. Guarded arrived yard permits scrap operations and rechecks ownership after refresh. No unbuilt arena modes."
+    note: "Merged ba4e739 after 246/246 lane suites, build, independent UI/Save Guardian reviews, 23 all-car browser captures and scoped 600-frame A/B/A percentile gate. Yard remains dev at likeness three; GFX-04-P1 owns residual art. No unbuilt arena modes or save schema changes."
     acceptance:
       - "Three saved fidelity rounds for the yard home and arena family; connect career/map/armory/crew choices and the ARENA-01/06 framework without granting unbuilt modes."
+  - id: GFX-04-P1
+    title: "Scrapdome yard reference likeness polish"
+    priority: 16
+    lane: VIS
+    size: M
+    needs: [GFX-04]
+    status: backlog
+    owns: [tools/blender/scrapdome-yard.py, public/assets/models/wasteland/scrapdome/, docs/board/looks/yard/]
+    hooks: [tools/test-scrapdome-yard-assets.mjs, tools/scenarios/scrapdome-review.mjs]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    flag: hidden-road
+    note: "Round 10 reaches likeness three with recognizable supported hulks. Increase pile density and barrier presence and refine cranes against the reference. Preserve the 25,000-triangle allocation and accepted car/aspect framing; settle the geometry trade before code."
+    acceptance:
+      - "Reach all art scores of four with matched High/Performance views and whole-scene frame cost within ten percent. Preserve entry clearance, ground support and existing yard shops."
   - id: FND-01
     title: "Live game safety"
     wave: 0

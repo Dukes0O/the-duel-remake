@@ -22,6 +22,7 @@ import { addFurniture, addSign, box, addStation, addTurnSigns, addCoast, addHarb
 import { registerSceneSystem, disposeSceneSystems } from './scene-systems.js';
 import { makeSignFallSystem } from './scenery-fall.js';
 import { createRustwallScene } from './rustwall-scene.js';
+import { createScrapdomeYard } from './scrapdome-yard.js';
 
 // Keep the established scene API for renderer and geometry-focused callers.
 export { worldAtExtended, strip, terrainGeometry, farTerrainGeometry } from './world-surfaces.js';
@@ -134,6 +135,8 @@ function addHiddenRoad(group, course) {
   root.add(banks);
   const rustwall = createRustwallScene(course);
   root.add(rustwall.group);
+  const yard = createScrapdomeYard(course);
+  root.add(yard.group);
   rustwall.ready.then(() => {
     if (rustwall.group.getObjectByName('Rustwall wash')) banks.visible = false;
   });

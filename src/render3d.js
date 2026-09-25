@@ -6,7 +6,7 @@ import {directionalCameraPose} from './camera-views.js';
 import {onFootCameraPose, projectOnFootAim} from './onfoot-camera.js';
 import {hiddenRoadPresentation,hiddenRoadDrivingCamera} from './hidden-road-ui.js';
 import { CARS, DRIVE } from './config.js';
-import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage } from './vehicles.js';
+import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage, combatVehicleWear } from './vehicles.js';
 import { buildEnvironment, worldAtExtended, disposeTree } from './world.js';
 import { createDrivingEffects } from './effects.js';
 import { createExplosion } from './explosion.js';
@@ -152,6 +152,7 @@ export function attachRenderer(host, app) {
   const firstPersonOptions={enabled:false,active:false,firstPerson:false,camera,time:0};
   const roadsideDebris=createRoadsideDebris();scene.add(roadsideDebris.group);
   let rustwallPresentation=null;
+  let yardPresentation=null;
   function retireObject(object,beforeDispose){
     detachRetiredVehicleVisuals(object,combatScene,vehicleAttachments);
     scene.remove(object);
@@ -169,6 +170,7 @@ export function attachRenderer(host, app) {
     lighting.apply({course,mood:app.lightingMood});
     world = buildEnvironment(course); scene.add(world);
     rustwallPresentation=world.getObjectByName('Rustwall')?.userData;
+    yardPresentation=world.getObjectByName('Scrapdome yard')?.userData;
     chickens=createChickens(course);world.add(chickens.group);
     ambientShading.refresh();
     host.dataset.worldBuildMs=(performance.now()-buildStart).toFixed(0);firstWorldFrame=true;
@@ -260,6 +262,7 @@ export function attachRenderer(host, app) {
     const spurCamera=!menu&&(!journeyView.camera||journeyView.camera.blend<1)?
       hiddenRoadDrivingCamera(st,course,app.cameraMode||'chase'):null;
     rustwallPresentation?.updateJourney?.(journeyView);
+    yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
     lighting.apply({course,theme:course.themeAt(distance),mood:app.lightingMood,blend:1-Math.exp(-dt*1.1),tunnel:!!course.tunnelAt(distance)});
     const tall=carKey==='titan_monster';
     const speed=Math.abs(st.speedMph);
@@ -269,7 +272,10 @@ export function attachRenderer(host, app) {
     vehicleAttachments.applyPaint(player,app.getPaintPreset?.(carKey,{menu})??null);
     host.dataset.paint=player.userData.paintAppearance?.id||'factory';
     const wreckAge=st.catastrophic ? Math.max(0,(st.impactDuration||0)-(st.impactTimer||0)) : 0;
-    updateVehicleDamage(player,menu?0:st.majorCrashes, !menu&&st.catastrophic, wreckAge,menu?null:st.damageZones,menu?0:st.crushDamage);
+    const combatWearEnabled=!menu&&st.mode==='wasteland'&&!!st.combat&&
+      app.duel.featureFlags?.enabled('wasteland2')===true;
+    updateVehicleDamage(player,menu?0:st.majorCrashes, !menu&&st.catastrophic, wreckAge,
+      menu?null:st.damageZones,menu?0:st.crushDamage,combatVehicleWear(st,combatWearEnabled));
     const steering = menu ? 0 : st.steerVisual || 0;
     updateDriver(player.userData.driver,steering,menu?0:st.slipAngle,!menu&&st.catastrophic);
     if(player.userData.steeringPivot)player.userData.steeringPivot.rotation.z=steering*.7;
@@ -354,15 +360,23 @@ export function attachRenderer(host, app) {
       if(blend>.15)player.visible=true;
       firstPersonView=false;
     }
+    const yardHomePose=yardPresentation?.homeCamera?.(camera.aspect);
+    if(yardHomePose){
+      camTarget.set(yardHomePose.position.x,yardHomePose.position.y,yardHomePose.position.z);
+      lookTarget.set(yardHomePose.target.x,yardHomePose.target.y,yardHomePose.target.z);
+      camera.fov=yardHomePose.fov;
+      player.visible=true;
+      firstPersonView=false;
+    }
     if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
-    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera) camera.position.copy(camTarget);
+    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose) camera.position.copy(camTarget);
     else {
       camera.position.lerp(camTarget, 1 - Math.exp(-14 * dt));
       // Follow longitudinal motion immediately: world-space damping otherwise
       // adds a speed-dependent camera gap and makes the car shrink at speed.
       camera.position.x = camTarget.x; camera.position.z = camTarget.z;
     }
-    if(!menu&&!journeyView.camera&&!spurCamera&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
+    if(!menu&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,now/1000);
@@ -381,12 +395,12 @@ export function attachRenderer(host, app) {
       ghost.visible=!!ghostPose&&Math.abs(ghostPose.s-st.s)<650;
       if(ghost.visible){const gp=vehicleGroundPoint(course,ghostPose.s,ghostPose.lateral),separation=Math.hypot(gp.x-pp.x,gp.z-pp.z);ghostStyle.opacity(.22*THREE.MathUtils.clamp((separation-2)/7,0,1));place(ghost,gp,ghostPose.headingError,wheelTravel(ghostPose.speedMph));ghost.position.y+=ghostPose.airHeight||0;const slope=groundSlope(course,ghostPose.s,ghostPose.lateral,ghostPose.headingError);ghost.rotation.x=slope.pitch;ghost.rotation.z=slope.roll;applyVehicleTerrainPose(ghost,course,ghostPose);}
     }
-    updateNpcVehicleDamage(rival,menu?null:st.rival);
+    updateNpcVehicleDamage(rival,menu?null:st.rival,combatVehicleWear(st.rival,combatWearEnabled));
     rival.visible = !menu && !!st.rival && Math.abs(visualGap(st.rival.s)) < 650;
     if (rival.visible) {place(rival, vehicleGroundPoint(course,st.rival.s, st.rival.lateral), st.rival.headingError||0, wheelTravel(st.rival.speedMph));rival.position.y+=st.rival.airHeight||0;const slope=groundSlope(course,st.rival.s,st.rival.lateral,st.rival.headingError||0);rival.rotation.x=slope.pitch;rival.rotation.z=slope.roll;applyVehicleTerrainPose(rival,course,st.rival);updateDriver(rival.userData.driver,Math.max(-1,Math.min(1,(st.rival.pushVelocity||0)*.08)),0,false);for(const lamp of rival.userData.brakeLights||[])lamp.material.emissiveIntensity=st.rival.braking?4:1.4;}
     extraOpponents.forEach(({mesh},index)=>{
       const actor=opponents[index+1];
-      updateNpcVehicleDamage(mesh,menu?null:actor);
+      updateNpcVehicleDamage(mesh,menu?null:actor,combatVehicleWear(actor,combatWearEnabled));
       mesh.visible=!menu&&!!actor&&Math.abs(visualGap(actor.s))<650;
       if(!mesh.visible)return;
       place(mesh,vehicleGroundPoint(course,actor.s,actor.lateral),actor.headingError||0,wheelTravel(actor.speedMph));

@@ -1,8 +1,11 @@
 import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 const clamp = value => Math.max(0, Math.min(1, value));
 const KIT_TIERS = Object.freeze({scrapper: 1, raider: 2, warlord: 3});
 const BREAK_POINTS = [0.75, 0.55, 0.35, 0.15];
+const kitLoader = new GLTFLoader();
+const defaultLoadKitAsset = car => kitLoader.loadAsync(`/assets/models/wasteland/kits/${car}.glb`);
 
 // Appearance follows the equipped kit. CPU opponents retain their authored
 // Scrapper baseline until their own kit loadouts are introduced.
@@ -15,7 +18,7 @@ export function armorCondition(actor) {
     ? clamp(actor.armor / actor.maxArmor) : 1;
 }
 
-export function createArmorKitMeshes(attachments) {
+export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKitAsset} = {}) {
   const group = new THREE.Group();
   group.name = 'Wasteland armor kits and loose plates';
   const box = new THREE.BoxGeometry(1, 1, 1);
@@ -30,9 +33,37 @@ export function createArmorKitMeshes(attachments) {
   const fallbackFire = new THREE.MeshBasicMaterial({color: 0xe06a19, transparent: true,
     opacity: 0.76, depthWrite: false});
   const loosePosition = new THREE.Vector3();
+  const looseBounds = new THREE.Box3();
+  const looseMatrix = new THREE.Matrix4();
+  const looseOffset = new THREE.Matrix4();
   let platingTexture = null;
   let textureRequested = false;
   let disposed = false;
+  const assets = new Map();
+  const releasedScenes = new WeakSet();
+  function releaseAsset(asset) {
+    const scene = asset?.scene;
+    if (!scene?.isObject3D || scene.userData.sharedAsset === true || releasedScenes.has(scene)) return;
+    releasedScenes.add(scene);
+    const geometries = new Set(), materials = new Set(), textures = new Set();
+    scene.traverse(node => {
+      if (node.geometry) geometries.add(node.geometry);
+      const entries = Array.isArray(node.material) ? node.material : [node.material];
+      for (const material of entries) if (material) materials.add(material);
+    });
+    for (const material of materials)
+      for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
+    for (const geometry of geometries) geometry.dispose();
+    for (const material of materials) material.dispose();
+    for (const texture of textures) texture.dispose();
+  }
+  function assetFor(car) {
+    if (!assets.has(car)) {
+      try { assets.set(car, Promise.resolve(loadKitAsset(car))); }
+      catch (error) { assets.set(car, Promise.reject(error)); }
+    }
+    return assets.get(car);
+  }
 
   function piece(parent, geometry, material, name) {
     const mesh = new THREE.Mesh(geometry, material);
@@ -84,16 +115,57 @@ export function createArmorKitMeshes(attachments) {
     smoke.castShadow = fire.castShadow = false;
     smoke.receiveShadow = fire.receiveShadow = false;
     const loose = sidePlates.map((source, partIndex) => {
-      const mesh = piece(group, box, plateMaterial,
-        `armor-kit-${index}-loose-${partIndex}`);
+      const mesh = new THREE.Group();
+      mesh.name = `armor-kit-${index}-loose-${partIndex}`;
+      group.add(mesh);
+      const fallback = piece(mesh, box, plateMaterial, 'fallback-loose-plate');
       mesh.visible = false;
-      return {mesh, source, droppedAt: -Infinity, x: 0, y: 0, z: 0,
+      return {mesh, fallback, authoredCopy: null, source,
+        droppedAt: -Infinity, x: 0, y: 0, z: 0,
         groundY: 0, active: false};
     });
     return {index, roots, plateMaterial, bullBar, centerGuard, sidePlates,
       hoodPlate, stacks, cage, saws, crown, smoke, fire, loose,
-      vehicle: null, lastCondition: 1};
+      vehicle: null, lastCondition: 1, authored: null, bindVersion: 0};
   });
+  function removeAuthored(rig) {
+    attachments.detach(`armor-kit-authored-${rig.index}`);
+    rig.authored?.removeFromParent();
+    for (const material of rig.authoredMaterials || []) material.dispose();
+    rig.authoredMaterials = null;
+    rig.authored = null;
+  }
+  function requestAuthored(rig, vehicle) {
+    const version = rig.bindVersion;
+    const car = vehicle.userData.vehicleKey;
+    if (!car) return;
+    assetFor(car).then(gltf => {
+      if (disposed || rig.vehicle !== vehicle || rig.bindVersion !== version ||
+          !gltf?.scene?.isObject3D) return;
+      const authored = gltf.scene.clone(true);
+      authored.name = 'authored-kit';
+      // Object3D.clone retains material references. Each actor needs its own
+      // finish so armor damage cannot repaint a peer or the cached source.
+      const materialClones = new Map();
+      authored.traverse(node => {
+        if (!node.isMesh || !node.material) return;
+        const own = material => {
+          if (!materialClones.has(material)) materialClones.set(material, material.clone());
+          return materialClones.get(material);
+        };
+        node.material = Array.isArray(node.material) ? node.material.map(own) : own(node.material);
+      });
+      rig.authoredMaterials = [...materialClones.values()];
+      for (const material of rig.authoredMaterials)
+        if (material.color) material.userData.kitBaseColor = material.color.clone();
+      attachments.attach({owner:`armor-kit-authored-${rig.index}`, vehicle,
+        socket:'roof', object:authored, fallback:group});
+      // The GLB uses vehicle-local coordinates; undo the roof socket's offset.
+      authored.position.copy(authored.parent.position).multiplyScalar(-1);
+      rig.authored = authored;
+      for (const root of Object.values(rig.roots)) root.visible = false;
+    }).catch(() => { /* Keep the explicit loading/failure fallback. */ });
+  }
   function ensurePlatingTexture() {
     if (textureRequested || typeof document === 'undefined') return;
     textureRequested = true;
@@ -116,6 +188,8 @@ export function createArmorKitMeshes(attachments) {
 
   function bind(rig, vehicle) {
     if (rig.vehicle === vehicle) return;
+    rig.bindVersion++;
+    removeAuthored(rig);
     for (const socket of Object.keys(rig.roots)) {
       attachments.detach(`armor-kit-${rig.index}-${socket}`);
       rig.roots[socket].visible = false;
@@ -125,12 +199,15 @@ export function createArmorKitMeshes(attachments) {
     for (const part of rig.loose) {
       part.active = false;
       part.mesh.visible = false;
+      part.authoredCopy?.removeFromParent();
+      part.authoredCopy = null;
     }
     if (!vehicle) return;
     for (const [socket, root] of Object.entries(rig.roots)) {
       attachments.attach({owner: `armor-kit-${rig.index}-${socket}`,
         vehicle, socket, object: root, fallback: group});
     }
+    requestAuthored(rig, vehicle);
     const {width, length, height} = vehicle.userData.size;
     rig.bullBar.scale.set(width * 1.17, 0.1, 0.11);
     rig.bullBar.position.y = -0.08;
@@ -183,13 +260,39 @@ export function createArmorKitMeshes(attachments) {
       const tier = armorKitTier(actor, index > 0);
       const visible = enabled && !!actor && !actor.crushed && !!vehicle &&
         Number.isFinite(actor.maxArmor) && tier > 0;
-      for (const root of Object.values(rig.roots)) root.visible = visible;
+      for (const root of Object.values(rig.roots)) root.visible = visible && !rig.authored;
+      if (rig.authored) {
+        rig.authored.visible = visible;
+        for (const [name, minimum] of [['kit-scrapper',1],['kit-raider',2],['kit-warlord',3]]) {
+          const part = rig.authored.getObjectByName(name);
+          if (part) part.visible = visible && tier >= minimum;
+        }
+        for (let partIndex = 0; partIndex < 4; partIndex++) {
+          const plate = rig.authored.getObjectByName(`kit-plate-${partIndex}`);
+          if (plate) plate.visible = visible && !actor.combatWrecking &&
+            armorCondition(actor) > BREAK_POINTS[partIndex];
+        }
+      }
       if (!visible) {
         rig.loose.forEach(part => { part.mesh.visible = false; });
         return;
       }
       const condition = armorCondition(actor);
       const wrecked = !!actor.combatWrecking;
+      if (rig.authored) {
+        const scorch = wrecked ? 0.24 : condition < 0.1 ? 0.48 :
+          condition < 0.3 ? 0.68 : condition < 0.6 ? 0.86 : 1;
+        for (const material of rig.authoredMaterials || []) {
+          const base = material.userData.kitBaseColor;
+          if (base) material.color.copy(base).multiplyScalar(scorch);
+        }
+        for (const name of ['kit-cage', 'kit-saw-0', 'kit-saw-1',
+          'kit-crown', 'kit-warlord-mount']) {
+          const part = rig.authored.getObjectByName(name);
+          if (part) part.visible = !wrecked && visible &&
+            tier >= (name === 'kit-crown' || name === 'kit-warlord-mount' ? 3 : 2);
+        }
+      }
       rig.plateMaterial.color.setHex(condition < 0.3 ? 0x383733 :
         condition < 0.6 ? 0x555047 : 0x69645a);
       rig.centerGuard.visible = !wrecked && condition > 0.2;
@@ -207,14 +310,34 @@ export function createArmorKitMeshes(attachments) {
       rig.loose.forEach((part, partIndex) => {
         const threshold = BREAK_POINTS[partIndex];
         if (rig.lastCondition > threshold && condition <= threshold && !wrecked) {
-          part.source.getWorldPosition(loosePosition);
+          const authoredPlate = rig.authored?.getObjectByName(`kit-plate-${partIndex}`);
+          part.authoredCopy?.removeFromParent();
+          part.authoredCopy = null;
+          if (authoredPlate) {
+            authoredPlate.updateWorldMatrix(true, true);
+            looseBounds.setFromObject(authoredPlate, true).getCenter(loosePosition);
+            const copy = authoredPlate.clone(true);
+            copy.visible = true;
+            looseOffset.makeTranslation(-loosePosition.x, -loosePosition.y, -loosePosition.z);
+            looseMatrix.multiplyMatrices(looseOffset, authoredPlate.matrixWorld);
+            copy.matrixAutoUpdate = false;
+            copy.matrix.copy(looseMatrix);
+            part.mesh.add(copy);
+            part.authoredCopy = copy;
+            part.fallback.visible = false;
+          } else {
+            part.source.getWorldPosition(loosePosition);
+            part.fallback.visible = true;
+            part.fallback.scale.copy(part.source.scale);
+          }
           part.x = loosePosition.x;
           part.y = loosePosition.y;
           part.z = loosePosition.z;
           part.groundY = duel.course.groundAt(actor.s, actor.lateral).y + 0.12;
           part.droppedAt = time;
           part.active = true;
-          part.mesh.scale.copy(part.source.scale);
+          part.mesh.scale.setScalar(1);
+          part.mesh.rotation.set(0, 0, 0);
         }
         const age = time - part.droppedAt;
         part.mesh.visible = part.active && age >= 0 && age < 1.5;
@@ -248,6 +371,7 @@ export function createArmorKitMeshes(attachments) {
       rig.plateMaterial.dispose();
     }
     for (const geometry of [box, pipe, blade, spike, puff]) geometry.dispose();
+    for (const promise of assets.values()) promise.then(releaseAsset).catch(() => {});
     for (const material of [trim, dark, fallbackSmoke, fallbackFire]) material.dispose();
     platingTexture?.dispose();
     group.removeFromParent();

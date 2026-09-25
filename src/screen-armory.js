@@ -42,5 +42,9 @@ function armoryScreen(){
  const scrapCareer=kitsEnabled()&&profile().wasteland?.discoveredGate===true;
  return `<section class="garage-panel" role="dialog" aria-modal="true" aria-labelledby="armory-title"><header class="shop-heading"><div><p class="eyebrow">THE ARMORY</p><h2 id="armory-title">UPGRADE YOUR WEAPONS${kitsEnabled()?' & ARMOR':''}.</h2></div><div class="shop-wallet"><span>${scrapCareer?'YOUR SCRAP':'YOUR CREDITS'}</span><b>${scrapCareer?profile().wasteland.scrap:credits(profile().credits)} ${scrapCareer?'SCRAP':'CR'}</b></div><button class="shop-close" data-action="armory-close" aria-label="Close armory">×</button></header>${scrapCareer?territoryPanel(profile()):''}${crewEnabled()?crewPanel(profile(),escapeHTML):''}${loadoutsEnabled()?loadoutPanel(profile()):''}${weaponUpgradePanel(profile(),kitsEnabled())}${kitsEnabled()?armorKitPanel(profile()):''}<p class="garage-message" role="status">${escapeHTML(garageMessage)||'Collect glowing road power-ups in Mad Max Duel to recharge a weapon instantly.'}</p><footer class="shop-footer">${action('BACK TO THE ROAD','armory-close')}</footer></section>`;
 }
+  armoryScreen.yardContent = () =>
+    `${loadoutsEnabled()?loadoutPanel(profile()):''}`+
+    `${weaponUpgradePanel(profile(),kitsEnabled())}`+
+    `${kitsEnabled()?armorKitPanel(profile()):''}`;
   return armoryScreen;
 }
