@@ -457,6 +457,10 @@ The external audio lane may own tools/test-combat-audio.mjs and tools/scenarios/
 
 AUD-14 also has the narrow .gitattributes hook to mark *.ogg binary, preventing text newline conversion of Vorbis data. Test exact compressed bytes through the Git attribute path before keeping runtime assets; no unrelated attribute changes.
 
+## 2026-09-25 PDT: selected Rustwall asset after the ten-round wave
+
+- Accept EGG-02-P2 only as a measured development improvement. Two independent reviews score the final wall and wash 3/3/3/3; the scoped full-render CPU/RAF frame score is four, with worst required A1/B/A2 ratio 1.0833 against 1.10. The actual exported wall has 55,834 triangles in 14 primitives; its 56,122 source total includes 288 duplicate reverse cloth faces omitted by export. EGG-02-P3 retains likeness four, denser interlocked salvage, irregular tower silhouettes, natural joined strata and the selected-paint recovery work. Hidden Road remains dev.
+- The selected steel paint is embedded in the committed wall GLB and originated from the exact generated image and prompt retained in `docs/ASSET_PIPELINE.md`. The generator's no-input P2 route is only a procedural fixture. A Git restore recovers the selected GLB but does not reproduce its image source. Preserve the original generated image by hash; require explicit verified input or hashed embedded-atlas extraction before modifying that paint. No source PNG is committed under `public/`.
 
 ## 2026-09-25 PDT: change Rook silhouette construction for round eight
 
