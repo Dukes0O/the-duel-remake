@@ -1649,3 +1649,19 @@ tasks:
       - "Private browser review shows actual free driving, a credited wreck, respawn, timer completion, results and return to yard. Record frame pacing, balance and the lane/build gate before readiness."
     sound: "Reuse combat impact/wreck cues and arena.countdown, arena.round-start and arena.results through the external audio owner's bank."
     note: "Phase 3 order two, after the framework. No implementation has begun. The owned mode filename is provisional until the framework design settles module boundaries."
+
+  - id: FIX-RUSTWALL-CLEAN
+    title: "Remove Rustwall test dependency on consumed art scratch"
+    priority: 0
+    lane: TOOL
+    size: S
+    needs: [EGG-02-P2]
+    status: building
+    flag: none
+    owns: [tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-relief.mjs, docs/changes/FIX-RUSTWALL-CLEAN.md]
+    helpers: [test_author, reviewer, test_runner]
+    acceptance:
+      - "Reproduce the external clean-checkout ENOENT for art-build/rustwall-p2/wall-relief-source.png before changing tests. Runtime asset verification may use only committed assets, and generated-source verification must build its own isolated fixture."
+      - "Preserve the exact generated-source SHA and exported pixel comparisons on each fresh build's own output; retain all geometry, atlas, route, gate and budget assertions. No copying a stale art scratch file or committing raw review output to hide the dependency. Explain and independently review any assertion relocation."
+      - "Run focused tests and the normal lane/build gate from a fresh checkout without prior art-build files. Integration full tier must pass after the fix before further feature merges."
+    note: "External AUD-11 gate reproduced235 pass/1 fail/23 not run: test-rustwall-p2.mjs line324 reads consumed lane-only source PNG. Integration is treated as red until the fix and fresh full pass. Audio owner does not edit this art test."
