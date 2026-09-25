@@ -298,7 +298,7 @@ export const SOUND_BANK = {
   'combat.blast.recorded': cue('impacts', {
     flag: 'wasteland2',
     files: ['blast-a.ogg', 'blast-b.ogg', 'blast-c.ogg'],
-    volume: 2.6,
+    volume: 3.7,
     priority: 80,
     limit: 8,
     duck: 'blast',
@@ -307,7 +307,7 @@ export const SOUND_BANK = {
   'vehicle.crash.recorded': cue('impacts', {
     flag: 'wasteland2',
     files: ['crash-a.ogg', 'crash-b.ogg', 'crash-c.ogg'],
-    volume: 2.8,
+    volume: 4.2,
     priority: 75,
     limit: 4,
     farCutoff: 2400,

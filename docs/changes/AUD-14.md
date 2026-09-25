@@ -55,3 +55,25 @@ must remain when the switch is off. The new regression proves this even with
 new buffers loaded; no existing assertion was relaxed. All previous 459
 PCM checks passed before the final variants. Further browser/gate validation
 is pending. Director approved the test/scenario hooks and *.ogg binary line.
+
+## Event-path and rebuild verification
+
+A stronger browser check fires an actual bolt through App, proves audio does
+not mutate race state, follows the same owned voice across movement, and
+releases every voice on pause. The rebuilt whistle measures 2148 Hz approaching
+and 1564 Hz receding; left/right level ratios exceed 1.5. The far blast RMS is
+.1544 versus .2341 nearby, with a softer spectrum. All checks pass privately,
+with memory-only storage and no browser warnings/errors.
+
+Actual crash/blast event routing exposed stereo gain absent from direct bank
+previews. The unchanged 6 dB event check first failed, then passed after bank
+gain correction: blast minimum 7.02 dB, typical crash 6.51 dB. All 27 final
+near-context checks pass; the dense mix is -12.82 LUFS, -1.51 dBTP. Mild crashes
+are intentionally quieter through their existing strength scale.
+
+All 36 variants have decoded true peak at or below -1.43 dBTP. Two scripted
+rebuilds produce identical compressed bytes; all 36 decoded outputs match the
+prior measured assets exactly. Total added audio is 453,141 bytes. Git marks
+OGG files binary. Eight focused tests now cover recipe provenance, flags,
+variants, lifecycle, deterministic synthesis and decoded headroom. Existing
+assertions and simulation state were not changed.

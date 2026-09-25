@@ -179,6 +179,7 @@ export function synthesize(recipe, variant, source) {
     data[i] =
       (data[i] / Math.max(peak, 1)) *
       Math.min(1, i / (RATE * 0.002), (data.length - 1 - i) / (RATE * 0.02));
+  data[0] = data[data.length - 1] = 0;
   return data;
 }
 export function buildCombat({
@@ -238,6 +239,10 @@ export function buildCombat({
             'pipe:0',
             '-af',
             'volume=' + attenuation + 'dB',
+            '-fflags',
+            '+bitexact',
+            '-flags:a',
+            '+bitexact',
             '-map_metadata',
             '-1',
             '-c:a',

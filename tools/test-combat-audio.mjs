@@ -161,3 +161,32 @@ test('wasteland2 off preserves pre-migration Wasteland weapon layers even when r
   assert.equal(layers.length, 3);
   assert(layers.every((row) => row.scale === 1));
 });
+
+test('procedural arcade variants rebuild deterministically without simulation randomness', async () => {
+  const { COMBAT_RECIPES, synthesize } =
+    await import('./audio/build-combat.mjs');
+  const source = () =>
+    Float32Array.from({ length: 48000 }, (_, i) => Math.sin(i * 0.18) * 0.5);
+  for (const recipe of COMBAT_RECIPES.filter((r) => r.kind !== 'recording')) {
+    const a = synthesize(recipe, 0, source),
+      b = synthesize(recipe, 0, source),
+      c = synthesize(recipe, 1, source);
+    assert.deepEqual(a, b, recipe.cue);
+    assert.notDeepEqual(a, c, recipe.cue + ' variants differ');
+    assert(a.every(Number.isFinite));
+    assert.equal(a[0], 0);
+    assert.equal(a.at(-1), 0);
+  }
+});
+
+test('all compressed variants retain true-peak headroom and a valid runtime home', async () => {
+  const { measureLoudness } = await import('./audio/measurements.mjs');
+  for (const [id, cue] of Object.entries(SOUND_BANK))
+    for (const file of cue.files || []) {
+      const bytes = readFileSync('public/assets/audio/' + file);
+      assert.equal(bytes.toString('ascii', 0, 4), 'OggS');
+      const measurement = measureLoudness(bytes);
+      assert(measurement.available, id);
+      assert(measurement.truePeakDbtp <= -1, id + ' codec true peak');
+    }
+});
