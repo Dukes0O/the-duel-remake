@@ -58,7 +58,11 @@ player_facing: no
   0.14 s + a 2000 to 1500 Hz whistle trail), F heavy harpoon (90 to 45 Hz
   thump + 1870/2710/3950 Hz metallic ring + A's flyby), and a hit-confirm
   (800 Hz low-passed thunk + 3200 Hz tink). All normalized with FFmpeg
-  loudnorm to about -12 LUFS, -1 dBTP. Awaiting Kyle's pick.
+  loudnorm to about -12 LUFS, -1 dBTP.
+- **Kyle picked E, the pew whistle**, heard in context over the engine, with the
+  hit-confirm sound. AUD-14 rebuilds E from its recipe above through the audio
+  build tool (not from the listening file), makes a few variations, and plays
+  the whistle trail as a 3D source that follows the bolt.
 
 ## Evidence
 
