@@ -29,7 +29,8 @@ const patch = {
 const sample = (z, options = {}) => measureContactFrame({
   patch, skinnedVertexPositions:hand(z), posedHandleTriangles:cube(),
   posedClosedHandleFaces:options.open ? cube().slice(1) : cube(),
-  requested:{clip:'idle',progress:.25}, actual:options.actual || {clip:'idle',progress:.25},
+  requested:options.requested || {clip:'idle',progress:.25},
+  actual:options.actual || options.requested || {clip:'idle',progress:.25},
   sampleStamp:options.sampleStamp ?? 1, geometryHash:`hand-z-${z}`,
 });
 
@@ -68,18 +69,29 @@ test('closed triangulated handle distinguishes 10 mm grip, 25 mm miss, and deep 
 });
 
 test('ordered phase assessment rejects stale samples and bad contacts but permits held poses', () => {
-  const item = (stamp, clip, progress, z, region='palm', tool='rpg', handSide='R') => ({
-    tool, hand:handSide, region,
-    requested:{clip,progress}, actual:{clip,progress}, sampleStamp:stamp,
-    geometryHash:'legitimate-held-pose', measurement:sample(z, {sampleStamp:stamp}),
-  });
-  const good = [
-    item(1,'idle',.25,.11), item(2,'aim',.25,.11), item(3,'fire',.10,.11),
-    item(4,'reload',.18,.11), item(5,'reload',.48,.11),
-    item(6,'reload',.76,.11), item(7,'reload',.90,.11),
-    item(8,'reload',1,.11), item(9,'wrench-idle',.25,.11,'palm','wrench'),
-    item(10,'repair',.5,.11,'palm','wrench'),
-  ];
+  let stamp = 0;
+  const frame = (clip, progress, tool, entries) => {
+    const requested = {clip,progress}, sampleStamp = ++stamp;
+    return {sampleStamp,requested,actual:{...requested},
+      geometryHash:'legitimate-held-pose',contacts:entries.map(([handSide,region]) => ({
+        tool,hand:handSide,region,measurement:sample(.11,{sampleStamp,requested}),
+      }))};
+  };
+  const good = [];
+  const rightRpg = [['R','palm'],['R','index'],['R','thumb']];
+  for (const [clip, progress] of [['idle',.25],['aim',.25],['fire',.1]]) {
+    good.push(frame(clip,progress,'rpg',[...rightRpg,['L','support']]));
+  }
+  for (const progress of [.18,.48,.76,.90,1]) {
+    const contacts = [...rightRpg];
+    if (progress === .48 || progress === .76)
+      contacts.push(['L','rocket-guide']);
+    if (progress >= .90) contacts.push(['L','support']);
+    good.push(frame('reload',progress,'rpg',contacts));
+  }
+  good.push(frame('wrench-idle',.25,'wrench',[['R','palm'],['R','thumb']]));
+  for (const progress of [.25,.5,.75,1])
+    good.push(frame('repair',progress,'wrench',[['R','palm'],['R','thumb']]));
   const accepted = assessContactSequence({frames:good});
   assert.equal(accepted.passed, true, JSON.stringify(accepted.failures));
   const stale = good.map(row => ({...row}));
@@ -87,11 +99,30 @@ test('ordered phase assessment rejects stale samples and bad contacts but permit
   assert.equal(assessContactSequence({frames:stale}).passed, false,
     'reused frame stamp cannot prove ordered continuous motion');
   const badGap = good.map(row => ({...row}));
-  badGap[1] = {...badGap[1],measurement:sample(.125)};
+  badGap[1] = {...badGap[1],contacts:badGap[1].contacts.map(contact =>
+    contact.hand === 'R' && contact.region === 'palm' ? {...contact,
+      measurement:sample(.125,{requested:badGap[1].requested,
+        sampleStamp:badGap[1].sampleStamp})} : contact)};
   assert.equal(assessContactSequence({frames:badGap}).passed, false,
     'a 25 mm right grip miss must be detected');
   const wrongPhase = good.map(row => ({...row}));
   wrongPhase[2] = {...wrongPhase[2],actual:{clip:'idle',progress:.25}};
   assert.equal(assessContactSequence({frames:wrongPhase}).passed, false,
     'actual production clip must match the requested phase');
+  const missingSupport = good.map(row => row.requested.clip === 'aim' ? {...row,
+    contacts:row.contacts.filter(contact => contact.hand !== 'L')} : row);
+  assert.equal(assessContactSequence({frames:missingSupport}).passed, false,
+    'an otherwise good sequence cannot omit an entire required support pose');
+  const openTarget = good.map(row => ({...row}));
+  openTarget[0] = {...openTarget[0],contacts:openTarget[0].contacts.map((contact,index) =>
+    index ? contact : {...contact,measurement:sample(.11,{
+      open:true,requested:openTarget[0].requested,sampleStamp:openTarget[0].sampleStamp})})};
+  assert.equal(assessContactSequence({frames:openTarget}).passed, false,
+    'an unsupported open handle cannot satisfy a required grip');
+  const embedded = good.map(row => ({...row}));
+  embedded[0] = {...embedded[0],contacts:embedded[0].contacts.map((contact,index) =>
+    index ? contact : {...contact,measurement:sample(.05,{
+      requested:embedded[0].requested,sampleStamp:embedded[0].sampleStamp})})};
+  assert.equal(assessContactSequence({frames:embedded}).passed, false,
+    'a hand more than 5 mm inside the handle is not a valid grip');
 });
