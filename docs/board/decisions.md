@@ -647,3 +647,5 @@ well-spread barycentric samples; minimum triangle count is not a substitute
 for physical area and spread. No new area threshold, measurement code or tool
 geometry change is approved until actual clipped-patch calibration and its
 independent fixtures are reviewed.
+
+- P2 first-proof scope clarification: remove the unused cross-panel crest-drift JSON field and defer that separate construction control. The sleeve retains implemented seam-angle drift and the exact axial bulge/gather/ridge nodes. Retain P1 fold displacement on all frozen rings rather than describing their absolute displacement as zero. No new contact threshold is approved.
