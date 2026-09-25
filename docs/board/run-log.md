@@ -1028,7 +1028,6 @@ checkout untouched until the final integration commit passes the full gate.
 
 - Crew round 2 is independently scored and retained in its lane. Likeness remains 2 or 3; supported recovery, individual heads and clothing are round 3 priorities. Root took the narrow capture-tool hook after the runtime agent became unavailable: center the prone side view and match Tusk's left-facing reference. Assets remain the Blender worker's responsibility.
 - The approved raider cone candidate reduced short-probe hits from 6 to 5 on Easy and 10 to 4 on Medium. Its unchanged common-time guidance check exposed a close-range error at the wider angle. The full balance report waits for a bounded correction and independent review; no assertion tolerance or target band changed.
-- Read-only CPU UFO preparation is in checks/2026-09-24-cpu-ufo-scope.md. Implementation waits for the enemy-aim slice because both own weapons. No new feature card started out of order.
 - Last quota check: 34 percent remaining. Three task merges since the 05:39 UTC full pass; next full remains due by 07:39 UTC or after two more task merges. No release or push.
 
 ## 2026-09-24 PDT - enemy aim merged (4 since full)

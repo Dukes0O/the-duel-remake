@@ -76,3 +76,35 @@ The architecture now has clear homes for richer scenes. Build the next improveme
 4. Author memorable track sections using course feature data: set-piece structures, vista framing and lighting transitions. Test approach, passage and exit at driving speed, not only a static screenshot.
 
 Future weather and set-piece work remains separate. Loading measurements improve, but a general frame-rate or hitch-free guarantee is not supported by the short samples. Vehicle designs, terrain shape, route versions, account data and save formats remain unchanged. The separate handling follow-up changes keyboard taps and NPC yielding, not these scene boundaries.
+
+## CPU tactical UFO pickups
+
+Physical CPU UFO pickups and safe jumps are implemented (BUG-07, merged
+`c15026d`). Easy ignores pickups. Medium and Hard acquire charges only through
+swept contact in `combat-pickups.js`; each rival owns its inventory and used-lap
+history. The AI in `combat-ai.js` holds the charge until its existing incoming
+player-crossbow threat check passes, including reaction time, forward cone,
+closing path and height. This is defensive use, not immediate use on collection
+or defense against every weapon. It does not reset the scheduled attack timer,
+shot seed or alternating CPU turn.
+
+`ufoDestination(duel, actor)` in `combat-weapons.js` uses that actor's lap,
+checkpoint, vehicle footprint and position. CPU jumps use stock range, begin
+after the actor's first checkpoint and are limited to one successful jump per
+validated lap. The scan preserves road, solid-obstacle, occupied-landing,
+checkpoint and finish margins; the player also counts as an occupied landing.
+A blocked attempt preserves the charge and pose. A success relocates only that
+rival, clears transient movement/contact state, clamps speed to its driving
+surface and refreshes route metadata. It gives no checkpoint, lap or saved
+reward. Departure/arrival bursts and indexed `cpuPickupUsed`/`weaponFired`
+events identify the jump; no player-only landing callout is emitted.
+
+The independent checks are `tools/test-cpu-pickups.mjs`,
+`tools/test-cpu-ufo.mjs` and `tools/test-ufo-landing.mjs`. They cover physical
+pickup and safe use, actor isolation, blocked landings, defensive threat policy
+and common-time behavior. The old test that required CPU UFO exclusion was
+replaced by physical pickup and safe-use assertions when the feature landed.
+The policy decision and rejected immediate-use balance results remain in
+`docs/board/decisions.md` under "CPU UFO is a defensive AI action". Current
+balance and exact-commit gate results belong in STATUS and the run log; the old
+preparation notes are no longer instructions.
