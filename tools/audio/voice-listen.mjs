@@ -22,13 +22,13 @@ const rows = ledger.entries
     return { ...e, measured: measureLoudness(bytes) };
   });
 const html =
-  '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>The Duel � voice candidates</title><style>body{background:#171b20;color:#eee4d2;font:17px system-ui;max-width:880px;margin:40px auto;padding:0 20px}h1{color:#e1a468}article{border-top:1px solid #56606a;padding:20px 0}audio{width:100%}small{color:#b3bec9}</style><h1>Voice candidates</h1><p>None selected or kept. These are dry casting auditions; runtime voices have not changed.</p><p>Generated with ElevenLabs stock voices. Human ratings pending.</p>' +
+  '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>The Duel - voice candidates</title><style>body{background:#171b20;color:#eee4d2;font:17px system-ui;max-width:880px;margin:40px auto;padding:0 20px}h1{color:#e1a468}article{border-top:1px solid #56606a;padding:20px 0}audio{width:100%}small{color:#b3bec9}</style><h1>Voice candidates</h1><p>None selected or kept. These are dry casting auditions; runtime voices have not changed.</p><p>Generated with ElevenLabs stock voices. Human ratings pending.</p>' +
   rows
     .map(
       (e) =>
         '<article><h2>' +
         escape(e.id) +
-        ' � ' +
+        ' - ' +
         escape(e.voice) +
         '</h2><p>' +
         escape(e.text) +
@@ -36,7 +36,7 @@ const html =
         escape(basename(e.path)) +
         '"></audio><p><small>' +
         e.measured.integratedLufs +
-        ' LUFS � ' +
+        ' LUFS - ' +
         e.measured.truePeakDbtp +
         ' dBTP</small></p></article>',
     )

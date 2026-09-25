@@ -71,3 +71,12 @@ Gate logs live in .evidence/2026-09-25/audio-ready/. The session-ending
 ready-note commit; full.log and full-tier.json record that exact commit and
 result. The Director merges the series; this lane never merges into integration,
 pushes, edits live files, or updates board/status/run-log files directly.
+
+## Audition-page label correction
+
+Final handoff inspection found three replacement characters in the page
+recipe's separators. Replaced them with plain ASCII and rebuilt the local
+page offline. All ten take hashes still match their receipts; the rebuilt
+page contains no replacement characters. Audio bytes, candidate state, credits
+and runtime files are unchanged. The final lane/build/full sequence follows
+this correction on the same clean commit, with no extra note commit afterward.
