@@ -1,6 +1,6 @@
 # FIX-AUDIT-SCOPE
 
-Status: design; independent tests pending.
+Status: implementation; independent review and lane gate pending.
 
 ## Design before code
 
@@ -10,7 +10,7 @@ The required janitor sweep will pass `--skip-lane lane/audio/aud-10`. No actual 
 
 ## Tests and review
 
-Pending.
+Independent test author ran three guarded throwaway-repository scenarios against the old helper: one passed and two failed, proving rejected CLI syntax and a forbidden Git call from the direct audit API. Tests and design were committed as82704eb before implementation. The unchanged three tests now pass in2.45 seconds. Tests intercept filesystem and Git calls under an excluded fixture lane and retain ordinary/prefix-name lane checks. No assertions changed. Review and normal lane/build gate pending.
 
 ## Removed
 

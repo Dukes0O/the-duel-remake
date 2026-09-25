@@ -166,8 +166,9 @@ function unindexedDocs(root, files, warnings) {
     .map(row => ({ path: row.path }));
 }
 
-function laneState(root, warnings) {
+function laneState(root, warnings, skipLanes) {
   const lanes = [];
+  const skippedBranches = new Set(skipLanes);
   const list = isGitRoot(root) ? git(root, ['worktree', 'list', '--porcelain']) : null;
   if (list !== null) {
     const integrationHead = git(root, ['rev-parse', '--verify', 'refs/heads/integration/wasteland'])?.trim() || null;
@@ -192,19 +193,23 @@ function laneState(root, warnings) {
       const status = block.includes('prunable') ? 'prunable' : block.includes('locked') ? 'locked' : 'registered';
       // Worktree inspection is limited to lane branches. Never inspect the live checkout.
       const isLive = norm(resolve(path)).toLowerCase() === 'c:/users/kyleb/dev/the-duel-remake';
-      const worktreeStatus = !isLive && status === 'registered'
+      const inspectionSkipped = skippedBranches.has(branch);
+      const worktreeStatus = !isLive && !inspectionSkipped && status === 'registered'
         ? git(path, ['status', '--porcelain=v1', '--untracked-files=all']) : null;
       const dirty = worktreeStatus === null ? null : worktreeStatus.length > 0;
       const fields = branchFields(branch);
-      lanes.push({ path, branch, ...fields, dirty, status,
-        cleanupCandidate: fields.mergedIntoIntegration === true && dirty === false,
+      lanes.push({ path, branch, ...fields, dirty,
+        status: inspectionSkipped ? `${status}; inspection skipped` : status, inspectionSkipped,
+        cleanupCandidate: !inspectionSkipped && fields.mergedIntoIntegration === true && dirty === false,
         removable: false });
     }
     for (const [branch] of branches) {
       if (!/^(?:lane|codex)\//.test(branch) || lanes.some(row => row.branch === branch)) continue;
       const fields = branchFields(branch);
-      lanes.push({ path: null, branch, ...fields, dirty: null, status: 'branch without worktree',
-        cleanupCandidate: fields.mergedIntoIntegration === true, removable: false });
+      const inspectionSkipped = skippedBranches.has(branch);
+      lanes.push({ path: null, branch, ...fields, dirty: null, inspectionSkipped,
+        status: inspectionSkipped ? 'branch without worktree; inspection skipped' : 'branch without worktree',
+        cleanupCandidate: !inspectionSkipped && fields.mergedIntoIntegration === true, removable: false });
     }
   } else warnings.push('Git worktree state is unavailable.');
   const laneDir = join(root, '.lanes');
@@ -219,7 +224,9 @@ function laneState(root, warnings) {
   return lanes;
 }
 
-export function audit(root = DEFAULT_ROOT) {
+export function audit(root = DEFAULT_ROOT, { skipLanes = [] } = {}) {
+  if (!Array.isArray(skipLanes) || skipLanes.some(branch => typeof branch !== 'string' || !branch.trim()))
+    throw Error('skipLanes must be an array of nonempty exact branch names.');
   root = resolve(root);
   const warnings = ['Candidates are advisory. Literal-reference scans cannot resolve generated paths, imports, or reflection.'];
   const files = inventory(root, warnings);
@@ -235,26 +242,32 @@ export function audit(root = DEFAULT_ROOT) {
     removedFeatureTestCandidates: removedFeatureTests(files, codeAndToolTexts, flags),
     unindexedDocs: unindexedDocs(root, files, warnings),
     fullyOnSwitches: flags,
-    lanes: laneState(root, warnings),
+    lanes: laneState(root, warnings, skipLanes),
     warnings,
   };
 }
 
 function parseArgs(args) {
   let root = DEFAULT_ROOT, json = false;
+  const skipLanes = [];
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === '--root' && args[index + 1]) root = args[++index];
     else if (arg === '--json') json = true;
+    else if (arg === '--skip-lane') {
+      const branch = args[++index];
+      if (!branch || !branch.trim() || branch.startsWith('--')) throw Error('--skip-lane needs a value.');
+      skipLanes.push(branch);
+    }
     else throw Error(`Unknown or incomplete argument: ${arg}`);
   }
-  return { root, json };
+  return { root, json, skipLanes };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
-    const { root, json } = parseArgs(process.argv.slice(2));
-    const report = audit(root);
+    const { root, json, skipLanes } = parseArgs(process.argv.slice(2));
+    const report = audit(root, { skipLanes });
     if (json) console.log(JSON.stringify(report, null, 2));
     else {
       console.log(`Repository audit: ${report.root}`);
