@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {runInNewContext} from 'node:vm';
 import {createHash} from 'node:crypto';
-import {inflateSync} from 'node:zlib';
+import {inflateSync, deflateSync} from 'node:zlib';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
@@ -108,6 +108,56 @@ function python(args, env = {}) {
   return spawnSync('python', [generator, '--', '--root', root, '--round', '1', ...args],
     {cwd: root, encoding: 'utf8', env: {...process.env, ...env}});
 }
+
+function syntheticTriptychPng() {
+  const size=1254,raw=Buffer.alloc(size*(size*3+1));
+  for(let y=0;y<size;y++)for(let x=0;x<size;x++) {
+    const at=y*(size*3+1)+1+x*3;
+    const panel=Math.floor(x/418);
+    const grain=(Math.floor(x/11)+Math.floor(y/13))%17;
+    const colors=[[42,86,87],[69,47,37],[158,137,105]][panel];
+    for(let channel=0;channel<3;channel++)raw[at+channel]=colors[channel]+grain;
+  }
+  let crcTable=Array.from({length:256},(_,i)=>{
+    for(let n=0;n<8;n++)i=(i&1)?0xedb88320^(i>>>1):i>>>1;
+    return i>>>0;
+  });
+  const chunk=(name,bytes)=>{
+    const type=Buffer.from(name),payload=Buffer.concat([type,bytes]);
+    let crc=0xffffffff;
+    for(const byte of payload)crc=crcTable[(crc^byte)&255]^(crc>>>8);
+    const out=Buffer.alloc(payload.length+8);
+    out.writeUInt32BE(bytes.length,0);payload.copy(out,4);
+    out.writeUInt32BE((crc^0xffffffff)>>>0,out.length-4);
+    return out;
+  };
+  const ihdr=Buffer.alloc(13);
+  ihdr.writeUInt32BE(size,0);ihdr.writeUInt32BE(size,4);
+  ihdr[8]=8;ihdr[9]=2;
+  return Buffer.concat([Buffer.from('89504e470d0a1a0a','hex'),
+    chunk('IHDR',ihdr),chunk('IDAT',deflateSync(raw)),chunk('IEND',Buffer.alloc(0))]);
+}
+
+test('R3 selected material is explicit, hash-matched and confined before any build writes', () => {
+  const base=join(root,'art-build/first-person-p1/test-r3-paint');
+  const input=join(base,'triptych.png'), output=join(base,'candidate');
+  mkdirSync(base,{recursive:true});
+  writeFileSync(input,syntheticTriptychPng());
+  const hash=sha256(readFileSync(input));
+  const args=['--p1-rook','--output-dir',output,'--paths-only'];
+  const absent=python([...args,'--p1-paint',input]);
+  assert.notEqual(absent.status,0,'selected paint without a SHA must reject before writes');
+  const mismatch=python([...args,'--p1-paint',input,'--p1-paint-sha256','0'.repeat(64)]);
+  assert.notEqual(mismatch.status,0,'wrong selected paint hash must reject before writes');
+  const publicInput=join(root,'public/assets/reference/wasteland-rpg.png');
+  const unsafe=python([...args,'--p1-paint',publicInput,
+    '--p1-paint-sha256',sha256(readFileSync(publicInput))]);
+  assert.notEqual(unsafe.status,0,'selected paint cannot read from public runtime/reference paths');
+  assert.equal(existsSync(output),false,'rejected selected paint cannot create output');
+  const valid=python([...args,'--p1-paint',input,'--p1-paint-sha256',hash]);
+  assert.equal(valid.status,0,valid.stderr||valid.stdout);
+  assert.equal(existsSync(output),false,'paths-only selected paint cannot write');
+});
 
 test('Rook proof path planning is Blender-free and cannot target public or outside the ignored art folder', () => {
   const output = join(root, 'art-build/first-person-p1/test-candidate');
@@ -848,5 +898,66 @@ test('Rook wrap covers the old exposed wrist with its own padded painted surface
     }
     assert.ok(covered.size >= 70,
       `${side} exported wrap covers ${covered.size}% of the frozen sleeve-to-glove interval`);
+  }
+});
+
+test('R3 sleeves export localized diagonal cloth crests instead of circular ring bands', async () => {
+  ensureCandidate();
+  const paths=source().sleeveFoldPaths;
+  for(const side of ['R','L']) {
+    assert.equal(paths?.[side]?.length,3,`${side} needs three explicit, side-specific fold paths`);
+    for(const fold of paths[side]) {
+      assert.ok(['compression','tension'].includes(fold.kind));
+      assert.equal(fold.stations?.length,3);
+      assert.ok(fold.stations.every(([t,angle])=>Number.isFinite(t)&&t>=.3&&t<=.82&&
+        Number.isFinite(angle)));
+      assert.ok(Math.abs(fold.stations[0][1]-fold.stations[2][1])>=20,
+        'a fold must progress diagonally instead of circling one sleeve ring');
+      assert.ok(fold.widthMetres>=.020&&fold.widthMetres<=.055);
+      assert.ok(fold.crestMetres>=.006&&fold.crestMetres<=.012);
+      assert.ok(fold.troughMetres<=-.003&&fold.troughMetres>=-.006);
+    }
+  }
+  const hands=await loadHands(candidate), rings=new Map();
+  hands.scene.traverse(mesh=>{
+    if(!mesh.isSkinnedMesh)return;
+    const {position,uv}=mesh.geometry.attributes;
+    for(let id=0;id<uv.count;id++) {
+      const x=uv.getX(id)*1024,y=(1-uv.getY(id))*1024;
+      if(x<9||x>247||y<9||y>247)continue;
+      const row=Math.round(y);
+      if(!rings.has(row))rings.set(row,[]);
+      rings.get(row).push({point:vertex(position,id),u:(x-10)/236});
+    }
+  });
+  const rows=[...rings].sort((a,b)=>a[0]-b[0]);
+  assert.ok(rows.length>=10,'actual painted cloth needs axial sleeve rows');
+  const knownT=[null,0,.15,.28,.40,.52,.60,.69,.77,.82];
+  for(const side of ['R','L']) {
+    const elbow=side==='R'?[.35,-.43,-.27]:[-.35,-.43,-.39];
+    const wrist=side==='R'?[.205,-.285,-.48]:[.075,-.285,-.82];
+    let proven=0;
+    for(const fold of paths[side]) for(const [t,angle] of fold.stations) {
+      const rowIndex=knownT.reduce((best,value,index)=>value===null?best:
+        Math.abs(value-t)<Math.abs(knownT[best]-t)?index:best,1);
+      const entries=rows[Math.round((rowIndex/9)*(rows.length-1))]?.[1]||[];
+      const centre=elbow.map((value,axis)=>value+(wrist[axis]-value)*t);
+      const otherElbow=side==='R'?[-.35,-.43,-.39]:[.35,-.43,-.27];
+      const otherWrist=side==='R'?[.075,-.285,-.82]:[.205,-.285,-.48];
+      const other=otherElbow.map((value,axis)=>value+(otherWrist[axis]-value)*t);
+      const sidePoints=entries.filter(({point})=>distance(point,centre)<distance(point,other));
+      const indexed=new Map();
+      for(const item of sidePoints)indexed.set(Math.round(item.u*20)%20,item.point);
+      if(indexed.size<18)continue;
+      const ringCentre=[0,1].map(axis=>[...indexed.values()].reduce((sum,p)=>sum+p[axis],0)/indexed.size);
+      const radial=j=>{
+        const p=indexed.get((j+20)%20);
+        return p?Math.hypot(p[0]-ringCentre[0],p[1]-ringCentre[1]):NaN;
+      };
+      const j=Math.round((((angle%360)+360)%360)/18)%20;
+      const local=radial(j)-.5*(radial(j-2)+radial(j+2));
+      if(Number.isFinite(local)&&local>=.0025)proven++;
+    }
+    assert.ok(proven>=4,`${side} exported sleeve has ${proven}/9 localized crests at authored stations`);
   }
 });
