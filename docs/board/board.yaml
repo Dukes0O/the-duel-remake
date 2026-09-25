@@ -1848,3 +1848,32 @@ tasks:
     acceptance:
       - "Exact branch exclusions retain ref-only inventory, unknown dirty state, skipped inspection and false cleanup eligibility; no access under excluded paths. Defaults unchanged."
       - "Independent throwaway-repository guard tests precede code, then independent review, lane tier and build. No game, save or runtime changes."
+
+  - id: JANITOR-HAND-NOTE
+    title: "Fold the completed hand proof into current asset guidance"
+    lane: OPS
+    size: S
+    needs: [GFX-02-P1]
+    status: merged
+    owns: [docs/ASSET_PIPELINE.md, docs/changes/GFX-02-P1.md, docs/changes/JANITOR-HAND-NOTE.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Preserve the exact material prompt, original path/hash, crop and exported-UV conventions, explicit rebuild/QA commands, protected skin controls and final proof limits before deleting the consumed P1 note."
+      - "Retain three immutable sheets, source/tests, current assets and original image. Record final3/4/3/3/4 with idle-only frame scope and unsupported contact; P2 owns missing likeness/contact work."
+      - "Independent fact review and normal lane/build gate. Docs only; no game source, binary, credit, live or external-audio worktree changes."
+
+  - id: JANITOR-UFO-NOTES
+    title: "Fold completed CPU UFO preparation into current architecture"
+    lane: OPS
+    size: S
+    needs: [BUG-07, BAL-02]
+    status: merged
+    flag: none
+    behavior_change: no
+    owns: [docs/ARCHITECTURE.md, docs/board/checks/2026-09-24-cpu-ufo-gap.md, docs/board/checks/2026-09-24-cpu-ufo-scope.md, docs/board/run-log.md, docs/changes/JANITOR-UFO-NOTES.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Record the implemented physical pickup, actor-specific safe jump and defensive threat policy; preserve limits, tests and source references."
+      - "Delete the two superseded preparation notes and their stale run-log pointer after independent fact review; retain decisions and existing gate verdicts."
+      - "Docs-only lane tier and build pass; no runtime, save, asset or audio-folder change."
+    note: "Merged after independent fact review, final clean576a76c lane6/6 in37.10s and build222modules421ms. Actor-specific protection is preserved in ARCHITECTURE; two superseded preparation notes and stale pointer removed. Runtime unchanged."

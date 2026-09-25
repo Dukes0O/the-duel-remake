@@ -114,6 +114,139 @@ All four are flat orthographic albedo swatches. Fine detail plus readable medium
 
 The committed tests create deterministic ignored paint fixtures and rebuild the structural GLB from source. Ordinary lane/full tests do not need either generated original, a painted trial GLB or raw browser captures. The ignored copied PNGs and paint-9 binary can be regenerated and consumed with the finished lane; preserve the external originals, this recipe, the candidate SHA and the immutable scored sheet/review pair.
 
+## Rook first-person P1 recipe — unpromoted
+
+GFX-02-P1 merged `4acf528` as a Rook-only construction proof. The final
+[round 3 review](board/looks/first-person-p1/round-3-review.md) scores
+**3/4/3/3/4** in both reviews; the frame score covers idle RPG CPU submission
+and native RAF only. Runtime Rook, the other seven hands, RPG and wrench
+remain unchanged. GFX-02-P2 carries broad sleeve volume, cloth scale, wraps,
+glove/wrist shape and complete contact evidence before promotion or conversion.
+
+### Inputs and rebuild
+
+`tools/blender/first-person-gear.py --p1-rook` reads the committed
+`tools/blender/first-person-p1-source.json`. The default generator remains the
+runtime baseline recipe. P1 output must be a dedicated ignored subfolder under
+`art-build/first-person-p1/`; realpath checks reject public/outside/junction
+escapes before writes. Evidence overrides must resolve inside that candidate
+subtree or a dedicated `.evidence/` subfolder, never its bare root.
+
+The original selected image is preserved outside disposable lanes:
+`C:/Users/kyleb/.codex/generated_images/01a0d53e-3baa-7c12-883d-38d2395c6099/exec-643b8830-8970-4809-a7a2-19004a01fa10.png`.
+It is 1254×1254 RGB, SHA-256
+`785c80bb03380c6454607e5fba687b633e47642cac0a1b58d7176afdf9a64b3b`.
+The built-in image tool used this exact prompt:
+
+```text
+Use case: stylized-concept. Asset type: flat albedo material source for a gritty realtime 3D game, to paint first-person sleeves and fingerless gloves. Create one square opaque image divided exactly into THREE equal full-height vertical panels with straight boundaries, no gaps or labels. LEFT THIRD: faded desaturated dark teal heavyweight woven workwear canvas, coarse directional weave, broad irregular faded patches, subtle dusty abrasion, a few long gently diagonal stitch seams. MIDDLE THIRD: dark umber brown worn glove leather, supple fine grain, broad irregular wear zones, a few sparse curved stitched panel seams, rubbed edges slightly lighter but never orange. RIGHT THIRD: dusty beige woven bandage/wrist-wrap canvas laid flat, dense fibers, uneven horizontal overlapping strips and frayed edges with narrow soft dark overlap stains. Every panel fills its rectangle edge to edge. Material photographed/scanned perfectly straight-on under uniform neutral diffuse light, no directional cast shadows, no highlights, no perspective, no objects, no arms, no hands, no weapons, no logos, no text. Make material-scale details clear but not noisy; large wear fields visible when downsampled to 240 square pixels. Painted photorealistic game texture quality. No rendered cylinders or sculpted folds: actual fold volume is supplied by the 3D mesh. All three panels opaque.
+```
+
+Run from the isolated workspace root, using the installed Blender executable:
+
+```powershell
+& 'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe' -b --python-exit-code 1 --python tools/blender/first-person-gear.py -- --root . --round 3 --p1-rook --output-dir art-build/first-person-p1/candidate --p1-paint C:/Users/kyleb/.codex/generated_images/01a0d53e-3baa-7c12-883d-38d2395c6099/exec-643b8830-8970-4809-a7a2-19004a01fa10.png --p1-paint-sha256 785c80bb03380c6454607e5fba687b633e47642cac0a1b58d7176afdf9a64b3b
+```
+
+This rebuilds the ignored GLB, three embedded 1024-square maps, blend and eight
+Blender views. The selected source requires the explicit paired path/hash;
+no-input procedural output and test-owned triptychs are construction fixtures,
+not reproduction of selected artwork. The manifest records the actual input
+hash/crops and `selectedArtwork`. No embedded-atlas extraction is implemented;
+retain the original. The full prompt alone cannot reproduce identical pixels.
+
+Native top-origin crops are cloth`[0,0,418,418]`,
+leather`[418,90,836,508]` and wrap`[836,250,1254,668]`, with exclusive upper
+bounds. Each 418-square crop uses fixed box filtering to240-square. Keep
+encoded RGB channels; another transfer curve would darken them. Blender image
+buffer rows 8..248 become PNG rows 776..1016. **Exported glTF V directly samples
+the PNG top-origin row with GLTFLoader flipY=false**; the old 1-minus-V color
+heuristic was wrong. Tests now require exact source-to-embedded pixels,
+distinct-color direct-V garment-face correspondence and inverse-V rejection.
+The P1 cloth/leather UV inset reaches 33.792..222.208 inside each256-pixel tile;
+the declared safe range is 16..240, inside its padded240-pixel chart.
+
+Skin is preserved in both PNG RGBA controls (bounds inclusive):
+
+| Region | SHA-256 |
+| --- | --- |
+| x520..760,y8..248 | `7eea2ce1afd880c2514cc24ec964cb6172becc2e8a72ccd97c7bbd449b7e8c7d` |
+| x520..760,y776..1016, actual material consumer | `d5d6619cd34a8c5b5fb96e0600f71980a8e97b2597520888624aeff9dc699b33` |
+
+### Geometry and review controls
+
+Authoring uses camera-local metres: X right, Y up, forward negative Z. Convert to
+Blender once with`(x,-z,y)`. P1 joins palm/thumb/digits, rounds exposed tips,
+adds layered wraps and localized sleeve folds while retaining bones, sockets
+and clips. Topology guards weld at 0.1 mm; ten proximal clothing loops remain
+intentional, while distal holes and edges with more than two faces fail.
+The source stores the exact inferred fold paths. Their angles are physical
++X toward+Y, computed from exported positions rather than UVs. The unchanged
+crest test needs at least four of nine stations above 2.5 mm per side; frozen
+P1 predecessors measured 2/9 and 3/9 before correction. Source controls and these
+geometry checks do not establish visual likeness.
+
+The final candidate is 4260 hand triangles in one hand primitive, or 7536 with
+the unchanged 3276-triangle RPG, below 8000/three active draws. At source
+checkpoint`50663d7`, generator SHA is
+`86219dd4da2e085f058fa84581601ac5245e2ebe969633ad6b507376309381bb`,
+source JSON SHA is
+`65efc6cbe282906a05a87a0ea8682cc4b1c4079ef34cb812bacb20f5ee1f2a95`,
+and reviewed GLB SHA is
+`8b985010d7a511503fa2fdeb37d7665bfad420f09b6751f87110d3ce55e30579`.
+The reviewed capture's observation`26f55a0` was dirty; those exact source
+hashes, not that commit alone, identify its build. Earlier 965a1347/3388b7
+exports were diagnostic preflights, never the scored round 3.
+
+Private memory-only QA uses`GFX_FIRST_PERSON_P1_ROUND` and optional
+`GFX_FIRST_PERSON_P1_CANDIDATE` with
+`node tools/browser-harness.mjs scenario first-person-polish --output-dir <new-ignored-review-folder>`.
+It requires the sibling`candidate/evidence/blender-manifest.json`, actual
+candidate hash, authored 1280×720 camera/FOV 72/near .15 and unchanged tool hashes.
+Each High/Performance page swaps only its same-origin Rook URL once. The final
+private 49797 run captured 16 matched views plus 12 real-input views: exit,
+aim, successful shot/reload, repair and re-entry, with zero browser issues.
+`DUEL_EVIDENCE_DIR` selects the review folder for
+`node tools/fidelity-sheet.mjs --first-person-p1-round <unused-round>`.
+Blender and capture round identities must agree. Existing round sheets are
+immutable; the helper refuses to overwrite them. Source-module Blender
+lighting differs from the game course and is labelled separately.
+
+### Frame and contact limits
+
+The separate`GFX_FIRST_PERSON_P1_FRAME_COST=1` mode compares actual public
+Rook A1, candidate B and public Rook A2 on fresh pages for both qualities.
+The final private 22072 pass used 30 warm plus 600 measured native frames per leg
+and exactly one complete renderFrame per tick. Worst required CPU mean/p95 or
+RAF p95 ratio was 1.0323 against the 1.10 limit. High CPU mean ratios were
+1.0046/0.9799 and p95 ratios 1.0217/0.9592; Performance mean 1.0049/1.0190 and
+p95 1.0323/1.0000. RAF p95 ratios were 1.0000/0.9945 and 1.0000/1.0000.
+This is idle Rook/RPG CPU submission/native RAF evidence, not GPU or action cost.
+High had 737 draws and Performance 423, with candidate triangle deltas +1208/+604.
+Renderer texture allocations were 71/71/71 and 70/48/48, including cached
+resources; they do not show active-gear savings. Both hand assets and RPG each
+have three 1024-square maps. Approximate full-mip RGBA8 arithmetic is 16,777,218
+bytes per three-map set; exact mip-chain arithmetic is 16,777,212. Neither is
+measured GPU allocation. Selected hand PNG bytes total 3,853,951 versus baseline
+3,567,627; the RPG's embedded maps total 3,402,673.
+
+`tools/first-person-contact.mjs` and its five independent tests validate fixed
+patch identity, per-tool bind, skinned samples, target closure and ordered
+phases. The actual R2 diagnostic could not form six distinct positions in the
+15 mm palm hint: the nearest connected part had four positions at 5.6 mm nearest
+gap; a six-position part was 40.5 mm away. It stopped before a complete assessment.
+This is insufficient local evidence, not a clearance pass or demonstrated
+continuous-contact failure. Keep 15 mm primary/wrench grip,20 mm support/rocket
+and 5 mm penetration limits; open targets report unsupported. Reload is sampled
+at .999 because exact 1 is already idle; the existing later idle sample is not
+adjacent boundary proof. P2 must finish real boundary/contact evidence and
+record selected tool components before changing its sampling or tool geometry.
+
+All 24 focused hand tests passed; final lane 268/268 and build passed on clean
+`e6c3cf9`, with 162 unchanged replay fingerprints and 48/48 expansion drives.
+Three immutable review sheets and tests remain. Raw captures, logs and ignored
+candidates were consumed after the verdict; the original source remains above.
+
 ## Model loading and retired prototypes
 
 The former renderer built the first-iteration procedural coupe immediately, then replaced it after the licensed GLB finished loading. That visible swap was an active fallback path, not a stale career save. The player, rival and ghost now share `src/vehicle-assets.js`. Six original models are immediately available; Heritage and Aurora share one source download, with separate sport and GT trim. While it loads, the previous car is hidden and the race clock waits for the selected model's first draw. Failure offers a retry, and the loader clears a failed import promise so retry can make a new request. Switching back to an original model works without the import. No vehicle-loading action clears browser storage, player profiles, records or paint ownership.
