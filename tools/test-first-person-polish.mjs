@@ -159,7 +159,7 @@ test('R3 selected material is explicit, hash-matched and confined before any bui
   assert.equal(existsSync(output),false,'paths-only selected paint cannot write');
 });
 
-test('R3 selected triptych paints exported charts while retaining R2 skin pixels', () => {
+test('R3 selected triptych paints exported charts while retaining R2 skin pixels', async () => {
   const base=join(root,'art-build/first-person-p1/test-r3-paint');
   const input=join(base,'triptych.png'), output=join(base,'painted');
   mkdirSync(base,{recursive:true});
@@ -197,6 +197,30 @@ test('R3 selected triptych paints exported charts while retaining R2 skin pixels
           `${role} exported pixel ${px},${py} does not follow selected source crop`);
       assert.equal(actual[3],255,`${role} embedded atlas must remain opaque`);
     }
+  }
+  // GLTFLoader uses flipY=false: the exported face's V addresses the embedded
+  // PNG row directly. Finding paint elsewhere in the atlas is insufficient.
+  const loaded=await loadHands(join(output,'hands/rook.glb'));
+  const consumers=Object.fromEntries(Object.keys(charts).map(role=>[role,[]]));
+  loaded.scene.traverse(mesh=>{
+    if(!mesh.isSkinnedMesh)return;
+    const uv=mesh.geometry.attributes.uv;
+    for(const corners of faces(mesh.geometry)) {
+      const x=corners.reduce((sum,id)=>sum+uv.getX(id)*1024,0)/3;
+      const sampledY=corners.reduce((sum,id)=>sum+uv.getY(id)*1024,0)/3;
+      for(const [role,rect] of Object.entries(charts))
+        if(x>=rect[0]+8&&x<=rect[2]-8&&
+          sampledY>=1024-rect[3]+8&&sampledY<=1024-rect[1]-8)
+          consumers[role].push(painted.pixel(x,sampledY));
+    }
+  });
+  for(const [role,pixels] of Object.entries(consumers)) {
+    assert.ok(pixels.length>=20,`${role} needs meaningful actual exported garment faces`);
+    const target=bases[role].map(value=>value+8);
+    const matching=pixels.filter(pixel=>
+      Math.hypot(...target.map((value,channel)=>pixel[channel]-value))<=24).length;
+    assert.ok(matching/pixels.length>=.75,
+      `${role} garment faces sample selected paint on only ${matching}/${pixels.length} surfaces`);
   }
   const protectedSkin=Buffer.alloc(241*241*4);
   for(let y=8;y<=248;y++)for(let x=520;x<=760;x++)
@@ -1076,13 +1100,19 @@ test('frame sampling finds the visible baseline Rook hand without candidate-only
   const rig={visible:true,parent:null,children:[],traverse(visitor){
     const walk=node=>{visitor(node);for(const child of node.children||[])walk(child);};walk(this);
   }};
-  const hand={name:'rook sleeves gloves fingers',isSkinnedMesh:true,skeleton:{bones:[{}]},
+  const hand={name:'rook_sleeves_gloves_fingers',isSkinnedMesh:true,skeleton:{bones:[{}]},
     visible:true,parent:rig,children:[]};
   const tool={name:'rpg-body',isSkinnedMesh:true,skeleton:{bones:[{}]},
     visible:true,parent:rig,children:[]};
   rig.children=[hand,tool];
   assert.deepEqual(findActiveFirstPersonHands(rig),[hand],
     'the actual production Rook mesh has no candidate handRegions extras');
+  const production=(await loadHands(baseline)).scene;
+  const actual=findActiveFirstPersonHands(production);
+  assert.equal(actual.length,1,
+    'the selector must find the visible decoded production Rook mesh without P1 extras');
+  assert.equal(actual[0].userData.handRegions,undefined,
+    'baseline proof must not depend on candidate-only region metadata');
   rig.visible=false;
   assert.deepEqual(findActiveFirstPersonHands(rig),[],
     'a hidden ancestor cannot establish a visible baseline');
