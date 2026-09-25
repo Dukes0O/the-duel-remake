@@ -24,6 +24,21 @@ player_facing: no
   (Callum, Harry, Bill) with the line "Outsiders don't find this road by
   accident. Come in, driver."
 
+## Kyle's first listening round (24 September 2026)
+
+- Gatekeeper voice: **Callum** chosen. The exact take was kept with
+  `elevenlabs.mjs keep-take` as `audio-src/voices/gatekeeper-welcome.mp3`
+  (no credits spent again); the Harry and Bill takes were deleted.
+- Crossbow: both originals rejected as far too quiet (one measured -33 LUFS)
+  and lacking flight. Kyle wants a "pew" with a whoosh or whistle through the
+  air. Three layered candidates were mixed at about -14 LUFS for round 2:
+  A snap + arrow flyby, B bow release + flyby + synthesized pew,
+  C snap + airy whistle + pew. Their recipes: sources 384905, 394180,
+  536068, 789389 and 855733 in the catalog, a 1400 to 350 Hz pitch-drop
+  "pew" of 0.18 s, FFmpeg loudnorm to -14 LUFS and -1 dBTP. The winning
+  recipe moves into the audio build tool with AUD-10.
+- Blasts, crash and rocket launches: not yet rated.
+
 ## Evidence
 
 - `node tools/test-audio-sourcing.mjs`: 27 checks with fake network responses.
@@ -39,4 +54,7 @@ sounds win their listening rounds.
 
 ## Behavior and test changes
 
-No game code changed. No existing assertion changed.
+No game code changed. No existing assertion changed. The placement check now
+accepts audio files in `audio-src/` (the SPEC 0.9 home for takes that cannot
+be regenerated); a new rules case covers it. Audio elsewhere outside
+`public/` still fails.

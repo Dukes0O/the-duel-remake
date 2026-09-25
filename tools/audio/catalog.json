@@ -2,6 +2,27 @@
   "version": 1,
   "sounds": [
     {
+      "source": "elevenlabs",
+      "key": "gatekeeper.welcome",
+      "cue": "gatekeeper.welcome",
+      "text": "Outsiders don't find this road by accident. Come in, driver.",
+      "voiceId": "N2lVS1w4EtoT3dr4eOWO",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.35,
+        "similarity_boost": 0.8,
+        "style": 0.5,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 60,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/gatekeeper-welcome.mp3",
+      "sha256": "5772399d1112b33edc845e5253417afd4d55ca1898fcb54f8901899a4eb96106",
+      "bytes": 66499,
+      "generated": "2026-09-25"
+    },
+    {
       "source": "freesound",
       "key": "249810",
       "cue": "weapon.crossbow.fire",
@@ -33,6 +54,40 @@
       "file": "freesound/384905-crossbow-fire-2.ogg",
       "sha256": "505f1fa1272d8a0f5e8dfbe32bc184ce370cdc85ff66ecb0543b38740c9cb820",
       "bytes": 17015,
+      "fetched": "2026-09-25"
+    },
+    {
+      "source": "freesound",
+      "key": "391444",
+      "cue": "weapon.crossbow.flight",
+      "title": "Arrow Whoosh 2 .R.wav",
+      "author": "saturdaysoundguy",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/saturdaysoundguy/sounds/391444/",
+      "download": "https://cdn.freesound.org/previews/391/391444_7280678-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.80279,
+      "file": "freesound/391444-arrow-whoosh-2-r-wav.ogg",
+      "sha256": "ec5cd9d7814e896e0e0004bc97ce4c8412973796943f8f071902ec1aa467cc4f",
+      "bytes": 32950,
+      "fetched": "2026-09-25"
+    },
+    {
+      "source": "freesound",
+      "key": "394180",
+      "cue": "weapon.crossbow.flight",
+      "title": "Arrow Loose and Flyby",
+      "author": "saturdaysoundguy",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/saturdaysoundguy/sounds/394180/",
+      "download": "https://cdn.freesound.org/previews/394/394180_7280678-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 0.642667,
+      "file": "freesound/394180-arrow-loose-and-flyby.ogg",
+      "sha256": "437def673bc215297b14989cd74e86f90f84305a468613ab1d7d5f81088a4d23",
+      "bytes": 12583,
       "fetched": "2026-09-25"
     },
     {
@@ -71,6 +126,23 @@
     },
     {
       "source": "freesound",
+      "key": "536068",
+      "cue": "weapon.crossbow.fire",
+      "title": "Bow Release Hit",
+      "author": "EminYILDIRIM",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/EminYILDIRIM/sounds/536068/",
+      "download": "https://cdn.freesound.org/previews/536/536068_10912485-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 0.233333,
+      "file": "freesound/536068-bow-release-hit.ogg",
+      "sha256": "b519198b2b6159608bb3492572923aa89a5d20aa603818d7ff55de9573bf714f",
+      "bytes": 9715,
+      "fetched": "2026-09-25"
+    },
+    {
+      "source": "freesound",
       "key": "592388",
       "cue": "impact.car.metal",
       "title": "Car Crash (with Glass)",
@@ -84,6 +156,23 @@
       "file": "freesound/592388-car-crash-with-glass.ogg",
       "sha256": "c9725c20a95a6b89bca74d2865cbe315f9e118b37bb06343d4a73198c85039b8",
       "bytes": 59407,
+      "fetched": "2026-09-25"
+    },
+    {
+      "source": "freesound",
+      "key": "789389",
+      "cue": "weapon.crossbow.flight",
+      "title": "Arrow Flyby",
+      "author": "modusmogulus",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/modusmogulus/sounds/789389/",
+      "download": "https://cdn.freesound.org/previews/789/789389_15956618-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 1.37583,
+      "file": "freesound/789389-arrow-flyby.ogg",
+      "sha256": "febe1507710062c941762bd998307059ec40e313a5d4fd446936a23ada42e8ff",
+      "bytes": 32158,
       "fetched": "2026-09-25"
     },
     {
@@ -118,6 +207,23 @@
       "file": "freesound/854476-m142-himars-rocket-launch-8.ogg",
       "sha256": "0c64590c081d7aca6966f2243620305093bd3668ceeb4a23b31714800a34f301",
       "bytes": 56221,
+      "fetched": "2026-09-25"
+    },
+    {
+      "source": "freesound",
+      "key": "855733",
+      "cue": "weapon.crossbow.flight",
+      "title": "Whoosh - Weighted string - Airy whistle",
+      "author": "Sadiquecat",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/Sadiquecat/sounds/855733/",
+      "download": "https://cdn.freesound.org/previews/855/855733_5287430-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 0.465917,
+      "file": "freesound/855733-whoosh-weighted-string-airy-whistle.ogg",
+      "sha256": "d454233fe1ce68e45d4915e717c7fb3a9d2cde8a5417544ae84fad8523514cf5",
+      "bytes": 15917,
       "fetched": "2026-09-25"
     }
   ]

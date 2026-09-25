@@ -8,6 +8,7 @@
 // A take goes to .evidence/audio/voices/ for listening. --keep saves the chosen
 // take in audio-src/voices/ and records it in tools/audio/catalog.json, since a
 // generated take cannot be recreated identically. Credits used are logged.
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { EVIDENCE_DIR, REPO_ROOT, addCatalogEntry, parseArgs, portablePath, readKey, saveBytes, slug } from './sourcing.mjs';
@@ -69,6 +70,24 @@ export async function say({ voice, line, text, model = DEFAULT_MODEL, keep = fal
   return { entry, path: saved.path, creditsLeft: measured > 0 ? after.left : after.left - text.length };
 }
 
+// Keep a take already made for listening, without spending credits again.
+export function keepTake({ take, line, voice, text, model = DEFAULT_MODEL, settings = {}, creditsUsed },
+  { catalogPath, root = REPO_ROOT } = {}) {
+  if (!take || !line || !voice || !text) throw new Error('keep-take needs --take, --line, --voice and --text.');
+  const source = join(EVIDENCE_DIR, 'voices', `${slug(take)}.mp3`);
+  const saved = saveBytes(join(root, 'audio-src', 'voices', `${slug(line)}.mp3`), readFileSync(source));
+  const entry = {
+    source: 'elevenlabs', key: line, cue: line, text, voiceId: voice, model, settings: voiceSettings(settings),
+    creditsUsed: Number(creditsUsed) || text.length, creditsEstimated: !Number(creditsUsed),
+    license: 'ElevenLabs free plan, non-commercial, attribution',
+    file: portablePath(saved.path, root), sha256: saved.sha256, bytes: saved.bytes,
+    generated: new Date().toISOString().slice(0, 10),
+  };
+  addCatalogEntry(entry, catalogPath);
+  rmSync(source, { force: true });
+  return { entry, path: saved.path };
+}
+
 async function main() {
   const { positional: [command], options } = parseArgs(process.argv.slice(2));
   if (command === 'credits') {
@@ -89,7 +108,14 @@ async function main() {
     console.log(`Saved ${entry.key} (${estimate}${entry.creditsUsed} credits, ${estimate}${creditsLeft} left) -> ${path}`);
     return;
   }
-  console.log('Usage: node tools/audio/elevenlabs.mjs credits | voices | say --voice <id> --line <id> --text "..." [--keep] [--stability N --similarity N --style N]');
+  if (command === 'keep-take') {
+    const { path } = keepTake({ take: options.take, line: options.line, voice: options.voice, text: options.text,
+      settings: { stability: options.stability, similarity: options.similarity, style: options.style } });
+    console.log(`Kept ${options.take} as ${options.line} -> ${path}`);
+    return;
+  }
+  console.log('Usage: node tools/audio/elevenlabs.mjs credits | voices | say --voice <id> --line <id> --text "..." [--keep] [--stability N --similarity N --style N]\n' +
+    '       node tools/audio/elevenlabs.mjs keep-take --take <listening take> --line <id> --voice <id> --text "..." [settings]');
   process.exitCode = command ? 1 : 0;
 }
 

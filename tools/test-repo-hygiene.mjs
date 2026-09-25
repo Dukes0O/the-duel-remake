@@ -18,6 +18,7 @@ const SKIP_FOLDERS = new Set(['.git', 'node_modules', 'dist', 'dist-next', 'dist
   '.qa-dist', '.qa-blender', '.qa-art', '.evidence', 'art-build', '.lanes']);
 const RAW_EVIDENCE = new Set(['.png', '.webm', '.mp4', '.wav', '.mp3', '.flac', '.ogg']);
 const IMAGE_EVIDENCE = new Set(['.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.tif', '.tiff']);
+const AUDIO_SOURCES = new Set(['.flac', '.mp3', '.ogg', '.wav']);
 const SOURCE_ASSETS = new Set(['.blend', '.blend1', '.py', '.psd', '.kra', '.xcf', '.svgz', '.exr']);
 
 function walk(root, base = '') {
@@ -61,7 +62,9 @@ export function inspectRepository(root = PROJECT_ROOT, files = projectFiles(root
     if (name.startsWith('public/') && (SOURCE_ASSETS.has(extension) || ['.mp4', '.webm'].includes(extension)))
       failures.push(`${name}: source or review asset is in the runtime public folder`);
     const roundSheet = extension === '.jpg' && /^docs\/board\/looks\/[^/]+\/round-\d+\.jpg$/.test(name);
-    if (!name.startsWith('public/') && !roundSheet && (RAW_EVIDENCE.has(extension) || IMAGE_EVIDENCE.has(extension)))
+    // SPEC 0.9: audio takes that cannot be regenerated live in audio-src/.
+    const keptAudio = name.startsWith('audio-src/') && AUDIO_SOURCES.has(extension);
+    if (!name.startsWith('public/') && !roundSheet && !keptAudio && (RAW_EVIDENCE.has(extension) || IMAGE_EVIDENCE.has(extension)))
       failures.push(`${name}: raw capture belongs in ignored .evidence, not the repository`);
   }
   const advisory = {
