@@ -5,7 +5,7 @@ import {join, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
-import {deflateSync} from 'node:zlib';
+import {deflateSync,inflateSync} from 'node:zlib';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
@@ -192,11 +192,11 @@ test('frame assessor rejects invented proof families with otherwise valid A1/B/A
     'an unrecognized proof family cannot inherit a valid P1 frame verdict');
 });
 
-function syntheticTriptych(colors=[[201,43,173],[34,196,47],[208,181,35]]) {
+function syntheticTriptych(colors=[[201,43,173],[34,196,47],[208,181,35]],grain=true) {
   const size=1254,row=size*3+1,raw=Buffer.alloc(row*size);
   for(let y=0;y<size;y++)for(let x=0;x<size;x++) {
     const at=y*row+1+x*3,base=colors[Math.floor(x/418)];
-    for(let c=0;c<3;c++)raw[at+c]=base[c]+((x+y)%11);
+    for(let c=0;c<3;c++)raw[at+c]=base[c]+(grain?(x+y)%11:0);
   }
   const table=Array.from({length:256},(_,i)=>{for(let n=0;n<8;n++)
     i=(i&1)?0xedb88320^(i>>>1):i>>>1;return i>>>0;});
@@ -296,6 +296,134 @@ function embeddedMapHashes(path) {
     return [image.name,hash(png)];
   }));
 }
+function embeddedMaps(path) {
+  const bytes=readFileSync(path);let json,binary;
+  for(let offset=12;offset<bytes.length;) {
+    const size=bytes.readUInt32LE(offset),type=bytes.readUInt32LE(offset+4);
+    const chunk=bytes.subarray(offset+8,offset+8+size);
+    if(type===0x4e4f534a)json=JSON.parse(chunk.toString('utf8'));
+    if(type===0x004e4942)binary=chunk;
+    offset+=8+size;
+  }
+  assert.ok(json&&binary);
+  return Object.fromEntries(json.images.map(image=>{
+    const view=json.bufferViews[image.bufferView];
+    const data=binary.subarray(view.byteOffset||0,(view.byteOffset||0)+view.byteLength);
+    return [image.name.replace(/^rook-/,'').replace(/\.png$/,''),decodePng(data)];
+  }));
+}
+function decodePng(png) {
+  assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+  const width=png.readUInt32BE(16),height=png.readUInt32BE(20),channels=png[25]===6?4:3;
+  assert.equal(png[24],8);assert.ok(channels===3||channels===4);
+  const parts=[];
+  for(let offset=8;offset<png.length;) {
+    const size=png.readUInt32BE(offset),name=png.toString('ascii',offset+4,offset+8);
+    if(name==='IDAT')parts.push(png.subarray(offset+8,offset+8+size));
+    offset+=size+12;
+  }
+  const raw=inflateSync(Buffer.concat(parts)),stride=width*channels;
+  const pixels=Buffer.alloc(stride*height);let at=0;
+  for(let y=0;y<height;y++) {
+    const filter=raw[at++];
+    assert.ok(filter>=0&&filter<=4);
+    for(let x=0;x<stride;x++) {
+      const left=x>=channels?pixels[y*stride+x-channels]:0;
+      const up=y?pixels[(y-1)*stride+x]:0;
+      const upperLeft=y&&x>=channels?pixels[(y-1)*stride+x-channels]:0;
+      let predictor=0;
+      if(filter===1)predictor=left;
+      if(filter===2)predictor=up;
+      if(filter===3)predictor=Math.floor((left+up)/2);
+      if(filter===4) {
+        const p=left+up-upperLeft,a=Math.abs(p-left),b=Math.abs(p-up),c=Math.abs(p-upperLeft);
+        predictor=a<=b&&a<=c?left:b<=c?up:upperLeft;
+      }
+      pixels[y*stride+x]=(raw[at++]+predictor)&255;
+    }
+  }
+  return {width,height,channels,pixels,pixel(x,y) {
+    const ix=Math.max(0,Math.min(width-1,Math.floor(x)));
+    const iy=Math.max(0,Math.min(height-1,Math.floor(y)));
+    return [...pixels.subarray((iy*width+ix)*channels,(iy*width+ix+1)*channels)];
+  }};
+}
+
+test('P2 cloth trial changes only actual consumed cloth pixels and preserves frozen geometry', async () => {
+  const dir=join(root,'art-build/first-person-p2/test-cloth-material');
+  mkdirSync(dir,{recursive:true});
+  const triptych=join(dir,'triptych.png'),cloth=join(dir,'cloth.png');
+  const base=join(dir,'base'),painted=join(dir,'painted');
+  writeFileSync(triptych,syntheticTriptych());
+  const colors=[[20,35,195],[211,42,32],[39,195,139]];
+  writeFileSync(cloth,syntheticTriptych(colors,false));
+  const blender=process.env.BLENDER_BIN||
+    'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe';
+  const generator=join(root,'tools/blender/first-person-gear.py');
+  const run=(output,extra=[])=>spawnSync(blender,['-b','--python-exit-code','1',
+    '--python',generator,'--','--root',root,'--round','2','--p2-rook',
+    '--output-dir',output,'--p2-paint',triptych,'--p2-paint-sha256',
+    hash(readFileSync(triptych)),...extra,'--skip-renders'],
+    {cwd:root,encoding:'utf8',timeout:300000,maxBuffer:16*1024*1024});
+  const baseline=run(base);
+  assert.equal(baseline.status,0,baseline.error?.message||baseline.stderr||baseline.stdout);
+  const selected=run(painted,['--p2-cloth-paint',cloth,
+    '--p2-cloth-paint-sha256',hash(readFileSync(cloth))]);
+  assert.equal(selected.status,0,selected.error?.message||selected.stderr||selected.stdout);
+  const manifest=JSON.parse(readFileSync(join(painted,'manifest.json'),'utf8'));
+  assert.equal(manifest.clothPaintSource?.sha256,hash(readFileSync(cloth)));
+  assert.deepEqual(manifest.clothPaintSource?.crop,[0,0,1254,1254]);
+  assert.equal(manifest.clothPaintSource?.method,'full-square-box-filter-to-240');
+  assert.equal(manifest.clothPaintSource?.selectedArtwork,false,
+    'a test-owned source cannot masquerade as reviewed art');
+  const oldPath=join(base,'hands/rook.glb'),newPath=join(painted,'hands/rook.glb');
+  const old=await loadMesh(oldPath),next=await loadMesh(newPath);
+  for(const name of ['position','normal','uv','skinIndex','skinWeight']) {
+    const a=old.geometry.attributes[name],b=next.geometry.attributes[name];
+    assert.deepEqual(Array.from(b.array),Array.from(a.array),
+      `cloth-only paint changed exported ${name}`);
+  }
+  assert.deepEqual(Array.from(next.geometry.index.array),Array.from(old.geometry.index.array),
+    'cloth-only paint changed face topology');
+  const oldMaps=embeddedMaps(oldPath),newMaps=embeddedMaps(newPath);
+  assert.deepEqual(Object.keys(newMaps).sort(),['color','normal','surface']);
+  for(const name of ['color','surface','normal']) {
+    const a=oldMaps[name],b=newMaps[name];
+    assert.equal(a.width,1024);assert.equal(b.width,1024);
+    assert.equal(a.channels,4);assert.equal(b.channels,4);
+    let changed=0;
+    for(let y=0;y<1024;y++)for(let x=0;x<1024;x++) {
+      const inside=x>=8&&x<=247&&y>=776&&y<=1015;
+      const at=(y*1024+x)*4;
+      for(let c=0;c<4;c++) {
+        if(!inside)assert.equal(b.pixels[at+c],a.pixels[at+c],
+          `${name} changed protected pixel ${x},${y},${c}`);
+        else if(b.pixels[at+c]!==a.pixels[at+c])changed++;
+      }
+    }
+    assert.ok(changed>1000,`${name} cloth chart was not materially repainted`);
+  }
+  let covered=0,matching=0;
+  const uv=next.geometry.attributes.uv,index=next.geometry.index,color=newMaps.color;
+  for(let i=0;i<index.count;i+=3) {
+    const ids=[index.getX(i),index.getX(i+1),index.getX(i+2)];
+    if(!ids.every(id=>clothUv(uv,id)))continue;
+    const px=ids.reduce((sum,id)=>sum+uv.getX(id)*1024,0)/3;
+    const py=ids.reduce((sum,id)=>sum+uv.getY(id)*1024,0)/3;
+    const local=px-8;
+    if(local<3||local>236||Math.abs(local-80)<3||Math.abs(local-160)<3)continue;
+    const expected=colors[Math.min(2,Math.floor(local/80))];
+    const actual=color.pixel(px,py);
+    covered++;
+    if(expected.every((n,c)=>Math.abs(actual[c]-n)<=3)&&actual[3]===255)matching++;
+  }
+  assert.ok(covered>=100,'paint consumer test needs actual cloth faces');
+  assert.ok(matching/covered>=.75,
+    `only ${matching}/${covered} cloth faces sample their source through direct glTF V`);
+  const surface=newMaps.surface;
+  const roughness=surface.pixel(128,890)[1]/255;
+  assert.ok(roughness>=.84&&roughness<=.96,'new cloth lost its bounded matte finish');
+});
 const centerlines={
   R:{elbow:[.35,-.43,-.27],wrist:[.205,-.285,-.48]},
   L:{elbow:[-.35,-.43,-.39],wrist:[.075,-.285,-.82]},
