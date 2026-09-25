@@ -90,3 +90,14 @@ The booth server prints its local address and saves explicit human verdicts
 under docs/board/listening/. A static QA preview supports playback; saving
 requires the local booth server. No game runtime or production build input
 was added. Raw capture evidence remains ignored until its verdict is reviewed.
+
+## Integration gate finding
+
+After integration sync 1bbe1d4, lane tier stopped with 235 passed, 1 failed
+and 23 not run in 353.23 seconds. The failing new Rustwall test required
+art-build/rustwall-p2/wall-relief-source.png, an absent scratch artifact in
+this clean lane. The Director reproduced it and opened FIX-RUSTWALL-CLEAN.
+No art assertion was changed and no old scratch file was copied into place.
+Production build passed separately in 346 ms. All 162 replay fingerprints
+were unchanged, and all 48 expansion drives completed and won. Rerun the
+lane gate after the integration-owned fix; this is not a passing lane gate.
