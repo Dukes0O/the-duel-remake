@@ -490,6 +490,45 @@ the warlord ladder, the arsenal waves, crew gear, boarding and CPU crews,
 then polish and release. The audio track runs alongside both phases. The
 order and cards are in `docs/board/next-run.md`.
 
+### 0.11 Art: start from existing assets (Kyle, 25 September 2026)
+
+Building characters and hero assets from scratch in Blender has cost too much
+quota for too little: after more than twenty crew rounds, the runtime crew is
+still round 3, Rook's round 10 scored 2 and was rejected, and the crew, hands
+and Rustwall all stopped near 3 of 5. Kyle's direction: **not everything has
+to be made from scratch.** The current art goes into the beta as it is, so the
+game can be tested; better art arrives through a different approach.
+
+**The new approach.** Start from an existing asset and adapt it. Blender is for
+fitting, rigging, retargeting animation, recoloring, retexturing, combining
+parts, trimming and making distant versions, not for sculpting whole
+characters. Look for a starting asset in this order:
+
+1. CC0 libraries: for example Quaternius and Kenney (game-ready, many rigged
+   and animated), Poly Pizza's CC0 models and OpenGameArt's CC0 section.
+2. CC-BY models, with the author credited in the game.
+3. Image-to-3D services fed our concept sheets, on free plans only, after
+   checking their terms, then cleaned up in Blender.
+4. Building from scratch, only when nothing above fits.
+
+No Adobe account (Mixamo) for now. Check every licence before download and
+record it.
+
+**Where art sources live.** The same rules as audio (0.9): the adaptation script
+in `tools/blender/` is the recipe; a downloaded asset is recorded in
+`tools/art/catalog.json` (source page, author, licence, checksum, what was
+changed) and cached outside the repository in `C:\Users\kyleb\dev\art-library\`;
+only the finished runtime model ships in `public/`. Credits appear in game.
+
+**Quota guard.** At most three rounds per art card per run. If two rounds in a
+row do not raise the score, stop, record the gap, and propose a different
+starting asset instead of continuing. No more ten-round loops.
+
+**Cards.** GFX-01-P3 (crew), GFX-02-P3 (first-person hands) and EGG-02-P3
+(Rustwall and wash) now start with a sourcing step: find two or three
+candidate starting assets per family, check licences, and show Kyle a short
+list with pictures before any adaptation work.
+
 ---
 
 ## 1. Objective
