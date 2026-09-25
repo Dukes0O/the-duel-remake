@@ -355,7 +355,7 @@ test('P2 cloth trial changes only actual consumed cloth pixels and preserves fro
   const triptych=join(dir,'triptych.png'),cloth=join(dir,'cloth.png');
   const base=join(dir,'base'),painted=join(dir,'painted');
   writeFileSync(triptych,syntheticTriptych());
-  const colors=[[20,35,195],[211,42,32],[39,195,139]];
+  const colors=[[10,20,30],[230,240,250],[70,120,170]];
   writeFileSync(cloth,syntheticTriptych(colors,false));
   const blender=process.env.BLENDER_BIN||
     'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe';
@@ -423,6 +423,30 @@ test('P2 cloth trial changes only actual consumed cloth pixels and preserves fro
   const surface=newMaps.surface;
   const roughness=surface.pixel(128,890)[1]/255;
   assert.ok(roughness>=.84&&roughness<=.96,'new cloth lost its bounded matte finish');
+  const normal=newMaps.normal;
+  const luminance=(x,y)=>color.pixel(x,y).slice(0,3)
+    .reduce((sum,value)=>sum+value,0)/(3*255);
+  let quarterError=0,fullError=0,gradientSamples=0;
+  for(let y=778;y<=1013;y++)for(let x=10;x<=245;x++) {
+    const dx=(luminance(x+1,y)-luminance(x-1,y))/2;
+    const dy=(luminance(x,y+1)-luminance(x,y-1))/2;
+    if(Math.hypot(dx,dy)<.008)continue;
+    const observed=normal.pixel(x,y).slice(0,3);
+    const predicted=factor=>{
+      const v=[-dx*.65*factor,+dy*.65*factor,1];
+      const length=Math.hypot(...v);
+      return v.map(n=>(n/length*.5+.5)*255);
+    };
+    const error=expected=>expected.reduce((sum,v,i)=>sum+Math.abs(v-observed[i]),0)/3;
+    quarterError+=error(predicted(.25));
+    fullError+=error(predicted(1));
+    gradientSamples++;
+  }
+  assert.ok(gradientSamples>=200,'cloth fixture needs real luminance gradients for normal proof');
+  assert.ok(quarterError/gradientSamples<=2.5,
+    `new cloth normals do not follow source-derived quarter-strength gradients`);
+  assert.ok(fullError/gradientSamples>=quarterError/gradientSamples+1,
+    `unreduced normals fit too well: quarter ${(quarterError/gradientSamples).toFixed(3)}, full ${(fullError/gradientSamples).toFixed(3)}, samples ${gradientSamples}`);
 });
 const centerlines={
   R:{elbow:[.35,-.43,-.27],wrist:[.205,-.285,-.48]},
