@@ -332,6 +332,7 @@ tasks:
     needs: [GFX-01-P2, EGG-02-P2, GFX-02-P1]
     status: building
     owns: [src/feature-flags.js, tools/test-feature-flags.mjs, tools/scenarios/experimental.mjs, tools/scenarios/wasteland-beta.mjs, tools/test-wasteland-beta.mjs, docs/playtest-inbox.md, docs/changes/BETA-01.md]
+    hooks: [tools/test-hidden-road.mjs, tools/test-combat-armor.mjs, src/style.css]
     helpers: [test_author, reviewer, browser_qa, save_guardian, test_runner]
     acceptance:
       - "After phase 2, move wasteland2 and hidden-road to beta under Experimental as Kyle requested; retain career-backup's current state and prove default-off, explicit opt-in, opt-out and reload persistence with memory-only storage."
@@ -383,7 +384,7 @@ tasks:
     lane: VIS
     size: M
     needs: [GFX-02-P1]
-    status: building
+    status: merged
     owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p2-source.json, docs/ASSET_PIPELINE.md, docs/board/looks/first-person-p2/, docs/changes/GFX-02-P2.md]
     hooks: [tools/test-first-person-cloth.mjs, tools/test-first-person-polish.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
@@ -553,7 +554,7 @@ tasks:
     hooks: [src/combat-hud.js, tools/test-combat-hud.mjs, src/career-backup.js, src/progression.js, src/weapon-upgrades.js, src/armor-kits.js, src/crew.js, src/screen-armory.js, src/screen-router.js, src/app.js, src/crew-ui.js, tools/test-crew-ui.mjs, src/combat-scoring.js, tools/test-combat-scoring.mjs, src/raiders.js, tools/test-raiders.mjs, src/game.js, src/screen-results.js, tools/test-wasteland-results.mjs, tools/scenarios/wasteland-career.mjs, tools/test-wasteland-profile.mjs, tools/test-progression.mjs, tools/test-progression-integration.mjs, tools/test-save-fixtures.mjs, tools/test-weapon-upgrades.mjs, tools/test-armor-kits.mjs, tools/test-crew.mjs, tools/test-career-backup.mjs]
     helpers: [test_author, save_guardian, reviewer, browser_qa]
     acceptance:
-      - "Add separate scrap and eight-warlord territory progression, ranks 1â€“30 and yard access behind the switch per SPEC 0.4. Preserve old credit-funded weapon levels and ordinary careers through backed-up migration."
+      - "Add separate scrap and eight-warlord territory progression, ranks 1Ã¢â‚¬â€œ30 and yard access behind the switch per SPEC 0.4. Preserve old credit-funded weapon levels and ordinary careers through backed-up migration."
     note: "Merged ac79e63 after 242/242 final lane suites, build, private browser review and independent Save Guardian clearance. Earns and spends scrap, builds hold, and shows the territory map. Existing ranks are preserved. GFX-04 connects the yard; WAR-01/02/03/04 own the unbuilt ladder, fights and one-time claim grants. Director approved hiding active combat HUD over result dialogs after actual screenshots proved overlapping controls."
   - id: GFX-03
     title: "Nine war rigs and kits fidelity rounds one to three"
@@ -566,7 +567,7 @@ tasks:
     hooks: [src/combat-scene.js, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-resource-lifecycle.mjs, tools/test-armor-kit-fit.mjs, tools/test-armor-kit-visuals.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/audit-armor-kit-fit.mjs, tools/test-blender-output.mjs, src/vehicles.js, src/render3d.js, tools/test-combat-vehicle-wear.mjs, tools/test-npc-vehicle-damage.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
     flag: wasteland2
-    note: "Merged31dfd13 after251/251 lane suites, build, independent fit/resource/wear review,44 all-car/state captures and600-frame four-car A/B/A. Final art3/4/4/3/frame4 remains dev; GFX-03-P1 owns distinct plate fidelity. Source family4,383,060B,3,440â€“5,094 triangles/car and18 named primitives; measured p95 overhead<=6.8%."
+    note: "Merged31dfd13 after251/251 lane suites, build, independent fit/resource/wear review,44 all-car/state captures and600-frame four-car A/B/A. Final art3/4/4/3/frame4 remains dev; GFX-03-P1 owns distinct plate fidelity. Source family4,383,060B,3,440Ã¢â‚¬â€œ5,094 triangles/car and18 named primitives; measured p95 overhead<=6.8%."
     acceptance:
       - "All nine cars have intact, damaged, burning and wrecked kits; three matched saved fidelity rounds meet SPEC 0.3 and frame budgets."
   - id: GFX-03-P1
@@ -1052,7 +1053,7 @@ tasks:
     size: M
     needs: [FND-05]
     status: spike-complete
-    note: "Throwaway branch 4cc9556 independently reviewed: real Pacific Canyon walking, pointer lock, 13 focused checks, private browser input and 0.0173â€“0.0257 ms median step cost. Go with course lookups for FOOT-01; do not merge spike code."
+    note: "Throwaway branch 4cc9556 independently reviewed: real Pacific Canyon walking, pointer lock, 13 focused checks, private browser input and 0.0173Ã¢â‚¬â€œ0.0257 ms median step cost. Go with course lookups for FOOT-01; do not merge spike code."
     spec: "SPEC.md, task FOOT-00"
   - id: RFX-04
     title: "Split combat into field-aware modules"
@@ -1089,7 +1090,7 @@ tasks:
     flag: wasteland2
     behavior_change: yes
     acceptance:
-      - "Every combat car starts with max armor 100 Ã— clamp(sqrt(mass/1450), 0.8, 1.6); all nine cars and both clamps have exact tests."
+      - "Every combat car starts with max armor 100 Ãƒâ€” clamp(sqrt(mass/1450), 0.8, 1.6); all nine cars and both clamps have exact tests."
       - "Level-zero bolt 12, bomb up to 18 with falloff, ram above 40 km/h at 0.2 per relative km/h, and major scenery 20 armor damage; future rocket/RPG/spike values have pure numeric tests."
       - "Each car's own star blocks projectile, ram, scenery, and self damage; a bomb near its thrower arms after 0.35 seconds and self damage stays at or below 25%."
       - "At zero armor each car wrecks exactly once, explodes, recovers within 12 m of the impact with 60% of its own max, and pays about 3.5 seconds once."

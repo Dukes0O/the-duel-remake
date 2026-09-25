@@ -22,38 +22,84 @@ p.add_argument('--crew', default='all')
 p.add_argument('--skip-renders', action='store_true')
 p.add_argument('--paths-only', action='store_true')
 p.add_argument('--p1-rook', action='store_true')
+p.add_argument('--p2-rook', action='store_true')
 p.add_argument('--output-dir')
 p.add_argument('--p1-paint')
 p.add_argument('--p1-paint-sha256')
+p.add_argument('--p2-paint')
+p.add_argument('--p2-paint-sha256')
+p.add_argument('--p2-cloth-paint')
+p.add_argument('--p2-cloth-paint-sha256')
 args = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
+if args.p1_rook and args.p2_rook:
+    p.error('P1 and P2 Rook modes are mutually exclusive')
+proof_mode = args.p1_rook or args.p2_rook
+if args.p2_rook and (args.p1_paint or args.p1_paint_sha256):
+    p.error('P2 Rook cannot use P1 paint arguments')
+if not args.p2_rook and (args.p2_paint or args.p2_paint_sha256):
+    p.error('P2 paint arguments require --p2-rook')
+if not args.p2_rook and (args.p2_cloth_paint or args.p2_cloth_paint_sha256):
+    p.error('P2 cloth paint arguments require --p2-rook')
 source_json = root / 'tools/blender/first-person-p1-source.json'
+p2_source_json = root / 'tools/blender/first-person-p2-source.json'
+p2_source = None
+if args.p2_rook:
+    p2_source = json.loads(p2_source_json.read_text(encoding='utf-8'))
+    parent = p2_source.get('parentRecipe', {})
+    if (parent.get('path') != 'tools/blender/first-person-p1-source.json' or
+        hashlib.sha256(source_json.read_bytes()).hexdigest() != parent.get('sha256')):
+        p.error('P2 parent P1 source hash does not match')
 paint_input = None
-if args.p1_paint or args.p1_paint_sha256:
-    if not args.p1_rook or not args.p1_paint or not args.p1_paint_sha256:
-        p.error('P1 paint requires --p1-rook, --p1-paint and --p1-paint-sha256 together')
-    paint_input = Path(args.p1_paint).resolve()
-    ignored_paint = (root / 'art-build/first-person-p1').resolve()
+cloth_input = None
+cloth_dimensions = None
+if args.p2_cloth_paint or args.p2_cloth_paint_sha256:
+    if not args.p2_cloth_paint or not args.p2_cloth_paint_sha256:
+        p.error('P2 cloth paint requires both path and SHA-256')
+    cloth_input = Path(args.p2_cloth_paint).resolve()
+    cloth_allowed = (root / 'art-build/first-person-p2').resolve()
+    original_paint = (Path.home() / '.codex/generated_images').resolve()
+    if cloth_allowed not in cloth_input.parents and original_paint not in cloth_input.parents:
+        p.error('P2 cloth paint must be an ignored art source or original generated image')
+    if not cloth_input.is_file():
+        p.error('P2 cloth paint source is missing')
+    cloth_bytes = cloth_input.read_bytes()
+    if hashlib.sha256(cloth_bytes).hexdigest() != args.p2_cloth_paint_sha256.lower():
+        p.error('P2 cloth paint source SHA-256 mismatch')
+    if cloth_bytes[:8] != b'\x89PNG\r\n\x1a\n':
+        p.error('P2 cloth paint must be a square PNG')
+    cloth_dimensions = (int.from_bytes(cloth_bytes[16:20], 'big'),
+                        int.from_bytes(cloth_bytes[20:24], 'big'))
+    if (cloth_dimensions[0] != cloth_dimensions[1] or
+        not 1024 <= cloth_dimensions[0] <= 2048 or cloth_bytes[25] not in (2, 6)):
+        p.error('P2 cloth paint must be a 1024–2048 square RGB/RGBA PNG')
+paint_path = args.p2_paint if args.p2_rook else args.p1_paint
+paint_hash = args.p2_paint_sha256 if args.p2_rook else args.p1_paint_sha256
+if paint_path or paint_hash or args.p2_rook:
+    if not proof_mode or not paint_path or not paint_hash:
+        p.error('Rook paint requires a matching explicit path and SHA-256')
+    paint_input = Path(paint_path).resolve()
+    ignored_paint = (root / ('art-build/first-person-p2' if args.p2_rook else 'art-build/first-person-p1')).resolve()
     original_paint = (Path.home() / '.codex/generated_images').resolve()
     if ignored_paint not in paint_input.parents and original_paint not in paint_input.parents:
-        p.error('P1 paint must be an ignored art source or original generated image')
+        p.error('Rook paint must be an ignored art source or original generated image')
     if not paint_input.is_file():
-        p.error('P1 paint source is missing')
+        p.error('Rook paint source is missing')
     paint_bytes = paint_input.read_bytes()
-    if hashlib.sha256(paint_bytes).hexdigest() != args.p1_paint_sha256.lower():
-        p.error('P1 paint source SHA-256 mismatch')
+    if hashlib.sha256(paint_bytes).hexdigest() != paint_hash.lower():
+        p.error('Rook paint source SHA-256 mismatch')
     if (paint_bytes[:8] != b'\x89PNG\r\n\x1a\n' or
         int.from_bytes(paint_bytes[16:20], 'big') != 1254 or
         int.from_bytes(paint_bytes[20:24], 'big') != 1254 or
         paint_bytes[25] not in (2, 6)):
-        p.error('P1 paint must be a 1254-square RGB/RGBA PNG triptych')
-if args.p1_rook:
+        p.error('Rook paint must be a 1254-square RGB/RGBA PNG triptych')
+if proof_mode:
     if not args.output_dir:
-        p.error('--p1-rook requires --output-dir')
+        p.error('Rook proof requires --output-dir')
     candidate_dir = Path(args.output_dir).resolve()
-    allowed = (root / 'art-build/first-person-p1').resolve()
+    allowed = (root / ('art-build/first-person-p2' if args.p2_rook else 'art-build/first-person-p1')).resolve()
     if candidate_dir == allowed or allowed not in candidate_dir.parents:
-        p.error('P1 Rook output must be a child of ignored art-build/first-person-p1')
+        p.error('Rook output must be a child of its ignored art-build family')
     evidence_override = os.environ.get('DUEL_EVIDENCE_DIR')
     if evidence_override:
         evidence_target = Path(evidence_override).resolve()
@@ -62,7 +108,8 @@ if args.p1_rook:
             evidence_home not in evidence_target.parents):
             p.error('P1 Rook evidence must remain under candidate output or ignored .evidence')
     planned = {
-        'mode': 'p1-rook', 'outputDir': str(candidate_dir), 'sourceJson': str(source_json),
+        'mode': 'p2-rook' if args.p2_rook else 'p1-rook', 'outputDir': str(candidate_dir),
+        'sourceJson': str(p2_source_json if args.p2_rook else source_json),
         'candidateGlb': str(candidate_dir / 'hands/rook.glb'),
         'candidateBlend': str(candidate_dir / 'hands/rook.blend'),
         'textures': {label: str(candidate_dir / 'hands' / f'rook-{label}.png')
@@ -73,13 +120,13 @@ if args.p1_rook:
         print(json.dumps(planned))
         sys.exit(0)
 elif args.output_dir:
-    p.error('--output-dir is only valid with --p1-rook')
+    p.error('--output-dir is only valid with a Rook proof mode')
 out = root / 'public/assets/models/wasteland/first-person'
 blend_dir = root / 'art-build/first-person'
 crew_names = ('rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk')
 selected_names = [name for name in crew_names if args.crew in ('all', name)]
 def tool_glb(name):
-    return (root / 'public/assets/models/wasteland/first-person' if args.p1_rook else out) / f'{name}.glb'
+    return (root / 'public/assets/models/wasteland/first-person' if proof_mode else out) / f'{name}.glb'
 def tool_blend(name):
     return blend_dir / f'{name}.blend'
 def hands_glb(name):
@@ -91,7 +138,7 @@ def tool_texture(name, label):
 def hands_texture(name, label):
     return blend_dir / 'hands' / f'{name}-{label}.png'
 shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or
-    (candidate_dir / 'evidence' if args.p1_rook else root / '.evidence' / date.today().isoformat() / 'first-person' / f'round-{args.round}'))
+    (candidate_dir / 'evidence' if proof_mode else root / '.evidence' / date.today().isoformat() / 'first-person' / f'round-{args.round}'))
 if not shots.is_absolute():
     shots = root / shots
 if args.paths_only:
@@ -110,7 +157,7 @@ import bpy
 import numpy as np
 from mathutils import Vector, Matrix, Euler
 
-if args.p1_rook:
+if proof_mode:
     out = candidate_dir
     blend_dir = candidate_dir
     selected_names = ['rook']
@@ -176,7 +223,7 @@ def texture_material(name, cfg, folder, tool=False):
         bases[15]=(.53,.54,.51)
     else:
         bases[7]=tuple(min(.8,c*1.12+.02) for c in cfg['sleeve'])
-        if args.p1_rook:
+        if proof_mode:
             # Exported glTF V directly addresses the saved PNG's bottom row.
             # Blender's image buffer is bottom-up, so the authored chart faces
             # sample buffer tiles 0/1/2/3 rather than the unused top row.
@@ -187,22 +234,22 @@ def texture_material(name, cfg, folder, tool=False):
         noise=rng.uniform(-1,1,(256,256))
         coarse=np.repeat(np.repeat(rng.uniform(-1,1,(16,16)),16,axis=0),16,axis=1)
         for _ in range(5):coarse=(coarse+np.roll(coarse,1,0)+np.roll(coarse,-1,0)+np.roll(coarse,1,1)+np.roll(coarse,-1,1))/5
-        cloth=tile in ([0,8,7,12,15] if args.p1_rook else [0,8,7,15]) and not tool and name!='jax'
+        cloth=tile in ([0,8,7,12,15] if proof_mode else [0,8,7,15]) and not tool and name!='jax'
         grain=(np.sin(xx*2.7)*np.sin(yy*2.3))*.018 if cloth else 0
         variation=1+noise*.045+coarse*.13+grain
-        if args.p1_rook and not tool and tile in (0,8,12):
+        if proof_mode and not tool and tile in (0,8,12):
             # Long shaded folds replace the evenly repeated bright sleeve dashes.
             valley=np.exp(-((xx-(86+28*np.sin(yy*.017)))/27)**2)
             variation=variation*(1-.16*valley)+.035*np.sin(yy*.022+xx*.013)
-        if args.p1_rook and not tool and tile==13:
+        if proof_mode and not tool and tile==13:
             panel=np.exp(-((xx-125-14*np.sin(yy*.012))/74)**4)
             variation*=1-.12*panel
-        if args.p1_rook and not tool and tile==15:
+        if proof_mode and not tool and tile==15:
             fibres=.025*np.sin(xx*.40+yy*.025)+.014*np.sin(xx*.91-yy*.019)
             weather=np.exp(-((yy-(96+24*np.sin(xx*.017)))/22)**2)
             variation=variation+fibres-.085*weather
-        if tile in ([2,10,14] if args.p1_rook else [2,10]):variation=1+noise*.025+coarse*.065
-        leather=tile in ([1,6,9,13] if args.p1_rook else [1,6,9])
+        if tile in ([2,10,14] if proof_mode else [2,10]):variation=1+noise*.025+coarse*.065
+        leather=tile in ([1,6,9,13] if proof_mode else [1,6,9])
         crease=np.zeros_like(noise)
         if leather:
             for row in [42,116,199]:crease+=np.exp(-((yy-row-np.sin(xx*.026+row)*11)/2.5)**2)
@@ -210,26 +257,26 @@ def texture_material(name, cfg, folder, tool=False):
         rgba=np.zeros((256,256,4),np.float32);rgba[:,:,:3]=np.array(base)[None,None,:]*variation[:,:,None];rgba[:,:,3]=1
         # Patina chips are localized clusters, not pale source-background streaks.
         worn=(coarse>.20)&(noise>.20)
-        if tool or tile in ([3,4,5,11] if args.p1_rook else [3,4,5,11,12,13,14]):
+        if tool or tile in ([3,4,5,11] if proof_mode else [3,4,5,11,12,13,14]):
             rgba[worn,:3]=np.array((.12,.13,.125) if tile in [0,8] else (.23,.15,.085))*(1+noise[worn,None]*.10)
             scratch=(noise>.94)&(coarse>.23)
             rgba[scratch,:3]=(.39,.40,.37)
             if tile==12:rgba[:,:,:3]=np.array(base)*(1+noise[:,:,None]*.02)
-        if cloth and not (args.p1_rook and not tool and tile in (0,8,12)):
+        if cloth and not (proof_mode and not tool and tile in (0,8,12)):
             seam=(abs(xx-16)<2)|(abs(xx-240)<2)
             stitch=seam&((yy%12)<5)
             rgba[stitch,:3]=np.array(base)*1.4
         y,x=divmod(tile,4);color[y*256:(y+1)*256,x*256:(x+1)*256]=np.clip(rgba,0,1)
-        rough=.90 if cloth else (.82 if tile in ([1,2,6,9,10,13,14] if args.p1_rook else [1,2,6,9,10]) else .65)
+        rough=.90 if cloth else (.82 if tile in ([1,2,6,9,10,13,14] if proof_mode else [1,2,6,9,10]) else .65)
         surface[y*256:(y+1)*256,x*256:(x+1)*256,1]=np.clip(rough+coarse*.13,.30,.98)
         surface[y*256:(y+1)*256,x*256:(x+1)*256,2]=.72 if tool and tile not in [1,6,9] else (.55 if tile in [3,11] else 0)
         height=noise*(.035 if cloth else .015)+grain*1.5-crease*.085
-        if tile in ([2,10,14] if args.p1_rook else [2,10,12]):height*=.12
+        if tile in ([2,10,14] if proof_mode else [2,10,12]):height*=.12
         dy,dx=np.gradient(height)
         vectors=np.stack([-dx*3,-dy*3,np.ones_like(dx)],axis=-1)
         vectors/=np.linalg.norm(vectors,axis=-1,keepdims=True)
         normal[y*256:(y+1)*256,x*256:(x+1)*256,:3]=vectors*.5+.5
-    if args.p1_rook and name=='rook' and not tool and paint_input:
+    if proof_mode and name=='rook' and not tool and paint_input:
         authored=json.loads(source_json.read_text(encoding='utf-8'))
         source=bpy.data.images.load(str(paint_input),check_existing=False)
         source.colorspace_settings.name='Non-Color'
@@ -268,6 +315,37 @@ def texture_material(name, cfg, folder, tool=False):
             vectors/=np.linalg.norm(vectors,axis=-1,keepdims=True)
             normal[8:248,atlas_x:atlas_x+240,:3]=vectors*.5+.5
         bpy.data.images.remove(source)
+    if args.p2_rook and name == 'rook' and not tool and cloth_input:
+        cloth_image = bpy.data.images.load(str(cloth_input), check_existing=False)
+        cloth_image.colorspace_settings.name = 'Non-Color'
+        size = cloth_dimensions[0]
+        native_pixels = np.empty(size*size*4, dtype=np.float32)
+        cloth_image.pixels.foreach_get(native_pixels)
+        native_rgb = np.flipud(native_pixels.reshape((size,size,4)))[:,:,:3]
+        # Area-weighted full-square reduction makes the source's fine threads
+        # subpixel on the sleeve. The atlas's Blender buffer is bottom-up.
+        scale = size/240
+        horizontal = np.empty((size,240,3), dtype=np.float32)
+        for column in range(240):
+            left,right=column*scale,(column+1)*scale
+            ids=np.arange(math.floor(left),math.ceil(right))
+            weights=np.maximum(0,np.minimum(ids+1,right)-np.maximum(ids,left))/scale
+            horizontal[:,column,:]=np.tensordot(native_rgb[:,ids,:],weights,axes=(1,0))
+        sample=np.empty((240,240,3),dtype=np.float32)
+        for row in range(240):
+            top,bottom=row*scale,(row+1)*scale
+            ids=np.arange(math.floor(top),math.ceil(bottom))
+            weights=np.maximum(0,np.minimum(ids+1,bottom)-np.maximum(ids,top))/scale
+            sample[row,:,:]=np.tensordot(weights,horizontal[ids,:,:],axes=(0,0))
+        color[8:248,8:248,:3]=np.flipud(sample)
+        luminance=np.mean(sample,axis=2)
+        surface[8:248,8:248,1]=np.flipud(np.clip(.90+(luminance-np.mean(luminance))*.04,.87,.93))
+        height=np.flipud(luminance)
+        dy,dx=np.gradient(height)
+        vectors=np.stack([-dx*.65*.25,-dy*.65*.25,np.ones_like(dx)],axis=-1)
+        vectors/=np.linalg.norm(vectors,axis=-1,keepdims=True)
+        normal[8:248,8:248,:3]=vectors*.5+.5
+        bpy.data.images.remove(cloth_image)
     images=[]
     for label,pixels in [('color',color),('surface',surface),('normal',normal)]:
         im=bpy.data.images.new(name+'-'+label,1024,1024,alpha=True)
@@ -292,13 +370,13 @@ class Geometry:
     def face(self,indices,tile,uv=None):
         self.faces.append(indices)
         if uv is None:uv=[(0,0),(1,0),(1,1),(0,1)][:len(indices)]
-        if args.p1_rook and tile in (0,1,2,3):
+        if proof_mode and tile in (0,1,2,3):
             # The declared skin chart is itself inset 8px from the 256px tile.
             # Keep terminal seam vertices another 8px inside that chart.
             uv=[(.1+.8*u,.1+.8*v) for u,v in uv]
         tx,ty=tile%4,tile//4
         self.uvs.append([((tx+.04+u*.92)/4,(ty+.04+v*.92)/4) for u,v in uv])
-    def loft(self,centres,radii,tile,bones,segments=12,axes=None,closed=True,warp=None,displace=None,
+    def loft(self,centres,radii,tile,bones,segments=12,axes=None,closed=True,warp=None,displace=None,ring_angles=None,
              cap_tile=None,cap_start=None,cap_end=None):
         rings=[]
         for i,(centre,radius) in enumerate(zip(centres,radii)):
@@ -311,8 +389,9 @@ class Geometry:
                 a.normalize();b=tangent.cross(a).normalized()
             rx,ry=(radius,radius) if isinstance(radius,(float,int)) else radius
             ring=[]
-            for j in range(segments):
-                theta=j*math.tau/segments
+            angles=ring_angles(i,rx,ry) if ring_angles else [j*math.tau/segments for j in range(segments)]
+            if len(angles)!=segments:raise ValueError('loft ring angle count changed')
+            for j,theta in enumerate(angles):
                 factor=warp(i,theta) if warp else 1
                 radial=a*(math.cos(theta)*rx)+b*(math.sin(theta)*ry)
                 point=(c+radial)*factor
@@ -586,7 +665,7 @@ def triangles(obj):
 
 def hand_geometry(name,cfg):
     g=Geometry();definitions=[('root',(0,0,0),None),('rpg-mount',RPG_GRIP,'root'),('wrench-mount',WRENCH_GRIP,'root')]
-    p1 = args.p1_rook and name == 'rook'
+    p1 = proof_mode and name == 'rook'
     anatomy = json.loads(source_json.read_text(encoding='utf-8')) if p1 else None
     for side,sign,grip in [('R',1,RPG_GRIP),('L',-1,RPG_GRIP+Vector((0,0,-.34)))]:
         hand='wrist_'+side;s=cfg['scale']
@@ -640,9 +719,76 @@ def hand_geometry(name,cfg):
                 edge=min(1,(t-stations[0][0]+.07)/.07,(stations[-1][0]+.07-t)/.07)
                 result+=(crest+trough)*max(0,edge)
             return result
+        def p2_value(values,t):
+            nodes=p2_source['sleeves']['axialNodes']
+            if t<=nodes[0]:return values[0]
+            if t>=nodes[-1]:return values[-1]
+            for k in range(len(nodes)-1):
+                if nodes[k]<=t<=nodes[k+1]:
+                    u=(t-nodes[k])/(nodes[k+1]-nodes[k])
+                    u=u*u*(3-2*u)
+                    return values[k]*(1-u)+values[k+1]*u
+            raise ValueError('sleeve axial station outside authored interval')
+        def p2_physical(theta,rx,ry):
+            return math.degrees(math.atan2(math.cos(theta)*rx,math.sin(theta)*ry))
+        def p2_seams(t):
+            spec=p2_source['sleeves'][side]
+            nodes=p2_source['sleeves']['axialNodes']
+            def linear(values):
+                if t<=nodes[0]:return values[0]
+                if t>=nodes[-1]:return values[-1]
+                for k in range(len(nodes)-1):
+                    if nodes[k]<=t<=nodes[k+1]:
+                        u=(t-nodes[k])/(nodes[k+1]-nodes[k])
+                        return values[k]*(1-u)+values[k+1]*u
+                raise ValueError('sleeve seam station outside authored interval')
+            return (linear(spec['lowerSeamDegrees']),
+                    linear(spec['upperSeamDegrees']))
+        def p2_angles(i,rx,ry):
+            if i<4 or i>8:return [j*math.tau/20 for j in range(20)]
+            t=samples[i-1];lower,upper=p2_seams(t)
+            boundary=[lower-20,lower,lower+20,upper-20,upper,upper+20]
+            def theta_from_physical(deg):
+                alpha=math.radians(deg)
+                return math.atan2(math.cos(alpha)/ry,math.sin(alpha)/rx)%math.tau
+            required=sorted(theta_from_physical(angle) for angle in boundary)
+            lengths=[(required[(k+1)%6]-required[k])%math.tau for k in range(6)]
+            desired=[14*length/math.tau for length in lengths]
+            counts=[math.floor(value) for value in desired]
+            for k in sorted(range(6),key=lambda x:desired[x]-counts[x],reverse=True)[:14-sum(counts)]:
+                counts[k]+=1
+            angles=[]
+            for k,theta in enumerate(required):
+                angles.append(theta)
+                angles.extend((theta+lengths[k]*j/(counts[k]+1))%math.tau
+                              for j in range(1,counts[k]+1))
+            return sorted(angles)
+        def p2_displace(i,theta):
+            if i<4 or i>8:return authored_fold(i,theta)
+            t=samples[i-1];rx,ry=radii[i]
+            alpha=p2_physical(theta,rx,ry)
+            lower,upper=p2_seams(t)
+            distance=(alpha-lower)%360
+            span=(upper-lower)%360
+            falloff=p2_source['sleeves']['angularFalloffDegrees']
+            def ramp(value):
+                u=max(0,min(1,value/falloff))
+                return u*u*(3-2*u)
+            outer=p2_value(p2_source['sleeves'][side]['outerOffsetsMetres'],t)
+            inner=p2_value(p2_source['sleeves']['undersideOffsetsMetres'],t)
+            if distance<=span:
+                result=outer*ramp(min(distance,span-distance))
+            else:
+                result=inner*ramp(min(distance-span,360-distance))
+            seam_distance=min(distance,abs(distance-span),360-distance)
+            half_width=p2_source['sleeves']['seamHalfWidthDegrees']
+            if seam_distance<half_width:
+                result+=p2_source['sleeves']['seamRidgeMetres']*(1-seam_distance/half_width)
+            return result
         palm_rings=g.loft(centres,radii,tiles,weights,20 if p1 else 16,
             axes=((0,1,0),(1,0,0)),warp=None if p1 else sleeve_folds,
-            displace=authored_fold if p1 else None,closed=not p1)
+            displace=p2_displace if args.p2_rook else (authored_fold if p1 else None),
+            ring_angles=p2_angles if args.p2_rook else None,closed=not p1)
         if sleeve_end:
             cuff=elbow.lerp(wrist,sleeve_end)+Vector((sign*.015*math.sin(sleeve_end*math.pi),.012*math.sin(sleeve_end*math.pi),0))
             radius=(.079*(1-sleeve_end)+.035*sleeve_end+.009*math.sin(sleeve_end*math.pi))*s
@@ -794,7 +940,7 @@ def build_hands(name,cfg):
     mat=texture_material(name,cfg,blend_dir/'hands')
     g,definitions=hand_geometry(name,cfg);rig=armature(name+' first-person hands',definitions)
     mesh=g.build(name+' sleeves gloves fingers',mat,rig)
-    if args.p1_rook:
+    if proof_mode:
         marks=json.loads(source_json.read_text(encoding='utf-8'))['hands']
         regions={}
         for side in ('R','L'):
@@ -814,7 +960,7 @@ def build_hands(name,cfg):
     if not args.skip_renders:
         samples=[('idle',.25,'rpg'),('wrench-idle',.25,'wrench')]
         if name=='rook':samples += [('aim',.25,'rpg'),('fire',.10,'rpg'),('reload',1.1,'rpg'),('reload',1.65,'rpg'),('aim-reload',1.1,'rpg')]
-        if args.p1_rook and name=='rook':samples += [('repair',1.12,'wrench')]
+        if proof_mode and name=='rook':samples += [('repair',1.12,'wrench')]
         if name=='odessa':samples += [('repair',1.12,'wrench'),('repair',2.8,'wrench')]
         for clip,t,tool in samples:
             rig.animation_data.action=actions[clip];scene.frame_set(1,subframe=0)
@@ -842,23 +988,24 @@ def build_hands(name,cfg):
         reference=dict(path=source.relative_to(root).as_posix(),sha256=digest(source),crop=cfg['crop']),
         files={p.name:digest(p) for p in [hands_glb(name),hands_blend(name),
             hands_texture(name, 'color'),hands_texture(name, 'surface'),hands_texture(name, 'normal')]},captures=captures)
-    if args.p1_rook: report['regions']=regions
+    if proof_mode: report['regions']=regions
     (shots/f'blender-{name}.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf8',newline='\n')
     print('HANDS_ASSET '+json.dumps({'id':name,'triangles':report['triangles'],'seconds':report['seconds']}),flush=True)
     return report
 
 started=time.perf_counter()
-tools=[] if args.p1_rook else [build_tool(name) for name in ['rpg','wrench']]
+tools=[] if proof_mode else [build_tool(name) for name in ['rpg','wrench']]
 hands=[build_hands(name,CREW[name]) for name in selected_names]
-if args.p1_rook:
+if proof_mode:
     anatomy=json.loads(source_json.read_text(encoding='utf-8'))
     def rel(path):return Path(path).relative_to(root).as_posix()
     paths=[hands_texture('rook',kind) for kind in ('color','surface','normal')]
     textures={kind:{'path':rel(path),'sha256':digest(path)}
               for kind,path in zip(('color','surface','normal'),paths)}
     asset=hands_glb('rook')
-    proof=dict(schemaVersion=1,mode='p1-rook',
-        source=dict(path=rel(source_json),sha256=digest(source_json),
+    proof=dict(schemaVersion=1,mode='p2-rook' if args.p2_rook else 'p1-rook',
+        source=dict(path=rel(p2_source_json if args.p2_rook else source_json),
+            sha256=digest(p2_source_json if args.p2_rook else source_json),
             referencePath=anatomy['reference']['path'],
             referenceSha256=anatomy['reference']['sha256'],
             rpgArmReferencePath=anatomy['rpgArmReference']['path'],
@@ -872,11 +1019,21 @@ if args.p1_rook:
         captures=hands[0]['captures'])
     if paint_input:
         paint_contract=anatomy['paintSource']
-        proof['paintSource']=dict(path=str(paint_input),sha256=args.p1_paint_sha256.lower(),
+        proof['paintSource']=dict(path=str(paint_input),sha256=paint_hash.lower(),
             crops=paint_contract['crops'],method=paint_contract['method'],
-            selectedArtwork=args.p1_paint_sha256.lower()==paint_contract['selectedSha256'])
+            selectedArtwork=paint_hash.lower()==paint_contract['selectedSha256'])
+    if args.p2_rook:
+        proof['parentRecipe']=p2_source['parentRecipe']
+        proof['sleeves']=p2_source['sleeves']
+        if cloth_input:
+            proof['clothPaintSource']=dict(path=str(cloth_input),
+                sha256=args.p2_cloth_paint_sha256.lower(),
+                width=cloth_dimensions[0],height=cloth_dimensions[1],
+                crop=[0,0,cloth_dimensions[0],cloth_dimensions[1]],
+                method='full-square-box-filter-to-240',
+                selectedArtwork=args.p2_cloth_paint_sha256.lower()==p2_source['selectedClothSha256'])
     (candidate_dir/'manifest.json').write_text(json.dumps(proof,indent=2)+'\n',encoding='utf-8',newline='\n')
-    review=dict(family='first-person-p1',round=args.round,
+    review=dict(family='first-person-p2' if args.p2_rook else 'first-person-p1',round=args.round,
         scope='Blender source module at authored camera',candidateSha256=digest(asset),
         camera=dict(position=[0,0,0],target=[0,0,-1],verticalFov=72,near=.15,width=1280,height=720),
         references=dict(crew=anatomy['reference'],rpgArm=anatomy['rpgArmReference']),
@@ -885,7 +1042,7 @@ if args.p1_rook:
         captures=[{**entry,'scope':'Blender source module'} for entry in hands[0]['captures']])
     (shots/'blender-manifest.json').write_text(json.dumps(review,indent=2)+'\n',
         encoding='utf-8',newline='\n')
-    print('GFX-02-P1 ROOK PROOF COMPLETE',flush=True)
+    print('GFX-02-P2 ROOK PROOF COMPLETE' if args.p2_rook else 'GFX-02-P1 ROOK PROOF COMPLETE',flush=True)
     sys.exit(0)
 manifest=dict(round=args.round,blender=bpy.app.version_string,seconds=time.perf_counter()-started,
     command='blender -b --python tools/blender/first-person-gear.py -- --root REPO --round '+str(args.round)+' --crew '+args.crew,

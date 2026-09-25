@@ -717,3 +717,15 @@ Prepare BETA-01 as the last active card before the morning handoff. Tests first,
 then the flag change and real private menu/journey checks, ordinary lane/build,
 exact integration full and supporting checks. After this card finish the run;
 do not start the arena or warlord cards tonight. Release still waits for Kyle.
+
+
+## 2026-09-25 PDT: keep Experimental reachable in compact menus
+
+BETA-01 browser QA found the real Experimental control hidden at 1280 by 720:
+it shares build-label styling, and the compact-height and compact-width media
+rules hide that class. Grant a narrow src/style.css hook to preserve decorative
+label hiding while keeping the interactive beta control visible and clickable
+at 1280 by 720 and widths at or below 1100. Record the failing real DOM state
+before the fix and verify the responsive result. Increasing the QA viewport
+would leave the player blocker intact. No other menu redesign is part of this
+card; retain the existing layout and unpack only rules that are rewritten.

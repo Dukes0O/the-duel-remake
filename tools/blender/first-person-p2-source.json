@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "units": "metres",
+  "frame": "camera-local-x-right-y-up-negative-z-forward",
+  "parentRecipe": {
+    "path": "tools/blender/first-person-p1-source.json",
+    "sha256": "65efc6cbe282906a05a87a0ea8682cc4b1c4079ef34cb812bacb20f5ee1f2a95"
+  },
+  "selectedPaintSha256": "785c80bb03380c6454607e5fba687b633e47642cac0a1b58d7176afdf9a64b3b",
+  "selectedClothSha256": "e4a286ebc7a4b07f0645c63f0eb0a66db93fd9bfcec0f213a0671f5e56bca3ac",
+  "provenance": "inferred cut-and-sewn cloth construction; not a native-pixel contour trace",
+  "sleeves": {
+    "axialNodes": [0.28, 0.40, 0.52, 0.60, 0.69, 0.77, 0.82],
+    "angularFalloffDegrees": 20,
+    "seamRidgeMetres": 0.0015,
+    "seamHalfWidthDegrees": 5,
+    "undersideOffsetsMetres": [0, -0.003, -0.004, -0.004, -0.002, -0.001, 0],
+    "R": {
+      "outerOffsetsMetres": [0, 0.020, 0.006, -0.009, 0.012, 0.010, 0],
+      "lowerSeamDegrees": [40, 44, 48, 46, 42, 40, 40],
+      "upperSeamDegrees": [200, 196, 192, 194, 198, 200, 200]
+    },
+    "L": {
+      "outerOffsetsMetres": [0, 0.023, 0.007, -0.010, 0.013, 0.009, 0],
+      "lowerSeamDegrees": [-50, -47, -43, -45, -48, -50, -50],
+      "upperSeamDegrees": [125, 122, 118, 120, 123, 125, 125]
+    }
+  }
+}
