@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-09-25T07:21:42.913Z
+Observed at: 2026-09-25T08:56:06.245Z
 
-Observation commit: 4ec8c63b159c880ad07080a27ed88c2bce5ecc40
+Observation commit: b151a10490a5945e9eb37cb7919f57b6f9cc98fb
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 4ec8c63b159c880ad07080a27ed88c2bce5ecc40
+Integration HEAD: b151a10490a5945e9eb37cb7919f57b6f9cc98fb
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -33,7 +33,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/gfx-01-p2 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-01-p2 |
-| lane/audio/aud-10 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/audio/aud-10 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/audio/aud-12 | 0 | unknown | true | false | unknown |
 
 ## Unmerged branches for idle review
@@ -42,8 +42,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/gfx-01-p2 | GFX-01-P2 | 2026-09-24T23:14:33-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/crew-p2/round-1-review.md, docs/board/looks/crew-p2/round-1.jpg, docs/board/looks/crew-p2/round-2-review.md, docs/board/looks/crew-p2/round-2.jpg, docs/board/looks/crew-p2/round-3-review.md |
-| lane/audio/aud-10 | AUD-10 | 2026-09-25T00:21:40-07:00 | 0 | last commit 2026-09-25T00:21:40-07:00 | .gitattributes, audio-src/library/engine-source.flac, audio-src/library/tire-squeal.flac, docs/audio/briefs.md, docs/board/listening/aud-11-round-1.json |
+| codex/gfx-01-p2 | GFX-01-P2 | 2026-09-25T01:43:22-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/crew-p2/round-1-review.md, docs/board/looks/crew-p2/round-1.jpg, docs/board/looks/crew-p2/round-2-review.md, docs/board/looks/crew-p2/round-2.jpg, docs/board/looks/crew-p2/round-3-review.md |
+| lane/audio/aud-10 | AUD-10 | 2026-09-25T01:34:02-07:00 | 0 | inspection skipped by request; uncommitted state unknown | .gitattributes, audio-src/library/engine-source.flac, audio-src/library/tire-squeal.flac, docs/audio/briefs.md, docs/board/listening/aud-11-round-1.json |
 
 ## Size targets
 
@@ -57,9 +57,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 210,328 B | +0 B | 500,000 B |
 | Review `looks/` | 5,665,862 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 151,282 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 58,183 B | +0 B | 5,000,000 B |
 | All `public/` | 255,694,015 B | +0 B | unavailable |
-| Git objects | 314,567,680 B | +611,328 B | unavailable |
+| Git objects | 316,841,984 B | +0 B | unavailable |
 | Lane folders | 1 | -1 | unavailable |
 
 ## Backups
@@ -68,7 +68,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 4ec8c63b159c880ad07080a27ed88c2bce5ecc40
+- Local integration/wasteland: b151a10490a5945e9eb37cb7919f57b6f9cc98fb
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
