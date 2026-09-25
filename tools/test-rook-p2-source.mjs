@@ -124,6 +124,152 @@ test('Rook landmarks identify the actual approved reference and all three measur
   }
 });
 
+test('front trouser landmarks follow independently sampled native leg edges', () => {
+  const marks=json('rook-p2-landmarks.json').views.front;
+  // Native 2067×761 approved reference, SHA checked by the landmark identity test.
+  // These lower-leg boundaries are visible against uninterrupted background.
+  // Waist, hip, crotch and holster-covered edges remain inferred in the source data.
+  const measured=[
+    {y:455,left:[48,94],right:[134,180],level:'knee'},
+    {y:500,left:[44,86],right:[143,185],level:'calf'},
+    {y:525,left:[38,87],right:[141,189]},
+    {y:550,left:[41,86],right:[142,189],level:'cuff'},
+    {y:556,left:[42,80],right:[145,183]}
+  ];
+  const errors=[];
+  for(const row of measured){
+    for(const [side,expected] of [['left',row.left],['right',row.right]]){
+      const trace=marks.outlines[`${side}-trouser-${side==='left'?'outer':'inner'}`];
+      const traceOther=marks.outlines[`${side}-trouser-${side==='left'?'inner':'outer'}`];
+      const atY=polyline=>{
+        for(let i=1;i<polyline.length;i++){
+          const [x0,y0]=polyline[i-1],[x1,y1]=polyline[i];
+          if(y0<=row.y&&row.y<=y1)return x0+(x1-x0)*(row.y-y0)/(y1-y0);
+        }
+        throw new Error(`missing ${side} contour at y${row.y}`);
+      };
+      const actual=[atY(trace),atY(traceOther)].sort((a,b)=>a-b);
+      for(let i=0;i<2;i++)if(Math.abs(actual[i]-expected[i])>3)
+        errors.push(`outline y${row.y} ${side} ${actual[i].toFixed(1)} vs native ${expected[i]}`);
+      if(row.level){
+        const band=marks.trouserBands[row.level];
+        assert.equal(band.y,row.y,`${row.level} band records the independently sampled native row`);
+        const pair=[...band[side]].sort((a,b)=>a-b);
+        for(let i=0;i<2;i++)if(Math.abs(pair[i]-expected[i])>3)
+          errors.push(`band ${row.level} ${side} ${pair[i]} vs native ${expected[i]}`);
+      }
+    }
+  }
+  assert.deepEqual(errors,[],`front trouser oracle must match independently visible native boundaries: ${errors.join('; ')}`);
+});
+
+test('authored trouser cloth follows the corrected visible lower-leg stance', () => {
+  const mesh=json('rook-p2-source.json').meshes.find(part=>
+    part.lod==='near'&&part.role==='trousers');
+  assert.ok(mesh,'inspect the connected near trouser surface');
+  const scale=1.83/578,errors=[];
+  const measured=[
+    {y:455,left:[48,94],right:[134,180]},
+    {y:500,left:[44,86],right:[143,185]},
+    {y:525,left:[38,87],right:[141,189]},
+    {y:550,left:[41,86],right:[142,189]}
+  ];
+  for(const row of measured){
+    const z=(641-row.y)*scale,points=[];
+    for(const face of mesh.faces)for(let i=0;i<face.length;i++){
+      const a=mesh.vertices[face[i]],b=mesh.vertices[face[(i+1)%face.length]];
+      if((a[2]-z)*(b[2]-z)>0||a[2]===b[2])continue;
+      const t=(z-a[2])/(b[2]-a[2]);
+      if(t>=0&&t<=1)points.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);
+    }
+    assert.ok(points.length>=8,`actual cloth intersects native y${row.y}`);
+    const depths=points.map(p=>p[1]);
+    const midDepth=(Math.min(...depths)+Math.max(...depths))/2;
+    const visible=points.filter(p=>p[1]<=midDepth);
+    for(const side of ['left','right']){
+      const sample=visible.filter(p=>side==='left'?p[0]<0:p[0]>0);
+      assert.ok(sample.length>=2,`front ${side} leg cloth at native y${row.y}`);
+      const actual=[Math.min(...sample.map(p=>p[0])),Math.max(...sample.map(p=>p[0]))]
+        .map(x=>112+x/scale);
+      for(let i=0;i<2;i++)if(Math.abs(actual[i]-row[side][i])>10)
+        errors.push(`front cloth y${row.y} ${side} ${actual[i].toFixed(1)} vs native ${row[side][i]}`);
+    }
+  }
+  assert.deepEqual(errors,[],`visible trouser surface follows the approved native stance at existing 10px geometry tolerance: ${errors.join('; ')}`);
+});
+
+test('back calf trace and rear cloth match the independently visible native pair', () => {
+  // The rear reference is a mirrored view. Original-image pixels at y490/500/510
+  // consistently show left 370..414 and right 463..507 at the central row.
+  // This corrects only the measured calf band; knee and cuff stay unchanged.
+  const native={left:[370,414],right:[463,507]};
+  const band=json('rook-p2-landmarks.json').views.back.trouserBands.calf;
+  assert.equal(band.y,500,'back calf band records the measured native row');
+  const errors=[];
+  for(const side of ['left','right'])for(let i=0;i<2;i++)
+    if(Math.abs(band[side][i]-native[side][i])>3)
+      errors.push(`back calf ${side} reference edge ${band[side][i]} vs native ${native[side][i]}`);
+
+  const mesh=json('rook-p2-source.json').meshes.find(part=>
+    part.lod==='near'&&part.role==='trousers');
+  assert.ok(mesh,'measure actual connected rear trouser surface');
+  const scale=1.83/578,z=(641-500)*scale,points=[];
+  for(const face of mesh.faces)for(let i=0;i<face.length;i++){
+    const a=mesh.vertices[face[i]],b=mesh.vertices[face[(i+1)%face.length]];
+    if((a[2]-z)*(b[2]-z)>0||a[2]===b[2])continue;
+    const t=(z-a[2])/(b[2]-a[2]);
+    if(t>=0&&t<=1)points.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);
+  }
+  assert.ok(points.length>=8,'back calf intersects a substantial cloth section');
+  const depths=points.map(p=>p[1]);
+  const midDepth=(Math.min(...depths)+Math.max(...depths))/2;
+  const rear=points.filter(p=>p[1]>=midDepth);
+  for(const side of ['left','right']){
+    const sample=rear.filter(p=>side==='left'?p[0]>0:p[0]<0);
+    assert.ok(sample.length>=2,`actual ${side} rear calf cloth`);
+    const pixels=sample.map(p=>439-p[0]/scale);
+    const actual=[Math.min(...pixels),Math.max(...pixels)];
+    for(let i=0;i<2;i++)if(Math.abs(actual[i]-native[side][i])>10)
+      errors.push(`back cloth ${side} ${actual[i].toFixed(1)} vs native ${native[side][i]}`);
+  }
+  assert.deepEqual(errors,[],`rear-facing calf must fit the measured back pose without moving accepted front cloth: ${errors.join('; ')}`);
+});
+
+test('boot shafts stand under the measured trouser cuffs at both visible leg heights', () => {
+  const source=json('rook-p2-source.json'),scale=1.83/578,errors=[];
+  const native=[
+    {y:565,left:[43,81],right:[147,185]},
+    {y:600,left:[44,74],right:[153,182]}
+  ];
+  for(const side of ['left','right']){
+    const boot=source.meshes.find(part=>part.lod==='near'&&part.name===`rook-near-boot-${side}`);
+    assert.ok(boot,`${side} boot has a real authored shaft`);
+    for(const row of native){
+      const z=(641-row.y)*scale,points=[];
+      for(const face of boot.faces)for(let i=0;i<face.length;i++){
+        const a=boot.vertices[face[i]],b=boot.vertices[face[(i+1)%face.length]];
+        if((a[2]-z)*(b[2]-z)>0||a[2]===b[2])continue;
+        const t=(z-a[2])/(b[2]-a[2]);
+        if(t>=0&&t<=1)points.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);
+      }
+      assert.ok(points.length>=4,`${side} actual boot shaft intersects native y${row.y}`);
+      const actual=[Math.min(...points.map(p=>p[0])),Math.max(...points.map(p=>p[0]))]
+        .map(x=>112+x/scale);
+      for(let i=0;i<2;i++)if(Math.abs(actual[i]-row[side][i])>10)
+        errors.push(`${side} shaft y${row.y} edge ${actual[i].toFixed(1)} vs native ${row[side][i]}`);
+    }
+    const bootTop=boot.vertices.filter(p=>p[2]>.23);
+    const trousers=source.meshes.find(part=>part.lod==='near'&&part.role==='trousers');
+    const cuff=trousers.vertices.filter(p=>p[2]>.25&&p[2]<.29&&
+      (side==='left'?p[0]<0:p[0]>0));
+    assert.ok(bootTop.length>=8&&cuff.length>=4,`${side} has real boot-top and trouser-cuff surfaces`);
+    const nearest=Math.min(...bootTop.flatMap(a=>cuff.map(b=>Math.hypot(
+      a[0]-b[0],a[1]-b[1],a[2]-b[2]))));
+    assert.ok(nearest<.05,`${side} boot shaft meets its trouser cuff within 50mm: ${nearest.toFixed(3)}m`);
+  }
+  assert.deepEqual(errors,[],`boot shaft stance follows independently visible native edges at original 10px geometry tolerance: ${errors.join('; ')}`);
+});
+
 test('near trousers are one substantial pelvis and two measured leg silhouettes', () => {
   const source=json('rook-p2-source.json'), landmarks=json('rook-p2-landmarks.json');
   const trousers=source.meshes.filter(mesh=>mesh.role==='trousers'&&mesh.lod==='near');
@@ -294,7 +440,9 @@ test('trouser folds follow visible intermediate contours while accepted bands st
     part.lod==='near'&&part.role==='trousers');
   assert.ok(mesh);
   const scale=1.83/578,errors=[];
-  for(const [y,referenceLeft] of [[425,50],[475,44],[525,52]]){
+  // y525 was previously 52 from the stale oracle. Native background separation
+  // independently measures the visible left outer cloth edge at x38 there.
+  for(const [y,referenceLeft] of [[425,50],[475,44],[525,38]]){
     const z=(641-y)*scale,points=[];
     for(const face of mesh.faces)for(let i=0;i<face.length;i++){
       const a=mesh.vertices[face[i]],b=mesh.vertices[face[(i+1)%face.length]];
