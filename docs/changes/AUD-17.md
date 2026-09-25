@@ -51,3 +51,26 @@ account balance, resume, changed plans, uncertain results, accounting failure
 and the explicit keep:false contract. Director approved the test hook.
 Lane/build gates after the latest integration sync remain pending; status is
 in-progress while the audio foundation baseline remains unresolved.
+
+## Final integration-synced lane gate
+
+Merged integration/wasteland at 568f2dc. On that clean checkout, lane tier
+passed 262/262 with no failures or skipped suites in 361.68 seconds; production
+build passed in 363 ms. All 162 replay fingerprints remain unchanged, and all
+48 expansion drives completed and won. The build retains the existing large
+chunk advisory. No assertion was relaxed to obtain this gate.
+
+The session-ending full command is
+`node tools/run-tests.mjs --tier full --jobs 8 --keep-going`. Its log and exact
+commit verdict are retained under .evidence/2026-09-25/audio-final/ as full.log
+and full-tier.json. Those are review evidence, not generated files to commit.
+No board, status or run-log file is edited directly by this lane.
+
+Status remains in-progress. Passing general suites does not waive AUD-10's
+strict waveform comparison or turn pending human ratings into approvals.
+
+The ten unselected audition files and receipts remain pending Kyle review,
+not consumed evidence. Preserve them until selected or rejected. If this lane
+must retire first, transfer them to a named integration ignored-evidence
+folder and verify their hashes before cleanup. Do not promote them into the
+runtime or audio-src without Kyle's selection.
