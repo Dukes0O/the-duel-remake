@@ -301,14 +301,30 @@ tasks:
     size: L
     needs: [GFX-01-P1]
     status: building
-    owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, docs/board/looks/crew-p2/]
-    hooks: [tools/test-rook-p2-source.mjs, tools/test-blender-output.mjs]
+    owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, docs/board/looks/crew-p2/]
+    hooks: [tools/test-rook-p2-source.mjs, tools/test-rook-p2-candidate.mjs, tools/test-rook-p2-review.mjs, tools/test-blender-output.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: wasteland2
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
       - "Start from the negative round-10 trial verdict and its text recipe. Build a reference-matched head, hair, collar, thin vest and asymmetric clothing folds. Prove likeness at least four on Rook in both game qualities before converting any of the other seven. Keep the existing runtime until that gate passes."
       - "Use a separate polish-wave review folder so previous round sheets remain immutable. Follow the ten-round limit, connected topology, padded UV, animation contact and measured frame budgets. A count of triangles never substitutes for a visual score."
     note: "The phase-2 Rook trial did not establish a winning technique. GFX-02-P1 waits for this card. The rejected experiment recipe and tests remain in Git text history."
+  - id: BETA-01
+    title: "Prepare the Experimental Wasteland release candidate"
+    priority: 1
+    lane: TOOL
+    size: M
+    needs: [GFX-01-P2, EGG-02-P2, GFX-02-P1]
+    status: backlog
+    owns: [src/feature-flags.js, tools/test-feature-flags.mjs, tools/scenarios/experimental.mjs, tools/scenarios/wasteland-beta.mjs, tools/test-wasteland-beta.mjs, docs/playtest-inbox.md, docs/changes/BETA-01.md]
+    helpers: [test_author, reviewer, browser_qa, save_guardian, test_runner]
+    acceptance:
+      - "After phase 2, move wasteland2 and hidden-road to beta under Experimental as Kyle requested; retain career-backup's current state and prove default-off, explicit opt-in, opt-out and reload persistence with memory-only storage."
+      - "Update the exact current-feature expectations in Experimental tests with a reviewed reason; preserve released-roadside and hidden-dev-feature protections."
+      - "Run a private production-menu path from Experimental opt-in through Hidden Road departure, gate invitation, yard and a Wasteland race. Record fixture placement separately from actual driving and UI actions; do not force completion or discovery to claim journey coverage."
+      - "Record full tier on the exact candidate commit, production build, complete combat checks off/on, applicable frame pacing, art and save budget results, and a short What to try note. Later commits require fresh exact evidence."
+      - "Prepare only: BETA-01 does not authorize master, the live folder, port 5174, a release or history rewrite. Kyle must approve release in writing."
+    note: "First phase-3 card under Kyle's 24 September overnight direction. Not dispatched while phase-2 cards remain. Existing Experimental scenario expects no beta entries; changing that expectation is the intended promotion, not a reason to remove isolation or released-feature checks."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8
@@ -345,7 +361,7 @@ tasks:
       - "Continue from the three immutable initial rounds. Fix fingertip cap/normal artifacts, mitten-like palms, generic sleeve construction, simplified tool fittings and continuous grip/animation contact as recorded in round-3-review.md."
       - "Retain meaningful matched High/Performance comparisons, short motion evidence, at most 8000 visible triangles and three draws. Measure texture memory and evaluate shared crew materials before making a resource-budget claim."
       - "Keep the family in dev until all SPEC 0.3 scores reach four and the measured budget holds. Follow its approach-change rule if another round fails to improve likeness."
-    note: "Initial resemblance improves from two to three in round 2 and remains three in round 3. One stagnant round so far; no beta approval. Follow the winning GFX-01-P1 technique."
+    note: "Initial resemblance improves from two to three in round 2 and remains three in round 3. One stagnant round so far; no beta approval. Follow the winning GFX-01-P2 technique."
   - id: EGG-02
     title: "Rustwall gate and salt-flat fidelity rounds one to three"
     priority: 9
@@ -388,7 +404,7 @@ tasks:
     needs: [EGG-02-P1]
     status: building
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall-p2/]
-    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-sheet.mjs, tools/test-rustwall-p2-relief.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: hidden-road
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
@@ -1112,6 +1128,96 @@ tasks:
     behavior_change: yes
     note: "Integrated at 32bf195. In Wasteland2, rival Star shields no longer block bomb or impact damage to traffic; flag-off Wasteland retains its old rule. Two focused cases and a production build passed."
     spec: "SPEC.md section 3.2: the star shield blocks damage to its own car"
+  - id: AUD-10
+    title: "Sound bank and mixer foundation"
+    priority: 1
+    lane: AUDIO
+    size: L
+    needs: []
+    status: in-progress
+    owner: "Kyle's separate audio session"
+    branch: lane/audio/aud-10
+    owns: [src/audio.js, src/sound-bank.js, src/audio-mixer.js, tools/audio/, public/assets/audio/, audio-src/, tools/test-audio.mjs, tools/test-audio-sourcing.mjs, docs/AUDIO_ITERATION.md, docs/audio/, docs/board/listening/, docs/changes/AUD-10.md]
+    hooks: [src/app.js, src/main.js, tools/test-repo-hygiene.mjs]
+    helpers: [test_author, reviewer, audio_qa, test_runner]
+    acceptance:
+      - "SPEC 0.9: existing sounds use the data sound bank and buses; compare a recorded baseline, measure ducking, voice limits and moving-source 3D."
+      - "Keep source recipes and licenses; move raw library sources out of public; compressed runtime audio and placement checks pass."
+      - "Latest branch change note explicitly says ready-to-merge before Director stages the normal lane/build gate."
+    note: "Kyle assigned the existing lane/audio/aud-10 session on 24 September. This Director does not use its worktree, start another audio lane or spend ElevenLabs credits. The latest inspected commit cf72d9c has no AUD-10 change note yet."
+  - id: AUD-11
+    title: "Listening booth and audio measurements"
+    priority: 2
+    lane: AUDIO
+    size: M
+    needs: [AUD-10]
+    status: backlog
+    owner: "Kyle's separate audio session"
+    branch: lane/audio/aud-10
+    owns: [tools/audio/, docs/audio/, docs/board/listening/, docs/changes/AUD-11.md]
+    helpers: [test_author, reviewer, audio_qa]
+    acceptance:
+      - "Play cues over engine and ambience with A/B/C variants; save human ratings and notes as verdict files."
+      - "Measure LUFS, true peak, loop seams, repetition and full-mix masking. Unrated rounds are flagged for human listening."
+  - id: AUD-12
+    title: "On-demand sound sourcing and Kyle's kept picks"
+    lane: AUDIO
+    size: M
+    needs: []
+    status: merged
+    owner: Kyle
+    branch: lane/audio/aud-12
+    owns: [tools/audio/, tools/test-audio-sourcing.mjs, audio-src/, docs/changes/AUD-12.md]
+    note: "Kyle's requested branch is retained unchanged. Merge review and gate are recorded in run-log.md. Keep the exact Callum gatekeeper take and catalog; combat pick is crossbow E pew whistle plus hit-confirm. AUD-12-R1 owns the reproduced post-generation persistence failure."
+  - id: AUD-12-R1
+    title: "Persist generated voice bytes before follow-up credit queries"
+    priority: 1
+    lane: AUDIO
+    size: S
+    needs: [AUD-12]
+    status: ready
+    owner: "Kyle's separate audio session"
+    branch: lane/audio/aud-10
+    owns: [tools/audio/elevenlabs.mjs, tools/test-audio-sourcing.mjs, docs/changes/AUD-12-R1.md]
+    helpers: [test_author, reviewer]
+    acceptance:
+      - "With fake responses only, a successful generation followed by a credit-query HTTP 503 still leaves the exact generated bytes available; accounting failure is explicit and must not trigger another generation."
+      - "Write the failure regression before changing persistence order; preserve the kept gatekeeper take and use no real credits for tests."
+    note: "Director reproduced on a1d0dd6: generation returned ID3 fixture bytes, subsequent subscription query failed HTTP 503, say rejected and no output take existed. Non-runtime sourcing follow-up belongs to the external audio owner before further voice generation."
+  - id: AUD-GATEKEEPER
+    title: "Wire Kyle's kept gatekeeper welcome"
+    priority: 3
+    lane: AUDIO
+    size: S
+    needs: [AUD-10, AUD-11, AUD-12]
+    status: backlog
+    owner: "Kyle's separate audio session"
+    branch: lane/audio/aud-10
+    owns: [src/sound-bank.js, public/assets/audio/, tools/audio/, docs/changes/AUD-GATEKEEPER.md]
+    hooks: [src/audio.js, src/hidden-road.js, src/hidden-road-journey.js, src/hidden-road-ui.js, src/app.js]
+    flag: hidden-road
+    sound: gatekeeper.welcome
+    acceptance:
+      - "Use the exact kept Callum take; wire gatekeeper.welcome to the arrival's existing event and preserve its subtitle."
+      - "Prove correct arrival timing, no repeated playback on paused frames, private memory-only testing and full-throttle intelligibility measurements."
+    note: "All wiring and credit use belong to Kyle's separate audio session. Do not regenerate the approved line."
+  - id: AUD-14
+    title: "Combat sounds and impacts from Kyle's approved recipes"
+    priority: 4
+    lane: AUDIO
+    size: L
+    needs: [AUD-10, AUD-11, AUD-12, AUD-GATEKEEPER]
+    status: backlog
+    owner: "Kyle's separate audio session"
+    branch: lane/audio/aud-10
+    owns: [src/sound-bank.js, public/assets/audio/, tools/audio/, docs/audio/, docs/board/listening/, docs/changes/AUD-14.md]
+    hooks: [src/audio.js, src/app.js]
+    flag: wasteland2
+    helpers: [test_author, reviewer, audio_qa]
+    acceptance:
+      - "Build approved blasts 523089/397691, crash 592388 and rocket launches 854476/854473 from catalog recipes."
+      - "Rebuild crossbow E pew whistle and hit-confirm; the flight source follows the bolt in 3D with doppler."
+      - "Apply bright transients, tonal signatures and clear hits; measure and compare all weapons over full-throttle engine, with three rounds for key cues and human ratings clearly distinguished from measurements."
   - id: AUD-01
     title: "Weapon sounds"
     wave: 3
@@ -1475,7 +1581,7 @@ tasks:
     flag: none
     behavior_change: no
     owns: [tools/repo-audit.mjs, tools/test-repo-audit.mjs]
-    note: "The phase-2 sweep reports 55 asset and 16 export candidates, but no unused module, removed-feature test or fully-on switch. Crew/hands/kits and wall use generated paths; audio sources and licenses have tooling/provenance consumers. Trace remaining candidates before proposing removal; preserve licensed originals and current runtime assets."
+    note: "The phase-2 sweep reports 55 asset and 16 export candidates, but no unused module, removed-feature test or fully-on switch. Crew/hands/kits and wall use generated paths; audio sources and licenses have tooling/provenance consumers. Director follow-up confirms all sixteen named export candidates are called inside their own modules; they are not dead functions. Trace remaining asset consumers and unnecessary export boundaries before proposing removal; preserve licensed originals and current runtime assets."
 
   - id: FIX-STATUS-CARD
     title: "Preserve phase suffixes in status lane ownership"
