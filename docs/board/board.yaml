@@ -308,7 +308,22 @@ tasks:
     acceptance:
       - "Start from the negative round-10 trial verdict and its text recipe. Build a reference-matched head, hair, collar, thin vest and asymmetric clothing folds. Prove likeness at least four on Rook in both game qualities before converting any of the other seven. Keep the existing runtime until that gate passes."
       - "Use a separate polish-wave review folder so previous round sheets remain immutable. Follow the ten-round limit, connected topology, padded UV, animation contact and measured frame budgets. A count of triangles never substitutes for a visual score."
-    note: "The phase-2 Rook trial did not establish a winning technique. GFX-02-P1 waits for this card. The rejected experiment recipe and tests remain in Git text history."
+    note: "Ten-round P2 research wave finished at3/3/3/3, frame unmeasured; closure gate pending. Current runtime crew remain unchanged. GFX-01-P3 owns remaining likeness and full-crew conversion; GFX-02-P1 may begin a separate Rook-only hand proof after this closure, without treating the body technique as accepted."
+  - id: GFX-01-P3
+    title: "Rook sculpt, retopology and baked detail before crew conversion"
+    lane: ART
+    size: L
+    needs: [GFX-01-P2]
+    status: backlog
+    owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, docs/board/looks/crew-p3/]
+    hooks: [tools/test-rook-p2-source.mjs, tools/test-rook-p2-candidate.mjs, tools/test-rook-p2-review.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    flag: wasteland2
+    acceptance:
+      - "Write the high-detail sculpt, low-poly retopology and texture-bake method before code; preserve verified original image inputs and current runtime baseline. Prove game-scale silhouette before detail."
+      - "Address round10 hair cap, small plain face, rigid scarf/vest/pockets, flat side/back clothing, coarse trouser folds and simplified boots/hands. Measured contours support but never substitute for independent actual-game likeness."
+      - "Rook must score at least four on every SPEC0.3 criterion, including measured twelve-fighter frame evidence, before converting the other seven. Keep8000/2000 triangles,24 color draws for12 fighters and one1024-square set. Ten rounds maximum per wave."
+    note: "Residual polish from GFX-01-P2 ten-round closure. No runtime promotion or all-eight conversion was accepted. Scheduled after remaining phase2 hand proof; no new body art wave is started by this card."
   - id: BETA-01
     title: "Prepare the Experimental Wasteland release candidate"
     priority: 1
@@ -354,15 +369,15 @@ tasks:
     size: M
     needs: [GFX-02, GFX-01-P2]
     status: backlog
-    owns: [tools/blender/first-person-gear.py, public/assets/models/wasteland/first-person/, docs/board/looks/first-person/]
-    hooks: [tools/test-first-person-gear.mjs, tools/test-first-person-polish.mjs, tools/scenarios/first-person-gear.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, public/assets/models/wasteland/first-person/, docs/board/looks/first-person-p1/, docs/changes/GFX-02-P1.md]
+    hooks: [tools/test-first-person-gear.mjs, tools/test-first-person-polish.mjs, tools/scenarios/first-person-gear.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [art_critic, reviewer, browser_qa]
     flag: wasteland2
     acceptance:
       - "Continue from the three immutable initial rounds. Fix fingertip cap/normal artifacts, mitten-like palms, generic sleeve construction, simplified tool fittings and continuous grip/animation contact as recorded in round-3-review.md."
       - "Retain meaningful matched High/Performance comparisons, short motion evidence, at most 8000 visible triangles and three draws. Measure texture memory and evaluate shared crew materials before making a resource-budget claim."
       - "Keep the family in dev until all SPEC 0.3 scores reach four and the measured budget holds. Follow its approach-change rule if another round fails to improve likeness."
-    note: "Read-only audit found leather tip caps closing skin finger rings, repeated narrow-ended digit lofts, disconnected palm/thumb pads and generic sleeve topology/paint. Settle one connected Rook hand, correct cap material/normal continuity, authored cuff seams and continuous motion contact before all-eight conversion. This is preparation only; implementation still waits for the GFX-01-P2 technique decision. Existing runtime selector stays untouched unless a reproduced defect earns a named hook."
+    note: "Read-only audit found leather tip caps closing skin finger rings, repeated narrow-ended digit lofts, disconnected palm/thumb pads and generic sleeve topology/paint. Settle one connected Rook hand, correct cap material/normal continuity, authored cuff seams and continuous motion contact before all-eight conversion. After P2 closure, use a Rook-only opt-in connected-hand proof with isolated candidate output and private fetch substitution. This tests topology and UV lessons independently; it does not claim the body trial won. Keep current runtime and other seven hands until accepted. Existing runtime selector stays untouched unless a reproduced defect earns a named hook."
   - id: EGG-02
     title: "Rustwall gate and salt-flat fidelity rounds one to three"
     priority: 9
