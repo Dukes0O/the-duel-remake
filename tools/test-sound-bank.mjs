@@ -30,8 +30,10 @@ class Node {
     this.connections.push(node);
     return node;
   }
-  disconnect() {
-    this.connections = [];
+  disconnect(destination) {
+    this.connections = destination
+      ? this.connections.filter((node) => node !== destination)
+      : [];
   }
 }
 const context = {
@@ -79,9 +81,13 @@ const master = new Node(),
 const mixer = new SoundMixer(context, master, { vehicle });
 for (const bus of BUS_NAMES)
   assert.equal(mixer.buses[bus].gain.value, 1, 'migration buses are unity');
-assert(mixer.buses.engine.connections.includes(vehicle));
-assert(mixer.buses.vehicle.connections.includes(vehicle));
-assert(mixer.buses.ambience.connections.includes(master));
+const enabledRouting = new SoundMixer(context, master, {
+  vehicle,
+  enabled: true,
+});
+assert(enabledRouting.buses.engine.connections.includes(vehicle));
+assert(enabledRouting.buses.vehicle.connections.includes(vehicle));
+assert(enabledRouting.buses.ambience.connections.includes(master));
 mixer.duck('voice', 1);
 assert.equal(mixer.buses.music.gain.value, 1, 'default mix does not duck');
 mixer.enabled = true;
@@ -211,3 +217,61 @@ assert(
   !mixer.output('engine.shift-fallback').connections.includes(vehicle),
   'fallback must not gain camera attenuation or tunnel echoes',
 );
+
+// Flat compatibility routing retains original leaf destinations.
+const flatMaster = new Node(),
+  flatVehicle = new Node();
+const flat = new SoundMixer(context, flatMaster, { vehicle: flatVehicle });
+const leaf = new Node();
+flat.connect(leaf, flat.buses.engine);
+assert(
+  !flat.buses.engine.connections.includes(flatVehicle),
+  'disabled bus must not regroup audible engine inputs',
+);
+let route = [...flat.routes][0];
+assert.equal(route.directConnected, true);
+assert(leaf.connections.includes(flatVehicle));
+flat.enabled = true;
+flat.update();
+assert(flat.buses.engine.connections.includes(flatVehicle));
+assert.equal(route.directConnected, false);
+flat.enabled = false;
+flat.update();
+assert(!flat.buses.engine.connections.includes(flatVehicle));
+assert.equal(route.directConnected, true);
+flat.voiceEnabled = true;
+flat.update();
+assert(
+  flat.buses.voice.connections.includes(flatMaster),
+  'Hidden Road alone needs a physical voice bus',
+);
+flat.voiceEnabled = false;
+flat.update();
+const group = new Node(),
+  external = new Node(),
+  shot = new Node();
+flat.registerGroup(group, 'weapon.crossbow.fire', external);
+flat.connect(shot, group);
+assert(
+  !group.connections.includes(external),
+  'flat external group must not double its bypass leaves',
+);
+const shotRoute = [...flat.routes].find((r) => r.input === shot);
+assert(shot.connections.includes(external));
+flat.enabled = true;
+flat.update();
+assert(group.connections.includes(external));
+assert.equal(shotRoute.directConnected, false);
+flat.fadeGroup(group);
+flat.enabled = false;
+flat.update();
+assert.equal(
+  shotRoute.directConnected,
+  false,
+  'fading sound cannot reopen during a switch',
+);
+flat.releaseGroup(group);
+assert(!flat.groups.has(group));
+assert.equal(flat.routes.size, 1);
+flat.disconnect(leaf);
+assert.equal(flat.routes.size, 0, 'ended leaf releases routing bookkeeping');

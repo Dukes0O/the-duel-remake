@@ -6,210 +6,109 @@ flag: wasteland2
 player_facing: yes
 ---
 
-# Sound bank and mixer
+# Sound bank and mixer foundation
 
-AUD-10 is not ready to merge. The sound-bank migration, compression and mixer
-are implemented. A strict new waveform comparison remains unresolved. AUD-11, gatekeeper and AUD-14 are implemented in separate in-progress notes.
-AUD-17 produced ten candidates using 400 credits, with none kept.
+Implementation and all five strict waveform comparisons now pass. Fresh lane,
+build, full tier and the Director's independent review remain before readiness.
+No tolerance approval is needed; no threshold was changed.
 
-## Design
+## Design and implementation
 
-Keep the existing synthesis envelopes and engine automation. Cue recipes,
-source declarations, routing, priorities and limits live in sound-bank.js.
-Unity-gain buses feed the existing master compressor. Engine and vehicle
-sounds retain the old perspective and tunnel path; originally dry vehicle
-sounds retain a dry branch. Lossless FLAC preserves every decoded runtime
-sample and loop boundary. This avoids a lossy-codec change in the foundation
-card. Combat ducking and moving-source playback require wasteland2. The new
-gatekeeper voice independently permits voice ducking under hidden-road.
+One sound bank owns existing source declarations, layers, voicings, cue routing,
+priorities, voice limits, variation and ducking. One renderer retains the old
+synthesis envelopes and engine automation. Eight named buses cover engine,
+vehicle, weapons, impacts, ambience, music, voice and interface. Dry vehicle
+and engine paths retain their original perspective/reflection behavior.
 
-The mixer has per-cue limits and a 64-cue total budget, with priority when
-full. Retired cues fade. Music and ambience duck for blasts or voice requests.
-Moving buffers use HRTF direction, inverse distance and bounded physical
-doppler. This card provides moving-source playback; the later weapon and
-vehicle cards connect their specific moving entities.
+The Director approved flat legacy destinations for both-flags-off mode after
+shared bus summation exposed tiny floating-point differences amplified by the
+unchanged master compressor. Each leaf still feeds its named bus for metering.
+With both flags off, bus outputs are disconnected from the audible path and
+the existing leaf reconnects directly to its original master/vehicle endpoint.
+There is no copied legacy renderer, duplicate recipe or extra per-leaf node.
+The original shared vehicle and Hidden Road stages remain.
 
-Kyle requested this lane work alone. The bank/mixer, placement, moving-source
-and Git-byte tests each failed before their corresponding implementation.
-Self-review is recorded here; no independent listening claim is made.
+When wasteland2 or hidden-road is enabled, physical bus outputs reconnect and
+flat leaf connections disconnect. External spatial subgroups disconnect in
+flat mode to avoid doubling. Routing records track inputs, fade targets and
+subgroups; ended nodes release them. Off/on/off changes reuse existing sources.
+Fading sounds cannot reopen during a switch. Hidden-road alone permits voice
+ducking; blast ducking and moving-source playback still require wasteland2.
 
-## What changed
+The mixer limits each cue and caps total voices at 64, evicting lower-priority
+voices when needed. Duck requests overlap safely and release smoothly. Moving
+sources use HRTF direction, inverse distance and bounded doppler, reading world
+state only. AUD-14 now attaches that API to the real projectiles.
 
-- Existing cue definitions and recordings now use the bank and named buses.
-- Added mixer tests for overlapping duck requests, release, voice limits,
-  priority, source movement, doppler, cleanup and read-only spatial inputs.
-- Compressed 14 runtime recordings from 6,108,572 to 3,575,193 bytes. All
-  decoded signed-16-bit PCM hashes and sample counts match the original WAVs.
-- The audio build tool rebuilds from catalog recipes and the external cache.
-  Rebuilding all 14 samples passed the same PCM identity test.
-- Freesound downloads and decoded source excerpts moved to
-  C:/Users/kyleb/dev/audio-library/legacy/. The catalog keeps their recipes,
-  provenance and original checksums. Nothing is fetched during gameplay.
-- Preserved the two licensed OpenGameArt originals as lossless FLAC under
-  audio-src/library/. Their old credits did not provide verified direct
-  download URLs, so they are not discarded as replaceable cache files.
-- Added *.flac binary to .gitattributes after a failing regression test proved
-  that the repository's text default corrupts staged FLAC bytes. Fixed forward
-  in be129b0; history was not rewritten. Runtime and kept-source staged bytes
-  now equal the working originals and the source catalog checksums.
-- Director approved the extra audio test/build hooks and .gitattributes on
-  25 September. The implementation keeps src/sound-mixer.js as approved.
+## Sources and compression
 
-## Evidence
+Fourteen runtime WAVs became lossless FLAC: 6,108,572 -> 3,575,193 bytes. Every
+decoded signed-16-bit PCM hash and loop sample count matches the original.
+Git attributes mark FLAC and OGG binary; byte checks catch text normalization.
+Two licensed originals without verified direct download recipes remain once
+in audio-src/library/ as lossless FLAC. Other original recordings/downloads
+are cached outside Git in C:/Users/kyleb/dev/audio-library/legacy/ with hashes
+and reconstruction recipes in tools/audio/catalog.json. Credits remain.
+The audio preparation tool rebuilds from those recipes and checks source hashes.
 
-Preliminary lane tier: 254 passed, 0 failed in 397.45 seconds. All 162 replay
-fingerprint checks passed. The 48 expansion drives completed and won. This
-was before the final integration merge and is not the final lane gate.
+## Tests first and evidence
 
-Focused audio suite: 459 checks and 598,707 finite automation commands passed.
-Compression checks: all 14 decoded PCM hashes and loop lengths unchanged.
-Repository placement tests: 101 checks passed, including new raw-audio cases.
-Existing analyzer fault tests and weapon-cue tests passed.
+Bank/mixer, placement, compression, moving-source and Git-byte tests failed
+before implementation. The later disabled-route, enabled-route, off/on/off,
+external-subgroup, fading and cleanup regressions also failed first. An initial
+extra per-leaf gain failed the existing two-node shift budget; reconnecting
+existing nodes fixed it without changing that assertion.
 
-Two real-time browser races used private ports, memory-only saves, seed 1989,
-841 captured frames, 23 events and seven PCM tracks. Neither had browser
-warnings or errors. Both pass all ten existing race-analysis checks:
+The original recorded race and migrated capture both pass the ten existing
+analysis gates: 841 frames, 23 events, seven tracks; correlation .978/.977,
+peaks -1.740/-1.599 dBFS, no clips/clicks/gaps, weapon contrast at least 6.94 dB,
+and 3.38 dB distance difference. This is measurement, not human listening.
 
-| Measure | Before | After |
-| --- | ---: | ---: |
-| Engine/revs correlation | 0.978 | 0.977 |
-| Engine tracking lag | 0 ms | 0 ms |
-| Peak | -1.740 dBFS | -1.599 dBFS |
-| Clipped samples | 0 | 0 |
-| Detected clicks / loop gaps | 0 / 0 | 0 / 0 |
-| Minimum measured hit/blast over engine | 7.155 dB | 6.940 dB |
-| Near/far level difference | 3.371 dB | 3.388 dB |
+The stricter same-clock comparator renders old/current/old-control stereo,
+with shared decoded buffers, fixed noise and complete filter tails. Initial
+shared summation failed the 14-second case at .00001648 peak. An earlier
+proposal to relax tolerance was not applied. After the routing correction,
+all five unchanged cases pass the original .000002 peak bound: race .000000194,
+wide .000000238, hood/events below .000000269, gate .000000119. Reference
+controls pass too. The baseline tool and its pass conditions were not edited.
+Evidence: audio-baseline-2026-09-25T08-06-10-999Z.
 
-The moving-source browser scenario passed on private port 26348 with no
-warnings or errors. A 440 Hz source measured 483 Hz approaching and 404 Hz
-receding. Right/left RMS was 0.106/0.056 approaching on the right; left/right
-RMS was 0.103/0.064 receding on the left. Both voices released their budgets.
+Live switch test: off/on/off/hidden-road-only RMS .03930/.03913/.03908/.03909,
+with correct physical routing and route cleanup. Moving tone approach/recede
+483/404 Hz, correct stereo direction, zero remaining voices. Hidden-road-only
+arrival still plays once with real voice ducking, readable subtitle and 13.06 dB
+speech-band contrast. Modern combat still passes all 27 full-throttle checks,
+real bolt following, near/far, doppler and pause cleanup. Browser runs use
+private ports and memory-only storage, with no warnings/errors.
 
-Commands:
+Focused PCM suite: 460 checks, 598,770 finite automation commands; all original
+pitch, loop, envelope, headroom, missing-file and node-budget targets retained.
 
-- node tools/test-sound-bank.mjs
-- node tools/test-audio.mjs
-- node tools/test-audio-compression.mjs
-- node tools/test-repo-hygiene-rules.mjs
-- node tools/test-audio-analysis.mjs
-- node tools/test-weapon-audio.mjs
-- node tools/prepare-audio.mjs
-- node tools/browser-harness.mjs record-race
-- node tools/audio-analysis.mjs <recording-directory>
-- node tools/browser-harness.mjs scenario audio-moving
-- node tools/browser-harness.mjs scenario audio-baseline
-- node tools/run-tests.mjs --tier lane --changed --jobs 8
+## Changed assertions and review scope
 
-## Unresolved baseline comparison
+Source-preservation tests now check catalog/external-cache hashes instead of
+requiring raw downloads in public. Exact decoded PCM assertions remain.
+Physical-bus assertions now explicitly enable grouped mode, as the Director
+approved; separate disabled-route coverage requires the original endpoints.
+The landing test follows the actual oscillator/gain path instead of assuming
+a node's allocation index. Mock disconnect(destination) now matches the native
+API's selective disconnect. No numerical acceptance target was lowered and no
+scenario, variant, replay or fault injection was removed. The packed audio
+unit file was formatted for readable review; unrelated assertions are intact.
 
-The reference is reconstructed from cf72d9c using Git text history. The
-comparison schedules identical inputs into native OfflineAudioContext graphs
-for a race, wide camera, hood/tunnel, events and gate arrival. It uses the same
-noise seed and the lossless decoded runtime assets. No live browser is used.
+## Gates and ownership
 
-The new comparator requires peak difference at most 0.000002. It currently
-fails: maximum before/after difference is about 0.0000317, with RMS at most
-0.000000329 across measured runs. Crucially, two renders of the unchanged old
-engine also differ by up to 0.0000317. Serial decoding and prefetching did not
-remove that variance. Repeated reads of the same rendered buffer are exact.
-The cause is still unresolved; do not call this proof of an unchanged mix.
-
-Automatic approval review rejected changing the comparison tolerance because
-it would weaken a failing test. The threshold remains unchanged. Keep this
-failure visible. Either resolve render repeatability or obtain Kyle's
-explicit approval for a reviewed comparison rule supported by this control.
-Human ratings are not available; the round remains flagged for listening.
+Before this routing correction, integration sync 568f2dc passed lane 262/262 in
+361.68 seconds and build in 363 ms. Frozen ff58086 passed full 262/262 in
+371.31 seconds with clean start/end. All 162 replay fingerprints and 48/48
+expansion drives passed unchanged. These are prior-code results; fresh gates
+are required for the correction. Director will arrange independent review.
+Kyle requested this builder work alone; no subagents were used in this lane.
 
 ## Removed
 
-Removed 12 raw source downloads/excerpts and 14 uncompressed runtime WAVs from
-public/. Runtime FLACs replace the WAVs. Source recipes remain in tools/audio/;
-licensed originals and credits remain. The old inline weapon/interface/music
-recipes were removed when the bank entries replaced them. The kept Callum MP3
-is unchanged, as Kyle specifically selected those exact bytes.
-
-## Behavior and test changes
-
-No simulation source or real save was changed. The 162 replay checks remain
-unchanged. Source-preservation assertions now check exact catalog hashes and
-external-cache recipes instead of requiring downloads in public/. Graph
-assertions follow named unity buses to the same reflection bus. Existing loop,
-headroom, seam, pitch, envelope, missing-file, weapon and analyzer fault targets
-are unchanged. FLAC decoding feeds the existing PCM assertions. The new strict
-baseline comparison is failing, not skipped or relaxed.
-
-## Handoff
-
-Integration was merged into the audio branch at 7393d07. After the later integration sync at 4f64f9e, the lane tier passed 254/254
-in 408.37 seconds and the production build passed. All 162 replay checks
-remain unchanged. The committed audio bytes were independently checked at 4f64f9e: 17/17
-files are exact, including the selected Callum take. Both licensed source
-FLACs also decode to the exact original PCM. Do not merge this card until the baseline finding and remaining gates
-are resolved and this note explicitly says ready-to-merge.
-
-AUD-11 and gatekeeper wiring are implemented in their own in-progress notes.
-AUD-14 is implemented and AUD-17 candidates are saved in their own notes. AUD-12-R1 was independently integrated by the
-Director at d355b9a after fake-only validation; no credits were used.
-
-## Baseline follow-up
-
-The stricter comparator now runs reference, candidate and a second reference
-in one six-channel OfflineAudioContext with shared decoded buffers. No threshold
-changed. Large residuals clustered just after source stops, where asynchronous
-onended cleanup could truncate filter tails. Deferring topology cleanup and
-onended handlers until rendering completes stabilized four of five cases below
-0.000000328 peak difference. The 14-second case still fails: peak difference
-0.000016481, RMS 0.0000000882; its reference control is 0.000001774. The issue
-is therefore not fully resolved. Do not mark this card ready. A specific
-approval question about peak and RMS bounds is pending with Kyle.
-
-The final lane and build pass covers the unchanged production audio source;
-the comparator follow-up is a QA-tool change, tested separately and still red.
-No claim of human listening or exact mixed-waveform identity is made.
-
-## Limiter diagnostic
-
-The unchanged strict assertions still fail. Adding pre-limiter taps isolates
-the residual: every case differs by at most 0.000000239 before the compressor,
-including the 14-second race. After that unchanged nonlinear compressor the
-race differs by 0.000016481 peak and 0.0000000884 RMS. This points to
-compressor sensitivity to floating-point summation differences introduced by
-regrouping the buses; it is an inference, not proof of perceptual equivalence.
-The reference control differs by at most 0.000000239 before the compressor
-and 0.000001774 after it. Diagnostic run: audio-baseline at
-2026-09-25T06-24-47-619Z. No threshold or pass condition was changed.
-
-The independent AUD-12-R1 fix was integrated; its consumed note was removed. Full tier on
-9268cb9 passed 254/254 with clean start and end. This does not resolve the
-AUD-10 card-specific comparison.
-
-## Final baseline recheck
-
-After the later feature-switch regressions were fixed, the unchanged strict
-comparison still fails only the 14-second race: peak .000016466, RMS
-.0000000890, reference-control peak .000001788. Pre-limiter peak difference
-is .000000179. The other four cases pass below .000000269. This agrees with
-the prior numerical diagnostic; it does not prove perceptual equivalence. It still does not meet
-the authored strict assertion, so no readiness claim is made.
-
-The Director suggested preserving the exact old summation graph when switches
-are off. That remains a possible design change, but it must be reconciled with
-the card's named-bus contract before bypassing bus nodes. No graph bypass or
-threshold change was applied. Kyle's explicit tolerance decision is pending.
-
-## Final integration-synced lane gate
-
-Merged integration/wasteland at 568f2dc. On that clean checkout, lane tier
-passed 262/262 with no failures or skipped suites in 361.68 seconds; production
-build passed in 363 ms. All 162 replay fingerprints remain unchanged, and all
-48 expansion drives completed and won. The build retains the existing large
-chunk advisory. No assertion was relaxed to obtain this gate.
-
-The session-ending full command is
-`node tools/run-tests.mjs --tier full --jobs 8 --keep-going`. Its log and exact
-commit verdict are retained under .evidence/2026-09-25/audio-final/ as full.log
-and full-tier.json. Those are review evidence, not generated files to commit.
-No board, status or run-log file is edited directly by this lane.
-
-Status remains in-progress. Passing general suites does not waive AUD-10's
-strict waveform comparison or turn pending human ratings into approvals.
+Removed 12 raw downloads/excerpts and 14 uncompressed runtime WAVs from public.
+Their compressed replacements, licensed originals, credits and build recipes
+remain in the governed homes. Inline sound recipes moved to the bank. The
+kept Callum MP3 remains byte-identical. The consumed AUD-12-R1 note was removed
+after its facts were integrated; Kyle's AUD-12 source selections remain.

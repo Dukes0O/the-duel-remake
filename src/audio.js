@@ -122,7 +122,9 @@ export class EngineAudio {
       voiceEnabled: this.flags.enabled('hidden-road'),
     });
     this.buses = this.mixer.buses;
-    this.hiddenRoadBus = this.buses.ambience;
+    this.hiddenRoadBus = ctx.createGain();
+    this.hiddenRoadBus.gain.value = 1;
+    this._connect(this.hiddenRoadBus, this.buses.ambience);
     // Two quiet, fixed early reflections. No feedback or moving delay times.
     this.tunnelWet = ctx.createGain();
     this.tunnelWet.gain.value = 0;
@@ -156,7 +158,7 @@ export class EngineAudio {
     this.engineGain = ctx.createGain();
     this.engineGain.gain.value = 0;
     this.engineFilter.connect(this.engineGain);
-    this.engineGain.connect(this.buses.engine);
+    this._connect(this.engineGain, this.buses.engine);
     this.engine = [1, 2, 3.01].map((multiple, index) => {
       const osc = ctx.createOscillator(),
         gain = ctx.createGain();
@@ -194,7 +196,7 @@ export class EngineAudio {
     this.sirenGain = ctx.createGain();
     this.sirenGain.gain.value = 0;
     this.siren.connect(this.sirenGain);
-    this.sirenGain.connect(this.dryVehicleBus);
+    this._connect(this.sirenGain, this.dryVehicleBus);
     this.siren.start();
     this.sirenHarmony = ctx.createOscillator();
     this.sirenHarmony.type = 'sine';
@@ -255,7 +257,10 @@ export class EngineAudio {
         filter.frequency.value = key === 'squeal' ? 5800 : 2400;
         source.connect(filter);
         filter.connect(gain);
-        gain.connect(key === 'squeal' ? this.buses.vehicle : this.buses.engine);
+        this._connect(
+          gain,
+          key === 'squeal' ? this.buses.vehicle : this.buses.engine,
+        );
         let body = null,
           intake = null;
         if (key !== 'squeal') {
@@ -267,7 +272,7 @@ export class EngineAudio {
           bodyGain.gain.value = 0;
           source.connect(bodyFilter);
           bodyFilter.connect(bodyGain);
-          bodyGain.connect(this.buses.engine);
+          this._connect(bodyGain, this.buses.engine);
           body = { filter: bodyFilter, gain: bodyGain };
           const intakeFilter = this.context.createBiquadFilter(),
             intakeGain = this.context.createGain();
@@ -277,7 +282,7 @@ export class EngineAudio {
           intakeGain.gain.value = 0;
           source.connect(intakeFilter);
           intakeFilter.connect(intakeGain);
-          intakeGain.connect(this.buses.engine);
+          this._connect(intakeGain, this.buses.engine);
           intake = { filter: intakeFilter, gain: intakeGain };
         }
         source.start();
@@ -313,7 +318,7 @@ export class EngineAudio {
         filter.Q.value = 0.45;
         source.connect(filter);
         filter.connect(gain);
-        gain.connect(this.buses.ambience);
+        this._connect(gain, this.buses.ambience);
         source.start();
         this.ambience[biome] = { source, filter, gain };
       }),
@@ -371,14 +376,14 @@ export class EngineAudio {
     gain.gain.setValueAtTime(volume, start + Math.max(0.009, duration - 0.035));
     gain.gain.linearRampToValueAtTime(0, start + duration);
     source.connect(gain);
-    gain.connect(destination);
+    this._connect(gain, destination);
     source.start();
     if (Number.isFinite(maxDuration)) source.stop(start + duration + 0.01);
     const voice = { source, gain, endAt: start + duration + 0.01 };
     this.activeShots.add(voice);
     source.onended = () => {
       source.disconnect();
-      gain.disconnect();
+      this._disconnect(gain);
       this.activeShots.delete(voice);
       onEnd?.();
     };
@@ -395,14 +400,18 @@ export class EngineAudio {
     level.gain.value = space.gain;
     panner.pan.value = space.pan;
     level.connect(panner);
-    panner.connect(this._cueOutput || this.buses?.impacts || this.master);
+    this._connect(
+      panner,
+      this._cueOutput || this.buses?.impacts || this.master,
+      level.gain,
+    );
     return {
       level,
       panner,
       space,
       disconnect: () => {
         level.disconnect();
-        panner.disconnect();
+        this._disconnect(panner);
       },
     };
   }
@@ -492,7 +501,7 @@ export class EngineAudio {
     source.onended = () => {
       source.disconnect();
       filter.disconnect();
-      gain.disconnect();
+      this._disconnect(gain);
       output.disconnect();
       this.activeShots.delete(voice);
     };
@@ -547,7 +556,7 @@ export class EngineAudio {
     gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
     source.connect(filter);
     filter.connect(gain);
-    gain.connect(destination);
+    this._connect(gain, destination);
     source.start(start);
     source.stop(start + duration + 0.01);
     const voice = { source, gain, endAt: start + duration + 0.01 };
@@ -555,7 +564,7 @@ export class EngineAudio {
     source.onended = () => {
       source.disconnect();
       filter.disconnect();
-      gain.disconnect();
+      this._disconnect(gain);
       this.activeShots.delete(voice);
       onEnd?.();
     };
@@ -593,6 +602,23 @@ export class EngineAudio {
       destination,
       onEnd,
     );
+  }
+
+  _connect(node, destination, fadeParam = node.gain) {
+    if (this.mixer) this.mixer.connect(node, destination, { fadeParam });
+    else node.connect(destination);
+  }
+
+  _disconnect(node) {
+    this.mixer?.disconnect(node);
+    node.disconnect();
+  }
+
+  _syncMixer() {
+    if (!this.mixer?.update) return;
+    this.mixer.enabled = this.flags.enabled('wasteland2');
+    this.mixer.voiceEnabled = this.flags.enabled('hidden-road');
+    this.mixer.update();
   }
 
   _cueBuffer(id) {
@@ -665,6 +691,7 @@ export class EngineAudio {
   }
 
   _playCue(id, { destination, scale = 1, onEnd = null, legacy = false } = {}) {
+    this._syncMixer();
     const def = bank(id);
     if (!def) throw Error('Unknown audio cue: ' + id);
     if (
@@ -699,7 +726,8 @@ export class EngineAudio {
       previousSources = this._cueSources;
     const output = this.context.createGain();
     output.gain.value = 1;
-    output.connect(destination || this.mixer?.output(id) || this.master);
+    if (this.mixer) this.mixer.registerGroup(output, id, destination);
+    else output.connect(destination || this.master);
     this._cueOutput = output;
     this._cueSources = [];
     let sources;
@@ -711,6 +739,7 @@ export class EngineAudio {
       this._cueSources = previousSources;
     }
     if (!sources.length) {
+      this.mixer?.releaseGroup(output);
       output.disconnect();
       onEnd?.();
       return null;
@@ -719,6 +748,7 @@ export class EngineAudio {
     const voice = {
       until: Math.max(...sources.map((source) => source._cueEnd || now + 4)),
       stop: () => {
+        this.mixer?.fadeGroup(output);
         output.gain.cancelScheduledValues?.(this.context.currentTime);
         output.gain.setTargetAtTime?.(0, this.context.currentTime, 0.008);
         for (const source of sources)
@@ -741,6 +771,7 @@ export class EngineAudio {
         ended?.();
         if (--pending === 0) {
           release?.();
+          this.mixer?.releaseGroup(output);
           output.disconnect();
           onEnd?.();
         }
@@ -784,7 +815,7 @@ export class EngineAudio {
     gain.gain.value = 0;
     source.connect(filter);
     filter.connect(gain);
-    gain.connect(destination);
+    this._connect(gain, destination);
     source.start();
     return { filter, gain };
   }
@@ -831,15 +862,13 @@ export class EngineAudio {
   }
 
   update(st, environment = {}) {
+    this._syncMixer();
     this.updateHiddenRoad(st);
     this._updateProjectiles(st, environment);
     const ctx = this.context;
     if (!ctx || ctx.state !== 'running') return;
     if (this.paused !== st.paused) this.setPaused(st.paused);
     const t = ctx.currentTime;
-    this.mixer.enabled = this.flags.enabled('wasteland2');
-    this.mixer.voiceEnabled = this.flags.enabled('hidden-road');
-    this.mixer.update();
     this._updateAmbience(st, environment, t);
     const dt = clamp(t - this.lastUpdateTime, 0, 0.1);
     this.lastUpdateTime = t;
@@ -1269,6 +1298,7 @@ export class EngineAudio {
       !ev
     )
       return;
+    this._syncMixer();
     const wastelandAudio =
       state?.mode === 'wasteland' &&
       Number.isFinite(state.maxArmor) &&
@@ -1363,7 +1393,7 @@ export class EngineAudio {
         [filter.type, filter.frequency.value] = def.filter;
         noise.connect(filter);
         filter.connect(gain);
-        gain.connect(this._cueOutput);
+        this._connect(gain, this._cueOutput);
         gain.gain.setValueAtTime(def.noiseVolume * force, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(
           0.001,
@@ -1376,7 +1406,7 @@ export class EngineAudio {
         noise.onended = () => {
           noise.disconnect();
           filter.disconnect();
-          gain.disconnect();
+          this._disconnect(gain);
         };
         this._layer(def.layers[0], this._cueOutput, force);
         if (ev.explosion && !this.samples.explosion)
@@ -1406,7 +1436,7 @@ export class EngineAudio {
       }
       source.connect(filter);
       filter.connect(gain);
-      gain.connect(this._cueOutput);
+      this._connect(gain, this._cueOutput);
       source.start();
       source.stop(start + def.duration);
       this._cueSources?.push(source);
@@ -1414,7 +1444,7 @@ export class EngineAudio {
       source.onended = () => {
         source.disconnect();
         filter.disconnect();
-        gain.disconnect();
+        this._disconnect(gain);
       };
     });
   }
@@ -1439,7 +1469,7 @@ export class EngineAudio {
       gain.gain.exponentialRampToValueAtTime(0.001, start + def.duration);
       source.connect(filter);
       filter.connect(gain);
-      gain.connect(this._cueOutput);
+      this._connect(gain, this._cueOutput);
       source.start();
       source.stop(start + def.tail);
       this._cueSources?.push(source);
@@ -1449,7 +1479,7 @@ export class EngineAudio {
       source.onended = () => {
         source.disconnect();
         filter.disconnect();
-        gain.disconnect();
+        this._disconnect(gain);
         this.activeShots.delete(voice);
       };
       this._layer(def.layers[0], this._cueOutput, force);
@@ -1649,12 +1679,12 @@ export class EngineAudio {
     gain.gain.linearRampToValueAtTime(volume, start + 0.009);
     gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
     oscillator.connect(gain);
-    gain.connect(destination);
+    this._connect(gain, destination);
     oscillator.start(start);
     oscillator.stop(start + duration + 0.02);
     oscillator.onended = () => {
       oscillator.disconnect();
-      gain.disconnect();
+      this._disconnect(gain);
       onEnd?.();
     };
     this._cueSources?.push(oscillator);

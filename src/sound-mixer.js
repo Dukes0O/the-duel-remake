@@ -42,18 +42,119 @@ export class SoundMixer {
     this.voices = new Map();
     this.ducks = [];
     this.dryVehicle = context.createGain();
-    this.dryVehicle.connect(master);
     this.dryEngine = context.createGain();
-    this.dryEngine.connect(master);
     this.buses = Object.fromEntries(
-      BUS_NAMES.map((name) => {
-        const bus = context.createGain();
-        bus.gain.value = 1;
-        bus.connect(['engine', 'vehicle'].includes(name) ? vehicle : master);
-        return [name, bus];
-      }),
+      BUS_NAMES.map((name) => [name, context.createGain()]),
     );
+    // Named buses always receive signal for metering. Their physical outputs
+    // join the mix only in enabled mode; flat leaves retain legacy addition order.
+    this.destinations = new Map([
+      ...BUS_NAMES.map((name) => [
+        this.buses[name],
+        ['engine', 'vehicle'].includes(name) ? vehicle : master,
+      ]),
+      [this.dryVehicle, master],
+      [this.dryEngine, master],
+    ]);
+    this.groups = new Map();
+    this.routes = new Set();
+    this.nodeRoutes = new Map();
+    this.grouped = null;
+    this._updateRouting();
   }
+
+  _updateRouting() {
+    const grouped = !!(this.enabled || this.voiceEnabled);
+    if (grouped === this.grouped) return;
+    for (const [bus, destination] of this.destinations) {
+      if (grouped) bus.connect(destination);
+      else if (this.grouped) bus.disconnect(destination);
+    }
+    for (const group of this.groups.values())
+      if (!group.monitor) {
+        if (grouped) group.output.connect(group.destination);
+        else if (this.grouped) group.output.disconnect(group.destination);
+      }
+    this.grouped = grouped;
+    for (const route of this.routes)
+      this._direct(route, !grouped && !route.fading);
+  }
+
+  _direct(route, connected) {
+    if (route.directConnected === connected) return;
+    if (connected) route.input.connect(route.legacy);
+    else route.input.disconnect(route.legacy);
+    route.directConnected = connected;
+  }
+
+  connect(input, destination, { fadeParam = input.gain } = {}) {
+    this._updateRouting();
+    input.connect(destination);
+    const group = this.groups.get(destination);
+    const legacy = group?.legacy || this.destinations.get(destination);
+    if (!legacy) return;
+    const route = {
+      input,
+      destination,
+      legacy,
+      group,
+      fadeParam,
+      fading: false,
+      directConnected: false,
+    };
+    this._direct(route, !this.grouped);
+    this.routes.add(route);
+    const routes = this.nodeRoutes.get(input) || new Set();
+    routes.add(route);
+    this.nodeRoutes.set(input, routes);
+    group?.routes.add(route);
+  }
+
+  disconnect(input) {
+    for (const route of this.nodeRoutes.get(input) || []) {
+      this._direct(route, false);
+      input.disconnect(route.destination);
+      this.routes.delete(route);
+      route.group?.routes.delete(route);
+    }
+    this.nodeRoutes.delete(input);
+  }
+
+  registerGroup(output, id, destination) {
+    this._updateRouting();
+    const target = destination || this.output(id);
+    const group = {
+      output,
+      destination: target,
+      legacy:
+        this.groups.get(target)?.legacy ||
+        this.destinations.get(target) ||
+        target,
+      monitor: this.destinations.has(target),
+      routes: new Set(),
+    };
+    this.groups.set(output, group);
+    if (group.monitor || this.grouped) output.connect(target);
+  }
+
+  fadeGroup(output) {
+    for (const route of this.groups.get(output)?.routes || []) {
+      route.fading = true;
+      if (!this.grouped && route.fadeParam) {
+        route.fadeParam.cancelScheduledValues(this.context.currentTime);
+        route.fadeParam.setTargetAtTime(0, this.context.currentTime, 0.008);
+      }
+    }
+  }
+
+  releaseGroup(output) {
+    const group = this.groups.get(output);
+    if (!group) return;
+    for (const route of [...group.routes]) this.disconnect(route.input);
+    if (group.monitor || this.grouped) output.disconnect(group.destination);
+    this.groups.delete(output);
+  }
+
   output(id) {
     const cue = SOUND_BANK[id];
     if (!cue) throw Error('Unknown audio cue: ' + id);
@@ -70,6 +171,7 @@ export class SoundMixer {
     this.update();
   }
   update() {
+    this._updateRouting();
     const now = this.context.currentTime;
     this.ducks = this.ducks.filter(
       (d) =>
@@ -139,6 +241,7 @@ export class SoundMixer {
     { rate = 1, volume = 1, loop = false } = {},
   ) {
     if (!this.enabled) return null;
+    this._updateRouting();
     const cue = SOUND_BANK[id];
     if (!cue) throw Error('Unknown audio cue: ' + id);
     const source = this.context.createBufferSource(),
