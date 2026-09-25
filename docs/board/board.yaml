@@ -482,7 +482,7 @@ tasks:
     needs: [CAR-01]
     status: building
     owns: [tools/blender/armor-kits.py, tools/blender/kit-review.py, tools/blender/kit-sheet.py, public/assets/models/wasteland/kits/, src/armor-kit-meshes.js, docs/board/looks/kits/]
-    hooks: [src/combat-scene.js, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-resource-lifecycle.mjs, tools/test-armor-kit-visuals.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/audit-armor-kit-fit.mjs, tools/test-blender-output.mjs, src/vehicles.js, src/render3d.js, tools/test-combat-vehicle-wear.mjs, tools/test-npc-vehicle-damage.mjs]
+    hooks: [src/combat-scene.js, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-resource-lifecycle.mjs, tools/test-armor-kit-fit.mjs, tools/test-armor-kit-visuals.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/audit-armor-kit-fit.mjs, tools/test-blender-output.mjs, src/vehicles.js, src/render3d.js, tools/test-combat-vehicle-wear.mjs, tools/test-npc-vehicle-damage.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
     flag: wasteland2
     note: "Active codex/gfx-03 from 85fe35f. Written design and independent red tests precede code. Crew builder owns fitted authored kits; measured four-car frame cost and three scored rounds required."
@@ -502,6 +502,20 @@ tasks:
     note: "Active codex/gfx-04 from 85fe35f. Career owns App/router/panels; Rustwall owns yard model/scene/world/render hooks. Written design and independent red tests precede each implementation. Guarded arrived yard permits scrap operations and rechecks ownership after refresh. No unbuilt arena modes."
     acceptance:
       - "Three saved fidelity rounds for the yard home and arena family; connect career/map/armory/crew choices and the ARENA-01/06 framework without granting unbuilt modes."
+  - id: GFX-04-P1
+    title: "Scrapdome yard reference likeness polish"
+    priority: 16
+    lane: VIS
+    size: M
+    needs: [GFX-04]
+    status: backlog
+    owns: [tools/blender/scrapdome-yard.py, public/assets/models/wasteland/scrapdome/, docs/board/looks/yard/]
+    hooks: [tools/test-scrapdome-yard-assets.mjs, tools/scenarios/scrapdome-review.mjs]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    flag: hidden-road
+    note: "Round 10 reaches likeness three with recognizable supported hulks. Increase pile density and barrier presence and refine cranes against the reference. Preserve the 25,000-triangle allocation and accepted car/aspect framing; settle the geometry trade before code."
+    acceptance:
+      - "Reach all art scores of four with matched High/Performance views and whole-scene frame cost within ten percent. Preserve entry clearance, ground support and existing yard shops."
   - id: FND-01
     title: "Live game safety"
     wave: 0
