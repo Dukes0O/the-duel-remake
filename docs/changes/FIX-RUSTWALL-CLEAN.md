@@ -1,6 +1,10 @@
 # FIX-RUSTWALL-CLEAN
 
-Status: ready to merge.
+status: ready-to-merge
+
+## Removed
+
+The committed runtime wall test no longer depends on an ignored, consumed `art-build` source PNG. Exact source PNG/hash equality remains in the fresh isolated full-wall and probe export tests, along with embedded atlas pixel equality. No runtime feature or asset was removed.
 
 ## Cause and decision before code
 
