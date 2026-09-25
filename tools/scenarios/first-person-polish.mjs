@@ -156,7 +156,7 @@ export function assessFirstPersonP1FrameCost({reports,candidateSha256,production
 export function findActiveFirstPersonHands(rig) {
   const hands=[];
   rig?.traverse?.(node=>{
-    if(node.name!=='rook sleeves gloves fingers'||!node.isSkinnedMesh||!node.skeleton)return;
+    if(node.name!=='rook_sleeves_gloves_fingers'||!node.isSkinnedMesh||!node.skeleton)return;
     for(let parent=node;parent;parent=parent.parent)if(!parent.visible)return;
     hands.push(node);
   });
@@ -198,7 +198,9 @@ export async function run(context) {
   const candidateBytes = await readFile(candidate.absolute);
   const contactOnly = process.env.GFX_FIRST_PERSON_CONTACT_ONLY === '1';
   const costOnly = process.env.GFX_FIRST_PERSON_P1_FRAME_COST === '1';
-  if(contactOnly&&costOnly)throw Error('Choose contact or frame-cost diagnostic, not both');
+  const paintPreflightOnly = process.env.GFX_FIRST_PERSON_P1_PAINT_PREFLIGHT === '1';
+  if([contactOnly,costOnly,paintPreflightOnly].filter(Boolean).length>1)
+    throw Error('Choose one first-person diagnostic mode');
   const blender = JSON.parse(await readFile(join(root,
     'art-build/first-person-p1/candidate/evidence/blender-manifest.json'),'utf8'));
   if (blender.family !== 'first-person-p1' || blender.round !== round ||
@@ -206,7 +208,8 @@ export async function run(context) {
     throw Error('Frozen Blender source module does not match selected Rook candidate');
   const camera = {position:[0,0,0],target:[0,0,-1],verticalFov:72,near:.15,width:1280,height:720};
   if (JSON.stringify(blender.camera) !== JSON.stringify(camera)) throw Error('Blender camera changed');
-  const manifestPath = join(context.outputDir,costOnly?'cost.json':contactOnly?'contact.json':'captures.json');
+  const manifestPath = join(context.outputDir,costOnly?'cost.json':contactOnly?'contact.json':
+    paintPreflightOnly?'paint-preflight.json':'captures.json');
   try {await access(manifestPath);throw Error('Completed first-person P1 evidence is immutable');}
   catch (error) {if (error.code !== 'ENOENT') throw error;}
   const relativePath = path => relative(root,path).replaceAll('\\','/');
@@ -291,6 +294,50 @@ export async function run(context) {
     await context.waitFor('window.__qaApp.visualReady','first-person course ready',60000);
     const qualityObserved = await context.evaluate("document.querySelector('#graphics-quality')?.value");
     if (qualityObserved !== quality) throw Error('Actual browser quality differs from requested '+quality);
+    if (paintPreflightOnly) {
+      await key(context,'keyDown','KeyF','f',70);
+      await context.evaluate('window.__qaApp.advance(.42)');
+      await key(context,'keyUp','KeyF','f',70);
+      await context.waitFor(`(() => {window.__render.renderFrame();return (
+        window.__render.scene.getObjectByName('First-person hands and gear')?.userData.assetStatus==='ready');})()`,
+        'paint preflight candidate loaded',60000);
+      const inspection=await context.evaluate(`(() => {
+        const r=window.__render,rig=r.scene.getObjectByName('First-person hands and gear');
+        r.renderFrame();
+        const meshes=[];rig.traverse(node=>{if(node.name==='rook_sleeves_gloves_fingers'&&node.isSkinnedMesh)meshes.push(node);});
+        if(meshes.length!==1){const found=[];rig.traverse(node=>{
+          if(node.isSkinnedMesh)found.push({name:node.name,visible:node.visible});});
+          throw Error('Paint preflight Rook mesh count '+meshes.length+': '+JSON.stringify(found));}
+        const mesh=meshes[0],tex=mesh.material.map,uv=mesh.geometry.attributes.uv;
+        if(!tex?.image||!uv)throw Error('Rook paint atlas or UV missing');
+        const canvas=document.createElement('canvas');canvas.width=tex.image.width;canvas.height=tex.image.height;
+        const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(tex.image,0,0);
+        const pixel=(u,v)=>{
+          const x=Math.min(canvas.width-1,Math.max(0,Math.floor(u*canvas.width)));
+          const y=Math.min(canvas.height-1,Math.max(0,Math.floor(v*canvas.height)));
+          return [...ctx.getImageData(x,y,1,1).data];
+        };
+        const picks=[];
+        for(let id=0;id<uv.count&&picks.length<8;id++){
+          const u=uv.getX(id),v=uv.getY(id);
+          if(u<.25&&v>.70&&v<1){picks.push({id,uv:[u,v],
+            directTopPixel:pixel(u,v),invertedTopPixel:pixel(u,1-v)});}
+        }
+        return{candidateRequests:window.__rookCandidateSwapCount,
+          assetStatus:rig.userData.assetStatus,meshName:mesh.name,
+          texture:{flipY:tex.flipY,colorSpace:tex.colorSpace,width:canvas.width,
+            height:canvas.height,version:tex.version},clothUvSamples:picks,
+          presentation:{...rig.userData.presentation}};
+      })()`);
+      const path=await context.screenshot('p1-r3-paint-preflight');
+      const bytes=await readFile(path);
+      await writeFile(manifestPath,JSON.stringify({family:'first-person-p1-paint-preflight',round,
+        candidate:{path:relativePath(candidate.absolute),sha256:candidate.sha256},
+        quality,inspection,screenshot:{path:relativePath(path),sha256:sha(bytes)}},null,2)+'\n',
+      {flag:'wx'});
+      console.log('Rook paint preflight: '+JSON.stringify(inspection));
+      return;
+    }
     if (contactOnly) {
       contactReports.push({quality,report:await productionContactObservation(context,root,candidate.absolute)});
       continue;
@@ -548,7 +595,7 @@ async function measureProductionHandFrameCost({context,root,quality,branch,candi
       renderFrameCalls++;
       if(i>=30){
         const hands=[];rig.traverse(node=>{
-          if(node.name!=='rook sleeves gloves fingers'||!node.isSkinnedMesh||!node.skeleton)return;
+          if(node.name!=='rook_sleeves_gloves_fingers'||!node.isSkinnedMesh||!node.skeleton)return;
           for(let p=node;p;p=p.parent)if(!p.visible)return;
           hands.push(node);
         });
