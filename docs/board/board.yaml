@@ -1861,3 +1861,18 @@ tasks:
       - "Preserve the exact material prompt, original path/hash, crop and exported-UV conventions, explicit rebuild/QA commands, protected skin controls and final proof limits before deleting the consumed P1 note."
       - "Retain three immutable sheets, source/tests, current assets and original image. Record final3/4/3/3/4 with idle-only frame scope and unsupported contact; P2 owns missing likeness/contact work."
       - "Independent fact review and normal lane/build gate. Docs only; no game source, binary, credit, live or external-audio worktree changes."
+
+  - id: JANITOR-UFO-NOTES
+    title: "Fold completed CPU UFO preparation into current architecture"
+    lane: OPS
+    size: S
+    needs: [BUG-07, BAL-02]
+    status: building
+    flag: none
+    behavior_change: no
+    owns: [docs/ARCHITECTURE.md, docs/board/checks/2026-09-24-cpu-ufo-gap.md, docs/board/checks/2026-09-24-cpu-ufo-scope.md, docs/board/run-log.md, docs/changes/JANITOR-UFO-NOTES.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Record the implemented physical pickup, actor-specific safe jump and defensive threat policy; preserve limits, tests and source references."
+      - "Delete the two superseded preparation notes and their stale run-log pointer after independent fact review; retain decisions and existing gate verdicts."
+      - "Docs-only lane tier and build pass; no runtime, save, asset or audio-folder change."
