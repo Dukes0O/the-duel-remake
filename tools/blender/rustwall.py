@@ -19,6 +19,10 @@ p.add_argument('--root', required=True)
 p.add_argument('--round', type=int, required=True)
 p.add_argument('--skip-renders', action='store_true')
 p.add_argument('--paths-only', action='store_true')
+p.add_argument('--p2', action='store_true', help='Write new Rustwall P2 review evidence; leave older round paths stable')
+p.add_argument('--p2-hulk-probe', action='store_true', help='Build only two offline welded-car proof hulks in ignored art-build')
+p.add_argument('--p2-section-probe', action='store_true', help='Build only one offline macro facade section in ignored art-build')
+p.add_argument('--p2-wheel-probe', action='store_true', help='Export one isolated cheap source-car tire measurement in ignored art-build')
 args = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/rustwall'
@@ -29,10 +33,36 @@ def blend_path(kind):
     return blend_dir / f'{kind}.blend'
 def texture_path(name, label):
     return blend_dir / f'{name}-{label}.png'
-shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / 'rustwall' / f'round-{args.round}')
+family = 'rustwall-p2' if args.p2 else 'rustwall'
+shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / family / f'round-{args.round}')
 if not shots.is_absolute():
     shots = root / shots
 if args.paths_only:
+    if args.p2_hulk_probe:
+        proof = root / 'art-build/rustwall-p2'
+        print(json.dumps({'blend': [str(proof / 'hulk-probe.blend')],
+                          'glb': [str(proof / 'hulk-probe.glb')],
+                          'textures': [str(texture_path('hulks', label)) for label in ('color','surface','normal')],
+                          'evidence': [str(proof / 'hulk-probe-front.png'),
+                                       str(proof / 'hulk-probe-quarter.png'),str(proof / 'hulk-probe.json')]}))
+        sys.exit(0)
+    if args.p2_section_probe:
+        proof = root / 'art-build/rustwall-p2'
+        print(json.dumps({'blend': [str(proof / 'section-probe.blend')],
+                          'glb': [str(proof / 'section-probe.glb')],
+                          'textures': [str(texture_path(name, label)) for name in ('steel','hulks')
+                                       for label in ('color','surface','normal')],
+                          'evidence': [str(proof / 'section-probe-front.png'),
+                                       str(proof / 'section-probe-quarter.png'),str(proof / 'section-probe.json')]}))
+        sys.exit(0)
+    if args.p2_wheel_probe:
+        proof = root / 'art-build/rustwall-p2'
+        print(json.dumps({'blend': [str(proof / 'wheel-probe.blend')],
+                          'glb': [str(proof / 'wheel-probe.glb')],
+                          'textures': [str(texture_path('hulks', label)) for label in ('color','surface','normal')],
+                          'evidence': [str(proof / 'wheel-probe-front.png'),
+                                       str(proof / 'wheel-probe-quarter.png'),str(proof / 'wheel-probe.json')]}))
+        sys.exit(0)
     print(json.dumps({'blend': [str(blend_path(kind)) for kind in ('wall', 'wash')],
                       'glb': [str(glb_path(kind)) for kind in ('wall', 'wash')],
                       'textures': [str(texture_path(name, label))
@@ -290,12 +320,13 @@ class Geometry:
             tip=self.vertex((point.x+.07,point.z-.85,-point.y+.12))
             other=self.vertex((point.x+.13,point.z-.05,-point.y+.04))
             self.face([rows[-1][ix],tip,other],tile,[(0,0),(.1,.2),(.2,0)])
-    def build(self,name,mat):
+    def build(self,name,mat,recalculate_normals=True):
         mesh=bpy.data.meshes.new(name);mesh.from_pydata(self.vertices,[],self.faces);mesh.update()
         uv=mesh.uv_layers.new(name='Authored material islands')
         for poly,coords in zip(mesh.polygons,self.uvs):
             for li,co in zip(poly.loop_indices,coords):uv.data[li].uv=co
-        bm=bmesh.new();bm.from_mesh(mesh);bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces));bm.to_mesh(mesh);bm.free()
+        if recalculate_normals:
+            bm=bmesh.new();bm.from_mesh(mesh);bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces));bm.to_mesh(mesh);bm.free()
         obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj);mesh.materials.append(mat)
         return obj
 
@@ -322,6 +353,113 @@ def car(g,x,y,z,tile,variant):
         v=g.vertices[i];dx=v.x-x;dy=v.z-y
         g.vertices[i]=Vector((x+dx*math.cos(angle)-dy*math.sin(angle),v.y,
                               y+dx*math.sin(angle)+dy*math.cos(angle)*compression))
+
+
+def welded_car_template(relative_path,body_target=750,trim_target=180,wheel_steps=8,
+                        visible_wheels_only=False,normalized_height=2.35):
+    """Read a production car only offline; return connected silhouette triangles in wall coordinates."""
+    before=set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=str(root / relative_path))
+    imported=set(bpy.data.objects)-before
+    bpy.context.view_layer.update()
+    body=next(obj for obj in imported if obj.type=='MESH' and obj.name=='Lacquered body')
+    trim=next(obj for obj in imported if obj.type=='MESH' and obj.name=='Carbon and trim')
+    glass=next(obj for obj in imported if obj.type=='MESH' and obj.name=='Glass')
+    tires=sorted((obj for obj in imported if obj.type=='MESH' and obj.name.startswith('Tire rubber')),
+                 key=lambda obj:obj.name)[:4]
+    assert len(tires)==4,relative_path
+    if args.p2_section_probe:
+        dimensions=[]
+        for tire in tires:
+            cloud=[tire.matrix_world @ v.co for v in tire.data.vertices]
+            dimensions.append([round(max(getattr(p,axis) for p in cloud)-min(getattr(p,axis) for p in cloud),3)
+                               for axis in ('x','y','z')])
+        print('RUSTWALL_P2_WHEEL_AXES '+json.dumps({'source':relative_path,'xyzSpans':dimensions}))
+    def components(bm):
+        remaining=set(bm.verts); count=0
+        while remaining:
+            count+=1; stack=[remaining.pop()]
+            while stack:
+                vertex=stack.pop()
+                for edge in vertex.link_edges:
+                    other=edge.other_vert(vertex)
+                    if other in remaining:remaining.remove(other);stack.append(other)
+        return count
+    original_components=welded_components=0
+    for obj in [body,trim,glass,*tires]:
+        bm=bmesh.new();bm.from_mesh(obj.data)
+        original_components+=components(bm)
+        bmesh.ops.remove_doubles(bm,verts=list(bm.verts),dist=.0001)
+        bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
+        welded_components+=components(bm)
+        bm.to_mesh(obj.data);obj.data.update();bm.free()
+    points=[obj.matrix_world @ vertex.co for obj in [body,trim,glass,*tires]
+            for vertex in obj.data.vertices]
+    mid_x=(max(p.x for p in points)+min(p.x for p in points))/2
+    mid_y=(max(p.y for p in points)+min(p.y for p in points))/2
+    half_x=(max(p.x for p in points)-min(p.x for p in points))/2
+    half_y=(max(p.y for p in points)-min(p.y for p in points))/2
+    low_z=min(p.z for p in points);height=max(p.z for p in points)-low_z
+    def normalized(point):
+        return ((point.x-mid_x)/half_x*.5,(point.y-mid_y)/half_y*.5,
+                (point.z-low_z)/height*normalized_height)
+    triangles=[];counts={'bodyTriangles':0,'glassTriangles':0,'wheelTriangles':0}
+    for obj,target,tile,label in [(body,body_target,0,'bodyTriangles'),(trim,trim_target,9,'bodyTriangles'),
+                                  (glass,16,8,'glassTriangles')]:
+        if target <= 0:continue
+        modifier=obj.modifiers.new('Offline Rustwall silhouette','DECIMATE')
+        modifier.ratio=min(1,target/max(1,len(obj.data.polygons)))
+        evaluated=obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
+        mesh=bpy.data.meshes.new_from_object(evaluated);mesh.calc_loop_triangles()
+        for face in mesh.loop_triangles:
+            triangles.append((tile,tuple(normalized(obj.matrix_world @ mesh.vertices[index].co)
+                                         for index in face.vertices)))
+            counts[label]+=1
+        bpy.data.meshes.remove(mesh)
+    wheel_objects=sorted(tires,key=lambda obj:sum((obj.matrix_world @ vertex.co).x
+                                                   for vertex in obj.data.vertices)/len(obj.data.vertices))[:2] \
+        if visible_wheels_only else tires
+    for obj in wheel_objects:
+        tire_points=[obj.matrix_world @ vertex.co for vertex in obj.data.vertices]
+        xs=[p.x for p in tire_points];ys=[p.y for p in tire_points];zs=[p.z for p in tire_points]
+        x0,x1=min(xs),max(xs);cy=(min(ys)+max(ys))/2;cz=(min(zs)+max(zs))/2
+        ry=(max(ys)-min(ys))/2;rz=(max(zs)-min(zs))/2
+        def wheel_point(x,r,angle):
+            return normalized(Vector((x,cy+ry*r*math.cos(angle),cz+rz*r*math.sin(angle))))
+        for i in range(wheel_steps):
+            a=i*math.tau/wheel_steps;b=(i+1)*math.tau/wheel_steps
+            for x in [x0,x1]:
+                oa,ob=wheel_point(x,1,a),wheel_point(x,1,b)
+                ia,ib=wheel_point(x,.52,a),wheel_point(x,.52,b)
+                # The two axle caps face opposite directions. Geometry
+                # stamping reverses face order during axis mapping.
+                cap=[(oa,ob,ib),(oa,ib,ia)] if x==x0 else [(oa,ib,ob),(oa,ia,ib)]
+                triangles.extend((3,face) for face in cap);counts['wheelTriangles']+=2
+            for radius in [1,.52]:
+                a0,a1=wheel_point(x0,radius,a),wheel_point(x1,radius,a)
+                b0,b1=wheel_point(x0,radius,b),wheel_point(x1,radius,b)
+                triangles.extend([(3,(a0,a1,b1)),(3,(a0,b1,b0))]);counts['wheelTriangles']+=2
+    for obj in imported:bpy.data.objects.remove(obj,do_unlink=True)
+    info=dict(path=relative_path,sha256=digest(root / relative_path),weldThresholdMetres=.0001,
+              originalComponents=original_components,weldedComponents=welded_components,**counts)
+    return triangles,info
+
+
+def stamp_welded_car(g,template,x,y,z,length,width,height,lean=0,yaw=0,body_tile=0,
+                     crush_spoiler=False):
+    """Place one supported source-derived hulk; glass and tires use the same hulks atlas."""
+    start=len(g.faces)
+    for tile,triangle in template:
+        placed=[]
+        for side,along,up in triangle:
+            px=x+along*length*math.cos(yaw)-side*width*math.sin(yaw)-up*lean
+            pz=z+along*length*math.sin(yaw)+side*width*math.cos(yaw)
+            pz+=.12*math.sin(along*9+side*5)
+            fold=max(0,up-.95)*.58 if crush_spoiler and along<-.29 else 0
+            py=y+max(0,(up-fold)*height+.055*math.sin(along*11+side*7))
+            placed.append(g.vertex((px,py,pz)))
+        g.face(list(reversed(placed)),body_tile if tile==0 else tile)
+    return len(g.faces)-start
 
 
 def tower(g,d,x,y=35,z=2,height=7,canopy=True):
@@ -594,6 +732,164 @@ def stage():
     camdata=bpy.data.cameras.new('Matched perspective');cam=bpy.data.objects.new('Matched perspective',camdata)
     bpy.context.collection.objects.link(cam);bpy.context.scene.camera=cam
     return cam
+
+
+if args.p2_wheel_probe:
+    fresh();hulk_material=material('hulks')
+    proof_dir=root / 'art-build/rustwall-p2';proof_dir.mkdir(parents=True,exist_ok=True)
+    template,source=welded_car_template('public/assets/models/classics/falcone_f42.glb',
+        body_target=150,trim_target=0,wheel_steps=6,visible_wheels_only=True,
+        normalized_height=1.65)
+    proof=Geometry()
+    stamp_welded_car(proof,template,0,.07,-5.15,5.35,2.25,1.05,.04,0,0)
+    model=proof.build('welded-car-hulks',hulk_material,recalculate_normals=False)
+    model['sources']=[source];model['placedHulks']=1
+    assert len(model.data.uv_layers)==1 and model.data.uv_layers[0].name=='Authored material islands'
+    bpy.ops.object.select_all(action='DESELECT');model.select_set(True)
+    bpy.context.view_layer.objects.active=model
+    glb=proof_dir / 'wheel-probe.glb'
+    bpy.ops.export_scene.gltf(filepath=str(glb),export_format='GLB',use_selection=True,
+                              export_yup=True,export_animations=False,export_materials='EXPORT',export_extras=True)
+    camera=stage();bpy.context.scene.render.engine='BLENDER_EEVEE_NEXT'
+    for label,position,target in [('front',(0,1.3,-15),(0,1,-5.15)),
+                                  ('quarter',(6,3,-13),(0,1,-5.15))]:
+        camera.location=bv(position)
+        camera.rotation_euler=(bv(target)-camera.location).to_track_quat('-Z','Y').to_euler()
+        camera.data.sensor_fit='VERTICAL';camera.data.sensor_height=32
+        camera.data.lens=32/(2*math.tan(math.radians(37)/2))
+        bpy.context.scene.render.filepath=str(proof_dir / f'wheel-probe-{label}.png')
+        bpy.ops.render.render(write_still=True)
+    bpy.ops.wm.save_as_mainfile(filepath=str(proof_dir / 'wheel-probe.blend'))
+    manifest={'source':source,'placedHulks':1,'triangles':sum(len(poly.vertices)-2 for poly in model.data.polygons),
+              'glbSha256':digest(glb),'uvLayer':'Authored material islands',
+              'stamp':dict(x=0,y=.07,z=-5.15,length=5.35,width=2.25,heightScale=1.05,
+                           lean=.04,yaw=0,bodyTile=0)}
+    (proof_dir / 'wheel-probe.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8',newline='\n')
+    print('RUSTWALL_P2_WHEEL_PROBE '+json.dumps(manifest))
+    sys.exit(0)
+
+if args.p2_section_probe:
+    fresh();steel_material=material('steel');hulk_material=material('hulks')
+    proof_dir=root / 'art-build/rustwall-p2';proof_dir.mkdir(parents=True,exist_ok=True)
+    paths=('public/assets/models/classics/falcone_f42.glb',
+           'public/assets/models/unlocks/banshee_muscle.glb')
+    sources=[welded_car_template(path) for path in paths]
+    sources.extend(welded_car_template(path,body_target=150,trim_target=0,wheel_steps=6,
+                                       visible_wheels_only=True,normalized_height=1.65)
+                   for path in paths)
+    mass=Geometry();supports=Geometry(cap_tubes=False);cars=Geometry()
+    # A framed, inset car-stack bay and a subdivided steel sheet bay.
+    mass.box((0,17.5,3.0),(34,35,2),3)
+    for x in [-17,-3,17]:supports.box((x,17.5,-4.1),(.75,35,.9),6)
+    for row in range(7):
+        y=2.45+row*4.25
+        mass.box((7,y,-2.8),(19,4.1,.55),[4,9,2,5,8,13,1][row])
+        supports.box((7,y+2.08,-3.18),(19,.18,.22),6)
+    for row in range(3):
+        y=22.3+row*4.6
+        mass.box((-10,y,-2.8+.35*(row%2)),(12.6,4.4,.64),[2,9,5][row])
+        supports.box((-10,y+2.23,-3.35),(13,.22,.36),6)
+    for row in (0,5,10):
+        y=row*1.65
+        supports.box((-10,y,-3.4),(13,.36,.8),[2,6,9][row%3])
+    brace_pairs=[((-16.3,0,-5.2),(-4.0,34,-4.0)),
+                 ((-3.7,0,-5.2),(-16.1,34,-4.0)),
+                 ((16.3,0,-5.2),(6,32,-3.7))]
+    for base,top in brace_pairs:
+        supports.tube(base,top,.32,6,8)
+        supports.tube((base[0],base[1],base[2]+.65),
+                      (top[0],top[1],top[2]+.65),.18,6,6)
+    mass.box((-10,36,-2.6),(13,2.0,3),9)
+    placements=[]
+    for row in range(12):
+        for col in range(2):
+            source_index=2+(row+col)%2
+            x=-13.0+col*5.6+(row%3-1)*.35
+            y=row*1.65+.07
+            z=-5.15-.18*((row+col)%3)
+            height=1.05+.05*((row+col)%3)
+            yaw=0 if (row+2*col)%5 else (-.32 if col else .27)
+            body_tile=[0,4,5,2,13][(row+3*col)%5]
+            crush=source_index==2 and (row+col)%4!=0
+            placements.append((source_index,x,y,z,5.35,2.25,height,
+                               (-.06 if row%2 else .04),yaw,body_tile,crush))
+    # A detailed recognizable car at the grounded foot marks vehicle scale.
+    placements.append((0,10,0,-5.25,5.5,2.3,1.06,.04,.12,0,False))
+    for source_index,x,y,z,length,width,height,lean,yaw,body_tile,crush in placements:
+        stamp_welded_car(cars,sources[source_index][0],x,y,z,length,width,height,lean,yaw,body_tile,crush)
+    models=[mass.build('p2-section-mass',steel_material),
+            supports.build('p2-section-supports',steel_material),
+            cars.build('welded-car-hulks',hulk_material,recalculate_normals=False)]
+    models[2]['sources']=[entry for _,entry in sources]
+    models[2]['placedHulks']=len(placements)
+    assert len(models[2].data.uv_layers)==1 and models[2].data.uv_layers[0].name=='Authored material islands'
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in models:obj.select_set(True)
+    bpy.context.view_layer.objects.active=models[0]
+    glb=proof_dir / 'section-probe.glb'
+    bpy.ops.export_scene.gltf(filepath=str(glb),export_format='GLB',use_selection=True,
+                              export_yup=True,export_animations=False,export_materials='EXPORT',export_extras=True)
+    camera=stage();bpy.context.scene.render.engine='BLENDER_EEVEE_NEXT'
+    for label,position,target in [('front',(0,19,-79),(0,17,0)),
+                                  ('quarter',(35,21,-65),(0,17,0))]:
+        camera.location=bv(position)
+        camera.rotation_euler=(bv(target)-camera.location).to_track_quat('-Z','Y').to_euler()
+        camera.data.sensor_fit='VERTICAL';camera.data.sensor_height=32
+        camera.data.lens=32/(2*math.tan(math.radians(37)/2))
+        bpy.context.scene.render.filepath=str(proof_dir / f'section-probe-{label}.png')
+        bpy.ops.render.render(write_still=True)
+    bpy.ops.wm.save_as_mainfile(filepath=str(proof_dir / 'section-probe.blend'))
+    probe_manifest={'sources':[entry for _,entry in sources],
+                    'placements':[dict(sourceIndex=i,x=x,y=y,z=z,length=length,width=width,
+                                       heightScale=height,lean=lean,yaw=yaw,bodyTile=tile,crushSpoiler=crush)
+                                  for i,x,y,z,length,width,height,lean,yaw,tile,crush in placements],
+                    'bracePairs':brace_pairs,'trianglesByObject':{obj.name:sum(len(poly.vertices)-2 for poly in obj.data.polygons)
+                                                                    for obj in models},
+                    'glbSha256':digest(glb),'uvLayer':'Authored material islands'}
+    (proof_dir / 'section-probe.json').write_text(json.dumps(probe_manifest,indent=2)+'\n',encoding='utf-8',newline='\n')
+    print('RUSTWALL_P2_SECTION_PROBE '+json.dumps(probe_manifest))
+    sys.exit(0)
+
+if args.p2_hulk_probe:
+    fresh();hulk_material=material('hulks');proof_dir=root / 'art-build/rustwall-p2'
+    proof_dir.mkdir(parents=True,exist_ok=True)
+    sources=[welded_car_template(path) for path in (
+        'public/assets/models/classics/falcone_f42.glb',
+        'public/assets/models/unlocks/banshee_muscle.glb')]
+    proof=Geometry()
+    for index,(template,_) in enumerate(sources):
+        stamp_welded_car(proof,template,-4.0+8.0*index,0,-.15,5.4,2.2,.98,
+                         -.06 if index else .05)
+    model=proof.build('welded-car-hulks',hulk_material)
+    model['sources']=[entry for _,entry in sources]
+    model['placedHulks']=2
+    assert len(model.data.uv_layers)==1 and model.data.uv_layers[0].name=='Authored material islands'
+    bpy.ops.object.select_all(action='DESELECT');model.select_set(True)
+    bpy.context.view_layer.objects.active=model
+    glb=proof_dir / 'hulk-probe.glb'
+    bpy.ops.export_scene.gltf(filepath=str(glb),export_format='GLB',use_selection=True,
+                              export_yup=True,export_animations=False,export_materials='EXPORT',export_extras=True)
+    camera=stage()
+    bpy.context.scene.render.engine='BLENDER_EEVEE_NEXT'
+    bpy.context.scene.render.resolution_x=1280;bpy.context.scene.render.resolution_y=720
+    bpy.context.scene.render.resolution_percentage=100
+    for label,position,target in [('front',(0,5,-22),(0,1,0)),
+                                  ('quarter',(12,7,-19),(0,1,0))]:
+        camera.location=bv(position)
+        camera.rotation_euler=(bv(target)-camera.location).to_track_quat('-Z','Y').to_euler()
+        camera.data.sensor_fit='VERTICAL';camera.data.sensor_height=32
+        camera.data.lens=32/(2*math.tan(math.radians(40)/2))
+        bpy.context.scene.render.filepath=str(proof_dir / f'hulk-probe-{label}.png')
+        bpy.ops.render.render(write_still=True)
+    bpy.ops.wm.save_as_mainfile(filepath=str(proof_dir / 'hulk-probe.blend'))
+    probe_manifest={'sources':[entry for _,entry in sources],
+                    'placedHulks':2,'triangles':sum(len(template) for template,_ in sources),
+                    'glbSha256':digest(glb),'uvLayer':'Authored material islands',
+                    'renderFrontSha256':digest(proof_dir / 'hulk-probe-front.png'),
+                    'renderQuarterSha256':digest(proof_dir / 'hulk-probe-quarter.png')}
+    (proof_dir / 'hulk-probe.json').write_text(json.dumps(probe_manifest,indent=2)+'\n',encoding='utf-8',newline='\n')
+    print('RUSTWALL_P2_HULK_PROBE '+json.dumps(probe_manifest))
+    sys.exit(0)
 
 
 def shot(id,kind,position,target,fov,gate=0,crop=None,scale=None):
