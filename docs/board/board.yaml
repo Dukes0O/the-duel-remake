@@ -1212,7 +1212,7 @@ tasks:
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
     owns: [src/sound-bank.js, public/assets/audio/, tools/audio/, docs/changes/AUD-GATEKEEPER.md]
-    hooks: [src/audio.js, src/hidden-road.js, src/hidden-road-journey.js, src/hidden-road-ui.js, src/app.js]
+    hooks: [src/audio.js, src/hidden-road.js, src/hidden-road-journey.js, src/hidden-road-ui.js, src/app.js, tools/test-gatekeeper-audio.mjs, tools/scenarios/gatekeeper-audio.mjs]
     flag: hidden-road
     sound: gatekeeper.welcome
     acceptance:
