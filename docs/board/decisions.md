@@ -470,3 +470,8 @@ Two actual game rounds remain at 3/3/3/3 despite better paint, scalp coverage, s
 ## 2026-09-25 PDT: external voice-candidate preparation
 
 Approve the external audio lane narrow tools/test-voice-candidates.mjs hook for independent fake-only budget, no-keep and resume checks before service use. AUD-17 preparation retains the SPEC ceiling and any tighter budget set in that session; all credits belong to that owner, none to the Director. Only Kyle selects takes. The unresolved AUD-10 baseline and pending human listening remain visible and are not waived by preparation on later cards.
+
+
+## 2026-09-25 PDT: Rook upper skull and hair must match together
+
+The narrower curl outline exposed a real scalp-coverage failure. At native side rows77/85, the connected upper skull projects rearward to x238.8/241.3 while the reference outer hair is about x253/246; the candidate hair at x245.6/242.1 lies inside that oversized skull. Restoring the old cap alone would cover scalp but keep the broad helmet silhouette. Approve a measured upper-rear core contour correction, tapering out before the lower hair/jaw bands, plus an exterior hair shell. Preserve the front face profile, eyes/beard paint, UVs, jaw, connected topology and rig. Independently test the existing reference head-back polyline at rows67/77/85 before code, then require both corrected profile and unchanged dense scalp coverage, face and motion guards. No coverage threshold is relaxed and no runtime crew is replaced.
