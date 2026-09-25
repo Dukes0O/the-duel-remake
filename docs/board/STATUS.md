@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-09-25T11:03:09.573Z
+Observed at: 2026-09-25T12:32:47.680Z
 
-Observation commit: 24f62241faec50982ba23187c3702bf2ea85f777
+Observation commit: 4acf52853f9876b19ff2a4a2d0e3ab0995110a3f
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 24f62241faec50982ba23187c3702bf2ea85f777
+Integration HEAD: 4acf52853f9876b19ff2a4a2d0e3ab0995110a3f
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -32,7 +32,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/gfx-02-p1 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-02-p1 |
+| codex/gfx-02-p1 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-02-p1 |
 | lane/audio/aud-10 | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/audio/aud-12 | 0 | unknown | true | false | unknown |
 
@@ -42,7 +42,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/gfx-02-p1 | GFX-02-P1 | 2026-09-25T04:01:15-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/first-person-p1/round-1-review.md, docs/board/looks/first-person-p1/round-1.jpg, docs/changes/GFX-02-P1.md, tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json |
 
 ## Size targets
 
@@ -54,11 +53,11 @@ Targets are advisory. Change compares with the previous status observation when 
 | Wasteland models | 78,930,708 B | +0 B | 60,000,000 B |
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
-| Largest review sheet | 210,328 B | +0 B | 500,000 B |
-| Review `looks/` | 6,579,829 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 22,806 B | +0 B | 5,000,000 B |
+| Largest review sheet | 255,671 B | +45,343 B | 500,000 B |
+| Review `looks/` | 7,351,749 B | +771,920 B | 20,000,000 B |
+| Added bytes in last merge | 2,245,383 B | +2,222,577 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 319,823,872 B | +67,584 B | unavailable |
+| Git objects | 321,437,696 B | +1,613,824 B | unavailable |
 | Lane folders | 1 | +0 | unavailable |
 
 ## Backups
@@ -67,7 +66,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 24f62241faec50982ba23187c3702bf2ea85f777
+- Local integration/wasteland: 4acf52853f9876b19ff2a4a2d0e3ab0995110a3f
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -75,4 +74,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: matches local; cached commit 24f62241faec50982ba23187c3702bf2ea85f777.
+- Remote origin/integration/wasteland: behind local; cached commit 24f62241faec50982ba23187c3702bf2ea85f777.
