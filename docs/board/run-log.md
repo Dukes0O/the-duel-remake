@@ -1685,3 +1685,5 @@ Cleanup order: CLEAN-01 and CLEAN-02 merged. CLEAN-03 is ready; CLEAN-04, CLEAN-
 
 
 - JANITOR-ROOK-NOTE merged24edb03 from clean71a309d after independent exact prompt/hash/recipe review, lane6/6 in36.97seconds (518 core checks) and build222 modules in353ms. Current ASSET_PIPELINE now holds both original prompts verbatim, external source custody, calibration exceptions, structural/painted rebuild commands and final Rook verdict. The consumed472-line note is deleted; its sources/tests and immutable sheets remain. Body and independent hand gates are distinguished. This completed janitor note is folded here and deleted. Merge count since full e3579f1: three; next full after five merges,11:03UTC or run end. After-merge cleanup removes only this completed docs lane; external audio remains excluded.
+
+- JANITOR-ROOK-NOTE after-merge cleanup verified and unlinked the integration-only dependency junction, normally removed the clean merged docs worktree and branch, and refreshed STATUS. Active hand work, Kyle branches, external audio, original images and current assets remain.
