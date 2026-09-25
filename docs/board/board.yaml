@@ -1137,14 +1137,14 @@ tasks:
     status: in-progress
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
-    owns: [src/audio.js, src/sound-bank.js, src/audio-mixer.js, tools/audio/, public/assets/audio/, audio-src/, tools/test-audio.mjs, tools/test-audio-sourcing.mjs, docs/AUDIO_ITERATION.md, docs/audio/, docs/board/listening/, docs/changes/AUD-10.md]
+    owns: [src/audio.js, src/sound-bank.js, src/sound-mixer.js, tools/audio/, public/assets/audio/, audio-src/, tools/test-audio.mjs, tools/test-audio-sourcing.mjs, docs/AUDIO_ITERATION.md, docs/audio/, docs/board/listening/, docs/changes/AUD-10.md, .gitattributes, tools/prepare-audio.mjs, tools/audio-analysis.mjs, tools/audio-race-check.js, tools/test-audio-analysis.mjs, tools/test-audio-compression.mjs, tools/test-sound-bank.mjs, tools/test-repo-hygiene-rules.mjs, tools/scenarios/audio-baseline.mjs, tools/scenarios/audio-moving.mjs]
     hooks: [src/app.js, src/main.js, tools/test-repo-hygiene.mjs]
     helpers: [test_author, reviewer, audio_qa, test_runner]
     acceptance:
       - "SPEC 0.9: existing sounds use the data sound bank and buses; compare a recorded baseline, measure ducking, voice limits and moving-source 3D."
       - "Keep source recipes and licenses; move raw library sources out of public; compressed runtime audio and placement checks pass."
       - "Latest branch change note explicitly says ready-to-merge before Director stages the normal lane/build gate."
-    note: "Kyle assigned the existing lane/audio/aud-10 session on 24 September. This Director does not use its worktree, start another audio lane or spend ElevenLabs credits. The latest inspected commit cf72d9c has no AUD-10 change note yet."
+    note: "Kyle assigned the existing lane/audio/aud-10 session on 24 September. This Director does not use its worktree, start another audio lane or spend ElevenLabs credits. Audio owner reported 7393d07 in progress after implementation 4ca81ce; not ready to merge. Baseline comparison investigation remains open. Scope includes the actual sound-mixer name, audio analysis/compression/scenarios and mandatory FLAC binary attributes."
   - id: AUD-11
     title: "Listening booth and audio measurements"
     priority: 2
