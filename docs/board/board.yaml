@@ -488,6 +488,20 @@ tasks:
     note: "Active codex/gfx-03 from 85fe35f. Written design and independent red tests precede code. Crew builder owns fitted authored kits; measured four-car frame cost and three scored rounds required."
     acceptance:
       - "All nine cars have intact, damaged, burning and wrecked kits; three matched saved fidelity rounds meet SPEC 0.3 and frame budgets."
+  - id: GFX-03-P1
+    title: "Armor kits with distinct fitted steel plates"
+    priority: 16
+    lane: VIS
+    size: M
+    needs: [GFX-03]
+    status: backlog
+    owns: [tools/blender/armor-kits.py, public/assets/models/wasteland/kits/, docs/board/looks/kits/]
+    hooks: [tools/blender/kit-review.py, tools/blender/kit-sheet.py, tools/audit-armor-kit-fit.mjs, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-fit.mjs, tools/scenarios/armor-kit-visuals.mjs]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    flag: wasteland2
+    note: "Round8 scores likeness3/readability4/grounding4/consistency3/frame4. Replace the continuous mottled wrap with distinct fitted steel plates and stronger edge wear at game distance. Settle the geometry trade in writing before code; preserve named breakable parts and resource ownership."
+    acceptance:
+      - "Reach all art scores of four, prove all nine cars and three tiers in game, and keep the four-car whole-scene cost within ten percent. Keep wheels, lamps and glass clear and existing purchases unchanged."
   - id: GFX-04
     title: "Yard home and arena fidelity rounds one to three"
     priority: 15
