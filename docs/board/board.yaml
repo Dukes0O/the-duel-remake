@@ -1821,3 +1821,14 @@ tasks:
       - "Preserve exact face/cloth prompts, original paths and hashes, calibration exceptions, rebuild command and structural-versus-selected-paint distinction in current guidance before deleting the consumed note."
       - "Keep committed recipes/tests and immutable sheets. Record7500/1833, final3/3/3/3 with unmeasured frame cost, unchanged runtime crew and P3 body-conversion gate; independent hand proof has its own gate."
       - "Independent fact review, lane tier and build before merge. No game code, originals or runtime asset edits."
+
+  - id: FIX-AUDIT-SCOPE
+    title: Exclude protected lane folders from janitor audit
+    lane: TOOL
+    status: in-progress
+    branch: codex/fix-audit-scope
+    needs: []
+    owns: [tools/repo-audit.mjs, tools/test-repo-audit-scope.mjs, docs/changes/FIX-AUDIT-SCOPE.md]
+    acceptance:
+      - "Exact branch exclusions retain ref-only inventory, unknown dirty state, skipped inspection and false cleanup eligibility; no access under excluded paths. Defaults unchanged."
+      - "Independent throwaway-repository guard tests precede code, then independent review, lane tier and build. No game, save or runtime changes."
