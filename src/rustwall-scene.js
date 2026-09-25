@@ -62,16 +62,25 @@ function joinedWash(road, material) {
         uvs.push(vertex.u, vertex.v);
       }
     };
-    const contour = (station, t, u) => {
+    const contour = (station, band, u) => {
       // The visible slope occupies the physical box: low at the track-side
-      // foot, broad near the ridge, without identical vertical column ends.
+      // foot, broad near the ridge. Interior bands move at shared stations;
+      // they remain in order and leave both physical box edges unchanged.
+      const t = band === .38
+        ? band + .028 * Math.sin(u * .61 + side * .5) + .010 * Math.sin(u * 1.37)
+        : band === .72
+          ? band + .026 * Math.sin(u * .53 + side * .8) + .011 * Math.sin(u * 1.19 + 1.4)
+          : band;
       const spread = station.width * t;
       const h = station.heading;
-      const profile = t === 0 ? 0 : t < .5 ? .67 : t < 1 ? .91 : .88;
-      const variation = .025 * Math.sin(u * .47 + side * 1.3) * (t > 0 ? 1 : 0);
+      const profile = band === 0 ? 0 : band === .38 ? .67 : band === .72 ? .91 : .88;
+      const variation = .025 * Math.sin(u * .47 + side * 1.3) * (band > 0 ? 1 : 0);
+      const heightFraction = Math.min(1, profile + variation);
+      const atlasWarp = .015 * Math.sin(u * .23 + t * 7.1);
       return {x: station.x + Math.cos(h) * side * spread,
-        y: station.y + station.height * Math.min(1, profile + variation),
-        z: station.z - Math.sin(h) * side * spread, u: u / 12, v: t};
+        y: station.y + station.height * heightFraction,
+        z: station.z - Math.sin(h) * side * spread,
+        u: u / 12, v: Math.max(0, Math.min(1, heightFraction + atlasWarp))};
     };
     for (let index = 0; index < ordered.length; index++) {
       const wall = ordered[index], previous = ordered[index - 1], next = ordered[index + 1];
