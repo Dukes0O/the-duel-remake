@@ -1,12 +1,12 @@
 ---
 task: EGG-02-P2
 flag: hidden-road
-status: ready to merge as measured development improvement; likeness target remains open
+status: merged
 ---
 
 # Rustwall salvage depth and canyon strata
 
-EGG-02-P2 is ready for integration as a measured development improvement. Director and Crew scored the final wall and wash likeness **3/5**, while the scoped frame gate scored **4/5** with the worst required A1/B/A2 ratio at 1.0833 against 1.10. Lane tests passed 256/256 and the build passed. The target likeness four remains open in EGG-02-P3; this card makes no beta or finished-art claim.
+EGG-02-P2 merged at 78cfffe as a measured development improvement. Director and Crew scored the final wall and wash likeness **3/5**, while the scoped frame gate scored **4/5** with the worst required A1/B/A2 ratio at 1.0833 against 1.10. Lane tests passed 256/256 and the build passed. The target likeness four remains open in EGG-02-P3; this card makes no beta or finished-art claim.
 
 ## Starting point and design choice before code
 

@@ -402,7 +402,7 @@ tasks:
     lane: VIS
     size: L
     needs: [EGG-02-P1]
-    status: building
+    status: merged
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall-p2/]
     hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/scenarios/rustwall-frame.mjs, tools/test-rustwall-frame.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-sheet.mjs, tools/test-rustwall-p2-relief.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: hidden-road
@@ -410,7 +410,7 @@ tasks:
     acceptance:
       - "Complete the ten-round P2 wave against the original likeness-four target, preserving every review verdict. Final wall and wash remain likeness three. Accept only a measured development improvement after frame and lane/build gates; EGG-02-P3 owns the unmet visual target under SPEC 0.3. This closure does not grant visual acceptance or a release."
       - "Retain the physical route, collision envelopes, gate clearance, joined-bank safety tests and smaller reviewed atlases. Use a separate next-wave review folder and immutable reference/Blender/High/Performance sheets."
-    note: "Active next-wave codex/egg-02-p2. Written design uses welded source-car salvage and unequal facade depth, funded by removing repeated microdetail within original limits. Wash follows measured contour strata using the approved art-direction background crop. Independent tests precede code. Physical route, gate and collision union remain fixed."
+    note: "Merged 78cfffe as a ten-round development improvement: 256/256 lane suites in 375.19 seconds, build and independent art/source/frame reviews passed. Wall and wash visual scores remain 3/3/3/3; scoped frame four, worst required CPU ratio 1.0833. EGG-02-P3 retains likeness-four and paint-recovery work. Hidden-road stays dev."
   - id: EGG-02-P3
     title: "Interlocked Rustwall salvage and natural canyon strata"
     lane: VIS
