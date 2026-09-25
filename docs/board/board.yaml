@@ -332,7 +332,7 @@ tasks:
     needs: [GFX-01-P2, EGG-02-P2, GFX-02-P1]
     status: building
     owns: [src/feature-flags.js, tools/test-feature-flags.mjs, tools/scenarios/experimental.mjs, tools/scenarios/wasteland-beta.mjs, tools/test-wasteland-beta.mjs, docs/playtest-inbox.md, docs/changes/BETA-01.md]
-    hooks: [tools/test-hidden-road.mjs]
+    hooks: [tools/test-hidden-road.mjs, tools/test-combat-armor.mjs]
     helpers: [test_author, reviewer, browser_qa, save_guardian, test_runner]
     acceptance:
       - "After phase 2, move wasteland2 and hidden-road to beta under Experimental as Kyle requested; retain career-backup's current state and prove default-off, explicit opt-in, opt-out and reload persistence with memory-only storage."

@@ -1783,3 +1783,10 @@ or beta switch changed.
   target and the corrected check passed. Both original images and all runtime,
   Kyle and external audio assets/branches remain. STATUS refreshed with the
   external audio folder excluded. BETA-01 is the only Director-owned active lane.
+
+
+- Independent BETA-01 review found a second exact development-state assertion
+  in test-combat-armor. Granted the narrow catalog expectation/title update
+  to beta, reflecting Kyle's promotion; all flag-off and armor behavior
+  assertions remain. Builder must demonstrate the old assertion fails and
+  record the change before the final gate.
