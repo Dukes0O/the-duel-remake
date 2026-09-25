@@ -1,6 +1,6 @@
 ---
 task: FIX-STATUS-SCOPE
-status: test-first
+status: ready-to-merge
 kind: qa-safety
 ---
 
@@ -50,3 +50,10 @@ Other rows keep their previous path.
 The unsafe assumption that every registered worktree may be inspected is
 removed. The status collector now leaves requested branches visible without
 opening their worktrees.
+
+## Lane gate
+
+Initial synced lane gate passed8/8 suites in40.37seconds, including275 status
+checks and518 core checks. Production build passed in356ms. Final readiness
+text is committed before the required fresh lane/build rerun; root records
+that exact commit result in the merge verdict. No game or save code changed.
