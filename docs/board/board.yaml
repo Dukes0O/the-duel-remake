@@ -1151,7 +1151,7 @@ tasks:
     lane: AUDIO
     size: L
     needs: []
-    status: in-progress
+    status: merged
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
     owns: [src/audio.js, src/sound-bank.js, src/sound-mixer.js, tools/audio/, public/assets/audio/, audio-src/, tools/test-audio.mjs, tools/test-audio-sourcing.mjs, docs/AUDIO_ITERATION.md, docs/audio/, docs/board/listening/, docs/changes/AUD-10.md, .gitattributes, tools/prepare-audio.mjs, tools/audio-analysis.mjs, tools/audio-race-check.js, tools/test-audio-analysis.mjs, tools/test-audio-compression.mjs, tools/test-sound-bank.mjs, tools/test-repo-hygiene-rules.mjs, tools/scenarios/audio-baseline.mjs, tools/scenarios/audio-moving.mjs]
@@ -1161,14 +1161,14 @@ tasks:
       - "SPEC 0.9: existing sounds use the data sound bank and buses; compare a recorded baseline, measure ducking, voice limits and moving-source 3D."
       - "Keep source recipes and licenses; move raw library sources out of public; compressed runtime audio and placement checks pass."
       - "Latest branch change note explicitly says ready-to-merge before Director stages the normal lane/build gate."
-    note: "Kyle assigned the existing lane/audio/aud-10 session on 24 September. This Director does not use its worktree, start another audio lane or spend ElevenLabs credits. Audio owner reported 7393d07 in progress after implementation 4ca81ce; not ready to merge. Baseline comparison investigation remains open. Scope includes the actual sound-mixer name, audio analysis/compression/scenarios and mandatory FLAC binary attributes."
+    note: "Merged e1a2d63 from exact reviewed 0673280 after lane262/262, build and clean full262/262. Original strict five-case baseline passes unchanged; physical buses/disabled flat routes and lifecycle are independently reviewed. Pending human listening is explicit. External branch/folder stay for unselected AUD-17 auditions; Director uses refs only."
   - id: AUD-11
     title: "Listening booth and audio measurements"
     priority: 2
     lane: AUDIO
     size: M
     needs: [AUD-10]
-    status: in-progress
+    status: merged
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
     owns: [tools/audio/, tools/audio-analysis.mjs, tools/audio-race-check.js, tools/test-audio-listening.mjs, tools/scenarios/audio-listening.mjs, docs/audio/, docs/board/listening/, docs/changes/AUD-11.md]
@@ -1177,7 +1177,7 @@ tasks:
     acceptance:
       - "Play cues over engine and ambience with A/B/C variants; save human ratings and notes as verdict files."
       - "Measure LUFS, true peak, loop seams, repetition and full-mix masking. Unrated rounds are flagged for human listening."
-    note: "Same audio owner may prepare independent measurement and booth tools against the unmerged foundation while AUD-10 baseline review remains open. AUD-11 cannot be marked ready or merged before AUD-10. Full-rate capture is required for true-peak measurements; existing comparator limits are unchanged."
+    note: "Merged e1a2d63 with full-rate measurements and private booth checks. Independent deferred-load A/B and Stop regressions pass. Human ratings remain pending; measurements are not human scores."
   - id: AUD-12
     title: "On-demand sound sourcing and Kyle's kept picks"
     lane: AUDIO
@@ -1209,7 +1209,7 @@ tasks:
     lane: AUDIO
     size: S
     needs: [AUD-10, AUD-11, AUD-12]
-    status: in-progress
+    status: merged
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
     owns: [src/sound-bank.js, public/assets/audio/, tools/audio/, docs/changes/AUD-GATEKEEPER.md]
@@ -1219,14 +1219,14 @@ tasks:
     acceptance:
       - "Use the exact kept Callum take; wire gatekeeper.welcome to the arrival's existing event and preserve its subtitle."
       - "Prove correct arrival timing, no repeated playback on paused frames, private memory-only testing and full-throttle intelligibility measurements."
-    note: "All wiring and credit use belong to Kyle's separate audio session. Do not regenerate the approved line."
+    note: "Merged e1a2d63. Exact kept Callum source preserved; arrival once, subtitle, hidden-road-only ducking, pause/navigation and missing-file checks pass. No regeneration."
   - id: AUD-14
     title: "Combat sounds and impacts from Kyle's approved recipes"
     priority: 4
     lane: AUDIO
     size: L
     needs: [AUD-10, AUD-11, AUD-12, AUD-GATEKEEPER]
-    status: in-progress
+    status: merged
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
     owns: [src/sound-bank.js, public/assets/audio/, tools/audio/, docs/audio/, docs/board/listening/, docs/changes/AUD-14.md]
@@ -1237,6 +1237,7 @@ tasks:
       - "Build approved blasts 523089/397691, crash 592388 and rocket launches 854476/854473 from catalog recipes."
       - "Rebuild crossbow E pew whistle and hit-confirm; the flight source follows the bolt in 3D with doppler."
       - "Apply bright transients, tonal signatures and clear hits; measure and compare all weapons over full-throttle engine, with three rounds for key cues and human ratings clearly distinguished from measurements."
+    note: "Merged e1a2d63 after three measured rounds,27 full-throttle checks, real moving projectile/doppler/pause checks and exact final gates. Dense combat loudness remains advisory and human listening is pending. Finite one-shot flight/no-reacquisition policy is documented."
   - id: AUD-01
     title: "Weapon sounds"
     wave: 3
@@ -1732,7 +1733,7 @@ tasks:
       - "Only the external audio owner may use ElevenLabs credits, within its current user-authorized budget and SPEC overnight ceiling of 1500. The Director spends none. Preserve Kyle's exact selected gatekeeper take."
       - "Candidates are marked for Kyle's choice; no agent keeps or promotes a take. Human ratings remain distinct from measurements. Keys stay in the environment, credit use is logged, and no generation is silently retried after an accounting failure."
       - "Any runtime voice wiring beyond the existing bank/credit hooks requires a named scope addition before implementation. Retain subtitles, attribution, one-version source placement and normal gates."
-    note: "Independent candidate-tool preparation may proceed in the external lane while upstream gates remain unresolved; this does not mark AUD-10/11/14 ready or waive their checks."
+    note: "Candidate preparation merged e1a2d63; full casting/runtime card remains in progress pending Kyle. Ten auditions used400 credits, none selected/rejected/kept. External owner preserves audition bytes/receipts and branch. No additional generation or audio runtime work tonight."
 
   - id: ARS-01
     title: "Oil Slick, Caltrops, Smoke Screen and Harpoon"
