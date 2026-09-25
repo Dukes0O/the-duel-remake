@@ -170,6 +170,94 @@ test('P2 wall records real source-car provenance for its welded visible hulks', 
     'foreground car bodies have depth at several locations');
 });
 
+test('P2 full wall has source-rendered car relief across eight substantial bays with retained 3D silhouettes', async () => {
+  const wall = await actualWall(), relief = wall.getObjectByName('source-car-relief');
+  const hulks = wall.getObjectByName('welded-car-hulks');
+  assert.ok(relief?.isMesh && hulks?.isMesh, 'relief complements actual source-derived car geometry');
+  const provenance = relief.userData;
+  assert.equal(provenance.sourceRenderPath, 'art-build/rustwall-p2/relief-source.png');
+  assert.match(provenance.sourceRenderSha256 || '', /^[a-f0-9]{64}$/);
+  assert.equal(createHash('sha256').update(readFileSync(new URL(`../${provenance.sourceRenderPath}`, import.meta.url))).digest('hex'),
+    provenance.sourceRenderSha256, 'full-wall relief maps the recorded local source-car render');
+  assert.deepEqual(provenance.uvRegion, [260, 132, 507, 379]);
+  assert.deepEqual(provenance.sectionIndices, [0, 1, 3, 5, 6, 8, 10, 11]);
+  assert.equal(relief.material.name, hulks.material.name, 'relief uses the existing hulks material draw');
+  const positions = relief.geometry.attributes.position, uv = relief.geometry.attributes.uv;
+  assert.ok(positions?.count > 100 && uv?.count === positions.count, 'actual raised relief surface has authored UVs');
+  const indices = relief.geometry.index;
+  const vertex = corner => indices ? indices.getX(corner) : corner;
+  const bins = new Map(), bounds = new THREE.Box3();
+  relief.updateMatrixWorld(true);
+  for (let i = 0; i < positions.count; i++) {
+    const point = new THREE.Vector3().fromBufferAttribute(positions, i).applyMatrix4(relief.matrixWorld);
+    bounds.expandByPoint(point);
+    const u = uv.getX(i) * 512, v = (1 - uv.getY(i)) * 512;
+    const primary = u >= 260 && u <= 507 && v >= 132 && v <= 379;
+    const patch = [1, 12, 14, 15].some(tile => {
+      const left = tile % 4 * 128 + 4, top = Math.floor(tile / 4) * 128 + 4;
+      return u >= left && u <= left + 119 && v >= top && v <= top + 119;
+    });
+    assert.ok(primary || patch,
+      `full-wall relief UV ${i} stays in a reserved padded source-car image`);
+  }
+  assert.ok(bounds.max.x - bounds.min.x >= 230 && bounds.min.y <= 2 && bounds.max.y >= 30 &&
+    bounds.max.z - bounds.min.z >= .04,
+  'actual relief reaches broad, tall and visibly raised wall bays');
+  let projectedArea = 0;
+  const faceCount = (indices?.count ?? positions.count) / 3;
+  for (let face = 0; face < faceCount; face++) {
+    const points = [0, 1, 2].map(corner => new THREE.Vector3().fromBufferAttribute(positions,
+      vertex(face * 3 + corner)).applyMatrix4(relief.matrixWorld));
+    const area = Math.abs((points[1].x - points[0].x) * (points[2].y - points[0].y) -
+      (points[1].y - points[0].y) * (points[2].x - points[0].x)) / 2;
+    const x = points.reduce((sum, point) => sum + point.x, 0) / 3;
+    const bin = Math.floor((x + 210) / 35);
+    if (bin >= 0 && bin < 12 && area > .001) bins.set(bin, (bins.get(bin) || 0) + area);
+    projectedArea += area;
+  }
+  assert.ok(projectedArea >= 4500, `relief visibly covers substantial facade area: ${projectedArea.toFixed(1)}m2`);
+  assert.ok([...bins.values()].filter(area => area >= 200).length >= 8,
+    `eight actual wall zones have source-car area, measured ${JSON.stringify([...bins.entries()])}`);
+  const carPositions = hulks.geometry.attributes.position, carWorld = hulks.matrixWorld;
+  hulks.updateMatrixWorld(true);
+  let foot = 0, upper = 0;
+  for (let i = 0; i < carPositions.count; i++) {
+    const point = new THREE.Vector3().fromBufferAttribute(carPositions, i).applyMatrix4(carWorld);
+    if (point.y <= 3) foot++;
+    if (point.y >= 26) upper++;
+  }
+  assert.ok(foot >= 100 && upper >= 100,
+    `retained source-derived 3D cars visibly anchor foot and upper silhouette: ${foot}/${upper} vertices`);
+});
+
+test('P2 exported salvage relief faces the actual wall inspection camera in every occupied zone', async () => {
+  const wall = await actualWall(), relief = wall.getObjectByName('source-car-relief');
+  assert.ok(relief?.isMesh, 'measure actual exported relief triangles');
+  relief.updateMatrixWorld(true);
+  const geometry = relief.geometry, positions = geometry.attributes.position, index = geometry.index;
+  const at = corner => index ? index.getX(corner) : corner;
+  const zones = new Map();
+  for (let face = 0; face < (index?.count ?? positions.count) / 3; face++) {
+    const points = [0, 1, 2].map(k => new THREE.Vector3().fromBufferAttribute(positions,
+      at(face * 3 + k)).applyMatrix4(relief.matrixWorld));
+    const normal = points[1].clone().sub(points[0]).cross(points[2].clone().sub(points[0]));
+    const projectedArea = Math.abs(normal.z) / 2;
+    if (projectedArea < .001) continue;
+    const centerX = points.reduce((sum, p) => sum + p.x, 0) / 3;
+    const zone = Math.floor((centerX + 210) / 35);
+    if (zone < 0 || zone >= 12) continue;
+    const row = zones.get(zone) ?? {front: 0, total: 0};
+    row.total += projectedArea;
+    if (normal.z < 0) row.front += projectedArea;
+    zones.set(zone, row);
+  }
+  const occupied = [...zones.entries()].filter(([, row]) => row.total >= 200);
+  assert.ok(occupied.length >= 8, 'measure eight substantial salvage zones');
+  for (const [zone, row] of occupied)
+    assert.ok(row.front / row.total >= .95,
+      `zone ${zone}: ${(100 * row.front / row.total).toFixed(1)}% of actual relief faces glTF -Z inspection camera`);
+});
+
 test('P2 wall skyline varies by section and upper braces have real ground paths', async () => {
   const wall = await actualWall(), skyline = new Map(), facadeDepth = new Map();
   wall.traverse(node => {

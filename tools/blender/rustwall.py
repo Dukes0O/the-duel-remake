@@ -23,10 +23,19 @@ p.add_argument('--p2', action='store_true', help='Write new Rustwall P2 review e
 p.add_argument('--p2-hulk-probe', action='store_true', help='Build only two offline welded-car proof hulks in ignored art-build')
 p.add_argument('--p2-section-probe', action='store_true', help='Build only one offline macro facade section in ignored art-build')
 p.add_argument('--p2-wheel-probe', action='store_true', help='Export one isolated cheap source-car tire measurement in ignored art-build')
+p.add_argument('--p2-relief-probe', action='store_true', help='Export one offline source-car relief and atlas packing proof')
+p.add_argument('--output-dir', help='Ignored isolated P2 QA output under art-build/rustwall-p2 only')
 args = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-out = root / 'public/assets/models/wasteland/rustwall'
-blend_dir = root / 'art-build/rustwall'
+qa_root=(root / 'art-build/rustwall-p2').resolve()
+if args.output_dir:
+    if not (args.p2 or args.p2_relief_probe):raise ValueError('--output-dir is for isolated P2 QA only')
+    requested=(root / args.output_dir).resolve()
+    if requested == qa_root or qa_root not in requested.parents:
+        raise ValueError('--output-dir must be a child of art-build/rustwall-p2')
+    out=requested
+else:out=root / 'public/assets/models/wasteland/rustwall'
+blend_dir=out if args.output_dir else root / 'art-build/rustwall'
 def glb_path(kind):
     return out / f'{kind}.glb'
 def blend_path(kind):
@@ -34,7 +43,9 @@ def blend_path(kind):
 def texture_path(name, label):
     return blend_dir / f'{name}-{label}.png'
 family = 'rustwall-p2' if args.p2 else 'rustwall'
-shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / family / f'round-{args.round}')
+shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or
+             (out / 'evidence' if args.output_dir else
+              root / '.evidence' / date.today().isoformat() / family / f'round-{args.round}'))
 if not shots.is_absolute():
     shots = root / shots
 if args.paths_only:
@@ -63,13 +74,26 @@ if args.paths_only:
                           'evidence': [str(proof / 'wheel-probe-front.png'),
                                        str(proof / 'wheel-probe-quarter.png'),str(proof / 'wheel-probe.json')]}))
         sys.exit(0)
+    if args.p2_relief_probe:
+        proof = out if args.output_dir else root / 'art-build/rustwall-p2'
+        print(json.dumps({'blend': [str(proof / 'relief-probe.blend')],
+                          'glb': [str(proof / 'relief-probe.glb')],
+                          'textures': [str(texture_path('hulks', label)) for label in ('color','surface','normal')],
+                          'evidence': [str(proof / name) for name in ('relief-probe.json','probe-relief-source.png',
+                                       'relief-probe-front.png','relief-probe-quarter.png',
+                                       'relief-probe-wall-scale.png',
+                                       'probe-atlas-color.png','probe-atlas-surface.png','probe-atlas-normal.png')]}))
+        sys.exit(0)
     print(json.dumps({'blend': [str(blend_path(kind)) for kind in ('wall', 'wash')],
                       'glb': [str(glb_path(kind)) for kind in ('wall', 'wash')],
                       'textures': [str(texture_path(name, label))
                                    for name in ('steel', 'hulks', 'details', 'rock')
                                    for label in (('color', 'surface', 'normal', 'emissive')
                                                  if name == 'details' else ('color', 'surface', 'normal'))],
-                      'evidence': [str(shots)]}))
+                      'evidence': [str(shots)] +
+                                  ([str(out / name) for name in ('wall-relief-source.png',
+                                   'wall-atlas-color.png','wall-atlas-surface.png','wall-atlas-normal.png')]
+                                   if args.output_dir else [])}))
     sys.exit(0)
 
 import bpy
@@ -190,14 +214,22 @@ def material(name):
     if name=='rock':
         # One continuous 1024 map for the complete rock, with winding strata.
         ry,rx=np.mgrid[:1024,:1024]
-        ripple=np.sin(rx*.009)*13+np.sin(rx*.027+ry*.002)*4
-        strata=np.sin((ry+ripple)*.075)*.026+np.sin((ry+ripple)*.022)*.027
+        ripple=np.sin(rx*.009)*17+np.sin(rx*.027+ry*.002)*7+rx*.16
+        phase=ry+ripple
+        strata=np.sin(phase*.075)*.026+np.sin(phase*.022)*.037
         erosion=np.sin(rx*.038+np.sin(ry*.006)*.9)*.028
         grain=rng.uniform(-.045,.045,(1024,1024))
         rockheight=strata+erosion+grain
-        weather=np.sin((ry+np.sin(rx*.011)*32)*.021)*.10 + np.sin((ry-rx*.31)*.047)*.055
-        color[:,:,:3]=np.array((.38,.29,.22))*(1+rockheight[:,:,None]+weather[:,:,None])
-        bands=np.exp(-(np.sin((ry+ripple)*.038)/.055)**2)
+        weather=np.sin((phase+np.sin(rx*.011)*24)*.019)*.10 + np.sin((ry-rx*.31)*.047)*.055
+        broad=np.sin(phase*.026)+.35*np.sin(phase*.071+rx*.006)
+        oxide=np.clip((broad-.15)*.48,0,.50)
+        chalk=np.clip((-broad-.18)*.40,0,.38)
+        base=np.array((.36,.275,.215))[None,None,:]
+        color[:,:,:3]=base*(1+rockheight[:,:,None]+weather[:,:,None])
+        color[:,:,:3]=color[:,:,:3]*(1-oxide[:,:,None])+np.array((.40,.245,.145))*oxide[:,:,None]
+        color[:,:,:3]=color[:,:,:3]*(1-chalk[:,:,None])+np.array((.46,.375,.29))*chalk[:,:,None]
+        fracture=np.clip(.55+.35*np.sin(rx*.018+ry*.004)+.25*np.sin(rx*.042-ry*.011),.15,1)
+        bands=np.exp(-(np.sin(phase*.038)/.065)**2)*fracture
         cracks=np.zeros((1024,1024))
         for _ in range(32):
             x0,y0=rng.uniform(0,1024,2);length=rng.uniform(22,140);slope=rng.uniform(-.7,.7)
@@ -498,16 +530,133 @@ def guard(name,mat,position):
     return obj
 
 
+def p2_facade(body,frames,relief):
+    """Twelve unequal sections, eight recessed source-car salvage fields."""
+    high_paths=('public/assets/models/classics/falcone_f42.glb',
+                'public/assets/models/unlocks/banshee_muscle.glb')
+    high=[welded_car_template(path) for path in high_paths]
+    cheap=[welded_car_template(path,body_target=150,trim_target=0,wheel_steps=6,
+        visible_wheels_only=True,normalized_height=1.65) for path in high_paths]
+    car_mesh=Geometry();placed=0
+    widths_left=[31,38,32,37,34,33.5]
+    widths_right=[35,31,40,32,36,31.5]
+    sections=[];x=-210
+    for width in widths_left:
+        sections.append((x,x+width));x+=width
+    assert abs(x+4.5)<.0001
+    x=4.5
+    for width in widths_right:
+        sections.append((x,x+width));x+=width
+    assert abs(x-210)<.0001
+    relief_sections={0,1,3,5,6,8,10,11}
+    crowns=[37.2,39.1,36.7,42.4,38.3,40.7,37.8,43.1,39.7,41.4,36.9,42.7]
+    for index,(left,right) in enumerate(sections):
+        width=right-left;center=(left+right)/2
+        front=-2.05-.48*(index%5)-.17*math.sin(index*2.1)
+        for edge in [left,right]:
+            post=edge+(.72 if abs(edge)<5 else -.40 if edge==right else .40)
+            frames.box((post,17.5,front-.72),(.95,35,1.5),6)
+        if index in relief_sections:
+            grid=[]
+            for iy in range(9):
+                row=[]
+                for ix in range(9):
+                    px=left+1.2+(width-2.4)*ix/8
+                    py=.35+31.9*iy/8
+                    pz=front+.75-.18*math.sin(ix*1.9+iy*.8+index)-.07*math.cos(iy*2.4)
+                    row.append(relief.vertex((px,py,pz)))
+                grid.append(row)
+            for iy in range(8):
+                for ix in range(8):
+                    u0=260+247*ix/8;u1=260+247*(ix+1)/8
+                    v0=132+247*iy/8;v1=132+247*(iy+1)/8
+                    relief.face([grid[iy][ix],grid[iy+1][ix],grid[iy+1][ix+1],grid[iy][ix+1]],
+                                0,[(u0/512,v0/512),(u0/512,v1/512),
+                                   (u1/512,v1/512),(u1/512,v0/512)],atlas=False)
+        for row in range(6):
+            if index in relief_sections:continue
+            y=2.88+row*5.78
+            inset=.15+(.28 if (index+row)%3==0 else 0)
+            face=front-inset
+            left_end=left+.9;right_end=right-.9
+            if right_end-left_end>3:
+                panel_width=right_end-left_end
+                # Irregular adjacent steel sheets retain broad painted regions.
+                body.box(((left_end+right_end)/2,y,face),(panel_width,5.50,.36),
+                         [4,9,2,5,8,13,1][(row+index*2)%7])
+                frames.box(((left_end+right_end)/2,y+2.79,face-.22),
+                           (panel_width+.2,.18,.38),6)
+        # Steel loads reach the ground in each section, including the upper crown.
+        frames.tube((left+1.3,.05,front-1.15),(right-1.5,30.8,front+.13),.24,6,6)
+        frames.tube((right-1.4,.05,front-.75),(left+2.0,34.8,front+.45),.19,6,6)
+        crown=crowns[index]
+        # Separate uneven salvage ledges replace broad triangular roof sheets.
+        for ledge,(a,b) in enumerate(((.04,.29),(.34,.62),(.67,.96))):
+            top=35.3+(crown-35)*[.44,.78,.57][(ledge+index)%3]
+            span=width*(b-a)
+            frames.box((left+width*(a+b)/2,(35+top)/2,front+.15),
+                       (span,top-35,.7),[2,5,9,13][(index+ledge)%4])
+            frames.box((left+width*(a+b)/2,top+.10,front-.18),
+                       (span+.28,.20,.94),6)
+        if index in relief_sections:
+            for x in (left+1.2,right-1.2):
+                frames.box((x,16,front-.75),(.55,32,1.0),6)
+            # Upper shelves transfer loads into vertical posts reaching y=0.
+            for y in (13.72,26.72):
+                frames.box((center,y,front-1.05),(width-2.6,.35,1.25),6)
+                frames.tube((left+1.2,.05,front-.82),(center,y,front-.95),.21,6,6)
+            for row,y in enumerate((.05,1.62,13.9,27.0)):
+                for col in range(3):
+                    variant=(row+col+index)%2
+                    cx=center+(col-1)*min(7.3,(width-6)/3)+.38*math.sin(row*1.9+index)
+                    cz=front-1.95-.25*((row+col+index)%3)
+                    stamp_welded_car(car_mesh,cheap[variant][0],cx,y,cz,
+                                     5.35,2.25,1.05+.05*((row+col)%3),
+                                     .04 if row%2 else -.04,
+                                     [-.25,.11,.29][(row+col+index)%3],
+                                     [0,4,5,2,13][(row+3*col+index)%5],
+                                     (row+col+index)%4!=0)
+                    placed+=1
+            if index in (5,6,10):
+                # Detailed cars break the upper line, supported by steel below.
+                top_y=35.35
+                frames.box((center,35.2,front-.8),(6.3,.36,1.8),6)
+                stamp_welded_car(car_mesh,high[index%2][0],center,top_y,front-1.1,
+                                 5.5,2.3,1.02,.04,.13,[0,4,5][index%3],True)
+                placed+=1
+        else:
+            # Four detailed heroes anchor the quieter steel sections at ground.
+            hero=index%2
+            stamp_welded_car(car_mesh,high[hero][0],center,0,front-2.1,
+                             5.5,2.3,1.03,.04,.12 if index%3==0 else -.08,
+                             [0,4,5,2,13][index%5],index%3!=0)
+            placed+=1
+    return car_mesh,[info for _,info in high],placed
+
+
 def wall():
     fresh();steel=material('steel');hulks=material('hulks');details=material('details')
     body,frames,wrecks,props,panel=Geometry(),Geometry(cap_tubes=False),Geometry(),Geometry(),Geometry()
+    relief_mesh=Geometry()
+    relief_path=relief_hash=relief_snapshots=None
+    if args.p2:
+        proof_dir=out if args.output_dir else root / 'art-build/rustwall-p2'
+        proof_dir.mkdir(parents=True,exist_ok=True)
+        source_paths=('public/assets/models/classics/falcone_f42.glb',
+                      'public/assets/models/unlocks/banshee_muscle.glb')
+        cheap_templates=[welded_car_template(path,body_target=150,trim_target=0,wheel_steps=6,
+                          visible_wheels_only=True,normalized_height=1.65) for path in source_paths]
+        relief_path,relief_hash,relief_snapshots=p2_prepare_relief_atlas(
+            hulks,cheap_templates,proof_dir,'wall')
     # Exact structural mass with a real empty 9 by 7 m passage all the way through.
     body.box((-107.25,17.5,4),(205.5,35,3),3)
     body.box((107.25,17.5,4),(205.5,35,3),3)
     body.box((0,21,4),(9,28,3),7)
     rng=np.random.default_rng(240923)
+    p2_cars=p2_sources=p2_placed=None
+    if args.p2:p2_cars,p2_sources,p2_placed=p2_facade(body,frames,relief_mesh)
     # Thirty irregular bays; hulk stacks remain full human/vehicle scale.
-    for bay in range(30):
+    for bay in range(0 if args.p2 else 30):
         x=-203+bay*14
         if abs(x)<10:continue
         salvage=bay%3==1
@@ -582,8 +731,10 @@ def wall():
         frames.box((x,35.8,-.2),(2.5,1.0,2.7),7)
         frames.tube((x,33.5,-.2),(x,35.8,-1.6),.15,5,6)
     for yy in [8,13,19,25,31,34.5]:frames.box((0,yy,1.29),(8.9,.22,.3),5)
-    for x in [-175,-119,-63,-21,21,77,133,189]:
-        tower(frames,props,x,height=7 if abs(x)<80 else 5)
+    tower_positions=[-175,-119,-63,-21,21,77,133,189]
+    tower_heights=[5.0,6.4,5.8,7.0,7.6,6.1,5.4,6.8] if args.p2 else [7 if abs(x)<80 else 5 for x in tower_positions]
+    for x,tower_height in zip(tower_positions,tower_heights):
+        tower(frames,props,x,height=tower_height)
         # The watch platforms need visible load paths into the wall, not
         # detached silhouettes perched above its top edge.
         frames.tube((x-2.2,35,1.3),(x-2.2,39.2,1.3),.12,5,6)
@@ -594,7 +745,7 @@ def wall():
             for side in [-1,1]:
                 frames.tube((x+side*2.0,36,1.4),(x+side*7.5,.3,-.8),.13,5,6)
     # Uneven roof salvage interrupts the structural core's straight top line.
-    for bay in range(30):
+    for bay in range(0 if args.p2 else 30):
         x=-203+bay*14
         if abs(x)<10:continue
         rise=[.9,1.6,.55,2.1,1.2][bay%5]
@@ -628,7 +779,7 @@ def wall():
         props.box((x,h/2,z),(1.4+float(rng.uniform(0,1.2)),h,.65),11)
     # Low broken cars give the facing a salvage foot and human-scale depth.
     # They stay outside the full vehicle opening and use the existing hulk draw.
-    for i in range(28):
+    for i in range(0 if args.p2 else 28):
         x=-198+i*14.65+float(rng.uniform(-1.0,1.0))
         if abs(x)<12:continue
         car(wrecks,x,-.22,-1.80-float(rng.uniform(0,.65)),
@@ -654,7 +805,21 @@ def wall():
     for x in [-18,18,-60,80]:
         for dx in [-.3,.3]:frames.tube((x+dx,0,-.9),(x+dx,35,-.9),.045,5)
         for yy in np.arange(.2,35,.4):frames.tube((x-.3,float(yy),-.95),(x+.3,float(yy),-.95),.035,6,4)
-    objects=[body.build('wall-body',steel),frames.build('scaffold-steel',steel),wrecks.build('hulk-stacks',hulks),props.build('wall-details',details),panel.build('gate-panel',steel)]
+    hulk_object=(p2_cars.build('welded-car-hulks',hulks,recalculate_normals=False)
+                 if args.p2 else wrecks.build('hulk-stacks',hulks))
+    if args.p2:
+        hulk_object['sources']=p2_sources
+        hulk_object['placedHulks']=p2_placed
+    objects=[body.build('wall-body',steel),frames.build('scaffold-steel',steel),hulk_object,
+             props.build('wall-details',details),panel.build('gate-panel',steel)]
+    if args.p2:
+        relief_object=relief_mesh.build('source-car-relief',hulks,recalculate_normals=False)
+        relief_object['sourceRenderPath']=str(relief_path.relative_to(root)).replace('\\','/')
+        relief_object['sourceRenderSha256']=relief_hash
+        relief_object['uvRegion']=[260,132,507,379]
+        relief_object['sectionIndices']=[0,1,3,5,6,8,10,11]
+        relief_object['atlasSnapshots']=relief_snapshots
+        objects.append(relief_object)
     places=[(-6.8,0,-1.8),(6.8,0,-1.8),(-14,35,-.1),(14,35,-.1),(-57,35,0),(67,35,0),(-125,35,0),(150,35,0)]
     for i,pos in enumerate(places):objects.append(guard(f'guard-{i+1:02}',details,pos))
     # Torches separate from human bounds, and above a safely readable hand.
@@ -733,6 +898,147 @@ def stage():
     bpy.context.collection.objects.link(cam);bpy.context.scene.camera=cam
     return cam
 
+
+def p2_prepare_relief_atlas(hulk_material, templates, proof_dir, snapshot_prefix):
+    """Render welded source cars offline, packing only the reserved hulk pixels."""
+    preexisting=set(bpy.data.objects)
+    source_geometry=Geometry();source_back=Geometry()
+    source_back.box((0,16,1.7),(31.5,32.4,.24),3)
+    for row in range(20):
+        for col in range(6):
+            template=templates[(row+col)%2][0]
+            jitter=.36*math.sin(row*1.71+col*.87)+.15*math.cos(row*.67-col*2)
+            x=-12.7+col*5.08+jitter
+            y=.05+row*1.59+.08*math.sin(row*1.91+col)
+            z=-.34*((row+col)%3)-.20*math.sin(row*.93-col*.7)
+            yaw=[-.22,.13,-.08,.32,.03,-.30][(row*3+col)%6]
+            stamp_welded_car(source_geometry,template,x,y,z,5.45,2.25,
+                             1.04+.075*((row+2*col)%3),.05 if (row+col)%2 else -.06,
+                             yaw,[0,4,5,2,13][(row+2*col)%5],(row+col)%5!=0)
+            if (row*7+col*3)%11==0:
+                source_back.box((x+1.5,y+.82,z+.36),(1.8,.48,.12),9)
+    source_back.build('SOURCE ONLY soot-dark recess',hulk_material)
+    source_geometry.build('SOURCE ONLY stacked welded cars',hulk_material,
+                          recalculate_normals=False)
+    source_camera=stage();source_camera.data.type='ORTHO';source_camera.data.ortho_scale=33
+    source_camera.location=bv((0,15.7,-90))
+    source_camera.rotation_euler=(bv((0,15.7,0))-source_camera.location).to_track_quat('-Z','Y').to_euler()
+    scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT'
+    scene.render.resolution_x=512;scene.render.resolution_y=512
+    scene.render.dither_intensity=0.0
+    scene.render.film_transparent=False
+    source_path=proof_dir / f'{snapshot_prefix}-relief-source.png'
+    scene.render.filepath=str(source_path);bpy.ops.render.render(write_still=True)
+    source_hash=digest(source_path)
+    source_image=bpy.data.images.load(str(source_path),check_existing=False)
+    source_pixels=np.empty(512*512*4,dtype=np.float32)
+    source_image.pixels.foreach_get(source_pixels)
+    source_pixels=source_pixels.reshape(512,512,4)
+    sample=np.linspace(0,511,248).round().astype(int)
+    painted=source_pixels[np.ix_(sample,sample)].copy()
+    luminance=np.mean(painted[:,:,:3],axis=2)
+    dy,dx=np.gradient(luminance)
+    vectors=np.stack([-dx*2,-dy*2,np.ones_like(dx)],axis=2)
+    vectors/=np.linalg.norm(vectors,axis=2,keepdims=True)
+    snapshots={}
+    for label in ('color','surface','normal'):
+        image=bpy.data.images[f'hulks-{label}']
+        # material() packed the initial palette. Discard that pack before
+        # editing, or glTF embeds stale bytes despite the new disk PNG.
+        if image.packed_file:image.unpack(method='REMOVE')
+        pixels=np.empty(512*512*4,dtype=np.float32);image.pixels.foreach_get(pixels)
+        pixels=pixels.reshape(512,512,4)
+        if label=='color':pixels[132:380,260:508,:3]=painted[:,:,:3]
+        elif label=='surface':
+            pixels[132:380,260:508,1]=.83
+            pixels[132:380,260:508,2]=.18
+        else:pixels[132:380,260:508,:3]=vectors*.5+.5
+        image.pixels.foreach_set(pixels.ravel());image.update();image.save()
+        encoded=Path(image.filepath_raw).read_bytes()
+        snapshot=proof_dir / f'{snapshot_prefix}-atlas-{label}.png'
+        snapshot.write_bytes(encoded)
+        snapshots[label]={'path':str(snapshot.relative_to(root)).replace('\\','/'),
+                          'sha256':digest(snapshot)}
+        image.pack(data=encoded,data_len=len(encoded))
+    for obj in set(bpy.data.objects)-preexisting:bpy.data.objects.remove(obj,do_unlink=True)
+    scene.render.engine='CYCLES';scene.render.resolution_x=1280;scene.render.resolution_y=720
+    return source_path,source_hash,snapshots
+
+
+if args.p2_relief_probe:
+    fresh();hulk_material=material('hulks')
+    proof_dir=out if args.output_dir else root / 'art-build/rustwall-p2'
+    proof_dir.mkdir(parents=True,exist_ok=True)
+    paths=('public/assets/models/classics/falcone_f42.glb',
+           'public/assets/models/unlocks/banshee_muscle.glb')
+    templates=[welded_car_template(path,body_target=150,trim_target=0,wheel_steps=6,
+               visible_wheels_only=True,normalized_height=1.65) for path in paths]
+    source_path,source_hash,snapshots=p2_prepare_relief_atlas(hulk_material,templates,proof_dir,'probe')
+    scene=bpy.context.scene
+    source_camera=stage();source_camera.data.type='ORTHO'
+    # The final probe contains a shallow irregular relief and genuine front
+    # cars sharing the same re-packed hulks material and one authored UV set.
+    relief_geometry=Geometry()
+    grid=[]
+    for iy in range(9):
+        row=[]
+        for ix in range(9):
+            x=-14+ix*3.5;y=.2+iy*3.85
+            z=-5.2-.20*math.sin(ix*1.9+iy*.8)-.08*math.cos(iy*2.4)
+            row.append(relief_geometry.vertex((x,y,z)))
+        grid.append(row)
+    for iy in range(8):
+        for ix in range(8):
+            ids=[grid[iy][ix],grid[iy+1][ix],grid[iy+1][ix+1],grid[iy][ix+1]]
+            x0=260+(247*ix/8);x1=260+(247*(ix+1)/8)
+            y0=132+(247*iy/8);y1=132+(247*(iy+1)/8)
+            relief_geometry.face(ids,0,[(x0/512,y0/512),(x0/512,y1/512),
+                                        (x1/512,y1/512),(x1/512,y0/512)],atlas=False)
+    relief=relief_geometry.build('source-car-relief',hulk_material,recalculate_normals=False)
+    relief['sourceRenderPath']=str(source_path.relative_to(root)).replace('\\','/')
+    relief['sourceRenderSha256']=source_hash
+    relief['uvRegion']=[260,132,507,379]
+    relief['atlasSnapshots']=snapshots
+    car_geometry=Geometry()
+    for col in range(2):
+        stamp_welded_car(car_geometry,templates[col][0],-3+col*6,.07,-5.7,5.35,2.25,
+                         1.05,.04,0,[0,4][col],col==1)
+    cars=car_geometry.build('welded-car-hulks',hulk_material,recalculate_normals=False)
+    cars['sources']=[info for _,info in templates];cars['placedHulks']=2
+    steel_material=material('steel')
+    steel_geometry=Geometry(cap_tubes=False)
+    for x in (-14.6,14.6):
+        steel_geometry.box((x,16,-5.65),(.9,32.2,1.45),6)
+        steel_geometry.tube((x,.05,-6.7),(x-(2.6 if x>0 else -2.6),25,-5.05),.28,6,6)
+    steel_geometry.box((0,31.9,-5.75),(30.2,.7,1.2),6)
+    steel_geometry.box((0,.35,-5.85),(30.2,.7,1.5),6)
+    steel=steel_geometry.build('relief-probe-grounded-steel',steel_material)
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in (relief,cars,steel):obj.select_set(True)
+    bpy.context.view_layer.objects.active=relief
+    glb=proof_dir / 'relief-probe.glb'
+    bpy.ops.export_scene.gltf(filepath=str(glb),export_format='GLB',use_selection=True,
+                              export_yup=True,export_animations=False,export_materials='EXPORT',export_extras=True)
+    for label,position,target,scale in [('front',(0,15,-70),(0,15,-5),37),
+                                         ('quarter',(31,18,-53),(0,15,-5),37),
+                                         ('wall-scale',(0,17,-110),(0,16,-5),100)]:
+        source_camera.location=bv(position)
+        source_camera.rotation_euler=(bv(target)-source_camera.location).to_track_quat('-Z','Y').to_euler()
+        scene.render.resolution_x=960;scene.render.resolution_y=720
+        source_camera.data.ortho_scale=scale
+        scene.render.filepath=str(proof_dir / f'relief-probe-{label}.png')
+        bpy.ops.render.render(write_still=True)
+    bpy.ops.wm.save_as_mainfile(filepath=str(proof_dir / 'relief-probe.blend'))
+    manifest={'sources':[{'path':path,'sha256':digest(root/path)} for path in paths],
+              'sourceRenderPath':str(source_path.relative_to(root)).replace('\\','/'),
+              'sourceRenderSha256':source_hash,'uvRegion':[260,132,507,379],
+              'atlasSnapshots':snapshots,
+              'reliefTriangles':len(relief.data.polygons)*2,
+              'carTriangles':sum(len(poly.vertices)-2 for poly in cars.data.polygons),
+              'glbSha256':digest(glb)}
+    (proof_dir/'relief-probe.json').write_text(json.dumps(manifest,indent=2)+'\n',
+                                               encoding='utf-8',newline='\n')
+    print('RUSTWALL_P2_RELIEF_PROBE '+json.dumps(manifest));sys.exit(0)
 
 if args.p2_wheel_probe:
     fresh();hulk_material=material('hulks')
@@ -906,6 +1212,7 @@ captures=[
     shot('full-span','wall',[0,60,-320],[0,17,0],45,crop=[0,0,1536,422]),
     shot('wash-module','wash',[18,9,-26],[0,9,0],42,scale=[3.2,19,4.5]),
 ]
+if args.p2:captures[-1]['comparisonScope']='source-module-vs-runtime-bank'
 assets={};budgets={}
 for kind,builder in [('wall',wall),('wash',wash)]:
     objects=builder();budgets[kind]=stats(objects)
@@ -936,5 +1243,10 @@ manifest=dict(round=args.round,blender=bpy.app.version_string,seconds=time.perf_
               dimensions=dict(coreWidth=420,coreHeight=35,gateWidth=9,gateHeight=7,gateLift=7.25,guardHeight=1.8),
               wash=dict(prototypeTriangles=144,observedBanks=179,observedTriangles=25776,
                         normalizedBounds=[[-1,0,-1],[1,1,1]],referenceNote='No wash close-up in reference; isolated module is a geometry review, actual course placement is captured separately.'))
+if args.p2:
+    context_path='public/assets/reference/wasteland-art-direction.png'
+    manifest['phase']='EGG-02-P2'
+    manifest['contextReference']=dict(path=context_path,sha256=digest(root/context_path),
+                                      crop=[1010,15,1470,310],scope='environment-context')
 (shots/'blender-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf8',newline='\n')
 print('RUSTWALL_RESULT '+json.dumps(dict(seconds=manifest['seconds'],budgets=budgets)))
