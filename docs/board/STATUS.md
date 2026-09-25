@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-25T12:32:47.680Z
+Observed at: 2026-09-25T12:34:14.261Z
 
-Observation commit: 4acf52853f9876b19ff2a4a2d0e3ab0995110a3f
+Observation commit: 47fd1cc578a6a94e803d383413c9ea59d3d3b93f
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 4acf52853f9876b19ff2a4a2d0e3ab0995110a3f
+Integration HEAD: 47fd1cc578a6a94e803d383413c9ea59d3d3b93f
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -32,7 +32,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/gfx-02-p1 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-02-p1 |
 | lane/audio/aud-10 | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/audio/aud-12 | 0 | unknown | true | false | unknown |
 
@@ -53,12 +52,12 @@ Targets are advisory. Change compares with the previous status observation when 
 | Wasteland models | 78,930,708 B | +0 B | 60,000,000 B |
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
-| Largest review sheet | 255,671 B | +45,343 B | 500,000 B |
-| Review `looks/` | 7,351,749 B | +771,920 B | 20,000,000 B |
-| Added bytes in last merge | 2,245,383 B | +2,222,577 B | 5,000,000 B |
+| Largest review sheet | 255,671 B | +0 B | 500,000 B |
+| Review `looks/` | 7,351,749 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 2,245,383 B | +0 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 321,437,696 B | +1,613,824 B | unavailable |
-| Lane folders | 1 | +0 | unavailable |
+| Git objects | 321,557,504 B | +119,808 B | unavailable |
+| Lane folders | 0 | -1 | unavailable |
 
 ## Backups
 
@@ -66,7 +65,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 4acf52853f9876b19ff2a4a2d0e3ab0995110a3f
+- Local integration/wasteland: 47fd1cc578a6a94e803d383413c9ea59d3d3b93f
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

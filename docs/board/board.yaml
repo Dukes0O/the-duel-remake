@@ -383,9 +383,9 @@ tasks:
     lane: VIS
     size: M
     needs: [GFX-02-P1]
-    status: backlog
-    owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, public/assets/models/wasteland/first-person/, docs/board/looks/first-person-p2/, docs/changes/GFX-02-P2.md]
-    hooks: [tools/test-first-person-polish.mjs, tools/first-person-contact.mjs, tools/test-first-person-contact.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    status: building
+    owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p2-source.json, public/assets/models/wasteland/first-person/, docs/board/looks/first-person-p2/, docs/changes/GFX-02-P2.md]
+    hooks: [tools/test-first-person-cloth.mjs, tools/test-first-person-polish.mjs, tools/first-person-contact.mjs, tools/test-first-person-contact.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [test_author, reviewer, art_critic, browser_qa]
     flag: wasteland2
     acceptance:
@@ -393,7 +393,7 @@ tasks:
       - "Use actual exported geometry and rendered material consumers in independent tests; preserve connected anatomy, skin, rig, clips, tools and8000 loaded-triangle/three-draw limits. Do not replace a missing visual score with a source assertion."
       - "Complete a valid fixed-surface contact method across reload boundaries, recoil and repair; unsupported open targets or sparse patches cannot pass. Keep15/20mm gaps and5mm penetration limits unless separately reviewed evidence changes the design."
       - "Require every SPEC0.3 score at least four, actual High/Performance motion views and quiet baseline/candidate/baseline frame proof before Rook runtime promotion or all-eight conversion."
-    note: "Residual acceptance from the bounded P1 Rook-only proof. Formal R3 is3/4/3/3 in both reviews; selected paint is consumed correctly but silhouette, wrap/glove construction and complete contact remain unfinished. Current runtime hands/tools stay selected. No new implementation starts from this backlog entry alone."
+    note: "Residual acceptance from the bounded P1 Rook-only proof. Formal R3 is3/4/3/3 in both reviews; selected paint is consumed correctly but silhouette, wrap/glove construction and complete contact remain unfinished. Current runtime hands/tools stay selected. Start with the separately designed sleeve construction proof; contact changes require a written sampling contract and independent reds."
   - id: EGG-02
     title: "Rustwall gate and salt-flat fidelity rounds one to three"
     priority: 9
