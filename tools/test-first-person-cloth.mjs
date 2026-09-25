@@ -192,10 +192,10 @@ test('frame assessor rejects invented proof families with otherwise valid A1/B/A
     'an unrecognized proof family cannot inherit a valid P1 frame verdict');
 });
 
-function syntheticTriptych() {
+function syntheticTriptych(colors=[[201,43,173],[34,196,47],[208,181,35]]) {
   const size=1254,row=size*3+1,raw=Buffer.alloc(row*size);
   for(let y=0;y<size;y++)for(let x=0;x<size;x++) {
-    const at=y*row+1+x*3,base=[[201,43,173],[34,196,47],[208,181,35]][Math.floor(x/418)];
+    const at=y*row+1+x*3,base=colors[Math.floor(x/418)];
     for(let c=0;c<3;c++)raw[at+c]=base[c]+((x+y)%11);
   }
   const table=Array.from({length:256},(_,i)=>{for(let n=0;n<8;n++)
@@ -210,6 +210,30 @@ function syntheticTriptych() {
   return Buffer.concat([Buffer.from('89504e470d0a1a0a','hex'),
     chunk('IHDR',ihdr),chunk('IDAT',deflateSync(raw)),chunk('IEND',Buffer.alloc(0))]);
 }
+
+test('P2 optional cloth input is paired, hashed and isolated before any output', () => {
+  const dir=join(root,'art-build/first-person-p2/test-cloth-paint-path');
+  mkdirSync(dir,{recursive:true});
+  const triptych=join(dir,'triptych.png'),cloth=join(dir,'cloth.png'),out=join(dir,'candidate');
+  writeFileSync(triptych,syntheticTriptych());
+  writeFileSync(cloth,syntheticTriptych([[24,38,210],[220,35,40],[36,216,185]]));
+  const generator=join(root,'tools/blender/first-person-gear.py');
+  const common=['--','--root',root,'--round','2','--p2-rook','--output-dir',out,
+    '--paths-only','--p2-paint',triptych,'--p2-paint-sha256',hash(readFileSync(triptych))];
+  const run=more=>spawnSync('python',[generator,...common,...more],
+    {cwd:root,encoding:'utf8',timeout:10000});
+  const valid=run(['--p2-cloth-paint',cloth,'--p2-cloth-paint-sha256',hash(readFileSync(cloth))]);
+  assert.equal(valid.status,0,valid.stderr||valid.stdout);
+  assert.equal(existsSync(out),false,'paths-only cannot create P2 cloth output');
+  for(const bad of [
+    ['--p2-cloth-paint',cloth],
+    ['--p2-cloth-paint-sha256',hash(readFileSync(cloth))],
+    ['--p2-cloth-paint',cloth,'--p2-cloth-paint-sha256','0'.repeat(64)],
+    ['--p2-cloth-paint',join(root,'public/assets/reference/wasteland-rpg.png'),
+      '--p2-cloth-paint-sha256',hash(readFileSync(join(root,'public/assets/reference/wasteland-rpg.png')))],
+  ])assert.notEqual(run(bad).status,0,'incomplete, mismatched or public cloth input must reject');
+  assert.equal(existsSync(out),false,'rejected input cannot write the candidate');
+});
 
 test('P2 paint and output path planning reject unsafe identities before a build', () => {
   const dir=join(root,'art-build/first-person-p2/test-cloth');
