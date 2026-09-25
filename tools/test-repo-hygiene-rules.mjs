@@ -100,6 +100,14 @@ try {
       `failure identifies ${path}`);
   });
 
+  test('a kept audio take has a valid home in audio-src', () => {
+    const root = fixture('kept-audio');
+    put(root, 'audio-src/voices/gatekeeper-welcome.mp3', 'kept voice take');
+    const { status, report } = run(hygieneTool, root);
+    same(status, 0, 'SPEC 0.9 kept audio passes placement');
+    same(report.failures, [], 'audio in audio-src is a kept source, not a raw capture');
+  });
+
   test('size targets report without blocking a lane', () => {
     const root = fixture('large-runtime-file');
     const path = 'public/assets/models/large-runtime.glb';
