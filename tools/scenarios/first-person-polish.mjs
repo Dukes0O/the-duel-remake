@@ -3,6 +3,7 @@ import {join, resolve, relative, extname} from 'node:path';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
+import {createActualContactPlan,collectActualCandidateContact} from '../first-person-contact.mjs';
 
 const IDS = ['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'];
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -81,6 +82,7 @@ export async function run(context) {
   const productionPath = join(root,'public/assets/models/wasteland/first-person/hands/rook.glb');
   const candidate = await validateFirstPersonCandidatePath({root,candidatePath,productionPath});
   const candidateBytes = await readFile(candidate.absolute);
+  const contactOnly = process.env.GFX_FIRST_PERSON_CONTACT_ONLY === '1';
   const blender = JSON.parse(await readFile(join(root,
     'art-build/first-person-p1/candidate/evidence/blender-manifest.json'),'utf8'));
   if (blender.family !== 'first-person-p1' || blender.round !== round ||
@@ -88,7 +90,7 @@ export async function run(context) {
     throw Error('Frozen Blender source module does not match selected Rook candidate');
   const camera = {position:[0,0,0],target:[0,0,-1],verticalFov:72,near:.15,width:1280,height:720};
   if (JSON.stringify(blender.camera) !== JSON.stringify(camera)) throw Error('Blender camera changed');
-  const manifestPath = join(context.outputDir,'captures.json');
+  const manifestPath = join(context.outputDir,contactOnly?'contact.json':'captures.json');
   try {await access(manifestPath);throw Error('Completed first-person P1 evidence is immutable');}
   catch (error) {if (error.code !== 'ENOENT') throw error;}
   const relativePath = path => relative(root,path).replaceAll('\\','/');
@@ -101,6 +103,7 @@ export async function run(context) {
     productionBefore,productionAfter:null,qualities:{},captures:[],orderedMotion:[],
     frameStatus:'unmeasured',loadErrors:[]};
   const base64 = candidateBytes.toString('base64');
+  const contactReports=[];
   for (const quality of ['high','performance']) {
     await context.command('Emulation.setDeviceMetricsOverride',
       {width:1280,height:720,deviceScaleFactor:1,mobile:false});
@@ -134,6 +137,10 @@ export async function run(context) {
     await context.waitFor('window.__qaApp.visualReady','first-person course ready',60000);
     const qualityObserved = await context.evaluate("document.querySelector('#graphics-quality')?.value");
     if (qualityObserved !== quality) throw Error('Actual browser quality differs from requested '+quality);
+    if (contactOnly) {
+      contactReports.push({quality,report:await productionContactObservation(context,root,candidate.absolute)});
+      continue;
+    }
     const motion = await realInputMotion(context,quality,relativePath);
     evidence.orderedMotion.push(...motion);
     await key(context,'keyDown','KeyF','f',70);
@@ -161,6 +168,14 @@ export async function run(context) {
       productionBefore,productionAfter:await handHashes(),swapCount:candidateRequests});
   }
   evidence.productionAfter = await handHashes();
+  if (contactOnly) {
+    await writeFile(manifestPath,JSON.stringify({family:'first-person-p1-contact',round,
+      observationCommit:evidence.observationCommit,candidate:evidence.candidate,
+      productionBefore,productionAfter:evidence.productionAfter,qualities:contactReports},null,2)+'\n',
+    {flag:'wx'});
+    console.log('First-person P1 actual rendered contact diagnostic saved; inspect verdict and unsupported geometry.');
+    return;
+  }
   if (evidence.loadErrors.length) throw Error('First-person candidate load errors: '+evidence.loadErrors.join('; '));
   if (evidence.captures.length !== 16) throw Error('Missing High/Performance matched Rook poses');
   await writeFile(manifestPath,JSON.stringify(evidence,null,2)+'\n',{flag:'wx'});
@@ -295,4 +310,142 @@ async function matchedPose(context,source,quality) {
       actualCamera:{position:r.camera.position.toArray(),quaternion:r.camera.quaternion.toArray(),
         fov:r.camera.fov,near:r.camera.near,far:r.camera.far,aspect:r.camera.aspect}};
   })()`);
+}
+
+// This diagnostic samples the production renderer after each pose. The bind
+// transfer is full once; later transfers contain only stable selected IDs.
+async function productionContactObservation(context,root,candidatePath) {
+  await key(context,'keyDown','KeyF','f',70);
+  await context.evaluate('window.__qaApp.advance(.42)');
+  await key(context,'keyUp','KeyF','f',70);
+  await context.evaluate('window.__render.renderFrame()');
+  await context.waitFor("window.__render.scene.getObjectByName('First-person hands and gear')?.userData.assetStatus==='ready'",
+    'contact diagnostic Rook hands ready',60000);
+  await context.evaluate(`(() => {
+    window.__qaP1ContactStamp=0;
+    window.__qaP1Snapshot=(requested,selection=null) => {
+      const r=window.__render,s=window.__qaApp.duel.state;
+      r.renderFrame();
+      const rig=r.scene.getObjectByName('First-person hands and gear');
+      if(rig?.userData.assetStatus!=='ready'||!rig.visible)
+        throw Error('Production first-person gear is not rendered');
+      rig.updateMatrixWorld(true);r.camera.updateMatrixWorld(true);
+      const active=node=>{for(let p=node;p;p=p.parent)if(!p.visible)return false;return true;};
+      const hand=[];rig.traverse(node=>{if(node.isSkinnedMesh&&node.userData.handRegions&&active(node))hand.push(node);});
+      if(hand.length!==1)throw Error('Expected one visible Rook hand skinned mesh, got '+hand.length);
+      const mesh=hand[0],geometry=mesh.geometry,position=geometry.attributes.position;
+      const point=(node,id)=>{
+        const value=node.position.clone().fromBufferAttribute(node.geometry.attributes.position,id);
+        if(node.isSkinnedMesh)node.applyBoneTransform(id,value);
+        node.localToWorld(value);r.camera.worldToLocal(value);
+        return value.toArray();
+      };
+      const faceIds=(geo)=>{
+        const idx=geo.index;const count=idx?idx.count:geo.attributes.position.count;
+        return Array.from({length:count/3},(_,i)=>({id:i,vertexIds:[0,1,2].map(k=>idx?idx.getX(i*3+k):i*3+k)}));
+      };
+      const allHand=selection===null;
+      const wanted=allHand?Array.from({length:position.count},(_,i)=>i):selection.handIds;
+      const positions=Object.fromEntries(wanted.map(id=>[id,point(mesh,id)]));
+      const regions={};
+      if(allHand)for(const [name,hint] of Object.entries(mesh.userData.handRegions)) {
+        const center=hint.center,radius=hint.radiusMetres;
+        let closest=-1,best=Infinity;
+        for(let id=0;id<position.count;id++) {
+          const v=mesh.position.clone().fromBufferAttribute(position,id).toArray();
+          const d=Math.hypot(...v.map((n,k)=>n-center[k]));
+          if(d<best){best=d;closest=id;}
+        }
+        if(best>radius)throw Error('Hand region has no source vertex: '+name);
+        // The authored selector center is skinned with the nearest source
+        // vertex's weights. Keep its offset rather than snapping it to that
+        // vertex, which would silently move the 15 mm selection sphere.
+        const posed=mesh.position.clone().set(...center);
+        mesh.applyBoneTransform(closest,posed);mesh.localToWorld(posed);
+        r.camera.worldToLocal(posed);
+        regions[name]={center:posed.toArray(),radiusMetres:radius,
+          sourceCenter:center,weightVertexId:closest};
+      }
+      if(allHand) {
+        regions['R:index']=regions['R:indexTip'];regions['R:thumb']=regions['R:thumbTip'];
+        regions['L:index']=regions['L:indexTip'];regions['L:thumb']=regions['L:thumbTip'];
+        regions['L:support']=regions['L:palm'];
+      }
+      const tools={};
+      for(const [key,name] of [['rpgBody','rpg-body'],['loadedRocket','loaded-rocket'],['wrenchBody','wrench-body']]) {
+        const nodes=[];rig.traverse(node=>{if(node.isMesh&&node.name===name&&active(node))nodes.push(node);});
+        if(nodes.length>1)throw Error('Duplicate visible mounted tool mesh: '+name);
+        if(!nodes.length)continue;
+        const node=nodes[0],faces=faceIds(node.geometry);
+        const allowed=selection?.toolIds?.[key];
+        tools[key]=faces.filter(face=>!allowed||allowed.includes(face.id)).map(face=>({
+          id:face.id,vertices:face.vertexIds.map(id=>point(node,id))}));
+      }
+      const p=rig.userData.presentation;
+      const clip=p.action==='idle'?(p.weapon==='wrench'?'wrench-idle':p.aim?'aim':'idle'):p.action;
+      const actual={clip,progress:p.action==='idle'?s.stageTimeSec%1:p.actionProgress};
+      return {sampleStamp:++window.__qaP1ContactStamp,requested,actual,
+        hand:{positions,...(allHand?{faces:faceIds(geometry),regions}:{})},tools,
+        presentation:{...p},candidateRequests:window.__rookCandidateSwapCount};
+    };
+  })()`);
+  const setPose=async (clip,progress,tool) => {
+    await context.evaluate(`(() => {
+      const s=window.__qaApp.duel.state,r=window.__render;
+      const clip=${JSON.stringify(clip)},progress=${progress},tool=${JSON.stringify(tool)};
+      if(clip==='post-reload-idle') {
+        if(s.footWeapons.serial!==1||!Number.isFinite(s.footWeapons.nextFireAt))
+          throw Error('Post-reload sample lost the production shot state');
+        s.stageTimeSec=Math.ceil(s.footWeapons.nextFireAt)+progress;
+        r.renderFrame();return;
+      }
+      Object.assign(s.fighter,{crewId:'rook',speed:0,airHeight:0,verticalSpeed:0,knockedDown:false});
+      s.stageTimeSec=clip==='idle'||clip==='wrench-idle'||clip==='aim'?progress:10;
+      s.fighterInput={aim:clip==='aim'};
+      Object.assign(s.footWeapons,{selected:tool,ammo:3,serial:0,lastFireAt:undefined,
+        nextFireAt:0,repairing:false,repairSeconds:0,repairAmount:0});
+      if(clip==='fire')Object.assign(s.footWeapons,{serial:1,lastFireAt:10-.22*progress,nextFireAt:12});
+      else if(clip==='reload') {
+        const age=.22+1.98*progress;
+        Object.assign(s.footWeapons,{serial:1,lastFireAt:10-age,nextFireAt:10-age+2.2});
+      } else if(clip==='repair')Object.assign(s.footWeapons,{repairing:true,
+        repairSeconds:progress*4,repairAmount:40*progress});
+      r.renderFrame();
+    })()`);
+    await context.waitFor("window.__render.scene.getObjectByName('First-person hands and gear')?.userData.assetStatus==='ready'",
+      'mounted contact tool ready',60000);
+  };
+  await setPose('idle',.25,'rpg');
+  const rpgBind=await context.evaluate("window.__qaP1Snapshot({clip:'idle',progress:.25})");
+  await setPose('wrench-idle',.25,'wrench');
+  const wrenchBind=await context.evaluate("window.__qaP1Snapshot({clip:'wrench-idle',progress:.25})");
+  const bindSnapshot={hand:rpgBind.hand,handByTool:{rpg:rpgBind.hand,wrench:wrenchBind.hand},
+    tools:{...rpgBind.tools,...wrenchBind.tools}};
+  const plan=createActualContactPlan({candidatePath,
+    rpgPath:join(root,'public/assets/models/wasteland/first-person/rpg.glb'),
+    wrenchPath:join(root,'public/assets/models/wasteland/first-person/wrench.glb'),bindSnapshot});
+  const handIds=[...new Set(Object.values(plan.patches).flatMap(patch=>patch.vertexIds))];
+  const toolIds={
+    rpgBody:[...new Set(['rpg-right-handle','rpg-left-support'].flatMap(name=>plan.componentIds[name].triangleIds))],
+    loadedRocket:plan.componentIds['rpg-rocket'].triangleIds,
+    wrenchBody:plan.componentIds['wrench-handle'].triangleIds,
+  };
+  const phases=[['idle',.25,'rpg'],['aim',.25,'rpg'],['fire',.1,'rpg'],
+    ...[.18,.48,.76,.90,.999].map(progress=>['reload',progress,'rpg']),
+    ['idle',.25,'rpg','post-reload-idle'],
+    ['wrench-idle',.25,'wrench'],...[.25,.5,.75,1].map(progress=>['repair',progress,'wrench'])];
+  const poseSamples=[];
+  for(const [clip,progress,tool,kind] of phases) {
+    await setPose(kind||clip,progress,tool);
+    const requested={clip,progress};
+    const sample=await context.evaluate(`window.__qaP1Snapshot(${JSON.stringify(requested)},${JSON.stringify({handIds,toolIds})})`);
+    sample.geometryHash=sha(Buffer.from(JSON.stringify({hand:sample.hand,tools:sample.tools})));
+    if(sample.candidateRequests!==1)throw Error('Contact sample did not use exactly one Rook candidate request');
+    poseSamples.push(sample);
+  }
+  const report=collectActualCandidateContact({plan,poseSamples});
+  return {...report,renderedPresentation:poseSamples.map(sample=>sample.presentation),
+    bind:{handVertices:Object.keys(bindSnapshot.hand.positions).length,
+      handFaces:bindSnapshot.hand.faces.length,
+      toolTriangles:Object.fromEntries(Object.entries(bindSnapshot.tools).map(([name,faces])=>[name,faces.length]))}};
 }
