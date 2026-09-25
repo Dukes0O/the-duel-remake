@@ -1671,7 +1671,7 @@ tasks:
     lane: TOOL
     size: S
     needs: [EGG-02-P2, FIX-RUSTWALL-CLEAN]
-    status: building
+    status: merged
     owns: [docs/ASSET_PIPELINE.md, docs/board/decisions.md, docs/changes/EGG-02-P2.md, docs/changes/JANITOR-RUSTWALL-NOTE.md]
     helpers: [reviewer, test_runner]
     acceptance:
