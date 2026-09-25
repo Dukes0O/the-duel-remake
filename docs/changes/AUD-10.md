@@ -1,6 +1,6 @@
 ---
 task: AUD-10
-status: in-progress
+status: ready-to-merge
 kind: refactor
 flag: wasteland2
 player_facing: yes
@@ -8,9 +8,8 @@ player_facing: yes
 
 # Sound bank and mixer foundation
 
-Implementation and all five strict waveform comparisons now pass. Fresh lane,
-build, full tier and the Director's independent review remain before readiness.
-No tolerance approval is needed; no threshold was changed.
+Implementation, all five strict waveform comparisons, fresh lane/build and
+independent review pass. No tolerance approval is needed; no threshold changed.
 
 ## Design and implementation
 
@@ -96,14 +95,37 @@ API's selective disconnect. No numerical acceptance target was lowered and no
 scenario, variant, replay or fault injection was removed. The packed audio
 unit file was formatted for readable review; unrelated assertions are intact.
 
-## Gates and ownership
+## Independent review and final recorded race
 
-Before this routing correction, integration sync 568f2dc passed lane 262/262 in
-361.68 seconds and build in 363 ms. Frozen ff58086 passed full 262/262 in
-371.31 seconds with clean start/end. All 162 replay fingerprints and 48/48
-expansion drives passed unchanged. These are prior-code results; fresh gates
-are required for the correction. Director will arrange independent review.
-Kyle requested this builder work alone; no subagents were used in this lane.
+The Director independently reviewed frozen 0b5a731 routing, bus assertions,
+group fades and cleanup, verified unchanged numerical PCM checks and strict
+baseline source, and ran the frozen bank tests with native-like connections.
+No finding remains. The later booth fix and finite-flight policy have their
+own notes; the mixer stayed frozen. Kyle requested this builder work alone;
+no subagents were used in this lane.
+
+The post-fix native-rate race captured 790 frames, 23 events and seven tracks.
+All ten original gates pass: correlation .980, zero lag, peak -1.555 dBFS,
+no clips/clicks/gaps, weapon contrast >=12.399 dB, distance difference 3.096 dB.
+LUFS/true peak are -17.75/-1.52; ten loop seams and three-variant repetition
+pass. Port 21041, zero warnings/errors, memory-only storage. Evidence:
+audio-race-2026-09-25T08-16-46-808Z. Human listening is still flagged.
+
+
+## Handoff gate
+
+Integration/wasteland was merged at 9a11eab (integration parent 0b1af27)
+before readiness. On that frozen source, lane tier with --changed --jobs 8
+passed 262/262, zero failures or skipped suites, in 361.08 seconds. Production
+build passed in 392 ms with the existing large-chunk advisory. All 162 replay
+fingerprints are unchanged; all 48 expansion drives completed and won.
+No assertion was relaxed. No simulation or save-format change is included.
+
+Gate logs live in .evidence/2026-09-25/audio-ready/. The session-ending
+`node tools/run-tests.mjs --tier full --jobs 8 --keep-going` runs on the final
+ready-note commit; full.log and full-tier.json record that exact commit and
+result. The Director merges the series; this lane never merges into integration,
+pushes, edits live files, or updates board/status/run-log files directly.
 
 ## Removed
 
