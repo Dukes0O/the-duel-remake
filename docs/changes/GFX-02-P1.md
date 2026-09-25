@@ -1,6 +1,6 @@
 # GFX-02-P1: first-person Rook hand proof
 
-status: Rook-only development proof complete; likeness 3, scoped idle frame 4, runtime unchanged; final lane gate pending
+status: ready-to-merge as a non-promoted Rook development proof; likeness 3, scoped idle frame 4, runtime unchanged
 
 ## Baseline and decision
 
@@ -124,6 +124,8 @@ To rebuild the selected painted candidate from a clean checkout, retain the orig
 
 ## Removed
 
-The P1 evidence override contract now permits only a resolved dedicated subfolder under the candidate output or the repository's ignored `.evidence` folder. Reject public, outside, junction escapes and the bare `.evidence` root before writes. GLB, blend, and texture output remains in the selected candidate subtree. The first path-guard source edit preceded this added bare-root/junction test request; record that chronology honestly. The existing public/outside override red was recorded before the guard.
+The P1 candidate replaced its own disconnected fingertip root caps and extra-face bridges with a connected open-root palm/web surface, and replaced P1-only procedural cuff/material/fold code paths with the authored wrapped cuff, physical-angle folds and explicit selected paint. The initial unused top-row copy of selected paint was removed after the actual-face consumer red; both protected skin regions were retained byte-for-byte. The ordinary eight-hand runtime generator path and production binaries remain, since the candidate did not reach likeness four. The P1 evidence override permits only a resolved dedicated folder below candidate output or ignored `.evidence`; public, outside, junction escapes and bare `.evidence` are rejected before writes. The source guard preceded the added bare-root/junction regression, while the original public/outside red preceded the guard. Rejected ignored raw review/build/candidate outputs are queued for normal after-merge janitor consumption once the source recipe and verdict are retained. Ordinary Git history remains unless Kyle separately approves a rewrite.
 
-Nothing removed in the design step. A later accepted runtime replacement would replace the superseded Rook binary in place; ordinary Git text/binary history remains unless Kyle separately approves a history rewrite. Rejected candidates stay ignored and are consumed after review.
+## Final lane gate
+
+The first full lane check on clean commit `8dbae18` passed `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 268/268 in 394.41 seconds, including 162/162 replay fingerprints across 18 cases and 48/48 expansion drives. `npm run build` built 222 modules in 372 ms with only the standard chunk-size warning. `git diff --check` and lane status were clean. Raw logs are ignored `.evidence/gfx-02-p1-lane-gate.log` and `.evidence/gfx-02-p1-build.log`. This note-only status/Removed correction is the final tracked change; the required lane/build rerun on its commit is pending, so readiness means implementation and review are complete, subject to that exact-commit gate.
