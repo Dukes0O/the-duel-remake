@@ -91,7 +91,10 @@ function preview(id, index) {
   );
   audio.mixer.output = () => output.input;
   try {
-    if (id === 'combat.blast') {
+    if (def.files) {
+      audio.cueIndices.set(id, index);
+      audio._playCue(id);
+    } else if (id === 'combat.blast') {
       audio.blastIndex = index;
       audio._runCue(id, () =>
         audio._combatBlast({ qaSide: 0.6, qaDistance: 15 }, state, course),

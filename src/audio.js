@@ -62,6 +62,8 @@ export class EngineAudio {
     this.nextRadar = 0;
     this.samples = {};
     this.cueBuffers = {};
+    this.cueIndices = new Map();
+    this.projectileVoices = new Map();
     this.pendingGatekeeper = null;
     this.sampleStatus = 'locked';
     this.ambience = {};
@@ -210,13 +212,18 @@ export class EngineAudio {
     if (this._cueBuffersPromise) return this._cueBuffersPromise;
     this._cueBuffersPromise = Promise.allSettled(
       Object.entries(SOUND_BANK)
-        .filter(([, cue]) => cue.file && !cue.sample && !cue.biome)
+        .filter(
+          ([, cue]) => (cue.file || cue.files) && !cue.sample && !cue.biome,
+        )
         .map(async ([id, cue]) => {
-          const response = await fetch('/assets/audio/' + cue.file);
-          if (!response.ok) throw Error('Cue unavailable: ' + id);
-          this.cueBuffers[id] = await this.context.decodeAudioData(
-            await response.arrayBuffer(),
+          const buffers = await Promise.all(
+            (cue.files || [cue.file]).map(async (file) => {
+              const response = await fetch('/assets/audio/' + file);
+              if (!response.ok) throw Error('Cue unavailable: ' + id);
+              return this.context.decodeAudioData(await response.arrayBuffer());
+            }),
           );
+          this.cueBuffers[id] = cue.files ? buffers : buffers[0];
         }),
     );
     return this._cueBuffersPromise;
@@ -504,6 +511,7 @@ export class EngineAudio {
   _raiderShot(event, state, course) {
     const output = this._spatialOutput(event, state, course);
     this._playCue('raider.shot', {
+      legacy: !this.flags.enabled('wasteland2'),
       destination: output.level,
       onEnd: output.disconnect,
     });
@@ -560,6 +568,7 @@ export class EngineAudio {
       bank('weapon.' + weapon + '.fire')
         ? 'weapon.' + weapon + '.fire'
         : 'weapon.default.fire',
+      { legacy: !this.flags.enabled('wasteland2') },
     );
   }
 
@@ -585,17 +594,96 @@ export class EngineAudio {
     );
   }
 
-  _playCue(id, { destination, scale = 1, onEnd = null } = {}) {
+  _cueBuffer(id) {
+    const buffers = this.cueBuffers[id];
+    if (!Array.isArray(buffers)) return buffers;
+    const index = this.cueIndices.get(id) || 0;
+    this.cueIndices.set(id, index + 1);
+    return buffers[index % buffers.length];
+  }
+
+  _clearProjectiles() {
+    for (const voice of this.projectileVoices.values()) voice.stop();
+    this.projectileVoices.clear();
+  }
+
+  _updateProjectiles(state, environment = {}) {
+    if (
+      !this.flags.enabled('wasteland2') ||
+      this.muted ||
+      state.paused ||
+      !['racing', 'exploring'].includes(state.status)
+    ) {
+      this._clearProjectiles();
+      return;
+    }
+    const listener = environment.listener;
+    if (!listener || !this.context || this.context.state !== 'running') {
+      this._clearProjectiles();
+      return;
+    }
+    const live = new Set();
+    for (const projectile of state.combat?.projectiles || []) {
+      const id = 'weapon.' + projectile.kind + '.flight';
+      if (!bank(id) || !this.cueBuffers[id]) continue;
+      live.add(projectile.id);
+      let voice = this.projectileVoices.get(projectile.id);
+      if (!voice) {
+        voice = this.mixer.playMoving(
+          id,
+          this._cueBuffer(id),
+          projectile,
+          listener,
+        );
+        if (voice) this.projectileVoices.set(projectile.id, voice);
+      }
+      voice?.update(projectile, listener);
+    }
+    for (const [id, voice] of this.projectileVoices)
+      if (!live.has(id)) {
+        voice.stop();
+        this.projectileVoices.delete(id);
+      }
+  }
+
+  _recordedImpact(id, event, state, course) {
+    const output = this._spatialOutput(event, state, course);
+    const filter = this.context.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value =
+      output.space.distance > 80 ? bank(id).farCutoff || 3500 : 16000;
+    filter.connect(output.level);
+    return this._playCue(id, {
+      destination: filter,
+      scale: event.crash ? 0.55 + (event.strength ?? 0.7) * 0.45 : 1,
+      onEnd: () => {
+        filter.disconnect();
+        output.disconnect();
+      },
+    });
+  }
+
+  _playCue(id, { destination, scale = 1, onEnd = null, legacy = false } = {}) {
     const def = bank(id);
     if (!def) throw Error('Unknown audio cue: ' + id);
-    if (def.flag && !this.flags.enabled(def.flag)) return null;
+    if (
+      def.flag &&
+      !this.flags.enabled(def.flag) &&
+      !(legacy && def.layers?.length)
+    )
+      return null;
     return this._runCue(
       id,
       () => {
-        if (this.cueBuffers[id])
-          this._sample(this.cueBuffers[id], def.volume * scale);
-        for (const layer of def.layers || [])
-          this._layer(layer, this._cueOutput, scale * def.volume);
+        const buffer = legacy ? null : this._cueBuffer(id);
+        if (buffer) this._sample(buffer, def.volume * scale);
+        else
+          for (const layer of def.layers || [])
+            this._layer(
+              layer,
+              this._cueOutput,
+              scale * (def.files ? 1 : def.volume),
+            );
         if (def.sampleRef && this.samples[def.sampleRef])
           this._sample(this.samples[def.sampleRef], def.volume * scale);
       },
@@ -709,6 +797,7 @@ export class EngineAudio {
     if (this.muted) for (const voice of this.activeShots) this._stopShot(voice);
     if (this.muted) {
       this._stopHiddenRoadVoices();
+      this._clearProjectiles();
       this.mixer?.stopAll();
     }
   }
@@ -727,6 +816,7 @@ export class EngineAudio {
     }
     if (this.paused) {
       this._stopHiddenRoadVoices();
+      this._clearProjectiles();
       this.mixer?.stopAll();
     }
   }
@@ -741,6 +831,7 @@ export class EngineAudio {
 
   update(st, environment = {}) {
     this.updateHiddenRoad(st);
+    this._updateProjectiles(st, environment);
     const ctx = this.context;
     if (!ctx || ctx.state !== 'running') return;
     if (this.paused !== st.paused) this.setPaused(st.paused);
@@ -1152,6 +1243,7 @@ export class EngineAudio {
     if (ev?.hiddenRoadPhase?.phase === 'opening')
       this.pendingGatekeeper = ev.hiddenRoadPhase.journeyId;
     if (ev?.stageLoaded != null) {
+      this._clearProjectiles();
       this.mixer?.stopAll();
       this._stopHiddenRoadVoices();
       this.hiddenRoadId = null;
@@ -1179,6 +1271,7 @@ export class EngineAudio {
       state?.mode === 'wasteland' &&
       Number.isFinite(state.maxArmor) &&
       state.maxArmor > 0;
+    const recordedAudio = wastelandAudio && this.flags.enabled('wasteland2');
     if (ev.countdown) this._playCue('interface.countdown');
     if (ev.go) this._playCue('interface.go');
     if (ev.shift != null) {
@@ -1235,18 +1328,28 @@ export class EngineAudio {
       if (ev.raiderShot) this._raiderShot(ev, state, course);
     }
     if (ev.combatExplosion) {
-      if (wastelandAudio && ev.audioWeapon === 'rpg')
+      if (recordedAudio && this.cueBuffers['combat.blast.recorded'])
+        this._recordedImpact('combat.blast.recorded', ev, state, course);
+      else if (wastelandAudio && ev.audioWeapon === 'rpg')
         this._rpgImpact(ev, state, course);
       else
         this._runCue('combat.blast', () =>
           this._combatBlast(ev, state, course),
         );
     }
-    if (ev.combatHit)
+    if (ev.combatHit) {
       this._runCue('combat.hit', () => this._combatImpact(ev, state, course));
-    if (ev.explosion && this.samples.explosion)
-      this._playCue('combat.explosion');
-    if (ev.crash)
+      if (recordedAudio && !ev.enemy && ev.victim !== 'player')
+        this._playCue('combat.hit-confirm');
+    }
+    if (ev.explosion) {
+      if (recordedAudio && this.cueBuffers['combat.blast.recorded'])
+        this._recordedImpact('combat.blast.recorded', ev, state, course);
+      else if (this.samples.explosion) this._playCue('combat.explosion');
+    }
+    if (ev.crash && recordedAudio && this.cueBuffers['vehicle.crash.recorded'])
+      this._recordedImpact('vehicle.crash.recorded', ev, state, course);
+    else if (ev.crash)
       this._runCue('vehicle.crash', () => {
         const def = bank('vehicle.crash');
         const force = 0.55 + (ev.strength ?? 0.7) * 0.45;

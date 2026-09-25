@@ -63,3 +63,17 @@ Kyle selected this exact take on 24 September 2026. The catalog records the
 ElevenLabs free-plan non-commercial and attribution terms. The runtime MP3
 is a byte-for-byte copy of the kept source; only game mixer gain is applied.
 Rebuild it with `node tools/audio/build-gatekeeper.mjs`.
+
+## Approved combat recordings
+
+Rebuilt by `tools/audio/build-combat.mjs`: trimmed, layered, varied, compressed,
+and loudness conditioned. Crossbow pew/whistle and confirmations add original
+synthesis. No author endorsement is implied.
+
+- [Crossbow Fire 2](https://freesound.org/people/Ali_6868/sounds/384905/) by **Ali_6868**, CC0 1.0.
+- [Arrow Loose and Flyby](https://freesound.org/people/saturdaysoundguy/sounds/394180/) by **saturdaysoundguy**, CC0 1.0.
+- [Explosion.wav](https://freesound.org/people/morganpurkis/sounds/397691/) by **morganpurkis**, CC0 1.0.
+- [Explosion 1](https://freesound.org/people/magnuswaker/sounds/523089/) by **magnuswaker**, CC0 1.0.
+- [Car Crash (with Glass)](https://freesound.org/people/magnuswaker/sounds/592388/) by **magnuswaker**, CC0 1.0.
+- [M142 HIMARS Rocket Launch 5](https://freesound.org/people/qubodup/sounds/854473/) by **qubodup**, CC0 1.0.
+- [M142 HIMARS Rocket Launch 8](https://freesound.org/people/qubodup/sounds/854476/) by **qubodup**, CC0 1.0.

@@ -172,6 +172,13 @@ export const SOUND_BANK = {
     ],
   }),
   'raider.shot': cue('weapons', {
+    flag: 'wasteland2',
+    files: [
+      'raider-arcade-a.ogg',
+      'raider-arcade-b.ogg',
+      'raider-arcade-c.ogg',
+    ],
+    volume: 1.8,
     layers: [
       noise(2250, 0.085, 0.115),
       tone(470, 0.13, 0.065, 'triangle', 0, 205),
@@ -199,6 +206,9 @@ export const SOUND_BANK = {
     layers: [tone(240, 0.15, 0.055, 'triangle', 0, 110)],
   }),
   'weapon.ufo.fire': cue('weapons', {
+    flag: 'wasteland2',
+    files: ['ufo-arcade-a.ogg', 'ufo-arcade-b.ogg', 'ufo-arcade-c.ogg'],
+    volume: 2.1,
     layers: [
       tone(210, 0.32, 0.075, 'triangle', 0, 390),
       ...Array.from({ length: 4 }, (_, i) =>
@@ -207,12 +217,18 @@ export const SOUND_BANK = {
     ],
   }),
   'weapon.bomb.fire': cue('weapons', {
+    flag: 'wasteland2',
+    files: ['bomb-arcade-a.ogg', 'bomb-arcade-b.ogg', 'bomb-arcade-c.ogg'],
+    volume: 1.8,
     layers: [
       noise(460, 0.17, 0.16, 'lowpass'),
       tone(138, 0.22, 0.19, 'triangle', 0, 52),
     ],
   }),
   'weapon.crossbow.fire': cue('weapons', {
+    flag: 'wasteland2',
+    files: ['crossbow-pew-a.ogg', 'crossbow-pew-b.ogg', 'crossbow-pew-c.ogg'],
+    volume: 1.8,
     layers: [
       noise(2450, 0.075, 0.17),
       tone(1050, 0.16, 0.12, 'triangle', 0, 260),
@@ -220,6 +236,9 @@ export const SOUND_BANK = {
     ],
   }),
   'weapon.star.fire': cue('weapons', {
+    flag: 'wasteland2',
+    files: ['star-arcade-a.ogg', 'star-arcade-b.ogg', 'star-arcade-c.ogg'],
+    volume: 1.8,
     layers: [
       ...[
         [392, 0],
@@ -232,11 +251,66 @@ export const SOUND_BANK = {
     ],
   }),
   'weapon.rpg.fire': cue('weapons', {
+    flag: 'wasteland2',
+    files: [
+      'rocket-launch-a.ogg',
+      'rocket-launch-b.ogg',
+      'rocket-launch-c.ogg',
+    ],
+    volume: 2,
     layers: [
       noise(820, 0.14, 0.14, 'lowpass'),
       tone(100, 0.22, 0.14, 'triangle', 0, 54),
       tone(280, 0.2, 0.045, 'sawtooth', 0.018, 480),
     ],
+  }),
+  'weapon.bomb.flight': cue('weapons', {
+    flag: 'wasteland2',
+    files: ['bomb-flight-a.ogg', 'bomb-flight-b.ogg', 'bomb-flight-c.ogg'],
+    volume: 0.6,
+    limit: 12,
+    spatial: { refDistance: 12, maxDistance: 600, rolloff: 1 },
+  }),
+  'weapon.rpg.flight': cue('weapons', {
+    flag: 'wasteland2',
+    files: ['rpg-flight-a.ogg', 'rpg-flight-b.ogg', 'rpg-flight-c.ogg'],
+    volume: 0.6,
+    limit: 12,
+    spatial: { refDistance: 12, maxDistance: 600, rolloff: 1 },
+  }),
+  'weapon.crossbow.flight': cue('weapons', {
+    flag: 'wasteland2',
+    files: [
+      'crossbow-whistle-a.ogg',
+      'crossbow-whistle-b.ogg',
+      'crossbow-whistle-c.ogg',
+    ],
+    volume: 1.4,
+    limit: 16,
+    spatial: { refDistance: 12, maxDistance: 600, rolloff: 1 },
+  }),
+  'combat.hit-confirm': cue('impacts', {
+    flag: 'wasteland2',
+    files: ['hit-confirm-a.ogg', 'hit-confirm-b.ogg', 'hit-confirm-c.ogg'],
+    volume: 1.8,
+    priority: 75,
+  }),
+  'combat.blast.recorded': cue('impacts', {
+    flag: 'wasteland2',
+    files: ['blast-a.ogg', 'blast-b.ogg', 'blast-c.ogg'],
+    volume: 2.6,
+    priority: 80,
+    limit: 8,
+    duck: 'blast',
+    farCutoff: 1600,
+  }),
+  'vehicle.crash.recorded': cue('impacts', {
+    flag: 'wasteland2',
+    files: ['crash-a.ogg', 'crash-b.ogg', 'crash-c.ogg'],
+    volume: 2.8,
+    priority: 75,
+    limit: 4,
+    farCutoff: 2400,
   }),
   'weapon.default.fire': cue('weapons', {
     layers: [tone(220, 0.22, 0.12, 'triangle', 0, 88)],

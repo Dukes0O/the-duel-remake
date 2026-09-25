@@ -54,7 +54,12 @@
       "file": "freesound/384905-crossbow-fire-2.ogg",
       "sha256": "505f1fa1272d8a0f5e8dfbe32bc184ce370cdc85ff66ecb0543b38740c9cb820",
       "bytes": 17015,
-      "fetched": "2026-09-25"
+      "fetched": "2026-09-25",
+      "processing": {
+        "script": "tools/audio/build-combat.mjs",
+        "recipe": "COMBAT_RECIPES: checked cut points, fixed ABC pitch variants, peak conditioning, EBU R128 loudnorm, Vorbis q5",
+        "approval": "Kyle AUD-12: blasts/crash/launches and crossbow E"
+      }
     },
     {
       "source": "freesound",
@@ -88,7 +93,12 @@
       "file": "freesound/394180-arrow-loose-and-flyby.ogg",
       "sha256": "437def673bc215297b14989cd74e86f90f84305a468613ab1d7d5f81088a4d23",
       "bytes": 12583,
-      "fetched": "2026-09-25"
+      "fetched": "2026-09-25",
+      "processing": {
+        "script": "tools/audio/build-combat.mjs",
+        "recipe": "COMBAT_RECIPES: checked cut points, fixed ABC pitch variants, peak conditioning, EBU R128 loudnorm, Vorbis q5",
+        "approval": "Kyle AUD-12: blasts/crash/launches and crossbow E"
+      }
     },
     {
       "source": "freesound",
@@ -105,7 +115,12 @@
       "file": "freesound/397691-explosion-wav.ogg",
       "sha256": "63f26ecb72b3c4adcda7f915fcd373ad625752a6bce0fa43eeb673a33a381137",
       "bytes": 49728,
-      "fetched": "2026-09-25"
+      "fetched": "2026-09-25",
+      "processing": {
+        "script": "tools/audio/build-combat.mjs",
+        "recipe": "COMBAT_RECIPES: checked cut points, fixed ABC pitch variants, peak conditioning, EBU R128 loudnorm, Vorbis q5",
+        "approval": "Kyle AUD-12: blasts/crash/launches and crossbow E"
+      }
     },
     {
       "source": "freesound",
@@ -122,7 +137,12 @@
       "file": "freesound/523089-explosion-1.ogg",
       "sha256": "0419b7764fb524a61708ec718f29fdca2b8b80b86f7a82dc4ba57dc0c9856777",
       "bytes": 45159,
-      "fetched": "2026-09-25"
+      "fetched": "2026-09-25",
+      "processing": {
+        "script": "tools/audio/build-combat.mjs",
+        "recipe": "COMBAT_RECIPES: checked cut points, fixed ABC pitch variants, peak conditioning, EBU R128 loudnorm, Vorbis q5",
+        "approval": "Kyle AUD-12: blasts/crash/launches and crossbow E"
+      }
     },
     {
       "source": "freesound",
@@ -156,7 +176,12 @@
       "file": "freesound/592388-car-crash-with-glass.ogg",
       "sha256": "c9725c20a95a6b89bca74d2865cbe315f9e118b37bb06343d4a73198c85039b8",
       "bytes": 59407,
-      "fetched": "2026-09-25"
+      "fetched": "2026-09-25",
+      "processing": {
+        "script": "tools/audio/build-combat.mjs",
+        "recipe": "COMBAT_RECIPES: checked cut points, fixed ABC pitch variants, peak conditioning, EBU R128 loudnorm, Vorbis q5",
+        "approval": "Kyle AUD-12: blasts/crash/launches and crossbow E"
+      }
     },
     {
       "source": "freesound",
@@ -190,7 +215,12 @@
       "file": "freesound/854473-m142-himars-rocket-launch-5.ogg",
       "sha256": "4caa830989edf756f816e97a71509c4499fb07eac6848082f3223b7bdaf5b563",
       "bytes": 34429,
-      "fetched": "2026-09-25"
+      "fetched": "2026-09-25",
+      "processing": {
+        "script": "tools/audio/build-combat.mjs",
+        "recipe": "COMBAT_RECIPES: checked cut points, fixed ABC pitch variants, peak conditioning, EBU R128 loudnorm, Vorbis q5",
+        "approval": "Kyle AUD-12: blasts/crash/launches and crossbow E"
+      }
     },
     {
       "source": "freesound",
@@ -207,7 +237,12 @@
       "file": "freesound/854476-m142-himars-rocket-launch-8.ogg",
       "sha256": "0c64590c081d7aca6966f2243620305093bd3668ceeb4a23b31714800a34f301",
       "bytes": 56221,
-      "fetched": "2026-09-25"
+      "fetched": "2026-09-25",
+      "processing": {
+        "script": "tools/audio/build-combat.mjs",
+        "recipe": "COMBAT_RECIPES: checked cut points, fixed ABC pitch variants, peak conditioning, EBU R128 loudnorm, Vorbis q5",
+        "approval": "Kyle AUD-12: blasts/crash/launches and crossbow E"
+      }
     },
     {
       "source": "freesound",
