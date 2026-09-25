@@ -424,6 +424,7 @@ tasks:
     acceptance:
       - "Settle a changed construction method in writing and prove one representative bay before extending it: interlocked 3D salvage rather than regular rectangular display bays, irregular grounded tower tops, and car bodies with convincing load paths. Preserve the actual moving gate and nine-by-seven-metre opening."
       - "Make joined canyon strata follow natural slope and contour without the current broad repeated bands. Preserve the exact physical route, collision-box union and shared bank seams."
+      - "Before changing the accepted steel paint, provide an explicit hashed embedded-atlas extraction and reapplication recipe from the committed GLB. The P2 no-input procedural fixture is not a reproduction of the selected generated paint. Preserve the original image-generation output and record source provenance."
       - "Reach likeness, readability, grounding and consistency of at least four in matched High/Performance views, retain immutable sheets and independent verdicts, and hold whole-scene frame cost within ten percent. Preserve the 60,000 wall triangles, 24 draws, three 512 texture sets and existing wash allocation."
     note: "Residual from the ten-round P2 wave: final wall and wash score 3/3/3/3. P2 is a development improvement only; this card keeps the original unmet art target visible. Do not erase failed rounds or infer visual acceptance from a performance pass."
   - id: EGG-03
@@ -1637,7 +1638,7 @@ tasks:
     needs: [ARENA-01]
     status: backlog
     flag: wasteland2
-    owns: [src/scrapdome-last-car.mjs, tools/test-last-car-rolling.mjs, tools/scenarios/last-car-rolling.mjs, docs/changes/ARENA-02.md]
+    owns: [src/scrapdome-last-car.js, tools/test-last-car-rolling.mjs, tools/scenarios/last-car-rolling.mjs, docs/changes/ARENA-02.md]
     hooks: [src/scrapdome.js, src/arena-ai.js, src/screen-arena.js, src/combat.js, src/wasteland-career.js, src/app.js]
     helpers: [test_author, reviewer, save_guardian, browser_qa, balance_analyst]
     acceptance:
