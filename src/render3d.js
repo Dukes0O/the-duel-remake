@@ -6,7 +6,7 @@ import {directionalCameraPose} from './camera-views.js';
 import {onFootCameraPose, projectOnFootAim} from './onfoot-camera.js';
 import {hiddenRoadPresentation,hiddenRoadDrivingCamera} from './hidden-road-ui.js';
 import { CARS, DRIVE } from './config.js';
-import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage } from './vehicles.js';
+import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage, combatVehicleWear } from './vehicles.js';
 import { buildEnvironment, worldAtExtended, disposeTree } from './world.js';
 import { createDrivingEffects } from './effects.js';
 import { createExplosion } from './explosion.js';
@@ -269,7 +269,10 @@ export function attachRenderer(host, app) {
     vehicleAttachments.applyPaint(player,app.getPaintPreset?.(carKey,{menu})??null);
     host.dataset.paint=player.userData.paintAppearance?.id||'factory';
     const wreckAge=st.catastrophic ? Math.max(0,(st.impactDuration||0)-(st.impactTimer||0)) : 0;
-    updateVehicleDamage(player,menu?0:st.majorCrashes, !menu&&st.catastrophic, wreckAge,menu?null:st.damageZones,menu?0:st.crushDamage);
+    const combatWearEnabled=!menu&&st.mode==='wasteland'&&!!st.combat&&
+      app.duel.featureFlags?.enabled('wasteland2')===true;
+    updateVehicleDamage(player,menu?0:st.majorCrashes, !menu&&st.catastrophic, wreckAge,
+      menu?null:st.damageZones,menu?0:st.crushDamage,combatVehicleWear(st,combatWearEnabled));
     const steering = menu ? 0 : st.steerVisual || 0;
     updateDriver(player.userData.driver,steering,menu?0:st.slipAngle,!menu&&st.catastrophic);
     if(player.userData.steeringPivot)player.userData.steeringPivot.rotation.z=steering*.7;
@@ -381,12 +384,12 @@ export function attachRenderer(host, app) {
       ghost.visible=!!ghostPose&&Math.abs(ghostPose.s-st.s)<650;
       if(ghost.visible){const gp=vehicleGroundPoint(course,ghostPose.s,ghostPose.lateral),separation=Math.hypot(gp.x-pp.x,gp.z-pp.z);ghostStyle.opacity(.22*THREE.MathUtils.clamp((separation-2)/7,0,1));place(ghost,gp,ghostPose.headingError,wheelTravel(ghostPose.speedMph));ghost.position.y+=ghostPose.airHeight||0;const slope=groundSlope(course,ghostPose.s,ghostPose.lateral,ghostPose.headingError);ghost.rotation.x=slope.pitch;ghost.rotation.z=slope.roll;applyVehicleTerrainPose(ghost,course,ghostPose);}
     }
-    updateNpcVehicleDamage(rival,menu?null:st.rival);
+    updateNpcVehicleDamage(rival,menu?null:st.rival,combatVehicleWear(st.rival,combatWearEnabled));
     rival.visible = !menu && !!st.rival && Math.abs(visualGap(st.rival.s)) < 650;
     if (rival.visible) {place(rival, vehicleGroundPoint(course,st.rival.s, st.rival.lateral), st.rival.headingError||0, wheelTravel(st.rival.speedMph));rival.position.y+=st.rival.airHeight||0;const slope=groundSlope(course,st.rival.s,st.rival.lateral,st.rival.headingError||0);rival.rotation.x=slope.pitch;rival.rotation.z=slope.roll;applyVehicleTerrainPose(rival,course,st.rival);updateDriver(rival.userData.driver,Math.max(-1,Math.min(1,(st.rival.pushVelocity||0)*.08)),0,false);for(const lamp of rival.userData.brakeLights||[])lamp.material.emissiveIntensity=st.rival.braking?4:1.4;}
     extraOpponents.forEach(({mesh},index)=>{
       const actor=opponents[index+1];
-      updateNpcVehicleDamage(mesh,menu?null:actor);
+      updateNpcVehicleDamage(mesh,menu?null:actor,combatVehicleWear(actor,combatWearEnabled));
       mesh.visible=!menu&&!!actor&&Math.abs(visualGap(actor.s))<650;
       if(!mesh.visible)return;
       place(mesh,vehicleGroundPoint(course,actor.s,actor.lateral),actor.headingError||0,wheelTravel(actor.speedMph));

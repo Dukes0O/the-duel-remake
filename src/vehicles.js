@@ -367,52 +367,73 @@ function deformGeometry(mesh, rest, strengths, wear, space, roofCrush = 0, basis
 
 const cleanDamageZones=Object.freeze({front:0,rear:0,left:0,right:0});
 
+// Armor is simulation state. This pure reading only selects the existing
+// vehicle finish wear path in an active flagged Wasteland presentation.
+export function combatVehicleWear(actor,enabled=false) {
+  if(!enabled || !actor || !Number.isFinite(actor.armor) ||
+     !Number.isFinite(actor.maxArmor) || actor.maxArmor<=0)return 0;
+  if(actor.combatWrecking)return 1;
+  const condition=THREE.MathUtils.clamp(actor.armor/actor.maxArmor,0,1);
+  return condition<.3 ? (.3-condition)/.3*.8 : 0;
+}
+
 // NPC meshes are pooled independently of simulation actors. Missing/menu actors
 // clear the mesh; unchanged clean or damaged actors never rewrite vertex buffers.
-export function updateNpcVehicleDamage(vehicle,actor=null) {
+export function updateNpcVehicleDamage(vehicle,actor=null,combatWear=0) {
   const zones=actor?.damageZones||cleanDamageZones;
   const crush=crushAmount(actor?.crushDamage);
-  const key=`${Math.max(0,Number(zones.front)||0)}:${Math.max(0,Number(zones.rear)||0)}:${Math.max(0,Number(zones.left)||0)}:${Math.max(0,Number(zones.right)||0)}:false:${crush}`;
+  const wear=crushAmount(combatWear);
+  const key=`${Math.max(0,Number(zones.front)||0)}:${Math.max(0,Number(zones.rear)||0)}:${Math.max(0,Number(zones.left)||0)}:${Math.max(0,Number(zones.right)||0)}:false:${crush}:${wear}`;
   if(vehicle.userData.damageKey===key)return false;
-  updateVehicleDamage(vehicle,0,false,0,zones,crush);
+  updateVehicleDamage(vehicle,0,false,0,zones,crush,wear);
   return true;
 }
 
 const crushAmount=value=>Number.isFinite(value)?THREE.MathUtils.clamp(value,0,1):0;
 
-export function updateVehicleDamage(vehicle, count, catastrophic, age = 0, damageZones, crushDamage = 0) {
+export function updateVehicleDamage(vehicle, count, catastrophic, age = 0, damageZones, crushDamage = 0, combatWear = 0) {
   const data = vehicle.userData;
   const roofCrush=crushAmount(crushDamage);
+  const finishWear=crushAmount(combatWear);
   if (data.contactShadow) data.contactShadow.visible = !catastrophic;
   // Fallback keeps old preview calls useful while gameplay supplies true contact sides.
   const zones = damageZones || { front: Math.min(count || 0, 2), rear: Math.max(0, (count || 0) - 2), left: 0, right: 0 };
   const values = ['front', 'rear', 'left', 'right'].map(zone => Math.max(0, Number(zones[zone]) || 0));
   const strengths = values.map(value => catastrophic ? 1 : 1 - Math.exp(-value * .62));
-  const key = `${values.join(':')}:${!!catastrophic}:${roofCrush}`;
+  const shapeKey = `${values.join(':')}:${!!catastrophic}:${roofCrush}`;
+  const key = `${shapeKey}:${finishWear}`;
   if (data.damageKey !== key) {
     data.damageKey = key;
     const paint = data.paint, total = Math.min(5, values.reduce((a, b) => a + b, 0));
     paint.color.copy(data.originalColor).lerp(new THREE.Color(0x191a1b), catastrophic ? .88 : total * .018);
     paint.roughness = catastrophic ? .94 : data.damageBase?.roughness ?? .22;
     paint.clearcoat = catastrophic ? .05 : data.damageBase?.clearcoat ?? 1;
-    for (const { mesh, rest, normals, damageBasis } of data.damageMeshes || []) {
-      deformGeometry(mesh, rest, strengths, mesh.geometry.attributes.panelWear, data.damageSpace, roofCrush, damageBasis);
-      if (roofCrush || strengths.some(Boolean)) mesh.geometry.computeVertexNormals();
-      else if (normals) { mesh.geometry.attributes.normal.array.set(normals); mesh.geometry.attributes.normal.needsUpdate = true; }
+    if(finishWear){
+      paint.color.lerp(new THREE.Color(0x151615),finishWear*.96);
+      paint.roughness=THREE.MathUtils.lerp(paint.roughness,Math.max(paint.roughness,.96),finishWear);
+      paint.clearcoat=THREE.MathUtils.lerp(paint.clearcoat,Math.min(paint.clearcoat,.025),finishWear);
     }
-    for (const { mesh, rest, zone } of data.fractures || []) {
-      mesh.visible = catastrophic || roofCrush > .12 || (zones[zone] || 0) > .2;
-      deformGeometry(mesh, rest, strengths, undefined, data.damageSpace, roofCrush);
-    }
-    // These articulated cabin accessories are outside the baked body batches.
-    // Hide the driver only in a flattened wreck; preserve its intact pose for a
-    // pooled reset, and lower roof-mounted accessories with the cabin.
-    if(data.driver)data.driver.visible=roofCrush<.45;
-    if(data.steeringPivot)data.steeringPivot.visible=roofCrush<.45;
-    for(const attachment of data.crushAttachments||[]){
-      attachment.userData.crushRestY??=attachment.position.y;
-      attachment.position.y=attachment.userData.crushRestY*(1-roofCrush*.52);
-      attachment.scale.y=1-roofCrush*.52;
+    if(data.damageShapeKey!==shapeKey){
+      data.damageShapeKey=shapeKey;
+      for (const { mesh, rest, normals, damageBasis } of data.damageMeshes || []) {
+        deformGeometry(mesh, rest, strengths, mesh.geometry.attributes.panelWear, data.damageSpace, roofCrush, damageBasis);
+        if (roofCrush || strengths.some(Boolean)) mesh.geometry.computeVertexNormals();
+        else if (normals) { mesh.geometry.attributes.normal.array.set(normals); mesh.geometry.attributes.normal.needsUpdate = true; }
+      }
+      for (const { mesh, rest, zone } of data.fractures || []) {
+        mesh.visible = catastrophic || roofCrush > .12 || (zones[zone] || 0) > .2;
+        deformGeometry(mesh, rest, strengths, undefined, data.damageSpace, roofCrush);
+      }
+      // These articulated cabin accessories are outside the baked body batches.
+      // Hide the driver only in a flattened wreck; preserve its intact pose for a
+      // pooled reset, and lower roof-mounted accessories with the cabin.
+      if(data.driver)data.driver.visible=roofCrush<.45;
+      if(data.steeringPivot)data.steeringPivot.visible=roofCrush<.45;
+      for(const attachment of data.crushAttachments||[]){
+        attachment.userData.crushRestY??=attachment.position.y;
+        attachment.position.y=attachment.userData.crushRestY*(1-roofCrush*.52);
+        attachment.scale.y=1-roofCrush*.52;
+      }
     }
   }
   for (let i = 0; i < (data.wheelPivots || []).length; i++) {
