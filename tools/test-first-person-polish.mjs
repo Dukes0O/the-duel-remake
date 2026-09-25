@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {existsSync, readFileSync, mkdirSync, rmSync, writeFileSync} from 'node:fs';
+import {existsSync, readFileSync, mkdirSync, rmSync, writeFileSync, copyFileSync,
+  symlinkSync, rmdirSync, lstatSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
@@ -136,7 +137,7 @@ test('candidate evidence override cannot write outside ignored review folders', 
   const output = join(root, 'art-build/first-person-p1/test-paths');
   const args = ['--p1-rook', '--output-dir', output, '--paths-only'];
   for (const bad of [join(root, 'public/assets/models/wasteland/first-person'),
-    resolve(root, '..', 'outside-first-person-evidence')]) {
+    resolve(root, '..', 'outside-first-person-evidence'), join(root, '.evidence')]) {
     const existed = existsSync(bad);
     const result = python(args, {DUEL_EVIDENCE_DIR: bad});
     assert.notEqual(result.status, 0, `${bad} evidence override must fail before writes`);
@@ -147,6 +148,19 @@ test('candidate evidence override cannot write outside ignored review folders', 
   const accepted = python(args, {DUEL_EVIDENCE_DIR: inside});
   assert.equal(accepted.status, 0, accepted.stderr || accepted.stdout);
   assert.equal(existsSync(inside), existed, 'allowed evidence dry run still cannot write');
+  const candidateEvidence = join(output, 'review');
+  const candidateExisted = existsSync(candidateEvidence);
+  const local = python(args, {DUEL_EVIDENCE_DIR: candidateEvidence});
+  assert.equal(local.status, 0, local.stderr || local.stdout);
+  assert.equal(existsSync(candidateEvidence), candidateExisted, 'candidate review dry run cannot write');
+  const junction = join(root, 'art-build/first-person-p1/test-evidence-junction');
+  assert.ok(!existsSync(junction), 'test-owned junction path is already occupied');
+  symlinkSync(join(root, 'public/assets'), junction, 'junction');
+  try {
+    assert.ok(lstatSync(junction).isSymbolicLink(), 'fixture must be an actual junction');
+    const escaped = python(args, {DUEL_EVIDENCE_DIR: join(junction, 'review')});
+    assert.notEqual(escaped.status, 0, 'resolved junction into public assets must be rejected');
+  } finally {rmdirSync(junction);}
 });
 
 async function loadHands(path) {
@@ -470,9 +484,9 @@ function weldedVertexIds(position, tolerance = .0001) {
   return Array.from({length: position.count}, (_, index) => find(index));
 }
 
-test('welded palm-to-digit surface has no interior edge shared by three or more faces', async () => {
+test('welded palm-to-digit surface is manifold with no open digit/web boundary', async () => {
   ensureCandidate();
-  const hands = await loadHands(candidate), meshes = [];
+  const hands = await loadHands(candidate), anatomy = source(), meshes = [];
   hands.scene.traverse(node => {if (node.isSkinnedMesh) meshes.push(node);});
   assert.ok(meshes.length);
   for (const side of ['L', 'R']) {
@@ -487,7 +501,7 @@ test('welded palm-to-digit surface has no interior edge shared by three or more 
         if (bone === `wrist_${side}` && weights.getComponent(vertex, slot) >= .25)
           wristComponents.add(connected[vertex]);
       }
-      const incidence = new Map();
+      const incidence = new Map(), edgeVertices = new Map();
       for (const corners of faces(geometry)) {
         if (!wristComponents.has(connected[corners[0]])) continue;
         checkedFaces++;
@@ -496,8 +510,24 @@ test('welded palm-to-digit surface has no interior edge shared by three or more 
           assert.notEqual(first, second, `${side} has a collapsed triangle edge after seam weld`);
           const edge = first < second ? `${first}:${second}` : `${second}:${first}`;
           incidence.set(edge, (incidence.get(edge) || 0) + 1);
+          if (!edgeVertices.has(edge)) edgeVertices.set(edge, [corners[a], corners[b]]);
         }
       }
+      const wrist = anatomy.hands[side].landmarks.wrist;
+      const palm = anatomy.hands[side].landmarks.palm;
+      // The authored sleeve and cuff have intentional open rings proximal to
+      // the wrist. Only the hand beyond the wrist-to-palm midpoint must close.
+      // This line separates both observed 10-edge palm/web holes from all ten
+      // independently classified garment rings on the frozen f478a564 export.
+      const distalHandZ = (wrist[2] + palm[2]) / 2;
+      const exposed = [...incidence].filter(([, count]) => count === 1).filter(([edge]) => {
+        const [a, b] = edgeVertices.get(edge);
+        const pa = vertex(geometry.attributes.position, a), pb = vertex(geometry.attributes.position, b);
+        const middle = pa.map((value, axis) => (value + pb[axis]) / 2);
+        return middle[2] < distalHandZ;
+      });
+      assert.equal(exposed.length, 0,
+        `${side} distal digit/palm/web has ${exposed.length} open boundary edges past the wrist-to-palm midpoint`);
       const overfull = [...incidence].filter(([, count]) => count > 2);
       assert.equal(overfull.length, 0,
         `${side} hand has ${overfull.length} non-manifold shared edges (first ${overfull[0]?.join('=')})`);
@@ -637,4 +667,125 @@ test('the actual browser fetch wrapper substitutes Rook once only after private 
   const unsafe = {location: window.location, fetch: original};
   assert.throws(() => runInNewContext(script, {...globals, window: unsafe}), /memory|private|guard/i);
   assert.equal(unsafe.fetch, original, 'failed memory guard cannot replace fetch');
+});
+
+const reviewCamera = {position: [0, 0, 0], target: [0, 0, -1], verticalFov: 72,
+  near: .15, width: 1280, height: 720};
+const reviewSamples = [
+  ['idle', .25, 'rpg'], ['aim', .25, 'rpg'], ['fire', .10, 'rpg'],
+  ['reload', 1.10, 'rpg'], ['reload', 1.65, 'rpg'], ['aim-reload', 1.10, 'rpg'],
+  ['wrench-idle', .25, 'wrench'], ['repair', 1.12, 'wrench'],
+];
+const clone = value => JSON.parse(JSON.stringify(value));
+
+function reviewFixture() {
+  const candidateSha256 = baselineHashes.rook;
+  const crewRef = 'public/assets/reference/wasteland-crew-1.png';
+  const rpgRef = 'public/assets/reference/wasteland-rpg.png';
+  const reference = (path, crop) => ({path, sha256: sha256(readFileSync(join(root, path))), crop});
+  const blender = {family: 'first-person-p1', round: 1,
+    scope: 'Blender source module at authored camera', candidateSha256,
+    camera: clone(reviewCamera), references: {
+      crew: reference(crewRef, [0, 40, 510, 675]),
+      rpgArm: reference(rpgRef, [790, 338, 1536, 1024]),
+    }, tools: Object.fromEntries(['rpg', 'wrench'].map(tool => [tool, {
+      path: `public/assets/models/wasteland/first-person/${tool}.glb`,
+      sha256: sha256(readFileSync(join(root, `public/assets/models/wasteland/first-person/${tool}.glb`))),
+    }])),
+    captures: reviewSamples.map(([clip, time, tool], index) => ({
+      path: `art-build/first-person-p1/candidate/evidence/blender-${index}.png`,
+      sha256: String(index + 1).padStart(64, 'a'), clip, time, tool,
+      scope: 'Blender source module',
+    }))};
+  const captures = {family: 'first-person-p1', round: 1,
+    candidate: {path: 'art-build/first-person-p1/candidate/hands/rook.glb', sha256: candidateSha256},
+    camera: clone(reviewCamera), productionBefore: {...baselineHashes}, productionAfter: {...baselineHashes},
+    qualities: {high: {candidateRequests: 1}, performance: {candidateRequests: 1}},
+    captures: reviewSamples.flatMap(([clip, time, tool], index) =>
+      ['high', 'performance'].map((quality, qualityIndex) => ({
+        path: `.evidence/first-person-p1/round-1/${quality}-${index}.png`,
+        sha256: String(index * 2 + qualityIndex + 1).padStart(64, 'b'),
+        clip, time, tool, quality, scope: 'game course',
+      }))),
+    orderedMotion: [], frameStatus: 'unmeasured'};
+  return {captures, blender, round: 1, productionHashes: {...baselineHashes}};
+}
+
+test('first-person P1 sheet paths use a separate immutable family without writes', () => {
+  const tool = join(root, 'tools/fidelity-sheet.mjs');
+  const old = join(root, 'docs/board/looks/first-person/round-1.jpg');
+  const oldHash = existsSync(old) ? sha256(readFileSync(old)) : null;
+  const result = spawnSync(process.execPath, [tool, '--first-person-p1-round', '1', '--paths-only'],
+    {cwd: root, encoding: 'utf8', timeout: 10000});
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const plan = JSON.parse(result.stdout);
+  assert.match(plan.directory.replaceAll('\\', '/'), /\/\.evidence\/[^/]+\/first-person-p1\/round-1$/);
+  assert.equal(plan.output, join(plan.directory, 'sheet.png'));
+  assert.equal(plan.manifest, join(plan.directory, 'sheet.json'));
+  assert.equal(plan.summary, join(root, 'docs/board/looks/first-person-p1/round-1.jpg'));
+  assert.equal(existsSync(plan.output), false, 'path planning cannot publish a sheet');
+  assert.equal(existsSync(old) ? sha256(readFileSync(old)) : null, oldHash,
+    'old first-person evidence remains immutable');
+});
+
+test('P1 sheet validator joins eight source poses with High and Performance using exact candidate provenance', async () => {
+  const sheet = await import('./fidelity-sheet.mjs');
+  assert.equal(typeof sheet.validateFirstPersonP1Sheet, 'function');
+  const input = reviewFixture();
+  const plan = sheet.validateFirstPersonP1Sheet(input);
+  assert.equal(plan.rows.length, 8);
+  assert.equal(plan.candidateSha256, baselineHashes.rook);
+  assert.deepEqual(plan.camera, reviewCamera);
+  assert.deepEqual(plan.productionHashes, baselineHashes);
+  assert.deepEqual(plan.rows.map(row => [row.clip, row.time, row.tool]), reviewSamples);
+  for (const row of plan.rows) {
+    assert.equal(row.scope, 'Blender module vs game course');
+    assert.deepEqual(row.columnLabels, ['REFERENCE', 'BLENDER MODULE', 'GAME HIGH', 'GAME PERF']);
+    assert.ok(row.blender && row.high && row.performance && row.label);
+    const expected = row.tool === 'rpg' ? input.blender.references.rpgArm : input.blender.references.crew;
+    assert.equal(row.reference, expected.path);
+    assert.deepEqual(row.crop, expected.crop);
+  }
+});
+
+test('P1 sheet validator rejects mismatched candidate, camera, requests, ownership and pose/scope', async () => {
+  const sheet = await import('./fidelity-sheet.mjs');
+  const check = changes => {
+    const input = reviewFixture();
+    changes(input);
+    assert.throws(() => sheet.validateFirstPersonP1Sheet(input));
+  };
+  check(input => {input.captures.candidate.sha256 = '0'.repeat(64);});
+  check(input => {input.captures.candidate.path = 'public/assets/models/wasteland/first-person/hands/rook.glb';});
+  check(input => {input.captures.camera.near = .20;});
+  check(input => {input.captures.qualities.performance.candidateRequests = 0;});
+  check(input => {input.captures.qualities.high.candidateRequests = 2;});
+  check(input => {input.captures.productionAfter.nell = '0'.repeat(64);});
+  check(input => {delete input.captures.productionAfter.wren;});
+  check(input => {input.captures.captures.pop();});
+  check(input => {input.captures.captures[0].scope = 'Blender source module';});
+  check(input => {input.blender.captures[0].scope = 'game course';});
+  check(input => {input.blender.captures[0].sha256 = null;});
+  check(input => {input.captures.captures[0].sha256 = null;});
+  check(input => {input.blender.references.rpgArm.sha256 = null;});
+});
+
+test('P1 sheet direct CLI reaches evidence validation after module initialization', () => {
+  const fixtureRoot = join(root, 'art-build/first-person-p1/test-sheet-cli-root');
+  const directory = join(fixtureRoot, 'evidence');
+  const captures = join(directory, 'captures.json');
+  mkdirSync(directory, {recursive: true});
+  mkdirSync(join(fixtureRoot, 'tools'), {recursive: true});
+  copyFileSync(join(root, 'tools/fidelity-sheet.mjs'), join(fixtureRoot, 'tools/fidelity-sheet.mjs'));
+  writeFileSync(captures, '{}\n');
+  try {
+    const result = spawnSync(process.execPath,
+      [join(fixtureRoot, 'tools/fidelity-sheet.mjs'), '--first-person-p1-round', '1'],
+      {cwd: fixtureRoot, encoding: 'utf8', timeout: 10000,
+        env: {...process.env, DUEL_EVIDENCE_DIR: directory}});
+    assert.notEqual(result.status, 0, 'invalid evidence fixture must be rejected');
+    assert.match(result.stderr, /First-person P1 family, round or source scope mismatch/i,
+      'CLI must reject an invalid capture before reading any ignored Blender manifest');
+    assert.doesNotMatch(result.stderr, /before initialization/i);
+  } finally {rmSync(fixtureRoot, {recursive: true, force: true});}
 });

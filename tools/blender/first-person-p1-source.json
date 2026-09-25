@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "units": "metres",
+  "frame": "camera-local-x-right-y-up-negative-z-forward",
+  "reference": {"path": "public/assets/reference/wasteland-crew-1.png", "sha256": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058", "crop": [0, 40, 510, 675]},
+  "rpgArmReference": {"path": "public/assets/reference/wasteland-rpg.png", "sha256": "5b03e9598c972b44e556e6bea6fcb3e1971a89bd2b9380c25b39b6df17c09bea", "crop": [790, 338, 1536, 1024]},
+  "hands": {
+    "R": {
+      "landmarks": {
+        "wrist": [0.205, -0.285, -0.48], "palm": [0.19, -0.24, -0.55],
+        "knuckles": {"index": [0.178, -0.2, -0.556], "middle": [0.178, -0.227, -0.556], "ring": [0.178, -0.254, -0.556], "pinky": [0.178, -0.28, -0.556]},
+        "fingertips": {"index": [0.104, -0.2, -0.568], "middle": [0.101, -0.227, -0.569], "ring": [0.105, -0.254, -0.568], "pinky": [0.115, -0.28, -0.566]},
+        "thumbRoot": [0.188, -0.276, -0.522], "thumbWeb": [0.177, -0.257, -0.531], "thumbTip": [0.142, -0.22, -0.532],
+        "distalStations": {"index": [[0.114,-0.2,-0.568],[0.104,-0.2,-0.568]], "middle": [[0.111,-0.227,-0.569],[0.101,-0.227,-0.569]], "ring": [[0.115,-0.254,-0.568],[0.105,-0.254,-0.568]], "pinky": [[0.125,-0.28,-0.566],[0.115,-0.28,-0.566]], "thumb": [[0.15,-0.226,-0.532],[0.142,-0.22,-0.532]]}
+      },
+      "provenance": {"wrist": "inferred-grip", "palm": "inferred-grip", "knuckles": "inferred-grip", "fingertips": "inferred-grip", "thumbRoot": "inferred-grip", "thumbWeb": "inferred-grip", "thumbTip": "inferred-grip", "distalStations": "inferred-grip"}
+    },
+    "L": {
+      "landmarks": {
+        "wrist": [0.075, -0.285, -0.82], "palm": [0.09, -0.24, -0.89],
+        "knuckles": {"index": [0.102, -0.2, -0.896], "middle": [0.102, -0.227, -0.896], "ring": [0.102, -0.254, -0.896], "pinky": [0.102, -0.28, -0.896]},
+        "fingertips": {"index": [0.176, -0.2, -0.908], "middle": [0.179, -0.227, -0.909], "ring": [0.175, -0.254, -0.908], "pinky": [0.165, -0.28, -0.906]},
+        "thumbRoot": [0.092, -0.276, -0.862], "thumbWeb": [0.103, -0.257, -0.871], "thumbTip": [0.138, -0.22, -0.872],
+        "distalStations": {"index": [[0.166,-0.2,-0.908],[0.176,-0.2,-0.908]], "middle": [[0.169,-0.227,-0.909],[0.179,-0.227,-0.909]], "ring": [[0.165,-0.254,-0.908],[0.175,-0.254,-0.908]], "pinky": [[0.155,-0.28,-0.906],[0.165,-0.28,-0.906]], "thumb": [[0.13,-0.226,-0.872],[0.138,-0.22,-0.872]]}
+      },
+      "provenance": {"wrist": "inferred-grip", "palm": "inferred-grip", "knuckles": "inferred-grip", "fingertips": "inferred-grip", "thumbRoot": "inferred-grip", "thumbWeb": "inferred-grip", "thumbTip": "inferred-grip", "distalStations": "inferred-grip"}
+    }
+  },
+  "atlas": {"size": 1024, "paddingPixels": 8, "charts": {"skin": {"rect": [520, 8, 760, 248]}, "leather": {"rect": [264, 8, 504, 248]}, "cloth": {"rect": [8, 8, 248, 248]}}}
+}
