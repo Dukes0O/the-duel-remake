@@ -1,6 +1,6 @@
 # JANITOR-UFO-NOTES
 
-status: independent fact review and ordinary lane/build gate pending
+status: ready-to-merge after final unchanged lane/build gate
 
 ## Design
 
@@ -21,4 +21,7 @@ retains the original investigation. No binary or generated source is removed.
 Independent review found and corrected one omitted fact: successful CPU jumps
 grant the jumping rival alone the normal short UFO protection and contact
 cooldown. Source and the independent CPU UFO test prove that behavior.
-Required lane tier and production build pending on the corrected text.
+Reviewer cleared corrected1405399. That checkpoint passed lane6/6 in37.05s
+(518 core checks) and build222modules387ms. Integration metadata was then
+synced; the final unchanged checkpoint must pass lane/build again before merge.
+The Director records that exact gate verdict in the integration run log.
