@@ -95,8 +95,9 @@ validated lap. The scan preserves road, solid-obstacle, occupied-landing,
 checkpoint and finish margins; the player also counts as an occupied landing.
 A blocked attempt preserves the charge and pose. A success relocates only that
 rival, clears transient movement/contact state, clamps speed to its driving
-surface and refreshes route metadata. It gives no checkpoint, lap or saved
-reward. Departure/arrival bursts and indexed `cpuPickupUsed`/`weaponFired`
+surface and refreshes route metadata. The jumping rival alone receives the
+normal short UFO protection and contact cooldown. It gives no checkpoint, lap
+or saved reward. Departure/arrival bursts and indexed `cpuPickupUsed`/`weaponFired`
 events identify the jump; no player-only landing callout is emitted.
 
 The independent checks are `tools/test-cpu-pickups.mjs`,

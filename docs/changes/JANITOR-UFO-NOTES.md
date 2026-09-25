@@ -18,4 +18,7 @@ retains the original investigation. No binary or generated source is removed.
 
 ## Verification
 
-Pending independent fact review, lane tier and production build.
+Independent review found and corrected one omitted fact: successful CPU jumps
+grant the jumping rival alone the normal short UFO protection and contact
+cooldown. Source and the independent CPU UFO test prove that behavior.
+Required lane tier and production build pending on the corrected text.
