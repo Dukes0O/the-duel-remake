@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const generators = [
+  { script: 'tools/blender/armor-kits.py', args: [], glb: ['falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt','dusthawk_rally','banshee_muscle','viper_proto','titan_monster','koenigsegg_jesko'].map(name => `public/assets/models/wasteland/kits/${name}.glb`) },
   { script: 'tools/blender/scrapdome-yard.py', args: ['--round', '1'], glb: ['public/assets/models/wasteland/scrapdome/yard.glb'] },
   { script: 'tools/blender/test-fighter.py', args: [], glb: ['public/assets/models/wasteland/test-fighter.glb'] },
   { script: 'tools/blender/crew-fighters.py', args: [], glb: ['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'].map(name => `public/assets/models/wasteland/crew/${name}.glb`) },
@@ -17,6 +18,10 @@ const generators = [
   ] },
   { script: 'tools/blender/rustwall.py', args: ['--round', '1'], glb: ['wall', 'wash'].map(name => `public/assets/models/wasteland/rustwall/${name}.glb`) },
   { script: 'tools/build-course-landmarks.py', args: [], glb: [], json: ['src/generated/course-landmarks.json'] },
+];
+const reviewHelpers = [
+  {script:'tools/blender/kit-review.py', args:['--','--car','falcone_f42'], render:true},
+  {script:'tools/blender/kit-sheet.py', args:['--round','1','--blender','missing-blender.png','--high','missing-high.png','--performance','missing-performance.png'], render:false},
 ];
 const failures = [];
 let checks = 0;
@@ -63,7 +68,7 @@ function pathPlan(generator, fixtureRoot) {
 check('all Blender asset generators are covered', () => {
   const actual = readdirSync(join(root, 'tools/blender')).filter(name => name.endsWith('.py') && name !== 'fidelity-sheet.py')
     .map(name => `tools/blender/${name}`);
-  assert.deepEqual(actual.sort(), generators.filter(item => item.script.startsWith('tools/blender/')).map(item => item.script).sort());
+  assert.deepEqual(actual.sort(), [...generators.filter(item => item.script.startsWith('tools/blender/')), ...reviewHelpers].map(item => item.script).sort());
 });
 
 const fixtureRoots = [mkdtempSync(join(tmpdir(), 'duel-blender-paths-a-')), mkdtempSync(join(tmpdir(), 'duel-blender-paths-b-'))];
@@ -97,6 +102,21 @@ try {
       }
     });
   }
+  for (const helper of reviewHelpers) check(helper.script + ' has a side-effect-free review output plan', () => {
+    for (const fixtureRoot of fixtureRoots) {
+      const args = [...helper.args, '--root', fixtureRoot, '--paths-only'];
+      if(helper.render) args.push('--out', join(fixtureRoot,'.evidence','kits','review.png'));
+      const call=spawnSync('python',[join(root,helper.script),...args],
+        {cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+      assert.equal(call.error,undefined);assert.equal(call.status,0,call.stderr||call.stdout);
+      const plan=JSON.parse(call.stdout);
+      assert.deepEqual(plan.glb,[],'review helper never emits a runtime model');
+      assert.deepEqual(plan.blend,[],'review helper never authors a model source');
+      assert.deepEqual(plan.evidence,helper.render?[join(fixtureRoot,'.evidence','kits','review.png')]:[]);
+      assert.deepEqual(plan.summary,helper.render?[]:[join(fixtureRoot,'docs','board','looks','kits','round-1.jpg')]);
+      assert.deepEqual(readdirSync(fixtureRoot),[],'planning creates no output');
+    }
+  });
 } finally {
   for (const fixtureRoot of fixtureRoots) rmSync(fixtureRoot, { recursive: true, force: true });
 }

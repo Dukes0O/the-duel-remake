@@ -85,6 +85,6 @@ const shader={vertexShader:'#include <begin_vertex>',fragmentShader:'#include <c
 traffic.userData.brakeLights[0].material.onBeforeCompile(shader,{});
 check(shader.fragmentShader.includes('totalEmissiveRadiance *=')&&shader.vertexShader.includes('attribute float panelWear'),'NPC lamps and paint compile localized wear without changing intact body design');
 const renderer=readFileSync(new URL('../src/render3d.js',import.meta.url),'utf8');
-for(const call of['updateNpcVehicleDamage(rival,menu?null:st.rival)','updateNpcVehicleDamage(car,!menu&&d?.alive?d:null)','updateNpcVehicleDamage(police,!menu&&pursuit?.active?pursuit:null)'])check(renderer.includes(call),'renderer updates and clears each NPC role from its own actor state');
+for(const call of['updateNpcVehicleDamage(rival,menu?null:st.rival,combatVehicleWear(st.rival,combatWearEnabled))','updateNpcVehicleDamage(car,!menu&&d?.alive?d:null)','updateNpcVehicleDamage(police,!menu&&pursuit?.active?pursuit:null)'])check(renderer.includes(call),'renderer updates and clears each NPC role from its own actor state');
 for(const car of[traffic,otherTraffic,police])disposeTree(car);
 console.log(`NPC vehicle damage: ${checks} localized dents, fractures, private materials, exact pooled resets, player isolation and cached-frame checks passed.`);
