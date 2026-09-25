@@ -1790,3 +1790,12 @@ or beta switch changed.
   to beta, reflecting Kyle's promotion; all flag-off and armor behavior
   assertions remain. Builder must demonstrate the old assertion fails and
   record the change before the final gate.
+
+
+- The end-run registry inventory found the protected audio worktree on
+  lane/audio/aud-17-picks at 31ef0ba rather than aud-10. The branch-only
+  exclusion did not match; the audit's Git status attempt returned unknown,
+  with no external file contents reported. Added both names and Kyle's audio
+  branch to all remaining exclusions and recorded JANITOR-LANE-PATH for a
+  durable path guard. No external worktree was edited or cleaned. Its new
+  unmerged work remains with its owner; no readiness is inferred from a ref.
