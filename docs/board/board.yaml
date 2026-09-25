@@ -494,12 +494,12 @@ tasks:
     lane: VIS
     size: L
     needs: [CAR-01]
-    status: building
+    status: merged
     owns: [src/app.js, src/screen-router.js, src/screen-yard-home.js, src/screen-yard-home.css, src/hidden-road-ui.js, src/hidden-road-ui.css, src/scrapdome-yard.js, tools/blender/scrapdome-yard.py, public/assets/models/wasteland/scrapdome/, docs/board/looks/yard/]
     hooks: [src/screen-armory.js, src/world-surfaces.js, src/world.js, src/render3d.js, tools/test-yard-home.mjs, tools/test-scrapdome-yard.mjs, tools/test-scrapdome-yard-assets.mjs, tools/scenarios/yard-home.mjs, tools/scenarios/scrapdome-review.mjs, tools/test-yard-ground-render.mjs, tools/test-blender-output.mjs]
     helpers: [test_author, reviewer, save_guardian, art_critic, browser_qa]
     flag: hidden-road
-    note: "Active codex/gfx-04 from 85fe35f. Career owns App/router/panels; Rustwall owns yard model/scene/world/render hooks. Written design and independent red tests precede each implementation. Guarded arrived yard permits scrap operations and rechecks ownership after refresh. No unbuilt arena modes."
+    note: "Merged ba4e739 after 246/246 lane suites, build, independent UI/Save Guardian reviews, 23 all-car browser captures and scoped 600-frame A/B/A percentile gate. Yard remains dev at likeness three; GFX-04-P1 owns residual art. No unbuilt arena modes or save schema changes."
     acceptance:
       - "Three saved fidelity rounds for the yard home and arena family; connect career/map/armory/crew choices and the ARENA-01/06 framework without granting unbuilt modes."
   - id: GFX-04-P1
