@@ -23,9 +23,30 @@ p.add_argument('--skip-renders', action='store_true')
 p.add_argument('--paths-only', action='store_true')
 p.add_argument('--p1-rook', action='store_true')
 p.add_argument('--output-dir')
+p.add_argument('--p1-paint')
+p.add_argument('--p1-paint-sha256')
 args = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 source_json = root / 'tools/blender/first-person-p1-source.json'
+paint_input = None
+if args.p1_paint or args.p1_paint_sha256:
+    if not args.p1_rook or not args.p1_paint or not args.p1_paint_sha256:
+        p.error('P1 paint requires --p1-rook, --p1-paint and --p1-paint-sha256 together')
+    paint_input = Path(args.p1_paint).resolve()
+    ignored_paint = (root / 'art-build/first-person-p1').resolve()
+    original_paint = (Path.home() / '.codex/generated_images').resolve()
+    if ignored_paint not in paint_input.parents and original_paint not in paint_input.parents:
+        p.error('P1 paint must be an ignored art source or original generated image')
+    if not paint_input.is_file():
+        p.error('P1 paint source is missing')
+    paint_bytes = paint_input.read_bytes()
+    if hashlib.sha256(paint_bytes).hexdigest() != args.p1_paint_sha256.lower():
+        p.error('P1 paint source SHA-256 mismatch')
+    if (paint_bytes[:8] != b'\x89PNG\r\n\x1a\n' or
+        int.from_bytes(paint_bytes[16:20], 'big') != 1254 or
+        int.from_bytes(paint_bytes[20:24], 'big') != 1254 or
+        paint_bytes[25] not in (2, 6)):
+        p.error('P1 paint must be a 1254-square RGB/RGBA PNG triptych')
 if args.p1_rook:
     if not args.output_dir:
         p.error('--p1-rook requires --output-dir')
@@ -208,6 +229,45 @@ def texture_material(name, cfg, folder, tool=False):
         vectors=np.stack([-dx*3,-dy*3,np.ones_like(dx)],axis=-1)
         vectors/=np.linalg.norm(vectors,axis=-1,keepdims=True)
         normal[y*256:(y+1)*256,x*256:(x+1)*256,:3]=vectors*.5+.5
+    if args.p1_rook and name=='rook' and not tool and paint_input:
+        authored=json.loads(source_json.read_text(encoding='utf-8'))
+        source=bpy.data.images.load(str(paint_input),check_existing=False)
+        source.colorspace_settings.name='Non-Color'
+        source_pixels=np.empty(1254*1254*4,dtype=np.float32)
+        source.pixels.foreach_get(source_pixels)
+        source_pixels=np.flipud(source_pixels.reshape((1254,1254,4)))[:,:,:3]
+        def box_filter(crop):
+            scale=418/240
+            horizontal=np.empty((418,240,3),dtype=np.float32)
+            for column in range(240):
+                left,right=column*scale,(column+1)*scale
+                ids=np.arange(math.floor(left),math.ceil(right))
+                weights=np.maximum(0,np.minimum(ids+1,right)-np.maximum(ids,left))/scale
+                horizontal[:,column,:]=np.tensordot(crop[:,ids,:],weights,axes=(1,0))
+            result=np.empty((240,240,3),dtype=np.float32)
+            for row in range(240):
+                top,bottom=row*scale,(row+1)*scale
+                ids=np.arange(math.floor(top),math.ceil(bottom))
+                weights=np.maximum(0,np.minimum(ids+1,bottom)-np.maximum(ids,top))/scale
+                result[row,:,:]=np.tensordot(weights,horizontal[ids,:,:],axes=(0,0))
+            return result
+        for role,rect in authored['paintSource']['crops'].items():
+            x0,y0,x1,y1=rect
+            sample=box_filter(source_pixels[y0:y1,x0:x1,:])
+            atlas_x={'cloth':8,'leather':264,'wrap':776}[role]
+            # Blender's authored PNG buffer is written directly. Keep the
+            # selected source's encoded channels; a transfer curve darkens it.
+            dest=np.flipud(sample)
+            color[776:1016,atlas_x:atlas_x+240,:3]=dest
+            luminance=np.mean(sample,axis=2)
+            surface[776:1016,atlas_x:atlas_x+240,1]=np.flipud(np.clip(
+                {'cloth':.87,'leather':.78,'wrap':.92}[role]+(luminance-.35)*.12,.5,.98))
+            height=np.flipud(luminance)
+            dy,dx=np.gradient(height)
+            vectors=np.stack([-dx*.65,-dy*.65,np.ones_like(dx)],axis=-1)
+            vectors/=np.linalg.norm(vectors,axis=-1,keepdims=True)
+            normal[776:1016,atlas_x:atlas_x+240,:3]=vectors*.5+.5
+        bpy.data.images.remove(source)
     images=[]
     for label,pixels in [('color',color),('surface',surface),('normal',normal)]:
         im=bpy.data.images.new(name+'-'+label,1024,1024,alpha=True)
@@ -232,13 +292,13 @@ class Geometry:
     def face(self,indices,tile,uv=None):
         self.faces.append(indices)
         if uv is None:uv=[(0,0),(1,0),(1,1),(0,1)][:len(indices)]
-        if args.p1_rook and tile in (2,3):
+        if args.p1_rook and tile in (0,1,2,3):
             # The declared skin chart is itself inset 8px from the 256px tile.
             # Keep terminal seam vertices another 8px inside that chart.
             uv=[(.1+.8*u,.1+.8*v) for u,v in uv]
         tx,ty=tile%4,tile//4
         self.uvs.append([((tx+.04+u*.92)/4,(ty+.04+v*.92)/4) for u,v in uv])
-    def loft(self,centres,radii,tile,bones,segments=12,axes=None,closed=True,warp=None,
+    def loft(self,centres,radii,tile,bones,segments=12,axes=None,closed=True,warp=None,displace=None,
              cap_tile=None,cap_start=None,cap_end=None):
         rings=[]
         for i,(centre,radius) in enumerate(zip(centres,radii)):
@@ -254,7 +314,12 @@ class Geometry:
             for j in range(segments):
                 theta=j*math.tau/segments
                 factor=warp(i,theta) if warp else 1
-                ring.append(self.vertex(c+(a*(math.cos(theta)*rx)+b*(math.sin(theta)*ry))*factor,bones[i]))
+                radial=a*(math.cos(theta)*rx)+b*(math.sin(theta)*ry)
+                point=(c+radial)*factor
+                if displace:
+                    delta=displace(i,theta)
+                    if radial.length:point+=radial.normalized()*delta
+                ring.append(self.vertex(point,bones[i]))
             rings.append(ring)
         for i in range(len(rings)-1):
             first,last=0,len(rings)-1
@@ -538,7 +603,7 @@ def hand_geometry(name,cfg):
         for i,t in enumerate(samples):
             centre=elbow.lerp(wrist,t)+Vector((sign*.015*math.sin(t*math.pi),.012*math.sin(t*math.pi),0))
             base=.079*(1-t)+.035*t+.009*math.sin(t*math.pi)
-            fold=(.006 if i%2==0 else -.003)*math.sin(t*math.pi) if t<sleeve_end else 0
+            fold=(.006 if i%2==0 else -.003)*math.sin(t*math.pi) if t<sleeve_end and not p1 else 0
             centres.append(centre);radii.append(((base+fold)*s,(base*.82+fold*.7)*s))
             w=min(1,.25+t*.95);weights.append({hand:w,'root':1-w})
             tiles.append(0 if t<=sleeve_end and sleeve_end else 2)
@@ -547,13 +612,37 @@ def hand_geometry(name,cfg):
         weights.extend([{hand:1}]*3);tiles.extend([1,1,1])
         def sleeve_folds(i,theta):
             if not 1<=i<=len(samples) or not sleeve_end or samples[i-1]>=sleeve_end:return 1
-            if p1:
-                t=samples[i-1]
-                bunch=.17*math.exp(-((t-.69)/.15)**2)
-                return 1+bunch*math.sin(theta*2.2+t*6.1+sign*.8)+.035*math.sin(theta-t*3.7)
             return 1+.105*math.sin(theta*3+i*.83)+.04*math.sin(theta*5-i*.4)
+        def authored_fold(i,theta):
+            if not 1<=i<=len(samples):return 0
+            t=samples[i-1]
+            if t>=sleeve_end:return 0
+            rx,ry=radii[i]
+            # Loft axis a is authoring +Y and b is +X. The authored source
+            # azimuth is measured from +X toward +Y, so raw theta is not it.
+            physical_angle=math.atan2(math.cos(theta)*rx,math.sin(theta)*ry)
+            result=0
+            for fold_path in anatomy['sleeveFoldPaths'][side]:
+                stations=fold_path['stations']
+                if t<stations[0][0]-.07 or t>stations[-1][0]+.07:continue
+                if t<=stations[0][0]:angle=stations[0][1]
+                elif t>=stations[-1][0]:angle=stations[-1][1]
+                else:
+                    lower,upper=next((a,b) for a,b in zip(stations,stations[1:]) if a[0]<=t<=b[0])
+                    amount=(t-lower[0])/(upper[0]-lower[0])
+                    angle=lower[1]+amount*(upper[1]-lower[1])
+                angle=math.radians(angle)
+                distance=math.atan2(math.sin(physical_angle-angle),
+                    math.cos(physical_angle-angle))*.043
+                width=fold_path['widthMetres']
+                crest=fold_path['crestMetres']*math.exp(-(distance/(width*.46))**2)
+                trough=fold_path['troughMetres']*math.exp(-((abs(distance)-width*.72)/(width*.30))**2)
+                edge=min(1,(t-stations[0][0]+.07)/.07,(stations[-1][0]+.07-t)/.07)
+                result+=(crest+trough)*max(0,edge)
+            return result
         palm_rings=g.loft(centres,radii,tiles,weights,20 if p1 else 16,
-            axes=((0,1,0),(1,0,0)),warp=sleeve_folds,closed=not p1)
+            axes=((0,1,0),(1,0,0)),warp=None if p1 else sleeve_folds,
+            displace=authored_fold if p1 else None,closed=not p1)
         if sleeve_end:
             cuff=elbow.lerp(wrist,sleeve_end)+Vector((sign*.015*math.sin(sleeve_end*math.pi),.012*math.sin(sleeve_end*math.pi),0))
             radius=(.079*(1-sleeve_end)+.035*sleeve_end+.009*math.sin(sleeve_end*math.pi))*s
@@ -781,6 +870,11 @@ if args.p1_rook:
         charts=anatomy['atlas'],clips=CLIPS,
         sockets={'rpg-mount':list(RPG_GRIP),'wrench-mount':list(WRENCH_GRIP)},
         captures=hands[0]['captures'])
+    if paint_input:
+        paint_contract=anatomy['paintSource']
+        proof['paintSource']=dict(path=str(paint_input),sha256=args.p1_paint_sha256.lower(),
+            crops=paint_contract['crops'],method=paint_contract['method'],
+            selectedArtwork=args.p1_paint_sha256.lower()==paint_contract['selectedSha256'])
     (candidate_dir/'manifest.json').write_text(json.dumps(proof,indent=2)+'\n',encoding='utf-8',newline='\n')
     review=dict(family='first-person-p1',round=args.round,
         scope='Blender source module at authored camera',candidateSha256=digest(asset),
