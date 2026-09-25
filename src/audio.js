@@ -61,6 +61,8 @@ export class EngineAudio {
     this.beatIndex = 0;
     this.nextRadar = 0;
     this.samples = {};
+    this.cueBuffers = {};
+    this.pendingGatekeeper = null;
     this.sampleStatus = 'locked';
     this.ambience = {};
     this.ambienceStatus = 'locked';
@@ -201,6 +203,23 @@ export class EngineAudio {
     this.nextBeat = ctx.currentTime + 0.08;
     this._loadSamples();
     this._loadAmbience();
+    this._loadCueBuffers();
+  }
+
+  _loadCueBuffers() {
+    if (this._cueBuffersPromise) return this._cueBuffersPromise;
+    this._cueBuffersPromise = Promise.allSettled(
+      Object.entries(SOUND_BANK)
+        .filter(([, cue]) => cue.file && !cue.sample && !cue.biome)
+        .map(async ([id, cue]) => {
+          const response = await fetch('/assets/audio/' + cue.file);
+          if (!response.ok) throw Error('Cue unavailable: ' + id);
+          this.cueBuffers[id] = await this.context.decodeAudioData(
+            await response.arrayBuffer(),
+          );
+        }),
+    );
+    return this._cueBuffersPromise;
   }
 
   _loadSamples() {
@@ -569,9 +588,12 @@ export class EngineAudio {
   _playCue(id, { destination, scale = 1, onEnd = null } = {}) {
     const def = bank(id);
     if (!def) throw Error('Unknown audio cue: ' + id);
+    if (def.flag && !this.flags.enabled(def.flag)) return null;
     return this._runCue(
       id,
       () => {
+        if (this.cueBuffers[id])
+          this._sample(this.cueBuffers[id], def.volume * scale);
         for (const layer of def.layers || [])
           this._layer(layer, this._cueOutput, scale * def.volume);
         if (def.sampleRef && this.samples[def.sampleRef])
@@ -1116,6 +1138,19 @@ export class EngineAudio {
   }
 
   event(ev, state, course) {
+    // Automatic visits emit opening while the stage is prepared, then stageLoaded.
+    // Preserve only that same visit's already-observed event across the reset.
+    if (
+      ev?.stageLoaded != null &&
+      !(
+        ev.hiddenRoadVisit &&
+        state?.hiddenRoadJourney?.phase === 'opening' &&
+        this.pendingGatekeeper === state.hiddenRoadJourney.id
+      )
+    )
+      this.pendingGatekeeper = null;
+    if (ev?.hiddenRoadPhase?.phase === 'opening')
+      this.pendingGatekeeper = ev.hiddenRoadPhase.journeyId;
     if (ev?.stageLoaded != null) {
       this.mixer?.stopAll();
       this._stopHiddenRoadVoices();
@@ -1331,11 +1366,15 @@ export class EngineAudio {
       this._stopHiddenRoadVoices();
       this.hiddenRoadCueKeys.clear();
       this.hiddenRoadId = id;
+      if (this.pendingGatekeeper !== id) this.pendingGatekeeper = null;
     }
     if (!enabled) {
+      this.pendingGatekeeper = null;
       this._stopHiddenRoadVoices();
       return;
     }
+    this._updateGatekeeperWelcome(state);
+    if (j.phase === 'turned-back') this._stopHiddenRoadVoices();
     const phase = j.phase,
       age = Math.max(0, Number(j.phaseElapsedSec) || 0),
       cues = [];
@@ -1372,6 +1411,33 @@ export class EngineAudio {
         }
       }
     }
+  }
+
+  _updateGatekeeperWelcome(state) {
+    const j = state.hiddenRoadJourney;
+    if (this.pendingGatekeeper !== j.id) return;
+    if (j.phase !== 'opening') {
+      this.pendingGatekeeper = null;
+      return;
+    }
+    if (
+      !this.flags.enabled('hidden-road') ||
+      state.paused ||
+      this.paused ||
+      this.muted ||
+      this.context?.state !== 'running' ||
+      !this.cueBuffers['gatekeeper.welcome']
+    )
+      return;
+    const key = 'gatekeeper.welcome';
+    this.pendingGatekeeper = null;
+    if (this.hiddenRoadCueKeys.has(key)) return;
+    this.hiddenRoadCueKeys.add(key);
+    let voice;
+    voice = this._playCue(key, {
+      onEnd: () => this.hiddenRoadVoices.delete(voice),
+    });
+    if (voice) this.hiddenRoadVoices.add(voice);
   }
 
   _createHiddenRoadVoice(cue) {

@@ -55,3 +55,11 @@ Harmless arena junk-car crushing reuses the original synthesized collision-noise
 The engine-response expansion also reduces a narrow 43 Hz drone in `engine-load-high.wav` and `engine-loop.wav`, using a Q 3.5 notch blended with 14% of the dry signal. Both loops use level matching and circular RMS leveling. The retained source recording is unchanged. Runtime rev pitch now has a wider, continuous contour; the coast texture is tuned to its measured 63.5 Hz fundamental. No new source or licence is involved. See `docs/AUDIO_EXPANSION.md` for processing and test details.
 
 AUD-10: all fourteen runtime recordings now use lossless FLAC. Their decoded PCM and loop sample counts are unchanged. Raw sources no longer ship in public/. Freesound previews live in the external audio-library cache, with recipes and checksums in tools/audio/catalog.json. The two licensed OpenGameArt originals are preserved losslessly in audio-src/library because the old credits do not record verified direct download URLs. New synthesis recipes live in src/sound-bank.js; state-driven engine automation stays in src/audio.js.
+
+## Gatekeeper voice
+
+Gatekeeper welcome generated with ElevenLabs, using its stock Callum voice.
+Kyle selected this exact take on 24 September 2026. The catalog records the
+ElevenLabs free-plan non-commercial and attribution terms. The runtime MP3
+is a byte-for-byte copy of the kept source; only game mixer gain is applied.
+Rebuild it with `node tools/audio/build-gatekeeper.mjs`.

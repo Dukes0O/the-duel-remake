@@ -42,7 +42,11 @@ async function ready() {
     readyPromise = (async () => {
       audio.muted = false;
       audio._build(new AudioContext());
-      await Promise.all([audio._samplesPromise, audio._ambiencePromise]);
+      await Promise.all([
+        audio._samplesPromise,
+        audio._ambiencePromise,
+        audio._cueBuffersPromise,
+      ]);
       if (audio.sampleStatus !== 'ready' || audio.ambienceStatus !== 'ready')
         throw Error('Sound files could not be loaded.');
       meter = audio.context.createAnalyser();
@@ -109,16 +113,16 @@ function preview(id, index) {
         audio.hiddenRoadBus = bus;
       }
     } else if (def.file) {
-      const sample = def.biome
-        ? audio.ambience[def.biome]
-        : audio.samples[def.sample];
+      const sample =
+        audio.cueBuffers[id] ||
+        (def.biome ? audio.ambience[def.biome] : audio.samples[def.sample]);
       const buffer = sample?.source?.buffer || sample;
       audio._sample(
         buffer,
         def.gain ?? def.volume,
         1,
         output.input,
-        Math.min(2, buffer.duration),
+        def.bus === 'voice' ? buffer.duration : Math.min(2, buffer.duration),
       );
     } else if (id === 'music.sequence') {
       const note = def.pattern[index];
@@ -190,7 +194,12 @@ async function play(slot) {
   };
   preview(id, 'ABC'.indexOf(slot));
   byId('status').textContent = `Playing ${slot}: ${id}.`;
-  timer = setTimeout(() => stop().catch(showError), 3200);
+  timer = setTimeout(
+    () => stop().catch(showError),
+    SOUND_BANK[id].bus === 'voice'
+      ? (audio.cueBuffers[id].duration + 0.25) * 1000
+      : 3200,
+  );
 }
 function level() {
   if (!meter) return 0;

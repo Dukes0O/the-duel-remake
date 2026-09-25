@@ -36,6 +36,14 @@ const noise = (frequency, duration, volume, type = 'bandpass') => ({
   type,
 });
 export const SOUND_BANK = {
+  'gatekeeper.welcome': cue('voice', {
+    file: 'gatekeeper-welcome.mp3',
+    volume: 2.2,
+    limit: 1,
+    priority: 100,
+    duck: 'voice',
+    flag: 'hidden-road',
+  }),
   'engine.fallback': cue('engine', {
     sample: 'engine',
     file: 'engine-loop.flac',
