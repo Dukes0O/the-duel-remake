@@ -482,6 +482,14 @@ your own user environment variables (`FREESOUND_API_KEY`,
 `ELEVENLABS_API_KEY`). Approve Freesound's OAuth2 once if full-quality
 originals are wanted. Download the engine simulator release when AUD-18 asks.
 
+### 0.10 Phase 3 (Kyle, 24 September 2026)
+
+After phase 2, phase 3 makes the Wasteland playable: a beta under
+Experimental first (release on Kyle's go-ahead), then the Scrapdome modes,
+the warlord ladder, the arsenal waves, crew gear, boarding and CPU crews,
+then polish and release. The audio track runs alongside both phases. The
+order and cards are in `docs/board/next-run.md`.
+
 ---
 
 ## 1. Objective
