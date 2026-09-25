@@ -3,6 +3,174 @@
   "sounds": [
     {
       "source": "elevenlabs",
+      "key": "crew.cinder.callout",
+      "cue": "crew.cinder.callout",
+      "text": "That road is mine. Keep moving.",
+      "voiceId": "cgSgspJ2msm6clMCkdW9",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 31,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/crew-cinder-callout.mp3",
+      "sha256": "f1c8dc81527a235c920737b8dcdd7c397aa5e5687339b95ce316474930f00620",
+      "bytes": 37660,
+      "generated": "2026-09-25"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "crew.dune.callout",
+      "cue": "crew.dune.callout",
+      "text": "One clean shot. Keep the car steady.",
+      "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 36,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/crew-dune-callout.mp3",
+      "sha256": "6fa503e87f918818e5ceb3a16be7f2f21c64af2bd9caadf8d382e236f355dc9c",
+      "bytes": 41004,
+      "generated": "2026-09-25"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "crew.jax.callout",
+      "cue": "crew.jax.callout",
+      "text": "Close the distance. I will catch the rest.",
+      "voiceId": "TX3LPaxmHKxFdv7VOQHJ",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 42,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/crew-jax-callout.mp3",
+      "sha256": "3e079a6bc3f6c2c6ff0faba4326f8d251660b58e6ec417ea74eb3040f9f74429",
+      "bytes": 38914,
+      "generated": "2026-09-25"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "crew.nell.callout",
+      "cue": "crew.nell.callout",
+      "text": "Give me a gap. I will make it wider.",
+      "voiceId": "Xb7hH8MSUJpSbSDYk0k2",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 36,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/crew-nell-callout.mp3",
+      "sha256": "6a275703a4aa8ad8976662b35fa824f4a06bde437f3c253f68c21535bed9b882",
+      "bytes": 39750,
+      "generated": "2026-09-25"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "crew.odessa.callout",
+      "cue": "crew.odessa.callout",
+      "text": "Hold still. This engine has one more run in it.",
+      "voiceId": "XrExE9yKIg1WjnnlVkGX",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 47,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/crew-odessa-callout.mp3",
+      "sha256": "b98f1fbe0aac4154f62d3fcfcfbabf74084c8a6663407002bf52b4e7d1b888b1",
+      "bytes": 47273,
+      "generated": "2026-09-25"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "crew.rook.callout",
+      "cue": "crew.rook.callout",
+      "text": "Road is clear. Keep your wheels under you.",
+      "voiceId": "SOYHLrjzK2X1ezoPC6cr",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 42,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/crew-rook-callout.mp3",
+      "sha256": "c2add59bebd7957666f0e700be191eed881c3154f4901e7ebfd8295f93529449",
+      "bytes": 40586,
+      "generated": "2026-09-25"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "crew.tusk.callout",
+      "cue": "crew.tusk.callout",
+      "text": "Too much scrap in the way. I will shift it.",
+      "voiceId": "pqHfZKP75CvOlQylNhV4",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 43,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/crew-tusk-callout.mp3",
+      "sha256": "e920d6a9f8a0fde369d5e9a1669cc1d30f2b2ae0c87e7daa67f895d3d5e4bef8",
+      "bytes": 47691,
+      "generated": "2026-09-25"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "crew.wren.callout",
+      "cue": "crew.wren.callout",
+      "text": "Clear path on the left. Follow my dust.",
+      "voiceId": "pFZP5JQG7iQjIQuC4Bku",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 39,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/crew-wren-callout.mp3",
+      "sha256": "dd50714d495ee75346f0715fab6418dc11424d2db03c5bb9ce473e2cb08a9de5",
+      "bytes": 41004,
+      "generated": "2026-09-25"
+    },
+    {
+      "source": "elevenlabs",
       "key": "gatekeeper.welcome",
       "cue": "gatekeeper.welcome",
       "text": "Outsiders don't find this road by accident. Come in, driver.",
@@ -23,6 +191,27 @@
       "generated": "2026-09-25"
     },
     {
+      "source": "elevenlabs",
+      "key": "raider.toll",
+      "cue": "raider.toll",
+      "text": "Turn around, driver. This road has a toll.",
+      "voiceId": "pqHfZKP75CvOlQylNhV4",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 42,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/raider-toll.mp3",
+      "sha256": "e77ed0c77c172234deee85ca5a72dc481233179ca6a96993a17491679e687ae5",
+      "bytes": 46437,
+      "generated": "2026-09-25"
+    },
+    {
       "source": "freesound",
       "key": "249810",
       "cue": "weapon.crossbow.fire",
@@ -38,6 +227,34 @@
       "sha256": "5faaa951d35efa55072adab15d67c0fdda4d7065f11a2fad27579fcc6bebd4c1",
       "bytes": 51084,
       "fetched": "2026-09-25"
+    },
+    {
+      "source": "freesound",
+      "title": "Stadium Crowd",
+      "author": "stomachache",
+      "published": "2015-05-20",
+      "page": "https://freesound.org/people/stomachache/sounds/274516/",
+      "download": "https://cdn.freesound.org/previews/274/274516_177850-hq.mp3",
+      "original": "stadium-source.mp3",
+      "sha256": "eea0213d5ccb6262c5c752a4f7c7241365b036b1ba1c9c05383776a5de586cc0",
+      "decodedExcerpt": "stadium-source.wav",
+      "sourceStartSeconds": 0,
+      "sourceDurationSeconds": 8.193061224489796,
+      "runtime": "ambience-stadium.wav",
+      "processing": "node tools/prepare-audio.mjs",
+      "key": "274516",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "quality": "preview-hq-mp3",
+      "file": "legacy/stadium-source.mp3",
+      "bytes": 192894,
+      "decode": {
+        "file": "stadium-source.wav",
+        "start": 0,
+        "duration": 8.193061224489796,
+        "rate": 44100,
+        "channels": 1
+      }
     },
     {
       "source": "freesound",
@@ -124,6 +341,56 @@
     },
     {
       "source": "freesound",
+      "key": "457958",
+      "title": "Acceleration Car",
+      "author": "Fabrizio84",
+      "page": "https://freesound.org/people/Fabrizio84/sounds/457958/",
+      "download": "https://cdn.freesound.org/previews/457/457958_2841496-hq.mp3",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "quality": "preview-hq-mp3",
+      "file": "legacy/acceleration-source.mp3",
+      "sha256": "99ee748133c6dc19599dddb73168ecdd4efee9f177f5bc215d516d4dd6a892a7",
+      "bytes": 362016,
+      "processing": "node tools/prepare-audio.mjs",
+      "decode": {
+        "file": "acceleration-source.wav",
+        "start": 0,
+        "duration": null,
+        "rate": 44100,
+        "channels": 1
+      }
+    },
+    {
+      "source": "freesound",
+      "title": "Sea waves on the beach, some seagulls in background",
+      "author": "felix.blume",
+      "published": "2019-12-26",
+      "page": "https://freesound.org/people/felix.blume/sounds/500171/",
+      "download": "https://cdn.freesound.org/previews/500/500171_1661766-hq.mp3",
+      "original": "coast-source.mp3",
+      "sha256": "c453ee1acef1f57d4f8d25acdd869b1b9263d9cc070175e7ab2cd11fdc6321c2",
+      "decodedExcerpt": "coast-source.wav",
+      "sourceStartSeconds": 20,
+      "sourceDurationSeconds": 24,
+      "runtime": "ambience-coast.wav",
+      "processing": "node tools/prepare-audio.mjs",
+      "key": "500171",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "quality": "preview-hq-mp3",
+      "file": "legacy/coast-source.mp3",
+      "bytes": 6547296,
+      "decode": {
+        "file": "coast-source.wav",
+        "start": 20,
+        "duration": 24,
+        "rate": 44100,
+        "channels": 1
+      }
+    },
+    {
+      "source": "freesound",
       "key": "523089",
       "cue": "combat.blast",
       "title": "Explosion 1",
@@ -181,6 +448,56 @@
         "script": "tools/audio/build-combat.mjs",
         "recipe": "COMBAT_RECIPES: checked cut points, fixed ABC pitch variants, peak conditioning, EBU R128 loudnorm, Vorbis q5",
         "approval": "Kyle AUD-12: blasts/crash/launches and crossbow E"
+      }
+    },
+    {
+      "source": "freesound",
+      "title": "Sunny Forest Ambience 1",
+      "author": "deadrobotmusic",
+      "published": "2021-11-30",
+      "page": "https://freesound.org/people/deadrobotmusic/sounds/609952/",
+      "download": "https://cdn.freesound.org/previews/609/609952_11532701-hq.mp3",
+      "original": "forest-source.mp3",
+      "sha256": "b0bae8dbcef0d4fdfba998bf93a50e39245a6b94d389f87fa5cc5bd4db430b4b",
+      "decodedExcerpt": "forest-source.wav",
+      "sourceStartSeconds": 10,
+      "sourceDurationSeconds": 24,
+      "runtime": "ambience-forest.wav",
+      "processing": "node tools/prepare-audio.mjs",
+      "key": "609952",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "quality": "preview-hq-mp3",
+      "file": "legacy/forest-source.mp3",
+      "bytes": 2496062,
+      "decode": {
+        "file": "forest-source.wav",
+        "start": 10,
+        "duration": 24,
+        "rate": 44100,
+        "channels": 1
+      }
+    },
+    {
+      "source": "freesound",
+      "key": "651534",
+      "title": "v8 engine rev.wav",
+      "author": "overmedium",
+      "page": "https://freesound.org/people/overmedium/sounds/651534/",
+      "download": "https://cdn.freesound.org/previews/651/651534_2396512-hq.mp3",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "quality": "preview-hq-mp3",
+      "file": "legacy/v8-rev-source.mp3",
+      "sha256": "65d7f1d60ecc276a48ea974a265bbee0715d6b2e0bd0081a45c57362a61a470c",
+      "bytes": 201292,
+      "processing": "node tools/prepare-audio.mjs",
+      "decode": {
+        "file": "v8-rev-source.wav",
+        "start": 0,
+        "duration": null,
+        "rate": 44100,
+        "channels": 1
       }
     },
     {
@@ -262,56 +579,6 @@
       "fetched": "2026-09-25"
     },
     {
-      "source": "freesound",
-      "key": "457958",
-      "title": "Acceleration Car",
-      "author": "Fabrizio84",
-      "page": "https://freesound.org/people/Fabrizio84/sounds/457958/",
-      "download": "https://cdn.freesound.org/previews/457/457958_2841496-hq.mp3",
-      "license": "CC0 1.0",
-      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "quality": "preview-hq-mp3",
-      "file": "legacy/acceleration-source.mp3",
-      "sha256": "99ee748133c6dc19599dddb73168ecdd4efee9f177f5bc215d516d4dd6a892a7",
-      "bytes": 362016,
-      "processing": "node tools/prepare-audio.mjs",
-      "decode": {
-        "file": "acceleration-source.wav",
-        "start": 0,
-        "duration": null,
-        "rate": 44100,
-        "channels": 1
-      }
-    },
-    {
-      "source": "freesound",
-      "title": "Sea waves on the beach, some seagulls in background",
-      "author": "felix.blume",
-      "published": "2019-12-26",
-      "page": "https://freesound.org/people/felix.blume/sounds/500171/",
-      "download": "https://cdn.freesound.org/previews/500/500171_1661766-hq.mp3",
-      "original": "coast-source.mp3",
-      "sha256": "c453ee1acef1f57d4f8d25acdd869b1b9263d9cc070175e7ab2cd11fdc6321c2",
-      "decodedExcerpt": "coast-source.wav",
-      "sourceStartSeconds": 20,
-      "sourceDurationSeconds": 24,
-      "runtime": "ambience-coast.wav",
-      "processing": "node tools/prepare-audio.mjs",
-      "key": "500171",
-      "license": "CC0 1.0",
-      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "quality": "preview-hq-mp3",
-      "file": "legacy/coast-source.mp3",
-      "bytes": 6547296,
-      "decode": {
-        "file": "coast-source.wav",
-        "start": 20,
-        "duration": 24,
-        "rate": 44100,
-        "channels": 1
-      }
-    },
-    {
       "source": "opengameart",
       "key": "engine-source",
       "cue": "engine.high",
@@ -324,62 +591,6 @@
       "processing": "node tools/prepare-audio.mjs"
     },
     {
-      "source": "freesound",
-      "title": "Sunny Forest Ambience 1",
-      "author": "deadrobotmusic",
-      "published": "2021-11-30",
-      "page": "https://freesound.org/people/deadrobotmusic/sounds/609952/",
-      "download": "https://cdn.freesound.org/previews/609/609952_11532701-hq.mp3",
-      "original": "forest-source.mp3",
-      "sha256": "b0bae8dbcef0d4fdfba998bf93a50e39245a6b94d389f87fa5cc5bd4db430b4b",
-      "decodedExcerpt": "forest-source.wav",
-      "sourceStartSeconds": 10,
-      "sourceDurationSeconds": 24,
-      "runtime": "ambience-forest.wav",
-      "processing": "node tools/prepare-audio.mjs",
-      "key": "609952",
-      "license": "CC0 1.0",
-      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "quality": "preview-hq-mp3",
-      "file": "legacy/forest-source.mp3",
-      "bytes": 2496062,
-      "decode": {
-        "file": "forest-source.wav",
-        "start": 10,
-        "duration": 24,
-        "rate": 44100,
-        "channels": 1
-      }
-    },
-    {
-      "source": "freesound",
-      "title": "Stadium Crowd",
-      "author": "stomachache",
-      "published": "2015-05-20",
-      "page": "https://freesound.org/people/stomachache/sounds/274516/",
-      "download": "https://cdn.freesound.org/previews/274/274516_177850-hq.mp3",
-      "original": "stadium-source.mp3",
-      "sha256": "eea0213d5ccb6262c5c752a4f7c7241365b036b1ba1c9c05383776a5de586cc0",
-      "decodedExcerpt": "stadium-source.wav",
-      "sourceStartSeconds": 0,
-      "sourceDurationSeconds": 8.193061224489796,
-      "runtime": "ambience-stadium.wav",
-      "processing": "node tools/prepare-audio.mjs",
-      "key": "274516",
-      "license": "CC0 1.0",
-      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "quality": "preview-hq-mp3",
-      "file": "legacy/stadium-source.mp3",
-      "bytes": 192894,
-      "decode": {
-        "file": "stadium-source.wav",
-        "start": 0,
-        "duration": 8.193061224489796,
-        "rate": 44100,
-        "channels": 1
-      }
-    },
-    {
       "source": "opengameart",
       "key": "tire-squeal",
       "cue": "vehicle.tires",
@@ -390,28 +601,6 @@
       "page": "https://opengameart.org/content/car-tire-squeal-skid-loop",
       "decodedFile": "tire-squeal.wav",
       "processing": "node tools/prepare-audio.mjs"
-    },
-    {
-      "source": "freesound",
-      "key": "651534",
-      "title": "v8 engine rev.wav",
-      "author": "overmedium",
-      "page": "https://freesound.org/people/overmedium/sounds/651534/",
-      "download": "https://cdn.freesound.org/previews/651/651534_2396512-hq.mp3",
-      "license": "CC0 1.0",
-      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "quality": "preview-hq-mp3",
-      "file": "legacy/v8-rev-source.mp3",
-      "sha256": "65d7f1d60ecc276a48ea974a265bbee0715d6b2e0bd0081a45c57362a61a470c",
-      "bytes": 201292,
-      "processing": "node tools/prepare-audio.mjs",
-      "decode": {
-        "file": "v8-rev-source.wav",
-        "start": 0,
-        "duration": null,
-        "rate": 44100,
-        "channels": 1
-      }
     }
   ]
 }
