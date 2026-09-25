@@ -339,7 +339,7 @@ tasks:
       - "Run a private production-menu path from Experimental opt-in through Hidden Road departure, gate invitation, yard and a Wasteland race. Record fixture placement separately from actual driving and UI actions; do not force completion or discovery to claim journey coverage."
       - "Record full tier on the exact candidate commit, production build, complete combat checks off/on, applicable frame pacing, art and save budget results, and a short What to try note. Later commits require fresh exact evidence."
       - "Prepare only: BETA-01 does not authorize master, the live folder, port 5174, a release or history rewrite. Kyle must approve release in writing."
-    note: "First phase-3 card under Kyle's 24 September overnight direction. Not dispatched while phase-2 cards remain. Existing Experimental scenario expects no beta entries; changing that expectation is the intended promotion, not a reason to remove isolation or released-feature checks."
+    note: "First phase-3 card under Kyle's overnight direction. Pending the explicit SPEC0.3 art-gate exception question recorded in parked.md; the requested phase-2 research cards merged without runtime art promotion and P2 sleeve polish continues. Existing Experimental scenario expects no beta entries; changing that expectation is the intended promotion, not a reason to remove isolation or released-feature checks."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8

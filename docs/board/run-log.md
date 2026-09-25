@@ -1728,3 +1728,16 @@ Cleanup order: CLEAN-01 and CLEAN-02 merged. CLEAN-03 is ready; CLEAN-04, CLEAN-
 - JANITOR-UFO-NOTES merged from clean reviewed576a76c after final lane6/6 in37.10seconds (518 core checks) and build222modules421ms. ARCHITECTURE now holds the physical CPU pickup, per-actor safe jump, short protection and defensive crossbow policy, source/test references and reviewed exclusion-assertion change. Deleted two superseded preparation notes and the stale run-log pointer. Independent review caught and restored the jumping rival-only protection fact before final gate. This consumed task note is folded here and deleted. After-merge janitor removes only its completed docs lane and reviewed output; no runtime or external-audio change. Full counterone sincecb06bfb, due14:49UTC/five merges/run end; sweep counterthree since2d813a7, with run-end sweep required.
 
 - CPU UFO docs after-merge janitor verified the exact clean merged lane and its integration-only dependency junction, unlinked the junction, normally removed the worktree and deleted the completed branch. Reviewed gate logs/build output were consumed; integration dependencies and active P2/Kyle/external audio branches remain. STATUS refreshed with the audio-folder exclusion.
+
+- P2 sleeve proof reached a clean frozen source7ddd456 and candidate22c7a442,
+4,260 hand triangles/7,536 with RPG. Independent8/8 checks prove broader
+localized cloth volume, connected seams, frozen hand/skin/rig/clip records and
+identical embedded color/surface/normal maps against the same P1 fixture.
+Private18557 round1 captured28 High/Performance views with zero warnings or
+errors, one candidate request per quality and unchanged eight hands/RPG/wrench.
+Director review of the sheet and native idle/repair remains3/4/3/3; broader
+elbow mass is visible but coarse weave, rigid wraps, exposed wrist and generic
+glove construction still miss likeness four. Frame and actual contact remain
+unmeasured for P2. A material-only follow-up needs its written source design
+and independent consumer/protected-chart reds before code. No runtime asset
+or beta switch changed.
