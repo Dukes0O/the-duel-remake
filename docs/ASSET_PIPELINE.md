@@ -264,8 +264,14 @@ Two matched game rounds scored likeness/readability/grounding/consistency
 **3/4/3/3**. Round 2 improved cloth scale but did not meet likeness four.
 The wrists and rigid wrap/clothing transitions, sparse soft folds and generic
 glove still need a different construction method. Continuous 14-pose contact
-and P2 frame cost are not established by the art tests. Do not promote this
-candidate or convert the other hands from these research scores.
+remains unsupported. A separate idle High/Performance A1/B/A2 frame check
+passed its scoped 1.10 limit on the frozen round-2 GLB: 30 warm and 600 native
+frames per leg, one complete renderFrame per sample, zero browser issues. High
+CPU mean B/A1 and B/A2 were 1.0086 and 0.9481; Performance were 1.0509 and
+1.0616. CPU p95 and RAF p95 ratios were at most 1.0056. Worst required ratio
+was 1.0616. This does not measure GPU time or action scenes. Passing this
+frame gate does not promote an asset whose likeness/contact gates remain open.
+Do not convert the other hands from these research scores.
 
 The selected P2 round-2 build reuses the P1 three-panel source above, then
 replaces only the actual glTF-V cloth chart in the embedded 1024-square
