@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-25T13:56:54.694Z
+Observed at: 2026-09-25T14:39:31.997Z
 
-Observation commit: 24f6fef6cc75ffad7ef8567541a556f1e7db5bd6
+Observation commit: eaa4da9de3833d124b4e18e090a020b6c8d03339
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 24f6fef6cc75ffad7ef8567541a556f1e7db5bd6
+Integration HEAD: eaa4da9de3833d124b4e18e090a020b6c8d03339
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -23,8 +23,8 @@ Last recorded full run: 2026-09-25T12:49:46.686Z; tested commit: cb06bfb2a025d91
 | Switch | State |
 | --- | --- |
 | career-backup | dev |
-| wasteland2 | dev |
-| hidden-road | dev |
+| wasteland2 | beta |
+| hidden-road | beta |
 
 ## Lane branches
 
@@ -32,9 +32,10 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/beta-01 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/beta-01 |
-| lane/audio/aud-10 | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| codex/beta-01 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/beta-01 |
+| lane/audio/aud-10 | 0 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 0 | unknown | true | false | unknown |
+| lane/audio/aud-17-picks | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -42,6 +43,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
+| lane/audio/aud-17-picks | AUD-17 | 2026-09-25T07:11:30-07:00 | 0 | inspection skipped by request; uncommitted state unknown | SPEC.md, audio-src/voices/crew-cinder-callout.mp3, audio-src/voices/crew-dune-callout.mp3, audio-src/voices/crew-jax-callout.mp3, audio-src/voices/crew-nell-callout.mp3 |
 
 ## Size targets
 
@@ -55,10 +57,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
 | Review `looks/` | 7,868,116 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 1,119,106 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 184,019 B | -935,087 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 323,886,080 B | +122,880 B | unavailable |
-| Lane folders | 1 | -1 | unavailable |
+| Git objects | 324,915,200 B | +1,029,120 B | unavailable |
+| Lane folders | 1 | +0 | unavailable |
 
 ## Backups
 
@@ -66,7 +68,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 24f6fef6cc75ffad7ef8567541a556f1e7db5bd6
+- Local integration/wasteland: eaa4da9de3833d124b4e18e090a020b6c8d03339
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

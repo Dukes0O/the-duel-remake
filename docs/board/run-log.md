@@ -1799,3 +1799,46 @@ or beta switch changed.
   branch to all remaining exclusions and recorded JANITOR-LANE-PATH for a
   durable path guard. No external worktree was edited or cleaned. Its new
   unmerged work remains with its owner; no readiness is inferred from a ref.
+
+
+- BETA-01 merged eaa4da9 from clean independently approved 5a6694e after
+  270/270 lane suites in 393.09 seconds and production build in 381 ms.
+  Kyle's explicit unfinished-art exception permits wasteland2 and hidden-road
+  beta; both remain off until Experimental opt-in. Career-backup stays dev.
+  Catalog assertions changed only to match that promotion; flag-off, armor,
+  route, production-query and released-roadside protections remain. A scoped
+  CSS fix keeps Experimental on screen, focusable and clickable at 1280x720
+  and 1024x720 despite the existing scrollable footer. No runtime art, save
+  schema/key, simulation behavior or dependency changed. Player instructions
+  and unfinished-art/contact/arena limitations live in playtest-inbox.
+
+- BETA private Experimental check passed port 46000 with one capture and no
+  issues, including opt-in/out reload persistence. Final journey passed port
+  56564 with six ordered events, six captures and zero issues. Only ten Pacific
+  finishes and route placements at 149.9/990.5 were fixtures; KeyW and 60
+  production simulation steps caused departure, then actual invitation,
+  entering, yard and UI return/race start. Final mode wasteland, status racing,
+  gate discovered, same player, results null. No discovery or completion was
+  forced. Root and independent reviewer viewed the yard/race evidence. Final
+  scenario source 9a1686c matches the captured pre-commit bytes; journey SHA
+  d6465444782ed6812a3dfec77a1cbb96f19d2e056b829df737a69eaaf272f55e.
+  Captures manifest SHA c67765b3ff8b8e75d9dfc4e1f5f486d498f2e56e0b1e9419e96e8f9267eb5d21.
+  Early diagnostic attempts exposed hidden/offscreen controls and QA overlay
+  timing; final strict hit/focus assertions remain. Resuming the App loop
+  before race start fixed a stale QA loading label, without forcing readiness.
+
+- BETA static native RAF check kept the renderer's own tick, 30 warmup and
+  120 measured intervals in each view. Yard High mean/p95 16.67/16.8 ms,
+  209 draws/516039 triangles; Performance 16.94/16.8 ms,125/333093. Race High
+  16.67/16.8 ms,685/1764519; Performance 16.67/16.8 ms,405/1004074. These are
+  frozen-scene intervals, not active-play, GPU or relative-budget evidence.
+  Automatic review initially rejected removing a duplicate debug draw;
+  independent renderer-loop evidence supported the corrected scoped edit.
+  Save Guardian independently passed 23/23 plus 31 flag checks: seven fixtures,
+  247 first-load/round-trip assertions, backup/recovery/quota/malformed data,
+  departure/discovery, scrap separation and memory storage. Model 3.47MB/4MB;
+  64 populated careers survive with 132-byte origin pointer or 2500506 bytes
+  including maximum ghost journal. Final full/build/balance remain pending.
+  The consumed BETA task note is folded here and into the current player guide,
+  then removed. Full merge count three since cb06bfb; sweep count five since
+  2d813a7. After-merge cleanup and the separate end-run sweep follow.

@@ -342,7 +342,7 @@ tasks:
     lane: TOOL
     size: M
     needs: [GFX-01-P2, EGG-02-P2, GFX-02-P1]
-    status: building
+    status: integrated
     owns: [src/feature-flags.js, tools/test-feature-flags.mjs, tools/scenarios/experimental.mjs, tools/scenarios/wasteland-beta.mjs, tools/test-wasteland-beta.mjs, docs/playtest-inbox.md, docs/changes/BETA-01.md]
     hooks: [tools/test-hidden-road.mjs, tools/test-combat-armor.mjs, src/style.css]
     helpers: [test_author, reviewer, browser_qa, save_guardian, test_runner]
