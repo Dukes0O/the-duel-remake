@@ -180,7 +180,7 @@ test('isolated P2 wall and probe embed their own exact authored atlases without 
     assert.ok(node.extras.sourceRenderPath&&node.extras.sourceRenderSha256,
       'exported relief records its actual source-car render');
     assert.equal(hash(readFileSync(join(root,node.extras.sourceRenderPath))),
-      node.extras.sourceRenderSha256,'source-car render bytes match exported provenance');
+      node.extras.sourceRenderSha256,`${check.asset}: this build's source-car PNG bytes match exported provenance`);
     const embedded=materialImages(asset,'hulks authored padded atlas');
     for(const [index,name] of ['color','surface','normal'].entries()){
       const record=snapshots[name];
@@ -190,7 +190,7 @@ test('isolated P2 wall and probe embed their own exact authored atlases without 
       const source=rgbaPng(snapshot),mapped=embedded[index];
       assert.deepEqual([source.width,source.height,mapped.width,mapped.height],[512,512,512,512]);
       assert.ok(source.pixels.equals(mapped.pixels),
-        `${check.asset}: embedded ${name} pixels equal that build's authored atlas, including relief and protected car tiles`);
+        `${check.asset}: embedded ${name} pixels equal this build's authored atlas, including relief and protected car tiles`);
     }
     for(let i=0;i<production.length;i++)assert.equal(hash(readFileSync(production[i])),frozen[i],
       `${production[i]} production bytes unchanged by isolated review build`);
