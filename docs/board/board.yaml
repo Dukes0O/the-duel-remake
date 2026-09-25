@@ -1714,3 +1714,22 @@ tasks:
       - "Prove seed/input repeatability, ordinary race fingerprints, real private launch-to-result flow, all three encounter balance checks and current lane/build gate. Do not expose the remaining bosses as playable."
     sound: "warlord.start and warlord.defeated, plus existing combat cues; the external audio lane owns sound implementations."
     note: "First half of SPEC WAR-02 under the phase-3 order. Later WAR-02 work retains bosses four and five after the prescribed arsenal/crew sequence. This card is planning only while phase 2 remains active."
+
+  - id: AUD-17
+    title: "Voice candidates and chosen crew/raider lines"
+    lane: AUDIO
+    size: L
+    needs: [AUD-14]
+    status: backlog
+    owner: "Kyle's separate audio session"
+    branch: lane/audio/aud-10
+    owns: [tools/audio/, docs/audio/, docs/board/listening/, audio-src/voices/, docs/changes/AUD-17.md]
+    hooks: [tools/test-voice-candidates.mjs, src/sound-bank.js, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
+    flag: wasteland2
+    helpers: [test_author, reviewer, audio_qa]
+    acceptance:
+      - "Write the stock-voice casting, short gritty nongory lines, candidate budget and repeat-safe generation plan before code or service calls. Independent fake-only tests cover budget exhaustion, no automatic keep, resume and accounting failures."
+      - "Only the external audio owner may use ElevenLabs credits, within its current user-authorized budget and SPEC overnight ceiling of 1500. The Director spends none. Preserve Kyle's exact selected gatekeeper take."
+      - "Candidates are marked for Kyle's choice; no agent keeps or promotes a take. Human ratings remain distinct from measurements. Keys stay in the environment, credit use is logged, and no generation is silently retried after an accounting failure."
+      - "Any runtime voice wiring beyond the existing bank/credit hooks requires a named scope addition before implementation. Retain subtitles, attribution, one-version source placement and normal gates."
+    note: "Independent candidate-tool preparation may proceed in the external lane while upstream gates remain unresolved; this does not mark AUD-10/11/14 ready or waive their checks."

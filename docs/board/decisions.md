@@ -465,3 +465,8 @@ AUD-14 also has the narrow .gitattributes hook to mark *.ogg binary, preventing 
 ## 2026-09-25 PDT: change Rook silhouette construction for round eight
 
 Two actual game rounds remain at 3/3/3/3 despite better paint, scalp coverage, scarf and cuffs. Before more code, approve the written grouped method: a scalloped cap edge with rooted three-dimensional curl locks, reference-traced intermediate trouser folds while freezing seven measured width anchors, and small separated fingertip/thumb silhouettes attached to the existing gloves. Independent actual exported contour, contact, uniform-skin UV and motion tests precede implementation. Keep dense scalp coverage, face paint, waist continuity, broad padded garment charts and near/far limits of 8,000/2,000 triangles. Label occluded reference edges as inferred. Attribute the straight upper-back projection in the bent pose before changing it. Three rounds remain in this bounded wave; no other crew converts or runtime candidate replaces the baseline before likeness four.
+
+
+## 2026-09-25 PDT: external voice-candidate preparation
+
+Approve the external audio lane narrow tools/test-voice-candidates.mjs hook for independent fake-only budget, no-keep and resume checks before service use. AUD-17 preparation retains the SPEC ceiling and any tighter budget set in that session; all credits belong to that owner, none to the Director. Only Kyle selects takes. The unresolved AUD-10 baseline and pending human listening remain visible and are not waived by preparation on later cards.
