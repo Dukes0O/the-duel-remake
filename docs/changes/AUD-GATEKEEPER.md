@@ -65,3 +65,11 @@ The booth waits for cue buffers and plays voice lines in full.
 Credits now name ElevenLabs and Callum and retain the catalog's source terms.
 The checked rebuild script verifies the selected hash before copying it.
 Lane/build gates and the upstream AUD-10 finding still prevent readiness.
+
+## Integration sync and lane gate
+
+Merged integration/wasteland at 7b32754, including the reviewed Rustwall
+clean-checkout repair. Lane tier passed 260/260 in 526.14 seconds; production
+build passed. Replay fingerprints and expansion drives passed unchanged.
+The generated in-game credits page is included with its source credit text.
+Status remains in-progress because AUD-10 baseline review is unresolved.
