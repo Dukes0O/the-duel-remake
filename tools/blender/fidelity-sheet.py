@@ -16,7 +16,7 @@ parser.add_argument('--output',required=True)
 parser.add_argument('--summary')
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
 root=Path(args.root)
-manifest=json.loads(Path(args.manifest).read_text())
+manifest=json.loads(Path(args.manifest).read_text(encoding='utf-8'))
 for path, expected in manifest.get('sources', {}).items():
     if hashlib.sha256((root/path).read_bytes()).hexdigest() != expected:
         raise ValueError('Evidence source changed: ' + path)
@@ -25,7 +25,7 @@ if manifest.get('round') and Path(args.output).exists():
 tile_w,tile_h=manifest.get('tile',{}).get('width',256),manifest.get('tile',{}).get('height',320)
 if not (128 <= tile_w <= 1024 and 128 <= tile_h <= 1024):
     raise ValueError('Invalid contact-sheet tile size')
-header,row_label=48,28
+header,row_label=48,42 if any(row.get('columnLabels') for row in manifest['rows']) else 28
 width=tile_w*4
 height=header+len(manifest['rows'])*(tile_h+row_label)
 canvas=np.full((height,width,3),24,dtype=np.uint8)
@@ -99,6 +99,8 @@ for column,name in enumerate(['Reference','Blender','High','Performance']):
 for index,row in enumerate(manifest['rows']):
     y=header+index*(tile_h+row_label)
     label(row.get('label') or (row.get('crew','')+' '+row['clip']+' '+row['view']+' '+str(row['time'])+' S').strip(),12,y+7)
+    for column,column_label in enumerate(row.get('columnLabels',[])):
+        label(column_label,column*tile_w+8,y+27,scale=1)
     for column,key in enumerate(['reference','blender','high','performance']):
         image=picture(row[key],row['crop'] if key=='reference' else None)
         h,w=image.shape[:2]

@@ -82,6 +82,8 @@ try {
   });
 
   for (const [label, path, contents] of [
+    ['raw audio source in public', 'public/assets/audio/engine-source.wav', 'RAW SOURCE'],
+    ['raw tire source in public', 'public/assets/audio/tire-squeal.wav', 'RAW SOURCE'],
     ['Blender source in public', 'public/assets/models/source.blend', 'BLENDER'],
     ['Blender script in public', 'public/assets/models/source.py', 'SOURCE'],
     ['raw review evidence in docs', 'docs/board/looks/race-capture.png', 'RAW CAPTURE'],
@@ -98,6 +100,14 @@ try {
     check(Array.isArray(report.failures), 'failure list is machine readable');
     check(report.failures.some(failure => String(failure).replaceAll('\\', '/').includes(path)),
       `failure identifies ${path}`);
+  });
+
+  test('a kept audio take has a valid home in audio-src', () => {
+    const root = fixture('kept-audio');
+    put(root, 'audio-src/voices/gatekeeper-welcome.mp3', 'kept voice take');
+    const { status, report } = run(hygieneTool, root);
+    same(status, 0, 'SPEC 0.9 kept audio passes placement');
+    same(report.failures, [], 'audio in audio-src is a kept source, not a raw capture');
   });
 
   test('size targets report without blocking a lane', () => {

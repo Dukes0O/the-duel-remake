@@ -1,0 +1,5 @@
+# Rustwall P2 round 5 review
+
+Director score: wall likeness 2/5, readability 3/5, grounding 3/5, scene consistency 3/5; wash 3/3/3/3. Crew separately scored the wall 2/3/2/2. Frame unmeasured. The central crown improves wayfinding but reads as a thin sign with cars displayed on top; the same two regular car-shelf grids dominate the wall. Do not spread this method to outer sections.
+
+The recorded `round-5.jpg` and ignored `.evidence/2026-09-24/rustwall-p2/round-5` are immutable matched Blender/High/Performance evidence. Private memory-only browser: 20 screenshots, zero warnings/errors. The captured export had 57,072 triangles / 14 draws and passed the new upper-mass and clear-gate regression. A later unchanged P1 asset check found its named `wall-body` extended to 46 m because three crown profiles were grouped with the fixed core; those profiles moved to `scaffold-steel` without changing geometry, leaving `wall-body` exactly 35 m. This sheet predates that node grouping correction. Its visual verdict remains valid; it is not final asset or frame evidence.

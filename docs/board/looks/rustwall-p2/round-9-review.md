@@ -1,0 +1,5 @@
+# Rustwall P2 round 9 review
+
+Director and Crew independently scored wall likeness/readability/grounding/scene consistency **3/3/3/3** and wash **3/3/3/3**. Frame unmeasured. The deep bridge and two connected tower tops improve the gate silhouette. Wide blue/orange horizontal outer bands and regular dark relief recesses still differ from the approved dense salvage wall, so likeness remains below the required four.
+
+`round-9.jpg` and ignored `.evidence/2026-09-24/rustwall-p2/round-9` preserve matched Blender, High and Performance views plus six all-route placements. Private memory-only browser port 55829: twenty screenshots, zero warnings/errors. Exported wall 55,866 triangles / 14 draws; wash source module 144 / 1. The full focused suite passed 24/24 after Crew replaced centroid-only sampling in the new tower check with clipped triangle area and added a triangulation-invariant fixture. The gate opening, collision envelope and texture limits remained under existing checks. Round 10 will change outer paint and panel rhythm within the same atlas and geometry caps.

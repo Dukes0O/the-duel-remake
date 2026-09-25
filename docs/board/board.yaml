@@ -301,14 +301,45 @@ tasks:
     size: L
     needs: [GFX-01-P1]
     status: building
-    owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, docs/board/looks/crew-p2/]
+    owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, docs/board/looks/crew-p2/]
     hooks: [tools/test-rook-p2-source.mjs, tools/test-rook-p2-candidate.mjs, tools/test-rook-p2-review.mjs, tools/test-blender-output.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: wasteland2
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
       - "Start from the negative round-10 trial verdict and its text recipe. Build a reference-matched head, hair, collar, thin vest and asymmetric clothing folds. Prove likeness at least four on Rook in both game qualities before converting any of the other seven. Keep the existing runtime until that gate passes."
       - "Use a separate polish-wave review folder so previous round sheets remain immutable. Follow the ten-round limit, connected topology, padded UV, animation contact and measured frame budgets. A count of triangles never substitutes for a visual score."
-    note: "The phase-2 Rook trial did not establish a winning technique. GFX-02-P1 waits for this card. The rejected experiment recipe and tests remain in Git text history."
+    note: "Ten-round P2 research wave finished at3/3/3/3, frame unmeasured; closure gate pending. Current runtime crew remain unchanged. GFX-01-P3 owns remaining likeness and full-crew conversion; GFX-02-P1 may begin a separate Rook-only hand proof after this closure, without treating the body technique as accepted."
+  - id: GFX-01-P3
+    title: "Rook sculpt, retopology and baked detail before crew conversion"
+    lane: ART
+    size: L
+    needs: [GFX-01-P2]
+    status: backlog
+    owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, docs/board/looks/crew-p3/]
+    hooks: [tools/test-rook-p2-source.mjs, tools/test-rook-p2-candidate.mjs, tools/test-rook-p2-review.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    flag: wasteland2
+    acceptance:
+      - "Write the high-detail sculpt, low-poly retopology and texture-bake method before code; preserve verified original image inputs and current runtime baseline. Prove game-scale silhouette before detail."
+      - "Address round10 hair cap, small plain face, rigid scarf/vest/pockets, flat side/back clothing, coarse trouser folds and simplified boots/hands. Measured contours support but never substitute for independent actual-game likeness."
+      - "Rook must score at least four on every SPEC0.3 criterion, including measured twelve-fighter frame evidence, before converting the other seven. Keep8000/2000 triangles,24 color draws for12 fighters and one1024-square set. Ten rounds maximum per wave."
+    note: "Residual polish from GFX-01-P2 ten-round closure. No runtime promotion or all-eight conversion was accepted. Scheduled after remaining phase2 hand proof; no new body art wave is started by this card."
+  - id: BETA-01
+    title: "Prepare the Experimental Wasteland release candidate"
+    priority: 1
+    lane: TOOL
+    size: M
+    needs: [GFX-01-P2, EGG-02-P2, GFX-02-P1]
+    status: backlog
+    owns: [src/feature-flags.js, tools/test-feature-flags.mjs, tools/scenarios/experimental.mjs, tools/scenarios/wasteland-beta.mjs, tools/test-wasteland-beta.mjs, docs/playtest-inbox.md, docs/changes/BETA-01.md]
+    helpers: [test_author, reviewer, browser_qa, save_guardian, test_runner]
+    acceptance:
+      - "After phase 2, move wasteland2 and hidden-road to beta under Experimental as Kyle requested; retain career-backup's current state and prove default-off, explicit opt-in, opt-out and reload persistence with memory-only storage."
+      - "Update the exact current-feature expectations in Experimental tests with a reviewed reason; preserve released-roadside and hidden-dev-feature protections."
+      - "Run a private production-menu path from Experimental opt-in through Hidden Road departure, gate invitation, yard and a Wasteland race. Record fixture placement separately from actual driving and UI actions; do not force completion or discovery to claim journey coverage."
+      - "Record full tier on the exact candidate commit, production build, complete combat checks off/on, applicable frame pacing, art and save budget results, and a short What to try note. Later commits require fresh exact evidence."
+      - "Prepare only: BETA-01 does not authorize master, the live folder, port 5174, a release or history rewrite. Kyle must approve release in writing."
+    note: "First phase-3 card under Kyle's 24 September overnight direction. Not dispatched while phase-2 cards remain. Existing Experimental scenario expects no beta entries; changing that expectation is the intended promotion, not a reason to remove isolation or released-feature checks."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8
@@ -338,14 +369,15 @@ tasks:
     size: M
     needs: [GFX-02, GFX-01-P2]
     status: backlog
-    owns: [tools/blender/first-person-gear.py, public/assets/models/wasteland/first-person/, docs/board/looks/first-person/]
+    owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, public/assets/models/wasteland/first-person/, docs/board/looks/first-person-p1/, docs/changes/GFX-02-P1.md]
+    hooks: [tools/test-first-person-gear.mjs, tools/test-first-person-polish.mjs, tools/scenarios/first-person-gear.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [art_critic, reviewer, browser_qa]
     flag: wasteland2
     acceptance:
       - "Continue from the three immutable initial rounds. Fix fingertip cap/normal artifacts, mitten-like palms, generic sleeve construction, simplified tool fittings and continuous grip/animation contact as recorded in round-3-review.md."
       - "Retain meaningful matched High/Performance comparisons, short motion evidence, at most 8000 visible triangles and three draws. Measure texture memory and evaluate shared crew materials before making a resource-budget claim."
       - "Keep the family in dev until all SPEC 0.3 scores reach four and the measured budget holds. Follow its approach-change rule if another round fails to improve likeness."
-    note: "Initial resemblance improves from two to three in round 2 and remains three in round 3. One stagnant round so far; no beta approval. Follow the winning GFX-01-P2 technique."
+    note: "Read-only audit found leather tip caps closing skin finger rings, repeated narrow-ended digit lofts, disconnected palm/thumb pads and generic sleeve topology/paint. Settle one connected Rook hand, correct cap material/normal continuity, authored cuff seams and continuous motion contact before all-eight conversion. After P2 closure, use a Rook-only opt-in connected-hand proof with isolated candidate output and private fetch substitution. This tests topology and UV lessons independently; it does not claim the body trial won. Keep current runtime and other seven hands until accepted. Existing runtime selector stays untouched unless a reproduced defect earns a named hook."
   - id: EGG-02
     title: "Rustwall gate and salt-flat fidelity rounds one to three"
     priority: 9
@@ -386,15 +418,31 @@ tasks:
     lane: VIS
     size: L
     needs: [EGG-02-P1]
-    status: building
+    status: merged
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall-p2/]
-    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-sheet.mjs, tools/test-rustwall-p2-relief.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/scenarios/rustwall-frame.mjs, tools/test-rustwall-frame.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-sheet.mjs, tools/test-rustwall-p2-relief.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: hidden-road
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
-      - "Continue the round-10 gaps: replace the regular flat facade with deeper irregular salvage, grounded supports and a varied roofline; make canyon strata follow the slope without repeated broad bands. Reach resemblance four and preserve the measured frame budget."
+      - "Complete the ten-round P2 wave against the original likeness-four target, preserving every review verdict. Final wall and wash remain likeness three. Accept only a measured development improvement after frame and lane/build gates; EGG-02-P3 owns the unmet visual target under SPEC 0.3. This closure does not grant visual acceptance or a release."
       - "Retain the physical route, collision envelopes, gate clearance, joined-bank safety tests and smaller reviewed atlases. Use a separate next-wave review folder and immutable reference/Blender/High/Performance sheets."
-    note: "Active next-wave codex/egg-02-p2. Written design uses welded source-car salvage and unequal facade depth, funded by removing repeated microdetail within original limits. Wash follows measured contour strata using the approved art-direction background crop. Independent tests precede code. Physical route, gate and collision union remain fixed."
+    note: "Merged 78cfffe as a ten-round development improvement: 256/256 lane suites in 375.19 seconds, build and independent art/source/frame reviews passed. Wall and wash visual scores remain 3/3/3/3; scoped frame four, worst required CPU ratio 1.0833. EGG-02-P3 retains likeness-four and paint-recovery work. Hidden-road stays dev."
+  - id: EGG-02-P3
+    title: "Interlocked Rustwall salvage and natural canyon strata"
+    lane: VIS
+    size: L
+    needs: [EGG-02-P2]
+    status: backlog
+    owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall-p3/]
+    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/scenarios/rustwall-frame.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-relief.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    flag: hidden-road
+    helpers: [test_author, art_critic, reviewer, browser_qa]
+    acceptance:
+      - "Settle a changed construction method in writing and prove one representative bay before extending it: interlocked 3D salvage rather than regular rectangular display bays, irregular grounded tower tops, and car bodies with convincing load paths. Preserve the actual moving gate and nine-by-seven-metre opening."
+      - "Make joined canyon strata follow natural slope and contour without the current broad repeated bands. Preserve the exact physical route, collision-box union and shared bank seams."
+      - "Before changing the accepted steel paint, provide an explicit hashed embedded-atlas extraction and reapplication recipe from the committed GLB. The P2 no-input procedural fixture is not a reproduction of the selected generated paint. Preserve the original image-generation output and record source provenance."
+      - "Reach likeness, readability, grounding and consistency of at least four in matched High/Performance views, retain immutable sheets and independent verdicts, and hold whole-scene frame cost within ten percent. Preserve the 60,000 wall triangles, 24 draws, three 512 texture sets and existing wash allocation."
+    note: "Residual from the ten-round P2 wave: final wall and wash score 3/3/3/3. P2 is a development improvement only; this card keeps the original unmet art target visible. Do not erase failed rounds or infer visual acceptance from a performance pass."
   - id: EGG-03
     title: "Gate arrival and invitation"
     priority: 10
@@ -1112,6 +1160,99 @@ tasks:
     behavior_change: yes
     note: "Integrated at 32bf195. In Wasteland2, rival Star shields no longer block bomb or impact damage to traffic; flag-off Wasteland retains its old rule. Two focused cases and a production build passed."
     spec: "SPEC.md section 3.2: the star shield blocks damage to its own car"
+  - id: AUD-10
+    title: "Sound bank and mixer foundation"
+    priority: 1
+    lane: AUDIO
+    size: L
+    needs: []
+    status: merged
+    owner: "Kyle's separate audio session"
+    branch: lane/audio/aud-10
+    owns: [src/audio.js, src/sound-bank.js, src/sound-mixer.js, tools/audio/, public/assets/audio/, audio-src/, tools/test-audio.mjs, tools/test-audio-sourcing.mjs, docs/AUDIO_ITERATION.md, docs/audio/, docs/board/listening/, docs/changes/AUD-10.md, .gitattributes, tools/prepare-audio.mjs, tools/audio-analysis.mjs, tools/audio-race-check.js, tools/test-audio-analysis.mjs, tools/test-audio-compression.mjs, tools/test-sound-bank.mjs, tools/test-repo-hygiene-rules.mjs, tools/scenarios/audio-baseline.mjs, tools/scenarios/audio-moving.mjs]
+    hooks: [src/app.js, src/main.js, tools/test-repo-hygiene.mjs]
+    helpers: [test_author, reviewer, audio_qa, test_runner]
+    acceptance:
+      - "SPEC 0.9: existing sounds use the data sound bank and buses; compare a recorded baseline, measure ducking, voice limits and moving-source 3D."
+      - "Keep source recipes and licenses; move raw library sources out of public; compressed runtime audio and placement checks pass."
+      - "Latest branch change note explicitly says ready-to-merge before Director stages the normal lane/build gate."
+    note: "Merged e1a2d63 from exact reviewed 0673280 after lane262/262, build and clean full262/262. Original strict five-case baseline passes unchanged; physical buses/disabled flat routes and lifecycle are independently reviewed. Pending human listening is explicit. External branch/folder stay for unselected AUD-17 auditions; Director uses refs only."
+  - id: AUD-11
+    title: "Listening booth and audio measurements"
+    priority: 2
+    lane: AUDIO
+    size: M
+    needs: [AUD-10]
+    status: merged
+    owner: "Kyle's separate audio session"
+    branch: lane/audio/aud-10
+    owns: [tools/audio/, tools/audio-analysis.mjs, tools/audio-race-check.js, tools/test-audio-listening.mjs, tools/scenarios/audio-listening.mjs, docs/audio/, docs/board/listening/, docs/changes/AUD-11.md]
+    hooks: [tools/vite-qa.config.js]
+    helpers: [test_author, reviewer, audio_qa]
+    acceptance:
+      - "Play cues over engine and ambience with A/B/C variants; save human ratings and notes as verdict files."
+      - "Measure LUFS, true peak, loop seams, repetition and full-mix masking. Unrated rounds are flagged for human listening."
+    note: "Merged e1a2d63 with full-rate measurements and private booth checks. Independent deferred-load A/B and Stop regressions pass. Human ratings remain pending; measurements are not human scores."
+  - id: AUD-12
+    title: "On-demand sound sourcing and Kyle's kept picks"
+    lane: AUDIO
+    size: M
+    needs: []
+    status: merged
+    owner: Kyle
+    branch: lane/audio/aud-12
+    owns: [tools/audio/, tools/test-audio-sourcing.mjs, audio-src/, docs/changes/AUD-12.md]
+    note: "Kyle's requested branch is retained unchanged. Merge review and gate are recorded in run-log.md. Keep the exact Callum gatekeeper take and catalog; combat pick is crossbow E pew whistle plus hit-confirm. AUD-12-R1 owns the reproduced post-generation persistence failure."
+  - id: AUD-12-R1
+    title: "Persist generated voice bytes before follow-up credit queries"
+    priority: 1
+    lane: AUDIO
+    size: S
+    needs: [AUD-12]
+    status: merged
+    owner: "Kyle's separate audio session"
+    branch: lane/audio/aud-10
+    owns: [tools/audio/elevenlabs.mjs, tools/test-audio-sourcing.mjs, docs/changes/AUD-12-R1.md]
+    helpers: [test_author, reviewer]
+    acceptance:
+      - "With fake responses only, a successful generation followed by a credit-query HTTP 503 still leaves the exact generated bytes available; accounting failure is explicit and must not trigger another generation."
+      - "Write the failure regression before changing persistence order; preserve the kept gatekeeper take and use no real credits for tests."
+    note: "Isolated fix merged d355b9a after seven lane suites in 82.62 seconds, build and 51 fake-only checks. Successful bytes persist before accounting; HTTP/network/JSON failures report estimates without regeneration. Exact kept Callum MP3 unchanged; zero credits. Unfinished AUD-10 and its branch remain separate."
+  - id: AUD-GATEKEEPER
+    title: "Wire Kyle's kept gatekeeper welcome"
+    priority: 3
+    lane: AUDIO
+    size: S
+    needs: [AUD-10, AUD-11, AUD-12]
+    status: merged
+    owner: "Kyle's separate audio session"
+    branch: lane/audio/aud-10
+    owns: [src/sound-bank.js, public/assets/audio/, tools/audio/, docs/changes/AUD-GATEKEEPER.md]
+    hooks: [src/audio.js, src/hidden-road.js, src/hidden-road-journey.js, src/hidden-road-ui.js, src/hidden-road-ui.css, src/app.js, tools/test-gatekeeper-audio.mjs, tools/scenarios/gatekeeper-audio.mjs]
+    flag: hidden-road
+    sound: gatekeeper.welcome
+    acceptance:
+      - "Use the exact kept Callum take; wire gatekeeper.welcome to the arrival's existing event and preserve its subtitle."
+      - "Prove correct arrival timing, no repeated playback on paused frames, private memory-only testing and full-throttle intelligibility measurements."
+    note: "Merged e1a2d63. Exact kept Callum source preserved; arrival once, subtitle, hidden-road-only ducking, pause/navigation and missing-file checks pass. No regeneration."
+  - id: AUD-14
+    title: "Combat sounds and impacts from Kyle's approved recipes"
+    priority: 4
+    lane: AUDIO
+    size: L
+    needs: [AUD-10, AUD-11, AUD-12, AUD-GATEKEEPER]
+    status: merged
+    owner: "Kyle's separate audio session"
+    branch: lane/audio/aud-10
+    owns: [src/sound-bank.js, public/assets/audio/, tools/audio/, docs/audio/, docs/board/listening/, docs/changes/AUD-14.md]
+    hooks: [.gitattributes, src/audio.js, src/app.js, tools/test-combat-audio.mjs, tools/scenarios/combat-audio.mjs]
+    flag: wasteland2
+    helpers: [test_author, reviewer, audio_qa]
+    acceptance:
+      - "Build approved blasts 523089/397691, crash 592388 and rocket launches 854476/854473 from catalog recipes."
+      - "Rebuild crossbow E pew whistle and hit-confirm; the flight source follows the bolt in 3D with doppler."
+      - "Apply bright transients, tonal signatures and clear hits; measure and compare all weapons over full-throttle engine, with three rounds for key cues and human ratings clearly distinguished from measurements."
+    note: "Merged e1a2d63 after three measured rounds,27 full-throttle checks, real moving projectile/doppler/pause checks and exact final gates. Dense combat loudness remains advisory and human listening is pending. Finite one-shot flight/no-reacquisition policy is documented."
   - id: AUD-01
     title: "Weapon sounds"
     wave: 3
@@ -1475,7 +1616,7 @@ tasks:
     flag: none
     behavior_change: no
     owns: [tools/repo-audit.mjs, tools/test-repo-audit.mjs]
-    note: "The phase-2 sweep reports 55 asset and 16 export candidates, but no unused module, removed-feature test or fully-on switch. Crew/hands/kits and wall use generated paths; audio sources and licenses have tooling/provenance consumers. Director follow-up confirms all sixteen named export candidates are called inside their own modules; they are not dead functions. Trace remaining asset consumers and unnecessary export boundaries before proposing removal; preserve licensed originals and current runtime assets."
+    note: "Read-only audit resolved54 of55 asset candidates as dynamic runtime, source/license/provenance, reference or QA consumers; scrapyard-dirt retains documented future arena use but no current runtime load. All16 export candidates are internally used. No deletion is proven safe. Remaining scope is to resolve the dirt asset when arena work settles its use and improve reporting of known dynamic consumers if useful. Rustwall legacy generator still has concrete test consumers and must be migrated deliberately by its art owner before removal."
 
   - id: FIX-STATUS-CARD
     title: "Preserve phase suffixes in status lane ownership"
@@ -1487,3 +1628,183 @@ tasks:
     behavior_change: no
     owns: [tools/build-status.mjs, tools/test-build-status.mjs, docs/changes/FIX-STATUS-CARD.md]
     note: "Merged 7b901c4 after independent red/green fixtures, 250 focused checks, eight lane suites and build. Optional numeric P suffixes remain in card labels; branch safety and evidence validity are unchanged."
+
+  - id: ARENA-01
+    title: "Scrapdome bounded arena framework"
+    priority: 2
+    lane: CMB
+    size: L
+    needs: [BETA-01, GFX-04, CAR-01]
+    status: backlog
+    flag: wasteland2
+    owns: [src/scrapdome.js, src/arena-driving.js, src/arena-ai.js, src/screen-arena.js, src/screen-arena.css, tools/test-scrapdome.mjs, tools/test-arena-driving.mjs, tools/scenarios/scrapdome.mjs, docs/changes/ARENA-01.md]
+    hooks: [src/game.js, src/app.js, src/screen-router.js, src/screen-yard-home.js, src/sim-driving.js, src/sim-contacts.js, src/sim-results.js, src/render3d.js, src/combat-ai.js, src/combat.js]
+    helpers: [test_author, reviewer, save_guardian, browser_qa, balance_analyst]
+    acceptance:
+      - "Before code, write the event-state contract, physical Titan stadium bounds, free-driving coordinates, player and CPU spawn selection, round lifecycle and return-to-yard behavior. Separate simulation decisions from rendering and reuse the existing opponents list. Up to three CPU cars must be supported from the first implementation."
+      - "Seed and inputs reproduce positions, contacts and outcomes without graphics. Arena boundaries must be physical and keep every supported car playable; ordinary course progress, checkpoints, police and race records retain their existing behavior. Keep on-foot support within the same bounded event."
+      - "A discovered player's yard can enter the implemented arena flow and return safely. Navigation, restart, pause and player changes clean up event state and input. No unbuilt mode is offered. Keep the new flow behind wasteland2 and preserve flag-off behavior."
+      - "Independent red tests cover seeds, one to three CPU cars, all nine player cars, bounds, spawn overlap, cleanup and ordinary replay controls. Review actual High/Performance driving with memory-only saves and measure complete-scene frame cost against the Titan stadium baseline."
+    sound: "Name arena.countdown, arena.round-start and arena.results events for the existing audio owner; use placeholder bank cues until that lane supplies assets."
+    note: "Phase 3 order two. Planning only until BETA-01 is complete; no audio lane or credit use is delegated here. Results and reward ownership must be settled with Save Guardian before persistence changes."
+  - id: ARENA-02
+    title: "Last Car Rolling with up to three CPU cars"
+    priority: 3
+    lane: CMB
+    size: M
+    needs: [ARENA-01]
+    status: backlog
+    flag: wasteland2
+    owns: [src/scrapdome-last-car.js, tools/test-last-car-rolling.mjs, tools/scenarios/last-car-rolling.mjs, docs/changes/ARENA-02.md]
+    hooks: [src/scrapdome.js, src/arena-ai.js, src/screen-arena.js, src/combat.js, src/wasteland-career.js, src/app.js]
+    helpers: [test_author, reviewer, save_guardian, browser_qa, balance_analyst]
+    acceptance:
+      - "Settle time limit, scoring, ties, respawn timing and protection in writing before code. Follow SPEC 3.7: wreck the others more times than they wreck you within the time limit. Attribution must distinguish player, CPU, environment and self damage; repeated collision or wreck events cannot score twice."
+      - "Use the bounded framework for one, two and three CPU cars at all three difficulties. Test deterministic round completion, simultaneous timer/wreck boundaries, fair respawn positions, pause and abandonment. Ordinary races and their fingerprints stay unchanged."
+      - "Integrate completed results with the existing scrap and territory contracts for the Scrapdome venue. Save Guardian proves idempotent settlement, owner identity, abandonment and historical-save preservation using fixtures only. New rank, price or reward choices require a recorded decision."
+      - "Private browser review shows actual free driving, a credited wreck, respawn, timer completion, results and return to yard. Record frame pacing, balance and the lane/build gate before readiness."
+    sound: "Reuse combat impact/wreck cues and arena.countdown, arena.round-start and arena.results through the external audio owner's bank."
+    note: "Phase 3 order two, after the framework. No implementation has begun. The owned mode filename is provisional until the framework design settles module boundaries."
+
+  - id: FIX-RUSTWALL-CLEAN
+    title: "Remove Rustwall test dependency on consumed art scratch"
+    priority: 0
+    lane: TOOL
+    size: S
+    needs: [EGG-02-P2]
+    status: merged
+    flag: none
+    owns: [tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-relief.mjs, docs/changes/FIX-RUSTWALL-CLEAN.md]
+    helpers: [test_author, reviewer, test_runner]
+    acceptance:
+      - "Reproduce the external clean-checkout ENOENT for art-build/rustwall-p2/wall-relief-source.png before changing tests. Runtime asset verification may use only committed assets, and generated-source verification must build its own isolated fixture."
+      - "Preserve the exact generated-source SHA and exported pixel comparisons on each fresh build's own output; retain all geometry, atlas, route, gate and budget assertions. No copying a stale art scratch file or committing raw review output to hide the dependency. Explain and independently review any assertion relocation."
+      - "Run focused tests and the normal lane/build gate from a fresh checkout without prior art-build files. Integration full tier must pass after the fix before further feature merges."
+    note: "Merged ea84b34 after clean red-to-green reproduction, independent assertion review, isolated export6/6, lane8/8 in64.15 seconds and build. Runtime asset checks no longer depend on consumed scratch; exact own-build SHA and atlas pixels remain checked. Integration clean full passed 256/256 on 1d82eb7 at 07:09 UTC; feature merges may resume."
+
+  - id: JANITOR-RUSTWALL-NOTE
+    title: "Fold the consumed Rustwall P2 note into current asset guidance"
+    lane: TOOL
+    size: S
+    needs: [EGG-02-P2, FIX-RUSTWALL-CLEAN]
+    status: merged
+    owns: [docs/ASSET_PIPELINE.md, docs/board/decisions.md, docs/changes/EGG-02-P2.md, docs/changes/JANITOR-RUSTWALL-NOTE.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Preserve the exact selected paint prompt, source path/hash, explicit bake recipe, procedural-fixture limitation and asset-recovery distinction in current guidance before deleting the consumed note."
+      - "Correct current exported wall inventory to 55,834 triangles, fourteen primitives and 8,421,064 bytes, with wash 3,840,288 bytes. Preserve immutable sheets and residual P3 likeness and paint-recovery work."
+      - "Independent fact review, unchanged review-evidence check, lane tier and build pass. No runtime, test or source-asset edits."
+
+  - id: WAR-01
+    title: "Warlord metadata and territory ladder"
+    priority: 3
+    lane: UI
+    size: M
+    needs: [ARENA-02, CAR-01]
+    status: backlog
+    owns: [src/warlords.js, src/screen-territory.js, tools/test-warlords.mjs, tools/test-territory-ui.mjs, docs/changes/WAR-01.md]
+    hooks: [src/screen-yard-home.js, src/wasteland-career.js]
+    flag: wasteland2
+    helpers: [test_author, reviewer, browser_qa]
+    acceptance:
+      - "Settle immutable eight-boss metadata, career territory mapping, hold/claimed/defeated display rules and which fights are actually available before code. Reuse the existing territory IDs and course assignments."
+      - "Render the ladder on the real territory map without save writes. No launch button, working weapon reward or completed fight is advertised before its owning implementation exists. Preserve per-player and unknown/future-save behavior."
+      - "Follow SPEC 0.10 order. Record the conflict between first-three boss rewards and later arsenal waves for explicit WAR-02 design resolution; do not silently replace promised rewards or create fake unlocks."
+      - "Independent data/UI tests, private High/Performance yard-map review, lane tier and build pass. No new poster or card-image system from superseded SPEC 3.10."
+    sound: "warlord.available for a future real availability event; metadata-only display adds no simulation event."
+  - id: WAR-02-P1
+    title: "First three warlord fights and one-time territory claims"
+    priority: 3
+    lane: CMB
+    size: L
+    needs: [WAR-01]
+    status: backlog
+    owns: [src/warlord-encounters.js, src/warlord-settlement.js, tools/test-warlord-encounters.mjs, tools/test-warlord-settlement.mjs, tools/scenarios/warlords.mjs, docs/changes/WAR-02-P1.md]
+    hooks: [src/game.js, src/app.js, src/screen-router.js, src/screen-territory.js, src/progression.js, src/wasteland-progress.js, src/wasteland-career.js]
+    flag: wasteland2
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
+    acceptance:
+      - "First settle Sal, Dustmonger and Mirage encounter formats, full-hold/rank/ladder eligibility, deterministic personalities and exact implemented rewards. Side Saws, Smoke Screen and Decoy Drone are absent and scheduled later; resolve this design conflict in writing before code or slicing further hooks."
+      - "Use a stable boss event identity distinct from ordinary course run/stage settlement. Only a completed eligible win claims territory and marks the matching boss defeated once. Repeated callbacks, restart, abandon, loss and another named player cannot duplicate or inherit rewards."
+      - "Reward mutation and persistence must be atomic from the player's view; denied writes cannot report a persisted claim. Preserve unknown fields and opaque future versions, existing credits/scrap rules, backups and historical save fixtures. Save Guardian review is required."
+      - "Prove seed/input repeatability, ordinary race fingerprints, real private launch-to-result flow, all three encounter balance checks and current lane/build gate. Do not expose the remaining bosses as playable."
+    sound: "warlord.start and warlord.defeated, plus existing combat cues; the external audio lane owns sound implementations."
+    note: "First half of SPEC WAR-02 under the phase-3 order. Later WAR-02 work retains bosses four and five after the prescribed arsenal/crew sequence. This card is planning only while phase 2 remains active."
+
+  - id: AUD-17
+    title: "Voice candidates and chosen crew/raider lines"
+    lane: AUDIO
+    size: L
+    needs: [AUD-14]
+    status: in-progress
+    owner: "Kyle's separate audio session"
+    branch: lane/audio/aud-10
+    owns: [tools/audio/, docs/audio/, docs/board/listening/, audio-src/voices/, docs/changes/AUD-17.md]
+    hooks: [tools/test-voice-candidates.mjs, src/sound-bank.js, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
+    flag: wasteland2
+    helpers: [test_author, reviewer, audio_qa]
+    acceptance:
+      - "Write the stock-voice casting, short gritty nongory lines, candidate budget and repeat-safe generation plan before code or service calls. Independent fake-only tests cover budget exhaustion, no automatic keep, resume and accounting failures."
+      - "Only the external audio owner may use ElevenLabs credits, within its current user-authorized budget and SPEC overnight ceiling of 1500. The Director spends none. Preserve Kyle's exact selected gatekeeper take."
+      - "Candidates are marked for Kyle's choice; no agent keeps or promotes a take. Human ratings remain distinct from measurements. Keys stay in the environment, credit use is logged, and no generation is silently retried after an accounting failure."
+      - "Any runtime voice wiring beyond the existing bank/credit hooks requires a named scope addition before implementation. Retain subtitles, attribution, one-version source placement and normal gates."
+    note: "Candidate preparation merged e1a2d63; full casting/runtime card remains in progress pending Kyle. Ten auditions used400 credits, none selected/rejected/kept. External owner preserves audition bytes/receipts and branch. No additional generation or audio runtime work tonight."
+
+  - id: ARS-01
+    title: "Oil Slick, Caltrops, Smoke Screen and Harpoon"
+    lane: CMB
+    size: L
+    needs: [WAR-02-P1]
+    status: backlog
+    owns: [src/arsenal-wave1.js, tools/test-arsenal-wave1.mjs, tools/test-arsenal-wave1-save.mjs, tools/scenarios/arsenal-wave1.mjs, docs/changes/ARS-01.md]
+    hooks: [src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat-ai.js, src/combat-scene.js, src/combat-effects.js, src/combat-hud.js, src/weapon-upgrades.js, src/wasteland-progress.js, src/screen-armory.js, src/app.js, src/wasteland-tuning.js]
+    flag: wasteland2
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
+    acceptance:
+      - "Settle pool/cloud geometry and lifetime, oil spin duration, caltrop reapplication, bounded harpoon pull/steering break and smoke visibility/lock rules before code. Retain SPEC level-zero recharge10/9/14/12 seconds and unlock ranks2/5/6/3 for oil/caltrops/smoke/harpoon."
+      - "Use seeded simulation state, bounded effects and actual CPU use. Test each counter, overlap/reapplication, shield interaction where specified, actor identity and cleanup. Smoke must break real CPU aim/lock behavior; a rendered cloud alone does not satisfy the rule."
+      - "Use the existing400-scrap new-weapon price unless a written decision changes it. Distinguish the four historically owned starter IDs from the expanded available catalog: extending WEAPON_IDS must not grant every new weapon during normalization. Preserve unknown fields, historical upgrades, opaque future saves, named-player isolation and four-slot loadouts. Save Guardian reviews migration and purchases."
+      - "Prove each working unlock through Armory and a private full-throttle combat scenario. Preserve ordinary and flag-off replay fingerprints. Review actual effect readability, bounded frame/resource cost and complete balance with wasteland2 on."
+      - "Coordinate event/cue contracts with the external audio owner before wiring. Apply Kyle's transient, tonal, moving-flight/doppler and hit-confirm rule where the weapon has those phases; do not create fake projectile flight for stationary oil or smoke."
+      - "Independent tests precede implementation; each counter and CPU path has a meaningful regression. Current lane/build and applicable visual/audio/save gates must pass before merge."
+    sound: "weapon.oil.deploy, weapon.caltrops.deploy, weapon.smoke.deploy, weapon.harpoon.fire, weapon.harpoon.flight, weapon.harpoon.hit and weapon.harpoon.break; external audio lane owns bank entries and sources."
+    note: "Future phase-3 card after the first-three boss slice. The legacy starter-only normalizer currently grants every known ID, so catalog expansion requires explicit save-safe design. No implementation is dispatched during phase 2."
+
+  - id: AUD-15-P1
+    title: "Bounded rival and traffic engine voices"
+    lane: AUDIO
+    size: M
+    needs: [AUD-14, AUD-17]
+    status: backlog
+    owner: "Future audio lane; not started tonight"
+    owns: [src/sound-bank.js, src/audio.js, tools/test-audio-vehicles.mjs, tools/scenarios/audio-vehicles.mjs, docs/audio/briefs.md, docs/changes/AUD-15-P1.md]
+    hooks: [src/app.js, src/sound-mixer.js]
+    flag: wasteland2
+    acceptance:
+      - "Before code, settle a bounded read-only actor snapshot, stable spawn identity, count/radius/priority limits and whether existing engine loops are suitable pending human listening. Proposal: at most three rivals and four nearest traffic cars within 250 metres; deterministic tie ordering and fade on leaving range."
+      - "Use bank cues vehicle.rival-engine and vehicle.traffic-engine with per-car pitch data, 3D distance/direction and bounded doppler. A cap applies to real loop voices and graph resources; no silent duplicate loops on identity reuse or loading."
+      - "Independent tests cover moving listener/actors, left/right, approach/recede, nearest selection, voice stealing, wreck/despawn/respawn, pause/menu/stage/flag-off cleanup and restart. Audio must not mutate simulation or saves."
+      - "Keep the original flag-off waveform comparator unchanged. Record a private memory-only full-throttle near/far browser mix, resource/frame measurements and at least three measured listening rounds; mark missing human ratings explicitly."
+    note: "Read-only preparation only. Kyle limited the current external session to AUD-10, AUD-11, kept gatekeeper, AUD-14 and optional AUD-17 candidates; it will stop after its final gate. Do not start this slice tonight or create another audio lane. Surface tires, scrapes/landings, convolution reverb, ambience one-shots and remaining arrival work need later AUD-15 slices. No new source downloads or credits are authorized by this card."
+
+  - id: FIX-STATUS-SCOPE
+    title: Exclude protected lane folders from status inspection
+    lane: TOOL
+    status: merged
+    branch: codex/fix-status-scope
+    needs: []
+    owns: [tools/build-status.mjs, tools/test-build-status.mjs, docs/changes/FIX-STATUS-SCOPE.md]
+    done_when: "Exact branch exclusions retain ref-only status with dirty unknown and removable false; no skipped-folder access; normal inspection unchanged; independent tests then lane and build."
+
+  - id: JANITOR-AUDIO-NOTES
+    title: Fold completed audio recipes and verdicts into current docs
+    lane: OPS
+    size: S
+    status: merged
+    branch: codex/janitor-audio-notes
+    needs: [AUD-10, AUD-11, AUD-GATEKEEPER, AUD-14]
+    owns: [docs/AUDIO_ITERATION.md, docs/changes/AUD-10.md, docs/changes/AUD-11.md, docs/changes/AUD-GATEKEEPER.md, docs/changes/AUD-14.md, docs/changes/JANITOR-AUDIO-NOTES.md]
+    acceptance:
+      - "Replace stale public WAV/source instructions with current compressed runtime/catalog/source recipes; retain current engine behavior, strict comparison, routing, booth and measurements, kept gatekeeper, combat build/flight policy and pending listening caveats."
+      - "Delete the four consumed task notes only after fact preservation review. Preserve Kyle's AUD-12 picks, pending AUD-17 note/auditions, licenses, runtime assets and external branch/folder."
+      - "Docs only: independent review and normal lane/build gate; no source, test, credit, runtime or external-folder changes."

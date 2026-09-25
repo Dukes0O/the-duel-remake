@@ -405,3 +405,145 @@ The event rates reward a finish and visible combat without making repeated hits 
 
 - Rustwall P2 round 5 remains below acceptance. Director scores wall 2/3/3/3; independent reviewer scores 2/3/2/2. Both score wash 3/3/3/3, with frame cost unmeasured. The irregular crown still looks suspended above two flat shelving grids. Its 57,072 triangles and fourteen draws do not establish likeness. The recorded images precede a node-only correction that moves crown geometry from the fixed 35 m wall-body into scaffold-steel; the next round must capture the final export.
 - Change the central sixty metres before extending anything outward. Replace thin gate framing with two grounded armored pylons, eight to ten metres wide and two to four metres deep, plus a thick connected lintel. Recess salvage behind their visible side faces, remove the central regular shelves and displayed crown cars, and use broad weathered vertical plates. Preserve the physical nine-by-seven-metre moving opening, 420 m span, 35 m core, existing vertical envelope and geometry/material limits. Independent exported depth, grounding and clearance tests precede this build. Actual High and Performance game views decide whether the method improves resemblance.
+
+
+## 2026-09-24 PDT: Kyle's overnight continuation and external audio owner
+
+- Kyle extended the run until morning. Finish remaining phase-2 cards, then follow phase 3 in next-run.md. BETA-01 prepares a reviewable candidate; release still waits for Kyle. No history rewrite is authorized.
+- Kyle's documentation branch precedes his audio sourcing branch. Keep both original branches. The separate lane/audio/aud-10 session owns AUD-10, AUD-11, AUD-14, the gatekeeper.welcome wiring and all ElevenLabs credit use. This Director does not use its worktree or start another audio lane. Readiness is an explicit ready-to-merge change note followed by the normal current lane/build gate.
+- Preserve Kyle's exact selected Callum MP3 take, catalog and crossbow E recipe. Do not regenerate the line or treat the general FLAC source guidance as authority to replace its original bytes. A reproduced post-generation credit-query failure is assigned to that audio owner as AUD-12-R1.
+- The generic 1,500-credit overnight allowance in next-run.md does not authorize this Director to spend credits: Kyle's latest direct assignment overrides it. Ending work by the old percentage budget is also superseded.
+
+
+## 2026-09-24 PDT: grouped garment paint and final wall trial
+
+- Rook round 5 closes the actual waist gap in both quality settings; two independent reviews score 2/3/3/3. The existing sixteen lower core vertices now overlap the trousers, with source/exported ray guards. Seven existing hair-cap vertices then fix sampled scalp contact, with 19/19 focused checks. Do not spend another likeness round on that isolated technical repair.
+- Change the garment method before the next scored Rook round: trace the actual reference's knee/calf/cuff contours onto existing vertices, replace fragmented trouser UVs with two padded sewn front/back panels, and bake one inspected four-material cloth source through explicit hashed calibration. Face/hair pixels, waist coverage and runtime crew remain unchanged. The source stays ignored; only the recipe/calibration and eventually selected embedded runtime maps are kept. Independent source, UV and pre-write validation tests precede implementation. The full crew conversion still waits for Rook likeness four.
+- Rustwall round 9 improves the broad lintel and two tower tops but remains 3/3/3/3 in both independent reviews. Round 10 reuses the successful grey/olive/rust plate paint on two unequal full-height panels in each of four outer non-relief sections, breaking the long blue/orange bands at a physical plate scale. Keep the third section broken rust/iron with dark joints. Name intentional new atlas consumers rather than weakening unchanged-region protection silently. Preserve span, core, gate, existing geometry/material budgets and route.
+- A centroid-only wall test missed large valid faces crossing its bands. Its reviewed correction clips actual triangle surface area to the same regions, retaining all area/depth/composition targets. Equivalent rectangle tessellations measure identically. This is a measurement correction; the original round 8 GLB was not retained, so no exact revised-metric red on that old export is claimed.
+
+
+## 2026-09-24 PDT: painted garment trial and native mirror sampling
+
+- Rook round 6 improves to 3/3/3/3 in two independent actual-game reviews. The 44 High/Performance captures show material detail and closed waist coverage. The side/back crown still has tan patches, so sparse hair contact rays did not establish full hair appearance. Next group: authored dark scalp/hair base above the measured hairline, overlapping clumps, layered scarf and rolled cuffs. Preserve the painted eyes/beard, measured body envelopes, working bindings and budgets. Matching seven trouser-width bands is a reason to avoid arbitrary narrowing; inspect real intermediate fold contours instead.
+- The generated garment sheet is 1254 square, SHA-256 793ee85733cd1ed0446b54d0cf5ef3746d5dba311aaf8b79d4fda6828e93e928. Its alpha is 216-250 despite the opaque prompt. The source stays unchanged. The explicitly reviewed RGB-only bake ignores source alpha, writes a final opaque atlas, and retains exact face/hair pixels; independent source-hash/output-opacity checks pass. The committed calibration records actual crop coordinates, and the exact prompt stays in the task recipe. No duplicate source PNG enters Git.
+- Private native Rustwall A/A diagnostics prove exact mirror Boolean sequence matching is invalid: equal 300/300 refresh counts still had 64 or 600 position mismatches; another view had 300 versus 299 with 445 mismatches. Keep native clocks. The revised comparison allows phase differences while requiring each refresh count within six of 600 versus both baselines; it retains aggregate and separate refreshed/reused CPU ratios against both baselines and the unchanged ten-percent cost limit. The highly unbalanced 1/599 fixture remains rejected. Concurrent dry runs are functional evidence only, never performance acceptance.
+
+
+## 2026-09-24 PDT: close the bounded wall wave without hiding visual debt
+
+- Rustwall P2 reached the ten-round limit with two independent final scores of 3/3/3/3 for wall and wash. SPEC 0.3 moves remaining differences to a new polish wave. Re-slice P2 as a measured development improvement, still requiring its original frame and lane/build gates. EGG-02-P3 retains the original likeness-four target and names regular bays, straight columns, perched cars and artificial strata. No visual pass, beta approval or release is inferred from this re-slice.
+- Rook round 7 pairs a calibrated dark scalp mask with broad projected hair coverage, layered scarf edges and rolled cuffs. Preserve painted eyes/beard and the connected core. Reclaim detail triangles from boot laces before adding folds; retain the 8,000 near and 2,000 far caps. Independent red tests on actual crown area and atlas pixels precede source changes. No other crew converts until Rook passes.
+- The external audio owner marked only AUD-12-R1 ready. Isolate commits 96cf90a and 9268cb9 plus readiness note 631deed in a temporary integration-owned checkout and rerun its lane/build gate. Do not merge the unfinished AUD-10 sound-bank series. Both Kyle branches and the external session branch remain intact; no credit use is needed.
+
+
+## 2026-09-24 PDT: first-person design audit before the next build
+
+- GFX-02-P1 remains behind the Rook technique decision. Read-only inspection found the fingerless glove generator closing a skin terminal ring with the first leather tile, plus very narrow radial tip caps. Repeated digit lofts and separate palm/thumb pads explain the mitten silhouette; the shared sleeve ring/noise recipe explains generic cloth. These are concrete starting defects for independent red tests, not a visual pass for a replacement.
+- The proposed proof is one connected Rook hand with a shaped thumb web, staggered curled digits, rounded terminal loops, explicit glove/skin material boundaries, authored cuff seams and padded painted UV charts. Keep wrist/finger bone names and tool sockets. Test actual exported geometry, cap pixels/normals and continuous clip-to-grip contact, then judge both game qualities before extending to eight. Preserve 8,000 visible triangles, three draws and current runtime lifecycle/selection. A measured runtime issue requires a separate named hook; none is authorized by this audit.
+
+
+## 2026-09-24 PDT: janitor consumer audit and exported counts
+
+- Read-only CLEAN-11 traced all 55 literal asset candidates: 29 are dynamically loaded runtime assets (eight crew, ten first-person, three kits, two wall/wash, six terrain textures); eleven are audio sources/metadata, licenses or exporter provenance; thirteen are documented art references; one is the test-fighter QA fixture; one is scrapyard-dirt with documented future use but no current runtime load. None is proven safe to delete. The sixteen export candidates were already confirmed internally used. Keep the unresolved dirt use visible until the arena work settles it.
+- The non-P2 Rustwall generator still has concrete consumers in test-blender-output, test-runtime-art-sources and test-review-evidence, alongside legacy P1 comparison handling. Removing it requires deliberate migration of those consumers while keeping historical sheets readable. It is not dead solely because the current runtime wall uses P2; EGG-02-P3 should settle the current rebuild recipe before deleting the old construction.
+- Actual exported wall triangles are 55,834, versus source 56,122. The 288 difference is six cloth banners times 24 cells times two reverse coincident triangles in wall-details; the exporter omits those duplicate faces. It is unrelated to the wash. Baseline exported wall was 58,626 versus source 58,914. Use actual exported geometry for budget reports; all prior limits and pass/fail conclusions remain intact.
+- The clean-checkout test failure is a separate issue: runtime verification must not read consumed art scratch. Keep runtime path/hash-schema, source-car hashes and actual geometry/UV/material checks. Exact source-render byte equality and embedded atlas pixel equality belong to each fresh isolated full-wall/probe build. That preserves generator source-to-export verification; it cannot retrospectively prove a historical source PNG's bytes after that PNG has been consumed. Independent review approves this narrow relocation, with a fresh integration full pass required before feature merges resume.
+
+
+## AUD-14 test hooks (25 September 2026)
+
+The external audio lane may own tools/test-combat-audio.mjs and tools/scenarios/combat-audio.mjs for tests-first weapon sound and full-throttle context checks. Runtime changes stay within its existing bank, audio and app listener hooks. No simulation changes or ElevenLabs credit use by the Director. The AUD-10 baseline tolerance decision remains pending; this scope approval does not waive it.
+
+AUD-14 also has the narrow .gitattributes hook to mark *.ogg binary, preventing text newline conversion of Vorbis data. Test exact compressed bytes through the Git attribute path before keeping runtime assets; no unrelated attribute changes.
+
+## 2026-09-25 PDT: selected Rustwall asset after the ten-round wave
+
+- Accept EGG-02-P2 only as a measured development improvement. Two independent reviews score the final wall and wash 3/3/3/3; the scoped full-render CPU/RAF frame score is four, with worst required A1/B/A2 ratio 1.0833 against 1.10. The actual exported wall has 55,834 triangles in 14 primitives; its 56,122 source total includes 288 duplicate reverse cloth faces omitted by export. EGG-02-P3 retains likeness four, denser interlocked salvage, irregular tower silhouettes, natural joined strata and the selected-paint recovery work. Hidden Road remains dev.
+- The selected steel paint is embedded in the committed wall GLB and originated from the exact generated image and prompt retained in `docs/ASSET_PIPELINE.md`. The generator's no-input P2 route is only a procedural fixture. A Git restore recovers the selected GLB but does not reproduce its image source. Preserve the original generated image by hash; require explicit verified input or hashed embedded-atlas extraction before modifying that paint. No source PNG is committed under `public/`.
+
+## 2026-09-25 PDT: change Rook silhouette construction for round eight
+
+Two actual game rounds remain at 3/3/3/3 despite better paint, scalp coverage, scarf and cuffs. Before more code, approve the written grouped method: a scalloped cap edge with rooted three-dimensional curl locks, reference-traced intermediate trouser folds while freezing seven measured width anchors, and small separated fingertip/thumb silhouettes attached to the existing gloves. Independent actual exported contour, contact, uniform-skin UV and motion tests precede implementation. Keep dense scalp coverage, face paint, waist continuity, broad padded garment charts and near/far limits of 8,000/2,000 triangles. Label occluded reference edges as inferred. Attribute the straight upper-back projection in the bent pose before changing it. Three rounds remain in this bounded wave; no other crew converts or runtime candidate replaces the baseline before likeness four.
+
+
+## 2026-09-25 PDT: external voice-candidate preparation
+
+Approve the external audio lane narrow tools/test-voice-candidates.mjs hook for independent fake-only budget, no-keep and resume checks before service use. AUD-17 preparation retains the SPEC ceiling and any tighter budget set in that session; all credits belong to that owner, none to the Director. Only Kyle selects takes. The unresolved AUD-10 baseline and pending human listening remain visible and are not waived by preparation on later cards.
+
+
+## 2026-09-25 PDT: Rook upper skull and hair must match together
+
+The narrower curl outline exposed a real scalp-coverage failure. At native side rows77/85, the connected upper skull projects rearward to x238.8/241.3 while the reference outer hair is about x253/246; the candidate hair at x245.6/242.1 lies inside that oversized skull. Restoring the old cap alone would cover scalp but keep the broad helmet silhouette. Approve a measured upper-rear core contour correction, tapering out before the lower hair/jaw bands, plus an exterior hair shell. Preserve the front face profile, eyes/beard paint, UVs, jaw, connected topology and rig. Independently test the existing reference head-back polyline at rows67/77/85 before code, then require both corrected profile and unchanged dense scalp coverage, face and motion guards. No coverage threshold is relaxed and no runtime crew is replaced.
+
+
+Pending AUD-17 auditions are not consumed evidence: the external owner holds ten unselected MP3 candidates, receipts and listen.html under its ignored .evidence/audio/voices/. Preserve them until Kyle selects or rejects them; none is a kept or runtime take. That lane remains in progress. If it must retire first, its owner must transfer the pending files to a named ignored integration evidence folder and verify hashes before cleanup. The Director must not access the external audio worktree. The reported400-credit batch is finished, with no further API calls planned.
+
+
+## 2026-09-25 PDT: preserve the flag-off audio summation graph
+
+The strict AUD-10 comparator explicitly constructs both engines with every feature flag false. Its remaining residual is introduced after unity bus regrouping and amplified by the unchanged compressor. The Director approves a bank-owned flat routing path for that disabled mode: all cue recipes and parameters still come from the bank, and SoundMixer chooses the original destinations/addition order. Do not restore a second handwritten engine or duplicate recipes. Physical grouped buses, ducking and moving playback remain required for their enabled features, including independent Hidden Road voice ducking. This reconciles the bus implementation with Kyle's requirement to preserve existing behavior and keep new features switched off.
+
+The same five strict baseline cases and thresholds remain, including the long race. This is an implementation change, not a comparison bypass. Write the routing and flag-transition design first, prove the disabled route red before code, and retain meaningful enabled-bus, voice-limit, moving-source and cleanup checks. Any graph assertion whose setup now needs enabled mode must state that premise explicitly and preserve its original routing condition; add the disabled and off/on/off transition checks rather than dropping coverage. Finish the currently frozen external full gate before tracked edits. Root independent review and a fresh lane/build gate follow the changed implementation; no ready or merge verdict is granted here.
+
+
+## 2026-09-25 PDT: first-three warlord sequencing question
+
+Read-only review confirms that the first three bosses promise Side Saws, Smoke Screen and Decoy Drone as early rewards, while the ordered arsenal cards implement them later. Existing ram, shortcut and UFO primitives can support encounters but do not implement those named weapons or their counters. Kyle has been asked whether WAR-02 may include those three working mechanics, or whether rewards should be explicitly pending until later arsenal waves. The question remains unanswered; do not create fake usable unlocks or silently change the order. Phase-2 work and independent preparation continue. Boss-specific kits, weather and stencil rewards also need actual consumers before being advertised as available.
+
+
+## 2026-09-25 PDT: Rook round nine changes torso construction
+
+Both round-eight reviews remain3/3/3/3. Change the large torso assembly rather than another small contour adjustment. Rebuild the existing vest grids as reference-traced asymmetric cloth surfaces with a visibly open teal center, unequal front edges/hems, curved lapel returns and shallow overlapping folds. Recompose the repeated square pockets as unequal attached hanging canvas volumes, and replace redundant rear rolls with one diagonal fabric flap meeting the retained lower satchel. Reuse existing role charts, one material, chest/pelvis bindings and actual armhole/waist contact guards. Reducing redundant vest grid faces funds the folds; near/far caps remain8000/2000.
+
+Use the existing verified cloth source with deterministic broad edge wear, seam shadow and desaturated trouser values. Freeze trouser geometry and its seven measured width bands for this round; the torso is the grouped construction change. No new image or boot/hair geometry is part of round nine. Independent tests must first fail on the actual traced front/quarter opening, asymmetry, lapel/pocket depth and cloth attachment; unchanged UV padding, skin/motion and budget guards remain. Do not accept invented exact mesh counts as a substitute for the visible result. The next private High/Performance review decides likeness. Two rounds remain in this wave, and all runtime crew remain unchanged until the acceptance decision.
+
+
+## 2026-09-25 PDT: Rook promotion frame evidence
+
+The private 44-view Rook trial deliberately has no crowd/frame verdict. The old crew crowd sample performs an additional isolated render and cannot establish promotion cost. If the visual trial reaches four, add a quiet baseline/candidate/baseline comparison on one frozen source bundle, using the existing private same-origin Rook substitution and fresh memory-only pages. Exercise twelve near Rook rigs and one near plus eleven far rigs in both qualities, with matched route, state, camera and pose controls. Use one complete production render per native frame, twenty warm frames and six hundred ordered samples; retain full-render CPU, RAF intervals, actual LOD/draw counts and asset hashes. Never call CPU submission time GPU time.
+
+Before measurement, set an additional Rook asset regression limit of ten percent for mean and p95 full-render CPU and RAF p95 against both baselines, with baseline-drift diagnostics and the existing mirror refresh/reuse safeguards where applicable. This is a Director choice for the new comparison, not a claim that SPEC assigns that relative threshold to crew. SPEC's separate combat-versus-ordinary average frame budget still applies; this scoped asset comparison does not replace it. Keep twelve figures within twenty-four color draws, near/far at8000/2000 triangles, and one1024-square texture set. No helper implementation or promotion is authorized by a score of three alone.
+
+
+## 2026-09-25 PDT: correct the Rook trouser reference before round nine
+
+Two independent native-pixel reviews found an error in the stored front inner-leg traces. The reference SHA remains af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058. At y455 the visible background gap is about x95–133, at y525 x88–141, and at y556 x81–144. Stored inner edges put the right leg about20–24 pixels into clear background and the left about5–12 pixels into it. Adjacent rows confirm the visible gap; no hand or holster obscures these samples. Existing source tests had validated the incorrect stored trace.
+
+Revise the earlier round-nine trouser freeze only to correct this proven reference error. Finish a second check of outer edges and the affected bands, label occluded points as inferred, then have the independent test author write the corrected native-edge regression before changing geometry. Record the changed reference assertions and their image evidence in the lane note. Update inconsistent front polylines/bands together; do not relax tolerances or arbitrarily narrow the garment. Preserve the connected pelvis, front/back sewn UV panels, waist and boot contact, rig/motion, and triangle limits. The paint implementation can continue independently, but no scored round-nine capture proceeds until this correction passes. Hair and boots remain outside this geometry correction unless a reproduced contact failure requires a separately written scope decision.
+
+
+## 2026-09-25 PDT: preserve Rook ankle contact while correcting stance
+
+The independent native reference and authored-face intersection audit proves that the boots share the incorrect inward stance. At native y565, visible boot shafts are43–81 and147–185; source shafts project57.5–98.3 and125.7–166.5. At y600 the reference is44–74 and153–182 versus source60.1–95.9 and128.3–164.1. Adjacent rows vary only1–3pixels. Correcting trousers alone would separate the cuff and boot laterally by about5–7cm.
+
+Approve translating each complete boot, trim and sole with its ankle contact to the independently measured stance, asymmetrically outward. Preserve shaft widths, floor height, toe shape, material/UVs and rig bindings. This is contact correction, not boot redesign. Independent native shaft/stance and posed cuff-contact reds must precede the source change; unchanged animation, foot-floor and triangle guards remain. Hair remains frozen for round nine.
+
+## 2026-09-25 PDT: status inspection scope
+
+Kyle excluded the external audio worktree from this Director's access. The current status helper calls Git status inside every registered lane. FIX-STATUS-SCOPE adds repeatable --skip-lane exact-branch arguments and an equivalent collectStatus skipLanes array. Skipped branches remain listed using integration Git refs, with unknown dirty state, explicitly skipped inspection and removable false. The helper must make no filesystem or Git call inside a skipped lane. Default behavior and normal lane inspection remain unchanged. Independent throwaway-repository tests precede code; no real external folder is used. This small QA fix precedes the next required status update.
+
+
+## 2026-09-25 PDT: measured rear trouser contour
+
+The independent back-view check resolves the apparent pose conflict. At native y500 the visible legs are370–414 and463–507; y490 and510 stay within1–2pixels. The old back band359–406/464–510 was approximate. Using the existing back center439 gives the first leg world x+.079..+.219m, compatible with the corrected front opposite leg+.098..+.231m. The current rear surface+.160..+.278m is displaced outward, not evidence that the reference poses are incompatible.
+
+Approve correcting the y500 back band to those independently measured native intervals, preserving the10pixel geometry tolerance. An independent corrected-reference/source red precedes a depth-dependent rear calf contour adjustment that keeps the accepted front surface fixed and tapers toward knee/cuff. Check connected cross-sections, unchanged sewnUVs, boot contact and poses. Do not change other back bands without independent visible-reference evidence.
+
+
+## 2026-09-25 PDT: final Rook wave round uses broad rooted hair locks
+
+Round9 again scores3/3/3/3 in two actual-game reviews. Its44 High/Performance captures pass on private20428; the90,800byte sheet and verdict are committed in lane91cc77c. Improved torso construction and measured trouser/boot stance do not meet likeness four. The apparent aim-waist hole was disproved by native pixels; no waist repair is justified by that image.
+
+Approve the builder's written round10 method: replace fourteen narrow hair strips with eight broad curved overlapping locks over an irregular dark undercap. Keep the undercap outside the actual scalp, preserve the existing dense four-view coverage and measured crown/forehead/side bounds, and root each lock into the cap. Sweep the locks across temples and nape with staggered ends and curved volume. Replace arbitrary SmartProject hair islands with explicit connected root-to-tip UV strips inside the existing padded hair chart; reuse the verified source crop, one material and unchanged face/garment pixels. The source grain is visibly longitudinal in the existing atlas and must follow each lock. Budget estimate near7596 is advisory; actual8000/2000 limits remain.
+
+Independent silhouette, scalp/contact, exported UV direction/padding, paint-isolation, rig/motion and actual-count tests precede code. The final private matched views decide the score. This is the last round in the current ten-round wave; any remaining likeness differences become a new polish card under SPEC0.3. Runtime Rook and the other seven crew stay unchanged unless the complete promotion gate passes.
+
+
+## 2026-09-25 PDT: close the Rook research wave and isolate the hand proof
+
+Both final round10 reviews score3/3/3/3 with frame cost unmeasured. The private26162 capture passed44 High/Performance views without warnings or errors; candidate32628d4c has7500/1833 triangles. The final90,844byte sheet and review retain the verdict. Close GFX-01-P2 after its ordinary lane/build gate as a non-promoted research result, preserving the reusable recipe, independent fixture tests and original paint inputs. GFX-01-P3 carries sculpt/retopology/bake work and the remaining full-crew likeness/frame gate. No round11 is part of this wave.
+
+The failed body likeness does not establish a winning whole-character method. It does establish useful connected-surface, explicit-UV and source-verification techniques. Re-slice GFX-02-P1 so that, after P2 closure, it first proves only Rook's hand anatomy independently: joined palm/thumb web and separated curled digits, rounded exposed-skin tips, authored sleeve cuff and padded material charts. Keep wrist/finger bones, sockets, clips, current runtime bytes and the other seven hands. Use an opt-in generator path to ignored candidate output, independently tested private same-origin substitution, a separate immutable review folder and actual High/Performance motion/camera checks. Existing all-eight baseline review behavior remains available. No all-eight conversion or runtime promotion until its own visual and measured budget gate passes. Write the detailed construction/UV/contact design and independent failing tests before code; runtime changes need a reproduced defect and separately named hook.
+
+BETA-01's requested Experimental promotion conflicts with the still-unmet SPEC0.3 art gate. Kyle has been asked whether to preserve the4/5 gate or permit an explicitly unfinished-art Experimental beta. The question is pending; no flag change or release is authorized by elapsed time. Phase2 hand work continues independently.

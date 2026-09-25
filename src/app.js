@@ -169,12 +169,38 @@ export class App {
     this.audio.setPaused(true);this.audio.context?.close?.()?.catch?.(()=>{});
     if(typeof window!=='undefined'&&window.__game?.duel===this.duel)delete window.__game;
   }
-  _updateAudio(){
-    const state=this.duel.state,course=this.duel.course,tunnel=course?.tunnelAt?.(state.s);
-    const phase=course?.phase?.(state.s)??state.s;
-    const inside=tunnel&&Math.abs(state.lateral)<=tunnel.width&&(state.airHeight||0)<tunnel.height;
-    const tunnelMix=inside?Math.max(0,Math.min(1,(phase-tunnel.start)/12,(tunnel.end-phase)/12)):0;
-    this.audio.update(state,{tunnel:tunnelMix,looseSurface:!!course?.def.offroad||!!course?.def.arena,biome:course?.themeAt(state.s),night:course?.def.timeOfDay==='night',cameraMode:this.cameraMode});
+  _updateAudio() {
+    const state = this.duel.state;
+    const course = this.duel.course;
+    const tunnel = course?.tunnelAt?.(state.s);
+    const phase = course?.phase?.(state.s) ?? state.s;
+    const inside = tunnel && Math.abs(state.lateral) <= tunnel.width &&
+      (state.airHeight || 0) < tunnel.height;
+    const tunnelMix = inside ? Math.max(0, Math.min(1,
+      (phase - tunnel.start) / 12, (tunnel.end - phase) / 12)) : 0;
+    const point = state.onFoot && state.fighter
+      ? state.fighter : course?.groundAt?.(state.s, state.lateral);
+    const heading = (point?.heading ?? point?.yaw ?? 0) + (state.onFoot ? 0 :
+      (state.headingError || 0) + (state.slipAngle || 0) + (state.crashSpin || 0));
+    const speed = state.onFoot ? (state.fighter?.speed || 0)
+      : (state.speedMph || 0) * DRIVE.mphToWorld;
+    const listener = point && {
+      x: point.x,
+      y: (point.y || 0) + 1.3 + (state.onFoot ? 0 : (state.airHeight || 0)),
+      z: point.z,
+      heading,
+      vx: Math.sin(heading) * speed,
+      vy: 0,
+      vz: Math.cos(heading) * speed,
+    };
+    this.audio.update(state, {
+      listener,
+      tunnel: tunnelMix,
+      looseSurface: !!course?.def.offroad || !!course?.def.arena,
+      biome: course?.themeAt(state.s),
+      night: course?.def.timeOfDay === 'night',
+      cameraMode: this.cameraMode,
+    });
   }
 
   _simulate(seconds) {

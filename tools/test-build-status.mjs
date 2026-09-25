@@ -24,6 +24,7 @@ import net from 'node:net';
 import tls from 'node:tls';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
+import childProcess from 'node:child_process';
 import { syncBuiltinESMExports } from 'node:module';
 const denied = () => { throw Error('TRACK-01 status inspection attempted network access'); };
 http.request = http.get = https.request = https.get = denied;
@@ -31,10 +32,28 @@ net.connect = net.createConnection = tls.connect = globalThis.fetch = denied;
 for (const [object, method] of [[fs, 'readFileSync'], [fs, 'readFile'], [fsp, 'readFile']]) {
   const original = object[method];
   object[method] = function(path, ...rest) {
+    guarded(path);
     if (String(path).includes('player-save-fixture')) throw Error('TRACK-01 status inspection attempted save access');
     return original.call(this, path, ...rest);
   };
 }
+const forbidden = JSON.parse(process.env.STATUS_SKIP_FORBIDDEN_PATHS || '[]')
+  .map(path => String(path).replaceAll('\\\\', '/').toLowerCase());
+const guarded = path => {
+  const value = String(path).replaceAll('\\\\', '/').toLowerCase();
+  if (forbidden.some(root => value === root || value.startsWith(root + '/')))
+    throw Error('FIX-STATUS-SCOPE inspected skipped lane: ' + value);
+};
+for (const method of ['existsSync', 'readdirSync', 'statSync', 'lstatSync',
+  'realpathSync', 'accessSync', 'openSync']) {
+  const original = fs[method];
+  fs[method] = function(path, ...rest) { guarded(path); return original.call(this, path, ...rest); };
+}
+const spawn = childProcess.spawnSync;
+childProcess.spawnSync = function(command, args, ...rest) {
+  if (command === 'git' && Array.isArray(args) && args[0] === '-C') guarded(args[1]);
+  return spawn.call(this, command, args, ...rest);
+};
 syncBuiltinESMExports();
 `);
 const check = (value, label) => { checks++; assert.ok(value, label); };
@@ -89,10 +108,10 @@ function fixture(name) {
   }
   return { home, root, live, base, evidencePath, statusPath, evidence };
 }
-function report(f) {
-  const child = spawnSync(process.execPath, ['--import', pathToFileURL(guard).href, statusTool, '--root', f.root, '--live-root', f.live, '--now', now, '--json'], {
+function report(f, extraArgs = [], extraEnv = {}) {
+  const child = spawnSync(process.execPath, ['--import', pathToFileURL(guard).href, statusTool, '--root', f.root, '--live-root', f.live, '--now', now, '--json', ...extraArgs], {
     cwd: f.root, encoding: 'utf8', shell: false, windowsHide: true, timeout: 15000,
-    env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
+    env: { ...process.env, GIT_OPTIONAL_LOCKS: '0', ...extraEnv },
   });
   same(child.status, 0, `build-status CLI generates fixture status successfully: ${child.stderr.split(/\r?\n/).find(line => line.startsWith('Error')) || child.stderr.trim()}`);
   const value = JSON.parse(child.stdout);
@@ -329,6 +348,71 @@ try {
     check(backed.markdown.includes('master') && backed.markdown.includes('integration/wasteland'), 'both backup branches are reported');
     check(/local|rollback|dist-previous/i.test(backed.markdown), 'local backup availability is stated');
     same(snapshot(f.home, new Set([f.statusPath])), withRemote, 'backup inspection never fetches, pushes or removes a worktree');
+  });
+
+  await test('exact skipped lanes remain visible without inspecting their worktrees', () => {
+    const f = fixture('skip-lanes'); f.evidence();
+    const merged = join(f.home, 'private-merged');
+    const pending = join(f.home, 'private-pending');
+    const ordinary = join(f.home, 'ordinary-dirty');
+    git(f.root, 'worktree', 'add', '-b', 'codex/private-merged', merged);
+    put(join(merged, 'uncommitted.txt'), 'preserve without inspection\n');
+    git(f.root, 'worktree', 'add', '-b', 'codex/private-pending', pending);
+    put(join(pending, 'pending.txt'), 'unmerged committed work\n');
+    git(pending, 'add', 'pending.txt'); git(pending, 'commit', '-m', 'pending lane work');
+    put(join(pending, 'uncommitted.txt'), 'preserve without inspection\n');
+    git(f.root, 'worktree', 'add', '-b', 'codex/private-merged-extra', ordinary);
+    put(join(ordinary, 'uncommitted.txt'), 'ordinary lane is inspected\n');
+    const forbidden = JSON.stringify([merged, pending]);
+    const args = ['--skip-lane', 'codex/private-merged', '--skip-lane', 'codex/private-pending'];
+    const result = report(f, args, { STATUS_SKIP_FORBIDDEN_PATHS: forbidden });
+    check(!result.issues.some(issue => /FIX-STATUS-SCOPE inspected skipped lane/.test(issue)),
+      'CLI does not mask forbidden lane inspection as an issue');
+    const lane = name => result.lanes.find(row => row.branch === name);
+    for (const [name, path, mergedState] of [
+      ['codex/private-merged', merged, true],
+      ['codex/private-pending', pending, false],
+    ]) {
+      const row = lane(name);
+      check(row, `${name} remains listed from integration refs`);
+      same(row.path?.replaceAll('\\', '/'), path.replaceAll('\\', '/'),
+        `${name} retains its registered path`);
+      check(/^[0-9a-f]{40}$/.test(row.commit), `${name} retains its commit`);
+      same(row.merged, mergedState, `${name} merge state comes from integration refs`);
+      same(row.dirty, null, `${name} dirty state is unknown`);
+      same(row.removable, false, `${name} cannot be removed without inspection`);
+      check(/inspection skipped/i.test(row.activity), `${name} activity names skipped inspection`);
+    }
+    same(lane('codex/private-merged-extra').dirty, true,
+      'a similar branch name is still inspected normally');
+    same(lane('codex/private-merged-extra').removable, false,
+      'ordinary dirty lane retains existing removal safety');
+    const expression = `import {collectStatus} from ${JSON.stringify(pathToFileURL(statusTool).href)};` +
+      `console.log(JSON.stringify(collectStatus({root:${JSON.stringify(f.root)},` +
+      `liveRoot:${JSON.stringify(f.live)},now:${JSON.stringify(now)},` +
+      `skipLanes:['codex/private-merged','codex/private-pending']})));`;
+    const direct = spawnSync(process.execPath,
+      ['--import', pathToFileURL(guard).href, '--input-type=module', '-e', expression],
+      { cwd:f.root, encoding:'utf8', shell:false, windowsHide:true, timeout:15000,
+        env:{...process.env, GIT_OPTIONAL_LOCKS:'0', STATUS_SKIP_FORBIDDEN_PATHS:forbidden} });
+    same(direct.status, 0, `direct collector honors skipLanes: ${direct.stderr}`);
+    const directReport = JSON.parse(direct.stdout);
+    check(!directReport.issues.some(issue => /FIX-STATUS-SCOPE inspected skipped lane/.test(issue)),
+      'direct collector does not mask forbidden lane inspection as an issue');
+    const directRows = directReport.lanes;
+    same(directRows.find(row => row.branch === 'codex/private-pending').dirty, null,
+      'direct collector also leaves skipped worktree dirty state unknown');
+  });
+
+  await test('skip-lane rejects a missing branch value before writing status', () => {
+    const f = fixture('skip-missing');
+    const child = spawnSync(process.execPath,
+      [statusTool, '--root', f.root, '--skip-lane', '--json'],
+      { cwd:f.root, encoding:'utf8', shell:false, windowsHide:true, timeout:15000,
+        env:{...process.env, GIT_OPTIONAL_LOCKS:'0'} });
+    check(child.status !== 0, 'missing skip-lane value fails');
+    check(/--skip-lane needs a value/i.test(child.stderr), 'error names required value');
+    check(!existsSync(f.statusPath), 'invalid CLI does not write STATUS');
   });
 
   async function runFixture(f, args, { fail = false, during = () => {} } = {}) {

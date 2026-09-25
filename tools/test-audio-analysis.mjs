@@ -1,3 +1,4 @@
+import {readRuntimeWav} from './audio/codec.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -5,7 +6,7 @@ import { analyzeRecording, decodeWav, resolvePitchOctaves } from './audio-analys
 import { wavFromPcm } from './scenarios/audio-race.mjs';
 
 const sampleRate = 16000, seconds = 4;
-const shiftTemplate = decodeWav(readFileSync(new URL('../public/assets/audio/engine-shift.wav', import.meta.url)));
+const shiftTemplate = decodeWav(readRuntimeWav('engine-shift.flac'));
 function fixture({ delaySec = 0, freezePitch = false, impactLevel = null, shiftDelaySec = 0,
   missingShift = false, priorShift = false, frozenStepAfterGap = false } = {}) {
   const count = sampleRate * seconds;
