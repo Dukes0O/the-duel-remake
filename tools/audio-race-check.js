@@ -9,10 +9,11 @@ const originalConnect = AudioNode.prototype.connect;
 AudioNode.prototype.connect = function(destination, ...rest) {
   if (destination instanceof DynamicsCompressorNode && this === app.audio.master) qa.limiter = destination;
   const recorder = qa.recorder;
-  if (recorder && (destination === app.audio.master || destination === app.audio.vehicleBus)) {
-    const kind = qa.category || 'ui';
+  const name=Object.entries(app.audio.buses || {}).find(([,bus])=>bus===destination)?.[0];
+  if (recorder && (name || destination === app.audio.master || destination === app.audio.vehicleBus)) {
+    const kind = ['weapons','impacts'].includes(name)?'weapons':name==='engine'?'engine':name==='ambience'?'ambience':qa.category || 'ui';
     originalConnect.call(this, recorder.buses[kind]);
-    if (kind === 'engine' && destination === app.audio.vehicleBus)
+    if (kind === 'engine' && (destination === app.audio.vehicleBus || name==='engine'))
       originalConnect.call(this, recorder.buses.shift);
   }
   return originalConnect.call(this, destination, ...rest);

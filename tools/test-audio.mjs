@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
+import {decodeAudioBytes, readRuntimeWav} from './audio/codec.mjs';
 import {EngineAudio,combatAudioSpace} from '../src/audio.js';
 import {App} from '../src/app.js';
 import {CARS,COURSE} from '../src/config.js';
@@ -13,7 +14,7 @@ function decodeWav(bytes){
   assert(format&&pcm);assert.equal(format.type,1);assert.equal(format.channels,1);assert([16,24].includes(format.bits));const width=format.bits/8;
   return {...format,samples:Float32Array.from({length:pcm.length/width},(_,i)=>pcm.readIntLE(i*width,width)/2**(format.bits-1))};
 }
-const readWav=file=>decodeWav(fs.readFileSync(new URL(`../public/assets/audio/${file}`,import.meta.url)));
+const readWav=file=>decodeWav(readRuntimeWav(file));
 const envelopeSwing=(data,rate=44100)=>{const window=Math.round(rate*.1),rms=[];for(let i=0;i+window<=data.length;i+=window){let sum=0;for(let j=i;j<i+window;j++)sum+=data[j]**2;rms.push(Math.sqrt(sum/window));}return 20*Math.log10(Math.max(...rms)/Math.max(1e-9,Math.min(...rms)));};
 class Param {
   constructor(value=0){this.value=value;}
@@ -44,13 +45,13 @@ class MockContext {
   createDynamicsCompressor(){return this.node('compressor',{threshold:-24,knee:30,ratio:12});}
   createBuffer(channels,length,sampleRate){const data=Array.from({length:channels},()=>new Float32Array(length));return {duration:length/sampleRate,sampleRate,length,numberOfChannels:channels,getChannelData:index=>data[index]};}
   async decodeAudioData(arrayBuffer){
-    const decoded=decodeWav(Buffer.from(arrayBuffer)),buffer=this.createBuffer(decoded.channels,decoded.samples.length,decoded.rate);buffer.getChannelData(0).set(decoded.samples);return buffer;
+    const decoded=decodeWav(decodeAudioBytes(Buffer.from(arrayBuffer))),buffer=this.createBuffer(decoded.channels,decoded.samples.length,decoded.rate);buffer.getChannelData(0).set(decoded.samples);return buffer;
   }
   advance(seconds){this.currentTime+=seconds;for(const node of this.nodes){const natural=node.type==='source'&&!node.loop&&node.buffer&&node.started!=null?node.started+node.buffer.duration/node.playbackRate.value:Infinity;const end=node.stopAt??natural;if(!node.ended&&end<=this.currentTime){node.ended=true;node.onended?.();}}}
 }
 globalThis.localStorage={getItem:()=>null,setItem:()=>{}};
 async function makeAudio(failed=new Set()){
-  globalThis.fetch=async url=>{const file=url.split('/').at(-1);if(failed.has(file)||failed.has('*'))throw Error('simulated download failure');const bytes=fs.readFileSync(new URL(`../public/assets/audio/${file}`,import.meta.url));return {ok:true,arrayBuffer:async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)};};
+  globalThis.fetch=async url=>{const file=url.split('/').at(-1);if(failed.has(file)||failed.has(file.replace('.flac','.wav'))||failed.has('*'))throw Error('simulated download failure');const bytes=fs.readFileSync(new URL(`../public/assets/audio/${file}`,import.meta.url));return {ok:true,arrayBuffer:async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)};};
   const audio=new EngineAudio(),context=new MockContext();audio._build(context);await new Promise(setImmediate);return {audio,context};
 }
 const state=(overrides={})=>({car:'falcone_f42',status:'racing',paused:false,impactTimer:0,speedMph:200,revs:1,input:{throttle:1,brake:0},slipAngle:0,steerVisual:0,offRoad:false,roughness:0,airborne:false,airHeight:0,police:{beep:0,pursuit:null},...overrides});
@@ -89,7 +90,7 @@ check(spatialSource.combat.bursts[0].x===-15,'sound positioning leaves simulatio
 check(audio.ambienceStatus==='ready'&&Object.keys(audio.ambience).length===3,'all three local ambience recordings decode');
 const ambientSources=Object.values(audio.ambience).map(layer=>layer.source),sourceCount=context.nodes.length;
 await audio._loadAmbience();check(context.nodes.length===sourceCount&&Object.values(audio.ambience).every((layer,index)=>layer.source===ambientSources[index]),'repeated loading cannot duplicate ambience buffers or loop voices');
-check(Object.values(audio.ambience).every(layer=>layer.source.loop&&layer.source.playbackRate.value===1&&layer.gain.connections.includes(audio.master)&&!layer.gain.connections.includes(audio.vehicleBus)),'one unpitched voice per ambience stays outside vehicle reflections');
+check(Object.values(audio.ambience).every(layer=>layer.source.loop&&layer.source.playbackRate.value===1&&layer.gain.connections.includes(audio.buses.ambience)&&!layer.gain.connections.includes(audio.vehicleBus)),'one unpitched voice per ambience stays outside vehicle reflections');
 check(new EngineAudio().context===null&&new EngineAudio().ambienceStatus==='locked','ambience does not initialize before the existing gesture unlock');
 audio.update(state({speedMph:0,input:{throttle:0,brake:0}}),{biome:'coast'});const openCoast=audio.ambience.coast.gain.gain.value;
 check(openCoast===.18&&audio.ambience.alpine.gain.gain.value===0&&audio.ambience.arena.gain.gain.value===0,'coast selects only quiet surf');
@@ -102,9 +103,9 @@ for(const biome of ['desert','city',undefined]){audio.update(state(),{biome});ch
 audio.update(state({paused:true}),{biome:'arena'});check(audio.master.gain.value===0&&Object.values(audio.ambience).every(layer=>layer.gain.gain.value===0),'pause silences all ambient loops');
 audio.update(state(),{biome:'arena'});audio.setMuted(true);check(audio.master.gain.value===0,'mute gates ambient recordings through the shared master');audio.setMuted(false);
 audio.update(state({status:'menu'}),{biome:'arena'});check(Object.values(audio.ambience).every(layer=>layer.gain.gain.value===0),'returning to menu fades the previous race ambience');
-const ambientManifest=JSON.parse(fs.readFileSync(new URL('../public/assets/audio/AMBIENCE_SOURCES.json',import.meta.url)));
+const ambientManifest=JSON.parse(fs.readFileSync(new URL('./audio/ambience-sources.json',import.meta.url)));
 for(const asset of ambientManifest.sources){
-  const original=fs.readFileSync(new URL(`../public/assets/audio/${asset.original}`,import.meta.url));check(createHash('sha256').update(original).digest('hex')===asset.sha256,`${asset.original}: downloaded source is preserved byte for byte`);
+  const recipe=JSON.parse(fs.readFileSync(new URL('./audio/catalog.json',import.meta.url))).sounds.find(row=>row.download===asset.download);check(recipe?.sha256===asset.sha256 && recipe.file.startsWith('legacy/'),`${asset.original}: exact source hash and external cache recipe retained`);
   const {samples,rate,bits}=readWav(asset.runtime),diffs=new Float32Array(samples.length-1);let peak=0,power=0;for(let i=0;i<samples.length;i++){peak=Math.max(peak,Math.abs(samples[i]));power+=samples[i]**2;if(i)diffs[i-1]=Math.abs(samples[i]-samples[i-1]);}diffs.sort();
   const seam=Math.abs(samples[0]-samples.at(-1));check(rate===44100&&bits===16&&samples.length/rate>=7,`${asset.runtime}: bounded nontrivial PCM loop`);
   check(peak<=.551&&Math.sqrt(power/samples.length)>.01,`${asset.runtime}: audible PCM with conservative peak headroom`);
@@ -190,21 +191,21 @@ for(const car of Object.keys(CARS))for(const targetRpm of [.31,.545,.735,1]){
   for(const layer of layers){const x=layer.source.buffer.getChannelData(0),rate=layer.source.playbackRate.value,gain=layer.gain.gain.value;for(let i=0;i<rendered.length;i++){const position=i*rate,index=Math.floor(position),fraction=position-index;rendered[i]+=(x[index%x.length]*(1-fraction)+x[(index+1)%x.length]*fraction)*gain;}}
   const swing=envelopeSwing(rendered);maximumBlendSwing=Math.max(maximumBlendSwing,swing);check(swing<7,`${car} steady PCM mix avoids deep beating (${targetRpm}: ${swing.toFixed(2)}dB)`);check(rendered.every(value=>Math.abs(value)<1),`${car} steady PCM mix has headroom`);
 }
-for(const file of ['engine-source.wav','v8-rev-source.wav','acceleration-source.wav','tire-squeal.wav']){const decoded=readWav(file);check(decoded.samples.length>decoded.rate/2&&decoded.samples.some(value=>Math.abs(value)>.01),`${file} source PCM decodes to non-silent samples`);}
+for(const file of ['engine-source.wav','v8-rev-source.wav','acceleration-source.wav','tire-squeal.wav']){check(!fs.existsSync(new URL('../public/assets/audio/'+file,import.meta.url)),`${file} source no longer ships at runtime`);}
 for(const revs of [0,.12,.4,.7,1,1.15])for(const throttle of [0,1]){context.advance(.1);audio.update(state({car:'viper_proto',revs,input:{throttle,brake:0}}));for(const key of ['engine','idle','loadLow','loadMid','loadHigh','coast'])check(audio.samples[key].source.playbackRate.value<=(key==='coast'?3:2.2),`${key} rate capped throughout rev/load changes`);}
 audio.smoothedSlip=0;audio.update(state({speedMph:100,input:{throttle:0,brake:0},slipAngle:0,steerVisual:0}));check(audio.tires.gain.gain.value>0&&audio.samples.squeal.gain.gain.value===0,'normal asphalt driving has a quiet rolling bed without false squeal');
 context.advance(.1);audio.update(state({input:{throttle:1,brake:1},slipAngle:.3}));check(audio.samples.squeal.gain.gain.value>0,'asphalt sliding fades in the recorded squeal');
 audio.update(state({input:{throttle:1,brake:1},slipAngle:.3}),{looseSurface:true});check(audio.samples.squeal.gain.gain.value===0&&audio.gravel.gain.gain.value>0,'rally dirt uses gravel without asphalt squeal');
 audio.update(state({airborne:true,airHeight:2,offRoad:true,input:{throttle:1,brake:1},slipAngle:.3}),{looseSurface:true});check(audio.samples.squeal.gain.gain.value===0&&audio.gravel.gain.gain.value===0&&audio.tires.gain.gain.value===0,'airborne tires are quiet');
 audio.update(state(),{tunnel:1});check(audio.tunnelWet.gain.value===.09,'tunnel reflections remain subtle');check(audio.tunnelTaps.every(tap=>tap.delay.delayTime.value<=.14),'reflections use fixed short delays');
-check(audio.samples.loadHigh.gain.connections.includes(audio.vehicleBus)&&audio.samples.squeal.gain.connections.includes(audio.vehicleBus),'engine and tire recordings feed reflection bus');
+check(audio.samples.loadHigh.gain.connections.includes(audio.buses.engine)&&audio.samples.squeal.gain.connections.includes(audio.buses.vehicle)&&audio.buses.engine.connections.includes(audio.vehicleBus)&&audio.buses.vehicle.connections.includes(audio.vehicleBus),'engine and tire recordings feed reflection bus through named buses');
 audio.update(state(),{tunnel:0});check(audio.tunnelWet.gain.value===0,'open road has no reflections');
 audio.update(state({police:{beep:0,pursuit:{active:true,gapU:650}}}));const far=audio.sirenGain.gain.value;
 audio.update(state({police:{beep:0,pursuit:{active:true,gapU:10}}}));check(audio.sirenGain.gain.value>far&&audio.sirenGain.gain.value<=.064,'nearby police sound louder within bounded gain');check(audio.sirenHarmony.frequency.value===audio.siren.frequency.value*1.5,'original siren has two controlled voices');
 audio.update(state({police:{beep:0,pursuit:{active:true,gapU:10,distanceU:650}}}));check(audio.sirenGain.gain.value===far,'siren uses physical distance across shortcuts');
 audio.update(state());check(audio.sirenGain.gain.value===0,'inactive pursuit silences siren');
-audio.update(state({car:'banshee_muscle',revs:.78,input:{throttle:1,brake:0}}));const preShift=audio.samples.loadHigh.gain.gain.value;audio.event({shift:2});check([...audio.activeShots].at(-1).gain.connections.includes(audio.vehicleBus),'shift accents receive vehicle reflections');context.advance(.09);audio.update(state({car:'banshee_muscle',revs:.78,input:{throttle:1,brake:0}}));check(audio.samples.loadHigh.gain.gain.value<preShift*.55&&audio.samples.loadHigh.body.gain.gain.value>0,'gear changes smoothly unload both recorded engine layers');context.advance(.11);audio.update(state({car:'banshee_muscle',revs:.78,input:{throttle:1,brake:0}}));check(audio.samples.loadHigh.gain.gain.value>preShift*.9,'recorded load returns after the shift instead of staying ducked');
-audio.event({jumpLanded:{distance:40}});check(context.nodes.at(-1).connections.includes(audio.vehicleBus),'landing thump uses vehicle bus');
+audio.update(state({car:'banshee_muscle',revs:.78,input:{throttle:1,brake:0}}));const preShift=audio.samples.loadHigh.gain.gain.value;audio.event({shift:2});check([...audio.activeShots].at(-1).gain.connections.includes(audio.buses.engine),'shift accents receive vehicle reflections');context.advance(.09);audio.update(state({car:'banshee_muscle',revs:.78,input:{throttle:1,brake:0}}));check(audio.samples.loadHigh.gain.gain.value<preShift*.55&&audio.samples.loadHigh.body.gain.gain.value>0,'gear changes smoothly unload both recorded engine layers');context.advance(.11);audio.update(state({car:'banshee_muscle',revs:.78,input:{throttle:1,brake:0}}));check(audio.samples.loadHigh.gain.gain.value>preShift*.9,'recorded load returns after the shift instead of staying ducked');
+audio.event({jumpLanded:{distance:40}});check(context.nodes.at(-1).connections[0]?.connections.includes(audio.buses.vehicle),'landing thump uses vehicle bus');
 const beforeRivalCrush=context.nodes.length;audio.event({propCrushed:{id:'rival-crush',byPlayer:false,strength:.8}});check(context.nodes.length===beforeRivalCrush,'rival crushes do not play the close player impact');const beforePlayerCrush=context.nodes.length;audio.event({propCrushed:{id:'player-crush',byPlayer:true,strength:.8}});const crushSource=context.nodes.slice(beforePlayerCrush).find(node=>node.type==='source');check(crushSource.buffer===audio.noiseBuffer&&crushSource.playbackRate.value===.72,'player crush reuses the original collision-noise source at lower rate');check(crushSource.stopAt-context.currentTime<=.27,'crush impact is brief and bounded');check(!context.nodes.slice(beforePlayerCrush).some(node=>node.buffer===audio.samples.explosion),'crush sound cannot trigger the fatal explosion recording');
 audio.update(state({paused:true}),{tunnel:1,looseSurface:true});check(audio.master.gain.value===0&&audio.tunnelWet.gain.value===0,'pause silences master and tunnel send');check([...audio.activeShots].every(shot=>shot.stopping),'pause stops recorded transients');
 context.advance(.1);check(audio.activeShots.size===0,'stopped transients disconnect and leave no active voices');

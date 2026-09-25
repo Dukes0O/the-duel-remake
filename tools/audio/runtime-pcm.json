@@ -1,0 +1,118 @@
+{
+  "schema": 1,
+  "codec": "FLAC lossless, signed 16-bit PCM, original rate and sample count",
+  "files": [
+    {
+      "file": "ambience-coast.flac",
+      "pcmSha256": "63466717d7151d4fcb85a16bb33d827e27be7bf7f9172eda6a0c1aedae7e3a9a",
+      "samples": 1003275,
+      "rate": 44100,
+      "beforeBytes": 2006594,
+      "bytes": 1134042
+    },
+    {
+      "file": "ambience-forest.flac",
+      "pcmSha256": "9e13c00db5a4eed2e404e85002c2ce6cf204f29f637a2bb6932e3ea908dd6a46",
+      "samples": 1003275,
+      "rate": 44100,
+      "beforeBytes": 2006594,
+      "bytes": 1206545
+    },
+    {
+      "file": "ambience-stadium.flac",
+      "pcmSha256": "af46914e4d1fea5ae38677f9069059f41c4b3c79ae6e3d79b010c5198a2faa48",
+      "samples": 326034,
+      "rate": 44100,
+      "beforeBytes": 652112,
+      "bytes": 388471
+    },
+    {
+      "file": "catastrophic-blast.flac",
+      "pcmSha256": "baca059d474e55b95ad4d6c5c1d871d9ddc73f6685da9282f651116aecaa74f4",
+      "samples": 176400,
+      "rate": 44100,
+      "beforeBytes": 352844,
+      "bytes": 224012
+    },
+    {
+      "file": "engine-coast.flac",
+      "pcmSha256": "233d17eed8572891f2de6cba1218ec9301974d4d7f900e83853c2ff0d204d551",
+      "samples": 56448,
+      "rate": 44100,
+      "beforeBytes": 112940,
+      "bytes": 61454
+    },
+    {
+      "file": "engine-idle.flac",
+      "pcmSha256": "30c7755a83a9ea5bd66cbf82c03e7e4525bb8190be9467dc792d1045dd115bed",
+      "samples": 45423,
+      "rate": 44100,
+      "beforeBytes": 90890,
+      "bytes": 51368
+    },
+    {
+      "file": "engine-lift.flac",
+      "pcmSha256": "d997befcd55ae4ea33d79ee704c815f782bc2f2797b0727816d9920cc80e10eb",
+      "samples": 55124,
+      "rate": 44100,
+      "beforeBytes": 110292,
+      "bytes": 52215
+    },
+    {
+      "file": "engine-load-high.flac",
+      "pcmSha256": "f922d8bbcdd796a89c519ebc4d582fa47dfe4c0d63feafa9e629943bcec73128",
+      "samples": 35460,
+      "rate": 44100,
+      "beforeBytes": 70964,
+      "bytes": 48481
+    },
+    {
+      "file": "engine-load-low.flac",
+      "pcmSha256": "717fe7d4279f2cbb18368c8025a2eefa0f65f2b0253969720d79c7f5889f959f",
+      "samples": 60858,
+      "rate": 44100,
+      "beforeBytes": 121760,
+      "bytes": 64624
+    },
+    {
+      "file": "engine-load-mid.flac",
+      "pcmSha256": "2e111cdf58d1d46a287631c84aa91c0353d6620c29377203a51547f14764901c",
+      "samples": 56448,
+      "rate": 44100,
+      "beforeBytes": 112940,
+      "bytes": 60623
+    },
+    {
+      "file": "engine-loop.flac",
+      "pcmSha256": "42ae6491da17a6ee95c4fdc777e408ae839864e4df229de330b0b241570937b0",
+      "samples": 35460,
+      "rate": 44100,
+      "beforeBytes": 70964,
+      "bytes": 46919
+    },
+    {
+      "file": "engine-shift.flac",
+      "pcmSha256": "1601a769a05b76b626632263ebc9eb58dfa3d4966dffe4d3725e84f0718e4c21",
+      "samples": 12789,
+      "rate": 44100,
+      "beforeBytes": 25622,
+      "bytes": 18445
+    },
+    {
+      "file": "engine-throttle.flac",
+      "pcmSha256": "068759e8cde3f4eec0523fecd49eb1d75a0ace515840ab1935b8c607c5d25a4d",
+      "samples": 57330,
+      "rate": 44100,
+      "beforeBytes": 114704,
+      "bytes": 58122
+    },
+    {
+      "file": "tire-loop.flac",
+      "pcmSha256": "f20921ee1afa3ff3f8ad0903804eacf1902e464104da063ec5e988324231548a",
+      "samples": 129654,
+      "rate": 44100,
+      "beforeBytes": 259352,
+      "bytes": 159872
+    }
+  ]
+}

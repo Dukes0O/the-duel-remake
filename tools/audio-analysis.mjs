@@ -1,3 +1,4 @@
+import {readRuntimeWav} from './audio/codec.mjs';
 // Dependency-free analysis for real-time WAV stems and an aligned race event log.
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
@@ -366,7 +367,7 @@ export async function analyzeFolder(input, { check = false } = {}) {
   const tracks = Object.fromEntries(await Promise.all(TRACK_NAMES.map(async name => [name,
     decodeWav(await readFile(join(folder, recording.tracks[name].file)), recording.tracks[name].audioStartSec)])));
   if (recording.tracks.shift) tracks.shift = decodeWav(await readFile(join(folder, recording.tracks.shift.file)), recording.tracks.shift.audioStartSec);
-  if (recording.tracks.shift) tracks.shiftTemplate = decodeWav(await readFile(new URL('../public/assets/audio/engine-shift.wav', import.meta.url)));
+  if (recording.tracks.shift) tracks.shiftTemplate = decodeWav(readRuntimeWav('engine-shift.flac'));
   const report = analyzeRecording(recording, tracks);
   await writeFile(join(folder, 'audio-analysis.json'), JSON.stringify(report, null, 2) + '\n');
   await writeFile(join(folder, 'spectrogram.svg'), spectrogramSvg(tracks.mix, recording.events));

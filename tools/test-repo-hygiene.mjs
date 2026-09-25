@@ -61,6 +61,8 @@ export function inspectRepository(root = PROJECT_ROOT, files = projectFiles(root
       failures.push(`${name}: generated or review output must stay out of Git`);
     if (name.startsWith('public/') && (SOURCE_ASSETS.has(extension) || ['.mp4', '.webm'].includes(extension)))
       failures.push(`${name}: source or review asset is in the runtime public folder`);
+    if (name.startsWith('public/assets/audio/') && (/(?:-source|tire-squeal)\.(?:wav|mp3|ogg|flac)$/.test(name)))
+      failures.push(`${name}: raw audio source belongs outside public; keep its recipe`);
     const roundSheet = extension === '.jpg' && /^docs\/board\/looks\/[^/]+\/round-\d+\.jpg$/.test(name);
     // SPEC 0.9: audio takes that cannot be regenerated live in audio-src/.
     const keptAudio = name.startsWith('audio-src/') && AUDIO_SOURCES.has(extension);
