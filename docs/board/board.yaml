@@ -301,7 +301,7 @@ tasks:
     size: L
     needs: [GFX-01-P1]
     status: building
-    owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, docs/board/looks/crew-p2/]
+    owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, docs/board/looks/crew-p2/]
     hooks: [tools/test-rook-p2-source.mjs, tools/test-rook-p2-candidate.mjs, tools/test-rook-p2-review.mjs, tools/test-blender-output.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: wasteland2
     helpers: [art_critic, reviewer, browser_qa]
@@ -1178,7 +1178,7 @@ tasks:
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
     owns: [src/sound-bank.js, public/assets/audio/, tools/audio/, docs/changes/AUD-GATEKEEPER.md]
-    hooks: [src/audio.js, src/hidden-road.js, src/hidden-road-ui.js, src/app.js]
+    hooks: [src/audio.js, src/hidden-road.js, src/hidden-road-journey.js, src/hidden-road-ui.js, src/app.js]
     flag: hidden-road
     sound: gatekeeper.welcome
     acceptance:
