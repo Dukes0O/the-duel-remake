@@ -1,6 +1,6 @@
 # JANITOR-RUSTWALL-NOTE
 
-status: integration sync and final gate pending
+status: ready-to-merge
 
 ## Design before edits
 
@@ -15,6 +15,8 @@ Review the exact diff and search for consumers of the task note path. Run `node 
 ## Evidence so far
 
 The exact prompt line in the old note and new asset pipeline compared equal. No literal source/tool/doc path reference to `docs/changes/EGG-02-P2.md` remains. `node tools/test-review-evidence.mjs` passed 9/9 (261 checks). Preliminary lane tier passed 6/6 in 39.75 seconds, including 518 core checks. Integration moved to 49d2b2a during this gate, so a normal sync and final lane/build gate follow before readiness. The preliminary log is retained under ignored `.evidence/janitor-rustwall-note/lane.log`.
+
+The normal merge of integration 49d2b2a preserved its new Rook round-eight decision next to the Rustwall final decision. After that sync, the final changed lane tier passed 6/6 in 37.64 seconds, including 518 core checks, and `npm run build` passed with 220 modules transformed. Final logs are ignored `.evidence/janitor-rustwall-note/lane-final.log` and `build-final.log`. `git diff --check` passed. The Director independently checked the exact prompt, selected-source recovery, count and atlas facts and found the fold clear. No runtime, test, generated asset or review sheet changed.
 
 ## Removed
 
