@@ -1230,7 +1230,7 @@ tasks:
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
     owns: [src/sound-bank.js, public/assets/audio/, tools/audio/, docs/audio/, docs/board/listening/, docs/changes/AUD-14.md]
-    hooks: [src/audio.js, src/app.js]
+    hooks: [.gitattributes, src/audio.js, src/app.js, tools/test-combat-audio.mjs, tools/scenarios/combat-audio.mjs]
     flag: wasteland2
     helpers: [test_author, reviewer, audio_qa]
     acceptance:
@@ -1664,4 +1664,92 @@ tasks:
       - "Reproduce the external clean-checkout ENOENT for art-build/rustwall-p2/wall-relief-source.png before changing tests. Runtime asset verification may use only committed assets, and generated-source verification must build its own isolated fixture."
       - "Preserve the exact generated-source SHA and exported pixel comparisons on each fresh build's own output; retain all geometry, atlas, route, gate and budget assertions. No copying a stale art scratch file or committing raw review output to hide the dependency. Explain and independently review any assertion relocation."
       - "Run focused tests and the normal lane/build gate from a fresh checkout without prior art-build files. Integration full tier must pass after the fix before further feature merges."
-    note: "Merged ea84b34 after clean red-to-green reproduction, independent assertion review, isolated export6/6, lane8/8 in64.15 seconds and build. Runtime asset checks no longer depend on consumed scratch; exact own-build SHA and atlas pixels remain checked. Feature merges stay held until integration full passes."
+    note: "Merged ea84b34 after clean red-to-green reproduction, independent assertion review, isolated export6/6, lane8/8 in64.15 seconds and build. Runtime asset checks no longer depend on consumed scratch; exact own-build SHA and atlas pixels remain checked. Integration clean full passed 256/256 on 1d82eb7 at 07:09 UTC; feature merges may resume."
+
+  - id: JANITOR-RUSTWALL-NOTE
+    title: "Fold the consumed Rustwall P2 note into current asset guidance"
+    lane: TOOL
+    size: S
+    needs: [EGG-02-P2, FIX-RUSTWALL-CLEAN]
+    status: merged
+    owns: [docs/ASSET_PIPELINE.md, docs/board/decisions.md, docs/changes/EGG-02-P2.md, docs/changes/JANITOR-RUSTWALL-NOTE.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Preserve the exact selected paint prompt, source path/hash, explicit bake recipe, procedural-fixture limitation and asset-recovery distinction in current guidance before deleting the consumed note."
+      - "Correct current exported wall inventory to 55,834 triangles, fourteen primitives and 8,421,064 bytes, with wash 3,840,288 bytes. Preserve immutable sheets and residual P3 likeness and paint-recovery work."
+      - "Independent fact review, unchanged review-evidence check, lane tier and build pass. No runtime, test or source-asset edits."
+
+  - id: WAR-01
+    title: "Warlord metadata and territory ladder"
+    priority: 3
+    lane: UI
+    size: M
+    needs: [ARENA-02, CAR-01]
+    status: backlog
+    owns: [src/warlords.js, src/screen-territory.js, tools/test-warlords.mjs, tools/test-territory-ui.mjs, docs/changes/WAR-01.md]
+    hooks: [src/screen-yard-home.js, src/wasteland-career.js]
+    flag: wasteland2
+    helpers: [test_author, reviewer, browser_qa]
+    acceptance:
+      - "Settle immutable eight-boss metadata, career territory mapping, hold/claimed/defeated display rules and which fights are actually available before code. Reuse the existing territory IDs and course assignments."
+      - "Render the ladder on the real territory map without save writes. No launch button, working weapon reward or completed fight is advertised before its owning implementation exists. Preserve per-player and unknown/future-save behavior."
+      - "Follow SPEC 0.10 order. Record the conflict between first-three boss rewards and later arsenal waves for explicit WAR-02 design resolution; do not silently replace promised rewards or create fake unlocks."
+      - "Independent data/UI tests, private High/Performance yard-map review, lane tier and build pass. No new poster or card-image system from superseded SPEC 3.10."
+    sound: "warlord.available for a future real availability event; metadata-only display adds no simulation event."
+  - id: WAR-02-P1
+    title: "First three warlord fights and one-time territory claims"
+    priority: 3
+    lane: CMB
+    size: L
+    needs: [WAR-01]
+    status: backlog
+    owns: [src/warlord-encounters.js, src/warlord-settlement.js, tools/test-warlord-encounters.mjs, tools/test-warlord-settlement.mjs, tools/scenarios/warlords.mjs, docs/changes/WAR-02-P1.md]
+    hooks: [src/game.js, src/app.js, src/screen-router.js, src/screen-territory.js, src/progression.js, src/wasteland-progress.js, src/wasteland-career.js]
+    flag: wasteland2
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
+    acceptance:
+      - "First settle Sal, Dustmonger and Mirage encounter formats, full-hold/rank/ladder eligibility, deterministic personalities and exact implemented rewards. Side Saws, Smoke Screen and Decoy Drone are absent and scheduled later; resolve this design conflict in writing before code or slicing further hooks."
+      - "Use a stable boss event identity distinct from ordinary course run/stage settlement. Only a completed eligible win claims territory and marks the matching boss defeated once. Repeated callbacks, restart, abandon, loss and another named player cannot duplicate or inherit rewards."
+      - "Reward mutation and persistence must be atomic from the player's view; denied writes cannot report a persisted claim. Preserve unknown fields and opaque future versions, existing credits/scrap rules, backups and historical save fixtures. Save Guardian review is required."
+      - "Prove seed/input repeatability, ordinary race fingerprints, real private launch-to-result flow, all three encounter balance checks and current lane/build gate. Do not expose the remaining bosses as playable."
+    sound: "warlord.start and warlord.defeated, plus existing combat cues; the external audio lane owns sound implementations."
+    note: "First half of SPEC WAR-02 under the phase-3 order. Later WAR-02 work retains bosses four and five after the prescribed arsenal/crew sequence. This card is planning only while phase 2 remains active."
+
+  - id: AUD-17
+    title: "Voice candidates and chosen crew/raider lines"
+    lane: AUDIO
+    size: L
+    needs: [AUD-14]
+    status: backlog
+    owner: "Kyle's separate audio session"
+    branch: lane/audio/aud-10
+    owns: [tools/audio/, docs/audio/, docs/board/listening/, audio-src/voices/, docs/changes/AUD-17.md]
+    hooks: [tools/test-voice-candidates.mjs, src/sound-bank.js, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
+    flag: wasteland2
+    helpers: [test_author, reviewer, audio_qa]
+    acceptance:
+      - "Write the stock-voice casting, short gritty nongory lines, candidate budget and repeat-safe generation plan before code or service calls. Independent fake-only tests cover budget exhaustion, no automatic keep, resume and accounting failures."
+      - "Only the external audio owner may use ElevenLabs credits, within its current user-authorized budget and SPEC overnight ceiling of 1500. The Director spends none. Preserve Kyle's exact selected gatekeeper take."
+      - "Candidates are marked for Kyle's choice; no agent keeps or promotes a take. Human ratings remain distinct from measurements. Keys stay in the environment, credit use is logged, and no generation is silently retried after an accounting failure."
+      - "Any runtime voice wiring beyond the existing bank/credit hooks requires a named scope addition before implementation. Retain subtitles, attribution, one-version source placement and normal gates."
+    note: "Independent candidate-tool preparation may proceed in the external lane while upstream gates remain unresolved; this does not mark AUD-10/11/14 ready or waive their checks."
+
+  - id: ARS-01
+    title: "Oil Slick, Caltrops, Smoke Screen and Harpoon"
+    lane: CMB
+    size: L
+    needs: [WAR-02-P1]
+    status: backlog
+    owns: [src/arsenal-wave1.js, tools/test-arsenal-wave1.mjs, tools/test-arsenal-wave1-save.mjs, tools/scenarios/arsenal-wave1.mjs, docs/changes/ARS-01.md]
+    hooks: [src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat-ai.js, src/combat-scene.js, src/combat-effects.js, src/combat-hud.js, src/weapon-upgrades.js, src/wasteland-progress.js, src/screen-armory.js, src/app.js, src/wasteland-tuning.js]
+    flag: wasteland2
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
+    acceptance:
+      - "Settle pool/cloud geometry and lifetime, oil spin duration, caltrop reapplication, bounded harpoon pull/steering break and smoke visibility/lock rules before code. Retain SPEC level-zero recharge10/9/14/12 seconds and unlock ranks2/5/6/3 for oil/caltrops/smoke/harpoon."
+      - "Use seeded simulation state, bounded effects and actual CPU use. Test each counter, overlap/reapplication, shield interaction where specified, actor identity and cleanup. Smoke must break real CPU aim/lock behavior; a rendered cloud alone does not satisfy the rule."
+      - "Use the existing400-scrap new-weapon price unless a written decision changes it. Distinguish the four historically owned starter IDs from the expanded available catalog: extending WEAPON_IDS must not grant every new weapon during normalization. Preserve unknown fields, historical upgrades, opaque future saves, named-player isolation and four-slot loadouts. Save Guardian reviews migration and purchases."
+      - "Prove each working unlock through Armory and a private full-throttle combat scenario. Preserve ordinary and flag-off replay fingerprints. Review actual effect readability, bounded frame/resource cost and complete balance with wasteland2 on."
+      - "Coordinate event/cue contracts with the external audio owner before wiring. Apply Kyle's transient, tonal, moving-flight/doppler and hit-confirm rule where the weapon has those phases; do not create fake projectile flight for stationary oil or smoke."
+      - "Independent tests precede implementation; each counter and CPU path has a meaningful regression. Current lane/build and applicable visual/audio/save gates must pass before merge."
+    sound: "weapon.oil.deploy, weapon.caltrops.deploy, weapon.smoke.deploy, weapon.harpoon.fire, weapon.harpoon.flight, weapon.harpoon.hit and weapon.harpoon.break; external audio lane owns bank entries and sources."
+    note: "Future phase-3 card after the first-three boss slice. The legacy starter-only normalizer currently grants every known ID, so catalog expansion requires explicit save-safe design. No implementation is dispatched during phase 2."

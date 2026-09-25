@@ -449,3 +449,29 @@ The event rates reward a finish and visible combat without making repeated hits 
 - The non-P2 Rustwall generator still has concrete consumers in test-blender-output, test-runtime-art-sources and test-review-evidence, alongside legacy P1 comparison handling. Removing it requires deliberate migration of those consumers while keeping historical sheets readable. It is not dead solely because the current runtime wall uses P2; EGG-02-P3 should settle the current rebuild recipe before deleting the old construction.
 - Actual exported wall triangles are 55,834, versus source 56,122. The 288 difference is six cloth banners times 24 cells times two reverse coincident triangles in wall-details; the exporter omits those duplicate faces. It is unrelated to the wash. Baseline exported wall was 58,626 versus source 58,914. Use actual exported geometry for budget reports; all prior limits and pass/fail conclusions remain intact.
 - The clean-checkout test failure is a separate issue: runtime verification must not read consumed art scratch. Keep runtime path/hash-schema, source-car hashes and actual geometry/UV/material checks. Exact source-render byte equality and embedded atlas pixel equality belong to each fresh isolated full-wall/probe build. That preserves generator source-to-export verification; it cannot retrospectively prove a historical source PNG's bytes after that PNG has been consumed. Independent review approves this narrow relocation, with a fresh integration full pass required before feature merges resume.
+
+
+## AUD-14 test hooks (25 September 2026)
+
+The external audio lane may own tools/test-combat-audio.mjs and tools/scenarios/combat-audio.mjs for tests-first weapon sound and full-throttle context checks. Runtime changes stay within its existing bank, audio and app listener hooks. No simulation changes or ElevenLabs credit use by the Director. The AUD-10 baseline tolerance decision remains pending; this scope approval does not waive it.
+
+AUD-14 also has the narrow .gitattributes hook to mark *.ogg binary, preventing text newline conversion of Vorbis data. Test exact compressed bytes through the Git attribute path before keeping runtime assets; no unrelated attribute changes.
+
+## 2026-09-25 PDT: selected Rustwall asset after the ten-round wave
+
+- Accept EGG-02-P2 only as a measured development improvement. Two independent reviews score the final wall and wash 3/3/3/3; the scoped full-render CPU/RAF frame score is four, with worst required A1/B/A2 ratio 1.0833 against 1.10. The actual exported wall has 55,834 triangles in 14 primitives; its 56,122 source total includes 288 duplicate reverse cloth faces omitted by export. EGG-02-P3 retains likeness four, denser interlocked salvage, irregular tower silhouettes, natural joined strata and the selected-paint recovery work. Hidden Road remains dev.
+- The selected steel paint is embedded in the committed wall GLB and originated from the exact generated image and prompt retained in `docs/ASSET_PIPELINE.md`. The generator's no-input P2 route is only a procedural fixture. A Git restore recovers the selected GLB but does not reproduce its image source. Preserve the original generated image by hash; require explicit verified input or hashed embedded-atlas extraction before modifying that paint. No source PNG is committed under `public/`.
+
+## 2026-09-25 PDT: change Rook silhouette construction for round eight
+
+Two actual game rounds remain at 3/3/3/3 despite better paint, scalp coverage, scarf and cuffs. Before more code, approve the written grouped method: a scalloped cap edge with rooted three-dimensional curl locks, reference-traced intermediate trouser folds while freezing seven measured width anchors, and small separated fingertip/thumb silhouettes attached to the existing gloves. Independent actual exported contour, contact, uniform-skin UV and motion tests precede implementation. Keep dense scalp coverage, face paint, waist continuity, broad padded garment charts and near/far limits of 8,000/2,000 triangles. Label occluded reference edges as inferred. Attribute the straight upper-back projection in the bent pose before changing it. Three rounds remain in this bounded wave; no other crew converts or runtime candidate replaces the baseline before likeness four.
+
+
+## 2026-09-25 PDT: external voice-candidate preparation
+
+Approve the external audio lane narrow tools/test-voice-candidates.mjs hook for independent fake-only budget, no-keep and resume checks before service use. AUD-17 preparation retains the SPEC ceiling and any tighter budget set in that session; all credits belong to that owner, none to the Director. Only Kyle selects takes. The unresolved AUD-10 baseline and pending human listening remain visible and are not waived by preparation on later cards.
+
+
+## 2026-09-25 PDT: Rook upper skull and hair must match together
+
+The narrower curl outline exposed a real scalp-coverage failure. At native side rows77/85, the connected upper skull projects rearward to x238.8/241.3 while the reference outer hair is about x253/246; the candidate hair at x245.6/242.1 lies inside that oversized skull. Restoring the old cap alone would cover scalp but keep the broad helmet silhouette. Approve a measured upper-rear core contour correction, tapering out before the lower hair/jaw bands, plus an exterior hair shell. Preserve the front face profile, eyes/beard paint, UVs, jaw, connected topology and rig. Independently test the existing reference head-back polyline at rows67/77/85 before code, then require both corrected profile and unchanged dense scalp coverage, face and motion guards. No coverage threshold is relaxed and no runtime crew is replaced.
