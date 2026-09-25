@@ -28,6 +28,8 @@ p.add_argument('--p1-paint')
 p.add_argument('--p1-paint-sha256')
 p.add_argument('--p2-paint')
 p.add_argument('--p2-paint-sha256')
+p.add_argument('--p2-cloth-paint')
+p.add_argument('--p2-cloth-paint-sha256')
 args = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 if args.p1_rook and args.p2_rook:
@@ -37,6 +39,8 @@ if args.p2_rook and (args.p1_paint or args.p1_paint_sha256):
     p.error('P2 Rook cannot use P1 paint arguments')
 if not args.p2_rook and (args.p2_paint or args.p2_paint_sha256):
     p.error('P2 paint arguments require --p2-rook')
+if not args.p2_rook and (args.p2_cloth_paint or args.p2_cloth_paint_sha256):
+    p.error('P2 cloth paint arguments require --p2-rook')
 source_json = root / 'tools/blender/first-person-p1-source.json'
 p2_source_json = root / 'tools/blender/first-person-p2-source.json'
 p2_source = None
@@ -47,6 +51,28 @@ if args.p2_rook:
         hashlib.sha256(source_json.read_bytes()).hexdigest() != parent.get('sha256')):
         p.error('P2 parent P1 source hash does not match')
 paint_input = None
+cloth_input = None
+cloth_dimensions = None
+if args.p2_cloth_paint or args.p2_cloth_paint_sha256:
+    if not args.p2_cloth_paint or not args.p2_cloth_paint_sha256:
+        p.error('P2 cloth paint requires both path and SHA-256')
+    cloth_input = Path(args.p2_cloth_paint).resolve()
+    cloth_allowed = (root / 'art-build/first-person-p2').resolve()
+    original_paint = (Path.home() / '.codex/generated_images').resolve()
+    if cloth_allowed not in cloth_input.parents and original_paint not in cloth_input.parents:
+        p.error('P2 cloth paint must be an ignored art source or original generated image')
+    if not cloth_input.is_file():
+        p.error('P2 cloth paint source is missing')
+    cloth_bytes = cloth_input.read_bytes()
+    if hashlib.sha256(cloth_bytes).hexdigest() != args.p2_cloth_paint_sha256.lower():
+        p.error('P2 cloth paint source SHA-256 mismatch')
+    if cloth_bytes[:8] != b'\x89PNG\r\n\x1a\n':
+        p.error('P2 cloth paint must be a square PNG')
+    cloth_dimensions = (int.from_bytes(cloth_bytes[16:20], 'big'),
+                        int.from_bytes(cloth_bytes[20:24], 'big'))
+    if (cloth_dimensions[0] != cloth_dimensions[1] or
+        not 1024 <= cloth_dimensions[0] <= 2048 or cloth_bytes[25] not in (2, 6)):
+        p.error('P2 cloth paint must be a 1024–2048 square RGB/RGBA PNG')
 paint_path = args.p2_paint if args.p2_rook else args.p1_paint
 paint_hash = args.p2_paint_sha256 if args.p2_rook else args.p1_paint_sha256
 if paint_path or paint_hash or args.p2_rook:
@@ -289,6 +315,37 @@ def texture_material(name, cfg, folder, tool=False):
             vectors/=np.linalg.norm(vectors,axis=-1,keepdims=True)
             normal[8:248,atlas_x:atlas_x+240,:3]=vectors*.5+.5
         bpy.data.images.remove(source)
+    if args.p2_rook and name == 'rook' and not tool and cloth_input:
+        cloth_image = bpy.data.images.load(str(cloth_input), check_existing=False)
+        cloth_image.colorspace_settings.name = 'Non-Color'
+        size = cloth_dimensions[0]
+        native_pixels = np.empty(size*size*4, dtype=np.float32)
+        cloth_image.pixels.foreach_get(native_pixels)
+        native_rgb = np.flipud(native_pixels.reshape((size,size,4)))[:,:,:3]
+        # Area-weighted full-square reduction makes the source's fine threads
+        # subpixel on the sleeve. The atlas's Blender buffer is bottom-up.
+        scale = size/240
+        horizontal = np.empty((size,240,3), dtype=np.float32)
+        for column in range(240):
+            left,right=column*scale,(column+1)*scale
+            ids=np.arange(math.floor(left),math.ceil(right))
+            weights=np.maximum(0,np.minimum(ids+1,right)-np.maximum(ids,left))/scale
+            horizontal[:,column,:]=np.tensordot(native_rgb[:,ids,:],weights,axes=(1,0))
+        sample=np.empty((240,240,3),dtype=np.float32)
+        for row in range(240):
+            top,bottom=row*scale,(row+1)*scale
+            ids=np.arange(math.floor(top),math.ceil(bottom))
+            weights=np.maximum(0,np.minimum(ids+1,bottom)-np.maximum(ids,top))/scale
+            sample[row,:,:]=np.tensordot(weights,horizontal[ids,:,:],axes=(0,0))
+        color[8:248,8:248,:3]=np.flipud(sample)
+        luminance=np.mean(sample,axis=2)
+        surface[8:248,8:248,1]=np.flipud(np.clip(.90+(luminance-np.mean(luminance))*.04,.87,.93))
+        height=np.flipud(luminance)
+        dy,dx=np.gradient(height)
+        vectors=np.stack([-dx*.65*.25,-dy*.65*.25,np.ones_like(dx)],axis=-1)
+        vectors/=np.linalg.norm(vectors,axis=-1,keepdims=True)
+        normal[8:248,8:248,:3]=vectors*.5+.5
+        bpy.data.images.remove(cloth_image)
     images=[]
     for label,pixels in [('color',color),('surface',surface),('normal',normal)]:
         im=bpy.data.images.new(name+'-'+label,1024,1024,alpha=True)
@@ -968,6 +1025,13 @@ if proof_mode:
     if args.p2_rook:
         proof['parentRecipe']=p2_source['parentRecipe']
         proof['sleeves']=p2_source['sleeves']
+        if cloth_input:
+            proof['clothPaintSource']=dict(path=str(cloth_input),
+                sha256=args.p2_cloth_paint_sha256.lower(),
+                width=cloth_dimensions[0],height=cloth_dimensions[1],
+                crop=[0,0,cloth_dimensions[0],cloth_dimensions[1]],
+                method='full-square-box-filter-to-240',
+                selectedArtwork=args.p2_cloth_paint_sha256.lower()==p2_source['selectedClothSha256'])
     (candidate_dir/'manifest.json').write_text(json.dumps(proof,indent=2)+'\n',encoding='utf-8',newline='\n')
     review=dict(family='first-person-p2' if args.p2_rook else 'first-person-p1',round=args.round,
         scope='Blender source module at authored camera',candidateSha256=digest(asset),
