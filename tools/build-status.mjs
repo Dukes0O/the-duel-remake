@@ -208,7 +208,8 @@ function worktrees(root) {
   return rows;
 }
 
-function lanes(root, liveRoot, commit, now) {
+function lanes(root, liveRoot, commit, now, skipLanes) {
+  const skippedBranches = new Set(skipLanes);
   const trees = worktrees(root);
   return git(root, ['for-each-ref', '--format=%(refname:short)%09%(objectname)%09%(committerdate:iso-strict)', 'refs/heads'])
     .trim().split('\n').filter(Boolean).map(line => line.split('\t'))
@@ -217,7 +218,8 @@ function lanes(root, liveRoot, commit, now) {
       const merged = git(root, ['merge-base', '--is-ancestor', head, commit], true) !== null;
       const changed = merged ? [] : (git(root, ['diff', '--name-only', `${commit}...${head}`], true) ?? '').trim().split('\n').filter(Boolean);
       let dirty = null, issue = null, dirtyPaths = [];
-      if (tree) {
+      const inspectionSkipped = skippedBranches.has(branch);
+      if (tree && !inspectionSkipped) {
         try {
           // Lane cleanup must also preserve uncommitted evidence.
           const status = git(tree.path, ['status', '--porcelain=v1', '--untracked-files=all']);
@@ -228,10 +230,11 @@ function lanes(root, liveRoot, commit, now) {
       const protectedRoot = tree && [root, liveRoot].filter(Boolean).some(path => resolve(path) === resolve(tree.path));
       const card = branch.match(/(?:^|\/)([a-z]+-\d+(?:-p\d+)?)(?:-|$)/i)?.[1].toUpperCase() ?? 'unknown';
       return { branch, commit: head, ageDays: Math.max(0, Math.floor((Date.parse(now) - Date.parse(date)) / 86400000)),
-        path: tree?.path ?? null, dirty, merged, card, lastCommit: date,
-        activity: dirty ? 'uncommitted changes; exact activity time unknown' : `last commit ${date}`,
+        path: tree?.path ?? null, dirty, merged, card, lastCommit: date, inspectionSkipped,
+        activity: inspectionSkipped ? 'inspection skipped by request; uncommitted state unknown'
+          : dirty ? 'uncommitted changes; exact activity time unknown' : `last commit ${date}`,
         holds: [...new Set([...changed, ...dirtyPaths])].slice(0, 5).join(', ') || 'no file difference',
-        removable: Boolean(tree && !protectedRoot && !tree.locked && !tree.prunable && merged && dirty === false), issue };
+        removable: Boolean(tree && !inspectionSkipped && !protectedRoot && !tree.locked && !tree.prunable && merged && dirty === false), issue };
     });
 }
 
@@ -294,7 +297,10 @@ export function renderStatus(report) {
   return lines.join('\n').replace(/\n*$/, '\n');
 }
 
-export function collectStatus({ root = ROOT, liveRoot = null, now = new Date().toISOString() } = {}) {
+export function collectStatus({ root = ROOT, liveRoot = null, now = new Date().toISOString(), skipLanes = [] } = {}) {
+  if (!Array.isArray(skipLanes) || skipLanes.some(branch => typeof branch !== 'string' || !branch.trim())) {
+    throw Error('skipLanes must be an array of nonempty exact branch names.');
+  }
   const integration = sourceState(root), issues = [];
   const manifest = liveRoot ? jsonFile(join(liveRoot, 'dist/build-version.json')) : { value: null };
   const live = { checked: Boolean(liveRoot), commit: liveRoot ? git(liveRoot, ['rev-parse', 'HEAD'], true)?.trim() ?? null : null,
@@ -303,7 +309,7 @@ export function collectStatus({ root = ROOT, liveRoot = null, now = new Date().t
   if (liveRoot && !live.version) issues.push('Live build manifest missing or invalid.');
   let features = {};
   try { features = featureStates(root); } catch (error) { issues.push(error.message); }
-  const laneRows = lanes(root, liveRoot, integration.commit, now);
+  const laneRows = lanes(root, liveRoot, integration.commit, now, skipLanes);
   issues.push(...laneRows.filter(row => row.issue).map(row => `${row.branch}: ${row.issue}`));
   const sizeReport = sizes(root);
   if (sizeReport.targetIssue) issues.push(`Size targets ${sizeReport.targetIssue}.`);
@@ -318,7 +324,11 @@ export function main(args = process.argv.slice(2)) {
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === '--json') json = true;
-    else if (['--root', '--live-root', '--now'].includes(arg)) {
+    else if (arg === '--skip-lane') {
+      const branch = args[++index];
+      if (!branch || !branch.trim() || branch.startsWith('--')) throw Error('--skip-lane needs a value.');
+      (options.skipLanes ??= []).push(branch);
+    } else if (['--root', '--live-root', '--now'].includes(arg)) {
       const value = args[++index];
       if (!value || value.startsWith('--')) throw Error(`${arg} needs a value.`);
       options[{ '--root': 'root', '--live-root': 'liveRoot', '--now': 'now' }[arg]] = value;
@@ -340,7 +350,7 @@ export function main(args = process.argv.slice(2)) {
     try { if (insideLive(realpathSync(parent))) throw Error('Status output resolves into the live checkout.'); break; }
     catch (error) { if (error.code !== 'ENOENT') throw error; parent = dirname(parent); }
   }
-  const report = collectStatus({ root, liveRoot, now });
+  const report = collectStatus({ root, liveRoot, now, skipLanes: options.skipLanes });
   mkdirSync(dirname(target), { recursive: true });
   writeFileSync(target, renderStatus(report));
   console.log(json ? JSON.stringify(report) : `Wrote ${target}; full tier ${report.fullRun.status} for ${report.observationCommit}.`);
