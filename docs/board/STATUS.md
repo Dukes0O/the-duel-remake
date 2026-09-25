@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-09-25T13:07:24.079Z
+Observed at: 2026-09-25T13:07:55.254Z
 
-Observation commit: 7edaa77dce6e711d691b19300e12d26b8cdeeddb
+Observation commit: 876c2a899b798fbcfa451a763e7c3d326be02504
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 7edaa77dce6e711d691b19300e12d26b8cdeeddb
+Integration HEAD: 876c2a899b798fbcfa451a763e7c3d326be02504
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -33,7 +33,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/gfx-02-p2 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-02-p2 |
-| codex/janitor-ufo-notes | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/janitor-ufo-notes |
 | lane/audio/aud-10 | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/audio/aud-12 | 0 | unknown | true | false | unknown |
 
@@ -57,10 +56,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 255,671 B | +0 B | 500,000 B |
 | Review `looks/` | 7,351,749 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 190,479 B | +149,900 B | 5,000,000 B |
+| Added bytes in last merge | 190,479 B | +0 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 322,332,672 B | +256,000 B | unavailable |
-| Lane folders | 2 | +1 | unavailable |
+| Git objects | 322,454,528 B | +121,856 B | unavailable |
+| Lane folders | 1 | -1 | unavailable |
 
 ## Backups
 
@@ -68,7 +67,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 7edaa77dce6e711d691b19300e12d26b8cdeeddb
+- Local integration/wasteland: 876c2a899b798fbcfa451a763e7c3d326be02504
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
