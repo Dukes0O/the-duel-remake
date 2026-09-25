@@ -20,7 +20,7 @@ async function check(name, run) {
 const historyRow = (key, changes = {}) => ({key, eventId: stageEventId(0), won: false,
   completed: true, timeSec: 180, reward: 0, car: 'falcone_f42', ...changes});
 const finish = (runId, changes = {}) => ({runId, stageIndex: 0, won: false, completed: true,
-  timeSec: 180, laps: 2, car: 'falcone_f42', mode: 'timetrial', seed: 1989,
+  timeSec: 180, laps: 2, car: 'falcone_f42', mode: 'wasteland', seed: 1989,
   difficulty: 'casual', cpuDifficulty: 'medium', ...changes});
 function makeApp() {
   values.clear();
@@ -29,7 +29,7 @@ function makeApp() {
   return app;
 }
 function start(app) {
-  app.startCampaign({startStage: 0, mode: 'timetrial', seed: 1989, car: 'falcone_f42', difficulty: 'casual'});
+  app.startCampaign({startStage: 0, mode: 'wasteland', seed: 1989, car: 'falcone_f42', difficulty: 'casual'});
   app.advance(3.1);
   Object.assign(app.duel.state, {traffic: [], opponents: [], rival: null});
 }
@@ -86,7 +86,7 @@ await check('missing additive fields trigger verified pre-write backup; backup f
   await assert.rejects(backupBeforeMigration(storage, {async save() {throw new Error('backup blocked');}, async load() {return null;}}));
   assert.deepEqual(captureCareer(storage), before);
 });
-await check('completed races count once, saturate at ten, and exclude abandoned/timeouts/other courses', () => {
+await check('completed Mad Max Duels count once, saturate at ten, and exclude abandoned/timeouts/other courses and modes', () => {
   let profile = createProfile();
   for (let i = 0; i < 12; i++) {
     const result = finish(`complete-${i}`, {won: i % 2 === 0});
@@ -96,7 +96,9 @@ await check('completed races count once, saturate at ten, and exclude abandoned/
     assert.equal(profile.wasteland.pacificFinishes, once);
     assert.equal(once, Math.min(i + 1, 10));
   }
-  for (const changes of [{abandoned: true}, {completed: false}, {stageIndex: 1}]) {
+  // Only Mad Max Duel counts toward the hints: the road exists only there (SPEC 0.12).
+  for (const changes of [{abandoned: true}, {completed: false}, {stageIndex: 1},
+    {mode: 'duel'}, {mode: 'timetrial'}]) {
     const before = createProfile();
     const after = settleRace(before, finish('excluded', changes)).profile;
     assert.equal(after.wasteland.pacificFinishes, 0);

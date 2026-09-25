@@ -39,8 +39,6 @@ import {createBuildUpdateChecker} from './build-update.js';
 import {DRIVERS, getEquippedDriverId} from './drivers.js';
 import {driverMenuMarkup} from './driver-ui.js';
 import {isCourseUnlocked} from './course-access.js';
-import {featureFlags} from './feature-flags.js';
-import {experimentalPanel} from './experimental-ui.js';
 import {parseCareerExport} from './career-backup.js';
 import {importBudgetCareer} from './career-budget.js';
 
@@ -50,7 +48,7 @@ const jumpHeightReadout = createJumpHeightReadout();
 const arrow = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg>';
 const sound = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5ZM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>';
 const choices = app.getRaceChoices();
-let uiDisposed=false,lastScreen, garageOpen = false, armoryOpen = false, garageCar = choices.car, armoryCar = choices.car, garageMessage = '', playersOpen=false,playerMessage='',backupMessage='',leaderboardOpen=false,experimentalOpen=false,experimentalStorageMessage='';
+let uiDisposed=false,lastScreen, garageOpen = false, armoryOpen = false, garageCar = choices.car, armoryCar = choices.car, garageMessage = '', playersOpen=false,playerMessage='',backupMessage='',leaderboardOpen=false;
 let coursesOpen=false,courseMessage='',yardPanel='home';
 const domEvents=new AbortController();
 const boardFilter={stage:choices.startStage,car:'',driverId:getEquippedDriverId(app.profile)};
@@ -67,7 +65,6 @@ if(hiddenRoadUiQa)window.__hiddenRoadUiQa=hiddenRoadUiQa;
 let lastHiddenRoadView=null;
 
 root.querySelector('.garage-tune').insertAdjacentHTML('beforebegin',driverMenuMarkup());
-root.querySelector('.build-meta').insertAdjacentHTML('beforeend','<button type="button" id="experimental-open" class="build-label experimental-open" data-action="experimental" aria-label="Open Experimental features">EXPERIMENTAL</button>');
 root.querySelector('.garage-tune').innerHTML='TUNE CAR & DRIVER <span>→</span>';
 root.querySelector('.scene-line').insertAdjacentHTML('beforeend','<button type="button" class="course-store-button" data-action="courses" aria-label="Unlock or select courses">COURSES ↗</button>');
 const weaponHud=document.createElement('section');weaponHud.className='weapon-hud';weaponHud.hidden=true;weaponHud.setAttribute('aria-label','Combat weapons');
@@ -104,9 +101,9 @@ const leaderboardScreen = createLeaderboardScreen({app, boardFilter, escapeHTML,
 const garageScreen = createGarageScreen({app, profile, credits, escapeHTML, getGarageCar:()=>garageCar, getGarageMessage:()=>garageMessage, arrow, action:(label,verb,primary)=>screenAction(label,verb,primary,arrow), clamp});
 const armoryScreen = createArmoryScreen({profile, credits, escapeHTML,
   getGarageMessage:()=>garageMessage, getArmoryCar:()=>armoryCar,
-  kitsEnabled:()=>app.duel.featureFlags.enabled('wasteland2'),
-  loadoutsEnabled:()=>app.duel.featureFlags.enabled('wasteland2'),
-  crewEnabled:()=>app.duel.featureFlags.enabled('wasteland2'),
+  kitsEnabled:()=>app.wastelandUnlocked(),
+  loadoutsEnabled:()=>app.wastelandUnlocked(),
+  crewEnabled:()=>app.wastelandUnlocked(),
   action:(label,verb,primary)=>screenAction(label,verb,primary,arrow)});
 const modalScreen = createResultsScreen({app, profile, credits, escapeHTML, time, arrow});
 const updateHud = createHudScreen({app, ui, text, time, clamp, credits, routeMap});
@@ -127,7 +124,6 @@ for(const id of ['rival-car','rival-driver','rival-upgrades'])ui[id].addEventLis
 },{signal:domEvents.signal});
 ui['lighting-mood'].addEventListener('change',event=>{app.setLightingMood(event.target.value);ui['lighting-mood'].value=app.lightingMood;});
 ui['graphics-quality'].value=app.ambientOcclusionEnabled?'high':'performance';
-ui['foot-camera']?.addEventListener('change',event=>{event.target.value=app.setFootCamera(event.target.value);},{signal:domEvents.signal});
 ui['graphics-quality'].addEventListener('change',event=>app.setGraphicsQuality(event.target.value));
 ui['car-select'].addEventListener('change',event=>{const car=event.target.value;if(!isCarUnlocked(profile(),car)){ui['car-select'].value=choices.car;openGarage(car);return;}choices.car=car;updateMenuScene();});
 ui['scene-select'].addEventListener('change', e => { choices.startStage = Math.max(0, Math.min(COURSE.length-1, Number(e.target.value) || 0)); updateMenuScene(); });
@@ -166,7 +162,7 @@ root.addEventListener('click',e => {
     if(armoryOpen)refreshArmory(message);else refreshGarage(message);
     return;
   }
-  if(button.dataset.kitAction && app.duel.featureFlags.enabled('wasteland2')){
+  if(button.dataset.kitAction && app.wastelandUnlocked()){
     const id=button.dataset.kitTier||null;
     const result=button.dataset.kitAction==='buy'?app.purchaseArmorKit(armoryCar,id):
       app.equipArmorKit(armoryCar,button.dataset.kitAction==='unequip'?null:id);
@@ -182,8 +178,8 @@ root.addEventListener('click',e => {
     case 'yard-crew': openYardPanel('crew'); return;
     case 'yard-home': openYardPanel('home'); return;
     case 'yard-menu': if(app.isYardHomeActive()){yardPanel='home';app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);} return;
-    case 'wasteland-visit': if(app.duel.state.status!=='menu'||!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu)return;armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=experimentalOpen=false;app.visitWasteland();lastScreen=null;break;
-    case 'start': armoryOpen = coursesOpen = garageOpen = playersOpen = leaderboardOpen = experimentalOpen = false; app.startCampaign(choices); break;
+    case 'wasteland-visit': if(app.duel.state.status!=='menu'||!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu)return;armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;app.visitWasteland();lastScreen=null;break;
+    case 'start': armoryOpen = coursesOpen = garageOpen = playersOpen = leaderboardOpen = false; app.startCampaign(choices); break;
     case 'courses':if(app.duel.state.status!=='menu')return;coursesOpen=true;garageOpen=playersOpen=leaderboardOpen=false;courseMessage='';lastScreen=null;break;
     case 'courses-close':coursesOpen=false;lastScreen=null;break;
     case 'unlock-next':app.returnToMenu();Object.assign(choices,app.getRaceChoices());updateMenuScene();coursesOpen=true;garageOpen=playersOpen=leaderboardOpen=false;courseMessage='Unlock the next course, then select it.';lastScreen=null;break;
@@ -198,8 +194,6 @@ root.addEventListener('click',e => {
       root.querySelector('#career-import-file')?.click();return;
     case 'leaderboard':leaderboardOpen=true;coursesOpen=playersOpen=garageOpen=false;boardFilter.stage=choices.startStage;boardFilter.driverId=getEquippedDriverId(profile());lastScreen=null;break;
     case 'leaderboard-close':leaderboardOpen=false;lastScreen=null;break;
-    case 'experimental': if(app.duel.state.status!=='menu')return;experimentalOpen=true;armoryOpen=coursesOpen=playersOpen=leaderboardOpen=garageOpen=false;experimentalStorageMessage='';lastScreen=null;break;
-    case 'experimental-close':experimentalOpen=false;lastScreen=null;break;
     case 'armory': if(app.duel.state.status!=='menu')return;armoryOpen=true;armoryCar=choices.car;garageOpen=coursesOpen=playersOpen=leaderboardOpen=false;garageMessage='';lastScreen=null;break;
     case 'armory-close':if(app.isYardHomeActive())yardPanel='home';else armoryOpen=false;lastScreen=null;break;
     case 'garage': openGarage(); return;
@@ -212,7 +206,7 @@ root.addEventListener('click',e => {
     case 'pause': app.togglePause(); break;
     case 'resume': app.resume(); break;
     case 'restart': app.requestNavigation('restart'); break;
-    case 'menu': armoryOpen = coursesOpen = garageOpen = playersOpen = leaderboardOpen = experimentalOpen = false; app.requestNavigation('menu');if(app.duel.state.status==='menu'){Object.assign(choices,app.getRaceChoices());updateMenuScene();}break;
+    case 'menu': armoryOpen = coursesOpen = garageOpen = playersOpen = leaderboardOpen = false; app.requestNavigation('menu');if(app.duel.state.status==='menu'){Object.assign(choices,app.getRaceChoices());updateMenuScene();}break;
     case 'next': app.nextStage(); break;
     case 'ticket': app.duel.ackTicket(); break;
     case 'reload-update': buildUpdates.requestReload(); return;
@@ -239,7 +233,7 @@ root.addEventListener('change',event=>{
     return;
   }
   if(event.target.matches('[data-kit-car]')){
-    if(!activeArmory||!app.duel.featureFlags.enabled('wasteland2'))return;
+    if(!activeArmory||!app.wastelandUnlocked())return;
     armoryCar=event.target.value;garageMessage='';lastScreen=null;renderState(app.duel.state);return;
   }
   if(event.target.id==='career-import-file'){
@@ -255,14 +249,6 @@ root.addEventListener('change',event=>{
     })();
     return;
   }
-  if(event.target.id==='experimental-toggle'){
-    if(app.duel.state.status!=='menu'||!experimentalOpen)return;
-    const result=featureFlags.setExperimental(event.target.checked);
-    experimentalStorageMessage=result.saved?'':'Browser storage is unavailable. This choice lasts for this session only.';
-    lastScreen=null;renderState(app.duel.state);
-    root.querySelector('#experimental-toggle')?.focus({preventScroll:true});
-    return;
-  }
   const key=event.target.dataset.boardFilter;if(!key)return;boardFilter[key]=key==='stage'?Number(event.target.value):event.target.value;lastScreen=null;renderState(app.duel.state);
 },{signal:domEvents.signal});
 function renderState(s) {
@@ -271,7 +257,7 @@ function renderState(s) {
   if(!yardActive)yardPanel='home';
   const discovery=app.getHiddenRoadDiscovery?.(),discoveryKey=hiddenRoadMapKey(discovery)+':'+(discovery?.pacificFinishes||0);
   if(s.status==='menu'&&discoveryKey!==menuDiscoveryKey){menuDiscoveryKey=discoveryKey;updateMenuScene();lastScreen=null;}
-  const helpText=app.duel.featureFlags.enabled('wasteland2')?upgradedCombatHelp:legacyCombatHelp;
+  const helpText=app.wastelandUnlocked()?upgradedCombatHelp:legacyCombatHelp;
   if(combatHelp.textContent!==helpText)combatHelp.textContent=helpText;
   const combat=s.combat,upgradedCombat=combatHudEnabled(app.duel,s),hideWeaponHud=yardActive||!combat||s.status==='menu'||upgradedCombat;
   if(weaponHud.hidden!==hideWeaponHud)weaponHud.hidden=hideWeaponHud;
@@ -298,7 +284,7 @@ function renderState(s) {
   ui.overlay.dataset.status=s.status; ui.overlay.dataset.paused=String(!!s.paused); ui.overlay.dataset.audioState=app.audio?.context?.state||'locked'; ui.overlay.dataset.muted=String(!!app.audio?.muted);
   ui.overlay.dataset.audioSamples=app.audio.sampleStatus;ui.overlay.dataset.majorCrashes=String(s.majorCrashes);ui.overlay.dataset.catastrophic=String(s.catastrophic);
   const showImpact = s.status === 'gameover' && s.impactTimer > 0;
-  const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${experimentalOpen}:${coursesOpen}:${yardActive}:${yardPanel}:${yardActive?profile().wasteland?.scrap:''}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
+  const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${yardActive}:${yardPanel}:${yardActive?profile().wasteland?.scrap:''}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
   if (screen!==lastScreen) {
     const focused=document.activeElement;
     const focusKey=focused?.dataset?.action?['action',focused.dataset.action]:
@@ -307,8 +293,8 @@ function renderState(s) {
       focused?.dataset?.crewSelect?['crewSelect',focused.dataset.crewSelect]:null;
     lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu);ui.stage.classList.toggle('yard-home-active',yardActive); ui['menu-screen'].hidden=!menu; ui['race-hud'].hidden=menu||yardActive; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu||yardActive;});
     ui['garage-open'].hidden = !menu;root.querySelector('#armory-open').hidden=!menu;
-    const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu&&experimentalOpen?experimentalPanel(featureFlags,experimentalStorageMessage):menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
-    if(menu&&garageOpen&&app.duel.featureFlags.enabled('wasteland2'))
+    const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
+    if(menu&&garageOpen&&app.wastelandUnlocked())
       ui['modal-layer'].querySelector('.driver-panel')?.insertAdjacentHTML(
         'afterend',crewPanel(profile(),escapeHTML));
     const challengeLabel=app.duel.stageDef?.kind==='chase'?'PURSUIT':s.objective||s.mode==='timetrial'?'TARGET':'CPU',routeLabel=supportsRouteVariants(app.duel.stageDef)?` · ${(getRouteVariantForSeed(s.seed)?.label||'Custom route').toUpperCase()}`:'';text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||choices.cpuDifficulty).toUpperCase()} ${challengeLabel}${routeLabel}`); text('stage-name',app.duel.stageDef?.name||'The open road'); text('stage-objective',s.opponents?.length>1?(s.objective?.kind==='checkpointRush'?'PASS THE LIT CHECKPOINTS':s.objective?.kind==='driftTrial'?'BANK THE DRIFT TARGET':s.objective?.kind==='stuntTrial'?'COMPLETE THE STUNT TARGETS':app.duel.stageDef?.kind==='chase'?'ESCAPE THE PURSUIT':`BEAT ${s.opponents.length} OPPONENTS OVER TWO LAPS`):s.rival?'BEAT YOUR RIVAL OVER TWO LAPS':'CHASE YOUR CAR PERSONAL BEST');
@@ -323,7 +309,6 @@ function renderState(s) {
       (preferred||yardDefault||ui['modal-layer'].querySelector('button'))?.focus({preventScroll:true});
     }
   }
-  text('experimental-open',featureFlags.experimental()?'EXPERIMENTAL · ON':'EXPERIMENTAL');
   const muted=!!app.audio?.muted; ui['sound-toggle'].classList.toggle('muted',muted); ui['sound-toggle'].setAttribute('aria-label',muted?'Enable sound':'Mute sound'); text('sound-caption',muted?'SOUND OFF':'SOUND ON'); ui['test-driver'].hidden=!app.autopilot;
   presentJumpHeight(jumpHeightReadout,s,app,ui,text);
   if(s.status!=='menu') updateHud(s);
@@ -335,7 +320,7 @@ function renderState(s) {
   if(ui.stage.style.getPropertyValue('--hidden-road-hud-opacity')!==hudOpacity)
     ui.stage.style.setProperty('--hidden-road-hud-opacity',hudOpacity);
 }
-document.addEventListener('keydown',e=>{if(e.code==='Escape'&&app.isYardHomeActive?.()){e.preventDefault();if(yardPanel!=='home')yardPanel='home';else app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);return;}if(e.code==='Escape'&&(armoryOpen||coursesOpen||garageOpen||playersOpen||leaderboardOpen||experimentalOpen)){e.preventDefault();armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=experimentalOpen=false;lastScreen=null;updateMenuCar();renderState(app.duel.state);return;}if(e.code!=='Tab'||ui['modal-layer'].hidden)return;const buttons=[...ui['modal-layer'].querySelectorAll('button:not(:disabled),select,input,summary')],first=buttons[0],last=buttons.at(-1);if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}},{signal:domEvents.signal});
+document.addEventListener('keydown',e=>{if(e.code==='Escape'&&app.isYardHomeActive?.()){e.preventDefault();if(yardPanel!=='home')yardPanel='home';else app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);return;}if(e.code==='Escape'&&(armoryOpen||coursesOpen||garageOpen||playersOpen||leaderboardOpen)){e.preventDefault();armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;lastScreen=null;updateMenuCar();renderState(app.duel.state);return;}if(e.code!=='Tab'||ui['modal-layer'].hidden)return;const buttons=[...ui['modal-layer'].querySelectorAll('button:not(:disabled),select,input,summary')],first=buttons[0],last=buttons.at(-1);if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}},{signal:domEvents.signal});
 app.onFrame=renderState;updatePlayers();updateMenuCar();updateMenuScene();renderState(app.duel.state);ensureRenderer();app.start();
   return {refreshRaceSetup};
 }

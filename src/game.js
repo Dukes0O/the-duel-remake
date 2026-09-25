@@ -29,6 +29,7 @@ import { DEFAULT_DRIVER, normalizeDriverId, applyDriverModifiers } from './drive
 import {normalizeRival} from './rival-settings.js';
 import {upgradedCar} from './progression.js';
 import {createFeatureFlags, featureFlags} from './feature-flags.js';
+import {hiddenRoadInRace, raceFeatureFlags} from './wasteland-access.js';
 import {clamp, freshDamageZones} from './sim-common.js';
 
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
@@ -39,8 +40,11 @@ export class Duel {
     this.seed = (opts.seed ?? seedFromUrl()) >>> 0;
     this.difficultyKey = DIFFICULTY[opts.difficulty] ? opts.difficulty : DEFAULT_DIFFICULTY;
     this.carKey = CARS[opts.car] ? opts.car : DEFAULT_CAR;
+    // Without explicit switches a race sees the released ones, with the
+    // Wasteland rules only for a player who found the gate (SPEC 0.12).
     this.featureFlags = opts.featureFlags?.enabled ? opts.featureFlags :
-      opts.featureFlags ? createFeatureFlags({overrides: opts.featureFlags, storage: null, qa: false}) : featureFlags;
+      opts.featureFlags ? createFeatureFlags({overrides: opts.featureFlags, storage: null, qa: false}) :
+      raceFeatureFlags(featureFlags, () => this.state);
     this.listeners = new Set();
     this.state = this._freshState();
   }
@@ -193,7 +197,7 @@ export class Duel {
   _loadStage(idx) {
     const s = this.state;
     s.stageIndex = idx;
-    this.course = new Course(COURSE[idx], this.seed, { hiddenRoad: this.featureFlags.enabled('hidden-road') });
+    this.course = new Course(COURSE[idx], this.seed, { hiddenRoad: hiddenRoadInRace(this.featureFlags, s) });
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     const rawGates = this.course.features.lapGates?.map(gate => typeof gate === 'number' ? gate : gate.s) || [this.course.length * .25, this.course.length * .5, this.course.length * .75];
     this._lapGates = [...new Set(rawGates.filter(distance => distance > 0 && distance < this.course.length))].sort((a, b) => a - b);

@@ -26,7 +26,7 @@ function fixture(){
     count(value){a.profile={...a.profile,wasteland:{...a.profile.wasteland,pacificFinishes:value}};a._saveProfile();this.refresh();},
     place(progress,speed=0){const d=a.duel,p=d.course.hiddenRoad.poseAt(progress);Object.assign(d.state,{s:p.s,prevS:p.s,lateral:p.lateral,prevLateral:p.lateral,headingError:p.heading-d.course.at(p.s).heading,speedMph:speed,groundHeight:p.y,airHeight:0,airborne:false,yawVelocity:0,pushVelocity:0});d.setInput({throttle:0,brake:0,steer:0});this.refresh();},
     advance(seconds){for(let i=0;i<Math.ceil(seconds*120);i++)a.duel.step(1/120);this.refresh();},
-    race(){a.inspectionCamera=null;a.startCampaign({mode:'duel',car:'falcone_f42',startStage:0,seed:1989,difficulty:'casual'});a.stop();Object.assign(a.duel.state,{status:'racing',paused:false,countdown:0,traffic:[],opponents:[],rival:null});this.refresh();}
+    race(){a.inspectionCamera=null;a.startCampaign({mode:'wasteland',car:'falcone_f42',startStage:0,seed:1989,difficulty:'casual'});a.stop();Object.assign(a.duel.state,{status:'racing',paused:false,countdown:0,traffic:[],opponents:[],rival:null});this.refresh();}
   };
   window.__discoveryQa.refresh();
 }
@@ -73,8 +73,7 @@ export async function run(context){
   report.checks.directVisit=await context.evaluate(`(()=>{const a=window.__qaApp;if(a.duel.state.hiddenRoadJourney.phase!=='arrived'||a.runId!==null||JSON.stringify(a.profile)!==${JSON.stringify(before)})throw Error('Direct visit altered career or did not arrive');a.requestNavigation('menu');window.__discoveryQa.refresh();return{noCareerMutation:true,noRaceRun:true};})()`);
   await context.evaluate('window.__discoveryQa.race();window.__discoveryQa.place(80)');await pause(120);await capture('discovered-live-map');
   report.checks.scenic=await context.evaluate(`(()=>{const a=window.__qaApp,q=window.__discoveryQa;if(document.querySelector('#route-map').dataset.hiddenRoad!=='true')throw Error('Live dotted path missing');q.place(149.9,35);q.advance(.1);q.place(a.duel.course.hiddenRoad.length-59.5,45);let choice=false;for(let i=0;i<1600&&a.duel.state.hiddenRoadJourney.phase!=='arrived';i++){a.duel.step(1/120);choice ||= a.duel.state.hiddenRoadJourney.choiceReady;}q.refresh();if(choice||a.duel.state.hiddenRoadJourney.phase!=='arrived')throw Error('Scenic revisit failed automatic entry');a.requestNavigation('menu');q.refresh();return{automatic:true};})()`);
-  await context.navigate('/tools/menu-check.html');await context.waitFor(READY,'flag-off control',60000);await context.evaluate(`(${fixture.toString()})()`);
-  report.checks.flagOff=await context.evaluate(`(()=>{const a=window.__qaApp;if(a.getHiddenRoadDiscovery().enabled||!document.querySelector('#wasteland-visit').hidden||document.querySelector('#menu-course-map').dataset.hiddenRoad!=='false')throw Error('Flag-off presentation leaked');return true;})()`);
+  // The switch is released (SPEC 0.12); flag-off behavior is covered by node tests.
   await writeFile(join(directory,'captures.json'),JSON.stringify(report,null,2)+'\n');
   const sheetPath=join(directory,'contact-sheet.png');
   await sheet(context,report.captures,sheetPath);

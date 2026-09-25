@@ -8,6 +8,8 @@ import {CAMERA_MODES} from './camera-views.js';
 // DOM HUD (main.js) are views that read state and call these verbs.
 
 import {hiddenRoadDiscoverySnapshot} from './hidden-road-discovery.js';
+import {featureFlags} from './feature-flags.js';
+import {raceFeatureFlags,wastelandUnlocked} from './wasteland-access.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
 import { seedFromUrl } from './rng.js';
@@ -37,7 +39,11 @@ export class App {
     this.menuRouteId=urlRoute?.id||readRoutePreference();this._customMenuSeed=urlSeed!=null&&!urlRoute?urlSeed:null;
     this.seed = this._customMenuSeed??getRouteVariant(this.menuRouteId).seed;
     this.autopilot = url.get('autopilot') === '1';
+    // Races and race sound see the Wasteland switch only for a player who found
+    // the gate; menus ask wastelandUnlocked() about the current player instead.
+    const raceFlags = raceFeatureFlags(featureFlags, () => this.duel?.state);
     this.duel = new Duel({
+      featureFlags: raceFlags,
       seed: this.seed,
       difficulty: url.get('diff') || undefined,
       car: url.get('car') || undefined,
@@ -69,7 +75,7 @@ export class App {
     this._markedRaceKey=null;this.interruptedRaceCharge=0;
     this._recoverInterruptedRace();
     this.cameraMode = 'chase';
-    this.audio = new EngineAudio();
+    this.audio = new EngineAudio({flags: raceFlags});
     this.duel.onChange((state, event) => {
       this._syncHiddenRoadDiscovery();
       this.audio.event(event,state,this.duel.course);
@@ -248,9 +254,9 @@ export class App {
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
     this.duel.startCampaign({...options,weaponLevels:getProfileWeapons(this.profile).levels,
-      weaponLoadout:this.duel.featureFlags.enabled('wasteland2')?getCarLoadout(this.profile):undefined,
-      combatArmorKit:this.duel.featureFlags.enabled('wasteland2') ? getEquippedArmorKit(this.profile,car) : null,
-      crewId:this.duel.featureFlags.enabled('wasteland2')?selectedCrewId(this.profile):undefined,
+      weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile):undefined,
+      combatArmorKit:this.wastelandUnlocked() ? getEquippedArmorKit(this.profile,car) : null,
+      crewId:this.wastelandUnlocked()?selectedCrewId(this.profile):undefined,
       discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     return true;
@@ -298,7 +304,7 @@ export class App {
   getMenuSeed(stageIndex=this.menuStage){return supportsRouteVariants(COURSE[stageIndex])?(this._customMenuSeed??getRouteVariant(this.menuRouteId).seed):1989;}
   // Menu views share these immutable-by-convention previews; racing always builds its own Course.
   getMenuCourse(stageIndex=this.menuStage){
-    const index=Number.isInteger(stageIndex)&&COURSE[stageIndex]?stageIndex:0,seed=this.getMenuSeed(index),hiddenRoad=this.duel.featureFlags.enabled('hidden-road'),key=`${index}:${seed}${hiddenRoad ? ':hidden-road' : ''}`;
+    const index=Number.isInteger(stageIndex)&&COURSE[stageIndex]?stageIndex:0,seed=this.getMenuSeed(index),hiddenRoad=this._switches().enabled('hidden-road')&&!!this.player&&this.getHiddenRoadDiscovery().discoveredGate,key=`${index}:${seed}${hiddenRoad ? ':hidden-road' : ''}`;
     let course=this._menuCourses.get(key);
     if(course)this._menuCourses.delete(key);else course=new Course(COURSE[index],seed,{hiddenRoad});
     this._menuCourses.set(key,course);
@@ -455,7 +461,7 @@ export class App {
   }
   getHiddenRoadDiscovery() {
     const old = this._hiddenRoadDiscovery, value = this.profile?.wasteland;
-    const enabled = this.duel.featureFlags.enabled('hidden-road');
+    const enabled = this._switches().enabled('hidden-road');
     const discovered = value?.version === 1 && value.discoveredGate === true;
     const count = value?.version === 1 && Number.isSafeInteger(value.pacificFinishes)
       ? Math.max(0, Math.min(10, value.pacificFinishes)) : 0;
@@ -473,7 +479,7 @@ export class App {
         !this.runId || state.playerId !== this._runPlayerId || this._runPlayerId !== this.player.id ||
         !j?.departed || j.phase !== 'choice' || !j.choiceReady ||
         event?.phase !== 'choice' || event.journeyId !== j.id ||
-        !this.duel.featureFlags.enabled('hidden-road') || this.profile.wasteland?.version !== 1 ||
+        !this._switches().enabled('hidden-road') || this.profile.wasteland?.version !== 1 ||
         this.profile.wasteland.discoveredGate === true) return false;
     this._refreshPlayer();
     if (this.profile.wasteland?.version !== 1 || this.profile.wasteland.discoveredGate === true) return false;
@@ -540,11 +546,18 @@ export class App {
   isYardHomeActive(){
     const state=this.duel.state, journey=state.hiddenRoadJourney;
     if(state.status!=='exploring'||journey?.phase!=='arrived'||!journey.departed||
-      state.playerId!==this.player.id||!this.duel.featureFlags.enabled('hidden-road')||
-      !this.duel.featureFlags.enabled('wasteland2')||
+      state.playerId!==this.player.id||!this._switches().enabled('hidden-road')||
+      !this.wastelandUnlocked()||
       this.profile.wasteland?.discoveredGate!==true)return false;
     const visit=state.hiddenRoadVisit;
     return !visit||(visit.playerId===this.player.id&&visit.journeyId===journey.id);
+  }
+  wastelandUnlocked(){
+    return wastelandUnlocked(this._switches(),this.profile);
+  }
+  // The released switch states, before the race view narrows the Wasteland rules.
+  _switches(){
+    return this.duel.featureFlags.base||this.duel.featureFlags;
   }
   _wastelandShopAccess(){
     return this.duel.state.status==='menu'||this.isYardHomeActive();
@@ -561,11 +574,11 @@ export class App {
     if(!this._wastelandShopAccess())return {ok:false,reason:'Return to the Armory to upgrade weapons.'};
     this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
     const previous=this.profile,result=purchaseWeaponUpgrade(this.profile,id,
-      {wastelandEnabled:this.duel.featureFlags.enabled('wasteland2')});
+      {wastelandEnabled:this.wastelandUnlocked()});
     if(result.ok){this.profile=result.profile;if(!this._saveShopProfile(previous))return {ok:false,reason:'Could not save this purchase.'};this.duel.emit({garage:true});}return result;
   }
   equipCarWeapon(slot,id){
-    if(!this._wastelandShopAccess()||!this.duel.featureFlags.enabled('wasteland2'))
+    if(!this._wastelandShopAccess()||!this.wastelandUnlocked())
       return {ok:false,reason:'Return to the Wasteland Armory to change weapons.'};
     this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
     const previous=this.profile,result=equipCarWeaponSlot(this.profile,slot,id);
@@ -573,7 +586,7 @@ export class App {
     return result;
   }
   selectCrewMember(id){
-    if(!this._wastelandShopAccess()||!this.duel.featureFlags.enabled('wasteland2'))
+    if(!this._wastelandShopAccess()||!this.wastelandUnlocked())
       return {ok:false,reason:'Return to the Wasteland Armory to choose crew.'};
     this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
     const previous=this.profile,result=chooseCrew(this.profile,id);
@@ -582,7 +595,7 @@ export class App {
     return result;
   }
   purchaseArmorKit(car,id){
-    if(!this._wastelandShopAccess()||!this.duel.featureFlags.enabled('wasteland2'))
+    if(!this._wastelandShopAccess()||!this.wastelandUnlocked())
       return {ok:false,reason:'Return to the Armory with Wasteland enabled.'};
     this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
     const previous=this.profile,result=purchaseArmorKit(this.profile,car,id);
@@ -590,7 +603,7 @@ export class App {
     return result;
   }
   equipArmorKit(car,id=null){
-    if(!this._wastelandShopAccess()||!this.duel.featureFlags.enabled('wasteland2'))
+    if(!this._wastelandShopAccess()||!this.wastelandUnlocked())
       return {ok:false,reason:'Return to the Armory with Wasteland enabled.'};
     this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
     const previous=this.profile,result=equipArmorKit(this.profile,car,id);

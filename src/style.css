@@ -118,10 +118,6 @@
 .build-update button{min-height:40px;padding:10px 13px;background:#ead5a9;border:1px solid #ead5a9;border-radius:2px;color:#12211b;font-size:10px;letter-spacing:1px;font-weight:800}
 .build-update button:hover{background:#ffedc9;color:#12211b}
 .build-update button:focus-visible{outline:3px solid #fff0c9;outline-offset:4px}
-.experimental-open{border:0;background:none;padding:0;font:inherit;text-align:right;cursor:pointer;color:#e3c28b}
-.experimental-open:hover{color:#ffe0a5}.experimental-open:focus-visible{outline:2px solid #ffe0a5;outline-offset:4px}
-.experimental-panel{max-width:630px}.experimental-choice{display:flex;align-items:center;gap:13px;margin:22px 0;padding:18px;border:1px solid #d6c6a94d;background:#d6c6a910;cursor:pointer;font-size:13px;font-weight:700}
-.experimental-choice input{width:20px;height:20px;accent-color:#ff7449}.experimental-list{border-top:1px solid #d6c6a94d;padding-top:15px}.experimental-list h3{font-size:10px;letter-spacing:1.5px}.experimental-list p,.experimental-list li{font-size:12px;color:#c3c9bb;line-height:1.6}.experimental-storage{color:#ffd29a!important}
 /* The mobile menu scrolls; its sections must not compress into the viewport. */
 @media(max-width:700px){.in-menu .menu-screen>.menu-intro,.in-menu .menu-screen>section,.in-menu .menu-screen>.menu-footer,.in-menu .menu-screen>.build-update{flex-shrink:0}.build-meta{align-items:flex-start;gap:4px;flex-shrink:1;min-width:0}.build-meta .build-version{font-size:7px;letter-spacing:0;white-space:normal}.build-update{position:relative;inset:auto;order:-1;max-width:none;width:100%;padding:10px 12px;gap:12px}.build-update p{font-size:11px}.build-update span{font-size:9px}}
 .driver-setup{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);min-width:0}.driver-setup>label{display:flex;align-items:center;gap:10px}.driver-setup>label>span{font-size:8px;letter-spacing:1px;flex:0 0 55px;color:#bac5b4}.driver-setup select{flex:1;min-width:0;max-width:none!important;width:100%;background:#12221de8;border:1px solid #d9d7bb40;color:var(--ink);padding:7px 9px;font-size:11px!important}.driver-setup>p{font-size:9px;line-height:1.5;color:#becbb5;margin:7px 0 0}.driver-panel{margin:0 0 24px;border-block:1px solid #c4c9af30;padding:12px 0}.driver-panel>summary{display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;font-size:9px;letter-spacing:.8px}.driver-panel>summary>b{font-size:10px;letter-spacing:0;color:#d6bc90}.driver-panel>p{font-size:11px;line-height:1.6;color:#aebbab;max-width:780px}.driver-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.driver-card{display:flex;flex-direction:column;min-width:0;padding:16px;border:1px solid #cad3b62b;background:#0f201aba}.driver-card.selected{border-color:#bfd5a885;background:#cbd8ab0a}.driver-card h3{margin:0 0 5px;font-size:17px}.driver-card>b{font-size:9px;color:#d4b28a;font-weight:500}.driver-card>p{font-size:11px;line-height:1.5;color:#b6c4b1}.driver-card>small{font-size:8px;color:#bed5b2;line-height:1.5;margin:auto 0 12px}.driver-card>button{padding:10px;font-size:9px;letter-spacing:.65px;color:var(--ink);background:#d0d4b60b;border:1px solid #d6dbb940;cursor:pointer}.driver-card>button:disabled{opacity:.5;cursor:default}.driver-card.selected>button{opacity:1;color:#b8d3ab}.driver-card>button:focus-visible,.driver-panel>summary:focus-visible,.driver-setup select:focus-visible{outline:2px solid #e9a26d;outline-offset:3px}@media(max-width:700px){.driver-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.driver-card{padding:11px}.driver-card h3{font-size:14px}.driver-card>p{font-size:10px}.driver-panel>summary{align-items:flex-start;flex-direction:column;gap:7px}.driver-setup select{font-size:12px!important}.driver-panel .driver-card>button{min-height:38px}.leaderboard-filters{flex-wrap:wrap}.leaderboard-filters>label{min-width:140px;flex:1}}
@@ -167,18 +163,3 @@
 .backup-blocked button{min-height:46px;padding:12px 18px;border:1px solid #e3bd87;background:#e3bd87;color:#15221b;font-size:11px;font-weight:800;letter-spacing:1px;cursor:pointer}
 .backup-blocked button:hover{background:#ffe0a5}
 .backup-blocked button:focus-visible{outline:3px solid #fff;outline-offset:4px}
-
-/* The Experimental button shares build-label typography, but remains a menu control. */
-@media (max-height: 740px) and (min-width: 851px), (max-width: 1100px) {
-  .build-meta .experimental-open {
-    display: inline-block;
-    position: fixed;
-    right: 5%;
-    bottom: 16px;
-    z-index: 4;
-    min-height: 40px;
-    padding: 10px 14px;
-    border: 1px solid #e3c28b;
-    background: #12211bf5;
-  }
-}

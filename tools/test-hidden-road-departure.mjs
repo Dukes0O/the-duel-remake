@@ -24,8 +24,10 @@ function place(app, progress, speed = 35) {
     yawVelocity: 0, steerVisual: 0, slipAngle: 0, groundHeight: p.y, airborne: false,
     airHeight: 0, impactTimer: 0, pushVelocity: 0 });
 }
-function start(app) {
-  app.startCampaign({ startStage: 0, mode: 'timetrial', seed: 1989, car: 'falcone_f42', difficulty: 'casual' });
+// The saved-record fixture comes from a Time Trial (the only mode that saves
+// ghosts); the Hidden Road itself exists only in Mad Max Duel (SPEC 0.12).
+function start(app, mode = 'wasteland') {
+  app.startCampaign({ startStage: 0, mode, seed: 1989, car: 'falcone_f42', difficulty: 'casual' });
   app.advance(3.1);
   Object.assign(app.duel.state, { traffic: [], opponents: [], rival: null });
 }
@@ -36,7 +38,7 @@ function makeApp() {
   app.profile.credits = 2000;
   app.profile.unlockedCars.push('aurora_gt');
   app._saveProfile();
-  start(app);
+  start(app, 'timetrial');
   // Seed a valid saved best/leaderboard/ghost through existing production APIs,
   // rather than relying on malformed sentinel records surviving normalization.
   const s = app.duel.state;
@@ -88,8 +90,9 @@ check('departure uses abandonment: preserve bank, records, unlocks and ghosts; d
   const app = makeApp(), s = app.duel.state;
   s.speedMph = 110;
   app.duel._ticket({ limitMph: 55 });
-  app.duel.ackTicket();
-  assert.ok(app.profile.activeRace.pendingPoliceFines > 0);
+  // Mad Max Duel issues no radar tickets, so no fine can be pending here.
+  assert.equal(s.status, 'racing');
+  assert.equal(app.profile.activeRace.pendingPoliceFines, 0);
   s.score = 1700; s.policeEscapes = 3;
   const before = bank(app), historyCount = app.profile.history.length;
   const event = depart(app);

@@ -34,9 +34,11 @@ function corridor(course) {
   assert.equal(typeof course.hiddenRoad.contains, 'function', 'corridor exposes physical containment');
   return course.hiddenRoad;
 }
-function race(seed = 1989, car = 'falcone_f42', enabled = true) {
-  const duel = new Duel({ seed, featureFlags: { 'hidden-road': enabled } });
-  duel.startCampaign({ startStage: 0, seed, car, mode: 'duel', difficulty: 'casual', cpuDifficulty: 'medium' });
+// The road exists only in Mad Max Duel (SPEC 0.12); wasteland2 off is the rule
+// set of a player who has not found the gate yet.
+function race(seed = 1989, car = 'falcone_f42', enabled = true, mode = 'wasteland') {
+  const duel = new Duel({ seed, featureFlags: { 'hidden-road': enabled, wasteland2: false } });
+  duel.startCampaign({ startStage: 0, seed, car, mode, difficulty: 'casual', cpuDifficulty: 'medium' });
   duel.state.status = 'racing';
   return duel;
 }
@@ -56,8 +58,8 @@ function sample(duel) {
   return { player: pick(state), opponents: state.opponents.map(pick),
     traffic: state.traffic.map(pick), police: state.police, results: state.results };
 }
-function roadReplay(seed, enabled, fps = 60) {
-  const duel = race(seed, 'falcone_f42', enabled);
+function roadReplay(seed, enabled, fps = 60, mode = 'duel') {
+  const duel = race(seed, 'falcone_f42', enabled, mode);
   const start = { ...duel.course.groundAt(1320, -2), s: 1320, lateral: -2 };
   place(duel, start, { speed: 45 });
   duel.state.nextLapGate = 1;
@@ -105,9 +107,11 @@ if (process.argv.includes('--record-baseline')) {
 assert.equal(process.argv.length, 2, 'usage: node tools/test-hidden-road.mjs');
 const baseline = JSON.parse(readFileSync(fixtureUrl, 'utf8'));
 
-check('dev-only switch and explicit construction', () => {
-  assert.equal(FEATURE_STATES['hidden-road'], 'beta', 'hidden-road is an opt-in Experimental beta switch');
-  assert.equal(createFeatureFlags({ storage: null, qa: false }).enabled('hidden-road'), false);
+check('released switch and explicit construction', () => {
+  assert.equal(FEATURE_STATES['hidden-road'], 'on', 'hidden-road is released');
+  assert.equal(createFeatureFlags({ storage: null, qa: false }).enabled('hidden-road'), true);
+  assert.ok(!race(1989, 'falcone_f42', true, 'duel').course.hiddenRoad, 'Rival Duel has no corridor');
+  assert.ok(!race(1989, 'falcone_f42', true, 'timetrial').course.hiddenRoad, 'Time Trial has no corridor');
   assert.equal(createFeatureFlags({ storage: null, qa: true, search: '?flags=hidden-road' }).enabled('hidden-road'), true);
   assert.ok(!courseFor(1989, false).hiddenRoad, 'flag-off course has no corridor');
   assert.ok(!new Course(COURSE[1], 1989, { hiddenRoad: true }).hiddenRoad, 'other courses have no corridor');
@@ -171,6 +175,8 @@ for (const route of ROUTE_VARIANTS) {
       assert.equal(roadReplay(route.seed, flag, fps), baseline.routes[route.id].roadFollowing,
         `${fps} Hz, hidden-road=${flag}: ordinary race/traffic/opponent results must not change`);
     }
+    for (const fps of [30, 60, 144]) assert.equal(roadReplay(route.seed, true, fps, 'wasteland'),
+      roadReplay(route.seed, false, fps, 'wasteland'), `${fps} Hz: the corridor does not change Mad Max Duel road driving`);
   });
   check(`${label} physical corridor has bounded protection and solid wash walls`, () => {
     const duel = race(route.seed), road = corridor(duel.course), middle = road.poseAt(250);

@@ -14,12 +14,14 @@ const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 // Pure evidence check shared by the synthetic acceptance test and the browser run.
 export function validateBetaJourneyEvidence(report){
   if(report?.storage?.memoryOnly!==true||report.storage.qaTab!==true)throw Error('Private memory-only QA storage was not proved.');
-  if(report?.flags?.urlOverride!==false)throw Error('Beta was enabled by a QA URL override.');
-  for(const key of ['defaultOff','optedIn','reloadOn']){
-    const expected=key==='defaultOff'?FEATURES:FEATURES;
-    if(!Array.isArray(report.flags[key])||expected.some(name=>!report.flags[key].includes(name))||report.flags[key].length!==2)
-      throw Error(`Experimental ${key} did not cover both beta switches.`);
-  }
+  if(report?.flags?.urlOverride!==false)throw Error('The Wasteland was enabled by a QA URL override.');
+  if(!Array.isArray(report.flags.released)||FEATURES.some(name=>!report.flags.released.includes(name))||report.flags.released.length!==2)
+    throw Error('Both Wasteland switches must be released on.');
+  if(!Array.isArray(report.flags.menuSettings)||report.flags.menuSettings.length!==0)
+    throw Error('The main menu shows Wasteland settings: '+JSON.stringify(report.flags.menuSettings));
+  if(report.flags.preDiscovery?.mode!=='wasteland'||report.flags.preDiscovery.hiddenRoad!==true||
+    report.flags.preDiscovery.newRules!==false)
+    throw Error('Before discovery, Mad Max Duel must carry the Hidden Road and keep the live rules.');
   const fixtures=report.fixtures;
   if(!Array.isArray(fixtures)||!fixtures.some(item=>item.kind==='pacific-finish-eligibility'&&item.value===10)||
     !['departure','gate'].every(phase=>fixtures.some(item=>item.kind==='route-placement'&&item.phase===phase&&Number.isFinite(item.s))))
@@ -86,7 +88,7 @@ async function sampleFrames(context,report,phase,quality){
 }
 
 export async function run(context){
-  const report={scope:'Private memory-only beta journey. Pacific finish eligibility and route positions are fixtures; departure, invitation, choice, yard and race use production UI/App/simulation. No race completion is forced.',
+  const report={scope:'Private memory-only Wasteland journey, found from a Mad Max Duel on Pacific Canyon with the released switches. Pacific finish eligibility and route positions are fixtures; departure, invitation, choice, yard and race use production UI/App/simulation. No race completion is forced.',
     storage:{},flags:{},fixtures:[],events:[],result:{},frames:{},captures:[]};
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
   await context.navigate('/tools/menu-check.html');
@@ -100,9 +102,9 @@ export async function run(context){
       memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value,
       loadingHidden:document.querySelector('#renderer-loading')?.hidden,
       menu:box('#menu-screen'),footer:box('.menu-footer'),meta:box('.build-meta'),
-      experimental:box('#experimental-open'),start:box('#start-engine')};})()`;
+      start:box('#start-engine')};})()`;
   const initialUi=await context.evaluate(layout());
-  if(!initialUi.experimental.bounds?.width||initialUi.experimental.bounds.bottom>720){
+  if(!initialUi.start.bounds?.width||initialUi.start.bounds.bottom>720){
     await context.command('Emulation.setDeviceMetricsOverride',{width:1024,height:720,deviceScaleFactor:1,mobile:false});
     const laptopUi=await context.evaluate(layout());
     throw Error('Private beta menu controls outside viewport: '+JSON.stringify({desktop:initialUi,laptop:laptopUi}));
@@ -116,27 +118,12 @@ export async function run(context){
     if(title.includes('TEMPORARY SAVES')||title.startsWith('Performance samples'))panel.style.display='none';
   }`);
   report.flags.urlOverride=false;
-  report.flags.defaultOff=await context.evaluate(`['wasteland2','hidden-road'].filter(name=>!window.__qaApp.duel.featureFlags.enabled(name))`);
   if(new URLSearchParams(await context.evaluate('location.search')).has('flags'))throw Error('QA URL flag override is forbidden.');
-  await click(context,'#experimental-open');
-  await context.waitFor(`document.querySelector('#experimental-toggle')?.getBoundingClientRect().width>0`,'visible Experimental choice');
-  await click(context,'#experimental-toggle');
-  report.flags.optedIn=await context.evaluate(`['wasteland2','hidden-road'].filter(name=>window.__qaApp.duel.featureFlags.enabled(name))`);
-  await capture(context,report,'beta-opted-in');
-  await context.navigate('/tools/menu-check.html');
-  await context.waitFor(`!!window.__qaApp?.visualReady&&window.__qaApp.duel.featureFlags.enabled('wasteland2')&&window.__qaApp.duel.featureFlags.enabled('hidden-road')`,'saved beta opt-in',60000);
-  report.flags.reloadOn=await context.evaluate(`['wasteland2','hidden-road'].filter(name=>window.__qaApp.duel.featureFlags.enabled(name))`);
-  await context.waitFor(`[...document.querySelectorAll('details summary')].some(node=>
-    node.textContent.includes('TEMPORARY SAVES'))`,'reloaded private QA controls');
-  await context.evaluate(`for(const panel of document.querySelectorAll('details')){
-    const title=panel.querySelector('summary')?.textContent||'';
-    if(title.includes('TEMPORARY SAVES')||title.startsWith('Performance samples'))panel.style.display='none';
-  }`);
-  await context.command('Emulation.setDeviceMetricsOverride',{width:1024,height:720,deviceScaleFactor:1,mobile:false});
-  await context.waitFor(`document.querySelector('#experimental-open')?.getBoundingClientRect().width>0`,'laptop Experimental control');
-  await click(context,'#experimental-open');
-  await context.waitFor(`document.querySelector('#experimental-toggle')?.checked`,'laptop Experimental panel');
-  await click(context,'[data-action="experimental-close"]');
+  report.flags.released=await context.evaluate(`['wasteland2','hidden-road'].filter(name=>window.__qaApp._switches().enabled(name))`);
+  // Kyle: the only Wasteland choice on the main menu is Mad Max Duel itself.
+  report.flags.menuSettings=await context.evaluate(`['#experimental-open','#foot-camera','#foot-camera-control','#wasteland-visit']
+    .filter(selector=>{const node=document.querySelector(selector);return !!node&&!node.hidden&&node.getBoundingClientRect().width>0;})`);
+  await capture(context,report,'menu-before-discovery');
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
   await context.evaluate(`(()=>{
     const a=window.__qaApp;
@@ -161,11 +148,17 @@ export async function run(context){
   })()`);
   report.fixtures.push({kind:'pacific-finish-eligibility',value:10});
   await context.waitFor(`document.querySelector('#start-engine')?.disabled===false`,'ready production Start Engine',60000);
+  await click(context,'[data-mode="wasteland"]');
   await click(context,'#start-engine');
-  await context.waitFor(`window.__qaApp?.duel.state.status==='countdown'||window.__qaApp?.duel.state.status==='racing'`,'ordinary duel started');
+  await context.waitFor(`window.__qaApp?.duel.state.mode==='wasteland'&&['countdown','racing'].includes(window.__qaApp?.duel.state.status)`,'Mad Max Duel started before discovery');
+  await context.waitFor(`window.__qaApp.visualReady&&document.querySelector('#renderer-loading')?.hidden`,'Mad Max scene ready',60000);
+  await context.waitFor(`window.__qaApp.duel.state.status==='racing'`,'active Mad Max Duel',30000);
   await context.evaluate('window.__qaApp.stop()');
+  report.flags.preDiscovery=await context.evaluate(`(()=>{const d=window.__qaApp.duel,s=d.state;
+    return{mode:s.mode,hiddenRoad:!!d.course.hiddenRoad,
+      newRules:d.featureFlags.enabled('wasteland2')||!!s.crewId||!!s.combatArmorKit||!!s.weaponLoadout};})()`);
   const playerId=await context.evaluate('window.__qaApp.player.id');
-  await context.evaluate('window.__betaQa.advance(4.5)');
+  await context.evaluate('window.__betaQa.advance(.5)');
   const departure=await context.evaluate(`window.__betaQa.place(149.9,35)`);
   report.fixtures.push({kind:'route-placement',phase:'departure',...departure});
   await context.command('Input.dispatchKeyEvent',{type:'keyDown',key:'w',code:'KeyW',windowsVirtualKeyCode:87});

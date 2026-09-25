@@ -8,6 +8,7 @@ import {
 } from './sound-bank.js';
 import { SoundMixer } from './sound-mixer.js';
 import { featureFlags } from './feature-flags.js';
+import { raceFeatureFlags } from './wasteland-access.js';
 const bank = (id) => SOUND_BANK[id];
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 // A continuous 18.6-semitone sweep makes each gear audible. Texture crossfades
@@ -52,7 +53,7 @@ export function combatAudioSpace(event, state, course) {
 }
 
 export class EngineAudio {
-  constructor({ hiddenRoadVoiceFactory, flags = featureFlags } = {}) {
+  constructor({ hiddenRoadVoiceFactory, flags = raceFeatureFlags(featureFlags, () => null) } = {}) {
     this.context = null;
     this.flags = flags;
     this.muted = readMuted();

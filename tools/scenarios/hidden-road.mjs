@@ -85,7 +85,7 @@ export async function run(context) {
   for (const [route, seed] of [['a', 1989], ['b', 42], ['c', 17]]) {
     await context.evaluate(`(() => {
       const app = window.__qaApp;
-      app.startCampaign({ mode: 'duel', startStage: 0, seed: ${seed}, car: 'falcone_f42', difficulty: 'casual' });
+      app.startCampaign({ mode: 'wasteland', startStage: 0, seed: ${seed}, car: 'falcone_f42', difficulty: 'casual' });
       app.stop(); Object.assign(app.duel.state, { status: 'racing', countdown: 0, paused: false });
       window.__render.renderFrame();
     })()`);

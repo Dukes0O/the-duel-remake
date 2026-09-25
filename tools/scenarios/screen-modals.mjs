@@ -20,7 +20,6 @@ export async function run(context) {
     ['courses', '[data-action="courses"]'],
     ['players', '[data-action="new-player"]'],
     ['leaderboard', '[data-action="leaderboard"]'],
-    ['experimental', '#experimental-open'],
   ]) {
     const opened = await context.evaluate(`(() => {
       const button = document.querySelector(${JSON.stringify(opener)});
@@ -42,7 +41,7 @@ export async function run(context) {
     })()`);
     if (layout.width !== 640 || layout.height !== 900 || !layout.focusInside || !layout.closeVisible)
       throw Error(`${name}: narrow dialog layout or keyboard focus failed: ${JSON.stringify(layout)}`);
-    if (name === 'garage' || name === 'experimental') await context.screenshot(`narrow-${name}`);
+    if (name === 'garage') await context.screenshot(`narrow-${name}`);
     await context.command('Input.dispatchKeyEvent', {
       type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27,
     });

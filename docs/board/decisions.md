@@ -729,3 +729,15 @@ at 1280 by 720 and widths at or below 1100. Record the failing real DOM state
 before the fix and verify the responsive result. Increasing the QA viewport
 would leave the player blocker intact. No other menu redesign is part of this
 card; retain the existing layout and unpack only rules that are rewritten.
+
+
+## 2026-09-25 PDT: release the Wasteland as a Mad Max easter egg (Kyle)
+
+Kyle: "I don't want settings selectable from the main menu beyond just the mad
+max option. I want this to be an easter egg that is found when racing in the
+mad max setting." Recorded as SPEC 0.12. The Experimental button, panel and the
+menu on-foot camera setting are removed; `wasteland2` and `hidden-road` go to
+`on`; the Hidden Road exists only in Mad Max Duel; the Wasteland rules apply
+only to a player who had found the gate when the race began (Q9, now enforced
+by `src/wasteland-access.js`). To reverse: set the switches back to `dev`.
+The release itself still needs Kyle's written go-ahead.

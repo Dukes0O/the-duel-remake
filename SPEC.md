@@ -64,7 +64,7 @@ opens, and the player is invited into the Wasteland.
 
 **Rules.**
 
-- **Where.** Pacific Canyon Circuit, every route (A, B and C), at one spot in the
+- **Where.** Pacific Canyon Circuit, in Mad Max Duel races only (0.12), every route (A, B and C), at one spot in the
   canyon section on the outside of a bend. The Director picks the exact spot
   and records it. The entrance is subtle but fair: tire ruts, a gap in the rock
   line, a leaning rusted post with no text, a line of dead cacti. It is not
@@ -529,6 +529,29 @@ starting asset instead of continuing. No more ten-round loops.
 candidate starting assets per family, check licences, and show Kyle a short
 list with pictures before any adaptation work.
 
+### 0.12 Release: the Wasteland is an easter egg (Kyle, 25 September 2026)
+
+Kyle: no settings on the main menu beyond the Mad Max option; the Wasteland is
+found while racing in Mad Max Duel. This replaces the Experimental route for the
+Wasteland and narrows 0.2.
+
+- **No Experimental menu.** The EXPERIMENTAL button and panel are removed. The
+  `wasteland2` and `hidden-road` switches go straight to `on` for release. The
+  `beta` state remains in `src/feature-flags.js` for QA builds only.
+- **The road is in Mad Max Duel only.** The Hidden Road, its dust-devil hint and
+  the Rustwall exist only in Mad Max Duel races on Pacific Canyon (and the
+  post-discovery WASTELAND visit). Rival Duel, Time Trial and objective events
+  have no turnoff. The garage hint counts finished Mad Max Duels on Pacific
+  Canyon only.
+- **The rules wait for the gate.** Q9 is enforced in code: a race uses the
+  Wasteland rules only when its player had found the gate when the race began
+  (`src/wasteland-access.js`). Menus and shops ask the same question of the
+  current player, so kits, crew and loadouts stay out of sight until then.
+- **No on-foot camera setting on the menu.** C switches first-person and
+  overhead while on foot.
+- **Kept after discovery:** the WASTELAND menu button (0.2 "After discovery")
+  and the dotted road on that player's course map.
+
 ---
 
 ## 1. Objective
@@ -972,7 +995,7 @@ Warlords add a personality on top.
 ### 3.14 Player safety features *(new)*
 
 - **Career backup.** Players → Export career downloads a file; Import career restores it after a check. The game also keeps an automatic backup in IndexedDB before any save format change.
-- **Experimental menu.** Menu → Experimental switches on features that are in `beta` (section 4.4) for this computer only.
+- **Experimental menu.** Removed for the Wasteland release (0.12); Kyle wants no settings on the main menu. `beta` features are reachable in QA builds only.
 - **Updates never interrupt a race.** The live game uses the existing menu-only "Reload" notice (FND-01).
 
 ---
@@ -1025,7 +1048,7 @@ There is no overnight schedule. The Integrator starts the full check itself, whi
 | State | Visible where | Moves on when |
 | --- | --- | --- |
 | `dev` | Test builds and `?flags=` | Its acceptance tests and browser scenario pass two full checks in a row → `beta` |
-| `beta` | Player build, behind Menu → Experimental | Kyle plays it, or three days pass with no serious play-test note → `on` |
+| `beta` | QA builds only (the Experimental menu was removed, 0.12) | Kyle plays it, or three days pass with no serious play-test note → `on` |
 | `on` | Everyone | The switch is removed after one clean release |
 
 A release (standing rule D3): full check green → Release Manager fast-forwards `master`, builds, keeps the previous build for rollback. The running game offers "Reload" from its menu. A plain-language "What's new to try" note goes into `docs/playtest-inbox.md`.

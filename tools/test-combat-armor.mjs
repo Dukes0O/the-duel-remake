@@ -66,8 +66,8 @@ function seedArmor(state) {
   }
 }
 
-test('wasteland2 is opt-in beta and flag-off races keep their current state', () => {
-  assert.equal(FEATURE_STATES.wasteland2, 'beta');
+test('wasteland2 is released and flag-off races keep their current state', () => {
+  assert.equal(FEATURE_STATES.wasteland2, 'on');
   for (const options of [
     {mode: 'wasteland', wasteland2: false},
     {mode: 'duel'},

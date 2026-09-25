@@ -207,7 +207,8 @@ async function makeAudio(failed = new Set()) {
         ),
     };
   };
-  const audio = new EngineAudio(),
+  // Both switches off: the legacy routing baseline (released switches are on).
+  const audio = new EngineAudio({ flags: { enabled: () => false } }),
     context = new MockContext();
   audio._build(context);
   await new Promise(setImmediate);

@@ -6,11 +6,9 @@ or hard to repeat. Do not include saved career data.
 
 ## What's new to try
 
-### Experimental Wasteland candidate (not released)
+### The Wasteland easter egg (release candidate)
 
-When you receive a tested candidate build, open **Menu → Experimental** and turn it on. This opts into the Wasteland career and Hidden Road together; turn it off to return to ordinary play. The choice should survive a reload. In Pacific Canyon, look for the hidden dirt road and follow the gate invitation into the Scrapdome yard. From the yard, try a Wasteland race, earn scrap, and inspect the available car armor, crew and weapon purchases. Tell us the car, course, difficulty, what you did, and whether the gate, yard or race transition failed.
-
-This is an opt-in candidate, not a live release. Current wall, canyon, crew and first-person hand art still need polish. Continuous first-person hand-to-tool contact has not passed; boss arena fights and later arsenal content are not yet available. Please report visual gaps and rough edges, but do not treat an unavailable item as a working purchase or reward.
+There is nothing new on the main menu. Pick **Mad Max Duel** on Pacific Canyon Circuit and race. Somewhere in the canyon section a faint dirt track leaves the road on the outside of a bend. Follow it for about 30 seconds to a huge wall; the gate invites you in, and **Enter** takes you to the Scrapdome yard. Until a player finds the gate, Mad Max Duel plays exactly as before. After that, that player's Mad Max Duels use the Wasteland rules (armor, crew, getting out on foot by holding **F**, raiders, scrap), and a **WASTELAND** button appears on their menu as a shortcut back to the yard. On foot, **C** switches between first-person and overhead. If you can't find the road, hints appear after 5 and 10 finished Mad Max Duels on Pacific Canyon. Current wall, crew and first-person hand art still need polish. Tell us the car, what you did, and whether the road, gate, yard or race went wrong.
 
 In Mad Max Duel, try a rear hit on the rival, a traffic collision, falling
 cacti, a missed checkpoint, and a short UFO jump after the first checkpoint.

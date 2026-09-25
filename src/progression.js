@@ -665,7 +665,9 @@ export function settleRace(profile, result = {}) {
   const balance = separateCareer ? profile.credits :
     integer(profile.credits + grossReward - policeFineCharge, 1_000_000_000),
     reward = balance - profile.credits;
-  const pacificFinish = finished && stageEventId(result.stageIndex) === 'pacific-canyon' &&
+  // Hint progress counts Mad Max Duel finishes only: the Hidden Road exists only there.
+  const pacificFinish = finished && result.mode === 'wasteland' &&
+    stageEventId(result.stageIndex) === 'pacific-canyon' &&
     profile.wasteland?.version === 1;
   const career = applyWastelandResult(profile.wasteland, result,
     stageEventId(result.stageIndex), {finished, won});

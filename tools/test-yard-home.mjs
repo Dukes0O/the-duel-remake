@@ -36,7 +36,7 @@ function revisit(app) {
 }
 
 function scenic(app) {
-  assert.equal(app.startCampaign({startStage: 0, mode: 'timetrial', seed: 1989,
+  assert.equal(app.startCampaign({startStage: 0, mode: 'wasteland', seed: 1989,
     car: 'falcone_f42', difficulty: 'casual'}), true);
   app.advance(3.1);
   const road = app.duel.course.hiddenRoad;
