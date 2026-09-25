@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-09-25T10:03:45.986Z
+Observed at: 2026-09-25T10:10:13.173Z
 
-Observation commit: 6b861e288b54c70c982b85f0cf5792669f2eb0ca
+Observation commit: 24edb03e317f8ebccee1a356b8f6a883f700836f
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 6b861e288b54c70c982b85f0cf5792669f2eb0ca
+Integration HEAD: 24edb03e317f8ebccee1a356b8f6a883f700836f
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -32,7 +32,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/gfx-02-p1 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-02-p1 |
+| codex/gfx-02-p1 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-02-p1 |
+| codex/janitor-rook-note | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/janitor-rook-note |
 | lane/audio/aud-10 | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/audio/aud-12 | 0 | unknown | true | false | unknown |
 
@@ -42,7 +43,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/gfx-02-p1 | GFX-02-P1 | 2026-09-25T03:02:58-07:00 | 0 | last commit 2026-09-25T03:02:58-07:00 | docs/changes/GFX-02-P1.md, tools/test-first-person-polish.mjs |
+| codex/gfx-02-p1 | GFX-02-P1 | 2026-09-25T03:06:42-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/GFX-02-P1.md, tools/test-first-person-polish.mjs, tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, tools/scenarios/first-person-polish.mjs |
 
 ## Size targets
 
@@ -56,10 +57,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 210,328 B | +0 B | 500,000 B |
 | Review `looks/` | 6,579,829 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 4,602,181 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 31,637 B | -4,570,544 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 318,466,048 B | +155,648 B | unavailable |
-| Lane folders | 1 | -1 | unavailable |
+| Git objects | 318,620,672 B | +154,624 B | unavailable |
+| Lane folders | 2 | +1 | unavailable |
 
 ## Backups
 
@@ -67,7 +68,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 6b861e288b54c70c982b85f0cf5792669f2eb0ca
+- Local integration/wasteland: 24edb03e317f8ebccee1a356b8f6a883f700836f
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
