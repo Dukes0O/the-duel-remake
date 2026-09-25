@@ -1455,3 +1455,24 @@ tasks:
     behavior_change: yes
     note: "Player RPG direct/splash knocks down raiders with one 25-XP Notoriety award per raider per race. Each camp has one solid, foot-only salvage ledge for a rocket and armor. Integrated at 0ced0a1; focused 11 cases, private visual scene, build and joined FOOT-08 check passed. Frame pacing and broad balance remain unmeasured."
     spec: "SPEC.md sections 3.4 and 12.2, task RAID-02"
+
+  - id: JANITOR-P2
+    title: "Fold consumed phase-2 notes and audit current repository growth"
+    lane: OPS
+    size: S
+    needs: [BAL-02, CAR-01, GFX-03, GFX-04]
+    status: in_progress
+    flag: none
+    behavior_change: no
+    owns: [docs/board/decisions.md, docs/board/run-log.md, docs/board/STATUS.md, docs/board/board.yaml, docs/ASSET_PIPELINE.md, docs/changes/]
+    note: "Independent read-only review identified the few unique facts to fold from four consumed notes. No runtime removal or history rewrite. Active Rook and Rustwall lanes remain."
+  - id: CLEAN-11
+    title: "Resolve literal-reference audit candidates against dynamic consumers"
+    lane: TOOL
+    size: S
+    needs: [CLEAN-06]
+    status: backlog
+    flag: none
+    behavior_change: no
+    owns: [tools/repo-audit.mjs, tools/test-repo-audit.mjs]
+    note: "The phase-2 sweep reports 55 asset and 16 export candidates, but no unused module, removed-feature test or fully-on switch. Crew/hands/kits and wall use generated paths; audio sources and licenses have tooling/provenance consumers. Trace remaining candidates before proposing removal; preserve licensed originals and current runtime assets."
