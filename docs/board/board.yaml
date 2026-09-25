@@ -379,21 +379,36 @@ tasks:
       - "Keep the family in dev until all SPEC 0.3 scores reach four and the measured budget holds. Follow its approach-change rule if another round fails to improve likeness."
     note: "Read-only audit found leather tip caps closing skin finger rings, repeated narrow-ended digit lofts, disconnected palm/thumb pads and generic sleeve topology/paint. Settle one connected Rook hand, correct cap material/normal continuity, authored cuff seams and continuous motion contact before all-eight conversion. After P2 closure, use a Rook-only opt-in connected-hand proof with isolated candidate output and private fetch substitution. This tests topology and UV lessons independently; it does not claim the body trial won. Keep current runtime and other seven hands until accepted. Existing runtime selector stays untouched unless a reproduced defect earns a named hook."
   - id: GFX-02-P2
-    title: "Finish Rook hand silhouette, materials and contact proof"
+    title: "Rook broad sleeve and fine cloth proof"
     lane: VIS
     size: M
     needs: [GFX-02-P1]
     status: building
-    owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p2-source.json, public/assets/models/wasteland/first-person/, docs/board/looks/first-person-p2/, docs/changes/GFX-02-P2.md]
-    hooks: [tools/test-first-person-cloth.mjs, tools/test-first-person-polish.mjs, tools/first-person-contact.mjs, tools/test-first-person-contact.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p2-source.json, docs/ASSET_PIPELINE.md, docs/board/looks/first-person-p2/, docs/changes/GFX-02-P2.md]
+    hooks: [tools/test-first-person-cloth.mjs, tools/test-first-person-polish.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
     flag: wasteland2
     acceptance:
-      - "Write the changed construction method before code: measured broad asymmetric sleeve volume and sewn panels, then game-scale weave, irregular overlapping wraps, glove pads and wrist transitions. Preserve the P1 recipe and original selected image source."
-      - "Use actual exported geometry and rendered material consumers in independent tests; preserve connected anatomy, skin, rig, clips, tools and8000 loaded-triangle/three-draw limits. Do not replace a missing visual score with a source assertion."
-      - "Complete a valid fixed-surface contact method across reload boundaries, recoil and repair; unsupported open targets or sparse patches cannot pass. Keep15/20mm gaps and5mm penetration limits unless separately reviewed evidence changes the design."
-      - "Require every SPEC0.3 score at least four, actual High/Performance motion views and quiet baseline/candidate/baseline frame proof before Rook runtime promotion or all-eight conversion."
-    note: "Residual acceptance from the bounded P1 Rook-only proof. Formal R3 is3/4/3/3 in both reviews; selected paint is consumed correctly but silhouette, wrap/glove construction and complete contact remain unfinished. Current runtime hands/tools stay selected. Start with the separately designed sleeve construction proof; contact changes require a written sampling contract and independent reds."
+      - "Preserve the written broad sleeve recipe, original image sources and independent actual-export geometry/material tests, including protected anatomy, skin, rig, clips and tool records."
+      - "Record both matched High/Performance reviews, a quiet actual-public/candidate/public frame comparison and the remaining contact and construction limits. Keep one compressed sheet per round."
+      - "Close this bounded research slice after ordinary lane/build and independent review. No runtime promotion: both rounds remain 3/4/3/3. Fold durable recipe and verdicts into ASSET_PIPELINE."
+    note: "Two rounds did not raise likeness. R2 fine cloth is the next construction baseline; GFX-02-P3 carries the unfinished visual, contact and all-eight acceptance. Current runtime hands and tools remain selected."
+  - id: GFX-02-P3
+    title: "Sewn cuffs, articulated gloves and complete hand contact"
+    lane: VIS
+    size: L
+    needs: [GFX-02-P2]
+    status: backlog
+    owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p3-source.json, public/assets/models/wasteland/first-person/, docs/ASSET_PIPELINE.md, docs/board/looks/first-person-p3/, docs/changes/GFX-02-P3.md]
+    hooks: [tools/test-first-person-cloth.mjs, tools/test-first-person-polish.mjs, tools/first-person-contact.mjs, tools/test-first-person-contact.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    flag: wasteland2
+    acceptance:
+      - "Settle a changed construction method before tests and code: continuous sewn cuff coverage to the actual leather boundary, asymmetric sleeve folds and articulated glove surfaces. Preserve the fine cloth baseline. Proposed old marker endpoints are not approved coverage evidence."
+      - "Calibrate a fixed actual facing palm patch inside the 15 mm region using clipped area and spatial spread, then independent deformation/gap tests. Record actual nearest tool component IDs; no farther closed target or proxy substitution."
+      - "Complete contact across reload boundaries, recoil and repair. Keep 15/20 mm gap and 5 mm penetration limits unless reviewed evidence changes the design. Unsupported contact cannot pass."
+      - "Require all SPEC 0.3 scores at least four, actual High/Performance motion views, quiet baseline/candidate/baseline frame evidence, measured texture memory and 8000 loaded triangles/three draws before Rook runtime promotion. Convert the remaining seven only after the Rook proof passes."
+    note: "No implementation started. P2 broadened the measured silhouette and improved cloth scale but retained tapered sleeves, rigid annular wraps, exposed wrist and smooth gloves. The next round changes construction, not just paint. No beta exception or release is inferred."
   - id: EGG-02
     title: "Rustwall gate and salt-flat fidelity rounds one to three"
     priority: 9

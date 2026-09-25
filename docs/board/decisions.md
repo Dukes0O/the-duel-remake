@@ -679,3 +679,26 @@ Independent reds must prove actual exported-face source consumption, exact
 outside-chart bytes in all three maps, and unchanged mesh/UV/rig/clips/tools.
 The scored High/Performance result decides whether this helps; no runtime
 promotion or contact pass follows from material tests.
+
+
+## 2026-09-25 PDT: close P2 research and carry construction acceptance forward
+
+Both P2 rounds score 3/4/3/3 in independent and Director reviews. R2 improves
+cloth scale but does not solve sleeve, wrap, wrist or glove construction. Close
+P2 as a bounded, non-promoted recipe and test slice after final quiet frame
+measurement, independent review and ordinary lane/build gates. Add
+ASSET_PIPELINE to its ownership so its recovery recipe and limits live in the
+current guide before the temporary change note is consumed.
+
+GFX-02-P3 owns the unfinished construction, contact, frame/resource and
+all-eight acceptance. No third paint-only round is authorized. The proposed
+continuous cuff ends at old glove markers and does not yet prove coverage to
+the actual leather surface; its endpoints remain unapproved. Future contact
+must use the actual mounted facing patch, clipped physical area, spread and
+fixed barycentric samples, with each triangle corner skinned before interpolation.
+No guessed area threshold or tool topology change is approved here.
+
+Morning is approaching. Finish the current measured slice and final run gates;
+do not begin a new 35–45 minute construction slice. Preserve both original
+material images outside the disposable lane. Reversal is a separately designed
+P3 recipe, never replacement of current runtime assets without acceptance.

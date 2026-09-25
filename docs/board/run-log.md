@@ -1741,3 +1741,12 @@ glove construction still miss likeness four. Frame and actual contact remain
 unmeasured for P2. A material-only follow-up needs its written source design
 and independent consumer/protected-chart reds before code. No runtime asset
 or beta switch changed.
+
+
+- P2 round 2 candidate d567b345 retains 4,260 hand/7,536 loaded RPG triangles.
+  Private 48503 captured 28 High/Performance views with zero browser issues
+  from observation 316c66a. Both reviews remain 3/4/3/3; the 254,049-byte sheet
+  and review are committed. Original fine cloth e4a286eb is retained outside
+  the lane. P2 closes as non-promoted research after final timing and gates;
+  GFX-02-P3 carries construction, contact and full acceptance. Consumed round 1
+  raw evidence totaled 45,750,706 bytes after both verdicts and owner clearance.
