@@ -355,13 +355,14 @@ tasks:
     needs: [GFX-02, GFX-01-P2]
     status: backlog
     owns: [tools/blender/first-person-gear.py, public/assets/models/wasteland/first-person/, docs/board/looks/first-person/]
+    hooks: [tools/test-first-person-gear.mjs, tools/test-first-person-polish.mjs, tools/scenarios/first-person-gear.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [art_critic, reviewer, browser_qa]
     flag: wasteland2
     acceptance:
       - "Continue from the three immutable initial rounds. Fix fingertip cap/normal artifacts, mitten-like palms, generic sleeve construction, simplified tool fittings and continuous grip/animation contact as recorded in round-3-review.md."
       - "Retain meaningful matched High/Performance comparisons, short motion evidence, at most 8000 visible triangles and three draws. Measure texture memory and evaluate shared crew materials before making a resource-budget claim."
       - "Keep the family in dev until all SPEC 0.3 scores reach four and the measured budget holds. Follow its approach-change rule if another round fails to improve likeness."
-    note: "Initial resemblance improves from two to three in round 2 and remains three in round 3. One stagnant round so far; no beta approval. Follow the winning GFX-01-P2 technique."
+    note: "Read-only audit found leather tip caps closing skin finger rings, repeated narrow-ended digit lofts, disconnected palm/thumb pads and generic sleeve topology/paint. Settle one connected Rook hand, correct cap material/normal continuity, authored cuff seams and continuous motion contact before all-eight conversion. This is preparation only; implementation still waits for the GFX-01-P2 technique decision. Existing runtime selector stays untouched unless a reproduced defect earns a named hook."
   - id: EGG-02
     title: "Rustwall gate and salt-flat fidelity rounds one to three"
     priority: 9
@@ -1212,7 +1213,7 @@ tasks:
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
     owns: [src/sound-bank.js, public/assets/audio/, tools/audio/, docs/changes/AUD-GATEKEEPER.md]
-    hooks: [src/audio.js, src/hidden-road.js, src/hidden-road-journey.js, src/hidden-road-ui.js, src/app.js]
+    hooks: [src/audio.js, src/hidden-road.js, src/hidden-road-journey.js, src/hidden-road-ui.js, src/hidden-road-ui.css, src/app.js, tools/test-gatekeeper-audio.mjs, tools/scenarios/gatekeeper-audio.mjs]
     flag: hidden-road
     sound: gatekeeper.welcome
     acceptance:
@@ -1599,7 +1600,7 @@ tasks:
     flag: none
     behavior_change: no
     owns: [tools/repo-audit.mjs, tools/test-repo-audit.mjs]
-    note: "The phase-2 sweep reports 55 asset and 16 export candidates, but no unused module, removed-feature test or fully-on switch. Crew/hands/kits and wall use generated paths; audio sources and licenses have tooling/provenance consumers. Director follow-up confirms all sixteen named export candidates are called inside their own modules; they are not dead functions. Trace remaining asset consumers and unnecessary export boundaries before proposing removal; preserve licensed originals and current runtime assets."
+    note: "Read-only audit resolved54 of55 asset candidates as dynamic runtime, source/license/provenance, reference or QA consumers; scrapyard-dirt retains documented future arena use but no current runtime load. All16 export candidates are internally used. No deletion is proven safe. Remaining scope is to resolve the dirt asset when arena work settles its use and improve reporting of known dynamic consumers if useful. Rustwall legacy generator still has concrete test consumers and must be migrated deliberately by its art owner before removal."
 
   - id: FIX-STATUS-CARD
     title: "Preserve phase suffixes in status lane ownership"
@@ -1648,3 +1649,19 @@ tasks:
       - "Private browser review shows actual free driving, a credited wreck, respawn, timer completion, results and return to yard. Record frame pacing, balance and the lane/build gate before readiness."
     sound: "Reuse combat impact/wreck cues and arena.countdown, arena.round-start and arena.results through the external audio owner's bank."
     note: "Phase 3 order two, after the framework. No implementation has begun. The owned mode filename is provisional until the framework design settles module boundaries."
+
+  - id: FIX-RUSTWALL-CLEAN
+    title: "Remove Rustwall test dependency on consumed art scratch"
+    priority: 0
+    lane: TOOL
+    size: S
+    needs: [EGG-02-P2]
+    status: merged
+    flag: none
+    owns: [tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-relief.mjs, docs/changes/FIX-RUSTWALL-CLEAN.md]
+    helpers: [test_author, reviewer, test_runner]
+    acceptance:
+      - "Reproduce the external clean-checkout ENOENT for art-build/rustwall-p2/wall-relief-source.png before changing tests. Runtime asset verification may use only committed assets, and generated-source verification must build its own isolated fixture."
+      - "Preserve the exact generated-source SHA and exported pixel comparisons on each fresh build's own output; retain all geometry, atlas, route, gate and budget assertions. No copying a stale art scratch file or committing raw review output to hide the dependency. Explain and independently review any assertion relocation."
+      - "Run focused tests and the normal lane/build gate from a fresh checkout without prior art-build files. Integration full tier must pass after the fix before further feature merges."
+    note: "Merged ea84b34 after clean red-to-green reproduction, independent assertion review, isolated export6/6, lane8/8 in64.15 seconds and build. Runtime asset checks no longer depend on consumed scratch; exact own-build SHA and atlas pixels remain checked. Feature merges stay held until integration full passes."
