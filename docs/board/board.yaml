@@ -1848,3 +1848,16 @@ tasks:
     acceptance:
       - "Exact branch exclusions retain ref-only inventory, unknown dirty state, skipped inspection and false cleanup eligibility; no access under excluded paths. Defaults unchanged."
       - "Independent throwaway-repository guard tests precede code, then independent review, lane tier and build. No game, save or runtime changes."
+
+  - id: JANITOR-HAND-NOTE
+    title: "Fold the completed hand proof into current asset guidance"
+    lane: OPS
+    size: S
+    needs: [GFX-02-P1]
+    status: building
+    owns: [docs/ASSET_PIPELINE.md, docs/changes/GFX-02-P1.md, docs/changes/JANITOR-HAND-NOTE.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Preserve the exact material prompt, original path/hash, crop and exported-UV conventions, explicit rebuild/QA commands, protected skin controls and final proof limits before deleting the consumed P1 note."
+      - "Retain three immutable sheets, source/tests, current assets and original image. Record final3/4/3/3/4 with idle-only frame scope and unsupported contact; P2 owns missing likeness/contact work."
+      - "Independent fact review and normal lane/build gate. Docs only; no game source, binary, credit, live or external-audio worktree changes."
