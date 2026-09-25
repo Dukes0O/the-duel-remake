@@ -555,3 +555,10 @@ GFX-02-P1's detailed pre-code design is frozen in lane a8766dc. Construction use
 ## 2026-09-25 PDT: janitor audit scope
 
 The ten-merge sweep is overdue: eleven first-parent merges followed the last recorded sweep. No feature merge proceeds before the sweep. Inspection found that repo-audit, like the repaired status helper, still calls Git status in every registered lane. Do not run that path against the protected external audio folder. FIX-AUDIT-SCOPE adds repeatable --skip-lane exact branch arguments and audit(root, {skipLanes: []}), retaining ref-only inventory with unknown dirty state, explicit skipped inspection and false cleanup eligibility. Default behavior stays unchanged. Independent guarded throwaway-repository reds precede code; then review and normal gates. The sweep follows immediately, with no deletion inferred merely from literal-reference candidates.
+
+
+## 2026-09-25 PDT: first-person round two addresses cloth construction
+
+Rook hand round1 on private43649 produced28High/Performance captures with zero browser issues and one verified candidate fetch per quality. Root actual-game review is resemblance3/readability4/grounding3/consistency3; frame and continuous contact remain unmeasured. Runtime hands/tools remain unchanged. Source-module Blender views and actual course views have different lighting and are labelled separately.
+
+Approve the written round2 method after independent review and red tests: open overlapping beige wrist-wrap shells, asymmetric forearm compression/tension folds, broad cloth fading/seams and dark leather panel wear, and a rounded visible thumb glove/skin boundary. Preserve connected hand topology, existing grip landmarks, rig/clips and selected-tool8000triangle/three-draw limits. Inferred clothing constraints: cover at least70percent of the previously exposed interval between sleeve hem and glove edge, shell thickness1–4mm, padded named wrap chart and no tool-grip intrusion. Keep deliberate procedural paint for this round; if two rounds stay below likeness improvement, change technique as SPEC0.3 requires. No runtime promotion, tool movement or camera workaround is approved by this choice.
