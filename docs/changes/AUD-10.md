@@ -148,7 +148,7 @@ FLACs also decode to the exact original PCM. Do not merge this card until the ba
 are resolved and this note explicitly says ready-to-merge.
 
 AUD-11 and gatekeeper wiring are implemented in their own in-progress notes.
-AUD-14 and AUD-17 are next. AUD-12-R1 was independently integrated by the
+AUD-14 is implemented and AUD-17 candidates are saved in their own notes. AUD-12-R1 was independently integrated by the
 Director at d355b9a after fake-only validation; no credits were used.
 
 ## Baseline follow-up
@@ -179,7 +179,7 @@ The reference control differs by at most 0.000000239 before the compressor
 and 0.000001774 after it. Diagnostic run: audio-baseline at
 2026-09-25T06-24-47-619Z. No threshold or pass condition was changed.
 
-The independent AUD-12-R1 fix is now ready in its own note. Full tier on
+The independent AUD-12-R1 fix was integrated; its consumed note was removed. Full tier on
 9268cb9 passed 254/254 with clean start and end. This does not resolve the
 AUD-10 card-specific comparison.
 
@@ -189,10 +189,27 @@ After the later feature-switch regressions were fixed, the unchanged strict
 comparison still fails only the 14-second race: peak .000016466, RMS
 .0000000890, reference-control peak .000001788. Pre-limiter peak difference
 is .000000179. The other four cases pass below .000000269. This agrees with
-the prior diagnostic, not a newly audible mismatch. It still does not meet
+the prior numerical diagnostic; it does not prove perceptual equivalence. It still does not meet
 the authored strict assertion, so no readiness claim is made.
 
 The Director suggested preserving the exact old summation graph when switches
 are off. That remains a possible design change, but it must be reconciled with
 the card's named-bus contract before bypassing bus nodes. No graph bypass or
 threshold change was applied. Kyle's explicit tolerance decision is pending.
+
+## Final integration-synced lane gate
+
+Merged integration/wasteland at 568f2dc. On that clean checkout, lane tier
+passed 262/262 with no failures or skipped suites in 361.68 seconds; production
+build passed in 363 ms. All 162 replay fingerprints remain unchanged, and all
+48 expansion drives completed and won. The build retains the existing large
+chunk advisory. No assertion was relaxed to obtain this gate.
+
+The session-ending full command is
+`node tools/run-tests.mjs --tier full --jobs 8 --keep-going`. Its log and exact
+commit verdict are retained under .evidence/2026-09-25/audio-final/ as full.log
+and full-tier.json. Those are review evidence, not generated files to commit.
+No board, status or run-log file is edited directly by this lane.
+
+Status remains in-progress. Passing general suites does not waive AUD-10's
+strict waveform comparison or turn pending human ratings into approvals.
