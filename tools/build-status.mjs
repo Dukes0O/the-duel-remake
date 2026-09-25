@@ -226,7 +226,7 @@ function lanes(root, liveRoot, commit, now) {
         } catch (error) { issue = error.message; }
       }
       const protectedRoot = tree && [root, liveRoot].filter(Boolean).some(path => resolve(path) === resolve(tree.path));
-      const card = branch.match(/(?:^|\/)([a-z]+-\d+)(?:-|$)/i)?.[1].toUpperCase() ?? 'unknown';
+      const card = branch.match(/(?:^|\/)([a-z]+-\d+(?:-p\d+)?)(?:-|$)/i)?.[1].toUpperCase() ?? 'unknown';
       return { branch, commit: head, ageDays: Math.max(0, Math.floor((Date.parse(now) - Date.parse(date)) / 86400000)),
         path: tree?.path ?? null, dirty, merged, card, lastCommit: date,
         activity: dirty ? 'uncommitted changes; exact activity time unknown' : `last commit ${date}`,
