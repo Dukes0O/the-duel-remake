@@ -29,8 +29,9 @@ const patch = {
 const sample = (z, options = {}) => measureContactFrame({
   patch, skinnedVertexPositions:hand(z), posedHandleTriangles:cube(),
   posedClosedHandleFaces:options.open ? cube().slice(1) : cube(),
-  requested:options.requested || {clip:'idle',progress:.25},
-  actual:options.actual || options.requested || {clip:'idle',progress:.25},
+  requested:Object.hasOwn(options,'requested') ? options.requested : {clip:'idle',progress:.25},
+  actual:Object.hasOwn(options,'actual') ? options.actual :
+    Object.hasOwn(options,'requested') ? options.requested : {clip:'idle',progress:.25},
   sampleStamp:options.sampleStamp ?? 1, geometryHash:`hand-z-${z}`,
 });
 
@@ -66,6 +67,10 @@ test('closed triangulated handle distinguishes 10 mm grip, 25 mm miss, and deep 
     'an open target must be reported as unsupported, never a clean pass');
   assert.throws(() => sample(.11, {actual:{clip:'fire',progress:.25}}),
     /phase|clip|actual|requested/i, 'measurement cannot silently relabel the production pose');
+  for (const invalid of [{clip:'idle',progress:NaN},{clip:'idle'},null])
+    assert.throws(() => sample(.11,{requested:invalid,actual:invalid}),
+      /phase|clip|progress|finite|requested/i,
+      'measurement cannot accept an absent or nonfinite pose identity');
 });
 
 test('ordered phase assessment rejects stale samples and bad contacts but permits held poses', () => {
@@ -125,4 +130,25 @@ test('ordered phase assessment rejects stale samples and bad contacts but permit
       requested:embedded[0].requested,sampleStamp:embedded[0].sampleStamp})})};
   assert.equal(assessContactSequence({frames:embedded}).passed, false,
     'a hand more than 5 mm inside the handle is not a valid grip');
+  const noPenetrationNumber = good.map(row => ({...row}));
+  noPenetrationNumber[0] = {...noPenetrationNumber[0],contacts:
+    noPenetrationNumber[0].contacts.map((contact,index) => index ? contact :
+      {...contact,measurement:{...contact.measurement,maxPenetration:NaN}})};
+  assert.equal(assessContactSequence({frames:noPenetrationNumber}).passed, false,
+    'NaN penetration must never satisfy the 5 mm safety bound');
+  const noPatchIdentity = good.map(row => ({...row}));
+  noPatchIdentity[0] = {...noPatchIdentity[0],contacts:
+    noPatchIdentity[0].contacts.map((contact,index) => index ? contact :
+      {...contact,measurement:{...contact.measurement,selectionHash:null}})};
+  assert.equal(assessContactSequence({frames:noPatchIdentity}).passed, false,
+    'missing bind-patch identity cannot prove fixed surface tracking');
+  const wrenchMiss = good.map(row => ({...row}));
+  const wrenchIndex = wrenchMiss.findIndex(row => row.requested.clip === 'wrench-idle');
+  wrenchMiss[wrenchIndex] = {...wrenchMiss[wrenchIndex],contacts:
+    wrenchMiss[wrenchIndex].contacts.map(contact => contact.region !== 'palm' ? contact :
+      {...contact,measurement:sample(.118,{
+        requested:wrenchMiss[wrenchIndex].requested,
+        sampleStamp:wrenchMiss[wrenchIndex].sampleStamp})})};
+  assert.equal(assessContactSequence({frames:wrenchMiss}).passed, false,
+    '18 mm wrench right-hand gap must fail the same 15 mm grip limit');
 });
