@@ -789,3 +789,64 @@ test('P1 sheet direct CLI reaches evidence validation after module initializatio
     assert.doesNotMatch(result.stderr, /before initialization/i);
   } finally {rmSync(fixtureRoot, {recursive: true, force: true});}
 });
+
+test('Rook wrap covers the old exposed wrist with its own padded painted surface', async () => {
+  ensureCandidate();
+  const data = source();
+  const wrap = data.atlas.charts.wrap?.rect;
+  assert.deepEqual(wrap, [776, 8, 1016, 248], 'wrap needs its reviewed disjoint atlas chart');
+  for (const side of ['R', 'L']) {
+    const clothing = data.clothing?.[side];
+    assert.ok(clothing, `${side} needs an authored sleeve-to-glove interval`);
+    for (const key of ['sleeveHem', 'gloveEdge'])
+      assert.ok(Array.isArray(clothing[key]) && clothing[key].length === 3 &&
+        clothing[key].every(Number.isFinite), `${side} ${key} needs measured metre coordinates`);
+    assert.equal(clothing.minWrapCoverage, .70);
+    assert.deepEqual(clothing.wrapThicknessMetres, [.001, .004]);
+  }
+  const hands = await loadHands(candidate);
+  const png = decodeRgbaPng(embeddedPng(glbDocument(candidate), 'color'));
+  const skin = data.atlas.charts.skin.rect;
+  const skinPixel = png.pixel(Math.round((skin[0] + skin[2]) / 2),
+    Math.round((skin[1] + skin[3]) / 2));
+  const wrapPixel = png.pixel(896, 128);
+  assert.equal(wrapPixel[3], 255, 'wrap paint must be opaque');
+  assert.ok(rgbDistance(wrapPixel, skinPixel) >= 15,
+    'wrap must paint distinct beige cloth instead of borrowing skin pixels');
+  const triangles = [];
+  hands.scene.traverse(mesh => {
+    if (!mesh.isSkinnedMesh || !mesh.geometry.attributes.uv) return;
+    const {position, uv} = mesh.geometry.attributes;
+    for (const corners of faces(mesh.geometry)) {
+      const mapped = corners.map(index => [uv.getX(index) * 1024,
+        (1 - uv.getY(index)) * 1024]);
+      if (!mapped.every(([x, y]) => x >= wrap[0] + 8 && x <= wrap[2] - 8 &&
+        y >= wrap[1] + 8 && y <= wrap[3] - 8)) continue;
+      triangles.push({points: corners.map(index => vertex(position, index)), mesh});
+    }
+  });
+  assert.ok(triangles.length >= 12, 'actual exported wrap cloth must occupy its own padded UV chart');
+  for (const side of ['R', 'L']) {
+    const {sleeveHem: start, gloveEdge: end} = data.clothing[side];
+    const axis = end.map((value, i) => value - start[i]);
+    const length = Math.hypot(...axis);
+    assert.ok(length >= .035 && length <= .12,
+      `${side} reviewed exposed wrist baseline must remain a local interval`);
+    const covered = new Set();
+    for (const triangle of triangles) {
+      const sample = triangle.points.map(point => {
+        const delta = point.map((value, i) => value - start[i]);
+        const t = delta.reduce((sum, value, i) => sum + value * axis[i], 0) / (length * length);
+        const radial = Math.hypot(...delta.map((value, i) => value - t * axis[i]));
+        return {t, radial};
+      });
+      if (sample.some(({radial}) => radial > .065)) continue;
+      const lo = Math.max(0, Math.min(...sample.map(item => item.t)));
+      const hi = Math.min(1, Math.max(...sample.map(item => item.t)));
+      for (let bin = 0; bin < 100; bin++) if ((bin + .5) / 100 >= lo && (bin + .5) / 100 <= hi)
+        covered.add(bin);
+    }
+    assert.ok(covered.size >= 70,
+      `${side} exported wrap covers ${covered.size}% of the frozen sleeve-to-glove interval`);
+  }
+});
