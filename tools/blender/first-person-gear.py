@@ -21,14 +21,65 @@ p.add_argument('--round', type=int, required=True)
 p.add_argument('--crew', default='all')
 p.add_argument('--skip-renders', action='store_true')
 p.add_argument('--paths-only', action='store_true')
+p.add_argument('--p1-rook', action='store_true')
+p.add_argument('--output-dir')
+p.add_argument('--p1-paint')
+p.add_argument('--p1-paint-sha256')
 args = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
+source_json = root / 'tools/blender/first-person-p1-source.json'
+paint_input = None
+if args.p1_paint or args.p1_paint_sha256:
+    if not args.p1_rook or not args.p1_paint or not args.p1_paint_sha256:
+        p.error('P1 paint requires --p1-rook, --p1-paint and --p1-paint-sha256 together')
+    paint_input = Path(args.p1_paint).resolve()
+    ignored_paint = (root / 'art-build/first-person-p1').resolve()
+    original_paint = (Path.home() / '.codex/generated_images').resolve()
+    if ignored_paint not in paint_input.parents and original_paint not in paint_input.parents:
+        p.error('P1 paint must be an ignored art source or original generated image')
+    if not paint_input.is_file():
+        p.error('P1 paint source is missing')
+    paint_bytes = paint_input.read_bytes()
+    if hashlib.sha256(paint_bytes).hexdigest() != args.p1_paint_sha256.lower():
+        p.error('P1 paint source SHA-256 mismatch')
+    if (paint_bytes[:8] != b'\x89PNG\r\n\x1a\n' or
+        int.from_bytes(paint_bytes[16:20], 'big') != 1254 or
+        int.from_bytes(paint_bytes[20:24], 'big') != 1254 or
+        paint_bytes[25] not in (2, 6)):
+        p.error('P1 paint must be a 1254-square RGB/RGBA PNG triptych')
+if args.p1_rook:
+    if not args.output_dir:
+        p.error('--p1-rook requires --output-dir')
+    candidate_dir = Path(args.output_dir).resolve()
+    allowed = (root / 'art-build/first-person-p1').resolve()
+    if candidate_dir == allowed or allowed not in candidate_dir.parents:
+        p.error('P1 Rook output must be a child of ignored art-build/first-person-p1')
+    evidence_override = os.environ.get('DUEL_EVIDENCE_DIR')
+    if evidence_override:
+        evidence_target = Path(evidence_override).resolve()
+        evidence_home = (root / '.evidence').resolve()
+        if (candidate_dir not in evidence_target.parents and
+            evidence_home not in evidence_target.parents):
+            p.error('P1 Rook evidence must remain under candidate output or ignored .evidence')
+    planned = {
+        'mode': 'p1-rook', 'outputDir': str(candidate_dir), 'sourceJson': str(source_json),
+        'candidateGlb': str(candidate_dir / 'hands/rook.glb'),
+        'candidateBlend': str(candidate_dir / 'hands/rook.blend'),
+        'textures': {label: str(candidate_dir / 'hands' / f'rook-{label}.png')
+                     for label in ('color', 'surface', 'normal')},
+        'manifest': str(candidate_dir / 'manifest.json')
+    }
+    if args.paths_only:
+        print(json.dumps(planned))
+        sys.exit(0)
+elif args.output_dir:
+    p.error('--output-dir is only valid with --p1-rook')
 out = root / 'public/assets/models/wasteland/first-person'
 blend_dir = root / 'art-build/first-person'
 crew_names = ('rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk')
 selected_names = [name for name in crew_names if args.crew in ('all', name)]
 def tool_glb(name):
-    return out / f'{name}.glb'
+    return (root / 'public/assets/models/wasteland/first-person' if args.p1_rook else out) / f'{name}.glb'
 def tool_blend(name):
     return blend_dir / f'{name}.blend'
 def hands_glb(name):
@@ -39,7 +90,8 @@ def tool_texture(name, label):
     return blend_dir / f'{name}-{label}.png'
 def hands_texture(name, label):
     return blend_dir / 'hands' / f'{name}-{label}.png'
-shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / 'first-person' / f'round-{args.round}')
+shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or
+    (candidate_dir / 'evidence' if args.p1_rook else root / '.evidence' / date.today().isoformat() / 'first-person' / f'round-{args.round}'))
 if not shots.is_absolute():
     shots = root / shots
 if args.paths_only:
@@ -58,7 +110,13 @@ import bpy
 import numpy as np
 from mathutils import Vector, Matrix, Euler
 
-out.mkdir(parents=True, exist_ok=True)
+if args.p1_rook:
+    out = candidate_dir
+    blend_dir = candidate_dir
+    selected_names = ['rook']
+    out.mkdir(parents=True, exist_ok=True)
+else:
+    out.mkdir(parents=True, exist_ok=True)
 (out/'hands').mkdir(exist_ok=True)
 blend_dir.mkdir(parents=True, exist_ok=True)
 (blend_dir/'hands').mkdir(exist_ok=True)
@@ -116,17 +174,35 @@ def texture_material(name, cfg, folder, tool=False):
         bases[11]=(.34,.35,.33);bases[12]=(.018,.021,.020)
         bases[13]=(.23,.12,.055)
         bases[15]=(.53,.54,.51)
-    else:bases[7]=tuple(min(.8,c*1.12+.02) for c in cfg['sleeve'])
+    else:
+        bases[7]=tuple(min(.8,c*1.12+.02) for c in cfg['sleeve'])
+        if args.p1_rook:
+            # Exported glTF V directly addresses the saved PNG's bottom row.
+            # Blender's image buffer is bottom-up, so the authored chart faces
+            # sample buffer tiles 0/1/2/3 rather than the unused top row.
+            bases[3]=(.56,.49,.36)  # padded beige wrist-wrap chart
+            bases[14]=cfg['skin']  # preserve the prior protected top-row skin bytes
     yy,xx=np.mgrid[0:256,0:256]
     for tile,base in enumerate(bases):
         noise=rng.uniform(-1,1,(256,256))
         coarse=np.repeat(np.repeat(rng.uniform(-1,1,(16,16)),16,axis=0),16,axis=1)
         for _ in range(5):coarse=(coarse+np.roll(coarse,1,0)+np.roll(coarse,-1,0)+np.roll(coarse,1,1)+np.roll(coarse,-1,1))/5
-        cloth=tile in [0,8,7,15] and not tool and name!='jax'
+        cloth=tile in ([0,8,7,12,15] if args.p1_rook else [0,8,7,15]) and not tool and name!='jax'
         grain=(np.sin(xx*2.7)*np.sin(yy*2.3))*.018 if cloth else 0
         variation=1+noise*.045+coarse*.13+grain
-        if tile in [2,10]:variation=1+noise*.025+coarse*.065
-        leather=tile in [1,6,9]
+        if args.p1_rook and not tool and tile in (0,8,12):
+            # Long shaded folds replace the evenly repeated bright sleeve dashes.
+            valley=np.exp(-((xx-(86+28*np.sin(yy*.017)))/27)**2)
+            variation=variation*(1-.16*valley)+.035*np.sin(yy*.022+xx*.013)
+        if args.p1_rook and not tool and tile==13:
+            panel=np.exp(-((xx-125-14*np.sin(yy*.012))/74)**4)
+            variation*=1-.12*panel
+        if args.p1_rook and not tool and tile==15:
+            fibres=.025*np.sin(xx*.40+yy*.025)+.014*np.sin(xx*.91-yy*.019)
+            weather=np.exp(-((yy-(96+24*np.sin(xx*.017)))/22)**2)
+            variation=variation+fibres-.085*weather
+        if tile in ([2,10,14] if args.p1_rook else [2,10]):variation=1+noise*.025+coarse*.065
+        leather=tile in ([1,6,9,13] if args.p1_rook else [1,6,9])
         crease=np.zeros_like(noise)
         if leather:
             for row in [42,116,199]:crease+=np.exp(-((yy-row-np.sin(xx*.026+row)*11)/2.5)**2)
@@ -134,25 +210,64 @@ def texture_material(name, cfg, folder, tool=False):
         rgba=np.zeros((256,256,4),np.float32);rgba[:,:,:3]=np.array(base)[None,None,:]*variation[:,:,None];rgba[:,:,3]=1
         # Patina chips are localized clusters, not pale source-background streaks.
         worn=(coarse>.20)&(noise>.20)
-        if tool or tile in [3,4,5,11,12,13,14]:
+        if tool or tile in ([3,4,5,11] if args.p1_rook else [3,4,5,11,12,13,14]):
             rgba[worn,:3]=np.array((.12,.13,.125) if tile in [0,8] else (.23,.15,.085))*(1+noise[worn,None]*.10)
             scratch=(noise>.94)&(coarse>.23)
             rgba[scratch,:3]=(.39,.40,.37)
             if tile==12:rgba[:,:,:3]=np.array(base)*(1+noise[:,:,None]*.02)
-        if cloth:
+        if cloth and not (args.p1_rook and not tool and tile in (0,8,12)):
             seam=(abs(xx-16)<2)|(abs(xx-240)<2)
             stitch=seam&((yy%12)<5)
             rgba[stitch,:3]=np.array(base)*1.4
         y,x=divmod(tile,4);color[y*256:(y+1)*256,x*256:(x+1)*256]=np.clip(rgba,0,1)
-        rough=.90 if cloth else (.82 if tile in [1,2,6,9,10] else .65)
+        rough=.90 if cloth else (.82 if tile in ([1,2,6,9,10,13,14] if args.p1_rook else [1,2,6,9,10]) else .65)
         surface[y*256:(y+1)*256,x*256:(x+1)*256,1]=np.clip(rough+coarse*.13,.30,.98)
         surface[y*256:(y+1)*256,x*256:(x+1)*256,2]=.72 if tool and tile not in [1,6,9] else (.55 if tile in [3,11] else 0)
         height=noise*(.035 if cloth else .015)+grain*1.5-crease*.085
-        if tile in [2,10,12]:height*=.12
+        if tile in ([2,10,14] if args.p1_rook else [2,10,12]):height*=.12
         dy,dx=np.gradient(height)
         vectors=np.stack([-dx*3,-dy*3,np.ones_like(dx)],axis=-1)
         vectors/=np.linalg.norm(vectors,axis=-1,keepdims=True)
         normal[y*256:(y+1)*256,x*256:(x+1)*256,:3]=vectors*.5+.5
+    if args.p1_rook and name=='rook' and not tool and paint_input:
+        authored=json.loads(source_json.read_text(encoding='utf-8'))
+        source=bpy.data.images.load(str(paint_input),check_existing=False)
+        source.colorspace_settings.name='Non-Color'
+        source_pixels=np.empty(1254*1254*4,dtype=np.float32)
+        source.pixels.foreach_get(source_pixels)
+        source_pixels=np.flipud(source_pixels.reshape((1254,1254,4)))[:,:,:3]
+        def box_filter(crop):
+            scale=418/240
+            horizontal=np.empty((418,240,3),dtype=np.float32)
+            for column in range(240):
+                left,right=column*scale,(column+1)*scale
+                ids=np.arange(math.floor(left),math.ceil(right))
+                weights=np.maximum(0,np.minimum(ids+1,right)-np.maximum(ids,left))/scale
+                horizontal[:,column,:]=np.tensordot(crop[:,ids,:],weights,axes=(1,0))
+            result=np.empty((240,240,3),dtype=np.float32)
+            for row in range(240):
+                top,bottom=row*scale,(row+1)*scale
+                ids=np.arange(math.floor(top),math.ceil(bottom))
+                weights=np.maximum(0,np.minimum(ids+1,bottom)-np.maximum(ids,top))/scale
+                result[row,:,:]=np.tensordot(weights,horizontal[ids,:,:],axes=(0,0))
+            return result
+        for role,rect in authored['paintSource']['crops'].items():
+            x0,y0,x1,y1=rect
+            sample=box_filter(source_pixels[y0:y1,x0:x1,:])
+            atlas_x={'cloth':8,'leather':264,'wrap':776}[role]
+            # Blender's authored PNG buffer is written directly. Keep the
+            # selected source's encoded channels; a transfer curve darkens it.
+            dest=np.flipud(sample)
+            color[8:248,atlas_x:atlas_x+240,:3]=dest
+            luminance=np.mean(sample,axis=2)
+            surface[8:248,atlas_x:atlas_x+240,1]=np.flipud(np.clip(
+                {'cloth':.87,'leather':.78,'wrap':.92}[role]+(luminance-.35)*.12,.5,.98))
+            height=np.flipud(luminance)
+            dy,dx=np.gradient(height)
+            vectors=np.stack([-dx*.65,-dy*.65,np.ones_like(dx)],axis=-1)
+            vectors/=np.linalg.norm(vectors,axis=-1,keepdims=True)
+            normal[8:248,atlas_x:atlas_x+240,:3]=vectors*.5+.5
+        bpy.data.images.remove(source)
     images=[]
     for label,pixels in [('color',color),('surface',surface),('normal',normal)]:
         im=bpy.data.images.new(name+'-'+label,1024,1024,alpha=True)
@@ -177,9 +292,14 @@ class Geometry:
     def face(self,indices,tile,uv=None):
         self.faces.append(indices)
         if uv is None:uv=[(0,0),(1,0),(1,1),(0,1)][:len(indices)]
+        if args.p1_rook and tile in (0,1,2,3):
+            # The declared skin chart is itself inset 8px from the 256px tile.
+            # Keep terminal seam vertices another 8px inside that chart.
+            uv=[(.1+.8*u,.1+.8*v) for u,v in uv]
         tx,ty=tile%4,tile//4
         self.uvs.append([((tx+.04+u*.92)/4,(ty+.04+v*.92)/4) for u,v in uv])
-    def loft(self,centres,radii,tile,bones,segments=12,axes=None,closed=True,warp=None):
+    def loft(self,centres,radii,tile,bones,segments=12,axes=None,closed=True,warp=None,displace=None,
+             cap_tile=None,cap_start=None,cap_end=None):
         rings=[]
         for i,(centre,radius) in enumerate(zip(centres,radii)):
             c=Vector(centre)
@@ -194,7 +314,12 @@ class Geometry:
             for j in range(segments):
                 theta=j*math.tau/segments
                 factor=warp(i,theta) if warp else 1
-                ring.append(self.vertex(c+(a*(math.cos(theta)*rx)+b*(math.sin(theta)*ry))*factor,bones[i]))
+                radial=a*(math.cos(theta)*rx)+b*(math.sin(theta)*ry)
+                point=(c+radial)*factor
+                if displace:
+                    delta=displace(i,theta)
+                    if radial.length:point+=radial.normalized()*delta
+                ring.append(self.vertex(point,bones[i]))
             rings.append(ring)
         for i in range(len(rings)-1):
             first,last=0,len(rings)-1
@@ -206,16 +331,94 @@ class Geometry:
             for j in range(segments):
                 self.face([rings[i][j],rings[i][(j+1)%segments],rings[i+1][(j+1)%segments],rings[i+1][j]],
                     tile[i] if isinstance(tile,list) else tile,[(j/segments,v0),((j+1)/segments,v0),((j+1)/segments,v1),(j/segments,v1)])
-        if closed:
-            for ring,centre,weight,flip in [(rings[0],centres[0],bones[0],True),(rings[-1],centres[-1],bones[-1],False)]:
+        close_first=closed if cap_start is None else cap_start
+        close_last=closed if cap_end is None else cap_end
+        if close_first or close_last:
+            ends=[]
+            if close_first:ends.append((rings[0],centres[0],bones[0],True))
+            if close_last:ends.append((rings[-1],centres[-1],bones[-1],False))
+            for ring,centre,weight,flip in ends:
                 mid=self.vertex(centre,weight)
                 for j in range(segments):
                     ids=[mid,ring[j],ring[(j+1)%segments]]
-                    self.face(ids[::-1] if flip else ids,tile[0] if isinstance(tile,list) else tile,[(.5,.5),(0,0),(1,0)])
+                    self.face(ids[::-1] if flip else ids,(cap_tile if cap_tile is not None else
+                        (tile[0] if isinstance(tile,list) else tile)),[(.5,.5),(0,0),(1,0)])
+        return rings
     def box(self,centre,size,tile,bone='base'):
         c=Vector(centre);s=Vector(size)/2
         ids=[self.vertex(c+Vector((x*s.x,y*s.y,z*s.z)),{bone:1}) for x,y,z in [(-1,-1,-1),(1,-1,-1),(1,1,-1),(-1,1,-1),(-1,-1,1),(1,-1,1),(1,1,1),(-1,1,1)]]
         for face in [(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]:self.face([ids[i] for i in face],tile)
+    def wrist_wrap(self,start,end,bone,side):
+        """Three closed, thin cloth turns; skin and digit topology stay separate."""
+        start,end=Vector(start),Vector(end)
+        tangent=(end-start).normalized()
+        across=tangent.cross(Vector((0,1,0))).normalized()
+        up=tangent.cross(across).normalized()
+        segments=10
+        for turn,(lo,hi) in enumerate(((.04,.55),(.50,.96))):
+            rings=[]
+            for layer in (0,1):
+                layer_rings=[]
+                for row in range(2):
+                    ring=[]
+                    for j in range(segments):
+                        theta=j*math.tau/segments
+                        t=lo+(hi-lo)*row + .012*math.sin(theta*2+turn+side*.7)
+                        centre=start.lerp(end,t)
+                        base=.046*(1-t)+.041*t
+                        radius=base+(.0025 if layer==0 else .0005)+turn*.0012
+                        # A slanted hem and an unequal tucked fold avoid three torus bands.
+                        radius+=.0012*math.sin(theta*3+turn*1.7)
+                        point=centre+across*(math.cos(theta)*radius)+up*(math.sin(theta)*radius*.83)
+                        ring.append(self.vertex(point,{bone:1}))
+                    layer_rings.append(ring)
+                rings.append(layer_rings)
+            for layer in (0,1):
+                for row in range(1):
+                    for j in range(segments):
+                        nxt=(j+1)%segments
+                        quad=[rings[layer][row][j],rings[layer][row][nxt],
+                              rings[layer][row+1][nxt],rings[layer][row+1][j]]
+                        if layer:quad.reverse()
+                        self.face(quad,3,[(j/segments,row),(nxt/segments,row),
+                                          (nxt/segments,row+1),(j/segments,row+1)])
+            for row in (0,1):
+                for j in range(segments):
+                    nxt=(j+1)%segments
+                    quad=[rings[0][row][j],rings[1][row][j],
+                          rings[1][row][nxt],rings[0][row][nxt]]
+                    if row==0:quad.reverse()
+                    self.face(quad,3)
+    def close_palm_web(self,grip,bone):
+        from collections import Counter
+        counts=Counter()
+        for face in self.faces:
+            for a,b in zip(face,face[1:]+face[:1]):
+                counts[tuple(sorted((a,b)))]+=1
+        edges=[edge for edge,count in counts.items() if count==1]
+        neighbors={}
+        for a,b in edges:
+            neighbors.setdefault(a,[]).append(b)
+            neighbors.setdefault(b,[]).append(a)
+        visited=set();closed=0
+        for initial in neighbors:
+            if initial in visited:continue
+            loop=[];current=initial;previous=None
+            while current not in visited:
+                visited.add(current);loop.append(current)
+                nexts=[item for item in neighbors[current] if item!=previous]
+                if not nexts:break
+                previous,current=current,nexts[0]
+            if current!=initial or len(loop)!=10:continue
+            center=sum((self.vertices[item] for item in loop),Vector())/len(loop)
+            if (center-bv(grip)).length>.15:continue
+            # A shallow curved web, using only boundary edges with one face.
+            center.y+=.004
+            middle=len(self.vertices);self.vertices.append(center);self.weights.append({bone:1})
+            for a,b in zip(loop,loop[1:]+loop[:1]):
+                self.face([a,b,middle],1)
+            closed+=1
+        return closed
     def build(self,name,material,rig=None,bevel=0):
         mesh=bpy.data.meshes.new(name);mesh.from_pydata(self.vertices,[],self.faces);mesh.update()
         obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj);mesh.materials.append(material)
@@ -383,6 +586,8 @@ def triangles(obj):
 
 def hand_geometry(name,cfg):
     g=Geometry();definitions=[('root',(0,0,0),None),('rpg-mount',RPG_GRIP,'root'),('wrench-mount',WRENCH_GRIP,'root')]
+    p1 = args.p1_rook and name == 'rook'
+    anatomy = json.loads(source_json.read_text(encoding='utf-8')) if p1 else None
     for side,sign,grip in [('R',1,RPG_GRIP),('L',-1,RPG_GRIP+Vector((0,0,-.34)))]:
         hand='wrist_'+side;s=cfg['scale']
         wrist=grip+Vector((sign*.065,-.045,.070))
@@ -398,7 +603,7 @@ def hand_geometry(name,cfg):
         for i,t in enumerate(samples):
             centre=elbow.lerp(wrist,t)+Vector((sign*.015*math.sin(t*math.pi),.012*math.sin(t*math.pi),0))
             base=.079*(1-t)+.035*t+.009*math.sin(t*math.pi)
-            fold=(.006 if i%2==0 else -.003)*math.sin(t*math.pi) if t<sleeve_end else 0
+            fold=(.006 if i%2==0 else -.003)*math.sin(t*math.pi) if t<sleeve_end and not p1 else 0
             centres.append(centre);radii.append(((base+fold)*s,(base*.82+fold*.7)*s))
             w=min(1,.25+t*.95);weights.append({hand:w,'root':1-w})
             tiles.append(0 if t<=sleeve_end and sleeve_end else 2)
@@ -408,20 +613,53 @@ def hand_geometry(name,cfg):
         def sleeve_folds(i,theta):
             if not 1<=i<=len(samples) or not sleeve_end or samples[i-1]>=sleeve_end:return 1
             return 1+.105*math.sin(theta*3+i*.83)+.04*math.sin(theta*5-i*.4)
-        g.loft(centres,radii,tiles,weights,16,axes=((0,1,0),(1,0,0)),warp=sleeve_folds)
+        def authored_fold(i,theta):
+            if not 1<=i<=len(samples):return 0
+            t=samples[i-1]
+            if t>=sleeve_end:return 0
+            rx,ry=radii[i]
+            # Loft axis a is authoring +Y and b is +X. The authored source
+            # azimuth is measured from +X toward +Y, so raw theta is not it.
+            physical_angle=math.atan2(math.cos(theta)*rx,math.sin(theta)*ry)
+            result=0
+            for fold_path in anatomy['sleeveFoldPaths'][side]:
+                stations=fold_path['stations']
+                if t<stations[0][0]-.07 or t>stations[-1][0]+.07:continue
+                if t<=stations[0][0]:angle=stations[0][1]
+                elif t>=stations[-1][0]:angle=stations[-1][1]
+                else:
+                    lower,upper=next((a,b) for a,b in zip(stations,stations[1:]) if a[0]<=t<=b[0])
+                    amount=(t-lower[0])/(upper[0]-lower[0])
+                    angle=lower[1]+amount*(upper[1]-lower[1])
+                angle=math.radians(angle)
+                distance=math.atan2(math.sin(physical_angle-angle),
+                    math.cos(physical_angle-angle))*.043
+                width=fold_path['widthMetres']
+                crest=fold_path['crestMetres']*math.exp(-(distance/(width*.46))**2)
+                trough=fold_path['troughMetres']*math.exp(-((abs(distance)-width*.72)/(width*.30))**2)
+                edge=min(1,(t-stations[0][0]+.07)/.07,(stations[-1][0]+.07-t)/.07)
+                result+=(crest+trough)*max(0,edge)
+            return result
+        palm_rings=g.loft(centres,radii,tiles,weights,20 if p1 else 16,
+            axes=((0,1,0),(1,0,0)),warp=None if p1 else sleeve_folds,
+            displace=authored_fold if p1 else None,closed=not p1)
         if sleeve_end:
             cuff=elbow.lerp(wrist,sleeve_end)+Vector((sign*.015*math.sin(sleeve_end*math.pi),.012*math.sin(sleeve_end*math.pi),0))
             radius=(.079*(1-sleeve_end)+.035*sleeve_end+.009*math.sin(sleeve_end*math.pi))*s
             tangent=(wrist-elbow).normalized()
             cw=min(1,.25+sleeve_end*.95)
-            g.loft([cuff-tangent*.015,cuff-tangent*.010,cuff+tangent*.007,cuff+tangent*.014],
-                [(radius+.003,radius*.82+.003),(radius+.006,radius*.82+.005),
-                 (radius+.006,radius*.82+.005),(radius+.003,radius*.82+.002)],
-                7,[{hand:cw,'root':1-cw}]*4,16,
-                axes=((0,1,0),(1,0,0)),closed=False,warp=lambda i,a:1+.065*math.sin(a*3+i*.4))
+            if not p1:
+                g.loft([cuff-tangent*.015,cuff-tangent*.010,cuff+tangent*.007,cuff+tangent*.014],
+                    [(radius+.003,radius*.82+.003),(radius+.006,radius*.82+.005),
+                     (radius+.006,radius*.82+.005),(radius+.003,radius*.82+.002)],
+                    7,[{hand:cw,'root':1-cw}]*4,16,
+                    axes=((0,1,0),(1,0,0)),closed=False,warp=lambda i,a:1+.065*math.sin(a*3+i*.4))
         # Fitted glove cuff has open ends over the continuous wrist.
         g.loft([wrist+Vector((0,0,.012)),wrist-Vector((0,0,.010))],
             [(.041*s,.037*s)]*2,9,[{hand:1}]*2,16,axes=((0,1,0),(1,0,0)),closed=False)
+        if p1:
+            clothing=anatomy['clothing'][side]
+            g.wrist_wrap(clothing['sleeveHem'],clothing['gloveEdge'],hand,sign)
         for digit,yy,length in [('index',.040,1.),('middle',.013,1.06),('ring',-.014,.99),('pinky',-.040,.84)]:
             angles=[0,.38,.82,1.26,1.72,2.22,2.60,2.80]
             path=[grip+Vector((sign*(.038*math.cos(a)),yy*s,-.006-.035*math.sin(a)*length)) for a in angles]
@@ -431,11 +669,45 @@ def hand_geometry(name,cfg):
             ws[1]={labels[0]:.5,labels[1]:.5};ws[3]={labels[1]:.5,labels[2]:.5}
             rr=[.014*s,.015*s,.0135*s,.013*s,.0115*s,.0105*s,.009*s,.004*s]
             # Fingerless glove ends reveal small natural fingertips, as on crew sheets.
-            g.loft(path,rr,[1,1,1,1,1 if name in ['jax','cinder'] else 2,1 if name in ['jax','cinder'] else 2,1 if name in ['jax','cinder'] else 2],ws,12)
+            if p1:
+                marks=anatomy['hands'][side]['landmarks']
+                end=Vector(marks['fingertips'][digit]);penultimate=Vector(marks['distalStations'][digit][0])
+                path[-2:]=[penultimate,end]
+                path.append(end+(end-penultimate).normalized()*.003)
+                rr[-2:]=[.007*s,.004*s];rr.append(.0015*s)
+                ws[-2:]=[{labels[2]:1},{labels[2]:1}];ws.append({labels[2]:1})
+                finger_tiles=[1,1,1,1,2,2,2,2]
+                finger_rings=g.loft(path,rr,finger_tiles,ws,12,cap_tile=2,cap_start=False)
+                # Broad palm/finger bridge is actual shared indexed geometry,
+                # not a coincident decorative tube. The transition has a
+                # finite four-face web around the proximal finger socket.
+                palm=palm_rings[-1]
+                root_ring=finger_rings[0]
+                offset={'index':0,'middle':4,'ring':8,'pinky':12}[digit]
+                for j in range(12):
+                    a=palm[offset+j//3];b=palm[(offset+(j+1)//3)%20]
+                    quad=[a,b,root_ring[(j+1)%12],root_ring[j]]
+                    g.face(quad if a!=b else [a,root_ring[(j+1)%12],root_ring[j]],1)
+            else:
+                g.loft(path,rr,[1,1,1,1,1 if name in ['jax','cinder'] else 2,1 if name in ['jax','cinder'] else 2,1 if name in ['jax','cinder'] else 2],ws,12)
         path=[grip+Vector((sign*.048,-.036,.028)),grip+Vector((sign*.046,-.017,.036)),grip+Vector((sign*.026,.008,.039)),grip+Vector((sign*.007,.021,.023)),grip+Vector((sign*.002,.020,.018))]
         labels=[f'finger_thumb_{i}_{side}' for i in range(3)]
         for i,label in enumerate(labels):definitions.append((label,path[i],hand if i==0 else labels[i-1]))
-        g.loft(path,[.022*s,.020*s,.017*s,.012*s,.006*s],[1,1,1 if name in ['jax','cinder'] else 2,1 if name in ['jax','cinder'] else 2],[{labels[min(i,2)]:1} for i in range(5)],12)
+        if p1:
+            marks=anatomy['hands'][side]['landmarks']
+            thumb_end=Vector(marks['thumbTip']);thumb_prev=Vector(marks['distalStations']['thumb'][0])
+            path[-2:]=[thumb_prev,thumb_end]
+            path.append(thumb_end+(thumb_end-thumb_prev).normalized()*.003)
+            thumb_rings=g.loft(path,[.022*s,.020*s,.017*s,.011*s,.005*s,.0015*s],
+                [1,1,1,2,2],[{labels[min(i,2)]:1} for i in range(6)],12,
+                cap_tile=2,cap_start=False)
+            palm=palm_rings[-1];root_ring=thumb_rings[0]
+            for j in range(12):
+                a=palm[16+j//3];b=palm[(16+(j+1)//3)%20]
+                quad=[a,b,root_ring[(j+1)%12],root_ring[j]]
+                g.face(quad if a!=b else [a,root_ring[(j+1)%12],root_ring[j]],1)
+        else:
+            g.loft(path,[.022*s,.020*s,.017*s,.012*s,.006*s],[1,1,1 if name in ['jax','cinder'] else 2,1 if name in ['jax','cinder'] else 2],[{labels[min(i,2)]:1} for i in range(5)],12)
         # Thenar pad rounds the thumb root into the palm instead of a thin stem.
         pad=grip+Vector((sign*.052,-.025,.027))
         g.loft([pad+Vector((0,-.013,0)),pad,pad+Vector((0,.015,0))],
@@ -459,6 +731,9 @@ def hand_geometry(name,cfg):
                 g.loft([at-tangent*.010,at+tangent*.010],[(radius+.004,radius*.83+.004)]*2,
                     6 if name=='cinder' else 1,[{hand:wrap_weight,'root':1-wrap_weight}]*2,16,
                     axes=((0,1,0),(1,0,0)),closed=False)
+        if p1:
+            if g.close_palm_web(grip,hand)!=1:
+                raise RuntimeError(f'{side} expected one bounded palm web opening')
     return g,definitions
 
 def hands_pose(rig,label,p):
@@ -519,6 +794,18 @@ def build_hands(name,cfg):
     mat=texture_material(name,cfg,blend_dir/'hands')
     g,definitions=hand_geometry(name,cfg);rig=armature(name+' first-person hands',definitions)
     mesh=g.build(name+' sleeves gloves fingers',mat,rig)
+    if args.p1_rook:
+        marks=json.loads(source_json.read_text(encoding='utf-8'))['hands']
+        regions={}
+        for side in ('R','L'):
+            points=marks[side]['landmarks']
+            for label,key in [('palm','palm'),('thumbWeb','thumbWeb'),('thumbTip','thumbTip')]:
+                regions[f'{side}:{label}']={'center':points[key],
+                    'radiusMetres':.015 if label=='palm' else (.023 if label=='thumbWeb' else .012)}
+            for digit in ('index','middle','ring','pinky'):
+                regions[f'{side}:{digit}Tip']={'center':points['fingertips'][digit],'radiusMetres':.013}
+            regions[f'{side}:cuffSeam']={'center':points['wrist'],'radiusMetres':.035}
+        mesh['handRegions']=regions
     actions={label:add_action(rig,label,duration,lambda phase,label=label:hands_pose(rig,label,phase),32 if label=='repair' else 16) for label,duration in CLIPS.items()}
     export(rig,[mesh],hands_glb(name))
     camera_lights(scene)
@@ -527,6 +814,7 @@ def build_hands(name,cfg):
     if not args.skip_renders:
         samples=[('idle',.25,'rpg'),('wrench-idle',.25,'wrench')]
         if name=='rook':samples += [('aim',.25,'rpg'),('fire',.10,'rpg'),('reload',1.1,'rpg'),('reload',1.65,'rpg'),('aim-reload',1.1,'rpg')]
+        if args.p1_rook and name=='rook':samples += [('repair',1.12,'wrench')]
         if name=='odessa':samples += [('repair',1.12,'wrench'),('repair',2.8,'wrench')]
         for clip,t,tool in samples:
             rig.animation_data.action=actions[clip];scene.frame_set(1,subframe=0)
@@ -554,13 +842,51 @@ def build_hands(name,cfg):
         reference=dict(path=source.relative_to(root).as_posix(),sha256=digest(source),crop=cfg['crop']),
         files={p.name:digest(p) for p in [hands_glb(name),hands_blend(name),
             hands_texture(name, 'color'),hands_texture(name, 'surface'),hands_texture(name, 'normal')]},captures=captures)
+    if args.p1_rook: report['regions']=regions
     (shots/f'blender-{name}.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf8',newline='\n')
     print('HANDS_ASSET '+json.dumps({'id':name,'triangles':report['triangles'],'seconds':report['seconds']}),flush=True)
     return report
 
 started=time.perf_counter()
-tools=[build_tool(name) for name in ['rpg','wrench']]
+tools=[] if args.p1_rook else [build_tool(name) for name in ['rpg','wrench']]
 hands=[build_hands(name,CREW[name]) for name in selected_names]
+if args.p1_rook:
+    anatomy=json.loads(source_json.read_text(encoding='utf-8'))
+    def rel(path):return Path(path).relative_to(root).as_posix()
+    paths=[hands_texture('rook',kind) for kind in ('color','surface','normal')]
+    textures={kind:{'path':rel(path),'sha256':digest(path)}
+              for kind,path in zip(('color','surface','normal'),paths)}
+    asset=hands_glb('rook')
+    proof=dict(schemaVersion=1,mode='p1-rook',
+        source=dict(path=rel(source_json),sha256=digest(source_json),
+            referencePath=anatomy['reference']['path'],
+            referenceSha256=anatomy['reference']['sha256'],
+            rpgArmReferencePath=anatomy['rpgArmReference']['path'],
+            rpgArmReferenceSha256=anatomy['rpgArmReference']['sha256']),
+        asset=dict(path=rel(asset),sha256=digest(asset),
+            triangles=hands[0]['triangles'],draws=1,
+            textureBytes=sum(path.stat().st_size for path in paths)),
+        textures=textures,regions=hands[0]['regions'],
+        charts=anatomy['atlas'],clips=CLIPS,
+        sockets={'rpg-mount':list(RPG_GRIP),'wrench-mount':list(WRENCH_GRIP)},
+        captures=hands[0]['captures'])
+    if paint_input:
+        paint_contract=anatomy['paintSource']
+        proof['paintSource']=dict(path=str(paint_input),sha256=args.p1_paint_sha256.lower(),
+            crops=paint_contract['crops'],method=paint_contract['method'],
+            selectedArtwork=args.p1_paint_sha256.lower()==paint_contract['selectedSha256'])
+    (candidate_dir/'manifest.json').write_text(json.dumps(proof,indent=2)+'\n',encoding='utf-8',newline='\n')
+    review=dict(family='first-person-p1',round=args.round,
+        scope='Blender source module at authored camera',candidateSha256=digest(asset),
+        camera=dict(position=[0,0,0],target=[0,0,-1],verticalFov=72,near=.15,width=1280,height=720),
+        references=dict(crew=anatomy['reference'],rpgArm=anatomy['rpgArmReference']),
+        tools={name:dict(path=rel(tool_glb(name)),sha256=digest(tool_glb(name)))
+               for name in ('rpg','wrench')},
+        captures=[{**entry,'scope':'Blender source module'} for entry in hands[0]['captures']])
+    (shots/'blender-manifest.json').write_text(json.dumps(review,indent=2)+'\n',
+        encoding='utf-8',newline='\n')
+    print('GFX-02-P1 ROOK PROOF COMPLETE',flush=True)
+    sys.exit(0)
 manifest=dict(round=args.round,blender=bpy.app.version_string,seconds=time.perf_counter()-started,
     command='blender -b --python tools/blender/first-person-gear.py -- --root REPO --round '+str(args.round)+' --crew '+args.crew,
     scriptSha256=digest(__file__),axis='Camera-local glTF: +X right, +Y up, -Z forward. Identity camera attachment; socket axes identity in rest pose.',

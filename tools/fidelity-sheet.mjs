@@ -6,6 +6,16 @@ import {fileURLToPath} from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const args = process.argv.slice(2);
+const P1_HAND_IDS = ['rook','nell','jax','odessa','cinder','dune','wren','tusk'];
+const P1_SAMPLES = [
+  ['idle',.25,'rpg'], ['aim',.25,'rpg'], ['fire',.1,'rpg'],
+  ['reload',1.1,'rpg'], ['reload',1.65,'rpg'], ['aim-reload',1.1,'rpg'],
+  ['wrench-idle',.25,'wrench'], ['repair',1.12,'wrench'],
+];
+const P1_CAMERA = {position:[0,0,0],target:[0,0,-1],verticalFov:72,near:.15,width:1280,height:720};
+const P1_SHA = /^[a-f0-9]{64}$/i;
+const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+const p1Key = item => `${item.clip}|${item.time}|${item.tool}`;
 function value(name, fallback) {
   const index = args.indexOf(name);
   return index < 0 ? fallback : args[index + 1];
@@ -18,11 +28,13 @@ function evidenceDir(family, round) {
 function summaryPath(family, round) {
   return join(root,'docs','board','looks',family,`round-${round}.jpg`);
 }
-const family = args.includes('--crew-p2-round') ? 'crew-p2' : args.includes('--crew-round') ? 'crew' : args.includes('--rustwall-p2-round') ? 'rustwall-p2'
+const direct = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (direct) {
+const family = args.includes('--first-person-p1-round') ? 'first-person-p1' : args.includes('--crew-p2-round') ? 'crew-p2' : args.includes('--crew-round') ? 'crew' : args.includes('--rustwall-p2-round') ? 'rustwall-p2'
   : args.includes('--rustwall-round') ? 'rustwall'
   : args.includes('--first-person-round') || args.includes('--first-person-tools-round') ? 'first-person' : 'test-fighter';
-const round = Number(value('--crew-p2-round', value('--crew-round', value('--rustwall-p2-round', value('--rustwall-round',
-  value('--first-person-round', value('--first-person-tools-round', 1)))))));
+const round = Number(value('--first-person-p1-round', value('--crew-p2-round', value('--crew-round', value('--rustwall-p2-round', value('--rustwall-round',
+  value('--first-person-round', value('--first-person-tools-round', 1))))))));
 if (args.includes('--paths-only')) {
   const directory = evidenceDir(family, round);
   const name = args.includes('--first-person-tools-round') ? 'sheet-tools' : 'sheet';
@@ -31,7 +43,9 @@ if (args.includes('--paths-only')) {
     summary:args.includes('--first-person-tools-round') ? null : summaryPath(family,round)}));
   process.exit(0);
 }
-if (args.includes('--crew-p2-round')) {
+if (args.includes('--first-person-p1-round')) {
+  await firstPersonP1Sheet(round);
+} else if (args.includes('--crew-p2-round')) {
   await crewP2Sheet(round);
 } else if (args.includes('--rustwall-p2-round')) {
   await rustwallP2Sheet(Number(value('--rustwall-p2-round')));
@@ -88,6 +102,7 @@ execFileSync(executable,['-b','--python',join(root,'tools/blender/fidelity-sheet
   '--','--root',root,'--manifest',manifest,'--output',output,
   '--summary',summaryPath('test-fighter',1)],{cwd:root,stdio:'inherit',windowsHide:true});
 console.log('Fidelity sheet: '+output);
+}
 }
 
 
@@ -416,4 +431,109 @@ async function rustwallP2Sheet(round) {
     '--','--root',root,'--manifest',manifest,'--output',output,
     '--summary',summaryPath('rustwall-p2',round)],{cwd:root,stdio:'inherit',windowsHide:true});
   console.log('Rustwall P2 fidelity sheet: '+output);
+}
+
+export function validateFirstPersonP1Sheet({captures,blender,round,productionHashes}) {
+  if (!Number.isInteger(round) || round < 1 || round > 10 ||
+      captures?.family !== 'first-person-p1' || blender?.family !== 'first-person-p1' ||
+      captures.round !== round || blender.round !== round ||
+      blender.scope !== 'Blender source module at authored camera')
+    throw Error('First-person P1 family, round or source scope mismatch');
+  if (!P1_SHA.test(captures.candidate?.sha256 || '') ||
+      captures.candidate.sha256 !== blender.candidateSha256)
+    throw Error('First-person P1 candidate hash mismatch');
+  if (typeof captures.candidate.path !== 'string' ||
+      !/^art-build\/first-person-p1\/(?:[a-z0-9-]+\/)*hands\/rook\.glb$/.test(captures.candidate.path))
+    throw Error('First-person P1 candidate must stay in ignored Rook proof output');
+  if (!same(captures.camera,P1_CAMERA) || !same(blender.camera,P1_CAMERA))
+    throw Error('First-person P1 camera mismatch');
+  if (captures.frameStatus !== 'unmeasured') throw Error('First-person P1 cannot infer frame cost from static captures');
+  for (const quality of ['high','performance'])
+    if (captures.qualities?.[quality]?.candidateRequests !== 1)
+      throw Error('First-person P1 needs exactly one candidate fetch in '+quality);
+  for (const hashes of [productionHashes,captures.productionBefore,captures.productionAfter]) {
+    if (!hashes || Object.keys(hashes).length !== P1_HAND_IDS.length ||
+        P1_HAND_IDS.some(id => !P1_SHA.test(hashes[id] || '')))
+      throw Error('First-person P1 requires eight production hand hashes');
+  }
+  if (!same(captures.productionBefore,productionHashes) || !same(captures.productionAfter,productionHashes))
+    throw Error('Production hands changed during candidate capture');
+  for (const reference of [blender.references?.crew,blender.references?.rpgArm]) {
+    if (!reference?.path || !P1_SHA.test(reference.sha256 || '') ||
+        !Array.isArray(reference.crop) || reference.crop.length !== 4 ||
+        reference.crop.some(n => !Number.isInteger(n)))
+      throw Error('First-person P1 reference provenance missing');
+  }
+  if (!Array.isArray(blender.captures) || blender.captures.length !== P1_SAMPLES.length ||
+      !Array.isArray(captures.captures) || captures.captures.length !== P1_SAMPLES.length * 2)
+    throw Error('First-person P1 requires eight Blender and sixteen game poses');
+  const rows = P1_SAMPLES.map(([clip,time,tool]) => {
+    const key = `${clip}|${time}|${tool}`;
+    const source = blender.captures.filter(item => p1Key(item) === key);
+    const game = quality => captures.captures.filter(item => p1Key(item) === key && item.quality === quality);
+    const high = game('high'), performance = game('performance');
+    if (source.length !== 1 || high.length !== 1 || performance.length !== 1 ||
+        source[0].scope !== 'Blender source module' ||
+        high[0].scope !== 'game course' || performance[0].scope !== 'game course')
+      throw Error('First-person P1 missing or mislabelled pose '+key);
+    for (const image of [source[0],high[0],performance[0]])
+      if (!image.path || !P1_SHA.test(image.sha256 || '')) throw Error('First-person P1 pose SHA missing: '+key);
+    const reference = tool === 'rpg' ? blender.references.rpgArm : blender.references.crew;
+    return {label:`ROOK ${clip.toUpperCase()} ${time} S ${tool.toUpperCase()} MODULE VS GAME COURSE`,
+      clip,time,tool,scope:'Blender module vs game course',
+      columnLabels:['REFERENCE','BLENDER MODULE','GAME HIGH','GAME PERF'],
+      reference:reference.path,crop:reference.crop,blender:source[0].path,
+      high:high[0].path,performance:performance[0].path};
+  });
+  return {rows,candidateSha256:captures.candidate.sha256,camera:captures.camera,productionHashes};
+}
+
+async function firstPersonP1Sheet(round) {
+  const base = evidenceDir('first-person-p1',round);
+  const published = summaryPath('first-person-p1',round);
+  try {await readFile(published);throw Error('Published first-person P1 round JPG is immutable');}
+  catch (error) {if (error.code !== 'ENOENT') throw error;}
+  const captures = JSON.parse(await readFile(join(base,'captures.json'),'utf8'));
+  // Reject an incomplete or wrong-family capture before opening any ignored
+  // candidate artifact. This also makes the CLI check reproducible from a
+  // clean checkout with only a test-owned invalid captures fixture.
+  if (captures?.family !== 'first-person-p1' || captures.round !== round)
+    throw Error('First-person P1 family, round or source scope mismatch');
+  const blender = JSON.parse(await readFile(join(root,
+    'art-build/first-person-p1/candidate/evidence/blender-manifest.json'),'utf8'));
+  const productionHashes = {};
+  for (const id of P1_HAND_IDS) productionHashes[id] = createHash('sha256').update(await readFile(join(root,
+    `public/assets/models/wasteland/first-person/hands/${id}.glb`))).digest('hex');
+  const plan = validateFirstPersonP1Sheet({captures,blender,round,productionHashes});
+  const sources = {};
+  const verify = async (path,expected) => {
+    if (typeof path !== 'string' || !P1_SHA.test(expected || '')) throw Error('Invalid first-person P1 source');
+    const absolute = resolve(root,path);
+    const part = relative(root,absolute);
+    if (!part || part.startsWith('..') || part.includes(':')) throw Error('First-person P1 source leaves workspace');
+    const actual = createHash('sha256').update(await readFile(absolute)).digest('hex');
+    if (actual !== expected) throw Error('First-person P1 evidence source changed: '+path);
+    sources[path] = actual;
+  };
+  await verify(captures.candidate.path,captures.candidate.sha256);
+  for (const id of P1_HAND_IDS) await verify(`public/assets/models/wasteland/first-person/hands/${id}.glb`,productionHashes[id]);
+  for (const item of Object.values(blender.references)) await verify(item.path,item.sha256);
+  for (const item of Object.values(blender.tools)) await verify(item.path,item.sha256);
+  for (const item of blender.captures) await verify(item.path,item.sha256);
+  for (const item of captures.captures) await verify(item.path,item.sha256);
+  const output = join(base,'sheet.png'), manifest = join(base,'sheet.json');
+  const status = 'Rook first-person candidate only. Blender shows an isolated source module; High and Performance show the game course. Lighting and environment differ. Independent visual and motion review decides fidelity; frame cost is unmeasured here.';
+  await writeFile(manifest,JSON.stringify({family:'first-person-p1',round,
+    observationCommit:captures.observationCommit,candidate:captures.candidate,
+    productionHashes,camera:plan.camera,qualities:captures.qualities,
+    references:blender.references,tools:blender.tools,orderedMotion:captures.orderedMotion,
+    frameStatus:captures.frameStatus,tile:{width:384,height:216},
+    rows:plan.rows,sources,output:relative(root,output).replaceAll('\\','/'),status},null,2)+'\n',{flag:'wx'});
+  const executable = value('--blender',process.env.BLENDER_PATH ||
+    'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe');
+  await mkdir(dirname(published),{recursive:true});
+  execFileSync(executable,['-b','--python',join(root,'tools/blender/fidelity-sheet.py'),
+    '--','--root',root,'--manifest',manifest,'--output',output,
+    '--summary',published],{cwd:root,stdio:'inherit',windowsHide:true});
+  console.log('First-person P1 fidelity sheet: '+output);
 }
