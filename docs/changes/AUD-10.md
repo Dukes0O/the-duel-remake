@@ -165,3 +165,19 @@ approval question about peak and RMS bounds is pending with Kyle.
 The final lane and build pass covers the unchanged production audio source;
 the comparator follow-up is a QA-tool change, tested separately and still red.
 No claim of human listening or exact mixed-waveform identity is made.
+
+## Limiter diagnostic
+
+The unchanged strict assertions still fail. Adding pre-limiter taps isolates
+the residual: every case differs by at most 0.000000239 before the compressor,
+including the 14-second race. After that unchanged nonlinear compressor the
+race differs by 0.000016481 peak and 0.0000000884 RMS. This points to
+compressor sensitivity to floating-point summation differences introduced by
+regrouping the buses; it is an inference, not proof of perceptual equivalence.
+The reference control differs by at most 0.000000239 before the compressor
+and 0.000001774 after it. Diagnostic run: audio-baseline at
+2026-09-25T06-24-47-619Z. No threshold or pass condition was changed.
+
+The independent AUD-12-R1 fix is now ready in its own note. Full tier on
+9268cb9 passed 254/254 with clean start and end. This does not resolve the
+AUD-10 card-specific comparison.

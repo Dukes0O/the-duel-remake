@@ -43,8 +43,8 @@ export async function run(context) {
       try {
         for(const [name,environment]of cases){
           const duration=name==='race'?14:5,rate=44100;
-          const native=new OfflineAudioContext(6,duration*rate,rate);
-          const merge=native.createChannelMerger(6);merge.connect(native.destination);
+          const native=new OfflineAudioContext(12,duration*rate,rate);
+          const merge=native.createChannelMerger(12);merge.connect(native.destination);
           const decoded=new Map();
           const audios=[],endedHandlers=[];
           let clock=0;
@@ -85,6 +85,7 @@ export async function run(context) {
             try{audio.muted=false;audio._build(proxy);}finally{Math.random=random;}
             await Promise.all([audio._samplesPromise,audio._ambiencePromise]);
             if(audio.sampleStatus!=='ready'||audio.ambienceStatus!=='ready')throw Error('Missing decoded samples');
+            const meter=native.createChannelSplitter(2);audio.master.connect(meter);meter.connect(merge,0,6+index*2);meter.connect(merge,1,7+index*2);
             audios.push(audio);
           }
           const course={groundAt:()=>({x:0,y:0,z:0,heading:0})};
@@ -112,7 +113,14 @@ export async function run(context) {
               repeatPeak=Math.max(repeatPeak,Math.abs(old[i]-repeat[i]));power+=delta*delta;count++;
             }
           }
-          rows.push({name,peakDifference,rmsDifference:Math.sqrt(power/count),repeatPeak,peakTime,samples:count});
+          let beforeLimiterPeak=0,beforeLimiterControl=0;
+          for(let ch=0;ch<2;ch++){
+            const a=rendered.getChannelData(ch+6),b=rendered.getChannelData(ch+8),c=rendered.getChannelData(ch+10);
+            for(let i=0;i<a.length;i++){beforeLimiterPeak=Math.max(beforeLimiterPeak,Math.abs(a[i]-b[i]));beforeLimiterControl=Math.max(beforeLimiterControl,Math.abs(a[i]-c[i]));}
+          }
+          const peakIndex=Math.round(peakTime*rate),window=[];
+          for(let i=Math.max(0,peakIndex-3);i<Math.min(rendered.length,peakIndex+4);i++)window.push(Array.from({length:12},(_,ch)=>rendered.getChannelData(ch)[i]));
+          rows.push({name,peakDifference,rmsDifference:Math.sqrt(power/count),repeatPeak,peakTime,samples:count,beforeLimiterPeak,beforeLimiterControl,window});
         }
       }finally{window.fetch=fetchOriginal;}
       return rows;
