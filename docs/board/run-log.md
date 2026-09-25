@@ -1842,3 +1842,24 @@ or beta switch changed.
   The consumed BETA task note is folded here and into the current player guide,
   then removed. Full merge count three since cb06bfb; sweep count five since
   2d813a7. After-merge cleanup and the separate end-run sweep follow.
+
+
+- BETA after-merge janitor safely unlinked its verified integration-only
+  dependency junction, normally removed the clean merged worktree and deleted
+  its completed branch. Consumed build/browser/gate output: 833671483 bytes.
+  No Director-owned lane remains; Kyle branches and external audio remain.
+
+- End-run janitor sweep: final registry-only external-lane exclusions cover
+  aud-10, aud-17-picks and Kyle's aud-12. Inventory 964 tracked files,
+  253719011 bytes before this log/card update; 48 literal asset candidates,
+  16 export candidates, zero unused-module candidates, removed-feature tests
+  or fully-on switches. Existing dynamic/reference/source consumers still
+  explain the candidates; no new runtime deletion is proved. Required review
+  and listening notes stay. Uncertain older balance/audio diagnostics are
+  JANITOR-DIAGNOSTIC-NOTES; renamed-worktree exclusion is JANITOR-LANE-PATH.
+  Current task notes were folded and deleted, 1748282590 bytes of P2/BETA
+  generated output consumed after verdicts. Public stays 235822734 bytes,
+  Wasteland models 78930708; runtime growth is zero, review growth is the two
+  permitted P2 sheets (510081 bytes). Existing model/file target overruns keep
+  their ASSET_PIPELINE reasons; no new size target is needed. Sweep counter
+  resets to zero. Final full and supporting checks run next on a clean commit.

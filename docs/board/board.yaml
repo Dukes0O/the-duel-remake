@@ -324,6 +324,18 @@ tasks:
       - "Address round10 hair cap, small plain face, rigid scarf/vest/pockets, flat side/back clothing, coarse trouser folds and simplified boots/hands. Measured contours support but never substitute for independent actual-game likeness."
       - "Rook must score at least four on every SPEC0.3 criterion, including measured twelve-fighter frame evidence, before converting the other seven. Keep8000/2000 triangles,24 color draws for12 fighters and one1024-square set. Ten rounds maximum per wave."
     note: "Residual polish from GFX-01-P2 ten-round closure. No runtime promotion or all-eight conversion was accepted. Scheduled after remaining phase2 hand proof; no new body art wave is started by this card."
+  - id: JANITOR-DIAGNOSTIC-NOTES
+    title: "Resolve remaining unindexed diagnostic notes"
+    lane: TOOL
+    size: S
+    needs: []
+    status: backlog
+    owns: [docs/board/checks/, docs/ARCHITECTURE.md, docs/AUDIO_ITERATION.md, docs/changes/JANITOR-DIAGNOSTIC-NOTES.md]
+    helpers: [reviewer]
+    acceptance:
+      - "Review remaining September 23 balance-hold and opponent-audio diagnostic notes against current guides. Fold still-needed facts, remove proven superseded notes and pass the docs lane gate."
+      - "Preserve required immutable look/listening verdicts, Kyle's AUD-12 selections, pending AUD-17 auditions and receipts; an unindexed path alone is not deletion proof."
+    note: "End-run audit retains uncertain historical diagnostics for review. Current P1/P2/BETA task facts have already been folded and consumed."
   - id: JANITOR-LANE-PATH
     title: "Keep worktree exclusions stable across branch changes"
     lane: TOOL
