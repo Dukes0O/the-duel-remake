@@ -345,7 +345,7 @@ tasks:
       - "Continue from the three immutable initial rounds. Fix fingertip cap/normal artifacts, mitten-like palms, generic sleeve construction, simplified tool fittings and continuous grip/animation contact as recorded in round-3-review.md."
       - "Retain meaningful matched High/Performance comparisons, short motion evidence, at most 8000 visible triangles and three draws. Measure texture memory and evaluate shared crew materials before making a resource-budget claim."
       - "Keep the family in dev until all SPEC 0.3 scores reach four and the measured budget holds. Follow its approach-change rule if another round fails to improve likeness."
-    note: "Initial resemblance improves from two to three in round 2 and remains three in round 3. One stagnant round so far; no beta approval. Follow the winning GFX-01-P1 technique."
+    note: "Initial resemblance improves from two to three in round 2 and remains three in round 3. One stagnant round so far; no beta approval. Follow the winning GFX-01-P2 technique."
   - id: EGG-02
     title: "Rustwall gate and salt-flat fidelity rounds one to three"
     priority: 9
@@ -1475,7 +1475,7 @@ tasks:
     flag: none
     behavior_change: no
     owns: [tools/repo-audit.mjs, tools/test-repo-audit.mjs]
-    note: "The phase-2 sweep reports 55 asset and 16 export candidates, but no unused module, removed-feature test or fully-on switch. Crew/hands/kits and wall use generated paths; audio sources and licenses have tooling/provenance consumers. Trace remaining candidates before proposing removal; preserve licensed originals and current runtime assets."
+    note: "The phase-2 sweep reports 55 asset and 16 export candidates, but no unused module, removed-feature test or fully-on switch. Crew/hands/kits and wall use generated paths; audio sources and licenses have tooling/provenance consumers. Director follow-up confirms all sixteen named export candidates are called inside their own modules; they are not dead functions. Trace remaining asset consumers and unnecessary export boundaries before proposing removal; preserve licensed originals and current runtime assets."
 
   - id: FIX-STATUS-CARD
     title: "Preserve phase suffixes in status lane ownership"
