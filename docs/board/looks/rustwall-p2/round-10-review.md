@@ -7,3 +7,7 @@ Director and Crew independently scored wall likeness/readability/grounding/scene
 ## Subsequent final frame verdict
 
 Scoped frame score four: quiet 600-frame A1/B/A2 on frozen d0e26a1 versus baseline 5a994ad, both qualities and wash/approach. Worst aggregate or mirror-stratum CPU p50/p95 ratio is 1.0833; worst RAF p95 ratio is 1.006; baseline CPU p95 drift is at most 1.053. Director independently reproduced the raw comparison. This measures complete production render CPU and delivered RAF, not GPU time. Visual scores remain 3/3/3/3. Lane 256/256 in 375.19 seconds and build passed. Prior concurrent diagnostics remain documented in the task note, including 23.5 percent baseline drift. EGG-02-P3 retains the unmet likeness target.
+
+## Export inventory correction after merge
+
+Direct parsing of the committed GLB accessors and scene nodes gives **55,834 wall triangles in 14 primitives**. The earlier 56,122 figure was a source total, 288 higher. Baseline wall is 58,626 in 13 primitives (not the initial source total 58,914). The actual frame sample's per-pass reduction of 2,792 agrees with these exported counts. No mesh is multiply instanced. This reporting correction changes no geometry, assertion, visual score or frame verdict; both assets remain within the original limits.
