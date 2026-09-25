@@ -1750,3 +1750,26 @@ or beta switch changed.
   the lane. P2 closes as non-promoted research after final timing and gates;
   GFX-02-P3 carries construction, contact and full acceptance. Consumed round 1
   raw evidence totaled 45,750,706 bytes after both verdicts and owner clearance.
+
+
+- GFX-02-P2 merged a7ef96b from exact clean reviewed 129a298 after lane
+  269/269 in 413.41 seconds, 162 unchanged replay fingerprints and 48/48
+  expansion drives with 648 checks. Build passed 222 modules in 396 ms.
+  Both visual rounds remain 3/4/3/3. Quiet private 10697 measured the final
+  d567b345 candidate at clean 03b0d8a, six High/Performance A1/B/A2 legs,
+  30 warm plus 600 measured frames each, zero issues. Worst CPU/RAF ratio
+  1.0616 is below 1.10; idle CPU submission/native RAF only, no GPU/action
+  claim. Draws were 737/423; High triangles rose 1,208 and Performance 604.
+  Hands and RPG each have three 1024 maps; estimated RGBA8 full-mip bytes
+  are 16,777,218 per asset, arithmetic rather than measured GPU allocation.
+  Complete contact is unsupported; no runtime art was promoted. ASSET_PIPELINE
+  holds the recipe, exact source identities and scope; the consumed task note
+  is removed. Both originals were independently rehashed outside the lane.
+  After-merge janitor removes only the completed P2 lane and used outputs.
+  Full counter is two since cb06bfb; sweep counter four since 2d813a7.
+
+- Kyle explicitly approved Experimental beta with current art. BETA-01 is the
+  final active card before morning closure; release remains separately gated.
+  Crew owns the newly named test-hidden-road catalog-state assertion hook:
+  dev to beta reflects the approved promotion, while isolation and gameplay
+  checks remain. The unfinished-art exception is recorded in decisions.md.
