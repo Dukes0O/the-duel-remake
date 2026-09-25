@@ -300,7 +300,9 @@ tasks:
     lane: ART
     size: L
     needs: [GFX-01-P1]
-    status: backlog
+    status: building
+    owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, docs/board/looks/crew-p2/]
+    hooks: [tools/test-rook-p2-source.mjs, tools/test-blender-output.mjs]
     flag: wasteland2
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
@@ -479,8 +481,8 @@ tasks:
     size: L
     needs: [CAR-01]
     status: building
-    owns: [tools/blender/armor-kits.py, public/assets/models/wasteland/kits/, src/armor-kit-meshes.js, docs/board/looks/kits/]
-    hooks: [src/combat-scene.js, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-resource-lifecycle.mjs, tools/test-armor-kit-visuals.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/audit-armor-kit-fit.mjs]
+    owns: [tools/blender/armor-kits.py, tools/blender/kit-review.py, tools/blender/kit-sheet.py, public/assets/models/wasteland/kits/, src/armor-kit-meshes.js, docs/board/looks/kits/]
+    hooks: [src/combat-scene.js, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-resource-lifecycle.mjs, tools/test-armor-kit-visuals.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/audit-armor-kit-fit.mjs, tools/test-blender-output.mjs, src/vehicles.js, src/render3d.js, tools/test-combat-vehicle-wear.mjs, tools/test-npc-vehicle-damage.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
     flag: wasteland2
     note: "Active codex/gfx-03 from 85fe35f. Written design and independent red tests precede code. Crew builder owns fitted authored kits; measured four-car frame cost and three scored rounds required."
@@ -494,7 +496,7 @@ tasks:
     needs: [CAR-01]
     status: building
     owns: [src/app.js, src/screen-router.js, src/screen-yard-home.js, src/screen-yard-home.css, src/hidden-road-ui.js, src/hidden-road-ui.css, src/scrapdome-yard.js, tools/blender/scrapdome-yard.py, public/assets/models/wasteland/scrapdome/, docs/board/looks/yard/]
-    hooks: [src/screen-armory.js, src/world-surfaces.js, src/world.js, src/render3d.js, tools/test-yard-home.mjs, tools/test-scrapdome-yard.mjs, tools/test-scrapdome-yard-assets.mjs, tools/scenarios/yard-home.mjs, tools/scenarios/scrapdome-review.mjs, tools/test-yard-ground-render.mjs]
+    hooks: [src/screen-armory.js, src/world-surfaces.js, src/world.js, src/render3d.js, tools/test-yard-home.mjs, tools/test-scrapdome-yard.mjs, tools/test-scrapdome-yard-assets.mjs, tools/scenarios/yard-home.mjs, tools/scenarios/scrapdome-review.mjs, tools/test-yard-ground-render.mjs, tools/test-blender-output.mjs]
     helpers: [test_author, reviewer, save_guardian, art_critic, browser_qa]
     flag: hidden-road
     note: "Active codex/gfx-04 from 85fe35f. Career owns App/router/panels; Rustwall owns yard model/scene/world/render hooks. Written design and independent red tests precede each implementation. Guarded arrived yard permits scrap operations and rechecks ownership after refresh. No unbuilt arena modes."

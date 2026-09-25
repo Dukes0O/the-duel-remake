@@ -1,20 +1,20 @@
 # Build status
 
-Observed at: 2026-09-24T23:34:47.519Z
+Observed at: 2026-09-25T00:17:34.235Z
 
-Observation commit: 54bd2a0240cc33201e3908cbcd8ce26f9f599776
+Observation commit: 157639c27f26f85c9df631748f97a3eb07172993
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 54bd2a0240cc33201e3908cbcd8ce26f9f599776
+Integration HEAD: 157639c27f26f85c9df631748f97a3eb07172993
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
 Live build version: not checked
 
-Full tier: passed; exact HEAD passed: yes.
+Full tier: stale; exact HEAD passed: no.
 
 Last recorded full run: 2026-09-24T23:31:45.872Z; tested commit: 54bd2a0240cc33201e3908cbcd8ce26f9f599776.
 
@@ -32,6 +32,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
+| codex/gfx-01-p2 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-01-p2 |
 | codex/gfx-03 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-03 |
 | codex/gfx-04 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-04 |
 
@@ -56,8 +57,8 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 1,395,343 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 6,599 B | +0 B | 5,000,000 B |
 | All `public/` | 243,113,287 B | +0 B | unavailable |
-| Git objects | 273,332,224 B | +100,352 B | unavailable |
-| Lane folders | 2 | +0 | unavailable |
+| Git objects | 273,485,824 B | +153,600 B | unavailable |
+| Lane folders | 3 | +1 | unavailable |
 
 ## Backups
 
@@ -65,7 +66,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 54bd2a0240cc33201e3908cbcd8ce26f9f599776
+- Local integration/wasteland: 157639c27f26f85c9df631748f97a3eb07172993
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -73,4 +74,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: matches local; cached commit 54bd2a0240cc33201e3908cbcd8ce26f9f599776.
+- Remote origin/integration/wasteland: behind local; cached commit 54bd2a0240cc33201e3908cbcd8ce26f9f599776.
