@@ -80,6 +80,22 @@ test('bind selection fixes connected contact-facing surface and tool triangle ID
   assert.ok(chosen.selectionHash, 'bind selection identity must be recorded once');
 });
 
+test('bind patch stays edge-connected across duplicated UV seam vertices after 0.1 mm weld', () => {
+  const points=[[-.02,-.02,.11],[0,-.02,.11],[-.02,0,.11],[0,0,.11],
+    [0,-.02,.11],[0,0,.11],[.02,-.02,.11],[.02,0,.11]];
+  const regionVertices=points.map((position,id)=>({id,position}));
+  const regionFaces=[
+    {id:0,vertexIds:[0,2,1]},{id:1,vertexIds:[1,2,3]},
+    {id:2,vertexIds:[4,5,6]},{id:3,vertexIds:[5,7,6]},
+  ];
+  const selected=selectBindContactPatch({regionVertices,regionFaces,
+    handleTriangles:cube(),closedHandleFaces:cube(),minVertices:6});
+  assert.ok(selected.vertexIds.some(id=>id<=3)&&selected.vertexIds.some(id=>id>=4),
+    'two sides of the physically shared seam must remain one fixed contact patch');
+  assert.ok(selected.vertexIds.length>=6);
+  assert.ok(selected.selectionHash);
+});
+
 test('closed triangulated handle distinguishes 10 mm grip, 25 mm miss, and deep penetration', () => {
   const near = sample(.11);
   assert.equal(near.closed, true);
@@ -116,13 +132,18 @@ test('ordered phase assessment rejects stale samples and bad contacts but permit
   for (const [clip, progress] of [['idle',.25],['aim',.25],['fire',.1]]) {
     good.push(frame(clip,progress,'rpg',[...rightRpg,['L','support']]));
   }
-  for (const progress of [.18,.48,.76,.90,1]) {
+  // Production presentation has left reload at exactly 1.0; .999 is the
+  // final in-action support reacquire sample, never a fabricated reload@1.
+  for (const progress of [.18,.48,.76,.90,.999]) {
     const contacts = [...rightRpg];
     if (progress === .48 || progress === .76)
       contacts.push(['L','rocket-guide']);
     if (progress >= .90) contacts.push(['L','support']);
     good.push(frame('reload',progress,'rpg',contacts));
   }
+  // A fresh production idle sample after the reload selector transition proves
+  // support remains attached after the in-action .999 reacquire pose.
+  good.push(frame('idle',.25,'rpg',[...rightRpg,['L','support']]));
   good.push(frame('wrench-idle',.25,'wrench',[['R','palm'],['R','thumb']]));
   for (const progress of [.25,.5,.75,1])
     good.push(frame('repair',progress,'wrench',[['R','palm'],['R','thumb']]));
@@ -231,6 +252,38 @@ test('actual asset contact plan keeps fixed patches and reports an open mounted 
   assert.ok(plan.componentIds['rpg-right-handle']?.triangleIds.length>0);
   assert.equal(plan.componentIds['rpg-right-handle'].closed,false,
     'nearest grip component is open; another closed component cannot mask it');
+  const wrenchHand={positions:Object.fromEntries(Object.entries(bindSnapshot.hand.positions)
+    .map(([id,[x,y,z]])=>[Number(id)+100,[x+.2,y,z]])),
+  faces:bindSnapshot.hand.faces.map(face=>({id:face.id+100,
+    vertexIds:face.vertexIds.map(id=>id+100)})),
+  regions:Object.fromEntries(Object.entries(bindSnapshot.hand.regions)
+    .map(([key,hint])=>[key,{...hint,center:[hint.center[0]+.2,...hint.center.slice(1)]}]))};
+  const distinctToolBind={...bindSnapshot,
+    handByTool:{rpg:bindSnapshot.hand,wrench:wrenchHand},
+    tools:{...bindSnapshot.tools,wrenchBody:shiftedCube(.2)}};
+  const separatePlan=createActualContactPlan({candidatePath,rpgPath,wrenchPath,
+    bindSnapshot:distinctToolBind});
+  assert.ok(separatePlan.patches['wrench:R:palm'].vertexIds.every(id=>id>=100),
+    'wrench grip must select the hand from its own production bind pose');
+  assert.ok(separatePlan.patches['rpg:R:palm'].vertexIds.every(id=>id<100),
+    'RPG grip must retain its separate production bind-pose vertices');
+  assert.ok(separatePlan.componentIds['wrench-handle'].nearestGripGap<.03,
+    'wrench component must be selected near the wrench-pose hand');
+  const inner=Object.fromEntries([
+    [-.012,-.01,.11],[0,-.01,.11],[.012,-.01,.11],
+    [-.012,.01,.11],[0,.01,.11],[.012,.01,.11],
+  ].map((point,index)=>[index+12,point]));
+  const edgeFaceBind={...bindSnapshot,hand:{...bindSnapshot.hand,
+    positions:{...bindSnapshot.hand.positions,...inner},
+    faces:[...bindSnapshot.hand.faces,
+      {id:20,vertexIds:[12,13,0]},{id:21,vertexIds:[13,14,2]},
+      {id:22,vertexIds:[15,16,3]},{id:23,vertexIds:[16,17,5]}],
+    regions:{...bindSnapshot.hand.regions,
+      'R:palm':{center:[0,0,.11],radiusMetres:.02}}}};
+  const edgePlan=createActualContactPlan({candidatePath,rpgPath,wrenchPath,
+    bindSnapshot:edgeFaceBind});
+  assert.ok(edgePlan.patches['rpg:R:palm'].vertexIds.some(id=>[0,2,3,5].includes(id)),
+    'a real face with centroid inside the palm region must keep its outside corner');
 
   let stamp=0;
   const pose=(clip,progress,tool='rpg')=>({sampleStamp:++stamp,
@@ -239,11 +292,12 @@ test('actual asset contact plan keeps fixed patches and reports an open mounted 
       loadedRocket:bindSnapshot.tools.loadedRocket,
       wrenchBody:bindSnapshot.tools.wrenchBody}});
   const poseSamples=[pose('idle',.25),pose('aim',.25),pose('fire',.1),
-    ...[.18,.48,.76,.90,1].map(value=>pose('reload',value)),
+    ...[.18,.48,.76,.90,.999].map(value=>pose('reload',value)),
+    pose('idle',.25),
     pose('wrench-idle',.25,'wrench'),
     ...[.25,.5,.75,1].map(value=>pose('repair',value,'wrench'))];
   const report=collectActualCandidateContact({plan,poseSamples});
-  assert.equal(report.frames.length,13);
+  assert.equal(report.frames.length,14);
   assert.ok(report.triangleCounts.rpgBody>0 && report.triangleCounts.wrenchBody>0);
   assert.deepEqual(report.sources,plan.sources);
   assert.equal(report.verdict.passed,false,
@@ -255,7 +309,7 @@ test('actual asset contact plan keeps fixed patches and reports an open mounted 
     row.requested.clip === 'repair' ? {...row,tools:{wrenchBody:row.tools.wrenchBody}} :
     {...row,tools:{rpgBody:row.tools.rpgBody,loadedRocket:row.tools.loadedRocket}});
   const activeReport=collectActualCandidateContact({plan,poseSamples:activeOnly});
-  assert.equal(activeReport.frames.length,13,
+  assert.equal(activeReport.frames.length,14,
     'ordinary poses only carry their active mounted tool, not hidden off-tool meshes');
   assert.ok(activeReport.unsupported.length>0,
     'open active RPG grip must still be reported unsupported');
