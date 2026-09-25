@@ -456,3 +456,8 @@ The event rates reward a finish and visible combat without making repeated hits 
 The external audio lane may own tools/test-combat-audio.mjs and tools/scenarios/combat-audio.mjs for tests-first weapon sound and full-throttle context checks. Runtime changes stay within its existing bank, audio and app listener hooks. No simulation changes or ElevenLabs credit use by the Director. The AUD-10 baseline tolerance decision remains pending; this scope approval does not waive it.
 
 AUD-14 also has the narrow .gitattributes hook to mark *.ogg binary, preventing text newline conversion of Vorbis data. Test exact compressed bytes through the Git attribute path before keeping runtime assets; no unrelated attribute changes.
+
+
+## 2026-09-25 PDT: change Rook silhouette construction for round eight
+
+Two actual game rounds remain at 3/3/3/3 despite better paint, scalp coverage, scarf and cuffs. Before more code, approve the written grouped method: a scalloped cap edge with rooted three-dimensional curl locks, reference-traced intermediate trouser folds while freezing seven measured width anchors, and small separated fingertip/thumb silhouettes attached to the existing gloves. Independent actual exported contour, contact, uniform-skin UV and motion tests precede implementation. Keep dense scalp coverage, face paint, waist continuity, broad padded garment charts and near/far limits of 8,000/2,000 triangles. Label occluded reference edges as inferred. Attribute the straight upper-back projection in the bent pose before changing it. Three rounds remain in this bounded wave; no other crew converts or runtime candidate replaces the baseline before likeness four.
