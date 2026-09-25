@@ -64,3 +64,51 @@ test('production URL requests cannot enable dev or beta, while QA keeps named is
     assert.equal(plainQa.enabled(name), false);
   }
 });
+
+test('private beta journey evidence distinguishes fixtures from production actions', async () => {
+  const { validateBetaJourneyEvidence } = await import('./scenarios/wasteland-beta.mjs');
+  const playerId = 'memory-only-review-player';
+  const report = {
+    storage: { memoryOnly: true, qaTab: true },
+    flags: {
+      urlOverride: false,
+      defaultOff: ['wasteland2', 'hidden-road'],
+      optedIn: ['wasteland2', 'hidden-road'],
+      reloadOn: ['wasteland2', 'hidden-road'],
+    },
+    fixtures: [
+      { kind: 'pacific-finish-eligibility', value: 10 },
+      { kind: 'route-placement', phase: 'departure', s: 1408 },
+      { kind: 'route-placement', phase: 'gate', s: 2300 },
+    ],
+    events: [
+      { kind: 'departure', status: 'driving', playerId, source: 'keyboard', stepCount: 120 },
+      { kind: 'invitation', status: 'invited', playerId, source: 'production' },
+      { kind: 'enter-choice', status: 'selected', playerId, source: 'ui' },
+      { kind: 'arrived-yard', status: 'yard', playerId, source: 'production' },
+      { kind: 'yard-menu', status: 'returned', playerId, source: 'ui' },
+      { kind: 'wasteland-start', status: 'started', playerId, source: 'ui' },
+    ],
+    result: { mode: 'wasteland', status: 'racing', discoveredGate: true,
+      forcedCompletion: false, forcedDiscovery: false, playerId },
+  };
+  assert.equal(validateBetaJourneyEvidence(report).passed, true);
+  const changed = modify => {
+    const copy = structuredClone(report);
+    modify(copy);
+    assert.throws(() => validateBetaJourneyEvidence(copy));
+  };
+  changed(copy => { copy.storage.memoryOnly = false; });
+  changed(copy => { copy.storage.qaTab = false; });
+  changed(copy => { copy.flags.urlOverride = true; });
+  changed(copy => { copy.flags.defaultOff = []; });
+  changed(copy => { copy.flags.reloadOn = ['wasteland2']; });
+  changed(copy => { copy.fixtures = []; });
+  changed(copy => { copy.events.splice(1, 1); });
+  changed(copy => { [copy.events[1], copy.events[2]] = [copy.events[2], copy.events[1]]; });
+  changed(copy => { copy.events[1].source = 'ui'; });
+  changed(copy => { copy.events[4].playerId = 'different-player'; });
+  changed(copy => { copy.result.forcedCompletion = true; });
+  changed(copy => { copy.result.forcedDiscovery = true; });
+  changed(copy => { copy.result.status = 'results'; });
+});
