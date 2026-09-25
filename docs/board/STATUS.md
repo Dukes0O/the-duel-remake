@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-09-25T05:29:13.744Z
+Observed at: 2026-09-25T05:45:37.219Z
 
-Observation commit: 26d2c9f154ab95b100c26ec1a74917890d1f8e14
+Observation commit: a1d0dd6c87c468fa928c7c0791c8e08e3e43bee7
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 26d2c9f154ab95b100c26ec1a74917890d1f8e14
+Integration HEAD: a1d0dd6c87c468fa928c7c0791c8e08e3e43bee7
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -34,8 +34,9 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/egg-02-p2 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/egg-02-p2 |
 | codex/gfx-01-p2 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-01-p2 |
+| codex/merge-aud-12 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/merge-aud-12 |
 | lane/audio/aud-10 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/audio/aud-12 | 0 | unknown | false | false | unknown |
+| lane/audio/aud-12 | 0 | unknown | true | false | unknown |
 
 ## Unmerged branches for idle review
 
@@ -45,8 +46,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/egg-02-p2 | EGG-02-P2 | 2026-09-24T21:28:20-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/rustwall-p2/round-1-review.md, docs/board/looks/rustwall-p2/round-1.jpg, docs/board/looks/rustwall-p2/round-2-review.md, docs/board/looks/rustwall-p2/round-2.jpg, docs/board/looks/rustwall-p2/round-3-review.md |
 | codex/gfx-01-p2 | GFX-01-P2 | 2026-09-24T22:06:44-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/GFX-01-P2.md, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-source.json, tools/blender/rook-p2.py, tools/fidelity-sheet.mjs |
-| lane/audio/aud-10 | AUD-10 | 2026-09-24T22:17:02-07:00 | 0 | uncommitted changes; exact activity time unknown | audio-src/voices/gatekeeper-welcome.mp3, docs/ASSET_PIPELINE.md, docs/board/STATUS.md, docs/board/board.yaml, docs/board/checks/full-tier.json |
-| lane/audio/aud-12 | AUD-12 | 2026-09-24T22:14:24-07:00 | 0 | last commit 2026-09-24T22:14:24-07:00 | audio-src/voices/gatekeeper-welcome.mp3, docs/ASSET_PIPELINE.md, docs/board/STATUS.md, docs/board/board.yaml, docs/board/checks/full-tier.json |
+| lane/audio/aud-10 | AUD-10 | 2026-09-24T22:17:02-07:00 | 0 | uncommitted changes; exact activity time unknown | SPEC.md, docs/board/next-run.md, public/assets/audio/AMBIENCE_SOURCES.json, public/assets/audio/CREDITS.md, public/assets/audio/acceleration-source.mp3 |
 
 ## Size targets
 
@@ -60,10 +60,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 210,328 B | +0 B | 500,000 B |
 | Review `looks/` | 3,610,597 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 471,177 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 137,959 B | -333,218 B | 5,000,000 B |
 | All `public/` | 255,108,495 B | +0 B | unavailable |
-| Git objects | 297,135,104 B | +56,320 B | unavailable |
-| Lane folders | 3 | -1 | unavailable |
+| Git objects | 297,141,248 B | +6,144 B | unavailable |
+| Lane folders | 4 | +1 | unavailable |
 
 ## Backups
 
@@ -71,7 +71,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 26d2c9f154ab95b100c26ec1a74917890d1f8e14
+- Local integration/wasteland: a1d0dd6c87c468fa928c7c0791c8e08e3e43bee7
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

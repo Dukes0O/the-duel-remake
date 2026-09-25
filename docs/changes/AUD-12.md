@@ -1,6 +1,6 @@
 ---
 task: AUD-12
-status: in-progress
+status: merged
 kind: tooling
 flag: none
 player_facing: no
@@ -83,3 +83,11 @@ No game code changed. No existing assertion changed. The placement check now
 accepts audio files in `audio-src/` (the SPEC 0.9 home for takes that cannot
 be regenerated); a new rules case covers it. Audio elsewhere outside
 `public/` still fails.
+
+## Integration review (25 September 2026 UTC)
+
+Kyle explicitly requested this branch merge. Reviewed staging commit a1d0dd6 passed 252/252 lane suites in 521.24 seconds and the production build. All 162 replay checks were unchanged and 48/48 expansion drives completed and won. No runtime source changed; no real service calls or credits were used in this gate. The audio-source placement allowance adds coverage without changing existing assertions. Kyle's branch lane/audio/aud-12 remains at 7876d99 and is retained.
+
+The kept 66,499-byte Callum take has SHA-256 5772399d1112b33edc845e5253417afd4d55ca1898fcb54f8901899a4eb96106. Preserve those exact selected bytes. Kyle's specific kept MP3 takes precedence over the general FLAC source guidance for this existing take.
+
+A fake-response review reproduced a non-runtime follow-up issue: generation succeeds, then the subscription query returns HTTP 503; say rejects before saving the returned audio bytes. AUD-12-R1 assigns persistence-before-accounting to the separate audio session before further voice generation. This Director does not own or use ElevenLabs credits. Keep this note while the external lane consumes Kyle's picks; fold its facts only after that dependency ends.
