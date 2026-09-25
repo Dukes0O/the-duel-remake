@@ -1,8 +1,37 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {existsSync, readFileSync, mkdirSync, rmSync, symlinkSync} from 'node:fs';
+import {join, resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {spawnSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {
   selectBindContactPatch, measureContactFrame, assessContactSequence,
+  createActualContactPlan, collectActualCandidateContact,
 } from './first-person-contact.mjs';
+
+const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
+const sha = path => createHash('sha256').update(readFileSync(path)).digest('hex');
+const proofRoot = join(root,'art-build/first-person-p1/contact-test');
+const candidatePath = process.env.GFX_FIRST_PERSON_P1_CANDIDATE ||
+  join(proofRoot,'hands/rook.glb');
+let builtThisRun=false;
+function ensureActualAssets() {
+  if (process.env.GFX_FIRST_PERSON_P1_CANDIDATE) {
+    assert.ok(existsSync(candidatePath),'an explicit frozen candidate path must exist');
+    return;
+  }
+  if (builtThisRun) return;
+  mkdirSync(proofRoot,{recursive:true});
+  const blender = process.env.BLENDER_PATH || 'blender';
+  const result = spawnSync(blender,['-b','--python-exit-code','1','--python',
+    join(root,'tools/blender/first-person-gear.py'),'--','--root',root,'--round','1',
+    '--p1-rook','--output-dir',proofRoot,'--skip-renders'],
+  {cwd:root,encoding:'utf8',timeout:300000,maxBuffer:16*1024*1024});
+  assert.equal(result.status,0,result.stderr||result.stdout||result.error?.message);
+  assert.ok(existsSync(candidatePath));
+  builtThisRun=true;
+}
 
 // A closed 100 mm cube is an actual triangulated handle. Its upper face is
 // z=.1, so a hand surface at .11 has a known 10 mm exterior gap.
@@ -114,6 +143,14 @@ test('ordered phase assessment rejects stale samples and bad contacts but permit
   wrongPhase[2] = {...wrongPhase[2],actual:{clip:'idle',progress:.25}};
   assert.equal(assessContactSequence({frames:wrongPhase}).passed, false,
     'actual production clip must match the requested phase');
+  for (const field of ['actual','requested']) for (const progress of [NaN,undefined]) {
+    const mislabeled=good.map(row=>({...row}));
+    mislabeled[0]={...mislabeled[0],contacts:mislabeled[0].contacts.map((contact,index)=>
+      index ? contact : {...contact,measurement:{...contact.measurement,
+        [field]:{clip:'idle',progress}}})};
+    assert.equal(assessContactSequence({frames:mislabeled}).passed,false,
+      `missing or NaN nested measurement ${field}.progress cannot certify a sampled pose`);
+  }
   const missingSupport = good.map(row => row.requested.clip === 'aim' ? {...row,
     contacts:row.contacts.filter(contact => contact.hand !== 'L')} : row);
   assert.equal(assessContactSequence({frames:missingSupport}).passed, false,
@@ -151,4 +188,83 @@ test('ordered phase assessment rejects stale samples and bad contacts but permit
         sampleStamp:wrenchMiss[wrenchIndex].sampleStamp})})};
   assert.equal(assessContactSequence({frames:wrenchMiss}).passed, false,
     '18 mm wrench right-hand gap must fail the same 15 mm grip limit');
+});
+
+test('actual asset contact plan keeps fixed patches and reports an open mounted grip as unsupported', () => {
+  ensureActualAssets();
+  const rpgPath=join(root,'public/assets/models/wasteland/first-person/rpg.glb');
+  const wrenchPath=join(root,'public/assets/models/wasteland/first-person/wrench.glb');
+  const glbNames = path => {
+    const bytes=readFileSync(path);
+    assert.equal(bytes.toString('ascii',0,4),'glTF');
+    const size=bytes.readUInt32LE(12);
+    return JSON.parse(bytes.subarray(20,20+size).toString('utf8')).nodes.map(node => node.name);
+  };
+  assert.ok(glbNames(candidatePath).some(name => /rook|hand/i.test(name)),
+    'contact proof must use an actual exported Rook hand asset');
+  assert.ok(glbNames(rpgPath).includes('rpg-body'));
+  assert.ok(glbNames(rpgPath).includes('loaded-rocket'));
+  assert.ok(glbNames(wrenchPath).includes('wrench-body'));
+
+  const shiftedCube=(x,idOffset=0,open=false) => cube().slice(open?1:0).map(face => ({
+    id:face.id+idOffset,vertices:face.vertices.map(([vx,y,z])=>[vx+x,y,z]),
+  }));
+  const positions={...hand(.11)};
+  for(const [id,point] of Object.entries(hand(.11))) positions[Number(id)+6]=[point[0]-.4,point[1],point[2]];
+  const facesBySide=offset => [
+    [0,3,1],[1,3,4],[1,4,2],[2,4,5],
+  ].map((vertexIds,id)=>({id:id+offset,vertexIds:vertexIds.map(vertex=>vertex+offset)}));
+  const bindSnapshot={
+    hand:{positions,faces:[...facesBySide(0),...facesBySide(6)],regions:Object.fromEntries(
+      ['R','L'].flatMap(side=>['palm','index','thumb','support'].map(region=>[
+        `${side}:${region}`,{center:[side==='R'?0:-.4,0,.11],radiusMetres:.05},
+      ])))},
+    tools:{rpgBody:[...shiftedCube(0,0,true),...shiftedCube(-.4,12)],
+      loadedRocket:shiftedCube(-.4),wrenchBody:shiftedCube(0)},
+  };
+  const plan=createActualContactPlan({candidatePath,rpgPath,wrenchPath,bindSnapshot});
+  assert.equal(plan.sources.candidate.sha256,sha(candidatePath));
+  assert.equal(plan.sources.rpg.sha256,sha(rpgPath));
+  assert.equal(plan.sources.wrench.sha256,sha(wrenchPath));
+  assert.ok(plan.patches['rpg:R:palm']?.vertexIds.length>=6);
+  assert.ok(plan.patches['rpg:R:palm']?.selectionHash);
+  assert.ok(plan.componentIds['rpg-right-handle']?.triangleIds.length>0);
+  assert.equal(plan.componentIds['rpg-right-handle'].closed,false,
+    'nearest grip component is open; another closed component cannot mask it');
+
+  let stamp=0;
+  const pose=(clip,progress,tool='rpg')=>({sampleStamp:++stamp,
+    requested:{clip,progress},actual:{clip,progress},geometryHash:`render-${stamp}`,
+    hand:{positions},tools:{rpgBody:bindSnapshot.tools.rpgBody,
+      loadedRocket:bindSnapshot.tools.loadedRocket,
+      wrenchBody:bindSnapshot.tools.wrenchBody}});
+  const poseSamples=[pose('idle',.25),pose('aim',.25),pose('fire',.1),
+    ...[.18,.48,.76,.90,1].map(value=>pose('reload',value)),
+    pose('wrench-idle',.25,'wrench'),
+    ...[.25,.5,.75,1].map(value=>pose('repair',value,'wrench'))];
+  const report=collectActualCandidateContact({plan,poseSamples});
+  assert.equal(report.frames.length,13);
+  assert.ok(report.triangleCounts.rpgBody>0 && report.triangleCounts.wrenchBody>0);
+  assert.deepEqual(report.sources,plan.sources);
+  assert.equal(report.verdict.passed,false,
+    'an open actual grip component cannot establish safe continuous contact');
+  assert.ok(report.unsupported.length>0);
+  assert.deepEqual(report.patches['rpg:R:palm'].vertexIds,
+    plan.patches['rpg:R:palm'].vertexIds,'selected hand IDs stay fixed after bind');
+  const activeOnly=poseSamples.map(row => row.requested.clip === 'wrench-idle' ||
+    row.requested.clip === 'repair' ? {...row,tools:{wrenchBody:row.tools.wrenchBody}} :
+    {...row,tools:{rpgBody:row.tools.rpgBody,loadedRocket:row.tools.loadedRocket}});
+  const activeReport=collectActualCandidateContact({plan,poseSamples:activeOnly});
+  assert.equal(activeReport.frames.length,13,
+    'ordinary poses only carry their active mounted tool, not hidden off-tool meshes');
+  assert.ok(activeReport.unsupported.length>0,
+    'open active RPG grip must still be reported unsupported');
+  const junction=join(proofRoot,'candidate-junction');
+  try {
+    mkdirSync(proofRoot,{recursive:true});
+    symlinkSync(join(root,'public/assets/models/wasteland/first-person/hands'),junction,'junction');
+    assert.throws(()=>createActualContactPlan({candidatePath:join(junction,'rook.glb'),
+      rpgPath,wrenchPath,bindSnapshot}),/outside|candidate|approved|realpath/i,
+    'candidate path cannot use an art-build junction to read production Rook bytes');
+  } finally {rmSync(junction,{recursive:true,force:true});}
 });
