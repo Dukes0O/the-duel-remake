@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "method": "piecewise-linear-landmark-bake",
+  "source": {
+    "path": "art-build/crew/rook-p2/face-paint-source-1.png",
+    "sha256": "cc48bbd07c6b436771537fcf416cf0c0d503e2afa5fab4c2b31b5582d46de358",
+    "size": [1254, 1254],
+    "landmarks": {
+      "hairline": [630, 155],
+      "leftEye": [490, 470],
+      "rightEye": [768, 470],
+      "nose": [630, 654],
+      "mouth": [630, 770],
+      "chin": [630, 965]
+    }
+  },
+  "target": {
+    "chart": "face",
+    "boundsPx": [16, 16, 244, 244],
+    "landmarks": {
+      "hairline": [130, 67],
+      "leftEye": [85, 126],
+      "rightEye": [175, 126],
+      "nose": [130, 147],
+      "mouth": [130, 169],
+      "chin": [130, 193]
+    }
+  }
+}
