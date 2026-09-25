@@ -1773,3 +1773,13 @@ or beta switch changed.
   Crew owns the newly named test-hidden-road catalog-state assertion hook:
   dev to beta reflects the approved promotion, while isolation and gameplay
   checks remain. The unfinished-art exception is recorded in decisions.md.
+
+
+- P2 after-merge janitor consumed 914,611,107 bytes of generated art, builds,
+  captures and gate logs. The exact clean merged worktree was removed normally
+  after checking and unlinking its integration-only dependency junction; its
+  completed branch was deleted. The first link check safely stopped because
+  PowerShell returned a string rather than an array; inspection confirmed the
+  target and the corrected check passed. Both original images and all runtime,
+  Kyle and external audio assets/branches remain. STATUS refreshed with the
+  external audio folder excluded. BETA-01 is the only Director-owned active lane.
