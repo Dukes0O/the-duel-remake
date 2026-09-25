@@ -1753,3 +1753,20 @@ tasks:
       - "Independent tests precede implementation; each counter and CPU path has a meaningful regression. Current lane/build and applicable visual/audio/save gates must pass before merge."
     sound: "weapon.oil.deploy, weapon.caltrops.deploy, weapon.smoke.deploy, weapon.harpoon.fire, weapon.harpoon.flight, weapon.harpoon.hit and weapon.harpoon.break; external audio lane owns bank entries and sources."
     note: "Future phase-3 card after the first-three boss slice. The legacy starter-only normalizer currently grants every known ID, so catalog expansion requires explicit save-safe design. No implementation is dispatched during phase 2."
+
+  - id: AUD-15-P1
+    title: "Bounded rival and traffic engine voices"
+    lane: AUDIO
+    size: M
+    needs: [AUD-14, AUD-17]
+    status: backlog
+    owner: "Future audio lane; not started tonight"
+    owns: [src/sound-bank.js, src/audio.js, tools/test-audio-vehicles.mjs, tools/scenarios/audio-vehicles.mjs, docs/audio/briefs.md, docs/changes/AUD-15-P1.md]
+    hooks: [src/app.js, src/sound-mixer.js]
+    flag: wasteland2
+    acceptance:
+      - "Before code, settle a bounded read-only actor snapshot, stable spawn identity, count/radius/priority limits and whether existing engine loops are suitable pending human listening. Proposal: at most three rivals and four nearest traffic cars within 250 metres; deterministic tie ordering and fade on leaving range."
+      - "Use bank cues vehicle.rival-engine and vehicle.traffic-engine with per-car pitch data, 3D distance/direction and bounded doppler. A cap applies to real loop voices and graph resources; no silent duplicate loops on identity reuse or loading."
+      - "Independent tests cover moving listener/actors, left/right, approach/recede, nearest selection, voice stealing, wreck/despawn/respawn, pause/menu/stage/flag-off cleanup and restart. Audio must not mutate simulation or saves."
+      - "Keep the original flag-off waveform comparator unchanged. Record a private memory-only full-throttle near/far browser mix, resource/frame measurements and at least three measured listening rounds; mark missing human ratings explicitly."
+    note: "Read-only preparation only. Kyle limited the current external session to AUD-10, AUD-11, kept gatekeeper, AUD-14 and optional AUD-17 candidates; it will stop after its final gate. Do not start this slice tonight or create another audio lane. Surface tires, scrapes/landings, convolution reverb, ambience one-shots and remaining arrival work need later AUD-15 slices. No new source downloads or credits are authorized by this card."
