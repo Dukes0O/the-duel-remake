@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "method": "quadrant-panel-bake",
+  "source": {
+    "path": "art-build/crew/rook-p2/garment-paint-source-1.png",
+    "sha256": "793ee85733cd1ed0446b54d0cf5ef3746d5dba311aaf8b79d4fda6828e93e928",
+    "size": [1254, 1254],
+    "regions": {
+      "shirt": [12, 12, 615, 615],
+      "canvas": [639, 12, 1242, 615],
+      "trousers": [12, 639, 615, 1242],
+      "leather": [639, 639, 1242, 1242]
+    }
+  },
+  "targets": {
+    "jacket": {"source": "shirt", "panels": [[528, 780, 632, 992], [648, 780, 752, 992], [768, 780, 872, 992], [888, 780, 992, 992]]},
+    "sleeve-cuff": {"source": "shirt"},
+    "vest-left": {"source": "canvas"},
+    "vest-right": {"source": "canvas"},
+    "pockets": {"source": "canvas"},
+    "scarf": {"source": "canvas"},
+    "pack": {"source": "canvas"},
+    "trousers": {"source": "trousers", "panels": [[780, 276, 878, 488], [894, 276, 992, 488]]},
+    "boots": {"source": "leather"},
+    "gloves": {"source": "leather"},
+    "straps": {"source": "leather"}
+  },
+  "finish": {
+    "version": 1,
+    "method": "source-boundary-uv-ink",
+    "targetRoles": ["vest-left", "vest-right", "pockets", "pack"],
+    "edgeWidthPx": 4,
+    "edgeDarken": 0.72,
+    "wearWidthPx": 2,
+    "wearLiftRgb": [10, 8, 5],
+    "trousers": {"saturation": 0.62, "value": 0.91}
+  }
+}

@@ -300,7 +300,7 @@ tasks:
     lane: ART
     size: L
     needs: [GFX-01-P1]
-    status: building
+    status: merged
     owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, docs/board/looks/crew-p2/]
     hooks: [tools/test-rook-p2-source.mjs, tools/test-rook-p2-candidate.mjs, tools/test-rook-p2-review.mjs, tools/test-blender-output.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: wasteland2
@@ -308,7 +308,7 @@ tasks:
     acceptance:
       - "Start from the negative round-10 trial verdict and its text recipe. Build a reference-matched head, hair, collar, thin vest and asymmetric clothing folds. Prove likeness at least four on Rook in both game qualities before converting any of the other seven. Keep the existing runtime until that gate passes."
       - "Use a separate polish-wave review folder so previous round sheets remain immutable. Follow the ten-round limit, connected topology, padded UV, animation contact and measured frame budgets. A count of triangles never substitutes for a visual score."
-    note: "Ten-round P2 research wave finished at3/3/3/3, frame unmeasured; closure gate pending. Current runtime crew remain unchanged. GFX-01-P3 owns remaining likeness and full-crew conversion; GFX-02-P1 may begin a separate Rook-only hand proof after this closure, without treating the body technique as accepted."
+    note: "Merged3069f34 as a ten-round non-promoted research closure: final3/3/3/3, frame unmeasured; clean lane265/265 and build passed on1e1d3fb. Current runtime crew remain unchanged. GFX-01-P3 owns remaining likeness and full-crew conversion; GFX-02-P1 may begin a separate Rook-only hand proof after this closure, without treating the body technique as accepted."
   - id: GFX-01-P3
     title: "Rook sculpt, retopology and baked detail before crew conversion"
     lane: ART
@@ -368,7 +368,7 @@ tasks:
     lane: VIS
     size: M
     needs: [GFX-02, GFX-01-P2]
-    status: backlog
+    status: building
     owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, public/assets/models/wasteland/first-person/, docs/board/looks/first-person-p1/, docs/changes/GFX-02-P1.md]
     hooks: [tools/test-first-person-gear.mjs, tools/test-first-person-polish.mjs, tools/scenarios/first-person-gear.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [art_critic, reviewer, browser_qa]
@@ -1808,3 +1808,16 @@ tasks:
       - "Replace stale public WAV/source instructions with current compressed runtime/catalog/source recipes; retain current engine behavior, strict comparison, routing, booth and measurements, kept gatekeeper, combat build/flight policy and pending listening caveats."
       - "Delete the four consumed task notes only after fact preservation review. Preserve Kyle's AUD-12 picks, pending AUD-17 note/auditions, licenses, runtime assets and external branch/folder."
       - "Docs only: independent review and normal lane/build gate; no source, test, credit, runtime or external-folder changes."
+
+  - id: JANITOR-ROOK-NOTE
+    title: "Fold the completed Rook research note into current asset guidance"
+    lane: TOOL
+    size: S
+    needs: [GFX-01-P2]
+    status: ready
+    owns: [docs/ASSET_PIPELINE.md, docs/changes/GFX-01-P2.md, docs/changes/JANITOR-ROOK-NOTE.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Preserve exact face/cloth prompts, original paths and hashes, calibration exceptions, rebuild command and structural-versus-selected-paint distinction in current guidance before deleting the consumed note."
+      - "Keep committed recipes/tests and immutable sheets. Record7500/1833, final3/3/3/3 with unmeasured frame cost, unchanged runtime crew and P3 body-conversion gate; independent hand proof has its own gate."
+      - "Independent fact review, lane tier and build before merge. No game code, originals or runtime asset edits."

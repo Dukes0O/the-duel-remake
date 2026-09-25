@@ -18,11 +18,11 @@ function evidenceDir(family, round) {
 function summaryPath(family, round) {
   return join(root,'docs','board','looks',family,`round-${round}.jpg`);
 }
-const family = args.includes('--crew-round') ? 'crew' : args.includes('--rustwall-p2-round') ? 'rustwall-p2'
+const family = args.includes('--crew-p2-round') ? 'crew-p2' : args.includes('--crew-round') ? 'crew' : args.includes('--rustwall-p2-round') ? 'rustwall-p2'
   : args.includes('--rustwall-round') ? 'rustwall'
   : args.includes('--first-person-round') || args.includes('--first-person-tools-round') ? 'first-person' : 'test-fighter';
-const round = Number(value('--crew-round', value('--rustwall-p2-round', value('--rustwall-round',
-  value('--first-person-round', value('--first-person-tools-round', 1))))));
+const round = Number(value('--crew-p2-round', value('--crew-round', value('--rustwall-p2-round', value('--rustwall-round',
+  value('--first-person-round', value('--first-person-tools-round', 1)))))));
 if (args.includes('--paths-only')) {
   const directory = evidenceDir(family, round);
   const name = args.includes('--first-person-tools-round') ? 'sheet-tools' : 'sheet';
@@ -31,7 +31,9 @@ if (args.includes('--paths-only')) {
     summary:args.includes('--first-person-tools-round') ? null : summaryPath(family,round)}));
   process.exit(0);
 }
-if (args.includes('--rustwall-p2-round')) {
+if (args.includes('--crew-p2-round')) {
+  await crewP2Sheet(round);
+} else if (args.includes('--rustwall-p2-round')) {
   await rustwallP2Sheet(Number(value('--rustwall-p2-round')));
 } else if (args.includes('--rustwall-round')) {
   await rustwallSheet(Number(value('--rustwall-round')));
@@ -243,6 +245,80 @@ async function rustwallSheet(round) {
     '--','--root',root,'--manifest',manifest,'--output',output,
     '--summary',summaryPath('rustwall',round)],{cwd:root,stdio:'inherit',windowsHide:true});
   console.log('Rustwall fidelity sheet: '+output);
+}
+
+async function crewP2Sheet(round) {
+  if (!Number.isInteger(round) || round < 1 || round > 10) throw Error('Crew P2 round must be 1..10');
+  const base = evidenceDir('crew-p2', round);
+  const captures = JSON.parse(await readFile(join(base, 'captures.json'), 'utf8'));
+  const blender = JSON.parse(await readFile(join(base, 'blender-rook.json'), 'utf8'));
+  const sources = {}, rows = [], blenderViewHashes = new Set();
+  const verify = async (path, expected) => {
+    if (typeof path !== 'string' || !/^[a-f0-9]{64}$/.test(expected || ''))
+      throw Error('Missing evidence path or SHA256');
+    const actual = createHash('sha256').update(await readFile(resolve(root, path))).digest('hex');
+    if (actual !== expected) throw Error('Evidence source changed: ' + path);
+    sources[path] = actual;
+  };
+  const candidate = captures.candidate, qa = captures.qa, asset = captures.assets?.rook;
+  if (captures.only !== 'rook' || !candidate || !qa || !asset ||
+      candidate.path !== asset.path || candidate.sha256 !== asset.sha256 ||
+      blender.asset?.path !== asset.path || blender.asset?.sha256 !== asset.sha256 ||
+      qa.candidateSha256 !== asset.sha256 ||
+      qa.baselineRookSha256 !== candidate.baselineRookSha256)
+    throw Error('Rook candidate identity or hash mismatch');
+  await verify(asset.path, asset.sha256);
+  await verify('public/assets/models/wasteland/crew/rook.glb', qa.baselineRookSha256);
+  for (const quality of ['high', 'performance']) {
+    if (!Number.isInteger(qa.substitutionRequests?.[quality]) || qa.substitutionRequests[quality] < 1)
+      throw Error('Missing positive candidate substitution count: ' + quality);
+  }
+  const fixed = {position:[0,.96,5], target:[0,.96,0], width:432, height:576};
+  for (const [key, expected] of Object.entries(fixed)) {
+    if (JSON.stringify(blender.camera?.[key]) !== JSON.stringify(expected) ||
+        JSON.stringify(captures.camera?.[key]) !== JSON.stringify(expected))
+      throw Error('Rook candidate camera mismatch: ' + key);
+  }
+  if (blender.camera.verticalFov !== 28 || captures.camera.fov !== 28)
+    throw Error('Rook candidate camera FOV mismatch');
+  await verify(blender.reference?.path, blender.reference?.sha256);
+  for (const [view, yaw] of [['front',0], ['side',Math.PI/2], ['back',Math.PI]]) {
+    const select = (items, predicate) => {
+      const matches = (items || []).filter(predicate);
+      if (matches.length !== 1) throw Error('Missing or duplicate Rook pose: ' + view);
+      const sample = matches[0];
+      if (sample.time !== .25 || sample.yaw !== yaw) throw Error('Rook pose/time mismatch: ' + view);
+      return sample;
+    };
+    const source = select(blender.captures, item => item.view === view && item.clip === 'idle');
+    const game = quality => select(captures.captures, item =>
+      item.crew === 'rook' && item.view === view && item.clip === 'idle' && item.quality === quality);
+    const high = game('high'), performance = game('performance');
+    const crops = blender.reference.crops;
+    const matches = Array.isArray(crops) ? crops.filter(item => item.view === view) : [];
+    const crop = matches.length === 1 ? matches[0].crop : null;
+    if (!Array.isArray(crop) || crop.length !== 4 || crop.some(item => !Number.isInteger(item)) ||
+        crop[0] < 0 || crop[1] < 0 || crop[2] <= crop[0] || crop[3] <= crop[1])
+      throw Error('Invalid Rook reference crop: ' + view);
+    for (const sample of [source, high, performance]) await verify(sample.path, sample.sha256);
+    if (blenderViewHashes.has(source.sha256)) throw Error('Duplicate Blender view image: ' + view);
+    blenderViewHashes.add(source.sha256);
+    rows.push({crew:'rook', clip:'idle', time:.25, view, yaw, crop,
+      reference:blender.reference.path, blender:source.path, high:high.path, performance:performance.path});
+  }
+  const output = join(base, 'sheet.png'), manifest = join(base, 'sheet.json');
+  await writeFile(manifest, JSON.stringify({round, observationCommit:captures.observationCommit,
+    candidate, qa, assets:{rook:asset}, sources, camera:captures.camera, counts:captures.counts,
+    qualities:captures.qualities, rows, output:relative(root,output).replaceAll('\\\\','/'),
+    status:'Rook candidate review only. Scores, crowd cost and promotion require independent checks.'
+  }, null, 2) + '\n', {flag:'wx'});
+  const executable = value('--blender', process.env.BLENDER_PATH ||
+    'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe');
+  await mkdir(dirname(summaryPath('crew-p2', round)), {recursive:true});
+  execFileSync(executable, ['-b','--python',join(root,'tools/blender/fidelity-sheet.py'),
+    '--','--root',root,'--manifest',manifest,'--output',output,
+    '--summary',summaryPath('crew-p2',round)], {cwd:root,stdio:'inherit',windowsHide:true});
+  console.log('Rook candidate fidelity sheet: ' + output);
 }
 
 async function rustwallP2Sheet(round) {
