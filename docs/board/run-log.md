@@ -1880,3 +1880,39 @@ or beta switch changed.
   16:48 UTC, or the next session end. Sweep is complete with count zero.
   Later metadata commits do not inherit this exact release pass. D8 ordinary
   integration push follows; release and history rewrite remain unauthorized.
+
+
+## Morning handoff — 25 September 2026
+
+Stopped after finishing the last active card and the final gates. BETA-01 is
+prepared on integration, with Kyle's explicit current-art exception. It is
+**not released**. Wasteland and Hidden Road are opt-in beta; Career Backup
+stays dev. The compact-menu Experimental control is fixed. Read the candidate
+What to try in docs/playtest-inbox.md.
+
+- Exact tested commit: 74646e8. Full 270/270, build, complete combat off/on,
+  private smoke, beta journey and save checks passed. The following commits
+  record verdicts/status/handoff only; a release still needs its own exact
+  final-commit gate and Kyle's written go-ahead.
+- Final reviewed validation logs and four smoke captures (6023313 bytes) were
+  consumed after the verdict commit; the disposable integration QA bundle was
+  removed too. Current integration build is 239924200 bytes, under250MB.
+  Public/runtime models are unchanged. End-run sweep complete, no owned lanes
+  left. Full and sweep counters zero; next full after five merges,16:48UTC,
+  or next session end.
+- Next phase-3 work: ARENA-01/02 in next-run order. First-three-warlord reward
+  mechanics remain the unanswered question in parked.md. Do not invent usable
+  rewards for unimplemented equipment.
+- Art remains unfinished. Rook body and hands are research closures at
+  likeness three; current runtime assets remain selected. GFX-01-P3 and
+  GFX-02-P3 carry changed construction and acceptance. Hand contact remains
+  unsupported; its idle frame pass is not active-action/GPU evidence.
+- Kyle's audio-direction and aud-12 branches are kept. Integrated audio
+  foundation/combat/gatekeeper work stays; all credit use remains external.
+  The external worktree is now registered on lane/audio/aud-17-picks at31ef0ba,
+  unmerged and uninspected by the final sweep. Coordinate through its session;
+  never enter that folder. Skip its current branch plus aud-10/aud-12 in status
+  and audit. JANITOR-LANE-PATH records the branch-change exclusion gap;
+  JANITOR-DIAGNOSTIC-NOTES records remaining uncertain old notes.
+- D8 ordinary integration push follows this handoff. No live-folder edit,
+  port5174 use, real-save work, history rewrite or release is part of closure.
