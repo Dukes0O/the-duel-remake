@@ -1678,3 +1678,39 @@ tasks:
       - "Preserve the exact selected paint prompt, source path/hash, explicit bake recipe, procedural-fixture limitation and asset-recovery distinction in current guidance before deleting the consumed note."
       - "Correct current exported wall inventory to 55,834 triangles, fourteen primitives and 8,421,064 bytes, with wash 3,840,288 bytes. Preserve immutable sheets and residual P3 likeness and paint-recovery work."
       - "Independent fact review, unchanged review-evidence check, lane tier and build pass. No runtime, test or source-asset edits."
+
+  - id: WAR-01
+    title: "Warlord metadata and territory ladder"
+    priority: 3
+    lane: UI
+    size: M
+    needs: [ARENA-02, CAR-01]
+    status: backlog
+    owns: [src/warlords.js, src/screen-territory.js, tools/test-warlords.mjs, tools/test-territory-ui.mjs, docs/changes/WAR-01.md]
+    hooks: [src/screen-yard-home.js, src/wasteland-career.js]
+    flag: wasteland2
+    helpers: [test_author, reviewer, browser_qa]
+    acceptance:
+      - "Settle immutable eight-boss metadata, career territory mapping, hold/claimed/defeated display rules and which fights are actually available before code. Reuse the existing territory IDs and course assignments."
+      - "Render the ladder on the real territory map without save writes. No launch button, working weapon reward or completed fight is advertised before its owning implementation exists. Preserve per-player and unknown/future-save behavior."
+      - "Follow SPEC 0.10 order. Record the conflict between first-three boss rewards and later arsenal waves for explicit WAR-02 design resolution; do not silently replace promised rewards or create fake unlocks."
+      - "Independent data/UI tests, private High/Performance yard-map review, lane tier and build pass. No new poster or card-image system from superseded SPEC 3.10."
+    sound: "warlord.available for a future real availability event; metadata-only display adds no simulation event."
+  - id: WAR-02-P1
+    title: "First three warlord fights and one-time territory claims"
+    priority: 3
+    lane: CMB
+    size: L
+    needs: [WAR-01]
+    status: backlog
+    owns: [src/warlord-encounters.js, src/warlord-settlement.js, tools/test-warlord-encounters.mjs, tools/test-warlord-settlement.mjs, tools/scenarios/warlords.mjs, docs/changes/WAR-02-P1.md]
+    hooks: [src/game.js, src/app.js, src/screen-router.js, src/screen-territory.js, src/progression.js, src/wasteland-progress.js, src/wasteland-career.js]
+    flag: wasteland2
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
+    acceptance:
+      - "First settle Sal, Dustmonger and Mirage encounter formats, full-hold/rank/ladder eligibility, deterministic personalities and exact implemented rewards. Side Saws, Smoke Screen and Decoy Drone are absent and scheduled later; resolve this design conflict in writing before code or slicing further hooks."
+      - "Use a stable boss event identity distinct from ordinary course run/stage settlement. Only a completed eligible win claims territory and marks the matching boss defeated once. Repeated callbacks, restart, abandon, loss and another named player cannot duplicate or inherit rewards."
+      - "Reward mutation and persistence must be atomic from the player's view; denied writes cannot report a persisted claim. Preserve unknown fields and opaque future versions, existing credits/scrap rules, backups and historical save fixtures. Save Guardian review is required."
+      - "Prove seed/input repeatability, ordinary race fingerprints, real private launch-to-result flow, all three encounter balance checks and current lane/build gate. Do not expose the remaining bosses as playable."
+    sound: "warlord.start and warlord.defeated, plus existing combat cues; the external audio lane owns sound implementations."
+    note: "First half of SPEC WAR-02 under the phase-3 order. Later WAR-02 work retains bosses four and five after the prescribed arsenal/crew sequence. This card is planning only while phase 2 remains active."
