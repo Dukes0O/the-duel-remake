@@ -115,7 +115,7 @@ function syntheticTriptychPng() {
     const at=y*(size*3+1)+1+x*3;
     const panel=Math.floor(x/418);
     const grain=(Math.floor(x/11)+Math.floor(y/13))%17;
-    const colors=[[42,86,87],[69,47,37],[158,137,105]][panel];
+    const colors=[[218,12,199],[22,219,16],[219,199,19]][panel];
     for(let channel=0;channel<3;channel++)raw[at+channel]=colors[channel]+grain;
   }
   let crcTable=Array.from({length:256},(_,i)=>{
@@ -182,8 +182,8 @@ test('R3 selected triptych paints exported charts while retaining R2 skin pixels
     cloth:[0,0,418,418],leather:[418,90,836,508],wrap:[836,250,1254,668],
   });
   const painted=decodeRgbaPng(embeddedPng(glbDocument(join(output,'hands/rook.glb')),'color'));
-  const charts={cloth:[8,8,248,248],leather:[264,8,504,248],wrap:[776,8,1016,248]};
-  const bases={cloth:[42,86,87],leather:[69,47,37],wrap:[158,137,105]};
+  const charts={cloth:[8,776,248,1016],leather:[264,776,504,1016],wrap:[776,776,1016,1016]};
+  const bases={cloth:[218,12,199],leather:[22,219,16],wrap:[219,199,19]};
   for(const [role,rect] of Object.entries(charts)) {
     const crop=manifest.paintSource.crops[role];
     for(const [dx,dy] of [[32,32],[120,120],[208,208]]) {
@@ -210,24 +210,39 @@ test('R3 selected triptych paints exported charts while retaining R2 skin pixels
       const sampledY=corners.reduce((sum,id)=>sum+uv.getY(id)*1024,0)/3;
       for(const [role,rect] of Object.entries(charts))
         if(x>=rect[0]+8&&x<=rect[2]-8&&
-          sampledY>=1024-rect[3]+8&&sampledY<=1024-rect[1]-8)
-          consumers[role].push(painted.pixel(x,sampledY));
+          sampledY>=rect[1]+8&&sampledY<=rect[3]-8)
+          consumers[role].push({pixel:painted.pixel(x,sampledY),x,y:sampledY});
     }
   });
-  for(const [role,pixels] of Object.entries(consumers)) {
-    assert.ok(pixels.length>=20,`${role} needs meaningful actual exported garment faces`);
-    const target=bases[role].map(value=>value+8);
-    const matching=pixels.filter(pixel=>
-      Math.hypot(...target.map((value,channel)=>pixel[channel]-value))<=24).length;
-    assert.ok(matching/pixels.length>=.75,
-      `${role} garment faces sample selected paint on only ${matching}/${pixels.length} surfaces`);
+  for(const [role,samples] of Object.entries(consumers)) {
+    assert.ok(samples.length>=20,`${role} needs meaningful actual exported garment faces`);
+    const rect=charts[role],crop=manifest.paintSource.crops[role];
+    const selectedColor=({pixel,x,y})=>{
+      const sourceX=Math.floor(crop[0]+(x-rect[0]+.5)*418/240);
+      const sourceY=Math.floor(crop[1]+(y-rect[1]+.5)*418/240);
+      const grain=(Math.floor(sourceX/11)+Math.floor(sourceY/13))%17;
+      return bases[role].every((value,channel)=>Math.abs(pixel[channel]-value-grain)<=6);
+    };
+    const matching=samples.filter(selectedColor).length;
+    assert.ok(matching/samples.length>=.75,
+      `${role} garment faces sample matching selected source pixels on only ${matching}/${samples.length} surfaces`);
+    const inverted=samples.filter(({x,y})=>
+      selectedColor({pixel:painted.pixel(x,1024-y),x,y})).length;
+    assert.ok(inverted/samples.length<=.25,
+      `${role} inverted V would falsely treat ${inverted}/${samples.length} faces as selected paint`);
   }
   const protectedSkin=Buffer.alloc(241*241*4);
-  for(let y=8;y<=248;y++)for(let x=520;x<=760;x++)
-    Buffer.from(painted.pixel(x,y)).copy(protectedSkin,((y-8)*241+x-520)*4);
+  for(let y=776;y<=1016;y++)for(let x=520;x<=760;x++)
+    Buffer.from(painted.pixel(x,y)).copy(protectedSkin,((y-776)*241+x-520)*4);
   assert.equal(sha256(protectedSkin),
-    '7eea2ce1afd880c2514cc24ec964cb6172becc2e8a72ccd97c7bbd449b7e8c7d',
+    'd5d6619cd34a8c5b5fb96e0600f71980a8e97b2597520888624aeff9dc699b33',
     'selected cloth/leather/wrap paint cannot alter frozen R2 skin pixels');
+  const protectedTopSkin=Buffer.alloc(241*241*4);
+  for(let y=8;y<=248;y++)for(let x=520;x<=760;x++)
+    Buffer.from(painted.pixel(x,y)).copy(protectedTopSkin,((y-8)*241+x-520)*4);
+  assert.equal(sha256(protectedTopSkin),
+    '7eea2ce1afd880c2514cc24ec964cb6172becc2e8a72ccd97c7bbd449b7e8c7d',
+    'reviewed legacy skin tile must retain its exact R2 pixels even when actual consumers use the bottom chart');
   for(const crew of Object.keys(baselineHashes))
     assert.equal(sha256(readFileSync(join(root,
       `public/assets/models/wasteland/first-person/hands/${crew}.glb`))),
@@ -412,11 +427,10 @@ test('isolated manifest identifies exact inputs, exported GLB and embedded map p
   assert.equal(manifest.asset.textureBytes, textureBytes);
 });
 
-test('actual baseline export maps glTF UV V to PNG rows through 1-v', async () => {
-  // This baseline control settles the Blender-to-glTF convention before a
-  // candidate assertion locates skin pixels. It uses decoded exported UVs and
-  // embedded image bytes, rather than source atlas comments or metadata.
-  const document = glbDocument(baseline), png = decodeRgbaPng(embeddedPng(document, 'color'));
+test('actual baseline export retains usable distal skin UV samples', async () => {
+  // The public GLB provides a distal-skin population control. Its similar
+  // palette colors cannot determine texture orientation; the distinct R3
+  // triptych above proves direct-V consumption and rejects inverse-V.
   const hands = await loadHands(baseline), samples = [];
   hands.scene.traverse(mesh => {
     if (!mesh.isSkinnedMesh) return;
@@ -432,12 +446,11 @@ test('actual baseline export maps glTF UV V to PNG rows through 1-v', async () =
     }
   });
   assert.ok(samples.length >= 30, 'baseline needs enough actual distal skin samples to calibrate UV origin');
-  const skin = png.pixel(640, 128);
-  const colorDistance = point => Math.hypot(...point.slice(0, 3).map((value, channel) => value - skin[channel]));
-  const direct = samples.reduce((sum, [x, y]) => sum + colorDistance(png.pixel(x, y)), 0) / samples.length;
-  const inverted = samples.reduce((sum, [x, y]) => sum + colorDistance(png.pixel(x, 1024 - y)), 0) / samples.length;
-  assert.ok(inverted < direct * .8,
-    `actual exported UV y must address PNG rows through 1-v: direct=${direct.toFixed(1)}, inverted=${inverted.toFixed(1)}`);
+  assert.ok(samples.every(([x,y])=>Number.isFinite(x)&&Number.isFinite(y)&&
+    x>=0&&x<=1024&&y>=0&&y<=1024),
+  'actual baseline distal skin UVs must remain finite and within the atlas');
+  assert.ok(new Set(samples.map(([,y])=>Math.round(y))).size>=3,
+    'actual baseline distal skin UVs need noncollapsed vertical coverage');
 });
 
 test('candidate keeps exact sockets, clips, normalized skin and combined tool budgets', async () => {
@@ -547,7 +560,7 @@ test('actual exported web and five distal pads per hand have local curved skin s
       assert.ok(Math.max(...axial) - Math.min(...axial) >= 6,
         `${side}:${name} needs at least 6 mm of multi-ring taper, not a flat end cap`);
       for (const hit of forward) for (const [x, gltfY] of hit.mapped) {
-        const y = 1024 - gltfY;
+        const y = gltfY;
         assert.ok(x >= skin[0] + 8 && x <= skin[2] - 8 && y >= skin[1] + 8 && y <= skin[3] - 8,
           `${side}:${name} terminal face samples leather/outside the padded skin chart`);
         const color = png.pixel(x, y);
@@ -919,7 +932,7 @@ test('Rook wrap covers the old exposed wrist with its own padded painted surface
   ensureCandidate();
   const data = source();
   const wrap = data.atlas.charts.wrap?.rect;
-  assert.deepEqual(wrap, [776, 8, 1016, 248], 'wrap needs its reviewed disjoint atlas chart');
+  assert.deepEqual(wrap, [776, 776, 1016, 1016], 'wrap needs its reviewed disjoint atlas chart');
   for (const side of ['R', 'L']) {
     const clothing = data.clothing?.[side];
     assert.ok(clothing, `${side} needs an authored sleeve-to-glove interval`);
@@ -934,7 +947,7 @@ test('Rook wrap covers the old exposed wrist with its own padded painted surface
   const skin = data.atlas.charts.skin.rect;
   const skinPixel = png.pixel(Math.round((skin[0] + skin[2]) / 2),
     Math.round((skin[1] + skin[3]) / 2));
-  const wrapPixel = png.pixel(896, 128);
+  const wrapPixel = png.pixel(896, 896);
   assert.equal(wrapPixel[3], 255, 'wrap paint must be opaque');
   assert.ok(rgbDistance(wrapPixel, skinPixel) >= 15,
     'wrap must paint distinct beige cloth instead of borrowing skin pixels');
@@ -944,7 +957,7 @@ test('Rook wrap covers the old exposed wrist with its own padded painted surface
     const {position, uv} = mesh.geometry.attributes;
     for (const corners of faces(mesh.geometry)) {
       const mapped = corners.map(index => [uv.getX(index) * 1024,
-        (1 - uv.getY(index)) * 1024]);
+        uv.getY(index) * 1024]);
       if (!mapped.every(([x, y]) => x >= wrap[0] + 8 && x <= wrap[2] - 8 &&
         y >= wrap[1] + 8 && y <= wrap[3] - 8)) continue;
       triangles.push({points: corners.map(index => vertex(position, index)), mesh});
