@@ -309,6 +309,22 @@ tasks:
       - "Start from the negative round-10 trial verdict and its text recipe. Build a reference-matched head, hair, collar, thin vest and asymmetric clothing folds. Prove likeness at least four on Rook in both game qualities before converting any of the other seven. Keep the existing runtime until that gate passes."
       - "Use a separate polish-wave review folder so previous round sheets remain immutable. Follow the ten-round limit, connected topology, padded UV, animation contact and measured frame budgets. A count of triangles never substitutes for a visual score."
     note: "The phase-2 Rook trial did not establish a winning technique. GFX-02-P1 waits for this card. The rejected experiment recipe and tests remain in Git text history."
+  - id: BETA-01
+    title: "Prepare the Experimental Wasteland release candidate"
+    priority: 1
+    lane: TOOL
+    size: M
+    needs: [GFX-01-P2, EGG-02-P2, GFX-02-P1]
+    status: backlog
+    owns: [src/feature-flags.js, tools/test-feature-flags.mjs, tools/scenarios/experimental.mjs, tools/scenarios/wasteland-beta.mjs, tools/test-wasteland-beta.mjs, docs/playtest-inbox.md, docs/changes/BETA-01.md]
+    helpers: [test_author, reviewer, browser_qa, save_guardian, test_runner]
+    acceptance:
+      - "After phase 2, move wasteland2 and hidden-road to beta under Experimental as Kyle requested; retain career-backup's current state and prove default-off, explicit opt-in, opt-out and reload persistence with memory-only storage."
+      - "Update the exact current-feature expectations in Experimental tests with a reviewed reason; preserve released-roadside and hidden-dev-feature protections."
+      - "Run a private production-menu path from Experimental opt-in through Hidden Road departure, gate invitation, yard and a Wasteland race. Record fixture placement separately from actual driving and UI actions; do not force completion or discovery to claim journey coverage."
+      - "Record full tier on the exact candidate commit, production build, complete combat checks off/on, applicable frame pacing, art and save budget results, and a short What to try note. Later commits require fresh exact evidence."
+      - "Prepare only: BETA-01 does not authorize master, the live folder, port 5174, a release or history rewrite. Kyle must approve release in writing."
+    note: "First phase-3 card under Kyle's 24 September overnight direction. Not dispatched while phase-2 cards remain. Existing Experimental scenario expects no beta entries; changing that expectation is the intended promotion, not a reason to remove isolation or released-feature checks."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8
