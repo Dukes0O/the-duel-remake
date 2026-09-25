@@ -45,15 +45,33 @@ import bmesh
 from mathutils import Vector
 
 
-def weld_and_offset_shell(mesh, car):
+def weld_and_offset_shell(mesh, car, paint_rear_z=None):
     bm=bmesh.new()
     bm.from_mesh(mesh)
     before=(len(bm.verts),sum(not edge.is_manifold for edge in bm.edges))
     bmesh.ops.remove_doubles(bm,verts=list(bm.verts),dist=.0005)
     bm.normal_update()
     after=(len(bm.verts),sum(not edge.is_manifold for edge in bm.edges))
+    rear_z=min(vertex.co.z for vertex in bm.verts)
+    rear_normals=[vertex.normal.z for vertex in bm.verts if vertex.co.z<=rear_z+.035]
+    print(f'SHELL_REAR {car} z={rear_z:.4f} normals={min(rear_normals):.3f}/{max(rear_normals):.3f} count={len(rear_normals)}')
+    rear_distance={vertex:vertex.co.z-rear_z for vertex in bm.verts}
     for vertex in bm.verts:
-        vertex.co+=vertex.normal*.02
+        normal=vertex.normal.copy()
+        if vertex.co.z<=rear_z+.035 and normal.z>0:
+            normal.z=-normal.z
+        vertex.co+=normal*.02
+    if paint_rear_z is not None:
+        rear_current=min(vertex.co.z for vertex in bm.verts
+                         if rear_distance[vertex]<=.035)
+        desired=paint_rear_z-.02
+        if rear_current>paint_rear_z-.002:
+            correction=desired-rear_current
+            for vertex in bm.verts:
+                distance=rear_distance[vertex]
+                weight=1 if distance<=.04 else max(0,1-(distance-.04)/.21)
+                vertex.co.z+=correction*weight
+            print(f'SHELL_REAR_FIT {car} {rear_current:.4f}->{desired:.4f} delta={correction:.4f}')
     bm.to_mesh(mesh)
     bm.free()
     mesh.update()
@@ -62,10 +80,16 @@ def weld_and_offset_shell(mesh, car):
 
 def paint_shell_uv(mesh):
     uv=mesh.uv_layers.active or mesh.uv_layers.new(name='Body-painted rust')
+    low=[min(vertex.co[axis] for vertex in mesh.vertices) for axis in range(3)]
+    high=[max(vertex.co[axis] for vertex in mesh.vertices) for axis in range(3)]
+    def mapped(value,axis):
+        return .02+.96*(value-low[axis])/max(.001,high[axis]-low[axis])
     for face in mesh.polygons:
+        direction=max(range(3),key=lambda axis:abs(face.normal[axis]))
+        axes=(2,1) if direction==0 else (0,2) if direction==1 else (0,1)
         for loop in face.loop_indices:
             p=mesh.vertices[mesh.loops[loop].vertex_index].co
-            uv.data[loop].uv=((p.x*.17+p.z*.13+.5)% .95,(p.y*.2+p.z*.08+.4)% .95)
+            uv.data[loop].uv=(mapped(p[axes[0]],axes[0]),mapped(p[axes[1]],axes[1]))
 
 
 def empty(name, parent=None):
@@ -215,13 +239,14 @@ def body_x(fit, side, z, default, y=None):
     return side*default
 
 
-def conforming_sheet(name, parent, material, fit, side, z0, z1, y0, y1, width):
+def conforming_sheet(name, parent, material, fit, side, z0, z1, y0, y1, width,
+                     lift=.025):
     """Door skin follows sampled production body rather than a catalog box."""
     zs = [z0, (z0+z1)/2, z1]
     points=[]
     for z in zs:
-        x0=body_x(fit,side,z,width/2,y0)+side*.025
-        x1=body_x(fit,side,z,width/2,y1)+side*.025
+        x0=body_x(fit,side,z,width/2,y0)+side*lift
+        x1=body_x(fit,side,z,width/2,y1)+side*lift
         points.extend([(x0,y0,z),(x1,y1,z)])
     faces=[]
     for i in range(2):
@@ -270,7 +295,7 @@ def body_skin_from_runtime(car, root_path, parent, material):
     return obj
 
 
-def body_skin_from_source(car, root_path, parent, material, target_length):
+def body_skin_from_source(car, root_path, parent, material, target_length, fit):
     """Retopologized rusty shell from the real metal body, not a size box."""
     source=root_path/'public/assets/models/classics'/f'{car}.glb'
     if not source.exists():
@@ -316,7 +341,7 @@ def body_skin_from_source(car, root_path, parent, material, target_length):
     mesh=bpy.data.meshes.new(f'{car}-metal-skin')
     mesh.from_pydata(verts,[],faces)
     mesh.update()
-    weld_and_offset_shell(mesh,car)
+    weld_and_offset_shell(mesh,car,fit.get('paintRearZ'))
     obj=bpy.data.objects.new('source-fitted-rust-shell',mesh)
     bpy.context.collection.objects.link(obj)
     finish(obj,'source-fitted-rust-shell',parent,material)
@@ -437,7 +462,21 @@ def build(car, width, length, height, material, index, fit, root_path):
                       (x, roof+.07, cabin_front),
                       (x+shape, roof+.31+(j%2)*.11, cabin_front+.12), .065)
     full = empty('kit-full-plating', warlord)
-    body_skin_from_source(car,root_path,full,material,length)
+    body_skin_from_source(car,root_path,full,material,length,fit)
+    door_lo=max(.25,flank_y-.22)
+    door_hi=flank_y+.045
+    door_z0,door_z1=-length*.16,length*.16
+    for sign in [-1,1]:
+        for y in [door_lo,door_hi-.03]:
+            conforming_sheet('folded-door-edge',full,material,fit,sign,
+                             door_z0,door_z1,y,y+.03,width,.065)
+        for z in [door_z0,door_z1-.025]:
+            conforming_sheet('folded-door-end',full,material,fit,sign,
+                             z,z+.025,door_lo,door_hi,width,.066)
+        for z in [door_z0+.06,door_z1-.06]:
+            for y in [door_lo+.025,door_hi-.025]:
+                x=body_x(fit,sign,z,width/2,y)+sign*.065
+                rod('fold-rivet',full,material,(x,y,z),(x+sign*.018,y,z),.03,6)
     # Three shallow overlapping rear strips wrap the corners but leave the
     # lamp band and exhaust/bumper visible.
     for x in [-width*.28,0,width*.28]:

@@ -1,4 +1,6 @@
 // Private, memory-only visual check. Both quality modes use the same race pose.
+import {writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
 async function qualityPass(context, quality) {
   await context.navigate('/tools/menu-check.html?flags=wasteland2');
   await context.waitFor(`!!window.__qaApp && !!window.__render &&
@@ -118,8 +120,133 @@ async function qualityPass(context, quality) {
 }
 
 export async function run(context) {
+  if(process.env.GFX_KIT_FRAME_COST==='1')return frameCostRun(context);
   for (const quality of ['high', 'performance']) await qualityPass(context, quality);
   if (process.env.GFX_KIT_FIT_MATRIX === '1') await fitMatrixPass(context);
+}
+
+async function frameCostRun(context) {
+  await context.command('Emulation.setDeviceMetricsOverride',
+    {width:1280,height:720,deviceScaleFactor:1,mobile:false});
+  const reports=[];
+  for(const quality of ['high','performance']){
+    await context.navigate('/tools/menu-check.html?flags=wasteland2');
+    await context.waitFor(`!!window.__qaApp && !!window.__render &&
+      !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value &&
+      !document.querySelector('#start-engine')?.disabled`,`${quality} private kit timing menu`,60000);
+    await context.evaluate(`(() => {
+      const select=document.querySelector('#graphics-quality');
+      select.value=${JSON.stringify(quality)};
+      select.dispatchEvent(new Event('change',{bubbles:true}));
+      const app=window.__qaApp;
+      app.profile={...app.profile,wasteland:{...app.profile.wasteland,
+        kits:{...app.profile.wasteland.kits,
+          falcone_f42:{owned:['warlord'],equipped:'warlord'}}}};
+      app._saveProfile();
+      if(!app.startCampaign({mode:'wasteland',startStage:0,car:'falcone_f42',
+        opponentCount:3,seed:1989}))throw Error('Four-car kit cost field did not start');
+      const state=app.duel.state;
+      Object.assign(state,{status:'racing',countdown:0,paused:false,s:500,prevS:500,
+        lateral:0,prevLateral:0,speedMph:0,traffic:[],armor:state.maxArmor,
+        combatArmorKit:'warlord',combatWrecking:false});
+      state.opponents.forEach((actor,index)=>Object.assign(actor,{s:480+index*9,
+        prevS:480+index*9,lateral:index===1?-4:4,
+        prevLateral:index===1?-4:4,speedMph:0,armor:actor.maxArmor,
+        combatArmorKit:index===0?'scrapper':index===1?'raider':'warlord'}));
+      state.combat.aiTimer=Infinity;state.combat.pickupTimer=Infinity;
+      const point=app.duel.course.groundAt(state.s,state.lateral);
+      app.inspectionCamera={position:[point.x+16,point.y+9,point.z+18],
+        target:[point.x,point.y+2,point.z]};
+      app.onFrame?.(state);
+    })()`);
+    await context.waitFor(`(() => {
+      const render=window.__render,host=document.querySelector('#view3d');
+      render.renderFrame();
+      let count=0;render.scene.traverse(node=>{if(node.name==='authored-kit'&&node.visible)count++;});
+      return count>=4&&host?.dataset.combatEffectsStatus==='ready'&&
+        host?.dataset.vehicleAsset==='ready'&&
+        render.renderer.domElement?.style.visibility!=='hidden';
+    })()`,`${quality} four authored kits ready`,60000);
+    await context.evaluate(`(() => {
+      const app=window.__qaApp,render=window.__render;
+      app.stop();
+      const kits=[];render.scene.traverse(node=>{if(node.name==='authored-kit'&&node.visible)kits.push(node);});
+      if(kits.length<4)throw Error('Four loaded authored kit roots required');
+      const original=render.renderer.render.bind(render.renderer);
+      window.__kitCost={raf:window.requestAnimationFrame.bind(window),kits,branch:'A',
+        originalRender:original};
+      window.requestAnimationFrame=()=>0;
+      render.renderer.render=(scene,camera)=>{
+        if(scene!==render.scene)return original(scene,camera);
+        const visibility=kits.map(node=>node.visible);
+        kits.forEach((node,index)=>node.visible=window.__kitCost.branch==='B'?
+          visibility[index]:false);
+        try{return original(scene,camera);}
+        finally{kits.forEach((node,index)=>node.visible=visibility[index]);}
+      };
+    })()`);
+    const passes=[];
+    for(const branch of ['A1','B','A2']){
+      const pass=await context.evaluate(`(async () => {
+        const q=window.__kitCost,render=window.__render;
+        q.branch=${JSON.stringify(branch==='B'?'B':'A')};
+        const raf=[],cpu=[],draw=[],triangles=[],mirror=[];
+        let last=0;
+        for(let i=0;i<630;i++){
+          const now=await new Promise(q.raf),start=performance.now();
+          const metrics=render.renderFrame(),elapsed=performance.now()-start;
+          if(i>=30){raf.push(now-last);cpu.push(elapsed);
+            draw.push(metrics.drawCalls);triangles.push(metrics.triangles);
+            mirror.push(document.querySelector('[data-rear-view-refreshed]')?.dataset.rearViewRefreshed==='true');}
+          last=now;
+        }
+        const summary=values=>{const sorted=[...values].sort((a,b)=>a-b),at=p=>sorted[Math.ceil(sorted.length*p)-1]??null;
+          return{samples:sorted.length,p50:at(.5),p95:at(.95),max:at(1),over33:sorted.filter(v=>v>33).length};};
+        return{branch:${JSON.stringify(branch)},raf:summary(raf),renderCpu:summary(cpu),
+          renderCpuByMirror:{refreshed:summary(cpu.filter((_,i)=>mirror[i])),
+            reused:summary(cpu.filter((_,i)=>!mirror[i]))},
+          drawCalls:summary(draw),triangles:summary(triangles),
+          rafSamplesMs:raf,renderCpuSamplesMs:cpu,drawCallSamples:draw,
+          triangleSamples:triangles,mirrorRefreshSamples:mirror};
+      })()`);
+      if(pass.raf.samples!==600||pass.renderCpu.samples!==600)
+        throw Error(`${quality} ${branch}: incomplete kit frame sample`);
+      passes.push(pass);
+    }
+    const repair=await context.evaluate(`(async () => {
+      const q=window.__kitCost,render=window.__render,app=window.__qaApp;
+      q.branch='B';
+      const state=app.duel.state,player=render.scene.getObjectByName('armor-kit-0-front')?.parent?.parent;
+      if(!player?.userData.damageMeshes?.length)throw Error('Player damage geometry unavailable');
+      const versions=()=>player.userData.damageMeshes.map(item=>item.mesh.geometry.attributes.position.version);
+      state.armor=state.maxArmor*.12;render.renderFrame();const before=versions();
+      const cpu=[];
+      for(let i=0;i<120;i++){
+        await new Promise(q.raf);
+        state.armor=state.maxArmor*(i%2?.135:.12);
+        const start=performance.now();render.renderFrame();cpu.push(performance.now()-start);
+      }
+      const after=versions();
+      return{samples:cpu.length,cpuSamplesMs:cpu,geometryBefore:before,
+        geometryAfter:after,unchanged:before.every((value,index)=>value===after[index])};
+    })()`);
+    await context.evaluate(`(() => {
+      const q=window.__kitCost,render=window.__render;
+      render.renderer.render=q.originalRender;
+      window.requestAnimationFrame=q.raf;
+      delete window.__kitCost;
+    })()`);
+    if(!repair.unchanged||repair.samples!==120)
+      throw Error(`${quality}: repair-only geometry changed or sample incomplete`);
+    const [a1,b,a2]=passes;
+    const ratio=(metric)=>({A1:b.renderCpu[metric]/a1.renderCpu[metric],
+      A2:b.renderCpu[metric]/a2.renderCpu[metric]});
+    reports.push({quality,passes,repair,cpuP50Ratio:ratio('p50'),
+      cpuP95Ratio:ratio('p95'),scope:'600 ordered RAF/full production renderFrame CPU samples per A/B/A branch after 30 warm frames; same stopped four-car field/camera/quality. A hides authored kits in each production world-scene submission, including mirror views; B draws them. The same visibility snapshot and wrapper run in both. CPU submission is not GPU time.'});
+    console.log(`${quality} kit A/B/A CPU p95 ratios ${JSON.stringify(reports.at(-1).cpuP95Ratio)}`);
+  }
+  await writeFile(join(context.outputDir,'armor-kit-frame-cost.json'),
+    JSON.stringify({reports},null,2)+'\n');
 }
 
 // Opt-in visual fit audit. It changes only a stopped memory-only QA race and
