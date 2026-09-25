@@ -1656,7 +1656,7 @@ tasks:
     lane: TOOL
     size: S
     needs: [EGG-02-P2]
-    status: building
+    status: merged
     flag: none
     owns: [tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-relief.mjs, docs/changes/FIX-RUSTWALL-CLEAN.md]
     helpers: [test_author, reviewer, test_runner]
@@ -1664,4 +1664,4 @@ tasks:
       - "Reproduce the external clean-checkout ENOENT for art-build/rustwall-p2/wall-relief-source.png before changing tests. Runtime asset verification may use only committed assets, and generated-source verification must build its own isolated fixture."
       - "Preserve the exact generated-source SHA and exported pixel comparisons on each fresh build's own output; retain all geometry, atlas, route, gate and budget assertions. No copying a stale art scratch file or committing raw review output to hide the dependency. Explain and independently review any assertion relocation."
       - "Run focused tests and the normal lane/build gate from a fresh checkout without prior art-build files. Integration full tier must pass after the fix before further feature merges."
-    note: "External AUD-11 gate reproduced235 pass/1 fail/23 not run: test-rustwall-p2.mjs line324 reads consumed lane-only source PNG. Integration is treated as red until the fix and fresh full pass. Audio owner does not edit this art test."
+    note: "Merged ea84b34 after clean red-to-green reproduction, independent assertion review, isolated export6/6, lane8/8 in64.15 seconds and build. Runtime asset checks no longer depend on consumed scratch; exact own-build SHA and atlas pixels remain checked. Feature merges stay held until integration full passes."
