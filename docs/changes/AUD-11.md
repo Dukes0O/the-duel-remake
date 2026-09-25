@@ -128,3 +128,16 @@ No board, status or run-log file is edited directly by this lane.
 
 Status remains in-progress. Passing general suites does not waive AUD-10's
 strict waveform comparison or turn pending human ratings into approvals.
+
+## Pending-load cancellation review
+
+Independent review reproduced overlapping A/B playback while samples loaded,
+and Stop allowing a pending audition to start later. Two tests execute the real
+booth module with deferred file loading; both failed first (two played takes
+and a post-Stop start). Request generations now cancel stale starts after each
+await, and loading never resumes the context itself. Timer callbacks also
+verify ownership. Both tests pass, with all eight earlier assertions unchanged.
+The private real-browser booth check confirms rapid A/B leaves exactly one B
+voice, then normal playback, verdict snapshots, stop, real siren and native-rate
+capture pass. Port 47771, zero warnings/errors, memory-only storage. Removed the
+unconditional pending-start path; no production renderer change.

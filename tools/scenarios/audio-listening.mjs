@@ -7,6 +7,9 @@ export async function run(context) {
     const booth=window.__listeningBooth;
     const storageIsMemory=!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value;
     const before=Object.keys(localStorage).length;
+    await Promise.all([booth.play('A'),booth.play('B')]);
+    const rapid={voices:booth.audio.mixer.voices.get('weapon.crossbow.fire')?.size,variant:booth.verdict().variant};
+    await booth.stop();
     await booth.play('A');
     await new Promise(r=>setTimeout(r,350));
     const level=booth.level();
@@ -18,8 +21,10 @@ export async function run(context) {
     document.querySelector('#bed').value='quiet';
     document.querySelector('#distance').value='far';
     const verdict=booth.verdict();
-    return {storageIsMemory,before,after:Object.keys(localStorage).length,level,stopped,verdict,slots:document.querySelectorAll('[data-play]').length};
+    return {rapid,storageIsMemory,before,after:Object.keys(localStorage).length,level,stopped,verdict,slots:document.querySelectorAll('[data-play]').length};
   })()`);
+  if (result.rapid.voices !== 1 || result.rapid.variant !== 'B')
+    throw Error('Rapid booth selections overlapped or retained the wrong take');
   if (!result.storageIsMemory || result.before !== result.after)
     throw Error('Booth touched persistent state');
   if (result.level <= 0.001 || result.stopped !== 'suspended')

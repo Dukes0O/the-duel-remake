@@ -1,6 +1,7 @@
 import { resolvePitchOctaves } from './audio-analysis.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { runInNewContext } from 'node:vm';
 import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve, relative } from 'node:path';
@@ -189,4 +190,122 @@ test('octave recovery uses the audio trend through a brief ambiguous reading', (
     resolvePitchOctaves(falling).map((row) => row.pitchHz),
     [120, 110, 100, 90, 80, 70],
   );
+});
+
+// Run the real booth module with a deferred file load, not a copy of play/stop.
+async function pendingBooth() {
+  let loaded;
+  const loading = new Promise((resolve) => {
+    loaded = resolve;
+  });
+  const played = [];
+  const elements = new Map();
+  const element = (id) => {
+    if (!elements.has(id))
+      elements.set(id, {
+        value:
+          id === 'bed'
+            ? 'full-throttle'
+            : id === 'distance'
+              ? 'near'
+              : 'weapon.crossbow.fire',
+        textContent: '',
+        add() {},
+        addEventListener() {},
+      });
+    return elements.get(id);
+  };
+  class Context {
+    state = 'suspended';
+    async resume() {
+      this.state = 'running';
+    }
+    async suspend() {
+      this.state = 'suspended';
+    }
+    createAnalyser() {
+      return {};
+    }
+  }
+  class Audio {
+    activeShots = new Set();
+    cueIndices = new Map();
+    output = { connect() {} };
+    mixer = {
+      output() {},
+      stopAll() {
+        played.length = 0;
+      },
+      movingOutput() {
+        return { input: {}, disconnect() {} };
+      },
+    };
+    _build(context) {
+      this.context = context;
+      this._samplesPromise = loading;
+      this._ambiencePromise = Promise.resolve();
+      this._cueBuffersPromise = Promise.resolve();
+      this.sampleStatus = this.ambienceStatus = 'ready';
+    }
+    update() {}
+    _stopHiddenRoadVoices() {}
+    _playCue(id) {
+      played.push(this.cueIndices.get(id));
+    }
+  }
+  const window = { addEventListener() {} };
+  const source = (
+    await readFile(new URL('./audio/listening.js', import.meta.url), 'utf8')
+  )
+    .replace(/^import .*;$/m, '')
+    .replace(/^const \{ EngineAudio \} = await import.*;$/m, '')
+    .replace(/^const \{ SOUND_BANK \} = await import.*;$/m, '');
+  await runInNewContext('(async()=>{' + source + '\n})()', {
+    installIsolatedStorage() {},
+    EngineAudio: Audio,
+    AudioContext: Context,
+    SOUND_BANK: {
+      'weapon.crossbow.fire': { files: ['a', 'b', 'c'], bus: 'weapons' },
+    },
+    document: { getElementById: element, querySelectorAll: () => [] },
+    window,
+    requestAnimationFrame() {
+      return 1;
+    },
+    cancelAnimationFrame() {},
+    setTimeout() {
+      return 1;
+    },
+    clearTimeout() {},
+  });
+  return { booth: window.__listeningBooth, played, loaded, element };
+}
+
+test('newest booth selection owns playback when A/B arrive during file loading', async () => {
+  const { booth, played, loaded } = await pendingBooth();
+  const a = booth.play('A');
+  const b = booth.play('B');
+  await new Promise(setImmediate);
+  loaded();
+  await Promise.all([a, b]);
+  assert.deepEqual(played, [1], 'only the requested B take may play');
+  assert.equal(booth.verdict().variant, 'B');
+  await booth.stop();
+});
+
+test('Stop during booth loading cancels pending playback and leaves context suspended', async () => {
+  const { booth, played, loaded, element } = await pendingBooth();
+  const play = booth.play('A');
+  await new Promise(setImmediate);
+  await booth.stop();
+  loaded();
+  await play;
+  assert.deepEqual(
+    played,
+    [],
+    'loading completion must not restart a stopped audition',
+  );
+  assert.equal(booth.audio.context.state, 'suspended');
+  assert.equal(element('status').textContent, 'Stopped.');
+  assert.throws(() => booth.verdict(), /Play a sound/);
 });

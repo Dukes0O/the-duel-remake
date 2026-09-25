@@ -25,6 +25,7 @@ const state = {
 };
 const course = { groundAt: () => ({ x: 0, y: 0, z: 0, heading: 0 }) };
 let previewId = null;
+let requestGeneration = 0;
 let active = 'A',
   audition = null,
   frame = 0,
@@ -55,7 +56,6 @@ async function ready() {
       audio.output.connect(meter);
     })();
   await readyPromise;
-  await audio.context.resume();
 }
 function updateBed() {
   audio.nextBeat = Infinity;
@@ -178,7 +178,9 @@ function preview(id, index) {
     audio.mixer.output = original;
   }
 }
-async function stop() {
+async function stop(cancelPending = true) {
+  if (cancelPending) requestGeneration++;
+  byId('status').textContent = 'Stopped.';
   playing = false;
   cancelAnimationFrame(frame);
   clearTimeout(timer);
@@ -191,11 +193,15 @@ async function stop() {
   output = null;
   previewId = null;
   await audio.context.suspend();
-  byId('status').textContent = 'Stopped.';
 }
 async function play(slot) {
-  await stop();
+  const request = ++requestGeneration;
+  await stop(false);
+  if (request !== requestGeneration) return;
   await ready();
+  if (request !== requestGeneration) return;
+  await audio.context.resume();
+  if (request !== requestGeneration) return;
   active = slot;
   playing = true;
   const id = byId('cue-' + slot).value;
@@ -210,7 +216,9 @@ async function play(slot) {
   preview(id, 'ABC'.indexOf(slot));
   byId('status').textContent = `Playing ${slot}: ${id}.`;
   timer = setTimeout(
-    () => stop().catch(showError),
+    () => {
+      if (request === requestGeneration) stop().catch(showError);
+    },
     SOUND_BANK[id].bus === 'voice'
       ? (audio.cueBuffers[id].duration + 0.25) * 1000
       : 3200,
