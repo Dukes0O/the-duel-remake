@@ -152,6 +152,7 @@ export function attachRenderer(host, app) {
   const firstPersonOptions={enabled:false,active:false,firstPerson:false,camera,time:0};
   const roadsideDebris=createRoadsideDebris();scene.add(roadsideDebris.group);
   let rustwallPresentation=null;
+  let yardPresentation=null;
   function retireObject(object,beforeDispose){
     detachRetiredVehicleVisuals(object,combatScene,vehicleAttachments);
     scene.remove(object);
@@ -169,6 +170,7 @@ export function attachRenderer(host, app) {
     lighting.apply({course,mood:app.lightingMood});
     world = buildEnvironment(course); scene.add(world);
     rustwallPresentation=world.getObjectByName('Rustwall')?.userData;
+    yardPresentation=world.getObjectByName('Scrapdome yard')?.userData;
     chickens=createChickens(course);world.add(chickens.group);
     ambientShading.refresh();
     host.dataset.worldBuildMs=(performance.now()-buildStart).toFixed(0);firstWorldFrame=true;
@@ -260,6 +262,7 @@ export function attachRenderer(host, app) {
     const spurCamera=!menu&&(!journeyView.camera||journeyView.camera.blend<1)?
       hiddenRoadDrivingCamera(st,course,app.cameraMode||'chase'):null;
     rustwallPresentation?.updateJourney?.(journeyView);
+    yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
     lighting.apply({course,theme:course.themeAt(distance),mood:app.lightingMood,blend:1-Math.exp(-dt*1.1),tunnel:!!course.tunnelAt(distance)});
     const tall=carKey==='titan_monster';
     const speed=Math.abs(st.speedMph);
@@ -354,15 +357,23 @@ export function attachRenderer(host, app) {
       if(blend>.15)player.visible=true;
       firstPersonView=false;
     }
+    const yardHomePose=yardPresentation?.homeCamera?.(camera.aspect);
+    if(yardHomePose){
+      camTarget.set(yardHomePose.position.x,yardHomePose.position.y,yardHomePose.position.z);
+      lookTarget.set(yardHomePose.target.x,yardHomePose.target.y,yardHomePose.target.z);
+      camera.fov=yardHomePose.fov;
+      player.visible=true;
+      firstPersonView=false;
+    }
     if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
-    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera) camera.position.copy(camTarget);
+    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose) camera.position.copy(camTarget);
     else {
       camera.position.lerp(camTarget, 1 - Math.exp(-14 * dt));
       // Follow longitudinal motion immediately: world-space damping otherwise
       // adds a speed-dependent camera gap and makes the car shrink at speed.
       camera.position.x = camTarget.x; camera.position.z = camTarget.z;
     }
-    if(!menu&&!journeyView.camera&&!spurCamera&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
+    if(!menu&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,now/1000);

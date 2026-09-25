@@ -511,41 +511,64 @@ export class App {
     this._refreshPlayers();if(!this.players.players.some(p=>p.id===id))return false;
     this.players=selectPlayer(this.players,id);this.player=activePlayer(this.players);this.profile=this.player.profile;this._restoreRaceSettings();this._rememberRaceSettings();this._recoverInterruptedRace();this.profileSaved=savePlayers(this.players);this.duel.emit({playerChanged:true});return true;
   }
+  isYardHomeActive(){
+    const state=this.duel.state, journey=state.hiddenRoadJourney;
+    if(state.status!=='exploring'||journey?.phase!=='arrived'||!journey.departed||
+      state.playerId!==this.player.id||!this.duel.featureFlags.enabled('hidden-road')||
+      !this.duel.featureFlags.enabled('wasteland2')||
+      this.profile.wasteland?.discoveredGate!==true)return false;
+    const visit=state.hiddenRoadVisit;
+    return !visit||(visit.playerId===this.player.id&&visit.journeyId===journey.id);
+  }
+  _wastelandShopAccess(){
+    return this.duel.state.status==='menu'||this.isYardHomeActive();
+  }
+  _saveShopProfile(previous){
+    if(this._saveProfile())return true;
+    this.profile=previous;
+    this.players=replacePlayerProfile(this.players,this.player.id,previous);
+    this.player=activePlayer(this.players);
+    this._syncHiddenRoadDiscovery();
+    return false;
+  }
   purchaseWeapon(id){
-    if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the Armory to upgrade weapons.'};
-    this._refreshPlayer();const result=purchaseWeaponUpgrade(this.profile,id,
+    if(!this._wastelandShopAccess())return {ok:false,reason:'Return to the Armory to upgrade weapons.'};
+    this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
+    const previous=this.profile,result=purchaseWeaponUpgrade(this.profile,id,
       {wastelandEnabled:this.duel.featureFlags.enabled('wasteland2')});
-    if(result.ok){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true});}return result;
+    if(result.ok){this.profile=result.profile;if(!this._saveShopProfile(previous))return {ok:false,reason:'Could not save this purchase.'};this.duel.emit({garage:true});}return result;
   }
   equipCarWeapon(slot,id){
-    if(this.duel.state.status!=='menu'||!this.duel.featureFlags.enabled('wasteland2'))
+    if(!this._wastelandShopAccess()||!this.duel.featureFlags.enabled('wasteland2'))
       return {ok:false,reason:'Return to the Wasteland Armory to change weapons.'};
-    this._refreshPlayer();
-    const result=equipCarWeaponSlot(this.profile,slot,id);
-    if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,loadoutChanged:true});}
+    this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
+    const previous=this.profile,result=equipCarWeaponSlot(this.profile,slot,id);
+    if(result.ok&&result.changed){this.profile=result.profile;if(!this._saveShopProfile(previous))return {ok:false,reason:'Could not save this loadout.'};this.duel.emit({garage:true,loadoutChanged:true});}
     return result;
   }
   selectCrewMember(id){
-    if(this.duel.state.status!=='menu'||!this.duel.featureFlags.enabled('wasteland2'))
+    if(!this._wastelandShopAccess()||!this.duel.featureFlags.enabled('wasteland2'))
       return {ok:false,reason:'Return to the Wasteland Armory to choose crew.'};
-    this._refreshPlayer();
-    const result=chooseCrew(this.profile,id);
-    if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();
+    this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
+    const previous=this.profile,result=chooseCrew(this.profile,id);
+    if(result.ok&&result.changed){this.profile=result.profile;if(!this._saveShopProfile(previous))return {ok:false,reason:'Could not save this crew choice.'};
       this.duel.emit({garage:true,crewChanged:true});}
     return result;
   }
   purchaseArmorKit(car,id){
-    if(this.duel.state.status!=='menu'||!this.duel.featureFlags.enabled('wasteland2'))
+    if(!this._wastelandShopAccess()||!this.duel.featureFlags.enabled('wasteland2'))
       return {ok:false,reason:'Return to the Armory with Wasteland enabled.'};
-    this._refreshPlayer();const result=purchaseArmorKit(this.profile,car,id);
-    if(result.ok){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true});}
+    this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
+    const previous=this.profile,result=purchaseArmorKit(this.profile,car,id);
+    if(result.ok){this.profile=result.profile;if(!this._saveShopProfile(previous))return {ok:false,reason:'Could not save this purchase.'};this.duel.emit({garage:true});}
     return result;
   }
   equipArmorKit(car,id=null){
-    if(this.duel.state.status!=='menu'||!this.duel.featureFlags.enabled('wasteland2'))
+    if(!this._wastelandShopAccess()||!this.duel.featureFlags.enabled('wasteland2'))
       return {ok:false,reason:'Return to the Armory with Wasteland enabled.'};
-    this._refreshPlayer();const result=equipArmorKit(this.profile,car,id);
-    if(result.ok){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true});}
+    this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
+    const previous=this.profile,result=equipArmorKit(this.profile,car,id);
+    if(result.ok){this.profile=result.profile;if(!this._saveShopProfile(previous))return {ok:false,reason:'Could not save this kit choice.'};this.duel.emit({garage:true});}
     return result;
   }
   purchaseUpgrade(car,type){
