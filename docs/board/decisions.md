@@ -649,3 +649,33 @@ geometry change is approved until actual clipped-patch calibration and its
 independent fixtures are reviewed.
 
 - P2 first-proof scope clarification: remove the unused cross-panel crest-drift JSON field and defer that separate construction control. The sleeve retains implemented seam-angle drift and the exact axial bulge/gather/ridge nodes. Retain P1 fold displacement on all frozen rings rather than describing their absolute displacement as zero. No new contact threshold is approved.
+
+## 2026-09-25 PDT: P2 round two isolates game-scale cloth material
+
+Both actual-game P2 round-one reviews remain 3/4/3/3, with frame cost
+unmeasured. The broader sleeve silhouette is visible, but coarse high-contrast
+weave dominates the cloth. Keep the exact R1 mesh, UVs, rig, clips, tools and
+camera for a material-only comparison before changing garment construction
+again.
+
+Approve one new built-in image-generated dark-teal tightly woven canvas source,
+with low-contrast fine grain and broad subtle wear under neutral illumination.
+No baked folds, directional shadows, lettering or objects. Use the entire native
+square image to represent about half a metre of cloth and box-filter it into
+the existing 240-square cloth chart. A centre crop would enlarge the threads;
+do not use one. Preserve the original image outside disposable output and
+record its full prompt, exact native dimensions, full crop and SHA. Accept
+square inputs from 1024 to 2048 pixels; a synthetic 1024-square fixture can
+prove the path independently.
+
+Add optional paired P2 cloth path/hash arguments, verified before output and
+confined to the existing ignored/original-image source homes. Keep the
+original three-panel source for leather, wrap and skin; distinguish its
+selected-source flag from the optional cloth source flag. Change only saved
+PNG x8..247/y776..1015 in the color, surface and normal maps. The cloth surface
+is matte near0.9 with bounded small variation; reduce normal height/slope to
+one quarter and renormalize, rather than scaling encoded RGB channels.
+Independent reds must prove actual exported-face source consumption, exact
+outside-chart bytes in all three maps, and unchanged mesh/UV/rig/clips/tools.
+The scored High/Performance result decides whether this helps; no runtime
+promotion or contact pass follows from material tests.
