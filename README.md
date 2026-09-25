@@ -60,8 +60,11 @@ hard head-on impact can still wreck both vehicles. Traffic cars, cacti, small
 trees, signposts and chevrons move aside when struck below half the striking
 car's upgraded top speed. At or above that closing speed, they break apart.
 Either hit slows the car but does not cost armor, a crash slot or race time.
-Large trees, rocks and walls remain solid. This roadside behavior is on in
-Mad Max Duel without an Experimental setting.
+Large trees, rocks and walls remain solid.
+
+Mad Max Duel on Pacific Canyon Circuit hides a secret for players who stray
+from the racing line. The main menu does not mention it, and each named player
+finds it for themselves (spoilers: `SPEC.md` sections 0.2 and 0.12).
 Combat blasts and hits now pan toward their source and fade with distance.
 Wreck recovery has a short two-second race penalty. A missed checkpoint retries
 near that checkpoint. The UFO jump never moves the rival or skips a checkpoint.

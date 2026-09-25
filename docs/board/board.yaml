@@ -365,6 +365,19 @@ tasks:
       - "Record full tier on the exact candidate commit, production build, complete combat checks off/on, applicable frame pacing, art and save budget results, and a short What to try note. Later commits require fresh exact evidence."
       - "Prepare only: BETA-01 does not authorize master, the live folder, port 5174, a release or history rewrite. Kyle must approve release in writing."
     note: "Merged eaa4da9 after reviewed 270/270 lane suites and build. Exact integration 74646e8 passed final full270/270, build, combat off/on and private smoke; private beta journey and save checks also passed. Kyle approved current-art Experimental beta, not release. Defaults remain off; unfinished polish is listed in playtest-inbox. Later metadata commits do not inherit an exact release pass."
+  - id: EGG-REL
+    title: "Release the Wasteland as a Mad Max easter egg"
+    priority: 1
+    lane: TOOL
+    size: M
+    needs: [BETA-01]
+    status: merged
+    owns: [src/wasteland-access.js, tools/test-wasteland-easter-egg.mjs, docs/changes/EGG-REL.md]
+    hooks: [src/app.js, src/game.js, src/audio.js, src/progression.js, src/screen-router.js, src/screen-menu.js, src/style.css, src/feature-flags.js]
+    helpers: [reviewer, browser_qa, test_runner]
+    acceptance:
+      - "Kyle, 25 September 2026: no settings on the main menu beyond Mad Max Duel; the Wasteland is found while racing Mad Max Duel (SPEC 0.12). Kyle approved the live release in writing the same day."
+    note: "Merged 359d185: Experimental menu and menu camera setting removed, switches on, Hidden Road only in Mad Max Duel, Wasteland rules only after a player finds the gate. Full 271/271, build, smoke, Mad Max journey and discovery browser checks passed."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8

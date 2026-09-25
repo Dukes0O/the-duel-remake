@@ -1,5 +1,35 @@
 # Remake verification
 
+## The Wasteland as a Mad Max easter egg — September 25, 2026
+
+Kyle asked for nothing new on the main menu beyond Mad Max Duel, with the
+Wasteland found while racing it, and approved the release in writing. A review
+of the BETA-01 candidate found an Experimental button on the menu, a Hidden
+Road present in every race mode on Pacific Canyon, and the Wasteland rules
+(crew, armor, loadouts, on foot, raiders) applied to every Mad Max Duel before
+the gate was found. EGG-REL removes the Experimental menu and the menu on-foot
+camera setting (C still switches it on foot) and switches `wasteland2` and
+`hidden-road` on. The Hidden Road and Rustwall now exist only in Mad Max Duel
+(and the post-discovery WASTELAND visit). A race uses the Wasteland rules only
+when its player had found the gate at the race start. Before that, Mad Max
+Duel plays as it did in the live game. Garage hints count finished Mad Max
+Duels on Pacific Canyon only. `src/wasteland-access.js` holds these rules.
+
+About a dozen tests changed, each because its rule changed on purpose: switch
+states moved from beta to on, road tests drive in Mad Max Duel, the hint count
+excludes other modes, and the audio routing baseline names its switches
+explicitly. The ordinary-race road fingerprint is unchanged against its stored
+baseline. A new check shows the road does not change Mad Max driving. The
+EGG-REL tree passed 271/271 suites and the production build. Private
+memory-only browser checks passed with no warnings or errors: smoke, the
+journey from a plain menu through a pre-discovery Mad Max Duel, the dirt road,
+gate, Enter, yard and back to a Mad Max Duel with Wasteland rules, and Hidden
+Road discovery (hints, Turn back, reload, phone layout, a second player who
+sees nothing, and the direct visit). Earlier BETA-01 evidence at 74646e8: full
+270/270, combat balance off (wins 9/6/2) and on (8/5/3, Easy CPU hits 3), save
+checks and private smoke. Current wall, crew and first-person hand art are
+still being polished. The final release gate is recorded below after it runs.
+
 ## Mad Max roadside collisions — September 23, 2026
 
 Player feedback on the live build showed that traffic and signposts stayed in
