@@ -36,7 +36,7 @@ def plan(args):
         raise ValueError('Choose a dedicated Rook review output directory')
     boots = args.isolate == 'boots'
     torso = args.isolate == 'torso'
-    views = ('front', 'side', 'three-quarter') if boots else ('front', 'side') if torso else ('front', 'side', 'back')
+    views = ('front', 'side', 'three-quarter') if boots or torso else ('front', 'side', 'back')
     prefix = 'boot' if boots else 'torso' if torso else 'neutral'
     stem = 'rook-p2-boots' if boots else 'rook-p2-torso' if torso else 'rook-p2-neutral'
     manifest = 'boot-manifest.json' if boots else 'torso-manifest.json' if torso else 'manifest.json'
@@ -144,7 +144,9 @@ def build(args, paths):
              ('front', (0, -6, target_height)), ('side', (-6, 0, target_height)),
              ('back', (0, 6, target_height))]
     if args.isolate == 'torso':
-        views = views[:2]
+        views = [('front', (0, -6, target_height)),
+                 ('side', (-6, 0, target_height)),
+                 ('three-quarter', (-4, -5, target_height))]
     prefix = 'boot' if args.isolate == 'boots' else 'torso' if args.isolate == 'torso' else 'neutral'
     for view, position in views:
         camera.location = position
@@ -170,8 +172,9 @@ def build(args, paths):
         'glb': [], 'textures': [],
         'outputs': {path.name: sha(path) for path in (output / f'{prefix}-{view}.png' for view, _ in views)},
     }
-    (output / ('boot-manifest.json' if args.isolate == 'boots' else 'torso-manifest.json' if args.isolate == 'torso' else 'manifest.json')).write_text(
-        json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+    manifest_path = output / ('boot-manifest.json' if args.isolate == 'boots' else 'torso-manifest.json' if args.isolate == 'torso' else 'manifest.json')
+    with manifest_path.open('w', encoding='utf-8', newline='\n') as target:
+        target.write(json.dumps(manifest, indent=2) + '\n')
     print(json.dumps(manifest))
 
 
