@@ -69,7 +69,7 @@ rewrite or release. D4 permits pushing `master` after an approved release.
 - **Tests written before the code, by someone else.** The test_author writes the acceptance tests from the task card before the builder starts. The builder can't bend a test to fit its code without the reviewer seeing it.
 - **Fresh eyes for review.** A helper agent starts with a clean context, so it reviews the change without the builder's assumptions.
 - **Files have owners.** Each lane owns a set of files. The busiest files (`src/game.js`, `src/main.js`, `src/render3d.js`, `src/app.js`) have exactly one owner lane at a time. Other lanes may add only small hook lines that their task card lists.
-- **At most four builder lanes at once.** More than that and review becomes the bottleneck.
+- **At most five builder lanes at once** in phase 2 (four plus the audio lane, SPEC 0.9); four otherwise. More than that and review becomes the bottleneck.
 
 ## 4. Roles
 
@@ -510,7 +510,7 @@ Paste these to start each thread. Replace the parts in angle brackets.
 You are the Director for the Wasteland expansion. Read SPEC.md section 0 first; it wins
 over conflicting later text. Read docs/README.md, docs/board/next-run.md,
 docs/CODEX_PLAYBOOK.md and your task card in docs/board/board.yaml.
-You plan; you do not write game code. Keep at most four builder lanes busy.
+You plan; you do not write game code. Keep at most five builder lanes busy in phase 2 (the fifth is audio), four otherwise.
 Finish the cleanup cards in `docs/board/next-run.md` before SPEC 0.6 features;
 its listed existing cards may continue when a lane is free. Enforce section 7:
 before EVERY integration merge,
@@ -680,7 +680,7 @@ repeat until: no card is ready, the budget is nearly spent, or Kyle says stop
   1. Read SPEC section 0, board.yaml, run-log.md, decisions.md, playtest-inbox.md
   2. Follow the cleanup order in docs/board/next-run.md before SPEC 0.6
      features. Turn notes into cards; expand one-line cards; mark ready cards
-  3. Fill free lanes (at most 4) with the top ready card each
+  3. Fill free lanes (at most 5 in phase 2, including audio) with the top ready card each
   4. For each lane with a card, next step of section 6:
        tests as needed → builder → test_runner → refine loops → reviewer (+ helpers) → change note
   5. Before EVERY merge, verify node tools/run-tests.mjs --tier lane --changed --jobs 8
