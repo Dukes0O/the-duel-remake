@@ -4,7 +4,7 @@ Standing decisions D1-D7 are approved in [SPEC.md](../../SPEC.md), section 15.
 This log is for choices the spec does not settle. Record the choice, reason,
 and how to reverse it before continuing.
 
-## 2026-09-22 PDT â€” FND-10/FND-11 order
+## 2026-09-22 PDT — FND-10/FND-11 order
 
 - Decision: Use FND-10's integrated seven historical fixtures as the
   prerequisite for FND-11, then complete FND-10's storage-budget design with
@@ -16,16 +16,16 @@ and how to reverse it before continuing.
   localStorage shape; the FND-11 export/import and backup feature can stand
   independently behind its development switch.
 
-## 2026-09-22 PDT â€” BUG-10 D-pad direction map
+## 2026-09-22 PDT — BUG-10 D-pad direction map
 
 - Decision: Up fires UFO swap, Right fires bomb storm, Down fires crossbow,
   Left fires star shield. Each weapon fires once per new press.
-- Reason: This follows keyboard weapon order 1â€“4 clockwise from Up and leaves
+- Reason: This follows keyboard weapon order 1–4 clockwise from Up and leaves
   analog steering, pedals, camera, and gear controls unchanged.
 - How to reverse: Change the mapping in `src/app.js`, its fake-gamepad test,
   and the HUD/help text together, then rerun the input and browser gates.
 
-## 2026-09-22 PDT â€” FND-10 storage unit and scope
+## 2026-09-22 PDT — FND-10 storage unit and scope
 
 - Decision: Interpret the 4 MB budget as 4,000,000 bytes of localStorage
   keys and values across the whole game origin. Count UTF-16 storage bytes.
@@ -38,7 +38,7 @@ and how to reverse it before continuing.
 - How to reverse: Change the budget definition and rerun the seven save
   fixtures and the storage model before moving any production save data.
 
-## 2026-09-22 PDT â€” FND-05 base
+## 2026-09-22 PDT — FND-05 base
 
 - Decision: Build the integration branch from the isolated green foundation
   commit that contains FND-04 and FIX-01..03.
@@ -49,7 +49,7 @@ and how to reverse it before continuing.
   commit before feature work; preserve the foundation commits as a separate
   branch.
 
-## 2026-09-23 PDT â€” CMB-07 initial aim bounds
+## 2026-09-23 PDT — CMB-07 initial aim bounds
 
 - Decision: For the first aimed-bolt implementation, cap homing at 12 degrees
   from launch direction and turn at no more than 90 degrees per second.
@@ -60,7 +60,7 @@ and how to reverse it before continuing.
 - How to reverse: Tune the two values in `src/wasteland-tuning.js`, update the
   CMB-07 tests, and rerun the crossbow hit-rate and Wasteland balance checks.
 
-## 2026-09-23 PDT â€” SAVE-01 completed combat loss reward
+## 2026-09-23 PDT — SAVE-01 completed combat loss reward
 
 - Decision: A completed armored Wasteland loss can earn the positive hit and
   wreck bonus, within the spec's 25% base-win cap. It does not debit saved
@@ -71,19 +71,19 @@ and how to reverse it before continuing.
 - How to reverse: Change SAVE-01 eligibility and rerun save migration,
   settlement-idempotence, result and balance tests before release.
 
-## 2026-09-23 PDT â€” CMB-02 active front spikes
+## 2026-09-23 PDT — CMB-02 active front spikes
 
 - Decision: The front spikes already visible on every Wasteland combat rig
   count as equipped when `wasteland2` is on. Only a front-face strike applies
-  the 1.5Ã— damage bonus to the other car. A rear or side contact does not.
+  the 1.5× damage bonus to the other car. A rear or side contact does not.
 - Reason: The art shows the spikes on each combat car, while the armor rule
-  already reserves a 1.5Ã— spike multiplier. The visual and collision rules
+  already reserves a 1.5× spike multiplier. The visual and collision rules
   should agree before kit purchases arrive.
 - How to reverse: Add an explicit equipped-bumper state with its future kit
   purchase, update the rig and CMB-02 contact tests together, then rerun the
   three-car browser scene and ordinary replay controls.
 
-## 2026-09-23 PDT â€” CMB-03 initial combat style tuning
+## 2026-09-23 PDT — CMB-03 initial combat style tuning
 
 - Decision: Use a separate combat combo with a five-second window and a
   maximum multiplier of five. Each positive player-owned armor hit earns
@@ -95,7 +95,7 @@ and how to reverse it before continuing.
 - How to reverse: Tune these values in `src/wasteland-tuning.js`, update
   CMB-03 score tests, and rerun combat balance before the switch leaves dev.
 
-## 2026-09-23 PDT â€” CMB-04 on-foot ammo timing
+## 2026-09-23 PDT — CMB-04 on-foot ammo timing
 
 - Decision: Define the capped ammo pickup effect in CMB-04, but do not spawn
   ammo crates in car-only races. Activate them when the on-foot inventory
@@ -105,7 +105,7 @@ and how to reverse it before continuing.
 - How to reverse: Enable ammo spawn when FOOT-01 provides an on-foot actor,
   then test player and CPU collection, save behavior and road visibility.
 
-## 2026-09-23 PDT â€” CMB-08 roadside traffic callouts
+## 2026-09-23 PDT — CMB-08 roadside traffic callouts
 
 - Decision: A low-tier traffic hit says `TRAFFIC SHOVED CLEAR`; a high-tier hit
   says `TRAFFIC OBLITERATED`. The existing traffic-wreck browser scenario now
@@ -349,7 +349,7 @@ The event rates reward a finish and visible combat without making repeated hits 
 
 - Yard round 10 remains within the original 25,000-triangle allocation: 24,190 triangles, three source draws and 7,612,148 bytes. Automatic approval review rejected a proposed increase to 29,000 as a weakened assertion; no test change was made. Removing broken filler and retaining twelve welded car hulks provided a compliant alternative. Root scores likeness/readability/grounding/consistency three; GFX-04-P1 owns remaining pile density, barriers and cranes. No beta promotion.
 - Imported vehicle triangles must be welded before decimation; disconnected face vertices otherwise produce shards. Preserve recognizable body and tire silhouettes before composing a pile. For kit part batching, normalize the active UV layer name before joining. An independent binary-asset regression reproduced a full shell with only 0.8 percent usable UV area, then passed after the correction across all nine cars.
-- The kit rear shell intersected actual loaded Falcone paint by 18.8 mm. An independent three-ray test now requires 2â€“65 mm exterior clearance. Fit the copied rear band against actual paint geometry with a local taper; preserve side, roof, wheels and glass. This is a presentation correction, with no changes to car physics or sockets.
+- The kit rear shell intersected actual loaded Falcone paint by 18.8 mm. An independent three-ray test now requires 2–65 mm exterior clearance. Fit the copied rear band against actual paint geometry with a local taper; preserve side, roof, wheels and glass. This is a presentation correction, with no changes to car physics or sockets.
 - Yard Armory change handlers must accept either the menu Armory or the guarded yard Armory. A real-DOM test first reproduced ignored weapon/car selections. The narrow guard fix passes unchanged; the expected later wallet changes from 2,200 to 1,850 because this test now buys one additional 350-scrap kit. Purchases retain App ownership checks.
 - The first 120-frame yard A/B/A sample keeps an unfavorable Performance-home CPU p95 result. Stable RAF cadence alone cannot grant the frame pass. Before optimization, repeat the same frozen scene with 600 ordered samples and dynamic quantiles to resolve baseline drift; retain both runs and the unchanged ten-percent CPU/RAF limit.
 
@@ -361,9 +361,9 @@ The event rates reward a finish and visible combat without making repeated hits 
 
 ## 2026-09-24 PDT: measured kit merge and next Rustwall wave
 
-- Nine authored kit GLBs total 4,383,060 bytes, below the proposed 5 MB family target. Total source geometry is 3,440â€“5,094 triangles per car and eighteen independently named primitives. Some cars exceed the advisory 4,000-near/two-draw goals; keeping breakable parts distinct serves existing damage behavior. The quiet four-car 600-frame A/B/A test passes full renderFrame CPU p50/p95, means and RAF against both baselines: maximum p95 ratios High1.0572, Performance1.0678. Every branch contains300 refreshed and300 reused mirror samples;120 repair frames preserve body geometry buffer versions in each quality. This establishes the measured scene scope, not GPU completion time or a far-detail claim.
+- Nine authored kit GLBs total 4,383,060 bytes, below the proposed 5 MB family target. Total source geometry is 3,440–5,094 triangles per car and eighteen independently named primitives. Some cars exceed the advisory 4,000-near/two-draw goals; keeping breakable parts distinct serves existing damage behavior. The quiet four-car 600-frame A/B/A test passes full renderFrame CPU p50/p95, means and RAF against both baselines: maximum p95 ratios High1.0572, Performance1.0678. Every branch contains300 refreshed and300 reused mirror samples;120 repair frames preserve body geometry buffer versions in each quality. This establishes the measured scene scope, not GPU completion time or a far-detail claim.
 - GFX-03 final round8 scores3/4/4/3/frame4. Keep dev. GFX-03-P1 owns individually segmented plate shapes and stronger reference likeness. Preserve the existing local async cache, cloned actor finishes, deduplicated source-resource disposal, actual subtree debris placement and1.5-second lifetime. Body scorch is gated presentation only, never adds clearcoat or polishes matte paint, and resets pooled finishes without geometry churn. Primitive kits remain only while authored models load or fail; successful authored mounting hides them. Remove that fallback only with a later proven replacement path.
-- EGG-02-P2 replaces repeated facade microdetail with welded/decimated existing car hulks and an authored unequal elevation/depth map, while retaining60,000 wall triangles,24 draws and three512 atlases. Reclaim rivets/interior tile geometry before adding macro forms; preserve400mÃ—35m core,9mÃ—7m moving gate and clear opening. Wash changes only joined ribbon contour/UV preparation inside the unchanged collision-box union, with shared XYZ/UV seams, two draws and existing1024 atlas. Root selected the top-right canyon background of the existing wasteland-art-direction.png as the labeled slope/strata/color target; it is environment context, not a close geological reference. Independent tests and a written reversal precede implementation; matched game review and whole-scene timing decide acceptance.
+- EGG-02-P2 replaces repeated facade microdetail with welded/decimated existing car hulks and an authored unequal elevation/depth map, while retaining60,000 wall triangles,24 draws and three512 atlases. Reclaim rivets/interior tile geometry before adding macro forms; preserve400m×35m core,9m×7m moving gate and clear opening. Wash changes only joined ribbon contour/UV preparation inside the unchanged collision-box union, with shared XYZ/UV seams, two draws and existing1024 atlas. Root selected the top-right canyon background of the existing wasteland-art-direction.png as the labeled slope/strata/color target; it is environment context, not a close geological reference. Independent tests and a written reversal precede implementation; matched game review and whole-scene timing decide acceptance.
 
 
 ## 2026-09-24 PDT: phase-2 janitor evidence fold
