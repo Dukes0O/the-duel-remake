@@ -354,7 +354,7 @@ tasks:
     lane: TOOL
     size: M
     needs: [GFX-01-P2, EGG-02-P2, GFX-02-P1]
-    status: integrated
+    status: merged
     owns: [src/feature-flags.js, tools/test-feature-flags.mjs, tools/scenarios/experimental.mjs, tools/scenarios/wasteland-beta.mjs, tools/test-wasteland-beta.mjs, docs/playtest-inbox.md, docs/changes/BETA-01.md]
     hooks: [tools/test-hidden-road.mjs, tools/test-combat-armor.mjs, src/style.css]
     helpers: [test_author, reviewer, browser_qa, save_guardian, test_runner]
@@ -364,7 +364,7 @@ tasks:
       - "Run a private production-menu path from Experimental opt-in through Hidden Road departure, gate invitation, yard and a Wasteland race. Record fixture placement separately from actual driving and UI actions; do not force completion or discovery to claim journey coverage."
       - "Record full tier on the exact candidate commit, production build, complete combat checks off/on, applicable frame pacing, art and save budget results, and a short What to try note. Later commits require fresh exact evidence."
       - "Prepare only: BETA-01 does not authorize master, the live folder, port 5174, a release or history rewrite. Kyle must approve release in writing."
-    note: "Kyle explicitly approved Experimental beta with current art on 25 September. Prepare with unfinished polish listed; retain art follow-on gates and current runtime assets. No release approval. This is the final active card before the morning handoff. Existing beta-empty test expectations must change with reviewed reasons while isolation protections remain."
+    note: "Merged eaa4da9 after reviewed 270/270 lane suites and build. Exact integration 74646e8 passed final full270/270, build, combat off/on and private smoke; private beta journey and save checks also passed. Kyle approved current-art Experimental beta, not release. Defaults remain off; unfinished polish is listed in playtest-inbox. Later metadata commits do not inherit an exact release pass."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8

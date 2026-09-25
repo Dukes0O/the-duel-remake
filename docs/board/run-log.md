@@ -1863,3 +1863,20 @@ or beta switch changed.
   permitted P2 sheets (510081 bytes). Existing model/file target overruns keep
   their ASSET_PIPELINE reasons; no new size target is needed. Sweep counter
   resets to zero. Final full and supporting checks run next on a clean commit.
+
+
+- Final exact clean integration 74646e86f18409bf3dc864135ed6369e26ab7f0c
+  passed 270/270 full suites in 396.42 seconds, ledger 2026-09-25T14:48:28.754Z,
+  clean start and end on the same commit. Replay fingerprints 162 unchanged;
+  expansion 48/48 completed and won, 648 checks. Build 222 modules in 398 ms.
+  Complete balance off: wins 9/6/2 of ten per difficulty, CPU hits 1/3/7,
+  crossbow 13/26, 71.54 seconds. On: wins 8/5/3, CPU hits 3/4/6, crossbow 12/26,
+  76.40 seconds; legal strong pursuit completed and caused player-owned CPU
+  wrecks 2/2/0. Own-bomb maximum speed loss 4.53 percent in both. Private14944
+  memory-only High/Performance smoke passed four captures with zero warnings
+  or errors. Earlier beta journey, scoped frame and Save Guardian verdicts
+  remain distinct; no active-play GPU or art-score improvement is inferred.
+  BETA-01 is merged. Full count resets to zero; next full after five merges,
+  16:48 UTC, or the next session end. Sweep is complete with count zero.
+  Later metadata commits do not inherit this exact release pass. D8 ordinary
+  integration push follows; release and history rewrite remain unauthorized.
