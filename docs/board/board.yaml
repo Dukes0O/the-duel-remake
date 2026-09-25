@@ -1854,7 +1854,7 @@ tasks:
     lane: OPS
     size: S
     needs: [GFX-02-P1]
-    status: building
+    status: merged
     owns: [docs/ASSET_PIPELINE.md, docs/changes/GFX-02-P1.md, docs/changes/JANITOR-HAND-NOTE.md]
     helpers: [reviewer, test_runner]
     acceptance:
