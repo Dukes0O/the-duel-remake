@@ -222,6 +222,193 @@ test('near trousers are one substantial pelvis and two measured leg silhouettes'
     'legs separate below the crotch rather than retaining a narrow central strip');
 });
 
+test('Rook hair follows the traced temple and rear curl silhouette', () => {
+  const source=json('rook-p2-source.json');
+  const parts=source.meshes.filter(mesh=>mesh.lod==='near'&&mesh.role.startsWith('hair'));
+  const scale=1.83/578, atY=y=>(641-y)*scale;
+  const section=y=>{
+    const z=atY(y),points=[];
+    for(const part of parts)for(const face of part.faces)for(let i=0;i<face.length;i++){
+      const a=part.vertices[face[i]],b=part.vertices[face[(i+1)%face.length]];
+      if((a[2]-z)*(b[2]-z)>0||a[2]===b[2])continue;
+      const t=(z-a[2])/(b[2]-a[2]);
+      if(t>=0&&t<=1)points.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);
+    }
+    assert.ok(points.length>=8,`hair contour has real surface at native row ${y}`);
+    return points;
+  };
+  const errors=[];
+  for(const [y,left,right] of [[95,79,149],[101,80,149]]){
+    const points=section(y),actual=[112+Math.min(...points.map(p=>p[0]))/scale,
+      112+Math.max(...points.map(p=>p[0]))/scale];
+    if(Math.abs(actual[0]-left)>6||Math.abs(actual[1]-right)>6)
+      errors.push(`front y${y}: ${actual.map(n=>n.toFixed(1))} vs ${left},${right}`);
+  }
+  // This rear edge is visible in the side reference, unlike the face-side hair boundary.
+  for(const [y,rear] of [[95,241],[101,242]]){
+    const actual=270-Math.max(...section(y).map(p=>p[1]))/scale;
+    if(Math.abs(actual-rear)>6)errors.push(`side rear y${y}: ${actual.toFixed(1)} vs ${rear}`);
+  }
+  assert.deepEqual(errors,[],`hair outline follows native front/side curl contour: ${errors.join('; ')}`);
+});
+
+test('upper rear skull sits inside the measured hair shell without moving the lower head', () => {
+  const source=json('rook-p2-source.json'),landmarks=json('rook-p2-landmarks.json');
+  const core=source.meshes.find(part=>part.lod==='near'&&part.role==='body-core');
+  assert.ok(core,'measure the actual connected skull rather than a scalp proxy');
+  const outline=landmarks.views.side.outlines['head-back'],scale=1.83/578;
+  const referenceAt=y=>{
+    for(let i=1;i<outline.length;i++){
+      const a=outline[i-1],b=outline[i];
+      if(y>=a[1]&&y<=b[1])return a[0]+(b[0]-a[0])*(y-a[1])/(b[1]-a[1]);
+    }
+    assert.fail(`missing side reference hair contour at y${y}`);
+  };
+  const rearAt=y=>{
+    const z=(641-y)*scale,depth=[];
+    for(const face of core.faces)for(let i=0;i<face.length;i++){
+      const a=core.vertices[face[i]],b=core.vertices[face[(i+1)%face.length]];
+      if((a[2]-z)*(b[2]-z)>0||a[2]===b[2])continue;
+      const t=(z-a[2])/(b[2]-a[2]);
+      if(t>=0&&t<=1)depth.push(a[1]+t*(b[1]-a[1]));
+    }
+    assert.ok(depth.length>=4,`real rear skull cross-section at native y${y}`);
+    return 270-Math.max(...depth)/scale;
+  };
+  const errors=[];
+  for(const y of [67,77,85]){
+    const skull=rearAt(y),hair=referenceAt(y);
+    // Three millimetres of exterior hair contact is one native pixel at this scale.
+    if(skull<hair+.003/scale)errors.push(`y${y} skull ${skull.toFixed(1)} before hair ${hair.toFixed(1)}`);
+  }
+  for(const y of [95,101]){
+    const skull=rearAt(y);
+    if(Math.abs(skull-243.2)>2)
+      errors.push(`lower y${y} skull ${skull.toFixed(1)} moved from accepted 243.2`);
+  }
+  assert.deepEqual(errors,[],`upper skull fits reference shell; lower head stays put: ${errors.join('; ')}`);
+});
+
+test('trouser folds follow visible intermediate contours while accepted bands stay fixed', () => {
+  const source=json('rook-p2-source.json'),mesh=source.meshes.find(part=>
+    part.lod==='near'&&part.role==='trousers');
+  assert.ok(mesh);
+  const scale=1.83/578,errors=[];
+  for(const [y,referenceLeft] of [[425,50],[475,44],[525,52]]){
+    const z=(641-y)*scale,points=[];
+    for(const face of mesh.faces)for(let i=0;i<face.length;i++){
+      const a=mesh.vertices[face[i]],b=mesh.vertices[face[(i+1)%face.length]];
+      if((a[2]-z)*(b[2]-z)>0||a[2]===b[2])continue;
+      const t=(z-a[2])/(b[2]-a[2]);
+      if(t>=0&&t<=1)points.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);
+    }
+    assert.ok(points.length>=8,`cloth section at native y${y}`);
+    const depths=points.map(p=>p[1]),midDepth=(Math.min(...depths)+Math.max(...depths))/2;
+    const front=points.filter(p=>p[1]<=midDepth);
+    assert.ok(front.length>=4,`visible trouser surface at native y${y}`);
+    const left=112+Math.min(...front.filter(p=>p[0]<0).map(p=>p[0]))/scale;
+    if(Math.abs(left-referenceLeft)>5)
+      errors.push(`front left cloth y${y}: ${left.toFixed(1)} vs ${referenceLeft}`);
+    if(y===525){
+      const sideFront=270-Math.min(...points.map(p=>p[1]))/scale;
+      if(Math.abs(sideFront-283)>6)
+        errors.push(`visible side lower calf y525: ${sideFront.toFixed(1)} vs 283`);
+    }
+  }
+  assert.deepEqual(errors,[],`measured visible fold inflections: ${errors.join('; ')}`);
+});
+
+test('Rook vest frames a measured widening teal opening with unequal soft hems', () => {
+  const source=json('rook-p2-source.json'),marks=json('rook-p2-landmarks.json').views.front.outlines;
+  const scale=1.83/578,parts=['vest-left','vest-right'].map(role=>source.meshes.find(mesh=>
+    mesh.lod==='near'&&mesh.role===role));
+  assert.ok(parts.every(Boolean),'both torso cloth panels remain separately authored');
+  const section=(part,imageY)=>{
+    const z=(641-imageY)*scale,points=[];
+    for(const face of part.faces)for(let edge=0;edge<face.length;edge++){
+      const a=part.vertices[face[edge]],b=part.vertices[face[(edge+1)%face.length]];
+      if((a[2]-z)*(b[2]-z)>0||a[2]===b[2])continue;
+      const t=(z-a[2])/(b[2]-a[2]);
+      if(t>=0&&t<=1)points.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);
+    }
+    const depth=points.map(point=>point[1]),mid=(Math.min(...depth)+Math.max(...depth))/2;
+    const visible=points.filter(point=>point[1]<=mid);
+    assert.ok(visible.length>=4,`${part.role} has real front cloth at native y${imageY}`);
+    return [112+Math.min(...visible.map(point=>point[0]))/scale,
+      112+Math.max(...visible.map(point=>point[0]))/scale];
+  };
+  const traceAt=(name,y)=>{
+    const trace=marks[name];
+    for(let i=1;i<trace.length;i++){
+      const a=trace[i-1],b=trace[i];
+      if(y>=a[1]&&y<=b[1])return a[0]+(b[0]-a[0])*(y-a[1])/(b[1]-a[1]);
+    }
+    assert.fail(`missing traced ${name} at y${y}`);
+  };
+  const errors=[];
+  for(const y of [180,211,241,269,289]){
+    const left=section(parts[0],y),right=section(parts[1],y);
+    const expected=[traceAt('vest-left-outer',y),traceAt('vest-left-inner',y),
+      traceAt('vest-right-inner',y),traceAt('vest-right-outer',y)];
+    const actual=[left[0],left[1],right[0],right[1]];
+    for(let edge=0;edge<4;edge++)if(Math.abs(actual[edge]-expected[edge])>7)
+      errors.push(`y${y} edge${edge} ${actual[edge].toFixed(1)} vs ${expected[edge].toFixed(1)}`);
+    assert.ok(left[1]+.003/scale<right[0],`teal shirt stays visibly open at y${y}`);
+  }
+  assert.deepEqual(errors,[],`vest visible edges match measured front trace: ${errors.slice(0,8).join('; ')}`);
+});
+
+test('vest lapels stand proud of cloth and pockets hang with unequal shaped flaps', () => {
+  const source=json('rook-p2-source.json');
+  const near=source.meshes.filter(mesh=>mesh.lod==='near');
+  for(const side of ['left','right']){
+    const vest=near.filter(mesh=>mesh.role===`vest-${side}`);
+    assert.ok(vest.length,'retain the separately paintable vest panel');
+    const points=vest.flatMap(mesh=>mesh.vertices);
+    const band=(low,high)=>points.filter(([x,,z])=>
+      Math.abs(x)>=.025&&Math.abs(x)<=.13&&z>=low&&z<=high);
+    const lapel=band(1.45,1.55),lower=band(1.35,1.43);
+    assert.ok(lapel.length>=6&&lower.length>=6,'lapel and lower return have surface');
+    const tip=Math.min(...lapel.map(point=>point[1]));
+    const cloth=Math.min(...lower.map(point=>point[1]));
+    assert.ok(tip<=cloth-.01,
+      `${side} upper lapel projects at least 10mm over adjacent lower cloth: ${tip} vs ${cloth}`);
+  }
+  const pockets=near.filter(mesh=>mesh.role==='pocket');
+  const flaps=['left','right'].map(side=>pockets.find(mesh=>
+    mesh.name.includes('flap')&&mesh.name.includes(side)));
+  assert.ok(flaps.every(Boolean),'two lower pocket flaps remain attached to vest');
+  for(const [index,flap] of flaps.entries()){
+    const lower=flap.vertices.filter(point=>point[2]<Math.max(...flap.vertices.map(v=>v[2]))-.02);
+    assert.ok(lower.length>=2,`${index?'right':'left'} pocket has a hanging lower flap edge`);
+    const tilt=Math.max(...lower.map(point=>point[2]))-Math.min(...lower.map(point=>point[2]));
+    assert.ok(tilt>=.008,
+      `${index?'right':'left'} soft flap edge slopes visibly instead of ending as a square box: ${tilt}`);
+  }
+});
+
+test('back fabric forms a connected diagonal drape down to the retained satchel', () => {
+  const source=json('rook-p2-source.json');
+  const parts=source.meshes.filter(mesh=>mesh.lod==='near'&&mesh.role==='pack');
+  assert.ok(parts.length>=1,'existing pack chart still owns the rear fabric');
+  const crossing=parts.filter(part=>{
+    const z=part.vertices.map(point=>point[2]);
+    return Math.max(...z)>=1.5&&Math.min(...z)<=1.2;
+  });
+  assert.ok(crossing.length>=1,
+    'one actual back fabric surface connects shoulder drape to lower satchel height');
+  const diagonal=crossing.some(part=>{
+    const high=part.vertices.filter(point=>point[2]>1.47),low=part.vertices.filter(point=>point[2]<1.25);
+    if(high.length<2||low.length<2)return false;
+    const centre=points=>points.reduce((sum,point)=>sum+point[0],0)/points.length;
+    return Math.abs(centre(high)-centre(low))>=.035;
+  });
+  assert.ok(diagonal,'rear fabric has a visible diagonal travel rather than three level rolls');
+  assert.ok(parts.some(part=>part.vertices.some(point=>point[2]<=1.07)&&
+    part.vertices.some(point=>point[2]>=1.14)),
+  'lower rear satchel remains as a real volume beneath the drape');
+});
+
 test('neutral output planning needs no Blender or authored binary and never touches runtime paths', () => {
   const fixture=mkdtempSync(join(tmpdir(),'duel-rook-neutral-'));
   try {

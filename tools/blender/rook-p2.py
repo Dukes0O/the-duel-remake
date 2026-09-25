@@ -6,6 +6,7 @@ neutral silhouette and has a separate acceptance gate.
 import argparse
 import hashlib
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -23,9 +24,11 @@ def arguments():
     parser.add_argument('--paths-only', action='store_true')
     parser.add_argument('--face-paint')
     parser.add_argument('--face-paint-sha256')
+    parser.add_argument('--hair-paint-from-face', action='store_true')
     parser.add_argument('--paint-calibration', default='tools/blender/rook-p2-paint-calibration.json')
     parser.add_argument('--garment-paint')
     parser.add_argument('--garment-paint-sha256')
+    parser.add_argument('--garment-finish', action='store_true')
     parser.add_argument('--garment-calibration', default='tools/blender/rook-p2-garment-calibration.json')
     return parser.parse_args(raw)
 
@@ -69,6 +72,8 @@ def sha(path):
 
 
 def validate_paint(args):
+    if args.hair_paint_from_face and not (args.face_paint and args.face_paint_sha256):
+        raise ValueError('Hair-chart paint requires the verified face source and SHA-256')
     if not (args.face_paint or args.face_paint_sha256):
         return None
     if args.stage != 'candidate' or not args.face_paint or not args.face_paint_sha256:
@@ -108,10 +113,44 @@ def validate_paint(args):
             raise ValueError('Paint calibration height landmarks are not ordered')
         if not points['leftEye'][0] < points['rightEye'][0]:
             raise ValueError('Paint calibration eye landmarks are not ordered')
+    mask = target.get('scalpMask')
+    if mask is not None:
+        boundary = mask.get('boundaryPx')
+        region = mask.get('sourceHairRegionPx')
+        if (not isinstance(boundary, list) or len(boundary) < 3 or
+                boundary[0][0] != 16 or boundary[-1][0] != 244 or
+                any(not isinstance(point, list) or len(point) != 2 or
+                    any(not isinstance(value, (int, float)) for value in point) or
+                    not 16 <= point[0] <= 244 or not 16 <= point[1] <= 244
+                    for point in boundary) or
+                any(left[0] >= right[0] for left, right in zip(boundary, boundary[1:])) or
+                mask.get('featherPx') != 2 or
+                not isinstance(region, list) or len(region) != 4 or
+                any(not isinstance(value, int) for value in region) or
+                not (0 <= region[0] < region[2] <= saved_source['size'][0] and
+                     0 <= region[1] < region[3] <= saved_source['size'][1])):
+            raise ValueError('Scalp paint mask is malformed')
+    hair_chart = target.get('hairChartPaint')
+    if hair_chart is not None:
+        if (hair_chart.get('chart') != 'hair' or
+                hair_chart.get('boundsPx') != [16, 772, 496, 1000] or
+                hair_chart.get('method') != 'bilinear-rgb' or
+                not isinstance(hair_chart.get('sourceRegionPx'), list) or
+                len(hair_chart['sourceRegionPx']) != 4 or
+                any(not isinstance(value, int) for value in hair_chart['sourceRegionPx'])):
+            raise ValueError('Hair-chart paint calibration is malformed')
+        x0, y0, x1, y1 = hair_chart['sourceRegionPx']
+        if not (0 <= x0 < x1 <= saved_source['size'][0] and
+                0 <= y0 < y1 <= saved_source['size'][1]):
+            raise ValueError('Hair-chart source region is outside verified portrait')
+    if args.hair_paint_from_face and hair_chart is None:
+        raise ValueError('Hair-chart paint calibration is missing')
     return {'source': source, 'calibration': calibration_path, 'data': data}
 
 
 def validate_garment_paint(args):
+    if args.garment_finish and not (args.garment_paint and args.garment_paint_sha256):
+        raise ValueError('Garment finish requires verified garment paint')
     if not (args.garment_paint or args.garment_paint_sha256):
         return None
     if args.stage != 'candidate' or not args.garment_paint or not args.garment_paint_sha256:
@@ -148,7 +187,7 @@ def validate_garment_paint(args):
     swatches = source_data['regions']
     if set(swatches) != {'shirt', 'canvas', 'trousers', 'leather'}:
         raise ValueError('Garment calibration needs four named swatches')
-    roles = {'jacket', 'vest-left', 'vest-right', 'pockets', 'scarf', 'pack',
+    roles = {'jacket', 'sleeve-cuff', 'vest-left', 'vest-right', 'pockets', 'scarf', 'pack',
              'trousers', 'boots', 'gloves', 'straps'}
     if set(data['targets']) != roles:
         raise ValueError('Garment calibration target roles changed')
@@ -168,7 +207,7 @@ def validate_garment_paint(args):
             if min(left[2], right[2]) > max(left[0], right[0]) and min(left[3], right[3]) > max(left[1], right[1]):
                 raise ValueError('Garment source regions overlap')
     labels = ('face', 'skin', 'straps', 'pockets', 'vest-left', 'vest-right',
-              'scarf', 'trousers', 'boots', 'gloves', 'pack')
+              'scarf', 'trousers', 'boots', 'gloves', 'pack', 'sleeve-cuff')
     bounds = {label: [16 + index % 4 * 252, 16 + index // 4 * 252,
                       244 + index % 4 * 252, 244 + index // 4 * 252]
               for index, label in enumerate(labels)}
@@ -191,6 +230,15 @@ def validate_garment_paint(args):
                     raise ValueError(f'Garment {role} panels lack sixteen-pixel clearance')
     if data['targets']['trousers'].get('panels') != [[780, 276, 878, 488], [894, 276, 992, 488]]:
         raise ValueError('Garment trouser panels changed from reviewed UV contract')
+    if args.garment_finish:
+        finish = data.get('finish')
+        if (not isinstance(finish, dict) or finish.get('version') != 1 or
+                finish.get('method') != 'source-boundary-uv-ink' or
+                finish.get('targetRoles') != ['vest-left', 'vest-right', 'pockets', 'pack'] or
+                finish.get('edgeWidthPx') != 4 or finish.get('edgeDarken') != .72 or
+                finish.get('wearWidthPx') != 2 or finish.get('wearLiftRgb') != [10, 8, 5] or
+                finish.get('trousers') != {'saturation': .62, 'value': .91}):
+            raise ValueError('Garment finish calibration is unsupported')
     return {'source': source, 'calibration': calibration, 'data': data}
 
 
@@ -306,6 +354,55 @@ def bake_face_paint(basecolor_path, paint):
                 d = source[(y1 * source_width + x1) * 4 + channel]
                 atlas[at + channel] = round((a * (1 - fx) + b * fx) * (1 - fy) +
                                             (c * (1 - fx) + d * fx) * fy)
+    mask = paint['data']['target'].get('scalpMask')
+    if mask:
+        boundary = mask['boundaryPx']
+        x0, y0, x1, y1 = mask['sourceHairRegionPx']
+        feather = mask['featherPx']
+        for x in range(16, 245):
+            for first, second in zip(boundary, boundary[1:]):
+                if x <= second[0]:
+                    edge = first[1] + (second[1] - first[1]) * (x - first[0]) / (second[0] - first[0])
+                    break
+            sx = round(x0 + (x - 16) * (x1 - x0 - 1) / (244 - 16))
+            for y in range(16, min(244, math.ceil(edge + feather)) + 1):
+                # The paint source supplies hair grain; the authored mask owns the hairline.
+                sy = round(y0 + (y - 16) * (y1 - y0 - 1) / max(1, edge - 16))
+                sy = max(y0, min(y1 - 1, sy))
+                strength = max(0, min(1, (edge + feather - y) / (2 * feather)))
+                at = (y * width + x) * 4
+                source_at = (sy * source_width + sx) * 4
+                for channel in range(3):
+                    atlas[at + channel] = round(atlas[at + channel] * (1 - strength) +
+                                                source[source_at + channel] * strength)
+    write_png(basecolor_path, atlas)
+
+
+def bake_hair_chart_from_face(basecolor_path, paint):
+    """Use verified portrait hair grain for the separate hair UV chart."""
+    source_width, source_height, source = read_png(paint['source'])
+    width, height, atlas = read_png(basecolor_path)
+    if (width, height) != (1024, 1024) or [source_width, source_height] != paint['data']['source']['size']:
+        raise ValueError('Hair paint source or atlas dimensions changed')
+    region = paint['data']['target']['hairChartPaint']['sourceRegionPx']
+    source_x0, source_y0, source_x1, source_y1 = region
+    left, top, right, bottom = 8, 764, 504, 1008
+    for y in range(top, bottom + 1):
+        sy = source_y0 + (y - top) * (source_y1 - source_y0 - 1) / (bottom - top)
+        sy0, sy1 = int(sy), min(source_height - 1, int(sy) + 1)
+        fy = sy - sy0
+        for x in range(left, right + 1):
+            sx = source_x0 + (x - left) * (source_x1 - source_x0 - 1) / (right - left)
+            sx0, sx1 = int(sx), min(source_width - 1, int(sx) + 1)
+            fx = sx - sx0
+            at = (y * width + x) * 4
+            for channel in range(3):
+                a = source[(sy0 * source_width + sx0) * 4 + channel]
+                b = source[(sy0 * source_width + sx1) * 4 + channel]
+                c = source[(sy1 * source_width + sx0) * 4 + channel]
+                d = source[(sy1 * source_width + sx1) * 4 + channel]
+                atlas[at + channel] = round((a * (1 - fx) + b * fx) * (1 - fy) +
+                                            (c * (1 - fx) + d * fx) * fy)
     write_png(basecolor_path, atlas)
 
 
@@ -343,11 +440,92 @@ def bake_garment_paint(basecolor_path, paint, charts):
     write_png(basecolor_path, atlas)
 
 
+def bake_garment_finish(basecolor_path, paint, chart_parts, charts):
+    """Ink authored cloth borders in their final packed UV positions."""
+    finish = paint['data']['finish']
+    width, height, pixels = read_png(basecolor_path)
+    if (width, height) != (1024, 1024):
+        raise ValueError('Garment finish requires the reviewed 1024 atlas')
+    paths = []
+    ink = {}
+    wear = {}
+    for role in finish['targetRoles']:
+        x0, y0, x1, y1 = charts[role]['boundsPx']
+        for obj in chart_parts[role]:
+            mesh = obj.data
+            layer = mesh.uv_layers['UV0']
+            edge_uses = {}
+            for poly in mesh.polygons:
+                loops = list(poly.loop_indices)
+                center = [sum(layer.data[i].uv.x * 1024 for i in loops) / len(loops),
+                          sum((1-layer.data[i].uv.y) * 1024 for i in loops) / len(loops)]
+                for at, loop in enumerate(loops):
+                    next_loop = loops[(at+1) % len(loops)]
+                    key = tuple(sorted((mesh.loops[loop].vertex_index,
+                                        mesh.loops[next_loop].vertex_index)))
+                    first = layer.data[loop].uv
+                    last = layer.data[next_loop].uv
+                    segment = ((first.x*1024, (1-first.y)*1024),
+                               (last.x*1024, (1-last.y)*1024), center)
+                    edge_uses.setdefault(key, []).append(segment)
+            for segments in edge_uses.values():
+                if len(segments) != 1:
+                    continue
+                (ax, ay), (bx, by), center = segments[0]
+                if not all(x0+8 <= px <= x1-8 and y0+8 <= py <= y1-8
+                           for px, py in ((ax, ay), (bx, by))):
+                    continue
+                paths.append({'role': role, 'mesh': obj.name,
+                              'fromPx': [round(ax, 2), round(ay, 2)],
+                              'toPx': [round(bx, 2), round(by, 2)]})
+                length2 = (bx-ax)**2+(by-ay)**2
+                if length2 < 1e-8:
+                    continue
+                left = max(x0, int(math.floor(min(ax, bx)-4)))
+                right = min(x1-1, int(math.ceil(max(ax, bx)+4)))
+                top = max(y0, int(math.floor(min(ay, by)-4)))
+                bottom = min(y1-1, int(math.ceil(max(ay, by)+4)))
+                for y in range(top, bottom+1):
+                    for x in range(left, right+1):
+                        t = max(0, min(1, ((x+.5-ax)*(bx-ax)+(y+.5-ay)*(by-ay))/length2))
+                        px = ax+t*(bx-ax)
+                        py = ay+t*(by-ay)
+                        distance = math.hypot(x+.5-px, y+.5-py)
+                        if distance >= 4:
+                            continue
+                        index = y*width+x
+                        ink[index] = max(ink.get(index, 0), 1-distance/4)
+                        # A narrow worn highlight falls on the cloth side.
+                        if ((x+.5-px)*(center[0]-px)+(y+.5-py)*(center[1]-py) > 0 and
+                                distance < 2):
+                            wear[index] = max(wear.get(index, 0), 1-distance/2)
+    for index, strength in ink.items():
+        at = index*4
+        dark = 1-(1-finish['edgeDarken'])*strength
+        highlight = wear.get(index, 0)
+        for channel in range(3):
+            pixels[at+channel] = max(0, min(255, round(
+                pixels[at+channel]*dark+finish['wearLiftRgb'][channel]*highlight)))
+    x0, y0, x1, y1 = charts['trousers']['boundsPx']
+    saturation = finish['trousers']['saturation']
+    value = finish['trousers']['value']
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            at = (y*width+x)*4
+            rgb = pixels[at:at+3]
+            luminance = .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2]
+            for channel in range(3):
+                pixels[at+channel] = max(0, min(255, round(
+                    (luminance*(1-saturation)+rgb[channel]*saturation)*value)))
+    write_png(basecolor_path, pixels)
+    return paths
+
+
 def candidate_atlases(output):
     # Interiors have 16 px clearance; eight pixels of color bleed belong to
     # each neighbouring chart. Their positions are part of the paint recipe.
     labels = ('face', 'skin', 'straps', 'pockets', 'vest-left', 'vest-right',
-              'scarf', 'trousers', 'boots', 'gloves', 'pack')
+              'scarf', 'trousers', 'boots', 'gloves', 'pack', 'sleeve-cuff')
     charts = {}
     for index, label in enumerate(labels):
         column, row = index % 4, index // 4
@@ -362,6 +540,7 @@ def candidate_atlases(output):
     colors = {
         'face': (147, 107, 82), 'skin': (134, 98, 75), 'hair': (49, 36, 31), 'jacket': (72, 99, 98),
         'vest-left': (150, 128, 96), 'vest-right': (148, 125, 93), 'scarf': (162, 139, 107),
+        'sleeve-cuff': (72, 99, 98),
         'trousers': (103, 88, 68), 'boots': (48, 39, 33), 'gloves': (55, 43, 35),
         'pack': (95, 77, 58), 'pockets': (137, 113, 81), 'straps': (65, 51, 38),
     }
@@ -407,7 +586,7 @@ def candidate_chart(role):
         return 'pockets'
     if role in ('strap', 'belt'):
         return 'straps'
-    if role in ('jacket', 'trousers', 'scarf', 'pack'):
+    if role in ('jacket', 'sleeve-cuff', 'trousers', 'scarf', 'pack'):
         return role
     return 'jacket'
 
@@ -438,13 +617,26 @@ def candidate_face_uv(obj, chart):
         values = []
         for loop_index in polygon.loop_indices:
             vertex = obj.data.vertices[obj.data.loops[loop_index].vertex_index].co
-            angle = math.atan2(vertex.x, -vertex.y)
+            # The measured upper rear skull tapers to the crown. Preserve its
+            # authored rear UV seam using the pre-taper virtual scalp depth;
+            # UV azimuth must not collapse when the real rear surface reaches
+            # Blender Y=0. This affects only hair-covered rear head pixels.
+            uv_y = max(vertex.y, .09) if vertex.z >= 1.775 and vertex.y >= 0 else vertex.y
+            angle = math.atan2(vertex.x, -uv_y)
             front = math.pi / 4
             if abs(angle) <= front:
                 u = .5 + .37 * angle / front
             else:
                 u = .5 + math.copysign(.37 + .13 * (abs(angle) - front) / (math.pi - front), angle)
             values.append(u)
+        # Split only triangles that cross the hidden rear seam. Without a
+        # per-loop seam, a face from U≈0 to U≈1 paints a stripe over the
+        # entire portrait chart after the upper skull tapers to its crown.
+        if max(values) - min(values) > .5:
+            if polygon.center.x < 0:
+                values = [0 if u > .5 else u for u in values]
+            else:
+                values = [1 if u < .5 else u for u in values]
         for loop_index, u in zip(polygon.loop_indices, values):
             vertex = obj.data.vertices[obj.data.loops[loop_index].vertex_index].co
             v = max(0, min(1, (vertex.z - 1.52) / .31))
@@ -617,6 +809,16 @@ def candidate_weight_groups(obj, rig, role):
             weights = {'head': 1}
         elif role == 'scarf':
             weights = {'neck': .7, 'head': .3}
+        elif role == 'sleeve-cuff':
+            # Lower fold follows exposed skin; upper fold follows the sewn
+            # jacket sleeve. Both surfaces stay attached as the arm rotates.
+            upper = min(1, max(0, (z - 1.066) / .04))
+            jacket_arm = min(.85, max(.53, (abs(x) - .14) / .20))
+            chest = min(1, max(0, (z - 1.01) / .2))
+            weights = {'forearm.' + side: .78 * (1 - upper) + jacket_arm * upper,
+                       'upper_arm.' + side: .22 * (1 - upper),
+                       'pelvis': (1 - jacket_arm) * (1 - chest) * upper,
+                       'chest': (1 - jacket_arm) * chest * upper}
         elif role == 'trousers':
             # Authored trousers reach beyond x=.20 at the cargo thigh. Bind
             # them by leg height, never by the generic hand/arm side rule.
@@ -690,6 +892,8 @@ def build_candidate(args, paths, paint=None, garment_paint=None):
     charts, maps = candidate_atlases(output)
     if paint:
         bake_face_paint(maps['basecolor'], paint)
+    if args.hair_paint_from_face:
+        bake_hair_chart_from_face(maps['basecolor'], paint)
     if garment_paint:
         bake_garment_paint(maps['basecolor'], garment_paint, charts)
     material = bpy.data.materials.new('Rook P2 painted atlas')
@@ -793,6 +997,11 @@ def build_candidate(args, paths, paint=None, garment_paint=None):
                     a, b, c = points[0], points[corner], points[corner + 1]
                     area += abs((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) * 1024 * 1024 / 2
         charts[label]['areaPx'] = round(area, 2)
+    finish_paths = []
+    finish_source_basecolor_sha = sha(maps['basecolor']) if args.garment_finish else None
+    if args.garment_finish:
+        finish_paths = bake_garment_finish(maps['basecolor'], garment_paint, chart_parts, charts)
+        color.image.reload()
     bpy.ops.object.select_all(action='DESELECT')
     for part in parts:
         part.select_set(True)
@@ -816,6 +1025,10 @@ def build_candidate(args, paths, paint=None, garment_paint=None):
     decimate = far.modifiers.new('Reviewed distant silhouette', 'DECIMATE')
     decimate.ratio = min(1, 1850 / near_triangles)
     bpy.ops.object.modifier_apply(modifier=decimate.name)
+    # Blender's decimator can leave duplicate faces with identical vertex
+    # sets. Export sanitizes them in place, so validate before counting and
+    # writing the manifest rather than reporting triangles that never ship.
+    far.data.validate(clean_customdata=False)
     far.data.calc_loop_triangles()
     far_triangles = len(far.data.loop_triangles)
     if far_triangles < 501 or far_triangles > 2000:
@@ -856,6 +1069,18 @@ def build_candidate(args, paths, paint=None, garment_paint=None):
             'basecolorSha256': sha(maps['basecolor']),
             'method': paint['data']['method'],
         }}
+    if args.hair_paint_from_face:
+        hair_chart = paint['data']['target']['hairChartPaint']
+        manifest['paint']['hair'] = {
+            'sourcePath': paint['source'].relative_to(root).as_posix(),
+            'sourceSha256': sha(paint['source']),
+            'calibrationPath': paint['calibration'].relative_to(root).as_posix(),
+            'calibrationSha256': sha(paint['calibration']),
+            'sourceRegionPx': hair_chart['sourceRegionPx'],
+            'chartBoundsPx': hair_chart['boundsPx'],
+            'basecolorSha256': sha(maps['basecolor']),
+            'method': hair_chart['method'],
+        }
     if garment_paint:
         manifest.setdefault('paint', {})['garments'] = {
             'sourcePath': garment_paint['source'].relative_to(root).as_posix(),
@@ -865,6 +1090,21 @@ def build_candidate(args, paths, paint=None, garment_paint=None):
             'basecolorSha256': sha(maps['basecolor']),
             'method': garment_paint['data']['method'],
             'roles': {role: target['source'] for role, target in garment_paint['data']['targets'].items()},
+        }
+    if args.garment_finish:
+        finish = garment_paint['data']['finish']
+        manifest.setdefault('paint', {})['finish'] = {
+            'method': finish['method'],
+            'calibrationSha256': sha(garment_paint['calibration']),
+            'sourceBasecolorSha256': finish_source_basecolor_sha,
+            'basecolorSha256': sha(maps['basecolor']),
+            'targetRoles': finish['targetRoles'],
+            'pathCount': len(finish_paths), 'paths': finish_paths,
+            'edgeWidthPx': finish['edgeWidthPx'],
+            'edgeDarken': finish['edgeDarken'],
+            'wearWidthPx': finish['wearWidthPx'],
+            'wearLiftRgb': finish['wearLiftRgb'],
+            'trousers': finish['trousers'],
         }
     with Path(paths['evidence'][0]).open('w', encoding='utf-8', newline='\n') as target:
         target.write(json.dumps(manifest, indent=2) + '\n')

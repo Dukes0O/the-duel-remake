@@ -17,6 +17,17 @@
   "target": {
     "chart": "face",
     "boundsPx": [16, 16, 244, 244],
+    "scalpMask": {
+      "boundaryPx": [[16, 200], [45, 145], [75, 86], [100, 67], [130, 66], [160, 67], [185, 86], [215, 145], [244, 200]],
+      "featherPx": 2,
+      "sourceHairRegionPx": [350, 20, 900, 140]
+    },
+    "hairChartPaint": {
+      "chart": "hair",
+      "boundsPx": [16, 772, 496, 1000],
+      "sourceRegionPx": [350, 20, 900, 140],
+      "method": "bilinear-rgb"
+    },
     "landmarks": {
       "hairline": [130, 67],
       "leftEye": [85, 126],

@@ -14,6 +14,7 @@
   },
   "targets": {
     "jacket": {"source": "shirt", "panels": [[528, 780, 632, 992], [648, 780, 752, 992], [768, 780, 872, 992], [888, 780, 992, 992]]},
+    "sleeve-cuff": {"source": "shirt"},
     "vest-left": {"source": "canvas"},
     "vest-right": {"source": "canvas"},
     "pockets": {"source": "canvas"},
@@ -23,5 +24,15 @@
     "boots": {"source": "leather"},
     "gloves": {"source": "leather"},
     "straps": {"source": "leather"}
+  },
+  "finish": {
+    "version": 1,
+    "method": "source-boundary-uv-ink",
+    "targetRoles": ["vest-left", "vest-right", "pockets", "pack"],
+    "edgeWidthPx": 4,
+    "edgeDarken": 0.72,
+    "wearWidthPx": 2,
+    "wearLiftRgb": [10, 8, 5],
+    "trousers": {"saturation": 0.62, "value": 0.91}
   }
 }

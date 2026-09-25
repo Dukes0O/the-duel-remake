@@ -89,6 +89,7 @@ function garmentFixture() {
       canvas:[520,8,1016,504],trousers:[8,520,504,1016],leather:[520,520,1016,1016]}},
   targets:{jacket:{source:'shirt',panels:[[528,780,632,992],[648,780,752,992],
       [768,780,872,992],[888,780,992,992]]},
+    'sleeve-cuff':{source:'shirt'},
     'vest-left':{source:'canvas'},'vest-right':{source:'canvas'},
     pockets:{source:'canvas'},scarf:{source:'canvas'},pack:{source:'canvas'},
     trousers:{source:'trousers',panels:[[780,276,878,488],[894,276,992,488]]},
@@ -343,6 +344,8 @@ test('optional garment source paints only its calibrated roles and embeds exact 
   assert.ok(changed>3000,`garment source creates substantive albedo detail: ${changed} pixels`);
   for(const role of roles)assert.ok(perRole.get(role)>20,
     `${role} visibly receives calibrated source pixels: ${perRole.get(role)}`);
+  assert.ok(perRole.get('sleeve-cuff')>20,
+    'new rolled cloth cuff receives the reviewed blue-green shirt swatch in actual atlas pixels');
   for(const name of [outputNames.surface,outputNames.normal])
     assert.equal(sha(readFileSync(join(control,name))),sha(readFileSync(join(painted,name))),
       `${name}: garment paint changes albedo only`);
@@ -851,6 +854,318 @@ test('connected Rook hair covers the sampled frontal scalp and traced hairline i
   assert.ok((geo.index?.count??position.count)/3<=8000,'coverage uses approved near triangle budget');
 });
 
+test('hair covers the visible crown as an area in front, both sides and back', async () => {
+  const source=JSON.parse(readFileSync(join(root,'tools/blender/rook-p2-source.json'),'utf8'));
+  const parts=source.meshes.filter(part=>part.lod==='near'&&
+    (part.role==='body-core'||part.role.startsWith('hair')));
+  const triangles=[];
+  for(const part of parts)for(const face of part.faces)for(let corner=1;corner+1<face.length;corner++)
+    triangles.push({hair:part.role.startsWith('hair'),points:[face[0],face[corner],face[corner+1]]
+      .map(id=>part.vertices[id])});
+  const {bytes}=readGlb(join(output,outputNames.glb));
+  const loader=new GLTFLoader();
+  loader.register(()=>({name:'TEST_LOCAL_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const asset=await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+  const near=asset.scene.getObjectByName('rook-near'),geo=near.geometry,position=geo.attributes.position,
+    uv=geo.attributes.uv;
+  const charts=JSON.parse(readFileSync(join(output,outputNames.manifest),'utf8')).asset.charts;
+  const chart=name=>charts.find(item=>item.role===name).boundsPx;
+  const inside=(pixel,bounds)=>pixel[0]>=bounds[0]&&pixel[0]<=bounds[2]&&
+    pixel[1]>=bounds[1]&&pixel[1]<=bounds[3];
+  const at=corner=>geo.index?geo.index.getX(corner):corner,exported=[];
+  for(let corner=0;corner<(geo.index?.count??position.count);corner+=3){
+    const ids=[at(corner),at(corner+1),at(corner+2)];
+    const pixel=[ids.reduce((sum,id)=>sum+uv.getX(id)*1024,0)/3,
+      ids.reduce((sum,id)=>sum+uv.getY(id)*1024,0)/3];
+    const hair=inside(pixel,chart('hair'));
+    if(!hair&&!inside(pixel,chart('face'))&&!inside(pixel,chart('skin')))continue;
+    exported.push({hair,points:ids.map(id=>[position.getX(id),-position.getZ(id),position.getY(id)])});
+  }
+  // A projected triangle contributes to the nearest visible surface at each pixel.
+  const sample=(triangle,axes,u,v)=>{
+    const [a,b,c]=triangle.points.map(point=>[point[axes[0]],point[axes[1]],point[axes[2]]]);
+    const determinant=(b[1]-c[1])*(a[0]-c[0])+(c[0]-b[0])*(a[1]-c[1]);
+    if(Math.abs(determinant)<1e-10)return null;
+    const wa=((b[1]-c[1])*(u-c[0])+(c[0]-b[0])*(v-c[1]))/determinant;
+    const wb=((c[1]-a[1])*(u-c[0])+(a[0]-c[0])*(v-c[1]))/determinant;
+    const wc=1-wa-wb;
+    return Math.min(wa,wb,wc)>=-1e-6?wa*a[2]+wb*b[2]+wc*c[2]:null;
+  };
+  const gaps=[];
+  for(const [label,allFaces] of [['source',triangles],['exported GLB',exported]]){
+    const faces=allFaces.filter(face=>Math.max(...face.points.map(point=>point[2]))>=1.775&&
+      Math.min(...face.points.map(point=>point[2]))<=1.83);
+    for(const view of [
+    {name:'front',axes:[0,2,1],span:[-.075,.075],nearest:Math.min},
+    {name:'back',axes:[0,2,1],span:[-.075,.075],nearest:Math.max},
+    {name:'left side',axes:[1,2,0],span:[-.10,.10],nearest:Math.min},
+    {name:'right side',axes:[1,2,0],span:[-.10,.10],nearest:Math.max},
+    ]){
+    let scalpPixels=0,covered=0;
+    for(let row=0;row<17;row++)for(let column=0;column<25;column++){
+      const u=view.span[0]+(view.span[1]-view.span[0])*(column+.5)/25;
+      const z=1.775+.055*(row+.5)/17;
+      const scalp=[],hair=[];
+      for(const triangle of faces){
+        const depth=sample(triangle,view.axes,u,z);
+        if(depth!==null)(triangle.hair?hair:scalp).push(depth);
+      }
+      if(!scalp.length)continue;
+      scalpPixels++;
+      const nearestScalp=view.nearest(...scalp),nearestHair=hair.length?view.nearest(...hair):null;
+      if(nearestHair!==null&&
+        (view.nearest===Math.min?nearestHair<=nearestScalp-.003:nearestHair>=nearestScalp+.003))covered++;
+    }
+    assert.ok(scalpPixels>=40,`${label} ${view.name} projected sample reaches real crown surface`);
+    if(covered/scalpPixels<.9)gaps.push(
+      `${label} ${view.name} projected hair covers ${covered}/${scalpPixels} scalp pixels`);
+    }
+  }
+  assert.deepEqual(gaps,[],`need 90% crown coverage in each view: ${gaps.join('; ')}`);
+});
+
+test('calibrated scalp paint darkens exported crown without changing eyes or beard', async () => {
+  const face=paintFixture(),mask=face.config.target.scalpMask;
+  assert.deepEqual(mask?.boundaryPx,[[16,200],[45,145],[75,86],[100,67],[130,66],
+    [160,67],[185,86],[215,145],[244,200]],
+  'reviewed hairline boundary is committed in the face calibration');
+  assert.equal(mask.featherPx,2);
+  assert.deepEqual(mask.sourceHairRegionPx,[350,20,900,140]);
+  const directory=join(output,'scalp-test','inputs');mkdirSync(directory,{recursive:true});
+  const bareCalibration=join(directory,'without-scalp-mask.json');
+  const bare=structuredClone(face.config);delete bare.target.scalpMask;
+  writeFileSync(bareCalibration,JSON.stringify(bare,null,2)+'\n');
+  const blender=process.env.BLENDER_BIN||'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe';
+  const build=(directory,calibration)=>execFileSync(blender,['-b','--python-exit-code','1',
+    '--python',script,'--','--root',root,'--stage','candidate','--output-dir',rel(directory),
+    '--face-paint',face.source,'--face-paint-sha256',face.sourceHash,
+    '--paint-calibration',calibration],{cwd:root,timeout:300000,maxBuffer:20*1024*1024});
+  const control=join(output,'scalp-test','control'),painted=join(output,'scalp-test','painted');
+  build(control,rel(bareCalibration));build(painted,face.calibration);
+  const before=rgbaPng(readFileSync(join(control,outputNames.basecolor)));
+  const after=rgbaPng(readFileSync(join(painted,outputNames.basecolor)));
+  assert.deepEqual([before.width,before.height,after.width,after.height],[1024,1024,1024,1024]);
+  const boundary=x=>{
+    const points=mask.boundaryPx;
+    for(let i=1;i<points.length;i++)if(x<=points[i][0]){
+      const [x0,y0]=points[i-1],[x1,y1]=points[i];
+      return y0+(y1-y0)*(x-x0)/(x1-x0);
+    }
+    return points.at(-1)[1];
+  };
+  let darkened=0;
+  for(let y=0;y<1024;y++)for(let x=0;x<1024;x++){
+    const at=(y*1024+x)*4,old=before.pixels.subarray(at,at+4),fresh=after.pixels.subarray(at,at+4);
+    if(x<16||x>244||y>boundary(x)+mask.featherPx+1)
+      assert.ok(old.equals(fresh),`face feature or other chart changed outside scalp mask at ${x},${y}`);
+    else if(y<boundary(x)-mask.featherPx&&fresh[0]<100&&fresh[1]<100&&fresh[2]<100&&
+      !old.equals(fresh))darkened++;
+  }
+  assert.ok(darkened>1000,`real scalp mask paints substantive formerly tan area: ${darkened} pixels`);
+  const asset=readGlb(join(painted,outputNames.glb));
+  assert.ok(embeddedBasecolor(asset).pixels.equals(after.pixels),
+    'candidate GLB embeds the exact scalp-painted atlas');
+  const loader=new GLTFLoader();
+  loader.register(()=>({name:'TEST_LOCAL_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const loaded=await loader.parseAsync(asset.bytes.buffer.slice(asset.bytes.byteOffset,
+    asset.bytes.byteOffset+asset.bytes.byteLength),'');
+  const near=loaded.scene.getObjectByName('rook-near'),position=near.geometry.attributes.position,
+    uv=near.geometry.attributes.uv;
+  let scalpSamples=0,darkSamples=0;
+  for(let i=0;i<position.count;i++){
+    const x=Math.floor(uv.getX(i)*1024),y=Math.floor(uv.getY(i)*1024);
+    if(position.getY(i)<1.775||position.getY(i)>1.83||x<16||x>244||y<16||y>244)continue;
+    const at=(y*1024+x)*4;scalpSamples++;
+    if(after.pixels[at]<100&&after.pixels[at+1]<100&&after.pixels[at+2]<100)darkSamples++;
+  }
+  assert.ok(scalpSamples>=30,'actual exported head has enough upper scalp UV samples');
+  assert.ok(darkSamples/scalpSamples>=.9,
+    `actual exported crown samples dark hair color: ${darkSamples}/${scalpSamples}`);
+});
+
+test('optional hair-chart paint uses the hashed face input without changing face or garments', () => {
+  const source=paintFixture(),option='--hair-paint-from-face';
+  const chartPaint=source.config.target.hairChartPaint;
+  assert.deepEqual(chartPaint,{chart:'hair',boundsPx:[16,772,496,1000],
+    sourceRegionPx:[350,20,900,140],method:'bilinear-rgb'},
+  'reviewed hair-chart mapping is committed in face calibration');
+  const planArgs=['--root',root,'--stage','candidate','--output-dir',
+    'art-build/crew/rook-p2/hair-test/rejected','--paths-only',option];
+  const missing=spawnSync('python',[script,...planArgs],{cwd:root,encoding:'utf8',timeout:10000});
+  assert.notEqual(missing.status,0,'hair-chart opt-in rejects absent face source and SHA before writing');
+  assert.ok(!existsSync(join(output,'hair-test','rejected')),
+    'rejected hair opt-in creates no output directory');
+  const frozen=Object.fromEntries(crew.map(id=>{
+    const path=`public/assets/models/wasteland/crew/${id}.glb`;return [path,fileHash(path)];
+  }));
+  const blender=process.env.BLENDER_BIN||'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe';
+  const control=join(output,'hair-test','control'),painted=join(output,'hair-test','painted');
+  const build=(directory,extra=[])=>execFileSync(blender,['-b','--python-exit-code','1',
+    '--python',script,'--','--root',root,'--stage','candidate','--output-dir',rel(directory),
+    '--face-paint',source.source,'--face-paint-sha256',source.sourceHash,
+    '--paint-calibration',source.calibration,...extra],
+  {cwd:root,timeout:300000,maxBuffer:20*1024*1024});
+  build(control);build(painted,[option]);
+  const plain=rgbaPng(readFileSync(join(control,outputNames.basecolor)));
+  const colored=rgbaPng(readFileSync(join(painted,outputNames.basecolor)));
+  assert.deepEqual([plain.width,plain.height,colored.width,colored.height],[1024,1024,1024,1024]);
+  let interiorChanged=0,bleedChanged=0;
+  for(let y=0;y<1024;y++)for(let x=0;x<1024;x++){
+    const at=(y*1024+x)*4,was=plain.pixels.subarray(at,at+4),now=colored.pixels.subarray(at,at+4);
+    const padded=x>=8&&x<=504&&y>=764&&y<=1008;
+    const interior=x>=16&&x<=496&&y>=772&&y<=1000;
+    if(!padded)assert.ok(was.equals(now),
+      `optional hair paint changed face, garment or unrelated atlas pixel ${x},${y}`);
+    else if(!was.equals(now)){
+      if(interior)interiorChanged++;else bleedChanged++;
+    }
+    assert.equal(colored.pixels[at+3],255,'hair paint atlas remains fully opaque');
+  }
+  assert.ok(interiorChanged>1000&&bleedChanged>100,
+    `hashed source produces substantial hair chart and eight-pixel bleed: ${interiorChanged}/${bleedChanged}`);
+  const manifest=JSON.parse(readFileSync(join(painted,outputNames.manifest),'utf8'));
+  assert.deepEqual(manifest.asset.charts.find(item=>item.role==='hair').boundsPx,[16,772,496,1000]);
+  assert.deepEqual(manifest.paint?.hair,{
+    sourcePath:source.source,sourceSha256:source.sourceHash,
+    calibrationPath:source.calibration,calibrationSha256:fileHash(source.calibration),
+    sourceRegionPx:[350,20,900,140],chartBoundsPx:[16,772,496,1000],
+    basecolorSha256:sha(readFileSync(join(painted,outputNames.basecolor))),
+    method:'bilinear-rgb'},'hair opt-in records exact input and atlas provenance');
+  assert.ok(embeddedBasecolor(readGlb(join(painted,outputNames.glb))).pixels.equals(colored.pixels),
+    'actual candidate GLB embeds the opt-in hair-painted atlas');
+  for(const [path,expected] of Object.entries(frozen))assert.equal(fileHash(path),expected,
+    `${path}: optional hair paint cannot change runtime crew`);
+});
+
+test('scarf has a tapered upper-chest drape below separately layered jaw cloth', () => {
+  const source=JSON.parse(readFileSync(join(root,'tools/blender/rook-p2-source.json'),'utf8'));
+  const named=new Map(source.meshes.filter(part=>part.lod==='near'&&part.role==='scarf')
+    .map(part=>[part.name,part]));
+  const wrap=named.get('rook-near-scarf-wrap'),middle=named.get('rook-near-scarf-middle-fold'),
+    jaw=named.get('rook-near-scarf-jaw-fold'),back=named.get('rook-near-back-scarf');
+  assert.ok(wrap&&middle&&jaw&&back,'four independently shaped scarf layers remain');
+  const front=part=>part.vertices.filter(([x,y])=>Math.abs(x)<.065&&y<-.09);
+  const tip=front(wrap).filter(([, ,z])=>z<1.39);
+  assert.ok(tip.length>=3,
+    'front scarf descends from neck onto upper chest with real cloth surface, not one hanging point');
+  assert.ok(Math.min(...tip.map(([x])=>Math.abs(x)))<.018,
+    'lower scarf point reaches the center of the chest');
+  const upper=front(wrap).filter(([, ,z])=>z>1.46&&z<1.51);
+  assert.ok(upper.length>=4&&Math.max(...upper.map(([x])=>Math.abs(x)))>.055,
+    'upper wrap widens at shoulders before tapering to the chest');
+  for(const [name,part,range] of [
+    ['jaw',jaw,[1.52,1.61]],['middle',middle,[1.46,1.57]],['back',back,[1.38,1.57]],
+  ])assert.ok(part.vertices.some(vertex=>vertex[2]>=range[0]&&vertex[2]<=range[1]),
+    `${name} layer stays in its measured neck/shoulder band`);
+  const triangles=part=>part.faces.reduce((count,face)=>count+face.length-2,0);
+  assert.ok([wrap,middle,jaw,back].reduce((total,part)=>total+triangles(part),0)<=328,
+    'layered scarf remains inside the reviewed 304+24 triangle allocation');
+});
+
+test('authored rolled sleeve cuffs bridge jacket to skin and follow both arm actions', async () => {
+  const source=JSON.parse(readFileSync(join(root,'tools/blender/rook-p2-source.json'),'utf8'));
+  const cuffs=['left','right'].map(side=>source.meshes.find(part=>part.lod==='near'&&
+    part.name===`rook-near-sleeve-cuff-${side}`));
+  assert.ok(cuffs.every(part=>part?.role==='sleeve-cuff'),
+    'two independent named sleeve-cuff surfaces use their private UV role');
+  for(const [index,cuff] of cuffs.entries()){
+    const x=cuff.vertices.map(point=>point[0]),y=cuff.vertices.map(point=>point[1]),
+      z=cuff.vertices.map(point=>point[2]);
+    assert.ok(cuff.faces.reduce((total,face)=>total+face.length-2,0)<=48,
+      'each rolled sleeve cuff fits its reviewed triangle allocation');
+    assert.ok(Math.min(...z)>=1.06&&Math.max(...z)<=1.11&&
+      Math.min(...z)<1.075&&Math.max(...z)>1.09,
+    'rolled cloth straddles the measured z1.08 jacket/skin junction');
+    assert.ok(Math.max(...x)-Math.min(...x)>.06&&Math.max(...y)-Math.min(...y)>.06&&
+      new Set(z.map(value=>value.toFixed(3))).size>=3,
+    'cuff has a shaped circumferential return rather than a flat disc');
+    assert.ok(index===0?Math.max(...x)<-.19:Math.min(...x)>.19,
+      'left and right cuff remain on their matching forearms');
+    const jacket=source.meshes.find(part=>part.lod==='near'&&part.name==='rook-near-jacket');
+    const skin=source.meshes.find(part=>part.lod==='near'&&
+      part.name===`rook-near-forearm-${index?'right':'left'}`);
+    const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+    for(const [name,surface] of [['jacket',jacket],['skin',skin]]){
+      const touching=cuff.vertices.filter(point=>surface.vertices.some(other=>distance(point,other)<.04));
+      assert.ok(touching.length>=4,
+        `${index?'right':'left'} rolled cuff has at least four real source contacts with ${name}`);
+    }
+  }
+  const {bytes}=readGlb(join(output,outputNames.glb));
+  const loader=new GLTFLoader();
+  loader.register(()=>({name:'TEST_LOCAL_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const asset=await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+  const near=asset.scene.getObjectByName('rook-near'),geometry=near.geometry,
+    uv=geometry.attributes.uv,position=geometry.attributes.position,
+    skinIndex=geometry.attributes.skinIndex,skinWeight=geometry.attributes.skinWeight;
+  const manifest=JSON.parse(readFileSync(join(output,outputNames.manifest),'utf8'));
+  const chart=manifest.asset.charts.find(item=>item.role==='sleeve-cuff');
+  assert.deepEqual(chart?.boundsPx,[772,520,1000,748],
+    'rolled cuff has one private 228px atlas chart');
+  const [x0,y0,x1,y1]=chart.boundsPx,ids=[[],[]];
+  for(const other of manifest.asset.charts.filter(item=>item.role!=='sleeve-cuff')){
+    const [a,b,c,d]=other.boundsPx;
+    const gapX=Math.max(a+8-(x1-8),x0+8-(c-8),0);
+    const gapY=Math.max(b+8-(y1-8),y0+8-(d-8),0);
+    assert.ok(Math.max(gapX,gapY)>=16,
+      `cuff chart interior remains at least 16px from ${other.role}`);
+  }
+  const garmentCalibration=JSON.parse(readFileSync(join(root,
+    'tools/blender/rook-p2-garment-calibration.json'),'utf8'));
+  assert.equal(garmentCalibration.targets['sleeve-cuff']?.source,'shirt',
+    'rolled cuffs share the reviewed blue-green shirt material swatch');
+  for(let i=0;i<position.count;i++){
+    const x=uv.getX(i)*1024,y=uv.getY(i)*1024;
+    if(x<x0||x>x1||y<y0||y>y1)continue;
+    assert.ok(x>=x0+8&&x<=x1-8&&y>=y0+8&&y<=y1-8,
+      'cuff UVs retain eight-pixel bleed inside their own chart');
+    const side=position.getX(i)<0?0:1;
+    const wrongSide=side===0?/^(hand|forearm|upper_arm)R$/:/^(hand|forearm|upper_arm)L$/;
+    let armWeight=0;
+    for(let slot=0;slot<4;slot++){
+      const bone=near.skeleton.bones[skinIndex.getComponent(i,slot)]?.name||'';
+      assert.ok(!wrongSide.test(bone),`cuff cannot bind the opposite arm: ${bone}`);
+      if(/^(forearm|upper_arm)[LR]$/.test(bone))armWeight+=skinWeight.getComponent(i,slot);
+    }
+    assert.ok(armWeight>.5,'cuff follows its arm rather than torso or pelvis');
+    ids[side].push(i);
+  }
+  assert.ok(ids.every(side=>side.length>=16),'both rolled cuffs survive the joined GLB export');
+  const roleIds=(role,side)=>{
+    const [a,b,c,d]=manifest.asset.charts.find(item=>item.role===role).boundsPx,found=[];
+    for(let id=0;id<position.count;id++){
+      const x=uv.getX(id)*1024,y=uv.getY(id)*1024;
+      if(x<a||x>c||y<b||y>d||position.getY(id)<.93||position.getY(id)>1.13)continue;
+      if(side===0?position.getX(id)<-.19:position.getX(id)>.19)found.push(id);
+    }
+    return found;
+  };
+  const jacketIds=[roleIds('jacket',0),roleIds('jacket',1)];
+  const skinIds=[roleIds('skin',0),roleIds('skin',1)];
+  assert.ok([...jacketIds,...skinIds].every(group=>group.length>=4),
+    'exported arm seam has jacket and skin on both sides');
+  const mixer=new THREE.AnimationMixer(asset.scene);
+  for(const [clipName,time] of [['aim',0],['get-up',.6]]){
+    mixer.stopAllAction();mixer.clipAction(asset.animations.find(clip=>clip.name===clipName)).play();
+    mixer.setTime(time);asset.scene.updateMatrixWorld(true);near.skeleton.update();
+    for(const [side,indices] of ids.entries()){
+      const movement=Math.max(...indices.map(id=>near.getVertexPosition(id,new THREE.Vector3())
+        .distanceTo(new THREE.Vector3().fromBufferAttribute(position,id))));
+      assert.ok(movement>.04,
+        `${clipName} moves ${side?'right':'left'} rolled cuff with forearm: ${movement.toFixed(3)}m`);
+      for(const [name,surface] of [['jacket',jacketIds[side]],['skin',skinIds[side]]]){
+        const posed=surface.map(id=>near.getVertexPosition(id,new THREE.Vector3()));
+        const contacts=indices.filter(id=>{
+          const cuff=near.getVertexPosition(id,new THREE.Vector3());
+          return posed.some(point=>point.distanceTo(cuff)<.045);
+        });
+        assert.ok(contacts.length>=4,
+          `${clipName} ${side?'right':'left'} cuff stays on ${name} seam: ${contacts.length} contacts`);
+      }
+    }
+  }
+});
+
 test('actual exported eye landmarks have enough unique face-atlas pixels for paint', async () => {
   const {bytes}=readGlb(join(output,outputNames.glb));
   const loader=new GLTFLoader();
@@ -986,4 +1301,492 @@ test('actual near face unwrap is continuous and separate painted islands keep si
   }
   assert.ok(failures.length===0,
     `exported UV seams lack space for 8px bleed: ${failures.length} failures; ${failures.slice(0,8).join('; ')}`);
+});
+
+test('Rook has separated skin fingertips attached to both moving gloves', async () => {
+  const source=JSON.parse(readFileSync(join(root,'tools/blender/rook-p2-source.json'),'utf8'));
+  const gloves=['left','right'].map(side=>source.meshes.find(part=>part.lod==='near'&&
+    part.name===`rook-near-glove-${side}`));
+  assert.ok(gloves.every(Boolean),'both existing glove palms remain');
+  const tips=source.meshes.filter(part=>part.lod==='near'&&part.role==='skin'&&
+    part.vertices.some(([, ,z])=>z<.9));
+  const triangles=tips.reduce((sum,part)=>sum+part.faces.reduce((n,face)=>n+face.length-2,0),0);
+  assert.ok(triangles>0&&triangles<=96,
+    `actual exposed fingertip geometry uses the reviewed <=96 triangle allocation: ${triangles}`);
+  const distance=(a,b)=>Math.hypot(...a.map((n,i)=>n-b[i]));
+  for(const [side,glove] of gloves.entries()){
+    const parts=tips.filter(part=>part.vertices.some(([x])=>side?x>.2:x<-.2));
+    const intervals=[];
+    for(const part of parts){
+      for(const face of part.faces)for(let i=1;i+1<face.length;i++){
+        const triangle=[face[0],face[i],face[i+1]].map(id=>part.vertices[id]);
+        const crossings=[];
+        for(let edge=0;edge<3;edge++){
+          const a=triangle[edge],b=triangle[(edge+1)%3],level=.855;
+          if((a[2]-level)*(b[2]-level)>0||a[2]===b[2])continue;
+          const t=(level-a[2])/(b[2]-a[2]);
+          if(t>=0&&t<=1)crossings.push(a[0]+t*(b[0]-a[0]));
+        }
+        if(crossings.length>=2&&(side?crossings.some(x=>x>.2):crossings.some(x=>x<-.2)))
+          intervals.push([Math.min(...crossings),Math.max(...crossings)]);
+      }
+    }
+    intervals.sort((a,b)=>a[0]-b[0]);
+    const silhouette=[];
+    for(const interval of intervals){
+      const last=silhouette.at(-1);
+      if(last&&interval[0]<=last[1]+.003)last[1]=Math.max(last[1],interval[1]);
+      else silhouette.push([...interval]);
+    }
+    assert.ok(silhouette.length>=3,
+      `${side?'right':'left'} hand needs three separated projected fingertip silhouettes at z=.855, got ${silhouette.length}`);
+    const roots=parts.flatMap(part=>part.vertices).filter(point=>
+      (side?point[0]>.2:point[0]<-.2)&&point[2]>=.875&&point[2]<=.91&&
+      glove.vertices.some(other=>distance(point,other)<.035));
+    assert.ok(roots.length>=3,`${side?'right':'left'} fingertip bases contact glove opening`);
+  }
+  const {bytes}=readGlb(join(output,outputNames.glb));
+  const loader=new GLTFLoader();
+  loader.register(()=>({name:'TEST_LOCAL_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const asset=await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+  const near=asset.scene.getObjectByName('rook-near'),geo=near.geometry,
+    position=geo.attributes.position,uv=geo.attributes.uv,
+    skinIndex=geo.attributes.skinIndex,skinWeight=geo.attributes.skinWeight;
+  const chart=JSON.parse(readFileSync(join(output,outputNames.manifest),'utf8'))
+    .asset.charts.find(item=>item.role==='skin').boundsPx;
+  const sourceTipVertices=tips.flatMap(part=>part.vertices.filter(([, ,z])=>z<.88));
+  const fingerIds=[[],[]];
+  for(let id=0;id<position.count;id++){
+    const x=position.getX(id),z=position.getY(id);
+    if(z>=.88||Math.abs(x)<.2||!sourceTipVertices.some(([sx,sy,sz])=>
+      Math.hypot(x-sx,position.getZ(id)+sy,z-sz)<.0001))continue;
+    const side=x<0?0:1,u=uv.getX(id)*1024,v=uv.getY(id)*1024;
+    assert.ok(u>=chart[0]+8&&u<=chart[2]-8&&v>=chart[1]+8&&v<=chart[3]-8,
+      'actual exported fingertip samples uniform skin chart interior, never portrait features');
+    let handWeight=0;
+    for(let slot=0;slot<4;slot++){
+      const bone=near.skeleton.bones[skinIndex.getComponent(id,slot)]?.name||'';
+      assert.ok(!new RegExp(`^(hand|forearm)${side?'L':'R'}$`).test(bone),
+        'fingertip cannot bind the opposite arm');
+      if(bone===`hand${side?'R':'L'}`||bone===`forearm${side?'R':'L'}`)
+        handWeight+=skinWeight.getComponent(id,slot);
+    }
+    assert.ok(handWeight>.8,'fingertip follows its own hand or forearm');
+    fingerIds[side].push(id);
+  }
+  assert.ok(fingerIds.every(ids=>ids.length>=9),'both fingertip silhouettes survive joined export');
+  const mixer=new THREE.AnimationMixer(asset.scene);
+  for(const [clip,time] of [['aim',0],['get-up',.6]]){
+    mixer.stopAllAction();mixer.clipAction(asset.animations.find(action=>action.name===clip)).play();
+    mixer.setTime(time);asset.scene.updateMatrixWorld(true);near.skeleton.update();
+    for(const ids of fingerIds){
+      const motion=Math.max(...ids.map(id=>near.getVertexPosition(id,new THREE.Vector3())
+        .distanceTo(new THREE.Vector3().fromBufferAttribute(position,id))));
+      assert.ok(motion>.04,`${clip} fingertip follows glove movement: ${motion.toFixed(3)}m`);
+    }
+  }
+});
+
+test('rear scarf stays seated on the jacket through production get-up pose', async () => {
+  const source=JSON.parse(readFileSync(join(root,'tools/blender/rook-p2-source.json'),'utf8'));
+  const scarf=source.meshes.find(part=>part.name==='rook-near-back-scarf');
+  const jacket=source.meshes.find(part=>part.name==='rook-near-jacket');
+  assert.ok(scarf&&jacket,'measure the two authored surfaces shown by controlled game captures');
+  const {bytes}=readGlb(join(output,outputNames.glb));
+  const loader=new GLTFLoader();
+  loader.register(()=>({name:'TEST_LOCAL_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const asset=await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+  const near=asset.scene.getObjectByName('rook-near'),position=near.geometry.attributes.position,
+    uv=near.geometry.attributes.uv;
+  const charts=JSON.parse(readFileSync(join(output,outputNames.manifest),'utf8')).asset.charts;
+  const idsFor=(vertex,role)=>{
+    const [x0,y0,x1,y1]=charts.find(chart=>chart.role===role).boundsPx,found=[];
+    for(let id=0;id<position.count;id++){
+      const u=uv.getX(id)*1024,v=uv.getY(id)*1024;
+      if(u<x0||u>x1||v<y0||v>y1)continue;
+      if(Math.hypot(position.getX(id)-vertex[0],position.getY(id)-vertex[2],
+        position.getZ(id)+vertex[1])<.0001)found.push(id);
+    }
+    return found;
+  };
+  const scarfIds=scarf.vertices.map(vertex=>idsFor(vertex,'scarf'));
+  const [x0,y0,x1,y1]=charts.find(chart=>chart.role==='jacket').boundsPx;
+  const index=near.geometry.index,at=corner=>index?index.getX(corner):corner,jacketFaces=[];
+  for(let corner=0;corner<(index?.count??position.count);corner+=3){
+    const ids=[at(corner),at(corner+1),at(corner+2)];
+    const u=ids.reduce((sum,id)=>sum+uv.getX(id)*1024,0)/3;
+    const v=ids.reduce((sum,id)=>sum+uv.getY(id)*1024,0)/3;
+    if(u>=x0&&u<=x1&&v>=y0&&v<=y1&&
+      ids.some(id=>position.getY(id)>1.34&&position.getZ(id)<-.06))jacketFaces.push(ids);
+  }
+  assert.ok(scarfIds.every(ids=>ids.length)&&jacketFaces.length>=40,
+    'measure actual exported scarf points against upper-back jacket triangles');
+  const mixer=new THREE.AnimationMixer(asset.scene);
+  const reports=[];
+  for(const [clip,time] of [['idle',.25],['get-up',.6]]){
+    mixer.stopAllAction();mixer.clipAction(asset.animations.find(action=>action.name===clip)).play();
+    mixer.setTime(time);asset.scene.updateMatrixWorld(true);near.skeleton.update();
+    const posed=new Map(),point=id=>{
+      if(!posed.has(id))posed.set(id,near.getVertexPosition(id,new THREE.Vector3()));
+      return posed.get(id);
+    };
+    const jacketTriangles=jacketFaces.map(ids=>new THREE.Triangle(...ids.map(point)));
+    const nearest=new THREE.Vector3();
+    const gaps=scarfIds.map(ids=>Math.min(...ids.map(id=>{
+      const scarfPoint=point(id);
+      return Math.min(...jacketTriangles.map(triangle=>
+        scarfPoint.distanceTo(triangle.closestPointToPoint(scarfPoint,nearest))));
+    })));
+    const ordered=[...gaps].sort((a,b)=>a-b),p90=ordered[Math.floor(.9*(ordered.length-1))];
+    reports.push({clip,p90});
+  }
+  // This is a loose cloth drape, so allow 55mm stand-off: it covers the already seated
+  // 22-44mm scarf points plus room for a fold, while excluding the visible 66-69mm free tip.
+  // At the 1.83m/578px native calibration, 55mm is about 17px, not a skin-tight seam.
+  assert.ok(reports.every(report=>report.p90<.055),
+    `rear scarf stays on jacket in both poses: ${reports.map(report=>
+      `${report.clip} p90 ${report.p90.toFixed(3)}m`).join('; ')}`);
+});
+
+test('candidate manifest counts the actual validated near and far GLB triangles', () => {
+  const manifest=JSON.parse(readFileSync(join(output,outputNames.manifest),'utf8'));
+  const {json}=readGlb(join(output,outputNames.glb));
+  for(const [name,declared,limit] of [
+    ['rook-near',manifest.asset.nearTriangles,8000],
+    ['rook-far',manifest.asset.farTriangles,2000],
+  ]){
+    const node=json.nodes.find(item=>item.name===name&&Number.isInteger(item.mesh));
+    assert.ok(node,`${name} is an actual exported drawable`);
+    const primitives=json.meshes[node.mesh].primitives;
+    assert.ok(primitives.length>0,`${name} has exported geometry`);
+    const actual=primitives.reduce((total,primitive)=>{
+      const count=primitive.indices===undefined
+        ?json.accessors[primitive.attributes.POSITION].count
+        :json.accessors[primitive.indices].count;
+      assert.equal(count%3,0,`${name} primitive has complete triangles`);
+      return total+count/3;
+    },0);
+    assert.ok(actual>0&&actual<=limit,`${name} respects its exported triangle budget`);
+    assert.equal(declared,actual,
+      `${name} manifest must count validated GLB triangles after Blender removes duplicate faces`);
+  }
+});
+
+test('exported vest leaves the traced shirt opening visible from front and quarter', async () => {
+  const {bytes}=readGlb(join(output,outputNames.glb));
+  const loader=new GLTFLoader();
+  loader.register(()=>({name:'TEST_LOCAL_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const asset=await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+  const near=asset.scene.getObjectByName('rook-near'),geo=near.geometry,
+    position=geo.attributes.position,uv=geo.attributes.uv,index=geo.index;
+  const charts=JSON.parse(readFileSync(join(output,outputNames.manifest),'utf8')).asset.charts;
+  const at=corner=>index?index.getX(corner):corner,scale=1.83/578;
+  const faces={};
+  for(const role of ['vest-left','vest-right']){
+    const [x0,y0,x1,y1]=charts.find(chart=>chart.role===role).boundsPx;
+    faces[role]=[];
+    for(let corner=0;corner<(index?.count??position.count);corner+=3){
+      const ids=[at(corner),at(corner+1),at(corner+2)],
+        u=ids.reduce((sum,id)=>sum+uv.getX(id)*1024,0)/3,
+        v=ids.reduce((sum,id)=>sum+uv.getY(id)*1024,0)/3;
+      if(u<x0||u>x1||v<y0||v>y1)continue;
+      faces[role].push(ids.map(id=>[position.getX(id),-position.getZ(id),position.getY(id)]));
+    }
+    assert.ok(faces[role].length>=30,`${role} is real exported painted cloth`);
+  }
+  const section=(role,imageY)=>{
+    const z=(641-imageY)*scale,points=[];
+    for(const face of faces[role])for(let edge=0;edge<3;edge++){
+      const a=face[edge],b=face[(edge+1)%3];
+      if((a[2]-z)*(b[2]-z)>0||a[2]===b[2])continue;
+      const t=(z-a[2])/(b[2]-a[2]);
+      if(t>=0&&t<=1)points.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);
+    }
+    assert.ok(points.length>=4,`${role} crosses native row ${imageY}`);
+    const depth=points.map(point=>point[1]),mid=(Math.min(...depth)+Math.max(...depth))/2;
+    const front=points.filter(point=>point[1]<=mid);
+    return [112+Math.min(...front.map(point=>point[0]))/scale,
+      112+Math.max(...front.map(point=>point[0]))/scale];
+  };
+  const trace=JSON.parse(readFileSync(join(root,'tools/blender/rook-p2-landmarks.json'),'utf8'))
+    .views.front.outlines;
+  const expected=(name,y)=>{
+    const line=trace[name];
+    for(let i=1;i<line.length;i++)if(y>=line[i-1][1]&&y<=line[i][1]){
+      const a=line[i-1],b=line[i];return a[0]+(b[0]-a[0])*(y-a[1])/(b[1]-a[1]);
+    }
+    assert.fail(`missing reference ${name} y${y}`);
+  };
+  const errors=[];
+  for(const y of [180,241,269]){
+    const left=section('vest-left',y),right=section('vest-right',y);
+    const want=[expected('vest-left-outer',y),expected('vest-left-inner',y),
+      expected('vest-right-inner',y),expected('vest-right-outer',y)];
+    const got=[...left,...right];
+    for(let edge=0;edge<4;edge++)if(Math.abs(got[edge]-want[edge])>7)
+      errors.push(`y${y} edge${edge} ${got[edge].toFixed(1)} vs ${want[edge].toFixed(1)}`);
+    assert.ok(right[0]-left[1]>=.003/scale,`exported teal opening remains at y${y}`);
+  }
+  assert.deepEqual(errors,[],`exported vest matches front reference: ${errors.join('; ')}`);
+  for(const role of ['vest-left','vest-right']){
+    const frontY=(low,high)=>Math.min(...faces[role].flatMap(face=>face)
+      .filter(([x,,z])=>Math.abs(x)>=.025&&Math.abs(x)<=.13&&z>=low&&z<=high)
+      .map(point=>point[1]));
+    assert.ok(frontY(1.45,1.55)<=frontY(1.35,1.43)-.01,
+      `${role} lapel rises at least 10mm toward front/quarter camera`);
+  }
+});
+
+test('exported hanging pockets stay attached to vest through aim and get-up', async () => {
+  const source=JSON.parse(readFileSync(join(root,'tools/blender/rook-p2-source.json'),'utf8'));
+  const {bytes}=readGlb(join(output,outputNames.glb));
+  const loader=new GLTFLoader();
+  loader.register(()=>({name:'TEST_LOCAL_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const asset=await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+  const near=asset.scene.getObjectByName('rook-near'),geo=near.geometry,
+    position=geo.attributes.position,uv=geo.attributes.uv,index=geo.index;
+  const charts=JSON.parse(readFileSync(join(output,outputNames.manifest),'utf8')).asset.charts;
+  const inChart=(id,role)=>{
+    const [x0,y0,x1,y1]=charts.find(chart=>chart.role===role).boundsPx;
+    const u=uv.getX(id)*1024,v=uv.getY(id)*1024;
+    return u>=x0&&u<=x1&&v>=y0&&v<=y1;
+  };
+  const at=corner=>index?index.getX(corner):corner;
+  const faces={};
+  for(const side of ['left','right']){
+    const role=`vest-${side}`;faces[side]=[];
+    for(let corner=0;corner<(index?.count??position.count);corner+=3){
+      const ids=[at(corner),at(corner+1),at(corner+2)];
+      if(ids.every(id=>inChart(id,role)))faces[side].push(ids);
+    }
+    assert.ok(faces[side].length>=30,`${side} exported vest surface for pocket contact`);
+  }
+  const roots={};
+  for(const side of ['left','right']){
+    const pocket=source.meshes.find(part=>part.name===`rook-near-pocket-${side}`);
+    const vest=source.meshes.filter(part=>part.lod==='near'&&part.role===`vest-${side}`)
+      .flatMap(part=>part.vertices);
+    assert.ok(pocket&&vest.length,'authored pocket and vest contact sources');
+    const touching=pocket.vertices.filter(point=>vest.some(other=>
+      Math.hypot(...point.map((value,i)=>value-other[i]))<.018));
+    roots[side]=touching.map(point=>{
+      const ids=[];
+      for(let id=0;id<position.count;id++)if(inChart(id,'pockets')&&
+        Math.hypot(position.getX(id)-point[0],position.getY(id)-point[2],
+          position.getZ(id)+point[1])<.0001)ids.push(id);
+      return ids;
+    });
+    assert.ok(roots[side].length>=3&&roots[side].every(ids=>ids.length),
+      `${side} hanging pocket retains at least three exported attachment points`);
+  }
+  const mixer=new THREE.AnimationMixer(asset.scene);
+  for(const [clip,time] of [['idle',.25],['aim',0],['get-up',.6]]){
+    mixer.stopAllAction();mixer.clipAction(asset.animations.find(action=>action.name===clip)).play();
+    mixer.setTime(time);asset.scene.updateMatrixWorld(true);near.skeleton.update();
+    const cache=new Map(),point=id=>{
+      if(!cache.has(id))cache.set(id,near.getVertexPosition(id,new THREE.Vector3()));
+      return cache.get(id);
+    };
+    for(const side of ['left','right']){
+      const triangles=faces[side].map(ids=>new THREE.Triangle(...ids.map(point)));
+      const target=new THREE.Vector3(),gaps=roots[side].map(ids=>Math.min(...ids.map(id=>
+        Math.min(...triangles.map(triangle=>
+          point(id).distanceTo(triangle.closestPointToPoint(point(id),target)))))));
+      assert.ok(Math.max(...gaps)<.04,
+        `${clip} ${side} pocket roots stay on vest surface: ${gaps.map(gap=>gap.toFixed(3))}`);
+    }
+  }
+});
+
+test('exported rear drape follows jacket and satchel in aim and get-up', async () => {
+  const source=JSON.parse(readFileSync(join(root,'tools/blender/rook-p2-source.json'),'utf8'));
+  const drape=source.meshes.find(part=>part.lod==='near'&&part.role==='pack'&&
+    Math.max(...part.vertices.map(point=>point[2]))>1.5&&
+    Math.min(...part.vertices.map(point=>point[2]))<1.2);
+  const satchel=source.meshes.find(part=>part.name==='rook-near-pack');
+  const jacket=source.meshes.find(part=>part.name==='rook-near-jacket');
+  assert.ok(drape&&satchel&&jacket,'rear fabric connects shoulder to retained satchel');
+  const {bytes}=readGlb(join(output,outputNames.glb));
+  const loader=new GLTFLoader();
+  loader.register(()=>({name:'TEST_LOCAL_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const asset=await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+  const near=asset.scene.getObjectByName('rook-near'),geo=near.geometry,
+    position=geo.attributes.position,uv=geo.attributes.uv;
+  const charts=JSON.parse(readFileSync(join(output,outputNames.manifest),'utf8')).asset.charts;
+  const idsFor=(vertex,role)=>{
+    const [x0,y0,x1,y1]=charts.find(chart=>chart.role===role).boundsPx,found=[];
+    for(let id=0;id<position.count;id++){
+      const u=uv.getX(id)*1024,v=uv.getY(id)*1024;
+      if(u<x0||u>x1||v<y0||v>y1)continue;
+      if(Math.hypot(position.getX(id)-vertex[0],position.getY(id)-vertex[2],
+        position.getZ(id)+vertex[1])<.0001)found.push(id);
+    }
+    return found;
+  };
+  const upper=drape.vertices.filter(point=>point[2]>1.47).map(point=>idsFor(point,'pack'));
+  const lower=drape.vertices.filter(point=>point[2]<1.2).map(point=>idsFor(point,'pack'));
+  const jacketIds=jacket.vertices.filter(point=>point[1]>.05&&point[2]>1.38)
+    .flatMap(point=>idsFor(point,'jacket'));
+  const satchelIds=satchel.vertices.flatMap(point=>idsFor(point,'pack'));
+  assert.ok(upper.length>=3&&lower.length>=3&&
+    [...upper,...lower].every(ids=>ids.length)&&jacketIds.length>=20&&satchelIds.length>=20,
+  'actual GLB retains upper/lower drape and its two support surfaces');
+  const mixer=new THREE.AnimationMixer(asset.scene);
+  for(const [clip,time] of [['idle',.25],['aim',0],['get-up',.6]]){
+    mixer.stopAllAction();mixer.clipAction(asset.animations.find(action=>action.name===clip)).play();
+    mixer.setTime(time);asset.scene.updateMatrixWorld(true);near.skeleton.update();
+    const point=id=>near.getVertexPosition(id,new THREE.Vector3());
+    for(const [label,roots,target,limit] of [
+      ['upper',upper,jacketIds,.08],['lower',lower,satchelIds,.055],
+    ]){
+      const attached=target.map(point),gaps=roots.map(ids=>Math.min(...ids.map(id=>
+        Math.min(...attached.map(other=>point(id).distanceTo(other))))));
+      assert.ok(Math.min(...gaps)<limit&&
+        [...gaps].sort((a,b)=>a-b)[Math.floor(.8*(gaps.length-1))]<limit,
+        `${clip} ${label} rear drape stays on ${label==='upper'?'jacket':'satchel'}: ${gaps}`);
+    }
+  }
+});
+
+test('garment UV-edge finish requires a hash-verified source before any output', () => {
+  const folder=join(output,'garment-finish-test','rejected');
+  const invoke=extra=>spawnSync('python',[script,'--root',root,'--stage','candidate',
+    '--output-dir',rel(folder),'--paths-only','--garment-finish',...extra],
+  {cwd:root,encoding:'utf8',timeout:10000});
+  const missing=invoke([]);
+  assert.notEqual(missing.status,0,'finish cannot run without selected garment source and SHA');
+  assert.ok(!existsSync(folder),'rejected finish creates no output folder');
+  const garment=garmentFixture();
+  const bad=invoke(['--garment-paint',garment.source,
+    '--garment-paint-sha256','0'.repeat(64),'--garment-calibration',garment.calibration]);
+  assert.notEqual(bad.status,0,'wrong garment source hash rejects finish before Blender');
+  assert.ok(!existsSync(folder),'bad source hash creates no output folder');
+  const config=structuredClone(garment.config);
+  config.finish={version:1,method:'source-boundary-uv-ink',
+    targetRoles:['vest-left','vest-right','pockets','pack'],edgeWidthPx:4,
+    edgeDarken:.72,wearWidthPx:2,wearLiftRgb:[10,8,5],
+    trousers:{saturation:.62,value:.91}};
+  const calibration=join(output,'garment-finish-test','inputs','calibration.json');
+  mkdirSync(join(output,'garment-finish-test','inputs'),{recursive:true});
+  writeFileSync(calibration,JSON.stringify(config,null,2)+'\n');
+  const valid=invoke(['--garment-paint',garment.source,
+    '--garment-paint-sha256',garment.sourceHash,'--garment-calibration',rel(calibration)]);
+  assert.equal(valid.status,0,valid.stderr||valid.stdout);
+  assert.equal(JSON.parse(valid.stdout).glb[0],join(folder,outputNames.glb),
+    'valid finish plans only an isolated ignored candidate');
+  assert.ok(!existsSync(folder),'valid paths-only finish performs no writes');
+});
+
+test('opt-in garment finish inks actual exported seams and changes only owned albedo charts', async () => {
+  const garment=garmentFixture(),config=structuredClone(garment.config);
+  config.finish={version:1,method:'source-boundary-uv-ink',
+    targetRoles:['vest-left','vest-right','pockets','pack'],edgeWidthPx:4,
+    edgeDarken:.72,wearWidthPx:2,wearLiftRgb:[10,8,5],
+    trousers:{saturation:.62,value:.91}};
+  const folder=join(output,'garment-finish-test');mkdirSync(join(folder,'inputs'),{recursive:true});
+  const calibration=join(folder,'inputs','calibration.json');
+  writeFileSync(calibration,JSON.stringify(config,null,2)+'\n');
+  const blender=process.env.BLENDER_BIN||'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe';
+  const common=['-b','--python-exit-code','1','--python',script,'--','--root',root,
+    '--stage','candidate','--garment-paint',garment.source,
+    '--garment-paint-sha256',garment.sourceHash,'--garment-calibration',rel(calibration)];
+  const control=join(folder,'control'),finished=join(folder,'finished');
+  const build=(target,extra=[])=>execFileSync(blender,[...common,'--output-dir',rel(target),...extra],
+    {cwd:root,timeout:300000,maxBuffer:20*1024*1024});
+  build(control);build(finished,['--garment-finish']);
+  const plain=rgbaPng(readFileSync(join(control,outputNames.basecolor)));
+  const inked=rgbaPng(readFileSync(join(finished,outputNames.basecolor)));
+  const manifest=JSON.parse(readFileSync(join(finished,outputNames.manifest),'utf8'));
+  const charts=new Map(manifest.asset.charts.map(chart=>[chart.role,chart.boundsPx]));
+  const targets=[...config.finish.targetRoles,'trousers'];
+  const changedByRole=new Map(targets.map(role=>[role,0]));
+  for(let y=0;y<1024;y++)for(let x=0;x<1024;x++){
+    const at=(y*1024+x)*4;
+    assert.equal(inked.pixels[at+3],255,'finished basecolor stays opaque');
+    if(plain.pixels.subarray(at,at+4).equals(inked.pixels.subarray(at,at+4)))continue;
+    const owner=targets.find(role=>{
+      const [x0,y0,x1,y1]=charts.get(role)||[];
+      return x>=x0&&x<=x1&&y>=y0&&y<=y1;
+    });
+    assert.ok(owner,`finish altered face, hair or unrelated chart at ${x},${y}`);
+    changedByRole.set(owner,changedByRole.get(owner)+1);
+  }
+  for(const role of targets)assert.ok(changedByRole.get(role)>100,
+    `${role} has substantial real atlas change: ${changedByRole.get(role)}`);
+  for(const name of [outputNames.surface,outputNames.normal])
+    assert.equal(sha(readFileSync(join(control,name))),sha(readFileSync(join(finished,name))),
+      `${name} remains byte-identical to plain garment paint`);
+  const glb=readGlb(join(finished,outputNames.glb)),{bytes}=glb;
+  assert.ok(embeddedBasecolor(glb).pixels.equals(inked.pixels),
+    'finished GLB embeds exact authored basecolor');
+  const loader=new GLTFLoader();
+  loader.register(()=>({name:'TEST_LOCAL_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const asset=await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+  const near=asset.scene.getObjectByName('rook-near'),geo=near.geometry,
+    pos=geo.attributes.position,uv=geo.attributes.uv,index=geo.index,at=corner=>index?index.getX(corner):corner;
+  const boundaryChanged=new Map(config.finish.targetRoles.map(role=>[role,{sampled:0,changed:0}]));
+  const exportedBoundaries=new Map();
+  for(const role of config.finish.targetRoles){
+    const [x0,y0,x1,y1]=charts.get(role),edges=new Map();
+    for(let corner=0;corner<(index?.count??pos.count);corner+=3){
+      const ids=[at(corner),at(corner+1),at(corner+2)];
+      const u=ids.reduce((sum,id)=>sum+uv.getX(id)*1024,0)/3,
+        v=ids.reduce((sum,id)=>sum+uv.getY(id)*1024,0)/3;
+      if(u<x0||u>x1||v<y0||v>y1)continue;
+      for(let edge=0;edge<3;edge++){
+        const pair=[ids[edge],ids[(edge+1)%3]];
+        const key=pair.map(id=>[pos.getX(id),pos.getY(id),pos.getZ(id)]
+          .map(value=>Math.round(value*100000)).join(',')).sort().join('|');
+        const row=edges.get(key)||{count:0,ids:pair};row.count++;edges.set(key,row);
+      }
+    }
+    exportedBoundaries.set(role,[...edges.values()].filter(edge=>edge.count===1)
+      .map(edge=>edge.ids.map(id=>[uv.getX(id)*1024,uv.getY(id)*1024])));
+    for(const edge of edges.values()){
+      if(edge.count!==1)continue;
+      const x=Math.round(edge.ids.reduce((sum,id)=>sum+uv.getX(id)*512,0));
+      const y=Math.round(edge.ids.reduce((sum,id)=>sum+uv.getY(id)*512,0));
+      if(x<x0+8||x>x1-8||y<y0+8||y>y1-8)continue;
+      const row=boundaryChanged.get(role);row.sampled++;
+      let changed=false;
+      for(let dy=-2;dy<=2&&!changed;dy++)for(let dx=-2;dx<=2;dx++){
+        const px=x+dx,py=y+dy,offset=(py*1024+px)*4;
+        if(!plain.pixels.subarray(offset,offset+3).equals(inked.pixels.subarray(offset,offset+3)))
+          changed=true;
+      }
+      if(changed)row.changed++;
+    }
+    const row=boundaryChanged.get(role);
+    assert.ok(row.sampled>=8&&row.changed>=Math.max(4,row.sampled*.1),
+      `${role} ink follows exported one-face UV edges: ${row.changed}/${row.sampled}`);
+  }
+  assert.deepEqual(manifest.paint?.finish,{
+    method:config.finish.method,calibrationSha256:fileHash(rel(calibration)),
+    sourceBasecolorSha256:sha(readFileSync(join(control,outputNames.basecolor))),
+    basecolorSha256:sha(readFileSync(join(finished,outputNames.basecolor))),
+    targetRoles:config.finish.targetRoles,pathCount:manifest.paint.finish.pathCount,
+    paths:manifest.paint.finish.paths,
+    edgeWidthPx:4,edgeDarken:.72,wearWidthPx:2,wearLiftRgb:[10,8,5],
+    trousers:{saturation:.62,value:.91}},'finish records calibrated edge and trouser recipe');
+  assert.ok(manifest.paint.finish.pathCount>10,'manifest records real traced UV boundary paths');
+  const paths=manifest.paint.finish.paths;
+  assert.ok(Array.isArray(paths)&&paths.length===manifest.paint.finish.pathCount,
+    'every recorded seam path has reviewable endpoints');
+  let matched=0;
+  for(const path of paths){
+    assert.ok(config.finish.targetRoles.includes(path.role)&&
+      typeof path.mesh==='string'&&path.mesh.length>0,
+    'finished path names its owning garment role and mesh');
+    const [x0,y0,x1,y1]=charts.get(path.role);
+    for(const point of [path.fromPx,path.toPx])assert.ok(Array.isArray(point)&&point.length===2&&
+      point.every(Number.isFinite)&&point[0]>=x0+8&&point[0]<=x1-8&&
+      point[1]>=y0+8&&point[1]<=y1-8,
+    'recorded seam endpoints stay in their padded role chart');
+    const close=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1])<=1;
+    if(exportedBoundaries.get(path.role).some(edge=>
+      close(edge[0],path.fromPx)&&close(edge[1],path.toPx)||
+      close(edge[1],path.fromPx)&&close(edge[0],path.toPx)))matched++;
+  }
+  assert.ok(matched>=Math.max(10,paths.length*.25),
+    `recorded seam paths correspond to actual exported cloth boundary edges: ${matched}/${paths.length}`);
 });
