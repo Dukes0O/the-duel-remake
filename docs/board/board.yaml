@@ -1616,7 +1616,7 @@ tasks:
     flag: none
     behavior_change: no
     owns: [tools/repo-audit.mjs, tools/test-repo-audit.mjs]
-    note: "Read-only audit resolved54 of55 asset candidates as dynamic runtime, source/license/provenance, reference or QA consumers; scrapyard-dirt retains documented future arena use but no current runtime load. All16 export candidates are internally used. No deletion is proven safe. Remaining scope is to resolve the dirt asset when arena work settles its use and improve reporting of known dynamic consumers if useful. Rustwall legacy generator still has concrete test consumers and must be migrated deliberately by its art owner before removal."
+    note: "Current scoped sweep reports48 asset candidates after seven obsolete audio-source candidates were removed by the audio lane. The remaining47 have dynamic runtime, source/license/provenance, reference or QA consumers; scrapyard-dirt retains documented future arena use but no current runtime load. All16 export candidates are internally used. No deletion is proven safe. Remaining scope is to resolve the dirt asset when arena work settles its use and improve reporting of known dynamic consumers if useful. Rustwall legacy generator still has concrete test consumers and must be migrated deliberately by its art owner before removal."
 
   - id: FIX-STATUS-CARD
     title: "Preserve phase suffixes in status lane ownership"
@@ -1825,7 +1825,7 @@ tasks:
   - id: FIX-AUDIT-SCOPE
     title: Exclude protected lane folders from janitor audit
     lane: TOOL
-    status: in-progress
+    status: merged
     branch: codex/fix-audit-scope
     needs: []
     owns: [tools/repo-audit.mjs, tools/test-repo-audit-scope.mjs, docs/changes/FIX-AUDIT-SCOPE.md]

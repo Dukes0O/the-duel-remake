@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-25T10:10:38.155Z
+Observed at: 2026-09-25T10:38:57.576Z
 
-Observation commit: 321b11d13d79c33beb0598f60c14eec14b2f1916
+Observation commit: 2d813a7e7af62ac935238fa6ba3f7b76b6c2cacc
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 321b11d13d79c33beb0598f60c14eec14b2f1916
+Integration HEAD: 2d813a7e7af62ac935238fa6ba3f7b76b6c2cacc
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -32,6 +32,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
+| codex/fix-audit-scope | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/fix-audit-scope |
 | codex/gfx-02-p1 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-02-p1 |
 | lane/audio/aud-10 | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/audio/aud-12 | 0 | unknown | true | false | unknown |
@@ -42,7 +43,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/gfx-02-p1 | GFX-02-P1 | 2026-09-25T03:06:42-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/GFX-02-P1.md, tools/test-first-person-polish.mjs, tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, tools/scenarios/first-person-polish.mjs |
+| codex/gfx-02-p1 | GFX-02-P1 | 2026-09-25T03:15:25-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/GFX-02-P1.md, tools/test-first-person-polish.mjs, tools/blender/first-person-gear.py, tools/fidelity-sheet.mjs, tools/blender/first-person-p1-source.json |
 
 ## Size targets
 
@@ -56,10 +57,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 210,328 B | +0 B | 500,000 B |
 | Review `looks/` | 6,579,829 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 31,637 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 22,806 B | -8,831 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 318,736,384 B | +115,712 B | unavailable |
-| Lane folders | 1 | -1 | unavailable |
+| Git objects | 318,949,376 B | +212,992 B | unavailable |
+| Lane folders | 2 | +1 | unavailable |
 
 ## Backups
 
@@ -67,7 +68,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 321b11d13d79c33beb0598f60c14eec14b2f1916
+- Local integration/wasteland: 2d813a7e7af62ac935238fa6ba3f7b76b6c2cacc
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
