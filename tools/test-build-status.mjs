@@ -290,6 +290,9 @@ try {
     git(pending, 'add', '.'); git(pending, 'commit', '-m', 'pending fixture work');
     put(join(pending, 'fresh-work.txt'), 'new uncommitted work\n');
     git(f.root, 'branch', 'codex/parked', git(pending, 'rev-parse', 'HEAD'));
+    for (const name of ['codex/gfx-01-p2', 'codex/egg-02-p1',
+      'codex/gfx-01-p2-neutral-review', 'codex/bal-02', 'codex/notes-only'])
+      git(f.root, 'branch', name, f.base);
     const before = snapshot(f.home);
     const result = report(f);
     const lane = name => result.lanes.find(row => row.branch === name);
@@ -300,6 +303,12 @@ try {
     check(lane('codex/pending').lastCommit?.includes('2026-09-20'), 'unmerged branch reports last commit time');
     check(lane('codex/pending').holds.includes('pending.txt'), 'unmerged branch reports retained committed work');
     same(lane('codex/pending').card, 'unknown', 'branch without a card ID is marked unknown');
+    same(lane('codex/gfx-01-p2').card, 'GFX-01-P2', 'phase-2 graphics card keeps its full ID');
+    same(lane('codex/egg-02-p1').card, 'EGG-02-P1', 'phase-1 canyon card keeps its full ID');
+    same(lane('codex/gfx-01-p2-neutral-review').card, 'GFX-01-P2',
+      'branch description after the phase does not become part of the card ID');
+    same(lane('codex/bal-02').card, 'BAL-02', 'ordinary base card ID is unchanged');
+    same(lane('codex/notes-only').card, 'unknown', 'branch without a card ID remains unknown');
     check(result.markdown.includes('## Unmerged branches for idle review'), 'status presents unmerged branch review list');
     check(lane('codex/pending').activity.includes('exact activity time unknown'), 'dirty worktree is not falsely dated by its last commit');
     check(lane('codex/pending').holds.includes('fresh-work.txt'), 'uncommitted file is named in retained work');

@@ -301,8 +301,8 @@ tasks:
     size: L
     needs: [GFX-01-P1]
     status: building
-    owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, docs/board/looks/crew-p2/]
-    hooks: [tools/test-rook-p2-source.mjs, tools/test-blender-output.mjs]
+    owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, docs/board/looks/crew-p2/]
+    hooks: [tools/test-rook-p2-source.mjs, tools/test-rook-p2-candidate.mjs, tools/test-rook-p2-review.mjs, tools/test-blender-output.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: wasteland2
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
@@ -345,7 +345,7 @@ tasks:
       - "Continue from the three immutable initial rounds. Fix fingertip cap/normal artifacts, mitten-like palms, generic sleeve construction, simplified tool fittings and continuous grip/animation contact as recorded in round-3-review.md."
       - "Retain meaningful matched High/Performance comparisons, short motion evidence, at most 8000 visible triangles and three draws. Measure texture memory and evaluate shared crew materials before making a resource-budget claim."
       - "Keep the family in dev until all SPEC 0.3 scores reach four and the measured budget holds. Follow its approach-change rule if another round fails to improve likeness."
-    note: "Initial resemblance improves from two to three in round 2 and remains three in round 3. One stagnant round so far; no beta approval. Follow the winning GFX-01-P1 technique."
+    note: "Initial resemblance improves from two to three in round 2 and remains three in round 3. One stagnant round so far; no beta approval. Follow the winning GFX-01-P2 technique."
   - id: EGG-02
     title: "Rustwall gate and salt-flat fidelity rounds one to three"
     priority: 9
@@ -388,7 +388,7 @@ tasks:
     needs: [EGG-02-P1]
     status: building
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall-p2/]
-    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-sheet.mjs, tools/test-rustwall-p2-relief.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: hidden-road
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
@@ -1455,3 +1455,35 @@ tasks:
     behavior_change: yes
     note: "Player RPG direct/splash knocks down raiders with one 25-XP Notoriety award per raider per race. Each camp has one solid, foot-only salvage ledge for a rocket and armor. Integrated at 0ced0a1; focused 11 cases, private visual scene, build and joined FOOT-08 check passed. Frame pacing and broad balance remain unmeasured."
     spec: "SPEC.md sections 3.4 and 12.2, task RAID-02"
+
+  - id: JANITOR-P2
+    title: "Fold consumed phase-2 notes and audit current repository growth"
+    lane: OPS
+    size: S
+    needs: [BAL-02, CAR-01, GFX-03, GFX-04]
+    status: merged
+    flag: none
+    behavior_change: no
+    owns: [docs/board/decisions.md, docs/board/run-log.md, docs/board/STATUS.md, docs/board/board.yaml, docs/ASSET_PIPELINE.md, docs/changes/]
+    note: "Merged 048258c, with Unicode repair 2b77176. Independent review, six lane suites and builds passed before each merge. Four consumed notes folded and deleted; CLEAN-11 holds uncertain audit candidates. Runtime unchanged, active art lanes preserved."
+  - id: CLEAN-11
+    title: "Resolve literal-reference audit candidates against dynamic consumers"
+    lane: TOOL
+    size: S
+    needs: [CLEAN-06]
+    status: backlog
+    flag: none
+    behavior_change: no
+    owns: [tools/repo-audit.mjs, tools/test-repo-audit.mjs]
+    note: "The phase-2 sweep reports 55 asset and 16 export candidates, but no unused module, removed-feature test or fully-on switch. Crew/hands/kits and wall use generated paths; audio sources and licenses have tooling/provenance consumers. Director follow-up confirms all sixteen named export candidates are called inside their own modules; they are not dead functions. Trace remaining asset consumers and unnecessary export boundaries before proposing removal; preserve licensed originals and current runtime assets."
+
+  - id: FIX-STATUS-CARD
+    title: "Preserve phase suffixes in status lane ownership"
+    lane: TOOL
+    size: S
+    needs: [TRACK-01]
+    status: merged
+    flag: none
+    behavior_change: no
+    owns: [tools/build-status.mjs, tools/test-build-status.mjs, docs/changes/FIX-STATUS-CARD.md]
+    note: "Merged 7b901c4 after independent red/green fixtures, 250 focused checks, eight lane suites and build. Optional numeric P suffixes remain in card labels; branch safety and evidence validity are unchanged."
