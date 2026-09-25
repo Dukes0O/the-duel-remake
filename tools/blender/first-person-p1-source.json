@@ -43,5 +43,5 @@
     ]
   },
   "paintSource": {"selectedSha256":"785c80bb03380c6454607e5fba687b633e47642cac0a1b58d7176afdf9a64b3b","crops":{"cloth":[0,0,418,418],"leather":[418,90,836,508],"wrap":[836,250,1254,668]},"method":"box-filter-418-to-240"},
-  "atlas": {"size": 1024, "paddingPixels": 8, "charts": {"skin": {"rect": [520, 8, 760, 248]}, "leather": {"rect": [264, 8, 504, 248]}, "cloth": {"rect": [8, 8, 248, 248]}, "wrap": {"rect": [776, 8, 1016, 248]}}}
+  "atlas": {"size": 1024, "paddingPixels": 8, "charts": {"skin": {"rect": [520, 776, 760, 1016]}, "leather": {"rect": [264, 776, 504, 1016]}, "cloth": {"rect": [8, 776, 248, 1016]}, "wrap": {"rect": [776, 776, 1016, 1016]}}}
 }

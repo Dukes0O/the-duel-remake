@@ -177,11 +177,11 @@ def texture_material(name, cfg, folder, tool=False):
     else:
         bases[7]=tuple(min(.8,c*1.12+.02) for c in cfg['sleeve'])
         if args.p1_rook:
-            # Blender's pixel buffer is bottom-up in the exported PNG. glTF
-            # chart 0/1/2 addresses the PNG top row, sourced from buffer
-            # tiles 12/13/14. Paint those actual sampled regions deliberately.
-            bases[12:15]=[cfg['sleeve'],cfg['leather'],cfg['skin']]
-            bases[15]=(.56,.49,.36)  # padded beige wrist-wrap chart
+            # Exported glTF V directly addresses the saved PNG's bottom row.
+            # Blender's image buffer is bottom-up, so the authored chart faces
+            # sample buffer tiles 0/1/2/3 rather than the unused top row.
+            bases[3]=(.56,.49,.36)  # padded beige wrist-wrap chart
+            bases[14]=cfg['skin']  # preserve the prior protected top-row skin bytes
     yy,xx=np.mgrid[0:256,0:256]
     for tile,base in enumerate(bases):
         noise=rng.uniform(-1,1,(256,256))
@@ -258,15 +258,15 @@ def texture_material(name, cfg, folder, tool=False):
             # Blender's authored PNG buffer is written directly. Keep the
             # selected source's encoded channels; a transfer curve darkens it.
             dest=np.flipud(sample)
-            color[776:1016,atlas_x:atlas_x+240,:3]=dest
+            color[8:248,atlas_x:atlas_x+240,:3]=dest
             luminance=np.mean(sample,axis=2)
-            surface[776:1016,atlas_x:atlas_x+240,1]=np.flipud(np.clip(
+            surface[8:248,atlas_x:atlas_x+240,1]=np.flipud(np.clip(
                 {'cloth':.87,'leather':.78,'wrap':.92}[role]+(luminance-.35)*.12,.5,.98))
             height=np.flipud(luminance)
             dy,dx=np.gradient(height)
             vectors=np.stack([-dx*.65,-dy*.65,np.ones_like(dx)],axis=-1)
             vectors/=np.linalg.norm(vectors,axis=-1,keepdims=True)
-            normal[776:1016,atlas_x:atlas_x+240,:3]=vectors*.5+.5
+            normal[8:248,atlas_x:atlas_x+240,:3]=vectors*.5+.5
         bpy.data.images.remove(source)
     images=[]
     for label,pixels in [('color',color),('surface',surface),('normal',normal)]:
