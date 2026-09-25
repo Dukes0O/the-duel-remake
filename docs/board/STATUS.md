@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-25T10:38:57.576Z
+Observed at: 2026-09-25T10:40:03.673Z
 
-Observation commit: 2d813a7e7af62ac935238fa6ba3f7b76b6c2cacc
+Observation commit: 17c3ddf2b0179b4ed2d6cff22d665e4f57b39cee
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2d813a7e7af62ac935238fa6ba3f7b76b6c2cacc
+Integration HEAD: 17c3ddf2b0179b4ed2d6cff22d665e4f57b39cee
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -32,7 +32,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/fix-audit-scope | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/fix-audit-scope |
 | codex/gfx-02-p1 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-02-p1 |
 | lane/audio/aud-10 | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/audio/aud-12 | 0 | unknown | true | false | unknown |
@@ -57,10 +56,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 210,328 B | +0 B | 500,000 B |
 | Review `looks/` | 6,579,829 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 22,806 B | -8,831 B | 5,000,000 B |
+| Added bytes in last merge | 22,806 B | +0 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 318,949,376 B | +212,992 B | unavailable |
-| Lane folders | 2 | +1 | unavailable |
+| Git objects | 319,066,112 B | +116,736 B | unavailable |
+| Lane folders | 1 | -1 | unavailable |
 
 ## Backups
 
@@ -68,7 +67,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 2d813a7e7af62ac935238fa6ba3f7b76b6c2cacc
+- Local integration/wasteland: 17c3ddf2b0179b4ed2d6cff22d665e4f57b39cee
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
