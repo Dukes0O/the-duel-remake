@@ -1632,3 +1632,5 @@ Cleanup order: CLEAN-01 and CLEAN-02 merged. CLEAN-03 is ready; CLEAN-04, CLEAN-
 
 
 - FIX-RUSTWALL-CLEAN merged ea84b34 from clean c8fe1e6 after independent review, fresh missing-PNG red0/1 to green1/1, isolated export6/6, lane8/8 in64.15 seconds and build. The committed runtime asset keeps its source path/hash schema, actual geometry/UV/material/route checks and committed embedded-pixel checks; exact source-PNG equality remains in fresh full/probe exports alongside exact color/surface/normal atlas comparison and production hash guards. No new build or threshold was added, and no runtime asset changed. The consumed task note is folded here and removed. Merge count since bb44ba1 is three, but the proven clean-checkout failure requires an immediate full integration pass before feature merges resume.
+
+- FIX-RUSTWALL-CLEAN after-merge janitor unlinked the verified integration-only dependency junction and normally removed the clean merged fix checkout, its branch and consumed gate logs after committing the verdict. STATUS refreshed. Immediate full integration check is next; no feature merge resumes on the lane result alone.
