@@ -160,6 +160,7 @@ def texture_material(name, cfg, folder, tool=False):
             # chart 0/1/2 addresses the PNG top row, sourced from buffer
             # tiles 12/13/14. Paint those actual sampled regions deliberately.
             bases[12:15]=[cfg['sleeve'],cfg['leather'],cfg['skin']]
+            bases[15]=(.56,.49,.36)  # padded beige wrist-wrap chart
     yy,xx=np.mgrid[0:256,0:256]
     for tile,base in enumerate(bases):
         noise=rng.uniform(-1,1,(256,256))
@@ -168,6 +169,17 @@ def texture_material(name, cfg, folder, tool=False):
         cloth=tile in ([0,8,7,12,15] if args.p1_rook else [0,8,7,15]) and not tool and name!='jax'
         grain=(np.sin(xx*2.7)*np.sin(yy*2.3))*.018 if cloth else 0
         variation=1+noise*.045+coarse*.13+grain
+        if args.p1_rook and not tool and tile in (0,8,12):
+            # Long shaded folds replace the evenly repeated bright sleeve dashes.
+            valley=np.exp(-((xx-(86+28*np.sin(yy*.017)))/27)**2)
+            variation=variation*(1-.16*valley)+.035*np.sin(yy*.022+xx*.013)
+        if args.p1_rook and not tool and tile==13:
+            panel=np.exp(-((xx-125-14*np.sin(yy*.012))/74)**4)
+            variation*=1-.12*panel
+        if args.p1_rook and not tool and tile==15:
+            fibres=.025*np.sin(xx*.40+yy*.025)+.014*np.sin(xx*.91-yy*.019)
+            weather=np.exp(-((yy-(96+24*np.sin(xx*.017)))/22)**2)
+            variation=variation+fibres-.085*weather
         if tile in ([2,10,14] if args.p1_rook else [2,10]):variation=1+noise*.025+coarse*.065
         leather=tile in ([1,6,9,13] if args.p1_rook else [1,6,9])
         crease=np.zeros_like(noise)
@@ -182,7 +194,7 @@ def texture_material(name, cfg, folder, tool=False):
             scratch=(noise>.94)&(coarse>.23)
             rgba[scratch,:3]=(.39,.40,.37)
             if tile==12:rgba[:,:,:3]=np.array(base)*(1+noise[:,:,None]*.02)
-        if cloth:
+        if cloth and not (args.p1_rook and not tool and tile in (0,8,12)):
             seam=(abs(xx-16)<2)|(abs(xx-240)<2)
             stitch=seam&((yy%12)<5)
             rgba[stitch,:3]=np.array(base)*1.4
@@ -220,7 +232,7 @@ class Geometry:
     def face(self,indices,tile,uv=None):
         self.faces.append(indices)
         if uv is None:uv=[(0,0),(1,0),(1,1),(0,1)][:len(indices)]
-        if args.p1_rook and tile == 2:
+        if args.p1_rook and tile in (2,3):
             # The declared skin chart is itself inset 8px from the 256px tile.
             # Keep terminal seam vertices another 8px inside that chart.
             uv=[(.1+.8*u,.1+.8*v) for u,v in uv]
@@ -271,6 +283,47 @@ class Geometry:
         c=Vector(centre);s=Vector(size)/2
         ids=[self.vertex(c+Vector((x*s.x,y*s.y,z*s.z)),{bone:1}) for x,y,z in [(-1,-1,-1),(1,-1,-1),(1,1,-1),(-1,1,-1),(-1,-1,1),(1,-1,1),(1,1,1),(-1,1,1)]]
         for face in [(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]:self.face([ids[i] for i in face],tile)
+    def wrist_wrap(self,start,end,bone,side):
+        """Three closed, thin cloth turns; skin and digit topology stay separate."""
+        start,end=Vector(start),Vector(end)
+        tangent=(end-start).normalized()
+        across=tangent.cross(Vector((0,1,0))).normalized()
+        up=tangent.cross(across).normalized()
+        segments=10
+        for turn,(lo,hi) in enumerate(((.04,.55),(.50,.96))):
+            rings=[]
+            for layer in (0,1):
+                layer_rings=[]
+                for row in range(2):
+                    ring=[]
+                    for j in range(segments):
+                        theta=j*math.tau/segments
+                        t=lo+(hi-lo)*row + .012*math.sin(theta*2+turn+side*.7)
+                        centre=start.lerp(end,t)
+                        base=.046*(1-t)+.041*t
+                        radius=base+(.0025 if layer==0 else .0005)+turn*.0012
+                        # A slanted hem and an unequal tucked fold avoid three torus bands.
+                        radius+=.0012*math.sin(theta*3+turn*1.7)
+                        point=centre+across*(math.cos(theta)*radius)+up*(math.sin(theta)*radius*.83)
+                        ring.append(self.vertex(point,{bone:1}))
+                    layer_rings.append(ring)
+                rings.append(layer_rings)
+            for layer in (0,1):
+                for row in range(1):
+                    for j in range(segments):
+                        nxt=(j+1)%segments
+                        quad=[rings[layer][row][j],rings[layer][row][nxt],
+                              rings[layer][row+1][nxt],rings[layer][row+1][j]]
+                        if layer:quad.reverse()
+                        self.face(quad,3,[(j/segments,row),(nxt/segments,row),
+                                          (nxt/segments,row+1),(j/segments,row+1)])
+            for row in (0,1):
+                for j in range(segments):
+                    nxt=(j+1)%segments
+                    quad=[rings[0][row][j],rings[1][row][j],
+                          rings[1][row][nxt],rings[0][row][nxt]]
+                    if row==0:quad.reverse()
+                    self.face(quad,3)
     def close_palm_web(self,grip,bone):
         from collections import Counter
         counts=Counter()
@@ -494,6 +547,10 @@ def hand_geometry(name,cfg):
         weights.extend([{hand:1}]*3);tiles.extend([1,1,1])
         def sleeve_folds(i,theta):
             if not 1<=i<=len(samples) or not sleeve_end or samples[i-1]>=sleeve_end:return 1
+            if p1:
+                t=samples[i-1]
+                bunch=.17*math.exp(-((t-.69)/.15)**2)
+                return 1+bunch*math.sin(theta*2.2+t*6.1+sign*.8)+.035*math.sin(theta-t*3.7)
             return 1+.105*math.sin(theta*3+i*.83)+.04*math.sin(theta*5-i*.4)
         palm_rings=g.loft(centres,radii,tiles,weights,20 if p1 else 16,
             axes=((0,1,0),(1,0,0)),warp=sleeve_folds,closed=not p1)
@@ -502,14 +559,18 @@ def hand_geometry(name,cfg):
             radius=(.079*(1-sleeve_end)+.035*sleeve_end+.009*math.sin(sleeve_end*math.pi))*s
             tangent=(wrist-elbow).normalized()
             cw=min(1,.25+sleeve_end*.95)
-            g.loft([cuff-tangent*.015,cuff-tangent*.010,cuff+tangent*.007,cuff+tangent*.014],
-                [(radius+.003,radius*.82+.003),(radius+.006,radius*.82+.005),
-                 (radius+.006,radius*.82+.005),(radius+.003,radius*.82+.002)],
-                7,[{hand:cw,'root':1-cw}]*4,16,
-                axes=((0,1,0),(1,0,0)),closed=False,warp=lambda i,a:1+.065*math.sin(a*3+i*.4))
+            if not p1:
+                g.loft([cuff-tangent*.015,cuff-tangent*.010,cuff+tangent*.007,cuff+tangent*.014],
+                    [(radius+.003,radius*.82+.003),(radius+.006,radius*.82+.005),
+                     (radius+.006,radius*.82+.005),(radius+.003,radius*.82+.002)],
+                    7,[{hand:cw,'root':1-cw}]*4,16,
+                    axes=((0,1,0),(1,0,0)),closed=False,warp=lambda i,a:1+.065*math.sin(a*3+i*.4))
         # Fitted glove cuff has open ends over the continuous wrist.
         g.loft([wrist+Vector((0,0,.012)),wrist-Vector((0,0,.010))],
             [(.041*s,.037*s)]*2,9,[{hand:1}]*2,16,axes=((0,1,0),(1,0,0)),closed=False)
+        if p1:
+            clothing=anatomy['clothing'][side]
+            g.wrist_wrap(clothing['sleeveHem'],clothing['gloveEdge'],hand,sign)
         for digit,yy,length in [('index',.040,1.),('middle',.013,1.06),('ring',-.014,.99),('pinky',-.040,.84)]:
             angles=[0,.38,.82,1.26,1.72,2.22,2.60,2.80]
             path=[grip+Vector((sign*(.038*math.cos(a)),yy*s,-.006-.035*math.sin(a)*length)) for a in angles]
@@ -549,7 +610,7 @@ def hand_geometry(name,cfg):
             path[-2:]=[thumb_prev,thumb_end]
             path.append(thumb_end+(thumb_end-thumb_prev).normalized()*.003)
             thumb_rings=g.loft(path,[.022*s,.020*s,.017*s,.011*s,.005*s,.0015*s],
-                [1,1,2,2,2],[{labels[min(i,2)]:1} for i in range(6)],12,
+                [1,1,1,2,2],[{labels[min(i,2)]:1} for i in range(6)],12,
                 cap_tile=2,cap_start=False)
             palm=palm_rings[-1];root_ring=thumb_rings[0]
             for j in range(12):

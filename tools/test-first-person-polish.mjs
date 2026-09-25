@@ -352,6 +352,7 @@ test('candidate keeps exact sockets, clips, normalized skin and combined tool bu
 });
 
 const distance = (a, b) => Math.hypot(...a.map((value, axis) => value - b[axis]));
+const rgbDistance = (a, b) => Math.hypot(...a.slice(0, 3).map((value, channel) => value - b[channel]));
 const vertex = (position, index) => [position.getX(index), position.getY(index), position.getZ(index)];
 const faces = geometry => {
   const index = geometry.index, count = index?.count ?? geometry.attributes.position.count;
@@ -372,7 +373,6 @@ test('actual exported web and five distal pads per hand have local curved skin s
   assert.ok(leather.length === 4, 'leather atlas chart needs measured image-top bounds');
   const middle = rect => png.pixel((rect[0] + rect[2]) / 2, (rect[1] + rect[3]) / 2);
   const skinColor = middle(skin), leatherColor = middle(leather);
-  const rgbDistance = (a, b) => Math.hypot(...a.slice(0, 3).map((value, channel) => value - b[channel]));
   assert.ok(rgbDistance(skinColor, leatherColor) >= 15,
     'painted skin and glove leather must read as distinct material charts');
   for (const side of ['R', 'L']) {

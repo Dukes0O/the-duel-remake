@@ -26,5 +26,9 @@
       "provenance": {"wrist": "inferred-grip", "palm": "inferred-grip", "knuckles": "inferred-grip", "fingertips": "inferred-grip", "thumbRoot": "inferred-grip", "thumbWeb": "inferred-grip", "thumbTip": "inferred-grip", "distalStations": "inferred-grip"}
     }
   },
-  "atlas": {"size": 1024, "paddingPixels": 8, "charts": {"skin": {"rect": [520, 8, 760, 248]}, "leather": {"rect": [264, 8, 504, 248]}, "cloth": {"rect": [8, 8, 248, 248]}}}
+  "clothing": {
+    "R": {"sleeveHem": [0.2391, -0.3047, -0.4422], "gloveEdge": [0.205, -0.285, -0.468], "minWrapCoverage": 0.70, "wrapThicknessMetres": [0.001, 0.004]},
+    "L": {"sleeveHem": [-0.0095, -0.3047, -0.7426], "gloveEdge": [0.075, -0.285, -0.808], "minWrapCoverage": 0.70, "wrapThicknessMetres": [0.001, 0.004]}
+  },
+  "atlas": {"size": 1024, "paddingPixels": 8, "charts": {"skin": {"rect": [520, 8, 760, 248]}, "leather": {"rect": [264, 8, 504, 248]}, "cloth": {"rect": [8, 8, 248, 248]}, "wrap": {"rect": [776, 8, 1016, 248]}}}
 }
