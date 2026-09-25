@@ -1616,7 +1616,7 @@ tasks:
     flag: none
     behavior_change: no
     owns: [tools/repo-audit.mjs, tools/test-repo-audit.mjs]
-    note: "Read-only audit resolved54 of55 asset candidates as dynamic runtime, source/license/provenance, reference or QA consumers; scrapyard-dirt retains documented future arena use but no current runtime load. All16 export candidates are internally used. No deletion is proven safe. Remaining scope is to resolve the dirt asset when arena work settles its use and improve reporting of known dynamic consumers if useful. Rustwall legacy generator still has concrete test consumers and must be migrated deliberately by its art owner before removal."
+    note: "Current scoped sweep reports48 asset candidates after seven obsolete audio-source candidates were removed by the audio lane. The remaining47 have dynamic runtime, source/license/provenance, reference or QA consumers; scrapyard-dirt retains documented future arena use but no current runtime load. All16 export candidates are internally used. No deletion is proven safe. Remaining scope is to resolve the dirt asset when arena work settles its use and improve reporting of known dynamic consumers if useful. Rustwall legacy generator still has concrete test consumers and must be migrated deliberately by its art owner before removal."
 
   - id: FIX-STATUS-CARD
     title: "Preserve phase suffixes in status lane ownership"
@@ -1814,10 +1814,21 @@ tasks:
     lane: TOOL
     size: S
     needs: [GFX-01-P2]
-    status: ready
+    status: merged
     owns: [docs/ASSET_PIPELINE.md, docs/changes/GFX-01-P2.md, docs/changes/JANITOR-ROOK-NOTE.md]
     helpers: [reviewer, test_runner]
     acceptance:
       - "Preserve exact face/cloth prompts, original paths and hashes, calibration exceptions, rebuild command and structural-versus-selected-paint distinction in current guidance before deleting the consumed note."
       - "Keep committed recipes/tests and immutable sheets. Record7500/1833, final3/3/3/3 with unmeasured frame cost, unchanged runtime crew and P3 body-conversion gate; independent hand proof has its own gate."
       - "Independent fact review, lane tier and build before merge. No game code, originals or runtime asset edits."
+
+  - id: FIX-AUDIT-SCOPE
+    title: Exclude protected lane folders from janitor audit
+    lane: TOOL
+    status: merged
+    branch: codex/fix-audit-scope
+    needs: []
+    owns: [tools/repo-audit.mjs, tools/test-repo-audit-scope.mjs, docs/changes/FIX-AUDIT-SCOPE.md]
+    acceptance:
+      - "Exact branch exclusions retain ref-only inventory, unknown dirty state, skipped inspection and false cleanup eligibility; no access under excluded paths. Defaults unchanged."
+      - "Independent throwaway-repository guard tests precede code, then independent review, lane tier and build. No game, save or runtime changes."
