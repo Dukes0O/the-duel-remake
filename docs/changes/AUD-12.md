@@ -37,7 +37,28 @@ player_facing: no
   536068, 789389 and 855733 in the catalog, a 1400 to 350 Hz pitch-drop
   "pew" of 0.18 s, FFmpeg loudnorm to -14 LUFS and -1 dBTP. The winning
   recipe moves into the audio build tool with AUD-10.
-- Blasts, crash and rocket launches: not yet rated.
+- Blasts, crash and rocket launches: **approved by Kyle** (523089 and 397691
+  blasts, 592388 car crash, 854476 and 854473 rocket launches). AUD-14 turns
+  them into game sounds (trim, variations, near and far versions).
+
+## Kyle's second listening round (24 September 2026)
+
+- Crossbow **A** (snap + arrow flyby) is preferred, but Kyle judged that a
+  realistic crossbow will not be audible while driving and asked for something
+  unique and less realistic. Design rule for car weapons from now on: sound
+  deliberately arcade, with a bright transient above the engine band, a tonal
+  signature, a flight sound that travels with the projectile (3D and doppler)
+  and a distinct hit-confirm sound; always judge them over the engine at full
+  throttle, never alone.
+- Round 3 candidates, in `C:\Users\kyleb\dev\audio-library\listening\crossbow-round-3\`
+  (outside Git), each also rendered in context over `engine-load-high.wav`
+  pitched up 25% plus wind, with the shot 6 dB down at 0.8 s:
+  D zing bolt (A's first 90 ms snap + 2600 to 1400 Hz zing with 25 Hz shimmer
+  + 3 to 9 kHz air whoosh), E pew whistle (snap + 3000 to 700 Hz pew in
+  0.14 s + a 2000 to 1500 Hz whistle trail), F heavy harpoon (90 to 45 Hz
+  thump + 1870/2710/3950 Hz metallic ring + A's flyby), and a hit-confirm
+  (800 Hz low-passed thunk + 3200 Hz tink). All normalized with FFmpeg
+  loudnorm to about -12 LUFS, -1 dBTP. Awaiting Kyle's pick.
 
 ## Evidence
 
