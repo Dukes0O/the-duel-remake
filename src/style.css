@@ -167,3 +167,18 @@
 .backup-blocked button{min-height:46px;padding:12px 18px;border:1px solid #e3bd87;background:#e3bd87;color:#15221b;font-size:11px;font-weight:800;letter-spacing:1px;cursor:pointer}
 .backup-blocked button:hover{background:#ffe0a5}
 .backup-blocked button:focus-visible{outline:3px solid #fff;outline-offset:4px}
+
+/* The Experimental button shares build-label typography, but remains a menu control. */
+@media (max-height: 740px) and (min-width: 851px), (max-width: 1100px) {
+  .build-meta .experimental-open {
+    display: inline-block;
+    position: fixed;
+    right: 5%;
+    bottom: 16px;
+    z-index: 4;
+    min-height: 40px;
+    padding: 10px 14px;
+    border: 1px solid #e3c28b;
+    background: #12211bf5;
+  }
+}

@@ -6,6 +6,12 @@ or hard to repeat. Do not include saved career data.
 
 ## What's new to try
 
+### Experimental Wasteland candidate (not released)
+
+When you receive a tested candidate build, open **Menu → Experimental** and turn it on. This opts into the Wasteland career and Hidden Road together; turn it off to return to ordinary play. The choice should survive a reload. In Pacific Canyon, look for the hidden dirt road and follow the gate invitation into the Scrapdome yard. From the yard, try a Wasteland race, earn scrap, and inspect the available car armor, crew and weapon purchases. Tell us the car, course, difficulty, what you did, and whether the gate, yard or race transition failed.
+
+This is an opt-in candidate, not a live release. Current wall, canyon, crew and first-person hand art still need polish. Continuous first-person hand-to-tool contact has not passed; boss arena fights and later arsenal content are not yet available. Please report visual gaps and rough edges, but do not treat an unavailable item as a working purchase or reward.
+
 In Mad Max Duel, try a rear hit on the rival, a traffic collision, falling
 cacti, a missed checkpoint, and a short UFO jump after the first checkpoint.
 The weapon bar previews the UFO landing in metres. Compare a low-speed hit

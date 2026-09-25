@@ -106,7 +106,7 @@ assert.equal(process.argv.length, 2, 'usage: node tools/test-hidden-road.mjs');
 const baseline = JSON.parse(readFileSync(fixtureUrl, 'utf8'));
 
 check('dev-only switch and explicit construction', () => {
-  assert.equal(FEATURE_STATES['hidden-road'], 'dev', 'hidden-road starts as a dev switch');
+  assert.equal(FEATURE_STATES['hidden-road'], 'beta', 'hidden-road is an opt-in Experimental beta switch');
   assert.equal(createFeatureFlags({ storage: null, qa: false }).enabled('hidden-road'), false);
   assert.equal(createFeatureFlags({ storage: null, qa: true, search: '?flags=hidden-road' }).enabled('hidden-road'), true);
   assert.ok(!courseFor(1989, false).hiddenRoad, 'flag-off course has no corridor');
