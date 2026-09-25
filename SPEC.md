@@ -388,7 +388,8 @@ recordings ship in `public/assets/audio/`, and a test requires them there.
 | Topic | Decision |
 | --- | --- |
 | Paid services | None. Use free sources only. This is a personal, non-commercial project |
-| ElevenLabs | The free plan: 10,000 credits a month, sound effects, voices and music included, non-commercial use, credit ElevenLabs on the in-game credits page. If the free plan has no API access, generate on the website from prompts the agents write |
+| Libraries | No bulk downloads. Search Freesound through its API and download only the sounds we keep, one at a time (Kyle, 24 September 2026). Previews need only Kyle's API key; full-quality originals need his one-time OAuth2 approval and are used for key sounds |
+| ElevenLabs | The free plan: 10,000 credits a month, non-commercial use, credit ElevenLabs on the in-game credits page. Voices use the API with Kyle's free key. The sound effects API is disabled on the free plan, so sound effects are made on the website (200 credits each) with computer use driving it, only for sounds no library has |
 | Voices | Yes: the gatekeeper, raiders and crew get spoken lines (reverses Q4). Text callouts stay as subtitles |
 | Adaptive music | Later, and only if it proves easy (AUD-20) |
 | Engine simulator | Try it: a one-car spike first (AUD-18) |
@@ -397,12 +398,13 @@ recordings ship in `public/assets/audio/`, and a test requires them there.
 
 **Sourcing, in this order.**
 
-1. Free professional libraries: the Sonniss GDC bundles (royalty-free, no
-   attribution, not for AI training) and Freesound CC0 originals (full-quality
-   files, not previews).
-2. ElevenLabs free credits, for what libraries lack: voices first, then sound
-   effects such as the UFO jump or Tesla coil. Plan each month's lines and
-   prompts to fit the 10,000 credits and log the credits each take used.
+1. Freesound, fetched on demand through its API: search by description,
+   licence (CC0 first, then CC-BY with credit), duration and quality; download
+   only chosen sounds. Previews for most sounds, originals for key sounds.
+2. ElevenLabs free credits, for what Freesound lacks: voices first (API),
+   then a few sound effects such as the UFO jump or Tesla coil (website, 200
+   credits each). Plan each month's lines and prompts to fit the 10,000
+   credits and log the credits each take used.
 3. The engine simulator (MIT licence, Windows) for per-car engines, if AUD-18
    shows it beats the current engine.
 4. Synthesis for interface sounds and layers the game drives directly.
@@ -414,7 +416,7 @@ recordings ship in `public/assets/audio/`, and a test requires them there.
 | --- | --- | --- |
 | Runtime sounds the game loads | `public/assets/audio/`, compressed (Opus or Vorbis for one-shots; seamless-loop-safe format for loops) | Yes |
 | Sounds that cannot be regenerated identically: chosen ElevenLabs takes, engine simulator captures, Kyle's recordings | `audio-src/`, FLAC, one version; rejected takes deleted | Yes |
-| Library sounds (Sonniss, Freesound) | Only the recipe in `tools/audio/catalog.json`: library, path or URL, checksum, licence, cut points, processing. The downloaded libraries live outside the repository in `C:\Users\kyleb\dev\audio-library\`; keep only bundles in use | Recipe only |
+| Freesound sounds | Only the recipe in `tools/audio/catalog.json`: sound id, URL, author, licence, checksum, cut points, processing. Downloads are cached outside the repository in `C:\Users\kyleb\dev\audio-library\freesound\` and can be re-fetched; delete cache files nothing uses | Recipe only |
 | Raw race recordings, stems, spectrograms | `.evidence/`, deleted after the verdict | No |
 | Listening verdicts | `docs/board/listening/<family>/round-<n>.md`: scores, notes, what changes next | Yes |
 | Credits | Every catalogued sound on the in-game credits page, including ElevenLabs | Yes |
@@ -465,7 +467,7 @@ engine at full throttle. Ambience sits under the engine.
 | --- | --- | --- |
 | 1 | **AUD-10** Sound bank and mixer foundation | Every existing sound plays through `src/sound-bank.js` and the buses with no audible change, proven against a recorded baseline race; ducking, voice limits and 3D for moving sources work; raw sources leave `public/` (recipes kept) and the placement check covers audio sources; runtime audio is compressed |
 | 2 | **AUD-11** Listening booth and audio measurements | The booth page plays cues in context with A/B/C variants and saves verdict files; the analysis adds LUFS, true peak, loop-seam and repetition checks |
-| 3 | **AUD-12** Sound library | Kyle downloads the Sonniss GDC 2026 bundle to `C:\Users\kyleb\dev\audio-library\`; an index script builds a searchable list (name, folder, duration, loudness) outside the repository |
+| 3 | **AUD-12** On-demand sound sourcing | `tools/audio/freesound.mjs` searches Freesound with Kyle's key (CC0 first), lists candidates with duration, licence and a preview, downloads only chosen sounds to the cache, and writes their recipe to the catalog; `tools/audio/elevenlabs.mjs` generates voice lines with Kyle's key and logs credits; keys are read from Kyle's environment only |
 | 4 | **AUD-13** Briefs | A short brief for every cue family below, in priority order |
 | 5 | **AUD-14** Combat and impacts | The four car weapons, RPG and raider shots, near and far explosions, metal crunch, debris and fire, through three rounds |
 | 6 | **AUD-17** Voices | Stock ElevenLabs voices cast for the gatekeeper, raiders and eight crew; gritty lines with no gore, written to fit the credits; voice bus; subtitles kept; attribution on the credits page |
@@ -474,10 +476,11 @@ engine at full throttle. Ambience sits under the engine.
 | 9 | **AUD-18** Engine simulator spike | Kyle downloads the official MIT release; one engine (Banshee's big-block V8) is built, its RPM sweep and steady on- and off-throttle steps are captured with Audacity recording the PC's output (computer use may drive it), and the booth compares it with today's engine. Decide go or no-go for all nine cars (AUD-19) |
 | backlog | **AUD-20** Adaptive score | Only if easy: music that rises with combat, a menu theme and a gate reveal cue, from ElevenLabs music credits or CC0 sources |
 
-**Kyle's one-time steps.** Create a free ElevenLabs account and, if the API is
-available, set `ELEVENLABS_API_KEY` in your own environment. Download the
-Sonniss GDC 2026 bundle when AUD-12 asks. Download the engine simulator
-release when AUD-18 asks.
+**Kyle's one-time steps.** Create free Freesound and ElevenLabs accounts,
+request a Freesound API key and create an ElevenLabs API key, and store both as
+your own user environment variables (`FREESOUND_API_KEY`,
+`ELEVENLABS_API_KEY`). Approve Freesound's OAuth2 once if full-quality
+originals are wanted. Download the engine simulator release when AUD-18 asks.
 
 ---
 
