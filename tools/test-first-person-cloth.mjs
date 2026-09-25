@@ -252,6 +252,26 @@ async function loadAsset(path) {
   return loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,
     bytes.byteOffset+bytes.byteLength),'');
 }
+function embeddedMapHashes(path) {
+  const bytes=readFileSync(path);
+  assert.equal(bytes.toString('ascii',0,4),'glTF');
+  let json,binary;
+  for(let offset=12;offset<bytes.length;) {
+    const size=bytes.readUInt32LE(offset),type=bytes.readUInt32LE(offset+4);
+    const chunk=bytes.subarray(offset+8,offset+8+size);
+    if(type===0x4e4f534a)json=JSON.parse(chunk.toString('utf8'));
+    if(type===0x004e4942)binary=chunk;
+    offset+=8+size;
+  }
+  assert.ok(json&&binary,'embedded material proof needs GLB JSON and BIN');
+  assert.equal(json.images?.length,3,'Rook must embed one color/surface/normal set');
+  return Object.fromEntries(json.images.map(image=>{
+    const view=json.bufferViews[image.bufferView];
+    const png=binary.subarray(view.byteOffset||0,(view.byteOffset||0)+view.byteLength);
+    assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+    return [image.name,hash(png)];
+  }));
+}
 const centerlines={
   R:{elbow:[.35,-.43,-.27],wrist:[.205,-.285,-.48]},
   L:{elbow:[-.35,-.43,-.39],wrist:[.075,-.285,-.82]},
@@ -428,6 +448,9 @@ test('actual P2 sleeves form broad localized sewn volume versus the P1 recipe', 
     `public/assets/models/wasteland/first-person/hands/${id}.glb`))),before[id],
     `P2 proof changed production ${id}`);
   const next=await loadMesh(join(p2out,'hands/rook.glb'));
+  assert.deepEqual(embeddedMapHashes(join(p2out,'hands/rook.glb')),
+    embeddedMapHashes(join(p1out,'hands/rook.glb')),
+    'P2 sleeve proof changed embedded color, surface or normal map bytes');
   const oldAsset=await loadAsset(join(p1out,'hands/rook.glb'));
   const newAsset=await loadAsset(join(p2out,'hands/rook.glb'));
   const clips=asset=>asset.animations.map(clip=>[clip.name,+clip.duration.toFixed(5)]).sort();
