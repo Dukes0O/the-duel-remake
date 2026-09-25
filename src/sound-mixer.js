@@ -31,9 +31,14 @@ export function spatialMotion(source, listener) {
 }
 
 export class SoundMixer {
-  constructor(context, master, { vehicle = master, enabled = false } = {}) {
+  constructor(
+    context,
+    master,
+    { vehicle = master, enabled = false, voiceEnabled = false } = {},
+  ) {
     this.context = context;
     this.enabled = enabled;
+    this.voiceEnabled = voiceEnabled;
     this.voices = new Map();
     this.ducks = [];
     this.dryVehicle = context.createGain();
@@ -56,13 +61,21 @@ export class SoundMixer {
     return this.buses[cue.bus];
   }
   duck(kind, duration) {
-    if (!this.enabled || !DUCKING[kind]) return;
+    if (
+      (!this.enabled && !(kind === 'voice' && this.voiceEnabled)) ||
+      !DUCKING[kind]
+    )
+      return;
     this.ducks.push({ kind, until: this.context.currentTime + duration });
     this.update();
   }
   update() {
     const now = this.context.currentTime;
-    this.ducks = this.enabled ? this.ducks.filter((d) => d.until > now) : [];
+    this.ducks = this.ducks.filter(
+      (d) =>
+        d.until > now &&
+        (this.enabled || (d.kind === 'voice' && this.voiceEnabled)),
+    );
     for (const name of ['music', 'ambience']) {
       const target = Math.min(
         1,

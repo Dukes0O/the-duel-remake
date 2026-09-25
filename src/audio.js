@@ -119,6 +119,7 @@ export class EngineAudio {
     this.mixer = new SoundMixer(ctx, this.master, {
       vehicle: this.vehicleBus,
       enabled: this.flags.enabled('wasteland2'),
+      voiceEnabled: this.flags.enabled('hidden-road'),
     });
     this.buses = this.mixer.buses;
     this.hiddenRoadBus = this.buses.ambience;
@@ -837,6 +838,7 @@ export class EngineAudio {
     if (this.paused !== st.paused) this.setPaused(st.paused);
     const t = ctx.currentTime;
     this.mixer.enabled = this.flags.enabled('wasteland2');
+    this.mixer.voiceEnabled = this.flags.enabled('hidden-road');
     this.mixer.update();
     this._updateAmbience(st, environment, t);
     const dt = clamp(t - this.lastUpdateTime, 0, 0.1);

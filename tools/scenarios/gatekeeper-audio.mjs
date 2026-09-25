@@ -10,7 +10,7 @@ export async function run(context) {
   );
   if (booth.live !== 'running' || booth.duration < 4)
     throw Error('Booth cut the approved line short');
-  await context.navigate('/tools/menu-check.html?flags=hidden-road,wasteland2');
+  await context.navigate('/tools/menu-check.html?flags=hidden-road');
   await context.waitFor(
     '!!window.__qaApp?.visualReady && !!window.__render',
     'actual gate presentation',
@@ -25,16 +25,18 @@ export async function run(context) {
     if(!a.duel.startHiddenRoadVisit({playerId:a.player.id,car:'falcone_f42',seed:1989}))throw Error('Visit fixture failed');
     a.audio.updateHiddenRoad(a.duel.state);a.onFrame?.(a.duel.state,0);
     const caption=document.querySelector('[data-gatekeeper-subtitle]');
+    const ducked=a.audio.mixer.ducks.some(d=>d.kind==='voice');
     const initial={phase:a.duel.state.hiddenRoadJourney.phase,visible:!caption.hidden,text:caption.textContent};
     for(let i=0;i<10;i++)a.audio.updateHiddenRoad(a.duel.state);
     a.duel.state.paused=true;for(let i=0;i<4;i++)a.audio.updateHiddenRoad(a.duel.state);
     a.duel.state.paused=false;a.audio.updateHiddenRoad(a.duel.state);
     for(let i=0;i<366;i++)a.duel.step(1/120);a.onFrame?.(a.duel.state,0);
     document.querySelectorAll('details').forEach(n=>n.style.display='none');
-    return {initial,count:calls.length,enteringVisible:!caption.hidden,phase:a.duel.state.hiddenRoadJourney.phase};
+    return {initial,ducked,count:calls.length,enteringVisible:!caption.hidden,phase:a.duel.state.hiddenRoadJourney.phase};
   })()`);
   if (
     arrival.count !== 1 ||
+    !arrival.ducked ||
     arrival.initial.phase !== 'opening' ||
     !arrival.initial.visible ||
     !arrival.enteringVisible ||

@@ -73,3 +73,17 @@ clean-checkout repair. Lane tier passed 260/260 in 526.14 seconds; production
 build passed. Replay fingerprints and expansion drives passed unchanged.
 The generated in-game credits page is included with its source credit text.
 Status remains in-progress because AUD-10 baseline review is unresolved.
+
+## Independent feature switch review
+
+The Director found that hidden-road alone could play the welcome without
+voice ducking, because the mixer's original enable switch followed wasteland2.
+A new real-mixer regression reproduced it. Hidden Road now independently permits
+voice duck requests; blast ducking still requires wasteland2. Both flags off
+retains the baseline behavior. The browser scenario now starts with hidden-road
+alone and requires a real voice duck request at arrival. No threshold changed.
+
+The eight focused tests and real browser arrival now pass with hidden-road
+on and wasteland2 off. One welcome, one voice duck, no console errors, and
+the full line/subtitle remain intact. Full-throttle speech contrast is still
+13.06 dB. Gate rerun after the current integration sync remains pending.

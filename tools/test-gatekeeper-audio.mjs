@@ -218,3 +218,36 @@ test('automatic visit stage-loaded follows opening without discarding its pendin
   f.audio.updateHiddenRoad(s);
   assert.equal(f.calls.length, 1);
 });
+
+test('hidden-road voice ducking works independently of wasteland2', async () => {
+  const { SoundMixer } = await import('../src/sound-mixer.js');
+  const gain = () => ({
+    gain: {
+      value: 1,
+      setTargetAtTime(value) {
+        this.value = value;
+      },
+    },
+    connect() {},
+  });
+  const context = { currentTime: 0, createGain: gain };
+  const mixer = new SoundMixer(context, gain(), {
+    enabled: false,
+    voiceEnabled: true,
+  });
+  mixer.duck('voice', 4);
+  assert(mixer.buses.music.gain.value < 1);
+  assert(mixer.buses.ambience.gain.value < 1);
+  context.currentTime = 5;
+  mixer.update();
+  assert.equal(mixer.buses.music.gain.value, 1);
+  mixer.duck('blast', 1);
+  assert.equal(
+    mixer.buses.music.gain.value,
+    1,
+    'hidden-road alone enables only voice ducking',
+  );
+  mixer.voiceEnabled = false;
+  mixer.duck('voice', 1);
+  assert.equal(mixer.buses.music.gain.value, 1, 'both flags off is unchanged');
+});
