@@ -1012,3 +1012,57 @@ test('R3 sleeves export localized diagonal cloth crests instead of circular ring
     assert.ok(proven>=4,`${side} exported sleeve has ${proven}/9 localized crests at authored stations`);
   }
 });
+
+test('first-person frame gate compares visible production A1/B/A2 in both qualities', async () => {
+  const {assessFirstPersonP1FrameCost}=await import('./scenarios/first-person-polish.mjs');
+  assert.equal(typeof assessFirstPersonP1FrameCost,'function',
+    'frame review needs a pure, independently testable A1/B/A2 assessor');
+  const productionSha='a'.repeat(64),candidateSha='b'.repeat(64);
+  const samples=(value)=>Array.from({length:600},()=>value);
+  const branch=(name,quality,cpu,raf)=>({branch:name,
+    asset:name==='B'?{kind:'candidate',
+      path:'art-build/first-person-p1/candidate/hands/rook.glb',sha256:candidateSha}:
+      {kind:'production',path:'public/assets/models/wasteland/first-person/hands/rook.glb',
+        sha256:productionSha},
+    candidateRequests:name==='B'?1:0,observedQuality:quality,
+    courseSignature:'same-frozen-course-seed-and-camera',poseSignature:'same-idle-presentation',
+    warmFrames:30,renderFrameCalls:630,nativeRafTicks:630,
+    rafSamplesMs:samples(raf),renderCpuSamplesMs:samples(cpu),
+    drawCallSamples:samples(80),triangleSamples:samples(120000),
+    textureCountSamples:samples(24),handsVisibleSamples:samples(true),
+    toolVisibleSamples:samples(true)});
+  const reports=['high','performance'].map(quality=>({quality,branches:[
+    branch('A1',quality,10,16.5),branch('B',quality,10.5,16.8),
+    branch('A2',quality,10.2,16.6)]}));
+  const assess=input=>assessFirstPersonP1FrameCost({reports:input,
+    candidateSha256:candidateSha,productionSha256:productionSha});
+  const good=assess(reports);
+  assert.equal(good.passed,true,JSON.stringify(good.failures));
+  assert.ok(good.qualities.high&&good.qualities.performance,
+    'both qualities must expose ratio evidence');
+  const mutate=callback=>{const copy=structuredClone(reports);callback(copy);return copy;};
+  const reject=(callback,why)=>assert.equal(assess(mutate(callback)).passed,false,why);
+  reject(rows=>rows[0].branches.pop(),'missing second baseline must fail');
+  reject(rows=>rows[0].branches[0].handsVisibleSamples[300]=false,
+    'hidden hand in a baseline frame must fail');
+  reject(rows=>rows[1].branches[2].toolVisibleSamples[100]=false,
+    'hidden tool in a baseline frame must fail');
+  reject(rows=>rows[0].branches[0].asset.sha256=candidateSha,
+    'first baseline cannot silently use the candidate asset');
+  reject(rows=>rows[0].branches[1].candidateRequests=0,
+    'candidate branch must observe the actual candidate swap');
+  reject(rows=>rows[1].branches[1].observedQuality='high',
+    'reported quality must match the renderer observation');
+  reject(rows=>rows[0].branches[1].renderCpuSamplesMs.pop(),
+    '599 measured frames are insufficient');
+  reject(rows=>rows[1].branches[1].rafSamplesMs[400]=NaN,
+    'nonfinite native RAF sample cannot count as a frame pass');
+  reject(rows=>rows[1].branches[1].renderFrameCalls=629,
+    'warm and measured frames require exactly one whole renderFrame each');
+  reject(rows=>rows[0].branches[1].renderCpuSamplesMs.fill(11.3),
+    'candidate above 1.10 against A1 must fail even if A2 is faster');
+  reject(rows=>{rows[0].branches[0].renderCpuSamplesMs.fill(11);
+    rows[0].branches[2].renderCpuSamplesMs.fill(10);
+    rows[0].branches[1].renderCpuSamplesMs.fill(11.5);},
+  'candidate above 1.10 against A2 must fail even if A1 comparison passes');
+});
