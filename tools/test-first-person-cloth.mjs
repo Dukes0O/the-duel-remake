@@ -177,7 +177,10 @@ test('frame assessor rejects invented proof families with otherwise valid A1/B/A
     branches:['A1','B','A2'].map(name=>branch(name,quality))}));
   const options={reports,candidateSha256:stamp(7),productionSha256:productionHashes.rook};
   assert.equal(assess(options).passed,true,'valid P1 family remains the control');
-  assert.equal(assess({...options,family:'first-person-fake'}).passed,false,
+  const fake=clone(reports);
+  for(const row of fake)row.branches[1].asset.path=
+    'art-build/first-person-fake/candidate/hands/rook.glb';
+  assert.equal(assess({...options,reports:fake,family:'first-person-fake'}).passed,false,
     'an unrecognized proof family cannot inherit a valid P1 frame verdict');
 });
 
