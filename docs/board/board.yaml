@@ -370,7 +370,7 @@ tasks:
     needs: [GFX-02, GFX-01-P2]
     status: building
     owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, public/assets/models/wasteland/first-person/, docs/board/looks/first-person-p1/, docs/changes/GFX-02-P1.md]
-    hooks: [tools/test-first-person-gear.mjs, tools/test-first-person-polish.mjs, tools/scenarios/first-person-gear.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    hooks: [tools/test-first-person-gear.mjs, tools/test-first-person-polish.mjs, tools/first-person-contact.mjs, tools/test-first-person-contact.mjs, tools/scenarios/first-person-gear.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [art_critic, reviewer, browser_qa]
     flag: wasteland2
     acceptance:
