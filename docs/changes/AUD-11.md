@@ -111,3 +111,20 @@ bed selection preserves the requested siren; stop restores the normal route.
 The new real-wail check failed first, then the complete booth scenario passed
 with no warnings/errors. Runtime siren behavior and existing assertions are
 unchanged. Replaced and removed the representative tone preview.
+
+## Final integration-synced lane gate
+
+Merged integration/wasteland at 568f2dc. On that clean checkout, lane tier
+passed 262/262 with no failures or skipped suites in 361.68 seconds; production
+build passed in 363 ms. All 162 replay fingerprints remain unchanged, and all
+48 expansion drives completed and won. The build retains the existing large
+chunk advisory. No assertion was relaxed to obtain this gate.
+
+The session-ending full command is
+`node tools/run-tests.mjs --tier full --jobs 8 --keep-going`. Its log and exact
+commit verdict are retained under .evidence/2026-09-25/audio-final/ as full.log
+and full-tier.json. Those are review evidence, not generated files to commit.
+No board, status or run-log file is edited directly by this lane.
+
+Status remains in-progress. Passing general suites does not waive AUD-10's
+strict waveform comparison or turn pending human ratings into approvals.
