@@ -94,3 +94,21 @@ No board, status or run-log file is edited directly by this lane.
 
 Status remains in-progress. Passing general suites does not waive AUD-10's
 strict waveform comparison or turn pending human ratings into approvals.
+
+## Flight lifetime and capacity policy
+
+Flight cues are finite one-shots: the crossbow whistle is 1.15 seconds and
+the RPG tail 1.6 seconds before doppler playback-rate adjustment. A projectile
+can remain alive longer (up to 2.5/4 seconds). Its remaining flight is then
+silent. The retained projectile identity deliberately suppresses replay after
+natural end or voice-limit stealing; repeating attacks and voice-pool churn
+would obscure other cues. A stolen cue fades once over 40 ms. Expiry removes
+the identity, and pause/mute/stage cleanup still clears all ownership.
+
+Independent review requested explicit coverage of this existing policy. Two
+bounded tests use the actual EngineAudio and SoundMixer with Web Audio nodes
+faked: natural completion and 17 bolts exceeding the 16-voice cue limit. Both
+check 120 further updates without reacquisition, spatial-node cleanup, final
+removal and an empty voice pool. They pass without changing runtime behavior
+or any existing assertion. This documents the audible tail limitation; it
+does not promise continuous sound for the full projectile lifetime.

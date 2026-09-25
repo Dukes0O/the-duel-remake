@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { EngineAudio } from '../src/audio.js';
+import { SoundMixer } from '../src/sound-mixer.js';
 import { SOUND_BANK } from '../src/sound-bank.js';
 
 test('approved combat recipes declare compressed variants and provenance', async () => {
@@ -189,4 +190,133 @@ test('all compressed variants retain true-peak headroom and a valid runtime home
       assert(measurement.available, id);
       assert(measurement.truePeakDbtp <= -1, id + ' codec true peak');
     }
+});
+
+// Exercise the real renderer ownership and mixer, with only Web Audio mocked.
+function finiteFlight() {
+  const fixture = moving();
+  const nodes = [],
+    sources = [];
+  const param = () => ({
+    value: 0,
+    writes: 0,
+    cancelScheduledValues() {},
+    setTargetAtTime(value) {
+      this.value = value;
+      this.writes++;
+    },
+  });
+  const node = () => {
+    const item = {
+      connections: new Set(),
+      gain: param(),
+      playbackRate: param(),
+      positionX: param(),
+      positionY: param(),
+      positionZ: param(),
+      connect(target) {
+        this.connections.add(target);
+      },
+      disconnect(target) {
+        if (target) this.connections.delete(target);
+        else this.connections.clear();
+      },
+    };
+    nodes.push(item);
+    return item;
+  };
+  fixture.a.context = {
+    state: 'running',
+    currentTime: 0,
+    createGain: node,
+    createPanner: node,
+    createBufferSource() {
+      const source = node();
+      source.starts = 0;
+      source.stops = [];
+      source.start = () => source.starts++;
+      source.stop = (time) => source.stops.push(time);
+      sources.push(source);
+      return source;
+    },
+  };
+  fixture.a.mixer = new SoundMixer(fixture.a.context, node(), {
+    enabled: true,
+  });
+  return { ...fixture, nodes, sources };
+}
+
+test('a naturally ended flight tail remains silent until that projectile is removed', () => {
+  const { a, s, ear, sources } = finiteFlight();
+  a._updateProjectiles(s, { listener: ear });
+  const voice = a.projectileVoices.get(1);
+  assert.equal(sources[0].loop, false, 'flight tails are finite one-shots');
+  sources[0].onended();
+  assert.equal(a.mixer.voices.get('weapon.crossbow.flight').size, 0);
+  assert.equal(
+    voice.output.input.connections.size,
+    0,
+    'ended spatial route releases',
+  );
+  const writes = voice.output.input.positionX.writes;
+  for (let i = 0; i < 120; i++) {
+    s.combat.projectiles[0].x++;
+    a._updateProjectiles(s, { listener: ear });
+  }
+  assert.equal(
+    sources.length,
+    1,
+    'a still-live projectile never restarts its tail',
+  );
+  assert.equal(
+    a.projectileVoices.get(1),
+    voice,
+    'identity suppresses reacquisition',
+  );
+  assert.equal(
+    voice.output.input.positionX.writes,
+    writes,
+    'ended routes receive no updates',
+  );
+  s.combat.projectiles = [];
+  a._updateProjectiles(s, { listener: ear });
+  assert.equal(a.projectileVoices.size, 0);
+  assert.deepEqual(
+    sources[0].stops,
+    [],
+    'natural end does not cause a second stop',
+  );
+});
+
+test('cue-capacity stealing fades the oldest flight once without frame-by-frame reacquisition', () => {
+  const { a, s, ear, sources } = finiteFlight();
+  const limit = SOUND_BANK['weapon.crossbow.flight'].limit;
+  const projectile = s.combat.projectiles[0];
+  s.combat.projectiles = Array.from({ length: limit + 1 }, (_, id) => ({
+    ...projectile,
+    id,
+  }));
+  a._updateProjectiles(s, { listener: ear });
+  const stolen = a.projectileVoices.get(0);
+  assert.deepEqual(
+    sources[0].stops,
+    [0.04],
+    'capacity uses the existing short fade',
+  );
+  assert.equal(a.mixer.voices.get('weapon.crossbow.flight').size, limit);
+  sources[0].onended();
+  assert.equal(stolen.output.input.connections.size, 0);
+  for (let i = 0; i < 120; i++) a._updateProjectiles(s, { listener: ear });
+  assert.equal(
+    sources.length,
+    limit + 1,
+    'stolen projectile does not churn the voice pool',
+  );
+  assert.deepEqual(sources[0].stops, [0.04]);
+  assert.equal(a.projectileVoices.get(0), stolen);
+  s.combat.projectiles = [];
+  a._updateProjectiles(s, { listener: ear });
+  for (const source of sources) source.onended();
+  assert.equal(a.projectileVoices.size, 0);
+  assert.equal(a.mixer.voices.get('weapon.crossbow.flight').size, 0);
 });
