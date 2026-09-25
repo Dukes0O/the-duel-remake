@@ -978,7 +978,7 @@ test('R3 sleeves export localized diagonal cloth crests instead of circular ring
       if(x<9||x>247||y<9||y>247)continue;
       const row=Math.round(y);
       if(!rings.has(row))rings.set(row,[]);
-      rings.get(row).push({point:vertex(position,id),u:(x-10)/236});
+      rings.get(row).push({point:vertex(position,id)});
     }
   });
   const rows=[...rings].sort((a,b)=>a[0]-b[0]);
@@ -997,10 +997,13 @@ test('R3 sleeves export localized diagonal cloth crests instead of circular ring
       const otherWrist=side==='R'?[.075,-.285,-.82]:[.205,-.285,-.48];
       const other=otherElbow.map((value,axis)=>value+(otherWrist[axis]-value)*t);
       const sidePoints=entries.filter(({point})=>distance(point,centre)<distance(point,other));
+      const ringCentre=[0,1].map(axis=>sidePoints.reduce((sum,{point})=>sum+point[axis],0)/sidePoints.length);
       const indexed=new Map();
-      for(const item of sidePoints)indexed.set(Math.round(item.u*20)%20,item.point);
+      for(const {point} of sidePoints) {
+        const theta=((Math.atan2(point[1]-ringCentre[1],point[0]-ringCentre[0])*180/Math.PI)%360+360)%360;
+        indexed.set(Math.round(theta/18)%20,point);
+      }
       if(indexed.size<18)continue;
-      const ringCentre=[0,1].map(axis=>[...indexed.values()].reduce((sum,p)=>sum+p[axis],0)/indexed.size);
       const radial=j=>{
         const p=indexed.get((j+20)%20);
         return p?Math.hypot(p[0]-ringCentre[0],p[1]-ringCentre[1]):NaN;
@@ -1065,4 +1068,26 @@ test('first-person frame gate compares visible production A1/B/A2 in both qualit
     rows[0].branches[2].renderCpuSamplesMs.fill(10);
     rows[0].branches[1].renderCpuSamplesMs.fill(11.5);},
   'candidate above 1.10 against A2 must fail even if A1 comparison passes');
+});
+
+test('frame sampling finds the visible baseline Rook hand without candidate-only extras', async () => {
+  const {findActiveFirstPersonHands}=await import('./scenarios/first-person-polish.mjs');
+  assert.equal(typeof findActiveFirstPersonHands,'function');
+  const rig={visible:true,parent:null,children:[],traverse(visitor){
+    const walk=node=>{visitor(node);for(const child of node.children||[])walk(child);};walk(this);
+  }};
+  const hand={name:'rook sleeves gloves fingers',isSkinnedMesh:true,skeleton:{bones:[{}]},
+    visible:true,parent:rig,children:[]};
+  const tool={name:'rpg-body',isSkinnedMesh:true,skeleton:{bones:[{}]},
+    visible:true,parent:rig,children:[]};
+  rig.children=[hand,tool];
+  assert.deepEqual(findActiveFirstPersonHands(rig),[hand],
+    'the actual production Rook mesh has no candidate handRegions extras');
+  rig.visible=false;
+  assert.deepEqual(findActiveFirstPersonHands(rig),[],
+    'a hidden ancestor cannot establish a visible baseline');
+  rig.visible=true;
+  const duplicate={...hand,parent:rig};rig.children.push(duplicate);
+  assert.equal(findActiveFirstPersonHands(rig).length,2,
+    'a duplicate must remain observable so the sampler can reject ambiguity');
 });
