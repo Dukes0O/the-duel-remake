@@ -103,9 +103,9 @@ test('hand anatomy input is tied to the Rook reference and unchanged grip envelo
   source();
 });
 
-function python(args) {
+function python(args, env = {}) {
   return spawnSync('python', [generator, '--', '--root', root, '--round', '1', ...args],
-    {cwd: root, encoding: 'utf8'});
+    {cwd: root, encoding: 'utf8', env: {...process.env, ...env}});
 }
 
 test('Rook proof path planning is Blender-free and cannot target public or outside the ignored art folder', () => {
@@ -130,6 +130,23 @@ test('Rook proof path planning is Blender-free and cannot target public or outsi
     assert.notEqual(result.status, 0, `${bad} must be rejected before Blender or file writes`);
     assert.ok(!existsSync(join(bad, 'rook.glb')), 'rejected destination stayed untouched');
   }
+});
+
+test('candidate evidence override cannot write outside ignored review folders', () => {
+  const output = join(root, 'art-build/first-person-p1/test-paths');
+  const args = ['--p1-rook', '--output-dir', output, '--paths-only'];
+  for (const bad of [join(root, 'public/assets/models/wasteland/first-person'),
+    resolve(root, '..', 'outside-first-person-evidence')]) {
+    const existed = existsSync(bad);
+    const result = python(args, {DUEL_EVIDENCE_DIR: bad});
+    assert.notEqual(result.status, 0, `${bad} evidence override must fail before writes`);
+    assert.equal(existsSync(bad), existed, 'rejected evidence destination was created');
+  }
+  const inside = join(root, '.evidence/test-first-person-p1-paths');
+  const existed = existsSync(inside);
+  const accepted = python(args, {DUEL_EVIDENCE_DIR: inside});
+  assert.equal(accepted.status, 0, accepted.stderr || accepted.stdout);
+  assert.equal(existsSync(inside), existed, 'allowed evidence dry run still cannot write');
 });
 
 async function loadHands(path) {
@@ -215,14 +232,20 @@ function decodeRgbaPng(png) {
 
 test('isolated manifest identifies exact inputs, exported GLB and embedded map pixels', () => {
   ensureCandidate();
-  const manifestPath = resolve(candidate, '..', '..', 'manifest.json');
+  // The focused override names a frozen reviewed candidate; pair it with its
+  // own manifest and maps. Ordinary clean-checkout runs still use test-proof.
+  const candidateOutput = resolve(candidate, '..', '..');
+  const allowed = join(root, 'art-build/first-person-p1');
+  assert.ok(candidateOutput.startsWith(allowed + '\\') || candidateOutput.startsWith(allowed + '/'),
+    'reviewed candidate must remain in the ignored first-person proof family');
+  const manifestPath = join(candidateOutput, 'manifest.json');
   assert.ok(existsSync(manifestPath), 'candidate needs its own build manifest');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.mode, 'p1-rook');
   const own = path => {
     const absolute = resolve(root, path);
-    assert.ok(absolute.startsWith(testOutput + '\\') || absolute.startsWith(testOutput + '/'),
+    assert.ok(absolute.startsWith(candidateOutput + '\\') || absolute.startsWith(candidateOutput + '/'),
       `${path} escaped the isolated proof folder`);
     return absolute;
   };
@@ -427,6 +450,61 @@ function joinedSurfaceComponents(mesh, tolerance = .0001) {
   }
   return Array.from({length: position.count}, (_, vertex) => find(vertex));
 }
+
+function weldedVertexIds(position, tolerance = .0001) {
+  const parent = Array.from({length: position.count}, (_, index) => index);
+  const find = index => {while (parent[index] !== index) {
+    parent[index] = parent[parent[index]]; index = parent[index];
+  } return index;};
+  const union = (a, b) => {a = find(a); b = find(b); if (a !== b) parent[b] = a;};
+  const cells = new Map(), key = (x, y, z) => `${x},${y},${z}`;
+  for (let vertex = 0; vertex < position.count; vertex++) {
+    const x = position.getX(vertex), y = position.getY(vertex), z = position.getZ(vertex);
+    const cx = Math.floor(x / tolerance), cy = Math.floor(y / tolerance), cz = Math.floor(z / tolerance);
+    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++)
+      for (const other of cells.get(key(cx + dx, cy + dy, cz + dz)) || [])
+        if (Math.hypot(x - position.getX(other), y - position.getY(other), z - position.getZ(other)) <= tolerance)
+          union(vertex, other);
+    const cell = key(cx, cy, cz); if (!cells.has(cell)) cells.set(cell, []); cells.get(cell).push(vertex);
+  }
+  return Array.from({length: position.count}, (_, index) => find(index));
+}
+
+test('welded palm-to-digit surface has no interior edge shared by three or more faces', async () => {
+  ensureCandidate();
+  const hands = await loadHands(candidate), meshes = [];
+  hands.scene.traverse(node => {if (node.isSkinnedMesh) meshes.push(node);});
+  assert.ok(meshes.length);
+  for (const side of ['L', 'R']) {
+    let checkedFaces = 0;
+    for (const mesh of meshes) {
+      const geometry = mesh.geometry, welded = weldedVertexIds(geometry.attributes.position);
+      const connected = joinedSurfaceComponents(mesh);
+      const indices = geometry.attributes.skinIndex, weights = geometry.attributes.skinWeight;
+      const wristComponents = new Set();
+      for (let vertex = 0; vertex < connected.length; vertex++) for (let slot = 0; slot < 4; slot++) {
+        const bone = mesh.skeleton.bones[indices.getComponent(vertex, slot)]?.name;
+        if (bone === `wrist_${side}` && weights.getComponent(vertex, slot) >= .25)
+          wristComponents.add(connected[vertex]);
+      }
+      const incidence = new Map();
+      for (const corners of faces(geometry)) {
+        if (!wristComponents.has(connected[corners[0]])) continue;
+        checkedFaces++;
+        for (const [a, b] of [[0, 1], [1, 2], [2, 0]]) {
+          const first = welded[corners[a]], second = welded[corners[b]];
+          assert.notEqual(first, second, `${side} has a collapsed triangle edge after seam weld`);
+          const edge = first < second ? `${first}:${second}` : `${second}:${first}`;
+          incidence.set(edge, (incidence.get(edge) || 0) + 1);
+        }
+      }
+      const overfull = [...incidence].filter(([, count]) => count > 2);
+      assert.equal(overfull.length, 0,
+        `${side} hand has ${overfull.length} non-manifold shared edges (first ${overfull[0]?.join('=')})`);
+    }
+    assert.ok(checkedFaces >= 200, `${side} hand manifold check did not reach the actual palm and digits`);
+  }
+});
 
 test('Rook exported palm and all five digits on each side form one welded deforming surface', async () => {
   ensureCandidate();
