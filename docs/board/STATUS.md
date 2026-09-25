@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-25T07:21:10.487Z
+Observed at: 2026-09-25T07:21:42.913Z
 
-Observation commit: c4f50a354dc86a216f74b3189dddf951c27c388b
+Observation commit: 4ec8c63b159c880ad07080a27ed88c2bce5ecc40
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: c4f50a354dc86a216f74b3189dddf951c27c388b
+Integration HEAD: 4ec8c63b159c880ad07080a27ed88c2bce5ecc40
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -33,8 +33,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/gfx-01-p2 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-01-p2 |
-| codex/janitor-rustwall-note | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/janitor-rustwall-note |
-| lane/audio/aud-10 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/audio/aud-10 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/audio/aud-12 | 0 | unknown | true | false | unknown |
 
 ## Unmerged branches for idle review
@@ -44,7 +43,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/gfx-01-p2 | GFX-01-P2 | 2026-09-24T23:14:33-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/crew-p2/round-1-review.md, docs/board/looks/crew-p2/round-1.jpg, docs/board/looks/crew-p2/round-2-review.md, docs/board/looks/crew-p2/round-2.jpg, docs/board/looks/crew-p2/round-3-review.md |
-| lane/audio/aud-10 | AUD-10 | 2026-09-25T00:10:40-07:00 | 0 | uncommitted changes; exact activity time unknown | .gitattributes, audio-src/library/engine-source.flac, audio-src/library/tire-squeal.flac, docs/board/listening/aud-11-round-1.json, docs/changes/AUD-10.md |
+| lane/audio/aud-10 | AUD-10 | 2026-09-25T00:21:40-07:00 | 0 | last commit 2026-09-25T00:21:40-07:00 | .gitattributes, audio-src/library/engine-source.flac, audio-src/library/tire-squeal.flac, docs/audio/briefs.md, docs/board/listening/aud-11-round-1.json |
 
 ## Size targets
 
@@ -58,10 +57,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 210,328 B | +0 B | 500,000 B |
 | Review `looks/` | 5,665,862 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 151,282 B | +88,881 B | 5,000,000 B |
+| Added bytes in last merge | 151,282 B | +0 B | 5,000,000 B |
 | All `public/` | 255,694,015 B | +0 B | unavailable |
-| Git objects | 313,956,352 B | +444,416 B | unavailable |
-| Lane folders | 2 | +1 | unavailable |
+| Git objects | 314,567,680 B | +611,328 B | unavailable |
+| Lane folders | 1 | -1 | unavailable |
 
 ## Backups
 
@@ -69,7 +68,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: c4f50a354dc86a216f74b3189dddf951c27c388b
+- Local integration/wasteland: 4ec8c63b159c880ad07080a27ed88c2bce5ecc40
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
