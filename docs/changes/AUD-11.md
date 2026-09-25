@@ -101,3 +101,13 @@ No art assertion was changed and no old scratch file was copied into place.
 Production build passed separately in 346 ms. All 162 replay fingerprints
 were unchanged, and all 48 expansion drives completed and won. Rerun the
 lane gate after the integration-owned fix; this is not a passing lane gate.
+
+## Booth source fidelity follow-up
+
+A new browser regression found that the siren preview was only a representative
+single tone. The booth now routes the actual game's two siren oscillators into
+the audition position and lets the production update drive their wail. Quiet
+bed selection preserves the requested siren; stop restores the normal route.
+The new real-wail check failed first, then the complete booth scenario passed
+with no warnings/errors. Runtime siren behavior and existing assertions are
+unchanged. Replaced and removed the representative tone preview.

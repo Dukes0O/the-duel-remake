@@ -24,6 +24,7 @@ const state = {
   police: { beep: 0, pursuit: null },
 };
 const course = { groundAt: () => ({ x: 0, y: 0, z: 0, heading: 0 }) };
+let previewId = null;
 let active = 'A',
   audition = null,
   frame = 0,
@@ -62,7 +63,7 @@ function updateBed() {
   if (byId('bed').value === 'quiet') {
     for (const item of [
       audio.engineGain,
-      audio.sirenGain,
+      previewId === 'vehicle.siren' ? null : audio.sirenGain,
       audio.wind.gain,
       audio.tires.gain,
       audio.gravel.gain,
@@ -161,9 +162,18 @@ function preview(id, index) {
         filter.disconnect();
         gain.disconnect();
       };
-    } else if (id === 'vehicle.siren')
-      audio._tone(760, 0.6, 0.06, 'sine', 0, 980, output.input);
-    else audio._playCue(id);
+    } else if (id === 'vehicle.siren') {
+      state.police.pursuit = { active: true, distanceU: 0 };
+      audio.sirenGain.disconnect();
+      audio.sirenGain.connect(output.input);
+      output.stopExtra = () => {
+        state.police.pursuit = null;
+        audio.sirenGain.gain.cancelScheduledValues(audio.context.currentTime);
+        audio.sirenGain.gain.value = 0;
+        audio.sirenGain.disconnect();
+        audio.sirenGain.connect(audio.dryVehicleBus);
+      };
+    } else audio._playCue(id);
   } finally {
     audio.mixer.output = original;
   }
@@ -179,6 +189,7 @@ async function stop() {
   output?.stopExtra?.();
   output?.disconnect();
   output = null;
+  previewId = null;
   await audio.context.suspend();
   byId('status').textContent = 'Stopped.';
 }
@@ -187,8 +198,9 @@ async function play(slot) {
   await ready();
   active = slot;
   playing = true;
-  updateBed();
   const id = byId('cue-' + slot).value;
+  previewId = id;
+  updateBed();
   audition = {
     cue: id,
     variant: slot,

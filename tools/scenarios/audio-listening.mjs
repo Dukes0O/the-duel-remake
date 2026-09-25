@@ -32,6 +32,18 @@ export async function run(context) {
     result.verdict.distance !== 'near'
   )
     throw Error('Booth variants or explicit ratings failed');
+  const siren = await context.evaluate(`(async()=>{
+    const b=window.__listeningBooth;document.querySelector('#cue-B').value='vehicle.siren';document.querySelector('#bed').value='quiet';
+    await b.play('B');await new Promise(r=>setTimeout(r,300));const first=b.audio.siren.frequency.value,gain=b.audio.sirenGain.gain.value;
+    await new Promise(r=>setTimeout(r,400));const second=b.audio.siren.frequency.value,harmony=b.audio.sirenHarmony.frequency.value;
+    await b.stop();return {gain,first,second,harmony};
+  })()`);
+  if (
+    siren.gain < 0.01 ||
+    Math.abs(siren.first - siren.second) < 30 ||
+    Math.abs(siren.harmony / siren.second - 1.5) > 0.01
+  )
+    throw Error('Booth siren does not use the real two-voice wail');
   await context.screenshot('listening-booth');
   await context.navigate('/tools/audio-race-check.html');
   await context.waitFor('window.__audioQaReady', 'native-rate recorder', 30000);
@@ -44,6 +56,6 @@ export async function run(context) {
   await context.evaluate('window.__audioQaFinish()');
   await writeFile(
     join(context.outputDir, 'listening-check.json'),
-    JSON.stringify({ ...result, rate }, null, 2) + '\n',
+    JSON.stringify({ ...result, rate, siren }, null, 2) + '\n',
   );
 }
