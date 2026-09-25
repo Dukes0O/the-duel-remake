@@ -139,11 +139,29 @@ baseline comparison is failing, not skipped or relaxed.
 
 ## Handoff
 
-Integration was merged into the audio branch at 7393d07. The final lane tier
-and production build after that merge are still pending. Latest source fix:
-be129b0. Do not merge this card until the baseline finding and remaining gates
+Integration was merged into the audio branch at 7393d07. After the later integration sync at 4f64f9e, the lane tier passed 254/254
+in 408.37 seconds and the production build passed. All 162 replay checks
+remain unchanged. The committed audio bytes were independently checked at 4f64f9e: 17/17
+files are exact, including the selected Callum take. Both licensed source
+FLACs also decode to the exact original PCM. Do not merge this card until the baseline finding and remaining gates
 are resolved and this note explicitly says ready-to-merge.
 
 AUD-11, gatekeeper wiring, AUD-14 and AUD-17 have not started. Before any future
 voice generation, complete the Director's AUD-12-R1 fake-only regression for
 preserving returned takes when the later subscription query fails.
+
+## Baseline follow-up
+
+The stricter comparator now runs reference, candidate and a second reference
+in one six-channel OfflineAudioContext with shared decoded buffers. No threshold
+changed. Large residuals clustered just after source stops, where asynchronous
+onended cleanup could truncate filter tails. Deferring topology cleanup and
+onended handlers until rendering completes stabilized four of five cases below
+0.000000328 peak difference. The 14-second case still fails: peak difference
+0.000016481, RMS 0.0000000882; its reference control is 0.000001774. The issue
+is therefore not fully resolved. Do not mark this card ready. A specific
+approval question about peak and RMS bounds is pending with Kyle.
+
+The final lane and build pass covers the unchanged production audio source;
+the comparator follow-up is a QA-tool change, tested separately and still red.
+No claim of human listening or exact mixed-waveform identity is made.

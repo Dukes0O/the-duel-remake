@@ -46,7 +46,7 @@ export async function run(context) {
           const native=new OfflineAudioContext(6,duration*rate,rate);
           const merge=native.createChannelMerger(6);merge.connect(native.destination);
           const decoded=new Map();
-          const audios=[];
+          const audios=[],endedHandlers=[];
           let clock=0;
           for(const [index,Audio]of [Legacy,Current,Legacy].entries()){
             const output=native.createGain(),split=native.createChannelSplitter(2);
@@ -64,7 +64,18 @@ export async function run(context) {
               const value=Reflect.get(target,key,target);
               if(key==='createBufferSource'||key==='createOscillator')return()=>{
                 const node=value.call(target),start=node.start.bind(node),stop=node.stop.bind(node);
+                // A stopped source can leave a filter tail. onended is delivered
+                // on the main thread at variable times during offline rendering.
+                // Keep topology connected until rendering finishes; source stops
+                // and all authored gain envelopes remain exactly as scheduled.
+                node.disconnect=()=>{};
+                let ended=null;
+                Object.defineProperty(node,'onended',{get:()=>ended,set:callback=>{ended=callback;}});
+                endedHandlers.push(()=>ended?.());
                 node.start=(time=clock,...rest)=>start(time,...rest);node.stop=(time=clock)=>stop(time);return node;
+              };
+              if(typeof value==='function'&&String(key).startsWith('create'))return(...args)=>{
+                const node=value.apply(target,args);if(typeof node.disconnect==='function')node.disconnect=()=>{};return node;
               };
               return typeof value==='function'?value.bind(target):value;
             }});
@@ -91,6 +102,7 @@ export async function run(context) {
             }
           }
           const rendered=await native.startRendering();
+          for(const cleanup of endedHandlers)cleanup();
           let peakDifference=0,repeatPeak=0,power=0,count=0,peakTime=0;
           for(let ch=0;ch<2;ch++){
             const old=rendered.getChannelData(ch),now=rendered.getChannelData(ch+2),repeat=rendered.getChannelData(ch+4);
