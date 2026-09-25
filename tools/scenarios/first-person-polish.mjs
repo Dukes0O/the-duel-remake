@@ -9,8 +9,22 @@ const IDS = ['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'];
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const ASSET = '/assets/models/wasteland/first-person/hands/rook.glb';
 
-export async function validateFirstPersonCandidatePath({root,candidatePath,productionPath}) {
-  const allowed = await realpath(join(root,'art-build/first-person-p1'));
+export function selectFirstPersonProof({p1Round,p2Round,contactOnly=false}={}) {
+  if(p1Round!==undefined&&p2Round!==undefined)throw Error('Conflicting P1/P2 round selectors');
+  const p2=p2Round!==undefined;
+  if(p2&&contactOnly)throw Error('P2 contact needs a separate approved sampling design');
+  const round=Number(p2?p2Round:p1Round??1);
+  if(!Number.isInteger(round)||round<1||round>10)throw Error('First-person proof round must be 1..10');
+  const family=p2?'first-person-p2':'first-person-p1';
+  const candidateRoot=`art-build/${family}`;
+  return {family,round,candidateRoot,
+    defaultCandidatePath:`${candidateRoot}/candidate/hands/rook.glb`,
+    blenderManifestPath:`${candidateRoot}/candidate/evidence/blender-manifest.json`};
+}
+
+export async function validateFirstPersonCandidatePath({root,candidatePath,productionPath,family='first-person-p1'}) {
+  if(!['first-person-p1','first-person-p2'].includes(family))throw Error('Unknown first-person proof family');
+  const allowed = await realpath(join(root,`art-build/${family}`));
   const absolute = await realpath(candidatePath);
   const production = await realpath(productionPath);
   if (absolute === production || extname(absolute).toLowerCase() !== '.glb')
@@ -74,8 +88,10 @@ export function rookCandidateFetchInstallScript(base64,origin) {
 }
 
 /** Assess raw native-frame evidence; browser collection is kept separate. */
-export function assessFirstPersonP1FrameCost({reports,candidateSha256,productionSha256}) {
+export function assessFirstPersonP1FrameCost({reports,candidateSha256,productionSha256,family='first-person-p1'}) {
   const failures=[],qualities={};
+  if(!['first-person-p1','first-person-p2'].includes(family))
+    failures.push('Unknown first-person proof family');
   const expected=['A1','B','A2'];
   const summarize=values=>{
     const sorted=[...values].sort((a,b)=>a-b);
@@ -99,7 +115,7 @@ export function assessFirstPersonP1FrameCost({reports,candidateSha256,production
     for(const branch of row.branches) {
       const tag=row.quality+'/'+branch.branch,selected=branch.branch==='B';
       const path=branch.asset?.path?.replaceAll('\\','/');
-      const badPath=selected ? !path?.startsWith('art-build/first-person-p1/')||
+      const badPath=selected ? !path?.startsWith(`art-build/${family}/`)||
         !path.endsWith('/hands/rook.glb')||path.includes('../') :
         path!=='public/assets/models/wasteland/first-person/hands/rook.glb';
       if(branch.asset?.kind!==(selected?'candidate':'production')||
@@ -189,21 +205,22 @@ function embeddedTextureEstimate(bytes) {
 
 export async function run(context) {
   const root = fileURLToPath(new URL('../../',import.meta.url));
-  const round = Number(process.env.GFX_FIRST_PERSON_P1_ROUND || 1);
-  if (!Number.isInteger(round) || round < 1 || round > 10) throw Error('First-person P1 round must be 1..10');
-  const candidatePath = process.env.GFX_FIRST_PERSON_P1_CANDIDATE ||
-    join(root,'art-build/first-person-p1/candidate/hands/rook.glb');
-  const productionPath = join(root,'public/assets/models/wasteland/first-person/hands/rook.glb');
-  const candidate = await validateFirstPersonCandidatePath({root,candidatePath,productionPath});
-  const candidateBytes = await readFile(candidate.absolute);
   const contactOnly = process.env.GFX_FIRST_PERSON_CONTACT_ONLY === '1';
+  const proof=selectFirstPersonProof({p1Round:process.env.GFX_FIRST_PERSON_P1_ROUND,
+    p2Round:process.env.GFX_FIRST_PERSON_P2_ROUND,contactOnly});
+  const {round,family}=proof;
+  const candidatePath = (family==='first-person-p2'
+    ? process.env.GFX_FIRST_PERSON_P2_CANDIDATE
+    : process.env.GFX_FIRST_PERSON_P1_CANDIDATE) || join(root,proof.defaultCandidatePath);
+  const productionPath = join(root,'public/assets/models/wasteland/first-person/hands/rook.glb');
+  const candidate = await validateFirstPersonCandidatePath({root,candidatePath,productionPath,family});
+  const candidateBytes = await readFile(candidate.absolute);
   const costOnly = process.env.GFX_FIRST_PERSON_P1_FRAME_COST === '1';
   const paintPreflightOnly = process.env.GFX_FIRST_PERSON_P1_PAINT_PREFLIGHT === '1';
   if([contactOnly,costOnly,paintPreflightOnly].filter(Boolean).length>1)
     throw Error('Choose one first-person diagnostic mode');
-  const blender = JSON.parse(await readFile(join(root,
-    'art-build/first-person-p1/candidate/evidence/blender-manifest.json'),'utf8'));
-  if (blender.family !== 'first-person-p1' || blender.round !== round ||
+  const blender = JSON.parse(await readFile(join(root,proof.blenderManifestPath),'utf8'));
+  if (blender.family !== family || blender.round !== round ||
       blender.candidateSha256 !== candidate.sha256 || blender.captures?.length !== 8)
     throw Error('Frozen Blender source module does not match selected Rook candidate');
   const camera = {position:[0,0,0],target:[0,0,-1],verticalFov:72,near:.15,width:1280,height:720};
@@ -215,7 +232,12 @@ export async function run(context) {
   const relativePath = path => relative(root,path).replaceAll('\\','/');
   const handHashes = async () => Object.fromEntries(await Promise.all(IDS.map(async id =>
     [id,sha(await readFile(join(root,`public/assets/models/wasteland/first-person/hands/${id}.glb`)))])));
+  const toolHashes = async () => Object.fromEntries(await Promise.all(['rpg','wrench'].map(async id =>
+    [id,sha(await readFile(join(root,`public/assets/models/wasteland/first-person/${id}.glb`)))])));
   const productionBefore = await handHashes();
+  const toolsBefore = family==='first-person-p2' ? await toolHashes() : null;
+  if(toolsBefore&&['rpg','wrench'].some(id=>toolsBefore[id]!==blender.tools?.[id]?.sha256))
+    throw Error('P2 Blender tool hashes differ from unchanged production tools');
   if(costOnly) {
     const baselineBytes=await readFile(productionPath);
     const rpgPath=join(root,'public/assets/models/wasteland/first-person/rpg.glb');
@@ -234,7 +256,7 @@ export async function run(context) {
       reports.push({quality,branches});
     }
     const assessment=assessFirstPersonP1FrameCost({reports,
-      candidateSha256:candidate.sha256,productionSha256:productionBefore.rook});
+      candidateSha256:candidate.sha256,productionSha256:productionBefore.rook,family});
     const productionAfter=await handHashes();
     const rpgAfterSha256=sha(await readFile(rpgPath));
     const sourceFailures=[];
@@ -242,7 +264,7 @@ export async function run(context) {
       sourceFailures.push('Production hand asset changed during frame-cost measurement');
     if(rpgAfterSha256!==rpgSha256)
       sourceFailures.push('Production RPG asset changed during frame-cost measurement');
-    await writeFile(manifestPath,JSON.stringify({family:'first-person-p1-frame-cost',round,
+    await writeFile(manifestPath,JSON.stringify({family:`${family}-frame-cost`,round,
       observationCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
       candidate:{path:relativePath(candidate.absolute),sha256:candidate.sha256},
       productionBefore,productionAfter,activeGearTextures,rpgAfterSha256,
@@ -254,10 +276,11 @@ export async function run(context) {
       failures:assessment.failures,qualities:assessment.qualities}));
     return;
   }
-  const evidence = {family:'first-person-p1',round,
+  const evidence = {family,round,
     observationCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
     candidate:{path:relativePath(candidate.absolute),sha256:candidate.sha256},camera,
-    productionBefore,productionAfter:null,qualities:{},captures:[],orderedMotion:[],
+    productionBefore,productionAfter:null,
+    ...(toolsBefore?{toolsBefore,toolsAfter:null}:{}),qualities:{},captures:[],orderedMotion:[],
     frameStatus:'unmeasured',loadErrors:[]};
   const base64 = candidateBytes.toString('base64');
   const contactReports=[];
@@ -331,7 +354,7 @@ export async function run(context) {
       })()`);
       const path=await context.screenshot('p1-r3-paint-preflight');
       const bytes=await readFile(path);
-      await writeFile(manifestPath,JSON.stringify({family:'first-person-p1-paint-preflight',round,
+      await writeFile(manifestPath,JSON.stringify({family:`${family}-paint-preflight`,round,
         candidate:{path:relativePath(candidate.absolute),sha256:candidate.sha256},
         quality,inspection,screenshot:{path:relativePath(path),sha256:sha(bytes)}},null,2)+'\n',
       {flag:'wx'});
@@ -369,6 +392,11 @@ export async function run(context) {
       productionBefore,productionAfter:await handHashes(),swapCount:candidateRequests});
   }
   evidence.productionAfter = await handHashes();
+  if(toolsBefore) {
+    evidence.toolsAfter=await toolHashes();
+    if(['rpg','wrench'].some(id=>evidence.toolsAfter[id]!==toolsBefore[id]))
+      throw Error('P2 production tool changed during candidate capture');
+  }
   if (contactOnly) {
     await writeFile(manifestPath,JSON.stringify({family:'first-person-p1-contact',round,
       observationCommit:evidence.observationCommit,candidate:evidence.candidate,
@@ -380,7 +408,7 @@ export async function run(context) {
   if (evidence.loadErrors.length) throw Error('First-person candidate load errors: '+evidence.loadErrors.join('; '));
   if (evidence.captures.length !== 16) throw Error('Missing High/Performance matched Rook poses');
   await writeFile(manifestPath,JSON.stringify(evidence,null,2)+'\n',{flag:'wx'});
-  console.log(`First-person P1 Rook: ${evidence.captures.length} matched course captures; real exit, shot, reload, repair and reentry in both qualities; candidate fetched once each.`);
+  console.log(`${family} Rook: ${evidence.captures.length} matched course captures; real exit, shot, reload, repair and reentry in both qualities; candidate fetched once each.`);
 }
 
 const key = (context,type,code,name,virtual) => context.command('Input.dispatchKeyEvent',

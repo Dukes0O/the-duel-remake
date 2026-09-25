@@ -247,6 +247,64 @@ All 24 focused hand tests passed; final lane 268/268 and build passed on clean
 Three immutable review sheets and tests remain. Raw captures, logs and ignored
 candidates were consumed after the verdict; the original source remains above.
 
+## Rook P2 sleeve and cloth research recipe — unpromoted
+
+GFX-02-P2 is a separate opt-in Rook proof; the public Rook and other seven hands,
+tools, sockets and save data remain unchanged. `--p2-rook` reads committed
+`tools/blender/first-person-p2-source.json` and checks the exact parent P1 source
+hash. Its first round replaced a narrow loft with one connected 20-vertex sewn
+sleeve shell per arm: asymmetric elbow bulge, gathered waist and seam-angle
+paths. The same P1 palm, digits, wrap, rig, clips and padded skin remain. The
+final 4,260 hand triangles plus unchanged 3,276-triangle RPG total 7,536,
+inside 8,000 and three active draws. Actual-export tests check both outer
+azimuths, the inner/seam taper, one manifold cloth shell, exact frozen rings,
+non-cloth geometry/UV/skin, rig/clips/sockets and production-byte isolation.
+
+Two matched game rounds scored likeness/readability/grounding/consistency
+**3/4/3/3**. Round 2 improved cloth scale but did not meet likeness four.
+The wrists and rigid wrap/clothing transitions, sparse soft folds and generic
+glove still need a different construction method. Continuous 14-pose contact
+remains unsupported. A separate idle High/Performance A1/B/A2 frame check
+passed its scoped 1.10 limit on the frozen round-2 GLB: 30 warm and 600 native
+frames per leg, one complete renderFrame per sample, zero browser issues. High
+CPU mean B/A1 and B/A2 were 1.0086 and 0.9481; Performance were 1.0509 and
+1.0616. CPU p95 and RAF p95 ratios were at most 1.0056. Worst required ratio
+was 1.0616. This does not measure GPU time or action scenes. Passing this
+frame gate does not promote an asset whose likeness/contact gates remain open.
+Do not convert the other hands from these research scores.
+
+The selected P2 round-2 build reuses the P1 three-panel source above, then
+replaces only the actual glTF-V cloth chart in the embedded 1024-square
+color/surface/normal atlas. The second selected original is preserved at
+`C:/Users/kyleb/.codex/generated_images/01a0d549-18ea-7f60-8b6c-cd0d3c382114/exec-f6024d6e-0813-45e4-afc0-41081de6e123.png`, 1254×1254 RGB,
+SHA-256 `e4a286ebc7a4b07f0645c63f0eb0a66db93fd9bfcec0f213a0671f5e56bca3ac`.
+It was generated with the built-in image tool using this exact prompt:
+
+```text
+Square seamless game texture swatch: worn dark teal tightly woven matte canvas, viewed straight on under neutral uniform lighting. Very fine dense threads and restrained subtle abrasion; low contrast. No folds, shadows, border, text, objects, stripes, embroidery, or large knit loops. One opaque square image.
+```
+
+From an isolated checkout, rebuild the ignored selected candidate with Blender:
+
+```powershell
+& 'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe' -b --python-exit-code 1 --python tools/blender/first-person-gear.py -- --root . --round 2 --p2-rook --output-dir art-build/first-person-p2/candidate --p2-paint C:/Users/kyleb/.codex/generated_images/01a0d53e-3baa-7c12-883d-38d2395c6099/exec-643b8830-8970-4809-a7a2-19004a01fa10.png --p2-paint-sha256 785c80bb03380c6454607e5fba687b633e47642cac0a1b58d7176afdf9a64b3b --p2-cloth-paint C:/Users/kyleb/.codex/generated_images/01a0d549-18ea-7f60-8b6c-cd0d3c382114/exec-f6024d6e-0813-45e4-afc0-41081de6e123.png --p2-cloth-paint-sha256 e4a286ebc7a4b07f0645c63f0eb0a66db93fd9bfcec0f213a0671f5e56bca3ac
+```
+
+The cloth input must be a hash-verified square 1024–2048 PNG. The generator
+box-filters its **whole native square** to 240×240. Blender buffer rows 8..247
+become decoded PNG cloth x8..247,y776..1015; exported glTF V samples those
+rows directly. Only that cloth rectangle changes. Roughness stays matte near
+0.9; cloth normal height/slope is quartered before normalizing, rather than
+scaling encoded RGB. The independent test uses a separate synthetic source,
+checks actual cloth-face pixels, exact other-map bytes and geometry identity.
+The manifest records both input paths/hashes separately with selected-artwork
+flags. The reviewed round-2 GLB SHA-256 is
+`d567b345bb780f20cca0c07f8e6bd56cb3414f8060c8f1fb6f9e62b15fe7e779`.
+An omitted cloth flag reproduces the round-1 material recipe; a procedural
+no-input build does **not** reproduce either selected generated image. Retain
+both originals outside disposable lanes. P2's first two sheets and review
+notes remain immutable; raw candidates may be consumed after final gates.
+
 ## Model loading and retired prototypes
 
 The former renderer built the first-iteration procedural coupe immediately, then replaced it after the licensed GLB finished loading. That visible swap was an active fallback path, not a stale career save. The player, rival and ghost now share `src/vehicle-assets.js`. Six original models are immediately available; Heritage and Aurora share one source download, with separate sport and GT trim. While it loads, the previous car is hidden and the race clock waits for the selected model's first draw. Failure offers a retry, and the loader clears a failed import promise so retry can make a new request. Switching back to an original model works without the import. No vehicle-loading action clears browser storage, player profiles, records or paint ownership.

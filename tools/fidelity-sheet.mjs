@@ -30,11 +30,13 @@ function summaryPath(family, round) {
 }
 const direct = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (direct) {
-const family = args.includes('--first-person-p1-round') ? 'first-person-p1' : args.includes('--crew-p2-round') ? 'crew-p2' : args.includes('--crew-round') ? 'crew' : args.includes('--rustwall-p2-round') ? 'rustwall-p2'
+if(args.includes('--first-person-p1-round')&&args.includes('--first-person-p2-round'))
+  throw Error('Conflicting P1/P2 round selectors');
+const family = args.includes('--first-person-p2-round') ? 'first-person-p2' : args.includes('--first-person-p1-round') ? 'first-person-p1' : args.includes('--crew-p2-round') ? 'crew-p2' : args.includes('--crew-round') ? 'crew' : args.includes('--rustwall-p2-round') ? 'rustwall-p2'
   : args.includes('--rustwall-round') ? 'rustwall'
   : args.includes('--first-person-round') || args.includes('--first-person-tools-round') ? 'first-person' : 'test-fighter';
-const round = Number(value('--first-person-p1-round', value('--crew-p2-round', value('--crew-round', value('--rustwall-p2-round', value('--rustwall-round',
-  value('--first-person-round', value('--first-person-tools-round', 1))))))));
+const round = Number(value('--first-person-p2-round',value('--first-person-p1-round', value('--crew-p2-round', value('--crew-round', value('--rustwall-p2-round', value('--rustwall-round',
+  value('--first-person-round', value('--first-person-tools-round', 1)))))))));
 if (args.includes('--paths-only')) {
   const directory = evidenceDir(family, round);
   const name = args.includes('--first-person-tools-round') ? 'sheet-tools' : 'sheet';
@@ -43,7 +45,9 @@ if (args.includes('--paths-only')) {
     summary:args.includes('--first-person-tools-round') ? null : summaryPath(family,round)}));
   process.exit(0);
 }
-if (args.includes('--first-person-p1-round')) {
+if (args.includes('--first-person-p2-round')) {
+  await firstPersonP2Sheet(round);
+} else if (args.includes('--first-person-p1-round')) {
   await firstPersonP1Sheet(round);
 } else if (args.includes('--crew-p2-round')) {
   await crewP2Sheet(round);
@@ -433,9 +437,15 @@ async function rustwallP2Sheet(round) {
   console.log('Rustwall P2 fidelity sheet: '+output);
 }
 
-export function validateFirstPersonP1Sheet({captures,blender,round,productionHashes}) {
+export function validateFirstPersonP1Sheet(input) {
+  return validateFirstPersonProofSheet(input,'first-person-p1');
+}
+export function validateFirstPersonP2Sheet(input) {
+  return validateFirstPersonProofSheet(input,'first-person-p2');
+}
+function validateFirstPersonProofSheet({captures,blender,round,productionHashes},family) {
   if (!Number.isInteger(round) || round < 1 || round > 10 ||
-      captures?.family !== 'first-person-p1' || blender?.family !== 'first-person-p1' ||
+      captures?.family !== family || blender?.family !== family ||
       captures.round !== round || blender.round !== round ||
       blender.scope !== 'Blender source module at authored camera')
     throw Error('First-person P1 family, round or source scope mismatch');
@@ -443,7 +453,7 @@ export function validateFirstPersonP1Sheet({captures,blender,round,productionHas
       captures.candidate.sha256 !== blender.candidateSha256)
     throw Error('First-person P1 candidate hash mismatch');
   if (typeof captures.candidate.path !== 'string' ||
-      !/^art-build\/first-person-p1\/(?:[a-z0-9-]+\/)*hands\/rook\.glb$/.test(captures.candidate.path))
+      !new RegExp(`^art-build/${family}/(?:[a-z0-9-]+/)*hands/rook\\.glb$`).test(captures.candidate.path))
     throw Error('First-person P1 candidate must stay in ignored Rook proof output');
   if (!same(captures.camera,P1_CAMERA) || !same(blender.camera,P1_CAMERA))
     throw Error('First-person P1 camera mismatch');
@@ -458,6 +468,12 @@ export function validateFirstPersonP1Sheet({captures,blender,round,productionHas
   }
   if (!same(captures.productionBefore,productionHashes) || !same(captures.productionAfter,productionHashes))
     throw Error('Production hands changed during candidate capture');
+  if(family==='first-person-p2') {
+    const tools=Object.fromEntries(['rpg','wrench'].map(id=>[id,blender.tools?.[id]?.sha256]));
+    if(Object.values(tools).some(hash=>!P1_SHA.test(hash||''))||
+        !same(captures.toolsBefore,tools)||!same(captures.toolsAfter,tools))
+      throw Error('P2 production tool hashes changed or mismatch Blender source');
+  }
   for (const reference of [blender.references?.crew,blender.references?.rpgArm]) {
     if (!reference?.path || !P1_SHA.test(reference.sha256 || '') ||
         !Array.isArray(reference.crop) || reference.crop.length !== 4 ||
@@ -478,6 +494,17 @@ export function validateFirstPersonP1Sheet({captures,blender,round,productionHas
       throw Error('First-person P1 missing or mislabelled pose '+key);
     for (const image of [source[0],high[0],performance[0]])
       if (!image.path || !P1_SHA.test(image.sha256 || '')) throw Error('First-person P1 pose SHA missing: '+key);
+    if(family==='first-person-p2') {
+      const sourcePath=source[0].path.replaceAll('\\','/');
+      if(!/^art-build\/first-person-p2\/candidate\/evidence\/.+\.png$/.test(sourcePath))
+        throw Error('P2 Blender pose path is outside candidate evidence: '+key);
+      for(const image of [high[0],performance[0]]) {
+        const gamePath=image.path.replaceAll('\\','/');
+        if(!/^\.evidence\/.+\.png$/.test(gamePath)||
+            gamePath.split('/').includes('first-person-p1'))
+          throw Error('P2 game pose path reuses P1 or leaves ignored evidence: '+key);
+      }
+    }
     const reference = tool === 'rpg' ? blender.references.rpgArm : blender.references.crew;
     return {label:`ROOK ${clip.toUpperCase()} ${time} S ${tool.toUpperCase()} MODULE VS GAME COURSE`,
       clip,time,tool,scope:'Blender module vs game course',
@@ -489,22 +516,28 @@ export function validateFirstPersonP1Sheet({captures,blender,round,productionHas
 }
 
 async function firstPersonP1Sheet(round) {
-  const base = evidenceDir('first-person-p1',round);
-  const published = summaryPath('first-person-p1',round);
+  return firstPersonProofSheet(round,'first-person-p1');
+}
+async function firstPersonP2Sheet(round) {
+  return firstPersonProofSheet(round,'first-person-p2');
+}
+async function firstPersonProofSheet(round,family) {
+  const base = evidenceDir(family,round);
+  const published = summaryPath(family,round);
   try {await readFile(published);throw Error('Published first-person P1 round JPG is immutable');}
   catch (error) {if (error.code !== 'ENOENT') throw error;}
   const captures = JSON.parse(await readFile(join(base,'captures.json'),'utf8'));
   // Reject an incomplete or wrong-family capture before opening any ignored
   // candidate artifact. This also makes the CLI check reproducible from a
   // clean checkout with only a test-owned invalid captures fixture.
-  if (captures?.family !== 'first-person-p1' || captures.round !== round)
+  if (captures?.family !== family || captures.round !== round)
     throw Error('First-person P1 family, round or source scope mismatch');
   const blender = JSON.parse(await readFile(join(root,
-    'art-build/first-person-p1/candidate/evidence/blender-manifest.json'),'utf8'));
+    `art-build/${family}/candidate/evidence/blender-manifest.json`),'utf8'));
   const productionHashes = {};
   for (const id of P1_HAND_IDS) productionHashes[id] = createHash('sha256').update(await readFile(join(root,
     `public/assets/models/wasteland/first-person/hands/${id}.glb`))).digest('hex');
-  const plan = validateFirstPersonP1Sheet({captures,blender,round,productionHashes});
+  const plan = validateFirstPersonProofSheet({captures,blender,round,productionHashes},family);
   const sources = {};
   const verify = async (path,expected) => {
     if (typeof path !== 'string' || !P1_SHA.test(expected || '')) throw Error('Invalid first-person P1 source');
@@ -523,9 +556,11 @@ async function firstPersonP1Sheet(round) {
   for (const item of captures.captures) await verify(item.path,item.sha256);
   const output = join(base,'sheet.png'), manifest = join(base,'sheet.json');
   const status = 'Rook first-person candidate only. Blender shows an isolated source module; High and Performance show the game course. Lighting and environment differ. Independent visual and motion review decides fidelity; frame cost is unmeasured here.';
-  await writeFile(manifest,JSON.stringify({family:'first-person-p1',round,
+  await writeFile(manifest,JSON.stringify({family,round,
     observationCommit:captures.observationCommit,candidate:captures.candidate,
-    productionHashes,camera:plan.camera,qualities:captures.qualities,
+    productionHashes,...(family==='first-person-p2'?{
+      toolsBefore:captures.toolsBefore,toolsAfter:captures.toolsAfter}:{}),
+    camera:plan.camera,qualities:captures.qualities,
     references:blender.references,tools:blender.tools,orderedMotion:captures.orderedMotion,
     frameStatus:captures.frameStatus,tile:{width:384,height:216},
     rows:plan.rows,sources,output:relative(root,output).replaceAll('\\','/'),status},null,2)+'\n',{flag:'wx'});
