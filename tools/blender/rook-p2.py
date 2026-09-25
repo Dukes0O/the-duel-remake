@@ -699,6 +699,43 @@ def candidate_trouser_uv(obj, chart):
     layer.active_render = True
 
 
+def candidate_hair_uv(obj, chart):
+    """Keep cap underpaint apart from eight root-to-tip lock grain strips."""
+    if chart['boundsPx'] != [16, 772, 496, 1000]:
+        raise ValueError('Reviewed hair chart moved')
+    layer = obj.data.uv_layers['UV0']
+    if obj.name == 'rook-near-hair':
+        if len(obj.data.vertices) != 144:
+            raise ValueError('Reviewed six-ring undercap topology changed')
+        for polygon in obj.data.polygons:
+            sectors = [obj.data.loops[index].vertex_index % 24
+                       for index in polygon.loop_indices]
+            seam = 0 in sectors and 23 in sectors and len(sectors) < 24
+            for loop_index in polygon.loop_indices:
+                vertex_index = obj.data.loops[loop_index].vertex_index
+                ring, sector = divmod(vertex_index, 24)
+                if seam and sector == 0:
+                    sector = 24
+                pixel_x = 24 + sector/24*104
+                pixel_y = 780 + (5-ring)/5*212
+                layer.data[loop_index].uv = (pixel_x/1024, 1-pixel_y/1024)
+    elif obj.name.startswith('rook-near-hair-lock-'):
+        number = int(obj.name.rsplit('-', 1)[-1])
+        if number not in range(8) or len(obj.data.vertices) != 35:
+            raise ValueError('Reviewed five-station rooted lock topology changed')
+        for polygon in obj.data.polygons:
+            for loop_index in polygon.loop_indices:
+                vertex_index = obj.data.loops[loop_index].vertex_index
+                row, column = divmod(vertex_index, 7)
+                pixel_x = 144 + number*45 + column/6*29
+                pixel_y = 780 + row/4*212
+                layer.data[loop_index].uv = (pixel_x/1024, 1-pixel_y/1024)
+    else:
+        raise ValueError(f'Unreviewed hair part {obj.name}')
+    layer.active = True
+    layer.active_render = True
+
+
 def candidate_pack_islands(objects, chart, gap=16, face_filter=None, atlas_input=False):
     """Pack whole connected UV islands with measured texel bleed clearance."""
     x0, y0, x1, y1 = chart['boundsPx']
@@ -954,6 +991,9 @@ def build_candidate(args, paths, paint=None, garment_paint=None):
         elif label == 'trousers':
             for obj in objects:
                 candidate_trouser_uv(obj, charts[label])
+        elif label == 'hair':
+            for obj in objects:
+                candidate_hair_uv(obj, charts[label])
         else:
             bpy.ops.object.select_all(action='DESELECT')
             for obj in objects:
@@ -979,7 +1019,7 @@ def build_candidate(args, paths, paint=None, garment_paint=None):
                     return start <= pixel_x <= start + panel_width
                 count, scale = candidate_pack_islands(objects, panel_chart, face_filter=in_panel, atlas_input=True)
                 charts[label]['seams'].append(f'panel {panel}: {count} islands at common scale {scale}')
-        elif label not in ('face', 'jacket', 'trousers'):
+        elif label not in ('face', 'jacket', 'trousers', 'hair'):
             for obj in objects:
                 layer = obj.data.uv_layers['UV0']
                 layer.active = True

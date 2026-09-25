@@ -6,6 +6,7 @@ import {join, resolve, relative, isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
+import * as THREE from 'three';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const json = name => JSON.parse(readFileSync(join(root, 'tools/blender', name), 'utf8'));
@@ -396,6 +397,69 @@ test('Rook hair follows the traced temple and rear curl silhouette', () => {
     if(Math.abs(actual-rear)>6)errors.push(`side rear y${y}: ${actual.toFixed(1)} vs ${rear}`);
   }
   assert.deepEqual(errors,[],`hair outline follows native front/side curl contour: ${errors.join('; ')}`);
+});
+
+test('rooted hair breaks the cap silhouette across all four actual view directions', () => {
+  const meshes=json('rook-p2-source.json').meshes.filter(part=>part.lod==='near');
+  const cap=meshes.find(part=>part.name==='rook-near-hair');
+  const locks=meshes.filter(part=>part.name.startsWith('rook-near-hair-lock-'));
+  assert.ok(cap&&locks.length>=4,'multiple authored rooted locks replace the narrow parallel flow strips');
+  const triangles=part=>part.faces.flatMap(face=>{
+    const result=[];
+    for(let i=1;i+1<face.length;i++)result.push([face[0],face[i],face[i+1]]
+      .map(id=>part.vertices[id]));
+    return result;
+  });
+  const capTriangles=triangles(cap),lockTriangles=locks.flatMap(triangles);
+  const capSurfaces=capTriangles.map(points=>new THREE.Triangle(...points.map(p=>
+    new THREE.Vector3(...p))));
+  const tipHeights=[];
+  for(const lock of locks){
+    assert.equal(lock.role,'hair','visible locks retain the one hair atlas/material role');
+    const zs=lock.vertices.map(p=>p[2]),top=Math.max(...zs),bottom=Math.min(...zs);
+    assert.ok(top-bottom>.045,`${lock.name} runs visibly from crown toward temple or nape`);
+    tipHeights.push(bottom);
+    const roots=lock.vertices.filter(p=>p[2]>=top-.012);
+    assert.ok(roots.length>=2,`${lock.name} has a substantial scalp root`);
+    const rootDistances=roots.map(p=>Math.min(...capSurfaces.map(surface=>
+      surface.closestPointToPoint(new THREE.Vector3(...p),new THREE.Vector3())
+        .distanceTo(new THREE.Vector3(...p)))));
+    assert.ok(rootDistances.filter(distance=>distance<.012).length>=2,
+      `${lock.name} has at least two real root contacts within 12mm of the undercap`);
+  }
+  assert.ok(Math.max(...tipHeights)-Math.min(...tipHeights)>.045,
+    'temple and nape locks finish at staggered heights rather than one helmet rim');
+  const depth=(triangle,axes,u,z)=>{
+    const [a,b,c]=triangle.map(p=>[p[axes[0]],p[2],p[axes[1]]]);
+    const d=(b[1]-c[1])*(a[0]-c[0])+(c[0]-b[0])*(a[1]-c[1]);
+    if(Math.abs(d)<1e-10)return null;
+    const wa=((b[1]-c[1])*(u-c[0])+(c[0]-b[0])*(z-c[1]))/d;
+    const wb=((c[1]-a[1])*(u-c[0])+(a[0]-c[0])*(z-c[1]))/d,wc=1-wa-wb;
+    return Math.min(wa,wb,wc)>=-1e-5?wa*a[2]+wb*b[2]+wc*c[2]:null;
+  };
+  const errors=[];
+  for(const view of [
+    {name:'front',axes:[0,1],nearest:Math.min},
+    {name:'back',axes:[0,1],nearest:Math.max},
+    {name:'left side',axes:[1,0],nearest:Math.min},
+    {name:'right side',axes:[1,0],nearest:Math.max}
+  ]){
+    let capPixels=0,raised=0;
+    for(let row=0;row<36;row++)for(let column=0;column<42;column++){
+      const u=-.14+.28*(column+.5)/42,z=1.635+.195*(row+.5)/36;
+      const under=capTriangles.map(t=>depth(t,view.axes,u,z)).filter(v=>v!==null);
+      if(!under.length)continue;
+      capPixels++;
+      const outer=lockTriangles.map(t=>depth(t,view.axes,u,z)).filter(v=>v!==null);
+      if(outer.length&&(view.nearest===Math.min?
+        view.nearest(...outer)<view.nearest(...under)-.008:
+        view.nearest(...outer)>view.nearest(...under)+.008))raised++;
+    }
+    assert.ok(capPixels>=300,`${view.name} samples actual undercap area`);
+    if(raised/capPixels<.12)
+      errors.push(`${view.name} raised lock area ${raised}/${capPixels}`);
+  }
+  assert.deepEqual(errors,[],`broad locks must visibly break the cap in front, back and both profiles: ${errors.join('; ')}`);
 });
 
 test('upper rear skull sits inside the measured hair shell without moving the lower head', () => {

@@ -924,6 +924,90 @@ test('hair covers the visible crown as an area in front, both sides and back', a
   assert.deepEqual(gaps,[],`need 90% crown coverage in each view: ${gaps.join('; ')}`);
 });
 
+test('exported rooted hair locks keep one padded root-to-tip UV island apiece', async () => {
+  const source=JSON.parse(readFileSync(join(root,'tools/blender/rook-p2-source.json'),'utf8'));
+  const locks=source.meshes.filter(part=>part.lod==='near'&&
+    part.name.startsWith('rook-near-hair-lock-'));
+  assert.ok(locks.length>=4,'inspect actual authored broad locks, not only the undercap');
+  const {bytes}=readGlb(join(output,outputNames.glb));
+  const loader=new GLTFLoader();
+  loader.register(()=>({name:'TEST_LOCAL_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const asset=await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+  const near=asset.scene.getObjectByName('rook-near'),geo=near.geometry,
+    pos=geo.attributes.position,uv=geo.attributes.uv;
+  assert.ok(near?.isSkinnedMesh&&uv,'inspect actual skinned GLB hair UV0');
+  const chart=JSON.parse(readFileSync(join(output,outputNames.manifest),'utf8'))
+    .asset.charts.find(item=>item.role==='hair').boundsPx;
+  assert.deepEqual(chart,[16,772,496,1000],'locks share the existing single hair atlas chart');
+  // glTF float32 coordinates can fall on the opposite side of a decimal
+  // quantization tie (source x=.10155, exported x=.10154995). Match the actual
+  // positions within 0.1 mm; the exported UV and face thresholds stay exact.
+  const exportedPoint=id=>[pos.getX(id),pos.getY(id),pos.getZ(id)];
+  const sourcePoint=point=>[point[0],point[2],-point[1]];
+  const close=(a,b)=>a.reduce((sum,value,i)=>sum+(value-b[i])**2,0)<1e-8;
+  const at=corner=>geo.index?geo.index.getX(corner):corner;
+  const intervals=[];
+  for(const lock of locks){
+    assert.ok(lock.vertices.length>=15&&lock.vertices.length%5===0,
+      `${lock.name} has ordered root-to-tip cross-section stations`);
+    const sources=lock.vertices.map(sourcePoint),owned=new Set(),triangles=[];
+    for(let id=0;id<pos.count;id++)if(sources.some(point=>close(exportedPoint(id),point)))
+      owned.add(id);
+    for(let corner=0;corner<(geo.index?.count??pos.count);corner+=3){
+      const ids=[at(corner),at(corner+1),at(corner+2)];
+      if(ids.every(id=>owned.has(id)))
+        triangles.push(ids.map(id=>[uv.getX(id)*1024,uv.getY(id)*1024]));
+    }
+    assert.ok(triangles.length>=12,`${lock.name} has actual exported 3D surface faces`);
+    const pixels=triangles.flat(),uValues=pixels.map(p=>p[0]),vValues=pixels.map(p=>p[1]);
+    const [uMin,uMax,vMin,vMax]=[Math.min(...uValues),Math.max(...uValues),
+      Math.min(...vValues),Math.max(...vValues)];
+    assert.ok(uMin>=136&&uMax<=488&&vMin>=780&&vMax<=992,
+      `${lock.name} UV lies inside its padded visible-lock strip, away from undercap`);
+    assert.ok(uMax-uMin>=12&&uMax-uMin<=38&&vMax-vMin>=150,
+      `${lock.name} has a tall dedicated grain strip rather than scattered or rotated islands`);
+    intervals.push({name:lock.name,min:uMin,max:uMax});
+
+    const vertexV=point=>{
+      const expected=sourcePoint(point),ids=[...owned].filter(id=>close(exportedPoint(id),expected));
+      const values=ids.map(id=>[uv.getX(id)*1024,uv.getY(id)*1024])
+        .filter(([u,v])=>u>=uMin-.5&&u<=uMax+.5&&v>=780&&v<=992)
+        .map(([,v])=>v).sort((a,b)=>a-b);
+      assert.ok(values.length,`${lock.name} source vertex survives in its exported UV strip`);
+      return values[Math.floor(values.length/2)];
+    };
+    const stride=lock.vertices.length/5,rows=[];
+    for(let row=0;row<5;row++){
+      const values=lock.vertices.slice(row*stride,(row+1)*stride).map(vertexV);
+      rows.push(values.reduce((a,b)=>a+b,0)/values.length);
+    }
+    assert.ok(rows[4]-rows[0]>=100&&rows.every((v,i)=>i===0||v>rows[i-1]+5),
+      `${lock.name} exported hair grain runs continuously from crown root to lower tip: ${rows.map(v=>v.toFixed(1))}`);
+
+    // UV-edge adjacency is independent of shared 3D vertices: a seam may duplicate
+    // geometry corners, but the visible lock must remain one connected painted island.
+    const endpoint=p=>`${Math.round(p[0]*4)}:${Math.round(p[1]*4)}`;
+    const edges=new Map(),adjacency=triangles.map(()=>new Set());
+    triangles.forEach((tri,index)=>{
+      for(let side=0;side<3;side++){
+        const a=endpoint(tri[side]),b=endpoint(tri[(side+1)%3]);
+        const edge=a<b?`${a}|${b}`:`${b}|${a}`;
+        const users=edges.get(edge)||[];
+        for(const other of users){adjacency[index].add(other);adjacency[other].add(index);}
+        users.push(index);edges.set(edge,users);
+      }
+    });
+    const seen=new Set([0]),queue=[0];
+    for(let cursor=0;cursor<queue.length;cursor++)for(const next of adjacency[queue[cursor]])
+      if(!seen.has(next)){seen.add(next);queue.push(next);}
+    assert.ok(seen.size/triangles.length>=.95,
+      `${lock.name} visible UVs form one connected island: ${seen.size}/${triangles.length}`);
+  }
+  intervals.sort((a,b)=>a.min-b.min);
+  for(let i=1;i<intervals.length;i++)assert.ok(intervals[i].min-intervals[i-1].max>=16,
+    `${intervals[i-1].name} and ${intervals[i].name} retain 16px hair-island separation`);
+});
+
 test('calibrated scalp paint darkens exported crown without changing eyes or beard', async () => {
   const face=paintFixture(),mask=face.config.target.scalpMask;
   assert.deepEqual(mask?.boundaryPx,[[16,200],[45,145],[75,86],[100,67],[130,66],
