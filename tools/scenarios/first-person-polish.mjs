@@ -153,6 +153,40 @@ export function assessFirstPersonP1FrameCost({reports,candidateSha256,production
     scope:'Native RAF plus one full production renderFrame CPU submission per frame; not GPU time'};
 }
 
+export function findActiveFirstPersonHands(rig) {
+  const hands=[];
+  rig?.traverse?.(node=>{
+    if(node.name!=='rook sleeves gloves fingers'||!node.isSkinnedMesh||!node.skeleton)return;
+    for(let parent=node;parent;parent=parent.parent)if(!parent.visible)return;
+    hands.push(node);
+  });
+  return hands;
+}
+
+function embeddedTextureEstimate(bytes) {
+  if(bytes.toString('ascii',0,4)!=='glTF'||bytes.readUInt32LE(4)!==2)
+    throw Error('Active hand/tool asset is not a GLB');
+  const jsonLength=bytes.readUInt32LE(12),json=JSON.parse(
+    bytes.subarray(20,20+jsonLength).toString('utf8'));
+  const binOffset=20+jsonLength+8;
+  let encodedBytes=0,estimatedRgba8MipBytes=0;
+  const images=[];
+  for(const image of json.images||[]) {
+    const view=json.bufferViews?.[image.bufferView];
+    if(!view||image.mimeType!=='image/png')throw Error('Active gear texture is not an embedded PNG');
+    const at=binOffset+(view.byteOffset||0),width=bytes.readUInt32BE(at+16),
+      height=bytes.readUInt32BE(at+20);
+    if(bytes.toString('hex',at,at+8)!=='89504e470d0a1a0a'||width<1||height<1)
+      throw Error('Active gear PNG dimensions invalid');
+    const mip=Math.ceil(width*height*4*4/3);
+    encodedBytes+=view.byteLength;estimatedRgba8MipBytes+=mip;
+    images.push({width,height,encodedBytes:view.byteLength,estimatedRgba8MipBytes:mip});
+  }
+  return {imageCount:images.length,textureCount:json.textures?.length||0,
+    encodedBytes,estimatedRgba8MipBytes,images,
+    scope:'Embedded PNG bytes and RGBA8 full-mip arithmetic only; not measured GPU allocation'};
+}
+
 export async function run(context) {
   const root = fileURLToPath(new URL('../../',import.meta.url));
   const round = Number(process.env.GFX_FIRST_PERSON_P1_ROUND || 1);
@@ -180,6 +214,13 @@ export async function run(context) {
     [id,sha(await readFile(join(root,`public/assets/models/wasteland/first-person/hands/${id}.glb`)))])));
   const productionBefore = await handHashes();
   if(costOnly) {
+    const baselineBytes=await readFile(productionPath);
+    const rpgPath=join(root,'public/assets/models/wasteland/first-person/rpg.glb');
+    const rpgBytes=await readFile(rpgPath);
+    const rpgSha256=sha(rpgBytes);
+    const activeGearTextures={productionHands:embeddedTextureEstimate(baselineBytes),
+      candidateHands:embeddedTextureEstimate(candidateBytes),rpg:embeddedTextureEstimate(rpgBytes),
+      rpgSha256};
     const reports=[];
     for(const quality of ['high','performance']) {
       const branches=[];
@@ -192,12 +233,20 @@ export async function run(context) {
     const assessment=assessFirstPersonP1FrameCost({reports,
       candidateSha256:candidate.sha256,productionSha256:productionBefore.rook});
     const productionAfter=await handHashes();
+    const rpgAfterSha256=sha(await readFile(rpgPath));
+    const sourceFailures=[];
     if(IDS.some(id=>productionAfter[id]!==productionBefore[id]))
-      throw Error('Production hand asset changed during frame-cost measurement');
+      sourceFailures.push('Production hand asset changed during frame-cost measurement');
+    if(rpgAfterSha256!==rpgSha256)
+      sourceFailures.push('Production RPG asset changed during frame-cost measurement');
     await writeFile(manifestPath,JSON.stringify({family:'first-person-p1-frame-cost',round,
       observationCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
       candidate:{path:relativePath(candidate.absolute),sha256:candidate.sha256},
-      productionBefore,productionAfter,reports,assessment},null,2)+'\n',{flag:'wx'});
+      productionBefore,productionAfter,activeGearTextures,rpgAfterSha256,
+      reports,assessment,sourceFailures},null,2)+'\n',{flag:'wx'});
+    if(!assessment.passed||sourceFailures.length)
+      throw Error('First-person frame-cost gate failed: '+
+        [...assessment.failures,...sourceFailures].join('; '));
     console.log('First-person P1 native A1/B/A2 cost: '+JSON.stringify({passed:assessment.passed,
       failures:assessment.failures,qualities:assessment.qualities}));
     return;
@@ -498,7 +547,11 @@ async function measureProductionHandFrameCost({context,root,quality,branch,candi
       const started=performance.now(),metrics=r.renderFrame(),cpu=performance.now()-started;
       renderFrameCalls++;
       if(i>=30){
-        const hands=[];rig.traverse(node=>{if(node.isSkinnedMesh&&node.userData.handRegions)hands.push(node);});
+        const hands=[];rig.traverse(node=>{
+          if(node.name!=='rook sleeves gloves fingers'||!node.isSkinnedMesh||!node.skeleton)return;
+          for(let p=node;p;p=p.parent)if(!p.visible)return;
+          hands.push(node);
+        });
         const tool=rig.getObjectByName('rpg-body');
         rafSamplesMs.push(now-last);renderCpuSamplesMs.push(cpu);
         drawCallSamples.push(metrics.drawCalls);triangleSamples.push(metrics.triangles);
