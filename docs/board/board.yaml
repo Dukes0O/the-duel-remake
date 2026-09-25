@@ -1665,3 +1665,16 @@ tasks:
       - "Preserve the exact generated-source SHA and exported pixel comparisons on each fresh build's own output; retain all geometry, atlas, route, gate and budget assertions. No copying a stale art scratch file or committing raw review output to hide the dependency. Explain and independently review any assertion relocation."
       - "Run focused tests and the normal lane/build gate from a fresh checkout without prior art-build files. Integration full tier must pass after the fix before further feature merges."
     note: "Merged ea84b34 after clean red-to-green reproduction, independent assertion review, isolated export6/6, lane8/8 in64.15 seconds and build. Runtime asset checks no longer depend on consumed scratch; exact own-build SHA and atlas pixels remain checked. Integration clean full passed 256/256 on 1d82eb7 at 07:09 UTC; feature merges may resume."
+
+  - id: JANITOR-RUSTWALL-NOTE
+    title: "Fold the consumed Rustwall P2 note into current asset guidance"
+    lane: TOOL
+    size: S
+    needs: [EGG-02-P2, FIX-RUSTWALL-CLEAN]
+    status: building
+    owns: [docs/ASSET_PIPELINE.md, docs/board/decisions.md, docs/changes/EGG-02-P2.md, docs/changes/JANITOR-RUSTWALL-NOTE.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Preserve the exact selected paint prompt, source path/hash, explicit bake recipe, procedural-fixture limitation and asset-recovery distinction in current guidance before deleting the consumed note."
+      - "Correct current exported wall inventory to 55,834 triangles, fourteen primitives and 8,421,064 bytes, with wash 3,840,288 bytes. Preserve immutable sheets and residual P3 likeness and paint-recovery work."
+      - "Independent fact review, unchanged review-evidence check, lane tier and build pass. No runtime, test or source-asset edits."
