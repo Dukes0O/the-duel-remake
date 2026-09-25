@@ -41,7 +41,15 @@ export function validateBetaJourneyEvidence(report){
 }
 
 async function click(context,selector){
-  const point=await context.evaluate(`(()=>{const b=document.querySelector(${JSON.stringify(selector)});if(!b||b.hidden||b.disabled)throw Error('Missing visible control ${selector}');const r=b.getBoundingClientRect();if(r.width<1||r.height<1)throw Error('Control has no bounds');return{x:r.x+r.width/2,y:r.y+r.height/2};})()`);
+  const point=await context.evaluate(`(()=>{const b=document.querySelector(${JSON.stringify(selector)});
+    if(!b||b.hidden||b.disabled)throw Error('Missing visible control ${selector}');
+    const r=b.getBoundingClientRect();
+    if(r.width<1||r.height<1||r.left<0||r.top<0||r.right>innerWidth||r.bottom>innerHeight)
+      throw Error('Control ${selector} is outside the viewport: '+JSON.stringify(r.toJSON()));
+    const x=r.x+r.width/2,y=r.y+r.height/2,top=document.elementFromPoint(x,y);
+    if(!b.contains(top))throw Error('Control ${selector} is covered by '+top?.tagName);
+    b.focus({preventScroll:true});if(document.activeElement!==b)throw Error('Control ${selector} cannot take focus');
+    return{x,y};})()`);
   for(const type of ['mousePressed','mouseReleased'])await context.command('Input.dispatchMouseEvent',{type,button:'left',clickCount:1,...point});
 }
 async function capture(context,report,name){
@@ -50,6 +58,9 @@ async function capture(context,report,name){
 }
 async function sampleFrames(context,report,phase,quality){
   await context.evaluate(`window.__qaApp.setGraphicsQuality(${JSON.stringify(quality)})`);
+  await context.waitFor(`window.__qaApp?.visualReady &&
+    window.__qaApp.ambientOcclusionEnabled===(${JSON.stringify(quality)}==='high') &&
+    !!window.__render?.renderer?.domElement?.isConnected`,'settled '+quality+' renderer',60000);
   const result=await context.evaluate(`(async()=>{
     const a=window.__qaApp,r=window.__render,expected=${JSON.stringify(phase)};
     const state=()=>a.duel.state.hiddenRoadJourney?.phase==='arrived'?'yard':a.duel.state.mode==='wasteland'?'race':'other';
@@ -79,23 +90,58 @@ export async function run(context){
     storage:{},flags:{},fixtures:[],events:[],result:{},frames:{},captures:[]};
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
   await context.navigate('/tools/menu-check.html');
-  await context.waitFor(`!!window.__qaApp?.visualReady&&!!window.__render&&document.querySelector('#stage.in-menu')`,'private beta menu',60000);
+  await context.waitFor(`!!window.__qaApp?.visualReady&&!!window.__render&&
+    document.querySelector('#stage.in-menu')`,'private beta menu',60000);
+  const layout=()=>`(()=>{const box=selector=>{const n=document.querySelector(selector),s=n&&getComputedStyle(n);
+    return{bounds:n?.getBoundingClientRect().toJSON(),display:s?.display,position:s?.position,
+      overflow:s?.overflow,scrollHeight:n?.scrollHeight,clientHeight:n?.clientHeight};};
+    return{viewport:[innerWidth,innerHeight],status:window.__qaApp.duel.state.status,
+      visualReady:window.__qaApp.visualReady,qaTab:window.name.startsWith('__duel_qa_tab_v2:'),
+      memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value,
+      loadingHidden:document.querySelector('#renderer-loading')?.hidden,
+      menu:box('#menu-screen'),footer:box('.menu-footer'),meta:box('.build-meta'),
+      experimental:box('#experimental-open'),start:box('#start-engine')};})()`;
+  const initialUi=await context.evaluate(layout());
+  if(!initialUi.experimental.bounds?.width||initialUi.experimental.bounds.bottom>720){
+    await context.command('Emulation.setDeviceMetricsOverride',{width:1024,height:720,deviceScaleFactor:1,mobile:false});
+    const laptopUi=await context.evaluate(layout());
+    throw Error('Private beta menu controls outside viewport: '+JSON.stringify({desktop:initialUi,laptop:laptopUi}));
+  }
   report.storage=await context.evaluate(`(()=>({memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value,
     qaTab:window.name.startsWith('__duel_qa_tab_v2:')}))()`);
+  await context.waitFor(`[...document.querySelectorAll('details summary')].some(node=>
+    node.textContent.includes('TEMPORARY SAVES'))`,'mounted private QA controls');
+  await context.evaluate(`for(const panel of document.querySelectorAll('details')){
+    const title=panel.querySelector('summary')?.textContent||'';
+    if(title.includes('TEMPORARY SAVES')||title.startsWith('Performance samples'))panel.style.display='none';
+  }`);
   report.flags.urlOverride=false;
   report.flags.defaultOff=await context.evaluate(`['wasteland2','hidden-road'].filter(name=>!window.__qaApp.duel.featureFlags.enabled(name))`);
   if(new URLSearchParams(await context.evaluate('location.search')).has('flags'))throw Error('QA URL flag override is forbidden.');
   await click(context,'#experimental-open');
+  await context.waitFor(`document.querySelector('#experimental-toggle')?.getBoundingClientRect().width>0`,'visible Experimental choice');
   await click(context,'#experimental-toggle');
   report.flags.optedIn=await context.evaluate(`['wasteland2','hidden-road'].filter(name=>window.__qaApp.duel.featureFlags.enabled(name))`);
   await capture(context,report,'beta-opted-in');
   await context.navigate('/tools/menu-check.html');
   await context.waitFor(`!!window.__qaApp?.visualReady&&window.__qaApp.duel.featureFlags.enabled('wasteland2')&&window.__qaApp.duel.featureFlags.enabled('hidden-road')`,'saved beta opt-in',60000);
   report.flags.reloadOn=await context.evaluate(`['wasteland2','hidden-road'].filter(name=>window.__qaApp.duel.featureFlags.enabled(name))`);
+  await context.waitFor(`[...document.querySelectorAll('details summary')].some(node=>
+    node.textContent.includes('TEMPORARY SAVES'))`,'reloaded private QA controls');
+  await context.evaluate(`for(const panel of document.querySelectorAll('details')){
+    const title=panel.querySelector('summary')?.textContent||'';
+    if(title.includes('TEMPORARY SAVES')||title.startsWith('Performance samples'))panel.style.display='none';
+  }`);
+  await context.command('Emulation.setDeviceMetricsOverride',{width:1024,height:720,deviceScaleFactor:1,mobile:false});
+  await context.waitFor(`document.querySelector('#experimental-open')?.getBoundingClientRect().width>0`,'laptop Experimental control');
+  await click(context,'#experimental-open');
+  await context.waitFor(`document.querySelector('#experimental-toggle')?.checked`,'laptop Experimental panel');
+  await click(context,'[data-action="experimental-close"]');
+  await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
   await context.evaluate(`(()=>{
     const a=window.__qaApp;
     if(!window.name.startsWith('__duel_qa_tab_v2:')||!Object.getOwnPropertyDescriptor(window,'localStorage')?.value)throw Error('Memory-only storage required');
-    a.stop();a.audio.setMuted(true);
+    a.audio.setMuted(true);
     a.profile={...a.profile,wasteland:{...a.profile.wasteland,pacificFinishes:10}};
     if(!a._saveProfile())throw Error('Eligibility fixture could not be saved in temporary storage');
     if(a.getHiddenRoadDiscovery().discoveredGate)throw Error('Fixture may not set discovery');
@@ -114,8 +160,10 @@ export async function run(context){
         choice:event.hiddenRoadChoice?.choice,arrived:!!event.hiddenRoadArrived});});
   })()`);
   report.fixtures.push({kind:'pacific-finish-eligibility',value:10});
+  await context.waitFor(`document.querySelector('#start-engine')?.disabled===false`,'ready production Start Engine',60000);
   await click(context,'#start-engine');
   await context.waitFor(`window.__qaApp?.duel.state.status==='countdown'||window.__qaApp?.duel.state.status==='racing'`,'ordinary duel started');
+  await context.evaluate('window.__qaApp.stop()');
   const playerId=await context.evaluate('window.__qaApp.player.id');
   await context.evaluate('window.__betaQa.advance(4.5)');
   const departure=await context.evaluate(`window.__betaQa.place(149.9,35)`);
@@ -153,6 +201,9 @@ export async function run(context){
   report.events.push({kind:'arrived-yard',status:'yard',actualPhase:arrived.phase,playerId,source:'production',stepCount:arrived.steps});
   await capture(context,report,'yard-home');
   for(const quality of ['high','performance'])await sampleFrames(context,report,'yard',quality);
+  // Resume the ordinary App loop for the menu and next race. It owns UI loading
+  // state and countdown updates; the renderer's separate RAF does not do that.
+  await context.evaluate('window.__qaApp.start()');
   await click(context,'[data-action="yard-menu"]');
   await context.waitFor(`window.__qaApp.duel.state.status==='menu'`,'yard return to menu');
   report.events.push({kind:'yard-menu',status:'returned',playerId,source:'ui'});
@@ -161,7 +212,16 @@ export async function run(context){
   await click(context,'#start-engine');
   await context.waitFor(`window.__qaApp.duel.state.mode==='wasteland'&&
     ['countdown','racing'].includes(window.__qaApp.duel.state.status)`,'Wasteland race start');
-  await context.evaluate('window.__betaQa.advance(4.5)');
+  try{await context.waitFor(`window.__qaApp.visualReady&&document.querySelector('#renderer-loading')?.hidden`,'Wasteland scene ready',12000);}
+  catch(error){const diagnostic=await context.evaluate(`(()=>{const a=window.__qaApp,h=document.querySelector('#view3d');
+    return{status:a.duel.state.status,mode:a.duel.state.mode,running:a.running,visualReady:a.visualReady,
+      gate:a._visualReadiness&&{ready:a._visualReadiness.ready,sameState:a._visualReadiness.state===a.duel.state,
+        sameCourse:a._visualReadiness.course===a.duel.course},loadingHidden:document.querySelector('#renderer-loading')?.hidden,
+      errorHidden:document.querySelector('#renderer-error')?.hidden,asset:h?.dataset.vehicleAsset,
+      warmup:h?.dataset.warmupStatus,canvasVisible:window.__render?.renderer?.domElement?.style.visibility};})()`);
+    throw Error(error.message+': '+JSON.stringify(diagnostic));}
+  await context.waitFor(`window.__qaApp.duel.state.status==='racing'`,'active Wasteland race');
+  await context.evaluate('window.__qaApp.stop()');
   report.events.push({kind:'wasteland-start',status:'started',playerId,source:'ui'});
   report.result=await context.evaluate(`(()=>{const a=window.__qaApp;
     return{mode:a.duel.state.mode,status:a.duel.state.status,discoveredGate:a.getHiddenRoadDiscovery().discoveredGate,

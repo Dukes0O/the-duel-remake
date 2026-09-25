@@ -51,7 +51,7 @@ export async function run(context) {
     !window.__qaApp.duel.featureFlags.enabled('wasteland2') &&
     !window.__qaApp.duel.featureFlags.enabled('hidden-road')`, 'Experimental beta opt-out');
   await context.navigate('/tools/menu-check.html');
-  await context.waitFor(`!window.__qaApp?.duel.featureFlags.experimental() &&
+  await context.waitFor(`!!window.__qaApp && !window.__qaApp.duel.featureFlags.experimental() &&
     !window.__qaApp.duel.featureFlags.enabled('wasteland2') &&
     !window.__qaApp.duel.featureFlags.enabled('hidden-road') &&
     !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`, 'Experimental opt-out survives private reload');
