@@ -11,10 +11,10 @@ const storage = {
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 
-check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES.wasteland2 === 'dev'
-  && FEATURE_STATES['hidden-road'] === 'dev' && !Object.hasOwn(FEATURE_STATES, 'roadside-destruction')
+check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES.wasteland2 === 'beta'
+  && FEATURE_STATES['hidden-road'] === 'beta' && !Object.hasOwn(FEATURE_STATES, 'roadside-destruction')
   && Object.keys(FEATURE_STATES).length === 3,
-  'career backup, Wasteland 2 and Hidden Road stay in QA; roadside destruction has no switch');
+  'career backup stays in QA; Wasteland 2 and Hidden Road are Experimental beta; roadside destruction has no switch');
 const productionData = new Map();
 const productionStorage = {
   getItem: key => productionData.get(key) ?? null,
@@ -23,12 +23,25 @@ const productionStorage = {
 const productionFlags = createFeatureFlags({ storage: productionStorage, qa: false });
 check(!productionFlags.enabled('roadside-destruction'), 'retired roadside switch is no longer recognized');
 check(!productionFlags.enabled('wasteland2'), 'production starts with Wasteland 2 switched off');
+check(!productionFlags.enabled('hidden-road'), 'production starts with Hidden Road switched off');
 check(!productionFlags.betaFeatures().includes('roadside-destruction'), 'Experimental cannot list the retired switch');
 productionFlags.setExperimental(true);
+check(productionFlags.enabled('wasteland2') && productionFlags.enabled('hidden-road'),
+  'an explicit production opt-in enables both beta features');
 check(!productionFlags.enabled('roadside-destruction') && !productionFlags.enabled('career-backup'),
   'Experimental cannot restore the retired switch or QA-only career backup');
 productionFlags.setExperimental(false);
+check(!productionFlags.enabled('wasteland2') && !productionFlags.enabled('hidden-road'),
+  'an explicit production opt-out disables both beta features');
 check(!productionFlags.enabled('roadside-destruction'), 'turning off Experimental does not restore the retired switch');
+const productionQuery = createFeatureFlags({ storage: productionStorage, qa: false,
+  search: '?flags=wasteland2,hidden-road,career-backup' });
+check(!productionQuery.enabled('wasteland2') && !productionQuery.enabled('hidden-road')
+  && !productionQuery.enabled('career-backup'), 'production URL flags cannot enable beta or dev');
+const productionPanel = experimentalPanel(productionQuery);
+check(productionPanel.includes('WASTELAND2') && productionPanel.includes('HIDDEN ROAD')
+  && !productionPanel.includes('CAREER BACKUP') && !productionPanel.includes('ROADSIDE DESTRUCTION'),
+  'real Experimental menu lists exactly the eligible beta features');
 const release = createFeatureFlags({ catalog, storage, search: '?flags=photo,crew', qa: false });
 check(!release.enabled('photo') && !release.enabled('crew'), 'release ignores QA URL switches');
 check(release.enabled('arena') && !release.enabled('unknown'), 'only known on switches are active');
