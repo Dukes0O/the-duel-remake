@@ -454,3 +454,5 @@ The event rates reward a finish and visible combat without making repeated hits 
 ## AUD-14 test hooks (25 September 2026)
 
 The external audio lane may own tools/test-combat-audio.mjs and tools/scenarios/combat-audio.mjs for tests-first weapon sound and full-throttle context checks. Runtime changes stay within its existing bank, audio and app listener hooks. No simulation changes or ElevenLabs credit use by the Director. The AUD-10 baseline tolerance decision remains pending; this scope approval does not waive it.
+
+AUD-14 also has the narrow .gitattributes hook to mark *.ogg binary, preventing text newline conversion of Vorbis data. Test exact compressed bytes through the Git attribute path before keeping runtime assets; no unrelated attribute changes.

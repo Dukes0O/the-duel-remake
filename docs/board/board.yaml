@@ -1230,7 +1230,7 @@ tasks:
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
     owns: [src/sound-bank.js, public/assets/audio/, tools/audio/, docs/audio/, docs/board/listening/, docs/changes/AUD-14.md]
-    hooks: [src/audio.js, src/app.js, tools/test-combat-audio.mjs, tools/scenarios/combat-audio.mjs]
+    hooks: [.gitattributes, src/audio.js, src/app.js, tools/test-combat-audio.mjs, tools/scenarios/combat-audio.mjs]
     flag: wasteland2
     helpers: [test_author, reviewer, audio_qa]
     acceptance:
