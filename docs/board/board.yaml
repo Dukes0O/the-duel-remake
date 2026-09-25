@@ -1600,7 +1600,7 @@ tasks:
     flag: none
     behavior_change: no
     owns: [tools/repo-audit.mjs, tools/test-repo-audit.mjs]
-    note: "The phase-2 sweep reports 55 asset and 16 export candidates, but no unused module, removed-feature test or fully-on switch. Crew/hands/kits and wall use generated paths; audio sources and licenses have tooling/provenance consumers. Director follow-up confirms all sixteen named export candidates are called inside their own modules; they are not dead functions. Trace remaining asset consumers and unnecessary export boundaries before proposing removal; preserve licensed originals and current runtime assets."
+    note: "Read-only audit resolved54 of55 asset candidates as dynamic runtime, source/license/provenance, reference or QA consumers; scrapyard-dirt retains documented future arena use but no current runtime load. All16 export candidates are internally used. No deletion is proven safe. Remaining scope is to resolve the dirt asset when arena work settles its use and improve reporting of known dynamic consumers if useful. Rustwall legacy generator still has concrete test consumers and must be migrated deliberately by its art owner before removal."
 
   - id: FIX-STATUS-CARD
     title: "Preserve phase suffixes in status lane ownership"
