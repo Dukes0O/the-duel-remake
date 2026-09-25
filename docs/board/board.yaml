@@ -378,6 +378,22 @@ tasks:
       - "Retain meaningful matched High/Performance comparisons, short motion evidence, at most 8000 visible triangles and three draws. Measure texture memory and evaluate shared crew materials before making a resource-budget claim."
       - "Keep the family in dev until all SPEC 0.3 scores reach four and the measured budget holds. Follow its approach-change rule if another round fails to improve likeness."
     note: "Read-only audit found leather tip caps closing skin finger rings, repeated narrow-ended digit lofts, disconnected palm/thumb pads and generic sleeve topology/paint. Settle one connected Rook hand, correct cap material/normal continuity, authored cuff seams and continuous motion contact before all-eight conversion. After P2 closure, use a Rook-only opt-in connected-hand proof with isolated candidate output and private fetch substitution. This tests topology and UV lessons independently; it does not claim the body trial won. Keep current runtime and other seven hands until accepted. Existing runtime selector stays untouched unless a reproduced defect earns a named hook."
+  - id: GFX-02-P2
+    title: "Finish Rook hand silhouette, materials and contact proof"
+    lane: VIS
+    size: M
+    needs: [GFX-02-P1]
+    status: backlog
+    owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, public/assets/models/wasteland/first-person/, docs/board/looks/first-person-p2/, docs/changes/GFX-02-P2.md]
+    hooks: [tools/test-first-person-polish.mjs, tools/first-person-contact.mjs, tools/test-first-person-contact.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    flag: wasteland2
+    acceptance:
+      - "Write the changed construction method before code: measured broad asymmetric sleeve volume and sewn panels, then game-scale weave, irregular overlapping wraps, glove pads and wrist transitions. Preserve the P1 recipe and original selected image source."
+      - "Use actual exported geometry and rendered material consumers in independent tests; preserve connected anatomy, skin, rig, clips, tools and8000 loaded-triangle/three-draw limits. Do not replace a missing visual score with a source assertion."
+      - "Complete a valid fixed-surface contact method across reload boundaries, recoil and repair; unsupported open targets or sparse patches cannot pass. Keep15/20mm gaps and5mm penetration limits unless separately reviewed evidence changes the design."
+      - "Require every SPEC0.3 score at least four, actual High/Performance motion views and quiet baseline/candidate/baseline frame proof before Rook runtime promotion or all-eight conversion."
+    note: "Residual acceptance from the bounded P1 Rook-only proof. Formal R3 is3/4/3/3 in both reviews; selected paint is consumed correctly but silhouette, wrap/glove construction and complete contact remain unfinished. Current runtime hands/tools stay selected. No new implementation starts from this backlog entry alone."
   - id: EGG-02
     title: "Rustwall gate and salt-flat fidelity rounds one to three"
     priority: 9
