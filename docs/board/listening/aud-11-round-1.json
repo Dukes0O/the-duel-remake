@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "card": "AUD-11",
+  "round": 1,
+  "status": "measured-awaiting-human-listening",
+  "requiresHumanListening": true,
+  "ratings": [],
+  "recording": {
+    "scenario": "audio-race",
+    "capturedAt": "2026-09-25T06:37:31.283Z",
+    "sampleRate": 48000,
+    "durationSec": 14.635,
+    "events": 24,
+    "frames": 791,
+    "memoryOnlySaves": true
+  },
+  "measurements": {
+    "integratedLufs": -17.92,
+    "truePeakDbtp": -1.58,
+    "loopSeamsPassed": 10,
+    "loopSeamsTotal": 10,
+    "repetition": {
+      "available": true,
+      "advisory": true,
+      "pass": true,
+      "longestRun": 1,
+      "cues": [
+        {
+          "cue": "combat.blast",
+          "events": 9,
+          "variants": 3,
+          "longestRun": 1,
+          "pass": true
+        }
+      ]
+    },
+    "legacyChecks": {
+      "sync": true,
+      "engine": true,
+      "clipping": true,
+      "clicks": true,
+      "loopGaps": true,
+      "weaponContrast": true,
+      "panning": true,
+      "distance": true,
+      "variety": true,
+      "stress": true
+    },
+    "engineCorrelation": 0.974,
+    "minimumWeaponOverEngineDb": 6.435
+  },
+  "findings": [
+    "All ten existing race checks pass on the full-rate recording.",
+    "The new audio-only trend regression repairs a greedy octave-lock failure; no threshold changed.",
+    "No human rating has been supplied.",
+    "AUD-10 strict mixed-waveform comparison is unresolved; AUD-11 is not ready before AUD-10."
+  ]
+}

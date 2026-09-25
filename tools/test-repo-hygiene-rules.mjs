@@ -82,6 +82,8 @@ try {
   });
 
   for (const [label, path, contents] of [
+    ['raw audio source in public', 'public/assets/audio/engine-source.wav', 'RAW SOURCE'],
+    ['raw tire source in public', 'public/assets/audio/tire-squeal.wav', 'RAW SOURCE'],
     ['Blender source in public', 'public/assets/models/source.blend', 'BLENDER'],
     ['Blender script in public', 'public/assets/models/source.py', 'SOURCE'],
     ['raw review evidence in docs', 'docs/board/looks/race-capture.png', 'RAW CAPTURE'],

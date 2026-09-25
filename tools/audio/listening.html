@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>The Duel — Listening booth</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+        background: #141719;
+        color: #edf0ed;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 40px 24px;
+      }
+      main {
+        max-width: 980px;
+        margin: auto;
+      }
+      h1 {
+        font-size: clamp(30px, 5vw, 48px);
+        margin: 8px 0 12px;
+        letter-spacing: -1.5px;
+      }
+      h2 {
+        font-size: 20px;
+      }
+      p {
+        color: #b8c3c6;
+        line-height: 1.6;
+      }
+      .eyebrow {
+        color: #e6af73;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        font-size: 12px;
+      }
+      .settings,
+      .slots,
+      .review-grid {
+        display: grid;
+        gap: 18px;
+      }
+      .settings {
+        grid-template-columns: 1fr 1fr;
+        margin: 28px 0;
+      }
+      .slots {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      section,
+      .slot {
+        background: #20272a;
+        border: 1px solid #374347;
+        border-radius: 12px;
+        padding: 22px;
+      }
+      label {
+        display: block;
+        font-size: 14px;
+        color: #c3ced0;
+      }
+      select,
+      input,
+      textarea,
+      button {
+        font: inherit;
+        border-radius: 6px;
+        border: 1px solid #526165;
+        padding: 11px;
+        background: #13191c;
+        color: #fff;
+        width: 100%;
+        margin-top: 7px;
+      }
+      button {
+        cursor: pointer;
+        background: #d79d60;
+        border-color: #d79d60;
+        color: #1c1814;
+        font-weight: 700;
+      }
+      button:hover {
+        background: #efbc84;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible {
+        outline: 3px solid #9adbea;
+        outline-offset: 3px;
+      }
+      .slot strong {
+        display: block;
+        color: #edbd89;
+        font-size: 26px;
+        margin-bottom: 14px;
+      }
+      .review-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      #stop {
+        background: transparent;
+        color: #fff;
+        width: auto;
+        min-width: 130px;
+        margin: 20px 0;
+      }
+      #status {
+        min-height: 28px;
+        margin: 0 0 24px;
+        color: #e9bd89;
+      }
+      textarea {
+        min-height: 95px;
+      }
+      .wide {
+        grid-column: 1/-1;
+      }
+      small {
+        color: #a9b8bc;
+        line-height: 1.5;
+      }
+      form button {
+        max-width: 260px;
+      }
+      @media (max-width: 700px) {
+        body {
+          padding: 24px 16px;
+        }
+        .slots,
+        .review-grid,
+        .settings {
+          grid-template-columns: 1fr;
+        }
+        .wide {
+          grid-column: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow">The Duel / Sound workshop</div>
+      <h1>Listening booth</h1>
+      <p>
+        Compare sounds over the engine at full throttle. Choose a cue for each
+        slot, listen near and far, then record what you hear.
+      </p>
+      <div class="settings">
+        <label
+          >Listening bed<select id="bed">
+            <option value="full-throttle">Engine + coastal ambience</option>
+            <option value="quiet">Cue alone</option>
+          </select></label
+        ><label
+          >Distance<select id="distance">
+            <option value="near">Near · 15 metres</option>
+            <option value="far">Far · 120 metres</option>
+          </select></label
+        >
+      </div>
+      <div class="slots">
+        <div class="slot">
+          <strong>A</strong
+          ><label>Cue<select id="cue-A" data-cue></select></label
+          ><button data-play="A">Play A</button>
+        </div>
+        <div class="slot">
+          <strong>B</strong
+          ><label>Cue<select id="cue-B" data-cue></select></label
+          ><button data-play="B">Play B</button>
+        </div>
+        <div class="slot">
+          <strong>C</strong
+          ><label>Cue<select id="cue-C" data-cue></select></label
+          ><button data-play="C">Play C</button>
+        </div>
+      </div>
+      <p>
+        <small
+          >A, B and C select each cue's corresponding authored variation where
+          available. A cue with one recipe sounds the same in every slot. Voice
+          lines play in full; other auditions stop after three seconds.</small
+        >
+      </p>
+      <button id="stop">Stop all</button>
+      <p id="status" role="status" aria-live="polite">
+        Choose a sound to begin.
+      </p>
+      <section>
+        <h2>Your listening verdict</h2>
+        <p>
+          The review records the last slot played. Ratings belong to the person
+          who listened.
+        </p>
+        <form id="review">
+          <div class="review-grid">
+            <label
+              >Card<input
+                id="card"
+                value="AUD-11"
+                required
+                pattern="AUD-[A-Z0-9-]+" /></label
+            ><label
+              >Round<input
+                id="round"
+                type="number"
+                min="1"
+                max="99"
+                value="1"
+                required /></label
+            ><label
+              >Listener<input
+                id="listener"
+                placeholder="Your name"
+                maxlength="80"
+                required /></label
+            ><label
+              >Rating<select id="rating" required>
+                <option value="">Choose a rating</option>
+                <option value="1">1 · Needs a new approach</option>
+                <option value="2">2 · Needs major changes</option>
+                <option value="3">3 · Close, with changes</option>
+                <option value="4">4 · Works well</option>
+                <option value="5">5 · Keep it</option>
+              </select></label
+            ><label class="wide"
+              >What worked? What should change?<textarea
+                id="notes"
+                maxlength="4000"
+              ></textarea>
+            </label>
+          </div>
+          <button type="submit">Save listening verdict</button>
+        </form>
+      </section>
+    </main>
+    <script type="module" src="./listening.js"></script>
+  </body>
+</html>
