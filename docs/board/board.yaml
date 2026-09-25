@@ -1230,7 +1230,7 @@ tasks:
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
     owns: [src/sound-bank.js, public/assets/audio/, tools/audio/, docs/audio/, docs/board/listening/, docs/changes/AUD-14.md]
-    hooks: [src/audio.js, src/app.js]
+    hooks: [src/audio.js, src/app.js, tools/test-combat-audio.mjs, tools/scenarios/combat-audio.mjs]
     flag: wasteland2
     helpers: [test_author, reviewer, audio_qa]
     acceptance:
@@ -1664,4 +1664,4 @@ tasks:
       - "Reproduce the external clean-checkout ENOENT for art-build/rustwall-p2/wall-relief-source.png before changing tests. Runtime asset verification may use only committed assets, and generated-source verification must build its own isolated fixture."
       - "Preserve the exact generated-source SHA and exported pixel comparisons on each fresh build's own output; retain all geometry, atlas, route, gate and budget assertions. No copying a stale art scratch file or committing raw review output to hide the dependency. Explain and independently review any assertion relocation."
       - "Run focused tests and the normal lane/build gate from a fresh checkout without prior art-build files. Integration full tier must pass after the fix before further feature merges."
-    note: "Merged ea84b34 after clean red-to-green reproduction, independent assertion review, isolated export6/6, lane8/8 in64.15 seconds and build. Runtime asset checks no longer depend on consumed scratch; exact own-build SHA and atlas pixels remain checked. Feature merges stay held until integration full passes."
+    note: "Merged ea84b34 after clean red-to-green reproduction, independent assertion review, isolated export6/6, lane8/8 in64.15 seconds and build. Runtime asset checks no longer depend on consumed scratch; exact own-build SHA and atlas pixels remain checked. Integration clean full passed 256/256 on 1d82eb7 at 07:09 UTC; feature merges may resume."
