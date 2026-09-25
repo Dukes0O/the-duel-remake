@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-25T01:57:42.270Z
+Observed at: 2026-09-25T02:22:55.891Z
 
-Observation commit: 31dfd137a2739b068f85d215591b078ef5bf5c8a
+Observation commit: 2b77176bfd4e38f191b1a967019b7d81a7e3cbcf
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 31dfd137a2739b068f85d215591b078ef5bf5c8a
+Integration HEAD: 2b77176bfd4e38f191b1a967019b7d81a7e3cbcf
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -32,7 +32,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/gfx-01-p2 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-01-p2 |
+| codex/egg-02-p2 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/egg-02-p2 |
+| codex/gfx-01-p2 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-01-p2 |
 
 ## Unmerged branches for idle review
 
@@ -40,6 +41,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
+| codex/gfx-01-p2 | GFX-01 | 2026-09-24T19:12:53-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/GFX-01-P2.md, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-source.json, tools/blender/rook-p2.py, tools/test-blender-output.mjs |
 
 ## Size targets
 
@@ -48,15 +50,15 @@ Targets are advisory. Change compares with the previous status observation when 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
 | Build `dist/` | 247,181,886 B | +0 B | 250,000,000 B |
-| Wasteland models | 78,345,188 B | +4,383,060 B | 60,000,000 B |
+| Wasteland models | 78,345,188 B | +0 B | 60,000,000 B |
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 210,328 B | +0 B | 500,000 B |
-| Review `looks/` | 3,610,597 B | +547,354 B | 20,000,000 B |
-| Added bytes in last merge | 9,541,665 B | -46,876 B | 5,000,000 B |
-| All `public/` | 255,108,495 B | +4,383,060 B | unavailable |
-| Git objects | 286,422,016 B | +2,436,096 B | unavailable |
-| Lane folders | 1 | -1 | unavailable |
+| Review `looks/` | 3,610,597 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 58,845 B | -9,482,820 B | 5,000,000 B |
+| All `public/` | 255,108,495 B | +0 B | unavailable |
+| Git objects | 286,800,896 B | +378,880 B | unavailable |
+| Lane folders | 2 | +1 | unavailable |
 
 ## Backups
 
@@ -64,7 +66,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 31dfd137a2739b068f85d215591b078ef5bf5c8a
+- Local integration/wasteland: 2b77176bfd4e38f191b1a967019b7d81a7e3cbcf
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

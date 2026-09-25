@@ -1461,11 +1461,11 @@ tasks:
     lane: OPS
     size: S
     needs: [BAL-02, CAR-01, GFX-03, GFX-04]
-    status: in_progress
+    status: merged
     flag: none
     behavior_change: no
     owns: [docs/board/decisions.md, docs/board/run-log.md, docs/board/STATUS.md, docs/board/board.yaml, docs/ASSET_PIPELINE.md, docs/changes/]
-    note: "Independent read-only review identified the few unique facts to fold from four consumed notes. No runtime removal or history rewrite. Active Rook and Rustwall lanes remain."
+    note: "Merged 048258c, with Unicode repair 2b77176. Independent review, six lane suites and builds passed before each merge. Four consumed notes folded and deleted; CLEAN-11 holds uncertain audit candidates. Runtime unchanged, active art lanes preserved."
   - id: CLEAN-11
     title: "Resolve literal-reference audit candidates against dynamic consumers"
     lane: TOOL
