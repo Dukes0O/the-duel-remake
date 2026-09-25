@@ -159,6 +159,57 @@ test('R3 selected material is explicit, hash-matched and confined before any bui
   assert.equal(existsSync(output),false,'paths-only selected paint cannot write');
 });
 
+test('R3 selected triptych paints exported charts while retaining R2 skin pixels', () => {
+  const base=join(root,'art-build/first-person-p1/test-r3-paint');
+  const input=join(base,'triptych.png'), output=join(base,'painted');
+  mkdirSync(base,{recursive:true});
+  writeFileSync(input,syntheticTriptychPng());
+  const hash=sha256(readFileSync(input));
+  const blender=process.env.BLENDER_PATH || 'blender';
+  const result=spawnSync(blender,['-b','--python-exit-code','1','--python',generator,
+    '--','--root',root,'--round','1','--p1-rook','--output-dir',output,
+    '--p1-paint',input,'--p1-paint-sha256',hash,'--skip-renders'],
+  {cwd:root,encoding:'utf8',timeout:300000,maxBuffer:16*1024*1024});
+  assert.equal(result.status,0,result.stderr||result.stdout||result.error?.message);
+  const manifest=JSON.parse(readFileSync(join(output,'manifest.json'),'utf8'));
+  assert.equal(manifest.paintSource?.sha256,hash,
+    'own-build manifest must name the actual selected fixture bytes');
+  assert.equal(resolve(root,manifest.paintSource?.path),input);
+  assert.equal(manifest.paintSource?.selectedArtwork,false,
+    'synthetic fixture must not claim to be the reviewed real artwork');
+  assert.equal(manifest.paintSource?.method,'box-filter-418-to-240');
+  assert.deepEqual(manifest.paintSource?.crops,{
+    cloth:[0,0,418,418],leather:[418,90,836,508],wrap:[836,250,1254,668],
+  });
+  const painted=decodeRgbaPng(embeddedPng(glbDocument(join(output,'hands/rook.glb')),'color'));
+  const charts={cloth:[8,8,248,248],leather:[264,8,504,248],wrap:[776,8,1016,248]};
+  const bases={cloth:[42,86,87],leather:[69,47,37],wrap:[158,137,105]};
+  for(const [role,rect] of Object.entries(charts)) {
+    const crop=manifest.paintSource.crops[role];
+    for(const [dx,dy] of [[32,32],[120,120],[208,208]]) {
+      const px=rect[0]+dx,py=rect[1]+dy;
+      const sourceX=Math.floor(crop[0]+(dx+.5)*418/240);
+      const sourceY=Math.floor(crop[1]+(dy+.5)*418/240);
+      const grain=(Math.floor(sourceX/11)+Math.floor(sourceY/13))%17;
+      const actual=painted.pixel(px,py);
+      for(let channel=0;channel<3;channel++)
+        assert.ok(Math.abs(actual[channel]-(bases[role][channel]+grain))<=6,
+          `${role} exported pixel ${px},${py} does not follow selected source crop`);
+      assert.equal(actual[3],255,`${role} embedded atlas must remain opaque`);
+    }
+  }
+  const protectedSkin=Buffer.alloc(241*241*4);
+  for(let y=8;y<=248;y++)for(let x=520;x<=760;x++)
+    Buffer.from(painted.pixel(x,y)).copy(protectedSkin,((y-8)*241+x-520)*4);
+  assert.equal(sha256(protectedSkin),
+    '7eea2ce1afd880c2514cc24ec964cb6172becc2e8a72ccd97c7bbd449b7e8c7d',
+    'selected cloth/leather/wrap paint cannot alter frozen R2 skin pixels');
+  for(const crew of Object.keys(baselineHashes))
+    assert.equal(sha256(readFileSync(join(root,
+      `public/assets/models/wasteland/first-person/hands/${crew}.glb`))),
+    baselineHashes[crew],`${crew} production hand changed during selected-paint proof`);
+});
+
 test('Rook proof path planning is Blender-free and cannot target public or outside the ignored art folder', () => {
   const output = join(root, 'art-build/first-person-p1/test-candidate');
   const before = existsSync(output);
