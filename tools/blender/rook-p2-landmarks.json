@@ -95,6 +95,19 @@
         ,"head-back": [[269,67],[247,81],[241,98],[244,118],[254,137],[263,150]]
         ,"head-front": [[271,67],[292,81],[307,98],[315,118],[311,137],[292,150]]
       },
+      "faceProfile": [
+        {"name":"forehead","y":91,"x":310,"halfWidthM":0.076,"pairedDepthM":[-0.124,-0.116,-0.098]},
+        {"name":"brow","y":100,"x":311,"halfWidthM":0.074,"pairedDepthM":[-0.126,-0.117,-0.098]},
+        {"name":"nose-root","y":105,"x":310,"halfWidthM":0.074,"pairedDepthM":[-0.123,-0.109,-0.094]},
+        {"name":"bridge","y":110,"x":313,"halfWidthM":0.073,"pairedDepthM":[-0.127,-0.106,-0.095]},
+        {"name":"nose-wing","y":115,"x":317,"halfWidthM":0.072,"pairedDepthM":[-0.133,-0.113,-0.100]},
+        {"name":"nose-tip","y":120,"x":319,"halfWidthM":0.070,"pairedDepthM":[-0.132,-0.111,-0.098]},
+        {"name":"under-nose","y":124,"x":312,"halfWidthM":0.066,"pairedDepthM":[-0.128,-0.114,-0.100]},
+        {"name":"upper-lip","y":130,"x":313,"halfWidthM":0.058,"pairedDepthM":[-0.130,-0.111,-0.096]},
+        {"name":"lower-lip","y":135,"x":310,"halfWidthM":0.052,"pairedDepthM":[-0.121,-0.108,-0.090]},
+        {"name":"chin","y":141,"x":309,"halfWidthM":0.040,"pairedDepthM":[-0.119,-0.104,-0.084]},
+        {"name":"under-chin","y":145,"x":307,"halfWidthM":0.036,"pairedDepthM":[-0.115,-0.101,-0.082]}
+      ],
       "points": {
         "crown": [273, 67],
         "chin": [306, 142],

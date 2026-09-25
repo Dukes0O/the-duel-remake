@@ -13,6 +13,40 @@ const roles = ['body-core','jacket','vest-left','vest-right','scarf','trousers',
 const pointNames = ['crown','chin','neck','shoulder','elbow','wrist','scarf','vest','belt','crotch','knee','boot','pack'];
 const finitePoint = (point, length) => Array.isArray(point) && point.length === length && point.every(Number.isFinite);
 
+test('connected neutral face follows measured side-profile brow, nose, lips and chin', () => {
+  const source = json('rook-p2-source.json');
+  const core = source.meshes.find(mesh => mesh.role === 'body-core' && mesh.lod === 'near');
+  assert.ok(core, 'measure the authored connected near body core');
+  const metresPerPixel = 1.83 / 578;
+  const heightAt = imageY => (641 - imageY) * metresPerPixel;
+  const centerline = core.vertices.filter(([x, depth, z]) =>
+    Math.abs(x) < .003 && depth < -.04 && z >= heightAt(145) - .05 && z <= heightAt(100) + .05)
+    .sort((a, b) => a[2] - b[2]);
+  assert.ok(centerline.length >= 6, 'face is measured on real connected centerline bands');
+  const projectedX = imageY => {
+    const height = heightAt(imageY);
+    let lower, upper;
+    for (const point of centerline) {
+      if (point[2] <= height) lower = point;
+      if (point[2] >= height && !upper) upper = point;
+    }
+    assert.ok(lower && upper, `connected face spans measured image row ${imageY}`);
+    const t = upper[2] === lower[2] ? 0 : (height - lower[2]) / (upper[2] - lower[2]);
+    const depth = lower[1] + t * (upper[1] - lower[1]);
+    return 270 - depth / metresPerPixel;
+  };
+  const errors = [];
+  for (const [name, imageX, imageY] of [
+    ['brow', 311, 100], ['nose tip', 319, 120], ['under nose', 312, 124],
+    ['upper lip', 313, 130], ['lower lip', 310, 135], ['chin', 309, 141],
+  ]) {
+    const actual = projectedX(imageY);
+    if (Math.abs(actual - imageX) > 2)
+      errors.push(`${name}: clay x${actual.toFixed(1)}, reference x${imageX} at y${imageY}`);
+  }
+  assert.deepEqual(errors, [], `connected side outline exceeds 2 native pixels: ${errors.join('; ')}`);
+});
+
 test('neutral Rook has explicit connected control meshes with bounded near and far geometry', () => {
   const source = json('rook-p2-source.json');
   assert.equal(source.version, 1);

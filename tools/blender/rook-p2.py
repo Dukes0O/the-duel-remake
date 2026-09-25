@@ -18,7 +18,7 @@ def arguments():
     parser.add_argument('--source', default='tools/blender/rook-p2-source.json')
     parser.add_argument('--landmarks', default='tools/blender/rook-p2-landmarks.json')
     parser.add_argument('--output-dir', default='art-build/crew/rook-p2')
-    parser.add_argument('--isolate', choices=('all', 'boots', 'torso'), default='all')
+    parser.add_argument('--isolate', choices=('all', 'boots', 'torso', 'head'), default='all')
     parser.add_argument('--paths-only', action='store_true')
     return parser.parse_args(raw)
 
@@ -36,10 +36,11 @@ def plan(args):
         raise ValueError('Choose a dedicated Rook review output directory')
     boots = args.isolate == 'boots'
     torso = args.isolate == 'torso'
-    views = ('front', 'side', 'three-quarter') if boots or torso else ('front', 'side', 'back')
-    prefix = 'boot' if boots else 'torso' if torso else 'neutral'
-    stem = 'rook-p2-boots' if boots else 'rook-p2-torso' if torso else 'rook-p2-neutral'
-    manifest = 'boot-manifest.json' if boots else 'torso-manifest.json' if torso else 'manifest.json'
+    head = args.isolate == 'head'
+    views = ('front', 'side', 'three-quarter') if boots or torso or head else ('front', 'side', 'back')
+    prefix = 'boot' if boots else 'torso' if torso else 'head' if head else 'neutral'
+    stem = 'rook-p2-boots' if boots else 'rook-p2-torso' if torso else 'rook-p2-head' if head else 'rook-p2-neutral'
+    manifest = 'boot-manifest.json' if boots else 'torso-manifest.json' if torso else 'head-manifest.json' if head else 'manifest.json'
     return {
         'blend': [str(output / f'{stem}.blend')],
         'glb': [],
@@ -113,8 +114,8 @@ def build(args, paths):
     scene = bpy.context.scene
     scene.render.engine = 'CYCLES'
     scene.cycles.samples = 24
-    scene.render.resolution_x = 500 if args.isolate in ('boots', 'torso') else 300
-    scene.render.resolution_y = 500 if args.isolate == 'torso' else 300 if args.isolate == 'boots' else 761
+    scene.render.resolution_x = 500 if args.isolate in ('boots', 'torso', 'head') else 300
+    scene.render.resolution_y = 500 if args.isolate in ('torso', 'head') else 300 if args.isolate == 'boots' else 761
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = 'PNG'
     scene.render.film_transparent = False
@@ -124,7 +125,8 @@ def build(args, paths):
     scene.collection.objects.link(camera)
     camera_data.type = 'ORTHO'
     camera_data.ortho_scale = (300 / (761 / 2.37) if args.isolate == 'boots'
-                               else 1.02 if args.isolate == 'torso' else 761 * 1.83 / 578)
+                               else 1.02 if args.isolate == 'torso' else .52 if args.isolate == 'head'
+                               else 761 * 1.83 / 578)
     scene.camera = camera
     for name, position, power in [('Key', (-3, -4, 5), 650), ('Fill', (3, -2, 3), 340), ('Rim', (1, 4, 4), 480)]:
         light_data = bpy.data.lights.new(name, 'AREA')
@@ -138,16 +140,17 @@ def build(args, paths):
     # Rook's approved profile faces right: looking from -X puts model front
     # (-Y) at image right. +X would silently mirror the reference comparison.
     target_height = (.16 if args.isolate == 'boots' else 1.30 if args.isolate == 'torso'
+                     else 1.62 if args.isolate == 'head'
                      else (641 - 761 / 2) * 1.83 / 578)
     views = [('front', (0, -6, target_height)), ('side', (-6, 0, target_height)),
              ('three-quarter', (-4, -5, target_height + .5))] if args.isolate == 'boots' else [
              ('front', (0, -6, target_height)), ('side', (-6, 0, target_height)),
              ('back', (0, 6, target_height))]
-    if args.isolate == 'torso':
+    if args.isolate in ('torso', 'head'):
         views = [('front', (0, -6, target_height)),
                  ('side', (-6, 0, target_height)),
                  ('three-quarter', (-4, -5, target_height))]
-    prefix = 'boot' if args.isolate == 'boots' else 'torso' if args.isolate == 'torso' else 'neutral'
+    prefix = 'boot' if args.isolate == 'boots' else 'torso' if args.isolate == 'torso' else 'head' if args.isolate == 'head' else 'neutral'
     for view, position in views:
         camera.location = position
         camera.rotation_euler = (Vector((0, 0, target_height)) - camera.location).to_track_quat('-Z', 'Y').to_euler()
@@ -158,7 +161,7 @@ def build(args, paths):
     for item in source['meshes']:
         totals[item['lod']] += sum(len(face) - 2 for face in item['faces'])
     manifest = {
-        'task': 'GFX-01-P2', 'stage': 'neutral-boots' if args.isolate == 'boots' else 'neutral-torso' if args.isolate == 'torso' else 'neutral',
+        'task': 'GFX-01-P2', 'stage': 'neutral-boots' if args.isolate == 'boots' else 'neutral-torso' if args.isolate == 'torso' else 'neutral-head' if args.isolate == 'head' else 'neutral',
         'blender': bpy.app.version_string,
         'source': {'path': source_path.relative_to(root).as_posix(), 'sha256': sha(source_path)},
         'landmarks': {'path': landmark_path.relative_to(root).as_posix(), 'sha256': sha(landmark_path)},
@@ -172,7 +175,7 @@ def build(args, paths):
         'glb': [], 'textures': [],
         'outputs': {path.name: sha(path) for path in (output / f'{prefix}-{view}.png' for view, _ in views)},
     }
-    manifest_path = output / ('boot-manifest.json' if args.isolate == 'boots' else 'torso-manifest.json' if args.isolate == 'torso' else 'manifest.json')
+    manifest_path = output / ('boot-manifest.json' if args.isolate == 'boots' else 'torso-manifest.json' if args.isolate == 'torso' else 'head-manifest.json' if args.isolate == 'head' else 'manifest.json')
     with manifest_path.open('w', encoding='utf-8', newline='\n') as target:
         target.write(json.dumps(manifest, indent=2) + '\n')
     print(json.dumps(manifest))
