@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-25T10:40:03.673Z
+Observed at: 2026-09-25T11:03:09.573Z
 
-Observation commit: 17c3ddf2b0179b4ed2d6cff22d665e4f57b39cee
+Observation commit: 24f62241faec50982ba23187c3702bf2ea85f777
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 17c3ddf2b0179b4ed2d6cff22d665e4f57b39cee
+Integration HEAD: 24f62241faec50982ba23187c3702bf2ea85f777
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-09-25T09:03:19.987Z; tested commit: e3579f1e5a415079856720f38fa332eb359b355e.
+Last recorded full run: 2026-09-25T11:00:47.887Z; tested commit: 537a417e7a150d0abc6163c0212fafaa5d705f7a.
 
 ## Feature switches
 
@@ -42,7 +42,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/gfx-02-p1 | GFX-02-P1 | 2026-09-25T03:15:25-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/GFX-02-P1.md, tools/test-first-person-polish.mjs, tools/blender/first-person-gear.py, tools/fidelity-sheet.mjs, tools/blender/first-person-p1-source.json |
+| codex/gfx-02-p1 | GFX-02-P1 | 2026-09-25T04:01:15-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/first-person-p1/round-1-review.md, docs/board/looks/first-person-p1/round-1.jpg, docs/changes/GFX-02-P1.md, tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json |
 
 ## Size targets
 
@@ -58,8 +58,8 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 6,579,829 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 22,806 B | +0 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 319,066,112 B | +116,736 B | unavailable |
-| Lane folders | 1 | -1 | unavailable |
+| Git objects | 319,823,872 B | +67,584 B | unavailable |
+| Lane folders | 1 | +0 | unavailable |
 
 ## Backups
 
@@ -67,7 +67,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 17c3ddf2b0179b4ed2d6cff22d665e4f57b39cee
+- Local integration/wasteland: 24f62241faec50982ba23187c3702bf2ea85f777
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -75,4 +75,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: behind local; cached commit 02e182adf16031cd7d383aafdcc847b5f250eb16.
+- Remote origin/integration/wasteland: matches local; cached commit 24f62241faec50982ba23187c3702bf2ea85f777.
