@@ -408,9 +408,24 @@ tasks:
     flag: hidden-road
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
-      - "Continue the round-10 gaps: replace the regular flat facade with deeper irregular salvage, grounded supports and a varied roofline; make canyon strata follow the slope without repeated broad bands. Reach resemblance four and preserve the measured frame budget."
+      - "Complete the ten-round P2 wave against the original likeness-four target, preserving every review verdict. Final wall and wash remain likeness three. Accept only a measured development improvement after frame and lane/build gates; EGG-02-P3 owns the unmet visual target under SPEC 0.3. This closure does not grant visual acceptance or a release."
       - "Retain the physical route, collision envelopes, gate clearance, joined-bank safety tests and smaller reviewed atlases. Use a separate next-wave review folder and immutable reference/Blender/High/Performance sheets."
     note: "Active next-wave codex/egg-02-p2. Written design uses welded source-car salvage and unequal facade depth, funded by removing repeated microdetail within original limits. Wash follows measured contour strata using the approved art-direction background crop. Independent tests precede code. Physical route, gate and collision union remain fixed."
+  - id: EGG-02-P3
+    title: "Interlocked Rustwall salvage and natural canyon strata"
+    lane: VIS
+    size: L
+    needs: [EGG-02-P2]
+    status: backlog
+    owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall-p3/]
+    hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/scenarios/rustwall-frame.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-relief.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
+    flag: hidden-road
+    helpers: [test_author, art_critic, reviewer, browser_qa]
+    acceptance:
+      - "Settle a changed construction method in writing and prove one representative bay before extending it: interlocked 3D salvage rather than regular rectangular display bays, irregular grounded tower tops, and car bodies with convincing load paths. Preserve the actual moving gate and nine-by-seven-metre opening."
+      - "Make joined canyon strata follow natural slope and contour without the current broad repeated bands. Preserve the exact physical route, collision-box union and shared bank seams."
+      - "Reach likeness, readability, grounding and consistency of at least four in matched High/Performance views, retain immutable sheets and independent verdicts, and hold whole-scene frame cost within ten percent. Preserve the 60,000 wall triangles, 24 draws, three 512 texture sets and existing wash allocation."
+    note: "Residual from the ten-round P2 wave: final wall and wash score 3/3/3/3. P2 is a development improvement only; this card keeps the original unmet art target visible. Do not erase failed rounds or infer visual acceptance from a performance pass."
   - id: EGG-03
     title: "Gate arrival and invitation"
     priority: 10
@@ -1154,11 +1169,13 @@ tasks:
     status: backlog
     owner: "Kyle's separate audio session"
     branch: lane/audio/aud-10
-    owns: [tools/audio/, docs/audio/, docs/board/listening/, docs/changes/AUD-11.md]
+    owns: [tools/audio/, tools/audio-analysis.mjs, tools/audio-race-check.js, tools/test-audio-listening.mjs, tools/scenarios/audio-listening.mjs, docs/audio/, docs/board/listening/, docs/changes/AUD-11.md]
+    hooks: [tools/vite-qa.config.js]
     helpers: [test_author, reviewer, audio_qa]
     acceptance:
       - "Play cues over engine and ambience with A/B/C variants; save human ratings and notes as verdict files."
       - "Measure LUFS, true peak, loop seams, repetition and full-mix masking. Unrated rounds are flagged for human listening."
+    note: "Same audio owner may prepare independent measurement and booth tools against the unmerged foundation while AUD-10 baseline review remains open. AUD-11 cannot be marked ready or merged before AUD-10. Full-rate capture is required for true-peak measurements; existing comparator limits are unchanged."
   - id: AUD-12
     title: "On-demand sound sourcing and Kyle's kept picks"
     lane: AUDIO
