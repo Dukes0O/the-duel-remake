@@ -28,3 +28,13 @@ Career owns the private memory-only browser scenarios. The Experimental scenario
 ## Reviewed legacy assertion correction
 
 `node tools/test-combat-armor.mjs` was run after the catalog change and before its test edit. It reported 18/19 passing; the only failure was line 70 expecting `FEATURE_STATES.wasteland2 === 'dev'` while the approved candidate state is `beta`. Director added this one named hook. The test title and exact state expectation now say opt-in beta; the flag-off armor/state loop and the other 18 assertions are unchanged. This follows Kyle's written Experimental approval, not a relaxation of combat or save behavior.
+
+## Responsive Experimental control fix
+
+The private browser at 1280×720 found `#experimental-open` present but hidden: computed `display:none` and a 0×0 box. The button also has the decorative `build-label` class. Existing compact-height and narrow-width media rules hide every `.build-label`, so they hide this interactive button too. Career is adding a visible, clickable control assertion at the actual 1280×720 viewport before this CSS edit.
+
+The narrow fix is a readable responsive override for `.build-meta .experimental-open` after those media rules. It restores the button's inline layout at compact heights and widths through 1100px while leaving decorative `.build-label` elements hidden. Browser review must check that the control stays on screen, can receive keyboard focus and can be clicked at 1280×720 and a narrow viewport. No viewport increase or menu behavior change is part of this fix.
+
+The first post-CSS browser run revealed a second layout issue: the button now has a 129.6×21px box, but its top is y751.7 at a 720px viewport. Actual browser measurements show a 720px scrollable menu with 800px of content; the footer starts at y697.5 and ends at y772.7. The Start Engine control ends at y658.3 in the left column. The compact layout will anchor only the interactive button at the lower right of the viewport with a 40px hit target; the ordinary footer and decorative labels remain in flow. Placement must pass the real viewport bounds, hit-target and keyboard-focus checks at 1280×720 and 1024×720.
+
+Career then verified the button is visible, clickable and keyboard focusable at both actual browser sizes. The final rule changes only its responsive display and placement; the decorative label hiding and menu actions are unchanged.
