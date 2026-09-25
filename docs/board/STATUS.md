@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-25T08:57:12.749Z
+Observed at: 2026-09-25T09:08:00.560Z
 
-Observation commit: 13895220a0de4f04aa0d169dae920c0fa53424d1
+Observation commit: e3579f1e5a415079856720f38fa332eb359b355e
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 13895220a0de4f04aa0d169dae920c0fa53424d1
+Integration HEAD: e3579f1e5a415079856720f38fa332eb359b355e
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -14,9 +14,9 @@ Live commit: not checked
 
 Live build version: not checked
 
-Full tier: stale; exact HEAD passed: no.
+Full tier: passed; exact HEAD passed: yes.
 
-Last recorded full run: 2026-09-25T07:09:36.695Z; tested commit: 1d82eb74e3836d9cc76f0cdec59034ba075d6447.
+Last recorded full run: 2026-09-25T09:03:19.987Z; tested commit: e3579f1e5a415079856720f38fa332eb359b355e.
 
 ## Feature switches
 
@@ -32,7 +32,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/gfx-01-p2 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-01-p2 |
+| codex/gfx-01-p2 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/gfx-01-p2 |
 | lane/audio/aud-10 | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/audio/aud-12 | 0 | unknown | true | false | unknown |
 
@@ -42,7 +42,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/gfx-01-p2 | GFX-01-P2 | 2026-09-25T01:43:22-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/crew-p2/round-1-review.md, docs/board/looks/crew-p2/round-1.jpg, docs/board/looks/crew-p2/round-2-review.md, docs/board/looks/crew-p2/round-2.jpg, docs/board/looks/crew-p2/round-3-review.md |
+| codex/gfx-01-p2 | GFX-01-P2 | 2026-09-25T02:06:37-07:00 | 0 | last commit 2026-09-25T02:06:37-07:00 | docs/board/looks/crew-p2/round-1-review.md, docs/board/looks/crew-p2/round-1.jpg, docs/board/looks/crew-p2/round-2-review.md, docs/board/looks/crew-p2/round-2.jpg, docs/board/looks/crew-p2/round-3-review.md |
 
 ## Size targets
 
@@ -50,15 +50,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 259,775,840 B | +0 B | 250,000,000 B |
+| Build `dist/` | 239,923,961 B | -19,851,879 B | 250,000,000 B |
 | Wasteland models | 78,930,708 B | +0 B | 60,000,000 B |
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 210,328 B | +0 B | 500,000 B |
 | Review `looks/` | 5,665,862 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 10,214,408 B | +10,156,225 B | 5,000,000 B |
-| All `public/` | 235,822,734 B | -19,871,281 B | unavailable |
-| Git objects | 316,968,960 B | +126,976 B | unavailable |
+| Added bytes in last merge | 10,214,408 B | +0 B | 5,000,000 B |
+| All `public/` | 235,822,734 B | +0 B | unavailable |
+| Git objects | 317,136,896 B | +167,936 B | unavailable |
 | Lane folders | 1 | +0 | unavailable |
 
 ## Backups
@@ -67,7 +67,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
 - Local main: missing
-- Local integration/wasteland: 13895220a0de4f04aa0d169dae920c0fa53424d1
+- Local integration/wasteland: e3579f1e5a415079856720f38fa332eb359b355e
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
