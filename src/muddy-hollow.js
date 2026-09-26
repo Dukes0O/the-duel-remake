@@ -223,15 +223,19 @@ export function checkMuddyHollowDeparture(duel) {
   const departure = state.muddyHollowDeparture;
   if (!zone || !departure || departure.departed ||
       state.status !== 'racing' || state.car !== 'titan_monster' ||
-      state.onFoot || state.airborne) return false;
+      state.onFoot || state.airborne || state.prevAirHeight > 0) return false;
   if (![state.prevS, state.prevLateral, state.s, state.lateral]
     .every(Number.isFinite)) return false;
   const previous = departurePosition(duel, state.prevS, state.prevLateral);
   const current = departurePosition(duel, state.s, state.lateral);
   const world = duel.course.worldAt(state.s, state.lateral);
   const boundary = zone.departureBoundary;
+  const crossingFraction = (boundary.lateral - previous.lateral) /
+    (current.lateral - previous.lateral);
+  const crossingAlong = previous.along +
+    (current.along - previous.along) * crossingFraction;
   if (!zone.contains(world.x, world.z) ||
-      current.along < boundary.alongMin || current.along > boundary.alongMax ||
+      crossingAlong < boundary.alongMin || crossingAlong > boundary.alongMax ||
       previous.lateral >= boundary.lateral || current.lateral < boundary.lateral)
     return false;
 

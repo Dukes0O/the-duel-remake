@@ -948,19 +948,25 @@ check('non-Titan, on-foot, airborne, road, flag-off and undiscovered states cann
 });
 
 check('departure validates the swept ridge intersection, not only the endpoint', () => {
-  const {duel, reference, boundary, events} = crossingFixture();
-  const beforePoint = localPoint(reference, boundary.alongMax + .15,
-    boundary.lateral - .15);
-  const afterPoint = localPoint(reference, boundary.alongMax - .1,
-    boundary.lateral + .15);
-  const before = duel.course.nearest(beforePoint.x, beforePoint.z, reference.frame.s);
-  const after = duel.course.nearest(afterPoint.x, afterPoint.z, reference.frame.s);
-  Object.assign(duel.state, {prevS: before.s, prevLateral: before.lateral,
-    s: after.s, lateral: after.lateral});
-  assert.equal(api('checkMuddyHollowDeparture')(duel), false,
-    'a diagonal sweep outside the finite ridge span cannot depart');
-  assert.equal(duel.state.status, 'racing');
-  assert.equal(phaseThreeEvent(events).length, 0);
+  for (const [label, beforeAlong, afterAlong] of [
+    ['upper end', .15, -.1],
+    ['lower end', -.15, .1],
+  ]) {
+    const {duel, reference, boundary, events} = crossingFixture();
+    const edge = label === 'upper end' ? boundary.alongMax : boundary.alongMin;
+    const beforePoint = localPoint(reference, edge + beforeAlong,
+      boundary.lateral - .15);
+    const afterPoint = localPoint(reference, edge + afterAlong,
+      boundary.lateral + .15);
+    const before = duel.course.nearest(beforePoint.x, beforePoint.z, reference.frame.s);
+    const after = duel.course.nearest(afterPoint.x, afterPoint.z, reference.frame.s);
+    Object.assign(duel.state, {prevS: before.s, prevLateral: before.lateral,
+      s: after.s, lateral: after.lateral});
+    assert.equal(api('checkMuddyHollowDeparture')(duel), false,
+      `${label} diagonal sweep outside the finite ridge span cannot depart`);
+    assert.equal(duel.state.status, 'racing');
+    assert.equal(phaseThreeEvent(events).length, 0);
+  }
 });
 
 check('an airborne-to-ground landing sweep cannot depart through the ridge', () => {
