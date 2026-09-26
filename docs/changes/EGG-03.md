@@ -555,3 +555,32 @@ sentence.
 
 Nothing. The lane adds the first governed art catalog and a decision document;
 it does not replace current runtime art.
+
+## Phase 6 code-native settled detail
+
+This lane completes the parts of the approved visual design that do not depend
+on Kyle's source choice. A dedicated `muddy-hollow-scene` builds one
+deterministic, collision-matched ground mesh from the existing authored height
+field. It adds three visibly wet mud beds, a shallow animated pond surface,
+the King of the Hill flag and the five earned-or-available hubcap markers. The
+mesh and markers are presentation only. They do not change the height field,
+surface query, collectible radii, random stream or race state.
+
+The shared driving-effects pool treats departed Hollow exploration as active
+driving. Existing fixed buffers gain brown mud clods and pale water spray.
+Mud emission follows `surfaceMud` and wheel spin; water spray follows depth and
+speed, with one larger entry burst when dry tyres cross into water. Paused and
+airborne frames emit nothing. Ordinary races and flag-off High Country keep
+their existing effects byte-for-byte.
+
+High Country mountain instances whose authored footprint overlaps the Hollow
+ellipse are omitted from the flagged world's render list only. Their course
+features and every ordinary-world instance remain intact. The Titan gets a
+Hollow-only visual grounding lift derived from its cached wheel contact points
+on steep terrain. The correction moves only the rendered vehicle and does not
+write to simulation state.
+
+External mud, rock and log sources remain blocked on the Kyle decision in the
+shortlist. This lane does not download, adapt or substitute any shortlisted
+asset. It therefore leaves source-selected surface detail and prop replacement
+as the last Phase 6 step.
