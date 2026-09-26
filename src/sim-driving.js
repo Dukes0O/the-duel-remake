@@ -13,7 +13,7 @@ export function _surface(distance, lateral) {
   return { ...surface, mainRoad: surface.mainRoad ?? surface.road };
 }
 
-export function _drivingSurface(distance, lateral, car = this.car) {
+export function _drivingSurface(distance, lateral, car = this.car, hasContact = true) {
   const floor = this.state.arena && this.course.def.scrapdome;
   if (floor) return { ...this._surface(distance, lateral), road: true, mainRoad: false, preparedGravel: true,
     boostAllowed: true, traction: floor.floorTraction, speedLimit: arenaFloorSpeed(floor, car.topSpeed),
@@ -22,8 +22,8 @@ export function _drivingSurface(distance, lateral, car = this.car) {
   const surface = hidden ? { ...this._surface(distance, lateral), road: true, mainRoad: false } : this._surface(distance, lateral);
   const preparedGravel = hidden || surface.road && !surface.mainRoad && (this.course.def.offroad || !!surface.shortcutId);
   const rally = car.kind === 'rally', roughnessScale = car.roughnessScale ?? 1;
-  const mud = clamp(Number(surface.mud) || 0, 0, 1);
-  const waterDepth = clamp(Number(surface.waterDepth) || 0, 0, 1);
+  const mud = hasContact ? clamp(Number(surface.mud) || 0, 0, 1) : 0;
+  const waterDepth = hasContact ? clamp(Number(surface.waterDepth) || 0, 0, 1) : 0;
   const traction = surface.mainRoad ? 1 : preparedGravel ? clamp(.6 + .4 * (car.offRoadGrip ?? DRIVE.offRoadGrip), .82, .995) : car.offRoadGrip ?? DRIVE.offRoadGrip;
   const speedLimit = surface.mainRoad ? car.topSpeed : preparedGravel ? car.topSpeed * (rally ? .98 : .95) : car.offRoadSpeed ?? 68;
   const scrub = surface.mainRoad ? 0 : (preparedGravel ? rally ? .014 : .035 : car.offRoadScrub ?? DRIVE.offRoadScrub) * roughnessScale;
@@ -120,7 +120,9 @@ export function _drive(dt) {
   if (s.gear !== previousGear) this.emit({ shift: s.gear });
 
   const wasBoosting = s.boosting;
-  const surface = this._drivingSurface(s.s, s.lateral, car);
+  // Terrain can be below an airborne vehicle without touching it. Delay mud,
+  // water and their entry latch until the tyres have ground contact.
+  const surface = this._drivingSurface(s.s, s.lateral, car, !s.airborne);
   const mud = surface.mud || 0, waterDepth = surface.waterDepth || 0;
   const surfaceEntrySpeed = Math.abs(s.speedMph);
   const wasInWater = (s.waterDepth || 0) >= .05;
