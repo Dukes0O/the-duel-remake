@@ -574,6 +574,18 @@ architecture for arena events and warlord fights; where it differs from 3.7,
 - Everything stays behind the `scrapdome` switch (dev) and is reached only
   from the Scrapdome yard, never the main menu (0.12).
 
+### 0.14 Crash physics and the Titan's playground (Kyle, 26 September 2026)
+
+Kyle: crashes should "mimic the real physics that would result in the other
+vehicle being smashed out of the way", in Mad Max and Rival Duel alike; the
+Titan should "really climb mountains" and have "an amazing playground as
+another easter egg" with mud pits, water and jumps. Designs, settled by
+Claude: `docs/CRASH_PHYSICS.md` (rigid-body impacts, knocked cars slide and
+spin, the player judged by their own change in velocity) and
+`docs/MUDDY_HOLLOW.md` (no 24 m climbing cap; a hidden valley over a steep
+ridge beside High Country, reached only by the Titan). Changes to ordinary
+race contacts are intended here; record every re-pinned fingerprint.
+
 ---
 
 ## 1. Objective

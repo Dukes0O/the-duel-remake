@@ -391,6 +391,60 @@ tasks:
     acceptance:
       - "Kyle, 25 September 2026: controls were backwards out of the car; remove R as a restart key (Gratian's request). Kyle asked for the fix during live play."
     note: "Merged and released faf5749: strafing and mouse turning match the screen, checked through the real camera; R does nothing. Full 272/272, build and smoke passed."
+  - id: CRASH-01
+    title: "Crash physics: rigid-body impacts and knocked cars"
+    priority: 1
+    lane: CMB
+    size: L
+    needs: []
+    status: active
+    flag: crash-physics
+    claimed_by: "Handed to Codex by Claude, 26 September 2026: continue branch lane/arch/crash-physics"
+    owns: [src/vehicle-collision.js, src/vehicle-knock.js, tools/test-vehicle-collision.mjs, tools/test-vehicle-knock-integration.mjs, docs/changes/CRASH-01.md]
+    hooks: [src/sim-contacts.js, src/sim-rival.js, src/sim-driving.js, src/sim-crash.js, src/destructibles.js, src/combat-armor.js, src/arena/arena-event.js, src/feature-flags.js, tools/test-combat-knockaway.mjs, tools/test-armored-vehicle-impact.mjs, tools/test-combat-ramming.mjs, tools/test-combat-replays.mjs, tools/test-feature-flags.mjs, tools/replays/combat-fingerprints.json, docs/board/decisions.md]
+    helpers: [test_author, reviewer, balance_analyst, browser_qa]
+    acceptance:
+      - "docs/CRASH_PHYSICS.md is settled. The solver, knocked motion and contact integration are built on lane/arch/crash-physics; docs/changes/CRASH-01.md lists the four failing test files and the decision for each. Finish those exactly as written, re-pin changed fingerprints with reasons, keep Mad Max combat balance in its bands, browser-review the four crash cases, then merge."
+      - "The evidence-based correction in decisions.md adds crash-physics in dev. Off keeps the exact integration contact paths. On applies the settled solver in every mode. A roadside knock stays visible until it parks as a still wreck, and a settling knock consumes that full simulation tick."
+  - id: CRASH-02
+    title: "Crash look and sound"
+    priority: 3
+    lane: VIS
+    size: M
+    needs: [CRASH-01]
+    status: backlog
+    owns: [docs/changes/CRASH-02.md]
+    hooks: [src/combat-effects.js, src/render3d.js, src/sound-bank.js, src/audio.js]
+    helpers: [reviewer, browser_qa]
+    acceptance:
+      - "From the vehicleSmash event (severity, dvMph, point): sparks and crumple at the contact point, tyre smoke while a car is knocked, roll visuals for launched traffic, impact sounds scaled by change in velocity per the SPEC 0.9 rule."
+  - id: TITAN-01
+    title: "The Titan climbs mountains"
+    priority: 1
+    lane: CMB
+    size: S
+    needs: []
+    status: backlog
+    owns: [docs/changes/TITAN-01.md, tools/test-titan-climb.mjs]
+    hooks: [src/offroad-physics.js, src/sim-driving.js]
+    helpers: [test_author, reviewer]
+    acceptance:
+      - "docs/MUDDY_HOLLOW.md section 2: remove the monster's accumulated-climb tip (climbGain) so the Titan climbs a whole hill under its maxGrade; steeper than maxGrade still tips. Climbing slows the truck by the slope and descending speeds it up (offroad-capable cars only). Rally keeps its limits; ordinary cars unchanged."
+      - "Tests: the Titan climbs a 60 m, 40 degree slope without tipping; tips on a slope over maxGrade; the rally car still tips at its limits; replay fingerprints unchanged."
+  - id: EGG-03
+    title: "Muddy Hollow, the Titan's playground (easter egg)"
+    priority: 2
+    lane: EGG
+    size: L
+    needs: [TITAN-01]
+    status: backlog
+    flag: muddy-hollow
+    owns: [src/muddy-hollow.js, src/muddy-hollow-scene.js, tools/test-muddy-hollow.mjs, tools/scenarios/muddy-hollow.mjs, docs/changes/EGG-03.md]
+    hooks: [src/course.js, src/sim-driving.js, src/game.js, src/app.js, src/world.js, src/progression.js, src/feature-flags.js]
+    helpers: [test_author, reviewer, save_guardian, browser_qa]
+    acceptance:
+      - "Build docs/MUDDY_HOLLOW.md in phases, each merged separately behind a new dev switch muddy-hollow: (1) installMuddyHollow for high-country only (ridge, valley bowl, hill, pits, pond bed, ramps) following the Hidden Road pattern, racing line, scenery and random stream untouched; (2) surfaces: mud (low grip, heavy drag, wheel spin) and water depth (drag by depth and speed, splash event); (3) departure past the ridge crest reuses the Hidden Road leaving-the-race flow; only a monster truck can reach it; (4) jumps (mega jump, three kickers, log ramp), rock garden, King of the Hill flag; (5) five gold hubcaps saved per player, all five unlock a gold Titan paint; garage tip after five High Country races in the Titan; (6) detailed ground mesh, mud and water materials, splash and mud particles; art per SPEC 0.11."
+      - "Nothing on the main menu. Ordinary races on High Country keep identical results; the scene signature changes only with reviewed screenshots."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8
