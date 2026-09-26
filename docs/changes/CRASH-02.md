@@ -120,6 +120,9 @@ Two consecutive High and Performance runs produced the same readable result.
 - Armored impacts, police knock, police route reset, combat ramming, combat
   replay fingerprints and ordinary replay fingerprints all pass. The ordinary
   replay run covers 162 checks across 18 cases and three frame rates.
+- The broader adjacent suite passed 56 of 56 test entries, including combat
+  replay fingerprints, vehicle damage and crush graphics, save-independent
+  feature switches and the fixed knock integration.
 - The private memory-only browser scenario passes in High and Performance on
   random ports above 5191. It observes one real launched impact at the exact
   contact point, rear damage, two distinct live rear-tyre plumes, ready
@@ -130,7 +133,15 @@ Two consecutive High and Performance runs produced the same readable result.
   warnings and 0 errors. The stopped-scene 60-frame CPU samples stayed at or
   below 4.9 ms p95. Raw review files remain disposable until the merge verdict
   is committed.
-- Lane tier, production build and final independent review: pending.
+- Independent code review passed exact code commit `946632b`: the production
+  resolver failure, actor lookup, full-life flash bound, flag-off, disposal and
+  readiness paths have no remaining finding. Independent browser review on
+  private port 39157 passed both quality modes with ready warmup, two distinct
+  plumes, local contact art, no flag-off pool and 0 issues, warnings or errors.
+- Required lane tier passed 283 suites with 0 failures and 0 not run in
+  433.66 seconds on exact reviewed code commit `946632b`. The production build
+  passed with 236 modules transformed. The evidence-only follow-up commit gets
+  the same lane tier and build before merge.
 
 ## Removed
 
