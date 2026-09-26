@@ -164,6 +164,9 @@ test('App settles arenaResult for the starting player and annotates the result s
   assert.match(screen.metrics, /\+336/);
   assert.match(screen.metrics, /HOLD/);
   assert.match(screen.metrics, /25 \/ 100/);
+  assert.equal(app._settleArenaResult({result}, app.duel.state), false, 'duplicate event does not pay');
+  assert.equal(result.scrapEarned, 336, 'duplicate event keeps the original presentation');
+  assert.equal(result.holdAdded, 25);
   app.dispose?.();
 });
 
