@@ -1083,3 +1083,26 @@ validating every known field. Keep invalid and future profile versions on the
 existing fresh-profile path, and keep future Wasteland versions write-blocked.
 The regression must pass through `replacePlayerProfile`, `savePlayers` and
 `loadPlayers`, not only the pure settlement helper.
+
+## 2026-09-26: split CRASH-02 visual and audio work
+
+CRASH-02 keeps Claude's settled design. Implement it in two isolated lanes so
+the visual work does not overlap the external audio owner. The VIS lane owns
+sparks, contact-point crumple presentation, knocked-tyre smoke and launched
+traffic roll checks. A later AUDIO lane owns the existing
+`vehicle.crash-impact` cue, its change-in-velocity scaling and full-throttle
+measurement under SPEC 0.9. Neither lane may edit the other's files.
+
+Add `crash-effects` as a new dev switch. It gates every new CRASH-02 visual
+and audio presentation. `crash-physics` remains the independent simulation
+switch: turning `crash-effects` off must preserve the exact current renderer,
+event and audio paths. The visual layer may subscribe to the existing
+`vehicleSmash` event and keep its own bounded, presentation-only lifetime. It
+must not add state to the deterministic simulation or consume simulation RNG.
+
+Re-slice the visual lane to own `tools/test-crash-presentation.mjs` and to use
+the existing feature-flag inventory tests. This records test ownership before
+code. Existing localized damage zones provide the permanent crumple; the new
+event effect must place the immediate spark/crumple flash at the exact supplied
+world point. Knocks produce smoke only while `actor.knock` exists. Launched
+traffic keeps the physical wreck roll already authored by CRASH-01.
