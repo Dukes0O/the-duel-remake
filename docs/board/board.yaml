@@ -378,6 +378,19 @@ tasks:
     acceptance:
       - "Kyle, 25 September 2026: no settings on the main menu beyond Mad Max Duel; the Wasteland is found while racing Mad Max Duel (SPEC 0.12). Kyle approved the live release in writing the same day."
     note: "Merged 359d185: Experimental menu and menu camera setting removed, switches on, Hidden Road only in Mad Max Duel, Wasteland rules only after a player finds the gate. Full 271/271, build, smoke, Mad Max journey and discovery browser checks passed."
+  - id: FOOT-FIX
+    title: "Fix mirrored on-foot controls and remove the R restart key"
+    priority: 1
+    lane: CMB
+    size: S
+    needs: [EGG-REL]
+    status: merged
+    owns: [src/onfoot.js, src/input-contexts.js, tools/test-onfoot-screen-directions.mjs]
+    hooks: [tools/test-onfoot.mjs, tools/test-onfoot-controls-camera.mjs, tools/test-progression-integration.mjs, README.md]
+    helpers: [test_runner]
+    acceptance:
+      - "Kyle, 25 September 2026: controls were backwards out of the car; remove R as a restart key (Gratian's request). Kyle asked for the fix during live play."
+    note: "Merged and released faf5749: strafing and mouse turning match the screen, checked through the real camera; R does nothing. Full 272/272, build and smoke passed."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8

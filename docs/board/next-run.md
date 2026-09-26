@@ -1,102 +1,95 @@
-# Next run: phase 2, features on a clean base (written 24 September 2026)
+# Next run: phase 3, a Wasteland worth finding (written 25 September 2026)
 
-The cleanup phase is finished. This is the one current plan for Codex. Rules:
-`AGENTS.md` (the nine working rules and the janitor) and SPEC.md section 0.
+This is the one current plan for Codex. Rules: `AGENTS.md` (the nine working
+rules and the janitor) and SPEC.md section 0, especially 0.9 (audio), 0.11
+(art from existing assets) and 0.12 (the easter egg).
 
 ## Where things stand
 
-- **Live game:** `master` at `eb879e5`, unchanged.
-- **Development:** `integration/wasteland`. All ten cleanup cards are merged.
-  Full tier 238 of 238 on the final cleanup commit. Build about 255 MB (was
-  487 MB), no `.blend` in the build, `docs/` under 1 MB, only `master` and
-  `integration/wasteland` branches, no lane folders.
-- **Switches:** `wasteland2`, `hidden-road` and `career-backup` are `dev`.
-- **Asset sizes:** build, Wasteland models (about 74 MB) and `wall.glb` remain
-  above their advisory targets for the reasons recorded in
-  `docs/ASSET_PIPELINE.md`. Revisit when the art is remade below.
+- **Live game:** the Wasteland is released as an easter egg (EGG-REL), with
+  the on-foot controls fix and no R restart key (FOOT-FIX). Kyle and Gratian
+  are playing it. Their notes arrive at the top of `docs/playtest-inbox.md`
+  and go to the top of the board.
+- **Development:** `integration/wasteland`. Switches `wasteland2` and
+  `hidden-road` are `on`; `career-backup` is `dev`.
+- **Phase 2 and BETA-01 are done.** Art is still at about 3 of 5 (crew, hands,
+  Rustwall); SPEC 0.11 sets the new approach.
 
-## What this phase must decide and build
+## Rules for this phase (Kyle, SPEC 0.12)
 
-This phase has real design questions. Settle each one in writing before its
-code: a short design section in the card's change note, with the choice, the
-reason and how to reverse it, logged in `docs/board/decisions.md` when the spec
-does not already answer it. Then tests, then code.
+- **The main menu does not change.** The only Wasteland choice there is Mad
+  Max Duel, plus the WASTELAND button a player earns by finding the gate. No
+  new menu buttons, settings or Experimental panels. New Wasteland screens
+  live inside the Scrapdome yard.
+- **The Wasteland stays hidden until found.** Anything new in Mad Max races
+  applies only to a player who has found the gate: check
+  `app.wastelandUnlocked()` in menus and shops, and the race's switch view
+  (`duel.featureFlags`) in the race. Before discovery, Mad Max Duel stays as it is.
+- **New features start behind a new `dev` switch** in `src/feature-flags.js`,
+  and move to `on` only in a release Kyle approves in writing. There is no
+  player-facing beta stage any more.
+- **Controls:** test every new on-foot or camera control through the camera,
+  as `tools/test-onfoot-screen-directions.mjs` does: a key that says "right"
+  must move right on screen.
 
-### First: tidy the board (Director, before any lane starts)
-
-- Remove the false chain that makes GFX-01-P1, GFX-02-P1 and EGG-02-P1 wait for
-  GFX-04. Art polish does not depend on the career, kits or yard.
-- Close or re-slice stale cards whose branches are gone: BUG-06 and BUG-07
-  (fold the remaining balance work into BAL-02 below), CREW-01 (keep only the
-  perks that wait for boarding, fire and shove mechanics, as backlog), AUD-01,
-  AUD-02 and TOOL-02 (finish what is left or close them with a note).
-
-### Then these lanes, in parallel (at most five at once; the fifth is audio)
-
-| Lane | Card | The open question to settle first | Done when |
-| --- | --- | --- | --- |
-| SAVE, UI | **CAR-01** Wasteland career, scrap and territory map (SPEC 0.4) | Scrap earn rates and prices; which courses form each warlord's territory; how a "hold" on a territory grows and what full hold unlocks; the `profile.wasteland` save shape and migration | A new player's career works end to end behind `wasteland2`: earn scrap, spend it, see territory progress on the map; every historical save fixture migrates without loss after a backup |
-| ART, VIS | **GFX-01-P1** Crew, changed technique (SPEC 0.3) | Whether continuous body meshes with baked textures in Blender beat the round-3 approach. Prove it on one crew member (Rook) first, compared with round 3, before converting all eight | Heads joined to necks, no stretched textures, real hair and faces; likeness 4 of 5 in game for all eight, or the remaining gap and the next approach recorded |
-| ART, VIS | **EGG-02-P1** Rustwall and wash polish | How to replace the repeated rock columns with natural banks, and richer wall materials without blowing the frame budget | Resemblance 4 of 5, frame cost held; `wall.glb` closer to its size target |
-| AUDIO | **AUD-10** first, then the audio cards in SPEC 0.9 order | How to move every sound into a data-driven sound bank and mixer with no audible change, so later sounds are a file plus one data entry | As SPEC 0.9 AUD-10; then AUD-11 onward in order |
-| CMB | **BAL-02** Combat that pays off (replaces the rest of BUG-06 and BUG-07) | Why the player wrecked no CPU car in 30 scripted races, and why the Easy CPU lands 6 hits (target 0 to 3) with `wasteland2` on | With `wasteland2` on: win rates stay in their bands, Easy CPU hits 0 to 3, and a strong scripted policy wrecks CPU cars |
-
-### After those
-
-- **GFX-02-P1** first-person hands follow GFX-01-P1's winning technique.
-- **GFX-03** war rigs and kits on nine cars, bought with scrap (needs CAR-01).
-- **GFX-04** the Scrapdome yard as the real inside of the gate and the
-  Wasteland home screen, showing the territory map (needs CAR-01). Today the
-  gate still leads to a temporary endpoint.
-
-## Rules to watch
-
-- Every art round: in-game capture compared with the reference, scored, one
-  compressed sheet of 500 KB or less committed, raw captures deleted.
-- If two rounds do not raise the likeness score, change the approach.
-- After every merge, the janitor deletes that lane's branch, folder and used
-  evidence. Never delete a branch for being idle.
-- Sizes are advisory targets; record why an asset grows.
-- Push `integration/wasteland` after each passing full tier (D8). Compaction
-  (history rewrite) still needs Kyle's approval.
-
-## Phase 3: a Wasteland you can play (added 24 September 2026)
-
-Phase 3 starts as soon as phase 2's remaining cards (GFX-01-P2, EGG-02-P2 and
-GFX-02-P1) are merged or running in lanes; the career (CAR-01) and the
-Scrapdome yard (GFX-04) it needs are already merged. The audio track (SPEC 0.9)
-is not a phase: it keeps its own lane through phase 2 and phase 3.
-
-### Order
+## Order
 
 | Order | Card | Done when |
 | --- | --- | --- |
-| 1 | **BETA-01** Playable beta | `wasteland2` and `hidden-road` move to `beta` so they appear under Experimental. A release candidate has the full release evidence: full tier on the exact commit, combat balance with `wasteland2` off and on, a browser scenario from the Hidden Road through the gate into the yard and a Wasteland race, frame pacing and the save budget. A short "What to try" note is in `docs/playtest-inbox.md`. **The release itself waits for Kyle's go-ahead** |
-| 2 | **ARENA-01, ARENA-02** Scrapdome framework and Last Car Rolling | Free driving inside the yard's arena bounds, spawns, rounds and results, with up to three CPU cars (SPEC 3.7) |
-| 3 | **WAR-01, first half of WAR-02** Warlords 1 to 3 | Warlord data and the ladder on the career's territory map, and the first three warlord fights (SPEC 3.9) |
-| 4 | **ARS-01** Arsenal wave 1 | Oil Slick, Caltrops, Smoke Screen and Harpoon, each with a counter test, CPU use, and an arcade sound built to the audio rule below (SPEC 3.3) |
-| 5 | Then, in this order | ARENA-03 to ARENA-05 (Fuel Run, Bounty Hunt, Ambush Alley); CREW-02 to CREW-04 (signature gear, boarding, CPU crews on foot); ARS-02 and ARS-03; the rest of WAR-02, then WAR-03 and WAR-04; ARENA-06 and ARENA-07 (Salt Flats, Convoy Raid) |
-| 6 | Polish and release | Look, sound and feel rounds across the Wasteland (SPEC 10.1), then a release under D3 |
+| 0 | **Play-test notes** | Anything Kyle reports from the live game goes first |
+| 1 | **ARENA-01, ARENA-02** Scrapdome framework and Last Car Rolling | Reached from the yard, not the main menu. Free driving inside the arena bounds, spawns, rounds and results, with up to three CPU cars (SPEC 3.7) |
+| 2 | **WAR-01, first half of WAR-02** Warlords 1 to 3 | Warlord data and the ladder on the yard's territory map, and the first three warlord fights (SPEC 3.9). Rewards: see the decision below |
+| 3 | **ARS-01** Arsenal wave 1 | Oil Slick, Caltrops, Smoke Screen and Harpoon, each with a counter test, CPU use and an arcade sound built to the audio rule (SPEC 3.3) |
+| 4 | Then, in this order | ARENA-03 to ARENA-05; CREW-02 to CREW-04; ARS-02 and ARS-03; the rest of WAR-02, then WAR-03 and WAR-04; ARENA-06 and ARENA-07 |
+| 5 | Polish and release | Look, sound and feel rounds (SPEC 10.1), then a release Kyle approves |
 
-Kyle's play-test notes from the beta go to the top of the board as they arrive.
+**Warlord rewards (was parked):** DEFAULT UNTIL KYLE SAYS OTHERWISE: each of
+the first three warlords' rewards is built with its fight, one working item per
+warlord, so a win always gives something usable. Never show a reward that does
+not work yet.
 
-### The audio track, alongside
+### Art, alongside (SPEC 0.11)
 
-AUD-10 (sound bank and mixer) → AUD-11 (listening booth and checks) → wire the
-kept gatekeeper line (cue `gatekeeper.welcome`) into the gate arrival → AUD-14
-(combat: the approved blasts, crash and rocket launches, and crossbow **E**, the
-pew whistle, with the hit-confirm sound; see `docs/changes/AUD-12.md`) →
-AUD-17 (voices) → AUD-15 → AUD-16 → AUD-18.
+GFX-01-P3 (crew), GFX-02-P3 (first-person hands) and EGG-02-P3 (Rustwall and
+wash) start with a sourcing step: two or three candidate starting assets per
+family from CC0 libraries first, licences checked and recorded in
+`tools/art/catalog.json`, and a short list with pictures for Kyle. No
+adaptation work before Kyle picks. At most three rounds per art card per run.
 
-- **Arcade rule for car weapons (Kyle):** a bright transient above the engine
-  band, a tonal signature, a flight sound that travels with the projectile
-  (3D and doppler) and a hit-confirm sound. Judge every weapon over the engine
-  at full throttle, never alone.
-- **ElevenLabs credits:** an overnight run may spend up to 1,500 credits on
-  voice candidates for AUD-17. It never keeps a take; Kyle picks. Log credits
-  used in the change note.
-- New sounds come from Freesound (CC0 first) through `tools/audio/freesound.mjs`
-  and are recorded in `tools/audio/catalog.json`.
+### Audio, alongside
+
+AUD-17: wire Kyle's kept voice lines (in `audio-src/voices/`, cataloged) into
+crew callouts and raider warnings, with subtitles. Raiders use Bill; Rook's
+line is Harry. Then AUD-15, AUD-16 and AUD-18 in SPEC 0.9 order. The arcade
+rule for car weapons stands: bright transient above the engine band, tonal
+signature, a flight sound that travels with the projectile, a hit-confirm, and
+judged over the engine at full throttle. ElevenLabs: up to 1,500 credits per run
+for candidates only; Kyle picks.
+
+### Housekeeping
+
+- Merge `codex/ux-backlog-notes` (Kyle's two relayed requests, UX-ENTRY-HINTS
+  and OPS-LAUNCHER-DIAG) with the docs lane gate. The launcher failure Kyle
+  saw on 25 September was a damaged rolldown package in the live folder,
+  repaired with `npm ci --offline`; OPS-LAUNCHER-DIAG should find what deleted
+  its `package.json` (likely a lane cleanup through a `node_modules` link).
+- Do UX-ENTRY-HINTS early in the run: Kyle and Gratian are playing on foot now.
+
+- `tools/test-rustwall-frame.mjs` reads commit `5a994ad` from Git history.
+  Give it a checked-in baseline so a history compaction cannot break it.
+- The audio lane's old voice audition takes in its `.evidence/` can go now that
+  Kyle has picked (keep `audio-src/voices/`).
+
+## Rules to watch
+
+- Gates: lane tier and build before every merge; full tier after every 5
+  merges or 2 hours and at the end of the run; update STATUS.md after every merge.
+- After every merge, the janitor deletes that lane's branch, folder and used
+  evidence (unlink `node_modules` junctions first). Never delete a branch for
+  being idle; never delete Kyle's branches.
+- Sizes are advisory targets; record why an asset grows.
+- Push `integration/wasteland` after each passing full tier (D8). No history
+  rewrite and no release without Kyle's written approval.
 
 ## Start prompt
 
@@ -104,21 +97,22 @@ Paste into Codex from `C:\Users\kyleb\.codex\worktrees\wasteland-integration\the
 
 ```
 You are the Director in autonomous mode for The Duel. Work in this folder
-(integration/wasteland). Read AGENTS.md, docs/board/next-run.md (phase 2, phase 3
-and the audio track), SPEC.md section 0 (especially 0.9), docs/board/STATUS.md and
-docs/board/decisions.md. Finish phase 2's remaining cards, then work phase 3 in
-the order given, with the audio track in its own lane throughout (at most five
-lanes). Settle each card's open design question in writing before code, log
-choices the spec does not settle in decisions.md, write tests first, then build.
-BETA-01 prepares a release candidate; the release itself waits for Kyle.
-Gates: lane tier and build before every merge; full tier after every 5 merges or
-2 hours and at the end of the run; update STATUS.md after every merge. After every
-successful merge run the after-merge janitor; run the sweep at the end. Never
-delete a branch for being idle. Never touch the live folder, port 5174 or real
-saves. Keep new features behind their switches. Do not rewrite history or
+(integration/wasteland). Read AGENTS.md, docs/board/next-run.md, SPEC.md
+section 0 (especially 0.9, 0.11 and 0.12), docs/board/STATUS.md,
+docs/board/decisions.md and the top of docs/playtest-inbox.md. The Wasteland is
+live as an easter egg: never add anything to the main menu, keep everything new
+hidden until a player finds the gate, and put new features behind a new dev
+switch. Work phase 3 in the order in next-run.md, with art sourcing and the
+audio track in their own lanes (at most five lanes). Art starts with a short
+list for Kyle, not adaptation. Settle each card's open design question in
+writing before code, write tests first, then build. Gates: lane tier and build
+before every merge; full tier after every 5 merges or 2 hours and at the end;
+update STATUS.md after every merge; run the after-merge janitor after every
+merge and the sweep at the end. Never delete a branch for being idle. Never
+touch the live folder, port 5174 or real saves. Do not rewrite history or
 release; push integration/wasteland after each passing full tier (D8).
-Budget for this run: <for example "until morning" or "about X% of my usage">.
-When the budget is nearly spent: finish cards in progress, run the full tier, run
-the janitor sweep, update STATUS.md, write a short handoff at the end of
+Budget for this run: <for example "until morning">.
+When the budget is nearly spent: finish cards in progress, run the full tier,
+run the janitor sweep, update STATUS.md, write a short handoff at the end of
 run-log.md, push, and stop.
 ```
