@@ -835,3 +835,32 @@ The maximum measured intended-entry grade is then 1.098, below the Titan limit
 of 1.65, while the full ellipse remains within 0.00245 m of ordinary terrain
 at the edge on route seeds 1989, 42 and 17. This changes only the transition
 shape. It does not move the Hollow, change the road, or redesign its landforms.
+
+## 2026-09-26: show failed Muddy Hollow departure saves in the existing pause panel
+
+Save Guardian review denied profile storage during phase-3 departure. The
+abandonment remained safe in memory and cleared the active race, but the
+exploration pause panel did not tell the player that the change was session
+only. The garage would show the warning later, after the player had already
+left the event.
+
+Re-slice EGG-03 narrowly to allow `src/screen-results.js`. When an exploration
+pause follows a failed profile save, append the same session-only storage
+warning used by the ticket screen. This is safety feedback in the existing
+pause panel. It adds no Muddy Hollow screen, control, menu entry or save field.
+
+## 2026-09-26: correct Muddy Hollow ridge grounding in phase 6
+
+Phase-3 browser QA first captured a stale Falcone frame while the Titan asset
+was still loading. That image and its grounding verdict are invalid. The
+corrected memory-only run proves the simulation car, ready renderer asset and
+only visible vehicle are all the Titan. Its rendered X/Z position and refreshed
+terrain pitch and roll match the simulation exactly, yet the body still
+intersects the steep departure slope.
+
+Keep phase 3 limited to deterministic departure behavior. Muddy Hollow remains
+behind its dev switch, and phase 6 already owns the detailed ground and visual
+pass. Extend phase-6 acceptance to correct this verified Titan intersection
+before the playground is visually complete. This is a required grounding fix,
+not a change to the settled ridge location, Titan-only access or departure
+rule.

@@ -1,6 +1,6 @@
 ---
 task: EGG-03
-status: active-phase-2
+status: active-phase-3
 kind: easter-egg
 flag: muddy-hollow
 player_facing: yes
@@ -186,3 +186,112 @@ fresh solver comparison confirms that every stored route remains exact.
 
 Nothing. Phase 2 adds isolated surface data and fixed-step behavior; it does
 not replace an existing path.
+
+## Phase 3 settled detail
+
+Phase 3 adds departure only. It does not add jumps, props, collectibles, save
+fields, detailed art, particles, audio playback, a new screen, or a main-menu
+action. The installed `muddy-hollow` development switch and discovered-gate
+race snapshot remain the only way to construct the zone.
+
+The ridge crossing is a deterministic world-space boundary owned by the
+Hollow. It is inside the zone, on the valley side of the authored ridge crest,
+and is expressed in the zone's existing local frame. A racing Titan crossing
+that boundary on its tyres leaves the race once. Other cars, an on-foot
+fighter, an airborne vehicle, the racing line at the same course distance,
+flag-off and undiscovered races cannot depart. This is an access guard as well
+as a physical outcome: a test that places a non-Titan beyond the crest still
+must not enter the playground.
+
+Departure reuses the settled Hidden Road outcome rather than inventing a new
+race result. The state becomes `exploring`; impact, tumble, boost, airborne
+state and pending fines are cleared; and the app settles the active run once
+as abandoned. Banked credits, records, unlocks and saved ghosts stay intact,
+while unbanked race earnings and pending fines are discarded through the
+existing settlement path. Race clocks, laps, checkpoints, rivals, police,
+combat, scoring and finish/deadline outcomes freeze after departure.
+
+Exploration remains fixed-step and drivable over the Hollow and back across
+the ridge. Returning to the road does not resume the abandoned race. Static
+contacts still resolve, but exploration cannot create a race crash, reward,
+record, ticket or result. The existing pause menu is the menu exit; phase 3
+adds no feature screen or control. If abandonment cannot be saved, that same
+pause panel must say that progress lasts for this session. A crossing takes
+priority over a simultaneous race deadline, matching the Hidden Road's
+point-of-no-return ordering.
+
+## Phase 3 tests first
+
+Independent acceptance tests were committed before runtime code. The first
+focused run passed 23/30 checks and retained seven intended failures: the
+finite departure boundary was absent; the crossing did not leave the race or
+win a deadline tie; exploration did not freeze race outcomes; fixed-step
+schedules did not agree; the real App did not settle an abandoned run; and
+the App settlement hook was absent.
+
+Review then produced four more red contracts. A normal discovered race threw
+before driving had initialized its previous pose. Diagonal sweeps could cross
+outside either end of the finite ridge span, a landing sweep could depart
+while its previous pose was airborne, and Pro engine overrev could freeze a
+departed Titan. Save Guardian review also proved that denied storage was not
+visible in the exploration pause panel. The four-review run passed 31/35
+checks before the narrow fixes. Private browser QA found one last startup
+case: the menu called the departure check before a course existed. Its red
+regression passed 35/36 checks before the course guard.
+
+No existing test was weakened. `tools/scenarios/muddy-hollow.mjs` extends the
+existing private, memory-only scenario with non-Titan isolation, Titan
+departure, one-time settlement, frozen race outcomes, drivable ridge return,
+pause and menu exit.
+
+## Phase 3 evidence
+
+- `node tools/test-muddy-hollow.mjs`: 36/36 checks passed. This includes both
+  ends of the swept boundary, a landing sweep, a normal countdown-to-racing
+  start, a no-course menu start, Pro overrev exploration with an ordinary
+  racing engine-failure control, 30/60/144 FPS agreement, and real App
+  settlement and identity guards.
+- Hidden Road controls remained green: journey 37/37, departure 7/7 and
+  presentation 11/11. The shared abandoned-race and departed-explorer paths
+  retain their existing behavior.
+- `node tools/test-replays.mjs`: all 162 fingerprints passed across 18 cases,
+  16 events, three frame rates and three runs.
+- Result and lifecycle controls passed: busted/quit 280 checks, completion
+  screen 162 checks, speed presentation 62 checks and App lifecycle 8 checks.
+- Save Guardian re-review passed an actual denied-storage departure. Credits
+  stayed at 2,400; the abandoned result had no reward or fine; `activeRace`
+  cleared in memory; `profileSaved` became false; and the existing pause panel
+  showed the session-only warning. Seven historical fixtures passed 247
+  checks, backup and QA isolation passed, and the storage model remained
+  3.47 MB of 4.00 MB.
+- Independent runtime re-review: clean after the normal-start, swept-boundary,
+  landing-sweep, Pro overrev and no-course startup fixes. The reviewer repeated
+  the 36/36 focused suite, Hidden Road controls and replay fingerprints.
+- Private browser QA passed on port 59970 with memory-only saves: 11 images,
+  no console warning or error, and no failed request. Flag-off, undiscovered
+  and non-Titan isolation passed. The Titan produced one departure and one
+  zero-charge abandoned record, cleared the active race, froze the timer and
+  result, drove 1.227 m back across the ridge in 13 fixed ticks, paused and
+  returned to the menu without another event or result.
+- Renderer-readiness checks replaced an invalid stale Falcone capture. The
+  final capture proves a ready Titan asset, exact horizontal position and the
+  refreshed terrain attitude. It also proves that the Titan body intersects
+  the steep departure slope. Phase 3 changes no rendering; the feature stays
+  dev-gated, and the active phase-6 acceptance now requires that grounding
+  correction before visual completion.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 278/278 suites
+  passed in 411.20 seconds with audio-decoder access.
+- `npm run build`: passed with 234 modules. The existing large-chunk warning
+  remains; no new warning was introduced.
+
+## Phase 3 changed assertions
+
+No existing assertion changed. New focused checks and browser assertions add
+the phase-3 contracts. The shared paused-results renderer gains only a
+session-only storage warning when an exploration save has failed, as recorded
+in `docs/board/decisions.md`.
+
+## Phase 3 removed
+
+Nothing. Phase 3 reuses the existing abandoned-race settlement and pause panel
+and adds an isolated departure state; it does not replace an old path.

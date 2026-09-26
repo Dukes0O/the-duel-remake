@@ -24,7 +24,16 @@ function modalScreen(s) {
   let eyebrow='',title='',description='',metrics='',combatMetrics='',actions='',arenaExtra='';
   const arenaScreen=s.arena&&(s.paused?arenaPauseScreen(s,{metric,action,time}):s.status==='arena_result'?arenaResultsScreen(s,{metric,action,escapeHTML}):null);
   if (arenaScreen) ({eyebrow,title,description,metrics,actions,extra:arenaExtra}=arenaScreen);
-  else if (s.paused) { const practice=!!COURSE[s.stageIndex]?.practice;eyebrow=practice?'FREE PRACTICE':'TAKE A BREATH'; title='ROAD<br>ON HOLD.'; description=practice?'Explore at your own pace. Practice has no timer, records or rewards.':'The clock is paused. Pick up where you left off.'; metrics=metric('EVENT',COURSE[s.stageIndex].name)+(practice?'':metric('TIME',time(s.stageTimeSec))); actions=action('BACK TO THE ROAD','resume',true)+action(practice?'RESTART PRACTICE':'RESTART RUN','restart')+action('MAIN MENU','menu'); }
+  else if (s.paused) {
+    const practice=!!COURSE[s.stageIndex]?.practice;
+    eyebrow=practice?'FREE PRACTICE':'TAKE A BREATH';
+    title='ROAD<br>ON HOLD.';
+    description=practice?'Explore at your own pace. Practice has no timer, records or rewards.':'The clock is paused. Pick up where you left off.';
+    if (s.status === 'exploring' && app.profileSaved === false)
+      description += ' Storage is unavailable; progress lasts for this session.';
+    metrics=metric('EVENT',COURSE[s.stageIndex].name)+(practice?'':metric('TIME',time(s.stageTimeSec)));
+    actions=action('BACK TO THE ROAD','resume',true)+action(practice?'RESTART PRACTICE':'RESTART RUN','restart')+action('MAIN MENU','menu');
+  }
   else if (s.status==='ticket') { const t=s.police.ticket; eyebrow='HIGHWAY PATROL'; title='BUSTED.'; description=`${formatSpeed(t.speedMph)} in a ${formatSpeed(t.limitMph)} zone. The fine reduces only this race's earnings when you finish. Your saved credits are untouched. Quitting forfeits the race earnings, not your saved balance.${app.profileSaved===false?' Storage is unavailable; progress lasts for this session.':''}`; metrics=metric('TIME PENALTY',`+${t.penaltySec} SEC`,true)+metric('RACE FINE',`${credits(t.fine)} CR`,true)+metric('SAVED BALANCE',`${credits(profile().credits)} CR`); actions=action('GET BACK OUT THERE','ticket',true)+action('MAIN MENU','menu'); }
   else if (s.status==='stage_result') {
     lastEventResult={state:s,stageIndex:s.stageIndex,runId:app.runId,result:r};

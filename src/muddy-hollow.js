@@ -6,6 +6,11 @@ const ZONE_ALONG_RADIUS = 190;
 const ZONE_LATERAL_RADIUS = 180;
 const ZONE_LATERAL_CENTER = 205;
 const INNER_BLEND_RADIUS = .65;
+const DEPARTURE_BOUNDARY = Object.freeze({
+  alongMin: -70.8,
+  alongMax: 70.8,
+  lateral: 84,
+});
 
 const clamp = (value, minimum = 0, maximum = 1) =>
   Math.max(minimum, Math.min(maximum, value));
@@ -162,9 +167,97 @@ export function installMuddyHollow(course) {
       lateralCenter: ZONE_LATERAL_CENTER,
     },
     landforms,
+    departureBoundary: DEPARTURE_BOUNDARY,
     contains,
     heightAt,
     surfaceAt,
   };
   return course.muddyHollow;
+}
+
+function localPosition(zone, point) {
+  const dx = point.x - zone.frame.origin.x;
+  const dz = point.z - zone.frame.origin.z;
+  return {
+    along: dx * Math.sin(zone.frame.heading) + dz * Math.cos(zone.frame.heading),
+    lateral: dx * Math.cos(zone.frame.heading) - dz * Math.sin(zone.frame.heading),
+  };
+}
+
+function departurePosition(duel, distance, lateral) {
+  return localPosition(duel.course.muddyHollow,
+    duel.course.worldAt(distance, lateral));
+}
+
+export function initializeMuddyHollowDeparture(duel) {
+  const state = duel.state;
+  state.muddyHollowDeparture = null;
+  if (!duel.course.muddyHollow) return;
+  duel._muddyHollowDepartureSerial =
+    (duel._muddyHollowDepartureSerial || 0) + 1;
+  state.muddyHollowDeparture = {
+    id: duel._muddyHollowDepartureSerial,
+    departed: false,
+    elapsedSec: 0,
+  };
+}
+
+export function nearMuddyHollowDeparture(duel) {
+  const state = duel.state;
+  const zone = duel.course?.muddyHollow;
+  const departure = state.muddyHollowDeparture;
+  if (!zone || !departure || departure.departed ||
+      state.status !== 'racing' || state.car !== 'titan_monster' ||
+      state.onFoot || state.airborne || state.impactTimer > 0) return false;
+  const local = departurePosition(duel, state.s, state.lateral);
+  const world = duel.course.worldAt(state.s, state.lateral);
+  const boundary = zone.departureBoundary;
+  return zone.contains(world.x, world.z) &&
+    local.along >= boundary.alongMin && local.along <= boundary.alongMax &&
+    local.lateral >= boundary.lateral - 20;
+}
+
+export function checkMuddyHollowDeparture(duel) {
+  const state = duel.state;
+  const zone = duel.course?.muddyHollow;
+  const departure = state.muddyHollowDeparture;
+  if (!zone || !departure || departure.departed ||
+      state.status !== 'racing' || state.car !== 'titan_monster' ||
+      state.onFoot || state.airborne || state.prevAirHeight > 0) return false;
+  if (![state.prevS, state.prevLateral, state.s, state.lateral]
+    .every(Number.isFinite)) return false;
+  const previous = departurePosition(duel, state.prevS, state.prevLateral);
+  const current = departurePosition(duel, state.s, state.lateral);
+  const world = duel.course.worldAt(state.s, state.lateral);
+  const boundary = zone.departureBoundary;
+  const crossingFraction = (boundary.lateral - previous.lateral) /
+    (current.lateral - previous.lateral);
+  const crossingAlong = previous.along +
+    (current.along - previous.along) * crossingFraction;
+  if (!zone.contains(world.x, world.z) ||
+      crossingAlong < boundary.alongMin || crossingAlong > boundary.alongMax ||
+      previous.lateral >= boundary.lateral || current.lateral < boundary.lateral)
+    return false;
+
+  departure.departed = true;
+  state.status = 'exploring';
+  state.impactTimer = 0;
+  state.tumble = null;
+  state.boosting = false;
+  state.airborne = false;
+  state.airHeight = 0;
+  state._jumpY = null;
+  state.police.pendingFines = 0;
+  duel.emit({muddyHollowDeparted: {departureId: departure.id}});
+  return true;
+}
+
+export function stepMuddyHollowExploration(duel, dt) {
+  const state = duel.state;
+  const departure = state.muddyHollowDeparture;
+  if (state.status !== 'exploring' || !departure?.departed) return false;
+  departure.elapsedSec += dt;
+  duel._drive(dt);
+  duel._staticContacts(state, true);
+  return true;
 }

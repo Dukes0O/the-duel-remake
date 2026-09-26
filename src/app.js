@@ -82,6 +82,8 @@ export class App {
       this.audio.event(event,state,this.duel.course);
       if (event.hiddenRoadPhase) this._discoverHiddenRoadGate(event.hiddenRoadPhase, state);
       if (event.hiddenRoadDeparted) this._settleHiddenRoadDeparture(event.hiddenRoadDeparted, state);
+      if (event.muddyHollowDeparted)
+        this._settleMuddyHollowDeparture(event.muddyHollowDeparted, state);
       if (event.hiddenRoadPhase && (state.hiddenRoadJourney?.controlsLocked ||
           state.hiddenRoadJourney?.phase === 'turned-back')) this._clearHiddenRoadInput();
       if(event.driftBanked||event.driftChainLost)this.driftNotice={type:event.driftBanked?'banked':'lost',...(event.driftBanked||event.driftChainLost),expiresAt:state.stageTimeSec+2};
@@ -240,6 +242,7 @@ export class App {
     this.seed=supportsRouteVariants(stage)?selectedSeed:1989;
     this._racePaint=getPaintAppearance(this.profile,car);this._racePaintCar=car;
     this.runId=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    this._settledMuddyHollowDeparture = null;
     this._stageStartCrashes=0;
     this._campaignStart=stageIndex;this._runPlayerId=this.player.id;
     this.cpuDifficulty=['easy','medium','hard'].includes(options.cpuDifficulty)?options.cpuDifficulty:this.cpuDifficulty;
@@ -463,6 +466,17 @@ export class App {
     this.driftNotice = this.checkpointNotice = null;
     return true;
   }
+  _settleMuddyHollowDeparture(event, state) {
+    const departure = state?.muddyHollowDeparture;
+    if (!this.runId || state !== this.duel.state || state.status !== 'exploring' ||
+        !departure?.departed || event?.departureId !== departure.id ||
+        state.playerId !== this._runPlayerId || this._runPlayerId !== this.player.id ||
+        this._settledMuddyHollowDeparture === departure) return false;
+    this._settleResult({won: false, completed: false, abandoned: true}, state);
+    this._settledMuddyHollowDeparture = departure;
+    this.driftNotice = this.checkpointNotice = null;
+    return true;
+  }
   getHiddenRoadDiscovery() {
     const old = this._hiddenRoadDiscovery, value = this.profile?.wasteland;
     const enabled = this._switches().enabled('hidden-road');
@@ -532,6 +546,7 @@ export class App {
     const car = this.menuCar, driverId = getEquippedDriverId(this.profile);
     this.runId = this._runPlayerId = this._markedRaceKey = null;
     this._settledHiddenRoadJourney = null;
+    this._settledMuddyHollowDeparture = null;
     this.ghostRecorder = this.ghostRecord = this.ghostPose = null; this.ghostStatus = 'none';
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
@@ -699,7 +714,8 @@ export class App {
     const st = this.duel.state;
     st.paused = false; st.status = 'menu'; st.boosting = false;
     const wasVisit = !!st.hiddenRoadVisit;
-    st.hiddenRoadJourney = null; st.hiddenRoadVisit = null; st.arena = null;
+    st.hiddenRoadJourney = null; st.hiddenRoadVisit = null;
+    st.muddyHollowDeparture = null; st.arena = null;
     if (wasVisit) this._applyRaceSettings(this._raceSettings);
     st.driverId=getEquippedDriverId(this.profile);
     this.ghostRecorder=null;this.ghostRecord=null;this.ghostPose=null;this.ghostStatus='none';

@@ -9,8 +9,19 @@ const OVERVIEW_CAMERA={
   target:[-2027.16194395827,69.6716346602651,46.92078935794765],
 };
 const OVERVIEW_CAMERA_TOLERANCE=1e-6;
+let navigationSerial=0;
 
-async function startHighCountry(context, discoveredGate) {
+async function navigateReady(context, path, label) {
+  const marker=`muddy-hollow-navigation-${++navigationSerial}`;
+  const target=new URL(path,'http://qa.local');
+  await context.evaluate(`window.__muddyHollowNavigation=${JSON.stringify(marker)}`);
+  await context.navigate(path);
+  await context.waitFor(`location.pathname===${JSON.stringify(target.pathname)}&&
+    location.search===${JSON.stringify(target.search)}&&
+    window.__muddyHollowNavigation!==${JSON.stringify(marker)}&&${ready}`,label,60_000);
+}
+
+async function startHighCountry(context, discoveredGate, car = 'titan_monster', mode = 'duel') {
   return context.evaluate(`(() => {
     const app=window.__qaApp;
     app.inspectionCamera=null;
@@ -19,8 +30,8 @@ async function startHighCountry(context, discoveredGate) {
       courses:{version:1,unlocked:[...new Set([...app.profile.courses.unlocked,'high-country'])]},
       wasteland:{...app.profile.wasteland,discoveredGate:${discoveredGate}}};
     if(!app._saveProfile())throw Error('Memory-only QA profile did not save');
-    const started=app.startCampaign({mode:'duel',startStage:1,seed:1989,
-      car:'titan_monster',difficulty:'casual'});
+    const started=app.startCampaign({mode:${JSON.stringify(mode)},startStage:1,seed:1989,
+      car:${JSON.stringify(car)},difficulty:'casual',opponentCount:0});
     if(!started||!app.duel.course)throw Error('QA High Country race did not start');
     app.stop();
     Object.assign(app.duel.state,{status:'racing',paused:false,countdown:0,
@@ -29,6 +40,148 @@ async function startHighCountry(context, discoveredGate) {
     window.__render.renderFrame();
     return {hasHollow:!!app.duel.course.muddyHollow,
       memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value};
+  })()`);
+}
+
+async function crossDepartureBoundary(context, {expectDeparture}) {
+  const result=await context.evaluate(`(() => {
+    const app=window.__qaApp,d=app.duel,zone=d.course.muddyHollow;
+    if(!zone?.departureBoundary)throw Error('Muddy Hollow departure boundary is unavailable');
+    const boundary=zone.departureBoundary;
+    const along=(boundary.alongMin+boundary.alongMax)/2;
+    const point=(lateral)=>({
+      x:zone.frame.origin.x+Math.sin(zone.frame.heading)*along+Math.cos(zone.frame.heading)*lateral,
+      z:zone.frame.origin.z+Math.cos(zone.frame.heading)*along-Math.sin(zone.frame.heading)*lateral,
+    });
+    const beforePoint=point(boundary.lateral-.5),afterPoint=point(boundary.lateral+.5);
+    const before=d.course.nearest(beforePoint.x,beforePoint.z,zone.frame.s);
+    const after=d.course.nearest(afterPoint.x,afterPoint.z,zone.frame.s);
+    const ground=d.course.groundAt(after.s,after.lateral);
+    const desired=zone.frame.heading+Math.PI/2;
+    window.__muddyPhase3Unsubscribe?.();window.__muddyPhase3Events=[];
+    window.__muddyPhase3Unsubscribe=d.onChange((_,event)=>{
+      if(event.muddyHollowDeparted)window.__muddyPhase3Events.push(event.muddyHollowDeparted);
+    });
+    const historyBefore=app.profile.history.length;
+    Object.assign(d.state,{status:'racing',paused:false,countdown:0,
+      prevS:before.s,prevLateral:before.lateral,s:after.s,lateral:after.lateral,
+      speedMph:35,gear:1,headingError:Math.atan2(Math.sin(desired-d.course.at(after.s).heading),
+        Math.cos(desired-d.course.at(after.s).heading)),yawVelocity:0,pushVelocity:0,
+      slipAngle:0,groundHeight:ground.y,prevGroundHeight:ground.y,onFoot:false,
+      airborne:false,airHeight:0,prevAirHeight:0,_jumpY:null,_verticalSpeed:0,
+      traffic:[],opponents:[],rival:null});
+    const beforeTime={stageTimeSec:d.state.stageTimeSec,lapTimeSec:d.state.lapTimeSec,
+      totalTimeSec:d.state.totalTimeSec};
+    d.step(1/120);app.onFrame?.(d.state);window.__render.renderFrame();
+    const modal=document.querySelector('#modal-layer');
+    const answer={status:d.state.status,historyBefore,
+      historyAfter:app.profile.history.length,departureEvents:window.__muddyPhase3Events.length,
+      activeRace:app.profile.activeRace,departureId:d.state.muddyHollowDeparture?.id,
+      beforeTime,afterTime:{stageTimeSec:d.state.stageTimeSec,lapTimeSec:d.state.lapTimeSec,
+        totalTimeSec:d.state.totalTimeSec},hud:{hidden:document.querySelector('#race-hud')?.hidden,
+        timeText:document.querySelector('#race-time')?.textContent,
+        modalHidden:modal?.hidden,resultVisible:!!modal?.querySelector('.result-panel')},
+      historyResult:app.profile.history.at(-1)};
+    if(${expectDeparture}&&answer.status!=='exploring')throw Error('Titan ridge crossing did not enter exploration');
+    if(!${expectDeparture}&&answer.status!=='racing')throw Error('Non-Titan ridge crossing left the race');
+    return answer;
+  })()`);
+  return result;
+}
+
+async function captureRenderedVehicle(context, expectedKey) {
+  await context.waitFor(`(() => {
+    const app=window.__qaApp,host=document.querySelector('#view3d');
+    window.__render.renderFrame();
+    return app.duel.state.car===${JSON.stringify(expectedKey)}&&
+      host.dataset.vehicleKey===${JSON.stringify(expectedKey)}&&
+      host.dataset.vehicleAsset==='ready'&&app.visualReady;
+  })()`,'phase-3 Titan renderer ready',60_000);
+  const evidence=await context.evaluate(`(() => {
+    const app=window.__qaApp,d=app.duel,host=document.querySelector('#view3d');
+    app.onFrame?.(d.state);window.__render.renderFrame();
+    const expected=d.course.worldAt(d.state.s,d.state.lateral);
+    const vehicles=window.__render.scene.children
+      .filter(node=>node.userData?.vehicleKey)
+      .map(node=>({key:node.userData.vehicleKey,source:node.userData.vehicleSource,
+        name:node.name||null,visible:node.visible,
+        position:[node.position.x,node.position.y,node.position.z],
+        rotation:[node.rotation.x,node.rotation.y,node.rotation.z]}));
+    const rendered=vehicles.filter(node=>node.visible&&node.name!=='Personal best ghost');
+    const horizontalError=rendered.length===1?
+      Math.hypot(rendered[0].position[0]-expected.x,rendered[0].position[2]-expected.z):null;
+    const expectedRoll=Math.atan2(Math.sin(d.state.terrainRoll)*Math.cos(d.state.terrainPitch),
+      Math.cos(d.state.terrainRoll));
+    const attitudeError=rendered.length===1?Math.max(
+      Math.abs(rendered[0].rotation[0]+d.state.terrainPitch),
+      Math.abs(rendered[0].rotation[2]-expectedRoll)):null;
+    return {state:{car:d.state.car,status:d.state.status,s:d.state.s,lateral:d.state.lateral,
+        world:[expected.x,expected.y,expected.z],terrainPitch:d.state.terrainPitch,
+        terrainRoll:d.state.terrainRoll},
+      host:{vehicleKey:host.dataset.vehicleKey,vehicleAsset:host.dataset.vehicleAsset,
+        vehicleSource:host.dataset.vehicleSource,warmupStatus:host.dataset.warmupStatus,
+        canvasVisibility:host.querySelector('canvas')?.style.visibility||'visible'},
+      rendered,vehicles,horizontalError,attitudeError};
+  })()`);
+  if(evidence.state.car!==expectedKey||evidence.host.vehicleKey!==expectedKey||
+      evidence.host.vehicleAsset!=='ready'||evidence.host.canvasVisibility==='hidden'||
+      evidence.rendered.length!==1||evidence.rendered[0].key!==expectedKey||
+      evidence.horizontalError>1e-3||evidence.attitudeError>1e-6)
+    throw Error(`Phase-3 rendered vehicle does not match simulation: ${JSON.stringify(evidence)}`);
+  return evidence;
+}
+
+async function refreshDepartureTerrainPose(context) {
+  return context.evaluate(`(() => {
+    const d=window.__qaApp.duel,s=d.state;
+    d._terrainPose();
+    const pose={groundHeight:s.groundHeight,terrainPitch:s.terrainPitch,
+      terrainRoll:s.terrainRoll,status:s.status};
+    if(!Number.isFinite(pose.groundHeight)||!Number.isFinite(pose.terrainPitch)||
+        !Number.isFinite(pose.terrainRoll))
+      throw Error('Titan departure terrain pose is not finite: '+JSON.stringify(pose));
+    return pose;
+  })()`);
+}
+
+async function driveBackAndExit(context) {
+  return context.evaluate(`(() => {
+    const app=window.__qaApp,d=app.duel,zone=d.course.muddyHollow;
+    const boundary=zone.departureBoundary,s=d.state;
+    const local=()=>{const world=d.course.worldAt(s.s,s.lateral),
+      dx=world.x-zone.frame.origin.x,dz=world.z-zone.frame.origin.z;
+      return {along:dx*Math.sin(zone.frame.heading)+dz*Math.cos(zone.frame.heading),
+        lateral:dx*Math.cos(zone.frame.heading)-dz*Math.sin(zone.frame.heading)};};
+    const frozen={stageTimeSec:s.stageTimeSec,lapTimeSec:s.lapTimeSec,
+      totalTimeSec:s.totalTimeSec,completedLaps:s.completedLaps,
+      nextLapGate:s.nextLapGate,score:s.score,results:structuredClone(s.results)};
+    const startWorld=d.course.worldAt(s.s,s.lateral),startLocal=local();
+    const desired=zone.frame.heading-Math.PI/2;
+    s.headingError=Math.atan2(Math.sin(desired-d.course.at(s.s).heading),
+      Math.cos(desired-d.course.at(s.s).heading));
+    s.speedMph=24;d.setInput({throttle:.65,brake:0,steer:0,boost:false});
+    let ticks=0;
+    for(;ticks<960&&local().lateral>=boundary.lateral-.5;ticks++)d.step(1/120);
+    d.setInput({throttle:0,brake:0,steer:0,boost:false});
+    const endWorld=d.course.worldAt(s.s,s.lateral),endLocal=local();
+    app.onFrame?.(s);window.__render.renderFrame();
+    const afterDrive={status:s.status,ticks,movedMeters:Math.hypot(endWorld.x-startWorld.x,endWorld.z-startWorld.z),
+      startLocal,endLocal,crossedBack:endLocal.lateral<boundary.lateral,
+      departureEvents:window.__muddyPhase3Events.length,
+      historyCount:app.profile.history.length,
+      frozen:JSON.stringify(frozen)===JSON.stringify({stageTimeSec:s.stageTimeSec,
+        lapTimeSec:s.lapTimeSec,totalTimeSec:s.totalTimeSec,completedLaps:s.completedLaps,
+        nextLapGate:s.nextLapGate,score:s.score,results:s.results}),
+      hudTimeText:document.querySelector('#race-time')?.textContent,
+      resultVisible:!!document.querySelector('#modal-layer .result-panel')};
+    app.togglePause();app.onFrame?.(s);window.__render.renderFrame();
+    const paused={status:s.status,paused:s.paused,
+      resultTitle:document.querySelector('#result-title')?.textContent?.trim()||null};
+    app.returnToMenu();app.onFrame?.(s);window.__render.renderFrame();
+    const menu={status:s.status,paused:s.paused,historyCount:app.profile.history.length,
+      departureEvents:window.__muddyPhase3Events.length,activeRace:app.profile.activeRace};
+    window.__muddyPhase3Unsubscribe?.();window.__muddyPhase3Unsubscribe=null;
+    return {afterDrive,paused,menu};
   })()`);
 }
 
@@ -127,20 +280,19 @@ export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride',
     {width:1280,height:720,deviceScaleFactor:1,mobile:false});
 
-  await context.navigate('/tools/menu-check.html');
-  await context.waitFor(ready,'flag-off memory-only menu',60_000);
+  await navigateReady(context,'/tools/menu-check.html','flag-off memory-only menu');
   report.isolation.flagOff=await startHighCountry(context,true);
   if(report.isolation.flagOff.hasHollow)throw Error('Flag-off High Country exposed Muddy Hollow');
 
-  await context.navigate('/tools/menu-check.html?flags=muddy-hollow');
-  await context.waitFor(ready,'undiscovered flagged memory-only menu',60_000);
+  await navigateReady(context,'/tools/menu-check.html?flags=muddy-hollow',
+    'undiscovered flagged memory-only menu');
   report.isolation.undiscovered=await startHighCountry(context,false);
   if(report.isolation.undiscovered.hasHollow)
     throw Error('Undiscovered High Country exposed Muddy Hollow');
   report.frames.push(await showOrdinaryOverview(context));
 
-  await context.navigate('/tools/menu-check.html?flags=muddy-hollow');
-  await context.waitFor(ready,'discovered flagged memory-only menu',60_000);
+  await navigateReady(context,'/tools/menu-check.html?flags=muddy-hollow',
+    'discovered flagged memory-only menu');
   report.isolation.discovered=await startHighCountry(context,true);
   if(!report.isolation.discovered.hasHollow)
     throw Error('Discovered flagged High Country did not expose Muddy Hollow');
@@ -177,6 +329,42 @@ export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride',
     {width:390,height:844,deviceScaleFactor:1,mobile:true});
   report.frames.push(await show(context,'high','phone-overview',['bowl','hill','pond']));
+
+  await context.command('Emulation.setDeviceMetricsOverride',
+    {width:1280,height:720,deviceScaleFactor:1,mobile:false});
+  await navigateReady(context,'/tools/menu-check.html?flags=muddy-hollow',
+    'phase-3 non-Titan memory-only menu');
+  const nonTitanStart=await startHighCountry(context,true,'dusthawk_rally','timetrial');
+  report.isolation.nonTitan={...nonTitanStart,
+    crossing:await crossDepartureBoundary(context,{expectDeparture:false})};
+  if(report.isolation.nonTitan.crossing.departureEvents!==0||
+      report.isolation.nonTitan.crossing.historyAfter!==report.isolation.nonTitan.crossing.historyBefore)
+    throw Error('Non-Titan crossing emitted or settled a Muddy Hollow departure');
+
+  await navigateReady(context,'/tools/menu-check.html?flags=muddy-hollow',
+    'phase-3 Titan memory-only menu');
+  const titanStart=await startHighCountry(context,true,'titan_monster','timetrial');
+  report.phaseThree={start:titanStart,
+    departure:await crossDepartureBoundary(context,{expectDeparture:true})};
+  const departure=report.phaseThree.departure;
+  if(departure.departureEvents!==1||departure.historyAfter!==departure.historyBefore+1||
+      departure.activeRace!==null||departure.historyResult?.abandoned!==true)
+    throw Error(`Titan departure did not settle once: ${JSON.stringify(departure)}`);
+  report.phaseThree.terrainPose=await refreshDepartureTerrainPose(context);
+  report.phaseThree.renderEvidence=await captureRenderedVehicle(context,'titan_monster');
+  await context.evaluate(`(() => {
+    document.querySelectorAll('details').forEach(panel=>{panel.open=false;panel.hidden=true;});
+    window.__qaApp.onFrame?.(window.__qaApp.duel.state);window.__render.renderFrame();
+  })()`);
+  await context.screenshot('phase3-exploring');
+  report.phaseThree.returnAndExit=await driveBackAndExit(context);
+  const returned=report.phaseThree.returnAndExit;
+  if(returned.afterDrive.status!=='exploring'||!returned.afterDrive.crossedBack||
+      returned.afterDrive.movedMeters<=1||!returned.afterDrive.frozen||
+      returned.afterDrive.departureEvents!==1||returned.afterDrive.resultVisible||
+      !returned.paused.paused||returned.menu.status!=='menu'||
+      returned.menu.historyCount!==departure.historyAfter||returned.menu.departureEvents!==1)
+    throw Error(`Muddy Hollow exploration return or exit failed: ${JSON.stringify(returned)}`);
   await writeFile(join(context.outputDir,'muddy-hollow-browser.json'),JSON.stringify(report,null,2)+'\n');
-  console.log(`Muddy Hollow browser: ${report.frames.length} memory-only frames; flag, discovery and both qualities passed.`);
+  console.log(`Muddy Hollow browser: ${report.frames.length} visual frames; phase-3 departure, return and menu exit passed.`);
 }
