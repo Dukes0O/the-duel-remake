@@ -755,3 +755,16 @@ credit to the last attacker within five seconds; two seconds of spawn
 protection that also blocks dealing damage; warlords as first-to-three duels
 whose reward is their signature move, working immediately. The last one
 answers the parked first-three-rewards question.
+
+
+## 2026-09-26: crash physics and Muddy Hollow (Claude, at Kyle's request)
+
+Recorded in `docs/CRASH_PHYSICS.md`, `docs/MUDDY_HOLLOW.md` and SPEC 0.14.
+Not to reopen without Kyle: crashes are solved as rigid-body impacts in every
+mode, including ordinary races (Kyle asked for Rival Duel too), so contact
+fingerprints may be re-pinned with reasons; the player crashes on their own
+change in velocity in Rival Duel; Mad Max's approved roadside rule (shoved
+traffic clears the lane and stays clear; small speed cost for the attacker)
+is kept, with physical motion; smashed traffic stays wrecked in all modes.
+Muddy Hollow sits over a Titan-only ridge beside High Country's Alpine Summit,
+has no main-menu entry, and follows the Hidden Road leaving-the-race flow.

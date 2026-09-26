@@ -1,8 +1,9 @@
-# Next run: phase 3, a Wasteland worth finding (written 25 September 2026)
+# Next run: phase 3, a Wasteland worth finding (updated 26 September 2026, overnight)
 
 This is the one current plan for Codex. Rules: `AGENTS.md` (the nine working
 rules and the janitor) and SPEC.md section 0, especially 0.9 (audio), 0.11
-(art from existing assets) and 0.12 (the easter egg).
+(art from existing assets), 0.12 (the easter egg), 0.13 (Scrapdome) and 0.14
+(crash physics and the Titan's playground).
 
 ## Where things stand
 
@@ -14,6 +15,12 @@ rules and the janitor) and SPEC.md section 0, especially 0.9 (audio), 0.11
   `hidden-road` are `on`; `career-backup` is `dev`.
 - **Phase 2 and BETA-01 are done.** Art is still at about 3 of 5 (crew, hands,
   Rustwall); SPEC 0.11 sets the new approach.
+- **Built by Claude on 26 September (merged):** the Scrapdome foundation
+  (ARENA-01), its yard entry, display and results (ARENA-01-UI), and crates,
+  jousting, junk sense and balance (ARENA-02 part 1). All behind `scrapdome`
+  (dev). **In progress on a branch:** crash physics (CRASH-01), see below.
+- **Designed by Claude, not yet built:** Titan climbing (TITAN-01) and Muddy
+  Hollow (EGG-03), in `docs/MUDDY_HOLLOW.md`.
 
 ## Rules for this phase (Kyle, SPEC 0.12)
 
@@ -43,14 +50,19 @@ section 9 lists the cards.
 | Order | Card | Done when |
 | --- | --- | --- |
 | 0 | **Play-test notes** | Anything Kyle reports from the live game goes first, including UX-ENTRY-HINTS |
-| 1 | **ARENA-02-PAY** | Scrap and Scrapdome hold for Last Car Rolling, paid once (the yard entry, display, crates and balance are already built by Claude) |
-| 2 | **Crash physics and the Titan playground** | Claude is designing these now (Kyle, 26 September); take their cards only once they appear on the board |
-| 3 | **ARENA-FEEL** | Tells, callouts and sounds for arena fights |
-| 4 | **WAR-01** | Warlord data and the ladder on the territory map |
-| 5 | **WAR-02a, WAR-02b, WAR-02c** | Sawtooth Sal, The Dustmonger, Mother Mirage, each with a working reward |
-| 6 | **ARS-01** | Arsenal wave 1 (Smoke Screen already built in WAR-02b) |
-| 7 | Then | ARENA-03 to ARENA-05; CREW-02 to CREW-04; ARS-02 and ARS-03; WAR-03 and WAR-04 (warlords 4 to 8, designed in writing in the section 5 format first); ARENA-06 and ARENA-07 |
+| 1 | **CRASH-01** | Finish the branch `lane/arch/crash-physics` exactly as `docs/changes/CRASH-01.md` says (four test files, each with a settled decision), re-pin changed fingerprints with reasons, combat balance in its bands, browser review, merge |
+| 2 | **TITAN-01** | The Titan climbs whole hills under its slope limit; slopes slow it going up and speed it going down |
+| 3 | **EGG-03** Muddy Hollow | Built in the six phases on the card, each merged separately behind `muddy-hollow` (dev) |
+| 4 | **ARENA-02-PAY** | Scrap and Scrapdome hold for Last Car Rolling, paid once |
+| 5 | **CRASH-02**, **ARENA-FEEL** | Crash look and sound; arena tells, callouts and sounds |
+| 6 | **WAR-01**, then **WAR-02a, WAR-02b, WAR-02c** | Warlord ladder; Sawtooth Sal, The Dustmonger, Mother Mirage, each with a working reward |
+| 7 | Then | ARS-01; ARENA-03 to ARENA-05; CREW-02 to CREW-04; ARS-02 and ARS-03; WAR-03 and WAR-04 (warlords 4 to 8, designed in writing in the SCRAPDOME.md section 5 format first); ARENA-06 and ARENA-07 |
 | 8 | Polish and release | Look, sound and feel rounds (SPEC 10.1), then a release Kyle approves |
+
+Designs are settled in `docs/SCRAPDOME.md`, `docs/CRASH_PHYSICS.md` and
+`docs/MUDDY_HOLLOW.md`. Build on them; do not redesign them. If a design
+choice turns out wrong in play or in the numbers, record the evidence and the
+change in `docs/board/decisions.md` and keep going.
 
 ### Art, alongside (SPEC 0.11)
 
@@ -97,27 +109,31 @@ for candidates only; Kyle picks.
 
 ## Start prompt
 
-Paste into Codex from `C:\Users\kyleb\.codex\worktrees\wasteland-integration\the-duel-remake`.
+Paste into a fresh Codex session from
+`C:\Users\kyleb\.codex\worktrees\wasteland-integration\the-duel-remake`.
+Use Sol: the designs are settled.
 
 ```
 You are the Director in autonomous mode for The Duel. Work in this folder
 (integration/wasteland). Read AGENTS.md, docs/board/next-run.md, SPEC.md
-section 0 (especially 0.9, 0.11, 0.12 and 0.13), docs/SCRAPDOME.md, docs/board/STATUS.md,
-docs/board/decisions.md and the top of docs/playtest-inbox.md. The Wasteland is
-live as an easter egg: never add anything to the main menu, keep everything new
-hidden until a player finds the gate, and put new features behind a new dev
-switch. The arena and warlords are designed in docs/SCRAPDOME.md and their
-foundation is built: build on it, balance through its tuning tables, and do not
-change the pilot's physics limits. Work phase 3 in the order in next-run.md, with art sourcing and the
-audio track in their own lanes (at most five lanes). Art starts with a short
-list for Kyle, not adaptation. Settle each card's open design question in
-writing before code, write tests first, then build. Gates: lane tier and build
-before every merge; full tier after every 5 merges or 2 hours and at the end;
-update STATUS.md after every merge; run the after-merge janitor after every
-merge and the sweep at the end. Never delete a branch for being idle. Never
-touch the live folder, port 5174 or real saves. Do not rewrite history or
-release; push integration/wasteland after each passing full tier (D8).
-Budget for this run: <for example "until morning">.
+section 0 (especially 0.9, 0.11, 0.12, 0.13 and 0.14), docs/SCRAPDOME.md,
+docs/CRASH_PHYSICS.md, docs/MUDDY_HOLLOW.md, docs/board/STATUS.md,
+docs/board/decisions.md and the top of docs/playtest-inbox.md. The designs are
+settled by Claude: build on them, do not redesign them, and log any evidence-
+based change in decisions.md. Start with CRASH-01: continue the branch
+lane/arch/crash-physics (worktree C:\Users\kyleb\.codex\worktrees\crash\the-duel-remake)
+exactly as docs/changes/CRASH-01.md says. Then TITAN-01, then EGG-03 Muddy
+Hollow in its six phases, then the rest of next-run.md in order (at most five
+lanes; art sourcing and audio in their own lanes; art starts with a short list
+for Kyle). The Wasteland is live as an easter egg: never add anything to the
+main menu, keep new Wasteland features hidden until a player finds the gate,
+and put every new feature behind a new dev switch. Write tests first. Gates:
+lane tier and build before every merge; full tier after every 5 merges or 2
+hours and at the end; update STATUS.md after every merge; run the after-merge
+janitor after every merge and the sweep at the end. Never delete a branch for
+being idle. Never touch the live folder, port 5174 or real saves. Do not
+rewrite history or release; push integration/wasteland after each passing full
+tier (D8). Budget for this run: until morning.
 When the budget is nearly spent: finish cards in progress, run the full tier,
 run the janitor sweep, update STATUS.md, write a short handoff at the end of
 run-log.md, push, and stop.
