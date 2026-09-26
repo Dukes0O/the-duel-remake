@@ -4,10 +4,10 @@ Two scoped backlog cards record Kyle's requests relayed by the audio session:
 UX-ENTRY-HINTS and OPS-LAUNCHER-DIAG. Their reported findings remain attributed
 and require verification before implementation. The launcher card is now closed: Kyle subsequently confirmed that double-click opens the game after the audio session refreshed desktop shortcut metadata. The F/X hint card remains backlog. No runtime files changed.
 
-This docs branch starts at release checkpoint 28ca5f6 and deliberately remains
-unmerged while release work is being finalized. It is not ready to merge until
-the normal docs lane tier and build pass. Do not include or overwrite another
-session's full-tier ledger. No tests or build were run for this capture.
+The branch now includes current `integration/wasteland`. Its only unique
+changes are these two board cards and this capture note. It does not include a
+launcher repair, UI design or runtime change. The normal docs lane tier, build
+and independent fact review must pass before merge.
 
 ## Removed
 
