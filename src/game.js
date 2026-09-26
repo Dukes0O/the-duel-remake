@@ -403,6 +403,7 @@ export class Duel {
     }
     if (checkMuddyHollowDeparture(this) || checkHiddenRoadDeparture(this) ||
         s.status === 'exploring') {
+      s.calloutTimer = Math.max(0, s.calloutTimer - dt);
       if (!stepMuddyHollowExploration(this, dt)) stepHiddenRoadJourney(this, dt);
       return;
     }
