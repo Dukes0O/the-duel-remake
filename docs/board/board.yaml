@@ -447,6 +447,7 @@ tasks:
     acceptance:
       - "Build docs/MUDDY_HOLLOW.md in phases, each merged separately behind a new dev switch muddy-hollow: (1) installMuddyHollow for high-country only (ridge, valley bowl, hill, pits, pond bed, ramps) following the Hidden Road pattern, racing line, scenery and random stream untouched; (2) surfaces: mud (low grip, heavy drag, wheel spin) and water depth (drag by depth and speed, splash event); (3) departure past the ridge crest reuses the Hidden Road leaving-the-race flow; only a monster truck can reach it; (4) jumps (mega jump, three kickers, log ramp), rock garden, King of the Hill flag; (5) five gold hubcaps saved per player, all five unlock a gold Titan paint; garage tip after five High Country races in the Titan; (6) detailed ground mesh, mud and water materials, splash and mud particles, correction of the verified Titan body intersection on the departure slope, and masking or replacement of ordinary High Country mountains that overlap authored play sites; art per SPEC 0.11."
       - "Nothing on the main menu. Ordinary races on High Country keep identical results; the scene signature changes only with reviewed screenshots."
+    note: "Phases 1-5 and the Phase-6 code-native presentation are merged through c438b92. Final runtime and browser reviews pass; the focused scene has 95 checks and the exact lane gate passed 71/71. Card remains active for Kyle's governed mud/prop source choice and the separate audio lane."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8

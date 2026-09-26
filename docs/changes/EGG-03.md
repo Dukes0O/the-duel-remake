@@ -668,3 +668,10 @@ The lane removes each failed presentation path as it is replaced: the broad
 coarse fits and approximate Titan centre/radius grounding. It keeps no old
 mesh, alternate path, screenshot or generated source asset. External mud,
 rock and log art remains pending Kyle's shortlist choice.
+
+## Phase 6 code-native merge
+
+Merged as `c438b92` after clean independent runtime and browser review. The
+exact documentation-final lane commit `af90d34` passed 71/71 lane suites in
+62.61 seconds and `npm run build` with 235 modules. Phase 6 remains open only
+for Kyle's governed mud and prop source choice and the separate audio lane.
