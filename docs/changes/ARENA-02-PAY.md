@@ -19,7 +19,11 @@ adds 25 Kettle Kingpin hold. A one-car win pays scrap only.
 Settlement belongs to the named player who started the event. It runs once on
 `arenaResult`, records `arena:<runId>` in the version-1 Wasteland career and
 reverts the whole profile if storage rejects the save. Leaving before a result
-does not settle anything.
+does not settle anything. Independent review re-sliced the card to
+`src/progression.js` after proving that the existing current-version normalizer
+dropped unknown root profile fields on the real save path. The added contract
+preserves those fields while keeping known-field validation and future-schema
+write refusal unchanged.
 
 ## Tests first
 

@@ -1073,3 +1073,13 @@ but adds no hold. Settle only the player who started the event, once under
 complete previous profile and shows no new award. Abandonment emits no arena
 result and therefore costs and pays nothing. Preserve unknown profile,
 Wasteland and Kettle fields throughout.
+
+Independent review of the first candidate proved that current-version profile
+normalization already preserved unknown Wasteland and Kettle fields but
+dropped unknown fields at the profile root during the actual player-registry
+save. Re-slice ARENA-02-PAY to the existing `src/progression.js` normalization
+hook. Preserve unknown root fields for supported profile versions before
+validating every known field. Keep invalid and future profile versions on the
+existing fresh-profile path, and keep future Wasteland versions write-blocked.
+The regression must pass through `replacePlayerProfile`, `savePlayers` and
+`loadPlayers`, not only the pure settlement helper.

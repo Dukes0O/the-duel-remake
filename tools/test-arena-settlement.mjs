@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {test} from 'node:test';
 import {App} from '../src/app.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
-import {loadPlayers} from '../src/progression.js';
+import {loadPlayers, replacePlayerProfile, savePlayers} from '../src/progression.js';
 import {arenaReward, settleArenaResult} from '../src/arena/arena-settlement.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
 import {screenMetric, screenAction} from '../src/screen-results.js';
@@ -68,6 +68,21 @@ test('a completed event pays once and preserves unknown save fields', () => {
   assert.equal(duplicate.profile, first.profile);
   assert.equal(duplicate.scrapEarned, 0);
   assert.equal(duplicate.holdAdded, 0);
+});
+
+test('unknown root profile fields survive the real player-registry save path', () => {
+  const storage = memoryStorage({}), before = profile();
+  const settled = settleArenaResult(before, payload());
+  let registry = {version: 2, activePlayerId: 'driver-a', players: [
+    {id: 'driver-a', name: 'Driver A', profile: before},
+  ]};
+  registry = replacePlayerProfile(registry, 'driver-a', settled.profile);
+  assert.equal(savePlayers(registry, storage), true);
+  const reloaded = loadPlayers(storage).players[0].profile;
+  assert.deepEqual(reloaded.unknownProfile, before.unknownProfile);
+  assert.deepEqual(reloaded.wasteland.unknownWasteland, before.wasteland.unknownWasteland);
+  assert.equal(reloaded.wasteland.territories.kettle.unknownKettle, 'kept');
+  assert.equal(reloaded.wasteland.settledResults.includes('arena:arena-run-1'), true);
 });
 
 test('hold needs a win against at least two computer cars', () => {
