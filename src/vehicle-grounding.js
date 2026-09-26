@@ -86,13 +86,19 @@ export function applyVehicleTerrainPose(vehicle,course,actor){
       course?.muddyHollow?.contains){
     const ground=course.groundAt(actor.s,actor.lateral);
     if(course.muddyHollow.contains(ground.x,ground.z)){
-      const {contactY,wheels}=prepareVehicleGrounding(vehicle);
-      let low=Infinity;
+      const {wheels}=prepareVehicleGrounding(vehicle);
+      let lowestGap=Infinity;
       for(const wheel of wheels){
-        point.set(wheel.x,wheel.contactY,wheel.z).applyEuler(vehicle.rotation);
-        low=Math.min(low,point.y);
+        point.set(wheel.x,wheel.contactY+wheel.radius,wheel.z)
+          .applyEuler(vehicle.rotation).add(vehicle.position);
+        const support=course.muddyHollow.heightAt(point.x,point.z);
+        lowestGap=Math.min(lowestGap,point.y-wheel.radius-support);
       }
-      if(Number.isFinite(low))vehicle.position.y+=Math.max(0,contactY-low);
+      // The imported tread extends beyond the centre-radius estimate as the
+      // tyre tilts. The measured squared-angle allowance leaves the real
+      // lowest tread at the normal 1 cm visual clearance across the ridge.
+      const angleAllowance=.34*((actor.terrainPitch||0)**2+(actor.terrainRoll||0)**2);
+      if(Number.isFinite(lowestGap))vehicle.position.y+=Math.max(0,.01+angleAllowance-lowestGap);
     }
   }
   if(actor?.tumble){

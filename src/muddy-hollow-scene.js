@@ -82,6 +82,7 @@ function buildWater(zone) {
   const pond = zone.landforms.pondBed;
   const center = localPosition(zone, pond.center);
   const alongRadius = pond.alongRadius, lateralRadius = pond.lateralRadius;
+  const waterline = zone.heightAt(pond.center.x, pond.center.z) + 1.045;
   const positions = [], depth = [], indices = [];
   for(let row = 0; row <= WATER_LATERAL_SEGMENTS; row++) {
     const lateral = center.lateral - lateralRadius +
@@ -91,7 +92,7 @@ function buildWater(zone) {
         column / WATER_ALONG_SEGMENTS * alongRadius * 2;
       const point = localToWorld(zone, along, lateral);
       const waterDepth = zone.surfaceAt(point.x, point.z).waterDepth || 0;
-      positions.push(point.x, zone.heightAt(point.x, point.z) + waterDepth + .045, point.z);
+      positions.push(point.x, waterline, point.z);
       depth.push(waterDepth);
     }
   }
@@ -147,7 +148,7 @@ function buildFlag(zone) {
 }
 
 function buildHubcaps(zone) {
-  const geometry = new THREE.TorusGeometry(.52, .13, 8, 20);
+  const geometry = new THREE.TorusGeometry(.72, .18, 8, 20);
   const material = new THREE.MeshStandardMaterial({color: 0xf2b92e,
     metalness: .72, roughness: .28, emissive: 0x2b1700, emissiveIntensity: .3});
   return zone.collectibles.map((collectible, index) => {
@@ -156,7 +157,7 @@ function buildHubcaps(zone) {
     group.userData.muddyHollowHubcap = collectible.id;
     const ring = new THREE.Mesh(geometry, material);
     ring.rotation.set(Math.PI / 2, 0, index * .47);
-    ring.position.set(collectible.center.x, collectible.baseY + .72, collectible.center.z);
+    ring.position.set(collectible.center.x, collectible.baseY + 1, collectible.center.z);
     ring.castShadow = true; group.add(ring);
     return group;
   });

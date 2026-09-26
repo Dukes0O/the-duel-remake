@@ -989,3 +989,28 @@ it; turning it on restores the saved selection. A non-Titan car, a profile
 without the found gate, a missing hubcap set and an opaque future Wasteland
 schema cannot expose it. This clarifies switch isolation and does not change
 the settled five-hubcap reward.
+
+## 2026-09-26: replace coarse Hollow cover and calibrate Phase-6 readability
+
+Browser review of Phase 6 at `a64e16c` found ordinary near and far terrain
+triangles spanning the authored Hollow as large pale slabs. The same review
+found a broken, ten-metre vertical pond surface, hubcap markers that were too
+small at driving distance and water spray that did not read behind the Titan.
+When the `muddy-hollow` switch is on, cut coarse triangles whose centres fall
+inside the Hollow and let the dedicated four-metre mesh replace them. Keep the
+flag-off geometry exact. Give the shallow pond one waterline at its settled
+one-metre centre depth. Increase only marker height and size and spray size and
+brightness; do not move sites, change pickup radii or change surface physics.
+
+Independent code review also measured the first departure correction with the
+real Titan model. It left the lowest tyre vertex about 0.73 metres above the
+authored slope. Base the correction on each wheel centre, wheel radius and the
+installed Hollow height field, with a measured squared-angle allowance for the
+imported tread. The three settled departure-boundary samples must leave the
+lowest real tread 0.005 to 0.03 metres above the surface and the body clear.
+Keep the correction render-only and absent outside the installed Hollow.
+
+Re-slice EGG-03 narrowly for the focused scene test and the existing
+`src/world-surfaces.js`, `src/effects.js` and `src/vehicle-grounding.js` hooks.
+These hooks may only provide the switched Phase-6 presentation and correction
+described above.

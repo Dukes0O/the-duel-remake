@@ -112,7 +112,7 @@ export function createDrivingEffects() {
       type === 1 ? .45 + Math.random() * .55 : .23 + Math.random() * .48;
     life[i] = lifetime[i];
     initialSize[i] = type === 0 || type===3 ? .65 + Math.random() * .7 :
-      type===4 ? .13+Math.random()*.22 : type===5 ? .28+Math.random()*.48 :
+      type===4 ? .13+Math.random()*.22 : type===5 ? .65+Math.random()*.65 :
       type === 1 ? .055 + Math.random() * .075 : .1 + Math.random() * .2;
     const shade = .78 + Math.random() * .22;
     color[n] = (type === 2 ? 3.4 : type === 1 ? .45 : .72) * shade;
@@ -120,7 +120,7 @@ export function createDrivingEffects() {
     color[n + 2] = (type === 2 ? .32 : type === 1 ? .18 : .28) * shade;
     if(type===3){color[n]=.72*shade;color[n+1]=.75*shade;color[n+2]=.78*shade;}
     if(type===4){color[n]=.19*shade;color[n+1]=.105*shade;color[n+2]=.045*shade;}
-    if(type===5){color[n]=.58*shade;color[n+1]=.78*shade;color[n+2]=.82*shade;}
+    if(type===5){color[n]=.75*shade;color[n+1]=.92*shade;color[n+2]=1.0*shade;}
     opacity[i] = type === 0 ? .28 * strength : .95;
   }
 
