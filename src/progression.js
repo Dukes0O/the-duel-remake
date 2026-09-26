@@ -126,7 +126,12 @@ export function createProfile() {
 export function normalizeProfile(value) {
   if (!value || typeof value !== 'object' || ![1, 2].includes(value.version))
     return createProfile();
-  let profile = createProfile();
+  // Supported schemas keep unknown additive fields across a load/save cycle.
+  // Known fields below are still rebuilt and validated from their source.
+  let profile = {...value, ...createProfile()};
+  delete profile.weapons;
+  delete profile.awardedWins;
+  delete profile.lightingMood;
   profile.credits = integer(value.credits, 1_000_000_000);
   profile.unlockedCars = [
     ...new Set([
