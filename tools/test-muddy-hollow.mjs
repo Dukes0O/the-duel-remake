@@ -890,6 +890,13 @@ check('a normal discovered Titan launch reaches racing before any ridge history 
     'ordinary launch emits no Muddy Hollow departure');
 });
 
+check('menu simulation before course creation cannot run a Hollow departure check', () => {
+  const duel = new Duel({seed, featureFlags: {'muddy-hollow': true}});
+  assert.equal(duel.course, undefined, 'fresh menu simulation has no course');
+  assert.equal(api('checkMuddyHollowDeparture')(duel), false,
+    'no-course menu simulation has no Hollow departure');
+});
+
 check('only a grounded racing Titan crossing the ridge departs once', () => {
   const before = phaseThreeDuel();
   const beforeZone = zoneFor(before.course);
