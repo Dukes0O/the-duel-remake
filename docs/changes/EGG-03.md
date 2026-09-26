@@ -1,6 +1,6 @@
 ---
 task: EGG-03
-status: active-phase-4
+status: active-phase-5
 kind: easter-egg
 flag: muddy-hollow
 player_facing: yes
@@ -433,3 +433,78 @@ does not count an abandoned or duplicate result, another car or course,
 practice, flag-off or undiscovered play. At five, the settled tip appears only
 on the Titan page and disappears after the guarded departure marks the Hollow
 discovered.
+
+## Phase 5 tests first
+
+The phase-5 acceptance commit preceded runtime code. Its first focused run
+passed 44/50 Muddy Hollow checks and retained six intended failures for the
+five authored pickups and their swept contact, per-player persistence, the
+derived Titan finish and the five-race garage hint. The Wasteland profile
+suite passed 4/6 because the additive save field was absent. Paint acceptance
+failed on the missing reward catalog entry, and backup acceptance rejected the
+missing migration guard.
+
+Independent runtime review then proved that the first implementation exposed
+an earned gold finish when the development switch was later turned off. The
+review also found that the abandonment comparison removed the whole new save
+object instead of ignoring only its expected discovery change. The narrow fix
+keeps the legitimate selection in the save, hides it from every inactive
+garage and race path, rejects non-Titan and opaque future-schema entitlements,
+and compares all other Hollow progress during abandonment.
+
+No old test was weakened. The exact catalog count changes from three ordinary
+finishes to three ordinary finishes plus one gated reward. The version-1
+Wasteland shape gains its settled additive object. Existing abandonment tests
+ignore only the `muddyHollow.discovered` field that the valid departure now
+changes; hubcaps, finish count and unknown nested data remain under comparison.
+
+## Phase 5 evidence
+
+- `node tools/test-muddy-hollow.mjs`: 50/50 checks passed. The suite covers all
+  five fixed sites, swept one-time contact, frozen outcomes, player isolation,
+  reload, flag-off garage and race hiding, enabled Titan restoration,
+  non-Titan isolation and the bounded Titan-only hint.
+- `node tools/test-paint-presets.mjs`: 104 immutable-state, purchase,
+  normalization and appearance-only checks passed. A valid selected reward
+  survives JSON normalization while inactive, but it is visible only for an
+  enabled version-1 gate owner with all five allow-listed IDs. Forged and
+  future-schema rewards fail closed.
+- Wasteland profile passed 6/6 subtests; career backup passed all seven
+  historical fixtures; Paint App integration passed 35 checks; progression
+  integration passed 146 assertions; all 162 replay fingerprints passed.
+- Save Guardian review was clean on the implemented save contract. It checked
+  migration, verified backup, malformed and future data, named-player and
+  cross-tab isolation, denied storage, duplicate settlement, entitlement and
+  the storage budgets. The largest ghost journal remained 2,500,604 bytes of
+  the 4,000,000-byte limit.
+- Independent runtime re-review was clean after the switch fix. It repeated
+  the 50/50 Hollow suite, 104 paint checks, 35 Paint App checks, profile,
+  backup and replay controls. Follow-up tests also protect Wasteland-visit and
+  Scrapdome snapshots and prove that departure preserves a non-zero hint count
+  and unknown nested data.
+- Private browser QA passed on port 52471 with memory-only saves, no console
+  errors or warnings and no failed requests. Five eligible finishes counted
+  exactly from one to five; the settled tip was Titan-only and retired on
+  discovery; all five hubcaps persisted in authored order. A flag-off reload
+  hid the progress UI and selected reward in the garage and race without
+  deleting them. Re-enabling restored the IDs and gold Titan. Another car and
+  another named player remained isolated. The six captures distinguish the
+  gold Titan, factory Titan and factory Falcone; the QA overlay and a stale
+  loading label are evidence-only limits and do not cover the measured car.
+- `npm run build`: passed with 234 modules. The existing large-chunk warning
+  remains; no new warning was introduced.
+
+## Phase 5 changed assertions
+
+- `tools/test-wasteland-profile.mjs` extends the exact version-1 Wasteland
+  shape with `muddyHollow`; it does not remove or rename an old field.
+- `tools/test-paint-presets.mjs` extends the exact paint catalog from three to
+  four entries. The fourth is reward-only and stays absent from ordinary and
+  flag-off catalogs.
+- Phase-3 abandonment comparisons now exclude only the expected discovery
+  marker change and continue to compare every other nested Hollow field.
+
+## Phase 5 removed
+
+Nothing. Phase 5 adds bounded progress and a gated appearance reward. It does
+not replace an old save field, reward path or menu entry.

@@ -974,3 +974,18 @@ hooks needed by this contract: `src/wasteland-progress.js`,
 `src/career-backup.js`, `src/paint-presets.js`, `src/screen-garage.js` and their
 focused tests. These hooks may add only the bounded fields, reward finish and
 Titan-page tip described above.
+
+## 2026-09-26: keep the earned Hollow finish behind the live switch
+
+Independent phase-5 review found that an earned and selected `titan_gold`
+finish remained visible after `muddy-hollow` was turned off. That leaked a new
+Wasteland feature beyond its development switch even though its entitlement
+was valid in the saved profile.
+
+Preserve a legitimately earned selection in the version-1 save, but require
+the current `muddy-hollow` switch for every catalog, garage operation and race
+appearance snapshot. Turning the switch off hides the finish without erasing
+it; turning it on restores the saved selection. A non-Titan car, a profile
+without the found gate, a missing hubcap set and an opaque future Wasteland
+schema cannot expose it. This clarifies switch isolation and does not change
+the settled five-hubcap reward.
