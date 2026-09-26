@@ -1,6 +1,6 @@
 ---
 task: CRASH-03
-status: ready-to-merge
+status: merged
 kind: physics
 flag: crash-physics
 player_facing: yes
