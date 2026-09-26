@@ -34,19 +34,23 @@ rules and the janitor) and SPEC.md section 0, especially 0.9 (audio), 0.11
 
 ## Order
 
+The arena and warlord design is settled in `docs/SCRAPDOME.md` (SPEC 0.13),
+and its foundation is built and merged (ARENA-01: venue, event rules, teams,
+the computer pilot and brains, tests). Build on it; do not redesign it. Its
+section 8 lists the measured behaviour, the balance targets and the known gaps;
+section 9 lists the cards.
+
 | Order | Card | Done when |
 | --- | --- | --- |
-| 0 | **Play-test notes** | Anything Kyle reports from the live game goes first |
-| 1 | **ARENA-01, ARENA-02** Scrapdome framework and Last Car Rolling | Reached from the yard, not the main menu. Free driving inside the arena bounds, spawns, rounds and results, with up to three CPU cars (SPEC 3.7) |
-| 2 | **WAR-01, first half of WAR-02** Warlords 1 to 3 | Warlord data and the ladder on the yard's territory map, and the first three warlord fights (SPEC 3.9). Rewards: see the decision below |
-| 3 | **ARS-01** Arsenal wave 1 | Oil Slick, Caltrops, Smoke Screen and Harpoon, each with a counter test, CPU use and an arcade sound built to the audio rule (SPEC 3.3) |
-| 4 | Then, in this order | ARENA-03 to ARENA-05; CREW-02 to CREW-04; ARS-02 and ARS-03; the rest of WAR-02, then WAR-03 and WAR-04; ARENA-06 and ARENA-07 |
-| 5 | Polish and release | Look, sound and feel rounds (SPEC 10.1), then a release Kyle approves |
-
-**Warlord rewards (was parked):** DEFAULT UNTIL KYLE SAYS OTHERWISE: each of
-the first three warlords' rewards is built with its fight, one working item per
-warlord, so a win always gives something usable. Never show a reward that does
-not work yet.
+| 0 | **Play-test notes** | Anything Kyle reports from the live game goes first, including UX-ENTRY-HINTS |
+| 1 | **ARENA-01-UI** | A player who found the gate can start Last Car Rolling from the yard, see the arena display, finish, rematch and return; never from the main menu |
+| 2 | **ARENA-02** | Settlement (scrap, hold), pickups on ramps and the Heap, balance to the section 8 targets |
+| 3 | **ARENA-FEEL** | Tells, callouts and sounds for arena fights |
+| 4 | **WAR-01** | Warlord data and the ladder on the territory map |
+| 5 | **WAR-02a, WAR-02b, WAR-02c** | Sawtooth Sal, The Dustmonger, Mother Mirage, each with a working reward |
+| 6 | **ARS-01** | Arsenal wave 1 (Smoke Screen already built in WAR-02b) |
+| 7 | Then | ARENA-03 to ARENA-05; CREW-02 to CREW-04; ARS-02 and ARS-03; WAR-03 and WAR-04 (warlords 4 to 8, designed in writing in the section 5 format first); ARENA-06 and ARENA-07 |
+| 8 | Polish and release | Look, sound and feel rounds (SPEC 10.1), then a release Kyle approves |
 
 ### Art, alongside (SPEC 0.11)
 
@@ -98,11 +102,13 @@ Paste into Codex from `C:\Users\kyleb\.codex\worktrees\wasteland-integration\the
 ```
 You are the Director in autonomous mode for The Duel. Work in this folder
 (integration/wasteland). Read AGENTS.md, docs/board/next-run.md, SPEC.md
-section 0 (especially 0.9, 0.11 and 0.12), docs/board/STATUS.md,
+section 0 (especially 0.9, 0.11, 0.12 and 0.13), docs/SCRAPDOME.md, docs/board/STATUS.md,
 docs/board/decisions.md and the top of docs/playtest-inbox.md. The Wasteland is
 live as an easter egg: never add anything to the main menu, keep everything new
 hidden until a player finds the gate, and put new features behind a new dev
-switch. Work phase 3 in the order in next-run.md, with art sourcing and the
+switch. The arena and warlords are designed in docs/SCRAPDOME.md and their
+foundation is built: build on it, balance through its tuning tables, and do not
+change the pilot's physics limits. Work phase 3 in the order in next-run.md, with art sourcing and the
 audio track in their own lanes (at most five lanes). Art starts with a short
 list for Kyle, not adaptation. Settle each card's open design question in
 writing before code, write tests first, then build. Gates: lane tier and build

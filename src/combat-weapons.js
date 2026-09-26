@@ -3,6 +3,7 @@ import {sweepObstacle} from './collision.js';
 import {CARS, DRIVE} from './config.js';
 import {makeRng} from './rng.js';
 import {WEAPONS, CPU_COMBAT, COMBAT_TUNING} from './wasteland-tuning.js';
+import {arenaTargetOf, combatOwnerId} from './combat-teams.js';
 
 export {WEAPONS};
 const T = COMBAT_TUNING;
@@ -168,7 +169,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   if (state.onFoot && !enemy) return false;
   const combat = state.combat;
   const actor = enemy ? cpuActor : state;
-  const target = enemy ? state : state.opponents.length > 1
+  const target = enemy ? (state.arena ? arenaTargetOf(duel, cpuActor) : state) : state.opponents.length > 1
     ? state.opponents.filter(opponent => !opponent.finished && !opponent.crushed &&
         !opponent.combatWrecking)
       .reduce((closest, opponent) =>
@@ -281,11 +282,13 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         vz: dz * speed + carryZ,
         vy, age: 0,
         ...(modernProjectile && weapon === 'crossbow' ? {
-          targetIndex: enemy ? -1 : state.opponents.indexOf(target),
+          targetIndex: enemy ? (state.arena && target !== state ? state.opponents.indexOf(target) : -1)
+            : state.opponents.indexOf(target),
           launchBearing: Math.atan2(dx * speed + carryX, dz * speed + carryZ),
           ...(enemy ? {aimBias} : {}),
         } : {}),
         ...(enemy && actor !== state.rival ? {sourceIndex: state.opponents.indexOf(actor)} : {}),
+        ...(state.arena ? {ownerId: combatOwnerId(duel, actor)} : {}),
       });
     }
   }

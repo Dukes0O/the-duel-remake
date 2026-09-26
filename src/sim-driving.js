@@ -4,6 +4,7 @@ import { stepDrift, breakDrift } from './drift-scoring.js';
 import { offroadCapability, wrapHeading, limitClimb, terrainAttitude } from './offroad-physics.js';
 import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
+import { arenaFloorSpeed } from './arena/venues.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -12,6 +13,10 @@ export function _surface(distance, lateral) {
 }
 
 export function _drivingSurface(distance, lateral, car = this.car) {
+  const floor = this.state.arena && this.course.def.scrapdome;
+  if (floor) return { ...this._surface(distance, lateral), road: true, mainRoad: false, preparedGravel: true,
+    boostAllowed: true, traction: floor.floorTraction, speedLimit: arenaFloorSpeed(floor, car.topSpeed),
+    scrub: floor.floorScrub, roughness: floor.floorRoughness };
   const hidden = car === this.car && onHiddenRoad(this.course, { s: distance, lateral });
   const surface = hidden ? { ...this._surface(distance, lateral), road: true, mainRoad: false } : this._surface(distance, lateral);
   const preparedGravel = hidden || surface.road && !surface.mainRoad && (this.course.def.offroad || !!surface.shortcutId);
@@ -162,7 +167,7 @@ export function _drive(dt) {
   else if (s.hiddenRoadDriving && surface.mainRoad && Math.abs(s.headingError) < 1.3) s.hiddenRoadDriving = false;
   // A returning road car may join the asphalt facing back along the circuit.
   // Keep its physical heading until the driver has steered into the race lane.
-  const freeHeading = this.course.hiddenRoad && s.hiddenRoadDriving || this.course.def.practice || offroadCapability(car) && (!surface.road || Math.abs(s.headingError) > 1.45);
+  const freeHeading = !!s.arena || this.course.hiddenRoad && s.hiddenRoadDriving || this.course.def.practice || offroadCapability(car) && (!surface.road || Math.abs(s.headingError) > 1.45);
   if (freeHeading) {
     const heading = frame.heading + s.headingError + s.yawVelocity * dt;
     const old = this.course.worldAt(s.s, s.lateral);

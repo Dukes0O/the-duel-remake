@@ -72,6 +72,8 @@ export function _rollover(dt) {
 }
 
 export function _boundary(car) {
+  // Arena walls contain every car (src/arena/arena-floor.js); nothing resets.
+  if (this.state.arena) { if (car === this.state) car.boundaryWarning = false; return; }
   if (car === this.state && onHiddenRoad(this.course, car)) {
     car.boundaryWarning = false;
     return;

@@ -552,6 +552,28 @@ Wasteland and narrows 0.2.
 - **Kept after discovery:** the WASTELAND menu button (0.2 "After discovery")
   and the dotted road on that player's course map.
 
+### 0.13 The Scrapdome and the warlords (Kyle, 25 September 2026)
+
+Kyle asked Claude to set the design and build the foundation, and Codex (Sol)
+to build the rest from a handoff. `docs/SCRAPDOME.md` is the play design and
+architecture for arena events and warlord fights; where it differs from 3.7,
+3.9 or older cards, it wins. In short:
+
+- **Last Car Rolling** is every car for itself: up to four cars, 2:30, points
+  for wrecks you cause, credit to the last attacker within five seconds, a
+  protected respawn farthest from enemies, sudden death on a tie.
+- **Computer cars** obey the player's car physics; difficulty changes only
+  their decisions. At most one (Easy), two (Medium) or three (Hard) may hunt
+  the player at once; the rest fight each other.
+- **The Scrapdome** is a walled dirt ring round the Heap with a floor speed
+  limit near 70 mph, so every car can turn round inside it.
+- **Warlords** are one-on-one, first to three wrecks, with a signature move
+  that always has a tell, a counter and a window. Beating a warlord gives that
+  move as a working item (Side Saws, Smoke Screen, Decoy Drone for the first
+  three). This settles the parked reward question.
+- Everything stays behind the `scrapdome` switch (dev) and is reached only
+  from the Scrapdome yard, never the main menu (0.12).
+
 ---
 
 ## 1. Objective

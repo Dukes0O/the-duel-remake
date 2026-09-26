@@ -10,6 +10,7 @@ import { breakableScenery, roadsideScenery, roadsideSpeedCost, roadsideTrafficDe
   trafficDestruction, startRoadsideTraffic, startTrafficWreck } from './destructibles.js';
 import { GLANCING_WALL_NORMAL_FRACTION, clamp, freshDamageZones } from './sim-common.js';
 import {applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled} from './combat-armor.js';
+import {combatOwnerId} from './combat-teams.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {upgradedCar} from './progression.js';
 import {applyDriverModifiers} from './drivers.js';
@@ -99,7 +100,7 @@ function armoredVehicleContact(duel, {a,b,nx,nz,end,width,length,specA,specB,
       const victimIndex=victim===duel.state?-1:duel.state.opponents.indexOf(victim);
       const spiked=combatFrontSpikes(attacker,face);
       const armorRemoved=applyRamArmorDamage(duel,victim,impactMph,
-        {spiked,owner:attacker===duel.state?'player':'cpu'});
+        {spiked,owner:combatOwnerId(duel,attacker)});
       duel.emit({combatRamHit:true,attacker:attackerIndex<0?'player':'rival',
         victim:victimIndex<0?'player':'rival',attackerIndex,victimIndex,
         armorRemoved,closingKph,spiked,hitPosition});

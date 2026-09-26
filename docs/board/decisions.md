@@ -741,3 +741,17 @@ menu on-foot camera setting are removed; `wasteland2` and `hidden-road` go to
 only to a player who had found the gate when the race began (Q9, now enforced
 by `src/wasteland-access.js`). To reverse: set the switches back to `dev`.
 The release itself still needs Kyle's written go-ahead.
+
+
+## 2026-09-26: Scrapdome and warlord design (Claude, at Kyle's request)
+
+Kyle asked Claude to design the arena and warlords and build the foundation,
+with Codex (Sol) building the rest from a handoff. Recorded in
+`docs/SCRAPDOME.md` and SPEC 0.13. Decisions a later card should not reopen
+without Kyle: Last Car Rolling is every car for itself; the hunter cap (1, 2,
+3 by difficulty); computer cars share the player's car physics; the Scrapdome
+floor speed limit near 70 mph (without it the bowl played as laps); wreck
+credit to the last attacker within five seconds; two seconds of spawn
+protection that also blocks dealing damage; warlords as first-to-three duels
+whose reward is their signature move, working immediately. The last one
+answers the parked first-three-rewards question.

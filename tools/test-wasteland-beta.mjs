@@ -5,7 +5,7 @@ import { createFeatureFlags, FEATURE_STATES } from '../src/feature-flags.js';
 
 test('the Wasteland switches are released and the Experimental panel is gone', () => {
   assert.deepEqual(FEATURE_STATES, {
-    'career-backup': 'dev', wasteland2: 'on', 'hidden-road': 'on',
+    'career-backup': 'dev', wasteland2: 'on', 'hidden-road': 'on', scrapdome: 'dev',
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), true);

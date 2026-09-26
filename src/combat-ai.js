@@ -1,6 +1,7 @@
 import {CPU_COMBAT, WEAPONS, COMBAT_TUNING} from './wasteland-tuning.js';
 import {point, velocity, fireWeapon} from './combat-weapons.js';
 import {cpuPickupCharges} from './combat-pickups.js';
+import {arenaTargetOf} from './combat-teams.js';
 
 const T = COMBAT_TUNING;
 
@@ -18,7 +19,8 @@ function incomingBolt(duel, cpu, opponent) {
   const forwardZ = Math.cos(facing);
 
   for (const projectile of combat.projectiles) {
-    if (projectile.enemy || projectile.kind !== 'crossbow') continue;
+    if ((state.arena ? projectile.ownerId === opponent.arenaId : projectile.enemy) ||
+        projectile.kind !== 'crossbow') continue;
     const dx = target.x - projectile.x;
     const dz = target.z - projectile.z;
     const rvx = projectile.vx - motion.x;
@@ -110,7 +112,9 @@ export function stepCombatAI(duel, dt) {
     if (opponent.finished || opponent.crushed || opponent.combatWrecking ||
         opponent.impactTimer > 0) continue;
     const attacker = point(duel, opponent);
-    const player = point(duel, state);
+    const quarry = state.arena ? arenaTargetOf(duel, opponent) : state;
+    if (!quarry) continue;
+    const player = point(duel, quarry);
     const gap = Math.hypot(attacker.x - player.x, attacker.z - player.z);
     if (!(gap < T.cpu.attackRange)) continue;
 

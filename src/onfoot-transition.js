@@ -10,7 +10,7 @@ const T = COMBAT_TUNING.foot;
 
 export function canLeaveCar(duel) {
   const state = duel.state, stage = duel.stageDef;
-  return combatArmorEnabled(duel) && state.status === 'racing' &&
+  return combatArmorEnabled(duel) && state.status === 'racing' && !state.arena &&
     !state.paused && !state.objective && !stage?.practice &&
     !stage?.stuntTrial && !['chase', 'drift', 'checkpoint'].includes(stage?.kind);
 }

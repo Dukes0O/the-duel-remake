@@ -1,6 +1,7 @@
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {initializeCombatScoring, recordCombatHit, recordCombatWreck} from './combat-scoring.js';
 import {armorKitBonus} from './armor-kits.js';
+import {arenaDamageBlocked, noteArenaDamage} from './combat-teams.js';
 
 const T = COMBAT_TUNING.armor;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -95,13 +96,14 @@ export function applyArmorDamage(duel, actor, source, options = {}) {
   if (!combatArmorEnabled(duel) ||
       actor !== state && !state.opponents.includes(actor) ||
       actor.finished || actor.crushed || actor.combatWrecking ||
-      combatShielded(duel, actor)) return 0;
+      combatShielded(duel, actor) || arenaDamageBlocked(duel, actor, options.owner)) return 0;
   const base = armorDamageFor(source, options);
   const factor = options.self ? T.maximumSelfDamageFraction : 1;
   const damage = Math.min(T.maximumHitDamage, Math.max(0, base * factor));
   if (!(damage > 0)) return 0;
   const removed = Math.min(Math.max(0, actor.armor), damage);
   actor.armor = Math.max(0, actor.armor - damage);
+  noteArenaDamage(duel, actor, removed, options.owner);
   if (actor.armor === 0) startCombatWreck(duel, actor, source, options.owner);
   recordCombatHit(duel, actor, removed, options.owner);
   return removed;
