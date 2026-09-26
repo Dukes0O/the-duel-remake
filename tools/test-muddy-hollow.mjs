@@ -873,6 +873,22 @@ check('ridge departure boundary is deterministic in the existing local frame', (
   assert.deepEqual(locals[2], locals[0], 'route C keeps the same local boundary');
 });
 
+check('a normal discovered Titan launch reaches racing before any ridge history exists', () => {
+  const duel = new Duel({seed, featureFlags: {
+    'muddy-hollow': true,
+    'titan-climb': true,
+  }});
+  duel.startCampaign({car: 'titan_monster', startStage: highCountryIndex,
+    discoveredGate: true, opponentCount: 0, mode: 'timetrial'});
+  const events = [];
+  duel.onChange((_, event) => events.push(event));
+  for (let tick = 0; tick < 370; tick++) duel.step(fixedStep);
+  assert.equal(duel.state.status, 'racing',
+    'ordinary launch remains in the race before the Titan approaches the ridge');
+  assert.equal(phaseThreeEvent(events).length, 0,
+    'ordinary launch emits no Muddy Hollow departure');
+});
+
 check('only a grounded racing Titan crossing the ridge departs once', () => {
   const before = phaseThreeDuel();
   const beforeZone = zoneFor(before.course);
