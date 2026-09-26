@@ -1,5 +1,37 @@
 # Next run: phase 3, a Wasteland worth finding (updated 26 September 2026, overnight)
 
+## Resume here (Claude handoff, 26 September 2026, evening)
+
+Claude stopped for quota mid-merge. Do these first, in order, then continue
+with the plan below.
+
+1. **Sound lane** `lane/audio/crash-hollow-sounds` (worktree
+   `C:\Users\kyleb\.codex\worktrees\sounds\the-duel-remake`, pushed): crash
+   impact, pond splash and mud sounds; finishes CRASH-02 and EGG-03 audio. Its
+   records are complete (docs/changes/CRASH-02.md, EGG-03.md). It already
+   contains integration through GATE-REJOIN. A lane gate was running when
+   Claude stopped: rerun `node tools/run-tests.mjs --tier lane --changed
+   --jobs 8` and `npm run build`, then merge it and run the janitor.
+2. **Arena lane** `lane/audio/arena-feel` (worktree
+   `C:\Users\kyleb\.codex\worktrees\arena-feel\the-duel-remake`, pushed),
+   stacked on the sound lane: the rammer's charge tell, respawn shimmer and
+   arena sounds (docs/changes/ARENA-FEEL.md, status ready-to-merge). After
+   step 1, merge integration into it, run the lane gate and build, set its
+   note to merged, merge, janitor.
+3. Full tier on the final integration commit, `node tools/build-status.mjs`,
+   then push integration/wasteland (D8). Integration is ahead of origin by
+   the GATE-REJOIN merge, which has not had a full tier yet.
+4. **Release needed, Kyle's go-ahead first.** GATE-REJOIN fixes a live bug
+   Kyle hit: reversing back down the hidden road froze the race. The fix only
+   reaches his game through a release (docs/OPERATIONS.md). Prepare the
+   release evidence and ask Kyle; do not release without his written yes.
+5. Open task chip for Kyle: the `combat-audio` browser scenario fails with
+   "No owned flight voice" on integration without any of today's changes.
+
+Janitor note: Claude force-removed the merged gate-rejoin lane folder
+(committed and merged work only, ignored scratch deleted). Use plain
+`git worktree remove` from here on, as AGENTS.md requires.
+
 This is the one current plan for Codex. Rules: `AGENTS.md` (the nine working
 rules and the janitor) and SPEC.md section 0, especially 0.9 (audio), 0.11
 (art from existing assets), 0.12 (the easter egg), 0.13 (Scrapdome) and 0.14

@@ -1956,3 +1956,16 @@ added). Exact commit 7bc97dd passed 284/284 full suites in 525.61 seconds;
 build passed. Both lanes were removed after merge. EGG-03 stays active only
 for its audio slice; CRASH-02 audio and ARENA-FEEL are next. No release was
 made; the live folder, port 5174 and real saves were not touched.
+
+## Claude session, 26 September 2026 (evening)
+
+Kyle asked for the sound and arena presentation work and reported a live bug.
+Merged GATE-REJOIN (leaving the race up the hidden road or over the Muddy
+Hollow ridge pauses it; driving back resumes it; only driving through the
+gate abandons it). Its lane tier passed 285/285 on rerun; the first run's
+single failure did not repeat under lower load. Built and committed, not yet
+merged: the sound lane (crash impact, pond splash, mud) and the stacked arena
+lane (charge tells, respawn shimmer, arena sounds, sprite shading fix). Both
+are pushed. The next steps are at the top of next-run.md. No release was made;
+the live folder, port 5174 and real saves were not touched.
+
