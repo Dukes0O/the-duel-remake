@@ -1,4 +1,6 @@
 // Deterministic phase-one ground for the hidden High Country playground.
+import {MUDDY_HOLLOW_HUBCAP_IDS} from './wasteland-progress.js';
+
 // The course is complete before this installer runs, so the zone cannot alter
 // its samples, generated features, scenery or random stream.
 const FRAME_S = 2400;
@@ -203,6 +205,21 @@ export function installMuddyHollow(course) {
     baseY: heightAt(summit.x, summit.z),
     height: 7,
   };
+  const collectibleSites = [
+    {id: 'hilltop', site: 'King of the Hill summit', along: authored.hill.along,
+      lateral: authored.hill.lateral},
+    {id: 'pond', site: 'Pond centre', along: authored.pondBed.along,
+      lateral: authored.pondBed.lateral},
+    {id: 'mega-landing', site: 'Mega-jump landing', along: -30, lateral: 185},
+    {id: 'mud-pit', site: 'Mud pit', along: authored.pits[1].along,
+      lateral: authored.pits[1].lateral},
+    {id: 'log-ramp', site: 'Behind the log ramp', along: -123, lateral: 96},
+  ];
+  const collectibles = collectibleSites.map(item => {
+    const center = frame.toWorld(item.along, item.lateral);
+    return {id: item.id, kind: 'gold-hubcap', site: item.site, center,
+      baseY: heightAt(center.x, center.z), radius: 3};
+  });
 
   function obstaclesNear(fromS, toS = fromS) {
     const minimum = Math.min(fromS, toS) - 16;
@@ -236,6 +253,7 @@ export function installMuddyHollow(course) {
     surfaceAt,
     obstacles: rocks,
     obstaclesNear,
+    collectibles,
   };
   return course.muddyHollow;
 }
@@ -254,9 +272,10 @@ function departurePosition(duel, distance, lateral) {
     duel.course.worldAt(distance, lateral));
 }
 
-export function initializeMuddyHollowDeparture(duel) {
+export function initializeMuddyHollowDeparture(duel, savedHubcaps = []) {
   const state = duel.state;
   state.muddyHollowDeparture = null;
+  state.muddyHollowHubcaps = null;
   if (!duel.course.muddyHollow) return;
   duel._muddyHollowDepartureSerial =
     (duel._muddyHollowDepartureSerial || 0) + 1;
@@ -265,6 +284,49 @@ export function initializeMuddyHollowDeparture(duel) {
     departed: false,
     elapsedSec: 0,
   };
+  state.muddyHollowHubcaps = {
+    found: [...new Set((Array.isArray(savedHubcaps) ? savedHubcaps : [])
+      .filter(id => MUDDY_HOLLOW_HUBCAP_IDS.includes(id)))],
+    collectedThisRun: [],
+  };
+}
+
+function segmentDistanceSquared(point, from, to) {
+  const dx = to.x - from.x;
+  const dz = to.z - from.z;
+  const lengthSquared = dx * dx + dz * dz;
+  const amount = lengthSquared > 1e-12 ? clamp(
+    ((point.x - from.x) * dx + (point.z - from.z) * dz) / lengthSquared) : 0;
+  const x = from.x + dx * amount;
+  const z = from.z + dz * amount;
+  return (point.x - x) ** 2 + (point.z - z) ** 2;
+}
+
+export function collectMuddyHollowHubcaps(duel) {
+  const state = duel.state;
+  const zone = duel.course?.muddyHollow;
+  const progress = state.muddyHollowHubcaps;
+  const departure = state.muddyHollowDeparture;
+  if (!zone || !progress || !departure?.departed || state.status !== 'exploring' ||
+      state.car !== 'titan_monster') return false;
+  const current = duel.course.worldAt(state.s, state.lateral);
+  const previous = [state.prevS, state.prevLateral].every(Number.isFinite)
+    ? duel.course.worldAt(state.prevS, state.prevLateral) : current;
+  for (const collectible of zone.collectibles) {
+    if (progress.found.includes(collectible.id) ||
+        segmentDistanceSquared(collectible.center, previous, current) >
+          collectible.radius ** 2) continue;
+    progress.found.push(collectible.id);
+    progress.found.sort((a, b) => MUDDY_HOLLOW_HUBCAP_IDS.indexOf(a) -
+      MUDDY_HOLLOW_HUBCAP_IDS.indexOf(b));
+    progress.collectedThisRun.push(collectible.id);
+    const event = {id: collectible.id, total: progress.found.length,
+      complete: progress.found.length === MUDDY_HOLLOW_HUBCAP_IDS.length,
+      departureId: departure.id};
+    duel.emit({muddyHollowHubcap: event});
+    return event;
+  }
+  return false;
 }
 
 export function nearMuddyHollowDeparture(duel) {
@@ -324,6 +386,7 @@ export function stepMuddyHollowExploration(duel, dt) {
   const firstStep = departure.elapsedSec === 0;
   departure.elapsedSec += dt;
   duel._drive(dt);
+  collectMuddyHollowHubcaps(duel);
   if (!firstStep) duel._jump(state, dt, departure.elapsedSec);
   duel._staticContacts(state, true);
   return true;

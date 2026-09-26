@@ -8,7 +8,8 @@ import { Duel } from '../src/game.js';
 import { GhostRecorder, loadGhosts } from '../src/ghost.js';
 import { loadLeaderboard } from '../src/leaderboard.js';
 import {limitClimb, offroadCapability} from '../src/offroad-physics.js';
-import { activePlayer, loadPlayers } from '../src/progression.js';
+import { activePlayer, createProfile, loadPlayers, settleRace } from '../src/progression.js';
+import {createGarageScreen} from '../src/screen-garage.js';
 import {createResultsScreen} from '../src/screen-results.js';
 
 let muddyHollow = {};
@@ -17,6 +18,7 @@ try {
 } catch (error) {
   if (error.code !== 'ERR_MODULE_NOT_FOUND') throw error;
 }
+const wastelandProgress = await import('../src/wasteland-progress.js');
 
 const seed = 1989;
 const highCountry = COURSE.find(course => course.id === 'high-country');
@@ -484,6 +486,12 @@ function stableSavedContent(value) {
   return copy;
 }
 
+function stableBankIgnoringHollowDiscovery(value) {
+  const copy = stableSavedContent(value);
+  if (copy.wasteland?.muddyHollow) delete copy.wasteland.muddyHollow.discovered;
+  return copy;
+}
+
 function seedRecordAndGhost(app) {
   app.startCampaign({startStage: 0, mode: 'timetrial', seed,
     car: 'falcone_f42', difficulty: 'casual'});
@@ -533,7 +541,10 @@ function makeMuddyApp() {
     courses: {version: 1, unlocked: [...new Set([
       ...(app.profile.courses?.unlocked ?? []), highCountry.id,
     ])]},
-    wasteland: {...app.profile.wasteland, version: 1, discoveredGate: true},
+    wasteland: {...app.profile.wasteland, version: 1, discoveredGate: true,
+      muddyHollow: {...app.profile.wasteland.muddyHollow, discovered: false,
+        hubcaps: [], titanHighCountryFinishes: 5,
+        unknownReviewField: {kept: 'unchanged'}}},
   };
   app._saveProfile();
   seedRecordAndGhost(app);
@@ -1323,8 +1334,14 @@ check('memory-only App abandonment preserves banked progress and discards the ac
   const before = savedAppBank(app);
   const historyCount = app.profile.history.length;
   const event = departMuddyApp(app);
-  assert.deepEqual(stableSavedContent(savedAppBank(app)), stableSavedContent(before),
+  assert.deepEqual(stableBankIgnoringHollowDiscovery(savedAppBank(app)), stableBankIgnoringHollowDiscovery(before),
     'abandonment preserves banked credits, records, unlocks and ghosts');
+  assert.equal(app.profile.wasteland.muddyHollow?.discovered, true,
+    'guarded departure remembers that this player found the Hollow');
+  assert.equal(app.profile.wasteland.muddyHollow.titanHighCountryFinishes, 5,
+    'departure preserves an existing non-zero hint count');
+  assert.deepEqual(app.profile.wasteland.muddyHollow.unknownReviewField,
+    {kept: 'unchanged'}, 'departure preserves unknown nested Hollow data');
   assert.equal(app.profile.history.length, historyCount + 1,
     'abandonment writes one history result');
   const result = app.profile.history.at(-1);
@@ -1338,7 +1355,7 @@ check('memory-only App abandonment preserves banked progress and discards the ac
   app.duel.emit({muddyHollowDeparted: event});
   assert.equal(app.profile.history.length, historyCount + 1,
     'duplicate departure cannot settle twice');
-  assert.deepEqual(stableSavedContent(savedAppBank(app)), stableSavedContent(before));
+  assert.deepEqual(stableBankIgnoringHollowDiscovery(savedAppBank(app)), stableBankIgnoringHollowDiscovery(before));
   assert.equal(activePlayer(loadPlayers()).profile.credits, before.credits);
   assert.deepEqual(loadLeaderboard(), before.leaderboard);
   const storedGhosts = loadGhosts();
@@ -1381,7 +1398,7 @@ check('invalid, stale-run and wrong-player Muddy Hollow events cannot settle', (
   app._settleMuddyHollowDeparture(event, app.duel.state);
   assert.equal(app.profile.history.length, restartedHistory,
     'old departure cannot abandon a restarted countdown');
-  assert.deepEqual(stableSavedContent(savedAppBank(app)), before);
+  assert.deepEqual(stableBankIgnoringHollowDiscovery(savedAppBank(app)), stableBankIgnoringHollowDiscovery(before));
 
   app.returnToMenu();
   const originalId = app.player.id;
@@ -1390,7 +1407,7 @@ check('invalid, stale-run and wrong-player Muddy Hollow events cannot settle', (
   app._settleMuddyHollowDeparture(event, oldState);
   assert.deepEqual(app.profile, other, 'wrong player is unchanged');
   app.selectPlayer(originalId);
-  assert.deepEqual(stableSavedContent(savedAppBank(app)), before,
+  assert.deepEqual(stableBankIgnoringHollowDiscovery(savedAppBank(app)), stableBankIgnoringHollowDiscovery(before),
     'original player bank remains unchanged');
   app.dispose();
 });
@@ -1426,6 +1443,218 @@ check('phase 4 exposes the settled five launch sites, rock garden and summit fla
   assert.ok(Math.abs(zone.landforms.hill.flag.baseY -
     zone.heightAt(point.x, point.z)) < 1e-9,
   'the flag base follows the deterministic summit height');
+});
+
+check('phase 5 exposes five fixed hubcaps at the settled sites', () => {
+  const zone = zoneFor(courseFor(highCountry, true));
+  assert.deepEqual(zone.collectibles?.map(item => item.id),
+    ['hilltop', 'pond', 'mega-landing', 'mud-pit', 'log-ramp']);
+  for (const item of zone.collectibles) {
+    const point = pointFor(item, item.id);
+    assert.equal(zone.contains(point.x, point.z), true, `${item.id} stays inside the Hollow`);
+    assert.ok(Number.isFinite(item.baseY) && Math.abs(item.baseY -
+      zone.heightAt(point.x, point.z)) < 1e-9, `${item.id} follows authored ground`);
+    assert.ok(item.radius >= 2 && item.radius <= 4, `${item.id} has a drivable pickup radius`);
+  }
+  assert.deepEqual(pointFor(zone.collectibles[0], 'hilltop'),
+    pointFor(zone.landforms.hill, 'hill'), 'hilltop hubcap is at King of the Hill');
+  assert.deepEqual(pointFor(zone.collectibles[1], 'pond'),
+    pointFor(zone.landforms.pondBed, 'pond'), 'pond hubcap is at the pond centre');
+  assert.ok(zone.surfaceAt(zone.collectibles[3].center.x,
+    zone.collectibles[3].center.z).mud > .9, 'mud-pit hubcap is in deep mud');
+  const mega = toLocal(zone, pointFor(zone.landforms.ramps[0], 'mega ramp'));
+  const pond = toLocal(zone, pointFor(zone.landforms.pondBed, 'pond'));
+  const landing = toLocal(zone, pointFor(zone.collectibles[2], 'mega landing'));
+  const direction = {along: pond.along - mega.along, lateral: pond.lateral - mega.lateral};
+  assert.ok((landing.along - mega.along) * direction.along +
+    (landing.lateral - mega.lateral) * direction.lateral >
+    direction.along ** 2 + direction.lateral ** 2,
+  'mega hubcap lies beyond the pond-side landing line');
+  const log = toLocal(zone, pointFor(zone.landforms.ramps[4], 'log ramp'));
+  const behind = toLocal(zone, pointFor(zone.collectibles[4], 'behind log ramp'));
+  assert.ok(behind.lateral < log.lateral && Math.hypot(behind.along - log.along,
+    behind.lateral - log.lateral) <= 30, 'log hubcap sits just behind the ramp');
+});
+
+check('phase 5 hubcap contact is swept, one-time and changes no race outcome', () => {
+  const duel = phaseThreeDuel();
+  const zone = zoneFor(duel.course);
+  const cap = zone.collectibles?.[0];
+  assert.ok(cap, 'phase-5 hilltop hubcap exists');
+  const local = toLocal(zone, pointFor(cap, 'hilltop hubcap'));
+  const beforePoint = localPoint(zone, local.along - 5, local.lateral);
+  const afterPoint = localPoint(zone, local.along + 5, local.lateral);
+  const beforePose = duel.course.nearest(beforePoint.x, beforePoint.z, zone.frame.s);
+  const afterPose = duel.course.nearest(afterPoint.x, afterPoint.z, zone.frame.s);
+  Object.assign(duel.state, {status: 'exploring', prevS: beforePose.s,
+    prevLateral: beforePose.lateral, s: afterPose.s, lateral: afterPose.lateral});
+  duel.state.muddyHollowDeparture.departed = true;
+  const frozen = Object.fromEntries(['score', 'stageStyleScore', 'stageTimeSec',
+    'lapTimeSec', 'totalTimeSec', 'completedLaps'].map(key => [key, duel.state[key]]));
+  const events = [];
+  duel.onChange((_, event) => events.push(event));
+  const collect = api('collectMuddyHollowHubcaps');
+  assert.equal(collect(duel)?.id, 'hilltop', 'swept path collects the crossed hubcap');
+  assert.equal(collect(duel), false, 'the same run cannot emit one ID twice');
+  assert.deepEqual(duel.state.muddyHollowHubcaps.found, ['hilltop']);
+  assert.equal(events.filter(event => event.muddyHollowHubcap).length, 1);
+  assert.deepEqual(Object.fromEntries(Object.keys(frozen).map(key =>
+    [key, duel.state[key]])), frozen, 'pickup changes no score or race clock');
+});
+
+check('phase 5 hubcaps persist per player and derive the gold Titan finish', () => {
+  const app = makeMuddyApp();
+  departMuddyApp(app);
+  const zone = zoneFor(app.duel.course);
+  const collect = api('collectMuddyHollowHubcaps');
+  for (const cap of zone.collectibles) {
+    const pose = app.duel.course.nearest(cap.center.x, cap.center.z, zone.frame.s);
+    Object.assign(app.duel.state, {prevS: pose.s, prevLateral: pose.lateral,
+      s: pose.s, lateral: pose.lateral});
+    assert.equal(collect(app.duel)?.id, cap.id, `${cap.id} emits once`);
+  }
+  assert.deepEqual(app.profile.wasteland.muddyHollow.hubcaps,
+    zone.collectibles.map(item => item.id), 'App saves all five fixed IDs');
+  const paint = app.getPaintPreset('titan_monster', {menu: true});
+  assert.equal(paint, null, 'reward unlock does not select the paint automatically');
+  app.returnToMenu();
+  const applied = app.applyPaint('titan_monster', 'titan_gold');
+  assert.equal(applied.ok, true, 'earned gold applies through the garage path');
+  assert.equal(app.getPaintPreset('titan_monster', {menu: true})?.id, 'titan_gold');
+  const originalId = app.player.id;
+  assert.equal(app.addPlayer('No Hollow finds').ok, true);
+  assert.deepEqual(app.profile.wasteland.muddyHollow.hubcaps, [],
+    'another named player does not inherit hubcaps');
+  assert.equal(app.getPaintPreset('titan_monster', {menu: true}), null,
+    'another named player does not inherit gold');
+  app.selectPlayer(originalId);
+  assert.equal(app.getPaintPreset('titan_monster', {menu: true})?.id, 'titan_gold',
+    'switching back restores the saved reward');
+  app.dispose();
+
+  const reloaded = new App();
+  reloaded.duel.featureFlags = createFeatureFlags({storage: null, overrides: {
+    wasteland2: true,
+    'hidden-road': true,
+    scrapdome: true,
+    'muddy-hollow': false,
+    'titan-climb': true,
+  }});
+  assert.equal(reloaded.getPaintPreset('titan_monster', {menu: true}), null,
+    'flag-off reload preserves but hides the selected reward');
+  const renderGarage = car => createGarageScreen({app: reloaded,
+    profile: () => reloaded.profile, credits: String, escapeHTML: String,
+    getGarageCar: () => car, getGarageMessage: () => '', arrow: '',
+    action: () => '', clamp: value => Math.max(0, Math.min(1, value))})();
+  assert.doesNotMatch(renderGarage('titan_monster'), /Hollow Gold/,
+    'flag-off garage does not list the reward');
+  assert.equal(reloaded.startCampaign({startStage: highCountryIndex,
+    mode: 'timetrial', seed, car: 'titan_monster', difficulty: 'casual'}), true);
+  assert.equal(reloaded.getPaintPreset('titan_monster'), null,
+    'flag-off Titan race does not render the reward');
+  reloaded.returnToMenu();
+  reloaded.menuCar = 'titan_monster';
+  assert.equal(reloaded.visitWasteland(), true,
+    'flag-off earned Titan can visit the Wasteland yard');
+  assert.equal(reloaded.getPaintPreset('titan_monster'), null,
+    'flag-off Wasteland visit does not render the reward');
+  reloaded.advance(8);
+  assert.equal(reloaded.startArenaEvent({opponents: 1}), true,
+    'flag-off earned Titan can enter the arena');
+  assert.equal(reloaded.getPaintPreset('titan_monster'), null,
+    'flag-off arena does not render the reward');
+  reloaded.returnToMenu();
+  reloaded.duel.featureFlags = createFeatureFlags({storage: null, overrides: {
+    wasteland2: true,
+    'hidden-road': true,
+    scrapdome: true,
+    'muddy-hollow': true,
+    'titan-climb': true,
+  }});
+  assert.equal(reloaded.getPaintPreset('titan_monster', {menu: true})?.id,
+    'titan_gold', 're-enabling the feature restores the saved selection');
+  assert.match(renderGarage('titan_monster'), /Hollow Gold/,
+    'enabled Titan garage lists the earned reward');
+  reloaded.menuCar = 'titan_monster';
+  assert.equal(reloaded.visitWasteland(), true,
+    'enabled earned Titan can visit the Wasteland yard');
+  assert.equal(reloaded.getPaintPreset('titan_monster')?.id, 'titan_gold',
+    'enabled Wasteland visit renders the selected reward');
+  reloaded.advance(8);
+  assert.equal(reloaded.startArenaEvent({opponents: 1}), true,
+    'enabled earned Titan can enter the arena');
+  assert.equal(reloaded.getPaintPreset('titan_monster')?.id, 'titan_gold',
+    'enabled arena renders the selected reward');
+  reloaded.returnToMenu();
+  assert.equal(reloaded.startCampaign({startStage: highCountryIndex,
+    mode: 'timetrial', seed, car: 'titan_monster', difficulty: 'casual'}), true);
+  assert.equal(reloaded.getPaintPreset('titan_monster')?.id, 'titan_gold',
+    'enabled Titan race renders the selected reward');
+  reloaded.returnToMenu();
+  assert.equal(reloaded.startCampaign({startStage: 0, mode: 'timetrial', seed,
+    car: 'falcone_f42', difficulty: 'casual'}), true);
+  assert.equal(reloaded.getPaintPreset('falcone_f42'), null,
+    'enabled feature never exposes the Titan reward to another car');
+  reloaded.dispose();
+});
+
+check('phase 5 garage hint counts only eligible completed Titan races', () => {
+  assert.equal(typeof wastelandProgress.muddyHollowSnapshot, 'function',
+    'muddyHollowSnapshot exists');
+  let profile = {...createProfile(), unlockedCars: [...new Set([
+    ...createProfile().unlockedCars, 'titan_monster'])], wasteland: {
+    ...createProfile().wasteland, discoveredGate: true}};
+  const finish = (source, runId, changes = {}) => settleRace(source, {
+    runId, stageIndex: highCountryIndex, won: true, completed: true,
+    timeSec: 180, laps: highCountry.laps || 2, seed, car: 'titan_monster',
+    mode: 'timetrial', difficulty: 'casual', cpuDifficulty: 'easy',
+    muddyHollowEnabled: true, ...changes,
+  });
+  for (let index = 1; index <= 5; index++) {
+    const settled = finish(profile, `hollow-tip-${index}`);
+    assert.equal(settled.awarded, true);
+    profile = settled.profile;
+  }
+  assert.equal(profile.wasteland.muddyHollow.titanHighCountryFinishes, 5);
+  const snapshot = wastelandProgress.muddyHollowSnapshot(profile, 'player-a', true);
+  assert.match(snapshot.garageTip,
+    /Locals say the Titan can climb the meadow above the Alpine Summit\./);
+  assert.equal(finish(profile, 'hollow-tip-6').profile.wasteland.muddyHollow
+    .titanHighCountryFinishes, 5, 'hint count is capped');
+  const duplicate = finish(profile, 'hollow-tip-5');
+  assert.equal(duplicate.awarded, false, 'duplicate settlement is rejected');
+  assert.equal(duplicate.profile.wasteland.muddyHollow.titanHighCountryFinishes, 5);
+  for (const [label, changes] of [
+    ['other car', {car: 'falcone_f42'}],
+    ['other course', {stageIndex: 0, laps: COURSE[0].laps || 2}],
+    ['abandoned', {completed: false, abandoned: true}],
+    ['flag off', {muddyHollowEnabled: false}],
+  ]) {
+    const base = {...createProfile(), wasteland: {...createProfile().wasteland,
+      discoveredGate: true}};
+    assert.equal(finish(base, `excluded-${label}`, changes).profile.wasteland
+      .muddyHollow.titanHighCountryFinishes, 0, `${label} does not count`);
+  }
+  assert.equal(wastelandProgress.muddyHollowSnapshot(profile, 'player-a', false)
+    .garageTip, null, 'flag-off garage hides the hint');
+  const discovered = {...profile, wasteland: {...profile.wasteland,
+    muddyHollow: {...profile.wasteland.muddyHollow, discovered: true}}};
+  assert.equal(wastelandProgress.muddyHollowSnapshot(discovered, 'player-a', true)
+    .garageTip, null, 'finding the Hollow retires the hint');
+});
+
+check('phase 5 garage tip appears only on the Titan page', () => {
+  const app = makeMuddyApp();
+  app.profile = {...app.profile, wasteland: {...app.profile.wasteland,
+    muddyHollow: {discovered: false, hubcaps: [], titanHighCountryFinishes: 5}}};
+  app._saveProfile();
+  const render = car => createGarageScreen({app, profile: () => app.profile,
+    credits: String, escapeHTML: String, getGarageCar: () => car,
+    getGarageMessage: () => '', arrow: '', action: () => '',
+    clamp: value => Math.max(0, Math.min(1, value))})();
+  assert.match(render('titan_monster'), /Locals say the Titan can climb the meadow/);
+  assert.doesNotMatch(render('falcone_f42'), /Locals say the Titan can climb the meadow/);
+  app.dispose();
 });
 
 check('all five playground ramps launch the Titan without scoring the abandoned race', () => {
@@ -1593,5 +1822,5 @@ check('phase 4 content remains absent when the development switch is off', () =>
 });
 
 for (const failure of failures) console.error(`FAIL ${failure}`);
-console.log(`Muddy Hollow phase 4: ${checks - failures.length}/${checks} checks passed; ${failures.length} failed.`);
+console.log(`Muddy Hollow phase 5: ${checks - failures.length}/${checks} checks passed; ${failures.length} failed.`);
 if (failures.length) process.exitCode = 1;

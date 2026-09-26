@@ -41,12 +41,14 @@ test('the versioned default profile has the full Wasteland shape', () => {
   const profile = createProfile();
   assert.equal(Object.hasOwn(profile, 'weapons'), false);
   assert.deepEqual(Object.keys(profile.wasteland), [
-    'version', 'discoveredGate', 'pacificFinishes', 'xp', 'rank', 'scrap', 'territories', 'weapons', 'loadout', 'crew', 'kits',
+    'version', 'discoveredGate', 'pacificFinishes', 'muddyHollow', 'xp', 'rank', 'scrap', 'territories', 'weapons', 'loadout', 'crew', 'kits',
     'warPaint', 'challenges', 'bounties', 'warlords', 'cards', 'settledResults',
   ]);
   assert.equal(profile.wasteland.version, 1);
   assert.equal(profile.wasteland.discoveredGate, false);
   assert.equal(profile.wasteland.pacificFinishes, 0);
+  assert.deepEqual(profile.wasteland.muddyHollow,
+    {discovered: false, hubcaps: [], titanHighCountryFinishes: 0});
   assert.equal(profile.wasteland.scrap, 0);
   assert.equal(Object.keys(profile.wasteland.territories).length, 8);
   assert.deepEqual(profile.wasteland.weapons.levels,
@@ -82,6 +84,9 @@ test('malformed optional fields recover while unknown future fields stay intact'
     bounties: {day: 'bad', done: [null, 'first'], streak: -2},
     warlords: {defeated: 'bad'}, cards: [{id: 1}, {id: 'a', kind: 'win', earnedAt: 1}],
     settledResults: [null, 'won:0'],
+    muddyHollow: {discovered: 'yes', hubcaps: [null, 'hilltop', 'hilltop',
+      'not-a-hubcap'], titanHighCountryFinishes: 99,
+      futureHollowField: {kept: true}},
   };
   const loaded = normalizeWasteland(malformed, {levels: {ufo: 2, bomb: 1}});
   assert.equal(loaded.version, 1);
@@ -92,6 +97,8 @@ test('malformed optional fields recover while unknown future fields stay intact'
   assert.deepEqual(loaded.crew, {unlocked: ['rook'], selected: 'rook'});
   assert.deepEqual(loaded.bounties, {day: null, done: ['first'], streak: 0});
   assert.deepEqual(loaded.cards, [{id: 'a', kind: 'win', earnedAt: 1}]);
+  assert.deepEqual(loaded.muddyHollow, {futureHollowField: {kept: true},
+    discovered: false, hubcaps: ['hilltop'], titanHighCountryFinishes: 5});
   const future = {...malformed, version: 2};
   assert.deepEqual(normalizeWasteland(future, {levels: {ufo: 2}}), future,
     'an older build keeps an unsupported future schema opaque');

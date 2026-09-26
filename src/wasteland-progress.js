@@ -15,6 +15,56 @@ const entries = value => record(value) ? Object.entries(value)
   .filter(([id]) => id.length > 0 && id.length <= 80)
   .slice(0, 100) : [];
 
+export const MUDDY_HOLLOW_HUBCAP_IDS = Object.freeze([
+  'hilltop', 'pond', 'mega-landing', 'mud-pit', 'log-ramp',
+]);
+
+export function normalizeMuddyHollow(value) {
+  const source = record(value) ? value : {};
+  return {
+    ...source,
+    discovered: source.discovered === true,
+    hubcaps: ids(source.hubcaps).filter(id => MUDDY_HOLLOW_HUBCAP_IDS.includes(id)),
+    titanHighCountryFinishes: bounded(source.titanHighCountryFinishes, 0, 5),
+  };
+}
+
+export function muddyHollowSnapshot(profile, playerId, enabled) {
+  const progress = normalizeMuddyHollow(profile?.wasteland?.muddyHollow);
+  const available = enabled === true && profile?.wasteland?.version === 1 &&
+    profile.wasteland.discoveredGate === true;
+  return Object.freeze({
+    playerId: typeof playerId === 'string' ? playerId : null,
+    enabled: available,
+    discovered: available && progress.discovered,
+    hubcaps: Object.freeze(available ? [...progress.hubcaps] : []),
+    titanHighCountryFinishes: available ? progress.titanHighCountryFinishes : 0,
+    garageTip: available && !progress.discovered &&
+      progress.titanHighCountryFinishes >= 5
+      ? 'Locals say the Titan can climb the meadow above the Alpine Summit.' : null,
+  });
+}
+
+export function discoverMuddyHollow(profile) {
+  const progress = normalizeMuddyHollow(profile?.wasteland?.muddyHollow);
+  if (profile?.wasteland?.version !== 1 || progress.discovered) return profile;
+  return {...profile, wasteland: {...profile.wasteland,
+    muddyHollow: {...progress, discovered: true}}};
+}
+
+export function collectMuddyHollowHubcap(profile, id) {
+  const progress = normalizeMuddyHollow(profile?.wasteland?.muddyHollow);
+  if (profile?.wasteland?.version !== 1 ||
+      !MUDDY_HOLLOW_HUBCAP_IDS.includes(id) || progress.hubcaps.includes(id))
+    return {profile, collected: false, total: progress.hubcaps.length,
+      complete: progress.hubcaps.length === MUDDY_HOLLOW_HUBCAP_IDS.length};
+  const hubcaps = [...progress.hubcaps, id].sort((a, b) =>
+    MUDDY_HOLLOW_HUBCAP_IDS.indexOf(a) - MUDDY_HOLLOW_HUBCAP_IDS.indexOf(b));
+  return {profile: {...profile, wasteland: {...profile.wasteland,
+    muddyHollow: {...progress, hubcaps}}}, collected: true, total: hubcaps.length,
+    complete: hubcaps.length === MUDDY_HOLLOW_HUBCAP_IDS.length};
+}
+
 export function normalizeWasteland(value, legacyWeapons, history = []) {
   const source = record(value) ? value : {};
   // An older build cannot interpret a newer schema. Keep every byte of the
@@ -64,6 +114,7 @@ export function normalizeWasteland(value, legacyWeapons, history = []) {
     ...source,
     version: 1,
     ...normalizeGateDiscovery(source, history),
+    muddyHollow: normalizeMuddyHollow(source.muddyHollow),
     xp,
     rank: rankForXp(xp),
     scrap: bounded(source.scrap, 0, 1_000_000_000),

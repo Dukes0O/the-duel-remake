@@ -154,12 +154,14 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, weaponLoadout, combatArmorKit = null, crewId = 'rook', discoveredGate = false, _hiddenRoadVisit = false } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, weaponLoadout, combatArmorKit = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     this.state.arena = null;
     this._hiddenRoadAutomaticEntry = discoveredGate === true;
     this.state.wastelandGateDiscovered = discoveredGate === true;
+    this.state.muddyHollowSavedHubcaps = Array.isArray(muddyHollowHubcaps)
+      ? [...muddyHollowHubcaps] : [];
     this.state.hiddenRoadVisit = _hiddenRoadVisit ? {playerId} : null;
     if (CARS[car]) this.state.car = car;
     if (DIFFICULTY[difficulty]) this.state.difficulty = difficulty;
@@ -255,7 +257,7 @@ export class Duel {
     initializeFootTransition(this);
     initializeFootWeapons(this);
     initializeHiddenRoadJourney(this);
-    initializeMuddyHollowDeparture(this);
+    initializeMuddyHollowDeparture(this, s.muddyHollowSavedHubcaps);
     if (s.hiddenRoadVisit) prepareHiddenRoadVisit(this);
     this.emit(s.hiddenRoadVisit ? {stageLoaded: idx, hiddenRoadVisit: true}
       : {stageLoaded: idx, countdown: 3});

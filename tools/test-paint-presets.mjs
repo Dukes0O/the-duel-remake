@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import {CARS} from '../src/config.js';
-import {createProfile,getUpgradeLevels,upgradedCar,bestKey} from '../src/progression.js';
+import {createProfile,normalizeProfile,getUpgradeLevels,upgradedCar,bestKey} from '../src/progression.js';
 import {PAINT_PRESETS,normalizePaintState,normalizeCosmetics,getPaintState,getEquippedPaintId,getPaintAppearance,purchasePaint,applyPaint} from '../src/paint-presets.js';
 let checks=0;const check=(ok,message)=>{assert(ok,message);checks++;};
-check(Object.keys(PAINT_PRESETS).length===3,'catalog has exactly three finishes');check(PAINT_PRESETS.factory.price===0&&PAINT_PRESETS.factory.appearance===null,'factory uses exact renderer restoration');check(PAINT_PRESETS.copper_metallic.price===250&&PAINT_PRESETS.glacier_satin.price===400,'paid presets have modest fixed prices');check(Object.isFrozen(PAINT_PRESETS)&&Object.values(PAINT_PRESETS).every(Object.isFrozen),'catalog is immutable');
+check(Object.keys(PAINT_PRESETS).length===4,'catalog has three ordinary finishes and one reward finish');check(PAINT_PRESETS.factory.price===0&&PAINT_PRESETS.factory.appearance===null,'factory uses exact renderer restoration');check(PAINT_PRESETS.copper_metallic.price===250&&PAINT_PRESETS.glacier_satin.price===400,'paid presets have modest fixed prices');check(PAINT_PRESETS.titan_gold?.price===0&&PAINT_PRESETS.titan_gold?.reward==='muddy-hollow'&&PAINT_PRESETS.titan_gold?.car==='titan_monster','gold Titan paint is reward-only');check(Object.isFrozen(PAINT_PRESETS)&&Object.values(PAINT_PRESETS).every(Object.isFrozen),'catalog is immutable');
 for(const preset of Object.values(PAINT_PRESETS).filter(item=>item.appearance)){
   const appearance=preset.appearance;check(Object.isFrozen(appearance),'appearance descriptor is immutable');check(appearance.id===preset.id&&Number.isSafeInteger(appearance.color)&&appearance.color>=0&&appearance.color<=0xffffff,'valid stable appearance identity and RGB');
   for(const key of ['metalness','roughness','clearcoat','clearcoatRoughness'])check(Number.isFinite(appearance[key])&&appearance[key]>=0&&appearance[key]<=1,`${key} stays within physical material bounds`);
@@ -26,4 +26,24 @@ for(const car of Object.keys(CARS)){
   check(bought.ok&&getPaintAppearance(bought.profile,car)===PAINT_PRESETS.glacier_satin.appearance,`${car}: every owned car supports the same preset`);check(JSON.stringify(upgradedCar(CARS[car],getUpgradeLevels(bought.profile,car)))===stats,`${car}: paint cannot alter physics statistics`);check(bestKey({stageIndex:0,seed:1989,car,mode:'timetrial',cosmetics:bought.profile.cosmetics})===key,`${car}: paint cannot alter competitive record keys`);
 }
 const serialized=JSON.parse(JSON.stringify(purchase.profile.cosmetics));check(normalizeCosmetics(serialized).falcone_f42.selected==='glacier_satin','paint ownership and selection round-trip as plain JSON');check(getPaintAppearance({ ...createProfile(),cosmetics:{titan_monster:{owned:['copper_metallic'],selected:'copper_metallic'}}},'titan_monster')===null,'unowned vehicle reads its factory appearance');
+const paintApi=await import('../src/paint-presets.js'),allHubcaps=['hilltop','pond','mega-landing','mud-pit','log-ramp'];
+const hollowOn={muddyHollowEnabled:true};
+const titanBase={...createProfile(),credits:999,unlockedCars:Object.keys(CARS),wasteland:{...createProfile().wasteland,discoveredGate:true,muddyHollow:{discovered:true,hubcaps:[],titanHighCountryFinishes:5}}};
+check(!getPaintState(titanBase,'titan_monster').owned.includes('titan_gold'),'gold paint is absent before all five hubcaps');
+check(!purchasePaint(titanBase,'titan_monster','titan_gold',hollowOn).ok,'gold paint cannot be bought early');
+check(typeof paintApi.paintPresetsFor==='function','paintPresetsFor exposes the non-leaking garage catalog');
+if(typeof paintApi.paintPresetsFor==='function')check(!paintApi.paintPresetsFor(titanBase,'titan_monster',hollowOn).some(item=>item.id==='titan_gold'),'garage catalog hides the unearned reward');
+const titanReward={...titanBase,wasteland:{...titanBase.wasteland,muddyHollow:{...titanBase.wasteland.muddyHollow,hubcaps:allHubcaps}}};
+check(!getPaintState(titanReward,'titan_monster').owned.includes('titan_gold'),'flag-off runtime hides earned gold ownership');
+check(getPaintState(titanReward,'titan_monster',hollowOn).owned.includes('titan_gold'),'all five hubcaps derive gold ownership while the feature is enabled');
+if(typeof paintApi.paintPresetsFor==='function')check(!paintApi.paintPresetsFor(titanReward,'titan_monster').some(item=>item.id==='titan_gold')&&paintApi.paintPresetsFor(titanReward,'titan_monster',hollowOn).some(item=>item.id==='titan_gold')&&!paintApi.paintPresetsFor(titanReward,'falcone_f42',hollowOn).some(item=>item.id==='titan_gold'),'earned gold appears only for the enabled Titan');
+check(!applyPaint(titanReward,'titan_monster','titan_gold').ok,'flag-off runtime cannot apply earned gold');
+const gold=applyPaint(titanReward,'titan_monster','titan_gold',hollowOn);check(gold.ok&&gold.cost===0&&getPaintAppearance(gold.profile,'titan_monster',hollowOn)===PAINT_PRESETS.titan_gold.appearance,'earned gold applies free through the enabled appearance path');
+const persisted=normalizeProfile(JSON.parse(JSON.stringify(gold.profile)));
+check(getPaintAppearance(persisted,'titan_monster')===null&&getPaintAppearance(persisted,'titan_monster',hollowOn)?.id==='titan_gold','reload preserves the selection but flag-off runtime hides it');
+const future=normalizeProfile({...gold.profile,wasteland:{...gold.profile.wasteland,version:2}});
+check(getPaintAppearance(future,'titan_monster',hollowOn)===null,'an opaque future Wasteland schema cannot grant the reward');
+check(JSON.stringify(upgradedCar(CARS.titan_monster,getUpgradeLevels(gold.profile,'titan_monster')))===JSON.stringify(upgradedCar(CARS.titan_monster,getUpgradeLevels(titanReward,'titan_monster'))),'gold paint changes no Titan physics');
+check(bestKey({stageIndex:0,seed:1989,car:'titan_monster',mode:'timetrial',cosmetics:gold.profile.cosmetics})===bestKey({stageIndex:0,seed:1989,car:'titan_monster',mode:'timetrial'}),'gold paint changes no record key');
+const forged={...titanBase,cosmetics:{titan_monster:{owned:['titan_gold'],selected:'titan_gold'}}};check(getPaintAppearance(forged,'titan_monster',hollowOn)===null,'a forged reward selection is rejected without all five IDs');
 console.log(`Paint presets: ${checks} immutable-state, purchase, normalization and appearance-only checks passed`);
