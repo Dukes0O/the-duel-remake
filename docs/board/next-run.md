@@ -84,11 +84,11 @@ for candidates only; Kyle picks.
 
 ### Housekeeping
 
-- Merge `codex/ux-backlog-notes` (Kyle's two relayed requests, UX-ENTRY-HINTS
-  and OPS-LAUNCHER-DIAG) with the docs lane gate. The launcher failure Kyle
-  saw on 25 September was a damaged rolldown package in the live folder,
-  repaired with `npm ci --offline`; OPS-LAUNCHER-DIAG should find what deleted
-  its `package.json` (likely a lane cleanup through a `node_modules` link).
+- Merge `codex/ux-backlog-notes` with the docs lane gate. It records Kyle's
+  UX-ENTRY-HINTS request and the closed OPS-LAUNCHER-DIAG report. Kyle later
+  confirmed that double-click opens the game after the audio session refreshed
+  shortcut metadata. The earlier cause was not proved; no launcher repair or
+  root-cause task remains authorized.
 - Do UX-ENTRY-HINTS early in the run: Kyle and Gratian are playing on foot now.
 
 - `tools/test-rustwall-frame.mjs` reads commit `5a994ad` from Git history.

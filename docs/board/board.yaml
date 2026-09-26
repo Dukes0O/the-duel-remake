@@ -5,6 +5,33 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: UX-ENTRY-HINTS
+    title: "Clarify car exit, bailout and reentry controls"
+    lane: UI
+    size: S
+    needs: []
+    status: backlog
+    owns: [docs/changes/UX-ENTRY-HINTS.md]
+    helpers: [test_author, reviewer, browser_qa]
+    acceptance:
+      - "Verify the reported F/X input mapping and transition thresholds against current source before choosing the in-game hint and assigning its UI files. Write the hint design before code."
+      - "Explain normal exit: hold 0.4 seconds below 40 km/h; bailout above 40 km/h: hold 1 second and lose 25 health. Verify the exact 40 km/h boundary in source rather than guessing."
+      - "Explain reentry: release the input first, then hold for 0.6 seconds within 3.5 metres of the car."
+      - "Show availability only in Wasteland combat races with wasteland2 enabled; preserve exclusion from time trials, ordinary races and objective events. Verify actual behavior in private memory-only QA."
+    note: "Requested by Kyle through the audio session on 25 September. Values and mode scope are that session's reported findings, not independently revalidated by this capture. No implementation authorized by this note; Director assigns UI ownership after source review."
+  - id: OPS-LAUNCHER-DIAG
+    title: "Desktop shortcut failure resolved by user confirmation"
+    lane: TOOL
+    size: S
+    needs: []
+    status: closed
+    owns: [docs/OPERATIONS.md, docs/changes/OPS-LAUNCHER-DIAG.md]
+    helpers: [reviewer]
+    acceptance:
+      - "Kyle confirmed on 25 September that double-clicking The Duel opens the game after the audio session refreshed the real-desktop shortcut metadata. The reported launch failure is resolved; no further repair is requested."
+      - "Earlier reported findings: OneDrive Desktop/The Duel.lnk resolved as Kyle to C:/Users/kyleb/dev/the-duel-remake/start-game.bat; the icon and prerequisites existed. The sandboxed view instead reported an obsolete CodexSandboxOffline target, and Kyle then reported that the icon still failed. The later successful-launch confirmation above supersedes that report."
+      - "Keep initial work diagnostic only. Do not use live port 5174, read or change real saves, or edit the live launcher. Any repair needs a separately scoped card and the applicable Release Manager gate. No API key is needed."
+    note: "Relayed by the audio session on 25 September; this capture did not inspect the shortcut, live folder or user account. Later audio-session update relays Kyle's successful launch confirmation after a targeted shortcut metadata refresh. This resolves observed behavior without proving the earlier root cause. The audio agent reports that it did not open port 5174 or access saves itself. Preserve that distinction."
   - id: CLEAN-01
     title: "Repository placement check, size targets and audit"
     priority: 1
