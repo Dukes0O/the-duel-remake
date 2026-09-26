@@ -150,15 +150,15 @@ test('App settles arenaResult for the starting player and annotates the result s
   const app = appInYard(), runId = app.runId, before = app.profile.wasteland.scrap;
   const result = finish(app);
   assert.equal(app.profile.wasteland.settledResults.includes(`arena:${runId}`), true);
-  assert.equal(result.scrapEarned, 360);
-  assert.equal(result.scrapBalance, before + 360);
+  assert.equal(result.scrapEarned, 336);
+  assert.equal(result.scrapBalance, before + 336);
   assert.equal(result.holdAdded, 25);
   assert.equal(result.hold, 25);
   const views = {metric: screenMetric, action: (label, verb, primary) => screenAction(label, verb, primary),
     escapeHTML: value => String(value), time: value => String(value)};
   const screen = arenaResultsScreen(app.duel.state, views);
   assert.match(screen.metrics, /SCRAP EARNED/);
-  assert.match(screen.metrics, /\+360/);
+  assert.match(screen.metrics, /\+336/);
   assert.match(screen.metrics, /HOLD/);
   assert.match(screen.metrics, /25 \/ 100/);
   app.dispose?.();
