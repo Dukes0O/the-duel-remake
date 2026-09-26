@@ -1,6 +1,6 @@
 ---
 task: EGG-03
-status: active-phase-3
+status: active-phase-4
 kind: easter-egg
 flag: muddy-hollow
 player_facing: yes
@@ -360,6 +360,10 @@ into the pond span. These evidence-based changes are recorded in
   red at 42/45 before the narrow fixes. Ordinary mountain support remains
   unchanged outside the installed zone; phase 6 now owns masking its visual
   overlap at authored play sites.
+- Final independent source re-review is clean. It repeated the 45/45 focused
+  suite, real 30/60/144 scheduling, all five launches, seven rock crawls,
+  later-lap support and rally collision, and the related replay, terrain,
+  contact, jump, flag and beta-isolation controls.
 - The summit flag is fixed to the deterministic King of the Hill centre and
   ground height. It is presentation data only. Flag-off construction exposes
   no Hollow content.
