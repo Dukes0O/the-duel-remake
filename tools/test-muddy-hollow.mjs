@@ -482,6 +482,74 @@ check('water drag rises with depth and absolute speed in forward and reverse', (
     `reverse uses the same absolute-speed drag (${reverse} vs ${forward})`);
 });
 
+check('an airborne Titan ignores mud and water until its tyres land', () => {
+  function airborne(surface) {
+    const duel = titanDuel();
+    const zone = zoneFor(duel.course);
+    const pose = placeAt(duel, pointFor(zone.landforms.pondBed, 'pond bed'), 30);
+    const ordinarySurfaceAt = duel.course.surfaceAt.bind(duel.course);
+    duel.course.surfaceAt = (s, lateral) => ({...ordinarySurfaceAt(s, lateral),
+      road: false, mainRoad: false, ...surface});
+    const ground = duel.course.groundAt(pose.s, pose.lateral).y;
+    Object.assign(duel.state, {airborne: true, airHeight: 5,
+      prevAirHeight: 5, _jumpY: ground + 5, _verticalSpeed: 0,
+      surfaceMud: 0, waterDepth: 0, mudWheelSpin: 0});
+    duel.setInput({throttle: .8, brake: 0, steer: 0, boost: false});
+    const events = [];
+    duel.onChange((_, event) => events.push(event));
+    duel._drive(1 / 120);
+    return {duel, events};
+  }
+
+  const dry = airborne({mud: 0, waterDepth: 0});
+  const wet = airborne({mud: 1, waterDepth: 1});
+  assert.deepEqual({
+    surfaceMud: wet.duel.state.surfaceMud,
+    waterDepth: wet.duel.state.waterDepth,
+    mudWheelSpin: wet.duel.state.mudWheelSpin,
+    speedMph: wet.duel.state.speedMph,
+    splashes: wet.events.filter(event => event.muddyHollowSplash).length,
+  }, {
+    surfaceMud: 0,
+    waterDepth: 0,
+    mudWheelSpin: 0,
+    speedMph: dry.duel.state.speedMph,
+    splashes: 0,
+  }, 'a Titan five metres airborne has no mud or water contact, drag, spin or splash');
+});
+
+check('grounded pond contact emits one splash and stays latched after an airborne pass', () => {
+  const duel = titanDuel();
+  const zone = zoneFor(duel.course);
+  const pose = placeAt(duel, pointFor(zone.landforms.pondBed, 'pond bed'), 30);
+  const ordinarySurfaceAt = duel.course.surfaceAt.bind(duel.course);
+  duel.course.surfaceAt = (s, lateral) => ({...ordinarySurfaceAt(s, lateral),
+    road: false, mainRoad: false, mud: 1, waterDepth: 1});
+  const ground = duel.course.groundAt(pose.s, pose.lateral).y;
+  Object.assign(duel.state, {airborne: true, airHeight: 5,
+    prevAirHeight: 5, _jumpY: ground + 5, _verticalSpeed: 0,
+    surfaceMud: 0, waterDepth: 0, mudWheelSpin: 0});
+  duel.setInput({throttle: .8, brake: 0, steer: 0, boost: false});
+  const events = [];
+  duel.onChange((_, event) => events.push(event));
+
+  duel._drive(1 / 120);
+  const afterAir = events.filter(event => event.muddyHollowSplash).length;
+  Object.assign(duel.state, {airborne: false, airHeight: 0,
+    prevAirHeight: 5, _jumpY: null, _verticalSpeed: 0});
+  duel._drive(1 / 120);
+  const afterLanding = events.filter(event => event.muddyHollowSplash).length;
+  duel._drive(1 / 120);
+  const afterLatchedStep = events.filter(event => event.muddyHollowSplash).length;
+
+  assert.deepEqual([afterAir, afterLanding, afterLatchedStep], [0, 1, 1],
+    'air emits none, grounded landing emits one, and continuing contact stays latched');
+  assert.deepEqual([duel.state.surfaceMud, duel.state.waterDepth], [1, 1],
+    'grounded landing reads full mud and water');
+  assert.ok(duel.state.mudWheelSpin > 0 && duel.state.mudWheelSpin <= 1,
+    `grounded landing exposes clamped mud wheel spin (got ${duel.state.mudWheelSpin})`);
+});
+
 check('dry-to-water entry emits one fixed-step splash with simulation data', () => {
   const duel = titanDuel();
   const zone = zoneFor(duel.course);
