@@ -3,6 +3,7 @@ import test from 'node:test';
 import * as THREE from 'three';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {createCombatEffects} from '../src/combat-effects.js';
+import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
 
 const course = {groundAt: (s, lateral) => ({x: lateral * 4, y: 2, z: s * 3})};
 const point = {x: 17, y: 3.5, z: -9};
@@ -54,6 +55,56 @@ test('vehicleSmash uses the exact point and bounded delta-v scale', () => {
   }
 });
 
+test('ordinary rigid-body contact identifies the struck actor and damage zone', () => {
+  const duel = new LegacyRoadsideDuel({seed: 624,
+    featureFlags: {'crash-physics': true}});
+  duel.startCampaign({mode: 'duel', car: 'banshee_muscle', startStage: 0});
+  const player = duel.state, rival = player.rival, events = [];
+  Object.assign(player, {status: 'racing', invulnerableSec: 0, traffic: [],
+    s: 100, prevS: 80, lateral: 0, prevLateral: 0, speedMph: 130});
+  Object.assign(rival, {s: 105, prevS: 105, lateral: .6, prevLateral: .6,
+    speedMph: 25, headingError: 0, pushVelocity: 0, contactCooldown: 0});
+  duel.onChange((_, event) => events.push(event));
+  assert.equal(duel._vehicleContact(player, rival, 'rival'), true);
+  const smash = events.find(event => event.vehicleSmash)?.vehicleSmash;
+  assert.equal(smash?.actor, rival);
+  assert.equal(smash?.zone, 'rear');
+  assert.ok(smash?.dvMph > 45 && ['x', 'z']
+    .every(axis => Number.isFinite(smash.point?.[axis])));
+  assert.ok(rival.damageZones.rear > 0,
+    'the same contacted panel receives the permanent crumple damage');
+});
+
+test('impact animation age comes from simulation time at 30, 60 and 144 FPS', () => {
+  const snapshots = [];
+  for (const dt of [1 / 30, 1 / 60, 1 / 144]) {
+    const effects = createCombatEffects({loadTexture: loader(),
+      crashPresentation: true});
+    try {
+      effects.recordVehicleSmash({severity: 'smashed', dvMph: 38,
+        point: {x: point.x, z: point.z}}, {enabled: true, y: point.y,
+        atTime: 4});
+      const current = state();
+      current.stageTimeSec = 4.6;
+      effects.update({state: current, course, dt, crashEnabled: true});
+      const spark = visible(effects.group, 'crash-vfx-impact-0-sparks');
+      const crumple = visible(effects.group, 'crash-vfx-impact-0-crumple');
+      assert.ok(crumple.material.opacity < .25,
+        'the effect has reached its late simulation-time fade');
+      snapshots.push(JSON.stringify({
+        sparkOpacity: spark.material.opacity,
+        sparkUv: [...spark.geometry.getAttribute('uv').array],
+        crumpleOpacity: crumple.material.opacity,
+        crumpleUv: [...crumple.geometry.getAttribute('uv').array],
+      }));
+    } finally {
+      effects.dispose();
+    }
+  }
+  assert.equal(new Set(snapshots).size, 1,
+    'equal simulation time produces one visual at every render rate');
+});
+
 test('impact presentation freezes while paused and expires after its bound', () => {
   const effects = createCombatEffects({loadTexture: loader(), crashPresentation: true});
   try {
@@ -81,15 +132,20 @@ test('tyre smoke exists only for live knocked motion', () => {
     const before = JSON.stringify(current);
     effects.update({state: current, course, dt: 1 / 60, crashEnabled: true});
     const smoke = visible(effects.group, 'crash-vfx-knock-0-smoke');
+    const second = visible(effects.group, 'crash-vfx-knock-1-smoke');
     assert.equal(smoke.visible, true);
+    assert.equal(second.visible, true);
     const expected = course.groundAt(12, -2);
     assert.equal(smoke.position.x, expected.x);
     assert.equal(smoke.position.z, expected.z);
     assert.ok(smoke.position.y > expected.y && smoke.position.y < expected.y + 1,
       'smoke rises less than one metre from the tyre contact');
+    assert.notDeepEqual(second.position.toArray(), smoke.position.toArray(),
+      'the two rear tyre sites remain distinct');
     current.opponents[0].knock = null;
     effects.update({state: current, course, dt: 1 / 60, crashEnabled: true});
     assert.equal(smoke.visible, false);
+    assert.equal(second.visible, false);
     assert.equal(JSON.stringify({...current,
       opponents: [{...current.opponents[0], knock: {severity: 'knocked', age: .2}}]}),
     before, 'rendering does not mutate actor state');

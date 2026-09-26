@@ -62,6 +62,10 @@ that this would still allocate the new pool in an armored race. Before runtime
 code was committed, the test was strengthened to require that the optional
 crash pool does not exist at all when `crash-effects` is off.
 
+Before runtime commit, the focused contract was also strengthened with a real
+ordinary-race contact, two distinct rear-tyre smoke sites and equal visual
+state at the same simulation time under 30, 60 and 144 FPS render schedules.
+
 ## Evidence
 
 Pending.
