@@ -1731,7 +1731,8 @@ tasks:
     lane: UI
     size: M
     needs: [ARENA-01]
-    status: backlog
+    status: active
+    claimed_by: "Claude, 26 September 2026 (Kyle asked Claude to keep building)"
     flag: scrapdome
     owns: [src/screen-arena.js, src/screen-arena.css, tools/test-arena-ui.mjs, docs/changes/ARENA-01-UI.md]
     hooks: [src/app.js, src/screen-router.js, src/screen-yard-home.js, src/screen-hud.js, src/combat-hud.js, src/combat-weapons.js, tools/scenarios/scrapdome.mjs]
