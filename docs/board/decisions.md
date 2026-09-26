@@ -1124,3 +1124,18 @@ Re-slice narrowly to `src/sim-police.js` and a new focused test. A knock present
 at tick start must consume that police tick, including the tick on which it
 settles, while preserving solid and boundary checks and pursuit-distance
 bookkeeping. Flag-off police driving remains exact.
+
+Independent review of the first CRASH-02 visual candidate proved that a direct
+stage load rewinds `stageTimeSec` without visiting the menu, so a renderer-only
+impact could remain at the prior course's world point. Clear presentation
+impacts whenever the course identity changes or simulation time rewinds. This
+does not change the settled effect lifetime during a stage.
+
+The review also proved that route-relative smoke offsets detach from a knocked
+car while its rendered body spins. Place the two rear-tyre sites from the same
+course heading, reverse direction and `headingError` used by the vehicle
+renderer. Keep the sites presentation-only. Replace the per-frame actor arrays
+with a fixed sixteen-actor scratch pool. If an artificial scene exceeds that
+bound, preserve the most player-visible order: player, racing opponents,
+police, then traffic. This meets the fixed-pool rule without changing knock
+motion or simulation state.

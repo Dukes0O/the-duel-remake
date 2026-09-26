@@ -32,7 +32,9 @@ in velocity under SPEC 0.9.
 fail before runtime work exists and cover exact contact placement, bounded
 delta-v scaling, pause and expiry, knocked-only tyre smoke, fixed resource
 reuse, state immutability, flag-off isolation and the existing launched-traffic
-roll path.
+roll path. The final contract also covers course and stage-time resets,
+accumulated 30, 60 and 144 FPS schedules, displayed vehicle yaw, eight
+simultaneous knocked actors, renderer listener disposal and readiness gating.
 
 The initial tyre-smoke assertion expected the billboard centre at exact ground
 height. The implementation correctly starts it 0.3 metres above the contact
@@ -69,10 +71,35 @@ The earlier horizontal smoke assertion used the actor centre; once the twin
 site contract was added, it was moved to the deterministic left-rear tyre
 offset and the second site must remain distinct.
 
+Independent review of the first visual candidate found three blocking gaps.
+An impact could survive a direct stage transition because simulation time
+rewound without clearing the pool. Rear-tyre smoke used route offsets instead
+of the car's displayed yaw. The smoke scan also created temporary arrays each
+frame and covered only six cars. Red regressions now require reset clearing,
+forward, spun and reverse tyre positions, and sixteen smoke sheets for eight
+simultaneous actors. Runtime work clears old impacts when the course changes or
+time rewinds. It uses preallocated actor and position storage for up to sixteen
+knocked cars, with player, racing opponents, police and traffic as the explicit
+visibility order.
+
 ## Evidence
 
-Pending.
+- Focused CRASH-02, shared combat-effect, feature-switch and Wasteland tests:
+  28 passed, 0 failed after the review fixes.
+- Armored impacts, police knock, police route reset, combat ramming, combat
+  replay fingerprints and ordinary replay fingerprints all pass. The ordinary
+  replay run covers 162 checks across 18 cases and three frame rates.
+- The private memory-only browser scenario passes in High and Performance on
+  random ports above 5191. It observes one real launched impact at the exact
+  contact point, rear damage, two live tyre-smoke sheets, ready first-frame
+  resources and no flag-off crash meshes. Four review frames were captured;
+  the browser logged 0 warnings and 0 errors. The stopped-scene 60-frame CPU
+  samples stayed at or below 0.4 ms p95 in both modes. Raw review files remain
+  disposable until the merge verdict is committed.
+- Lane tier, production build and final independent review: pending.
 
 ## Removed
 
-Nothing yet.
+No runtime assets were added. The visual lane reuses the four accepted combat
+atlases and removes no released path. Raw browser evidence is deleted after
+its verdict is committed.

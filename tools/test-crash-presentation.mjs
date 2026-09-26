@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {readFile} from 'node:fs/promises';
 import * as THREE from 'three';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {createCombatEffects} from '../src/combat-effects.js';
 import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
 
 const course = {groundAt: (s, lateral) => ({x: lateral * 4, y: 2, z: s * 3})};
+const flatCourse = {groundAt: (s, lateral) => ({x: lateral, y: 2, z: s,
+  heading: 0})};
 const point = {x: 17, y: 3.5, z: -9};
 
 function loader() {
@@ -85,7 +88,11 @@ test('impact animation age comes from simulation time at 30, 60 and 144 FPS', ()
         point: {x: point.x, z: point.z}}, {enabled: true, y: point.y,
         atTime: 4});
       const current = state();
-      current.stageTimeSec = 4.6;
+      for(let elapsed=dt;elapsed<.6;elapsed+=dt){
+        current.stageTimeSec=4+elapsed;
+        effects.update({state: current, course, dt, crashEnabled: true});
+      }
+      current.stageTimeSec=4.6;
       effects.update({state: current, course, dt, crashEnabled: true});
       const spark = visible(effects.group, 'crash-vfx-impact-0-sparks');
       const crumple = visible(effects.group, 'crash-vfx-impact-0-crumple');
@@ -103,6 +110,30 @@ test('impact animation age comes from simulation time at 30, 60 and 144 FPS', ()
   }
   assert.equal(new Set(snapshots).size, 1,
     'equal simulation time produces one visual at every render rate');
+});
+
+test('impact presentation clears when simulation time or course resets', () => {
+  const effects=createCombatEffects({loadTexture:loader(),crashPresentation:true});
+  try {
+    effects.recordVehicleSmash({severity:'smashed',dvMph:42,point},
+      {enabled:true,atTime:100});
+    const current=state();current.stageTimeSec=100.2;
+    effects.update({state:current,course,dt:1/60,crashEnabled:true});
+    const spark=visible(effects.group,'crash-vfx-impact-0-sparks');
+    assert.equal(spark.visible,true);
+    current.stageTimeSec=0;
+    effects.update({state:current,course,dt:1/60,crashEnabled:true});
+    assert.equal(spark.visible,false,'an old-stage hit cannot survive time reversal');
+
+    effects.recordVehicleSmash({severity:'knocked',dvMph:24,point},
+      {enabled:true,atTime:0});
+    effects.update({state:current,course,dt:1/60,crashEnabled:true});
+    const nextSpark=visible(effects.group,'crash-vfx-impact-1-sparks');
+    assert.equal(nextSpark.visible,true);
+    effects.update({state:current,course:{...course},dt:1/60,crashEnabled:true});
+    assert.equal(nextSpark.visible,false,
+      'an old-course hit cannot appear in a new world');
+  } finally { effects.dispose(); }
 });
 
 test('impact presentation freezes while paused and expires after its bound', () => {
@@ -135,7 +166,8 @@ test('tyre smoke exists only for live knocked motion', () => {
     const second = visible(effects.group, 'crash-vfx-knock-1-smoke');
     assert.equal(smoke.visible, true);
     assert.equal(second.visible, true);
-    const expected = course.groundAt(12 - 1.05, -2 - .68);
+    const ground=course.groundAt(12,-2);
+    const expected={x:ground.x-.68,y:ground.y,z:ground.z-1.05};
     assert.equal(smoke.position.x, expected.x);
     assert.equal(smoke.position.z, expected.z);
     assert.ok(smoke.position.y > expected.y && smoke.position.y < expected.y + 1,
@@ -152,6 +184,44 @@ test('tyre smoke exists only for live knocked motion', () => {
   } finally {
     effects.dispose();
   }
+});
+
+test('rear tyre smoke follows forward, spun and reverse vehicle yaw', () => {
+  const effects=createCombatEffects({loadTexture:loader(),crashPresentation:true});
+  try {
+    const current=state({s:100,lateral:0,dir:1,headingError:0,
+      knock:{severity:'knocked',age:.2}});
+    const positions=[];
+    for(const pose of [{dir:1,headingError:0},{dir:1,headingError:Math.PI/2},
+      {dir:-1,headingError:0}]){
+      Object.assign(current.opponents[0],pose);
+      effects.update({state:current,course:flatCourse,dt:1/60,crashEnabled:true});
+      positions.push([0,1].map(index=>{
+        const p=visible(effects.group,`crash-vfx-knock-${index}-smoke`).position;
+        return [p.x,p.z];
+      }));
+    }
+    assert.deepEqual(positions[0],[[-.68,98.95],[.68,98.95]]);
+    assert.deepEqual(positions[1],[[-1.05,100.68],[-1.05,99.32]]);
+    assert.ok(positions[2].every(([,z])=>Math.abs(z-101.05)<1e-9),
+      'a reverse-facing car emits behind its displayed body');
+  } finally { effects.dispose(); }
+});
+
+test('the fixed smoke pool covers eight simultaneous knocked actors', () => {
+  const effects=createCombatEffects({loadTexture:loader(),crashPresentation:true});
+  try {
+    const knocked=index=>({s:30+index,lateral:index,dir:1,headingError:0,
+      knock:{severity:'knocked',age:.2}});
+    const current=state();
+    current.opponents=[knocked(0),knocked(1),knocked(2)];
+    current.police.pursuit=knocked(3);
+    current.traffic=[knocked(4),knocked(5),knocked(6),knocked(7)];
+    effects.update({state:current,course:flatCourse,dt:1/60,crashEnabled:true});
+    for(let index=0;index<16;index++)assert.equal(
+      visible(effects.group,`crash-vfx-knock-${index}-smoke`).visible,true,
+      `smoke slot ${index} covers an active tyre`);
+  } finally { effects.dispose(); }
 });
 
 test('flag-off builds no crash pool and records no hit', () => {
@@ -192,4 +262,12 @@ test('launched traffic keeps the physical CRASH-01 wreck roll', async () => {
   assert.equal(source.crashRollVisual({wrecked: {roll: .2,
     severity: 'smashed'}}), .2);
   assert.equal(source.crashRollVisual({}), 0);
+});
+
+test('renderer owns one flagged listener, readiness gate and disposal path', async () => {
+  const source=await readFile(new URL('../src/render3d.js',import.meta.url),'utf8');
+  assert.match(source,/const stopCrashEvents=crashEffectsFlag\(\)\?app\.duel\.onChange/);
+  assert.match(source,/if\(effectsField&&!combatEffectsPrepared\)\{/);
+  assert.match(source,/if\(disposed\)return;disposed=true;stopCrashEvents\(\)/,
+    'renderer disposal removes the crash event listener before resources');
 });

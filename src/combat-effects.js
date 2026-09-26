@@ -11,7 +11,8 @@ const BURST_LIMIT = 32;
 const PROJECTILE_LIMIT = 40;
 const WRECK_LIMIT = 4; // Player and up to three CPU cars.
 const CRASH_IMPACT_LIMIT = 8;
-const KNOCK_SMOKE_LIMIT = 12;
+const KNOCKED_ACTOR_LIMIT = 16;
+const KNOCK_SMOKE_LIMIT = KNOCKED_ACTOR_LIMIT * 2;
 const CRASH_IMPACT_DURATION = .65;
 const PLANE_UV = [0, 1, 1, 1, 0, 0, 1, 0];
 
@@ -139,6 +140,16 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
   const knockSmoke = Array.from({length: crashPresentation ? KNOCK_SMOKE_LIMIT : 0}, (_, index) =>
     makeSlot(group, resources, resources.textures.smoke,
       `crash-vfx-knock-${index}-smoke`, grid8));
+  const knockedActors = new Array(crashPresentation ? KNOCKED_ACTOR_LIMIT : 0)
+    .fill(null);
+  const knockSmokeSites = Array.from({length: knockSmoke.length}, () =>
+    ({x: 0, y: 0, z: 0}));
+  const crashSparkOptions = {age: 0, duration: .48, size: 0,
+    startFrame: 3, frameCount: 4};
+  const crashCrumpleOptions = {age: 0, duration: CRASH_IMPACT_DURATION,
+    size: 0, frameCount: 18, alpha: .54};
+  const knockSmokeOptions = {age: 0, duration: 1.35, size: 0,
+    rise: 0, alpha: .48};
   const everySlot = [...bursts.flatMap(entry => Object.values(entry)),
     ...muzzles, ...wrecks.flatMap(entry => [entry.fire, entry.explosion,
       entry.smoke]), ...damage.flatMap(entry => [entry.smoke, entry.fire]),
@@ -148,6 +159,25 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
   let texturesWarm = false;
   let meshesWarm = false;
   let nextCrashImpact = 0;
+  let crashCourse = null;
+  let lastCrashStageTime = null;
+  let knockedActorCount = 0;
+
+  function clearCrashImpacts() {
+    for (const entry of crashImpacts) {
+      entry.active = false;
+      entry.age = 0;
+      entry.event = null;
+      hide(entry.sparks);
+      hide(entry.crumple);
+    }
+  }
+
+  function rememberKnocked(actor) {
+    if (knockedActorCount >= knockedActors.length || !actor?.knock ||
+        !Number.isFinite(actor.s) || !Number.isFinite(actor.lateral)) return;
+    knockedActors[knockedActorCount++] = actor;
+  }
 
   function recordVehicleSmash(event, {enabled = false, y = 0, atTime = null} = {}) {
     const point = event?.point;
@@ -217,10 +247,22 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
     if (!enabled && !crashVisible) {
       everySlot.forEach(hide);
       wrecks.forEach(entry => { entry.active = false; entry.age = 0; });
-      crashImpacts.forEach(entry => {
-        entry.active = false; entry.age = 0; entry.event = null;
-      });
+      clearCrashImpacts();
+      crashCourse = null;
+      lastCrashStageTime = null;
       return;
+    }
+    const stageTime = state?.stageTimeSec;
+    if (crashVisible && crashCourse !== null &&
+        (course !== crashCourse || Number.isFinite(stageTime) &&
+          Number.isFinite(lastCrashStageTime) &&
+          stageTime < lastCrashStageTime - 1e-9)) clearCrashImpacts();
+    if (crashVisible) {
+      crashCourse = course;
+      if (Number.isFinite(stageTime)) lastCrashStageTime = stageTime;
+    } else {
+      crashCourse = null;
+      lastCrashStageTime = null;
     }
     const combat = enabled ? state.combat : null;
     bursts.forEach((entry, index) => {
@@ -306,10 +348,11 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
         rise: 3 + Math.min(age, 2) * 2, alpha: .8});
       else hide(entry.smoke);
     });
-    crashImpacts.forEach(entry => {
+    for (let crashIndex = 0; crashIndex < crashImpacts.length; crashIndex++) {
+      const entry = crashImpacts[crashIndex];
       if (!crashVisible || !entry.active || !entry.event) {
         hide(entry.sparks); hide(entry.crumple);
-        return;
+        continue;
       }
       if (!state.paused && Number.isFinite(entry.atTime) &&
           Number.isFinite(state.stageTimeSec)) {
@@ -318,35 +361,56 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       if (entry.age >= CRASH_IMPACT_DURATION) {
         entry.active = false; entry.event = null;
         hide(entry.sparks); hide(entry.crumple);
-        return;
+        continue;
       }
       const {event, age} = entry;
       const severityScale = event.severity === 'launched' ? 1.18 :
         event.severity === 'smashed' ? 1.08 : 1;
       const sparkSize = Math.min(8,
         Math.max(3, 2.6 + event.dvMph * .09) * severityScale);
-      show(entry.sparks, event.point, {age, duration: .48, size: sparkSize,
-        startFrame: 3, frameCount: 4});
-      show(entry.crumple, event.point, {age, duration: CRASH_IMPACT_DURATION,
-        size: Math.min(5.5, 2.2 + event.dvMph * .045) * severityScale,
-        frameCount: 18, alpha: .54});
-    });
-    const knocked = crashVisible ? [state, ...(state.opponents || []),
-      ...(state.traffic || []), state.police?.pursuit]
-      .filter(actor => actor?.knock && Number.isFinite(actor.s) &&
-        Number.isFinite(actor.lateral)).slice(0, knockSmoke.length / 2) : [];
-    knockSmoke.forEach((slot, index) => {
-      const actor = knocked[Math.floor(index / 2)];
-      if (!actor) { hide(slot); return; }
+      crashSparkOptions.age = age;
+      crashSparkOptions.size = sparkSize;
+      show(entry.sparks, event.point, crashSparkOptions);
+      crashCrumpleOptions.age = age;
+      crashCrumpleOptions.size = Math.min(5.5,
+        2.2 + event.dvMph * .045) * severityScale;
+      show(entry.crumple, event.point, crashCrumpleOptions);
+    }
+    knockedActorCount = 0;
+    if (crashVisible) {
+      // Player and racing opponents stay visible before police and traffic if
+      // an extreme scripted scene exceeds the fixed sixteen-actor pool.
+      rememberKnocked(state);
+      for (let index = 0; index < (state.opponents?.length || 0); index++)
+        rememberKnocked(state.opponents[index]);
+      rememberKnocked(state.police?.pursuit);
+      for (let index = 0; index < (state.traffic?.length || 0); index++)
+        rememberKnocked(state.traffic[index]);
+    }
+    for (let index = knockedActorCount; index < knockedActors.length; index++)
+      knockedActors[index] = null;
+    for (let index = 0; index < knockSmoke.length; index++) {
+      const slot = knockSmoke[index];
+      const actor = knockedActors[Math.floor(index / 2)];
+      if (!actor) { hide(slot); continue; }
       const side = index % 2 ? 1 : -1;
-      const ground = course.groundAt(actor.s - (actor.dir || 1) * 1.05,
-        actor.lateral + side * .68);
+      const ground = course.groundAt(actor.s, actor.lateral);
+      const yaw = (ground.heading || 0) + (actor.dir < 0 ? Math.PI : 0) +
+        (actor.headingError || 0);
+      const cosine = Math.cos(yaw), sine = Math.sin(yaw);
+      const localX = side * .68, localZ = -1.05;
+      const site = knockSmokeSites[index];
+      site.x = ground.x + cosine * localX + sine * localZ;
+      site.y = ground.y;
+      site.z = ground.z - sine * localX + cosine * localZ;
       const phase = ((state.stageTimeSec || 0) * 1.7 + index * .29) % 1.35;
       const severity = actor.knock.severity === 'launched' ? 1.35 :
         actor.knock.severity === 'smashed' ? 1.18 : 1;
-      show(slot, ground, {age: phase, duration: 1.35, size: 3.1 * severity,
-        rise: .3 + phase * .45, alpha: .48});
-    });
+      knockSmokeOptions.age = phase;
+      knockSmokeOptions.size = 3.1 * severity;
+      knockSmokeOptions.rise = .3 + phase * .45;
+      show(slot, site, knockSmokeOptions);
+    }
   }
 
   function withWarmupVisibility(callback) {
