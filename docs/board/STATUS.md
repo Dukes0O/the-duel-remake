@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-26T08:22:26.353Z
+Observed at: 2026-09-26T09:17:05.924Z
 
-Observation commit: 307b2f686e9a5eb2b6ca757240578d0857079aa5
+Observation commit: ebdd47d1a87a484418ed017d2993d53a28877a50
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 307b2f686e9a5eb2b6ca757240578d0857079aa5
+Integration HEAD: ebdd47d1a87a484418ed017d2993d53a28877a50
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -37,10 +37,10 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/ux-backlog-notes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/ux-backlog-notes |
-| lane/audio/aud-10 | 0 | unknown | true | false | unknown |
+| lane/audio/aud-10 | 1 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 1 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/egg/egg-03-p2-surfaces | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/muddy-hollow-p2/the-duel-remake |
+| lane/egg/egg-03-p3-departure | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/muddy-hollow-p3/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -62,9 +62,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
 | Review `looks/` | 7,868,116 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 327,134 B | +157,259 B | 5,000,000 B |
+| Added bytes in last merge | 1,076,848 B | +749,714 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 328,188,928 B | +161,792 B | unavailable |
+| Git objects | 328,709,120 B | +520,192 B | unavailable |
 | Lane folders | 1 | +0 | unavailable |
 
 ## Backups
@@ -73,7 +73,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: faf5749598d061d0d11cadff9a4515fb10308ddb
 - Local main: missing
-- Local integration/wasteland: 307b2f686e9a5eb2b6ca757240578d0857079aa5
+- Local integration/wasteland: ebdd47d1a87a484418ed017d2993d53a28877a50
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
