@@ -110,10 +110,11 @@ function cutHiddenRoadGround(geometry, course) {
   for (const group of groups) geometry.addGroup(group.start, group.count, group.materialIndex);
 }
 
-// Replace only coarse triangles that overlap the Hollow. Each replacement has
-// private vertices fitted to the authored height field, so its outer edges
-// still meet the ordinary world while the dense core can cover its interior.
-// Flag-off geometry and the race-side tunnel remain byte-for-byte unchanged.
+// Replace only coarse triangles that overlap the Hollow. Subdivision keeps a
+// large source triangle from bridging over the dense authored surface. A
+// narrow outer blend returns to the exact source plane, so the patch still
+// meets ordinary terrain without a crack. Flag-off geometry and the race-side
+// tunnel remain byte-for-byte unchanged.
 function fitMuddyHollowGround(geometry, course, yOffset) {
   const zone=course.muddyHollow;
   if(!zone)return;
@@ -122,22 +123,70 @@ function fitMuddyHollowGround(geometry, course, yOffset) {
     name,itemSize:attribute.itemSize,normalized:attribute.normalized,
     ArrayType:attribute.array.constructor,values:Array.from(attribute.array),
   }));
-  const fit=Array(position.count).fill(0);
+  const fit=Array(position.count).fill(0),sourceY=[];
+  for(let vertex=0;vertex<position.count;vertex++)sourceY.push(position.getY(vertex));
   const indices=[],groups=[];
+  const midpoint=(left,right)=>left.map((value,index)=>(value+right[index])*.5);
+  const samplePoint=(vertices,weights)=>{
+    let originalY=0,x=0,z=0;
+    for(let item=0;item<3;item++){
+      const vertex=vertices[item],weight=weights[item];
+      x+=position.getX(vertex)*weight;
+      originalY+=position.getY(vertex)*weight;
+      z+=position.getZ(vertex)*weight;
+    }
+    const dx=x-zone.frame.origin.x,dz=z-zone.frame.origin.z;
+    const sin=Math.sin(zone.frame.heading),cos=Math.cos(zone.frame.heading);
+    const radius=Math.hypot((dx*sin+dz*cos)/zone.bounds.alongRadius,
+      (dx*cos-dz*sin-zone.bounds.lateralCenter)/zone.bounds.lateralRadius);
+    const target=zone.heightAt(x,z)+yOffset-.7;
+    const blend=THREE.MathUtils.smoothstep(radius,1,1.08);
+    return {x,z,originalY,radius,y:THREE.MathUtils.lerp(target,originalY,blend)};
+  };
+  const subdivide=triangle=>{
+    let leaves=[triangle];
+    const depth=yOffset<0?3:2;
+    for(let level=0;level<depth;level++){
+      const next=[];
+      for(const [a,b,c] of leaves){
+        const ab=midpoint(a,b),bc=midpoint(b,c),ca=midpoint(c,a);
+        next.push([a,ab,ca],[ab,b,bc],[ca,bc,c],[ab,bc,ca]);
+      }
+      leaves=next;
+    }
+    return leaves;
+  };
+  const appendVertex=(vertices,weights)=>{
+    const next=fit.length;
+    const point=samplePoint(vertices,weights);
+    for(const attribute of attributes){
+      for(let item=0;item<attribute.itemSize;item++){
+        let value=0;
+        for(let corner=0;corner<3;corner++)value+=
+          attribute.values[vertices[corner]*attribute.itemSize+item]*weights[corner];
+        attribute.values.push(value);
+      }
+      if(attribute.name==='position'){
+        attribute.values[next*3]=point.x;
+        attribute.values[next*3+1]=point.y;
+        attribute.values[next*3+2]=point.z;
+      }
+    }
+    fit.push(1);sourceY.push(point.originalY);
+    return next;
+  };
   for(const group of geometry.groups){
     const start=indices.length;
     for(let i=group.start;i<group.start+group.count;i+=3){
       const a=source[i],b=source[i+1],c=source[i+2];
-      if(!muddyHollowTriangleOverlap(position,[a,b,c],zone)){indices.push(a,b,c);continue;}
-      for(const vertex of[a,b,c]){
-        const next=fit.length;
-        for(const attribute of attributes){
-          for(let item=0;item<attribute.itemSize;item++)
-            attribute.values.push(attribute.values[vertex*attribute.itemSize+item]);
-          if(attribute.name==='position')attribute.values[next*3+1]=
-            zone.heightAt(position.getX(vertex),position.getZ(vertex))+yOffset;
+      if(!muddyHollowTriangleOverlap(position,[a,b,c],zone,1.08)){indices.push(a,b,c);continue;}
+      const vertices=[a,b,c],vertexCache=new Map();
+      for(const triangle of subdivide([[1,0,0],[0,1,0],[0,0,1]])){
+        for(const weights of triangle){
+          const key=weights.join(',');
+          if(!vertexCache.has(key))vertexCache.set(key,appendVertex(vertices,weights));
+          indices.push(vertexCache.get(key));
         }
-        fit.push(1);indices.push(next);
       }
     }
     groups.push({start,count:indices.length-start,materialIndex:group.materialIndex});
@@ -146,11 +195,12 @@ function fitMuddyHollowGround(geometry, course, yOffset) {
     new THREE.BufferAttribute(new attribute.ArrayType(attribute.values),
       attribute.itemSize,attribute.normalized));
   geometry.setAttribute('muddyHollowFit',new THREE.Float32BufferAttribute(fit,1));
+  geometry.setAttribute('muddyHollowSourceY',new THREE.Float32BufferAttribute(sourceY,1));
   geometry.setIndex(indices);geometry.clearGroups();
   for(const group of groups)geometry.addGroup(group.start,group.count,group.materialIndex);
 }
 
-function muddyHollowTriangleOverlap(position,vertices,zone){
+function muddyHollowTriangleOverlap(position,vertices,zone,radius=1){
   const sin=Math.sin(zone.frame.heading),cos=Math.cos(zone.frame.heading);
   const points=vertices.map(index=>{
     const dx=position.getX(index)-zone.frame.origin.x;
@@ -160,7 +210,11 @@ function muddyHollowTriangleOverlap(position,vertices,zone){
       y:(dx*cos-dz*sin-zone.bounds.lateralCenter)/zone.bounds.lateralRadius,
     };
   });
-  if(points.some(p=>p.x*p.x+p.y*p.y<=1))return true;
+  return muddyHollowNormalizedTriangleOverlap(points,radius);
+}
+
+function muddyHollowNormalizedTriangleOverlap(points,radius=1){
+  if(points.some(p=>p.x*p.x+p.y*p.y<=radius*radius))return true;
   const cross=(a,b,p)=>(b.x-a.x)*(p.y-a.y)-(b.y-a.y)*(p.x-a.x);
   const signs=points.map((point,index)=>cross(point,points[(index+1)%3],{x:0,y:0}));
   if(signs.every(value=>value>=0)||signs.every(value=>value<=0))return true;
@@ -168,7 +222,7 @@ function muddyHollowTriangleOverlap(position,vertices,zone){
     const a=points[index],b=points[(index+1)%3],dx=b.x-a.x,dy=b.y-a.y;
     const t=Math.max(0,Math.min(1,-(a.x*dx+a.y*dy)/(dx*dx+dy*dy||1)));
     const x=a.x+dx*t,y=a.y+dy*t;
-    if(x*x+y*y<=1)return true;
+    if(x*x+y*y<=radius*radius)return true;
   }
   return false;
 }

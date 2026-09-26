@@ -62,7 +62,8 @@ function checkHollowCut(builder, label, yOffset) {
   const fitted = hollowGeometry.attributes.muddyHollowFit;
   const sourceY = hollowGeometry.attributes.muddyHollowSourceY;
   let overlapTriangles = 0, firstUnfitted = -1, firstHeightError = -1;
-  let firstSeamError = -1, firstOcclusion = -1, samples = 0;
+  let firstSeamError = -1, firstTransitionError = -1;
+  let firstOcclusion = -1, samples = 0;
   for(let offset = 0; offset < index.length; offset += 3) {
     const a = index[offset], b = index[offset + 1], c = index[offset + 2];
     if(!triangleOverlapsHollow(position, [a, b, c])) continue;
@@ -75,8 +76,28 @@ function checkHollowCut(builder, label, yOffset) {
         if(position.getY(vertex) > field - .05 || position.getY(vertex) < field - 1) {
           firstHeightError = offset / 3; break;
         }
-      } else if(Math.abs(position.getY(vertex) - sourceY.getX(vertex)) > .0001) {
-        firstSeamError = offset / 3; break;
+      } else {
+        const dx = x - course.muddyHollow.frame.origin.x;
+        const dz = z - course.muddyHollow.frame.origin.z;
+        const radius = Math.hypot(
+          (dx * Math.sin(course.muddyHollow.frame.heading) +
+            dz * Math.cos(course.muddyHollow.frame.heading)) /
+            course.muddyHollow.bounds.alongRadius,
+          (dx * Math.cos(course.muddyHollow.frame.heading) -
+            dz * Math.sin(course.muddyHollow.frame.heading) -
+            course.muddyHollow.bounds.lateralCenter) /
+            course.muddyHollow.bounds.lateralRadius,
+        );
+        if(radius >= 1.08 - 1e-6 &&
+          Math.abs(position.getY(vertex) - sourceY.getX(vertex)) > .0001) {
+          firstSeamError = offset / 3; break;
+        }
+        const target = course.muddyHollow.heightAt(x, z) + yOffset - .7;
+        const low = Math.min(target, sourceY.getX(vertex)) - .0001;
+        const high = Math.max(target, sourceY.getX(vertex)) + .0001;
+        if(position.getY(vertex) < low || position.getY(vertex) > high) {
+          firstTransitionError = offset / 3; break;
+        }
       }
     }
     for(let first = 0; first <= 4; first++) for(let second = 0;
@@ -96,16 +117,47 @@ function checkHollowCut(builder, label, yOffset) {
       }
     }
     if(firstUnfitted >= 0 || firstHeightError >= 0 || firstSeamError >= 0 ||
-      firstOcclusion >= 0) break;
+      firstTransitionError >= 0 || firstOcclusion >= 0) break;
   }
   check(overlapTriangles > 0 && firstUnfitted < 0,
     `${label} replaces every triangle that overlaps the authored Hollow`);
   check(firstHeightError < 0,
     `${label} interior replacement vertices sit just below the authored height field`);
   check(firstSeamError < 0,
-    `${label} exterior replacement vertices retain their original terrain height`);
+    `${label} outer replacement vertices retain their original terrain height`);
+  check(firstTransitionError < 0,
+    `${label} boundary vertices blend between fitted and original terrain height`);
   check(samples > 0 && firstOcclusion < 0,
-    `${label} cannot rise through the detailed Hollow surface`);
+    `${label} cannot rise through the detailed Hollow surface (triangle ${firstOcclusion})`);
+  let uncheckedFit = -1;
+  for(let vertex = 0; vertex < position.count; vertex++) {
+    if(fitted.getX(vertex) !== 1) continue;
+    const x = position.getX(vertex), z = position.getZ(vertex);
+    const dx = x - course.muddyHollow.frame.origin.x;
+    const dz = z - course.muddyHollow.frame.origin.z;
+    const radius = Math.hypot(
+      (dx * Math.sin(course.muddyHollow.frame.heading) +
+        dz * Math.cos(course.muddyHollow.frame.heading)) /
+        course.muddyHollow.bounds.alongRadius,
+      (dx * Math.cos(course.muddyHollow.frame.heading) -
+        dz * Math.sin(course.muddyHollow.frame.heading) -
+        course.muddyHollow.bounds.lateralCenter) /
+        course.muddyHollow.bounds.lateralRadius,
+    );
+    if(radius >= 1.08 - 1e-6 &&
+      Math.abs(position.getY(vertex) - sourceY.getX(vertex)) > .0001) {
+      uncheckedFit = vertex; break;
+    }
+    if(radius > 1 && radius < 1.08) {
+      const target = course.muddyHollow.heightAt(x, z) + yOffset - .7;
+      if(position.getY(vertex) < Math.min(target, sourceY.getX(vertex)) - .0001 ||
+        position.getY(vertex) > Math.max(target, sourceY.getX(vertex)) + .0001) {
+        uncheckedFit = vertex; break;
+      }
+    }
+  }
+  check(uncheckedFit < 0,
+    `${label} applies the seam-safe blend to every generated vertex`);
   equal(hollowGeometry.groups.map(group => group.materialIndex),
     ordinaryGeometry.groups.map(group => group.materialIndex),
   `${label} keeps the ordinary material group order`);
