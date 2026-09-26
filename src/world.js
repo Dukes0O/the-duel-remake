@@ -23,6 +23,7 @@ import { registerSceneSystem, disposeSceneSystems } from './scene-systems.js';
 import { makeSignFallSystem } from './scenery-fall.js';
 import { createRustwallScene } from './rustwall-scene.js';
 import { createScrapdomeYard } from './scrapdome-yard.js';
+import { createMuddyHollowScene, filterMuddyHollowMountains } from './muddy-hollow-scene.js';
 
 // Keep the established scene API for renderer and geometry-focused callers.
 export { worldAtExtended, strip, terrainGeometry, farTerrainGeometry } from './world-surfaces.js';
@@ -53,6 +54,7 @@ export function buildEnvironment(course) {
     if(theme==='arena')continue;
     const view=Object.create(course);view.def={...course.def,theme};view.features={...course.features};
     for(const field of ['mountains','trees','rocks'])view.features[field]=course.features[field].filter(p=>p.theme===theme);
+    view.features.mountains=filterMuddyHollowMountains(course,view.features.mountains);
     view.detailSections=course.sections.filter(s=>s.theme===theme);
     const updateLandscape=addLandscape(group,view);if(updateLandscape)registerSceneSystem(group,{sync:updateLandscape});
     addLandscapeDetail(group,view,theme==='alpine');
@@ -68,6 +70,11 @@ export function buildEnvironment(course) {
   if(course.hiddenRoad){
     addHiddenRoad(group,course);const hint=createHiddenRoadHint(course);group.add(hint);
     registerSceneSystem(group,{sync:hint.userData.sync,animate:hint.userData.animate});
+  }
+  const muddyHollow=createMuddyHollowScene(course);
+  if(muddyHollow){
+    group.add(muddyHollow.group);
+    registerSceneSystem(group,{animate:muddyHollow.animate,sync:muddyHollow.sync});
   }
   for(const lane of course.features.passingLanes){
     for(let s=lane.start+55;s<lane.end-50;s+=18)for(const side of[-1,1])group.add(new THREE.Mesh(strip(course,side*6.45,side*6.6,.07,s,s+7),cream));

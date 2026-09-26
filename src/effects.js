@@ -35,9 +35,11 @@ export function createDrivingEffects() {
         float mask=1.-smoothstep(.12,1.,r);
         if(vKind>.5)mask=1.-smoothstep(.64,1.,r);
         if(vKind>1.5)mask=exp(-dot(p*vec2(3.8,.8),p*vec2(3.8,.8)))*1.2;
-        if(vKind>2.5){vec2 uv=mat2(cos(vSpin),-sin(vSpin),sin(vSpin),cos(vSpin))*p*.5+.5;
+        if(vKind>2.5&&vKind<3.5){vec2 uv=mat2(cos(vSpin),-sin(vSpin),sin(vSpin),cos(vSpin))*p*.5+.5;
           vec4 smoke=texture2D(smokeTexture,clamp(uv,0.0,1.0));
           mask=smoke.a*(.65+.35*smoke.r)*step(0.0,uv.x)*step(0.0,uv.y)*step(uv.x,1.0)*step(uv.y,1.0);}
+        if(vKind>3.5&&vKind<4.5)mask=1.-smoothstep(.45,1.,length(p*vec2(.82,1.18)));
+        if(vKind>4.5)mask=(1.-smoothstep(.32,1.,length(p*vec2(2.8,.58))))*(.72+.28*cos(p.x*13.));
         gl_FragColor=vec4(vColor,vAlpha*mask);if(gl_FragColor.a<.008)discard;
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -90,7 +92,8 @@ export function createDrivingEffects() {
   for (let i = 0; i < markCount; i++) marks.setMatrixAt(i, transform.matrix);
   for (let i = 0; i < chipCount; i++) chips.setMatrixAt(i, transform.matrix);
   let cursor = 0, markCursor = 0, chipCursor = 0, previousImpact = 0;
-  let dustBudget = 0, gravelBudget = 0, skidBudget = 0, smokeBudget=0, previousX, previousZ;
+  let dustBudget = 0, gravelBudget = 0, skidBudget = 0, smokeBudget=0,
+    mudBudget=0,waterBudget=0,previousWaterDepth=0,previousX, previousZ;
   let previousAirborne = false, peakAirHeight = 0, previousCourse;
   let previousMarkContacts = null;
   let previousCrushSerial = 0;
@@ -104,14 +107,20 @@ export function createDrivingEffects() {
     floor[i] = contact?.y ?? y - .09; floorX[i] = contact?.x ?? x; floorZ[i] = contact?.z ?? z;
     floorSlopeX[i] = contact?.slopeX || 0; floorSlopeZ[i] = contact?.slopeZ || 0;
     particleStrength[i] = strength; kind[i] = type;spin[i]=Math.random()*Math.PI*2;
-    lifetime[i] = type === 0 || type===3 ? 1.0 + Math.random() * .95 : type === 1 ? .45 + Math.random() * .55 : .23 + Math.random() * .48;
+    lifetime[i] = type === 0 || type===3 ? 1.0 + Math.random() * .95 :
+      type===4 ? .55+Math.random()*.65 : type===5 ? .38+Math.random()*.48 :
+      type === 1 ? .45 + Math.random() * .55 : .23 + Math.random() * .48;
     life[i] = lifetime[i];
-    initialSize[i] = type === 0 || type===3 ? .65 + Math.random() * .7 : type === 1 ? .055 + Math.random() * .075 : .1 + Math.random() * .2;
+    initialSize[i] = type === 0 || type===3 ? .65 + Math.random() * .7 :
+      type===4 ? .13+Math.random()*.22 : type===5 ? .28+Math.random()*.48 :
+      type === 1 ? .055 + Math.random() * .075 : .1 + Math.random() * .2;
     const shade = .78 + Math.random() * .22;
     color[n] = (type === 2 ? 3.4 : type === 1 ? .45 : .72) * shade;
     color[n + 1] = (type === 2 ? 1.8 : type === 1 ? .31 : .49) * shade;
     color[n + 2] = (type === 2 ? .32 : type === 1 ? .18 : .28) * shade;
     if(type===3){color[n]=.72*shade;color[n+1]=.75*shade;color[n+2]=.78*shade;}
+    if(type===4){color[n]=.19*shade;color[n+1]=.105*shade;color[n+2]=.045*shade;}
+    if(type===5){color[n]=.58*shade;color[n+1]=.78*shade;color[n+2]=.82*shade;}
     opacity[i] = type === 0 ? .28 * strength : .95;
   }
 
@@ -119,7 +128,7 @@ export function createDrivingEffects() {
     if (!(dt > 0) || !p || !state) return;
     dt = Math.min(dt, .06);
     emitted=false;marksAdded=false;chipsAdded=false;
-    const activeDrive = !state.status || state.status === 'racing';
+    const activeDrive = !state.status || state.status === 'racing' || state.status === 'exploring';
     const speed = Math.abs(state.speedMph || 0), direction = state.speedMph < 0 ? -1 : 1, moving = speed > 9 && activeDrive;
     const heading = (p.heading || 0) + (state.headingError || 0) + (state.slipAngle || 0);
     const fx = Math.sin(heading), fz = Math.cos(heading), rx = Math.cos(heading), rz = -Math.sin(heading);
@@ -127,10 +136,12 @@ export function createDrivingEffects() {
     const roughness = Math.max(monster ? .65 : .2, state.roughness || 0);
     const airborne = !!state.airborne || !!state.tumble || (state.airHeight || 0) > .08;
     const dirt = !!state.offRoad || !!course?.def.arena || !!course?.def.offroad;
+    const surfaceMud=Math.max(0,Math.min(1,Number(state.surfaceMud)||0));
+    const waterDepth=Math.max(0,Math.min(1,Number(state.waterDepth)||0));
     const wheelTrack = monster ? 1.32 : rally ? .89 : 1, rearAxle = monster ? 1.5 : rally ? 1.25 : 1.4;
     const impact = state.impactTimer || 0;
     const teleported = previousCourse !== course || previousX !== undefined && Math.hypot(p.x - previousX, p.z - previousZ) > 45;
-    if (teleported) { life.fill(0); markLife.fill(0); chipLife.fill(0); dustBudget = gravelBudget = skidBudget = smokeBudget = 0; previousMarkContacts=null; previousAirborne = false; peakAirHeight = 0; previousImpact = 0; previousCrushSerial = state.crushBurst?.serial || 0; }
+    if (teleported) { life.fill(0); markLife.fill(0); chipLife.fill(0); dustBudget = gravelBudget = skidBudget = smokeBudget = mudBudget = waterBudget = 0; previousWaterDepth=waterDepth; previousMarkContacts=null; previousAirborne = false; peakAirHeight = 0; previousImpact = 0; previousCrushSerial = state.crushBurst?.serial || 0; }
     previousCourse = course;
     previousX = p.x; previousZ = p.z;
 
@@ -165,7 +176,7 @@ export function createDrivingEffects() {
     // Landing, crush and impact bursts sample their own contact below.
     const braking = Number((state.gear===-1?state.input?.throttle:state.input?.brake) || 0) > .2;
     const sliding = !!state.drifting || (Math.abs(state.slipAngle || 0) > .075);
-    const contacts = moving && !airborne && (dirt || braking || sliding || impact > .1) ? [-1, 1].map(side => contactAt(-fx * rearAxle + rx * side * wheelTrack, -fz * rearAxle + rz * side * wheelTrack)) : [];
+    const contacts = moving && !airborne && (dirt || surfaceMud>0 || waterDepth>0 || braking || sliding || impact > .1) ? [-1, 1].map(side => contactAt(-fx * rearAxle + rx * side * wheelTrack, -fz * rearAxle + rz * side * wheelTrack)) : [];
     if (airborne) peakAirHeight = Math.max(peakAirHeight, state.airHeight || 0);
     if (previousAirborne && !airborne && activeDrive && !teleported) {
       const contact = contactAt(0, 0), power = Math.min(1, .3 + peakAirHeight * .16), amount = Math.round((monster ? 65 : 40) * power);
@@ -219,6 +230,40 @@ export function createDrivingEffects() {
           -fz * direction * (3 + speed * .035) + rz * scatter, 1, 1, contact);
       }
     } else { dustBudget = 0; gravelBudget = 0; }
+
+    if(moving&&!airborne&&contacts.length&&surfaceMud>0){
+      const spin=Math.max(.35,Math.min(2,Number(state.mudWheelSpin)||1));
+      mudBudget+=dt*(10+speed*.42)*surfaceMud*spin*(monster?1.55:1);
+      while(mudBudget>=1){
+        mudBudget--;
+        const side=cursor%2,contact=contacts[side];
+        emit(contact.x,contact.y+.16,contact.z,
+          -fx*direction*(2.4+speed*.028)+rx*(side?1:-1)*(1.2+Math.random()*2.4),
+          1.2+Math.random()*3.6,
+          -fz*direction*(2.4+speed*.028)+rz*(side?1:-1)*(1.2+Math.random()*2.4),
+          4,.55+surfaceMud*.55,contact);
+      }
+    }else mudBudget=0;
+
+    const enteredWater=waterDepth>=.05&&previousWaterDepth<.05;
+    if(moving&&!airborne&&contacts.length&&waterDepth>=.05){
+      waterBudget+=dt*(8+speed*.32)*waterDepth*(monster?1.45:1);
+      const burst=enteredWater?Math.round(12+Math.min(28,speed*.28)*waterDepth):0;
+      for(let n=0;n<burst;n++){
+        const side=n%2,contact=contacts[side],spread=(Math.random()-.5)*(5+waterDepth*6);
+        emit(contact.x,contact.y+.2,contact.z,
+          fx*direction*(1+speed*.018)+rx*spread,2.5+Math.random()*(4+waterDepth*5),
+          fz*direction*(1+speed*.018)+rz*spread,5,.65+waterDepth*.5,contact);
+      }
+      while(waterBudget>=1){
+        waterBudget--;
+        const side=cursor%2,contact=contacts[side],spray=(side?1:-1)*(1.8+Math.random()*2.8);
+        emit(contact.x,contact.y+.15,contact.z,
+          -fx*direction*(1.2+speed*.02)+rx*spray,1.5+Math.random()*3.2,
+          -fz*direction*(1.2+speed*.02)+rz*spray,5,.45+waterDepth*.55,contact);
+      }
+    }else waterBudget=0;
+    previousWaterDepth=airborne?0:waterDepth;
 
     if (impact > previousImpact + .12) {
       const power = Math.max(.25, Math.min(1, state.impactStrength || .5)), side = state.impactSide || 1;

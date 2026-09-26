@@ -20,9 +20,11 @@ export function prepareVehicleGrounding(vehicle){
       for(let i=0;i<positions.count;i++){point.fromBufferAttribute(positions,i).applyMatrix4(local);low=Math.min(low,point.y);high=Math.max(high,point.y);}
     });
     if(!Number.isFinite(low)||high<=low)continue;
+    local.multiplyMatrices(inverse,wheel.parent.matrixWorld);
+    point.set(0,0,0).applyMatrix4(local);
     const radius=(high-low)/2;contactY=Math.min(contactY,low);
     wheel.parent.userData.radius=radius;
-    wheels.push(Object.freeze({contactY:low,radius}));
+    wheels.push(Object.freeze({contactY:low,radius,x:point.x,z:point.z}));
   }
   if(!Number.isFinite(contactY))contactY=0;
   const bounds=new THREE.Box3(),part=new THREE.Box3();
@@ -78,6 +80,20 @@ export function applyVehicleTerrainPose(vehicle,course,actor){
     // Ground grades are measured independently along/across the tire plane.
     // YXZ applies roll before pitch, so remove that pitch cross-coupling.
     vehicle.rotation.z=actor.tumble?roll:Math.atan2(Math.sin(roll)*Math.cos(pitch),Math.cos(roll));
+  }
+  if(!actor?.tumble&&!actor?.airborne&&(actor?.airHeight||0)<=.08&&
+      actor?.car==='titan_monster'&&Number.isFinite(actor?.groundHeight)&&
+      course?.muddyHollow?.contains){
+    const ground=course.groundAt(actor.s,actor.lateral);
+    if(course.muddyHollow.contains(ground.x,ground.z)){
+      const {contactY,wheels}=prepareVehicleGrounding(vehicle);
+      let low=Infinity;
+      for(const wheel of wheels){
+        point.set(wheel.x,wheel.contactY,wheel.z).applyEuler(vehicle.rotation);
+        low=Math.min(low,point.y);
+      }
+      if(Number.isFinite(low))vehicle.position.y+=Math.max(0,contactY-low);
+    }
   }
   if(actor?.tumble){
     // A complete roll rotates around the chassis, not the tire-plane origin.
