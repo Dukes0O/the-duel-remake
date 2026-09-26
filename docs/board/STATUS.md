@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-26T07:58:06.832Z
+Observed at: 2026-09-26T08:22:26.353Z
 
-Observation commit: b1ee611bcd2460caf8a98e3939faa44cb3ecc25b
+Observation commit: 307b2f686e9a5eb2b6ca757240578d0857079aa5
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: b1ee611bcd2460caf8a98e3939faa44cb3ecc25b
+Integration HEAD: 307b2f686e9a5eb2b6ca757240578d0857079aa5
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -14,7 +14,7 @@ Live commit: not checked
 
 Live build version: not checked
 
-Full tier: passed; exact HEAD passed: yes.
+Full tier: stale; exact HEAD passed: no.
 
 Last recorded full run: 2026-09-26T07:57:21.145Z; tested commit: b1ee611bcd2460caf8a98e3939faa44cb3ecc25b.
 
@@ -40,7 +40,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | lane/audio/aud-10 | 0 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 1 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/egg/egg-03-p2-surfaces | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/muddy-hollow-p2/the-duel-remake |
+| lane/egg/egg-03-p2-surfaces | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/muddy-hollow-p2/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -49,7 +49,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/ux-backlog-notes | unknown | 2026-09-25T17:10:59-07:00 | 0 | last commit 2026-09-25T17:10:59-07:00 | docs/board/board.yaml, docs/changes/BACKLOG-UX-LAUNCHER.md |
-| lane/egg/egg-03-p2-surfaces | EGG-03-P2 | 2026-09-26T00:55:16-07:00 | 0 | uncommitted changes; exact activity time unknown | tools/test-muddy-hollow.mjs, docs/changes/EGG-03.md |
 
 ## Size targets
 
@@ -57,15 +56,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 239,972,553 B | +3,898 B | 250,000,000 B |
+| Build `dist/` | 239,972,553 B | +0 B | 250,000,000 B |
 | Wasteland models | 78,930,708 B | +0 B | 60,000,000 B |
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
 | Review `looks/` | 7,868,116 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 169,875 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 327,134 B | +157,259 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 328,027,136 B | +23,552 B | unavailable |
+| Git objects | 328,188,928 B | +161,792 B | unavailable |
 | Lane folders | 1 | +0 | unavailable |
 
 ## Backups
@@ -74,7 +73,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: faf5749598d061d0d11cadff9a4515fb10308ddb
 - Local main: missing
-- Local integration/wasteland: b1ee611bcd2460caf8a98e3939faa44cb3ecc25b
+- Local integration/wasteland: 307b2f686e9a5eb2b6ca757240578d0857079aa5
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -82,4 +81,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit faf5749598d061d0d11cadff9a4515fb10308ddb.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: matches local; cached commit b1ee611bcd2460caf8a98e3939faa44cb3ecc25b.
+- Remote origin/integration/wasteland: behind local; cached commit b1ee611bcd2460caf8a98e3939faa44cb3ecc25b.
