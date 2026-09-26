@@ -87,7 +87,9 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   const title = won ? 'LAST CAR<br>ROLLING.' : place === 2 ? 'SO CLOSE.' : 'BACK TO<br>THE HEAP.';
   const description = `${won ? 'You wrecked them more than they wrecked you.' : `${escapeHTML(winner.name)} took the Scrapdome.`} ${REASONS[result.reason] || ''}`;
   const metrics = metric('PLACE', `${ORDINALS[place - 1]} / ${arena.participants.length}`, true) +
-    metric('WRECKS', me.wrecks) + metric('WRECKED', me.wrecked) + metric('DAMAGE DEALT', Math.round(me.damageDealt));
+    metric('WRECKS', me.wrecks) + metric('WRECKED', me.wrecked) + metric('DAMAGE DEALT', Math.round(me.damageDealt)) +
+    metric('SCRAP EARNED', `+${Number.isSafeInteger(result.scrapEarned) ? result.scrapEarned : 0}`) +
+    metric('HOLD', `${Number.isSafeInteger(result.hold) ? result.hold : 0} / 100`);
   const table = `<ol class="arena-results"><li class="arena-results-head"><b></b><span>DRIVER</span><strong>WRECKS / WRECKED</strong></li>${result.placings.map((id, index) => {
     const p = byId[id];
     return `<li class="${id === 'player' ? 'is-you' : ''}"><b>${ORDINALS[index]}</b><span>${escapeHTML(p.name)}${arenaStyleLabel(p) ? ` · ${arenaStyleLabel(p)}` : ''}</span><strong>${p.wrecks} / ${p.wrecked}</strong></li>`;

@@ -11,6 +11,7 @@ import {hiddenRoadDiscoverySnapshot} from './hidden-road-discovery.js';
 import {featureFlags} from './feature-flags.js';
 import {raceFeatureFlags,wastelandUnlocked} from './wasteland-access.js';
 import {ARENA_FIELD} from './arena/arena-event.js';
+import {settleArenaResult} from './arena/arena-settlement.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
 import { seedFromUrl } from './rng.js';
@@ -93,6 +94,7 @@ export class App {
       if(event.driftBanked||event.driftChainLost)this.driftNotice={type:event.driftBanked?'banked':'lost',...(event.driftBanked||event.driftChainLost),expiresAt:state.stageTimeSec+2};
       if(event.checkpointRushEvent)this.checkpointNotice={...event.checkpointRushEvent,expiresAt:state.stageTimeSec+2.5};
       if(event.ticket)this._settlePoliceTicket(event.ticket,state);
+      if(event.arenaResult)this._settleArenaResult(event.arenaResult,state);
       if (event.stageResult) {
         this._settleResult(event.stageResult,state);
       }
@@ -460,6 +462,28 @@ export class App {
     }else if(result.creditReward==null)result.creditReward=0;
     this._finishGhost(payload,state,awarded,result);
     result.creditBalance=this.profile.credits;
+  }
+  _settleArenaResult(event,state){
+    const result=state?.arena?.result,currentHold=Number.isSafeInteger(this.profile?.wasteland?.territories?.kettle?.hold)?this.profile.wasteland.territories.kettle.hold:0;
+    if(result&&result.scrapEarned==null){Object.assign(result,{scrapEarned:0,holdAdded:0,hold:currentHold,settlementSaved:false});}
+    if(!result||event?.result!==result||state!==this.duel.state||
+      !this.runId||!this._switches().enabled('scrapdome')||
+      this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return false;
+    this._refreshPlayer();
+    if(this._runPlayerId!==this.player.id||state.playerId!==this.player.id)return false;
+    const previous=this.profile,settled=settleArenaResult(previous,{runId:this.runId,
+      ownerPlayerId:this._runPlayerId,activePlayerId:this.player.id,
+      cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,arena:state.arena});
+    if(!settled.awarded){
+      result.hold=settled.hold;
+      return false;
+    }
+    this.profile=settled.profile;
+    if(!this._saveShopProfile(previous))return false;
+    Object.assign(result,{scrapEarned:settled.scrapEarned,
+      scrapBalance:this.profile.wasteland.scrap,holdAdded:settled.holdAdded,
+      hold:settled.hold,settlementSaved:true});
+    return true;
   }
   _settleAbandoned(){
     const state=this.duel.state;

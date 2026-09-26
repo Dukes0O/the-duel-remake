@@ -1055,3 +1055,31 @@ band, use a smooth deterministic taper back to the exact source triangle
 height. This prevents a large triangle from bridging above the detailed mesh,
 keeps the outside seam continuous and does not widen the detailed Hollow mesh
 or alter the race tunnel. Flag-off geometry remains on the unchanged path.
+
+## 2026-09-26: settle Last Car Rolling scrap and hold
+
+Use CAR-01's existing 80-scrap finish and 60-scrap credited-wreck values for
+the Scrapdome. Add 40 scrap for each computer car that finishes behind the
+player. Count at most four credited wrecks, matching CAR-01's bounded wreck
+contract. Multiply that subtotal by computer difficulty: 1.0 on Easy, 1.2 on
+Medium and 1.4 on Hard, then round to the nearest whole scrap. This makes a
+larger field pay more without adding a second currency rule or rewarding an
+unfinished event.
+
+A player win against at least two computer cars adds 25 hold to Kettle
+Kingpin's territory, capped at 100. A one-computer-car win still pays scrap
+but adds no hold. Settle only the player who started the event, once under
+`arena:<runId>` in `wasteland.settledResults`. A failed save restores the
+complete previous profile and shows no new award. Abandonment emits no arena
+result and therefore costs and pays nothing. Preserve unknown profile,
+Wasteland and Kettle fields throughout.
+
+Independent review of the first candidate proved that current-version profile
+normalization already preserved unknown Wasteland and Kettle fields but
+dropped unknown fields at the profile root during the actual player-registry
+save. Re-slice ARENA-02-PAY to the existing `src/progression.js` normalization
+hook. Preserve unknown root fields for supported profile versions before
+validating every known field. Keep invalid and future profile versions on the
+existing fresh-profile path, and keep future Wasteland versions write-blocked.
+The regression must pass through `replacePlayerProfile`, `savePlayers` and
+`loadPlayers`, not only the pure settlement helper.
