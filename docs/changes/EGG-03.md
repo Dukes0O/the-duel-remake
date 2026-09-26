@@ -584,3 +584,87 @@ External mud, rock and log sources remain blocked on the Kyle decision in the
 shortlist. This lane does not download, adapt or substitute any shortlisted
 asset. It therefore leaves source-selected surface detail and prop replacement
 as the last Phase 6 step.
+
+## Phase 6 code-native tests first
+
+The first scene acceptance commit, `9abafb2`, preceded runtime code and failed
+because `src/muddy-hollow-scene.js` did not exist. It covered the switched
+scene, deterministic collision-matched ground, pond, flag, hubcaps, particles,
+mountain masking and real-model Titan grounding.
+
+Browser and source review then drove narrow red regressions before their
+fixes. These covered grounded-effect demand, upward face winding, exact
+triangle-to-ellipse overlap, a readable wet margin, visible tread support and
+coarse terrain occlusion. The final seam contract was committed at `c19e612`
+before its implementation. It failed on the first near-terrain triangle
+because the coarse mesh had not yet been subdivided.
+
+## Phase 6 code-native evidence
+
+- `node tools/test-muddy-hollow-scene.mjs`: 95 checks passed. The suite proves
+  upward finite ground and water, visible water only, all five markers,
+  deterministic indices and positions, complete material groups, exact outer
+  seam heights and sampled coarse terrain below the actual detailed mesh,
+  including its narrow outer skirt.
+- `node tools/test-muddy-hollow.mjs`: 50/50 checks passed.
+- Effects passed 172 checks; contact demand passed 3,795 checks and 1,260 exact
+  effect-buffer snapshots; render reuse passed 176 checks.
+- All 162 replay fingerprints passed. World composition passed 33 checks.
+  Terrain, polyline integration and terrain style passed, including 22,713
+  polyline checks and 20,914 style checks.
+- Vehicle grounding passed 4,967 checks across all nine real models. The
+  switched Titan's tread support remains render-only and its body stays clear.
+- Independent exact triangle-overlay review found at least 0.315 metres of
+  near-terrain clearance and 0.093 metres of far-terrain clearance across the
+  detailed mesh. Every shared exterior edge had zero height discontinuity.
+  Median switched near-plus-far construction was about 0.245 seconds versus
+  0.075 seconds flag-off. It adds no per-frame work.
+- Browser review first found coarse slabs, downward faces, a broad-skirt tunnel
+  seam and, at `c8121c9`, coarse terrain burying the detailed ground and pond.
+  Exact raycasts separated the ordinary `Circuit rock surface` from Hollow
+  meshes.
+- Final browser QA passed exact runtime commit `2aecd84` on private ports 18541
+  and 52403 with memory-only saves. The official run produced 11 captures; the
+  direct run produced eight. Both had zero console errors, warnings or failed
+  requests. The pond, wet margin, flag, five hubcaps, collected-marker hiding,
+  26 mud clods and 30 water sprays passed. The Titan's real treads were tangent
+  and its body stayed clear. The former sky hole, flooded basin, broad slab and
+  fitted-ground clipping were absent.
+- Matched flag-off and flagged cameras had zero coordinate difference. The
+  remaining lower-right slab raycast to the ordinary `Circuit rock surface`
+  and was identical flag-off. The overhead patch was ordinary near/far terrain;
+  at its overlap sample the detailed Hollow ground was 3.25 metres nearer.
+  The phone HUD remained readable and unclipped.
+- Frame time across 120 browser frames was 17.7 ms median, 19.2 ms at the 95th
+  percentile and 21.4 ms maximum; no frame exceeded 33 ms. A retained direct
+  helper reports only its obsolete invented `lift > 0.25 m` assertion. The
+  measured lift is 0.08219 m and the real-tread image and focused test pass.
+- Raw review evidence is in
+  `.evidence/2026-09-26/EGG-03-P6-browser/official-2aecd84/` and
+  `.evidence/2026-09-26/EGG-03-P6-browser/direct-control-2aecd84/`.
+- The fitted-ground perimeter still reads as a thin stair-stepped dark rim at
+  some overview angles. It is bounded to the ellipse and does not cross the
+  Hollow. Keep this as a known polish item for the source-selected surface
+  pass; do not widen the mesh back toward the race tunnel.
+- `npm run build`: passed with 235 modules. The existing large-chunk warning
+  remains; no new warning was introduced.
+
+## Phase 6 changed assertions
+
+- `tools/test-muddy-hollow-scene.mjs` is new for Phase 6. Its first topology
+  assertion expected one private replacement triangle for each source
+  triangle. Evidence proved that topology could still bridge far above the
+  detailed surface. The final assertion requires bounded subdivision instead,
+  then checks every generated overlap, boundary taper, material group and
+  sampled surface height. No pre-existing test was weakened.
+- The grounded-effect test now supplies the same contact demand required by
+  runtime emission. This corrects an incomplete fixture; it does not reduce
+  the production contact guard.
+
+## Phase 6 removed
+
+The lane removes each failed presentation path as it is replaced: the broad
+1.3-times detailed-ground skirt, centroid-only coarse cuts, single-triangle
+coarse fits and approximate Titan centre/radius grounding. It keeps no old
+mesh, alternate path, screenshot or generated source asset. External mud,
+rock and log art remains pending Kyle's shortlist choice.

@@ -1037,3 +1037,21 @@ outer seam against ordinary terrain. The pale slab was `Circuit rock surface`,
 not a Hollow mesh or overlapping mountain. Retire that broad skirt. The private
 coarse replacements above keep their original outer edges and let the dense
 mesh end at the authored ellipse, away from the race road and tunnel.
+
+## 2026-09-26: subdivide coarse Hollow cover and taper its boundary
+
+Review of the first private-vertex replacement at `c8121c9` found that copying
+only each coarse triangle's three corners did not fit its interior. Near
+terrain rose 2.086 metres above the detailed mesh, far terrain rose 17.900
+metres above it, and one fitted-to-unfitted far edge opened a 1.636-metre
+crack. Browser review showed the same failure as buried ground and pond.
+
+Subdivide only near and far triangles that touch a 1.08-times Hollow ellipse.
+Use two fixed subdivision levels for near terrain and three for the coarser far
+grid. Interpolate every existing non-position attribute and keep the source
+triangle's material group. Inside the authored ellipse, place this coarse
+underlay 0.7 metres below its authored height. Across the outer eight-percent
+band, use a smooth deterministic taper back to the exact source triangle
+height. This prevents a large triangle from bridging above the detailed mesh,
+keeps the outside seam continuous and does not widen the detailed Hollow mesh
+or alter the race tunnel. Flag-off geometry remains on the unchanged path.

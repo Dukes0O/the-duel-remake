@@ -47,7 +47,55 @@ function triangleOverlapsHollow(position, vertices) {
   return false;
 }
 
-function checkHollowCut(builder, label, yOffset) {
+function detailedHeightLookup(geometry) {
+  const position = geometry.attributes.position;
+  const local = vertex => {
+    const dx = position.getX(vertex) - course.muddyHollow.frame.origin.x;
+    const dz = position.getZ(vertex) - course.muddyHollow.frame.origin.z;
+    return {
+      along: dx * Math.sin(course.muddyHollow.frame.heading) +
+        dz * Math.cos(course.muddyHollow.frame.heading),
+      lateral: dx * Math.cos(course.muddyHollow.frame.heading) -
+        dz * Math.sin(course.muddyHollow.frame.heading),
+    };
+  };
+  const first = local(0);
+  let width = 1;
+  while(width < position.count && Math.abs(local(width).lateral - first.lateral) < .001)
+    width++;
+  const rows = position.count / width;
+  check(Number.isInteger(rows) && width > 2 && rows > 2,
+    'the detailed Hollow remains an ordered ground grid');
+  const last = local(position.count - 1), cells = new Set();
+  for(let offset = 0; offset < geometry.index.count; offset += 3) {
+    const vertices = [geometry.index.array[offset], geometry.index.array[offset + 1],
+      geometry.index.array[offset + 2]];
+    const row = Math.min(...vertices.map(vertex => Math.floor(vertex / width)));
+    const column = Math.min(...vertices.map(vertex => vertex % width));
+    cells.add(`${row}:${column}`);
+  }
+  return (x, z) => {
+    const dx = x - course.muddyHollow.frame.origin.x;
+    const dz = z - course.muddyHollow.frame.origin.z;
+    const along = dx * Math.sin(course.muddyHollow.frame.heading) +
+      dz * Math.cos(course.muddyHollow.frame.heading);
+    const lateral = dx * Math.cos(course.muddyHollow.frame.heading) -
+      dz * Math.sin(course.muddyHollow.frame.heading);
+    const columnAt = (along - first.along) / (last.along - first.along) * (width - 1);
+    const rowAt = (lateral - first.lateral) / (last.lateral - first.lateral) * (rows - 1);
+    const column = Math.floor(columnAt), row = Math.floor(rowAt);
+    if(column < 0 || row < 0 || column >= width - 1 || row >= rows - 1 ||
+      !cells.has(`${row}:${column}`)) return null;
+    const across = columnAt - column, down = rowAt - row;
+    const a = row * width + column, b = a + 1, c = a + width, d = c + 1;
+    if(across + down <= 1) return position.getY(a) * (1 - across - down) +
+      position.getY(b) * across + position.getY(c) * down;
+    return position.getY(b) * (1 - down) + position.getY(c) * (1 - across) +
+      position.getY(d) * (across + down - 1);
+  };
+}
+
+function checkHollowCut(builder, label, yOffset, denseHeight) {
   const ordinaryGeometry = builder(ordinary);
   const hollowGeometry = builder(course);
   check(hollowGeometry.index.count > ordinaryGeometry.index.count,
@@ -108,11 +156,12 @@ function checkHollowCut(builder, label, yOffset) {
         sum + position.getX(vertex) * weights[item], 0);
       const z = vertices.reduce((sum, vertex, item) =>
         sum + position.getZ(vertex) * weights[item], 0);
-      if(!course.muddyHollow.contains(x, z)) continue;
+      const detailedY = denseHeight(x, z);
+      if(detailedY === null) continue;
       const y = vertices.reduce((sum, vertex, item) =>
         sum + position.getY(vertex) * weights[item], 0);
       samples++;
-      if(y >= course.muddyHollow.heightAt(x, z) + .031) {
+      if(y >= detailedY - .001) {
         firstOcclusion = offset / 3; break;
       }
     }
@@ -128,7 +177,7 @@ function checkHollowCut(builder, label, yOffset) {
   check(firstTransitionError < 0,
     `${label} boundary vertices blend between fitted and original terrain height`);
   check(samples > 0 && firstOcclusion < 0,
-    `${label} cannot rise through the detailed Hollow surface (triangle ${firstOcclusion})`);
+    `${label} cannot rise through the actual detailed Hollow mesh (triangle ${firstOcclusion})`);
   let uncheckedFit = -1;
   for(let vertex = 0; vertex < position.count; vertex++) {
     if(fitted.getX(vertex) !== 1) continue;
@@ -286,8 +335,12 @@ function checkHollowCut(builder, label, yOffset) {
 }
 
 {
-  checkHollowCut(terrainGeometry, 'near terrain', 0);
-  checkHollowCut(farTerrainGeometry, 'far terrain', -.15);
+  const scene = createMuddyHollowScene(course);
+  const dense = scene.group.getObjectByName('Muddy Hollow detailed ground');
+  const denseHeight = detailedHeightLookup(dense.geometry);
+  checkHollowCut(terrainGeometry, 'near terrain', 0, denseHeight);
+  checkHollowCut(farTerrainGeometry, 'far terrain', -.15, denseHeight);
+  scene.dispose();
 }
 
 {
