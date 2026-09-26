@@ -295,3 +295,30 @@ in `docs/board/decisions.md`.
 
 Nothing. Phase 3 reuses the existing abandoned-race settlement and pause panel
 and adds an isolated departure state; it does not replace an old path.
+
+## Phase 4 settled detail
+
+Phase 4 turns the five phase-1 ramp sites into the settled playground set:
+one mega jump beside the pond, three dirt kickers across the valley and one
+stacked-log ramp. They use the shared deterministic off-road flight and
+landing physics. Exploration calls that physics between driving and static
+contact resolution. Natural Hollow jumps do not create an arena jump token,
+score, record, reward, callout or race event. The race clocks remain frozen.
+
+The rock garden is a fixed, zone-owned group of climbable boulders on the
+valley floor. It is queried through the existing support and static-contact
+paths without adding the rocks to `course.features`, consuming course random
+values or changing the ordinary High Country obstacle buckets. Every intended
+garden boulder is within the Titan's installed rock-height limit. A car with
+no matching off-road capability still treats the same boulders as solid.
+
+King of the Hill keeps the phase-1 summit and gains one deterministic flag
+marker at its top. The marker is presentation data, not a checkpoint or a
+collectible: reaching it changes no state and emits no event. Phase 6 will
+render this marker with the detailed Hollow scene. Phase 4 adds no menu,
+screen, save field, collectible, particle or audio playback.
+
+All phase-4 content exists only when the `muddy-hollow` development switch
+and discovered-gate snapshot install the zone. The fixed-step outcomes must
+agree under 30, 60 and 144 FPS scheduling, while the flag-off course,
+ordinary course fingerprint and random stream remain unchanged.
