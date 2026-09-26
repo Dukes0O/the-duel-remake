@@ -1,6 +1,6 @@
 ---
 task: EGG-03
-status: phase-1-merged
+status: active-phase-2
 kind: easter-egg
 flag: muddy-hollow
 player_facing: yes
@@ -97,3 +97,38 @@ and distinct render cache keys.
 ## Removed
 
 Nothing in phase 1.
+
+## Phase 2 settled detail
+
+Phase 2 adds simulation data and driving only. It does not add materials,
+particles, audio playback, departure, jumps, collectibles or save fields.
+The existing `muddy-hollow` development switch and discovered-gate snapshot
+remain the only way to install the zone.
+
+`course.surfaceAt(s, lateral)` keeps its existing road fields and gains two
+numbers only inside the installed, off-road Hollow: `mud` from 0 to 1 and
+`waterDepth` from 0 to 1 metre. Each of the three authored pit ellipses has a
+smooth mud falloff. The authored pond ellipse has a smooth depth falloff to a
+one-metre centre. Queries are deterministic and consume no random values.
+
+Driving uses those shared values in the fixed step. Mud lowers traction and
+adds drag at any speed. It also exposes a clamped `mudWheelSpin` state derived
+from mud, throttle and vehicle speed, so the later renderer can show wheel
+spin without changing simulation. Water drag rises with both depth and the
+absolute entry speed; reverse uses the same magnitude rule. Crossing from
+dry ground into at least 0.05 metre of water emits one
+`muddyHollowSplash` event with depth, speed, position and the placeholder cue
+`world.muddy-hollow-splash`. Remaining in the pond does not emit every tick;
+leaving below the threshold arms the next entry. The separate audio lane will
+implement the cue.
+
+Phase-2 tuning must prove these player outcomes on the real Titan: full mud
+has less steering authority and loses more speed than dry Hollow grass; deep
+water loses more speed than shallow water at the same entry speed; a faster
+entry loses more speed than a slower one at the same depth. Flag-off,
+undiscovered, road, racing-line, scenery, RNG, replay and 30/60/144 FPS paths
+stay exact.
+
+## Phase 2 tests first
+
+Pending red acceptance tests.
