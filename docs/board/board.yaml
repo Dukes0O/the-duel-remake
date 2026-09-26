@@ -5,6 +5,33 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: UX-ENTRY-HINTS
+    title: "Clarify car exit, bailout and reentry controls"
+    lane: UI
+    size: S
+    needs: []
+    status: backlog
+    owns: [docs/changes/UX-ENTRY-HINTS.md]
+    helpers: [test_author, reviewer, browser_qa]
+    acceptance:
+      - "Verify the reported F/X input mapping and transition thresholds against current source before choosing the in-game hint and assigning its UI files. Write the hint design before code."
+      - "Explain normal exit: hold 0.4 seconds below 40 km/h; bailout above 40 km/h: hold 1 second and lose 25 health. Verify the exact 40 km/h boundary in source rather than guessing."
+      - "Explain reentry: release the input first, then hold for 0.6 seconds within 3.5 metres of the car."
+      - "Show availability only in Wasteland combat races with wasteland2 enabled; preserve exclusion from time trials, ordinary races and objective events. Verify actual behavior in private memory-only QA."
+    note: "Requested by Kyle through the audio session on 25 September. Values and mode scope are that session's reported findings, not independently revalidated by this capture. No implementation authorized by this note; Director assigns UI ownership after source review."
+  - id: OPS-LAUNCHER-DIAG
+    title: "Investigate the reported desktop shortcut failure"
+    lane: TOOL
+    size: S
+    needs: []
+    status: backlog
+    owns: [docs/OPERATIONS.md, docs/changes/OPS-LAUNCHER-DIAG.md]
+    helpers: [reviewer]
+    acceptance:
+      - "Reproduce and identify the failing launch step in Kyle's user context. Separate actual shortcut resolution from sandbox identity artifacts before proposing a repair."
+      - "Reported findings: OneDrive Desktop/The Duel.lnk resolves as Kyle to C:/Users/kyleb/dev/the-duel-remake/start-game.bat; the icon and prerequisites exist. The sandboxed view instead reports an obsolete CodexSandboxOffline target. Kyle reports the icon still fails."
+      - "Keep initial work diagnostic only. Do not use live port 5174, read or change real saves, or edit the live launcher. Any repair needs a separately scoped card and the applicable Release Manager gate. No API key is needed."
+    note: "Relayed by the audio session on 25 September; this capture did not inspect the shortcut, live folder or user account. Root cause remains unknown. Preserve the difference between the user report and the two reported execution contexts."
   - id: CLEAN-01
     title: "Repository placement check, size targets and audit"
     priority: 1
