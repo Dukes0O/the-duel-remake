@@ -377,6 +377,8 @@ into the pond span. These evidence-based changes are recorded in
 - Feature-switch checks passed 22 assertions; Wasteland beta isolation passed
   all three subtests; all 162 replay fingerprints passed across 18 cases,
   16 events, three frame rates and three runs.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 187/187 suites
+  passed in 311.77 seconds on the reviewed phase-4 candidate.
 - `npm run build`: passed with 234 modules. The existing large-chunk warning
   remains; no new warning was introduced.
 
