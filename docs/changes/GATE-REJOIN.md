@@ -1,6 +1,6 @@
 ---
 task: GATE-REJOIN
-status: ready-to-merge
+status: merged
 kind: fix
 flag: hidden-road
 player_facing: yes
