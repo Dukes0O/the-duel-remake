@@ -38,6 +38,15 @@ const ordinary = new Course(highCountry, 1989, {muddyHollow: false});
   check([...ground.geometry.attributes.position.array].every(Number.isFinite) &&
     [...water.geometry.attributes.position.array].every(Number.isFinite),
   'all detailed ground and water vertices are finite');
+  const positions = ground.geometry.attributes.position.array;
+  for(let index = 0; index < positions.length; index += 3 * 401) {
+    check(Math.abs(positions[index + 1] -
+      (course.muddyHollow.heightAt(positions[index], positions[index + 2]) + .032)) < .001,
+    'sampled detailed vertices match the physical Hollow height field');
+  }
+  const surfaceKinds = new Set(ground.geometry.attributes.hollowSurface.array);
+  check(surfaceKinds.has(0) && surfaceKinds.has(1) && surfaceKinds.has(2),
+    'the detailed mesh carries distinct dry, mud and pond regions');
   equal([...ground.geometry.attributes.position.array],
     [...second.group.getObjectByName('Muddy Hollow detailed ground')
       .geometry.attributes.position.array],
@@ -79,7 +88,8 @@ const ordinary = new Course(highCountry, 1989, {muddyHollow: false});
   const fx = createDrivingEffects();
   const p = course.muddyHollow.landforms.pits[0].center;
   const base = {
-    status: 'exploring', car: 'titan_monster', s: course.muddyHollow.frame.s,
+    status: 'exploring', muddyHollowDeparture: {departed: true},
+    car: 'titan_monster', s: course.muddyHollow.frame.s,
     lateral: 160, speedMph: 52, headingError: 0, slipAngle: 0,
     groundHeight: course.muddyHollow.heightAt(p.x, p.z), terrainPitch: 0,
     terrainRoll: 0, airborne: false, tumble: null, airHeight: 0,
@@ -100,6 +110,15 @@ const ordinary = new Course(highCountry, 1989, {muddyHollow: false});
     state: {...base, airborne: true}, dt: .06, course});
   equal([...kinds], before, 'airborne tyres cannot emit mud or water');
   fx.dispose();
+
+  const otherExploration = createDrivingEffects();
+  const unrelated = {...base, muddyHollowDeparture: null, surfaceMud: 0,
+    mudWheelSpin: 0, waterDepth: 0, offRoad: true, airborne: false};
+  for(let i = 0; i < 6; i++) otherExploration.update({
+    p: {...p, y: base.groundHeight, heading: 0}, state: unrelated, dt: .06, course});
+  check(otherExploration.group.children.every(child => !child.visible),
+    'Hidden Road and yard exploration cannot wake Hollow driving effects');
+  otherExploration.dispose();
 }
 
 {

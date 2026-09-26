@@ -128,7 +128,8 @@ export function createDrivingEffects() {
     if (!(dt > 0) || !p || !state) return;
     dt = Math.min(dt, .06);
     emitted=false;marksAdded=false;chipsAdded=false;
-    const activeDrive = !state.status || state.status === 'racing' || state.status === 'exploring';
+    const activeDrive = !state.status || state.status === 'racing' ||
+      state.status === 'exploring' && state.muddyHollowDeparture?.departed === true;
     const speed = Math.abs(state.speedMph || 0), direction = state.speedMph < 0 ? -1 : 1, moving = speed > 9 && activeDrive;
     const heading = (p.heading || 0) + (state.headingError || 0) + (state.slipAngle || 0);
     const fx = Math.sin(heading), fz = Math.cos(heading), rx = Math.cos(heading), rz = -Math.sin(heading);
