@@ -70,11 +70,20 @@ export function installMuddyHollow(course) {
       { along: 72, lateral: 174, alongRadius: 23, lateralRadius: 18 },
     ],
     ramps: [
-      { along: -119, lateral: 268, alongRadius: 25, lateralRadius: 13, height: 5.5 },
-      { along: 119, lateral: 210, alongRadius: 23, lateralRadius: 12, height: 4.5 },
-      { along: -17, lateral: 319, alongRadius: 22, lateralRadius: 12, height: 4 },
-      { along: 61, lateral: 112, alongRadius: 25, lateralRadius: 11, height: 4.5 },
-      { along: -123, lateral: 124, alongRadius: 24, lateralRadius: 12, height: 3.8 },
+      { along: -119, lateral: 268, alongRadius: 25, lateralRadius: 13, height: 14, kind: 'mega-jump' },
+      { along: 119, lateral: 210, alongRadius: 23, lateralRadius: 12, height: 4.5, kind: 'dirt-kicker' },
+      { along: -17, lateral: 319, alongRadius: 22, lateralRadius: 12, height: 5.5, kind: 'dirt-kicker' },
+      { along: 61, lateral: 112, alongRadius: 25, lateralRadius: 11, height: 5.5, kind: 'dirt-kicker' },
+      { along: -123, lateral: 124, alongRadius: 24, lateralRadius: 12, height: 3.8, kind: 'log-ramp', direction: { along: 0, lateral: 1 } },
+    ],
+    rocks: [
+      { along: 32, lateral: 208, halfX: 1.4, halfZ: 1.5, height: 1.3, heading: -.28 },
+      { along: 42, lateral: 216, halfX: 1.55, halfZ: 1.4, height: 1.55, heading: .36 },
+      { along: 51, lateral: 207, halfX: 1.45, halfZ: 1.6, height: 1.75, heading: -.12 },
+      { along: 59, lateral: 219, halfX: 1.6, halfZ: 1.4, height: 1.45, heading: .48 },
+      { along: 69, lateral: 210, halfX: 1.5, halfZ: 1.65, height: 1.85, heading: -.4 },
+      { along: 78, lateral: 222, halfX: 1.6, halfZ: 1.4, height: 1.6, heading: .18 },
+      { along: 87, lateral: 213, halfX: 1.4, halfZ: 1.5, height: 1.35, heading: -.5 },
     ],
   };
 
@@ -154,6 +163,60 @@ export function installMuddyHollow(course) {
     return lerp(base, authoredHeight, blend);
   }
 
+  const rocks = authored.rocks.map((rock, index) => {
+    const point = frame.toWorld(rock.along, rock.lateral);
+    const pose = course.nearest(point.x, point.z, FRAME_S);
+    const supportRadius = Math.max(rock.halfX, rock.halfZ) * Math.SQRT2 + .6;
+    const baseY = Math.min(heightAt(point.x, point.z),
+      ...Array.from({ length: 16 }, (_, sample) => {
+        const angle = sample * Math.PI / 8;
+        return heightAt(point.x + Math.cos(angle) * supportRadius,
+          point.z + Math.sin(angle) * supportRadius);
+      }));
+    return {
+      id: `muddy-hollow-rock-${index + 1}`,
+      kind: 'rock',
+      shape: 'box',
+      x: point.x,
+      y: baseY,
+      z: point.z,
+      s: pose.s,
+      off: pose.lateral,
+      halfX: rock.halfX,
+      halfZ: rock.halfZ,
+      height: rock.height,
+      heading: frame.origin.heading + rock.heading,
+    };
+  });
+  const gardenCenter = frame.toWorld(60, 215);
+  landforms.rockGarden = {
+    id: 'rock-garden',
+    name: 'Rock garden',
+    center: gardenCenter,
+    rocks,
+  };
+  const summit = frame.toWorld(authored.hill.along, authored.hill.lateral);
+  landforms.hill.flag = {
+    id: 'king-of-the-hill-flag',
+    name: 'King of the Hill flag',
+    center: summit,
+    baseY: heightAt(summit.x, summit.z),
+    height: 7,
+  };
+
+  function obstaclesNear(fromS, toS = fromS) {
+    const minimum = Math.min(fromS, toS) - 16;
+    const maximum = Math.max(fromS, toS) + 16;
+    const obstacles = [];
+    for (const rock of rocks) {
+      const firstLap = Math.ceil((minimum - rock.s) / course.length);
+      const lastLap = Math.floor((maximum - rock.s) / course.length);
+      for (let lap = firstLap; lap <= lastLap; lap++) obstacles.push(lap === 0
+        ? rock : { ...rock, s: rock.s + lap * course.length });
+    }
+    return obstacles;
+  }
+
   course.muddyHollow = {
     frame: {
       s: FRAME_S,
@@ -171,6 +234,8 @@ export function installMuddyHollow(course) {
     contains,
     heightAt,
     surfaceAt,
+    obstacles: rocks,
+    obstaclesNear,
   };
   return course.muddyHollow;
 }
@@ -256,8 +321,10 @@ export function stepMuddyHollowExploration(duel, dt) {
   const state = duel.state;
   const departure = state.muddyHollowDeparture;
   if (state.status !== 'exploring' || !departure?.departed) return false;
+  const firstStep = departure.elapsedSec === 0;
   departure.elapsedSec += dt;
   duel._drive(dt);
+  if (!firstStep) duel._jump(state, dt, departure.elapsedSec);
   duel._staticContacts(state, true);
   return true;
 }

@@ -864,3 +864,78 @@ pass. Extend phase-6 acceptance to correct this verified Titan intersection
 before the playground is visually complete. This is a required grounding fix,
 not a change to the settled ridge location, Titan-only access or departure
 rule.
+
+## 2026-09-26: give Dirt Kickers 2 and 3 enough lift
+
+The phase-4 tests drove the Titan through all five settled ramp sites at the
+same 120 Hz step. The first red run stopped at Dirt Kicker 2: its four-metre
+bump was cancelled by the underlying valley grade at 58 mph. After that site
+matched the already proven mega-site lift, the continuing run found the same
+problem at Dirt Kicker 3 with its 4.5-metre lift. The mega jump, Dirt Kicker 1
+and the log ramp produced shared off-road flight without lift tuning.
+
+Keep both sites, footprints, roles and approaches unchanged, but raise their
+authored lift to 5.5 metres, matching the already proven mega-site lift. The
+phase-4 acceptance trace must prove the resulting flight. This does not change
+the racing line, ordinary course features, random stream or any flag-off
+course.
+
+The first test also assumed that every site used the local-along approach.
+The log site lies on a 28.6-metre local-along descent, while its cross-slope
+profile contains the intended crest. Retain its settled 3.8-metre lift and
+record the cross-slope approach in the authored site. The acceptance trace
+still requires real flight; this corrects the test path instead of inflating
+the ramp to overpower unrelated terrain.
+
+The settled mega jump must carry a fast Titan over the pond. Its phase-1
+five-and-a-half-metre placeholder launched the truck but landed before the
+pond. At 92 mph, 12, 13 and 13.5 metres reached nearest normalized pond radii
+of 1.188, 1.097 and 1.024, respectively, where 1.0 is the pond edge. A
+14-metre lift is the first tested half-metre value that enters the pond span.
+Keep the existing site and footprint and use that lift. Phase 6 still owns the
+visual review of the detailed ramp and landing.
+
+## 2026-09-26: isolate Hollow support from ordinary mountains
+
+Independent phase-4 review drove the sites through the public exploration
+step instead of assigning positions. Dirt Kicker 1 stopped before its centre.
+At local position 105.24, 210, the authored Hollow ground is 72.495 metres,
+but an ordinary High Country mountain supplies 76.679 metres of support; at
+the kicker centre it rises to 114.168 metres over 74.692 metres of Hollow
+ground. The unchanged mountain field physically buries the authored site.
+
+Inside the installed Hollow boundary, use the Hollow's own ground and
+zone-owned rocks for tyre support. Keep ordinary mountain support unchanged
+outside the boundary and on every flag-off course. Phase 6 must also mask or
+replace the overlapping ordinary mountain visuals when it builds the detailed
+Hollow scene; physics isolation alone is not visual acceptance.
+
+The same real-step review found steep support entries on the first rock group.
+Keep all seven centres and heights, widen their deterministic footprints, and
+anchor each support base to the minimum of 16 fixed samples around its support
+radius. This removes the terrain-height step at the downhill edge and lets the
+Titan crawl across each boulder without bypassing its max-grade rule.
+
+## 2026-09-26: use the exploration clock for Hollow airtime
+
+The race clock correctly freezes after departure, but shared jump physics also
+used it to measure airtime. A real mega-jump stayed airborne for 114 fixed
+ticks, about 0.95 seconds, while reporting only 0.008 seconds. Pass the
+deterministic departure elapsed time into the shared jump step during Hollow
+exploration. Ordinary race and arena calls keep the existing race-clock
+default. This changes no scoring or outcome clock.
+
+## 2026-09-26: repeat Hollow obstacles on each course lap
+
+The first rock query compared raw authored course distance. On lap two, rock 1
+was absent near distance 7,222.956 and Titan support fell from 71.3997 to the
+69.9997-metre base. Project each fixed rock onto every queried course lap and
+return that lap's absolute distance. IDs, world positions and authored order
+stay fixed, while shared support and solid-contact lookup now repeat exactly.
+
+The card did not originally name `src/sim-contacts.js`, although its settled
+rock garden requires the shared rock support and static-contact query. Re-slice
+EGG-03 narrowly to add that hook. The hook may only combine the installed
+zone's fixed obstacles with the existing query and suppress ordinary mountain
+support inside the zone boundary. Ordinary obstacles, contact damage and
+flag-off behavior stay unchanged.

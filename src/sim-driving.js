@@ -291,7 +291,7 @@ export function _offroadStep(dt, offPreparedRoute) {
   this._terrainPose();
 }
 
-export function _jump(actor, dt) {
+export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   const arena = this.course.def.kind === 'arena';
   const allTerrain = actor === this.state && offroadCapability(this.car) && (actor.airborne || !this._surface(actor.s, actor.lateral).road);
   if (actor.tumble || (!arena && this.course.def.airborne !== true && !allTerrain) || !Number.isFinite(dt) || dt <= 0) return;
@@ -314,7 +314,8 @@ export function _jump(actor, dt) {
     if (predicted > ground + .0001 && (!arena || verticalSpeed > 1) && fastEnough) {
       actor.airborne = true;
       actor._verticalSpeed = verticalSpeed;
-      actor._airOrigin = { x: previousPoint.x, z: previousPoint.z, time: this.state.stageTimeSec - dt };
+      actor._airOrigin = { x: previousPoint.x, z: previousPoint.z,
+        time: simulationTime - dt };
       actor.airDistance = 0; actor.airTime = 0;
       // Natural crests share flight/landing physics, but only authored arena
       // ramps can create a scored jump token. Resets still clear that token.
@@ -330,7 +331,7 @@ export function _jump(actor, dt) {
   actor.airHeight = Math.max(0, actor._jumpY - ground);
   if (actor._airOrigin) {
     actor.airDistance = Math.hypot(groundPoint.x - actor._airOrigin.x, groundPoint.z - actor._airOrigin.z);
-    actor.airTime = Math.max(0, this.state.stageTimeSec - actor._airOrigin.time);
+    actor.airTime = Math.max(0, simulationTime - actor._airOrigin.time);
   }
   if (actor._jumpY > ground) return;
   // Rejoin a descending road at its tangent speed. Zeroing this for natural
