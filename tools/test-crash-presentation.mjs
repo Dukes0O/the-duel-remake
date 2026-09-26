@@ -33,7 +33,7 @@ test('crash-effects starts as a named dev switch', () => {
 });
 
 test('vehicleSmash uses the exact point and bounded delta-v scale', () => {
-  const effects = createCombatEffects({loadTexture: loader()});
+  const effects = createCombatEffects({loadTexture: loader(), crashPresentation: true});
   try {
     const event = {severity: 'smashed', dvMph: 32, point: {...point}};
     const before = JSON.stringify(event);
@@ -55,7 +55,7 @@ test('vehicleSmash uses the exact point and bounded delta-v scale', () => {
 });
 
 test('impact presentation freezes while paused and expires after its bound', () => {
-  const effects = createCombatEffects({loadTexture: loader()});
+  const effects = createCombatEffects({loadTexture: loader(), crashPresentation: true});
   try {
     effects.recordVehicleSmash({severity: 'launched', dvMph: 80, point},
       {enabled: true});
@@ -75,7 +75,7 @@ test('impact presentation freezes while paused and expires after its bound', () 
 });
 
 test('tyre smoke exists only for live knocked motion', () => {
-  const effects = createCombatEffects({loadTexture: loader()});
+  const effects = createCombatEffects({loadTexture: loader(), crashPresentation: true});
   try {
     const current = state({knock: {severity: 'knocked', age: .2}});
     const before = JSON.stringify(current);
@@ -98,23 +98,21 @@ test('tyre smoke exists only for live knocked motion', () => {
   }
 });
 
-test('flag-off records no hit and hides crash presentation', () => {
-  const effects = createCombatEffects({loadTexture: loader()});
+test('flag-off builds no crash pool and records no hit', () => {
+  const effects = createCombatEffects({loadTexture: loader(), crashPresentation: false});
   try {
     assert.equal(effects.recordVehicleSmash(
       {severity: 'smashed', dvMph: 40, point}, {enabled: false}), false);
-    effects.update({state: state({knock: {severity: 'knocked'}}), course,
-      dt: 1 / 60, crashEnabled: false});
-    assert.equal(visible(effects.group, 'crash-vfx-impact-0-sparks').visible, false);
-    assert.equal(visible(effects.group, 'crash-vfx-impact-0-crumple').visible, false);
-    assert.equal(visible(effects.group, 'crash-vfx-knock-0-smoke').visible, false);
+    assert.equal(!!effects.group.getObjectByName('crash-vfx-impact-0-sparks'), false);
+    assert.equal(!!effects.group.getObjectByName('crash-vfx-impact-0-crumple'), false);
+    assert.equal(!!effects.group.getObjectByName('crash-vfx-knock-0-smoke'), false);
   } finally {
     effects.dispose();
   }
 });
 
 test('all crash hits reuse one fixed pool', () => {
-  const effects = createCombatEffects({loadTexture: loader()});
+  const effects = createCombatEffects({loadTexture: loader(), crashPresentation: true});
   try {
     const initial = [];
     effects.group.traverse(object => initial.push(object.uuid));

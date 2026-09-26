@@ -57,6 +57,11 @@ path and therefore found the normal event without its new actor field. Before
 the contact fix, it was corrected to enable `wasteland2`, which selects the
 actual armored helper identified by the probe.
 
+The initial flag-off test only required hidden crash meshes. The audit showed
+that this would still allocate the new pool in an armored race. Before runtime
+code was committed, the test was strengthened to require that the optional
+crash pool does not exist at all when `crash-effects` is off.
+
 ## Evidence
 
 Pending.
