@@ -433,6 +433,20 @@ tasks:
     acceptance:
       - "docs/CRASH_PHYSICS.md is settled. The solver, knocked motion and contact integration are built on lane/arch/crash-physics; docs/changes/CRASH-01.md lists the four failing test files and the decision for each. Finish those exactly as written, re-pin changed fingerprints with reasons, keep Mad Max combat balance in its bands, browser-review the four crash cases, then merge."
       - "The evidence-based correction in decisions.md adds crash-physics in dev. Off keeps the exact integration contact paths. On applies the settled solver in every mode. A roadside knock stays visible until it parks as a still wreck, and a settling knock consumes that full simulation tick."
+  - id: CRASH-03
+    title: "Smashed cars slide to rest off the road"
+    priority: 1
+    lane: CMB
+    size: S
+    needs: [CRASH-01]
+    status: merged
+    flag: crash-physics
+    claimed_by: "Merged by Claude, 26 September 2026"
+    owns: [tools/test-crash-slide.mjs, docs/changes/CRASH-03.md]
+    hooks: [src/vehicle-knock.js, src/sim-rival.js, docs/CRASH_PHYSICS.md, docs/board/decisions.md]
+    helpers: []
+    acceptance:
+      - "A hard Rival Duel rear-end wrecks traffic that keeps rolling at least 40 m and ends beyond the shoulder; a Mad Max shove scrubs to a stop and parks beyond the shoulder; no struck car slows faster than about 1 g before its final crawl; switch off keeps the released wreck motion."
   - id: CRASH-02
     title: "Crash look and sound"
     priority: 3

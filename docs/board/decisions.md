@@ -1180,3 +1180,20 @@ can precede completed renderer warmup. The browser verdict now requires a
 settled renderer warmup state and ready combat effects before it stops the
 race, creates the reviewed collision and freezes the evidence frame. A
 `scheduled` warmup is not acceptable capture evidence in either quality mode.
+
+## 26 September 2026: smashed cars slide to rest off the road (CRASH-03)
+
+Claude's morning review measured five staged crashes with `crash-physics` on.
+A Rival Duel sedan hit from behind at 55 mph closing stopped within about
+15 m and stayed in the lane: smashed traffic used the released scripted
+wreck motion, which damps speed away in about half a second. A Mad Max
+roadside shove parked as a still wreck the moment its sideways slide ended,
+halting from about 76 mph in one tick, and parking pulled a car that had slid
+past the clear line 6 m back toward the road. Kyle asked for cars to be
+smashed out of the way as real physics would, and asked Claude to fix it.
+
+Physical wrecks now slide on constant friction (6 m/s² along the road,
+7.8 m/s² sideways), leave by the side the hit pushed them or the nearest
+shoulder, stop at solids and park where they come to rest. A roadside shove
+parks only once nearly stopped (within 9 seconds at the latest). The released
+wreck motion is unchanged with the switch off.
