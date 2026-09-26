@@ -76,6 +76,20 @@ export function crashRollVisual(actor) {
   return Number.isFinite(actor?.wrecked?.roll) ? actor.wrecked.roll : 0;
 }
 
+export function installCrashPresentationEvents({duel, enabled, effects,
+  getCourse}) {
+  if (!enabled) return () => {};
+  return duel.onChange((state, event) => {
+    const smash = event.vehicleSmash;
+    if (!smash) return;
+    const actor = smash.actor, course = getCourse();
+    const ground = actor && Number.isFinite(actor.s) &&
+      Number.isFinite(actor.lateral) && course?.groundAt(actor.s, actor.lateral);
+    effects?.recordVehicleSmash(smash,
+      {enabled: true, y: (ground?.y || 0) + .8, atTime: state.stageTimeSec});
+  });
+}
+
 // This layer only reads simulation state. Asset replacement never changes race rules.
 export function attachRenderer(host, app) {
   const rendererAttachedAt=performance.now();let firstPresentation=true;
@@ -159,13 +173,32 @@ export function attachRenderer(host, app) {
   if(crashEffectsFlag()){
     combatEffects=createCombatEffects({crashPresentation:true});scene.add(combatEffects.group);sceneRevision++;
   }
-  const stopCrashEvents=crashEffectsFlag()?app.duel.onChange((_state,event)=>{
-    if(!event.vehicleSmash)return;
-    const actor=event.vehicleSmash.actor;
-    const ground=actor&&course?.groundAt(actor.s,actor.lateral);
-    combatEffects?.recordVehicleSmash(event.vehicleSmash,
-      {enabled:true,y:(ground?.y||0)+.8,atTime:_state.stageTimeSec});
-  }):()=>{};
+  const stopCrashEvents=installCrashPresentationEvents({duel:app.duel,
+    enabled:crashEffectsFlag(),effects:combatEffects,getCourse:()=>course});
+  let crashPoseState=null;
+  function resolveCrashTyres(actor,left,right){
+    const state=crashPoseState;
+    let mesh=null;
+    if(actor===state)mesh=player;
+    else if(actor===state?.rival)mesh=rival;
+    else{
+      for(let index=1;index<(state?.opponents?.length||0);index++)
+        if(actor===state.opponents[index]){mesh=extraOpponents[index-1]?.mesh;break;}
+      if(!mesh)for(let index=0;index<(state?.traffic?.length||0);index++)
+        if(actor===state.traffic[index]){mesh=traffic[index];break;}
+      if(!mesh&&actor===state?.police?.pursuit)mesh=police;
+    }
+    if(!mesh?.visible)return false;
+    let found=0;
+    for(const wheel of mesh.userData.wheelPivots||[]){
+      if(wheel.userData.front)continue;
+      const site=found===0?left:right;
+      wheel.getWorldPosition(site);
+      site.y-=wheel.userData.radius||.36;
+      if(++found===2)return true;
+    }
+    return false;
+  }
   let rustwallPresentation=null;
   let yardPresentation=null;
   function retireObject(object,beforeDispose){
@@ -449,8 +482,9 @@ export function attachRenderer(host, app) {
     effects.update({ p: pp, course, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now });
     const effectDt = st.paused ? 0 : dt;
     explosion.update(pp,st.combatWrecking?{...st,catastrophic:false}:st,effectDt);
+    crashPoseState=st;
     combatEffects?.update({state:effectsField?st:null,course,dt:effectDt,
-      crashEnabled:crashEffectsEnabled});
+      crashEnabled:crashEffectsEnabled,resolveCrashTyres});
     const measureCombatWarmup=effectsField&&!combatEffectsWarmupMeasured&&
       combatEffects?.available;
     const combatWarmupStart=measureCombatWarmup?performance.now():0;

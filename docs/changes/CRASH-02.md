@@ -33,8 +33,9 @@ fail before runtime work exists and cover exact contact placement, bounded
 delta-v scaling, pause and expiry, knocked-only tyre smoke, fixed resource
 reuse, state immutability, flag-off isolation and the existing launched-traffic
 roll path. The final contract also covers course and stage-time resets,
-accumulated 30, 60 and 144 FPS schedules, displayed vehicle yaw, eight
-simultaneous knocked actors, renderer listener disposal and readiness gating.
+accumulated 30, 60 and 144 FPS schedules, displayed vehicle yaw, the
+sixteen-actor capacity boundary, renderer listener disposal, delayed texture
+readiness and capture-time effect lifetime.
 
 The initial tyre-smoke assertion expected the billboard centre at exact ground
 height. The implementation correctly starts it 0.3 metres above the contact
@@ -76,26 +77,45 @@ An impact could survive a direct stage transition because simulation time
 rewound without clearing the pool. Rear-tyre smoke used route offsets instead
 of the car's displayed yaw. The smoke scan also created temporary arrays each
 frame and covered only six cars. Red regressions now require reset clearing,
-forward, spun and reverse tyre positions, and sixteen smoke sheets for eight
-simultaneous actors. Runtime work clears old impacts when the course changes or
-time rewinds. It uses preallocated actor and position storage for up to sixteen
-knocked cars, with player, racing opponents, police and traffic as the explicit
-visibility order.
+forward, spun and reverse tyre positions, and thirty-two smoke sheets for
+sixteen simultaneous actors. Runtime work clears old impacts when the course
+changes or time rewinds. It uses preallocated actor and position storage for
+up to sixteen knocked cars, with player, racing opponents, police and traffic
+as the explicit visibility order.
+
+The exact-candidate review found two remaining per-frame allocations: course
+samples for every smoke site and result objects from the atlas UV helper. The
+renderer now resolves the two already-placed rear wheel pivots into reusable
+vectors, and the atlas helper writes into caller storage. The focused contract
+proves that the production resolver never samples the course, that a
+seventeenth actor is dropped after the stated priority order, and that the
+event bridge subscribes, forwards once and disposes.
+
+The first browser verdict failed even though every mesh was visible. The
+atlas frames blended into the asphalt and the two smoke plumes read as one
+faint patch. A second test-first correction selects readable existing frames,
+keeps each plume on its rendered wheel, and adds a small code-native wireframe
+flash behind the authored contact art. Its late draw order prevents vehicle
+bodywork from hiding the cue; strict scale bounds keep the burst local to the
+struck panel. No asset or simulation rule changed.
 
 ## Evidence
 
-- Focused CRASH-02, shared combat-effect, feature-switch and Wasteland tests:
-  28 passed, 0 failed after the review fixes.
+- Focused CRASH-02 and shared combat-effect tests: 27 passed, 0 failed after
+  the review fixes. The CRASH-02 file contributes 15 behavioral tests.
 - Armored impacts, police knock, police route reset, combat ramming, combat
   replay fingerprints and ordinary replay fingerprints all pass. The ordinary
   replay run covers 162 checks across 18 cases and three frame rates.
 - The private memory-only browser scenario passes in High and Performance on
   random ports above 5191. It observes one real launched impact at the exact
-  contact point, rear damage, two live tyre-smoke sheets, ready first-frame
-  resources and no flag-off crash meshes. Four review frames were captured;
-  the browser logged 0 warnings and 0 errors. The stopped-scene 60-frame CPU
-  samples stayed at or below 0.4 ms p95 in both modes. Raw review files remain
-  disposable until the merge verdict is committed.
+  contact point, rear damage, two distinct live rear-tyre plumes, ready
+  first-frame resources and no flag-off crash meshes. It freezes only the QA
+  presentation after proving the live collision, waits 500 ms, and requires
+  all three contact layers to remain visible before capture. Four final local
+  review frames were captured; the browser logged 0 warnings and 0 errors.
+  The stopped-scene 60-frame CPU samples stayed at or below 0.2 ms p95 in both
+  modes. Raw review files remain disposable until the merge verdict is
+  committed.
 - Lane tier, production build and final independent review: pending.
 
 ## Removed

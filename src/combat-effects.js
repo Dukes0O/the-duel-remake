@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {flipbookFrameUV} from './combat-vfx-atlas.js';
+import {flipbookFrameUVInto} from './combat-vfx-atlas.js';
 
 const PATHS = Object.freeze({
   fire: '/assets/textures/fire-flipbook.png',
@@ -19,11 +19,11 @@ const PLANE_UV = [0, 1, 1, 1, 0, 0, 1, 0];
 function selectFrame(slot, frame) {
   if (frame === slot.frame) return;
   slot.frame = frame;
-  const {offset, repeat} = flipbookFrameUV(frame, slot.grid);
+  const values = flipbookFrameUVInto(frame, slot.grid, slot.frameUv);
   const uv = slot.mesh.geometry.getAttribute('uv');
   for (let index = 0; index < 4; index++) {
-    uv.setXY(index, offset.x + PLANE_UV[index * 2] * repeat.x,
-      offset.y + PLANE_UV[index * 2 + 1] * repeat.y);
+    uv.setXY(index, values.offsetX + PLANE_UV[index * 2] * values.repeatX,
+      values.offsetY + PLANE_UV[index * 2 + 1] * values.repeatY);
   }
   uv.needsUpdate = true;
 }
@@ -47,12 +47,43 @@ function makeSlot(group, resources, texture, name, grid) {
   group.add(mesh);
   resources.geometries.push(geometry);
   resources.materials.push(material);
-  const slot = {mesh, grid, frame: -1};
+  const slot = {mesh, grid, frame: -1,
+    frameUv: {offsetX: 0, offsetY: 0, repeatX: 0, repeatY: 0}};
   const firstFrame = name.endsWith('-fire') ? 8 :
     name.endsWith('-explosion') ? 5 :
     name.endsWith('-impact') ? 3 : 0;
   selectFrame(slot, firstFrame);
   return slot;
+}
+
+function makeImpactFlash(group, resources, name) {
+  const geometry = new THREE.OctahedronGeometry(1, 0);
+  const material = new THREE.MeshBasicMaterial({color: 0xffb33b,
+    transparent: false, opacity: 1, depthTest: false, depthWrite: false,
+    side: THREE.DoubleSide, toneMapped: false,
+    blending: THREE.NormalBlending, wireframe: true});
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = name;
+  mesh.visible = false;
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 100;
+  mesh.onBeforeRender = (_renderer, _scene, camera) => {
+    mesh.quaternion.copy(camera.quaternion);
+    mesh.updateMatrixWorld();
+  };
+  group.add(mesh);
+  resources.geometries.push(geometry);
+  resources.materials.push(material);
+  return {mesh};
+}
+
+function showImpactFlash(slot, position, age, size) {
+  const mesh = slot.mesh;
+  mesh.visible = age < .2;
+  if (!mesh.visible) return;
+  mesh.position.set(position.x, position.y, position.z);
+  mesh.scale.setScalar(size * (1 + age * 1.8));
+  mesh.material.opacity = 1;
 }
 
 function show(slot, position, {age = 0, duration = 1, size = 1,
@@ -77,11 +108,12 @@ function hide(slot) {
 export function createCombatEffects({loadTexture, crashPresentation = false} = {}) {
   const group = new THREE.Group();
   group.name = 'Wasteland atlas effects';
+  const synchronousLoader = !!loadTexture && loadTexture.length < 2;
   const resources = {textures: {}, geometries: [], materials: [],
-    available: true, ready: !!loadTexture};
+    available: true, ready: synchronousLoader};
   const loader = loadTexture || ((url, onLoaded, onError) =>
     new THREE.TextureLoader().load(url, onLoaded, undefined, onError));
-  let pending = loadTexture ? 0 : Object.keys(PATHS).length;
+  let pending = synchronousLoader ? 0 : Object.keys(PATHS).length;
   for (const [kind, url] of Object.entries(PATHS)) {
     const texture = loader(url, () => {
       pending--;
@@ -135,25 +167,33 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       `crash-vfx-impact-${index}-sparks`, grid2),
     crumple: makeSlot(group, resources, resources.textures.smoke,
       `crash-vfx-impact-${index}-crumple`, grid8),
+    flash: makeImpactFlash(group, resources,
+      `crash-vfx-impact-${index}-flash`),
     active: false, age: 0, event: null,
   }));
+  for (const entry of crashImpacts) {
+    entry.sparks.mesh.material.depthTest = false;
+    entry.crumple.mesh.material.depthTest = false;
+    entry.sparks.mesh.renderOrder = entry.crumple.mesh.renderOrder = 10;
+  }
   const knockSmoke = Array.from({length: crashPresentation ? KNOCK_SMOKE_LIMIT : 0}, (_, index) =>
     makeSlot(group, resources, resources.textures.smoke,
       `crash-vfx-knock-${index}-smoke`, grid8));
   const knockedActors = new Array(crashPresentation ? KNOCKED_ACTOR_LIMIT : 0)
     .fill(null);
   const knockSmokeSites = Array.from({length: knockSmoke.length}, () =>
-    ({x: 0, y: 0, z: 0}));
+    new THREE.Vector3());
   const crashSparkOptions = {age: 0, duration: .48, size: 0,
     startFrame: 3, frameCount: 4};
   const crashCrumpleOptions = {age: 0, duration: CRASH_IMPACT_DURATION,
-    size: 0, frameCount: 18, alpha: .54};
-  const knockSmokeOptions = {age: 0, duration: 1.35, size: 0,
-    rise: 0, alpha: .48};
+    size: 0, startFrame: 16, frameCount: 40, alpha: .76};
+  const knockSmokeOptions = {age: 0, duration: 1, size: 2,
+    startFrame: 16, frameCount: 48, rise: .18, alpha: .72};
   const everySlot = [...bursts.flatMap(entry => Object.values(entry)),
     ...muzzles, ...wrecks.flatMap(entry => [entry.fire, entry.explosion,
       entry.smoke]), ...damage.flatMap(entry => [entry.smoke, entry.fire]),
-    ...crashImpacts.flatMap(entry => [entry.sparks, entry.crumple]),
+    ...crashImpacts.flatMap(entry => [entry.sparks, entry.crumple,
+      entry.flash]),
     ...knockSmoke];
   let disposed = false;
   let texturesWarm = false;
@@ -170,6 +210,7 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       entry.event = null;
       hide(entry.sparks);
       hide(entry.crumple);
+      hide(entry.flash);
     }
   }
 
@@ -237,7 +278,8 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
     return true;
   }
 
-  function update({state, course, dt = 0, crashEnabled = false}) {
+  function update({state, course, dt = 0, crashEnabled = false,
+    resolveCrashTyres = null}) {
     const ready = resources.available && resources.ready &&
       state?.status !== 'menu';
     const enabled = ready &&
@@ -351,7 +393,7 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
     for (let crashIndex = 0; crashIndex < crashImpacts.length; crashIndex++) {
       const entry = crashImpacts[crashIndex];
       if (!crashVisible || !entry.active || !entry.event) {
-        hide(entry.sparks); hide(entry.crumple);
+        hide(entry.sparks); hide(entry.crumple); hide(entry.flash);
         continue;
       }
       if (!state.paused && Number.isFinite(entry.atTime) &&
@@ -360,20 +402,22 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       } else if (!state.paused && dt > 0) entry.age += dt;
       if (entry.age >= CRASH_IMPACT_DURATION) {
         entry.active = false; entry.event = null;
-        hide(entry.sparks); hide(entry.crumple);
+        hide(entry.sparks); hide(entry.crumple); hide(entry.flash);
         continue;
       }
       const {event, age} = entry;
       const severityScale = event.severity === 'launched' ? 1.18 :
         event.severity === 'smashed' ? 1.08 : 1;
-      const sparkSize = Math.min(8,
-        Math.max(3, 2.6 + event.dvMph * .09) * severityScale);
+      const sparkSize = Math.min(3.4,
+        Math.max(1.8, 1.35 + event.dvMph * .035) * severityScale);
       crashSparkOptions.age = age;
       crashSparkOptions.size = sparkSize;
       show(entry.sparks, event.point, crashSparkOptions);
+      showImpactFlash(entry.flash,event.point,age,
+        Math.min(.72,(.45+event.dvMph*.005)*severityScale));
       crashCrumpleOptions.age = age;
-      crashCrumpleOptions.size = Math.min(5.5,
-        2.2 + event.dvMph * .045) * severityScale;
+      crashCrumpleOptions.size = Math.min(2.8,
+        (1.15 + event.dvMph * .025) * severityScale);
       show(entry.crumple, event.point, crashCrumpleOptions);
     }
     knockedActorCount = 0;
@@ -389,27 +433,35 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
     }
     for (let index = knockedActorCount; index < knockedActors.length; index++)
       knockedActors[index] = null;
-    for (let index = 0; index < knockSmoke.length; index++) {
-      const slot = knockSmoke[index];
-      const actor = knockedActors[Math.floor(index / 2)];
-      if (!actor) { hide(slot); continue; }
-      const side = index % 2 ? 1 : -1;
-      const ground = course.groundAt(actor.s, actor.lateral);
-      const yaw = (ground.heading || 0) + (actor.dir < 0 ? Math.PI : 0) +
-        (actor.headingError || 0);
-      const cosine = Math.cos(yaw), sine = Math.sin(yaw);
-      const localX = side * .68, localZ = -1.05;
-      const site = knockSmokeSites[index];
-      site.x = ground.x + cosine * localX + sine * localZ;
-      site.y = ground.y;
-      site.z = ground.z - sine * localX + cosine * localZ;
-      const phase = ((state.stageTimeSec || 0) * 1.7 + index * .29) % 1.35;
+    for (let actorIndex = 0; actorIndex < knockedActors.length; actorIndex++) {
+      const actor = knockedActors[actorIndex];
+      const leftIndex = actorIndex * 2, rightIndex = leftIndex + 1;
+      const leftSlot = knockSmoke[leftIndex], rightSlot = knockSmoke[rightIndex];
+      if (!actor) { hide(leftSlot); hide(rightSlot); continue; }
+      const leftSite = knockSmokeSites[leftIndex];
+      const rightSite = knockSmokeSites[rightIndex];
+      let resolved = resolveCrashTyres?.(actor, leftSite, rightSite) === true;
+      if (!resolved) {
+        const ground = course.groundAt(actor.s, actor.lateral);
+        const yaw = (ground.heading || 0) + (actor.dir < 0 ? Math.PI : 0) +
+          (actor.headingError || 0);
+        const cosine = Math.cos(yaw), sine = Math.sin(yaw), localZ = -1.05;
+        leftSite.set(ground.x + cosine * -.68 + sine * localZ, ground.y,
+          ground.z - sine * -.68 + cosine * localZ);
+        rightSite.set(ground.x + cosine * .68 + sine * localZ, ground.y,
+          ground.z - sine * .68 + cosine * localZ);
+        resolved = true;
+      }
+      if (!resolved) { hide(leftSlot); hide(rightSlot); continue; }
       const severity = actor.knock.severity === 'launched' ? 1.35 :
         actor.knock.severity === 'smashed' ? 1.18 : 1;
-      knockSmokeOptions.age = phase;
-      knockSmokeOptions.size = 3.1 * severity;
-      knockSmokeOptions.rise = .3 + phase * .45;
-      show(slot, site, knockSmokeOptions);
+      knockSmokeOptions.size = 2 * severity;
+      knockSmokeOptions.age = .25 + ((state.stageTimeSec || 0) * 1.7 +
+        actorIndex * .19) % .42;
+      show(leftSlot, leftSite, knockSmokeOptions);
+      knockSmokeOptions.age = .25 + ((state.stageTimeSec || 0) * 1.7 +
+        actorIndex * .19 + .12) % .42;
+      show(rightSlot, rightSite, knockSmokeOptions);
     }
   }
 

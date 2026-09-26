@@ -1139,3 +1139,30 @@ with a fixed sixteen-actor scratch pool. If an artificial scene exceeds that
 bound, preserve the most player-visible order: player, racing opponents,
 police, then traffic. This meets the fixed-pool rule without changing knock
 motion or simulation state.
+
+The exact-candidate review then found that removing array creation was not
+enough: course samples and atlas UV helpers still returned short-lived objects
+on changing crash frames. Re-slice CRASH-02 to `src/combat-vfx-atlas.js` for an
+output-object UV helper. In production, resolve smoke from the already-placed
+vehicle wheel meshes instead of sampling the course again. This both removes
+the new ground objects and makes the smoke follow the exact rendered tyres.
+The renderer bridge must have a behavioral subscribe/dispose test, and the
+pool test must cover all sixteen actors plus a seventeenth overflow actor.
+
+The same review's screenshots proved that mesh visibility is not a visual
+verdict. The first spark/crumple and the twin tyre plumes were not readable in
+either quality mode. Keep Claude's effect design, but move the reused atlas to
+readable authored frames and tune size, phase and opacity only as needed to
+make the settled cues visible. Browser screenshots, not object flags, decide
+the correction.
+
+The delayed screenshot check then proved that the contact layers remained
+live but were hidden by their blend and draw treatment. Keep the reused spark
+and smoke sheets as the authored effect. Add one small, code-native wireframe
+flash at the same exact point, drawn after vehicle bodywork, so the atlas stays
+readable against both asphalt and bright paint. Bound the flash, spark and
+crumple scales so the cue stays local to the struck panel. The browser recipe
+may freeze the presentation only after a real collision has emitted its event;
+it must hide the QA pause modal, wait 500 ms and recheck all contact layers
+before capture. This changes presentation evidence only, not simulation time,
+collision rules or live pause behavior.
