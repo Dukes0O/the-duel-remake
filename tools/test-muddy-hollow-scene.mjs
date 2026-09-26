@@ -50,33 +50,73 @@ function triangleOverlapsHollow(position, vertices) {
 function checkHollowCut(builder, label, yOffset) {
   const ordinaryGeometry = builder(ordinary);
   const hollowGeometry = builder(course);
-  equal(hollowGeometry.index.count, ordinaryGeometry.index.count,
-    `${label} keeps the ordinary outer topology while fitting overlap triangles`);
+  check(hollowGeometry.index.count > ordinaryGeometry.index.count,
+    `${label} subdivides coarse triangles that cross the authored Hollow`);
   check(!ordinaryGeometry.attributes.muddyHollowFit &&
-    hollowGeometry.attributes.muddyHollowFit,
+    !ordinaryGeometry.attributes.muddyHollowSourceY &&
+    hollowGeometry.attributes.muddyHollowFit &&
+    hollowGeometry.attributes.muddyHollowSourceY,
   `${label} marks only switched fitted vertices`);
   const position = hollowGeometry.attributes.position;
   const index = hollowGeometry.index.array;
   const fitted = hollowGeometry.attributes.muddyHollowFit;
+  const sourceY = hollowGeometry.attributes.muddyHollowSourceY;
   let overlapTriangles = 0, firstUnfitted = -1, firstHeightError = -1;
+  let firstSeamError = -1, firstOcclusion = -1, samples = 0;
   for(let offset = 0; offset < index.length; offset += 3) {
     const a = index[offset], b = index[offset + 1], c = index[offset + 2];
     if(!triangleOverlapsHollow(position, [a, b, c])) continue;
     overlapTriangles++;
     for(const vertex of [a, b, c]) {
       if(fitted.getX(vertex) !== 1) { firstUnfitted = offset / 3; break; }
-      const expected = course.muddyHollow.heightAt(
-        position.getX(vertex), position.getZ(vertex)) + yOffset;
-      if(Math.abs(position.getY(vertex) - expected) > .0001) {
-        firstHeightError = offset / 3; break;
+      const x = position.getX(vertex), z = position.getZ(vertex);
+      if(course.muddyHollow.contains(x, z)) {
+        const field = course.muddyHollow.heightAt(x, z) + yOffset;
+        if(position.getY(vertex) > field - .05 || position.getY(vertex) < field - 1) {
+          firstHeightError = offset / 3; break;
+        }
+      } else if(Math.abs(position.getY(vertex) - sourceY.getX(vertex)) > .0001) {
+        firstSeamError = offset / 3; break;
       }
     }
-    if(firstUnfitted >= 0 || firstHeightError >= 0) break;
+    for(let first = 0; first <= 4; first++) for(let second = 0;
+      second <= 4 - first; second++) {
+      const weights = [first / 4, second / 4, 1 - (first + second) / 4];
+      const vertices = [a, b, c];
+      const x = vertices.reduce((sum, vertex, item) =>
+        sum + position.getX(vertex) * weights[item], 0);
+      const z = vertices.reduce((sum, vertex, item) =>
+        sum + position.getZ(vertex) * weights[item], 0);
+      if(!course.muddyHollow.contains(x, z)) continue;
+      const y = vertices.reduce((sum, vertex, item) =>
+        sum + position.getY(vertex) * weights[item], 0);
+      samples++;
+      if(y >= course.muddyHollow.heightAt(x, z) + .031) {
+        firstOcclusion = offset / 3; break;
+      }
+    }
+    if(firstUnfitted >= 0 || firstHeightError >= 0 || firstSeamError >= 0 ||
+      firstOcclusion >= 0) break;
   }
   check(overlapTriangles > 0 && firstUnfitted < 0,
     `${label} replaces every triangle that overlaps the authored Hollow`);
   check(firstHeightError < 0,
-    `${label} replacement vertices follow the authored height field`);
+    `${label} interior replacement vertices sit just below the authored height field`);
+  check(firstSeamError < 0,
+    `${label} exterior replacement vertices retain their original terrain height`);
+  check(samples > 0 && firstOcclusion < 0,
+    `${label} cannot rise through the detailed Hollow surface`);
+  equal(hollowGeometry.groups.map(group => group.materialIndex),
+    ordinaryGeometry.groups.map(group => group.materialIndex),
+  `${label} keeps the ordinary material group order`);
+  check(hollowGeometry.groups.every(group => group.count % 3 === 0) &&
+    hollowGeometry.groups.reduce((sum, group) => sum + group.count, 0) === index.length,
+  `${label} replacement triangles remain inside complete material groups`);
+  const repeat = builder(course);
+  equal([...repeat.index.array], [...index], `${label} replacement indices are deterministic`);
+  equal([...repeat.attributes.position.array], [...position.array],
+    `${label} replacement positions are deterministic`);
+  repeat.dispose();
   ordinaryGeometry.dispose(); hollowGeometry.dispose();
 }
 
