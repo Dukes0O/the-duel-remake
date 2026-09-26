@@ -14,8 +14,10 @@ export const SCRAPDOME_LAYOUT = Object.freeze({
   rampFractions: Object.freeze([.08, .42, .75]),
   rampLength: 34,
   rampHeight: 2.4,
-  // Breakable junk-car cover: [fraction of the ring, offset].
-  junk: Object.freeze([[.2, 9], [.26, -10], [.55, 11], [.6, -8], [.88, 10], [.93, -11]]),
+  // Junk-car cover in three rows, one car each side of the middle lane, each
+  // row midway between spawn slots. Only the Titan can crush junk.
+  junk: Object.freeze([[.25, 10], [.25, -10], [.625, 10], [.625, -10], [.89, 10], [.89, -10]]),
+  junkSpawnClearance: 14,
   spawnSlots: 8,
   spawnOffset: 9,
 });
@@ -46,6 +48,11 @@ export function venueCurvatureRatio(course) {
   return worst * (layout?.wallOffset ?? course.roadHalfWidthAt(0));
 }
 
+export function junkNear(course, s, lateral, clearance) {
+  const at = course.worldAt(s, lateral);
+  return (course.features.crushables || []).some(prop => Math.hypot(prop.x - at.x, prop.z - at.z) < clearance);
+}
+
 // Evenly spaced slots around the ring, alternating outer and inner lanes and
 // facing along the ring. Deterministic: no random numbers.
 export function spawnSlots(course) {
@@ -55,8 +62,11 @@ export function spawnSlots(course) {
     const s = (index + .5) / count * course.length;
     // Keep slots off the ramps so nobody spawns airborne.
     const ramp = course.features.ramps.find(r => s >= r.start - 6 && s <= r.end + 6);
-    const at = ramp ? ramp.end + 10 : s;
-    slots.push({index, s: at, lateral: (index % 2 ? -1 : 1) * layout.spawnOffset, headingError: 0});
+    let at = ramp ? ramp.end + 10 : s;
+    const lateral = (index % 2 ? -1 : 1) * layout.spawnOffset;
+    // Never spawn nose-to-nose with junk: step along the ring until clear.
+    for (let tries = 0; tries < 6 && junkNear(course, at, lateral, layout.junkSpawnClearance); tries++) at += 6;
+    slots.push({index, s: at, lateral, headingError: 0});
   }
   return slots;
 }

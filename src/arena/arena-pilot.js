@@ -15,8 +15,11 @@ export const PILOT = Object.freeze({
   probes: Object.freeze([Object.freeze([.45, 6]), Object.freeze([1, 10])]), wallMargin: 3.5,
   wallBias: .3, wallBiasPerDanger: .25, wallSlowdown: .45, uTurnRadians: 2.1, uTurnDoneRadians: .9, uTurnSwing: 1.5,
   uTurnShare: .62, uTurnWallShare: .4,
+  // Junk cars stop anything lighter than the Titan: look for them and go round.
+  junkClearance: 3.8, junkReachMinimum: 10, junkReachSeconds: 1.1, junkSwerve: .6, junkSwerveNear: .6, junkSlowdown: .8,
   ringRouteMetres: 55, laneCorrection: .035, laneCorrectionLimit: .5,
-  stuckMetres: 1.5, stuckSeconds: 1, stuckGoalMph: 10, reverseSeconds: 1.1, reverseGraceSeconds: 1.5,
+  stuckMetres: 1.5, stuckSeconds: 1, stuckGoalMph: 10, reverseSeconds: 1.4, reverseGraceSeconds: 1.5,
+  pinnedMetres: 5.5, pinnedMph: 6,
 });
 
 export function arenaCarSpec(duel, actor) {
@@ -88,6 +91,29 @@ export function pilotStep(duel, actor, goal, dt) {
     desired = tangent + (along > 0 ? 0 : Math.PI) - Math.sign(ahead.lateral) * along * (PILOT.wallBias + PILOT.wallBiasPerDanger * danger);
     speedScale = Math.min(speedScale, 1 - PILOT.wallSlowdown * Math.min(1, danger));
     break;
+  }
+
+  // Junk on the line: turn away from it, harder the closer it is.
+  if (!actor._arenaUTurn) {
+    const reach = Math.max(PILOT.junkReachMinimum, metres * PILOT.junkReachSeconds);
+    const hx = Math.sin(pose.heading), hz = Math.cos(pose.heading);
+    let nearest = null;
+    for (const prop of course.features.crushables || []) {
+      if (duel.state.crushedProps?.includes(prop.id)) continue;
+      const dx = prop.x - pose.x, dz = prop.z - pose.z, along = dx * hx + dz * hz;
+      // Positive side: the way the heading turns as it increases.
+      const side = dx * hz - dz * hx;
+      if (along > 0 && along < reach && Math.abs(side) < PILOT.junkClearance &&
+          (!nearest || along < nearest.along)) nearest = {along, side};
+    }
+    if (nearest) {
+      const swerve = PILOT.junkSwerve + PILOT.junkSwerveNear * (1 - nearest.along / reach);
+      desired = pose.heading - (nearest.side >= 0 ? 1 : -1) * swerve;
+      speedScale = Math.min(speedScale, PILOT.junkSlowdown);
+      // Nose against junk and too slow to steer round it: back out now.
+      if (nearest.along < PILOT.pinnedMetres && Math.abs(speed) < PILOT.pinnedMph &&
+          !(actor._arenaReverseSec > 0) && !(actor._arenaGraceSec > 0)) actor._arenaReverseSec = PILOT.reverseSeconds;
+    }
   }
 
   // Unstick: a car that wants to move but has not covered 1.5 m in a second

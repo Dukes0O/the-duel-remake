@@ -1762,8 +1762,7 @@ tasks:
     lane: CMB
     size: M
     needs: [ARENA-01-UI]
-    status: active
-    claimed_by: "Claude, 26 September 2026"
+    status: merged
     flag: scrapdome
     owns: [src/scrapdome-last-car.js, tools/test-last-car-rolling.mjs, tools/scenarios/last-car-rolling.mjs, docs/changes/ARENA-02.md]
     hooks: [src/scrapdome.js, src/arena-ai.js, src/screen-arena.js, src/combat.js, src/wasteland-career.js, src/app.js]
@@ -1774,7 +1773,22 @@ tasks:
       - "Integrate completed results with the existing scrap and territory contracts for the Scrapdome venue. Save Guardian proves idempotent settlement, owner identity, abandonment and historical-save preservation using fixtures only. New rank, price or reward choices require a recorded decision."
       - "Private browser review shows actual free driving, a credited wreck, respawn, timer completion, results and return to yard. Record frame pacing, balance and the lane/build gate before readiness."
     sound: "Reuse combat impact/wreck cues and arena.countdown, arena.round-start and arena.results through the external audio owner's bank."
-    note: "Rules are settled in docs/SCRAPDOME.md section 3; scoring, credit, respawn and sudden death already run in src/arena/arena-event.js. This card adds settlement (scrap and hold), pickups on ramps and the Heap, and balance to the section 8 targets."
+    note: "Part 1 built by Claude: arena crates, jousting, junk sense, half armor, tools/arena-balance.mjs; results in docs/SCRAPDOME.md section 8. Settlement moved to ARENA-02-PAY."
+  - id: ARENA-02-PAY
+    title: "Last Car Rolling settlement: scrap and Scrapdome hold"
+    priority: 2
+    lane: SAVE
+    size: S
+    needs: [ARENA-02]
+    status: backlog
+    flag: scrapdome
+    owns: [src/arena/arena-settlement.js, tools/test-arena-settlement.mjs, docs/changes/ARENA-02-PAY.md]
+    hooks: [src/app.js, src/screen-arena.js, src/wasteland-career.js]
+    helpers: [test_author, reviewer, save_guardian]
+    acceptance:
+      - "Design settled by Claude: scrap = a base for finishing, a placing bonus that grows with the number of computer cars, points per wreck caused, times a small difficulty factor (1, 1.2, 1.4); a win against two or more computer cars adds 25 hold to Kettle Kingpin's territory (the scrapdome venue in TERRITORIES); a 1-car win pays scrap only; leaving early costs and pays nothing."
+      - "Settle once per event on arenaResult, keyed arena:<runId> in wasteland.settledResults, only for the player who started it; atomic from the player's view (revert on a failed save). Show SCRAP EARNED and HOLD on the results screen."
+      - "Save Guardian proves idempotent settlement, owner identity, abandonment, unknown-field preservation and historical save fixtures."
 
   - id: FIX-RUSTWALL-CLEAN
     title: "Remove Rustwall test dependency on consumed art scratch"

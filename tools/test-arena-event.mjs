@@ -228,3 +228,48 @@ test('computer cars fight close and rarely hit the walls hard', () => {
   assert.ok(near / samples >= .45, `computer cars within 40 m of their target ${(100 * near / samples).toFixed(0)}% of the time`);
   assert.ok(wallHits <= 8, `computer cars hit walls hard ${wallHits} times`);
 });
+
+test('crates sit on the ramp tops and by the Heap, come back, and can be taken from any direction', async () => {
+  const {arenaPickupSpots, ARENA_PICKUPS} = await import('../src/arena/arena-pickups.js');
+  const {duel} = arena();
+  duel.state.countdown = 0; duel.step(1 / 120);
+  const spots = arenaPickupSpots(duel.course);
+  assert.equal(spots.filter(spot => spot.kind === 'weapon').length, 3);
+  assert.equal(spots.filter(spot => spot.kind === 'armor').length, 2);
+  for (let i = 0; i < 120 * (ARENA_PICKUPS.firstDelaySec + .1); i++) duel.step(1 / 120);
+  assert.equal(duel.state.combat.pickups.length, 5, 'all five crates are out after the first delay');
+  const s = duel.state, crate = duel.state.combat.pickups.find(item => item.kind === 'armor');
+  s.armor = s.maxArmor / 2;
+  // Drive backwards along the ring onto the crate: arena crates do not care.
+  Object.assign(s, {s: crate.s + 1, prevS: crate.s + 2, lateral: crate.lateral, prevLateral: crate.lateral,
+    headingError: Math.PI, speedMph: 5, airHeight: 0});
+  for (const other of s.opponents) Object.assign(other, {s: crate.s + 200, prevS: crate.s + 200});
+  const before = s.armor;
+  duel.step(1 / 120);
+  assert.ok(s.armor > before, 'the repair crate was collected');
+  assert.equal(duel.state.combat.pickups.some(item => item.spot === crate.spot), false);
+  for (let i = 0; i < 120 * (ARENA_PICKUPS.respawnSec + .1); i++) duel.step(1 / 120);
+  assert.ok(duel.state.combat.pickups.some(item => item.spot === crate.spot), 'the crate came back');
+});
+
+test('spawn points are well clear of junk, and a stalled rammer backs off to charge again', async () => {
+  const {spawnSlots, SCRAPDOME_VENUE} = await import('../src/arena/venues.js');
+  const {decideGoal} = await import('../src/arena/arena-brains.js');
+  const course = new Course(SCRAPDOME_VENUE, 1989);
+  for (const slot of spawnSlots(course)) {
+    const at = course.worldAt(slot.s, slot.lateral);
+    const nearest = Math.min(...course.features.crushables.map(prop => Math.hypot(prop.x - at.x, prop.z - at.z)));
+    assert.ok(nearest >= course.def.scrapdome.junkSpawnClearance, `slot at ${slot.s} is ${nearest.toFixed(1)} m from junk`);
+  }
+  const {duel} = arena();
+  duel.state.countdown = 0; duel.step(1 / 120);
+  const rammer = duel.state.opponents[0], participant = duel.state.arena.participants[1];
+  assert.equal(participant.brain, 'rammer');
+  participant.targetId = 'player';
+  Object.assign(rammer, {s: duel.state.s - 6, lateral: duel.state.lateral, headingError: 0, speedMph: 3});
+  const goal = decideGoal(duel, participant, rammer);
+  assert.ok(participant.backoffSec > 0, 'a stalled shove starts a back-off');
+  assert.ok(rammer._arenaReverseSec > 0, 'it reverses out first');
+  const me = worldPose(duel, rammer), them = worldPose(duel, duel.state);
+  assert.ok(Math.hypot(goal.x - them.x, goal.z - them.z) > Math.hypot(me.x - them.x, me.z - them.z), 'then it heads away to line up a charge');
+});

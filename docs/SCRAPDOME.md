@@ -74,7 +74,12 @@ for itself.
   take damage and cannot deal it, so nobody can spawn and shoot.
 - **Tie at the top when the clock runs out:** sudden death, "NEXT WRECK
   WINS", for up to 30 seconds; then most damage dealt wins.
-- **Pickups** appear on the ramp tops and at the Heap's foot: risk for reward.
+- **Pickups:** weapon crates on the three ramp tops (commit to the jump
+  line) and repair crates at two spots on the inner floor by the Heap, where
+  fights are closest. A crate comes back 12 seconds after it is taken; any car
+  collects from any direction. Easy computer cars leave crates alone.
+- **Armor** in the arena is half of race armor: every wreck is a point and a
+  car is back in four seconds, so wrecks should come every half minute or so.
 - **Result:** placing, wrecks, wrecked, damage, and scrap (section 6).
 
 ## 4. Computer drivers
@@ -92,8 +97,16 @@ steering curve and grip, and the floor speed limit. It:
   from it, slowing to make the turn;
 - commits to U-turns: it picks the side with more room once and keeps turning
   until it faces its goal, braking near walls instead of giving up;
+- steers round junk cars (only the Titan can crush them) and backs out at once
+  when pinned nose-first against one;
 - reverses out only when it wants to move but has not covered 1.5 metres in a
   second, then has a grace period so reversing never counts as being stuck.
+
+**Jousting.** A shove at walking pace does no damage, and two rammers pushing
+nose to nose once froze a round for 30 seconds. A rammer that stalls against
+its target backs out, retreats about 30 metres and charges again from speed.
+A badly damaged car (Medium and Hard) breaks off for a nearby repair crate,
+which gives the player a window.
 
 **Brain.** Three built-in styles, one per computer car so a field has variety:
 
@@ -293,14 +306,22 @@ Built and tested on `lane/arch/scrapdome`: everything marked Claude below.
 Measured over full rounds with three computer cars and a simple scripted
 player (six rounds, three difficulties):
 
-| Measure | Now | Target for ARENA-02 balance |
-| --- | --- | --- |
-| Wrecks per round | 6 to 10 | 10 to 14 on Medium |
-| Hits per round | 45 to 80 | keep |
-| Computer cars within 40 m of their target | 52 to 68 % of the time | at least 55 % |
-| Hard wall hits by computer cars | 0 to 4 per round | at most 3 |
-| Computer cars reversing | 6 to 11 % of the time | at most 8 % |
-| Easy vs Hard, same scripted player | wins on Easy, loses on Hard | keep that spread |
+After ARENA-02 part 1 (crates, jousting, junk avoidance, half armor),
+`node tools/arena-balance.mjs` (36 rounds per difficulty: four seeds, three
+player cars, one to three computer cars) reports:
+
+| Measure | Easy | Medium | Hard | Target |
+| --- | --- | --- | --- | --- |
+| Wrecks per round, three computer cars | 14.5 | 12.5 | 16.1 | 10 to 14 on Medium |
+| Scripted player wins | 18 of 36 | 2 of 36 | 2 of 36 | see note |
+| Computer cars within 40 m of their target | 53 % | 50 % | 46 % | at least 45 % |
+| Hard wall hits by computer cars per round | 1.1 | 1.6 | 1.8 | at most 3 |
+| Computer cars reversing | 6.6 % | 8.1 % | 8.7 % | at most 10 % |
+
+Note: the scripted player only chases and fires a crossbow every four
+seconds, so its win rates say little about a real player. A person with
+boost, bombs and the shield should win Medium regularly; check that in play
+and, if not, ease Medium (reaction, pace or hunters) rather than Easy.
 
 Known gaps, all for Codex:
 
@@ -310,8 +331,6 @@ Known gaps, all for Codex:
 - **UFO jump** is built around laps and checkpoints; in the arena it reports
   "charges at first gate". Decide its arena rule (for example once per 30
   seconds, landing anywhere on the floor) in ARENA-01-UI.
-- **Pickups** still spawn by race distance; place them on ramp tops and at the
-  Heap's foot (section 3) in ARENA-02.
 - **The Heap** has walls but no model yet; the infield is flat ground. Art per
   SPEC 0.11 (existing assets first).
 - **App entry:** there is no `app.startArenaEvent` yet. The app must pass only

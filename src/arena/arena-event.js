@@ -19,6 +19,9 @@ export const ARENA_FIELD = Object.freeze(['dusthawk_rally', 'aurora_gt', 'stuttg
 
 export const ARENA_RULES = Object.freeze({
   creditWindowSec: 5, protectedSec: 2, respawnSpeedMph: 12, spawnClearMetres: 12,
+  // Lighter than race armor: every wreck is a point and a car is back in
+  // four seconds, so wrecks should come every half a minute or so.
+  armorScale: .5,
 });
 
 export function createArenaEvent({mode, venueId, opponentBrains, course}) {
@@ -41,6 +44,15 @@ export function createArenaEvent({mode, venueId, opponentBrains, course}) {
 // Evenly spread starting slots: the player first, then around the ring.
 export function startingSlots(slotCount, carCount) {
   return Array.from({length: carCount}, (_, index) => Math.round(index * slotCount / carCount) % slotCount);
+}
+
+// Every car in an arena event carries the same share of its race armor.
+export function applyArenaArmor(duel) {
+  for (const actor of [duel.state, ...duel.state.opponents]) {
+    if (!Number.isFinite(actor.maxArmor)) continue;
+    actor.maxArmor *= ARENA_RULES.armorScale;
+    actor.armor = actor.maxArmor;
+  }
 }
 
 // Put a car at a pose with the kinematic state of a fresh start.

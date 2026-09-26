@@ -3,6 +3,7 @@ import {arenaCarSpec, ringDistance} from './arena-pilot.js';
 import {arenaActor, hostile, outOfPlay} from '../combat-teams.js';
 import {predictedPoint} from '../combat-weapons.js';
 import {arenaFloorSpeed} from './venues.js';
+import {nearestRepairCrate} from './arena-pickups.js';
 
 // What a computer car wants (docs/SCRAPDOME.md section 4). Difficulty changes
 // decisions only: reaction, pace, boost use and the hunter cap.
@@ -18,9 +19,12 @@ export const TARGETING = Object.freeze({
 });
 
 export const STYLES = Object.freeze({
-  rammer: Object.freeze({leadMaxSec: 1.2, chargeRange: 60, chargeAlignRadians: .2}),
+  rammer: Object.freeze({leadMaxSec: 1.2, chargeRange: 60, chargeAlignRadians: .2,
+    // Joust: a stalled shove does no damage, so back out and charge again.
+    stallMetres: 10, stallMph: 20, backoffSec: 1.8, reverseSec: .7, retreatMetres: 30}),
   gunner: Object.freeze({near: 25, far: 45, orbit: 30, retreat: 40, cruiseShare: .78}),
   brawler: Object.freeze({switchArmorFraction: .5}),
+  repair: Object.freeze({armorFraction: .35, reachMetres: 90}),
   intercept: Object.freeze({nearMetres: 70, minimumMph: 30, maxSeconds: 8}),
 });
 
@@ -100,11 +104,29 @@ export function decideGoal(duel, participant, actor) {
     const ahead = duel.course.worldAt(actor.s + 40, 0);
     return {x: ahead.x, z: ahead.z, speedMph: top * .6, boost: false, heading: frame.heading};
   }
+  // A badly damaged car breaks off for a repair crate: the player's window.
+  if ((actor.armor ?? 1) < (actor.maxArmor ?? 1) * STYLES.repair.armorFraction && duel.state.cpuDifficulty !== 'easy') {
+    const crate = nearestRepairCrate(duel, actor);
+    if (crate && crate.distance < STYLES.repair.reachMetres) return {x: crate.x, z: crate.z, speedMph: top, boost: false};
+  }
   const at = worldPose(duel, target), distance = Math.hypot(at.x - me.x, at.z - me.z);
   const style = styleOf(duel, participant, actor);
   const intercept = ringIntercept(duel, actor, target, top);
   if (intercept) return {x: intercept.x, z: intercept.z, speedMph: top, boost: difficulty.boost === 'always'};
   if (style === 'rammer') {
+    const R = STYLES.rammer;
+    if ((participant.backoffSec || 0) > 0) {
+      const away = Math.atan2(me.x - at.x, me.z - at.z);
+      return {x: me.x + Math.sin(away) * R.retreatMetres, z: me.z + Math.cos(away) * R.retreatMetres,
+        speedMph: top * .8, boost: false};
+    }
+    if (distance < R.stallMetres && Math.abs(actor.speedMph || 0) < R.stallMph) {
+      participant.backoffSec = R.backoffSec;
+      actor._arenaReverseSec = Math.max(actor._arenaReverseSec || 0, R.reverseSec);
+      const away = Math.atan2(me.x - at.x, me.z - at.z);
+      return {x: me.x + Math.sin(away) * R.retreatMetres, z: me.z + Math.cos(away) * R.retreatMetres,
+        speedMph: top * .8, boost: false};
+    }
     const closing = Math.max(8, Math.abs(actor.speedMph) * .44704);
     const lead = Math.min(STYLES.rammer.leadMaxSec, distance / closing);
     const future = predictedPoint(duel, target, lead);
@@ -131,6 +153,10 @@ export function decideGoal(duel, participant, actor) {
 // re-plan its goal at its reaction time (Easy re-plans least often).
 export function thinkBrain(duel, participant, actor, dt) {
   participant.targetHeldSec = (participant.targetHeldSec || 0) + dt;
+  if ((participant.backoffSec || 0) > 0) {
+    participant.backoffSec = Math.max(0, participant.backoffSec - dt);
+    if (participant.backoffSec === 0) participant.reactionSec = 0;
+  }
   participant.reactionSec = Math.max(0, (participant.reactionSec || 0) - dt);
   const current = participant.targetId ? arenaActor(duel, participant.targetId) : null;
   if (!participant.targetId || !current || outOfPlay(duel, current) ||

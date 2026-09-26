@@ -32,7 +32,7 @@ import {createFeatureFlags, featureFlags} from './feature-flags.js';
 import {hiddenRoadInRace, raceFeatureFlags} from './wasteland-access.js';
 import {clamp, freshDamageZones} from './sim-common.js';
 import {ARENA_VENUES} from './arena/venues.js';
-import {ARENA_MODES, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
+import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
 
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
 const FACTORY_MAX_UPGRADES = Object.freeze(Object.fromEntries(UPGRADE_KEYS.map(key => [key, 3])));
@@ -356,6 +356,7 @@ export class Duel {
     });
     s.combat = createCombat(s.weaponLevels);
     initializeCombatArmor(this);
+    applyArenaArmor(this);
     initializeFootTransition(this);
     initializeFootWeapons(this);
     s.countdown = 3;

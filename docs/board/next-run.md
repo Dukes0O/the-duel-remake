@@ -43,8 +43,8 @@ section 9 lists the cards.
 | Order | Card | Done when |
 | --- | --- | --- |
 | 0 | **Play-test notes** | Anything Kyle reports from the live game goes first, including UX-ENTRY-HINTS |
-| 1 | **ARENA-01-UI** | A player who found the gate can start Last Car Rolling from the yard, see the arena display, finish, rematch and return; never from the main menu |
-| 2 | **ARENA-02** | Settlement (scrap, hold), pickups on ramps and the Heap, balance to the section 8 targets |
+| 1 | **ARENA-02-PAY** | Scrap and Scrapdome hold for Last Car Rolling, paid once (the yard entry, display, crates and balance are already built by Claude) |
+| 2 | **Crash physics and the Titan playground** | Claude is designing these now (Kyle, 26 September); take their cards only once they appear on the board |
 | 3 | **ARENA-FEEL** | Tells, callouts and sounds for arena fights |
 | 4 | **WAR-01** | Warlord data and the ladder on the territory map |
 | 5 | **WAR-02a, WAR-02b, WAR-02c** | Sawtooth Sal, The Dustmonger, Mother Mirage, each with a working reward |
