@@ -31,7 +31,8 @@ test('WASD and gamepad feed fixed-step fighter movement and terrain-safe camera'
   assert.equal(control.fire,true);
   assert.equal(duel.setFighterInput(control),true);
   ticks(duel,1);
-  assert.ok(state.fighter.yaw>start.yaw);
+  // Mouse right turns the view right, which lowers yaw in this camera frame.
+  assert.ok(state.fighter.yaw<start.yaw);
   assert.equal(state.fighterInput.lookX,0,'mouse delta is consumed once');
   duel.setFighterInput(footControlInput(keys,{},{}));
   ticks(duel,100);

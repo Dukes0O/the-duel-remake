@@ -154,6 +154,25 @@ function attemptMovement(course, car, fighter, dx, dz, feetY, airborne) {
   return {moved: true};
 }
 
+// Look and move directions as the player sees them through the camera, which
+// faces (sin yaw, cos yaw). Kept separate so a test can check them on screen.
+export function applyFootLook(fighter, input) {
+  // Mouse right turns right: the camera's right is (-cos yaw, sin yaw).
+  fighter.yaw -= (Number(input.lookX) || 0) * .0022;
+  fighter.pitch = clamp(fighter.pitch - (Number(input.lookY) || 0) * .0022,
+    -1.25, 1.25);
+}
+
+// Unit ground direction for the held movement keys, or zero when none.
+export function footMoveDirection(yaw, input) {
+  const forward = (input.forward ? 1 : 0) - (input.back ? 1 : 0);
+  const right = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+  const length = Math.hypot(forward, right);
+  if (!length) return {x: 0, z: 0};
+  return {x: (Math.sin(yaw) * forward - Math.cos(yaw) * right) / length,
+    z: (Math.cos(yaw) * forward + Math.sin(yaw) * right) / length};
+}
+
 export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_SECONDS) {
   if (!Number.isFinite(dt) || Math.abs(dt - FIGHTER_STEP_SECONDS) > 1e-10)
     throw new Error('Fighter movement needs the fixed 120 Hz simulation step.');
@@ -168,9 +187,7 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
   }
 
   const startX = fighter.x, startZ = fighter.z;
-  fighter.yaw += (Number(input.lookX) || 0) * .0022;
-  fighter.pitch = clamp(fighter.pitch - (Number(input.lookY) || 0) * .0022,
-    -1.25, 1.25);
+  applyFootLook(fighter, input);
   if (input.jump && !fighter.jumpHeld && fighter.airHeight === 0)
     fighter.verticalSpeed = JUMP_SPEED;
   fighter.jumpHeld = !!input.jump;
@@ -182,16 +199,11 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
     fighter.verticalSpeed -= T.gravity * dt;
   }
 
-  const forward = (input.forward ? 1 : 0) - (input.back ? 1 : 0);
-  const right = (input.right ? 1 : 0) - (input.left ? 1 : 0);
-  const length = Math.hypot(forward, right);
-  if (length) {
+  const move = footMoveDirection(fighter.yaw, input);
+  if (move.x || move.z) {
     const distance = (input.sprint ? T.sprintMetersPerSecond *
-      (fighter.sprintMultiplier || 1) : T.walkMetersPerSecond) * dt / length;
-    const dx = (Math.sin(fighter.yaw) * forward +
-      Math.cos(fighter.yaw) * right) * distance;
-    const dz = (Math.cos(fighter.yaw) * forward -
-      Math.sin(fighter.yaw) * right) * distance;
+      (fighter.sprintMultiplier || 1) : T.walkMetersPerSecond) * dt;
+    const dx = move.x * distance, dz = move.z * distance;
     const result = attemptMovement(course, car, fighter, dx, dz, feetY, airborne);
     if (result.hit) {
       const into = dx * result.hit.nx + dz * result.hit.nz;
