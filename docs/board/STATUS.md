@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-26T12:46:00.128Z
+Observed at: 2026-09-26T13:07:07.921Z
 
-Observation commit: 709a4e82f9da79be9e6fe14dc8ec708caab3360c
+Observation commit: fc2f7d3eab56619cb4044ba3fab5db8cf655dc26
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 709a4e82f9da79be9e6fe14dc8ec708caab3360c
+Integration HEAD: fc2f7d3eab56619cb4044ba3fab5db8cf655dc26
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -39,6 +39,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | lane/audio/aud-10 | 1 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 1 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/save/arena-02-pay | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/arena-02-pay/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -59,10 +60,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
 | Review `looks/` | 7,872,326 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 642,307 B | -569,773 B | 5,000,000 B |
+| Added bytes in last merge | 574,168 B | -68,139 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 330,483,712 B | +137,216 B | unavailable |
-| Lane folders | 0 | -1 | unavailable |
+| Git objects | 330,860,544 B | +376,832 B | unavailable |
+| Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
@@ -70,7 +71,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: faf5749598d061d0d11cadff9a4515fb10308ddb
 - Local main: missing
-- Local integration/wasteland: 709a4e82f9da79be9e6fe14dc8ec708caab3360c
+- Local integration/wasteland: fc2f7d3eab56619cb4044ba3fab5db8cf655dc26
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
