@@ -1,14 +1,14 @@
 import {GTAOPass} from 'three/addons/postprocessing/GTAOPass.js';
 
 // Small-radius ambient shading adds contact and panel depth. Foliage cutouts,
-// glass and particles are excluded from the opaque depth pass so their quads
-// cannot create dark rectangular artifacts.
+// glass, particles and sprites are excluded from the opaque depth pass so their
+// quads cannot create dark rectangular artifacts.
 export function createAmbientShading(scene,camera){
   const pass=new GTAOPass(scene,camera,640,360,undefined,{radius:1.5,thickness:.8,distanceFallOff:1,scale:1,samples:16},{radius:6,samples:8});
   pass.blendIntensity=.38;
   const setSize=pass.setSize.bind(pass);pass.setSize=(width,height)=>setSize(Math.max(1,Math.round(width*.6)),Math.max(1,Math.round(height*.6)));
   const excluded=[],visibility=[];
-  pass.refresh=()=>{excluded.length=0;scene.traverse(object=>{if(!object.isMesh)return;const materials=Array.isArray(object.material)?object.material:[object.material];if(materials.some(m=>m?.transparent||m?.alphaTest>0)||object.userData.excludeAmbientOcclusion||object.name==='Atmospheric sky')excluded.push(object);});visibility.length=excluded.length;};
+  pass.refresh=()=>{excluded.length=0;scene.traverse(object=>{if(object.isSprite){excluded.push(object);return;}if(!object.isMesh)return;const materials=Array.isArray(object.material)?object.material:[object.material];if(materials.some(m=>m?.transparent||m?.alphaTest>0)||object.userData.excludeAmbientOcclusion||object.name==='Atmospheric sky')excluded.push(object);});visibility.length=excluded.length;};
   const renderOverride=pass.renderOverride.bind(pass);
   pass.renderOverride=(renderer,material,target,clearColor,clearAlpha)=>{
     // RenderPass already drew the colour scene and its shadows. Normals do not

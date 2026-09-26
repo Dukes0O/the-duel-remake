@@ -1849,7 +1849,7 @@ tasks:
     lane: AUDIO
     size: S
     needs: [ARENA-01-UI]
-    status: backlog
+    status: merged
     flag: scrapdome
     owns: [docs/changes/ARENA-FEEL.md]
     hooks: [src/arena/arena-brains.js, src/sound-bank.js, src/combat-effects.js, src/screen-arena.js]

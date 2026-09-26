@@ -343,6 +343,31 @@ export const SOUND_BANK = {
     filter: ['bandpass', 420],
     loop: true,
   }),
+  // ARENA-FEEL: a computer car's charge tell (an engine roar rising), a
+  // respawn shimmer, and the player's wreck credit.
+  'arena.tell': cue('impacts', {
+    flag: 'scrapdome',
+    priority: 68,
+    limit: 3,
+    layers: [
+      tone(92, 0.7, 0.15, 'sawtooth', 0, 185),
+      tone(184, 0.55, 0.06, 'square', 0.06, 370),
+    ],
+  }),
+  'arena.respawn': cue('interface', {
+    flag: 'scrapdome',
+    layers: [
+      tone(330, 0.35, 0.05, 'sine', 0, 990),
+      tone(660, 0.3, 0.03, 'triangle', 0.08, 1320),
+    ],
+  }),
+  'arena.wreck-credit': cue('impacts', {
+    flag: 'scrapdome',
+    buffersFrom: 'combat.hit-confirm',
+    volume: 2.2,
+    priority: 78,
+    layers: [tone(70, 0.4, 0.2, 'sine', 0, 35)],
+  }),
   'weapon.default.fire': cue('weapons', {
     layers: [tone(220, 0.22, 0.12, 'triangle', 0, 88)],
   }),

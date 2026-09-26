@@ -1208,3 +1208,13 @@ water covers the whole area the car already treats as water (the pond's
 physics is unchanged); and the log ramp is logs laid up the slope in the
 direction of travel, because the ramp site sits on a steep bank where logs
 laid across it looked like a fence.
+
+## 26 September 2026: the rammer's charge tell (ARENA-FEEL)
+
+Kyle asked Claude to build the arena presentation job. Claude made the tell
+part of the computer driver, not decoration: a rammer that lines up a charge
+first eases to 60% speed for the difficulty's tell time (1.2, 0.8, 0.5 s),
+flashing its high beams and roaring, and only then boosts in. Every charge is
+announced. Quick balance runs moved little: wrecks per round 14, 10, 13 before
+and 13.5, 10, 13 after (Easy, Medium, Hard); player mean place 3, 3, 3.5
+before and 3, 3.5, 3.5 after.
