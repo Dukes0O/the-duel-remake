@@ -491,6 +491,9 @@ changes; hubcaps, finish count and unknown nested data remain under comparison.
   another named player remained isolated. The six captures distinguish the
   gold Titan, factory Titan and factory Falcone; the QA overlay and a stale
   loading label are evidence-only limits and do not cover the measured car.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 206/206 suites
+  passed in 311.33 seconds with actual PCM decoded on the reviewed phase-5
+  candidate.
 - `npm run build`: passed with 234 modules. The existing large-chunk warning
   remains; no new warning was introduced.
 
