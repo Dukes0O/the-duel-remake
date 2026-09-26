@@ -546,6 +546,10 @@ sentence.
   Quaternius links Ultimate Nature Pack to CC0; Kenney lists Nature Kit as
   Creative Commons CC0.
 - No source archive, texture, model or generated runtime output was added.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 7/7 suites
+  passed in 36.94 seconds.
+- `npm run build`: passed with 234 modules. The existing large-chunk warning
+  remains; no new warning was introduced.
 
 ### Phase 6 sourcing removed
 
