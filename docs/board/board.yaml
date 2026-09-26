@@ -433,6 +433,20 @@ tasks:
     acceptance:
       - "docs/CRASH_PHYSICS.md is settled. The solver, knocked motion and contact integration are built on lane/arch/crash-physics; docs/changes/CRASH-01.md lists the four failing test files and the decision for each. Finish those exactly as written, re-pin changed fingerprints with reasons, keep Mad Max combat balance in its bands, browser-review the four crash cases, then merge."
       - "The evidence-based correction in decisions.md adds crash-physics in dev. Off keeps the exact integration contact paths. On applies the settled solver in every mode. A roadside knock stays visible until it parks as a still wreck, and a settling knock consumes that full simulation tick."
+  - id: GATE-REJOIN
+    title: "Leaving the race up the hidden road pauses it; driving back rejoins"
+    priority: 1
+    lane: EGG
+    size: S
+    needs: []
+    status: merged
+    flag: hidden-road
+    claimed_by: "Merged by Claude, 26 September 2026"
+    owns: [tools/test-race-exit-rejoin.mjs, docs/changes/GATE-REJOIN.md]
+    hooks: [src/hidden-road-journey.js, src/muddy-hollow.js, src/app.js, src/game.js, tools/test-hidden-road-departure.mjs, tools/test-hidden-road-journey.mjs, tools/test-muddy-hollow.mjs, tools/scenarios/muddy-hollow.mjs, SPEC.md, docs/MUDDY_HOLLOW.md, docs/board/decisions.md, docs/playtest-inbox.md]
+    helpers: []
+    acceptance:
+      - "Kyle's report: reversing back from the hidden road froze the race. Departure pauses the race; returning resumes clock, rival and combat; only entering the gate abandons it, once; Muddy Hollow's ridge behaves the same; players see a pause and a rejoin message."
   - id: CRASH-03
     title: "Smashed cars slide to rest off the road"
     priority: 1

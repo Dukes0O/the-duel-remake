@@ -119,7 +119,10 @@ check('departed wash contacts still resolve without terminal damage or earnings'
   advance(duel, .1);
   const p = duel.course.worldAt(duel.state.s, duel.state.lateral);
   assert.ok(Math.hypot(p.x - wall.x, p.z - wall.z) > 1, 'solid bank resolves the overlap');
-  assert.equal(duel.state.status, 'exploring');
+  // Placed inside the bank, the car is off the road and is reset to the
+  // course; back on the course the paused race resumes (GATE-REJOIN).
+  const reset = events.some(e => e.boundaryReset);
+  assert.equal(duel.state.status, reset ? 'racing' : 'exploring');
   assert.equal(duel.state.majorCrashes, crashes);
   assert.equal(duel.state.score, score);
   assert.equal(events.some(e => e.gameover || e.stageResult || e.ticket), false);
