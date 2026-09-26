@@ -7,7 +7,7 @@ import { vehicleContactEnvelope, planNpcYield } from './npc-yielding.js';
 import { clamp, freshDamageZones } from './sim-common.js';
 import {completeCombatRecovery} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
-import {stepKnock} from './vehicle-knock.js';
+import {stepKnock, stepPhysicalWreck} from './vehicle-knock.js';
 import {trafficSpeedNearFighter, opponentFighterIntent} from './onfoot-race.js';
 
 export function _npcYield(actor, targetMph, plannedHeading = actor.headingError || 0) {
@@ -56,7 +56,12 @@ export function _traffic(dt) {
       continue;
     }
     if (c.roadsideMotion) { stepRoadsideTraffic(c, dt); continue; }
-    if (c.wrecked) { stepTrafficWreck(c, dt); continue; }
+    if (c.wrecked) {
+      if (c.wrecked.physical && this.featureFlags?.enabled('crash-physics') === true)
+        stepPhysicalWreck(this, c, dt);
+      else stepTrafficWreck(c, dt);
+      continue;
+    }
     if (!c.alive || c.crushed) continue;
     c.prevS = c.s;
     c.prevLateral = c.lateral;

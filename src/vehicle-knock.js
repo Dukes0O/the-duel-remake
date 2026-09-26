@@ -16,6 +16,25 @@ export const KNOCK = Object.freeze({
   endSpeed: 1.5, endSpin: .35, minSec: .3, maxSec: 3.5,
 });
 
+// A wrecked or shoved-off car has no driver: it scrubs to a stop on friction
+// and ends beyond the nearest shoulder (CRASH-03). It never parks in the lane
+// and never halts from speed in one tick.
+export const WRECK = Object.freeze({
+  forwardDecel: 6,      // m/s², a damaged car skidding along the road
+  slideDecel: KNOCK.slideDecel,
+  spinDamping: 2.3,     // per second, as the released wreck spin
+  maxSec: 9,            // a roadside shove parks by then at the latest
+  pastShoulder: 10,     // m beyond the clear line before sideways motion stops
+});
+
+// Sideways road-frame speed that carries a car from `lateral` to beyond the
+// shoulder on `side` under the sliding friction, with a little to spare.
+function shoulderSpeed(duel, actor, lateral, side) {
+  const clear = (duel.course.roadHalfWidthAt?.(actor.s) ?? 7) +
+    duel._vehicleSpec(actor).halfWidth + .5;
+  return Math.sqrt(2 * WRECK.slideDecel * Math.max(0, clear - side * lateral)) + 1;
+}
+
 function roadsideParkingPose(duel, actor, side) {
   const spec = duel._vehicleSpec(actor);
   const fromS = actor.prevS ?? actor.s, fromLateral = actor.prevLateral ?? actor.lateral;
@@ -23,7 +42,8 @@ function roadsideParkingPose(duel, actor, side) {
   for (const distance of [0, 8, -8, 16, -16, 24, -24, 40, -40, 64, -64]) {
     const s = actor.s + distance;
     const roadHalfWidth = duel.course.roadHalfWidthAt?.(s) ?? 7;
-    const lateral = side * (roadHalfWidth + spec.halfWidth + .5);
+    // A car already past the clear line parks where it slid to.
+    const lateral = side * Math.max(side * actor.lateral, roadHalfWidth + spec.halfWidth + .5);
     const end = {...duel.course.worldAt(s, lateral), y: undefined};
     const heading = duel.course.at(s).heading + (actor.headingError || 0) +
       ((actor.dir || 1) < 0 ? Math.PI : 0);
@@ -73,7 +93,8 @@ export function stepKnock(duel, actor, dt) {
   const heading = bodyHeading(duel, actor);
   const f = {x: Math.sin(heading), z: Math.cos(heading)}, side = {x: Math.cos(heading), z: -Math.sin(heading)};
   let forward = k.vx * f.x + k.vz * f.z, across = k.vx * side.x + k.vz * side.z;
-  const rollDecel = actor === duel.state ? T.playerRollDecel : T.rollDecel;
+  const rollDecel = k.roadside ? WRECK.forwardDecel :
+    actor === duel.state ? T.playerRollDecel : T.rollDecel;
   forward = Math.sign(forward) * Math.max(0, Math.abs(forward) - rollDecel * dt);
   across = Math.sign(across) * Math.max(0, Math.abs(across) - T.slideDecel * dt);
   k.vx = f.x * forward + side.x * across; k.vz = f.z * forward + side.z * across;
@@ -91,11 +112,13 @@ export function stepKnock(duel, actor, dt) {
   actor.speedMph = (actor === duel.state ? forward : Math.max(0, forward)) / DRIVE.mphToWorld;
   actor.pushVelocity = 0;
   // Control returns once the car stops sliding sideways and spinning; rolling
-  // forward is fine to hand back to the driver.
+  // forward is fine to hand back to the driver. A roadside shove has no
+  // driver, so it parks only once it has nearly stopped.
   const endSpeed = k.roadside ? 2 : T.endSpeed;
-  const settled = k.age >= T.minSec && Math.abs(across) < endSpeed && Math.abs(k.spin) < T.endSpin &&
+  const sliding = k.roadside ? Math.hypot(forward, across) : Math.abs(across);
+  const settled = k.age >= T.minSec && sliding < endSpeed && Math.abs(k.spin) < T.endSpin &&
     !(actor.airHeight > 0);
-  if (settled || k.age >= T.maxSec) {
+  if (settled || k.age >= (k.roadside ? WRECK.maxSec : T.maxSec)) {
     if (k.roadside) {
       const parking = roadsideParkingPose(duel, actor, k.roadside.side);
       if (!parking) {
@@ -118,6 +141,41 @@ export function stepKnock(duel, actor, dt) {
     return false;
   }
   return true;
+}
+
+// One step of a physical traffic wreck (made under crash physics). It slides
+// on constant friction instead of the released scripted kick, stops sideways
+// motion well past the shoulder, and stops at a solid instead of passing
+// through it. Rolling and the hop keep the released wreck look.
+export function stepPhysicalWreck(duel, actor, dt) {
+  const w = actor.wrecked;
+  if (!w || !Number.isFinite(dt) || dt <= 0) return;
+  dt = Math.min(dt, .05);
+  actor.prevS = actor.s; actor.prevLateral = actor.lateral;
+  w.age += dt;
+  const s = actor.s + w.forwardVelocity * dt;
+  const lateral = actor.lateral + w.lateralVelocity * dt;
+  if (s !== actor.s || lateral !== actor.lateral) {
+    const spec = duel._vehicleSpec(actor);
+    const start = {...duel.course.worldAt(actor.s, actor.lateral), y: undefined};
+    const end = {...duel.course.worldAt(s, lateral), y: undefined};
+    const heading = bodyHeading(duel, actor);
+    const blocked = duel._obstacles(Math.min(actor.s, s) - 6, Math.max(actor.s, s) + 6)
+      .some(obstacle => sweepObstacle(start, end, obstacle, heading, spec));
+    if (blocked) { w.forwardVelocity = 0; w.lateralVelocity = 0; }
+    else { actor.s = s; actor.lateral = lateral; }
+  }
+  const clear = (duel.course.roadHalfWidthAt?.(actor.s) ?? 7) +
+    duel._vehicleSpec(actor).halfWidth + .5;
+  if (Math.abs(actor.lateral) >= clear + WRECK.pastShoulder &&
+      Math.sign(w.lateralVelocity) === Math.sign(actor.lateral)) w.lateralVelocity = 0;
+  const scrub = (value, decel) => Math.sign(value) * Math.max(0, Math.abs(value) - decel * dt);
+  w.forwardVelocity = scrub(w.forwardVelocity, WRECK.forwardDecel);
+  w.lateralVelocity = scrub(w.lateralVelocity, WRECK.slideDecel);
+  actor.headingError = (actor.headingError || 0) + w.spinVelocity * dt;
+  w.spinVelocity *= Math.exp(-WRECK.spinDamping * dt);
+  actor.airHeight = Math.max(0, w.verticalVelocity * w.age - 4.9 * w.age * w.age);
+  w.roll = w.side * Math.min(w.rollLimit ?? 1.05, w.age * (1 + Math.abs(w.spinVelocity) * .5));
 }
 
 // Hop speeds for hard hits: a smashed car jolts, a launched one leaves the ground.
@@ -143,8 +201,13 @@ function applyDriving(duel, actor, before, after, {player}) {
 // says and rolling with its spin (the existing traffic-wreck motion).
 function wreckTraffic(duel, actor, after, severity, dvMph) {
   const frame = duel.course.at(actor.s);
-  const lateral = after.vx * Math.cos(frame.heading) - after.vz * Math.sin(frame.heading);
+  let lateral = after.vx * Math.cos(frame.heading) - after.vz * Math.sin(frame.heading);
   const along = after.vx * Math.sin(frame.heading) + after.vz * Math.cos(frame.heading);
+  // A clear sideways shove decides the side; a straight hit leaves by the
+  // nearest shoulder. Either way the wreck ends off the road.
+  const side = Math.abs(lateral) > 1 ? Math.sign(lateral) :
+    Math.sign(actor.lateral) || Math.sign(lateral) || 1;
+  lateral = side * Math.max(side * lateral, shoulderSpeed(duel, actor, actor.lateral, side));
   actor.alive = false;
   actor.wrecked = {atTime: duel.state.stageTimeSec, age: 0, side: Math.sign(lateral) || 1,
     lateralVelocity: lateral, forwardVelocity: along, verticalVelocity: hopFor(severity, dvMph) || 1.1,
