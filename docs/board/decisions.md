@@ -848,3 +848,19 @@ Re-slice EGG-03 narrowly to allow `src/screen-results.js`. When an exploration
 pause follows a failed profile save, append the same session-only storage
 warning used by the ticket screen. This is safety feedback in the existing
 pause panel. It adds no Muddy Hollow screen, control, menu entry or save field.
+
+## 2026-09-26: correct Muddy Hollow ridge grounding in phase 6
+
+Phase-3 browser QA first captured a stale Falcone frame while the Titan asset
+was still loading. That image and its grounding verdict are invalid. The
+corrected memory-only run proves the simulation car, ready renderer asset and
+only visible vehicle are all the Titan. Its rendered X/Z position and refreshed
+terrain pitch and roll match the simulation exactly, yet the body still
+intersects the steep departure slope.
+
+Keep phase 3 limited to deterministic departure behavior. Muddy Hollow remains
+behind its dev switch, and phase 6 already owns the detailed ground and visual
+pass. Extend phase-6 acceptance to correct this verified Titan intersection
+before the playground is visually complete. This is a required grounding fix,
+not a change to the settled ridge location, Titan-only access or departure
+rule.

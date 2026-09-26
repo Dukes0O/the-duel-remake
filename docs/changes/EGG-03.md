@@ -1,6 +1,6 @@
 ---
 task: EGG-03
-status: active-phase-2
+status: active-phase-3
 kind: easter-egg
 flag: muddy-hollow
 player_facing: yes
@@ -222,4 +222,72 @@ point-of-no-return ordering.
 
 ## Phase 3 tests first
 
-Pending independent red acceptance tests.
+Independent acceptance tests were committed before runtime code. The first
+focused run passed 23/30 checks and retained seven intended failures: the
+finite departure boundary was absent; the crossing did not leave the race or
+win a deadline tie; exploration did not freeze race outcomes; fixed-step
+schedules did not agree; the real App did not settle an abandoned run; and
+the App settlement hook was absent.
+
+Review then produced four more red contracts. A normal discovered race threw
+before driving had initialized its previous pose. Diagonal sweeps could cross
+outside either end of the finite ridge span, a landing sweep could depart
+while its previous pose was airborne, and Pro engine overrev could freeze a
+departed Titan. Save Guardian review also proved that denied storage was not
+visible in the exploration pause panel. The four-review run passed 31/35
+checks before the narrow fixes. Private browser QA found one last startup
+case: the menu called the departure check before a course existed. Its red
+regression passed 35/36 checks before the course guard.
+
+No existing test was weakened. `tools/scenarios/muddy-hollow.mjs` extends the
+existing private, memory-only scenario with non-Titan isolation, Titan
+departure, one-time settlement, frozen race outcomes, drivable ridge return,
+pause and menu exit.
+
+## Phase 3 evidence
+
+- `node tools/test-muddy-hollow.mjs`: 36/36 checks passed. This includes both
+  ends of the swept boundary, a landing sweep, a normal countdown-to-racing
+  start, a no-course menu start, Pro overrev exploration with an ordinary
+  racing engine-failure control, 30/60/144 FPS agreement, and real App
+  settlement and identity guards.
+- Hidden Road controls remained green: journey 37/37, departure 7/7 and
+  presentation 11/11. The shared abandoned-race and departed-explorer paths
+  retain their existing behavior.
+- `node tools/test-replays.mjs`: all 162 fingerprints passed across 18 cases,
+  16 events, three frame rates and three runs.
+- Result and lifecycle controls passed: busted/quit 280 checks, completion
+  screen 162 checks, speed presentation 62 checks and App lifecycle 8 checks.
+- Save Guardian re-review passed an actual denied-storage departure. Credits
+  stayed at 2,400; the abandoned result had no reward or fine; `activeRace`
+  cleared in memory; `profileSaved` became false; and the existing pause panel
+  showed the session-only warning. Seven historical fixtures passed 247
+  checks, backup and QA isolation passed, and the storage model remained
+  3.47 MB of 4.00 MB.
+- Independent runtime re-review: clean after the normal-start, swept-boundary,
+  landing-sweep, Pro overrev and no-course startup fixes. The reviewer repeated
+  the 36/36 focused suite, Hidden Road controls and replay fingerprints.
+- Private browser QA passed on port 59970 with memory-only saves: 11 images,
+  no console warning or error, and no failed request. Flag-off, undiscovered
+  and non-Titan isolation passed. The Titan produced one departure and one
+  zero-charge abandoned record, cleared the active race, froze the timer and
+  result, drove 1.227 m back across the ridge in 13 fixed ticks, paused and
+  returned to the menu without another event or result.
+- Renderer-readiness checks replaced an invalid stale Falcone capture. The
+  final capture proves a ready Titan asset, exact horizontal position and the
+  refreshed terrain attitude. It also proves that the Titan body intersects
+  the steep departure slope. Phase 3 changes no rendering; the feature stays
+  dev-gated, and the active phase-6 acceptance now requires that grounding
+  correction before visual completion.
+
+## Phase 3 changed assertions
+
+No existing assertion changed. New focused checks and browser assertions add
+the phase-3 contracts. The shared paused-results renderer gains only a
+session-only storage warning when an exploration save has failed, as recorded
+in `docs/board/decisions.md`.
+
+## Phase 3 removed
+
+Nothing. Phase 3 reuses the existing abandoned-race settlement and pause panel
+and adds an isolated departure state; it does not replace an old path.
