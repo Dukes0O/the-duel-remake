@@ -264,6 +264,106 @@ function tracePlaygroundRamp(index, fps = 60) {
     airborneOverPond, nearestAirbornePondRadius, tick};
 }
 
+function drivePlaygroundRamp(index, fps = 60) {
+  const duel = phaseThreeDuel();
+  const zone = zoneFor(duel.course);
+  const ramp = zone.landforms.ramps[index];
+  const center = toLocal(zone, pointFor(ramp, ramp.name));
+  const pond = toLocal(zone, pointFor(zone.landforms.pondBed, 'pond bed'));
+  let direction = ramp.direction ?? {along: 1, lateral: 0};
+  if (index === 0) {
+    const length = Math.hypot(pond.along - center.along,
+      pond.lateral - center.lateral);
+    direction = {along: (pond.along - center.along) / length,
+      lateral: (pond.lateral - center.lateral) / length};
+  }
+  const speedMph = index === 0 ? 92 : 58;
+  const startOffset = -Math.max(ramp.alongRadius, ramp.lateralRadius) * 1.45;
+  const start = localPoint(zone,
+    center.along + direction.along * startOffset,
+    center.lateral + direction.lateral * startOffset);
+  const pose = placeAt(duel, start, speedMph);
+  const dx = Math.sin(zone.frame.heading) * direction.along +
+    Math.cos(zone.frame.heading) * direction.lateral;
+  const dz = Math.cos(zone.frame.heading) * direction.along -
+    Math.sin(zone.frame.heading) * direction.lateral;
+  const targetHeading = Math.atan2(dx, dz);
+  Object.assign(duel.state, {status: 'exploring',
+    headingError: Math.atan2(Math.sin(targetHeading - duel.course.at(pose.s).heading),
+      Math.cos(targetHeading - duel.course.at(pose.s).heading)),
+    stageTimeSec: 123, lapTimeSec: 45, totalTimeSec: 67});
+  duel.state.muddyHollowDeparture.departed = true;
+  duel.state.muddyHollowDeparture.elapsedSec = fixedStep;
+  duel.setInput({throttle: 1, brake: 0, steer: 0, boost: false});
+  const frozen = Object.fromEntries(['score', 'stageStyleScore', 'jumpScore',
+    'jumps', 'stageTimeSec', 'lapTimeSec', 'totalTimeSec'].map(key =>
+    [key, structuredClone(duel.state[key])]));
+  const events = [];
+  duel.onChange((_, event) => events.push(event));
+  let tumbleAttempts = 0;
+  const startTumble = duel._startTumble.bind(duel);
+  duel._startTumble = reason => {
+    tumbleAttempts++;
+    return startTumble(reason);
+  };
+  let accumulator = 0;
+  let tick = 0;
+  let maxAirHeight = 0;
+  let maxAirTime = 0;
+  let airborneTicks = 0;
+  let longestFlightTicks = 0;
+  let maximumProgress = startOffset;
+  while (tick < 1200 && maximumProgress <
+      Math.max(ramp.alongRadius, ramp.lateralRadius) * 2.2) {
+    accumulator += 1 / fps;
+    while (accumulator + 1e-10 >= fixedStep && tick < 1200) {
+      accumulator = Math.max(0, accumulator - fixedStep);
+      duel.step(fixedStep);
+      tick++;
+      maxAirHeight = Math.max(maxAirHeight, duel.state.airHeight || 0);
+      maxAirTime = Math.max(maxAirTime, duel.state.airTime || 0);
+      airborneTicks = duel.state.airborne ? airborneTicks + 1 : 0;
+      longestFlightTicks = Math.max(longestFlightTicks, airborneTicks);
+      const local = toLocal(zone, duel.course.worldAt(duel.state.s,
+        duel.state.lateral));
+      maximumProgress = Math.max(maximumProgress,
+        (local.along - center.along) * direction.along +
+        (local.lateral - center.lateral) * direction.lateral);
+    }
+  }
+  return {duel, ramp, maxAirHeight, maxAirTime, longestFlightTicks,
+    maximumProgress, tumbleAttempts, frozen, events, tick};
+}
+
+function crawlGardenRock(rock) {
+  const duel = phaseThreeDuel();
+  const zone = zoneFor(duel.course);
+  const local = toLocal(zone, rock);
+  const start = localPoint(zone, local.along - 6, local.lateral);
+  const pose = placeAt(duel, start, 8);
+  Object.assign(duel.state, {status: 'exploring',
+    headingError: Math.atan2(Math.sin(zone.frame.heading -
+      duel.course.at(pose.s).heading), Math.cos(zone.frame.heading -
+      duel.course.at(pose.s).heading))});
+  duel.state.muddyHollowDeparture.departed = true;
+  duel.state.muddyHollowDeparture.elapsedSec = 1;
+  duel.setInput({throttle: .5, brake: 0, steer: 0, boost: false});
+  let tumbleAttempts = 0;
+  const startTumble = duel._startTumble.bind(duel);
+  duel._startTumble = reason => {
+    tumbleAttempts++;
+    return startTumble(reason);
+  };
+  let maximumAlong = local.along - 6;
+  for (let tick = 0; tick < 1200; tick++) {
+    duel.step(fixedStep);
+    const position = toLocal(zone, duel.course.worldAt(duel.state.s,
+      duel.state.lateral));
+    maximumAlong = Math.max(maximumAlong, position.along);
+  }
+  return {duel, maximumAlong, tumbleAttempts, local};
+}
+
 function offsetFeature(zone, feature, alongScale = 0, lateralScale = 0) {
   const center = pointFor(feature, feature?.name || feature?.id || 'feature');
   const heading = zone.frame.heading;
@@ -1346,6 +1446,57 @@ check('zone-owned rock garden supports the Titan without entering ordinary featu
   const queried = zone.obstaclesNear(zone.frame.s - 190, zone.frame.s + 190);
   assert.deepEqual(queried.map(rock => rock.id), garden.rocks.map(rock => rock.id),
     'the zone query returns the fixed garden in authored order');
+});
+
+check('rock support and collision lookup follow the garden onto later laps', () => {
+  const duel = phaseThreeDuel();
+  const zone = zoneFor(duel.course);
+  const rock = zone.landforms.rockGarden.rocks[0];
+  const first = duel._supportAt(rock.s, rock.off);
+  for (const lap of [1, 2]) {
+    const distance = rock.s + duel.course.length * lap;
+    const support = duel._supportAt(distance, rock.off);
+    assert.ok(Math.abs(support.y - first.y) < 1e-9,
+      `lap ${lap + 1} keeps the same rounded rock support`);
+    assert.equal(duel._obstacles(distance - 5, distance + 5)
+      .some(obstacle => obstacle.id === rock.id), true,
+    `lap ${lap + 1} keeps the rock in static-contact lookup`);
+  }
+});
+
+check('actual exploration driving reaches and launches from every playground ramp', () => {
+  for (let index = 0; index < 5; index++) {
+    const result = drivePlaygroundRamp(index);
+    assert.ok(result.maximumProgress >
+      Math.max(result.ramp.alongRadius, result.ramp.lateralRadius),
+    `${result.ramp.name} does not become an invisible climb-limit wall`);
+    assert.ok(result.maxAirHeight > .25,
+      `${result.ramp.name} launches through real exploration driving`);
+    assert.equal(result.tumbleAttempts, 0,
+      `${result.ramp.name} causes no rejected climb-limit tumble`);
+    assert.ok(result.longestFlightTicks > 1 && Math.abs(result.maxAirTime -
+      result.longestFlightTicks * fixedStep) <= fixedStep * 2,
+    `${result.ramp.name} measures airtime on the exploration clock`);
+    assert.deepEqual(Object.fromEntries(Object.keys(result.frozen).map(key =>
+      [key, result.duel.state[key]])), result.frozen,
+    `${result.ramp.name} keeps race clocks and scoring frozen`);
+    assert.equal(result.events.some(event => event.jumpLanded || event.rollover ||
+      event.stageResult || event.gameover), false,
+    `${result.ramp.name} creates no score or race outcome event`);
+    assert.equal(result.duel.state.status, 'exploring');
+  }
+});
+
+check('the Titan crawls across every garden rock without an invisible wall', () => {
+  const zone = zoneFor(phaseThreeDuel().course);
+  for (const rock of zone.landforms.rockGarden.rocks) {
+    const result = crawlGardenRock(rock);
+    const reach = Math.max(rock.halfX, rock.halfZ) * Math.SQRT2 + .7;
+    assert.ok(result.maximumAlong > result.local.along + reach,
+      `${rock.id} can be crossed through real exploration driving`);
+    assert.equal(result.tumbleAttempts, 0,
+      `${rock.id} causes no rejected climb-limit tumble`);
+  }
 });
 
 check('phase 4 playground traces agree under 30, 60 and 144 FPS scheduling', () => {
