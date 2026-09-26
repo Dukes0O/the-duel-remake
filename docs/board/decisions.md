@@ -1106,3 +1106,21 @@ code. Existing localized damage zones provide the permanent crumple; the new
 event effect must place the immediate spark/crumple flash at the exact supplied
 world point. Knocks produce smoke only while `actor.knock` exists. Launched
 traffic keeps the physical wreck roll already authored by CRASH-01.
+
+A read-only integration probe then found two settled-design gaps. The armored
+contact helper returns before the normal path's `vehicleSmash` emit, so a real
+130-to-25 mph Wasteland rear impact launches the rival but provides no CRASH-02
+presentation event. Re-slice narrowly to `src/sim-contacts.js` and the existing
+armored-impact test. Emit one event for the player-visible struck car from the
+already-computed solver result and contact point. Add the actor and contacted
+damage zone so the renderer can resolve height and the existing crumple without
+guessing. Do not change motion, armor, damage, incident latching or balance.
+
+The same probe found that police can receive `actor.knock`, but
+`src/sim-police.js` does not step it. Its age stays at zero while ordinary
+police driving moves the car, which would make knocked-tyre smoke permanent.
+This also contradicts the settled CRASH-01 rule that police become free bodies.
+Re-slice narrowly to `src/sim-police.js` and a new focused test. A knock present
+at tick start must consume that police tick, including the tick on which it
+settles, while preserving solid and boundary checks and pursuit-distance
+bookkeeping. Flag-off police driving remains exact.

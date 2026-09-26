@@ -83,7 +83,10 @@ test('tyre smoke exists only for live knocked motion', () => {
     const smoke = visible(effects.group, 'crash-vfx-knock-0-smoke');
     assert.equal(smoke.visible, true);
     const expected = course.groundAt(12, -2);
-    assert.deepEqual(smoke.position.toArray(), [expected.x, expected.y, expected.z]);
+    assert.equal(smoke.position.x, expected.x);
+    assert.equal(smoke.position.z, expected.z);
+    assert.ok(smoke.position.y > expected.y && smoke.position.y < expected.y + 1,
+      'smoke rises less than one metre from the tyre contact');
     current.opponents[0].knock = null;
     effects.update({state: current, course, dt: 1 / 60, crashEnabled: true});
     assert.equal(smoke.visible, false);

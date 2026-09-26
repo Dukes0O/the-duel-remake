@@ -36,10 +36,12 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
 }
 
 {
-  const { duel, player, rival } = race();
+  const { duel, player, rival } = race('wasteland', 'banshee_muscle', false, true);
   player.lateral = player.prevLateral = 6;
   rival.lateral = rival.prevLateral = 6.6;
   const before = { playerSpeed: player.speedMph, rivalSpeed: rival.speedMph };
+  const events = [];
+  duel.onChange((_, event) => events.push(event));
   assert.equal(duel._vehicleContact(player, rival, 'rival'), true);
   assert.equal(player.impactTimer, 0, 'a protected rear ram below the car threshold leaves control with the player');
   assert.equal(player.stageCrashes, 0, 'a protected rear ram adds no crash penalty');
@@ -52,6 +54,20 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
   assert.ok(Math.abs(sideways) > 1 && Math.abs(rival.knock.spin) > .01,
     'an off-centre rear hit gives the opponent sideways velocity and spin');
   assert.ok(rival.knock.vy > 0, 'a fast rear hit launches the opponent');
+  const smash = events.filter(event => event.vehicleSmash)
+    .map(event => event.vehicleSmash);
+  assert.equal(smash.length, 1,
+    'the first armored incident emits one CRASH-02 presentation event');
+  assert.equal(smash[0].severity, 'launched');
+  assert.equal(smash[0].actor, rival,
+    'the event identifies the struck actor without a renderer guess');
+  assert.equal(smash[0].zone, 'rear');
+  assert.ok(smash[0].dvMph > 45 && ['x', 'z']
+    .every(axis => Number.isFinite(smash[0].point?.[axis])),
+  'the armored event carries solver delta-v and finite contact coordinates');
+  duel._vehicleContact(player, rival, 'rival');
+  assert.equal(events.filter(event => event.vehicleSmash).length, 1,
+    'the latched armored incident cannot emit the presentation twice');
   let pushedOffRoad = false, maxLateral = 0;
   for (let i = 0; i < 480 && rival.knock; i++) {
     duel._rival(1 / 120);
