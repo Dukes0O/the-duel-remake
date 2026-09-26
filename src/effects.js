@@ -176,7 +176,9 @@ export function createDrivingEffects() {
     // Landing, crush and impact bursts sample their own contact below.
     const braking = Number((state.gear===-1?state.input?.throttle:state.input?.brake) || 0) > .2;
     const sliding = !!state.drifting || (Math.abs(state.slipAngle || 0) > .075);
-    const contacts = moving && !airborne && (dirt || surfaceMud>0 || waterDepth>0 || braking || sliding || impact > .1) ? [-1, 1].map(side => contactAt(-fx * rearAxle + rx * side * wheelTrack, -fz * rearAxle + rz * side * wheelTrack)) : [];
+    let contacts = moving && !airborne && (dirt || braking || sliding || impact > .1) ? [-1, 1].map(side => contactAt(-fx * rearAxle + rx * side * wheelTrack, -fz * rearAxle + rz * side * wheelTrack)) : [];
+    if(!contacts.length&&moving&&!airborne&&(surfaceMud>0||waterDepth>0))
+      contacts=[-1,1].map(side=>contactAt(-fx*rearAxle+rx*side*wheelTrack,-fz*rearAxle+rz*side*wheelTrack));
     if (airborne) peakAirHeight = Math.max(peakAirHeight, state.airHeight || 0);
     if (previousAirborne && !airborne && activeDrive && !teleported) {
       const contact = contactAt(0, 0), power = Math.min(1, .3 + peakAirHeight * .16), amount = Math.round((monster ? 65 : 40) * power);
