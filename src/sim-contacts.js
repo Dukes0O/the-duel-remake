@@ -213,7 +213,8 @@ export function _supportAt(distance, lateral, actor = this.state) {
   const ground = this.course.groundAt(distance, lateral);
   const capability = actor === this.state ? offroadCapability(this.car) : null;
   if (!capability) return ground;
-  if (this.course.features.mountains?.length) {
+  const inMuddyHollow = this.course.muddyHollow?.contains(ground.x, ground.z);
+  if (!inMuddyHollow && this.course.features.mountains?.length) {
     const mountain = sampleMountainSupport(this.course, ground.x, ground.z);
     if (mountain != null) ground.y = Math.max(ground.y, mountain);
   }

@@ -322,3 +322,75 @@ All phase-4 content exists only when the `muddy-hollow` development switch
 and discovered-gate snapshot install the zone. The fixed-step outcomes must
 agree under 30, 60 and 144 FPS scheduling, while the flag-off course,
 ordinary course fingerprint and random stream remain unchanged.
+
+## Phase 4 tests first
+
+The phase-4 acceptance commit preceded runtime code. Its first focused run
+passed 38/42 checks and retained four intended failures: the ramp roles,
+rock garden and summit flag were absent; Dirt Kicker 2 did not launch; the
+exploration path did not call shared jump physics; and no isolated Hollow
+obstacle query existed.
+
+Continuing the same trace after implementation found that Dirt Kicker 3 also
+needed lift. The log-ramp trace then exposed a test-path error: the site lies
+on a steep local-along descent, while its intended cross-slope approach has
+the required crest. The test now follows the authored approach and retains
+the original 3.8-metre log-ramp lift. Finally, measured mega-jump trials found
+14 metres to be the first tested half-metre lift that carries the 92 mph Titan
+into the pond span. These evidence-based changes are recorded in
+`docs/board/decisions.md`.
+
+## Phase 4 evidence
+
+- `node tools/test-muddy-hollow.mjs`: 45/45 checks passed. All five named
+  sites produce natural off-road flight without a score, record, reward,
+  callout, race event or clock change. The mega line is airborne over the
+  pond. Public exploration driving clears every ramp without a rejected
+  climb-limit tumble, and measured airtime follows the fixed exploration
+  clock. Thirty, 60 and 144 FPS scheduling agree exactly.
+- Seven fixed, zone-owned rocks remain outside `course.features`; each is
+  above the rally rock limit and within the switched Titan limit. The shared
+  support query and public exploration step carry the Titan across every
+  rock. Bucket-aligned lookup keeps the existing obstacle cache valid, and
+  later laps repeat the same support and solid-contact lookup.
+- Independent review reproduced and then cleared four defects: raw-distance
+  rocks vanished on lap two; the frozen race clock held airtime at one tick;
+  ordinary High Country mountain support buried Dirt Kicker 1; and abrupt
+  rock support edges stopped real traversal. Review regressions were committed
+  red at 42/45 before the narrow fixes. Ordinary mountain support remains
+  unchanged outside the installed zone; phase 6 now owns masking its visual
+  overlap at authored play sites.
+- The summit flag is fixed to the deterministic King of the Hill centre and
+  ground height. It is presentation data only. Flag-off construction exposes
+  no Hollow content.
+- `node tools/test-offroad-physics.mjs`: 8,788 checks passed.
+- `node tools/test-contact-damage.mjs`: 195 checks passed.
+- `node tools/test-jump-height.mjs`: 95 checks passed.
+- `node tools/test-jump-distance.mjs`: 374 checks passed; the real arena
+  control stayed 70.258 m / 1.358 s at 30 and 144 FPS.
+- `node tools/test-terrain.mjs`: 2,545,523 checks passed across 16 circuits
+  and four seeds.
+- Feature-switch checks passed 22 assertions; Wasteland beta isolation passed
+  all three subtests; all 162 replay fingerprints passed across 18 cases,
+  16 events, three frame rates and three runs.
+- `npm run build`: passed with 234 modules. The existing large-chunk warning
+  remains; no new warning was introduced.
+
+## Phase 4 changed assertions
+
+No pre-existing assertion was weakened. The new ramp trace originally assumed
+one local-along approach for every site. Actual height samples proved that this
+was not the authored log-ramp line, so the new trace now reads each site's
+deterministic approach vector. It still requires real flight and now reports
+the nearest normalized pond radius when the mega-jump requirement fails.
+Independent review supplemented that geometry trace with public
+`duel.step` driving, bounded steering input, climb-limit instrumentation,
+fixed exploration airtime and frozen outcome checks. The rock crawl stops
+after clearing each target footprint so a later site cannot be misattributed
+to the rock under test.
+
+## Phase 4 removed
+
+Nothing. Phase 4 extends the isolated Hollow zone and reuses shared flight,
+rock support and static-contact paths. It does not replace ordinary course
+features or introduce generated output.

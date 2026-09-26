@@ -894,3 +894,48 @@ of 1.188, 1.097 and 1.024, respectively, where 1.0 is the pond edge. A
 14-metre lift is the first tested half-metre value that enters the pond span.
 Keep the existing site and footprint and use that lift. Phase 6 still owns the
 visual review of the detailed ramp and landing.
+
+## 2026-09-26: isolate Hollow support from ordinary mountains
+
+Independent phase-4 review drove the sites through the public exploration
+step instead of assigning positions. Dirt Kicker 1 stopped before its centre.
+At local position 105.24, 210, the authored Hollow ground is 72.495 metres,
+but an ordinary High Country mountain supplies 76.679 metres of support; at
+the kicker centre it rises to 114.168 metres over 74.692 metres of Hollow
+ground. The unchanged mountain field physically buries the authored site.
+
+Inside the installed Hollow boundary, use the Hollow's own ground and
+zone-owned rocks for tyre support. Keep ordinary mountain support unchanged
+outside the boundary and on every flag-off course. Phase 6 must also mask or
+replace the overlapping ordinary mountain visuals when it builds the detailed
+Hollow scene; physics isolation alone is not visual acceptance.
+
+The same real-step review found steep support entries on the first rock group.
+Keep all seven centres and heights, widen their deterministic footprints, and
+anchor each support base to the minimum of 16 fixed samples around its support
+radius. This removes the terrain-height step at the downhill edge and lets the
+Titan crawl across each boulder without bypassing its max-grade rule.
+
+## 2026-09-26: use the exploration clock for Hollow airtime
+
+The race clock correctly freezes after departure, but shared jump physics also
+used it to measure airtime. A real mega-jump stayed airborne for 114 fixed
+ticks, about 0.95 seconds, while reporting only 0.008 seconds. Pass the
+deterministic departure elapsed time into the shared jump step during Hollow
+exploration. Ordinary race and arena calls keep the existing race-clock
+default. This changes no scoring or outcome clock.
+
+## 2026-09-26: repeat Hollow obstacles on each course lap
+
+The first rock query compared raw authored course distance. On lap two, rock 1
+was absent near distance 7,222.956 and Titan support fell from 71.3997 to the
+69.9997-metre base. Project each fixed rock onto every queried course lap and
+return that lap's absolute distance. IDs, world positions and authored order
+stay fixed, while shared support and solid-contact lookup now repeat exactly.
+
+The card did not originally name `src/sim-contacts.js`, although its settled
+rock garden requires the shared rock support and static-contact query. Re-slice
+EGG-03 narrowly to add that hook. The hook may only combine the installed
+zone's fixed obstacles with the existing query and suppress ordinary mountain
+support inside the zone boundary. Ordinary obstacles, contact damage and
+flag-off behavior stay unchanged.

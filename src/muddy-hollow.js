@@ -77,13 +77,13 @@ export function installMuddyHollow(course) {
       { along: -123, lateral: 124, alongRadius: 24, lateralRadius: 12, height: 3.8, kind: 'log-ramp', direction: { along: 0, lateral: 1 } },
     ],
     rocks: [
-      { along: 32, lateral: 208, halfX: .8, halfZ: 1.05, height: 1.3, heading: -.28 },
-      { along: 42, lateral: 216, halfX: 1.05, halfZ: .85, height: 1.55, heading: .36 },
-      { along: 51, lateral: 207, halfX: .9, halfZ: 1.15, height: 1.75, heading: -.12 },
-      { along: 59, lateral: 219, halfX: 1.1, halfZ: .9, height: 1.45, heading: .48 },
-      { along: 69, lateral: 210, halfX: .95, halfZ: 1.2, height: 1.85, heading: -.4 },
-      { along: 78, lateral: 222, halfX: 1.15, halfZ: .9, height: 1.6, heading: .18 },
-      { along: 87, lateral: 213, halfX: .85, halfZ: 1.05, height: 1.35, heading: -.5 },
+      { along: 32, lateral: 208, halfX: 1.4, halfZ: 1.5, height: 1.3, heading: -.28 },
+      { along: 42, lateral: 216, halfX: 1.55, halfZ: 1.4, height: 1.55, heading: .36 },
+      { along: 51, lateral: 207, halfX: 1.45, halfZ: 1.6, height: 1.75, heading: -.12 },
+      { along: 59, lateral: 219, halfX: 1.6, halfZ: 1.4, height: 1.45, heading: .48 },
+      { along: 69, lateral: 210, halfX: 1.5, halfZ: 1.65, height: 1.85, heading: -.4 },
+      { along: 78, lateral: 222, halfX: 1.6, halfZ: 1.4, height: 1.6, heading: .18 },
+      { along: 87, lateral: 213, halfX: 1.4, halfZ: 1.5, height: 1.35, heading: -.5 },
     ],
   };
 
@@ -166,12 +166,19 @@ export function installMuddyHollow(course) {
   const rocks = authored.rocks.map((rock, index) => {
     const point = frame.toWorld(rock.along, rock.lateral);
     const pose = course.nearest(point.x, point.z, FRAME_S);
+    const supportRadius = Math.max(rock.halfX, rock.halfZ) * Math.SQRT2 + .6;
+    const baseY = Math.min(heightAt(point.x, point.z),
+      ...Array.from({ length: 16 }, (_, sample) => {
+        const angle = sample * Math.PI / 8;
+        return heightAt(point.x + Math.cos(angle) * supportRadius,
+          point.z + Math.sin(angle) * supportRadius);
+      }));
     return {
       id: `muddy-hollow-rock-${index + 1}`,
       kind: 'rock',
       shape: 'box',
       x: point.x,
-      y: heightAt(point.x, point.z),
+      y: baseY,
       z: point.z,
       s: pose.s,
       off: pose.lateral,
@@ -200,7 +207,14 @@ export function installMuddyHollow(course) {
   function obstaclesNear(fromS, toS = fromS) {
     const minimum = Math.min(fromS, toS) - 16;
     const maximum = Math.max(fromS, toS) + 16;
-    return rocks.filter(rock => rock.s >= minimum && rock.s <= maximum);
+    const obstacles = [];
+    for (const rock of rocks) {
+      const firstLap = Math.ceil((minimum - rock.s) / course.length);
+      const lastLap = Math.floor((maximum - rock.s) / course.length);
+      for (let lap = firstLap; lap <= lastLap; lap++) obstacles.push(lap === 0
+        ? rock : { ...rock, s: rock.s + lap * course.length });
+    }
+    return obstacles;
   }
 
   course.muddyHollow = {
@@ -310,7 +324,7 @@ export function stepMuddyHollowExploration(duel, dt) {
   const firstStep = departure.elapsedSec === 0;
   departure.elapsedSec += dt;
   duel._drive(dt);
-  if (!firstStep) duel._jump(state, dt);
+  if (!firstStep) duel._jump(state, dt, departure.elapsedSec);
   duel._staticContacts(state, true);
   return true;
 }
