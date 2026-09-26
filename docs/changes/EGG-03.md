@@ -688,7 +688,7 @@ Pack) and asked Claude to finish the work directly. Lane
 - Recipes: `tools/art/muddy-hollow-mud.py` writes the runtime
   `public/assets/textures/muddy-hollow-mud.jpg` (229,753 bytes);
   `tools/blender/muddy-hollow-props.py` writes
-  `src/generated/muddy-hollow-props.json` (20,562 bytes, 7 low-poly props,
+  `src/generated/muddy-hollow-props.json` and an editable .blend in art-build (20,562 bytes, 7 low-poly props,
   recoloured to the course palette).
 - `src/terrain-style.js`: optional mud layer for the terrain material, weighted
   by a `terrainWet` vertex attribute. Other terrain is unchanged.

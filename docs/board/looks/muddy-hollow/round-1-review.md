@@ -1,6 +1,6 @@
 # Muddy Hollow art, round 1 (26 September 2026)
 
-Sheet: `egg-03-art-round-1.jpg` (High quality: overview, ridge, pits,
+Sheet: `round-1.jpg` (High quality: overview, ridge, pits,
 jumps, log ramp, rock garden). Sources: Kyle's picks, Brown Mud 02 (Poly
 Haven, CC0) and the Quaternius Ultimate Nature Pack (CC0); details and
 checksums in `tools/art/catalog.json`.

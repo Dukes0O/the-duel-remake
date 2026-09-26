@@ -4,10 +4,25 @@
 # SOURCES, kept outside the repository in the art library. This script
 # imports each one, recolours it to sit in High Country, converts it to the
 # game's Y-up metres with its base at y = 0, and writes the compact mesh file
-# the game builds from. Run:
-#   blender -b --factory-startup --python tools/blender/muddy-hollow-props.py -- \
-#     C:/Users/kyleb/dev/art-library/quaternius-ultimate-nature-pack/fbx
-import bpy, bmesh, json, os, sys
+# the game builds from, plus an editable .blend in ignored art-build. Run:
+#   blender -b --factory-startup --python tools/blender/muddy-hollow-props.py -- --root .
+import argparse, json, os, sys
+from pathlib import Path
+
+LIBRARY = r'C:\Users\kyleb\dev\art-library\quaternius-ultimate-nature-pack\fbx'
+parser = argparse.ArgumentParser()
+parser.add_argument('--root', required=True)
+parser.add_argument('--source', default=LIBRARY)
+parser.add_argument('--paths-only', action='store_true')
+options = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
+root = Path(options.root).resolve()
+OUT = root / 'src/generated/muddy-hollow-props.json'
+NATIVE = root / 'art-build/muddy-hollow-props.blend'
+if options.paths_only:
+    print(json.dumps({'blend': [str(NATIVE)], 'glb': [], 'json': [str(OUT)]}))
+    sys.exit(0)
+
+import bpy, bmesh
 
 SOURCES = ['Rock_1', 'Rock_2', 'Rock_3', 'Rock_5', 'Rock_Moss_1', 'Rock_Moss_2', 'WoodLog']
 # Linear colours matched to the alpine granite and meadow; the pack's cool
@@ -21,8 +36,6 @@ RECOLOUR = {
     'Mushroom_Top': [0.150, 0.110, 0.080],
     'Mushroom_Bottom': [0.330, 0.270, 0.210],
 }
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUT = os.path.join(ROOT, 'src', 'generated', 'muddy-hollow-props.json')
 
 
 def material_colour(material):
@@ -63,10 +76,9 @@ def export_prop(path):
 
 
 def main():
-    source = sys.argv[sys.argv.index('--') + 1]
     props, colours = {}, {}
     for name in SOURCES:
-        props[name], used = export_prop(os.path.join(source, name + '.fbx'))
+        props[name], used = export_prop(os.path.join(options.source, name + '.fbx'))
         colours.update(used)
     data = {
         'revision': 1,
@@ -74,10 +86,17 @@ def main():
         'materials': {name: {'color': colour} for name, colour in sorted(colours.items())},
         'props': props,
     }
+    OUT.parent.mkdir(parents=True, exist_ok=True)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as handle:
         json.dump(data, handle, separators=(',', ':'))
         handle.write('\n')
-    print('wrote', OUT, os.path.getsize(OUT), 'bytes')
+    # Keep an editable source of the last imported prop set for review.
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    for name in SOURCES:
+        bpy.ops.import_scene.fbx(filepath=os.path.join(options.source, name + '.fbx'))
+    NATIVE.parent.mkdir(parents=True, exist_ok=True)
+    bpy.ops.wm.save_as_mainfile(filepath=str(NATIVE))
+    print('wrote', OUT, OUT.stat().st_size, 'bytes')
 
 
 main()
