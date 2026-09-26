@@ -10,6 +10,7 @@ import {CAMERA_MODES} from './camera-views.js';
 import {hiddenRoadDiscoverySnapshot} from './hidden-road-discovery.js';
 import {featureFlags} from './feature-flags.js';
 import {raceFeatureFlags,wastelandUnlocked} from './wasteland-access.js';
+import {ARENA_FIELD} from './arena/arena-event.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
 import { seedFromUrl } from './rng.js';
@@ -293,6 +294,7 @@ export class App {
     this._applyRaceSettings(settings,customSeed);this.duel.emit({raceSettingsChanged:true});return this.getRaceChoices();
   }
   restart() {
+    if (this.duel.state.arena) return this.startArenaEvent();
     if (this.duel.state.hiddenRoadVisit) {
       this.returnToMenu();
       return this.visitWasteland();
@@ -416,6 +418,8 @@ export class App {
     return result;
   }
   _settleResult(result,state){
+    // Scrapdome events settle through their own result, never as races.
+    if(state.arena)return;
     if(state.hiddenRoadVisit)return;
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;
     if(this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return;
@@ -487,6 +491,39 @@ export class App {
     this._saveProfile();
     return true;
   }
+  // Scrapdome events (docs/SCRAPDOME.md 6): offered in the yard to a player who
+  // found the gate, only while the scrapdome switch is on. Never from the menu.
+  arenaAvailable() {
+    return this.wastelandUnlocked() && this._switches().enabled('scrapdome') === true;
+  }
+  startArenaEvent({opponents = this._arenaOpponents ?? 3} = {}) {
+    const state = this.duel.state;
+    if (!this.arenaAvailable() || !(this.isYardHomeActive() || state.arena)) return false;
+    this._refreshPlayer();
+    const count = Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
+    const car = isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42';
+    const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
+    const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map(key => ({car: key, upgradeLevel: level}));
+    this.runId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    this._runPlayerId = this.player.id; this._markedRaceKey = null; this._arenaOpponents = count;
+    this._arenaSerial = (this._arenaSerial || 0) + 1;
+    this.ghostRecorder = this.ghostRecord = this.ghostPose = null; this.ghostStatus = 'none';
+    this.driftNotice = this.checkpointNotice = null;
+    this._clearHiddenRoadInput(); this._stepAccumulator = 0;
+    this._racePaint = getPaintAppearance(this.profile, car); this._racePaintCar = car;
+    this.audio.unlock(); this.audio.setPaused(false);
+    return this.duel.startArenaEvent({car, driverId: getEquippedDriverId(this.profile),
+      upgrades: getUpgradeLevels(this.profile, car), difficulty: this._raceSettings.difficulty,
+      cpuDifficulty: this.cpuDifficulty, seed: (1989 + this._arenaSerial * 7919) >>> 0,
+      playerId: this.player.id, opponents: field, weaponLevels: getProfileWeapons(this.profile).levels,
+      weaponLoadout: getCarLoadout(this.profile), combatArmorKit: getEquippedArmorKit(this.profile, car),
+      crewId: selectedCrewId(this.profile)});
+  }
+  returnToYard() {
+    if (!this.duel.state.arena) return false;
+    this.returnToMenu();
+    return this.visitWasteland();
+  }
   visitWasteland() {
     if (this.duel.state.status !== 'menu') return false;
     this._refreshPlayer();
@@ -520,6 +557,7 @@ export class App {
     return true;
   }
   _markActiveRace(state){
+    if(state.arena)return;
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;
     const key=`${this.runId}:${state.stageIndex}`;
     if(!this.runId||this._markedRaceKey===key||this.profile.settledResults.includes(key))return;
@@ -661,7 +699,7 @@ export class App {
     const st = this.duel.state;
     st.paused = false; st.status = 'menu'; st.boosting = false;
     const wasVisit = !!st.hiddenRoadVisit;
-    st.hiddenRoadJourney = null; st.hiddenRoadVisit = null;
+    st.hiddenRoadJourney = null; st.hiddenRoadVisit = null; st.arena = null;
     if (wasVisit) this._applyRaceSettings(this._raceSettings);
     st.driverId=getEquippedDriverId(this.profile);
     this.ghostRecorder=null;this.ghostRecord=null;this.ghostPose=null;this.ghostStatus='none';

@@ -1,0 +1,31 @@
+/* Scrapdome scoreboard and yard panel (docs/SCRAPDOME.md). */
+.arena-board{position:absolute;right:4%;top:252px;width:268px;padding:10px 12px;background:#12211bd9;border:1px solid #d6c6a94d;color:#f3e9d6;font-size:11px;pointer-events:none}
+.arena-board-title{display:flex;justify-content:space-between;gap:8px;margin:0 0 6px;font-size:9px;font-weight:800;letter-spacing:1.4px;color:#e3c28b}
+.arena-board-title b{color:#ff6a4d;letter-spacing:.8px}
+.arena-board ol{list-style:none;margin:0;padding:0}
+.arena-board-row,.arena-board-head{display:grid;grid-template-columns:16px 1fr auto 40px 46px;align-items:center;gap:6px;padding:4px 0;border-top:1px solid #d6c6a91f}
+.arena-board-row b{font-variant-numeric:tabular-nums;color:#c3c9bb}
+.arena-board-row span{font-weight:800;letter-spacing:.6px}
+.arena-board-row span small{display:block;font-size:8px;font-weight:600;color:#9fa89b;letter-spacing:.8px}
+.arena-board-row em{font-style:normal;font-size:8px;font-weight:800;letter-spacing:.8px;color:#ff6a4d}
+.arena-board-row.is-protected em{color:#8fd3ff}
+.arena-board-row strong,.arena-board-row i{text-align:right;font-size:14px;font-style:normal;font-weight:800;font-variant-numeric:tabular-nums}
+.arena-board-row i{color:#9fa89b;font-size:12px}
+.arena-board-row.is-you span,.arena-board-row.is-you strong{color:#ffd29a}
+.combat-opponent-marker.is-hunting{border-color:#ff6a4d;box-shadow:0 0 0 1px #ff6a4d}
+.combat-opponent-marker.is-hunting .combat-marker-heading{color:#ff8a6e}
+.combat-opponent-marker.is-protected{opacity:.6}
+.arena-yard ul{margin:10px 0 14px;padding-left:18px;line-height:1.6;color:#d0d8cb}
+.arena-yard-mode{font-weight:800;letter-spacing:1px;color:#e3c28b}
+.arena-yard-setup{display:grid;gap:8px;margin:12px 0 16px}
+.arena-yard-difficulty{margin:0;color:#9fa89b;font-size:12px}
+.arena-results{list-style:none;margin:14px 0 0;padding:0;max-width:420px}
+.arena-results li{display:grid;grid-template-columns:44px 1fr auto;gap:10px;padding:6px 0;border-top:1px solid #d6c6a933}
+.arena-results li.is-you{color:#ffd29a}
+.arena-results strong{font-variant-numeric:tabular-nums}
+@media (max-width:850px){.arena-board{top:auto;bottom:210px;right:12px;width:220px}}
+.arena-board-head{font-size:7px;font-weight:800;letter-spacing:1px;color:#9fa89b;padding:0 0 3px}
+.arena-board-head strong,.arena-board-head i{text-align:right;font-size:7px;font-style:normal;letter-spacing:.6px}
+.arena-results-head{font-size:9px;font-weight:800;letter-spacing:1.2px;color:#9fa89b;border-top:0!important}
+.yard-home-panel .arena-yard .arena-start{width:100%;margin:0 0 14px;background:var(--accent);border-color:var(--accent);color:#111816;font-weight:900;letter-spacing:2px}
+.yard-home-panel .arena-yard .choice.on{background:#4a3a22;border-color:var(--accent);color:#ffe0a8}

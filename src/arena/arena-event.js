@@ -12,15 +12,21 @@ export const ARENA_MODES = Object.freeze({
   'last-car-rolling': Object.freeze({timeLimitSec: 150, suddenDeathSec: 30, maxOpponents: 3}),
 });
 
+// Computer drivers are named, so callouts read "YOU WRECKED GASKET", and the
+// default field is varied. The Titan is saved for Kettle Kingpin.
+export const ARENA_DRIVER_NAMES = Object.freeze(['GASKET', 'RIVET', 'SPROCKET']);
+export const ARENA_FIELD = Object.freeze(['dusthawk_rally', 'aurora_gt', 'stuttgart_959s', 'banshee_muscle', 'falcone_f42', 'viper_proto']);
+
 export const ARENA_RULES = Object.freeze({
   creditWindowSec: 5, protectedSec: 2, respawnSpeedMph: 12, spawnClearMetres: 12,
 });
 
 export function createArenaEvent({mode, venueId, opponentBrains, course}) {
   const rules = ARENA_MODES[mode];
-  const participants = [{id: 'player', team: 'player', kind: 'player', brain: null}];
+  const participants = [{id: 'player', team: 'player', kind: 'player', brain: null, name: 'YOU'}];
   opponentBrains.forEach((brain, index) => participants.push({id: `cpu-${index + 1}`,
-    team: `cpu-${index + 1}`, kind: 'cpu', brain: brain || STYLE_ORDER[index % STYLE_ORDER.length]}));
+    team: `cpu-${index + 1}`, kind: 'cpu', brain: brain || STYLE_ORDER[index % STYLE_ORDER.length],
+    name: ARENA_DRIVER_NAMES[index % ARENA_DRIVER_NAMES.length]}));
   return {
     version: 1, venueId, mode, phase: 'countdown',
     clockSec: 0, timeLimitSec: rules.timeLimitSec, suddenDeathSec: 0, suddenDeathLimitSec: rules.suddenDeathSec,
@@ -112,7 +118,8 @@ function creditWrecks(duel) {
     if (credited) credited.wrecks++;
     participant.lastHitBy = null; participant.lastHitAt = -Infinity;
     duel.emit({arenaWreck: {victimId: participant.id, creditedId: credited?.id || null}});
-    if (credited?.id === 'player') duel._callout(`YOU WRECKED ${participant.id.toUpperCase()}`, 2);
+    if (credited?.id === 'player') duel._callout(`YOU WRECKED ${participant.name}`, 2);
+    else if (participant.id === 'player' && credited) duel._callout(`WRECKED BY ${credited.name}`, 2);
   }
 }
 
@@ -136,7 +143,8 @@ function finish(duel, reason) {
   arena.result = {placings, winnerId: placings[0], reason};
   state.status = 'arena_result';
   state.results = {arena: arena.result};
-  duel._callout(placings[0] === 'player' ? 'LAST CAR ROLLING / YOU WIN' : `${placings[0].toUpperCase()} WINS`, 3);
+  const winner = arena.participants.find(p => p.id === placings[0]);
+  duel._callout(winner.id === 'player' ? 'LAST CAR ROLLING / YOU WIN' : `${winner.name} WINS`, 3);
   duel.emit({arenaPhase: {phase: 'over'}, arenaResult: {result: arena.result}});
 }
 

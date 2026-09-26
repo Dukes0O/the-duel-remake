@@ -21,7 +21,7 @@ export const COMBAT_TUNING=Object.freeze({
  projectileRadiusPadding:1.2,
  cooldownUpgradeDiscount:.15,
  shieldDuration:5,
- ufo:{baseDistance:12,distancePerLevel:4,gateMargin:2,scanStep:2,landingRadius:13,
+ ufo:{baseDistance:12,distancePerLevel:4,gateMargin:2,scanStep:2,landingRadius:13,arenaWallMargin:2,
   lateralClearance:2.7,obstacleReach:4,invulnerability:.35,calloutSeconds:2},
  bomb:{baseCount:8,countPerLevel:2,launchSpeed:27,gravity:18,lifetime:1.4,
   radius:22,radiusPerLevel:2,blastPower:1.3,powerPerLevel:.15,selfDamage:.25,
