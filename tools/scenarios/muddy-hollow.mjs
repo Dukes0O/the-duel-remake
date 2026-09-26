@@ -105,23 +105,43 @@ async function captureRenderedVehicle(context, expectedKey) {
       .filter(node=>node.userData?.vehicleKey)
       .map(node=>({key:node.userData.vehicleKey,source:node.userData.vehicleSource,
         name:node.name||null,visible:node.visible,
-        position:[node.position.x,node.position.y,node.position.z]}));
+        position:[node.position.x,node.position.y,node.position.z],
+        rotation:[node.rotation.x,node.rotation.y,node.rotation.z]}));
     const rendered=vehicles.filter(node=>node.visible&&node.name!=='Personal best ghost');
     const horizontalError=rendered.length===1?
       Math.hypot(rendered[0].position[0]-expected.x,rendered[0].position[2]-expected.z):null;
+    const expectedRoll=Math.atan2(Math.sin(d.state.terrainRoll)*Math.cos(d.state.terrainPitch),
+      Math.cos(d.state.terrainRoll));
+    const attitudeError=rendered.length===1?Math.max(
+      Math.abs(rendered[0].rotation[0]+d.state.terrainPitch),
+      Math.abs(rendered[0].rotation[2]-expectedRoll)):null;
     return {state:{car:d.state.car,status:d.state.status,s:d.state.s,lateral:d.state.lateral,
-        world:[expected.x,expected.y,expected.z]},
+        world:[expected.x,expected.y,expected.z],terrainPitch:d.state.terrainPitch,
+        terrainRoll:d.state.terrainRoll},
       host:{vehicleKey:host.dataset.vehicleKey,vehicleAsset:host.dataset.vehicleAsset,
         vehicleSource:host.dataset.vehicleSource,warmupStatus:host.dataset.warmupStatus,
         canvasVisibility:host.querySelector('canvas')?.style.visibility||'visible'},
-      rendered,vehicles,horizontalError};
+      rendered,vehicles,horizontalError,attitudeError};
   })()`);
   if(evidence.state.car!==expectedKey||evidence.host.vehicleKey!==expectedKey||
       evidence.host.vehicleAsset!=='ready'||evidence.host.canvasVisibility==='hidden'||
       evidence.rendered.length!==1||evidence.rendered[0].key!==expectedKey||
-      evidence.horizontalError>1e-3)
+      evidence.horizontalError>1e-3||evidence.attitudeError>1e-6)
     throw Error(`Phase-3 rendered vehicle does not match simulation: ${JSON.stringify(evidence)}`);
   return evidence;
+}
+
+async function refreshDepartureTerrainPose(context) {
+  return context.evaluate(`(() => {
+    const d=window.__qaApp.duel,s=d.state;
+    d._terrainPose();
+    const pose={groundHeight:s.groundHeight,terrainPitch:s.terrainPitch,
+      terrainRoll:s.terrainRoll,status:s.status};
+    if(!Number.isFinite(pose.groundHeight)||!Number.isFinite(pose.terrainPitch)||
+        !Number.isFinite(pose.terrainRoll))
+      throw Error('Titan departure terrain pose is not finite: '+JSON.stringify(pose));
+    return pose;
+  })()`);
 }
 
 async function driveBackAndExit(context) {
@@ -330,6 +350,7 @@ export async function run(context) {
   if(departure.departureEvents!==1||departure.historyAfter!==departure.historyBefore+1||
       departure.activeRace!==null||departure.historyResult?.abandoned!==true)
     throw Error(`Titan departure did not settle once: ${JSON.stringify(departure)}`);
+  report.phaseThree.terrainPose=await refreshDepartureTerrainPose(context);
   report.phaseThree.renderEvidence=await captureRenderedVehicle(context,'titan_monster');
   await context.evaluate(`(() => {
     document.querySelectorAll('details').forEach(panel=>{panel.open=false;panel.hidden=true;});
