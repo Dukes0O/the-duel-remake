@@ -541,7 +541,10 @@ function makeMuddyApp() {
     courses: {version: 1, unlocked: [...new Set([
       ...(app.profile.courses?.unlocked ?? []), highCountry.id,
     ])]},
-    wasteland: {...app.profile.wasteland, version: 1, discoveredGate: true},
+    wasteland: {...app.profile.wasteland, version: 1, discoveredGate: true,
+      muddyHollow: {...app.profile.wasteland.muddyHollow, discovered: false,
+        hubcaps: [], titanHighCountryFinishes: 5,
+        unknownReviewField: {kept: 'unchanged'}}},
   };
   app._saveProfile();
   seedRecordAndGhost(app);
@@ -1335,6 +1338,10 @@ check('memory-only App abandonment preserves banked progress and discards the ac
     'abandonment preserves banked credits, records, unlocks and ghosts');
   assert.equal(app.profile.wasteland.muddyHollow?.discovered, true,
     'guarded departure remembers that this player found the Hollow');
+  assert.equal(app.profile.wasteland.muddyHollow.titanHighCountryFinishes, 5,
+    'departure preserves an existing non-zero hint count');
+  assert.deepEqual(app.profile.wasteland.muddyHollow.unknownReviewField,
+    {kept: 'unchanged'}, 'departure preserves unknown nested Hollow data');
   assert.equal(app.profile.history.length, historyCount + 1,
     'abandonment writes one history result');
   const result = app.profile.history.at(-1);
@@ -1527,6 +1534,9 @@ check('phase 5 hubcaps persist per player and derive the gold Titan finish', () 
 
   const reloaded = new App();
   reloaded.duel.featureFlags = createFeatureFlags({storage: null, overrides: {
+    wasteland2: true,
+    'hidden-road': true,
+    scrapdome: true,
     'muddy-hollow': false,
     'titan-climb': true,
   }});
@@ -1543,7 +1553,21 @@ check('phase 5 hubcaps persist per player and derive the gold Titan finish', () 
   assert.equal(reloaded.getPaintPreset('titan_monster'), null,
     'flag-off Titan race does not render the reward');
   reloaded.returnToMenu();
+  reloaded.menuCar = 'titan_monster';
+  assert.equal(reloaded.visitWasteland(), true,
+    'flag-off earned Titan can visit the Wasteland yard');
+  assert.equal(reloaded.getPaintPreset('titan_monster'), null,
+    'flag-off Wasteland visit does not render the reward');
+  reloaded.advance(8);
+  assert.equal(reloaded.startArenaEvent({opponents: 1}), true,
+    'flag-off earned Titan can enter the arena');
+  assert.equal(reloaded.getPaintPreset('titan_monster'), null,
+    'flag-off arena does not render the reward');
+  reloaded.returnToMenu();
   reloaded.duel.featureFlags = createFeatureFlags({storage: null, overrides: {
+    wasteland2: true,
+    'hidden-road': true,
+    scrapdome: true,
     'muddy-hollow': true,
     'titan-climb': true,
   }});
@@ -1551,6 +1575,17 @@ check('phase 5 hubcaps persist per player and derive the gold Titan finish', () 
     'titan_gold', 're-enabling the feature restores the saved selection');
   assert.match(renderGarage('titan_monster'), /Hollow Gold/,
     'enabled Titan garage lists the earned reward');
+  reloaded.menuCar = 'titan_monster';
+  assert.equal(reloaded.visitWasteland(), true,
+    'enabled earned Titan can visit the Wasteland yard');
+  assert.equal(reloaded.getPaintPreset('titan_monster')?.id, 'titan_gold',
+    'enabled Wasteland visit renders the selected reward');
+  reloaded.advance(8);
+  assert.equal(reloaded.startArenaEvent({opponents: 1}), true,
+    'enabled earned Titan can enter the arena');
+  assert.equal(reloaded.getPaintPreset('titan_monster')?.id, 'titan_gold',
+    'enabled arena renders the selected reward');
+  reloaded.returnToMenu();
   assert.equal(reloaded.startCampaign({startStage: highCountryIndex,
     mode: 'timetrial', seed, car: 'titan_monster', difficulty: 'casual'}), true);
   assert.equal(reloaded.getPaintPreset('titan_monster')?.id, 'titan_gold',
