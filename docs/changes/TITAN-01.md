@@ -1,6 +1,6 @@
 ---
 task: TITAN-01
-status: ready-to-merge
+status: merged
 kind: physics
 flag: titan-climb
 player_facing: yes

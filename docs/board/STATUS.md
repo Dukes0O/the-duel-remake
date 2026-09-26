@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-26T06:19:14.590Z
+Observed at: 2026-09-26T06:55:37.354Z
 
-Observation commit: 2583d39e1f1faf64daa1b83b3214f2a018f471a6
+Observation commit: 56246c2bcce5d0d9adaa924153f3763ba8e10b27
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2583d39e1f1faf64daa1b83b3214f2a018f471a6
+Integration HEAD: 56246c2bcce5d0d9adaa924153f3763ba8e10b27
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -14,7 +14,7 @@ Live commit: not checked
 
 Live build version: not checked
 
-Full tier: dirty; exact HEAD passed: no.
+Full tier: stale; exact HEAD passed: no.
 
 Last recorded full run: 2026-09-26T06:18:03.726Z; tested commit: 2583d39e1f1faf64daa1b83b3214f2a018f471a6.
 
@@ -27,6 +27,7 @@ Last recorded full run: 2026-09-26T06:18:03.726Z; tested commit: 2583d39e1f1faf6
 | hidden-road | on |
 | scrapdome | dev |
 | crash-physics | dev |
+| titan-climb | dev |
 
 ## Lane branches
 
@@ -59,9 +60,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
 | Review `looks/` | 7,868,116 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 679,320 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 169,875 B | +0 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 327,447,552 B | +0 B | unavailable |
+| Git objects | 327,674,880 B | +0 B | unavailable |
 | Lane folders | 1 | +0 | unavailable |
 
 ## Backups
@@ -70,7 +71,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: faf5749598d061d0d11cadff9a4515fb10308ddb
 - Local main: missing
-- Local integration/wasteland: 2583d39e1f1faf64daa1b83b3214f2a018f471a6
+- Local integration/wasteland: 56246c2bcce5d0d9adaa924153f3763ba8e10b27
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -78,4 +79,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit faf5749598d061d0d11cadff9a4515fb10308ddb.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: matches local; cached commit 2583d39e1f1faf64daa1b83b3214f2a018f471a6.
+- Remote origin/integration/wasteland: behind local; cached commit 2583d39e1f1faf64daa1b83b3214f2a018f471a6.
