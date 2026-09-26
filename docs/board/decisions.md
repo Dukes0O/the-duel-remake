@@ -835,3 +835,16 @@ The maximum measured intended-entry grade is then 1.098, below the Titan limit
 of 1.65, while the full ellipse remains within 0.00245 m of ordinary terrain
 at the edge on route seeds 1989, 42 and 17. This changes only the transition
 shape. It does not move the Hollow, change the road, or redesign its landforms.
+
+## 2026-09-26: show failed Muddy Hollow departure saves in the existing pause panel
+
+Save Guardian review denied profile storage during phase-3 departure. The
+abandonment remained safe in memory and cleared the active race, but the
+exploration pause panel did not tell the player that the change was session
+only. The garage would show the warning later, after the player had already
+left the event.
+
+Re-slice EGG-03 narrowly to allow `src/screen-results.js`. When an exploration
+pause follows a failed profile save, append the same session-only storage
+warning used by the ticket screen. This is safety feedback in the existing
+pause panel. It adds no Muddy Hollow screen, control, menu entry or save field.

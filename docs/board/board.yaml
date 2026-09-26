@@ -442,7 +442,7 @@ tasks:
     claimed_by: "Codex autonomous Director, 26 September 2026"
     flag: muddy-hollow
     owns: [src/muddy-hollow.js, src/muddy-hollow-scene.js, tools/test-muddy-hollow.mjs, tools/scenarios/muddy-hollow.mjs, docs/changes/EGG-03.md]
-    hooks: [src/course.js, src/sim-driving.js, src/game.js, src/app.js, src/world.js, src/progression.js, src/feature-flags.js, src/environment-key.js, src/generated-shortcut-presets.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, tools/test-render-reuse.mjs, docs/board/decisions.md]
+    hooks: [src/course.js, src/sim-driving.js, src/game.js, src/app.js, src/screen-results.js, src/world.js, src/progression.js, src/feature-flags.js, src/environment-key.js, src/generated-shortcut-presets.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, tools/test-render-reuse.mjs, docs/board/decisions.md]
     helpers: [test_author, reviewer, save_guardian, browser_qa]
     acceptance:
       - "Build docs/MUDDY_HOLLOW.md in phases, each merged separately behind a new dev switch muddy-hollow: (1) installMuddyHollow for high-country only (ridge, valley bowl, hill, pits, pond bed, ramps) following the Hidden Road pattern, racing line, scenery and random stream untouched; (2) surfaces: mud (low grip, heavy drag, wheel spin) and water depth (drag by depth and speed, splash event); (3) departure past the ridge crest reuses the Hidden Road leaving-the-race flow; only a monster truck can reach it; (4) jumps (mega jump, three kickers, log ramp), rock garden, King of the Hill flag; (5) five gold hubcaps saved per player, all five unlock a gold Titan paint; garage tip after five High Country races in the Titan; (6) detailed ground mesh, mud and water materials, splash and mud particles; art per SPEC 0.11."

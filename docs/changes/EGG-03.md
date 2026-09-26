@@ -215,8 +215,10 @@ Exploration remains fixed-step and drivable over the Hollow and back across
 the ridge. Returning to the road does not resume the abandoned race. Static
 contacts still resolve, but exploration cannot create a race crash, reward,
 record, ticket or result. The existing pause menu is the menu exit; phase 3
-adds no new UI. A crossing takes priority over a simultaneous race deadline,
-matching the Hidden Road's point-of-no-return ordering.
+adds no feature screen or control. If abandonment cannot be saved, that same
+pause panel must say that progress lasts for this session. A crossing takes
+priority over a simultaneous race deadline, matching the Hidden Road's
+point-of-no-return ordering.
 
 ## Phase 3 tests first
 
