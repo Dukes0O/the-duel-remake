@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-26T12:39:34.178Z
+Observed at: 2026-09-26T12:46:00.128Z
 
-Observation commit: e3a64f4ed44b04f4035483acd40eaf34798ac3e0
+Observation commit: 709a4e82f9da79be9e6fe14dc8ec708caab3360c
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e3a64f4ed44b04f4035483acd40eaf34798ac3e0
+Integration HEAD: 709a4e82f9da79be9e6fe14dc8ec708caab3360c
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -36,7 +36,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/ux-backlog-notes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/ux-backlog-notes |
 | lane/audio/aud-10 | 1 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 1 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
@@ -47,7 +46,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/ux-backlog-notes | unknown | 2026-09-25T17:10:59-07:00 | 0 | last commit 2026-09-25T17:10:59-07:00 | docs/board/board.yaml, docs/changes/BACKLOG-UX-LAUNCHER.md |
 
 ## Size targets
 
@@ -61,10 +59,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
 | Review `looks/` | 7,872,326 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 1,212,080 B | +1,137,607 B | 5,000,000 B |
+| Added bytes in last merge | 642,307 B | -569,773 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 330,346,496 B | +721,920 B | unavailable |
-| Lane folders | 1 | +0 | unavailable |
+| Git objects | 330,483,712 B | +137,216 B | unavailable |
+| Lane folders | 0 | -1 | unavailable |
 
 ## Backups
 
@@ -72,7 +70,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: faf5749598d061d0d11cadff9a4515fb10308ddb
 - Local main: missing
-- Local integration/wasteland: e3a64f4ed44b04f4035483acd40eaf34798ac3e0
+- Local integration/wasteland: 709a4e82f9da79be9e6fe14dc8ec708caab3360c
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
