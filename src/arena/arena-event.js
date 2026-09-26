@@ -2,6 +2,7 @@ import {stepCombat} from '../combat.js';
 import {arenaActor, arenaParticipant} from '../combat-teams.js';
 import {containInArena, worldPose} from './arena-floor.js';
 import {pilotStep} from './arena-pilot.js';
+import {stepKnock} from '../vehicle-knock.js';
 import {thinkBrain, STYLE_ORDER} from './arena-brains.js';
 import {spawnSlots} from './venues.js';
 
@@ -66,6 +67,7 @@ export function placeActor(duel, actor, pose, speedMph = 0) {
   actor.groundHeight = null; actor.prevGroundHeight = null; actor.terrainPitch = null;
   actor.terrainRoll = null; actor.tumble = null; actor.impactTimer = 0;
   actor._arenaWatch = null; actor._arenaReverseSec = 0; actor._arenaGraceSec = 0; actor._arenaUTurn = 0;
+  actor.knock = null;
   if (actor === duel.state) {
     actor.gear = 0; actor.revs = 0; actor.overrevSec = 0; actor.reverseHoldSec = 0;
     actor.crashSpin = 0; actor.impactDuration = 0; actor.offRoad = false;
@@ -215,7 +217,7 @@ export function stepArenaEvent(duel, dt) {
   for (const actor of state.opponents) {
     if (actor.combatWrecking) { if (stepWreckedActor(duel, actor, dt)) respawns.push(actor); continue; }
     const participant = arenaParticipant(duel, actor);
-    pilotStep(duel, actor, thinkBrain(duel, participant, actor, dt), dt);
+    if (!(actor.knock && stepKnock(duel, actor, dt))) pilotStep(duel, actor, thinkBrain(duel, participant, actor, dt), dt);
     if (!duel._ramFlight(actor, dt)) duel._jump(actor, dt);
     containInArena(duel, actor, dt);
   }

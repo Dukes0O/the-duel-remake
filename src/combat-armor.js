@@ -66,6 +66,7 @@ function startCombatWreck(duel, actor, source, owner) {
   const point = duel.course.groundAt(actor.s, actor.lateral);
   actor.armor = 0;
   actor.combatWrecking = true;
+  actor.knock = null;
   recordCombatWreck(duel, actor, owner);
   actor.combatWreckTimer = player && state.onFoot ?
     COMBAT_TUNING.foot.parkedWreckSeconds : T.wreckDuration;

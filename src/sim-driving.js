@@ -5,6 +5,7 @@ import { offroadCapability, wrapHeading, limitClimb, terrainAttitude } from './o
 import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
+import { stepKnock } from './vehicle-knock.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -56,6 +57,14 @@ export function _tickDrift(dt) {
 
 export function _drive(dt) {
   const s = this.state, car = this.car, d = this.diff;
+  // A crash that knocked the car loose: it slides and spins until the tyres
+  // bite, and the driver has no control meanwhile (docs/CRASH_PHYSICS.md).
+  if (s.knock && stepKnock(this, s, dt)) {
+    s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[Math.max(0, s.gear)]);
+    s.boosting = false; s.steerVisual = 0; s.yawVelocity = 0;
+    this._boundary(s);
+    return;
+  }
   // recorded up front (not at the integration line) so the swept collision
   // test stays valid on frames where a crash bails out of _drive early
   s.prevS = s.s;
