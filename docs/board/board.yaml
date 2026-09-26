@@ -29,7 +29,7 @@ tasks:
     helpers: [reviewer]
     acceptance:
       - "Kyle confirmed on 25 September that double-clicking The Duel opens the game after the audio session refreshed the real-desktop shortcut metadata. The reported launch failure is resolved; no further repair is requested."
-      - "Reported findings: OneDrive Desktop/The Duel.lnk resolves as Kyle to C:/Users/kyleb/dev/the-duel-remake/start-game.bat; the icon and prerequisites exist. The sandboxed view instead reports an obsolete CodexSandboxOffline target. Kyle reports the icon still fails."
+      - "Earlier reported findings: OneDrive Desktop/The Duel.lnk resolved as Kyle to C:/Users/kyleb/dev/the-duel-remake/start-game.bat; the icon and prerequisites existed. The sandboxed view instead reported an obsolete CodexSandboxOffline target, and Kyle then reported that the icon still failed. The later successful-launch confirmation above supersedes that report."
       - "Keep initial work diagnostic only. Do not use live port 5174, read or change real saves, or edit the live launcher. Any repair needs a separately scoped card and the applicable Release Manager gate. No API key is needed."
     note: "Relayed by the audio session on 25 September; this capture did not inspect the shortcut, live folder or user account. Later audio-session update relays Kyle's successful launch confirmation after a targeted shortcut metadata refresh. This resolves observed behavior without proving the earlier root cause. The audio agent reports that it did not open port 5174 or access saves itself. Preserve that distinction."
   - id: CLEAN-01
