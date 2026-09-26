@@ -175,11 +175,23 @@ export function _collisions() {
 
 export function _obstacles(fromS, toS) {
   if (this.course.obstaclesNear) {
-    if (this._obstacleArray !== this.course.features.obstacles) { this._obstacleArray = this.course.features.obstacles; this._obstacleQueryCache.clear(); }
+    const hollowObstacles = this.course.muddyHollow?.obstacles;
+    if (this._obstacleArray !== this.course.features.obstacles ||
+        this._muddyHollowObstacleArray !== hollowObstacles) {
+      this._obstacleArray = this.course.features.obstacles;
+      this._muddyHollowObstacleArray = hollowObstacles;
+      this._obstacleQueryCache.clear();
+    }
     const first = Math.floor((Math.min(fromS, toS) - 10) / 64), last = Math.floor((Math.max(fromS, toS) + 10) / 64), key = `${first}:${last}`;
-    if (!this._obstacleQueryCache.has(key)) this._obstacleQueryCache.set(key, this.course.obstaclesNear(fromS, toS)
-      .filter(obstacle => !this._brokenSceneryIds?.has(sceneryIdentity(obstacle)) &&
+    if (!this._obstacleQueryCache.has(key)) {
+      const obstacles = this.course.obstaclesNear(fromS, toS);
+      if (this.course.muddyHollow?.obstaclesNear)
+        obstacles.push(...this.course.muddyHollow.obstaclesNear(
+          first * 64, (last + 1) * 64));
+      this._obstacleQueryCache.set(key, obstacles.filter(obstacle =>
+        !this._brokenSceneryIds?.has(sceneryIdentity(obstacle)) &&
         !(this.roadsideKnockAwayEnabled() && this._fallenCactusIds?.has(obstacle.id))));
+    }
     return this._obstacleQueryCache.get(key);
   }
   // Keeps older exported courses usable while they acquire world colliders.

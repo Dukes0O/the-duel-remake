@@ -194,7 +194,7 @@ function tracePlaygroundRamp(index, fps = 60) {
   const ramp = zone.landforms.ramps[index];
   const center = toLocal(zone, pointFor(ramp, ramp.name));
   const pond = toLocal(zone, pointFor(zone.landforms.pondBed, 'pond bed'));
-  let direction = {along: 1, lateral: 0};
+  let direction = ramp.direction ?? {along: 1, lateral: 0};
   if (index === 0) {
     const length = Math.hypot(pond.along - center.along,
       pond.lateral - center.lateral);
@@ -231,6 +231,7 @@ function tracePlaygroundRamp(index, fps = 60) {
   let tick = 0;
   let maxAirHeight = 0;
   let airborneOverPond = false;
+  let nearestAirbornePondRadius = Infinity;
   let accumulator = 0;
   for (let frame = 0; tick < totalTicks; frame++) {
     accumulator += 1 / fps;
@@ -250,14 +251,17 @@ function tracePlaygroundRamp(index, fps = 60) {
       maxAirHeight = Math.max(maxAirHeight, duel.state.airHeight || 0);
       const local = toLocal(zone, duel.course.worldAt(duel.state.s,
         duel.state.lateral));
-      if (Math.hypot(
+      const pondRadius = Math.hypot(
         (local.along - pond.along) / zone.landforms.pondBed.alongRadius,
-        (local.lateral - pond.lateral) / zone.landforms.pondBed.lateralRadius,
-      ) <= 1 && duel.state.airborne) airborneOverPond = true;
+        (local.lateral - pond.lateral) / zone.landforms.pondBed.lateralRadius);
+      if (duel.state.airborne) {
+        nearestAirbornePondRadius = Math.min(nearestAirbornePondRadius, pondRadius);
+        if (pondRadius <= 1) airborneOverPond = true;
+      }
     }
   }
   return {duel, zone, ramp, before, events, maxAirHeight,
-    airborneOverPond, tick};
+    airborneOverPond, nearestAirbornePondRadius, tick};
 }
 
 function offsetFeature(zone, feature, alongScale = 0, lateralScale = 0) {
@@ -1301,8 +1305,9 @@ check('all five playground ramps launch the Titan without scoring the abandoned 
     assert.equal(result.events.some(event => event.jumpLanded), false,
       `${result.ramp.name} emits no scored arena landing`);
   }
-  assert.equal(tracePlaygroundRamp(0).airborneOverPond, true,
-    'the fast mega-jump line carries the Titan over the pond');
+  const mega = tracePlaygroundRamp(0);
+  assert.equal(mega.airborneOverPond, true,
+    `the fast mega-jump line carries the Titan over the pond (nearest normalized pond radius ${mega.nearestAirbornePondRadius})`);
 });
 
 check('exploration advances shared jump physics before static contacts', () => {

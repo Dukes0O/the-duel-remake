@@ -864,3 +864,33 @@ pass. Extend phase-6 acceptance to correct this verified Titan intersection
 before the playground is visually complete. This is a required grounding fix,
 not a change to the settled ridge location, Titan-only access or departure
 rule.
+
+## 2026-09-26: give Dirt Kickers 2 and 3 enough lift
+
+The phase-4 tests drove the Titan through all five settled ramp sites at the
+same 120 Hz step. The first red run stopped at Dirt Kicker 2: its four-metre
+bump was cancelled by the underlying valley grade at 58 mph. After that site
+matched the already proven mega-site lift, the continuing run found the same
+problem at Dirt Kicker 3 with its 4.5-metre lift. The mega jump, Dirt Kicker 1
+and the log ramp produced shared off-road flight without lift tuning.
+
+Keep both sites, footprints, roles and approaches unchanged, but raise their
+authored lift to 5.5 metres, matching the already proven mega-site lift. The
+phase-4 acceptance trace must prove the resulting flight. This does not change
+the racing line, ordinary course features, random stream or any flag-off
+course.
+
+The first test also assumed that every site used the local-along approach.
+The log site lies on a 28.6-metre local-along descent, while its cross-slope
+profile contains the intended crest. Retain its settled 3.8-metre lift and
+record the cross-slope approach in the authored site. The acceptance trace
+still requires real flight; this corrects the test path instead of inflating
+the ramp to overpower unrelated terrain.
+
+The settled mega jump must carry a fast Titan over the pond. Its phase-1
+five-and-a-half-metre placeholder launched the truck but landed before the
+pond. At 92 mph, 12, 13 and 13.5 metres reached nearest normalized pond radii
+of 1.188, 1.097 and 1.024, respectively, where 1.0 is the pond edge. A
+14-metre lift is the first tested half-metre value that enters the pond span.
+Keep the existing site and footprint and use that lift. Phase 6 still owns the
+visual review of the detailed ramp and landing.
