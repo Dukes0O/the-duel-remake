@@ -997,9 +997,10 @@ triangles spanning the authored Hollow as large pale slabs. The same review
 found a broken, ten-metre vertical pond surface, hubcap markers that were too
 small at driving distance and water spray that did not read behind the Titan.
 Follow-up review proved that a centroid-only cut left a far-terrain wedge 4.82
-metres above the detailed ground. When the `muddy-hollow` switch is on, cut
-every coarse triangle that overlaps the Hollow ellipse and extend the fitted
-four-metre mesh to cover each removed triangle. Keep the flag-off geometry
+metres above the detailed ground. When the `muddy-hollow` switch is on, give
+every coarse triangle that overlaps the Hollow ellipse private vertices fitted
+to the authored height field. Keep its ordinary outer edges and topology, then
+cover the authored core with the four-metre mesh. Keep the flag-off geometry
 exact. Give the reflective centre of the shallow pond one waterline at its
 settled one-metre centre depth, and show the rest of the unchanged water-contact
 field as a blue-green saturated margin. Submit no buried water triangles.
@@ -1029,3 +1030,10 @@ a flooded basin with floating sheets. Reverse only the fitted ground and pond
 face order so their normals point upward. Keep the settled vertices, materials,
 height field, surface field and physics unchanged, and protect the normal
 direction in the focused scene test.
+
+A later raycast found that the broad 1.3-times skirt used to cover whole
+removed triangles reached High Country's race tunnel and left a new clipped
+outer seam against ordinary terrain. The pale slab was `Circuit rock surface`,
+not a Hollow mesh or overlapping mountain. Retire that broad skirt. The private
+coarse replacements above keep their original outer edges and let the dense
+mesh end at the authored ellipse, away from the race road and tunnel.

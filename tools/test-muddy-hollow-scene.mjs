@@ -21,22 +21,62 @@ const highCountry = COURSE.find(course => course.id === 'high-country');
 const course = new Course(highCountry, 1989, {muddyHollow: true});
 const ordinary = new Course(highCountry, 1989, {muddyHollow: false});
 
-function checkHollowCut(builder, label) {
+function triangleOverlapsHollow(position, vertices) {
+  const zone = course.muddyHollow;
+  const sin = Math.sin(zone.frame.heading), cos = Math.cos(zone.frame.heading);
+  const points = vertices.map(index => {
+    const dx = position.getX(index) - zone.frame.origin.x;
+    const dz = position.getZ(index) - zone.frame.origin.z;
+    return {
+      x: (dx * sin + dz * cos) / zone.bounds.alongRadius,
+      y: (dx * cos - dz * sin - zone.bounds.lateralCenter) /
+        zone.bounds.lateralRadius,
+    };
+  });
+  if(points.some(point => point.x ** 2 + point.y ** 2 <= 1)) return true;
+  const cross = (a, b) => (b.x - a.x) * -a.y - (b.y - a.y) * -a.x;
+  const signs = points.map((point, index) => cross(point, points[(index + 1) % 3]));
+  if(signs.every(value => value >= 0) || signs.every(value => value <= 0)) return true;
+  for(let index = 0; index < 3; index++) {
+    const a = points[index], b = points[(index + 1) % 3];
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const amount = Math.max(0, Math.min(1,
+      -(a.x * dx + a.y * dy) / (dx * dx + dy * dy || 1)));
+    if((a.x + dx * amount) ** 2 + (a.y + dy * amount) ** 2 <= 1) return true;
+  }
+  return false;
+}
+
+function checkHollowCut(builder, label, yOffset) {
   const ordinaryGeometry = builder(ordinary);
   const hollowGeometry = builder(course);
-  check(hollowGeometry.index.count < ordinaryGeometry.index.count,
-    `${label} removes coarse triangles covered by the detailed Hollow mesh`);
+  equal(hollowGeometry.index.count, ordinaryGeometry.index.count,
+    `${label} keeps the ordinary outer topology while fitting overlap triangles`);
+  check(!ordinaryGeometry.attributes.muddyHollowFit &&
+    hollowGeometry.attributes.muddyHollowFit,
+  `${label} marks only switched fitted vertices`);
   const position = hollowGeometry.attributes.position;
   const index = hollowGeometry.index.array;
-  let firstBridge = -1;
+  const fitted = hollowGeometry.attributes.muddyHollowFit;
+  let overlapTriangles = 0, firstUnfitted = -1, firstHeightError = -1;
   for(let offset = 0; offset < index.length; offset += 3) {
     const a = index[offset], b = index[offset + 1], c = index[offset + 2];
-    if([a, b, c].some(vertex => course.muddyHollow.contains(
-      position.getX(vertex), position.getZ(vertex)))) {
-      firstBridge = offset / 3; break;
+    if(!triangleOverlapsHollow(position, [a, b, c])) continue;
+    overlapTriangles++;
+    for(const vertex of [a, b, c]) {
+      if(fitted.getX(vertex) !== 1) { firstUnfitted = offset / 3; break; }
+      const expected = course.muddyHollow.heightAt(
+        position.getX(vertex), position.getZ(vertex)) + yOffset;
+      if(Math.abs(position.getY(vertex) - expected) > .0001) {
+        firstHeightError = offset / 3; break;
+      }
     }
+    if(firstUnfitted >= 0 || firstHeightError >= 0) break;
   }
-  check(firstBridge < 0, `${label} cannot bridge the authored Hollow`);
+  check(overlapTriangles > 0 && firstUnfitted < 0,
+    `${label} replaces every triangle that overlaps the authored Hollow`);
+  check(firstHeightError < 0,
+    `${label} replacement vertices follow the authored height field`);
   ordinaryGeometry.dispose(); hollowGeometry.dispose();
 }
 
@@ -121,8 +161,8 @@ function checkHollowCut(builder, label) {
       (lateral - course.muddyHollow.bounds.lateralCenter) /
         course.muddyHollow.bounds.lateralRadius));
   }
-  check(usedRadius >= 1.25,
-    'the fitted replacement covers complete coarse triangles around the Hollow edge');
+  check(usedRadius >= 1 && usedRadius < 1.05,
+    'the dense fitted mesh covers the authored core without reaching the race road');
   equal([...ground.geometry.attributes.position.array],
     [...second.group.getObjectByName('Muddy Hollow detailed ground')
       .geometry.attributes.position.array],
@@ -154,8 +194,8 @@ function checkHollowCut(builder, label) {
 }
 
 {
-  checkHollowCut(terrainGeometry, 'near terrain');
-  checkHollowCut(farTerrainGeometry, 'far terrain');
+  checkHollowCut(terrainGeometry, 'near terrain', 0);
+  checkHollowCut(farTerrainGeometry, 'far terrain', -.15);
 }
 
 {

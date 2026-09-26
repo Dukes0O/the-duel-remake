@@ -57,7 +57,7 @@ export function terrainGeometry(course) {
     });
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3)); setMaterialGroups(g,groups); cutHiddenRoadGround(g,course); cutMuddyHollowGround(g,course); g.computeVertexNormals(); return g;
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3)); setMaterialGroups(g,groups); cutHiddenRoadGround(g,course); fitMuddyHollowGround(g,course,0); g.computeVertexNormals(); return g;
 }
 
 export function farTerrainGeometry(course) {
@@ -83,7 +83,7 @@ export function farTerrainGeometry(course) {
       if(quad.every(k=>distances[k]>(course.def.arena?18:course.def.expansion?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80)))groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(quad[0],quad[1],quad[2],quad[2],quad[1],quad[3]);
     }
   }
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);cutMuddyHollowGround(g,course);g.computeVertexNormals();return g;
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);fitMuddyHollowGround(g,course,-.15);g.computeVertexNormals();return g;
 }
 
 // Coarse radial/grid triangles bridge across a narrow wash. Replace only
@@ -110,24 +110,42 @@ function cutHiddenRoadGround(geometry, course) {
   for (const group of groups) geometry.addGroup(group.start, group.count, group.materialIndex);
 }
 
-// The ordinary 32-metre far grid bridges across the Hollow's compact pits,
-// pond and ridge as giant slabs. The dedicated four-metre mesh replaces only
-// triangles whose centre is inside the installed zone. Flag-off geometry is
-// untouched, and the zone begins beyond the protected race road.
-function cutMuddyHollowGround(geometry, course) {
+// Replace only coarse triangles that overlap the Hollow. Each replacement has
+// private vertices fitted to the authored height field, so its outer edges
+// still meet the ordinary world while the dense core can cover its interior.
+// Flag-off geometry and the race-side tunnel remain byte-for-byte unchanged.
+function fitMuddyHollowGround(geometry, course, yOffset) {
   const zone=course.muddyHollow;
   if(!zone)return;
   const position=geometry.attributes.position,source=geometry.index.array;
+  const attributes=Object.entries(geometry.attributes).map(([name,attribute])=>({
+    name,itemSize:attribute.itemSize,normalized:attribute.normalized,
+    ArrayType:attribute.array.constructor,values:Array.from(attribute.array),
+  }));
+  const fit=Array(position.count).fill(0);
   const indices=[],groups=[];
   for(const group of geometry.groups){
     const start=indices.length;
     for(let i=group.start;i<group.start+group.count;i+=3){
       const a=source[i],b=source[i+1],c=source[i+2];
-      if(muddyHollowTriangleOverlap(position,[a,b,c],zone))continue;
-      indices.push(a,b,c);
+      if(!muddyHollowTriangleOverlap(position,[a,b,c],zone)){indices.push(a,b,c);continue;}
+      for(const vertex of[a,b,c]){
+        const next=fit.length;
+        for(const attribute of attributes){
+          for(let item=0;item<attribute.itemSize;item++)
+            attribute.values.push(attribute.values[vertex*attribute.itemSize+item]);
+          if(attribute.name==='position')attribute.values[next*3+1]=
+            zone.heightAt(position.getX(vertex),position.getZ(vertex))+yOffset;
+        }
+        fit.push(1);indices.push(next);
+      }
     }
     groups.push({start,count:indices.length-start,materialIndex:group.materialIndex});
   }
+  for(const attribute of attributes)geometry.setAttribute(attribute.name,
+    new THREE.BufferAttribute(new attribute.ArrayType(attribute.values),
+      attribute.itemSize,attribute.normalized));
+  geometry.setAttribute('muddyHollowFit',new THREE.Float32BufferAttribute(fit,1));
   geometry.setIndex(indices);geometry.clearGroups();
   for(const group of groups)geometry.addGroup(group.start,group.count,group.materialIndex);
 }

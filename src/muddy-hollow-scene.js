@@ -1,8 +1,7 @@
 import * as THREE from 'three';
 
-const GROUND_COVERAGE = 1.3;
-const GROUND_ALONG_SEGMENTS = 124;
-const GROUND_LATERAL_SEGMENTS = 118;
+const GROUND_ALONG_SEGMENTS = 96;
+const GROUND_LATERAL_SEGMENTS = 90;
 const WATER_ALONG_SEGMENTS = 28;
 const WATER_LATERAL_SEGMENTS = 24;
 
@@ -35,11 +34,10 @@ function buildGround(zone) {
   const lateralRadius = zone.bounds.lateralRadius;
   const lateralCenter = zone.bounds.lateralCenter;
   for(let row = 0; row <= GROUND_LATERAL_SEGMENTS; row++) {
-    const lateral = lateralCenter - lateralRadius * GROUND_COVERAGE +
-      row / GROUND_LATERAL_SEGMENTS * lateralRadius * 2 * GROUND_COVERAGE;
+    const lateral = lateralCenter - lateralRadius +
+      row / GROUND_LATERAL_SEGMENTS * lateralRadius * 2;
     for(let column = 0; column <= GROUND_ALONG_SEGMENTS; column++) {
-      const along = -alongRadius * GROUND_COVERAGE +
-        column / GROUND_ALONG_SEGMENTS * alongRadius * 2 * GROUND_COVERAGE;
+      const along = -alongRadius + column / GROUND_ALONG_SEGMENTS * alongRadius * 2;
       const point = localToWorld(zone, along, lateral);
       const surface = zone.surfaceAt(point.x, point.z);
       const boundary = Math.max(0, 1 - Math.hypot(along / alongRadius,
@@ -60,11 +58,10 @@ function buildGround(zone) {
   const width = GROUND_ALONG_SEGMENTS + 1;
   for(let row = 0; row < GROUND_LATERAL_SEGMENTS; row++) {
     for(let column = 0; column < GROUND_ALONG_SEGMENTS; column++) {
-      const along = -alongRadius * GROUND_COVERAGE +
-        (column + .5) / GROUND_ALONG_SEGMENTS * alongRadius * 2 * GROUND_COVERAGE;
-      const lateral = lateralCenter - lateralRadius * GROUND_COVERAGE +
-        (row + .5) / GROUND_LATERAL_SEGMENTS * lateralRadius * 2 * GROUND_COVERAGE;
-      if(!inside(zone, along, lateral, GROUND_COVERAGE - 1 + .012)) continue;
+      const along = -alongRadius + (column + .5) / GROUND_ALONG_SEGMENTS * alongRadius * 2;
+      const lateral = lateralCenter - lateralRadius +
+        (row + .5) / GROUND_LATERAL_SEGMENTS * lateralRadius * 2;
+      if(!inside(zone, along, lateral, .012)) continue;
       const a = row * width + column, b = a + 1, c = a + width, d = c + 1;
       indices.push(a, b, c, b, d, c);
     }
