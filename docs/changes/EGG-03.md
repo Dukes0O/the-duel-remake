@@ -11,10 +11,10 @@ player_facing: yes
 ## Settled design
 
 The six phases and their order are fixed by `docs/MUDDY_HOLLOW.md` and the
-active EGG-03 board card. Each phase merges separately. This note starts phase
-1 only: deterministic ground geometry on High Country Grand Tour. It does not
-add mud or water driving, departure, collectibles, save data, detailed art,
-particles, audio, or any menu action.
+active EGG-03 board card. Each phase merges separately. The first section
+records phase 1: deterministic ground geometry on High Country Grand Tour.
+It did not add mud or water driving, departure, collectibles, save data,
+detailed art, particles, audio, or any menu action.
 
 Phase 1 uses a world-space local frame at the middle of the Alpine Summit
 section (`s = 2400 m`). The Hollow sits on the positive-lateral side. Its
@@ -131,4 +131,51 @@ stay exact.
 
 ## Phase 2 tests first
 
-Pending red acceptance tests.
+Independent acceptance tests were committed before runtime code. The first
+focused run passed 12/20 checks and had eight intended failures: the pit and
+pond fields and falloffs were absent; mud did not change steering, drag or
+wheel spin; water did not add speed-dependent drag; and the splash event and
+latch did not exist.
+
+Review then reproduced an airborne Titan receiving mud, pond drag and a splash
+five metres over the pond. A second independent red commit passed 20/22 checks
+and retained two intended failures: flight still exposed surface state and the
+airborne splash consumed the landing edge. Runtime code now treats mud and
+water as tyre-contact effects. Flight exposes zero mud, water depth and wheel
+spin; landing reads the surface and emits one splash.
+
+No existing assertion was weakened. The phase-2 tests add the settled surface,
+driving, event, contact and frame-scheduling contracts. The generated shortcut
+preset changed only because its freshness fingerprint covers `src/course.js`;
+fresh solver comparison confirms that every stored route remains exact.
+
+## Phase 2 evidence
+
+- `node tools/test-muddy-hollow.mjs`: 22/22 checks passed, including all three
+  pits, the pond, smooth falloffs, road/outside/flag-off isolation, real Titan
+  steering and drag, reverse water drag, splash payload and latch, airborne
+  isolation, grounded landing, and exact 30/60/144 FPS scheduling.
+- `node tools/test-replays.mjs`: 162 fingerprints passed across all 18 cases,
+  16 events, three frame rates and three runs.
+- `node tools/test-offroad-physics.mjs`: 8,788 checks passed.
+- `node tools/test-terrain.mjs`: 2,545,523 checks passed.
+- `node tools/test-feature-flags.mjs`: 22 checks passed.
+- `node tools/test-wasteland-beta.mjs`: 3/3 subtests passed.
+- `node tools/test-render-reuse.mjs`: 176 checks passed.
+- `node tools/test-shortcut-presets.mjs --verify-solvers`: 241 checks passed,
+  including exact agreement with all 15 freshly solved layouts.
+- `node tools/test-audio.mjs`: 460 checks passed with actual PCM decoded. The
+  first broad gate ran in a restricted process sandbox that blocked FFmpeg and
+  therefore reported the expected recordings as unavailable. No audio source,
+  fixture or assertion changed; rerunning with decoder access passed.
+- Independent source review found and reproduced the airborne-contact defect.
+  The independent red regression preceded the narrow grounded-contact fix.
+- This phase adds no rendering or UI. Phase 1 already reviewed the installed
+  ground in a memory-only browser; phase 2 is verified through fixed-step
+  simulation and ordinary replay controls. Phase 6 owns visual surfaces and
+  particles, and the audio lane owns playback for the placeholder splash cue.
+
+## Phase 2 removed
+
+Nothing. Phase 2 adds isolated surface data and fixed-step behavior; it does
+not replace an existing path.
