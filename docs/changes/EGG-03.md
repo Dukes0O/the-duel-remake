@@ -186,3 +186,38 @@ fresh solver comparison confirms that every stored route remains exact.
 
 Nothing. Phase 2 adds isolated surface data and fixed-step behavior; it does
 not replace an existing path.
+
+## Phase 3 settled detail
+
+Phase 3 adds departure only. It does not add jumps, props, collectibles, save
+fields, detailed art, particles, audio playback, a new screen, or a main-menu
+action. The installed `muddy-hollow` development switch and discovered-gate
+race snapshot remain the only way to construct the zone.
+
+The ridge crossing is a deterministic world-space boundary owned by the
+Hollow. It is inside the zone, on the valley side of the authored ridge crest,
+and is expressed in the zone's existing local frame. A racing Titan crossing
+that boundary on its tyres leaves the race once. Other cars, an on-foot
+fighter, an airborne vehicle, the racing line at the same course distance,
+flag-off and undiscovered races cannot depart. This is an access guard as well
+as a physical outcome: a test that places a non-Titan beyond the crest still
+must not enter the playground.
+
+Departure reuses the settled Hidden Road outcome rather than inventing a new
+race result. The state becomes `exploring`; impact, tumble, boost, airborne
+state and pending fines are cleared; and the app settles the active run once
+as abandoned. Banked credits, records, unlocks and saved ghosts stay intact,
+while unbanked race earnings and pending fines are discarded through the
+existing settlement path. Race clocks, laps, checkpoints, rivals, police,
+combat, scoring and finish/deadline outcomes freeze after departure.
+
+Exploration remains fixed-step and drivable over the Hollow and back across
+the ridge. Returning to the road does not resume the abandoned race. Static
+contacts still resolve, but exploration cannot create a race crash, reward,
+record, ticket or result. The existing pause menu is the menu exit; phase 3
+adds no new UI. A crossing takes priority over a simultaneous race deadline,
+matching the Hidden Road's point-of-no-return ordering.
+
+## Phase 3 tests first
+
+Pending independent red acceptance tests.
