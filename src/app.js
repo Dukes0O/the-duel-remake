@@ -28,6 +28,8 @@ import {INPUT_CONTEXTS,keyboardAction,heldInput,gamepadEdgeActions,carGamepadDri
   footGamepadInput,footControlInput,preventCarKeyDefault} from './input-contexts.js';
 import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as buyDriver,selectDriver as equipDriver} from './drivers.js';
 import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
+import {collectMuddyHollowHubcap, discoverMuddyHollow,
+  muddyHollowSnapshot} from './wasteland-progress.js';
 
 const SIMULATION_STEP = 1 / 120;
 export const ROUTE_PREFERENCE_KEY='duel_route_variant';
@@ -84,6 +86,8 @@ export class App {
       if (event.hiddenRoadDeparted) this._settleHiddenRoadDeparture(event.hiddenRoadDeparted, state);
       if (event.muddyHollowDeparted)
         this._settleMuddyHollowDeparture(event.muddyHollowDeparted, state);
+      if (event.muddyHollowHubcap)
+        this._settleMuddyHollowHubcap(event.muddyHollowHubcap, state);
       if (event.hiddenRoadPhase && (state.hiddenRoadJourney?.controlsLocked ||
           state.hiddenRoadJourney?.phase === 'turned-back')) this._clearHiddenRoadInput();
       if(event.driftBanked||event.driftChainLost)this.driftNotice={type:event.driftBanked?'banked':'lost',...(event.driftBanked||event.driftChainLost),expiresAt:state.stageTimeSec+2};
@@ -262,6 +266,7 @@ export class App {
       combatArmorKit:this.wastelandUnlocked() ? getEquippedArmorKit(this.profile,car) : null,
       crewId:this.wastelandUnlocked()?selectedCrewId(this.profile):undefined,
       discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
+      muddyHollowHubcaps:this.profile.wasteland?.muddyHollow?.hubcaps,
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     return true;
   }
@@ -431,6 +436,8 @@ export class App {
       timeSec:result.timeSec??result.stageTimeSec,laps:result.laps??state.completedLaps,seed:state.seed,car:state.car,driverId:state.driverId,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,
       upgrades:{...state.upgrades},rival:state.rivalSettings,weaponLevels:state.weaponLevels,policeEscapes:result.policeEscapes??state.policeEscapes,
       combatRewardsEnabled:state.mode==='wasteland'&&this.duel.featureFlags.enabled('wasteland2'),
+      muddyHollowEnabled:this.duel.featureFlags.enabled('muddy-hollow')&&
+        state.wastelandGateDiscovered===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     const awarded=settleRace(this.profile,payload);
     if(awarded.awarded){
@@ -473,9 +480,32 @@ export class App {
         state.playerId !== this._runPlayerId || this._runPlayerId !== this.player.id ||
         this._settledMuddyHollowDeparture === departure) return false;
     this._settleResult({won: false, completed: false, abandoned: true}, state);
+    const discovered = discoverMuddyHollow(this.profile);
+    if (discovered !== this.profile) { this.profile = discovered; this._saveProfile(); }
     this._settledMuddyHollowDeparture = departure;
     this.driftNotice = this.checkpointNotice = null;
     return true;
+  }
+  _settleMuddyHollowHubcap(event, state) {
+    const departure = state?.muddyHollowDeparture;
+    const progress = state?.muddyHollowHubcaps;
+    if (!this.runId || state !== this.duel.state || state.status !== 'exploring' ||
+        !departure?.departed || event?.departureId !== departure.id ||
+        !progress?.found?.includes(event?.id) ||
+        !this.duel.course?.muddyHollow?.collectibles?.some(item => item.id === event.id) ||
+        !this.duel.featureFlags.enabled('muddy-hollow') ||
+        state.playerId !== this._runPlayerId || this._runPlayerId !== this.player.id)
+      return false;
+    this._refreshPlayer();
+    const result = collectMuddyHollowHubcap(this.profile, event.id);
+    if (!result.collected) return false;
+    this.profile = result.profile;
+    this._saveProfile();
+    return true;
+  }
+  getMuddyHollowProgress() {
+    return muddyHollowSnapshot(this.profile, this.player?.id,
+      this._switches().enabled('muddy-hollow'));
   }
   getHiddenRoadDiscovery() {
     const old = this._hiddenRoadDiscovery, value = this.profile?.wasteland;

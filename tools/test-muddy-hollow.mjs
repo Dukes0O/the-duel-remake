@@ -1750,5 +1750,5 @@ check('phase 4 content remains absent when the development switch is off', () =>
 });
 
 for (const failure of failures) console.error(`FAIL ${failure}`);
-console.log(`Muddy Hollow phase 4: ${checks - failures.length}/${checks} checks passed; ${failures.length} failed.`);
+console.log(`Muddy Hollow phase 5: ${checks - failures.length}/${checks} checks passed; ${failures.length} failed.`);
 if (failures.length) process.exitCode = 1;
