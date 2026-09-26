@@ -23,6 +23,8 @@ import { Course } from './course.js';
 import { onHiddenRoad } from './hidden-road.js';
 import {initializeHiddenRoadJourney, checkHiddenRoadDeparture, stepHiddenRoadJourney,
   queueHiddenRoadChoice, hiddenRoadColliders, prepareHiddenRoadVisit} from './hidden-road-journey.js';
+import {initializeMuddyHollowDeparture, nearMuddyHollowDeparture,
+  checkMuddyHollowDeparture, stepMuddyHollowExploration} from './muddy-hollow.js';
 import { seedFromUrl } from './rng.js';
 import { createDriftState } from './drift-scoring.js';
 import { DEFAULT_DRIVER, normalizeDriverId, applyDriverModifiers } from './drivers.js';
@@ -253,6 +255,7 @@ export class Duel {
     initializeFootTransition(this);
     initializeFootWeapons(this);
     initializeHiddenRoadJourney(this);
+    initializeMuddyHollowDeparture(this);
     if (s.hiddenRoadVisit) prepareHiddenRoadVisit(this);
     this.emit(s.hiddenRoadVisit ? {stageLoaded: idx, hiddenRoadVisit: true}
       : {stageLoaded: idx, countdown: 3});
@@ -339,7 +342,7 @@ export class Duel {
     s.timeLimitSec = s.timeRemaining = s.parTimeSec = s.objective = s.drift = s.checkpointRush = null;
     s.police = { beep: 0, triggered: false, pursuit: null, ticket: null, ticketCount: 0, pendingFines: 0 };
     s.results = null; s.lastCrashReason = null; s.crashFlash = 0;
-    s.traffic = []; s.hiddenRoadJourney = null; delete s.raids;
+    s.traffic = []; s.hiddenRoadJourney = null; s.muddyHollowDeparture = null; delete s.raids;
     s.arena = createArenaEvent({mode, venueId: venue.id, course: this.course,
       opponentBrains: opponentSpecs.map(spec => spec.brain)});
     const slots = startingSlots(s.arena.spawnSlots.length, opponentSpecs.length + 1);
@@ -396,8 +399,9 @@ export class Duel {
       if (s.status === 'racing') stepArenaEvent(this, dt);
       return;
     }
-    if (checkHiddenRoadDeparture(this) || s.status === 'exploring') {
-      stepHiddenRoadJourney(this, dt);
+    if (checkMuddyHollowDeparture(this) || checkHiddenRoadDeparture(this) ||
+        s.status === 'exploring') {
+      if (!stepMuddyHollowExploration(this, dt)) stepHiddenRoadJourney(this, dt);
       return;
     }
     if (s.status !== 'racing') {
@@ -408,9 +412,14 @@ export class Duel {
     // Within the actual spur, motion decides departure before race outcomes.
     // Ordinary and flag-off racing retain their established call order.
     const droveSpur = !!s.hiddenRoadJourney && !s.onFoot && s.impactTimer <= 0 && onHiddenRoad(this.course, s);
+    const droveHollowApproach = nearMuddyHollowDeparture(this);
     if (droveSpur) {
       this._drive(dt);
       if (checkHiddenRoadDeparture(this) || s.status !== 'racing') return;
+    }
+    if (droveHollowApproach) {
+      this._drive(dt);
+      if (checkMuddyHollowDeparture(this) || s.status !== 'racing') return;
     }
     s.stageTimeSec += dt;
     if (s.timeLimitSec) s.timeRemaining = Math.max(0, s.timeLimitSec - s.stageTimeSec - s.racePenaltySec);
@@ -452,8 +461,8 @@ export class Duel {
     // each sub-step can end the run (gameover crash, ticket); once the status
     // leaves 'racing' the rest of the frame must not keep simulating, or a
     // finish-line crossing could overwrite the gameover/ticket state
-    if (!droveSpur) this._drive(dt);
-    if (checkHiddenRoadDeparture(this)) return;
+    if (!droveSpur && !droveHollowApproach) this._drive(dt);
+    if (checkMuddyHollowDeparture(this) || checkHiddenRoadDeparture(this)) return;
     if (s.status !== 'racing' || s.impactTimer > 0) { this._tickDrift(dt); return; }
     this._jump(s, dt);
     this._traffic(dt);
