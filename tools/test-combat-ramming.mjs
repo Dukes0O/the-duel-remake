@@ -356,14 +356,14 @@ test('enabled crash physics has reviewed contact replays while switch-off stays 
     'd414293c318c4ddb90b1aecd7a0ffd60ed59455434febc825518b23665066fdc',
     'switch-off Wasteland keeps its integration armored-contact fingerprint');
   assert.equal(legacyDigest('wasteland', false, true),
-    '58dd02e2b3d9ad70478588334efec092d40f61d6f38573a8d278315cf94a58f8',
+    '77e512edd147264c2da17858eca6ed4fb74f031500dba8ce95e891ea3676bb38',
     'enabled crash physics governs Wasteland contact when Wasteland 2 is off');
   assert.equal(legacyDigest('duel', false, false),
     '81b4193349b1b5aa06d0180d02ddf6879156b9bc23c762eac8a1ca6a3222caaa',
     'switch-off ordinary contact keeps the integration fingerprint');
 });
 
-test('ordinary traffic stays solid while flag-off Wasteland still wrecks it', () => {
+test('enabled crash physics lets smashed traffic stay wrecked in every mode', () => {
   for (const mode of ['duel', 'wasteland']) {
     const field = race({mode, wasteland2: false, classicDestruction: true});
     const traffic = {s: 105, prevS: 115, lateral: .6, prevLateral: .6,
@@ -383,5 +383,31 @@ test('ordinary traffic stays solid while flag-off Wasteland still wrecks it', ()
         'the ordinary head-on still crashes the player');
     }
     assert.equal(ramEvents(field).length, 0, 'legacy traffic has no new combat event');
+  }
+});
+
+test('crash-physics off keeps ordinary solid traffic and the released Wasteland wreck path', () => {
+  for (const mode of ['duel', 'wasteland']) {
+    const field = race({mode, wasteland2: false, classicDestruction: true,
+      crashPhysics: false});
+    const traffic = {s: 105, prevS: 115, lateral: .6, prevLateral: .6,
+      speedMph: 20, dir: -1, alive: true};
+    field.state.traffic.push(traffic);
+    place(field.state, 102);
+    field.state.prevS = 98;
+    field.state.speedMph = 90;
+    assert.equal(field.duel._vehicleContact(field.state, traffic, 'head_on'), true);
+    if (mode === 'wasteland') {
+      assert.ok(traffic.wrecked, 'switch-off Wasteland keeps its released traffic wreck');
+      assert.equal(traffic.alive, false);
+      assert.equal(field.events.filter(event => event.trafficWrecked).length, 1);
+      assert.ok(traffic.wrecked.lateralVelocity || traffic.wrecked.forwardVelocity,
+        'switch-off Wasteland keeps the released wreck motion');
+    } else {
+      assert.equal(traffic.wrecked, undefined, 'switch-off ordinary traffic stays solid');
+      assert.equal(traffic.alive, true);
+      assert.equal(field.events.filter(event => event.trafficWrecked).length, 0);
+      assert.ok(field.state.stageCrashes > 0, 'switch-off ordinary head-on keeps its crash cost');
+    }
   }
 });

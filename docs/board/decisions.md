@@ -785,3 +785,28 @@ traffic becomes non-collidable at knock start but keeps the existing
 `roadsideMotion.visible` render marker until it settles beyond the nearest
 shoulder, then becomes a zero-motion, zero-roll wreck. These are transition and
 visibility correctness fixes. They do not change the settled impact model.
+The final roadside parking move must also pass the same swept solid test as
+normal motion. Search the nearest deterministic whole-car-clear pose without
+crossing a wall. If none exists, keep the car visible and non-collidable with
+zero motion, run normal solid and boundary resolution, and retry next tick.
+Never create an in-lane "parked" wreck or hide a path through a wall.
+
+## 2026-09-26: keep armored Wasteland control below 70 mph own delta-v
+
+CRASH-01 balance failed with solver motion applied to every non-nudge player
+impact: crash physics on produced 9/4/2 wins under legacy Wasteland rules and
+8/5/1 with `wasteland2`; Medium and Hard missed their target bands, one Hard
+baseline race did not finish, and Medium UFO gain reached 11.29 seconds.
+
+Keep the rigid-body result for both cars, but leave the armored Wasteland
+player in driving motion when its own change in velocity is below 70 mph. The
+struck car still takes the full solver shove, spin and launch. Hits at or above
+70 mph can still knock the player loose. Rival Duel keeps its 6 mph knock and
+22 mph crash rules. This is the narrow threshold called for by the settled
+CRASH-01 handoff, not a solver or pace change.
+
+The four balance combinations then passed: crash off gave 9/6/2 and 8/5/3
+wins by difficulty; crash on gave 9/5/2 and 8/5/3. No race was unfinished and
+all UFO, combat, wreck and pacing targets passed. A 130-to-25 mph protected
+rear-ram fixture measures 58.86 mph player delta-v and retains control; the
+260-to-25 mph fixture measures 131.68 mph and still knocks the player.

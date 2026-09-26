@@ -43,6 +43,8 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
   assert.equal(duel._vehicleContact(player, rival, 'rival'), true);
   assert.equal(player.impactTimer, 0, 'a protected rear ram below the car threshold leaves control with the player');
   assert.equal(player.stageCrashes, 0, 'a protected rear ram adds no crash penalty');
+  assert.equal(player.knock, undefined,
+    'a protected Wasteland rear ram below the armored threshold leaves the player driving');
   assert.ok(rival.knock, 'the struck rival enters free-body knock motion');
   assert.ok(rival.speedMph > before.rivalSpeed + 20, 'closing speed transfers into the opponent');
   const heading = duel.course.at(rival.s).heading;
@@ -82,6 +84,8 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
     'Mad Max keeps its armor rule instead of applying an ordinary-race crash');
   assert.notEqual(player.racePenaltySec, 30,
     'the armored hit does not add the Rival Duel 30-second penalty');
+  assert.ok(player.knock,
+    'an extreme Wasteland hit can still knock the armored player out of driving motion');
   assert.ok(rival.knock?.vy > 0, 'the high-speed collision still launches the opponent');
 }
 

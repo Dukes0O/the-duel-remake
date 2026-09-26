@@ -74,7 +74,8 @@ function armoredVehicleContact(duel, {a,b,nx,nz,end,width,length,specA,specB,
   if(crashPhysics){
     // Motion comes from the rigid-body solver (docs/CRASH_PHYSICS.md); the
     // ram response still sets the computer's recovery timing and ram cadence.
-    crash=resolveCarCrash(duel,a,b);
+    crash=resolveCarCrash(duel,a,b,{playerKnockMinDvMph:
+      duel.state.mode==='wasteland'?CRASH_TUNING.armoredPlayerKnockDvMph:0});
     for(const actor of [a,b])if(actor!==duel.state)
       actor.ramRecoverySec=Math.max(actor.ramRecoverySec||0,response.recoverySeconds);
   }else{
@@ -610,7 +611,8 @@ export function _vehicleContact(a, b, reason) {
     // struck car is shoved, spun or smashed aside by mass, speed and where it
     // was hit. In Rival Duel the player crashes on their own change in
     // velocity, not closing speed alone; legacy Mad Max keeps its threshold.
-    const crash = resolveCarCrash(this, a, b);
+    const crash = resolveCarCrash(this, a, b, {playerKnockMinDvMph:
+      armoredPlayer ? CRASH_TUNING.armoredPlayerKnockDvMph : 0});
     if (rearRam) {
       b.ramRecoverySec = Math.max(b.ramRecoverySec || 0,
         clamp(.4 + impactMph / 230, .4, 1.2));

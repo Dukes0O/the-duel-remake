@@ -1,4 +1,5 @@
 import {DRIVE} from './config.js';
+import {sweepObstacle} from './collision.js';
 import {wrapHeading} from './offroad-physics.js';
 import {yawInertia, solveVehicleImpact, impactSeverity} from './vehicle-collision.js';
 
@@ -14,6 +15,24 @@ export const KNOCK = Object.freeze({
   gravity: 18,          // the game's jump gravity
   endSpeed: 1.5, endSpin: .35, minSec: .3, maxSec: 3.5,
 });
+
+function roadsideParkingPose(duel, actor, side) {
+  const spec = duel._vehicleSpec(actor);
+  const fromS = actor.prevS ?? actor.s, fromLateral = actor.prevLateral ?? actor.lateral;
+  const start = {...duel.course.worldAt(fromS, fromLateral), y: undefined};
+  for (const distance of [0, 8, -8, 16, -16, 24, -24, 40, -40, 64, -64]) {
+    const s = actor.s + distance;
+    const roadHalfWidth = duel.course.roadHalfWidthAt?.(s) ?? 7;
+    const lateral = side * (roadHalfWidth + spec.halfWidth + .5);
+    const end = {...duel.course.worldAt(s, lateral), y: undefined};
+    const heading = duel.course.at(s).heading + (actor.headingError || 0) +
+      ((actor.dir || 1) < 0 ? Math.PI : 0);
+    const blocked = duel._obstacles(Math.min(fromS, s) - 6, Math.max(fromS, s) + 6)
+      .some(obstacle => sweepObstacle(start, end, obstacle, heading, spec));
+    if (!blocked) return {s, lateral};
+  }
+  return null;
+}
 
 export function bodyHeading(duel, actor) {
   return duel.course.at(actor.s).heading + (actor.headingError || 0) + ((actor.dir || 1) < 0 ? Math.PI : 0);
@@ -78,6 +97,15 @@ export function stepKnock(duel, actor, dt) {
     !(actor.airHeight > 0);
   if (settled || k.age >= T.maxSec) {
     if (k.roadside) {
+      const parking = roadsideParkingPose(duel, actor, k.roadside.side);
+      if (!parking) {
+        k.vx = 0; k.vz = 0; k.spin = 0; k.vy = 0;
+        actor.speedMph = 0; actor.pushVelocity = 0; actor.airHeight = 0;
+        actor.airborne = false; actor.alive = false;
+        actor.roadsideMotion ??= {visible: true};
+        return true;
+      }
+      actor.s = parking.s; actor.lateral = parking.lateral;
       actor.alive = false;
       actor.roadsideMotion = null;
       actor.wrecked = {atTime: duel.state.stageTimeSec, age: 0,
@@ -131,6 +159,7 @@ function wreckTraffic(duel, actor, after, severity, dvMph) {
 // result and each car's severity, for crash rules and effects.
 export function resolveCarCrash(duel, a, b, {
   wreckTrafficAt = ['smashed', 'launched'], onlyB = false, forceKnock = false,
+  playerKnockMinDvMph = 0,
 } = {}) {
   const s = duel.state;
   const spinOf = actor => actor === s ? s.yawVelocity || 0 : 0;
@@ -140,7 +169,9 @@ export function resolveCarCrash(duel, a, b, {
   const severityB = impactSeverity(result.b.dvMph, {attackerMass: bodyA.mass, mass: bodyB.mass});
   for (const [actor, before, after, severity] of onlyB ? [[b, bodyB, result.b, severityB]]
     : [[a, bodyA, result.a, severityA], [b, bodyB, result.b, severityB]]) {
-    if (!forceKnock && actor === s && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: true});
+    if (!forceKnock && actor === s && after.dvMph < playerKnockMinDvMph && !actor.knock)
+      applyDriving(duel, actor, before, after, {player: true});
+    else if (!forceKnock && actor === s && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: true});
     else if (s.traffic.includes(actor) && wreckTrafficAt.includes(severity)) wreckTraffic(duel, actor, after, severity, after.dvMph);
     else if (!forceKnock && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: false});
     else startKnock(actor, {vx: after.vx, vz: after.vz, spin: after.spin,

@@ -200,6 +200,22 @@ test('outside clips and aligned rear hits send traffic to its nearest shoulder',
   }
 });
 
+test('crash-physics off keeps both released scripted roadside traffic outcomes', () => {
+  const lowDuel = fixture({crashPhysics: false});
+  const low = trafficHit(lowDuel, lowDuel.car.topSpeed * .3);
+  assert.equal(low.events.find(event => event.roadsideImpact)?.roadsideImpact?.outcome, 'knock');
+  assert.equal(low.traffic.knock, undefined, 'switch-off low hit does not start rigid-body knock');
+  assert.equal(low.traffic.roadsideMotion?.outcome, 'knock',
+    'switch-off low hit keeps the released scripted roadside motion');
+
+  const highDuel = fixture({crashPhysics: false});
+  const high = trafficHit(highDuel, highDuel.car.topSpeed * .7);
+  assert.equal(high.events.find(event => event.roadsideImpact)?.roadsideImpact?.outcome, 'obliterate');
+  assert.equal(high.traffic.knock, undefined, 'switch-off hard hit does not start rigid-body knock');
+  assert.equal(high.traffic.roadsideMotion?.outcome, 'obliterate',
+    'switch-off hard hit keeps the released scripted obliteration motion');
+});
+
 test('high closing speed removes traffic after its burst and never costs player armor', () => {
   const duel = fixture();
   const hit = trafficHit(duel, duel.car.topSpeed * .7);

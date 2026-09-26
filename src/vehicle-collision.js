@@ -12,6 +12,7 @@ export const CRASH_TUNING = Object.freeze({
   // Heavier-than-target share needed before a hit launches the target.
   launchMassRatio: .8,
   playerCrashDvMph: 22,     // Rival Duel: the player's own Δv that means a crash
+  armoredPlayerKnockDvMph: 70, // Wasteland armor keeps control below a major hit
 });
 
 const cross = (r, v) => r.z * v.x - r.x * v.z;

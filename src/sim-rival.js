@@ -52,7 +52,7 @@ export function _traffic(dt) {
     // A knocked car slides and spins until its tyres bite (docs/CRASH_PHYSICS.md).
     if (this.featureFlags?.enabled('crash-physics') === true && c.knock) {
       stepKnock(this, c, dt);
-      if (c.knock) { this._staticContacts(c, false); this._boundary(c); }
+      this._staticContacts(c, false); this._boundary(c);
       continue;
     }
     if (c.roadsideMotion) { stepRoadsideTraffic(c, dt); continue; }
@@ -101,7 +101,7 @@ export function _rival(dt, opponent = this.state.rival) {
   if (r.crushed) return;
   if (this.featureFlags?.enabled('crash-physics') === true && r.knock) {
     stepKnock(this, r, dt);
-    if (r.knock) { this._staticContacts(r, false); this._boundary(r); }
+    this._staticContacts(r, false); this._boundary(r);
     if (!r.finished) this._advanceLaps(r, dt);
     return;
   }
