@@ -1,6 +1,6 @@
 ---
 task: EGG-03
-status: phase-1-ready-to-merge
+status: phase-1-merged
 kind: easter-egg
 flag: muddy-hollow
 player_facing: yes
@@ -91,6 +91,8 @@ and distinct render cache keys.
   refreshed.
 - `npm run build`: passed with 234 modules. The existing large-chunk warning
   remains; no new warning was introduced.
+- Phase 1 merged at `3bba167` after the documentation-final lane rerun passed
+  278/278 suites in 425.79 seconds and the build passed again.
 
 ## Removed
 

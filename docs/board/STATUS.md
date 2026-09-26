@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-09-26T06:55:37.354Z
+Observed at: 2026-09-26T07:46:50.778Z
 
-Observation commit: 56246c2bcce5d0d9adaa924153f3763ba8e10b27
+Observation commit: 3bba167dd8ba5c205871f1853e98dd1b0dd84a40
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 56246c2bcce5d0d9adaa924153f3763ba8e10b27
+Integration HEAD: 3bba167dd8ba5c205871f1853e98dd1b0dd84a40
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -28,6 +28,7 @@ Last recorded full run: 2026-09-26T06:18:03.726Z; tested commit: 2583d39e1f1faf6
 | scrapdome | dev |
 | crash-physics | dev |
 | titan-climb | dev |
+| muddy-hollow | dev |
 
 ## Lane branches
 
@@ -39,6 +40,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | lane/audio/aud-10 | 0 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 1 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/egg/egg-03-p1-zone | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/muddy-hollow-p1/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -62,7 +64,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 7,868,116 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 169,875 B | +0 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 327,674,880 B | +0 B | unavailable |
+| Git objects | 327,996,416 B | +321,536 B | unavailable |
 | Lane folders | 1 | +0 | unavailable |
 
 ## Backups
@@ -71,7 +73,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: faf5749598d061d0d11cadff9a4515fb10308ddb
 - Local main: missing
-- Local integration/wasteland: 56246c2bcce5d0d9adaa924153f3763ba8e10b27
+- Local integration/wasteland: 3bba167dd8ba5c205871f1853e98dd1b0dd84a40
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
