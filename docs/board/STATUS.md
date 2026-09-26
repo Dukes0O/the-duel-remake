@@ -1,20 +1,20 @@
 # Build status
 
-Observed at: 2026-09-26T10:12:46.698Z
+Observed at: 2026-09-26T10:51:21.527Z
 
-Observation commit: 10017ff46cdd70012f70e144be0559a2aaae2c58
+Observation commit: 09db89ef2614a1de25640c2b00e8885899dfc1a9
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 10017ff46cdd70012f70e144be0559a2aaae2c58
+Integration HEAD: 09db89ef2614a1de25640c2b00e8885899dfc1a9
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
 Live build version: not checked
 
-Full tier: passed; exact HEAD passed: yes.
+Full tier: stale; exact HEAD passed: no.
 
 Last recorded full run: 2026-09-26T10:11:51.650Z; tested commit: 10017ff46cdd70012f70e144be0559a2aaae2c58.
 
@@ -55,15 +55,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 239,978,339 B | +5,786 B | 250,000,000 B |
+| Build `dist/` | 239,978,339 B | +0 B | 250,000,000 B |
 | Wasteland models | 78,930,708 B | +0 B | 60,000,000 B |
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
 | Review `looks/` | 7,868,116 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 864,148 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 1,104,855 B | +0 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 329,103,360 B | +4,096 B | unavailable |
+| Git objects | 329,559,040 B | +0 B | unavailable |
 | Lane folders | 1 | +0 | unavailable |
 
 ## Backups
@@ -72,7 +72,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: faf5749598d061d0d11cadff9a4515fb10308ddb
 - Local main: missing
-- Local integration/wasteland: 10017ff46cdd70012f70e144be0559a2aaae2c58
+- Local integration/wasteland: 09db89ef2614a1de25640c2b00e8885899dfc1a9
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -80,4 +80,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit faf5749598d061d0d11cadff9a4515fb10308ddb.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: matches local; cached commit 10017ff46cdd70012f70e144be0559a2aaae2c58.
+- Remote origin/integration/wasteland: behind local; cached commit 10017ff46cdd70012f70e144be0559a2aaae2c58.
