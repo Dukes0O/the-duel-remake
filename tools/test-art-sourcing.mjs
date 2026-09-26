@@ -40,6 +40,6 @@ const shortlist = readFileSync(shortlistPath, 'utf8');
 for (const id of required) assert.match(shortlist, new RegExp(`\\b${id}\\b`));
 assert.match(shortlist, /Decision needed from Kyle/);
 assert.match(shortlist, /Recommended pair/);
-assert.match(shortlist, /No adaptation or download has started/);
+assert.match(shortlist, /No\s+adaptation or download has started/);
 
 console.log(`Art sourcing: ${phaseSix.length} licensed EGG-03 phase-six candidates and one Kyle decision gate passed.`);
