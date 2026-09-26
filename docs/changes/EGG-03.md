@@ -170,10 +170,17 @@ fresh solver comparison confirms that every stored route remains exact.
   fixture or assertion changed; rerunning with decoder access passed.
 - Independent source review found and reproduced the airborne-contact defect.
   The independent red regression preceded the narrow grounded-contact fix.
+- Independent re-review: clean. The actual airborne repro now keeps contact
+  fields at zero and matches dry-flight speed; the first grounded step applies
+  pond drag and emits once, and continued contact stays latched.
 - This phase adds no rendering or UI. Phase 1 already reviewed the installed
   ground in a memory-only browser; phase 2 is verified through fixed-step
   simulation and ordinary replay controls. Phase 6 owns visual surfaces and
   particles, and the audio lane owns playback for the placeholder splash cue.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 187/187 suites
+  passed in 341.33 seconds with audio-decoder access.
+- `npm run build`: passed with 234 modules. The existing large-chunk warning
+  remains; no new warning was introduced.
 
 ## Phase 2 removed
 
