@@ -1,22 +1,22 @@
 # Build status
 
-Observed at: 2026-09-26T15:40:56.815Z
+Observed at: 2026-09-26T16:27:50.375Z
 
-Observation commit: 72b3b1f24ed7ce419d86d26e58ed84aafcc88cbc
+Observation commit: 7bc97dd3dfb7bef0fc41e2726642e2f5852a9fe0
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 72b3b1f24ed7ce419d86d26e58ed84aafcc88cbc
+Integration HEAD: 7bc97dd3dfb7bef0fc41e2726642e2f5852a9fe0
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
 Live build version: not checked
 
-Full tier: stale; exact HEAD passed: no.
+Full tier: passed; exact HEAD passed: yes.
 
-Last recorded full run: 2026-09-26T15:06:27.841Z; tested commit: 3815ada4a8b66cadfc8cd5a5050ae228d6dfc8be.
+Last recorded full run: 2026-09-26T16:27:37.925Z; tested commit: 7bc97dd3dfb7bef0fc41e2726642e2f5852a9fe0.
 
 ## Feature switches
 
@@ -37,11 +37,9 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| lane/arch/crash-03-slide | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/crash03/the-duel-remake |
 | lane/audio/aud-10 | 1 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 1 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/egg/egg-03-art | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/hollow-art/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -49,7 +47,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| lane/egg/egg-03-art | EGG-03 | 2026-09-26T08:38:08-07:00 | 0 | uncommitted changes; exact activity time unknown | src/generated/muddy-hollow-props.json, tools/blender/muddy-hollow-props.py, tools/test-art-sourcing.mjs, tools/test-muddy-hollow-scene.mjs, src/muddy-hollow-scene.js |
 
 ## Size targets
 
@@ -57,15 +54,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 240,003,525 B | +0 B | 250,000,000 B |
+| Build `dist/` | 240,260,136 B | +256,611 B | 250,000,000 B |
 | Wasteland models | 78,930,708 B | +0 B | 60,000,000 B |
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
-| Review `looks/` | 7,872,326 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 335,263 B | -1,323,802 B | 5,000,000 B |
-| All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 331,921,408 B | +269,312 B | unavailable |
+| Review `looks/` | 8,019,558 B | +147,232 B | 20,000,000 B |
+| Added bytes in last merge | 935,945 B | +600,682 B | 5,000,000 B |
+| All `public/` | 236,053,473 B | +230,739 B | unavailable |
+| Git objects | 332,628,992 B | +707,584 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -74,7 +71,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: faf5749598d061d0d11cadff9a4515fb10308ddb
 - Local main: missing
-- Local integration/wasteland: 72b3b1f24ed7ce419d86d26e58ed84aafcc88cbc
+- Local integration/wasteland: 7bc97dd3dfb7bef0fc41e2726642e2f5852a9fe0
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

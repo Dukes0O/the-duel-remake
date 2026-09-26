@@ -1942,3 +1942,17 @@ separate audio slice is not merged. No release was made.
   slice and ARENA-FEEL; do UX-ENTRY-HINTS early as next-run.md directs.
 - D8 push follows this handoff. The live folder, port 5174, real saves and
   history were not touched.
+
+
+## Claude session, 26 September 2026 (afternoon)
+
+Kyle reviewed the overnight build and asked Claude to fix what the review found.
+Merged CRASH-03 (smashed and shoved cars slide to rest beyond the shoulder
+instead of stopping in the lane or halting from speed) and EGG-03 phase 6 art
+(Kyle's picks: Brown Mud 02 and the Quaternius nature pack; the Hollow ground
+now uses the course terrain material, the pond water covers the whole wet
+area, the rock garden is drawn over its collision boxes, and a log ramp was
+added). Exact commit 7bc97dd passed 284/284 full suites in 525.61 seconds;
+build passed. Both lanes were removed after merge. EGG-03 stays active only
+for its audio slice; CRASH-02 audio and ARENA-FEEL are next. No release was
+made; the live folder, port 5174 and real saves were not touched.
