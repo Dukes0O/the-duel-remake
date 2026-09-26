@@ -204,7 +204,7 @@ export function initializeMuddyHollowDeparture(duel) {
 
 export function nearMuddyHollowDeparture(duel) {
   const state = duel.state;
-  const zone = duel.course.muddyHollow;
+  const zone = duel.course?.muddyHollow;
   const departure = state.muddyHollowDeparture;
   if (!zone || !departure || departure.departed ||
       state.status !== 'racing' || state.car !== 'titan_monster' ||
@@ -219,7 +219,7 @@ export function nearMuddyHollowDeparture(duel) {
 
 export function checkMuddyHollowDeparture(duel) {
   const state = duel.state;
-  const zone = duel.course.muddyHollow;
+  const zone = duel.course?.muddyHollow;
   const departure = state.muddyHollowDeparture;
   if (!zone || !departure || departure.departed ||
       state.status !== 'racing' || state.car !== 'titan_monster' ||
