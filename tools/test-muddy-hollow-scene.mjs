@@ -344,6 +344,93 @@ function checkHollowCut(builder, label, yOffset, denseHeight) {
 }
 
 {
+  // EGG-03 art: Kyle's Surface A (Brown Mud 02) and Props A (Quaternius).
+  const texture = () => new THREE.Texture();
+  const textures = {earth: texture(), grass: texture(), city: texture(),
+    rock: texture(), normal: texture(), roughness: texture(), mud: texture()};
+  const scene = createMuddyHollowScene(course, {textures});
+  const zone = course.muddyHollow;
+  const ground = scene.group.getObjectByName('Muddy Hollow detailed ground');
+  check(ground.material.userData.terrainMud === textures.mud &&
+    ground.material.map === textures.earth,
+  'the Hollow ground uses the course terrain material with the chosen mud surface');
+  for (const name of ['uv', 'biomeWeights', 'terrainWet'])
+    check(ground.geometry.attributes[name]?.count === ground.geometry.attributes.position.count,
+      `the Hollow ground carries the terrain ${name} attribute`);
+
+  // The dry Hollow must match the terrain just outside it, not a pale slab.
+  const coarse = terrainGeometry(course);
+  const local = (x, z) => {
+    const dx = x - zone.frame.origin.x, dz = z - zone.frame.origin.z;
+    return Math.hypot((dx * Math.sin(zone.frame.heading) + dz * Math.cos(zone.frame.heading)) /
+      zone.bounds.alongRadius, (dx * Math.cos(zone.frame.heading) - dz * Math.sin(zone.frame.heading) -
+      zone.bounds.lateralCenter) / zone.bounds.lateralRadius);
+  };
+  const average = (geometry, keep) => {
+    const position = geometry.attributes.position, colour = geometry.attributes.color;
+    const sum = [0, 0, 0]; let count = 0;
+    for (let index = 0; index < position.count; index++) {
+      if (!keep(index, local(position.getX(index), position.getZ(index)))) continue;
+      sum[0] += colour.getX(index); sum[1] += colour.getY(index); sum[2] += colour.getZ(index); count++;
+    }
+    return sum.map(value => value / Math.max(1, count));
+  };
+  const outside = average(coarse, (_, radius) => radius > 1.08 && radius < 1.4);
+  const surface = ground.geometry.attributes.hollowSurface;
+  const inside = average(ground.geometry, (index, radius) =>
+    surface.getX(index) === 0 && radius > .8);
+  check(inside.every((value, channel) => Math.abs(value - outside[channel]) < .06),
+    `the Hollow rim matches the surrounding terrain colour (${inside.map(v => v.toFixed(3))} vs ${outside.map(v => v.toFixed(3))})`);
+  const wet = ground.geometry.attributes.terrainWet;
+  let pitWet = 0;
+  for (const pit of zone.landforms.pits) {
+    let best = 0;
+    for (let index = 0; index < wet.count; index++) {
+      const x = ground.geometry.attributes.position.getX(index);
+      const z = ground.geometry.attributes.position.getZ(index);
+      if (Math.hypot(x - pit.center.x, z - pit.center.z) < 4) best = Math.max(best, wet.getX(index));
+    }
+    if (best > .8) pitWet++;
+  }
+  equal(pitWet, zone.landforms.pits.length, 'every mud pit centre is fully mud');
+
+  const garden = scene.group.getObjectByName('Muddy Hollow rock garden');
+  const rocks = garden?.children.filter(child => child.isMesh) || [];
+  equal(rocks.length, zone.obstacles.length, 'every solid rock in the garden is drawn');
+  const box = new THREE.Box3();
+  for (const [index, rock] of zone.obstacles.entries()) {
+    const mesh = rocks[index];
+    mesh.updateMatrixWorld(true);
+    box.setFromObject(mesh);
+    const centre = box.getCenter(new THREE.Vector3());
+    check(Math.hypot(centre.x - rock.x, centre.z - rock.z) < .35,
+      `rock ${index + 1} is drawn where it collides`);
+    check(Math.abs(box.min.y - rock.y) < .35 && Math.abs(box.max.y - (rock.y + rock.height)) < .35,
+      `rock ${index + 1} is as tall as its collision box`);
+    const reach = Math.max(box.max.x - box.min.x, box.max.z - box.min.z) / 2;
+    check(reach >= Math.min(rock.halfX, rock.halfZ) * .9 &&
+      reach <= Math.hypot(rock.halfX, rock.halfZ) * 1.15,
+    `rock ${index + 1} covers its collision footprint`);
+  }
+
+  const ramp = zone.landforms.ramps.find(item => item.kind === 'log-ramp');
+  const logs = scene.group.getObjectByName('Muddy Hollow log ramp')?.children
+    .filter(child => child.isMesh) || [];
+  check(logs.length >= 8, `the log ramp is built from logs (${logs.length})`);
+  for (const log of logs) {
+    log.updateMatrixWorld(true);
+    box.setFromObject(log);
+    const centre = box.getCenter(new THREE.Vector3());
+    check(Math.hypot(centre.x - ramp.center.x, centre.z - ramp.center.z) <
+      Math.max(ramp.length, ramp.width) / 2 + 1, 'each log lies on the log-ramp site');
+    const groundY = zone.heightAt(centre.x, centre.z);
+    check(box.min.y < groundY && box.max.y > groundY + .15 && box.max.y < groundY + .9,
+      'each log is bedded into the ramp surface, not floating or buried');
+  }
+  scene.dispose(); coarse.dispose();
+}
+
+{
   const all = course.features.mountains;
   equal(filterMuddyHollowMountains(ordinary, ordinary.features.mountains),
     ordinary.features.mountains,
