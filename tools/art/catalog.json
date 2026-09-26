@@ -10,12 +10,33 @@
       "author": "Rob Tuytel",
       "license": "CC0-1.0",
       "licenseEvidence": "The official asset page labels Brown Mud 02 as CC0.",
-      "status": "candidate",
-      "downloaded": false,
+      "status": "selected",
+      "downloaded": true,
       "sha256": null,
       "fit": "Neutral wet and compact patches can tile across all three authored pits without prescribing a driving line.",
       "risk": "The source is photoreal and must be reduced to a small 1K or 2K runtime set and color-matched to the existing terrain.",
-      "checked": "2026-09-26"
+      "checked": "2026-09-26",
+      "decision": "Kyle picked Surface A on 26 September 2026.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\polyhaven-brown-mud-02",
+      "files": [
+        {
+          "path": "1k/brown_mud_02_diff_1k.jpg",
+          "sha256": "058b6f12493305ec6b47cb5ea77f013c9e7e58216b34af3700a3d3d7d821732d"
+        },
+        {
+          "path": "1k/brown_mud_02_nor_gl_1k.jpg",
+          "sha256": "9ca6f68d25599c98ba5e594df221f5653d93faceda1ba26a0babb1143e8c615f"
+        },
+        {
+          "path": "1k/brown_mud_02_rough_1k.jpg",
+          "sha256": "c6d5891f090554c8f51172b2c4056f490ab1ed1a69127f1f876f9d58c46f0f23"
+        }
+      ],
+      "downloadedFrom": "https://api.polyhaven.com/files/brown_mud_02 (1K JPG maps)",
+      "recipe": "tools/art/muddy-hollow-mud.py",
+      "runtime": [
+        "public/assets/textures/muddy-hollow-mud.jpg"
+      ]
     },
     {
       "id": "polyhaven-muddy-tracks",
@@ -26,7 +47,7 @@
       "author": "Amal Kumar",
       "license": "CC0-1.0",
       "licenseEvidence": "The official asset page labels Muddy Tracks as CC0.",
-      "status": "candidate",
+      "status": "declined",
       "downloaded": false,
       "sha256": null,
       "fit": "Deep ruts and wet sheen make the pits read immediately from the Titan camera.",
@@ -42,12 +63,53 @@
       "author": "Quaternius",
       "license": "CC0-1.0",
       "licenseEvidence": "The official pack page links the pack to the CC0 1.0 licence.",
-      "status": "candidate",
-      "downloaded": false,
+      "status": "selected",
+      "downloaded": true,
       "sha256": null,
       "fit": "One coherent lightweight pack includes rocks and logs for the garden and log ramp.",
       "risk": "Its faceted style and flat materials need restrained recoloring to sit beside the current High Country scene.",
-      "checked": "2026-09-26"
+      "checked": "2026-09-26",
+      "decision": "Kyle picked Props A on 26 September 2026.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\quaternius-ultimate-nature-pack",
+      "files": [
+        {
+          "path": "License.txt",
+          "sha256": "83d8959f9fc56353ed571fbe2dc52e4bcd64508e2399501cd45ac2ce3df0bf8c"
+        },
+        {
+          "path": "fbx/Rock_1.fbx",
+          "sha256": "8a6e150e2d71dd601daf48d7967e273e940347a4826c2004b71ed1a9fa99c962"
+        },
+        {
+          "path": "fbx/Rock_2.fbx",
+          "sha256": "5a06ef3ec0b90098666407792fd2ea03879a10d3d0b0fe09b47f0df3a04025a1"
+        },
+        {
+          "path": "fbx/Rock_3.fbx",
+          "sha256": "4144136bd6c313ac7c48a08548504d7d30b7d628f35ce9dcd290ebe84e10e734"
+        },
+        {
+          "path": "fbx/Rock_5.fbx",
+          "sha256": "a335cfa716e962010450026884f19c7474967682334635286ca315eef3490c94"
+        },
+        {
+          "path": "fbx/Rock_Moss_1.fbx",
+          "sha256": "94ea25751e2ce17ca55ab0ddf3a70d5fda1fca4f308d883f9e51451162faf20e"
+        },
+        {
+          "path": "fbx/Rock_Moss_2.fbx",
+          "sha256": "9e6bb49e692da8c21c6cf5cdb77bcf6b9956edb55e1719a265524f7007fc717c"
+        },
+        {
+          "path": "fbx/WoodLog.fbx",
+          "sha256": "efc0eacf35939e10b6ca13cac145fda682ae65a624448fd43faebc84d98dbb02"
+        }
+      ],
+      "downloadedFrom": "The pack page Download link (Google Drive folder, FBX files only)",
+      "recipe": "tools/blender/muddy-hollow-props.py",
+      "runtime": [
+        "src/generated/muddy-hollow-props.json"
+      ]
     },
     {
       "id": "kenney-nature-kit",
@@ -58,7 +120,7 @@
       "author": "Kenney",
       "license": "CC0-1.0",
       "licenseEvidence": "The official asset page lists Creative Commons CC0.",
-      "status": "candidate",
+      "status": "declined",
       "downloaded": false,
       "sha256": null,
       "fit": "The 330-file game-ready kit offers very small rock and foliage props with simple material editing.",
@@ -74,7 +136,7 @@
       "author": "Rico Cilliers",
       "license": "CC0-1.0",
       "licenseEvidence": "The official asset page labels Boulder 01 as CC0.",
-      "status": "candidate",
+      "status": "declined",
       "downloaded": false,
       "sha256": null,
       "fit": "A realistic weathered boulder would give the seven-rock garden a strong hero shape and includes source LODs.",

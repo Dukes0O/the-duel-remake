@@ -54,3 +54,13 @@ It supplies natural lighting and car reflections. The visible sky and 3D landsca
 `sidewalk-concrete.png` was made for this project with the built-in OpenAI image generator on 19 September 2026. It provides weathered concrete color and bump detail for city sidewalks. The exact prompt and retained original path are in `docs/IMAGE_PROMPTS.md`.
 
 `pine-bark.png` is original bark material artwork generated with the built-in OpenAI image generator on 19 September 2026. The trunk material uses color and a restrained luminance bump. Exact prompt and retained original output are in `docs/IMAGE_PROMPTS.md`.
+
+## Muddy Hollow mud
+
+`muddy-hollow-mud.jpg` is the 1K diffuse map of **Brown Mud 02** by **Rob
+Tuytel**, [Poly Haven](https://polyhaven.com/a/brown_mud_02), released under
+[CC0 1.0](https://polyhaven.com/license). Downloaded 26 September 2026 from the
+provider's file manifest and re-encoded (JPEG quality 84) by
+`tools/art/muddy-hollow-mud.py`; checksums of the source maps are in
+`tools/art/catalog.json`. The game tints it and blends it into the Muddy
+Hollow pits.

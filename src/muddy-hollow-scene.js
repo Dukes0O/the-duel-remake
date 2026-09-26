@@ -1,9 +1,11 @@
 import * as THREE from 'three';
+import {createTerrainMaterial, terrainStyleAt} from './terrain-style.js';
+import PROPS from './generated/muddy-hollow-props.json' with {type: 'json'};
 
 const GROUND_ALONG_SEGMENTS = 96;
 const GROUND_LATERAL_SEGMENTS = 90;
-const WATER_ALONG_SEGMENTS = 28;
-const WATER_LATERAL_SEGMENTS = 24;
+const WATER_ALONG_SEGMENTS = 40;
+const WATER_LATERAL_SEGMENTS = 34;
 
 function localToWorld(zone, along, lateral) {
   const sin = Math.sin(zone.frame.heading), cos = Math.cos(zone.frame.heading);
@@ -28,11 +30,15 @@ function inside(zone, along, lateral, padding = 0) {
   return Math.hypot(da, dl) <= 1 + padding;
 }
 
-function buildGround(zone) {
-  const positions = [], colors = [], surfaces = [], indices = [];
+// The Hollow ground is the course terrain (same material, tint and texture
+// scale as the ground around it) with Kyle's chosen mud surface in the pits.
+function buildGround(zone, course, textures) {
+  const positions = [], colors = [], surfaces = [], uvs = [], weights = [],
+    wetness = [], indices = [];
   const alongRadius = zone.bounds.alongRadius;
   const lateralRadius = zone.bounds.lateralRadius;
   const lateralCenter = zone.bounds.lateralCenter;
+  const style = terrainStyleAt(course, zone.frame.s), tint = new THREE.Color();
   for(let row = 0; row <= GROUND_LATERAL_SEGMENTS; row++) {
     const lateral = lateralCenter - lateralRadius +
       row / GROUND_LATERAL_SEGMENTS * lateralRadius * 2;
@@ -40,19 +46,18 @@ function buildGround(zone) {
       const along = -alongRadius + column / GROUND_ALONG_SEGMENTS * alongRadius * 2;
       const point = localToWorld(zone, along, lateral);
       const surface = zone.surfaceAt(point.x, point.z);
-      const boundary = Math.max(0, 1 - Math.hypot(along / alongRadius,
-        (lateral - lateralCenter) / lateralRadius));
       const mud = surface.mud || 0, water = surface.waterDepth || 0;
       positions.push(point.x, zone.heightAt(point.x, point.z) + .032, point.z);
+      uvs.push(point.x / 22, point.z / 22);
+      weights.push(...style.weights);
       surfaces.push(water > .02 ? 2 : mud > .02 ? 1 : 0);
-      const edge = Math.min(1, boundary * 5), wet = Math.max(mud, water * .48);
-      const light = .84 + edge * .16;
-      if(water > .02) colors.push(.10 * light, .22 * light, .24 * light);
-      else colors.push(
-        THREE.MathUtils.lerp(.25, .19, wet) * light,
-        THREE.MathUtils.lerp(.39, .12, wet) * light,
-        THREE.MathUtils.lerp(.18, .055, wet) * light,
-      );
+      wetness.push(mud);
+      // The same gentle light variation as the course terrain.
+      const wave = Math.sin(along * .012 + lateral * .017) * Math.cos(along * .004 - lateral * .031);
+      tint.copy(style.color).multiplyScalar(.86 + .13 * wave + .07 * Math.sin(along * .025));
+      // Ground under the pond reads as a dark blue-green bed through the water.
+      if(water > .02) tint.lerp(new THREE.Color(.08, .16, .16), Math.min(1, .4 + water * .6));
+      colors.push(tint.r, tint.g, tint.b);
     }
   }
   const width = GROUND_ALONG_SEGMENTS + 1;
@@ -69,16 +74,118 @@ function buildGround(zone) {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setAttribute('biomeWeights', new THREE.Float32BufferAttribute(weights, 3));
+  geometry.setAttribute('terrainWet', new THREE.Float32BufferAttribute(wetness, 1));
   geometry.setAttribute('hollowSurface', new THREE.Float32BufferAttribute(surfaces, 1));
   geometry.setIndex(indices); geometry.computeVertexNormals();
   geometry.computeBoundingBox(); geometry.computeBoundingSphere();
-  const material = new THREE.MeshStandardMaterial({vertexColors: true,
-    roughness: .98, metalness: 0, polygonOffset: true,
-    polygonOffsetFactor: -1, polygonOffsetUnits: -1});
+  // Headless callers (tests, tools) have no textures: keep the tint alone.
+  const material = textures ? createTerrainMaterial(textures) :
+    new THREE.MeshStandardMaterial({vertexColors: true, roughness: .98, metalness: 0});
+  material.polygonOffset = true;
+  material.polygonOffsetFactor = -1; material.polygonOffsetUnits = -1;
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = 'Muddy Hollow detailed ground'; mesh.receiveShadow = true;
   return mesh;
 }
+
+// Low-poly Quaternius rocks and logs (Kyle's Props A pick), exported by
+// tools/blender/muddy-hollow-props.py. Flat shading keeps their facets.
+const ROCK_PROPS = ['Rock_1', 'Rock_2', 'Rock_3', 'Rock_5', 'Rock_Moss_1', 'Rock_Moss_2'];
+
+function propMaterials() {
+  const materials = new Map();
+  for(const [name, {color}] of Object.entries(PROPS.materials)) {
+    materials.set(name, new THREE.MeshStandardMaterial({name: `Muddy Hollow ${name}`,
+      color: new THREE.Color().setRGB(...color), roughness: name === 'Wood' ? .86 : .93,
+      metalness: 0, flatShading: true}));
+  }
+  return materials;
+}
+
+function propGeometry(name) {
+  const prop = PROPS.props[name], geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(prop.positions, 3));
+  const indices = [];
+  prop.groups.forEach((group, slot) => {
+    geometry.addGroup(indices.length, group.indices.length, slot);
+    indices.push(...group.indices);
+  });
+  geometry.setIndex(indices); geometry.computeVertexNormals();
+  geometry.computeBoundingBox(); geometry.computeBoundingSphere();
+  return {geometry, size: prop.size, materialNames: prop.groups.map(group => group.material)};
+}
+
+// Each garden rock is drawn exactly over its collision box.
+function buildRockGarden(zone, materials) {
+  const group = new THREE.Group(); group.name = 'Muddy Hollow rock garden';
+  const shapes = new Map();
+  zone.obstacles.forEach((rock, index) => {
+    const name = ROCK_PROPS[index % ROCK_PROPS.length];
+    if(!shapes.has(name)) shapes.set(name, propGeometry(name));
+    const {geometry, size, materialNames} = shapes.get(name);
+    const mesh = new THREE.Mesh(geometry, materialNames.map(material => materials.get(material)));
+    mesh.name = `Garden ${rock.id}`;
+    mesh.position.set(rock.x, rock.y, rock.z);
+    mesh.rotation.y = rock.heading;
+    mesh.scale.set(rock.halfX * 2 / size[0], rock.height / size[1], rock.halfZ * 2 / size[2]);
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    group.add(mesh);
+  });
+  return group;
+}
+
+// A log ramp: logs laid side by side up the rising face in the direction of
+// travel, two lengths end to end, each bedded half into the ground so the
+// ramp keeps the physical profile the Titan drives.
+const LOG_LENGTH = 7.2, LOG_DIAMETER = 1.05, LOG_SPACING = 1.1, LOG_COLUMNS = 6;
+
+function buildLogRamp(zone, materials) {
+  const ramp = zone.landforms.ramps.find(item => item.kind === 'log-ramp');
+  const group = new THREE.Group(); group.name = 'Muddy Hollow log ramp';
+  if(!ramp) return group;
+  const {geometry, size} = propGeometry('WoodLog');
+  const centre = localPosition(zone, ramp.center);
+  const travel = ramp.direction || {along: 0, lateral: 1};
+  const across = {along: travel.lateral, lateral: -travel.along};
+  const rise = ramp.width / 2 + 2.4;   // the face rises from here to the crest
+  const logs = new THREE.InstancedMesh(geometry, materials.get('Wood'), LOG_COLUMNS * 2);
+  logs.name = 'Log ramp logs'; logs.castShadow = true; logs.receiveShadow = true;
+  const up = new THREE.Vector3(0, 1, 0), axis = new THREE.Vector3(), side = new THREE.Vector3();
+  const normalUp = new THREE.Vector3(), matrix = new THREE.Matrix4(), basis = new THREE.Matrix4();
+  const scale = new THREE.Matrix4().makeScale(LOG_DIAMETER / size[0], LOG_DIAMETER / size[1],
+    LOG_LENGTH / size[2]);
+  const point = (offset, sideways) => localToWorld(zone,
+    centre.along + travel.along * offset + across.along * sideways,
+    centre.lateral + travel.lateral * offset + across.lateral * sideways);
+  let instance = 0;
+  for(let column = 0; column < LOG_COLUMNS; column++) {
+    const sideways = (column - (LOG_COLUMNS - 1) / 2) * LOG_SPACING;
+    for(let piece = 0; piece < 2; piece++) {
+      // Deterministic small offsets keep the logs from looking machine-laid.
+      const jitter = Math.sin(column * 12.9898 + piece * 78.233) * .35;
+      const from = -rise + piece * LOG_LENGTH + jitter;
+      const start = point(from, sideways), end = point(from + LOG_LENGTH, sideways);
+      const mid = point(from + LOG_LENGTH / 2, sideways);
+      axis.set(end.x - start.x, zone.heightAt(end.x, end.z) - zone.heightAt(start.x, start.z),
+        end.z - start.z).normalize();
+      side.crossVectors(up, axis).normalize();
+      normalUp.crossVectors(axis, side).normalize();
+      basis.makeBasis(side, normalUp, axis);
+      const y = (zone.heightAt(start.x, start.z) + zone.heightAt(end.x, end.z)) / 2 -
+        LOG_DIAMETER * .5;
+      matrix.copy(basis).multiply(scale).setPosition(mid.x, y, mid.z);
+      logs.setMatrixAt(instance++, matrix);
+    }
+  }
+  logs.instanceMatrix.needsUpdate = true;
+  logs.computeBoundingBox(); logs.computeBoundingSphere();
+  group.add(logs);
+  return group;
+}
+
+export const waterSheet = waterDepth => .08 + .3 * waterDepth;
 
 function buildWater(zone) {
   const pond = zone.landforms.pondBed;
@@ -94,7 +201,10 @@ function buildWater(zone) {
         column / WATER_ALONG_SEGMENTS * alongRadius * 2;
       const point = localToWorld(zone, along, lateral);
       const waterDepth = zone.surfaceAt(point.x, point.z).waterDepth || 0;
-      positions.push(point.x, waterline, point.z);
+      // The whole wet area the Titan splashes through is drawn: level water
+      // over the deep middle, a thin sheet over the shallow margin.
+      const ground = zone.heightAt(point.x, point.z);
+      positions.push(point.x, Math.max(waterline, ground + waterSheet(waterDepth)), point.z);
       depth.push(waterDepth);
     }
   }
@@ -105,11 +215,7 @@ function buildWater(zone) {
       const dl = (row + .5) / WATER_LATERAL_SEGMENTS * 2 - 1;
       if(Math.hypot(da, dl) > .99) continue;
       const a = row * width + column, b = a + 1, c = a + width, d = c + 1;
-      if(![a,b,c,d].every(index=>{
-        const x=positions[index*3],z=positions[index*3+2];
-        return waterline > zone.heightAt(x,z)+.02 &&
-          zone.surfaceAt(x,z).waterDepth>.02;
-      }))continue;
+      if(![a,b,c,d].every(index => depth[index] > .02)) continue;
       indices.push(a, b, c, b, d, c);
     }
   }
@@ -130,7 +236,7 @@ function buildWater(zone) {
         vec3 shallow=vec3(.30,.57,.55),deep=vec3(.10,.31,.36);
         vec3 color=mix(shallow,deep,smoothstep(.08,1.,vDepth));
         color+=vec3(.08,.11,.10)*ripple*(1.-vDepth*.45);
-        gl_FragColor=vec4(color,.34+.28*smoothstep(.04,1.,vDepth));
+        gl_FragColor=vec4(color,smoothstep(.02,.18,vDepth)*(.56+.2*smoothstep(.3,1.,vDepth)));
         #include <tonemapping_fragment>
         #include <colorspace_fragment>}`,
   });
@@ -182,13 +288,14 @@ export function filterMuddyHollowMountains(course, mountains) {
   });
 }
 
-export function createMuddyHollowScene(course) {
+export function createMuddyHollowScene(course, {textures = null} = {}) {
   const zone = course?.muddyHollow;
   if(!zone) return null;
   const group = new THREE.Group(); group.name = 'Muddy Hollow';
-  const ground = buildGround(zone), water = buildWater(zone), flag = buildFlag(zone);
-  const hubcaps = buildHubcaps(zone);
-  group.add(ground, water, flag, ...hubcaps);
+  const ground = buildGround(zone, course, textures), water = buildWater(zone), flag = buildFlag(zone);
+  const hubcaps = buildHubcaps(zone), materials = propMaterials();
+  group.add(ground, water, flag, buildRockGarden(zone, materials),
+    buildLogRamp(zone, materials), ...hubcaps);
   const animate = seconds => { water.material.uniforms.hollowTime.value = seconds; };
   const sync = state => {
     const found = new Set(state?.muddyHollowHubcaps?.found || []);
@@ -202,7 +309,7 @@ export function createMuddyHollowScene(course) {
         ? object.material : [object.material])) materials.add(material);
     });
     for(const geometry of geometries) geometry.dispose();
-    for(const material of materials) material.dispose();
+    for(const material of materials) if(!material.userData?.sharedAsset) material.dispose();
     group.removeFromParent(); group.clear();
   };
   return {group, animate, sync, dispose};

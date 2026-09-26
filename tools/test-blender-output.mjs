@@ -19,6 +19,7 @@ const generators = [
   ] },
   { script: 'tools/blender/rustwall.py', args: ['--round', '1'], glb: ['wall', 'wash'].map(name => `public/assets/models/wasteland/rustwall/${name}.glb`) },
   { script: 'tools/build-course-landmarks.py', args: [], glb: [], json: ['src/generated/course-landmarks.json'] },
+  { script: 'tools/blender/muddy-hollow-props.py', args: [], glb: [], json: ['src/generated/muddy-hollow-props.json'] },
 ];
 const reviewHelpers = [
   {script:'tools/blender/kit-review.py', args:['--','--car','falcone_f42'], render:true},

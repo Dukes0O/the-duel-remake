@@ -1,6 +1,6 @@
 ---
 task: EGG-03
-status: waiting-phase-6-source-pick
+status: waiting-phase-6-audio
 kind: easter-egg
 flag: muddy-hollow
 player_facing: yes
@@ -675,3 +675,43 @@ Merged as `c438b92` after clean independent runtime and browser review. The
 exact documentation-final lane commit `af90d34` passed 71/71 lane suites in
 62.61 seconds and `npm run build` with 235 modules. Phase 6 remains open only
 for Kyle's governed mud and prop source choice and the separate audio lane.
+
+## Phase 6 art (Claude, 26 September 2026)
+
+Kyle picked Surface A (Brown Mud 02) and Props A (Quaternius Ultimate Nature
+Pack) and asked Claude to finish the work directly. Lane
+`lane/egg/egg-03-art`.
+
+- Sources are in `C:\Users\kyleb\dev\art-library\` with checksums in
+  `tools/art/catalog.json`: three 1K mud maps (2.3 MB) and seven FBX models
+  plus the licence (under 0.2 MB). Declined candidates are marked declined.
+- Recipes: `tools/art/muddy-hollow-mud.py` writes the runtime
+  `public/assets/textures/muddy-hollow-mud.jpg` (229,753 bytes);
+  `tools/blender/muddy-hollow-props.py` writes
+  `src/generated/muddy-hollow-props.json` and an editable .blend in art-build (20,562 bytes, 7 low-poly props,
+  recoloured to the course palette).
+- `src/terrain-style.js`: optional mud layer for the terrain material, weighted
+  by a `terrainWet` vertex attribute. Other terrain is unchanged.
+- `src/muddy-hollow-scene.js`: the Hollow ground uses the course terrain
+  material and tint (the old vertex colours were raw values the renderer
+  brightened, which made the pale slab); mud in the pits; the pond water
+  covers the whole wet area; the rock garden and a log ramp are drawn.
+- `src/world.js`, `src/world-surfaces.js`: pass the course textures and load
+  the mud map.
+
+Tests (written red first): `tools/test-muddy-hollow-scene.mjs` now checks the
+terrain material and mud, that the Hollow rim matches the surrounding terrain
+colour within 0.06 per channel, mud at every pit centre, each rock drawn over
+its collision box, and each log bedded along its length.
+`tools/test-art-sourcing.mjs` checks the decision, library paths, checksums
+and runtime files. The browser scenario adds close log ramp and rock garden
+views: 13 screenshots, no warnings or errors.
+
+Changed assertions: the scene test's "one coherent waterline" became "level
+over the deep pond, thin sheet over the shallows", because the drawn water now
+covers the area the car already treats as water. The art-sourcing test's
+"waiting for Kyle" checks became checks of his recorded decision.
+
+Removed: the phase-6 shortlist note (its facts are in the catalog), the old
+pale vertex-colour ground and the waterline-only pond cut. The runtime adds
+one 230 KB texture and a 21 KB mesh file.

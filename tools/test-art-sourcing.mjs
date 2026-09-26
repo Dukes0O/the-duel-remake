@@ -2,9 +2,7 @@ import assert from 'node:assert/strict';
 import {existsSync, readFileSync} from 'node:fs';
 
 const catalogPath = new URL('./art/catalog.json', import.meta.url);
-const shortlistPath = new URL('../docs/board/looks/muddy-hollow/phase-6-source-shortlist.md', import.meta.url);
 assert.equal(existsSync(catalogPath), true, 'the governed art catalog exists');
-assert.equal(existsSync(shortlistPath), true, 'the phase-six shortlist exists');
 
 const catalog = JSON.parse(readFileSync(catalogPath, 'utf8'));
 assert.equal(catalog.version, 1);
@@ -12,34 +10,43 @@ assert.ok(Array.isArray(catalog.assets));
 const ids = catalog.assets.map(asset => asset.id);
 assert.equal(new Set(ids).size, ids.length, 'catalog IDs stay unique');
 
-const required = [
+// Kyle picked Surface A and Props A on 26 September 2026 (EGG-03 art).
+const candidates = [
   'polyhaven-brown-mud-02',
   'polyhaven-muddy-tracks',
   'quaternius-ultimate-nature-pack',
   'kenney-nature-kit',
   'polyhaven-boulder-01',
 ];
+const selected = ['polyhaven-brown-mud-02', 'quaternius-ultimate-nature-pack'];
 const phaseSix = catalog.assets.filter(asset => asset.card === 'EGG-03-P6');
-assert.deepEqual(phaseSix.map(asset => asset.id), required,
-  'the shortlist records the settled five candidates in review order');
+assert.deepEqual(phaseSix.map(asset => asset.id), candidates,
+  'the catalog keeps the five reviewed candidates in review order');
 for (const asset of phaseSix) {
   assert.match(asset.sourcePage, /^https:\/\//);
-  assert.match(asset.previewImage, /^https:\/\//);
   assert.equal(asset.license, 'CC0-1.0');
-  assert.equal(asset.status, 'candidate');
-  assert.equal(asset.downloaded, false);
-  assert.equal(asset.sha256, null,
-    'a candidate has no checksum until Kyle selects and the source is downloaded');
   assert.ok(['surface', 'props'].includes(asset.family));
   assert.ok(typeof asset.author === 'string' && asset.author.length > 0);
-  assert.ok(typeof asset.fit === 'string' && asset.fit.length > 0);
-  assert.ok(typeof asset.risk === 'string' && asset.risk.length > 0);
+  if (selected.includes(asset.id)) {
+    assert.equal(asset.status, 'selected', `${asset.id} is Kyle's pick`);
+    assert.equal(asset.downloaded, true);
+    assert.match(asset.decision, /Kyle/);
+    assert.match(asset.library, /^C:\\Users\\kyleb\\dev\\art-library\\/,
+      'sources live in the art library outside the repository');
+    assert.ok(Array.isArray(asset.files) && asset.files.length > 0);
+    for (const file of asset.files) {
+      assert.match(file.sha256, /^[0-9a-f]{64}$/, `${file.path} has a checksum`);
+      assert.ok(!file.path.includes(':') && !file.path.startsWith('/'),
+        'file paths are relative to the library folder');
+    }
+    assert.ok(Array.isArray(asset.runtime) && asset.runtime.length > 0,
+      'a selected source names what the game loads from it');
+    for (const path of asset.runtime)
+      assert.equal(existsSync(new URL(`../${path}`, import.meta.url)), true, `${path} exists`);
+  } else {
+    assert.equal(asset.status, 'declined', `${asset.id} was not picked`);
+    assert.equal(asset.downloaded, false);
+  }
 }
 
-const shortlist = readFileSync(shortlistPath, 'utf8');
-for (const id of required) assert.match(shortlist, new RegExp(`\\b${id}\\b`));
-assert.match(shortlist, /Decision needed from Kyle/);
-assert.match(shortlist, /Recommended pair/);
-assert.match(shortlist, /No\s+adaptation or download has started/);
-
-console.log(`Art sourcing: ${phaseSix.length} licensed EGG-03 phase-six candidates and one Kyle decision gate passed.`);
+console.log(`Art sourcing: ${selected.length} selected and ${phaseSix.length - selected.length} declined EGG-03 sources checked.`);

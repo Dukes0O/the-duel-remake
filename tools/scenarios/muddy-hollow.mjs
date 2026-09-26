@@ -203,7 +203,9 @@ async function show(context, quality, label, names) {
     if(!zone)throw Error('Discovered flagged High Country has no Muddy Hollow');
     const all={ridge:[zone.landforms.ridge],bowl:[zone.landforms.valleyBowl],
       hill:[zone.landforms.hill],pond:[zone.landforms.pondBed],
-      pits:zone.landforms.pits,ramps:zone.landforms.ramps};
+      pits:zone.landforms.pits,ramps:zone.landforms.ramps,
+      logs:zone.landforms.ramps.filter(ramp=>ramp.kind==='log-ramp'),
+      garden:[zone.landforms.rockGarden]};
     const selected=${JSON.stringify(names)}.flatMap(name=>all[name]);
     const centre=selected.reduce((p,item)=>({x:p.x+item.center.x/selected.length,
       z:p.z+item.center.z/selected.length}),{x:0,z:0});
@@ -214,8 +216,10 @@ async function show(context, quality, label, names) {
       : centre;
     const nearest=overview ? {s:2400,lateral:0} : d.course.nearest(actor.x,actor.z,zone.frame.s);
     const ground=d.course.groundAt(nearest.s,nearest.lateral);
-    const back=105;
-    const height=58;
+    // The log ramp and rock garden art (EGG-03) need a closer look.
+    const close=['logs','garden'].includes(${JSON.stringify(label)});
+    const back=close?30:105;
+    const height=close?11:58;
     const s=d.state;
     Object.assign(s,{s:nearest.s,prevS:nearest.s,lateral:nearest.lateral,
       prevLateral:nearest.lateral,speedMph:0,headingError:heading-d.course.at(nearest.s).heading,
@@ -308,6 +312,8 @@ export async function run(context) {
       ['pits',['pits']],['ramps',['ramps']]])
       report.frames.push(await show(context,quality,label,names));
   }
+  for(const [label,names] of [['logs',['logs']],['garden',['garden']]])
+    report.frames.push(await show(context,'high',label,names));
 
   const flagOffOverview=report.frames.find(frame=>frame.label==='flag-off-overview');
   const flaggedOverview=report.frames.find(frame=>frame.quality==='high'&&frame.label==='overview');

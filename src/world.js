@@ -17,7 +17,7 @@ import { addCitySkyline } from './city-skyline.js';
 import { addCityParking } from './city-parking.js';
 import { addFreestyleScenery } from './freestyle-scene.js';
 
-import { strip, terrainGeometry, farTerrainGeometry, hiddenRoadGroundGeometry, meadowTexture, groundTexture, surfaceTexture, addTrailShoulder } from './world-surfaces.js';
+import { strip, terrainGeometry, farTerrainGeometry, hiddenRoadGroundGeometry, meadowTexture, groundTexture, hollowMudTexture, surfaceTexture, addTrailShoulder } from './world-surfaces.js';
 import { addFurniture, addSign, box, addStation, addTurnSigns, addCoast, addHarbor, addFinish } from './world-props.js';
 import { registerSceneSystem, disposeSceneSystems } from './scene-systems.js';
 import { makeSignFallSystem } from './scenery-fall.js';
@@ -71,7 +71,7 @@ export function buildEnvironment(course) {
     addHiddenRoad(group,course);const hint=createHiddenRoadHint(course);group.add(hint);
     registerSceneSystem(group,{sync:hint.userData.sync,animate:hint.userData.animate});
   }
-  const muddyHollow=createMuddyHollowScene(course);
+  const muddyHollow=course.muddyHollow&&createMuddyHollowScene(course,{textures:{earth:groundTexture('color'),grass:meadowTexture(),city:surfaceTexture('asphalt'),rock:rockTexture('alpine'),normal:groundTexture('normal'),roughness:groundTexture('roughness'),mud:hollowMudTexture()}});
   if(muddyHollow){
     group.add(muddyHollow.group);
     registerSceneSystem(group,{animate:muddyHollow.animate,sync:muddyHollow.sync});

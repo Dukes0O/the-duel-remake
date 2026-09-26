@@ -1197,3 +1197,14 @@ Physical wrecks now slide on constant friction (6 m/s² along the road,
 shoulder, stop at solids and park where they come to rest. A roadside shove
 parks only once nearly stopped (within 9 seconds at the latest). The released
 wreck motion is unchanged with the switch off.
+
+## 26 September 2026: Muddy Hollow art sources (EGG-03 phase 6)
+
+Kyle picked Surface A (Poly Haven Brown Mud 02) and Props A (Quaternius
+Ultimate Nature Pack) and asked Claude to finish the art directly. Claude also
+settled three presentation points found in review: the Hollow ground uses the
+course terrain material so it cannot read as a separate slab; the drawn pond
+water covers the whole area the car already treats as water (the pond's
+physics is unchanged); and the log ramp is logs laid up the slope in the
+direction of travel, because the ramp site sits on a steep bank where logs
+laid across it looked like a fence.
