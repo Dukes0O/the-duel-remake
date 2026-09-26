@@ -279,6 +279,10 @@ pause and menu exit.
   the steep departure slope. Phase 3 changes no rendering; the feature stays
   dev-gated, and the active phase-6 acceptance now requires that grounding
   correction before visual completion.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 278/278 suites
+  passed in 411.20 seconds with audio-decoder access.
+- `npm run build`: passed with 234 modules. The existing large-chunk warning
+  remains; no new warning was introduced.
 
 ## Phase 3 changed assertions
 
