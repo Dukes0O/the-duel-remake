@@ -822,3 +822,16 @@ The card also requires the rally limits and replay fingerprints to remain
 unchanged. Slope gravity therefore applies only to the Titan. The rally keeps
 its existing accumulated-climb cap and speed behavior; ordinary cars remain
 unchanged.
+
+## 2026-09-26: widen the Muddy Hollow phase-1 boundary blend
+
+The first phase-1 height field joined the ordinary High Country ground within
+one centimetre at its outer edge, but the inner blend made the intended Titan
+entry reach a 63.2-degree grade. That exceeded the switched Titan limit of
+58.8 degrees and contradicted the settled Titan-only access design.
+
+Start the deterministic quintic boundary blend at normalized radius 0.65.
+The maximum measured intended-entry grade is then 1.098, below the Titan limit
+of 1.65, while the full ellipse remains within 0.00245 m of ordinary terrain
+at the edge on route seeds 1989, 42 and 17. This changes only the transition
+shape. It does not move the Hollow, change the road, or redesign its landforms.

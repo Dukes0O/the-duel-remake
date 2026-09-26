@@ -4,6 +4,7 @@ import { Course } from '../src/course.js';
 import { COURSE } from '../src/config.js';
 import { FEATURE_STATES, createFeatureFlags } from '../src/feature-flags.js';
 import { Duel } from '../src/game.js';
+import {limitClimb, offroadCapability} from '../src/offroad-physics.js';
 
 let muddyHollow = {};
 try {
@@ -71,6 +72,14 @@ function ordinaryFingerprint(course) {
     sections: course.sections,
     features: course.features,
   });
+}
+
+function localPoint(zone, along, lateral) {
+  const {origin, heading} = zone.frame;
+  return {
+    x: origin.x + Math.sin(heading) * along + Math.cos(heading) * lateral,
+    z: origin.z + Math.cos(heading) * along - Math.sin(heading) * lateral,
+  };
 }
 
 check('muddy-hollow is a QA-only dev switch', () => {
@@ -205,6 +214,83 @@ check('zone geometry is deterministic for the same course seed', () => {
     points.map(point => second.contains(point.x, point.z)),
     'containment queries repeat exactly',
   );
+});
+
+check('groundAt applies the authored zone and joins the old terrain across all routes', () => {
+  for (const routeSeed of [1989, 42, 17]) {
+    const ordinary = new Course(highCountry, routeSeed, {muddyHollow: false});
+    const course = new Course(highCountry, routeSeed, {muddyHollow: true});
+    const zone = zoneFor(course);
+    const named = [zone.landforms.ridge, zone.landforms.valleyBowl,
+      zone.landforms.hill, zone.landforms.pondBed,
+      ...zone.landforms.pits, ...zone.landforms.ramps];
+    for (const [index, feature] of named.entries()) {
+      const point = pointFor(feature, `route ${routeSeed} landform ${index + 1}`);
+      const nearest = course.nearest(point.x, point.z, zone.frame.s);
+      assert.ok(Math.abs(course.groundAt(nearest.s, nearest.lateral).y -
+        zone.heightAt(point.x, point.z)) < 1e-6,
+      `route ${routeSeed} groundAt uses authored landform ${index + 1}`);
+    }
+    for (const s of [0, 1200, 2200, 2400, 2600, 3600])
+      assert.equal(course.groundAt(s, 0).y, ordinary.groundAt(s, 0).y,
+        `route ${routeSeed} road height stays exact at ${s} m`);
+
+    const edge = zone.bounds.lateralCenter + zone.bounds.lateralRadius;
+    const samples = [0.995, 0.999, 1, 1.001, 1.005].map(scale => {
+      const point = localPoint(zone, 0, zone.bounds.lateralCenter +
+        zone.bounds.lateralRadius * scale);
+      const enabledNear = course.nearest(point.x, point.z, zone.frame.s);
+      const ordinaryNear = ordinary.nearest(point.x, point.z, zone.frame.s);
+      return course.groundAt(enabledNear.s, enabledNear.lateral).y -
+        ordinary.groundAt(ordinaryNear.s, ordinaryNear.lateral).y;
+    });
+    assert.ok(Math.max(...samples.map(Math.abs)) < .01,
+      `route ${routeSeed} zone edge joins within 1 cm: ${samples.join(', ')}`);
+    const boundary = localPoint(zone, 0, edge);
+    assert.equal(zone.contains(boundary.x, boundary.z), true,
+      `route ${routeSeed} exact ellipse edge is contained`);
+  }
+});
+
+check('the intended ridge entry stays below the switched Titan grade limit', () => {
+  const capability = offroadCapability({kind: 'monster'}, {titanClimb: true});
+  for (const routeSeed of [1989, 42, 17]) {
+    const course = new Course(highCountry, routeSeed, {muddyHollow: true});
+    let maximum = 0;
+    for (let lateral = 8; lateral < 112; lateral += .5) {
+      const from = course.groundAt(2400, lateral);
+      const to = course.groundAt(2400, lateral + .5);
+      const gain = to.y - from.y;
+      const distance = Math.hypot(to.x - from.x, to.z - from.z);
+      const result = limitClimb({gain, distance, dt: 1 / 120, capability});
+      maximum = Math.max(maximum, result.grade);
+      assert.equal(result.tipped, false,
+        `route ${routeSeed} Titan entry stays climbable at lateral ${lateral + .5} m`);
+    }
+    assert.ok(maximum <= capability.maxGrade,
+      `route ${routeSeed} maximum entry grade ${maximum} stays within ${capability.maxGrade}`);
+  }
+});
+
+check('flag-on discovered road driving matches flag-off at 30, 60 and 144 FPS', () => {
+  function run(fps, enabled) {
+    const duel = new Duel({seed, featureFlags: {'muddy-hollow': enabled}});
+    duel.startCampaign({car: 'titan_monster', startStage: COURSE.indexOf(highCountry),
+      discoveredGate: true, opponentCount: 0});
+    Object.assign(duel.state, {status: 'racing', countdown: 0, s: 2200, prevS: 2200,
+      lateral: 0, prevLateral: 0, speedMph: 55, traffic: [], opponents: [], rival: null});
+    duel.setInput({throttle: .35, brake: 0, steer: 0, boost: false});
+    const samples = [];
+    for (let frame = 0; frame < fps * 3; frame++) {
+      duel.step(1 / fps);
+      if ((frame + 1) % fps === 0) samples.push({s: duel.state.s,
+        lateral: duel.state.lateral, speedMph: duel.state.speedMph,
+        groundHeight: duel.state.groundHeight, status: duel.state.status});
+    }
+    return samples;
+  }
+  for (const fps of [30, 60, 144]) assert.deepEqual(run(fps, true), run(fps, false),
+    `${fps} FPS road-driving control is unchanged by the enabled Hollow`);
 });
 
 check('installation preserves the racing line, scenery and RNG stream', () => {

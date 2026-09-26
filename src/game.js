@@ -200,7 +200,10 @@ export class Duel {
   _loadStage(idx) {
     const s = this.state;
     s.stageIndex = idx;
-    this.course = new Course(COURSE[idx], this.seed, { hiddenRoad: hiddenRoadInRace(this.featureFlags, s) });
+    this.course = new Course(COURSE[idx], this.seed, {
+      hiddenRoad: hiddenRoadInRace(this.featureFlags, s),
+      muddyHollow: s.wastelandGateDiscovered === true && this.featureFlags.enabled('muddy-hollow'),
+    });
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     const rawGates = this.course.features.lapGates?.map(gate => typeof gate === 'number' ? gate : gate.s) || [this.course.length * .25, this.course.length * .5, this.course.length * .75];
     this._lapGates = [...new Set(rawGates.filter(distance => distance > 0 && distance < this.course.length))].sort((a, b) => a - b);

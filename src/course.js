@@ -2,6 +2,7 @@
 // the renderer, player, CPU and checkpoint validation.
 import { makeRng } from './rng.js';
 import { installHiddenRoad } from './hidden-road.js';
+import { installMuddyHollow } from './muddy-hollow.js';
 import { THEMES } from './config.js';
 import { buildRoadFurniture, tunnelCoverShape } from './road-furniture.js';
 import { createPolylineIndex } from './polyline-index.js';
@@ -37,7 +38,7 @@ const ROUTE_SHAPES={
 };
 
 export class Course {
-  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false}={}){
+  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false}={}){
     this.def=def;this.seed=seed>>>0;this.theme=THEMES[def.theme];this.length=def.lengthU;
     this._solveShortcuts=solveShortcuts===true;
     this.closed=def.closed!==false;this.raceLength=this.length*(def.laps||2);
@@ -48,6 +49,7 @@ export class Course {
     this.features={checkpoints:[],lapGates:[],rushGates:[],radarTraps:[],scenery:[],rocks:[],obstacles:[],mountains:[],stations:[],trees:[],buildings:[],barriers:[],turns:[],flocks:[],poles:[],landmarks:[],shortcuts:[],passingLanes:[],tunnels:[],ramps:[],crushables:[],signs:[],chevrons:[]};
     this._build();
     if(hiddenRoad && def.id === 'pacific-canyon') installHiddenRoad(this);
+    if(muddyHollow && def.id === 'high-country') installMuddyHollow(this);
   }
   phase(s){return this.closed?((s%this.length)+this.length)%this.length:clamp(s,0,this.length);}
   sectionAt(s){const p=this.phase(s);return this.sections.find(v=>p>=v.start&&p<v.end)||this.sections.at(-1);}
@@ -147,7 +149,7 @@ export class Course {
     for(const cut of this.features.shortcuts)if(p>=cut.start&&p<=cut.end){const distance=Math.abs(off-this.shortcutOffset(cut,p)),blend=smooth((p-cut.start)/36)*smooth((cut.end-p)/36);h*=1-blend*(1-smooth((distance-cut.halfWidth-3)/6));}
     return h;
   }
-  groundAt(s,off=0){const p=this.worldAt(s,off);p.y+=this._relief(s,off);
+  _baseGroundAt(s,off=0){const p=this.worldAt(s,off);p.y+=this._relief(s,off);
     if(Math.abs(off)>this.roadHalfWidthAt(s)+1)for(const station of this.features.stations){
       const ds=angleDiff((this.phase(s)-station.s)/this.length*TAU,0)*this.length/TAU,dl=off-station.off,c=Math.cos(station.angle),sn=Math.sin(station.angle),x=c*dl-sn*ds,z=sn*dl+c*ds;
       const weight=(1-smooth((Math.abs(x)-11)/4))*(1-smooth((Math.abs(z)-9.5)/4.5));
@@ -157,6 +159,9 @@ export class Course {
       const blend=1-smooth((hidden.distance-width)/8);
       p.y=lerp(p.y,hidden.y,blend);
     }
+    return p;}
+  groundAt(s,off=0){const p=this._baseGroundAt(s,off);
+    if(this.muddyHollow && !this.surfaceAt(s,off).road && this.muddyHollow.contains(p.x,p.z))p.y=this.muddyHollow.heightAt(p.x,p.z);
     return p;}
   _solidScenery(){
     const f=this.features,rng=this.rng;

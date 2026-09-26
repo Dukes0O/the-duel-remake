@@ -3,5 +3,6 @@
 // the menu preview and live simulation own separate, equivalent Course objects.
 export function environmentKey(course) {
   if (course.hiddenRoad) return JSON.stringify([course.seed, course.def, 'hidden-road-v1']);
+  if (course.muddyHollow) return JSON.stringify([course.seed, course.def, 'muddy-hollow-v1']);
   return JSON.stringify([course.seed,course.def]);
 }
