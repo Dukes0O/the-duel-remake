@@ -217,7 +217,12 @@ export function stepArenaEvent(duel, dt) {
   for (const actor of state.opponents) {
     if (actor.combatWrecking) { if (stepWreckedActor(duel, actor, dt)) respawns.push(actor); continue; }
     const participant = arenaParticipant(duel, actor);
-    if (!(actor.knock && stepKnock(duel, actor, dt))) pilotStep(duel, actor, thinkBrain(duel, participant, actor, dt), dt);
+    if (duel.featureFlags?.enabled('crash-physics') === true && actor.knock) {
+      stepKnock(duel, actor, dt);
+      containInArena(duel, actor, dt);
+      continue;
+    }
+    pilotStep(duel, actor, thinkBrain(duel, participant, actor, dt), dt);
     if (!duel._ramFlight(actor, dt)) duel._jump(actor, dt);
     containInArena(duel, actor, dt);
   }

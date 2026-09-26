@@ -3,10 +3,13 @@ import { CARS, LIVES } from '../src/config.js';
 import {LegacyRoadsideDuel, ClassicDestructionDuel} from './legacy-roadside-duel.mjs';
 import { combatCrashThresholdMph, rearRamResponse } from '../src/vehicle-impact.js';
 
-const race = (mode = 'wasteland', car = 'banshee_muscle', classicDestruction = false) => {
+const race = (mode = 'wasteland', car = 'banshee_muscle', classicDestruction = false,
+  wasteland2 = false) => {
   // This suite pins the earlier armored-contact rules; CMB-08 tests the
   // released roadside rule separately.
-  const duel = new (classicDestruction ? ClassicDestructionDuel : LegacyRoadsideDuel)({ seed: 624 });
+  const duel = new (classicDestruction ? ClassicDestructionDuel : LegacyRoadsideDuel)({
+    seed: 624, featureFlags: {wasteland2, 'crash-physics': true},
+  });
   duel.startCampaign({ mode, car, startStage: 0 });
   const player = duel.state;
   player.status = 'racing'; player.invulnerableSec = 0; player.traffic = [];
@@ -34,16 +37,21 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
 
 {
   const { duel, player, rival } = race();
+  player.lateral = player.prevLateral = 6;
+  rival.lateral = rival.prevLateral = 6.6;
   const before = { playerSpeed: player.speedMph, rivalSpeed: rival.speedMph };
   assert.equal(duel._vehicleContact(player, rival, 'rival'), true);
   assert.equal(player.impactTimer, 0, 'a protected rear ram below the car threshold leaves control with the player');
   assert.equal(player.stageCrashes, 0, 'a protected rear ram adds no crash penalty');
-  assert.ok(player.speedMph > before.playerSpeed * .75, 'the attacking car keeps most of its speed');
+  assert.ok(rival.knock, 'the struck rival enters free-body knock motion');
   assert.ok(rival.speedMph > before.rivalSpeed + 20, 'closing speed transfers into the opponent');
-  assert.ok(rival.pushVelocity > 5 && rival.headingError > 0, 'an off-centre rear hit shovels the opponent sideways');
-  assert.ok(rival._ramVerticalSpeed > 0, 'a fast rear hit launches the opponent');
+  const heading = duel.course.at(rival.s).heading;
+  const sideways = rival.knock.vx * Math.cos(heading) - rival.knock.vz * Math.sin(heading);
+  assert.ok(Math.abs(sideways) > 1 && Math.abs(rival.knock.spin) > .01,
+    'an off-centre rear hit gives the opponent sideways velocity and spin');
+  assert.ok(rival.knock.vy > 0, 'a fast rear hit launches the opponent');
   let pushedOffRoad = false, maxLateral = 0;
-  for (let i = 0; i < 240; i++) {
+  for (let i = 0; i < 480 && rival.knock; i++) {
     duel._rival(1 / 120);
     pushedOffRoad ||= rival.offRoad;
     maxLateral = Math.max(maxLateral, Math.abs(rival.lateral));
@@ -65,11 +73,16 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
 }
 
 {
-  const { duel, player, rival } = race();
+  const { duel, player, rival } = race('wasteland', 'banshee_muscle', false, true);
   player.speedMph = 260;
   duel._vehicleContact(player, rival, 'rival');
-  assert.equal(player.lastCrashReason, 'rival', 'an extreme rear closing speed can exceed armor protection');
-  assert.ok(rival._ramVerticalSpeed > 0, 'the high-speed collision still launches the opponent');
+  assert.ok(player.armor < player.maxArmor,
+    'an extreme rear closing speed removes ram armor from the attacker');
+  assert.equal(player.lastCrashReason, null,
+    'Mad Max keeps its armor rule instead of applying an ordinary-race crash');
+  assert.notEqual(player.racePenaltySec, 30,
+    'the armored hit does not add the Rival Duel 30-second penalty');
+  assert.ok(rival.knock?.vy > 0, 'the high-speed collision still launches the opponent');
 }
 
 {
@@ -80,7 +93,7 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
 }
 
 {
-  const { duel, player } = race();
+  const { duel, player } = race('wasteland', 'banshee_muscle', false, false);
   player.speedMph = 160;
   duel._crash('rock', 1, 160, 'front');
   assert.equal(player.racePenaltySec, 2, 'a combat wreck has a short time cost instead of the ordinary 30 seconds');

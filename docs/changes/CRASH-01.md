@@ -2,7 +2,7 @@
 task: CRASH-01
 status: in-progress
 kind: physics
-flag: none
+flag: crash-physics
 player_facing: yes
 ---
 
@@ -68,3 +68,65 @@ Four files fail, each with a settled decision:
 Then: full tier, build, private browser review (a Rival Duel rear-end and a
 T-bone on traffic, a Mad Max ram, a Titan hitting a sedan), this note to
 ready-to-merge, merge.
+
+## Scope correction after independent review
+
+- `crash-physics` starts in `dev`. When it is off, armored rams, roadside
+  traffic, traffic wrecks and ordinary contacts use the exact
+  `integration/wasteland` behavior. When it is on, the settled solver applies
+  in every race mode.
+- A knock consumes the simulation tick on which it settles. Normal player,
+  rival, traffic or arena driving resumes on the next tick.
+- Low-tier roadside traffic remains visible while it is non-collidable, then
+  becomes a still wreck beyond the nearest shoulder.
+- CRASH-02's placeholder sound cue is `vehicle.crash-impact`.
+
+## Changed assertions
+
+- `tools/test-armored-vehicle-impact.mjs` now checks the solver state directly:
+  immediate forward speed, sideways velocity, spin, upward velocity, route
+  departure and landing. Its extreme Mad Max ram checks armor loss and no
+  ordinary 30-second Rival Duel penalty. This follows
+  `docs/CRASH_PHYSICS.md` section 2: Mad Max keeps its armor rules while motion
+  comes from the solver.
+- `tools/test-combat-ramming.mjs` permits smashed Rival Duel traffic to become
+  a wreck but still requires the player to crash in the head-on. It keeps the
+  switch-off ordinary-contact digest unchanged.
+
+## Fingerprint review
+
+- Enabled ordinary contact: `90ae44392f1e118f66f38b57677448c16d9f5db7e444585277c66cafc9e38ff5`.
+  The player and opponent snapshots now expose the solver's immediate forward
+  speeds and knock state; both ordinary flag combinations agree.
+- Enabled Wasteland contact with `wasteland2` off:
+  `58dd02e2b3d9ad70478588334efec092d40f61d6f38573a8d278315cf94a58f8`.
+  The Wasteland mode keeps its old damage rule while motion comes from the new
+  solver. The `crash-physics`-off ordinary digest remains
+  `81b4193349b1b5aa06d0180d02ddf6879156b9bc23c762eac8a1ca6a3222caaa`,
+  and the switch-off Wasteland digest remains
+  `d414293c318c4ddb90b1aecd7a0ffd60ed59455434febc825518b23665066fdc`.
+- The built-in combat replay recorder changed two enabled traces at all three
+  frame rates. `three-opponent-bolt-order` is now
+  `4d571677f171d4c19de2db72ad30af26a9d3be12e94ec33b496e06d3944663a8`;
+  `rear-ram-wreck-recovery` is now
+  `4d32b095ce051a52633238049ec134802329d6aa24e354e955da26db7fc8bc44`.
+  The recorded hit, wreck, recovery, score and shooter-order assertions still
+  pass, and each trace is equal at 30, 60 and 144 FPS. The hashes changed
+  because sampled actors now expose solver speed and knock motion. The armor
+  crate and staggered CPU attack traces did not change.
+
+## Focused evidence
+
+- `node tools/test-combat-replays.mjs --record` — recorded four enabled combat
+  replays at 30, 60 and 144 FPS.
+- `node --test tools/test-feature-flags.mjs tools/test-vehicle-knock-integration.mjs tools/test-combat-knockaway.mjs tools/test-armored-vehicle-impact.mjs tools/test-combat-ramming.mjs tools/test-combat-replays.mjs`
+  — 40/40 passed. This includes the unchanged switch-off contact digests, the
+  one-tick settlement guard, roadside visibility and parking, new armored
+  motion assertions, and 12 combat replay checks.
+
+Balance, browser review, lane tier and build remain for the Director's gate.
+
+## Removed
+
+- No files or runtime assets removed. The switch-off branches retain the
+  integration behavior as the explicit reversal path.

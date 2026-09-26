@@ -755,3 +755,20 @@ credit to the last attacker within five seconds; two seconds of spawn
 protection that also blocks dealing damage; warlords as first-to-three duels
 whose reward is their signature move, working immediately. The last one
 answers the parked first-three-rewards question.
+
+
+## 2026-09-26: gate crash physics and preserve the exact reversal
+
+Independent tests found that CRASH-01 had replaced contact behavior before it
+had a feature switch. Add `crash-physics` in `dev`. On enables the settled
+rigid-body solver and knocked motion in every mode. Off restores the exact
+`integration/wasteland` armored ram, roadside traffic, traffic-wreck and
+ordinary-contact paths; it is the reversal, not a second physics design.
+
+Two narrow corrections are required for the enabled path. A car that had a
+knock at the start of a simulation tick consumes that full tick even when the
+knock settles, so normal driving cannot move it a second time. Low roadside
+traffic becomes non-collidable at knock start but keeps the existing
+`roadsideMotion.visible` render marker until it settles beyond the nearest
+shoulder, then becomes a zero-motion, zero-roll wreck. These are transition and
+visibility correctness fixes. They do not change the settled impact model.

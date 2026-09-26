@@ -49,10 +49,14 @@ export function _spawnTraffic(idx) {
 export function _traffic(dt) {
   const s = this.state;
   for (const c of s.traffic) {
+    // A knocked car slides and spins until its tyres bite (docs/CRASH_PHYSICS.md).
+    if (this.featureFlags?.enabled('crash-physics') === true && c.knock) {
+      stepKnock(this, c, dt);
+      if (c.knock) { this._staticContacts(c, false); this._boundary(c); }
+      continue;
+    }
     if (c.roadsideMotion) { stepRoadsideTraffic(c, dt); continue; }
     if (c.wrecked) { stepTrafficWreck(c, dt); continue; }
-    // A knocked car slides and spins until its tyres bite (docs/CRASH_PHYSICS.md).
-    if (c.knock && stepKnock(this, c, dt)) { this._staticContacts(c, false); this._boundary(c); continue; }
     if (!c.alive || c.crushed) continue;
     c.prevS = c.s;
     c.prevLateral = c.lateral;
@@ -95,8 +99,9 @@ export function _rival(dt, opponent = this.state.rival) {
     return;
   }
   if (r.crushed) return;
-  if (r.knock && stepKnock(this, r, dt)) {
-    this._staticContacts(r, false); this._boundary(r);
+  if (this.featureFlags?.enabled('crash-physics') === true && r.knock) {
+    stepKnock(this, r, dt);
+    if (r.knock) { this._staticContacts(r, false); this._boundary(r); }
     if (!r.finished) this._advanceLaps(r, dt);
     return;
   }

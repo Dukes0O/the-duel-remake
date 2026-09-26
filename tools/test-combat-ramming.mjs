@@ -19,10 +19,11 @@ function place(actor, s, lateral = 0) {
     airborne: false, airHeight: 0, prevAirHeight: 0});
 }
 
-function race({mode = 'wasteland', wasteland2 = true, car = 'falcone_f42', classicDestruction = false} = {}) {
+function race({mode = 'wasteland', wasteland2 = true, crashPhysics = true,
+  car = 'falcone_f42', classicDestruction = false} = {}) {
   // Pin the legacy control even after roadside destruction is on by default.
   const duel = new (classicDestruction ? ClassicDestructionDuel : LegacyRoadsideDuel)({seed: 1989, car,
-    featureFlags: {wasteland2}});
+    featureFlags: {wasteland2, 'crash-physics': crashPhysics}});
   duel.startCampaign({mode, car, startStage: 0, opponentCount: 3,
     cpuDifficulty: 'hard'});
   const state = duel.state;
@@ -325,8 +326,8 @@ test('scripted contact incidents replay at 30, 60 and 144 FPS', () => {
   assert.ok(traces[0].events.length > 0, 'the fixture actually contains ram hits');
 });
 
-function legacyDigest(mode, wasteland2) {
-  const field = race({mode, wasteland2});
+function legacyDigest(mode, wasteland2, crashPhysics = true) {
+  const field = race({mode, wasteland2, crashPhysics});
   const target = field.state.opponents[0];
   field.state.input.steer = .75;
   rearContact(field, field.state, target, {attackerMph: 130,
@@ -344,16 +345,22 @@ function legacyDigest(mode, wasteland2) {
   return createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
 }
 
-test('ordinary and flag-off Wasteland preserve their pinned contact replay', () => {
+test('enabled crash physics has reviewed contact replays while switch-off stays pinned', () => {
   assert.equal(legacyDigest('duel', false),
-    '81b4193349b1b5aa06d0180d02ddf6879156b9bc23c762eac8a1ca6a3222caaa',
+    '90ae44392f1e118f66f38b57677448c16d9f5db7e444585277c66cafc9e38ff5',
     'ordinary race keeps its collision and vehicleRam result');
   assert.equal(legacyDigest('duel', true),
-    '81b4193349b1b5aa06d0180d02ddf6879156b9bc23c762eac8a1ca6a3222caaa',
+    '90ae44392f1e118f66f38b57677448c16d9f5db7e444585277c66cafc9e38ff5',
     'wasteland2 does not change ordinary races');
-  assert.equal(legacyDigest('wasteland', false),
+  assert.equal(legacyDigest('wasteland', false, false),
     'd414293c318c4ddb90b1aecd7a0ffd60ed59455434febc825518b23665066fdc',
-    'flag-off Wasteland keeps its original armored contact');
+    'switch-off Wasteland keeps its integration armored-contact fingerprint');
+  assert.equal(legacyDigest('wasteland', false, true),
+    '58dd02e2b3d9ad70478588334efec092d40f61d6f38573a8d278315cf94a58f8',
+    'enabled crash physics governs Wasteland contact when Wasteland 2 is off');
+  assert.equal(legacyDigest('duel', false, false),
+    '81b4193349b1b5aa06d0180d02ddf6879156b9bc23c762eac8a1ca6a3222caaa',
+    'switch-off ordinary contact keeps the integration fingerprint');
 });
 
 test('ordinary traffic stays solid while flag-off Wasteland still wrecks it', () => {
@@ -366,16 +373,14 @@ test('ordinary traffic stays solid while flag-off Wasteland still wrecks it', ()
     field.state.prevS = 98;
     field.state.speedMph = 90;
     assert.equal(field.duel._vehicleContact(field.state, traffic, 'head_on'), true);
+    assert.ok(traffic.wrecked, `${mode} can wreck smashed traffic under crash physics`);
+    assert.equal(traffic.alive, false);
     if (mode === 'wasteland') {
-      assert.ok(traffic.wrecked, 'flag-off Wasteland still wrecks light traffic');
-      assert.equal(traffic.alive, false);
       assert.equal(field.events.filter(event => event.trafficWrecked).length, 1);
     } else {
-      assert.equal(traffic.wrecked, undefined, 'ordinary traffic stays solid');
-      assert.equal(traffic.alive, true);
       assert.equal(field.events.filter(event => event.trafficWrecked).length, 0);
       assert.ok(field.state.stageCrashes > 0,
-        'the ordinary head-on crash keeps its old cost');
+        'the ordinary head-on still crashes the player');
     }
     assert.equal(ramEvents(field).length, 0, 'legacy traffic has no new combat event');
   }

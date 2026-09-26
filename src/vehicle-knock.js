@@ -35,8 +35,10 @@ export function actorBody(duel, actor, spinRate = 0) {
     inertia: yawInertia(spec.mass, spec.halfLength, spec.halfWidth)};
 }
 
-export function startKnock(actor, {vx, vz, spin, severity, hopMps = 0}) {
+export function startKnock(actor, {vx, vz, spin, severity, hopMps = 0, heading = 0}) {
   actor.knock = {vx, vz, spin, severity, age: 0, vy: hopMps};
+  const forward = vx * Math.sin(heading) + vz * Math.cos(heading);
+  actor.speedMph = forward / DRIVE.mphToWorld;
   if (hopMps > 0) { actor.airborne = true; actor.airHeight = Math.max(actor.airHeight || 0, .02); }
   actor.boosting = false;
 }
@@ -71,9 +73,19 @@ export function stepKnock(duel, actor, dt) {
   actor.pushVelocity = 0;
   // Control returns once the car stops sliding sideways and spinning; rolling
   // forward is fine to hand back to the driver.
-  const settled = k.age >= T.minSec && Math.abs(across) < T.endSpeed && Math.abs(k.spin) < T.endSpin &&
+  const endSpeed = k.roadside ? 2 : T.endSpeed;
+  const settled = k.age >= T.minSec && Math.abs(across) < endSpeed && Math.abs(k.spin) < T.endSpin &&
     !(actor.airHeight > 0);
   if (settled || k.age >= T.maxSec) {
+    if (k.roadside) {
+      actor.alive = false;
+      actor.roadsideMotion = null;
+      actor.wrecked = {atTime: duel.state.stageTimeSec, age: 0,
+        side: k.roadside.side, lateralVelocity: 0, forwardVelocity: 0,
+        verticalVelocity: 0, spinVelocity: 0, physical: true, rollLimit: 0};
+      actor.speedMph = 0; actor.pushVelocity = 0; actor.airHeight = 0;
+      actor.airborne = false;
+    }
     actor.knock = null;
     return false;
   }
@@ -117,7 +129,9 @@ function wreckTraffic(duel, actor, after, severity, dvMph) {
 
 // Solve one car-to-car hit and apply it to both cars. Returns the solver
 // result and each car's severity, for crash rules and effects.
-export function resolveCarCrash(duel, a, b, {wreckTrafficAt = ['smashed', 'launched'], onlyB = false} = {}) {
+export function resolveCarCrash(duel, a, b, {
+  wreckTrafficAt = ['smashed', 'launched'], onlyB = false, forceKnock = false,
+} = {}) {
   const s = duel.state;
   const spinOf = actor => actor === s ? s.yawVelocity || 0 : 0;
   const bodyA = actorBody(duel, a, spinOf(a)), bodyB = actorBody(duel, b, spinOf(b));
@@ -126,10 +140,11 @@ export function resolveCarCrash(duel, a, b, {wreckTrafficAt = ['smashed', 'launc
   const severityB = impactSeverity(result.b.dvMph, {attackerMass: bodyA.mass, mass: bodyB.mass});
   for (const [actor, before, after, severity] of onlyB ? [[b, bodyB, result.b, severityB]]
     : [[a, bodyA, result.a, severityA], [b, bodyB, result.b, severityB]]) {
-    if (actor === s && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: true});
+    if (!forceKnock && actor === s && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: true});
     else if (s.traffic.includes(actor) && wreckTrafficAt.includes(severity)) wreckTraffic(duel, actor, after, severity, after.dvMph);
-    else if (severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: false});
-    else startKnock(actor, {vx: after.vx, vz: after.vz, spin: after.spin, severity, hopMps: hopFor(severity, after.dvMph)});
+    else if (!forceKnock && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: false});
+    else startKnock(actor, {vx: after.vx, vz: after.vz, spin: after.spin,
+      severity, hopMps: hopFor(severity, after.dvMph), heading: before.heading});
   }
   return {result, severityA, severityB};
 }
