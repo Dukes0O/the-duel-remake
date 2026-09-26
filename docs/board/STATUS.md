@@ -1,22 +1,22 @@
 # Build status
 
-Observed at: 2026-09-26T14:58:33.306Z
+Observed at: 2026-09-26T15:08:00.306Z
 
-Observation commit: e23146274262d08d09ea85c1c407a1e80b12d78b
+Observation commit: 3815ada4a8b66cadfc8cd5a5050ae228d6dfc8be
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e23146274262d08d09ea85c1c407a1e80b12d78b
+Integration HEAD: 3815ada4a8b66cadfc8cd5a5050ae228d6dfc8be
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
 Live build version: not checked
 
-Full tier: stale; exact HEAD passed: no.
+Full tier: passed; exact HEAD passed: yes.
 
-Last recorded full run: 2026-09-26T13:23:56.041Z; tested commit: 51842af934679fa5101ae904259f88ca5d99188c.
+Last recorded full run: 2026-09-26T15:06:27.841Z; tested commit: 3815ada4a8b66cadfc8cd5a5050ae228d6dfc8be.
 
 ## Feature switches
 
@@ -54,7 +54,7 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 239,997,989 B | +0 B | 250,000,000 B |
+| Build `dist/` | 240,003,525 B | +5,536 B | 250,000,000 B |
 | Wasteland models | 78,930,708 B | +0 B | 60,000,000 B |
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
@@ -62,7 +62,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 7,872,326 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 1,659,065 B | +0 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 331,648,000 B | +0 B | unavailable |
+| Git objects | 331,652,096 B | +4,096 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -71,7 +71,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: faf5749598d061d0d11cadff9a4515fb10308ddb
 - Local main: missing
-- Local integration/wasteland: e23146274262d08d09ea85c1c407a1e80b12d78b
+- Local integration/wasteland: 3815ada4a8b66cadfc8cd5a5050ae228d6dfc8be
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

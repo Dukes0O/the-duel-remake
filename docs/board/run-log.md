@@ -1916,3 +1916,29 @@ What to try in docs/playtest-inbox.md.
   JANITOR-DIAGNOSTIC-NOTES records remaining uncertain old notes.
 - D8 ordinary integration push follows this handoff. No live-folder edit,
   port5174 use, real-save work, history rewrite or release is part of closure.
+
+
+## Morning handoff — 26 September 2026
+
+Stopped at the morning budget after finishing CRASH-02's visual slice and the
+end-of-run gates. This run merged CRASH-01, TITAN-01, all six Muddy Hollow
+phases, ARENA-02-PAY, and CRASH-02 visuals. CRASH-02 remains active because its
+separate audio slice is not merged. No release was made.
+
+- Exact integration commit 3815ada4a8b66cadfc8cd5a5050ae228d6dfc8be
+  passed 283/283 full suites in 437.26 seconds with clean start and end. The
+  production build transformed 236 modules in 441 ms. The following ledger,
+  status and handoff commit records evidence only and does not inherit that
+  exact-commit result.
+- Janitor: the merged CRASH-02 lane was archived, its branch was deleted, and
+  empty ignored evidence directories were removed. The sweep found 1,018
+  tracked files at 242.9 MiB, no unused module or removed-test candidates, and
+  no deletion proved safe among the literal-reference asset, export or document
+  suggestions. Build size is 240,003,525 bytes; public remains 235,822,734 and
+  Wasteland models remain 78,930,708. Existing asset-size reasons still apply;
+  no target change is proposed. Full and sweep counters reset to zero.
+- Leave lane/audio/aud-17-picks and Kyle's aud-10/aud-12 branches in place.
+  They were excluded from inspection. Next work is the pending CRASH-02 audio
+  slice and ARENA-FEEL; do UX-ENTRY-HINTS early as next-run.md directs.
+- D8 push follows this handoff. The live folder, port 5174, real saves and
+  history were not touched.
