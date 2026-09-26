@@ -73,6 +73,7 @@ export class Duel {
       s: 0, lateral: 0, speedMph: 0, gear: 0, revs: 0, overrevSec: 0, reverseHoldSec: 0, offRoad: false,
       steerVisual: 0, boost: 1, boosting: false, invulnerableSec: 0,
       headingError: 0, yawVelocity: 0, roughness: 0, offRoadTime: 0, preparedGravel: false, slipAngle: 0, drifting: false,
+      surfaceMud: 0, waterDepth: 0, mudWheelSpin: 0,
       impactTimer: 0, impactDuration: 0, impactStrength: 0, impactSide: 1, crashSpin: 0,
       majorCrashes: 0, stageCrashes: 0, catastrophic: false,
       damageZones: freshDamageZones(), damageCooldown: 0,
@@ -264,6 +265,7 @@ export class Duel {
     s.paused = false; s.offRoad = false; s.steerVisual = 0;
     s.boost = 1; s.boosting = false; s.invulnerableSec = 0;
     s.headingError = 0; s.yawVelocity = 0; s.roughness = 0; s.offRoadTime = 0; s.preparedGravel = false;
+    s.surfaceMud = 0; s.waterDepth = 0; s.mudWheelSpin = 0;
     s.slipAngle = 0; s.drifting = false;
     s.boundaryWarning = false; s.pushVelocity = 0; s.damageCooldown = 0; s.collectedFlocks = [];
     s.airborne = false; s.airHeight = 0; s.jumpScore = 0; s.jumps = 0; s.bestJumpMeters = 0; s.collectedJumps = [];

@@ -129,7 +129,9 @@ export class Course {
   surfaceAt(s,lateral=0){const p=this.phase(s),roadHalfWidth=this.roadHalfWidthAt(p);
     if(this.def.practice){const world=this.worldAt(s,lateral);if(onFreestyleDrag(world.x,world.z))return {road:true,mainRoad:true,shortcutId:null,roadHalfWidth:16};}
     const cut=this.features.shortcuts.find(c=>p>=c.start&&p<=c.end&&Math.abs(lateral-this.shortcutOffset(c,p))<=c.halfWidth);
-    return {road:Math.abs(lateral)<=roadHalfWidth||!!cut,mainRoad:!this.def.offroad&&(Math.abs(lateral)<=roadHalfWidth||cut?.surface==='paved'),shortcutId:cut?.id||null,roadHalfWidth};}
+    const surface={road:Math.abs(lateral)<=roadHalfWidth||!!cut,mainRoad:!this.def.offroad&&(Math.abs(lateral)<=roadHalfWidth||cut?.surface==='paved'),shortcutId:cut?.id||null,roadHalfWidth};
+    if(this.muddyHollow&&!surface.road){const world=this.worldAt(s,lateral);if(this.muddyHollow.contains(world.x,world.z))return {...surface,...this.muddyHollow.surfaceAt(world.x,world.z)};}
+    return surface;}
   tunnelAt(s){const p=this.phase(s);return this.features.tunnels.find(t=>p>=t.start&&p<=t.end)||null;}
   jumpAt(s){const p=this.phase(s),r=this.features.ramps.find(r=>p>=r.start&&p<=r.end);if(!r)return 0;
     const t=(p-r.start)/(r.end-r.start);return r.height*Math.sin(Math.PI*t)**2;}
