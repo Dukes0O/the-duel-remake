@@ -18,7 +18,9 @@ and builds the core; see the cards at the end.
 3. **A struck car reacts, visibly.** It slides and spins as a free body until
    its tyres bite again, then its driver recovers. A very hard hit on a light
    car lifts it and rolls it. Traffic that is smashed stays wrecked at the
-   roadside.
+   roadside: it keeps the speed the hit gave it, scrubs to a stop on tyre
+   friction (never halting from speed in one moment) and ends beyond the
+   nearest shoulder, never parked in the lane (CRASH-03).
 4. **The player is judged by their own car.** Whether your car crashes (a
    race penalty in Rival Duel, armor in Mad Max) depends on how hard the hit
    was for *your* car, its change in velocity, not on closing speed alone.
