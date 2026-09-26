@@ -1,6 +1,6 @@
 ---
 task: EGG-03
-status: active-phase-5
+status: waiting-phase-6-source-pick
 kind: easter-egg
 flag: muddy-hollow
 player_facing: yes
@@ -511,3 +511,47 @@ changes; hubcaps, finish count and unknown nested data remain under comparison.
 
 Nothing. Phase 5 adds bounded progress and a gated appearance reward. It does
 not replace an old save field, reward path or menu entry.
+
+## Phase 6 art sourcing gate
+
+Phase 6 starts with the required source choice. No external art was downloaded
+or adapted in this lane. The shortlist gives Kyle two CC0 mud surfaces and
+three CC0 prop families with official source pages, preview images, authors,
+fit and risk. The recommended pair is Poly Haven Brown Mud 02 for the pit
+surface and Quaternius Ultimate Nature Pack for rocks and logs.
+
+Water, splash and mud particles remain code-native presentation. The detailed
+ground stays a deterministic mesh from the authored Hollow height field. This
+keeps the source decision narrow: one mud-map family and one rock/log starting
+family. After Kyle selects them, only those sources will be cached outside the
+repository, checksummed in `tools/art/catalog.json`, adapted by a committed
+recipe and reduced to current runtime output.
+
+### Phase 6 sourcing tests first
+
+`tools/test-art-sourcing.mjs` was committed before the catalog and shortlist.
+It failed first because the governed catalog did not exist. It now requires
+the exact five candidates, unique IDs, official HTTPS source and preview URLs,
+CC0-1.0 licence records, candidate state with no false download checksum, both
+source families, and a visible Kyle decision gate. Its final documentation
+check accepts an ordinary Markdown line wrap without changing the required
+sentence.
+
+### Phase 6 sourcing evidence
+
+- `node tools/test-art-sourcing.mjs`: five licensed candidates and one Kyle
+  decision gate passed.
+- Official source pages checked on 26 September 2026: Poly Haven identifies
+  Brown Mud 02, Muddy Tracks and Boulder 01 as CC0 and names their authors;
+  Quaternius links Ultimate Nature Pack to CC0; Kenney lists Nature Kit as
+  Creative Commons CC0.
+- No source archive, texture, model or generated runtime output was added.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8`: 7/7 suites
+  passed in 36.94 seconds.
+- `npm run build`: passed with 234 modules. The existing large-chunk warning
+  remains; no new warning was introduced.
+
+### Phase 6 sourcing removed
+
+Nothing. The lane adds the first governed art catalog and a decision document;
+it does not replace current runtime art.
