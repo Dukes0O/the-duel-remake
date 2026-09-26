@@ -400,3 +400,36 @@ to the rock under test.
 Nothing. Phase 4 extends the isolated Hollow zone and reuses shared flight,
 rock support and static-contact paths. It does not replace ordinary course
 features or introduce generated output.
+
+## Phase 5 settled detail
+
+Phase 5 adds the five fixed gold hubcaps, per-player Hollow progress, the gold
+Titan paint reward and the settled five-race garage tip. It adds no main-menu
+action, Hollow return entry, separate wallet, race reward, score, record,
+particle, audio playback or detailed scene art. Phase 6 owns the visible
+collectible models and final environment presentation.
+
+The version-1 Wasteland save gains one additive `muddyHollow` object with a
+boolean discovery marker, the unique allow-listed hubcap IDs and a High Country
+Titan finish count clamped from zero to five. Unknown data remains intact. The
+startup migration gate must make and verify a backup before an older save is
+normalized to this shape.
+
+The authored hubcaps sit at the King of the Hill summit, pond centre, mega-jump
+landing, one mud pit and behind the log ramp. Only the current player's Titan
+in departed exploration can collect them. A swept contact emits each ID once.
+The App rechecks the current run and player before saving it. Existing found
+IDs enter the race snapshot and cannot emit again. Collection changes no race
+clock, score, record, wallet or result.
+
+All five validated IDs derive ownership of a reward-only `titan_gold` finish.
+It is hidden before it is earned, applies only to the Titan, costs nothing and
+is not selected automatically. The existing appearance snapshot applies it to
+a later race without changing vehicle statistics or record identity.
+
+The garage hint count advances once for a completed High Country Titan result
+whose race snapshot had both gate discovery and the `muddy-hollow` switch. It
+does not count an abandoned or duplicate result, another car or course,
+practice, flag-off or undiscovered play. At five, the settled tip appears only
+on the Titan page and disappears after the guarded departure marks the Hollow
+discovered.

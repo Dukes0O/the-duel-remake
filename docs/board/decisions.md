@@ -939,3 +939,38 @@ EGG-03 narrowly to add that hook. The hook may only combine the installed
 zone's fixed obstacles with the existing query and suppress ordinary mountain
 support inside the zone boundary. Ordinary obstacles, contact damage and
 flag-off behavior stay unchanged.
+
+## 2026-09-26: keep Muddy Hollow phase-5 progress bounded and reward-only
+
+Phase 5 stores one additive `wasteland.muddyHollow` object per named player:
+`discovered` is a boolean, `hubcaps` is a unique allow-listed set of the five
+authored IDs, and `titanHighCountryFinishes` is an integer clamped from zero to
+five. Unknown nested fields remain intact. The existing startup migration gate
+must require and verify a backup before it writes this new normalized shape.
+
+The five hubcaps are fixed zone data at the settled sites. Exploration uses a
+swept pickup test so frame rate and speed cannot skip one. The simulation emits
+each ID once and changes no race clock, score, record, wallet or reward. The App
+accepts that event only from the current player, run, installed Hollow and live
+exploration state before it saves the ID. Entering the Hollow marks it
+discovered through the same guarded departure event. Denied storage remains a
+session-only success with the existing warning.
+
+All five IDs make `titan_gold` an owned, free, appearance-only Titan finish.
+The entitlement is derived from the validated hubcap set, not a second reward
+flag. It cannot be bought, forged onto another car or shown before it is
+earned. It is not selected automatically. Applying it uses the existing paint
+snapshot path and cannot change physics or competitive record keys.
+
+The settled garage hint counts completed High Country races in the Titan only
+when the `muddy-hollow` switch and found Wasteland gate are both present in the
+race snapshot. Wins, losses and time trials count; abandoned, incomplete,
+practice, other-car, other-course, duplicate and flag-off results do not. The
+count stops at five. The exact tip appears only on the Titan garage page and
+only until the Hollow is discovered. It adds no menu action.
+
+Re-slice EGG-03 narrowly for the existing save, migration, paint and garage
+hooks needed by this contract: `src/wasteland-progress.js`,
+`src/career-backup.js`, `src/paint-presets.js`, `src/screen-garage.js` and their
+focused tests. These hooks may add only the bounded fields, reward finish and
+Titan-page tip described above.
