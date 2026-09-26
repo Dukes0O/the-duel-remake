@@ -183,6 +183,19 @@ test('impact presentation freezes while paused and expires after its bound', () 
   }
 });
 
+test('the contact flash stays within its panel-local bound for its full life', () => {
+  const effects=createCombatEffects({loadTexture:loader(),crashPresentation:true});
+  try {
+    effects.recordVehicleSmash({severity:'launched',dvMph:100,point},
+      {enabled:true,atTime:4});
+    const current=state();current.stageTimeSec=4.199;
+    effects.update({state:current,course,dt:.199,crashEnabled:true});
+    const flash=visible(effects.group,'crash-vfx-impact-0-flash');
+    assert.equal(flash.visible,true);
+    assert.ok(flash.scale.x<=.8,'late expansion stays local to the struck panel');
+  } finally {effects.dispose();}
+});
+
 test('tyre smoke exists only for live knocked motion', () => {
   const effects = createCombatEffects({loadTexture: loader(), crashPresentation: true});
   try {
@@ -263,6 +276,29 @@ test('the fixed smoke pool covers sixteen actors and drops seventeenth traffic l
       visible(effects.group,`crash-vfx-knock-${index}-smoke`).position.x);
     assert.equal(xs.some(x=>x===160||x===161),false,
       'the seventeenth actor is the last traffic car, not a visible-priority actor');
+  } finally { effects.dispose(); }
+});
+
+test('a failed production tyre lookup hides smoke without course allocation', () => {
+  const effects=createCombatEffects({loadTexture:loader(),crashPresentation:true});
+  try {
+    const current=state({knock:{severity:'knocked',age:.2}});
+    effects.update({state:current,
+      course:{groundAt(){throw Error('production lookup must not sample the course');}},
+      dt:1/60,crashEnabled:true,resolveCrashTyres:()=>false});
+    assert.equal(visible(effects.group,'crash-vfx-knock-0-smoke').visible,false);
+    assert.equal(visible(effects.group,'crash-vfx-knock-1-smoke').visible,false);
+  } finally { effects.dispose(); }
+});
+
+test('combat damage actor lookup does not iterate or copy opponents', () => {
+  const effects=createCombatEffects({loadTexture:loader(),crashPresentation:true});
+  try {
+    const opponents={length:1,0:{s:12,lateral:0,armor:100,maxArmor:100},
+      [Symbol.iterator](){throw Error('damage lookup must not spread opponents');}};
+    const current={...state(),mode:'wasteland',combat:{bursts:[],projectiles:[]},
+      armor:100,maxArmor:100,opponents};
+    effects.update({state:current,course:flatCourse,dt:1/60,crashEnabled:true});
   } finally { effects.dispose(); }
 });
 

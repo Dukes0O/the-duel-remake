@@ -99,23 +99,37 @@ flash behind the authored contact art. Its late draw order prevents vehicle
 bodywork from hiding the cue; strict scale bounds keep the burst local to the
 struck panel. No asset or simulation rule changed.
 
+The next exact-candidate review found that a failed production wheel lookup
+still entered the route-space fallback, sampled the course, and could draw
+smoke for a hidden car. A supplied renderer resolver is now authoritative: a
+failed lookup hides both plumes, while direct unit users without a resolver
+retain the deterministic route-space fallback. The same correction removes a
+remaining spread of the combat actor list and caps the flash after its late-life
+expansion, not only at age zero. Three red regressions cover these cases.
+
+Independent screenshots also exposed a race in the QA recipe: Performance
+could capture while renderer warmup still read `scheduled`. The scenario now
+starts the real race, waits for both renderer warmup and combat effects to
+report ready, and only then stops simulation and creates the reviewed crash.
+Two consecutive High and Performance runs produced the same readable result.
+
 ## Evidence
 
-- Focused CRASH-02 and shared combat-effect tests: 27 passed, 0 failed after
-  the review fixes. The CRASH-02 file contributes 15 behavioral tests.
+- Focused CRASH-02 and shared combat-effect tests: 30 passed, 0 failed after
+  the review fixes. The CRASH-02 file contributes 18 behavioral tests.
 - Armored impacts, police knock, police route reset, combat ramming, combat
   replay fingerprints and ordinary replay fingerprints all pass. The ordinary
   replay run covers 162 checks across 18 cases and three frame rates.
 - The private memory-only browser scenario passes in High and Performance on
   random ports above 5191. It observes one real launched impact at the exact
   contact point, rear damage, two distinct live rear-tyre plumes, ready
-  first-frame resources and no flag-off crash meshes. It freezes only the QA
-  presentation after proving the live collision, waits 500 ms, and requires
-  all three contact layers to remain visible before capture. Four final local
-  review frames were captured; the browser logged 0 warnings and 0 errors.
-  The stopped-scene 60-frame CPU samples stayed at or below 0.2 ms p95 in both
-  modes. Raw review files remain disposable until the merge verdict is
-  committed.
+  effect resources, settled renderer warmup and no flag-off crash meshes. It
+  freezes only the QA presentation after proving the live collision, waits
+  500 ms, and requires all three contact layers to remain visible before
+  capture. Two consecutive four-frame local reviews passed; each logged 0
+  warnings and 0 errors. The stopped-scene 60-frame CPU samples stayed at or
+  below 4.9 ms p95. Raw review files remain disposable until the merge verdict
+  is committed.
 - Lane tier, production build and final independent review: pending.
 
 ## Removed

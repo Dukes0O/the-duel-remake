@@ -82,7 +82,7 @@ function showImpactFlash(slot, position, age, size) {
   mesh.visible = age < .2;
   if (!mesh.visible) return;
   mesh.position.set(position.x, position.y, position.z);
-  mesh.scale.setScalar(size * (1 + age * 1.8));
+  mesh.scale.setScalar(Math.min(.8, size * (1 + age * 1.8)));
   mesh.material.opacity = 1;
 }
 
@@ -342,9 +342,10 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
         size: projectile.kind === 'bomb' ? 3 : 2.2,
         startFrame: projectile.age < .05 ? 0 : 1, frameCount: 2});
     });
-    const actors = [state, ...(state.opponents || [])];
     damage.forEach((entry, index) => {
-      const actor = enabled ? actors[index] : null;
+      const actor = enabled
+        ? index === 0 ? state : state.opponents?.[index - 1]
+        : null;
       const fraction = actor?.armor / actor?.maxArmor;
       const damaged = Number.isFinite(fraction) && fraction >= 0 &&
         !actor.combatWrecking && !actor.crushed;
@@ -366,7 +367,9 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       else hide(entry.fire);
     });
     wrecks.forEach((entry, index) => {
-      const actor = enabled ? actors[index] : null;
+      const actor = enabled
+        ? index === 0 ? state : state.opponents?.[index - 1]
+        : null;
       if (!actor?.combatWrecking) {
         entry.active = false;
         entry.age = 0;
@@ -440,8 +443,10 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       if (!actor) { hide(leftSlot); hide(rightSlot); continue; }
       const leftSite = knockSmokeSites[leftIndex];
       const rightSite = knockSmokeSites[rightIndex];
-      let resolved = resolveCrashTyres?.(actor, leftSite, rightSite) === true;
-      if (!resolved) {
+      let resolved = false;
+      if (resolveCrashTyres) {
+        resolved = resolveCrashTyres(actor, leftSite, rightSite) === true;
+      } else {
         const ground = course.groundAt(actor.s, actor.lateral);
         const yaw = (ground.heading || 0) + (actor.dir < 0 ? Math.PI : 0) +
           (actor.headingError || 0);

@@ -1166,3 +1166,17 @@ may freeze the presentation only after a real collision has emitted its event;
 it must hide the QA pause modal, wait 500 ms and recheck all contact layers
 before capture. This changes presentation evidence only, not simulation time,
 collision rules or live pause behavior.
+
+Exact-candidate review found that the route-space smoke fallback could run
+after the production wheel resolver rejected a hidden or incomplete vehicle.
+When a resolver is supplied, treat its result as authoritative: failure hides
+both tyre plumes and never samples the course. Keep route-space fallback only
+for direct users that supply no renderer resolver. Remove the remaining combat
+actor spread, and apply the flash scale cap after its age expansion so the
+settled panel-local maximum holds for the full lifetime.
+
+The independent Performance screenshot also proved that visible object flags
+can precede completed renderer warmup. The browser verdict now requires a
+settled renderer warmup state and ready combat effects before it stops the
+race, creates the reviewed collision and freezes the evidence frame. A
+`scheduled` warmup is not acceptable capture evidence in either quality mode.

@@ -14,10 +14,20 @@ async function qualityPass(context, quality) {
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'`,
   `${quality} renderer ready`, 60_000);
 
-  const setup=await context.evaluate(`(() => {
+  await context.evaluate(`(() => {
     const app=window.__qaApp;
     if(!app.startCampaign({mode:'wasteland',startStage:0,
       car:'falcone_f42',seed:1989}))throw Error('Wasteland race did not start');
+  })()`);
+  await context.waitFor(`(() => {
+    const app=window.__qaApp,host=document.querySelector('#view3d');
+    return app.visualReady &&
+      ['ready','fallback','off','unsupported-fallback'].includes(host?.dataset.warmupStatus) &&
+      host?.dataset.combatEffectsStatus==='ready';
+  })()`,`${quality} settled renderer warmup`,60_000);
+
+  const setup=await context.evaluate(`(() => {
+    const app=window.__qaApp;
     app.stop();
     const duel=app.duel,state=duel.state,rival=state.rival,render=window.__render;
     Object.assign(state,{status:'racing',paused:false,s:100,prevS:80,
@@ -105,6 +115,7 @@ async function qualityPass(context, quality) {
       effectsStatus:document.querySelector('#view3d')?.dataset.combatEffectsStatus};
   })()`);
   if(!setup.memoryOnly||setup.effectsStatus!=='ready'||setup.knockSmoke!==2||
+      !['ready','fallback','off','unsupported-fallback'].includes(setup.warmupStatus)||
       !(setup.dvMph>45)||!(setup.rearDamage>0)||setup.contactDistance>.01)
     throw Error(`${quality} crash presentation failed: ${JSON.stringify(setup)}`);
   await context.evaluate(`window.__crashCaptureAt=performance.now()+500`);
