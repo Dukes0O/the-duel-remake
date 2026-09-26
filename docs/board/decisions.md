@@ -1083,3 +1083,100 @@ validating every known field. Keep invalid and future profile versions on the
 existing fresh-profile path, and keep future Wasteland versions write-blocked.
 The regression must pass through `replacePlayerProfile`, `savePlayers` and
 `loadPlayers`, not only the pure settlement helper.
+
+## 2026-09-26: split CRASH-02 visual and audio work
+
+CRASH-02 keeps Claude's settled design. Implement it in two isolated lanes so
+the visual work does not overlap the external audio owner. The VIS lane owns
+sparks, contact-point crumple presentation, knocked-tyre smoke and launched
+traffic roll checks. A later AUDIO lane owns the existing
+`vehicle.crash-impact` cue, its change-in-velocity scaling and full-throttle
+measurement under SPEC 0.9. Neither lane may edit the other's files.
+
+Add `crash-effects` as a new dev switch. It gates every new CRASH-02 visual
+and audio presentation. `crash-physics` remains the independent simulation
+switch: turning `crash-effects` off must preserve the exact current renderer,
+event and audio paths. The visual layer may subscribe to the existing
+`vehicleSmash` event and keep its own bounded, presentation-only lifetime. It
+must not add state to the deterministic simulation or consume simulation RNG.
+
+Re-slice the visual lane to own `tools/test-crash-presentation.mjs` and to use
+the existing feature-flag inventory tests. This records test ownership before
+code. Existing localized damage zones provide the permanent crumple; the new
+event effect must place the immediate spark/crumple flash at the exact supplied
+world point. Knocks produce smoke only while `actor.knock` exists. Launched
+traffic keeps the physical wreck roll already authored by CRASH-01.
+
+A read-only integration probe then found two settled-design gaps. The armored
+contact helper returns before the normal path's `vehicleSmash` emit, so a real
+130-to-25 mph Wasteland rear impact launches the rival but provides no CRASH-02
+presentation event. Re-slice narrowly to `src/sim-contacts.js` and the existing
+armored-impact test. Emit one event for the player-visible struck car from the
+already-computed solver result and contact point. Add the actor and contacted
+damage zone so the renderer can resolve height and the existing crumple without
+guessing. Do not change motion, armor, damage, incident latching or balance.
+
+The same probe found that police can receive `actor.knock`, but
+`src/sim-police.js` does not step it. Its age stays at zero while ordinary
+police driving moves the car, which would make knocked-tyre smoke permanent.
+This also contradicts the settled CRASH-01 rule that police become free bodies.
+Re-slice narrowly to `src/sim-police.js` and a new focused test. A knock present
+at tick start must consume that police tick, including the tick on which it
+settles, while preserving solid and boundary checks and pursuit-distance
+bookkeeping. Flag-off police driving remains exact.
+
+Independent review of the first CRASH-02 visual candidate proved that a direct
+stage load rewinds `stageTimeSec` without visiting the menu, so a renderer-only
+impact could remain at the prior course's world point. Clear presentation
+impacts whenever the course identity changes or simulation time rewinds. This
+does not change the settled effect lifetime during a stage.
+
+The review also proved that route-relative smoke offsets detach from a knocked
+car while its rendered body spins. Place the two rear-tyre sites from the same
+course heading, reverse direction and `headingError` used by the vehicle
+renderer. Keep the sites presentation-only. Replace the per-frame actor arrays
+with a fixed sixteen-actor scratch pool. If an artificial scene exceeds that
+bound, preserve the most player-visible order: player, racing opponents,
+police, then traffic. This meets the fixed-pool rule without changing knock
+motion or simulation state.
+
+The exact-candidate review then found that removing array creation was not
+enough: course samples and atlas UV helpers still returned short-lived objects
+on changing crash frames. Re-slice CRASH-02 to `src/combat-vfx-atlas.js` for an
+output-object UV helper. In production, resolve smoke from the already-placed
+vehicle wheel meshes instead of sampling the course again. This both removes
+the new ground objects and makes the smoke follow the exact rendered tyres.
+The renderer bridge must have a behavioral subscribe/dispose test, and the
+pool test must cover all sixteen actors plus a seventeenth overflow actor.
+
+The same review's screenshots proved that mesh visibility is not a visual
+verdict. The first spark/crumple and the twin tyre plumes were not readable in
+either quality mode. Keep Claude's effect design, but move the reused atlas to
+readable authored frames and tune size, phase and opacity only as needed to
+make the settled cues visible. Browser screenshots, not object flags, decide
+the correction.
+
+The delayed screenshot check then proved that the contact layers remained
+live but were hidden by their blend and draw treatment. Keep the reused spark
+and smoke sheets as the authored effect. Add one small, code-native wireframe
+flash at the same exact point, drawn after vehicle bodywork, so the atlas stays
+readable against both asphalt and bright paint. Bound the flash, spark and
+crumple scales so the cue stays local to the struck panel. The browser recipe
+may freeze the presentation only after a real collision has emitted its event;
+it must hide the QA pause modal, wait 500 ms and recheck all contact layers
+before capture. This changes presentation evidence only, not simulation time,
+collision rules or live pause behavior.
+
+Exact-candidate review found that the route-space smoke fallback could run
+after the production wheel resolver rejected a hidden or incomplete vehicle.
+When a resolver is supplied, treat its result as authoritative: failure hides
+both tyre plumes and never samples the course. Keep route-space fallback only
+for direct users that supply no renderer resolver. Remove the remaining combat
+actor spread, and apply the flash scale cap after its age expansion so the
+settled panel-local maximum holds for the full lifetime.
+
+The independent Performance screenshot also proved that visible object flags
+can precede completed renderer warmup. The browser verdict now requires a
+settled renderer warmup state and ready combat effects before it stops the
+race, creates the reviewed collision and freezes the evidence frame. A
+`scheduled` warmup is not acceptable capture evidence in either quality mode.

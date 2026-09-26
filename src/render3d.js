@@ -72,6 +72,24 @@ export function terrainBounceAmplitude(roughness, speedMph) {
   return roughness * Math.min(1, Math.abs(speedMph) / 18);
 }
 
+export function crashRollVisual(actor) {
+  return Number.isFinite(actor?.wrecked?.roll) ? actor.wrecked.roll : 0;
+}
+
+export function installCrashPresentationEvents({duel, enabled, effects,
+  getCourse}) {
+  if (!enabled) return () => {};
+  return duel.onChange((state, event) => {
+    const smash = event.vehicleSmash;
+    if (!smash) return;
+    const actor = smash.actor, course = getCourse();
+    const ground = actor && Number.isFinite(actor.s) &&
+      Number.isFinite(actor.lateral) && course?.groundAt(actor.s, actor.lateral);
+    effects?.recordVehicleSmash(smash,
+      {enabled: true, y: (ground?.y || 0) + .8, atTime: state.stageTimeSec});
+  });
+}
+
 // This layer only reads simulation state. Asset replacement never changes race rules.
 export function attachRenderer(host, app) {
   const rendererAttachedAt=performance.now();let firstPresentation=true;
@@ -151,6 +169,36 @@ export function attachRenderer(host, app) {
   const firstPersonEntry={fighter:null,input:null,weapons:null};
   const firstPersonOptions={enabled:false,active:false,firstPerson:false,camera,time:0};
   const roadsideDebris=createRoadsideDebris();scene.add(roadsideDebris.group);
+  const crashEffectsFlag=()=>app.duel.featureFlags?.enabled('crash-effects')===true;
+  if(crashEffectsFlag()){
+    combatEffects=createCombatEffects({crashPresentation:true});scene.add(combatEffects.group);sceneRevision++;
+  }
+  const stopCrashEvents=installCrashPresentationEvents({duel:app.duel,
+    enabled:crashEffectsFlag(),effects:combatEffects,getCourse:()=>course});
+  let crashPoseState=null;
+  function resolveCrashTyres(actor,left,right){
+    const state=crashPoseState;
+    let mesh=null;
+    if(actor===state)mesh=player;
+    else if(actor===state?.rival)mesh=rival;
+    else{
+      for(let index=1;index<(state?.opponents?.length||0);index++)
+        if(actor===state.opponents[index]){mesh=extraOpponents[index-1]?.mesh;break;}
+      if(!mesh)for(let index=0;index<(state?.traffic?.length||0);index++)
+        if(actor===state.traffic[index]){mesh=traffic[index];break;}
+      if(!mesh&&actor===state?.police?.pursuit)mesh=police;
+    }
+    if(!mesh?.visible)return false;
+    let found=0;
+    for(const wheel of mesh.userData.wheelPivots||[]){
+      if(wheel.userData.front)continue;
+      const site=found===0?left:right;
+      wheel.getWorldPosition(site);
+      site.y-=wheel.userData.radius||.36;
+      if(++found===2)return true;
+    }
+    return false;
+  }
   let rustwallPresentation=null;
   let yardPresentation=null;
   function retireObject(object,beforeDispose){
@@ -221,22 +269,22 @@ export function attachRenderer(host, app) {
       scene.add(mesh);extraOpponents[index-1]={mesh,carKey};sceneRevision++;ambientShading.refresh();
     }
     const armoredField=!menu && st.mode==='wasteland' && Number.isFinite(st.maxArmor);
+    const crashEffectsEnabled=!menu&&crashEffectsFlag();
+    const effectsField=armoredField||crashEffectsEnabled;
     if(combatPlayerExplosion && (!armoredField || opponentExplosions.length!==opponents.length)){
       combatPlayerExplosion.dispose();combatPlayerExplosion=null;
       opponentExplosions.forEach(effect=>effect.dispose());
       opponentExplosions=null;sceneRevision++;
     }
+    if(effectsField&&!combatEffects){combatEffects=createCombatEffects({crashPresentation:crashEffectsEnabled});scene.add(combatEffects.group);sceneRevision++;}
+    if(effectsField&&!combatEffectsPrepared){
+      if(!readinessClaimed){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
+      app.holdVisualReadiness?.(readinessOwner);
+    }
     if(armoredField && !combatPlayerExplosion){
       // Build and compile flagged combat effects during race setup, before
       // the first player or CPU wreck can interrupt a driving frame.
       const buildStart=performance.now();
-      if(!combatEffects){combatEffects=createCombatEffects();scene.add(combatEffects.group);sceneRevision++;}
-      // Sheet decode and the real first draw can finish after the world shader
-      // warmup. Keep the race clock held until that one-time work is done.
-      if(!combatEffectsPrepared){
-        if(!readinessClaimed){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
-        app.holdVisualReadiness?.(readinessOwner);
-      }
       combatPlayerExplosion=createExplosion({combat:true});scene.add(combatPlayerExplosion.group);
       opponentExplosions=Array.from({length:opponents.length},()=>createExplosion({combat:true}));
       for(const effect of opponentExplosions)scene.add(effect.group);
@@ -419,7 +467,7 @@ export function attachRenderer(host, app) {
         Math.abs(visualGap(d.s)) < 540;
       if (!menu && d?.wrecked) updateNpcVehicleDamage(car,d);
       else updateNpcVehicleDamage(car,!menu&&d?.alive?d:null);
-      if (car.visible) {const turn=(d.dir<0?Math.PI:0)+(d.headingError||0);place(car,vehicleGroundPoint(course,d.s,d.lateral),turn,wheelTravel(d.speedMph));car.position.y+=d.airHeight||0;const slope=groundSlope(course,d.s,d.lateral,turn);car.rotation.x=slope.pitch;car.rotation.z=slope.roll+(d.wrecked?.roll||0);applyVehicleTerrainPose(car,course,d);}
+      if (car.visible) {const turn=(d.dir<0?Math.PI:0)+(d.headingError||0);place(car,vehicleGroundPoint(course,d.s,d.lateral),turn,wheelTravel(d.speedMph));car.position.y+=d.airHeight||0;const slope=groundSlope(course,d.s,d.lateral,turn);car.rotation.x=slope.pitch;car.rotation.z=slope.roll+crashRollVisual(d);applyVehicleTerrainPose(car,course,d);}
     });
     const pursuit = st.police.pursuit; police.visible = !menu && !!pursuit?.active && pursuit.distanceU < 250;
     updateNpcVehicleDamage(police,!menu&&pursuit?.active?pursuit:null);
@@ -434,18 +482,20 @@ export function attachRenderer(host, app) {
     effects.update({ p: pp, course, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now });
     const effectDt = st.paused ? 0 : dt;
     explosion.update(pp,st.combatWrecking?{...st,catastrophic:false}:st,effectDt);
-    combatEffects?.update({state:armoredField?st:null,course,dt:effectDt});
-    const measureCombatWarmup=armoredField&&!combatEffectsWarmupMeasured&&
+    crashPoseState=st;
+    combatEffects?.update({state:effectsField?st:null,course,dt:effectDt,
+      crashEnabled:crashEffectsEnabled,resolveCrashTyres});
+    const measureCombatWarmup=effectsField&&!combatEffectsWarmupMeasured&&
       combatEffects?.available;
     const combatWarmupStart=measureCombatWarmup?performance.now():0;
-    const useCombatAtlas=armoredField&&!!combatEffects?.prewarm(renderer,camera);
-    if(armoredField&&combatEffects?.resources.ready)combatEffectsPrepared=true;
+    const useCombatAtlas=effectsField&&!!combatEffects?.prewarm(renderer,camera);
+    if(effectsField&&combatEffects?.resources.ready)combatEffectsPrepared=true;
     if(measureCombatWarmup){
       host.dataset.combatEffectsWarmupMs=(performance.now()-combatWarmupStart).toFixed(2);
       combatEffectsWarmupMeasured=true;
     }
-    host.dataset.combatEffectsStatus=armoredField?useCombatAtlas?'ready':'fallback':'off';
-    if(armoredField&&!combatEffectsPrepared){
+    host.dataset.combatEffectsStatus=effectsField?useCombatAtlas?'ready':'fallback':'off';
+    if(effectsField&&!combatEffectsPrepared){
       host.dataset.combatEffectsStatus='loading';
       renderer.domElement.style.visibility='hidden';
       rearView.hide();frameMetrics.suspend();return;
@@ -555,7 +605,7 @@ export function attachRenderer(host, app) {
       return projectVehicleMarkers(camera, meshes);
     },
     dispose() {
-    if(disposed)return;disposed=true;lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;disposed=true;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);

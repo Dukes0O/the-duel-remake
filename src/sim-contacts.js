@@ -37,6 +37,15 @@ function emitRoadsideImpact(duel, impact) {
   if (bursts.length > COMBAT_TUNING.roadside.burstRecordLimit) bursts.shift();
 }
 
+function emitVehicleSmash(duel, {a, b, crash, zone}) {
+  if (!crash || crash.severityB === 'nudge' ||
+      a !== duel.state && b !== duel.state) return false;
+  duel.emit({vehicleSmash: {severity: crash.severityB,
+    dvMph: crash.result.b.dvMph, point: crash.result.point,
+    traffic: duel.state.traffic.includes(b), actor: b, zone}});
+  return true;
+}
+
 function combatShieldForActor(duel, actor) {
   const state = duel.state;
   if (actor === state) return state.combat?.shield;
@@ -78,6 +87,7 @@ function armoredVehicleContact(duel, {a,b,nx,nz,end,width,length,specA,specB,
       duel.state.mode==='wasteland'?CRASH_TUNING.armoredPlayerKnockDvMph:0});
     for(const actor of [a,b])if(actor!==duel.state)
       actor.ramRecoverySec=Math.max(actor.ramRecoverySec||0,response.recoverySeconds);
+    emitVehicleSmash(duel,{a,b,crash,zone:zoneB});
   }else{
     a.speedMph+=(response.speedDeltaA/(a.dir||1));
     b.speedMph+=(response.speedDeltaB/(b.dir||1));
@@ -640,10 +650,7 @@ export function _vehicleContact(a, b, reason) {
         armoredPlayer ? impactMph : playerDv, zone);
       else if (impactMph > 1) this._scrape(zone, impactMph);
     }
-    if (crash.severityB !== 'nudge' && (a === this.state || b === this.state))
-      this.emit({vehicleSmash: {severity: crash.severityB,
-        dvMph: crash.result.b.dvMph, point: crash.result.point,
-        traffic: this.state.traffic.includes(b)}});
+    emitVehicleSmash(this,{a,b,crash,zone:zoneB});
   }
   a.offRoad = !this._surface(a.s, a.lateral).mainRoad;
   b.offRoad = !this._surface(b.s, b.lateral).mainRoad;
