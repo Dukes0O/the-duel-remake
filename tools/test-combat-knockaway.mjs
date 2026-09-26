@@ -17,10 +17,11 @@ import { upgradedCar } from '../src/progression.js';
 const stageIndex = COURSE.findIndex(stage => !stage.kind && stage.hasRival);
 const zeroDamage = () => ({ front: 0, rear: 0, left: 0, right: 0 });
 
-function fixture({ mode = 'wasteland', legacy = false, wasteland2 = true } = {}) {
+function fixture({ mode = 'wasteland', legacy = false, wasteland2 = true,
+  crashPhysics = true } = {}) {
   const duel = new (legacy ? LegacyRoadsideDuel : Duel)({
     seed: 1989,
-    featureFlags: { wasteland2 },
+    featureFlags: { wasteland2, 'crash-physics': crashPhysics },
   });
   duel.startCampaign({ startStage: stageIndex, mode, car: 'falcone_f42' });
   const point = (s, lateral = 0) => ({ x: lateral, y: 0, z: s, heading: 0, curvature: 0 });
@@ -147,6 +148,8 @@ test('low closing speed shoves traffic visibly clear and leaves it there for the
   assert.equal(impact[0].outcome, 'knock');
   assert.equal(state.callout, 'TRAFFIC SHOVED CLEAR');
   const entrySpeed = state.speedMph, startLateral = traffic.lateral;
+  assert.ok(traffic.alive || traffic.wrecked || traffic.roadsideMotion?.visible,
+    'the physical roadside slide stays visible after leaving collision targeting');
   for (let i = 0; i < 120; i++) duel._traffic(1 / 120);
   assert.ok(Math.abs(traffic.lateral - startLateral) > 2,
     'the car itself moves clear of the occupied lane');
@@ -157,6 +160,12 @@ test('low closing speed shoves traffic visibly clear and leaves it there for the
   assert.equal(duel._vehicleContact(state, traffic, 'traffic'), false,
     'the same knocked car cannot be hit every frame');
   assert.equal(events.filter(event => event.roadsideImpact).length, 1);
+  assert.ok(traffic.wrecked, 'settled roadside traffic becomes a still wreck');
+  assert.deepEqual([
+    traffic.wrecked.lateralVelocity, traffic.wrecked.forwardVelocity,
+    traffic.wrecked.verticalVelocity, traffic.wrecked.spinVelocity,
+    traffic.wrecked.rollLimit,
+  ], [0, 0, 0, 0, 0], 'the parked wreck has no remaining motion or roll');
   assert.ok(entrySpeed < duel.car.topSpeed * .3 && entrySpeed > duel.car.topSpeed * .3 - 25);
   assert.equal(state.armor, armor);
   assert.deepEqual([state.stageCrashes, state.racePenaltySec], [crashes, penalty]);
@@ -189,6 +198,22 @@ test('outside clips and aligned rear hits send traffic to its nearest shoulder',
     assert.equal(duel._surface(traffic.s, traffic.lateral).road, false,
       `${name} cannot become a non-collidable ghost in another lane`);
   }
+});
+
+test('crash-physics off keeps both released scripted roadside traffic outcomes', () => {
+  const lowDuel = fixture({crashPhysics: false});
+  const low = trafficHit(lowDuel, lowDuel.car.topSpeed * .3);
+  assert.equal(low.events.find(event => event.roadsideImpact)?.roadsideImpact?.outcome, 'knock');
+  assert.equal(low.traffic.knock, undefined, 'switch-off low hit does not start rigid-body knock');
+  assert.equal(low.traffic.roadsideMotion?.outcome, 'knock',
+    'switch-off low hit keeps the released scripted roadside motion');
+
+  const highDuel = fixture({crashPhysics: false});
+  const high = trafficHit(highDuel, highDuel.car.topSpeed * .7);
+  assert.equal(high.events.find(event => event.roadsideImpact)?.roadsideImpact?.outcome, 'obliterate');
+  assert.equal(high.traffic.knock, undefined, 'switch-off hard hit does not start rigid-body knock');
+  assert.equal(high.traffic.roadsideMotion?.outcome, 'obliterate',
+    'switch-off hard hit keeps the released scripted obliteration motion');
 });
 
 test('high closing speed removes traffic after its burst and never costs player armor', () => {

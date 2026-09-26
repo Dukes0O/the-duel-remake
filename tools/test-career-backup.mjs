@@ -69,9 +69,13 @@ assert.equal(await backupBeforeMigration(old,backups),null,'no backup for unchan
 assert.equal(needsCareerMigration(memoryStorage({'the-duel-leaderboard-v1':'{"version":1,"entries":[]}'})),true,'orphaned records are copied before a new player registry is written');
 // CAR-01 must back up saves that already have valid discovery fields but lack
 // the new currency and territory shape. All storage here is memory-only.
-for (const missing of ['scrap', 'territories', 'territory-entry']) {
+for (const missing of ['scrap', 'territories', 'territory-entry', 'muddyHollow',
+  'muddy-hollow-hubcaps', 'muddy-hollow-discovered', 'muddy-hollow-finishes']) {
   const profile = {...createProfile(), raceSettings: {footCamera: 'first-person'}};
   if (missing === 'territory-entry') delete profile.wasteland.territories.sal;
+  else if (missing === 'muddy-hollow-hubcaps') delete profile.wasteland.muddyHollow.hubcaps;
+  else if (missing === 'muddy-hollow-discovered') delete profile.wasteland.muddyHollow.discovered;
+  else if (missing === 'muddy-hollow-finishes') delete profile.wasteland.muddyHollow.titanHighCountryFinishes;
   else delete profile.wasteland[missing];
   const source = memoryStorage({'the-duel-players-v2': JSON.stringify({
     version: 2, activePlayerId: 'phase-one',

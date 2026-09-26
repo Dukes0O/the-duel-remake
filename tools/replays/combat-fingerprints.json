@@ -4,14 +4,14 @@
   "stepHz": 120,
   "fingerprints": {
     "three-opponent-bolt-order": {
-      "30": "e5df3bbb963058aa303929bec8a3d681a8f3ea575222d99cab7abc2e6bd1a95b",
-      "60": "e5df3bbb963058aa303929bec8a3d681a8f3ea575222d99cab7abc2e6bd1a95b",
-      "144": "e5df3bbb963058aa303929bec8a3d681a8f3ea575222d99cab7abc2e6bd1a95b"
+      "30": "4d571677f171d4c19de2db72ad30af26a9d3be12e94ec33b496e06d3944663a8",
+      "60": "4d571677f171d4c19de2db72ad30af26a9d3be12e94ec33b496e06d3944663a8",
+      "144": "4d571677f171d4c19de2db72ad30af26a9d3be12e94ec33b496e06d3944663a8"
     },
     "rear-ram-wreck-recovery": {
-      "30": "698fd519951a67973e0c491d1e9b6ab9c1614baaf4b82d2bc778acbe4b1e53b6",
-      "60": "698fd519951a67973e0c491d1e9b6ab9c1614baaf4b82d2bc778acbe4b1e53b6",
-      "144": "698fd519951a67973e0c491d1e9b6ab9c1614baaf4b82d2bc778acbe4b1e53b6"
+      "30": "48d30867f637754a65e5f5aa96452d190ecb68df6d84c31da08fbba5902151bb",
+      "60": "48d30867f637754a65e5f5aa96452d190ecb68df6d84c31da08fbba5902151bb",
+      "144": "48d30867f637754a65e5f5aa96452d190ecb68df6d84c31da08fbba5902151bb"
     },
     "armor-and-weapon-crates": {
       "30": "411886f3bfe12c70a96e7a983b72e0a80b923965a374d7da906ca907be186aec",

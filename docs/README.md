@@ -31,6 +31,8 @@ choose which one to read; they do not override the spec or current board.
 | --- | --- |
 | Architecture and assets | [Architecture](ARCHITECTURE.md), [asset pipeline](ASSET_PIPELINE.md), [graphics](GRAPHICS_ITERATION.md), [performance](PERFORMANCE_PASS.md) |
 | Courses and driving | [Course expansion](COURSE_EXPANSION.md), [course access](COURSE_ACCESS.md), [route landforms](ROUTE_LANDFORMS.md), [shortcut pace](SHORTCUT_PACE_AUDIT.md), [physics](PHYSICS_EXPANSION.md), [freestyle](FREESTYLE_EXPANSION.md), [stunt trial](STUNT_TRIAL.md) |
+| Arena and warlords | [Scrapdome](SCRAPDOME.md): play design, architecture and the handoff cards |
+| Crashes and the Titan | [Crash physics](CRASH_PHYSICS.md), [Muddy Hollow](MUDDY_HOLLOW.md): the monster truck playground |
 | Career and vehicles | [Progression](PROGRESSION_V2.md), [unlocks](UNLOCK_VEHICLES.md), [classic vehicles](CLASSIC_VEHICLES.md), [drivers](DRIVERS.md), [ghosts](GHOSTS.md) |
 | Art and sound | [Wasteland art](WASTELAND_ART.md), [image prompts](IMAGE_PROMPTS.md), [coast showcase](COAST_SHOWCASE.md), [audio expansion](AUDIO_EXPANSION.md), [audio iteration](AUDIO_ITERATION.md) |
 

@@ -1,8 +1,12 @@
 import {DRIVE, LIVES} from './config.js';
 import {speedKph, formatSpeed} from './speed-format.js';
+import {arenaHud, arenaBoardMarkup} from './screen-arena.js';
+
+const escapeText = value => String(value).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 
 export function hudMarkup() {
   return `  <section id="race-hud" class="hud" aria-label="Race information" hidden><div class="race-progress"><i id="progress-fill"></i></div><div class="race-heading"><p class="eyebrow" id="stage-label"></p><h2 id="stage-name"></h2><p id="stage-objective"></p></div><div class="race-clock"><span id="race-time-label" class="field-label">RACE TIME</span><b id="race-time">00:00.00</b><span id="penalty-time"></span><div class="lap-readout"><b id="lap-number">LAP 1 / 2</b><span id="lap-time">00:00.00</span></div></div><div class="race-position"><span class="position-number"><b id="race-position">01</b><span id="position-total">/02</span></span><div><span class="field-label" id="gap-label">RIVAL BEHIND</span><b id="rival-gap">0.0 SEC</b></div></div>
+  <section id="arena-board" class="arena-board" aria-label="Scrapdome scoreboard" hidden><p class="arena-board-title"><span>SCRAPDOME</span><b id="arena-board-hunted"></b></p><ol id="arena-board-rows"></ol></section>
   <div class="route-hud"><div class="route-hud-top"><span class="field-label">CIRCUIT / LIVE</span><b id="route-percent">0%</b></div><div class="route-section"><span id="route-section"></span><b id="route-lap">1 / 2</b></div><canvas id="route-map" width="400" height="280" role="img" aria-label="Circuit map with your heading, race actors and shortcut branches"></canvas><div class="route-legend"><span><i class="player-dot"></i> YOU</span><span id="rival-legend"><i class="rival-dot"></i> RIVAL</span><span id="police-legend" hidden><i class="police-dot"></i> PATROL</span></div><div class="route-map-footer"><span id="arena-crush" class="arena-crush" role="status" hidden>CRUSHED 0 / 6</span><span id="shortcut-legend" class="shortcut-legend" hidden>SHORTCUTS <i class="shortcut-a"></i>A <span id="shortcut-b-legend"><i class="shortcut-b"></i>B</span></span><b id="route-remaining"></b></div></div><div class="race-health"><span class="field-label">CHASSIS INTEGRITY</span><span id="lives-display"></span><b id="damage-label">0 / 5 CRASHES</b><span id="radar-label">RADAR CLEAR</span><div id="radar-meter" class="radar-meter"><i id="radar-fill"></i></div></div>
   <div class="speedometer"><section id="jump-height-panel" class="jump-height" aria-label="Jump height above the ground" hidden><span id="jump-height-label" class="field-label">HEIGHT ABOVE GROUND</span><div class="jump-height-number"><b id="jump-height-value">0.0</b><span>m</span></div><span id="jump-height-peak" class="jump-height-peak">PEAK 0.0 m</span><span id="jump-distance" class="jump-distance">DISTANCE 0.0 m · 0.0 s</span></section><div class="speed-top"><div class="gear"><span class="field-label">GEAR</span><b id="gear-value">1</b></div><div class="speed"><b id="speed-value">000</b><span>km/h</span></div></div><div class="rpm-track"><i id="rpm-fill"></i></div><div class="rpm-labels"><span>0</span><span>RPM × 1000</span><span id="rpm-value">8</span></div><div class="boost-readout"><span class="field-label">NITRO</span><div class="boost-track"><i id="boost-fill"></i></div><kbd>SPACE</kbd></div><div class="speed-footer"><span id="camera-label">CHASE CAM</span><span><kbd>ESC</kbd> PAUSE</span></div></div><div id="style-score-panel" class="style-score"><b id="style-score">0000</b><span class="field-label">STYLE POINTS</span><span id="combo-label"></span></div><section id="drift-panel" class="drift-panel" aria-label="Drift trial score" hidden><div class="drift-score-row"><div><span>BANKED <small id="drift-target-label"></small></span><b id="drift-banked">0</b></div><div><span>LIVE CHAIN</span><b id="drift-chain">+0 <small id="drift-multiplier">×1.00</small></b></div></div><div class="drift-target-track"><i id="drift-target-fill"></i></div><p id="drift-notice" aria-live="polite">Straighten to bank your chain.</p></section>
   <section id="checkpoint-panel" class="drift-panel checkpoint-panel" aria-label="Checkpoint rush progress" hidden><div class="drift-score-row"><div><span>GATES PASSED</span><b id="checkpoint-passed">0 / 12</b></div><div><span>TIME LEFT</span><b id="checkpoint-time">00:00.00</b></div></div><div class="drift-target-track"><i id="checkpoint-target-fill"></i></div><p id="checkpoint-next">NEXT GATE 1 / 12</p><p id="checkpoint-notice" aria-live="polite">Each gate adds time.</p></section>
@@ -77,9 +81,9 @@ function updateHud(s) {
   const crash=s.crashFlash>0||s.impactTimer>0; ui['crash-flash'].hidden=!crash;
   const dirtCourse=!!app.duel.stageDef.offroad||!!app.duel.stageDef.arena;
   const trafficWreckCrash=crash&&s.combat&&s.calloutTimer>0&&s.callout?.startsWith('TRAFFIC WRECKED / IMPACT');
-  const callout=crash?(s.combatWrecking?'WRECKED / RECOVERING':s.catastrophic?'CATASTROPHIC IMPACT':trafficWreckCrash?s.callout:s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):s.calloutTimer>0?s.callout:s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
+  const callout=crash?(s.combatWrecking?'WRECKED / RECOVERING':s.catastrophic?'CATASTROPHIC IMPACT':trafficWreckCrash?s.callout:s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):s.calloutTimer>0?s.callout:s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel&&!s.arena?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
   ui['race-callout'].hidden=!callout||!!s.paused; text('callout-kicker',s.combatWrecking?'ARMOR GONE. RECOVERY IN PROGRESS.':s.catastrophic?'FIVE HITS. END OF THE ROAD.':crash?persistent?'THE CAR SURVIVES. THE CLOCK KEEPS RUNNING.':s.combat?'ARMOR HIT. AUTO RECOVERY.':hits===limit-1?'CHASSIS CRITICAL. NEXT CRASH ENDS RACE.':'SHAKE IT OFF. KEEP DRIVING.':s.boundaryWarning?'COURSE BOUNDARY · RESET AHEAD':s.preparedGravel?'KEEP YOUR LINE':s.offRoad?dirtCourse?'CONTROL THE SLIDE':'FIND THE TARMAC':s.boosting?'FULL SEND':'MAKE EVERY MOVE COUNT');text('callout-text',callout);ui['race-callout'].classList.toggle('crash-callout',crash);
-  ui.stage.classList.toggle('is-arena',!!app.duel.stageDef.arena);ui['arena-crush'].hidden=!app.duel.stageDef.arena;const crushed=Math.max(0,Math.floor(s.crushCount||0));text('arena-crush',app.duel.stageDef.practice?`CRUSHED ${crushed}`:`CRUSHED ${Math.min(6,crushed)} / 6`);
+  ui.stage.classList.toggle('is-arena',!!app.duel.stageDef.arena);ui['arena-crush'].hidden=!app.duel.stageDef.arena||!!s.arena;const crushed=Math.max(0,Math.floor(s.crushCount||0));text('arena-crush',app.duel.stageDef.practice?`CRUSHED ${crushed}`:`CRUSHED ${Math.min(6,crushed)} / 6`);
   text('route-section',section);text('route-lap',`${s.currentLap||s.lap||1} / ${app.duel.stageDef.laps||2}`);ui['police-legend'].hidden=!s.police?.pursuit?.active;ui['shortcut-legend'].hidden=!app.duel.course?.features.shortcuts.length;ui['shortcut-b-legend'].hidden=(app.duel.course?.features.shortcuts.length||0)<2;routeMap.update(app.duel.course,s);
   const practice=!!app.duel.stageDef.practice;
   ui.stage.classList.toggle('is-practice',practice);
@@ -93,6 +97,26 @@ function updateHud(s) {
     text('damage-label','PRACTICE · RECOVER AND KEEP DRIVING');
     if(crash)text('callout-kicker','RECOVER AND TRY AGAIN · NO RACE PENALTY');
     if(s.status==='countdown')text('countdown-word','EXPLORE THE PLAYGROUND');
+  }
+  const arena=arenaHud(s);
+  ui['arena-board'].hidden=!arena;
+  ui.stage.classList.toggle('is-scrapdome',!!arena);
+  if(arena){
+    // Scrapdome events replace laps, route progress and race position.
+    text('race-time-label',arena.timeLabel);text('race-time',time(arena.remainingSec));text('penalty-time','');
+    text('lap-number','LAST CAR ROLLING');text('lap-time',arena.scoreText);
+    text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||'medium').toUpperCase()} · SCRAPDOME`);
+    text('stage-objective','WRECK THEM MORE THAN THEY WRECK YOU');
+    text('route-percent','');text('route-remaining',arena.scoreText);text('route-lap','ARENA');text('route-section','THE SCRAPDOME');
+    ui['progress-fill'].style.transform=`scaleX(${clamp(1-arena.remainingSec/Math.max(1,s.arena.timeLimitSec))})`;
+    text('race-position',String(arena.place).padStart(2,'0'));text('position-total',`/${String(arena.field).padStart(2,'0')}`);
+    text('gap-label','PLACING');text('rival-gap',arena.leaderText);
+    ui['radar-label'].hidden=true;ui['radar-meter'].hidden=true;
+    text('arena-board-hunted',arena.huntedBy.length?`${arena.huntedBy.join(' + ')} HUNTING YOU`:'');
+    const rows=arenaBoardMarkup(arena,escapeText);
+    if(ui['arena-board-rows'].dataset.markup!==rows){ui['arena-board-rows'].dataset.markup=rows;ui['arena-board-rows'].innerHTML=rows;}
+    if(arena.respawnSec){text('callout-text','WRECKED');text('callout-kicker',`BACK IN THE FIGHT IN ${arena.respawnSec}`);}
+    if(s.status==='countdown')text('countdown-word',s.countdown>1?'SCRAPDOME':'WRECK THEM');
   }
 }
 

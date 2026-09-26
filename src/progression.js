@@ -140,8 +140,8 @@ export function normalizeProfile(value) {
   // Reward old, fully built garages on load, before validating the selected car.
   // A previously earned reward stays owned if the roster grows in a later update.
   profile = grantCompletionCars(profile);
-  profile.cosmetics = normalizeCosmetics(value.cosmetics);
   profile.wasteland = normalizeWasteland(value.wasteland, value.weapons, value.history);
+  profile.cosmetics = normalizeCosmetics(value.cosmetics, profile);
   profile.drivers = getDriverState({ ...profile, drivers: value.drivers });
   profile.courses = normalizeCourseAccess(value.courses, value);
   profile.raceSettings =
@@ -669,17 +669,23 @@ export function settleRace(profile, result = {}) {
   const pacificFinish = finished && result.mode === 'wasteland' &&
     stageEventId(result.stageIndex) === 'pacific-canyon' &&
     profile.wasteland?.version === 1;
+  const muddyHollowFinish = finished && result.muddyHollowEnabled === true &&
+    stageEventId(result.stageIndex) === 'high-country' && result.car === 'titan_monster' &&
+    profile.wasteland?.version === 1 && profile.wasteland.discoveredGate === true;
   const career = applyWastelandResult(profile.wasteland, result,
     stageEventId(result.stageIndex), {finished, won});
   const updated = {
     ...profile,
-    ...(notoriety || pacificFinish || career.wasteland !== profile.wasteland ? {wasteland: {
+    ...(notoriety || pacificFinish || muddyHollowFinish || career.wasteland !== profile.wasteland ? {wasteland: {
       ...career.wasteland,
       ...(notoriety ? {xp: totalXp, rank: notorietyRank,
         settledResults: [...(profile.wasteland.settledResults || []), key].slice(-1000)} : {}),
       ...(pacificFinish ? {
         pacificFinishes: Math.min(10, integer(profile.wasteland.pacificFinishes, 10) + 1),
       } : {}),
+      ...(muddyHollowFinish ? {muddyHollow: {...profile.wasteland.muddyHollow,
+        titanHighCountryFinishes: Math.min(5,
+          integer(profile.wasteland.muddyHollow?.titanHighCountryFinishes, 5) + 1)}} : {}),
     }} : {}),
     credits: balance,
     winStreak: separateCareer ? profile.winStreak : streak,

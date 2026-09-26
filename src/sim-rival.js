@@ -7,6 +7,7 @@ import { vehicleContactEnvelope, planNpcYield } from './npc-yielding.js';
 import { clamp, freshDamageZones } from './sim-common.js';
 import {completeCombatRecovery} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {stepKnock} from './vehicle-knock.js';
 import {trafficSpeedNearFighter, opponentFighterIntent} from './onfoot-race.js';
 
 export function _npcYield(actor, targetMph, plannedHeading = actor.headingError || 0) {
@@ -48,6 +49,12 @@ export function _spawnTraffic(idx) {
 export function _traffic(dt) {
   const s = this.state;
   for (const c of s.traffic) {
+    // A knocked car slides and spins until its tyres bite (docs/CRASH_PHYSICS.md).
+    if (this.featureFlags?.enabled('crash-physics') === true && c.knock) {
+      stepKnock(this, c, dt);
+      this._staticContacts(c, false); this._boundary(c);
+      continue;
+    }
     if (c.roadsideMotion) { stepRoadsideTraffic(c, dt); continue; }
     if (c.wrecked) { stepTrafficWreck(c, dt); continue; }
     if (!c.alive || c.crushed) continue;
@@ -92,6 +99,12 @@ export function _rival(dt, opponent = this.state.rival) {
     return;
   }
   if (r.crushed) return;
+  if (this.featureFlags?.enabled('crash-physics') === true && r.knock) {
+    stepKnock(this, r, dt);
+    this._staticContacts(r, false); this._boundary(r);
+    if (!r.finished) this._advanceLaps(r, dt);
+    return;
+  }
   r.prevS = r.s; r.prevLateral = r.lateral;
   r.prevAirHeight = r.airHeight || 0;
   if (r.finished) {

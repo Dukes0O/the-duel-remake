@@ -4,7 +4,7 @@ const cameras = Object.fromEntries(Object.entries(CAMERA_KEYS).map(([key, mode])
 const carKeyboard = Object.freeze({
   Escape: 'pause', KeyP: 'pause', ...cameras,
   Digit1: 'weapon:ufo', Digit2: 'weapon:bomb', Digit3: 'weapon:crossbow', Digit4: 'weapon:star',
-  KeyM: 'mute', KeyR: 'restart', KeyE: 'shift-up', KeyQ: 'shift-down',
+  KeyM: 'mute', KeyE: 'shift-up', KeyQ: 'shift-down',
 });
 const carGamepad = Object.freeze([
   [9, 'pause'], [3, 'camera-cycle'], [5, 'shift-up'], [4, 'shift-down'],
@@ -26,7 +26,7 @@ export const INPUT_CONTEXTS = Object.freeze({
   menu: Object.freeze({ keyboard: Object.freeze({ Escape: 'menu-back', KeyM: 'mute', ...cameras }),
     gamepad: Object.freeze([[1, 'menu-back'], [0, 'menu-confirm'], [3, 'camera-cycle']]), held: Object.freeze({}) }),
   foot: Object.freeze({ keyboard: Object.freeze({ Escape: 'pause', KeyP: 'pause', KeyF: 'enter-car',
-    Space: 'jump', KeyC: 'foot-camera-cycle', Digit1: 'gear:1', Digit2: 'gear:2', Digit3: 'gear:3', KeyR: 'restart' }),
+    Space: 'jump', KeyC: 'foot-camera-cycle', Digit1: 'gear:1', Digit2: 'gear:2', Digit3: 'gear:3' }),
     gamepad: Object.freeze([[9, 'pause'], [2, 'enter-car'], [0, 'jump'], [7, 'fire'], [6, 'aim'],
       [12, 'gear:1'], [15, 'gear:2'], [13, 'gear:3']]),
     held: Object.freeze({ forward: Object.freeze(['KeyW']), back: Object.freeze(['KeyS']),

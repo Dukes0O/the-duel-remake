@@ -3,6 +3,7 @@ import {sweepObstacle} from './collision.js';
 import {CARS, DRIVE} from './config.js';
 import {makeRng} from './rng.js';
 import {WEAPONS, CPU_COMBAT, COMBAT_TUNING} from './wasteland-tuning.js';
+import {arenaTargetOf, combatOwnerId} from './combat-teams.js';
 
 export {WEAPONS};
 const T = COMBAT_TUNING;
@@ -80,11 +81,41 @@ function relocate(actor, pose) {
   actor.tumble = null;
 }
 
+// In the Scrapdome the UFO is a hop straight ahead (docs/SCRAPDOME.md): no
+// laps or gates to respect, so its only limit is its recharge, and it must
+// land on the floor clear of cars and junk.
+function arenaUfoDestination(duel, actor, level) {
+  const state = duel.state, course = duel.course, fromS = actor.s;
+  const at = course.worldAt(actor.s, actor.lateral);
+  const heading = course.at(actor.s).heading + (actor.headingError || 0);
+  const limit = (course.def.scrapdome?.floorHalfWidth ?? course.roadHalfWidthAt(fromS)) - T.ufo.arenaWallMargin;
+  const requested = T.ufo.baseDistance + T.ufo.distancePerLevel * level;
+  const spec = duel._vehicleSpec(actor);
+  const others = [state, ...state.opponents].filter(other => other !== actor && !other.combatWrecking);
+  for (let distance = requested; distance >= T.ufo.scanStep; distance -= T.ufo.scanStep) {
+    const x = at.x + Math.sin(heading) * distance, z = at.z + Math.cos(heading) * distance;
+    const pose = course.nearest(x, z, actor.s);
+    if (Math.abs(pose.lateral) > limit) continue;
+    if (others.some(other => {
+      const p = course.worldAt(other.s, other.lateral);
+      return Math.hypot(p.x - x, p.z - z) < T.ufo.landingRadius;
+    })) continue;
+    const landing = course.worldAt(pose.s, pose.lateral);
+    if (duel._obstacles(pose.s - T.ufo.obstacleReach, pose.s + T.ufo.obstacleReach)
+      .some(obstacle => sweepObstacle(landing, landing, obstacle, heading, spec))) continue;
+    const turn = heading - course.at(pose.s).heading;
+    return {kind: 'jump', fromS, toS: pose.s, lateral: pose.lateral, gainMeters: distance,
+      headingError: Math.atan2(Math.sin(turn), Math.cos(turn)), arena: true};
+  }
+  return {kind: 'blocked', reason: 'landing', fromS, toS: fromS, gainMeters: 0};
+}
+
 export function ufoDestination(duel, actor = duel.state) {
   const state = duel.state;
   const combat = state.combat;
   const player = actor === state;
   const level = player ? combat?.levels.ufo || 0 : 0;
+  if (state.arena) return arenaUfoDestination(duel, actor, level);
   const usedLaps = player ? combat?.ufoUsedLaps : actor.ufoUsedLaps;
   const fromS = actor.s;
   const blocked = reason => ({kind: 'blocked', reason, fromS, toS: fromS, gainMeters: 0});
@@ -136,9 +167,10 @@ function fireCpuUfo(duel, actor, departure) {
 
   // Only a successful physical landing spends this rival's collected charge.
   actor.ufoUsedLaps ??= [];
-  actor.ufoUsedLaps[actor.completedLaps] = true;
+  if (!destination.arena) actor.ufoUsedLaps[actor.completedLaps] = true;
   charges.ufo--;
-  relocate(actor, {s: destination.toS, lateral: destination.lateral});
+  relocate(actor, {s: destination.toS, lateral: destination.lateral,
+    ...(destination.arena ? {headingError: destination.headingError} : {})});
   Object.assign(actor, {
     prevAirHeight: 0, prevGroundHeight: null, _ramVerticalSpeed: null,
     airDistance: 0, airTime: 0, ramRecoverySec: 0, drifting: false,
@@ -168,7 +200,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   if (state.onFoot && !enemy) return false;
   const combat = state.combat;
   const actor = enemy ? cpuActor : state;
-  const target = enemy ? state : state.opponents.length > 1
+  const target = enemy ? (state.arena ? arenaTargetOf(duel, cpuActor) : state) : state.opponents.length > 1
     ? state.opponents.filter(opponent => !opponent.finished && !opponent.crushed &&
         !opponent.combatWrecking)
       .reduce((closest, opponent) =>
@@ -193,8 +225,9 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         'UFO / NO SAFE LANDING', T.ufo.calloutSeconds);
       return false;
     }
-    combat.ufoUsedLaps[state.completedLaps] = true;
-    relocate(state, {s: destination.toS, lateral: destination.lateral});
+    if (!destination.arena) combat.ufoUsedLaps[state.completedLaps] = true;
+    relocate(state, {s: destination.toS, lateral: destination.lateral,
+      ...(destination.arena ? {headingError: destination.headingError} : {})});
     const surface = duel._drivingSurface(state.s, state.lateral, duel.car);
     state.speedMph = Math.sign(state.speedMph) *
       Math.min(Math.abs(state.speedMph), surface.speedLimit);
@@ -202,7 +235,8 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
     state.routeLap = state.routeId ? state.completedLaps + 1 : null;
     state.assistedLaps ??= (state.lapTimes || []).map(() => false);
     state.assistedLap = true;
-    duel._callout(`UFO / JUMP +${Math.round(destination.gainMeters)} m TO ${Math.round(destination.toS)} m`,
+    duel._callout(destination.arena ? `UFO / HOP ${Math.round(destination.gainMeters)} m` :
+      `UFO / JUMP +${Math.round(destination.gainMeters)} m TO ${Math.round(destination.toS)} m`,
       T.ufo.calloutSeconds);
     combat.lastUfo = {...destination};
     combat.shield = Math.max(combat.shield, T.ufo.invulnerability);
@@ -281,11 +315,13 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         vz: dz * speed + carryZ,
         vy, age: 0,
         ...(modernProjectile && weapon === 'crossbow' ? {
-          targetIndex: enemy ? -1 : state.opponents.indexOf(target),
+          targetIndex: enemy ? (state.arena && target !== state ? state.opponents.indexOf(target) : -1)
+            : state.opponents.indexOf(target),
           launchBearing: Math.atan2(dx * speed + carryX, dz * speed + carryZ),
           ...(enemy ? {aimBias} : {}),
         } : {}),
         ...(enemy && actor !== state.rival ? {sourceIndex: state.opponents.indexOf(actor)} : {}),
+        ...(state.arena ? {ownerId: combatOwnerId(duel, actor)} : {}),
       });
     }
   }

@@ -33,6 +33,10 @@ const canyonDef=COURSE.find(def=>def.id==='pacific-canyon');
 const ordinaryCanyon=new Course(canyonDef,1989),hiddenCanyon=new Course(canyonDef,1989,{hiddenRoad:true});
 check(environmentKey(ordinaryCanyon)!==environmentKey(hiddenCanyon),'an ordinary menu world cannot satisfy a Hidden Road race');
 check(environmentKey(hiddenCanyon)===environmentKey(new Course(canyonDef,1989,{hiddenRoad:true})),'equivalent Hidden Road courses reuse the same world');
+const highCountryDef=COURSE.find(def=>def.id==='high-country');
+const ordinaryHighCountry=new Course(highCountryDef,1989),muddyHighCountry=new Course(highCountryDef,1989,{muddyHollow:true});
+check(environmentKey(ordinaryHighCountry)!==environmentKey(muddyHighCountry),'an ordinary High Country world cannot satisfy a Muddy Hollow race');
+check(environmentKey(muddyHighCountry)===environmentKey(new Course(highCountryDef,1989,{muddyHollow:true})),'equivalent Muddy Hollow courses reuse the same world');
 {
   const ray = new THREE.Raycaster(), down = new THREE.Vector3(0,-1,0);
   let roadClear = true;

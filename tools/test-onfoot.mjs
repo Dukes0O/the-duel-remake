@@ -67,12 +67,14 @@ test('jump peaks near 1.1 m, lands, and held jump does not repeat', () => {
 test('real roadside barrier is solid and allows a tangent slide', () => {
   const car = {s: 172, lateral: 0};
   const fighter = createFighter(pacific, car, {s: 172, lateral: 0});
-  advance(pacific, car, fighter, {right: true, sprint: true}, 240);
+  // The barrier is on the fighter's left (A) since the strafe fix; before it,
+  // D walked there because strafing was mirrored on screen.
+  advance(pacific, car, fighter, {left: true, sprint: true}, 240);
   assert.ok(fighter.contacts > 0, 'roadside furniture catches the fighter');
   assert.ok(fighter.lateral > 8 && fighter.lateral < 9.1,
     'fighter stays on the near side of the barrier');
   const before = fighter.s;
-  advance(pacific, car, fighter, {forward: true, right: true}, 120);
+  advance(pacific, car, fighter, {forward: true, left: true}, 120);
   assert.ok(fighter.s > before + 1, 'fighter can slide along the barrier');
 });
 
@@ -80,13 +82,13 @@ test('slopes over 40 degrees and water block movement', () => {
   const car = {s: 0, lateral: 0};
   const steep = flatCourse({grade: 1});
   const fighter = createFighter(steep, car, {s: 0, lateral: 0});
-  stepFighter(steep, car, fighter, {right: true});
+  stepFighter(steep, car, fighter, {left: true});
   assert.equal(fighter.lateral, 0);
   assert.equal(fighter.slopeStops, 1);
 
   const gentle = flatCourse({grade: .5});
   const walker = createFighter(gentle, car, {s: 0, lateral: 0});
-  stepFighter(gentle, car, walker, {right: true});
+  stepFighter(gentle, car, walker, {left: true});
   assert.ok(walker.lateral > 0);
   close(walker.y, walker.lateral * .5, 'gentle uphill ground', 1e-9);
 

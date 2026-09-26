@@ -6,6 +6,7 @@ import {createLeaderboardScreen} from './screen-leaderboard.js';
 import {createGarageScreen, handleDriverAction, handleGarageUpgrade} from './screen-garage.js';
 import {createArmoryScreen} from './screen-armory.js';
 import {yardHomeScreen} from './screen-yard-home.js';
+import {arenaYardPanel} from './screen-arena.js';
 import {crewPanel} from './crew-ui.js';
 import {CREW} from './crew.js';
 import {courseScreen, createCourseActions} from './screen-courses.js';
@@ -21,6 +22,7 @@ import './screen-leaderboard.css';
 import './screen-garage.css';
 import './screen-armory.css';
 import './screen-yard-home.css';
+import './screen-arena.css';
 import './screen-territory.css';
 import './crew-ui.css';
 import './screen-courses.css';
@@ -49,7 +51,7 @@ const arrow = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="
 const sound = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5ZM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>';
 const choices = app.getRaceChoices();
 let uiDisposed=false,lastScreen, garageOpen = false, armoryOpen = false, garageCar = choices.car, armoryCar = choices.car, garageMessage = '', playersOpen=false,playerMessage='',backupMessage='',leaderboardOpen=false;
-let coursesOpen=false,courseMessage='',yardPanel='home';
+let coursesOpen=false,courseMessage='',yardPanel='home',arenaOpponents=3;
 const domEvents=new AbortController();
 const boardFilter={stage:choices.startStage,car:'',driverId:getEquippedDriverId(app.profile)};
 const profile = () => app.profile || createProfile();
@@ -147,6 +149,7 @@ function openYardPanel(panel){
 root.addEventListener('click',e => {
   const button = e.target.closest('button,[data-action]'); if (!button) return;
   if(courseActions.handle(button))return;
+  if(button.dataset.arenaOpponents){arenaOpponents=Math.max(1,Math.min(3,Number(button.dataset.arenaOpponents)||3));lastScreen=null;renderState(app.duel.state);root.querySelector(`[data-arena-opponents="${arenaOpponents}"]`)?.focus({preventScroll:true});return;}
   if(button.dataset.routeVariant){if(app.setRouteVariant(button.dataset.routeVariant))updateMenuScene();return;}
   if(button.dataset.challenge!=null){const stageIndex=Number(button.dataset.challenge);if(!isCourseUnlocked(profile(),stageIndex)){garageOpen=false;coursesOpen=true;courseMessage='Unlock the recommended course here, then select it.';lastScreen=null;renderState(app.duel.state);return;}choices.startStage=stageIndex;updateMenuScene();closeGarage();return;}
   if (button.dataset.garageCar) { garageCar = button.dataset.garageCar; app.menuCar = garageCar; garageMessage = ''; lastScreen = null; renderState(app.duel.state); return; }
@@ -176,6 +179,10 @@ root.addEventListener('click',e => {
     case 'yard-territory': openYardPanel('territory'); return;
     case 'yard-armory': openYardPanel('armory'); return;
     case 'yard-crew': openYardPanel('crew'); return;
+    case 'yard-scrapdome': if(app.arenaAvailable?.())openYardPanel('scrapdome'); return;
+    case 'arena-start': if(app.startArenaEvent({opponents:arenaOpponents})){yardPanel='home';lastScreen=null;} return;
+    case 'arena-rematch': if(app.startArenaEvent({opponents:arenaOpponents}))lastScreen=null; return;
+    case 'arena-yard': if(app.returnToYard())lastScreen=null; return;
     case 'yard-home': openYardPanel('home'); return;
     case 'yard-menu': if(app.isYardHomeActive()){yardPanel='home';app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);} return;
     case 'wasteland-visit': if(app.duel.state.status!=='menu'||!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu)return;armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;app.visitWasteland();lastScreen=null;break;
@@ -284,7 +291,7 @@ function renderState(s) {
   ui.overlay.dataset.status=s.status; ui.overlay.dataset.paused=String(!!s.paused); ui.overlay.dataset.audioState=app.audio?.context?.state||'locked'; ui.overlay.dataset.muted=String(!!app.audio?.muted);
   ui.overlay.dataset.audioSamples=app.audio.sampleStatus;ui.overlay.dataset.majorCrashes=String(s.majorCrashes);ui.overlay.dataset.catastrophic=String(s.catastrophic);
   const showImpact = s.status === 'gameover' && s.impactTimer > 0;
-  const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${yardActive}:${yardPanel}:${yardActive?profile().wasteland?.scrap:''}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
+  const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${yardActive}:${yardPanel}:${arenaOpponents}:${yardActive?profile().wasteland?.scrap:''}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
   if (screen!==lastScreen) {
     const focused=document.activeElement;
     const focusKey=focused?.dataset?.action?['action',focused.dataset.action]:
@@ -293,7 +300,7 @@ function renderState(s) {
       focused?.dataset?.crewSelect?['crewSelect',focused.dataset.crewSelect]:null;
     lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu);ui.stage.classList.toggle('yard-home-active',yardActive); ui['menu-screen'].hidden=!menu; ui['race-hud'].hidden=menu||yardActive; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu||yardActive;});
     ui['garage-open'].hidden = !menu;root.querySelector('#armory-open').hidden=!menu;
-    const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
+    const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({opponents:arenaOpponents,difficulty:app.cpuDifficulty}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
     if(menu&&garageOpen&&app.wastelandUnlocked())
       ui['modal-layer'].querySelector('.driver-panel')?.insertAdjacentHTML(
         'afterend',crewPanel(profile(),escapeHTML));

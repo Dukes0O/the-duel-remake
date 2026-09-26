@@ -10,7 +10,10 @@ import { breakableScenery, roadsideScenery, roadsideSpeedCost, roadsideTrafficDe
   trafficDestruction, startRoadsideTraffic, startTrafficWreck } from './destructibles.js';
 import { GLANCING_WALL_NORMAL_FRACTION, clamp, freshDamageZones } from './sim-common.js';
 import {applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled} from './combat-armor.js';
+import {combatOwnerId} from './combat-teams.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {KNOCK, resolveCarCrash} from './vehicle-knock.js';
+import {CRASH_TUNING} from './vehicle-collision.js';
 import {upgradedCar} from './progression.js';
 import {applyDriverModifiers} from './drivers.js';
 
@@ -66,23 +69,34 @@ function armoredVehicleContact(duel, {a,b,nx,nz,end,width,length,specA,specB,
     massB:specB.mass,normalX:nx,normalZ:nz,speedA:a.speedMph,
     speedB:b.speedMph,zoneA,zoneB,offset:b.lateral-a.lateral,
     steerA:a.input?.steer||0,steerB:b.input?.steer||0});
-  a.speedMph+=(response.speedDeltaA/(a.dir||1));
-  b.speedMph+=(response.speedDeltaB/(b.dir||1));
-  a.pushVelocity=clamp((a.pushVelocity||0)+response.pushDeltaA,-32,32);
-  b.pushVelocity=clamp((b.pushVelocity||0)+response.pushDeltaB,-32,32);
-  if(response.shovelFromB){
-    a.headingError=clamp((a.headingError||0)+Math.sign(response.shovelFromB)*
-      Math.min(.3,Math.abs(response.shovelFromB)*.014),-.8,.8);
-    a.ramRecoverySec=Math.max(a.ramRecoverySec||0,response.recoverySeconds);
-  }
-  if(response.shovelFromA){
-    b.headingError=clamp((b.headingError||0)+Math.sign(response.shovelFromA)*
-      Math.min(.3,Math.abs(response.shovelFromA)*.014),-.8,.8);
-    b.ramRecoverySec=Math.max(b.ramRecoverySec||0,response.recoverySeconds);
-  }
-  for(const [actor,launch] of [[a,response.launchA],[b,response.launchB]])if(launch>0){
-    actor._ramVerticalSpeed=Math.max(actor._ramVerticalSpeed||0,launch);
-    actor.airborne=true;actor.airHeight=Math.max(actor.airHeight||0,.03);
+  const crashPhysics=duel.featureFlags?.enabled('crash-physics')===true;
+  let crash=null;
+  if(crashPhysics){
+    // Motion comes from the rigid-body solver (docs/CRASH_PHYSICS.md); the
+    // ram response still sets the computer's recovery timing and ram cadence.
+    crash=resolveCarCrash(duel,a,b,{playerKnockMinDvMph:
+      duel.state.mode==='wasteland'?CRASH_TUNING.armoredPlayerKnockDvMph:0});
+    for(const actor of [a,b])if(actor!==duel.state)
+      actor.ramRecoverySec=Math.max(actor.ramRecoverySec||0,response.recoverySeconds);
+  }else{
+    a.speedMph+=(response.speedDeltaA/(a.dir||1));
+    b.speedMph+=(response.speedDeltaB/(b.dir||1));
+    a.pushVelocity=clamp((a.pushVelocity||0)+response.pushDeltaA,-32,32);
+    b.pushVelocity=clamp((b.pushVelocity||0)+response.pushDeltaB,-32,32);
+    if(response.shovelFromB){
+      a.headingError=clamp((a.headingError||0)+Math.sign(response.shovelFromB)*
+        Math.min(.3,Math.abs(response.shovelFromB)*.014),-.8,.8);
+      a.ramRecoverySec=Math.max(a.ramRecoverySec||0,response.recoverySeconds);
+    }
+    if(response.shovelFromA){
+      b.headingError=clamp((b.headingError||0)+Math.sign(response.shovelFromA)*
+        Math.min(.3,Math.abs(response.shovelFromA)*.014),-.8,.8);
+      b.ramRecoverySec=Math.max(b.ramRecoverySec||0,response.recoverySeconds);
+    }
+    for(const [actor,launch] of [[a,response.launchA],[b,response.launchB]])if(launch>0){
+      actor._ramVerticalSpeed=Math.max(actor._ramVerticalSpeed||0,launch);
+      actor.airborne=true;actor.airHeight=Math.max(actor.airHeight||0,.03);
+    }
   }
   b.contactCooldown=Math.max(b.contactCooldown||0,.8);
   if(a===duel.state&&duel.state.invulnerableSec<=0&&impactMph>1)
@@ -99,7 +113,7 @@ function armoredVehicleContact(duel, {a,b,nx,nz,end,width,length,specA,specB,
       const victimIndex=victim===duel.state?-1:duel.state.opponents.indexOf(victim);
       const spiked=combatFrontSpikes(attacker,face);
       const armorRemoved=applyRamArmorDamage(duel,victim,impactMph,
-        {spiked,owner:attacker===duel.state?'player':'cpu'});
+        {spiked,owner:combatOwnerId(duel,attacker)});
       duel.emit({combatRamHit:true,attacker:attackerIndex<0?'player':'rival',
         victim:victimIndex<0?'player':'rival',attackerIndex,victimIndex,
         armorRemoved,closingKph,spiked,hitPosition});
@@ -109,7 +123,8 @@ function armoredVehicleContact(duel, {a,b,nx,nz,end,width,length,specA,specB,
   }
   if(a===duel.state&&duel.state.opponents.includes(b)&&zoneA==='front'&&zoneB==='rear')
     duel.emit({vehicleRam:true,victim:'rival',impactMph,
-      lateralKick:response.shovelFromA,launched:response.launchB>0});
+      lateralKick:response.shovelFromA,
+      launched:crashPhysics?crash.severityB==='launched':response.launchB>0});
   return true;
 }
 
@@ -160,11 +175,23 @@ export function _collisions() {
 
 export function _obstacles(fromS, toS) {
   if (this.course.obstaclesNear) {
-    if (this._obstacleArray !== this.course.features.obstacles) { this._obstacleArray = this.course.features.obstacles; this._obstacleQueryCache.clear(); }
+    const hollowObstacles = this.course.muddyHollow?.obstacles;
+    if (this._obstacleArray !== this.course.features.obstacles ||
+        this._muddyHollowObstacleArray !== hollowObstacles) {
+      this._obstacleArray = this.course.features.obstacles;
+      this._muddyHollowObstacleArray = hollowObstacles;
+      this._obstacleQueryCache.clear();
+    }
     const first = Math.floor((Math.min(fromS, toS) - 10) / 64), last = Math.floor((Math.max(fromS, toS) + 10) / 64), key = `${first}:${last}`;
-    if (!this._obstacleQueryCache.has(key)) this._obstacleQueryCache.set(key, this.course.obstaclesNear(fromS, toS)
-      .filter(obstacle => !this._brokenSceneryIds?.has(sceneryIdentity(obstacle)) &&
+    if (!this._obstacleQueryCache.has(key)) {
+      const obstacles = this.course.obstaclesNear(fromS, toS);
+      if (this.course.muddyHollow?.obstaclesNear)
+        obstacles.push(...this.course.muddyHollow.obstaclesNear(
+          first * 64, (last + 1) * 64));
+      this._obstacleQueryCache.set(key, obstacles.filter(obstacle =>
+        !this._brokenSceneryIds?.has(sceneryIdentity(obstacle)) &&
         !(this.roadsideKnockAwayEnabled() && this._fallenCactusIds?.has(obstacle.id))));
+    }
     return this._obstacleQueryCache.get(key);
   }
   // Keeps older exported courses usable while they acquire world colliders.
@@ -186,7 +213,8 @@ export function _supportAt(distance, lateral, actor = this.state) {
   const ground = this.course.groundAt(distance, lateral);
   const capability = actor === this.state ? offroadCapability(this.car) : null;
   if (!capability) return ground;
-  if (this.course.features.mountains?.length) {
+  const inMuddyHollow = this.course.muddyHollow?.contains(ground.x, ground.z);
+  if (!inMuddyHollow && this.course.features.mountains?.length) {
     const mountain = sampleMountainSupport(this.course, ground.x, ground.z);
     if (mountain != null) ground.y = Math.max(ground.y, mountain);
   }
@@ -433,7 +461,9 @@ export function _vehicleContact(a, b, reason) {
   const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
   if (armoredPair) return armoredVehicleContact(this,{a,b,nx,nz,end,width,length,
     specA,specB,impactMph,zoneA:zone,zoneB,pairKey});
+  const crashPhysics = this.featureFlags?.enabled('crash-physics') === true;
   if (this.roadsideKnockAwayEnabled() && this.state.traffic.includes(b) &&
+      (!crashPhysics || !b.knock) &&
       (a === this.state || this.state.opponents.includes(a)) &&
       impactMph >= COMBAT_TUNING.roadside.minimumImpactMph) {
     const topSpeedMph = roadsideTopSpeedMph(this, a);
@@ -444,11 +474,36 @@ export function _vehicleContact(a, b, reason) {
     const side = Math.sign(b.lateral) || Math.sign(b.lateral - a.lateral) ||
       Math.sign(nx) || 1;
     const roadHalfWidth = this.course.roadHalfWidthAt?.(b.s) ?? 7;
-    const clearLateral = Math.max(Math.abs(b.lateral) +
-      COMBAT_TUNING.roadside.trafficKnockDistance,
-      roadHalfWidth + specB.halfWidth + .5);
-    if (startRoadsideTraffic(b, {atTime: this.state.stageTimeSec,
-      outcome, side, impactMph, targetLateral: side * clearLateral})) {
+    const clearLateral = crashPhysics ? roadHalfWidth + specB.halfWidth + .5 :
+      Math.max(Math.abs(b.lateral) + COMBAT_TUNING.roadside.trafficKnockDistance,
+        roadHalfWidth + specB.halfWidth + .5);
+    // A shove is physical: the traffic car slides and spins by the solver.
+    // The attacker keeps the approved roadside rule (a small speed cost, no
+    // armor or crash). An obliteration keeps its scripted burst and debris.
+    const knocked = crashPhysics && outcome === 'knock' && !b.knock && !b.wrecked;
+    if (knocked) {
+      resolveCarCrash(this, a, b, {onlyB: true, wreckTrafficAt: [], forceKnock: true});
+      if (b.knock) {
+        const frame = this.course.at(b.s);
+        const shoulderSpeed = Math.sqrt(2 * KNOCK.slideDecel *
+          Math.max(0, clearLateral - Math.abs(b.lateral))) + 1;
+        const lateralSpeed = b.knock.vx * Math.cos(frame.heading) -
+          b.knock.vz * Math.sin(frame.heading);
+        if (lateralSpeed * side < shoulderSpeed) {
+          const delta = side * shoulderSpeed - lateralSpeed;
+          b.knock.vx += Math.cos(frame.heading) * delta;
+          b.knock.vz -= Math.sin(frame.heading) * delta;
+        }
+        b.knock.roadside = {side};
+        b.roadsideMotion = {visible: true};
+        b.alive = false;
+      }
+    }
+    let roadsideStarted = knocked;
+    if (!roadsideStarted && (!crashPhysics || outcome !== 'knock'))
+      roadsideStarted = startRoadsideTraffic(b, {atTime: this.state.stageTimeSec,
+        outcome, side, impactMph, targetLateral: side * clearLateral});
+    if (roadsideStarted) {
       a.speedMph = Math.sign(a.speedMph) * Math.max(0,
         Math.abs(a.speedMph) - roadsideSpeedCost(impactMph));
       const pointA = this.course.groundAt(a.s, a.lateral);
@@ -475,8 +530,12 @@ export function _vehicleContact(a, b, reason) {
   if (armoredPlayer && this.state.traffic.includes(b)) {
     const wreck = trafficDestruction({ enabled: this.destructionEnabled(), mode: this.state.mode,
       impactMph, playerTopSpeedMph: this.car.topSpeed, playerMass: specA.mass, targetMass: specB.mass });
-    if (wreck.wreck && startTrafficWreck(b, { atTime: this.state.stageTimeSec,
-      impulse: wreck.impulse, side: Math.sign(b.lateral - a.lateral) || Math.sign(nx) || 1 })) {
+    const wreckStarted = wreck.wreck && (crashPhysics ?
+      !b.wrecked && (resolveCarCrash(this, a, b, {onlyB: true,
+        wreckTrafficAt: ['nudge', 'knocked', 'smashed', 'launched']}), b.wrecked) :
+      startTrafficWreck(b, {atTime: this.state.stageTimeSec, impulse: wreck.impulse,
+        side: Math.sign(b.lateral - a.lateral) || Math.sign(nx) || 1}));
+    if (wreckStarted) {
       // Wrecking the lighter car does not make an extreme head-on hit safe
       // for the attacker. Both outcomes use the same closing-speed measure.
       const crashesBefore = a.stageCrashes, penaltyBefore = a.racePenaltySec;
@@ -510,43 +569,81 @@ export function _vehicleContact(a, b, reason) {
   const shareA = specB.mass / (specA.mass + specB.mass), shareB = 1 - shareA;
   a.lateral += nx * correction * shareA; b.lateral -= nx * correction * shareB;
   a.s += nz * correction * shareA; b.s -= nz * correction * shareB;
-  if (nx) {
-    const shove = clamp(2.5 + impactMph * DRIVE.mphToWorld * .62, 2.5, armoredPlayer ? 28 : 13);
-    const pushLimit = armoredPlayer ? 32 : 16;
-    a.pushVelocity = clamp((a.pushVelocity || 0) + nx * shove * .6 * shareA, -pushLimit, pushLimit);
-    b.pushVelocity = clamp((b.pushVelocity || 0) - nx * shove * 2 * shareB, -pushLimit, pushLimit);
-    b.headingError = clamp((b.headingError || 0) - nx * (armoredPlayer ? .07 + Math.min(.16, impactMph / 500) : .07), -.8, .8);
-    if (armoredPlayer && this.state.opponents.includes(b)) b.ramRecoverySec = Math.max(b.ramRecoverySec || 0, clamp(.35 + impactMph / 250, .35, 1.1));
-    a.speedMph *= .992; b.speedMph *= .985;
-    if (a === this.state && this.state.invulnerableSec <= 0) {
-      if (!armorContact && armoredPlayer && impactMph >= crashThreshold)
+  if (!crashPhysics) {
+    if (nx) {
+      const shove = clamp(2.5 + impactMph * DRIVE.mphToWorld * .62, 2.5, armoredPlayer ? 28 : 13);
+      const pushLimit = armoredPlayer ? 32 : 16;
+      a.pushVelocity = clamp((a.pushVelocity || 0) + nx * shove * .6 * shareA, -pushLimit, pushLimit);
+      b.pushVelocity = clamp((b.pushVelocity || 0) - nx * shove * 2 * shareB, -pushLimit, pushLimit);
+      b.headingError = clamp((b.headingError || 0) - nx *
+        (armoredPlayer ? .07 + Math.min(.16, impactMph / 500) : .07), -.8, .8);
+      if (armoredPlayer && this.state.opponents.includes(b))
+        b.ramRecoverySec = Math.max(b.ramRecoverySec || 0,
+          clamp(.35 + impactMph / 250, .35, 1.1));
+      a.speedMph *= .992; b.speedMph *= .985;
+      if (a === this.state && this.state.invulnerableSec <= 0) {
+        if (!armorContact && armoredPlayer && impactMph >= crashThreshold)
+          this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
+        else if (impactMph > 1) this._scrape(zone, impactMph);
+      }
+    } else if (impactMph > 0 || rearRam && Math.abs(a.input?.steer || 0) > .1) {
+      const backingPlayer = a === this.state && a.speedMph < 0;
+      if (rearRam) {
+        const ram = rearRamResponse({closingMph: impactMph, attackerMph: a.speedMph,
+          attackerMass: specA.mass, targetMass: specB.mass,
+          steer: a.input?.steer || 0, offset: b.lateral - a.lateral});
+        a.speedMph = Math.max(0, a.speedMph - ram.attackerLossMph);
+        b.speedMph = Math.max(0, b.speedMph + ram.targetGainMph);
+        b.pushVelocity = clamp((b.pushVelocity || 0) + ram.lateralKick, -32, 32);
+        b.headingError = clamp((b.headingError || 0) + Math.sign(ram.lateralKick) *
+          Math.min(.3, Math.abs(ram.lateralKick) * .014), -.8, .8);
+        b.ramRecoverySec = Math.max(b.ramRecoverySec || 0,
+          clamp(.4 + impactMph / 230, .4, 1.2));
+        if (ram.launchMps > 0) {
+          b._ramVerticalSpeed = Math.max(b._ramVerticalSpeed || 0, ram.launchMps);
+          b.airborne = true; b.airHeight = Math.max(b.airHeight || 0, .03);
+        }
+        this.emit({vehicleRam: true, victim: 'rival', impactMph,
+          lateralKick: ram.lateralKick, launched: ram.launchMps > 0});
+      } else {
+        const momentum = (vaZ * specA.mass + vbZ * specB.mass) /
+          (specA.mass + specB.mass);
+        const combined = backingPlayer ? momentum : Math.max(0, momentum);
+        a.speedMph = (a.dir || 1) > 0 ? combined : Math.abs(combined);
+        b.speedMph = backingPlayer ? Math.max(0, combined * (b.dir || 1)) :
+          (b.dir || 1) > 0 ? combined : Math.abs(combined);
+      }
+      if (!armorContact && a === this.state && this.state.invulnerableSec <= 0 &&
+          impactMph >= crashThreshold)
         this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
+      else if (a === this.state && this.state.invulnerableSec <= 0 && impactMph > 1)
+        this._scrape(zone, impactMph);
+    }
+  } else {
+    // Motion comes from the rigid-body solver (docs/CRASH_PHYSICS.md): the
+    // struck car is shoved, spun or smashed aside by mass, speed and where it
+    // was hit. In Rival Duel the player crashes on their own change in
+    // velocity, not closing speed alone; legacy Mad Max keeps its threshold.
+    const crash = resolveCarCrash(this, a, b, {playerKnockMinDvMph:
+      armoredPlayer ? CRASH_TUNING.armoredPlayerKnockDvMph : 0});
+    if (rearRam) {
+      b.ramRecoverySec = Math.max(b.ramRecoverySec || 0,
+        clamp(.4 + impactMph / 230, .4, 1.2));
+      this.emit({vehicleRam: true, victim: 'rival', impactMph,
+        lateralKick: b.pushVelocity || 0, launched: crash.severityB === 'launched'});
+    }
+    if (a === this.state && this.state.invulnerableSec <= 0) {
+      const playerDv = crash.result.a.dvMph;
+      const crashes = armoredPlayer ? !armorContact && impactMph >= crashThreshold :
+        playerDv >= CRASH_TUNING.playerCrashDvMph;
+      if (crashes) this._crash(reason, Math.sign(a.lateral - b.lateral),
+        armoredPlayer ? impactMph : playerDv, zone);
       else if (impactMph > 1) this._scrape(zone, impactMph);
     }
-  } else if (impactMph > 0 || rearRam && Math.abs(a.input?.steer || 0) > .1) {
-    const backingPlayer = a === this.state && a.speedMph < 0;
-    if (rearRam) {
-      const ram = rearRamResponse({ closingMph: impactMph, attackerMph: a.speedMph,
-        attackerMass: specA.mass, targetMass: specB.mass, steer: a.input?.steer || 0, offset: b.lateral - a.lateral });
-      a.speedMph = Math.max(0, a.speedMph - ram.attackerLossMph);
-      b.speedMph = Math.max(0, b.speedMph + ram.targetGainMph);
-      b.pushVelocity = clamp((b.pushVelocity || 0) + ram.lateralKick, -32, 32);
-      b.headingError = clamp((b.headingError || 0) + Math.sign(ram.lateralKick) * Math.min(.3, Math.abs(ram.lateralKick) * .014), -.8, .8);
-      b.ramRecoverySec = Math.max(b.ramRecoverySec || 0, clamp(.4 + impactMph / 230, .4, 1.2));
-      if (ram.launchMps > 0) {
-        b._ramVerticalSpeed = Math.max(b._ramVerticalSpeed || 0, ram.launchMps);
-        b.airborne = true; b.airHeight = Math.max(b.airHeight || 0, .03);
-      }
-      this.emit({ vehicleRam: true, victim: 'rival', impactMph, lateralKick: ram.lateralKick, launched: ram.launchMps > 0 });
-    } else {
-      const momentum = (vaZ * specA.mass + vbZ * specB.mass) / (specA.mass + specB.mass);
-      const combined = backingPlayer ? momentum : Math.max(0, momentum);
-      a.speedMph = (a.dir || 1) > 0 ? combined : Math.abs(combined);
-      b.speedMph = backingPlayer ? Math.max(0, combined * (b.dir || 1)) : (b.dir || 1) > 0 ? combined : Math.abs(combined);
-    }
-    if (!armorContact && a === this.state && this.state.invulnerableSec <= 0 && impactMph >= crashThreshold)
-      this._crash(reason, Math.sign(a.lateral - b.lateral), impactMph, zone);
-    else if (a === this.state && this.state.invulnerableSec <= 0 && impactMph > 1) this._scrape(zone, impactMph);
+    if (crash.severityB !== 'nudge' && (a === this.state || b === this.state))
+      this.emit({vehicleSmash: {severity: crash.severityB,
+        dvMph: crash.result.b.dvMph, point: crash.result.point,
+        traffic: this.state.traffic.includes(b)}});
   }
   a.offRoad = !this._surface(a.s, a.lateral).mainRoad;
   b.offRoad = !this._surface(b.s, b.lateral).mainRoad;

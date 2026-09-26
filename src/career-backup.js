@@ -1,4 +1,5 @@
 import { TERRITORIES } from './wasteland-career.js';
+import {MUDDY_HOLLOW_HUBCAP_IDS} from './wasteland-progress.js';
 import { PROFILE_KEY, PLAYERS_KEY, loadPlayers, normalizeProfile } from './progression.js';
 import { LEADERBOARD_KEY, loadLeaderboard } from './leaderboard.js';
 import { GHOST_KEY, GHOST_ENABLED_KEY, loadGhosts } from './ghost.js';
@@ -72,6 +73,16 @@ export function needsCareerMigration(storage) {
         typeof player.profile.wasteland.discoveredGate !== 'boolean' ||
         !Number.isSafeInteger(player.profile.wasteland.pacificFinishes) ||
         player.profile.wasteland.pacificFinishes < 0 || player.profile.wasteland.pacificFinishes > 10 ||
+        !isObject(player.profile.wasteland.muddyHollow) ||
+        typeof player.profile.wasteland.muddyHollow.discovered !== 'boolean' ||
+        !Array.isArray(player.profile.wasteland.muddyHollow.hubcaps) ||
+        new Set(player.profile.wasteland.muddyHollow.hubcaps).size !==
+          player.profile.wasteland.muddyHollow.hubcaps.length ||
+        player.profile.wasteland.muddyHollow.hubcaps.some(id =>
+          !MUDDY_HOLLOW_HUBCAP_IDS.includes(id)) ||
+        !Number.isSafeInteger(player.profile.wasteland.muddyHollow.titanHighCountryFinishes) ||
+        player.profile.wasteland.muddyHollow.titanHighCountryFinishes < 0 ||
+        player.profile.wasteland.muddyHollow.titanHighCountryFinishes > 5 ||
         !Number.isSafeInteger(player.profile.wasteland.scrap) ||
         player.profile.wasteland.scrap < 0 || player.profile.wasteland.scrap > 1_000_000_000 ||
         !isObject(player.profile.wasteland.territories) ||

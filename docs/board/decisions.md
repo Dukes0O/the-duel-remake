@@ -741,3 +741,317 @@ menu on-foot camera setting are removed; `wasteland2` and `hidden-road` go to
 only to a player who had found the gate when the race began (Q9, now enforced
 by `src/wasteland-access.js`). To reverse: set the switches back to `dev`.
 The release itself still needs Kyle's written go-ahead.
+
+
+## 2026-09-26: Scrapdome and warlord design (Claude, at Kyle's request)
+
+Kyle asked Claude to design the arena and warlords and build the foundation,
+with Codex (Sol) building the rest from a handoff. Recorded in
+`docs/SCRAPDOME.md` and SPEC 0.13. Decisions a later card should not reopen
+without Kyle: Last Car Rolling is every car for itself; the hunter cap (1, 2,
+3 by difficulty); computer cars share the player's car physics; the Scrapdome
+floor speed limit near 70 mph (without it the bowl played as laps); wreck
+credit to the last attacker within five seconds; two seconds of spawn
+protection that also blocks dealing damage; warlords as first-to-three duels
+whose reward is their signature move, working immediately. The last one
+answers the parked first-three-rewards question.
+
+
+## 2026-09-26: crash physics and Muddy Hollow (Claude, at Kyle's request)
+
+Recorded in `docs/CRASH_PHYSICS.md`, `docs/MUDDY_HOLLOW.md` and SPEC 0.14.
+Not to reopen without Kyle: crashes are solved as rigid-body impacts in every
+mode, including ordinary races (Kyle asked for Rival Duel too), so contact
+fingerprints may be re-pinned with reasons; the player crashes on their own
+change in velocity in Rival Duel; Mad Max's approved roadside rule (shoved
+traffic clears the lane and stays clear; small speed cost for the attacker)
+is kept, with physical motion; smashed traffic stays wrecked in all modes.
+Muddy Hollow sits over a Titan-only ridge beside High Country's Alpine Summit,
+has no main-menu entry, and follows the Hidden Road leaving-the-race flow.
+
+
+## 2026-09-26: gate crash physics and preserve the exact reversal
+
+Independent tests found that CRASH-01 had replaced contact behavior before it
+had a feature switch. Add `crash-physics` in `dev`. On enables the settled
+rigid-body solver and knocked motion in every mode. Off restores the exact
+`integration/wasteland` armored ram, roadside traffic, traffic-wreck and
+ordinary-contact paths; it is the reversal, not a second physics design.
+
+Two narrow corrections are required for the enabled path. A car that had a
+knock at the start of a simulation tick consumes that full tick even when the
+knock settles, so normal driving cannot move it a second time. Low roadside
+traffic becomes non-collidable at knock start but keeps the existing
+`roadsideMotion.visible` render marker until it settles beyond the nearest
+shoulder, then becomes a zero-motion, zero-roll wreck. These are transition and
+visibility correctness fixes. They do not change the settled impact model.
+The final roadside parking move must also pass the same swept solid test as
+normal motion. Search the nearest deterministic whole-car-clear pose without
+crossing a wall. If none exists, keep the car visible and non-collidable with
+zero motion, run normal solid and boundary resolution, and retry next tick.
+Never create an in-lane "parked" wreck or hide a path through a wall.
+
+## 2026-09-26: keep armored Wasteland control below 70 mph own delta-v
+
+CRASH-01 balance failed with solver motion applied to every non-nudge player
+impact: crash physics on produced 9/4/2 wins under legacy Wasteland rules and
+8/5/1 with `wasteland2`; Medium and Hard missed their target bands, one Hard
+baseline race did not finish, and Medium UFO gain reached 11.29 seconds.
+
+Keep the rigid-body result for both cars, but leave the armored Wasteland
+player in driving motion when its own change in velocity is below 70 mph. The
+struck car still takes the full solver shove, spin and launch. Hits at or above
+70 mph can still knock the player loose. Rival Duel keeps its 6 mph knock and
+22 mph crash rules. This is the narrow threshold called for by the settled
+CRASH-01 handoff, not a solver or pace change.
+
+The four balance combinations then passed: crash off gave 9/6/2 and 8/5/3
+wins by difficulty; crash on gave 9/5/2 and 8/5/3. No race was unfinished and
+all UFO, combat, wreck and pacing targets passed. A 130-to-25 mph protected
+rear-ram fixture measures 58.86 mph player delta-v and retains control; the
+260-to-25 mph fixture measures 131.68 mph and still knocks the player.
+
+## 2026-09-26: TITAN-01 slope gravity is Titan-only
+
+The first red TITAN-01 contract treated slope gravity as a rule for both the
+Titan and the rally car. Implementing that interpretation changed the pinned
+`ridge-rally-duel` physics fingerprint from
+`58535e5a13d35cd4ef16e35d740c52b4ae3e77666074ea4a16878be8d20eadef` to
+`6a0536d5f14b95951e8d25447a12918896bd561a87d40ed2a2d6317d9e7589a2`.
+The card also requires the rally limits and replay fingerprints to remain
+unchanged. Slope gravity therefore applies only to the Titan. The rally keeps
+its existing accumulated-climb cap and speed behavior; ordinary cars remain
+unchanged.
+
+## 2026-09-26: widen the Muddy Hollow phase-1 boundary blend
+
+The first phase-1 height field joined the ordinary High Country ground within
+one centimetre at its outer edge, but the inner blend made the intended Titan
+entry reach a 63.2-degree grade. That exceeded the switched Titan limit of
+58.8 degrees and contradicted the settled Titan-only access design.
+
+Start the deterministic quintic boundary blend at normalized radius 0.65.
+The maximum measured intended-entry grade is then 1.098, below the Titan limit
+of 1.65, while the full ellipse remains within 0.00245 m of ordinary terrain
+at the edge on route seeds 1989, 42 and 17. This changes only the transition
+shape. It does not move the Hollow, change the road, or redesign its landforms.
+
+## 2026-09-26: show failed Muddy Hollow departure saves in the existing pause panel
+
+Save Guardian review denied profile storage during phase-3 departure. The
+abandonment remained safe in memory and cleared the active race, but the
+exploration pause panel did not tell the player that the change was session
+only. The garage would show the warning later, after the player had already
+left the event.
+
+Re-slice EGG-03 narrowly to allow `src/screen-results.js`. When an exploration
+pause follows a failed profile save, append the same session-only storage
+warning used by the ticket screen. This is safety feedback in the existing
+pause panel. It adds no Muddy Hollow screen, control, menu entry or save field.
+
+## 2026-09-26: correct Muddy Hollow ridge grounding in phase 6
+
+Phase-3 browser QA first captured a stale Falcone frame while the Titan asset
+was still loading. That image and its grounding verdict are invalid. The
+corrected memory-only run proves the simulation car, ready renderer asset and
+only visible vehicle are all the Titan. Its rendered X/Z position and refreshed
+terrain pitch and roll match the simulation exactly, yet the body still
+intersects the steep departure slope.
+
+Keep phase 3 limited to deterministic departure behavior. Muddy Hollow remains
+behind its dev switch, and phase 6 already owns the detailed ground and visual
+pass. Extend phase-6 acceptance to correct this verified Titan intersection
+before the playground is visually complete. This is a required grounding fix,
+not a change to the settled ridge location, Titan-only access or departure
+rule.
+
+## 2026-09-26: give Dirt Kickers 2 and 3 enough lift
+
+The phase-4 tests drove the Titan through all five settled ramp sites at the
+same 120 Hz step. The first red run stopped at Dirt Kicker 2: its four-metre
+bump was cancelled by the underlying valley grade at 58 mph. After that site
+matched the already proven mega-site lift, the continuing run found the same
+problem at Dirt Kicker 3 with its 4.5-metre lift. The mega jump, Dirt Kicker 1
+and the log ramp produced shared off-road flight without lift tuning.
+
+Keep both sites, footprints, roles and approaches unchanged, but raise their
+authored lift to 5.5 metres, matching the already proven mega-site lift. The
+phase-4 acceptance trace must prove the resulting flight. This does not change
+the racing line, ordinary course features, random stream or any flag-off
+course.
+
+The first test also assumed that every site used the local-along approach.
+The log site lies on a 28.6-metre local-along descent, while its cross-slope
+profile contains the intended crest. Retain its settled 3.8-metre lift and
+record the cross-slope approach in the authored site. The acceptance trace
+still requires real flight; this corrects the test path instead of inflating
+the ramp to overpower unrelated terrain.
+
+The settled mega jump must carry a fast Titan over the pond. Its phase-1
+five-and-a-half-metre placeholder launched the truck but landed before the
+pond. At 92 mph, 12, 13 and 13.5 metres reached nearest normalized pond radii
+of 1.188, 1.097 and 1.024, respectively, where 1.0 is the pond edge. A
+14-metre lift is the first tested half-metre value that enters the pond span.
+Keep the existing site and footprint and use that lift. Phase 6 still owns the
+visual review of the detailed ramp and landing.
+
+## 2026-09-26: isolate Hollow support from ordinary mountains
+
+Independent phase-4 review drove the sites through the public exploration
+step instead of assigning positions. Dirt Kicker 1 stopped before its centre.
+At local position 105.24, 210, the authored Hollow ground is 72.495 metres,
+but an ordinary High Country mountain supplies 76.679 metres of support; at
+the kicker centre it rises to 114.168 metres over 74.692 metres of Hollow
+ground. The unchanged mountain field physically buries the authored site.
+
+Inside the installed Hollow boundary, use the Hollow's own ground and
+zone-owned rocks for tyre support. Keep ordinary mountain support unchanged
+outside the boundary and on every flag-off course. Phase 6 must also mask or
+replace the overlapping ordinary mountain visuals when it builds the detailed
+Hollow scene; physics isolation alone is not visual acceptance.
+
+The same real-step review found steep support entries on the first rock group.
+Keep all seven centres and heights, widen their deterministic footprints, and
+anchor each support base to the minimum of 16 fixed samples around its support
+radius. This removes the terrain-height step at the downhill edge and lets the
+Titan crawl across each boulder without bypassing its max-grade rule.
+
+## 2026-09-26: use the exploration clock for Hollow airtime
+
+The race clock correctly freezes after departure, but shared jump physics also
+used it to measure airtime. A real mega-jump stayed airborne for 114 fixed
+ticks, about 0.95 seconds, while reporting only 0.008 seconds. Pass the
+deterministic departure elapsed time into the shared jump step during Hollow
+exploration. Ordinary race and arena calls keep the existing race-clock
+default. This changes no scoring or outcome clock.
+
+## 2026-09-26: repeat Hollow obstacles on each course lap
+
+The first rock query compared raw authored course distance. On lap two, rock 1
+was absent near distance 7,222.956 and Titan support fell from 71.3997 to the
+69.9997-metre base. Project each fixed rock onto every queried course lap and
+return that lap's absolute distance. IDs, world positions and authored order
+stay fixed, while shared support and solid-contact lookup now repeat exactly.
+
+The card did not originally name `src/sim-contacts.js`, although its settled
+rock garden requires the shared rock support and static-contact query. Re-slice
+EGG-03 narrowly to add that hook. The hook may only combine the installed
+zone's fixed obstacles with the existing query and suppress ordinary mountain
+support inside the zone boundary. Ordinary obstacles, contact damage and
+flag-off behavior stay unchanged.
+
+## 2026-09-26: keep Muddy Hollow phase-5 progress bounded and reward-only
+
+Phase 5 stores one additive `wasteland.muddyHollow` object per named player:
+`discovered` is a boolean, `hubcaps` is a unique allow-listed set of the five
+authored IDs, and `titanHighCountryFinishes` is an integer clamped from zero to
+five. Unknown nested fields remain intact. The existing startup migration gate
+must require and verify a backup before it writes this new normalized shape.
+
+The five hubcaps are fixed zone data at the settled sites. Exploration uses a
+swept pickup test so frame rate and speed cannot skip one. The simulation emits
+each ID once and changes no race clock, score, record, wallet or reward. The App
+accepts that event only from the current player, run, installed Hollow and live
+exploration state before it saves the ID. Entering the Hollow marks it
+discovered through the same guarded departure event. Denied storage remains a
+session-only success with the existing warning.
+
+All five IDs make `titan_gold` an owned, free, appearance-only Titan finish.
+The entitlement is derived from the validated hubcap set, not a second reward
+flag. It cannot be bought, forged onto another car or shown before it is
+earned. It is not selected automatically. Applying it uses the existing paint
+snapshot path and cannot change physics or competitive record keys.
+
+The settled garage hint counts completed High Country races in the Titan only
+when the `muddy-hollow` switch and found Wasteland gate are both present in the
+race snapshot. Wins, losses and time trials count; abandoned, incomplete,
+practice, other-car, other-course, duplicate and flag-off results do not. The
+count stops at five. The exact tip appears only on the Titan garage page and
+only until the Hollow is discovered. It adds no menu action.
+
+Re-slice EGG-03 narrowly for the existing save, migration, paint and garage
+hooks needed by this contract: `src/wasteland-progress.js`,
+`src/career-backup.js`, `src/paint-presets.js`, `src/screen-garage.js` and their
+focused tests. These hooks may add only the bounded fields, reward finish and
+Titan-page tip described above.
+
+## 2026-09-26: keep the earned Hollow finish behind the live switch
+
+Independent phase-5 review found that an earned and selected `titan_gold`
+finish remained visible after `muddy-hollow` was turned off. That leaked a new
+Wasteland feature beyond its development switch even though its entitlement
+was valid in the saved profile.
+
+Preserve a legitimately earned selection in the version-1 save, but require
+the current `muddy-hollow` switch for every catalog, garage operation and race
+appearance snapshot. Turning the switch off hides the finish without erasing
+it; turning it on restores the saved selection. A non-Titan car, a profile
+without the found gate, a missing hubcap set and an opaque future Wasteland
+schema cannot expose it. This clarifies switch isolation and does not change
+the settled five-hubcap reward.
+
+## 2026-09-26: replace coarse Hollow cover and calibrate Phase-6 readability
+
+Browser review of Phase 6 at `a64e16c` found ordinary near and far terrain
+triangles spanning the authored Hollow as large pale slabs. The same review
+found a broken, ten-metre vertical pond surface, hubcap markers that were too
+small at driving distance and water spray that did not read behind the Titan.
+Follow-up review proved that a centroid-only cut left a far-terrain wedge 4.82
+metres above the detailed ground. When the `muddy-hollow` switch is on, give
+every coarse triangle that overlaps the Hollow ellipse private vertices fitted
+to the authored height field. Keep its ordinary outer edges and topology, then
+cover the authored core with the four-metre mesh. Keep the flag-off geometry
+exact. Give the reflective centre of the shallow pond one waterline at its
+settled one-metre centre depth, and show the rest of the unchanged water-contact
+field as a blue-green saturated margin. Submit no buried water triangles.
+Increase only marker height and size and spray size and brightness; do not move
+sites, change pickup radii or change surface physics.
+
+Independent code review also measured the first departure correction with the
+real Titan model. It left the lowest tyre vertex about 0.73 metres above the
+authored slope. A second review found that the centre/radius approximation
+still floated 0.16 to 0.21 metres at local lateral 60 to 65 and penetrated about
+0.05 metres at lateral 80. Cache a bounded support hull from the imported tread
+and compare those points with the installed Hollow height field. The three
+departure-boundary samples and the ridge approach at laterals 60, 65 and 80
+must leave the lowest real tread 0.005 to 0.03 metres above the surface and the
+body clear. Keep the correction render-only and absent outside the installed
+Hollow.
+
+Re-slice EGG-03 narrowly for the focused scene test and the existing
+`src/world-surfaces.js`, `src/effects.js` and `src/vehicle-grounding.js` hooks.
+These hooks may only provide the switched Phase-6 presentation and correction
+described above.
+
+Final browser review showed that the first fitted mesh had downward-facing
+triangles. The normal above-ground camera therefore culled the replacement and
+looked through the deliberate coarse-terrain cut at the sky, which appeared as
+a flooded basin with floating sheets. Reverse only the fitted ground and pond
+face order so their normals point upward. Keep the settled vertices, materials,
+height field, surface field and physics unchanged, and protect the normal
+direction in the focused scene test.
+
+A later raycast found that the broad 1.3-times skirt used to cover whole
+removed triangles reached High Country's race tunnel and left a new clipped
+outer seam against ordinary terrain. The pale slab was `Circuit rock surface`,
+not a Hollow mesh or overlapping mountain. Retire that broad skirt. The private
+coarse replacements above keep their original outer edges and let the dense
+mesh end at the authored ellipse, away from the race road and tunnel.
+
+## 2026-09-26: subdivide coarse Hollow cover and taper its boundary
+
+Review of the first private-vertex replacement at `c8121c9` found that copying
+only each coarse triangle's three corners did not fit its interior. Near
+terrain rose 2.086 metres above the detailed mesh, far terrain rose 17.900
+metres above it, and one fitted-to-unfitted far edge opened a 1.636-metre
+crack. Browser review showed the same failure as buried ground and pond.
+
+Subdivide only near and far triangles that touch a 1.08-times Hollow ellipse.
+Use two fixed subdivision levels for near terrain and three for the coarser far
+grid. Interpolate every existing non-position attribute and keep the source
+triangle's material group. Inside the authored ellipse, place this coarse
+underlay 0.7 metres below its authored height. Across the outer eight-percent
+band, use a smooth deterministic taper back to the exact source triangle
+height. This prevents a large triangle from bridging above the detailed mesh,
+keeps the outside seam continuous and does not widen the detailed Hollow mesh
+or alter the race tunnel. Flag-off geometry remains on the unchanged path.

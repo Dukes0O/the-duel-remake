@@ -136,5 +136,5 @@ export function stepTrafficWreck(actor, dt) {
   wreck.forwardVelocity *= Math.exp(-2.2 * dt);
   wreck.spinVelocity *= Math.exp(-2.3 * dt);
   actor.airHeight = Math.max(0, wreck.verticalVelocity * wreck.age - 4.9 * wreck.age * wreck.age);
-  wreck.roll = wreck.side * Math.min(1.05, wreck.age * (1 + Math.abs(wreck.spinVelocity) * .5));
+  wreck.roll = wreck.side * Math.min(wreck.rollLimit ?? 1.05, wreck.age * (1 + Math.abs(wreck.spinVelocity) * .5));
 }

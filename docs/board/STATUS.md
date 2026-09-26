@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-25T14:53:11.277Z
+Observed at: 2026-09-26T12:39:34.178Z
 
-Observation commit: bd9a162eae40542eb88d47a2bb23604a7ac37f6b
+Observation commit: e3a64f4ed44b04f4035483acd40eaf34798ac3e0
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: bd9a162eae40542eb88d47a2bb23604a7ac37f6b
+Integration HEAD: e3a64f4ed44b04f4035483acd40eaf34798ac3e0
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -16,15 +16,19 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-09-25T14:48:28.754Z; tested commit: 74646e86f18409bf3dc864135ed6369e26ab7f0c.
+Last recorded full run: 2026-09-26T11:09:27.404Z; tested commit: 717f9d495b1dfef675e782ed98b84a8f2d6d62c1.
 
 ## Feature switches
 
 | Switch | State |
 | --- | --- |
 | career-backup | dev |
-| wasteland2 | beta |
-| hidden-road | beta |
+| wasteland2 | on |
+| hidden-road | on |
+| scrapdome | dev |
+| crash-physics | dev |
+| titan-climb | dev |
+| muddy-hollow | dev |
 
 ## Lane branches
 
@@ -32,9 +36,10 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| lane/audio/aud-10 | 0 | unknown | true | false | unknown |
-| lane/audio/aud-12 | 0 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| codex/ux-backlog-notes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/ux-backlog-notes |
+| lane/audio/aud-10 | 1 | unknown | true | false | unknown |
+| lane/audio/aud-12 | 1 | unknown | true | false | unknown |
+| lane/audio/aud-17-picks | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -42,7 +47,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| lane/audio/aud-17-picks | AUD-17 | 2026-09-25T07:11:30-07:00 | 0 | inspection skipped by request; uncommitted state unknown | SPEC.md, audio-src/voices/crew-cinder-callout.mp3, audio-src/voices/crew-dune-callout.mp3, audio-src/voices/crew-jax-callout.mp3, audio-src/voices/crew-nell-callout.mp3 |
+| codex/ux-backlog-notes | unknown | 2026-09-25T17:10:59-07:00 | 0 | last commit 2026-09-25T17:10:59-07:00 | docs/board/board.yaml, docs/changes/BACKLOG-UX-LAUNCHER.md |
 
 ## Size targets
 
@@ -50,29 +55,29 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 239,924,200 B | +239 B | 250,000,000 B |
+| Build `dist/` | 239,984,446 B | +0 B | 250,000,000 B |
 | Wasteland models | 78,930,708 B | +0 B | 60,000,000 B |
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
-| Review `looks/` | 7,868,116 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 184,019 B | +0 B | 5,000,000 B |
+| Review `looks/` | 7,872,326 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 1,212,080 B | +1,137,607 B | 5,000,000 B |
 | All `public/` | 235,822,734 B | +0 B | unavailable |
-| Git objects | 325,294,080 B | +252,928 B | unavailable |
-| Lane folders | 0 | +0 | unavailable |
+| Git objects | 330,346,496 B | +721,920 B | unavailable |
+| Lane folders | 1 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6
+- Local master: faf5749598d061d0d11cadff9a4515fb10308ddb
 - Local main: missing
-- Local integration/wasteland: bd9a162eae40542eb88d47a2bb23604a7ac37f6b
+- Local integration/wasteland: e3a64f4ed44b04f4035483acd40eaf34798ac3e0
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit eb879e5457ef9f993970a9e8bfa2e3ef69f7d4f6.
+- Remote origin/master: matches local; cached commit faf5749598d061d0d11cadff9a4515fb10308ddb.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: behind local; cached commit 00e576aec24717a9cace0af648fc8f6581bfa1c2.
+- Remote origin/integration/wasteland: behind local; cached commit 717f9d495b1dfef675e782ed98b84a8f2d6d62c1.

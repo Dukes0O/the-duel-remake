@@ -405,6 +405,76 @@ tasks:
     acceptance:
       - "Kyle, 25 September 2026: no settings on the main menu beyond Mad Max Duel; the Wasteland is found while racing Mad Max Duel (SPEC 0.12). Kyle approved the live release in writing the same day."
     note: "Merged 359d185: Experimental menu and menu camera setting removed, switches on, Hidden Road only in Mad Max Duel, Wasteland rules only after a player finds the gate. Full 271/271, build, smoke, Mad Max journey and discovery browser checks passed."
+  - id: FOOT-FIX
+    title: "Fix mirrored on-foot controls and remove the R restart key"
+    priority: 1
+    lane: CMB
+    size: S
+    needs: [EGG-REL]
+    status: merged
+    owns: [src/onfoot.js, src/input-contexts.js, tools/test-onfoot-screen-directions.mjs]
+    hooks: [tools/test-onfoot.mjs, tools/test-onfoot-controls-camera.mjs, tools/test-progression-integration.mjs, README.md]
+    helpers: [test_runner]
+    acceptance:
+      - "Kyle, 25 September 2026: controls were backwards out of the car; remove R as a restart key (Gratian's request). Kyle asked for the fix during live play."
+    note: "Merged and released faf5749: strafing and mouse turning match the screen, checked through the real camera; R does nothing. Full 272/272, build and smoke passed."
+  - id: CRASH-01
+    title: "Crash physics: rigid-body impacts and knocked cars"
+    priority: 1
+    lane: CMB
+    size: L
+    needs: []
+    status: merged
+    flag: crash-physics
+    claimed_by: "Merged by Codex, 26 September 2026"
+    owns: [src/vehicle-collision.js, src/vehicle-knock.js, tools/test-vehicle-collision.mjs, tools/test-vehicle-knock-integration.mjs, docs/changes/CRASH-01.md]
+    hooks: [src/sim-contacts.js, src/sim-rival.js, src/sim-driving.js, src/sim-crash.js, src/destructibles.js, src/combat-armor.js, src/arena/arena-event.js, src/feature-flags.js, tools/test-combat-knockaway.mjs, tools/test-armored-vehicle-impact.mjs, tools/test-combat-ramming.mjs, tools/test-combat-replays.mjs, tools/test-feature-flags.mjs, tools/replays/combat-fingerprints.json, docs/board/decisions.md]
+    helpers: [test_author, reviewer, balance_analyst, browser_qa]
+    acceptance:
+      - "docs/CRASH_PHYSICS.md is settled. The solver, knocked motion and contact integration are built on lane/arch/crash-physics; docs/changes/CRASH-01.md lists the four failing test files and the decision for each. Finish those exactly as written, re-pin changed fingerprints with reasons, keep Mad Max combat balance in its bands, browser-review the four crash cases, then merge."
+      - "The evidence-based correction in decisions.md adds crash-physics in dev. Off keeps the exact integration contact paths. On applies the settled solver in every mode. A roadside knock stays visible until it parks as a still wreck, and a settling knock consumes that full simulation tick."
+  - id: CRASH-02
+    title: "Crash look and sound"
+    priority: 3
+    lane: VIS
+    size: M
+    needs: [CRASH-01]
+    status: backlog
+    owns: [docs/changes/CRASH-02.md]
+    hooks: [src/combat-effects.js, src/render3d.js, src/sound-bank.js, src/audio.js]
+    helpers: [reviewer, browser_qa]
+    acceptance:
+      - "From the vehicleSmash event (severity, dvMph, point): sparks and crumple at the contact point, tyre smoke while a car is knocked, roll visuals for launched traffic, impact sounds scaled by change in velocity per the SPEC 0.9 rule."
+  - id: TITAN-01
+    title: "The Titan climbs mountains"
+    priority: 1
+    lane: CMB
+    size: S
+    needs: [CRASH-01]
+    status: merged
+    claimed_by: "Merged by Codex, 26 September 2026"
+    owns: [docs/changes/TITAN-01.md, tools/test-titan-climb.mjs, tools/test-offroad-physics.mjs]
+    hooks: [src/offroad-physics.js, src/sim-driving.js, src/feature-flags.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs]
+    helpers: [test_author, reviewer]
+    acceptance:
+      - "docs/MUDDY_HOLLOW.md section 2: remove the monster's accumulated-climb tip (climbGain) so the Titan climbs a whole hill under its maxGrade; steeper than maxGrade still tips. Climbing slows the truck by the slope and descending speeds it up (offroad-capable cars only). Rally keeps its limits; ordinary cars unchanged."
+      - "Tests: the Titan climbs a 60 m, 40 degree slope without tipping; tips on a slope over maxGrade; the rally car still tips at its limits; replay fingerprints unchanged."
+  - id: EGG-03
+    title: "Muddy Hollow, the Titan's playground (easter egg)"
+    priority: 2
+    lane: EGG
+    size: L
+    needs: [TITAN-01]
+    status: active
+    claimed_by: "Codex autonomous Director, 26 September 2026"
+    flag: muddy-hollow
+    owns: [src/muddy-hollow.js, src/muddy-hollow-scene.js, tools/test-muddy-hollow.mjs, tools/test-muddy-hollow-scene.mjs, tools/scenarios/muddy-hollow.mjs, docs/changes/EGG-03.md]
+    hooks: [src/course.js, src/sim-driving.js, src/sim-contacts.js, src/game.js, src/app.js, src/screen-results.js, src/screen-garage.js, src/world.js, src/world-surfaces.js, src/effects.js, src/vehicle-grounding.js, src/progression.js, src/wasteland-progress.js, src/career-backup.js, src/paint-presets.js, src/feature-flags.js, src/environment-key.js, src/generated-shortcut-presets.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, tools/test-render-reuse.mjs, tools/test-wasteland-profile.mjs, tools/test-career-backup.mjs, tools/test-paint-presets.mjs, tools/test-paint-integration.mjs, docs/board/decisions.md]
+    helpers: [test_author, reviewer, save_guardian, browser_qa]
+    acceptance:
+      - "Build docs/MUDDY_HOLLOW.md in phases, each merged separately behind a new dev switch muddy-hollow: (1) installMuddyHollow for high-country only (ridge, valley bowl, hill, pits, pond bed, ramps) following the Hidden Road pattern, racing line, scenery and random stream untouched; (2) surfaces: mud (low grip, heavy drag, wheel spin) and water depth (drag by depth and speed, splash event); (3) departure past the ridge crest reuses the Hidden Road leaving-the-race flow; only a monster truck can reach it; (4) jumps (mega jump, three kickers, log ramp), rock garden, King of the Hill flag; (5) five gold hubcaps saved per player, all five unlock a gold Titan paint; garage tip after five High Country races in the Titan; (6) detailed ground mesh, mud and water materials, splash and mud particles, correction of the verified Titan body intersection on the departure slope, and masking or replacement of ordinary High Country mountains that overlap authored play sites; art per SPEC 0.11."
+      - "Nothing on the main menu. Ordinary races on High Country keep identical results; the scene signature changes only with reviewed screenshots."
+    note: "Phases 1-5 and the Phase-6 code-native presentation are merged through c438b92. Final runtime and browser reviews pass; the focused scene has 95 checks and the exact lane gate passed 71/71. Card remains active for Kyle's governed mud/prop source choice and the separate audio lane."
   - id: GFX-02
     title: "First-person hands and gear fidelity rounds one to three"
     priority: 8
@@ -1726,31 +1796,58 @@ tasks:
     note: "Merged 7b901c4 after independent red/green fixtures, 250 focused checks, eight lane suites and build. Optional numeric P suffixes remain in card labels; branch safety and evidence validity are unchanged."
 
   - id: ARENA-01
-    title: "Scrapdome bounded arena framework"
+    title: "Scrapdome foundation: venue, event, teams, pilot and brains"
     priority: 2
     lane: CMB
     size: L
     needs: [BETA-01, GFX-04, CAR-01]
-    status: backlog
-    flag: wasteland2
-    owns: [src/scrapdome.js, src/arena-driving.js, src/arena-ai.js, src/screen-arena.js, src/screen-arena.css, tools/test-scrapdome.mjs, tools/test-arena-driving.mjs, tools/scenarios/scrapdome.mjs, docs/changes/ARENA-01.md]
-    hooks: [src/game.js, src/app.js, src/screen-router.js, src/screen-yard-home.js, src/sim-driving.js, src/sim-contacts.js, src/sim-results.js, src/render3d.js, src/combat-ai.js, src/combat.js]
-    helpers: [test_author, reviewer, save_guardian, browser_qa, balance_analyst]
+    status: merged
+    flag: scrapdome
+    owns: [src/arena/venues.js, src/arena/arena-event.js, src/arena/arena-floor.js, src/arena/arena-pilot.js, src/arena/arena-brains.js, src/combat-teams.js, tools/test-arena-event.mjs, tools/scenarios/scrapdome.mjs, docs/SCRAPDOME.md, docs/changes/ARENA-01.md]
+    hooks: [src/game.js, src/course.js, src/sim-driving.js, src/sim-crash.js, src/sim-contacts.js, src/combat-armor.js, src/combat-projectiles.js, src/combat-weapons.js, src/combat-ai.js, src/onfoot-transition.js, src/feature-flags.js]
+    helpers: [test_runner, browser_qa]
     acceptance:
-      - "Before code, write the event-state contract, physical Titan stadium bounds, free-driving coordinates, player and CPU spawn selection, round lifecycle and return-to-yard behavior. Separate simulation decisions from rendering and reuse the existing opponents list. Up to three CPU cars must be supported from the first implementation."
-      - "Seed and inputs reproduce positions, contacts and outcomes without graphics. Arena boundaries must be physical and keep every supported car playable; ordinary course progress, checkpoints, police and race records retain their existing behavior. Keep on-foot support within the same bounded event."
-      - "A discovered player's yard can enter the implemented arena flow and return safely. Navigation, restart, pause and player changes clean up event state and input. No unbuilt mode is offered. Keep the new flow behind wasteland2 and preserve flag-off behavior."
-      - "Independent red tests cover seeds, one to three CPU cars, all nine player cars, bounds, spawn overlap, cleanup and ordinary replay controls. Review actual High/Performance driving with memory-only saves and measure complete-scene frame cost against the Titan stadium baseline."
-    sound: "Name arena.countdown, arena.round-start and arena.results events for the existing audio owner; use placeholder bank cues until that lane supplies assets."
-    note: "Phase 3 order two. Planning only until BETA-01 is complete; no audio lane or credit use is delegated here. Results and reward ownership must be settled with Save Guardian before persistence changes."
+      - "Built by Claude at Kyle's request to docs/SCRAPDOME.md sections 1 to 7: headless, seeded, behind scrapdome (dev); races and replay fingerprints unchanged."
+    note: "Foundation only: no app entry, arena HUD or settlement yet (ARENA-01-UI, ARENA-02). Measurements and known gaps in docs/SCRAPDOME.md section 8."
+  - id: ARENA-01-UI
+    title: "Scrapdome entry, arena display and results"
+    priority: 2
+    lane: UI
+    size: M
+    needs: [ARENA-01]
+    status: merged
+    flag: scrapdome
+    owns: [src/screen-arena.js, src/screen-arena.css, tools/test-arena-ui.mjs, docs/changes/ARENA-01-UI.md]
+    hooks: [src/app.js, src/screen-router.js, src/screen-yard-home.js, src/screen-hud.js, src/combat-hud.js, src/combat-weapons.js, tools/scenarios/scrapdome.mjs]
+    helpers: [test_author, reviewer, browser_qa]
+    acceptance:
+      - "app.startArenaEvent starts an event only for a player who found the gate, passing that player's car, upgrades, loadout, kit and crew; race settlement never runs for state.arena events; no main-menu entry (SPEC 0.12)."
+      - "A SCRAPDOME panel in the yard (mode, one to three computer cars, the player's difficulty). The arena display replaces lap, position and distance: clock, scoreboard (wrecks, wrecked), a red marker on any car hunting the player, respawn countdown, sudden death. No GRAVEL TRACK message in the arena."
+      - "Settle the UFO jump's arena rule in writing (for example once per 30 s, landing anywhere clear on the floor) and test it."
+      - "Results with placings, REMATCH and BACK TO THE YARD. Extend tools/scenarios/scrapdome.mjs to the real yard flow; High and Performance review; frame pacing with four cars."
+    sound: "arena.countdown, arena.round-start, arena.wreck-credit and arena.results through the audio lane's bank."
+    note: "Built by Claude: yard SCRAPDOME panel, arena display and scoreboard, named opponents with HUNTING YOU tags, results, rematch, back to the yard, arena UFO hop. Full 274/274; private browser journey passed at 60 fps with four cars."
+  - id: ARENA-FEEL
+    title: "Tells, callouts and sounds for arena fights"
+    priority: 3
+    lane: AUDIO
+    size: S
+    needs: [ARENA-01-UI]
+    status: backlog
+    flag: scrapdome
+    owns: [docs/changes/ARENA-FEEL.md]
+    hooks: [src/arena/arena-brains.js, src/sound-bank.js, src/combat-effects.js, src/screen-arena.js]
+    helpers: [reviewer, browser_qa]
+    acceptance:
+      - "Every big computer attack has a tell of the length in BRAIN_DIFFICULTY.tellSec: rammer headlight flash and engine roar before a charge; respawn shimmer; wreck-credit callouts (YOU WRECKED ...). Follow the SPEC 0.9 arcade rule and judge sounds over engines at full throttle."
   - id: ARENA-02
     title: "Last Car Rolling with up to three CPU cars"
     priority: 3
     lane: CMB
     size: M
-    needs: [ARENA-01]
-    status: backlog
-    flag: wasteland2
+    needs: [ARENA-01-UI]
+    status: merged
+    flag: scrapdome
     owns: [src/scrapdome-last-car.js, tools/test-last-car-rolling.mjs, tools/scenarios/last-car-rolling.mjs, docs/changes/ARENA-02.md]
     hooks: [src/scrapdome.js, src/arena-ai.js, src/screen-arena.js, src/combat.js, src/wasteland-career.js, src/app.js]
     helpers: [test_author, reviewer, save_guardian, browser_qa, balance_analyst]
@@ -1760,7 +1857,22 @@ tasks:
       - "Integrate completed results with the existing scrap and territory contracts for the Scrapdome venue. Save Guardian proves idempotent settlement, owner identity, abandonment and historical-save preservation using fixtures only. New rank, price or reward choices require a recorded decision."
       - "Private browser review shows actual free driving, a credited wreck, respawn, timer completion, results and return to yard. Record frame pacing, balance and the lane/build gate before readiness."
     sound: "Reuse combat impact/wreck cues and arena.countdown, arena.round-start and arena.results through the external audio owner's bank."
-    note: "Phase 3 order two, after the framework. No implementation has begun. The owned mode filename is provisional until the framework design settles module boundaries."
+    note: "Part 1 built by Claude: arena crates, jousting, junk sense, half armor, tools/arena-balance.mjs; results in docs/SCRAPDOME.md section 8. Settlement moved to ARENA-02-PAY."
+  - id: ARENA-02-PAY
+    title: "Last Car Rolling settlement: scrap and Scrapdome hold"
+    priority: 2
+    lane: SAVE
+    size: S
+    needs: [ARENA-02]
+    status: backlog
+    flag: scrapdome
+    owns: [src/arena/arena-settlement.js, tools/test-arena-settlement.mjs, docs/changes/ARENA-02-PAY.md]
+    hooks: [src/app.js, src/screen-arena.js, src/wasteland-career.js]
+    helpers: [test_author, reviewer, save_guardian]
+    acceptance:
+      - "Design settled by Claude: scrap = a base for finishing, a placing bonus that grows with the number of computer cars, points per wreck caused, times a small difficulty factor (1, 1.2, 1.4); a win against two or more computer cars adds 25 hold to Kettle Kingpin's territory (the scrapdome venue in TERRITORIES); a 1-car win pays scrap only; leaving early costs and pays nothing."
+      - "Settle once per event on arenaResult, keyed arena:<runId> in wasteland.settledResults, only for the player who started it; atomic from the player's view (revert on a failed save). Show SCRAP EARNED and HOLD on the results screen."
+      - "Save Guardian proves idempotent settlement, owner identity, abandonment, unknown-field preservation and historical save fixtures."
 
   - id: FIX-RUSTWALL-CLEAN
     title: "Remove Rustwall test dependency on consumed art scratch"
@@ -1796,7 +1908,7 @@ tasks:
     priority: 3
     lane: UI
     size: M
-    needs: [ARENA-02, CAR-01]
+    needs: [ARENA-01-UI, CAR-01]
     status: backlog
     owns: [src/warlords.js, src/screen-territory.js, tools/test-warlords.mjs, tools/test-territory-ui.mjs, docs/changes/WAR-01.md]
     hooks: [src/screen-yard-home.js, src/wasteland-career.js]
@@ -1805,7 +1917,7 @@ tasks:
     acceptance:
       - "Settle immutable eight-boss metadata, career territory mapping, hold/claimed/defeated display rules and which fights are actually available before code. Reuse the existing territory IDs and course assignments."
       - "Render the ladder on the real territory map without save writes. No launch button, working weapon reward or completed fight is advertised before its owning implementation exists. Preserve per-player and unknown/future-save behavior."
-      - "Follow SPEC 0.10 order. Record the conflict between first-three boss rewards and later arsenal waves for explicit WAR-02 design resolution; do not silently replace promised rewards or create fake unlocks."
+      - "Follow SPEC 0.10 order and docs/SCRAPDOME.md section 5; the reward conflict is settled there (each warlord gives their signature move, working). Do not silently replace promised rewards or create fake unlocks."
       - "Independent data/UI tests, private High/Performance yard-map review, lane tier and build pass. No new poster or card-image system from superseded SPEC 3.10."
     sound: "warlord.available for a future real availability event; metadata-only display adds no simulation event."
   - id: WAR-02-P1
@@ -1814,7 +1926,7 @@ tasks:
     lane: CMB
     size: L
     needs: [WAR-01]
-    status: backlog
+    status: superseded
     owns: [src/warlord-encounters.js, src/warlord-settlement.js, tools/test-warlord-encounters.mjs, tools/test-warlord-settlement.mjs, tools/scenarios/warlords.mjs, docs/changes/WAR-02-P1.md]
     hooks: [src/game.js, src/app.js, src/screen-router.js, src/screen-territory.js, src/progression.js, src/wasteland-progress.js, src/wasteland-career.js]
     flag: wasteland2
@@ -1826,6 +1938,48 @@ tasks:
       - "Prove seed/input repeatability, ordinary race fingerprints, real private launch-to-result flow, all three encounter balance checks and current lane/build gate. Do not expose the remaining bosses as playable."
     sound: "warlord.start and warlord.defeated, plus existing combat cues; the external audio lane owns sound implementations."
     note: "First half of SPEC WAR-02 under the phase-3 order. Later WAR-02 work retains bosses four and five after the prescribed arsenal/crew sequence. This card is planning only while phase 2 remains active."
+    note: "Split into WAR-02a, WAR-02b and WAR-02c per docs/SCRAPDOME.md section 5, which also settles the rewards."
+  - id: WAR-02a
+    title: "Sawtooth Sal: warlord duel format, Saw Sweep, Side Saws"
+    priority: 3
+    lane: CMB
+    size: L
+    needs: [WAR-01, ARENA-02]
+    status: backlog
+    flag: scrapdome
+    owns: [src/arena/warlords.js, src/arena/moves/saw-sweep.js, tools/test-warlord-sal.mjs, docs/changes/WAR-02a.md]
+    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/combat-teams.js, src/armor-kits.js, src/screen-territory.js, src/app.js]
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
+    acceptance:
+      - "The warlord duel format from docs/SCRAPDOME.md section 5: one-on-one in the Scrapdome, first to three wrecks, 1.5x armor, phase two after the warlord's first wreck, four-minute limit then sudden death, losing costs nothing."
+      - "Sal's brain and Saw Sweep with its tell (length from BRAIN_DIFFICULTY.tellSec), counter and two-second window; phase-two Charge. Brains may not change pilot physics limits."
+      - "Winning grants Side Saws once, working immediately (equipped like a kit), plus scrap and a one-time territory claim; Save Guardian proves idempotent, atomic settlement."
+  - id: WAR-02b
+    title: "The Dustmonger: Dust Veil, oil, dust storm, Smoke Screen"
+    priority: 3
+    lane: CMB
+    size: L
+    needs: [WAR-02a]
+    status: backlog
+    flag: scrapdome
+    owns: [src/arena/moves/dust-veil.js, tools/test-warlord-dustmonger.mjs, docs/changes/WAR-02b.md]
+    hooks: [src/arena/warlords.js, src/combat-weapons.js, src/combat-projectiles.js, src/render3d.js]
+    helpers: [test_author, reviewer, balance_analyst, browser_qa]
+    acceptance:
+      - "Dust Veil blocks crossbow aim through the cloud; oil only on straight runs; brown-puff tell; phase-two dust storm. Smoke Screen is built here as a working player weapon and reused by ARS-01."
+  - id: WAR-02c
+    title: "Mother Mirage: Mirage decoys, Decoy Drone"
+    priority: 3
+    lane: CMB
+    size: L
+    needs: [WAR-02a]
+    status: backlog
+    flag: scrapdome
+    owns: [src/arena/moves/mirage.js, tools/test-warlord-mirage.mjs, docs/changes/WAR-02c.md]
+    hooks: [src/arena/warlords.js, src/combat-teams.js, src/arena/arena-event.js]
+    helpers: [test_author, reviewer, balance_analyst, browser_qa]
+    acceptance:
+      - "Mirage splits into three: only the real car fires and leaves tire marks; a decoy bursts on its first hit and shares the warlord's team. Heat-shimmer tell. Decoy Drone reward draws computer fire for five seconds."
 
   - id: AUD-17
     title: "Voice candidates and chosen crew/raider lines"

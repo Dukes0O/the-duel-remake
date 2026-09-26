@@ -2,6 +2,7 @@ import {WEAPONS, COMBAT_TUNING} from './wasteland-tuning.js';
 import {burst} from './combat-weapons.js';
 import {combatArmorEnabled} from './combat-armor.js';
 import {makeRng} from './rng.js';
+import {stepArenaPickups} from './arena/arena-pickups.js';
 
 const T = COMBAT_TUNING;
 const LANES = [-2.2, 0, 2.2];
@@ -148,6 +149,7 @@ function crossesPickup(actor, pickup) {
 }
 
 export function stepPickups(duel, dt) {
+  if (duel.state.arena) return stepArenaPickups(duel, dt);
   if (combatArmorEnabled(duel)) return stepSeededPickups(duel, dt);
   const state = duel.state;
   const combat = state.combat;

@@ -1,9 +1,11 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { DRIVE, BOOST, steeringYawAuthority } from './config.js';
 import { stepDrift, breakDrift } from './drift-scoring.js';
-import { offroadCapability, wrapHeading, limitClimb, terrainAttitude } from './offroad-physics.js';
+import { offroadCapability, wrapHeading, limitClimb, slopeSpeedDelta, terrainAttitude } from './offroad-physics.js';
 import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
+import { arenaFloorSpeed } from './arena/venues.js';
+import { stepKnock } from './vehicle-knock.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -11,15 +13,25 @@ export function _surface(distance, lateral) {
   return { ...surface, mainRoad: surface.mainRoad ?? surface.road };
 }
 
-export function _drivingSurface(distance, lateral, car = this.car) {
+export function _drivingSurface(distance, lateral, car = this.car, hasContact = true) {
+  const floor = this.state.arena && this.course.def.scrapdome;
+  if (floor) return { ...this._surface(distance, lateral), road: true, mainRoad: false, preparedGravel: true,
+    boostAllowed: true, traction: floor.floorTraction, speedLimit: arenaFloorSpeed(floor, car.topSpeed),
+    scrub: floor.floorScrub, roughness: floor.floorRoughness };
   const hidden = car === this.car && onHiddenRoad(this.course, { s: distance, lateral });
   const surface = hidden ? { ...this._surface(distance, lateral), road: true, mainRoad: false } : this._surface(distance, lateral);
   const preparedGravel = hidden || surface.road && !surface.mainRoad && (this.course.def.offroad || !!surface.shortcutId);
   const rally = car.kind === 'rally', roughnessScale = car.roughnessScale ?? 1;
+  const mud = hasContact ? clamp(Number(surface.mud) || 0, 0, 1) : 0;
+  const waterDepth = hasContact ? clamp(Number(surface.waterDepth) || 0, 0, 1) : 0;
+  const traction = surface.mainRoad ? 1 : preparedGravel ? clamp(.6 + .4 * (car.offRoadGrip ?? DRIVE.offRoadGrip), .82, .995) : car.offRoadGrip ?? DRIVE.offRoadGrip;
+  const speedLimit = surface.mainRoad ? car.topSpeed : preparedGravel ? car.topSpeed * (rally ? .98 : .95) : car.offRoadSpeed ?? 68;
+  const scrub = surface.mainRoad ? 0 : (preparedGravel ? rally ? .014 : .035 : car.offRoadScrub ?? DRIVE.offRoadScrub) * roughnessScale;
   return { ...surface, preparedGravel, boostAllowed: surface.road || this.course.def.practice,
-    traction: surface.mainRoad ? 1 : preparedGravel ? clamp(.6 + .4 * (car.offRoadGrip ?? DRIVE.offRoadGrip), .82, .995) : car.offRoadGrip ?? DRIVE.offRoadGrip,
-    speedLimit: surface.mainRoad ? car.topSpeed : preparedGravel ? car.topSpeed * (rally ? .98 : .95) : car.offRoadSpeed ?? 68,
-    scrub: surface.mainRoad ? 0 : (preparedGravel ? rally ? .014 : .035 : car.offRoadScrub ?? DRIVE.offRoadScrub) * roughnessScale,
+    mud, waterDepth,
+    traction: traction * (1 - mud * .45),
+    speedLimit: mud > 0 ? Math.min(speedLimit, 42 + (1 - mud) * 32) : speedLimit,
+    scrub: scrub + mud * .42,
     roughness: preparedGravel ? (rally ? .14 : .2) * roughnessScale : null };
 }
 
@@ -51,6 +63,15 @@ export function _tickDrift(dt) {
 
 export function _drive(dt) {
   const s = this.state, car = this.car, d = this.diff;
+  // A crash that knocked the car loose: it slides and spins until the tyres
+  // bite, and the driver has no control meanwhile (docs/CRASH_PHYSICS.md).
+  if (this.featureFlags?.enabled('crash-physics') === true && s.knock) {
+    stepKnock(this, s, dt);
+    s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[Math.max(0, s.gear)]);
+    s.boosting = false; s.steerVisual = 0; s.yawVelocity = 0;
+    this._boundary(s);
+    return;
+  }
   // recorded up front (not at the integration line) so the swept collision
   // test stays valid on frames where a crash bails out of _drive early
   s.prevS = s.s;
@@ -99,7 +120,21 @@ export function _drive(dt) {
   if (s.gear !== previousGear) this.emit({ shift: s.gear });
 
   const wasBoosting = s.boosting;
-  const surface = this._drivingSurface(s.s, s.lateral, car);
+  // Terrain can be below an airborne vehicle without touching it. Delay mud,
+  // water and their entry latch until the tyres have ground contact.
+  const surface = this._drivingSurface(s.s, s.lateral, car, !s.airborne);
+  const mud = surface.mud || 0, waterDepth = surface.waterDepth || 0;
+  const surfaceEntrySpeed = Math.abs(s.speedMph);
+  const wasInWater = (s.waterDepth || 0) >= .05;
+  s.surfaceMud = mud;
+  s.waterDepth = waterDepth;
+  s.mudWheelSpin = mud * clamp(s.input.throttle || 0, 0, 1) *
+    clamp(1 - Math.abs(s.speedMph) / (car.offRoadSpeed ?? 68), 0, 1);
+  if(waterDepth >= .05 && !wasInWater){
+    const position = this.course.groundAt(s.s, s.lateral);
+    this.emit({muddyHollowSplash:{depth:waterDepth,speedMph:s.speedMph,
+      position:{x:position.x,y:position.y,z:position.z},cue:'world.muddy-hollow-splash'}});
+  }
   const nitro = s.upgrades.nitro, boostDrain = BOOST.drainPerSec / ((1 + nitro * .14) * car.boostCapacity);
   const boostTopSpeed = BOOST.topSpeedMult + nitro * .025 + (car.nitroSpeedBonus ?? 0);
   if(s.practice)s.boost=1;
@@ -116,7 +151,8 @@ export function _drive(dt) {
 
   // engine blow if you ride the limiter on a Pro manual — the threshold sits
   // below the gear ceiling so holding throttle without upshifting gets there
-  if (s.status === 'exploring' && s.hiddenRoadJourney?.departed) {
+  if (s.status === 'exploring' &&
+      (s.hiddenRoadJourney?.departed || s.muddyHollowDeparture?.departed)) {
     s.overrevSec = 0;
   } else if (!reversing && !d.autoShift && d.engineBlow && s.revs > DRIVE.overRevFrac && s.input.throttle > 0) {
     s.overrevSec += dt;
@@ -152,17 +188,23 @@ export function _drive(dt) {
     if (s.speedMph > offRoadLimit) s.speedMph -= (s.speedMph - offRoadLimit) * (1 - Math.exp(-1.4 * dt));
     if (!surface.boostAllowed) s.boosting = false;
   }
+  if(mud>0)s.speedMph*=Math.exp(-mud*.36*dt);
 
   const speedCap = s.boosting ? car.topSpeed * boostTopSpeed : car.topSpeed;
   if (!s.boosting && s.speedMph > speedCap) s.speedMph -= 22 * dt;
   s.speedMph = Math.max(-DRIVE.reverseMaxMph, Math.min(car.topSpeed * boostTopSpeed, s.speedMph));
+  if(waterDepth>0){
+    const waterDrag=waterDepth*(.18+surfaceEntrySpeed*.008);
+    const waterLoss=surfaceEntrySpeed*(1-Math.exp(-waterDrag*dt));
+    s.speedMph=Math.sign(s.speedMph)*Math.max(0,Math.abs(s.speedMph)-waterLoss);
+  }
   s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[s.gear]);
   const metresPerSec = s.speedMph * DRIVE.mphToWorld;
   if (onHiddenRoad(this.course, s)) s.hiddenRoadDriving = true;
   else if (s.hiddenRoadDriving && surface.mainRoad && Math.abs(s.headingError) < 1.3) s.hiddenRoadDriving = false;
   // A returning road car may join the asphalt facing back along the circuit.
   // Keep its physical heading until the driver has steered into the race lane.
-  const freeHeading = this.course.hiddenRoad && s.hiddenRoadDriving || this.course.def.practice || offroadCapability(car) && (!surface.road || Math.abs(s.headingError) > 1.45);
+  const freeHeading = !!s.arena || this.course.hiddenRoad && s.hiddenRoadDriving || this.course.def.practice || offroadCapability(car) && (!surface.road || Math.abs(s.headingError) > 1.45);
   if (freeHeading) {
     const heading = frame.heading + s.headingError + s.yawVelocity * dt;
     const old = this.course.worldAt(s.s, s.lateral);
@@ -202,7 +244,7 @@ export function _terrainPose(actor = this.state) {
 }
 
 export function _offroadStep(dt, offPreparedRoute) {
-  const s = this.state, capability = offroadCapability(this.car);
+  const s = this.state, capability = offroadCapability(this.car, { titanClimb: this.featureFlags?.enabled('titan-climb') === true });
   if (!capability || s.tumble) return;
   const before = this._supportAt(s.prevS, s.prevLateral), after = this._supportAt(s.s, s.lateral);
   if (![before.y, after.y, s.s, s.lateral].every(Number.isFinite)) {
@@ -228,7 +270,14 @@ export function _offroadStep(dt, offPreparedRoute) {
       const pose = this._roadPosition({ x: before.x + (after.x - before.x) * low, z: before.z + (after.z - before.z) * low }, s.prevS);
       s.s = pose.s; s.lateral = pose.lateral; s.speedMph *= low;
     }
-    const actualGain = this._supportAt(s.s, s.lateral).y - before.y;
+    const actualAfter = this._supportAt(s.s, s.lateral);
+    const actualGain = actualAfter.y - before.y;
+    const actualDistance = Math.hypot(actualAfter.x - before.x, actualAfter.z - before.z);
+    const slopeDelta = slopeSpeedDelta({ gain: actualGain, distance: actualDistance, dt, capability });
+    if (s.speedMph && slopeDelta) {
+      const travelSign = Math.sign(s.speedMph);
+      s.speedMph = travelSign * Math.max(0, Math.abs(s.speedMph) + slopeDelta);
+    }
     s._climbGain = (s._climbGain || 0) + Math.max(0, actualGain);
     // Traversing sideways across a steep face is not a fresh climb. Reset
     // only on genuinely gentle support, not just a zero-rise driving vector.
@@ -242,7 +291,7 @@ export function _offroadStep(dt, offPreparedRoute) {
   this._terrainPose();
 }
 
-export function _jump(actor, dt) {
+export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   const arena = this.course.def.kind === 'arena';
   const allTerrain = actor === this.state && offroadCapability(this.car) && (actor.airborne || !this._surface(actor.s, actor.lateral).road);
   if (actor.tumble || (!arena && this.course.def.airborne !== true && !allTerrain) || !Number.isFinite(dt) || dt <= 0) return;
@@ -265,7 +314,8 @@ export function _jump(actor, dt) {
     if (predicted > ground + .0001 && (!arena || verticalSpeed > 1) && fastEnough) {
       actor.airborne = true;
       actor._verticalSpeed = verticalSpeed;
-      actor._airOrigin = { x: previousPoint.x, z: previousPoint.z, time: this.state.stageTimeSec - dt };
+      actor._airOrigin = { x: previousPoint.x, z: previousPoint.z,
+        time: simulationTime - dt };
       actor.airDistance = 0; actor.airTime = 0;
       // Natural crests share flight/landing physics, but only authored arena
       // ramps can create a scored jump token. Resets still clear that token.
@@ -281,7 +331,7 @@ export function _jump(actor, dt) {
   actor.airHeight = Math.max(0, actor._jumpY - ground);
   if (actor._airOrigin) {
     actor.airDistance = Math.hypot(groundPoint.x - actor._airOrigin.x, groundPoint.z - actor._airOrigin.z);
-    actor.airTime = Math.max(0, this.state.stageTimeSec - actor._airOrigin.time);
+    actor.airTime = Math.max(0, simulationTime - actor._airOrigin.time);
   }
   if (actor._jumpY > ground) return;
   // Rejoin a descending road at its tangent speed. Zeroing this for natural

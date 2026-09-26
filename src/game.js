@@ -23,6 +23,8 @@ import { Course } from './course.js';
 import { onHiddenRoad } from './hidden-road.js';
 import {initializeHiddenRoadJourney, checkHiddenRoadDeparture, stepHiddenRoadJourney,
   queueHiddenRoadChoice, hiddenRoadColliders, prepareHiddenRoadVisit} from './hidden-road-journey.js';
+import {initializeMuddyHollowDeparture, nearMuddyHollowDeparture,
+  checkMuddyHollowDeparture, stepMuddyHollowExploration} from './muddy-hollow.js';
 import { seedFromUrl } from './rng.js';
 import { createDriftState } from './drift-scoring.js';
 import { DEFAULT_DRIVER, normalizeDriverId, applyDriverModifiers } from './drivers.js';
@@ -31,6 +33,8 @@ import {upgradedCar} from './progression.js';
 import {createFeatureFlags, featureFlags} from './feature-flags.js';
 import {hiddenRoadInRace, raceFeatureFlags} from './wasteland-access.js';
 import {clamp, freshDamageZones} from './sim-common.js';
+import {ARENA_VENUES} from './arena/venues.js';
+import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
 
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
 const FACTORY_MAX_UPGRADES = Object.freeze(Object.fromEntries(UPGRADE_KEYS.map(key => [key, 3])));
@@ -71,6 +75,7 @@ export class Duel {
       s: 0, lateral: 0, speedMph: 0, gear: 0, revs: 0, overrevSec: 0, reverseHoldSec: 0, offRoad: false,
       steerVisual: 0, boost: 1, boosting: false, invulnerableSec: 0,
       headingError: 0, yawVelocity: 0, roughness: 0, offRoadTime: 0, preparedGravel: false, slipAngle: 0, drifting: false,
+      surfaceMud: 0, waterDepth: 0, mudWheelSpin: 0,
       impactTimer: 0, impactDuration: 0, impactStrength: 0, impactSide: 1, crashSpin: 0,
       majorCrashes: 0, stageCrashes: 0, catastrophic: false,
       damageZones: freshDamageZones(), damageCooldown: 0,
@@ -136,7 +141,7 @@ export class Duel {
   }
   get diff() { return DIFFICULTY[this.state.difficulty]; }
   get scoreMultiplier() { return this.state.difficulty === 'pro' ? SCORING.manualMultiplier : 1; }
-  get stageDef() { return COURSE[this.state.stageIndex]; }
+  get stageDef() { return this.state.arena ? this.course.def : COURSE[this.state.stageIndex]; }
   get raceLength() { return this.course?.raceLength || this.course?.length || 0; }
   _parTime(...args) { return simResults._parTime.apply(this, args); }
   relativeS(value, reference = this.state.s) {
@@ -149,11 +154,14 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, weaponLoadout, combatArmorKit = null, crewId = 'rook', discoveredGate = false, _hiddenRoadVisit = false } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, weaponLoadout, combatArmorKit = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
+    this.state.arena = null;
     this._hiddenRoadAutomaticEntry = discoveredGate === true;
     this.state.wastelandGateDiscovered = discoveredGate === true;
+    this.state.muddyHollowSavedHubcaps = Array.isArray(muddyHollowHubcaps)
+      ? [...muddyHollowHubcaps] : [];
     this.state.hiddenRoadVisit = _hiddenRoadVisit ? {playerId} : null;
     if (CARS[car]) this.state.car = car;
     if (DIFFICULTY[difficulty]) this.state.difficulty = difficulty;
@@ -197,33 +205,14 @@ export class Duel {
   _loadStage(idx) {
     const s = this.state;
     s.stageIndex = idx;
-    this.course = new Course(COURSE[idx], this.seed, { hiddenRoad: hiddenRoadInRace(this.featureFlags, s) });
+    this.course = new Course(COURSE[idx], this.seed, {
+      hiddenRoad: hiddenRoadInRace(this.featureFlags, s),
+      muddyHollow: s.wastelandGateDiscovered === true && this.featureFlags.enabled('muddy-hollow'),
+    });
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     const rawGates = this.course.features.lapGates?.map(gate => typeof gate === 'number' ? gate : gate.s) || [this.course.length * .25, this.course.length * .5, this.course.length * .75];
     this._lapGates = [...new Set(rawGates.filter(distance => distance > 0 && distance < this.course.length))].sort((a, b) => a - b);
-    s.s = 0; s.lateral = 0; s.speedMph = 0; s.gear = 0; s.revs = 0; s.overrevSec = 0; s.reverseHoldSec = 0;
-    s.paused = false; s.offRoad = false; s.steerVisual = 0;
-    s.boost = 1; s.boosting = false; s.invulnerableSec = 0;
-    s.headingError = 0; s.yawVelocity = 0; s.roughness = 0; s.offRoadTime = 0; s.preparedGravel = false;
-    s.slipAngle = 0; s.drifting = false;
-    s.boundaryWarning = false; s.pushVelocity = 0; s.damageCooldown = 0; s.collectedFlocks = [];
-    s.airborne = false; s.airHeight = 0; s.jumpScore = 0; s.jumps = 0; s.bestJumpMeters = 0; s.collectedJumps = [];
-    s.airDistance = 0; s.airTime = 0; s._airOrigin = null;
-    s.groundHeight = null; s.terrainPitch = null; s.terrainRoll = null; s.tumble = null; s.rollovers = 0;
-    s._climbGain = 0; s._climbRest = 0; s._offroadSafe = null; s.practice = this.course.def.practice === true;
-    s.crushedProps = []; s.crushCount = 0; s.crushScore = 0; s.crushBurst = null;
-    this._crushedVehicles = [];
-    s.fallenCacti = []; this._fallenCactusIds = new Set();
-    s.brokenScenery = []; this._brokenSceneryIds = new Set();
-    s.roadsideBursts = [];
-    s.roadsideBurstSerial = 0;
-    s._jumpY = null; s._verticalSpeed = 0; s._jumpOrigin = null; s.prevAirHeight = 0;
-    s.crashSite = null; s.impactTimer = 0; s.impactDuration = 0; s.impactStrength = 0; s.impactSide = 1; s.crashSpin = 0;
-    s.bombImpactCooldown = 0;
-    s.combo = 0; s.comboTimer = 0; s.stageStyleScore = 0; s.stageCrashes = 0; s.policeEscapes = 0;
-    s.callout = ''; s.calloutTimer = 0;
-    s.input = { throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false };
-    s.stageTimeSec = 0;
+    this._resetStageDriving();
     s.racePenaltySec = 0; s.lap = s.currentLap = 1; s.completedLaps = 0; s.lapsTotal = this.course.def.laps || 1;
     s.lapTimeSec = 0; s.lapTimes = []; s.lapStartedAt = 0; s.nextLapGate = 0; s.assistedLaps = []; s.assistedLap = false;
     const stunt = this.course.def.stuntTrial, drift = this.course.def.driftTrial, rush = this.course.def.checkpointRush;
@@ -268,9 +257,121 @@ export class Duel {
     initializeFootTransition(this);
     initializeFootWeapons(this);
     initializeHiddenRoadJourney(this);
+    initializeMuddyHollowDeparture(this, s.muddyHollowSavedHubcaps);
     if (s.hiddenRoadVisit) prepareHiddenRoadVisit(this);
     this.emit(s.hiddenRoadVisit ? {stageLoaded: idx, hiddenRoadVisit: true}
       : {stageLoaded: idx, countdown: 3});
+  }
+
+  // Driving, crash and scoring state for a fresh stage or arena event.
+  _resetStageDriving() {
+    const s = this.state;
+    s.s = 0; s.lateral = 0; s.speedMph = 0; s.gear = 0; s.revs = 0; s.overrevSec = 0; s.reverseHoldSec = 0;
+    s.paused = false; s.offRoad = false; s.steerVisual = 0;
+    s.boost = 1; s.boosting = false; s.invulnerableSec = 0;
+    s.headingError = 0; s.yawVelocity = 0; s.roughness = 0; s.offRoadTime = 0; s.preparedGravel = false;
+    s.surfaceMud = 0; s.waterDepth = 0; s.mudWheelSpin = 0;
+    s.slipAngle = 0; s.drifting = false;
+    s.boundaryWarning = false; s.pushVelocity = 0; s.damageCooldown = 0; s.collectedFlocks = [];
+    s.airborne = false; s.airHeight = 0; s.jumpScore = 0; s.jumps = 0; s.bestJumpMeters = 0; s.collectedJumps = [];
+    s.airDistance = 0; s.airTime = 0; s._airOrigin = null;
+    s.groundHeight = null; s.terrainPitch = null; s.terrainRoll = null; s.tumble = null; s.rollovers = 0;
+    s._climbGain = 0; s._climbRest = 0; s._offroadSafe = null; s.practice = this.course.def.practice === true;
+    s.crushedProps = []; s.crushCount = 0; s.crushScore = 0; s.crushBurst = null;
+    this._crushedVehicles = [];
+    s.fallenCacti = []; this._fallenCactusIds = new Set();
+    s.brokenScenery = []; this._brokenSceneryIds = new Set();
+    s.roadsideBursts = [];
+    s.roadsideBurstSerial = 0;
+    s._jumpY = null; s._verticalSpeed = 0; s._jumpOrigin = null; s.prevAirHeight = 0;
+    s.crashSite = null; s.impactTimer = 0; s.impactDuration = 0; s.impactStrength = 0; s.impactSide = 1; s.crashSpin = 0;
+    s.bombImpactCooldown = 0;
+    s.combo = 0; s.comboTimer = 0; s.stageStyleScore = 0; s.stageCrashes = 0; s.policeEscapes = 0;
+    s.callout = ''; s.calloutTimer = 0;
+    s.input = { throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false };
+    s.stageTimeSec = 0;
+  }
+
+  // ---- arena events (docs/SCRAPDOME.md) ----------------------------------
+  // Reached only from the Scrapdome yard. Returns false for an invalid request
+  // or while the scrapdome switch is off; the caller must only offer it to a
+  // player who has found the gate.
+  startArenaEvent({ venueId = 'scrapdome', mode = 'last-car-rolling', car, difficulty,
+    cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, upgrades = {},
+    seed, opponents = [], weaponLevels, weaponLoadout, combatArmorKit = null, crewId = 'rook' } = {}) {
+    const venue = ARENA_VENUES[venueId], rules = ARENA_MODES[mode];
+    const released = this.featureFlags.base || this.featureFlags;
+    if (!this.featureFlags.enabled('scrapdome') || !released.enabled('wasteland2') || !venue || !rules ||
+        !Array.isArray(opponents) || opponents.length < 1 || opponents.length > rules.maxOpponents ||
+        opponents.some(spec => !CARS[spec?.car])) return false;
+    const s = this.state;
+    if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
+    s.seed = this.seed;
+    s.wastelandGateDiscovered = true;
+    this._hiddenRoadAutomaticEntry = false;
+    s.hiddenRoadVisit = null;
+    if (CARS[car]) s.car = car;
+    if (DIFFICULTY[difficulty]) s.difficulty = difficulty;
+    s.cpuDifficulty = CPU_DIFFICULTY[cpuDifficulty] ? cpuDifficulty : DEFAULT_CPU_DIFFICULTY;
+    s.playerId = typeof playerId === 'string' ? playerId : null;
+    s.driverId = normalizeDriverId(driverId);
+    s.rivalSettings = null;
+    s.weaponLevels = normalizeWeapons({levels: weaponLevels}).levels;
+    s.opponentCount = opponents.length;
+    s.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[s.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
+    s.mode = 'wasteland';
+    s.weaponLoadout = normalizeCarLoadout(weaponLoadout, Object.keys(WEAPONS));
+    s.combatArmorKit = validArmorKit(combatArmorKit);
+    s.crewId = Object.hasOwn(CREW, crewId) ? crewId : 'rook';
+    s.lives = LIVES.start; s.totalTimeSec = 0; s.penaltySec = 0; s.score = 0; s.nearMisses = 0;
+    s.majorCrashes = 0; s.catastrophic = false; s.boundaryResets = 0;
+    s.damageZones = { front: 0, rear: 0, left: 0, right: 0 };
+    this._loadArena(venue, mode, opponents);
+    return true;
+  }
+
+  _loadArena(venue, mode, opponentSpecs) {
+    const s = this.state;
+    // Keep a valid index for code that reads the course list; the arena
+    // itself always reads `this.course` and `state.arena`.
+    s.stageIndex = Math.max(0, COURSE.findIndex(course => course.id === 'titan-arena'));
+    this.course = new Course(venue, this.seed);
+    this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
+    this._lapGates = [];
+    this._resetStageDriving();
+    s.racePenaltySec = 0; s.lap = s.currentLap = 1; s.completedLaps = 0; s.lapsTotal = 1;
+    s.lapTimeSec = 0; s.lapTimes = []; s.lapStartedAt = 0; s.nextLapGate = 0; s.assistedLaps = []; s.assistedLap = false;
+    s.timeLimitSec = s.timeRemaining = s.parTimeSec = s.objective = s.drift = s.checkpointRush = null;
+    s.police = { beep: 0, triggered: false, pursuit: null, ticket: null, ticketCount: 0, pendingFines: 0 };
+    s.results = null; s.lastCrashReason = null; s.crashFlash = 0;
+    s.traffic = []; s.hiddenRoadJourney = null; s.muddyHollowDeparture = null; delete s.raids;
+    s.arena = createArenaEvent({mode, venueId: venue.id, course: this.course,
+      opponentBrains: opponentSpecs.map(spec => spec.brain)});
+    const slots = startingSlots(s.arena.spawnSlots.length, opponentSpecs.length + 1);
+    s.opponents = opponentSpecs.map((spec, index) => ({
+      arenaId: `cpu-${index + 1}`, car: spec.car, driverId: spec.driverId || DEFAULT_DRIVER,
+      upgrades: Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[spec.car].factoryMaxed ? 3 :
+        clamp(Math.floor(spec.upgrades?.[key] ?? spec.upgradeLevel ?? 0), 0, 3)])),
+      speedMph: 0, finished: false, finishTime: null, headingError: 0, yawVelocity: 0, pushVelocity: 0,
+      offRoad: false, contactCooldown: 0, boost: 1, boosting: false,
+      damageZones: freshDamageZones(), damageCooldown: 0,
+      airborne: false, airHeight: 0, _jumpY: null, _verticalSpeed: 0, _jumpOrigin: null,
+      completedLaps: 0, nextLapGate: 0, lapTimes: [], lapStartedAt: 0 }));
+    const first = s.opponents[0];
+    this.rivalSpec = applyDriverModifiers(upgradedCar(CARS[first.car], first.upgrades), first.driverId, first.car);
+    [s, ...s.opponents].forEach((actor, index) => {
+      const slot = s.arena.spawnSlots[slots[index]];
+      placeActor(this, actor, slot);
+      s.arena.participants[index].spawnSlot = slot.index;
+    });
+    s.combat = createCombat(s.weaponLevels);
+    initializeCombatArmor(this);
+    applyArenaArmor(this);
+    initializeFootTransition(this);
+    initializeFootWeapons(this);
+    s.countdown = 3;
+    s.status = 'countdown';
+    this.emit({ arenaLoaded: venue.id, countdown: 3 });
   }
 
   _spawnTraffic(...args) { return simRival._spawnTraffic.apply(this, args); }
@@ -296,8 +397,13 @@ export class Duel {
       else if (Math.ceil(s.countdown) !== beat) this.emit({ countdown: Math.ceil(s.countdown) });
       return;
     }
-    if (checkHiddenRoadDeparture(this) || s.status === 'exploring') {
-      stepHiddenRoadJourney(this, dt);
+    if (s.arena) {
+      if (s.status === 'racing') stepArenaEvent(this, dt);
+      return;
+    }
+    if (checkMuddyHollowDeparture(this) || checkHiddenRoadDeparture(this) ||
+        s.status === 'exploring') {
+      if (!stepMuddyHollowExploration(this, dt)) stepHiddenRoadJourney(this, dt);
       return;
     }
     if (s.status !== 'racing') {
@@ -308,9 +414,14 @@ export class Duel {
     // Within the actual spur, motion decides departure before race outcomes.
     // Ordinary and flag-off racing retain their established call order.
     const droveSpur = !!s.hiddenRoadJourney && !s.onFoot && s.impactTimer <= 0 && onHiddenRoad(this.course, s);
+    const droveHollowApproach = nearMuddyHollowDeparture(this);
     if (droveSpur) {
       this._drive(dt);
       if (checkHiddenRoadDeparture(this) || s.status !== 'racing') return;
+    }
+    if (droveHollowApproach) {
+      this._drive(dt);
+      if (checkMuddyHollowDeparture(this) || s.status !== 'racing') return;
     }
     s.stageTimeSec += dt;
     if (s.timeLimitSec) s.timeRemaining = Math.max(0, s.timeLimitSec - s.stageTimeSec - s.racePenaltySec);
@@ -352,8 +463,8 @@ export class Duel {
     // each sub-step can end the run (gameover crash, ticket); once the status
     // leaves 'racing' the rest of the frame must not keep simulating, or a
     // finish-line crossing could overwrite the gameover/ticket state
-    if (!droveSpur) this._drive(dt);
-    if (checkHiddenRoadDeparture(this)) return;
+    if (!droveSpur && !droveHollowApproach) this._drive(dt);
+    if (checkMuddyHollowDeparture(this) || checkHiddenRoadDeparture(this)) return;
     if (s.status !== 'racing' || s.impactTimer > 0) { this._tickDrift(dt); return; }
     this._jump(s, dt);
     this._traffic(dt);

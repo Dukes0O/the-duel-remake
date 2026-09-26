@@ -95,23 +95,26 @@ try{
     if(screen==='ticket'){keyboard.duel.state.speedMph=110;keyboard.duel._ticket({limitMph:55});}
     const runId=keyboard.runId,beforeHistory=keyboard.profile.history.length,settings=JSON.stringify(keyboard.profile.raceSettings);
     check(screen!=='paused'||keyboard.duel.state.paused,'Escape uses the real keyboard handler to pause');
-    key('keydown','KeyR');
-    check(keyboard.runId!==runId&&keyboard.duel.state.status==='countdown'&&!keyboard.duel.state.paused,`${screen}: one R press immediately restarts into countdown`);
+    // Kyle, 25 September 2026: R no longer restarts; the Restart button does.
+    const beforeStatus=keyboard.duel.state.status;
+    key('keydown','KeyR');key('keyup','KeyR');
+    check(keyboard.runId===runId&&keyboard.duel.state.status===beforeStatus,`${screen}: R does not restart the race`);
+    keyboard.requestNavigation('restart');
+    check(keyboard.runId!==runId&&keyboard.duel.state.status==='countdown'&&!keyboard.duel.state.paused,`${screen}: one Restart immediately restarts into countdown`);
     check(keyboard.profile.credits===2000&&keyboard.profile.activeRace===null,`${screen}: keyboard restart preserves the bank and discards pending earnings`);
     check(keyboard.profile.history.length===beforeHistory+(screen==='countdown'?0:1),`${screen}: keyboard restart settles only a stage that reached GO`);
     check(JSON.stringify(keyboard.profile.raceSettings)===settings,`${screen}: keyboard restart preserves the selected setup`);
     const restartedRun=keyboard.runId,settledHistory=keyboard.profile.history.length;
-    key('keydown','KeyR',true);key('keydown','KeyR',true);
-    check(keyboard.runId===restartedRun&&keyboard.profile.history.length===settledHistory,`${screen}: browser key-repeat cannot repeatedly restart or settle`);
+    key('keydown','KeyR');key('keydown','KeyR',true);key('keydown','KeyR',true);
+    check(keyboard.runId===restartedRun&&keyboard.profile.history.length===settledHistory,`${screen}: held or repeated R cannot restart or settle`);
     key('keyup','KeyR');check(keyboard.keys.KeyR===false,'R release clears the held input');
   }
   keyboard.advance(4);const completed=finishBonus(keyboard,180),earned=keyboard.profile.credits,completedBests=JSON.stringify(keyboard.profile.personalBests),completedHistory=keyboard.profile.history.length;
   check(completed.won&&earned>2000,'keyboard dismissal fixture has a real settled winning result');
   keyboard.duel.emit({stageResult:completed});check(keyboard.profile.credits===earned&&keyboard.profile.history.length===completedHistory,'duplicate result within its owning run cannot repeat completed earnings');
-  key('keydown','KeyR');check(keyboard.duel.state.status==='countdown'&&keyboard.profile.credits===earned,'R restarts a completed result without reclaiming its earnings');
-  key('keyup','KeyR');
+  keyboard.requestNavigation('restart');check(keyboard.duel.state.status==='countdown'&&keyboard.profile.credits===earned,'Restart after a completed result does not reclaim its earnings');
   check(JSON.stringify(keyboard.profile.personalBests)===completedBests&&keyboard.profile.history.length===completedHistory,'completed-result restart preserves prior records and settlement');
-  check(keyboard.requestNavigation('menu')&&keyboard.duel.state.status==='menu','one-click Exit also works after a keyboard restart');
+  check(keyboard.requestNavigation('menu')&&keyboard.duel.state.status==='menu','one-click Exit also works after a Restart');
   const menuRun=keyboard.runId;key('keydown','KeyR');check(keyboard.duel.state.status==='menu'&&keyboard.runId===menuRun,'R at the menu does not launch an unsolicited race');
 }finally{
   keyboard?._inputEvents?.abort();

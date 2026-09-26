@@ -28,7 +28,35 @@ Road discovery (hints, Turn back, reload, phone layout, a second player who
 sees nothing, and the direct visit). Earlier BETA-01 evidence at 74646e8: full
 270/270, combat balance off (wins 9/6/2) and on (8/5/3, Easy CPU hits 3), save
 checks and private smoke. Current wall, crew and first-person hand art are
-still being polished. The final release gate is recorded below after it runs.
+still being polished.
+
+Release gate on the exact candidate 28ca5f6: full tier 271/271, clean start
+and end. Combat balance passed with the Wasteland rules off (wins 9/6/2 of ten
+at Easy/Medium/Hard) and on (8/5/3). Before release, the live launcher failed:
+the rolldown native package in the live folder had lost its `package.json`.
+`npm ci --offline` restored the locked packages with no version change. The
+live folder fast-forwarded from eb879e5 to 28ca5f6. Build
+20260925231031-649657493d40 was checked on a private port, the previous build
+was kept in `dist-previous`, new hashed assets were copied first and
+`index.html` and `build-version.json` last. No server was running.
+
+## On-foot controls and the R key — September 25, 2026
+
+Kyle, playing the live release: out of the car the controls were backwards.
+Projected through the first-person camera, D walked left on screen, A right,
+and mouse right turned the view left. FOOT-FIX makes strafing use the camera's
+right and mouse right turn right; the gamepad right stick shares that path.
+A new test projects each direction through the real camera at four facings;
+it failed 4/4 on the old code. At Kyle's request (from Gratian), R no longer
+restarts the race; the on-screen Restart button is unchanged. Changed tests
+walk to the barrier and slope with A, expect mouse right to lower yaw, and
+check that R does nothing while restart settlement is checked through the
+Restart path. Exact commit faf5749 passed the full tier 272/272, the build and
+the private browser smoke (0 warnings, 0 errors). The live folder
+fast-forwarded from 28ca5f6 to faf5749 with no dependency change; build
+20260926003909-0b03d903c5cd was checked on a private port and installed assets
+first while a live server was running. The server returned the new build
+version and landing page; no open tab was refreshed.
 
 ## Mad Max roadside collisions — September 23, 2026
 

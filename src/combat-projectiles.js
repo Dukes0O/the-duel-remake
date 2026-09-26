@@ -4,6 +4,7 @@ import {applyArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {tickCombatScoring} from './combat-scoring.js';
 import {damageRaider} from './raiders.js';
+import {arenaDamageBlocked, arenaStrikeCandidates} from './combat-teams.js';
 
 const T = COMBAT_TUNING;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -85,6 +86,7 @@ function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
       : state.opponents.includes(actor) && (actor.combatShield || 0) > 0;
   if (actor.finished || actor.crushed || actor.combatWrecking || shielded ||
       (projectile.kind === 'bomb' && actor.bombImpactCooldown > 0)) return;
+  if (state.arena && arenaDamageBlocked(duel, actor, projectile.ownerId)) return;
 
   const where = point(duel, actor);
   const normal = Math.sign((where.x - projectile.x) * Math.cos(where.heading) -
@@ -136,7 +138,7 @@ function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
     ? armorOptions.splash ? 'rpg-splash' : 'rpg-direct'
     : projectile.kind === 'bomb' ? 'bomb' : 'crossbow',
     {level: projectile.level, ...armorOptions,
-      owner: projectile.raid ? 'raider' : enemy ? 'cpu' : 'player'});
+      owner: projectile.raid ? 'raider' : state.arena ? projectile.ownerId : enemy ? 'cpu' : 'player'});
 }
 
 function sweptApproach(projectile, old, target, radius) {
@@ -243,7 +245,8 @@ export function stepProjectiles(duel, dt) {
     let raiderTarget = null;
     let firstContact = Infinity;
     for (const actor of projectile.raid ? [state, ...state.opponents]
-      : projectile.enemy ? [state] : state.opponents) {
+      : state.arena ? arenaStrikeCandidates(duel, projectile.ownerId)
+        : projectile.enemy ? [state] : state.opponents) {
       const at = point(duel, actor);
       const vehicle = duel._vehicleSpec(actor);
       const radius = vehicle.halfWidth + T.projectileRadiusPadding;

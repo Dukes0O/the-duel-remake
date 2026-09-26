@@ -72,6 +72,8 @@ export function _rollover(dt) {
 }
 
 export function _boundary(car) {
+  // Arena walls contain every car (src/arena/arena-floor.js); nothing resets.
+  if (this.state.arena) { if (car === this.state) car.boundaryWarning = false; return; }
   if (car === this.state && onHiddenRoad(this.course, car)) {
     car.boundaryWarning = false;
     return;
@@ -189,6 +191,7 @@ export function _safeReset(car, crashSite = null) {
 export function _crash(reason, side = 0, impactMph = Math.abs(this.state.speedMph), zone = 'front') {
   const s = this.state;
   if (s.impactTimer > 0 || s.status !== 'racing' || s.combat?.shield>0) return;
+  s.knock = null; // the crash sequence takes over from any crash slide
   if (combatArmorEnabled(this) && reason !== 'engine_blew') {
     if (['traffic', 'rival', 'head_on'].includes(reason))
       applyRamArmorDamage(this, s, impactMph);

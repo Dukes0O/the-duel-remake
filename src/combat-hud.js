@@ -1,4 +1,5 @@
 import {WEAPONS, ufoDestination} from './combat.js';
+import {arenaMarker} from './screen-arena.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {NOTORIETY_XP} from './notoriety.js';
 import {WEAPON_IDS} from './weapon-upgrades.js';
@@ -252,7 +253,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       const angle = `${Math.round(360 * (1 - clamp(left / Math.max(.01, full))))}deg`;
       if (button.style.getPropertyValue('--ready-angle') !== angle) button.style.setProperty('--ready-angle', angle);
       if (button.disabled !== disabled) button.disabled = disabled;
-      const label = left > 0 ? `${Math.ceil(left)}s` : blocked ? ufo.reason === 'lap-used' ? 'LAP USED' : 'CHARGING' : 'READY';
+      const label = left > 0 ? `${Math.ceil(left)}s` : blocked ? ufo.reason === 'lap-used' ? 'LAP USED' : ufo.reason === 'landing' ? 'NO ROOM' : 'CHARGING' : 'READY';
       setText(button.querySelector('.combat-slot-state'), label);
       setAttribute(button, 'aria-label', `${weapon.name}, level ${combat.levels[id] || 0}, keyboard ${slot+1}, gamepad D-pad ${CAR_SLOT_PAD[slot]}, ${label.toLowerCase()}`);
     }
@@ -277,12 +278,23 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       marker.style.left = `${(Math.max(.11, Math.min(.89, clamp(position.x))) * 100).toFixed(1)}%`;
       marker.style.top = `${(clamp(position.y) * 100).toFixed(1)}%`;
       const opponentArmor = armorPresentation(opponent);
-      setText(marker.querySelector('.combat-marker-heading'), index ? `OPPONENT ${index + 1}` : 'RIVAL');
-      setText(marker.querySelector('.combat-marker-value'), exact ? `${opponentArmor.value} / ${opponentArmor.max}` : `${position.direction} · ${Math.round(Math.abs(opponent.s - state.s))} m · ${opponentArmor.value} / ${opponentArmor.max}`);
+      // In the Scrapdome, cars carry names and a red tag when hunting you, and
+      // distance is measured across the floor, not along the ring.
+      const arena = arenaMarker(state, opponent);
+      let gapMetres = Math.round(Math.abs(opponent.s - state.s));
+      if (arena) {
+        const a = app.duel.course.worldAt(opponent.s, opponent.lateral || 0);
+        const b = app.duel.course.worldAt(state.s, state.lateral || 0);
+        gapMetres = Math.round(Math.hypot(a.x - b.x, a.z - b.z));
+      }
+      setText(marker.querySelector('.combat-marker-heading'), arena ? `${arena.heading}${arena.hunting ? ' · HUNTING YOU' : ''}` : index ? `OPPONENT ${index + 1}` : 'RIVAL');
+      marker.classList.toggle('is-hunting', !!arena?.hunting);
+      marker.classList.toggle('is-protected', !!arena?.protected);
+      setText(marker.querySelector('.combat-marker-value'), exact ? `${opponentArmor.value} / ${opponentArmor.max}` : `${position.direction} · ${gapMetres} m · ${opponentArmor.value} / ${opponentArmor.max}`);
       setFraction(marker.querySelector('.combat-marker-track i'), opponentArmor.fraction);
       marker.classList.toggle('is-critical', opponentArmor.fraction <= .25);
       marker.classList.toggle('is-wrecked', !!opponent.combatWrecking);
-      setAttribute(marker, 'aria-label', `${index ? `Opponent ${index + 1}` : 'Rival'} armor ${opponentArmor.value} of ${opponentArmor.max}${exact ? '' : `, ${position.direction.toLowerCase()}, ${Math.round(Math.abs(opponent.s - state.s))} metres away`}`);
+      setAttribute(marker, 'aria-label', `${arena ? `${arena.heading}${arena.hunting ? ', hunting you' : ''}` : index ? `Opponent ${index + 1}` : 'Rival'} armor ${opponentArmor.value} of ${opponentArmor.max}${exact ? '' : `, ${position.direction.toLowerCase()}, ${gapMetres} metres away`}`);
     }
     hitMarker.classList.toggle('is-visible', hitUntil > state.stageTimeSec && !state.paused);
     damageArrow.classList.toggle('is-visible', damageUntil > state.stageTimeSec && !state.paused);

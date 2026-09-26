@@ -32,7 +32,7 @@ All displayed speeds use **km/h**, including the dashboard, garage, tickets and 
 
 Hold the brake for a quarter-second after stopping to select reverse in either transmission. The gear display shows **R** and reverse speed is capped at about 35 km/h. Press accelerate to brake while reversing, then move forward in first gear. Q/E shifts forward gears only. Nitro is unavailable in reverse.
 
-Main Menu and Restart act immediately with one click, including after Busted. The R key also restarts immediately. Leaving or restarting forfeits unbanked race earnings, but never deducts saved credits.
+Main Menu and Restart act immediately with one click, including after Busted. There is no restart key, so a stray key press cannot end a race. Leaving or restarting forfeits unbanked race earnings, but never deducts saved credits.
 
 ## Events
 

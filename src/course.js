@@ -2,6 +2,7 @@
 // the renderer, player, CPU and checkpoint validation.
 import { makeRng } from './rng.js';
 import { installHiddenRoad } from './hidden-road.js';
+import { installMuddyHollow } from './muddy-hollow.js';
 import { THEMES } from './config.js';
 import { buildRoadFurniture, tunnelCoverShape } from './road-furniture.js';
 import { createPolylineIndex } from './polyline-index.js';
@@ -37,7 +38,7 @@ const ROUTE_SHAPES={
 };
 
 export class Course {
-  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false}={}){
+  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false}={}){
     this.def=def;this.seed=seed>>>0;this.theme=THEMES[def.theme];this.length=def.lengthU;
     this._solveShortcuts=solveShortcuts===true;
     this.closed=def.closed!==false;this.raceLength=this.length*(def.laps||2);
@@ -48,6 +49,7 @@ export class Course {
     this.features={checkpoints:[],lapGates:[],rushGates:[],radarTraps:[],scenery:[],rocks:[],obstacles:[],mountains:[],stations:[],trees:[],buildings:[],barriers:[],turns:[],flocks:[],poles:[],landmarks:[],shortcuts:[],passingLanes:[],tunnels:[],ramps:[],crushables:[],signs:[],chevrons:[]};
     this._build();
     if(hiddenRoad && def.id === 'pacific-canyon') installHiddenRoad(this);
+    if(muddyHollow && def.id === 'high-country') installMuddyHollow(this);
   }
   phase(s){return this.closed?((s%this.length)+this.length)%this.length:clamp(s,0,this.length);}
   sectionAt(s){const p=this.phase(s);return this.sections.find(v=>p>=v.start&&p<v.end)||this.sections.at(-1);}
@@ -89,6 +91,15 @@ export class Course {
     if(!this.def.practice)f.checkpoints.push({s:this.raceLength,kind:'finish'});
     if(this.def.hasRadar)f.radarTraps.push({s:Math.round(this.length*.43),limitMph:this.def.speedLimitMph});
     if(this.def.practice){buildFreestyleFeatures(this);}
+    else if(this.def.scrapdome){
+      // The Scrapdome venue (src/arena/venues.js); Titan Monster Arena below is unchanged.
+      const layout=this.def.scrapdome;
+      for(const frac of layout.rampFractions)f.ramps.push({start:this.length*frac,end:this.length*frac+layout.rampLength,height:layout.rampHeight});
+      for(const [i,[frac,off]]of layout.junk.entries()){
+        const distance=this.length*frac,p=this.groundAt(distance,off);
+        f.crushables.push({id:`scrapdome-junk-${i}`,kind:'junkCar',s:distance,off,...p,halfX:1.06,halfZ:2.25,height:1.30,shape:'box',color:[0x53645b,0x935143,0x557185][i%3]});
+      }
+    }
     else if(arena){
       for(const frac of [.17,.55,.78])f.ramps.push({start:this.length*frac,end:this.length*frac+38,height:2.6});
       for(const [row,s]of[330,680,960].entries())for(let i=0;i<2;i++){
@@ -113,12 +124,14 @@ export class Course {
     if(cut.offsets)return sampledOffset(cut.offsets,t);
     const u=Math.min(1,Math.min(t,1-t)/(cut.transition||.5));return cut.offset*Math.sin(Math.PI*.5*u)**2;
   }
-  roadHalfWidthAt(s){if(this.def.practice)return 24;if(this.def.arena)return 13;if(this.def.offroad)return 5.5;const p=this.phase(s);let width=7;
+  roadHalfWidthAt(s){if(this.def.practice)return 24;if(this.def.scrapdome)return this.def.scrapdome.floorHalfWidth;if(this.def.arena)return 13;if(this.def.offroad)return 5.5;const p=this.phase(s);let width=7;
     for(const lane of this.features.passingLanes)if(p>=lane.start&&p<=lane.end)width+=3.5*smooth((p-lane.start)/45)*smooth((lane.end-p)/45);return width;}
   surfaceAt(s,lateral=0){const p=this.phase(s),roadHalfWidth=this.roadHalfWidthAt(p);
     if(this.def.practice){const world=this.worldAt(s,lateral);if(onFreestyleDrag(world.x,world.z))return {road:true,mainRoad:true,shortcutId:null,roadHalfWidth:16};}
     const cut=this.features.shortcuts.find(c=>p>=c.start&&p<=c.end&&Math.abs(lateral-this.shortcutOffset(c,p))<=c.halfWidth);
-    return {road:Math.abs(lateral)<=roadHalfWidth||!!cut,mainRoad:!this.def.offroad&&(Math.abs(lateral)<=roadHalfWidth||cut?.surface==='paved'),shortcutId:cut?.id||null,roadHalfWidth};}
+    const surface={road:Math.abs(lateral)<=roadHalfWidth||!!cut,mainRoad:!this.def.offroad&&(Math.abs(lateral)<=roadHalfWidth||cut?.surface==='paved'),shortcutId:cut?.id||null,roadHalfWidth};
+    if(this.muddyHollow&&!surface.road){const world=this.worldAt(s,lateral);if(this.muddyHollow.contains(world.x,world.z))return {...surface,...this.muddyHollow.surfaceAt(world.x,world.z)};}
+    return surface;}
   tunnelAt(s){const p=this.phase(s);return this.features.tunnels.find(t=>p>=t.start&&p<=t.end)||null;}
   jumpAt(s){const p=this.phase(s),r=this.features.ramps.find(r=>p>=r.start&&p<=r.end);if(!r)return 0;
     const t=(p-r.start)/(r.end-r.start);return r.height*Math.sin(Math.PI*t)**2;}
@@ -138,7 +151,7 @@ export class Course {
     for(const cut of this.features.shortcuts)if(p>=cut.start&&p<=cut.end){const distance=Math.abs(off-this.shortcutOffset(cut,p)),blend=smooth((p-cut.start)/36)*smooth((cut.end-p)/36);h*=1-blend*(1-smooth((distance-cut.halfWidth-3)/6));}
     return h;
   }
-  groundAt(s,off=0){const p=this.worldAt(s,off);p.y+=this._relief(s,off);
+  _baseGroundAt(s,off=0){const p=this.worldAt(s,off);p.y+=this._relief(s,off);
     if(Math.abs(off)>this.roadHalfWidthAt(s)+1)for(const station of this.features.stations){
       const ds=angleDiff((this.phase(s)-station.s)/this.length*TAU,0)*this.length/TAU,dl=off-station.off,c=Math.cos(station.angle),sn=Math.sin(station.angle),x=c*dl-sn*ds,z=sn*dl+c*ds;
       const weight=(1-smooth((Math.abs(x)-11)/4))*(1-smooth((Math.abs(z)-9.5)/4.5));
@@ -148,6 +161,9 @@ export class Course {
       const blend=1-smooth((hidden.distance-width)/8);
       p.y=lerp(p.y,hidden.y,blend);
     }
+    return p;}
+  groundAt(s,off=0){const p=this._baseGroundAt(s,off);
+    if(this.muddyHollow && !this.surfaceAt(s,off).road && this.muddyHollow.contains(p.x,p.z))p.y=this.muddyHollow.heightAt(p.x,p.z);
     return p;}
   _solidScenery(){
     const f=this.features,rng=this.rng;
@@ -234,7 +250,7 @@ export class Course {
         if(this.tunnelAt(s))continue;if(!vacant(s,off,4))off=(i%2?1:-1)*5;
         if(vacant(s,off,3.5))f.flocks.push({id:`flock-${i}`,s,off,radius:3.5,count:8,seed:rng.int(1,100000)});}
     }else if(!this.def.practice){
-      for(let s=0;s<this.length;s+=8)for(const side of[-1,1])f.barriers.push(add(`arena-wall-${s}-${side}`,'prop',s,side*22,.5,4.2,0,{barrier:true,arenaWall:true}));
+      for(let s=0;s<this.length;s+=8)for(const side of[-1,1])f.barriers.push(add(`arena-wall-${s}-${side}`,'prop',s,side*(this.def.scrapdome?.wallOffset??22),.5,4.2,0,{barrier:true,arenaWall:true}));
     }
     if(!this.def.practice)Object.assign(f,buildRoadFurniture(this));
     for(const sign of f.signs)for(const post of sign.posts)f.obstacles.push({...post,kind:'prop',shape:'box',theme:this.themeAt(post.s),signSupport:true});
