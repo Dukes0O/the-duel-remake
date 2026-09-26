@@ -1864,7 +1864,7 @@ tasks:
     lane: SAVE
     size: S
     needs: [ARENA-02]
-    status: ready-to-merge
+    status: merged
     flag: scrapdome
     owns: [src/arena/arena-settlement.js, tools/test-arena-settlement.mjs, docs/changes/ARENA-02-PAY.md]
     hooks: [src/app.js, src/screen-arena.js, src/wasteland-career.js]

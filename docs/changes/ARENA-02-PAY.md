@@ -1,6 +1,6 @@
 ---
 task: ARENA-02-PAY
-status: ready-to-merge
+status: merged
 kind: feature
 flag: scrapdome
 player_facing: yes
@@ -66,8 +66,13 @@ passed after it.
   trajectory fingerprint `2351cf5c7fd3c3a33c2587680c897e3d5a18e08da69d8ce22727a0158d26aa10`.
 - Audio: 460 actual-PCM checks passed with the configured FFmpeg decoder; no
   listening claim.
-- Build: 236 modules. Final lane gate and independent corrected-candidate
-  verdicts are recorded in the merge commit.
+- Exact lane commit `f81f0e3`: 147/147 changed suites passed in 273.44
+  seconds; build passed with 236 modules.
+- Independent reviewer and Save Guardian both returned clean verdicts on the
+  corrected code candidate `c0e15e5`. The reviewer also measured settlement
+  at about 0.0026 ms per call over 100,000 worst-shape calls; it runs only on
+  the result event.
+- Merged into `integration/wasteland` as `a652c95`.
 
 ## Removed
 
