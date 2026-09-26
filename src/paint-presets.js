@@ -15,12 +15,17 @@ const knownCar=car=>Object.hasOwn(CARS,car);
 const ownsCar=(profile,car)=>knownCar(car)&&(!(CARS[car].price>0)&&!CARS[car].unlockRequirement||profile?.unlockedCars?.includes(car));
 const makeState=(owned,selected)=>Object.freeze({owned:Object.freeze(owned),selected});
 
-function rewardIds(profile,car){
-  if(car!=='titan_monster')return [];
+function rewardEarned(profile,car){
+  if(car!=='titan_monster')return false;
+  if(profile?.wasteland?.version!==1||profile.wasteland.discoveredGate!==true)return false;
   const progress=normalizeMuddyHollow(profile?.wasteland?.muddyHollow);
-  return MUDDY_HOLLOW_HUBCAP_IDS.every(id=>progress.hubcaps.includes(id))?['titan_gold']:[];
+  return MUDDY_HOLLOW_HUBCAP_IDS.every(id=>progress.hubcaps.includes(id));
 }
-function allowedIds(profile,car){return [...ordinaryIds,...rewardIds(profile,car)];}
+function rewardIds(profile,car,{muddyHollowEnabled=false,includeInactiveRewards=false}={}){
+  return rewardEarned(profile,car)&&(muddyHollowEnabled===true||includeInactiveRewards)
+    ?['titan_gold']:[];
+}
+function allowedIds(profile,car,options){return [...ordinaryIds,...rewardIds(profile,car,options)];}
 export function normalizePaintState(value,allowed=ordinaryIds){
   const source=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
   const rewards=allowed.filter(id=>PAINT_PRESETS[id]?.reward);
@@ -30,20 +35,20 @@ export function normalizePaintState(value,allowed=ordinaryIds){
 }
 export function normalizeCosmetics(value,profile){
   if(!value||typeof value!=='object'||Array.isArray(value))return Object.freeze({});
-  return Object.freeze(Object.fromEntries(Object.entries(value).filter(([car])=>knownCar(car)).map(([car,state])=>[car,normalizePaintState(state,allowedIds(profile,car))])));
+  return Object.freeze(Object.fromEntries(Object.entries(value).filter(([car])=>knownCar(car)).map(([car,state])=>[car,normalizePaintState(state,allowedIds(profile,car,{includeInactiveRewards:true}))])));
 }
-export function getPaintState(profile,car){return ownsCar(profile,car)?normalizePaintState(profile?.cosmetics?.[car],allowedIds(profile,car)):factory;}
-export function getEquippedPaintId(profile,car){return getPaintState(profile,car).selected;}
-export function getPaintAppearance(profile,car){return PAINT_PRESETS[getEquippedPaintId(profile,car)].appearance;}
-export function paintPresetsFor(profile,car){return allowedIds(profile,car).map(id=>PAINT_PRESETS[id]);}
+export function getPaintState(profile,car,options){return ownsCar(profile,car)?normalizePaintState(profile?.cosmetics?.[car],allowedIds(profile,car,options)):factory;}
+export function getEquippedPaintId(profile,car,options){return getPaintState(profile,car,options).selected;}
+export function getPaintAppearance(profile,car,options){return PAINT_PRESETS[getEquippedPaintId(profile,car,options)].appearance;}
+export function paintPresetsFor(profile,car,options){return allowedIds(profile,car,options).map(id=>PAINT_PRESETS[id]);}
 
-function operation(profile,car,id,buy){
+function operation(profile,car,id,buy,options){
   const fail=reason=>({profile,ok:false,reason,cost:0,purchased:false,changed:false});
   if(!knownCar(car))return fail('Choose an available car.');
   if(!ownsCar(profile,car))return fail('Unlock this car before choosing paint.');
   if(!Object.hasOwn(PAINT_PRESETS,id))return fail('Choose an available paint finish.');
-  if(!allowedIds(profile,car).includes(id))return fail('Earn this paint finish before applying it.');
-  const state=getPaintState(profile,car),owned=state.owned.includes(id),preset=PAINT_PRESETS[id];
+  if(!allowedIds(profile,car,options).includes(id))return fail('Earn this paint finish before applying it.');
+  const state=getPaintState(profile,car,options),owned=state.owned.includes(id),preset=PAINT_PRESETS[id];
   if(!owned&&!buy)return fail('Buy this finish for this car before applying it.');
   const cost=owned?0:preset.price,credits=Number.isFinite(profile?.credits)?Math.max(0,Math.floor(profile.credits)):0;
   if(cost>credits)return fail(`You need ${cost-credits} more credits.`);
@@ -53,5 +58,5 @@ function operation(profile,car,id,buy){
 }
 // Purchases equip the finish immediately. Reapplying an owned finish is free,
 // including a repeated purchase action from a stale garage button.
-export const purchasePaint=(profile,car,id)=>operation(profile,car,id,true);
-export const applyPaint=(profile,car,id)=>operation(profile,car,id,false);
+export const purchasePaint=(profile,car,id,options)=>operation(profile,car,id,true,options);
+export const applyPaint=(profile,car,id,options)=>operation(profile,car,id,false,options);

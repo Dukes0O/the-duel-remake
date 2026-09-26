@@ -244,7 +244,8 @@ export class App {
     const legacySeed=this.duel.state.status==='menu'&&this.duel.seed!==this.seed?this.duel.seed>>>0:null;
     const selectedSeed=isRouteVariant(options.routeVariant)?getRouteVariant(options.routeVariant).seed:explicitSeed??legacySeed??this.getMenuSeed(stageIndex);
     this.seed=supportsRouteVariants(stage)?selectedSeed:1989;
-    this._racePaint=getPaintAppearance(this.profile,car);this._racePaintCar=car;
+    this._racePaint=getPaintAppearance(this.profile,car,
+      {muddyHollowEnabled:this._switches().enabled('muddy-hollow')});this._racePaintCar=car;
     this.runId=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;
     this._settledMuddyHollowDeparture = null;
     this._stageStartCrashes=0;
@@ -334,14 +335,16 @@ export class App {
     return findGhost(this.ghosts,this.player.id,{seed:this.getMenuSeed(stageIndex),car:this.duel.state.car,driverId:getEquippedDriverId(this.profile),difficulty:this.duel.state.difficulty,cpuDifficulty:this.cpuDifficulty,...options,stageIndex,laps:COURSE[stageIndex]?.laps||2});
   }
   getPaintPreset(car,{menu=false}={}){
-    if(menu||this.duel.state.status==='menu')return getPaintAppearance(this.profile,car);
+    if(menu||this.duel.state.status==='menu')return getPaintAppearance(this.profile,car,
+      {muddyHollowEnabled:this._switches().enabled('muddy-hollow')});
     return car===this._racePaintCar?this._racePaint:null;
   }
   purchasePaint(car,id){return this._paintOperation(car,id,true);}
   applyPaint(car,id){return this._paintOperation(car,id,false);}
   _paintOperation(car,id,buy){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before changing paint.',cost:0};
-    this._refreshPlayer();const result=(buy?buyPaint:equipPaint)(this.profile,car,id);
+    this._refreshPlayer();const result=(buy?buyPaint:equipPaint)(this.profile,car,id,
+      {muddyHollowEnabled:this._switches().enabled('muddy-hollow')});
     if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,paintChanged:true});}return result;
   }
   setGhostEnabled(enabled){
@@ -554,7 +557,8 @@ export class App {
     this.ghostRecorder = this.ghostRecord = this.ghostPose = null; this.ghostStatus = 'none';
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
-    this._racePaint = getPaintAppearance(this.profile, car); this._racePaintCar = car;
+    this._racePaint = getPaintAppearance(this.profile, car,
+      {muddyHollowEnabled: this._switches().enabled('muddy-hollow')}); this._racePaintCar = car;
     this.audio.unlock(); this.audio.setPaused(false);
     return this.duel.startArenaEvent({car, driverId: getEquippedDriverId(this.profile),
       upgrades: getUpgradeLevels(this.profile, car), difficulty: this._raceSettings.difficulty,
@@ -580,7 +584,8 @@ export class App {
     this.ghostRecorder = this.ghostRecord = this.ghostPose = null; this.ghostStatus = 'none';
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
-    this._racePaint = getPaintAppearance(this.profile, car); this._racePaintCar = car;
+    this._racePaint = getPaintAppearance(this.profile, car,
+      {muddyHollowEnabled: this._switches().enabled('muddy-hollow')}); this._racePaintCar = car;
     this.audio.unlock(); this.audio.setPaused(false);
     return this.duel.startHiddenRoadVisit({playerId: this.player.id, car, driverId,
       upgrades: getUpgradeLevels(this.profile, car), seed: this.getMenuSeed(0),

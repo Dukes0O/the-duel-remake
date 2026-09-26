@@ -486,9 +486,9 @@ function stableSavedContent(value) {
   return copy;
 }
 
-function stableBankWithoutHollow(value) {
+function stableBankIgnoringHollowDiscovery(value) {
   const copy = stableSavedContent(value);
-  if (copy.wasteland) delete copy.wasteland.muddyHollow;
+  if (copy.wasteland?.muddyHollow) delete copy.wasteland.muddyHollow.discovered;
   return copy;
 }
 
@@ -1331,7 +1331,7 @@ check('memory-only App abandonment preserves banked progress and discards the ac
   const before = savedAppBank(app);
   const historyCount = app.profile.history.length;
   const event = departMuddyApp(app);
-  assert.deepEqual(stableBankWithoutHollow(savedAppBank(app)), stableBankWithoutHollow(before),
+  assert.deepEqual(stableBankIgnoringHollowDiscovery(savedAppBank(app)), stableBankIgnoringHollowDiscovery(before),
     'abandonment preserves banked credits, records, unlocks and ghosts');
   assert.equal(app.profile.wasteland.muddyHollow?.discovered, true,
     'guarded departure remembers that this player found the Hollow');
@@ -1348,7 +1348,7 @@ check('memory-only App abandonment preserves banked progress and discards the ac
   app.duel.emit({muddyHollowDeparted: event});
   assert.equal(app.profile.history.length, historyCount + 1,
     'duplicate departure cannot settle twice');
-  assert.deepEqual(stableBankWithoutHollow(savedAppBank(app)), stableBankWithoutHollow(before));
+  assert.deepEqual(stableBankIgnoringHollowDiscovery(savedAppBank(app)), stableBankIgnoringHollowDiscovery(before));
   assert.equal(activePlayer(loadPlayers()).profile.credits, before.credits);
   assert.deepEqual(loadLeaderboard(), before.leaderboard);
   const storedGhosts = loadGhosts();
@@ -1391,7 +1391,7 @@ check('invalid, stale-run and wrong-player Muddy Hollow events cannot settle', (
   app._settleMuddyHollowDeparture(event, app.duel.state);
   assert.equal(app.profile.history.length, restartedHistory,
     'old departure cannot abandon a restarted countdown');
-  assert.deepEqual(stableBankWithoutHollow(savedAppBank(app)), stableBankWithoutHollow(before));
+  assert.deepEqual(stableBankIgnoringHollowDiscovery(savedAppBank(app)), stableBankIgnoringHollowDiscovery(before));
 
   app.returnToMenu();
   const originalId = app.player.id;
@@ -1400,7 +1400,7 @@ check('invalid, stale-run and wrong-player Muddy Hollow events cannot settle', (
   app._settleMuddyHollowDeparture(event, oldState);
   assert.deepEqual(app.profile, other, 'wrong player is unchanged');
   app.selectPlayer(originalId);
-  assert.deepEqual(stableBankWithoutHollow(savedAppBank(app)), stableBankWithoutHollow(before),
+  assert.deepEqual(stableBankIgnoringHollowDiscovery(savedAppBank(app)), stableBankIgnoringHollowDiscovery(before),
     'original player bank remains unchanged');
   app.dispose();
 });
@@ -1524,6 +1524,43 @@ check('phase 5 hubcaps persist per player and derive the gold Titan finish', () 
   assert.equal(app.getPaintPreset('titan_monster', {menu: true})?.id, 'titan_gold',
     'switching back restores the saved reward');
   app.dispose();
+
+  const reloaded = new App();
+  reloaded.duel.featureFlags = createFeatureFlags({storage: null, overrides: {
+    'muddy-hollow': false,
+    'titan-climb': true,
+  }});
+  assert.equal(reloaded.getPaintPreset('titan_monster', {menu: true}), null,
+    'flag-off reload preserves but hides the selected reward');
+  const renderGarage = car => createGarageScreen({app: reloaded,
+    profile: () => reloaded.profile, credits: String, escapeHTML: String,
+    getGarageCar: () => car, getGarageMessage: () => '', arrow: '',
+    action: () => '', clamp: value => Math.max(0, Math.min(1, value))})();
+  assert.doesNotMatch(renderGarage('titan_monster'), /Hollow Gold/,
+    'flag-off garage does not list the reward');
+  assert.equal(reloaded.startCampaign({startStage: highCountryIndex,
+    mode: 'timetrial', seed, car: 'titan_monster', difficulty: 'casual'}), true);
+  assert.equal(reloaded.getPaintPreset('titan_monster'), null,
+    'flag-off Titan race does not render the reward');
+  reloaded.returnToMenu();
+  reloaded.duel.featureFlags = createFeatureFlags({storage: null, overrides: {
+    'muddy-hollow': true,
+    'titan-climb': true,
+  }});
+  assert.equal(reloaded.getPaintPreset('titan_monster', {menu: true})?.id,
+    'titan_gold', 're-enabling the feature restores the saved selection');
+  assert.match(renderGarage('titan_monster'), /Hollow Gold/,
+    'enabled Titan garage lists the earned reward');
+  assert.equal(reloaded.startCampaign({startStage: highCountryIndex,
+    mode: 'timetrial', seed, car: 'titan_monster', difficulty: 'casual'}), true);
+  assert.equal(reloaded.getPaintPreset('titan_monster')?.id, 'titan_gold',
+    'enabled Titan race renders the selected reward');
+  reloaded.returnToMenu();
+  assert.equal(reloaded.startCampaign({startStage: 0, mode: 'timetrial', seed,
+    car: 'falcone_f42', difficulty: 'casual'}), true);
+  assert.equal(reloaded.getPaintPreset('falcone_f42'), null,
+    'enabled feature never exposes the Titan reward to another car');
+  reloaded.dispose();
 });
 
 check('phase 5 garage hint counts only eligible completed Titan races', () => {
