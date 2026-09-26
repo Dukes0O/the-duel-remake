@@ -1,7 +1,7 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { DRIVE, BOOST, steeringYawAuthority } from './config.js';
 import { stepDrift, breakDrift } from './drift-scoring.js';
-import { offroadCapability, wrapHeading, limitClimb, terrainAttitude } from './offroad-physics.js';
+import { offroadCapability, wrapHeading, limitClimb, slopeSpeedDelta, terrainAttitude } from './offroad-physics.js';
 import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
@@ -217,7 +217,7 @@ export function _terrainPose(actor = this.state) {
 }
 
 export function _offroadStep(dt, offPreparedRoute) {
-  const s = this.state, capability = offroadCapability(this.car);
+  const s = this.state, capability = offroadCapability(this.car, { titanClimb: this.featureFlags?.enabled('titan-climb') === true });
   if (!capability || s.tumble) return;
   const before = this._supportAt(s.prevS, s.prevLateral), after = this._supportAt(s.s, s.lateral);
   if (![before.y, after.y, s.s, s.lateral].every(Number.isFinite)) {
@@ -243,7 +243,14 @@ export function _offroadStep(dt, offPreparedRoute) {
       const pose = this._roadPosition({ x: before.x + (after.x - before.x) * low, z: before.z + (after.z - before.z) * low }, s.prevS);
       s.s = pose.s; s.lateral = pose.lateral; s.speedMph *= low;
     }
-    const actualGain = this._supportAt(s.s, s.lateral).y - before.y;
+    const actualAfter = this._supportAt(s.s, s.lateral);
+    const actualGain = actualAfter.y - before.y;
+    const actualDistance = Math.hypot(actualAfter.x - before.x, actualAfter.z - before.z);
+    const slopeDelta = slopeSpeedDelta({ gain: actualGain, distance: actualDistance, dt, capability });
+    if (s.speedMph && slopeDelta) {
+      const travelSign = Math.sign(s.speedMph);
+      s.speedMph = travelSign * Math.max(0, Math.abs(s.speedMph) + slopeDelta);
+    }
     s._climbGain = (s._climbGain || 0) + Math.max(0, actualGain);
     // Traversing sideways across a steep face is not a fresh climb. Reset
     // only on genuinely gentle support, not just a zero-rise driving vector.

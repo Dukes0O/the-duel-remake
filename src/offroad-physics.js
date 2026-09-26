@@ -2,11 +2,14 @@
 // are metres and angles are radians; no renderer, clock or random source lives
 // here. Limits are deliberately generous arcade limits, not a vehicle simulator.
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+const GRAVITY_MPH_PER_SEC = 9.80665 * 2.2369362921;
 const CAPABILITIES = Object.freeze({
   monster: Object.freeze({ maxGrade: 1.65, risePerSec: 10, climbGain: 24, rockHeight: 2.25, tipSpeed: 9 }),
   rally: Object.freeze({ maxGrade: .95, risePerSec: 7, climbGain: 16, rockHeight: 1.15, tipSpeed: 15 }),
 });
-export const offroadCapability = car => CAPABILITIES[car?.kind] || null;
+const TITAN_CLIMB = Object.freeze({ ...CAPABILITIES.monster, climbGain: Infinity, slopeGravityMphPerSec: GRAVITY_MPH_PER_SEC });
+export const offroadCapability = (car, { titanClimb = false } = {}) =>
+  car?.kind === 'monster' && titanClimb ? TITAN_CLIMB : CAPABILITIES[car?.kind] || null;
 export const wrapHeading = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
 
 export function rockHeight(obstacle) {
@@ -39,7 +42,16 @@ export function limitClimb({ gain, distance, dt, capability, accumulated = 0 }) 
   if (!capability || gain <= 0 || distance < 1e-8) return { fraction: 1, grade: 0, tipped: false };
   const grade = gain / distance;
   return { grade, fraction: Math.min(1, capability.risePerSec * dt / gain),
-    tipped: grade > capability.maxGrade || accumulated + gain > capability.climbGain };
+    tipped: grade > capability.maxGrade || Number.isFinite(capability.climbGain) && accumulated + gain > capability.climbGain };
+}
+
+// Gravity along the travelled slope changes speed magnitude. A positive gain
+// is uphill and slows the car; a negative gain is downhill and speeds it up.
+// Ordinary cars never call this off-road capability rule.
+export function slopeSpeedDelta({ gain, distance, dt, capability }) {
+  if (!capability || !Number.isFinite(gain) || !Number.isFinite(distance) || distance < 1e-8 || !Number.isFinite(dt) || dt <= 0) return 0;
+  const sine = gain / Math.hypot(distance, gain);
+  return -(capability.slopeGravityMphPerSec || 0) * sine * dt;
 }
 
 export function terrainAttitude(front, rear, left, right, halfLength, halfWidth) {

@@ -15,8 +15,8 @@ function check(name, run) {
   try { run(); } catch (error) { failures.push(`${name}: ${error.message}`); }
 }
 
-function game(car, height) {
-  const duel = new Duel({ seed: 1989 });
+function game(car, height, titanClimb = true) {
+  const duel = new Duel({ seed: 1989, featureFlags: { 'titan-climb': titanClimb } });
   duel.startCampaign({ car, startStage: practice, difficulty: 'casual', mode: 'timetrial' });
   duel.state.status = 'racing';
   const point = (s, lateral = 0) => ({ x: lateral, y: height(s, lateral), z: s, heading: 0, curvature: 0 });
@@ -52,10 +52,10 @@ function game(car, height) {
   return duel;
 }
 
-function runClimb(car, grade, targetRise, seconds = 30) {
+function runClimb(car, grade, targetRise, seconds = 30, titanClimb = true) {
   const start = 25;
   const height = s => Math.max(0, Math.min(targetRise, (s - start) * grade));
-  const duel = game(car, height);
+  const duel = game(car, height, titanClimb);
   duel.setInput({ throttle: 1 });
   let peak = 0;
   for (let i = 0; i < seconds / dt && !duel.state.tumble && peak < targetRise - .01; i++) {
@@ -65,8 +65,8 @@ function runClimb(car, grade, targetRise, seconds = 30) {
   return { duel, peak };
 }
 
-function speedAfterSlope(car, grade) {
-  const duel = game(car, s => s * grade);
+function speedAfterSlope(car, grade, titanClimb = true) {
+  const duel = game(car, s => s * grade, titanClimb);
   Object.assign(duel.state, { s: 200, prevS: 200, speedMph: 40, gear: 1 });
   duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false });
   for (let i = 0; i < 120; i++) duel.step(dt);
@@ -91,6 +91,14 @@ check('Titan still tips when the local slope exceeds maxGrade', () => {
     `over-grade Titan did not tip; reached ${result.peak.toFixed(3)} m`);
 });
 
+check('switch-off Titan retains the 24 m accumulated-climb tip', () => {
+  const capability = offroadCapability(CARS.titan_monster);
+  const result = runClimb('titan_monster', fortyDegrees, 60, 30, false);
+  assert.equal(result.duel.state.tumble?.reason, 'climb_limit', 'switch-off Titan did not retain its climb-limit tip');
+  assert.ok(result.peak <= capability.climbGain + .1,
+    `switch-off Titan exceeded its ${capability.climbGain} m cap by reaching ${result.peak.toFixed(3)} m`);
+});
+
 check('Rally retains its lower accumulated-climb limit', () => {
   const capability = offroadCapability(CARS.dusthawk_rally);
   const result = runClimb('dusthawk_rally', fortyDegrees, 30, 15);
@@ -99,14 +107,26 @@ check('Rally retains its lower accumulated-climb limit', () => {
     `rally exceeded its ${capability.climbGain} m climb limit by reaching ${result.peak.toFixed(3)} m`);
 });
 
-for (const car of ['titan_monster', 'dusthawk_rally']) check(`${car} loses speed uphill and gains speed downhill`, () => {
-  const uphill = speedAfterSlope(car, .3);
-  const flat = speedAfterSlope(car, 0);
-  const downhill = speedAfterSlope(car, -.3);
+check('Titan loses speed uphill and gains speed downhill', () => {
+  const uphill = speedAfterSlope('titan_monster', .3);
+  const flat = speedAfterSlope('titan_monster', 0);
+  const downhill = speedAfterSlope('titan_monster', -.3);
   assert.ok(uphill < flat - 1e-6,
-    `${car} uphill ${uphill.toFixed(6)} mph was not below flat ${flat.toFixed(6)} mph`);
+    `Titan uphill ${uphill.toFixed(6)} mph was not below flat ${flat.toFixed(6)} mph`);
   assert.ok(downhill > flat + 1e-6,
-    `${car} downhill ${downhill.toFixed(6)} mph was not above flat ${flat.toFixed(6)} mph`);
+    `Titan downhill ${downhill.toFixed(6)} mph was not above flat ${flat.toFixed(6)} mph`);
+});
+
+check('rally keeps its recorded slope speed behavior', () => {
+  const speeds = [.3, 0, -.3].map(grade => speedAfterSlope('dusthawk_rally', grade));
+  assert.ok(Math.max(...speeds) - Math.min(...speeds) < 1e-9,
+    `rally slope speeds changed: ${speeds.map(speed => speed.toFixed(6)).join(', ')}`);
+});
+
+check('switch-off Titan keeps slope-neutral speed', () => {
+  const speeds = [.3, 0, -.3].map(grade => speedAfterSlope('titan_monster', grade, false));
+  assert.ok(Math.max(...speeds) - Math.min(...speeds) < 1e-9,
+    `switch-off Titan slope speeds changed: ${speeds.map(speed => speed.toFixed(6)).join(', ')}`);
 });
 
 check('ordinary cars keep slope-neutral driving', () => {

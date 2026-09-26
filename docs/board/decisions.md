@@ -810,3 +810,15 @@ wins by difficulty; crash on gave 9/5/2 and 8/5/3. No race was unfinished and
 all UFO, combat, wreck and pacing targets passed. A 130-to-25 mph protected
 rear-ram fixture measures 58.86 mph player delta-v and retains control; the
 260-to-25 mph fixture measures 131.68 mph and still knocks the player.
+
+## 2026-09-26: TITAN-01 slope gravity is Titan-only
+
+The first red TITAN-01 contract treated slope gravity as a rule for both the
+Titan and the rally car. Implementing that interpretation changed the pinned
+`ridge-rally-duel` physics fingerprint from
+`58535e5a13d35cd4ef16e35d740c52b4ae3e77666074ea4a16878be8d20eadef` to
+`6a0536d5f14b95951e8d25447a12918896bd561a87d40ed2a2d6317d9e7589a2`.
+The card also requires the rally limits and replay fingerprints to remain
+unchanged. Slope gravity therefore applies only to the Titan. The rally keeps
+its existing accumulated-climb cap and speed behavior; ordinary cars remain
+unchanged.

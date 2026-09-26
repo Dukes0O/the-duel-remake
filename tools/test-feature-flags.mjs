@@ -13,15 +13,15 @@ const check = (condition, message) => { assert.ok(condition, message); checks++;
 check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES.wasteland2 === 'on'
   && FEATURE_STATES['hidden-road'] === 'on' && !Object.hasOwn(FEATURE_STATES, 'roadside-destruction')
   && FEATURE_STATES.scrapdome === 'dev' && FEATURE_STATES['crash-physics'] === 'dev'
-  && Object.keys(FEATURE_STATES).length === 5,
-  'career backup, the Scrapdome and crash physics stay in QA; Wasteland 2 and Hidden Road are released; roadside destruction has no switch');
+  && FEATURE_STATES['titan-climb'] === 'dev' && Object.keys(FEATURE_STATES).length === 6,
+  'career backup, the Scrapdome, crash physics and Titan climbing stay in QA; Wasteland 2 and Hidden Road are released; roadside destruction has no switch');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 check(!productionFlags.enabled('roadside-destruction'), 'retired roadside switch is no longer recognized');
 check(productionFlags.enabled('wasteland2') && productionFlags.enabled('hidden-road'),
   'production has the released Wasteland switches on without any menu choice');
 check(!productionFlags.enabled('career-backup') && !productionFlags.enabled('scrapdome') &&
-  !productionFlags.enabled('crash-physics'),
-  'production keeps the QA-only career backup, Scrapdome and crash physics off');
+  !productionFlags.enabled('crash-physics') && !productionFlags.enabled('titan-climb'),
+  'production keeps the QA-only career backup, Scrapdome, crash physics and Titan climbing off');
 const productionQuery = createFeatureFlags({ storage: null, qa: false, search: '?flags=career-backup' });
 check(!productionQuery.enabled('career-backup'), 'production URL flags cannot enable dev');
 const release = createFeatureFlags({ catalog, storage, search: '?flags=photo,crew', qa: false });

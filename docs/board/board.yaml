@@ -424,9 +424,10 @@ tasks:
     lane: CMB
     size: S
     needs: [CRASH-01]
-    status: backlog
+    status: ready-to-merge
+    claimed_by: "Codex autonomous Director, 26 September 2026"
     owns: [docs/changes/TITAN-01.md, tools/test-titan-climb.mjs, tools/test-offroad-physics.mjs]
-    hooks: [src/offroad-physics.js, src/sim-driving.js]
+    hooks: [src/offroad-physics.js, src/sim-driving.js, src/feature-flags.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs]
     helpers: [test_author, reviewer]
     acceptance:
       - "docs/MUDDY_HOLLOW.md section 2: remove the monster's accumulated-climb tip (climbGain) so the Titan climbs a whole hill under its maxGrade; steeper than maxGrade still tips. Climbing slows the truck by the slope and descending speeds it up (offroad-capable cars only). Rally keeps its limits; ordinary cars unchanged."
