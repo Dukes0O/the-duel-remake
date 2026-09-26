@@ -22,10 +22,16 @@ export function _drivingSurface(distance, lateral, car = this.car) {
   const surface = hidden ? { ...this._surface(distance, lateral), road: true, mainRoad: false } : this._surface(distance, lateral);
   const preparedGravel = hidden || surface.road && !surface.mainRoad && (this.course.def.offroad || !!surface.shortcutId);
   const rally = car.kind === 'rally', roughnessScale = car.roughnessScale ?? 1;
+  const mud = clamp(Number(surface.mud) || 0, 0, 1);
+  const waterDepth = clamp(Number(surface.waterDepth) || 0, 0, 1);
+  const traction = surface.mainRoad ? 1 : preparedGravel ? clamp(.6 + .4 * (car.offRoadGrip ?? DRIVE.offRoadGrip), .82, .995) : car.offRoadGrip ?? DRIVE.offRoadGrip;
+  const speedLimit = surface.mainRoad ? car.topSpeed : preparedGravel ? car.topSpeed * (rally ? .98 : .95) : car.offRoadSpeed ?? 68;
+  const scrub = surface.mainRoad ? 0 : (preparedGravel ? rally ? .014 : .035 : car.offRoadScrub ?? DRIVE.offRoadScrub) * roughnessScale;
   return { ...surface, preparedGravel, boostAllowed: surface.road || this.course.def.practice,
-    traction: surface.mainRoad ? 1 : preparedGravel ? clamp(.6 + .4 * (car.offRoadGrip ?? DRIVE.offRoadGrip), .82, .995) : car.offRoadGrip ?? DRIVE.offRoadGrip,
-    speedLimit: surface.mainRoad ? car.topSpeed : preparedGravel ? car.topSpeed * (rally ? .98 : .95) : car.offRoadSpeed ?? 68,
-    scrub: surface.mainRoad ? 0 : (preparedGravel ? rally ? .014 : .035 : car.offRoadScrub ?? DRIVE.offRoadScrub) * roughnessScale,
+    mud, waterDepth,
+    traction: traction * (1 - mud * .45),
+    speedLimit: mud > 0 ? Math.min(speedLimit, 42 + (1 - mud) * 32) : speedLimit,
+    scrub: scrub + mud * .42,
     roughness: preparedGravel ? (rally ? .14 : .2) * roughnessScale : null };
 }
 
@@ -115,6 +121,18 @@ export function _drive(dt) {
 
   const wasBoosting = s.boosting;
   const surface = this._drivingSurface(s.s, s.lateral, car);
+  const mud = surface.mud || 0, waterDepth = surface.waterDepth || 0;
+  const surfaceEntrySpeed = Math.abs(s.speedMph);
+  const wasInWater = (s.waterDepth || 0) >= .05;
+  s.surfaceMud = mud;
+  s.waterDepth = waterDepth;
+  s.mudWheelSpin = mud * clamp(s.input.throttle || 0, 0, 1) *
+    clamp(1 - Math.abs(s.speedMph) / (car.offRoadSpeed ?? 68), 0, 1);
+  if(waterDepth >= .05 && !wasInWater){
+    const position = this.course.groundAt(s.s, s.lateral);
+    this.emit({muddyHollowSplash:{depth:waterDepth,speedMph:s.speedMph,
+      position:{x:position.x,y:position.y,z:position.z},cue:'world.muddy-hollow-splash'}});
+  }
   const nitro = s.upgrades.nitro, boostDrain = BOOST.drainPerSec / ((1 + nitro * .14) * car.boostCapacity);
   const boostTopSpeed = BOOST.topSpeedMult + nitro * .025 + (car.nitroSpeedBonus ?? 0);
   if(s.practice)s.boost=1;
@@ -167,10 +185,16 @@ export function _drive(dt) {
     if (s.speedMph > offRoadLimit) s.speedMph -= (s.speedMph - offRoadLimit) * (1 - Math.exp(-1.4 * dt));
     if (!surface.boostAllowed) s.boosting = false;
   }
+  if(mud>0)s.speedMph*=Math.exp(-mud*.36*dt);
 
   const speedCap = s.boosting ? car.topSpeed * boostTopSpeed : car.topSpeed;
   if (!s.boosting && s.speedMph > speedCap) s.speedMph -= 22 * dt;
   s.speedMph = Math.max(-DRIVE.reverseMaxMph, Math.min(car.topSpeed * boostTopSpeed, s.speedMph));
+  if(waterDepth>0){
+    const waterDrag=waterDepth*(.18+surfaceEntrySpeed*.008);
+    const waterLoss=surfaceEntrySpeed*(1-Math.exp(-waterDrag*dt));
+    s.speedMph=Math.sign(s.speedMph)*Math.max(0,Math.abs(s.speedMph)-waterLoss);
+  }
   s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[s.gear]);
   const metresPerSec = s.speedMph * DRIVE.mphToWorld;
   if (onHiddenRoad(this.course, s)) s.hiddenRoadDriving = true;

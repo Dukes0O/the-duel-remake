@@ -113,6 +113,22 @@ export function installMuddyHollow(course) {
     return normalizedRadius(x, z).radius <= 1 + 1e-9;
   }
 
+  function featureAmount(local, feature) {
+    const along = (local.along - feature.along) / feature.alongRadius;
+    const lateral = (local.lateral - feature.lateral) / feature.lateralRadius;
+    return smoother(1 - Math.hypot(along, lateral));
+  }
+
+  function surfaceAt(x, z) {
+    const local = frame.toLocal(x, z);
+    let mud = 0;
+    for(const pit of authored.pits) mud = Math.max(mud, featureAmount(local, pit));
+    return {
+      mud: clamp(mud),
+      waterDepth: clamp(featureAmount(local, authored.pondBed)),
+    };
+  }
+
   function heightAt(x, z) {
     const local = normalizedRadius(x, z);
     const base = baseHeightAt(x, z);
@@ -148,6 +164,7 @@ export function installMuddyHollow(course) {
     landforms,
     contains,
     heightAt,
+    surfaceAt,
   };
   return course.muddyHollow;
 }
