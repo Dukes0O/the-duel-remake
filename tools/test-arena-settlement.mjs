@@ -130,6 +130,7 @@ function appInYard() {
   const app = new App();
   app.duel.featureFlags = createFeatureFlags({storage: null, overrides: ON});
   app.audio.unlock = () => {};
+  app.cpuDifficulty = 'medium';
   app.profile = {...app.profile, wasteland: {...app.profile.wasteland, discoveredGate: true}};
   assert.equal(app._saveProfile(), true);
   assert.equal(app.visitWasteland(), true); app.advance(8);
