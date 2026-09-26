@@ -1,6 +1,27 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, CPU_DIFFICULTY, POLICE, DRIVE, SCORING } from './config.js';
 import { clamp, freshDamageZones } from './sim-common.js';
+import {stepKnock} from './vehicle-knock.js';
+
+function finishPoliceMotion(duel, cruiser) {
+  const state = duel.state;
+  duel._staticContacts(cruiser, false); duel._boundary(cruiser);
+  duel._vehicleContact(state, cruiser, 'police');
+  for (const car of state.traffic) if (car.alive)
+    duel._vehicleContact(cruiser, car, 'traffic');
+  for (const opponent of state.opponents)
+    duel._vehicleContact(cruiser, opponent, 'rival');
+  duel._staticContacts(cruiser, false); duel._boundary(cruiser);
+  duel._staticContacts(state, true);
+  cruiser.gapU = state.s - cruiser.s;
+  const a = duel.course.groundAt(state.s, state.lateral);
+  const b = duel.course.groundAt(cruiser.s, cruiser.lateral);
+  const distance = Math.hypot(a.x - b.x,
+    a.y + (state.airHeight || 0) - b.y, a.z - b.z);
+  cruiser.distanceU = Number.isFinite(distance) ? distance :
+    Math.hypot(duel.relativeS(state.s, cruiser.s) - cruiser.s,
+      state.lateral - cruiser.lateral);
+}
 
 export function _newPursuit(gap) {
   const s = this.state, distance = s.s - gap;
@@ -30,6 +51,11 @@ export function _movePolice(cruiser, dt) {
   cruiser.headingError ||= 0; cruiser.pushVelocity ||= 0;
   cruiser.braking = false; cruiser.yieldingToPlayer = false;
   cruiser.contactCooldown = Math.max(0, (cruiser.contactCooldown || 0) - dt);
+  if (this.featureFlags?.enabled('crash-physics') === true && cruiser.knock) {
+    stepKnock(this, cruiser, dt);
+    finishPoliceMotion(this, cruiser);
+    return;
+  }
   const cuts = this.course.features.shortcuts || [], phase = this.course.phase?.(cruiser.s) ?? cruiser.s;
   const playerCut = cuts.find(cut => cut.id === this._surface(s.s, s.lateral).shortcutId);
   let route = cuts.find(cut => cut.id === cruiser.routeId && phase >= cut.start - 70 && phase <= cut.end);
@@ -78,15 +104,7 @@ export function _movePolice(cruiser, dt) {
   cruiser.s += Math.cos(cruiser.headingError) * speed * dt / Math.max(.25, 1 - this.course.at(cruiser.s).curvature * cruiser.lateral);
   cruiser.pushVelocity *= Math.exp(-1.7 * dt);
   this._jump(cruiser, dt);
-  this._staticContacts(cruiser, false); this._boundary(cruiser);
-  this._vehicleContact(s, cruiser, 'police');
-  for (const car of s.traffic) if (car.alive) this._vehicleContact(cruiser, car, 'traffic');
-  for (const opponent of s.opponents) this._vehicleContact(cruiser, opponent, 'rival');
-  this._staticContacts(cruiser, false); this._boundary(cruiser); this._staticContacts(s, true);
-  cruiser.gapU = s.s - cruiser.s;
-  const a = this.course.groundAt(s.s, s.lateral), b = this.course.groundAt(cruiser.s, cruiser.lateral);
-  const distance = Math.hypot(a.x - b.x, a.y + (s.airHeight || 0) - b.y, a.z - b.z);
-  cruiser.distanceU = Number.isFinite(distance) ? distance : Math.hypot(this.relativeS(s.s, cruiser.s) - cruiser.s, s.lateral - cruiser.lateral);
+  finishPoliceMotion(this, cruiser);
 }
 
 export function _police(dt, allowTicket = true) {

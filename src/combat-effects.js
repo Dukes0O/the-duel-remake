@@ -10,6 +10,9 @@ const PATHS = Object.freeze({
 const BURST_LIMIT = 32;
 const PROJECTILE_LIMIT = 40;
 const WRECK_LIMIT = 4; // Player and up to three CPU cars.
+const CRASH_IMPACT_LIMIT = 8;
+const KNOCK_SMOKE_LIMIT = 12;
+const CRASH_IMPACT_DURATION = .65;
 const PLANE_UV = [0, 1, 1, 1, 0, 0, 1, 0];
 
 function selectFrame(slot, frame) {
@@ -70,7 +73,7 @@ function hide(slot) {
 
 // The loader is intentionally dedicated to this pool. Asset failures never
 // dispose a texture owned by another renderer, and no hit requests a sheet.
-export function createCombatEffects({loadTexture} = {}) {
+export function createCombatEffects({loadTexture, crashPresentation = false} = {}) {
   const group = new THREE.Group();
   group.name = 'Wasteland atlas effects';
   const resources = {textures: {}, geometries: [], materials: [],
@@ -126,12 +129,42 @@ export function createCombatEffects({loadTexture} = {}) {
     fire: makeSlot(group, resources, resources.textures.fire,
       `combat-vfx-damage-${index}-fire`, grid8),
   }));
+  const crashImpacts = Array.from({length: crashPresentation ? CRASH_IMPACT_LIMIT : 0}, (_, index) => ({
+    sparks: makeSlot(group, resources, resources.textures.muzzle,
+      `crash-vfx-impact-${index}-sparks`, grid2),
+    crumple: makeSlot(group, resources, resources.textures.smoke,
+      `crash-vfx-impact-${index}-crumple`, grid8),
+    active: false, age: 0, event: null,
+  }));
+  const knockSmoke = Array.from({length: crashPresentation ? KNOCK_SMOKE_LIMIT : 0}, (_, index) =>
+    makeSlot(group, resources, resources.textures.smoke,
+      `crash-vfx-knock-${index}-smoke`, grid8));
   const everySlot = [...bursts.flatMap(entry => Object.values(entry)),
     ...muzzles, ...wrecks.flatMap(entry => [entry.fire, entry.explosion,
-      entry.smoke]), ...damage.flatMap(entry => [entry.smoke, entry.fire])];
+      entry.smoke]), ...damage.flatMap(entry => [entry.smoke, entry.fire]),
+    ...crashImpacts.flatMap(entry => [entry.sparks, entry.crumple]),
+    ...knockSmoke];
   let disposed = false;
   let texturesWarm = false;
   let meshesWarm = false;
+  let nextCrashImpact = 0;
+
+  function recordVehicleSmash(event, {enabled = false, y = 0, atTime = null} = {}) {
+    const point = event?.point;
+    if (disposed || !crashPresentation || !enabled ||
+        !['knocked', 'smashed', 'launched'].includes(event?.severity) ||
+        !Number.isFinite(event?.dvMph) || !point ||
+        !Number.isFinite(point.x) || !Number.isFinite(point.z)) return false;
+    const entry = crashImpacts[nextCrashImpact];
+    nextCrashImpact = (nextCrashImpact + 1) % crashImpacts.length;
+    entry.active = true;
+    entry.age = 0;
+    entry.atTime = Number.isFinite(atTime) ? atTime : null;
+    entry.event = {severity: event.severity, dvMph: Math.max(0, event.dvMph),
+      point: {x: point.x, y: Number.isFinite(point.y) ? point.y : y,
+        z: point.z}};
+    return true;
+  }
 
   function prewarmTextures(renderer) {
     if (disposed || !resources.available || !resources.ready) return false;
@@ -174,18 +207,24 @@ export function createCombatEffects({loadTexture} = {}) {
     return true;
   }
 
-  function update({state, course, dt = 0}) {
-    const enabled = resources.available && resources.ready &&
+  function update({state, course, dt = 0, crashEnabled = false}) {
+    const ready = resources.available && resources.ready &&
+      state?.status !== 'menu';
+    const enabled = ready &&
       state?.mode === 'wasteland' && !!state.combat && state.status !== 'menu';
-    group.visible = !!enabled;
-    if (!enabled) {
+    const crashVisible = ready && crashEnabled;
+    group.visible = !!(enabled || crashVisible);
+    if (!enabled && !crashVisible) {
       everySlot.forEach(hide);
       wrecks.forEach(entry => { entry.active = false; entry.age = 0; });
+      crashImpacts.forEach(entry => {
+        entry.active = false; entry.age = 0; entry.event = null;
+      });
       return;
     }
-    const combat = state.combat;
+    const combat = enabled ? state.combat : null;
     bursts.forEach((entry, index) => {
-      const burst = combat.bursts[index];
+      const burst = combat?.bursts[index];
       const age = burst?.age ?? Infinity;
       if (!burst || !['blast', 'spark'].includes(burst.kind) ||
           age >= (burst.kind === 'spark' ? .35 : 1.4)) {
@@ -210,7 +249,7 @@ export function createCombatEffects({loadTexture} = {}) {
       }
     });
     muzzles.forEach((slot, index) => {
-      const projectile = combat.projectiles[index];
+      const projectile = combat?.projectiles[index];
       if (!projectile || projectile.age >= .14) {
         hide(slot);
         return;
@@ -221,7 +260,7 @@ export function createCombatEffects({loadTexture} = {}) {
     });
     const actors = [state, ...(state.opponents || [])];
     damage.forEach((entry, index) => {
-      const actor = actors[index];
+      const actor = enabled ? actors[index] : null;
       const fraction = actor?.armor / actor?.maxArmor;
       const damaged = Number.isFinite(fraction) && fraction >= 0 &&
         !actor.combatWrecking && !actor.crushed;
@@ -243,7 +282,7 @@ export function createCombatEffects({loadTexture} = {}) {
       else hide(entry.fire);
     });
     wrecks.forEach((entry, index) => {
-      const actor = actors[index];
+      const actor = enabled ? actors[index] : null;
       if (!actor?.combatWrecking) {
         entry.active = false;
         entry.age = 0;
@@ -266,6 +305,47 @@ export function createCombatEffects({loadTexture} = {}) {
         duration: 3.3, size: 9 + Math.min(age, 2) * 4,
         rise: 3 + Math.min(age, 2) * 2, alpha: .8});
       else hide(entry.smoke);
+    });
+    crashImpacts.forEach(entry => {
+      if (!crashVisible || !entry.active || !entry.event) {
+        hide(entry.sparks); hide(entry.crumple);
+        return;
+      }
+      if (!state.paused && Number.isFinite(entry.atTime) &&
+          Number.isFinite(state.stageTimeSec)) {
+        entry.age = Math.max(0, state.stageTimeSec - entry.atTime);
+      } else if (!state.paused && dt > 0) entry.age += dt;
+      if (entry.age >= CRASH_IMPACT_DURATION) {
+        entry.active = false; entry.event = null;
+        hide(entry.sparks); hide(entry.crumple);
+        return;
+      }
+      const {event, age} = entry;
+      const severityScale = event.severity === 'launched' ? 1.18 :
+        event.severity === 'smashed' ? 1.08 : 1;
+      const sparkSize = Math.min(8,
+        Math.max(3, 2.6 + event.dvMph * .09) * severityScale);
+      show(entry.sparks, event.point, {age, duration: .48, size: sparkSize,
+        startFrame: 3, frameCount: 4});
+      show(entry.crumple, event.point, {age, duration: CRASH_IMPACT_DURATION,
+        size: Math.min(5.5, 2.2 + event.dvMph * .045) * severityScale,
+        frameCount: 18, alpha: .54});
+    });
+    const knocked = crashVisible ? [state, ...(state.opponents || []),
+      ...(state.traffic || []), state.police?.pursuit]
+      .filter(actor => actor?.knock && Number.isFinite(actor.s) &&
+        Number.isFinite(actor.lateral)).slice(0, knockSmoke.length / 2) : [];
+    knockSmoke.forEach((slot, index) => {
+      const actor = knocked[Math.floor(index / 2)];
+      if (!actor) { hide(slot); return; }
+      const side = index % 2 ? 1 : -1;
+      const ground = course.groundAt(actor.s - (actor.dir || 1) * 1.05,
+        actor.lateral + side * .68);
+      const phase = ((state.stageTimeSec || 0) * 1.7 + index * .29) % 1.35;
+      const severity = actor.knock.severity === 'launched' ? 1.35 :
+        actor.knock.severity === 'smashed' ? 1.18 : 1;
+      show(slot, ground, {age: phase, duration: 1.35, size: 3.1 * severity,
+        rise: .3 + phase * .45, alpha: .48});
     });
   }
 
@@ -293,7 +373,7 @@ export function createCombatEffects({loadTexture} = {}) {
     group.clear();
   }
 
-  return {group, resources, update, prewarmTextures, prewarm,
+  return {group, resources, update, recordVehicleSmash, prewarmTextures, prewarm,
     withWarmupVisibility, dispose,
     get available() { return resources.available && resources.ready; }};
 }

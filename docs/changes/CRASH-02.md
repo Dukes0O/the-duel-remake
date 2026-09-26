@@ -65,6 +65,9 @@ crash pool does not exist at all when `crash-effects` is off.
 Before runtime commit, the focused contract was also strengthened with a real
 ordinary-race contact, two distinct rear-tyre smoke sites and equal visual
 state at the same simulation time under 30, 60 and 144 FPS render schedules.
+The earlier horizontal smoke assertion used the actor centre; once the twin
+site contract was added, it was moved to the deterministic left-rear tyre
+offset and the second site must remain distinct.
 
 ## Evidence
 
