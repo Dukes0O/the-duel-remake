@@ -123,15 +123,36 @@ function cutMuddyHollowGround(geometry, course) {
     const start=indices.length;
     for(let i=group.start;i<group.start+group.count;i+=3){
       const a=source[i],b=source[i+1],c=source[i+2];
-      const x=(position.getX(a)+position.getX(b)+position.getX(c))/3;
-      const z=(position.getZ(a)+position.getZ(b)+position.getZ(c))/3;
-      if(zone.contains(x,z))continue;
+      if(muddyHollowTriangleOverlap(position,[a,b,c],zone))continue;
       indices.push(a,b,c);
     }
     groups.push({start,count:indices.length-start,materialIndex:group.materialIndex});
   }
   geometry.setIndex(indices);geometry.clearGroups();
   for(const group of groups)geometry.addGroup(group.start,group.count,group.materialIndex);
+}
+
+function muddyHollowTriangleOverlap(position,vertices,zone){
+  const sin=Math.sin(zone.frame.heading),cos=Math.cos(zone.frame.heading);
+  const points=vertices.map(index=>{
+    const dx=position.getX(index)-zone.frame.origin.x;
+    const dz=position.getZ(index)-zone.frame.origin.z;
+    return {
+      x:(dx*sin+dz*cos)/zone.bounds.alongRadius,
+      y:(dx*cos-dz*sin-zone.bounds.lateralCenter)/zone.bounds.lateralRadius,
+    };
+  });
+  if(points.some(p=>p.x*p.x+p.y*p.y<=1))return true;
+  const cross=(a,b,p)=>(b.x-a.x)*(p.y-a.y)-(b.y-a.y)*(p.x-a.x);
+  const signs=points.map((point,index)=>cross(point,points[(index+1)%3],{x:0,y:0}));
+  if(signs.every(value=>value>=0)||signs.every(value=>value<=0))return true;
+  for(let index=0;index<3;index++){
+    const a=points[index],b=points[(index+1)%3],dx=b.x-a.x,dy=b.y-a.y;
+    const t=Math.max(0,Math.min(1,-(a.x*dx+a.y*dy)/(dx*dx+dy*dy||1)));
+    const x=a.x+dx*t,y=a.y+dy*t;
+    if(x*x+y*y<=1)return true;
+  }
+  return false;
 }
 
 function touchesRaceRoad(positions, vertices, course) {

@@ -996,19 +996,26 @@ Browser review of Phase 6 at `a64e16c` found ordinary near and far terrain
 triangles spanning the authored Hollow as large pale slabs. The same review
 found a broken, ten-metre vertical pond surface, hubcap markers that were too
 small at driving distance and water spray that did not read behind the Titan.
-When the `muddy-hollow` switch is on, cut coarse triangles whose centres fall
-inside the Hollow and let the dedicated four-metre mesh replace them. Keep the
-flag-off geometry exact. Give the shallow pond one waterline at its settled
-one-metre centre depth. Increase only marker height and size and spray size and
-brightness; do not move sites, change pickup radii or change surface physics.
+Follow-up review proved that a centroid-only cut left a far-terrain wedge 4.82
+metres above the detailed ground. When the `muddy-hollow` switch is on, cut
+every coarse triangle that overlaps the Hollow ellipse and extend the fitted
+four-metre mesh to cover each removed triangle. Keep the flag-off geometry
+exact. Give the reflective centre of the shallow pond one waterline at its
+settled one-metre centre depth, and show the rest of the unchanged water-contact
+field as a blue-green saturated margin. Submit no buried water triangles.
+Increase only marker height and size and spray size and brightness; do not move
+sites, change pickup radii or change surface physics.
 
 Independent code review also measured the first departure correction with the
 real Titan model. It left the lowest tyre vertex about 0.73 metres above the
-authored slope. Base the correction on each wheel centre, wheel radius and the
-installed Hollow height field, with a measured squared-angle allowance for the
-imported tread. The three settled departure-boundary samples must leave the
-lowest real tread 0.005 to 0.03 metres above the surface and the body clear.
-Keep the correction render-only and absent outside the installed Hollow.
+authored slope. A second review found that the centre/radius approximation
+still floated 0.16 to 0.21 metres at local lateral 60 to 65 and penetrated about
+0.05 metres at lateral 80. Cache a bounded support hull from the imported tread
+and compare those points with the installed Hollow height field. The three
+departure-boundary samples and the ridge approach at laterals 60, 65 and 80
+must leave the lowest real tread 0.005 to 0.03 metres above the surface and the
+body clear. Keep the correction render-only and absent outside the installed
+Hollow.
 
 Re-slice EGG-03 narrowly for the focused scene test and the existing
 `src/world-surfaces.js`, `src/effects.js` and `src/vehicle-grounding.js` hooks.

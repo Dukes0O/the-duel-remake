@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 
-const GROUND_ALONG_SEGMENTS = 96;
-const GROUND_LATERAL_SEGMENTS = 90;
+const GROUND_COVERAGE = 1.3;
+const GROUND_ALONG_SEGMENTS = 124;
+const GROUND_LATERAL_SEGMENTS = 118;
 const WATER_ALONG_SEGMENTS = 28;
 const WATER_LATERAL_SEGMENTS = 24;
 
@@ -34,10 +35,11 @@ function buildGround(zone) {
   const lateralRadius = zone.bounds.lateralRadius;
   const lateralCenter = zone.bounds.lateralCenter;
   for(let row = 0; row <= GROUND_LATERAL_SEGMENTS; row++) {
-    const lateral = lateralCenter - lateralRadius +
-      row / GROUND_LATERAL_SEGMENTS * lateralRadius * 2;
+    const lateral = lateralCenter - lateralRadius * GROUND_COVERAGE +
+      row / GROUND_LATERAL_SEGMENTS * lateralRadius * 2 * GROUND_COVERAGE;
     for(let column = 0; column <= GROUND_ALONG_SEGMENTS; column++) {
-      const along = -alongRadius + column / GROUND_ALONG_SEGMENTS * alongRadius * 2;
+      const along = -alongRadius * GROUND_COVERAGE +
+        column / GROUND_ALONG_SEGMENTS * alongRadius * 2 * GROUND_COVERAGE;
       const point = localToWorld(zone, along, lateral);
       const surface = zone.surfaceAt(point.x, point.z);
       const boundary = Math.max(0, 1 - Math.hypot(along / alongRadius,
@@ -46,20 +48,23 @@ function buildGround(zone) {
       positions.push(point.x, zone.heightAt(point.x, point.z) + .032, point.z);
       surfaces.push(water > .02 ? 2 : mud > .02 ? 1 : 0);
       const edge = Math.min(1, boundary * 5), wet = Math.max(mud, water * .48);
-      colors.push(
-        THREE.MathUtils.lerp(.25, .19, wet) * (.84 + edge * .16),
-        THREE.MathUtils.lerp(.39, .12, wet) * (.84 + edge * .16),
-        THREE.MathUtils.lerp(.18, .055, wet) * (.84 + edge * .16),
+      const light = .84 + edge * .16;
+      if(water > .02) colors.push(.10 * light, .22 * light, .24 * light);
+      else colors.push(
+        THREE.MathUtils.lerp(.25, .19, wet) * light,
+        THREE.MathUtils.lerp(.39, .12, wet) * light,
+        THREE.MathUtils.lerp(.18, .055, wet) * light,
       );
     }
   }
   const width = GROUND_ALONG_SEGMENTS + 1;
   for(let row = 0; row < GROUND_LATERAL_SEGMENTS; row++) {
     for(let column = 0; column < GROUND_ALONG_SEGMENTS; column++) {
-      const along = -alongRadius + (column + .5) / GROUND_ALONG_SEGMENTS * alongRadius * 2;
-      const lateral = lateralCenter - lateralRadius +
-        (row + .5) / GROUND_LATERAL_SEGMENTS * lateralRadius * 2;
-      if(!inside(zone, along, lateral, .012)) continue;
+      const along = -alongRadius * GROUND_COVERAGE +
+        (column + .5) / GROUND_ALONG_SEGMENTS * alongRadius * 2 * GROUND_COVERAGE;
+      const lateral = lateralCenter - lateralRadius * GROUND_COVERAGE +
+        (row + .5) / GROUND_LATERAL_SEGMENTS * lateralRadius * 2 * GROUND_COVERAGE;
+      if(!inside(zone, along, lateral, GROUND_COVERAGE - 1 + .012)) continue;
       const a = row * width + column, b = a + 1, c = a + width, d = c + 1;
       indices.push(a, c, b, b, c, d);
     }
@@ -103,6 +108,11 @@ function buildWater(zone) {
       const dl = (row + .5) / WATER_LATERAL_SEGMENTS * 2 - 1;
       if(Math.hypot(da, dl) > .99) continue;
       const a = row * width + column, b = a + 1, c = a + width, d = c + 1;
+      if(![a,b,c,d].every(index=>{
+        const x=positions[index*3],z=positions[index*3+2];
+        return waterline > zone.heightAt(x,z)+.02 &&
+          zone.surfaceAt(x,z).waterDepth>.02;
+      }))continue;
       indices.push(a, c, b, b, c, d);
     }
   }

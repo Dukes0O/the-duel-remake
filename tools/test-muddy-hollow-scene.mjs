@@ -31,9 +31,10 @@ function checkHollowCut(builder, label) {
   let firstBridge = -1;
   for(let offset = 0; offset < index.length; offset += 3) {
     const a = index[offset], b = index[offset + 1], c = index[offset + 2];
-    const x = (position.getX(a) + position.getX(b) + position.getX(c)) / 3;
-    const z = (position.getZ(a) + position.getZ(b) + position.getZ(c)) / 3;
-    if(course.muddyHollow.contains(x, z)) { firstBridge = offset / 3; break; }
+    if([a, b, c].some(vertex => course.muddyHollow.contains(
+      position.getX(vertex), position.getZ(vertex)))) {
+      firstBridge = offset / 3; break;
+    }
   }
   check(firstBridge < 0, `${label} cannot bridge the authored Hollow`);
   ordinaryGeometry.dispose(); hollowGeometry.dispose();
@@ -71,6 +72,49 @@ function checkHollowCut(builder, label) {
   const surfaceKinds = new Set(ground.geometry.attributes.hollowSurface.array);
   check(surfaceKinds.has(0) && surfaceKinds.has(1) && surfaceKinds.has(2),
     'the detailed mesh carries distinct dry, mud and pond regions');
+  const surfaceAttribute = ground.geometry.attributes.hollowSurface;
+  const colorAttribute = ground.geometry.attributes.color;
+  let wetMarginVertices = 0, unreadableWetVertex = -1;
+  for(let index = 0; index < surfaceAttribute.count; index++) {
+    if(surfaceAttribute.getX(index) !== 2) continue;
+    wetMarginVertices++;
+    if(colorAttribute.getZ(index) <= colorAttribute.getX(index)) {
+      unreadableWetVertex = index; break;
+    }
+  }
+  check(unreadableWetVertex < 0,
+    'water-contact ground has a visible blue-green wet treatment');
+  check(wetMarginVertices > 100, 'the visible wet margin covers the settled water-contact field');
+  const waterIndex = water.geometry.index.array;
+  const waterPosition = water.geometry.attributes.position;
+  let buriedWaterTriangle = -1;
+  for(let offset = 0; offset < waterIndex.length; offset += 3) {
+    const triangle = [waterIndex[offset], waterIndex[offset + 1], waterIndex[offset + 2]];
+    const x = triangle.reduce((sum, vertex) => sum + waterPosition.getX(vertex), 0) / 3;
+    const y = triangle.reduce((sum, vertex) => sum + waterPosition.getY(vertex), 0) / 3;
+    const z = triangle.reduce((sum, vertex) => sum + waterPosition.getZ(vertex), 0) / 3;
+    if(y <= course.muddyHollow.heightAt(x, z) + .02) {
+      buriedWaterTriangle = offset / 3; break;
+    }
+  }
+  check(buriedWaterTriangle < 0,
+    'the reflective pool submits only visible water above the authored ground');
+  const groundIndex = ground.geometry.index.array;
+  let usedRadius = 0;
+  for(const vertex of groundIndex) {
+    const dx = ground.geometry.attributes.position.getX(vertex) - course.muddyHollow.frame.origin.x;
+    const dz = ground.geometry.attributes.position.getZ(vertex) - course.muddyHollow.frame.origin.z;
+    const along = dx * Math.sin(course.muddyHollow.frame.heading) +
+      dz * Math.cos(course.muddyHollow.frame.heading);
+    const lateral = dx * Math.cos(course.muddyHollow.frame.heading) -
+      dz * Math.sin(course.muddyHollow.frame.heading);
+    usedRadius = Math.max(usedRadius, Math.hypot(
+      along / course.muddyHollow.bounds.alongRadius,
+      (lateral - course.muddyHollow.bounds.lateralCenter) /
+        course.muddyHollow.bounds.lateralRadius));
+  }
+  check(usedRadius >= 1.25,
+    'the fitted replacement covers complete coarse triangles around the Hollow edge');
   equal([...ground.geometry.attributes.position.array],
     [...second.group.getObjectByName('Muddy Hollow detailed ground')
       .geometry.attributes.position.array],
@@ -173,9 +217,14 @@ function checkHollowCut(builder, label) {
     z: zone.frame.origin.z + Math.cos(zone.frame.heading) * along -
       Math.sin(zone.frame.heading) * lateral,
   });
-  for(const along of [zone.departureBoundary.alongMin, 0,
-    zone.departureBoundary.alongMax]) {
-    const center = toWorld(along, zone.departureBoundary.lateral);
+  const samples = [
+    [zone.departureBoundary.alongMin, zone.departureBoundary.lateral],
+    [0, zone.departureBoundary.lateral],
+    [zone.departureBoundary.alongMax, zone.departureBoundary.lateral],
+    [0, 60], [0, 65], [0, 80],
+  ];
+  for(const [along, lateral] of samples) {
+    const center = toWorld(along, lateral);
     const pose = course.nearest(center.x, center.z, zone.frame.s);
     const ground = course.groundAt(pose.s, pose.lateral);
     const sample = (forward, side) => zone.heightAt(
@@ -210,8 +259,8 @@ function checkHollowCut(builder, label) {
       }
     });
     check(Math.min(...wheelGaps) >= .005 && Math.min(...wheelGaps) <= .03,
-      `real Titan tread stays supported at departure ${along} pitch ${attitude.pitch} roll ${attitude.roll}: ${wheelGaps.join(',')}`);
-    check(bodyGap >= 0, `real Titan body clears the departure slope at ${along}`);
+      `real Titan tread stays supported at Hollow ${along}/${lateral} pitch ${attitude.pitch} roll ${attitude.roll}: ${wheelGaps.join(',')}`);
+    check(bodyGap >= 0, `real Titan body clears the Hollow slope at ${along}/${lateral}`);
     equal(actor, snapshot, 'the grounding correction cannot write to simulation state');
   }
 

@@ -13,18 +13,37 @@ export function prepareVehicleGrounding(vehicle){
   const wheels=[];
   for(const wheel of vehicle.userData.wheels||[]){
     let low=Infinity,high=-Infinity;
+    const vertices=[];
     wheel.traverse(mesh=>{
       if(!mesh.isMesh||!mesh.geometry.attributes.position)return;
       local.multiplyMatrices(inverse,mesh.matrixWorld);
       const positions=mesh.geometry.attributes.position;
-      for(let i=0;i<positions.count;i++){point.fromBufferAttribute(positions,i).applyMatrix4(local);low=Math.min(low,point.y);high=Math.max(high,point.y);}
+      for(let i=0;i<positions.count;i++){
+        point.fromBufferAttribute(positions,i).applyMatrix4(local);
+        low=Math.min(low,point.y);high=Math.max(high,point.y);
+        vertices.push([point.x,point.y,point.z]);
+      }
     });
     if(!Number.isFinite(low)||high<=low)continue;
     local.multiplyMatrices(inverse,wheel.parent.matrixWorld);
     point.set(0,0,0).applyMatrix4(local);
     const radius=(high-low)/2;contactY=Math.min(contactY,low);
     wheel.parent.userData.radius=radius;
-    wheels.push(Object.freeze({contactY:low,radius,x:point.x,z:point.z}));
+    // Cache a small support hull from the real imported tread. It stays
+    // bounded in the hidden Hollow while following pitch, roll and local
+    // terrain more closely than a centre/radius approximation.
+    const supportIndices=new Set(),directions=[-1,-.67,-.33,0,.33,.67,1];
+    for(const dx of directions)for(const dz of directions)for(const dy of[.25,.5,.75,1]){
+      let best=Infinity,bestIndex=0;
+      for(let index=0;index<vertices.length;index++){
+        const vertex=vertices[index],value=dx*vertex[0]+dy*vertex[1]+dz*vertex[2];
+        if(value<best){best=value;bestIndex=index;}
+      }
+      supportIndices.add(bestIndex);
+    }
+    const supportPoints=Object.freeze([...supportIndices].map(index=>
+      Object.freeze(vertices[index])));
+    wheels.push(Object.freeze({contactY:low,radius,x:point.x,z:point.z,supportPoints}));
   }
   if(!Number.isFinite(contactY))contactY=0;
   const bounds=new THREE.Box3(),part=new THREE.Box3();
@@ -91,14 +110,23 @@ export function applyVehicleTerrainPose(vehicle,course,actor){
       for(const wheel of wheels){
         point.set(wheel.x,wheel.contactY+wheel.radius,wheel.z)
           .applyEuler(vehicle.rotation).add(vehicle.position);
-        const support=course.muddyHollow.heightAt(point.x,point.z);
-        lowestGap=Math.min(lowestGap,point.y-wheel.radius-support);
+        const centerX=point.x,centerZ=point.z;
+        const centerHeight=course.muddyHollow.heightAt(centerX,centerZ),step=.5;
+        const slopeX=(course.muddyHollow.heightAt(centerX+step,centerZ)-
+          course.muddyHollow.heightAt(centerX-step,centerZ))/(step*2);
+        const slopeZ=(course.muddyHollow.heightAt(centerX,centerZ+step)-
+          course.muddyHollow.heightAt(centerX,centerZ-step))/(step*2);
+        let candidate=null,candidateGap=Infinity;
+        for(const tread of wheel.supportPoints){
+          point.fromArray(tread).applyEuler(vehicle.rotation).add(vehicle.position);
+          const plane=centerHeight+slopeX*(point.x-centerX)+slopeZ*(point.z-centerZ);
+          if(point.y-plane<candidateGap){candidateGap=point.y-plane;candidate=point.clone();}
+        }
+        const support=course.muddyHollow.heightAt(candidate.x,candidate.z);
+        lowestGap=Math.min(lowestGap,candidate.y-support);
       }
-      // The imported tread extends beyond the centre-radius estimate as the
-      // tyre tilts. The measured squared-angle allowance leaves the real
-      // lowest tread at the normal 1 cm visual clearance across the ridge.
-      const angleAllowance=.34*((actor.terrainPitch||0)**2+(actor.terrainRoll||0)**2);
-      if(Number.isFinite(lowestGap))vehicle.position.y+=Math.max(0,.01+angleAllowance-lowestGap);
+      if(Number.isFinite(lowestGap))vehicle.position.y+=THREE.MathUtils.clamp(
+        TIRE_CLEARANCE-lowestGap,-.35,.6);
     }
   }
   if(actor?.tumble){
