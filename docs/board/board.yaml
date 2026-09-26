@@ -1731,8 +1731,7 @@ tasks:
     lane: UI
     size: M
     needs: [ARENA-01]
-    status: active
-    claimed_by: "Claude, 26 September 2026 (Kyle asked Claude to keep building)"
+    status: merged
     flag: scrapdome
     owns: [src/screen-arena.js, src/screen-arena.css, tools/test-arena-ui.mjs, docs/changes/ARENA-01-UI.md]
     hooks: [src/app.js, src/screen-router.js, src/screen-yard-home.js, src/screen-hud.js, src/combat-hud.js, src/combat-weapons.js, tools/scenarios/scrapdome.mjs]
@@ -1743,6 +1742,7 @@ tasks:
       - "Settle the UFO jump's arena rule in writing (for example once per 30 s, landing anywhere clear on the floor) and test it."
       - "Results with placings, REMATCH and BACK TO THE YARD. Extend tools/scenarios/scrapdome.mjs to the real yard flow; High and Performance review; frame pacing with four cars."
     sound: "arena.countdown, arena.round-start, arena.wreck-credit and arena.results through the audio lane's bank."
+    note: "Built by Claude: yard SCRAPDOME panel, arena display and scoreboard, named opponents with HUNTING YOU tags, results, rematch, back to the yard, arena UFO hop. Full 274/274; private browser journey passed at 60 fps with four cars."
   - id: ARENA-FEEL
     title: "Tells, callouts and sounds for arena fights"
     priority: 3
@@ -1762,7 +1762,8 @@ tasks:
     lane: CMB
     size: M
     needs: [ARENA-01-UI]
-    status: backlog
+    status: active
+    claimed_by: "Claude, 26 September 2026"
     flag: scrapdome
     owns: [src/scrapdome-last-car.js, tools/test-last-car-rolling.mjs, tools/scenarios/last-car-rolling.mjs, docs/changes/ARENA-02.md]
     hooks: [src/scrapdome.js, src/arena-ai.js, src/screen-arena.js, src/combat.js, src/wasteland-career.js, src/app.js]
