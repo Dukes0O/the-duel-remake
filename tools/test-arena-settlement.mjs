@@ -139,6 +139,8 @@ function appInYard() {
 
 function finish(app, {wrecks = 2} = {}) {
   const state = app.duel.state, me = state.arena.participants.find(item => item.id === 'player');
+  state.countdown = 0; app.duel.step(1 / 120);
+  assert.equal(state.status, 'racing');
   me.wrecks = wrecks; me.damageDealt = 300;
   state.arena.clockSec = state.arena.timeLimitSec - 1 / 240;
   app.duel.step(1 / 120);
