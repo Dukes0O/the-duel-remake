@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { Course } from '../src/course.js';
 import { COURSE } from '../src/config.js';
 import { FEATURE_STATES, createFeatureFlags } from '../src/feature-flags.js';
+import { Duel } from '../src/game.js';
 
 let muddyHollow = {};
 try {
@@ -106,6 +107,23 @@ check('course construction gates the zone explicitly', () => {
   zoneFor(courseFor(highCountry, true));
   assert.equal(courseFor(pacificCanyon, true).muddyHollow, undefined,
     'the enabled option cannot install the zone on another course');
+});
+
+check('race construction requires both discovery and the dev switch', () => {
+  const options = {seed, car: 'titan_monster', startStage: COURSE.indexOf(highCountry)};
+  const undiscovered = new Duel({seed, featureFlags: {'muddy-hollow': true}});
+  undiscovered.startCampaign({...options, discoveredGate: false});
+  assert.equal(undiscovered.course.muddyHollow, undefined,
+    'an undiscovered player cannot load the Hollow');
+
+  const disabled = new Duel({seed, featureFlags: {'muddy-hollow': false}});
+  disabled.startCampaign({...options, discoveredGate: true});
+  assert.equal(disabled.course.muddyHollow, undefined,
+    'discovery cannot bypass the development switch');
+
+  const discovered = new Duel({seed, featureFlags: {'muddy-hollow': true}});
+  discovered.startCampaign({...options, discoveredGate: true});
+  zoneFor(discovered.course);
 });
 
 check('zone exposes every phase-one authored landform', () => {
