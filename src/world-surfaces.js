@@ -278,6 +278,9 @@ function setMaterialGroups(geometry,groups){const indices=[];groups.forEach((gro
 
 const groundMaps = new Map();
 let meadowMap;
+// Muddy Hollow mud (Poly Haven Brown Mud 02, CC0; tools/art/muddy-hollow-mud.py).
+let hollowMudMap=null;
+export function hollowMudTexture(){if(!hollowMudMap){hollowMudMap=new THREE.TextureLoader().load('/assets/textures/muddy-hollow-mud.jpg');hollowMudMap.wrapS=hollowMudMap.wrapT=THREE.RepeatWrapping;hollowMudMap.colorSpace=THREE.SRGBColorSpace;hollowMudMap.anisotropy=8;hollowMudMap.userData.sharedAsset=true;}return hollowMudMap;}
 export function meadowTexture(){if(!meadowMap){meadowMap=new THREE.TextureLoader().load('/assets/textures/mountain-meadow.png');meadowMap.wrapS=meadowMap.wrapT=THREE.RepeatWrapping;meadowMap.repeat.set(4,4);meadowMap.colorSpace=THREE.SRGBColorSpace;meadowMap.anisotropy=8;meadowMap.userData.sharedAsset=true;}return meadowMap;}
 export function groundTexture(kind) {
   if (!groundMaps.has(kind)) {

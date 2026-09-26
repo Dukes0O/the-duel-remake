@@ -15,10 +15,14 @@ export function terrainStyleAt(course,s){
   return{weights,color:new THREE.Color(TINTS[previous.theme]||TINTS.desert).lerp(new THREE.Color(TINTS[section.theme]||TINTS.desert),blend)};
 }
 
-export function createTerrainMaterial({earth,grass,city,rock=earth,normal,roughness}){
+// `mud` (optional) adds a wet mud layer weighted by a per-vertex `terrainWet`
+// attribute; only the Muddy Hollow ground uses it (EGG-03 art).
+export function createTerrainMaterial({earth,grass,city,rock=earth,normal,roughness,mud=null}){
   const material=new THREE.MeshStandardMaterial({map:earth,normalMap:normal,roughnessMap:roughness,normalScale:new THREE.Vector2(.65,.65),roughness:1,vertexColors:true});
   material.name='Slope-aware meadow, scree and soil';
+  if(mud)material.userData.terrainMud=mud;
   material.onBeforeCompile=shader=>{
+    if(mud)applyMudLayer(shader,mud);
     shader.uniforms.terrainGrass={value:grass};shader.uniforms.terrainCity={value:city};shader.uniforms.terrainRock={value:rock};
     shader.vertexShader=shader.vertexShader.replace('#include <common>',`#include <common>
       attribute vec3 biomeWeights;
@@ -64,6 +68,23 @@ export function createTerrainMaterial({earth,grass,city,rock=earth,normal,roughn
       #endif
     `);
   };
-  material.customProgramCacheKey=()=> 'terrain-slope-mosaic-v2';
+  material.customProgramCacheKey=()=>mud?'terrain-slope-mosaic-v2-mud':'terrain-slope-mosaic-v2';
   return material;
+}
+
+// Mud replaces the turf where the ground is wet: darker, smoother and with a
+// little sheen. The vertex tint is neutral there, so the mud keeps its colour.
+function applyMudLayer(shader,mud){
+  shader.uniforms.terrainMud={value:mud};
+  shader.vertexShader=shader.vertexShader.replace('#include <common>',`#include <common>
+    attribute float terrainWet;
+    varying float vTerrainWet;`).replace('#include <begin_vertex>',`#include <begin_vertex>
+    vTerrainWet=terrainWet;`);
+  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
+    uniform sampler2D terrainMud;
+    varying float vTerrainWet;`).replace('#include <color_fragment>',`#include <color_fragment>
+    float terrainMudAmount=smoothstep(.08,.62,vTerrainWet);
+    vec3 terrainMudTexel=texture2D(terrainMud,vTerrainPosition.xz*.12).rgb;
+    diffuseColor.rgb=mix(diffuseColor.rgb,terrainMudTexel*vec3(.62,.54,.46),terrainMudAmount);`).replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+    roughnessFactor*=1.0-.16*terrainMudAmount;`);
 }

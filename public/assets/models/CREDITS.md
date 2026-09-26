@@ -30,3 +30,13 @@ created with the built-in image tool. It is a visual target, not a screenshot
 of the game. The prompt brief, source/export contract and iteration notes are
 in `docs/COURSE_EXPANSION.md`. Existing landscape materials and their credits
 remain unchanged.
+
+## Muddy Hollow rocks and logs
+
+The garden rocks and ramp logs in `src/generated/muddy-hollow-props.json` come
+from the **Ultimate Nature Pack** by **Quaternius**
+([pack page](https://quaternius.com/packs/ultimatenature.html)), released under
+[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). Seven FBX
+models were downloaded on 26 September 2026 and converted by
+`tools/blender/muddy-hollow-props.py`, which recolours them to the High
+Country palette. Source checksums are in `tools/art/catalog.json`.

@@ -13,7 +13,7 @@ SOURCES = ['Rock_1', 'Rock_2', 'Rock_3', 'Rock_5', 'Rock_Moss_1', 'Rock_Moss_2',
 # Linear colours matched to the alpine granite and meadow; the pack's cool
 # blue-grey rock and red-brown wood read as foreign beside the course.
 RECOLOUR = {
-    'Rock': [0.235, 0.226, 0.205],
+    'Rock': [0.118, 0.112, 0.100],
     'Green': [0.075, 0.118, 0.042],
     'DarkGreen': [0.048, 0.078, 0.030],
     'Wood': [0.150, 0.092, 0.052],

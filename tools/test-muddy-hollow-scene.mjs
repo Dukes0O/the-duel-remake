@@ -10,6 +10,7 @@ import {models} from './audit-vehicle-grounding.mjs';
 import {
   createMuddyHollowScene,
   filterMuddyHollowMountains,
+  waterSheet,
 } from '../src/muddy-hollow-scene.js';
 
 let checks = 0;
@@ -248,10 +249,27 @@ function checkHollowCut(builder, label, yOffset, denseHeight) {
   check([...ground.geometry.attributes.position.array].every(Number.isFinite) &&
     [...water.geometry.attributes.position.array].every(Number.isFinite),
   'all detailed ground and water vertices are finite');
-  const waterY = [...water.geometry.attributes.position.array]
-    .filter((_, index) => index % 3 === 1);
-  check(Math.max(...waterY) - Math.min(...waterY) < .08,
-    'the shallow pond has one coherent waterline');
+  // The drawn water covers the whole area the Titan splashes through: level
+  // over the deep middle, a thin sheet over the shallow margin (EGG-03 art).
+  const pondCentre = course.muddyHollow.landforms.pondBed.center;
+  const waterline = course.muddyHollow.heightAt(pondCentre.x, pondCentre.z) + 1.045;
+  let levelVertices = 0, badSheet = -1;
+  for (let index = 0; index < water.geometry.attributes.position.count; index++) {
+    const x = water.geometry.attributes.position.getX(index);
+    const y = water.geometry.attributes.position.getY(index);
+    const z = water.geometry.attributes.position.getZ(index);
+    const depth = water.geometry.attributes.waterDepth.getX(index);
+    const bed = course.muddyHollow.heightAt(x, z);
+    if (bed + waterSheet(depth) <= waterline) {
+      if (Math.abs(y - waterline) > 1e-3) { badSheet = index; break; }
+      levelVertices++;
+    } else if (Math.abs(y - (bed + waterSheet(depth))) > 1e-3) { badSheet = index; break; }
+  }
+  check(badSheet < 0 && levelVertices > 20,
+    'the deep pond has one level waterline and the shallows a thin sheet');
+  const drawnWet = water.geometry.index.count / 3;
+  check(drawnWet > 800,
+    `water is drawn across the wet area the car splashes through (${drawnWet} triangles)`);
   const positions = ground.geometry.attributes.position.array;
   for(let index = 0; index < positions.length; index += 3 * 401) {
     check(Math.abs(positions[index + 1] -
@@ -414,18 +432,30 @@ function checkHollowCut(builder, label, yOffset, denseHeight) {
   }
 
   const ramp = zone.landforms.ramps.find(item => item.kind === 'log-ramp');
-  const logs = scene.group.getObjectByName('Muddy Hollow log ramp')?.children
-    .filter(child => child.isMesh) || [];
-  check(logs.length >= 8, `the log ramp is built from logs (${logs.length})`);
-  for (const log of logs) {
-    log.updateMatrixWorld(true);
-    box.setFromObject(log);
+  // The logs are one instanced batch: one draw for the whole ramp.
+  const batch = scene.group.getObjectByName('Muddy Hollow log ramp')?.children
+    .find(child => child.isInstancedMesh);
+  const count = batch?.count || 0;
+  check(count >= 8, `the log ramp is built from logs (${count})`);
+  batch?.geometry.computeBoundingBox();
+  const instance = new THREE.Matrix4();
+  for (let index = 0; index < count; index++) {
+    batch.getMatrixAt(index, instance);
+    box.copy(batch.geometry.boundingBox).applyMatrix4(instance);
     const centre = box.getCenter(new THREE.Vector3());
     check(Math.hypot(centre.x - ramp.center.x, centre.z - ramp.center.z) <
       Math.max(ramp.length, ramp.width) / 2 + 1, 'each log lies on the log-ramp site');
-    const groundY = zone.heightAt(centre.x, centre.z);
-    check(box.min.y < groundY && box.max.y > groundY + .15 && box.max.y < groundY + .9,
-      'each log is bedded into the ramp surface, not floating or buried');
+    // Along the whole log, its underside is in the ground and its top shows
+    // above it: bedded, not floating or buried, even on a sloping bank.
+    const {min, max} = batch.geometry.boundingBox;
+    for (const z of [min.z, 0, max.z]) {
+      const bottom = new THREE.Vector3(0, min.y, z).applyMatrix4(instance);
+      const top = new THREE.Vector3(0, max.y, z).applyMatrix4(instance);
+      const groundY = zone.heightAt(top.x, top.z);
+      check(bottom.y < zone.heightAt(bottom.x, bottom.z) && top.y > groundY + .15 &&
+        top.y < groundY + .9,
+      `log ${index + 1} is bedded into the ramp surface along its length`);
+    }
   }
   scene.dispose(); coarse.dispose();
 }
