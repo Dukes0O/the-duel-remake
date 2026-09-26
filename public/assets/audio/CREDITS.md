@@ -77,3 +77,15 @@ synthesis. No author endorsement is implied.
 - [Car Crash (with Glass)](https://freesound.org/people/magnuswaker/sounds/592388/) by **magnuswaker**, CC0 1.0.
 - [M142 HIMARS Rocket Launch 5](https://freesound.org/people/qubodup/sounds/854473/) by **qubodup**, CC0 1.0.
 - [M142 HIMARS Rocket Launch 8](https://freesound.org/people/qubodup/sounds/854476/) by **qubodup**, CC0 1.0.
+
+## Muddy Hollow water and mud
+
+Rebuilt by `tools/audio/build-hollow.mjs` from the public HQ previews: cut,
+faded, one variant repitched, loudness normalised (EBU R128) and encoded as
+mono Vorbis. Runtime files: `hollow-splash-a/b/c.ogg`, `hollow-mud-a/b.ogg`.
+The mud churn under the tyres is original synthesis. No author endorsement is
+implied.
+
+- [Big Water Splash](https://freesound.org/people/qubodup/sounds/442773/) by **qubodup**, CC0 1.0.
+- [car2.WAV](https://freesound.org/people/barion/sounds/462117/) by **barion**, CC0 1.0.
+- [Mud_1.wav](https://freesound.org/people/lzmraul/sounds/389460/) by **lzmraul**, CC0 1.0.

@@ -453,7 +453,7 @@ tasks:
     lane: VIS
     size: M
     needs: [CRASH-01]
-    status: active
+    status: merged
     claimed_by: "Codex autonomous Director, 26 September 2026"
     flag: crash-effects
     owns: [docs/changes/CRASH-02.md, tools/test-crash-presentation.mjs, tools/test-police-knock.mjs, tools/scenarios/crash-presentation.mjs]
@@ -481,7 +481,7 @@ tasks:
     lane: EGG
     size: L
     needs: [TITAN-01]
-    status: active
+    status: merged
     claimed_by: "Codex autonomous Director, 26 September 2026"
     flag: muddy-hollow
     owns: [src/muddy-hollow.js, src/muddy-hollow-scene.js, tools/test-muddy-hollow.mjs, tools/test-muddy-hollow-scene.mjs, tools/scenarios/muddy-hollow.mjs, docs/changes/EGG-03.md]

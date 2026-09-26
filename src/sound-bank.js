@@ -312,6 +312,37 @@ export const SOUND_BANK = {
     limit: 4,
     farCutoff: 2400,
   }),
+  // CRASH-02 audio: a smash reuses the recorded crashes, scaled by the change
+  // in velocity and placed at the hit; the thump covers them while loading.
+  'vehicle.crash-impact': cue('impacts', {
+    flag: 'crash-effects',
+    buffersFrom: 'vehicle.crash.recorded',
+    volume: 3.4,
+    priority: 72,
+    limit: 4,
+    farCutoff: 2400,
+    layers: [tone(62, 0.35, 0.22, 'sine', 0, 30)],
+  }),
+  // EGG-03 audio (tools/audio/build-hollow.mjs): pond entry and mud.
+  'world.muddy-hollow-splash': cue('vehicle', {
+    flag: 'muddy-hollow',
+    files: ['hollow-splash-a.ogg', 'hollow-splash-b.ogg', 'hollow-splash-c.ogg'],
+    volume: 2.6,
+    priority: 70,
+    limit: 3,
+  }),
+  'world.muddy-hollow-mud': cue('vehicle', {
+    flag: 'muddy-hollow',
+    files: ['hollow-mud-a.ogg', 'hollow-mud-b.ogg'],
+    volume: 2.2,
+    priority: 55,
+    limit: 3,
+  }),
+  'world.muddy-hollow-churn': cue('vehicle', {
+    flag: 'muddy-hollow',
+    filter: ['bandpass', 420],
+    loop: true,
+  }),
   'weapon.default.fire': cue('weapons', {
     layers: [tone(220, 0.22, 0.12, 'triangle', 0, 88)],
   }),
