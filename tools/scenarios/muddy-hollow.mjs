@@ -89,6 +89,41 @@ async function crossDepartureBoundary(context, {expectDeparture}) {
   return result;
 }
 
+async function captureRenderedVehicle(context, expectedKey) {
+  await context.waitFor(`(() => {
+    const app=window.__qaApp,host=document.querySelector('#view3d');
+    window.__render.renderFrame();
+    return app.duel.state.car===${JSON.stringify(expectedKey)}&&
+      host.dataset.vehicleKey===${JSON.stringify(expectedKey)}&&
+      host.dataset.vehicleAsset==='ready'&&app.visualReady;
+  })()`,'phase-3 Titan renderer ready',60_000);
+  const evidence=await context.evaluate(`(() => {
+    const app=window.__qaApp,d=app.duel,host=document.querySelector('#view3d');
+    app.onFrame?.(d.state);window.__render.renderFrame();
+    const expected=d.course.worldAt(d.state.s,d.state.lateral);
+    const vehicles=window.__render.scene.children
+      .filter(node=>node.userData?.vehicleKey)
+      .map(node=>({key:node.userData.vehicleKey,source:node.userData.vehicleSource,
+        name:node.name||null,visible:node.visible,
+        position:[node.position.x,node.position.y,node.position.z]}));
+    const rendered=vehicles.filter(node=>node.visible&&node.name!=='Personal best ghost');
+    const horizontalError=rendered.length===1?
+      Math.hypot(rendered[0].position[0]-expected.x,rendered[0].position[2]-expected.z):null;
+    return {state:{car:d.state.car,status:d.state.status,s:d.state.s,lateral:d.state.lateral,
+        world:[expected.x,expected.y,expected.z]},
+      host:{vehicleKey:host.dataset.vehicleKey,vehicleAsset:host.dataset.vehicleAsset,
+        vehicleSource:host.dataset.vehicleSource,warmupStatus:host.dataset.warmupStatus,
+        canvasVisibility:host.querySelector('canvas')?.style.visibility||'visible'},
+      rendered,vehicles,horizontalError};
+  })()`);
+  if(evidence.state.car!==expectedKey||evidence.host.vehicleKey!==expectedKey||
+      evidence.host.vehicleAsset!=='ready'||evidence.host.canvasVisibility==='hidden'||
+      evidence.rendered.length!==1||evidence.rendered[0].key!==expectedKey||
+      evidence.horizontalError>1e-3)
+    throw Error(`Phase-3 rendered vehicle does not match simulation: ${JSON.stringify(evidence)}`);
+  return evidence;
+}
+
 async function driveBackAndExit(context) {
   return context.evaluate(`(() => {
     const app=window.__qaApp,d=app.duel,zone=d.course.muddyHollow;
@@ -295,6 +330,7 @@ export async function run(context) {
   if(departure.departureEvents!==1||departure.historyAfter!==departure.historyBefore+1||
       departure.activeRace!==null||departure.historyResult?.abandoned!==true)
     throw Error(`Titan departure did not settle once: ${JSON.stringify(departure)}`);
+  report.phaseThree.renderEvidence=await captureRenderedVehicle(context,'titan_monster');
   await context.evaluate(`(() => {
     document.querySelectorAll('details').forEach(panel=>{panel.open=false;panel.hidden=true;});
     window.__qaApp.onFrame?.(window.__qaApp.duel.state);window.__render.renderFrame();
