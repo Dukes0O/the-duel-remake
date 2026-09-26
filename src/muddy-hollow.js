@@ -224,6 +224,8 @@ export function checkMuddyHollowDeparture(duel) {
   if (!zone || !departure || departure.departed ||
       state.status !== 'racing' || state.car !== 'titan_monster' ||
       state.onFoot || state.airborne) return false;
+  if (![state.prevS, state.prevLateral, state.s, state.lateral]
+    .every(Number.isFinite)) return false;
   const previous = departurePosition(duel, state.prevS, state.prevLateral);
   const current = departurePosition(duel, state.s, state.lateral);
   const world = duel.course.worldAt(state.s, state.lateral);
