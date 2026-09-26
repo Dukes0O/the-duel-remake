@@ -9,8 +9,9 @@ with the plan below.
    `C:\Users\kyleb\.codex\worktrees\sounds\the-duel-remake`, pushed): crash
    impact, pond splash and mud sounds; finishes CRASH-02 and EGG-03 audio. Its
    records are complete (docs/changes/CRASH-02.md, EGG-03.md). It already
-   contains integration through GATE-REJOIN. A lane gate was running when
-   Claude stopped: rerun `node tools/run-tests.mjs --tier lane --changed
+   contains integration through GATE-REJOIN. Its gate passed 285 suites and
+   failed test-combat-audio (splash true peak); Claude fixed and pushed that.
+   Rerun `node tools/run-tests.mjs --tier lane --changed
    --jobs 8` and `npm run build`, then merge it and run the janitor.
 2. **Arena lane** `lane/audio/arena-feel` (worktree
    `C:\Users\kyleb\.codex\worktrees\arena-feel\the-duel-remake`, pushed),
