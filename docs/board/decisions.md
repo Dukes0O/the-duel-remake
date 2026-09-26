@@ -1021,3 +1021,11 @@ Re-slice EGG-03 narrowly for the focused scene test and the existing
 `src/world-surfaces.js`, `src/effects.js` and `src/vehicle-grounding.js` hooks.
 These hooks may only provide the switched Phase-6 presentation and correction
 described above.
+
+Final browser review showed that the first fitted mesh had downward-facing
+triangles. The normal above-ground camera therefore culled the replacement and
+looked through the deliberate coarse-terrain cut at the sky, which appeared as
+a flooded basin with floating sheets. Reverse only the fitted ground and pond
+face order so their normals point upward. Keep the settled vertices, materials,
+height field, surface field and physics unchanged, and protect the normal
+direction in the focused scene test.

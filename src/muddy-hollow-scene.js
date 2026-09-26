@@ -66,7 +66,7 @@ function buildGround(zone) {
         (row + .5) / GROUND_LATERAL_SEGMENTS * lateralRadius * 2 * GROUND_COVERAGE;
       if(!inside(zone, along, lateral, GROUND_COVERAGE - 1 + .012)) continue;
       const a = row * width + column, b = a + 1, c = a + width, d = c + 1;
-      indices.push(a, c, b, b, c, d);
+      indices.push(a, b, c, b, d, c);
     }
   }
   const geometry = new THREE.BufferGeometry();
@@ -113,7 +113,7 @@ function buildWater(zone) {
         return waterline > zone.heightAt(x,z)+.02 &&
           zone.surfaceAt(x,z).waterDepth>.02;
       }))continue;
-      indices.push(a, c, b, b, c, d);
+      indices.push(a, b, c, b, d, c);
     }
   }
   const geometry = new THREE.BufferGeometry();

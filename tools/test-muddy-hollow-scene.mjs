@@ -56,6 +56,14 @@ function checkHollowCut(builder, label) {
   check(ground.geometry.attributes.hollowSurface?.count ===
     ground.geometry.attributes.position.count,
   'ground vertices identify dry, mud and water presentation');
+  const averageNormalY = geometry => {
+    const normal = geometry.attributes.normal;
+    let total = 0;
+    for(let index = 0; index < normal.count; index++) total += normal.getY(index);
+    return total / normal.count;
+  };
+  check(averageNormalY(ground.geometry) > .5 && averageNormalY(water.geometry) > 0,
+    'ground and water faces point upward for the normal above-ground camera');
   check([...ground.geometry.attributes.position.array].every(Number.isFinite) &&
     [...water.geometry.attributes.position.array].every(Number.isFinite),
   'all detailed ground and water vertices are finite');
