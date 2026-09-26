@@ -397,9 +397,9 @@ tasks:
     lane: CMB
     size: L
     needs: []
-    status: active
+    status: merged
     flag: crash-physics
-    claimed_by: "Handed to Codex by Claude, 26 September 2026: continue branch lane/arch/crash-physics"
+    claimed_by: "Merged by Codex, 26 September 2026"
     owns: [src/vehicle-collision.js, src/vehicle-knock.js, tools/test-vehicle-collision.mjs, tools/test-vehicle-knock-integration.mjs, docs/changes/CRASH-01.md]
     hooks: [src/sim-contacts.js, src/sim-rival.js, src/sim-driving.js, src/sim-crash.js, src/destructibles.js, src/combat-armor.js, src/arena/arena-event.js, src/feature-flags.js, tools/test-combat-knockaway.mjs, tools/test-armored-vehicle-impact.mjs, tools/test-combat-ramming.mjs, tools/test-combat-replays.mjs, tools/test-feature-flags.mjs, tools/replays/combat-fingerprints.json, docs/board/decisions.md]
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
@@ -423,9 +423,9 @@ tasks:
     priority: 1
     lane: CMB
     size: S
-    needs: []
+    needs: [CRASH-01]
     status: backlog
-    owns: [docs/changes/TITAN-01.md, tools/test-titan-climb.mjs]
+    owns: [docs/changes/TITAN-01.md, tools/test-titan-climb.mjs, tools/test-offroad-physics.mjs]
     hooks: [src/offroad-physics.js, src/sim-driving.js]
     helpers: [test_author, reviewer]
     acceptance:
