@@ -2,13 +2,14 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { App } from '../src/app.js';
 import { Course } from '../src/course.js';
-import { COURSE } from '../src/config.js';
+import { COURSE, DRIVE } from '../src/config.js';
 import { FEATURE_STATES, createFeatureFlags } from '../src/feature-flags.js';
 import { Duel } from '../src/game.js';
 import { GhostRecorder, loadGhosts } from '../src/ghost.js';
 import { loadLeaderboard } from '../src/leaderboard.js';
 import {limitClimb, offroadCapability} from '../src/offroad-physics.js';
 import { activePlayer, loadPlayers } from '../src/progression.js';
+import {createResultsScreen} from '../src/screen-results.js';
 
 let muddyHollow = {};
 try {
@@ -126,13 +127,13 @@ function departureBoundary(zone, required = false) {
 }
 
 function phaseThreeDuel({car = 'titan_monster', enabled = true,
-  discovered = true} = {}) {
+  discovered = true, difficulty = 'casual'} = {}) {
   const duel = new Duel({seed, featureFlags: {
     'muddy-hollow': enabled,
     'titan-climb': true,
   }});
   duel.startCampaign({car, startStage: highCountryIndex, discoveredGate: discovered,
-    opponentCount: 0, mode: 'timetrial'});
+    opponentCount: 0, mode: 'timetrial', difficulty});
   Object.assign(duel.state, {status: 'racing', countdown: 0, traffic: [],
     opponents: [], impactTimer: 0, headingError: 0, yawVelocity: 0,
     pushVelocity: 0, slipAngle: 0, offRoadTime: 0, roughness: 0});
@@ -946,6 +947,32 @@ check('non-Titan, on-foot, airborne, road, flag-off and undiscovered states cann
   }
 });
 
+check('departure validates the swept ridge intersection, not only the endpoint', () => {
+  const {duel, reference, boundary, events} = crossingFixture();
+  const beforePoint = localPoint(reference, boundary.alongMax + .15,
+    boundary.lateral - .15);
+  const afterPoint = localPoint(reference, boundary.alongMax - .1,
+    boundary.lateral + .15);
+  const before = duel.course.nearest(beforePoint.x, beforePoint.z, reference.frame.s);
+  const after = duel.course.nearest(afterPoint.x, afterPoint.z, reference.frame.s);
+  Object.assign(duel.state, {prevS: before.s, prevLateral: before.lateral,
+    s: after.s, lateral: after.lateral});
+  assert.equal(api('checkMuddyHollowDeparture')(duel), false,
+    'a diagonal sweep outside the finite ridge span cannot depart');
+  assert.equal(duel.state.status, 'racing');
+  assert.equal(phaseThreeEvent(events).length, 0);
+});
+
+check('an airborne-to-ground landing sweep cannot depart through the ridge', () => {
+  const {duel, events} = crossingFixture();
+  Object.assign(duel.state, {airborne: false, airHeight: 0,
+    prevAirHeight: 5, _jumpY: null});
+  assert.equal(api('checkMuddyHollowDeparture')(duel), false,
+    'the whole swept crossing must have tyre contact');
+  assert.equal(duel.state.status, 'racing');
+  assert.equal(phaseThreeEvent(events).length, 0);
+});
+
 check('ridge crossing wins over a simultaneous race deadline', () => {
   const {duel, events} = crossingFixture();
   Object.assign(duel.state, {timeLimitSec: 20,
@@ -990,6 +1017,32 @@ check('exploration stays drivable while race outcomes freeze and ridge return ca
     'crossing back to the road cannot resume the abandoned race');
   assert.deepEqual(Object.fromEntries(outcomeFields.map(key =>
     [key, duel.state[key]])), frozen, 'ridge return keeps race outcomes frozen');
+});
+
+check('Pro overrev cannot freeze a departed Titan; ordinary engine failure remains', () => {
+  const {duel} = crossingFixture({difficulty: 'pro'});
+  duel.step(fixedStep);
+  Object.assign(duel.state, {speedMph: 36, gear: 0,
+    overrevSec: DRIVE.overRevBlowSec});
+  duel.setInput({throttle: 1, brake: 0, steer: 0, boost: false});
+  const before = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  for (let tick = 0; tick < 10; tick++) duel.step(fixedStep);
+  const after = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  assert.ok(Math.hypot(after.x - before.x, after.z - before.z) > .1,
+    'riding the limiter after departure still integrates position');
+  assert.equal(duel.state.status, 'exploring');
+  assert.equal(duel.state.majorCrashes, 0);
+  assert.ok(Number.isFinite(duel.state.overrevSec) &&
+    duel.state.overrevSec <= DRIVE.overRevBlowSec + fixedStep * 2,
+  'departed explorer keeps a bounded overrev counter');
+
+  const ordinary = phaseThreeDuel({difficulty: 'pro'});
+  Object.assign(ordinary.state, {speedMph: 36, gear: 0,
+    overrevSec: DRIVE.overRevBlowSec});
+  ordinary.setInput({throttle: 1, brake: 0, steer: 0, boost: false});
+  ordinary.step(fixedStep);
+  assert.ok(ordinary.state.majorCrashes > 0 || ordinary.state.impactTimer > 0,
+    'ordinary Pro racing still fails the engine');
 });
 
 check('departure and exploration agree under 30, 60 and 144 FPS schedules', () => {
@@ -1061,6 +1114,20 @@ check('memory-only App abandonment preserves banked progress and discards the ac
   const storedGhosts = loadGhosts();
   for (const record of storedGhosts.records) delete record.lastUsedAt;
   assert.deepEqual(storedGhosts, stableSavedContent(before).ghosts);
+  app.dispose();
+});
+
+check('failed departure save is visible in the existing exploration pause panel', () => {
+  const app = makeMuddyApp();
+  departMuddyApp(app);
+  app.profileSaved = false;
+  app.duel.state.paused = true;
+  const render = createResultsScreen({app, profile: () => app.profile,
+    credits: value => Number(value || 0).toLocaleString('en-US'),
+    time: String, escapeHTML: String, arrow: ''});
+  const html = render(app.duel.state);
+  assert.match(html, /Storage is unavailable; progress lasts for this session\./,
+    'pause panel warns that the failed abandonment save is session only');
   app.dispose();
 });
 
