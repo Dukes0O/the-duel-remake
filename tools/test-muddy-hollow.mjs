@@ -188,6 +188,78 @@ function phaseThreeEvent(events) {
     .map(event => event.muddyHollowDeparted);
 }
 
+function tracePlaygroundRamp(index, fps = 60) {
+  const duel = phaseThreeDuel();
+  const zone = zoneFor(duel.course);
+  const ramp = zone.landforms.ramps[index];
+  const center = toLocal(zone, pointFor(ramp, ramp.name));
+  const pond = toLocal(zone, pointFor(zone.landforms.pondBed, 'pond bed'));
+  let direction = {along: 1, lateral: 0};
+  if (index === 0) {
+    const length = Math.hypot(pond.along - center.along,
+      pond.lateral - center.lateral);
+    direction = {along: (pond.along - center.along) / length,
+      lateral: (pond.lateral - center.lateral) / length};
+  }
+  const speedMph = index === 0 ? 92 : 58;
+  const metresPerTick = speedMph * .44704 * fixedStep;
+  const startOffset = -Math.max(ramp.alongRadius, ramp.lateralRadius) * 1.45;
+  const endOffset = index === 0
+    ? Math.hypot(pond.along - center.along, pond.lateral - center.lateral) +
+      zone.landforms.pondBed.lateralRadius + 12
+    : Math.max(ramp.alongRadius, ramp.lateralRadius) * 2.6;
+  const totalTicks = Math.ceil((endOffset - startOffset) / metresPerTick);
+  const start = localPoint(zone,
+    center.along + direction.along * startOffset,
+    center.lateral + direction.lateral * startOffset);
+  placeAt(duel, start, speedMph);
+  Object.assign(duel.state, {status: 'exploring',
+    stageTimeSec: 123, lapTimeSec: 45, totalTimeSec: 67});
+  duel.state.muddyHollowDeparture.departed = true;
+  const before = {
+    score: duel.state.score,
+    stageStyleScore: duel.state.stageStyleScore,
+    jumpScore: duel.state.jumpScore,
+    jumps: duel.state.jumps,
+    collectedJumps: structuredClone(duel.state.collectedJumps),
+    stageTimeSec: duel.state.stageTimeSec,
+    lapTimeSec: duel.state.lapTimeSec,
+    totalTimeSec: duel.state.totalTimeSec,
+  };
+  const events = [];
+  duel.onChange((_, event) => events.push(event));
+  let tick = 0;
+  let maxAirHeight = 0;
+  let airborneOverPond = false;
+  let accumulator = 0;
+  for (let frame = 0; tick < totalTicks; frame++) {
+    accumulator += 1 / fps;
+    while (accumulator + 1e-10 >= fixedStep && tick < totalTicks) {
+      accumulator = Math.max(0, accumulator - fixedStep);
+      const offset = Math.min(endOffset, startOffset + (++tick) * metresPerTick);
+      const world = localPoint(zone,
+        center.along + direction.along * offset,
+        center.lateral + direction.lateral * offset);
+      const pose = duel.course.nearest(world.x, world.z, zone.frame.s);
+      duel.state.prevS = duel.state.s;
+      duel.state.prevLateral = duel.state.lateral;
+      duel.state.s = pose.s;
+      duel.state.lateral = pose.lateral;
+      duel.state.speedMph = speedMph;
+      duel._jump(duel.state, fixedStep);
+      maxAirHeight = Math.max(maxAirHeight, duel.state.airHeight || 0);
+      const local = toLocal(zone, duel.course.worldAt(duel.state.s,
+        duel.state.lateral));
+      if (Math.hypot(
+        (local.along - pond.along) / zone.landforms.pondBed.alongRadius,
+        (local.lateral - pond.lateral) / zone.landforms.pondBed.lateralRadius,
+      ) <= 1 && duel.state.airborne) airborneOverPond = true;
+    }
+  }
+  return {duel, zone, ramp, before, events, maxAirHeight,
+    airborneOverPond, tick};
+}
+
 function offsetFeature(zone, feature, alongScale = 0, lateralScale = 0) {
   const center = pointFor(feature, feature?.name || feature?.id || 'feature');
   const heading = zone.frame.heading;
@@ -1192,6 +1264,107 @@ check('installation preserves the racing line, scenery and RNG stream', () => {
   );
 });
 
+check('phase 4 exposes the settled five launch sites, rock garden and summit flag', () => {
+  const zone = zoneFor(courseFor(highCountry, true));
+  assert.deepEqual(zone.landforms.ramps.map(ramp => ramp.kind),
+    ['mega-jump', 'dirt-kicker', 'dirt-kicker', 'dirt-kicker', 'log-ramp'],
+  'the five existing sites have their settled playground roles');
+  assert.equal(zone.landforms.rockGarden?.id, 'rock-garden');
+  assert.ok(zone.landforms.rockGarden.rocks.length >= 6,
+    'the rock garden has a useful fixed boulder group');
+  assert.equal(zone.landforms.hill.flag?.id, 'king-of-the-hill-flag');
+  const hill = toLocal(zone, pointFor(zone.landforms.hill, 'hill'));
+  const flag = toLocal(zone, pointFor(zone.landforms.hill.flag, 'summit flag'));
+  assert.ok(Math.hypot(flag.along - hill.along, flag.lateral - hill.lateral) < 1e-9,
+    'the flag stands at the authored summit');
+  const point = pointFor(zone.landforms.hill.flag, 'summit flag');
+  assert.ok(Math.abs(zone.landforms.hill.flag.baseY -
+    zone.heightAt(point.x, point.z)) < 1e-9,
+  'the flag base follows the deterministic summit height');
+});
+
+check('all five playground ramps launch the Titan without scoring the abandoned race', () => {
+  for (let index = 0; index < 5; index++) {
+    const result = tracePlaygroundRamp(index);
+    assert.ok(result.maxAirHeight > .25,
+      `${result.ramp.name} creates real off-road flight`);
+    assert.deepEqual({
+      score: result.duel.state.score,
+      stageStyleScore: result.duel.state.stageStyleScore,
+      jumpScore: result.duel.state.jumpScore,
+      jumps: result.duel.state.jumps,
+      collectedJumps: result.duel.state.collectedJumps,
+      stageTimeSec: result.duel.state.stageTimeSec,
+      lapTimeSec: result.duel.state.lapTimeSec,
+      totalTimeSec: result.duel.state.totalTimeSec,
+    }, result.before, `${result.ramp.name} changes no score, record or race clock`);
+    assert.equal(result.events.some(event => event.jumpLanded), false,
+      `${result.ramp.name} emits no scored arena landing`);
+  }
+  assert.equal(tracePlaygroundRamp(0).airborneOverPond, true,
+    'the fast mega-jump line carries the Titan over the pond');
+});
+
+check('exploration advances shared jump physics before static contacts', () => {
+  const calls = [];
+  const duel = {
+    state: {status: 'exploring', muddyHollowDeparture: {
+      departed: true, elapsedSec: 2}},
+    _drive: () => calls.push('drive'),
+    _jump: actor => { assert.equal(actor.status, 'exploring'); calls.push('jump'); },
+    _staticContacts: actor => { assert.equal(actor.status, 'exploring'); calls.push('contacts'); },
+  };
+  assert.equal(api('stepMuddyHollowExploration')(duel, fixedStep), true);
+  assert.deepEqual(calls, ['drive', 'jump', 'contacts']);
+  assert.equal(duel.state.muddyHollowDeparture.elapsedSec, 2 + fixedStep);
+});
+
+check('zone-owned rock garden supports the Titan without entering ordinary features', () => {
+  const duel = phaseThreeDuel();
+  const zone = zoneFor(duel.course);
+  const garden = zone.landforms.rockGarden;
+  assert.ok(typeof zone.obstaclesNear === 'function',
+    'the Hollow exposes its isolated obstacle query');
+  const ordinaryObstacles = new Set(duel.course.features.obstacles);
+  for (const rock of garden.rocks) {
+    assert.equal(ordinaryObstacles.has(rock), false,
+      `${rock.id} is not inserted into ordinary course features`);
+    assert.ok(rock.height > 1.15 && rock.height + .1 <=
+      offroadCapability(duel.car, {titanClimb: true}).rockHeight,
+    `${rock.id} is Titan-scale but within its installed climb limit`);
+    const pose = duel.course.nearest(rock.x, rock.z, zone.frame.s);
+    const base = duel.course.groundAt(pose.s, pose.lateral).y;
+    const support = duel._supportAt(pose.s, pose.lateral);
+    assert.ok(support.y > base + rock.height * .8,
+      `${rock.id} supplies rounded tyre support`);
+  }
+  const queried = zone.obstaclesNear(zone.frame.s - 190, zone.frame.s + 190);
+  assert.deepEqual(queried.map(rock => rock.id), garden.rocks.map(rock => rock.id),
+    'the zone query returns the fixed garden in authored order');
+});
+
+check('phase 4 playground traces agree under 30, 60 and 144 FPS scheduling', () => {
+  function result(fps) {
+    const trace = tracePlaygroundRamp(0, fps);
+    return {tick: trace.tick, maxAirHeight: trace.maxAirHeight,
+      airborneOverPond: trace.airborneOverPond,
+      airborne: trace.duel.state.airborne,
+      airHeight: trace.duel.state.airHeight,
+      jumpY: trace.duel.state._jumpY,
+      verticalSpeed: trace.duel.state._verticalSpeed};
+  }
+  const at30 = result(30);
+  assert.deepEqual(result(60), at30, '60 FPS matches the 30 FPS fixed-step trace');
+  assert.deepEqual(result(144), at30, '144 FPS matches the 30 FPS fixed-step trace');
+});
+
+check('phase 4 content remains absent when the development switch is off', () => {
+  const ordinary = courseFor(highCountry, false);
+  assert.equal(ordinary.muddyHollow, undefined);
+  assert.equal(ordinary.features.obstacles.some(obstacle =>
+    String(obstacle.id).startsWith('muddy-hollow-rock-')), false);
+});
+
 for (const failure of failures) console.error(`FAIL ${failure}`);
-console.log(`Muddy Hollow phase 3: ${checks - failures.length}/${checks} checks passed; ${failures.length} failed.`);
+console.log(`Muddy Hollow phase 4: ${checks - failures.length}/${checks} checks passed; ${failures.length} failed.`);
 if (failures.length) process.exitCode = 1;
