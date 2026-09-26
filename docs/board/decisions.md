@@ -989,3 +989,69 @@ it; turning it on restores the saved selection. A non-Titan car, a profile
 without the found gate, a missing hubcap set and an opaque future Wasteland
 schema cannot expose it. This clarifies switch isolation and does not change
 the settled five-hubcap reward.
+
+## 2026-09-26: replace coarse Hollow cover and calibrate Phase-6 readability
+
+Browser review of Phase 6 at `a64e16c` found ordinary near and far terrain
+triangles spanning the authored Hollow as large pale slabs. The same review
+found a broken, ten-metre vertical pond surface, hubcap markers that were too
+small at driving distance and water spray that did not read behind the Titan.
+Follow-up review proved that a centroid-only cut left a far-terrain wedge 4.82
+metres above the detailed ground. When the `muddy-hollow` switch is on, give
+every coarse triangle that overlaps the Hollow ellipse private vertices fitted
+to the authored height field. Keep its ordinary outer edges and topology, then
+cover the authored core with the four-metre mesh. Keep the flag-off geometry
+exact. Give the reflective centre of the shallow pond one waterline at its
+settled one-metre centre depth, and show the rest of the unchanged water-contact
+field as a blue-green saturated margin. Submit no buried water triangles.
+Increase only marker height and size and spray size and brightness; do not move
+sites, change pickup radii or change surface physics.
+
+Independent code review also measured the first departure correction with the
+real Titan model. It left the lowest tyre vertex about 0.73 metres above the
+authored slope. A second review found that the centre/radius approximation
+still floated 0.16 to 0.21 metres at local lateral 60 to 65 and penetrated about
+0.05 metres at lateral 80. Cache a bounded support hull from the imported tread
+and compare those points with the installed Hollow height field. The three
+departure-boundary samples and the ridge approach at laterals 60, 65 and 80
+must leave the lowest real tread 0.005 to 0.03 metres above the surface and the
+body clear. Keep the correction render-only and absent outside the installed
+Hollow.
+
+Re-slice EGG-03 narrowly for the focused scene test and the existing
+`src/world-surfaces.js`, `src/effects.js` and `src/vehicle-grounding.js` hooks.
+These hooks may only provide the switched Phase-6 presentation and correction
+described above.
+
+Final browser review showed that the first fitted mesh had downward-facing
+triangles. The normal above-ground camera therefore culled the replacement and
+looked through the deliberate coarse-terrain cut at the sky, which appeared as
+a flooded basin with floating sheets. Reverse only the fitted ground and pond
+face order so their normals point upward. Keep the settled vertices, materials,
+height field, surface field and physics unchanged, and protect the normal
+direction in the focused scene test.
+
+A later raycast found that the broad 1.3-times skirt used to cover whole
+removed triangles reached High Country's race tunnel and left a new clipped
+outer seam against ordinary terrain. The pale slab was `Circuit rock surface`,
+not a Hollow mesh or overlapping mountain. Retire that broad skirt. The private
+coarse replacements above keep their original outer edges and let the dense
+mesh end at the authored ellipse, away from the race road and tunnel.
+
+## 2026-09-26: subdivide coarse Hollow cover and taper its boundary
+
+Review of the first private-vertex replacement at `c8121c9` found that copying
+only each coarse triangle's three corners did not fit its interior. Near
+terrain rose 2.086 metres above the detailed mesh, far terrain rose 17.900
+metres above it, and one fitted-to-unfitted far edge opened a 1.636-metre
+crack. Browser review showed the same failure as buried ground and pond.
+
+Subdivide only near and far triangles that touch a 1.08-times Hollow ellipse.
+Use two fixed subdivision levels for near terrain and three for the coarser far
+grid. Interpolate every existing non-position attribute and keep the source
+triangle's material group. Inside the authored ellipse, place this coarse
+underlay 0.7 metres below its authored height. Across the outer eight-percent
+band, use a smooth deterministic taper back to the exact source triangle
+height. This prevents a large triangle from bridging above the detailed mesh,
+keeps the outside seam continuous and does not widen the detailed Hollow mesh
+or alter the race tunnel. Flag-off geometry remains on the unchanged path.
