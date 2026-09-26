@@ -15,3 +15,9 @@ and independent fact review must pass before merge.
 
 The current run plan drops the obsolete launcher diagnosis and unproved package
 cause. Fold this capture note into the integration run log after merge.
+
+## Merge evidence
+
+Merged after clean independent fact review at `ab9a3aa`. The exact lane commit
+passed 6/6 changed suites in 39.77 seconds and the production build passed with
+235 modules. No runtime, launcher, live-folder or save file changed.
