@@ -1208,3 +1208,20 @@ water covers the whole area the car already treats as water (the pond's
 physics is unchanged); and the log ramp is logs laid up the slope in the
 direction of travel, because the ramp site sits on a steep bank where logs
 laid across it looked like a fence.
+
+## 26 September 2026: leaving the race pauses it (GATE-REJOIN)
+
+Kyle reported that after going far enough up the hidden road for the clock to
+stop, reversing back to the course left the race frozen: the opponent parked,
+weapons and pickups dead, the clock stopped. The settled rule said departure
+abandons the race and returning cannot resume it, so the frozen race was by
+design, and a hard hit on the wash bank that reset the car onto the course
+reached the same state. Claude changed the rule: departure (the hidden road at
+150 m, the Muddy Hollow ridge) pauses the race; back below 120 m on the road,
+or back 12 m toward the road from the ridge line, it resumes where it stopped.
+Driving through the gate (entering, chosen or automatic) is the point of no
+return that settles the race as abandoned, and pending police fines are
+cleared only there. Players see RACE PAUSED · DRIVE BACK TO REJOIN and BACK IN
+THE RACE. A Titan can gain at most the ridge window (about 140 m along the
+course) by crossing back elsewhere; that is accepted for this Titan-only side
+trip.

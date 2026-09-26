@@ -161,17 +161,22 @@ async function driveBackAndExit(context) {
       Math.cos(desired-d.course.at(s.s).heading));
     s.speedMph=24;d.setInput({throttle:.65,brake:0,steer:0,boost:false});
     let ticks=0;
-    for(;ticks<960&&local().lateral>=boundary.lateral-.5;ticks++)d.step(1/120);
+    for(;ticks<1600&&s.status==='exploring';ticks++)d.step(1/120);
+    const rejoinedFrozen=JSON.stringify(frozen)===JSON.stringify({stageTimeSec:s.stageTimeSec,
+      lapTimeSec:s.lapTimeSec,totalTimeSec:s.totalTimeSec,completedLaps:s.completedLaps,
+      nextLapGate:s.nextLapGate,score:s.score,results:s.results});
+    const calloutText=s.calloutTimer>0?s.callout:null;
     d.setInput({throttle:0,brake:0,steer:0,boost:false});
+    const clock=s.stageTimeSec;
+    for(let tick=0;tick<120;tick++)d.step(1/120);
+    const resumedSeconds=s.stageTimeSec-clock;
     const endWorld=d.course.worldAt(s.s,s.lateral),endLocal=local();
     app.onFrame?.(s);window.__render.renderFrame();
     const afterDrive={status:s.status,ticks,movedMeters:Math.hypot(endWorld.x-startWorld.x,endWorld.z-startWorld.z),
       startLocal,endLocal,crossedBack:endLocal.lateral<boundary.lateral,
       departureEvents:window.__muddyPhase3Events.length,
       historyCount:app.profile.history.length,
-      frozen:JSON.stringify(frozen)===JSON.stringify({stageTimeSec:s.stageTimeSec,
-        lapTimeSec:s.lapTimeSec,totalTimeSec:s.totalTimeSec,completedLaps:s.completedLaps,
-        nextLapGate:s.nextLapGate,score:s.score,results:s.results}),
+      frozen:rejoinedFrozen,calloutText,resumedSeconds,
       hudTimeText:document.querySelector('#race-time')?.textContent,
       resultVisible:!!document.querySelector('#modal-layer .result-panel')};
     app.togglePause();app.onFrame?.(s);window.__render.renderFrame();
@@ -353,9 +358,9 @@ export async function run(context) {
   report.phaseThree={start:titanStart,
     departure:await crossDepartureBoundary(context,{expectDeparture:true})};
   const departure=report.phaseThree.departure;
-  if(departure.departureEvents!==1||departure.historyAfter!==departure.historyBefore+1||
-      departure.activeRace!==null||departure.historyResult?.abandoned!==true)
-    throw Error(`Titan departure did not settle once: ${JSON.stringify(departure)}`);
+  // GATE-REJOIN: crossing the ridge pauses the race and settles nothing.
+  if(departure.departureEvents!==1||departure.historyAfter!==departure.historyBefore)
+    throw Error(`Titan departure did not pause the race once: ${JSON.stringify(departure)}`);
   report.phaseThree.terrainPose=await refreshDepartureTerrainPose(context);
   report.phaseThree.renderEvidence=await captureRenderedVehicle(context,'titan_monster');
   await context.evaluate(`(() => {
@@ -365,11 +370,14 @@ export async function run(context) {
   await context.screenshot('phase3-exploring');
   report.phaseThree.returnAndExit=await driveBackAndExit(context);
   const returned=report.phaseThree.returnAndExit;
-  if(returned.afterDrive.status!=='exploring'||!returned.afterDrive.crossedBack||
+  if(returned.afterDrive.status!=='racing'||!returned.afterDrive.crossedBack||
       returned.afterDrive.movedMeters<=1||!returned.afterDrive.frozen||
+      returned.afterDrive.calloutText!=='BACK IN THE RACE'||
+      returned.afterDrive.resumedSeconds<.9||
       returned.afterDrive.departureEvents!==1||returned.afterDrive.resultVisible||
       !returned.paused.paused||returned.menu.status!=='menu'||
-      returned.menu.historyCount!==departure.historyAfter||returned.menu.departureEvents!==1)
+      // Quitting the resumed race abandons it like any race after GO.
+      returned.menu.historyCount!==departure.historyAfter+1||returned.menu.departureEvents!==1)
     throw Error(`Muddy Hollow exploration return or exit failed: ${JSON.stringify(returned)}`);
   await writeFile(join(context.outputDir,'muddy-hollow-browser.json'),JSON.stringify(report,null,2)+'\n');
   console.log(`Muddy Hollow browser: ${report.frames.length} visual frames; phase-3 departure, return and menu exit passed.`);

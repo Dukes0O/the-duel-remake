@@ -9,6 +9,12 @@ export const HIDDEN_ROAD_GATE = Object.freeze({halfWidth: 210, height: 35,
   openingHalfWidth: 4.5, openingHeight: 7, panelLift: 7.25,
   wallFront: -1.575, wallBack: 5.5, panelFront: -.845, panelBack: -.09,
   stopDistance: 12, enterDistance: 12});
+// Leaving the race up the spur only pauses it (GATE-REJOIN). Back below this
+// progress the race resumes; driving through the gate abandons it.
+export const HIDDEN_ROAD_REJOIN_PROGRESS = 120;
+export const RACE_PAUSED_CALLOUT = 'RACE PAUSED · DRIVE BACK TO REJOIN';
+export const RACE_REJOINED_CALLOUT = 'BACK IN THE RACE';
+
 const NEUTRAL = Object.freeze({throttle: 0, brake: 0, steer: 0, boost: false,
   shiftUp: false, shiftDown: false, interact: false});
 const clamp = value => Math.max(0, Math.min(1, value));
@@ -74,10 +80,32 @@ export function checkHiddenRoadDeparture(duel) {
   s.status = 'exploring';
   s.impactTimer = 0; s.tumble = null; s.boosting = false;
   s.airborne = false; s.airHeight = 0; s._jumpY = null;
-  s.police.pendingFines = 0;
   phase(duel, 'exploring');
+  duel._callout(RACE_PAUSED_CALLOUT, 3.5);
   duel.emit({hiddenRoadDeparted: {journeyId: j.id}});
   return true;
+}
+
+// Back down the spur toward the course: the paused race carries on.
+function rejoinIfBack(duel) {
+  const s = duel.state, j = s.hiddenRoadJourney;
+  if (s.hiddenRoadVisit || !['exploring', 'turned-back'].includes(j.phase) ||
+      j.progress >= HIDDEN_ROAD_REJOIN_PROGRESS) return false;
+  j.departed = false;
+  s.status = 'racing';
+  phase(duel, 'racing');
+  duel._callout(RACE_REJOINED_CALLOUT);
+  duel.emit({hiddenRoadRejoined: {journeyId: j.id}});
+  return true;
+}
+
+// Driving through the gate is the point of no return: the race is abandoned.
+function commit(duel) {
+  const s = duel.state, j = s.hiddenRoadJourney;
+  if (j.committed) return;
+  j.committed = true;
+  s.police.pendingFines = 0;
+  if (!s.hiddenRoadVisit) duel.emit({hiddenRoadCommitted: {journeyId: j.id}});
 }
 
 export function queueHiddenRoadChoice(duel, choice) {
@@ -147,7 +175,7 @@ export function stepHiddenRoadJourney(duel, dt) {
       duel._staticContacts(s, true);
       const point = duel.course.worldAt(s.s, s.lateral);
       j.progress = duel.course.hiddenRoad.nearest(point.x, point.z).progress;
-      arriveIfClose(duel);
+      if (!rejoinIfBack(duel)) arriveIfClose(duel);
       return;
     }
   }
@@ -155,6 +183,7 @@ export function stepHiddenRoadJourney(duel, dt) {
     const choice = j._choice; j._choice = null;
     duel.emit({hiddenRoadChoice: {journeyId: j.id, choice}});
     if (choice === 'turn-back') { phase(duel, 'turned-back'); return; }
+    commit(duel);
     beginMotion(duel, 'entering', HIDDEN_ROAD_GATE.enterDistance, 3);
   }
   let remaining = dt;
@@ -176,7 +205,10 @@ export function stepHiddenRoadJourney(duel, dt) {
     if (j.phase === 'arriving') { s.speedMph = 0; phase(duel, 'opening'); }
     else if (j.phase === 'opening') {
       j.gateOpen = 1;
-      if (j.automaticEntry) beginMotion(duel, 'entering', HIDDEN_ROAD_GATE.enterDistance, 3);
+      if (j.automaticEntry) {
+        commit(duel);
+        beginMotion(duel, 'entering', HIDDEN_ROAD_GATE.enterDistance, 3);
+      }
       else phase(duel, 'choice');
     }
     else if (j.phase === 'entering') {
