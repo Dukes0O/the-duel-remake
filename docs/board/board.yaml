@@ -482,9 +482,9 @@ tasks:
     lane: CMB
     size: M
     needs: [CRASH-04]
-    status: ready-to-merge
+    status: merged
     flag: crash-physics
-    claimed_by: "Claude, 27 September 2026"
+    claimed_by: "Merged by Claude, 27 September 2026"
     owns: [tools/test-madmax-solid.mjs, docs/changes/CRASH-05.md]
     hooks: [src/sim-contacts.js, src/vehicle-knock.js, src/sim-rival.js, src/vehicle-collision.js, src/combat-effects.js, tools/combat-balance.mjs, docs/CRASH_PHYSICS.md]
     acceptance:
