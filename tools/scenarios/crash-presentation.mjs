@@ -148,16 +148,18 @@ async function qualityPass(context, quality) {
   console.log(`${quality} crash presentation: ${JSON.stringify(setup)}`);
 }
 
-async function flagOffPass(context) {
-  await context.navigate('/tools/menu-check.html?flags=crash-physics,wasteland2');
+// CRASH-PRESENTATION-ON: crash-effects is released, so the game has the crash
+// pool without asking for it in the URL.
+async function releasedDefaultPass(context) {
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor(`!!window.__qaApp && !!window.__render &&
     !document.querySelector('#start-engine')?.disabled &&
     !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value`,
-  'memory-only crash flag-off menu',60_000);
+  'memory-only released crash menu',60_000);
   const result=await context.evaluate(`(() => {
     const app=window.__qaApp;
     if(!app.startCampaign({mode:'wasteland',startStage:0,
-      car:'falcone_f42',seed:1989}))throw Error('Flag-off Wasteland race did not start');
+      car:'falcone_f42',seed:1989}))throw Error('Released Wasteland race did not start');
     app.stop();app.duel.state.status='racing';
     app.onFrame?.(app.duel.state);window.__render.renderFrame();
     const names=[];window.__render.scene.traverse(object=>{
@@ -166,14 +168,14 @@ async function flagOffPass(context) {
     return {names,memoryOnly:!!Object.getOwnPropertyDescriptor(window,
       'localStorage')?.value};
   })()`);
-  if(!result.memoryOnly||result.names.length)
-    throw Error(`Flag-off crash pool exists: ${JSON.stringify(result)}`);
-  console.log('flag off: no crash presentation meshes');
+  if(!result.memoryOnly||!result.names.some(name => name.includes('-sparks')))
+    throw Error(`Released crash pool is missing: ${JSON.stringify(result)}`);
+  console.log(`released: ${result.names.length} crash presentation meshes without a URL flag`);
 }
 
 export async function run(context) {
   for(const quality of ['high','performance'])await qualityPass(context,quality);
-  await flagOffPass(context);
+  await releasedDefaultPass(context);
   if(context.issues.length||context.warnings.length)
     throw Error('Crash presentation browser issues: '+JSON.stringify({
       issues:context.issues,warnings:context.warnings}));
