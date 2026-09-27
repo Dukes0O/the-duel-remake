@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-27T03:06:04.773Z
+Observed at: 2026-09-27T03:31:28.206Z
 
-Observation commit: 0e15d5d6854f92bcc99be1bea5edbe3fad161f1c
+Observation commit: 650e3300176991e58cdf72e978cc4b5dbb7470c9
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 0e15d5d6854f92bcc99be1bea5edbe3fad161f1c
+Integration HEAD: 650e3300176991e58cdf72e978cc4b5dbb7470c9
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -37,11 +37,11 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
+| lane/art/war-sal-art | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/sal-art/the-duel-remake |
 | lane/audio/aud-10 | 1 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 1 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/ops/preview-launcher | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/preview-launcher/the-duel-remake |
-| lane/ui/war-01 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/war-01-ladder/the-duel-remake |
+| lane/ui/war-01 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/war-01-ladder/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -49,7 +49,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| lane/ui/war-01 | WAR-01 | 2026-09-26T19:43:35-07:00 | 0 | last commit 2026-09-26T19:43:35-07:00 | docs/board/board.yaml, docs/changes/WAR-01.md, src/armor-kits.js, src/career-backup.js, src/screen-armory.js |
+| lane/art/war-sal-art | unknown | 2026-09-26T20:20:10-07:00 | 0 | last commit 2026-09-26T20:20:10-07:00 | docs/board/board.yaml, tools/test-sal-art.mjs |
 
 ## Size targets
 
@@ -63,9 +63,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
 | Review `looks/` | 8,526,295 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 593,380 B | +573,519 B | 5,000,000 B |
+| Added bytes in last merge | 991,190 B | +397,810 B | 5,000,000 B |
 | All `public/` | 236,164,408 B | +0 B | unavailable |
-| Git objects | 336,209,920 B | +147,456 B | unavailable |
+| Git objects | 336,449,536 B | +239,616 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -74,7 +74,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 5858a94cb1c58525fbe6967483de45cdaf25f96d
 - Local main: missing
-- Local integration/wasteland: 0e15d5d6854f92bcc99be1bea5edbe3fad161f1c
+- Local integration/wasteland: 650e3300176991e58cdf72e978cc4b5dbb7470c9
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

@@ -2094,10 +2094,11 @@ tasks:
     lane: UI
     size: M
     needs: [ARENA-01-UI, CAR-01]
-    status: building
+    status: merged
     claimed_by: "Codex Warlord UI lane, 26 September 2026"
     owns: [src/warlords.js, src/screen-territory.js, tools/test-warlords.mjs, tools/test-territory-ui.mjs, docs/changes/WAR-01.md]
-    hooks: [src/screen-yard-home.js, src/wasteland-career.js]
+    hooks: [src/screen-yard-home.js, src/wasteland-career.js, src/wasteland-progress.js, src/career-backup.js, src/armor-kits.js, src/screen-armory.js, tools/test-armor-kits.mjs, tools/scenarios/yard-home.mjs]
+    note: "Director re-slices, 26 September 2026: WAR-01 may update only the existing warlords normalization in src/wasteland-progress.js; its matching migration/export guards in src/career-backup.js; the two existing armor-kit consumers plus their focused test; and the existing private yard-home scenario. This must give the save-shape change a verified backup, keep old exports valid, preserve unknown legacy IDs, retain armor-kit unlocks, and prove the settled locked/available/defeated ladder in High and Performance modes including a phone-width map capture."
     flag: wasteland2
     helpers: [test_author, reviewer, browser_qa]
     acceptance:

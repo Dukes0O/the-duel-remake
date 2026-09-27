@@ -1,7 +1,22 @@
 // Click the production yard UI in a private browser tab with memory-only saves.
 import {CARS} from '../../src/config.js';
+import {territoryPanel} from '../../src/screen-territory.js';
 
 const CAR_KEYS=Object.keys(CARS);
+const LADDER_HTML=territoryPanel({wasteland:{version:1,discoveredGate:true,
+  territories:{
+    sal:{hold:75,claimed:false},
+    dustmonger:{hold:100,claimed:false},
+    mirage:{hold:100,claimed:true},
+    gunn:{hold:100,claimed:false},
+  },
+  warlords:{
+    sal:{defeated:false,wins:0,losses:0},
+    dustmonger:{defeated:false,wins:0,losses:0},
+    mirage:{defeated:true,wins:1,losses:0},
+    gunn:{defeated:false,wins:0,losses:0},
+  },
+}}, {builtWarlordIds:['dustmonger','mirage']});
 
 async function framedCar(context,car,viewport){
   const size=viewport==='portrait'?{width:390,height:844}:{width:1280,height:800};
@@ -142,6 +157,87 @@ export async function run(context) {
   if(!territory.active||territory.status!=='exploring'||!territory.text.includes('TERRITORY MAP'))
     throw Error('Territory panel failed: '+JSON.stringify(territory));
   await context.screenshot('yard-territory');
+  const ladderBefore=await context.evaluate(`(() => {const p=window.__qaApp.profile;return {
+    credits:p.credits,scrap:p.wasteland.scrap,history:JSON.stringify(p.history),
+    results:JSON.stringify(p.settledResults),activeRace:JSON.stringify(p.activeRace)};})()`);
+  for(const quality of ['high','performance']){
+    const ladder=await context.evaluate(`(() => {
+      const app=window.__qaApp;
+      app.setGraphicsQuality(${JSON.stringify(quality)});
+      const content=document.querySelector('.yard-home-content');
+      content.innerHTML=${JSON.stringify(LADDER_HTML)};
+      const cards=[...content.querySelectorAll('.territory-card')];
+      const byName=Object.fromEntries(cards.map(card=>[card.querySelector('h4')?.textContent.trim(),{
+        text:card.textContent.replace(/\\s+/g,' ').trim(),
+        buttons:[...card.querySelectorAll('button')].map(button=>({
+          label:button.textContent.trim(),warlord:button.dataset.warlord}))
+      }]));
+      const p=app.profile;
+      return {quality:app.ambientOcclusionEnabled?'high':'performance',cards:cards.length,
+        buttons:cards.flatMap(card=>[...card.querySelectorAll('button')]).length,byName,
+        state:{credits:p.credits,scrap:p.wasteland.scrap,history:JSON.stringify(p.history),
+          results:JSON.stringify(p.settledResults),activeRace:JSON.stringify(p.activeRace)}};
+    })()`);
+    const sal=ladder.byName['Sawtooth Sal'],dustmonger=ladder.byName['The Dustmonger'];
+    const mirage=ladder.byName['Mother Mirage'],gunn=ladder.byName['Gearhead Gunn'];
+    if(ladder.quality!==quality||ladder.cards!==8||ladder.buttons!==2||
+      !sal?.text.includes('75 / 100 HOLD')||sal.buttons.length!==0||
+      !dustmonger?.text.includes('THE DUSTMONGER IS WAITING')||
+      dustmonger.buttons.length!==1||dustmonger.buttons[0].label!=='FIGHT'||
+      dustmonger.buttons[0].warlord!=='dustmonger'||
+      !mirage?.text.includes('DEFEATED · DECOY DRONE EARNED · CLAIMED')||
+      mirage.buttons.length!==1||mirage.buttons[0].label!=='REMATCH'||
+      mirage.buttons[0].warlord!=='mirage'||
+      !gunn?.text.includes('WARLORD FIGHT COMING LATER')||gunn.buttons.length!==0||
+      JSON.stringify(ladder.state)!==JSON.stringify(ladderBefore))
+      throw Error(`${quality} ladder fixture failed: ${JSON.stringify(ladder)}`);
+    await context.command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+    await context.screenshot(`yard-territory-ladder-${quality}`);
+    await context.command('Emulation.setDeviceMetricsOverride',
+      {width:390,height:844,deviceScaleFactor:1,mobile:true});
+    await context.waitFor('window.innerWidth===390 && window.innerHeight===844',
+      `${quality} territory phone viewport`);
+    await context.evaluate(`(() => {
+      const content=document.querySelector('.yard-home-content');
+      const first=content.querySelector('.territory-card');
+      content.scrollTop=Math.max(1,first.offsetTop-content.offsetTop-8);
+      document.querySelector('canvas[aria-label="The Duel three-dimensional racing scene"]').style.visibility='hidden';
+    })()`);
+    await context.evaluate(`new Promise(resolve=>requestAnimationFrame(()=>
+      requestAnimationFrame(()=>setTimeout(()=>{window.__render.renderFrame();resolve(true);},250))))`);
+    const phone=await context.evaluate(`(() => {
+      const panel=document.querySelector('.yard-home-panel'),map=document.querySelector('.territory-map');
+      const content=document.querySelector('.yard-home-content'),cr=content.getBoundingClientRect();
+      const cards=[...map.querySelectorAll('.territory-card')],pr=panel.getBoundingClientRect(),mr=map.getBoundingClientRect();
+      return {width:innerWidth,height:innerHeight,documentWidth:document.documentElement.scrollWidth,
+        panel:{left:pr.left,right:pr.right,width:pr.width},map:{left:mr.left,right:mr.right,width:mr.width},
+        cards:cards.map(card=>{const r=card.getBoundingClientRect();return {left:r.left,right:r.right,width:r.width};}),
+        visibleCards:cards.filter(card=>{const r=card.getBoundingClientRect();return r.bottom>cr.top&&r.top<cr.bottom;}).length,
+        scrollTop:content.scrollTop,heading:map.querySelector('h3')?.textContent,
+        buttons:map.querySelectorAll('[data-warlord]').length};
+    })()`);
+    if(phone.width!==390||phone.height!==844||phone.documentWidth>390||
+      phone.panel.left<-.5||phone.panel.right>390.5||phone.map.left<-.5||phone.map.right>390.5||
+      phone.cards.length!==8||phone.cards.some(card=>card.left<phone.map.left-.5||card.right>phone.map.right+.5)||
+      phone.scrollTop<=0||phone.visibleCards<1||
+      phone.heading!=='TERRITORY MAP'||phone.buttons!==2)
+      throw Error(`${quality} phone territory layout failed: ${JSON.stringify(phone)}`);
+    await context.command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+    await context.screenshot(`yard-territory-ladder-${quality}-phone`);
+    await context.evaluate(`(() => {
+      const canvas=document.querySelector('canvas[aria-label="The Duel three-dimensional racing scene"]');
+      canvas.style.visibility='';window.__render.renderFrame();
+    })()`);
+    await context.command('Emulation.setDeviceMetricsOverride',
+      {width:1280,height:800,deviceScaleFactor:1,mobile:false});
+    await context.waitFor('window.innerWidth===1280 && window.innerHeight===800',
+      `${quality} territory desktop viewport`);
+  }
+  const ladderAfter=await context.evaluate(`(() => {const p=window.__qaApp.profile;return {
+    credits:p.credits,scrap:p.wasteland.scrap,history:JSON.stringify(p.history),
+    results:JSON.stringify(p.settledResults),activeRace:JSON.stringify(p.activeRace)};})()`);
+  if(JSON.stringify(ladderAfter)!==JSON.stringify(ladderBefore))
+    throw Error('Territory rendering changed career state: '+JSON.stringify({ladderBefore,ladderAfter}));
   const shop=await context.evaluate(`(() => {
     const app=window.__qaApp;
     document.querySelector('[data-action="yard-armory"]').click();

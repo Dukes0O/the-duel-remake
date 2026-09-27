@@ -67,6 +67,25 @@ assert.deepEqual((await backups.load(migration.id)).entries,oldRaw,'migration ba
 assert.equal(needsCareerMigration(old),false);
 assert.equal(await backupBeforeMigration(old,backups),null,'no backup for unchanged format');
 assert.equal(needsCareerMigration(memoryStorage({'the-duel-leaderboard-v1':'{"version":1,"entries":[]}'})),true,'orphaned records are copied before a new player registry is written');
+const legacyWarlordProfile = {...createProfile(), raceSettings: {footCamera: 'first-person'}};
+legacyWarlordProfile.wasteland.warlords = {defeated: ['sal', 'future-legacy-warlord']};
+const legacyWarlordRegistry = {version: 2, activePlayerId: 'legacy-warlord', players: [{
+  id: 'legacy-warlord', name: 'Legacy Warlord', profile: legacyWarlordProfile,
+}]};
+const legacyWarlordStorage = memoryStorage({
+  'the-duel-players-v2': JSON.stringify(legacyWarlordRegistry),
+});
+const legacyWarlordRaw = captureCareer(legacyWarlordStorage);
+const legacyWarlordBackups = memoryBackups();
+assert.equal(needsCareerMigration(legacyWarlordStorage), true,
+  'the defeated-id array requires a verified backup before per-warlord records are written');
+const legacyWarlordBackup = await backupBeforeMigration(
+  legacyWarlordStorage, legacyWarlordBackups);
+assert.deepEqual((await legacyWarlordBackups.load(legacyWarlordBackup.id)).entries,
+  legacyWarlordRaw, 'the verified backup keeps the exact legacy defeated-id bytes');
+const legacyWarlordExport = createCareerExport(legacyWarlordStorage);
+assert.deepEqual(parseCareerExport(legacyWarlordExport).entries, legacyWarlordRaw,
+  'a career export with the old defeated-id array remains valid');
 // CAR-01 must back up saves that already have valid discovery fields but lack
 // the new currency and territory shape. All storage here is memory-only.
 for (const missing of ['scrap', 'territories', 'territory-entry', 'muddyHollow',
