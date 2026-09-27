@@ -1969,3 +1969,21 @@ lane (charge tells, respawn shimmer, arena sounds, sprite shading fix). Both
 are pushed. The next steps are at the top of next-run.md. No release was made;
 the live folder, port 5174 and real saves were not touched.
 
+## Release, 26 September 2026 evening (Claude, Kyle's go-ahead: "release")
+
+Released commit 5858a94 (release/2026-09-26, cut from integration 9b2a43a
+because Codex was committing to integration): GATE-REJOIN and
+RALLY-CHECKPOINT, with release notes. Evidence on that exact commit: full
+tier 287/287 in 554.34 s; build passed; combat balance --check passed with
+wasteland2 off (wins 9/6/2) and on (8/5/3), same as the last release;
+private memory-only browser checks with 0 warnings and 0 errors: smoke,
+hidden-road (33 captures), hidden-road-discovery (throwaway round 9, sheet
+deleted), hidden-road-arrival (round 1 with its committed sheet restored),
+wasteland-beta and frame-pacing. The live folder was clean and fast-forwarded
+faf5749 to 5858a94; dependencies unchanged; dist-next built, checked on
+private port 5188 with no console errors, dist copied to dist-previous for
+rollback, assets copied, then index.html and build-version.json last. Live
+localhost:5174 serves build e61891 (26.09.27 01:50 UTC). master pushed to
+GitHub. All other features merged since the last release stay behind switches
+that are off in the live game.
+
