@@ -1955,7 +1955,8 @@ tasks:
     lane: INT
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: "Codex autonomous Director, 26 September 2026"
     acceptance:
       - "The 'Resume here' steps 1 to 3 in docs/board/next-run.md: gate and merge lane/audio/crash-hollow-sounds, then merge integration into lane/audio/arena-feel, gate and merge it, then the full tier, build-status and the D8 push. Janitor after each merge with plain git worktree remove."
   - id: PREVIEW-LAUNCHER
