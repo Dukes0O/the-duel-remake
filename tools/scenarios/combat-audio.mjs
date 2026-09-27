@@ -12,6 +12,8 @@ export async function run(context) {
   const flight = await context.evaluate(`(async()=>{
     const a=window.__qaApp;a.stop();a.audio.unlock();a.audio.setMuted(false);
     await Promise.all([a.audio._samplesPromise,a.audio._ambiencePromise,a.audio._cueBuffersPromise]);
+    a.profile={...a.profile,wasteland:{...a.profile.wasteland,discoveredGate:true}};
+    a._saveProfile();
     if(!a.startCampaign({mode:'wasteland',car:'falcone_f42',difficulty:'casual',cpuDifficulty:'medium',seed:1989}))throw Error('Memory race fixture failed');
     a.stop();for(let i=0;i<500&&a.duel.state.status!=='racing';i++)a.duel.step(1/120);
     const state=a.duel.state;state.speedMph=100;state.revs=.9;state.input.throttle=1;
