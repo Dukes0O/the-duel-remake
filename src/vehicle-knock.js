@@ -231,6 +231,7 @@ function applyDriving(duel, actor, before, after, {player}) {
 // Smashed or launched traffic becomes a roadside wreck, moving as the solver
 // says and rolling with its spin (the existing traffic-wreck motion).
 function wreckTraffic(duel, actor, after, severity, dvMph, style) {
+  const prior = actor.wrecked;
   const frame = duel.course.at(actor.s);
   let lateral = after.vx * Math.cos(frame.heading) - after.vz * Math.sin(frame.heading);
   const along = after.vx * Math.sin(frame.heading) + after.vz * Math.cos(frame.heading);
@@ -248,13 +249,22 @@ function wreckTraffic(duel, actor, after, severity, dvMph, style) {
       1.05 + (dvMph - style.launchMph) * .05) * style.tumble : .2};
   actor.airHeight = 0; actor.speedMph = 0; actor.pushVelocity = 0;
   actor.damageZones = {front: 3.5, rear: 3.5, left: 3.5, right: 3.5};
+  if (prior) {
+    // A shoved hulk keeps how it lies (its roll and side) and its fate.
+    Object.assign(actor.wrecked, {age: Math.max(actor.wrecked.age, prior.age || 0),
+      side: prior.side ?? actor.wrecked.side,
+      rollLimit: Math.max(actor.wrecked.rollLimit, prior.rollLimit || 0),
+      verticalVelocity: 0, atTime: prior.atTime,
+      ...(prior.exploded ? {exploded: true} : {}),
+      ...(prior.explodeAt != null ? {explodeAt: prior.explodeAt} : {})});
+  }
 }
 
 // Solve one car-to-car hit and apply it to both cars. Returns the solver
 // result and each car's severity, for crash rules and effects.
 export function resolveCarCrash(duel, a, b, {
   wreckTrafficAt = ['smashed', 'launched'], onlyB = false, forceKnock = false,
-  playerKnockMinDvMph = 0,
+  playerKnockMinDvMph = 0, attackerKeepsControl = false,
 } = {}) {
   const s = duel.state;
   const spinOf = actor => actor === s ? s.yawVelocity || 0 : 0;
@@ -267,11 +277,18 @@ export function resolveCarCrash(duel, a, b, {
     launchMph: style.launchMph});
   for (const [actor, before, after, severity] of onlyB ? [[b, bodyB, result.b, severityB]]
     : [[a, bodyA, result.a, severityA], [b, bodyB, result.b, severityB]]) {
-    if (!forceKnock && actor === s && after.dvMph < playerKnockMinDvMph && !actor.knock)
+    // forceKnock always frees the struck car; the player keeps its own rule.
+    const force = forceKnock && actor === b;
+    if (actor === s && after.dvMph < playerKnockMinDvMph && !actor.knock)
       applyDriving(duel, actor, before, after, {player: true});
-    else if (!forceKnock && actor === s && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: true});
-    else if (s.traffic.includes(actor) && wreckTrafficAt.includes(severity)) wreckTraffic(duel, actor, after, severity, after.dvMph, style);
-    else if (!forceKnock && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: false});
+    // An armored racer smashing traffic pays in speed but keeps control.
+    else if (attackerKeepsControl && actor === a && actor !== s && !actor.knock)
+      applyDriving(duel, actor, before, after, {player: false});
+    else if (actor === s && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: true});
+    // A hulk hit again is shoved as a wreck at any severity.
+    else if (s.traffic.includes(actor) && (actor.wrecked || wreckTrafficAt.includes(severity)))
+      wreckTraffic(duel, actor, after, severity, after.dvMph, style);
+    else if (!force && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: false});
     else startKnock(actor, {vx: after.vx, vz: after.vz, spin: after.spin,
       severity, hopMps: hopFor(severity, after.dvMph, style), heading: before.heading});
   }

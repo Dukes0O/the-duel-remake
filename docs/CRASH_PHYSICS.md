@@ -104,6 +104,7 @@ boxes, using their real headings:
 | CRASH-02 | Codex | Look and sound: sparks and crumple at the contact point, tyre smoke while knocked, roll visuals for smashed traffic, impact sounds scaled by Δv (SPEC 0.9) |
 | CRASH-03 | Claude | Smashed cars slide to rest off the road |
 | CRASH-04 | Claude | Mad Max Duel crash physics (section 6) |
+| CRASH-05 | Claude | Mad Max cars are solids; late explosions; smouldering wreckage (section 7) |
 
 ## 6. Mad Max Duel (CRASH-04)
 
@@ -119,12 +120,12 @@ rules.
    at solid scenery, and recovers where it came to rest when its recovery time
    ends. The player's wreck plays out as a Rival Duel crash (a skid and spin).
    Before, every wreck stopped dead on the spot.
-2. **Hard-hit traffic explodes and tumbles off.** The solver decides, as in
-   Rival Duel. A smash (over 25 mph of Δv) or a launch explodes the car at the
-   hit, and its burning hulk slides and rolls off the road and stays there. A
-   lighter hit shoves it clear. This replaces the old rule that made traffic
-   vanish in a burst only above half the attacker's top speed, so explosions
-   start far lower: about 42 mph of closing speed on an equal car.
+2. **Hard-hit traffic is wrecked and tumbles off.** The solver decides, as in
+   Rival Duel. A smash (over 25 mph of Δv) or a launch wrecks the car, and its
+   hulk slides and rolls off the road and stays there. A lighter hit shoves it
+   clear. This replaces the old rule that made traffic vanish in a burst.
+   (CRASH-04 also exploded every smash; CRASH-05 keeps explosions for hits
+   over 250 km/h, section 7.)
 3. **Damage follows F = ma.** Ram damage comes from each car's own change in
    velocity: 1.25 armor per mph of Δv above 8 mph, times 1.5 with front
    spikes, capped at 80. Δv already carries the other car's mass, so a heavy
@@ -145,3 +146,33 @@ rules.
 With the switch off, Mad Max keeps its released scripted rules. Tuning lives
 in `CRASH_TUNING.madMax` and `COMBAT_TUNING.armor` (`ramDvThresholdMph`,
 `ramDamagePerDvMph`).
+
+## 7. Solid cars, late explosions, smouldering wreckage (CRASH-05)
+
+Kyle, 27 September 2026, after playing CRASH-04: "Low speed bumps a car, but
+high speed just goes right through it. The vehicle should be smashed ahead,
+it's a solid." The struck car took the impulse but the attacker only paid a
+small flat speed cost, so it kept most of its speed, caught the slower car
+within a fraction of a second and, because wrecks and shoved cars were
+scenery, drove through it.
+
+1. **Both cars are solids.** A Mad Max hit on traffic gives each car its share
+   of the impulse. The struck car is thrown ahead and to its nearest
+   shoulder; the attacker loses real speed (about 0.6 of the closing speed
+   against an equal car) but keeps control and takes no armor or crash cost.
+   This applies to the player and to computer racers alike.
+2. **Wrecks and shoved cars stay solid.** They can be hit again and are
+   shoved along (one shove per touch). A touch below shove speed leaves them
+   as they are.
+3. **Explosions are for the big hits, after the smash.** Only a hit over
+   250 km/h of closing speed blows the car up, 0.6 s later, where the hulk
+   has been thrown, with a small extra lift. Below that the car is smashed
+   (callout TRAFFIC SMASHED) and left as a hulk.
+4. **Wreckage smoulders.** Wrecked traffic already stays for the whole race;
+   now the twelve nearest wrecks within 450 m carry a smoke plume, and a
+   blown-up hulk keeps a low glow of flame, so lap two shows lap one's
+   carnage.
+
+Tuning: `CRASH_TUNING.madMax.explodeClosingKph` (250),
+`explodeDelaySec` (0.6), `rehitGapSec` (0.25).
+

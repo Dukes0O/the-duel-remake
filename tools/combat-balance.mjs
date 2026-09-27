@@ -154,7 +154,7 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
         recordTrafficWreck(event.trafficWrecked.actor, 'player');
       }
       const impact = event.roadsideImpact;
-      if (impact?.kind === 'traffic' && impact.outcome === 'obliterate') {
+      if (impact?.kind === 'traffic' && ['obliterate', 'smash'].includes(impact.outcome)) {
         // actor is the traffic victim. Current events do not identify its attacker.
         recordTrafficWreck(impact.actor, impact.owner);
       }

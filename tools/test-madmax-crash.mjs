@@ -62,7 +62,8 @@ function worstStop(samples) {
   return worst;
 }
 
-test('Mad Max: hard-hit traffic explodes and its hulk slides off the road', () => {
+// CRASH-05: explosions need 250 km/h closing (tools/test-madmax-solid.mjs).
+test('Mad Max: hard-hit traffic is smashed and its hulk slides off the road', () => {
   const {duel, s, events} = start({playerMph: 110});
   const traffic = placeTraffic(s, 40);
   let hitS = null;
@@ -78,19 +79,8 @@ test('Mad Max: hard-hit traffic explodes and its hulk slides off the road', () =
   assert.ok(Math.abs(traffic.lateral) > duel.course.roadHalfWidthAt(traffic.s),
     'the hulk ends off the road');
   assert.ok(worstStop(samples) <= MAX_DECEL, 'the hulk never stops dead');
-  assert.ok(events.some(ev => ev.roadsideImpact?.outcome === 'obliterate' ||
-    ev.roadsideImpact?.kind === 'traffic' && ev.roadsideImpact.outcome === 'obliterate'),
-  'the hit is reported as an explosion');
-});
-
-test('Mad Max: explosions start at a smash, well below the old half-top-speed rule', () => {
-  // 60 mph closing on an equal-mass sedan is a smash (about 36 mph of Δv).
-  // The old rule needed a closing speed of half the Falcone's 201 mph.
-  const {duel, s, events} = start({playerMph: 100});
-  const traffic = placeTraffic(s, 40);
-  run(duel, 3);
-  assert.ok(traffic.wrecked, 'a smash wrecks the car');
-  assert.ok(events.some(ev => ev.roadsideImpact?.outcome === 'obliterate'), 'and it explodes');
+  assert.ok(events.some(ev => ev.roadsideImpact?.outcome === 'smash'),
+    'the hit is reported as a smash');
 });
 
 test('Mad Max: a light shove still just knocks traffic aside', () => {
