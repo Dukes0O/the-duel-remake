@@ -280,6 +280,28 @@
     },
     {
       "source": "freesound",
+      "key": "389460",
+      "cue": "world.muddy-hollow-mud",
+      "title": "Mud_1.wav",
+      "author": "lzmraul",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/lzmraul/sounds/389460/",
+      "download": "https://cdn.freesound.org/previews/389/389460_6060491-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 3.40533,
+      "file": "freesound/389460-mud-1-wav.ogg",
+      "sha256": "e59aded70fb476c055e750447b6254a391c01c6314e28da2052a15d351ea81f2",
+      "bytes": 49677,
+      "fetched": "2026-09-26",
+      "processing": {
+        "script": "tools/audio/build-hollow.mjs",
+        "recipe": "HOLLOW_RECIPES: cut points, fades, optional repitch, EBU R128 loudnorm, mono Vorbis q5",
+        "approval": "Claude pick for Muddy Hollow, 26 September 2026; Kyle to confirm by listening"
+      }
+    },
+    {
+      "source": "freesound",
       "key": "391444",
       "cue": "weapon.crossbow.flight",
       "title": "Arrow Whoosh 2 .R.wav",
@@ -341,6 +363,28 @@
     },
     {
       "source": "freesound",
+      "key": "442773",
+      "cue": "world.muddy-hollow-splash",
+      "title": "Big Water Splash",
+      "author": "qubodup",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/qubodup/sounds/442773/",
+      "download": "https://cdn.freesound.org/previews/442/442773_71257-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.17225,
+      "file": "freesound/442773-big-water-splash.ogg",
+      "sha256": "39bee4eb7bb3b7bc543f32b18f82365a9a2dee5e02e710552b31a5ceec0c35ab",
+      "bytes": 47683,
+      "fetched": "2026-09-26",
+      "processing": {
+        "script": "tools/audio/build-hollow.mjs",
+        "recipe": "HOLLOW_RECIPES: cut points, fades, optional repitch, EBU R128 loudnorm, mono Vorbis q5",
+        "approval": "Claude pick for Muddy Hollow, 26 September 2026; Kyle to confirm by listening"
+      }
+    },
+    {
+      "source": "freesound",
       "key": "457958",
       "title": "Acceleration Car",
       "author": "Fabrizio84",
@@ -359,6 +403,28 @@
         "duration": null,
         "rate": 44100,
         "channels": 1
+      }
+    },
+    {
+      "source": "freesound",
+      "key": "462117",
+      "cue": "world.muddy-hollow-splash",
+      "title": "car2.WAV",
+      "author": "barion",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/barion/sounds/462117/",
+      "download": "https://cdn.freesound.org/previews/462/462117_7108137-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 5.71537,
+      "file": "freesound/462117-car2-wav.ogg",
+      "sha256": "42b0071a45e40feff1738f22d1b585d17e6844467f1f9afba77fb52806a05a2e",
+      "bytes": 134208,
+      "fetched": "2026-09-26",
+      "processing": {
+        "script": "tools/audio/build-hollow.mjs",
+        "recipe": "HOLLOW_RECIPES: cut points, fades, optional repitch, EBU R128 loudnorm, mono Vorbis q5",
+        "approval": "Claude pick for Muddy Hollow, 26 September 2026; Kyle to confirm by listening"
       }
     },
     {
