@@ -61,11 +61,26 @@ Focused checks now pass:
 - `node --test tools/test-wasteland-profile.mjs tools/test-progression.mjs tools/test-territory-ui.mjs tools/test-territory-screen.mjs tools/test-wasteland-career.mjs`:
   21 test entries passed, 0 failed; the progression runner reported 27 checks
   and the territory UI reported 22 display and safety checks.
+- `node tools/browser-harness.mjs scenario yard-home --output-dir .evidence/2026-09-26/WAR-01-yard-ladder-final4`:
+  passed on private port 61230 with memory-only saves, 27 captures, 0 browser
+  warnings and 0 browser errors. The production territory renderer supplied
+  controlled scenario-only fixtures for a 75-hold locked Sal, a full-hold
+  Dustmonger with FIGHT, a defeated and claimed Mirage with REMATCH and her
+  working-reward name, and a full-hold unbuilt Gunn with COMING LATER and no
+  button. The scenario did not add any fight to the runtime shipped-fight list.
+- High and Performance captures both showed the real yard map and its eight
+  cards. The 390 by 844 checks kept the panel, map and every card inside the
+  viewport width, retained the two intended fixture actions and exposed the
+  cards through the existing vertical scroll area. The inspected final
+  captures had no clipped navigation, overlapping controls or horizontal
+  overflow.
+- Before and after both map renders, credits, scrap, full history, full settled
+  results and `activeRace` matched exactly. Rendering the ladder made no save
+  change.
 
-No existing assertion was weakened. No browser check was run in this focused
-save fix; the Director will run the required private High and Performance map
-review, lane gate and build before merge. Race fingerprints are unchanged
-because this card does not alter simulation or race setup.
+No existing assertion was weakened. The Director will run the required lane
+gate and build before merge. Race fingerprints are unchanged because this card
+does not alter simulation or race setup.
 
 ## Removed
 
@@ -73,4 +88,5 @@ The normalized save no longer writes the legacy shared `warlords.defeated`
 array. Migration reads it once, after a verified backup, and writes the
 per-warlord records instead. The removed array read in armor-kit logic and UI
 was replaced by a shared per-ID defeat check. No runtime asset or released
-fight path was removed.
+fight path was removed. The browser screenshots and reports were deleted after
+their pass and visual verdict were recorded here.
