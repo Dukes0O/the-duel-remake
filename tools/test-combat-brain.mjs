@@ -34,7 +34,8 @@ test('flagged CPU cars take separate, repeatable attack turns', () => {
     const fired = state.combat.projectiles.filter(projectile => projectile.enemy);
     assert.equal(fired.length, 1, 'only one opponent fires on a decision');
     shots.push(fired[0].sourceIndex ?? 0);
-    assert.equal(state.combat.aiTimer, 5 / 3);
+    // CRASH-RELEASE: the Hard interval is 6 s (was 5), shared across three cars.
+  assert.equal(state.combat.aiTimer, 6 / 3);
   }
   assert.deepEqual(shots, [0, 1, 2, 0, 1, 2]);
 });
@@ -46,7 +47,7 @@ test('a finished opponent loses its turn without stopping later cars', () => {
   const shot = state.combat.projectiles.find(projectile => projectile.enemy);
   assert.equal(shot?.sourceIndex, 1);
   assert.equal(state.combat.aiTurn, 2);
-  assert.equal(state.combat.aiTimer, 5 / 2,
+  assert.equal(state.combat.aiTimer, 6 / 2,
     'the two remaining cars share the original total attack rate');
 });
 
@@ -54,7 +55,7 @@ test('flag-off three-car attacks keep their former shared timer and volley', () 
   const {duel, state} = field(false);
   stepCombat(duel, .01);
   assert.equal(state.combat.projectiles.filter(projectile => projectile.enemy).length, 3);
-  assert.equal(state.combat.aiTimer, 5);
+  assert.equal(state.combat.aiTimer, 6); // CRASH-RELEASE: Hard 6 s (was 5)
   assert.equal(state.combat.aiTurn, undefined);
 });
 

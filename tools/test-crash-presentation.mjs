@@ -27,10 +27,10 @@ function state(actor = {}) {
     traffic: [], police: {pursuit: null}};
 }
 
-test('crash-effects starts as a named dev switch', () => {
+test('crash-effects is a named switch, released in CRASH-RELEASE', () => {
   const flags = createFeatureFlags({storage: null, search: '', qa: false});
-  assert.equal(flags.state('crash-effects'), 'dev');
-  assert.equal(flags.enabled('crash-effects'), false);
+  assert.equal(flags.state('crash-effects'), 'on');
+  assert.equal(flags.enabled('crash-effects'), true);
   const qa = createFeatureFlags({storage: null,
     search: '?flags=crash-effects', qa: true});
   assert.equal(qa.enabled('crash-effects'), true);

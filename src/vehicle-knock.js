@@ -84,10 +84,12 @@ export function actorBody(duel, actor, spinRate = 0) {
 }
 
 export function startKnock(actor, {vx, vz, spin, severity, hopMps = 0, heading = 0,
-  wreck = null}) {
+  wreck = null, player = false}) {
   actor.knock = {vx, vz, spin, severity, age: 0, vy: hopMps, ...(wreck ? {wreck} : {})};
   const forward = vx * Math.sin(heading) + vz * Math.cos(heading);
-  actor.speedMph = forward / DRIVE.mphToWorld;
+  // Only the player's car has a reverse gear; a car shoved backwards by a hit
+  // slides as a free body but its speed never reads as reversing.
+  actor.speedMph = (player ? forward : Math.max(0, forward)) / DRIVE.mphToWorld;
   if (hopMps > 0) { actor.airborne = true; actor.airHeight = Math.max(actor.airHeight || 0, .02); }
   actor.boosting = false;
 }
@@ -290,7 +292,8 @@ export function resolveCarCrash(duel, a, b, {
       wreckTraffic(duel, actor, after, severity, after.dvMph, style);
     else if (!force && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: false});
     else startKnock(actor, {vx: after.vx, vz: after.vz, spin: after.spin,
-      severity, hopMps: hopFor(severity, after.dvMph, style), heading: before.heading});
+      severity, hopMps: hopFor(severity, after.dvMph, style), heading: before.heading,
+      player: actor === s});
   }
   return {result, severityA, severityB};
 }

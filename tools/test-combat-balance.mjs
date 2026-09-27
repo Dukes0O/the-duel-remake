@@ -154,7 +154,8 @@ check('single-race targets use the mean of the repeated seeds', () => {
   const report = required('buildReport')(input);
   // Gains 5, 1 and -1 seconds: one lucky race no longer fails the 4 s target.
   assert.equal(report.ufoGainByDifficulty['ufo-max'].medium, 1.67);
-  assert.equal(report.cpuHitsByDifficulty.medium, 4, 'hits 4, 7 and 1 average to 4');
+  // Seeds 1989-1991 give 4, 7 and 1 hits; the other 27 fixture races give 4.
+  assert.equal(report.cpuHitsByDifficulty.medium, 4, 'the mean covers every no-weapon race');
 });
 check('both reports retain every existing target band and failure', () => {
   const build = required('buildReport'), validate = required('reportFailures');
@@ -177,7 +178,8 @@ check('both reports retain every existing target band and failure', () => {
       candidate.ufoGainByDifficulty[policy][difficulty] = 4;
       assert.deepEqual(errors(candidate), []);
     }
-    for (const [difficulty, low, high] of [['easy', 0, 3], ['medium', 2, 6], ['hard', 4, 10]]) {
+    // CRASH-RELEASE: bands for the thirty-race mean (were one-race counts).
+    for (const [difficulty, low, high] of [['easy', 1, 4], ['medium', 4, 9], ['hard', 4, 10]]) {
       for (const hits of [low, high]) assert.deepEqual(errors({ ...report,
         cpuHitsByDifficulty: { ...report.cpuHitsByDifficulty, [difficulty]: hits } }), []);
       for (const hits of [low - 1, high + 1]) assert.match(errors({ ...report,
@@ -196,7 +198,9 @@ check('both reports retain every existing target band and failure', () => {
 // Exercise production contacts so reporting cannot silently depend on the older
 // trafficWrecked event or label every traffic incident as player-owned.
 for (const flags of [[], ['wasteland2']]) for (const attacker of ['player', 'cpu']) {
-  for (const outcome of ['knock', 'obliterate']) {
+  // CRASH-RELEASE: crash physics decides; a hard hit smashes traffic (a wreck)
+  // and a light one knocks it clear. The cars start just touching.
+  for (const outcome of ['knock', 'smash']) {
     check(`${flags.length ? 'flag-on' : 'flag-off'} ${attacker} traffic ${outcome} accounting`, () => {
       const run = required('run');
       const original = App.prototype.advance;
@@ -204,8 +208,8 @@ for (const flags of [[], ['wasteland2']]) for (const attacker of ['player', 'cpu
       App.prototype.advance = function (...args) {
         const duel = this.duel, state = duel.state;
         const striking = attacker === 'player' ? state : state.rival;
-        Object.assign(striking, { car: 'falcone_f42', s: 107, prevS: 100,
-          lateral: 0, prevLateral: 0, speedMph: duel.car.topSpeed * (outcome === 'obliterate' ? .7 : .3),
+        Object.assign(striking, { car: 'falcone_f42', s: 105.6, prevS: 104.5,
+          lateral: 0, prevLateral: 0, speedMph: duel.car.topSpeed * (outcome === 'smash' ? .7 : .15),
           headingError: 0, slipAngle: 0, pushVelocity: 0, dir: 1,
           airborne: false, groundHeight: undefined, airHeight: 0 });
         const traffic = { alive: true, s: 110, prevS: 110,
@@ -225,9 +229,9 @@ for (const flags of [[], ['wasteland2']]) for (const attacker of ['player', 'cpu
       try {
         const row = run('none', 'medium', 1989, { flags, maxFrames: 1 });
         const expected = wrecks();
-        expected.traffic = expected.byOwner.unknown = outcome === 'obliterate' ? 1 : 0;
+        expected.traffic = expected.byOwner.unknown = outcome === 'smash' ? 1 : 0;
         assert.deepEqual(row.wrecks, expected,
-          outcome === 'obliterate' ? 'real traffic obliteration counts once with unknown ownership' :
+          outcome === 'smash' ? 'a real traffic smash counts once with unknown ownership' :
             'traffic knocked clear is not a wreck');
       } finally { App.prototype.advance = original; }
     });

@@ -520,8 +520,10 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
 
 // Isolate contacts from random course placement while exercising the exact
 // production sweep, resolution, damage and steering code.
+// Pins the crash-physics switch-off contact rules (still in the code until the
+// switch is removed); the released crash rules have their own suites.
 function collisionArena() {
-  const d = new Duel({ seed: 611 }); d.startCampaign();
+  const d = new Duel({ seed: 611, featureFlags: { 'crash-physics': false } }); d.startCampaign();
   d.state.status = 'racing'; d.state.s = d.state.prevS = 100;
   d.state.lateral = d.state.prevLateral = 0; d.state.speedMph = 80;
   d.state.traffic = []; d.state.rival = null;
