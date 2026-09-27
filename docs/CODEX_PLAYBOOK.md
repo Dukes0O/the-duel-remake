@@ -105,7 +105,7 @@ rewrite or release. D4 permits pushing `master` after an approved release.
 
 ## 6. How one task flows
 
-1. **Pick.** The lane takes the top `ready` card for its lane from `docs/board/board.yaml` on the integration branch. A card is ready when everything in its `needs` list is merged, or marked `spike-complete` for a throwaway research spike that the spec says not to merge.
+1. **Pick.** Run `node tools/board.mjs`: its first list, CODEX CAN START NOW, is the only work Codex starts. A card is Codex's when its `owner` is `codex` or unset; a card with `owner: claude` or `owner: kyle` is never started by Codex, even when it looks ready. A codex card can start when its status is `ready`, it has no `waiting_on`, and everything in its `needs` is merged (or `spike-complete` for a throwaway research spike). Claim it by setting `status: building` and `claimed_by` on integration before starting. When a card needs Claude's review or Kyle's go-ahead, set `waiting_on: claude` or `waiting_on: kyle` and move on to another card. A design question goes to Claude in writing (the card's change note and `docs/playtest-inbox.md`); never invent a rule to get unstuck.
 2. **Start clean.** New worktree from the latest `integration/wasteland`, branch `lane/<lane>/<task-id>-<short-name>`. Run `npm ci`. Use this lane's private port (section 11).
 3. **Tests first.** Spawn `test_author` with the card. It adds failing tests and reports which fail and why. The lane confirms they fail for the right reason. Docs-only cards need independent review and the lane/build gate, without new tests that merely check wording.
 4. **Build.** The lane implements, staying inside the card's `owns` and `hooks` files. If the task needs another file, stop and ask the Director to re-slice.
