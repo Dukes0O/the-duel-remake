@@ -42,11 +42,12 @@ paid tool, network request, administrator access or change to port 5174.
 - `npm run build`: passed with the existing large-chunk warnings.
 - `git diff --check`: passed.
 
-The broad lane gate was not rerun after the review fixes. The Director will
-run it after independent review is clean, as requested.
+The final lane tier at `498bcf0` passed 290/290 tests with no skips. The
+production build passed at the same commit.
 
 Browser launch is waiting for Kyle after the lane merges and the shortcut is
-installed from the durable integration checkout.
+installed from the durable integration checkout. The installer completed on
+26 September 2026; the shortcut points at this integration worktree.
 
 ## Changed assertions
 
