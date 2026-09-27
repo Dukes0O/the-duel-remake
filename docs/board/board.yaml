@@ -515,7 +515,8 @@ tasks:
     lane: VIS
     size: S
     needs: [CRASH-RELEASE]
-    status: building
+    status: merged
+    claimed_by: "Merged by Claude, 27 September 2026"
     acceptance:
       - "tools/scenarios/crash-presentation.mjs ends with a switch-off check that no crash-vfx meshes exist; crash-effects is now on, so the final pass checks that the released game has the crash pool without any URL flag."
   - id: BALANCE-W2-OFF-RETIRE
