@@ -199,6 +199,66 @@ Blackiron follow the same rules (SPEC 3.9 table): one signature move with a
 tell, a counter and a window; a phase two; a working reward. Design each in
 writing, in this format, before code.
 
+### Settled for build: the ladder and Sawtooth Sal (Claude, 26 September 2026)
+
+Kyle wants Gratian playing warlord fights. This settles WAR-01 and WAR-02a so
+Codex can build without reopening design.
+
+**How a warlord unlocks (WAR-01).** Each territory already belongs to a
+warlord (`TERRITORIES` in `src/wasteland-career.js`): Sal holds Pacific
+Canyon and Red Mesa. Four Mad Max Duel wins on a territory's courses fill its
+hold (existing rule). A full hold opens that warlord's fight. No other gate:
+no rank requirement, no ladder order.
+
+- The territory map card shows the state in plain words: `n / 100 HOLD`,
+  then `SAWTOOTH SAL IS WAITING` with a **FIGHT** button when the hold is full
+  and the fight is built, `DEFEATED · SIDE SAWS EARNED` with **REMATCH**
+  after a win. A full hold whose fight is not built yet says `WARLORD FIGHT
+  COMING LATER` and has no button. Nothing is advertised that does not work.
+- The fight starts from that card only (and from the Preview launcher's
+  shortcut, below). Never from the main menu.
+- Save: `profile.wasteland.warlords[id] = {defeated, wins, losses}`, additive,
+  per named player, unknown fields preserved.
+
+**Sawtooth Sal (WAR-02a).** Banshee Muscle with side saws, in the Scrapdome.
+
+| Rule | Value |
+| --- | --- |
+| Format | One-on-one, first to three wrecks wins |
+| Sal's armor | 1.5 times the arena armor |
+| Difficulty | The player's usual difficulty from the SCRAPDOME panel |
+| Time | Four minutes, then sudden death (next wreck wins; damage decides if none) |
+| Losing | Costs nothing; REMATCH at once |
+
+- **Base behaviour:** the rammer brain, including the charge tell built in
+  ARENA-FEEL.
+- **Saw Sweep:** when Sal is alongside the player (within 12 m sideways and
+  6 m along) she tells for `BRAIN_DIFFICULTY.tellSec`: saws spin up with
+  sparks and a rising scream. Then she swerves into the player's flank; a
+  sweep hit deals twice ordinary ram damage to that side. At most one sweep
+  every 9 s on Easy, 7 s on Medium, 5 s on Hard.
+- **Counter and window:** if the player brakes hard or boosts clear during
+  the tell, the sweep misses. Sal overshoots and for two seconds drives at
+  60% speed with reduced steering; hits on her rear then deal 1.5 times
+  damage. The window is shown by her saws sparking out.
+- **Phase two** (after Sal's first wreck): tells are 80% as long and she adds
+  **Charge**: a straight boosted run across the ring, using the same flash
+  and roar tell.
+- **Reward, first win only:** Side Saws (an armory kit: when equipped, the
+  player's side contacts deal 1.6 times ram damage, with sparks), 150 scrap,
+  and Sal's territory marked claimed. Rematch wins pay 25 scrap. Settlement is
+  once per fight, atomic, per named player (Save Guardian).
+- **Presentation:** an intro card before the countdown (name, car, one taunt
+  line as text), saws visible on her car, sparks and a saw scream during the
+  tell, callouts `SAW SWEEP!` on a hit and `SHE MISSED. HIT HER NOW!` in the
+  window. A spoken taunt is optional: ElevenLabs free plan, Kyle picks.
+- **Done means:** Gratian can win it on Medium within a few tries, and every
+  sweep is fair (it always has its tell). Headless tests prove the tell, the
+  window, phase two and one-time settlement; people judge the fun.
+
+The Dustmonger and Mother Mirage keep their designs above; each gets the same
+"settled for build" table before its code, after Sal has been played.
+
 ## 6. Where it lives and what it pays
 
 - **Entry:** only from the Scrapdome yard (a SCRAPDOME panel: mode, number of

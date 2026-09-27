@@ -33,6 +33,42 @@ Janitor note: Claude force-removed the merged gate-rejoin lane folder
 (committed and merged work only, ignored scratch deleted). Use plain
 `git worktree remove` from here on, as AGENTS.md requires.
 
+## Warlords for Gratian (Kyle, 26 September 2026)
+
+Gratian wants to play the warlord fights. The plan below gets him there in
+two steps: a **Preview** icon so he can test each piece the day it is merged
+(nothing saved), then **real releases** on Kyle's go-ahead. Do this after the
+"Resume here" steps above and before the rest of the older plan.
+
+**How Claude and Codex split it.** Claude settles rules and design in
+writing, judges look and feel from screenshots and play notes, and takes the
+small, subtle fixes in the live game. Codex builds, tests, balances, runs the
+art and sound pipelines and keeps the janitor. A design question Codex meets
+goes back to Claude in writing; Codex does not invent a rule to get unstuck.
+
+**Stop rule (Kyle).** This is a game on one laptop for Kyle and his son. If a
+card cannot meet its acceptance with the tools we have (free services, this
+laptop, the three-round art cap) stop the card, write why in its change note,
+and ask Kyle: get the tool, or change the plan. Never ship a placeholder, a
+stub or a hidden shortcut as if it were the finished thing.
+
+| Step | Card | Who | Runs |
+| --- | --- | --- | --- |
+| 1 | RALLY-CHECKPOINT: rally car sent back by a checkpoint | Claude | Now, beside everything |
+| 1 | PREVIEW-LAUNCHER: the Preview icon | Codex | Now, beside everything |
+| 1 | Resume steps: sound and ARENA-FEEL merges, full tier | Codex | Now |
+| 2 | WAR-01: the ladder on the territory map | Codex (design settled) | After step 1 merges |
+| 2 | WAR-SAL-ART: saws, sparks, scream | Codex, Claude reviews | Beside WAR-01 |
+| 3 | WAR-02a: Sawtooth Sal, fight and reward | Codex, Claude reviews feel | After WAR-01 |
+| 3 | SCRAPDOME-RELEASE: Last Car Rolling in the real game | Claude and Codex | Gratian plays Preview first |
+| 4 | Gratian plays Sal in Preview; Claude tunes from his notes | Claude | After WAR-02a |
+| 5 | Release Sal (warlord ladder + Sal) | Kyle's go-ahead | After step 4 |
+| 6 | WAR-02b Dustmonger and WAR-02c Mirage, in parallel lanes | Codex; Claude settles each first | After Sal is played |
+
+Must run in order: WAR-01, then WAR-02a, then Sal's release; each release
+waits for Kyle. Can run side by side: the rally fix, the Preview icon, Sal's
+art and sound, and later the Dustmonger and Mirage lanes.
+
 This is the one current plan for Codex. Rules: `AGENTS.md` (the nine working
 rules and the janitor) and SPEC.md section 0, especially 0.9 (audio), 0.11
 (art from existing assets), 0.12 (the easter egg), 0.13 (Scrapdome) and 0.14
