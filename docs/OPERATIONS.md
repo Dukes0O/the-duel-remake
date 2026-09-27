@@ -12,7 +12,25 @@ playbook defines task cards and review roles.
 | Live browser address | `http://localhost:5174/` | Keep this exact origin so local careers remain available. |
 | Integration | `C:\Users\kyleb\.codex\worktrees\wasteland-integration\the-duel-remake` on `integration/wasteland` | Combine one reviewed change at a time. |
 | Browser QA | Private port, normally 5175 or above 5190 | Use memory-only saves and a throwaway browser profile. |
-| Playtest preview | `http://127.0.0.1:5195/tools/preview.html` | Built from integration, with memory-only saves and a visible PREVIEW badge. |
+| Playtest preview | `http://127.0.0.1:5195/tools/preview.html`, served from `.preview-dist` in the integration folder | Built from integration, with memory-only saves and a visible PREVIEW badge. |
+
+## Two places to play (Kyle, 27 September 2026)
+
+There are exactly two ways to play: the **live game** (`localhost:5174`,
+served from the live folder's `dist`) and the **Preview** (`127.0.0.1:5195`,
+served from the integration folder's `.preview-dist`). Nothing else is kept
+for play. Lane folders and test builds (`.qa-dist`, a lane's `dist`) are
+working space, overwritten by the next run or deleted with their lane.
+
+The routine after Kyle accepts something in the Preview:
+
+1. **Release it** (see Release): switch the accepted feature on, run the full
+   release evidence and copy the build into the live game.
+2. **Clean up the live folder in the same release:** `dist` holds exactly the
+   new build, `dist-previous` holds exactly one rollback build and
+   `dist-next` is deleted.
+3. **The Preview cleans itself:** the next click sees that integration has
+   moved on, closes the old Preview and rebuilds `.preview-dist` in place.
 
 The live launcher, `start-game.bat`, serves the built `dist` directory with
 Vite preview after this launcher change is released. It builds once if `dist`
@@ -34,11 +52,15 @@ while a race is in progress. Do not use port 5174 for development or QA.
 Run `install-preview-shortcut.ps1` once from the integration folder. It creates
 the **The Duel Preview** icon on the current player's Desktop. It needs no
 administrator access, account or download. The icon follows that integration
-checkout, builds its QA bundle and serves it only on this computer at port
-5195. A second click opens the preview that is already running.
+checkout, builds its QA bundle into `.preview-dist` (emptied on every build)
+and serves it only on this computer at port 5195. Each build records the
+integration commit it came from. A click opens the running preview when it is
+current; when newer work has been merged it closes the old preview window and
+rebuilds. Browser checks build into `.qa-dist`, so a test run never disturbs
+an open preview.
 
 The red **PREVIEW badge** at the top of the screen confirms that this is the
-development build. Its saves are memory-only. They remain available when the
+development build and shows when it was built. Its saves are memory-only. They remain available when the
 same preview tab reloads, but closing the tab discards them. The preview never
 reads or writes the live career on port 5174.
 
@@ -81,12 +103,15 @@ checks that the live tree is clean, then fast-forwards `master`. It installs loc
 dependencies if needed and builds a release in `dist-next`. Before serving it,
 it copies the current `dist` to `dist-previous` for rollback and checks the
 new build on a private port. It copies the new hashed assets into the live
-`dist` first, keeping old hashed assets available to open races. It replaces
-`index.html` and `build-version.json` last. It does not refresh an open game
-tab. It verifies the new build manifest and landing page on `localhost:5174`,
-then records what players can try in `docs/playtest-inbox.md`. Push `master`
-to GitHub after a release as the approved backup step. A failed check or a
-non-fast-forward update stops the release.
+`dist` first and replaces `index.html` and `build-version.json` last, so a
+page load never meets a half-copied build. It does not refresh an open game
+tab. It verifies the new build manifest and landing page on `localhost:5174`.
+Then it cleans up: `robocopy dist-next dist /MIR` leaves `dist` holding
+exactly the new build (older builds' files go; Kyle reloads any open tab), and
+`dist-next` is deleted. It records what players can try in
+`docs/playtest-inbox.md`. Push `master` to GitHub after a release as the
+approved backup step. A failed check or a non-fast-forward update stops the
+release.
 
 Use the direct Vite CLI for the staged build and private preview on this
 Windows setup. npm did not reliably forward arguments after `--`:

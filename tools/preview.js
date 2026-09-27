@@ -22,3 +22,15 @@ if (!localStorage.getItem(PLAYERS_KEY)) {
 }
 
 await import('../src/main.js');
+
+// Show when this Preview was built, so it is clear which version is playing.
+fetch('/preview-build.json', {cache: 'no-store'})
+  .then(response => response.ok ? response.json() : null)
+  .then(stamp => {
+    const badge = document.querySelector('[data-preview-badge]');
+    if (!badge || !stamp?.builtAt) return;
+    const built = new Date(stamp.builtAt).toLocaleString([], {
+      weekday: 'short', hour: 'numeric', minute: '2-digit'});
+    badge.textContent = `PREVIEW · BUILT ${built.toUpperCase()}`;
+  })
+  .catch(() => {});

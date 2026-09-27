@@ -79,6 +79,8 @@ await withServer((request, response) => {
 }, async port => {
   assert.equal(await probeDuelServer(port, {kind:'preview'}), 'preview', 'exact preview build is recognized');
   assert.equal((await previewCliState(port)).code, 10, 'preview launcher receives the reuse exit code');
+  assert.equal(await probeDuelServer(port, {kind:'preview', expectCommit:'abc'}), 'stale',
+    'a preview without a matching build stamp is replaced');
 });
 
 await withServer((request, response) => {

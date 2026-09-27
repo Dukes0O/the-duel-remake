@@ -16,7 +16,7 @@ const ROOT_FILES = new Set([
   'install-preview-shortcut.ps1', 'vite.config.js',
 ]);
 const SKIP_FOLDERS = new Set(['.git', 'node_modules', 'dist', 'dist-next', 'dist-previous',
-  '.qa-dist', '.qa-blender', '.qa-art', '.evidence', 'art-build', '.lanes']);
+  '.qa-dist', '.preview-dist', '.qa-blender', '.qa-art', '.evidence', 'art-build', '.lanes']);
 const RAW_EVIDENCE = new Set(['.png', '.webm', '.mp4', '.wav', '.mp3', '.flac', '.ogg']);
 const IMAGE_EVIDENCE = new Set(['.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.tif', '.tiff']);
 const AUDIO_SOURCES = new Set(['.flac', '.mp3', '.ogg', '.wav']);
