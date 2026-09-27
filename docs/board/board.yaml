@@ -500,6 +500,15 @@ tasks:
     acceptance:
       - "Found in CRASH-05: tools/combat-balance.mjs --check judges win rates on 10 races per level and single-race policy samples, so one close finish moves a rate by 10 points. With crash physics on, the 10-race check failed (Medium 7/10, Hard 1/10) while 30 further seeds showed no change (Medium 19/30 before and after, Hard 8/30 and 7/30)."
       - "Make the check use enough races to tell a real shift from noise (for example 30 seeds per level, or the same seeds before and after with a stated tolerance), keep its run time reasonable on this laptop, and record the new sample in the targets. Then run it with wasteland2,crash-physics and report. Do not change game tuning in this card; if the larger sample shows a real imbalance, stop and hand it to Claude."
+  - id: CRASH-SWITCH-REMOVE
+    title: "Remove the crash-physics and crash-effects switches now they are on"
+    owner: codex
+    lane: CMB
+    size: M
+    needs: [CRASH-RELEASE]
+    status: ready
+    acceptance:
+      - "Both switches are on in the real game. Remove the switch-off contact paths they guard (scripted roadside burst and knock, flat roadside speed cost, closing-speed ram damage, the old wreck motion) and the tests that pin only those paths (src/test.js collisionArena, the switch-off cases in the crash and knock-away suites), with unchanged replay fingerprints for the released rules. SPEC 0.8: replace means remove."
   - id: CRASH-02
     title: "Crash look and sound"
     priority: 3
@@ -2029,8 +2038,8 @@ tasks:
     lane: RELEASE
     size: S
     needs: [PREVIEW-OWN-FOLDER, BALANCE-SAMPLE]
-    status: ready
-    waiting_on: kyle
+    status: merged
+    claimed_by: "Released by Claude on Kyle's go-ahead, 27 September 2026"
     acceptance:
       - "Kyle and Gratian try crash physics in the Preview first (wrecks slide to rest off the road, crash impact sounds). With Kyle's written go-ahead, switch crash-physics and crash-effects on for the real game, with full release evidence on the exact commit, combat balance with wasteland2 off and on, and the crash browser checks. Rollback build kept as usual."
   - id: COMBAT-AUDIO-SCENARIO

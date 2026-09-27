@@ -733,3 +733,23 @@ off in the live game (scrapdome, crash-physics, crash-effects, titan-climb,
 muddy-hollow). Release evidence for this exact commit is recorded in
 docs/board/run-log.md.
 
+## Release 27 September 2026: crash physics (CRASH-01 to CRASH-05, CRASH-RELEASE)
+
+Kyle accepted crash physics in the Preview and asked for it in the real game.
+`crash-physics` and `crash-effects` are now on. A car hit by another is solved
+as a rigid body: it is smashed ahead, spins and slides to rest; smashed
+traffic ends beyond the shoulder (docs/CRASH_PHYSICS.md). In Mad Max Duel both
+cars take the hit and armored cars keep control; wrecks and shoved cars stay
+solid; hits over 250 km/h closing explode the car after the smash; the nearest
+wrecks smoulder all race; ram damage follows each car's change in velocity and
+kit plating adds mass. Crash sparks, crumple, tyre smoke and impact sounds
+come with it (CRASH-02).
+
+Balance is judged on thirty races per difficulty (BALANCE-SAMPLE). Crash
+physics made Hard harder (8 of 30 wins fell to 5, because every traffic smash
+costs the player real speed), so the Hard Mad Max CPU now attacks every 6
+seconds instead of 5 (its aim is unchanged): 8 of 30 again. CPU-hit targets
+are now bands for the thirty-race mean. The Scrapdome, Titan climbing and
+Muddy Hollow stay switched off. Release evidence for this exact commit is in
+docs/board/run-log.md.
+

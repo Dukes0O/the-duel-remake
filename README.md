@@ -70,6 +70,11 @@ Leaving a Mad Max Duel up the hidden dirt road only pauses the race: drive
 back to the course and it carries on where it stopped. Only driving through
 the gate ends it. The rally car and Titan Monster may cross lap checkpoints
 out on the dirt near the road or a shortcut without being put back on it.
+Crashes are physical: a struck car is smashed ahead, spins and slides to rest,
+and both cars feel the hit. In Mad Max Duel armored cars keep control, traffic
+hit hard is wrecked and left smouldering at the roadside for the rest of the
+race, a hit over 250 km/h closing blows the car up after the smash, and ram
+damage follows each car's change in velocity, so heavy cars hit hardest.
 Wreck recovery has a short two-second race penalty. A missed checkpoint retries
 near that checkpoint. The UFO jump never moves the rival or skips a checkpoint.
 

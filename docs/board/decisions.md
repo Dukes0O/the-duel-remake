@@ -1272,3 +1272,14 @@ replaces the CRASH-04 rule that exploded every smash. The live-game balance
 (crash physics off) is unchanged; with crash physics on the 10-race check is
 too noisy to judge, so BALANCE-SAMPLE comes before CRASH-RELEASE.
 
+## 27 September 2026: two places to play, and crash physics released
+
+Kyle: exactly two places to play, the live game and one Preview, with the
+Preview rebuilt in place and a clean-up after every release so builds never
+pile up (docs/OPERATIONS.md, "Two places to play"). He accepted crash physics
+in the Preview and chose to tune Hard first: thirty-race balance showed crash
+physics took Hard from 8 to 5 wins in 30; the Hard Mad Max CPU now attacks
+every 6 s (was 5), restoring 8 of 30 with its aim unchanged. CPU-hit targets
+are bands for the thirty-race mean; the one-race bands did not describe the
+live game (Medium averaged 7.27).
+

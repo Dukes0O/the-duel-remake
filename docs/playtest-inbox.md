@@ -6,6 +6,16 @@ or hard to repeat. Do not include saved career data.
 
 ## What's new to try
 
+### Crash physics (released 27 September 2026)
+
+- In any race, rear-end a car: it is smashed ahead, spins and slides to a stop
+  off the road. Your own car feels the hit too.
+- In Mad Max Duel, ram traffic hard: it is wrecked and left smoking at the
+  roadside, still there on lap two, and you can shove the hulk. Hit it at over
+  250 km/h (about 155 mph) closing and it blows up a moment after the smash.
+- Heavy cars hit hardest: the Titan takes far more armor off a Falcone than it
+  loses. Hard is back to about one win in four.
+
 ### Two fixes (released 26 September 2026)
 
 - In a Mad Max Duel after finding the gate, drive up the dirt road until the
