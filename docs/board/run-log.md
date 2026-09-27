@@ -2058,3 +2058,29 @@ first run failed only tools/test-build-status.mjs, which passed alone (275
 checks); the rerun with 8 jobs passed 295/295 in 698.85 s. The checkout was
 removed. D8 push follows; no release.
 
+## Release, 27 September 2026 evening (Claude, Kyle's go-ahead: "The preview has been great! this should be merged")
+
+Released 006cd48: crash physics and crash effects on (CRASH-01 to CRASH-05),
+the Hard Mad Max CPU attacking every 6 s (CRASH-RELEASE), the one-Preview
+launcher (PREVIEW-OWN-FOLDER), the thirty-race balance check (BALANCE-SAMPLE)
+and the build-status test allowance (STATUS-TIMEOUT). Evidence on that exact
+commit: full tier 295/295; build passed; combat balance --check with
+wasteland2 passed (26/19/8 of 30; CPU hits 2.67/7.2/5.53; UFO gains within
+4 s). Without wasteland2 the check failed (Medium 13/30, Easy CPU hits 0.83,
+Medium 3.8): that is the pre-Wasteland-2 rule set, which the live game cannot
+reach because wasteland2 is on; BALANCE-W2-OFF-RETIRE carries retiring that
+gate. Private memory-only browser checks: smoke, hidden-road (33 captures),
+wasteland-beta and frame-pacing passed with 0 warnings and 0 errors;
+crash-presentation passed every effect capture in both qualities and failed
+only its final "no crash effects without the switch" step, which this release
+makes obsolete (CRASH-PRESENTATION-ON fixes the step). The staged build 20c16a
+loaded on port 5188 with no console errors.
+
+Live folder: master fast-forwarded 5858a94 to 006cd48; no dependency change.
+Clean-up per docs/OPERATIONS.md: dist-previous mirrored from the exact
+previous build (e61891, 143 files); new assets copied, index.html and
+build-version.json last; localhost:5174 serves 20c16a (menu loads, no console
+errors); then dist mirrored to exactly the new build (149 files) and dist-next
+deleted. Live build folders went from about 780 MB to 458 MB. master pushed.
+The Scrapdome, Titan climbing and Muddy Hollow stay switched off.
+

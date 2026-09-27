@@ -509,6 +509,24 @@ tasks:
     status: ready
     acceptance:
       - "Both switches are on in the real game. Remove the switch-off contact paths they guard (scripted roadside burst and knock, flat roadside speed cost, closing-speed ram damage, the old wreck motion) and the tests that pin only those paths (src/test.js collisionArena, the switch-off cases in the crash and knock-away suites), with unchanged replay fingerprints for the released rules. SPEC 0.8: replace means remove."
+  - id: CRASH-PRESENTATION-ON
+    title: "Crash presentation scenario expects the effects on by default"
+    owner: claude
+    lane: VIS
+    size: S
+    needs: [CRASH-RELEASE]
+    status: building
+    acceptance:
+      - "tools/scenarios/crash-presentation.mjs ends with a switch-off check that no crash-vfx meshes exist; crash-effects is now on, so the final pass checks that the released game has the crash pool without any URL flag."
+  - id: BALANCE-W2-OFF-RETIRE
+    title: "Retire the wasteland2-off balance gate and switch-off path"
+    owner: codex
+    lane: OPS
+    size: S
+    needs: [CRASH-RELEASE]
+    status: ready
+    acceptance:
+      - "wasteland2 is on and players cannot turn it off, so the release rule 'combat balance with wasteland2 off and on' checks a rule set nobody can play (27 September 2026: it failed at Medium 13/30 while the live set passed). Propose to Kyle (waiting_on: kyle) removing the wasteland2 switch-off path and the off-balance gate from AGENTS.md, docs/OPERATIONS.md and the balance tool; do not remove before Kyle agrees."
   - id: CRASH-02
     title: "Crash look and sound"
     priority: 3
