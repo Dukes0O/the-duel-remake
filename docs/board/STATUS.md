@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-27T01:52:01.347Z
+Observed at: 2026-09-27T02:17:16.932Z
 
-Observation commit: 71e8c68eb379f36c9fa352384182536f1a61499e
+Observation commit: a6e88143791e6387598eda204cecc4c9360165f1
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 71e8c68eb379f36c9fa352384182536f1a61499e
+Integration HEAD: a6e88143791e6387598eda204cecc4c9360165f1
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-09-27T01:51:48.957Z; tested commit: 1eb02f0bf26e07b5a54bde725020aa6eced56c2f.
+Last recorded full run: 2026-09-27T02:16:29.142Z; tested commit: cd09211d2dc4e4853849f005a14df725993ca33b.
 
 ## Feature switches
 
@@ -41,7 +41,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | lane/audio/aud-12 | 1 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/audio/combat-audio-scenario | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/combat-audio-scenario/the-duel-remake |
-| lane/ops/preview-launcher | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/preview-launcher/the-duel-remake |
+| lane/ops/preview-launcher | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/preview-launcher/the-duel-remake |
 | lane/ui/war-01 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/war-01-ladder/the-duel-remake |
 
 ## Unmerged branches for idle review
@@ -51,7 +51,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | lane/audio/combat-audio-scenario | unknown | 2026-09-26T18:50:34-07:00 | 0 | last commit 2026-09-26T18:50:34-07:00 | docs/changes/COMBAT-AUDIO-SCENARIO.md, tools/scenarios/combat-audio.mjs, tools/test-combat-audio.mjs |
-| lane/ops/preview-launcher | unknown | 2026-09-26T18:42:06-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/OPERATIONS.md, docs/board/board.yaml, docs/changes/PREVIEW-LAUNCHER.md, install-preview-shortcut.ps1, start-preview.bat |
+| lane/ops/preview-launcher | unknown | 2026-09-26T18:54:19-07:00 | 0 | last commit 2026-09-26T18:54:19-07:00 | docs/OPERATIONS.md, docs/board/board.yaml, docs/changes/PREVIEW-LAUNCHER.md, install-preview-shortcut.ps1, src/main.js |
 | lane/ui/war-01 | WAR-01 | 2026-09-26T18:50:43-07:00 | 0 | last commit 2026-09-26T18:50:43-07:00 | docs/board/board.yaml, docs/changes/WAR-01.md, src/screen-territory.js, src/warlords.js, src/wasteland-progress.js |
 
 ## Size targets
@@ -66,9 +66,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
 | Review `looks/` | 8,526,295 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 317,840 B | -582,068 B | 5,000,000 B |
+| Added bytes in last merge | 317,840 B | +0 B | 5,000,000 B |
 | All `public/` | 236,164,408 B | +0 B | unavailable |
-| Git objects | 335,589,376 B | +305,152 B | unavailable |
+| Git objects | 335,696,896 B | +107,520 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -77,7 +77,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 5858a94cb1c58525fbe6967483de45cdaf25f96d
 - Local main: missing
-- Local integration/wasteland: 71e8c68eb379f36c9fa352384182536f1a61499e
+- Local integration/wasteland: a6e88143791e6387598eda204cecc4c9360165f1
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
