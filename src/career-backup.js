@@ -25,6 +25,20 @@ function preserved(raw, loaded) {
   if (isObject(raw)) return isObject(loaded) && Object.entries(raw).every(([key, value]) => has(loaded, key) && preserved(value, loaded[key]));
   return Object.is(raw, loaded);
 }
+function preservedWarlords(raw, loaded) {
+  if (!isObject(raw) || !isObject(loaded)) return preserved(raw, loaded);
+  return Object.entries(raw).every(([key, value]) => {
+    if (key !== 'defeated') return has(loaded, key) && preserved(value, loaded[key]);
+    return Array.isArray(value) && value.every(id => typeof id === 'string' &&
+      id.length > 0 && id.length <= 80 && loaded[id]?.defeated === true);
+  });
+}
+function preservedWasteland(raw, loaded) {
+  if (!isObject(raw) || !isObject(loaded)) return preserved(raw, loaded);
+  return Object.entries(raw).every(([key, value]) => key === 'warlords'
+    ? preservedWarlords(value, loaded.warlords)
+    : has(loaded, key) && preserved(value, loaded[key]));
+}
 function validateProfile(profile) {
   if (!isObject(profile) || ![1, 2].includes(profile.version)) return false;
   if (Number.isSafeInteger(profile.wasteland?.version) && profile.wasteland.version > 1) return false;
@@ -33,6 +47,7 @@ function validateProfile(profile) {
   return Object.entries(profile).every(([key, value]) =>
     key === 'version' || key === 'awardedWins' ||
     key === 'weapons' && preserved(value, normalized.wasteland.weapons) ||
+    key === 'wasteland' && preservedWasteland(value, normalized.wasteland) ||
     has(normalized, key) && preserved(value, normalized[key]));
 }
 const isCareerKey = key => CAREER_KEYS.includes(key) || key.startsWith('the-duel-') || key.startsWith('duel_');
@@ -90,6 +105,15 @@ export function needsCareerMigration(storage) {
           const territory = player.profile.wasteland.territories[id];
           return !isObject(territory) || !Number.isSafeInteger(territory.hold) ||
             territory.hold < 0 || territory.hold > 100 || typeof territory.claimed !== 'boolean';
+        }) ||
+        !isObject(player.profile.wasteland.warlords) ||
+        has(player.profile.wasteland.warlords, 'defeated') ||
+        Object.keys(TERRITORIES).some(id => {
+          const warlord = player.profile.wasteland.warlords[id];
+          return !isObject(warlord) || typeof warlord.defeated !== 'boolean' ||
+            !Number.isSafeInteger(warlord.wins) || warlord.wins < 0 ||
+            warlord.wins > 1_000_000 || !Number.isSafeInteger(warlord.losses) ||
+            warlord.losses < 0 || warlord.losses > 1_000_000;
         }) ||
         has(player.profile, 'weapons')) ||
       loadPlayers(source).players.some(player => !player.profile.raceSettings);

@@ -2,6 +2,7 @@ import {getProfileWeapons, WEAPON_UPGRADE_COSTS, WASTELAND_UPGRADE_COSTS} from '
 import {WEAPONS} from './combat.js';
 import {CARS} from './config.js';
 import {ARMOR_KITS, getEquippedArmorKit} from './armor-kits.js';
+import {hasDefeatedWarlord} from './wasteland-progress.js';
 import {isCarUnlocked} from './progression.js';
 import {availableCarWeapons,getCarLoadout,CAR_SLOT_DIRECTIONS,
   CAR_SLOT_PAD} from './car-loadout.js';
@@ -26,7 +27,7 @@ function armorKitPanel(saved){
  const requested=getArmoryCar(),car=Object.hasOwn(CARS,requested)?requested:'falcone_f42';
  const unlocked=isCarUnlocked(saved,car),installed=saved.wasteland?.kits?.[car]||{owned:[],equipped:null};
  const equipped=getEquippedArmorKit(saved,car),rank=saved.wasteland?.rank||1;
- const defeated=saved.wasteland?.warlords?.defeated?.length>0;
+ const defeated=hasDefeatedWarlord(saved.wasteland?.warlords);
  return `<details class="weapon-shop kit-shop" open><summary>ARMOR KITS · PER CAR</summary><p>Choose a car, then buy or equip its plating. Only the equipped kit adds armor in Mad Max Duel.</p><label class="kit-car-label" for="kit-car">CAR</label><select id="kit-car" data-kit-car>${Object.entries(CARS).map(([id,item])=>`<option value="${id}" ${id===car?'selected':''}>${escapeHTML(item.name)}${isCarUnlocked(saved,id)?'':' · LOCKED'}</option>`).join('')}</select><p class="kit-equipped">${escapeHTML(CARS[car].name)} · ${equipped?`${ARMOR_KITS[equipped].name.toUpperCase()} EQUIPPED (+${ARMOR_KITS[equipped].armor} ARMOR)`:'STOCK ARMOR'}</p><div class="kit-grid">${Object.entries(ARMOR_KITS).map(([id,kit])=>{
    const owned=installed.owned?.includes(id),selected=equipped===id;
    const gate=id==='warlord'&&!defeated?'Defeat a warlord to unlock':rank<kit.rank?`Notoriety rank ${kit.rank} required`:null;
