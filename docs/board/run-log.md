@@ -2044,3 +2044,17 @@ passed alone (632 checks). Kyle's Preview was open on port 5195 and serves
 removed. PREVIEW-OWN-FOLDER stays the fix for the shared folder. D8 push
 follows; no release.
 
+## CRASH-05 merged, 27 September 2026 (Claude)
+
+Kyle, after playing CRASH-04: high-speed Mad Max hits drove through traffic
+like a gas. CRASH-05 merged (3048361): both cars take the hit, wrecks and
+shoved cars stay solid, explosions only over 250 km/h closing and after the
+smash, the nearest wrecks smoulder all race. Lane tier 169/169 and build.
+Balance with crash physics off unchanged (8/5/3, passed); with crash physics
+on the 10-race check is too noisy (30-seed comparison showed no shift);
+BALANCE-SAMPLE carded before CRASH-RELEASE. Kyle's Preview (port 5195) was
+open, so the full tier ran in a separate detached checkout of 78ae255: the
+first run failed only tools/test-build-status.mjs, which passed alone (275
+checks); the rerun with 8 jobs passed 295/295 in 698.85 s. The checkout was
+removed. D8 push follows; no release.
+
