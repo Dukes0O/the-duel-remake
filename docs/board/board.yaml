@@ -461,6 +461,20 @@ tasks:
     helpers: []
     acceptance:
       - "A hard Rival Duel rear-end wrecks traffic that keeps rolling at least 40 m and ends beyond the shoulder; a Mad Max shove scrubs to a stop and parks beyond the shoulder; no struck car slows faster than about 1 g before its final crawl; switch off keeps the released wreck motion."
+  - id: CRASH-04
+    title: "Mad Max crash physics: wrecks slide, traffic explodes and tumbles, damage by F = ma"
+    owner: claude
+    priority: 1
+    lane: CMB
+    size: M
+    needs: [CRASH-03]
+    status: ready-to-merge
+    flag: crash-physics
+    claimed_by: "Claude, 27 September 2026"
+    owns: [tools/test-madmax-crash.mjs, docs/changes/CRASH-04.md]
+    hooks: [src/combat-armor.js, src/vehicle-knock.js, src/vehicle-collision.js, src/sim-contacts.js, src/sim-rival.js, src/sim-crash.js, src/armor-kits.js, src/wasteland-tuning.js, tools/combat-balance.mjs, tools/replays/combat-fingerprints.json, docs/CRASH_PHYSICS.md]
+    acceptance:
+      - "Kyle: crash physics should be built out in Mad Max, mirrored from Rival Duel first, then lower explosion thresholds for struck cars and a bit more distance and tumbling, not outrageously more; armored cars should hit harder by F = ma. Design in docs/CRASH_PHYSICS.md section 6."
   - id: CRASH-02
     title: "Crash look and sound"
     priority: 3

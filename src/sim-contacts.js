@@ -15,6 +15,7 @@ import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {KNOCK, resolveCarCrash} from './vehicle-knock.js';
 import {CRASH_TUNING} from './vehicle-collision.js';
 import {upgradedCar} from './progression.js';
+import {armorKitMass} from './armor-kits.js';
 import {applyDriverModifiers} from './drivers.js';
 
 function roadsideTopSpeedMph(duel, actor) {
@@ -83,8 +84,11 @@ function armoredVehicleContact(duel, {a,b,nx,nz,end,width,length,specA,specB,
   if(crashPhysics){
     // Motion comes from the rigid-body solver (docs/CRASH_PHYSICS.md); the
     // ram response still sets the computer's recovery timing and ram cadence.
+    // Armor keeps the player in control below a big hit: a lower bar on the
+    // road in Mad Max (CRASH-04) than in the Scrapdome arena.
     crash=resolveCarCrash(duel,a,b,{playerKnockMinDvMph:
-      duel.state.mode==='wasteland'?CRASH_TUNING.armoredPlayerKnockDvMph:0});
+      duel.state.mode!=='wasteland'?0:duel.state.arena?
+        CRASH_TUNING.armoredPlayerKnockDvMph:CRASH_TUNING.madMax.playerKnockDvMph});
     for(const actor of [a,b])if(actor!==duel.state)
       actor.ramRecoverySec=Math.max(actor.ramRecoverySec||0,response.recoverySeconds);
     emitVehicleSmash(duel,{a,b,crash,zone:zoneB});
@@ -113,7 +117,12 @@ function armoredVehicleContact(duel, {a,b,nx,nz,end,width,length,specA,specB,
     duel._scrape(zoneA,impactMph);
 
   const closingKph=impactMph*COMBAT_TUNING.armor.kphPerMph;
-  if(closingKph>COMBAT_TUNING.armor.ramThresholdKph){
+  // On the road, crash physics judges ram damage by each car's own change
+  // in velocity (F = ma): a heavy car deals more and takes less (CRASH-04).
+  const dvDamage=crashPhysics&&!duel.state.arena;
+  const dvOf=victim=>victim===a?crash.result.a.dvMph:crash.result.b.dvMph;
+  if(dvDamage?Math.max(dvOf(a),dvOf(b))>COMBAT_TUNING.armor.ramDvThresholdMph:
+    closingKph>COMBAT_TUNING.armor.ramThresholdKph){
     const pointA=duel.course.groundAt(a.s,a.lateral);
     const pointB=duel.course.groundAt(b.s,b.lateral);
     const hitPosition={x:(pointA.x+pointB.x)/2,y:(pointA.y+pointB.y)/2,
@@ -123,7 +132,7 @@ function armoredVehicleContact(duel, {a,b,nx,nz,end,width,length,specA,specB,
       const victimIndex=victim===duel.state?-1:duel.state.opponents.indexOf(victim);
       const spiked=combatFrontSpikes(attacker,face);
       const armorRemoved=applyRamArmorDamage(duel,victim,impactMph,
-        {spiked,owner:combatOwnerId(duel,attacker)});
+        {spiked,owner:combatOwnerId(duel,attacker),...(dvDamage?{dvMph:dvOf(victim)}:{})});
       duel.emit({combatRamHit:true,attacker:attackerIndex<0?'player':'rival',
         victim:victimIndex<0?'player':'rival',attackerIndex,victimIndex,
         armorRemoved,closingKph,spiked,hitPosition});
@@ -139,9 +148,11 @@ function armoredVehicleContact(duel, {a,b,nx,nz,end,width,length,specA,specB,
 }
 
 export function _vehicleSpec(actor) {
-  // Upgrades change handling and power, never the collision shell or mass.
+  // Upgrades change handling and power, never the collision shell. Armor-kit
+  // plating adds its weight to the mass (Mad Max only; CRASH-04).
   const car = CARS[actor === this.state ? this.state.car : actor.car || (actor === this.state.rival ? this.state.car : null)] || {};
-  return { halfWidth: car.collision?.halfWidth ?? CAR_HALF_WIDTH, halfLength: car.collision?.halfLength ?? CAR_HALF_LENGTH, mass: car.mass || 1450, height: car.height || 1.35 };
+  return { halfWidth: car.collision?.halfWidth ?? CAR_HALF_WIDTH, halfLength: car.collision?.halfLength ?? CAR_HALF_LENGTH,
+    mass: (car.mass || 1450) + armorKitMass(actor.combatArmorKit), height: car.height || 1.35 };
 }
 
 export function _collisions() {
@@ -478,7 +489,7 @@ export function _vehicleContact(a, b, reason) {
       impactMph >= COMBAT_TUNING.roadside.minimumImpactMph) {
     const topSpeedMph = roadsideTopSpeedMph(this, a);
     const decision = roadsideTrafficDecision({impactMph, topSpeedMph});
-    const outcome = decision.wreck ? 'obliterate' : 'knock';
+    let outcome = decision.wreck ? 'obliterate' : 'knock';
     // The struck car leaves by its nearest shoulder. An outside clip must
     // never shove a non-collidable car across the opposite driving lane.
     const side = Math.sign(b.lateral) || Math.sign(b.lateral - a.lateral) ||
@@ -487,12 +498,14 @@ export function _vehicleContact(a, b, reason) {
     const clearLateral = crashPhysics ? roadHalfWidth + specB.halfWidth + .5 :
       Math.max(Math.abs(b.lateral) + COMBAT_TUNING.roadside.trafficKnockDistance,
         roadHalfWidth + specB.halfWidth + .5);
-    // A shove is physical: the traffic car slides and spins by the solver.
-    // The attacker keeps the approved roadside rule (a small speed cost, no
-    // armor or crash). An obliteration keeps its scripted burst and debris.
-    const knocked = crashPhysics && outcome === 'knock' && !b.knock && !b.wrecked;
-    if (knocked) {
-      resolveCarCrash(this, a, b, {onlyB: true, wreckTrafficAt: [], forceKnock: true});
+    // Under crash physics the solver decides, as in Rival Duel. A smash or
+    // launch explodes the car and its hulk slides and tumbles off the road;
+    // a lighter hit shoves it clear (CRASH-04). The attacker keeps the
+    // approved roadside rule (a small speed cost, no armor or crash).
+    const physical = crashPhysics && !b.knock && !b.wrecked;
+    if (physical) {
+      resolveCarCrash(this, a, b, {onlyB: true, forceKnock: true});
+      outcome = b.wrecked ? 'obliterate' : 'knock';
       if (b.knock) {
         const frame = this.course.at(b.s);
         const shoulderSpeed = Math.sqrt(2 * KNOCK.slideDecel *
@@ -509,9 +522,8 @@ export function _vehicleContact(a, b, reason) {
         b.alive = false;
       }
     }
-    let roadsideStarted = knocked;
-    if (!roadsideStarted && (!crashPhysics || outcome !== 'knock'))
-      roadsideStarted = startRoadsideTraffic(b, {atTime: this.state.stageTimeSec,
+    const roadsideStarted = physical || !crashPhysics &&
+      startRoadsideTraffic(b, {atTime: this.state.stageTimeSec,
         outcome, side, impactMph, targetLateral: side * clearLateral});
     if (roadsideStarted) {
       a.speedMph = Math.sign(a.speedMph) * Math.max(0,

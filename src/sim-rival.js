@@ -7,7 +7,7 @@ import { vehicleContactEnvelope, planNpcYield } from './npc-yielding.js';
 import { clamp, freshDamageZones } from './sim-common.js';
 import {completeCombatRecovery} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
-import {stepKnock, stepPhysicalWreck} from './vehicle-knock.js';
+import {stepKnock, stepPhysicalWreck, stepWreckSlide} from './vehicle-knock.js';
 import {trafficSpeedNearFighter, opponentFighterIntent} from './onfoot-race.js';
 
 export function _npcYield(actor, targetMph, plannedHeading = actor.headingError || 0) {
@@ -98,6 +98,13 @@ export function _rival(dt, opponent = this.state.rival) {
   const s = this.state, r = opponent;
   if (!r) return;
   if (r.combatWrecking) {
+    // A wreck made at speed skids to rest first, and recovers where it
+    // stopped (CRASH-04).
+    if (r.knock) {
+      stepWreckSlide(this, r, dt);
+      this._boundary(r);
+      r.combatWreckSite = {s: r.s, lateral: r.lateral, headingError: r.headingError || 0};
+    }
     r.combatWreckTimer = Math.max(0, r.combatWreckTimer - dt);
     r.impactTimer = r.combatWreckTimer;
     if (r.combatWreckTimer === 0) completeCombatRecovery(this, r);

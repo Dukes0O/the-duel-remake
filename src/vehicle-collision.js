@@ -12,7 +12,14 @@ export const CRASH_TUNING = Object.freeze({
   // Heavier-than-target share needed before a hit launches the target.
   launchMassRatio: .8,
   playerCrashDvMph: 22,     // Rival Duel: the player's own Δv that means a crash
-  armoredPlayerKnockDvMph: 70, // Wasteland armor keeps control below a major hit
+  armoredPlayerKnockDvMph: 70, // Scrapdome arena armor keeps control below a major hit
+  // Mad Max Duel starts from the same physics, then (section 6, CRASH-04):
+  madMax: Object.freeze({
+    launchMph: 38,          // struck cars leave the ground a little sooner
+    tumble: 1.25,           // and roll a quarter further
+    wreckDecelScale: .8,    // wrecks slide about a quarter further
+    playerKnockDvMph: 45,   // armor keeps control below a big hit
+  }),
 });
 
 const cross = (r, v) => r.z * v.x - r.x * v.z;
@@ -113,10 +120,11 @@ function finish(result, a, b) {
 }
 
 // What a change in velocity does to a car (docs/CRASH_PHYSICS.md section 2).
-export function impactSeverity(dvMph, {attackerMass = 1450, mass = 1450} = {}) {
+export function impactSeverity(dvMph, {attackerMass = 1450, mass = 1450,
+  launchMph = CRASH_TUNING.launchMph} = {}) {
   const T = CRASH_TUNING;
   if (dvMph < T.nudgeMph) return 'nudge';
   if (dvMph < T.smashMph) return 'knocked';
-  if (dvMph >= T.launchMph && attackerMass >= mass * T.launchMassRatio) return 'launched';
+  if (dvMph >= launchMph && attackerMass >= mass * T.launchMassRatio) return 'launched';
   return 'smashed';
 }

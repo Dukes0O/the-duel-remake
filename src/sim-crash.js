@@ -6,6 +6,7 @@ import { BOUNDARY_WARNING, BOUNDARY_RESET, clamp } from './sim-common.js';
 import {applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled,
   completeCombatRecovery} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {crashStyle} from './vehicle-knock.js';
 import { onHiddenRoad } from './hidden-road.js';
 
 const WASTELAND_CRASH_PENALTY_SEC = 2;
@@ -252,7 +253,8 @@ export function _impact(dt) {
   s.prevS = s.s;
   s.prevLateral = s.lateral;
   s.impactTimer = Math.max(0, s.impactTimer - dt);
-  s.speedMph *= Math.exp(-3.2 * dt);
+  // A Mad Max wreck skids a little further than a Rival Duel crash (CRASH-04).
+  s.speedMph *= Math.exp(-3.2 * (s.combatWrecking ? crashStyle(this).wreckDecelScale : 1) * dt);
   s.crashSpin += s.impactSide * s.impactStrength * 5 * remaining * dt;
   s.lateral += s.impactSide * s.speedMph * DRIVE.mphToWorld * .15 * remaining * dt;
   const skidDistance = s.s + s.speedMph * DRIVE.mphToWorld * .3 * dt;

@@ -69,6 +69,8 @@ check('CLI default and selected flags', () => {
     ['--baseline-only', '--flags', 'wasteland2'], ['--probe=medium,1989', '--flags', 'wasteland2']]) {
     assert.deepEqual(parse(args).flags, ['wasteland2'], `valid CLI: ${args.join(' ')}`);
   }
+  assert.deepEqual(parse(['--check', '--flags', 'wasteland2,crash-physics']).flags,
+    ['wasteland2', 'crash-physics'], 'CRASH-04 balance runs with crash physics on');
 });
 check('CLI rejects unsupported flags and malformed values', () => {
   const parse = required('parseArgs');

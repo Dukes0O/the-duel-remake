@@ -1,7 +1,7 @@
 import {DRIVE} from './config.js';
 import {sweepObstacle} from './collision.js';
 import {wrapHeading} from './offroad-physics.js';
-import {yawInertia, solveVehicleImpact, impactSeverity} from './vehicle-collision.js';
+import {CRASH_TUNING, yawInertia, solveVehicleImpact, impactSeverity} from './vehicle-collision.js';
 
 // A struck computer car becomes a free body until its tyres bite again
 // (docs/CRASH_PHYSICS.md section 2). It keeps the road-relative fields every
@@ -26,6 +26,15 @@ export const WRECK = Object.freeze({
   maxSec: 9,            // a roadside shove parks by then at the latest
   pastShoulder: 10,     // m beyond the clear line before sideways motion stops
 });
+
+// Mad Max Duel on the road (not the Scrapdome arena) tumbles and slides a
+// little more than Rival Duel (docs/CRASH_PHYSICS.md section 6).
+export function crashStyle(duel) {
+  const madMax = duel.state.mode === 'wasteland' && !duel.state.arena;
+  const M = CRASH_TUNING.madMax;
+  return madMax ? {launchMph: M.launchMph, tumble: M.tumble, wreckDecelScale: M.wreckDecelScale}
+    : {launchMph: CRASH_TUNING.launchMph, tumble: 1, wreckDecelScale: 1};
+}
 
 // Sideways road-frame speed that carries a car from `lateral` to beyond the
 // shoulder on `side` under the sliding friction, with a little to spare.
@@ -74,8 +83,9 @@ export function actorBody(duel, actor, spinRate = 0) {
     inertia: yawInertia(spec.mass, spec.halfLength, spec.halfWidth)};
 }
 
-export function startKnock(actor, {vx, vz, spin, severity, hopMps = 0, heading = 0}) {
-  actor.knock = {vx, vz, spin, severity, age: 0, vy: hopMps};
+export function startKnock(actor, {vx, vz, spin, severity, hopMps = 0, heading = 0,
+  wreck = null}) {
+  actor.knock = {vx, vz, spin, severity, age: 0, vy: hopMps, ...(wreck ? {wreck} : {})};
   const forward = vx * Math.sin(heading) + vz * Math.cos(heading);
   actor.speedMph = forward / DRIVE.mphToWorld;
   if (hopMps > 0) { actor.airborne = true; actor.airHeight = Math.max(actor.airHeight || 0, .02); }
@@ -93,7 +103,9 @@ export function stepKnock(duel, actor, dt) {
   const heading = bodyHeading(duel, actor);
   const f = {x: Math.sin(heading), z: Math.cos(heading)}, side = {x: Math.cos(heading), z: -Math.sin(heading)};
   let forward = k.vx * f.x + k.vz * f.z, across = k.vx * side.x + k.vz * side.z;
-  const rollDecel = k.roadside ? WRECK.forwardDecel :
+  // A wreck has no driver braking it; it skids on like a roadside shove.
+  const rollDecel = k.wreck ? WRECK.forwardDecel * k.wreck.decelScale :
+    k.roadside ? WRECK.forwardDecel :
     actor === duel.state ? T.playerRollDecel : T.rollDecel;
   forward = Math.sign(forward) * Math.max(0, Math.abs(forward) - rollDecel * dt);
   across = Math.sign(across) * Math.max(0, Math.abs(across) - T.slideDecel * dt);
@@ -114,11 +126,12 @@ export function stepKnock(duel, actor, dt) {
   // Control returns once the car stops sliding sideways and spinning; rolling
   // forward is fine to hand back to the driver. A roadside shove has no
   // driver, so it parks only once it has nearly stopped.
-  const endSpeed = k.roadside ? 2 : T.endSpeed;
-  const sliding = k.roadside ? Math.hypot(forward, across) : Math.abs(across);
+  const driverless = k.roadside || k.wreck;
+  const endSpeed = driverless ? 2 : T.endSpeed;
+  const sliding = driverless ? Math.hypot(forward, across) : Math.abs(across);
   const settled = k.age >= T.minSec && sliding < endSpeed && Math.abs(k.spin) < T.endSpin &&
     !(actor.airHeight > 0);
-  if (settled || k.age >= (k.roadside ? WRECK.maxSec : T.maxSec)) {
+  if (settled || k.age >= (driverless ? WRECK.maxSec : T.maxSec)) {
     if (k.roadside) {
       const parking = roadsideParkingPose(duel, actor, k.roadside.side);
       if (!parking) {
@@ -141,6 +154,24 @@ export function stepKnock(duel, actor, dt) {
     return false;
   }
   return true;
+}
+
+// One step of a sliding combat wreck: free motion that stops at a solid
+// instead of passing through it. Returns true while it still moves.
+export function stepWreckSlide(duel, actor, dt) {
+  if (!actor.knock) return false;
+  const from = {s: actor.s, lateral: actor.lateral};
+  const moving = stepKnock(duel, actor, dt);
+  const start = {...duel.course.worldAt(from.s, from.lateral), y: undefined};
+  const end = {...duel.course.worldAt(actor.s, actor.lateral), y: undefined};
+  const spec = duel._vehicleSpec(actor), heading = bodyHeading(duel, actor);
+  const blocked = duel._obstacles(Math.min(from.s, actor.s) - 6, Math.max(from.s, actor.s) + 6)
+    .some(obstacle => sweepObstacle(start, end, obstacle, heading, spec));
+  if (blocked) {
+    actor.s = from.s; actor.lateral = from.lateral; actor.speedMph = 0;
+    if (actor.knock) { actor.knock.vx = 0; actor.knock.vz = 0; }
+  }
+  return moving;
 }
 
 // One step of a physical traffic wreck (made under crash physics). It slides
@@ -170,7 +201,7 @@ export function stepPhysicalWreck(duel, actor, dt) {
   if (Math.abs(actor.lateral) >= clear + WRECK.pastShoulder &&
       Math.sign(w.lateralVelocity) === Math.sign(actor.lateral)) w.lateralVelocity = 0;
   const scrub = (value, decel) => Math.sign(value) * Math.max(0, Math.abs(value) - decel * dt);
-  w.forwardVelocity = scrub(w.forwardVelocity, WRECK.forwardDecel);
+  w.forwardVelocity = scrub(w.forwardVelocity, WRECK.forwardDecel * (w.decelScale ?? 1));
   w.lateralVelocity = scrub(w.lateralVelocity, WRECK.slideDecel);
   actor.headingError = (actor.headingError || 0) + w.spinVelocity * dt;
   w.spinVelocity *= Math.exp(-WRECK.spinDamping * dt);
@@ -179,8 +210,8 @@ export function stepPhysicalWreck(duel, actor, dt) {
 }
 
 // Hop speeds for hard hits: a smashed car jolts, a launched one leaves the ground.
-function hopFor(severity, dvMph) {
-  if (severity === 'launched') return Math.min(8, 3 + (dvMph - 45) * .12);
+function hopFor(severity, dvMph, style = {launchMph: CRASH_TUNING.launchMph, tumble: 1}) {
+  if (severity === 'launched') return Math.min(8, (3 + (dvMph - style.launchMph) * .12) * style.tumble);
   return severity === 'smashed' ? 1.2 : 0;
 }
 
@@ -199,7 +230,7 @@ function applyDriving(duel, actor, before, after, {player}) {
 
 // Smashed or launched traffic becomes a roadside wreck, moving as the solver
 // says and rolling with its spin (the existing traffic-wreck motion).
-function wreckTraffic(duel, actor, after, severity, dvMph) {
+function wreckTraffic(duel, actor, after, severity, dvMph, style) {
   const frame = duel.course.at(actor.s);
   let lateral = after.vx * Math.cos(frame.heading) - after.vz * Math.sin(frame.heading);
   const along = after.vx * Math.sin(frame.heading) + after.vz * Math.cos(frame.heading);
@@ -210,10 +241,11 @@ function wreckTraffic(duel, actor, after, severity, dvMph) {
   lateral = side * Math.max(side * lateral, shoulderSpeed(duel, actor, actor.lateral, side));
   actor.alive = false;
   actor.wrecked = {atTime: duel.state.stageTimeSec, age: 0, side: Math.sign(lateral) || 1,
-    lateralVelocity: lateral, forwardVelocity: along, verticalVelocity: hopFor(severity, dvMph) || 1.1,
-    spinVelocity: after.spin, physical: true,
+    lateralVelocity: lateral, forwardVelocity: along, verticalVelocity: hopFor(severity, dvMph, style) || 1.1,
+    spinVelocity: after.spin, physical: true, decelScale: style.wreckDecelScale,
     // Smashed cars stay upright; launched ones roll, the harder the further.
-    rollLimit: severity === 'launched' ? Math.min(Math.PI, 1.05 + (dvMph - 45) * .05) : .2};
+    rollLimit: severity === 'launched' ? Math.min(Math.PI,
+      1.05 + (dvMph - style.launchMph) * .05) * style.tumble : .2};
   actor.airHeight = 0; actor.speedMph = 0; actor.pushVelocity = 0;
   actor.damageZones = {front: 3.5, rear: 3.5, left: 3.5, right: 3.5};
 }
@@ -228,17 +260,36 @@ export function resolveCarCrash(duel, a, b, {
   const spinOf = actor => actor === s ? s.yawVelocity || 0 : 0;
   const bodyA = actorBody(duel, a, spinOf(a)), bodyB = actorBody(duel, b, spinOf(b));
   const result = solveVehicleImpact(bodyA, bodyB);
-  const severityA = impactSeverity(result.a.dvMph, {attackerMass: bodyB.mass, mass: bodyA.mass});
-  const severityB = impactSeverity(result.b.dvMph, {attackerMass: bodyA.mass, mass: bodyB.mass});
+  const style = crashStyle(duel);
+  const severityA = impactSeverity(result.a.dvMph, {attackerMass: bodyB.mass, mass: bodyA.mass,
+    launchMph: style.launchMph});
+  const severityB = impactSeverity(result.b.dvMph, {attackerMass: bodyA.mass, mass: bodyB.mass,
+    launchMph: style.launchMph});
   for (const [actor, before, after, severity] of onlyB ? [[b, bodyB, result.b, severityB]]
     : [[a, bodyA, result.a, severityA], [b, bodyB, result.b, severityB]]) {
     if (!forceKnock && actor === s && after.dvMph < playerKnockMinDvMph && !actor.knock)
       applyDriving(duel, actor, before, after, {player: true});
     else if (!forceKnock && actor === s && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: true});
-    else if (s.traffic.includes(actor) && wreckTrafficAt.includes(severity)) wreckTraffic(duel, actor, after, severity, after.dvMph);
+    else if (s.traffic.includes(actor) && wreckTrafficAt.includes(severity)) wreckTraffic(duel, actor, after, severity, after.dvMph, style);
     else if (!forceKnock && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: false});
     else startKnock(actor, {vx: after.vx, vz: after.vz, spin: after.spin,
-      severity, hopMps: hopFor(severity, after.dvMph), heading: before.heading});
+      severity, hopMps: hopFor(severity, after.dvMph, style), heading: before.heading});
   }
   return {result, severityA, severityB};
+}
+
+// A car whose armor runs out keeps the motion it had: it skids and spins to
+// rest with no driver instead of stopping dead (CRASH-04). Its recovery timer
+// runs meanwhile, and it recovers where it came to rest.
+export function startWreckSlide(duel, actor) {
+  const style = crashStyle(duel);
+  if (actor.knock) {
+    actor.knock.wreck = {decelScale: style.wreckDecelScale};
+    return;
+  }
+  const body = actorBody(duel, actor);
+  if (Math.hypot(body.vx, body.vz) < 1) return;
+  startKnock(actor, {vx: body.vx, vz: body.vz, spin: body.spin, severity: 'smashed',
+    hopMps: hopFor('smashed', 0, style), heading: body.heading,
+    wreck: {decelScale: style.wreckDecelScale}});
 }

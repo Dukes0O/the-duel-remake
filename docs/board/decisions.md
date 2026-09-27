@@ -1246,3 +1246,17 @@ off-road-capable cars count a checkpoint within 120 m of the road or any
 shortcut; farther out is a corner cut and still a miss. Ordinary cars keep
 the road-and-shoulder rule. Boulders taller than a car can climb stay solid;
 their message now says ROCK TOO BIG / BACKING OFF instead of CLIMB LIMIT.
+
+## 27 September 2026: Mad Max crash physics (CRASH-04)
+
+Kyle found crash physics good in Rival Duel but missing in Mad Max. Ordinary
+rams already used the solver; wrecks stopped dead, hard-hit traffic vanished
+in a scripted burst, and ram damage ignored mass. Claude settled that Mad Max
+starts from the Rival Duel physics, then: wrecks keep moving and recover where
+they stop; a smash or launch explodes traffic and its hulk slides and tumbles
+off the road; ram damage comes from each car's own change in velocity (1.25
+armor per mph of Δv above 8 mph, spikes 1.5 times, cap 80), so mass counts; kit plating adds
+90 to 270 kg; launch from 38 mph of Δv, a quarter more roll and slide; the
+armored player spins from 45 mph of Δv. The Scrapdome arena keeps its own
+rules. Combat balance stayed in its bands (9/5/2 and 8/5/2 wins).
+

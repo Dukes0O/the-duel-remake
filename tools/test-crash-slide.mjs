@@ -73,8 +73,10 @@ test('Rival Duel: an off-centre hit leaves by the side it was struck toward', ()
     `pushed right, parked on the right shoulder (${traffic.lateral.toFixed(2)})`);
 });
 
+// A 25 mph closing shove. Since CRASH-04 a harder Mad Max hit is a smash that
+// explodes the car (tools/test-madmax-crash.mjs), so the shove is gentler.
 test('Mad Max: a shoved car scrubs to a stop instead of halting from speed', () => {
-  const {traffic, samples, clear} = crash({mode: 'wasteland', playerMph: 100, trafficMph: 45});
+  const {traffic, samples, clear} = crash({mode: 'wasteland', playerMph: 70, trafficMph: 45});
   assert.ok(traffic.wrecked, 'the shoved car ends as a still roadside wreck');
   assert.ok(worstStop(samples) <= MAX_DECEL,
     `no dead stop (worst ${worstStop(samples).toFixed(1)} m/s²)`);

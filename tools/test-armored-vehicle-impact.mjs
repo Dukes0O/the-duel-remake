@@ -45,8 +45,10 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
   assert.equal(duel._vehicleContact(player, rival, 'rival'), true);
   assert.equal(player.impactTimer, 0, 'a protected rear ram below the car threshold leaves control with the player');
   assert.equal(player.stageCrashes, 0, 'a protected rear ram adds no crash penalty');
-  assert.equal(player.knock, undefined,
-    'a protected Wasteland rear ram below the armored threshold leaves the player driving');
+  // CRASH-04: about 63 mph of Δv is above Mad Max's 45 mph bar, so the big
+  // rear ram now spins the armored player too; it is still no crash.
+  assert.ok(player.knock,
+    'a big Wasteland rear ram spins the armored player without a crash');
   assert.ok(rival.knock, 'the struck rival enters free-body knock motion');
   assert.ok(rival.speedMph > before.rivalSpeed + 20, 'closing speed transfers into the opponent');
   const heading = duel.course.at(rival.s).heading;
