@@ -112,7 +112,8 @@ test('a full round is repeatable, stays on the floor, holds the hunter cap and e
     assert.deepEqual(result.placings, arenaRanking(first.duel.state.arena).map(p => p.id));
     assert.deepEqual(second.duel.state.arena.result, result, `${difficulty}: same seed, same result`);
     assert.deepEqual(second.events, first.events, `${difficulty}: same wrecks in the same order`);
-    assert.ok(first.seconds >= 150 && first.seconds <= 180.1);
+    // Countdown 3 s + 150 s + at most 30 s of sudden death ending on damage.
+    assert.ok(first.seconds >= 150 && first.seconds <= 183.1);
     assert.equal(first.duel.state.status, 'arena_result');
   }
 });

@@ -152,6 +152,9 @@ Each win gives a story card, scrap, and the warlord's signature move as a
 working item.
 
 Every signature move follows one rule: **tell, then attack, then a window.**
+The first tell is built (ARENA-FEEL): a rammer that lines up a charge eases to
+60% speed, flashes its high beams and roars for the difficulty's tell time,
+then boosts in. A respawned car shimmers for 1.2 s.
 The tell gives time to react; the window after the attack is the moment to
 hit back.
 

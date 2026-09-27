@@ -32,6 +32,8 @@ import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehi
 import { createFrameMetrics } from './frame-metrics.js';
 import { createRearView } from './rear-view.js';
 import { createRoadsideDebris } from './roadside-debris.js';
+import { updateArenaTells } from './arena/arena-tell-view.js';
+import { ARENA_FEEL } from './arena/arena-brains.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
@@ -502,6 +504,9 @@ export function attachRenderer(host, app) {
     }
     combatPlayerExplosion?.update(pp,
       {catastrophic:!useCombatAtlas&&!!st.combatWrecking,status:st.status},effectDt);
+    if (!menu && st.arena && updateArenaTells([{mesh: player, actor: st}, {mesh: rival, actor: st.rival},
+      ...extraOpponents.map(({mesh}, index) => ({mesh, actor: opponents[index + 1]}))],
+      performance.now() / 1000, ARENA_FEEL.shimmerSec)) ambientShading.refresh();
     opponentExplosions?.forEach((effect, index) => {
       const actor = st.opponents?.[index];
       effect.update(actor ? course.groundAt(actor.s, actor.lateral) : pp,
