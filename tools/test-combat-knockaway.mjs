@@ -140,9 +140,10 @@ for (const [name, kind, make] of [['cactus', 'cactus', cactus],
   });
 }
 
+// CRASH-05: a shove is under 25 mph of Δv; the cars start just touching.
 test('low closing speed shoves traffic visibly clear and leaves it there for the stage', () => {
   const duel = fixture();
-  const hit = trafficHit(duel, duel.car.topSpeed * .3);
+  const hit = trafficHit(duel, duel.car.topSpeed * .15, {touching: true});
   const { state, traffic, events, armor, crashes, penalty } = hit;
   const impact = events.filter(event => event.roadsideImpact).map(event => event.roadsideImpact);
   assert.equal(impact.length, 1, 'one traffic contact produces one flagged event');
@@ -158,18 +159,22 @@ test('low closing speed shoves traffic visibly clear and leaves it there for the
     'the car itself moves clear of the occupied lane');
   const displaced = traffic.lateral;
   for (let i = 0; i < 240; i++) duel._traffic(1 / 120);
-  assert.ok(Math.abs(traffic.lateral - displaced) < 1,
+  // The gentler CRASH-05 shove may still be sliding outward after a second.
+  assert.ok(Math.abs(traffic.lateral) >= Math.abs(displaced) - .1,
     'traffic does not steer back into the player lane during this stage');
-  assert.equal(duel._vehicleContact(state, traffic, 'traffic'), false,
+  // CRASH-05: the shoved car stays solid, but one touch is one hit.
+  duel._vehicleContact(state, traffic, 'traffic');
+  assert.equal(events.filter(event => event.roadsideImpact).length, 1,
     'the same knocked car cannot be hit every frame');
-  assert.equal(events.filter(event => event.roadsideImpact).length, 1);
   assert.ok(traffic.wrecked, 'settled roadside traffic becomes a still wreck');
   assert.deepEqual([
     traffic.wrecked.lateralVelocity, traffic.wrecked.forwardVelocity,
     traffic.wrecked.verticalVelocity, traffic.wrecked.spinVelocity,
     traffic.wrecked.rollLimit,
   ], [0, 0, 0, 0, 0], 'the parked wreck has no remaining motion or roll');
-  assert.ok(entrySpeed < duel.car.topSpeed * .3 && entrySpeed > duel.car.topSpeed * .3 - 25);
+  // CRASH-05: the attacker pays in speed by momentum, not a small flat cost.
+  assert.ok(entrySpeed < duel.car.topSpeed * .15 - 5 && entrySpeed > 0,
+    `the shove costs the attacker real speed (${entrySpeed.toFixed(0)} mph)`);
   assert.equal(state.armor, armor);
   assert.deepEqual([state.stageCrashes, state.racePenaltySec], [crashes, penalty]);
 });
@@ -221,9 +226,9 @@ test('crash-physics off keeps both released scripted roadside traffic outcomes',
     'switch-off hard hit keeps the released scripted obliteration motion');
 });
 
-// CRASH-04 replaced the vanishing burst: the car explodes and its hulk
-// slides and tumbles off the road, as smashed traffic does in Rival Duel.
-test('a hard hit explodes traffic, leaves a sliding hulk and never costs player armor', () => {
+// CRASH-04 replaced the vanishing burst with a hulk that slides and tumbles
+// off the road. CRASH-05: below 250 km/h closing it is smashed, not blown up.
+test('a hard hit smashes traffic, leaves a sliding hulk and never costs player armor', () => {
   const duel = fixture();
   const hit = trafficHit(duel, duel.car.topSpeed * .7, {touching: true});
   const { state, traffic, events, armor, crashes, penalty } = hit;
@@ -231,8 +236,8 @@ test('a hard hit explodes traffic, leaves a sliding hulk and never costs player 
   assert.equal(impact.length, 1, 'one traffic collision starts one visible burst');
   assert.equal(impact[0].actor, traffic);
   assert.equal(impact[0].kind, 'traffic');
-  assert.equal(impact[0].outcome, 'obliterate');
-  assert.equal(state.callout, 'TRAFFIC OBLITERATED');
+  assert.equal(impact[0].outcome, 'smash', '227 km/h closing is a smash');
+  assert.equal(state.callout, 'TRAFFIC SMASHED');
   for (let i = 0; i < 180; i++) duel._traffic(1 / 120);
   assert.ok(!traffic.alive && traffic.wrecked?.physical,
     'the burning hulk stays as a physical wreck, not an intact car');
@@ -249,7 +254,7 @@ test('an oncoming car uses closing speed, even when player speed is below half t
   const impacts = events.filter(event => event.roadsideImpact).map(event => event.roadsideImpact);
   assert.equal(impacts.length, 1);
   assert.equal(impacts[0].actor, traffic);
-  assert.equal(impacts[0].outcome, 'obliterate', 'relative 55% top speed enters the high tier');
+  assert.equal(impacts[0].outcome, 'smash', 'relative 55% top speed smashes the car (under 250 km/h)');
   assert.ok(impacts[0].impactMph > duel.car.topSpeed * .5);
 });
 

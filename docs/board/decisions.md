@@ -1260,3 +1260,15 @@ armor per mph of Δv above 8 mph, spikes 1.5 times, cap 80), so mass counts; kit
 armored player spins from 45 mph of Δv. The Scrapdome arena keeps its own
 rules. Combat balance stayed in its bands (9/5/2 and 8/5/2 wins).
 
+## 27 September 2026: Mad Max cars are solids (CRASH-05)
+
+After playing CRASH-04, Kyle found high-speed hits drove through traffic like a
+gas. Claude settled: a Mad Max hit on traffic gives both cars their share of
+the impulse, so the struck car is smashed ahead and the attacker (player or
+computer racer) loses real speed but keeps control; wrecks and shoved cars
+stay solid; only a hit over 250 km/h closing blows a car up, 0.6 s after the
+smash, where the hulk has got to; the nearest wrecks smoulder all race. This
+replaces the CRASH-04 rule that exploded every smash. The live-game balance
+(crash physics off) is unchanged; with crash physics on the 10-race check is
+too noisy to judge, so BALANCE-SAMPLE comes before CRASH-RELEASE.
+

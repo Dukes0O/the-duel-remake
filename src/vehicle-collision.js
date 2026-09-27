@@ -19,6 +19,10 @@ export const CRASH_TUNING = Object.freeze({
     tumble: 1.25,           // and roll a quarter further
     wreckDecelScale: .8,    // wrecks slide about a quarter further
     playerKnockDvMph: 45,   // armor keeps control below a big hit
+    // CRASH-05: only a very hard hit blows a car up, after it is smashed ahead.
+    explodeClosingKph: 250,
+    explodeDelaySec: .6,
+    rehitGapSec: .25,       // one shove of a hulk per touch, not one per frame
   }),
 });
 

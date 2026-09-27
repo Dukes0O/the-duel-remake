@@ -26,6 +26,21 @@ function roadsideTopSpeedMph(duel, actor) {
     actor.driverId, carKey).topSpeed;
 }
 
+// A hulk thrown by a hit over 250 km/h blows up where it has got to
+// (CRASH-05). It stays as a burnt-out wreck for the rest of the race.
+export function explodeTrafficWreck(duel, car) {
+  const wreck = car.wrecked;
+  if (!wreck || wreck.exploded) return false;
+  wreck.exploded = true;
+  wreck.verticalVelocity = Math.max(wreck.verticalVelocity || 0, 3.2) + 4.9 * (wreck.age || 0);
+  const point = duel.course.groundAt(car.s, car.lateral);
+  emitRoadsideImpact(duel, {id: `traffic-${duel.state.traffic.indexOf(car)}`,
+    kind: 'traffic', outcome: 'obliterate', impactMph: 0, thresholdMph: 0,
+    hitPosition: {x: point.x, y: point.y, z: point.z}, actor: car});
+  duel._callout('TRAFFIC EXPLODED', 1.6);
+  return true;
+}
+
 function emitRoadsideImpact(duel, impact) {
   duel.emit({roadsideImpact: impact});
   if (impact.outcome !== 'obliterate') return;
@@ -163,7 +178,8 @@ export function _collisions() {
     for (let j = i + 1; j < s.opponents.length; j++) this._vehicleContact(s.opponents[i], s.opponents[j], 'rival');
   }
   for (const c of s.traffic) {
-    if (!c.alive || c.crushed) continue;
+    // Mad Max hulks and shoved cars stay solid (CRASH-05).
+    if (!c.alive && !solidTraffic(this, c) || c.crushed) continue;
     // swept longitudinal test: a head-on closing speed can cross the whole
     // hit window in one clamped frame, so a relative sign flip counts too
     const phase = this.relativeS(c.s, s.s) - c.s;
@@ -171,8 +187,9 @@ export function _collisions() {
     const prev = (c.prevS ?? c.s) + phase - (s.prevS ?? s.s);
     const clearance = Math.abs(c.lateral - s.lateral);
     this._vehicleContact(s, c, c.dir < 0 ? 'head_on' : 'traffic');
-    if (!c.alive || c.wrecked) continue;
+    if (!c.alive && !solidTraffic(this, c) || c.crushed) continue;
     for (const opponent of s.opponents) this._vehicleContact(opponent, c, 'traffic');
+    if (!c.alive || c.wrecked) continue;
     // Reward a completed pass once, rather than every frame spent near a car.
     if (c.passedLap !== s.completedLaps && prev > 0 && now <= 0) {
       c.passed = true; c.passedLap = s.completedLaps;
@@ -404,9 +421,17 @@ export function _staticContacts(car, player, journeyColliders = null) {
   car.offRoad = !this._surface(car.s, car.lateral).mainRoad;
 }
 
+// In Mad Max on the road, a smashed or shoved car and its hulk stay solid
+// (CRASH-05); elsewhere they are scenery the cars pass.
+function solidTraffic(duel, actor) {
+  return duel.state.mode === 'wasteland' && !duel.state.arena &&
+    duel.featureFlags?.enabled('crash-physics') === true && duel.roadsideKnockAwayEnabled() &&
+    duel.state.traffic.includes(actor) && !!(actor.wrecked?.physical || actor.knock);
+}
+
 export function _vehicleContact(a, b, reason) {
-  if (a.crushed || b.crushed || a.wrecked || b.wrecked ||
-      a.roadsideMotion || b.roadsideMotion ||
+  const ghost = actor => (actor.wrecked || actor.roadsideMotion) && !solidTraffic(this, actor);
+  if (a.crushed || b.crushed || ghost(a) || ghost(b) ||
       a.combatWrecking || b.combatWrecking || a.tumble || b.tumble) return false;
   if (b === this.state && a !== this.state) return this._vehicleContact(b, a, reason);
   const armorContact = combatArmorEnabled(this);
@@ -436,7 +461,8 @@ export function _vehicleContact(a, b, reason) {
   if (!hit) return false;
   const descendingCrush = a === this.state && a.airborne && a._verticalSpeed < -1 && (a.prevAirHeight || 0) > (a.airHeight || 0)
     && canCrushVehicle(this.car, specB, { descending: true });
-  const yieldNormal = a === this.state && !this.state.onFoot && !descendingCrush ?
+  const yieldNormal = a === this.state && !this.state.onFoot && !descendingCrush &&
+    !b.wrecked && !b.knock ?
     npcYieldContactNormal(a, b, hit, start.z) : null;
   if (yieldNormal) {
     // A late cut-in or numerical overlap is not permission for an NPC to
@@ -483,8 +509,11 @@ export function _vehicleContact(a, b, reason) {
   if (armoredPair) return armoredVehicleContact(this,{a,b,nx,nz,end,width,length,
     specA,specB,impactMph,zoneA:zone,zoneB,pairKey});
   const crashPhysics = this.featureFlags?.enabled('crash-physics') === true;
+  // A solid hulk or shoved car touched below shove speed just stays in
+  // contact; the older contact rules must not restart it as a live car.
+  if (solidTraffic(this, b) && impactMph < COMBAT_TUNING.roadside.minimumImpactMph) return true;
   if (this.roadsideKnockAwayEnabled() && this.state.traffic.includes(b) &&
-      (!crashPhysics || !b.knock) &&
+      (crashPhysics || !b.knock) &&
       (a === this.state || this.state.opponents.includes(a)) &&
       impactMph >= COMBAT_TUNING.roadside.minimumImpactMph) {
     const topSpeedMph = roadsideTopSpeedMph(this, a);
@@ -498,14 +527,24 @@ export function _vehicleContact(a, b, reason) {
     const clearLateral = crashPhysics ? roadHalfWidth + specB.halfWidth + .5 :
       Math.max(Math.abs(b.lateral) + COMBAT_TUNING.roadside.trafficKnockDistance,
         roadHalfWidth + specB.halfWidth + .5);
-    // Under crash physics the solver decides, as in Rival Duel. A smash or
-    // launch explodes the car and its hulk slides and tumbles off the road;
-    // a lighter hit shoves it clear (CRASH-04). The attacker keeps the
-    // approved roadside rule (a small speed cost, no armor or crash).
-    const physical = crashPhysics && !b.knock && !b.wrecked;
+    // Under crash physics both cars are solids (CRASH-04, CRASH-05). The
+    // solver pushes each by its share of the impulse: the struck car is
+    // smashed ahead and the attacker loses speed but keeps control, with no
+    // armor or crash cost. A smash or launch wrecks the car, and only a hit
+    // over 250 km/h closing blows it up, once it has been thrown forward. A
+    // lighter hit shoves it clear; a hulk hit again is shoved along.
+    const M = CRASH_TUNING.madMax, now = this.state.stageTimeSec;
+    const wasWreck = !!b.wrecked;
+    if (crashPhysics && (b.lastSmashAt ?? -Infinity) > now - M.rehitGapSec) return true;
+    const physical = crashPhysics;
     if (physical) {
-      resolveCarCrash(this, a, b, {onlyB: true, forceKnock: true});
-      outcome = b.wrecked ? 'obliterate' : 'knock';
+      resolveCarCrash(this, a, b, {forceKnock: true, playerKnockMinDvMph: Infinity,
+        attackerKeepsControl: true});
+      b.lastSmashAt = now;
+      outcome = wasWreck ? 'wreck' : b.wrecked ? 'smash' : 'knock';
+      if (b.wrecked && !wasWreck &&
+          impactMph * COMBAT_TUNING.armor.kphPerMph >= M.explodeClosingKph)
+        b.wrecked.explodeAt = now + M.explodeDelaySec;
       if (b.knock) {
         const frame = this.course.at(b.s);
         const shoulderSpeed = Math.sqrt(2 * KNOCK.slideDecel *
@@ -526,7 +565,7 @@ export function _vehicleContact(a, b, reason) {
       startRoadsideTraffic(b, {atTime: this.state.stageTimeSec,
         outcome, side, impactMph, targetLateral: side * clearLateral});
     if (roadsideStarted) {
-      a.speedMph = Math.sign(a.speedMph) * Math.max(0,
+      if (!physical) a.speedMph = Math.sign(a.speedMph) * Math.max(0,
         Math.abs(a.speedMph) - roadsideSpeedCost(impactMph));
       const pointA = this.course.groundAt(a.s, a.lateral);
       const pointB = this.course.groundAt(b.s, b.lateral);
@@ -536,8 +575,9 @@ export function _vehicleContact(a, b, reason) {
         hitPosition: {x: (pointA.x + pointB.x) / 2,
           y: (pointA.y + pointB.y) / 2, z: (pointA.z + pointB.z) / 2},
         actor: b});
-      if (a === this.state) this._callout(outcome === 'obliterate'
-        ? 'TRAFFIC OBLITERATED' : 'TRAFFIC SHOVED CLEAR', 1.8);
+      const callout = {obliterate: 'TRAFFIC OBLITERATED', smash: 'TRAFFIC SMASHED',
+        knock: 'TRAFFIC SHOVED CLEAR'}[outcome];
+      if (a === this.state && callout) this._callout(callout, 1.8);
       return true;
     }
   }

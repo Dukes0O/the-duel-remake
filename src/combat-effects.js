@@ -13,6 +13,10 @@ const WRECK_LIMIT = 4; // Player and up to three CPU cars.
 const CRASH_IMPACT_LIMIT = 8;
 const KNOCKED_ACTOR_LIMIT = 16;
 const KNOCK_SMOKE_LIMIT = KNOCKED_ACTOR_LIMIT * 2;
+// CRASH-05: the nearest wrecks keep smouldering all race, so lap two shows
+// the carnage of lap one.
+const TRAFFIC_WRECK_LIMIT = 12;
+const TRAFFIC_WRECK_RANGE = 450;
 const CRASH_IMPACT_DURATION = .65;
 const PLANE_UV = [0, 1, 1, 1, 0, 0, 1, 0];
 
@@ -156,6 +160,12 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
     age: 0,
     active: false,
   }));
+  const trafficWrecks = Array.from({length: TRAFFIC_WRECK_LIMIT}, (_, index) => ({
+    smoke: makeSlot(group, resources, resources.textures.smoke,
+      `combat-vfx-traffic-wreck-${index}-smoke`, grid8),
+    fire: makeSlot(group, resources, resources.textures.fire,
+      `combat-vfx-traffic-wreck-${index}-fire`, grid8),
+  }));
   const damage = Array.from({length: WRECK_LIMIT}, (_, index) => ({
     smoke: makeSlot(group, resources, resources.textures.smoke,
       `combat-vfx-damage-${index}-smoke`, grid8),
@@ -190,6 +200,7 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
   const knockSmokeOptions = {age: 0, duration: 1, size: 2,
     startFrame: 16, frameCount: 48, rise: .18, alpha: .72};
   const everySlot = [...bursts.flatMap(entry => Object.values(entry)),
+    ...trafficWrecks.flatMap(entry => [entry.smoke, entry.fire]),
     ...muzzles, ...wrecks.flatMap(entry => [entry.fire, entry.explosion,
       entry.smoke]), ...damage.flatMap(entry => [entry.smoke, entry.fire]),
     ...crashImpacts.flatMap(entry => [entry.sparks, entry.crumple,
@@ -392,6 +403,26 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
         duration: 3.3, size: 9 + Math.min(age, 2) * 4,
         rise: 3 + Math.min(age, 2) * 2, alpha: .8});
       else hide(entry.smoke);
+    });
+    const smouldering = enabled ? (state.traffic || [])
+      .map((car, index) => ({car, index, gap: Math.abs((car?.s ?? Infinity) - state.s)}))
+      .filter(entry => entry.car?.wrecked && entry.gap < TRAFFIC_WRECK_RANGE)
+      .sort((left, right) => left.gap - right.gap)
+      .slice(0, TRAFFIC_WRECK_LIMIT) : [];
+    trafficWrecks.forEach((entry, slot) => {
+      const wreck = smouldering[slot];
+      if (!wreck) { hide(entry.smoke); hide(entry.fire); return; }
+      const {car, index} = wreck;
+      const ground = course.groundAt(car.s, car.lateral);
+      const time = state.stageTimeSec || 0;
+      show(entry.smoke, ground, {age: (time * .55 + index * .37) % 2.4,
+        duration: 2.4, size: car.wrecked.exploded ? 6.5 : 4.5,
+        rise: 2.2 + ((time * .55 + index * .37) % 2.4) * .9, alpha: .6});
+      // A blown-up hulk keeps a low glow of flame under its smoke.
+      if (car.wrecked.exploded) show(entry.fire, ground, {
+        age: (time * 1.3 + index * .29) % 1.35, duration: 1.35, startFrame: 8,
+        size: 2.4, rise: .9, alpha: .75});
+      else hide(entry.fire);
     });
     for (let crashIndex = 0; crashIndex < crashImpacts.length; crashIndex++) {
       const entry = crashImpacts[crashIndex];

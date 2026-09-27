@@ -475,6 +475,30 @@ tasks:
     hooks: [src/combat-armor.js, src/vehicle-knock.js, src/vehicle-collision.js, src/sim-contacts.js, src/sim-rival.js, src/sim-crash.js, src/armor-kits.js, src/wasteland-tuning.js, tools/combat-balance.mjs, tools/replays/combat-fingerprints.json, docs/CRASH_PHYSICS.md]
     acceptance:
       - "Kyle: crash physics should be built out in Mad Max, mirrored from Rival Duel first, then lower explosion thresholds for struck cars and a bit more distance and tumbling, not outrageously more; armored cars should hit harder by F = ma. Design in docs/CRASH_PHYSICS.md section 6."
+  - id: CRASH-05
+    title: "Mad Max: cars are solids, explosions over 250 km/h after the smash, smouldering wreckage"
+    owner: claude
+    priority: 1
+    lane: CMB
+    size: M
+    needs: [CRASH-04]
+    status: ready-to-merge
+    flag: crash-physics
+    claimed_by: "Claude, 27 September 2026"
+    owns: [tools/test-madmax-solid.mjs, docs/changes/CRASH-05.md]
+    hooks: [src/sim-contacts.js, src/vehicle-knock.js, src/sim-rival.js, src/vehicle-collision.js, src/combat-effects.js, tools/combat-balance.mjs, docs/CRASH_PHYSICS.md]
+    acceptance:
+      - "Kyle: high-speed Mad Max hits drove through traffic like a gas. A struck car is a solid and is smashed ahead; hits over 250 km/h explode it after the smash; lap-one wreckage smoulders for lap two. Design in docs/CRASH_PHYSICS.md section 7."
+  - id: BALANCE-SAMPLE
+    title: "Combat balance check judges physics changes on enough races"
+    owner: codex
+    lane: OPS
+    size: S
+    needs: [CRASH-05]
+    status: ready
+    acceptance:
+      - "Found in CRASH-05: tools/combat-balance.mjs --check judges win rates on 10 races per level and single-race policy samples, so one close finish moves a rate by 10 points. With crash physics on, the 10-race check failed (Medium 7/10, Hard 1/10) while 30 further seeds showed no change (Medium 19/30 before and after, Hard 8/30 and 7/30)."
+      - "Make the check use enough races to tell a real shift from noise (for example 30 seeds per level, or the same seeds before and after with a stated tolerance), keep its run time reasonable on this laptop, and record the new sample in the targets. Then run it with wasteland2,crash-physics and report. Do not change game tuning in this card; if the larger sample shows a real imbalance, stop and hand it to Claude."
   - id: CRASH-02
     title: "Crash look and sound"
     priority: 3
@@ -2001,7 +2025,7 @@ tasks:
     owner: claude
     lane: RELEASE
     size: S
-    needs: [PREVIEW-OWN-FOLDER]
+    needs: [PREVIEW-OWN-FOLDER, BALANCE-SAMPLE]
     status: ready
     waiting_on: kyle
     acceptance:

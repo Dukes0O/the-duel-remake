@@ -8,6 +8,7 @@ import { clamp, freshDamageZones } from './sim-common.js';
 import {completeCombatRecovery} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {stepKnock, stepPhysicalWreck, stepWreckSlide} from './vehicle-knock.js';
+import {explodeTrafficWreck} from './sim-contacts.js';
 import {trafficSpeedNearFighter, opponentFighterIntent} from './onfoot-race.js';
 
 export function _npcYield(actor, targetMph, plannedHeading = actor.headingError || 0) {
@@ -57,8 +58,11 @@ export function _traffic(dt) {
     }
     if (c.roadsideMotion) { stepRoadsideTraffic(c, dt); continue; }
     if (c.wrecked) {
-      if (c.wrecked.physical && this.featureFlags?.enabled('crash-physics') === true)
+      if (c.wrecked.physical && this.featureFlags?.enabled('crash-physics') === true) {
         stepPhysicalWreck(this, c, dt);
+        if (c.wrecked.explodeAt != null && !c.wrecked.exploded &&
+            s.stageTimeSec >= c.wrecked.explodeAt) explodeTrafficWreck(this, c);
+      }
       else stepTrafficWreck(c, dt);
       continue;
     }
