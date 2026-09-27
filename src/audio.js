@@ -1441,6 +1441,22 @@ export class EngineAudio {
       !(this.context.currentTime - (this._lastCrashCueAt ?? -Infinity) < 0.15)
     )
       this._smashImpact(ev, state, course);
+    if (this.flags.enabled('scrapdome')) {
+      if (ev.arenaTell) {
+        const output = this._spatialOutput(
+          { hitPosition: ev.arenaTell.position, combatHit: true },
+          state,
+          course,
+        );
+        this._playCue('arena.tell', {
+          destination: output.level,
+          onEnd: output.disconnect,
+        });
+      }
+      if (ev.arenaRespawn) this._playCue('arena.respawn');
+      if (ev.arenaWreck?.creditedId === 'player')
+        this._playCue('arena.wreck-credit');
+    }
     if (ev.muddyHollowSplash)
       this._playCue('world.muddy-hollow-splash', {
         scale: clamp(

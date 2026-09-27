@@ -3,7 +3,7 @@ import {arenaActor, arenaParticipant} from '../combat-teams.js';
 import {containInArena, worldPose} from './arena-floor.js';
 import {pilotStep} from './arena-pilot.js';
 import {stepKnock} from '../vehicle-knock.js';
-import {thinkBrain, STYLE_ORDER} from './arena-brains.js';
+import {thinkBrain, STYLE_ORDER, ARENA_FEEL} from './arena-brains.js';
 import {spawnSlots} from './venues.js';
 
 // Arena event rules (docs/SCRAPDOME.md sections 3 and 7). `state.arena` is the
@@ -101,6 +101,8 @@ export function chooseRespawnSlot(duel, participant) {
   return best || arena.spawnSlots[0];
 }
 
+export {ARENA_FEEL} from './arena-brains.js';
+
 function respawn(duel, participant, actor) {
   const slot = chooseRespawnSlot(duel, participant);
   placeActor(duel, actor, slot, ARENA_RULES.respawnSpeedMph);
@@ -111,6 +113,8 @@ function respawn(duel, participant, actor) {
   participant.protectedSec = ARENA_RULES.protectedSec;
   participant.wreckCounted = false;
   participant.goal = null; participant.reactionSec = 0;
+  participant.tellLeft = 0; participant.chargeReady = false; actor.arenaTellSec = 0;
+  actor.arenaShimmerSec = ARENA_FEEL.shimmerSec;
   if (actor === duel.state) {
     duel.state.invulnerableSec = Math.max(duel.state.invulnerableSec, ARENA_RULES.protectedSec);
     duel.state.impactTimer = 0; duel.state.crashFlash = 0;
@@ -202,6 +206,8 @@ export function stepArenaEvent(duel, dt) {
   state.calloutTimer = Math.max(0, state.calloutTimer - dt);
   for (const participant of arena.participants)
     participant.protectedSec = Math.max(0, participant.protectedSec - dt);
+  for (const actor of [state, ...state.opponents])
+    if (actor.arenaShimmerSec > 0) actor.arenaShimmerSec = Math.max(0, actor.arenaShimmerSec - dt);
   for (const actor of state.opponents)
     if (actor.damageCooldown > 0) actor.damageCooldown = Math.max(0, actor.damageCooldown - dt);
 

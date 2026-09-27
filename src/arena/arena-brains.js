@@ -28,6 +28,11 @@ export const STYLES = Object.freeze({
   intercept: Object.freeze({nearMetres: 70, minimumMph: 30, maxSeconds: 8}),
 });
 
+// ARENA-FEEL: a rammer announces each charge with a tell of tellSec
+// (flashing lights and an engine roar) while easing off, then boosts in.
+// A respawned car shimmers for shimmerSec. Presentation reads these timers.
+export const ARENA_FEEL = Object.freeze({tellSpeedShare: .6, shimmerSec: 1.2});
+
 // Default style for the n-th computer car, so a field has variety.
 export const STYLE_ORDER = Object.freeze(['rammer', 'gunner', 'brawler']);
 
@@ -116,12 +121,14 @@ export function decideGoal(duel, participant, actor) {
   if (style === 'rammer') {
     const R = STYLES.rammer;
     if ((participant.backoffSec || 0) > 0) {
+      participant.chargeReady = false;
       const away = Math.atan2(me.x - at.x, me.z - at.z);
       return {x: me.x + Math.sin(away) * R.retreatMetres, z: me.z + Math.cos(away) * R.retreatMetres,
         speedMph: top * .8, boost: false};
     }
     if (distance < R.stallMetres && Math.abs(actor.speedMph || 0) < R.stallMph) {
       participant.backoffSec = R.backoffSec;
+      participant.chargeReady = false;
       actor._arenaReverseSec = Math.max(actor._arenaReverseSec || 0, R.reverseSec);
       const away = Math.atan2(me.x - at.x, me.z - at.z);
       return {x: me.x + Math.sin(away) * R.retreatMetres, z: me.z + Math.cos(away) * R.retreatMetres,
@@ -133,6 +140,17 @@ export function decideGoal(duel, participant, actor) {
     const aligned = Math.abs(Math.atan2(Math.sin(Math.atan2(future.x - me.x, future.z - me.z) - me.heading),
       Math.cos(Math.atan2(future.x - me.x, future.z - me.z) - me.heading))) < STYLES.rammer.chargeAlignRadians;
     const charge = distance < STYLES.rammer.chargeRange && aligned;
+    if (!charge) participant.chargeReady = false;
+    else if (!participant.chargeReady) {
+      // The tell: announce the charge, ease off, then come in.
+      if (!(participant.tellLeft > 0)) {
+        participant.tellLeft = difficulty.tellSec;
+        actor.arenaTellSec = difficulty.tellSec;
+        duel.emit({arenaTell: {id: participant.id, targetId: participant.targetId,
+          seconds: difficulty.tellSec, position: {x: me.x, y: me.y ?? 0, z: me.z}}});
+      }
+      return {x: future.x, z: future.z, speedMph: top * ARENA_FEEL.tellSpeedShare, boost: false};
+    }
     const boost = difficulty.boost === 'always' || difficulty.boost === 'charges' && charge;
     return {x: future.x, z: future.z, speedMph: top, boost: boost && charge};
   }
@@ -156,6 +174,11 @@ export function thinkBrain(duel, participant, actor, dt) {
   if ((participant.backoffSec || 0) > 0) {
     participant.backoffSec = Math.max(0, participant.backoffSec - dt);
     if (participant.backoffSec === 0) participant.reactionSec = 0;
+  }
+  if (participant.tellLeft > 0) {
+    participant.tellLeft = Math.max(0, participant.tellLeft - dt);
+    actor.arenaTellSec = participant.tellLeft;
+    if (participant.tellLeft === 0) { participant.chargeReady = true; participant.reactionSec = 0; }
   }
   participant.reactionSec = Math.max(0, (participant.reactionSec || 0) - dt);
   const current = participant.targetId ? arenaActor(duel, participant.targetId) : null;
