@@ -5,6 +5,22 @@ import { EngineAudio } from '../src/audio.js';
 import { SoundMixer } from '../src/sound-mixer.js';
 import { SOUND_BANK } from '../src/sound-bank.js';
 
+let scenarioChecks = 0;
+test.after(() =>
+  console.log(`Combat audio scenario: ${scenarioChecks} fixture checks executed.`),
+);
+
+test('combat-audio browser fixture unlocks Wasteland rules before flight audio', () => {
+  const scenario = readFileSync('tools/scenarios/combat-audio.mjs', 'utf8');
+  const discovery = scenario.match(/discoveredGate\s*:\s*true/)?.index ?? -1;
+  const campaign = scenario.indexOf("a.startCampaign({mode:'wasteland'");
+  scenarioChecks++;
+  assert.ok(
+    discovery >= 0 && discovery < campaign,
+    'combat-audio must discover the gate before starting its memory-only Wasteland race',
+  );
+});
+
 test('approved combat recipes declare compressed variants and provenance', async () => {
   const { COMBAT_RECIPES } = await import('./audio/build-combat.mjs');
   const ids = new Set(COMBAT_RECIPES.flatMap((r) => r.sources));

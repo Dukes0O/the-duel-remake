@@ -48,6 +48,15 @@ async function cliState(port) {
   }
 }
 
+async function previewCliState(port) {
+  try {
+    const { stdout, stderr } = await exec(process.execPath, [fileURLToPath(new URL('./launcher-port.mjs', import.meta.url)), '--port', String(port), '--preview']);
+    return { code: 0, output: stdout + stderr };
+  } catch (error) {
+    return { code: error.code, output: error.stdout + error.stderr };
+  }
+}
+
 await withServer((request, response) => {
   response.writeHead(200, { 'Content-Type': request.url === '/src/main.js' ? 'text/javascript' : 'text/html; charset=utf-8' });
   response.end(request.url === '/src/main.js' ? '' : page);
@@ -62,6 +71,25 @@ await withServer((request, response) => {
   response.writeHead(200, { 'Content-Type': request.url === '/assets/index-Abc123.js' ? 'application/javascript' : 'text/html' });
   response.end(request.url === '/assets/index-Abc123.js' ? '' : page.replace('/src/main.js', '/assets/index-Abc123.js'));
 }, async port => assert.equal(await probeDuelServer(port), 'duel', 'built game is recognized'));
+
+await withServer((request, response) => {
+  const previewPage='<title>The Duel Preview</title><div id="app"></div><div data-preview-badge>PREVIEW</div><script type="module" crossorigin src="/assets/preview-Abc123.js"></script>';
+  response.writeHead(200, { 'Content-Type': request.url === '/assets/preview-Abc123.js' ? 'application/javascript' : 'text/html; charset=utf-8' });
+  response.end(request.url === '/assets/preview-Abc123.js' ? '' : previewPage);
+}, async port => {
+  assert.equal(await probeDuelServer(port, {kind:'preview'}), 'preview', 'exact preview build is recognized');
+  assert.equal((await previewCliState(port)).code, 10, 'preview launcher receives the reuse exit code');
+});
+
+await withServer((request, response) => {
+  response.writeHead(200, { 'Content-Type': request.url === '/src/main.js' ? 'text/javascript' : 'text/html; charset=utf-8' });
+  response.end(request.url === '/src/main.js' ? '' : page);
+}, async port => {
+  assert.equal(await probeDuelServer(port, {kind:'preview'}), 'occupied',
+    'ordinary or old Duel server cannot impersonate Preview');
+  assert.equal((await previewCliState(port)).code, 20,
+    'preview launcher fails closed on an ordinary Duel server');
+});
 
 for (const [label, reply] of [
   ['unrelated site', (request, response) => { response.writeHead(200, { 'Content-Type': 'text/html' }); response.end('<title>Another game</title>'); }],
