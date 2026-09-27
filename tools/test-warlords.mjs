@@ -80,9 +80,14 @@ test('warlord saves add one independent record per territory', () => {
 });
 
 test('legacy defeats and unknown future warlord data survive normalization', () => {
-  const legacy = normalizeWasteland({version: 1, warlords: {defeated: ['sal']}});
+  const legacy = normalizeWasteland({version: 1, warlords: {
+    defeated: ['sal', 'future-legacy-warlord'],
+  }});
   equal(legacy.warlords.sal, {defeated: true, wins: 0, losses: 0},
     'the existing defeated-id array migrates without losing Sal');
+  equal(legacy.warlords['future-legacy-warlord'],
+    {defeated: true, wins: 0, losses: 0},
+    'an unknown id found only in the legacy defeated array survives migration');
 
   const futureData = {route: 'future', tuning: {phase: 4}};
   const unknownBoss = {defeated: true, wins: 9, losses: 2, reward: 'future-item'};
