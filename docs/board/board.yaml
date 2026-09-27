@@ -1965,8 +1965,9 @@ tasks:
     lane: OPS
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: "Codex Preview lane, 26 September 2026"
+    waiting_on: kyle
     acceptance:
       - "A second desktop icon, 'The Duel Preview', builds and serves the integration folder's QA build on a private port (not 5174), turns on the dev switches under test (scrapdome, crash-physics, crash-effects, titan-climb, muddy-hollow) and uses memory-only saves so no real career is touched. A clear PREVIEW badge shows on screen."
       - "A preview player starts with the gate found, Sal's territory hold full and the Titan unlocked, so each new piece can be reached at once. Document it in docs/OPERATIONS.md. Stop and ask Kyle if any step needs an account, a paid tool or an admin setting."
