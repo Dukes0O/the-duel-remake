@@ -2016,3 +2016,16 @@ full tier, 292/292 suites in 460.27 seconds, with a clean start and end. Its
 production build transformed 239 modules in 479 ms. The following ledger,
 status and handoff commit records evidence only. D8 push follows; do not
 release.
+
+## Claude review of the Codex run, 27 September 2026
+
+Reviewed the 26 September Codex run (local, integration/wasteland): INT-0926-MERGE,
+COMBAT-AUDIO-SCENARIO, PREVIEW-LAUNCHER and WAR-01 are sound. One flaw found in
+the Preview: it serves .qa-dist from the integration folder, which every browser
+scenario and full tier rebuilds, so a test run during a playtest would break the
+open preview; carded as PREVIEW-OWN-FOLDER for Codex. Gave the WAR-SAL-ART
+verdict (approved; darker steel noted for WAR-SAL-TUNE), merged it with its lane
+tier 293/293 and build, and removed its lane. Added CRASH-RELEASE (Claude,
+waiting on Kyle). Exact commit 5efed11 passed the full tier, 293/293 suites in
+437.65 seconds. D8 push follows; no release.
+
