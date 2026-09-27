@@ -1,6 +1,6 @@
 ---
 task: COMBAT-AUDIO-SCENARIO
-status: review
+status: merged
 kind: fix
 flag: wasteland2
 player_facing: no
@@ -37,8 +37,10 @@ not broken.
   kept one owned voice while moving, then pause cleared all owned and mixer
   voices. Peak was 0.843, all 27 combat samples cleared the 6 dB engine
   contrast check, and spatial distance and Doppler checks passed.
-- Lane tier: 287 passed, 0 failed, 0 not run. Replay fingerprints passed.
-- Build passed.
+- Final lane tier at `3c987737`: 289 passed, 0 failed, 0 not run. Replay
+  fingerprints passed. Two unrelated Rustwall Blender tests timed out during
+  the prior attempt, passed alone, then passed in this exact rerun.
+- Production build passed at the same commit.
 
 ## Changed assertions
 

@@ -1977,7 +1977,7 @@ tasks:
     lane: AUDIO
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: "Codex Audio QA lane, 26 September 2026"
     acceptance:
       - "node tools/browser-harness.mjs scenario combat-audio fails on integration 7ef0126 and later with 'No owned flight voice'. Find whether the scenario or src/audio.js regressed (git history), fix the real cause, keep the SPEC 0.9 rule that a flight sound travels with its projectile, and rerun to 0 errors."
