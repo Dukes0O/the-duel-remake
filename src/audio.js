@@ -25,10 +25,13 @@ export function combatAudioSpace(event, state, course) {
     const hit =
       (event?.combatHit || event?.combatExplosion || event?.raiderShot) &&
       event.hitPosition;
+    const smashPoint = event?.vehicleSmash?.point;
     const source =
       hit && [hit.x, hit.y, hit.z].every(Number.isFinite)
         ? hit
-        : state?.combat?.bursts?.at(-1);
+        : smashPoint && [smashPoint.x, smashPoint.z].every(Number.isFinite)
+          ? smashPoint
+          : state?.combat?.bursts?.at(-1);
     const listener =
       Number.isFinite(state?.s) && course?.groundAt?.(state.s, state.lateral);
     if (!source || !listener) return { pan: 0, gain: 1, distance: null };
@@ -191,6 +194,10 @@ export class EngineAudio {
     this.boost = this._noiseLayer(
       ...bank('vehicle.boost').filter,
       this.dryVehicleBus,
+    );
+    this.mud = this._noiseLayer(
+      ...bank('world.muddy-hollow-churn').filter,
+      this.buses.vehicle,
     );
     this.siren = ctx.createOscillator();
     this.siren.type = 'sine';
@@ -528,6 +535,52 @@ export class EngineAudio {
     });
   }
 
+  // A smash sounds as hard as the hit (CRASH-02 audio). The player's own
+  // crash already plays for the same collision, so it is not doubled.
+  _smashImpact(event, state, course) {
+    const dv = Number(event.vehicleSmash.dvMph) || 0;
+    const output = this._spatialOutput(event, state, course);
+    const filter = this.context.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value =
+      output.space.distance > 80 ? bank('vehicle.crash-impact').farCutoff : 16000;
+    filter.connect(output.level);
+    return this._playCue('vehicle.crash-impact', {
+      destination: filter,
+      scale: clamp(0.35 + dv / 55, 0.35, 1.4),
+      onEnd: () => {
+        filter.disconnect();
+        output.disconnect();
+      },
+    });
+  }
+
+  // Mud (EGG-03 audio): a squelch on entering, splats while the wheels spin,
+  // and a low churn under the tyres while moving through it.
+  _updateMud(st, t, touching) {
+    if (!this.mud) return;
+    const enabled = this.flags.enabled('muddy-hollow');
+    const mud = enabled && touching ? clamp(Number(st.surfaceMud) || 0, 0, 1) : 0;
+    const speed = clamp(Math.abs(Number(st.speedMph) || 0) / 60, 0, 1);
+    const spin = clamp(Number(st.mudWheelSpin) || 0, 0, 1);
+    this.mud.filter.frequency.setTargetAtTime(300 + speed * 380 + spin * 220, t, 0.1);
+    this.mud.gain.gain.setTargetAtTime(
+      mud > 0.05 ? Math.min(0.26, mud * (speed * 0.16 + spin * 0.18 + 0.02)) : 0,
+      t,
+      0.08,
+    );
+    const inMud = mud > 0.35;
+    if (inMud && !this._inMud && speed > 0.05)
+      this._playCue('world.muddy-hollow-mud', { scale: 0.6 + speed * 0.6 });
+    else if (inMud && spin > 0.3 && t >= (this._nextMudSplat || 0)) {
+      if (this._nextMudSplat) this._playCue('world.muddy-hollow-mud', { scale: 0.45 + spin * 0.4 });
+      this._nextMudSplat = t + 0.32;
+      return void (this._inMud = inMud);
+    }
+    if (!inMud || spin <= 0.3) this._nextMudSplat = inMud ? t + 0.32 : 0;
+    this._inMud = inMud;
+  }
+
   _repairCue(phase) {
     this._playCue('repair.' + phase);
   }
@@ -623,7 +676,7 @@ export class EngineAudio {
   }
 
   _cueBuffer(id) {
-    const buffers = this.cueBuffers[id];
+    const buffers = this.cueBuffers[bank(id)?.buffersFrom || id];
     if (!Array.isArray(buffers)) return buffers;
     const index = this.cueIndices.get(id) || 0;
     this.cueIndices.set(id, index + 1);
@@ -1201,6 +1254,7 @@ export class EngineAudio {
       t,
       0.07,
     );
+    this._updateMud(st, t, racing && grounded);
     const proximity = clamp(
         1 -
           (st.police.pursuit?.distanceU ?? st.police.pursuit?.gapU ?? 650) /
@@ -1380,6 +1434,39 @@ export class EngineAudio {
         this._recordedImpact('combat.blast.recorded', ev, state, course);
       else if (this.samples.explosion) this._playCue('combat.explosion');
     }
+    if (ev.crash) this._lastCrashCueAt = this.context.currentTime;
+    if (
+      ev.vehicleSmash &&
+      this.flags.enabled('crash-effects') &&
+      !(this.context.currentTime - (this._lastCrashCueAt ?? -Infinity) < 0.15)
+    )
+      this._smashImpact(ev, state, course);
+    if (this.flags.enabled('scrapdome')) {
+      if (ev.arenaTell) {
+        const output = this._spatialOutput(
+          { hitPosition: ev.arenaTell.position, combatHit: true },
+          state,
+          course,
+        );
+        this._playCue('arena.tell', {
+          destination: output.level,
+          onEnd: output.disconnect,
+        });
+      }
+      if (ev.arenaRespawn) this._playCue('arena.respawn');
+      if (ev.arenaWreck?.creditedId === 'player')
+        this._playCue('arena.wreck-credit');
+    }
+    if (ev.muddyHollowSplash)
+      this._playCue('world.muddy-hollow-splash', {
+        scale: clamp(
+          0.45 +
+            Math.abs(Number(ev.muddyHollowSplash.speedMph) || 0) / 55 +
+            (Number(ev.muddyHollowSplash.depth) || 0) * 0.3,
+          0.45,
+          1.6,
+        ),
+      });
     if (ev.crash && recordedAudio && this.cueBuffers['vehicle.crash.recorded'])
       this._recordedImpact('vehicle.crash.recorded', ev, state, course);
     else if (ev.crash)

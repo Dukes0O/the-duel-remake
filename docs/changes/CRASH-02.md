@@ -1,6 +1,6 @@
 ---
 task: CRASH-02
-status: active
+status: merged
 kind: presentation
 flag: crash-effects
 player_facing: yes
@@ -148,3 +148,30 @@ Two consecutive High and Performance runs produced the same readable result.
 No runtime assets were added. The visual lane reuses the four accepted combat
 atlases and removes no released path. Raw browser evidence is deleted after
 its verdict is committed.
+
+## Audio slice (Claude, 26 September 2026)
+
+- `vehicle.crash-impact` (behind `crash-effects`) plays on `vehicleSmash`. It
+  reuses the approved recorded crashes (`buffersFrom:
+  'vehicle.crash.recorded'`), so no new file ships. Loudness scales with the
+  struck car's change in velocity, 0.35 to 1.4 (12 mph about 0.57, 48 mph
+  about 1.22). It is placed at the hit point (pan and distance, with a
+  low-pass beyond 80 m). A synthesized thump covers it while the recordings load.
+- When the player's own crash sound started within 0.15 s, the smash is not
+  played on top of it.
+
+Tests: new `tools/test-crash-hollow-audio.mjs` (31 checks, committed red
+first) covers the cues, files, catalogue and credits, loudness by change in
+velocity and speed, placement at the hit, no double crash, the switch-off
+paths and the mud squelch, splats and churn. `test-audio` (460 checks with
+real decoded audio), `test-audio-sourcing`, `-compression`, `-listening`,
+`-analysis` and the repository placement check pass. Browser: `muddy-hollow`
+and `crash-presentation` pass with no console errors or warnings. The
+`combat-audio` browser scenario fails with "No owned flight voice" on
+integration without this change; it is reported as its own task.
+
+Listening: Claude cannot listen. Kyle should judge the splash, mud and smash
+levels over the engine at full throttle; the loudness scales are in
+`src/audio.js` (`_smashImpact`, `_updateMud`, the splash scale).
+
+Removed: nothing; the placeholder cue name from the visual slice is now real.

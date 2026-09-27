@@ -1,6 +1,6 @@
 ---
 task: EGG-03
-status: waiting-phase-6-audio
+status: merged
 kind: easter-egg
 flag: muddy-hollow
 player_facing: yes
@@ -715,3 +715,36 @@ covers the area the car already treats as water. The art-sourcing test's
 Removed: the phase-6 shortlist note (its facts are in the catalog), the old
 pale vertex-colour ground and the waterline-only pond cut. The runtime adds
 one 230 KB texture and a 21 KB mesh file.
+
+## Phase 6 audio (Claude, 26 September 2026)
+
+- Three CC0 Freesound previews, fetched one at a time through Kyle's key
+  (SPEC 0.9) and catalogued with checksums: Big Water Splash (qubodup),
+  car2.WAV (barion, a car through water) and Mud_1.wav (lzmraul).
+  `tools/audio/build-hollow.mjs` cuts, fades, levels and encodes five mono
+  Vorbis files (109 KB): three splash variants and two mud squelches.
+- `world.muddy-hollow-splash` plays on the existing `muddyHollowSplash` event,
+  louder with speed and depth. `world.muddy-hollow-mud` squelches on entering
+  mud and splats about three times a second while the wheels spin. A
+  synthesized low churn (`world.muddy-hollow-churn`) runs under the tyres in
+  mud, rising with speed and wheel spin. All behind `muddy-hollow`.
+
+Tests: new `tools/test-crash-hollow-audio.mjs` (31 checks, committed red
+first) covers the cues, files, catalogue and credits, loudness by change in
+velocity and speed, placement at the hit, no double crash, the switch-off
+paths and the mud squelch, splats and churn. `test-audio` (460 checks with
+real decoded audio), `test-audio-sourcing`, `-compression`, `-listening`,
+`-analysis` and the repository placement check pass. Browser: `muddy-hollow`
+and `crash-presentation` pass with no console errors or warnings. The
+`combat-audio` browser scenario fails with "No owned flight voice" on
+integration without this change; it is reported as its own task.
+
+Listening: Claude cannot listen. Kyle should judge the splash, mud and smash
+levels over the engine at full throttle; the loudness scales are in
+`src/audio.js` (`_smashImpact`, `_updateMud`, the splash scale).
+
+Credits: `public/assets/audio/CREDITS.md` and the in-game credits page.
+
+Gate fix: the first lane gate (285 passed) failed `test-combat-audio`: the splash
+files' encoded true peak exceeded -1 dBTP. `build-hollow.mjs` now levels to a
+-3 dBTP target and adds a limiter; the files were rebuilt and the test passes.

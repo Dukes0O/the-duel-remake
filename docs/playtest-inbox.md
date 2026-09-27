@@ -6,6 +6,16 @@ or hard to repeat. Do not include saved career data.
 
 ## What's new to try
 
+### Two fixes (released 26 September 2026)
+
+- In a Mad Max Duel after finding the gate, drive up the dirt road until the
+  race pauses (RACE PAUSED · DRIVE BACK TO REJOIN), then reverse or drive
+  back to the course: BACK IN THE RACE, the clock, rival, weapons and
+  power-ups carry on. Only driving through the gate ends the race.
+- With the rally car on Pacific Canyon, leave the road near the shortcut and
+  cross back over the racing line out on the dirt: you are no longer put back
+  on the track. Big boulders still stop you, now with ROCK TOO BIG.
+
 ### The Wasteland easter egg (release candidate)
 
 There is nothing new on the main menu. Pick **Mad Max Duel** on Pacific Canyon Circuit and race. Somewhere in the canyon section a faint dirt track leaves the road on the outside of a bend. Follow it for about 30 seconds to a huge wall; the gate invites you in, and **Enter** takes you to the Scrapdome yard. Until a player finds the gate, Mad Max Duel plays exactly as before. After that, that player's Mad Max Duels use the Wasteland rules (armor, crew, getting out on foot by holding **F**, raiders, scrap), and a **WASTELAND** button appears on their menu as a shortcut back to the yard. On foot, **C** switches between first-person and overhead. If you can't find the road, hints appear after 5 and 10 finished Mad Max Duels on Pacific Canyon. Current wall, crew and first-person hand art still need polish. Tell us the car, what you did, and whether the road, gate, yard or race went wrong.
@@ -37,8 +47,8 @@ Please include the car, approximate speed, course, and difficulty with a note.
 | 2026-09-25 | Voices are fine; raiders use Bill (Harry is too wispy and breathy). Stop building characters from scratch in Blender: it burns too much quota. Put the existing art in the game for testing, and start new art from existing assets. No Adobe account for now. | Voices and all 3D art | Voices kept in `audio-src/voices/`; SPEC 0.11 sets the source-first art approach and a three-round cap. |
 | 2026-09-25 | Wasteland is working, but the controls are backwards when out of the car. We need to continue with next phase development. | Live release, on foot | Confirmed: strafing and mouse turning were mirrored on screen. Fixed in FOOT-FIX with a camera-based test. Next phase starts from `docs/board/next-run.md`. |
 | 2026-09-26 | Improve vehicle crash physics overall, especially in Mad Max and Rival Duel: crashing into a vehicle should smash it out of the way like real physics. The monster truck should climb mountains and hills far off-road, with a hidden playground easter egg: mud pits, big water puddles, jumps. | Crashes; Titan | Designed by Claude: docs/CRASH_PHYSICS.md (CRASH-01 in progress on a branch, CRASH-02) and docs/MUDDY_HOLLOW.md (TITAN-01, EGG-03). |
-| 2026-09-26 | After driving up the hidden road far enough that the clock stops, reversing back to the course leaves the clock stopped and the race frozen: the opponent doesn't drive and power-ups and weapons don't work. | Mad Max Duel, live build | Confirmed and fixed in GATE-REJOIN: leaving only pauses the race and driving back resumes it; only driving through the gate abandons it. Needs a release to reach the live game. |
-| 2026-09-26 | Gratian would really like to test the warlord battles. With the rally car on the first course, near the shortcut, the game keeps resetting you and dropping you onto the track. | Warlords; Pacific Canyon, rally car | Rally: reproduced (a checkpoint crossed out on the dirt snaps the rally car back onto the road); fixed in RALLY-CHECKPOINT, needs a release. Warlords: plan in next-run.md, 'Warlords for Gratian'; Sal's fight settled in SCRAPDOME.md section 5. |
+| 2026-09-26 | After driving up the hidden road far enough that the clock stops, reversing back to the course leaves the clock stopped and the race frozen: the opponent doesn't drive and power-ups and weapons don't work. | Mad Max Duel, live build | Confirmed and fixed in GATE-REJOIN: leaving only pauses the race and driving back resumes it; only driving through the gate abandons it. Released 26 September 2026. |
+| 2026-09-26 | Gratian would really like to test the warlord battles. With the rally car on the first course, near the shortcut, the game keeps resetting you and dropping you onto the track. | Warlords; Pacific Canyon, rally car | Rally: reproduced (a checkpoint crossed out on the dirt snaps the rally car back onto the road); fixed in RALLY-CHECKPOINT, released 26 September 2026. Warlords: plan in next-run.md, 'Warlords for Gratian'; Sal's fight settled in SCRAPDOME.md section 5. |
 
 ## Weekly summary
 

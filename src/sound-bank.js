@@ -312,6 +312,62 @@ export const SOUND_BANK = {
     limit: 4,
     farCutoff: 2400,
   }),
+  // CRASH-02 audio: a smash reuses the recorded crashes, scaled by the change
+  // in velocity and placed at the hit; the thump covers them while loading.
+  'vehicle.crash-impact': cue('impacts', {
+    flag: 'crash-effects',
+    buffersFrom: 'vehicle.crash.recorded',
+    volume: 3.4,
+    priority: 72,
+    limit: 4,
+    farCutoff: 2400,
+    layers: [tone(62, 0.35, 0.22, 'sine', 0, 30)],
+  }),
+  // EGG-03 audio (tools/audio/build-hollow.mjs): pond entry and mud.
+  'world.muddy-hollow-splash': cue('vehicle', {
+    flag: 'muddy-hollow',
+    files: ['hollow-splash-a.ogg', 'hollow-splash-b.ogg', 'hollow-splash-c.ogg'],
+    volume: 2.6,
+    priority: 70,
+    limit: 3,
+  }),
+  'world.muddy-hollow-mud': cue('vehicle', {
+    flag: 'muddy-hollow',
+    files: ['hollow-mud-a.ogg', 'hollow-mud-b.ogg'],
+    volume: 2.2,
+    priority: 55,
+    limit: 3,
+  }),
+  'world.muddy-hollow-churn': cue('vehicle', {
+    flag: 'muddy-hollow',
+    filter: ['bandpass', 420],
+    loop: true,
+  }),
+  // ARENA-FEEL: a computer car's charge tell (an engine roar rising), a
+  // respawn shimmer, and the player's wreck credit.
+  'arena.tell': cue('impacts', {
+    flag: 'scrapdome',
+    priority: 68,
+    limit: 3,
+    layers: [
+      tone(92, 0.7, 0.15, 'sawtooth', 0, 185),
+      tone(184, 0.55, 0.06, 'square', 0.06, 370),
+    ],
+  }),
+  'arena.respawn': cue('interface', {
+    flag: 'scrapdome',
+    layers: [
+      tone(330, 0.35, 0.05, 'sine', 0, 990),
+      tone(660, 0.3, 0.03, 'triangle', 0.08, 1320),
+    ],
+  }),
+  'arena.wreck-credit': cue('impacts', {
+    flag: 'scrapdome',
+    buffersFrom: 'combat.hit-confirm',
+    volume: 2.2,
+    priority: 78,
+    layers: [tone(70, 0.4, 0.2, 'sine', 0, 35)],
+  }),
   'weapon.default.fire': cue('weapons', {
     layers: [tone(220, 0.22, 0.12, 'triangle', 0, 88)],
   }),
