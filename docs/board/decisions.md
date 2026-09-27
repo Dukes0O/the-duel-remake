@@ -1225,3 +1225,15 @@ cleared only there. Players see RACE PAUSED · DRIVE BACK TO REJOIN and BACK IN
 THE RACE. A Titan can gain at most the ridge window (about 140 m along the
 course) by crossing back elsewhere; that is accepted for this Titan-only side
 trip.
+
+## 26 September 2026: checkpoints for off-road cars (RALLY-CHECKPOINT)
+
+Kyle and Gratian found the rally car kept being put back on the track near
+Pacific Canyon's shortcut. The rally car and the Titan have no course
+boundary, but lap checkpoints only counted on the road or its shoulder, so a
+crossing out on the dirt snapped them back onto the road. Claude settled that
+off-road-capable cars count a checkpoint within 120 m of the road or any
+shortcut; farther out is a corner cut and still a miss. Ordinary cars keep
+the road-and-shoulder rule. Boulders taller than a car can climb stay solid;
+their message now says ROCK TOO BIG / BACKING OFF instead of CLIMB LIMIT.
+

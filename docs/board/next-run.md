@@ -83,7 +83,7 @@ as the finished thing.
 
 | Card | What | When |
 | --- | --- | --- |
-| RALLY-CHECKPOINT | The rally car sent back 1.8 km by a checkpoint | Now (in progress) |
+| RALLY-CHECKPOINT | The rally car snapped onto the road by checkpoints | Now (in progress) |
 | SCRAPDOME-PLAYTEST | Gratian and Kyle play Last Car Rolling in Preview; notes become codex cards | After PREVIEW-LAUNCHER |
 | SCRAPDOME-RELEASE | The Scrapdome in the real game, with GATE-REJOIN and the rally fix | Kyle's go-ahead |
 | WAR-SAL-TUNE | Play Sal, tune to "winnable in a few tries" | After Sal's cards |

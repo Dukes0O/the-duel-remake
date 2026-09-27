@@ -1937,7 +1937,7 @@ tasks:
   # owner: codex cards are for Codex agents; owner: claude cards are Claude's
   # and are never started by Codex. See `node tools/board.mjs`.
   - id: RALLY-CHECKPOINT
-    title: "Rally car sent back 1.8 km by a checkpoint it crossed off-road"
+    title: "Rally car snapped back onto the road by checkpoints it crossed off-road"
     owner: claude
     lane: CORE
     size: S
@@ -1946,8 +1946,8 @@ tasks:
     claimed_by: "Claude, 26 September 2026"
     hooks: [src/sim-laps.js, src/offroad-physics.js, src/sim-crash.js]
     acceptance:
-      - "Kyle and Gratian's report: with the rally car on Pacific Canyon, near the shortcut, the game keeps putting you back on the track. Reproduced headless: a rally car crossing the lap checkpoint at s 2772 out on the dirt (it is exempt from the course boundary) counts as a missed checkpoint and is reset to about s 988, before the shortcut."
-      - "Rule: for off-road-capable cars a checkpoint counts anywhere within a drivable corridor of the road or a shortcut; a genuine miss resets to just before the missed checkpoint, never to the previous one. Also check the rollover loop seen on the canyon sides."
+      - "Kyle and Gratian's report: with the rally car on Pacific Canyon, near the shortcut, the game keeps putting you back on the track. Reproduced headless from before the first checkpoint: a rally car (exempt from the course boundary) that crosses the checkpoints at s 2772 or 3000 out on the dirt is snapped back onto the road just before the checkpoint. (A first probe that started past a checkpoint wrongly suggested a 1.8 km reset.)"
+      - "Rule: off-road-capable cars count a checkpoint within OFFROAD_CHECKPOINT_CORRIDOR (120 m) of the road or a shortcut; farther out is a corner cut and still a miss. Boulders taller than the car can climb stay solid, but the message says ROCK TOO BIG / BACKING OFF instead of CLIMB LIMIT."
       - "Red-first tests with the rally car and Titan; ordinary cars and replay fingerprints unchanged. Ships with GATE-REJOIN in the next release (Kyle's go-ahead)."
   - id: INT-0926-MERGE
     title: "Finish today's merges: crash and Muddy Hollow sounds, then ARENA-FEEL"

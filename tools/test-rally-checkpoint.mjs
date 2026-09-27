@@ -24,9 +24,9 @@ function crossing({car, lateral, prevLateral = lateral}) {
 }
 
 test('a rally car crossing a checkpoint out on the dirt keeps going', () => {
-  assert.ok(SECOND_GATE < new Duel({seed: 1989}).course.length);
   for (const lateral of [-25, -60, -90, 40]) {
-    const {s, events} = crossing({car: 'dusthawk_rally', lateral});
+    const {duel, s, events} = crossing({car: 'dusthawk_rally', lateral});
+    assert.equal(duel._lapGates[1], SECOND_GATE, 'the fixture crosses the second checkpoint');
     assert.equal(s.nextLapGate, 2, `the checkpoint counts at ${lateral} m`);
     assert.ok(!events.some(event => event.checkpointReset), `no snap back to the road at ${lateral} m`);
     assert.equal(s.lateral, lateral, 'the car stays where it was driving');
