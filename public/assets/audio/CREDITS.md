@@ -89,3 +89,11 @@ implied.
 - [Big Water Splash](https://freesound.org/people/qubodup/sounds/442773/) by **qubodup**, CC0 1.0.
 - [car2.WAV](https://freesound.org/people/barion/sounds/462117/) by **barion**, CC0 1.0.
 - [Mud_1.wav](https://freesound.org/people/lzmraul/sounds/389460/) by **lzmraul**, CC0 1.0.
+
+## Sawtooth Sal side saw
+
+[Circular Saw 02 170501_1491.wav](https://freesound.org/people/megashroom/sounds/390712/),
+by **megashroom**, released under **CC0 1.0**. The public HQ Ogg preview is
+trimmed to its start-up scream, high- and low-pass filtered, faded, loudness
+conditioned and encoded as mono Vorbis by `tools/audio/build-sal.mjs`. Runtime
+file: `sal-saw-scream.ogg`. No author endorsement is implied.

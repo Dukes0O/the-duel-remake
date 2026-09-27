@@ -302,6 +302,28 @@
     },
     {
       "source": "freesound",
+      "key": "390712",
+      "cue": "arena.sal-saw",
+      "title": "Circular Saw 02 170501_1491.wav",
+      "author": "megashroom",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/megashroom/sounds/390712/",
+      "download": "https://cdn.freesound.org/previews/390/390712_1830834-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 9.06462,
+      "file": "freesound/390712-circular-saw-02-170501-1491-wav.ogg",
+      "sha256": "94ac38532225f80f018653f66390c28a2285253ff129bfafb66f5b6ee26dd605",
+      "bytes": 111970,
+      "fetched": "2026-09-27",
+      "processing": {
+        "script": "tools/audio/build-sal.mjs",
+        "recipe": "1.2 second start-up cut, 150 Hz high-pass, 10.5 kHz low-pass, fades, EBU R128 loudness conditioning, mono 48 kHz Vorbis q5",
+        "approval": "WAR-SAL-ART round 1 review"
+      }
+    },
+    {
+      "source": "freesound",
       "key": "391444",
       "cue": "weapon.crossbow.flight",
       "title": "Arrow Whoosh 2 .R.wav",

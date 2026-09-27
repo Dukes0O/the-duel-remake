@@ -272,6 +272,32 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
           if (plate) plate.visible = visible && !actor.combatWrecking &&
             armorCondition(actor) > BREAK_POINTS[partIndex];
         }
+        const sal = rig.authored.getObjectByName('kit-sal-saws');
+        if (sal) {
+          const salVisible = visible && tier >= 3 && !actor?.combatWrecking &&
+            vehicle?.userData.vehicleKey === 'banshee_muscle' && actor?.warlordId === 'sal';
+          sal.visible = salVisible;
+          const left = sal.getObjectByName('kit-sal-saw-left');
+          const right = sal.getObjectByName('kit-sal-saw-right');
+          const sparks = sal.getObjectByName('kit-sal-sparks');
+          const phase = actor?.salSaw?.phase || 'idle';
+          const elapsed = Math.max(0, (state.stageTimeSec || 0) -
+            (Number(actor?.salSaw?.sinceSec) || 0));
+          const spinning = phase === 'spin-up' || phase === 'sparking';
+          const angle = spinning ? elapsed * 8 + elapsed * elapsed * 18 : 0;
+          if (left) left.rotation.x = angle;
+          if (right) right.rotation.x = -angle;
+          if (sparks) {
+            sparks.visible = salVisible && phase === 'sparking';
+            sparks.scale.setScalar(1);
+            sparks.children.forEach((streak, streakIndex) => {
+              const age = (elapsed * 7.5 + streakIndex * 0.31) % 1;
+              streak.visible = age < 0.74;
+              streak.scale.setScalar(0.5 + (1 - age) * 0.7);
+              streak.rotation.x = Math.sin(elapsed * 19 + streakIndex * 1.7) * 0.11;
+            });
+          }
+        }
       }
       if (!visible) {
         rig.loose.forEach(part => { part.mesh.visible = false; });

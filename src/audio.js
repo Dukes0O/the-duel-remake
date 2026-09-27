@@ -1442,6 +1442,17 @@ export class EngineAudio {
     )
       this._smashImpact(ev, state, course);
     if (this.flags.enabled('scrapdome')) {
+      if (ev.salSaw?.position) {
+        const output = this._spatialOutput(
+          { hitPosition: ev.salSaw.position, combatHit: true },
+          state,
+          course,
+        );
+        this._playCue('arena.sal-saw', {
+          destination: output.level,
+          onEnd: output.disconnect,
+        });
+      }
       if (ev.arenaTell) {
         const output = this._spatialOutput(
           { hitPosition: ev.arenaTell.position, combatHit: true },
