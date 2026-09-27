@@ -1,6 +1,6 @@
 ---
 task: CRASH-04
-status: ready-to-merge
+status: merged
 kind: feature
 flag: crash-physics
 player_facing: yes
@@ -98,3 +98,11 @@ equal-mass hit only 22 armor, barely above the old 19, so the rate is 1.25.
   only with the switch off, until CRASH-RELEASE turns the switch fully on and
   removes the switch-off path).
 - The in-memory module loader workaround for balance runs.
+
+## Gate
+
+- Lane tier on 6a92c8b: 213 passed, 0 failed in 581.80 s. npm run build passed.
+- Private browser check (memory-only QA page, port 5231, crash-physics and
+  wasteland2 on): a 110 mph hit on a slow sedan showed the fireball and flash,
+  the car lifting and turning, then the hulk sliding off the road on its side,
+  ending about 80 m on and 14 m off the road. No console errors.
