@@ -2091,8 +2091,8 @@ tasks:
     status: building
     claimed_by: "Codex Warlord UI lane, 26 September 2026"
     owns: [src/warlords.js, src/screen-territory.js, tools/test-warlords.mjs, tools/test-territory-ui.mjs, docs/changes/WAR-01.md]
-    hooks: [src/screen-yard-home.js, src/wasteland-career.js, src/wasteland-progress.js]
-    note: "Director re-slice, 26 September 2026: WAR-01 may update only the existing warlords normalization in src/wasteland-progress.js so the settled additive per-id save shape migrates safely and preserves unknown fields."
+    hooks: [src/screen-yard-home.js, src/wasteland-career.js, src/wasteland-progress.js, src/career-backup.js, src/armor-kits.js, src/screen-armory.js, tools/test-armor-kits.mjs]
+    note: "Director re-slice, 26 September 2026: WAR-01 may update only the existing warlords normalization in src/wasteland-progress.js; its matching migration/export guards in src/career-backup.js; and the two existing armor-kit consumers plus their focused test. This must give the save-shape change a verified backup, keep old exports valid, preserve unknown legacy IDs and retain armor-kit unlocks."
     flag: wasteland2
     helpers: [test_author, reviewer, browser_qa]
     acceptance:
