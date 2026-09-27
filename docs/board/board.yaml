@@ -1988,7 +1988,9 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: ready
+    status: review
+    claimed_by: "Codex Sal art lane, 26 September 2026"
+    waiting_on: claude
     acceptance:
       - "Side saws as an armor-kit style part for Banshee Muscle, using the tools/blender/armor-kits.py approach (fit and recolour existing shapes, no sculpting; three-round cap, SPEC 0.11). Idle, spin-up and sparking states the renderer can drive. A CC0 saw scream from Freesound through tools/audio/catalog.json."
       - "One review sheet in docs/board/looks/sal/; then set status review and waiting_on: claude for Claude's verdict. Stop rule: if three rounds cannot reach the look with these tools, stop and report; never ship a placeholder as final."
