@@ -140,6 +140,22 @@ check('report includes flags and separate difficulty win, hit and wreck totals',
       'aggregate all seven policies and nine additional baseline seeds, retaining traffic ownership');
   }
 });
+check('single-race targets use the mean of the repeated seeds', () => {
+  const input = fixture(['wasteland2']);
+  const race = (policy, cpuDifficulty, seed, timeSec, cpuHits) =>
+    ({ ...input.runs.find(run => run.policy === policy && run.cpuDifficulty === cpuDifficulty),
+      seed, timeSec, cpuHits });
+  input.runs = input.runs.map(run => run.policy === 'ufo-max' && run.cpuDifficulty === 'medium'
+    ? { ...run, timeSec: 95 } : run);
+  input.runs.push(race('ufo-max', 'medium', 1990, 100, 4), race('ufo-max', 'medium', 1991, 100, 4));
+  input.baselineRuns = input.baselineRuns.map(run => run.cpuDifficulty === 'medium' && run.seed === 1990
+    ? { ...run, timeSec: 101, cpuHits: 7 } : run.cpuDifficulty === 'medium' && run.seed === 1991
+      ? { ...run, timeSec: 99, cpuHits: 1 } : run);
+  const report = required('buildReport')(input);
+  // Gains 5, 1 and -1 seconds: one lucky race no longer fails the 4 s target.
+  assert.equal(report.ufoGainByDifficulty['ufo-max'].medium, 1.67);
+  assert.equal(report.cpuHitsByDifficulty.medium, 4, 'hits 4, 7 and 1 average to 4');
+});
 check('both reports retain every existing target band and failure', () => {
   const build = required('buildReport'), validate = required('reportFailures');
   for (const flags of [[], ['wasteland2']]) {

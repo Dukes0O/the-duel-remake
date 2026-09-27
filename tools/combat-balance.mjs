@@ -12,7 +12,11 @@ import { winRateFailures } from './balance-targets.mjs';
 // fixed-step Duel physics, and disposable in-memory saves.
 const policies = ['none', 'ufo', 'ufo-max', 'bomb', 'crossbow', 'star', 'all'];
 const difficulties = ['easy', 'medium', 'hard'];
-const baselineSeeds = [1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998];
+// BALANCE-SAMPLE: win rates are judged on 30 races per difficulty and the
+// single-race targets on the mean of three seeds, so one close finish cannot
+// move a result by ten points (CRASH-05 showed the old ten-race sample flip).
+const baselineSeeds = Array.from({ length: 30 }, (_, index) => 1989 + index);
+const repeatSeeds = baselineSeeds.slice(0, 3);
 const usage = 'Usage: node tools/combat-balance.mjs [--flags wasteland2,crash-physics] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED';
 const BALANCE_FLAGS = ['wasteland2', 'crash-physics'];
 
@@ -53,8 +57,9 @@ export function parseArgs(args = []) {
 
 function simulationFlags(flags) {
   return createFeatureFlags({ storage: null, search: '', qa: false,
+    // crash-physics follows the game's own switch unless asked for.
     overrides: { wasteland2: flags.includes('wasteland2'),
-      'crash-physics': flags.includes('crash-physics') } });
+      ...(flags.includes('crash-physics') ? { 'crash-physics': true } : {}) } });
 }
 
 function emptyWrecks() {
@@ -260,13 +265,23 @@ export function buildReport({ flags = [], runs, baselineRuns, firstTwelveSec, el
   }));
   const gainSec = Object.fromEntries(policies.filter(policy => policy !== 'none').map(policy => [policy,
     rounded(average(difficulties.map(difficulty => by('none', difficulty).timeSec - by(policy, difficulty).timeSec)))]));
+  // Mean over every seed that has both a no-weapon and a policy race.
+  const noWeapon = (difficulty, seed) => [...runs, ...baselineRuns].find(run =>
+    run.policy === 'none' && run.cpuDifficulty === difficulty && run.seed === seed);
   const ufoGainByDifficulty = Object.fromEntries(['ufo', 'ufo-max'].map(policy => [policy,
-    Object.fromEntries(difficulties.map(difficulty => [difficulty,
-      rounded(by('none', difficulty).timeSec - by(policy, difficulty).timeSec)]))]));
+    Object.fromEntries(difficulties.map(difficulty => {
+      const pairs = runs.filter(run => run.policy === policy && run.cpuDifficulty === difficulty)
+        .map(run => [noWeapon(difficulty, run.seed), run]).filter(([none]) => none);
+      return [difficulty, rounded(average(pairs.map(([none, run]) => none.timeSec - run.timeSec)))];
+    }))]));
   const crossbow = runs.filter(run => run.policy === 'crossbow');
   const crossbowShots = crossbow.reduce((total, run) => total + run.shots.crossbow, 0);
   const crossbowHits = crossbow.reduce((total, run) => total + run.rivalHits, 0);
-  const cpuHitsByDifficulty = Object.fromEntries(difficulties.map(difficulty => [difficulty, by('none', difficulty).cpuHits]));
+  const cpuHitsByDifficulty = Object.fromEntries(difficulties.map(difficulty => {
+    const samples = repeatSeeds.map(seed => noWeapon(difficulty, seed)).filter(Boolean);
+    return [difficulty, samples.some(sample => sample.cpuHits == null) ? null :
+      rounded(average(samples.map(sample => sample.cpuHits)))];
+  }));
   const allRuns = [...runs, ...baselineRuns];
   const wrecksByDifficulty = Object.fromEntries(difficulties.map(difficulty => {
     const total = emptyWrecks();
@@ -286,8 +301,9 @@ export function buildReport({ flags = [], runs, baselineRuns, firstTwelveSec, el
   return { flags, policyRuns: runs.length,
     baselineRaces: Object.values(baselineWins).reduce((sum, row) => sum + row.races, 0),
     sampleScope: {
-      winRateByDifficulty: 'No-weapon policy, ten seeds 1989-1998 per difficulty; seed 1989 reused from policy runs.',
-      cpuHitsByDifficulty: 'No-weapon policy, seed 1989 only per difficulty; existing CPU-hit target sample.',
+      winRateByDifficulty: 'No-weapon policy, thirty seeds 1989-2018 per difficulty; seed 1989 reused from policy runs.',
+      cpuHitsByDifficulty: 'No-weapon policy, mean of seeds 1989-1991 per difficulty.',
+      ufoGainByDifficulty: 'UFO and UFO-max policies against no-weapon races, mean of seeds 1989-1991.',
       hitsByDifficulty: 'All seven policies at seed 1989 plus nine additional no-weapon seeds per difficulty (16 unique races). CPU hits count enemy combatHit events whose victim is player; rivalHits uses the existing combat hit counter.',
       wrecksByDifficulty: 'Same 16 races per difficulty; combatWreck events for player/opponents, trafficWrecked collisions and roadsideImpact traffic obliterations. Traffic victims count once; knocks are excluded. byOwner counts the attacker; current roadsideImpact events supply no attacker, so their owner is unknown. Legacy vehicleCrushed events are excluded.',
       weaponProbes: 'Crossbow: 26 moving-target cases across combat courses. Own bombs: ten speeds from 20 to 200 mph.',
@@ -348,6 +364,8 @@ function main(args) {
     runs.push(run(policy, difficulty, 1989, options));
     if (runs.length === 12) firstTwelveSec = rounded((performance.now() - started) / 1000);
   }
+  for (const policy of ['ufo', 'ufo-max']) for (const difficulty of difficulties)
+    for (const seed of repeatSeeds.slice(1)) runs.push(run(policy, difficulty, seed, options));
   const baselineRuns = difficulties.flatMap(difficulty => baselineSeeds.slice(1)
     .map(seed => run('none', difficulty, seed, options)));
   const crossbowAim = crossbowProbe(options);
