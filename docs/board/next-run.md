@@ -2,8 +2,8 @@
 
 ## Resume here (Claude handoff, 26 September 2026, evening)
 
-Claude stopped for quota mid-merge. Do these first, in order, then continue
-with the plan below.
+Claude stopped for quota mid-merge. Steps 1 to 3 are card INT-0926-MERGE;
+do them first, in order, then continue with the plan below.
 
 1. **Sound lane** `lane/audio/crash-hollow-sounds` (worktree
    `C:\Users\kyleb\.codex\worktrees\sounds\the-duel-remake`, pushed): crash
@@ -33,46 +33,66 @@ Janitor note: Claude force-removed the merged gate-rejoin lane folder
 (committed and merged work only, ignored scratch deleted). Use plain
 `git worktree remove` from here on, as AGENTS.md requires.
 
-## Warlords for Gratian (Kyle, 26 September 2026)
+## Warlords for Gratian: the plan and who does what (Kyle, 26 September 2026)
 
-Gratian wants to play the warlord fights. The plan below gets him there in
-two steps: a **Preview** icon so he can test each piece the day it is merged
-(nothing saved), then **real releases** on Kyle's go-ahead. Do this after the
-"Resume here" steps above and before the rest of the older plan.
+Gratian wants to play the warlord fights. Two steps get him there: a
+**Preview** icon so he can test each piece the day it merges (nothing is
+saved), then **real releases** on Kyle's written go-ahead. The first warlord
+is Sawtooth Sal; her fight is settled for build in docs/SCRAPDOME.md
+section 5. Later warlords are settled one at a time after Sal has been played.
 
-**How Claude and Codex split it.** Claude settles rules and design in
-writing, judges look and feel from screenshots and play notes, and takes the
-small, subtle fixes in the live game. Codex builds, tests, balances, runs the
-art and sound pipelines and keeps the janitor. A design question Codex meets
-goes back to Claude in writing; Codex does not invent a rule to get unstuck.
+**Where to look.** Every task is a card in docs/board/board.yaml with an
+`owner`. Run `node tools/board.mjs` to see the split:
 
-**Stop rule (Kyle).** This is a game on one laptop for Kyle and his son. If a
-card cannot meet its acceptance with the tools we have (free services, this
-laptop, the three-round art cap) stop the card, write why in its change note,
-and ask Kyle: get the tool, or change the plan. Never ship a placeholder, a
-stub or a hidden shortcut as if it were the finished thing.
+- CODEX CAN START NOW: the only cards a Codex agent starts. Claim one by
+  setting `status: building` and `claimed_by` on integration, then follow
+  docs/CODEX_PLAYBOOK.md section 6. Several agents can take different cards
+  at once, up to five lanes.
+- CLAUDE IS WORKING ON and CLAUDE NEXT: Claude's cards. Never start them.
+- WAITING FOR CLAUDE'S REVIEW / WAITING FOR KYLE: paused for a verdict or a
+  go-ahead; pick another card meanwhile.
 
-| Step | Card | Who | Runs |
-| --- | --- | --- | --- |
-| 1 | RALLY-CHECKPOINT: rally car sent back by a checkpoint | Claude | Now, beside everything |
-| 1 | PREVIEW-LAUNCHER: the Preview icon | Codex | Now, beside everything |
-| 1 | Resume steps: sound and ARENA-FEEL merges, full tier | Codex | Now |
-| 2 | WAR-01: the ladder on the territory map | Codex (design settled) | After step 1 merges |
-| 2 | WAR-SAL-ART: saws, sparks, scream | Codex, Claude reviews | Beside WAR-01 |
-| 3 | WAR-02a: Sawtooth Sal, fight and reward | Codex, Claude reviews feel | After WAR-01 |
-| 3 | SCRAPDOME-RELEASE: Last Car Rolling in the real game | Claude and Codex | Gratian plays Preview first |
-| 4 | Gratian plays Sal in Preview; Claude tunes from his notes | Claude | After WAR-02a |
-| 5 | Release Sal (warlord ladder + Sal) | Kyle's go-ahead | After step 4 |
-| 6 | WAR-02b Dustmonger and WAR-02c Mirage, in parallel lanes | Codex; Claude settles each first | After Sal is played |
+**How the work is split.** Claude settles rules and design in writing, judges
+look and feel from screenshots and play, takes small subtle fixes to the live
+game, and prepares releases for Kyle. Codex builds, tests, balances, runs the
+art and sound pipelines and keeps the janitor. A design question goes back to
+Claude in writing; Codex does not invent a rule to get unstuck.
 
-Must run in order: WAR-01, then WAR-02a, then Sal's release; each release
-waits for Kyle. Can run side by side: the rally fix, the Preview icon, Sal's
-art and sound, and later the Dustmonger and Mirage lanes.
+**Stop rule (Kyle).** This is a game for one laptop, played by Kyle and his
+11-year-old son. If a card cannot meet its acceptance with the tools we have
+(free services, this laptop, the three-round art cap in SPEC 0.11), stop the
+card, write why in its change note, set `waiting_on: kyle`, and ask: get the
+tool, or change the plan. Never ship a placeholder, stub or hidden shortcut
+as the finished thing.
 
-This is the one current plan for Codex. Rules: `AGENTS.md` (the nine working
-rules and the janitor) and SPEC.md section 0, especially 0.9 (audio), 0.11
-(art from existing assets), 0.12 (the easter egg), 0.13 (Scrapdome) and 0.14
-(crash physics and the Titan's playground).
+### Codex cards
+
+| Card | What | Can start |
+| --- | --- | --- |
+| INT-0926-MERGE | Finish today's merges (sounds, ARENA-FEEL), full tier, push | Now |
+| PREVIEW-LAUNCHER | The Preview desktop icon | Now |
+| COMBAT-AUDIO-SCENARIO | Fix the failing combat-audio browser check | Now |
+| WAR-SAL-ART | Sal's side saws, sparks and saw scream; Claude judges the sheet | Now |
+| WAR-01 | The warlord ladder on the territory map (FIGHT, REMATCH, COMING LATER) | Now |
+| WAR-02a-FORMAT | The warlord duel format, launched from the map | After WAR-01 and INT-0926-MERGE |
+| WAR-02a-REWARD | Side Saws that work, scrap, one-time claim (Save Guardian) | After WAR-02a-FORMAT |
+| WAR-02a-SAL | Sal's Saw Sweep, window and phase-two Charge; Claude plays it | After WAR-02a-FORMAT and WAR-SAL-ART |
+| WAR-02b, WAR-02c | The Dustmonger and Mother Mirage, in parallel lanes | After Claude settles each |
+
+### Claude cards
+
+| Card | What | When |
+| --- | --- | --- |
+| RALLY-CHECKPOINT | The rally car sent back 1.8 km by a checkpoint | Now (in progress) |
+| SCRAPDOME-PLAYTEST | Gratian and Kyle play Last Car Rolling in Preview; notes become codex cards | After PREVIEW-LAUNCHER |
+| SCRAPDOME-RELEASE | The Scrapdome in the real game, with GATE-REJOIN and the rally fix | Kyle's go-ahead |
+| WAR-SAL-TUNE | Play Sal, tune to "winnable in a few tries" | After Sal's cards |
+| WAR-SAL-RELEASE | The ladder and Sal in the real game | Kyle's go-ahead |
+| DESIGN-WAR-02b, DESIGN-WAR-02c | Settle the Dustmonger and Mirage for build | After Sal has been played |
+
+**In order, not side by side:** WAR-01, then WAR-02a-FORMAT, then Sal's fight
+and reward, then WAR-SAL-TUNE and the release. **Side by side:** everything
+else, including all of today's "Can start: Now" cards.
 
 ## Where things stand
 

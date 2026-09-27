@@ -639,7 +639,7 @@ tasks:
       - "Before changing the accepted steel paint, provide an explicit hashed embedded-atlas extraction and reapplication recipe from the committed GLB. The P2 no-input procedural fixture is not a reproduction of the selected generated paint. Preserve the original image-generation output and record source provenance."
       - "Reach likeness, readability, grounding and consistency of at least four in matched High/Performance views, retain immutable sheets and independent verdicts, and hold whole-scene frame cost within ten percent. Preserve the 60,000 wall triangles, 24 draws, three 512 texture sets and existing wash allocation."
     note: "Residual from the ten-round P2 wave: final wall and wash score 3/3/3/3. P2 is a development improvement only; this card keeps the original unmet art target visible. Do not erase failed rounds or infer visual acceptance from a performance pass."
-  - id: EGG-03
+  - id: EGG-03-GATE
     title: "Gate arrival and invitation"
     priority: 10
     lane: UI
@@ -668,7 +668,7 @@ tasks:
     priority: 11
     lane: SAVE
     size: M
-    needs: [EGG-03]
+    needs: [EGG-03-GATE]
     status: merged
     owns: [src/hidden-road-discovery.js, src/hidden-road-hints.js, tools/test-hidden-road-discovery.mjs, tools/test-hidden-road-hints.mjs, tools/scenarios/hidden-road-discovery.mjs, docs/board/looks/hidden-road-discovery/]
     hooks: [src/wasteland-progress.js, src/career-backup.js, src/progression.js, src/app.js, src/game.js, src/hidden-road-journey.js, src/hidden-road-ui.js, src/screen-menu.js, src/screen-menu.css, src/screen-router.js, src/screen-garage.js, src/route-map.js, src/course-preview.js, src/world.js, tools/test-wasteland-profile.mjs]
@@ -1933,58 +1933,159 @@ tasks:
       - "Correct current exported wall inventory to 55,834 triangles, fourteen primitives and 8,421,064 bytes, with wash 3,840,288 bytes. Preserve immutable sheets and residual P3 likeness and paint-recovery work."
       - "Independent fact review, unchanged review-evidence check, lane tier and build pass. No runtime, test or source-asset edits."
 
+  # ---- Warlords for Gratian (plan: docs/board/next-run.md, 26 September 2026).
+  # owner: codex cards are for Codex agents; owner: claude cards are Claude's
+  # and are never started by Codex. See `node tools/board.mjs`.
   - id: RALLY-CHECKPOINT
     title: "Rally car sent back 1.8 km by a checkpoint it crossed off-road"
-    priority: 1
+    owner: claude
     lane: CORE
     size: S
     needs: []
-    status: ready
-    owner: Claude
+    status: building
+    claimed_by: "Claude, 26 September 2026"
     hooks: [src/sim-laps.js, src/offroad-physics.js, src/sim-crash.js]
     acceptance:
       - "Kyle and Gratian's report: with the rally car on Pacific Canyon, near the shortcut, the game keeps putting you back on the track. Reproduced headless: a rally car crossing the lap checkpoint at s 2772 out on the dirt (it is exempt from the course boundary) counts as a missed checkpoint and is reset to about s 988, before the shortcut."
-      - "Rule to settle and build: for off-road-capable cars a checkpoint counts anywhere within a drivable corridor of the road or a shortcut; a genuine miss resets to just before the missed checkpoint, never to the previous one. Also check the rollover loop seen on the canyon sides (recovered on the same slope and rolling again)."
-      - "Red-first tests with the rally and Titan on Pacific Canyon and Ridge Rally; ordinary cars and replay fingerprints unchanged."
+      - "Rule: for off-road-capable cars a checkpoint counts anywhere within a drivable corridor of the road or a shortcut; a genuine miss resets to just before the missed checkpoint, never to the previous one. Also check the rollover loop seen on the canyon sides."
+      - "Red-first tests with the rally car and Titan; ordinary cars and replay fingerprints unchanged. Ships with GATE-REJOIN in the next release (Kyle's go-ahead)."
+  - id: INT-0926-MERGE
+    title: "Finish today's merges: crash and Muddy Hollow sounds, then ARENA-FEEL"
+    owner: codex
+    lane: INT
+    size: S
+    needs: []
+    status: ready
+    acceptance:
+      - "The 'Resume here' steps 1 to 3 in docs/board/next-run.md: gate and merge lane/audio/crash-hollow-sounds, then merge integration into lane/audio/arena-feel, gate and merge it, then the full tier, build-status and the D8 push. Janitor after each merge with plain git worktree remove."
   - id: PREVIEW-LAUNCHER
     title: "A Preview desktop icon: the development build for playtests, nothing saved"
-    priority: 1
+    owner: codex
     lane: OPS
     size: S
     needs: []
     status: ready
-    owner: Codex
     acceptance:
-      - "A second desktop icon, 'The Duel Preview', builds and serves the integration folder's QA build on a private port (not 5174), opens it with the dev switches for the features under test, and uses memory-only saves so no real career is touched. A clear PREVIEW badge shows on screen."
-      - "A preview profile starts with the gate found and useful fixtures for the current test (for warlords: Sal's territory hold full). Document it in docs/OPERATIONS.md. Kyle tests it once before Gratian uses it."
-  - id: SCRAPDOME-RELEASE
-    title: "Release the Scrapdome to the real game"
-    priority: 2
-    lane: RELEASE
+      - "A second desktop icon, 'The Duel Preview', builds and serves the integration folder's QA build on a private port (not 5174), turns on the dev switches under test (scrapdome, crash-physics, crash-effects, titan-climb, muddy-hollow) and uses memory-only saves so no real career is touched. A clear PREVIEW badge shows on screen."
+      - "A preview player starts with the gate found, Sal's territory hold full and the Titan unlocked, so each new piece can be reached at once. Document it in docs/OPERATIONS.md. Stop and ask Kyle if any step needs an account, a paid tool or an admin setting."
+      - "Set waiting_on: kyle until Kyle has opened it once and said it works."
+  - id: COMBAT-AUDIO-SCENARIO
+    title: "Fix the failing combat-audio browser scenario (No owned flight voice)"
+    owner: codex
+    lane: AUDIO
     size: S
-    needs: [ARENA-FEEL, PREVIEW-LAUNCHER]
-    status: backlog
-    owner: Claude and Codex
+    needs: []
+    status: ready
     acceptance:
-      - "Gratian and Kyle play Last Car Rolling in Preview; Claude turns their notes into fixes. Then the full release evidence, and Kyle's written go-ahead flips scrapdome to on (it is only reachable from the yard, so the main menu is unchanged). GATE-REJOIN and RALLY-CHECKPOINT ship in the same release if ready."
+      - "node tools/browser-harness.mjs scenario combat-audio fails on integration 7ef0126 and later with 'No owned flight voice'. Find whether the scenario or src/audio.js regressed (git history), fix the real cause, keep the SPEC 0.9 rule that a flight sound travels with its projectile, and rerun to 0 errors."
   - id: WAR-SAL-ART
     title: "Sal's look and sound: side saws kit, saw spin, scream, sparks"
-    priority: 2
+    owner: codex
     lane: ART
     size: S
     needs: []
-    status: backlog
-    owner: Codex
+    status: ready
     acceptance:
-      - "Side saws as an armor-kit style part for Banshee Muscle, made with the existing tools/blender/armor-kits.py approach (fit and recolour, no sculpting; three-round cap, SPEC 0.11). Spin-up and spark states the renderer can drive. A CC0 saw scream from Freesound through the catalog. One review sheet; Claude judges it."
-      - "Stop rule: if a round cannot reach the look with these tools, stop and report; do not ship a placeholder as final."
+      - "Side saws as an armor-kit style part for Banshee Muscle, using the tools/blender/armor-kits.py approach (fit and recolour existing shapes, no sculpting; three-round cap, SPEC 0.11). Idle, spin-up and sparking states the renderer can drive. A CC0 saw scream from Freesound through tools/audio/catalog.json."
+      - "One review sheet in docs/board/looks/sal/; then set status review and waiting_on: claude for Claude's verdict. Stop rule: if three rounds cannot reach the look with these tools, stop and report; never ship a placeholder as final."
+  - id: WAR-02a-FORMAT
+    title: "Warlord duel format in the Scrapdome, launched from the territory map"
+    owner: codex
+    lane: CMB
+    size: M
+    needs: [WAR-01, INT-0926-MERGE]
+    status: ready
+    flag: scrapdome
+    acceptance:
+      - "Build exactly the format in docs/SCRAPDOME.md section 5, 'Settled for build': one-on-one, first to three wrecks, warlord armor 1.5 times, a phase-two hook after the warlord's first wreck, four minutes then sudden death, losing costs nothing, REMATCH and BACK TO THE YARD. Warlord and escorts share a team (src/combat-teams.js)."
+      - "Starts from the territory card's FIGHT button (WAR-01), with an intro card (name, car, one taunt line as text). Uses Sal with the plain rammer brain until WAR-02a-SAL. Deterministic from seed and inputs; ordinary race fingerprints unchanged."
+  - id: WAR-02a-SAL
+    title: "Sawtooth Sal's fight: Saw Sweep with its tell and window, phase-two Charge"
+    owner: codex
+    lane: CMB
+    size: M
+    needs: [WAR-02a-FORMAT, WAR-SAL-ART]
+    status: ready
+    flag: scrapdome
+    acceptance:
+      - "Saw Sweep, its counter and two-second window, the cooldowns and phase two exactly as settled in docs/SCRAPDOME.md section 5. Every sweep has a full tell (test); a braked or boosted escape makes it miss and opens the window (test). Brains may not change pilot physics limits."
+      - "Callouts SAW SWEEP! and SHE MISSED. HIT HER NOW!; the saw art states and scream from WAR-SAL-ART. When built, set status review and waiting_on: claude: Claude plays it through Preview before merge."
+  - id: WAR-02a-REWARD
+    title: "Sal's reward: Side Saws kit that works, scrap and a one-time territory claim"
+    owner: codex
+    lane: SAVE
+    size: S
+    needs: [WAR-02a-FORMAT]
+    status: ready
+    flag: scrapdome
+    helpers: [save_guardian]
+    acceptance:
+      - "First win only: Side Saws in the armory (equipped like a kit: the player's side contacts deal 1.6 times ram damage, with sparks), 150 scrap, Sal's territory claimed. Rematch wins pay 25 scrap. profile.wasteland.warlords.sal = {defeated, wins, losses}, additive and per named player."
+      - "Settlement once per fight, atomic from the player's view; restart, abandon, loss, repeated callbacks and another player cannot duplicate or inherit it. Save Guardian review is required."
+  - id: SCRAPDOME-PLAYTEST
+    title: "Gratian and Kyle play Last Car Rolling in Preview; Claude turns notes into fixes"
+    owner: claude
+    lane: DESIGN
+    size: S
+    needs: [PREVIEW-LAUNCHER, INT-0926-MERGE]
+    status: ready
+    acceptance:
+      - "Claude collects the play notes (docs/playtest-inbox.md), plays the same build privately, and writes each fix as a codex card with a settled rule. Nothing is tuned by guesswork."
+  - id: SCRAPDOME-RELEASE
+    title: "Release the Scrapdome to the real game"
+    owner: claude
+    lane: RELEASE
+    size: S
+    needs: [SCRAPDOME-PLAYTEST, RALLY-CHECKPOINT]
+    status: ready
+    waiting_on: kyle
+    acceptance:
+      - "Full release evidence on the exact commit, then Kyle's written go-ahead flips scrapdome to on (reachable only from the yard; the main menu is unchanged). GATE-REJOIN and RALLY-CHECKPOINT ship in the same release."
+  - id: WAR-SAL-TUNE
+    title: "Claude plays Sal, Gratian plays Sal in Preview; tune to 'winnable in a few tries'"
+    owner: claude
+    lane: DESIGN
+    size: S
+    needs: [WAR-02a-SAL, WAR-02a-REWARD, PREVIEW-LAUNCHER]
+    status: ready
+    acceptance:
+      - "Target: Gratian beats Sal on Medium within a few tries and every sweep feels fair. Tuning changes only the settled numbers in docs/SCRAPDOME.md, recorded in decisions.md, built by Codex as a small card."
+  - id: WAR-SAL-RELEASE
+    title: "Release the warlord ladder with Sawtooth Sal"
+    owner: claude
+    lane: RELEASE
+    size: S
+    needs: [WAR-SAL-TUNE, SCRAPDOME-RELEASE]
+    status: ready
+    waiting_on: kyle
+    acceptance:
+      - "Full release evidence, then Kyle's written go-ahead. Other warlords show WARLORD FIGHT COMING LATER and have no button."
+  - id: DESIGN-WAR-02b
+    title: "Settle the Dustmonger for build (after Sal has been played)"
+    owner: claude
+    lane: DESIGN
+    size: S
+    needs: [WAR-SAL-TUNE]
+    status: ready
+    acceptance:
+      - "A 'Settled for build' table like Sal's in docs/SCRAPDOME.md section 5, using what Sal taught us; then WAR-02b becomes ready for Codex."
+  - id: DESIGN-WAR-02c
+    title: "Settle Mother Mirage for build (after Sal has been played)"
+    owner: claude
+    lane: DESIGN
+    size: S
+    needs: [WAR-SAL-TUNE]
+    status: ready
+    acceptance:
+      - "A 'Settled for build' table like Sal's in docs/SCRAPDOME.md section 5; then WAR-02c becomes ready for Codex."
   - id: WAR-01
     title: "Warlord metadata and territory ladder"
+    owner: codex
     priority: 3
     lane: UI
     size: M
     needs: [ARENA-01-UI, CAR-01]
-    status: backlog
+    status: ready
     owns: [src/warlords.js, src/screen-territory.js, tools/test-warlords.mjs, tools/test-territory-ui.mjs, docs/changes/WAR-01.md]
     hooks: [src/screen-yard-home.js, src/wasteland-career.js]
     flag: wasteland2
@@ -2016,11 +2117,12 @@ tasks:
     note: "Split into WAR-02a, WAR-02b and WAR-02c per docs/SCRAPDOME.md section 5, which also settles the rewards."
   - id: WAR-02a
     title: "Sawtooth Sal: warlord duel format, Saw Sweep, Side Saws"
+    note: "Split on 26 September 2026 into WAR-02a-FORMAT, WAR-02a-SAL, WAR-02a-REWARD and WAR-SAL-ART so Codex agents can work in parallel."
     priority: 3
     lane: CMB
     size: L
     needs: [WAR-01, ARENA-02]
-    status: backlog
+    status: replaced
     flag: scrapdome
     owns: [src/arena/warlords.js, src/arena/moves/saw-sweep.js, tools/test-warlord-sal.mjs, docs/changes/WAR-02a.md]
     hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/combat-teams.js, src/armor-kits.js, src/screen-territory.js, src/app.js]
@@ -2031,11 +2133,12 @@ tasks:
       - "Winning grants Side Saws once, working immediately (equipped like a kit), plus scrap and a one-time territory claim; Save Guardian proves idempotent, atomic settlement."
   - id: WAR-02b
     title: "The Dustmonger: Dust Veil, oil, dust storm, Smoke Screen"
+    owner: codex
     priority: 3
     lane: CMB
     size: L
-    needs: [WAR-02a]
-    status: backlog
+    needs: [WAR-02a-FORMAT, DESIGN-WAR-02b]
+    status: ready
     flag: scrapdome
     owns: [src/arena/moves/dust-veil.js, tools/test-warlord-dustmonger.mjs, docs/changes/WAR-02b.md]
     hooks: [src/arena/warlords.js, src/combat-weapons.js, src/combat-projectiles.js, src/render3d.js]
@@ -2044,11 +2147,12 @@ tasks:
       - "Dust Veil blocks crossbow aim through the cloud; oil only on straight runs; brown-puff tell; phase-two dust storm. Smoke Screen is built here as a working player weapon and reused by ARS-01."
   - id: WAR-02c
     title: "Mother Mirage: Mirage decoys, Decoy Drone"
+    owner: codex
     priority: 3
     lane: CMB
     size: L
-    needs: [WAR-02a]
-    status: backlog
+    needs: [WAR-02a-FORMAT, DESIGN-WAR-02c]
+    status: ready
     flag: scrapdome
     owns: [src/arena/moves/mirage.js, tools/test-warlord-mirage.mjs, docs/changes/WAR-02c.md]
     hooks: [src/arena/warlords.js, src/combat-teams.js, src/arena/arena-event.js]
