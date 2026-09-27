@@ -713,3 +713,23 @@ No new runtime dependency was installed. The game uses Three.js, Web Audio and t
 The post-checkpoint audio pass uses the existing licensed recordings and adds filtered exhaust-body and intake paths, car-specific balance, a smooth recorded-load gear-change envelope, camera-aware hood/chase/wide perspective, a normal-driving asphalt tire bed and a stable fade into the recorded squeal. It also lowers the in-race synthesized sequencer so vehicle cues remain dominant. No source asset, licence, runtime dependency, handling rule, event, reward or save format changed.
 
 Validation passes 248 focused audio/PCM checks with 301,448 finite Web Audio automation commands, 70 App/progression integration assertions, and the unchanged 481-check core simulation with 60 complete campaigns and 180/180 stage wins. Production and QA builds pass with only the existing renderer chunk-size warning. Browser QA on isolated port 5176 reported `Audio running · samples ready · ambience ready` in Pacific Canyon Circuit, Midnight Muscle Chase and Neon Drift Trial; the inspected browser log had no warnings or errors. This is browser decoding and runtime evidence, not a substitute for human listening on headphones and speakers.
+
+## Release 26 September 2026: two live fixes (GATE-REJOIN, RALLY-CHECKPOINT)
+
+Kyle and Gratian reported both in the live game. GATE-REJOIN: after driving
+far enough up the hidden road for the clock to stop, reversing back to the
+course left the race frozen (opponent parked, weapons and pickups dead,
+clock stopped). Leaving now pauses the race with RACE PAUSED · DRIVE BACK TO
+REJOIN; driving back resumes it with BACK IN THE RACE; only driving through
+the gate settles it as abandoned (docs/changes/GATE-REJOIN.md).
+RALLY-CHECKPOINT: the rally car, exempt from the course boundary, was
+snapped back onto the road when it crossed a lap checkpoint out on the dirt
+near Pacific Canyon's shortcut. Off-road-capable cars now count a checkpoint
+within 120 m of the road or a shortcut; ordinary cars are unchanged; a
+boulder stop says ROCK TOO BIG / BACKING OFF (docs/changes/RALLY-CHECKPOINT.md).
+
+Everything else merged since the last release stays behind switches that are
+off in the live game (scrapdome, crash-physics, crash-effects, titan-climb,
+muddy-hollow). Release evidence for this exact commit is recorded in
+docs/board/run-log.md.
+

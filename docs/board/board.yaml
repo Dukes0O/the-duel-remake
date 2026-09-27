@@ -467,7 +467,7 @@ tasks:
     lane: VIS
     size: M
     needs: [CRASH-01]
-    status: active
+    status: merged
     claimed_by: "Codex autonomous Director, 26 September 2026"
     flag: crash-effects
     owns: [docs/changes/CRASH-02.md, tools/test-crash-presentation.mjs, tools/test-police-knock.mjs, tools/scenarios/crash-presentation.mjs]
@@ -495,7 +495,7 @@ tasks:
     lane: EGG
     size: L
     needs: [TITAN-01]
-    status: active
+    status: merged
     claimed_by: "Codex autonomous Director, 26 September 2026"
     flag: muddy-hollow
     owns: [src/muddy-hollow.js, src/muddy-hollow-scene.js, tools/test-muddy-hollow.mjs, tools/test-muddy-hollow-scene.mjs, tools/scenarios/muddy-hollow.mjs, docs/changes/EGG-03.md]
@@ -1863,7 +1863,7 @@ tasks:
     lane: AUDIO
     size: S
     needs: [ARENA-01-UI]
-    status: backlog
+    status: merged
     flag: scrapdome
     owns: [docs/changes/ARENA-FEEL.md]
     hooks: [src/arena/arena-brains.js, src/sound-bank.js, src/combat-effects.js, src/screen-arena.js]
@@ -1955,7 +1955,7 @@ tasks:
     lane: INT
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: "Codex autonomous Director, 26 September 2026"
     acceptance:
       - "The 'Resume here' steps 1 to 3 in docs/board/next-run.md: gate and merge lane/audio/crash-hollow-sounds, then merge integration into lane/audio/arena-feel, gate and merge it, then the full tier, build-status and the D8 push. Janitor after each merge with plain git worktree remove."

@@ -66,6 +66,10 @@ Mad Max Duel on Pacific Canyon Circuit hides a secret for players who stray
 from the racing line. The main menu does not mention it, and each named player
 finds it for themselves (spoilers: `SPEC.md` sections 0.2 and 0.12).
 Combat blasts and hits now pan toward their source and fade with distance.
+Leaving a Mad Max Duel up the hidden dirt road only pauses the race: drive
+back to the course and it carries on where it stopped. Only driving through
+the gate ends it. The rally car and Titan Monster may cross lap checkpoints
+out on the dirt near the road or a shortcut without being put back on it.
 Wreck recovery has a short two-second race penalty. A missed checkpoint retries
 near that checkpoint. The UFO jump never moves the rival or skips a checkpoint.
 
