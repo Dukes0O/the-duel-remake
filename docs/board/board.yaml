@@ -1965,7 +1965,8 @@ tasks:
     lane: OPS
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: "Codex Preview lane, 26 September 2026"
     acceptance:
       - "A second desktop icon, 'The Duel Preview', builds and serves the integration folder's QA build on a private port (not 5174), turns on the dev switches under test (scrapdome, crash-physics, crash-effects, titan-climb, muddy-hollow) and uses memory-only saves so no real career is touched. A clear PREVIEW badge shows on screen."
       - "A preview player starts with the gate found, Sal's territory hold full and the Titan unlocked, so each new piece can be reached at once. Document it in docs/OPERATIONS.md. Stop and ask Kyle if any step needs an account, a paid tool or an admin setting."
@@ -1976,7 +1977,8 @@ tasks:
     lane: AUDIO
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: "Codex Audio QA lane, 26 September 2026"
     acceptance:
       - "node tools/browser-harness.mjs scenario combat-audio fails on integration 7ef0126 and later with 'No owned flight voice'. Find whether the scenario or src/audio.js regressed (git history), fix the real cause, keep the SPEC 0.9 rule that a flight sound travels with its projectile, and rerun to 0 errors."
   - id: WAR-SAL-ART
@@ -2086,7 +2088,8 @@ tasks:
     lane: UI
     size: M
     needs: [ARENA-01-UI, CAR-01]
-    status: ready
+    status: building
+    claimed_by: "Codex Warlord UI lane, 26 September 2026"
     owns: [src/warlords.js, src/screen-territory.js, tools/test-warlords.mjs, tools/test-territory-ui.mjs, docs/changes/WAR-01.md]
     hooks: [src/screen-yard-home.js, src/wasteland-career.js]
     flag: wasteland2
