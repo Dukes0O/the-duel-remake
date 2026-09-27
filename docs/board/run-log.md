@@ -2029,3 +2029,18 @@ tier 293/293 and build, and removed its lane. Added CRASH-RELEASE (Claude,
 waiting on Kyle). Exact commit 5efed11 passed the full tier, 293/293 suites in
 437.65 seconds. D8 push follows; no release.
 
+## CRASH-04 merged, 27 September 2026 (Claude)
+
+Kyle: crash physics good in Rival Duel, missing in Mad Max. CRASH-04 merged
+(024f675): Mad Max wrecks slide and recover where they stop, hard-hit traffic
+explodes and its hulk tumbles off the road, ram damage by each car's own
+change in velocity, kit plating adds mass. Lane tier 213/213 and build;
+combat balance --check passed with crash-physics and with
+wasteland2,crash-physics (9/5/2 and 8/5/2 wins). The first full tier on
+192a067 failed only tools/test-compact-binaries.mjs under load (820 s); it
+passed alone (632 checks). Kyle's Preview was open on port 5195 and serves
+.qa-dist from this folder, so the rerun used a separate detached checkout of
+192a067: 294/294 suites in 901.77 s, clean start and end. That checkout was
+removed. PREVIEW-OWN-FOLDER stays the fix for the shared folder. D8 push
+follows; no release.
+
