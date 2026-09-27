@@ -15,7 +15,7 @@ echo  ============================================
 echo.
 
 rem A second click opens the preview that is already served from this port.
-node tools\launcher-port.mjs --port %PREVIEW_PORT%
+node tools\launcher-port.mjs --port %PREVIEW_PORT% --preview
 if errorlevel 20 goto port_conflict
 if errorlevel 10 goto open_existing
 if errorlevel 1 goto probe_failed
@@ -44,7 +44,7 @@ if not exist .qa-dist\tools\preview.html (
 
 node node_modules\vite\bin\vite.js preview --config tools\vite-qa.config.js --host 127.0.0.1 --port %PREVIEW_PORT% --strictPort --open "%PREVIEW_PATH%"
 if errorlevel 1 (
-  node tools\launcher-port.mjs --port %PREVIEW_PORT%
+  node tools\launcher-port.mjs --port %PREVIEW_PORT% --preview
   if errorlevel 20 goto port_conflict
   if errorlevel 10 goto open_existing
   goto probe_failed

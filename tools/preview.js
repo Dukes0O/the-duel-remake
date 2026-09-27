@@ -1,6 +1,6 @@
 // Install the isolated store before importing production startup. The preview
 // never keeps a handle to the browser's physical localStorage.
-import {installIsolatedStorage} from './qa-storage.js';
+import {createMemoryBackupStore,installIsolatedStorage} from './qa-storage.js';
 import {seedPreviewProfile} from './preview-player.js';
 import {
   PLAYERS_KEY,
@@ -10,6 +10,7 @@ import {
 } from '../src/progression.js';
 
 installIsolatedStorage();
+globalThis.__duelQaBackupStore=createMemoryBackupStore(window);
 
 // Seed a fresh preview tab once. Reloads keep that tab's temporary playtest
 // progress, while closing it discards the isolated store.

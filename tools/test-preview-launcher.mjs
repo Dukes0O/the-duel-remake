@@ -25,6 +25,7 @@ const entryUrl = toolFile('preview.js');
 const playerUrl = toolFile('preview-player.js');
 const qaConfigUrl = toolFile('vite-qa.config.js');
 const operationsUrl = rootFile('docs/OPERATIONS.md');
+const mainUrl = rootFile('src/main.js');
 const boardUrl = rootFile('docs/board/board.yaml');
 const launcher = source(launcherUrl);
 const installer = source(installerUrl);
@@ -32,6 +33,7 @@ const page = source(pageUrl);
 const entry = source(entryUrl);
 const qaConfig = source(qaConfigUrl);
 const operations = source(operationsUrl);
+const mainSource = source(mainUrl);
 const board = source(boardUrl);
 
 check('preview launcher recipe exists', () => assert.ok(existsSync(launcherUrl),
@@ -101,6 +103,16 @@ check('preview isolates saves before game startup', () => {
     'memory-only storage must be installed before importing production startup');
   assert.doesNotMatch(entry, /__qaPhysicalStorage/,
     'preview entry must not retain a handle to the real save store');
+});
+check('preview uses a memory-only career store before game startup', () => {
+  assert.match(entry, /createMemoryBackupStore/,
+    'preview entry must create the in-memory career backup and budget store');
+  const inject = entry.indexOf('__duelQaBackupStore');
+  const main = entry.search(/await\s+import\(\s*['"]\.\.\/src\/main\.js['"]\s*\)/);
+  assert.ok(inject >= 0 && main > inject,
+    'preview must inject the memory store before production startup');
+  assert.match(mainSource, /__DUEL_QA__[\s\S]{0,200}__duelQaBackupStore/,
+    'production startup may accept the injected store only in a QA build');
 });
 
 check('preview player seeding module exists', () => assert.ok(existsSync(playerUrl),

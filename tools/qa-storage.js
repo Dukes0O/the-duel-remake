@@ -1,3 +1,23 @@
+const detachedCopy=value=>value===undefined?undefined:
+  (typeof structuredClone==='function'?structuredClone(value):JSON.parse(JSON.stringify(value)));
+
+function memoryBackupStore(records=new Map(),sync=()=>{}){
+  return Object.freeze({
+    async save(record){
+      if(!record||typeof record.id!=='string'||!record.id)throw new Error('A memory backup needs an id.');
+      records.set(record.id,detachedCopy(record));sync();
+    },
+    async load(id){return detachedCopy(records.get(String(id)));},
+  });
+}
+
+// Preview uses this store for both career backups and the origin-budget
+// snapshot. It never calls IndexedDB. A host installed below keeps the store
+// across same-tab reloads through window.name; a different tab gets a new map.
+export function createMemoryBackupStore(target){
+  return target?.__qaMemoryBackupStore??memoryBackupStore();
+}
+
 // Install before importing App/main. QA never reads or writes the real origin's
 // storage, even if a developer opens a test page on the live game's port.
 export function installIsolatedStorage(target = window) {
@@ -6,9 +26,11 @@ export function installIsolatedStorage(target = window) {
   const prefix='__duel_qa_tab_v2:';
   let saved=null;
   try{if(target.name?.startsWith(prefix))saved=JSON.parse(target.name.slice(prefix.length));}catch{}
-  if(typeof saved?.id!=='string'||!Array.isArray(saved.rows))saved={id:target.crypto?.randomUUID?.()??Math.random().toString(36).slice(2),rows:[]};
+  if(typeof saved?.id!=='string'||!Array.isArray(saved.rows))saved={id:target.crypto?.randomUUID?.()??Math.random().toString(36).slice(2),rows:[],backups:[]};
+  if(!Array.isArray(saved.backups))saved.backups=[];
   const memory = new Map(saved.rows);
-  const sync=()=>{target.name=prefix+JSON.stringify({id:saved.id,rows:[...memory]});};
+  const backups=new Map(saved.backups);
+  const sync=()=>{target.name=prefix+JSON.stringify({id:saved.id,rows:[...memory],backups:[...backups]});};
   const storage = {
     get length() { return memory.size; },
     key(index) { return [...memory.keys()][index] ?? null; },
@@ -20,6 +42,9 @@ export function installIsolatedStorage(target = window) {
   // Failure stops the caller before it imports game code. Never fall back to
   // the user's localStorage if the isolated replacement cannot be installed.
   Object.defineProperty(target, 'localStorage', { configurable:true,value: storage });
+  Object.defineProperty(target,'__qaMemoryBackupStore',{
+    configurable:true,value:memoryBackupStore(backups,sync),
+  });
   const databaseName=name=>`${String(name)}__qa_tab_${saved.id}`;
   target.__qaIndexedDbName=databaseName;
   const native=target.indexedDB;
