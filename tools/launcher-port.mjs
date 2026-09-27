@@ -25,7 +25,8 @@ function portHasListener(port, timeoutMs) {
   });
 }
 
-export async function probeDuelServer(port = LIVE_PORT, { timeoutMs = 1500, kind = 'duel' } = {}) {
+export async function probeDuelServer(port = LIVE_PORT, { timeoutMs = 1500, kind = 'duel',
+  expectCommit = null } = {}) {
   const path=kind==='preview'?'/tools/preview.html':'/';
   let response;
   try {
@@ -52,10 +53,22 @@ export async function probeDuelServer(port = LIVE_PORT, { timeoutMs = 1500, kind
     const script = await fetch(`http://localhost:${port}${bootstrap}`, {
       method: 'HEAD', redirect: 'manual', signal: AbortSignal.timeout(timeoutMs),
     });
-    return script.status === 200 && script.headers.get('content-type')?.toLowerCase().includes('javascript')
-      ? (preview?'preview':'duel') : 'occupied';
+    if (script.status !== 200 || !script.headers.get('content-type')?.toLowerCase().includes('javascript'))
+      return 'occupied';
   } catch {
     return 'occupied';
+  }
+  if (!preview) return 'duel';
+  if (!expectCommit) return 'preview';
+  // A running Preview built from older work is replaced, not reopened.
+  try {
+    const stamp = await fetch(`http://localhost:${port}/preview-build.json`, {
+      redirect: 'manual', signal: AbortSignal.timeout(timeoutMs), headers: { Accept: 'application/json' },
+    });
+    const built = stamp.ok ? (await stamp.json())?.commit : null;
+    return built === expectCommit ? 'preview' : 'stale';
+  } catch {
+    return 'stale';
   }
 }
 
@@ -63,14 +76,17 @@ if (process.argv[1] && fileURLToPath(import.meta.url).toLowerCase() === resolve(
   const args=process.argv.slice(2),portIndex=args.indexOf('--port');
   const port = portIndex>=0 ? Number(args[portIndex+1]) : LIVE_PORT;
   const kind=args.includes('--preview')?'preview':'duel';
+  const commitIndex=args.indexOf('--expect-commit');
+  const expectCommit=commitIndex>=0?args[commitIndex+1]||null:null;
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     console.error('Invalid launcher probe port.');
     process.exitCode = 20;
   } else {
-    const state = await probeDuelServer(port,{kind});
+    const state = await probeDuelServer(port,{kind,expectCommit});
     if (state === 'duel') console.log('The Duel is already running.');
     if (state === 'preview') console.log('The Duel Preview is already running.');
+    if (state === 'stale') console.log('The running Duel Preview is older than the current work.');
     if (state === 'occupied') console.error(`Port ${port} is in use by an unrecognized server.`);
-    process.exitCode = { free: 0, duel: 10, preview:10, occupied: 20 }[state];
+    process.exitCode = { free: 0, duel: 10, preview:10, stale: 11, occupied: 20 }[state];
   }
 }

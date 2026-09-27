@@ -27,6 +27,7 @@ dist-previous/
 *.sw?
 
 .qa-dist/
+.preview-dist/
 .qa-blender/
 .qa-art/
 
