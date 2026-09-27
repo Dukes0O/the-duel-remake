@@ -1,7 +1,13 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
-import { COURSE, DRIVE, ROAD_SHOULDER_WIDTH } from './config.js';
+import { CARS, COURSE, DRIVE, ROAD_SHOULDER_WIDTH } from './config.js';
+import { offroadCapability } from './offroad-physics.js';
 import { segmentCircle } from './collision.js';
 import { clamp } from './sim-common.js';
+
+// Off-road-capable cars have no course boundary, so a checkpoint crossed out
+// on the dirt counts for them within this many metres of the road or a
+// shortcut (RALLY-CHECKPOINT). Farther out the crossing is a corner cut.
+export const OFFROAD_CHECKPOINT_CORRIDOR = 120;
 
 export function _flockBonuses() {
   const s = this.state;
@@ -23,6 +29,7 @@ export function _advanceLaps(actor, dt, noReset = false) {
   if (current <= previous) return;
   const lapBase = actor.completedLaps * this.course.length, finish = lapBase + this.course.length;
   const gate = this._lapGates[actor.nextLapGate];
+  const offroad = !!offroadCapability(player ? this.car : CARS[actor.car]);
   const crossed = threshold => previous < threshold && current >= threshold;
   const legalAt = threshold => {
     const fraction = clamp((threshold - previous) / (current - previous), 0, 1);
@@ -32,7 +39,12 @@ export function _advanceLaps(actor, dt, noReset = false) {
     // Otherwise a harmless edge crossing (even inside the finish arch)
     // silently invalidates the lap. This does not alter grip, boost, solid
     // posts, ordered progress, or the separate timed challenge gate widths.
-    return surface.road || !!surface.shortcutId || Math.abs(lateral) <= surface.roadHalfWidth + ROAD_SHOULDER_WIDTH;
+    if (surface.road || surface.shortcutId || Math.abs(lateral) <= surface.roadHalfWidth + ROAD_SHOULDER_WIDTH) return true;
+    if (!offroad) return false;
+    const phase = this.course.phase?.(threshold) ?? threshold;
+    return Math.abs(lateral) <= surface.roadHalfWidth + OFFROAD_CHECKPOINT_CORRIDOR ||
+      (this.course.features.shortcuts || []).some(cut => phase >= cut.start && phase <= cut.end &&
+        Math.abs(lateral - this.course.shortcutOffset(cut, phase)) <= cut.halfWidth + OFFROAD_CHECKPOINT_CORRIDOR);
   };
   // A discontinuous position change cannot substitute for driving a circuit.
   const plausibleTravel = current - previous < Math.max(20, actor.speedMph * DRIVE.mphToWorld * dt * 4 + 12);

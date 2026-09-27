@@ -40,7 +40,8 @@ export function _startTumble(reason) {
   s.airborne = false; s.airHeight = 0; s._jumpY = null; s._jumpOrigin = null;
   s.airDistance = 0; s.airTime = 0; s._airOrigin = null;
   s.speedMph = 0; s.boosting = false;
-  this._callout('CLIMB LIMIT  /  ROLLING BACK', 2.2);
+  // Say what stopped the car: a boulder too big to drive over is not a climb.
+  this._callout(reason === 'oversized_rock' ? 'ROCK TOO BIG  /  BACKING OFF' : 'CLIMB LIMIT  /  ROLLING BACK', 2.2);
   this.emit({ rollover: { reason } });
 }
 
