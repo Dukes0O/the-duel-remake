@@ -1990,6 +1990,10 @@ tasks:
     needs: []
     status: building
     claimed_by: "Codex Sal art lane, 26 September 2026"
+    owns: [tools/blender/armor-kits.py, public/assets/models/wasteland/kits/banshee_muscle.glb, tools/audio/build-sal.mjs, public/assets/audio/sal-saw-scream.ogg, tools/test-sal-art.mjs, tools/scenarios/sal-art.mjs, tools/sal-sheet.py, docs/board/looks/sal, docs/changes/WAR-SAL-ART.md]
+    hooks: [src/armor-kit-meshes.js, src/sound-bank.js, src/audio.js, tools/audio/catalog.json, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
+    helpers: [test_author, art_director, art_critic, browser_qa, audio_qa, reviewer]
+    note: "Director file slice, 26 September 2026: add a Banshee-only Sal saw root with explicit left/right blades; expose renderer-only idle, spin-up and sparking states driven by stage time; add one positional scrapdome-gated saw cue for the future fight event; and publish at most three bounded review rounds. Do not change simulation, rewards, the generic Raider kit or the other eight kit GLBs."
     acceptance:
       - "Side saws as an armor-kit style part for Banshee Muscle, using the tools/blender/armor-kits.py approach (fit and recolour existing shapes, no sculpting; three-round cap, SPEC 0.11). Idle, spin-up and sparking states the renderer can drive. A CC0 saw scream from Freesound through tools/audio/catalog.json."
       - "One review sheet in docs/board/looks/sal/; then set status review and waiting_on: claude for Claude's verdict. Stop rule: if three rounds cannot reach the look with these tools, stop and report; never ship a placeholder as final."
