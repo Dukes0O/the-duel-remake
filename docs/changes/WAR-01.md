@@ -78,9 +78,11 @@ Focused checks now pass:
   results and `activeRace` matched exactly. Rendering the ladder made no save
   change.
 
-No existing assertion was weakened. The Director will run the required lane
-gate and build before merge. Race fingerprints are unchanged because this card
-does not alter simulation or race setup.
+No existing assertion was weakened. The final lane tier at `51aa3a7` passed
+292/292 tests with no skips, and the production build passed at the same
+commit. An earlier attempt timed out in the unrelated binary-compaction child
+process; that test passed alone and in the exact final rerun. Race fingerprints
+are unchanged because this card does not alter simulation or race setup.
 
 ## Removed
 

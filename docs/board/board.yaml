@@ -2089,7 +2089,7 @@ tasks:
     lane: UI
     size: M
     needs: [ARENA-01-UI, CAR-01]
-    status: building
+    status: merged
     claimed_by: "Codex Warlord UI lane, 26 September 2026"
     owns: [src/warlords.js, src/screen-territory.js, tools/test-warlords.mjs, tools/test-territory-ui.mjs, docs/changes/WAR-01.md]
     hooks: [src/screen-yard-home.js, src/wasteland-career.js, src/wasteland-progress.js, src/career-backup.js, src/armor-kits.js, src/screen-armory.js, tools/test-armor-kits.mjs, tools/scenarios/yard-home.mjs]
