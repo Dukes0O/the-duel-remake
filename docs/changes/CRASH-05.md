@@ -1,6 +1,6 @@
 ---
 task: CRASH-05
-status: ready-to-merge
+status: merged
 kind: fix
 flag: crash-physics
 player_facing: yes
@@ -87,3 +87,10 @@ cars that were not alive), drove through it.
 - The flat roadside speed cost for Mad Max traffic hits under crash physics
   (momentum replaces it; kept with the switch off).
 - The CRASH-04 rule that exploded every smashed car.
+
+## Gate
+
+- Lane tier on af1ad1e: 169 passed, 0 failed in 491.55 s. npm run build passed.
+- A private browser look was attempted on a memory-only QA page; the browser
+  pane was hidden, which slows the game loop too much for a timed staged
+  crash, so the look is left to Kyle's Preview. No console errors were seen.
