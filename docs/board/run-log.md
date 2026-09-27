@@ -2011,5 +2011,8 @@ docs for future proof, with no deletion proven safe. Tracked size changed from
 1,018 files / 242.9 MiB to 1,060 files / 244.0 MiB; public changed from
 235,822,734 to 236,164,408 bytes; Wasteland models stayed 78,930,708 bytes.
 The growth is the merged arena/audio, launcher and territory work. Current
-targets remain unchanged. Run the end-of-session full tier, refresh status,
-commit its evidence and push `integration/wasteland`; do not release.
+targets remain unchanged. Exact integration commit `8c5ff37` passed the final
+full tier, 292/292 suites in 460.27 seconds, with a clean start and end. Its
+production build transformed 239 modules in 479 ms. The following ledger,
+status and handoff commit records evidence only. D8 push follows; do not
+release.
