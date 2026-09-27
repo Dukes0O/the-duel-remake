@@ -1942,7 +1942,7 @@ tasks:
     lane: CORE
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: "Claude, 26 September 2026"
     hooks: [src/sim-laps.js, src/offroad-physics.js, src/sim-crash.js]
     acceptance:

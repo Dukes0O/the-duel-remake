@@ -1,6 +1,6 @@
 ---
 task: RALLY-CHECKPOINT
-status: ready-to-merge
+status: merged
 kind: fix
 flag: none
 player_facing: yes
@@ -40,7 +40,8 @@ the clean reproduction from before the first checkpoint showed the snap.
 - Drive-through probe (rally car, Pacific Canyon, Mad Max): the desert line at
   -90 m and a wide shortcut exit at -25 m now pass all three checkpoints with
   no snap; before, both snapped back at 2772 (and 3000).
-- Lane tier and build: see the gate below.
+- Lane tier: 134 passed, 0 failed, 0 not run (replay fingerprints unchanged).
+  Build passed.
 
 ## Changed assertions
 
