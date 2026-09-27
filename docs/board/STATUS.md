@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-09-26T18:27:03.478Z
+Observed at: 2026-09-27T00:58:57.753Z
 
-Observation commit: 4a3bb556ed3c0257a52b92014b127081310acb50
+Observation commit: bbc9ad6ed92c9ea243f452c4f824b21ae70af700
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 4a3bb556ed3c0257a52b92014b127081310acb50
+Integration HEAD: bbc9ad6ed92c9ea243f452c4f824b21ae70af700
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -50,7 +50,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | lane/audio/arena-feel | unknown | 2026-09-26T11:25:20-07:00 | 0 | last commit 2026-09-26T11:25:20-07:00 | docs/SCRAPDOME.md, docs/board/board.yaml, docs/board/decisions.md, docs/board/looks/arena-feel/round-1-review.md, docs/board/looks/arena-feel/round-1.jpg |
-| lane/audio/crash-hollow-sounds | unknown | 2026-09-26T11:24:37-07:00 | 0 | last commit 2026-09-26T11:24:37-07:00 | docs/board/board.yaml, docs/changes/CRASH-02.md, docs/changes/EGG-03.md, public/assets/audio/CREDITS.md, public/assets/audio/credits.html |
+| lane/audio/crash-hollow-sounds | unknown | 2026-09-26T11:33:10-07:00 | 0 | last commit 2026-09-26T11:33:10-07:00 | docs/board/board.yaml, docs/changes/CRASH-02.md, docs/changes/EGG-03.md, public/assets/audio/CREDITS.md, public/assets/audio/credits.html |
 
 ## Size targets
 
@@ -63,10 +63,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
-| Review `looks/` | 8,441,898 B | +422,340 B | 20,000,000 B |
-| Added bytes in last merge | 1,136,128 B | +200,183 B | 5,000,000 B |
+| Review `looks/` | 8,441,898 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 269,987 B | -866,141 B | 5,000,000 B |
 | All `public/` | 236,053,473 B | +0 B | unavailable |
-| Git objects | 334,057,472 B | +1,428,480 B | unavailable |
+| Git objects | 334,497,792 B | +440,320 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -75,7 +75,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: faf5749598d061d0d11cadff9a4515fb10308ddb
 - Local main: missing
-- Local integration/wasteland: 4a3bb556ed3c0257a52b92014b127081310acb50
+- Local integration/wasteland: bbc9ad6ed92c9ea243f452c4f824b21ae70af700
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
