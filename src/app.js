@@ -84,7 +84,7 @@ export class App {
       this._syncHiddenRoadDiscovery();
       this.audio.event(event,state,this.duel.course);
       if (event.hiddenRoadPhase) this._discoverHiddenRoadGate(event.hiddenRoadPhase, state);
-      if (event.hiddenRoadDeparted) this._settleHiddenRoadDeparture(event.hiddenRoadDeparted, state);
+      if (event.hiddenRoadCommitted) this._settleHiddenRoadDeparture(event.hiddenRoadCommitted, state);
       if (event.muddyHollowDeparted)
         this._settleMuddyHollowDeparture(event.muddyHollowDeparted, state);
       if (event.muddyHollowHubcap)
@@ -492,7 +492,7 @@ export class App {
   _settleHiddenRoadDeparture(event, state) {
     const journey = state?.hiddenRoadJourney;
     if (!this.runId || state !== this.duel.state || state.status !== 'exploring' ||
-        !journey?.departed || event?.journeyId !== journey.id ||
+        !journey?.departed || !journey.committed || event?.journeyId !== journey.id ||
         state.playerId !== this._runPlayerId || this._runPlayerId !== this.player.id ||
         this._settledHiddenRoadJourney === journey) return false;
     this._settleResult({won: false, completed: false, abandoned: true}, state);
@@ -506,7 +506,8 @@ export class App {
         !departure?.departed || event?.departureId !== departure.id ||
         state.playerId !== this._runPlayerId || this._runPlayerId !== this.player.id ||
         this._settledMuddyHollowDeparture === departure) return false;
-    this._settleResult({won: false, completed: false, abandoned: true}, state);
+    // Crossing the ridge only pauses the race (GATE-REJOIN); it records the
+    // discovery and settles nothing.
     const discovered = discoverMuddyHollow(this.profile);
     if (discovered !== this.profile) { this.profile = discovered; this._saveProfile(); }
     this._settledMuddyHollowDeparture = departure;

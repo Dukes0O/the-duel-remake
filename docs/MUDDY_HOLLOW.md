@@ -65,7 +65,9 @@ without disturbing the racing line, its scenery or its random stream.
   Driving reads them: mud lowers grip and adds drag; water adds drag by
   depth and speed and raises a splash event.
 - **Leaving the race:** reuse the Hidden Road departure flow (`exploring`
-  status, abandonment settlement, faded race display).
+  status, faded race display). Crossing the ridge only pauses the race;
+  crossing back toward the road resumes it (GATE-REJOIN). No abandonment is
+  recorded unless the player quits the race.
 - **Rendering:** its own detailed ground mesh (the shared far terrain is too
   coarse), mud and water materials, splash and mud particles. Art follows
   SPEC 0.11 (existing assets first).

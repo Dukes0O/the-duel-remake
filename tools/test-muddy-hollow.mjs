@@ -1157,8 +1157,9 @@ check('only a grounded racing Titan crossing the ridge departs once', () => {
     jumpY: duel.state._jumpY,
     pendingFines: duel.state.police.pendingFines,
   }, {impactTimer: 0, tumble: null, boosting: false, airborne: false,
-    airHeight: 0, jumpY: null, pendingFines: 0},
-  'departure clears transient race, flight and pending-fine state');
+    airHeight: 0, jumpY: null, pendingFines: 600},
+  // GATE-REJOIN: the race is only paused, so a pending fine is kept.
+  'departure clears transient race and flight state and keeps pending fines');
   for (let tick = 0; tick < 20; tick++) duel.step(fixedStep);
   assert.equal(phaseThreeEvent(events).length, 1,
     'remaining beyond the ridge cannot depart twice');
@@ -1226,7 +1227,8 @@ check('ridge crossing wins over a simultaneous race deadline', () => {
     'simultaneous deadline cannot publish a race result');
 });
 
-check('exploration stays drivable while race outcomes freeze and ridge return cannot resume', () => {
+// GATE-REJOIN: crossing the ridge pauses the race; crossing back resumes it.
+check('exploration stays drivable while race outcomes freeze and ridge return resumes the race', () => {
   const {duel, reference, events} = crossingFixture();
   duel.step(fixedStep);
   assert.equal(duel.state.status, 'exploring', 'fixture departs into exploration');
@@ -1254,10 +1256,10 @@ check('exploration stays drivable while race outcomes freeze and ridge return ca
   Object.assign(duel.state, {s: road.s, prevS: road.s,
     lateral: road.lateral, prevLateral: road.lateral, speedMph: 0});
   duel.step(fixedStep);
-  assert.equal(duel.state.status, 'exploring',
-    'crossing back to the road cannot resume the abandoned race');
+  assert.equal(duel.state.status, 'racing',
+    'crossing back to the road resumes the paused race');
   assert.deepEqual(Object.fromEntries(outcomeFields.map(key =>
-    [key, duel.state[key]])), frozen, 'ridge return keeps race outcomes frozen');
+    [key, duel.state[key]])), frozen, 'the paused time and progress carry on unchanged');
 });
 
 check('Pro overrev cannot freeze a departed Titan; ordinary engine failure remains', () => {
@@ -1325,7 +1327,7 @@ check('departure and exploration agree under 30, 60 and 144 FPS schedules', () =
   assert.deepEqual(run(144), at30, '144 FPS matches the 30 FPS fixed-step result');
 });
 
-check('memory-only App abandonment preserves banked progress and discards the active attempt', () => {
+check('memory-only App departure records the discovery and keeps the paused race active', () => {
   const app = makeMuddyApp();
   const state = app.duel.state;
   state.score = 1700;
@@ -1335,26 +1337,19 @@ check('memory-only App abandonment preserves banked progress and discards the ac
   const historyCount = app.profile.history.length;
   const event = departMuddyApp(app);
   assert.deepEqual(stableBankIgnoringHollowDiscovery(savedAppBank(app)), stableBankIgnoringHollowDiscovery(before),
-    'abandonment preserves banked credits, records, unlocks and ghosts');
+    'departure preserves banked credits, records, unlocks and ghosts');
   assert.equal(app.profile.wasteland.muddyHollow?.discovered, true,
     'guarded departure remembers that this player found the Hollow');
   assert.equal(app.profile.wasteland.muddyHollow.titanHighCountryFinishes, 5,
     'departure preserves an existing non-zero hint count');
   assert.deepEqual(app.profile.wasteland.muddyHollow.unknownReviewField,
     {kept: 'unchanged'}, 'departure preserves unknown nested Hollow data');
-  assert.equal(app.profile.history.length, historyCount + 1,
-    'abandonment writes one history result');
-  const result = app.profile.history.at(-1);
-  assert.deepEqual({abandoned: result.abandoned, reward: result.reward,
-    charge: result.charge, policeFineCharge: result.policeFineCharge},
-  {abandoned: true, reward: 0, charge: 0, policeFineCharge: 0},
-  'unbanked race earnings and pending fines are discarded');
-  assert.equal(app.profile.activeRace, null, 'abandoned active race is cleared');
-  assert.equal(state.police.pendingFines, 0, 'simulation pending fines are cleared');
-  assert.equal(app.ghostRecorder, null, 'unfinished attempt no longer records a ghost');
+  assert.equal(app.profile.history.length, historyCount,
+    'crossing the ridge settles no result');
+  assert.ok(app.profile.activeRace, 'the paused race stays active');
   app.duel.emit({muddyHollowDeparted: event});
-  assert.equal(app.profile.history.length, historyCount + 1,
-    'duplicate departure cannot settle twice');
+  assert.equal(app.profile.history.length, historyCount,
+    'a duplicate departure settles nothing either');
   assert.deepEqual(stableBankIgnoringHollowDiscovery(savedAppBank(app)), stableBankIgnoringHollowDiscovery(before));
   assert.equal(activePlayer(loadPlayers()).profile.credits, before.credits);
   assert.deepEqual(loadLeaderboard(), before.leaderboard);

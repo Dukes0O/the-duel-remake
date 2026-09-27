@@ -98,6 +98,11 @@ opens, and the player is invited into the Wasteland.
   through the gate into the Scrapdome yard, which is the Wasteland's home
   screen: career, territory map, armory and crew over a live view of the yard.
   **Turn back** leaves the player parked outside; the discovery still counts.
+- **Leaving the race only pauses it** (GATE-REJOIN, 26 September 2026). Up
+  the dirt road, the race clock, rival, weapons and pickups pause and the
+  player sees RACE PAUSED · DRIVE BACK TO REJOIN. Driving back to the course
+  (or being reset onto it) resumes the race where it stopped. Only driving
+  through the gate abandons the race. Muddy Hollow's ridge works the same way.
 - **After discovery.** A **WASTELAND** entry appears on this player's main menu.
   The Hidden Road stays drivable as a scenic way in; the gate now opens without
   the invitation. Each named player finds it for themselves.

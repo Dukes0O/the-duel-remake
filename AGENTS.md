@@ -9,6 +9,16 @@ before its code. Read `docs/CODEX_PLAYBOOK.md`
 for the workflow, and `docs/board/board.yaml` for task ownership. Use
 `docs/OPERATIONS.md` for current folders, ports and release steps.
 
+## Who works on what
+
+- `node tools/board.mjs` shows the split. Codex starts only cards listed under
+  CODEX CAN START NOW. Cards with `owner: claude` are Claude's (design, rules,
+  look and feel reviews, releases prepared for Kyle); never start them.
+- Stop rule (Kyle): this is a game for one laptop, played by Kyle and his son.
+  If a card cannot meet its acceptance with the tools we have (free services,
+  this laptop, SPEC 0.11's three-round art cap), stop, write why in the change
+  note and ask Kyle. Never ship a placeholder or stub as the finished thing.
+
 ## Never
 
 - Do not edit or build in `C:\Users\kyleb\dev\the-duel-remake` except as the

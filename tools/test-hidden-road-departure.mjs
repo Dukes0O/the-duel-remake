@@ -86,7 +86,9 @@ function choice(app) {
   assert.equal(app.duel.state.hiddenRoadJourney?.phase, 'choice');
 }
 
-check('departure uses abandonment: preserve bank, records, unlocks and ghosts; discard unbanked/fines', () => {
+// GATE-REJOIN: departure only pauses the race; driving through the gate is
+// the point of no return that settles it as abandoned.
+check('entering the gate uses abandonment: preserve bank, records, unlocks and ghosts; discard unbanked/fines', () => {
   const app = makeApp(), s = app.duel.state;
   s.speedMph = 110;
   app.duel._ticket({ limitMph: 55 });
@@ -95,7 +97,18 @@ check('departure uses abandonment: preserve bank, records, unlocks and ghosts; d
   assert.equal(app.profile.activeRace.pendingPoliceFines, 0);
   s.score = 1700; s.policeEscapes = 3;
   const before = bank(app), historyCount = app.profile.history.length;
-  const event = depart(app);
+  depart(app);
+  assert.equal(app.profile.history.length, historyCount, 'departure alone settles nothing');
+  assert.ok(app.profile.activeRace, 'the paused race stays active');
+  const commits = [];
+  app.duel.onChange((_s, e) => { if (e.hiddenRoadCommitted) commits.push(e.hiddenRoadCommitted); });
+  choice(app);
+  app.chooseHiddenRoad('enter');
+  app.advance(4);
+  assert.equal(commits.length, 1, 'driving through the gate commits once');
+  const event = commits[0];
+  // Reaching the gate records the discovery; the bank is otherwise untouched.
+  before.wasteland = {...before.wasteland, discoveredGate: true};
   assert.deepEqual(bank(app), before, 'abandonment cannot alter prior earnings or records');
   assert.equal(app.profile.history.length, historyCount + 1);
   const result = app.profile.history.at(-1);
@@ -104,7 +117,7 @@ check('departure uses abandonment: preserve bank, records, unlocks and ghosts; d
   assert.equal(result.charge, 0);
   assert.equal(app.profile.activeRace, null);
   assert.equal(app.ghostRecorder, null, 'unfinished attempt no longer records');
-  app.duel.emit({ hiddenRoadDeparted: event });
+  app.duel.emit({ hiddenRoadCommitted: event });
   assert.equal(app.profile.history.length, historyCount + 1);
   assert.deepEqual(savedContent(bank(app)), savedContent(before));
   assert.equal(activePlayer(loadPlayers()).profile.credits, before.credits);
@@ -185,7 +198,12 @@ for (const selected of ['enter', 'turn-back']) check(`${selected} is queued by A
   app.advance(4);
   assert.equal(app.duel.state.hiddenRoadJourney.phase, selected === 'enter' ? 'arrived' : 'turned-back');
   assert.equal(events.length, selected === 'enter' ? 1 : 0);
-  assert.deepEqual(app.profile, saved, 'EGG-04 owns persistent discovery; invitation only changes journey');
+  // Entering also abandons the paused race (GATE-REJOIN); discovery is unchanged.
+  const unsettled = profile => ({...profile, history: null, activeRace: null, winStreak: null,
+    settledResults: null});
+  if (selected === 'enter') assert.deepEqual(unsettled(app.profile), unsettled(saved),
+    'EGG-04 owns persistent discovery; entering only settles the abandoned race');
+  else assert.deepEqual(app.profile, saved, 'EGG-04 owns persistent discovery; invitation only changes journey');
   app.returnToMenu();
   assert.equal(app.duel.state.status, 'menu');
   app.dispose();

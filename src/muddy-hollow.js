@@ -1,5 +1,6 @@
 // Deterministic phase-one ground for the hidden High Country playground.
 import {MUDDY_HOLLOW_HUBCAP_IDS} from './wasteland-progress.js';
+import {RACE_PAUSED_CALLOUT, RACE_REJOINED_CALLOUT} from './hidden-road-journey.js';
 
 // The course is complete before this installer runs, so the zone cannot alter
 // its samples, generated features, scenery or random stream.
@@ -12,6 +13,8 @@ const DEPARTURE_BOUNDARY = Object.freeze({
   alongMin: -70.8,
   alongMax: 70.8,
   lateral: 84,
+  // Back this far toward the road, the paused race resumes (GATE-REJOIN).
+  rejoinLateral: 72,
 });
 
 const clamp = (value, minimum = 0, maximum = 1) =>
@@ -374,7 +377,7 @@ export function checkMuddyHollowDeparture(duel) {
   state.airborne = false;
   state.airHeight = 0;
   state._jumpY = null;
-  state.police.pendingFines = 0;
+  duel._callout(RACE_PAUSED_CALLOUT, 3.5);
   duel.emit({muddyHollowDeparted: {departureId: departure.id}});
   return true;
 }
@@ -383,11 +386,29 @@ export function stepMuddyHollowExploration(duel, dt) {
   const state = duel.state;
   const departure = state.muddyHollowDeparture;
   if (state.status !== 'exploring' || !departure?.departed) return false;
+  if (rejoinMuddyHollowRace(duel)) return true;
   const firstStep = departure.elapsedSec === 0;
   departure.elapsedSec += dt;
   duel._drive(dt);
   collectMuddyHollowHubcaps(duel);
   if (!firstStep) duel._jump(state, dt, departure.elapsedSec);
   duel._staticContacts(state, true);
+  rejoinMuddyHollowRace(duel);
+  return true;
+}
+
+// Leaving over the ridge only pauses the race. Back on the road side of the
+// ridge, on the ground, the race carries on from here.
+function rejoinMuddyHollowRace(duel) {
+  const state = duel.state, zone = duel.course?.muddyHollow;
+  const departure = state.muddyHollowDeparture;
+  if (!zone || state.airborne || (state.airHeight || 0) > 0) return false;
+  const local = departurePosition(duel, state.s, state.lateral);
+  if (local.lateral > zone.departureBoundary.rejoinLateral) return false;
+  departure.departed = false;
+  departure.elapsedSec = 0;
+  state.status = 'racing';
+  duel._callout(RACE_REJOINED_CALLOUT);
+  duel.emit({muddyHollowRejoined: {departureId: departure.id}});
   return true;
 }

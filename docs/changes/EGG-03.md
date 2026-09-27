@@ -744,3 +744,7 @@ levels over the engine at full throttle; the loudness scales are in
 `src/audio.js` (`_smashImpact`, `_updateMud`, the splash scale).
 
 Credits: `public/assets/audio/CREDITS.md` and the in-game credits page.
+
+Gate fix: the first lane gate (285 passed) failed `test-combat-audio`: the splash
+files' encoded true peak exceeded -1 dBTP. `build-hollow.mjs` now levels to a
+-3 dBTP target and adds a limiter; the files were rebuilt and the test passes.

@@ -1,6 +1,6 @@
 ---
 task: ARENA-FEEL
-status: ready-to-merge
+status: merged
 kind: presentation
 flag: scrapdome
 player_facing: yes

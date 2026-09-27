@@ -1218,3 +1218,31 @@ flashing its high beams and roaring, and only then boosts in. Every charge is
 announced. Quick balance runs moved little: wrecks per round 14, 10, 13 before
 and 13.5, 10, 13 after (Easy, Medium, Hard); player mean place 3, 3, 3.5
 before and 3, 3.5, 3.5 after.
+
+## 26 September 2026: leaving the race pauses it (GATE-REJOIN)
+
+Kyle reported that after going far enough up the hidden road for the clock to
+stop, reversing back to the course left the race frozen: the opponent parked,
+weapons and pickups dead, the clock stopped. The settled rule said departure
+abandons the race and returning cannot resume it, so the frozen race was by
+design, and a hard hit on the wash bank that reset the car onto the course
+reached the same state. Claude changed the rule: departure (the hidden road at
+150 m, the Muddy Hollow ridge) pauses the race; back below 120 m on the road,
+or back 12 m toward the road from the ridge line, it resumes where it stopped.
+Driving through the gate (entering, chosen or automatic) is the point of no
+return that settles the race as abandoned, and pending police fines are
+cleared only there. Players see RACE PAUSED · DRIVE BACK TO REJOIN and BACK IN
+THE RACE. A Titan can gain at most the ridge window (about 140 m along the
+course) by crossing back elsewhere; that is accepted for this Titan-only side
+trip.
+
+## 26 September 2026: checkpoints for off-road cars (RALLY-CHECKPOINT)
+
+Kyle and Gratian found the rally car kept being put back on the track near
+Pacific Canyon's shortcut. The rally car and the Titan have no course
+boundary, but lap checkpoints only counted on the road or its shoulder, so a
+crossing out on the dirt snapped them back onto the road. Claude settled that
+off-road-capable cars count a checkpoint within 120 m of the road or any
+shortcut; farther out is a corner cut and still a miss. Ordinary cars keep
+the road-and-shoulder rule. Boulders taller than a car can climb stay solid;
+their message now says ROCK TOO BIG / BACKING OFF instead of CLIMB LIMIT.

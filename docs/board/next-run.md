@@ -1,9 +1,100 @@
 # Next run: phase 3, a Wasteland worth finding (updated 26 September 2026, overnight)
 
-This is the one current plan for Codex. Rules: `AGENTS.md` (the nine working
-rules and the janitor) and SPEC.md section 0, especially 0.9 (audio), 0.11
-(art from existing assets), 0.12 (the easter egg), 0.13 (Scrapdome) and 0.14
-(crash physics and the Titan's playground).
+## Resume here (Claude handoff, 26 September 2026, evening)
+
+Claude stopped for quota mid-merge. Steps 1 to 3 are card INT-0926-MERGE;
+do them first, in order, then continue with the plan below.
+
+1. **Sound lane** `lane/audio/crash-hollow-sounds` (worktree
+   `C:\Users\kyleb\.codex\worktrees\sounds\the-duel-remake`, pushed): crash
+   impact, pond splash and mud sounds; finishes CRASH-02 and EGG-03 audio. Its
+   records are complete (docs/changes/CRASH-02.md, EGG-03.md). It already
+   contains integration through GATE-REJOIN. Its gate passed 285 suites and
+   failed test-combat-audio (splash true peak); Claude fixed and pushed that.
+   Rerun `node tools/run-tests.mjs --tier lane --changed
+   --jobs 8` and `npm run build`, then merge it and run the janitor.
+2. **Arena lane** `lane/audio/arena-feel` (worktree
+   `C:\Users\kyleb\.codex\worktrees\arena-feel\the-duel-remake`, pushed),
+   stacked on the sound lane: the rammer's charge tell, respawn shimmer and
+   arena sounds (docs/changes/ARENA-FEEL.md, status ready-to-merge). After
+   step 1, merge integration into it, run the lane gate and build, set its
+   note to merged, merge, janitor.
+3. Full tier on the final integration commit, `node tools/build-status.mjs`,
+   then push integration/wasteland (D8). Integration is ahead of origin by
+   the GATE-REJOIN merge, which has not had a full tier yet.
+4. **Release needed, Kyle's go-ahead first.** GATE-REJOIN and RALLY-CHECKPOINT
+   fix two live bugs Kyle and Gratian hit: reversing back down the hidden road
+   froze the race, and the rally car was snapped onto the road near the
+   Pacific Canyon shortcut. The fix only
+   reaches his game through a release (docs/OPERATIONS.md). Prepare the
+   release evidence and ask Kyle; do not release without his written yes.
+5. Open task chip for Kyle: the `combat-audio` browser scenario fails with
+   "No owned flight voice" on integration without any of today's changes.
+
+Janitor note: Claude force-removed the merged gate-rejoin lane folder
+(committed and merged work only, ignored scratch deleted). Use plain
+`git worktree remove` from here on, as AGENTS.md requires.
+
+## Warlords for Gratian: the plan and who does what (Kyle, 26 September 2026)
+
+Gratian wants to play the warlord fights. Two steps get him there: a
+**Preview** icon so he can test each piece the day it merges (nothing is
+saved), then **real releases** on Kyle's written go-ahead. The first warlord
+is Sawtooth Sal; her fight is settled for build in docs/SCRAPDOME.md
+section 5. Later warlords are settled one at a time after Sal has been played.
+
+**Where to look.** Every task is a card in docs/board/board.yaml with an
+`owner`. Run `node tools/board.mjs` to see the split:
+
+- CODEX CAN START NOW: the only cards a Codex agent starts. Claim one by
+  setting `status: building` and `claimed_by` on integration, then follow
+  docs/CODEX_PLAYBOOK.md section 6. Several agents can take different cards
+  at once, up to five lanes.
+- CLAUDE IS WORKING ON and CLAUDE NEXT: Claude's cards. Never start them.
+- WAITING FOR CLAUDE'S REVIEW / WAITING FOR KYLE: paused for a verdict or a
+  go-ahead; pick another card meanwhile.
+
+**How the work is split.** Claude settles rules and design in writing, judges
+look and feel from screenshots and play, takes small subtle fixes to the live
+game, and prepares releases for Kyle. Codex builds, tests, balances, runs the
+art and sound pipelines and keeps the janitor. A design question goes back to
+Claude in writing; Codex does not invent a rule to get unstuck.
+
+**Stop rule (Kyle).** This is a game for one laptop, played by Kyle and his
+11-year-old son. If a card cannot meet its acceptance with the tools we have
+(free services, this laptop, the three-round art cap in SPEC 0.11), stop the
+card, write why in its change note, set `waiting_on: kyle`, and ask: get the
+tool, or change the plan. Never ship a placeholder, stub or hidden shortcut
+as the finished thing.
+
+### Codex cards
+
+| Card | What | Can start |
+| --- | --- | --- |
+| INT-0926-MERGE | Finish today's merges (sounds, ARENA-FEEL), full tier, push | Now |
+| PREVIEW-LAUNCHER | The Preview desktop icon | Now |
+| COMBAT-AUDIO-SCENARIO | Fix the failing combat-audio browser check | Now |
+| WAR-SAL-ART | Sal's side saws, sparks and saw scream; Claude judges the sheet | Now |
+| WAR-01 | The warlord ladder on the territory map (FIGHT, REMATCH, COMING LATER) | Now |
+| WAR-02a-FORMAT | The warlord duel format, launched from the map | After WAR-01 and INT-0926-MERGE |
+| WAR-02a-REWARD | Side Saws that work, scrap, one-time claim (Save Guardian) | After WAR-02a-FORMAT |
+| WAR-02a-SAL | Sal's Saw Sweep, window and phase-two Charge; Claude plays it | After WAR-02a-FORMAT and WAR-SAL-ART |
+| WAR-02b, WAR-02c | The Dustmonger and Mother Mirage, in parallel lanes | After Claude settles each |
+
+### Claude cards
+
+| Card | What | When |
+| --- | --- | --- |
+| RALLY-CHECKPOINT | The rally car snapped onto the road by checkpoints | Now (in progress) |
+| SCRAPDOME-PLAYTEST | Gratian and Kyle play Last Car Rolling in Preview; notes become codex cards | After PREVIEW-LAUNCHER |
+| SCRAPDOME-RELEASE | The Scrapdome in the real game, with GATE-REJOIN and the rally fix | Kyle's go-ahead |
+| WAR-SAL-TUNE | Play Sal, tune to "winnable in a few tries" | After Sal's cards |
+| WAR-SAL-RELEASE | The ladder and Sal in the real game | Kyle's go-ahead |
+| DESIGN-WAR-02b, DESIGN-WAR-02c | Settle the Dustmonger and Mirage for build | After Sal has been played |
+
+**In order, not side by side:** WAR-01, then WAR-02a-FORMAT, then Sal's fight
+and reward, then WAR-SAL-TUNE and the release. **Side by side:** everything
+else, including all of today's "Can start: Now" cards.
 
 ## Where things stand
 
@@ -115,26 +206,22 @@ Use Sol: the designs are settled.
 
 ```
 You are the Director in autonomous mode for The Duel. Work in this folder
-(integration/wasteland). Read AGENTS.md, docs/board/next-run.md, SPEC.md
-section 0 (especially 0.9, 0.11, 0.12, 0.13 and 0.14), docs/SCRAPDOME.md,
-docs/CRASH_PHYSICS.md, docs/MUDDY_HOLLOW.md, docs/board/STATUS.md,
-docs/board/decisions.md and the top of docs/playtest-inbox.md. The designs are
-settled by Claude: build on them, do not redesign them, and log any evidence-
-based change in decisions.md. Start with CRASH-01: continue the branch
-lane/arch/crash-physics (worktree C:\Users\kyleb\.codex\worktrees\crash\the-duel-remake)
-exactly as docs/changes/CRASH-01.md says. Then TITAN-01, then EGG-03 Muddy
-Hollow in its six phases, then the rest of next-run.md in order (at most five
-lanes; art sourcing and audio in their own lanes; art starts with a short list
-for Kyle). The Wasteland is live as an easter egg: never add anything to the
-main menu, keep new Wasteland features hidden until a player finds the gate,
-and put every new feature behind a new dev switch. Write tests first. Gates:
-lane tier and build before every merge; full tier after every 5 merges or 2
-hours and at the end; update STATUS.md after every merge; run the after-merge
-janitor after every merge and the sweep at the end. Never delete a branch for
-being idle. Never touch the live folder, port 5174 or real saves. Do not
-rewrite history or release; push integration/wasteland after each passing full
-tier (D8). Budget for this run: until morning.
-When the budget is nearly spent: finish cards in progress, run the full tier,
-run the janitor sweep, update STATUS.md, write a short handoff at the end of
-run-log.md, push, and stop.
+(integration/wasteland). Read AGENTS.md (especially "Who works on what"),
+docs/board/next-run.md, docs/CODEX_PLAYBOOK.md section 6, SPEC.md section 0,
+docs/SCRAPDOME.md section 5 and the top of docs/playtest-inbox.md. Then run
+node tools/board.mjs. Work only on cards listed under CODEX CAN START NOW,
+starting with INT-0926-MERGE; claim each card on the board before starting,
+and run up to five lanes in parallel. Never start a card owned by Claude or
+Kyle. The designs are settled by Claude: build on them, do not redesign them;
+send design questions to Claude in writing. Follow Kyle's stop rule: if a
+card cannot meet its acceptance with the tools we have on this laptop, stop,
+write why, set waiting_on: kyle and move on. Write tests first. Gates: lane
+tier and build before every merge; full tier after every 5 merges or 2 hours
+and at the end; build-status after every merge; janitor after every merge
+with plain git worktree remove, and the sweep at the end. Never touch the
+live folder, port 5174 or real saves. Do not rewrite history or release;
+push integration/wasteland after each passing full tier (D8). When the budget
+is nearly spent: finish cards in progress, run the full tier and the janitor
+sweep, update STATUS.md, write a short handoff at the end of run-log.md,
+push, and stop.
 ```

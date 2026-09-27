@@ -35,7 +35,9 @@ export function filterChain(recipe) {
   const played = length / recipe.rate;
   if (recipe.fadeIn) filters.push(`afade=t=in:d=${recipe.fadeIn}`);
   filters.push(`afade=t=out:st=${Math.max(0, played - recipe.fadeOut).toFixed(3)}:d=${recipe.fadeOut}`);
-  filters.push(`loudnorm=I=${recipe.loudness}:TP=-1.5:LRA=11`, 'aresample=48000');
+  // A limiter after levelling keeps the encoded true peak under -1 dBTP.
+  filters.push(`loudnorm=I=${recipe.loudness}:TP=-3:LRA=11`, 'aresample=48000',
+    'alimiter=limit=0.6:level=false');
   return filters.join(',');
 }
 
