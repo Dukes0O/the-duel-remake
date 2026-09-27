@@ -2008,8 +2008,8 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: ready-to-merge
-    claimed_by: "Codex Sal art lane, 26 September 2026"
+    status: merged
+    claimed_by: "Codex Sal art lane; approved and merged by Claude, 27 September 2026"
     owns: [tools/blender/armor-kits.py, public/assets/models/wasteland/kits/banshee_muscle.glb, tools/audio/build-sal.mjs, public/assets/audio/sal-saw-scream.ogg, tools/test-sal-art.mjs, tools/scenarios/sal-art.mjs, tools/sal-sheet.py, docs/board/looks/sal, docs/changes/WAR-SAL-ART.md]
     hooks: [src/armor-kit-meshes.js, src/sound-bank.js, src/audio.js, tools/audio/catalog.json, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
     helpers: [test_author, art_director, art_critic, browser_qa, audio_qa, reviewer]
