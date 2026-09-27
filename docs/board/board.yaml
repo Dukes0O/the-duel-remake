@@ -2020,6 +2020,7 @@ tasks:
     acceptance:
       - "Found in Claude's review of the 26 September run: start-preview.bat serves .qa-dist from the integration folder, and every browser scenario or full tier run in that folder rebuilds .qa-dist (Vite empties it first). A test run while Kyle and Gratian play would pull the files out from under the open preview."
       - "Build and serve the preview from its own ignored folder (for example .preview-dist, added to .gitignore and the hygiene allow-list), so test runs never touch it. A second click still reuses the running preview. Extend tools/test-preview-launcher.mjs to prove the preview folder differs from the QA harness folder. No change to memory-only saves, the port or the PREVIEW badge."
+      - "Found 27 September 2026: Kyle clicked the icon after CRASH-04 and CRASH-05 merged and saw no change, because the Preview started at 7:52 that morning was still running and a click only reopens it. The preview records the integration commit it was built from; a click when integration has moved on stops the old preview and rebuilds (a click with nothing new still reopens it). The PREVIEW badge shows the build time, so Kyle can tell which version he is playing."
   - id: CRASH-RELEASE
     title: "Release crash physics and crash sounds to the real game"
     owner: claude
