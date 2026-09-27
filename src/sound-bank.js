@@ -368,6 +368,14 @@ export const SOUND_BANK = {
     priority: 78,
     layers: [tone(70, 0.4, 0.2, 'sine', 0, 35)],
   }),
+  'arena.sal-saw': cue('impacts', {
+    flag: 'scrapdome',
+    file: 'sal-saw-scream.ogg',
+    volume: 1.65,
+    priority: 82,
+    limit: 1,
+    spatial: true,
+  }),
   'weapon.default.fire': cue('weapons', {
     layers: [tone(220, 0.22, 0.12, 'triangle', 0, 88)],
   }),

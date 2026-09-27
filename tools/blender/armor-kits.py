@@ -179,6 +179,31 @@ def saw_disc(name,parent,material,center,radius=.18,points=12):
     return finish(obj,name,parent,material)
 
 
+def sal_saw_disc(name, parent, material, center, radius=.52, points=18):
+    """A local-origin blade that the renderer can spin without orbiting it."""
+    verts=[]
+    for offset in [-.035,.035]:
+        for index in range(points*2):
+            angle=index*math.pi/points
+            tooth=radius if index%2==0 else radius*.79
+            verts.append((offset, math.sin(angle)*tooth, math.cos(angle)*tooth))
+    faces=[tuple(range(points*2-1,-1,-1)), tuple(range(points*2,points*4))]
+    faces += [(i,(i+1)%(points*2),(i+1)%(points*2)+points*2,i+points*2)
+              for i in range(points*2)]
+    mesh=bpy.data.meshes.new(name)
+    mesh.from_pydata(verts,[],faces)
+    mesh.update()
+    uv=mesh.uv_layers.new(name='Toothed steel')
+    for face in mesh.polygons:
+        for loop in face.loop_indices:
+            p=mesh.vertices[mesh.loops[loop].vertex_index].co
+            uv.data[loop].uv=((p.y*.7+.5)% .95,(p.z*.7+.5)% .95)
+    obj=bpy.data.objects.new(name,mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.location=center
+    return finish(obj,name,parent,material)
+
+
 def arch_sheet(name, parent, material, side, axle, width, height, span=1.82):
     """Thin door/fender sheet cut above the actual axle's wheel arch."""
     wheel_z, wheel_y, radius = axle['z'], axle['y'], axle['radius']
@@ -354,7 +379,8 @@ def body_skin_from_source(car, root_path, parent, material, target_length, fit):
     return obj
 
 
-def build(car, width, length, height, material, index, fit, root_path):
+def build(car, width, length, height, material, sal_material, mark_material,
+          spark_core_material, spark_tip_material, index, fit, root_path):
     front = length / 2 + .035
     roof = fit['roofSkin'] + .045
     side = width / 2 + .055
@@ -502,6 +528,47 @@ def build(car, width, length, height, material, index, fit, root_path):
     mount = empty('kit-warlord-mount', warlord)
     rod('warlord-crossbar', mount, material, (-width*rail_span*.9, roof+.085, cabin_rear),
         (width*rail_span*.9, roof+.085, cabin_rear), .06)
+
+    if car == 'banshee_muscle':
+        # Sawtooth Sal's signature silhouette is separate from the generic
+        # Raider saws. The two named mesh nodes stay direct children of this
+        # root so runtime animation has a stable, car-local pivot on each side.
+        sal = empty('kit-sal-saws', root)
+        saw_y=max(.48, flank_y-.02)
+        saw_z=-length*.045
+        left=sal_saw_disc('kit-sal-saw-left',sal,sal_material,
+                          (body_x(fit,1,saw_z,width/2,saw_y)+.19,saw_y,saw_z))
+        right=sal_saw_disc('kit-sal-saw-right',sal,sal_material,
+                           (body_x(fit,-1,saw_z,width/2,saw_y)-.19,saw_y,saw_z))
+        for sign,blade in [(1,left),(-1,right)]:
+            # One asymmetric spoke makes deterministic stage-time rotation
+            # legible even when the evenly spaced teeth alias in a still.
+            rod('sal-blade-phase-mark',blade,mark_material,
+                (sign*.041,-.04,-.04),(sign*.041,.34,.20),.028,6)
+        mounts=empty('kit-sal-saw-mounts',sal)
+        for sign,blade in [(1,left),(-1,right)]:
+            x=blade.location.x
+            rod('saw-axle',mounts,material,
+                (x-sign*.23,saw_y,saw_z),(x,saw_y,saw_z),.075,10)
+            plate('saw-guard',mounts,material,
+                  (x-sign*.055,saw_y+.22,saw_z),.10,.20,.58,sign*.015,.035).rotation_euler.y=sign*math.pi/2
+        sparks=empty('kit-sal-sparks',sal)
+        for sign,blade in [(1,left),(-1,right)]:
+            x=blade.location.x+sign*.045
+            vectors=[(.20,-.17,-.10),(.29,-.25,.07),(.16,-.30,-.22),
+                     (.36,-.20,.18),(.24,-.36,.02)]
+            for spark_index,(dx,dy,dz) in enumerate(vectors):
+                angle=-1.18+spark_index*.54
+                start=(x,saw_y+math.sin(angle)*.45,saw_z+math.cos(angle)*.45)
+                streak=empty(f'kit-sal-spark-{sign}-{spark_index}',sparks)
+                streak.location=start
+                vector=Vector((sign*dx,dy,dz))
+                split=vector*.58
+                rod('sal-spark-white-core',streak,spark_core_material,
+                    (0,0,0),tuple(split),.014,5)
+                rod('sal-spark-orange-tip',streak,spark_tip_material,
+                    tuple(split),tuple(vector),.009,5)
+        return [scrapper, raider, warlord, sal]
     return [scrapper, raider, warlord]
 
 
@@ -514,6 +581,8 @@ def batch_component_meshes():
             continue
         if group.type != 'EMPTY':
             continue
+        if group.name == 'kit-sal-saws':
+            continue  # Left/right blade nodes are separate animation pivots.
         meshes = [child for child in group.children if child.type == 'MESH']
         if len(meshes) < 2:
             continue
@@ -572,12 +641,43 @@ def main():
     bsdf.inputs['Metallic'].default_value = .58
     bsdf.inputs['Roughness'].default_value = .76
     material.node_tree.links.new(paint.outputs['Color'], bsdf.inputs['Base Color'])
+    sal_material = bpy.data.materials.new('Sal saw honed steel')
+    sal_material.use_nodes = True
+    sal_bsdf = sal_material.node_tree.nodes.get('Principled BSDF')
+    sal_bsdf.inputs['Base Color'].default_value = (.48, .53, .55, 1.0)
+    sal_bsdf.inputs['Metallic'].default_value = .92
+    sal_bsdf.inputs['Roughness'].default_value = .28
+    mark_material = bpy.data.materials.new('Sal saw phase mark')
+    mark_material.use_nodes = True
+    mark_bsdf = mark_material.node_tree.nodes.get('Principled BSDF')
+    mark_bsdf.inputs['Base Color'].default_value = (.10, .035, .012, 1.0)
+    mark_bsdf.inputs['Metallic'].default_value = .72
+    mark_bsdf.inputs['Roughness'].default_value = .45
+    spark_core_material = bpy.data.materials.new('Sal spark white-hot core')
+    spark_core_material.use_nodes = True
+    core_bsdf = spark_core_material.node_tree.nodes.get('Principled BSDF')
+    core_bsdf.inputs['Base Color'].default_value = (1.0, .72, .30, 1.0)
+    core_bsdf.inputs['Metallic'].default_value = .05
+    core_bsdf.inputs['Roughness'].default_value = .24
+    if 'Emission Color' in core_bsdf.inputs:
+        core_bsdf.inputs['Emission Color'].default_value = (1.0, .52, .12, 1.0)
+        core_bsdf.inputs['Emission Strength'].default_value = 5.0
+    spark_tip_material = bpy.data.materials.new('Sal spark orange tip')
+    spark_tip_material.use_nodes = True
+    tip_bsdf = spark_tip_material.node_tree.nodes.get('Principled BSDF')
+    tip_bsdf.inputs['Base Color'].default_value = (1.0, .075, .004, 1.0)
+    tip_bsdf.inputs['Metallic'].default_value = .05
+    tip_bsdf.inputs['Roughness'].default_value = .32
+    if 'Emission Color' in tip_bsdf.inputs:
+        tip_bsdf.inputs['Emission Color'].default_value = (1.0, .02, .001, 1.0)
+        tip_bsdf.inputs['Emission Strength'].default_value = 3.2
     for index, (car, size) in enumerate(SIZES.items()):
         if car not in args.cars:
             continue
         bpy.ops.object.select_all(action='SELECT')
         bpy.ops.object.delete(use_global=False)
-        parts = build(car, *size, material, index, fits[car], root)
+        parts = build(car, *size, material, sal_material, mark_material,
+                      spark_core_material, spark_tip_material, index, fits[car], root)
         batch_component_meshes()
         bpy.ops.wm.save_as_mainfile(filepath=str(blends/f'{car}.blend'))
         for obj in bpy.context.scene.objects:
