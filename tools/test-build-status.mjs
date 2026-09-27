@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { createHash, randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
+// The status CLI runs several git commands; under a full-tier load it took over
+// 15 s twice on 27 September 2026 and was cut off with no error. This is a
+// time allowance for the child process, not a check on its result.
+const STATUS_CLI_TIMEOUT_MS = 60000;
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -110,7 +114,7 @@ function fixture(name) {
 }
 function report(f, extraArgs = [], extraEnv = {}) {
   const child = spawnSync(process.execPath, ['--import', pathToFileURL(guard).href, statusTool, '--root', f.root, '--live-root', f.live, '--now', now, '--json', ...extraArgs], {
-    cwd: f.root, encoding: 'utf8', shell: false, windowsHide: true, timeout: 15000,
+    cwd: f.root, encoding: 'utf8', shell: false, windowsHide: true, timeout: STATUS_CLI_TIMEOUT_MS,
     env: { ...process.env, GIT_OPTIONAL_LOCKS: '0', ...extraEnv },
   });
   same(child.status, 0, `build-status CLI generates fixture status successfully: ${child.stderr.split(/\r?\n/).find(line => line.startsWith('Error')) || child.stderr.trim()}`);
@@ -179,7 +183,7 @@ try {
   await test('default status collection does not inspect live metadata', () => {
     const f = fixture('offline-live'); f.evidence();
     const child = spawnSync(process.execPath, [statusTool, '--root', f.root, '--now', now, '--json'], {
-      cwd: f.root, encoding: 'utf8', shell: false, windowsHide: true, timeout: 15000,
+      cwd: f.root, encoding: 'utf8', shell: false, windowsHide: true, timeout: STATUS_CLI_TIMEOUT_MS,
       env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
     });
     same(child.status, 0, 'status runs without a live-root argument');
@@ -393,7 +397,7 @@ try {
       `skipLanes:['codex/private-merged','codex/private-pending']})));`;
     const direct = spawnSync(process.execPath,
       ['--import', pathToFileURL(guard).href, '--input-type=module', '-e', expression],
-      { cwd:f.root, encoding:'utf8', shell:false, windowsHide:true, timeout:15000,
+      { cwd:f.root, encoding:'utf8', shell:false, windowsHide:true, timeout:STATUS_CLI_TIMEOUT_MS,
         env:{...process.env, GIT_OPTIONAL_LOCKS:'0', STATUS_SKIP_FORBIDDEN_PATHS:forbidden} });
     same(direct.status, 0, `direct collector honors skipLanes: ${direct.stderr}`);
     const directReport = JSON.parse(direct.stdout);
@@ -408,7 +412,7 @@ try {
     const f = fixture('skip-missing');
     const child = spawnSync(process.execPath,
       [statusTool, '--root', f.root, '--skip-lane', '--json'],
-      { cwd:f.root, encoding:'utf8', shell:false, windowsHide:true, timeout:15000,
+      { cwd:f.root, encoding:'utf8', shell:false, windowsHide:true, timeout:STATUS_CLI_TIMEOUT_MS,
         env:{...process.env, GIT_OPTIONAL_LOCKS:'0'} });
     check(child.status !== 0, 'missing skip-lane value fails');
     check(/--skip-lane needs a value/i.test(child.stderr), 'error names required value');
