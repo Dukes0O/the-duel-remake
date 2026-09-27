@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {installIsolatedStorage} from './qa-storage.js';
+import {createMemoryBackupStore,installIsolatedStorage} from './qa-storage.js';
 let checks=0,reads=0;
 const same=(a,b,label)=>{assert.deepEqual(a,b,label);checks++;};
 const host={};Object.defineProperty(host,'localStorage',{configurable:true,get(){reads++;throw Error('Real saves must never be read');}});
@@ -36,6 +36,17 @@ same(opened.map(row=>row[0]),['the-duel-career-backups__qa_tab_tab-one','the-due
   'both tabs open different physical databases');
 otherTab.indexedDB.deleteDatabase('the-duel-career-backups');
 same(deleted,['the-duel-career-backups__qa_tab_tab-two'],'database deletion stays inside the second tab namespace');
+const memoryBackups=createMemoryBackupStore();
+const backup={id:'preview-only',version:1,entries:{wallet:'500'}};
+await memoryBackups.save(backup);
+backup.entries.wallet='real-store-never-touched';
+same(await memoryBackups.load('preview-only'),{id:'preview-only',version:1,entries:{wallet:'500'}},
+  'preview backup store keeps a detached in-memory copy');
+const loaded=await memoryBackups.load('preview-only');loaded.entries.wallet='changed';
+same((await memoryBackups.load('preview-only')).entries.wallet,'500',
+  'callers cannot mutate the saved in-memory snapshot');
+same(await createMemoryBackupStore().load('preview-only'),undefined,
+  'a new preview tab has no saved IndexedDB career data');
 for(const file of ['visual-check','reward-check','reverse-check','contact-check','jump-height-check','update-check','menu-check']){
   const source=readFileSync(new URL(`./${file}.js`,import.meta.url),'utf8');
   assert.ok(source.includes("from './qa-storage.js'"));checks++;

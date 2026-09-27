@@ -12,7 +12,8 @@ const DEFAULT_TARGETS = Object.freeze({
 const ROOT_FILES = new Set([
   '.gitattributes', '.gitignore', 'AGENTS.md', 'DECISIONS.md', 'README.md',
   'SPEC.md', 'game-icon.ico', 'index.html', 'package-lock.json',
-  'package.json', 'start-game.bat', 'vite.config.js',
+  'package.json', 'start-game.bat', 'start-preview.bat',
+  'install-preview-shortcut.ps1', 'vite.config.js',
 ]);
 const SKIP_FOLDERS = new Set(['.git', 'node_modules', 'dist', 'dist-next', 'dist-previous',
   '.qa-dist', '.qa-blender', '.qa-art', '.evidence', 'art-build', '.lanes']);

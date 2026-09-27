@@ -4,7 +4,11 @@ import {backupBeforeMigration, backupCareer, captureCareer, createCompleteCareer
 import {prepareCareerBudget, createBudgetCareerExport, ORIGIN_POINTER_KEY} from './career-budget.js';
 
 const root = document.querySelector('#app');
-const backupStore=createIndexedDbBackupStore();
+// A QA entry may inject a tab-scoped store before this module loads. Production
+// builds cannot select it and always use the durable IndexedDB implementation.
+const qaBackupStore=typeof __DUEL_QA__!=='undefined'&&__DUEL_QA__===true?
+  globalThis.__duelQaBackupStore:null;
+const backupStore=qaBackupStore??createIndexedDbBackupStore();
 let budgetStorage=null;
 async function downloadCareer(){
   if(!budgetStorage){
