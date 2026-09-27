@@ -204,26 +204,22 @@ Use Sol: the designs are settled.
 
 ```
 You are the Director in autonomous mode for The Duel. Work in this folder
-(integration/wasteland). Read AGENTS.md, docs/board/next-run.md, SPEC.md
-section 0 (especially 0.9, 0.11, 0.12, 0.13 and 0.14), docs/SCRAPDOME.md,
-docs/CRASH_PHYSICS.md, docs/MUDDY_HOLLOW.md, docs/board/STATUS.md,
-docs/board/decisions.md and the top of docs/playtest-inbox.md. The designs are
-settled by Claude: build on them, do not redesign them, and log any evidence-
-based change in decisions.md. Start with CRASH-01: continue the branch
-lane/arch/crash-physics (worktree C:\Users\kyleb\.codex\worktrees\crash\the-duel-remake)
-exactly as docs/changes/CRASH-01.md says. Then TITAN-01, then EGG-03 Muddy
-Hollow in its six phases, then the rest of next-run.md in order (at most five
-lanes; art sourcing and audio in their own lanes; art starts with a short list
-for Kyle). The Wasteland is live as an easter egg: never add anything to the
-main menu, keep new Wasteland features hidden until a player finds the gate,
-and put every new feature behind a new dev switch. Write tests first. Gates:
-lane tier and build before every merge; full tier after every 5 merges or 2
-hours and at the end; update STATUS.md after every merge; run the after-merge
-janitor after every merge and the sweep at the end. Never delete a branch for
-being idle. Never touch the live folder, port 5174 or real saves. Do not
-rewrite history or release; push integration/wasteland after each passing full
-tier (D8). Budget for this run: until morning.
-When the budget is nearly spent: finish cards in progress, run the full tier,
-run the janitor sweep, update STATUS.md, write a short handoff at the end of
-run-log.md, push, and stop.
+(integration/wasteland). Read AGENTS.md (especially "Who works on what"),
+docs/board/next-run.md, docs/CODEX_PLAYBOOK.md section 6, SPEC.md section 0,
+docs/SCRAPDOME.md section 5 and the top of docs/playtest-inbox.md. Then run
+node tools/board.mjs. Work only on cards listed under CODEX CAN START NOW,
+starting with INT-0926-MERGE; claim each card on the board before starting,
+and run up to five lanes in parallel. Never start a card owned by Claude or
+Kyle. The designs are settled by Claude: build on them, do not redesign them;
+send design questions to Claude in writing. Follow Kyle's stop rule: if a
+card cannot meet its acceptance with the tools we have on this laptop, stop,
+write why, set waiting_on: kyle and move on. Write tests first. Gates: lane
+tier and build before every merge; full tier after every 5 merges or 2 hours
+and at the end; build-status after every merge; janitor after every merge
+with plain git worktree remove, and the sweep at the end. Never touch the
+live folder, port 5174 or real saves. Do not rewrite history or release;
+push integration/wasteland after each passing full tier (D8). When the budget
+is nearly spent: finish cards in progress, run the full tier and the janitor
+sweep, update STATUS.md, write a short handoff at the end of run-log.md,
+push, and stop.
 ```
