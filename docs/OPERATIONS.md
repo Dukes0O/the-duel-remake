@@ -12,6 +12,7 @@ playbook defines task cards and review roles.
 | Live browser address | `http://localhost:5174/` | Keep this exact origin so local careers remain available. |
 | Integration | `C:\Users\kyleb\.codex\worktrees\wasteland-integration\the-duel-remake` on `integration/wasteland` | Combine one reviewed change at a time. |
 | Browser QA | Private port, normally 5175 or above 5190 | Use memory-only saves and a throwaway browser profile. |
+| Playtest preview | `http://127.0.0.1:5195/tools/preview.html` | Built from integration, with memory-only saves and a visible PREVIEW badge. |
 
 The live launcher, `start-game.bat`, serves the built `dist` directory with
 Vite preview after this launcher change is released. It builds once if `dist`
@@ -27,6 +28,24 @@ checks the page already on `localhost:5174` and opens it if it is The Duel.
 If another service owns the port, the launcher stops with a clear message.
 Closing the first launcher's console stops its server. Do not stop a server
 while a race is in progress. Do not use port 5174 for development or QA.
+
+## Start the playtest preview
+
+Run `install-preview-shortcut.ps1` once from the integration folder. It creates
+the **The Duel Preview** icon on the current player's Desktop. It needs no
+administrator access, account or download. The icon follows that integration
+checkout, builds its QA bundle and serves it only on this computer at port
+5195. A second click opens the preview that is already running.
+
+The red **PREVIEW badge** at the top of the screen confirms that this is the
+development build. Its saves are memory-only. They remain available when the
+same preview tab reloads, but closing the tab discards them. The preview never
+reads or writes the live career on port 5174.
+
+Each fresh preview tab starts with the gate found, Sal's territory hold at
+100 percent and the Titan unlocked. The launcher also requests the current
+development switches for the Scrapdome, crash physics and effects, Titan
+climbing and Muddy Hollow so playtest areas can be reached at once.
 
 ## Development checks
 

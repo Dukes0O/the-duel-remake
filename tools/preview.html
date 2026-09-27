@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>The Duel Preview</title>
+    <style>
+      [data-preview-badge] {
+        position: fixed;
+        z-index: 10000;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 6px 14px;
+        border: 2px solid #ffd36a;
+        border-radius: 4px;
+        background: #681414;
+        color: #fff3cb;
+        font: 800 14px/1 system-ui, sans-serif;
+        letter-spacing: .16em;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div data-preview-badge role="status" aria-label="Development preview with temporary saves">PREVIEW</div>
+    <script type="module" src="./preview.js"></script>
+  </body>
+</html>
