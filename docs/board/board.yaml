@@ -1972,6 +1972,26 @@ tasks:
       - "A second desktop icon, 'The Duel Preview', builds and serves the integration folder's QA build on a private port (not 5174), turns on the dev switches under test (scrapdome, crash-physics, crash-effects, titan-climb, muddy-hollow) and uses memory-only saves so no real career is touched. A clear PREVIEW badge shows on screen."
       - "A preview player starts with the gate found, Sal's territory hold full and the Titan unlocked, so each new piece can be reached at once. Document it in docs/OPERATIONS.md. Stop and ask Kyle if any step needs an account, a paid tool or an admin setting."
       - "Set waiting_on: kyle until Kyle has opened it once and said it works."
+  - id: PREVIEW-OWN-FOLDER
+    title: "Preview plays from its own build folder, safe from test runs"
+    owner: codex
+    lane: OPS
+    size: S
+    needs: [PREVIEW-LAUNCHER]
+    status: ready
+    acceptance:
+      - "Found in Claude's review of the 26 September run: start-preview.bat serves .qa-dist from the integration folder, and every browser scenario or full tier run in that folder rebuilds .qa-dist (Vite empties it first). A test run while Kyle and Gratian play would pull the files out from under the open preview."
+      - "Build and serve the preview from its own ignored folder (for example .preview-dist, added to .gitignore and the hygiene allow-list), so test runs never touch it. A second click still reuses the running preview. Extend tools/test-preview-launcher.mjs to prove the preview folder differs from the QA harness folder. No change to memory-only saves, the port or the PREVIEW badge."
+  - id: CRASH-RELEASE
+    title: "Release crash physics and crash sounds to the real game"
+    owner: claude
+    lane: RELEASE
+    size: S
+    needs: [PREVIEW-OWN-FOLDER]
+    status: ready
+    waiting_on: kyle
+    acceptance:
+      - "Kyle and Gratian try crash physics in the Preview first (wrecks slide to rest off the road, crash impact sounds). With Kyle's written go-ahead, switch crash-physics and crash-effects on for the real game, with full release evidence on the exact commit, combat balance with wasteland2 off and on, and the crash browser checks. Rollback build kept as usual."
   - id: COMBAT-AUDIO-SCENARIO
     title: "Fix the failing combat-audio browser scenario (No owned flight voice)"
     owner: codex
@@ -2049,7 +2069,7 @@ tasks:
     status: ready
     waiting_on: kyle
     acceptance:
-      - "Full release evidence on the exact commit, then Kyle's written go-ahead flips scrapdome to on (reachable only from the yard; the main menu is unchanged). GATE-REJOIN and RALLY-CHECKPOINT ship in the same release."
+      - "Full release evidence on the exact commit, then Kyle's written go-ahead flips scrapdome to on (reachable only from the yard; the main menu is unchanged). GATE-REJOIN and RALLY-CHECKPOINT already shipped on 26 September 2026."
   - id: WAR-SAL-TUNE
     title: "Claude plays Sal, Gratian plays Sal in Preview; tune to 'winnable in a few tries'"
     owner: claude

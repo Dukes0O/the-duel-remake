@@ -1987,3 +1987,32 @@ localhost:5174 serves build e61891 (26.09.27 01:50 UTC). master pushed to
 GitHub. All other features merged since the last release stay behind switches
 that are off in the live game.
 
+## Codex autonomous run handoff — 26 September 2026
+
+Completed INT-0926-MERGE, COMBAT-AUDIO-SCENARIO, PREVIEW-LAUNCHER and WAR-01.
+The three post-full feature merges each passed their exact lane tier and build;
+their worktrees, branches and disposable evidence were removed after merge.
+The Preview desktop shortcut now points at this integration worktree, uses a
+private port and memory-only saves, and stays `waiting_on: kyle` until Kyle
+opens it once.
+
+WAR-SAL-ART remains unmerged at `782558a` in
+`lane/art/war-sal-art`. Its third and final visual round passed independent
+review, its 1.200-second saw cue passed audio QA, and the exact lane handoff
+passed 293/293 suites plus the production build. The board now records
+`waiting_on: claude`; keep the lane and worktree until Claude gives the final
+look verdict. Do not start WAR-02a-FORMAT from this handoff: it was not in the
+run's original start set.
+
+Janitor sweep: removed the three merged lane worktrees, branches and consumed
+evidence; retained the unmerged Sal lane and Kyle's audio lanes; flagged 48
+literal-reference asset candidates, 27 export candidates and 111 unindexed
+docs for future proof, with no deletion proven safe. Tracked size changed from
+1,018 files / 242.9 MiB to 1,060 files / 244.0 MiB; public changed from
+235,822,734 to 236,164,408 bytes; Wasteland models stayed 78,930,708 bytes.
+The growth is the merged arena/audio, launcher and territory work. Current
+targets remain unchanged. Exact integration commit `8c5ff37` passed the final
+full tier, 292/292 suites in 460.27 seconds, with a clean start and end. Its
+production build transformed 239 modules in 479 ms. The following ledger,
+status and handoff commit records evidence only. D8 push follows; do not
+release.
