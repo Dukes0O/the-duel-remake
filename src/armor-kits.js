@@ -1,7 +1,7 @@
 import {CARS} from './config.js';
 import {isCarUnlocked} from './progression.js';
 import {rankForXp} from './notoriety.js';
-import {normalizeWasteland} from './wasteland-progress.js';
+import {hasDefeatedWarlord, normalizeWasteland} from './wasteland-progress.js';
 
 // Prices are per car. Later tiers cost more because they carry stronger plating.
 export const ARMOR_KITS = Object.freeze({
@@ -49,7 +49,7 @@ export function purchaseArmorKit(profile, car, id) {
   if (installed.owned.includes(id)) return result(profile, 'This car already owns that kit.');
   const rank = rankForXp(wasteland.xp);
   if (rank < kit.rank) return result(profile, `Reach Notoriety rank ${kit.rank} first.`);
-  if (id === 'warlord' && wasteland.warlords.defeated.length === 0)
+  if (id === 'warlord' && !hasDefeatedWarlord(wasteland.warlords))
     return result(profile, 'Defeat a warlord first.');
   const scrapCareer = wasteland.discoveredGate === true;
   const balance = scrapCareer ? wasteland.scrap : profile.credits;

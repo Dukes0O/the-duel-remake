@@ -15,6 +15,13 @@ const entries = value => record(value) ? Object.entries(value)
   .filter(([id]) => id.length > 0 && id.length <= 80)
   .slice(0, 100) : [];
 
+export function hasDefeatedWarlord(value) {
+  if (!record(value)) return false;
+  if (ids(value.defeated).length > 0) return true;
+  return entries(value).some(([id, item]) =>
+    id !== 'defeated' && record(item) && item.defeated === true);
+}
+
 export const MUDDY_HOLLOW_HUBCAP_IDS = Object.freeze([
   'hilltop', 'pond', 'mega-landing', 'mud-pit', 'log-ramp',
 ]);
@@ -95,6 +102,24 @@ export function normalizeWasteland(value, legacyWeapons, history = []) {
   ]));
   const bountySource = record(source.bounties) ? source.bounties : {};
   const warlordSource = record(source.warlords) ? source.warlords : {};
+  const legacyDefeats = ids(warlordSource.defeated);
+  const warlords = {
+    ...Object.fromEntries(entries(warlordSource)
+      .filter(([id]) => id !== 'defeated')
+      .map(([id, item]) => [id, record(item) ? {...item} : item])),
+    ...Object.fromEntries(legacyDefeats
+      .filter(id => !Object.hasOwn(TERRITORIES, id) && !Object.hasOwn(warlordSource, id))
+      .map(id => [id, {defeated: true, wins: 0, losses: 0}])),
+    ...Object.fromEntries(Object.keys(TERRITORIES).map(id => {
+      const item = record(warlordSource[id]) ? warlordSource[id] : {};
+      return [id, {
+        ...item,
+        defeated: item.defeated === true || legacyDefeats.includes(id),
+        wins: bounded(item.wins, 0, 1_000_000),
+        losses: bounded(item.losses, 0, 1_000_000),
+      }];
+    })),
+  };
   const cards = (Array.isArray(source.cards) ? source.cards : [])
     .filter(item => record(item) && typeof item.id === 'string' &&
       item.id.length > 0 && item.id.length <= 80 &&
@@ -132,7 +157,7 @@ export function normalizeWasteland(value, legacyWeapons, history = []) {
       done: ids(bountySource.done),
       streak: bounded(bountySource.streak, 0, 1_000_000),
     },
-    warlords: {defeated: ids(warlordSource.defeated)},
+    warlords,
     cards,
     settledResults: ids(source.settledResults, 1000, 180),
   };

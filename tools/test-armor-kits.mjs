@@ -10,7 +10,9 @@ import {createArmoryScreen} from '../src/screen-armory.js';
 function profile({xp = 0, credits = 10000, defeated = []} = {}) {
   const saved = createProfile();
   return {...saved, credits, wasteland: {...saved.wasteland, xp,
-    warlords: {defeated}}};
+    warlords: {...saved.wasteland.warlords,
+      ...Object.fromEntries(defeated.map(id => [id,
+        {defeated: true, wins: 1, losses: 0}]))}}};
 }
 
 test('per-car prices and rank gates require earned notoriety and a beaten warlord', () => {
@@ -97,4 +99,11 @@ test('Armory shows per-car kit choices only with the feature enabled', () => {
   assert.match(flagged, /ARMOR KITS · PER CAR/);
   assert.match(flagged, /data-kit-action="buy" data-kit-tier="scrapper"/);
   assert.match(flagged, /Notoriety rank 12 required/);
+  const victorious = profile({xp: 12650, defeated: ['sal']});
+  const victoriousHtml = createArmoryScreen({...common, profile: () => victorious,
+    kitsEnabled: () => true, getArmoryCar: () => 'falcone_f42'})();
+  assert.match(victoriousHtml,
+    /data-kit-action="buy" data-kit-tier="warlord"/,
+    'the Armory unlocks Warlord plating from the per-id record shape');
+  assert.doesNotMatch(victoriousHtml, /Defeat a warlord to unlock/);
 });
