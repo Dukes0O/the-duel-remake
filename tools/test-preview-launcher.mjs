@@ -41,7 +41,25 @@ check('preview launcher recipe exists', () => assert.ok(existsSync(launcherUrl),
 check('launcher builds the QA bundle', () => {
   assert.match(launcher, /(?:qa:build|vite-qa\.config\.js)/i,
     'preview launcher must build with the memory-only QA configuration');
-  assert.match(launcher, /\.qa-dist/i, 'preview launcher must serve the QA build output');
+  assert.match(launcher, /PREVIEW_DIR=\.preview-dist/i, 'preview launcher must name its own folder');
+  assert.match(launcher, /build[^\r\n]*--outDir %PREVIEW_DIR% --emptyOutDir/i,
+    'every build empties and reuses the one preview folder');
+  assert.match(launcher, /preview[^\r\n]*--outDir %PREVIEW_DIR%/i,
+    'the preview serves its own folder');
+  assert.doesNotMatch(launcher, /\.qa-dist/i,
+    'the preview never serves the folder that browser checks rebuild');
+});
+check('a click rebuilds when newer work is merged', () => {
+  assert.match(launcher, /git rev-parse HEAD/i, 'the launcher reads the current integration commit');
+  assert.match(launcher, /--expect-commit %PREVIEW_COMMIT%/i,
+    'the launcher asks whether the running preview matches that commit');
+  assert.match(launcher, /errorlevel 11 goto replace_stale/i, 'an older preview is replaced');
+  assert.match(launcher, /taskkill \/FI "WINDOWTITLE eq The Duel Preview - close\*"/i,
+    'the old preview window is closed, never another program');
+  assert.match(launcher, /preview-stamp\.mjs %PREVIEW_DIR% %PREVIEW_COMMIT%/i,
+    'each build records its commit');
+  assert.match(entry, /preview-build\.json[\s\S]*BUILT/,
+    'the PREVIEW badge shows when this copy was built');
 });
 check('launcher stays in its integration checkout', () => assert.match(launcher, /%~dp0/,
   'preview launcher must resolve the repository from its own folder'));
