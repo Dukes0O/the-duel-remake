@@ -2,6 +2,8 @@ import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {initializeCombatScoring, recordCombatHit, recordCombatWreck} from './combat-scoring.js';
 import {armorKitBonus} from './armor-kits.js';
 import {arenaDamageBlocked, noteArenaDamage} from './combat-teams.js';
+import {CARS} from './config.js';
+import {startWreckSlide} from './vehicle-knock.js';
 
 const T = COMBAT_TUNING.armor;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -13,7 +15,7 @@ export function maxArmorForMass(mass) {
 }
 
 export function armorDamageFor(source, {
-  level = 0, distanceFraction = 0, relativeKph = 0,
+  level = 0, distanceFraction = 0, relativeKph = 0, dvMph = 0,
   spiked = false,
 } = {}) {
   const upgrade = 1 + clamp(level, 0, T.maximumWeaponLevel) * T.upgradePerLevel;
@@ -26,6 +28,12 @@ export function armorDamageFor(source, {
     case 'ram': return relativeKph > T.ramThresholdKph
       ? Math.min(T.maximumRamDamage, relativeKph * T.ramDamagePerKph *
         (spiked ? T.spikedRamMultiplier : 1)) * upgrade
+      : 0;
+    // Crash physics: damage from the struck car's own change in velocity, so
+    // a heavy car hitting a light one deals much more than it takes.
+    case 'ram-dv': return dvMph > T.ramDvThresholdMph
+      ? Math.min(T.maximumRamDamage, (dvMph - T.ramDvThresholdMph) *
+        T.ramDamagePerDvMph * (spiked ? T.spikedRamMultiplier : 1)) * upgrade
       : 0;
     case 'scenery': return T.scenery;
     default: return 0;
@@ -43,7 +51,9 @@ export function initializeCombatArmor(duel) {
   if (!duel._combatRamIncidents) return;
   initializeCombatScoring(duel);
   for (const actor of [duel.state, ...duel.state.opponents]) {
-    actor.maxArmor = maxArmorForMass(duel._vehicleSpec(actor).mass) +
+    // Armor follows the car's own weight; a kit's plating adds its armor.
+    const car = actor === duel.state ? duel.state.car : actor.car || duel.state.car;
+    actor.maxArmor = maxArmorForMass(CARS[car]?.mass || T.referenceMass) +
       armorKitBonus(actor.combatArmorKit);
     actor.armor = actor.maxArmor;
     actor.combatWrecking = false;
@@ -66,7 +76,10 @@ function startCombatWreck(duel, actor, source, owner) {
   const point = duel.course.groundAt(actor.s, actor.lateral);
   actor.armor = 0;
   actor.combatWrecking = true;
-  actor.knock = null;
+  const slide = duel.featureFlags?.enabled('crash-physics') === true &&
+    !state.arena && !(player && state.onFoot);
+  if (slide && !player) startWreckSlide(duel, actor);
+  else actor.knock = null;
   recordCombatWreck(duel, actor, owner);
   actor.combatWreckTimer = player && state.onFoot ?
     COMBAT_TUNING.foot.parkedWreckSeconds : T.wreckDuration;
@@ -74,7 +87,9 @@ function startCombatWreck(duel, actor, source, owner) {
   actor.combatWreckSite = {
     s: actor.s, lateral: actor.lateral, headingError: actor.headingError || 0,
   };
-  actor.speedMph = 0;
+  // A sliding wreck keeps its speed; the player's skid plays out in the
+  // crash step exactly as a Rival Duel crash does.
+  if (!slide) actor.speedMph = 0;
   actor.pushVelocity = 0;
   actor.boosting = false;
   if (player) {
@@ -111,6 +126,7 @@ export function applyArmorDamage(duel, actor, source, options = {}) {
 }
 
 export function applyRamArmorDamage(duel, actor, relativeMph, options = {}) {
+  if (Number.isFinite(options.dvMph)) return applyArmorDamage(duel, actor, 'ram-dv', options);
   return applyArmorDamage(duel, actor, 'ram',
     {...options, relativeKph: Math.max(0, relativeMph) * T.kphPerMph});
 }
@@ -124,6 +140,7 @@ export function completeCombatRecovery(duel, actor, {alreadyReset = false} = {})
   if (!alreadyReset) duel._safeReset(actor, actor.combatWreckSite);
   actor.armor = actor.maxArmor * T.recoveryArmorFraction;
   actor.combatWrecking = false;
+  actor.knock = null;
   actor.combatWreckTimer = 0;
   actor.impactTimer = 0;
   actor.combatWreckSite = null;

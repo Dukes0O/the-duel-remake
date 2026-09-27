@@ -5,9 +5,10 @@ import {hasDefeatedWarlord, normalizeWasteland} from './wasteland-progress.js';
 
 // Prices are per car. Later tiers cost more because they carry stronger plating.
 export const ARMOR_KITS = Object.freeze({
-  scrapper: Object.freeze({name: 'Scrapper', armor: 10, price: 350, rank: 3}),
-  raider: Object.freeze({name: 'Raider', armor: 20, price: 950, rank: 12}),
-  warlord: Object.freeze({name: 'Warlord', armor: 30, price: 2500, rank: 1}),
+  // massKg is the plating's weight: a kitted car hits harder and is shoved less.
+  scrapper: Object.freeze({name: 'Scrapper', armor: 10, massKg: 90, price: 350, rank: 3}),
+  raider: Object.freeze({name: 'Raider', armor: 20, massKg: 180, price: 950, rank: 12}),
+  warlord: Object.freeze({name: 'Warlord', armor: 30, massKg: 270, price: 2500, rank: 1}),
 });
 
 export function validArmorKit(id) {
@@ -16,6 +17,10 @@ export function validArmorKit(id) {
 
 export function armorKitBonus(id) {
   return ARMOR_KITS[validArmorKit(id)]?.armor || 0;
+}
+
+export function armorKitMass(id) {
+  return ARMOR_KITS[validArmorKit(id)]?.massKg || 0;
 }
 
 export function getEquippedArmorKit(profile, car) {

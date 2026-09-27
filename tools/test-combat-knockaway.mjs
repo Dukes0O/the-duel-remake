@@ -63,13 +63,16 @@ function staticHit(duel, obstacle, speedMph) {
   return { state, hits, events, armor, crashes, penalty };
 }
 
-function trafficHit(duel, playerMph, { targetMph = 0, direction = 1 } = {}) {
+// `touching` starts the cars just in contact, as a real simulation step finds
+// them; the crash solver (CRASH-04) needs that geometry. The default deep
+// overlap suits the scripted roadside rules.
+function trafficHit(duel, playerMph, { targetMph = 0, direction = 1, touching = false } = {}) {
   const state = duel.state;
-  const traffic = { alive: true, s: 110, prevS: direction < 0 ? 115 : 110, lateral: .6, prevLateral: .6,
+  const traffic = { alive: true, s: 110, prevS: direction < 0 ? (touching ? 111 : 115) : 110, lateral: .6, prevLateral: .6,
     speedMph: targetMph, dir: direction, headingError: 0, pushVelocity: 0,
     damageZones: zeroDamage(), damageCooldown: 0 };
   state.traffic = [traffic];
-  Object.assign(state, { prevS: 100, s: 107, prevLateral: 0, lateral: 0,
+  Object.assign(state, { prevS: touching ? 104.5 : 100, s: touching ? 105.6 : 107, prevLateral: 0, lateral: 0,
     speedMph: playerMph, headingError: 0, pushVelocity: 0 });
   const events = [];
   duel.onChange((_, event) => events.push(event));
@@ -171,6 +174,8 @@ test('low closing speed shoves traffic visibly clear and leaves it there for the
   assert.deepEqual([state.stageCrashes, state.racePenaltySec], [crashes, penalty]);
 });
 
+// CRASH-04: the solver now decides. A shove (under 25 mph of Δv) knocks the
+// car clear; the cars start just touching, as a real step finds them.
 test('outside clips and aligned rear hits send traffic to its nearest shoulder', () => {
   for (const [name, playerLateral, trafficLateral, direction] of [
     ['outside clip', 4.8, 3.8, 1],
@@ -181,9 +186,9 @@ test('outside clips and aligned rear hits send traffic to its nearest shoulder',
       lateral: trafficLateral, prevLateral: trafficLateral,
       speedMph: 0, dir: 1, headingError: 0, pushVelocity: 0};
     state.traffic = [traffic];
-    Object.assign(state, {s: 107, prevS: 100,
+    Object.assign(state, {s: 105.6, prevS: 104.5,
       lateral: playerLateral, prevLateral: playerLateral,
-      speedMph: duel.car.topSpeed * .3});
+      speedMph: duel.car.topSpeed * .15});
     const events = [];
     duel.onChange((_, event) => { if (event.roadsideImpact) events.push(event.roadsideImpact); });
     assert.equal(duel._vehicleContact(state, traffic, 'traffic'), true, `${name} is a contact`);
@@ -216,9 +221,11 @@ test('crash-physics off keeps both released scripted roadside traffic outcomes',
     'switch-off hard hit keeps the released scripted obliteration motion');
 });
 
-test('high closing speed removes traffic after its burst and never costs player armor', () => {
+// CRASH-04 replaced the vanishing burst: the car explodes and its hulk
+// slides and tumbles off the road, as smashed traffic does in Rival Duel.
+test('a hard hit explodes traffic, leaves a sliding hulk and never costs player armor', () => {
   const duel = fixture();
-  const hit = trafficHit(duel, duel.car.topSpeed * .7);
+  const hit = trafficHit(duel, duel.car.topSpeed * .7, {touching: true});
   const { state, traffic, events, armor, crashes, penalty } = hit;
   const impact = events.filter(event => event.roadsideImpact).map(event => event.roadsideImpact);
   assert.equal(impact.length, 1, 'one traffic collision starts one visible burst');
@@ -227,8 +234,9 @@ test('high closing speed removes traffic after its burst and never costs player 
   assert.equal(impact[0].outcome, 'obliterate');
   assert.equal(state.callout, 'TRAFFIC OBLITERATED');
   for (let i = 0; i < 180; i++) duel._traffic(1 / 120);
-  assert.ok(!traffic.alive && !traffic.wrecked,
-    'the renderer must no longer show an intact or flying traffic car after the burst');
+  assert.ok(!traffic.alive && traffic.wrecked?.physical,
+    'the burning hulk stays as a physical wreck, not an intact car');
+  assert.ok(!traffic.roadsideMotion, 'no scripted vanishing burst');
   assert.equal(duel._vehicleContact(state, traffic, 'traffic'), false);
   assert.equal(state.armor, armor);
   assert.deepEqual([state.stageCrashes, state.racePenaltySec], [crashes, penalty]);
@@ -237,7 +245,7 @@ test('high closing speed removes traffic after its burst and never costs player 
 test('an oncoming car uses closing speed, even when player speed is below half top speed', () => {
   const duel = fixture();
   const playerMph = duel.car.topSpeed * .3, targetMph = duel.car.topSpeed * .25;
-  const { traffic, events } = trafficHit(duel, playerMph, { targetMph, direction: -1 });
+  const { traffic, events } = trafficHit(duel, playerMph, { targetMph, direction: -1, touching: true });
   const impacts = events.filter(event => event.roadsideImpact).map(event => event.roadsideImpact);
   assert.equal(impacts.length, 1);
   assert.equal(impacts[0].actor, traffic);

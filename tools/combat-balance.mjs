@@ -13,11 +13,12 @@ import { winRateFailures } from './balance-targets.mjs';
 const policies = ['none', 'ufo', 'ufo-max', 'bomb', 'crossbow', 'star', 'all'];
 const difficulties = ['easy', 'medium', 'hard'];
 const baselineSeeds = [1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998];
-const usage = 'Usage: node tools/combat-balance.mjs [--flags wasteland2] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED';
+const usage = 'Usage: node tools/combat-balance.mjs [--flags wasteland2,crash-physics] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED';
+const BALANCE_FLAGS = ['wasteland2', 'crash-physics'];
 
 function selectedFlags(flags = []) {
-  if (!Array.isArray(flags) || flags.some(flag => flag !== 'wasteland2'))
-    throw Error('Unsupported flags; expected wasteland2.');
+  if (!Array.isArray(flags) || flags.some(flag => !BALANCE_FLAGS.includes(flag)))
+    throw Error('Unsupported flags; expected wasteland2 or crash-physics.');
   return [...new Set(flags)];
 }
 
@@ -52,7 +53,8 @@ export function parseArgs(args = []) {
 
 function simulationFlags(flags) {
   return createFeatureFlags({ storage: null, search: '', qa: false,
-    overrides: { wasteland2: flags.includes('wasteland2') } });
+    overrides: { wasteland2: flags.includes('wasteland2'),
+      'crash-physics': flags.includes('crash-physics') } });
 }
 
 function emptyWrecks() {

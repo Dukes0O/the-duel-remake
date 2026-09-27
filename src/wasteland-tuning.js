@@ -60,6 +60,7 @@ export const COMBAT_TUNING=Object.freeze({
   base:100,referenceMass:1450,minimumMassScale:.8,maximumMassScale:1.6,
   crossbow:12,bomb:18,rocket:10,rpgDirect:35,rpgSplash:20,
   ramThresholdKph:40,ramDamagePerKph:.2,spikedRamMultiplier:1.5,
+  ramDvThresholdMph:8,ramDamagePerDvMph:1.25,
   kphPerMph:1.609344,
   scenery:20,
   upgradePerLevel:.15,maximumWeaponLevel:3,maximumRamDamage:80,maximumHitDamage:80,

@@ -90,8 +90,11 @@ test('ram damage uses a strict 40 km/h closing threshold and an 80-armor cap', (
     'the high-speed armor hit remains capped');
 });
 
+// With crash physics on, road ram damage follows each car's own Δv
+// (CRASH-04, tools/test-madmax-crash.mjs). These spike-bonus checks pin the
+// closing-speed rule, which still applies with the switch off.
 test('a player front bumper spikes only the struck CPU car', () => {
-  const field = race();
+  const field = race({crashPhysics: false});
   const target = field.state.opponents[1];
   const closingKph = 60 * KPH_PER_MPH;
   rearContact(field, field.state, target);
@@ -106,7 +109,7 @@ test('a player front bumper spikes only the struck CPU car', () => {
 });
 
 test('a disabled bumper and rear or side contact have plain ram damage', () => {
-  const disabled = race();
+  const disabled = race({crashPhysics: false});
   const disabledTarget = disabled.state.opponents[1];
   disabled.state.combatBumperSpikes = false;
   rearContact(disabled, disabled.state, disabledTarget);
@@ -115,7 +118,7 @@ test('a disabled bumper and rear or side contact have plain ram damage', () => {
     'explicitly disabled front spikes give plain damage');
   assert.equal(ownedHit(disabled, -1, 1)?.spiked, false);
 
-  const reversing = race();
+  const reversing = race({crashPhysics: false});
   const rearTarget = reversing.state.opponents[1];
   place(reversing.state, 104);
   reversing.state.prevS = 110;
@@ -127,7 +130,7 @@ test('a disabled bumper and rear or side contact have plain ram damage', () => {
     'a reverse strike with the player rear receives no front-spike bonus');
   assert.equal(ownedHit(reversing, -1, 1)?.spiked, false);
 
-  const side = race();
+  const side = race({crashPhysics: false});
   const sideTarget = side.state.opponents[1];
   place(side.state, 102, -1);
   side.state.prevLateral = -6;
@@ -142,7 +145,7 @@ test('a disabled bumper and rear or side contact have plain ram damage', () => {
 });
 
 test('both equipped fronts can strike in a head-on CPU contact', () => {
-  const field = race();
+  const field = race({crashPhysics: false});
   const first = field.state.opponents[1], second = field.state.opponents[2];
   place(first, 102);
   first.prevS = 98;
