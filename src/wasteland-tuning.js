@@ -2,7 +2,7 @@ export const WEAPONS=Object.freeze({ufo:{name:'UFO JUMP',key:'1',cooldown:18},bo
 export const CPU_COMBAT=Object.freeze({
  easy:{interval:10,aimError:Math.PI/18,shieldReaction:.20,visionCos:.5},
  medium:{interval:7,aimError:.055,shieldReaction:.13,visionCos:.26},
- hard:{interval:5,aimError:.03,shieldReaction:.07,visionCos:.09},
+ hard:{interval:6,aimError:.04,shieldReaction:.07,visionCos:.09},
 });
 
 // Gameplay values shared by the weapon, projectile, pickup and CPU systems.
