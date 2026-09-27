@@ -52,7 +52,8 @@ for (const difficulty of ['medium', 'hard']) {
   assert.equal(combat.cpuPickupCharges.bomb, 0, 'a mid-range target spends the collected bomb');
   assert.ok(combat.projectiles.some(projectile => projectile.enemy && projectile.kind === 'bomb'),
     'the pickup selects a physical bomb instead of the usual mid-range crossbow');
-  assert.equal(combat.aiTimer, difficulty === 'medium' ? 7 : 5, 'pickup use keeps the scheduled attack interval');
+  // CRASH-RELEASE: Hard attacks every 6 s (was 5).
+  assert.equal(combat.aiTimer, difficulty === 'medium' ? 7 : 6, 'pickup use keeps the scheduled attack interval');
 
   combat.projectiles = [];
   combat.pickups.push({ s: 320, weapon: 'crossbow', age: 0 });

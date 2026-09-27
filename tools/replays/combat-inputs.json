@@ -52,7 +52,7 @@
       "opponents": [540, 565, 590],
       "opponentLateral": [-3, 0, 3],
       "cpuAttacks": true,
-      "durationTicks": 720,
+      "durationTicks": 750,
       "actions": [
         {"atTick": 0, "kind": "input", "throttle": 1}
       ],

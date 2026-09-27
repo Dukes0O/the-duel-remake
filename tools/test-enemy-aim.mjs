@@ -263,8 +263,9 @@ check('raiders keep nearest moving target selection and one shot per member per 
   }
 });
 
-check('CPU attack cadence stays 10 / 7 / 5 seconds', () => {
-  for (const [difficulty, interval] of [['easy', 10], ['medium', 7], ['hard', 5]]) {
+check('CPU attack cadence stays 10 / 7 / 6 seconds', () => {
+  // CRASH-RELEASE: Hard 6 s (was 5).
+  for (const [difficulty, interval] of [['easy', 10], ['medium', 7], ['hard', 6]]) {
     const duel = field({difficulty}), combat = duel.state.combat;
     stepCombatAI(duel, .1);
     near(combat.aiTimer, interval - .1, 1e-10, `${difficulty} initial cadence`);

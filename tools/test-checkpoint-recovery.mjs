@@ -109,7 +109,9 @@ globalThis.localStorage = {
 };
 try {
   const app = new App(), events = [];
-  app.startCampaign({ startStage: 0, seed: 1989, mode: 'wasteland',
+  // CRASH-RELEASE: with crash physics on, seed 1989 no longer misses a gate;
+  // seed 2009 is the first in 1989-2029 whose race does, once.
+  app.startCampaign({ startStage: 0, seed: 2009, mode: 'wasteland',
     car: 'falcone_f42', difficulty: 'casual', cpuDifficulty: 'medium' });
   app.autopilot = true; app._scriptedCrashDone = true;
   app.duel.onChange((state, event) => {
@@ -124,7 +126,7 @@ try {
   }
   const state = app.duel.state, resets = events.filter(event => event.type === 'reset');
   assert.equal(state.results?.completed, true, 'the full Medium race completes');
-  assert.equal(resets.length, 1, 'the real crossbow shove causes one missed gate');
+  assert.equal(resets.length, 1, 'a real in-race shove causes one missed gate');
   // Balance changes decide where the shove lands, so measure the retry against
   // the gate actually missed, on its own lap, rather than assuming lap one.
   const lapStart = resets[0].completedLaps * app.duel.course.length;

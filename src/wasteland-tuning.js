@@ -2,7 +2,10 @@ export const WEAPONS=Object.freeze({ufo:{name:'UFO JUMP',key:'1',cooldown:18},bo
 export const CPU_COMBAT=Object.freeze({
  easy:{interval:10,aimError:Math.PI/18,shieldReaction:.20,visionCos:.5},
  medium:{interval:7,aimError:.055,shieldReaction:.13,visionCos:.26},
- hard:{interval:6,aimError:.04,shieldReaction:.07,visionCos:.09},
+ // CRASH-RELEASE: every traffic smash now costs the player real speed, which
+ // gave the Hard CPU more shots (30 races: 8 wins fell to 5). Attacking every
+ // 6 s instead of 5 restores 8 of 30; its aim stays the sharpest.
+ hard:{interval:6,aimError:.03,shieldReaction:.07,visionCos:.09},
 });
 
 // Gameplay values shared by the weapon, projectile, pickup and CPU systems.

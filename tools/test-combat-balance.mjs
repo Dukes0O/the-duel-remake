@@ -198,7 +198,9 @@ check('both reports retain every existing target band and failure', () => {
 // Exercise production contacts so reporting cannot silently depend on the older
 // trafficWrecked event or label every traffic incident as player-owned.
 for (const flags of [[], ['wasteland2']]) for (const attacker of ['player', 'cpu']) {
-  for (const outcome of ['knock', 'obliterate']) {
+  // CRASH-RELEASE: crash physics decides; a hard hit smashes traffic (a wreck)
+  // and a light one knocks it clear. The cars start just touching.
+  for (const outcome of ['knock', 'smash']) {
     check(`${flags.length ? 'flag-on' : 'flag-off'} ${attacker} traffic ${outcome} accounting`, () => {
       const run = required('run');
       const original = App.prototype.advance;
@@ -206,8 +208,8 @@ for (const flags of [[], ['wasteland2']]) for (const attacker of ['player', 'cpu
       App.prototype.advance = function (...args) {
         const duel = this.duel, state = duel.state;
         const striking = attacker === 'player' ? state : state.rival;
-        Object.assign(striking, { car: 'falcone_f42', s: 107, prevS: 100,
-          lateral: 0, prevLateral: 0, speedMph: duel.car.topSpeed * (outcome === 'obliterate' ? .7 : .3),
+        Object.assign(striking, { car: 'falcone_f42', s: 105.6, prevS: 104.5,
+          lateral: 0, prevLateral: 0, speedMph: duel.car.topSpeed * (outcome === 'smash' ? .7 : .15),
           headingError: 0, slipAngle: 0, pushVelocity: 0, dir: 1,
           airborne: false, groundHeight: undefined, airHeight: 0 });
         const traffic = { alive: true, s: 110, prevS: 110,
@@ -227,9 +229,9 @@ for (const flags of [[], ['wasteland2']]) for (const attacker of ['player', 'cpu
       try {
         const row = run('none', 'medium', 1989, { flags, maxFrames: 1 });
         const expected = wrecks();
-        expected.traffic = expected.byOwner.unknown = outcome === 'obliterate' ? 1 : 0;
+        expected.traffic = expected.byOwner.unknown = outcome === 'smash' ? 1 : 0;
         assert.deepEqual(row.wrecks, expected,
-          outcome === 'obliterate' ? 'real traffic obliteration counts once with unknown ownership' :
+          outcome === 'smash' ? 'a real traffic smash counts once with unknown ownership' :
             'traffic knocked clear is not a wreck');
       } finally { App.prototype.advance = original; }
     });
