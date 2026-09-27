@@ -22,8 +22,10 @@ do them first, in order, then continue with the plan below.
 3. Full tier on the final integration commit, `node tools/build-status.mjs`,
    then push integration/wasteland (D8). Integration is ahead of origin by
    the GATE-REJOIN merge, which has not had a full tier yet.
-4. **Release needed, Kyle's go-ahead first.** GATE-REJOIN fixes a live bug
-   Kyle hit: reversing back down the hidden road froze the race. The fix only
+4. **Release needed, Kyle's go-ahead first.** GATE-REJOIN and RALLY-CHECKPOINT
+   fix two live bugs Kyle and Gratian hit: reversing back down the hidden road
+   froze the race, and the rally car was snapped onto the road near the
+   Pacific Canyon shortcut. The fix only
    reaches his game through a release (docs/OPERATIONS.md). Prepare the
    release evidence and ask Kyle; do not release without his written yes.
 5. Open task chip for Kyle: the `combat-audio` browser scenario fails with
