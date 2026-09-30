@@ -64,7 +64,7 @@ export const CARS = {
     name:'Titan Monster',homage:'Stadium monster truck',gearbox:'manual',
     topSpeed:116,accel:8.6,grip:.91,braking:1.08,gears:[35,61,87,105,116],
     color:0x58329b,accent:0xb5db3b,price:12000,offRoadGrip:1.05,offRoadSpeed:108,offRoadScrub:.12,mass:4700,
-    collision:{halfWidth:1.4,halfLength:2.6},height:3.6,kind:'monster',
+    collision:{halfWidth:1.4,halfLength:2.6},height:3.6,kind:'monster',lowSpeedSteer:true,
   },
   koenigsegg_jesko: {
     name:'Koenigsegg Jesko Absolut',homage:'Jesko Absolut-inspired hypercar',gearbox:'manual',
@@ -188,11 +188,14 @@ export const DRIVE = {
 
 // Maximum yaw under the current conditions. Shared with the demo driver so
 // its route knowledge becomes steering input rather than a physics bypass.
-export function steeringYawAuthority(speedMph, grip = 1, traction = 1) {
-  const rolling = Math.min(1, Math.max(0, speedMph) / 30);
+export function steeringYawAuthority(speedMph, grip = 1, traction = 1, car = null) {
+  const assisted = car?.lowSpeedSteer === true;
+  const rolling = Math.min(1, assisted && speedMph > 3
+    ? Math.max(speedMph / 30, .55) : Math.max(0, speedMph) / 30);
+  const steeringGrip = assisted && speedMph < 45 ? Math.max(grip, 1) : grip;
   const highSpeed = 1 / (1 + Math.max(0, speedMph - 110) * 0.0022);
-  const steeringLimit = DRIVE.yawRate * rolling * highSpeed * grip * traction;
-  const tireLimit = DRIVE.maxLateralAccel * grip * traction / Math.max(8, speedMph * DRIVE.mphToWorld);
+  const steeringLimit = DRIVE.yawRate * rolling * highSpeed * steeringGrip * traction;
+  const tireLimit = DRIVE.maxLateralAccel * steeringGrip * traction / Math.max(8, speedMph * DRIVE.mphToWorld);
   return Math.min(steeringLimit, tireLimit);
 }
 

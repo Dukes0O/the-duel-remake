@@ -2485,7 +2485,7 @@ tasks:
     needs: [WAR-02a-FORMAT, CRASH-SWITCH-REMOVE]
     status: building
     claimed_by: "Codex autonomous Director, 30 September 2026"
-    owns: [src/arena/warlord-settlement.js, src/vehicle-contact-modifiers.js, src/armor-kits.js, src/sim-contacts.js, src/combat-armor.js, src/microcombat-projectiles.js, src/armor-kit-meshes.js, src/screen-armory.js, src/screen-arena.js, src/warlords.js, src/wasteland-progress.js, tools/test-warlord-settlement.mjs, tools/test-side-saws.mjs, tools/scenarios/warlord-reward.mjs, docs/changes/WAR-02a-REWARD.md]
+    owns: [src/arena/warlord-settlement.js, src/vehicle-contact-modifiers.js, src/armor-kits.js, src/sim-contacts.js, src/combat-armor.js, src/combat-projectiles.js, src/armor-kit-meshes.js, src/screen-armory.js, src/screen-arena.js, src/warlords.js, src/wasteland-progress.js, tools/test-warlord-settlement.mjs, tools/test-side-saws.mjs, tools/scenarios/warlord-reward.mjs, docs/changes/WAR-02a-REWARD.md]
     hooks: [src/app.js]
     sequencing: "FORMAT and CRASH-SWITCH-REMOVE merged. Tests first. Contact damage reads Sal actor move state without editing Sal files. app.js waits for TITAN-HANDLING to merge. Save Guardian review is required before merge."
     flag: warlords
@@ -2519,7 +2519,9 @@ tasks:
     lane: PHYS
     size: S
     needs: [CRASH-SWITCH-REMOVE]
-    status: building
+    status: merged
+    review_commit: 71a1582c0d9b5c9a009282c389f5290ba6745946
+    note: "Kyle approved 30 September: Titan is fine. integrate. Merged 7c9ff20 from frozen 71a1582 after clean independent review, lane300/300 in670.94s, build0.95s, focus40/40 and162 replay checks. Sal Pilot and Reward App hooks are free."
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [src/config.js, src/sim-driving.js, src/sim-rival.js, src/arena/arena-pilot.js, tools/test-titan-handling.mjs, tools/replays/titan-handling.json, tools/scenarios/titan-handling.mjs, docs/changes/TITAN-HANDLING.md]
     hooks: [src/app.js, tools/replays/expected-fingerprints.json]
@@ -2535,7 +2537,7 @@ tasks:
     lane: TOOL
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [tools/launcher-test-listen.mjs, tools/test-launcher-test-listen.mjs, tools/test-launcher-port.mjs, docs/changes/HK-LAUNCHER-PORT.md]
     sequencing: "Pure test-fixture binding helper only; no other lane owns these files. Test EACCES retry first, retain every launcher assertion and the twenty-attempt limit."
