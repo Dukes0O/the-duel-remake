@@ -20,10 +20,10 @@ Final captures/report: integration's `.evidence/2026-09-30/WAR-02a-SAL/`.
 Keep the lane until your verdict. This Director has not merged Sal or touched
 Preview. Reward is merged as de3eb0f and remains behind warlords: dev.
 
-Integration is closing for its five-merge full-tier check. Hold feature merges
-until the end-of-run verdict is recorded in run-log.md. Kyle's art picks and
-your gritty fitting rules are preserved; new fitting/source cards remain for
-the next run.
+The end full tier passed 303/303 and build on exact clean `0f7818f6a351b4ce0f728a9a8cde3354ee99ec75`.
+The verdict and tested source are recorded at the end of run-log.md. Kyle's
+art picks and your gritty fitting rules are preserved; new fitting/source
+cards remain for the next run. Sal's Preview review remains required.
 
 ## What's new to try
 

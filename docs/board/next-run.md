@@ -26,10 +26,12 @@ for Claude's Preview play-through. Do not restart a merged source card.
   files. Verify WAR-02c's old warlords path and re-slice its actual hook before
   starting. ARS-CORE is ready, but its sound-bank.js hook belongs to the
   external audio lane; coordinate a slice or wait for that lane's merge.
-- The Director is closing this run. Five integration merges have landed since
-  the last full tier, including Claude's two art-documentation merges. Hold
-  feature merges until the final full tier passes. Its exact result will be
-  at the end of run-log.md and in the full-tier ledger.
+- The Director's end full tier passed 303/303 in 823.86 seconds, with build
+  passing in 1.10 seconds, on exact clean `0f7818f6a351b4ce0f728a9a8cde3354ee99ec75`.
+  The ledger time is 2026-09-30T19:37:41.407Z. The five-merge/two-hour counter resets
+  here. The following ledger/status/handoff commit is metadata and does not
+  inherit an exact-commit full pass. Normal D8 push follows; this run stops.
+  Start the next run from the board and these retained ownership constraints.
 
 **Stop rule (Kyle).** This is a game for one laptop, played by Kyle and his
 11-year-old son. If a card cannot meet its acceptance with the tools we have
