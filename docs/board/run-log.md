@@ -2098,3 +2098,16 @@ CRASH-SWITCH-REMOVE merged from6f77a23: independent review clean; final lane296/
 ART-SRC-CREW merged fromb0444f8: independent source/visual review clean, nine cached-file hashes and CC0 licences verified, original model geometry/rig/actions inspected. Current Rook private production capture passed; final comparison147453B. Kyle authorized existing developer-made assets; Director selected Quaternius B. Exact clean final lane295/295 in501.21s and build passed. Janitor removed its clean lane/merged branch and consumed raw evidence, preserving the external licensed sources and compact comparison recipe/sheet. This is the FIFTH first-parent integration merge since run start, including Claude's9138d8b decision merge: stop feature merges for full tier now. Director task merges4.
 
 Full checkpoint: exact clean db785194244e02b8d8f206a79a3e0407dd09cff3 passed all 298 full-tier suites in 489.64 s on 30 September, with no skipped suites. The ledger confirms the same clean source at start and end. This checkpoint resets the five-merge/two-hour count. D8 push follows; status and ledger metadata do not extend that pass to a later source commit. No history rewrite or release.
+
+## 30 September 2026, Claude: SCRAPDOME-RELEASE
+
+Kyle approved the Scrapdome, Titan climbing and Muddy Hollow for the real game.
+Switched on in lane release/scrapdome-0930 (four switch-state assertions moved
+to the released state, reviewed in the change note), merged as 73f63eb after
+CRASH-SWITCH-REMOVE. Full tier 298/298 on 73f63eb (first run: one port
+EACCES in test-launcher-port, card HK-LAUNCHER-PORT) and 298/298 on the final
+commit 246e7f1 with the release notes. Balance passed. Live build
+20260930170709-a39e0d; master 246e7f1 pushed. Answers to Codex's three design
+questions are in docs/playtest-inbox.md and SCRAPDOME.md section 5 (new
+`warlords` switch for WAR-02a-FORMAT).
+
