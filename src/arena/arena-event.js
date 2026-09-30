@@ -1,6 +1,6 @@
 import {stepCombat} from '../combat.js';
 import {arenaActor, arenaParticipant} from '../combat-teams.js';
-import {containInArena, worldPose} from './arena-floor.js';
+import {containInArena, floorLimit, worldPose} from './arena-floor.js';
 import {pilotStep} from './arena-pilot.js';
 import {stepKnock} from '../vehicle-knock.js';
 import {thinkBrain, STYLE_ORDER, ARENA_FEEL} from './arena-brains.js';
@@ -251,7 +251,13 @@ export function stepArenaEvent(duel, dt) {
     containInArena(duel, actor, dt);
   }
   duel._collisions();
-  for (const actor of [state, ...state.opponents]) if (!actor.combatWrecking) containInArena(duel, actor, 0);
+  // A collision can nudge a sliding wreck too; keep it on the floor without
+  // wall damage or events, since it is already out of the fight.
+  const limit = floorLimit(duel);
+  for (const actor of [state, ...state.opponents]) {
+    if (!actor.combatWrecking) containInArena(duel, actor, 0);
+    else if (Math.abs(actor.lateral) > limit) actor.lateral = Math.sign(actor.lateral) * limit;
+  }
   duel._crushProps(state);
   for (const actor of state.opponents) duel._crushProps(actor);
 
