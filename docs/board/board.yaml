@@ -11,7 +11,7 @@ tasks:
     size: S
     needs: []
     owner: codex
-    status: building
+    status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
     helpers: [test_author, reviewer, browser_qa]
     owns: [src/screen-hud.js, src/onfoot-hints.js, tools/test-onfoot-hints.mjs, tools/scenarios/onfoot-hints.mjs, docs/changes/UX-ENTRY-HINTS.md]
