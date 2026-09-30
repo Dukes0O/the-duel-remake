@@ -615,7 +615,12 @@ tasks:
     lane: ART
     size: S
     needs: [ART-SRC-CREW]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-09-30-resume
+    owns: [tools/art/crew-w-source-sheet.py, tools/art/crew-w-source-inspect.py, tools/scenarios/crew-w-source-current.mjs, docs/board/looks/crew-w-src/, docs/changes/ART-SRC-CREW-W.md]
+    hooks: [tools/art/catalog.json]
+    helpers: [reviewer]
+    sequencing: "Male fitting paused and released its unchanged catalog hook. Source women now; tanker waits for this catalog lane to merge. Source only, no runtime assets or adaptation. Compare 2-3 CC0 packs with checked licences and source geometry/rig when available; ask Kyle at the sheet and send it to Claude."
     acceptance:
       - "Nell, Odessa and Wren are women, and so is the secret crew member, Vesper Blackiron (settled by Claude, 30 September 2026). Quaternius Modular Men has no women. Short-list two or three CC0 sources with the ART-SRC-CREW rules; check Quaternius's own women's modular pack first, because a shared rig lets the whole crew share every action. Stop at a comparison sheet with a recommendation (waiting_on: kyle); Kyle said he is not picky."
   - id: ART-FIT-CREW-W
