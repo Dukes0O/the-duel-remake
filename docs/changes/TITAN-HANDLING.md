@@ -82,7 +82,7 @@ run exposed a test-fixture mistake in the demo lane position; the fixture now
 uses the existing cruising lane (-3.36 m for a 7 m half-width). Its final
 failure therefore tests the steering change rather than a lane mismatch.
 
-Current focused result: 39/40 checks pass, including all eight frozen non-Titan full-state fingerprints. The remaining demo check correctly fails until App can pass its actual car after FORMAT merges. Three existing Titan replay proposals were computed in ignored evidence with the original recipe and redirected output; fifteen other recorded cases are unchanged and all 30/60/144 FPS proposals agree. Existing replay pins are untouched pending independent review. Lane tier, build, browser checks and Kyle's Preview check are pending.
+Current focused result: 39/40 checks pass, including all eight frozen non-Titan full-state fingerprints. The remaining demo check correctly fails until App can pass its actual car after FORMAT merges. Three existing Titan replay proposals were computed in ignored evidence with the original recipe and redirected output; fifteen other recorded cases are unchanged and all 30/60/144 FPS proposals agree. Independent reviewer approved only these three Titan case entries after reproducing their new hashes and restoring their exact old hashes by disabling only Titan's opt-in in memory. The fifteen other case entries stay byte-identical. Lane tier, build, browser checks and Kyle's Preview check are pending.
 
 ## Assertions and race fingerprints
 
@@ -96,7 +96,13 @@ tools/test-titan-climb.mjs also runs that full replay suite. Those Titan
 assertions can conflict with the card's permitted Titan behavior change.
 The implementation must name and explain every changed Titan replay and get
 review before editing its old assertion or expected pin. Non-Titan pins must
-stay unchanged. This tests-only task leaves all those existing files intact.
+stay unchanged. The Director named expected-fingerprints.json as a hook before the reviewed edit. Only the three Titan entries are replaced; test code and recorded inputs stay unchanged. Each changes because the recorded steering spends time below 45 mph. At 70 mph and above the exact old formula still passes.
+
+| Titan replay | Old hash | Reviewed new hash |
+| --- | --- | --- |
+| titan-arena-duel | 70118ff66807ae808b469f599ef16447bab85231a935a63fcd8ed6555a638628 | a233011d43166eb6f29b9a4c52c8cc9316a1549ee7eb524cfb85c0394e2fc88f |
+| titan-stunt-trial | 3137351729b8e9efec5ecb5f33f17031ae2d9cc7f3b4b86f12fc59b274eb720f | b1d7d78b5f395a1383a94539590f24621cfc5609d1d9cd3ee87d8860f1a131e3 |
+| titan-freestyle-practice | 71636a70aea9f0e05cc0bc20c4a20abfcabdc2544667baae458b368391d0f5dc | 46bbf9631baf0d93d9ff416dde36b122fcd48fab9a3338e418e62deaf4e7ad3b |
 
 ## Removed
 
