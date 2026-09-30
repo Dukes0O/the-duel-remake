@@ -72,9 +72,15 @@ function appFight(cpuDifficulty = 'medium') {
 }
 function wreck(app, victimId, owner) {
   const duel = app.duel, loser = victimId === 'player' ? duel.state : duel.state.opponents[0];
-  for (const p of duel.state.arena.participants) {p.protectedSec = 0; p.wreckCounted = false;}
+  // Run the real respawn lifecycle before another controlled damage event.
+  // Never reset a counted wreck while its actor is still wrecking.
+  for (let step = 0; step < 480 && [duel.state, ...duel.state.opponents].some(actor => actor.combatWrecking); step++) {
+    duel.step(1 / 120);
+  }
+  assert.ok([duel.state, ...duel.state.opponents].every(actor => !actor.combatWrecking), 'previous real wreck respawned');
+  for (const p of duel.state.arena.participants) p.protectedSec = 0;
   duel.state.invulnerableSec = 0; duel.state.combat.shield = 0; duel.state.combat.rivalShield = 0;
-  loser.combatWrecking = false; loser.armor = 1;
+  loser.armor = 1;
   applyArmorDamage(duel, loser, 'crossbow', {owner}); duel.step(1 / 120);
 }
 function finish(app, won = true) {
