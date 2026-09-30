@@ -1,5 +1,9 @@
 # WAR-02a-REWARD
 
+Status: partial core checkpoint; App integration blocked by TITAN-HANDLING.
+Save Guardian review pending on this exact checkpoint. `rewardBuilt` remains false.
+No merge, release or finished reward claim.
+
 ## Settled contract before tests
 
 Read SPEC 0, docs/SCRAPDOME.md section 5 and the card's owned files.
@@ -57,7 +61,13 @@ the earned-kit lookup avoids that conflict without weakening the old test.
 
 ## Removed
 
-Nothing replaced. No runtime modules, stubs, assets or review captures added.
+Replaced the paid-only kit lookup with separate paid and earned lookups;
+removed no paid tier. Replaced the Armory's paid-only presentation and unpacked
+its touched panel and the contact function. Replaced Sal's static sweep pose
+with stage-time rotation. The missed-window spark node keeps its old role;
+the tell uses a renderer clone named `kit-sal-tell-sparks`.
+No runtime assets, dependencies, saves, review captures or test assertions removed.
+No stub stands in for the pending App save hook.
 
 ## Tests-first red verdict (30 September 2026)
 
@@ -119,3 +129,82 @@ The sweep/player-side fixture moves both cars into contact; this intentionally
 avoids the existing NPC cut-in safety-yield path. Wrong-context modifier tests
 use actual Last Car Rolling contact with stray Sal fields, both with the dev
 warlord switch requested and absent. They pass and do not fake the damage path.
+
+
+## Implemented core checkpoint (30 September 2026)
+
+`settleWarlordResult` now builds one pure, additive transaction. First win
+pays 150 scrap, claims Sal, records defeat and equips Side Saws on only the
+winning car. New rematches pay 25; losses pay zero and add one loss. Run
+markers, participant facts, named-player identity, career version and discovery
+reject unsupported or repeated results without changing the old profile.
+Unknown profile, career, warlord, territory and kit fields survive.
+
+Side Saws use a separate earned catalog. A named career's Sal defeat supplies
+permanent ownership on current and future unlocked cars. Both legacy defeat
+shapes work without scrap repayment or guessed autoequipping. Equip is free;
+undefeated players cannot buy or equip it. The three paid prices stay
+[350, 950, 2500]. Side Saws add zero armor and zero mass. The Armory shows the
+owned item under the warlords switch and uses existing equip actions.
+
+Actual contact faces drive the damage rules: equipped attacker left/right
+gets 1.6 times; enabled Sal sweep to the player's left/right gets 2 times;
+hits on Sal's rear during her window get 1.5 times. Multipliers precede the
+existing damage caps. A genuine positive saw hit marks `combatRamHit` with
+`sideSaws: true` and uses the existing bounded `burst(..., 'spark')` pool,
+already drawn by combat effects. No new fields or bursts enter ordinary
+contacts. Only positive sweep damage sets `salSaw.hit = true` and immediately
+calls out `SAW SWEEP!`.
+
+The corrected owned projectile file is `src/combat-projectiles.js`.
+It forwards its existing contact zone for direct hits only. Bombs and splash
+hits have no guessed contact face and do not get rear-window damage. No Sal
+FSM, pilot or shared renderer file was edited.
+
+The friendly-contact red fixture exposed a real older bug: contacts passed
+correct participant-owner ids, but the damage guard checked only respawn
+protection and never rejected an allied team. The owned armor path now rejects
+distinct allied arena participants. Own bomb damage, shields, invulnerability,
+respawn protection and one-hit-per-contact cadence remain intact.
+
+Authored Side Saws show the existing saw meshes without paid plating. Sal's
+reviewed blades rotate in the sweeping phase; a distinct clone of the reviewed
+spark geometry tells during spin-up. `kit-sal-sparks` stays hidden during the
+tell and remains reserved for the missed window. All motion reads simulation
+time and changes no race or save state.
+
+## Current checks and remaining dependency
+
+- `node tools/test-side-saws.mjs`: 27/27 subtests passed, 116 acceptance checks.
+  All three ordinary fingerprints in the unchanged
+  `tools/replays/warlord-format-ordinary.json` pass.
+- `node tools/test-warlord-settlement.mjs`: 9/11 subtests passed, 87 checks
+  reached. The two remaining App failures are exactly
+  "actual arenaResult callback settles the first win" and
+  "screen reports an unsaved settlement". They require the owned App hook
+  after TITAN-HANDLING merges; these assertions were not weakened or skipped.
+- Ten focused suites for Side Saws, paid kits, authored kits, visual kits,
+  resource lifecycle, Sal art, armor, bomb radius, Wasteland profiles and
+  warlord metadata: 81/81 subtests passed in 1.83 seconds. Existing missed-window
+  spark assertion and own-bomb checks remain unchanged.
+- Final focused reruns with Node's spec reporter repeat 27/27 Side Saws
+  (116 checks) and 9/11 settlement (87 checks), after the readable contact
+  rewrite and malformed-owned-list guard. The same two App assertions fail.
+- Read-only, memory-only production `stepProjectiles` proof: rear bolt 12
+  to 18 armor during the window; front bolt 12 to 12; radial bomb
+  17.18181818181813 to 17.18181818181813. An initial scratch expectation of
+  an 18-damage centered bomb failed because modern blast floor clearance
+  causes falloff; the measured positive control and window are equal.
+  No tracked test or assertion changed. Malformed owned-kit objects are
+  safely rejected by the public ownership lookup.
+- Save fixtures were not rerun here. Save Guardian remains mandatory and
+  independent. Headless checks do not claim a complete App storage
+  transaction, browser reward flow or final result presentation.
+- Lane tier, build and browser reward scenario remain pending. No heavy gate,
+  private browser build, merge, push or history rewrite was run during the
+  Director's Rustwall gate. Browser recipe and end-to-end App/storage review
+  follow once the App hook clears; current work is a reviewable partial core.
+
+Freeze this source checkpoint for Save Guardian. `src/app.js` is untouched,
+`src/warlords.js` still has `rewardBuilt: false`, and the reward is not declared
+built until the working App/save/contact/armory path passes final review.

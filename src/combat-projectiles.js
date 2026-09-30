@@ -138,6 +138,7 @@ function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
     ? armorOptions.splash ? 'rpg-splash' : 'rpg-direct'
     : projectile.kind === 'bomb' ? 'bomb' : 'crossbow',
     {level: projectile.level, ...armorOptions,
+      ...(projectile.kind !== 'bomb' && !armorOptions.splash ? {contactFace: zone} : {}),
       owner: projectile.raid ? 'raider' : state.arena ? projectile.ownerId : enemy ? 'cpu' : 'player'});
 }
 

@@ -144,6 +144,16 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
           !gltf?.scene?.isObject3D) return;
       const authored = gltf.scene.clone(true);
       authored.name = 'authored-kit';
+      // Reuse the reviewed streak geometry in a distinct tell effect. The
+      // original spark node remains reserved for the missed-sweep window.
+      const sal = authored.getObjectByName('kit-sal-saws');
+      const windowSparks = sal?.getObjectByName('kit-sal-sparks');
+      if (windowSparks) {
+        const tellSparks = windowSparks.clone(true);
+        tellSparks.name = 'kit-sal-tell-sparks';
+        tellSparks.visible = false;
+        sal.add(tellSparks);
+      }
       // Object3D.clone retains material references. Each actor needs its own
       // finish so armor damage cannot repaint a peer or the cached source.
       const materialClones = new Map();
@@ -258,18 +268,19 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
         vehicles.extraOpponents?.[index - 2]?.mesh : vehicles.player;
       bind(rig, enabled ? vehicle : null);
       const tier = armorKitTier(actor, index > 0);
+      const sideSaws = actor?.combatArmorKit === 'side-saws';
       const visible = enabled && !!actor && !actor.crushed && !!vehicle &&
-        Number.isFinite(actor.maxArmor) && tier > 0;
+        Number.isFinite(actor.maxArmor) && (tier > 0 || sideSaws);
       for (const root of Object.values(rig.roots)) root.visible = visible && !rig.authored;
       if (rig.authored) {
         rig.authored.visible = visible;
         for (const [name, minimum] of [['kit-scrapper',1],['kit-raider',2],['kit-warlord',3]]) {
           const part = rig.authored.getObjectByName(name);
-          if (part) part.visible = visible && tier >= minimum;
+          if (part) part.visible = visible && (sideSaws ? name === 'kit-raider' : tier >= minimum);
         }
         for (let partIndex = 0; partIndex < 4; partIndex++) {
           const plate = rig.authored.getObjectByName(`kit-plate-${partIndex}`);
-          if (plate) plate.visible = visible && !actor.combatWrecking &&
+          if (plate) plate.visible = visible && !sideSaws && !actor.combatWrecking &&
             armorCondition(actor) > BREAK_POINTS[partIndex];
         }
         const sal = rig.authored.getObjectByName('kit-sal-saws');
@@ -284,13 +295,17 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
           const elapsed = Math.max(0, (state.stageTimeSec || 0) -
             (Number(actor?.salSaw?.sinceSec) || 0));
           const spinning = phase === 'spin-up' || phase === 'sparking';
-          const angle = spinning ? elapsed * 8 + elapsed * elapsed * 18 : 0;
+          const angle = phase === 'sweeping' ? elapsed * 48 :
+            spinning ? elapsed * 8 + elapsed * elapsed * 18 : 0;
           if (left) left.rotation.x = angle;
           if (right) right.rotation.x = -angle;
-          if (sparks) {
-            sparks.visible = salVisible && phase === 'sparking';
-            sparks.scale.setScalar(1);
-            sparks.children.forEach((streak, streakIndex) => {
+          const tellSparks = sal.getObjectByName('kit-sal-tell-sparks');
+          for (const [effect, active] of [[sparks, phase === 'sparking'],
+            [tellSparks, phase === 'spin-up']]) {
+            if (!effect) continue;
+            effect.visible = salVisible && active;
+            effect.scale.setScalar(1);
+            effect.children.forEach((streak, streakIndex) => {
               const age = (elapsed * 7.5 + streakIndex * 0.31) % 1;
               streak.visible = age < 0.74;
               streak.scale.setScalar(0.5 + (1 - age) * 0.7);
@@ -313,29 +328,37 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
           if (base) material.color.copy(base).multiplyScalar(scorch);
         }
         for (const name of ['kit-cage', 'kit-saw-0', 'kit-saw-1',
-          'kit-crown', 'kit-warlord-mount']) {
+          'kit-crown', 'kit-warlord-mount', 'kit-turret-mount']) {
           const part = rig.authored.getObjectByName(name);
-          if (part) part.visible = !wrecked && visible &&
-            tier >= (name === 'kit-crown' || name === 'kit-warlord-mount' ? 3 : 2);
+          if (part) {
+            const saw = name === 'kit-saw-0' || name === 'kit-saw-1';
+            part.visible = !wrecked && visible && (sideSaws ? saw :
+              tier >= (name === 'kit-crown' || name === 'kit-warlord-mount' ? 3 : 2));
+            if (saw) {
+              part.userData.kitRestX ??= part.rotation.x;
+              part.rotation.x = part.userData.kitRestX + (sideSaws ? (state.stageTimeSec || 0) * 36 : 0);
+            }
+          }
         }
       }
       rig.plateMaterial.color.setHex(condition < 0.3 ? 0x383733 :
         condition < 0.6 ? 0x555047 : 0x69645a);
-      rig.centerGuard.visible = !wrecked && condition > 0.2;
-      rig.hoodPlate.visible = !wrecked && condition > 0.35;
-      rig.stacks.forEach(stack => { stack.visible = !wrecked; });
-      rig.cage.forEach(bar => { bar.visible = tier >= 2 && !wrecked; });
-      rig.saws.forEach(saw => { saw.visible = tier >= 2 && !wrecked; });
-      rig.crown.forEach(point => { point.visible = tier >= 3 && !wrecked; });
+      rig.bullBar.visible = !sideSaws;
+      rig.centerGuard.visible = !sideSaws && !wrecked && condition > 0.2;
+      rig.hoodPlate.visible = !sideSaws && !wrecked && condition > 0.35;
+      rig.stacks.forEach(stack => { stack.visible = !sideSaws && !wrecked; });
+      rig.cage.forEach(bar => { bar.visible = !sideSaws && tier >= 2 && !wrecked; });
+      rig.saws.forEach(saw => { saw.visible = (sideSaws || tier >= 2) && !wrecked; });
+      rig.crown.forEach(point => { point.visible = !sideSaws && tier >= 3 && !wrecked; });
       rig.sidePlates.forEach((plate, partIndex) => {
-        plate.visible = !wrecked && condition > BREAK_POINTS[partIndex];
+        plate.visible = !sideSaws && !wrecked && condition > BREAK_POINTS[partIndex];
         plate.rotation.z = (partIndex < 2 ? -1 : 1) *
           (0.04 + (1 - condition) * 0.12);
       });
       const time = state.stageTimeSec || 0;
       rig.loose.forEach((part, partIndex) => {
         const threshold = BREAK_POINTS[partIndex];
-        if (rig.lastCondition > threshold && condition <= threshold && !wrecked) {
+        if (!sideSaws && rig.lastCondition > threshold && condition <= threshold && !wrecked) {
           const authoredPlate = rig.authored?.getObjectByName(`kit-plate-${partIndex}`);
           part.authoredCopy?.removeFromParent();
           part.authoredCopy = null;
