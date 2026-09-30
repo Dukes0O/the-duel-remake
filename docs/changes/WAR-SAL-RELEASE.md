@@ -1,6 +1,6 @@
 ---
 task: WAR-SAL-RELEASE
-status: review
+status: released
 kind: release
 flag: warlords
 player_facing: yes

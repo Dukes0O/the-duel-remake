@@ -2210,3 +2210,15 @@ Observed Claude merge 0bbb68d: Kyle keeps current Nell, Odessa and Wren; only fu
 ART-SRC-CREW-W artifacts merged from clean d6cd763: lane 306/306 in 734.88 seconds, build 1.74 seconds, independent source/rename review clear. Both earlier filename failures are retained as failures in the note. Kyle keeps current women; no game asset, race, save, assertion or runtime code changes. Catalog released for tanker. This is merge three since full bcb09e44. Janitor now removes the merged source lane, branch and consumed raw evidence; licensed originals remain outside the repository.
 
 Claimed ART-SRC-TANKER after the women source merge and plain lane cleanup released its catalog hook. Sources and one comparison only, then Kyle; no fitting or runtime change. Routed SAVE-DAMAGED-FIELDS as a separate priority fix with exclusive progression ownership after Save Guardian's JSON-safe coercion repro. Fuel retains its own App retry/settlement fixes and new tests; no overlapping production ownership.
+
+## 30 September 2026, Claude: third release (WAR-SAL-RELEASE)
+
+Kyle: "let's ensure Sal is available in the main game now." `warlords` on in
+lane release/warlords (six switch assertions moved to the released state;
+switch-off cases now force the switch off; reviewed in the change note);
+lane 157/157 and build; merged as 4c3248e. Full tier 306/306 on 4c3248e in
+911 s; balance passed (26, 19, 8 of 30; CPU hits 2.67, 7.2, 5.53). Build
+20260930224228-039fc6 has warlords on, checked on port 5188 (no errors, main
+menu unchanged), copied into the live dist (server was stopped; files
+verified), dist 149, dist-previous 149 (42f962), dist-next deleted, master
+pushed. Kyle also kept the current women crew (0bbb68d).

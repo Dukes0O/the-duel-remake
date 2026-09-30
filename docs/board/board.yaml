@@ -2726,7 +2726,7 @@ tasks:
     lane: RELEASE
     size: S
     needs: [WAR-02a-SAL, WAR-02a-REWARD, WAR-PAY]
-    status: building
+    status: released
     claimed_by: "Claude, 30 September 2026"
     acceptance:
       - "Full release evidence, then Kyle's written go-ahead. Other warlords show WARLORD FIGHT COMING LATER and have no button."
