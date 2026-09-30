@@ -574,20 +574,23 @@ export class App {
   arenaAvailable() {
     return this.wastelandUnlocked() && this._switches().enabled('scrapdome') === true;
   }
+  warlordsAvailable() {
+    return this.arenaAvailable() && this._switches().enabled('warlords') === true;
+  }
   startWarlordFight(warlordId) {
     this._refreshPlayer();
     const state = this.duel.state;
     const ownRematch = state.arena?.mode === 'warlord' &&
       state.arena.warlordId === warlordId && this._runPlayerId === this.player.id &&
       state.playerId === this.player.id;
-    if (!this.arenaAvailable() || !BUILT_WARLORD_IDS.includes(warlordId) ||
+    if (!this.warlordsAvailable() || !BUILT_WARLORD_IDS.includes(warlordId) ||
         this.profile.wasteland?.territories?.[warlordId]?.hold !== 100 ||
         !(this.isYardHomeActive() || ownRematch)) return false;
     return this._startArenaFight({warlordId, opponents: 1});
   }
   beginWarlordFight() {
     if (this._runPlayerId !== this.player.id ||
-        this.duel.state.playerId !== this.player.id || !this.arenaAvailable()) return false;
+        this.duel.state.playerId !== this.player.id || !this.warlordsAvailable()) return false;
     this._clearHiddenRoadInput();
     return beginWarlordEvent(this.duel);
   }
@@ -596,7 +599,8 @@ export class App {
   }
   _startArenaFight({opponents, warlordId = null}) {
     const state = this.duel.state;
-    if (!this.arenaAvailable() || !(this.isYardHomeActive() || state.arena)) return false;
+    if (!(warlordId ? this.warlordsAvailable() : this.arenaAvailable()) ||
+        !(this.isYardHomeActive() || state.arena)) return false;
     this._refreshPlayer();
     const count = Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
     const car = isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42';

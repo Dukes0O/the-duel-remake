@@ -9,7 +9,7 @@ export const WARLORD_RULES = Object.freeze({
 export function startWarlordEvent(duel, {warlordId, ...options} = {}) {
   const warlord = WARLORDS[warlordId];
   if (!warlord || !BUILT_WARLORD_IDS.includes(warlordId) ||
-      !duel.featureFlags?.enabled('scrapdome') ||
+      !duel.featureFlags?.enabled('scrapdome') || !duel.featureFlags?.enabled('warlords') ||
       !duel.featureFlags?.enabled('wasteland2')) return false;
   if (!duel.startArenaEvent({...options, venueId: 'scrapdome', mode: 'warlord',
       opponents: [{car: warlord.car, brain: warlord.brain}]})) return false;
@@ -34,7 +34,8 @@ export function startWarlordEvent(duel, {warlordId, ...options} = {}) {
 
 export function beginWarlordEvent(duel) {
   const state = duel.state, arena = state.arena;
-  if (state.status !== 'warlord_intro' || arena?.mode !== 'warlord' ||
+  if (!duel.featureFlags?.enabled('warlords') ||
+      state.status !== 'warlord_intro' || arena?.mode !== 'warlord' ||
       arena.phase !== 'intro') return false;
   arena.phase = 'countdown';
   state.countdown = 3;

@@ -236,8 +236,10 @@ test('territory hold, discovery and switch access checks cannot be bypassed', ()
     const app = yard(options);
     try {
       requireAppEntry(app);
+      const before = JSON.stringify(app.duel.state), ownArena = Object.hasOwn(app.duel.state, 'arena');
       equal(app.startWarlordFight('sal'), false, 'an inaccessible territory fight is rejected');
-      equal(app.duel.state.arena, null, 'failed launch cannot mutate arena state');
+      equal(JSON.stringify(app.duel.state), before, 'failed launch preserves the complete race state');
+      equal(Object.hasOwn(app.duel.state, 'arena'), ownArena, 'failed launch preserves arena property presence');
     } finally { app.dispose?.(); }
   }
 });
@@ -324,7 +326,7 @@ test('launch controls stay inside the enabled yard and never appear in the main-
       escapeHTML, panel: 'territory', arenaMarkup: ''});
     ok(!/data-warlord=/.test(closed), 'disabled scrapdome shows no inert FIGHT button');
     const open = yardHomeScreen({profile: app.profile, playerName: app.player.name,
-      escapeHTML, panel: 'territory', arenaMarkup: screens.arenaYardPanel()});
+      escapeHTML, panel: 'territory', arenaMarkup: screens.arenaYardPanel(), warlordsAvailable: true});
     ok(/data-warlord="sal"/.test(open), 'the enabled yard exposes the territory entry');
     const armory = createArmoryScreen({profile: () => app.profile, credits: String,
       escapeHTML, getGarageMessage: () => '', kitsEnabled: () => true, action: screenAction});

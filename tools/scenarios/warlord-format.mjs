@@ -24,7 +24,7 @@ async function ready(context, label) {
 }
 
 async function runQuality(context, quality) {
-  await context.navigate(`/tools/menu-check.html?flags=scrapdome&harness=${quality}`);
+  await context.navigate(`/tools/menu-check.html?flags=scrapdome,warlords&harness=${quality}`);
   await context.waitFor(`document.readyState==='complete'&&!!window.__qaApp&&
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'&&
     !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`, `${quality} isolated menu`, 60_000);

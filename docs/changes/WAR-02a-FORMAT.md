@@ -18,17 +18,14 @@ most damage wins; equal damage keeps stable participant order. These choices
 were written before implementation. Seed and inputs decide simulation rules.
 
 Sal uses the plain rammer brain until WAR-02a-SAL. Her team is warlord:sal;
-future escorts with that team cannot target or strike their boss. This card
-uses the existing Scrapdome development switch. It does not enable a release
-or introduce a switch. WAR-02a-REWARD owns atomic settlement and working Side
+future escorts with that team cannot target or strike their boss. Claude settled a separate warlords development switch after the Scrapdome release merged. Both Scrapdome and warlords are required; production has only Scrapdome, so every warlord launch and intro gate stays off. The released Last Car Rolling stays available. WAR-02a-REWARD owns atomic settlement and working Side
 Saws. No ordinary arena pay is awarded here, and no Side Saws earned message
 appears before that reward is built. Loss, rematch and yard return leave the
 wallet and ordinary racing records unchanged.
 
 Disabled-yard and main-menu Armory maps expose no inert FIGHT control.
 Ordinary arena rules, racing saves, runtime assets and renderer code remain
-unchanged. The approved game.js hook initializes arena to null, matching the
-existing campaign reset and making a rejected initial launch observable.
+unchanged. The game.js hook gates the foundation warlord entry. Ordinary initial state stays unchanged.
 
 ## Tests first and changed assertions
 
@@ -106,3 +103,9 @@ The empty built-fight list and Sal's unbuilt-fight message are replaced by
 her playable format. Stale Scrapdome coming-later copy is removed. Signature
 moves and atomic rewards remain owned by WAR-02a-SAL and WAR-02a-REWARD.
 No runtime asset or binary is replaced by this card.
+
+## Gate findings fixed forward
+
+The first mandatory lane tier on a9094d1 failed the existing HINTS full-state fingerprint. FORMAT had added arena:null to the initial Duel state. Removed that field; the exact existing 15/15 HINTS tests and all four frozen hashes now pass unchanged. Two new FORMAT rejection tests had assumed null; they now prove complete before/after state equality and unchanged property presence instead. No existing replay expectation or HINTS assertion changed. This is a stronger rejection invariant, under independent review.
+
+Claude answered the questions in SCRAPDOME5 and the inbox, and merged release 73f63eb before this lane synced it. New gate tests were committed before implementation: 18/23 passed, five failed for the missing gate. The foundation test fixture first used an invalid numeric opponent field; corrected it to a valid car array so it reaches and fails the missing gate. The implementation covers headless, foundation, intro, App and yard launches; no launch promise appears without warlords. Source flag-table assertions now include the new dev entry, while retaining all released entries and production isolation. The yard module was unpacked when rewritten. Browser readiness and all ordinary pins remain unchanged; a new gated browser check and final review/gates still await.
