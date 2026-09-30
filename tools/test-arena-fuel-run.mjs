@@ -15,6 +15,8 @@ import {arenaReward, settleArenaResult} from '../src/arena/arena-settlement.js';
 import {beginWarlordEvent, startWarlordEvent} from '../src/arena/warlord-event.js';
 import {arenaHud, arenaBoardMarkup, arenaYardPanel} from '../src/screen-arena.js';
 import {loadPlayers, PLAYERS_KEY} from '../src/progression.js';
+import * as THREE from 'three';
+import {createFuelRunView} from '../src/arena/modes/fuel-run-view.js';
 
 // ARENA-03: SCRAPDOME 10 Fuel Run, shared 3/6, SPEC 0.12.
 // All saves are fabricated in memory. Race rules run through the actual engine.
@@ -503,6 +505,161 @@ for (const blocked of ['rank', 'fuel-run', 'scrapdome', 'discovery', 'menu']) te
   equal([...values.entries()], previous, 'a refused launch does not write or mutate a player save');
   app.dispose?.();
 });
+
+// Same-owner writes below are fabricated other-tab writes to memory. Launch
+// must validate refreshed eligibility before changing run or simulation state.
+function durableFuelEligibility(app, {rank = 6, discovered = true} = {}) {
+  const registry = JSON.parse(values.get(PLAYERS_KEY));
+  const owner = registry.players.find(p => p.id === app.player.id);
+  ok(owner, 'the eligibility update targets the same actual named owner');
+  owner.profile.wasteland.xp = rank === 6 ? 3500 : 2500;
+  owner.profile.wasteland.rank = rank;
+  owner.profile.wasteland.discoveredGate = discovered;
+  owner.profile.credits = 8765;
+  owner.profile.eligibilityOtherTab = {kept: true};
+  values.set(PLAYERS_KEY, JSON.stringify(registry));
+  return registry;
+}
+const launchContext = app => ({runId: app.runId, owner: app._runPlayerId,
+  marker: app._markedRaceKey, serial: app._arenaSerial, opponents: app._arenaOpponents,
+  fuelRetry: app._fuelSettlementRetry, warlordRetry: app._warlordSettlementRetry,
+  verifiedOwner: app._warlordVerifiedOwner, seed: app.duel.seed, course: app.duel.course});
+for (const boundary of ['rank', 'discovery']) test(`Fuel launch rejects newer durable ${boundary} lock before creating a run`, () => {
+  const app = yard();
+  try {
+    equal(app.profile.wasteland.rank, 6, 'the live yard begins with an eligible local rank-six profile');
+    durableFuelEligibility(app, boundary === 'rank' ? {rank: 5} : {discovered: false});
+    const storage = [...values.entries()], state = app.duel.state;
+    const snapshot = structuredClone(state), context = launchContext(app), beforeWrites = writes;
+    equal(app.startArenaEvent({mode: 'fuel-run', opponents: 3}), false,
+      `newer durable ${boundary} lock must refuse Fuel before starting or seeding an event`);
+    checks++; assert.strictEqual(app.duel.state, state, 'rejected eligibility preserves the actual Duel state object');
+    equal(app.duel.state, snapshot, 'rejected eligibility preserves every current Duel field');
+    equal(launchContext(app), context, 'rejected eligibility leaves run, seed, receipt and retry context unchanged');
+    equal([...values.entries()], storage, 'rejected eligibility leaves exact durable memory bytes unchanged');
+    equal(writes, beforeWrites, 'rejected eligibility performs no storage write');
+    equal(app.profile.credits, 8765, 'the local view may adopt newer durable progress without starting Fuel');
+    equal(app.profile.eligibilityOtherTab, {kept: true}, 'durable unknown owner fields survive refresh');
+  } finally { app.dispose?.(); }
+});
+test('Fuel launch accepts an eligible newer durable rank-six owner without writing a receipt', () => {
+  const app = yard();
+  try {
+    durableFuelEligibility(app);
+    const storage = [...values.entries()], beforeWrites = writes;
+    equal(app.startArenaEvent({mode: 'fuel-run', opponents: 3}), true, 'durable discovered rank six remains eligible');
+    equal(app.duel.state.arena.mode, 'fuel-run', 'the real App starts the requested Fuel mode');
+    equal(app.profile.wasteland.rank, 6, 'the eligible durable owner stays rank six');
+    equal(app.profile.credits, 8765, 'launch uses the newer durable owner profile');
+    equal([...values.entries()], storage, 'launch alone creates no durable result receipt');
+    equal(writes, beforeWrites, 'eligible launch performs no registry write');
+  } finally { app.dispose?.(); }
+});
+for (const localRank of [5, 6]) test(`failed local save retains session rank ${localRank} at the Fuel launch boundary`, () => {
+  const app = yard({rank: localRank === 6 ? 5 : 6});
+  try {
+    app.profile.wasteland.xp = localRank === 6 ? 3500 : 2500;
+    app.profile.wasteland.rank = localRank;
+    failWrites = true;
+    try { equal(app._saveProfile(), false, 'the local eligibility change has a real synthetic atomic save failure'); }
+    finally { failWrites = false; }
+    equal(app.profileSaved, false, 'the session remembers its unsaved profile');
+    const storage = [...values.entries()], beforeWrites = writes;
+    equal(app.startArenaEvent({mode: 'fuel-run', opponents: 3}), localRank === 6,
+      'eligibility refresh preserves the existing failed-save session guard');
+    equal(app.profile.wasteland.rank, localRank, 'launch does not replace unsaved session progress with older durable rank');
+    equal(app.profileSaved, false, 'launch does not claim the failed save succeeded');
+    equal([...values.entries()], storage, 'launch preserves the durable registry after a local save failure');
+    equal(writes, beforeWrites, 'launch adds no write after the failed local save');
+  } finally { failWrites = false; app.dispose?.(); }
+});
+
+function withFuelCanvas(action) {
+  const previous = globalThis.document;
+  const context = {fillRect() {}, strokeRect() {}, fillText() {}};
+  // Only unavailable Canvas2D label drawing is substituted. The Three scene,
+  // matrices, geometries, instance buffers and actual Fuel view remain real.
+  globalThis.document = {createElement(tag) {
+    assert.equal(tag, 'canvas');
+    return {width: 0, height: 0, getContext: () => context};
+  }};
+  try { return action(); }
+  finally {
+    if (previous === undefined) delete globalThis.document;
+    else globalThis.document = previous;
+  }
+}
+const cargoBuffers = cargo => ({mesh: cargo, geometry: cargo.geometry,
+  matrix: cargo.instanceMatrix, matrixArray: cargo.instanceMatrix.array,
+  color: cargo.instanceColor, colorArray: cargo.instanceColor.array});
+function sameCargoBuffers(cargo, original) {
+  for (const [name, value] of Object.entries(cargoBuffers(cargo))) {
+    checks++; assert.strictEqual(value, original[name], `actual Fuel ${name} buffer identity is stable`);
+  }
+}
+function looseFuelPose(view, duel, canisterId, groundAt) {
+  const items = fuel(duel).canisters, index = items.findIndex(c => c.id === canisterId);
+  ok(index >= 0 && !items[index].carriedBy, 'the pose check uses a real available canister');
+  const cargo = view.group.getObjectByName('Fuel canisters'), matrix = new THREE.Matrix4();
+  cargo.getMatrixAt(index, matrix);
+  const actual = new THREE.Vector3().setFromMatrixPosition(matrix), item = items[index];
+  const at = groundAt(item.s, item.lateral);
+  equal(actual.toArray(), [Math.fround(at.x), Math.fround(at.y + .08), Math.fround(at.z)],
+    'the actual instance follows the latest real ground pose with its existing presentation lift');
+}
+test('stationary Fuel view has no repeated ground samples or new pose objects over 144 frames', () => withFuelCanvas(() => {
+  const duel = start(), view = createFuelRunView(duel), groundAt = duel.course.groundAt.bind(duel.course);
+  const samples = [];
+  duel.course.groundAt = (...args) => { const at = groundAt(...args); samples.push(at); return at; };
+  try {
+    view.update(duel.state, duel.course, []);
+    const cargo = view.group.getObjectByName('Fuel canisters'), stable = cargoBuffers(cargo);
+    const before = structuredClone(duel.state), matrices = [...cargo.instanceMatrix.array];
+    samples.length = 0;
+    for (let frame = 0; frame < 144; frame++) view.update(duel.state, duel.course, []);
+    sameCargoBuffers(view.group.getObjectByName('Fuel canisters'), stable);
+    equal(duel.state, before, 'all stationary view updates leave the actual race state unchanged');
+    equal([...cargo.instanceMatrix.array], matrices, 'stationary loose fuel keeps its actual instance poses');
+    equal(cargo.count, 4, 'all four real loose canisters remain represented');
+    equal(samples.length, 0, '144 steady Fuel view updates must make zero groundAt calls for unchanged loose fuel');
+    equal(new Set(samples).size, 0, 'steady rendering creates no repeated ground pose objects');
+  } finally { view.dispose(); }
+}));
+for (const event of ['creation', 'refill', 'drop']) test(`real Fuel ${event} prepares correct loose cargo pose outside rendering`, () => withFuelCanvas(() => {
+  const duel = new Duel({seed: 1989, featureFlags: ON}), view = createFuelRunView(duel);
+  let groundAt, samples = [];
+  try {
+    equal(duel.startArenaEvent({mode: 'fuel-run', car: 'falcone_f42', seed: 1989,
+      cpuDifficulty: 'medium', playerId: 'fuel-driver', opponents: FIELD}), true,
+    'the event pose check starts the actual Fuel engine with its existing view attached');
+    duel.state.countdown = 0; tick(duel, 2);
+    const control = start(); holdOthers(duel); holdOthers(control);
+    const cargo = view.group.getObjectByName('Fuel canisters'), stable = cargoBuffers(cargo);
+    let id = fuel(duel).pads[0].canisterId;
+    if (event === 'drop') {
+      pick(duel); pick(control);
+      const pose = {s: fuel(duel).pads[0].s + 37, lateral: -11};
+      place(duel, 'player', pose); place(control, 'player', pose);
+      hit(duel, 26); hit(control, 26);
+      equal(fuel(duel).canisters.find(c => c.id === id).carriedBy, null, 'an actual qualifying armor hit drops that same fuel');
+    } else if (event === 'refill') {
+      pick(duel); pick(control); deliver(duel); deliver(control);
+      tick(duel, 601); tick(control, 601);
+      const replacement = fuel(duel).pads[0].canisterId;
+      ok(replacement && replacement !== id, 'the real five-second timer creates a new replacement canister');
+      id = replacement;
+    }
+    equal(duel.state, control.state, 'actual Fuel events with presentation match the same engine events without presentation');
+    groundAt = duel.course.groundAt.bind(duel.course);
+    duel.course.groundAt = (...args) => { const at = groundAt(...args); samples.push(at); return at; };
+    const before = structuredClone(duel.state);
+    view.update(duel.state, duel.course, []);
+    looseFuelPose(view, duel, id, groundAt);
+    sameCargoBuffers(view.group.getObjectByName('Fuel canisters'), stable);
+    equal(duel.state, before, 'event presentation never writes cached poses into race state');
+    equal(samples.length, 0, `${event} ground poses must be prepared at the actual event before rendering`);
+  } finally { view.dispose(); }
+}));
 
 test('Fuel HUD and scoreboard name deliveries and delivery sudden death without changing race state', () => {
   const duel = start(); holdOthers(duel); point(duel);

@@ -587,3 +587,67 @@ After integration sync, all59 Fuel tests/1400checks,86 damaged-field tests/
 changed. No new whole lane/full tier, audio or visual clearance is claimed.
 Fighter projectile contact rules still await Claude; this is a clean retained
 partial review candidate, not ready to merge or release.
+
+## Tests first — durable launch eligibility and stationary Fuel view
+
+On clean held source `2d29b2f900e6898a925b8e64b7299e93a0de6b8a`, the
+Director assigned two independently reviewed P2 findings. Only new acceptance
+checks are added to the existing NEW Fuel suite. Production, existing
+assertions, fixed-step inputs and replay pins are unchanged.
+
+The actual memory-only App starts in a discovered rank-six yard. A fabricated
+other-tab registry update changes that same named owner's durable XP to 2,500
+and rank to five, or removes discovery. Fuel launch must refuse before changing
+the Duel state object or any field, run ID, owner, seed, serial, settlement
+receipt/retry context or durable storage bytes. The current normal profile
+refresh may adopt the newer owner's 8,765 credits and unknown field; the new
+checks also verify that adoption. Positive controls accept a newer discovered
+rank-six owner and preserve the existing `profileSaved === false` guard after
+actual synthetic atomic save failures, for both locally eligible and locked
+session ranks. Launch alone must not write a receipt or registry.
+
+The view checks use the actual Three Fuel scene and instance buffers. Only
+unavailable Canvas2D label drawing is substituted in Node. A warmed stationary
+view receives 144 real updates with four unchanged loose canisters and must
+make zero `course.groundAt` calls. Matrix/color attributes, their arrays,
+geometry, mesh identity and actual instance poses stay stable; rendering must
+leave the race state unchanged.
+
+Separate real-engine creation, five-second refill and qualifying armor-hit
+drop controls verify the correct new canister ID/pose with the existing
+presentation lift. A second identical Duel without the view proves that event
+presentation changes no simulation field. View updates must use already
+prepared poses and reuse the same instance resources. No particular new event
+name or cache API is required: fixed pad ground poses may be cached at
+initialization for refill, and the existing `fuelDrop` event may update drop
+poses. These tests do not require a `fuelRefill` emit or a simulation change.
+
+Command: `node --test --test-reporter=tap tools/test-arena-fuel-run.mjs`.
+Pre-fix result: **68 tests, 62 passed, 6 failed, zero skipped; 1,537 acceptance
+checks reached; exit 1**. All 59 prior Fuel checks pass, including the unchanged
+mode fingerprints and actual 30/60/144 FPS comparison. The three new positive
+eligibility/session-save controls pass. Exact first failures:
+
+| New check | First failure | Observed / required |
+| --- | --- | --- |
+| Newer durable rank lock | newer durable rank lock must refuse Fuel before starting or seeding an event | true / false |
+| Newer durable discovery lock | newer durable discovery lock must refuse Fuel before starting or seeding an event | true / false |
+| Stationary 144-frame view | 144 steady Fuel view updates must make zero groundAt calls for unchanged loose fuel | 576 / 0 calls |
+| Actual creation | creation ground poses must be prepared at the actual event before rendering | 4 / 0 calls |
+| Actual refill | refill ground poses must be prepared at the actual event before rendering | 4 / 0 calls |
+| Actual drop | drop ground poses must be prepared at the actual event before rendering | 4 / 0 calls |
+
+Before each lifecycle allocation failure, the real pose, unchanged race-state
+and stable-buffer controls pass. These are observed rule/rendering defects,
+not missing-module, canvas or fixture failures. No browser, build, full tier or
+contact-design clearance is claimed.
+
+### Removed — durable eligibility/view tests-first follow-up
+
+Nothing. This follow-up adds acceptance and its red evidence only.
+
+Coverage decision: automatic approval rejected a proposed removal of the two
+new post-rejection profile-adoption checks as test weakening. No removal or
+retry occurred. The Director explicitly accepted the retained stronger
+contract: the existing durable refresh adopts the same owner's newer credits
+and unknown field while refusing the launch. All acceptance remains intact.
