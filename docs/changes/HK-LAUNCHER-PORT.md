@@ -63,3 +63,7 @@ assertions. No existing source or assertions were edited. No heavy gates ran.
 ## Implementation and focused result
 
 The tools-only helper retries EACCES and EADDRINUSE with the same localhost host, private port range and twenty-attempt cap. It removes only its temporary listener on all outcomes, including synchronous throws. Seven new stub cases pass; the original launcher port suite passes with every assertion unchanged. Mandatory lane/build and independent review are pending. No runtime, live launcher or save code changed.
+
+## Final merge evidence
+
+Independent review clean on exact clean bc498a5d268219959931236dabfa7916e251ea4d. Mandatory lane8/8 in111.39s and build passed (241 modules, Vite707ms); source unchanged through gates. Seven stub cases make40 acceptance checks; every original launcher assertion remains byte-identical. No runtime launcher or save changes.

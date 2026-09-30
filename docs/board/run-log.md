@@ -2116,3 +2116,5 @@ questions are in docs/playtest-inbox.md and SCRAPDOME.md section 5 (new
 `warlords` switch for WAR-02a-FORMAT).
 
 ART-SRC-RUSTWALL artifacts merged from567cfc3: source/licence/visual review clean, 16 source hashes checked, 182867B sheet. Final unchanged lane298/298 in580.20s plusbuild1.33s; first random-portfixture EACCES59884 reproduced as Windows-reserved59796–59895, unchangedrerunPASS/noassertionchanges. Cardreview/waitingKyle, no runtimeadoption. Mergecountsincefull4 includingClaude release. Janitor removescleanlane/branch/consumedraw, preserveslicensedoriginals.
+
+HK-LAUNCHER-PORT merged frombc498a5: independent tests first f059f2d reproducedEACCES beforecode, sevenstubcases/40checks pass; oldreal-portassertions byte-identical. Finalcleanlane8/8 in111.39s plusbuild241modules/Vite707ms. Helperretainslocalhost/range/twentycap, retriesWindowsreservedEACCES withoutskippingassertions. This is merge5sinceDirectorfullcheckpoint and10since runstart: stopfeaturemerges forfull and runjanitorsweep. Janitor removescleanlane/branch; no raw evidence was produced.

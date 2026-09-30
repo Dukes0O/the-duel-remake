@@ -2535,7 +2535,7 @@ tasks:
     lane: TOOL
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [tools/launcher-test-listen.mjs, tools/test-launcher-test-listen.mjs, tools/test-launcher-port.mjs, docs/changes/HK-LAUNCHER-PORT.md]
     sequencing: "Pure test-fixture binding helper only; no other lane owns these files. Test EACCES retry first, retain every launcher assertion and the twenty-attempt limit."
