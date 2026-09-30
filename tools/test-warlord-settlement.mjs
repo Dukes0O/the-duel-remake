@@ -8,6 +8,8 @@ import {startWarlordEvent} from '../src/arena/warlord-event.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {getEquippedArmorKit} from '../src/armor-kits.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
+import {territoryPanel} from '../src/screen-territory.js';
+import {createArmoryScreen} from '../src/screen-armory.js';
 import {screenMetric, screenAction} from '../src/screen-results.js';
 
 let checks = 0, failWrites = false, writes = [];
@@ -536,4 +538,35 @@ test('initial reward preserves genuine unsaved owner and freshly saved other pla
     const other = loadPlayers().players.find(p => p.id === 'driver-b')?.profile;
     equal([other?.credits, other?.futureB], [900, {keep: 23}], 'initial settlement retains the complete fresh other player');
   } finally { failWrites = false; app.dispose?.(); }
+});
+
+
+test('an actual saved Sal win advertises earned working saws only for the built enabled fight', () => {
+  const app = appFight();
+  try {
+    const result = finish(app);
+    const saved = loadPlayers().players.find(player => player.id === app.player.id).profile;
+    equal(result.settlementSaved, true, 'actual three-wreck result is durable before advertising its reward');
+    equal([saved.wasteland.warlords.sal.defeated, saved.wasteland.territories.sal.claimed,
+      getEquippedArmorKit(saved, app.duel.state.car)], [true, true, 'side-saws'],
+      'loaded winning owner has the complete working earned reward');
+    const snapshot = structuredClone(saved);
+    const unbuilt = territoryPanel(saved, {builtWarlordIds: []});
+    ok(!/SIDE SAWS EARNED|data-warlord="sal"/.test(unbuilt), 'explicit unbuilt ids suppress earned claims and rematch');
+    const future = {...saved, wasteland: {...saved.wasteland,
+      warlords: {...saved.wasteland.warlords, dustmonger: {defeated: true, wins: 1, losses: 0}},
+      territories: {...saved.wasteland.territories, dustmonger: {hold: 100, claimed: true}}}};
+    ok(!/SMOKE SCREEN EARNED|data-warlord="dustmonger"/.test(territoryPanel(future)),
+      'a saved future defeat cannot claim an unbuilt reward or advertise its rematch');
+    const armory = enabled => createArmoryScreen({profile: () => saved, credits: String, escapeHTML: String,
+      getGarageMessage: () => '', kitsEnabled: () => true, warlordsEnabled: () => enabled,
+      action: label => label})();
+    ok(!/SIDE SAWS|side-saws/i.test(armory(false)), 'released Armory hides the reward and earned territory claim with warlords off');
+    const panel = territoryPanel(saved);
+    ok(/data-warlord="sal">REMATCH/.test(panel), 'the saved built fight remains replayable');
+    equal(saved, snapshot, 'territory and Armory rendering do not change saved progress');
+    ok(/DEFEATED · SIDE SAWS EARNED · CLAIMED/.test(panel),
+      'actual durable Sal victory must advertise the reviewed working reward on its defeated territory');
+    ok(/SIDE SAWS EARNED/.test(armory(true)), 'enabled Armory also reports the actual earned territory reward');
+  } finally { app.dispose?.(); }
 });

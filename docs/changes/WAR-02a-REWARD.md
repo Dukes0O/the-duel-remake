@@ -508,3 +508,35 @@ review. No mandatory lane tier/build, merge, release or flag flip was run.
 
 None. The reproducible recipe remains; review evidence stays ignored until
 the Director records its verdict and removes it under the janitor rule.
+
+
+## Final review and built-reward metadata red
+
+Save Guardian clears runtime `ad819aa120517f7ec7ea9d0a84c6887b57d19cef`
+(note-only HEAD `2fe1defa`) with 502 independent memory-only checks and no
+findings. Both original retry repros and initial owner conflicts before and
+after launch preserve all credits and opaque fields. Review also covers
+proved/unproved unsaved boundaries, fresh other players, rejected future or
+malformed registry data, active-owner changes, exact-marker zero-write adoption,
+root-1 support, new-player identity, successful ordinary save with bookkeeping
+read failure and damaged normalization. Seven save fixtures/247 checks, backup
+and budget, progression/27 and police/225 checks pass.
+
+The Director records general art/contact source clearance, including all nine
+original car GLBs. The complete corrected-source browser pass above remains
+the current gameplay verdict. The Director authorizes only final built metadata
+after these reviews; warlords remain under their existing dev feature state.
+
+A new owned settlement test first wins via the actual three-wreck App event,
+reloads its named saved owner, and checks defeated/claimed/equipped state. It
+requires the working SIDE SAWS EARNED claim on the defeated territory and in
+enabled Armory. Controls require explicit unbuilt ids, a saved future boss
+defeat and warlords-off Armory to hide their earned claims/actions. Rendering
+must preserve the saved profile. The test correctly fails before metadata is
+changed: 0/1, after eight checks, because the actual durable Sal territory lacks
+the reviewed working reward claim. Existing assertions are unchanged.
+
+## Removed in final metadata completion
+
+None. Only the reviewed Sal reward's build marker is to be completed; future
+unbuilt fights and the warlords development gate keep their existing controls.
