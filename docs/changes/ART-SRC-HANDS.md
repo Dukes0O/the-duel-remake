@@ -30,8 +30,10 @@ RPG; the renderer reports three draw calls and 6,932 triangles. The finished
 sheet was inspected visually for genuine current game content and readable
 source labels.
 
-The mandatory lane tier, production build and independent review are pending
-the Director’s gate queue. No green merge gate is claimed by this checkpoint.
+Director independent source review confirms seven checksums, the official CC0
+pages, a separate Blender probe and the visible sheet/current RPG. The source
+loader now explicitly disables supplied Blender scripts; counts stay identical.
+The mandatory lane tier and production build are pending the gate queue. No green merge gate is claimed by this checkpoint.
 No new implementation tests are needed for this source-only comparison.
 Existing assertions and race fingerprint files are unchanged.
 

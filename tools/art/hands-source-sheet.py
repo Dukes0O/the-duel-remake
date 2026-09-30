@@ -27,7 +27,7 @@ def load_source(path):
     import bpy
     bpy.ops.wm.read_factory_settings(use_empty=True)
     if path.suffix == ".blend":
-        bpy.ops.wm.open_mainfile(filepath=str(path))
+        bpy.ops.wm.open_mainfile(filepath=str(path), use_scripts=False)
     else:
         bpy.ops.import_scene.gltf(filepath=str(path))
     # Resolve the supplied original texture, without modifying source files.

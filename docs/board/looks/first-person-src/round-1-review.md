@@ -62,7 +62,7 @@ Run the recipe in an isolated lane. Pass an absolute output path to Blender.
 Relative Blender render paths can resolve outside the lane, so the recipe
 resolves its render target before rendering.
 
-1. `blender -b --python tools/art/hands-source-sheet.py -- --probe --render --output <absolute evidence source directory>`
+1. `blender -b --disable-autoexec --python tools/art/hands-source-sheet.py -- --probe --render --output <absolute evidence source directory>`
 2. `node tools/browser-harness.mjs scenario art-source-hands --output-dir .evidence/2026-09-30/ART-SRC-HANDS/current`
 3. `python tools/art/hands-source-sheet.py --sheet --current <current-rook-rpg.png> --sources <source preview directory> --output docs/board/looks/first-person-src/round-1.jpg`
 
@@ -70,3 +70,5 @@ The source files must be present in the two cache roots above. The recipe
 only loads them, inspects them and renders previews; it never saves a changed
 source model or exports a game asset. Raw captures and inspection JSON serve
 this review and are removed by the Director once the verdict is committed.
+
+Director independent source review: all seven recorded checksums match and both primary pages confirm CC0. A separate Blender 4.5.13 probe with scripts disabled confirms every reported triangle, rig, action and texture count. The sheet shows the current held RPG and both original sources clearly. The source loader explicitly disables embedded scripts when opening the supplied Blender file.
