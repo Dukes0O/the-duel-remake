@@ -315,7 +315,6 @@ export const SOUND_BANK = {
   // CRASH-02 audio: a smash reuses the recorded crashes, scaled by the change
   // in velocity and placed at the hit; the thump covers them while loading.
   'vehicle.crash-impact': cue('impacts', {
-    flag: 'crash-effects',
     buffersFrom: 'vehicle.crash.recorded',
     volume: 3.4,
     priority: 72,

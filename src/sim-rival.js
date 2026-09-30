@@ -2,7 +2,6 @@
 import { CARS, CPU_DIFFICULTY, COURSE, DRIVE, TRAFFIC, BOOST, steeringYawAuthority } from './config.js';
 import { makeRng } from './rng.js';
 import { NpcRoutePlanner } from './npc-route.js';
-import { stepRoadsideTraffic, stepTrafficWreck } from './destructibles.js';
 import { vehicleContactEnvelope, planNpcYield } from './npc-yielding.js';
 import { clamp, freshDamageZones } from './sim-common.js';
 import {completeCombatRecovery} from './combat-armor.js';
@@ -51,19 +50,15 @@ export function _traffic(dt) {
   const s = this.state;
   for (const c of s.traffic) {
     // A knocked car slides and spins until its tyres bite (docs/CRASH_PHYSICS.md).
-    if (this.featureFlags?.enabled('crash-physics') === true && c.knock) {
+    if (c.knock) {
       stepKnock(this, c, dt);
       this._staticContacts(c, false); this._boundary(c);
       continue;
     }
-    if (c.roadsideMotion) { stepRoadsideTraffic(c, dt); continue; }
     if (c.wrecked) {
-      if (c.wrecked.physical && this.featureFlags?.enabled('crash-physics') === true) {
-        stepPhysicalWreck(this, c, dt);
-        if (c.wrecked.explodeAt != null && !c.wrecked.exploded &&
-            s.stageTimeSec >= c.wrecked.explodeAt) explodeTrafficWreck(this, c);
-      }
-      else stepTrafficWreck(c, dt);
+      stepPhysicalWreck(this, c, dt);
+      if (c.wrecked.explodeAt != null && !c.wrecked.exploded &&
+          s.stageTimeSec >= c.wrecked.explodeAt) explodeTrafficWreck(this, c);
       continue;
     }
     if (!c.alive || c.crushed) continue;
@@ -115,7 +110,7 @@ export function _rival(dt, opponent = this.state.rival) {
     return;
   }
   if (r.crushed) return;
-  if (this.featureFlags?.enabled('crash-physics') === true && r.knock) {
+  if (r.knock) {
     stepKnock(this, r, dt);
     this._staticContacts(r, false); this._boundary(r);
     if (!r.finished) this._advanceLaps(r, dt);

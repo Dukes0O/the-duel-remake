@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {COURSE, DRIVE} from '../src/config.js';
+import {COURSE} from '../src/config.js';
 import {Duel} from '../src/game.js';
 
 // CRASH-03: a car smashed out of the way keeps the solver's speed and scrubs
@@ -12,9 +12,9 @@ const MAX_DECEL = 10;
 const BASE = 900;
 
 function crash({mode = 'duel', car = 'falcone_f42', playerMph, trafficMph,
-  lateral = 0, crashPhysics = true}) {
+  lateral = 0}) {
   const duel = new Duel({seed: 2609,
-    featureFlags: {wasteland2: true, 'crash-physics': crashPhysics}});
+    featureFlags: {wasteland2: true}});
   duel.startCampaign({mode, startStage: mode === 'duel' ? RIVAL_STAGE : 0, car,
     opponentCount: 1});
   const s = duel.state;
@@ -97,11 +97,4 @@ test('Mad Max Titan: a sedan is thrown clear and slides to rest', () => {
   const last = samples.slice(-10);
   assert.ok(last.every(sample => sample.s === last[0].s &&
     sample.lateral === last[0].lateral), 'the wreck comes to rest');
-});
-
-test('crash-physics off keeps the released wreck motion', () => {
-  const {traffic} = crash({playerMph: 100, trafficMph: 45, crashPhysics: false});
-  assert.equal(traffic.wrecked?.physical, undefined,
-    'no physical wreck exists without the switch');
-  assert.ok(DRIVE.mphToWorld > 0);
 });
