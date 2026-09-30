@@ -319,11 +319,13 @@ test('failed warlord settlement exposes RETRY SAVE without advertising the unpai
 });
 
 
-test('App keeps a saved Side Saws reward inactive while the dev warlords switch is off', () => {
+test('App keeps a saved Side Saws reward inactive while the warlords switch is off', () => {
   const app = appFight();
   try {
     finish(app); app.returnToMenu();
-    app.duel.featureFlags = createFeatureFlags({storage: null, qa: true});
+    // Released on (WAR-SAL-RELEASE); the switch-off path stays tested until
+    // the switch is removed.
+    app.duel.featureFlags = createFeatureFlags({storage: null, qa: true, overrides: {warlords: false}});
     equal(getEquippedArmorKit(app.profile, 'falcone_f42'), 'side-saws', 'saved reward remains owned and equipped');
     equal(app.equipArmorKit('stuttgart_959s', 'side-saws').ok, false, 'released build cannot change the dev reward equip');
     equal(app.visitWasteland(), true, 'released yard remains available'); app.advance(8);

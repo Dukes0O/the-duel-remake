@@ -786,3 +786,12 @@ HK-LAUNCHER-PORT (a test fix). Sal's fight, the Side Saws and the warlord
 reward are in this build but stay off behind the `warlords` development
 switch. Release evidence is recorded in docs/board/run-log.md.
 
+## Release 30 September 2026 (third): Sawtooth Sal (WAR-SAL-RELEASE)
+
+Kyle beat Sal 3-0 on Medium in the Preview and asked for her in the main
+game. `warlords` is on: Sal's fight (WAR-02a-FORMAT, WAR-02a-SAL, with Claude's
+sweep and charge time limits), her reward and Side Saws (WAR-02a-REWARD) and
+the settled pay (WAR-PAY: first win 600 times the difficulty factor, rematches
+like an arena win). The main menu is unchanged. Release evidence is recorded
+in docs/board/run-log.md.
+
