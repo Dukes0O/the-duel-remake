@@ -31,7 +31,13 @@ does not hold this release.
   production has the Hollow without a request.
 - `tools/test-wasteland-beta.mjs`: the switch table lists the three as on.
 
-Each assertion checked the switch was off; the release turns it on by Kyle's
+- `tools/test-offroad-physics.mjs`: the 70% slope elevation cap now applies
+  to the rally car only, and the summit check expects the Titan to climb past
+  the old 24 m cap on the 44 m summit without a limit rollover (it does); the
+  rally car still meets its limit. The Titan's grade tip stays covered here
+  (near-vertical face) and in `tools/test-titan-climb.mjs`.
+
+Each assertion checked the switch was off (or the switched-off Titan); the release turns it on by Kyle's
 written approval, so the test now checks the released state.
 
 ## Tests
