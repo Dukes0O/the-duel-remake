@@ -115,7 +115,7 @@ for (const [cpuDifficulty, factor] of Object.entries(factors)) {
     const counts = [0, 1, 2, 3, 9];
     equal(counts.map(wrecksOnWarlord => settle(profile(), {cpuDifficulty,
       arena: completedArena({won: false, wrecksOnWarlord, credited: 0})}).scrapEarned),
-      counts.map(count => Math.round(60 * Math.min(3, count) * factor)),
+      counts.map(count => Math.round(60 * count * factor)),
       'loss pays actual boss wrecks without first-win pay or win bonus');
   });
 }

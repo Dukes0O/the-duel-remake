@@ -3,7 +3,7 @@
 The settled warlord pay now uses the completed fight's difficulty and actual
 wrecks on its warlord. Sal pays 600 / 720 / 840 for the first win on Easy /
 Medium / Hard. A three-wreck rematch pays 260 / 312 / 364. A loss pays 60 per
-warlord wreck, capped at three, times the same difficulty factor. Saved results
+actual warlord wreck, with no loss cap, times the same difficulty factor. Saved results
 explain FIRST WIN, REMATCH or wreck pay beside the amount.
 
 ## Contract and boundaries
@@ -11,7 +11,7 @@ explain FIRST WIN, REMATCH or wreck pay beside the amount.
 SCRAPDOME section 5, settled by Claude and Kyle on 30 September, is the rule.
 The pure exported warlordPay policy covers all eight ladder positions, adding
 100 base scrap for each earlier warlord. Unknown difficulty, invalid boss wreck
-counts and unsupported economic context reject without a reward or marker.
+counts, unsafe computed pay and unsupported economic context reject without a reward or marker.
 The validated career settlement still accepts Sal alone. Later warlord cards
 must extend their actual format, entitlement and reward before they can settle.
 
@@ -42,10 +42,11 @@ a different tab using .qa-dist, a private port and memory-only saves.
 Independent acceptance tests committed as 8e9c74d failed 18/18 on the old pay
 and missing public ladder policy. Additional invalid-context tests committed
 as a7ce6d9 also failed before production edits: invalid economics still paid 150.
-New focused tests now pass 19/19 with 93 checks. Existing reward settlement tests
-pass 29/29 with 234 checks. The public policy covers every ladder entry at every
-difficulty; rematches and losses cover zero through three boss wrecks, a capped
-nine-wreck fixture and uncredited wall wrecks. Actual App fights cover a fresh
+The initial focused tests passed 19/19 with 93 checks, but their loss cap
+contradicted the literal card. The correction below removes it. Existing reward
+settlement tests pass 29/29 with 234 checks. The public policy covers every ladder
+entry at every difficulty; rematches cover the three-wreck cap, while losses
+count every actual boss wreck, including nine and uncredited wall wrecks. Actual App fights cover a fresh
 Preview first win 720, rematch 312 and two-wreck loss 144, captured difficulty,
 result explanation, failed save, fresh owner retry and one atomic registry write.
 
@@ -86,7 +87,7 @@ committed; the Director owns evidence cleanup and lane removal after merge.
 ## Gates and review
 
 Focused: node --test tools/test-warlord-pay.mjs tools/test-warlord-settlement.mjs
-passes 48/48, 327 acceptance checks, no skips.
+passes 54/54, 342 acceptance checks, no skips after the correction below.
 
 node tools/browser-harness.mjs scenario warlord-pay --output-dir
 .evidence/2026-09-30/WAR-PAY-preview passed on private port 14082. High and
@@ -130,4 +131,14 @@ three. New red checks require nine-wreck losses to pay 540 / 648 / 756 on
 Easy / Medium / Hard and require the public rule to reject unsafe payout
 arithmetic. Existing capped-loss assertions are reported as contradictions and
 remain unchanged by the test author; their replacement needs reviewer approval.
-No source files or earlier assertions changed in this tests-first correction.
+No source files or earlier assertions changed in the test-author commit c901742:
+its six new checks correctly failed before this fix. Implementation then removed
+the loss cap in both pay and explanation and rejects an unsafe computed payout
+before any transaction. Only the contradictory loss-matrix expectation changed
+from 60 * min(3, count) * factor to 60 * count * factor. Rematch cap expectations,
+the actual two-wreck loss 144, total 1176 and every save guard remain unchanged.
+The independent Reviewer must verify this literal-rule replacement before merge.
+Correction-focused tests pass 54/54 with 342 checks (new pay 25/25, 108 checks;
+existing settlement 29/29, 234 checks). The real two-wreck loss and atomic save
+checks pass unchanged. Earlier browser data stays valid for its zero-to-three
+wreck fixtures; both private browser recipes will also be rerun on this correction.

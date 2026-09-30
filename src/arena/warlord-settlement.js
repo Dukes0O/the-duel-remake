@@ -23,16 +23,17 @@ export function warlordPay({warlordId, won, firstWin, wrecksOnWarlord, cpuDiffic
       typeof won !== 'boolean' || typeof firstWin !== 'boolean' ||
       (firstWin && !won) || !Number.isSafeInteger(wrecksOnWarlord) || wrecksOnWarlord < 0)
     return null;
-  const wrecks = Math.min(3, wrecksOnWarlord);
+  const wrecks = won ? Math.min(3, wrecksOnWarlord) : wrecksOnWarlord;
   const base = firstWin ? 600 + 100 * position : (won ? 80 : 0) + 60 * wrecks;
-  return Math.round(base * DIFFICULTY_FACTORS[cpuDifficulty]);
+  const total = Math.round(base * DIFFICULTY_FACTORS[cpuDifficulty]);
+  return Number.isSafeInteger(total) && total >= 0 ? total : null;
 }
 
 function payExplanation({warlordId, won, firstWin, wrecksOnWarlord, cpuDifficulty}) {
   const factor = DIFFICULTY_FACTORS[cpuDifficulty];
   if (firstWin) return 'First win: ' + (600 + 100 * WARLORD_LADDER.indexOf(warlordId)) +
     ' scrap at ' + factor + '× difficulty.';
-  const wrecks = Math.min(3, wrecksOnWarlord);
+  const wrecks = won ? Math.min(3, wrecksOnWarlord) : wrecksOnWarlord;
   return (won ? 'Rematch: 80 scrap plus ' : 'Wreck pay: ') +
     '60 per warlord wreck (' + wrecks + ') at ' + factor + '× difficulty.';
 }
