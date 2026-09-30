@@ -12,4 +12,4 @@ Current Rook uses the unchanged production GLB and the game's renderer. `tools/s
 
 The capture verifies the memory guard, production Rook exit, loaded asset, active idle clip and exclusive near-skin draw. Earlier misframed captures were rejected. Visual inspection confirms the current shot shows the complete fighter. The comparison sheet is below 500 KB.
 
-Decision: `waiting_on: kyle`. Pick A or B, or request another starting style. No adaptation before Kyle picks.
+Decision, 30 September: Kyle said he is not picky about Rook or the CC0 packs and authorized using existing developer-made assets. The Director selects B, Quaternius Modular Men, for its existing rig, actions and modular costumes. A remains the recorded alternate. This is a source choice; the sourcing card does not adapt or ship a model. Female crew coverage remains a named task for later reuse.

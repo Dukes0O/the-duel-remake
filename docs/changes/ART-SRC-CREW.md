@@ -1,11 +1,11 @@
 # ART-SRC-CREW
 
-status: building
-waiting_on: kyle
+status: review
+source_choice: Quaternius Modular Men (B)
 
 ## Decision
 
-Offer two free CC0 starting packs, inspect the cached original models and compare their source previews beside current in-game Rook. Kyle chooses before adaptation. This completes the sourcing step only. Candidate limits are recorded in the sheet and review note.
+Offer two free CC0 starting packs, inspect the cached original models and compare their source previews beside current in-game Rook. Kyle authorized choosing existing assets on 30 September; the Director selects Quaternius B before later adaptation. This completes the sourcing step only. Candidate limits are recorded in the sheet and review note.
 
 ## Evidence
 
@@ -15,7 +15,7 @@ Current Rook uses the unchanged production GLB and renderer in a private memory-
 
 Browser: final art-source-current recipe passed on private port 10701; memory-only saves, zero warnings, zero errors. Comparison sheet: 147453 bytes; below 500 KB. No race source, save code or replay assertions changed. Race fingerprints are unaffected because only source records, comparison tooling and review documents changed. No game event was added, so no sound cue applies. No new wording-only tests; the sourcing card uses independent document/visual review and the required lane/build gate.
 
-Lane/build gate and independent review pending.
+Independent source review at 0b0a611 is clean: all nine checksums, official CC0 pages and cached licences, original Blender geometry/rig/action counts, actual current Rook image and source-only scope verified. The reviewer accepts Quaternius B under Kyle's new direction. No existing assertion changed. Mandatory lane/build gate on this final selection commit is pending; the integration run log records its actual result before merge.
 
 ## Removed
 

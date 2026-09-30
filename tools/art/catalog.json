@@ -162,7 +162,7 @@
       "family": "crew",
       "license": "CC0-1.0",
       "licenseEvidence": "Official source page links CC0; cached licence explicitly states Creative Commons Zero / CC0 1.0.",
-      "status": "candidate",
+      "status": "declined",
       "downloaded": true,
       "library": "C:/Users/kyleb/dev/art-library/kenney-animated-characters-survivors",
       "files": [
@@ -192,7 +192,8 @@
         }
       ],
       "checked": "2026-09-30",
-      "recipe": "tools/art/crew-source-sheet.py"
+      "recipe": "tools/art/crew-source-sheet.py",
+      "decision": "Director retained comparison A as the alternate after Kyle authorized choosing existing crew assets; comparison B offers more existing actions and modular costumes."
     },
     {
       "id": "quaternius-modular-men",
@@ -217,7 +218,7 @@
       "family": "crew",
       "license": "CC0-1.0",
       "licenseEvidence": "Official source page links CC0; cached licence explicitly states Creative Commons Zero / CC0 1.0.",
-      "status": "candidate",
+      "status": "selected",
       "downloaded": true,
       "library": "C:/Users/kyleb/dev/art-library/quaternius-modular-men",
       "files": [
@@ -235,7 +236,8 @@
         }
       ],
       "checked": "2026-09-30",
-      "recipe": "tools/art/crew-source-sheet.py"
+      "recipe": "tools/art/crew-source-sheet.py",
+      "decision": "Director selected comparison B under Kyle's 30 September instruction to choose existing developer-made crew assets; reuse the rig and 24 actions. Source-only selection, not runtime adaptation."
     }
   ]
 }
