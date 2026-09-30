@@ -573,3 +573,17 @@ review candidate, not an integration merge or release.
 Replaced the permissive sudden-death nonwinner condition in the same change.
 No assertion, input, replay pin, runtime asset or audio source was changed or
 removed.
+
+## Director held-review checkpoint
+
+Synced the integrated SAVE-DAMAGED-FIELDS fix and current card ownership.
+The narrow validator review clears prior P2 on source24a27af9:123/123
+independent tests,280 sudden-death score combinations and nine proof controls
+pass. Impossible nonwinner-five results pay nothing; real lower-scoring
+next-delivery winner remains valid. App hash is unchanged from the current
+durable retry/browser review:2000 credits,340 scrap,engine1,one write.
+After integration sync, all59 Fuel tests/1400checks,86 damaged-field tests/
+3654checks,sevenfixtures/247checks and build pass. No old assertion or pin
+changed. No new whole lane/full tier, audio or visual clearance is claimed.
+Fighter projectile contact rules still await Claude; this is a clean retained
+partial review candidate, not ready to merge or release.
