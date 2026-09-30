@@ -539,6 +539,7 @@ tasks:
       - "Kyle approved on 30 September 2026: retire and remove the rule set nobody can play. wasteland2 is on and cannot be turned off, so delete the switch from src/feature-flags.js and every switch-off branch in src/ (about 20 files), keeping exactly the switched-on behavior."
       - "Remove the off-balance gate: AGENTS.md and docs/OPERATIONS.md release evidence becomes one combat balance run; tools/combat-balance.mjs, tools/arena-balance.mjs and tools/onfoot-balance.mjs lose the off mode; scenarios and tests stop setting or toggling wasteland2. Delete tests that only prove the switched-off behavior; list each one in the change note's Removed section."
       - "Race fingerprints for the released rules stay unchanged (replay check). Cards that name flag: wasteland2 on the board lose the field."
+      - "Also remove the scrapdome, titan-climb and muddy-hollow switches and their switch-off branches, released by SCRAPDOME-RELEASE on 30 September 2026, keeping the switched-on behavior."
       - "Touches many files: run it when no other lane owns any of them, in parts if needed (src first, then tools and scenarios), each part through the lane tier."
   - id: ART-SRC-CREW
     title: "Crew figures: short list of existing starting models for Kyle"
@@ -546,7 +547,7 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
     flag: wasteland2
     owns: [tools/art/catalog.json, tools/art/crew-source-sheet.py, docs/board/looks/crew-src/round-1.jpg, docs/board/looks/crew-src/round-1-review.md, docs/changes/ART-SRC-CREW.md]
@@ -758,7 +759,11 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [tools/art/salt-flats-source-sheet.py, docs/board/looks/salt-flats-src/round-1.jpg, docs/board/looks/salt-flats-src/round-1-review.md, docs/changes/ART-SRC-SALTFLATS.md]
+    hooks: [tools/art/catalog.json]
+    sequencing: "Source originals and sheet only; catalog waits for ART-SRC-RUSTWALL to merge. Stop at review waiting_on: kyle before adaptation."
     flag: scrapdome
     acceptance:
       - "SPEC 0.11 sourcing step for docs/SCRAPDOME.md section 10's Salt Flats: two or three candidate CC0 sets for scrap piles, a crane, a bus, tyre and container walls, and a tileable salt ground. Licences recorded in tools/art/catalog.json, files cached outside the repository, one sheet docs/board/looks/salt-flats-src/round-1.jpg, then waiting_on: kyle."
@@ -2446,13 +2451,14 @@ tasks:
     needs: [WAR-01, INT-0926-MERGE]
     status: building
     claimed_by: "Codex autonomous Director, 30 September 2026"
-    flag: scrapdome
+    flag: warlords
     owns: [src/arena/arena-event.js, src/warlords.js, src/arena/warlord-event.js, src/screen-arena.js, src/app.js, src/screen-territory.js, tools/test-warlord-format.mjs, tools/scenarios/warlord-format.mjs, docs/changes/WAR-02a-FORMAT.md]
-    hooks: [src/screen-hud.js, src/screen-arena.css, tools/replays/warlord-format-ordinary.json, tools/test-warlords.mjs, src/screen-results.js, src/screen-router.js, src/game.js, tools/test-territory-ui.mjs, tools/test-territory-screen.mjs, src/screen-yard-home.js, src/screen-armory.js]
-    note: "Director 30 September: tests and independent modules may proceed beside crash cleanup and hints. Wait for CRASH-SWITCH-REMOVE to merge before editing arena-event.js; wait for UX-ENTRY-HINTS before editing screen-hud.js. Keep 1.5x armor in arena files. No feature-flags edits while crash owns it. Approved assertion migration: no-built-Sal expectation becomes built Sal; unbuilt-territory tests keep explicit empty built list; earned reward messages wait for REWARD. Review all changed assertions in the change note. game.js may initialize arena to null consistently with reset."
+    hooks: [src/screen-hud.js, src/screen-arena.css, tools/replays/warlord-format-ordinary.json, tools/test-warlords.mjs, src/feature-flags.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, src/screen-results.js, src/screen-router.js, src/game.js, tools/test-territory-ui.mjs, tools/test-territory-screen.mjs, src/screen-yard-home.js, src/screen-armory.js]
+    note: "Director 30 September: tests and independent modules may proceed beside crash cleanup and hints. Wait for CRASH-SWITCH-REMOVE to merge before editing arena-event.js; wait for UX-ENTRY-HINTS before editing screen-hud.js. Keep 1.5x armor in arena files. Release merged 73f63eb; feature-flags.js is now free. Add Claude's settled warlords dev switch and gate event, App and yard launch independently from released scrapdome. New failing gate tests first; browser recheck and final lane/build required after sync. Approved assertion migration: no-built-Sal expectation becomes built Sal; unbuilt-territory tests keep explicit empty built list; earned reward messages wait for REWARD. Review all changed assertions in the change note. game.js may initialize arena to null consistently with reset."
     acceptance:
       - "Build exactly the format in docs/SCRAPDOME.md section 5, 'Settled for build': one-on-one, first to three wrecks, warlord armor 1.5 times, a phase-two hook after the warlord's first wreck, four minutes then sudden death, losing costs nothing, REMATCH and BACK TO THE YARD. Warlord and escorts share a team (src/combat-teams.js)."
       - "Starts from the territory card's FIGHT button (WAR-01), with an intro card (name, car, one taunt line as text). Uses Sal with the plain rammer brain until WAR-02a-SAL. Deterministic from seed and inputs; ordinary race fingerprints unchanged."
+    claude_note: "30 September: add warlords: 'dev' to src/feature-flags.js after SCRAPDOME-RELEASE merges, and put every warlord fight and the territory launch behind it (SCRAPDOME.md section 5). Do not merge before SCRAPDOME-RELEASE."
   - id: WAR-02a-SAL
     title: "Sawtooth Sal's fight: Saw Sweep with its tell and window, phase-two Charge"
     owner: codex
@@ -2492,7 +2498,8 @@ tasks:
     lane: RELEASE
     size: S
     needs: [SCRAPDOME-PLAYTEST, FEATURE-PLAYTEST, RALLY-CHECKPOINT, CRASH-SWITCH-REMOVE]
-    status: ready
+    status: building
+    claimed_by: "Claude, 30 September 2026"
     acceptance:
       - "Kyle approved in writing on 30 September 2026. Flip scrapdome, titan-climb and muddy-hollow to on in src/feature-flags.js (career-backup stays dev), then full release evidence on the exact integration commit and the OPERATIONS.md release routine. The Scrapdome stays reachable only from the yard and Muddy Hollow only by driving there; the main menu is unchanged. Waits for CRASH-SWITCH-REMOVE, which owns feature-flags.js until it merges."
   - id: TITAN-HANDLING
@@ -2503,8 +2510,9 @@ tasks:
     needs: [CRASH-SWITCH-REMOVE]
     status: building
     claimed_by: "Codex autonomous Director, 30 September 2026"
-    owns: [src/config.js, tools/test-titan-handling.mjs, tools/scenarios/titan-handling.mjs, docs/changes/TITAN-HANDLING.md]
-    sequencing: "Independent tests before config edits; no shared files with active source or FORMAT lanes."
+    owns: [src/config.js, src/sim-driving.js, src/sim-rival.js, src/arena/arena-pilot.js, tools/test-titan-handling.mjs, tools/replays/titan-handling.json, tools/scenarios/titan-handling.mjs, docs/changes/TITAN-HANDLING.md]
+    hooks: [src/app.js, tools/replays/expected-fingerprints.json]
+    sequencing: "Independent tests first. app.js caller update waits for WAR-02a-FORMAT to merge; other owned steering callers are disjoint from FORMAT."
     acceptance:
       - "Kyle, 30 September 2026: the Titan is hard to steer compared with the computer cars. Cause: steeringYawAuthority (src/config.js) scales turning down below 30 mph and by grip, and the Titan spends Muddy Hollow and the climbs slow, with grip .91 against the rally car's 1.05."
       - "Settled rule: for the Titan only (a new car field, lowSpeedSteer: true in its CARS entry), the rolling factor is max(speed/30, .55) once the Titan moves faster than 3 mph, and steering grip is max(grip, 1.0) below 45 mph. Above 45 mph nothing changes, so its high-speed feel and every other car stay exactly as they are."

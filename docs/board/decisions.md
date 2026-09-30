@@ -1321,3 +1321,13 @@ the second balance run from the release evidence.
 ## 2026-09-30 PDT — Existing crew assets
 
 Kyle authorized choosing existing developer-made assets and said he is not picky about Rook or the CC0 packs. Choose Quaternius Modular Men (comparison B) as the crew starting pack: 24 existing actions and modular costumes offer the best reuse. Keep the Kenney option as a declined source record. Female crew require a licensed companion source or permitted changes to the selected pack; the sourcing card does not adapt or ship a model. Other art families continue their source comparisons. A later source choice can replace this selection before adaptation.
+
+## 2026-09-30 PDT — Titan steering implementation
+
+Implement Claude's settled numbers through an optional car argument to the existing steeringYawAuthority helper. Calls without a car keep their exact existing behavior. Pass the actual car specification from player, rival, arena and demo callers so all Titan drivers use the same limits. Only the Titan receives lowSpeedSteer. The App caller waits for FORMAT's App edits to merge. This is API plumbing, with no new handling numbers or encounter design.
+
+## 30 September 2026: source and Titan replay scope
+
+ART-SRC-SALTFLATS claims the fifth lane for original licensed source comparison, using existing developer-made assets under Kyle's instruction. Its shared catalog hook waits for Rustwall to merge. It stops at Kyle's choice before adaptation. No new scene design is needed for a source sheet.
+
+TITAN-HANDLING may change only the three named Titan replay pins in tools/replays/expected-fingerprints.json after independent review of their old/new hashes and causes. All other recorded races and all world signatures remain unchanged. This is the explicit Titan exception on the settled card; no global replay regeneration is authorized.

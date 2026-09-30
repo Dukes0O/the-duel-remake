@@ -12,19 +12,19 @@ const check = (condition, message) => { assert.ok(condition, message); checks++;
 
 check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES.wasteland2 === 'on'
   && FEATURE_STATES['hidden-road'] === 'on' && !Object.hasOwn(FEATURE_STATES, 'roadside-destruction')
-  && FEATURE_STATES.scrapdome === 'dev' && !Object.hasOwn(FEATURE_STATES, 'crash-physics')
+  && FEATURE_STATES.scrapdome === 'on' && !Object.hasOwn(FEATURE_STATES, 'crash-physics')
   && !Object.hasOwn(FEATURE_STATES, 'crash-effects')
-  && FEATURE_STATES['titan-climb'] === 'dev' && FEATURE_STATES['muddy-hollow'] === 'dev'
+  && FEATURE_STATES['titan-climb'] === 'on' && FEATURE_STATES['muddy-hollow'] === 'on'
   && Object.keys(FEATURE_STATES).length === 6,
-  'career backup, the Scrapdome, Titan climbing and Muddy Hollow stay in QA; Wasteland 2 and Hidden Road are released; roadside destruction, crash physics and crash effects have no switches');
+  'career backup stays in QA; Wasteland 2, Hidden Road, the Scrapdome, Titan climbing and Muddy Hollow are released (SCRAPDOME-RELEASE); roadside destruction, crash physics and crash effects have no switches');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 check(!productionFlags.enabled('roadside-destruction'), 'retired roadside switch is no longer recognized');
 check(productionFlags.enabled('wasteland2') && productionFlags.enabled('hidden-road'),
   'production has the released Wasteland switches on without any menu choice');
-check(!productionFlags.enabled('career-backup') && !productionFlags.enabled('scrapdome') &&
-  !productionFlags.enabled('titan-climb') &&
-  !productionFlags.enabled('muddy-hollow'),
-  'production keeps the QA-only career backup, Scrapdome, Titan climbing and Muddy Hollow off');
+check(!productionFlags.enabled('career-backup'), 'production keeps the QA-only career backup off');
+check(productionFlags.enabled('scrapdome') && productionFlags.enabled('titan-climb') &&
+  productionFlags.enabled('muddy-hollow'),
+  'production has the Scrapdome, Titan climbing and Muddy Hollow on (SCRAPDOME-RELEASE)');
 check(!productionFlags.enabled('crash-physics') && !productionFlags.enabled('crash-effects'),
   'retired crash switches are no longer recognized (CRASH-SWITCH-REMOVE)');
 const productionQuery = createFeatureFlags({ storage: null, qa: false, search: '?flags=career-backup' });

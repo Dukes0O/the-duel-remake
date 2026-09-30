@@ -54,7 +54,9 @@ for (const car of ['titan_monster', 'dusthawk_rally']) {
   Object.assign(d.state, { lateral: 0, prevLateral: 0, speedMph: 25, headingError: Math.PI });
   drive(d, .5, { throttle: 0 }); check(d.state.s < 20 && Math.abs(d.state.headingError) > 3, `${car}: returning to the main road backward-facing cannot trap/clamp the heading`);
 }
-for (const car of ['titan_monster', 'dusthawk_rally']) {
+// The released Titan (titan-climb, SCRAPDOME-RELEASE) has no accumulated
+// climb cap; tools/test-titan-climb.mjs proves its hill climb and grade tip.
+for (const car of ['dusthawk_rally']) {
   const d = straight(car, s => Math.max(0, s - 25) * .7), s = d.state; let previousY = 0, peak = 0;
   d.setInput({ throttle: 1 });
   for (let i = 0; i < 600 && !s.tumble; i++) {
@@ -142,12 +144,16 @@ for (const car of ['titan_monster', 'dusthawk_rally']) for (const kind of ['moun
     d.step(dt); const actual = d._supportAt(s.s, s.lateral).y, bottom = actual + s.airHeight;
     // A falling truck may pass above a faster-rising surface without gaining
     // that height itself. Measure the physical tire plane, not the hill below.
-    check(bottom - previous <= offroadCapability(CARS[car]).risePerSec * dt + 1e-6, `${car}/${kind}: actual vehicle rise remains bounded`);
+    check(bottom - previous <= offroadCapability(CARS[car], { titanClimb: true }).risePerSec * dt + 1e-6, `${car}/${kind}: actual vehicle rise remains bounded`);
     previous = bottom; peak = Math.max(peak, actual);
   }
   check(peak > 3, `${car}/${kind}: vehicle really climbs the visible surface`);
-  check(peak - initialHeight <= offroadCapability(CARS[car]).climbGain + .1, `${car}/${kind}: actual ascent cannot exceed the climb budget`);
-  if (kind === 'summit') check(s.tumble?.reason === 'climb_limit', `${car}: the44m summit requires a limit rollover`);
+  // Released titan-climb: the Titan has no accumulated budget and may crest
+  // the 44 m summit; the rally car keeps its 16 m budget.
+  const budget = offroadCapability(CARS[car], { titanClimb: true }).climbGain;
+  check(peak - initialHeight <= budget + .1, `${car}/${kind}: actual ascent cannot exceed the climb budget`);
+  if (kind === 'summit' && car === 'titan_monster') check(peak - initialHeight > 24 && s.tumble?.reason !== 'climb_limit', 'titan_monster: climbs past the old 24 m cap on the 44 m summit without a limit rollover');
+  else if (kind === 'summit') check(s.tumble?.reason === 'climb_limit', `${car}: the44m summit requires a limit rollover`);
   else check(!s.tumble || s.tumble.reason === 'climb_limit', 'a broad quarry massif can be traversed or meet a real climb limit, never cause an ordinary boundary crash');
   if (kind === 'mountain') check(sampleMountainSupport(c, feature.x, feature.z) > 10, 'practice quarry has solid rendered mountain support');
   same(s.boundaryResets, 0, 'climb limit is not an out-of-bounds reset');
