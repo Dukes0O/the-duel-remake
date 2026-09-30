@@ -211,4 +211,21 @@ built until the working App/save/contact/armory path passes final review.
 
 ## Save Guardian findings: reject before settlement
 
-Independent review of0a66105 found that unsupported root schema99 could be awarded before save normalization reset progress, and a damage result with undefined boss/CPU/placing IDs could earn150. A malformed unlockedCars object also throws during a paid-car lookup. The fix must reject these with the unchanged input before any award: supported root schemas1/2 only, a valid owned-car array, and the known Sal roster (player and cpu-1). New rejection tests are written before the guard fix. Existing App transaction tests remain blocked.
+Independent review of `0a66105` found three unsafe inputs. Root schema 99
+could earn a reward that later normalization would discard. A damage result
+with missing boss and placing ids could earn 150 scrap. A malformed
+`unlockedCars` object could throw during a paid-car lookup. The Director added
+three failing rejection tests in `d24235b` before this fix.
+
+Settlement now accepts root profile versions 1 and 2 only. It requires an
+owned-car array of known car ids and Sal's canonical player / cpu-1 roster.
+Malformed participant or result objects also reject before the transaction.
+Every rejection returns the exact old profile reference without changing it.
+No assertion was changed.
+
+Focused check: 12/14 settlement subtests pass, with 116 acceptance checks
+reached. Only the two existing App transaction cases still fail. Side Saws
+remains 27/27, with 116 checks and the three unchanged ordinary fingerprints.
+Titan has merged into integration as `7c9ff20`; the App hook may now proceed
+in a separate checkpoint. `rewardBuilt` remains false. No heavy gate or
+browser build ran for this guard checkpoint.

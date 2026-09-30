@@ -12,11 +12,13 @@ const noAward = (profile, key) => ({profile, key, awarded: false, scrapEarned: 0
 const COMPLETED_REASONS = new Set(['three-wrecks', 'sudden-death', 'damage']);
 
 function resultFacts(arena) {
-  if (arena?.version !== 1 || arena.venueId !== 'scrapdome' ||
+  if (!record(arena) || arena.version !== 1 || arena.venueId !== 'scrapdome' ||
       arena.mode !== 'warlord' || arena.warlordId !== 'sal' ||
-      !WARLORDS[arena.warlordId] || arena.phase !== 'over' ||
+      !WARLORDS[arena.warlordId] || arena.warlordBossId !== 'cpu-1' ||
+      arena.phase !== 'over' || !record(arena.result) ||
       !COMPLETED_REASONS.has(arena.result?.reason) ||
       !Array.isArray(arena.participants) || arena.participants.length !== 2 ||
+      !arena.participants.every(record) ||
       !Array.isArray(arena.result?.placings)) return null;
   const player = arena.participants.find(item => item?.id === 'player' && item.kind === 'player');
   const boss = arena.participants.find(item => item?.id === arena.warlordBossId && item.kind === 'cpu');
@@ -36,7 +38,10 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
   const key = typeof runId === 'string' && runId.length > 0 && runId.length <= 128
     ? `warlord:${runId}` : null;
   const career = profile?.wasteland, facts = resultFacts(arena);
-  if (!key || typeof ownerPlayerId !== 'string' || ownerPlayerId.length === 0 ||
+  if (!record(profile) || ![1, 2].includes(profile.version) ||
+      !Array.isArray(profile.unlockedCars) ||
+      !profile.unlockedCars.every(id => typeof id === 'string' && Object.hasOwn(CARS, id)) ||
+      !key || typeof ownerPlayerId !== 'string' || ownerPlayerId.length === 0 ||
       ownerPlayerId !== activePlayerId || career?.version !== 1 ||
       career.discoveredGate !== true || !facts || !Object.hasOwn(CARS, car) ||
       !isCarUnlocked(profile, car) || !Array.isArray(career.settledResults) ||
