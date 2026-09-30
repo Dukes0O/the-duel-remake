@@ -1,6 +1,6 @@
 # ART-SRC-HANDS : existing first-person hand sources
 
-Status: review; waiting_on: kyle. Source catalog is complete; final lane/build gate pending.
+Status: review; waiting_on: kyle. Source catalog and comparison are merged; source choice is pending.
 
 Two CC0 hand models are cached outside the repository and compared with the
 current in-game Rook hands holding the RPG. Recommend WRAD ARMS by wriks.
@@ -47,3 +47,5 @@ resolves render paths. The final review retains only one compact sheet.
 Raw review evidence is deleted by the Director after its verdict is recorded.
 
 Catalog update followed the Crew merge; its selected Quaternius record and all existing EGG-03 source decisions are preserved. The final source-loader probe is byte-identical to the independent probe. Existing game rules, assets and replay pins remain untouched.
+
+Final exact clean91c4c93 gate: lane298/298 in666.73s and build1.12s passed. No skipped suites or source change. Two default-sandbox attempts failed the audio sample-ready assertion because the FFmpeg child decoder was blocked; the escalated unchanged gate passed, as did the standalone460check reproduction. No assertion was weakened or runtime fix claimed. Director records this actual verdict after merge; the earlier pending gate text is superseded.

@@ -562,7 +562,8 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: building
+    status: review
+    waiting_on: kyle
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [tools/art/hands-source-sheet.py, tools/scenarios/art-source-hands.mjs, docs/board/looks/first-person-src/round-1.jpg, docs/board/looks/first-person-src/round-1-review.md, docs/changes/ART-SRC-HANDS.md]
     hooks: [tools/art/catalog.json]
@@ -571,6 +572,7 @@ tasks:
     acceptance:
       - "SPEC 0.11 sourcing step for the first-person hands, gloves and sleeves (replaces GFX-02-P3). Same rules as ART-SRC-CREW: two or three candidates, CC0 first, licences recorded in tools/art/catalog.json, files cached outside the repository."
       - "One comparison sheet, docs/board/looks/first-person-src/round-1.jpg, beside the current in-game hands holding the RPG, with a note per candidate. Then waiting_on: kyle. No adaptation before Kyle picks."
+    note: "Source artifacts merged after independent licence/model/sheet review and exactclean91c4c93 lane298/298+build. WRAD ARMS recommended; adaptation waits Kyle. No runtime replacement."
   - id: ART-SRC-RUSTWALL
     title: "Rustwall salvage wall and canyon rock: short list of existing starting models"
     owner: codex
