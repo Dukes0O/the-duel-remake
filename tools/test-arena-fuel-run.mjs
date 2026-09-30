@@ -836,6 +836,21 @@ test('actual sudden-death next delivery may settle for a winner below the previo
     'the equal-score nonwinner leaders can exchange positions beneath the sudden-death winner');
 });
 
+test('Fuel settlement rejects sudden death after a nonwinner already delivered five', () => {
+  const arena = finishedRoster({opponents: 2, wrecks: 0}), before = profile();
+  arena.clockSec = 180;
+  arena.participants[0].fuelDelivered = 1;
+  arena.participants[1].fuelDelivered = 5;
+  arena.participants[2].fuelDelivered = 0;
+  arena.result = {placings: ['player', 'cpu-1', 'cpu-2'], winnerId: 'player', reason: 'sudden-death'};
+  const settled = settleArenaResult(before, payload(arena));
+  equal({awarded: settled.awarded, scrap: settled.scrapEarned, hold: settled.holdAdded},
+    {awarded: false, scrap: 0, hold: 0},
+  'a nonwinner with five deliveries already ended Fuel Run before sudden death and cannot authorize payment');
+  equal(settled.profile, before, 'the impossible sudden-death result preserves the exact profile');
+  equal(settled.profile.wasteland.settledResults, ['old-result'], 'the impossible result stores no receipt');
+});
+
 function controls(spec) {
   const duel = new Duel({seed: spec.seed, featureFlags: {...ON, 'fuel-run': spec.fuelEnabled}});
   if (spec.kind === 'road') duel.startCampaign({seed: spec.seed, mode: spec.mode, car: 'falcone_f42',

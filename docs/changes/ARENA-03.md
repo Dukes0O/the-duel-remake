@@ -518,3 +518,29 @@ old retryable-flag branches. That ordinary path remains for its existing
 callers. Replaced Fuel's count-only finish validation with the settled result
 proof in the same change. No assertion, replay pin, licensed/runtime asset or
 protected audio source was removed, relaxed or regenerated.
+
+## Tests first — impossible sudden-death nonwinner score
+
+Save Guardian found one remaining result-proof gap on clean source
+`e20470ab6587765c3cf2144235b2e2000c323efa`. A forged three-car result declares
+sudden death at 180 seconds with deliveries **player 1 / CPU 1 5 / CPU 2 0**,
+placings `[player, cpu-1, cpu-2]`, and the player as winner. The CPU's fifth
+delivery would already have ended the real event; this result cannot pay.
+The new check requires zero scrap/hold and no new receipt, preserving the exact
+profile. The existing real-engine **[2, 2, 1, 0]** lower-scoring sudden-death
+winner remains valid and unchanged. No top-only sudden-death rule was added.
+
+Command: `node --test --test-reporter=tap tools/test-arena-fuel-run.mjs`.
+Pre-fix result: **59 tests, 58 pass, 1 fail, 0 skipped, 1398 checks reached;
+exit 1**. Exact first failure:
+`a nonwinner with five deliveries already ended Fuel Run before sudden death and cannot authorize payment`.
+Actual returned award: **awarded true, 192 scrap, 25 hold**; expected:
+**awarded false, zero scrap and zero hold**. The legitimate lower-scoring
+sudden-death positive control passes, as do all other existing tests, unchanged
+mode pins and the 30/60/144 FPS comparison. No existing assertion/input/pin,
+production file, progression file or contact design was changed. This is
+pre-fix acceptance evidence, not a lane/build/full gate or browser verdict.
+
+### Removed — this narrow tests-first follow-up
+
+Nothing. Only the new acceptance check and its evidence are added.
