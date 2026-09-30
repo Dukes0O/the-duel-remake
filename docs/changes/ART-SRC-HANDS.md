@@ -1,4 +1,4 @@
-# ART-SRC-HANDS — existing first-person hand sources
+# ART-SRC-HANDS : existing first-person hand sources
 
 Status: review; waiting_on: kyle. Source catalog is complete; final lane/build gate pending.
 
@@ -33,7 +33,7 @@ source labels.
 Director independent source review confirms seven checksums, the official CC0
 pages, a separate Blender probe and the visible sheet/current RPG. The source
 loader now explicitly disables supplied Blender scripts; counts stay identical.
-The mandatory lane tier and production build are pending the gate queue. No green merge gate is claimed by this checkpoint.
+Independent reviewer also verified the cached hashes, official licences, original geometry and visible sheet; no substantive findings. Catalog preserves the selected Crew and EGG-03 decisions. The mandatory lane tier and production build are pending the gate queue. No green merge gate is claimed by this checkpoint.
 No new implementation tests are needed for this source-only comparison.
 Existing assertions and race fingerprint files are unchanged.
 

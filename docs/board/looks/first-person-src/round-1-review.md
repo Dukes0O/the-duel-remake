@@ -1,4 +1,4 @@
-# First-person hand sources — round 1
+# First-person hand sources : round 1
 
 Recommend **A, WRAD ARMS by wriks**, as the starting hand rig. Its fingers and
 skin texture give a stronger base than the very simple DevMops hands. Both
@@ -10,8 +10,8 @@ the source catalog and merge gates are complete.
 
 | Candidate | Original geometry checked in Blender 4.5.13 | Rig and animation | Fitting work after a pick |
 | --- | --- | --- | --- |
-| A — [WRAD ARMS](https://wriks.itch.io/wrad-arms), wriks | 1,196 arm triangles in the supplied GLB; an extra 80-triangle helper sphere is also present. One 512 × 512 skin texture is embedded; the ZIP includes pale and dark alternatives. | The GLB imports with one bound skin and 50 bones. No animation actions are supplied. The pack also includes the author’s native Blender IK rig, FBX and OBJ. | Fit proportions, scale and camera placement; add the crew’s existing glove/sleeve treatment; bind RPG and wrench sockets; adapt the existing aim/fire/reload/repair motion to this rig. Remove the helper from the later game export. |
-| B — [Low Poly Arms (Rigged)](https://opengameart.org/content/low-poly-arms-rigged), DevMops | 520 base triangles; the source mirror modifier produces 1,040 triangles for both arms. Original 128 × 128 flat skin texture. | The bound Rigify rig has 257 bones, of which 48 are marked for skin deformation. A separate 44-bone metarig is present. No animation actions are supplied. | Fit proportions and camera placement; improve the mitten-like fingers for both grips; add gloves/sleeves; bake the author’s rig to the skin bones and export; adapt action motion and sockets. |
+| A : [WRAD ARMS](https://wriks.itch.io/wrad-arms), wriks | 1,196 arm triangles in the supplied GLB; an extra 80-triangle helper sphere is also present. One 512 × 512 skin texture is embedded; the ZIP includes pale and dark alternatives. | The GLB imports with one bound skin and 50 bones. No animation actions are supplied. The pack also includes the author’s native Blender IK rig, FBX and OBJ. | Fit proportions, scale and camera placement; add the crew’s existing glove/sleeve treatment; bind RPG and wrench sockets; adapt the existing aim/fire/reload/repair motion to this rig. Remove the helper from the later game export. |
+| B : [Low Poly Arms (Rigged)](https://opengameart.org/content/low-poly-arms-rigged), DevMops | 520 base triangles; the source mirror modifier produces 1,040 triangles for both arms. Original 128 × 128 flat skin texture. | The bound Rigify rig has 257 bones, of which 48 are marked for skin deformation. A separate 44-bone metarig is present. No animation actions are supplied. | Fit proportions and camera placement; improve the mitten-like fingers for both grips; add gloves/sleeves; bake the author’s rig to the skin bones and export; adapt action motion and sockets. |
 
 ## Licence and source checks
 
