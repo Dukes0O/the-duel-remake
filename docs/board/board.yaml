@@ -2508,7 +2508,7 @@ tasks:
     status: building
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [src/config.js, src/sim-driving.js, src/sim-rival.js, src/arena/arena-pilot.js, tools/test-titan-handling.mjs, tools/replays/titan-handling.json, tools/scenarios/titan-handling.mjs, docs/changes/TITAN-HANDLING.md]
-    hooks: [src/app.js]
+    hooks: [src/app.js, tools/replays/expected-fingerprints.json]
     sequencing: "Independent tests first. app.js caller update waits for WAR-02a-FORMAT to merge; other owned steering callers are disjoint from FORMAT."
     acceptance:
       - "Kyle, 30 September 2026: the Titan is hard to steer compared with the computer cars. Cause: steeringYawAuthority (src/config.js) scales turning down below 30 mph and by grip, and the Titan spends Muddy Hollow and the climbs slow, with grip .91 against the rally car's 1.05."
