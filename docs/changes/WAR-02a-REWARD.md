@@ -229,3 +229,15 @@ remains 27/27, with 116 checks and the three unchanged ordinary fingerprints.
 Titan has merged into integration as `7c9ff20`; the App hook may now proceed
 in a separate checkpoint. `rewardBuilt` remains false. No heavy gate or
 browser build ran for this guard checkpoint.
+
+
+## Retry control red check
+
+The Director assigned only the `warlord-retry-save` click-handler case in
+`src/screen-router.js` as a named hook. Before adding that UI or handler,
+a separate acceptance test used an actual three-wreck App result with failing
+memory-only storage. It failed at "failed result provides the production
+RETRY SAVE control"; 14/15 settlement subtests passed and 130 checks reached.
+The existing transaction, failure and API retry assertions remain unchanged.
+The new test also requires clear failure text, no unpaid kit or +150 claim,
+and removal of the retry control after one successful save.

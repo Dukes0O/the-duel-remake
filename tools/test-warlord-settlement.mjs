@@ -295,3 +295,22 @@ test('a damage result with missing or noncanonical Sal boss identities cannot se
     equal(before, snapshot, 'malformed result changes neither scrap nor kit nor counters');
   }
 });
+
+
+test('failed warlord settlement exposes RETRY SAVE without advertising the unpaid reward', () => {
+  const app = appFight();
+  const screen = () => arenaResultsScreen(app.duel.state, {metric: screenMetric,
+    action: screenAction, escapeHTML: String});
+  try {
+    failWrites = true; finish(app); failWrites = false;
+    ok(/data-action="warlord-retry-save"[^>]*>[\s\S]*?RETRY SAVE/.test(screen().actions),
+      'failed result provides the production RETRY SAVE control');
+    ok(/Could not save this result/.test(screen().description), 'failure is explained on the result');
+    ok(!/Side Saws unlocked/.test(screen().description), 'unpaid kit is not advertised');
+    ok(!/\+150/.test(screen().metrics), 'unpaid scrap is not advertised');
+    equal(app.retryArenaSettlement(), true, 'result retry verb saves the same completed fight');
+    ok(!/warlord-retry-save/.test(screen().actions), 'success removes the retry control');
+    ok(/Side Saws unlocked/.test(screen().description), 'saved first win shows the working reward');
+    equal(app.retryArenaSettlement(), false, 'second retry cannot pay again');
+  } finally { failWrites = false; app.dispose?.(); }
+});
