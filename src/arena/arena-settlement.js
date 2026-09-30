@@ -25,7 +25,8 @@ function validFuelFinish(arena) {
   if (!Number.isFinite(arena.clockSec) || arena.clockSec < FUEL_RULES.timeLimitSec) return false;
   if (reason === 'time') return delivered < FUEL_RULES.deliveriesToWin &&
     arena.participants.every(p => p.id === winnerId || p.fuelDelivered < delivered);
-  return reason === 'sudden-death' && delivered > 0;
+  return reason === 'sudden-death' && delivered > 0 &&
+    arena.participants.every(p => p.id === winnerId || p.fuelDelivered < FUEL_RULES.deliveriesToWin);
 }
 
 function arenaFacts(arena) {

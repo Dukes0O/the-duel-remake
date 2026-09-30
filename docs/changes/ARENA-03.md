@@ -544,3 +544,32 @@ pre-fix acceptance evidence, not a lane/build/full gate or browser verdict.
 ### Removed — this narrow tests-first follow-up
 
 Nothing. Only the new acceptance check and its evidence are added.
+
+## Narrow sudden-death proof fixed
+
+After tests-first red `9759af4`, only the Fuel finish validator changes:
+sudden death cannot have a nonwinner at five deliveries, because that fifth
+delivery would already have ended the event. The declared next-delivery winner
+can still have a lower score than the previous leaders. Nonwinner ordering
+and all prior score/type/time rules remain intact. App, progression, render,
+feature switches and contact behavior are unchanged.
+
+Focused Fuel plus existing arena/Warlord economy and fabricated-save guards
+pass **147/147 tests, zero skips; exit 0**. Fuel accounts for **59/59 tests and
+1400 checks**, including rejection of the forged [1, 5, 0] result with no award
+or receipt, and acceptance of the actual [2, 2, 1, 0] lower-scoring next-delivery
+winner. All prior assertions, inputs, mode fingerprints and the actual
+30/60/144 FPS comparison remain unchanged.
+
+Per the Director's narrow follow-up, no broader browser or gate was repeated
+for this pure validator change. The private `browser-save-fixed` evidence for
+`e20470ab` still records the actual newer-owner 2000-credit / 340-scrap / engine-1
+Retry proof; that App path did not change. Fresh Save Guardian review, current
+mandatory gates and Claude's contact decision remain pending. This is a held
+review candidate, not an integration merge or release.
+
+### Removed — narrow proof fix
+
+Replaced the permissive sudden-death nonwinner condition in the same change.
+No assertion, input, replay pin, runtime asset or audio source was changed or
+removed.
