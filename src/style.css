@@ -163,3 +163,36 @@
 .backup-blocked button{min-height:46px;padding:12px 18px;border:1px solid #e3bd87;background:#e3bd87;color:#15221b;font-size:11px;font-weight:800;letter-spacing:1px;cursor:pointer}
 .backup-blocked button:hover{background:#ffe0a5}
 .backup-blocked button:focus-visible{outline:3px solid #fff;outline-offset:4px}
+
+/* Transition controls stay above weapons and clear of the driving view. */
+.onfoot-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 208px;
+  transform: translateX(-50%);
+  width: min(520px, calc(100% - 590px));
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid #d3945b;
+  border-radius: 3px;
+  background: #142126ed;
+  color: #ffe7bd;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  text-shadow: none;
+  pointer-events: none;
+}
+@media (min-width: 601px) and (max-width: 850px) {
+  .onfoot-hint { top: 260px; bottom: auto; width: calc(100% - 48px); }
+}
+@media (max-width: 600px) {
+  .onfoot-hint {
+    top: 330px;
+    bottom: auto;
+    width: calc(100% - 32px);
+  }
+}
+@media (max-height: 500px) and (min-width: 601px) {
+  .onfoot-hint { top: 210px; bottom: auto; }
+}
