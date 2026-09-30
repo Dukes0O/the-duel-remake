@@ -379,3 +379,16 @@ test('intro acceptance cannot bypass a disabled warlord gate', async () => {
   equal(api.beginWarlordEvent(duel), false, 'disabled dev gate prevents intro acceptance');
   equal(JSON.stringify(duel.state), before, 'rejected intro acceptance preserves complete state');
 });
+
+test('main-menu Armory advertises a yard fight only when warlords are available', () => {
+  const app = yard({warlords: false});
+  try {
+    const base = {profile: () => app.profile, credits: String, escapeHTML,
+      getGarageMessage: () => '', kitsEnabled: () => true, action: screenAction};
+    const closed = createArmoryScreen({...base, warlordsEnabled: () => false})();
+    ok(!/SAL IS WAITING|FIGHT FROM THE YARD/.test(closed), 'off-gate Armory gives no unavailable fight instruction');
+    const open = createArmoryScreen({...base, warlordsEnabled: () => true})();
+    ok(/FIGHT FROM THE YARD/.test(open), 'available warlord retains read-only yard direction');
+    ok(!/data-warlord=/.test(open), 'Armory never launches a fight');
+  } finally { app.dispose?.(); }
+});
