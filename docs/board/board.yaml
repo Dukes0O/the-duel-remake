@@ -2467,8 +2467,12 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-02a-FORMAT, WAR-SAL-ART]
-    status: ready
-    flag: scrapdome
+    status: building
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [src/arena/sal-fight.js, src/arena/arena-brains.js, src/arena/arena-event.js, src/arena/warlord-event.js, tools/test-sal-fight.mjs, tools/scenarios/sal-fight.mjs, docs/changes/WAR-02a-SAL.md]
+    hooks: [src/arena/arena-pilot.js]
+    sequencing: "Tests first. Sal owns move state and arena dispatch. arena-pilot.js waits for TITAN-HANDLING to merge; do not edit that hook before then. REWARD owns contact damage and reads the agreed Sal actor state. Claude Preview review is required before merge."
+    flag: warlords
     acceptance:
       - "Saw Sweep, its counter and two-second window, the cooldowns and phase two exactly as settled in docs/SCRAPDOME.md section 5. Every sweep has a full tell (test); a braked or boosted escape makes it miss and opens the window (test). Brains may not change pilot physics limits."
       - "Callouts SAW SWEEP! and SHE MISSED. HIT HER NOW!; the saw art states and scream from WAR-SAL-ART. When built, set status review and waiting_on: claude: Claude plays it through Preview before merge."
@@ -2478,8 +2482,12 @@ tasks:
     lane: SAVE
     size: S
     needs: [WAR-02a-FORMAT, CRASH-SWITCH-REMOVE]
-    status: ready
-    flag: scrapdome
+    status: building
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [src/arena/warlord-settlement.js, src/vehicle-contact-modifiers.js, src/armor-kits.js, src/sim-contacts.js, src/combat-armor.js, src/microcombat-projectiles.js, src/armor-kit-meshes.js, src/screen-armory.js, src/screen-arena.js, src/arena/warlords.js, src/wasteland-progress.js, tools/test-warlord-settlement.mjs, tools/test-side-saws.mjs, tools/scenarios/warlord-reward.mjs, docs/changes/WAR-02a-REWARD.md]
+    hooks: [src/app.js]
+    sequencing: "FORMAT and CRASH-SWITCH-REMOVE merged. Tests first. Contact damage reads Sal actor move state without editing Sal files. app.js waits for TITAN-HANDLING to merge. Save Guardian review is required before merge."
+    flag: warlords
     helpers: [save_guardian]
     acceptance:
       - "First win only: Side Saws in the armory (equipped like a kit: the player's side contacts deal 1.6 times ram damage, with sparks), 150 scrap, Sal's territory claimed. Rematch wins pay 25 scrap. profile.wasteland.warlords.sal = {defeated, wins, losses}, additive and per named player."
