@@ -44,7 +44,7 @@ and missing public ladder policy. Additional invalid-context tests committed
 as a7ce6d9 also failed before production edits: invalid economics still paid 150.
 The initial focused tests passed 19/19 with 93 checks, but their loss cap
 contradicted the literal card. The correction below removes it. Existing reward
-settlement tests pass 29/29 with 234 checks. The public policy covers every ladder
+settlement tests pass 29/29 with 235 checks. The public policy covers every ladder
 entry at every difficulty; rematches cover the three-wreck cap, while losses
 count every actual boss wreck, including nine and uncredited wall wrecks. Actual App fights cover a fresh
 Preview first win 720, rematch 312 and two-wreck loss 144, captured difficulty,
@@ -87,7 +87,7 @@ committed; the Director owns evidence cleanup and lane removal after merge.
 ## Gates and review
 
 Focused: node --test tools/test-warlord-pay.mjs tools/test-warlord-settlement.mjs
-passes 54/54, 342 acceptance checks, no skips after the correction below.
+passes 54/54, 343 acceptance checks, no skips after the correction below.
 
 node tools/browser-harness.mjs scenario warlord-pay --output-dir
 .evidence/2026-09-30/WAR-PAY-preview passed again on corrected source 899443e on private port 26123. High and
@@ -118,9 +118,19 @@ readiness before yard/fight advancement. High first win, Performance rematch
 and the failed-save screenshots were inspected: amounts and reasons are readable,
 and the unpaid result shows zero with RETRY SAVE.
 
-Mandatory lane tier/build and independent Reviewer and Save Guardian verdicts
-are held for the Director's review/runner handoff. No merge, push, release or
-real-save access performed.
+Independent Reviewer and Save Guardian both approve the corrected rule and
+changed assertions. Reviewer independently passed 54/54 focused tests with
+343 checks (108 pay and 235 settlement) and repeated actual App fights at
+30/60/144 FPS with identical pay, wrecks and wins. Save Guardian passed 76/76
+focused tests, all seven historical fixtures with 247 checks, and 1,320 synthetic
+transaction probes. No gameplay, save or performance defect was found.
+
+Mandatory lane tier at clean 0733e07 passed 306/306, no skips, in 477.48 seconds;
+build passed in 1.04 seconds. Campaigns ran. The standard large-chunk warning
+remains. This final documentation correction records those verdicts and fixes
+the settlement check count; the Director will rerun lane tier and build on
+this final commit before merging. No merge, push, release or real-save access
+performed in this lane.
 
 ### Tests-first correction: loss wreck count
 
@@ -137,9 +147,9 @@ the loss cap in both pay and explanation and rejects an unsafe computed payout
 before any transaction. Only the contradictory loss-matrix expectation changed
 from 60 * min(3, count) * factor to 60 * count * factor. Rematch cap expectations,
 the actual two-wreck loss 144, total 1176 and every save guard remain unchanged.
-The independent Reviewer must verify this literal-rule replacement before merge.
-Correction-focused tests pass 54/54 with 342 checks (new pay 25/25, 108 checks;
-existing settlement 29/29, 234 checks). The real two-wreck loss and atomic save
+The independent Reviewer and Save Guardian explicitly approved this literal-rule replacement.
+Correction-focused tests pass 54/54 with 343 checks (new pay 25/25, 108 checks;
+existing settlement 29/29, 235 checks). The real two-wreck loss and atomic save
 checks pass unchanged. Both private browser recipes were rebuilt and rerun on
 clean corrected source 899443e; their zero-to-three-wreck fixtures retain the
 same pay and pass in High and Performance with zero warnings or errors.
@@ -148,5 +158,6 @@ A separate pure settlement probe confirms a nine-wreck Medium loss pays 648 and
 its explanation names all nine wrecks. Setting the boss wreck count to
 Number.MAX_SAFE_INTEGER rejects the transaction with the exact input profile
 and markers unchanged. This probe uses only synthetic profile and arena data.
-Independent literal-rule review, Save Guardian and mandatory gates remain
-pending; no source or assertion changes are needed for the browser verdicts.
+Independent literal-rule review and Save Guardian are clear. The final mandatory
+gate rerun remains with the Director; no source or assertion changes are needed
+for the browser verdicts.
