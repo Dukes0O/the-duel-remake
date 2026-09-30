@@ -706,6 +706,15 @@ tasks:
     claimed_by: "Settled by Claude, 30 September 2026"
     acceptance:
       - "docs/SCRAPDOME.md gains a settled section for each remaining mode and the Salt Flats Scrapyard map (ARENA-03 to ARENA-07): goal, rules, scoring, pay, computer behaviour, art sources and tests. Build cards follow on the board."
+  - id: DESIGN-FUEL-FIGHTER-HITS
+    title: "Settle car projectiles against the on-foot Fuel carrier"
+    owner: claude
+    lane: DESIGN
+    size: S
+    needs: []
+    status: ready
+    acceptance:
+      - "Answer the measured ARENA-03 contact gap in docs/playtest-inbox.md: car crossbow damage to fighters, whether car bomb splash affects them and by how much, and cargo loss after a surviving fighter hit versus knockdown. Keep existing health, car knockdown and physical parked-car rules. Record the rules in docs/SCRAPDOME.md section 10 so Codex can write the remaining tests before contact code. No new source art or weapon design is requested."
   - id: DESIGN-WARLORDS-4-8
     title: "Settle warlords 4 to 8 and the ladder's end (WAR-03, WAR-04) for build"
     owner: claude
@@ -799,7 +808,7 @@ tasks:
     owner: codex
     lane: CMB
     size: M
-    needs: [WAR-02a-FORMAT]
+    needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
     status: building
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
