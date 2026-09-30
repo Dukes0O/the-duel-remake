@@ -5,7 +5,7 @@ import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 
 // A local QA pose fixture, never installed into the game or browser globals.
-const contactFixture = `(loserId,speed)=>{
+export const contactFixture = `(loserId,speed)=>{
       const a=window.__qaApp;
       const d=a.duel,s=d.state,b=s.opponents[0],slot=s.arena.spawnSlots[0];
       for(const p of s.arena.participants){p.protectedSec=0;p.wreckCounted=false;}
@@ -101,6 +101,7 @@ async function runQuality(context, quality) {
     a.stop();a.audio.setMuted(true);a.setGraphicsQuality(${JSON.stringify(quality)});
     document.head.insertAdjacentHTML('beforeend','<style>details:not(.weapon-shop){display:none!important}</style>');
     const owner=a.player.id;if(!a.addPlayer('Other Reward QA').ok||!a.selectPlayer(owner))throw Error('Named player fixture failed');
+    a.cpuDifficulty='medium';
     a.profile={...a.profile,credits:50000,unknownRewardProfile:{keep:17},wasteland:{...a.profile.wasteland,
       discoveredGate:true,unknownRewardCareer:{keep:19},territories:{...a.profile.wasteland.territories,sal:{hold:100,claimed:false}}}};
     if(!a._saveProfile())throw Error('Memory-only career fixture failed');
@@ -112,6 +113,7 @@ async function runQuality(context, quality) {
     return {owner,credits:a.profile.credits,history:JSON.stringify(a.profile.history),raceMarkers:JSON.stringify(a.profile.settledResults)};
   })()`);
   await ready(context,quality+' chosen graphics mode');
+  await click(context,'[data-cpu-difficulty="medium"]');
   await click(context,'#wasteland-visit');await yard(context);await begin(context);
   await context.evaluate(`(()=>{const a=window.__qaApp,q=window.__rewardProbe;q.before=JSON.stringify(a.profile);
     q.saved=window.name;q.writes=[];q.fail=true;})()`);
@@ -121,7 +123,7 @@ async function runQuality(context, quality) {
     const text=document.querySelector('#modal-layer').textContent;
     if(JSON.stringify(a.profile)!==q.before||window.name!==q.saved||q.writes.length)throw Error('Failed save changed career/storage');
     if(!document.querySelector('[data-action="warlord-retry-save"]')||!/Could not save this result/.test(text)||
-      text.includes('Side Saws unlocked')||text.includes('+150'))throw Error('Failed result advertises an unpaid reward or lacks retry');
+      text.includes('Side Saws unlocked')||text.includes('+720'))throw Error('Failed result advertises an unpaid reward or lacks retry');
     // Simulate a second memory tab's durable updates before the actual retry click.
     q.fail=false;
     const store=Object.getOwnPropertyDescriptor(window,'localStorage').value;
@@ -139,10 +141,10 @@ async function runQuality(context, quality) {
   await click(context,'[data-action="warlord-retry-save"]');
   await ready(context,quality+' saved retry result');
   const saved=await context.evaluate(`(()=>{const a=window.__qaApp,q=window.__rewardProbe,p=a.profile,r=a.duel.state.arena.result;
-    if(q.writes.length!==1||r.scrapEarned!==150||!r.settlementSaved||r.settlementRetryable||
-      p.wasteland.scrap!==150||!p.wasteland.warlords.sal.defeated||!p.wasteland.territories.sal.claimed||
+    if(q.writes.length!==1||r.scrapEarned!==720||!r.settlementSaved||r.settlementRetryable||
+      p.wasteland.scrap!==720||!p.wasteland.warlords.sal.defeated||!p.wasteland.territories.sal.claimed||
       p.wasteland.kits[a.duel.state.car]?.equipped!=='side-saws'||!p.wasteland.settledResults.includes('warlord:'+a.runId)||
-      p.unknownRewardProfile.keep!==17||p.wasteland.unknownRewardCareer.keep!==19||p.credits!==50100||p.otherTabOwner?.keep!==41)throw Error('Incomplete first-win transaction');
+      p.unknownRewardProfile.keep!==17||p.wasteland.unknownRewardCareer.keep!==19||p.credits!==50100||p.otherTabOwner?.keep!==41)throw Error('Incomplete first-win transaction: '+JSON.stringify({writes:q.writes.length,result:r,scrap:p.wasteland.scrap,credits:p.credits,difficulty:a.duel.state.cpuDifficulty,root:p.unknownRewardProfile,career:p.wasteland.unknownRewardCareer,later:p.otherTabOwner,kit:p.wasteland.kits[a.duel.state.car]}));
     if(JSON.stringify(a.players.players.find(x=>x.id!==a.player.id).profile)!==q.other)throw Error('Other named player changed');
     if(document.querySelector('[data-action="warlord-retry-save"]')||!/Side Saws unlocked/.test(document.querySelector('#modal-layer').textContent))
       throw Error('Successful retry presentation missing');
@@ -160,7 +162,7 @@ async function runQuality(context, quality) {
     return {...hit,authoredSawVisible:visible};})()`);
   await context.screenshot(`${quality}-earned-saws-hit`);
   const rematch=await finish(context,'player');
-  if(rematch.scrapEarned!==25)throw Error('Rematch did not earn exactly 25');
+  if(rematch.scrapEarned!==312)throw Error('Rematch did not earn exactly 312');
   await ready(context,quality+' rematch win');
   await begin(context,true);const loss=await finish(context,'cpu-1');
   if(loss.scrapEarned!==0||!loss.settlementSaved)throw Error('Loss did not settle for zero scrap');
@@ -176,13 +178,13 @@ async function runQuality(context, quality) {
   await context.screenshot(`${quality}-future-car-free-equip`);
   await click(context,'[data-action="armory-close"]');
   const final=await context.evaluate(`(()=>{const a=window.__qaApp,p=a.profile;
-    if(p.wasteland.scrap!==175||p.wasteland.warlords.sal.wins!==2||p.wasteland.warlords.sal.losses!==1||
+    if(p.wasteland.scrap!==1032||p.wasteland.warlords.sal.wins!==2||p.wasteland.warlords.sal.losses!==1||
       JSON.stringify(p.history)!==${JSON.stringify(baseline.history)}||JSON.stringify(p.settledResults)!==${JSON.stringify(baseline.raceMarkers)})
       throw Error('Reward flow altered race records or paid wrong economy');
     return{scrap:p.wasteland.scrap,wins:2,losses:1,credits:p.credits,currentCar:'stuttgart_959s',futureCar:'banshee_muscle'};})()`);
   // Same-tab reload restores the disposable registry, never the real origin store.
   await context.navigate('/tools/menu-check.html?flags=warlords&harness=reward-reload-'+quality);
-  await context.waitFor(`window.__qaApp?.profile?.wasteland?.scrap===175`,'saved reward reload',60_000);
+  await context.waitFor(`window.__qaApp?.profile?.wasteland?.scrap===1032`,'saved reward reload',60_000);
   await ready(context,quality+' reload');
   await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();a.audio.setMuted(true);
     if(a.profile.wasteland.warlords.sal.wins!==2||a.profile.wasteland.kits.banshee_muscle.equipped!=='side-saws')throw Error('Reward reload incomplete');
@@ -191,12 +193,12 @@ async function runQuality(context, quality) {
       throw Error('Second named player inherited reward');
     if(!a.selectPlayer(${JSON.stringify(baseline.owner)}))throw Error('Reward owner restore failed');})()`);
   await context.navigate('/tools/menu-check.html?harness=reward-released-'+quality);
-  await context.waitFor(`window.__qaApp?.profile?.wasteland?.scrap===175`,'released reward owner',60_000);
+  await context.waitFor(`window.__qaApp?.profile?.wasteland?.scrap===1032`,'released reward owner',60_000);
   await ready(context,quality+' released menu');await click(context,'#armory-open');
   const released=await context.evaluate(`(()=>{const a=window.__qaApp,text=document.querySelector('.garage-panel').textContent;
     if(a.warlordsAvailable()||document.querySelector('[data-kit-tier="side-saws"]')||(/SIDE SAWS/.test(text)||text.includes('1.6')))throw Error('Dev reward advertised in released Armory');
     return{hidden:true,entitlementPreserved:a.profile.wasteland.warlords.sal.defeated};})()`);
-  console.log(`${quality}: real retry click saved one complete 150-scrap reward; rematch 25, loss 0; authored saws + real sparks; current/future free equip, reload and named-player/switch isolation`);
+  console.log(`${quality}: real retry click saved one complete 720-scrap reward; rematch 312, loss 0; authored saws + real sparks; current/future free equip, reload and named-player/switch isolation`);
   return{quality,failure,saved,hit,rematch:rematch.scrapEarned,loss:loss.scrapEarned,final,released};
 }
 
