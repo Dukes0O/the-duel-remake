@@ -1,8 +1,9 @@
 # WAR-02a-REWARD
 
-Status: App, save retry and dev-switch integration implemented. Focused checks
-pass; private browser review is in progress. Final Save Guardian review and
-mandatory lane/build gates remain pending. `rewardBuilt` remains false.
+Status: Initial and retry reward writes now share verified-owner safeguards.
+All 154 focused checks pass. The High/Performance browser pass on ee8de512
+needs a fresh run on this correction. Final Save Guardian review and mandatory
+lane/build gates remain pending. `rewardBuilt` remains false.
 No merge, release or finished reward claim.
 
 ## Settled contract before tests
@@ -442,3 +443,39 @@ Initial and retry reward writes must share fresh-candidate rules; unknown or
 changed proof retains both genuine local work and durable progress and leaves
 a retryable failure. The complete browser pass above is a limited verdict for
 `ee8de512`; the corrected source needs Guardian and a fresh browser rerun.
+
+
+## Shared initial and retry transaction correction
+
+Tests-first checkpoint `1fea4e3` reproduced all three initial-write defects
+before this correction. The real prior failed save is used in both owner
+conflict cases. No old or new assertion was weakened.
+
+Initial settlement now uses the same directly read, validated fresh registry
+and one-write candidate as retry. Both paths retain all fresh other players.
+An owner with genuine unsaved work needs an earlier verified durable owner
+snapshot that still matches. A changed or absent snapshot leaves the complete
+local career and durable registry untouched, with RETRY SAVE and no award.
+The strictly proved never-saved exception remains separate and unchanged.
+
+A small approved bookkeeping hook reads the supported durable registry after
+a successful existing `_saveProfile`. It records proof only if the named owner,
+persisted active owner and serialized saved profile match exactly. Constructor
+and warlord launch apply the same rule; an unsaved profile cannot establish
+new proof at launch. Read failure or mismatch cannot overwrite earlier proof.
+The hook does not change the existing shop save result or rollback behavior.
+
+- Settlement: 28/28 tests and 226 acceptance checks pass.
+- Side Saws: 31/31 tests and 133 acceptance checks pass.
+- Sixteen focused suites: 154/154 pass in 2.54 seconds, including ordinary
+  arena/UI, warlord format, paid/authored/visual/resource kits, Sal art, armor,
+  bomb radius, Wasteland profile, progression and territory presentation.
+- `git diff --check` passes. Complete corrected-source browser and independent
+  Save Guardian review remain pending; no mandatory gate or merge was run.
+
+## Removed in the initial-write correction
+
+Removed the separate warlord initial award route through `_refreshPlayer`
+and `_saveShopProfile`, which skipped fresh data after an earlier failed save.
+The narrow shared reward candidate replaces it. Ordinary arena and global
+shop save behavior remain unchanged.

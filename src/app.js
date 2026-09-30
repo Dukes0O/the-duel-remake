@@ -105,6 +105,7 @@ export class App {
       this.players={...this.players,players:this.players.players.map(player=>player.profile.raceSettings?player:{...player,profile:{...player.profile,raceSettings:normalizeRaceSettings(this._legacyRaceDefaults,player.profile)}})};
       this.player=activePlayer(this.players);this.profile=this.player.profile;this.profileSaved=savePlayers(this.players);
     }
+    this._rememberWarlordOwner();
     this.leaderboard=loadLeaderboard();this.cpuDifficulty=DEFAULT_CPU_DIFFICULTY;
     this.ghosts=loadGhosts();this.ghostEnabled=readGhostEnabled();this.ghostPose=null;this.ghostRecord=null;this.ghostRecorder=null;this.ghostStatus='none';this._ghostPoseBuffer={};
     this.ambientOcclusionEnabled=readGraphicsQuality()!=='performance';
@@ -427,7 +428,18 @@ export class App {
     for(const p of fresh.players)players.set(p.id,p);
     this.players=replacePlayerProfile({...this.players,players:[...players.values()]},this.player.id,this.profile);
     this.player=activePlayer(this.players);this.profile=this.player.profile;
-    this.profileSaved=savePlayers(this.players);this._syncHiddenRoadDiscovery();return this.profileSaved;
+    this.profileSaved=savePlayers(this.players);
+    if(this.profileSaved)this._rememberWarlordOwner();
+    this._syncHiddenRoadDiscovery();return this.profileSaved;
+  }
+  _rememberWarlordOwner() {
+    if (this.profileSaved === false) return;
+    const durable = readWarlordRegistry();
+    const owner = durable.registry?.players.find(player => player.id === this.player.id);
+    const snapshot = JSON.stringify(this.profile);
+    if (owner && durable.registry.activePlayerId === this.player.id &&
+        JSON.stringify(owner.profile) === snapshot)
+      this._warlordVerifiedOwner = {ownerId: this.player.id, snapshot};
   }
   _refreshPlayer(){
     if(this.profileSaved===false)return;
@@ -540,37 +552,27 @@ export class App {
         !this.runId || !this.warlordsAvailable() ||
         this._runPlayerId !== this.player.id || state.playerId !== this._runPlayerId)
       return false;
+    if (result.settlementSaved) return false;
     if (result.settlementRetryable) return this._retryWarlordResult(state, result);
     const durable = readWarlordRegistry();
-    const owner = durable.registry?.players.find(player => player.id === this.player.id);
+    const verified = this._warlordVerifiedOwner?.ownerId === this.player.id
+      ? this._warlordVerifiedOwner : null;
     this._warlordSettlementRetry = {state, result, runId: this.runId, ownerId: this.player.id,
-      unsaved: this.profileSaved === false, registryWasAbsent: durable.status === 'absent',
-      ownerSnapshot: owner ? JSON.stringify(owner.profile) : null};
-    if (durable.status === 'invalid') {
-      result.settlementRetryable = true;
-      return false;
-    }
-    this._refreshPlayer();
-    if (this._runPlayerId !== this.player.id || state.playerId !== this.player.id)
-      return false;
-    const previous = this.profile;
-    const settled = settleWarlordResult(previous, {runId: this.runId,
-      ownerPlayerId: this._runPlayerId, activePlayerId: this.player.id,
-      arena: state.arena, car: state.car});
-    if (!settled.awarded) { this._warlordSettlementRetry = null; return false; }
-    this.profile = settled.profile;
-    if (!this._saveShopProfile(previous)) {
-      result.settlementRetryable = true;
-      return false;
-    }
-    this._presentWarlordSettlement(state, result, settled);
-    return true;
+      unsaved: this.profileSaved === false,
+      registryWasAbsent: durable.status === 'absent' && !verified && this.profileSaved === false,
+      ownerSnapshot: verified?.snapshot ?? null};
+    // Initial settlement and retry obey the same durable-owner rules. A failed
+    // earlier shop write must never authorize replacing newer owner progress.
+    result.settlementRetryable = true;
+    return this._writeWarlordResult(state, result, durable);
   }
   _retryWarlordResult(state, result) {
+    return this._writeWarlordResult(state, result, readWarlordRegistry());
+  }
+  _writeWarlordResult(state, result, durable) {
     const pending = this._warlordSettlementRetry;
     if (!pending || pending.state !== state || pending.result !== result ||
         pending.runId !== this.runId || pending.ownerId !== this.player.id) return false;
-    const durable = readWarlordRegistry();
     let registry, profile;
     if (durable.status === 'ready') {
       registry = durable.registry;
@@ -618,6 +620,7 @@ export class App {
   _adoptWarlordRegistry(registry, saved) {
     this.players = registry; this.player = activePlayer(registry);
     this.profile = this.player.profile; this.profileSaved = saved;
+    if (saved) this._rememberWarlordOwner();
     this._syncHiddenRoadDiscovery();
   }
   _presentWarlordSettlement(state, result, settled) {
@@ -751,6 +754,8 @@ export class App {
     const car = isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42';
     const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
     const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map(key => ({car: key, upgradeLevel: level}));
+    if (warlordId) this._rememberWarlordOwner();
+    this._warlordSettlementRetry = null;
     this.runId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     this._runPlayerId = this.player.id; this._markedRaceKey = null; this._arenaOpponents = count;
     this._arenaSerial = (this._arenaSerial || 0) + 1;
