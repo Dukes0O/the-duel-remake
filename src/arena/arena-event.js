@@ -5,11 +5,14 @@ import {pilotStep} from './arena-pilot.js';
 import {stepKnock} from '../vehicle-knock.js';
 import {thinkBrain, STYLE_ORDER, ARENA_FEEL} from './arena-brains.js';
 import {spawnSlots} from './venues.js';
+import {WARLORD_RULES, noteWarlordWreck, stepWarlordClock} from './warlord-event.js';
 
 // Arena event rules (docs/SCRAPDOME.md sections 3 and 7). `state.arena` is the
 // whole event; its presence replaces laps, finish, traffic, police and raiders.
 
 export const ARENA_MODES = Object.freeze({
+  warlord: Object.freeze({timeLimitSec: WARLORD_RULES.timeLimitSec,
+    suddenDeathSec: WARLORD_RULES.suddenDeathSec, maxOpponents: 1}),
   'last-car-rolling': Object.freeze({timeLimitSec: 150, suddenDeathSec: 30, maxOpponents: 3}),
 });
 
@@ -138,12 +141,16 @@ function creditWrecks(duel) {
     duel.emit({arenaWreck: {victimId: participant.id, creditedId: credited?.id || null}});
     if (credited?.id === 'player') duel._callout(`YOU WRECKED ${participant.name}`, 2);
     else if (participant.id === 'player' && credited) duel._callout(`WRECKED BY ${credited.name}`, 2);
+    const decision = noteWarlordWreck(duel, participant, credited);
+    if (decision) { finish(duel, decision.reason, decision.winnerId); return; }
   }
 }
 
 export function arenaRanking(arena) {
+  const score = participant => arena.mode === 'warlord' ? participant.wrecks :
+    participant.wrecks - participant.wrecked;
   return arena.participants.map((participant, order) => ({participant, order})).sort((a, b) =>
-    (b.participant.wrecks - b.participant.wrecked) - (a.participant.wrecks - a.participant.wrecked) ||
+    score(b.participant) - score(a.participant) ||
     b.participant.wrecks - a.participant.wrecks ||
     b.participant.damageDealt - a.participant.damageDealt || a.order - b.order).map(entry => entry.participant);
 }
@@ -154,20 +161,29 @@ function topTied(arena) {
     first.wrecks === second.wrecks;
 }
 
-function finish(duel, reason) {
+function finish(duel, reason, winnerId = null) {
   const state = duel.state, arena = state.arena;
-  const placings = arenaRanking(arena).map(participant => participant.id);
+  if (arena.result) return;
+  const ranked = arenaRanking(arena).map(participant => participant.id);
+  const placings = winnerId ? [winnerId, ...ranked.filter(id => id !== winnerId)] : ranked;
   arena.phase = 'over';
   arena.result = {placings, winnerId: placings[0], reason};
   state.status = 'arena_result';
   state.results = {arena: arena.result};
   const winner = arena.participants.find(p => p.id === placings[0]);
-  duel._callout(winner.id === 'player' ? 'LAST CAR ROLLING / YOU WIN' : `${winner.name} WINS`, 3);
+  duel._callout(winner.id === 'player' ?
+    arena.mode === 'warlord' ? 'WARLORD DUEL / YOU WIN' : 'LAST CAR ROLLING / YOU WIN' :
+    `${winner.name} WINS`, 3);
   duel.emit({arenaPhase: {phase: 'over'}, arenaResult: {result: arena.result}});
 }
 
 function stepClock(duel, dt) {
   const arena = duel.state.arena;
+  if (arena.mode === 'warlord') {
+    const decision = stepWarlordClock(duel, dt);
+    if (decision) finish(duel, decision.reason, decision.winnerId);
+    return;
+  }
   if (arena.phase === 'countdown') {
     arena.phase = 'fight';
     duel.emit({arenaPhase: {phase: 'fight'}});
@@ -238,6 +254,7 @@ export function stepArenaEvent(duel, dt) {
   for (const actor of state.opponents) duel._crushProps(actor);
 
   creditWrecks(duel);
+  if (arena.result) return;
   for (const actor of respawns) respawn(duel, arenaParticipant(duel, actor), actor);
   stepClock(duel, dt);
 }

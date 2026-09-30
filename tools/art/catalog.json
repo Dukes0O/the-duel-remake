@@ -238,6 +238,215 @@
       "checked": "2026-09-30",
       "recipe": "tools/art/crew-source-sheet.py",
       "decision": "Director selected comparison B under Kyle's 30 September instruction to choose existing developer-made crew assets; reuse the rig and 24 actions. Source-only selection, not runtime adaptation."
+    },
+    {
+      "id": "wriks-wrad-arms",
+      "author": "wriks",
+      "sourcePage": "https://wriks.itch.io/wrad-arms",
+      "triangles": 1196,
+      "bones": 50,
+      "animationCount": 0,
+      "textureSize": [
+        512,
+        512
+      ],
+      "fit": "Existing bound finger rig and textured anatomy; preferred starting point for hands.",
+      "risk": "No action clips; requires fitting, gloves and sleeves, sockets and adaptation of existing held-tool motion. The original helper sphere is excluded from the later game export.",
+      "licenseEvidence": "Official author page, cached README and cached CC0 1.0 LICENSE.txt.",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "d5f91fdc9bd6465dc59b54265ca2aefe2dc881c00b6c7a9c76bd0b80fa498093"
+        },
+        {
+          "path": "unpacked/arms.glb",
+          "sha256": "580efbb0852bf0b41f82dd3e17eafec86b3d2a48f4a7acaa7e64d60e850f565d"
+        },
+        {
+          "path": "unpacked/LICENSE.txt",
+          "sha256": "a19d58aaab15c4d0019e569d1c073d1b5286fdd37dbeee7a58a7d1ae76045ae1"
+        }
+      ],
+      "card": "ART-SRC-HANDS",
+      "family": "first-person",
+      "license": "CC0-1.0",
+      "status": "candidate",
+      "downloaded": true,
+      "checked": "2026-09-30",
+      "library": "C:/Users/kyleb/dev/art-library/wriks-wrad-arms",
+      "recipe": "tools/art/hands-source-sheet.py"
+    },
+    {
+      "id": "devmops-low-poly-arms",
+      "author": "DevMops",
+      "sourcePage": "https://opengameart.org/content/low-poly-arms-rigged",
+      "triangles": {
+        "base": 520,
+        "mirrored": 1040
+      },
+      "bones": {
+        "controlRig": 257,
+        "skin": 48
+      },
+      "animationCount": 0,
+      "textureSize": [
+        128,
+        128
+      ],
+      "fit": "Very small original arms with a full Rigify control rig.",
+      "risk": "No clips; fingers need grip work, gloves and sleeves, socket fitting and existing motion adaptation. Bake the control rig to its skin bones for a later export.",
+      "licenseEvidence": "Official uploader page labels CC0; original page cached because the ZIP has no separate licence text.",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "a685cd52d98f884565ae2d0b29d93cecebeff614c4ee7f57055502267a86887a"
+        },
+        {
+          "path": "unpacked/arms_low_poly.blend",
+          "sha256": "15170a28893613d3370915fd62b32de584734db34491d49daf7aca7f5a18f75d"
+        },
+        {
+          "path": "unpacked/arms_low_poly.fbx",
+          "sha256": "8f0bbb00f6253deb6ab474504b784b97df514aed8ab3f1da400f9c932d96ac1f"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "47a364bfd661c983ddb44a7fb841888ce52d9bc913cf44535b131d203d30fe9c"
+        }
+      ],
+      "card": "ART-SRC-HANDS",
+      "family": "first-person",
+      "license": "CC0-1.0",
+      "status": "candidate",
+      "downloaded": true,
+      "checked": "2026-09-30",
+      "library": "C:/Users/kyleb/dev/art-library/devmops-low-poly-arms",
+      "recipe": "tools/art/hands-source-sheet.py"
+    },
+    {
+      "id": "kenney-car-kit-rustwall",
+      "card": "ART-SRC-RUSTWALL",
+      "family": "props",
+      "sourcePage": "https://kenney.nl/assets/car-kit",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Primary author page and original cached License.txt identify CC0 1.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "fac7dacac5c7874348cf19729af3ef205f3d366493edaf0a827d93f4fdf3d0c4",
+      "fit": "Original loose panels, doors and bumpers plus intact cars provide lightweight salvage shapes.",
+      "risk": "Complete cars are intact and bright; fitting needs crushed/scorched variants, worn materials and efficient repeated wall parts.",
+      "checked": "2026-09-30",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\kenney-car-kit",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "fac7dacac5c7874348cf19729af3ef205f3d366493edaf0a827d93f4fdf3d0c4"
+        },
+        {
+          "path": "unpacked/License.txt",
+          "sha256": "c33b7f6453d134deae7b1b8493717d9ccfa754c25ab97f6de89b88f8fda19b00"
+        },
+        {
+          "path": "unpacked/Models/GLB format/sedan.glb",
+          "sha256": "b532ea7d2c59f7f6b22b138cf1955218a2c1898f1cea932af4d3fd563c3959b7"
+        },
+        {
+          "path": "unpacked/Models/GLB format/debris-door.glb",
+          "sha256": "c62ab01c07be9be5dfc0f940dbc933fa836019ea1bc8fd0baa2d0e52cd764ea2"
+        },
+        {
+          "path": "unpacked/Models/GLB format/debris-plate-a.glb",
+          "sha256": "3ecb3242d9e984dadd149fcdd0ded5f43e803b6370b6ddf2b7ab24876aa361ae"
+        },
+        {
+          "path": "unpacked/Models/GLB format/debris-bumper.glb",
+          "sha256": "dac8b9a01766f187c4f116eb7070e13485b642120f4d53ec611bf987100a1792"
+        }
+      ],
+      "recipe": "tools/art/rustwall-source-sheet.py",
+      "adaptation": "None; original source previews only, waiting for Kyle."
+    },
+    {
+      "id": "kenney-industrial-rustwall",
+      "card": "ART-SRC-RUSTWALL",
+      "family": "props",
+      "sourcePage": "https://kenney.nl/assets/city-kit-industrial",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Primary author page and original cached License.txt identify CC0 1.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "5b381164e5760f3830a2dbee43b972deee38b2a695d091b56e238ab2910c96d2",
+      "fit": "Tower supports, container panels and industrial silhouettes suit reuse in the existing wall layout.",
+      "risk": "Not ready-made salvage structures; fitting needs rusty material treatment, scaffold placement and merged or instanced repeats.",
+      "checked": "2026-09-30",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\kenney-city-kit-industrial",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "5b381164e5760f3830a2dbee43b972deee38b2a695d091b56e238ab2910c96d2"
+        },
+        {
+          "path": "unpacked/License.txt",
+          "sha256": "60a8c5c31191256ec9779dc18745dea6d69c46f4b29703459ce064c1765a59ea"
+        },
+        {
+          "path": "unpacked/Models/GLB format/water-tower.glb",
+          "sha256": "11ac7ae19f32ce889bfe7a9c8e78c8ce8c77b7a76b52fd4ffa439a022ea2ef40"
+        },
+        {
+          "path": "unpacked/Models/GLB format/shipping-container-a.glb",
+          "sha256": "7b2d5ca874c8e659ee6cfd1614f0470b70410b2ddc7620ac83b8954dedeb861d"
+        },
+        {
+          "path": "unpacked/Models/GLB format/chimney-large.glb",
+          "sha256": "fd88d6c971ffb27f5ee5b0df9f7c23ac82f9b6d32e85d3e2066f90a62f92f59f"
+        }
+      ],
+      "recipe": "tools/art/rustwall-source-sheet.py",
+      "adaptation": "None; original source previews only, waiting for Kyle."
+    },
+    {
+      "id": "quaternius-nature-rustwall-rocks",
+      "card": "ART-SRC-RUSTWALL",
+      "family": "props",
+      "sourcePage": "https://quaternius.com/packs/ultimatenature.html",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Primary author page and original cached License.txt identify CC0 1.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": null,
+      "fit": "Existing licensed Muddy Hollow cache supplies four low-cost original rock shapes for canyon outcrops.",
+      "risk": "No continuous strata walls; fitting needs desert colour, layered appearance and continuous joined banks. Legacy FBX shader alpha imports as zero; original diffuse alpha is one.",
+      "checked": "2026-09-30",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\quaternius-ultimate-nature-pack",
+      "files": [
+        {
+          "path": "License.txt",
+          "sha256": "83d8959f9fc56353ed571fbe2dc52e4bcd64508e2399501cd45ac2ce3df0bf8c"
+        },
+        {
+          "path": "fbx/Rock_1.fbx",
+          "sha256": "8a6e150e2d71dd601daf48d7967e273e940347a4826c2004b71ed1a9fa99c962"
+        },
+        {
+          "path": "fbx/Rock_2.fbx",
+          "sha256": "5a06ef3ec0b90098666407792fd2ea03879a10d3d0b0fe09b47f0df3a04025a1"
+        },
+        {
+          "path": "fbx/Rock_3.fbx",
+          "sha256": "4144136bd6c313ac7c48a08548504d7d30b7d628f35ce9dcd290ebe84e10e734"
+        },
+        {
+          "path": "fbx/Rock_5.fbx",
+          "sha256": "a335cfa716e962010450026884f19c7474967682334635286ca315eef3490c94"
+        }
+      ],
+      "recipe": "tools/art/rustwall-source-sheet.py",
+      "adaptation": "None; original source previews only, waiting for Kyle.",
+      "reusesCatalogAsset": "quaternius-ultimate-nature-pack"
     }
   ]
 }

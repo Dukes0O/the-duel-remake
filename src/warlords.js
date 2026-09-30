@@ -1,7 +1,8 @@
 import {TERRITORIES} from './wasteland-career.js';
 
 const details = Object.freeze({
-  sal: {reward: 'Side Saws'},
+  sal: {reward: 'Side Saws', rewardBuilt: false, car: 'banshee_muscle', brain: 'rammer',
+    taunt: 'Let us see how long those doors last.'},
   dustmonger: {reward: 'Smoke Screen'},
   mirage: {reward: 'Decoy Drone'},
   gunn: {},
@@ -22,6 +23,6 @@ export const WARLORDS = Object.freeze(Object.fromEntries(
   })]),
 ));
 
-// A fight belongs here only after its complete implementation ships. The
-// territory map uses this list instead of trusting progress saved by a newer build.
-export const BUILT_WARLORD_IDS = Object.freeze([]);
+// Only formats with a playable entry belong here. Signature moves and reward
+// settlement have their own cards; a saved future defeat never builds a fight.
+export const BUILT_WARLORD_IDS = Object.freeze(['sal']);

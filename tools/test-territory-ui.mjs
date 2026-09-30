@@ -40,7 +40,7 @@ test('hold stays a plain progress state until all four wins are earned', () => {
 
 test('a full hold offers FIGHT only when that warlord fight is actually built', () => {
   const full = profileFor({hold: 100});
-  const unavailable = territoryPanel(full);
+  const unavailable = territoryPanel(full, {builtWarlordIds: []});
   match(unavailable, /WARLORD FIGHT COMING LATER/,
     'an unbuilt full-hold fight says exactly what is missing');
   noMatch(unavailable, /<button[^>]*>\s*FIGHT\s*<\/button>/,
@@ -56,11 +56,11 @@ test('a full hold offers FIGHT only when that warlord fight is actually built', 
     'opening the fight does not claim a win or reward');
 });
 
-test('a real defeat shows the claimed reward and REMATCH for a built fight', () => {
+test('a saved defeat shows claimed territory and REMATCH without advertising an unbuilt reward', () => {
   const panel = territoryPanel(profileFor({hold: 100, claimed: true,
     defeated: true, wins: 1}), salBuilt);
-  match(panel, /DEFEATED · SIDE SAWS EARNED/,
-    'the defeated state names Sal\'s settled working reward');
+  match(panel, /DEFEATED/, 'the saved defeat is retained');
+  noMatch(panel, /SIDE SAWS EARNED/, 'WAR-02a-REWARD has not supplied a working reward');
   match(panel, /CLAIMED/, 'the matching territory carries its claimed banner');
   match(panel, /<button[^>]*data-warlord="sal"[^>]*>\s*REMATCH\s*<\/button>/,
     'a defeated built fight offers REMATCH, tied to Sal');
@@ -69,7 +69,7 @@ test('a real defeat shows the claimed reward and REMATCH for a built fight', () 
 
 test('saved defeat data cannot expose a launch or reward in a build without the fight', () => {
   const panel = territoryPanel(profileFor({hold: 100, claimed: true,
-    defeated: true, wins: 1}));
+    defeated: true, wins: 1}), {builtWarlordIds: []});
   match(panel, /WARLORD FIGHT COMING LATER/,
     'availability comes from shipped behavior, not save bytes');
   noMatch(panel, /<button/, 'no launch control is rendered for an unbuilt fight');

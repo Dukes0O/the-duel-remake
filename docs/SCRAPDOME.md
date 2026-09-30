@@ -242,7 +242,8 @@ no rank requirement, no ladder order.
   every 9 s on Easy, 7 s on Medium, 5 s on Hard.
 - **Counter and window:** if the player brakes hard or boosts clear during
   the tell, the sweep misses. Sal overshoots and for two seconds drives at
-  60% speed with reduced steering; hits on her rear then deal 1.5 times
+  60% speed with half her normal steering (0.5 times the yaw authority
+  from steeringYawAuthority); hits on her rear then deal 1.5 times
   damage. The window is shown by her saws sparking out.
 - **Phase two** (after Sal's first wreck): tells are 80% as long and she adds
   **Charge**: a straight boosted run across the ring, using the same flash
@@ -251,6 +252,18 @@ no rank requirement, no ladder order.
   player's side contacts deal 1.6 times ram damage, with sparks), 150 scrap,
   and Sal's territory marked claimed. Rematch wins pay 25 scrap. Settlement is
   once per fight, atomic, per named player (Save Guardian).
+- **Side Saws ownership (settled 30 September 2026):** the win earns the kit
+  for that named player on every car they own now or buy later, at no cost.
+  It is equipped automatically on the car that won; on other cars it waits in
+  the armory like any owned kit. The 1.6 times side-contact damage is its only
+  rule: no armor and no mass. A save that already records Sal defeated but
+  has no Side Saws gains them when it loads (only the settled win can record
+  that defeat), with no scrap paid again, so the armory never offers an item
+  the player does not own.
+- **Warlord switch (settled 30 September 2026):** every warlord fight, and
+  the territory map's launch into one, sits behind its own `warlords` switch
+  in dev, separate from `scrapdome`. `scrapdome` is released for Last Car
+  Rolling; a warlord releases only when Kyle approves it in the Preview.
 - **Presentation:** an intro card before the countdown (name, car, one taunt
   line as text), saws visible on her car, sparks and a saw scream during the
   tell, callouts `SAW SWEEP!` on a hit and `SHE MISSED. HIT HER NOW!` in the

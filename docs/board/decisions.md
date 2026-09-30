@@ -1331,3 +1331,5 @@ Implement Claude's settled numbers through an optional car argument to the exist
 ART-SRC-SALTFLATS claims the fifth lane for original licensed source comparison, using existing developer-made assets under Kyle's instruction. Its shared catalog hook waits for Rustwall to merge. It stops at Kyle's choice before adaptation. No new scene design is needed for a source sheet.
 
 TITAN-HANDLING may change only the three named Titan replay pins in tools/replays/expected-fingerprints.json after independent review of their old/new hashes and causes. All other recorded races and all world signatures remain unchanged. This is the explicit Titan exception on the settled card; no global replay regeneration is authorized.
+
+- 30 September 2026, Kyle: use the CC0 salt photo and tile it. The source comparison uses Marina Shemesh’s unchanged photograph with a mirrored UV material; the review records its repetition and baked light. This approves the ground recipe, while Salt Flats model selection remains for Kyle.

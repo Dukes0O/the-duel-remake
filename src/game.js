@@ -301,7 +301,8 @@ export class Duel {
     seed, opponents = [], weaponLevels, weaponLoadout, combatArmorKit = null, crewId = 'rook' } = {}) {
     const venue = ARENA_VENUES[venueId], rules = ARENA_MODES[mode];
     const released = this.featureFlags.base || this.featureFlags;
-    if (!this.featureFlags.enabled('scrapdome') || !released.enabled('wasteland2') || !venue || !rules ||
+    if (!this.featureFlags.enabled('scrapdome') || !released.enabled('wasteland2') ||
+        (mode === 'warlord' && !this.featureFlags.enabled('warlords')) || !venue || !rules ||
         !Array.isArray(opponents) || opponents.length < 1 || opponents.length > rules.maxOpponents ||
         opponents.some(spec => !CARS[spec?.car])) return false;
     const s = this.state;

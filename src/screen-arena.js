@@ -1,4 +1,6 @@
 import {arenaRanking} from './arena/arena-event.js';
+import {WARLORDS} from './warlords.js';
+import {CARS} from './config.js';
 
 // Screens for Scrapdome events (docs/SCRAPDOME.md sections 3 and 6). The
 // presentation functions are pure so they can be tested without a browser.
@@ -21,10 +23,12 @@ export function arenaHud(state) {
   const place = ranking.findIndex(participant => participant.id === 'player') + 1;
   const me = arena.participants.find(participant => participant.id === 'player');
   const hunters = arena.participants.filter(participant => participant.kind === 'cpu' && participant.targetId === 'player');
-  const leader = ranking[0], net = participant => participant.wrecks - participant.wrecked;
+  const leader = ranking[0], net = participant => arena.mode === 'warlord' ?
+    participant.wrecks : participant.wrecks - participant.wrecked;
   const tiedAtTop = ranking.length > 1 && net(ranking[0]) === net(ranking[1]) && ranking[0].wrecks === ranking[1].wrecks;
   return {
     phase: arena.phase,
+    modeLabel: arena.mode === 'warlord' ? 'FIRST TO THREE WRECKS' : 'LAST CAR ROLLING',
     timeLabel: suddenDeath ? 'SUDDEN DEATH · NEXT WRECK WINS' : 'TIME LEFT',
     remainingSec,
     place, field: arena.participants.length,
@@ -75,8 +79,8 @@ export function arenaYardPanel({opponents = 3, difficulty = 'medium'} = {}) {
     <li>Most wrecks when the clock runs out wins. A tie goes to sudden death.</li></ul></div>`;
 }
 
-const REASONS = Object.freeze({time: 'Decided when the clock ran out.',
-  'sudden-death': 'Decided in sudden death.', damage: 'Still level after sudden death: decided on damage dealt.'});
+const REASONS = Object.freeze({'three-wrecks': 'First to three wrecks.', time: 'Decided when the clock ran out.',
+  'sudden-death': 'Decided in sudden death.', damage: 'No wreck in sudden death: decided on damage dealt.'});
 
 export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   const arena = state.arena, result = arena?.result;
@@ -84,17 +88,22 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   const byId = Object.fromEntries(arena.participants.map(p => [p.id, p]));
   const place = result.placings.indexOf('player') + 1, me = byId.player, won = result.winnerId === 'player';
   const winner = byId[result.winnerId];
-  const title = won ? 'LAST CAR<br>ROLLING.' : place === 2 ? 'SO CLOSE.' : 'BACK TO<br>THE HEAP.';
-  const description = `${won ? 'You wrecked them more than they wrecked you.' : `${escapeHTML(winner.name)} took the Scrapdome.`} ${REASONS[result.reason] || ''}`;
+  const warlord = arena.mode === 'warlord' ? WARLORDS[arena.warlordId] : null;
+  const title = warlord ? won ? 'YOU WIN.' : 'TRY AGAIN.' :
+    won ? 'LAST CAR<br>ROLLING.' : place === 2 ? 'SO CLOSE.' : 'BACK TO<br>THE HEAP.';
+  const description = warlord
+    ? `${won ? `You beat ${escapeHTML(warlord.name)}.` : `${escapeHTML(warlord.name)} won. Losing costs nothing.`} ${REASONS[result.reason] || ''}`
+    : `${won ? 'You wrecked them more than they wrecked you.' : `${escapeHTML(winner.name)} took the Scrapdome.`} ${REASONS[result.reason] || ''}`;
   const metrics = metric('PLACE', `${ORDINALS[place - 1]} / ${arena.participants.length}`, true) +
     metric('WRECKS', me.wrecks) + metric('WRECKED', me.wrecked) + metric('DAMAGE DEALT', Math.round(me.damageDealt)) +
-    metric('SCRAP EARNED', `+${Number.isSafeInteger(result.scrapEarned) ? result.scrapEarned : 0}`) +
-    metric('HOLD', `${Number.isSafeInteger(result.hold) ? result.hold : 0} / 100`);
+    (warlord && !Number.isSafeInteger(result.scrapEarned) ? '' :
+      metric('SCRAP EARNED', `+${Number.isSafeInteger(result.scrapEarned) ? result.scrapEarned : 0}`) +
+      metric('HOLD', `${Number.isSafeInteger(result.hold) ? result.hold : 0} / 100`));
   const table = `<ol class="arena-results"><li class="arena-results-head"><b></b><span>DRIVER</span><strong>WRECKS / WRECKED</strong></li>${result.placings.map((id, index) => {
     const p = byId[id];
     return `<li class="${id === 'player' ? 'is-you' : ''}"><b>${ORDINALS[index]}</b><span>${escapeHTML(p.name)}${arenaStyleLabel(p) ? ` · ${arenaStyleLabel(p)}` : ''}</span><strong>${p.wrecks} / ${p.wrecked}</strong></li>`;
   }).join('')}</ol>`;
-  return {eyebrow: `SCRAPDOME / LAST CAR ROLLING / ${won ? 'VICTORY' : ORDINALS[place - 1]}`, title, description,
+  return {eyebrow: `SCRAPDOME / ${warlord ? escapeHTML(warlord.name.toUpperCase()) : 'LAST CAR ROLLING'} / ${won ? 'VICTORY' : ORDINALS[place - 1]}`, title, description,
     metrics, extra: table,
     actions: action('REMATCH', 'arena-rematch', true) + action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
 }
@@ -107,4 +116,21 @@ export function arenaPauseScreen(state, {metric, action, time}) {
     metrics: metric(hud.phase === 'sudden-death' ? 'SUDDEN DEATH' : 'TIME LEFT', time(hud.remainingSec), true) +
       metric('PLACE', `${hud.placeText} / ${hud.field}`) + metric('SCORE', hud.scoreText.replace(' · ', ' / ')),
     extra: '', actions: action('BACK TO THE FIGHT', 'resume', true) + action('REMATCH', 'arena-rematch') + action('BACK TO THE YARD', 'arena-yard')};
+}
+
+// The clock and cars stay frozen while the player reads this card.
+export function warlordIntroScreen(state, {metric, action, escapeHTML}) {
+  const arena = state.arena;
+  const warlord = arena?.mode === 'warlord' ? WARLORDS[arena.warlordId] : null;
+  if (!warlord || state.status !== 'warlord_intro') return null;
+  return {
+    eyebrow: 'SCRAPDOME / WARLORD DUEL',
+    title: escapeHTML(warlord.name.toUpperCase()),
+    description: escapeHTML(warlord.taunt),
+    metrics: metric('CAR', escapeHTML(CARS[warlord.car].name.toUpperCase()), true) +
+      metric('WIN', 'FIRST TO THREE WRECKS') + metric('TIME', '4:00 + SUDDEN DEATH'),
+    extra: '',
+    actions: action('BEGIN FIGHT', 'warlord-begin', true) +
+      action('BACK TO THE YARD', 'arena-yard'),
+  };
 }

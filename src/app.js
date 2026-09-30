@@ -12,6 +12,8 @@ import {featureFlags} from './feature-flags.js';
 import {raceFeatureFlags,wastelandUnlocked} from './wasteland-access.js';
 import {ARENA_FIELD} from './arena/arena-event.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
+import {startWarlordEvent, beginWarlordEvent} from './arena/warlord-event.js';
+import {BUILT_WARLORD_IDS} from './warlords.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
 import { seedFromUrl } from './rng.js';
@@ -305,6 +307,8 @@ export class App {
     this._applyRaceSettings(settings,customSeed);this.duel.emit({raceSettingsChanged:true});return this.getRaceChoices();
   }
   restart() {
+    if (this.duel.state.arena?.mode === 'warlord')
+      return this.startWarlordFight(this.duel.state.arena.warlordId);
     if (this.duel.state.arena) return this.startArenaEvent();
     if (this.duel.state.hiddenRoadVisit) {
       this.returnToMenu();
@@ -464,6 +468,8 @@ export class App {
     result.creditBalance=this.profile.credits;
   }
   _settleArenaResult(event,state){
+    // WAR-02a-REWARD owns atomic warlord pay. Never award ordinary arena pay.
+    if (state?.arena?.mode === 'warlord') return false;
     const result=state?.arena?.result,currentHold=Number.isSafeInteger(this.profile?.wasteland?.territories?.kettle?.hold)?this.profile.wasteland.territories.kettle.hold:0;
     if(result&&result.scrapEarned==null){Object.assign(result,{scrapEarned:0,holdAdded:0,hold:currentHold,settlementSaved:false});}
     if(!result||event?.result!==result||state!==this.duel.state||
@@ -568,9 +574,33 @@ export class App {
   arenaAvailable() {
     return this.wastelandUnlocked() && this._switches().enabled('scrapdome') === true;
   }
-  startArenaEvent({opponents = this._arenaOpponents ?? 3} = {}) {
+  warlordsAvailable() {
+    return this.arenaAvailable() && this._switches().enabled('warlords') === true;
+  }
+  startWarlordFight(warlordId) {
+    this._refreshPlayer();
     const state = this.duel.state;
-    if (!this.arenaAvailable() || !(this.isYardHomeActive() || state.arena)) return false;
+    const ownRematch = state.arena?.mode === 'warlord' &&
+      state.arena.warlordId === warlordId && this._runPlayerId === this.player.id &&
+      state.playerId === this.player.id;
+    if (!this.warlordsAvailable() || !BUILT_WARLORD_IDS.includes(warlordId) ||
+        this.profile.wasteland?.territories?.[warlordId]?.hold !== 100 ||
+        !(this.isYardHomeActive() || ownRematch)) return false;
+    return this._startArenaFight({warlordId, opponents: 1});
+  }
+  beginWarlordFight() {
+    if (this._runPlayerId !== this.player.id ||
+        this.duel.state.playerId !== this.player.id || !this.warlordsAvailable()) return false;
+    this._clearHiddenRoadInput();
+    return beginWarlordEvent(this.duel);
+  }
+  startArenaEvent({opponents = this._arenaOpponents ?? 3} = {}) {
+    return this._startArenaFight({opponents});
+  }
+  _startArenaFight({opponents, warlordId = null}) {
+    const state = this.duel.state;
+    if (!(warlordId ? this.warlordsAvailable() : this.arenaAvailable()) ||
+        !(this.isYardHomeActive() || state.arena)) return false;
     this._refreshPlayer();
     const count = Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
     const car = isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42';
@@ -585,12 +615,14 @@ export class App {
     this._racePaint = getPaintAppearance(this.profile, car,
       {muddyHollowEnabled: this._switches().enabled('muddy-hollow')}); this._racePaintCar = car;
     this.audio.unlock(); this.audio.setPaused(false);
-    return this.duel.startArenaEvent({car, driverId: getEquippedDriverId(this.profile),
+    const options = {car, driverId: getEquippedDriverId(this.profile),
       upgrades: getUpgradeLevels(this.profile, car), difficulty: this._raceSettings.difficulty,
       cpuDifficulty: this.cpuDifficulty, seed: (1989 + this._arenaSerial * 7919) >>> 0,
       playerId: this.player.id, opponents: field, weaponLevels: getProfileWeapons(this.profile).levels,
       weaponLoadout: getCarLoadout(this.profile), combatArmorKit: getEquippedArmorKit(this.profile, car),
-      crewId: selectedCrewId(this.profile)});
+      crewId: selectedCrewId(this.profile)};
+    return warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
+      this.duel.startArenaEvent(options);
   }
   returnToYard() {
     if (!this.duel.state.arena) return false;
