@@ -723,7 +723,8 @@ tasks:
     status: ready
     flag: arsenal
     owns: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/arsenal/oil.js, src/arsenal/smoke.js, tools/test-arsenal-core.mjs, tools/test-arsenal-save.mjs, docs/changes/ARS-CORE.md]
-    hooks: [src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat-ai.js, src/weapon-upgrades.js, src/car-loadout.js, src/screen-armory.js, src/wasteland-progress.js, src/sim-driving.js, src/sim-rival.js, src/render3d.js, src/combat-effects.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js]
+    hooks: [src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/onfoot-weapons.js, src/combat-ai.js, src/weapon-upgrades.js, src/car-loadout.js, src/screen-armory.js, src/wasteland-progress.js, src/sim-driving.js, src/sim-rival.js, src/render3d.js, src/combat-effects.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js]
+    sequencing: "Steering owns sim-driving until its gate/merge; Fuel owns feature-flags/render/audio/onfoot/app hooks until its merge. Add actual RPG lock/guidance through onfoot-weapons to targetFor, proven by read-only bypass inspection. Protected sound-bank belongs to external audio owner: named cue additions only by explicit file handoff, otherwise wait; no competing edits."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build docs/ARSENAL.md section 2 exactly: road hazards, car effects, targetFor (every existing CPU aim, homing and lock path routed through it, with a test that fails on a bypass), unlocks by rank and 400-scrap purchase, rewards that unlock free, upgrades, computer loadouts, and the arsenal switch (dev)."
