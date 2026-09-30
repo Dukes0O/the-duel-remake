@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-27T23:57:32.859Z
+Observed at: 2026-09-30T14:38:17.492Z
 
-Observation commit: 7d471f45984ce3a29ae3e96b710333c849448af1
+Observation commit: 6729b48b0ae7f17abb8bb74c18b18e71c06a82f6
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 7d471f45984ce3a29ae3e96b710333c849448af1
+Integration HEAD: 6729b48b0ae7f17abb8bb74c18b18e71c06a82f6
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -14,7 +14,7 @@ Live commit: not checked
 
 Live build version: not checked
 
-Full tier: passed; exact HEAD passed: yes.
+Full tier: stale; exact HEAD passed: no.
 
 Last recorded full run: 2026-09-27T23:57:32.511Z; tested commit: 7d471f45984ce3a29ae3e96b710333c849448af1.
 
@@ -37,9 +37,9 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| lane/audio/aud-10 | 2 | unknown | true | false | unknown |
-| lane/audio/aud-12 | 2 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 2 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/audio/aud-10 | 5 | unknown | true | false | unknown |
+| lane/audio/aud-12 | 5 | unknown | true | false | unknown |
+| lane/audio/aud-17-picks | 5 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -60,9 +60,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
 | Review `looks/` | 9,043,315 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 194,279 B | -206,348 B | 5,000,000 B |
+| Added bytes in last merge | 199,686 B | +5,407 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 339,821,568 B | +585,728 B | unavailable |
+| Git objects | 339,901,440 B | +79,872 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -71,7 +71,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 006cd48a8b263d234dfa3edbc910f2debd7f1861
 - Local main: missing
-- Local integration/wasteland: 7d471f45984ce3a29ae3e96b710333c849448af1
+- Local integration/wasteland: 6729b48b0ae7f17abb8bb74c18b18e71c06a82f6
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -79,4 +79,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 006cd48a8b263d234dfa3edbc910f2debd7f1861.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: behind local; cached commit d427a174dcd98641dc17c1e859061995bf7c5d5c.
+- Remote origin/integration/wasteland: behind local; cached commit 8009f589f8807726d57b903169f79943f398f223.
