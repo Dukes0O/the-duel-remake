@@ -10,7 +10,8 @@ tasks:
     lane: UI
     size: S
     needs: []
-    status: backlog
+    owner: codex
+    status: ready
     owns: [docs/changes/UX-ENTRY-HINTS.md]
     helpers: [test_author, reviewer, browser_qa]
     acceptance:
@@ -18,7 +19,7 @@ tasks:
       - "Explain normal exit: hold 0.4 seconds below 40 km/h; bailout above 40 km/h: hold 1 second and lose 25 health. Verify the exact 40 km/h boundary in source rather than guessing."
       - "Explain reentry: release the input first, then hold for 0.6 seconds within 3.5 metres of the car."
       - "Show availability only in Wasteland combat races with wasteland2 enabled; preserve exclusion from time trials, ordinary races and objective events. Verify actual behavior in private memory-only QA."
-    note: "Requested by Kyle through the audio session on 25 September. Values and mode scope are that session's reported findings, not independently revalidated by this capture. No implementation authorized by this note; Director assigns UI ownership after source review."
+    note: "Kyle, 30 September 2026: build it (he and Gratian play on foot). Requested by Kyle through the audio session on 25 September. Values and mode scope are that session's reported findings, not independently revalidated by this capture. No implementation authorized by this note; Director assigns UI ownership after source review."
   - id: OPS-LAUNCHER-DIAG
     title: "Desktop shortcut failure resolved by user confirmation"
     lane: TOOL
@@ -341,7 +342,8 @@ tasks:
     lane: ART
     size: L
     needs: [GFX-01-P2]
-    status: backlog
+    status: replaced
+    replaced_by: "ART-SRC cards, 30 September 2026 (SPEC 0.11: start from existing assets)"
     owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, docs/board/looks/crew-p3/]
     hooks: [tools/test-rook-p2-source.mjs, tools/test-rook-p2-candidate.mjs, tools/test-rook-p2-review.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [test_author, reviewer, art_critic, browser_qa]
@@ -526,8 +528,91 @@ tasks:
     size: S
     needs: [CRASH-RELEASE]
     status: ready
+    waiting_on: kyle
     acceptance:
       - "wasteland2 is on and players cannot turn it off, so the release rule 'combat balance with wasteland2 off and on' checks a rule set nobody can play (27 September 2026: it failed at Medium 13/30 while the live set passed). Propose to Kyle (waiting_on: kyle) removing the wasteland2 switch-off path and the off-balance gate from AGENTS.md, docs/OPERATIONS.md and the balance tool; do not remove before Kyle agrees."
+  - id: ART-SRC-CREW
+    title: "Crew figures: short list of existing starting models for Kyle"
+    owner: codex
+    lane: ART
+    size: S
+    needs: []
+    status: ready
+    flag: wasteland2
+    acceptance:
+      - "SPEC 0.11 sourcing step for the eight crew figures (replaces GFX-01-P3). Find two or three candidate starting models: CC0 first (Quaternius, Kenney, Poly Pizza CC0, OpenGameArt CC0), then CC-BY with credit. Rigged and animated humanoids are preferred. Check and record each licence, source page, author and checksum in tools/art/catalog.json as a candidate; cache the files in C:\\Users\\kyleb\\dev\\art-library\\, never in the repository."
+      - "Show each candidate on one comparison sheet, docs/board/looks/crew-src/round-1.jpg (500 KB at most), beside the current in-game Rook, with a short note per candidate: licence, triangle count, rig and animations, what adapting it would take. Then set waiting_on: kyle. No adaptation work before Kyle picks."
+  - id: ART-SRC-HANDS
+    title: "First-person hands and gloves: short list of existing starting models"
+    owner: codex
+    lane: ART
+    size: S
+    needs: []
+    status: ready
+    flag: wasteland2
+    acceptance:
+      - "SPEC 0.11 sourcing step for the first-person hands, gloves and sleeves (replaces GFX-02-P3). Same rules as ART-SRC-CREW: two or three candidates, CC0 first, licences recorded in tools/art/catalog.json, files cached outside the repository."
+      - "One comparison sheet, docs/board/looks/first-person-src/round-1.jpg, beside the current in-game hands holding the RPG, with a note per candidate. Then waiting_on: kyle. No adaptation before Kyle picks."
+  - id: ART-SRC-RUSTWALL
+    title: "Rustwall salvage wall and canyon rock: short list of existing starting models"
+    owner: codex
+    lane: ART
+    size: S
+    needs: []
+    status: ready
+    flag: hidden-road
+    acceptance:
+      - "SPEC 0.11 sourcing step for Rustwall's salvage (wrecked cars, sheet metal, tower parts) and the canyon strata (replaces EGG-02-P3). Two or three candidate sets, CC0 first, licences recorded in tools/art/catalog.json, files cached outside the repository. The Quaternius pack already used for Muddy Hollow counts as a candidate source."
+      - "One comparison sheet, docs/board/looks/rustwall-src/round-1.jpg, beside the current in-game Rustwall, with a note per candidate. Then waiting_on: kyle. No adaptation before Kyle picks."
+  - id: HK-RUSTWALL-BASELINE
+    title: "Rustwall frame test keeps its baseline in the repository"
+    owner: codex
+    lane: OPS
+    size: S
+    needs: []
+    status: ready
+    acceptance:
+      - "tools/test-rustwall-frame.mjs reads its baseline from commit 5a994ad in Git history, so a history compaction would break it. Record the numbers it compares (not images) in a small checked-in file under tools/ and read that instead; the test's verdicts must not change."
+  - id: DESIGN-ARSENAL
+    title: "Settle the arsenal waves (ARS-01 to ARS-03) for build"
+    owner: claude
+    lane: DESIGN
+    size: M
+    needs: []
+    status: building
+    claimed_by: "Claude, 30 September 2026"
+    acceptance:
+      - "docs/ARSENAL.md settles every new car weapon in the SPEC 3.3 table: what it does, its numbers, counter, computer use, sound cues, save and unlock rules, and the shared systems the weapons are built on. Build cards follow on the board."
+  - id: DESIGN-CREW
+    title: "Settle crew gear, boarding and computer crews (CREW-02 to CREW-04) for build"
+    owner: claude
+    lane: DESIGN
+    size: M
+    needs: []
+    status: building
+    claimed_by: "Claude, 30 September 2026"
+    acceptance:
+      - "docs/CREW.md settles each crew member's signature gear, boarding a car, and computer crews getting out, with numbers, counters and tests. Build cards follow on the board."
+  - id: DESIGN-ARENA-MODES
+    title: "Settle Fuel Run, Bounty Hunt, Ambush Alley, Salt Flats and Convoy Raid for build"
+    owner: claude
+    lane: DESIGN
+    size: M
+    needs: []
+    status: building
+    claimed_by: "Claude, 30 September 2026"
+    acceptance:
+      - "docs/SCRAPDOME.md gains a settled section for each remaining mode and the Salt Flats Scrapyard map (ARENA-03 to ARENA-07): goal, rules, scoring, pay, computer behaviour, art sources and tests. Build cards follow on the board."
+  - id: DESIGN-WARLORDS-4-8
+    title: "Settle warlords 4 to 8 and the ladder's end (WAR-03, WAR-04) for build"
+    owner: claude
+    lane: DESIGN
+    size: M
+    needs: []
+    status: building
+    claimed_by: "Claude, 30 September 2026"
+    acceptance:
+      - "docs/SCRAPDOME.md section 5 gains a 'settled for build' table for Gearhead Gunn, Kettle Kingpin, The Twin Vultures, The Tollkeeper and Baron Blackiron, plus story cards, wanted posters and the secret crew member. Build cards follow on the board."
   - id: CRASH-02
     title: "Crash look and sound"
     priority: 3
@@ -630,7 +715,8 @@ tasks:
     lane: VIS
     size: L
     needs: [GFX-02-P2]
-    status: backlog
+    status: replaced
+    replaced_by: "ART-SRC cards, 30 September 2026 (SPEC 0.11: start from existing assets)"
     owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p3-source.json, public/assets/models/wasteland/first-person/, docs/ASSET_PIPELINE.md, docs/board/looks/first-person-p3/, docs/changes/GFX-02-P3.md]
     hooks: [tools/test-first-person-cloth.mjs, tools/test-first-person-polish.mjs, tools/first-person-contact.mjs, tools/test-first-person-contact.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
@@ -695,7 +781,8 @@ tasks:
     lane: VIS
     size: L
     needs: [EGG-02-P2]
-    status: backlog
+    status: replaced
+    replaced_by: "ART-SRC cards, 30 September 2026 (SPEC 0.11: start from existing assets)"
     owns: [tools/blender/rustwall.py, public/assets/models/wasteland/rustwall/, docs/board/looks/rustwall-p3/]
     hooks: [src/rustwall-scene.js, tools/scenarios/rustwall.mjs, tools/scenarios/rustwall-frame.mjs, tools/test-rustwall-assets.mjs, tools/test-rustwall-scene.mjs, tools/test-rustwall-p2.mjs, tools/test-rustwall-p2-relief.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     flag: hidden-road
@@ -2113,7 +2200,7 @@ tasks:
     owner: codex
     lane: SAVE
     size: S
-    needs: [WAR-02a-FORMAT]
+    needs: [WAR-02a-FORMAT, CRASH-SWITCH-REMOVE]
     status: ready
     flag: scrapdome
     helpers: [save_guardian]
@@ -2163,8 +2250,9 @@ tasks:
     owner: claude
     lane: DESIGN
     size: S
-    needs: [WAR-SAL-TUNE]
-    status: ready
+    needs: []
+    status: building
+    claimed_by: "Claude, 30 September 2026 (Kyle: design the rest of phase 3 now; tune after Sal is played)"
     acceptance:
       - "A 'Settled for build' table like Sal's in docs/SCRAPDOME.md section 5, using what Sal taught us; then WAR-02b becomes ready for Codex."
   - id: DESIGN-WAR-02c
@@ -2172,8 +2260,9 @@ tasks:
     owner: claude
     lane: DESIGN
     size: S
-    needs: [WAR-SAL-TUNE]
-    status: ready
+    needs: []
+    status: building
+    claimed_by: "Claude, 30 September 2026 (Kyle: design the rest of phase 3 now; tune after Sal is played)"
     acceptance:
       - "A 'Settled for build' table like Sal's in docs/SCRAPDOME.md section 5; then WAR-02c becomes ready for Codex."
   - id: WAR-01
