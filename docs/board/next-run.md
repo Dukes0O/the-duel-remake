@@ -70,11 +70,11 @@ releases. A design question goes to Claude in writing.
   integrated Titan handling but did not release it.
 - **Development:** `integration/wasteland`. Switches `wasteland2` and
   `hidden-road`, `scrapdome`, `titan-climb` and `muddy-hollow` are `on`;
-  `career-backup` and `warlords` are `dev`.
+  `career-backup` is `dev`; `warlords` is `on` after Claude's Sal merge.
 - **Phase 2 and BETA-01 are done.** Art is still at about 3 of 5 (crew, hands,
   Rustwall); SPEC 0.11 sets the new approach.
 - **Integration:** WAR-02a-FORMAT, WAR-02a-SAL, WAR-02a-REWARD and
-  WAR-PAY are merged behind `warlords: dev`. Sal's moves, free Side Saws,
+  WAR-PAY are merged with `warlords: on`. Sal's moves, free Side Saws,
   the one-time territory claim and the corrected ladder payments are built.
   Claude owns Sal's play-through and release; do not touch that lane.
 - **Art:** Quaternius Modular Men is picked for crew. Claude recorded Kyle's
