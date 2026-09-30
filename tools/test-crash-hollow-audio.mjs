@@ -9,7 +9,7 @@ import { SOUND_BANK } from '../src/sound-bank.js';
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 
-function makeAudio(enabled = ['crash-effects', 'muddy-hollow']) {
+function makeAudio(enabled = ['muddy-hollow']) {
   const audio = new EngineAudio({ flags: { enabled: name => enabled.includes(name) } });
   const calls = [];
   audio.context = { state: 'running', currentTime: 10 };
@@ -32,9 +32,9 @@ const smash = (dvMph, point = { x: 30, z: 0 }) => ({ vehicleSmash: { severity: '
 for (const id of ['vehicle.crash-impact', 'world.muddy-hollow-splash', 'world.muddy-hollow-mud']) {
   check(SOUND_BANK[id], `${id} is in the sound bank`);
 }
-check(SOUND_BANK['vehicle.crash-impact'].flag === 'crash-effects' &&
+check(SOUND_BANK['vehicle.crash-impact'].flag === undefined &&
   SOUND_BANK['vehicle.crash-impact'].buffersFrom === 'vehicle.crash.recorded',
-'the smash reuses the recorded crashes behind the crash-effects switch');
+'the permanent smash reuses the recorded crashes without a switch');
 for (const id of ['world.muddy-hollow-splash', 'world.muddy-hollow-mud']) {
   check(SOUND_BANK[id].flag === 'muddy-hollow', `${id} is behind the muddy-hollow switch`);
   for (const file of SOUND_BANK[id].files)
@@ -66,7 +66,8 @@ for (const name of ['qubodup', 'barion', 'lzmraul']) check(credits.includes(name
 {
   const { audio, calls } = makeAudio([]);
   audio.event(smash(40), {}, null);
-  check(!calls.some(call => call.id === 'vehicle.crash-impact'), 'switch off: no smash sound');
+  check(calls.filter(call => call.id === 'vehicle.crash-impact').length === 1,
+    'released smash sound plays with every development switch off');
 }
 {
   const { audio, calls } = makeAudio();

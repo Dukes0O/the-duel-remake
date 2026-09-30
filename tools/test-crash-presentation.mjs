@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import * as THREE from 'three';
-import {createFeatureFlags} from '../src/feature-flags.js';
 import {createCombatEffects} from '../src/combat-effects.js';
 import {flipbookFrameUVInto} from '../src/combat-vfx-atlas.js';
 import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
@@ -26,15 +25,6 @@ function state(actor = {}) {
     s: 10, lateral: 1, opponents: [{s: 12, lateral: -2, ...actor}],
     traffic: [], police: {pursuit: null}};
 }
-
-test('crash-effects is a named switch, released in CRASH-RELEASE', () => {
-  const flags = createFeatureFlags({storage: null, search: '', qa: false});
-  assert.equal(flags.state('crash-effects'), 'on');
-  assert.equal(flags.enabled('crash-effects'), true);
-  const qa = createFeatureFlags({storage: null,
-    search: '?flags=crash-effects', qa: true});
-  assert.equal(qa.enabled('crash-effects'), true);
-});
 
 test('vehicleSmash uses the exact point and bounded delta-v scale', () => {
   const effects = createCombatEffects({loadTexture: loader(), crashPresentation: true});
@@ -86,8 +76,7 @@ test('vehicleSmash uses the exact point and bounded delta-v scale', () => {
 });
 
 test('ordinary rigid-body contact identifies the struck actor and damage zone', () => {
-  const duel = new LegacyRoadsideDuel({seed: 624,
-    featureFlags: {'crash-physics': true}});
+  const duel = new LegacyRoadsideDuel({seed: 624});
   duel.startCampaign({mode: 'duel', car: 'banshee_muscle', startStage: 0});
   const player = duel.state, rival = player.rival, events = [];
   Object.assign(player, {status: 'racing', invulnerableSec: 0, traffic: [],

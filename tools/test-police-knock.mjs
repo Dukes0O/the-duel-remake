@@ -4,7 +4,7 @@ import {KNOCK, startKnock} from '../src/vehicle-knock.js';
 
 function fixture() {
   const duel = new LegacyRoadsideDuel({seed: 624,
-    featureFlags: {'crash-physics': true}});
+    featureFlags: {}});
   duel.startCampaign({mode: 'duel', car: 'banshee_muscle', startStage: 0});
   const state = duel.state;
   state.status = 'racing';

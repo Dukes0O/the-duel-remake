@@ -17,11 +17,10 @@ import { upgradedCar } from '../src/progression.js';
 const stageIndex = COURSE.findIndex(stage => !stage.kind && stage.hasRival);
 const zeroDamage = () => ({ front: 0, rear: 0, left: 0, right: 0 });
 
-function fixture({ mode = 'wasteland', legacy = false, wasteland2 = true,
-  crashPhysics = true } = {}) {
+function fixture({ mode = 'wasteland', legacy = false, wasteland2 = true } = {}) {
   const duel = new (legacy ? LegacyRoadsideDuel : Duel)({
     seed: 1989,
-    featureFlags: { wasteland2, 'crash-physics': crashPhysics },
+    featureFlags: { wasteland2 },
   });
   duel.startCampaign({ startStage: stageIndex, mode, car: 'falcone_f42' });
   const point = (s, lateral = 0) => ({ x: lateral, y: 0, z: s, heading: 0, curvature: 0 });
@@ -208,22 +207,6 @@ test('outside clips and aligned rear hits send traffic to its nearest shoulder',
     assert.equal(duel._surface(traffic.s, traffic.lateral).road, false,
       `${name} cannot become a non-collidable ghost in another lane`);
   }
-});
-
-test('crash-physics off keeps both released scripted roadside traffic outcomes', () => {
-  const lowDuel = fixture({crashPhysics: false});
-  const low = trafficHit(lowDuel, lowDuel.car.topSpeed * .3);
-  assert.equal(low.events.find(event => event.roadsideImpact)?.roadsideImpact?.outcome, 'knock');
-  assert.equal(low.traffic.knock, undefined, 'switch-off low hit does not start rigid-body knock');
-  assert.equal(low.traffic.roadsideMotion?.outcome, 'knock',
-    'switch-off low hit keeps the released scripted roadside motion');
-
-  const highDuel = fixture({crashPhysics: false});
-  const high = trafficHit(highDuel, highDuel.car.topSpeed * .7);
-  assert.equal(high.events.find(event => event.roadsideImpact)?.roadsideImpact?.outcome, 'obliterate');
-  assert.equal(high.traffic.knock, undefined, 'switch-off hard hit does not start rigid-body knock');
-  assert.equal(high.traffic.roadsideMotion?.outcome, 'obliterate',
-    'switch-off hard hit keeps the released scripted obliteration motion');
 });
 
 // CRASH-04 replaced the vanishing burst with a hulk that slides and tumbles

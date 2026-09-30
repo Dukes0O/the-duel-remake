@@ -101,7 +101,9 @@ for (const [name, flags] of Object.entries(views)) {
 check('crash sound plays with a custom flag view that disables retired flags', () => {
   const audio = new EngineAudio({flags: {enabled: () => false}});
   const calls = [];
-  audio.context = {state: 'running', currentTime: 10};
+  audio.context = {state: 'running', currentTime: 10,
+    createBiquadFilter: () => ({type: '', frequency: {value: 0}, Q: {value: 0},
+      connect() {}, disconnect() {}})};
   audio.muted = false; audio.paused = false;
   audio._syncMixer = () => {};
   audio._spatialOutput = () => ({level: {}, space: {distance: 30, pan: 0}, disconnect() {}});
