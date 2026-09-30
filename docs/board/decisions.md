@@ -1333,3 +1333,20 @@ ART-SRC-SALTFLATS claims the fifth lane for original licensed source comparison,
 TITAN-HANDLING may change only the three named Titan replay pins in tools/replays/expected-fingerprints.json after independent review of their old/new hashes and causes. All other recorded races and all world signatures remain unchanged. This is the explicit Titan exception on the settled card; no global replay regeneration is authorized.
 
 - 30 September 2026, Kyle: use the CC0 salt photo and tile it. The source comparison uses Marina Shemesh’s unchanged photograph with a mirrored UV material; the review records its repetition and baked light. This approves the ground recipe, while Salt Flats model selection remains for Kyle.
+
+## 30 September 2026: fitting picked art, and who is on the crew
+
+Codex's four source short lists showed clean, bright, toy-like models; the
+Wasteland is gritty. Claude settled rules for turning any picked source into
+game art (docs/WASTELAND_ART.md, "Fitting existing models"): no source palette
+survives, wrecks look wrecked, judge in the game renderer, and keep the current
+art unless the fit beats it by round 3. The board had no card after the source
+picks for the crew, hands and Rustwall; ART-FIT-CREW-M, ART-FIT-CREW-W,
+ART-FIT-HANDS and ART-FIT-RUSTWALL now carry that work.
+
+The crew sheets never said who is a man or a woman. Settled: Nell, Odessa,
+Wren and the secret Vesper Blackiron are women; Rook, Jax, Cinder, Dune and
+Tusk are men. The picked Modular Men pack covers five; ART-SRC-CREW-W finds a
+women's source. The Convoy Raid needs a tanker that no inspected pack has:
+ART-SRC-TANKER.
+
