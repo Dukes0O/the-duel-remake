@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-09-30T21:31:32.684Z
+Observed at: 2026-09-30T21:32:06.602Z
 
-Observation commit: 56ad5a8e4e0470598e858641c184eba59d36f8fd
+Observation commit: 5d497c36e6edaf6e8459ffdd65ea12225c0320a5
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 56ad5a8e4e0470598e858641c184eba59d36f8fd
+Integration HEAD: 5d497c36e6edaf6e8459ffdd65ea12225c0320a5
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -43,7 +43,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | lane/audio/aud-17-picks | 5 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/cmb/arena-03-fuel-run | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-03-fuel-run |
 | lane/phys/arena-steer | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-steer |
-| lane/save/war-pay | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/war-pay |
 
 ## Unmerged branches for idle review
 
@@ -66,10 +65,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 430,908 B | +0 B | 500,000 B |
 | Review `looks/` | 9,947,193 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 301,075 B | +168,179 B | 5,000,000 B |
+| Added bytes in last merge | 301,075 B | +0 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 313,366,528 B | +1,539,072 B | unavailable |
-| Lane folders | 5 | +2 | unavailable |
+| Git objects | 313,535,488 B | +168,960 B | unavailable |
+| Lane folders | 4 | -1 | unavailable |
 
 ## Backups
 
@@ -77,7 +76,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: e2c418e73538af1c24d783c79e426151e2c79c9a
 - Local main: missing
-- Local integration/wasteland: 56ad5a8e4e0470598e858641c184eba59d36f8fd
+- Local integration/wasteland: 5d497c36e6edaf6e8459ffdd65ea12225c0320a5
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
