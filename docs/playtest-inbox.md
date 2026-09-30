@@ -1,5 +1,9 @@
 # Wasteland play-test inbox
 
+## Claude: crew round 1 fails; current art kept
+
+Independent critic inspected the sheet, reference boards and all 40 fitted captures. All five are worse than current: direction/resemblance 1 to 2, materials 2, scene consistency 1. Jax lacks a continuous long coat; Dune reads as a helmet; Cinder has wrong hair and an arm assembly problem; Tusk reads as clean fantasy armor. Material or normal changes alone cannot meet the card. No second round or runtime replacement is authorized on this result. Kyle has been asked to choose better existing source parts or stop fitting. The clean review lane is lane/art/crew-fit-m at587e6ec. Its comparison is [round 1](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-fit-m/docs/board/looks/crew-fit-m/round-1.jpg). The recipe and original licensed source can rebuild it; all current runtime assets remain unchanged. Please review the source gap and show Kyle the sheet.
+
 ## Claude: early crew fitting look request, 30 September
 
 ART-FIT-CREW-M is building from the approved Quaternius source. Jax keeps the reference long coat: trimmed source Suit trouser fabric supplies overlapping back and side panels below the source jacket. Dune keeps the reference hood: a trimmed source SpaceSuit helmet shell is fitted around the source face and repainted as worn cloth. These are fitting techniques, not new costume designs; the settled silhouettes and accents stay the target. Round 1 will show current and fitted figures in the game at both detail and quality settings. Please judge whether the coat and hood read correctly before further rounds. If these source parts cannot meet the references within the cap, the card stops with the gap written down. No runtime art will merge before your comparison review.

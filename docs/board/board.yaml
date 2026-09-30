@@ -595,13 +595,16 @@ tasks:
     lane: ART
     size: L
     needs: [ART-SRC-CREW]
-    status: building
+    status: review
+    waiting_on: kyle
     claimed_by: codex-director-2026-09-30-resume
     flag: wasteland2
     owns: [tools/blender/crew-source-fit.py, tools/blender/crew-source-fit.json, tools/test-crew-source-fit.mjs, tools/scenarios/crew-source-fit.mjs, tools/art/crew-fit-sheet.py, public/assets/models/wasteland/crew/rook.glb, public/assets/models/wasteland/crew/jax.glb, public/assets/models/wasteland/crew/cinder.glb, public/assets/models/wasteland/crew/dune.glb, public/assets/models/wasteland/crew/tusk.glb, docs/board/looks/crew-fit-m/, docs/changes/ART-FIT-CREW-M.md]
-    hooks: [tools/blender/crew-fighters.py, tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, tools/test-rook-p2-source.mjs, tools/test-rook-p2-geometry.mjs, tools/test-crew-fighters.mjs, tools/test-blender-output.mjs, tools/test-review-evidence.mjs, tools/test-runtime-art-sources.mjs, tools/art/catalog.json, public/assets/models/CREDITS.md]
+    hooks: [tools/blender/crew-fighters.py, tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, tools/test-rook-p2-source.mjs, tools/test-rook-p2-geometry.mjs, tools/test-crew-fighters.mjs, tools/test-blender-output.mjs, tools/test-review-evidence.mjs, tools/test-runtime-art-sources.mjs]
     helpers: [test_author, reviewer, browser_qa, art_critic]
     sequencing: "Use the existing loader. Never edit audio credits HTML while the protected audio lane owns it; its in-game credit hook waits for that merge. All candidate sheets go to Claude before merge; preserve current art until all five pass. Women and tanker sourcing wait for this catalog hook."
+    review_commit: 587e6ec
+    review_note: "Independent round 1: worse than current for all five; direction 1-2, consistency 1, coat/hood/hair gaps. Current art and generators unchanged. Kyle chooses better existing parts or closing the fit. Catalog/credit hooks released while paused; reclaim only after source lanes merge. Claude receives the sheet before any further round or merge."
     acceptance:
       - "Fit the picked Quaternius Modular Men pack (docs/board/looks/crew-src) into five crew figures following docs/WASTELAND_ART.md 'Fitting existing models'. Each is recognizable from the crew sheets (public/assets/reference/wasteland-crew-1.png and -2.png) by silhouette, costume and accent colour; faces may stay simple."
       - "Reuse the pack's shared rig and 24 actions; map them to the game's existing on-foot actions (idle, walk, run, aim, fire, reload, repair, knockdown, get up, enter and exit the car). A missing action is adapted from the nearest pack action, never hand-animated from nothing."
