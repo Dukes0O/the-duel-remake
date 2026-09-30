@@ -33,6 +33,8 @@ after(() => console.log(`Rustwall baseline: ${checks} checks.`));
 
 function command(repo, executable, args) {
   const env = {...process.env};
+  // Nested Node test contexts suppress the child reporter output.
+  delete env.NODE_TEST_CONTEXT;
   // A caller's Git environment must never redirect this fixture to shared history.
   for (const name of Object.keys(env)) if (name.startsWith('GIT_')) delete env[name];
   Object.assign(env, {GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: join(repo, '.empty-git-global-config')});
