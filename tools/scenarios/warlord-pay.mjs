@@ -123,7 +123,7 @@ export async function run(context) {
     const newFirst = await finish(context, 'window.__payTab'); check(newFirst, 720, true, quality + ' new tab first');
     await context.evaluate('window.__payTab.close();delete window.__payTab;true');
     reports.push({quality,fresh,first,second,reload,afterReload,newSeed,newFirst});
-    console.log(quality + ': actual fresh Preview first720, rematch312, same-tab reload remains rematch312, different tab first720');
+    console.log(quality + ': actual fresh Preview first 720, rematch 312, same-tab reload remains rematch 312, different tab first 720');
   }
   await writeFile(join(context.outputDir, 'pay-verdict.json'), JSON.stringify(reports, null, 2) + '\n');
 }

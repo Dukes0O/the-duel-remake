@@ -39,14 +39,14 @@ a different tab using .qa-dist, a private port and memory-only saves.
 
 ## Tests first
 
-Independent acceptance tests committed as 8e9c74d failed18/18 on the old pay
+Independent acceptance tests committed as 8e9c74d failed 18/18 on the old pay
 and missing public ladder policy. Additional invalid-context tests committed
-as a7ce6d9 also failed before production edits: invalid economics still paid150.
-New focused tests now pass19/19 with93 checks. Existing reward settlement tests
-pass29/29 with234 checks. The public policy covers every ladder entry at every
+as a7ce6d9 also failed before production edits: invalid economics still paid 150.
+New focused tests now pass 19/19 with 93 checks. Existing reward settlement tests
+pass 29/29 with 234 checks. The public policy covers every ladder entry at every
 difficulty; rematches and losses cover zero through three boss wrecks, a capped
 nine-wreck fixture and uncredited wall wrecks. Actual App fights cover a fresh
-Preview first win720, rematch312 and two-wreck loss144, captured difficulty,
+Preview first win 720, rematch 312 and two-wreck loss 144, captured difficulty,
 result explanation, failed save, fresh owner retry and one atomic registry write.
 
 ## Changed assertions
@@ -55,22 +55,22 @@ The new App fixture initially cleared every participant's wreckCounted guard
 while an old boss actor was still combatWrecking. That recounted a third boss
 wreck during the two-wreck loss. It now advances Duel.step through the real
 respawn lifecycle and requires live actors before the next controlled damage.
-Its two-wreck loss expectation144 and total1176 stay unchanged.
+Its two-wreck loss expectation 144 and total 1176 stay unchanged.
 
-Existing tools/test-warlord-settlement.mjs payout assertions150 became720 for
-explicit Medium fixtures; banks160 became730 and185 became1042 (start10,
-first720, rematch312). The rematch assertion25 became312. Fresh defeated owner
-retry bank325 became612 (saved300 + rematch312). The never-saved fixture retains
-its default Easy difficulty and expects600. Actual callback, duplicate, retry,
+Existing tools/test-warlord-settlement.mjs payout assertions 150 became 720 for
+explicit Medium fixtures; banks 160 became 730 and 185 became 1042 (start 10,
+first 720, rematch 312). The rematch assertion 25 became 312. Fresh defeated owner
+retry bank 325 became 612 (saved 300 + rematch 312). The never-saved fixture retains
+its default Easy difficulty and expects 600. Actual callback, duplicate, retry,
 fresh owner, durable marker and genuine unsaved owner amount assertions follow
-those exact values. The no-unpaid-reward screen regex follows720. The pure
+those exact values. The no-unpaid-reward screen regex follows 720. The pure
 three-wreck fixture now records three wrecks on its losing participant, and
-all pure payloads explicitly supply Medium. Its zero-boss-wreck loss stays0.
+all pure payloads explicitly supply Medium. Its zero-boss-wreck loss stays 0.
 No save rejection, unknown-field, marker, ownership or kit assertions weaken.
 
 Existing tools/scenarios/warlord-reward.mjs explicitly selects Medium and
-checks720 first,312 rematch,0 zero-boss-wreck loss and bank1032 through reload.
-Its failed-save rejection checks the new unpaid720 amount. All actual click,
+checks 720 first, 312 rematch, 0 zero-boss-wreck loss and bank 1032 through reload.
+Its failed-save rejection checks the new unpaid 720 amount. All actual click,
 atomic write, fresh owner, free equip, future car, named player, race record and
 switch-isolation checks remain. The shared controlled contact fixture is
 exported for the new private Preview recipe. tools/preview.js exposes its App
@@ -78,7 +78,7 @@ only under the existing __DUEL_QA__ compile guard for that recipe.
 
 ## Removed
 
-Replaced the old fixed150/25/0 payout branch and its obsolete amount assertions
+Replaced the old fixed 150/25/0 payout branch and its obsolete amount assertions
 in the same card. No save guards, kit entitlement, sounds, assets or replay pins
 removed. Review evidence remains temporary until its independent verdict is
 committed; the Director owns evidence cleanup and lane removal after merge.
@@ -86,6 +86,37 @@ committed; the Director owns evidence cleanup and lane removal after merge.
 ## Gates and review
 
 Focused: node --test tools/test-warlord-pay.mjs tools/test-warlord-settlement.mjs
-passes48/48,327 acceptance checks, no skips. Private Preview and reward browser
-checks, mandatory lane tier/build, independent Reviewer and Save Guardian
-verdicts are pending. No merge, push, release or real-save access performed.
+passes 48/48, 327 acceptance checks, no skips.
+
+node tools/browser-harness.mjs scenario warlord-pay --output-dir
+.evidence/2026-09-30/WAR-PAY-preview passed on private port 14082. High and
+Performance each prove fresh Preview first win 720, second win 312, same-tab
+reload preserving its two wins and bank 1032, a third rematch 312, and a genuinely
+different browser tab seeded undefeated with first win 720. Six screenshots,
+zero warnings, zero errors. The recipe uses the actual Preview entry and mouse
+clicks for the first tab's production controls; the different tab calls the same
+production App entry and contact functions. Contacts cause three actual wrecks
+with real credit and respawn handling. Its disposable build stamp lives only
+in .qa-dist; .preview-dist and the user's running Preview remain untouched.
+
+node tools/browser-harness.mjs scenario warlord-reward --output-dir
+.evidence/2026-09-30/WAR-PAY-reward passed on private port 41076. High and
+Performance each prove the actual RETRY SAVE click, unchanged failed career,
+no unpaid item or amount, one complete registry write, fresh owner and other
+player fields, repeat rejection, first 720, rematch 312, zero-wreck loss 0,
+authored Side Saws contact sparks, free current and future car equip, reload,
+separate named players, unchanged race records and dev-switch isolation.
+Twelve screenshots, zero warnings, zero errors.
+
+The old browser fixture restores its menu settings when changing named players
+and when discovered-menu presentation refreshes. Its first attempt remained on
+Easy and failed the new exact Medium amount check. The final recipe selects
+Medium through the actual menu control after that setup; it changes no expected
+amount or transaction guard. The new Preview recipe also waits for renderer
+readiness before yard/fight advancement. High first win, Performance rematch
+and the failed-save screenshots were inspected: amounts and reasons are readable,
+and the unpaid result shows zero with RETRY SAVE.
+
+Mandatory lane tier/build and independent Reviewer and Save Guardian verdicts
+are held for the Director's review/runner handoff. No merge, push, release or
+real-save access performed.

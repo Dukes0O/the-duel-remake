@@ -98,9 +98,10 @@ async function runQuality(context, quality) {
   await ready(context,quality+' initial presentation');
   const baseline=await context.evaluate(`(()=>{const a=window.__qaApp;
     if(!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('QA storage isolation missing');
-    a.stop();a.audio.setMuted(true);a.cpuDifficulty='medium';a.setGraphicsQuality(${JSON.stringify(quality)});
+    a.stop();a.audio.setMuted(true);a.setGraphicsQuality(${JSON.stringify(quality)});
     document.head.insertAdjacentHTML('beforeend','<style>details:not(.weapon-shop){display:none!important}</style>');
     const owner=a.player.id;if(!a.addPlayer('Other Reward QA').ok||!a.selectPlayer(owner))throw Error('Named player fixture failed');
+    a.cpuDifficulty='medium';
     a.profile={...a.profile,credits:50000,unknownRewardProfile:{keep:17},wasteland:{...a.profile.wasteland,
       discoveredGate:true,unknownRewardCareer:{keep:19},territories:{...a.profile.wasteland.territories,sal:{hold:100,claimed:false}}}};
     if(!a._saveProfile())throw Error('Memory-only career fixture failed');
@@ -112,6 +113,7 @@ async function runQuality(context, quality) {
     return {owner,credits:a.profile.credits,history:JSON.stringify(a.profile.history),raceMarkers:JSON.stringify(a.profile.settledResults)};
   })()`);
   await ready(context,quality+' chosen graphics mode');
+  await click(context,'[data-cpu-difficulty="medium"]');
   await click(context,'#wasteland-visit');await yard(context);await begin(context);
   await context.evaluate(`(()=>{const a=window.__qaApp,q=window.__rewardProbe;q.before=JSON.stringify(a.profile);
     q.saved=window.name;q.writes=[];q.fail=true;})()`);
@@ -142,7 +144,7 @@ async function runQuality(context, quality) {
     if(q.writes.length!==1||r.scrapEarned!==720||!r.settlementSaved||r.settlementRetryable||
       p.wasteland.scrap!==720||!p.wasteland.warlords.sal.defeated||!p.wasteland.territories.sal.claimed||
       p.wasteland.kits[a.duel.state.car]?.equipped!=='side-saws'||!p.wasteland.settledResults.includes('warlord:'+a.runId)||
-      p.unknownRewardProfile.keep!==17||p.wasteland.unknownRewardCareer.keep!==19||p.credits!==50100||p.otherTabOwner?.keep!==41)throw Error('Incomplete first-win transaction');
+      p.unknownRewardProfile.keep!==17||p.wasteland.unknownRewardCareer.keep!==19||p.credits!==50100||p.otherTabOwner?.keep!==41)throw Error('Incomplete first-win transaction: '+JSON.stringify({writes:q.writes.length,result:r,scrap:p.wasteland.scrap,credits:p.credits,difficulty:a.duel.state.cpuDifficulty,root:p.unknownRewardProfile,career:p.wasteland.unknownRewardCareer,later:p.otherTabOwner,kit:p.wasteland.kits[a.duel.state.car]}));
     if(JSON.stringify(a.players.players.find(x=>x.id!==a.player.id).profile)!==q.other)throw Error('Other named player changed');
     if(document.querySelector('[data-action="warlord-retry-save"]')||!/Side Saws unlocked/.test(document.querySelector('#modal-layer').textContent))
       throw Error('Successful retry presentation missing');
