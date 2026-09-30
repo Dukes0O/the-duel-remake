@@ -2174,3 +2174,5 @@ every asset present. dist 149 files, dist-previous 149 (a39e0d), dist-next
 deleted, master pushed. Sal, Side Saws and warlord pay stay behind
 `warlords` (dev). Kyle's Sal findings are cards WAR-PAY, ARENA-STEER and
 ARENA-SHOVE (merged 282758d).
+
+Claimed ART-FIT-CREW-M after inspecting the actual source rig and loader: five male GLBs, source fitting recipe, focused tests and private comparison sheets, with no renderer or simulation hook. Source rig has79bones/24actions. In-game credits HTML waits for the protected audio owner; catalog hook is exclusive, so source cards follow. Current art stays until all five pass; source silhouette gaps go to Claude if existing-part fitting cannot cover them.
