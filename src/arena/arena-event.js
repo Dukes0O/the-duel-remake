@@ -5,6 +5,7 @@ import {pilotStep} from './arena-pilot.js';
 import {stepKnock} from '../vehicle-knock.js';
 import {thinkBrain, STYLE_ORDER, ARENA_FEEL} from './arena-brains.js';
 import {spawnSlots} from './venues.js';
+import {resetSalFight} from './sal-fight.js';
 import {WARLORD_RULES, noteWarlordWreck, stepWarlordClock} from './warlord-event.js';
 
 // Arena event rules (docs/SCRAPDOME.md sections 3 and 7). `state.arena` is the
@@ -118,6 +119,7 @@ function respawn(duel, participant, actor) {
   participant.goal = null; participant.reactionSec = 0;
   participant.tellLeft = 0; participant.chargeReady = false; actor.arenaTellSec = 0;
   actor.arenaShimmerSec = ARENA_FEEL.shimmerSec;
+  resetSalFight(duel, actor);
   if (actor === duel.state) {
     duel.state.invulnerableSec = Math.max(duel.state.invulnerableSec, ARENA_RULES.protectedSec);
     duel.state.impactTimer = 0; duel.state.crashFlash = 0;

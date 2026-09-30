@@ -1,4 +1,5 @@
 import {WARLORDS, BUILT_WARLORD_IDS} from '../warlords.js';
+import {resetSalFight} from './sal-fight.js';
 
 // Shared warlord format (docs/SCRAPDOME.md section 5). All simulation
 // decisions stay here; presentation and rewards read the resulting state.
@@ -26,6 +27,7 @@ export function startWarlordEvent(duel, {warlordId, ...options} = {}) {
     actor.warlordId = warlordId;
     actor.maxArmor *= WARLORD_RULES.armorScale;
     actor.armor = actor.maxArmor;
+    resetSalFight(duel, actor);
   }
   state.status = 'warlord_intro';
   duel.emit({warlordIntro: {warlordId}});
