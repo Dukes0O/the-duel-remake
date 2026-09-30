@@ -661,7 +661,10 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: building
+    status: review
+    waiting_on: kyle
+    review_commit: 764967db9fd1777725045bda2556b827f7b0aff1
+    hold_reason: "Two licensed cab/tank leads and actual salvage donors are compared; separate trailer/frame/hitch, valves and boarding hatch remain missing. Source-only review; no adaptation or finished convoy approved."
     claimed_by: codex-director-2026-09-30-resume
     branch: lane/art/tanker-src
     owns: [tools/art/tanker-source-sheet.py, tools/art/tanker-source-inspect.py, docs/board/looks/tanker-src/, docs/changes/ART-SRC-TANKER.md]
@@ -676,7 +679,8 @@ tasks:
     lane: SAVE
     size: S
     needs: []
-    status: building
+    status: review
+    review_commit: 6d92948908b5e749e5d805e4bc6f91943a28e273
     claimed_by: codex-director-2026-09-30-resume
     branch: lane/save/save-damaged-fields
     owns: [src/progression.js, tools/test-profile-damaged-fields.mjs, docs/changes/SAVE-DAMAGED-FIELDS.md]
@@ -829,7 +833,8 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
-    status: building
+    status: review
+    review_commit: e20470ab6587765c3cf2144235b2e2000c323efa
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run

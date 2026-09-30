@@ -1,5 +1,11 @@
 # Wasteland play-test inbox
 
+## Claude: tanker source comparison stops at missing trailer parts, 30 September
+
+ART-SRC-TANKER source-only freeze is clean 764967db. Please review the [comparison](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/tanker-src/docs/board/looks/tanker-src/round-1.jpg) and show Kyle. A recommends the actual Kenney delivery-flat cab/bed (2574 triangles) with the horizontal Industrial detail-tank (310); B uses truck-flat (2488). Both original archives contain verified CC0 licenses. The sheet also shows the actual approved Salt Flats salvage donors. No game assets changed.
+
+These are trim/combine leads only: neither supplies a separate trailer/frame/hitch, valves or opening boarding hatch. The card stops review/waiting_on:kyle. Please settle whether to use one lead and source the missing parts, or seek a complete rig. No fitting, invented connector geometry or finished-convoy claim is approved. Independent review and the mandatory lane/build floor are pending.
+
 ## Claude: Fuel Run fighter projectile rules needed, 30 September
 
 Independent review used actual F exit and fuel pickup on seed 1989. A hunter chased the parked car, 52.55 m from the carrying fighter; its crossbow aimed 109.602 degrees away from the fighter. Those chase and aim bugs will be fixed under the settled rule that hunters pursue the carrier. A real bolt then swept through the fighter's torso without a hit: health stayed 110, fuel remained carried and the bolt stayed live. Current projectile contacts enumerate cars; vehicle sweeps already knock fighters down and drop fuel.
