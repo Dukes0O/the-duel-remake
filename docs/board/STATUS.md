@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-30T14:38:17.492Z
+Observed at: 2026-09-30T14:44:09.982Z
 
-Observation commit: 6729b48b0ae7f17abb8bb74c18b18e71c06a82f6
+Observation commit: 65c2a44ccfd5b3f3d78ff11310980443e7277543
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 6729b48b0ae7f17abb8bb74c18b18e71c06a82f6
+Integration HEAD: 65c2a44ccfd5b3f3d78ff11310980443e7277543
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -60,9 +60,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
 | Review `looks/` | 9,043,315 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 199,686 B | +5,407 B | 5,000,000 B |
+| Added bytes in last merge | 403,239 B | +203,553 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 339,901,440 B | +79,872 B | unavailable |
+| Git objects | 340,070,400 B | +168,960 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -71,7 +71,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 006cd48a8b263d234dfa3edbc910f2debd7f1861
 - Local main: missing
-- Local integration/wasteland: 6729b48b0ae7f17abb8bb74c18b18e71c06a82f6
+- Local integration/wasteland: 65c2a44ccfd5b3f3d78ff11310980443e7277543
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -79,4 +79,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 006cd48a8b263d234dfa3edbc910f2debd7f1861.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: behind local; cached commit 8009f589f8807726d57b903169f79943f398f223.
+- Remote origin/integration/wasteland: behind local; cached commit da6e53955997e142b29691dee54803fa7d2388f8.
