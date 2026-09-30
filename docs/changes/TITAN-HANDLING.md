@@ -1,6 +1,6 @@
 # TITAN-HANDLING
 
-Status: tests first; implementation has not started in this lane.
+Status: implementation in progress. Four disjoint steering callers are implemented; App waits for FORMAT to merge.
 
 ## Settled rule and implementation decision
 
@@ -82,8 +82,7 @@ run exposed a test-fixture mistake in the demo lane position; the fixture now
 uses the existing cruising lane (-3.36 m for a 7 m half-width). Its final
 failure therefore tests the steering change rather than a lane mismatch.
 
-Lane tier, build, browser checks, independent review and Kyle's Preview check
-are pending implementation. No heavy gate ran during this tests-only task.
+Current focused result: 39/40 checks pass, including all eight frozen non-Titan full-state fingerprints. The remaining demo check correctly fails until App can pass its actual car after FORMAT merges. Three existing Titan replay proposals were computed in ignored evidence with the original recipe and redirected output; fifteen other recorded cases are unchanged and all 30/60/144 FPS proposals agree. Existing replay pins are untouched pending independent review. Lane tier, build, browser checks and Kyle's Preview check are pending.
 
 ## Assertions and race fingerprints
 
@@ -101,6 +100,4 @@ stay unchanged. This tests-only task leaves all those existing files intact.
 
 ## Removed
 
-Nothing. This adds acceptance coverage and freezes unchanged behavior. Runtime
-changes, any reviewed Titan replay updates and their removals belong to the
-implementation handoff.
+The Titan alone replaces the old low-speed steering curve through its explicit car field. Every other car and every legacy three-argument caller keeps the old curve. No runtime asset, world signature, save field or dependency is replaced. The shared App caller and reviewed Titan pin replacements are still pending their named dependencies.
