@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-30T16:44:10.845Z
+Observed at: 2026-09-30T16:54:41.896Z
 
-Observation commit: 806c579cd7a3ab056332b3c6a0e2cc9448c021b3
+Observation commit: af7bc21ce5f4b1598a1dc633e634fe7e1a41ece9
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 806c579cd7a3ab056332b3c6a0e2cc9448c021b3
+Integration HEAD: af7bc21ce5f4b1598a1dc633e634fe7e1a41ece9
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -28,6 +28,7 @@ Last recorded full run: 2026-09-30T16:10:17.860Z; tested commit: db785194244e02b
 | scrapdome | on |
 | titan-climb | on |
 | muddy-hollow | on |
+| warlords | dev |
 
 ## Lane branches
 
@@ -36,11 +37,10 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | lane/art/art-src-rustwall | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/rustwall-source |
-| lane/art/art-src-saltflats | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/saltflats-source |
+| lane/art/art-src-saltflats | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/saltflats-source |
 | lane/audio/aud-10 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 5 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/cmb/war-02a-format | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/war-format |
 | lane/phys/titan-handling | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/titan-handling |
 | lane/release/scrapdome-0930 | 0 | unknown | true | false | unknown |
 
@@ -50,9 +50,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| lane/art/art-src-rustwall | unknown | 2026-09-30T09:17:07-07:00 | 0 | last commit 2026-09-30T09:17:07-07:00 | docs/board/looks/rustwall-src/round-1-review.md, docs/board/looks/rustwall-src/round-1.jpg, docs/changes/ART-SRC-RUSTWALL.md, tools/art/rustwall-source-sheet.py, tools/scenarios/art-source-rustwall.mjs |
-| lane/art/art-src-saltflats | unknown | 2026-09-30T09:34:58-07:00 | 0 | last commit 2026-09-30T09:34:58-07:00 | docs/board/looks/salt-flats-src/round-1-review.md, docs/board/looks/salt-flats-src/round-1.jpg, docs/changes/ART-SRC-SALTFLATS.md, tools/art/salt-flats-source-sheet.py |
-| lane/cmb/war-02a-format | unknown | 2026-09-30T09:39:24-07:00 | 0 | last commit 2026-09-30T09:39:24-07:00 | docs/changes/WAR-02a-FORMAT.md, src/app.js, src/arena/arena-event.js, src/arena/warlord-event.js, src/feature-flags.js |
+| lane/art/art-src-rustwall | unknown | 2026-09-30T09:45:05-07:00 | 0 | last commit 2026-09-30T09:45:05-07:00 | docs/board/looks/rustwall-src/round-1-review.md, docs/board/looks/rustwall-src/round-1.jpg, docs/changes/ART-SRC-RUSTWALL.md, tools/art/catalog.json, tools/art/rustwall-source-sheet.py |
+| lane/art/art-src-saltflats | unknown | 2026-09-30T09:34:58-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/salt-flats-src/round-1-review.md, docs/board/looks/salt-flats-src/round-1.jpg, docs/changes/ART-SRC-SALTFLATS.md, tools/art/salt-flats-source-sheet.py |
 | lane/phys/titan-handling | unknown | 2026-09-30T09:22:43-07:00 | 0 | last commit 2026-09-30T09:22:43-07:00 | docs/changes/TITAN-HANDLING.md, src/arena/arena-pilot.js, src/config.js, src/sim-driving.js, src/sim-rival.js |
 
 ## Size targets
@@ -66,11 +65,11 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
-| Review `looks/` | 9,312,177 B | +118,824 B | 20,000,000 B |
-| Added bytes in last merge | 176,162 B | -410,672 B | 5,000,000 B |
+| Review `looks/` | 9,312,177 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 578,522 B | +402,360 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 305,969,152 B | +509,952 B | unavailable |
-| Lane folders | 4 | -1 | unavailable |
+| Git objects | 306,185,216 B | +216,064 B | unavailable |
+| Lane folders | 3 | -1 | unavailable |
 
 ## Backups
 
@@ -78,7 +77,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 006cd48a8b263d234dfa3edbc910f2debd7f1861
 - Local main: missing
-- Local integration/wasteland: 806c579cd7a3ab056332b3c6a0e2cc9448c021b3
+- Local integration/wasteland: af7bc21ce5f4b1598a1dc633e634fe7e1a41ece9
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
