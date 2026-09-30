@@ -2,6 +2,7 @@
 
 status: review
 waiting_on: kyle
+artifact_status: ready-to-merge
 
 ## Decision
 
@@ -28,3 +29,19 @@ Unchanged current runtime GLB SHA-256 values (verified byte-for-byte against the
 ## Removed
 
 No existing runtime art or recipe was replaced. Invalid quota-error downloads were removed, preserving actual licensed originals. The source-specific rejected temporary render outside the lane was deleted after correcting the output path. No earlier catalog entry or source licence was changed. Raw comparison captures are consumed and deleted after the verdict; only one <=500 KB sheet, recipes and findings are retained. Runtime retirement belongs to ART-FIT-CREW-W after a source is picked and all figures pass.
+
+## Independent review
+
+Reviewer cleared clean bbb4db3 for source comparison only, with no defects.
+All 19 hashes/sizes match the cache; twelve extracted source/licence files
+match their archive originals. All 17 prior catalog records and three current
+female GLBs are unchanged. Paid source content is excluded; held Modular Women
+is explicitly unverified and receives no rights claim. The inspected geometry,
+rig and action counts match the sheet. Blender inspection and the 376150-byte
+sheet reproduced byte-for-byte. Independent private memory-only browser
+reproduction on port43431 passed three captures, zero warnings/errors,
+matching geometry and one draw per current figure. No runtime, save, existing
+assertion, race-rule or dependency change. The keep-current recommendation
+honors the stop rule. This final note records that verdict; the Director owns
+the mandatory lane/build run and its integration verdict. Source choice still
+waits for Kyle, with no fitting or runtime installation authorized.
