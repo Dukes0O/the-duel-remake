@@ -2222,3 +2222,5 @@ lane 157/157 and build; merged as 4c3248e. Full tier 306/306 on 4c3248e in
 menu unchanged), copied into the live dist (server was stopped; files
 verified), dist 149, dist-previous 149 (42f962), dist-next deleted, master
 pushed. Kyle also kept the current women crew (0bbb68d).
+
+Claimed SAVE-DAMAGED-FIELDS from the ready list. Director owns the narrow progression fix; independent test author writes synthetic failing profile/registry tests first. Fuel App and settlement remain its lane's exclusive files. Preserve all valid conversions, historical saves and race pins; no schema or key change. Five lane folders are now in use, including two held review lanes.

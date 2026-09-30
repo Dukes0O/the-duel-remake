@@ -676,7 +676,9 @@ tasks:
     lane: SAVE
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-09-30-resume
+    branch: lane/save/save-damaged-fields
     owns: [src/progression.js, tools/test-profile-damaged-fields.mjs, docs/changes/SAVE-DAMAGED-FIELDS.md]
     hooks: []
     helpers: [test_author, reviewer, save_guardian]
