@@ -1,8 +1,8 @@
 # WAR-02a-REWARD
 
 Status: Initial and retry reward writes now share verified-owner safeguards.
-All 154 focused checks pass. The High/Performance browser pass on ee8de512
-needs a fresh run on this correction. Final Save Guardian review and mandatory
+All 154 focused checks and the complete private High/Performance browser flow
+pass on corrected source ad819aa1. Final Save Guardian review and mandatory
 lane/build gates remain pending. `rewardBuilt` remains false.
 No merge, release or finished reward claim.
 
@@ -479,3 +479,32 @@ Removed the separate warlord initial award route through `_refreshPlayer`
 and `_saveShopProfile`, which skipped fresh data after an earlier failed save.
 The narrow shared reward candidate replaces it. Ordinary arena and global
 shop save behavior remain unchanged.
+
+
+## Corrected-source browser verdict
+
+The complete recipe passes on `ad819aa120517f7ec7ea9d0a84c6887b57d19cef`,
+private port 38622: High and Performance, 12 screenshots, zero errors and zero
+warnings. It uses only memory-only player storage and the existing bundled
+QA App. Actual RETRY SAVE preserves the newer owner and other player in one
+complete registry write. First win pays 150, rematch 25, loss zero; final
+scrap is 175 with two wins and one loss. Actual side contact removes
+18.0246528 armor and creates one spark in each mode.
+
+Actual current Stuttgart and later purchased Banshee free equip, same-tab
+reload, other-player rejection and released-switch Armory isolation all pass.
+Visual inspection of High failed-save HOLD/retry and earned-contact captures
+plus Performance future-car Armory finds clear controls, HOLD 100/100 during
+failure, static fitted original saw housings and visible real contact sparks.
+The three earlier failed recipe attempts remain recorded above.
+
+Ignored evidence is under
+`.evidence/2026-09-30/warlord-reward-2026-09-30T18-27-34-444Z/`;
+`report.json` holds console/capture results and `reward-verdict.json` holds
+both quality verdicts. The source is frozen for Save Guardian and general
+review. No mandatory lane tier/build, merge, release or flag flip was run.
+
+## Removed after browser validation
+
+None. The reproducible recipe remains; review evidence stays ignored until
+the Director records its verdict and removes it under the janitor rule.
