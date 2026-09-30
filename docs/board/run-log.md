@@ -2204,3 +2204,27 @@ D8 push was rejected by automatic approval: remote verification and an exact-HEA
 Observed Claude merge 4c3248e for WAR-SAL-RELEASE. Board and build-status reran; the warlords switch is now on and Fuel must preserve the release assertions when merging latest integration. This is merge one since the clean bcb09e44 full pass at 22:08:38 UTC. The Director performed no release, live-folder, Preview or real-save operation. Women source now freezes at d6cd763: both filename checks pass, independent rename review clears it, and the fresh mandatory floor runs before artifact merge.
 
 Routed the measured Fuel projectile gap as DESIGN-FUEL-FIGHTER-HITS, owned by Claude, with the written inbox reproduction and no chosen damage values. ARENA-03 waits for that design before contact code or merge; its six settled regressions now pass. Source filenames and unchanged review note are independently cleared at d6cd763; the mandatory gate remains in progress.
+
+Observed Claude merge 0bbb68d: Kyle keeps current Nell, Odessa and Wren; only future Vesper is refitted. The existing women-source gate continues unchanged, then its artifacts can merge with that decision recorded on the board. Board/status refreshed. This is merge two since full bcb09e44. Crew stop verdict is now committed on held 59a5b99; janitor removed 90 consumed capture/report files, 4,867,157 bytes, preserving the comparison, recipes, current art and licensed originals.
+
+ART-SRC-CREW-W artifacts merged from clean d6cd763: lane 306/306 in 734.88 seconds, build 1.74 seconds, independent source/rename review clear. Both earlier filename failures are retained as failures in the note. Kyle keeps current women; no game asset, race, save, assertion or runtime code changes. Catalog released for tanker. This is merge three since full bcb09e44. Janitor now removes the merged source lane, branch and consumed raw evidence; licensed originals remain outside the repository.
+
+Claimed ART-SRC-TANKER after the women source merge and plain lane cleanup released its catalog hook. Sources and one comparison only, then Kyle; no fitting or runtime change. Routed SAVE-DAMAGED-FIELDS as a separate priority fix with exclusive progression ownership after Save Guardian's JSON-safe coercion repro. Fuel retains its own App retry/settlement fixes and new tests; no overlapping production ownership.
+
+## 30 September 2026, Claude: third release (WAR-SAL-RELEASE)
+
+Kyle: "let's ensure Sal is available in the main game now." `warlords` on in
+lane release/warlords (six switch assertions moved to the released state;
+switch-off cases now force the switch off; reviewed in the change note);
+lane 157/157 and build; merged as 4c3248e. Full tier 306/306 on 4c3248e in
+911 s; balance passed (26, 19, 8 of 30; CPU hits 2.67, 7.2, 5.53). Build
+20260930224228-039fc6 has warlords on, checked on port 5188 (no errors, main
+menu unchanged), copied into the live dist (server was stopped; files
+verified), dist 149, dist-previous 149 (42f962), dist-next deleted, master
+pushed. Kyle also kept the current women crew (0bbb68d).
+
+Claimed SAVE-DAMAGED-FIELDS from the ready list. Director owns the narrow progression fix; independent test author writes synthetic failing profile/registry tests first. Fuel App and settlement remain its lane's exclusive files. Preserve all valid conversions, historical saves and race pins; no schema or key change. Five lane folders are now in use, including two held review lanes.
+
+SAVE-DAMAGED-FIELDS merged from clean6d929489: lane175/175 in508.52s, build1.16s; independent correctness/SaveGuardian100/100,192 old-successful comparisons,96 mutation/backup probes and sevenfixtures247checks clear. Tests first had48 intended reds; now86/86 and3654checks. Only failed number conversion uses existing field zero fallback; named careers remain. No schema/key/receipt/race or old assertion change. This is merge four since fullbcb09e44 at22:08:38UTC. Plain janitor cleanup follows; the full is due after one more merge or00:08:38UTC. Fuel narrowSDproof24a27af9 independently clears280 score combinations+nine proof controls and retains actual lower-scoring winner; contact rules still waitClaude.
+
+Claimed ART-FIT-HANDS from ready list after SAVE-DAMAGED-FIELDS merged and its ordinary cleanup freed the fifth lane. Exclusive new WRAD fitting recipe/settings/sheet/tests/scenario/note plus named later hand-asset/generator/test hooks; no shared runtime renderer or game logic. Source rig/topology and settled gloves/sleeves/motion remain the target. Test author precedes fitting. Current eight hands and shared tools remain until the same in-game sheet beats them; three-round cap and stop rule apply. Catalog waits Tanker artifact merge; protected audio credits are not granted.

@@ -1,5 +1,11 @@
 # Wasteland play-test inbox
 
+## Claude: tanker source comparison stops at missing trailer parts, 30 September
+
+ART-SRC-TANKER source-only freeze is clean 764967db. Please review the [comparison](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/tanker-src/docs/board/looks/tanker-src/round-1.jpg) and show Kyle. A recommends the actual Kenney delivery-flat cab/bed (2574 triangles) with the horizontal Industrial detail-tank (310); B uses truck-flat (2488). Both original archives contain verified CC0 licenses. The sheet also shows the actual approved Salt Flats salvage donors. No game assets changed.
+
+These are trim/combine leads only: neither supplies a separate trailer/frame/hitch, valves or opening boarding hatch. The card stops review/waiting_on:kyle. Please settle whether to use one lead and source the missing parts, or seek a complete rig. No fitting, invented connector geometry or finished-convoy claim is approved. Independent review and the mandatory lane/build floor are pending.
+
 ## Claude: Fuel Run fighter projectile rules needed, 30 September
 
 Independent review used actual F exit and fuel pickup on seed 1989. A hunter chased the parked car, 52.55 m from the carrying fighter; its crossbow aimed 109.602 degrees away from the fighter. Those chase and aim bugs will be fixed under the settled rule that hunters pursue the carrier. A real bolt then swept through the fighter's torso without a hit: health stayed 110, fuel remained carried and the bolt stayed live. Current projectile contacts enumerate cars; vehicle sweeps already knock fighters down and drop fuel.
@@ -8,11 +14,11 @@ Please settle the missing contact rules in writing: how much damage a car crossb
 
 The proposed 0.75-second original-carrier pickup delay is withdrawn. A test will enforce the literal rule that anyone can recover dropped fuel.
 
-## Claude: women crew source sheet; keep current pending parts, 30 September
+## Women source records merged; Kyle keeps current crew, 30 September
 
-ART-SRC-CREW-W is frozen clean at 9c2dee0 on lane/art/crew-w-src. [Comparison](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-w-src/docs/board/looks/crew-w-src/round-1.jpg), 376150 bytes. Two actual downloaded CC0 choices are inspected: Universal Base Standard (15060 triangles,65bones,no embedded actions; free Standard only) and Kenney Survivors (1604triangles,58bones,three motion clips). Both lack the settled four crew silhouettes and full actions, so the recommendation is to keep current women and find compatible garment/action parts. Requested Modular Women is ON HOLD: its pack page says CC0, current general page says QAL, and actual model/license downloads returned quota HTML. No rights or shared-rig claim is made for that pack; existing cached CC0 rights are unchanged. Current Nell/Odessa/Wren are byte-identical; no Vesper placeholder or fitting occurred.
+ART-SRC-CREW-W source records are merged from clean d6cd763. Kyle keeps current Nell, Odessa and Wren. [Comparison](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/docs/board/looks/crew-w-src/round-1.jpg), 376150 bytes. Two actual downloaded CC0 choices are inspected: Universal Base Standard (15060 triangles,65bones,no embedded actions; free Standard only) and Kenney Survivors (1604triangles,58bones,three motion clips). Both lack the settled four crew silhouettes and full actions, so the recommendation is to keep current women and find compatible garment/action parts. Requested Modular Women is ON HOLD: its pack page says CC0, current general page says QAL, and actual model/license downloads returned quota HTML. No rights or shared-rig claim is made for that pack; existing cached CC0 rights are unchanged. Current Nell/Odessa/Wren are byte-identical; no Vesper placeholder or fitting occurred.
 
-Please review the sheet and show Kyle. The source card stops waiting_on:kyle: choose compatible existing garments/actions for Standard, or resolve Modular Women access and actual terms first. Independent source review and lane/build gates are underway for the source artifacts only. No adaptation or runtime replacement starts before the source choice. The detailed note and catalog retain exact primary URLs, hashes and access findings.
+Kyle has chosen to keep the current women. Independent source review, lane 306/306 and build pass for these records. No new-source adaptation or runtime replacement is approved. The later figure card covers only Vesper under Claude's settled scope. The detailed note and catalog retain exact primary URLs, hashes and access findings.
 
 ## Claude: Mirage build dependency and early reward, 30 September
 
@@ -20,7 +26,7 @@ The settled Mirage build note calls targetFor, but the shared targeting module d
 
 ## Claude: crew round 1 fails; current art kept
 
-Independent critic inspected the sheet, reference boards and all 40 fitted captures. All five are worse than current: direction/resemblance 1 to 2, materials 2, scene consistency 1. Jax lacks a continuous long coat; Dune reads as a helmet; Cinder has wrong hair and an arm assembly problem; Tusk reads as clean fantasy armor. Material or normal changes alone cannot meet the card. No second round or runtime replacement is authorized on this result. Kyle has been asked to choose better existing source parts or stop fitting. The clean review lane is lane/art/crew-fit-m at587e6ec. Its comparison is [round 1](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-fit-m/docs/board/looks/crew-fit-m/round-1.jpg). The recipe and original licensed source can rebuild it; all current runtime assets remain unchanged. Please review the source gap and show Kyle the sheet.
+Independent critic inspected the sheet, reference boards and all 40 fitted captures. All five are worse than current: direction/resemblance 1 to 2, materials 2, scene consistency 1. Jax lacks a continuous long coat; Dune reads as a helmet; Cinder has wrong hair and an arm assembly problem; Tusk reads as clean fantasy armor. Material or normal changes alone cannot meet the card. No second round or runtime replacement is authorized on this result. Kyle has been asked to choose better existing source parts or stop fitting. The clean review lane is lane/art/crew-fit-m at 59a5b99. Its comparison is [round 1](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-fit-m/docs/board/looks/crew-fit-m/round-1.jpg). The recipe and original licensed source can rebuild it; all current runtime assets remain unchanged. Please review the source gap and show Kyle the sheet.
 
 ## Claude: early crew fitting look request, 30 September
 

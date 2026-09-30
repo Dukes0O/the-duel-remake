@@ -603,7 +603,7 @@ tasks:
     hooks: [tools/blender/crew-fighters.py, tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, tools/test-rook-p2-source.mjs, tools/test-rook-p2-geometry.mjs, tools/test-crew-fighters.mjs, tools/test-blender-output.mjs, tools/test-review-evidence.mjs, tools/test-runtime-art-sources.mjs]
     helpers: [test_author, reviewer, browser_qa, art_critic]
     sequencing: "Use the existing loader. Never edit audio credits HTML while the protected audio lane owns it; its in-game credit hook waits for that merge. All candidate sheets go to Claude before merge; preserve current art until all five pass. Women and tanker sourcing wait for this catalog hook."
-    review_commit: 587e6ec
+    review_commit: 59a5b99
     review_note: "Independent round 1: worse than current for all five; direction 1-2, consistency 1, coat/hood/hair gaps. Current art and generators unchanged. Kyle chooses better existing parts or closing the fit. Catalog/credit hooks released while paused; reclaim only after source lanes merge. Claude receives the sheet before any further round or merge."
     acceptance:
       - "Fit the picked Quaternius Modular Men pack (docs/board/looks/crew-src) into five crew figures following docs/WASTELAND_ART.md 'Fitting existing models'. Each is recognizable from the crew sheets (public/assets/reference/wasteland-crew-1.png and -2.png) by silhouette, costume and accent colour; faces may stay simple."
@@ -615,12 +615,11 @@ tasks:
     lane: ART
     size: S
     needs: [ART-SRC-CREW]
-    status: review
-    waiting_on: kyle
+    status: merged
     claimed_by: codex-director-2026-09-30-resume
     owns: [tools/art/crew-w-source-sheet.py, tools/art/crew-w-source-inspect.py, tools/scenarios/crew-w-source-current.mjs, docs/board/looks/crew-w-src/, docs/changes/ART-SRC-CREW-W.md]
-    hooks: [tools/art/catalog.json]
-    review_checkpoint: "Clean9c2dee0 source comparison376150B1800x1660, correctedround-1filename withidenticalbytes; current female GLBs unchanged. Two verified CC0 packs lack settled garments/actions; requested Modular Women actual license/model downloads quota-blocked and general/pack pages differ. Keep current; Claude receives sheet/source gap before artifact merge. Independent review and lane/build gates pending; no adaptation."
+    hooks: []
+    review_checkpoint: "Source artifacts merged from clean d6cd763 after 306 passing lane suites in 734.88 seconds and build in 1.74 seconds. Independent source and final rename reviews clear. Kyle keeps current Nell, Odessa and Wren; no runtime replacement or new-source fitting. Catalog hook released for tanker sourcing."
     helpers: [reviewer]
     sequencing: "Male fitting paused and released its unchanged catalog hook. Source women now; tanker waits for this catalog lane to merge. Source only, no runtime assets or adaptation. Compare 2-3 CC0 packs with checked licences and source geometry/rig when available; ask Kyle at the sheet and send it to Claude."
     acceptance:
@@ -642,8 +641,14 @@ tasks:
     lane: ART
     size: M
     needs: [ART-SRC-HANDS]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-09-30-resume
+    branch: lane/art/hands-fit
     flag: wasteland2
+    owns: [tools/blender/first-person-wrad.py, tools/blender/first-person-wrad-source.json, tools/art/hands-fit-sheet.py, tools/test-first-person-wrad.mjs, tools/scenarios/hands-fit-wrad.mjs, docs/board/looks/hands-fit/, docs/changes/ART-FIT-HANDS.md]
+    hooks: [public/assets/models/wasteland/first-person/hands/, tools/art/catalog.json, tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, tools/blender/first-person-p2-source.json, tools/test-first-person-gear.mjs, tools/test-first-person-cloth.mjs, tools/test-first-person-contact.mjs, tools/test-first-person-polish.mjs, tools/test-runtime-art-sources.mjs]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    sequencing: "Tests first. Fit actual licensed WRAD Arms, preserve source topology/weights/rig and existing crew garment direction and motion. No sculpted replacement anatomy. Private candidate outputs/comparison first; no runtime install or old recipe removal until independent comparison beats current at4/5 on every item. At most3rounds; two without gain stop. Catalog editing waits Tanker artifact merge; protected audio credits HTML has no granted hook and waits its owner. No App/renderer/simulation/audio/crew-body files. Retain shared RPG/wrench models and their build recipe; replace only superseded hand build paths after acceptance. Existing assertion edits require a written independent review reason, never weakened to pass."
     acceptance:
       - "Fit Kyle's pick from docs/board/looks/first-person-src following docs/WASTELAND_ART.md 'Fitting existing models': gloves and sleeves per crew member matching ART-FIT-CREW-M and -W, RPG and wrench grips, and the existing aim, fire, reload and repair motion. The current hands are already acceptable, so rule 5 applies strictly: if the fit does not beat them on the same sheet by round 3, keep the current hands and close the card."
   - id: ART-FIT-RUSTWALL
@@ -662,9 +667,34 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: ready
+    status: review
+    waiting_on: kyle
+    review_commit: 764967db9fd1777725045bda2556b827f7b0aff1
+    hold_reason: "Two licensed cab/tank leads and actual salvage donors are compared; separate trailer/frame/hitch, valves and boarding hatch remain missing. Source-only review; no adaptation or finished convoy approved."
+    claimed_by: codex-director-2026-09-30-resume
+    branch: lane/art/tanker-src
+    owns: [tools/art/tanker-source-sheet.py, tools/art/tanker-source-inspect.py, docs/board/looks/tanker-src/, docs/changes/ART-SRC-TANKER.md]
+    hooks: [tools/art/catalog.json]
+    helpers: [reviewer]
+    sequencing: "Women source artifacts are merged and their catalog hook is released. Source comparison only: verify actual original CC0 licenses and geometry, preserve all prior catalog records, show existing Salt Flats armor parts, and stop at one <=500 KB round-1.jpg with matching round-1-review.md, waiting for Kyle. No fitting, runtime asset, game code or protected audio edit."
     acceptance:
       - "ARENA-07 needs an armored fuel tanker with a trailer, and no inspected source has one (Salt Flats review). Short-list two or three CC0 sources (cab and tank trailer may come from different packs) with the ART-SRC-CREW rules, showing how the Salt Flats salvage parts would armor it. Stop at a comparison sheet with a recommendation (waiting_on: kyle)."
+  - id: SAVE-DAMAGED-FIELDS
+    title: "Damaged numeric profile fields cannot replace a named player with defaults"
+    owner: codex
+    lane: SAVE
+    size: S
+    needs: []
+    status: merged
+    review_commit: 6d92948908b5e749e5d805e4bc6f91943a28e273
+    claimed_by: codex-director-2026-09-30-resume
+    branch: lane/save/save-damaged-fields
+    owns: [src/progression.js, tools/test-profile-damaged-fields.mjs, docs/changes/SAVE-DAMAGED-FIELDS.md]
+    hooks: []
+    note: "Clean 6d929489: tests-first 48 intended reds fixed; lane175/175 in508.52s and build1.16s. Independent correctness/SaveGuardian100/100,192 successful-conversion controls and96 mutation/backup probes clear. No schema/key/receipt/race or existing assertion changes."
+    helpers: [test_author, reviewer, save_guardian]
+    acceptance:
+      - "Save Guardian reproduced JSON-safe credits and winStreak objects with a non-callable own toString throwing in normalizeProfile; loadPlayers then displays a default Player 1. Write failing synthetic tests first. Normalize damaged numeric fields without object-coercion errors while preserving the named owner and every valid historical field. All seven fixtures and 247 preservation checks, migration/backup and storage gates pass unchanged; no real saves, schema/key change or runtime dependency. Race fingerprints remain unchanged."
   - id: HK-RUSTWALL-BASELINE
     title: "Rustwall frame test keeps its baseline in the repository"
     owner: codex
@@ -810,7 +840,8 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
-    status: building
+    status: review
+    review_commit: 24a27af9b3879e6cdd98debde3b17d34b942cf15
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run
@@ -2709,7 +2740,7 @@ tasks:
     lane: RELEASE
     size: S
     needs: [WAR-02a-SAL, WAR-02a-REWARD, WAR-PAY]
-    status: building
+    status: released
     claimed_by: "Claude, 30 September 2026"
     acceptance:
       - "Full release evidence, then Kyle's written go-ahead. Other warlords show WARLORD FIGHT COMING LATER and have no button."

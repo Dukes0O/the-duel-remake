@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-30T22:18:53.837Z
+Observed at: 2026-09-30T23:03:35.162Z
 
-Observation commit: 4c3248e59bfaaa3eb02ef4f680d43fa051fd7f4c
+Observation commit: a7a642c2d064e1a35ff3ec47128da36081b51712
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 4c3248e59bfaaa3eb02ef4f680d43fa051fd7f4c
+Integration HEAD: a7a642c2d064e1a35ff3ec47128da36081b51712
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -37,13 +37,12 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | lane/art/crew-fit-m | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-fit-m |
-| lane/art/crew-w-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-w-src |
+| lane/art/tanker-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/tanker-src |
 | lane/audio/aud-10 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 5 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/cmb/arena-03-fuel-run | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-03-fuel-run |
+| lane/cmb/arena-03-fuel-run | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-03-fuel-run |
 | lane/phys/arena-steer | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-steer |
-| lane/release/warlords | 0 | unknown | true | false | unknown |
 
 ## Unmerged branches for idle review
 
@@ -51,9 +50,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| lane/art/crew-fit-m | unknown | 2026-09-30T14:08:14-07:00 | 0 | last commit 2026-09-30T14:08:14-07:00 | docs/board/looks/crew-fit-m/round-1-review.md, docs/board/looks/crew-fit-m/round-1.jpg, docs/changes/ART-FIT-CREW-M.md, tools/art/crew-fit-sheet.py, tools/blender/crew-source-fit.json |
-| lane/art/crew-w-src | unknown | 2026-09-30T14:55:00-07:00 | 0 | last commit 2026-09-30T14:55:00-07:00 | docs/board/looks/crew-w-src/review.md, docs/board/looks/crew-w-src/round-1.jpg, docs/changes/ART-SRC-CREW-W.md, tools/art/catalog.json, tools/art/crew-w-source-inspect.py |
-| lane/cmb/arena-03-fuel-run | ARENA-03 | 2026-09-30T14:54:24-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/ARENA-03.md, tools/replays/arena-fuel-run-controls.json, tools/test-arena-fuel-run.mjs, src/app.js, src/arena/arena-brains.js |
+| lane/art/crew-fit-m | unknown | 2026-09-30T15:31:33-07:00 | 0 | last commit 2026-09-30T15:31:33-07:00 | docs/board/looks/crew-fit-m/round-1-review.md, docs/board/looks/crew-fit-m/round-1.jpg, docs/changes/ART-FIT-CREW-M.md, tools/art/crew-fit-sheet.py, tools/blender/crew-source-fit.json |
+| lane/art/tanker-src | unknown | 2026-09-30T15:52:53-07:00 | 0 | last commit 2026-09-30T15:52:53-07:00 | docs/board/looks/tanker-src/round-1-review.md, docs/board/looks/tanker-src/round-1.jpg, docs/changes/ART-SRC-TANKER.md, tools/art/catalog.json, tools/art/tanker-source-inspect.py |
+| lane/cmb/arena-03-fuel-run | ARENA-03 | 2026-09-30T15:58:49-07:00 | 0 | last commit 2026-09-30T15:58:49-07:00 | docs/changes/ARENA-03.md, src/app.js, src/arena/arena-brains.js, src/arena/arena-event.js, src/arena/arena-settlement.js |
 | lane/phys/arena-steer | unknown | 2026-09-30T14:11:55-07:00 | 0 | last commit 2026-09-30T14:11:55-07:00 | docs/changes/ARENA-STEER.md, src/arena/arena-pilot.js, src/config.js, src/sim-driving.js, tools/replays/arena-steering-controls.json |
 
 ## Size targets
@@ -67,24 +66,24 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 430,908 B | +0 B | 500,000 B |
-| Review `looks/` | 9,947,193 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 706,646 B | +405,571 B | 5,000,000 B |
+| Review `looks/` | 10,330,840 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 48,968 B | +0 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 315,115,520 B | +358,400 B | unavailable |
-| Lane folders | 4 | +0 | unavailable |
+| Git objects | 317,784,064 B | +178,176 B | unavailable |
+| Lane folders | 4 | -1 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: e2c418e73538af1c24d783c79e426151e2c79c9a
+- Local master: 4c3248e59bfaaa3eb02ef4f680d43fa051fd7f4c
 - Local main: missing
-- Local integration/wasteland: 4c3248e59bfaaa3eb02ef4f680d43fa051fd7f4c
+- Local integration/wasteland: a7a642c2d064e1a35ff3ec47128da36081b51712
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit e2c418e73538af1c24d783c79e426151e2c79c9a.
+- Remote origin/master: matches local; cached commit 4c3248e59bfaaa3eb02ef4f680d43fa051fd7f4c.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
 - Remote origin/integration/wasteland: behind local; cached commit 8492332c4d314d8e94c7637d39573342ef032efa.
