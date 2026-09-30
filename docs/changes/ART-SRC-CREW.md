@@ -1,6 +1,6 @@
 # ART-SRC-CREW
 
-status: review
+status: merged
 source_choice: Quaternius Modular Men (B)
 
 ## Decision
@@ -20,3 +20,5 @@ Independent source review at 0b0a611 is clean: all nine checksums, official CC0 
 ## Removed
 
 No game art replaced. Downloaded sources stay in `C:/Users/kyleb/dev/art-library/`, not shipped or committed. Consumed raw captures and logs are deleted after the verdict; retain only the compact sheet, recipe and source licence records. Earlier misframed screenshots are excluded from the comparison.
+
+Final merge gate: exact clean b0444f8 passed295/295 suites in501.21s and production build. This source-only choice is recorded under Kyle's reuse direction; no runtime adaptation occurred.
