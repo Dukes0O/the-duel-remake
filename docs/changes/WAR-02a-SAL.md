@@ -28,8 +28,9 @@ SHE MISSED. HIT HER NOW! when the miss window opens.
 ## Acceptance evidence
 
 Tests first. Focused suite: node tools/test-sal-fight.mjs.
-The pilot hook must wait for TITAN-HANDLING; its actual yaw check remains
-required and honestly failing until the hook lands. No runtime stubs are allowed.
+The pilot hook required the TITAN-HANDLING merge before implementation. Its
+actual yaw check now passes on the merged steering formula. No runtime stubs
+are used. Physical contact and visual acceptance still require REWARD.
 The ordinary replay fingerprint in tools/replays/warlord-format-ordinary.json
 is reused unchanged by the new suite; no new replay file is within this slice.
 Human fun/fairness, Claude Preview review and browser art/audio checks remain
@@ -44,6 +45,9 @@ None. New assertions only. Existing renderer art uses salSaw.phase; keep it.
 Sal's signature stages replace plain rammer control while a move is active.
 The base rammer remains available between moves. No ordinary car behavior,
 runtime model, sound, save field or existing test was removed or repinned.
+The failed draft browser recipe's /src imports, custom brain-dispatch global,
+manual simulation clock jumps and forced respawn/protection timers are removed.
+Built-game rematches, Duel.step and existing collision methods replace them.
 
 ## Tests-first red verdict (30 September 2026)
 
@@ -119,3 +123,39 @@ on the final source checkpoint. Syntax checks and git diff --check passed.
 Browser recipe checks are prepared for tell sparks, spinning sweep, actual
 side-contact damage and hit callout, miss window, real-wreck phase two and
 Charge in both quality modes. Recipe remains unrun while dependencies wait.
+
+## Titan and built-browser checkpoint (30 September 2026)
+
+Synced the Director-confirmed TITAN-HANDLING integration commit
+7c9ff20ac0334ead4edd90849a72dc3c2734e264. The owned pilot hook multiplies
+actual steering yaw authority by the move's steeringScale, bounded from zero
+to one. Ordinary goals default to one. The merged Titan formula still receives
+the original car specification; no steering angle approximation or grip change
+substitutes for the required half-yaw window.
+
+Focused unchanged suite: 23 subtests, 22 passed, 1 failed; 109 assertions
+reached. The actual half-yaw test now passes. The remaining damaging sweep
+subtest fails on SAW SWEEP!, before reaching its hit=true assertion. Both
+contact assertions depend on REWARD's exclusive contact hook. The three
+ordinary fingerprints above remain unchanged. Titan handling checks pass
+40/40 against the new hook. No test code or assertions changed in this update.
+
+Independent review found that source imports cannot run against built
+.qa-dist. The browser recipe now uses existing App fight-entry and rematch
+methods, real Duel.step timing, the existing vehicle-contact method, natural
+wreck respawn and natural protection expiry. Only discovery, hold, armor,
+position and camera are labelled memory-only fixtures. Bounded waits fail
+explicitly if production countdown, move stages, respawn or protection fail.
+No shared runtime QA hook was added.
+
+Headless controls of those same Duel calls reached the full tell, brake-clear
+window, uncountered sweep, real-contact first wreck, timed respawn,
+phase-two charge tell and boosted Charge. These controls verify the recipe's
+method and timing choices; they are not browser, art or audible evidence.
+Recipe syntax and git diff checks pass. The recipe is still unrun.
+
+This remains a source checkpoint. REWARD integration is required for contact
+multipliers, the hit handshake/callout, rotating sweep blades and separate tell
+sparks. The coordinated lane tier and build, private High/Performance browser
+review, sound review and Claude Preview fun/fairness review remain pending.
+No heavy gate, browser build, integration merge or push was run by this lane.

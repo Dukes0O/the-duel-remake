@@ -1,6 +1,6 @@
 // Private, memory-only visual review of the production Sal move dispatcher.
 // Discovery, hold and car positions are labelled fixtures; tell/counter/phase
-// transitions below run through the real brain or Duel.step, never art overrides.
+// transitions below run through Duel.step and existing game methods, never art overrides.
 async function ready(context, label) {
   await context.evaluate('new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(()=>done(true))))');
   await context.waitFor(`(() => {window.__qaApp?.onFrame?.(window.__qaApp.duel.state,0);
@@ -45,12 +45,46 @@ async function capture(context, quality, stage, label = stage) {
   return result;
 }
 
+// All controls below exist in the built game. No /src imports or QA dispatcher.
+async function startFight(context) {
+  await context.evaluate(`(() => {const app=window.__qaApp;
+    if(!app.startWarlordFight('sal')||!app.beginWarlordFight())throw Error('Production Sal entry failed');
+    for(let i=0;i<362;i++)app.duel.step(1/120);
+    if(app.duel.state.status!=='racing')throw Error('Production countdown failed');
+  })()`);
+  await ready(context, 'Sal fight assets');
+}
+
+async function alongsideFixture(context) {
+  await context.evaluate(`(() => {
+    const d=window.__qaApp.duel,s=d.state,a=s.opponents[0],site=s.arena.spawnSlots[0].s;
+    // One matched pose in a clear spawn area. After this, real physics advances
+    // both cars for every tell, sweep and counter tick.
+    Object.assign(s,{s:site,prevS:site,lateral:-4,prevLateral:-4,headingError:0,speedMph:35});
+    Object.assign(a,{s:site,prevS:site,lateral:4,prevLateral:4,headingError:0,speedMph:35});
+    d.setInput({throttle:1,brake:0,steer:0,boost:false});
+  })()`);
+}
+
+async function advanceTo(context, stage, minimumAge = .05, maximumSeconds = 5) {
+  await context.evaluate(`(() => {
+    const d=window.__qaApp.duel,s=d.state,a=s.opponents[0];
+    for(let tick=0;tick<${Math.ceil(maximumSeconds * 120)};tick++){
+      if(a.salSaw?.stage===${JSON.stringify(stage)}&&
+          s.stageTimeSec-a.salSaw.sinceSec>=${minimumAge}-1e-9)return true;
+      if(s.status!=='racing')throw Error('Sal review left the running fight');
+      d.step(1/120);
+    }
+    throw Error('Production Sal stage did not arrive: '+JSON.stringify(a.salSaw));
+  })()`);
+}
+
 async function runQuality(context, quality) {
   await context.navigate(`/tools/menu-check.html?flags=warlords&harness=sal-fight-${quality}`);
   await context.waitFor('!!window.__qaApp&&!!window.__render', `${quality} private menu`, 60000);
   await ready(context, `${quality} menu`);
   await context.evaluate(`(() => {
-    if (!Object.getOwnPropertyDescriptor(window,'localStorage')?.value||
+    if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value||
         !window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only review required');
     const app=window.__qaApp;app.stop();app.setGraphicsQuality(${JSON.stringify(quality)});
     app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true,
@@ -61,87 +95,69 @@ async function runQuality(context, quality) {
       window.__salFightEvents.push(event)});
   })()`);
   await ready(context, `${quality} yard`);
-  await context.evaluate(`(() => {const app=window.__qaApp;
-    if(!app.startWarlordFight('sal')||!app.beginWarlordFight())throw Error('Production Sal entry failed');
-    for(let i=0;i<362;i++)app.duel.step(1/120);
-    if(app.duel.state.status!=='racing')throw Error('Production countdown failed');
-  })()`);
-  await ready(context, `${quality} fight`);
-  await context.evaluate(`(async () => {
-    const app=window.__qaApp,d=app.duel,s=d.state,a=s.opponents[0],p=s.arena.participants[1];
-    const {resetSalFight}=await import('/src/arena/sal-fight.js');
-    const {thinkBrain}=await import('/src/arena/arena-brains.js');
-    window.__salFightThink=thinkBrain;
-    // Stop both cars in an open, matched alongside pose. The real brain starts
-    // the tell, while a fixed review camera makes its shipped art readable.
-    const site=d.course.def.scrapdome.ringRadius?0:s.s;
-    Object.assign(s,{s:site,prevS:site,lateral:-4,prevLateral:-4,headingError:0,speedMph:35});
-    Object.assign(a,{s:site,prevS:site,lateral:4,prevLateral:4,headingError:0,speedMph:35});
-    for(const participant of s.arena.participants)participant.protectedSec=0;
-    s.invulnerableSec=0;p.targetId='player';p.goal=null;p.reactionSec=0;
-    p.tellLeft=0;p.chargeReady=false;resetSalFight(d,a);thinkBrain(d,p,a,0);
-    const at=d.course.worldAt(a.s,a.lateral);
-    app.inspectionCamera={position:[at.x+7,at.y+3,at.z+5],target:[at.x,at.y+.7,at.z]};
-    app.onFrame?.(s,0);window.__render.renderFrame();
-  })()`);
   const rows=[];
-  await context.evaluate(`(() => {const s=window.__qaApp.duel.state;s.stageTimeSec+=.2;
-    window.__salFightThink(window.__qaApp.duel,s.arena.participants[1],s.opponents[0],.2)})()`);
+  await startFight(context);
+  await alongsideFixture(context);
+  await advanceTo(context,'tell',.2);
   rows.push(await capture(context,quality,'tell'));
   await context.evaluate(`(() => {
-    const app=window.__qaApp,d=app.duel,s=d.state,a=s.opponents[0],p=s.arena.participants[1];
-    d.setInput({throttle:0,brake:1,boost:false});s.s-=10;s.speedMph=0;
-    s.stageTimeSec=a.salSaw.untilSec;const goal=window.__salFightThink(d,p,a,0);
-    if(goal.steeringScale!==.5||goal.boost||a.salSaw.stage!=='window')throw Error('Production miss goal wrong');
+    const d=window.__qaApp.duel,s=d.state;
+    // A brake-clear position fixture exercises the production counter. Timers
+    // still advance solely through Duel.step; the move state is never assigned.
+    d.setInput({throttle:0,brake:1,steer:0,boost:false});s.s-=10;
   })()`);
+  await advanceTo(context,'window');
   rows.push(await capture(context,quality,'window'));
-  await context.evaluate(`(async () => {
-    const d=window.__qaApp.duel,s=d.state,a=s.opponents[0],p=s.arena.participants[1];
-    const {resetSalFight}=await import('/src/arena/sal-fight.js');
-    // A second alongside fixture tests a complete, uncountered sweep.
-    d.setInput({throttle:1,brake:0,boost:false});s.boosting=false;
-    Object.assign(s,{lateral:0,prevLateral:0,headingError:0,speedMph:35});
-    Object.assign(a,{s:s.s,prevS:s.s,lateral:8,prevLateral:8,headingError:0,speedMph:35});
-    resetSalFight(d,a);s.stageTimeSec=Math.max(s.stageTimeSec,a.salSaw.nextSweepSec);
-    window.__salFightThink(d,p,a,0);
-    if(a.salSaw.stage!=='tell')throw Error('Repeat must start with its own tell');
-    s.stageTimeSec=a.salSaw.untilSec;window.__salFightThink(d,p,a,0);
-    s.stageTimeSec+=.1;window.__salFightThink(d,p,a,.1);
-    if(a.salSaw.stage!=='sweep')throw Error('Complete repeat tell must release sweep');
-  })()`);
+
+  // A production rematch supplies a fresh FSM and contact latch.
+  await startFight(context);
+  await alongsideFixture(context);
+  await advanceTo(context,'sweep');
   rows.push(await capture(context,quality,'sweep'));
   await context.evaluate(`(() => {
-    const d=window.__qaApp.duel,s=d.state,a=s.opponents[0];
-    // Clear a contact latch only because the fixture repositioned both cars.
-    d._combatRamIncidents.clear();s.invulnerableSec=0;
-    Object.assign(s,{prevS:s.s,prevLateral:0,lateral:0,pushVelocity:0,speedMph:35});
-    Object.assign(a,{prevS:s.s,s:s.s,prevLateral:6,lateral:1,pushVelocity:-20,speedMph:35});
+    const d=window.__qaApp.duel,s=d.state,a=s.opponents[0],site=s.arena.spawnSlots[0].s;
+    // Labelled swept side-contact fixture; the existing collision method does
+    // the damage, contact credit, sparks and hit callout.
+    Object.assign(s,{s:site,prevS:site,lateral:-1,prevLateral:-4,headingError:0,
+      pushVelocity:10,speedMph:35});
+    Object.assign(a,{s:site,prevS:site,lateral:1,prevLateral:4,headingError:0,
+      pushVelocity:-10,speedMph:35});
     const before=s.armor;d._vehicleContact(s,a,'rival');
     if(!(s.armor<before)||a.salSaw.hit!==true)throw Error('Real side contact must complete sweep damage');
   })()`);
   rows.push(await capture(context,quality,'sweep','sweep-hit'));
-  await context.evaluate(`(async () => {
-    const app=window.__qaApp,d=app.duel,s=d.state,a=s.opponents[0];
-    const {applyArmorDamage}=await import('/src/combat-armor.js');
-    a.armor=1;applyArmorDamage(d,a,'crossbow',{owner:'player'});d.step(1/120);
-    if(s.arena.warlordPhase!==2)throw Error('Real Sal wreck failed phase two');
-    a.combatWreckTimer=0;d.step(1/120);s.arena.participants[1].protectedSec=0;
-    a.s=s.s+35;a.lateral=s.lateral;a.headingError=Math.PI;a.speedMph=35;
-    s.stageTimeSec+=.01;window.__salFightThink(d,s.arena.participants[1],a,.01);
-    if(a.salSaw.stage!=='charge-tell'||!(a.arenaTellSec>0))throw Error('Production phase-two charge tell missing');
-    const at=d.course.worldAt(a.s,a.lateral);
-    app.inspectionCamera={position:[at.x+7,at.y+3,at.z+5],target:[at.x,at.y+.7,at.z]};
+
+  await startFight(context);
+  await context.evaluate(`(() => {
+    const d=window.__qaApp.duel,s=d.state,a=s.opponents[0],p=s.arena.participants[1],
+      site=s.arena.spawnSlots[0].s;
+    // One armor point makes this real contact a controlled first wreck.
+    Object.assign(s,{s:site,prevS:site,lateral:-1,prevLateral:-4,headingError:0,
+      speedMph:35,pushVelocity:10});
+    Object.assign(a,{s:site,prevS:site,lateral:1,prevLateral:4,headingError:0,
+      speedMph:35,pushVelocity:-10,armor:1});
+    d._vehicleContact(s,a,'rival');d.step(1/120);
+    if(s.arena.warlordPhase!==2||!a.combatWrecking)throw Error('Real contact failed phase two');
+    d.setInput({throttle:0,brake:1,steer:0,boost:false});
+    for(let tick=0;tick<600&&a.combatWrecking;tick++)d.step(1/120);
+    if(a.combatWrecking)throw Error('Production timed respawn failed');
+    // Set the approach pose just before natural respawn protection expires.
+    for(let tick=0;tick<600&&p.protectedSec>1/120+1e-9;tick++)d.step(1/120);
+    if(p.protectedSec>1/120+1e-9)throw Error('Production respawn protection did not expire');
+    Object.assign(a,{s:s.s+35,lateral:s.lateral,headingError:Math.PI,speedMph:35});
   })()`);
+  await advanceTo(context,'charge-tell');
+  if(await context.evaluate('window.__qaApp.duel.state.opponents[0].boosting'))
+    throw Error('Charge must not boost during its flash/roar tell');
   rows.push(await capture(context,quality,'charge-tell'));
-  await context.evaluate(`(() => {const d=window.__qaApp.duel,s=d.state,a=s.opponents[0];
-    s.stageTimeSec=a.salSaw.untilSec;const goal=window.__salFightThink(d,s.arena.participants[1],a,0);
-    if(a.salSaw.stage!=='charge'||goal.boost!==true)throw Error('Full Charge tell failed to release boost');
-  })()`);
+  await advanceTo(context,'charge');
+  if(!await context.evaluate('window.__qaApp.duel.state.opponents[0].boosting'))
+    throw Error('Production pilot must boost after the full Charge tell');
   rows.push(await capture(context,quality,'charge'));
   console.log(`${quality} Sal move review: ${JSON.stringify(rows)}`);
 }
 
 export async function run(context) {
-  for (const quality of ['high','performance']) await runQuality(context,quality);
-  console.log('Sal review uses stopped memory-only position/camera fixtures and real move transitions. Audio event checks prove routing, not audibility or fun; those require Claude play-through.');
+  for(const quality of ['high','performance'])await runQuality(context,quality);
+  console.log('Sal review uses memory-only discovery/hold/position/camera fixtures and real Duel methods for all transitions. Audio event checks prove routing, not audibility or fun; those require Claude play-through.');
 }
