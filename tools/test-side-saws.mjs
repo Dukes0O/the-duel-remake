@@ -251,3 +251,73 @@ test('ordinary races reuse the three existing reviewed fingerprint controls unch
       spec.mode + '/' + spec.course + ': ordinary rules unchanged');
   }
 });
+
+// WAR-SAL-ART keeps its missed-window spark node hidden during spin-up.
+// Tell sparks therefore use a separate effect, without weakening that suite.
+async function renderedSal() {
+  const THREE = await import('three');
+  const {createVehicleAttachmentRegistry} = await import('../src/vehicle-attachments.js');
+  const {createArmorKitMeshes} = await import('../src/armor-kit-meshes.js');
+  const scene = new THREE.Group();
+  function add(parent, name) { const node = new THREE.Group(); node.name = name; parent.add(node); return node; }
+  const scrapper = add(scene, 'kit-scrapper');
+  for (const name of ['kit-bull-bar', 'kit-stack-0', 'kit-stack-1', 'kit-plate-0', 'kit-plate-1', 'kit-plate-2', 'kit-plate-3']) add(scrapper, name);
+  const raider = add(scene, 'kit-raider');
+  for (const name of ['kit-cage', 'kit-saw-0', 'kit-saw-1', 'kit-turret-mount']) add(raider, name);
+  const warlord = add(scene, 'kit-warlord');
+  for (const name of ['kit-crown', 'kit-full-plating', 'kit-warlord-mount']) add(warlord, name);
+  const sal = add(scene, 'kit-sal-saws');
+  for (const name of ['kit-sal-saw-left', 'kit-sal-saw-right', 'kit-sal-sparks']) add(sal, name);
+  const registry = createVehicleAttachmentRegistry();
+  const kits = createArmorKitMeshes(registry, {loadKitAsset: async () => ({scene})});
+  const vehicle = new THREE.Group();
+  vehicle.userData.vehicleKey = 'banshee_muscle';
+  vehicle.userData.size = {width: 2.6, length: 4.8, height: 1.55};
+  const state = {s: 100, lateral: 0, armor: 100, maxArmor: 100, combatArmorKit: 'warlord',
+    mode: 'wasteland', status: 'racing', stageTimeSec: 5, combat: {}, warlordId: 'sal',
+    salSaw: {stage: 'idle', phase: 'idle', sinceSec: 5}, opponents: []};
+  const duel = {state, course: {groundAt: () => ({x: 0, y: 0, z: 0})}, featureFlags: flags()};
+  const vehicles = {player: vehicle, rival: null, extraOpponents: []};
+  kits.update(duel, vehicles, true);
+  await new Promise(resolve => setImmediate(resolve)); await new Promise(resolve => setImmediate(resolve));
+  kits.update(duel, vehicles, true);
+  return {kits, state, duel, vehicles, vehicle, registry};
+}
+test('reviewed Sal blades keep rotating during the actual sweeping art state without mutating rules', async () => {
+  const f = await renderedSal();
+  try {
+    const left = f.vehicle.getObjectByName('kit-sal-saw-left'), right = f.vehicle.getObjectByName('kit-sal-saw-right');
+    ok(left && right, 'reviewed left and right blades are attached');
+    const rotation = () => [left.rotation.toArray(), right.rotation.toArray()];
+    const idle = rotation();
+    f.state.salSaw = {stage: 'sweep', phase: 'sweeping', sinceSec: 5}; f.state.stageTimeSec = 5.4;
+    const before = structuredClone(f.state);
+    f.kits.update(f.duel, f.vehicles, true);
+    ok(JSON.stringify(rotation()) !== JSON.stringify(idle), 'sweeping stage visibly rotates both reviewed blades');
+    equal(f.state, before, 'drawing the sweep changes no simulation state');
+    const pose = rotation();
+    f.state.stageTimeSec = 5.2; f.kits.update(f.duel, f.vehicles, true);
+    f.state.stageTimeSec = 5.4; f.kits.update(f.duel, f.vehicles, true);
+    equal(rotation(), pose, 'blade motion repeats exactly at the same simulation time');
+  } finally { f.kits.dispose(); }
+  equal(f.registry.size, 0, 'sweep presentation releases its attachments');
+});
+test('Sal tell sparks use a distinct effect while the old missed-window node stays reserved', async () => {
+  const f = await renderedSal();
+  try {
+    f.state.salSaw = {stage: 'tell', phase: 'spin-up', sinceSec: 5}; f.state.stageTimeSec = 5.4;
+    const before = structuredClone(f.state);
+    f.kits.update(f.duel, f.vehicles, true);
+    equal(f.vehicle.getObjectByName('kit-sal-sparks')?.visible, false, 'existing missed-window sparks stay hidden during the tell');
+    const tellSparks = f.vehicle.getObjectByName('kit-sal-tell-sparks');
+    ok(tellSparks?.visible === true, 'distinct tell-spark effect is visible while the saws spin up');
+    equal(f.state, before, 'tell sparks change no race rules or saves');
+    f.state.salSaw = {stage: 'idle', phase: 'idle', sinceSec: 5.4};
+    f.kits.update(f.duel, f.vehicles, true);
+    equal(tellSparks.visible, false, 'the separate tell sparks stop outside the tell');
+    f.state.salSaw = {stage: 'window', phase: 'sparking', sinceSec: 5.4};
+    f.kits.update(f.duel, f.vehicles, true);
+    equal(f.vehicle.getObjectByName('kit-sal-sparks').visible, true, 'the reviewed window still shows its original spark node');
+  } finally { f.kits.dispose(); }
+  equal(f.registry.size, 0, 'tell presentation releases its attachments');
+});

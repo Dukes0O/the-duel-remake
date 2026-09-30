@@ -102,3 +102,20 @@ ordinary rigs retain their existing behavior.
 
 Focused red evidence only. No full lane gate or build was run because the
 Director assigned the focused suites while another runner owns heavy gates.
+
+## Presentation tests-first addition
+
+The renderer's separate tell effect is named kit-sal-tell-sparks. It is visible
+during spin-up only, and never changes simulation state. Keep kit-sal-sparks
+reserved for the reviewed missed window. Reviewed left and right blades rotate
+in the sweeping phase using stageTimeSec and sinceSec, with deterministic poses.
+
+Focused Side Saws rerun after these new checks: 27 subtests, 14 passed,
+13 expected failures, 75 assertions reached. Additional exact messages:
+- "sweeping stage visibly rotates both reviewed blades".
+- "distinct tell-spark effect is visible while the saws spin up".
+
+The sweep/player-side fixture moves both cars into contact; this intentionally
+avoids the existing NPC cut-in safety-yield path. Wrong-context modifier tests
+use actual Last Car Rolling contact with stray Sal fields, both with the dev
+warlord switch requested and absent. They pass and do not fake the damage path.
