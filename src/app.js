@@ -12,14 +12,15 @@ import {featureFlags} from './feature-flags.js';
 import {raceFeatureFlags,wastelandUnlocked} from './wasteland-access.js';
 import {ARENA_FIELD} from './arena/arena-event.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
+import {settleWarlordResult} from './arena/warlord-settlement.js';
 import {startWarlordEvent, beginWarlordEvent} from './arena/warlord-event.js';
 import {BUILT_WARLORD_IDS} from './warlords.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
 import { seedFromUrl } from './rng.js';
-import { DRIVE, COURSE, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority } from './config.js';
+import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority } from './config.js';
 import { EngineAudio } from './audio.js';
-import { loadPlayers, savePlayers, activePlayer, createPlayer, selectPlayer, replacePlayerProfile, settleRace, settlePoliceFine, purchaseUpgrade, unlockCar, getUpgradeLevels, isCarUnlocked, CPU_REWARDS } from './progression.js';
+import { loadPlayers, savePlayers, PLAYERS_KEY, playerName, activePlayer, createPlayer, selectPlayer, replacePlayerProfile, settleRace, settlePoliceFine, purchaseUpgrade, unlockCar, getUpgradeLevels, isCarUnlocked, CPU_REWARDS } from './progression.js';
 import {loadLeaderboard,saveLeaderboard,recordFinish,mergeLeaderboards} from './leaderboard.js';
 import {loadGhosts,saveGhosts,findGhost,mergeGhostStores,storeGhost,GhostRecorder,sampleGhost,readGhostEnabled,saveGhostEnabled} from './ghost.js';
 import {getPaintAppearance,purchasePaint as buyPaint,applyPaint as equipPaint} from './paint-presets.js';
@@ -33,6 +34,44 @@ import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as
 import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
 import {collectMuddyHollowHubcap, discoverMuddyHollow,
   muddyHollowSnapshot} from './wasteland-progress.js';
+
+// Reward recovery must use durable evidence, never loadPlayers' synthesized
+// fallback. Validate every profile before savePlayers normalizes the registry.
+function validWarlordRegistry(registry) {
+  const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+  if (!record(registry) || registry.version !== 2 || !Array.isArray(registry.players) ||
+      registry.players.length === 0) return false;
+  const ids = new Set(), names = new Set();
+  for (const player of registry.players) {
+    const profile = player?.profile, name = playerName(player?.name);
+    const carsValid = profile?.version === 1 && profile.unlockedCars === undefined ||
+      Array.isArray(profile?.unlockedCars) && profile.unlockedCars.every(id =>
+        typeof id === 'string' && Object.hasOwn(CARS, id));
+    const careerValid = profile?.version === 1 && profile.wasteland === undefined ||
+      record(profile?.wasteland) && profile.wasteland.version === 1;
+    if (!record(player) || typeof player.id !== 'string' || !/^[\w-]{1,80}$/.test(player.id) ||
+        ids.has(player.id) || !name || name !== player.name || names.has(name.toLowerCase()) ||
+        !record(profile) || ![1, 2].includes(profile.version) ||
+        !Number.isSafeInteger(profile.credits) || profile.credits < 0 ||
+        !carsValid || !careerValid) return false;
+    ids.add(player.id); names.add(name.toLowerCase());
+  }
+  return ids.has(registry.activePlayerId);
+}
+function readWarlordRegistry() {
+  try {
+    const storage = globalThis.localStorage;
+    if (!storage || typeof storage.getItem !== 'function') return {status: 'invalid'};
+    const raw = storage.getItem(PLAYERS_KEY);
+    if (raw === null) return {status: 'absent'};
+    if (typeof raw !== 'string' || !validWarlordRegistry(JSON.parse(raw))) return {status: 'invalid'};
+    return {status: 'ready', registry: loadPlayers({getItem: key => key === PLAYERS_KEY ? raw : null})};
+  } catch { return {status: 'invalid'}; }
+}
+const warlordHold = (profile, id) => {
+  const hold = profile?.wasteland?.territories?.[id]?.hold;
+  return Number.isSafeInteger(hold) ? Math.max(0, Math.min(100, hold)) : 0;
+};
 
 const SIMULATION_STEP = 1 / 120;
 export const ROUTE_PREFERENCE_KEY='duel_route_variant';
@@ -66,6 +105,7 @@ export class App {
       this.players={...this.players,players:this.players.players.map(player=>player.profile.raceSettings?player:{...player,profile:{...player.profile,raceSettings:normalizeRaceSettings(this._legacyRaceDefaults,player.profile)}})};
       this.player=activePlayer(this.players);this.profile=this.player.profile;this.profileSaved=savePlayers(this.players);
     }
+    this._rememberWarlordOwner();
     this.leaderboard=loadLeaderboard();this.cpuDifficulty=DEFAULT_CPU_DIFFICULTY;
     this.ghosts=loadGhosts();this.ghostEnabled=readGhostEnabled();this.ghostPose=null;this.ghostRecord=null;this.ghostRecorder=null;this.ghostStatus='none';this._ghostPoseBuffer={};
     this.ambientOcclusionEnabled=readGraphicsQuality()!=='performance';
@@ -268,7 +308,7 @@ export class App {
     this._scriptedCrashDone = false;
     this.duel.startCampaign({...options,weaponLevels:getProfileWeapons(this.profile).levels,
       weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile):undefined,
-      combatArmorKit:this.wastelandUnlocked() ? getEquippedArmorKit(this.profile,car) : null,
+      combatArmorKit:this.wastelandUnlocked() ? this._combatArmorKit(car) : null,
       crewId:this.wastelandUnlocked()?selectedCrewId(this.profile):undefined,
       discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
       muddyHollowHubcaps:this.profile.wasteland?.muddyHollow?.hubcaps,
@@ -388,7 +428,18 @@ export class App {
     for(const p of fresh.players)players.set(p.id,p);
     this.players=replacePlayerProfile({...this.players,players:[...players.values()]},this.player.id,this.profile);
     this.player=activePlayer(this.players);this.profile=this.player.profile;
-    this.profileSaved=savePlayers(this.players);this._syncHiddenRoadDiscovery();return this.profileSaved;
+    this.profileSaved=savePlayers(this.players);
+    if(this.profileSaved)this._rememberWarlordOwner();
+    this._syncHiddenRoadDiscovery();return this.profileSaved;
+  }
+  _rememberWarlordOwner() {
+    if (this.profileSaved === false) return;
+    const durable = readWarlordRegistry();
+    const owner = durable.registry?.players.find(player => player.id === this.player.id);
+    const snapshot = JSON.stringify(this.profile);
+    if (owner && durable.registry.activePlayerId === this.player.id &&
+        JSON.stringify(owner.profile) === snapshot)
+      this._warlordVerifiedOwner = {ownerId: this.player.id, snapshot};
   }
   _refreshPlayer(){
     if(this.profileSaved===false)return;
@@ -468,8 +519,7 @@ export class App {
     result.creditBalance=this.profile.credits;
   }
   _settleArenaResult(event,state){
-    // WAR-02a-REWARD owns atomic warlord pay. Never award ordinary arena pay.
-    if (state?.arena?.mode === 'warlord') return false;
+    if (state?.arena?.mode === 'warlord') return this._settleWarlordResult(event, state);
     const result=state?.arena?.result,currentHold=Number.isSafeInteger(this.profile?.wasteland?.territories?.kettle?.hold)?this.profile.wasteland.territories.kettle.hold:0;
     if(result&&result.scrapEarned==null){Object.assign(result,{scrapEarned:0,holdAdded:0,hold:currentHold,settlementSaved:false});}
     if(!result||event?.result!==result||state!==this.duel.state||
@@ -490,6 +540,104 @@ export class App {
       scrapBalance:this.profile.wasteland.scrap,holdAdded:settled.holdAdded,
       hold:settled.hold,settlementSaved:true});
     return true;
+  }
+  _settleWarlordResult(event, state) {
+    const result = state?.arena?.result;
+    if (result && result.scrapEarned == null) {
+      Object.assign(result, {scrapEarned: 0, settlementSaved: false,
+        settlementRetryable: false, kitEarned: null, territoryClaimed: false,
+        hold: warlordHold(this.profile, state.arena.warlordId)});
+    }
+    if (!result || event?.result !== result || state !== this.duel.state ||
+        !this.runId || !this.warlordsAvailable() ||
+        this._runPlayerId !== this.player.id || state.playerId !== this._runPlayerId)
+      return false;
+    if (result.settlementSaved) return false;
+    if (result.settlementRetryable) return this._retryWarlordResult(state, result);
+    const durable = readWarlordRegistry();
+    const verified = this._warlordVerifiedOwner?.ownerId === this.player.id
+      ? this._warlordVerifiedOwner : null;
+    this._warlordSettlementRetry = {state, result, runId: this.runId, ownerId: this.player.id,
+      unsaved: this.profileSaved === false,
+      registryWasAbsent: durable.status === 'absent' && !verified && this.profileSaved === false,
+      ownerSnapshot: verified?.snapshot ?? null};
+    // Initial settlement and retry obey the same durable-owner rules. A failed
+    // earlier shop write must never authorize replacing newer owner progress.
+    result.settlementRetryable = true;
+    return this._writeWarlordResult(state, result, durable);
+  }
+  _retryWarlordResult(state, result) {
+    return this._writeWarlordResult(state, result, readWarlordRegistry());
+  }
+  _writeWarlordResult(state, result, durable) {
+    const pending = this._warlordSettlementRetry;
+    if (!pending || pending.state !== state || pending.result !== result ||
+        pending.runId !== this.runId || pending.ownerId !== this.player.id) return false;
+    let registry, profile;
+    if (durable.status === 'ready') {
+      registry = durable.registry;
+      const owner = registry.players.find(player => player.id === pending.ownerId);
+      if (!owner || registry.activePlayerId !== pending.ownerId) return false;
+      // Genuine unsaved local work can only use the old durable owner when it
+      // is still identical. Conflicting owner progress is never guessed away.
+      if (pending.unsaved && JSON.stringify(owner.profile) !== pending.ownerSnapshot) return false;
+      profile = pending.unsaved ? this.profile : owner.profile;
+      const local = {...registry, players: registry.players.map(player =>
+        player.id === pending.ownerId ? {...player, profile} : player)};
+      if (!validWarlordRegistry(local)) return false;
+      registry = replacePlayerProfile(registry, pending.ownerId, profile);
+    } else if (durable.status === 'absent' && pending.registryWasAbsent &&
+        this.players.activePlayerId === pending.ownerId && validWarlordRegistry(this.players)) {
+      profile = this.profile;
+      registry = {...this.players, players: this.players.players.map(player =>
+        player.id === pending.ownerId ? {...player, profile} : player)};
+      if (!validWarlordRegistry(registry)) return false;
+    } else return false;
+    const settled = settleWarlordResult(profile, {runId: pending.runId,
+      ownerPlayerId: pending.ownerId, activePlayerId: this.player.id,
+      arena: state.arena, car: state.car});
+    if (!settled.awarded) {
+      if (settled.key && profile.wasteland?.settledResults?.includes(settled.key)) {
+        this._adoptWarlordRegistry(registry, true);
+        Object.assign(result, {scrapEarned: 0, settlementSaved: true,
+          settlementRetryable: false, hold: warlordHold(this.profile, state.arena.warlordId)});
+        this._warlordSettlementRetry = null;
+      }
+      return false;
+    }
+    const candidate = replacePlayerProfile(registry, pending.ownerId, settled.profile);
+    // Do not expose a partial reward. The single existing registry write is
+    // synchronous; no mutation enters App until its complete result is known.
+    if (!savePlayers(candidate)) {
+      this._adoptWarlordRegistry(registry, false);
+      result.hold = warlordHold(this.profile, state.arena.warlordId);
+      return false;
+    }
+    this._adoptWarlordRegistry(candidate, true);
+    this._presentWarlordSettlement(state, result, settled);
+    return true;
+  }
+  _adoptWarlordRegistry(registry, saved) {
+    this.players = registry; this.player = activePlayer(registry);
+    this.profile = this.player.profile; this.profileSaved = saved;
+    if (saved) this._rememberWarlordOwner();
+    this._syncHiddenRoadDiscovery();
+  }
+  _presentWarlordSettlement(state, result, settled) {
+    Object.assign(result, {scrapEarned: settled.scrapEarned,
+      scrapBalance: this.profile.wasteland.scrap,
+      hold: warlordHold(this.profile, state.arena.warlordId),
+      settlementSaved: true, settlementRetryable: false,
+      firstWin: settled.firstWin, kitEarned: settled.kitEarned,
+      territoryClaimed: settled.territoryClaimed});
+    this._warlordSettlementRetry = null;
+  }
+  retryArenaSettlement() {
+    const state = this.duel.state, result = state.arena?.result;
+    if (state.status !== 'arena_result' || !result?.settlementRetryable) return false;
+    const saved = this._settleArenaResult({result}, state);
+    this.duel.emit({arenaSettlementRetried: true});
+    return saved;
   }
   _settleAbandoned(){
     const state=this.duel.state;
@@ -606,6 +754,8 @@ export class App {
     const car = isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42';
     const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
     const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map(key => ({car: key, upgradeLevel: level}));
+    if (warlordId) this._rememberWarlordOwner();
+    this._warlordSettlementRetry = null;
     this.runId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     this._runPlayerId = this.player.id; this._markedRaceKey = null; this._arenaOpponents = count;
     this._arenaSerial = (this._arenaSerial || 0) + 1;
@@ -619,7 +769,7 @@ export class App {
       upgrades: getUpgradeLevels(this.profile, car), difficulty: this._raceSettings.difficulty,
       cpuDifficulty: this.cpuDifficulty, seed: (1989 + this._arenaSerial * 7919) >>> 0,
       playerId: this.player.id, opponents: field, weaponLevels: getProfileWeapons(this.profile).levels,
-      weaponLoadout: getCarLoadout(this.profile), combatArmorKit: getEquippedArmorKit(this.profile, car),
+      weaponLoadout: getCarLoadout(this.profile), combatArmorKit: this._combatArmorKit(car),
       crewId: selectedCrewId(this.profile)};
     return warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
       this.duel.startArenaEvent(options);
@@ -747,7 +897,13 @@ export class App {
     if(result.ok){this.profile=result.profile;if(!this._saveShopProfile(previous))return {ok:false,reason:'Could not save this purchase.'};this.duel.emit({garage:true});}
     return result;
   }
+  _combatArmorKit(car) {
+    const kit = getEquippedArmorKit(this.profile, car);
+    return kit === 'side-saws' && !this._switches().enabled('warlords') ? null : kit;
+  }
   equipArmorKit(car,id=null){
+    if(id==='side-saws'&&!this._switches().enabled('warlords'))
+      return {ok:false,reason:'Side Saws are not available in this build.'};
     if(!this._wastelandShopAccess()||!this.wastelandUnlocked())
       return {ok:false,reason:'Return to the Armory with Wasteland enabled.'};
     this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};

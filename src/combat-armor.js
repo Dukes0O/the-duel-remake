@@ -1,7 +1,8 @@
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {initializeCombatScoring, recordCombatHit, recordCombatWreck} from './combat-scoring.js';
 import {armorKitBonus} from './armor-kits.js';
-import {arenaDamageBlocked, noteArenaDamage} from './combat-teams.js';
+import {arenaActor, arenaDamageBlocked, hostile, noteArenaDamage} from './combat-teams.js';
+import {salRearDamageMultiplier} from './vehicle-contact-modifiers.js';
 import {CARS} from './config.js';
 import {startWreckSlide} from './vehicle-knock.js';
 
@@ -16,24 +17,25 @@ export function maxArmorForMass(mass) {
 
 export function armorDamageFor(source, {
   level = 0, distanceFraction = 0, relativeKph = 0, dvMph = 0,
-  spiked = false,
+  spiked = false, damageMultiplier = 1,
 } = {}) {
+  const multiplier = Number.isFinite(damageMultiplier) && damageMultiplier > 0 ? damageMultiplier : 1;
   const upgrade = 1 + clamp(level, 0, T.maximumWeaponLevel) * T.upgradePerLevel;
   switch (source) {
-    case 'crossbow': return T.crossbow * upgrade;
-    case 'bomb': return T.bomb * (1 - clamp(distanceFraction, 0, 1)) * upgrade;
-    case 'rocket': return T.rocket * upgrade;
-    case 'rpg-direct': return T.rpgDirect * upgrade;
-    case 'rpg-splash': return T.rpgSplash * upgrade;
+    case 'crossbow': return T.crossbow * upgrade * multiplier;
+    case 'bomb': return T.bomb * (1 - clamp(distanceFraction, 0, 1)) * upgrade * multiplier;
+    case 'rocket': return T.rocket * upgrade * multiplier;
+    case 'rpg-direct': return T.rpgDirect * upgrade * multiplier;
+    case 'rpg-splash': return T.rpgSplash * upgrade * multiplier;
     case 'ram': return relativeKph > T.ramThresholdKph
       ? Math.min(T.maximumRamDamage, relativeKph * T.ramDamagePerKph *
-        (spiked ? T.spikedRamMultiplier : 1)) * upgrade
+        (spiked ? T.spikedRamMultiplier : 1) * multiplier) * upgrade
       : 0;
     // Crash physics: damage from the struck car's own change in velocity, so
     // a heavy car hitting a light one deals much more than it takes.
     case 'ram-dv': return dvMph > T.ramDvThresholdMph
       ? Math.min(T.maximumRamDamage, (dvMph - T.ramDvThresholdMph) *
-        T.ramDamagePerDvMph * (spiked ? T.spikedRamMultiplier : 1)) * upgrade
+        T.ramDamagePerDvMph * (spiked ? T.spikedRamMultiplier : 1) * multiplier) * upgrade
       : 0;
     case 'scenery': return T.scenery;
     default: return 0;
@@ -112,7 +114,14 @@ export function applyArmorDamage(duel, actor, source, options = {}) {
       actor !== state && !state.opponents.includes(actor) ||
       actor.finished || actor.crushed || actor.combatWrecking ||
       combatShielded(duel, actor) || arenaDamageBlocked(duel, actor, options.owner)) return 0;
-  const base = armorDamageFor(source, options);
+  // Contact owners already use participant ids. Protection alone did not
+  // reject a distinct allied participant; keep own bomb damage unchanged.
+  const attacker = state.arena ? arenaActor(duel, options.owner) : null;
+  if (attacker && attacker !== actor && !hostile(duel, attacker, actor)) return 0;
+  const multiplier = Number.isFinite(options.damageMultiplier) && options.damageMultiplier > 0
+    ? options.damageMultiplier : 1;
+  const base = armorDamageFor(source, {...options, damageMultiplier: multiplier *
+    salRearDamageMultiplier(duel, actor, options.contactFace)});
   const factor = options.self ? T.maximumSelfDamageFraction : 1;
   const damage = Math.min(T.maximumHitDamage, Math.max(0, base * factor));
   if (!(damage > 0)) return 0;
