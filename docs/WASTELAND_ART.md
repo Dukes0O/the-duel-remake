@@ -12,6 +12,39 @@ The intake check reports planned images that are still absent; it fails when a
 present image has invalid dimensions, missing transparency, an excessive file
 size, or incomplete provenance.
 
+## Fitting existing models (Claude, 30 September 2026)
+
+Rules for every card that turns a picked CC0 source into game art (SPEC 0.11).
+The sources are clean, bright and toy-like; the Wasteland is gritty. The work
+is making them belong.
+
+1. **No source palette survives.** Every Kenney or Quaternius colour is
+   replaced by worn materials from this document's direction: faded paint,
+   rust, scorch, dust, oil. Bright colours stay only as small accents a
+   character owns (Rook's teal, Nell's rust-red harness).
+2. **Wrecks look wrecked.** Intact source cars are crushed, dented, missing
+   panels or burned before use; loose doors, plates, bumpers and tyres fill
+   the gaps. No clean car sits in a scrap wall.
+3. **Keep the source's strengths.** Reuse its rig, actions and topology.
+   Recolour, retexture, combine, trim and make distant versions in Blender;
+   do not re-sculpt.
+4. **Judge in the game.** Each round's sheet shows the current game art and
+   the fitted model in the game renderer, near and at racing or walking
+   distance, High and Performance, scored with SPEC 0.3's 1 to 5 scale. Pass at
+   4 on every item. At most three rounds per run; two rounds without a gain
+   stop the card with the gap written down (SPEC 0.11).
+5. **Better than now, or not at all.** If the fitted model does not beat the
+   current game art on the same sheet by round 3, keep the current art, close
+   the card with the reason, and propose a different source.
+6. **Budgets.** Crew: near 6,500 triangles, distant 2,000, one skinned draw per
+   figure. Hands with the held tool: 8,000. Rustwall: no more than today's
+   54,858 triangles and 10 draws for the wall. Arenas: SPEC 0.3's frame budget
+   at both quality settings.
+7. **Replace means remove.** The old runtime model and its build script go in
+   the same card. Credits for every source appear in game.
+8. **Kyle has the last look** in the Preview before a family's switch or
+   release.
+
 ## public/assets/reference/wasteland-art-direction.png
 
 Date: 2026-09-23

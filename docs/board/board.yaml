@@ -589,6 +589,66 @@ tasks:
     acceptance:
       - "SPEC 0.11 sourcing step for Rustwall's salvage (wrecked cars, sheet metal, tower parts) and the canyon strata (replaces EGG-02-P3). Two or three candidate sets, CC0 first, licences recorded in tools/art/catalog.json, files cached outside the repository. The Quaternius pack already used for Muddy Hollow counts as a candidate source."
       - "One comparison sheet, docs/board/looks/rustwall-src/round-1.jpg, beside the current in-game Rustwall, with a note per candidate. Then waiting_on: kyle. No adaptation before Kyle picks."
+  - id: ART-FIT-CREW-M
+    title: "Crew figures from Quaternius Modular Men: Rook, Jax, Cinder, Dune, Tusk"
+    owner: codex
+    lane: ART
+    size: L
+    needs: [ART-SRC-CREW]
+    status: ready
+    flag: wasteland2
+    acceptance:
+      - "Fit the picked Quaternius Modular Men pack (docs/board/looks/crew-src) into five crew figures following docs/WASTELAND_ART.md 'Fitting existing models'. Each is recognizable from the crew sheets (public/assets/reference/wasteland-crew-1.png and -2.png) by silhouette, costume and accent colour; faces may stay simple."
+      - "Reuse the pack's shared rig and 24 actions; map them to the game's existing on-foot actions (idle, walk, run, aim, fire, reload, repair, knockdown, get up, enter and exit the car). A missing action is adapted from the nearest pack action, never hand-animated from nothing."
+      - "Near and distant versions within the budgets; the old Rook runtime model and its figure scripts are removed once all five pass; Kyle checks them in the Preview."
+  - id: ART-SRC-CREW-W
+    title: "Crew figures for women: short list of existing starting models"
+    owner: codex
+    lane: ART
+    size: S
+    needs: [ART-SRC-CREW]
+    status: ready
+    acceptance:
+      - "Nell, Odessa and Wren are women, and so is the secret crew member, Vesper Blackiron (settled by Claude, 30 September 2026). Quaternius Modular Men has no women. Short-list two or three CC0 sources with the ART-SRC-CREW rules; check Quaternius's own women's modular pack first, because a shared rig lets the whole crew share every action. Stop at a comparison sheet with a recommendation (waiting_on: kyle); Kyle said he is not picky."
+  - id: ART-FIT-CREW-W
+    title: "Crew figures for Nell, Odessa, Wren and Vesper"
+    owner: codex
+    lane: ART
+    size: L
+    needs: [ART-SRC-CREW-W, ART-FIT-CREW-M]
+    status: ready
+    flag: wasteland2
+    acceptance:
+      - "Same rules and actions as ART-FIT-CREW-M, from the picked women's source. Vesper's figure is built but shown only once WAR-04 reveals her."
+  - id: ART-FIT-HANDS
+    title: "First-person hands, gloves and sleeves from the picked source"
+    owner: codex
+    lane: ART
+    size: M
+    needs: [ART-SRC-HANDS]
+    status: ready
+    flag: wasteland2
+    acceptance:
+      - "Fit Kyle's pick from docs/board/looks/first-person-src following docs/WASTELAND_ART.md 'Fitting existing models': gloves and sleeves per crew member matching ART-FIT-CREW-M and -W, RPG and wrench grips, and the existing aim, fire, reload and repair motion. The current hands are already acceptable, so rule 5 applies strictly: if the fit does not beat them on the same sheet by round 3, keep the current hands and close the card."
+  - id: ART-FIT-RUSTWALL
+    title: "Rustwall salvage wall and canyon rock from the picked sources"
+    owner: codex
+    lane: ART
+    size: L
+    needs: [ART-SRC-RUSTWALL]
+    status: ready
+    flag: hidden-road
+    acceptance:
+      - "Rebuild the Rustwall's salvage face, towers and canyon banks from Kyle's picks in docs/board/looks/rustwall-src, following docs/WASTELAND_ART.md 'Fitting existing models': crushed and burned car hulks, rusted sheet metal and container panels on the existing scaffold, tower supports from the industrial kit, canyon banks from the rock shapes with desert strata. The gate, its opening and every collision envelope stay exactly where they are; world signatures change only with a reviewed visual difference (AGENTS.md)."
+  - id: ART-SRC-TANKER
+    title: "Convoy Raid tanker and trailer: short list of existing starting models"
+    owner: codex
+    lane: ART
+    size: S
+    needs: []
+    status: ready
+    acceptance:
+      - "ARENA-07 needs an armored fuel tanker with a trailer, and no inspected source has one (Salt Flats review). Short-list two or three CC0 sources (cab and tank trailer may come from different packs) with the ART-SRC-CREW rules, showing how the Salt Flats salvage parts would armor it. Stop at a comparison sheet with a recommendation (waiting_on: kyle)."
   - id: HK-RUSTWALL-BASELINE
     title: "Rustwall frame test keeps its baseline in the repository"
     owner: codex
@@ -784,12 +844,13 @@ tasks:
     helpers: [test_author, reviewer, art_critic, browser_qa]
     acceptance:
       - "Starts after Kyle picks from the ART-SRC-SALTFLATS sheet. Build docs/SCRAPDOME.md section 10's venue from the picked assets (three art rounds at most, SPEC 0.11), rank 9 unlock, every arena mode playable there, frame cost within 10% of the Scrapdome in High and Performance."
+    claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
   - id: ARENA-07
     title: "Convoy Raid"
     owner: codex
     lane: CMB
     size: L
-    needs: [ARENA-06, CREW-03]
+    needs: [ARENA-06, CREW-03, ART-SRC-TANKER]
     status: ready
     flag: scrapdome
     owns: [src/arena/modes/convoy-raid.js, src/arena/convoy.js, tools/test-arena-convoy.mjs, tools/scenarios/convoy-raid.mjs, docs/changes/ARENA-07.md]
