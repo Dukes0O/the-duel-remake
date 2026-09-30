@@ -86,7 +86,7 @@ Current focused result after FORMAT merged: 40/40 checks pass, including all eig
 
 Private memory-only browser on port 55443: four High/Performance captures, zero warnings and errors. The released Muddy Hollow exploration branch turns on the pit at an initial 12 mph and the hill at 25 mph. Over one second, pit movement was 3.671834 m with a -0.414911 rad turn; hill movement was 8.408199 m with a -0.902514 rad turn. Both qualities give identical measured state; career scrap/history stayed unchanged. The recipe fixtures an already-departed exploration state and already-owned hubcaps, then runs the real driver and terrain. First attempts exposed recipe readiness and missing departure-fixture errors, corrected without runtime changes or weaker checks. Two final representative captures were visually inspected: the actual Titan, mud and hillside render correctly. Human steering feel remains Kyle’s Preview check.
 
-Commands: node tools/test-titan-handling.mjs; node tools/test-replays.mjs; node tools/browser-harness.mjs scenario titan-handling --output-dir .evidence/2026-09-30/TITAN-HANDLING/browser. Mandatory lane/build gates are pending; do not merge before Kyle checks the Preview.
+Commands: node tools/test-titan-handling.mjs; node tools/test-replays.mjs; node tools/browser-harness.mjs scenario titan-handling --output-dir .evidence/2026-09-30/TITAN-HANDLING/browser. Final mandatory gates on exact clean 71a1582c0d9b5c9a009282c389f5290ba6745946: lane 300/300 in 670.94 s and build 0.95 s. Kyle approved in writing on 30 September: "Titan is fine. integrate." Merged as 7c9ff20; this completes the manual review.
 
 ## Assertions and race fingerprints
 

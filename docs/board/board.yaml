@@ -2519,10 +2519,9 @@ tasks:
     lane: PHYS
     size: S
     needs: [CRASH-SWITCH-REMOVE]
-    status: review
-    waiting_on: kyle
+    status: merged
     review_commit: 71a1582c0d9b5c9a009282c389f5290ba6745946
-    note: "Independent review clean. Exact clean lane300/300 in670.94s and build0.95s; focus40/40, replay162/162 and four private High/Performance terrain captures pass. Kyle Preview feel check remains required before merge; Sal Pilot and Reward App hooks wait."
+    note: "Kyle approved 30 September: Titan is fine. integrate. Merged 7c9ff20 from frozen 71a1582 after clean independent review, lane300/300 in670.94s, build0.95s, focus40/40 and162 replay checks. Sal Pilot and Reward App hooks are free."
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [src/config.js, src/sim-driving.js, src/sim-rival.js, src/arena/arena-pilot.js, tools/test-titan-handling.mjs, tools/replays/titan-handling.json, tools/scenarios/titan-handling.mjs, docs/changes/TITAN-HANDLING.md]
     hooks: [src/app.js, tools/replays/expected-fingerprints.json]
