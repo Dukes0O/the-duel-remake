@@ -122,6 +122,32 @@ for (const [difficulty, cooldown, tell] of [['easy', 9, 1.2], ['medium', 7, .8],
   });
 }
 
+// Claude review, 30 September 2026: headless fights held a sweep up to 16 s
+// when Sal stayed alongside without contact. A sweep is one committed swerve.
+test('a sweep that has not connected within 1.5 s is a miss with the usual window', () => {
+  const f = fight(); startTell(f); advance(f, .8);
+  equal(f.actor.salSaw.stage, 'sweep', 'the sweep starts after its tell');
+  f.actor.salSaw.sweepGoal = {x: 500, z: 500};
+  advance(f, 1.5 - DT);
+  equal(f.actor.salSaw.stage, 'sweep', 'the sweep is not cut short before 1.5 s');
+  tick(f);
+  equal(f.actor.salSaw.stage, 'window', 'an unconnected sweep ends as a miss at 1.5 s');
+  equal(f.duel.state.callout, 'SHE MISSED. HIT HER NOW!', 'the player is told to hit back');
+});
+
+test('a charge that is blocked ends within 3 s', () => {
+  const f = fight(); f.duel.state.arena.warlordPhase = 2;
+  f.actor.lateral = 0; f.actor.s = 60;
+  tick(f, 0);
+  equal(f.actor.salSaw.stage, 'charge-tell', 'phase two lines up a charge');
+  advance(f, .64 + DT);
+  equal(f.actor.salSaw.stage, 'charge', 'the charge runs after its tell');
+  advance(f, 3 - 2 * DT);
+  equal(f.actor.salSaw.stage, 'charge', 'a charge that makes no ground is not cut before 3 s');
+  advance(f, 2 * DT);
+  equal(f.actor.salSaw.stage, 'idle', 'a blocked charge gives up at 3 s');
+});
+
 test('one saw scream is emitted at the tell position, not every reaction tick', () => {
   const f = fight(), events = [];
   f.duel.onChange((_state, event) => { if (event.salSaw) events.push(event.salSaw); });

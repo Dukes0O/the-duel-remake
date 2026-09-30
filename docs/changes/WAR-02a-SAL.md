@@ -249,3 +249,29 @@ live folder, port 5174 or real player save was accessed. No merge into
 integration, push or release was performed by this lane. Final syntax and
 owned-file diff checks pass. Raw evidence is copied to integration's ignored
 .evidence/2026-09-30/WAR-02a-SAL folder for independent review.
+
+## Claude review (30 September 2026)
+
+Code matches docs/SCRAPDOME.md section 5: tells on every sweep and charge,
+per-difficulty cooldowns, the brake-or-boost counter, the two-second window at
+60% pace and half steering, and phase-two tells at 80%.
+
+Headless review (48 full fights per build, seeds 1989, 7, 42 and 2024, Falcone
+and Banshee, a chase-and-crossbow player with and without braking on the tell)
+found one defect: a sweep had no time limit. When Sal stayed alongside without
+contact she held the sweep for up to 15.8 s; a blocked charge had the same gap.
+Settled and fixed test-first: a sweep that has not connected within 1.5 s is a
+miss and opens the usual window (`sweepMaxSec`); a charge ends after 3 s at
+most (`chargeMaxSec`). Two new tests in `tools/test-sal-fight.mjs` failed
+before the change and pass after; all 25 pass.
+
+Difficulty is not judged here. Plain rammer Sal (already merged in FORMAT)
+beat the scripted player on Medium and Hard in 16 of 16 fights, and Sal's
+moves take Easy from 3 to between 0 and 3 wins in 8, depending on whether the
+player reacts. A scripted player is far weaker than a person, so the target
+("Gratian wins Medium within a few tries") is judged in WAR-SAL-TUNE, when Kyle
+and Gratian play her in the Preview; the likely first lever is the warlord
+armor scale (1.5) rather than her moves.
+
+Verdict: merge with the fix. Sal stays behind the `warlords` switch (dev) until
+Kyle approves her in the Preview.

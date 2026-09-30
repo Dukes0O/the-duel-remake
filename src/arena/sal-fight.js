@@ -8,6 +8,8 @@ import {arenaFloorSpeed} from './venues.js';
 export const SAL_RULES = Object.freeze({
   sidewaysMetres: 12, alongMetres: 6, cooldownSec: Object.freeze({easy: 9, medium: 7, hard: 5}),
   windowSec: 2, windowSpeedShare: .6, windowSteeringScale: .5, phaseTwoTellShare: .8,
+  // A sweep is one committed swerve; a charge that makes no ground gives up.
+  sweepMaxSec: 1.5, chargeMaxSec: 3,
 });
 const EPSILON = 1e-9;
 const SIDE_PHASES = Object.freeze({idle: 'idle', tell: 'spin-up', sweep: 'sweeping',
@@ -134,13 +136,14 @@ export function thinkSalFight(duel, participant, actor, difficulty) {
     // Commit across the player's line. The counter moves clear before release;
     // the sweep does not chase someone who has already escaped its tell.
     move.sweepGoal = {x: relative.at.x, z: relative.at.z};
+    move.untilSec = now + SAL_RULES.sweepMaxSec;
   }
   if (move.stage === 'sweep') {
     if (move.hit === true) {
       setStage(duel, participant, actor, 'idle');
       return null;
     }
-    if (!alongside(relative)) {
+    if (!alongside(relative) || now + EPSILON >= move.untilSec) {
       openWindow(duel, participant, actor);
       return straightGoal({...relative.me, heading: move.runHeading}, pace * .6, false, .5);
     }
@@ -151,13 +154,14 @@ export function thinkSalFight(duel, participant, actor, difficulty) {
     if (now + EPSILON < move.untilSec)
       return straightGoal({...relative.me, heading: move.runHeading}, pace * .6);
     setStage(duel, participant, actor, 'charge');
+    move.untilSec = now + SAL_RULES.chargeMaxSec;
     participant.chargeReady = true;
   }
   if (move.stage === 'charge') {
     const travel = (relative.me.x - move.chargeStart.x) * Math.sin(move.runHeading) +
       (relative.me.z - move.chargeStart.z) * Math.cos(move.runHeading);
     const turnedAway = Math.cos(relative.me.heading - move.runHeading) <= 0;
-    if (travel >= move.chargeLength || turnedAway) {
+    if (travel >= move.chargeLength || turnedAway || now + EPSILON >= move.untilSec) {
       setStage(duel, participant, actor, 'idle');
       return null;
     }
