@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-09-30T20:55:43.634Z
+Observed at: 2026-09-30T21:31:32.684Z
 
-Observation commit: ab5c075554fb760fbaaabbf160634e178d0a5f39
+Observation commit: 56ad5a8e4e0470598e858641c184eba59d36f8fd
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: ab5c075554fb760fbaaabbf160634e178d0a5f39
+Integration HEAD: 56ad5a8e4e0470598e858641c184eba59d36f8fd
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -37,11 +37,13 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | lane/art/crew-fit-m | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-fit-m |
+| lane/art/crew-w-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-w-src |
 | lane/audio/aud-10 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 5 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/cmb/arena-03-fuel-run | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-03-fuel-run |
 | lane/phys/arena-steer | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-steer |
-| lane/save/war-pay | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/war-pay |
+| lane/save/war-pay | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/war-pay |
 
 ## Unmerged branches for idle review
 
@@ -49,9 +51,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| lane/art/crew-fit-m | unknown | 2026-09-30T13:55:33-07:00 | 0 | last commit 2026-09-30T13:55:33-07:00 | tools/test-crew-source-fit.mjs |
-| lane/phys/arena-steer | unknown | 2026-09-30T13:53:49-07:00 | 0 | last commit 2026-09-30T13:53:49-07:00 | tools/replays/arena-steering-controls.json, tools/test-arena-steering.mjs |
-| lane/save/war-pay | unknown | 2026-09-30T13:54:26-07:00 | 0 | last commit 2026-09-30T13:54:26-07:00 | tools/test-warlord-pay.mjs |
+| lane/art/crew-fit-m | unknown | 2026-09-30T14:08:14-07:00 | 0 | last commit 2026-09-30T14:08:14-07:00 | docs/board/looks/crew-fit-m/round-1-review.md, docs/board/looks/crew-fit-m/round-1.jpg, docs/changes/ART-FIT-CREW-M.md, tools/art/crew-fit-sheet.py, tools/blender/crew-source-fit.json |
+| lane/phys/arena-steer | unknown | 2026-09-30T14:11:55-07:00 | 0 | last commit 2026-09-30T14:11:55-07:00 | docs/changes/ARENA-STEER.md, src/arena/arena-pilot.js, src/config.js, src/sim-driving.js, tools/replays/arena-steering-controls.json |
 
 ## Size targets
 
@@ -65,10 +66,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 430,908 B | +0 B | 500,000 B |
 | Review `looks/` | 9,947,193 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 132,896 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 301,075 B | +168,179 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 311,827,456 B | +386,048 B | unavailable |
-| Lane folders | 3 | +1 | unavailable |
+| Git objects | 313,366,528 B | +1,539,072 B | unavailable |
+| Lane folders | 5 | +2 | unavailable |
 
 ## Backups
 
@@ -76,7 +77,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: e2c418e73538af1c24d783c79e426151e2c79c9a
 - Local main: missing
-- Local integration/wasteland: ab5c075554fb760fbaaabbf160634e178d0a5f39
+- Local integration/wasteland: 56ad5a8e4e0470598e858641c184eba59d36f8fd
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

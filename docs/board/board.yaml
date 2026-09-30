@@ -801,7 +801,7 @@ tasks:
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run
-    owns: [src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md]
+    owns: [src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/replays/arena-fuel-run-controls.json, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md]
     hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js]
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     sequencing: "Tests first in owned files now. Production App and screen-arena edits wait for WAR-PAY merge; held ARENA-STEER App demo hook is deferred until Fuel merges. No config, driving, pilot or crate-test ownership. Future Arsenal waits Fuel feature/render/audio hooks. Protected sound-bank/catalog/assets remain untouched: explicit fuel events reuse authored interface.bonus, vehicle.landing, interface.go cues. SPEC0.12 adds fuel-run:dev plus scrapdome/discovery/rank6 gates; Last Car Rolling unchanged."
@@ -2645,11 +2645,12 @@ tasks:
     lane: SAVE
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: codex-director-2026-09-30-resume
     flag: warlords
     owns: [tools/test-warlord-pay.mjs, tools/scenarios/warlord-pay.mjs, docs/changes/WAR-PAY.md]
     hooks: [tools/preview.js, src/arena/warlord-settlement.js, src/app.js, src/screen-arena.js, tools/test-warlord-settlement.mjs, tools/scenarios/warlord-reward.mjs]
+    merge_verdict: "Final clean da5e8f3 lane306/306 in451.87s and build0.97s; Reviewer54/54 with343checks, SaveGuardian76/76 plus247historical/1320syntheticchecks approve uncapped loss and all changed assertions. Actual private Preview/reward High/Performance18captures clear. App/screen hooks released to Fuel Run."
     helpers: [test_author, reviewer, save_guardian, browser_qa]
     sequencing: "Exclusive settlement/App/results hooks before WAR-02c. Preserve all named-player, fresh-owner, fail/retry and single-write guarantees. Changed old pay assertions require independent review."
     acceptance:
