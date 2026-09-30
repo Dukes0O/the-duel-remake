@@ -2622,6 +2622,43 @@ tasks:
       - "Target: Gratian beats Sal on Medium within a few tries and every sweep feels fair. Tuning changes only the settled numbers in docs/SCRAPDOME.md, recorded in decisions.md, built by Codex as a small card."
     waiting_on: kyle
     claude_note: "Ready 30 September 2026: the Preview now turns on the warlords switch. Headless fights: plain rammer Sal already beat a scripted player on Medium and Hard 16 of 16, so expect her to be hard; the first lever is the warlord armor scale (1.5), not her moves."
+    kyle_play: "30 September 2026: Kyle beat Sal 3-0 on Medium. Findings became WAR-PAY, ARENA-STEER and ARENA-SHOVE; Sal's own moves and armor stay until Gratian has played her."
+  - id: WAR-PAY
+    title: "Warlord pay worth the fight: first win 600 and up, rematches like an arena win"
+    owner: codex
+    lane: SAVE
+    size: S
+    needs: []
+    status: ready
+    flag: warlords
+    acceptance:
+      - "Kyle, 30 September 2026: beat Sal 3-0 on Medium in the Preview and was paid 25 scrap. Pay is now settled in docs/SCRAPDOME.md section 5: first win 600 plus 100 per earlier warlord on the ladder, times the arena difficulty factor (Easy 1, Medium 1.2, Hard 1.4); rematch win (80 plus 60 per wreck on the warlord, at most 3) times the factor; loss 60 per wreck on the warlord times the factor. Result screen shows the amount and why (first win or rematch)."
+      - "Find why Kyle's win paid the rematch amount: a fresh Preview player (tools/preview-player.js) has never beaten Sal, so a first win must pay first-win pay. Reproduce with a memory-only browser run of a fresh Preview tab (first fight won, then a second); if the first fight pays the rematch amount, fix the cause and keep the test. If it was a second win in the same tab, say so in the change note."
+      - "Settlement stays atomic and once per fight (Save Guardian review); tests first."
+  - id: ARENA-STEER
+    title: "Tighter steering in the Scrapdome for every car"
+    owner: codex
+    lane: PHYS
+    size: S
+    needs: []
+    status: ready
+    flag: scrapdome
+    acceptance:
+      - "Kyle, 30 September 2026: steering in the dome is very difficult whatever the car or speed. Measured: at full lock every car turns 53 to 66 degrees a second at 25 and 45 mph, the same in a warlord fight and Last Car Rolling; turning around takes more than 3 s in a ring."
+      - "Settled rule: in an arena venue only, every car at full lock turns at least 100 degrees a second from 15 to 50 mph and at least 75 degrees a second at the floor's top speed, by raising both the steering limit and the tyre limit in steeringYawAuthority for arena courses (one arena factor, recorded). Computer cars use the same function, so it stays fair. Sal's window still halves her steering. Road courses, Muddy Hollow and the Titan's road handling are unchanged (replay fingerprints unchanged except arena replays, each named)."
+      - "Re-run tools/arena-balance.mjs and the Sal tests and record the change; cars must not spin out or oscillate at full lock (check yaw settles within 0.3 s of releasing the stick). Kyle checks it in the Preview."
+  - id: ARENA-SHOVE
+    title: "Every car can shove a sitting car in the Scrapdome"
+    owner: codex
+    lane: CMB
+    size: S
+    needs: []
+    status: ready
+    flag: scrapdome
+    acceptance:
+      - "Kyle, 30 September 2026: cars other than the Titan cannot budge the sitting cars in the dome. Measured by Claude: a live computer car hit at 20, 40 and 60 mph moves 2 to 12 m, so the stuck case is a car in another state. Reproduce each in a test: a wreck waiting to respawn, a car pinned against the wall, a car inside its respawn protection, and a stopped car with its brain idle."
+      - "Settled rule: in the dome any car rammed at 20 mph or more by any car moves at least 1.5 m, and at 40 mph at least 4 m, through the crash solver (released crash physics), in every state above. A wreck waiting to respawn slides like a traffic hulk and stays on the floor; respawn protection blocks damage, not movement. The Titan's crush stays as it is."
+      - "Tests first; arena replays that change are named and explained."
   - id: WAR-SAL-RELEASE
     title: "Release the warlord ladder with Sawtooth Sal"
     owner: claude
