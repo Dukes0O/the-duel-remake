@@ -809,6 +809,363 @@
         "independentReview": "pending"
       },
       "runtime": []
+    },
+    {
+      "card": "ART-SRC-CREW-W",
+      "family": "crew",
+      "checked": "2026-09-30",
+      "status": "awaiting-kyle",
+      "runtime": [],
+      "recipe": "tools/art/crew-w-source-inspect.py",
+      "comparisonRecipe": "tools/art/crew-w-source-sheet.py",
+      "id": "quaternius-base-standard-crew-w",
+      "sourcePage": "https://quaternius.com/packs/universalbasecharacters.html",
+      "downloadedFrom": "https://quaternius.itch.io/universal-base-characters",
+      "downloadAccess": "Anonymous zero-price Standard ZIP, free upload 15861669; paid Source edition excluded. No account, email or payment.",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Actual embedded License_Standard.txt states CC0 1.0 Universal / Public Domain Dedication. General licence page is not substituted for this embedded evidence.",
+      "downloaded": true,
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\quaternius-universal-base-characters-standard",
+      "previewImage": "https://quaternius.com/assets/images/fullres/universalbasecharacters/standard.jpg",
+      "files": [
+        {
+          "path": "Standard.zip",
+          "sha256": "fdbf1804c90dfc1ea03e992bff7da2dfd1a79318e13270a660180f9308455f40",
+          "bytes": 128968391
+        },
+        {
+          "path": "License_Standard.txt",
+          "sha256": "0f4beaf0fe360a7732e58bbe3dbf60a2422367fbea60cb9ea4add968f383268e",
+          "bytes": 806
+        },
+        {
+          "path": "Superhero_Female_FullBody.fbx",
+          "sha256": "0727e7b236eeea4115531e07aeb2bb7690c1a58155f743bbf54282944fb97ea9",
+          "bytes": 1006508
+        },
+        {
+          "path": "Hair_Buns.fbx",
+          "sha256": "cb45536c0e8c2b715732d9a75a33849239ca5e788c7dee4e17998daa0986fdfc",
+          "bytes": 259420
+        },
+        {
+          "path": "Hair_BuzzedFemale.fbx",
+          "sha256": "aeb3a606d8b9b1818025dbf6b4640ff33f14b0e9676f3cbfe410321e1a1d6a5d",
+          "bytes": 164492
+        },
+        {
+          "path": "Hair_Long.fbx",
+          "sha256": "206f14b69e05758425278f074eb61a730bfe40250e7cc30e0c433ab0b05342c7",
+          "bytes": 249404
+        },
+        {
+          "path": "Hair_SimpleParted.fbx",
+          "sha256": "5e98acd3561c814127326fdc78e74f20dfa1c3397760006d17ebaea4c8d7a24d",
+          "bytes": 181628
+        },
+        {
+          "path": "Preview.jpg",
+          "sha256": "fbe0cf5a8187ec2083906280cb1b9f8e6d0276b9821cdfb647822da0f0a9cba1",
+          "bytes": 251838
+        }
+      ],
+      "inspection": [
+        {
+          "label": "Standard female body",
+          "source": "Superhero_Female_FullBody.fbx",
+          "meshes": [
+            {
+              "name": "Eyes",
+              "triangles": 768,
+              "bound": true
+            },
+            {
+              "name": "Eyebrows",
+              "triangles": 1480,
+              "bound": true
+            },
+            {
+              "name": "Superhero_Female",
+              "triangles": 12812,
+              "bound": true
+            }
+          ],
+          "boundTriangles": 15060,
+          "bones": [
+            65
+          ],
+          "actions": []
+        },
+        {
+          "label": "Standard Hair_Buns",
+          "source": "Hair_Buns.fbx",
+          "meshes": [
+            {
+              "name": "Hair_Buns",
+              "triangles": 3284,
+              "bound": true
+            }
+          ],
+          "boundTriangles": 3284,
+          "bones": [
+            65
+          ],
+          "actions": []
+        },
+        {
+          "label": "Standard Hair_BuzzedFemale",
+          "source": "Hair_BuzzedFemale.fbx",
+          "meshes": [
+            {
+              "name": "Hair_BuzzedFemale",
+              "triangles": 830,
+              "bound": true
+            }
+          ],
+          "boundTriangles": 830,
+          "bones": [
+            65
+          ],
+          "actions": []
+        },
+        {
+          "label": "Standard Hair_Long",
+          "source": "Hair_Long.fbx",
+          "meshes": [
+            {
+              "name": "Hair_Long",
+              "triangles": 2906,
+              "bound": true
+            }
+          ],
+          "boundTriangles": 2906,
+          "bones": [
+            65
+          ],
+          "actions": []
+        },
+        {
+          "label": "Standard Hair_SimpleParted",
+          "source": "Hair_SimpleParted.fbx",
+          "meshes": [
+            {
+              "name": "Hair_SimpleParted",
+              "triangles": 1301,
+              "bound": true
+            }
+          ],
+          "boundTriangles": 1301,
+          "bones": [
+            65
+          ],
+          "actions": []
+        }
+      ],
+      "fit": "More detailed female face/body with supplied hairstyles. Downloaded Standard includes Superhero bodies only, not paid Regular/Teen.",
+      "risk": "15060 bound triangles before hair; 65-bone rig; zero embedded actions or crew garment models. Needs existing garments/actions, tested near/distant reduction and retargeting. Shared Modular Men rig is unproven.",
+      "decision": "Pending Kyle. Recommendation keep current until suitable existing garment and animation sources are verified.",
+      "changed": "No source bytes, geometry, rig, palette or runtime assets changed. The comparison crops only the official preview."
+    },
+    {
+      "card": "ART-SRC-CREW-W",
+      "family": "crew",
+      "checked": "2026-09-30",
+      "status": "awaiting-kyle",
+      "runtime": [],
+      "recipe": "tools/art/crew-w-source-inspect.py",
+      "comparisonRecipe": "tools/art/crew-w-source-sheet.py",
+      "id": "kenney-survivors-crew-w",
+      "reusesCatalogAsset": "kenney-animated-characters-survivors",
+      "sourcePage": "https://kenney.nl/assets/animated-characters-survivors",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Actual cached unpacked/License.txt states Creative Commons Zero / CC0. Original source ZIP retained.",
+      "downloaded": true,
+      "downloadAccess": "Original free pack cached; primary creator page provides download without donation/account.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\kenney-animated-characters-survivors",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "fdadced07a0454c9b7f0b46507be6144a072b4d03b4ffa37f225893c76c62845",
+          "bytes": 718027
+        },
+        {
+          "path": "unpacked/License.txt",
+          "sha256": "8eab20a1fa97308ae50443f6b8a0fabc4dd1fc37062988cd635fc74c8f1be21c",
+          "bytes": 696
+        },
+        {
+          "path": "unpacked/Model/characterMedium.fbx",
+          "sha256": "18835fef534eede635b081ee7fe647d01a885550a591d2e6bf071010906167d8",
+          "bytes": 167212
+        },
+        {
+          "path": "unpacked/Animations/idle.fbx",
+          "sha256": "c8a24e0294376ee5a195c56752a13310e1c0b5f8588a4db50e094120e3e4cc74",
+          "bytes": 608188
+        },
+        {
+          "path": "unpacked/Animations/jump.fbx",
+          "sha256": "b88429077a7a1af5d3f55f43cfd8ce0f7441b4f6f7bb15a8070d7ed15d275f74",
+          "bytes": 562796
+        },
+        {
+          "path": "unpacked/Animations/run.fbx",
+          "sha256": "e635461fc8dace85ec67a7f7941e949a7c3f108b51ae4d2da1557e6e01749df8",
+          "bytes": 572732
+        },
+        {
+          "path": "unpacked/Skins/survivorFemaleA.png",
+          "sha256": "bb7123c98f0d85029447fed30794108657ec30c788e4a6039a14766a435a88d0",
+          "bytes": 54833
+        }
+      ],
+      "inspection": [
+        {
+          "label": "Kenney body",
+          "source": "unpacked/Model/characterMedium.fbx",
+          "boundTriangles": 1604,
+          "bones": [
+            58
+          ],
+          "actions": []
+        },
+        {
+          "label": "Kenney idle",
+          "source": "unpacked/Animations/idle.fbx",
+          "boundTriangles": 0,
+          "bones": [
+            58
+          ],
+          "actions": [
+            {
+              "name": "Root|Root|0.Targeting Pose",
+              "frames": [
+                1,
+                2
+              ]
+            },
+            {
+              "name": "Root|Root|Idle",
+              "frames": [
+                1,
+                33
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Kenney jump",
+          "source": "unpacked/Animations/jump.fbx",
+          "boundTriangles": 0,
+          "bones": [
+            58
+          ],
+          "actions": [
+            {
+              "name": "Root|Root|0.Targeting Pose",
+              "frames": [
+                1,
+                2
+              ]
+            },
+            {
+              "name": "Root|Root|Jump",
+              "frames": [
+                1,
+                13
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Kenney run",
+          "source": "unpacked/Animations/run.fbx",
+          "boundTriangles": 0,
+          "bones": [
+            58
+          ],
+          "actions": [
+            {
+              "name": "Root|Root|0.Targeting Pose",
+              "frames": [
+                1,
+                2
+              ]
+            },
+            {
+              "name": "Root|Root|Run",
+              "frames": [
+                1,
+                17
+              ]
+            }
+          ]
+        }
+      ],
+      "fit": "1604 triangles, 58 bones; supplied female texture on the shared body; separate idle/jump/run motions.",
+      "risk": "Cartoon proportions conflict with settled gritty style; no distinct female topology or four crew garments. Other required actions/rig mapping unproven. Targeting-pose tracks are not extra gameplay motions.",
+      "decision": "Pending Kyle. Recommendation keep current; original declined male source record unchanged.",
+      "changed": "A disposable native Blender inspection render applies the original supplied female skin to original shared body. No source geometry, rig, UV, source files or runtime asset changed."
+    },
+    {
+      "card": "ART-SRC-CREW-W",
+      "family": "crew",
+      "checked": "2026-09-30",
+      "status": "on-hold",
+      "runtime": [],
+      "recipe": "tools/art/crew-w-source-inspect.py",
+      "comparisonRecipe": "tools/art/crew-w-source-sheet.py",
+      "id": "quaternius-modular-women-hold",
+      "sourcePage": "https://quaternius.com/packs/ultimatemodularwomen.html",
+      "author": "Quaternius",
+      "license": null,
+      "licenseUrl": "https://quaternius.com/license.html",
+      "licenseEvidence": "UNVERIFIED: official pack page says CC0; current general page displays QAL v1.0 updated 8/28/2026. Actual embedded License.txt unavailable. No rights conclusion applied to this pack or earlier cached CC0 packs.",
+      "downloaded": false,
+      "previewDownloaded": true,
+      "downloadAccess": "Creator Drive folder public, but actual License.txt, How To Use.txt and All together.fbx return quota-exceeded HTML; invalid downloads rejected/removed. No model acquired.",
+      "downloadedFrom": "https://drive.google.com/drive/folders/1720N9IGyQHXYvtvZJzazhxtTTlz-y2Vf?usp=sharing",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\quaternius-modular-women",
+      "previewImage": "https://quaternius.com/assets/images/fullres/modularwomen.jpg",
+      "files": [
+        {
+          "path": "Preview.jpg",
+          "sha256": "80daa5b48791a014d356c5107e6d312672400b87d247472ee72437f66a18efd6",
+          "bytes": 286665
+        },
+        {
+          "path": "Pack-page.html",
+          "sha256": "d2cc6dcdd11e2152ffe958cefb2ca19737ab58307601e05d53186a4a0d6d22b4",
+          "bytes": 15441
+        },
+        {
+          "path": "License-page.html",
+          "sha256": "d1b56be5228d372b049b45cc7447a823da7989a6cf7036f60cfac2284c8fcb0d",
+          "bytes": 10301
+        },
+        {
+          "path": "access-evidence.txt",
+          "sha256": "105e28b6746912139369b7583bccea926b88ced1cd1b481bd80ea09fdf91e893",
+          "bytes": 969
+        }
+      ],
+      "advertised": {
+        "outfits": 10,
+        "animations": 24,
+        "interchangeableParts": 4
+      },
+      "inspection": {
+        "triangles": null,
+        "bones": null,
+        "actions": null,
+        "sharedMaleRig": null
+      },
+      "fit": "Official preview suggests women and workwear, but source access and licence verification failed.",
+      "risk": "Not a verified CC0 option. No actual geometry/rig/action counts; shared Modular Men rig unverified. Preview also remains cartoon-like and clean.",
+      "decision": "ON HOLD; no fitting until actual model and applicable licence are acquired and reviewed.",
+      "changed": "Only primary preview and licence/page/access evidence cached; no model or embedded licence acquired."
     }
   ]
 }
