@@ -661,9 +661,27 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-09-30-resume
+    branch: lane/art/tanker-src
+    owns: [tools/art/tanker-source-sheet.py, tools/art/tanker-source-inspect.py, docs/board/looks/tanker-src/, docs/changes/ART-SRC-TANKER.md]
+    hooks: [tools/art/catalog.json]
+    helpers: [reviewer]
+    sequencing: "Women source artifacts are merged and their catalog hook is released. Source comparison only: verify actual original CC0 licenses and geometry, preserve all prior catalog records, show existing Salt Flats armor parts, and stop at one <=500 KB round-1.jpg with matching round-1-review.md, waiting for Kyle. No fitting, runtime asset, game code or protected audio edit."
     acceptance:
       - "ARENA-07 needs an armored fuel tanker with a trailer, and no inspected source has one (Salt Flats review). Short-list two or three CC0 sources (cab and tank trailer may come from different packs) with the ART-SRC-CREW rules, showing how the Salt Flats salvage parts would armor it. Stop at a comparison sheet with a recommendation (waiting_on: kyle)."
+  - id: SAVE-DAMAGED-FIELDS
+    title: "Damaged numeric profile fields cannot replace a named player with defaults"
+    owner: codex
+    lane: SAVE
+    size: S
+    needs: []
+    status: ready
+    owns: [src/progression.js, tools/test-profile-damaged-fields.mjs, docs/changes/SAVE-DAMAGED-FIELDS.md]
+    hooks: []
+    helpers: [test_author, reviewer, save_guardian]
+    acceptance:
+      - "Save Guardian reproduced JSON-safe credits and winStreak objects with a non-callable own toString throwing in normalizeProfile; loadPlayers then displays a default Player 1. Write failing synthetic tests first. Normalize damaged numeric fields without object-coercion errors while preserving the named owner and every valid historical field. All seven fixtures and 247 preservation checks, migration/backup and storage gates pass unchanged; no real saves, schema/key change or runtime dependency. Race fingerprints remain unchanged."
   - id: HK-RUSTWALL-BASELINE
     title: "Rustwall frame test keeps its baseline in the repository"
     owner: codex
