@@ -46,13 +46,22 @@ honors the stop rule. This final note records that verdict; the Director owns
 the mandatory lane/build run and its integration verdict. Source choice still
 waits for Kyle, with no fitting or runtime installation authorized.
 
-## Gate placement correction
+## Gate placement corrections
 
-The first mandatory lane gate at clean688fabe failed repository hygiene: the
-sheet was named round1.jpg, which is treated as a raw capture. It completed
-247 suites, failed1, left58 unrun, in651.60seconds; build passed1.13seconds.
-Renamed the exact376150-byte JPEG to round-1.jpg and updated both review
-metadata/reproduction references. No image bytes, source, catalog, runtime or
-assertions change. The incorrect filename is removed in the same correction.
-The existing placement rule remains unchanged. A fresh mandatory lane/build
-run follows on this final commit; prior partial gate is not a pass.
+The first mandatory lane gate at clean `688fabe` failed repository hygiene:
+the sheet was named `round1.jpg`, which is treated as a raw capture. It
+finished with 247 passing suites, one failure and 58 not run in 651.60 seconds.
+Build passed in 1.13 seconds. The exact 376,150-byte JPEG was renamed to
+`round-1.jpg`, with both metadata and reproduction references corrected.
+
+The next mandatory gate at clean `9c2dee0` passed hygiene but failed the
+existing review-evidence assertion: every retained round sheet needs its
+matching `round-1-review.md` note. It finished with 247 passing suites, one
+failure and 58 not run in 610.94 seconds. Build passed in 1.54 seconds. The
+unchanged review note is now renamed from `review.md` to that required name.
+
+Neither correction changes image bytes, licensed sources, catalog entries,
+runtime code, assertions or placement rules. Both incorrect names are removed
+in the same correction. Focused hygiene and review-evidence checks, independent
+rename review and a fresh mandatory lane/build run follow on the final commit.
+The two partial failed gates are not merge passes.
