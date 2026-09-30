@@ -12,6 +12,28 @@ Kyle played Sal on Medium and won 3-0. Three findings, settled as cards:
 **WAR-PAY** (the win paid 25 scrap), **ARENA-STEER** (steering in the dome is
 too slow for a ring) and **ARENA-SHOVE** (sitting cars cannot be shoved).
 
+### Director checkpoint, 30 September, 22:08 UTC
+
+WAR-PAY is merged. The full tier passed 306/306 suites and build on clean
+`bcb09e44`; the merge count resets to zero. The next full is due after five
+merges or 00:08:38 UTC, and at the end. A push waits for a fresh full pass on
+the exact final commit after automatic approval rejected the newer metadata
+commit. The existing GitHub remote and branch refs have been verified.
+
+ARENA-STEER remains on its clean lane, waiting for Kyle's explicit approval
+to isolate the crate spawn fixture. Its App demo correction waits for Fuel's
+App ownership to end. ART-FIT-CREW-M stopped after the failed first comparison;
+keep current art until Kyle chooses better source parts or closes fitting.
+
+ART-SRC-CREW-W has two inspected CC0 alternatives and a comparison ready for
+its corrected lane/build gate. Neither supplies the settled garments and
+full actions; no runtime replacement is approved. Its source artifact merge
+will release the catalog for ART-SRC-TANKER. Fuel Run's tests-first fixes
+cover original-carrier recovery, actual fighter chase/aim and named-player
+mode selection. Fighter projectile damage and splash rules wait for Claude's
+written decision in the inbox. Arsenal and arena cards wait for those shared
+files; do not take the hooks from a paused or active lane.
+
 ### Tracks for this run (up to five lanes)
 
 | Track | Cards, in order | Notes |
@@ -51,9 +73,10 @@ releases. A design question goes to Claude in writing.
   `career-backup` and `warlords` are `dev`.
 - **Phase 2 and BETA-01 are done.** Art is still at about 3 of 5 (crew, hands,
   Rustwall); SPEC 0.11 sets the new approach.
-- **Integration:** WAR-02a-FORMAT and WAR-02a-REWARD are merged behind
-  `warlords: dev`. Rewards, free Side Saws and the one-time territory claim
-  are implemented. Sal's signature moves remain on their review lane.
+- **Integration:** WAR-02a-FORMAT, WAR-02a-SAL, WAR-02a-REWARD and
+  WAR-PAY are merged behind `warlords: dev`. Sal's moves, free Side Saws,
+  the one-time territory claim and the corrected ladder payments are built.
+  Claude owns Sal's play-through and release; do not touch that lane.
 - **Art:** Quaternius Modular Men is picked for crew. Claude recorded Kyle's
   picks in f586be4: WRAD Arms for hands, all three Rustwall sets, and all three
   Salt Flats groups with the plain Bus. The CC0 salt photo with mirrored UV
