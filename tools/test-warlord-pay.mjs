@@ -197,3 +197,22 @@ test('successful higher-pay settlement atomically saves reward, territory and ex
     equal(registryWrites(), 1, 'duplicate result performs no additional registry write');
   } finally {app.dispose?.();}
 });
+
+test('invalid payout economics reject without touching the owner or marker', () => {
+  for (const cpuDifficulty of [undefined, null, '', 'extreme', 'toString', 2]) {
+    const p = profile(), before = structuredClone(p), result = settlement.settleWarlordResult(p, {
+      runId: 'invalid-pay', ownerPlayerId: 'pay-driver', activePlayerId: 'pay-driver',
+      arena: completedArena(), car: 'falcone_f42', cpuDifficulty});
+    equal([result.awarded, result.scrapEarned], [false, 0], 'unknown difficulty must not guess an award');
+    assert.equal(result.profile, p, 'unknown difficulty retains the exact input');
+    equal(p, before, 'unknown difficulty preserves owner and markers');
+  }
+  for (const wrecksOnWarlord of [undefined, null, -1, 1.5, '3', Infinity]) {
+    const p = profile(), arena = completedArena();
+    arena.participants.find(item => item.id === 'cpu-1').wrecked = wrecksOnWarlord;
+    const before = structuredClone(p), result = settle(p, {arena});
+    equal([result.awarded, result.scrapEarned], [false, 0], 'unknown boss wreck count must not guess an award');
+    assert.equal(result.profile, p, 'unknown boss wreck count retains the exact input');
+    equal(p, before, 'unknown boss wreck count preserves owner and markers');
+  }
+});
