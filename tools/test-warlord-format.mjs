@@ -335,11 +335,11 @@ test('launch controls stay inside the enabled yard and never appear in the main-
 });
 
 // Claude settled this separate dev gate after the Scrapdome release merge.
-test('released Scrapdome keeps warlord development off in production', () => {
-  equal(FEATURE_STATES.warlords, 'dev', 'warlords has its own settled development switch');
-  const flags = createFeatureFlags({storage: null, qa: false, search: '?flags=warlords'});
+test('the warlord fights are released alongside the Scrapdome (WAR-SAL-RELEASE)', () => {
+  equal(FEATURE_STATES.warlords, 'on', 'warlords keeps its own switch, now released');
+  const flags = createFeatureFlags({storage: null, qa: false});
   equal(flags.enabled('scrapdome'), true, 'ordinary Scrapdome is released');
-  equal(flags.enabled('warlords'), false, 'production ignores a warlord development request');
+  equal(flags.enabled('warlords'), true, 'production has the warlord fights without any request');
 });
 
 test('disabled warlords reject headless and App launch without changing state', async () => {

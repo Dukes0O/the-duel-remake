@@ -539,7 +539,7 @@ tasks:
       - "Kyle approved on 30 September 2026: retire and remove the rule set nobody can play. wasteland2 is on and cannot be turned off, so delete the switch from src/feature-flags.js and every switch-off branch in src/ (about 20 files), keeping exactly the switched-on behavior."
       - "Remove the off-balance gate: AGENTS.md and docs/OPERATIONS.md release evidence becomes one combat balance run; tools/combat-balance.mjs, tools/arena-balance.mjs and tools/onfoot-balance.mjs lose the off mode; scenarios and tests stop setting or toggling wasteland2. Delete tests that only prove the switched-off behavior; list each one in the change note's Removed section."
       - "Race fingerprints for the released rules stay unchanged (replay check). Cards that name flag: wasteland2 on the board lose the field."
-      - "Also remove the scrapdome, titan-climb and muddy-hollow switches and their switch-off branches, released by SCRAPDOME-RELEASE on 30 September 2026, keeping the switched-on behavior."
+      - "Also remove the scrapdome, titan-climb and muddy-hollow switches and their switch-off branches, released by SCRAPDOME-RELEASE on 30 September 2026, and warlords, released by WAR-SAL-RELEASE the same day, keeping the switched-on behavior."
       - "Touches many files: run it when no other lane owns any of them, in parts if needed (src first, then tools and scenarios), each part through the lane tier."
   - id: ART-SRC-CREW
     title: "Crew figures: short list of existing starting models for Kyle"
@@ -620,21 +620,22 @@ tasks:
     claimed_by: codex-director-2026-09-30-resume
     owns: [tools/art/crew-w-source-sheet.py, tools/art/crew-w-source-inspect.py, tools/scenarios/crew-w-source-current.mjs, docs/board/looks/crew-w-src/, docs/changes/ART-SRC-CREW-W.md]
     hooks: [tools/art/catalog.json]
-    review_checkpoint: "Clean bbb4db3 source comparison376150B1800x1660; current female GLBs unchanged. Two verified CC0 packs lack settled garments/actions; requested Modular Women actual license/model downloads quota-blocked and general/pack pages differ. Keep current; Claude receives sheet/source gap before artifact merge. Independent review and lane/build gates pending; no adaptation."
+    review_checkpoint: "Clean9c2dee0 source comparison376150B1800x1660, correctedround-1filename withidenticalbytes; current female GLBs unchanged. Two verified CC0 packs lack settled garments/actions; requested Modular Women actual license/model downloads quota-blocked and general/pack pages differ. Keep current; Claude receives sheet/source gap before artifact merge. Independent review and lane/build gates pending; no adaptation."
     helpers: [reviewer]
     sequencing: "Male fitting paused and released its unchanged catalog hook. Source women now; tanker waits for this catalog lane to merge. Source only, no runtime assets or adaptation. Compare 2-3 CC0 packs with checked licences and source geometry/rig when available; ask Kyle at the sheet and send it to Claude."
     acceptance:
       - "Nell, Odessa and Wren are women, and so is the secret crew member, Vesper Blackiron (settled by Claude, 30 September 2026). Quaternius Modular Men has no women. Short-list two or three CC0 sources with the ART-SRC-CREW rules; check Quaternius's own women's modular pack first, because a shared rig lets the whole crew share every action. Stop at a comparison sheet with a recommendation (waiting_on: kyle); Kyle said he is not picky."
+    kyle_pick: "Kyle, 30 September 2026: keep the current Nell, Odessa and Wren (\"that's fine. keep current.\"). Merge the comparison and source records as they are; no fitting of a new source."
   - id: ART-FIT-CREW-W
-    title: "Crew figures for Nell, Odessa, Wren and Vesper"
+    title: "Vesper Blackiron's figure from the current women's figures"
     owner: codex
     lane: ART
-    size: L
-    needs: [ART-SRC-CREW-W, ART-FIT-CREW-M]
+    size: M
+    needs: [ART-SRC-CREW-W]
     status: ready
     flag: wasteland2
     acceptance:
-      - "Same rules and actions as ART-FIT-CREW-M, from the picked women's source. Vesper's figure is built but shown only once WAR-04 reveals her."
+      - "Kyle kept the current Nell, Odessa and Wren on 30 September 2026, so they are not refitted. Build only Vesper Blackiron, the Baron's daughter, by adapting the current women's figure (its rig, actions and topology) under docs/WASTELAND_ART.md 'Fitting existing models': her own costume in the Baron's blackened steel and a dark red accent, recognizable next to Nell, Odessa and Wren. Built but shown only once WAR-04 reveals her. Kyle has the last look in the Preview."
   - id: ART-FIT-HANDS
     title: "First-person hands, gloves and sleeves from the picked source"
     owner: codex
@@ -706,6 +707,15 @@ tasks:
     claimed_by: "Settled by Claude, 30 September 2026"
     acceptance:
       - "docs/SCRAPDOME.md gains a settled section for each remaining mode and the Salt Flats Scrapyard map (ARENA-03 to ARENA-07): goal, rules, scoring, pay, computer behaviour, art sources and tests. Build cards follow on the board."
+  - id: DESIGN-FUEL-FIGHTER-HITS
+    title: "Settle car projectiles against the on-foot Fuel carrier"
+    owner: claude
+    lane: DESIGN
+    size: S
+    needs: []
+    status: ready
+    acceptance:
+      - "Answer the measured ARENA-03 contact gap in docs/playtest-inbox.md: car crossbow damage to fighters, whether car bomb splash affects them and by how much, and cargo loss after a surviving fighter hit versus knockdown. Keep existing health, car knockdown and physical parked-car rules. Record the rules in docs/SCRAPDOME.md section 10 so Codex can write the remaining tests before contact code. No new source art or weapon design is requested."
   - id: DESIGN-WARLORDS-4-8
     title: "Settle warlords 4 to 8 and the ladder's end (WAR-03, WAR-04) for build"
     owner: claude
@@ -799,13 +809,15 @@ tasks:
     owner: codex
     lane: CMB
     size: M
-    needs: [WAR-02a-FORMAT]
+    needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
     status: building
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run
     owns: [src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/replays/arena-fuel-run-controls.json, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md]
-    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js]
+    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js, src/combat-ai.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-feature-flags.mjs]
+    waiting_on: claude
+    design_question: "Actual on-foot Fuel carrier is currently immune to car projectiles. Claude must settle bolt damage, bomb splash and cargo-drop behavior before that contact code; chase and aim fixes follow the settled carrier rule now."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     sequencing: "Tests first in owned files now. Production App and screen-arena edits wait for WAR-PAY merge; held ARENA-STEER App demo hook is deferred until Fuel merges. No config, driving, pilot or crate-test ownership. Future Arsenal waits Fuel feature/render/audio hooks. Protected sound-bank/catalog/assets remain untouched: explicit fuel events reuse authored interface.bonus, vehicle.landing, interface.go cues. SPEC0.12 adds fuel-run:dev plus scrapdome/discovery/rank6 gates; Last Car Rolling unchanged."
     acceptance:
@@ -2696,11 +2708,13 @@ tasks:
     owner: claude
     lane: RELEASE
     size: S
-    needs: [WAR-SAL-TUNE, SCRAPDOME-RELEASE]
-    status: ready
-    waiting_on: kyle
+    needs: [WAR-02a-SAL, WAR-02a-REWARD, WAR-PAY]
+    status: building
+    claimed_by: "Claude, 30 September 2026"
     acceptance:
       - "Full release evidence, then Kyle's written go-ahead. Other warlords show WARLORD FIGHT COMING LATER and have no button."
+    kyle_go: "Kyle, 30 September 2026: \"let's ensure Sal is available in the main game now.\" Released before Gratian's play; WAR-SAL-TUNE, ARENA-STEER and ARENA-SHOVE follow as normal releases."
+    note: "Release lane edits src/feature-flags.js (warlords on). ARENA-03 (Fuel Run) also edits that file: Codex merges after this and keeps warlords: on."
   - id: DESIGN-WAR-02b
     title: "Settle the Dustmonger for build (after Sal has been played)"
     owner: claude

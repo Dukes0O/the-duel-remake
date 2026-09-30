@@ -83,6 +83,9 @@ own to find. Leaving the car shows the exit, bailout and get-back-in controls
 on screen.
 The Titan Monster turns more sharply at crawling and climbing speeds. In the
 Scrapdome, driving onto a jump from the side is a bump, not a launch.
+Once the Scrapdome is found, Sawtooth Sal waits on the territory map: first
+to three wrecks wins, her saw sweep always warns first, and beating her earns
+her Side Saws and a big scrap payout.
 Wreck recovery has a short two-second race penalty. A missed checkpoint retries
 near that checkpoint. The UFO jump never moves the rival or skips a checkpoint.
 

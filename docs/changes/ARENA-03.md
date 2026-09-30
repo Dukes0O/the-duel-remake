@@ -298,3 +298,21 @@ Removed the proposed owner pickup block, its canister fields and all timer/goal
 filters in the same change. Removed the added per-frame Fuel entry/map/filter
 allocations and moved color-buffer creation to preparation. No runtime asset,
 old mode, old assertion or replay fingerprint was removed or regenerated.
+
+## Integration sync for partial review
+
+The Director requested a clean partial candidate so Save Guardian can review
+the implemented economy while UI/contact/browser work waits. Partial commit
+`a3a222f0ffd7be1a9fcf34f471ae1652eebf5486` was clean before merging current
+integration `0bbb68d`. The merge conflicted only in `src/feature-flags.js` and
+`tools/test-feature-flags.mjs`: Claude's released `warlords:on` is preserved,
+as are all upstream released-state and production-on assertions. The approved
+Fuel additions are only `fuel-run:dev`, exact eight-entry count, explicit
+production-off and production-URL-off checks. The resulting switch suite passes
+27 checks; no released feature was turned back off. The router clamps remain
+absent for the actual browser red. This sync is not a feature merge or a
+merge-ready verdict.
+
+Post-sync focused verification: **39/39 Fuel tests, 842 checks, zero skips**;
+**27 switch checks**. All ten existing-mode traces and the actual 30/60/144
+comparison still pass without regenerating any pin.
