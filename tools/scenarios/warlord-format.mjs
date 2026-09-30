@@ -103,6 +103,11 @@ async function runReleasedYard(context) {
       territories:{...a.profile.wasteland.territories,sal:{hold:100,claimed:false}}}};
     if(!a._saveProfile())throw Error('Temporary released-yard fixture failed');
     a.onFrame?.(a.duel.state,0);return true;})()`);
+  await click(context, '#armory-open');
+  await context.waitFor('!!document.querySelector(".garage-panel .territory-map")||!!document.querySelector(".garage-panel")', 'released Armory');
+  const armoryText = await context.evaluate('document.querySelector(".garage-panel")?.textContent||""');
+  if(/SAL IS WAITING|FIGHT FROM THE YARD/.test(armoryText)) throw Error('Released Armory advertises unfinished Sal');
+  await click(context, '[data-action="armory-close"]');
   await click(context, '#wasteland-visit');
   await context.waitFor('window.__qaApp.isYardHomeActive()', 'released yard', 30_000);
   await ready(context, 'released yard presentation');
