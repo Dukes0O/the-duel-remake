@@ -178,3 +178,16 @@ verdict; a real browser run is still pending.**
 No fighter projectile damage, splash, knockdown or drop values were assumed or
 asserted. That separate design gap is with Claude; these tests cover only the
 settled chase, aim, carrying, selection and switch behavior.
+
+### Browser fixture menu refresh
+
+The first private-browser attempt stopped before acceptance at
+`Named-player option missing` (private port **44766**, memory-only saves).
+The fixture IDs match production option values. Direct App fixture creation
+emits state but does not call the menu's `updatePlayers`; a frame render alone
+leaves the native options stale. Setup now invokes the existing production
+`refreshRaceSetup` exported from `main.js`, as the isolated menu-check fixture
+buttons do, and waits for both actual named-player options. The eight mode and
+owner assertions and subsequent real UI controls are unchanged. **The genuine
+browser red remains pending.** This setup correction does not record a browser
+acceptance verdict.
