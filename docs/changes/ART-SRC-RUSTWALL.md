@@ -1,6 +1,6 @@
 # ART-SRC-RUSTWALL : existing salvage and canyon sources
 
-Status: source checkpoint ready; catalog waits for Crew then Hands to merge.
+Status: review; waiting_on: kyle. Source comparison and catalog complete; final lane/build gates pending.
 
 Three verified CC0 source sets are compared with the current in-game Rustwall.
 Recommend Kenney Car Kit for loose car and sheet-metal salvage, Kenney City Kit
@@ -35,10 +35,10 @@ load errors and draws 10 calls / 54,858 triangles in the isolated front view.
 The finished JPG was inspected for actual current wall content, all candidate
 parts, visible rocks, accurate counts and readable labels.
 
-Independent source reviewer verified all sixteen cached-file hashes, the primary CC0 pages, original model counts and the visible sheet with no substantive findings. The shared catalog still waits for the Hands merge. Mandatory lane tier and production build await the Director’s gate queue. This source checkpoint claims no passing merge gate.
+Independent source reviewer verified all sixteen cached-file hashes, the primary CC0 pages, original model counts and the visible sheet with no substantive findings. Catalog update followed the Hands merge and preserves every prior record, including the selected Crew, Hands candidates and EGG-03 choices. Mandatory lane tier and production build await the Director’s gate queue. This source checkpoint claims no passing merge gate.
 No new implementation tests are needed for a source-only comparison.
 Existing assertions, race fingerprints, source assets and runtime code are
-unchanged. The shared catalog has not been edited while its other lanes work.
+unchanged. The shared catalog was updated only after its preceding lane merged.
 
 ## Removed
 
