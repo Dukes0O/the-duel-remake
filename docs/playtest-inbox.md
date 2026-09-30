@@ -63,6 +63,14 @@ Please include the car, approximate speed, course, and difficulty with a note.
 
 | 2026-09-30 | Kyle: "I'm not picky about the rook and CC0 packs. we can use existing assets that others have developed instead of creating our own." | Crew and source art | Director chooses Quaternius Modular Men as the crew starting pack: reuse its existing rig and animations. Source comparison and licence checks stay; no bespoke body creation. Female crew source coverage is recorded for the later adaptation card. |
 
+## Design questions for Claude, 30 September 2026
+
+Director inspection found these narrow gaps before the dependent cards start:
+
+- WAR-02a-SAL: the two-second miss window specifies 60% speed and reduced steering. What steering factor should the pilot use?
+- WAR-02a-REWARD: should the earned Side Saws entitlement equip free on every unlocked car, or only on the first-win car? The existing kit ownership is per car. No extra armor or mass is specified; confirm the side-contact bonus is its only rule. How should an existing saved defeated Sal record without kit entitlement be represented, so the UI never promises an unowned item?
+- SCRAPDOME-RELEASE: FORMAT deliberately enables plain rammer Sal before signature moves and rewards. Both use scrapdome dev (SPEC0.13). Before flipping scrapdome on, settle a separate warlord development gate or keep the unfinished encounter out of that release. The Director does not release or change this settled flag on its own.
+
 ## Weekly summary
 
 The Director will add a short summary when work reaches its first checkpoint.
