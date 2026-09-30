@@ -208,3 +208,7 @@ time and changes no race or save state.
 Freeze this source checkpoint for Save Guardian. `src/app.js` is untouched,
 `src/warlords.js` still has `rewardBuilt: false`, and the reward is not declared
 built until the working App/save/contact/armory path passes final review.
+
+## Save Guardian findings: reject before settlement
+
+Independent review of0a66105 found that unsupported root schema99 could be awarded before save normalization reset progress, and a damage result with undefined boss/CPU/placing IDs could earn150. A malformed unlockedCars object also throws during a paid-car lookup. The fix must reject these with the unchanged input before any award: supported root schemas1/2 only, a valid owned-car array, and the known Sal roster (player and cpu-1). New rejection tests are written before the guard fix. Existing App transaction tests remain blocked.

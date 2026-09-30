@@ -258,3 +258,40 @@ test('another named player cannot receive a stale callback from the first player
     equal(getEquippedArmorKit(app.profile, 'falcone_f42'), null, 'new named player cannot equip first player reward');
   } finally { app.dispose?.(); }
 });
+
+test('unsupported root schemas cannot earn a reward that save normalization would discard', async () => {
+  const settle = await settlement();
+  for (const version of [99, 3, 0, null]) {
+    const before = {...profile(), version, futurePayload: {keep: 'whole snapshot'}};
+    const snapshot = structuredClone(before), result = settle(before, payload());
+    equal(result.awarded, false, 'unsupported root version ' + version + ' must reject');
+    assert.equal(result.profile, before, 'unsupported root retains the exact input reference');
+    equal(before, snapshot, 'unsupported root cannot change any progress or future fields');
+  }
+});
+
+test('malformed owned-car lists reject before paid-car lookup without throwing or mutating', async () => {
+  const settle = await settlement();
+  for (const unlockedCars of [{}, 'banshee_muscle', undefined]) {
+    const before = {...profile(), unlockedCars}, snapshot = structuredClone(before);
+    let result;
+    assert.doesNotThrow(() => {result = settle(before, payload({car: 'banshee_muscle'}));},
+      'malformed unlocks must not escape the pure settlement boundary');
+    equal(result.awarded, false, 'malformed unlocks reject instead of awarding');
+    assert.equal(result.profile, before, 'malformed unlocks retain the input reference');
+    equal(before, snapshot, 'malformed unlocks leave the entire profile unchanged');
+  }
+});
+
+test('a damage result with missing or noncanonical Sal boss identities cannot settle', async () => {
+  const settle = await settlement();
+  for (const id of [undefined, null, '', 'other-boss', 'player', 3]) {
+    const bad = arena(); bad.warlordBossId = id;
+    bad.participants.find(p => p.kind === 'cpu').id = id;
+    bad.result = {winnerId: 'player', reason: 'damage', placings: ['player', id]};
+    const before = profile(), snapshot = structuredClone(before), result = settle(before, payload({arena: bad}));
+    equal(result.awarded, false, 'only the actual player/cpu-1 Sal roster can earn a reward');
+    assert.equal(result.profile, before, 'malformed result retains the old profile');
+    equal(before, snapshot, 'malformed result changes neither scrap nor kit nor counters');
+  }
+});
