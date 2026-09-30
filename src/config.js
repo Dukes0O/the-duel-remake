@@ -163,6 +163,7 @@ export const DRIVE = {
   steerRate: 12.5,        // legacy UI tuning value; steering now changes yaw
   steerResponse: 24,     // quick keyboard and controller response
   yawRate: 1.35,
+  arenaSteeringFactor: 3.4, // Stock Falcone reaches 102.4 deg/s at 15 mph on the arena floor.
   yawResponse: 22,
   roadHalfWidth: 7,       // |lateral| beyond this = off-road
   boundaryWarning: 60,
@@ -188,14 +189,17 @@ export const DRIVE = {
 
 // Maximum yaw under the current conditions. Shared with the demo driver so
 // its route knowledge becomes steering input rather than a physics bypass.
-export function steeringYawAuthority(speedMph, grip = 1, traction = 1, car = null) {
+export function steeringYawAuthority(speedMph, grip = 1, traction = 1, car = null, course = null) {
+  // A race styled as an arena is still a road race. Only a real arena venue
+  // receives the same factor on both ceilings; legacy callers keep factor 1.
+  const factor = course?.def?.venue === true && course.def.arena === true ? DRIVE.arenaSteeringFactor : 1;
   const assisted = car?.lowSpeedSteer === true;
   const rolling = Math.min(1, assisted && speedMph > 3
     ? Math.max(speedMph / 30, .55) : Math.max(0, speedMph) / 30);
   const steeringGrip = assisted && speedMph < 45 ? Math.max(grip, 1) : grip;
   const highSpeed = 1 / (1 + Math.max(0, speedMph - 110) * 0.0022);
-  const steeringLimit = DRIVE.yawRate * rolling * highSpeed * steeringGrip * traction;
-  const tireLimit = DRIVE.maxLateralAccel * steeringGrip * traction / Math.max(8, speedMph * DRIVE.mphToWorld);
+  const steeringLimit = DRIVE.yawRate * rolling * highSpeed * steeringGrip * traction * factor;
+  const tireLimit = (DRIVE.maxLateralAccel * steeringGrip * traction / Math.max(8, speedMph * DRIVE.mphToWorld)) * factor;
   return Math.min(steeringLimit, tireLimit);
 }
 
