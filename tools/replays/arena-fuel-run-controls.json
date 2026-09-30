@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "capturedCommit": "60c20f0294cc7a0e852d7e9923602ee4c191fffa",
+  "scope": "ARENA-03 pre-build engine controls. Fixed 120 Hz, ten seconds, literal scripted input. Fuel switch off and on must preserve these traces.",
+  "cases": [
+    {
+      "kind": "road",
+      "seed": 1989,
+      "mode": "duel",
+      "course": "pacific-canyon",
+      "fingerprint": "cc93330532ebadc03575549ccdb03552b0ea378999c1bdbfb50dd3692dfd05ae"
+    },
+    {
+      "kind": "road",
+      "seed": 42,
+      "mode": "timetrial",
+      "course": "red-mesa",
+      "fingerprint": "0616b40744d3fdd27f7df283adaf317f67c8511962bfddd6f944ab3f89d0f500"
+    },
+    {
+      "kind": "road",
+      "seed": 17,
+      "mode": "duel",
+      "course": "timberline-rush",
+      "fingerprint": "a0bdaa42703432581339f0275a950ace468aef188f291199b080896adbc83a68"
+    },
+    {
+      "kind": "last-car-rolling",
+      "seed": 1989,
+      "fingerprint": "0bea25ff94c52712c8ff0de88af58f31a382c91333f2a17f1fc1d5e6cef51d88"
+    },
+    {
+      "kind": "sal",
+      "seed": 1989,
+      "fingerprint": "67c00e4e979986de686266b64cc1d920d491282b7a733657dcfe2cbcd552c5e5"
+    }
+  ]
+}
