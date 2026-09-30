@@ -49,7 +49,7 @@ and clamps to the exact deadline. The test assertion stayed unchanged.
 
 ## Checks and evidence
 
-- FORMAT acceptance: 18/18 tests and 221 checks passed. Covers both winners,
+- FORMAT acceptance: 24/24 tests passed, including the post-release development gate and Armory regression. Covers both winners,
   intro freeze, phase two once, four-minute and damage deadlines, wall sudden
   death, team exclusions, gates, free loss, rematch and 30/60/144 FPS equality.
 - FORMAT plus arena UI, territory UI, territory screen and warlord metadata:
@@ -69,8 +69,7 @@ and clamps to the exact deadline. The test assertion stayed unchanged.
   transition, then waits for App.visualReady, settled warmup, ready assets
   and hidden loading UI before continuing. No production renderer edit,
   disabled warmup or suppressed error was used. Both reports are retained.
-- Mandatory lane tier and final build are pending the Director's gate queue.
-  This note does not grant merge approval.
+- The final mandatory lane tier and build are pending the Director's gate queue after the gate and fingerprint fixes. This note does not grant merge approval.
 
 Independent reviewer: no findings on frozen 1a268b6. Separate headless probes confirmed wall sudden-death wins, respawn armor, one phase event and exact deadline results. Save Guardian: clean on the same source, including seven profiles, 247 preservation checks, stale-player rejection, repeated callbacks, reload and the 4 MB budget. No storage shape or key changed; no unfinished reward is paid. Both reviewers inspected the changed assertions and browser verdict.
 
@@ -108,4 +107,8 @@ No runtime asset or binary is replaced by this card.
 
 The first mandatory lane tier on a9094d1 failed the existing HINTS full-state fingerprint. FORMAT had added arena:null to the initial Duel state. Removed that field; the exact existing 15/15 HINTS tests and all four frozen hashes now pass unchanged. Two new FORMAT rejection tests had assumed null; they now prove complete before/after state equality and unchanged property presence instead. No existing replay expectation or HINTS assertion changed. This is a stronger rejection invariant, under independent review.
 
-Claude answered the questions in SCRAPDOME5 and the inbox, and merged release 73f63eb before this lane synced it. New gate tests were committed before implementation: 18/23 passed, five failed for the missing gate. The foundation test fixture first used an invalid numeric opponent field; corrected it to a valid car array so it reaches and fails the missing gate. The implementation covers headless, foundation, intro, App and yard launches; no launch promise appears without warlords. Source flag-table assertions now include the new dev entry, while retaining all released entries and production isolation. The yard module was unpacked when rewritten. Browser readiness and all ordinary pins remain unchanged; a new gated browser check and final review/gates still await.
+Claude answered the questions in SCRAPDOME5 and the inbox, and merged release 73f63eb before this lane synced it. New gate tests were committed before implementation: 18/23 passed, five failed for the missing gate. The foundation test fixture first used an invalid numeric opponent field; corrected it to a valid car array so it reaches and fails the missing gate. The implementation covers headless, foundation, intro, App and yard launches; no launch promise appears without warlords. Source flag-table assertions now include the new dev entry, while retaining all released entries and production isolation. Feature-switch checks24/24 and Wasteland beta3/3 pass. The yard module was unpacked when rewritten. Browser readiness and all ordinary pins remain unchanged; the final mandatory lane/build gates still await.
+
+Final source review at c3b6308: no findings. The reviewer reproduced and confirmed the Armory off-gate promise fix in 32 independent checks across six profiles; enabled Armory content and yardContent are byte-identical to their prior rendering. Its new regression failed first and now passes without changing old assertions. Save Guardian again confirms seven fixtures/247 preservation checks, backup and 4 MB budget suites, plus40 independent saved-byte probes through rejected actions, win/loss, quit and reload.
+
+Final private browser: port22761, seven captures, memory-only, zero warnings/errors. Actual production Armory and released yard have no unfinished Sal launch; Last Car Rolling remains available. Explicit warlords QA request then covers the High/Performance intro, fight, loss, same-boss rematch and yard return with unchanged wallet/history. Director inspected the released-yard, intro, fight and loss pixels. QA controls remain visible only in the released-yard evidence capture; they are harness UI. The intro/fight/results are readable without overlap. Source/renderer errors are not filtered. All raw reports/images are consumed after the committed verdict.
