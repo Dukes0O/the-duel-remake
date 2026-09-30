@@ -1369,3 +1369,11 @@ lock, too slow for a ring: ARENA-STEER sets at least 100 degrees a second for
 every car in arenas only. Sitting cars: ARENA-SHOVE. Sal's moves and armor
 wait for Gratian's play.
 
+## 30 September 2026: keep the current women on the crew
+
+Codex's short list for the women found no free source better than the game's
+current Nell, Odessa and Wren (one cartoon pack, one bare base body, and the
+Quaternius women's pack could not be downloaded to check its licence). Kyle:
+"keep current." ART-FIT-CREW-W now builds only Vesper, adapted from the
+current women's figure.
+

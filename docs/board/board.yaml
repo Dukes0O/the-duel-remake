@@ -625,16 +625,17 @@ tasks:
     sequencing: "Male fitting paused and released its unchanged catalog hook. Source women now; tanker waits for this catalog lane to merge. Source only, no runtime assets or adaptation. Compare 2-3 CC0 packs with checked licences and source geometry/rig when available; ask Kyle at the sheet and send it to Claude."
     acceptance:
       - "Nell, Odessa and Wren are women, and so is the secret crew member, Vesper Blackiron (settled by Claude, 30 September 2026). Quaternius Modular Men has no women. Short-list two or three CC0 sources with the ART-SRC-CREW rules; check Quaternius's own women's modular pack first, because a shared rig lets the whole crew share every action. Stop at a comparison sheet with a recommendation (waiting_on: kyle); Kyle said he is not picky."
+    kyle_pick: "Kyle, 30 September 2026: keep the current Nell, Odessa and Wren (\"that's fine. keep current.\"). Merge the comparison and source records as they are; no fitting of a new source."
   - id: ART-FIT-CREW-W
-    title: "Crew figures for Nell, Odessa, Wren and Vesper"
+    title: "Vesper Blackiron's figure from the current women's figures"
     owner: codex
     lane: ART
-    size: L
-    needs: [ART-SRC-CREW-W, ART-FIT-CREW-M]
+    size: M
+    needs: [ART-SRC-CREW-W]
     status: ready
     flag: wasteland2
     acceptance:
-      - "Same rules and actions as ART-FIT-CREW-M, from the picked women's source. Vesper's figure is built but shown only once WAR-04 reveals her."
+      - "Kyle kept the current Nell, Odessa and Wren on 30 September 2026, so they are not refitted. Build only Vesper Blackiron, the Baron's daughter, by adapting the current women's figure (its rig, actions and topology) under docs/WASTELAND_ART.md 'Fitting existing models': her own costume in the Baron's blackened steel and a dark red accent, recognizable next to Nell, Odessa and Wren. Built but shown only once WAR-04 reveals her. Kyle has the last look in the Preview."
   - id: ART-FIT-HANDS
     title: "First-person hands, gloves and sleeves from the picked source"
     owner: codex
