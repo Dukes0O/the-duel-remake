@@ -80,30 +80,33 @@ serialize and say why in the card.
   as `tools/test-onfoot-screen-directions.mjs` does: a key that says "right"
   must move right on screen.
 
-## Order
+## Order: the rest of phase 3 (settled 30 September 2026)
 
-The arena and warlord design is settled in `docs/SCRAPDOME.md` (SPEC 0.13),
-and its foundation is built and merged (ARENA-01: venue, event rules, teams,
-the computer pilot and brains, tests). Build on it; do not redesign it. Its
-section 8 lists the measured behaviour, the balance targets and the known gaps;
-section 9 lists the cards.
+Every remaining phase 3 feature is settled for build:
+`docs/ARSENAL.md` (car weapons), `docs/CREW.md` (gear, boarding, computer
+crews) and `docs/SCRAPDOME.md` sections 5 and 10 (warlords 2 to 8, the
+ladder's end, Fuel Run, Bounty Hunt, Ambush Alley, the Salt Flats, Convoy
+Raid). Build on them; do not redesign them. If a number turns out wrong in
+play or in the balance check, record the evidence and the change in
+`docs/board/decisions.md` and keep going.
 
-| Order | Card | Done when |
+The board's `needs` lists are the order. Waves that can run side by side:
+
+| Wave | Cards | Notes |
 | --- | --- | --- |
-| 0 | **Play-test notes** | Anything Kyle reports from the live game goes first, including UX-ENTRY-HINTS |
-| 1 | **CRASH-01** | Finish the branch `lane/arch/crash-physics` exactly as `docs/changes/CRASH-01.md` says (four test files, each with a settled decision), re-pin changed fingerprints with reasons, combat balance in its bands, browser review, merge |
-| 2 | **TITAN-01** | The Titan climbs whole hills under its slope limit; slopes slow it going up and speed it going down |
-| 3 | **EGG-03** Muddy Hollow | Built in the six phases on the card, each merged separately behind `muddy-hollow` (dev) |
-| 4 | **ARENA-02-PAY** | Scrap and Scrapdome hold for Last Car Rolling, paid once |
-| 5 | **CRASH-02**, **ARENA-FEEL** | Crash look and sound; arena tells, callouts and sounds |
-| 6 | **WAR-01**, then **WAR-02a, WAR-02b, WAR-02c** | Warlord ladder; Sawtooth Sal, The Dustmonger, Mother Mirage, each with a working reward |
-| 7 | Then | ARS-01; ARENA-03 to ARENA-05; CREW-02 to CREW-04; ARS-02 and ARS-03; WAR-03 and WAR-04 (warlords 4 to 8, designed in writing in the SCRAPDOME.md section 5 format first); ARENA-06 and ARENA-07 |
-| 8 | Polish and release | Look, sound and feel rounds (SPEC 10.1), then a release Kyle approves |
+| Now | Tracks A to E (Resume here) and ART-SRC-SALTFLATS | |
+| After WAR-02a-FORMAT | WAR-02a-SAL, WAR-02c, ARENA-03 | All three touch the arena event or `src/arena/warlords.js`: take them one at a time unless their files are proven separate |
+| After WAR-02a-REWARD | ARS-CORE | Also edits the armory and car contacts |
+| After ARS-CORE | WAR-02b, ARS-01, CREW-02 | Three lanes: warlord, weapons, on foot |
+| After CREW-02 | CREW-03, CREW-04, ARENA-05 | CREW-04 and ARENA-05 both touch raiders: one at a time |
+| After ARS-01 | ARS-02, then ARS-03 (also needs WAR-02c) | |
+| After WAR-02a-SAL | WAR-03b; WAR-03a (needs ARS-02); WAR-03c (needs CREW-02) | Each warlord goes to Claude for a play-through before merge |
+| After Kyle picks the Salt Flats | ARENA-06, then ARENA-07 (needs CREW-03), then WAR-03d | |
+| Last | WAR-03e, then WAR-04 | |
 
-Designs are settled in `docs/SCRAPDOME.md`, `docs/CRASH_PHYSICS.md` and
-`docs/MUDDY_HOLLOW.md`. Build on them; do not redesign them. If a design
-choice turns out wrong in play or in the numbers, record the evidence and the
-change in `docs/board/decisions.md` and keep going.
+Claude, alongside: warlord play-throughs as they reach review, the playtests
+Kyle and Gratian do in the Preview (FEATURE-PLAYTEST, SCRAPDOME-PLAYTEST),
+releases on Kyle's go-ahead, and P3-POLISH at the end.
 
 ### Art, alongside (SPEC 0.11)
 

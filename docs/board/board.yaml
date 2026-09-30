@@ -579,8 +579,8 @@ tasks:
     lane: DESIGN
     size: M
     needs: []
-    status: building
-    claimed_by: "Claude, 30 September 2026"
+    status: merged
+    claimed_by: "Settled by Claude, 30 September 2026"
     acceptance:
       - "docs/ARSENAL.md settles every new car weapon in the SPEC 3.3 table: what it does, its numbers, counter, computer use, sound cues, save and unlock rules, and the shared systems the weapons are built on. Build cards follow on the board."
   - id: DESIGN-CREW
@@ -589,8 +589,8 @@ tasks:
     lane: DESIGN
     size: M
     needs: []
-    status: building
-    claimed_by: "Claude, 30 September 2026"
+    status: merged
+    claimed_by: "Settled by Claude, 30 September 2026"
     acceptance:
       - "docs/CREW.md settles each crew member's signature gear, boarding a car, and computer crews getting out, with numbers, counters and tests. Build cards follow on the board."
   - id: DESIGN-ARENA-MODES
@@ -599,8 +599,8 @@ tasks:
     lane: DESIGN
     size: M
     needs: []
-    status: building
-    claimed_by: "Claude, 30 September 2026"
+    status: merged
+    claimed_by: "Settled by Claude, 30 September 2026"
     acceptance:
       - "docs/SCRAPDOME.md gains a settled section for each remaining mode and the Salt Flats Scrapyard map (ARENA-03 to ARENA-07): goal, rules, scoring, pay, computer behaviour, art sources and tests. Build cards follow on the board."
   - id: DESIGN-WARLORDS-4-8
@@ -609,10 +609,251 @@ tasks:
     lane: DESIGN
     size: M
     needs: []
-    status: building
-    claimed_by: "Claude, 30 September 2026"
+    status: merged
+    claimed_by: "Settled by Claude, 30 September 2026"
     acceptance:
       - "docs/SCRAPDOME.md section 5 gains a 'settled for build' table for Gearhead Gunn, Kettle Kingpin, The Twin Vultures, The Tollkeeper and Baron Blackiron, plus story cards, wanted posters and the secret crew member. Build cards follow on the board."
+  - id: ARS-CORE
+    title: "Arsenal core: hazards, car effects, targeting, unlocks; Oil Slick and Smoke Screen"
+    owner: codex
+    lane: CMB
+    size: L
+    needs: [WAR-02a-REWARD]
+    status: ready
+    flag: arsenal
+    owns: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/arsenal/oil.js, src/arsenal/smoke.js, tools/test-arsenal-core.mjs, tools/test-arsenal-save.mjs, docs/changes/ARS-CORE.md]
+    hooks: [src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat-ai.js, src/weapon-upgrades.js, src/car-loadout.js, src/screen-armory.js, src/wasteland-progress.js, src/sim-driving.js, src/sim-rival.js, src/render3d.js, src/combat-effects.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js]
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
+    acceptance:
+      - "Build docs/ARSENAL.md section 2 exactly: road hazards, car effects, targetFor (every existing CPU aim, homing and lock path routed through it, with a test that fails on a bypass), unlocks by rank and 400-scrap purchase, rewards that unlock free, upgrades, computer loadouts, and the arsenal switch (dev)."
+      - "Oil Slick and Smoke Screen as section 3 says, with their counters, computer use and sounds. Save Guardian reviews unlocks and purchases: normalizing never grants an unearned weapon; per named player; old and future saves survive."
+  - id: ARS-02
+    title: "Arsenal wave 2: Rocket Pods, Flamethrower, Scrap Magnet"
+    owner: codex
+    lane: CMB
+    size: M
+    needs: [ARS-01]
+    status: ready
+    flag: arsenal
+    owns: [src/arsenal/rockets.js, src/arsenal/flamethrower.js, src/arsenal/magnet.js, tools/test-arsenal-wave2.mjs, tools/scenarios/arsenal-wave2.mjs, docs/changes/ARS-02.md]
+    helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
+    acceptance:
+      - "Build the three wave 2 weapons exactly as docs/ARSENAL.md section 3 says, with section 4's tests, balance and browser scenario. Side Saws are Sal's kit, not a weapon here."
+  - id: ARS-03
+    title: "Arsenal wave 3: Mortar, Tesla Coil, Decoy Drone, Nitro Ram"
+    owner: codex
+    lane: CMB
+    size: M
+    needs: [ARS-02, WAR-02c]
+    status: ready
+    flag: arsenal
+    owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, docs/changes/ARS-03.md]
+    helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
+    acceptance:
+      - "Build the four wave 3 weapons exactly as docs/ARSENAL.md section 3 says, with section 4's tests, balance and browser scenario. The Decoy Drone reuses Mother Mirage's decoy cars; the Mortar's ring is always drawn before the shell lands."
+  - id: CREW-02
+    title: "Crew signature gear; Jax, Cinder and Tusk become active"
+    owner: codex
+    lane: FOOT
+    size: L
+    needs: [ARS-CORE]
+    status: ready
+    flag: crew-gear
+    owns: [src/crew-gear/, tools/test-crew-gear.mjs, tools/scenarios/crew-gear.mjs, docs/changes/CREW-02.md]
+    hooks: [src/feature-flags.js, src/crew.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/combat-hud.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js]
+    helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
+    acceptance:
+      - "Build docs/CREW.md section 1 exactly: the crew-gear switch (dev), all eight items on key 3 (gamepad D-pad down on foot), gear refilled on getting back in, Jax, Cinder and Tusk active. Wren's grenades and Tusk's shove use the arsenal's smoke and the crash solver."
+      - "Tests first for each item's numbers and counters; on-foot controls tested through the camera (a key that says right moves right on screen); a private browser scenario per item with no console errors."
+  - id: CREW-03
+    title: "Boarding: jump or grapple onto an enemy car and plant a charge"
+    owner: codex
+    lane: FOOT
+    size: M
+    needs: [CREW-02]
+    status: ready
+    flag: crew-gear
+    owns: [src/crew-gear/boarding.js, tools/test-boarding.mjs, tools/scenarios/boarding.mjs, docs/changes/CREW-03.md]
+    helpers: [test_author, reviewer, browser_qa]
+    acceptance:
+      - "Build docs/CREW.md section 2 exactly, with its tests: speed limits at 49/51 and 89/91 km/h, shake-off rules, one charge, the safe landing, and determinism at 30, 60 and 144 FPS."
+  - id: CREW-04
+    title: "Computer crews get out: repair stops and Hard ambushes"
+    owner: codex
+    lane: FOOT
+    size: M
+    needs: [CREW-02]
+    status: ready
+    flag: crew-gear
+    owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, docs/changes/CREW-04.md]
+    hooks: [src/sim-rival.js, src/combat-ai.js, src/raiders.js]
+    helpers: [test_author, reviewer, balance_analyst, browser_qa]
+    acceptance:
+      - "Build docs/CREW.md section 3 exactly, with its tests, including never on Easy, never near the finish, and a full Hard race where an ambush happens and the race completes. The thirty-race balance passes with the switch on."
+  - id: ARENA-03
+    title: "Fuel Run"
+    owner: codex
+    lane: CMB
+    size: M
+    needs: [WAR-02a-FORMAT]
+    status: ready
+    flag: scrapdome
+    owns: [src/arena/modes/fuel-run.js, tools/test-arena-fuel-run.mjs, docs/changes/ARENA-03.md]
+    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js]
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
+    acceptance:
+      - "Build docs/SCRAPDOME.md section 10, Fuel Run, exactly: canisters, depots, dropping, the collector brain, rank 6 unlock (hidden before), pay and hold once per event (Save Guardian). Headless tests and a private browser scenario."
+  - id: ARENA-04
+    title: "Bounty Hunt"
+    owner: codex
+    lane: CMB
+    size: S
+    needs: [ARENA-03]
+    status: ready
+    flag: scrapdome
+    owns: [src/arena/modes/bounty-hunt.js, tools/test-arena-bounty-hunt.mjs, docs/changes/ARENA-04.md]
+    helpers: [test_author, reviewer, balance_analyst, browser_qa]
+    acceptance:
+      - "Build docs/SCRAPDOME.md section 10, Bounty Hunt, exactly, with rank 9 unlock, pay and hold once per event. Headless tests and a private browser scenario."
+  - id: ARENA-05
+    title: "Ambush Alley: hold the scrap fort on foot"
+    owner: codex
+    lane: FOOT
+    size: M
+    needs: [CREW-02]
+    status: ready
+    flag: scrapdome
+    owns: [src/arena/modes/ambush-alley.js, tools/test-arena-ambush-alley.mjs, docs/changes/ARENA-05.md]
+    hooks: [src/raiders.js, src/onfoot-race.js, src/arena/arena-event.js]
+    helpers: [test_author, reviewer, balance_analyst, browser_qa]
+    acceptance:
+      - "Build docs/SCRAPDOME.md section 10, Ambush Alley, exactly: on foot inside the arena with the wall as the boundary, the fort, five waves, rank 12 unlock, pay by waves survived. Headless tests and a private browser scenario."
+  - id: ART-SRC-SALTFLATS
+    title: "Salt Flats Scrapyard: short list of existing starting models and ground"
+    owner: codex
+    lane: ART
+    size: S
+    needs: []
+    status: ready
+    flag: scrapdome
+    acceptance:
+      - "SPEC 0.11 sourcing step for docs/SCRAPDOME.md section 10's Salt Flats: two or three candidate CC0 sets for scrap piles, a crane, a bus, tyre and container walls, and a tileable salt ground. Licences recorded in tools/art/catalog.json, files cached outside the repository, one sheet docs/board/looks/salt-flats-src/round-1.jpg, then waiting_on: kyle."
+  - id: ARENA-06
+    title: "The Salt Flats Scrapyard venue"
+    owner: codex
+    lane: VIS
+    size: L
+    needs: [ART-SRC-SALTFLATS]
+    status: ready
+    waiting_on: kyle
+    flag: scrapdome
+    owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    acceptance:
+      - "Starts after Kyle picks from the ART-SRC-SALTFLATS sheet. Build docs/SCRAPDOME.md section 10's venue from the picked assets (three art rounds at most, SPEC 0.11), rank 9 unlock, every arena mode playable there, frame cost within 10% of the Scrapdome in High and Performance."
+  - id: ARENA-07
+    title: "Convoy Raid"
+    owner: codex
+    lane: CMB
+    size: L
+    needs: [ARENA-06, CREW-03]
+    status: ready
+    flag: scrapdome
+    owns: [src/arena/modes/convoy-raid.js, src/arena/convoy.js, tools/test-arena-convoy.mjs, tools/scenarios/convoy-raid.mjs, docs/changes/ARENA-07.md]
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
+    acceptance:
+      - "Build docs/SCRAPDOME.md section 10, Convoy Raid, exactly: the rig on its loop, escorts, three valves, the hatch and the boarding finish, the 60 s hatch rule, pay once per event. The rig and trailer art start from the ART-SRC-SALTFLATS pick. Headless tests and a private browser scenario."
+  - id: WAR-03a
+    title: "Gearhead Gunn: Barrage; Rocket Pods reward"
+    owner: codex
+    lane: CMB
+    size: M
+    needs: [WAR-02a-SAL, ARS-02]
+    status: ready
+    flag: scrapdome
+    owns: [src/arena/moves/barrage.js, tools/test-warlord-gunn.mjs, docs/changes/WAR-03a.md]
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
+    acceptance:
+      - "Build exactly 'Settled for build: Gearhead Gunn' in docs/SCRAPDOME.md section 5, with the shared rules. Tests: every barrage has its tell, the window, phase two, one-time settlement. When built, status review and waiting_on: claude before merge."
+  - id: WAR-03b
+    title: "Kettle Kingpin: Kettle Drop; Titan kit and Tusk reward"
+    owner: codex
+    lane: CMB
+    size: M
+    needs: [WAR-02a-SAL]
+    status: ready
+    flag: scrapdome
+    owns: [src/arena/moves/kettle-drop.js, tools/test-warlord-kettle.mjs, docs/changes/WAR-03b.md]
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
+    acceptance:
+      - "Build exactly 'Settled for build: Kettle Kingpin' in docs/SCRAPDOME.md section 5. The ring is always drawn before he lands; the shove goes through the crash solver. Tusk unlocks early only once CREW-02 has made him active. When built, status review and waiting_on: claude before merge."
+  - id: WAR-03c
+    title: "The Twin Vultures: the pair and Pincer; grapple upgrade"
+    owner: codex
+    lane: CMB
+    size: M
+    needs: [WAR-02a-SAL, CREW-02]
+    status: ready
+    flag: scrapdome
+    owns: [src/arena/moves/pincer.js, tools/test-warlord-vultures.mjs, docs/changes/WAR-03c.md]
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
+    acceptance:
+      - "Build exactly 'Settled for build: The Twin Vultures' in docs/SCRAPDOME.md section 5, including the two-car format and the collision stun through crash physics. When built, status review and waiting_on: claude before merge."
+  - id: WAR-03d
+    title: "The Tollkeeper: Toll Gate on the Convoy Raid"
+    owner: codex
+    lane: CMB
+    size: M
+    needs: [ARENA-07]
+    status: ready
+    flag: scrapdome
+    owns: [src/arena/moves/toll-gate.js, tools/test-warlord-tollkeeper.mjs, docs/changes/WAR-03d.md]
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
+    acceptance:
+      - "Build exactly 'Settled for build: The Tollkeeper' in docs/SCRAPDOME.md section 5 on the Convoy Raid. When built, status review and waiting_on: claude before merge."
+  - id: WAR-03e
+    title: "Baron Blackiron: the move cycle and Nitro Ram"
+    owner: codex
+    lane: CMB
+    size: M
+    needs: [WAR-02b, WAR-02c, WAR-03a, WAR-03b, WAR-03c, WAR-03d, ARS-03]
+    status: ready
+    flag: scrapdome
+    owns: [src/arena/moves/blackiron.js, tools/test-warlord-blackiron.mjs, docs/changes/WAR-03e.md]
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
+    acceptance:
+      - "Build exactly 'Settled for build: Baron Blackiron' in docs/SCRAPDOME.md section 5, reusing the earlier warlords' moves unchanged. Unlocks only when the other seven are defeated. When built, status review and waiting_on: claude before merge."
+  - id: WAR-04
+    title: "Story cards, wanted posters and Vesper Blackiron"
+    owner: codex
+    lane: SAVE
+    size: M
+    needs: [WAR-03e, CREW-02]
+    status: ready
+    flag: scrapdome
+    owns: [src/warlord-cards.js, src/screen-card-wall.js, tools/test-warlord-cards.mjs, docs/changes/WAR-04.md]
+    helpers: [test_author, reviewer, save_guardian, browser_qa]
+    acceptance:
+      - "Build 'Settled for build: the ladder's end' in docs/SCRAPDOME.md section 5: story cards on a yard wall and wanted posters, both rendered from the real models (no generated pictures), per named player and additive (Save Guardian); Vesper Blackiron listed only after the Baron falls, with her perk and Shock Charge."
+  - id: FEATURE-PLAYTEST
+    title: "Kyle and Gratian play Titan climbing and Muddy Hollow in the Preview"
+    owner: claude
+    lane: DESIGN
+    size: S
+    needs: []
+    status: ready
+    waiting_on: kyle
+    acceptance:
+      - "Both are built and switched off in the real game. Kyle and Gratian play them in the Preview; Claude turns notes into settled fixes, then prepares a release on Kyle's go-ahead, with the Scrapdome if its playtest is done."
+  - id: P3-POLISH
+    title: "Phase 3 polish and release rounds"
+    owner: claude
+    lane: DESIGN
+    size: M
+    needs: [WAR-04, ARENA-07, CREW-04, ARS-03]
+    status: ready
+    acceptance:
+      - "Look, sound and feel rounds (SPEC 10.1) across the finished phase, each finding a codex card with a settled rule; then a release Kyle approves in writing. Features also release earlier in batches as Kyle and Gratian approve them in the Preview."
   - id: CRASH-02
     title: "Crash look and sound"
     priority: 3
@@ -2251,8 +2492,8 @@ tasks:
     lane: DESIGN
     size: S
     needs: []
-    status: building
-    claimed_by: "Claude, 30 September 2026 (Kyle: design the rest of phase 3 now; tune after Sal is played)"
+    status: merged
+    claimed_by: "Settled by Claude, 30 September 2026"
     acceptance:
       - "A 'Settled for build' table like Sal's in docs/SCRAPDOME.md section 5, using what Sal taught us; then WAR-02b becomes ready for Codex."
   - id: DESIGN-WAR-02c
@@ -2261,8 +2502,8 @@ tasks:
     lane: DESIGN
     size: S
     needs: []
-    status: building
-    claimed_by: "Claude, 30 September 2026 (Kyle: design the rest of phase 3 now; tune after Sal is played)"
+    status: merged
+    claimed_by: "Settled by Claude, 30 September 2026"
     acceptance:
       - "A 'Settled for build' table like Sal's in docs/SCRAPDOME.md section 5; then WAR-02c becomes ready for Codex."
   - id: WAR-01
@@ -2326,14 +2567,15 @@ tasks:
     priority: 3
     lane: CMB
     size: L
-    needs: [WAR-02a-FORMAT, DESIGN-WAR-02b]
+    needs: [WAR-02a-FORMAT, DESIGN-WAR-02b, ARS-CORE]
     status: ready
     flag: scrapdome
     owns: [src/arena/moves/dust-veil.js, tools/test-warlord-dustmonger.mjs, docs/changes/WAR-02b.md]
     hooks: [src/arena/warlords.js, src/combat-weapons.js, src/combat-projectiles.js, src/render3d.js]
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
-      - "Dust Veil blocks crossbow aim through the cloud; oil only on straight runs; brown-puff tell; phase-two dust storm. Smoke Screen is built here as a working player weapon and reused by ARS-01."
+      - "Build exactly 'Settled for build: The Dustmonger' in docs/SCRAPDOME.md section 5, on the arsenal's smoke and oil hazards (ARS-CORE, docs/ARSENAL.md). Dust Veil blocks computer aim through the cloud through targetFor; oil only on straight runs; the window and phase-two dust storm as settled. Reward: Smoke Screen unlocked early for this player."
+      - "Tests first: every veil has its tell; the window; phase two; one-time settlement (Save Guardian). When built, status review and waiting_on: claude: Claude plays it in the Preview before merge."
   - id: WAR-02c
     title: "Mother Mirage: Mirage decoys, Decoy Drone"
     owner: codex
@@ -2347,7 +2589,8 @@ tasks:
     hooks: [src/arena/warlords.js, src/combat-teams.js, src/arena/arena-event.js]
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
-      - "Mirage splits into three: only the real car fires and leaves tire marks; a decoy bursts on its first hit and shares the warlord's team. Heat-shimmer tell. Decoy Drone reward draws computer fire for five seconds."
+      - "Build exactly 'Settled for build: Mother Mirage' in docs/SCRAPDOME.md section 5, including the decoy cars as arena participants with a decoy flag (they never score, fire or settle). Only the real car fires and leaves tyre marks; a copy bursts on its first hit; the window and phase two as settled. Reward: Decoy Drone unlocked early (ARS-03 reuses the decoy cars)."
+      - "Tests first: every split has its tell; copies never score or settle; the window; phase two; one-time settlement (Save Guardian). When built, status review and waiting_on: claude before merge."
 
   - id: AUD-17
     title: "Voice candidates and chosen crew/raider lines"
@@ -2369,25 +2612,19 @@ tasks:
     note: "Candidate preparation merged e1a2d63; full casting/runtime card remains in progress pending Kyle. Ten auditions used400 credits, none selected/rejected/kept. External owner preserves audition bytes/receipts and branch. No additional generation or audio runtime work tonight."
 
   - id: ARS-01
-    title: "Oil Slick, Caltrops, Smoke Screen and Harpoon"
+    title: "Arsenal wave 1: Harpoon and Caltrops, and computer use of wave 1"
+    owner: codex
     lane: CMB
-    size: L
-    needs: [WAR-02-P1]
-    status: backlog
-    owns: [src/arsenal-wave1.js, tools/test-arsenal-wave1.mjs, tools/test-arsenal-wave1-save.mjs, tools/scenarios/arsenal-wave1.mjs, docs/changes/ARS-01.md]
-    hooks: [src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat-ai.js, src/combat-scene.js, src/combat-effects.js, src/combat-hud.js, src/weapon-upgrades.js, src/wasteland-progress.js, src/screen-armory.js, src/app.js, src/wasteland-tuning.js]
-    flag: wasteland2
-    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
+    size: M
+    needs: [ARS-CORE]
+    status: ready
+    flag: arsenal
+    owns: [src/arsenal/harpoon.js, src/arsenal/caltrops.js, tools/test-arsenal-wave1.mjs, tools/scenarios/arsenal-wave1.mjs, docs/changes/ARS-01.md]
+    hooks: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/combat-projectiles.js, src/combat-ai.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js]
+    helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
     acceptance:
-      - "Settle pool/cloud geometry and lifetime, oil spin duration, caltrop reapplication, bounded harpoon pull/steering break and smoke visibility/lock rules before code. Retain SPEC level-zero recharge10/9/14/12 seconds and unlock ranks2/5/6/3 for oil/caltrops/smoke/harpoon."
-      - "Use seeded simulation state, bounded effects and actual CPU use. Test each counter, overlap/reapplication, shield interaction where specified, actor identity and cleanup. Smoke must break real CPU aim/lock behavior; a rendered cloud alone does not satisfy the rule."
-      - "Use the existing400-scrap new-weapon price unless a written decision changes it. Distinguish the four historically owned starter IDs from the expanded available catalog: extending WEAPON_IDS must not grant every new weapon during normalization. Preserve unknown fields, historical upgrades, opaque future saves, named-player isolation and four-slot loadouts. Save Guardian reviews migration and purchases."
-      - "Prove each working unlock through Armory and a private full-throttle combat scenario. Preserve ordinary and flag-off replay fingerprints. Review actual effect readability, bounded frame/resource cost and complete balance with wasteland2 on."
-      - "Coordinate event/cue contracts with the external audio owner before wiring. Apply Kyle's transient, tonal, moving-flight/doppler and hit-confirm rule where the weapon has those phases; do not create fake projectile flight for stationary oil or smoke."
-      - "Independent tests precede implementation; each counter and CPU path has a meaningful regression. Current lane/build and applicable visual/audio/save gates must pass before merge."
-    sound: "weapon.oil.deploy, weapon.caltrops.deploy, weapon.smoke.deploy, weapon.harpoon.fire, weapon.harpoon.flight, weapon.harpoon.hit and weapon.harpoon.break; external audio lane owns bank entries and sources."
-    note: "Future phase-3 card after the first-three boss slice. The legacy starter-only normalizer currently grants every known ID, so catalog expansion requires explicit save-safe design. No implementation is dispatched during phase 2."
-
+      - "Build Harpoon and Caltrops exactly as docs/ARSENAL.md section 3, and computer use of all four wave 1 weapons (Oil Slick and Smoke Screen come from ARS-CORE). Every counter has a headless test."
+      - "Section 4's tests pass: determinism at 30, 60 and 144 FPS; the thirty-race balance with wasteland2 and arsenal on, with the computer's use of each weapon counted; a private browser scenario showing each weapon and counter. Sounds from Freesound CC0 through the catalog."
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"
     lane: AUDIO
