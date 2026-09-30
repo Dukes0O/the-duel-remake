@@ -138,7 +138,10 @@ export function pilotStep(duel, actor, goal, dt) {
   turn = wrapHeading(desired - pose.heading);
   const steer = Math.max(-1, Math.min(1, -turn * PILOT.steerGain)) * (reversing ? -1 : 1);
   actor.steerVisual = (actor.steerVisual || 0) + (steer - (actor.steerVisual || 0)) * (1 - Math.exp(-DRIVE.steerResponse * dt));
-  const authority = steeringYawAuthority(Math.abs(speed), spec.grip, 1, spec);
+  // A move may reduce steering, never raise the car's physical authority.
+  const steeringScale = Number.isFinite(goal.steeringScale)
+    ? Math.max(0, Math.min(1, goal.steeringScale)) : 1;
+  const authority = steeringYawAuthority(Math.abs(speed), spec.grip, 1, spec) * steeringScale;
   const targetYaw = -actor.steerVisual * authority * (speed < 0 ? -1 : 1);
   actor.yawVelocity = (actor.yawVelocity || 0) + (targetYaw - (actor.yawVelocity || 0)) * (1 - Math.exp(-DRIVE.yawResponse * dt));
 

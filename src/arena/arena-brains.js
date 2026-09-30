@@ -4,6 +4,7 @@ import {arenaActor, hostile, outOfPlay} from '../combat-teams.js';
 import {predictedPoint} from '../combat-weapons.js';
 import {arenaFloorSpeed} from './venues.js';
 import {nearestRepairCrate} from './arena-pickups.js';
+import {thinkSalFight, isSalFight, SAL_RULES} from './sal-fight.js';
 
 // What a computer car wants (docs/SCRAPDOME.md section 4). Difficulty changes
 // decisions only: reaction, pace, boost use and the hunter cap.
@@ -144,10 +145,12 @@ export function decideGoal(duel, participant, actor) {
     else if (!participant.chargeReady) {
       // The tell: announce the charge, ease off, then come in.
       if (!(participant.tellLeft > 0)) {
-        participant.tellLeft = difficulty.tellSec;
-        actor.arenaTellSec = difficulty.tellSec;
+        const seconds = difficulty.tellSec * (isSalFight(duel, actor) &&
+          duel.state.arena.warlordPhase === 2 ? SAL_RULES.phaseTwoTellShare : 1);
+        participant.tellLeft = seconds;
+        actor.arenaTellSec = seconds;
         duel.emit({arenaTell: {id: participant.id, targetId: participant.targetId,
-          seconds: difficulty.tellSec, position: {x: me.x, y: me.y ?? 0, z: me.z}}});
+          seconds, position: {x: me.x, y: me.y ?? 0, z: me.z}}});
       }
       return {x: future.x, z: future.z, speedMph: top * ARENA_FEEL.tellSpeedShare, boost: false};
     }
@@ -170,6 +173,8 @@ export function decideGoal(duel, participant, actor) {
 // Once per step for each computer participant: retarget on its interval, and
 // re-plan its goal at its reaction time (Easy re-plans least often).
 export function thinkBrain(duel, participant, actor, dt) {
+  const salGoal = thinkSalFight(duel, participant, actor, brainDifficulty(duel));
+  if (salGoal) return salGoal;
   participant.targetHeldSec = (participant.targetHeldSec || 0) + dt;
   if ((participant.backoffSec || 0) > 0) {
     participant.backoffSec = Math.max(0, participant.backoffSec - dt);
