@@ -539,7 +539,7 @@ tasks:
       - "Kyle approved on 30 September 2026: retire and remove the rule set nobody can play. wasteland2 is on and cannot be turned off, so delete the switch from src/feature-flags.js and every switch-off branch in src/ (about 20 files), keeping exactly the switched-on behavior."
       - "Remove the off-balance gate: AGENTS.md and docs/OPERATIONS.md release evidence becomes one combat balance run; tools/combat-balance.mjs, tools/arena-balance.mjs and tools/onfoot-balance.mjs lose the off mode; scenarios and tests stop setting or toggling wasteland2. Delete tests that only prove the switched-off behavior; list each one in the change note's Removed section."
       - "Race fingerprints for the released rules stay unchanged (replay check). Cards that name flag: wasteland2 on the board lose the field."
-      - "Also remove the scrapdome, titan-climb and muddy-hollow switches and their switch-off branches, released by SCRAPDOME-RELEASE on 30 September 2026, keeping the switched-on behavior."
+      - "Also remove the scrapdome, titan-climb and muddy-hollow switches and their switch-off branches, released by SCRAPDOME-RELEASE on 30 September 2026, and warlords, released by WAR-SAL-RELEASE the same day, keeping the switched-on behavior."
       - "Touches many files: run it when no other lane owns any of them, in parts if needed (src first, then tools and scenarios), each part through the lane tier."
   - id: ART-SRC-CREW
     title: "Crew figures: short list of existing starting models for Kyle"
@@ -2698,11 +2698,13 @@ tasks:
     owner: claude
     lane: RELEASE
     size: S
-    needs: [WAR-SAL-TUNE, SCRAPDOME-RELEASE]
-    status: ready
-    waiting_on: kyle
+    needs: [WAR-02a-SAL, WAR-02a-REWARD, WAR-PAY]
+    status: building
+    claimed_by: "Claude, 30 September 2026"
     acceptance:
       - "Full release evidence, then Kyle's written go-ahead. Other warlords show WARLORD FIGHT COMING LATER and have no button."
+    kyle_go: "Kyle, 30 September 2026: \"let's ensure Sal is available in the main game now.\" Released before Gratian's play; WAR-SAL-TUNE, ARENA-STEER and ARENA-SHOVE follow as normal releases."
+    note: "Release lane edits src/feature-flags.js (warlords on). ARENA-03 (Fuel Run) also edits that file: Codex merges after this and keeps warlords: on."
   - id: DESIGN-WAR-02b
     title: "Settle the Dustmonger for build (after Sal has been played)"
     owner: claude
