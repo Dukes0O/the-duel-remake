@@ -1,7 +1,7 @@
 import {TERRITORIES} from './wasteland-career.js';
 
 const details = Object.freeze({
-  sal: {reward: 'Side Saws', rewardBuilt: false, car: 'banshee_muscle', brain: 'rammer',
+  sal: {reward: 'Side Saws', rewardBuilt: true, car: 'banshee_muscle', brain: 'rammer',
     taunt: 'Let us see how long those doors last.'},
   dustmonger: {reward: 'Smoke Screen'},
   mirage: {reward: 'Decoy Drone'},

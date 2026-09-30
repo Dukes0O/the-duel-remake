@@ -1,10 +1,11 @@
 # WAR-02a-REWARD
 
-Status: Initial and retry reward writes now share verified-owner safeguards.
-All 154 focused checks and the complete private High/Performance browser flow
-pass on corrected source ad819aa1. Final Save Guardian review and mandatory
-lane/build gates remain pending. `rewardBuilt` remains false.
-No merge, release or finished reward claim.
+Status: Reward implementation and independent save/art/contact/browser reviews
+are complete. Sal's reviewed `rewardBuilt` is true; the warlords feature remains
+under its existing development switch. The final metadata checks pass 99/99.
+Mandatory lane/build gates and integration merge remain Director-owned and
+pending. No release was made.
+
 
 ## Settled contract before tests
 
@@ -540,3 +541,41 @@ the reviewed working reward claim. Existing assertions are unchanged.
 
 None. Only the reviewed Sal reward's build marker is to be completed; future
 unbuilt fights and the warlords development gate keep their existing controls.
+
+
+## Final built metadata and reviewed assertion completion
+
+Tests-first `ea0e795cee1fc36add3cb439da40f0b3512d3170` supplies the actual
+saved App-win proof before the single runtime metadata change. Setting only
+Sal's `rewardBuilt` to true makes that new territory/Armory proof pass. The
+warlords feature flag and all future boss metadata remain unchanged.
+
+The first focused metadata run passed 98/99. It exposed the old assertion
+in `tools/test-territory-ui.mjs:63`: noMatch SIDE SAWS EARNED with the premise
+"WAR-02a-REWARD has not supplied a working reward". That premise described
+the foundation card before this reward existed. The Director assigned only
+that obsolete test hook in integration `0265f90`, then obtained independent
+approval before its edit. The replacement is stronger: the same full-hold,
+defeated, built fixture must match DEFEATED · SIDE SAWS EARNED · CLAIMED.
+Its name now describes completed earned-reward behavior. All existing FIGHT,
+REMATCH, unbuilt, future and switch-off controls remain unchanged; the separate
+new actual App-win proof stays in place. No replay pin or other assertion changed.
+
+The narrow independent review ran nine probes: no false earned/rematch claim
+when disabled, unbuilt or future; no profile mutation. General art/contact and
+router clearance carries, including all nine original car GLBs. Final Save
+Guardian's 502 memory probes and corrected-source High/Performance browser
+verdict above remain the actual transaction/gameplay clearance.
+
+Seven relevant focused suites pass 99/99 in 2.05 seconds: settlement 29/29
+with 235 checks, Side Saws 31/31 with 133 checks, territory UI 5/5 with 23
+checks, territory screen, warlord metadata, paid kit/Armory and warlord format.
+`git diff --check` passes. Mandatory lane/build gates are pending on the final
+synced source; no heavy gate, browser rerun, feature release or merge was run
+during this metadata completion.
+
+## Removed in the reviewed assertion completion
+
+Replaced the obsolete pre-implementation "working reward not supplied"
+assertion with the reviewed complete earned/claimed requirement. No runtime
+path, control, asset, save field or replay fingerprint was removed.
