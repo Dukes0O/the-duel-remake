@@ -571,7 +571,7 @@ tasks:
     acceptance:
       - "SPEC 0.11 sourcing step for the first-person hands, gloves and sleeves (replaces GFX-02-P3). Same rules as ART-SRC-CREW: two or three candidates, CC0 first, licences recorded in tools/art/catalog.json, files cached outside the repository."
       - "One comparison sheet, docs/board/looks/first-person-src/round-1.jpg, beside the current in-game hands holding the RPG, with a note per candidate. Then waiting_on: kyle. No adaptation before Kyle picks."
-    note: "Source artifacts merged after independent licence/model/sheet review and exactclean91c4c93 lane298/298+build. WRAD ARMS recommended; adaptation waits Kyle. No runtime replacement."
+    note: "Source artifacts merged after independent licence/model/sheet review and exactclean91c4c93 lane298/298+build. Kyle subsequently picked WRAD Arms A in f586be4; ART-FIT-HANDS is ready. This source comparison made no runtime replacement."
     kyle_pick: "Kyle, 30 September 2026: A, WRAD Arms by wriks. ART-FIT-HANDS starts."
   - id: ART-SRC-RUSTWALL
     title: "Rustwall salvage wall and canyon rock: short list of existing starting models"
@@ -826,7 +826,7 @@ tasks:
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [tools/art/salt-flats-source-sheet.py, docs/board/looks/salt-flats-src/round-1.jpg, docs/board/looks/salt-flats-src/round-1-review.md, docs/changes/ART-SRC-SALTFLATS.md]
     hooks: [tools/art/catalog.json]
-    sequencing: "Reviewed source artifacts merged as3e0bc17 after clean lane301/301 and build. Kyle selected the CC0 salt photograph with mirrored UV tiling; model pack selection remains waiting_on:kyle. No adaptation before the model pick."
+    sequencing: "Reviewed source artifacts merged as3e0bc17 after clean lane301/301 and build. Kyle selected the CC0 photo with mirrored UV tiling, then all three model groups and plain Bus as recorded in f586be4. ARENA-06 is ready under the settled fitting rules."
     flag: scrapdome
     acceptance:
       - "SPEC 0.11 sourcing step for docs/SCRAPDOME.md section 10's Salt Flats: two or three candidate CC0 sets for scrap piles, a crane, a bus, tyre and container walls, and a tileable salt ground. Licences recorded in tools/art/catalog.json, files cached outside the repository, one sheet docs/board/looks/salt-flats-src/round-1.jpg, then waiting_on: kyle."
@@ -1645,6 +1645,7 @@ tasks:
     status: building
     note: "Renderer ghost lifecycle finding merged as 10645f2; 147-suite merge gate, build, private High/Performance smoke and focused ghost-lifecycle browser scenario pass. Discovery continues."
     spec: "SPEC.md, task DISC"
+    janitor_follow_up: "30 September end sweep: rebuild repo-audit's48 literal asset candidates and prove dynamic references before deletion. No unused modules or removed-feature tests are proved. Any confirmed removal gets a gated cleanup card and unchanged fingerprints; preserve licensed current assets."
   - id: RFX-01
     title: "Split main UI into screens"
     wave: 2
@@ -2530,11 +2531,14 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-02a-FORMAT, WAR-SAL-ART]
-    status: building
+    status: review
+    waiting_on: claude
+    review_commit: 1b5f3365a9717f477e85d6503d1f2bb88375c272
+    note: "Exact clean lane 304/304 in 774.64 seconds and build 1.25 seconds. Independent source/visual review and 12 private High/Performance captures pass; integrated sweep-hit/first-wreck replay matches at 30/60/144 FPS. Claude must review fun, fairness, audible cues and standard chase-camera callout clearance in Preview before merge. Retain the lane and final evidence."
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [src/arena/sal-fight.js, src/arena/arena-brains.js, src/arena/arena-event.js, src/arena/warlord-event.js, tools/test-sal-fight.mjs, tools/scenarios/sal-fight.mjs, docs/changes/WAR-02a-SAL.md]
     hooks: [src/arena/arena-pilot.js]
-    sequencing: "Tests first. Sal owns move state and arena dispatch. arena-pilot.js waits for TITAN-HANDLING to merge; do not edit that hook before then. REWARD owns contact damage and reads the agreed Sal actor state. Claude Preview review is required before merge."
+    sequencing: "FORMAT, REWARD and TITAN-HANDLING are merged. Sal's owned move state, dispatch and actual half-yaw pilot hook are complete on the retained review lane. Shared arena files remain held until Claude's Preview review and merge. Reward contact reads the agreed actor state; Sal does not edit those files."
     flag: warlords
     acceptance:
       - "Saw Sweep, its counter and two-second window, the cooldowns and phase two exactly as settled in docs/SCRAPDOME.md section 5. Every sweep has a full tell (test); a braked or boosted escape makes it miss and opens the window (test). Brains may not change pilot physics limits."

@@ -7,6 +7,30 @@ at 6 s, the one-Preview launcher and the thirty-race balance check
 (docs/board/run-log.md). Kyle: get Codex moving on the existing cards, in
 parallel where it is safe, while Claude designs the rest of phase 3.
 
+### Director continuation, 30 September 2026
+
+The original tracks below are complete except Sal, which is built and waiting
+for Claude's Preview play-through. Do not restart a merged source card.
+
+- Sal: retain `lane/cmb/war-02a-sal` at `1b5f3365a9717f477e85d6503d1f2bb88375c272`.
+  Its clean lane tier passed 304/304 in 774.64 seconds, build in 1.25 seconds.
+  All 23 focused tests and 12 private High/Performance captures pass. Claude
+  checks fun, fairness, audible cues and the normal chase-camera callout view
+  before merge. The final captures are in integration's ignored
+  `.evidence/2026-09-30/WAR-02a-SAL/`.
+- Claude's fitting rules/cards and Kyle's art picks are merged as 27cd169 and
+  f586be4. New crew, hands, Rustwall, women's source, tanker source and Salt
+  Flats venue cards are ready for the next run. Assign explicit owned files
+  and hooks before starting a fitting/source card that has none.
+- BALANCE-W2-OFF-RETIRE, ARENA-03 and WAR-02c wait for Sal's shared arena
+  files. Verify WAR-02c's old warlords path and re-slice its actual hook before
+  starting. ARS-CORE is ready, but its sound-bank.js hook belongs to the
+  external audio lane; coordinate a slice or wait for that lane's merge.
+- The Director is closing this run. Five integration merges have landed since
+  the last full tier, including Claude's two art-documentation merges. Hold
+  feature merges until the final full tier passes. Its exact result will be
+  at the end of run-log.md and in the full-tier ledger.
+
 **Stop rule (Kyle).** This is a game for one laptop, played by Kyle and his
 11-year-old son. If a card cannot meet its acceptance with the tools we have
 (free services, this laptop, the three-round art cap in SPEC 0.11), stop the
@@ -20,7 +44,7 @@ cards under CODEX CAN START NOW, claims each (`status: building`,
 or Kyle. Claude settles design in writing, judges look and feel, and prepares
 releases. A design question goes to Claude in writing.
 
-### Codex: what can run side by side now
+### Original parallel tracks for this run
 
 | Track | Cards, in order | Runs beside |
 | --- | --- | --- |
@@ -38,7 +62,8 @@ releases. A design question goes to Claude in writing.
   if it needs `src/combat-armor.js`, it waits for CRASH-SWITCH-REMOVE.
 - WAR-02a-SAL: when built, `status: review` and `waiting_on: claude`; Claude
   plays it in the Preview before merge.
-- BALANCE-W2-OFF-RETIRE waits for Kyle's yes.
+- BALANCE-W2-OFF-RETIRE has Kyle's approval. It waits until no other lane owns
+  the released-switch files; Sal still owns arena dispatch and pilot files.
 - WAR-02b and WAR-02c start when Claude marks DESIGN-WAR-02b and
   DESIGN-WAR-02c merged; the arsenal, crew and arena-mode build cards appear
   on the board as Claude settles their designs. Pick them up as they appear.
@@ -48,21 +73,26 @@ serialize and say why in the card.
 
 ## Where things stand
 
-- **Live game:** the Wasteland is released as an easter egg (EGG-REL), with
-  the on-foot controls fix and no R restart key (FOOT-FIX). Kyle and Gratian
-  are playing it. Their notes arrive at the top of `docs/playtest-inbox.md`
-  and go to the top of the board.
+- **Live game:** Claude released the Scrapdome, Titan climbing and Muddy
+  Hollow on 30 September after Kyle and Gratian approved them. The Wasteland
+  remains hidden until found. Crash physics was released on 27 September.
+  Player notes arrive at the top of `docs/playtest-inbox.md`. This Director
+  integrated Titan handling but did not release it.
 - **Development:** `integration/wasteland`. Switches `wasteland2` and
   `hidden-road`, `scrapdome`, `titan-climb` and `muddy-hollow` are `on`;
   `career-backup` and `warlords` are `dev`.
 - **Phase 2 and BETA-01 are done.** Art is still at about 3 of 5 (crew, hands,
   Rustwall); SPEC 0.11 sets the new approach.
-- **Built by Claude on 26 September (merged):** the Scrapdome foundation
-  (ARENA-01), its yard entry, display and results (ARENA-01-UI), and crates,
-  jousting, junk sense and balance (ARENA-02 part 1). All behind `scrapdome`
-  (dev). **In progress on a branch:** crash physics (CRASH-01), see below.
-- **Designed by Claude, not yet built:** Titan climbing (TITAN-01) and Muddy
-  Hollow (EGG-03), in `docs/MUDDY_HOLLOW.md`.
+- **Integration:** WAR-02a-FORMAT and WAR-02a-REWARD are merged behind
+  `warlords: dev`. Rewards, free Side Saws and the one-time territory claim
+  are implemented. Sal's signature moves remain on their review lane.
+- **Art:** Quaternius Modular Men is picked for crew. Claude recorded Kyle's
+  picks in f586be4: WRAD Arms for hands, all three Rustwall sets, and all three
+  Salt Flats groups with the plain Bus. The CC0 salt photo with mirrored UV
+  tiling is approved. Source comparisons do not replace runtime assets. The
+  fitting cards follow docs/WASTELAND_ART.md, Fitting existing models: gritty
+  materials, comparison in the game, and a three-round cap. Female crew and
+  the armored tanker need their new source cards.
 
 ## Rules for this phase (Kyle, SPEC 0.12)
 
@@ -96,7 +126,7 @@ The board's `needs` lists are the order. Waves that can run side by side:
 | Wave | Cards | Notes |
 | --- | --- | --- |
 | Now | Tracks A to E (Resume here) and ART-SRC-SALTFLATS | |
-| After WAR-02a-FORMAT | WAR-02a-SAL, WAR-02c, ARENA-03 | All three touch the arena event or `src/arena/warlords.js`: take them one at a time unless their files are proven separate |
+| After WAR-02a-FORMAT | WAR-02a-SAL, WAR-02c, ARENA-03 | All three touch arena dispatch: take them one at a time unless their files are proven separate |
 | After WAR-02a-REWARD | ARS-CORE | Also edits the armory and car contacts |
 | After ARS-CORE | WAR-02b, ARS-01, CREW-02 | Three lanes: warlord, weapons, on foot |
 | After CREW-02 | CREW-03, CREW-04, ARENA-05 | CREW-04 and ARENA-05 both touch raiders: one at a time |
@@ -139,6 +169,10 @@ for candidates only; Kyle picks.
   not proved; no launcher repair or root-cause task remains authorized.
 - The backlog capture note is consumed. Its two current board records and
   merge verdict remain in the board and run log.
+- The end sweep removed 64,392,137 bytes of reproducible release-browser
+  evidence from 27 September after confirming the committed verdict. Current
+  licensed sources and Sal's pending review evidence stay. DISC owns checking
+  the audit's 48 literal asset candidates against dynamic references.
 - Old voice auditions belong to the external audio lane's cleanup. Preserve
   audio-src/voices and do not inspect or remove that protected lane's files.
 

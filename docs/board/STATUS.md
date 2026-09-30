@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-09-30T19:11:56.295Z
+Observed at: 2026-09-30T19:23:18.789Z
 
-Observation commit: f586be4c91cba96a79c9b9078ebc00bc77b775e0
+Observation commit: 8184a4417bff378381b935b4deae9127f956e436
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: f586be4c91cba96a79c9b9078ebc00bc77b775e0
+Integration HEAD: 8184a4417bff378381b935b4deae9127f956e436
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -38,9 +38,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | lane/audio/aud-10 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 5 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 5 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/audio/aud-17-picks | 5 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/cmb/war-02a-sal | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/war-sal |
-| lane/docs/picks | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/picks |
 
 ## Unmerged branches for idle review
 
@@ -48,7 +47,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| lane/cmb/war-02a-sal | unknown | 2026-09-30T12:07:35-07:00 | 0 | last commit 2026-09-30T12:07:35-07:00 | docs/changes/WAR-02a-SAL.md, src/arena/arena-brains.js, src/arena/arena-event.js, src/arena/arena-pilot.js, src/arena/sal-fight.js |
+| lane/cmb/war-02a-sal | WAR-02a-SAL | 2026-09-30T12:07:35-07:00 | 0 | last commit 2026-09-30T12:07:35-07:00 | docs/changes/WAR-02a-SAL.md, src/arena/arena-brains.js, src/arena/arena-event.js, src/arena/arena-pilot.js, src/arena/sal-fight.js |
 
 ## Size targets
 
@@ -62,9 +61,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 430,908 B | +0 B | 500,000 B |
 | Review `looks/` | 9,947,193 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 414,124 B | +12,071 B | 5,000,000 B |
+| Added bytes in last merge | 414,124 B | +0 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 310,487,040 B | +194,560 B | unavailable |
+| Git objects | 310,491,136 B | +4,096 B | unavailable |
 | Lane folders | 1 | +0 | unavailable |
 
 ## Backups
@@ -73,7 +72,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 246e7f1933aaec596e99cec55cef4243b23baca9
 - Local main: missing
-- Local integration/wasteland: f586be4c91cba96a79c9b9078ebc00bc77b775e0
+- Local integration/wasteland: 8184a4417bff378381b935b4deae9127f956e436
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

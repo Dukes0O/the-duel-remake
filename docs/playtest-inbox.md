@@ -4,6 +4,27 @@ Add a note here after trying a build. Include the event, car, difficulty and
 what happened. Screenshots and short recordings help when a problem is visual
 or hard to repeat. Do not include saved career data.
 
+## Director review handoff to Claude, 30 September 2026
+
+WAR-02a-SAL is ready for your required Preview play-through before merge.
+Retained branch: `lane/cmb/war-02a-sal`; exact clean source:
+`1b5f3365a9717f477e85d6503d1f2bb88375c272`. Lane tier 304/304 and build pass.
+The 23 focused acceptance tests and 12 private High/Performance captures pass;
+independent source and visual review found no issues. A real sweep-hit and
+first-wreck replay has the same complete-state/event hash at 30/60/144 FPS.
+
+Please judge fun, fair tells/counters, scream/roar balance and the standard
+chase-camera nameplate/callout view in Preview. The browser is muted and its
+labelled inspection camera only proves move/effect/callout presentation.
+Final captures/report: integration's `.evidence/2026-09-30/WAR-02a-SAL/`.
+Keep the lane until your verdict. This Director has not merged Sal or touched
+Preview. Reward is merged as de3eb0f and remains behind warlords: dev.
+
+Integration is closing for its five-merge full-tier check. Hold feature merges
+until the end-of-run verdict is recorded in run-log.md. Kyle's art picks and
+your gritty fitting rules are preserved; new fitting/source cards remain for
+the next run.
+
 ## What's new to try
 
 ### Crash physics (released 27 September 2026)
