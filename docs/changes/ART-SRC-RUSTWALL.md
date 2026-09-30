@@ -1,4 +1,4 @@
-# ART-SRC-RUSTWALL — existing salvage and canyon sources
+# ART-SRC-RUSTWALL : existing salvage and canyon sources
 
 Status: source checkpoint ready; catalog waits for Crew then Hands to merge.
 
@@ -35,8 +35,7 @@ load errors and draws 10 calls / 54,858 triangles in the isolated front view.
 The finished JPG was inspected for actual current wall content, all candidate
 parts, visible rocks, accurate counts and readable labels.
 
-The mandatory lane tier, production build and independent review await the
-Director’s gate queue. This source checkpoint claims no passing merge gate.
+Independent source reviewer verified all sixteen cached-file hashes, the primary CC0 pages, original model counts and the visible sheet with no substantive findings. The shared catalog still waits for the Hands merge. Mandatory lane tier and production build await the Director’s gate queue. This source checkpoint claims no passing merge gate.
 No new implementation tests are needed for a source-only comparison.
 Existing assertions, race fingerprints, source assets and runtime code are
 unchanged. The shared catalog has not been edited while its other lanes work.
