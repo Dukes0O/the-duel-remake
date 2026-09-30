@@ -1350,3 +1350,11 @@ Tusk are men. The picked Modular Men pack covers five; ART-SRC-CREW-W finds a
 women's source. The Convoy Raid needs a tanker that no inspected pack has:
 ART-SRC-TANKER.
 
+## 30 September 2026: Kyle's art picks
+
+Hands: A, WRAD Arms by wriks. Rustwall: all three sets together. Salt Flats:
+all three groups, with the plain Bus. Kyle: "we don't want cartoony looking
+toy like assets here", they must look gritty. That is rule 1 and 2 of
+docs/WASTELAND_ART.md, "Fitting existing models"; an art critic scoring any
+fitted model treats a toy-like or cartoon look as a failed consistency score.
+

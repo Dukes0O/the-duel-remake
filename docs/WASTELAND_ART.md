@@ -18,6 +18,9 @@ Rules for every card that turns a picked CC0 source into game art (SPEC 0.11).
 The sources are clean, bright and toy-like; the Wasteland is gritty. The work
 is making them belong.
 
+Kyle, 30 September 2026: "we don't want cartoony looking toy like assets
+here." A toy-like or cartoon result fails the consistency score outright.
+
 1. **No source palette survives.** Every Kenney or Quaternius colour is
    replaced by worn materials from this document's direction: faded paint,
    rust, scorch, dust, oil. Bright colours stay only as small accents a

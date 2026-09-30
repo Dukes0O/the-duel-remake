@@ -562,8 +562,7 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: review
-    waiting_on: kyle
+    status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [tools/art/hands-source-sheet.py, tools/scenarios/art-source-hands.mjs, docs/board/looks/first-person-src/round-1.jpg, docs/board/looks/first-person-src/round-1-review.md, docs/changes/ART-SRC-HANDS.md]
     hooks: [tools/art/catalog.json]
@@ -573,14 +572,14 @@ tasks:
       - "SPEC 0.11 sourcing step for the first-person hands, gloves and sleeves (replaces GFX-02-P3). Same rules as ART-SRC-CREW: two or three candidates, CC0 first, licences recorded in tools/art/catalog.json, files cached outside the repository."
       - "One comparison sheet, docs/board/looks/first-person-src/round-1.jpg, beside the current in-game hands holding the RPG, with a note per candidate. Then waiting_on: kyle. No adaptation before Kyle picks."
     note: "Source artifacts merged after independent licence/model/sheet review and exactclean91c4c93 lane298/298+build. WRAD ARMS recommended; adaptation waits Kyle. No runtime replacement."
+    kyle_pick: "Kyle, 30 September 2026: A, WRAD Arms by wriks. ART-FIT-HANDS starts."
   - id: ART-SRC-RUSTWALL
     title: "Rustwall salvage wall and canyon rock: short list of existing starting models"
     owner: codex
     lane: ART
     size: S
     needs: []
-    status: review
-    waiting_on: kyle
+    status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [tools/art/rustwall-source-sheet.py, tools/scenarios/art-source-rustwall.mjs, docs/board/looks/rustwall-src/round-1.jpg, docs/board/looks/rustwall-src/round-1-review.md, docs/changes/ART-SRC-RUSTWALL.md]
     hooks: [tools/art/catalog.json]
@@ -589,6 +588,7 @@ tasks:
     acceptance:
       - "SPEC 0.11 sourcing step for Rustwall's salvage (wrecked cars, sheet metal, tower parts) and the canyon strata (replaces EGG-02-P3). Two or three candidate sets, CC0 first, licences recorded in tools/art/catalog.json, files cached outside the repository. The Quaternius pack already used for Muddy Hollow counts as a candidate source."
       - "One comparison sheet, docs/board/looks/rustwall-src/round-1.jpg, beside the current in-game Rustwall, with a note per candidate. Then waiting_on: kyle. No adaptation before Kyle picks."
+    kyle_pick: "Kyle, 30 September 2026: all three together (Kenney Car Kit, Kenney City Kit Industrial, Quaternius rocks). ART-FIT-RUSTWALL starts."
   - id: ART-FIT-CREW-M
     title: "Crew figures from Quaternius Modular Men: Rook, Jax, Cinder, Dune, Tusk"
     owner: codex
@@ -822,8 +822,7 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: review
-    waiting_on: kyle
+    status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [tools/art/salt-flats-source-sheet.py, docs/board/looks/salt-flats-src/round-1.jpg, docs/board/looks/salt-flats-src/round-1-review.md, docs/changes/ART-SRC-SALTFLATS.md]
     hooks: [tools/art/catalog.json]
@@ -831,6 +830,7 @@ tasks:
     flag: scrapdome
     acceptance:
       - "SPEC 0.11 sourcing step for docs/SCRAPDOME.md section 10's Salt Flats: two or three candidate CC0 sets for scrap piles, a crane, a bus, tyre and container walls, and a tileable salt ground. Licences recorded in tools/art/catalog.json, files cached outside the repository, one sheet docs/board/looks/salt-flats-src/round-1.jpg, then waiting_on: kyle."
+    kyle_pick: "Kyle, 30 September 2026: all three groups, with the plain Bus (Claude recommendation). ARENA-06 starts."
   - id: ARENA-06
     title: "The Salt Flats Scrapyard venue"
     owner: codex
@@ -838,13 +838,13 @@ tasks:
     size: L
     needs: [ART-SRC-SALTFLATS]
     status: ready
-    waiting_on: kyle
     flag: scrapdome
     owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md]
     helpers: [test_author, reviewer, art_critic, browser_qa]
     acceptance:
       - "Starts after Kyle picks from the ART-SRC-SALTFLATS sheet. Build docs/SCRAPDOME.md section 10's venue from the picked assets (three art rounds at most, SPEC 0.11), rank 9 unlock, every arena mode playable there, frame cost within 10% of the Scrapdome in High and Performance."
     claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
+    kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
   - id: ARENA-07
     title: "Convoy Raid"
     owner: codex
