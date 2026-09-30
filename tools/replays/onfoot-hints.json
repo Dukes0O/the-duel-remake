@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "seed": 1989,
+  "stepHz": 120,
+  "durationTicks": 360,
+  "fingerprints": {
+    "duel/true": "cfbcb692cdfb3c2be6061b2405ddc2d18e15686a0c7ae521928a5bfc097c2035",
+    "timetrial/true": "482b33e9dec64ec5b9ee2f89528b14610266393858148fe74176d59577dd64c6",
+    "wasteland/false": "c174f02745b327a694e810b5cfdf71ec6170d0dbecdcc3d45c58cd71c100b3e2",
+    "wasteland/true": "c0317a1bac65cfc107254bf6696218cf2c49944ecb7124a8ec69874979318552"
+  }
+}

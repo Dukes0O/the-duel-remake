@@ -11,7 +11,7 @@ tasks:
     size: S
     needs: []
     owner: codex
-    status: building
+    status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
     helpers: [test_author, reviewer, browser_qa]
     owns: [src/screen-hud.js, src/onfoot-hints.js, tools/test-onfoot-hints.mjs, tools/scenarios/onfoot-hints.mjs, docs/changes/UX-ENTRY-HINTS.md]
@@ -514,7 +514,7 @@ tasks:
     status: building
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [src/feature-flags.js, src/sim-contacts.js, src/combat-armor.js, src/sim-driving.js, src/sim-police.js, src/sim-rival.js, src/render3d.js, src/audio.js, src/sound-bank.js, src/arena/arena-event.js, src/test.js, tools/test-crash-switch-remove.mjs, docs/changes/CRASH-SWITCH-REMOVE.md]
-    hooks: [tools/test-feature-flags.mjs, tools/test-combat-knockaway.mjs, tools/test-combat-ramming.mjs, tools/test-combat-replays.mjs, tools/test-crash-hollow-audio.mjs, tools/test-crash-presentation.mjs, tools/test-crash-slide.mjs, tools/test-armored-vehicle-impact.mjs, tools/test-madmax-crash.mjs, tools/test-madmax-solid.mjs, tools/test-police-knock.mjs, tools/test-vehicle-knock-integration.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, tools/test-combat-balance.mjs, tools/combat-balance.mjs, tools/scenarios/preview-storage.mjs, src/destructibles.js, src/vehicle-impact.js, tools/test-roadside-destruction.mjs, tools/scenarios/crash-presentation.mjs, start-preview.bat]
+    hooks: [tools/test-feature-flags.mjs, tools/test-combat-knockaway.mjs, tools/test-combat-ramming.mjs, tools/test-combat-replays.mjs, tools/test-crash-hollow-audio.mjs, tools/test-crash-presentation.mjs, tools/test-crash-slide.mjs, tools/test-armored-vehicle-impact.mjs, tools/test-madmax-crash.mjs, tools/test-madmax-solid.mjs, tools/test-police-knock.mjs, tools/test-vehicle-knock-integration.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, tools/test-combat-balance.mjs, tools/combat-balance.mjs, tools/scenarios/preview-storage.mjs, src/destructibles.js, src/vehicle-impact.js, tools/test-roadside-destruction.mjs, tools/scenarios/crash-presentation.mjs, start-preview.bat, src/wasteland-tuning.js]
     note: "Director 30 September: exclusive arena-event.js and feature-flags.js ownership until merged; FORMAT waits for this lane before touching arena-event.js. Preserve released-rules replay fingerprints and wasteland2-off decision pending Kyle."
     acceptance:
       - "Both switches are on in the real game. Remove the switch-off contact paths they guard (scripted roadside burst and knock, flat roadside speed cost, closing-speed ram damage, the old wreck motion) and the tests that pin only those paths (src/test.js collisionArena, the switch-off cases in the crash and knock-away suites), with unchanged replay fingerprints for the released rules. SPEC 0.8: replace means remove."
@@ -529,15 +529,17 @@ tasks:
     acceptance:
       - "tools/scenarios/crash-presentation.mjs ends with a switch-off check that no crash-vfx meshes exist; crash-effects is now on, so the final pass checks that the released game has the crash pool without any URL flag."
   - id: BALANCE-W2-OFF-RETIRE
-    title: "Retire the wasteland2-off balance gate and switch-off path"
+    title: "Remove the wasteland2 switch and the rule set behind it being off"
     owner: codex
     lane: OPS
-    size: S
-    needs: [CRASH-RELEASE]
+    size: L
+    needs: [CRASH-SWITCH-REMOVE, SCRAPDOME-RELEASE]
     status: ready
-    waiting_on: kyle
     acceptance:
-      - "wasteland2 is on and players cannot turn it off, so the release rule 'combat balance with wasteland2 off and on' checks a rule set nobody can play (27 September 2026: it failed at Medium 13/30 while the live set passed). Propose to Kyle (waiting_on: kyle) removing the wasteland2 switch-off path and the off-balance gate from AGENTS.md, docs/OPERATIONS.md and the balance tool; do not remove before Kyle agrees."
+      - "Kyle approved on 30 September 2026: retire and remove the rule set nobody can play. wasteland2 is on and cannot be turned off, so delete the switch from src/feature-flags.js and every switch-off branch in src/ (about 20 files), keeping exactly the switched-on behavior."
+      - "Remove the off-balance gate: AGENTS.md and docs/OPERATIONS.md release evidence becomes one combat balance run; tools/combat-balance.mjs, tools/arena-balance.mjs and tools/onfoot-balance.mjs lose the off mode; scenarios and tests stop setting or toggling wasteland2. Delete tests that only prove the switched-off behavior; list each one in the change note's Removed section."
+      - "Race fingerprints for the released rules stay unchanged (replay check). Cards that name flag: wasteland2 on the board lose the field."
+      - "Touches many files: run it when no other lane owns any of them, in parts if needed (src first, then tools and scenarios), each part through the lane tier."
   - id: ART-SRC-CREW
     title: "Crew figures: short list of existing starting models for Kyle"
     owner: codex
@@ -559,7 +561,11 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [tools/art/hands-source-sheet.py, tools/scenarios/art-source-hands.mjs, docs/board/looks/first-person-src/round-1.jpg, docs/board/looks/first-person-src/round-1-review.md, docs/changes/ART-SRC-HANDS.md]
+    hooks: [tools/art/catalog.json]
+    sequencing: "Catalog edits wait for ART-SRC-CREW to merge; source research and private capture may proceed."
     flag: wasteland2
     acceptance:
       - "SPEC 0.11 sourcing step for the first-person hands, gloves and sleeves (replaces GFX-02-P3). Same rules as ART-SRC-CREW: two or three candidates, CC0 first, licences recorded in tools/art/catalog.json, files cached outside the repository."
@@ -570,7 +576,11 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [tools/art/rustwall-source-sheet.py, tools/scenarios/art-source-rustwall.mjs, docs/board/looks/rustwall-src/round-1.jpg, docs/board/looks/rustwall-src/round-1-review.md, docs/changes/ART-SRC-RUSTWALL.md]
+    hooks: [tools/art/catalog.json]
+    sequencing: "Shared catalog edits wait for CREW then HANDS source lanes to merge; original-source research and private capture may proceed."
     flag: hidden-road
     acceptance:
       - "SPEC 0.11 sourcing step for Rustwall's salvage (wrecked cars, sheet metal, tower parts) and the canyon strata (replaces EGG-02-P3). Two or three candidate sets, CC0 first, licences recorded in tools/art/catalog.json, files cached outside the repository. The Quaternius pack already used for Muddy Hollow counts as a candidate source."
@@ -581,7 +591,10 @@ tasks:
     lane: OPS
     size: S
     needs: []
-    status: ready
+    status: merged
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [tools/test-rustwall-frame.mjs, tools/test-rustwall-baseline.mjs, tools/fixtures/rustwall-frame-baseline.json, docs/changes/HK-RUSTWALL-BASELINE.md]
+    hooks: [tools/scenarios/rustwall-frame.mjs]
     acceptance:
       - "tools/test-rustwall-frame.mjs reads its baseline from commit 5a994ad in Git history, so a history compaction would break it. Record the numbers it compares (not images) in a small checked-in file under tools/ and read that instead; the test's verdicts must not change."
   - id: DESIGN-ARSENAL
@@ -852,10 +865,10 @@ tasks:
     lane: DESIGN
     size: S
     needs: []
-    status: ready
-    waiting_on: kyle
+    status: closed
     acceptance:
       - "Both are built and switched off in the real game. Kyle and Gratian play them in the Preview; Claude turns notes into settled fixes, then prepares a release on Kyle's go-ahead, with the Scrapdome if its playtest is done."
+    note: "Kyle, 30 September 2026: good enough to release. The Titan is hard to steer next to the computer cars; that becomes TITAN-HANDLING, which does not hold the release."
   - id: P3-POLISH
     title: "Phase 3 polish and release rounds"
     owner: claude
@@ -2435,7 +2448,7 @@ tasks:
     claimed_by: "Codex autonomous Director, 30 September 2026"
     flag: scrapdome
     owns: [src/arena/arena-event.js, src/warlords.js, src/arena/warlord-event.js, src/screen-arena.js, src/app.js, src/screen-territory.js, tools/test-warlord-format.mjs, tools/scenarios/warlord-format.mjs, docs/changes/WAR-02a-FORMAT.md]
-    hooks: [src/screen-hud.js, src/screen-arena.css, tools/replays/warlord-format-ordinary.json, tools/test-warlords.mjs, src/screen-results.js, src/screen-router.js, src/game.js, tools/test-territory-ui.mjs, tools/test-territory-screen.mjs]
+    hooks: [src/screen-hud.js, src/screen-arena.css, tools/replays/warlord-format-ordinary.json, tools/test-warlords.mjs, src/screen-results.js, src/screen-router.js, src/game.js, tools/test-territory-ui.mjs, tools/test-territory-screen.mjs, src/screen-yard-home.js, src/screen-armory.js]
     note: "Director 30 September: tests and independent modules may proceed beside crash cleanup and hints. Wait for CRASH-SWITCH-REMOVE to merge before editing arena-event.js; wait for UX-ENTRY-HINTS before editing screen-hud.js. Keep 1.5x armor in arena files. No feature-flags edits while crash owns it. Approved assertion migration: no-built-Sal expectation becomes built Sal; unbuilt-territory tests keep explicit empty built list; earned reward messages wait for REWARD. Review all changed assertions in the change note. game.js may initialize arena to null consistently with reset."
     acceptance:
       - "Build exactly the format in docs/SCRAPDOME.md section 5, 'Settled for build': one-on-one, first to three wrecks, warlord armor 1.5 times, a phase-two hook after the warlord's first wreck, four minutes then sudden death, losing costs nothing, REMATCH and BACK TO THE YARD. Warlord and escorts share a team (src/combat-teams.js)."
@@ -2469,19 +2482,31 @@ tasks:
     lane: DESIGN
     size: S
     needs: [PREVIEW-LAUNCHER, INT-0926-MERGE]
-    status: ready
+    status: closed
     acceptance:
       - "Claude collects the play notes (docs/playtest-inbox.md), plays the same build privately, and writes each fix as a codex card with a settled rule. Nothing is tuned by guesswork."
+    note: "Kyle and Gratian, 30 September 2026: good enough to release."
   - id: SCRAPDOME-RELEASE
-    title: "Release the Scrapdome to the real game"
+    title: "Release the Scrapdome, Titan climbing and Muddy Hollow to the real game"
     owner: claude
     lane: RELEASE
     size: S
-    needs: [SCRAPDOME-PLAYTEST, RALLY-CHECKPOINT]
+    needs: [SCRAPDOME-PLAYTEST, FEATURE-PLAYTEST, RALLY-CHECKPOINT, CRASH-SWITCH-REMOVE]
     status: ready
-    waiting_on: kyle
     acceptance:
-      - "Full release evidence on the exact commit, then Kyle's written go-ahead flips scrapdome to on (reachable only from the yard; the main menu is unchanged). GATE-REJOIN and RALLY-CHECKPOINT already shipped on 26 September 2026."
+      - "Kyle approved in writing on 30 September 2026. Flip scrapdome, titan-climb and muddy-hollow to on in src/feature-flags.js (career-backup stays dev), then full release evidence on the exact integration commit and the OPERATIONS.md release routine. The Scrapdome stays reachable only from the yard and Muddy Hollow only by driving there; the main menu is unchanged. Waits for CRASH-SWITCH-REMOVE, which owns feature-flags.js until it merges."
+  - id: TITAN-HANDLING
+    title: "The Titan steers well at crawling and climbing speeds"
+    owner: codex
+    lane: PHYS
+    size: S
+    needs: [CRASH-SWITCH-REMOVE]
+    status: ready
+    acceptance:
+      - "Kyle, 30 September 2026: the Titan is hard to steer compared with the computer cars. Cause: steeringYawAuthority (src/config.js) scales turning down below 30 mph and by grip, and the Titan spends Muddy Hollow and the climbs slow, with grip .91 against the rally car's 1.05."
+      - "Settled rule: for the Titan only (a new car field, lowSpeedSteer: true in its CARS entry), the rolling factor is max(speed/30, .55) once the Titan moves faster than 3 mph, and steering grip is max(grip, 1.0) below 45 mph. Above 45 mph nothing changes, so its high-speed feel and every other car stay exactly as they are."
+      - "Tests first: at 12 mph and 25 mph on dirt the Titan's turning rate is at least the rally car's; at 70 mph it is unchanged; ordinary cars unchanged at every speed; race fingerprints unchanged except replays that drive the Titan, each named and explained in the change note."
+      - "Kyle checks it in the Preview (waiting_on: kyle at review)."
   - id: WAR-SAL-TUNE
     title: "Claude plays Sal, Gratian plays Sal in Preview; tune to 'winnable in a few tries'"
     owner: claude

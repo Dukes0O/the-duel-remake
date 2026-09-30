@@ -1,23 +1,33 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
+import {readFileSync} from 'node:fs';
 import {test} from 'node:test';
 import {summarizeFrames} from './performance-review.js';
 
-const baselineCommit=execFileSync('git',['rev-parse','5a994ad'],{encoding:'utf8'}).trim();
+// Synthetic validator inputs, not recorded browser frame measurements.
+const baseline=JSON.parse(readFileSync(new URL('./fixtures/rustwall-frame-baseline.json',import.meta.url),'utf8'));
+const baselineCommit=baseline.baselineCommit;
 const candidateCommit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const clone=value=>structuredClone(value);
 const summary=values=>summarizeFrames(values);
-const report=(role,run,commit,{cpuScale=1,rafScale=1,draws=90,triangles=50000}={})=>{
+const report=(role,run,commit,{cpuScale=baseline.defaults.cpuScale,rafScale=baseline.defaults.rafScale,
+  draws=baseline.defaults.draws,triangles=baseline.defaults.triangles}={})=>{
   const quality={};
+  const {samples,warmup,generation}=baseline;
+  const {cpu,raf}=generation;
   for(const name of ['high','performance']){
     quality[name]={};
     for(const view of ['wash','approach']){
-      const mirrorRefreshSamples=Array.from({length:600},(_,i)=>i%2===0);
-      const renderCpuSamplesMs=Array.from({length:600},(_,i)=>
-        (4+(i%7)*.11+(name==='high'?.8:0)+(view==='approach'?.25:0))*cpuScale);
-      const rafSamplesMs=Array.from({length:600},(_,i)=>
-        (16+(i%9)*.07+(name==='high'?.3:0)+(view==='approach'?.1:0))*rafScale);
-      const warmEndTimestampMs=1000,frameIds=Array.from({length:600},(_,i)=>i);
+      const mirrorRefreshSamples=Array.from({length:samples},(_,i)=>i%generation.mirrorRefreshPeriod===0);
+      const renderCpuSamplesMs=Array.from({length:samples},(_,i)=>
+        (cpu.baseMs+(i%cpu.period)*cpu.incrementMs+
+          (name==='high'?cpu.highOffsetMs:0)+
+          (view==='approach'?cpu.approachOffsetMs:0))*cpuScale);
+      const rafSamplesMs=Array.from({length:samples},(_,i)=>
+        (raf.baseMs+(i%raf.period)*raf.incrementMs+
+          (name==='high'?raf.highOffsetMs:0)+
+          (view==='approach'?raf.approachOffsetMs:0))*rafScale);
+      const warmEndTimestampMs=generation.warmEndTimestampMs,frameIds=Array.from({length:samples},(_,i)=>i);
       let timestamp=warmEndTimestampMs;
       const rafTimestampsMs=rafSamplesMs.map(interval=>(timestamp+=interval));
       quality[name][view]={
@@ -25,10 +35,10 @@ const report=(role,run,commit,{cpuScale=1,rafScale=1,draws=90,triangles=50000}={
         rafSamplesMs,renderCpuSamplesMs,mirrorRefreshSamples,
         frameIds,rafTimestampsMs,warmEndTimestampMs,
         renderCpuByMirror:{refreshed:summary(renderCpuSamplesMs.filter((_,i)=>i%2===0)),
-          reused:summary(renderCpuSamplesMs.filter((_,i)=>i%2===1))},
-        drawCallSamples:Array(600).fill(draws),
-        triangleSamples:Array(600).fill(triangles),
-        canvasPixelSamples:Array(600).fill(1280*720),
+          reused:summary(renderCpuSamplesMs.filter((_,i)=>i%generation.mirrorRefreshPeriod!==0))},
+        drawCallSamples:Array(samples).fill(draws),
+        triangleSamples:Array(samples).fill(triangles),
+        canvasPixelSamples:Array(samples).fill(1280*720),
         canvas:{width:1280,height:720},
         camera:{position:view==='wash'?[0,4,12]:[0,5,15],target:[0,2,0],fov:55,
           projectionMatrix:[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
@@ -37,12 +47,12 @@ const report=(role,run,commit,{cpuScale=1,rafScale=1,draws=90,triangles=50000}={
         state:{seed:1989,progress:view==='wash'?350:960,stopped:true,gateClosed:true,
           courseId:'pacific-canyon',routeSeed:1989,status:'racing',speedMph:0,
           s:view==='wash'?350:960,lateral:0,hiddenRoadLength:1200},
-        diagnosticMean:{raf:rafSamplesMs.reduce((a,b)=>a+b,0)/600,
-          renderCpu:renderCpuSamplesMs.reduce((a,b)=>a+b,0)/600},
+        diagnosticMean:{raf:rafSamplesMs.reduce((a,b)=>a+b,0)/samples,
+          renderCpu:renderCpuSamplesMs.reduce((a,b)=>a+b,0)/samples},
       };
     }
   }
-  return {role,run,commit,samples:600,warmup:20,
+  return {role,run,commit,samples,warmup,
     hashes:{renderer:'1'.repeat(64),worldSurfaces:'2'.repeat(64),
       course:'3'.repeat(64),wallGlb:(role==='baseline'?'4':'5').repeat(64),
       washGlb:(role==='baseline'?'6':'7').repeat(64)},
