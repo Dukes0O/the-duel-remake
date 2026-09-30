@@ -730,8 +730,10 @@ export async function checkFuelPlayerModeFallback(c) {
     if(!a._saveProfile())throw Error('Rank-five memory save failed');
     a.onFrame?.(a.duel.state,0);return{six,five};})()`);
   // App fixtures do not go through the real new-player form's menu refresh.
-  // Use the same production refresh as the isolated menu-check fixture buttons.
-  await c.evaluate("import('/src/main.js').then(({refreshRaceSetup})=>{refreshRaceSetup();return true;})");
+  // Changing an existing native option invokes the production refresh handler.
+  const existingPlayer = await c.evaluate("document.querySelector('#player-select')?.options[0]?.value??null");
+  if (!existingPlayer) throw Error('Initial named-player option missing');
+  await choosePlayer(existingPlayer);
   await c.waitFor(`(()=>{const s=document.querySelector('#player-select');
     return s&&[${JSON.stringify(players.six)},${JSON.stringify(players.five)}]
       .every(id=>[...s.options].some(o=>o.value===id));})()`, 'both named-player fixture options');

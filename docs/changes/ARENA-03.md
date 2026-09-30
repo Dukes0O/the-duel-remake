@@ -187,12 +187,15 @@ The first private-browser attempt stopped before acceptance at
 `Named-player option missing` (private port **44766**, memory-only saves).
 The fixture IDs match production option values. Direct App fixture creation
 emits state but does not call the menu's `updatePlayers`; a frame render alone
-leaves the native options stale. Setup now invokes the existing production
-`refreshRaceSetup` exported from `main.js`, as the isolated menu-check fixture
-buttons do, and waits for both actual named-player options. The eight mode and
-owner assertions and subsequent real UI controls are unchanged. **The genuine
-browser red remains pending.** This setup correction does not record a browser
-acceptance verdict.
+leaves the native options stale. The first correction imported `/src/main.js`
+at runtime, which would fail in compiled `.qa-dist`: that build serves hashed
+asset modules and no source path. That import was removed before a retry.
+Setup instead selects the first existing native player option through its real
+change handler, which already calls production `refreshRaceSetup`, then waits
+for both actual fixture options. All eight mode and owner assertions and the
+subsequent real UI controls are unchanged. Syntax and diff checks pass.
+**The genuine browser red remains pending.** No browser was launched for this
+setup correction; missing options or modules do not count as acceptance reds.
 
 ## Implementation candidate
 
