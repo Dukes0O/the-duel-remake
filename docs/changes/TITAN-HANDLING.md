@@ -1,6 +1,6 @@
 # TITAN-HANDLING
 
-Status: implementation in progress. Four disjoint steering callers are implemented; App waits for FORMAT to merge.
+Status: implemented for independent review; lane/build gates and Kyle’s Preview feel check are pending.
 
 ## Settled rule and implementation decision
 
@@ -82,15 +82,19 @@ run exposed a test-fixture mistake in the demo lane position; the fixture now
 uses the existing cruising lane (-3.36 m for a 7 m half-width). Its final
 failure therefore tests the steering change rather than a lane mismatch.
 
-Current focused result: 39/40 checks pass, including all eight frozen non-Titan full-state fingerprints. The remaining demo check correctly fails until App can pass its actual car after FORMAT merges. Three existing Titan replay proposals were computed in ignored evidence with the original recipe and redirected output; fifteen other recorded cases are unchanged and all 30/60/144 FPS proposals agree. Independent reviewer approved only these three Titan case entries after reproducing their new hashes and restoring their exact old hashes by disabling only Titan's opt-in in memory. The fifteen other case entries stay byte-identical. Lane tier, build, browser checks and Kyle's Preview check are pending.
+Current focused result after FORMAT merged: 40/40 checks pass, including all eight frozen non-Titan full-state fingerprints. The App demo controller now passes its actual car. Existing replay suite: 162/162 checks pass. Independent review reproduced the three named Titan pins at 30/60/144 FPS and restored their exact old hashes by disabling only Titan’s opt-in in memory. The fifteen other case entries stay byte-identical.
+
+Private memory-only browser on port 55443: four High/Performance captures, zero warnings and errors. The released Muddy Hollow exploration branch turns on the pit at an initial 12 mph and the hill at 25 mph. Over one second, pit movement was 3.671834 m with a -0.414911 rad turn; hill movement was 8.408199 m with a -0.902514 rad turn. Both qualities give identical measured state; career scrap/history stayed unchanged. The recipe fixtures an already-departed exploration state and already-owned hubcaps, then runs the real driver and terrain. First attempts exposed recipe readiness and missing departure-fixture errors, corrected without runtime changes or weaker checks. Two final representative captures were visually inspected: the actual Titan, mud and hillside render correctly. Human steering feel remains Kyle’s Preview check.
+
+Commands: node tools/test-titan-handling.mjs; node tools/test-replays.mjs; node tools/browser-harness.mjs scenario titan-handling --output-dir .evidence/2026-09-30/TITAN-HANDLING/browser. Mandatory lane/build gates are pending; do not merge before Kyle checks the Preview.
 
 ## Assertions and race fingerprints
 
-No existing assertion or fingerprint was edited. The new fixture is
+No existing test code or recorded input was edited. Three permitted Titan expected pins were updated only after independent review; all other pins stay unchanged. The new fixture is
 tools/replays/titan-handling.json; it records full state every 120 ticks over
 360 ticks, at 120 Hz, seed 1989, with three deliberate steering/input phases.
 
-The existing tools/test-replays.mjs asserts unchanged fingerprints for
+The existing tools/test-replays.mjs covers the permitted changed fingerprints for
 titan-arena-duel, titan-stunt-trial and titan-freestyle-practice.
 tools/test-titan-climb.mjs also runs that full replay suite. Those Titan
 assertions can conflict with the card's permitted Titan behavior change.
@@ -106,4 +110,4 @@ stay unchanged. The Director named expected-fingerprints.json as a hook before t
 
 ## Removed
 
-The Titan alone replaces the old low-speed steering curve through its explicit car field. Every other car and every legacy three-argument caller keeps the old curve. No runtime asset, world signature, save field or dependency is replaced. The shared App caller and reviewed Titan pin replacements are still pending their named dependencies.
+The Titan alone replaces the old low-speed steering curve through its explicit car field. Every other car and every legacy three-argument caller keeps the old curve. No runtime asset, world signature, save field or dependency is replaced. The App hook was completed after FORMAT merged. Reviewed Titan pin replacements are included; no temporary proposal generator is committed.
