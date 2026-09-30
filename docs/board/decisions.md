@@ -1396,3 +1396,10 @@ helmet, Tusk in clean fantasy armor) and stopped. Claude recommends keeping
 the current crew figures, as Kyle chose for the women, and closing the
 fitting card; Kyle confirms.
 
+## 30 September 2026: a ceiling for dome steering
+
+ARENA-STEER met Claude's floor (100 degrees a second at low speed) with a
+3.4 times multiplier that turns cars 205 to 300 degrees a second at 45 mph.
+Added: no car turns faster than 150 degrees a second at full lock in an
+arena. Floor and ceiling together keep the ring manageable without twitch.
+
