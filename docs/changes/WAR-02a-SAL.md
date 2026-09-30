@@ -30,15 +30,18 @@ SHE MISSED. HIT HER NOW! when the miss window opens.
 Tests first. Focused suite: node tools/test-sal-fight.mjs.
 The pilot hook required the TITAN-HANDLING merge before implementation. Its
 actual yaw check now passes on the merged steering formula. No runtime stubs
-are used. Physical contact and visual acceptance still require REWARD.
+are used. REWARD contact and visual hooks are now integrated.
 The ordinary replay fingerprint in tools/replays/warlord-format-ordinary.json
 is reused unchanged by the new suite; no new replay file is within this slice.
-Human fun/fairness, Claude Preview review and browser art/audio checks remain
-required before merge and are not measured by these headless tests.
+Human fun/fairness and Claude Preview audible-feel/standard-camera review
+remain required before merge. Automated browser art, callout visibility and
+positional cue-event checks pass as recorded in the final checkpoint below.
 
 ## Changed assertions
 
-None. New assertions only. Existing renderer art uses salSaw.phase; keep it.
+No existing assertions or headless test code changed. New browser checks verify
+phase-two headlight flares, the positional roar and visible move callouts clear
+of the nameplate in the labelled review camera. Existing art uses salSaw.phase.
 
 ## Removed
 
@@ -159,3 +162,90 @@ multipliers, the hit handshake/callout, rotating sweep blades and separate tell
 sparks. The coordinated lane tier and build, private High/Performance browser
 review, sound review and Claude Preview fun/fairness review remain pending.
 No heavy gate, browser build, integration merge or push was run by this lane.
+
+## Final source and browser checkpoint (30 September 2026)
+
+Synced the confirmed REWARD merge de3eb0fa133c1ed3923638dcd6a2edbb05deb1c5
+and integration metadata tip d2d28f90b2f4b51be8287f8555570c88c11ed99d into
+this lane. No Reward, renderer, HUD, menu or save implementation was edited by
+this continuation. The only new source edits are the owned browser recipe.
+
+Unchanged focused checks all pass:
+- test-sal-fight: 23/23 subtests, 110 acceptance checks, including the actual
+  damaging sweep callout/hit handshake and actual half-yaw pilot check.
+- test-combat-brain: 5/5; test-arena-event: 12/12; test-arena-feel: 5/5.
+- test-warlord-format: 24/24.
+- test-titan-handling: 40 checks, zero failures; test-titan-climb: 10 checks,
+  zero failures.
+
+All three ordinary fingerprints listed above remain unchanged. No assertion
+was weakened, no headless test was edited and no replay was repinned.
+
+Final command: node tools/browser-harness.mjs scenario sal-fight
+--output-dir .evidence/2026-09-30/WAR-02a-SAL/browser-final-clear.
+The harness built the lane's .qa-dist, used private port 18805, a throwaway
+Chrome profile and memory-only careers. High and Performance both pass:
+12 captures, zero browser issues and zero warnings. All 12 final captures
+were inspected. The full car and saw kit remain visible. Both actual move
+callouts are readable. Tell sparks, miss sparks, real contact sparks and the
+phase-two headlight tell are present in both quality modes.
+
+The fixed-step production calls give a 1.2-second Easy sweep tell, a real
+brake-clear miss, an uncountered sweep and an actual side contact. That contact
+removes 28.8 player armor (50 to 21.2), versus 14.4 reciprocal damage, and
+marks salSaw.hit while displaying SAW SWEEP! in the production HUD. The real
+contact first wreck changes phase two; natural respawn/protection expiry then
+leads to a .96-second Charge tell with two visible headlight flares and no
+boost, followed by actual pilot boost. Tell/sweep blade rotations are
++/-2.32 and +/-2.4 radians in the sampled frames.
+
+Actual positional salSaw and arenaTell events are observed. The unchanged
+Audio implementation routes them to arena.sal-saw and arena.tell. This checks
+cue-event routing; the headless browser is muted, so audible sound quality,
+scream/roar balance and play feel remain unreviewed.
+
+The recipe labels temporary discovery, hold, low armor, car poses, input and
+camera as fixtures. It first waits for real renderer readiness, advances the
+production yard approach through App.advance, then waits for the real hub.
+Low throttle .15 keeps the Easy player alongside for the complete tell; full
+throttle had correctly escaped it. Move timing, contact, phase, respawn and
+protection still use real Duel methods without FSM or timer assignments.
+The private QA panel is collapsed; production HUD and nameplates are retained.
+
+### Failed and partial browser attempts
+
+All raw reports and logs are under the same card evidence folder. These
+attempts are recorded as failures or limitations, not passing evidence:
+- The initial root report refused premature Sal entry while the yard approach
+  was still active. browser-final timed out waiting for the hub because App's
+  visual readiness gate had correctly prevented an early advance.
+- browser-ready reached the actual tell/window but failed to reach sweep:
+  full-throttle acceleration cleared the Easy full tell and caused a real miss.
+- browser-review passed both modes with 12 captures and no issues/warnings,
+  but its close inspection camera put the nameplate over the timer or partly
+  over the hit callout. This was a visual fixture limitation despite assertions
+  passing; it is not the final clear-callout verdict.
+- browser-framed, browser-hud-diagnostic, browser-final-framed and
+  browser-clear each failed the retained new nameplate/callout visibility guard
+  during the High window. The last attempted target +2.5 still projected the
+  plate at y237.9-279.2 against callout y227-273. No runtime errors were found.
+
+The final labelled camera uses actor ground/air height, position offset
+[10,4.5,7] and target offset [0,4,0], then waits for the shipped camera easing
+and repaints the HUD projection. The real miss nameplate is at y384.3-425.6
+and the hit nameplate at y501.1-542.4, clear of callout y227-273. The guard
+passes; no HUD element, nameplate or runtime rule was hidden or changed.
+
+### Remaining review and gates
+
+Claude must play the fight through Preview before merge and assess fun,
+fairness, audible scream/roar balance, counter timing and normal chase-camera
+nameplate/callout overlap. These stopped, labelled camera fixtures do not
+provide that human verdict. The Director owns status/review routing.
+
+Mandatory lane tier and production build are not run by this continuation;
+the Director will schedule them on the frozen reviewed source. No Preview,
+live folder, port 5174 or real player save was accessed. No merge into
+integration, push or release was performed by this lane. Final syntax and
+owned-file diff checks pass. Raw evidence is copied to integration's ignored
+.evidence/2026-09-30/WAR-02a-SAL folder for independent review.
