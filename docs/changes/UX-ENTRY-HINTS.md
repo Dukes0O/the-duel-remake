@@ -1,6 +1,6 @@
 ---
 task: UX-ENTRY-HINTS
-status: review
+status: ready-to-merge
 kind: feature
 flag: wasteland2
 player_facing: yes
@@ -75,8 +75,11 @@ only read race state. Styling places the hint above the score and weapons.
   cases, 16 events, eight categories, three FPS values and three runs.
 - Final npm run build passed (455 ms Vite build). The existing large-chunk
   size advisory remains. No dependency, asset or runtime request was added.
-- Independent review is pending with the Director. This note remains review
-  status until that review is clean.
+- Independent read-only review by format_build: CLEAN on source commit
+  5b58850. The reviewer checked the pure UI helper, state/input safety,
+  unchanged replays and screenshots, and independently passed focused
+  acceptance 15/15. The Director dispatches test_runner to verify the final
+  evidence-only commit before merging; source remains frozen.
 - An initial Chrome transport timeout left two disposable QA profiles locked.
   After their Chrome processes had ended, the builder removed only those exact
   profiles from verified Temp paths. The final browser run cleaned up normally.
