@@ -120,3 +120,14 @@ and the unpaid result shows zero with RETRY SAVE.
 Mandatory lane tier/build and independent Reviewer and Save Guardian verdicts
 are held for the Director's review/runner handoff. No merge, push, release or
 real-save access performed.
+
+### Tests-first correction: loss wreck count
+
+The Director's initial test brief incorrectly applied the rematch's three-wreck
+pay cap to losses. SCRAPDOME section 5 and WAR-PAY cap rematches only: losses
+pay 60 for every actual boss wreck, including uncredited wall wrecks beyond
+three. New red checks require nine-wreck losses to pay 540 / 648 / 756 on
+Easy / Medium / Hard and require the public rule to reject unsafe payout
+arithmetic. Existing capped-loss assertions are reported as contradictions and
+remain unchanged by the test author; their replacement needs reviewer approval.
+No source files or earlier assertions changed in this tests-first correction.

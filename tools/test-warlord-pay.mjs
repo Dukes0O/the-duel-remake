@@ -222,3 +222,20 @@ test('invalid payout economics reject without touching the owner or marker', () 
     equal(p, before, 'unknown boss wreck count preserves owner and markers');
   }
 });
+
+// Test-author correction: SCRAPDOME 5 caps rematch wreck pay only. The
+// earlier loss matrix's cap is contradictory and needs reviewed replacement.
+for (const [cpuDifficulty, factor] of Object.entries(factors)) {
+  test('loss pays all nine actual boss wrecks on ' + cpuDifficulty, () => {
+    const arena = completedArena({won: false, wrecksOnWarlord: 9, credited: 0});
+    equal(settle(profile(), {cpuDifficulty, arena}).scrapEarned, Math.round(9 * 60 * factor),
+      'loss counts all actual boss wrecks, including uncredited wall wrecks beyond three');
+  });
+  test('loss pay rejects unsafe arithmetic on ' + cpuDifficulty, () => {
+    const context = {warlordId: 'sal', won: false, firstWin: false,
+      wrecksOnWarlord: Number.MAX_SAFE_INTEGER, cpuDifficulty};
+    equal(pay(context), null, 'safe wreck count cannot produce an unsafe scrap amount');
+    equal(pay({...context, won: true}), Math.round(260 * factor),
+      'rematch alone caps actual wreck pay at three before arithmetic');
+  });
+}
