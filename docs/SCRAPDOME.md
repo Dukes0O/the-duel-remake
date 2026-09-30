@@ -249,8 +249,9 @@ no rank requirement, no ladder order.
   **Charge**: a straight boosted run across the ring, using the same flash
   and roar tell.
 - **Reward, first win only:** Side Saws (an armory kit: when equipped, the
-  player's side contacts deal 1.6 times ram damage, with sparks), 150 scrap,
-  and Sal's territory marked claimed. Rematch wins pay 25 scrap. Settlement is
+  player's side contacts deal 1.6 times ram damage, with sparks), the first-win
+  pay (600 times the difficulty factor: 720 on Medium) and Sal's territory
+  marked claimed. Rematch wins and losses pay as in the format above. Settlement is
   once per fight, atomic, per named player (Save Guardian).
 - **Side Saws ownership (settled 30 September 2026):** the win earns the kit
   for that named player on every car they own now or buy later, at no cost.
@@ -281,8 +282,14 @@ redesigns them: a changed number goes in `docs/board/decisions.md`.
 wreck, four minutes then sudden death, losing costs nothing). Every move has
 a tell of `BRAIN_DIFFICULTY.tellSec` (1.2, 0.8, 0.5 s) unless it says
 otherwise, 80% as long in phase two. Every warlord has a **window** after
-their move where hits deal 1.5 times damage, shown on their car. First win:
-the reward, 150 scrap and the territory claimed; rematch wins pay 25 scrap.
+their move where hits deal 1.5 times damage, shown on their car. Pay
+(settled 30 September 2026, replacing 150 and 25 after Kyle beat Sal 3-0 on
+Medium and was paid 25): the **first win** pays 600 scrap plus 100 for each
+warlord before this one on the ladder (Sal 600, the Dustmonger 700, up to the
+Baron 1,300), times the arena difficulty factor (Easy 1, Medium 1.2, Hard
+1.4), with the reward and the territory claimed; a **rematch win** pays like a
+Last Car Rolling win, 80 plus 60 for each wreck on the warlord, times the
+factor; a **loss** pays 60 for each wreck on the warlord, times the factor.
 Settlement is once per fight, atomic, per named player (Save Guardian). An
 intro card with the name, car and one taunt line comes before the countdown.
 

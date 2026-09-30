@@ -1,37 +1,30 @@
 # Next run: phase 3, a Wasteland worth finding (updated 30 September 2026)
 
-## Resume here (Claude, 30 September 2026)
+## Resume here (Claude, 30 September 2026, evening)
 
-Released on 27 September: crash physics and effects, the Hard Mad Max CPU
-at 6 s, the one-Preview launcher and the thirty-race balance check
-(docs/board/run-log.md). Kyle: get Codex moving on the existing cards, in
-parallel where it is safe, while Claude designs the rest of phase 3.
+Live since this evening: the Scrapdome (Last Car Rolling), Titan climbing,
+Muddy Hollow, the Titan's low-speed steering and the ramp-side fix
+(ARENA-RAMP-SIDE). Sal's fight, the Side Saws and her reward are merged and
+reachable in the Preview behind the `warlords` switch. Phase 3 is the last
+planned phase and about thirty build cards remain; the order is below.
 
-### Director continuation, 30 September 2026
+Kyle played Sal on Medium and won 3-0. Three findings, settled as cards:
+**WAR-PAY** (the win paid 25 scrap), **ARENA-STEER** (steering in the dome is
+too slow for a ring) and **ARENA-SHOVE** (sitting cars cannot be shoved).
 
-The original tracks below are complete except Sal, which is built and waiting
-for Claude's Preview play-through. Do not restart a merged source card.
+### Tracks for this run (up to five lanes)
 
-- Sal: retain `lane/cmb/war-02a-sal` at `1b5f3365a9717f477e85d6503d1f2bb88375c272`.
-  Its clean lane tier passed 304/304 in 774.64 seconds, build in 1.25 seconds.
-  All 23 focused tests and 12 private High/Performance captures pass. Claude
-  checks fun, fairness, audible cues and the normal chase-camera callout view
-  before merge. The final captures are in integration's ignored
-  `.evidence/2026-09-30/WAR-02a-SAL/`.
-- Claude's fitting rules/cards and Kyle's art picks are merged as 27cd169 and
-  f586be4. New crew, hands, Rustwall, women's source, tanker source and Salt
-  Flats venue cards are ready for the next run. Assign explicit owned files
-  and hooks before starting a fitting/source card that has none.
-- BALANCE-W2-OFF-RETIRE, ARENA-03 and WAR-02c wait for Sal's shared arena
-  files. Verify WAR-02c's old warlords path and re-slice its actual hook before
-  starting. ARS-CORE is ready, but its sound-bank.js hook belongs to the
-  external audio lane; coordinate a slice or wait for that lane's merge.
-- The Director's end full tier passed 303/303 in 823.86 seconds, with build
-  passing in 1.10 seconds, on exact clean `0f7818f6a351b4ce0f728a9a8cde3354ee99ec75`.
-  The ledger time is 2026-09-30T19:37:41.407Z. The five-merge/two-hour counter resets
-  here. The following ledger/status/handoff commit is metadata and does not
-  inherit an exact-commit full pass. Normal D8 push follows; this run stops.
-  Start the next run from the board and these retained ownership constraints.
+| Track | Cards, in order | Notes |
+| --- | --- | --- |
+| A. Dome feel | ARENA-STEER, then ARENA-SHOVE | Both touch driving and contact files; one at a time. Kyle checks each in the Preview |
+| B. Warlord pay, then warlords | WAR-PAY, then WAR-02c (Mother Mirage) | WAR-PAY first: it edits the settlement WAR-02c will call |
+| C. Arsenal | ARS-CORE, then ARS-01 | ARS-CORE's sound-bank hook belongs to the audio lane: add only new cue names, or wait. Starts after ARENA-STEER if both need `src/sim-driving.js` |
+| D. Art | ART-FIT-CREW-M, ART-SRC-CREW-W, ART-SRC-TANKER, then ART-FIT-HANDS, ART-FIT-RUSTWALL, ARENA-06 | docs/WASTELAND_ART.md "Fitting existing models"; send every comparison sheet to Claude, who shows Kyle |
+| E. Clean-up | BALANCE-W2-OFF-RETIRE | Many files: run it when no other lane owns them, in parts |
+
+Then follow "Order: the rest of phase 3" below as cards open. Give every card
+explicit owned files before starting it; when two cards need one file, take
+them one at a time and say why in the card.
 
 **Stop rule (Kyle).** This is a game for one laptop, played by Kyle and his
 11-year-old son. If a card cannot meet its acceptance with the tools we have
@@ -45,33 +38,6 @@ cards under CODEX CAN START NOW, claims each (`status: building`,
 `claimed_by`) on integration first, and never starts a card owned by Claude
 or Kyle. Claude settles design in writing, judges look and feel, and prepares
 releases. A design question goes to Claude in writing.
-
-### Original parallel tracks for this run
-
-| Track | Cards, in order | Runs beside |
-| --- | --- | --- |
-| A. Warlords | WAR-02a-FORMAT, then WAR-02a-SAL and WAR-02a-REWARD in two lanes | B (FORMAT only), C, D, E |
-| B. Crash clean-up | CRASH-SWITCH-REMOVE | A's FORMAT, C, D, E |
-| C. On-foot hints | UX-ENTRY-HINTS | everything |
-| D. Art sourcing | ART-SRC-CREW, ART-SRC-HANDS, ART-SRC-RUSTWALL (three small lanes; each stops at a sheet for Kyle) | everything |
-| E. Housekeeping | HK-RUSTWALL-BASELINE | everything |
-
-**Must wait, and why:**
-
-- WAR-02a-REWARD waits for CRASH-SWITCH-REMOVE as well as FORMAT: both edit
-  car contacts (`src/sim-contacts.js`, `src/combat-armor.js`).
-- WAR-02a-FORMAT keeps the warlord's 1.5 times armor inside the arena files;
-  if it needs `src/combat-armor.js`, it waits for CRASH-SWITCH-REMOVE.
-- WAR-02a-SAL: when built, `status: review` and `waiting_on: claude`; Claude
-  plays it in the Preview before merge.
-- BALANCE-W2-OFF-RETIRE has Kyle's approval. It waits until no other lane owns
-  the released-switch files; Sal still owns arena dispatch and pilot files.
-- WAR-02b and WAR-02c start when Claude marks DESIGN-WAR-02b and
-  DESIGN-WAR-02c merged; the arsenal, crew and arena-mode build cards appear
-  on the board as Claude settles their designs. Pick them up as they appear.
-
-Up to five lanes at once. Two lanes never edit the same file; when unsure,
-serialize and say why in the card.
 
 ## Where things stand
 
@@ -127,7 +93,7 @@ The board's `needs` lists are the order. Waves that can run side by side:
 
 | Wave | Cards | Notes |
 | --- | --- | --- |
-| Now | Tracks A to E (Resume here) and ART-SRC-SALTFLATS | |
+| Now | Tracks A to E (Resume here) | |
 | After WAR-02a-FORMAT | WAR-02a-SAL, WAR-02c, ARENA-03 | All three touch arena dispatch: take them one at a time unless their files are proven separate |
 | After WAR-02a-REWARD | ARS-CORE | Also edits the armory and car contacts |
 | After ARS-CORE | WAR-02b, ARS-01, CREW-02 | Three lanes: warlord, weapons, on foot |
@@ -201,19 +167,19 @@ docs/board/next-run.md (start at "Resume here"), docs/CODEX_PLAYBOOK.md
 section 6, SPEC.md section 0, docs/SCRAPDOME.md section 5 and the top of
 docs/playtest-inbox.md. Then run node tools/board.mjs.
 
-Run these tracks side by side, up to five lanes at once, exactly as the
-table in next-run.md says:
-  A. WAR-02a-FORMAT, then WAR-02a-SAL and WAR-02a-REWARD in two lanes
-     (REWARD also waits for CRASH-SWITCH-REMOVE).
-  B. CRASH-SWITCH-REMOVE.
-  C. UX-ENTRY-HINTS.
-  D. ART-SRC-CREW, ART-SRC-HANDS, ART-SRC-RUSTWALL (each stops at a
-     comparison sheet with waiting_on: kyle).
-  E. HK-RUSTWALL-BASELINE.
+Run the tracks in next-run.md "Resume here" side by side, up to five
+lanes at once:
+  A. ARENA-STEER, then ARENA-SHOVE.
+  B. WAR-PAY, then WAR-02c.
+  C. ARS-CORE, then ARS-01.
+  D. ART-FIT-CREW-M, ART-SRC-CREW-W, ART-SRC-TANKER, then ART-FIT-HANDS,
+     ART-FIT-RUSTWALL and ARENA-06 (Kyle's picks are on the cards).
+  E. BALANCE-W2-OFF-RETIRE when no other lane owns its files.
+Then keep taking cards from "Order: the rest of phase 3" as they open.
 Two lanes never edit the same file; if a card needs another lane's file,
-wait for that lane to merge. Claude is settling the rest of phase 3 while
-you work: rerun node tools/board.mjs after every merge and pick up new cards
-under CODEX CAN START NOW as they appear.
+wait for that lane to merge. Rerun node tools/board.mjs after every merge.
+A warlord or any card with a comparison sheet goes to Claude for review
+(waiting_on: claude) before merge.
 
 Claim each card on the board before starting. Never start a card owned by
 Claude or Kyle. The designs are settled by Claude: build on them, do not

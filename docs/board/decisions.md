@@ -1358,3 +1358,14 @@ toy like assets here", they must look gritty. That is rule 1 and 2 of
 docs/WASTELAND_ART.md, "Fitting existing models"; an art critic scoring any
 fitted model treats a toy-like or cartoon look as a failed consistency score.
 
+## 30 September 2026: Kyle's first Sal fight
+
+Kyle beat Sal 3-0 on Medium in the Preview. The pay (150 first win, 25 after)
+was Claude's number and too low: a Last Car Rolling win already pays more.
+Settled in SCRAPDOME.md section 5: first win 600 plus 100 per earlier warlord,
+times the difficulty factor; rematches and losses pay like arena rounds
+(WAR-PAY). Dome steering was measured at 53 to 66 degrees a second at full
+lock, too slow for a ring: ARENA-STEER sets at least 100 degrees a second for
+every car in arenas only. Sitting cars: ARENA-SHOVE. Sal's moves and armor
+wait for Gratian's play.
+
