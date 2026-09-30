@@ -55,3 +55,15 @@ is removed. The boxed truck, upright large tank and Toy Car Kit are declined
 as leads, not installed substitutes. Raw Blender renders/reports are ignored
 review evidence and are deleted after their verdict is committed. Keep the
 licensed original source archives and their licenses in the external cache.
+
+## Integration verdict
+
+Source records merged from exact clean `764967db9fd1777725045bda2556b827f7b0aff1`.
+Mandatory lane tier **306/306 suites in 572.02 seconds**, no selected suites
+skipped, and build **1.13 seconds** pass. Independent review verifies all
+20 prior catalog records, 18 hashes, original ZIP members and embedded CC0
+licenses, actual geometry and identical reproduction pixels/JPEG. All 143
+current public files, 236,249,990 bytes, retain their hashes. Existing chunk
+warning remains. Catalog ownership is released. This remains a source-only
+**review / waiting_on: kyle** stop, with missing trailer parts explicit; no
+fitting, complete-convoy, gameplay or release approval is granted.

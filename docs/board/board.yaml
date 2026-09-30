@@ -674,7 +674,8 @@ tasks:
     claimed_by: codex-director-2026-09-30-resume
     branch: lane/art/tanker-src
     owns: [tools/art/tanker-source-sheet.py, tools/art/tanker-source-inspect.py, docs/board/looks/tanker-src/, docs/changes/ART-SRC-TANKER.md]
-    hooks: [tools/art/catalog.json]
+    hooks: []
+    note: "Source records merged from clean 764967db after lane 306/306 in 572.02s, build 1.13s and independent source review. Catalog released. Kyle source choice and trailer/frame/hitch/valve/hatch gaps remain; no fitting or runtime convoy approved."
     helpers: [reviewer]
     sequencing: "Women source artifacts are merged and their catalog hook is released. Source comparison only: verify actual original CC0 licenses and geometry, preserve all prior catalog records, show existing Salt Flats armor parts, and stop at one <=500 KB round-1.jpg with matching round-1-review.md, waiting for Kyle. No fitting, runtime asset, game code or protected audio edit."
     acceptance:

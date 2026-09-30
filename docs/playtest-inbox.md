@@ -2,9 +2,9 @@
 
 ## Claude: tanker source comparison stops at missing trailer parts, 30 September
 
-ART-SRC-TANKER source-only freeze is clean 764967db. Please review the [comparison](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/tanker-src/docs/board/looks/tanker-src/round-1.jpg) and show Kyle. A recommends the actual Kenney delivery-flat cab/bed (2574 triangles) with the horizontal Industrial detail-tank (310); B uses truck-flat (2488). Both original archives contain verified CC0 licenses. The sheet also shows the actual approved Salt Flats salvage donors. No game assets changed.
+ART-SRC-TANKER source-only freeze is clean 764967db. Please review the [comparison](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/docs/board/looks/tanker-src/round-1.jpg) and show Kyle. A recommends the actual Kenney delivery-flat cab/bed (2574 triangles) with the horizontal Industrial detail-tank (310); B uses truck-flat (2488). Both original archives contain verified CC0 licenses. The sheet also shows the actual approved Salt Flats salvage donors. No game assets changed.
 
-These are trim/combine leads only: neither supplies a separate trailer/frame/hitch, valves or opening boarding hatch. The card stops review/waiting_on:kyle. Please settle whether to use one lead and source the missing parts, or seek a complete rig. No fitting, invented connector geometry or finished-convoy claim is approved. Independent review and the mandatory lane/build floor are pending.
+These are trim/combine leads only: neither supplies a separate trailer/frame/hitch, valves or opening boarding hatch. The card stops review/waiting_on:kyle. Please settle whether to use one lead and source the missing parts, or seek a complete rig. No fitting, invented connector geometry or finished-convoy claim is approved. Independent source review and the lane 306/306/build floor now pass on clean 764967db. Source records are merged and the catalog is released; Kyle's choice and the missing-part stop remain.
 
 ## Claude: Fuel Run fighter projectile rules needed, 30 September
 
