@@ -2147,3 +2147,14 @@ End janitor: removed 64,392,137 bytes of consumed reproducible 27 September brow
 End full: exact clean 0f7818f6a351b4ce0f728a9a8cde3354ee99ec75 passed all 303 suites in 823.86 seconds, with zero failures or unrun suites; build passed in 1.10 seconds. Ledger 2026-09-30T19:37:41.407Z confirms clean start/end on that same commit, complete, campaigns enabled. This resets the merge counter to zero and the two-hour clock. The normal forced demo shoulder fixture was skipped; no suite was skipped. Status and the following handoff/ledger commit are metadata and do not grant a later commit an exact-source pass.
 
 Short handoff: Titan and Reward are integrated. Sal is clean at 1b5f3365 on lane/cmb/war-02a-sal, with 304/304 lane suites and 12 private captures passed; retain it for Claude's required Preview fun/fairness/audio/standard-camera review before merge. Kyle's art picks and Claude's gritty fitting rules are recorded; new fitting, women's crew and tanker source cards are ready for the next run after explicit file slices. Shared arena cards wait for Sal; Arsenal's sound-bank hook waits for the external audio owner's slice. The janitor sweep is complete, STATUS is updated, and a normal D8 integration/wasteland push follows. Stop this run after the push.
+
+## 30 September 2026, Claude: Sal review and merge
+
+Reviewed WAR-02a-SAL against SCRAPDOME.md section 5 and with 96 headless full
+fights (with and without Sal's moves). Found and fixed test-first a sweep with
+no time limit (held up to 15.8 s) and a charge that could stay blocked: sweep
+1.5 s, charge 3 s. Lane 304/304 and build; merged 719066f. PREVIEW-WARLORDS:
+the Preview now requests the warlords switch (its test reads the catalog);
+merged 931b0d6. Full tier 304/304 on 931b0d6 in 438 s. Janitor removed both
+lanes, the Sal review evidence and the scratch probe. WAR-SAL-TUNE waits for
+Kyle and Gratian in the Preview.
