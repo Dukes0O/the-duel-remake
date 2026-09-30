@@ -1,4 +1,4 @@
-"""Inspect original CC0 sources and draw a source sheet. Never export game art.
+"""Inspect CC0 sources and the chosen salt-photo UV material. No game export.
 
 Run inspection with Blender --disable-autoexec. Run --sheet with bundled Python.
 Downloaded originals stay outside the repository. Output is review evidence only.
@@ -24,6 +24,8 @@ MODELS = [
     ("quaternius-public-transport", "Bus", "blend/Bus.blend"),
     ("quaternius-public-transport", "SchoolBus", "blend/SchoolBus.blend"),
 ]
+SALT_PHOTO = "marina-salt-crystals-beach/salt-crystals-on-beach-textures.jpg"
+SALT_SHA256 = "91911006c31d862527b7b3b98719512e6074ea80e7bbe483393eb925b9237b79"
 
 
 def arguments():
@@ -32,14 +34,15 @@ def arguments():
     parser.add_argument("--inspect", action="store_true")
     parser.add_argument("--render", action="store_true")
     parser.add_argument("--sheet", action="store_true")
+    parser.add_argument("--ground", action="store_true", help="Render the authorized mirrored salt material and its repeat control")
     parser.add_argument("--library", type=Path, default=DEFAULT_LIBRARY)
     parser.add_argument("--sources", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.sheet and not args.sources:
         parser.error("--sheet needs --sources pointing to the inspection output")
-    if not (args.inspect or args.render or args.sheet):
-        parser.error("Choose --inspect, --render or --sheet")
+    if not (args.inspect or args.render or args.sheet or args.ground):
+        parser.error("Choose --inspect, --render, --sheet or --ground")
     return args
 
 
@@ -176,6 +179,156 @@ def render_original(path, output):
     bpy.ops.render.render(write_still=True)
 
 
+def salt_material(photo, mirrored, unlit):
+    """Fold UVs in the shader. Never write or edit the source image pixels."""
+    import bpy
+
+    material = bpy.data.materials.new("CC0 salt photo: mirrored UV" if mirrored else "Original photo: ordinary repeat control")
+    material.use_nodes = True
+    nodes = material.node_tree.nodes
+    nodes.clear()
+    links = material.node_tree.links
+    coordinates = nodes.new("ShaderNodeTexCoord")
+    separate = nodes.new("ShaderNodeSeparateXYZ")
+    combine = nodes.new("ShaderNodeCombineXYZ")
+    links.new(coordinates.outputs["UV"], separate.inputs["Vector"])
+    for axis in ("X", "Y"):
+        scale = nodes.new("ShaderNodeMath")
+        scale.name = f"{axis}: four source-photo tiles"
+        scale.operation = "MULTIPLY"
+        scale.inputs[1].default_value = 4.0
+        links.new(separate.outputs[axis], scale.inputs[0])
+        output = scale.outputs[0]
+        if mirrored:
+            fold = nodes.new("ShaderNodeMath")
+            fold.name = f"{axis}: mirrored repeat, period two"
+            fold.operation = "PINGPONG"
+            fold.inputs[1].default_value = 1.0
+            links.new(output, fold.inputs[0])
+            output = fold.outputs[0]
+        links.new(output, combine.inputs[axis])
+    image = nodes.new("ShaderNodeTexImage")
+    image.image = bpy.data.images.load(str(photo), check_existing=True)
+    image.image.colorspace_settings.name = "sRGB"
+    image.interpolation = "Linear"
+    # Mirrored UVs end at 0 or 1. Extend clamps to the actual edge texels;
+    # Repeat would blend opposite source edges and introduce a thin seam.
+    image.extension = "EXTEND" if mirrored else "REPEAT"
+    links.new(combine.outputs["Vector"], image.inputs["Vector"])
+    shader = nodes.new("ShaderNodeEmission" if unlit else "ShaderNodeBsdfPrincipled")
+    if unlit:
+        links.new(image.outputs["Color"], shader.inputs["Color"])
+        shader.inputs["Strength"].default_value = 1.0
+    else:
+        links.new(image.outputs["Color"], shader.inputs["Base Color"])
+        shader.inputs["Metallic"].default_value = 0.0
+        shader.inputs["Roughness"].default_value = 1.0
+    output = nodes.new("ShaderNodeOutputMaterial")
+    links.new(shader.outputs[0], output.inputs["Surface"])
+    return material
+
+
+def render_salt_plane(photo, destination, mirrored, angled=False):
+    import bpy
+    from mathutils import Vector
+
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    # Keep the original photo's aspect ratio. Physical texel scale is a review
+    # setting, not a measured property of the photograph or a venue decision.
+    tile_width = 3.0
+    tile_height = tile_width * 1275 / 1920
+    width, height = tile_width * 4, tile_height * 4
+    bpy.ops.mesh.primitive_plane_add(size=2)
+    plane = bpy.context.object
+    plane.name = "4 by 4 photo tiles: one uninterrupted two-triangle plane"
+    plane.scale = (width / 2, height / 2, 1)
+    plane.data.materials.append(salt_material(photo, mirrored, unlit=not angled))
+    if not angled:
+        label_material = bpy.data.materials.new("Outside-plane diagnostic labels")
+        label_material.use_nodes = True
+        shader = label_material.node_tree.nodes.get("Principled BSDF")
+        shader.inputs["Base Color"].default_value = (.9, .9, .9, 1)
+        shader.inputs["Emission Color"].default_value = (.9, .9, .9, 1)
+        shader.inputs["Emission Strength"].default_value = 1
+        # Labels sit outside the plane, so no line can hide a material join.
+        for index in range(4):
+            positions = [(tile_width * (index + .5) - width / 2, -height / 2 - .45),
+                         (-width / 2 - .45, tile_height * (index + .5) - height / 2)]
+            for x, y in positions:
+                bpy.ops.object.text_add(location=(x, y, .01))
+                label = bpy.context.object
+                label.name = "Outside tile number"
+                label.data.body = str(index + 1)
+                label.data.align_x = "CENTER"
+                label.data.align_y = "CENTER"
+                label.data.size = .27
+                label.data.materials.append(label_material)
+    scene = bpy.context.scene
+    camera_data = bpy.data.cameras.new("Salt material proof camera")
+    camera = bpy.data.objects.new("Salt material proof camera", camera_data)
+    scene.collection.objects.link(camera)
+    camera.location = (8, -10, 8) if angled else (0, 0, 12)
+    camera.rotation_euler = (Vector((0, 0, 0)) - camera.location).to_track_quat("-Z", "Y").to_euler()
+    camera_data.type = "ORTHO"
+    camera_data.ortho_scale = width * (1.55 if angled else 1.18)
+    scene.camera = camera
+    scene.world = bpy.data.worlds.new("Neutral salt-proof world")
+    scene.world.use_nodes = True
+    scene.world.node_tree.nodes["Background"].inputs[0].default_value = (.08, .08, .08, 1)
+    scene.world.node_tree.nodes["Background"].inputs[1].default_value = 1.0
+    if angled:
+        light_data = bpy.data.lights.new("Neutral salt-proof area light", "AREA")
+        light_data.energy = 1800
+        light_data.size = 8
+        light = bpy.data.objects.new("Neutral salt-proof area light", light_data)
+        scene.collection.objects.link(light)
+        light.location = (2, -3, 7)
+        light.rotation_euler = (Vector((0, 0, 0)) - light.location).to_track_quat("-Z", "Y").to_euler()
+    scene.render.engine = "BLENDER_EEVEE_NEXT"
+    scene.render.resolution_x = 1200
+    scene.render.resolution_y = 900
+    scene.render.resolution_percentage = 100
+    scene.render.image_settings.file_format = "PNG"
+    scene.render.filepath = str(destination.resolve())
+    scene.view_settings.view_transform = "Standard"
+    scene.view_settings.look = "None"
+    bpy.ops.render.render(write_still=True)
+    return {"planeMetres": [width, height], "sourceCopies": [4, 4],
+            "triangles": 2, "mirrored": mirrored, "imageExtension": "EXTEND" if mirrored else "REPEAT",
+            "shader": "Principled: roughness 1, metal 0" if angled else "Emission: unlit join proof",
+            "imagePixels": list(plane.data.materials[0].node_tree.nodes.get("Image Texture").image.size)}
+
+
+def inspect_salt_material(args):
+    photo = args.library / SALT_PHOTO
+    before = checksum(photo)
+    if before != SALT_SHA256:
+        raise ValueError("Chosen original photo checksum differs; stop for provenance review")
+    args.output.mkdir(parents=True, exist_ok=True)
+    proofs = []
+    for name, mirrored, angled in [("salt-repeat-control", False, False), ("salt-mirrored-4x4", True, False),
+                                  ("salt-mirrored-angle", True, True)]:
+        proofs.append({"render": name + ".png", **render_salt_plane(photo, args.output / (name + ".png"), mirrored, angled)})
+    # A triangle-wave UV fold is continuous at each integer tile edge and
+    # repeats after two source tiles. Check both properties without touching
+    # any raster data. The genuine shader renders supply the visual check.
+    fold = lambda value: 1.0 - abs(value % 2.0 - 1.0)
+    seam_errors = [abs(fold(edge - 1e-5) - fold(edge + 1e-5)) for edge in range(5)]
+    periodic_errors = [abs(fold(value) - fold(value + 2)) for value in [-2.3, -.5, 0, .1, .7, 1, 1.9, 3.7]]
+    if max(seam_errors + periodic_errors) > 1e-12:
+        raise RuntimeError("Mirrored UV continuity or period check failed")
+    after = checksum(photo)
+    if after != before:
+        raise RuntimeError("Original photo bytes changed")
+    report = {"source": str(photo), "sha256Before": before, "sha256After": after,
+              "originalUnchanged": True, "bitmapTileable": False,
+              "materialRepeat": "PingPong(U * 4, 1), PingPong(V * 4, 1); texture EXTEND; linear filtering",
+              "repeatUnitSourceTiles": [2, 2], "maximumUvSeamError": max(seam_errors),
+              "maximumUvPeriodError": max(periodic_errors), "proofs": proofs,
+              "limitations": "Mirrored motifs; baked photographed light and wet glints; no normal, height or roughness maps; no venue/runtime export."}
+    (args.output / "salt-material-inspection.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+
+
 def compose_sheet(args):
     from PIL import Image, ImageChops, ImageDraw, ImageFont, ImageOps
 
@@ -186,10 +339,10 @@ def compose_sheet(args):
     small = ImageFont.truetype(str(fonts / "segoeui.ttf"), 19)
     report = json.loads((args.sources / "source-inspection.json").read_text(encoding="utf-8"))
     counts = {entry["model"]: entry["triangles"] for entry in report}
-    sheet = Image.new("RGB", (2100, 1200), (24, 27, 29))
+    sheet = Image.new("RGB", (2100, 1650), (24, 27, 29))
     draw = ImageDraw.Draw(sheet)
     draw.text((32, 22), "SALT FLATS: THREE COMPLEMENTARY SOURCE GROUPS / ROUND 1", font=heading, fill="#f2dfaf")
-    draw.text((32, 66), "Original geometry and colours. Kyle picks before adaptation. Ground source is still open.", font=text, fill="#c3cbca")
+    draw.text((32, 66), "Original model shapes and colours; model choices await Kyle. The CC0 salt photo is selected; its mirrored material is shown below.", font=text, fill="#c3cbca")
     groups = [
         ("A: SALVAGE + TYRES", "Kenney Car Kit 3.1 / CC0", ["sedan", "debris-door", "debris-drivetrain", "debris-tire"],
          ["Existing loose parts suit piles and tyre walls.", "Needs rust, damage and cover layout.", "No finished wreck or scrap-pile mesh."]),
@@ -226,20 +379,30 @@ def compose_sheet(args):
             draw.text((left + 5, top + 192), f"{label_name}: {counts[name]:,} triangles", font=small, fill="#e9ede5")
         for row, line in enumerate(lines):
             draw.text((x + 17, 736 + row * 36), line, font=text, fill="#ecece4")
-    draw.rounded_rectangle((32, 894, 2068, 1122), 12, fill=(65, 47, 35))
-    draw.text((49, 910), "GROUND GAP: NO READY CC0 TILEABLE SALT FOUND IN THE BOUNDED SEARCH", font=title, fill="#ffd89b")
+    draw.rounded_rectangle((32, 894, 2068, 1568), 12, fill=(45, 52, 45))
+    draw.text((49, 910), "GROUND: KYLE SELECTED THE CC0 SALT PHOTO + MIRRORED UV MATERIAL", font=title, fill="#dcecb5")
+    panels = [("Original photo: bitmap is not tileable", args.library / SALT_PHOTO),
+              ("Control: ordinary 4 by 4 repeat", args.sources / "salt-repeat-control.png"),
+              ("Chosen material: mirrored 4 by 4", args.sources / "salt-mirrored-4x4.png")]
+    for index, (label, path) in enumerate(panels):
+        x = 49 + index * 674
+        draw.text((x, 962), label, font=text, fill="#eef1db")
+        content = ImageOps.contain(Image.open(path).convert("RGB"), (636, 430))
+        sheet.paste(content, (x + (636 - content.width) // 2, 1002 + (430 - content.height) // 2))
     ground_lines = [
-        "CC0 photo option: Marina Shemesh, Salt Crystals On Beach Textures. Real salt; not tileable; no PBR maps.",
-        "Free ready texture option: cspykstra, Salt Flat Smooth on CGTrader. Seamless scanned salt; royalty-free, not CC0.",
-        "Both need Kyle's direction. No ground file was downloaded or presented as a finished salt material.",
-        "White bowl, two ramps, heat shimmer and the full venue still require ARENA-06. No adaptation has started.",
+        "Marina Shemesh / CC0 / free original 1920 x 1275 photo, unchanged. UVs reflect at tile edges; repeat unit is two by two photos.",
+        "The material repeats continuously; the bitmap does not. Mirrored motifs and photographed glints remain visible. No PBR map set.",
+        "The numbered proof plane shows all sixteen source-photo tiles without lines covering joins. No venue or game asset replaced.",
     ]
     for row, line in enumerate(ground_lines):
-        draw.text((49, 956 + row * 34), line, font=text, fill="#f0e7da")
-    draw.text((32, 1150), "Source-only: Kenney glTF materials; Quaternius native Blender shader colours shown in Workbench. Preview compatibility details, licences and hashes in review.", font=small, fill="#bbc4c4")
+        draw.text((49, 1441 + row * 35), line, font=text, fill="#e7ece0")
+    draw.text((32, 1600), "Source-only model comparison plus the authorized photo-material proof. White bowl, ramps, heat shimmer and venue/frame checks remain ARENA-06 work.", font=small, fill="#bbc4c4")
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    sheet.save(args.output, quality=87, optimize=True)
-    if args.output.stat().st_size > 500000:
+    for quality in (87, 84, 81, 78, 75):
+        sheet.save(args.output, quality=quality, optimize=True)
+        if args.output.stat().st_size <= 500000:
+            break
+    else:
         raise RuntimeError("Comparison sheet exceeds 500 KB")
 
 
@@ -247,6 +410,9 @@ def main():
     args = arguments()
     if args.sheet:
         compose_sheet(args)
+        return
+    if args.ground:
+        inspect_salt_material(args)
         return
     args.output.mkdir(parents=True, exist_ok=True)
     report = []

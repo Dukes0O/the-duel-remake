@@ -1,8 +1,9 @@
 # Salt Flats source review: round 1
 
-Date: 30 September 2026. Status: model comparison ready for independent
-review and Kyle's source choice. The tileable salt requirement is unmet.
-No adaptation or runtime export has started.
+Date: 30 September 2026. Status: Kyle selected the CC0 salt photo and tiling
+method. Its material proof is ready for independent review. Model groups and
+the bus choice still wait for Kyle. No model adaptation or runtime export
+has started.
 
 ## Recommendation and fit
 
@@ -34,13 +35,23 @@ evidence; the linked public folder supplies the original models.
 | Kenney, City Kit Industrial 2.0 | [Official pack](https://kenney.nl/assets/city-kit-industrial) | [Original ZIP](https://kenney.nl/media/pages/assets/city-kit-industrial/0ec35b139d-1788171848/kenney_city-kit-industrial_2.0.zip) |
 | Kenney, Factory Kit 3.0 | [Official pack](https://kenney.nl/assets/factory-kit) | [Original ZIP](https://kenney.nl/media/pages/assets/factory-kit/edaac9d4f6-1777639602/kenney_factory-kit_3.0.zip) |
 | Quaternius, Public Transport Pack | [Official pack](https://quaternius.com/packs/publictransport.html) | [Public source folder](https://drive.google.com/drive/folders/1GUIE138uPVNraiQEf33dIx9wENhttZ15?usp=sharing) |
+| Marina Shemesh, Salt Crystals On Beach Textures | [Primary CC0 photo page](https://www.publicdomainpictures.net/en/view-image.php?image=391081&picture=salt-crystals-on-beach-textures) | [Free original JPEG](https://www.publicdomainpictures.net/pictures/400000/velka/salt-crystals-on-beach-textures.jpg) |
 
 Cache root: `C:/Users/kyleb/dev/art-library/`. Pack folders are
 `kenney-car-kit`, `kenney-city-kit-industrial`, `kenney-factory-kit` and
-`quaternius-public-transport`. Car and Industrial reuse the existing caches.
-Factory and the bus originals were downloaded for this review. Source files,
-licensed archives and licence evidence stay outside Git. No account or API key
-was created. Future runtime credits should name Kenney and Quaternius.
+`quaternius-public-transport`. The chosen photo is in
+`marina-salt-crystals-beach`. Car and Industrial reuse the existing caches.
+Factory, the bus originals and the free photo were downloaded for this review.
+Source files, licensed archives and licence evidence stay outside Git. No
+premium download, account or API key was used. Future runtime credits should
+name Kenney, Quaternius and Marina Shemesh with their source links.
+
+The photo page states CC0 and offers the free 1920 by 1275 JPEG. Its dated
+primary-page evidence is cached as `license-evidence.txt`, not HTML: the web
+tool read the primary page successfully, while a shell page request met
+Cloudflare. The free image link supplied the original JPEG. The material
+derives from this CC0 photo by changing UV coordinates; it is not a separately
+licensed scan or a claim that the original bitmap is seamless.
 
 ## Original-file inspection
 
@@ -81,26 +92,44 @@ lighting are review presentation only. Model transforms and geometry are not
 changed. The sheet trims the flat bus-preview background while retaining
 the complete roof and wheel silhouette.
 
-## Salt ground: stop-rule gap
+## Salt ground: chosen photo and repeating material
 
-A bounded search checked primary Poly Haven and ambientCG listings and metadata,
-plus targeted searches for cgbookcase, ShareTextures, TextureCan, 3DTextures and
-OpenGameArt. ambientCG's `q=salt` metadata query returned zero results. Poly
-Haven's texture metadata returned salt-weathered wall and wood descriptions,
-not a salt ground. Search results do not prove that no suitable asset exists;
-they establish that this run has no verified ready CC0 tileable salt source.
+Kyle chose "Use the CC0 salt photo and tile it (Recommended)" on 30 September
+2026. The earlier bounded search found no verified ready CC0 salt material.
+This chosen recipe supplies a repeating surface from the genuine photo
+without editing its pixels. The alternative royalty-free scan was not chosen
+and remains undownloaded.
 
-Two concrete free alternatives are available for Kyle's direction:
+The Blender shader maps each axis through `PingPong(U * 4, 1)` and
+`PingPong(V * 4, 1)`. Each tile reflects the photo, so neighbouring tiles meet
+at the same source edge. The complete repeat unit is two by two source photos.
+The image uses sRGB, linear filtering and `EXTEND` to clamp the edge texels.
+The bitmap itself is still non-tileable. This is continuous mirrored repetition,
+with a direction reversal at each tile edge, not a seamless standalone JPEG.
 
-| Choice | Primary evidence | Gap |
-| --- | --- | --- |
-| Keep CC0 and allow manual seam work | [Marina Shemesh: Salt Crystals On Beach Textures](https://www.publicdomainpictures.net/en/view-image.php?image=391081&picture=salt-crystals-on-beach-textures). The primary photo page states CC0 and offers a free 1920 by 1275 image. | Real salt photo, not tileable and no material-map set. It would need seam work and a tiling review after approval. No photo was downloaded or adapted. |
-| Allow a free non-CC0 source after a full licence/access check | [cspykstra: Ground - Salt Flat Smooth](https://www.cgtrader.com/free-3d-models/textures/natural-textures/ground-salt-flat-smooth). The primary page describes a seamless photoscan with 1024 and 3072 material maps. | It is labelled Royalty Free License (no AI), not CC0. Full terms and download access remain unchecked. No account or download was attempted. |
+The genuine proof is one uninterrupted two-triangle plane showing four by
+four source-photo tiles. Tile numbers sit outside the plane; no grid hides
+the joins. The original aspect ratio is preserved: a review tile is 3 by
+1.9921875 m, making the plane 12 by 7.96875 m. Those dimensions are review
+settings, not a measured physical scale from the photo.
 
-Question for Kyle: accept the model groups, choose Bus or SchoolBus, and
-either allow manual tiling from the CC0 salt photo or permit checking the free
-royalty-free scan. The current CC0 tileable-ground acceptance is not waived.
-The project stop rule and SPEC 0.11 require this source choice before adaptation.
+| Evidence | What it shows |
+| --- | --- |
+| `salt-repeat-control.png` | Ordinary four by four repetition of the unchanged photo has visible joins. |
+| `salt-mirrored-4x4.png` | The same plane with mirrored UVs has matched edges. An unlit shader makes the colour joins easy to inspect. |
+| `salt-mirrored-angle.png` | An angled render with roughness 1 and metallic 0 shows the material under neutral light. It does not invent material maps. |
+
+The source SHA-256 is equal before and after all three renders. The numerical
+UV checks passed: maximum difference across mirrored joins was
+`4.440892098500626e-16`; maximum difference after a two-tile period was
+`2.220446049250313e-16`. These check coordinate continuity, not venue realism.
+Visual inspection also found matched edges across the full sixteen tiles.
+
+Mirrored motifs remain obvious. The photo includes baked light and wet glints;
+there are no normal, height or roughness maps. It is not a ready full material
+map set. Matching the white bowl, scale, repeat visibility, camera distance and
+frame budget remains ARENA-06 work after source approval. No venue or runtime
+asset has been replaced. The model decision remains `waiting_on: kyle`.
 
 ## SHA-256 provenance
 
@@ -131,20 +160,33 @@ under `unpacked/Models/GLB format/`. Hashes identify unchanged source bytes.
 | Public Transport | fbx/SchoolBus.fbx | `08f74525747edde923baa2f6a13567c87476800c38161b800afb5c54d059fe71` |
 | Public Transport | blend/Bus.blend | `b6603f556b73b0e9f4aa92d02f11d2a197fc8d55139c960788f0db36a679bbd8` |
 | Public Transport | blend/SchoolBus.blend | `c51a071f872f2234dfb5ee8d94087428b0be0df51e0564e22e005bef9b16e7b8` |
+| Marina salt photo | salt-crystals-on-beach-textures.jpg | `91911006c31d862527b7b3b98719512e6074ea80e7bbe483393eb925b9237b79` |
+| Marina salt photo | license-evidence.txt | `d2196ff0adeccb98306bc8be2c57c59299854fd87897e4fd9f1fe68c80981acd` |
 
 ## Verdict and evidence
 
-Builder's source inspection: model identities, licences, hashes and labels
-checked. The final sheet was opened visually: all ten complete silhouettes and
-labels are readable. It is 2100 by 1200 pixels and 249,714 bytes, below 500 KB.
-Sheet SHA-256: `b71770c7dce2294887fe7bdc254fb12823147ea665e7945b3c3afc54c180568b`.
-Independent review is pending. No runtime-fidelity score is claimed.
+Builder's source inspection: source identities, licences, hashes and labels
+checked. The Director reviewed the original model checkpoint clean. The
+new photo/material needs independent review. The updated round-1 sheet and
+all three salt renders were opened visually: all ten complete model silhouettes
+and labels are readable, and the ordinary-repeat and mirrored proofs show
+their actual joins. The sheet is 2100 by 1650 pixels and 430,908 bytes, below
+500 KB. Sheet SHA-256:
+`17a618421f4cba0cc9f9d2955286ed4be2980f5d28cf701cc45d375158392a38`.
+This replaces the current round-1 file, adding 181,194 working-file bytes.
+History retains the old 249,714-byte blob and adds the new 430,908-byte blob
+(680,622 logical bytes total). The new compressed loose blob is 384,051 bytes
+on disk. No history rewrite was performed.
+No runtime-fidelity score is claimed.
 
 The recipe is `tools/art/salt-flats-source-sheet.py`. Raw images and detailed
 mesh/material inspection are ignored evidence at
 `C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-09-30/ART-SRC-SALTFLATS/`.
-The lane's ignored `.evidence/catalog-candidates.json` contains six proposals:
-four checked model packs with 22 hashed source files and two undownloaded
-ground alternatives. The shared catalog hook waits for Rustwall to merge.
+`source-inspection.json` holds the model details; `salt-material-inspection.json`
+holds the unchanged-photo hashes, repeat checks and proof settings. The lane's
+ignored `.evidence/catalog-candidates.json` contains five proposals: four
+shortlisted model packs and the selected photo, with 24 hashed source files.
+The shared catalog hook waits for Rustwall to merge. Lane tier and build must
+pass before merge; both remain pending Director scheduling.
 Delete used raw evidence after its verdict is committed. Preserve licensed
 external originals and licence evidence.
