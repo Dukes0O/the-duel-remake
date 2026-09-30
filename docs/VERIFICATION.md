@@ -753,3 +753,24 @@ are now bands for the thirty-race mean. The Scrapdome, Titan climbing and
 Muddy Hollow stay switched off. Release evidence for this exact commit is in
 docs/board/run-log.md.
 
+## Release 30 September 2026: Scrapdome, Titan climbing and Muddy Hollow (SCRAPDOME-RELEASE)
+
+Kyle and Gratian played all three in the Preview; Kyle approved them for the
+real game on 30 September. `scrapdome`, `titan-climb` and `muddy-hollow` are
+now on; `career-backup` stays in development. The Scrapdome is reached only
+from the yard and Muddy Hollow only by driving there; the main menu is
+unchanged. Warlord fights are not in this release: they get their own
+`warlords` switch in development (docs/SCRAPDOME.md section 5).
+
+Also in this build: the crash switches are gone with crash physics permanent
+(CRASH-SWITCH-REMOVE), and on-screen hints for leaving and re-entering the
+car (UX-ENTRY-HINTS). Known item: the Titan is slow to turn at crawling
+speeds; TITAN-HANDLING fixes that next.
+
+Evidence on the release commit: full tier 298 of 298 (a first run hit a port
+Windows had reserved in tools/test-launcher-port.mjs, unrelated; the rerun
+passed cleanly); combat balance with the released rules passed (wins 26, 19
+and 8 of 30 on Easy, Medium and Hard; CPU hits 2.67, 7.2 and 5.53 per race).
+The balance run with wasteland2 off is retired by Kyle's decision of the same
+day (BALANCE-W2-OFF-RETIRE).
+
