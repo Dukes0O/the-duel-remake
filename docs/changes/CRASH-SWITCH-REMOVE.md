@@ -1,7 +1,6 @@
 # CRASH-SWITCH-REMOVE: permanent released crash rules
 
-Status: building. Focused checks pass; lane/build/browser gates and independent
-review pending.
+Status: source and independent review complete; final mandatory lane gate pending.
 
 Both crash switches shipped on 27 September. This card keeps that released
 physics, look and sound, while removing the switch registry entries and the
@@ -95,8 +94,15 @@ All changed assertions and removed cases require independent review.
 
 Focused checks pass: acceptance 17/17, ramming 13/13, core 510/510. The core
 run initially exposed only the two synthetic fixture setup issues described
-above; no assertions changed for those fixes. Lane tier, build, private
-memory-only crash browser scenario and independent review are pending.
+above; no assertions changed for those fixes. Production build passed. Private
+memory-only crash-presentation passed High and Performance (4 captures, no
+warnings or errors, 56 default crash meshes), on private port 11526. Independent
+review at ae19f91 found no issues: retired assertions match the settled card;
+released pins stay verbatim, classic paths remain, and simulation/render/save
+boundaries stay intact. Six focused reviewer suites also passed (22/22 Node
+tests plus internal audio, roadside and flag checks). The mandatory lane tier
+and build on the final note commit are the remaining merge gate; their exact
+result is recorded in the integration run log.
 
 The four reviewed combat replay hashes remain unchanged at all 30/60/144 FPS:
 
