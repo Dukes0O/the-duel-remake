@@ -561,7 +561,11 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [tools/art/hands-source-sheet.py, tools/scenarios/art-source-hands.mjs, docs/board/looks/first-person-src/round-1.jpg, docs/board/looks/first-person-src/round-1-review.md, docs/changes/ART-SRC-HANDS.md]
+    hooks: [tools/art/catalog.json]
+    sequencing: "Catalog edits wait for ART-SRC-CREW to merge; source research and private capture may proceed."
     flag: wasteland2
     acceptance:
       - "SPEC 0.11 sourcing step for the first-person hands, gloves and sleeves (replaces GFX-02-P3). Same rules as ART-SRC-CREW: two or three candidates, CC0 first, licences recorded in tools/art/catalog.json, files cached outside the repository."
