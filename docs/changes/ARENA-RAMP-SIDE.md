@@ -29,6 +29,13 @@ authored ramp slope (pi times height over length, 0.22 for the Scrapdome, plus
 10%). A straight run up a ramp never reaches that limit, so jumps are exactly
 as before; mounting a side becomes a bump.
 
+Found by the lane tier: with the fix a Medium round in
+`tools/test-arena-event.mjs` plays out differently and a sliding computer
+wreck ended 0.10 m past the floor edge. Wrecks skipped the final floor pass
+after collisions (an older gap). `src/arena/arena-event.js` now clamps a
+sliding wreck to the floor edge after collisions, with no wall damage or
+event, since it is already out of the fight.
+
 ## Tests
 
 - `tools/test-arena-ramp-side.mjs` (new, written first): the twelve worst
@@ -38,6 +45,9 @@ as before; mounting a side becomes a bump.
 - Review sweep after the change: 0 of 384 approaches above 10 m; highest 3.6 m
   (a normal jump is 2.1 to 3.2 m).
 - Lane tier and build: see below.
+
+- `tools/test-arena-event.mjs` "every car stays on the floor" failed with
+  the ramp fix alone (0.10 m) and passes with the wreck clamp; unchanged.
 
 ## Changed assertions
 
