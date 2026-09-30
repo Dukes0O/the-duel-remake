@@ -65,9 +65,10 @@ same preview tab reloads, but closing the tab discards them. The preview never
 reads or writes the live career on port 5174.
 
 Each fresh preview tab starts with the gate found, Sal's territory hold at
-100 percent and the Titan unlocked. The launcher also requests the current
-development switches for the Scrapdome, crash physics and effects, Titan
-climbing and Muddy Hollow so playtest areas can be reached at once.
+100 percent and the Titan unlocked. The launcher also requests every
+development switch except career backup (today: the warlord fights), so
+playtest areas can be reached at once; a test keeps that list in step with
+`src/feature-flags.js`.
 
 ## Development checks
 

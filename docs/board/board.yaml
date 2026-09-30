@@ -2531,8 +2531,7 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-02a-FORMAT, WAR-SAL-ART]
-    status: review
-    waiting_on: claude
+    status: merged
     review_commit: 1b5f3365a9717f477e85d6503d1f2bb88375c272
     note: "Exact clean lane 304/304 in 774.64 seconds and build 1.25 seconds. Independent source/visual review and 12 private High/Performance captures pass; integrated sweep-hit/first-wreck replay matches at 30/60/144 FPS. Claude must review fun, fairness, audible cues and standard chase-camera callout clearance in Preview before merge. Retain the lane and final evidence."
     claimed_by: "Codex autonomous Director, 30 September 2026"
@@ -2543,6 +2542,7 @@ tasks:
     acceptance:
       - "Saw Sweep, its counter and two-second window, the cooldowns and phase two exactly as settled in docs/SCRAPDOME.md section 5. Every sweep has a full tell (test); a braked or boosted escape makes it miss and opens the window (test). Brains may not change pilot physics limits."
       - "Callouts SAW SWEEP! and SHE MISSED. HIT HER NOW!; the saw art states and scream from WAR-SAL-ART. When built, set status review and waiting_on: claude: Claude plays it through Preview before merge."
+    claude_review: "30 September 2026: merged as 719066f after review. Added time limits (sweep 1.5 s, charge 3 s) after headless fights held a sweep up to 15.8 s. Difficulty is judged in WAR-SAL-TUNE with Kyle and Gratian in the Preview."
   - id: WAR-02a-REWARD
     title: "Sal's reward: Side Saws kit that works, scrap and a one-time territory claim"
     owner: codex
@@ -2620,6 +2620,8 @@ tasks:
     status: ready
     acceptance:
       - "Target: Gratian beats Sal on Medium within a few tries and every sweep feels fair. Tuning changes only the settled numbers in docs/SCRAPDOME.md, recorded in decisions.md, built by Codex as a small card."
+    waiting_on: kyle
+    claude_note: "Ready 30 September 2026: the Preview now turns on the warlords switch. Headless fights: plain rammer Sal already beat a scripted player on Medium and Hard 16 of 16, so expect her to be hard; the first lever is the warlord armor scale (1.5), not her moves."
   - id: WAR-SAL-RELEASE
     title: "Release the warlord ladder with Sawtooth Sal"
     owner: claude

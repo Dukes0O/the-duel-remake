@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { createFeatureFlags } from '../src/feature-flags.js';
+import { createFeatureFlags, FEATURE_STATES } from '../src/feature-flags.js';
 import { createProfile, isCarUnlocked, normalizeProfile } from '../src/progression.js';
 import { wastelandUnlocked } from '../src/wasteland-access.js';
 
@@ -76,7 +76,13 @@ check('launcher binds a private strict port', () => {
   assert.notEqual(port, 5174, 'preview must never use the live game port');
 });
 check('preview launch requests every current dev switch', () => {
-  for (const flag of ['scrapdome', 'titan-climb', 'muddy-hollow']) {
+  // Read from the catalog so a new development switch cannot be missed
+  // (WAR-02a-SAL added warlords). Career backup is left out: Preview saves
+  // are memory-only.
+  const devSwitches = Object.entries(FEATURE_STATES)
+    .filter(([name, state]) => state === 'dev' && name !== 'career-backup').map(([name]) => name);
+  assert.ok(devSwitches.includes('warlords'), 'warlords is a development switch');
+  for (const flag of devSwitches) {
     assert.match(launcher, new RegExp(`(?:flags[^\\r\\n]*|PREVIEW_FLAGS[^\\r\\n]*)${flag}`),
       `preview URL must request ${flag}`);
   }
