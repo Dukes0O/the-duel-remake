@@ -986,7 +986,7 @@ export class App {
     const look = d.course.at(st.s + metresPerSec * .18);
     const desiredYaw = look.curvature * metresPerSec + (headingTarget - st.headingError) * 6;
     const drivingSurface=d._drivingSurface(st.s,st.lateral),traction=drivingSurface.traction;
-    const authority = Math.max(.05, steeringYawAuthority(st.speedMph, d.car.grip, traction));
+    const authority = Math.max(.05, steeringYawAuthority(st.speedMph, d.car.grip, traction, d.car));
     const steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
     const bend = Math.max(Math.abs(frame.curvature), Math.abs(d.course.at(st.s + 100).curvature), Math.abs(d.course.at(st.s + 220).curvature));
     const cornerSpeed = Math.min(d.car.topSpeed * .94, .85 * Math.sqrt(DRIVE.maxLateralAccel * d.car.grip / Math.max(.0001, bend)) / DRIVE.mphToWorld);
