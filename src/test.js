@@ -520,10 +520,8 @@ ok(!DIFFICULTY.pro.autoShift && DIFFICULTY.pro.engineBlow, 'pro = manual + engin
 
 // Isolate contacts from random course placement while exercising the exact
 // production sweep, resolution, damage and steering code.
-// Pins the crash-physics switch-off contact rules (still in the code until the
-// switch is removed); the released crash rules have their own suites.
-function collisionArena() {
-  const d = new Duel({ seed: 611, featureFlags: { 'crash-physics': false } }); d.startCampaign();
+function contactCourse() {
+  const d = new Duel({ seed: 611 }); d.startCampaign();
   d.state.status = 'racing'; d.state.s = d.state.prevS = 100;
   d.state.lateral = d.state.prevLateral = 0; d.state.speedMph = 80;
   d.state.traffic = []; d.state.rival = null;
@@ -540,7 +538,7 @@ function collisionArena() {
 
 // --- Bounds return either car to an empty paved position without damage ---
 {
-  const d = collisionArena(), s = d.state, events = [];
+  const d = contactCourse(), s = d.state, events = [];
   d.onChange((_, event) => events.push(event));
   s.lateral = 62; d.step(1 / 120);
   ok(s.boundaryWarning && s.callout.includes('BOUNDARY'), 'the course warns before its outer boundary');
@@ -562,7 +560,7 @@ function collisionArena() {
 
 // --- Coastal recovery keeps both cars above the sea ---
 {
-  const d = collisionArena(), s = d.state;
+  const d = contactCourse(), s = d.state;
   d.course.def = { ...d.course.def, theme: 'coast' };
   d.course.groundAt = (distance, lateral) => ({ x: lateral, y: lateral > 28 ? -(lateral - 28) * .55 : 0, z: distance, heading: 0 });
   s.lateral = 40; d._boundary(s);
@@ -583,7 +581,7 @@ function collisionArena() {
 
 // --- Continuous solid scenery, including during damage protection ---
 for (const kind of ['rock', 'mountain', 'building']) {
-  const d = collisionArena(), s = d.state;
+  const d = contactCourse(), s = d.state;
   const obstacle = { id: kind, kind, x: 0, z: 110, s: 110, off: 0, heading: 0, halfX: 4, halfZ: 3, shape: kind === 'building' ? 'box' : 'ellipse' };
   d.course.features.obstacles = [obstacle];
   s.prevS = 90; s.s = 135; s.speedMph = 120;
@@ -603,7 +601,7 @@ for (const kind of ['rock', 'mountain', 'building']) {
 }
 
 {
-  const d = collisionArena(), s = d.state;
+  const d = contactCourse(), s = d.state;
   d.course.features.obstacles = [{ id: 'wall', kind: 'building', x: 0, z: 110, heading: 0, halfX: 4, halfZ: 3 }];
   s.prevS = 102; s.s = 110; s.speedMph = 12;
   d._collisions();
@@ -620,32 +618,8 @@ for (const kind of ['rock', 'mountain', 'building']) {
   eq(sweepObstacle({ x: 19, z: 19 }, { x: 20, z: 20 }, ellipse), null, 'rounded mountain corners do not create invisible box walls');
 }
 
-// --- Ramming transfers motion and the rival recovers by steering ---
 {
-  const d = collisionArena(), s = d.state;
-  const r = s.rival = { s: 100, prevS: 100, lateral: 6.4, prevLateral: 6.4, speedMph: 100, headingError: 0, pushVelocity: 0, finished: false };
-  s.prevLateral = 3.8; s.lateral = 5.3; s.headingError = .3; s.speedMph = 105;
-  d._vehicleContact(s, r, 'rival');
-  ok(r.lateral > 7 && r.pushVelocity > 0 && r.offRoad, 'a sideswipe physically pushes the opponent off the road');
-  ok(Math.abs(r.lateral - s.lateral) >= 2.24, 'cars separate after the sideswipe');
-  eq(s.majorCrashes, 0, 'an ordinary side ram is not a major head-on crash');
-  eq(s.lives, LIVES.start, 'a side ram preserves the player life');
-  const before = r.lateral, speed = r.speedMph; d._rival(1 / 120);
-  ok(Math.abs(r.lateral - before) < .4 && r.lateral > 7, 'the rival cannot snap back into its lane');
-  ok(r.speedMph < speed, 'an off-road opponent loses speed');
-  let maxStep = 0;
-  // Hold a stationary blocker at the recovery edge. A still-steering 105 mph
-  // player was a moving prediction, not a sustained stopped-lane obstruction.
-  s.headingError = 0; s.speedMph = 0; s.pushVelocity = 0;
-  for (let i = 0; i < 1200; i++) { const lateral = r.lateral; s.s = r.s; d._rival(1 / 120); maxStep = Math.max(maxStep, Math.abs(r.lateral - lateral)); }
-  ok(r.yieldingToPlayer && r.speedMph < 5, 'the opponent waits while the player continues to block its recovery corridor');
-  s.lateral = s.prevLateral = -DRIVE.laneOffset; s.headingError = 0; s.speedMph = 0;
-  for (let i = 0; i < 1200; i++) { const lateral = r.lateral; s.s = r.s; d._rival(1 / 120); maxStep = Math.max(maxStep, Math.abs(r.lateral - lateral)); }
-  ok(Math.abs(r.lateral) < DRIVE.roadHalfWidth && maxStep < .4, 'after the player clears, the opponent recovers gradually using steering and traction');
-}
-
-{
-  const d = collisionArena(), s = d.state;
+  const d = contactCourse(), s = d.state;
   s.s = 100; s.prevS = 80; s.speedMph = 130;
   const r = s.rival = { s: 95, prevS: 95, lateral: 0, prevLateral: 0, speedMph: 25, headingError: 0, pushVelocity: 0, finished: false };
   d._vehicleContact(s, r, 'rival');
@@ -660,7 +634,7 @@ for (const kind of ['rock', 'mountain', 'building']) {
 
 // --- The CPU must yield when the player cuts in front ---
 {
-  const d = collisionArena(), s = d.state;
+  const d = contactCourse(), s = d.state;
   s.s = s.prevS = 120; s.speedMph = 25;
   const r = s.rival = { prevS: 100, s: 124, prevLateral: 0, lateral: 0, speedMph: 170, headingError: 0, pushVelocity: 0, finished: false };
   const playerPosition = s.s, playerSpeed = s.speedMph;
@@ -678,7 +652,7 @@ for (const kind of ['rock', 'mountain', 'building']) {
 }
 
 {
-  const d = collisionArena(), s = d.state;
+  const d = contactCourse(), s = d.state;
   s.s = 130; s.lateral = 8; s.speedMph = 70; s.headingError = -.75;
   const r = s.rival = { s: 100, lateral: 0, speedMph: 160, headingError: 0, pushVelocity: 0, finished: false };
   d._rival(1 / 60);
@@ -695,7 +669,7 @@ for (const kind of ['rock', 'mountain', 'building']) {
 }
 
 {
-  const d = collisionArena(), s = d.state;
+  const d = contactCourse(), s = d.state;
   s.s = 135; s.lateral = 3; s.speedMph = 70; s.headingError = -.5;
   const r = s.rival = { s: 100, lateral: 0, speedMph: 160, headingError: 0, pushVelocity: 0, finished: false };
   let slowed = false;
@@ -703,7 +677,7 @@ for (const kind of ['rock', 'mountain', 'building']) {
   ok(slowed, 'a real cut-in during fixed-step driving makes the CPU shed speed');
   eq(s.lives, LIVES.start, 'a simulated cut-in preserves the player life');
   eq(s.lastCrashReason, null, 'the CPU cannot turn a player cut-in into a crash');
-  const headOn = collisionArena(), player = headOn.state;
+  const headOn = contactCourse(), player = headOn.state;
   player.prevS = 100; player.s = 105; player.speedMph = 100;
   const oncoming = { prevS: 115, s: 105, prevLateral: 0, lateral: 0, speedMph: 70, dir: -1, alive: true };
   headOn._vehicleContact(player, oncoming, 'head_on');
@@ -716,7 +690,7 @@ for (const kind of ['rock', 'mountain', 'building']) {
   eq(contactZone(1, 0, 0), 'right', 'world-right contact maps to the right panels');
   eq(contactZone(0, 1, 0), 'rear', 'rear contact maps to rear bodywork');
   eq(contactZone(0, -1, Math.PI / 2), 'right', 'damage mapping follows the car heading');
-  const d = collisionArena(), s = d.state;
+  const d = contactCourse(), s = d.state;
   s.prevS = s.s = 100; s.speedMph = 30;
   const rearCar = { prevS: 90, s: 98, prevLateral: 0, lateral: 0, speedMph: 100, dir: 1, alive: true };
   d._vehicleContact(s, rearCar, 'traffic');
@@ -732,7 +706,7 @@ for (const kind of ['rock', 'mountain', 'building']) {
 
 // --- Chicken flocks refill nitro once, without damage or repeated farming ---
 {
-  const d = collisionArena(), s = d.state, events = [];
+  const d = contactCourse(), s = d.state, events = [];
   d.onChange((_, event) => events.push(event));
   d.course.features.flocks = [{ id: 'bonus-a', s: 110, off: 9, radius: 3.5, count: 8 }];
   s.boost = .1; s.prevS = 90; s.s = 130; s.prevLateral = s.lateral = 9; s.speedMph = 60;
@@ -829,26 +803,29 @@ function crossGate(duel, actor, gate, lateral = 0) {
 
 // --- Cars, pickups and static contacts stay solid across the lap seam ---
 {
-  const d=collisionArena(),s=d.state;d.course.closed=true;d.course.length=1000;d.course.raceLength=2000;
+  const d=contactCourse(),s=d.state;d.course.closed=true;d.course.length=1000;d.course.raceLength=2000;
+  // Neighbours across a closed-course seam also share nearby world positions.
+  d.course.worldAt=(distance,lateral=0)=>({x:lateral,y:0,z:(distance+500)%1000-500,heading:0});
   s.prevS=990;s.s=1002;s.speedMph=140;
   const other={s:3,prevS:3,lateral:0,prevLateral:0,speedMph:20,dir:1};
   d._vehicleContact(s,other,'traffic');
   ok(d.relativeS(other.s,s.s)-s.s>=5,'a car beyond the start line remains solid to a car finishing the lap');
   eq(s.lastCrashReason,'traffic','wrapped physical contact uses the usual damage rules');
-  const finish=collisionArena(),f=finish.state;f.prevS=90;f.s=115;f.speedMph=120;
+  const finish=contactCourse(),f=finish.state;f.prevS=90;f.s=115;f.speedMph=120;
   f.rival={s:110,prevS:110,lateral:0,prevLateral:0,speedMph:0,headingError:0,finished:true,finishTime:30};
   finish._collisions();
   ok(f.s<f.rival.s&&f.rival.s-f.s>=5,'the visible finished opponent remains solid');
-  f.rival.speedMph=80;const stoppedAt=f.rival.s;finish._rival(.05);
+  // Isolate post-finish braking after the separate solid-contact assertion.
+  f.rival.knock=null;f.rival.speedMph=80;const stoppedAt=f.rival.s;finish._rival(.05);
   ok(f.rival.s>stoppedAt&&f.rival.speedMph<80&&f.rival.braking,'a finished CPU car coasts down using its brakes');
   eq(f.rival.finishTime,30,'post-finish braking cannot change the CPU finish time');
-  const cpu=collisionArena(),p=cpu.state;cpu.course.closed=true;cpu.course.length=1000;
+  const cpu=contactCourse(),p=cpu.state;cpu.course.closed=true;cpu.course.length=1000;
   p.prevS=p.s=1010;p.speedMph=25;
   const r=p.rival={prevS:990,s:1014,lateral:0,prevLateral:0,speedMph:170,headingError:0,pushVelocity:0};
   cpu._vehicleContact(p,r,'rival');
   eq(p.lives,LIVES.start,'CPU cut-in yielding remains harmless at a lap seam');
   ok(r.s<p.s-5&&r.speedMph<25,'the CPU yields behind the player across the seam');
-  const pick=collisionArena(),q=pick.state;pick.course.closed=true;pick.course.length=1000;
+  const pick=contactCourse(),q=pick.state;pick.course.closed=true;pick.course.length=1000;
   pick.course.features.flocks=[{id:'wrap-flock',s:5,off:0,radius:3.5}];
   q.prevS=999;q.s=1010;q.boost=.2;pick._flockBonuses();
   eq(q.boost,1,'flocks are collectible on the second lap using wrapped positions');
@@ -870,20 +847,20 @@ function crossGate(duel, actor, gate, lateral = 0) {
 {
   const distances=[];
   for(const level of Object.keys(CPU_DIFFICULTY)){
-    const d=collisionArena();d.state.cpuDifficulty=level;d.state.s=900;
+    const d=contactCourse();d.state.cpuDifficulty=level;d.state.s=900;
     d.state.rival={s:100,lateral:-3.4,speedMph:0,headingError:0,pushVelocity:0,completedLaps:0,nextLapGate:0,lapTimes:[],lapStartedAt:0};
     for(let i=0;i<1200;i++)d._rival(1/120);
     distances.push(d.state.rival.s);
   }
   ok(distances[0]<distances[1]&&distances[1]<distances[2],'higher CPU levels make progressively more race progress');
-  const d=collisionArena();d.startCampaign({cpuDifficulty:'invalid'});eq(d.state.cpuDifficulty,DEFAULT_CPU_DIFFICULTY,'invalid CPU level uses the configured default');
+  const d=contactCourse();d.startCampaign({cpuDifficulty:'invalid'});eq(d.state.cpuDifficulty,DEFAULT_CPU_DIFFICULTY,'invalid CPU level uses the configured default');
   const speeds=[];
   for(const car of ['falcone_f42','dusthawk_rally']){
-    const race=collisionArena();race.state.car=car;race.state.lateral=20;race.state.speedMph=120;
+    const race=contactCourse();race.state.car=car;race.state.lateral=20;race.state.speedMph=120;
     for(let i=0;i<120;i++)race._drive(1/120);speeds.push(race.state.speedMph);
   }
   ok(speeds[1]>speeds[0]+25,'the rally car retains substantially more speed on dirt');
-  const stock=collisionArena(),upgraded=collisionArena();
+  const stock=contactCourse(),upgraded=contactCourse();
   upgraded.state.upgrades={...upgraded.state.upgrades,brakes:3,suspension:3,tank:3};
   for(const race of [stock,upgraded]){race.state.speedMph=100;race.setInput({brake:1});for(let i=0;i<120;i++)race._drive(1/120);}
   ok(stock.state.speedMph<55,'standard brakes shed at least 45 mph in a second');
@@ -921,7 +898,7 @@ function crossGate(duel, actor, gate, lateral = 0) {
   s.completedLaps=1;jump(1);eq(s.jumps,2,'the same ramp can reward a new validated lap');
   jump(0);eq(s.jumps,2,'returning to a previous lap cannot create another jump reward');
   eq(s.lives,LIVES.start,'a clean jump and landing never cause crash damage');
-  const contact=collisionArena(),a=contact.state;a.car='titan_monster';a.airborne=true;a.airHeight=5;a.prevS=90;a.s=115;a.speedMph=90;
+  const contact=contactCourse(),a=contact.state;a.car='titan_monster';a.airborne=true;a.airHeight=5;a.prevS=90;a.s=115;a.speedMph=90;
   contact.course.groundAt=(distance,lateral)=>({x:lateral,y:0,z:distance});
   const below={s:110,prevS:110,lateral:0,prevLateral:0,speedMph:0,dir:1};
   eq(contact._vehicleContact(a,below,'traffic'),false,'a truck can jump over a car it visibly clears');
@@ -958,7 +935,7 @@ function crossGate(duel, actor, gate, lateral = 0) {
 }
 {
   for(const cpuDifficulty of Object.keys(CPU_DIFFICULTY)){
-    const d=collisionArena(),s=d.state;s.cpuDifficulty=cpuDifficulty;s.s=130;s.lateral=8;s.speedMph=70;s.headingError=-.75;
+    const d=contactCourse(),s=d.state;s.cpuDifficulty=cpuDifficulty;s.s=130;s.lateral=8;s.speedMph=70;s.headingError=-.75;
     s.rival={s:100,lateral:0,speedMph:190,headingError:0,pushVelocity:0,finished:false};
     d._rival(1/60);
     ok(s.rival.braking&&s.rival.yieldingToPlayer&&s.rival.speedMph<189,`${cpuDifficulty}: even a fast CPU brakes for an imminent cut-in`);
@@ -996,7 +973,7 @@ function crossGate(duel, actor, gate, lateral = 0) {
   ok(Math.abs(p.distanceU-Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z))<1e-8,'actual police distance uses the full branch geometry');
 }
 {
-  const d=collisionArena(),s=d.state;s.s=s.prevS=100;s.lateral=s.prevLateral=50;s.speedMph=60;
+  const d=contactCourse(),s=d.state;s.s=s.prevS=100;s.lateral=s.prevLateral=50;s.speedMph=60;
   const p=s.police.pursuit={...d._newPursuit(0),s:100,lateral:0,speedMph:30};
   d._police(1/120);
   eq(s.status,'racing','matching course progress50 metres away cannot catch the player');
@@ -1006,7 +983,7 @@ function crossGate(duel, actor, gate, lateral = 0) {
   eq(s.lives,LIVES.start,'being caught does not cost a chassis life');
 }
 {
-  const d=collisionArena(),s=d.state;s.s=s.prevS=200;s.speedMph=60;
+  const d=contactCourse(),s=d.state;s.s=s.prevS=200;s.speedMph=60;
   d.course.features.obstacles=[{id:'police-wall',kind:'building',x:0,z:110,s:110,off:0,heading:0,halfX:4,halfZ:3}];
   const p=s.police.pursuit={...d._newPursuit(100),s:100,lateral:0,speedMph:300};
   d._police(.05);
@@ -1017,7 +994,7 @@ function crossGate(duel, actor, gate, lateral = 0) {
   ok(p.s<s.traffic[0].s&&s.traffic[0].s-p.s>=5,'the police remain solid against traffic');
 }
 {
-  const d=collisionArena(),s=d.state;s.s=s.prevS=130;s.lateral=s.prevLateral=8;s.speedMph=70;s.headingError=-.75;
+  const d=contactCourse(),s=d.state;s.s=s.prevS=130;s.lateral=s.prevLateral=8;s.speedMph=70;s.headingError=-.75;
   const p=s.police.pursuit={...d._newPursuit(30),s:100,lateral:0,speedMph:190};
   d._police(1/60);
   ok(p.braking&&p.yieldingToPlayer&&p.speedMph<189,'police brake when the player cuts across their path');
@@ -1028,7 +1005,7 @@ function crossGate(duel, actor, gate, lateral = 0) {
   eq(s.impactTimer,0,'police yielding cannot trigger the player impact animation');
 }
 {
-  const d=collisionArena(),s=d.state;s.s=s.prevS=700;s.speedMph=80;
+  const d=contactCourse(),s=d.state;s.s=s.prevS=700;s.speedMph=80;
   const p=s.police.pursuit={...d._newPursuit(500),s:200,lateral:20,speedMph:120};
   d._police(1/120);
   ok(p.offRoad&&p.speedMph<120&&Math.abs(p.lateral-20)<.4,'a dirt excursion slows the cruiser and recovers through steering');
@@ -1041,7 +1018,7 @@ function crossGate(duel, actor, gate, lateral = 0) {
   eq(player.status,'ticket','physical catch distance remains correct across the closed-course seam');
 }
 {
-  const d=collisionArena(),s=d.state;s.s=s.prevS=100;s.speedMph=80;
+  const d=contactCourse(),s=d.state;s.s=s.prevS=100;s.speedMph=80;
   const p=s.police.pursuit={...d._newPursuit(10),s:90,lateral:0,speedMph:100};
   d._crash('head_on');const before=p.s;d.step(1/120);
   ok(p.s>before,'the physical police car keeps moving during impact recovery');

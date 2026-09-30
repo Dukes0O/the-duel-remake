@@ -51,7 +51,7 @@ export function _movePolice(cruiser, dt) {
   cruiser.headingError ||= 0; cruiser.pushVelocity ||= 0;
   cruiser.braking = false; cruiser.yieldingToPlayer = false;
   cruiser.contactCooldown = Math.max(0, (cruiser.contactCooldown || 0) - dt);
-  if (this.featureFlags?.enabled('crash-physics') === true && cruiser.knock) {
+  if (cruiser.knock) {
     stepKnock(this, cruiser, dt);
     finishPoliceMotion(this, cruiser);
     return;

@@ -1,6 +1,6 @@
 // Private, memory-only review of CRASH-02 in both render quality modes.
 async function qualityPass(context, quality) {
-  await context.navigate('/tools/menu-check.html?flags=crash-physics,crash-effects,wasteland2');
+  await context.navigate('/tools/menu-check.html?flags=wasteland2');
   await context.waitFor(`!!window.__qaApp && !!window.__render &&
     !document.querySelector('#start-engine')?.disabled &&
     !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value`,

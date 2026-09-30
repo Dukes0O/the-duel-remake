@@ -511,7 +511,7 @@ tasks:
     lane: CMB
     size: M
     needs: [CRASH-RELEASE]
-    status: building
+    status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [src/feature-flags.js, src/sim-contacts.js, src/combat-armor.js, src/sim-driving.js, src/sim-police.js, src/sim-rival.js, src/render3d.js, src/audio.js, src/sound-bank.js, src/arena/arena-event.js, src/test.js, tools/test-crash-switch-remove.mjs, docs/changes/CRASH-SWITCH-REMOVE.md]
     hooks: [tools/test-feature-flags.mjs, tools/test-combat-knockaway.mjs, tools/test-combat-ramming.mjs, tools/test-combat-replays.mjs, tools/test-crash-hollow-audio.mjs, tools/test-crash-presentation.mjs, tools/test-crash-slide.mjs, tools/test-armored-vehicle-impact.mjs, tools/test-madmax-crash.mjs, tools/test-madmax-solid.mjs, tools/test-police-knock.mjs, tools/test-vehicle-knock-integration.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, tools/test-combat-balance.mjs, tools/combat-balance.mjs, tools/scenarios/preview-storage.mjs, src/destructibles.js, src/vehicle-impact.js, tools/test-roadside-destruction.mjs, tools/scenarios/crash-presentation.mjs, start-preview.bat, src/wasteland-tuning.js]
@@ -2501,7 +2501,10 @@ tasks:
     lane: PHYS
     size: S
     needs: [CRASH-SWITCH-REMOVE]
-    status: ready
+    status: building
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [src/config.js, tools/test-titan-handling.mjs, tools/scenarios/titan-handling.mjs, docs/changes/TITAN-HANDLING.md]
+    sequencing: "Independent tests before config edits; no shared files with active source or FORMAT lanes."
     acceptance:
       - "Kyle, 30 September 2026: the Titan is hard to steer compared with the computer cars. Cause: steeringYawAuthority (src/config.js) scales turning down below 30 mph and by grip, and the Titan spends Muddy Hollow and the climbs slow, with grip .91 against the rally car's 1.05."
       - "Settled rule: for the Titan only (a new car field, lowSpeedSteer: true in its CARS entry), the rolling factor is max(speed/30, .55) once the Titan moves faster than 3 mph, and steering grip is max(grip, 1.0) below 45 mph. Above 45 mph nothing changes, so its high-speed feel and every other car stay exactly as they are."

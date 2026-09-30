@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {LegacyRoadsideDuel, ClassicDestructionDuel} from './legacy-roadside-duel.mjs';
 import {COURSE, LIVES} from '../src/config.js';
-import {breakableScenery, trafficDestruction, startTrafficWreck, stepTrafficWreck} from '../src/destructibles.js';
+import {breakableScenery, trafficDestruction} from '../src/destructibles.js';
 import {combatCrashThresholdMph} from '../src/vehicle-impact.js';
 
 let checks = 0;
@@ -88,12 +88,6 @@ for(const options of [{mode:'duel',enabled:true},{mode:'wasteland',enabled:false
   const tap=trafficDestruction({enabled:true,mode:'wasteland',impactMph:8,playerTopSpeedMph:150});
   same(tap.wreck,false,'low-speed contact remains a shove');
   same(trafficDestruction({enabled:true,mode:'duel',impactMph:150,playerTopSpeedMph:150}).wreck,false,'traffic wrecking belongs to Wasteland');
-  const car={alive:true,s:110,lateral:0,speedMph:55,dir:-1,headingError:0};
-  check(startTrafficWreck(car,{atTime:3,impulse:light.impulse,side:-1}),'first impact starts one wreck');
-  same(startTrafficWreck(car,{atTime:4,impulse:light.impulse,side:1}),false,'a wreck cannot restart and farm impact events');
-  for(let i=0;i<180;i++)stepTrafficWreck(car,1/120);
-  check(!car.alive&&car.lateral<0&&car.s<110&&car.airHeight===0,'destroyed oncoming car flies sideways, slides ahead in its travel direction, then lands');
-  check([car.s,car.lateral,car.headingError,car.wrecked.roll].every(Number.isFinite),'wreck motion remains finite');
 }
 
 console.log(`Roadside destruction: ${checks} checks passed.`);

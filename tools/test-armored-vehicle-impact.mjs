@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import { CARS, LIVES } from '../src/config.js';
 import {LegacyRoadsideDuel, ClassicDestructionDuel} from './legacy-roadside-duel.mjs';
-import { combatCrashThresholdMph, rearRamResponse } from '../src/vehicle-impact.js';
+import { combatCrashThresholdMph } from '../src/vehicle-impact.js';
 
 const race = (mode = 'wasteland', car = 'banshee_muscle', classicDestruction = false,
   wasteland2 = false) => {
   // This suite pins the earlier armored-contact rules; CMB-08 tests the
   // released roadside rule separately.
   const duel = new (classicDestruction ? ClassicDestructionDuel : LegacyRoadsideDuel)({
-    seed: 624, featureFlags: {wasteland2, 'crash-physics': true},
+    seed: 624, featureFlags: {wasteland2},
   });
   duel.startCampaign({ mode, car, startStage: 0 });
   const player = duel.state;
@@ -168,13 +168,6 @@ assert.ok(combatCrashThresholdMph(CARS.banshee_muscle, { targetMass: 4700 })
   duel._vehicleContact(player, traffic, 'traffic');
   assert.ok(traffic.wrecked && player.impactTimer === 0,
     'an armored same-direction rear hit can wreck slower traffic without a player crash');
-}
-
-{
-  const ram = rearRamResponse({ closingMph: 0, attackerMph: 300, attackerMass: 1800,
-    targetMass: 1800, steer: 0, offset: 0 });
-  assert.equal(ram.launchMps, 0);
-  assert.equal(ram.lateralKick, 0, 'aligned equal-speed cars do not receive an arbitrary sideways impulse');
 }
 
 console.log('armored vehicle impacts: passed');

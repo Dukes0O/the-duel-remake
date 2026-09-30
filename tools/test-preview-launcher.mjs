@@ -76,7 +76,7 @@ check('launcher binds a private strict port', () => {
   assert.notEqual(port, 5174, 'preview must never use the live game port');
 });
 check('preview launch requests every current dev switch', () => {
-  for (const flag of ['scrapdome', 'crash-physics', 'crash-effects', 'titan-climb', 'muddy-hollow']) {
+  for (const flag of ['scrapdome', 'titan-climb', 'muddy-hollow']) {
     assert.match(launcher, new RegExp(`(?:flags[^\\r\\n]*|PREVIEW_FLAGS[^\\r\\n]*)${flag}`),
       `preview URL must request ${flag}`);
   }
