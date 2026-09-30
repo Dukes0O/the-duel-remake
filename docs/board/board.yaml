@@ -2501,7 +2501,10 @@ tasks:
     lane: PHYS
     size: S
     needs: [CRASH-SWITCH-REMOVE]
-    status: ready
+    status: building
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [src/config.js, tools/test-titan-handling.mjs, tools/scenarios/titan-handling.mjs, docs/changes/TITAN-HANDLING.md]
+    sequencing: "Independent tests before config edits; no shared files with active source or FORMAT lanes."
     acceptance:
       - "Kyle, 30 September 2026: the Titan is hard to steer compared with the computer cars. Cause: steeringYawAuthority (src/config.js) scales turning down below 30 mph and by grip, and the Titan spends Muddy Hollow and the climbs slow, with grip .91 against the rally car's 1.05."
       - "Settled rule: for the Titan only (a new car field, lowSpeedSteer: true in its CARS entry), the rolling factor is max(speed/30, .55) once the Titan moves faster than 3 mph, and steering grip is max(grip, 1.0) below 45 mph. Above 45 mph nothing changes, so its high-speed feel and every other car stay exactly as they are."
