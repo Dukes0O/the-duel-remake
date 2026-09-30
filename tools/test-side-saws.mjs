@@ -321,3 +321,12 @@ test('Sal tell sparks use a distinct effect while the old missed-window node sta
   } finally { f.kits.dispose(); }
   equal(f.registry.size, 0, 'tell presentation releases its attachments');
 });
+
+
+test('an earned saved kit cannot multiply a released arena contact with warlords off', () => {
+  const plain = contact({warlord: false, enabled: false});
+  const savedKit = contact({kit: true, warlord: false, enabled: false});
+  ok(plain.removed > 0, 'flag-off positive control reaches real damage');
+  near(savedKit.removed, plain.removed, 'dev reward has no flag-off damage effect');
+  ok(!savedKit.hits.some(hit => hit.sideSaws), 'flag-off contact emits no earned saw cue');
+});

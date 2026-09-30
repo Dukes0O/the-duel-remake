@@ -241,3 +241,15 @@ RETRY SAVE control"; 14/15 settlement subtests passed and 130 checks reached.
 The existing transaction, failure and API retry assertions remain unchanged.
 The new test also requires clear failure text, no unpaid kit or +150 claim,
 and removal of the retry control after one successful save.
+
+
+## Dev-switch regression red check
+
+The App completion exposed a missing switch boundary: a saved Side Saws kit
+could still multiply damage in a released arena with `warlords` off. Before
+adding its contact guard, two separate regressions failed. Actual flag-off
+side contact removed 18.0246528 armor with the saved kit against 11.265408
+without it (1.6 times). App also allowed equip with that switch off.
+The tests keep the saved entitlement, require ordinary Last Car Rolling to
+remain playable, and require its started actor to have no active Side Saws.
+No old contact assertion, FSM rule or fingerprint changed.
