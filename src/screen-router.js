@@ -104,6 +104,7 @@ const garageScreen = createGarageScreen({app, profile, credits, escapeHTML, getG
 const armoryScreen = createArmoryScreen({profile, credits, escapeHTML,
   getGarageMessage:()=>garageMessage, getArmoryCar:()=>armoryCar,
   kitsEnabled:()=>app.wastelandUnlocked(),
+  warlordsEnabled:()=>app.warlordsAvailable?.()===true,
   loadoutsEnabled:()=>app.wastelandUnlocked(),
   crewEnabled:()=>app.wastelandUnlocked(),
   action:(label,verb,primary)=>screenAction(label,verb,primary,arrow)});
