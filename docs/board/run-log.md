@@ -2158,3 +2158,7 @@ the Preview now requests the warlords switch (its test reads the catalog);
 merged 931b0d6. Full tier 304/304 on 931b0d6 in 438 s. Janitor removed both
 lanes, the Sal review evidence and the scratch probe. WAR-SAL-TUNE waits for
 Kyle and Gratian in the Preview.
+
+## 30 September 2026, Director: resume the remaining phase 3 build
+
+Kyle resumed autonomous work. Claimed ARENA-STEER and WAR-PAY with exclusive file slices; crew fitting follows its source/loader slice check. Steering precedes Shove, and Arsenal waits for the driving hook. Cleanup waits until its broad file set is free. Last full pass remains 931b0d65 (304/304 at20:08UTC); two later integration merges already count, so the next full is due after three further merges or22:08UTC. No live, Preview or real-save work is authorized.

@@ -2629,8 +2629,13 @@ tasks:
     lane: SAVE
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-09-30-resume
     flag: warlords
+    owns: [tools/test-warlord-pay.mjs, tools/scenarios/warlord-pay.mjs, docs/changes/WAR-PAY.md]
+    hooks: [src/arena/warlord-settlement.js, src/app.js, src/screen-arena.js, tools/test-warlord-settlement.mjs, tools/scenarios/warlord-reward.mjs]
+    helpers: [test_author, reviewer, save_guardian, browser_qa]
+    sequencing: "Exclusive settlement/App/results hooks before WAR-02c. Preserve all named-player, fresh-owner, fail/retry and single-write guarantees. Changed old pay assertions require independent review."
     acceptance:
       - "Kyle, 30 September 2026: beat Sal 3-0 on Medium in the Preview and was paid 25 scrap. Pay is now settled in docs/SCRAPDOME.md section 5: first win 600 plus 100 per earlier warlord on the ladder, times the arena difficulty factor (Easy 1, Medium 1.2, Hard 1.4); rematch win (80 plus 60 per wreck on the warlord, at most 3) times the factor; loss 60 per wreck on the warlord times the factor. Result screen shows the amount and why (first win or rematch)."
       - "Find why Kyle's win paid the rematch amount: a fresh Preview player (tools/preview-player.js) has never beaten Sal, so a first win must pay first-win pay. Reproduce with a memory-only browser run of a fresh Preview tab (first fight won, then a second); if the first fight pays the rematch amount, fix the cause and keep the test. If it was a second win in the same tab, say so in the change note."
@@ -2641,8 +2646,13 @@ tasks:
     lane: PHYS
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-09-30-resume
     flag: scrapdome
+    owns: [tools/test-arena-steering.mjs, tools/scenarios/arena-steering.mjs, docs/changes/ARENA-STEER.md]
+    hooks: [src/config.js, src/sim-driving.js, src/arena/arena-pilot.js]
+    helpers: [test_author, reviewer, balance_analyst, browser_qa]
+    sequencing: "One lane before ARENA-SHOVE and ARS-CORE: driving hooks are exclusive. App demo hook waits for WAR-PAY if needed. Road and Titan handling stay unchanged."
     acceptance:
       - "Kyle, 30 September 2026: steering in the dome is very difficult whatever the car or speed. Measured: at full lock every car turns 53 to 66 degrees a second at 25 and 45 mph, the same in a warlord fight and Last Car Rolling; turning around takes more than 3 s in a ring."
       - "Settled rule: in an arena venue only, every car at full lock turns at least 100 degrees a second from 15 to 50 mph and at least 75 degrees a second at the floor's top speed, by raising both the steering limit and the tyre limit in steeringYawAuthority for arena courses (one arena factor, recorded). Computer cars use the same function, so it stays fair. Sal's window still halves her steering. Road courses, Muddy Hollow and the Titan's road handling are unchanged (replay fingerprints unchanged except arena replays, each named)."
