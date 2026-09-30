@@ -366,7 +366,7 @@ test('released yard shows no warlord launch or promise without the dev gate', ()
 
 test('the foundation warlord mode cannot bypass its development gate', () => {
   const duel = new Duel({featureFlags: {...ON, warlords: false}}), before = JSON.stringify(duel.state);
-  equal(duel.startArenaEvent({mode: 'warlord', opponents: 1}), false, 'foundation entry also requires warlords');
+  equal(duel.startArenaEvent({mode: 'warlord', opponents: [{car: 'banshee_muscle'}]}), false, 'foundation entry also requires warlords');
   equal(JSON.stringify(duel.state), before, 'foundation rejection preserves complete state');
 });
 
