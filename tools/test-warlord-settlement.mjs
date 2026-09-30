@@ -3,7 +3,7 @@ import {test} from 'node:test';
 import {App} from '../src/app.js';
 import {Duel} from '../src/game.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
-import {createProfile, normalizeProfile, loadPlayers, replacePlayerProfile, savePlayers} from '../src/progression.js';
+import {createProfile, normalizeProfile, loadPlayers, replacePlayerProfile, savePlayers, PLAYERS_KEY} from '../src/progression.js';
 import {startWarlordEvent} from '../src/arena/warlord-event.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {getEquippedArmorKit} from '../src/armor-kits.js';
@@ -328,4 +328,159 @@ test('App keeps a saved Side Saws reward inactive while the dev warlords switch 
     equal(app.duel.state.combatArmorKit, null, 'released event does not activate the saved dev kit');
     equal(getEquippedArmorKit(app.profile, 'falcone_f42'), 'side-saws', 'switch isolation never deletes the saved entitlement');
   } finally { app.dispose?.(); }
+});
+
+
+test('failed warlord save shows the unchanged Sal hold on its results', () => {
+  const app = appFight(), before = structuredClone(app.profile);
+  try {
+    failWrites = true; const result = finish(app); failWrites = false;
+    equal(result.hold, before.wasteland.territories.sal.hold, 'unsaved result retains the actual prior 100 hold');
+    const screen = arenaResultsScreen(app.duel.state, {metric: screenMetric,
+      action: screenAction, escapeHTML: String});
+    ok(screen.metrics.includes('100 / 100'), 'failed result does not invent zero territory hold');
+    equal(app.profile, before, 'hold presentation changes none of the failed transaction rollback');
+  } finally { failWrites = false; app.dispose?.(); }
+});
+
+
+test('public reward retry preserves another player saved by a second memory tab', () => {
+  const app = appFight();
+  try {
+    const registry = loadPlayers();
+    registry.players.push({id: 'driver-b', name: 'Driver B', profile: {...createProfile(), credits: 100, unknownB: {old: true}}});
+    equal(savePlayers(registry), true, 'second named player is durably present before failure');
+    failWrites = true; finish(app); failWrites = false;
+    const fresh = loadPlayers(), other = fresh.players.find(p => p.id === 'driver-b');
+    equal(savePlayers(replacePlayerProfile(fresh, 'driver-b', {...other.profile, credits: 900, unknownB: {old: true, later: 23}})),
+      true, 'second memory tab saves newer progress during failed reward');
+    equal(app.retryArenaSettlement(), true, 'public retry saves owner result after recovery');
+    const after = loadPlayers().players.find(p => p.id === 'driver-b').profile;
+    equal([after.credits, after.unknownB], [900, {old: true, later: 23}], 'retry preserves the complete fresh other-player progress');
+  } finally { failWrites = false; app.dispose?.(); }
+});
+
+test('public reward retry rebases the immutable result on fresh owner progress', () => {
+  const app = appFight();
+  try {
+    failWrites = true; finish(app); failWrites = false;
+    const fresh = loadPlayers(), owner = fresh.players.find(p => p.id === app.player.id);
+    const updated = {...owner.profile, credits: 1765, unknownOwnerLater: {keep: 31}};
+    equal(savePlayers(replacePlayerProfile(fresh, owner.id, updated)), true, 'second memory tab saves newer owner progress');
+    equal(app.retryArenaSettlement(), true, 'public retry rebases and saves the result');
+    const after = loadPlayers().players.find(p => p.id === owner.id).profile;
+    equal([after.credits, after.unknownOwnerLater], [1765, {keep: 31}], 'retry retains fresh owner currency and additive fields');
+    equal(after.wasteland.scrap, owner.profile.wasteland.scrap + 150, 'fresh owner receives exactly the first-win reward');
+    equal(after.wasteland.warlords.sal.wins, 1, 'retry counts that immutable fight once');
+  } finally { failWrites = false; app.dispose?.(); }
+});
+
+
+test('reward retry rejects missing, switched, unreadable and unsupported durable registries unchanged', () => {
+  for (const kind of ['missing', 'malformed', 'deleted-owner', 'switched-owner', 'future-owner', 'future-career', 'future-other', 'read-failure']) {
+    const app = appFight(), getItem = localStorage.getItem;
+    try {
+      failWrites = true; finish(app); failWrites = false;
+      const fresh = loadPlayers(), owner = fresh.players.find(p => p.id === app.player.id);
+      fresh.players.push({id: 'driver-b', name: 'Driver B', profile: createProfile()});
+      if (kind === 'missing') values.delete(PLAYERS_KEY);
+      else if (kind === 'malformed') values.set(PLAYERS_KEY, '{broken');
+      else {
+        if (kind === 'deleted-owner') fresh.players = fresh.players.filter(p => p.id !== owner.id);
+        if (kind === 'switched-owner' || kind === 'deleted-owner') fresh.activePlayerId = 'driver-b';
+        if (kind === 'future-owner') owner.profile.version = 99;
+        if (kind === 'future-career') owner.profile.wasteland.version = 2;
+        if (kind === 'future-other') fresh.players.at(-1).profile.version = 99;
+        values.set(PLAYERS_KEY, JSON.stringify(fresh));
+      }
+      if (kind === 'read-failure') localStorage.getItem = key => {if (key === PLAYERS_KEY) throw Error('synthetic read failure'); return getItem(key);};
+      const visible = structuredClone(app.profile), persisted = [...values];
+      equal(app.retryArenaSettlement(), false, kind + ': unproven durable owner cannot be overwritten');
+      equal(app.profile, visible, kind + ': entire visible career is retained');
+      equal([...values], persisted, kind + ': durable registry is unchanged');
+      equal(app.duel.state.arena.result.settlementRetryable, true, kind + ': result remains retryable without claiming an award');
+    } finally { localStorage.getItem = getItem; failWrites = false; app.dispose?.(); }
+  }
+});
+
+test('retry recalculates rematch status from a freshly saved Sal defeat', () => {
+  const app = appFight();
+  try {
+    failWrites = true; finish(app); failWrites = false;
+    const fresh = loadPlayers(), owner = fresh.players.find(p => p.id === app.player.id);
+    const profile = {...owner.profile, wasteland: {...owner.profile.wasteland, scrap: 300,
+      warlords: {...owner.profile.wasteland.warlords, sal: {defeated: true, wins: 4, losses: 0}},
+      kits: {stuttgart_959s: {owned: ['scrapper'], equipped: 'scrapper'}}}};
+    equal(savePlayers(replacePlayerProfile(fresh, owner.id, profile)), true, 'another completed win is saved during failure');
+    equal(app.retryArenaSettlement(), true, 'this distinct completed fight can retry against fresh status');
+    equal([app.profile.wasteland.scrap, app.profile.wasteland.warlords.sal.wins], [325, 5], 'retry earns rematch 25 and adds only this win');
+    equal(getEquippedArmorKit(app.profile, 'stuttgart_959s'), 'scrapper', 'fresh equipped paid kit survives');
+    equal(getEquippedArmorKit(app.profile, 'falcone_f42'), null, 'retry does not falsely autoequip another first win');
+  } finally { failWrites = false; app.dispose?.(); }
+});
+
+test('a durably settled exact retry marker resolves without another write or reward', async () => {
+  const app = appFight();
+  try {
+    failWrites = true; finish(app); failWrites = false;
+    const settle = await settlement(), fresh = loadPlayers(), owner = fresh.players.find(p => p.id === app.player.id);
+    const saved = settle(owner.profile, {runId: app.runId, ownerPlayerId: owner.id, activePlayerId: owner.id,
+      arena: app.duel.state.arena, car: app.duel.state.car});
+    equal(savePlayers(replacePlayerProfile(fresh, owner.id, saved.profile)), true, 'same immutable result was saved durably elsewhere');
+    writes = [];
+    equal(app.retryArenaSettlement(), false, 'durable exact marker rejects another award');
+    equal(writes.length, 0, 'already saved result causes no registry write');
+    equal(app.profile.wasteland.scrap, 150, 'visible career adopts the proven saved reward');
+    equal(app.duel.state.arena.result.settlementRetryable, false, 'proven durable marker removes misleading retry UI');
+    equal(app.duel.state.arena.result.settlementSaved, true, 'durable exact marker proves saved completion');
+  } finally { failWrites = false; app.dispose?.(); }
+});
+
+function neverSavedFight() {
+  values.clear(); failWrites = true; writes = [];
+  const app = new App(); app.duel.featureFlags = flags(); app.audio.unlock = () => {};
+  app.profile = {...app.profile, credits: 2777, unsavedSession: {keep: true}, wasteland: {...app.profile.wasteland,
+    discoveredGate: true, territories: {...app.profile.wasteland.territories, sal: {hold: 100, claimed: false}}}};
+  assert.equal(app.profileSaved, false);
+  assert.equal(app.visitWasteland(), true); app.advance(8);
+  assert.equal(app.startWarlordFight('sal'), true); assert.equal(app.beginWarlordFight(), true);
+  app.duel.state.countdown = 0; app.duel.step(1/120); app.duel.step(1/120);
+  return app;
+}
+
+test('never-saved retry creates the first registry only from proved absence and the same valid local owner', () => {
+  const app = neverSavedFight();
+  try {
+    finish(app); failWrites = false;
+    equal(values.has(PLAYERS_KEY), false, 'durable registry was absent through initial failed settlement');
+    equal(app.retryArenaSettlement(), true, 'proved absent registry can receive the same local session');
+    equal([app.profile.credits, app.profile.unsavedSession, app.profile.wasteland.scrap], [2777, {keep: true}, 150],
+      'first durable registry retains the genuine unsaved session and one reward');
+    equal(loadPlayers().players.find(p => p.id === app.player.id).profile.unsavedSession, {keep: true}, 'unsaved fields become durable');
+  } finally { failWrites = false; app.dispose?.(); }
+});
+
+test('a failed initial registry read is never proof of an absent never-saved registry', () => {
+  const app = neverSavedFight(), getItem = localStorage.getItem;
+  try {
+    localStorage.getItem = key => {if (key === PLAYERS_KEY) throw Error('synthetic initial read failure'); return getItem(key);};
+    finish(app); localStorage.getItem = getItem; failWrites = false;
+    const before = structuredClone(app.profile), persisted = [...values];
+    equal(app.retryArenaSettlement(), false, 'read failure cannot authorize first-registry creation');
+    equal(app.profile, before, 'unproven unsaved session remains fully visible');
+    equal([...values], persisted, 'unproven retry changes no durable data');
+  } finally { localStorage.getItem = getItem; failWrites = false; app.dispose?.(); }
+});
+
+test('retry preserves genuine unsaved owner fields when that durable owner is unchanged', () => {
+  const app = appFight();
+  try {
+    app.profile = {...app.profile, credits: 2777, unsavedSession: {keep: true}}; app.profileSaved = false;
+    failWrites = true; finish(app); failWrites = false;
+    const fresh = loadPlayers(); fresh.players.push({id: 'driver-b', name: 'Driver B', profile: {...createProfile(), credits: 900}});
+    equal(savePlayers(fresh), true, 'other player saves while durable owner stays unchanged');
+    equal(app.retryArenaSettlement(), true, 'genuine unsaved owner can retry without discarding local work');
+    equal([app.profile.credits, app.profile.unsavedSession, app.profile.wasteland.scrap], [2777, {keep: true}, 150], 'unsaved owner remains complete');
+    equal(loadPlayers().players.find(p => p.id === 'driver-b')?.profile?.credits, 900, 'fresh other player is retained too');
+  } finally { failWrites = false; app.dispose?.(); }
 });

@@ -341,3 +341,59 @@ test('released Armory does not advertise an inactive saved Side Saws kit', () =>
   ok(/Scrapper/.test(html) && /Raider/.test(html) && /Warlord/.test(html), 'three paid plating choices remain visible');
   equal(getEquippedArmorKit(saved, 'falcone_f42'), 'side-saws', 'presentation does not erase the saved equip');
 });
+
+
+// Parse the unchanged original geometry/transforms. Remove only material
+// references in an in-memory GLB copy because Node has no browser image decoder.
+async function originalEarnedKit() {
+  const THREE = await import('three');
+  const {GLTFLoader} = await import('three/examples/jsm/loaders/GLTFLoader.js');
+  const {createVehicleAttachmentRegistry} = await import('../src/vehicle-attachments.js');
+  const {createArmorKitMeshes} = await import('../src/armor-kit-meshes.js');
+  const bytes = readFileSync(new URL('../public/assets/models/wasteland/kits/falcone_f42.glb', import.meta.url));
+  const length = bytes.readUInt32LE(12), json = JSON.parse(bytes.subarray(20, 20 + length).toString('utf8'));
+  delete json.materials; delete json.images; delete json.textures; delete json.samplers;
+  for (const mesh of json.meshes) for (const primitive of mesh.primitives) delete primitive.material;
+  const text = Buffer.from(JSON.stringify(json)), padded = Buffer.alloc(Math.ceil(text.length / 4) * 4, 32);
+  text.copy(padded); const binary = bytes.subarray(20 + length), copy = Buffer.alloc(20 + padded.length + binary.length);
+  bytes.copy(copy, 0, 0, 12); copy.writeUInt32LE(copy.length, 8);
+  copy.writeUInt32LE(padded.length, 12); copy.writeUInt32LE(0x4e4f534a, 16);
+  padded.copy(copy, 20); binary.copy(copy, 20 + padded.length);
+  const asset = await new GLTFLoader().parseAsync(copy.buffer.slice(copy.byteOffset, copy.byteOffset + copy.byteLength), '');
+  const registry = createVehicleAttachmentRegistry(), kits = createArmorKitMeshes(registry, {loadKitAsset: async () => asset});
+  const vehicle = new THREE.Group(); vehicle.userData.vehicleKey = 'falcone_f42';
+  vehicle.userData.size = {width: 2.6, length: 4.8, height: 1.55};
+  const state = {s: 100, lateral: 0, armor: 100, maxArmor: 100, combatArmorKit: 'side-saws',
+    mode: 'wasteland', status: 'racing', stageTimeSec: 0, combat: {}, opponents: []};
+  const duel = {state, course: {groundAt: () => ({x: 0, y: 0, z: 0})}, featureFlags: flags()};
+  const vehicles = {player: vehicle, rival: null, extraOpponents: []};
+  kits.update(duel, vehicles, true);
+  await new Promise(resolve => setImmediate(resolve)); await new Promise(resolve => setImmediate(resolve));
+  kits.update(duel, vehicles, true); vehicle.updateMatrixWorld(true);
+  return {THREE, kits, registry, state, duel, vehicles, vehicle};
+}
+
+test('original earned saw housings remain fitted instead of orbiting the vehicle origin', async () => {
+  const f = await originalEarnedKit();
+  try {
+    const centers = () => [0, 1].map(i => new f.THREE.Box3().setFromObject(f.vehicle.getObjectByName('kit-saw-' + i)).getCenter(new f.THREE.Vector3()));
+    const start = centers();
+    f.state.stageTimeSec = Math.PI / 72; f.kits.update(f.duel, f.vehicles, true); f.vehicle.updateMatrixWorld(true);
+    centers().forEach((center, i) => near(center.distanceTo(start[i]), 0, 'original saw housing ' + i + ' stays at its reviewed fitted center'));
+  } finally { f.kits.dispose(); }
+  equal(f.registry.size, 0, 'original geometry fixture releases its attachments');
+});
+
+test('original Side Saws geometry hides direct paid Raider plating and restores it for Raider', async () => {
+  const f = await originalEarnedKit();
+  try {
+    const plating = f.vehicle.getObjectByName('kit-raider-painted-metal');
+    ok(plating?.isMesh && plating.geometry.attributes.position.count > 0, 'fixture contains actual original paid door plating');
+    equal(plating.visible, false, 'earned-only kit hides the direct paid Raider plating mesh');
+    equal(f.vehicle.getObjectByName('kit-saw-0').visible, true, 'earned original saw housing remains visible');
+    f.state.combatArmorKit = 'raider'; f.kits.update(f.duel, f.vehicles, true);
+    equal(plating.visible, true, 'paid Raider restores its unchanged door plating');
+    equal(f.vehicle.getObjectByName('kit-cage').visible, true, 'paid Raider keeps its reviewed cage');
+  } finally { f.kits.dispose(); }
+  equal(f.registry.size, 0, 'original plating fixture releases its attachments');
+});

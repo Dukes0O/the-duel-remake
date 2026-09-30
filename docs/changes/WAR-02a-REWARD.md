@@ -316,3 +316,47 @@ Removed the App's warlord early-return placeholder. The ordinary arena
 settlement path stays in place; its regression suite passes. No save format,
 paid kit, real player data, asset binary or Sal FSM was removed. The dev switch
 only suspends the earned kit; it never deletes it from the career.
+
+
+## Independent App and original-geometry review: red fixes
+
+Save Guardian found a stale retry registry in `38a77e2`: the first failed
+write sets `profileSaved = false`, so `_refreshPlayer` skips durable data.
+Public retry could replace another player's later 900 credits with old 100,
+or replace the owner's later 1765 credits with old progress. Separate real
+three-wreck/public-retry tests reproduce both before the fix. More red tests
+require fresh rematch status, exact-marker idempotence, supported raw profiles
+for every player, unchanged rejection of missing/switched/unreadable data,
+and preservation of genuine unsaved sessions. The strictly proved never-saved
+happy path is a passing control. The unsaved-other-player red first reported
+an absent player as a property error; optional access makes the same required
+900-credit equality fail clearly, without changing its acceptance.
+
+The Director approved first-registry creation only with successful proof of
+absence captured before the first failed settlement and still absent at
+retry, the same run and active local owner, and supported local profiles.
+A read failure or a loader-generated default is never absence proof.
+
+The actual failed-save screenshot also showed HOLD 0/100 while the career
+still held Sal at 100. Its separate stronger test fails with undefined versus
+100 before the integer-guarded initializer fix. No transaction assertion changed.
+
+General review used the original Falcone GLB geometry and found whole earned
+housings orbiting the vehicle origin. An original-geometry regression fails
+with 1.410157468 metres of center displacement at a quarter turn. A second
+original-geometry test proves paid `kit-raider-painted-metal` stays visible
+inside the earned kit. The fixture preserves all original vertices and
+transforms; only material references are removed from an in-memory GLB copy
+because Node has no browser image decoder. No asset file is edited.
+The authorized fix keeps earned housings static, hides only that direct paid
+mesh, and preserves paid Raider and Sal-specific motion.
+
+Browser attempt 2 (private port 53470, zero issues/warnings) passed High's
+retry click, complete 150 award, rematch 25, free loss and genuine authored
+saw/contact spark proof, then timed out returning to the yard. The stopped
+App needed renderer/course readiness before fixed-step advance. The recipe
+now waits for the existing readiness gate. Attempt 3 (private port 8438,
+zero issues/warnings) additionally passed current-car free equip, then used
+the menu Armory close selector in the yard. The yard has BACK TO HOME; correct
+that production selector, without bypassing navigation or runtime assertions.
+Both attempt verdicts remain explicit; full High/Performance rerun follows.
