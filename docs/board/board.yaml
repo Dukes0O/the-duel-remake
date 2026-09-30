@@ -15,7 +15,7 @@ tasks:
     claimed_by: "Codex autonomous Director, 30 September 2026"
     helpers: [test_author, reviewer, browser_qa]
     owns: [src/screen-hud.js, src/onfoot-hints.js, tools/test-onfoot-hints.mjs, tools/scenarios/onfoot-hints.mjs, docs/changes/UX-ENTRY-HINTS.md]
-    hooks: [src/style.css]
+    hooks: [src/style.css, tools/replays/onfoot-hints.json]
     note: "Director 30 September: validate F/X and exact thresholds from source; write hint design in change note before implementation. Own HUD exclusively until merged; FORMAT waits before HUD edits. No simulation or input-rule changes."
     acceptance:
       - "Verify the reported F/X input mapping and transition thresholds against current source before choosing the in-game hint and assigning its UI files. Write the hint design before code."
@@ -514,7 +514,7 @@ tasks:
     status: building
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [src/feature-flags.js, src/sim-contacts.js, src/combat-armor.js, src/sim-driving.js, src/sim-police.js, src/sim-rival.js, src/render3d.js, src/audio.js, src/sound-bank.js, src/arena/arena-event.js, src/test.js, tools/test-crash-switch-remove.mjs, docs/changes/CRASH-SWITCH-REMOVE.md]
-    hooks: [tools/test-feature-flags.mjs, tools/test-combat-knockaway.mjs, tools/test-combat-ramming.mjs, tools/test-combat-replays.mjs, tools/test-crash-hollow-audio.mjs, tools/test-crash-presentation.mjs, tools/test-crash-slide.mjs, tools/test-armored-vehicle-impact.mjs, tools/test-madmax-crash.mjs, tools/test-madmax-solid.mjs, tools/test-police-knock.mjs, tools/test-vehicle-knock-integration.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, tools/test-combat-balance.mjs, tools/combat-balance.mjs, tools/scenarios/preview-storage.mjs]
+    hooks: [tools/test-feature-flags.mjs, tools/test-combat-knockaway.mjs, tools/test-combat-ramming.mjs, tools/test-combat-replays.mjs, tools/test-crash-hollow-audio.mjs, tools/test-crash-presentation.mjs, tools/test-crash-slide.mjs, tools/test-armored-vehicle-impact.mjs, tools/test-madmax-crash.mjs, tools/test-madmax-solid.mjs, tools/test-police-knock.mjs, tools/test-vehicle-knock-integration.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, tools/test-combat-balance.mjs, tools/combat-balance.mjs, tools/scenarios/preview-storage.mjs, src/destructibles.js, src/vehicle-impact.js, tools/test-roadside-destruction.mjs, tools/scenarios/crash-presentation.mjs]
     note: "Director 30 September: exclusive arena-event.js and feature-flags.js ownership until merged; FORMAT waits for this lane before touching arena-event.js. Preserve released-rules replay fingerprints and wasteland2-off decision pending Kyle."
     acceptance:
       - "Both switches are on in the real game. Remove the switch-off contact paths they guard (scripted roadside burst and knock, flat roadside speed cost, closing-speed ram damage, the old wreck motion) and the tests that pin only those paths (src/test.js collisionArena, the switch-off cases in the crash and knock-away suites), with unchanged replay fingerprints for the released rules. SPEC 0.8: replace means remove."
@@ -2435,7 +2435,7 @@ tasks:
     claimed_by: "Codex autonomous Director, 30 September 2026"
     flag: scrapdome
     owns: [src/arena/arena-event.js, src/warlords.js, src/arena/warlord-event.js, src/screen-arena.js, src/app.js, src/screen-territory.js, tools/test-warlord-format.mjs, tools/scenarios/warlord-format.mjs, docs/changes/WAR-02a-FORMAT.md]
-    hooks: [src/sim.js, src/screen-hud.js, src/screen-arena.css]
+    hooks: [src/sim.js, src/screen-hud.js, src/screen-arena.css, tools/replays/warlord-format-ordinary.json, tools/test-warlords.mjs]
     note: "Director 30 September: tests and independent modules may proceed beside crash cleanup and hints. Wait for CRASH-SWITCH-REMOVE to merge before editing arena-event.js; wait for UX-ENTRY-HINTS before editing screen-hud.js. Keep 1.5x armor in arena files. No feature-flags edits while crash owns it."
     acceptance:
       - "Build exactly the format in docs/SCRAPDOME.md section 5, 'Settled for build': one-on-one, first to three wrecks, warlord armor 1.5 times, a phase-two hook after the warlord's first wreck, four minutes then sudden death, losing costs nothing, REMATCH and BACK TO THE YARD. Warlord and escorts share a team (src/combat-teams.js)."
