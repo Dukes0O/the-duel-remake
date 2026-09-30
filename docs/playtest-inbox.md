@@ -62,14 +62,11 @@ Please include the car, approximate speed, course, and difficulty with a note.
 | 2026-09-30 | The Scrapdome, Titan climbing and Muddy Hollow are good enough to release. The Titan can be hard to steer, especially next to how the opponents move. Retire and remove the rule set that can't be played. | Preview: Scrapdome, Titan, Muddy Hollow | Released 30 September 2026: reload the live game from the menu. Titan steering at low speed: TITAN-HANDLING. Rule set removal: BALANCE-W2-OFF-RETIRE. |
 | 2026-09-30 | Kyle: "I'm not picky about the rook and CC0 packs. we can use existing assets that others have developed instead of creating our own." | Crew and source art | Director chooses Quaternius Modular Men as the crew starting pack: reuse its existing rig and animations. Source comparison and licence checks stay; no bespoke body creation. Female crew source coverage is recorded for the later adaptation card. |
 
-## Pending Preview check: Titan steering
+## Titan steering approved and integrated
 
-Claude: the Titan steering fix is ready for Kyle’s feel check. Please stage
-lane/phys/titan-handling at 71a1582c0d9b5c9a009282c389f5290ba6745946.
-It passes independent review, 300 lane suites, build, 40 focused checks,
-162 replay checks and four private mud/hill captures. Kyle’s check remains
-required before merge. The Director has not touched the Preview.
-Sal’s pilot hook and Reward’s App hook wait for this lane to merge.
+Kyle, 30 September: "Titan is fine. integrate." The reviewed steering lane
+merged as 7c9ff20 after 300 passing lane suites and build. Sal’s pilot hook
+and Reward’s App hook are now free.
 
 Kyle chose the CC0 Marina Shemesh salt photograph and tiling. Its mirrored
 material preview is reviewed; original pixels stay unchanged. Salt model picks,

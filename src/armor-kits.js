@@ -1,7 +1,7 @@
 import {CARS} from './config.js';
 import {isCarUnlocked} from './progression.js';
 import {rankForXp} from './notoriety.js';
-import {hasDefeatedWarlord, normalizeWasteland} from './wasteland-progress.js';
+import {hasDefeatedWarlord, hasEarnedSideSaws, normalizeWasteland} from './wasteland-progress.js';
 
 // Prices are per car. Later tiers cost more because they carry stronger plating.
 export const ARMOR_KITS = Object.freeze({
@@ -11,8 +11,25 @@ export const ARMOR_KITS = Object.freeze({
   warlord: Object.freeze({name: 'Warlord', armor: 30, massKg: 270, price: 2500, rank: 1}),
 });
 
+// Earned items stay separate from the three unchanged paid plating tiers.
+export const EARNED_ARMOR_KITS = Object.freeze({
+  'side-saws': Object.freeze({name: 'Side Saws', armor: 0, massKg: 0}),
+});
+
 export function validArmorKit(id) {
-  return Object.hasOwn(ARMOR_KITS, id) ? id : null;
+  return Object.hasOwn(ARMOR_KITS, id) || Object.hasOwn(EARNED_ARMOR_KITS, id) ? id : null;
+}
+
+export function armorKitDetails(id) {
+  return ARMOR_KITS[validArmorKit(id)] || EARNED_ARMOR_KITS[validArmorKit(id)] || null;
+}
+
+export function ownsArmorKit(profile, car, id) {
+  if (!Object.hasOwn(CARS, car) || !isCarUnlocked(profile, car) ||
+      profile?.wasteland?.version !== 1 || !validArmorKit(id)) return false;
+  if (id === 'side-saws') return hasEarnedSideSaws(profile.wasteland);
+  const owned = profile.wasteland.kits?.[car]?.owned;
+  return Array.isArray(owned) && owned.includes(id);
 }
 
 export function armorKitBonus(id) {
@@ -28,8 +45,7 @@ export function getEquippedArmorKit(profile, car) {
       profile?.wasteland?.version !== 1) return null;
   const kit = profile.wasteland.kits?.[car];
   const equipped = validArmorKit(kit?.equipped);
-  return equipped && Array.isArray(kit.owned) && kit.owned.includes(equipped)
-    ? equipped : null;
+  return equipped && ownsArmorKit(profile, car, equipped) ? equipped : null;
 }
 
 function currentWasteland(profile) {
@@ -74,12 +90,13 @@ export function equipArmorKit(profile, car, id = null) {
   const wasteland = currentWasteland(profile);
   if (!wasteland) return result(profile, 'This career is not ready for Wasteland kit changes.');
   const installed = wasteland.kits[car] || {owned: [], equipped: null};
-  if (id !== null && (!validArmorKit(id) || !installed.owned.includes(id)))
-    return result(profile, 'Buy this kit for this car first.');
+  if (id !== null && !ownsArmorKit({...profile, wasteland}, car, id))
+    return result(profile, 'Earn or buy this kit first.');
   if (installed.equipped === id) return result(profile, id ? 'This kit is already equipped.' : 'This car is already stock.');
   return {
     profile: {...profile, wasteland: {...wasteland, kits: {...wasteland.kits,
-      [car]: {...installed, equipped: id}}}},
+      [car]: {...installed, owned: id === 'side-saws'
+        ? [...new Set([...installed.owned, id])] : installed.owned, equipped: id}}}},
     ok: true, reason: '', cost: 0, equipped: id,
   };
 }

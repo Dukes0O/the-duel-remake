@@ -183,6 +183,7 @@ root.addEventListener('click',e => {
     case 'yard-crew': openYardPanel('crew'); return;
     case 'yard-scrapdome': if(app.arenaAvailable?.())openYardPanel('scrapdome'); return;
     case 'arena-start': if(app.startArenaEvent({opponents:arenaOpponents})){yardPanel='home';lastScreen=null;} return;
+    case 'warlord-retry-save': app.retryArenaSettlement();lastScreen=null;renderState(app.duel.state);return;
     case 'arena-rematch': if(app.restart())lastScreen=null; return;
     case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
     case 'arena-yard': if(app.returnToYard())lastScreen=null; return;

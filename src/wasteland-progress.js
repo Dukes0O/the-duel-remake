@@ -22,6 +22,14 @@ export function hasDefeatedWarlord(value) {
     id !== 'defeated' && record(item) && item.defeated === true);
 }
 
+// Entitlement is the named career's settled defeat, not a second purchase
+// ledger. Both supported legacy defeat shapes inherit it without repayment.
+export function hasEarnedSideSaws(wasteland) {
+  if (wasteland?.version !== 1) return false;
+  return wasteland.warlords?.sal?.defeated === true ||
+    ids(wasteland.warlords?.defeated).includes('sal');
+}
+
 export const MUDDY_HOLLOW_HUBCAP_IDS = Object.freeze([
   'hilltop', 'pond', 'mega-landing', 'mud-pit', 'log-ramp',
 ]);
@@ -92,7 +100,8 @@ export function normalizeWasteland(value, legacyWeapons, history = []) {
   const crewUnlocked = [...new Set(['rook', ...ids(crewSource.unlocked)])];
   const kits = Object.fromEntries(entries(source.kits).map(([car, item]) => {
     const owned = ids(item?.owned);
-    return [car, {owned, equipped: owned.includes(item?.equipped) ? item.equipped : null}];
+    return [car, {...(record(item) ? item : {}), owned,
+      equipped: owned.includes(item?.equipped) ? item.equipped : null}];
   }));
   const warPaint = Object.fromEntries(entries(source.warPaint).map(([car, item]) => [
     car, {layers: Array.isArray(item?.layers) ? item.layers.filter(record).slice(0, 32) : []},

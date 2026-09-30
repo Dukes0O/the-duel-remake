@@ -11,6 +11,8 @@ import { breakableScenery, roadsideScenery, roadsideTrafficDecision, sceneryIden
 import { GLANCING_WALL_NORMAL_FRACTION, clamp, freshDamageZones } from './sim-common.js';
 import {applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {combatOwnerId} from './combat-teams.js';
+import {vehicleContactModifiers} from './vehicle-contact-modifiers.js';
+import {burst} from './combat-weapons.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {KNOCK, resolveCarCrash} from './vehicle-knock.js';
 import {CRASH_TUNING} from './vehicle-collision.js';
@@ -73,68 +75,80 @@ function combatShieldForActor(duel, actor) {
   return state.opponents.includes(actor) ? actor.combatShield : 0;
 }
 
-function armoredVehicleContact(duel, {a,b,nx,nz,end,width,length,specA,specB,
-  impactMph,zoneA,zoneB,pairKey}) {
-  const incidents=duel._combatRamIncidents;
-  const firstImpact=!incidents.has(pairKey);
-  const correction=Math.max(0,nx?width+.04-end.x*nx:length+.04-end.z*nz);
-  const shareA=specB.mass/(specA.mass+specB.mass),shareB=1-shareA;
+function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, specB,
+  impactMph, zoneA, zoneB, pairKey}) {
+  const incidents = duel._combatRamIncidents;
+  const firstImpact = !incidents.has(pairKey);
+  const correction = Math.max(0, nx ? width + .04 - end.x * nx : length + .04 - end.z * nz);
+  const shareA = specB.mass / (specA.mass + specB.mass), shareB = 1 - shareA;
   // Continue to separate solid bodies while the incident is latched. Only the
   // first contact transfers momentum or armor and emits a hit.
-  a.lateral+=nx*correction*shareA;b.lateral-=nx*correction*shareB;
-  a.s+=nz*correction*shareA;b.s-=nz*correction*shareB;
-  a.offRoad=!duel._surface(a.s,a.lateral).mainRoad;
-  b.offRoad=!duel._surface(b.s,b.lateral).mainRoad;
-  if(!firstImpact)return true;
+  a.lateral += nx * correction * shareA;
+  b.lateral -= nx * correction * shareB;
+  a.s += nz * correction * shareA;
+  b.s -= nz * correction * shareB;
+  a.offRoad = !duel._surface(a.s, a.lateral).mainRoad;
+  b.offRoad = !duel._surface(b.s, b.lateral).mainRoad;
+  if (!firstImpact) return true;
   incidents.add(pairKey);
 
-  if(a!==duel.state)duel._dentVehicle(a,zoneA,impactMph);
-  if(b!==duel.state)duel._dentVehicle(b,zoneB,impactMph);
-  const response=combatRamResponse({closingMph:impactMph,massA:specA.mass,
-    massB:specB.mass,speedA:a.speedMph,zoneA,offset:b.lateral-a.lateral,
-    steerA:a.input?.steer||0});
+  if (a !== duel.state) duel._dentVehicle(a, zoneA, impactMph);
+  if (b !== duel.state) duel._dentVehicle(b, zoneB, impactMph);
+  const response = combatRamResponse({closingMph: impactMph, massA: specA.mass,
+    massB: specB.mass, speedA: a.speedMph, zoneA, offset: b.lateral - a.lateral,
+    steerA: a.input?.steer || 0});
   // Motion comes from the rigid-body solver (docs/CRASH_PHYSICS.md); the
   // ram response still sets the computer's recovery timing and ram cadence.
   // Armor keeps the player in control below a big hit: a lower bar on the
   // road in Mad Max (CRASH-04) than in the Scrapdome arena.
-  const crash=resolveCarCrash(duel,a,b,{playerKnockMinDvMph:
-    duel.state.mode!=='wasteland'?0:duel.state.arena?
-      CRASH_TUNING.armoredPlayerKnockDvMph:CRASH_TUNING.madMax.playerKnockDvMph});
-  for(const actor of [a,b])if(actor!==duel.state)
-    actor.ramRecoverySec=Math.max(actor.ramRecoverySec||0,response.recoverySeconds);
-  emitVehicleSmash(duel,{a,b,crash,zone:zoneB});
-  b.contactCooldown=Math.max(b.contactCooldown||0,.8);
-  if(a===duel.state&&duel.state.invulnerableSec<=0&&impactMph>1)
-    duel._scrape(zoneA,impactMph);
+  const crash = resolveCarCrash(duel, a, b, {playerKnockMinDvMph:
+    duel.state.mode !== 'wasteland' ? 0 : duel.state.arena ?
+      CRASH_TUNING.armoredPlayerKnockDvMph : CRASH_TUNING.madMax.playerKnockDvMph});
+  for (const actor of [a, b]) if (actor !== duel.state)
+    actor.ramRecoverySec = Math.max(actor.ramRecoverySec || 0, response.recoverySeconds);
+  emitVehicleSmash(duel, {a, b, crash, zone: zoneB});
+  b.contactCooldown = Math.max(b.contactCooldown || 0, .8);
+  if (a === duel.state && duel.state.invulnerableSec <= 0 && impactMph > 1)
+    duel._scrape(zoneA, impactMph);
 
-  const closingKph=impactMph*COMBAT_TUNING.armor.kphPerMph;
+  const closingKph = impactMph * COMBAT_TUNING.armor.kphPerMph;
   // On the road, crash physics judges ram damage by each car's own change
   // in velocity (F = ma): a heavy car deals more and takes less (CRASH-04).
-  const dvDamage=!duel.state.arena;
-  const dvOf=victim=>victim===a?crash.result.a.dvMph:crash.result.b.dvMph;
-  if(dvDamage?Math.max(dvOf(a),dvOf(b))>COMBAT_TUNING.armor.ramDvThresholdMph:
-    closingKph>COMBAT_TUNING.armor.ramThresholdKph){
-    const pointA=duel.course.groundAt(a.s,a.lateral);
-    const pointB=duel.course.groundAt(b.s,b.lateral);
-    const hitPosition={x:(pointA.x+pointB.x)/2,y:(pointA.y+pointB.y)/2,
-      z:(pointA.z+pointB.z)/2};
-    const report=(attacker,victim,face)=>{
-      const attackerIndex=attacker===duel.state?-1:duel.state.opponents.indexOf(attacker);
-      const victimIndex=victim===duel.state?-1:duel.state.opponents.indexOf(victim);
-      const spiked=combatFrontSpikes(attacker,face);
-      const armorRemoved=applyRamArmorDamage(duel,victim,impactMph,
-        {spiked,owner:combatOwnerId(duel,attacker),...(dvDamage?{dvMph:dvOf(victim)}:{})});
-      duel.emit({combatRamHit:true,attacker:attackerIndex<0?'player':'rival',
-        victim:victimIndex<0?'player':'rival',attackerIndex,victimIndex,
-        armorRemoved,closingKph,spiked,hitPosition});
+  const dvDamage = !duel.state.arena;
+  const dvOf = victim => victim === a ? crash.result.a.dvMph : crash.result.b.dvMph;
+  if (dvDamage ? Math.max(dvOf(a), dvOf(b)) > COMBAT_TUNING.armor.ramDvThresholdMph :
+    closingKph > COMBAT_TUNING.armor.ramThresholdKph) {
+    const pointA = duel.course.groundAt(a.s, a.lateral);
+    const pointB = duel.course.groundAt(b.s, b.lateral);
+    const hitPosition = {x: (pointA.x + pointB.x) / 2, y: (pointA.y + pointB.y) / 2,
+      z: (pointA.z + pointB.z) / 2};
+    const report = (attacker, victim, face, victimFace) => {
+      const attackerIndex = attacker === duel.state ? -1 : duel.state.opponents.indexOf(attacker);
+      const victimIndex = victim === duel.state ? -1 : duel.state.opponents.indexOf(victim);
+      const spiked = combatFrontSpikes(attacker, face);
+      const modifiers = vehicleContactModifiers(duel, attacker, victim, face, victimFace);
+      const armorRemoved = applyRamArmorDamage(duel, victim, impactMph,
+        {spiked, owner: combatOwnerId(duel, attacker), contactFace: victimFace,
+          damageMultiplier: modifiers.multiplier, ...(dvDamage ? {dvMph: dvOf(victim)} : {})});
+      const sawHit = armorRemoved > 0 && (modifiers.sideSaws || modifiers.salSweep);
+      // This existing bounded spark pool is already drawn by combat effects.
+      // Ordinary contacts never add a burst or a new simulation field.
+      if (sawHit) burst(duel.state.combat, hitPosition, 'spark');
+      if (armorRemoved > 0 && modifiers.salSweep) {
+        attacker.salSaw.hit = true;
+        duel._callout('SAW SWEEP!', 1.6);
+      }
+      duel.emit({combatRamHit: true, attacker: attackerIndex < 0 ? 'player' : 'rival',
+        victim: victimIndex < 0 ? 'player' : 'rival', attackerIndex, victimIndex,
+        armorRemoved, closingKph, spiked, hitPosition, ...(sawHit ? {sideSaws: true} : {})});
     };
-    report(b,a,zoneB);
-    report(a,b,zoneA);
+    report(b, a, zoneB, zoneA);
+    report(a, b, zoneA, zoneB);
   }
-  if(a===duel.state&&duel.state.opponents.includes(b)&&zoneA==='front'&&zoneB==='rear')
-    duel.emit({vehicleRam:true,victim:'rival',impactMph,
-      lateralKick:response.shovelFromA,
-      launched:crash.severityB==='launched'});
+  if (a === duel.state && duel.state.opponents.includes(b) && zoneA === 'front' && zoneB === 'rear')
+    duel.emit({vehicleRam: true, victim: 'rival', impactMph,
+      lateralKick: response.shovelFromA,
+      launched: crash.severityB === 'launched'});
   return true;
 }
 

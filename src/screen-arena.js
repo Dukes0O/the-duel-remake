@@ -91,9 +91,14 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   const warlord = arena.mode === 'warlord' ? WARLORDS[arena.warlordId] : null;
   const title = warlord ? won ? 'YOU WIN.' : 'TRY AGAIN.' :
     won ? 'LAST CAR<br>ROLLING.' : place === 2 ? 'SO CLOSE.' : 'BACK TO<br>THE HEAP.';
-  const description = warlord
+  let description = warlord
     ? `${won ? `You beat ${escapeHTML(warlord.name)}.` : `${escapeHTML(warlord.name)} won. Losing costs nothing.`} ${REASONS[result.reason] || ''}`
     : `${won ? 'You wrecked them more than they wrecked you.' : `${escapeHTML(winner.name)} took the Scrapdome.`} ${REASONS[result.reason] || ''}`;
+  if (warlord && result.settlementRetryable) {
+    description += ' Could not save this result. Retry before leaving.';
+  } else if (warlord && result.settlementSaved && result.kitEarned === 'side-saws') {
+    description += ' Side Saws unlocked and equipped on this car. Free on every car you own.';
+  }
   const metrics = metric('PLACE', `${ORDINALS[place - 1]} / ${arena.participants.length}`, true) +
     metric('WRECKS', me.wrecks) + metric('WRECKED', me.wrecked) + metric('DAMAGE DEALT', Math.round(me.damageDealt)) +
     (warlord && !Number.isSafeInteger(result.scrapEarned) ? '' :
@@ -105,7 +110,9 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   }).join('')}</ol>`;
   return {eyebrow: `SCRAPDOME / ${warlord ? escapeHTML(warlord.name.toUpperCase()) : 'LAST CAR ROLLING'} / ${won ? 'VICTORY' : ORDINALS[place - 1]}`, title, description,
     metrics, extra: table,
-    actions: action('REMATCH', 'arena-rematch', true) + action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
+    actions: (warlord && result.settlementRetryable ? action('RETRY SAVE', 'warlord-retry-save', true) : '') +
+      action('REMATCH', 'arena-rematch', !result.settlementRetryable) +
+      action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
 }
 
 export function arenaPauseScreen(state, {metric, action, time}) {
