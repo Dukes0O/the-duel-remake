@@ -1,6 +1,7 @@
 # CRASH-SWITCH-REMOVE: permanent released crash rules
 
-Status: source and independent review complete; final mandatory lane gate pending.
+Status: merged after independent review and the final clean lane/build gate.
+Final gate: 296 suites passed in 433.93 seconds at 6f77a23; production build passed.
 
 Both crash switches shipped on 27 September. This card keeps that released
 physics, look and sound, while removing the switch registry entries and the

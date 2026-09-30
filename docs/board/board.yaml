@@ -511,7 +511,7 @@ tasks:
     lane: CMB
     size: M
     needs: [CRASH-RELEASE]
-    status: building
+    status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [src/feature-flags.js, src/sim-contacts.js, src/combat-armor.js, src/sim-driving.js, src/sim-police.js, src/sim-rival.js, src/render3d.js, src/audio.js, src/sound-bank.js, src/arena/arena-event.js, src/test.js, tools/test-crash-switch-remove.mjs, docs/changes/CRASH-SWITCH-REMOVE.md]
     hooks: [tools/test-feature-flags.mjs, tools/test-combat-knockaway.mjs, tools/test-combat-ramming.mjs, tools/test-combat-replays.mjs, tools/test-crash-hollow-audio.mjs, tools/test-crash-presentation.mjs, tools/test-crash-slide.mjs, tools/test-armored-vehicle-impact.mjs, tools/test-madmax-crash.mjs, tools/test-madmax-solid.mjs, tools/test-police-knock.mjs, tools/test-vehicle-knock-integration.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, tools/test-combat-balance.mjs, tools/combat-balance.mjs, tools/scenarios/preview-storage.mjs, src/destructibles.js, src/vehicle-impact.js, tools/test-roadside-destruction.mjs, tools/scenarios/crash-presentation.mjs, start-preview.bat, src/wasteland-tuning.js]
