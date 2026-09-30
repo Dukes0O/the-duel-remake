@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "kind": "synthetic-frame-test-baseline",
+  "baselineCommit": "5a994ad1b99f6a90734f960cb89dbd5eb26e6675",
+  "samples": 600,
+  "warmup": 20,
+  "generation": {
+    "cpu": {
+      "baseMs": 4,
+      "period": 7,
+      "incrementMs": 0.11,
+      "highOffsetMs": 0.8,
+      "approachOffsetMs": 0.25
+    },
+    "raf": {
+      "baseMs": 16,
+      "period": 9,
+      "incrementMs": 0.07,
+      "highOffsetMs": 0.3,
+      "approachOffsetMs": 0.1
+    },
+    "mirrorRefreshPeriod": 2,
+    "warmEndTimestampMs": 1000
+  },
+  "defaults": {
+    "cpuScale": 1,
+    "rafScale": 1,
+    "draws": 90,
+    "triangles": 50000
+  },
+  "runs": {
+    "a1": {
+      "cpuScale": 1,
+      "rafScale": 1,
+      "draws": 90,
+      "triangles": 50000
+    },
+    "b": {
+      "cpuScale": 1.08,
+      "rafScale": 1.06,
+      "draws": 96,
+      "triangles": 51200
+    },
+    "a2": {
+      "cpuScale": 1.02,
+      "rafScale": 1.01,
+      "draws": 90,
+      "triangles": 50000
+    }
+  }
+}
