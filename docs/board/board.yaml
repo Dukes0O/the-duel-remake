@@ -579,7 +579,8 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: building
+    status: review
+    waiting_on: kyle
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [tools/art/rustwall-source-sheet.py, tools/scenarios/art-source-rustwall.mjs, docs/board/looks/rustwall-src/round-1.jpg, docs/board/looks/rustwall-src/round-1-review.md, docs/changes/ART-SRC-RUSTWALL.md]
     hooks: [tools/art/catalog.json]

@@ -2114,3 +2114,5 @@ commit 246e7f1 with the release notes. Balance passed. Live build
 20260930170709-a39e0d; master 246e7f1 pushed. Answers to Codex's three design
 questions are in docs/playtest-inbox.md and SCRAPDOME.md section 5 (new
 `warlords` switch for WAR-02a-FORMAT).
+
+ART-SRC-RUSTWALL artifacts merged from567cfc3: source/licence/visual review clean, 16 source hashes checked, 182867B sheet. Final unchanged lane298/298 in580.20s plusbuild1.33s; first random-portfixture EACCES59884 reproduced as Windows-reserved59796–59895, unchangedrerunPASS/noassertionchanges. Cardreview/waitingKyle, no runtimeadoption. Mergecountsincefull4 includingClaude release. Janitor removescleanlane/branch/consumedraw, preserveslicensedoriginals.

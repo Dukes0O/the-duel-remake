@@ -47,3 +47,7 @@ FBX-preview draft was rejected and replaced before committing the one review
 sheet. Raw images and diagnostic JSON stay in ignored evidence and are deleted
 by the Director after the review verdict is recorded. Licensed originals and
 licence files remain in Kyle’s external art library.
+
+## Final merge gate
+
+Exact clean 567cfc35b4ae53c0bfabfe310925342da4f32c05 passed all 298 mandatory lane suites in 580.20 s and build in 1.33 s; no skipped suites. First run failed the existing launcher fixture before any assertion: random IPv6 port 59884 lies in Windows reserved range 59796–59895. It recorded 201 passes, one failure and 96 not run in 527.61 s; build passed. The complete unchanged rerun passed, with no source or assertion changes. Independent source/visual review is clean. This merges comparison artifacts only; source choice remains Kyle’s.
