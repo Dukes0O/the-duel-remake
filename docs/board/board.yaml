@@ -2508,7 +2508,7 @@ tasks:
     lane: RELEASE
     size: S
     needs: [SCRAPDOME-PLAYTEST, FEATURE-PLAYTEST, RALLY-CHECKPOINT, CRASH-SWITCH-REMOVE]
-    status: building
+    status: released
     claimed_by: "Claude, 30 September 2026"
     acceptance:
       - "Kyle approved in writing on 30 September 2026. Flip scrapdome, titan-climb and muddy-hollow to on in src/feature-flags.js (career-backup stays dev), then full release evidence on the exact integration commit and the OPERATIONS.md release routine. The Scrapdome stays reachable only from the yard and Muddy Hollow only by driving there; the main menu is unchanged. Waits for CRASH-SWITCH-REMOVE, which owns feature-flags.js until it merges."
@@ -2528,6 +2528,15 @@ tasks:
       - "Settled rule: for the Titan only (a new car field, lowSpeedSteer: true in its CARS entry), the rolling factor is max(speed/30, .55) once the Titan moves faster than 3 mph, and steering grip is max(grip, 1.0) below 45 mph. Above 45 mph nothing changes, so its high-speed feel and every other car stay exactly as they are."
       - "Tests first: at 12 mph and 25 mph on dirt the Titan's turning rate is at least the rally car's; at 70 mph it is unchanged; ordinary cars unchanged at every speed; race fingerprints unchanged except replays that drive the Titan, each named and explained in the change note."
       - "Kyle checks it in the Preview (waiting_on: kyle at review)."
+  - id: HK-LAUNCHER-PORT
+    title: "Launcher port test retries ports Windows has reserved"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: ready
+    acceptance:
+      - "tools/test-launcher-port.mjs picks a random port from 5200 to 62000 and retries only on EADDRINUSE. On 30 September 2026 a full tier failed once with EACCES on ::1:59825, a port Windows had reserved. Retry on EACCES as well (still 20 attempts); nothing else changes. Test first by stubbing a listen that fails with EACCES once."
   - id: WAR-SAL-TUNE
     title: "Claude plays Sal, Gratian plays Sal in Preview; tune to 'winnable in a few tries'"
     owner: claude

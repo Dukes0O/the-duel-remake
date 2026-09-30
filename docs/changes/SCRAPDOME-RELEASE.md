@@ -1,6 +1,6 @@
 ---
 task: SCRAPDOME-RELEASE
-status: review
+status: released
 kind: release
 flag: scrapdome, titan-climb, muddy-hollow
 player_facing: yes
@@ -42,8 +42,13 @@ written approval, so the test now checks the released state.
 
 ## Tests
 
-Lane tier and build in the lane; full tier and release evidence on the exact
-integration commit (recorded in docs/board/run-log.md).
+Lane tier and build in the lane. Full tier 298 of 298 on the merge 73f63eb
+and again on the final release commit 246e7f1 (release notes added). Combat
+balance with the released rules passed. Build 20260930170709-a39e0d checked on
+port 5188 (menu loads, no errors, no Scrapdome entry on the main menu), copied
+into the live dist; the live server was not running, so the landing page was
+verified from the files. dist 149 files, dist-previous 149 (20c16a), dist-next
+deleted; master pushed.
 
 ## Removed
 

@@ -2099,6 +2099,21 @@ ART-SRC-CREW merged fromb0444f8: independent source/visual review clean, nine ca
 
 Full checkpoint: exact clean db785194244e02b8d8f206a79a3e0407dd09cff3 passed all 298 full-tier suites in 489.64 s on 30 September, with no skipped suites. The ledger confirms the same clean source at start and end. This checkpoint resets the five-merge/two-hour count. D8 push follows; status and ledger metadata do not extend that pass to a later source commit. No history rewrite or release.
 
+<<<<<<< HEAD
 ART-SRC-HANDS source artifacts merged from91c4c93: independent review confirms7hashes/licences/geometry and genuine113025B sheet; sourcecatalog preserves Crew/EGG-03 choices. Final escalated lane298/298 in666.73s and build1.12s passed, sourcecleanunchanged. Default-sandbox audio decoder failures were reproduced and cleared by authorized child-process execution, without source/assertion changes. Card staysreview/waitingKyle. Mergecountsincefull2 includingClaude's release merge; janitor removeslane/branch/usedraw, retains originallicensedcache.
 
 WAR-02a-FORMAT merged frome837be1 after clean source/Save Guardian review, private memory-only browser22761(7captures/0errorswarnings), final lane299/299 in519.84s and build1.15s. First-to-three/1.5armor/phase2/240s+suddendeath are deterministic; warlordsdev keeps unfinished Sal out of releasedScrapdome. Fixed the initially added arena:null full-state regression by removing it; old HINTS/replay pins unchanged. Stronger rejection tests and Armory offflag regression reviewed. Mergecountsincefull3 includingClaude release. Janitor removescleanlane/branch/consumedraw, retaining recipes and verdict.
+=======
+## 30 September 2026, Claude: SCRAPDOME-RELEASE
+
+Kyle approved the Scrapdome, Titan climbing and Muddy Hollow for the real game.
+Switched on in lane release/scrapdome-0930 (four switch-state assertions moved
+to the released state, reviewed in the change note), merged as 73f63eb after
+CRASH-SWITCH-REMOVE. Full tier 298/298 on 73f63eb (first run: one port
+EACCES in test-launcher-port, card HK-LAUNCHER-PORT) and 298/298 on the final
+commit 246e7f1 with the release notes. Balance passed. Live build
+20260930170709-a39e0d; master 246e7f1 pushed. Answers to Codex's three design
+questions are in docs/playtest-inbox.md and SCRAPDOME.md section 5 (new
+`warlords` switch for WAR-02a-FORMAT).
+
+>>>>>>> release/0930
