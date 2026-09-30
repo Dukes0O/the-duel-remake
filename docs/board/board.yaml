@@ -615,10 +615,12 @@ tasks:
     lane: ART
     size: S
     needs: [ART-SRC-CREW]
-    status: building
+    status: review
+    waiting_on: kyle
     claimed_by: codex-director-2026-09-30-resume
     owns: [tools/art/crew-w-source-sheet.py, tools/art/crew-w-source-inspect.py, tools/scenarios/crew-w-source-current.mjs, docs/board/looks/crew-w-src/, docs/changes/ART-SRC-CREW-W.md]
     hooks: [tools/art/catalog.json]
+    review_checkpoint: "Clean bbb4db3 source comparison376150B1800x1660; current female GLBs unchanged. Two verified CC0 packs lack settled garments/actions; requested Modular Women actual license/model downloads quota-blocked and general/pack pages differ. Keep current; Claude receives sheet/source gap before artifact merge. Independent review and lane/build gates pending; no adaptation."
     helpers: [reviewer]
     sequencing: "Male fitting paused and released its unchanged catalog hook. Source women now; tanker waits for this catalog lane to merge. Source only, no runtime assets or adaptation. Compare 2-3 CC0 packs with checked licences and source geometry/rig when available; ask Kyle at the sheet and send it to Claude."
     acceptance:
