@@ -259,8 +259,137 @@ no rank requirement, no ladder order.
   sweep is fair (it always has its tell). Headless tests prove the tell, the
   window, phase two and one-time settlement; people judge the fun.
 
-The Dustmonger and Mother Mirage keep their designs above; each gets the same
-"settled for build" table before its code, after Sal has been played.
+The warlords below are settled for build on 30 September 2026 (Kyle: design
+the rest of phase 3 now). What Gratian learns playing Sal tunes them, not
+redesigns them: a changed number goes in `docs/board/decisions.md`.
+
+**Shared rules for every warlord fight.** The format above (first to three,
+1.5 times armor unless a warlord says otherwise, phase two after their first
+wreck, four minutes then sudden death, losing costs nothing). Every move has
+a tell of `BRAIN_DIFFICULTY.tellSec` (1.2, 0.8, 0.5 s) unless it says
+otherwise, 80% as long in phase two. Every warlord has a **window** after
+their move where hits deal 1.5 times damage, shown on their car. First win:
+the reward, 150 scrap and the territory claimed; rematch wins pay 25 scrap.
+Settlement is once per fight, atomic, per named player (Save Guardian). An
+intro card with the name, car and one taunt line comes before the countdown.
+
+### Settled for build: The Dustmonger (WAR-02b)
+
+Dusthawk Rally. A gunner who fires the crossbow and hides in his own dust.
+
+| Rule | Value |
+| --- | --- |
+| Base behaviour | Keeps 20 to 45 m from the player and fires the crossbow (hunter brain) |
+| Dust Veil | When the player is within 40 m behind him: tell of brown exhaust puffs, then a smoke cloud (the arsenal's smoke, 7 m radius, 5 s) behind him, and, if he is driving straight, an 8 m oil strip behind the cloud. At most every 10, 8, 6 s (Easy, Medium, Hard) |
+| Counter | Go around the cloud, not through his line: the oil lies only where he drove straight |
+| Window | After a veil his engine coughs: 2 s at 70% speed, rear hits 1.5 times |
+| Phase two | A dust storm: fog closes in (drawn only, never hides a tell), veils 20% more often, clouds 1.3 times wider |
+| Reward | Smoke Screen, unlocked early and working (built by ARS-CORE) |
+| Callouts | `DUST VEIL!`, `HE'S CHOKING. HIT HIM NOW!` |
+
+### Settled for build: Mother Mirage (WAR-02c)
+
+Aurora GTR. An evasive gunner who splits into copies.
+
+| Rule | Value |
+| --- | --- |
+| Base behaviour | Circles at 25 to 50 m and fires the crossbow |
+| Mirage | Tell: a heat shimmer around her car. Then she splits into three matching cars that spread 8 m apart for 6 s. Only the real one fires and leaves tyre marks. A copy bursts into scrap on its first hit. At most every 12, 10, 8 s |
+| Counter | Watch who fires and whose tyres mark the floor |
+| Window | Hitting the real Mirage during the split ends it and stuns her for 2 s; hits then deal 1.5 times |
+| Phase two | Copies ram (rammer brain, half ram damage), splits 20% more often |
+| Reward | Decoy Drone, unlocked early and working (ARS-03 reuses these decoy cars) |
+| Build note | Decoy cars are `state.arena` participants with a `decoy` flag: they drive, can be hit and burst, but never score, fire or settle. `targetFor` (docs/ARSENAL.md) sends computer aim to them. |
+| Callouts | `MIRAGE!`, `GOT HER. HIT HER NOW!` |
+
+### Settled for build: Gearhead Gunn (WAR-03a)
+
+Stuttgart 959-S with a roof turret. A long-range shooter who keeps away.
+
+| Rule | Value |
+| --- | --- |
+| Base behaviour | Keeps 40 to 80 m away (kiter brain: backs off when the player closes) and fires single rockets |
+| Barrage | Tell: the turret swings onto the player with a red aiming line and a rising whine. Then three rockets (Rocket Pods numbers) at where the player will be. At most every 9, 7, 5 s |
+| Counter | Break the line: turn hard, or put a scrap pile between you |
+| Window | The turret overheats for 3 s (glows red, no shots) and he slows to 80% |
+| Phase two | Five-rocket barrages |
+| Reward | Rocket Pods, unlocked early (ARS-02), and a turret look for your kit |
+| Callouts | `BARRAGE!`, `HIS GUN'S COOKED. GET HIM!` |
+
+### Settled for build: Kettle Kingpin (WAR-03b)
+
+Titan Monster. The arena crusher. His armor is the Titan's (160) times 1.5.
+
+| Rule | Value |
+| --- | --- |
+| Base behaviour | Rammer brain, slow but heavy (crash physics does the rest) |
+| Kettle Drop | Tell (1.4 times the usual): he revs and squats, and a red ring 8 m across appears on the floor where he will land. Then he leaps (1.2 s arc) and lands: every car in the ring is shoved outward as if hit at 25 mph and loses 20 armor; a car he lands on squarely loses 40. At most every 12, 10, 8 s |
+| Counter | Get out of the ring |
+| Window | He is stuck for 2.5 s after landing, wheels spinning |
+| Phase two | Two drops in a row, the second ring appearing as he lands |
+| Reward | The Titan warlord kit (looks and +30 armor on the Titan) and Tusk unlocked early |
+| Callouts | `KETTLE DROP!`, `HE'S STUCK. HIT HIM NOW!` |
+
+### Settled for build: The Twin Vultures (WAR-03c)
+
+Two raider buggies, fast and light. They fight as a pair.
+
+| Rule | Value |
+| --- | --- |
+| Format | First to three wrecks, counting either buggy. Each buggy has 0.9 times arena armor (no 1.5), respawns on its own |
+| Base behaviour | One harasses (hunter brain, crossbow), one shadows |
+| Pincer | Tell: both flash and sound a two-tone horn, and arcs on the screen edge show which side each comes from. Then they charge in from left and right at the same moment. At most every 11, 9, 7 s |
+| Counter | Brake hard during the tell: they meet each other instead of you |
+| Window | If they collide, both are stunned for 2.5 s |
+| Phase two | After their second wreck: pincers come 20% faster and the shadow also fires |
+| Reward | Grapple range +10 m for Jax (needs CREW-02) |
+| Callouts | `PINCER!`, `THEY HIT EACH OTHER. NOW!` |
+
+### Settled for build: The Tollkeeper (WAR-03d)
+
+The Convoy Raid boss (section 10): he drives the armored tanker on the Salt
+Flats. The fight is the Convoy Raid with these additions.
+
+| Rule | Value |
+| --- | --- |
+| Toll Gate | Tell: a klaxon and flashing trailer lights. Then the trailer drops a spike strip 12 m wide across his path (caltrops rules), with a gap marked by two lights. At most every 14, 11, 9 s |
+| Counter | Drive through the lit gap |
+| Window | After each gate the trailer doors open for 3 s, showing the core valve: hits on it deal 2 times damage |
+| Phase two | After the first valve breaks: his escorts respawn once, gates 20% more often |
+| Win | Break the valves and plant the finishing charge by boarding (CREW-03), as in every Convoy Raid |
+| Reward | The convoy kit (plated look, +30 armor on any car) and his story card |
+| Callouts | `TOLL GATE!`, `DOORS OPEN. HIT THE CORE!` |
+
+### Settled for build: Baron Blackiron (WAR-03e)
+
+Viper Prototype with the full arsenal. The final warlord.
+
+| Rule | Value |
+| --- | --- |
+| Unlock | His territory's hold is full and the other seven warlords are defeated |
+| Armor | The Viper's 80 times 1.5; he is fast and fragile |
+| Moves | He takes turns using Saw Sweep, Dust Veil, Mirage and Barrage, each with its own tell, counter and window as above, one at a time, at most every 8, 7, 6 s |
+| Phase two | He adds Nitro Ram (docs/ARSENAL.md) with its own tell (spikes out, engine scream), and two moves may follow each other with one tell between them |
+| Reward | The secret crew member, the Chrome Crown kit and the title "Warlord of the Wastes" |
+| Callouts | Each move keeps its own; on the win: `THE BARON IS DOWN!` |
+
+### Settled for build: the ladder's end (WAR-04)
+
+- **Story cards.** Each first win gives a card: the warlord's name, a picture
+  of their car rendered from the real model (SPEC 3.10 v3: no generated
+  pictures), and three short lines of story. The cards live on a wall in the
+  Scrapdome yard. Per named player, additive.
+- **Wanted posters.** After every warlord win, the results screen shows a
+  poster: your car rendered from the real model, your crew member, and the
+  fight's numbers (wrecks, hits, time).
+- **The secret crew member: Vesper Blackiron,** the Baron's daughter, who
+  leaves his gang when he falls. Scout-mechanic. Perk: gear recharges 25%
+  faster. Signature gear: **Shock Charge**, an on-foot Tesla pulse 8 m around
+  her that disables car weapons for 3 s (the arsenal's `disabled` effect).
+  She appears in the crew roster only after the Baron is defeated; before
+  that she is not listed at all.
+
+
 
 ## 6. Where it lives and what it pays
 
@@ -418,6 +547,110 @@ tests first, and keeps everything behind the `scrapdome` switch.
 | WAR-02a | Codex | Sawtooth Sal: warlord fight format (first to three, phase two), Saw Sweep with tell and window, Side Saws reward |
 | WAR-02b | Codex | The Dustmonger: Dust Veil, oil, dust storm; Smoke Screen reward (build it here, reused by ARS-01) |
 | WAR-02c | Codex | Mother Mirage: Mirage decoys; Decoy Drone reward |
+| WAR-03a | Codex | Gearhead Gunn: Barrage; Rocket Pods reward (needs ARS-02) |
+| WAR-03b | Codex | Kettle Kingpin: Kettle Drop; Titan kit and Tusk reward |
+| WAR-03c | Codex | The Twin Vultures: the pair format and Pincer; grapple upgrade (needs CREW-02) |
+| WAR-03d | Codex | The Tollkeeper: Toll Gate on the Convoy Raid (needs ARENA-07) |
+| WAR-03e | Codex | Baron Blackiron: the move cycle and Nitro Ram (needs every other warlord and ARS-03) |
+| WAR-04 | Codex | Story cards, wanted posters and Vesper Blackiron (needs WAR-03e) |
 
 Warlord cards may add a brain in `src/arena/arena-brains.js` and a move module
 under `src/arena/moves/`; they must not change the pilot's physics limits.
+
+## 10. The other arena modes and the Salt Flats (settled 30 September 2026)
+
+SPEC 3.7 lists the modes; these are settled for build. They share the
+arena foundation (sections 3 and 7): venue, teams, pilot, brains, pickups,
+respawn, scoring, settlement. Each mode is one file under `src/arena/modes/`
+registered in `ARENA_MODES`, behind `scrapdome`. Each pays scrap by place
+through CAR-01 and adds territory hold like Last Car Rolling (section 6), once
+per event (Save Guardian).
+
+**Unlocks.** SPEC 3.8 put the later modes at ranks 11 to 26, which is about
+100 events for a family that plays a few evenings a week. Settled instead:
+Fuel Run at rank 6, Bounty Hunt at rank 9, Ambush Alley at rank 12, and the
+Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
+(section 5), not by rank. A locked mode is not shown on the SCRAPDOME panel
+(nothing is advertised that does not work yet).
+
+### Fuel Run (ARENA-03)
+
+- **Goal:** carry fuel canisters to your own depot. First to five, or most
+  after three minutes; a tie goes to sudden death.
+- **Canisters:** four sit on pads in the middle; a taken canister's pad
+  refills after 5 s. Drive over one to carry it (one at a time, shown on the
+  roof). A fighter on foot can carry one too, walking at 70% speed.
+- **Depots:** each car has a coloured pad near its spawn. Drive onto yours
+  with a canister: one point.
+- **Dropping:** a wreck, or losing more than 25 armor in one hit, drops the
+  canister where the car is; anyone can take it.
+- **Computer:** collectors go for canisters and avoid fights; rammers and
+  hunters go after whoever carries one. Each brain uses the same pilot limits.
+
+### Bounty Hunt (ARENA-04)
+
+- **Goal:** most points after three minutes.
+- **The mark:** one car carries the bounty, shown by a beacon and a screen
+  arrow. It starts on a computer car on Easy and Medium, and at random on
+  Hard (seeded). The marked car scores one point a second.
+- **Taking it:** wrecking the marked car scores 20 and moves the mark to the
+  wrecker. A marked car that wrecks itself passes the mark to the car that
+  last hit it, or to the leader if nobody did.
+- **Computer:** everyone hunts the marked car; the marked car runs (kiter
+  brain) and uses its rear weapons.
+
+### Ambush Alley (ARENA-05)
+
+- **Goal:** on foot, hold the scrap fort in the middle of the arena against
+  five waves of raiders.
+- **The fort:** a ring of scrap cover with 300 health. Raiders within 10 m of
+  it wear it down at 5 health a second each; their rockets hit it too. The
+  wrench repairs the fort (40 over 4 s).
+- **Waves:** 3, 4, 5, 6 and 8 raiders (the existing raider fighters). Waves
+  four and five add one raider buggy that rams the fort. A wave ends when
+  every raider is knocked down; 10 s between waves.
+- **Your fighter:** your crew member with the RPG, the wrench and their
+  signature gear (CREW-02). Your car is parked at the fort as cover and a
+  refill point.
+- **Win:** survive all five waves. Lose: the fort falls (no cost). Pay by
+  waves survived.
+- **Needs:** on foot inside the arena, with the arena wall as the boundary
+  instead of the 150 m tether.
+
+### The Salt Flats Scrapyard (ARENA-06)
+
+- A second venue: a white salt bowl about 300 by 200 m with scrap-pile cover,
+  two ramps, a crane, a derelict bus and a boundary of stacked tyres and
+  containers, with heat shimmer. Every arena mode can be played here, and
+  the Convoy Raid needs it.
+- **Art (SPEC 0.11):** starts with a sourcing card, ART-SRC-SALTFLATS: two or
+  three candidate CC0 sets (Kenney, Quaternius and similar) and a tileable
+  salt texture, on one sheet for Kyle to pick. No building before he picks.
+- Frame cost within 10% of the Scrapdome's in High and Performance.
+
+### Convoy Raid (ARENA-07)
+
+- **Goal:** destroy an armored tanker rig in five minutes.
+- **The convoy:** a 12 tonne truck and trailer driving a fixed loop on the
+  Salt Flats at 55 km/h (it follows the loop like traffic; crash physics
+  treats it as a very heavy body), with two escort cars (guard brain: ram
+  whoever attacks the rig).
+- **Weak points:** three fuel valves on the trailer, 150 armor each, hit by
+  weapons and rams. When all three are broken the rig slows to 35 km/h and a
+  hatch on its roof opens.
+- **The finish:** board the rig (CREW-03; at 35 km/h anyone can) and plant
+  the finishing charge. If nobody does within 60 s, the hatch closes and the
+  valves come back at half armor.
+- **Pay:** the largest arena payout, since it is the hardest.
+- **The Tollkeeper's fight** (section 5) is this mode with his tells added.
+
+### Cards
+
+| Card | Scope | Needs |
+| --- | --- | --- |
+| ARENA-03 | Fuel Run | WAR-02a-FORMAT (both edit the arena event) |
+| ARENA-04 | Bounty Hunt | ARENA-03 (the mode registry) |
+| ARENA-05 | Ambush Alley, and on foot in the arena | CREW-02 |
+| ART-SRC-SALTFLATS | Sourcing sheet for the Salt Flats | none |
+| ARENA-06 | The Salt Flats venue | ART-SRC-SALTFLATS, after Kyle picks |
+| ARENA-07 | Convoy Raid | ARENA-06, CREW-03 |

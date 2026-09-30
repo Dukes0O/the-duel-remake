@@ -1283,3 +1283,25 @@ every 6 s (was 5), restoring 8 of 30 with its aim unchanged. CPU-hit targets
 are bands for the thirty-race mean; the one-race bands did not describe the
 live game (Medium averaged 7.27).
 
+## 30 September 2026: the rest of phase 3 settled for build
+
+Kyle asked Claude to design the rest of phase 3 while Codex builds. Settled in
+docs/ARSENAL.md, docs/CREW.md and docs/SCRAPDOME.md sections 5 and 10, with
+build cards on the board. Changes from SPEC 3.3 to 3.9 and why:
+
+- Side Saws are Sal's armory kit (settled 26 September), not a timed weapon;
+  wave 2 has three weapons.
+- The weapons share five small systems (hazards, car effects, one targeting
+  function, projectiles, unlocks) so twelve weapons are not twelve pieces of
+  machinery; every effect is readable, counterable and never a lock-out.
+- Arena modes unlock earlier (Fuel Run rank 6, Bounty Hunt and the Salt
+  Flats rank 9, Ambush Alley rank 12) than SPEC 3.8's ranks 11 to 26, which
+  would take a family about 100 events; the Convoy Raid opens with the
+  Tollkeeper's territory. Weapon ranks stay as SPEC 3.3; warlord rewards
+  deliver key weapons early.
+- The Dustmonger and Mother Mirage were to be settled after Sal was played;
+  Kyle asked for them now. Sal's playtest tunes their numbers, not their
+  design.
+- The secret crew member is Vesper Blackiron, the Baron's daughter, with a
+  Shock Charge built on the arsenal's disable effect.
+
