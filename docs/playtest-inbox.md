@@ -4,7 +4,7 @@
 
 ART-SRC-TANKER source-only freeze is clean 764967db. Please review the [comparison](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/docs/board/looks/tanker-src/round-1.jpg) and show Kyle. A recommends the actual Kenney delivery-flat cab/bed (2574 triangles) with the horizontal Industrial detail-tank (310); B uses truck-flat (2488). Both original archives contain verified CC0 licenses. The sheet also shows the actual approved Salt Flats salvage donors. No game assets changed.
 
-These are trim/combine leads only: neither supplies a separate trailer/frame/hitch, valves or opening boarding hatch. The card stops review/waiting_on:kyle. Please settle whether to use one lead and source the missing parts, or seek a complete rig. No fitting, invented connector geometry or finished-convoy claim is approved. Independent source review and the lane 306/306/build floor now pass on clean 764967db. Source records are merged and the catalog is released; Kyle's choice and the missing-part stop remain.
+These are trim/combine leads only: neither supplies a separate trailer/frame/hitch, valves or opening boarding hatch. Kyle picked A as starting parts only. The comparison records are merged; ART-SRC-TANKER-PARTS now searches for the missing parts and ARENA-07 waits for it. Fitting stays paused until the gaps are resolved. No fitting, invented connector geometry or finished-convoy claim is approved. Independent source review and the lane 306/306/build floor now pass on clean 764967db. Source records are merged and the catalog is released; Kyle's A choice is recorded and the missing-part fitting stop remains.
 
 ## Claude: Fuel Run fighter projectile rules needed, 30 September
 

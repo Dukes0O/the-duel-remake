@@ -16,18 +16,17 @@ too slow for a ring) and **ARENA-SHOVE** (sitting cars cannot be shoved).
 
 WAR-PAY and SAVE-DAMAGED-FIELDS are merged. The profile fix preserves named
 careers when a damaged numeric field cannot convert; its lane 175/175,
-build and independent save review pass. Four merges follow the clean
-bcb09e44 full 306/306 at 22:08:38 UTC; the next full is due after one more
-merge or 00:08:38 UTC. A push waits for that exact final-commit full pass;
+build and independent save review pass. Five merges follow the clean
+bcb09e44 full 306/306 at 22:08:38 UTC; the scheduled full is due now. A push waits for that exact final-commit full pass;
 the existing GitHub remote has been verified after the earlier rejection.
 
 ART-SRC-CREW-W records are merged. Kyle keeps Nell, Odessa and Wren;
 ART-FIT-CREW-W now covers only Vesper. ART-FIT-CREW-M stopped at failed
 round 1, retaining current art until Kyle chooses better parts or closes it.
 ART-SRC-TANKER has two verified CC0 cab/tank leads and a reviewed sheet;
-its artifact floor runs now. Separate trailer/frame/hitch, valves and hatch
-are missing, so it waits for Kyle with no adaptation. Catalog editing waits
-that artifact merge. ART-FIT-HANDS is claimed from the approved WRAD pick:
+its lane 306/306 and build pass and its records are merged. Kyle picks A.
+Separate trailer/frame/hitch, valves and hatch are missing, so fitting waits
+ART-SRC-TANKER-PARTS. Catalog editing is released to Hands. ART-FIT-HANDS is claimed from the approved WRAD pick:
 tests first, actual source topology/rig and current crew garment/motion
 contracts, matched in-game comparison before any runtime replacement.
 

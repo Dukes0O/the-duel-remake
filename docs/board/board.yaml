@@ -667,19 +667,31 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: review
-    waiting_on: kyle
+    status: merged
     review_commit: 764967db9fd1777725045bda2556b827f7b0aff1
-    hold_reason: "Two licensed cab/tank leads and actual salvage donors are compared; separate trailer/frame/hitch, valves and boarding hatch remain missing. Source-only review; no adaptation or finished convoy approved."
     claimed_by: codex-director-2026-09-30-resume
     branch: lane/art/tanker-src
     owns: [tools/art/tanker-source-sheet.py, tools/art/tanker-source-inspect.py, docs/board/looks/tanker-src/, docs/changes/ART-SRC-TANKER.md]
     hooks: []
-    note: "Source records merged from clean 764967db after lane 306/306 in 572.02s, build 1.13s and independent source review. Catalog released. Kyle source choice and trailer/frame/hitch/valve/hatch gaps remain; no fitting or runtime convoy approved."
+    note: "Kyle picks A, delivery-flat cab plus horizontal detail-tank, on 30 September. Source records passed clean 764967db lane 306/306 and build; catalog released. Missing trailer/frame/hitch, valves and boarding hatch move to ART-SRC-TANKER-PARTS. No fitting or finished convoy is approved."
     helpers: [reviewer]
     sequencing: "Women source artifacts are merged and their catalog hook is released. Source comparison only: verify actual original CC0 licenses and geometry, preserve all prior catalog records, show existing Salt Flats armor parts, and stop at one <=500 KB round-1.jpg with matching round-1-review.md, waiting for Kyle. No fitting, runtime asset, game code or protected audio edit."
     acceptance:
       - "ARENA-07 needs an armored fuel tanker with a trailer, and no inspected source has one (Salt Flats review). Short-list two or three CC0 sources (cab and tank trailer may come from different packs) with the ART-SRC-CREW rules, showing how the Salt Flats salvage parts would armor it. Stop at a comparison sheet with a recommendation (waiting_on: kyle)."
+  - id: ART-SRC-TANKER-PARTS
+    title: "Existing trailer and boarding parts for the picked delivery-flat tanker lead"
+    owner: codex
+    lane: ART
+    size: S
+    needs: [ART-SRC-TANKER]
+    status: ready
+    owns: [tools/art/tanker-parts-inspect.py, tools/art/tanker-parts-sheet.py, docs/board/looks/tanker-parts/, docs/changes/ART-SRC-TANKER-PARTS.md]
+    hooks: []
+    helpers: [reviewer]
+    sequencing: "Kyle picked A as starting parts only. Source search and inspection may proceed; fitting and ARENA-07 wait for the missing parts. Catalog hook belongs to Hands and can be granted only after that lane releases it. No runtime model, game code, source fabrication or protected audio edit."
+    acceptance:
+      - "Find actual existing licensed CC0 parts for a separate trailer/frame/hitch, three fuel valves and an opening boarding hatch around the picked Kenney delivery-flat plus horizontal detail-tank. Verify original embedded rights, source hashes and actual geometry; a complete existing trailer may come from another free pack. Do not claim kit sample columns or boxes already supply a finished articulated trailer."
+      - "Retain one bounded comparison and matching review with a recommendation and explicit remaining gaps; stop waiting_on: kyle before adaptation. Existing placement/source validators and independent review plus lane/build floor apply. If free sources and this laptop cannot meet acceptance, write why and stop for Kyle; never fabricate a finished substitute."
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex
@@ -913,7 +925,7 @@ tasks:
     owner: codex
     lane: CMB
     size: L
-    needs: [ARENA-06, CREW-03, ART-SRC-TANKER]
+    needs: [ARENA-06, CREW-03, ART-SRC-TANKER, ART-SRC-TANKER-PARTS]
     status: ready
     flag: scrapdome
     owns: [src/arena/modes/convoy-raid.js, src/arena/convoy.js, tools/test-arena-convoy.mjs, tools/scenarios/convoy-raid.mjs, docs/changes/ARENA-07.md]

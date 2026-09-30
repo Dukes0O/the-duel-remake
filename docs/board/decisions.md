@@ -1377,3 +1377,11 @@ Quaternius women's pack could not be downloaded to check its licence). Kyle:
 "keep current." ART-FIT-CREW-W now builds only Vesper, adapted from the
 current women's figure.
 
+
+## 30 September 2026: tanker starting source
+
+Kyle picks A: the existing Kenney delivery-flat cab and horizontal Industrial
+detail-tank. This chooses starting parts only. Fitting stays paused until
+the separate trailer/frame/hitch, valves and boarding hatch are resolved.
+ART-SRC-TANKER-PARTS owns that follow-up; ARENA-07 now waits for it. No
+assembled convoy or new missing geometry is approved by this source choice.
