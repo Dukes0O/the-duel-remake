@@ -1,7 +1,7 @@
 import {COURSE} from './config.js';
 import {COURSE_PRICES, isCourseUnlocked} from './course-access.js';
 import {formatSpeed} from './speed-format.js';
-import {arenaPauseScreen, arenaResultsScreen} from './screen-arena.js';
+import {arenaPauseScreen, arenaResultsScreen, warlordIntroScreen} from './screen-arena.js';
 
 export const screenMetric = (label,value,accent=false) => `<div class="result-metric${accent?' accent':''}"><span class="field-label">${label}</span><b>${value}</b></div>`;
 export const screenAction = (label,verb,primary=false,arrow='') => `<button class="${primary?'start-button':'secondary-button'}" data-action="${verb}"><span>${label}</span>${primary?arrow:''}</button>`;
@@ -22,7 +22,7 @@ function modalScreen(s) {
   const r = s.results || {};
   const scrapResult = Number.isSafeInteger(r.scrapEarned);
   let eyebrow='',title='',description='',metrics='',combatMetrics='',actions='',arenaExtra='';
-  const arenaScreen=s.arena&&(s.paused?arenaPauseScreen(s,{metric,action,time}):s.status==='arena_result'?arenaResultsScreen(s,{metric,action,escapeHTML}):null);
+  const arenaScreen=s.arena&&(s.paused?arenaPauseScreen(s,{metric,action,time}):s.status==='arena_result'?arenaResultsScreen(s,{metric,action,escapeHTML}):s.status==='warlord_intro'?warlordIntroScreen(s,{metric,action,escapeHTML}):null);
   if (arenaScreen) ({eyebrow,title,description,metrics,actions,extra:arenaExtra}=arenaScreen);
   else if (s.paused) {
     const practice=!!COURSE[s.stageIndex]?.practice;

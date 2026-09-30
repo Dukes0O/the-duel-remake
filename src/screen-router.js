@@ -149,6 +149,7 @@ function openYardPanel(panel){
 root.addEventListener('click',e => {
   const button = e.target.closest('button,[data-action]'); if (!button) return;
   if(courseActions.handle(button))return;
+  if(button.dataset.warlord){if(app.startWarlordFight(button.dataset.warlord)){yardPanel='home';lastScreen=null;}return;}
   if(button.dataset.arenaOpponents){arenaOpponents=Math.max(1,Math.min(3,Number(button.dataset.arenaOpponents)||3));lastScreen=null;renderState(app.duel.state);root.querySelector(`[data-arena-opponents="${arenaOpponents}"]`)?.focus({preventScroll:true});return;}
   if(button.dataset.routeVariant){if(app.setRouteVariant(button.dataset.routeVariant))updateMenuScene();return;}
   if(button.dataset.challenge!=null){const stageIndex=Number(button.dataset.challenge);if(!isCourseUnlocked(profile(),stageIndex)){garageOpen=false;coursesOpen=true;courseMessage='Unlock the recommended course here, then select it.';lastScreen=null;renderState(app.duel.state);return;}choices.startStage=stageIndex;updateMenuScene();closeGarage();return;}
@@ -181,7 +182,8 @@ root.addEventListener('click',e => {
     case 'yard-crew': openYardPanel('crew'); return;
     case 'yard-scrapdome': if(app.arenaAvailable?.())openYardPanel('scrapdome'); return;
     case 'arena-start': if(app.startArenaEvent({opponents:arenaOpponents})){yardPanel='home';lastScreen=null;} return;
-    case 'arena-rematch': if(app.startArenaEvent({opponents:arenaOpponents}))lastScreen=null; return;
+    case 'arena-rematch': if(app.restart())lastScreen=null; return;
+    case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
     case 'arena-yard': if(app.returnToYard())lastScreen=null; return;
     case 'yard-home': openYardPanel('home'); return;
     case 'yard-menu': if(app.isYardHomeActive()){yardPanel='home';app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);} return;

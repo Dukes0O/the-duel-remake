@@ -4,11 +4,11 @@ import {BUILT_WARLORD_IDS, WARLORDS} from './warlords.js';
 
 const courseNames = new Map(COURSE.map(course => [course.id, course.name]));
 const venueNames = Object.freeze({
-  scrapdome: 'Scrapdome (coming later)',
+  scrapdome: 'Scrapdome',
   'salt-flats': 'Salt Flats Convoy Raid (coming later)',
 });
 
-export function territoryPanel(profile, {builtWarlordIds = BUILT_WARLORD_IDS} = {}) {
+export function territoryPanel(profile, {builtWarlordIds = BUILT_WARLORD_IDS, canFight = true} = {}) {
   const career = profile?.wasteland;
   if (career?.version !== 1 || career.discoveredGate !== true) return '';
   const cards = Object.entries(TERRITORIES).map(([id, territory]) => {
@@ -29,12 +29,17 @@ export function territoryPanel(profile, {builtWarlordIds = BUILT_WARLORD_IDS} = 
       statusLabel = ' aria-label="Warlord fight coming later"';
     }
     else if (fightBuilt && warlordProgress.defeated === true) {
-      status = `DEFEATED · ${warlord.reward.toUpperCase()} EARNED`+
+      status = 'DEFEATED'+
+        (warlord.rewardBuilt !== false && warlord.reward ? ` · ${warlord.reward.toUpperCase()} EARNED` : '')+
         (progress.claimed === true ? ' · CLAIMED' : '');
       action = `<button type="button" data-warlord="${id}">REMATCH</button>`;
     } else if (hold === 100 && fightBuilt) {
       status = `${warlord.name.toUpperCase()} IS WAITING`;
       action = `<button type="button" data-warlord="${id}">FIGHT</button>`;
+    }
+    if (action && !canFight) {
+      action = '';
+      status += ' · FIGHT FROM THE YARD';
     }
     return `<article class="territory-card"><h4>${territory.name}</h4><p>${courses}${venues}</p><b${statusLabel}>${status}</b>`+
       action+

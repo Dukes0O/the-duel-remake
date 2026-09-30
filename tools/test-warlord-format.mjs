@@ -9,6 +9,8 @@ import {applyArmorDamage} from '../src/combat-armor.js';
 import {combatTeam, hostile, arenaStrikeCandidates} from '../src/combat-teams.js';
 import {territoryPanel} from '../src/screen-territory.js';
 import * as screens from '../src/screen-arena.js';
+import {yardHomeScreen} from '../src/screen-yard-home.js';
+import {createArmoryScreen} from '../src/screen-armory.js';
 import {screenMetric, screenAction} from '../src/screen-results.js';
 import {COURSE} from '../src/config.js';
 
@@ -311,3 +313,18 @@ test('ordinary duel, time trial and objective race fingerprints stay unchanged w
 });
 
 test.after(() => console.log(`Warlord format: ${checks} acceptance checks executed.`));
+
+test('launch controls stay inside the enabled yard and never appear in the main-menu armory', () => {
+  const app = yard();
+  try {
+    const closed = yardHomeScreen({profile: app.profile, playerName: app.player.name,
+      escapeHTML, panel: 'territory', arenaMarkup: ''});
+    ok(!/data-warlord=/.test(closed), 'disabled scrapdome shows no inert FIGHT button');
+    const open = yardHomeScreen({profile: app.profile, playerName: app.player.name,
+      escapeHTML, panel: 'territory', arenaMarkup: screens.arenaYardPanel()});
+    ok(/data-warlord="sal"/.test(open), 'the enabled yard exposes the territory entry');
+    const armory = createArmoryScreen({profile: () => app.profile, credits: String,
+      escapeHTML, getGarageMessage: () => '', kitsEnabled: () => true, action: screenAction});
+    ok(!/data-warlord=/.test(armory()), 'main-menu armory keeps territory information read-only');
+  } finally { app.dispose?.(); }
+});

@@ -100,6 +100,8 @@ export class Duel {
       input: { throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false },
       countdown: 0,
       results: null,
+      // Match the empty arena state used when starting an ordinary campaign.
+      arena: null,
       mode: 'duel', // 'duel' | 'timetrial'
       lastCrashReason: null,
       crashFlash: 0,

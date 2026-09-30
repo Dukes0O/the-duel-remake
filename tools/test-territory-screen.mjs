@@ -16,6 +16,7 @@ test('territory panel is scoped to discovered players and shows earned hold', ()
   assert.match(panel, /75 \/ 100/);
   assert.match(panel, /Pacific Canyon/);
   assert.match(panel, /Warlord fight coming later/);
-  assert.match(panel, /Scrapdome \(coming later\)/);
+  assert.match(panel, /Scrapdome/);
+  assert.doesNotMatch(panel, /Scrapdome \(coming later\)/, 'the arena venue is playable');
   assert.match(panel, /Salt Flats Convoy Raid \(coming later\)/);
 });
