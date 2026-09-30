@@ -14,7 +14,7 @@ import {arenaFloorSpeed} from '../src/arena/venues.js';
 import {arenaReward, settleArenaResult} from '../src/arena/arena-settlement.js';
 import {beginWarlordEvent, startWarlordEvent} from '../src/arena/warlord-event.js';
 import {arenaHud, arenaBoardMarkup, arenaYardPanel} from '../src/screen-arena.js';
-import {loadPlayers} from '../src/progression.js';
+import {loadPlayers, PLAYERS_KEY} from '../src/progression.js';
 
 // ARENA-03: SCRAPDOME 10 Fuel Run, shared 3/6, SPEC 0.12.
 // All saves are fabricated in memory. Race rules run through the actual engine.
@@ -632,6 +632,208 @@ test('Fuel abandonment and changed owner cannot bank scrap or hold', () => {
   equal(wrong.profile, wrongBefore, 'a changed run owner preserves the current named profile');
   equal(result.scrapEarned, 0, 'a changed owner gets no reward');
   wrong.dispose?.();
+});
+
+// Other-tab writes replace only the fabricated registry in the memory store.
+// They do not use App's stale local registry or count as this App's writes.
+function failedNamedFuel() {
+  const app = yard({enter: false}), owner = app.player.id;
+  app.profile.credits = 1000;
+  equal(app._saveProfile(), true, 'the original owner starts with 1000 memory-only credits');
+  ok(app.addPlayer('Retry spectator').ok, 'the independent named spectator exists');
+  const spectator = app.player.id;
+  equal(app.selectPlayer(owner), true, 'the event owner is selected before starting');
+  app.cpuDifficulty = 'medium';
+  equal(app.visitWasteland(), true, 'the owner reaches the actual yard action'); app.advance(8);
+  equal(app.startArenaEvent({mode: 'fuel-run', opponents: 3}), true, 'the owner starts the actual Fuel event');
+  equal(app.duel.state.cpuDifficulty, 'medium', 'the retry fixture uses the actual Medium 240-scrap event');
+  app.duel.state.countdown = 0; tick(app.duel, 2); holdOthers(app.duel);
+  const durable = JSON.parse(values.get(PLAYERS_KEY));
+  failWrites = true;
+  let result;
+  try { result = finishApp(app); } finally { failWrites = false; }
+  equal(result.settlementSaved, false, 'the completed event has not been paid after its failed atomic write');
+  equal(result.settlementRetryable, true, 'the actual failed completion exposes Retry');
+  equal(JSON.parse(values.get(PLAYERS_KEY)), durable, 'the failed completion leaves the durable registry intact');
+  return {app, owner, spectator, result, durable};
+}
+function otherTabProgress(fixture) {
+  const registry = structuredClone(fixture.durable), owner = registry.players.find(p => p.id === fixture.owner);
+  owner.profile.credits = 2000;
+  owner.profile.wasteland.scrap = 100;
+  owner.profile.upgrades.falcone_f42 = {...owner.profile.upgrades.falcone_f42, engine: 1};
+  owner.profile.wasteland.territories.kettle.hold = 10;
+  owner.profile.otherTabFuelField = {kept: true};
+  registry.players.find(p => p.id === fixture.spectator).profile.credits = 3333;
+  values.set(PLAYERS_KEY, JSON.stringify(registry));
+  return registry;
+}
+
+test('real Fuel Retry adds its award to newer durable owner progress with one atomic write', () => {
+  const f = failedNamedFuel(), durable = otherTabProgress(f), before = writes;
+  equal(f.app.retryArenaSettlement(), true, 'real Retry successfully settles the completed event');
+  const saved = JSON.parse(values.get(PLAYERS_KEY)), owner = saved.players.find(p => p.id === f.owner);
+  equal({credits: owner.profile.credits, scrap: owner.profile.wasteland.scrap,
+    engine: owner.profile.upgrades.falcone_f42.engine}, {credits: 2000, scrap: 340, engine: 1},
+  'Retry preserves durable 2000 credits and engine 1, adding exactly 240 to durable scrap 100');
+  equal(owner.profile.wasteland.territories.kettle.hold, 35, 'Retry adds 25 hold to the durable 10 hold');
+  equal(owner.profile.otherTabFuelField, {kept: true}, 'Retry preserves the newer unknown owner field');
+  equal(saved.players.find(p => p.id === f.spectator), durable.players.find(p => p.id === f.spectator),
+    'Retry preserves the entire newer named spectator');
+  equal(saved.players.map(p => p.id), durable.players.map(p => p.id), 'Retry preserves all named player identities');
+  equal(writes - before, 1, 'Retry persists the whole award with one registry write');
+  equal(owner.profile.wasteland.settledResults.filter(k => k === `arena:${f.app.runId}`).length, 1,
+    'Retry stores exactly one receipt for this completed event');
+  equal(f.result.scrapEarned, 240, 'Retry displays only its own 240-scrap award');
+  equal(f.result.holdAdded, 25, 'Retry displays only its own 25-hold award');
+  equal(f.result.settlementSaved, true, 'Retry reports its successful atomic save');
+  equal(f.result.settlementRetryable, false, 'a paid result no longer offers Retry');
+  const paid = values.get(PLAYERS_KEY), paidWrites = writes;
+  equal(f.app.retryArenaSettlement(), false, 'a second real Retry cannot pay again');
+  equal(f.app._settleArenaResult({result: f.result}, f.app.duel.state), false, 'a duplicate result event cannot pay again');
+  equal(values.get(PLAYERS_KEY), paid, 'duplicates preserve the exact paid registry');
+  equal(writes, paidWrites, 'duplicates do not write a registry');
+  f.app.dispose?.();
+});
+
+test('another failed real Fuel Retry leaves newer durable progress intact until a successful retry', () => {
+  const f = failedNamedFuel(); otherTabProgress(f);
+  const durable = values.get(PLAYERS_KEY), before = writes;
+  failWrites = true;
+  try { equal(f.app.retryArenaSettlement(), false, 'a second blocked atomic write reports failure'); }
+  finally { failWrites = false; }
+  equal(values.get(PLAYERS_KEY), durable, 'a failed Retry preserves every newer durable byte');
+  equal(writes, before, 'a failed Retry makes no successful write');
+  equal(f.result.scrapEarned, 0, 'a failed Retry still displays no banked reward');
+  equal(f.result.settlementRetryable, true, 'another write failure retains Retry');
+  equal(f.app.retryArenaSettlement(), true, 'a later successful Retry can settle once');
+  const owner = JSON.parse(values.get(PLAYERS_KEY)).players.find(p => p.id === f.owner);
+  equal({credits: owner.profile.credits, scrap: owner.profile.wasteland.scrap,
+    engine: owner.profile.upgrades.falcone_f42.engine}, {credits: 2000, scrap: 340, engine: 1},
+  'repeated failure never authorizes replacing newer durable owner progress');
+  equal(writes - before, 1, 'only the successful Retry writes the registry');
+  f.app.dispose?.();
+});
+
+for (const boundary of ['changed active owner', 'removed event owner', 'invalid event owner'])
+  test(`real Fuel Retry refuses a ${boundary} without replacing the durable registry`, () => {
+    const f = failedNamedFuel(), registry = otherTabProgress(f);
+    if (boundary === 'changed active owner') registry.activePlayerId = f.spectator;
+    else if (boundary === 'removed event owner') {
+      registry.players = registry.players.filter(p => p.id !== f.owner); registry.activePlayerId = f.spectator;
+    } else registry.players.find(p => p.id === f.owner).profile.wasteland.version = 2;
+    values.set(PLAYERS_KEY, JSON.stringify(registry));
+    const durable = values.get(PLAYERS_KEY), before = writes;
+    equal(f.app.retryArenaSettlement(), false, `${boundary} cannot authorize the event owner's Retry`);
+    equal(values.get(PLAYERS_KEY), durable, 'a refused Retry preserves the exact other-tab registry');
+    equal(writes, before, 'a refused Retry writes nothing');
+    equal(f.result.scrapEarned, 0, 'a refused Retry adds no reward');
+    equal(f.result.holdAdded, 0, 'a refused Retry adds no hold');
+    f.app.dispose?.();
+  });
+
+test('real Fuel Retry recognizes a durable receipt without paying or erasing newer progress', () => {
+  const f = failedNamedFuel(), registry = otherTabProgress(f), owner = registry.players.find(p => p.id === f.owner);
+  owner.profile.wasteland.scrap = 340; owner.profile.wasteland.territories.kettle.hold = 35;
+  owner.profile.wasteland.settledResults.push(`arena:${f.app.runId}`);
+  values.set(PLAYERS_KEY, JSON.stringify(registry));
+  const durable = values.get(PLAYERS_KEY), before = writes;
+  equal(f.app.retryArenaSettlement(), false, 'an already-paid durable receipt cannot pay through Retry');
+  equal(values.get(PLAYERS_KEY), durable, 'receipt detection preserves the exact durable registry');
+  equal(writes, before, 'recognizing the durable receipt makes no new save');
+  equal(f.result.scrapEarned, 0, 'receipt detection does not claim another award');
+  equal(f.result.holdAdded, 0, 'receipt detection does not claim another hold award');
+  equal(f.result.settlementRetryable, false, 'a durably paid result stops offering Retry');
+  equal(f.app.profile.credits, 2000, 'receipt detection adopts the newer durable owner');
+  equal(f.app.profile.wasteland.scrap, 340, 'receipt detection shows the already-paid durable bank');
+  f.app.dispose?.();
+});
+
+const forgedFuelResults = [
+  ['early all-zero first-five', a => { a.participants.forEach(p => { p.fuelDelivered = 0; }); a.clockSec = 1; }],
+  ['declared winner below CPU delivery five', a => {
+    a.participants[0].fuelDelivered = 1; a.participants[1].fuelDelivered = 5;
+  }],
+  ['unsupported completion reason', a => { a.result.reason = 'damage'; }],
+  ['time result before the three-minute whistle', a => { a.result.reason = 'time'; a.clockSec = 1; }],
+  ['first-five result with no fifth delivery', a => { a.participants[0].fuelDelivered = 4; }],
+  ['time result with tied leaders', a => {
+    a.result.reason = 'time'; a.clockSec = 180;
+    a.participants[0].fuelDelivered = 2; a.participants[1].fuelDelivered = 2;
+  }],
+  ['time winner below another delivery score', a => {
+    a.result.reason = 'time'; a.clockSec = 180;
+    a.participants[0].fuelDelivered = 1; a.participants[1].fuelDelivered = 2;
+  }],
+  ['sudden death with no delivery', a => {
+    a.result.reason = 'sudden-death'; a.clockSec = 180;
+    a.participants.forEach(p => { p.fuelDelivered = 0; });
+  }],
+  ['placings reversing unequal nonwinner deliveries', a => {
+    a.participants[1].fuelDelivered = 2; a.participants[2].fuelDelivered = 1;
+    a.result.placings = ['player', 'cpu-2', 'cpu-1', 'cpu-3'];
+  }],
+];
+for (const [label, forge] of forgedFuelResults) test(`Fuel settlement rejects ${label}`, () => {
+  const arena = finishedRoster({wrecks: 0}), before = profile(); forge(arena);
+  const settled = settleArenaResult(before, payload(arena));
+  equal({awarded: settled.awarded, scrap: settled.scrapEarned, hold: settled.holdAdded},
+    {awarded: false, scrap: 0, hold: 0}, `${label} is not a completed Fuel result and earns no reward or hold`);
+  equal(settled.profile, before, 'rejecting a forged result leaves the exact profile and receipts unchanged');
+  equal(settled.profile.wasteland.settledResults, ['old-result'], 'a forged result cannot consume its receipt');
+});
+
+for (const ending of ['fuel', 'time', 'sudden-death']) test(`actual engine ${ending} Fuel completion remains eligible for settlement`, () => {
+  const duel = start(); holdOthers(duel);
+  if (ending === 'fuel') for (let n = 0; n < 5; n++) point(duel);
+  else if (ending === 'time') {
+    point(duel); point(duel, 'player', 1);
+    duel.state.arena.clockSec = 180 - DT / 2; tick(duel);
+  } else {
+    pick(duel); duel.state.arena.clockSec = 180 - DT / 2; tick(duel);
+    equal(duel.state.arena.phase, 'sudden-death', 'a real score tie reaches delivery sudden death');
+    deliver(duel);
+  }
+  equal(duel.state.status, 'arena_result', 'the actual engine completes this Fuel event');
+  equal(duel.state.arena.result.reason, ending, 'the engine provides this supported reason');
+  const before = profile(), settled = settleArenaResult(before, payload(duel.state.arena));
+  equal(settled.awarded, true, 'a genuine engine Fuel completion still earns its reward');
+  equal(settled.scrapEarned, 240, 'each genuine four-car Medium win without credited wrecks earns 240');
+  equal(settled.holdAdded, 25, 'each genuine four-car win earns 25 hold');
+  equal(settled.profile.wasteland.settledResults, ['old-result', 'arena:fuel-run-1'], 'genuine completion stores one receipt');
+  const tiedOrder = structuredClone(duel.state.arena);
+  tiedOrder.result.placings = ['player', 'cpu-3', 'cpu-2', 'cpu-1'];
+  equal(settleArenaResult(before, payload(tiedOrder)).awarded, true,
+    'equal-score nonwinners may be ordered differently without invalidating a genuine winner');
+});
+
+test('actual sudden-death next delivery may settle for a winner below the previous tied leaders', () => {
+  const duel = start();
+  for (const id of ['player', 'cpu-1']) {
+    holdOthers(duel, id);
+    Object.assign(actor(duel, id), {combatWrecking: false, combatWreckTimer: 0});
+    member(duel, id).wreckCounted = false;
+    point(duel, id); point(duel, id);
+  }
+  holdOthers(duel, 'cpu-2');
+  Object.assign(actor(duel, 'cpu-2'), {combatWrecking: false, combatWreckTimer: 0});
+  member(duel, 'cpu-2').wreckCounted = false;
+  pick(duel, 'cpu-2', 2);
+  duel.state.arena.clockSec = 180 - DT / 2; tick(duel);
+  equal(duel.state.arena.phase, 'sudden-death', 'the actual two-delivery leaders tie at the whistle');
+  deliver(duel, 'cpu-2');
+  equal(duel.state.arena.result.reason, 'sudden-death', 'the next actual delivery ends sudden death');
+  equal(duel.state.arena.result.winnerId, 'cpu-2', 'a lower scorer may win by the next delivery');
+  equal(duel.state.arena.participants.map(p => p.fuelDelivered), [2, 2, 1, 0],
+    'the legitimate winner still has fewer deliveries than the previous tied leaders');
+  const settled = settleArenaResult(profile(), payload(duel.state.arena));
+  equal(settled.awarded, true, 'settlement accepts the actual lower-scoring sudden-death winner');
+  equal(settled.scrapEarned, 192, 'the player in second receives Medium base plus two cars behind');
+  equal(settled.holdAdded, 0, 'the losing player receives no hold');
+  const tiedOrder = structuredClone(duel.state.arena);
+  tiedOrder.result.placings = ['cpu-2', 'cpu-1', 'player', 'cpu-3'];
+  equal(settleArenaResult(profile(), payload(tiedOrder)).awarded, true,
+    'the equal-score nonwinner leaders can exchange positions beneath the sudden-death winner');
 });
 
 function controls(spec) {

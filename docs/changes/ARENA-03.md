@@ -319,3 +319,80 @@ merge-ready verdict.
 Post-sync focused verification: **39/39 Fuel tests, 842 checks, zero skips**;
 **27 switch checks**. All ten existing-mode traces and the actual 30/60/144
 comparison still pass without regenerating any pin.
+
+## Tests first — durable Fuel retry and result legitimacy
+
+Save Guardian found two blockers after the browser candidate review. New
+checks in the owned Fuel suite exercise only fabricated in-memory registry
+writes, the actual Fuel engine and the actual App Retry action. No production
+file, old assertion, fixed-step input or replay fingerprint changed.
+
+### Durable retry
+
+The fixture starts a real four-car Medium Fuel event for a named owner with
+1000 credits, plus a separate named spectator. Five real deliveries complete
+it while the atomic registry write is deliberately blocked. Another synthetic
+tab then changes the durable owner to 2000 credits, 100 scrap, engine level 1
+and 10 Kettle hold, updates the spectator, and preserves unknown owner fields.
+The actual Retry must add exactly 240 scrap and 25 hold to those durable
+values, retain every named player and newer field, write one complete registry
+and store one event receipt. Duplicate Retry/result events must write nothing.
+A second blocked Retry must leave durable bytes intact and still permit one
+later successful write. Removed, switched or future-version owners cannot
+permit stale local progress to replace the registry. A durable event receipt
+must end Retry without another payment and adopt the current durable bank.
+
+Creating/selecting fixture players restores their normal race settings, so the
+setup explicitly selects Medium again and verifies the actual event difficulty.
+No assertion was changed to accommodate the initial fixture's Easy reset.
+
+### Fuel result proof
+
+Forged complete-looking Fuel rosters test the settled rules: first-five needs
+its fifth delivery; the three-minute whistle needs a unique delivery leader;
+unsupported reasons cannot pay; placings must follow unequal nonwinner scores.
+A sudden-death result with no delivery cannot pay. Rejection must add no scrap,
+hold or receipt and preserve the exact profile. Existing count-type and roster
+checks are unchanged.
+
+Positive controls use the actual engine's first-five, whistle and next-delivery
+sudden-death results. Equal-score nonwinner order may vary. An additional real
+engine control reaches the whistle with leaders at two deliveries each, then
+CPU 2 wins sudden death with its first delivery: scores **[2, 2, 1, 0]**.
+That legitimate lower-scoring winner remains eligible; the player receives
+**192 scrap and zero hold** in second. The checks do not impose top-only
+sudden-death eligibility or infer an unsettled projectile/contact rule.
+
+Command: `node --test --test-reporter=tap tools/test-arena-fuel-run.mjs`.
+Pre-fix result: **58 tests, 43 pass, 15 fail, 0 skipped, 1345 checks reached;
+exit 1**. All four new genuine-engine completion controls pass. Existing-mode
+pins and the 30/60/144 FPS comparison pass unchanged.
+
+| Regression | Exact first failure |
+| --- | --- |
+| Durable progress | Retry preserves durable 2000 credits and engine 1, adding exactly 240 to durable scrap 100 |
+| Repeated blocked write | repeated failure never authorizes replacing newer durable owner progress |
+| Switched durable owner | changed active owner cannot authorize the event owner's Retry |
+| Removed durable owner | removed event owner cannot authorize the event owner's Retry |
+| Invalid durable owner | invalid event owner cannot authorize the event owner's Retry |
+| Existing durable receipt | an already-paid durable receipt cannot pay through Retry |
+| Early zero score | early all-zero first-five is not a completed Fuel result and earns no reward or hold |
+| Wrong first-five winner | declared winner below CPU delivery five is not a completed Fuel result and earns no reward or hold |
+| Unsupported reason | unsupported completion reason is not a completed Fuel result and earns no reward or hold |
+| Early whistle | time result before the three-minute whistle is not a completed Fuel result and earns no reward or hold |
+| Missing fifth delivery | first-five result with no fifth delivery is not a completed Fuel result and earns no reward or hold |
+| Tied whistle | time result with tied leaders is not a completed Fuel result and earns no reward or hold |
+| Wrong whistle winner | time winner below another delivery score is not a completed Fuel result and earns no reward or hold |
+| Empty sudden death | sudden death with no delivery is not a completed Fuel result and earns no reward or hold |
+| Reversed unequal placings | placings reversing unequal nonwinner deliveries is not a completed Fuel result and earns no reward or hold |
+
+The two retry progress failures actually save **credits 1000 / scrap 240 /
+engine 0**, instead of **2000 / 340 / 1**. The owner/receipt boundaries wrongly
+return true. Each forged-result case wrongly returns awarded true, **240 scrap
+and 25 hold**. These are meaningful pre-fix reds, not setup/module failures.
+No lane/build/full gate or new browser verdict is claimed by this test commit.
+
+### Removed — this tests-first follow-up
+
+Nothing removed. This adds only the new acceptance checks and their evidence.
+The separate malformed-JSON progression fix stays with its assigned lane.
