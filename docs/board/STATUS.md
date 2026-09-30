@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-30T16:54:41.896Z
+Observed at: 2026-09-30T17:49:01.040Z
 
-Observation commit: af7bc21ce5f4b1598a1dc633e634fe7e1a41ece9
+Observation commit: 7c9ff20ac0334ead4edd90849a72dc3c2734e264
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: af7bc21ce5f4b1598a1dc633e634fe7e1a41ece9
+Integration HEAD: 7c9ff20ac0334ead4edd90849a72dc3c2734e264
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-09-30T16:10:17.860Z; tested commit: db785194244e02b8d8f206a79a3e0407dd09cff3.
+Last recorded full run: 2026-09-30T17:45:15.187Z; tested commit: dfcd6db1d4f92dd0281724d75ad99bd9b72603ad.
 
 ## Feature switches
 
@@ -36,13 +36,12 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| lane/art/art-src-rustwall | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/rustwall-source |
-| lane/art/art-src-saltflats | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/saltflats-source |
+| lane/art/art-src-saltflats | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/saltflats-source |
 | lane/audio/aud-10 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 5 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/phys/titan-handling | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/titan-handling |
-| lane/release/scrapdome-0930 | 0 | unknown | true | false | unknown |
+| lane/cmb/war-02a-sal | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/war-sal |
+| lane/save/war-02a-reward | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/war-reward |
 
 ## Unmerged branches for idle review
 
@@ -50,9 +49,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| lane/art/art-src-rustwall | unknown | 2026-09-30T09:45:05-07:00 | 0 | last commit 2026-09-30T09:45:05-07:00 | docs/board/looks/rustwall-src/round-1-review.md, docs/board/looks/rustwall-src/round-1.jpg, docs/changes/ART-SRC-RUSTWALL.md, tools/art/catalog.json, tools/art/rustwall-source-sheet.py |
-| lane/art/art-src-saltflats | unknown | 2026-09-30T09:34:58-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/salt-flats-src/round-1-review.md, docs/board/looks/salt-flats-src/round-1.jpg, docs/changes/ART-SRC-SALTFLATS.md, tools/art/salt-flats-source-sheet.py |
-| lane/phys/titan-handling | unknown | 2026-09-30T09:22:43-07:00 | 0 | last commit 2026-09-30T09:22:43-07:00 | docs/changes/TITAN-HANDLING.md, src/arena/arena-pilot.js, src/config.js, src/sim-driving.js, src/sim-rival.js |
+| lane/art/art-src-saltflats | unknown | 2026-09-30T10:22:36-07:00 | 0 | last commit 2026-09-30T10:22:36-07:00 | docs/board/looks/salt-flats-src/round-1-review.md, docs/board/looks/salt-flats-src/round-1.jpg, docs/changes/ART-SRC-SALTFLATS.md, tools/art/catalog.json, tools/art/salt-flats-source-sheet.py |
+| lane/cmb/war-02a-sal | unknown | 2026-09-30T10:48:44-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/WAR-02a-SAL.md, src/arena/arena-brains.js, src/arena/arena-event.js, src/arena/sal-fight.js, src/arena/warlord-event.js |
+| lane/save/war-02a-reward | unknown | 2026-09-30T10:42:21-07:00 | 0 | last commit 2026-09-30T10:42:21-07:00 | docs/changes/WAR-02a-REWARD.md, src/arena/warlord-settlement.js, src/armor-kit-meshes.js, src/armor-kits.js, src/combat-armor.js |
 
 ## Size targets
 
@@ -60,29 +59,29 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 240,383,788 B | +0 B | 250,000,000 B |
+| Build `dist/` | 240,474,978 B | +0 B | 250,000,000 B |
 | Wasteland models | 78,998,200 B | +0 B | 60,000,000 B |
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 256,032 B | +0 B | 500,000 B |
-| Review `looks/` | 9,312,177 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 578,522 B | +402,360 B | 5,000,000 B |
+| Review `looks/` | 9,503,059 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 176,005 B | +156,964 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 306,185,216 B | +216,064 B | unavailable |
+| Git objects | 308,722,688 B | +124,928 B | unavailable |
 | Lane folders | 3 | -1 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: 006cd48a8b263d234dfa3edbc910f2debd7f1861
+- Local master: 246e7f1933aaec596e99cec55cef4243b23baca9
 - Local main: missing
-- Local integration/wasteland: af7bc21ce5f4b1598a1dc633e634fe7e1a41ece9
+- Local integration/wasteland: 7c9ff20ac0334ead4edd90849a72dc3c2734e264
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit 006cd48a8b263d234dfa3edbc910f2debd7f1861.
+- Remote origin/master: matches local; cached commit 246e7f1933aaec596e99cec55cef4243b23baca9.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: behind local; cached commit f3420b4477133bdb766aecc2ea57ffbaddcecda7.
+- Remote origin/integration/wasteland: behind local; cached commit 16d72e8272eed38daaf4e504a96a1415da189fd1.

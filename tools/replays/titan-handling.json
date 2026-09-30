@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "seed": 1989,
+  "stepHz": 120,
+  "durationTicks": 360,
+  "baselineCommit": "58cf295b84029ba5b018d41302760d490c4a21b2",
+  "description": "Pre-TITAN-HANDLING full-state seeded Pacific Canyon runs for every non-Titan car.",
+  "fingerprints": {
+    "falcone_f42": "4e21858b0a9fa432e5fa60a04f4edafa07d9a882e5946e91954f3b758c4cee81",
+    "stuttgart_959s": "48e3771f58a858a851037b6e579bd557571334c8b64afd38f0a0c34a2d1491ff",
+    "falcone_heritage": "70a0a47844e7c85e9027c8c438552b0d49b1209467ea39060d41827232a68621",
+    "aurora_gt": "f37807c821b7206f79726b9619e450824ce5340fdb365b85ef20fd18a5106219",
+    "dusthawk_rally": "8d8ed289728cfabe1f8ac566248a2d89761ab03881ab91401fc34beb7697d097",
+    "banshee_muscle": "9c4ae4e389cef2f78ca30cc9970bf9e84c128fc1708dea4c6e62a0150c2d0c83",
+    "viper_proto": "6f2922e0f7faeb13e56a6f83fb1d1396b9354f57ce63b9e2c0f0d2b260bd7eec",
+    "koenigsegg_jesko": "43e1bec178904e9663552f1f41d039b9f02ecf9535c2679437220278c4f676a9"
+  }
+}

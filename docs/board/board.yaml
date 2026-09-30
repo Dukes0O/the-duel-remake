@@ -579,7 +579,8 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: building
+    status: review
+    waiting_on: kyle
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [tools/art/rustwall-source-sheet.py, tools/scenarios/art-source-rustwall.mjs, docs/board/looks/rustwall-src/round-1.jpg, docs/board/looks/rustwall-src/round-1-review.md, docs/changes/ART-SRC-RUSTWALL.md]
     hooks: [tools/art/catalog.json]
@@ -2484,7 +2485,7 @@ tasks:
     needs: [WAR-02a-FORMAT, CRASH-SWITCH-REMOVE]
     status: building
     claimed_by: "Codex autonomous Director, 30 September 2026"
-    owns: [src/arena/warlord-settlement.js, src/vehicle-contact-modifiers.js, src/armor-kits.js, src/sim-contacts.js, src/combat-armor.js, src/microcombat-projectiles.js, src/armor-kit-meshes.js, src/screen-armory.js, src/screen-arena.js, src/arena/warlords.js, src/wasteland-progress.js, tools/test-warlord-settlement.mjs, tools/test-side-saws.mjs, tools/scenarios/warlord-reward.mjs, docs/changes/WAR-02a-REWARD.md]
+    owns: [src/arena/warlord-settlement.js, src/vehicle-contact-modifiers.js, src/armor-kits.js, src/sim-contacts.js, src/combat-armor.js, src/combat-projectiles.js, src/armor-kit-meshes.js, src/screen-armory.js, src/screen-arena.js, src/warlords.js, src/wasteland-progress.js, tools/test-warlord-settlement.mjs, tools/test-side-saws.mjs, tools/scenarios/warlord-reward.mjs, docs/changes/WAR-02a-REWARD.md]
     hooks: [src/app.js]
     sequencing: "FORMAT and CRASH-SWITCH-REMOVE merged. Tests first. Contact damage reads Sal actor move state without editing Sal files. app.js waits for TITAN-HANDLING to merge. Save Guardian review is required before merge."
     flag: warlords
@@ -2508,7 +2509,7 @@ tasks:
     lane: RELEASE
     size: S
     needs: [SCRAPDOME-PLAYTEST, FEATURE-PLAYTEST, RALLY-CHECKPOINT, CRASH-SWITCH-REMOVE]
-    status: building
+    status: released
     claimed_by: "Claude, 30 September 2026"
     acceptance:
       - "Kyle approved in writing on 30 September 2026. Flip scrapdome, titan-climb and muddy-hollow to on in src/feature-flags.js (career-backup stays dev), then full release evidence on the exact integration commit and the OPERATIONS.md release routine. The Scrapdome stays reachable only from the yard and Muddy Hollow only by driving there; the main menu is unchanged. Waits for CRASH-SWITCH-REMOVE, which owns feature-flags.js until it merges."
@@ -2518,7 +2519,9 @@ tasks:
     lane: PHYS
     size: S
     needs: [CRASH-SWITCH-REMOVE]
-    status: building
+    status: merged
+    review_commit: 71a1582c0d9b5c9a009282c389f5290ba6745946
+    note: "Kyle approved 30 September: Titan is fine. integrate. Merged 7c9ff20 from frozen 71a1582 after clean independent review, lane300/300 in670.94s, build0.95s, focus40/40 and162 replay checks. Sal Pilot and Reward App hooks are free."
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [src/config.js, src/sim-driving.js, src/sim-rival.js, src/arena/arena-pilot.js, tools/test-titan-handling.mjs, tools/replays/titan-handling.json, tools/scenarios/titan-handling.mjs, docs/changes/TITAN-HANDLING.md]
     hooks: [src/app.js, tools/replays/expected-fingerprints.json]
@@ -2528,6 +2531,18 @@ tasks:
       - "Settled rule: for the Titan only (a new car field, lowSpeedSteer: true in its CARS entry), the rolling factor is max(speed/30, .55) once the Titan moves faster than 3 mph, and steering grip is max(grip, 1.0) below 45 mph. Above 45 mph nothing changes, so its high-speed feel and every other car stay exactly as they are."
       - "Tests first: at 12 mph and 25 mph on dirt the Titan's turning rate is at least the rally car's; at 70 mph it is unchanged; ordinary cars unchanged at every speed; race fingerprints unchanged except replays that drive the Titan, each named and explained in the change note."
       - "Kyle checks it in the Preview (waiting_on: kyle at review)."
+  - id: HK-LAUNCHER-PORT
+    title: "Launcher port test retries ports Windows has reserved"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: merged
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [tools/launcher-test-listen.mjs, tools/test-launcher-test-listen.mjs, tools/test-launcher-port.mjs, docs/changes/HK-LAUNCHER-PORT.md]
+    sequencing: "Pure test-fixture binding helper only; no other lane owns these files. Test EACCES retry first, retain every launcher assertion and the twenty-attempt limit."
+    acceptance:
+      - "tools/test-launcher-port.mjs picks a random port from 5200 to 62000 and retries only on EADDRINUSE. On 30 September 2026 a full tier failed once with EACCES on ::1:59825, a port Windows had reserved. Retry on EACCES as well (still 20 attempts); nothing else changes. Test first by stubbing a listen that fails with EACCES once."
   - id: WAR-SAL-TUNE
     title: "Claude plays Sal, Gratian plays Sal in Preview; tune to 'winnable in a few tries'"
     owner: claude

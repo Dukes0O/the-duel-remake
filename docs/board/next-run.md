@@ -53,7 +53,8 @@ serialize and say why in the card.
   are playing it. Their notes arrive at the top of `docs/playtest-inbox.md`
   and go to the top of the board.
 - **Development:** `integration/wasteland`. Switches `wasteland2` and
-  `hidden-road` are `on`; `career-backup` is `dev`.
+  `hidden-road`, `scrapdome`, `titan-climb` and `muddy-hollow` are `on`;
+  `career-backup` and `warlords` are `dev`.
 - **Phase 2 and BETA-01 are done.** Art is still at about 3 of 5 (crew, hands,
   Rustwall); SPEC 0.11 sets the new approach.
 - **Built by Claude on 26 September (merged):** the Scrapdome foundation
@@ -128,17 +129,18 @@ for candidates only; Kyle picks.
 
 ### Housekeeping
 
-- Merge `codex/ux-backlog-notes` with the docs lane gate. It records Kyle's
-  UX-ENTRY-HINTS request and the closed OPS-LAUNCHER-DIAG report. Kyle later
-  confirmed that double-click opens the game after the audio session refreshed
-  shortcut metadata. The earlier cause was not proved; no launcher repair or
-  root-cause task remains authorized.
-- Do UX-ENTRY-HINTS early in the run: Kyle and Gratian are playing on foot now.
-
-- `tools/test-rustwall-frame.mjs` reads commit `5a994ad` from Git history.
-  Give it a checked-in baseline so a history compaction cannot break it.
-- The audio lane's old voice audition takes in its `.evidence/` can go now that
-  Kyle has picked (keep `audio-src/voices/`).
+- UX-ENTRY-HINTS and HK-RUSTWALL-BASELINE merged on 30 September. The hints
+  explain the verified F/gamepad X controls and thresholds. Rustwall's frame
+  test now uses a checked-in baseline instead of reading an old Git commit.
+- HK-LAUNCHER-PORT merged on 30 September. Its test-only helper retries
+  Windows-reserved ports without changing any launcher assertion.
+- OPS-LAUNCHER-DIAG is closed: Kyle confirmed that double-click opens the game
+  after the audio session refreshed shortcut metadata. The earlier cause was
+  not proved; no launcher repair or root-cause task remains authorized.
+- The backlog capture note is consumed. Its two current board records and
+  merge verdict remain in the board and run log.
+- Old voice auditions belong to the external audio lane's cleanup. Preserve
+  audio-src/voices and do not inspect or remove that protected lane's files.
 
 ## Rules to watch
 

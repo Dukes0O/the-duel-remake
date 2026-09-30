@@ -2102,3 +2102,29 @@ Full checkpoint: exact clean db785194244e02b8d8f206a79a3e0407dd09cff3 passed all
 ART-SRC-HANDS source artifacts merged from91c4c93: independent review confirms7hashes/licences/geometry and genuine113025B sheet; sourcecatalog preserves Crew/EGG-03 choices. Final escalated lane298/298 in666.73s and build1.12s passed, sourcecleanunchanged. Default-sandbox audio decoder failures were reproduced and cleared by authorized child-process execution, without source/assertion changes. Card staysreview/waitingKyle. Mergecountsincefull2 includingClaude's release merge; janitor removeslane/branch/usedraw, retains originallicensedcache.
 
 WAR-02a-FORMAT merged frome837be1 after clean source/Save Guardian review, private memory-only browser22761(7captures/0errorswarnings), final lane299/299 in519.84s and build1.15s. First-to-three/1.5armor/phase2/240s+suddendeath are deterministic; warlordsdev keeps unfinished Sal out of releasedScrapdome. Fixed the initially added arena:null full-state regression by removing it; old HINTS/replay pins unchanged. Stronger rejection tests and Armory offflag regression reviewed. Mergecountsincefull3 includingClaude release. Janitor removescleanlane/branch/consumedraw, retaining recipes and verdict.
+
+## 30 September 2026, Claude: SCRAPDOME-RELEASE
+
+Kyle approved the Scrapdome, Titan climbing and Muddy Hollow for the real game.
+Switched on in lane release/scrapdome-0930 (four switch-state assertions moved
+to the released state, reviewed in the change note), merged as 73f63eb after
+CRASH-SWITCH-REMOVE. Full tier 298/298 on 73f63eb (first run: one port
+EACCES in test-launcher-port, card HK-LAUNCHER-PORT) and 298/298 on the final
+commit 246e7f1 with the release notes. Balance passed. Live build
+20260930170709-a39e0d; master 246e7f1 pushed. Answers to Codex's three design
+questions are in docs/playtest-inbox.md and SCRAPDOME.md section 5 (new
+`warlords` switch for WAR-02a-FORMAT).
+
+ART-SRC-RUSTWALL artifacts merged from567cfc3: source/licence/visual review clean, 16 source hashes checked, 182867B sheet. Final unchanged lane298/298 in580.20s plusbuild1.33s; first random-portfixture EACCES59884 reproduced as Windows-reserved59796–59895, unchangedrerunPASS/noassertionchanges. Cardreview/waitingKyle, no runtimeadoption. Mergecountsincefull4 includingClaude release. Janitor removescleanlane/branch/consumedraw, preserveslicensedoriginals.
+
+HK-LAUNCHER-PORT merged frombc498a5: independent tests first f059f2d reproducedEACCES beforecode, sevenstubcases/40checks pass; oldreal-portassertions byte-identical. Finalcleanlane8/8 in111.39s plusbuild241modules/Vite707ms. Helperretainslocalhost/range/twentycap, retriesWindowsreservedEACCES withoutskippingassertions. This is merge5sinceDirectorfullcheckpoint and10since runstart: stopfeaturemerges forfull and runjanitorsweep. Janitor removescleanlane/branch; no raw evidence was produced.
+
+Ten-merge janitor: folded the completed UX/launcher capture into the current plan and removed docs/changes/BACKLOG-UX-LAUNCHER.md. Its original docs mergeab9a3aa passed6/6 changed suites in39.77s and build235modules, with no runtime/live/save edits; the closed launcher report does not prove a root cause. Retain idle unmerged Titan/Sal/Reward/Salt work and protected audio/design/release refs. No runtime removal is justified by the audit’s literal-only asset candidates; dynamic manifests and licensed current assets need proof. Advisory size comparison and final replay/full evidence follow.
+
+Ten-merge sweep verdict: docs lane6/6 in123.53s and build passed(Vite520ms). Tracked inventory 257292562→257292298B (1118→1117files); public236249990B and Wasteland78998200B unchanged, looks9503059B. Real growth is source sheets and small recipes/tests, not runtime assets. Forty-eight literal asset candidates need dynamic-reference proof; no unused modules or removed-feature tests are proved. Retain aud-10/aud-12 refs of uncertain cleanup ownership and active unmerged work; protected audio/design/release folders remain excluded. Existing Wasteland60MB/runtime8MB advisory gaps remain for later asset work; no target increase or history rewrite. Exact integration full checkpoint follows.
+
+TITAN-HANDLING ready for Kyle: frozen71a1582c0d9b5c9a009282c389f5290ba6745946, independent review clean, lane300/300 in670.94s plusbuild0.95s, focus40/40 and162replaychecks. Four private memory-onlyHigh/Performance mud/hillturn capturesport55443pass/noissues withmatchingstate. Three Titan pins changed only after independent reproduction; allothers unchanged. No merge before Kyle Preview feel check; keep branch/lane and review evidence.
+
+Full checkpoint: exact clean dfcd6db1d4f92dd0281724d75ad99bd9b72603ad passed 300/300 suites in 527.77 s at 10:45 PDT, with no skipped suites and campaigns enabled. Start/end source matches the committed ledger. The five-merge/two-hour counter resets here. D8 normal push follows; this evidence does not cover later source commits. Kyle then approved Titan in writing: "Titan is fine. integrate."
+
+TITAN-HANDLING merged as 7c9ff20 from frozen 71a1582 after Kyle’s written approval: "Titan is fine. integrate." Final lane300/300 in670.94s and build0.95s; independent review,40 focused checks,162 replay checks and4 private terrain captures pass. Only the three reviewed Titan pins change. Merge count since full:1. Janitor removes its clean lane/branch and used evidence; named Sal Pilot and Reward App hooks are released.
