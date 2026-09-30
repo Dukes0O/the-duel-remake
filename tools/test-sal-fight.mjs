@@ -180,11 +180,12 @@ test('the actual pilot applies .5 yaw authority without changing the car physics
 
 test('a successful sweep announces SAW SWEEP only when real contact damages the target', () => {
   const f = fight(); startTell(f); advance(f, .8);
-  Object.assign(f.actor, {prevS: 100, s: 100, prevLateral: 6, lateral: 1, pushVelocity: -20, speedMph: 35});
-  Object.assign(f.duel.state, {prevS: 100, s: 100, prevLateral: 0, lateral: 0, pushVelocity: 0, speedMph: 35});
+  Object.assign(f.actor, {prevS: 100, s: 100, prevLateral: 6, lateral: 1, pushVelocity: -10, speedMph: 35});
+  Object.assign(f.duel.state, {prevS: 100, s: 100, prevLateral: -4, lateral: -1, pushVelocity: 10, speedMph: 35});
   f.duel._vehicleContact(f.duel.state, f.actor, 'rival');
   ok(f.duel.state.armor < f.duel.state.maxArmor, 'fixture makes a real damaging side contact');
   equal(f.duel.state.callout, 'SAW SWEEP!', 'a damaging sweep has the settled hit callout');
+  equal(f.actor.salSaw.hit, true, 'contact records a positive sweep hit for the next Sal step');
 });
 
 test('ordinary race controls retain the existing reviewed replay fingerprints', () => {

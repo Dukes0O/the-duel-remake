@@ -60,3 +60,9 @@ Ordinary replay control passed all three unchanged committed fingerprints.
 No full lane gate or build was run: Director assigned the focused tests only
 while another runner owns the heavy gate. This is red evidence for the builder,
 not passing merge evidence.
+
+Contact handshake settled with the SAL builder: only a positive sweep hit on
+the target side sets attacker.salSaw.hit = true and emits SAW SWEEP! immediately.
+SAL consumes that result on the next fixed tick; it must not infer a hit from
+unrelated armor changes. The contact fixture moves both cars toward one another
+so the established NPC safety-yield rule does not replace the intended impact.
