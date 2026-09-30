@@ -2535,7 +2535,10 @@ tasks:
     lane: TOOL
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [tools/launcher-test-listen.mjs, tools/test-launcher-test-listen.mjs, tools/test-launcher-port.mjs, docs/changes/HK-LAUNCHER-PORT.md]
+    sequencing: "Pure test-fixture binding helper only; no other lane owns these files. Test EACCES retry first, retain every launcher assertion and the twenty-attempt limit."
     acceptance:
       - "tools/test-launcher-port.mjs picks a random port from 5200 to 62000 and retries only on EADDRINUSE. On 30 September 2026 a full tier failed once with EACCES on ::1:59825, a port Windows had reserved. Retry on EACCES as well (still 20 attempts); nothing else changes. Test first by stubbing a listen that fails with EACCES once."
   - id: WAR-SAL-TUNE
