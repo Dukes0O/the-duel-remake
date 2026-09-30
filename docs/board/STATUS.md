@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-09-30T17:49:01.040Z
+Observed at: 2026-09-30T17:59:33.714Z
 
-Observation commit: 7c9ff20ac0334ead4edd90849a72dc3c2734e264
+Observation commit: 3e0bc170870e77da4d62f8d0d18405b1a7a1e166
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 7c9ff20ac0334ead4edd90849a72dc3c2734e264
+Integration HEAD: 3e0bc170870e77da4d62f8d0d18405b1a7a1e166
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -36,12 +36,11 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| lane/art/art-src-saltflats | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/saltflats-source |
 | lane/audio/aud-10 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 5 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/cmb/war-02a-sal | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/war-sal |
-| lane/save/war-02a-reward | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/war-reward |
+| lane/cmb/war-02a-sal | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/war-sal |
+| lane/save/war-02a-reward | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/war-reward |
 
 ## Unmerged branches for idle review
 
@@ -49,9 +48,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| lane/art/art-src-saltflats | unknown | 2026-09-30T10:22:36-07:00 | 0 | last commit 2026-09-30T10:22:36-07:00 | docs/board/looks/salt-flats-src/round-1-review.md, docs/board/looks/salt-flats-src/round-1.jpg, docs/changes/ART-SRC-SALTFLATS.md, tools/art/catalog.json, tools/art/salt-flats-source-sheet.py |
-| lane/cmb/war-02a-sal | unknown | 2026-09-30T10:48:44-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/WAR-02a-SAL.md, src/arena/arena-brains.js, src/arena/arena-event.js, src/arena/sal-fight.js, src/arena/warlord-event.js |
-| lane/save/war-02a-reward | unknown | 2026-09-30T10:42:21-07:00 | 0 | last commit 2026-09-30T10:42:21-07:00 | docs/changes/WAR-02a-REWARD.md, src/arena/warlord-settlement.js, src/armor-kit-meshes.js, src/armor-kits.js, src/combat-armor.js |
+| lane/cmb/war-02a-sal | unknown | 2026-09-30T10:56:06-07:00 | 0 | last commit 2026-09-30T10:56:06-07:00 | docs/changes/WAR-02a-SAL.md, src/arena/arena-brains.js, src/arena/arena-event.js, src/arena/arena-pilot.js, src/arena/sal-fight.js |
+| lane/save/war-02a-reward | unknown | 2026-09-30T10:58:49-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/WAR-02a-REWARD.md, src/arena/warlord-settlement.js, src/armor-kit-meshes.js, src/armor-kits.js, src/combat-armor.js |
 
 ## Size targets
 
@@ -63,12 +61,12 @@ Targets are advisory. Change compares with the previous status observation when 
 | Wasteland models | 78,998,200 B | +0 B | 60,000,000 B |
 | Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
-| Largest review sheet | 256,032 B | +0 B | 500,000 B |
-| Review `looks/` | 9,503,059 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 176,005 B | +156,964 B | 5,000,000 B |
+| Largest review sheet | 430,908 B | +174,876 B | 500,000 B |
+| Review `looks/` | 9,947,193 B | +444,134 B | 20,000,000 B |
+| Added bytes in last merge | 797,041 B | +621,036 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 308,722,688 B | +124,928 B | unavailable |
-| Lane folders | 3 | -1 | unavailable |
+| Git objects | 309,234,688 B | +512,000 B | unavailable |
+| Lane folders | 2 | -1 | unavailable |
 
 ## Backups
 
@@ -76,7 +74,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 246e7f1933aaec596e99cec55cef4243b23baca9
 - Local main: missing
-- Local integration/wasteland: 7c9ff20ac0334ead4edd90849a72dc3c2734e264
+- Local integration/wasteland: 3e0bc170870e77da4d62f8d0d18405b1a7a1e166
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
