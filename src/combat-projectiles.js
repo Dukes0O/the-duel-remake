@@ -1,5 +1,5 @@
 import {contactZone} from './collision.js';
-import {point, predictedPoint, burst} from './combat-weapons.js';
+import {point, aimPoint, predictedPoint, burst} from './combat-weapons.js';
 import {applyArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {tickCombatScoring} from './combat-scoring.js';
@@ -23,7 +23,7 @@ function steerBolt(duel, projectile, dt, sampleSeconds = dt * .5) {
   const biasedEnemy = projectile.enemy && Number.isFinite(projectile.aimBias);
   const sampleX = projectile.x + (biasedEnemy ? projectile.vx * sampleSeconds : 0);
   const sampleZ = projectile.z + (biasedEnemy ? projectile.vz * sampleSeconds : 0);
-  const at = point(duel, target);
+  const at = aimPoint(duel, target);
   const travel = Math.min(T.crossbow.leadTime,
     Math.hypot(at.x - sampleX, at.z - sampleZ) / speed);
   const future = predictedPoint(duel, target, travel);

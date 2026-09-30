@@ -10,7 +10,7 @@ const noAward = (profile, key = null) => ({profile, key, awarded: false,
 
 function arenaFacts(arena) {
   if (arena?.version !== 1 || arena.venueId !== 'scrapdome' ||
-      arena.mode !== 'last-car-rolling' || arena.phase !== 'over' ||
+      !['last-car-rolling', 'fuel-run'].includes(arena.mode) || arena.phase !== 'over' ||
       !arena.result || !Array.isArray(arena.participants) ||
       !Array.isArray(arena.result.placings)) return null;
   const player = arena.participants.filter(item => item?.id === 'player' && item.kind === 'player');
@@ -23,6 +23,8 @@ function arenaFacts(arena) {
       placings.length !== ids.length || new Set(placings).size !== placings.length ||
       placings.some(id => !ids.includes(id)) || !placings.includes('player') ||
       arena.result.winnerId !== placings[0]) return null;
+  if (arena.mode === 'fuel-run' && arena.participants.some(p =>
+      !Number.isSafeInteger(p.fuelDelivered) || p.fuelDelivered < 0 || p.fuelDelivered > 5)) return null;
   const placeIndex = placings.indexOf('player');
   return {player: player[0], computers: computers.length,
     behind: placings.slice(placeIndex + 1).filter(id => id !== 'player').length,

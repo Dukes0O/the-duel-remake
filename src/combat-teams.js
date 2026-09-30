@@ -1,3 +1,5 @@
+import {noteFuelDamage} from './arena/modes/fuel-run.js';
+
 // Whose side is a car on? (docs/SCRAPDOME.md section 7, decision 4)
 // Outside an arena event the answer is exactly the established rule: the
 // player against the computer cars, with owners reported as 'player' or 'cpu'.
@@ -57,6 +59,7 @@ export function arenaTargetOf(duel, actor) {
 export function noteArenaDamage(duel, victim, removed, ownerId) {
   const state = duel.state, target = arenaParticipant(duel, victim);
   if (!state.arena || !target || !(removed > 0)) return;
+  if (state.arena.mode === 'fuel-run') noteFuelDamage(duel, target, removed);
   if (ownerId && ownerId !== target.id) {
     target.lastHitBy = ownerId; target.lastHitAt = state.stageTimeSec;
     const owner = state.arena.participants.find(p => p.id === ownerId);

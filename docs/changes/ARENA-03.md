@@ -1,6 +1,8 @@
 # ARENA-03 — Fuel Run
 
-Status: tests-first. No implementation or merge verdict yet.
+Status: implementation candidate. Not merge-ready. The actual named-player
+browser regression, current visual/audio review and Claude's on-foot projectile
+contact decision remain pending.
 
 ## Tests first
 
@@ -191,3 +193,108 @@ buttons do, and waits for both actual named-player options. The eight mode and
 owner assertions and subsequent real UI controls are unchanged. **The genuine
 browser red remains pending.** This setup correction does not record a browser
 acceptance verdict.
+
+## Implementation candidate
+
+Fuel Run uses the real arena event, pilot, combat damage, F exit/re-entry and
+fixed-step fighter movement. Four level inner-floor fuel pads refill after five
+seconds. A participant owns one canister across car/fighter transfers. Each
+team's depot is a visible **4 m-wide disk, 2 m center-overlap radius**, beside
+its starting spawn; the simulation and visible ring use that same radius.
+Five deliveries win; otherwise the three-minute delivery placing wins, and a
+delivery tie waits for the next delivery. Wreck counts still determine the
+existing CAR-01 wreck bonus, never the Fuel winner. Settlement uses the existing
+owner/complete-event/atomic-save safeguards and Kettle hold rule.
+
+Collector goals use available fuel and their own depot. Rammer and hunter
+pursuit, range selection, crossbow launch and guidance use an actual on-foot
+carrier's pose; moving lead uses the real fighter input and observed walking
+speed. Combat `point()` remains the parked car's physical hit position. Roads,
+Last Car Rolling and Sal keep their existing target paths.
+
+A proposed 0.75-second original-owner pickup block was withdrawn. A real heavy
+hit emits a drop before another fixed step, and an overlapping original owner
+can legally reclaim it on the next step. The independent recovery regression
+failed with the proposed block and now passes without any exception to
+Claude's settled "anyone can take it" rule. Browser probes must check the
+actual drop event rather than require an arbitrary unclaimed interval.
+
+Presentation reads arena state. Native canister geometry is instanced; pads
+and depot signs, mesh capacity and the color attribute are prepared on events.
+The renderer reuses its entry buffer only in Fuel, and counts cargo in its
+existing update loop. It does not allocate new Fuel entry/filter arrays on
+ordinary frames or create visual resources during rendering. Pickup, drop and
+delivery map to existing authored `interface.bonus`, `vehicle.landing` and
+`interface.go` cues. Results use `interface.win` or `interface.lose`.
+Protected sound banks, catalogs and assets are unchanged.
+
+### Current headless evidence
+
+After tests-first commit `9028370`, all six reviewed regressions pass:
+**39/39 Fuel tests, 842 assertion checks, zero skips**. The switch suite passes
+**25 checks**. The focused existing on-foot/direction/weapon, projectile-body,
+arena, Sal, CAR-01/warlord reward, settlement and fabricated-save guards pass
+**195/195 tests**, zero skips. No existing fingerprint changed.
+
+Fuel's switch off/on both preserve all five pre-build control traces:
+
+| Control | SHA-256 |
+| --- | --- |
+| Pacific Canyon duel, seed 1989 | cc93330532ebadc03575549ccdb03552b0ea378999c1bdbfb50dd3692dfd05ae |
+| Red Mesa time trial, seed 42 | 0616b40744d3fdd27f7df283adaf317f67c8511962bfddd6f944ab3f89d0f500 |
+| Timberline objective event, seed 17 | a0bdaa42703432581339f0275a950ace468aef188f291199b080896adbc83a68 |
+| Last Car Rolling, seed 1989 | 0bea25ff94c52712c8ff0de88af58f31a382c91333f2a17f1fc1d5e6cef51d88 |
+| Sal, seed 1989 | 67c00e4e979986de686266b64cc1d920d491282b7a733657dcfe2cbcd552c5e5 |
+
+Actual App Fuel samples, ownership, canisters, refill timers, delivery scores,
+event traces and settled result match exactly at **30/60/144 FPS**.
+
+### Limited seeded completion sample
+
+The owned scenario exports `measureFuelRounds()`: two seeds at each difficulty,
+fixed 120 Hz, real driving input and existing car limits. Its simple player
+seeks fuel/depot without teleported pickups, weapons or boosts. It is a round
+completion smoke check, not a human win-rate or full balance claim. All six
+ended at five deliveries in **55.65–146.52 s**: **103 pickups, 41 drops,
+51 deliveries, four hard wall-hit events**. Collectors won four rounds; rammers
+won two. The scripted player delivered twice across the six rounds.
+
+| Difficulty / seed | Seconds | Winner | Trace SHA-256 |
+| --- | ---: | --- | --- |
+| Easy / 1989 | 93.92 | cpu-2 | f2e00693dfe009c861c96add0e8daef9a2c94503bdd31d17b514a5d57c8ed616 |
+| Easy / 77123 | 55.65 | cpu-1 | 3291f4f204a75b218fd6831c05b174b60c86b263e2fc7efa1bb38d4b83fa440d |
+| Medium / 1989 | 78.59 | cpu-1 | 263f507290f7f7173848c94495ef32de67fc5f6a52f71df42460a1353fc84ad7 |
+| Medium / 77123 | 146.52 | cpu-1 | 69714bafbcbc8264445fe05b03f36219028c7c073504a5242f304c5f91def3a4 |
+| Hard / 1989 | 97.56 | cpu-1 | bc6db388aaf69c0dfab0bf924c51bbefc3a78f85614168be58de11529f71f59e |
+| Hard / 77123 | 132.78 | cpu-2 | 265a4ac213a84913031e9307ada82c132db1f24ce3327aa3b35a87c127b4d5d1 |
+
+### Review boundary and browser work
+
+The preliminary reviewer proved that current projectiles can aim at a carrying
+fighter but contact only car actors. Fighter projectile health/splash/drop
+rules were not settled by the card. The Director sent that question to Claude
+in writing and marked the card waiting on Claude. This candidate does not
+invent a damage value or claim finished fighter projectile support.
+
+An earlier private High/Performance browser pass tested real yard launch, roof
+and fighter cargo, heavy contact/wreck drops, enemy pickup, F exit/re-entry,
+loaded walking, five-second refill, delivery sudden death and failed-save retry.
+It predates the reviewed recovery/targeting/allocation fixes and is **not a
+current candidate verdict**. The next run stopped at `Page.navigate timed out`
+on private port **14128**, before acceptance, with zero screenshots/warnings
+or console errors. That is a harness/setup failure, not a game failure or pass.
+Its exact disposable Chrome profile/process cleanup was completed. Further
+browser work waits for the other lane's gate to release laptop resources.
+
+The named-player fixture setup correction in `9ed52e0` remains to run against
+the deliberately absent UI clamps, prove the actual stale Fuel-selection red,
+then rerun green after the settled clamp. Lane/build gates, current browser
+checks and independent Reviewer/Save Guardian/audio verdicts remain pending.
+No merge, release, live folder, Preview build or real player save was touched.
+
+## Removed — implementation
+
+Removed the proposed owner pickup block, its canister fields and all timer/goal
+filters in the same change. Removed the added per-frame Fuel entry/map/filter
+allocations and moved color-buffer creation to preparation. No runtime asset,
+old mode, old assertion or replay fingerprint was removed or regenerated.

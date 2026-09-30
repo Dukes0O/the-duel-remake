@@ -44,7 +44,8 @@ function blockedByScenery(course, from, to, fromS, toS) {
 
 function allowedGround(course, point, car, {arena = course.def?.arena === true} = {}) {
   if (point.y <= T.seaLevel) return false;
-  if (arena) return Math.abs(point.lateral) <= T.arenaLateralLimit;
+  if (arena) return Math.abs(point.lateral) <= (course.def?.venue === true
+    ? course.def.scrapdome.wallOffset - T.radius : T.arenaLateralLimit);
   const anchor = carPoint(course, car);
   return Math.hypot(point.x - anchor.x, point.z - anchor.z) <=
     T.carRangeMeters + 1e-8;
@@ -202,7 +203,8 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
   const move = footMoveDirection(fighter.yaw, input);
   if (move.x || move.z) {
     const distance = (input.sprint ? T.sprintMetersPerSecond *
-      (fighter.sprintMultiplier || 1) : T.walkMetersPerSecond) * dt;
+      (fighter.sprintMultiplier || 1) : T.walkMetersPerSecond) *
+      (car.arena?.mode === 'fuel-run' && car.arena.participants.find(p => p.id === 'player')?.fuelCanisterId ? .7 : 1) * dt;
     const dx = move.x * distance, dz = move.z * distance;
     const result = attemptMovement(course, car, fighter, dx, dz, feetY, airborne);
     if (result.hit) {

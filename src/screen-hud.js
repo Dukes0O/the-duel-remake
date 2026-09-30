@@ -250,13 +250,13 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     if(arena){
     // Scrapdome events replace laps, route progress and race position.
       text('race-time-label',arena.timeLabel);
-      text('race-time',time(arena.remainingSec));
+      text('race-time',arena.fuel && arena.phase==='sudden-death' ? 'NEXT DELIVERY' : time(arena.remainingSec));
       text('penalty-time','');
       text('lap-number',arena.modeLabel);
       text('lap-time',arena.scoreText);
       text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||'medium').toUpperCase()} · SCRAPDOME`);
       text('stage-objective',s.arena.mode === 'warlord' ?
-        'FIRST TO THREE WRECKS' : 'WRECK THEM MORE THAN THEY WRECK YOU');
+        'FIRST TO THREE WRECKS' : arena.fuel ? 'BRING FUEL TO YOUR BLUE DEPOT' : 'WRECK THEM MORE THAN THEY WRECK YOU');
       text('route-percent','');
       text('route-remaining',arena.scoreText);
       text('route-lap','ARENA');
@@ -278,7 +278,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
         text('callout-text','WRECKED');
         text('callout-kicker',`BACK IN THE FIGHT IN ${arena.respawnSec}`);
       }
-      if(s.status==='countdown')text('countdown-word',s.countdown>1?'SCRAPDOME':'WRECK THEM');
+      if(s.status==='countdown')text('countdown-word',s.countdown>1?'SCRAPDOME':arena.fuel?'BRING IT HOME':'WRECK THEM');
     }
   }
   return updateHud;
