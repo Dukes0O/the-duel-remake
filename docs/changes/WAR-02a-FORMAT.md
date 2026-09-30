@@ -73,7 +73,9 @@ and clamps to the exact deadline. The test assertion stayed unchanged.
   and hidden loading UI before continuing. No production renderer edit,
   disabled warmup or suppressed error was used. Both reports are retained.
 - Mandatory lane tier and final build are pending the Director's gate queue.
-  This note does not grant merge approval. Independent review is pending.
+  This note does not grant merge approval.
+
+Independent reviewer: no findings on frozen 1a268b6. Separate headless probes confirmed wall sudden-death wins, respawn armor, one phase event and exact deadline results. Save Guardian: clean on the same source, including seven profiles, 247 preservation checks, stale-player rejection, repeated callbacks, reload and the 4 MB budget. No storage shape or key changed; no unfinished reward is paid. Both reviewers inspected the changed assertions and browser verdict.
 
 Raw browser evidence is under the integration folder's
 .evidence/2026-09-30/WAR-02a-FORMAT/: ready-flow contains the passing report
