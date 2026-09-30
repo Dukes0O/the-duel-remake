@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { randomInt } from 'node:crypto';
+import {listenPrivate} from './launcher-test-listen.mjs';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
@@ -9,25 +9,6 @@ import { probeDuelServer } from './launcher-port.mjs';
 
 const exec = promisify(execFile);
 const page = await readFile(new URL('../index.html', import.meta.url), 'utf8');
-
-async function listenPrivate(server) {
-  for (let attempt = 0; attempt < 20; attempt++) {
-    const port = randomInt(5200, 62000);
-    try {
-      await new Promise((resolve, reject) => {
-        server.once('error', reject);
-        server.listen(port, 'localhost', () => {
-          server.off('error', reject);
-          resolve();
-        });
-      });
-      return port;
-    } catch (error) {
-      if (error.code !== 'EADDRINUSE') throw error;
-    }
-  }
-  throw new Error('No private launcher test port was available');
-}
 
 async function withServer(reply, check) {
   const server = createServer(reply);

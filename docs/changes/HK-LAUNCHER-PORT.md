@@ -59,3 +59,7 @@ EADDRINUSE/EACCES retry, both twenty-attempt limits, unexpected asynchronous
 error propagation, synchronous-throw cleanup and default-port success.
 Once the builder exposes the API, they execute the actual retry and listener
 assertions. No existing source or assertions were edited. No heavy gates ran.
+
+## Implementation and focused result
+
+The tools-only helper retries EACCES and EADDRINUSE with the same localhost host, private port range and twenty-attempt cap. It removes only its temporary listener on all outcomes, including synchronous throws. Seven new stub cases pass; the original launcher port suite passes with every assertion unchanged. Mandatory lane/build and independent review are pending. No runtime, live launcher or save code changed.
