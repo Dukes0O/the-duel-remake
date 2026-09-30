@@ -529,15 +529,17 @@ tasks:
     acceptance:
       - "tools/scenarios/crash-presentation.mjs ends with a switch-off check that no crash-vfx meshes exist; crash-effects is now on, so the final pass checks that the released game has the crash pool without any URL flag."
   - id: BALANCE-W2-OFF-RETIRE
-    title: "Retire the wasteland2-off balance gate and switch-off path"
+    title: "Remove the wasteland2 switch and the rule set behind it being off"
     owner: codex
     lane: OPS
-    size: S
-    needs: [CRASH-RELEASE]
+    size: L
+    needs: [CRASH-SWITCH-REMOVE, SCRAPDOME-RELEASE]
     status: ready
-    waiting_on: kyle
     acceptance:
-      - "wasteland2 is on and players cannot turn it off, so the release rule 'combat balance with wasteland2 off and on' checks a rule set nobody can play (27 September 2026: it failed at Medium 13/30 while the live set passed). Propose to Kyle (waiting_on: kyle) removing the wasteland2 switch-off path and the off-balance gate from AGENTS.md, docs/OPERATIONS.md and the balance tool; do not remove before Kyle agrees."
+      - "Kyle approved on 30 September 2026: retire and remove the rule set nobody can play. wasteland2 is on and cannot be turned off, so delete the switch from src/feature-flags.js and every switch-off branch in src/ (about 20 files), keeping exactly the switched-on behavior."
+      - "Remove the off-balance gate: AGENTS.md and docs/OPERATIONS.md release evidence becomes one combat balance run; tools/combat-balance.mjs, tools/arena-balance.mjs and tools/onfoot-balance.mjs lose the off mode; scenarios and tests stop setting or toggling wasteland2. Delete tests that only prove the switched-off behavior; list each one in the change note's Removed section."
+      - "Race fingerprints for the released rules stay unchanged (replay check). Cards that name flag: wasteland2 on the board lose the field."
+      - "Touches many files: run it when no other lane owns any of them, in parts if needed (src first, then tools and scenarios), each part through the lane tier."
   - id: ART-SRC-CREW
     title: "Crew figures: short list of existing starting models for Kyle"
     owner: codex
@@ -852,10 +854,10 @@ tasks:
     lane: DESIGN
     size: S
     needs: []
-    status: ready
-    waiting_on: kyle
+    status: closed
     acceptance:
       - "Both are built and switched off in the real game. Kyle and Gratian play them in the Preview; Claude turns notes into settled fixes, then prepares a release on Kyle's go-ahead, with the Scrapdome if its playtest is done."
+    note: "Kyle, 30 September 2026: good enough to release. The Titan is hard to steer next to the computer cars; that becomes TITAN-HANDLING, which does not hold the release."
   - id: P3-POLISH
     title: "Phase 3 polish and release rounds"
     owner: claude
@@ -2469,19 +2471,31 @@ tasks:
     lane: DESIGN
     size: S
     needs: [PREVIEW-LAUNCHER, INT-0926-MERGE]
-    status: ready
+    status: closed
     acceptance:
       - "Claude collects the play notes (docs/playtest-inbox.md), plays the same build privately, and writes each fix as a codex card with a settled rule. Nothing is tuned by guesswork."
+    note: "Kyle and Gratian, 30 September 2026: good enough to release."
   - id: SCRAPDOME-RELEASE
-    title: "Release the Scrapdome to the real game"
+    title: "Release the Scrapdome, Titan climbing and Muddy Hollow to the real game"
     owner: claude
     lane: RELEASE
     size: S
-    needs: [SCRAPDOME-PLAYTEST, RALLY-CHECKPOINT]
+    needs: [SCRAPDOME-PLAYTEST, FEATURE-PLAYTEST, RALLY-CHECKPOINT, CRASH-SWITCH-REMOVE]
     status: ready
-    waiting_on: kyle
     acceptance:
-      - "Full release evidence on the exact commit, then Kyle's written go-ahead flips scrapdome to on (reachable only from the yard; the main menu is unchanged). GATE-REJOIN and RALLY-CHECKPOINT already shipped on 26 September 2026."
+      - "Kyle approved in writing on 30 September 2026. Flip scrapdome, titan-climb and muddy-hollow to on in src/feature-flags.js (career-backup stays dev), then full release evidence on the exact integration commit and the OPERATIONS.md release routine. The Scrapdome stays reachable only from the yard and Muddy Hollow only by driving there; the main menu is unchanged. Waits for CRASH-SWITCH-REMOVE, which owns feature-flags.js until it merges."
+  - id: TITAN-HANDLING
+    title: "The Titan steers well at crawling and climbing speeds"
+    owner: codex
+    lane: PHYS
+    size: S
+    needs: [CRASH-SWITCH-REMOVE]
+    status: ready
+    acceptance:
+      - "Kyle, 30 September 2026: the Titan is hard to steer compared with the computer cars. Cause: steeringYawAuthority (src/config.js) scales turning down below 30 mph and by grip, and the Titan spends Muddy Hollow and the climbs slow, with grip .91 against the rally car's 1.05."
+      - "Settled rule: for the Titan only (a new car field, lowSpeedSteer: true in its CARS entry), the rolling factor is max(speed/30, .55) once the Titan moves faster than 3 mph, and steering grip is max(grip, 1.0) below 45 mph. Above 45 mph nothing changes, so its high-speed feel and every other car stay exactly as they are."
+      - "Tests first: at 12 mph and 25 mph on dirt the Titan's turning rate is at least the rally car's; at 70 mph it is unchanged; ordinary cars unchanged at every speed; race fingerprints unchanged except replays that drive the Titan, each named and explained in the change note."
+      - "Kyle checks it in the Preview (waiting_on: kyle at review)."
   - id: WAR-SAL-TUNE
     title: "Claude plays Sal, Gratian plays Sal in Preview; tune to 'winnable in a few tries'"
     owner: claude

@@ -1305,3 +1305,15 @@ build cards on the board. Changes from SPEC 3.3 to 3.9 and why:
 - The secret crew member is Vesper Blackiron, the Baron's daughter, with a
   Shock Charge built on the arsenal's disable effect.
 
+## 30 September 2026: Scrapdome, Titan climbing and Muddy Hollow approved; wasteland2 switch retired
+
+Kyle, after he and Gratian played them in the Preview: "good enough to merge".
+SCRAPDOME-RELEASE releases all three once CRASH-SWITCH-REMOVE has merged
+(that lane owns the switch file). Kyle found the Titan hard to steer next to
+the computer cars; TITAN-HANDLING settles a low-speed steering fix for the
+Titan only and does not hold the release.
+
+Kyle also approved retiring the rule set with wasteland2 off, which players
+cannot reach: BALANCE-W2-OFF-RETIRE removes the switch, its off branches and
+the second balance run from the release evidence.
+
