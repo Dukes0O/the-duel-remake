@@ -576,7 +576,11 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [tools/art/rustwall-source-sheet.py, tools/scenarios/art-source-rustwall.mjs, docs/board/looks/rustwall-src/round-1.jpg, docs/board/looks/rustwall-src/round-1-review.md, docs/changes/ART-SRC-RUSTWALL.md]
+    hooks: [tools/art/catalog.json]
+    sequencing: "Shared catalog edits wait for CREW then HANDS source lanes to merge; original-source research and private capture may proceed."
     flag: hidden-road
     acceptance:
       - "SPEC 0.11 sourcing step for Rustwall's salvage (wrecked cars, sheet metal, tower parts) and the canyon strata (replaces EGG-02-P3). Two or three candidate sets, CC0 first, licences recorded in tools/art/catalog.json, files cached outside the repository. The Quaternius pack already used for Muddy Hollow counts as a candidate source."
