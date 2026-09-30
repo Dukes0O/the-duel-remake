@@ -183,7 +183,12 @@ root.addEventListener('click',e => {
     case 'yard-armory': openYardPanel('armory'); return;
     case 'yard-crew': openYardPanel('crew'); return;
     case 'yard-scrapdome': if(app.arenaAvailable?.())openYardPanel('scrapdome'); return;
-    case 'arena-start': if(app.startArenaEvent({mode:arenaMode,opponents:arenaOpponents})){yardPanel='home';lastScreen=null;} return;
+    case 'arena-start':
+      if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
+      if (app.startArenaEvent({mode: arenaMode, opponents: arenaOpponents})) {
+        yardPanel = 'home'; lastScreen = null;
+      }
+      return;
     case 'warlord-retry-save': app.retryArenaSettlement();lastScreen=null;renderState(app.duel.state);return;
     case 'arena-rematch': if(app.restart())lastScreen=null; return;
     case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
@@ -295,6 +300,7 @@ function renderState(s) {
   text('menu-credits', `${credits(profile().credits)} CR`);
   ui.overlay.dataset.status=s.status; ui.overlay.dataset.paused=String(!!s.paused); ui.overlay.dataset.audioState=app.audio?.context?.state||'locked'; ui.overlay.dataset.muted=String(!!app.audio?.muted);
   ui.overlay.dataset.audioSamples=app.audio.sampleStatus;ui.overlay.dataset.majorCrashes=String(s.majorCrashes);ui.overlay.dataset.catastrophic=String(s.catastrophic);
+  if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
   const showImpact = s.status === 'gameover' && s.impactTimer > 0;
   const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${yardActive}:${yardPanel}:${arenaOpponents}:${arenaMode}:${yardActive?profile().wasteland?.scrap:''}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
   if (screen!==lastScreen) {

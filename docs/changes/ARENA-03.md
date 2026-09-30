@@ -1,8 +1,10 @@
 # ARENA-03 — Fuel Run
 
-Status: implementation candidate. Not merge-ready. The actual named-player
-browser regression, current visual/audio review and Claude's on-foot projectile
-contact decision remain pending.
+Status: held implementation candidate. Not merge-ready. The named-player UI
+red/green and current High/Performance browser checks pass. Save Guardian's
+durable-retry/result-proof fixes pass the independent acceptance tests and
+current browser probe; independent re-review, final lane/full gates, audio/art
+review and Claude's on-foot projectile contact decision remain pending.
 
 ## Tests first
 
@@ -320,6 +322,63 @@ Post-sync focused verification: **39/39 Fuel tests, 842 checks, zero skips**;
 **27 switch checks**. All ten existing-mode traces and the actual 30/60/144
 comparison still pass without regenerating any pin.
 
+## Actual named-player browser red
+
+With fixture-only setup `c10b493`, private port **34000**, memory-only saves,
+the helper reached the genuine defect: the rank-six named player selected
+Fuel through the yard, the real native select changed to the rank-five player,
+the yard displayed Last Car Rolling and hid Fuel, and its actual ENTER button
+left event mode **null**, rather than starting the displayed Last Car Rolling.
+The failure was the unchanged expected-mode assertion; no module/option/setup
+error occurred. There were zero warnings and console errors. The same imported
+Node suite separately passed **39/39**, 842 checks; that does not turn the UI
+red into a pass.
+
+After this red, the builder restored only the reviewed router mode clamps:
+re-check the current player's Fuel availability before rendering and before
+launch. App/economy/settlement paths remain unchanged. The exact same browser
+helper and eight assertions will now run green.
+
+## Current browser candidate evidence
+
+The unchanged eight-assertion named-player helper passes on private port
+**49518**, memory-only saves: rank-six Fuel selection, actual native player
+change, rank-five displayed Last Car Rolling and real Last Car Rolling start
+for the current owner. One capture, zero warnings/errors; exit 0. Its imported
+Node checks separately pass 39/39. The only production change is the two
+reviewed router mode clamps; App and settlement were unchanged.
+
+The current full High/Performance scenario passes on private port **49373**,
+memory-only saves, **22 captures, zero warnings and console errors; exit 0**.
+It covers real rank-gated yard controls, roof and fighter cargo, actual heavy
+contact and wreck drops, enemy recovery, F exit/re-entry, loaded walking, refill,
+delivery sudden death, named-player isolation and the real Retry Save button.
+Each quality records eight pickups, three drops, five deliveries and one result.
+The actual heavy hit removes **38.624256 armor**. Loaded walking covers
+**0.63 m over 0.2 s** while the resting car stays parked. Refill takes exactly
+**5 s**. The synthetic failed save leaves the owner/raw memory registry unchanged;
+retry banks **240 scrap and 25 hold once** and preserves the spectator.
+
+Existing authored bonus/landing/go/win cues were dispatched during their real
+engine events; no sound bank, catalog or audio asset changed. This is an event
+and dispatch check, not an independent listening verdict. The final audio
+review remains pending. The builder inspected the current roof, fighter and
+result captures: canister handle/body and loaded fighter canister are visible,
+and HUD/results are readable. The roof canister is dark under the current
+lighting. No independent art score or art approval is claimed.
+
+The actual running four-car 150-RAF pacing sample (after 30 warmup frames) has
+mean **16.6664 ms**, p95 **16.8 ms**, in both qualities. High reports **506 draws /
+564,805 triangles**; Performance **304 / 363,903**. This is a narrow private-browser
+sample, without a baseline overhead comparison or a general frame-budget claim.
+
+These browser checks predate fixes for Save Guardian's two new findings. The
+existing save probe does not cover another-tab durable owner changes, and the
+payout probe does not prove rejection of forged completions. Those clearances
+are **blocked**, not passing. Tests first are being added independently; no
+App/settlement production fix has started. Earlier option/module/navigation
+setup failures remain excluded from these verdicts.
+
 ## Tests first — durable Fuel retry and result legitimacy
 
 Save Guardian found two blockers after the browser candidate review. New
@@ -396,3 +455,66 @@ No lane/build/full gate or new browser verdict is claimed by this test commit.
 
 Nothing removed. This adds only the new acceptance checks and their evidence.
 The separate malformed-JSON progression fix stays with its assigned lane.
+
+## Save findings fixed for independent re-review
+
+After the independent tests-first commit `fb2634d`, Fuel settlement now reads
+and validates the durable registry on initial completion and every real Retry.
+It reuses the existing owner-validation, verified-owner and atomic registry
+adoption guards. Pending identity remains tied to the exact state, result,
+run and owner. Newer durable owner progress is the base for the award; changed,
+missing and unsupported owners refuse Retry without a write. An existing
+receipt adopts the durable bank and closes Retry without another reward or
+write. Failed writes never expose banked scrap/hold or make stale local progress
+trusted. Fuel no longer uses the ordinary profile-save shortcut after failure.
+Last Car Rolling and Warlord settlement bodies retain their existing behavior.
+
+Pure Fuel result validation now rejects missing fifth deliveries, wrong
+first-five winners, early/tied/wrong whistle winners, unsupported reasons,
+empty sudden-death results and reversed unequal nonwinner placings. The
+settled lower-scoring next-delivery sudden-death winner remains valid; equal
+nonwinner counts may appear in any order. No top-only SD rule was introduced.
+
+The actual Fuel suite passes **58/58 tests, 1397 checks, zero skips; exit 0**,
+including all 15 independent save/result reds and all four actual-engine
+completion controls. Switch coverage passes **27 checks**. The focused existing
+Last Car Rolling settlement, released Warlord format/pay/settlement and
+fabricated-save guards pass **88/88 tests**, including 247 historical save
+round-trip checks. All ten unchanged-mode fingerprints and actual 30/60/144
+Fuel traces pass without changing any assertion or pin.
+
+### Current browser after save fixes
+
+The owned scenario adds a newer-owner memory-registry write between the actual
+failed completion and the same real Retry button. This fixture does not use
+App's stale registry, fabricate a result or bypass payment. Every original
+Retry/+240/+25/one-write/spectator/duplicate assertion remains intact; new
+assertions verify the durable credits, bank, engine, hold and unknown field.
+
+Current High and Performance pass on private port **42338**, memory-only saves,
+**22 captures, zero warnings/console errors; exit 0**. Both finish with durable
+**credits 2000, scrap 340, engine 1, hold 35**, adding exactly **240 scrap and
+25 hold** once to the newer bank. The spectator remains unchanged. Heavy hit,
+walking, refill, gameplay events and authored cue-dispatch checks still pass.
+Each quality traces eight pickups, three drops, five deliveries and one result.
+Their complete event trace hashes match:
+`7096999c721371f43df65dddee343def5eb54aaee86ed556c5b28f34948a1a77`.
+The same narrow pacing sample remains mean 16.6664 ms / p95 16.8 ms in both
+qualities, with 506 draws / 564,805 triangles High and 304 / 363,903 Performance.
+The builder inspected the current result capture: it displays the +240 award
+and correctly shows total Kettle hold 35/100. Independent listening/look review
+is still pending.
+
+`npm run build` passes for this isolated lane's current source, 246 modules;
+the existing large-chunk warning remains. No lane/full-tier pass is claimed by
+this builder note. The Director's independent runner and Save Guardian must
+review the clean freeze. Contact design still waits for Claude, so this card
+remains held rather than merge-ready.
+
+### Removed — save fixes
+
+Removed Fuel's use of the stale profile-save path after a failed award and its
+old retryable-flag branches. That ordinary path remains for its existing
+callers. Replaced Fuel's count-only finish validation with the settled result
+proof in the same change. No assertion, replay pin, licensed/runtime asset or
+protected audio source was removed, relaxed or regenerated.

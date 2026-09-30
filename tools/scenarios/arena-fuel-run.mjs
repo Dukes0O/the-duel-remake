@@ -3,6 +3,7 @@
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {contactFixture} from './warlord-reward.mjs';
+import {PLAYERS_KEY} from '../../src/progression.js';
 
 async function click(c, selector) {
   const point = await c.evaluate(`(()=>{const b=document.querySelector(${JSON.stringify(selector)});
@@ -66,6 +67,7 @@ async function qualityRun(c, quality) {
     window.__fuelProbe={events:[],cues:[],fail:false,writes:0,
       other:JSON.stringify(a.players.players.find(p=>p.id!==owner).profile),owner};
     const store=Object.getOwnPropertyDescriptor(window,'localStorage').value,set=store.setItem.bind(store);
+    window.__fuelProbe.externalSet=set;
     store.setItem=(k,v)=>{if(window.__fuelProbe.fail)throw Error('Synthetic Fuel save failure');
       window.__fuelProbe.writes++;set(k,v);};
     const play=a.audio._playCue.bind(a.audio);
@@ -171,13 +173,29 @@ async function qualityRun(c, quality) {
       !a.duel.state.arena.result.settlementRetryable||q.before!==JSON.stringify(a.profile)||q.saved!==window.name)
       throw Error('Failed Fuel persistence changed owner or reported payment');})()`);
   await c.screenshot(quality+'-retry-save');
+  // A separate tab's progress is a raw write to this disposable memory store.
+  // It bypasses only the App-write counter, not storage or actual Retry behavior.
+  await c.evaluate(`(()=>{const a=window.__qaApp,q=window.__fuelProbe;
+    const registry=JSON.parse(localStorage.getItem(${JSON.stringify(PLAYERS_KEY)}));
+    const owner=registry.players.find(p=>p.id===q.owner),car=a.duel.state.car;
+    owner.profile.credits=2000;owner.profile.wasteland.scrap=100;
+    owner.profile.upgrades[car]={...owner.profile.upgrades[car],engine:1};
+    owner.profile.wasteland.territories.kettle.hold=10;
+    owner.profile.otherTabFuelField={kept:true};
+    q.externalSet(${JSON.stringify(PLAYERS_KEY)},JSON.stringify(registry));q.freshOwnerCar=car;
+  })()`);
   await click(c,'[data-action="warlord-retry-save"]');
   const saved=await c.evaluate(`(()=>{const a=window.__qaApp,q=window.__fuelProbe,r=a.duel.state.arena.result;
     if(!r.settlementSaved||r.scrapEarned!==240||r.holdAdded!==25||q.writes!==1)
       throw Error('Actual Fuel retry did not bank Medium pay once '+JSON.stringify(r));
+    if(a.profile.credits!==2000||a.profile.wasteland.scrap!==340||
+      a.profile.upgrades[q.freshOwnerCar]?.engine!==1||a.profile.wasteland.territories.kettle.hold!==35||
+      a.profile.otherTabFuelField?.kept!==true)throw Error('Fuel Retry erased newer durable owner progress');
     if(a._settleArenaResult({result:r},a.duel.state)||q.writes!==1)throw Error('Fuel duplicate settlement paid twice');
     if(JSON.stringify(a.players.players.find(p=>p.id!==q.owner).profile)!==q.other)throw Error('Fuel changed other named player');
-    window.__fuel.paint();return{...r,cues:[...q.cues],events:structuredClone(q.events)};})()`);
+    window.__fuel.paint();return{...r,durableOwner:{credits:a.profile.credits,scrap:a.profile.wasteland.scrap,
+      engine:a.profile.upgrades[q.freshOwnerCar].engine,hold:a.profile.wasteland.territories.kettle.hold},
+      cues:[...q.cues],events:structuredClone(q.events)};})()`);
   await ready(c,'saved Fuel result');await c.screenshot(quality+'-saved-result');
   for(const cue of ['interface.bonus','vehicle.landing','interface.go','interface.win'])
     if(!saved.cues.includes(cue))throw Error('Authored Fuel cue missing '+cue);
