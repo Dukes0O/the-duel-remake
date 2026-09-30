@@ -8,6 +8,7 @@ import {FEATURE_STATES, createFeatureFlags} from '../src/feature-flags.js';
 import {COURSE} from '../src/config.js';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
+import {fireWeapon, point as vehiclePoint} from '../src/combat-weapons.js';
 import {arenaCarSpec} from '../src/arena/arena-pilot.js';
 import {arenaFloorSpeed} from '../src/arena/venues.js';
 import {arenaReward, settleArenaResult} from '../src/arena/arena-settlement.js';
@@ -291,6 +292,17 @@ test('wrecking drops fuel before the respawn and an enemy can take the dropped c
   equal(member(duel).fuelDelivered, 0, 'a wreck is not a delivery point');
 });
 
+test('the original carrier can immediately recover their dropped fuel, just like an enemy', () => {
+  const duel = start(); holdOthers(duel);
+  const id = pick(duel);
+  hit(duel, 26);
+  equal(member(duel).fuelCanisterId, null, 'the heavy hit first drops the carried item');
+  equal(fuel(duel).canisters.find(c => c.id === id)?.carriedBy, null, 'the item becomes available on the floor');
+  tick(duel);
+  equal(member(duel).fuelCanisterId, id, 'anyone includes the original carrier on the very next drive-over step');
+  equal(fuel(duel).canisters.find(c => c.id === id)?.carriedBy, 'player', 'immediate recovery owns the same canister');
+});
+
 function leave(duel) {
   duel.setInput({interact: true}); tick(duel, 48);
   equal(duel.state.onFoot, true, 'holding actual F exits the car inside Fuel Run');
@@ -374,6 +386,99 @@ for (const brain of ['rammer', 'hunter']) test(`${brain} pursues a carrier throu
   ok(p.goal.speedMph <= limit + 1e-8, 'fuel targeting stays inside the existing arena car speed limit');
   ok(Number.isFinite(attacker.yawVelocity) && Math.abs(attacker.lateral) <= duel.course.def.scrapdome.wallOffset,
     'the actual pilot keeps the attacker finite and inside the arena wall');
+});
+
+function footCarrier(brain = 'rammer') {
+  const duel = start({difficulty: 'hard'});
+  holdOthers(duel); leave(duel);
+  const pad = fuel(duel).pads[0], id = pad.canisterId;
+  placeFighter(duel, pad); tick(duel);
+  equal(member(duel).fuelCanisterId, id, 'actual F exit and actual pad pickup create the on-foot carrier');
+  const cpu = actor(duel, 'cpu-1'), p = member(duel, 'cpu-1');
+  Object.assign(cpu, {combatWrecking: false, combatWreckTimer: 0, armor: cpu.maxArmor, impactTimer: 0});
+  Object.assign(p, {brain, wreckCounted: false, protectedSec: 0,
+    targetId: null, goal: null, reactionSec: 0, targetHeldSec: 0});
+  place(duel, 'cpu-1', {s: pad.s + 20, lateral: 0});
+  duel.state.combat.aiTimer = Infinity;
+  tick(duel);
+  equal(p.targetId, 'player', 'the real brain selects the participant carrying fuel on foot');
+  return duel;
+}
+const bearing = (from, to) => Math.atan2(to.x - from.x, to.z - from.z);
+const angleGap = (from, to) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
+
+for (const brain of ['rammer', 'hunter']) test(`${brain} chases the actual on-foot carrier rather than the parked car`, () => {
+  const duel = footCarrier(brain), p = member(duel, 'cpu-1'), fighter = duel.state.fighter;
+  const parked = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  ok(Math.hypot(fighter.x - parked.x, fighter.z - parked.z) > 40,
+    'the fighter and parked car are far enough apart to distinguish targeting');
+  ok(p.goal && Math.hypot(p.goal.x - fighter.x, p.goal.z - fighter.z) < 3,
+    `${brain} pilot goal follows the actual stationary fighter carrying fuel`);
+});
+
+function carrierBolt() {
+  const duel = footCarrier(), cpu = actor(duel, 'cpu-1'), fighter = duel.state.fighter;
+  place(duel, 'cpu-1', {s: fighter.s - 40, lateral: fighter.lateral});
+  // Fire from rest: this isolates target bearing from inherited car velocity.
+  const launch = duel.course.worldAt(cpu.s, cpu.lateral);
+  equal(fireWeapon(duel, 'crossbow', true, cpu), true, 'the actual CPU weapon entry fires its crossbow');
+  const bolt = duel.state.combat.projectiles.at(-1);
+  equal(bolt.ownerId, 'cpu-1', 'this is the real CPU-owned bolt');
+  const physicalCar = vehiclePoint(duel, duel.state), parked = duel.course.groundAt(duel.state.s, duel.state.lateral);
+  near(physicalCar.x, parked.x, 'the occupied-car physical point remains at the parked car');
+  near(physicalCar.z, parked.z, 'aiming at a fighter does not move the parked-car damage hitbox');
+  return {duel, bolt, launch};
+}
+
+test('a Hard CPU crossbow launch aims at the actual on-foot carrier, keeping the existing spread', () => {
+  const {duel, bolt, launch} = carrierBolt(), fighter = duel.state.fighter;
+  const intended = bearing(launch, fighter), actual = Math.atan2(bolt.vx, bolt.vz);
+  const degrees = Math.abs(angleGap(actual, intended)) * 180 / Math.PI;
+  ok(Math.abs(angleGap(actual, intended)) <= .03 + 1e-8,
+    `Hard bolt follows the fighter within its existing 0.03-radian spread; error was ${degrees} degrees`);
+});
+
+test('the actual Hard CPU attack uses on-foot carrier range when choosing its crossbow', () => {
+  const duel = footCarrier(), fighter = duel.state.fighter, cpu = actor(duel, 'cpu-1');
+  place(duel, 'cpu-1', {s: fighter.s - 40, lateral: fighter.lateral});
+  const from = duel.course.worldAt(cpu.s, cpu.lateral), parked = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  ok(Math.hypot(from.x - fighter.x, from.z - fighter.z) > 35,
+    'the actual fighter is beyond the existing CPU bomb range');
+  ok(Math.hypot(from.x - parked.x, from.z - parked.z) < 35,
+    'the parked car gives the opposite weapon choice, making this a meaningful range check');
+  let weapon = null;
+  duel.onChange((_s, event) => { if (event.weaponFired) weapon = event.weaponFired; });
+  duel.state.combat.aiTimer = 0; duel.state.combat.aiTurn = 0;
+  tick(duel);
+  equal(weapon, 'crossbow', 'the real scheduled CPU attack measures its on-foot carrier, not the parked car');
+});
+
+test('CPU bolt guidance follows a moved on-foot carrier while the parked-car hitbox stays in place', () => {
+  const {duel, bolt, launch} = carrierBolt(), fighter = duel.state.fighter;
+  const parked = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  const initial = bearing(launch, fighter), speed = Math.hypot(bolt.vx, bolt.vz);
+  // Isolate guidance from the separately tested launch: place this real fired
+  // bolt along the stationary carrier bearing, then move the real fighter.
+  Object.assign(bolt, {vx: Math.sin(initial) * speed, vz: Math.cos(initial) * speed,
+    launchBearing: initial, x: launch.x + Math.sin(initial) * 3,
+    z: launch.z + Math.cos(initial) * 3});
+  const oldPose = {s: fighter.s, lateral: fighter.lateral};
+  const parkedSide = Math.sign(angleGap(initial, bearing(bolt, parked)));
+  const candidate = [-3, 3].map(offset => {
+    const pose = {s: oldPose.s, lateral: oldPose.lateral + offset};
+    return {pose, at: duel.course.worldAt(pose.s, pose.lateral)};
+  }).find(({at}) => Math.sign(angleGap(initial, bearing(bolt, at) + bolt.aimBias)) !== parkedSide);
+  ok(candidate, 'the foot movement separates fighter guidance from parked-car guidance');
+  placeFighter(duel, candidate.pose);
+  const desired = bearing(bolt, duel.state.fighter) + bolt.aimBias;
+  const before = Math.abs(angleGap(Math.atan2(bolt.vx, bolt.vz), desired));
+  tick(duel);
+  ok(duel.state.combat.projectiles.some(p => p.id === bolt.id), 'the real bolt is still in flight for its guidance check');
+  const after = Math.abs(angleGap(Math.atan2(bolt.vx, bolt.vz),
+    bearing(bolt, duel.state.fighter) + bolt.aimBias));
+  ok(after < before, `guidance turns toward the moved fighter; angular error ${before} became ${after}`);
+  near(vehiclePoint(duel, duel.state).x, parked.x, 'the parked car keeps its physical hit position during guidance');
+  near(vehiclePoint(duel, duel.state).z, parked.z, 'the parked car remains separate from its fighter');
 });
 
 test('rank 6 and the new dev switch govern the yard choice; locked choices stay hidden', () => {
@@ -583,3 +688,74 @@ test('same Fuel inputs produce identical carry, refill, delivery, timing and res
 });
 
 test.after(() => console.log(`Fuel Run: ${checks} acceptance checks executed.`));
+
+// Separate private-browser acceptance. The owned Fuel scenario invokes this
+// with the normal browser-harness context. Node-only results exclude this UI
+// verdict: it requires actual DOM selection and the actual yard start button.
+export async function checkFuelPlayerModeFallback(c) {
+  const click = async selector => {
+    const where = await c.evaluate(`(()=>{const b=document.querySelector(${JSON.stringify(selector)});
+      if(!b||b.hidden||b.disabled)throw Error('Missing visible player-mode control');
+      b.scrollIntoView({block:'center'});const r=b.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2;
+      if(!b.contains(document.elementFromPoint(x,y)))throw Error('Player-mode control is covered');
+      return{x,y};})()`);
+    for (const type of ['mousePressed', 'mouseReleased'])
+      await c.command('Input.dispatchMouseEvent', {type, button: 'left', clickCount: 1, ...where});
+  };
+  const ready = async label => c.waitFor(`(()=>{const a=window.__qaApp;
+    a?.onFrame?.(a.duel.state,0);window.__render?.renderFrame();
+    return a?.visualReady&&document.querySelector('#renderer-loading')?.hidden;})()`, label, 60000);
+  const choosePlayer = async id => {
+    // The visible native select's real change handler calls production App.
+    await c.evaluate(`(()=>{const s=document.querySelector('#player-select');
+      if(!s||s.hidden||!s.getBoundingClientRect().width)throw Error('Named-player select is not visible');
+      if(![...s.options].some(o=>o.value===${JSON.stringify(id)}))throw Error('Named-player option missing');
+      s.value=${JSON.stringify(id)};s.dispatchEvent(new Event('change',{bubbles:true}));return true;})()`);
+    await c.waitFor(`window.__qaApp.player.id===${JSON.stringify(id)}`, 'actual named-player change');
+  };
+  await c.evaluate('window.name=""');
+  await c.navigate('/tools/menu-check.html?flags=fuel-run&harness=fuel-player-mode-fallback');
+  await c.waitFor('window.__qaApp?.duel.state.status==="menu"', 'memory-only player-mode menu', 60000);
+  const players = await c.evaluate(`(()=>{const a=window.__qaApp;a.stop();
+    if(!window.name.startsWith('__duel_qa_tab_v2:')||!Object.getOwnPropertyDescriptor(window,'localStorage')?.value)
+      throw Error('The fallback check requires the isolated memory-only QA store');
+    document.head.insertAdjacentHTML('beforeend','<style>details{display:none!important}</style>');
+    if(!a.addPlayer('Fuel rank six').ok)throw Error('Rank-six named fixture failed');
+    const six=a.player.id;a.profile.wasteland.discoveredGate=true;
+    a.profile.wasteland.xp=3500;a.profile.wasteland.rank=6;
+    if(!a._saveProfile())throw Error('Rank-six memory save failed');
+    if(!a.addPlayer('Fuel rank five').ok)throw Error('Rank-five named fixture failed');
+    const five=a.player.id;a.profile.wasteland.discoveredGate=true;
+    a.profile.wasteland.xp=2500;a.profile.wasteland.rank=5;
+    if(!a._saveProfile())throw Error('Rank-five memory save failed');
+    a.onFrame?.(a.duel.state,0);return{six,five};})()`);
+  await ready('rank-six menu ready');
+  await choosePlayer(players.six); await ready('rank-six player selected');
+  await click('#wasteland-visit'); await ready('rank-six yard transition');
+  await c.evaluate('window.__qaApp.advance(8)'); await ready('rank-six yard ready');
+  await click('[data-action="yard-scrapdome"]'); await click('[data-arena-mode="fuel-run"]');
+  const selected = await c.evaluate(`({rank:window.__qaApp.profile.wasteland.rank,
+    label:document.querySelector('.arena-yard-mode')?.textContent,
+    selected:document.querySelector('[data-arena-mode="fuel-run"]')?.getAttribute('aria-pressed')})`);
+  assert.equal(selected.rank, 6, 'Fuel was selected by the actual discovered rank-six named player');
+  assert.match(selected.label, /FUEL RUN/, 'the visible yard actually displays Fuel before the player change');
+  assert.equal(selected.selected, 'true', 'the actual Fuel control is selected');
+  await click('[data-action="yard-menu"]'); await ready('main menu after rank-six yard');
+  await choosePlayer(players.five); await ready('rank-five player selected');
+  await click('#wasteland-visit'); await ready('rank-five yard transition');
+  await c.evaluate('window.__qaApp.advance(8)'); await ready('rank-five yard ready');
+  await click('[data-action="yard-scrapdome"]');
+  const shown = await c.evaluate(`({rank:window.__qaApp.profile.wasteland.rank,
+    fuelVisible:!!document.querySelector('[data-arena-mode="fuel-run"]'),
+    label:document.querySelector('.arena-yard-mode')?.textContent})`);
+  assert.equal(shown.rank, 5, 'the second actual named player is rank five');
+  assert.equal(shown.fuelVisible, false, 'the second player cannot see the locked Fuel choice');
+  assert.match(shown.label, /LAST CAR ROLLING/, 'the second player sees Last Car Rolling');
+  await click('[data-action="arena-start"]');
+  const started = await c.evaluate(`({mode:window.__qaApp.duel.state.arena?.mode??null,
+    playerId:window.__qaApp.duel.state.playerId})`);
+  assert.equal(started.mode, 'last-car-rolling',
+    'the rank-five real yard button must start displayed Last Car Rolling after another player selected Fuel');
+  assert.equal(started.playerId, players.five, 'the displayed event starts for the current named owner');
+  return {checks: 8, rankSixSelection: selected, rankFiveDisplay: shown, started};
+}

@@ -125,3 +125,56 @@ comparison with the committed suite proved the only text changes were these
 two approved setup replacements. Every assertion, input, loop duration and
 fingerprint remains unchanged. This test-only commit does not grant a passing
 lane/build gate or an independent production review.
+
+## Tests first — settled review regressions
+
+The independent reviewer found additional settled acceptance gaps. Before the
+builder fixes them, the new suite adds six real-engine checks. Actual F exit
+and a real pad pickup establish the on-foot carrier; no carry ownership is
+fabricated. These checks cover immediate recovery by the original dropped-fuel
+owner, rammer and hunter pursuit of the actual fighter, Hard crossbow launch
+bearing, actual scheduled CPU weapon choice from the fighter's range, and
+guidance after the fighter moves. They preserve the physical parked-car hit
+point and every existing replay control. A real fired bolt's initial trajectory
+is controlled only in the guidance test, isolating guidance from the separately
+tested launch-bearing bug.
+
+Pre-fix command:
+`node --test --test-reporter=tap tools/test-arena-fuel-run.mjs`.
+Result: **39 tests, 33 pass, 6 fail, 0 skipped, 838 checks reached; exit 1**.
+
+| New regression | Exact first failure |
+| --- | --- |
+| Original owner recovers immediately | anyone includes the original carrier on the very next drive-over step |
+| Rammer follows fighter | rammer pilot goal follows the actual stationary fighter carrying fuel |
+| Hunter follows fighter | hunter pilot goal follows the actual stationary fighter carrying fuel |
+| Hard crossbow aim | Hard bolt follows the fighter within its existing 0.03-radian spread; error was 140.84640403121608 degrees |
+| Scheduled attack range | the real scheduled CPU attack measures its on-foot carrier, not the parked car |
+| Guidance follows moved fighter | guidance turns toward the moved fighter; angular error 0.10366448131998918 became 0.12161495279853485 |
+
+### Reviewed existing assertion change
+
+`tools/test-feature-flags.mjs` first failed its unchanged seven-entry catalog
+assertion on the builder's new Fuel catalog. Reviewer `fuel_review` approved
+the exact **7 → 8** count and explicit `fuel-run:dev` / production-default-off
+coverage; the Director granted this file on integration in `186256b` and
+authorized this narrow change. Every previous feature state and retirement
+condition remains asserted. The production-off check retains career backup
+and warlords and adds Fuel. A separate production URL check proves
+`?flags=fuel-run` cannot expose it. After the reviewed change, the switch suite
+passes **25 checks**. No other old assertion or fingerprint changed.
+
+### Separate browser regression
+
+The new suite exports `checkFuelPlayerModeFallback(context)` for the owned
+private-browser scenario. It uses the real visible player select and yard
+buttons: discovered rank-six player selects Fuel, returns to the menu, changes
+to another discovered rank-five player, sees Last Car Rolling, and presses
+ENTER THE SCRAPDOME. The resulting mode must be the displayed Last Car Rolling
+and must belong to that current named player. Its profile setup uses only the
+isolated QA memory store. **The Node result above excludes this browser
+verdict; a real browser run is still pending.**
+
+No fighter projectile damage, splash, knockdown or drop values were assumed or
+asserted. That separate design gap is with Claude; these tests cover only the
+settled chase, aim, carrying, selection and switch behavior.
