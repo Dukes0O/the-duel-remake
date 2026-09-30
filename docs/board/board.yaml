@@ -2484,7 +2484,9 @@ tasks:
     lane: SAVE
     size: S
     needs: [WAR-02a-FORMAT, CRASH-SWITCH-REMOVE]
-    status: building
+    status: merged
+    review_commit: 1924f613cd4142ded0c35570b04f812a801a66d7
+    note: "Merged de3eb0f after exact clean lane303/303 in471.96s and build1.00s. Save Guardian502 memory probes, independent contact/art review and corrected-source12-capture High/Performance browser pass. Atomic per-player first150/rematch25/loss0, free Side Saws and one-time territory claim; warlords remains dev."
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [src/arena/warlord-settlement.js, src/vehicle-contact-modifiers.js, src/armor-kits.js, src/sim-contacts.js, src/combat-armor.js, src/combat-projectiles.js, src/armor-kit-meshes.js, src/screen-armory.js, src/screen-arena.js, src/warlords.js, src/wasteland-progress.js, tools/test-warlord-settlement.mjs, tools/test-side-saws.mjs, tools/scenarios/warlord-reward.mjs, docs/changes/WAR-02a-REWARD.md]
     hooks: [src/app.js, src/screen-router.js, tools/test-territory-ui.mjs]

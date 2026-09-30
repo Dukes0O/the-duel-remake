@@ -579,3 +579,20 @@ during this metadata completion.
 Replaced the obsolete pre-implementation "working reward not supplied"
 assertion with the reviewed complete earned/claimed requirement. No runtime
 path, control, asset, save field or replay fingerprint was removed.
+
+## Final integration verdict
+
+Merged as de3eb0fa133c1ed3923638dcd6a2edbb05deb1c5 from exact clean
+1924f613cd4142ded0c35570b04f812a801a66d7. Mandatory lane tier passed
+303/303 suites, zero failures or unrun suites, in 471.96 seconds; build
+passed in 1.00 second. Source stayed clean and unchanged throughout.
+Campaigns ran; only the normal forced demo shoulder fixture was skipped.
+The standard large-chunk build advisory remains. No test was weakened.
+
+Save Guardian cleared the final transaction runtime with 502 independent
+memory checks. Independent art/contact and narrow built-metadata/assertion
+reviews cleared the final source. Corrected-runtime private browser passed
+12 captures in High and Performance with zero errors or warnings. The
+reviewed declaration that Sal reward is built does not enable the warlords
+development switch. Used lane evidence is removed after this verdict;
+current authored models, save data and licensed source files are preserved.
