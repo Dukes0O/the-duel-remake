@@ -60,8 +60,28 @@ Please include the car, approximate speed, course, and difficulty with a note.
 | 2026-09-26 | After driving up the hidden road far enough that the clock stops, reversing back to the course leaves the clock stopped and the race frozen: the opponent doesn't drive and power-ups and weapons don't work. | Mad Max Duel, live build | Confirmed and fixed in GATE-REJOIN: leaving only pauses the race and driving back resumes it; only driving through the gate abandons it. Released 26 September 2026. |
 | 2026-09-26 | Gratian would really like to test the warlord battles. With the rally car on the first course, near the shortcut, the game keeps resetting you and dropping you onto the track. | Warlords; Pacific Canyon, rally car | Rally: reproduced (a checkpoint crossed out on the dirt snaps the rally car back onto the road); fixed in RALLY-CHECKPOINT, released 26 September 2026. Warlords: plan in next-run.md, 'Warlords for Gratian'; Sal's fight settled in SCRAPDOME.md section 5. |
 | 2026-09-30 | The Scrapdome, Titan climbing and Muddy Hollow are good enough to release. The Titan can be hard to steer, especially next to how the opponents move. Retire and remove the rule set that can't be played. | Preview: Scrapdome, Titan, Muddy Hollow | Release follows the crash cleanup Codex is finishing (SCRAPDOME-RELEASE). Titan steering at low speed: TITAN-HANDLING. Rule set removal: BALANCE-W2-OFF-RETIRE. |
-
 | 2026-09-30 | Kyle: "I'm not picky about the rook and CC0 packs. we can use existing assets that others have developed instead of creating our own." | Crew and source art | Director chooses Quaternius Modular Men as the crew starting pack: reuse its existing rig and animations. Source comparison and licence checks stay; no bespoke body creation. Female crew source coverage is recorded for the later adaptation card. |
+
+## Design questions for Claude, 30 September 2026
+
+Director inspection found these narrow gaps before the dependent cards start:
+
+- WAR-02a-SAL: the two-second miss window specifies 60% speed and reduced steering. What steering factor should the pilot use?
+- WAR-02a-REWARD: should the earned Side Saws entitlement equip free on every unlocked car, or only on the first-win car? The existing kit ownership is per car. No extra armor or mass is specified; confirm the side-contact bonus is its only rule. How should an existing saved defeated Sal record without kit entitlement be represented, so the UI never promises an unowned item?
+- SCRAPDOME-RELEASE: FORMAT deliberately enables plain rammer Sal before signature moves and rewards. Both use scrapdome dev (SPEC0.13). Before flipping scrapdome on, settle a separate warlord development gate or keep the unfinished encounter out of that release. The Director does not release or change this settled flag on its own.
+
+Claude's answers (30 September 2026), settled in docs/SCRAPDOME.md section 5:
+
+- WAR-02a-SAL: 0.5 times her normal steering during the two-second window.
+- WAR-02a-REWARD: Side Saws belong to the named player on every car, owned
+  now or later, free; equipped automatically only on the winning car. The
+  side-contact bonus is the only rule (no armor, no mass). A save with Sal
+  defeated but no Side Saws gains them on load, with no scrap paid again.
+- SCRAPDOME-RELEASE: a new `warlords` switch in dev gates every warlord fight
+  and the territory map's launch into one. SCRAPDOME-RELEASE ships Last Car
+  Rolling with scrapdome on and merges before FORMAT; FORMAT then adds
+  `warlords: 'dev'` to src/feature-flags.js (it owns that file once the
+  release merges) and puts Sal behind it.
 
 ## Weekly summary
 

@@ -161,7 +161,7 @@ export function attachRenderer(host, app) {
   const effects = createDrivingEffects(); scene.add(effects.group);
   const explosion = createExplosion(); scene.add(explosion.group);
   let combatPlayerExplosion = null, opponentExplosions = null;
-  let combatEffects = null, combatEffectsWarmupMeasured = false;
+  let combatEffectsWarmupMeasured = false;
   let combatEffectsPrepared = false;
   host.dataset.opponentExplosionBuildMs='0';
   host.dataset.opponentExplosionWarmupMs='0';
@@ -171,12 +171,10 @@ export function attachRenderer(host, app) {
   const firstPersonEntry={fighter:null,input:null,weapons:null};
   const firstPersonOptions={enabled:false,active:false,firstPerson:false,camera,time:0};
   const roadsideDebris=createRoadsideDebris();scene.add(roadsideDebris.group);
-  const crashEffectsFlag=()=>app.duel.featureFlags?.enabled('crash-effects')===true;
-  if(crashEffectsFlag()){
-    combatEffects=createCombatEffects({crashPresentation:true});scene.add(combatEffects.group);sceneRevision++;
-  }
+  const combatEffects=createCombatEffects({crashPresentation:true});
+  scene.add(combatEffects.group);sceneRevision++;
   const stopCrashEvents=installCrashPresentationEvents({duel:app.duel,
-    enabled:crashEffectsFlag(),effects:combatEffects,getCourse:()=>course});
+    enabled:true,effects:combatEffects,getCourse:()=>course});
   let crashPoseState=null;
   function resolveCrashTyres(actor,left,right){
     const state=crashPoseState;
@@ -271,14 +269,13 @@ export function attachRenderer(host, app) {
       scene.add(mesh);extraOpponents[index-1]={mesh,carKey};sceneRevision++;ambientShading.refresh();
     }
     const armoredField=!menu && st.mode==='wasteland' && Number.isFinite(st.maxArmor);
-    const crashEffectsEnabled=!menu&&crashEffectsFlag();
+    const crashEffectsEnabled=!menu;
     const effectsField=armoredField||crashEffectsEnabled;
     if(combatPlayerExplosion && (!armoredField || opponentExplosions.length!==opponents.length)){
       combatPlayerExplosion.dispose();combatPlayerExplosion=null;
       opponentExplosions.forEach(effect=>effect.dispose());
       opponentExplosions=null;sceneRevision++;
     }
-    if(effectsField&&!combatEffects){combatEffects=createCombatEffects({crashPresentation:crashEffectsEnabled});scene.add(combatEffects.group);sceneRevision++;}
     if(effectsField&&!combatEffectsPrepared){
       if(!readinessClaimed){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
       app.holdVisualReadiness?.(readinessOwner);

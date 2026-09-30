@@ -1,4 +1,4 @@
-const flags='scrapdome,crash-physics,crash-effects,titan-climb,muddy-hollow';
+const flags='scrapdome,titan-climb,muddy-hollow';
 
 async function snapshot(context){
   return context.evaluate(`(async()=>{

@@ -1,0 +1,51 @@
+# ART-SRC-HANDS : existing first-person hand sources
+
+Status: review; waiting_on: kyle. Source catalog and comparison are merged; source choice is pending.
+
+Two CC0 hand models are cached outside the repository and compared with the
+current in-game Rook hands holding the RPG. Recommend WRAD ARMS by wriks.
+No fitting, game model replacement or motion changes have started. Kyle’s
+choice is the next art decision after catalog and merge checks.
+
+## Evidence
+
+- `docs/board/looks/first-person-src/round-1.jpg`: one 113,025-byte comparison.
+- `round-1-review.md`: original sources, authors, licences, SHA-256 values,
+  measured geometry, rigs, motion gaps and fitting costs.
+- `tools/art/hands-source-sheet.py`: repeatable source inspection and sheet.
+- `tools/scenarios/art-source-hands.mjs`: current production hands/RPG capture
+  using a private memory-only fixture and no player-profile persistence.
+- Original licensed files: Kyle’s external `art-library` cache.
+
+## Tests and browser checks
+
+Blender 4.5.13 inspected the original GLB and Blender sources. WRAD has 1,196
+arm triangles and a 50-bone bound skin; DevMops has 520 base triangles, 1,040
+after its mirror modifier, and 48 skin bones on its 257-bone control rig.
+Neither source includes action clips. Original textures loaded successfully.
+
+The private browser capture passed on port 15762 with one image, memory-only
+storage, zero warnings and zero errors. The current Rook holds the production
+RPG; the renderer reports three draw calls and 6,932 triangles. The finished
+sheet was inspected visually for genuine current game content and readable
+source labels.
+
+Director independent source review confirms seven checksums, the official CC0
+pages, a separate Blender probe and the visible sheet/current RPG. The source
+loader now explicitly disables supplied Blender scripts; counts stay identical.
+Independent reviewer also verified the cached hashes, official licences, original geometry and visible sheet; no substantive findings. Catalog preserves the selected Crew and EGG-03 decisions. The mandatory lane tier and production build are pending the gate queue. No green merge gate is claimed by this checkpoint.
+No new implementation tests are needed for this source-only comparison.
+Existing assertions and race fingerprint files are unchanged.
+
+## Removed
+
+No runtime asset or code path is replaced by a shortlist. The first missing
+texture render was corrected from the supplied original PNG and superseded
+in ignored evidence. Two accidental relative-path Blender previews outside
+the lane were deleted after explicit path verification; the recipe now
+resolves render paths. The final review retains only one compact sheet.
+Raw review evidence is deleted by the Director after its verdict is recorded.
+
+Catalog update followed the Crew merge; its selected Quaternius record and all existing EGG-03 source decisions are preserved. The final source-loader probe is byte-identical to the independent probe. Existing game rules, assets and replay pins remain untouched.
+
+Final exact clean91c4c93 gate: lane298/298 in666.73s and build1.12s passed. No skipped suites or source change. Two default-sandbox attempts failed the audio sample-ready assertion because the FFmpeg child decoder was blocked; the escalated unchanged gate passed, as did the standalone460check reproduction. No assertion was weakened or runtime fix claimed. Director records this actual verdict after merge; the earlier pending gate text is superseded.
