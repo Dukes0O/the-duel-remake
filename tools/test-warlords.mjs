@@ -57,9 +57,9 @@ test('the eight immutable warlords use the existing territory ids and assignment
     'Mirage promises only her settled reward');
 });
 
-test('the current ladder marks no fight built before its owning implementation lands', async () => {
+test('the current ladder marks only the playable Sal format built', async () => {
   const {BUILT_WARLORD_IDS} = await loadWarlords();
-  equal(BUILT_WARLORD_IDS, [], 'WAR-01 cannot claim that a warlord fight is playable');
+  equal(BUILT_WARLORD_IDS, ['sal'], 'WAR-02a-FORMAT builds Sal; the other seven remain unavailable');
   ok(Object.isFrozen(BUILT_WARLORD_IDS), 'fight availability cannot be changed at runtime');
 });
 

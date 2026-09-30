@@ -252,10 +252,11 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       text('race-time-label',arena.timeLabel);
       text('race-time',time(arena.remainingSec));
       text('penalty-time','');
-      text('lap-number','LAST CAR ROLLING');
+      text('lap-number',arena.modeLabel);
       text('lap-time',arena.scoreText);
       text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||'medium').toUpperCase()} · SCRAPDOME`);
-      text('stage-objective','WRECK THEM MORE THAN THEY WRECK YOU');
+      text('stage-objective',s.arena.mode === 'warlord' ?
+        'FIRST TO THREE WRECKS' : 'WRECK THEM MORE THAN THEY WRECK YOU');
       text('route-percent','');
       text('route-remaining',arena.scoreText);
       text('route-lap','ARENA');

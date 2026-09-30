@@ -142,6 +142,186 @@
       "fit": "A realistic weathered boulder would give the seven-rock garden a strong hero shape and includes source LODs.",
       "risk": "The source is 124,000 triangles and covers no logs, so it needs aggressive LOD selection and keeps the log ramp code-made.",
       "checked": "2026-09-26"
+    },
+    {
+      "id": "kenney-animated-characters-survivors",
+      "sourcePage": "https://kenney.nl/assets/animated-characters-survivors",
+      "author": "Kenney",
+      "previewImage": "https://kenney.nl/media/pages/assets/animated-characters-survivors/de34934a09-1674931680/preview.png",
+      "triangles": 1604,
+      "bones": 58,
+      "animationCount": 0,
+      "separateAnimationFiles": [
+        "idle",
+        "jump",
+        "run"
+      ],
+      "fit": "Ready clothing, male and female skins and a small body mesh.",
+      "risk": "Blocky face and body need eight distinct crew outfits, worn materials and the remaining actions. Separate animation files need retargeting review.",
+      "card": "ART-SRC-CREW",
+      "family": "crew",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Official source page links CC0; cached licence explicitly states Creative Commons Zero / CC0 1.0.",
+      "status": "declined",
+      "downloaded": true,
+      "library": "C:/Users/kyleb/dev/art-library/kenney-animated-characters-survivors",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "fdadced07a0454c9b7f0b46507be6144a072b4d03b4ffa37f225893c76c62845"
+        },
+        {
+          "path": "unpacked/License.txt",
+          "sha256": "8eab20a1fa97308ae50443f6b8a0fabc4dd1fc37062988cd635fc74c8f1be21c"
+        },
+        {
+          "path": "unpacked/Model/characterMedium.fbx",
+          "sha256": "18835fef534eede635b081ee7fe647d01a885550a591d2e6bf071010906167d8"
+        },
+        {
+          "path": "unpacked/Animations/idle.fbx",
+          "sha256": "c8a24e0294376ee5a195c56752a13310e1c0b5f8588a4db50e094120e3e4cc74"
+        },
+        {
+          "path": "unpacked/Animations/jump.fbx",
+          "sha256": "b88429077a7a1af5d3f55f43cfd8ce0f7441b4f6f7bb15a8070d7ed15d275f74"
+        },
+        {
+          "path": "unpacked/Animations/run.fbx",
+          "sha256": "e635461fc8dace85ec67a7f7941e949a7c3f108b51ae4d2da1557e6e01749df8"
+        }
+      ],
+      "checked": "2026-09-30",
+      "recipe": "tools/art/crew-source-sheet.py",
+      "decision": "Director retained comparison A as the alternate after Kyle authorized choosing existing crew assets; comparison B offers more existing actions and modular costumes."
+    },
+    {
+      "id": "quaternius-modular-men",
+      "sourcePage": "https://quaternius.com/packs/ultimatemodularcharacters.html",
+      "author": "Quaternius",
+      "previewImage": "https://quaternius.com/assets/images/fullres/modularcharacters.jpg",
+      "triangles": {
+        "example": "Punk complete body",
+        "total": 5500,
+        "parts": {
+          "body": 2958,
+          "head": 1244,
+          "legs": 746,
+          "feet": 552
+        }
+      },
+      "bones": 79,
+      "animationCount": 24,
+      "fit": "Modular outfits and animated proportions closer to the reference, with walk, run, gun and interaction actions.",
+      "risk": "Male bodies only: female crew need a licensed companion source or proportion work. Needs worn materials, new outfits and 2000-triangle distant variants. Some other outfits exceed 8000 triangles.",
+      "card": "ART-SRC-CREW",
+      "family": "crew",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Official source page links CC0; cached licence explicitly states Creative Commons Zero / CC0 1.0.",
+      "status": "selected",
+      "downloaded": true,
+      "library": "C:/Users/kyleb/dev/art-library/quaternius-modular-men",
+      "files": [
+        {
+          "path": "Humans_Master.fbx",
+          "sha256": "39b729db833fafb9fed5a5da93818b458675d519508195f128099f29c4d93775"
+        },
+        {
+          "path": "License.txt",
+          "sha256": "e8dbf915a2b82229913e301a0787696611241bdefec4832bc084f54161db1efe"
+        },
+        {
+          "path": "Preview.jpg",
+          "sha256": "ccf065362f4035d5a62a7a18dcb092365670d1e0877e55c1de0b5cc184652e4b"
+        }
+      ],
+      "checked": "2026-09-30",
+      "recipe": "tools/art/crew-source-sheet.py",
+      "decision": "Director selected comparison B under Kyle's 30 September instruction to choose existing developer-made crew assets; reuse the rig and 24 actions. Source-only selection, not runtime adaptation."
+    },
+    {
+      "id": "wriks-wrad-arms",
+      "author": "wriks",
+      "sourcePage": "https://wriks.itch.io/wrad-arms",
+      "triangles": 1196,
+      "bones": 50,
+      "animationCount": 0,
+      "textureSize": [
+        512,
+        512
+      ],
+      "fit": "Existing bound finger rig and textured anatomy; preferred starting point for hands.",
+      "risk": "No action clips; requires fitting, gloves and sleeves, sockets and adaptation of existing held-tool motion. The original helper sphere is excluded from the later game export.",
+      "licenseEvidence": "Official author page, cached README and cached CC0 1.0 LICENSE.txt.",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "d5f91fdc9bd6465dc59b54265ca2aefe2dc881c00b6c7a9c76bd0b80fa498093"
+        },
+        {
+          "path": "unpacked/arms.glb",
+          "sha256": "580efbb0852bf0b41f82dd3e17eafec86b3d2a48f4a7acaa7e64d60e850f565d"
+        },
+        {
+          "path": "unpacked/LICENSE.txt",
+          "sha256": "a19d58aaab15c4d0019e569d1c073d1b5286fdd37dbeee7a58a7d1ae76045ae1"
+        }
+      ],
+      "card": "ART-SRC-HANDS",
+      "family": "first-person",
+      "license": "CC0-1.0",
+      "status": "candidate",
+      "downloaded": true,
+      "checked": "2026-09-30",
+      "library": "C:/Users/kyleb/dev/art-library/wriks-wrad-arms",
+      "recipe": "tools/art/hands-source-sheet.py"
+    },
+    {
+      "id": "devmops-low-poly-arms",
+      "author": "DevMops",
+      "sourcePage": "https://opengameart.org/content/low-poly-arms-rigged",
+      "triangles": {
+        "base": 520,
+        "mirrored": 1040
+      },
+      "bones": {
+        "controlRig": 257,
+        "skin": 48
+      },
+      "animationCount": 0,
+      "textureSize": [
+        128,
+        128
+      ],
+      "fit": "Very small original arms with a full Rigify control rig.",
+      "risk": "No clips; fingers need grip work, gloves and sleeves, socket fitting and existing motion adaptation. Bake the control rig to its skin bones for a later export.",
+      "licenseEvidence": "Official uploader page labels CC0; original page cached because the ZIP has no separate licence text.",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "a685cd52d98f884565ae2d0b29d93cecebeff614c4ee7f57055502267a86887a"
+        },
+        {
+          "path": "unpacked/arms_low_poly.blend",
+          "sha256": "15170a28893613d3370915fd62b32de584734db34491d49daf7aca7f5a18f75d"
+        },
+        {
+          "path": "unpacked/arms_low_poly.fbx",
+          "sha256": "8f0bbb00f6253deb6ab474504b784b97df514aed8ab3f1da400f9c932d96ac1f"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "47a364bfd661c983ddb44a7fb841888ce52d9bc913cf44535b131d203d30fe9c"
+        }
+      ],
+      "card": "ART-SRC-HANDS",
+      "family": "first-person",
+      "license": "CC0-1.0",
+      "status": "candidate",
+      "downloaded": true,
+      "checked": "2026-09-30",
+      "library": "C:/Users/kyleb/dev/art-library/devmops-low-poly-arms",
+      "recipe": "tools/art/hands-source-sheet.py"
     }
   ]
 }

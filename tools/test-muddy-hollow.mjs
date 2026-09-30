@@ -580,17 +580,11 @@ function departMuddyApp(app) {
   return events[0];
 }
 
-check('muddy-hollow is a QA-only dev switch', () => {
-  assert.equal(FEATURE_STATES['muddy-hollow'], 'dev',
-    'muddy-hollow starts in dev');
-  assert.equal(createFeatureFlags({ storage: null, qa: false,
-    search: '?flags=muddy-hollow' }).enabled('muddy-hollow'), false,
-  'production cannot enable a dev switch');
-  assert.equal(createFeatureFlags({ storage: null, qa: true }).enabled('muddy-hollow'), false,
-    'QA does not enable the Hollow unless it is requested');
-  assert.equal(createFeatureFlags({ storage: null, qa: true,
-    search: '?flags=muddy-hollow' }).enabled('muddy-hollow'), true,
-  'an explicit QA request enables the Hollow');
+check('muddy-hollow is released', () => {
+  assert.equal(FEATURE_STATES['muddy-hollow'], 'on',
+    'muddy-hollow is on (SCRAPDOME-RELEASE)');
+  assert.equal(createFeatureFlags({ storage: null, qa: false }).enabled('muddy-hollow'), true,
+    'production has the Hollow without any request');
 });
 
 check('installer affects High Country only', () => {

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "capturedCommit": "f400c1835fac75b789a95aea9f99d95c34934230",
+  "scope": "WAR-02a-FORMAT pre-change ordinary duel, time trial and checkpoint inputs; arena switch enabled; fixed 120 Hz for 10 seconds.",
+  "cases": [
+    {
+      "seed": 1989,
+      "mode": "duel",
+      "course": "pacific-canyon",
+      "fingerprint": "04548ba7a765a0880d7d93ca73488d4aed40445c1abd75d24ce2c6d6847cf443"
+    },
+    {
+      "seed": 42,
+      "mode": "timetrial",
+      "course": "red-mesa",
+      "fingerprint": "b080b14b5862cea7f8528c04f1a846b7d4712257521de52e1b36a56150db7889"
+    },
+    {
+      "seed": 17,
+      "mode": "duel",
+      "course": "timberline-rush",
+      "fingerprint": "108d30f0ed9f84e9e959f03559568007cd0a46fba7edff6e222efd4ee8fcf254"
+    }
+  ]
+}
