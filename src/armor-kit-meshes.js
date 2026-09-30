@@ -278,6 +278,8 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
           const part = rig.authored.getObjectByName(name);
           if (part) part.visible = visible && (sideSaws ? name === 'kit-raider' : tier >= minimum);
         }
+        const raiderPlating = rig.authored.getObjectByName('kit-raider-painted-metal');
+        if (raiderPlating) raiderPlating.visible = visible && !sideSaws && tier >= 2;
         for (let partIndex = 0; partIndex < 4; partIndex++) {
           const plate = rig.authored.getObjectByName(`kit-plate-${partIndex}`);
           if (plate) plate.visible = visible && !sideSaws && !actor.combatWrecking &&
@@ -334,10 +336,6 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
             const saw = name === 'kit-saw-0' || name === 'kit-saw-1';
             part.visible = !wrecked && visible && (sideSaws ? saw :
               tier >= (name === 'kit-crown' || name === 'kit-warlord-mount' ? 3 : 2));
-            if (saw) {
-              part.userData.kitRestX ??= part.rotation.x;
-              part.rotation.x = part.userData.kitRestX + (sideSaws ? (state.stageTimeSec || 0) * 36 : 0);
-            }
           }
         }
       }

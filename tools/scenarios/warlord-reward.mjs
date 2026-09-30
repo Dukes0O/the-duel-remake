@@ -4,6 +4,28 @@
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 
+// A local QA pose fixture, never installed into the game or browser globals.
+const contactFixture = `(loserId,speed)=>{
+      const a=window.__qaApp;
+      const d=a.duel,s=d.state,b=s.opponents[0],slot=s.arena.spawnSlots[0];
+      for(const p of s.arena.participants){p.protectedSec=0;p.wreckCounted=false;}
+      for(const actor of [s,b])Object.assign(actor,{s:slot.s,prevS:slot.s,lateral:slot.lateral,
+        prevLateral:slot.lateral,speedMph:0,headingError:0,slipAngle:0,pushVelocity:0,yawVelocity:0,
+        dir:1,combatWrecking:false,combatWreckTimer:0,knock:null,tumble:null,airborne:false,
+        airHeight:0,prevAirHeight:0,groundHeight:null,damageCooldown:0,contactCooldown:0,armor:actor.maxArmor});
+      s.invulnerableSec=0;s.combat.shield=0;s.combat.rivalShield=0;
+      // Clear the existing pair through the real separation rule, then sweep both cars inward.
+      s.lateral=s.prevLateral=slot.lateral-20;d._vehicleContact(s,b,'rival');
+      Object.assign(s,{lateral:slot.lateral-1,prevLateral:slot.lateral-6,pushVelocity:speed*.44704});
+      Object.assign(b,{lateral:slot.lateral+1,prevLateral:slot.lateral+6,pushVelocity:-speed*.44704});
+      const loser=loserId==='player'?s:b;if(loserId)loser.armor=1;
+      const before=b.armor,sparks=s.combat.bursts.filter(x=>x.kind==='spark').length;
+      if(!d._vehicleContact(s,b,'rival'))throw Error('Actual swept contact was not reached');
+      if(loserId&&!loser.combatWrecking)throw Error('Actual contact did not wreck the controlled low-armor victim');
+      return {removed:before-b.armor,newSparks:s.combat.bursts.filter(x=>x.kind==='spark').length-sparks};
+    }`;
+
+
 async function click(context, selector) {
   const point = await context.evaluate(`(()=>{const b=document.querySelector(${JSON.stringify(selector)});
     if(!b||b.hidden||b.disabled)throw Error('Missing control ${selector}');
@@ -23,6 +45,7 @@ async function ready(context, label) {
 }
 
 async function yard(context) {
+  await ready(context,'yard transition renderer ready');
   await context.evaluate('window.__qaApp.advance(8)');
   await context.waitFor('window.__qaApp.isYardHomeActive()','reward yard');
   await ready(context,'reward yard presentation');
@@ -43,9 +66,9 @@ async function begin(context, rematch=false) {
 }
 
 async function finish(context, winner) {
-  return context.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state;
+  return context.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,contact=${contactFixture};
     for(let i=0;i<3;i++){
-      window.__rewardContact(${JSON.stringify(winner==='player'?'cpu-1':'player')},35);
+      contact(${JSON.stringify(winner==='player'?'cpu-1':'player')},35);
       if(s.status==='arena_result')break;
       a.duel.step(1/120);
     }
@@ -85,24 +108,6 @@ async function runQuality(context, quality) {
     window.__rewardProbe={fail:false,writes:[],other:JSON.stringify(a.players.players.find(p=>p.id!==owner).profile)};
     store.setItem=(key,value)=>{const q=window.__rewardProbe;if(q.fail)throw Error('Synthetic reward save failure');
       set(key,value);let parsed;try{parsed=JSON.parse(value)}catch{}if(parsed?.players)q.writes.push(parsed);};
-    window.__rewardContact=(loserId,speed)=>{
-      const d=a.duel,s=d.state,b=s.opponents[0],slot=s.arena.spawnSlots[0];
-      for(const p of s.arena.participants){p.protectedSec=0;p.wreckCounted=false;}
-      for(const actor of [s,b])Object.assign(actor,{s:slot.s,prevS:slot.s,lateral:slot.lateral,
-        prevLateral:slot.lateral,speedMph:0,headingError:0,slipAngle:0,pushVelocity:0,yawVelocity:0,
-        dir:1,combatWrecking:false,combatWreckTimer:0,knock:null,tumble:null,airborne:false,
-        airHeight:0,prevAirHeight:0,groundHeight:null,damageCooldown:0,contactCooldown:0,armor:actor.maxArmor});
-      s.invulnerableSec=0;s.combat.shield=0;s.combat.rivalShield=0;
-      // Clear the existing pair through the real separation rule, then sweep both cars inward.
-      s.lateral=s.prevLateral=slot.lateral-20;d._vehicleContact(s,b,'rival');
-      Object.assign(s,{lateral:slot.lateral-1,prevLateral:slot.lateral-6,pushVelocity:speed*.44704});
-      Object.assign(b,{lateral:slot.lateral+1,prevLateral:slot.lateral+6,pushVelocity:-speed*.44704});
-      const loser=loserId==='player'?s:b;if(loserId)loser.armor=1;
-      const before=b.armor,sparks=s.combat.bursts.filter(x=>x.kind==='spark').length;
-      if(!d._vehicleContact(s,b,'rival'))throw Error('Actual swept contact was not reached');
-      if(loserId&&!loser.combatWrecking)throw Error('Actual contact did not wreck the controlled low-armor victim');
-      return {removed:before-b.armor,newSparks:s.combat.bursts.filter(x=>x.kind==='spark').length-sparks};
-    };
     a.onFrame?.(a.duel.state,0);
     return {owner,credits:a.profile.credits,history:JSON.stringify(a.profile.history),raceMarkers:JSON.stringify(a.profile.settledResults)};
   })()`);
@@ -117,7 +122,18 @@ async function runQuality(context, quality) {
     if(JSON.stringify(a.profile)!==q.before||window.name!==q.saved||q.writes.length)throw Error('Failed save changed career/storage');
     if(!document.querySelector('[data-action="warlord-retry-save"]')||!/Could not save this result/.test(text)||
       text.includes('Side Saws unlocked')||text.includes('+150'))throw Error('Failed result advertises an unpaid reward or lacks retry');
-    q.fail=false;return{unchanged:true,scrapEarned:a.duel.state.arena.result.scrapEarned};})()`);
+    // Simulate a second memory tab's durable updates before the actual retry click.
+    q.fail=false;
+    const store=Object.getOwnPropertyDescriptor(window,'localStorage').value;
+    for(let i=0;i<store.length;i++){
+      const key=store.key(i);let registry;try{registry=JSON.parse(store.getItem(key))}catch{}
+      if(!registry?.players)continue;
+      const owner=registry.players.find(p=>p.id===a.player.id),other=registry.players.find(p=>p.id!==a.player.id);
+      owner.profile={...owner.profile,credits:50100,otherTabOwner:{keep:41}};
+      other.profile={...other.profile,credits:900,otherTabPlayer:{keep:43}};
+      q.other=JSON.stringify(other.profile);store.setItem(key,JSON.stringify(registry));q.writes=[];break;
+    }
+    return{unchanged:true,scrapEarned:a.duel.state.arena.result.scrapEarned};})()`);
   if(failed.settlementSaved!==false||failure.scrapEarned!==0)throw Error('Failure result fields wrong');
   await context.screenshot(`${quality}-retry-save`);
   await click(context,'[data-action="warlord-retry-save"]');
@@ -126,7 +142,7 @@ async function runQuality(context, quality) {
     if(q.writes.length!==1||r.scrapEarned!==150||!r.settlementSaved||r.settlementRetryable||
       p.wasteland.scrap!==150||!p.wasteland.warlords.sal.defeated||!p.wasteland.territories.sal.claimed||
       p.wasteland.kits[a.duel.state.car]?.equipped!=='side-saws'||!p.wasteland.settledResults.includes('warlord:'+a.runId)||
-      p.unknownRewardProfile.keep!==17||p.wasteland.unknownRewardCareer.keep!==19)throw Error('Incomplete first-win transaction');
+      p.unknownRewardProfile.keep!==17||p.wasteland.unknownRewardCareer.keep!==19||p.credits!==50100||p.otherTabOwner?.keep!==41)throw Error('Incomplete first-win transaction');
     if(JSON.stringify(a.players.players.find(x=>x.id!==a.player.id).profile)!==q.other)throw Error('Other named player changed');
     if(document.querySelector('[data-action="warlord-retry-save"]')||!/Side Saws unlocked/.test(document.querySelector('#modal-layer').textContent))
       throw Error('Successful retry presentation missing');
@@ -136,10 +152,11 @@ async function runQuality(context, quality) {
   await begin(context,true);
   const hit=await context.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state;
     if(s.combatArmorKit!=='side-saws')throw Error('Rematch did not activate the equipped earned kit');
-    const hit=window.__rewardContact(null,17.5);a.onFrame?.(s,0);window.__render.renderFrame();
+    const contact=${contactFixture},hit=contact(null,17.5);a.onFrame?.(s,0);window.__render.renderFrame();
     const saw=window.__render.scene.getObjectByName('kit-saw-0');let visible=!!saw;
     for(let n=saw;n;n=n.parent)visible=visible&&n.visible;
-    if(hit.removed<=0||hit.newSparks<1||!visible)throw Error('Authored earned saws or real contact sparks absent');
+    const plating=window.__render.scene.getObjectByName('kit-raider-painted-metal');
+    if(hit.removed<=0||hit.newSparks<1||!visible||plating?.visible)throw Error('Authored earned saws/sparks absent or paid plating still visible');
     return {...hit,authoredSawVisible:visible};})()`);
   await context.screenshot(`${quality}-earned-saws-hit`);
   const rematch=await finish(context,'player');
@@ -151,7 +168,7 @@ async function runQuality(context, quality) {
   await click(context,'[data-action="arena-yard"]');await yard(context);
   await click(context,'[data-action="yard-armory"]');await equip(context,'stuttgart_959s');
   await context.screenshot(`${quality}-current-car-free-equip`);
-  await click(context,'[data-action="armory-close"]');
+  await click(context,'[data-action="yard-home"]');
   await click(context,'[data-action="yard-menu"]');
   await context.waitFor(`window.__qaApp.duel.state.status==='menu'`,'menu to buy future car');
   await context.evaluate(`(()=>{const a=window.__qaApp;if(!a.unlockCar('banshee_muscle').ok)throw Error('Future car purchase failed');})()`);

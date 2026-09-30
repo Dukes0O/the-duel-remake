@@ -360,3 +360,54 @@ zero issues/warnings) additionally passed current-car free equip, then used
 the menu Armory close selector in the yard. The yard has BACK TO HOME; correct
 that production selector, without bypassing navigation or runtime assertions.
 Both attempt verdicts remain explicit; full High/Performance rerun follows.
+
+
+## Reviewed recovery and geometry fixes
+
+The narrow warlord retry path now reads the durable registry directly and
+validates every raw player's supported root/career schema before the existing
+save normalizer can discard data. It requires the same starting owner and
+persisted active player. The immutable completed result is applied to the
+fresh owner's career and all other fresh players travel in the same candidate.
+Missing, malformed, deleted, future, unreadable or externally switched data
+rejects without changing the visible career or storage and leaves RETRY SAVE.
+
+Genuine unsaved owner work survives when its previously captured durable owner
+is still identical. Conflicting newer owner work fails closed instead of being
+guessed away. The Director-approved never-saved exception requires proved
+absence captured before the first failure, still-absent storage, the same run
+and local owner, and valid local profiles. Read failure never authorizes it.
+An already durable exact result marker adopts that proven saved career without
+another write or reward and removes the stale retry warning. A failed re-save
+retains the fresh candidate's previous career. Global shop helpers are unchanged.
+
+The failed result now initializes HOLD from the unchanged career with a safe
+integer/range guard. Earned original saw housings remain at their reviewed
+fit; only Sal's actual blade nodes retain their stage-time spin. The earned
+kit hides the direct paid Raider plating mesh; paid Raider restores it. No
+asset or pivot changed and no synthetic animation assertion was replaced.
+
+- New original-geometry regressions pass: zero center displacement, earned
+  plating hidden, paid Raider plating/cage restored, attachments released.
+- Settlement 25/25, 210 checks; Side Saws 31/31, 133 checks. All original
+  transaction, Sal-motion, missed-window, damage and fingerprint assertions
+  remain unchanged. Sixteen focused suites pass 151/151 in 2.46 seconds.
+- Independent review of the earlier `38a77e2` contact core cleared 15 probes
+  and an 8-second actual saw-contact replay. Its full state/event SHA-256
+  `ea9da8ff7ab83d933a11efeb2767fc1c3dcf754cb5d7aebca22a6f7c0e908351`
+  matched at 30/60/144 FPS. That limited verdict did not clear the two original
+  geometry findings or the stale retry; those now have red/pass evidence.
+- Browser recipe now uses a local pose fixture inside each evaluation, with
+  no helper installed in the game or browser globals and no `/src` imports.
+  The real `_vehicleContact` performs damage and the actual event credits
+  wrecks. Its actual retry click will also check a second memory tab's newer
+  owner and other-player fields. The complete High/Performance rerun and
+  final Save Guardian/general review remain pending on this checkpoint.
+
+## Removed in review fixes
+
+Removed whole earned-housing rotation about the vehicle-origin pivot and its
+renderer-only rest-angle cache. The original static housings and all Sal blade
+motion remain. Removed paid Raider direct plating from the earned-only view;
+paid Raider still loads it. Replaced the stale retry save route with a narrow
+fresh-registry candidate transaction; ordinary shop and arena paths remain.
