@@ -10,27 +10,38 @@ async function ready(context, label) {
   })()`, label, 60000);
 }
 
-async function capture(context, quality, stage) {
+async function capture(context, quality, stage, label = stage) {
+  await context.evaluate(`(() => {const app=window.__qaApp,d=app.duel,a=d.state.opponents[0];
+    const at=d.course.worldAt(a.s,a.lateral);
+    app.inspectionCamera={position:[at.x+7,at.y+3,at.z+5],target:[at.x,at.y+.7,at.z]};
+  })()`);
   await ready(context, `${quality} ${stage} assets`);
   const result = await context.evaluate(`(() => {
     const app=window.__qaApp,s=app.duel.state,a=s.opponents[0],render=window.__render;
     const found=[];render.scene.traverse(n=>{if(n.name==='kit-sal-saws'&&n.visible)found.push(n);});
     const rig=found[0],left=rig?.getObjectByName('kit-sal-saw-left'),
-      right=rig?.getObjectByName('kit-sal-saw-right'),sparks=rig?.getObjectByName('kit-sal-sparks');
+      right=rig?.getObjectByName('kit-sal-saw-right'),sparks=rig?.getObjectByName('kit-sal-sparks'),
+      tellSparks=rig?.getObjectByName('kit-sal-tell-sparks');
     return {quality:${JSON.stringify(quality)},stage:a.salSaw.stage,phase:a.salSaw.phase,
       sinceSec:a.salSaw.sinceSec,time:s.stageTimeSec,callout:s.callout,
-      visible:!!rig,left:!!left,right:!!right,sparks:!!sparks?.visible,
+      visible:!!rig,left:!!left,right:!!right,sparks:!!sparks?.visible,tellSparks:!!tellSparks?.visible,
       rotations:[left?.rotation.x,right?.rotation.x],armor:a.maxArmor,kit:a.combatArmorKit??null,
-      presentationKit:a.armorKit,memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value&&
+      presentationKit:a.armorKit,playerArmor:s.armor,
+      contact:window.__salFightEvents.filter(e=>e.combatRamHit&&e.attackerIndex===0&&e.victim==='player').at(-1),memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value&&
         window.name.startsWith('__duel_qa_tab_v2:'),events:window.__salFightEvents};
   })()`);
   if (!result.memoryOnly || !result.visible || !result.left || !result.right || result.stage !== stage)
     throw Error(`Sal ${quality}/${stage} presentation: ${JSON.stringify(result)}`);
   if (stage === 'window' && (!result.sparks || result.callout !== 'SHE MISSED. HIT HER NOW!'))
     throw Error('Miss must show its sparks and counterattack callout');
-  if (stage === 'tell' && !result.events.some(e=>e.salSaw?.position))
-    throw Error('Production tell must emit the positional saw-scream event');
-  await context.screenshot(`${quality}-${stage}`);
+  if (stage === 'tell' && (!result.events.some(e=>e.salSaw?.position) || !result.tellSparks))
+    throw Error('Production tell must emit the positional saw scream and show tell sparks');
+  if (['tell','sweep'].includes(stage) && result.rotations.some(v=>!Number.isFinite(v)||Math.abs(v)<.2))
+    throw Error('Production tell and sweep must spin the shipped blades');
+  if (label === 'sweep-hit' && (result.callout !== 'SAW SWEEP!' ||
+      !(result.contact?.armorRemoved>0) || result.contact.victim !== 'player'))
+    throw Error('Actual damaging sweep must report its hit and callout');
+  await context.screenshot(`${quality}-${label}`);
   return result;
 }
 
@@ -46,7 +57,7 @@ async function runQuality(context, quality) {
       territories:{...app.profile.wasteland.territories,sal:{hold:100,claimed:false}}}};
     if(!app._saveProfile()||!app.visitWasteland())throw Error('Private discovery/hold fixture failed');
     window.__salFightEvents=[];
-    app.duel.onChange((_state,event)=>{if(event.salSaw||event.arenaTell||event.warlordPhase)
+    app.duel.onChange((_state,event)=>{if(event.salSaw||event.arenaTell||event.warlordPhase||event.combatRamHit)
       window.__salFightEvents.push(event)});
   })()`);
   await ready(context, `${quality} yard`);
@@ -84,6 +95,31 @@ async function runQuality(context, quality) {
     if(goal.steeringScale!==.5||goal.boost||a.salSaw.stage!=='window')throw Error('Production miss goal wrong');
   })()`);
   rows.push(await capture(context,quality,'window'));
+  await context.evaluate(`(async () => {
+    const d=window.__qaApp.duel,s=d.state,a=s.opponents[0],p=s.arena.participants[1];
+    const {resetSalFight}=await import('/src/arena/sal-fight.js');
+    // A second alongside fixture tests a complete, uncountered sweep.
+    d.setInput({throttle:1,brake:0,boost:false});s.boosting=false;
+    Object.assign(s,{lateral:0,prevLateral:0,headingError:0,speedMph:35});
+    Object.assign(a,{s:s.s,prevS:s.s,lateral:8,prevLateral:8,headingError:0,speedMph:35});
+    resetSalFight(d,a);s.stageTimeSec=Math.max(s.stageTimeSec,a.salSaw.nextSweepSec);
+    window.__salFightThink(d,p,a,0);
+    if(a.salSaw.stage!=='tell')throw Error('Repeat must start with its own tell');
+    s.stageTimeSec=a.salSaw.untilSec;window.__salFightThink(d,p,a,0);
+    s.stageTimeSec+=.1;window.__salFightThink(d,p,a,.1);
+    if(a.salSaw.stage!=='sweep')throw Error('Complete repeat tell must release sweep');
+  })()`);
+  rows.push(await capture(context,quality,'sweep'));
+  await context.evaluate(`(() => {
+    const d=window.__qaApp.duel,s=d.state,a=s.opponents[0];
+    // Clear a contact latch only because the fixture repositioned both cars.
+    d._combatRamIncidents.clear();s.invulnerableSec=0;
+    Object.assign(s,{prevS:s.s,prevLateral:0,lateral:0,pushVelocity:0,speedMph:35});
+    Object.assign(a,{prevS:s.s,s:s.s,prevLateral:6,lateral:1,pushVelocity:-20,speedMph:35});
+    const before=s.armor;d._vehicleContact(s,a,'rival');
+    if(!(s.armor<before)||a.salSaw.hit!==true)throw Error('Real side contact must complete sweep damage');
+  })()`);
+  rows.push(await capture(context,quality,'sweep','sweep-hit'));
   await context.evaluate(`(async () => {
     const app=window.__qaApp,d=app.duel,s=d.state,a=s.opponents[0];
     const {applyArmorDamage}=await import('/src/combat-armor.js');

@@ -90,7 +90,8 @@ The format's 1.5-times arena armor and the vehicle's physical mass are preserved
 Actor salSaw keeps the agreed stage/phase/sinceSec fields. Existing positional
 salSaw and arenaTell events route to arena.sal-saw and arena.tell respectively;
 no new cue or generated asset is needed. REWARD's renderer hook must support
-the sweeping phase and spin-up sparks before visual acceptance can pass.
+the sweeping phase and the separate kit-sal-tell-sparks effect before visual
+acceptance can pass (old kit-sal-sparks stays hidden during spin-up).
 
 Focused unchanged suite: 23 tests, 21 passed and 2 failed, 108 assertions
 reached. The failures are actual half-yaw authority and the damaging sweep
@@ -114,3 +115,7 @@ checkpoint, not passing evidence or a merge-ready card.
 
 Unchanged controls: test-combat-brain passed 5/5; test-arena-feel passed 5/5
 on the final source checkpoint. Syntax checks and git diff --check passed.
+
+Browser recipe checks are prepared for tell sparks, spinning sweep, actual
+side-contact damage and hit callout, miss window, real-wreck phase two and
+Charge in both quality modes. Recipe remains unrun while dependencies wait.
