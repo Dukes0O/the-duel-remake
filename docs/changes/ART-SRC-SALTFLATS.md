@@ -97,11 +97,12 @@ CC0 photo/material record. The current source comparison remains round 1.
   adaptation round used.
 - Bundled Python `ast.parse` syntax check: passed.
 - `git diff --cached --check`: passed on the four staged owned files.
-- Lane tier and build pending Director scheduling; the Director requested
-  this source checkpoint while other heavy gates run. Required before merge.
-- Original model checkpoint reviewed clean by the Director. Independent
-  review of the new photo/material is pending. No new wording tests.
-- Race fingerprints not rerun. No simulation, renderer, HUD, switch, save,
+- Final mandatory lane tier: 301/301 suites in 513.34 s (516.78 s wall),
+  with no skipped suites. Build passed in 1.01 s. Exact clean start/end:
+  747b8678907f1b3cb4a1f3a5fec42a4414236b8a.
+- Independent source/model/photo/material review is clear, including all
+  24 original hashes and actual 4×4 joins. No new wording tests.
+- The final lane tier reran replay controls successfully. No simulation, renderer, HUD, switch, save,
   assertion or runtime asset changed. Browser/frame checks are not applicable
   to this source checkpoint; ARENA-06 must measure them after adaptation.
 
@@ -125,4 +126,4 @@ verdict is recorded.
 
 ## Shared catalog turn completed
 
-Rustwall source artifacts merged before this lane touched tools/art/catalog.json. The Director synced integration and appended the five verified Salt source records, preserving every parsed prior record byte for byte. The Marina Shemesh photograph is selected by Kyle; the original raster remains unchanged and the mirrored material is tileable. Independent delta review at6696673 verifies all24 source hashes and actual4×4 joins, with documented mirrored motifs and baked glints. Model selection remains waiting_on: kyle. Mandatory final lane/build gates are pending.
+Rustwall source artifacts merged before this lane touched tools/art/catalog.json. The Director synced integration and appended the five verified Salt source records, preserving every parsed prior record byte for byte. The Marina Shemesh photograph is selected by Kyle; the original raster remains unchanged and the mirrored material is tileable. Independent delta review at6696673 verifies all24 source hashes and actual4×4 joins, with documented mirrored motifs and baked glints. Model selection remains waiting_on: kyle. Final lane/build gates pass on exact clean747b867, as recorded above. Artifacts merged as3e0bc17; model selection still waits for Kyle. No history rewrite, runtime adoption or release. The replaced comparison adds about384KB compressed binary history; Kyle explicitly prohibited history rewriting, so the D8 push remains a normal push.
