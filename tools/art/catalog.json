@@ -238,6 +238,90 @@
       "checked": "2026-09-30",
       "recipe": "tools/art/crew-source-sheet.py",
       "decision": "Director selected comparison B under Kyle's 30 September instruction to choose existing developer-made crew assets; reuse the rig and 24 actions. Source-only selection, not runtime adaptation."
+    },
+    {
+      "id": "wriks-wrad-arms",
+      "author": "wriks",
+      "sourcePage": "https://wriks.itch.io/wrad-arms",
+      "triangles": 1196,
+      "bones": 50,
+      "animationCount": 0,
+      "textureSize": [
+        512,
+        512
+      ],
+      "fit": "Existing bound finger rig and textured anatomy; preferred starting point for hands.",
+      "risk": "No action clips; requires fitting, gloves and sleeves, sockets and adaptation of existing held-tool motion. The original helper sphere is excluded from the later game export.",
+      "licenseEvidence": "Official author page, cached README and cached CC0 1.0 LICENSE.txt.",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "d5f91fdc9bd6465dc59b54265ca2aefe2dc881c00b6c7a9c76bd0b80fa498093"
+        },
+        {
+          "path": "unpacked/arms.glb",
+          "sha256": "580efbb0852bf0b41f82dd3e17eafec86b3d2a48f4a7acaa7e64d60e850f565d"
+        },
+        {
+          "path": "unpacked/LICENSE.txt",
+          "sha256": "a19d58aaab15c4d0019e569d1c073d1b5286fdd37dbeee7a58a7d1ae76045ae1"
+        }
+      ],
+      "card": "ART-SRC-HANDS",
+      "family": "first-person",
+      "license": "CC0-1.0",
+      "status": "candidate",
+      "downloaded": true,
+      "checked": "2026-09-30",
+      "library": "C:/Users/kyleb/dev/art-library/wriks-wrad-arms",
+      "recipe": "tools/art/hands-source-sheet.py"
+    },
+    {
+      "id": "devmops-low-poly-arms",
+      "author": "DevMops",
+      "sourcePage": "https://opengameart.org/content/low-poly-arms-rigged",
+      "triangles": {
+        "base": 520,
+        "mirrored": 1040
+      },
+      "bones": {
+        "controlRig": 257,
+        "skin": 48
+      },
+      "animationCount": 0,
+      "textureSize": [
+        128,
+        128
+      ],
+      "fit": "Very small original arms with a full Rigify control rig.",
+      "risk": "No clips; fingers need grip work, gloves and sleeves, socket fitting and existing motion adaptation. Bake the control rig to its skin bones for a later export.",
+      "licenseEvidence": "Official uploader page labels CC0; original page cached because the ZIP has no separate licence text.",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "a685cd52d98f884565ae2d0b29d93cecebeff614c4ee7f57055502267a86887a"
+        },
+        {
+          "path": "unpacked/arms_low_poly.blend",
+          "sha256": "15170a28893613d3370915fd62b32de584734db34491d49daf7aca7f5a18f75d"
+        },
+        {
+          "path": "unpacked/arms_low_poly.fbx",
+          "sha256": "8f0bbb00f6253deb6ab474504b784b97df514aed8ab3f1da400f9c932d96ac1f"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "47a364bfd661c983ddb44a7fb841888ce52d9bc913cf44535b131d203d30fe9c"
+        }
+      ],
+      "card": "ART-SRC-HANDS",
+      "family": "first-person",
+      "license": "CC0-1.0",
+      "status": "candidate",
+      "downloaded": true,
+      "checked": "2026-09-30",
+      "library": "C:/Users/kyleb/dev/art-library/devmops-low-poly-arms",
+      "recipe": "tools/art/hands-source-sheet.py"
     }
   ]
 }
