@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {Duel} from '../src/game.js';
 import {CARS, COURSE, DRIVE, steeringYawAuthority} from '../src/config.js';
+import {DRIVERS} from '../src/drivers.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {arenaCarSpec, pilotStep} from '../src/arena/arena-pilot.js';
 import {arenaFloorSpeed} from '../src/arena/venues.js';
@@ -175,6 +176,46 @@ for (const car of Object.keys(CARS)) {
         'released yaw must decay monotonically without reversing');
     }
     assert.ok(Math.abs(state.yawVelocity) <= full * .015, 'yaw must settle below 1.5% in 0.3 s');
+  });
+}
+// Engine-only upgrades give the lowest grip at a higher floor cap; fully
+// upgraded matching specialists give the largest yaw and release response.
+for (const car of Object.keys(CARS)) for (const variant of ['engine-only', 'max-specialist']) {
+  const driverId = variant === 'max-specialist'
+    ? Object.values(DRIVERS).find(driver => driver.cars.includes(car))?.id || 'club' : 'club';
+  const upgrades = variant === 'engine-only' ? {engine: 3} :
+    {engine: 3, nitro: 3, handling: 3, tires: 3, brakes: 3, suspension: 3, tank: 3};
+  const duel = new Duel({seed: 1989, featureFlags: flags()});
+  assert.equal(duel.startArenaEvent({car, seed: 1989, driverId, upgrades,
+    opponents: [{car, driverId, upgrades, brain: 'rammer'}]}), true);
+  duel.state.status = 'racing'; duel.state.countdown = 0; duel.state.arena.phase = 'fighting';
+  const spec = arenaCarSpec(duel, duel.state.opponents[0]);
+  check(car + '/' + variant + ' actual player and CPU full-lock minima', () => {
+    assert.equal(duel.state.driverId, driverId);
+    assert.ok(duel.car.topSpeed >= CARS[car].topSpeed && duel.car.grip >= CARS[car].grip);
+    assert.equal(spec.grip, duel.car.grip, 'matching upgrades and driver must reach both physics paths');
+    for (const speed of [15, 25, 35, 45, 50]) {
+      assert.ok(Math.abs(playerYaw(duel, speed)) * DEG >= 100, 'upgraded player full lock below100');
+      assert.ok(Math.abs(cpuYaw(duel, speed)) * DEG >= 100, 'upgraded CPU full lock below100');
+    }
+    assert.ok(Math.abs(playerYaw(duel, arenaFloorSpeed(duel.course.def.scrapdome, duel.car.topSpeed))) * DEG >= 75);
+    assert.ok(Math.abs(cpuYaw(duel, arenaFloorSpeed(duel.course.def.scrapdome, spec.topSpeed))) * DEG >= 75);
+  });
+  check(car + '/' + variant + ' player and CPU release settle at their actual grip', () => {
+    for (const actor of [duel.state, duel.state.opponents[0]]) {
+      const isPlayer = actor === duel.state, grip = isPlayer ? duel.car.grip : spec.grip;
+      actor.steerVisual = 1;
+      actor.yawVelocity = -steeringYawAuthority(45, grip, isPlayer ? .95 : 1, isPlayer ? duel.car : spec, duel.course);
+      const full = Math.abs(actor.yawVelocity);
+      duel.setInput({steer: 0, throttle: 0, brake: 0, boost: false});
+      for (let tick = 0; tick < 36; tick++) {
+        pose(duel, actor, 45); const prior = actor.yawVelocity;
+        if (isPlayer) duel.step(DT); else pilotStep(duel, actor, cpuGoal(duel, actor, 0), DT);
+        assert.ok(Number.isFinite(actor.yawVelocity) && actor.yawVelocity <= 1e-12 &&
+          Math.abs(actor.yawVelocity) <= Math.abs(prior) + 1e-12, 'enhanced grip must decay without oscillation');
+      }
+      assert.ok(Math.abs(actor.yawVelocity) <= full * .015, 'enhanced grip must settle in0.3s');
+    }
   });
 }
 for (const def of [{kind: 'arena'}, {venue: true}, {arena: true}, ...COURSE]) {
