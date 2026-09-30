@@ -12,27 +12,33 @@ Kyle played Sal on Medium and won 3-0. Three findings, settled as cards:
 **WAR-PAY** (the win paid 25 scrap), **ARENA-STEER** (steering in the dome is
 too slow for a ring) and **ARENA-SHOVE** (sitting cars cannot be shoved).
 
-### Director checkpoint, 30 September, 22:08 UTC
+### Director checkpoint, 30 September, 23:08 UTC
 
-WAR-PAY is merged. The full tier passed 306/306 suites and build on clean
-`bcb09e44`; the merge count resets to zero. The next full is due after five
-merges or 00:08:38 UTC, and at the end. A push waits for a fresh full pass on
-the exact final commit after automatic approval rejected the newer metadata
-commit. The existing GitHub remote and branch refs have been verified.
+WAR-PAY and SAVE-DAMAGED-FIELDS are merged. The profile fix preserves named
+careers when a damaged numeric field cannot convert; its lane175/175,
+build and independent save review pass. Four merges follow the clean
+bcb09e44 full306/306 at22:08:38UTC; the next full is due after one more
+merge or00:08:38UTC. A push waits for that exact final-commit full pass;
+the existing GitHub remote has been verified after the earlier rejection.
 
-ARENA-STEER remains on its clean lane, waiting for Kyle's explicit approval
-to isolate the crate spawn fixture. Its App demo correction waits for Fuel's
-App ownership to end. ART-FIT-CREW-M stopped after the failed first comparison;
-keep current art until Kyle chooses better source parts or closes fitting.
+ART-SRC-CREW-W records are merged. Kyle keeps Nell, Odessa and Wren;
+ART-FIT-CREW-W now covers only Vesper. ART-FIT-CREW-M stopped at failed
+round1, retaining current art until Kyle chooses better parts or closes it.
+ART-SRC-TANKER has two verified CC0 cab/tank leads and a reviewed sheet;
+its artifact floor runs now. Separate trailer/frame/hitch, valves and hatch
+are missing, so it waits for Kyle with no adaptation. Catalog editing waits
+that artifact merge. ART-FIT-HANDS is claimed from the approved WRAD pick:
+tests first, actual source topology/rig and current crew garment/motion
+contracts, matched in-game comparison before any runtime replacement.
 
-ART-SRC-CREW-W has two inspected CC0 alternatives and a comparison ready for
-its corrected lane/build gate. Neither supplies the settled garments and
-full actions; no runtime replacement is approved. Its source artifact merge
-will release the catalog for ART-SRC-TANKER. Fuel Run's tests-first fixes
-cover original-carrier recovery, actual fighter chase/aim and named-player
-mode selection. Fighter projectile damage and splash rules wait for Claude's
-written decision in the inbox. Arsenal and arena cards wait for those shared
-files; do not take the hooks from a paused or active lane.
+ARENA-STEER waits for Kyle's explicit crate-fixture authorization. Its App
+demo correction still waits for Fuel ownership to end. Fuel Run's clean
+held2d29b2f includes the merged profile fix; current tests59/1400checks,
+actual High/Performance browser/durable Retry and independent save review
+pass. Fighter projectile damage, bomb splash and cargo-drop rules wait for
+Claude's DESIGN-FUEL-FIGHTER-HITS. No whole lane/full/audio/art clearance
+or merge is claimed for that held card. Arsenal and other arena cards wait
+for these shared files. Never take hooks from held or active lanes.
 
 ### Tracks for this run (up to five lanes)
 
@@ -82,8 +88,8 @@ releases. A design question goes to Claude in writing.
   Salt Flats groups with the plain Bus. The CC0 salt photo with mirrored UV
   tiling is approved. Source comparisons do not replace runtime assets. The
   fitting cards follow docs/WASTELAND_ART.md, Fitting existing models: gritty
-  materials, comparison in the game, and a three-round cap. Female crew and
-  the armored tanker need their new source cards.
+  materials, comparison in the game, and a three-round cap. Kyle keeps the current women; only Vesper needs fitting. The tanker
+  shortlist remains a source decision with missing trailer parts.
 
 ## Rules for this phase (Kyle, SPEC 0.12)
 

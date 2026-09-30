@@ -841,7 +841,7 @@ tasks:
     size: M
     needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
     status: review
-    review_commit: 24a27af9b3879e6cdd98debde3b17d34b942cf15
+    review_commit: 2d29b2f900e6898a925b8e64b7299e93a0de6b8a
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run
@@ -2595,7 +2595,7 @@ tasks:
     needs: [WAR-02a-FORMAT, WAR-SAL-ART]
     status: merged
     review_commit: 1b5f3365a9717f477e85d6503d1f2bb88375c272
-    note: "Exact clean lane 304/304 in 774.64 seconds and build 1.25 seconds. Independent source/visual review and 12 private High/Performance captures pass; integrated sweep-hit/first-wreck replay matches at 30/60/144 FPS. Claude must review fun, fairness, audible cues and standard chase-camera callout clearance in Preview before merge. Retain the lane and final evidence."
+    note: "Merged after Claude review and released by WAR-SAL-RELEASE; warlords is on. Current tuning and Kyle playthrough are WAR-SAL-TUNE; no old Sal build lane is retained."
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [src/arena/sal-fight.js, src/arena/arena-brains.js, src/arena/arena-event.js, src/arena/warlord-event.js, tools/test-sal-fight.mjs, tools/scenarios/sal-fight.mjs, docs/changes/WAR-02a-SAL.md]
     hooks: [src/arena/arena-pilot.js]
