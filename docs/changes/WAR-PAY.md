@@ -90,7 +90,7 @@ Focused: node --test tools/test-warlord-pay.mjs tools/test-warlord-settlement.mj
 passes 54/54, 342 acceptance checks, no skips after the correction below.
 
 node tools/browser-harness.mjs scenario warlord-pay --output-dir
-.evidence/2026-09-30/WAR-PAY-preview passed on private port 14082. High and
+.evidence/2026-09-30/WAR-PAY-preview passed again on corrected source 899443e on private port 26123. High and
 Performance each prove fresh Preview first win 720, second win 312, same-tab
 reload preserving its two wins and bank 1032, a third rematch 312, and a genuinely
 different browser tab seeded undefeated with first win 720. Six screenshots,
@@ -101,7 +101,7 @@ with real credit and respawn handling. Its disposable build stamp lives only
 in .qa-dist; .preview-dist and the user's running Preview remain untouched.
 
 node tools/browser-harness.mjs scenario warlord-reward --output-dir
-.evidence/2026-09-30/WAR-PAY-reward passed on private port 41076. High and
+.evidence/2026-09-30/WAR-PAY-reward passed again on corrected source 899443e on private port 21184. High and
 Performance each prove the actual RETRY SAVE click, unchanged failed career,
 no unpaid item or amount, one complete registry write, fresh owner and other
 player fields, repeat rejection, first 720, rematch 312, zero-wreck loss 0,
@@ -140,5 +140,13 @@ the actual two-wreck loss 144, total 1176 and every save guard remain unchanged.
 The independent Reviewer must verify this literal-rule replacement before merge.
 Correction-focused tests pass 54/54 with 342 checks (new pay 25/25, 108 checks;
 existing settlement 29/29, 234 checks). The real two-wreck loss and atomic save
-checks pass unchanged. Earlier browser data stays valid for its zero-to-three
-wreck fixtures; both private browser recipes will also be rerun on this correction.
+checks pass unchanged. Both private browser recipes were rebuilt and rerun on
+clean corrected source 899443e; their zero-to-three-wreck fixtures retain the
+same pay and pass in High and Performance with zero warnings or errors.
+
+A separate pure settlement probe confirms a nine-wreck Medium loss pays 648 and
+its explanation names all nine wrecks. Setting the boss wreck count to
+Number.MAX_SAFE_INTEGER rejects the transaction with the exact input profile
+and markers unchanged. This probe uses only synthetic profile and arena data.
+Independent literal-rule review, Save Guardian and mandatory gates remain
+pending; no source or assertion changes are needed for the browser verdicts.
