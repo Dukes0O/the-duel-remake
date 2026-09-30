@@ -484,3 +484,56 @@ test('retry preserves genuine unsaved owner fields when that durable owner is un
     equal(loadPlayers().players.find(p => p.id === 'driver-b')?.profile?.credits, 900, 'fresh other player is retained too');
   } finally { failWrites = false; app.dispose?.(); }
 });
+
+
+test('initial reward never overwrites a newer durable owner after a real prior save failure', () => {
+  const app = appFight();
+  try {
+    app.profile = {...app.profile, credits: 2777, unsavedSession: {keep: true}};
+    failWrites = true; equal(app._saveProfile(), false, 'actual prior save failure creates unsaved owner work'); failWrites = false;
+    const visible = structuredClone(app.profile), fresh = loadPlayers(), owner = fresh.players.find(p => p.id === app.player.id);
+    equal(savePlayers(replacePlayerProfile(fresh, owner.id, {...owner.profile, credits: 4765, newerDurable: {keep: 23}})), true,
+      'another memory tab saves a conflicting newer owner');
+    const durable = [...values]; const result = finish(app);
+    equal(result.settlementSaved, false, 'initial result must reject the unresolved owner conflict');
+    equal(result.settlementRetryable, true, 'owner conflict stays retryable without a false saved claim');
+    equal(app.profile, visible, 'complete genuine unsaved owner stays visible');
+    equal([...values], durable, 'newer durable owner remains unchanged');
+  } finally { failWrites = false; app.dispose?.(); }
+});
+
+test('an unsaved owner conflict before warlord launch is not made trusted by launch-time capture', () => {
+  const app = appFight();
+  try {
+    app.returnToMenu();
+    app.profile = {...app.profile, credits: 2777, unsavedSession: {keep: true}};
+    failWrites = true; equal(app._saveProfile(), false, 'actual failed save predates the new fight'); failWrites = false;
+    const fresh = loadPlayers(), owner = fresh.players.find(p => p.id === app.player.id);
+    equal(savePlayers(replacePlayerProfile(fresh, owner.id, {...owner.profile, credits: 4765, newerDurable: {keep: 23}})), true,
+      'durable conflict already exists before launch');
+    const visible = structuredClone(app.profile), durable = [...values];
+    assert.equal(app.visitWasteland(), true); app.advance(8);
+    assert.equal(app.startWarlordFight('sal'), true); assert.equal(app.beginWarlordFight(), true);
+    app.duel.state.countdown = 0; app.duel.step(1/120); app.duel.step(1/120);
+    const result = finish(app);
+    equal(result.settlementSaved, false, 'launch-time capture cannot turn an older unsaved profile into durable truth');
+    equal(app.profile, visible, 'unsaved career survives the conflict before launch');
+    equal([...values], durable, 'pre-existing newer durable career remains untouched');
+  } finally { failWrites = false; app.dispose?.(); }
+});
+
+test('initial reward preserves genuine unsaved owner and freshly saved other players when owner baseline is unchanged', () => {
+  const app = appFight();
+  try {
+    app.profile = {...app.profile, credits: 2777, unsavedSession: {keep: true}};
+    failWrites = true; equal(app._saveProfile(), false, 'genuine local save failed'); failWrites = false;
+    const fresh = loadPlayers(); fresh.players.push({id: 'driver-b', name: 'Driver B', profile: {...createProfile(), credits: 900, futureB: {keep: 23}}});
+    equal(savePlayers(fresh), true, 'another player is saved while the durable owner is unchanged');
+    const result = finish(app);
+    equal(result.settlementSaved, true, 'unchanged verified owner baseline permits complete settlement');
+    equal([app.profile.credits, app.profile.unsavedSession, app.profile.wasteland.scrap], [2777, {keep: true}, 150],
+      'initial settlement preserves genuine unsaved owner fields');
+    const other = loadPlayers().players.find(p => p.id === 'driver-b')?.profile;
+    equal([other?.credits, other?.futureB], [900, {keep: 23}], 'initial settlement retains the complete fresh other player');
+  } finally { failWrites = false; app.dispose?.(); }
+});

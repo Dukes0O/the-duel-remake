@@ -411,3 +411,34 @@ renderer-only rest-angle cache. The original static housings and all Sal blade
 motion remain. Removed paid Raider direct plating from the earned-only view;
 paid Raider still loads it. Replaced the stale retry save route with a narrow
 fresh-registry candidate transaction; ordinary shop and arena paths remain.
+
+
+## Browser pass and remaining initial-write review
+
+The complete High/Performance private browser flow passed on `ee8de512`,
+port 36958: 12 screenshots, zero errors and zero warnings. Actual RETRY SAVE
+preserved the newer durable owner's 50100 credits and additive field plus
+another player's 900 credits/additive field in one reward write. First win
+paid 150, rematch 25, loss zero; final scrap 175, wins 2, losses 1. Actual
+side contact removed 18.0246528 armor and added one spark in each mode. The
+recipe proved current Stuttgart and later purchased Banshee free equip,
+same-tab reload, other-player rejection and released Armory switch isolation.
+Visual inspection of earned-contact, corrected failed HOLD and future-car
+Armory captures found no covered controls or misleading reward claim.
+Evidence: `.evidence/2026-09-30/warlord-reward-2026-09-30T18-18-03-813Z/`.
+
+Guardian then found a related initial-write hole with pre-existing unsaved
+work. A real failed `_saveProfile` left local credits 2777; another tab saved
+owner credits 4765, then the first completed fight could replace that newer
+career. Three separate tests now fail before fixing it: conflict after launch,
+conflict already present before launch, and a dropped fresh other player on
+initial success with unchanged owner. Existing assertions stay unchanged.
+
+The Director approved a small evidence hook after successful `_saveProfile`,
+without changing global shop save/rollback behavior. It records an earlier
+verified serialized owner only when a supported durable registry matches the
+saved profile. Constructor/run-start proof also requires that exact match.
+Initial and retry reward writes must share fresh-candidate rules; unknown or
+changed proof retains both genuine local work and durable progress and leaves
+a retryable failure. The complete browser pass above is a limited verdict for
+`ee8de512`; the corrected source needs Guardian and a fresh browser rerun.
