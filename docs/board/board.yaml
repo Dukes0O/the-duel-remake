@@ -797,11 +797,14 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-02a-FORMAT]
-    status: ready
-    flag: scrapdome
-    owns: [src/arena/modes/fuel-run.js, tools/test-arena-fuel-run.mjs, docs/changes/ARENA-03.md]
-    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js]
-    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
+    status: building
+    claimed_by: "codex-director-2026-09-30-resume"
+    branch: lane/cmb/arena-03-fuel-run
+    flag: fuel-run
+    owns: [src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md]
+    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js]
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
+    sequencing: "Tests first in owned files now. Production App and screen-arena edits wait for WAR-PAY merge; held ARENA-STEER App demo hook is deferred until Fuel merges. No config, driving, pilot or crate-test ownership. Future Arsenal waits Fuel feature/render/audio hooks. Protected sound-bank/catalog/assets remain untouched: explicit fuel events reuse authored interface.bonus, vehicle.landing, interface.go cues. SPEC0.12 adds fuel-run:dev plus scrapdome/discovery/rank6 gates; Last Car Rolling unchanged."
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Fuel Run, exactly: canisters, depots, dropping, the collector brain, rank 6 unlock (hidden before), pay and hold once per event (Save Guardian). Headless tests and a private browser scenario."
   - id: ARENA-04
