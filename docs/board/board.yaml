@@ -2655,7 +2655,7 @@ tasks:
     claimed_by: codex-director-2026-09-30-resume
     flag: scrapdome
     owns: [tools/test-arena-steering.mjs, tools/replays/arena-steering-controls.json, tools/scenarios/arena-steering.mjs, docs/changes/ARENA-STEER.md]
-    hooks: [src/config.js, src/sim-driving.js, src/arena/arena-pilot.js]
+    hooks: [tools/test-arena-event.mjs, src/config.js, src/sim-driving.js, src/arena/arena-pilot.js]
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     sequencing: "One lane before ARENA-SHOVE and ARS-CORE: driving hooks are exclusive. App demo hook waits for WAR-PAY if needed. Road and Titan handling stay unchanged."
     acceptance:
