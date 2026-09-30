@@ -1,7 +1,8 @@
 # WAR-02a-REWARD
 
-Status: partial core checkpoint; App integration blocked by TITAN-HANDLING.
-Save Guardian review pending on this exact checkpoint. `rewardBuilt` remains false.
+Status: App, save retry and dev-switch integration implemented. Focused checks
+pass; private browser review is in progress. Final Save Guardian review and
+mandatory lane/build gates remain pending. `rewardBuilt` remains false.
 No merge, release or finished reward claim.
 
 ## Settled contract before tests
@@ -46,8 +47,8 @@ Use existing combatRamHit event plus sideSaws: true to mark those sparks.
 
 ## Dependencies and reviews
 
-App hook waits for TITAN-HANDLING merge. rewardBuilt stays false until the
-App/save/contact/armory path is implemented and reviewed. Save Guardian review
+Titan merged as `7c9ff20` and the App hook is implemented. `rewardBuilt` stays
+false until the App/save/contact/armory path is reviewed. Save Guardian review
 and Claude/Kyle Preview review remain required, not claimed by headless tests.
 Tests use only memory storage and QA warlords enablement. Run focused suites
 only while the Director's other runner owns full/heavy gates.
@@ -173,7 +174,7 @@ spark geometry tells during spin-up. `kit-sal-sparks` stays hidden during the
 tell and remains reserved for the missed window. All motion reads simulation
 time and changes no race or save state.
 
-## Current checks and remaining dependency
+## Core checkpoint checks before App integration
 
 - `node tools/test-side-saws.mjs`: 27/27 subtests passed, 116 acceptance checks.
   All three ordinary fingerprints in the unchanged
@@ -205,9 +206,9 @@ time and changes no race or save state.
   Director's Rustwall gate. Browser recipe and end-to-end App/storage review
   follow once the App hook clears; current work is a reviewable partial core.
 
-Freeze this source checkpoint for Save Guardian. `src/app.js` is untouched,
-`src/warlords.js` still has `rewardBuilt: false`, and the reward is not declared
-built until the working App/save/contact/armory path passes final review.
+At that core checkpoint, `src/app.js` was untouched and `rewardBuilt` was
+false. Later sections record the completed App hook and new checks. The reward
+is not declared built until the whole path passes final review.
 
 ## Save Guardian findings: reject before settlement
 
@@ -260,3 +261,58 @@ heading: its item row was hidden, but the saved kit still advertised
 "SIDE SAWS EQUIPPED" and 1.6 times damage. The test fails before changing that
 heading, requires all three paid choices to remain visible, and proves the
 presentation does not erase the saved kit. Existing assertions are unchanged.
+
+
+## App and result integration checkpoint
+
+The actual `arenaResult` event now dispatches warlord results to the pure
+transaction. App checks the current state, event identity, starting named
+player, active player and enabled warlord access before saving. It uses the
+existing `_saveShopProfile` path: one player-registry write contains scrap,
+defeat, claim, kit and marker. A failed write restores the previous visible
+profile and registry. The result advertises zero scrap and no kit until the
+save succeeds. The same completed result can retry; duplicate success cannot
+pay again. Unknown profile and career fields remain additive.
+
+Failed results explain the failure and show RETRY SAVE. The owned App retry
+verb retries only that current failed result. The only screen-router change
+is the Director-assigned `warlord-retry-save` click-handler case. The handler
+calls the verb and refreshes result presentation. First saved win states that
+Side Saws are unlocked and equipped on the winning car.
+
+The dev-switch fixes have separate red cases above. Contact multiplication
+requires `warlords`; App leaves a saved earned kit inactive at event/race start
+and rejects its equip when the switch is off. The Armory also hides its saved
+equipped heading then. These guards preserve stored entitlement and all three
+paid kits. Sal's FSM, contact faces and ordinary replay hashes are unchanged.
+
+- Settlement: 16/16, 143 acceptance checks. This includes the real App event,
+  exact one-write transaction, storage failure, same-result retry and new UI
+  and switch cases. Original API assertions are unchanged.
+- Side Saws: 29/29, 124 checks. Both new switch regressions pass; the original
+  27 cases and all three ordinary fingerprint controls remain unchanged.
+- Sixteen focused suites: 140/140 subtests pass in 2.53 seconds. These cover
+  ordinary arena settlement/UI, warlord format, paid/authored/visual kits,
+  resource lifecycle, Sal art, armor/bomb radius, Wasteland profile,
+  progression integration and territory presentation.
+- Browser recipe syntax and `git diff --check` pass. The recipe uses the
+  bundled QA App and UI, with no `/src` imports. It checks actual damaging
+  contact wrecks, the real retry click, one registry write, authored earned
+  saws and spark bursts, first/rematch/loss economy, current/future free equip,
+  same-tab reload and named-player/dev-switch isolation in High/Performance.
+- Browser attempt 1 on private port 63426 stopped because a nested recipe
+  string lost its regex escape before `+150`. No runtime assertion or console
+  issue was hidden. The equivalent literal text check fixes the recipe; the
+  rerun is in progress. Evidence is ignored under `.evidence/2026-09-30/`.
+
+Save Guardian cleared the earlier exact guards checkpoint `8347dd2` with 180
+probes, 247 fixture checks and backup/budget checks. This App delta still needs
+its separate final review. The Director authorized the private QA build;
+mandatory lane/build gates are held until reviewed source is frozen.
+
+## Removed in App integration
+
+Removed the App's warlord early-return placeholder. The ordinary arena
+settlement path stays in place; its regression suite passes. No save format,
+paid kit, real player data, asset binary or Sal FSM was removed. The dev switch
+only suspends the earned kit; it never deletes it from the career.

@@ -12,6 +12,7 @@ import {featureFlags} from './feature-flags.js';
 import {raceFeatureFlags,wastelandUnlocked} from './wasteland-access.js';
 import {ARENA_FIELD} from './arena/arena-event.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
+import {settleWarlordResult} from './arena/warlord-settlement.js';
 import {startWarlordEvent, beginWarlordEvent} from './arena/warlord-event.js';
 import {BUILT_WARLORD_IDS} from './warlords.js';
 import { Duel } from './game.js';
@@ -268,7 +269,7 @@ export class App {
     this._scriptedCrashDone = false;
     this.duel.startCampaign({...options,weaponLevels:getProfileWeapons(this.profile).levels,
       weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile):undefined,
-      combatArmorKit:this.wastelandUnlocked() ? getEquippedArmorKit(this.profile,car) : null,
+      combatArmorKit:this.wastelandUnlocked() ? this._combatArmorKit(car) : null,
       crewId:this.wastelandUnlocked()?selectedCrewId(this.profile):undefined,
       discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
       muddyHollowHubcaps:this.profile.wasteland?.muddyHollow?.hubcaps,
@@ -468,8 +469,7 @@ export class App {
     result.creditBalance=this.profile.credits;
   }
   _settleArenaResult(event,state){
-    // WAR-02a-REWARD owns atomic warlord pay. Never award ordinary arena pay.
-    if (state?.arena?.mode === 'warlord') return false;
+    if (state?.arena?.mode === 'warlord') return this._settleWarlordResult(event, state);
     const result=state?.arena?.result,currentHold=Number.isSafeInteger(this.profile?.wasteland?.territories?.kettle?.hold)?this.profile.wasteland.territories.kettle.hold:0;
     if(result&&result.scrapEarned==null){Object.assign(result,{scrapEarned:0,holdAdded:0,hold:currentHold,settlementSaved:false});}
     if(!result||event?.result!==result||state!==this.duel.state||
@@ -490,6 +490,44 @@ export class App {
       scrapBalance:this.profile.wasteland.scrap,holdAdded:settled.holdAdded,
       hold:settled.hold,settlementSaved:true});
     return true;
+  }
+  _settleWarlordResult(event, state) {
+    const result = state?.arena?.result;
+    if (result && result.scrapEarned == null) {
+      Object.assign(result, {scrapEarned: 0, settlementSaved: false,
+        settlementRetryable: false, kitEarned: null, territoryClaimed: false});
+    }
+    if (!result || event?.result !== result || state !== this.duel.state ||
+        !this.runId || !this.warlordsAvailable() ||
+        this._runPlayerId !== this.player.id || state.playerId !== this._runPlayerId)
+      return false;
+    this._refreshPlayer();
+    if (this._runPlayerId !== this.player.id || state.playerId !== this.player.id)
+      return false;
+    const previous = this.profile;
+    const settled = settleWarlordResult(previous, {runId: this.runId,
+      ownerPlayerId: this._runPlayerId, activePlayerId: this.player.id,
+      arena: state.arena, car: state.car});
+    if (!settled.awarded) return false;
+    this.profile = settled.profile;
+    if (!this._saveShopProfile(previous)) {
+      result.settlementRetryable = true;
+      return false;
+    }
+    Object.assign(result, {scrapEarned: settled.scrapEarned,
+      scrapBalance: this.profile.wasteland.scrap,
+      hold: this.profile.wasteland.territories[state.arena.warlordId].hold,
+      settlementSaved: true, settlementRetryable: false,
+      firstWin: settled.firstWin, kitEarned: settled.kitEarned,
+      territoryClaimed: settled.territoryClaimed});
+    return true;
+  }
+  retryArenaSettlement() {
+    const state = this.duel.state, result = state.arena?.result;
+    if (state.status !== 'arena_result' || !result?.settlementRetryable) return false;
+    const saved = this._settleArenaResult({result}, state);
+    this.duel.emit({arenaSettlementRetried: true});
+    return saved;
   }
   _settleAbandoned(){
     const state=this.duel.state;
@@ -619,7 +657,7 @@ export class App {
       upgrades: getUpgradeLevels(this.profile, car), difficulty: this._raceSettings.difficulty,
       cpuDifficulty: this.cpuDifficulty, seed: (1989 + this._arenaSerial * 7919) >>> 0,
       playerId: this.player.id, opponents: field, weaponLevels: getProfileWeapons(this.profile).levels,
-      weaponLoadout: getCarLoadout(this.profile), combatArmorKit: getEquippedArmorKit(this.profile, car),
+      weaponLoadout: getCarLoadout(this.profile), combatArmorKit: this._combatArmorKit(car),
       crewId: selectedCrewId(this.profile)};
     return warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
       this.duel.startArenaEvent(options);
@@ -747,7 +785,13 @@ export class App {
     if(result.ok){this.profile=result.profile;if(!this._saveShopProfile(previous))return {ok:false,reason:'Could not save this purchase.'};this.duel.emit({garage:true});}
     return result;
   }
+  _combatArmorKit(car) {
+    const kit = getEquippedArmorKit(this.profile, car);
+    return kit === 'side-saws' && !this._switches().enabled('warlords') ? null : kit;
+  }
   equipArmorKit(car,id=null){
+    if(id==='side-saws'&&!this._switches().enabled('warlords'))
+      return {ok:false,reason:'Side Saws are not available in this build.'};
     if(!this._wastelandShopAccess()||!this.wastelandUnlocked())
       return {ok:false,reason:'Return to the Armory with Wasteland enabled.'};
     this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};

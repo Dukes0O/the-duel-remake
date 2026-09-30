@@ -32,7 +32,8 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
     const requested = getArmoryCar();
     const car = Object.hasOwn(CARS, requested) ? requested : 'falcone_f42';
     const unlocked = isCarUnlocked(saved, car);
-    const equipped = getEquippedArmorKit(saved, car);
+    const storedKit = getEquippedArmorKit(saved, car);
+    const equipped = storedKit === 'side-saws' && !warlordsEnabled() ? null : storedKit;
     const equippedDetails = armorKitDetails(equipped);
     const rank = saved.wasteland?.rank || 1;
     const defeated = hasDefeatedWarlord(saved.wasteland?.warlords);

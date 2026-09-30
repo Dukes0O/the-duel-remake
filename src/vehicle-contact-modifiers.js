@@ -16,7 +16,8 @@ export function salRearDamageMultiplier(duel, victim, victimFace) {
 }
 
 export function vehicleContactModifiers(duel, attacker, victim, attackerFace, victimFace) {
-  const sideSaws = attacker?.combatArmorKit === 'side-saws' && side(attackerFace);
+  const sideSaws = duel.featureFlags?.enabled('warlords') === true &&
+    attacker?.combatArmorKit === 'side-saws' && side(attackerFace);
   const salSweep = salBoss(duel, attacker) && victim === duel.state &&
     attacker.salSaw?.stage === 'sweep' && side(victimFace);
   return {multiplier: (sideSaws ? 1.6 : 1) * (salSweep ? 2 : 1), sideSaws, salSweep};
