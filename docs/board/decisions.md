@@ -1385,3 +1385,14 @@ detail-tank. This chooses starting parts only. Fitting stays paused until
 the separate trailer/frame/hitch, valves and boarding hatch are resolved.
 ART-SRC-TANKER-PARTS owns that follow-up; ARENA-07 now waits for it. No
 assembled convoy or new missing geometry is approved by this source choice.
+
+## 30 September 2026: correction, Cinder is a woman; fitted crew not better
+
+Claude's earlier split listed Cinder with the men. Cinder's crew sheet and
+current game figure are a woman; Nell, Odessa, Wren, Cinder and Vesper are the
+women, Rook, Jax, Dune and Tusk the men. ART-FIT-CREW-M round 1 scored 1 to 2
+against the current figures (Jax without his coat, Dune's hood reading as a
+helmet, Tusk in clean fantasy armor) and stopped. Claude recommends keeping
+the current crew figures, as Kyle chose for the women, and closing the
+fitting card; Kyle confirms.
+

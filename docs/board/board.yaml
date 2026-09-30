@@ -609,6 +609,7 @@ tasks:
       - "Fit the picked Quaternius Modular Men pack (docs/board/looks/crew-src) into five crew figures following docs/WASTELAND_ART.md 'Fitting existing models'. Each is recognizable from the crew sheets (public/assets/reference/wasteland-crew-1.png and -2.png) by silhouette, costume and accent colour; faces may stay simple."
       - "Reuse the pack's shared rig and 24 actions; map them to the game's existing on-foot actions (idle, walk, run, aim, fire, reload, repair, knockdown, get up, enter and exit the car). A missing action is adapted from the nearest pack action, never hand-animated from nothing."
       - "Near and distant versions within the budgets; the old Rook runtime model and its figure scripts are removed once all five pass; Kyle checks them in the Preview."
+    claude_review: "30 September 2026: agree with the critic; round 1 is worse than the current figures at every distance. Recommend Kyle keeps the current crew and this card closes (as he chose for the women). Correction: Cinder is a woman (crew sheet and current figure); she stays as she is either way."
   - id: ART-SRC-CREW-W
     title: "Crew figures for women: short list of existing starting models"
     owner: codex
