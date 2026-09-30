@@ -2162,3 +2162,15 @@ Kyle and Gratian in the Preview.
 ## 30 September 2026, Director: resume the remaining phase 3 build
 
 Kyle resumed autonomous work. Claimed ARENA-STEER and WAR-PAY with exclusive file slices; crew fitting follows its source/loader slice check. Steering precedes Shove, and Arsenal waits for the driving hook. Cleanup waits until its broad file set is free. Last full pass remains 931b0d65 (304/304 at20:08UTC); two later integration merges already count, so the next full is due after three further merges or22:08UTC. No live, Preview or real-save work is authorized.
+
+## 30 September 2026, Claude: second release (ARENA-RAMP-SIDE, TITAN-HANDLING)
+
+Kyle asked for the ramp-side fix in the live game. Release commit e2c418e
+(integration 1310ca0 plus release notes): full tier 305/305 in 615 s, combat
+balance passed (wins 26, 19 and 8 of 30; CPU hits 2.67, 7.2 and 5.53). Build
+20260930204849-42f962 checked on port 5188 (no errors, main menu unchanged),
+copied into the live dist with index and version last, verified on 5174 with
+every asset present. dist 149 files, dist-previous 149 (a39e0d), dist-next
+deleted, master pushed. Sal, Side Saws and warlord pay stay behind
+`warlords` (dev). Kyle's Sal findings are cards WAR-PAY, ARENA-STEER and
+ARENA-SHOVE (merged 282758d).

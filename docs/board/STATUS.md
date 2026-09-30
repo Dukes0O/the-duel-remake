@@ -1,20 +1,20 @@
 # Build status
 
-Observed at: 2026-09-30T20:08:41.274Z
+Observed at: 2026-09-30T20:49:37.686Z
 
-Observation commit: 931b0d65ee7cc58eb626763a403d5df21347f9e8
+Observation commit: de4221f1cb2fbdce44ce34a265524428d7ee3c94
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 931b0d65ee7cc58eb626763a403d5df21347f9e8
+Integration HEAD: de4221f1cb2fbdce44ce34a265524428d7ee3c94
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
 Live build version: not checked
 
-Full tier: passed; exact HEAD passed: yes.
+Full tier: stale; exact HEAD passed: no.
 
 Last recorded full run: 2026-09-30T20:08:29.650Z; tested commit: 931b0d65ee7cc58eb626763a403d5df21347f9e8.
 
@@ -39,6 +39,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | lane/audio/aud-10 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 5 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/phys/arena-steer | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-steer |
+| lane/save/war-pay | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/war-pay |
 
 ## Unmerged branches for idle review
 
@@ -59,23 +61,23 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 430,908 B | +0 B | 500,000 B |
 | Review `looks/` | 9,947,193 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 242,471 B | -171,653 B | 5,000,000 B |
+| Added bytes in last merge | 132,896 B | -109,575 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 310,907,904 B | +241,664 B | unavailable |
-| Lane folders | 0 | -1 | unavailable |
+| Git objects | 311,441,408 B | +533,504 B | unavailable |
+| Lane folders | 2 | +2 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: 246e7f1933aaec596e99cec55cef4243b23baca9
+- Local master: e2c418e73538af1c24d783c79e426151e2c79c9a
 - Local main: missing
-- Local integration/wasteland: 931b0d65ee7cc58eb626763a403d5df21347f9e8
+- Local integration/wasteland: de4221f1cb2fbdce44ce34a265524428d7ee3c94
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit 246e7f1933aaec596e99cec55cef4243b23baca9.
+- Remote origin/master: matches local; cached commit e2c418e73538af1c24d783c79e426151e2c79c9a.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: behind local; cached commit 12340f691ddcfc7cf6828552b8f4ce6cd1756566.
+- Remote origin/integration/wasteland: behind local; cached commit 8492332c4d314d8e94c7637d39573342ef032efa.
