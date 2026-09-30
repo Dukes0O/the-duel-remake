@@ -2485,7 +2485,7 @@ tasks:
     needs: [WAR-02a-FORMAT, CRASH-SWITCH-REMOVE]
     status: building
     claimed_by: "Codex autonomous Director, 30 September 2026"
-    owns: [src/arena/warlord-settlement.js, src/vehicle-contact-modifiers.js, src/armor-kits.js, src/sim-contacts.js, src/combat-armor.js, src/microcombat-projectiles.js, src/armor-kit-meshes.js, src/screen-armory.js, src/screen-arena.js, src/warlords.js, src/wasteland-progress.js, tools/test-warlord-settlement.mjs, tools/test-side-saws.mjs, tools/scenarios/warlord-reward.mjs, docs/changes/WAR-02a-REWARD.md]
+    owns: [src/arena/warlord-settlement.js, src/vehicle-contact-modifiers.js, src/armor-kits.js, src/sim-contacts.js, src/combat-armor.js, src/combat-projectiles.js, src/armor-kit-meshes.js, src/screen-armory.js, src/screen-arena.js, src/warlords.js, src/wasteland-progress.js, tools/test-warlord-settlement.mjs, tools/test-side-saws.mjs, tools/scenarios/warlord-reward.mjs, docs/changes/WAR-02a-REWARD.md]
     hooks: [src/app.js]
     sequencing: "FORMAT and CRASH-SWITCH-REMOVE merged. Tests first. Contact damage reads Sal actor move state without editing Sal files. app.js waits for TITAN-HANDLING to merge. Save Guardian review is required before merge."
     flag: warlords
