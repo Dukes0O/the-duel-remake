@@ -12,13 +12,15 @@ Kyle played Sal on Medium and won 3-0. Three findings, settled as cards:
 **WAR-PAY** (the win paid 25 scrap), **ARENA-STEER** (steering in the dome is
 too slow for a ring) and **ARENA-SHOVE** (sitting cars cannot be shoved).
 
-### Director checkpoint, 30 September, 23:08 UTC
+### Director checkpoint, 30 September, 23:44 UTC
 
 WAR-PAY and SAVE-DAMAGED-FIELDS are merged. The profile fix preserves named
 careers when a damaged numeric field cannot convert; its lane 175/175,
-build and independent save review pass. Five merges follow the clean
-bcb09e44 full 306/306 at 22:08:38 UTC; the scheduled full is due now. A push waits for that exact final-commit full pass;
-the existing GitHub remote has been verified after the earlier rejection.
+build and independent save review pass. The five-merge full checkpoint passed307/307 on exact clean352dba3,
+792.56 seconds, build1.17 seconds, completed23:32:52UTC. No campaigns
+skipped. D8 push is blocked by automatic review requiring explicit human
+approval of the verified existing GitHub destination and committed content;
+the precise question is pending. Further metadata needs its own final full.
 
 ART-SRC-CREW-W records are merged. Kyle keeps Nell, Odessa and Wren;
 ART-FIT-CREW-W now covers only Vesper. ART-FIT-CREW-M stopped at failed
@@ -26,13 +28,15 @@ round 1, retaining current art until Kyle chooses better parts or closes it.
 ART-SRC-TANKER has two verified CC0 cab/tank leads and a reviewed sheet;
 its lane 306/306 and build pass and its records are merged. Kyle picks A.
 Separate trailer/frame/hitch, valves and hatch are missing, so fitting waits
-ART-SRC-TANKER-PARTS. Catalog editing is released to Hands. ART-FIT-HANDS is claimed from the approved WRAD pick:
+ART-SRC-TANKER-PARTS, now claimed in a separate fifth lane. Catalog editing is released to Hands. ART-FIT-HANDS is claimed from the approved WRAD pick:
 tests first, actual source topology/rig and current crew garment/motion
-contracts, matched in-game comparison before any runtime replacement.
+contracts. All eight private candidates pass61/61 mechanical checks; matched
+in-game comparison/critic remains pending before any runtime replacement.
 
 ARENA-STEER waits for Kyle's explicit crate-fixture authorization. Its App
 demo correction still waits for Fuel ownership to end. Fuel Run's clean
-held 2d29b2f includes the merged profile fix; current tests 59/1,400 checks,
+held53e6796 includes the profile fix and tests-first stale-rank/render-cache
+repairs; current tests68/1,552checks,
 actual High/Performance browser/durable Retry and independent save review
 pass. Fighter projectile damage, bomb splash and cargo-drop rules wait for
 Claude's DESIGN-FUEL-FIGHTER-HITS. No whole lane/full/audio/art clearance

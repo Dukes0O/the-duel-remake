@@ -1,9 +1,9 @@
 # ART-SRC-TANKER: existing source comparison
 
-Status: review, waiting_on: kyle. Recommend Kenney delivery-flat plus the
-horizontal Industrial detail-tank as an existing-parts lead. Neither option
-supplies a separate trailer or hitch; no adaptation or runtime change starts
-until Kyle chooses the source path.
+Status: merged source records. Kyle chose A, Kenney delivery-flat plus the
+horizontal Industrial detail-tank, as starting parts only. Neither option
+supplies a separate trailer or hitch. ART-SRC-TANKER-PARTS searches for the
+missing parts; adaptation and runtime changes stay paused.
 
 ## Changed
 
@@ -67,3 +67,12 @@ current public files, 236,249,990 bytes, retain their hashes. Existing chunk
 warning remains. Catalog ownership is released. This remains a source-only
 **review / waiting_on: kyle** stop, with missing trailer parts explicit; no
 fitting, complete-convoy, gameplay or release approval is granted.
+
+## Kyle source choice and current stop
+
+Kyle explicitly chose A as starting parts only. The artifact merge and
+ordinary lane/branch/evidence cleanup are complete. ART-SRC-TANKER-PARTS
+is claimed to inspect existing trailer/frame/hitch, three valves and an
+opening hatch. ARENA-07 waits for that follow-up. No fitting or finished
+convoy is approved; the historical pre-choice review above is not current
+waiting status. Catalog belongs to Hands until that lane releases it.

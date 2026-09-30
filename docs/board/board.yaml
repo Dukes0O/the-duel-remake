@@ -648,6 +648,7 @@ tasks:
     owns: [tools/blender/first-person-wrad.py, tools/blender/first-person-wrad-source.json, tools/art/hands-fit-sheet.py, tools/test-first-person-wrad.mjs, tools/scenarios/hands-fit-wrad.mjs, docs/board/looks/hands-fit/, docs/changes/ART-FIT-HANDS.md]
     hooks: [public/assets/models/wasteland/first-person/hands/, tools/art/catalog.json, tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, tools/blender/first-person-p2-source.json, tools/test-first-person-gear.mjs, tools/test-first-person-cloth.mjs, tools/test-first-person-contact.mjs, tools/test-first-person-polish.mjs, tools/test-runtime-art-sources.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
+    note: "Private candidates mechanically pass61/61 and492423 source/loader assertions after independently approved added-bone naming seam; current runtime unchanged. First matched round1 comparison/critic in progress, no visual or merge clearance."
     sequencing: "Tests first. Fit actual licensed WRAD Arms, preserve source topology/weights/rig and existing crew garment direction and motion. No sculpted replacement anatomy. Private candidate outputs/comparison first; no runtime install or old recipe removal until independent comparison beats current at4/5 on every item. At most3rounds; two without gain stop. Catalog editing waits Tanker artifact merge; protected audio credits HTML has no granted hook and waits its owner. No App/renderer/simulation/audio/crew-body files. Retain shared RPG/wrench models and their build recipe; replace only superseded hand build paths after acceptance. Existing assertion edits require a written independent review reason, never weakened to pass."
     acceptance:
       - "Fit Kyle's pick from docs/board/looks/first-person-src following docs/WASTELAND_ART.md 'Fitting existing models': gloves and sleeves per crew member matching ART-FIT-CREW-M and -W, RPG and wrench grips, and the existing aim, fire, reload and repair motion. The current hands are already acceptable, so rule 5 applies strictly: if the fit does not beat them on the same sheet by round 3, keep the current hands and close the card."
@@ -684,10 +685,12 @@ tasks:
     lane: ART
     size: S
     needs: [ART-SRC-TANKER]
-    status: ready
-    owns: [tools/art/tanker-parts-inspect.py, tools/art/tanker-parts-sheet.py, docs/board/looks/tanker-parts/, docs/changes/ART-SRC-TANKER-PARTS.md]
+    status: building
+    claimed_by: codex-director-2026-09-30-resume
+    branch: lane/art/tanker-parts
+    owns: [tools/test-tanker-parts-sources.mjs, tools/art/tanker-parts-source.json, tools/art/tanker-parts-inspect.py, tools/art/tanker-parts-sheet.py, docs/board/looks/tanker-parts/, docs/changes/ART-SRC-TANKER-PARTS.md]
     hooks: []
-    helpers: [reviewer]
+    helpers: [test_author, reviewer]
     sequencing: "Kyle picked A as starting parts only. Source search and inspection may proceed; fitting and ARENA-07 wait for the missing parts. Catalog hook belongs to Hands and can be granted only after that lane releases it. No runtime model, game code, source fabrication or protected audio edit."
     acceptance:
       - "Find actual existing licensed CC0 parts for a separate trailer/frame/hitch, three fuel valves and an opening boarding hatch around the picked Kenney delivery-flat plus horizontal detail-tank. Verify original embedded rights, source hashes and actual geometry; a complete existing trailer may come from another free pack. Do not claim kit sample columns or boxes already supply a finished articulated trailer."
@@ -854,7 +857,7 @@ tasks:
     size: M
     needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
     status: review
-    review_commit: 2d29b2f900e6898a925b8e64b7299e93a0de6b8a
+    review_commit: 53e67964fb3e5c1f2a2c75d4ca087b1b8306cb08
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run

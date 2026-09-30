@@ -1210,3 +1210,34 @@ Janitor documentation compaction: removed pre-24September run entries and their 
 ART-SRC-TANKER source records merged from clean 764967db: lane 306/306 in 572.02 seconds, build 1.13 seconds and independent source review clear. All 20 prior catalog values, 18 source hashes and original embedded CC0 licenses are verified; 143 runtime files remain unchanged. This is merge five since full bcb09e44 at 22:08:38 UTC, so the scheduled full checkpoint is due now. Source choice and missing trailer/frame/hitch, valves and hatch remain review/waiting Kyle; no adaptation or finished convoy. Catalog released for Hands. The plain janitor removes only this merged source lane/branch and consumed raw evidence; original licensed sources and bounded comparison remain.
 
 Kyle picks Tanker A, starting parts only. The source card is merged; new ART-SRC-TANKER-PARTS covers the missing trailer, hitch, valves and boarding hatch. ARENA-07 explicitly waits for that follow-up. Hands is tests-first on clean 8cfcb5c; its merged provenance seam has independent written review and preserves the unchanged 8,000-triangle/three-draw budget, full WRAD anatomy and verified original garment subsets. The scheduled full checkpoint starts after five merges. Integration will stay frozen through full/build and the D8 push; no metadata commit will move the tested HEAD before pushing.
+
+Five-merge full checkpoint passed on exact clean352dba3:307/307 suites,
+792.56seconds, build1.17seconds, complete23:32:52UTC. No skipped suites or
+campaigns; existing forced-demo shoulder excursion remains the sole internal
+scenario skip. Count resets tozero and next full is due afterfive merges or
+01:32:52UTC, plus end-of-run. D8 normalpush was rejected by automatic review
+for lacking explicit human authorization of the verified existing GitHub
+destination and committed content. The exact destination/payload question is
+pending; no push/rewrite/release ran. Further metadata requires its own full.
+
+Fuel53e6796 clears two new independent findings after testauthor3c67fe4
+six meaningful reds: authoritative durable rank/discovery check before launch
+and event-owned ground caches outside rendering. Focused68/68 with1552checks,
+switch27, existingeconomy/progression64 andbuild pass. Independentreview
+10/10/162checks and SaveGuardian77/77 plus six actualmemoryApp probes clear
+these narrow deltas, preserving failed-save sessions, durable8765credits/
+unknown fields, source state/IDs/seed/receipts, zero writes, pure stationary
+rendering and unchanged pins. This is not fullfeature clearance; Claude's
+fighter design lane and final gameplay/audio/look evidence still wait.
+
+Hands private candidates61/61/492423checks pass all8 WRAD/garment source
+proofs, loader/clips and8000tri/3draw budgets. Independent reviewer approved
+only loader-safe underscore names for added garment bones; original50source
+bones and their graph/weights/hashes remain. Current runtime is unchanged.
+First matched privatebrowser round1 comparison and independent critic run.
+
+Claimed ART-SRC-TANKER-PARTS from the ready list, fifth lane. Kyle's A lead
+is fixed; tests-first evidence then inspect actual existing licensed parts.
+No fabrication, adaptation, runtime edits or catalog ownership is granted;
+Hands retains catalog. Stop with explicit gaps/waitingKyle if tools/free
+sources cannot meet acceptance.
