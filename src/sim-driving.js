@@ -291,6 +291,15 @@ export function _offroadStep(dt, offPreparedRoute) {
   this._terrainPose();
 }
 
+const RAMP_GRADES = new WeakMap();
+// Steepest slope of a course's authored ramps (height times sin squared over
+// the ramp length peaks at pi times height over length), with 10% margin.
+function rampLaunchGrade(course) {
+  if (!RAMP_GRADES.has(course)) RAMP_GRADES.set(course, 1.1 * Math.max(0,
+    ...(course.features?.ramps || []).map(ramp => Math.PI * ramp.height / Math.max(1, ramp.end - ramp.start))));
+  return RAMP_GRADES.get(course);
+}
+
 export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   const arena = this.course.def.kind === 'arena';
   const allTerrain = actor === this.state && offroadCapability(this.car) && (actor.airborne || !this._surface(actor.s, actor.lateral).road);
@@ -298,7 +307,13 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   const groundPoint = this._supportAt(actor.s, actor.lateral, actor), previousPoint = this._supportAt(actor.prevS ?? actor.s, actor.prevLateral ?? actor.lateral, actor);
   const ground = groundPoint.y, previousGround = previousPoint.y;
   if (!Number.isFinite(ground) || !Number.isFinite(previousGround)) return;
-  const groundVelocity = (ground - previousGround) / dt;
+  // An arena ramp's full height starts abruptly at its sides. Give a car only
+  // the vertical speed the steepest authored ramp slope gives at its actual
+  // travel speed, so mounting a side is a bump, never a launch (Kyle,
+  // 30 September 2026: 600 to 2,200 m flights). Straight jumps stay exact.
+  const rise = (ground - previousGround) / dt, limit = arena
+    ? Math.hypot(groundPoint.x - previousPoint.x, groundPoint.z - previousPoint.z) / dt * rampLaunchGrade(this.course) : Infinity;
+  const groundVelocity = Math.max(-limit, Math.min(limit, rise));
   if (actor._jumpY == null) { actor._jumpY = previousGround; actor._verticalSpeed = arena ? 0 : groundVelocity; }
   // Consecutive terrain velocities are interval averages. Their midpoint
   // estimates the tangent velocity at the start of this step. Extrapolating
