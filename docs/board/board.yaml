@@ -641,8 +641,14 @@ tasks:
     lane: ART
     size: M
     needs: [ART-SRC-HANDS]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-09-30-resume
+    branch: lane/art/hands-fit
     flag: wasteland2
+    owns: [tools/blender/first-person-wrad.py, tools/blender/first-person-wrad-source.json, tools/art/hands-fit-sheet.py, tools/test-first-person-wrad.mjs, tools/scenarios/hands-fit-wrad.mjs, docs/board/looks/hands-fit/, docs/changes/ART-FIT-HANDS.md]
+    hooks: [public/assets/models/wasteland/first-person/hands/, tools/art/catalog.json, tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, tools/blender/first-person-p2-source.json, tools/test-first-person-gear.mjs, tools/test-first-person-cloth.mjs, tools/test-first-person-contact.mjs, tools/test-first-person-polish.mjs, tools/test-runtime-art-sources.mjs]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    sequencing: "Tests first. Fit actual licensed WRAD Arms, preserve source topology/weights/rig and existing crew garment direction and motion. No sculpted replacement anatomy. Private candidate outputs/comparison first; no runtime install or old recipe removal until independent comparison beats current at4/5 on every item. At most3rounds; two without gain stop. Catalog editing waits Tanker artifact merge; protected audio credits HTML has no granted hook and waits its owner. No App/renderer/simulation/audio/crew-body files. Retain shared RPG/wrench models and their build recipe; replace only superseded hand build paths after acceptance. Existing assertion edits require a written independent review reason, never weakened to pass."
     acceptance:
       - "Fit Kyle's pick from docs/board/looks/first-person-src following docs/WASTELAND_ART.md 'Fitting existing models': gloves and sleeves per crew member matching ART-FIT-CREW-M and -W, RPG and wrench grips, and the existing aim, fire, reload and repair motion. The current hands are already acceptable, so rule 5 applies strictly: if the fit does not beat them on the same sheet by round 3, keep the current hands and close the card."
   - id: ART-FIT-RUSTWALL
