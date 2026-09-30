@@ -2176,3 +2176,5 @@ deleted, master pushed. Sal, Side Saws and warlord pay stay behind
 ARENA-SHOVE (merged 282758d).
 
 Claimed ART-FIT-CREW-M after inspecting the actual source rig and loader: five male GLBs, source fitting recipe, focused tests and private comparison sheets, with no renderer or simulation hook. Source rig has79bones/24actions. In-game credits HTML waits for the protected audio owner; catalog hook is exclusive, so source cards follow. Current art stays until all five pass; source silhouette gaps go to Claude if existing-part fitting cannot cover them.
+
+Concurrent Claude release-note merge de4221f is counted as the third merge since full931b0d65. No Director feature merge has landed yet. Full tier is now due after two further merges or22:08UTC. Claims/slices remain intact; build-status refreshed after the observed merge.
