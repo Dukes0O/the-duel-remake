@@ -8,11 +8,13 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     'career-backup': 'dev', wasteland2: 'on', 'hidden-road': 'on', scrapdome: 'on',
     'titan-climb': 'on',
     'muddy-hollow': 'on',
+    warlords: 'dev',
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), true);
   assert.equal(flags.enabled('hidden-road'), true);
   assert.equal(flags.enabled('career-backup'), false);
+  assert.equal(flags.enabled('warlords'), false);
   assert.deepEqual(flags.betaFeatures(), []);
   assert.equal(existsSync(new URL('../src/experimental-ui.js', import.meta.url)), false);
   const router = readFileSync(new URL('../src/screen-router.js', import.meta.url), 'utf8');

@@ -15,13 +15,13 @@ check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES.wasteland2 ===
   && FEATURE_STATES.scrapdome === 'on' && !Object.hasOwn(FEATURE_STATES, 'crash-physics')
   && !Object.hasOwn(FEATURE_STATES, 'crash-effects')
   && FEATURE_STATES['titan-climb'] === 'on' && FEATURE_STATES['muddy-hollow'] === 'on'
-  && Object.keys(FEATURE_STATES).length === 6,
-  'career backup stays in QA; Wasteland 2, Hidden Road, the Scrapdome, Titan climbing and Muddy Hollow are released (SCRAPDOME-RELEASE); roadside destruction, crash physics and crash effects have no switches');
+  && FEATURE_STATES.warlords === 'dev' && Object.keys(FEATURE_STATES).length === 7,
+  'career backup and warlords stay in QA; Wasteland 2, Hidden Road, the Scrapdome, Titan climbing and Muddy Hollow are released (SCRAPDOME-RELEASE); roadside destruction, crash physics and crash effects have no switches');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 check(!productionFlags.enabled('roadside-destruction'), 'retired roadside switch is no longer recognized');
 check(productionFlags.enabled('wasteland2') && productionFlags.enabled('hidden-road'),
   'production has the released Wasteland switches on without any menu choice');
-check(!productionFlags.enabled('career-backup'), 'production keeps the QA-only career backup off');
+check(!productionFlags.enabled('career-backup') && !productionFlags.enabled('warlords'), 'production keeps career backup and unfinished warlords off');
 check(productionFlags.enabled('scrapdome') && productionFlags.enabled('titan-climb') &&
   productionFlags.enabled('muddy-hollow'),
   'production has the Scrapdome, Titan climbing and Muddy Hollow on (SCRAPDOME-RELEASE)');
