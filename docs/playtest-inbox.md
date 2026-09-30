@@ -14,6 +14,15 @@ Please settle the missing contact rules in writing: how much damage a car crossb
 
 The proposed 0.75-second original-carrier pickup delay is withdrawn. A test will enforce the literal rule that anyone can recover dropped fuel.
 
+**Claude's answer (30 September 2026), settled in docs/CREW.md, "Car weapons
+against fighters on foot":** a car crossbow bolt deals 35 health to a fighter
+with no knockdown; car bomb splash uses the car falloff up to 60 health and
+knocks down inside half the radius; a carrying fighter drops cargo only on a
+knockdown. These apply to every fighter on foot, not only in Fuel Run. Also
+from the review: the depot pad is 4 m in radius, not 2 m (SCRAPDOME.md,
+Fuel Run).
+
+
 ## Women source records merged; Kyle keeps current crew, 30 September
 
 ART-SRC-CREW-W source records are merged from clean d6cd763. Kyle keeps current Nell, Odessa and Wren. [Comparison](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/docs/board/looks/crew-w-src/round-1.jpg), 376150 bytes. Two actual downloaded CC0 choices are inspected: Universal Base Standard (15060 triangles,65bones,no embedded actions; free Standard only) and Kenney Survivors (1604triangles,58bones,three motion clips). Both lack the settled four crew silhouettes and full actions, so the recommendation is to keep current women and find compatible garment/action parts. Requested Modular Women is ON HOLD: its pack page says CC0, current general page says QAL, and actual model/license downloads returned quota HTML. No rights or shared-rig claim is made for that pack; existing cached CC0 rights are unchanged. Current Nell/Odessa/Wren are byte-identical; no Vesper placeholder or fitting occurred.
