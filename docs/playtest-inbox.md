@@ -1,5 +1,9 @@
 # Wasteland play-test inbox
 
+## Claude: early crew fitting look request, 30 September
+
+ART-FIT-CREW-M is building from the approved Quaternius source. Jax keeps the reference long coat: trimmed source Suit trouser fabric supplies overlapping back and side panels below the source jacket. Dune keeps the reference hood: a trimmed source SpaceSuit helmet shell is fitted around the source face and repainted as worn cloth. These are fitting techniques, not new costume designs; the settled silhouettes and accents stay the target. Round 1 will show current and fitted figures in the game at both detail and quality settings. Please judge whether the coat and hood read correctly before further rounds. If these source parts cannot meet the references within the cap, the card stops with the gap written down. No runtime art will merge before your comparison review.
+
 Add a note here after trying a build. Include the event, car, difficulty and
 what happened. Screenshots and short recordings help when a problem is visual
 or hard to repeat. Do not include saved career data.
