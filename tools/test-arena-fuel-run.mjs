@@ -88,8 +88,10 @@ function deliver(duel, id = 'player') {
 }
 function point(duel, id = 'player', padIndex = 0) {
   if (!fuel(duel).pads[padIndex].canisterId) {
-    place(duel, id, fuel(duel).depots.find(d => d.participantId === id));
-    tick(duel, 601);
+    const depot = fuel(duel).depots.find(d => d.participantId === id);
+    for (let step = 0; step < 601; step++) {
+      place(duel, id, depot); tick(duel);
+    }
   }
   pick(duel, id, padIndex); deliver(duel, id);
 }
@@ -314,7 +316,9 @@ test('the real fighter picks up and delivers fuel from their own pose while the 
 });
 
 test('carried fuel reduces actual walking speed to 70 percent and F re-entry preserves the canister', () => {
-  const duel = start(); holdOthers(duel); leave(duel);
+  const duel = start(); holdOthers(duel);
+  place(duel, 'player', {s: duel.state.s + 20, lateral: duel.state.lateral});
+  leave(duel);
   // Use one clear starting strip for both measurements, with the same yaw/input.
   const origin = {s: duel.state.s, lateral: duel.state.lateral - 3};
   placeFighter(duel, origin);

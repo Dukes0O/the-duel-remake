@@ -97,3 +97,31 @@ Lane/build gates and independent Reviewer/Save Guardian review remain pending.
 Nothing. This tests-first commit adds only the new suite, its new control
 fingerprints and this test record. Existing production code, assertions and
 fingerprints remain unchanged.
+
+## Reviewed test fixture setup
+
+The Director approved two setup corrections after independent real-engine
+reproductions. During `point()` refill waits, the controlled participant now
+stays at its depot before each of the same **601 Duel steps**. Without this,
+the unrestricted collector legally took `fuel-2` at **2.733333 s** while pad 0
+refilled `fuel-5`, so a later pickup correctly could not replace its carry.
+The separate collector-brain test remains unrestricted. In the isolated
+reproduction, the computer delivered canisters 1, 5, 6, 7 and 8; delivery five
+won at **20.125 s**, with all one-carry, score, status and winner assertions
+preserved.
+
+Only the walking/re-entry test now parks the car **20 m away** before exiting.
+The original walking ratio already passed: **0.9 m empty, 0.63 m loaded,
+70%**. Its final F return occurred with the car on its own depot and correctly
+emitted `fighterEntered` plus `fuelDelivery` at **1.425 s**. The isolated setup
+puts the measurement origin **22.31 m** from the depot and the re-entry pose
+**22.98 m** away, so the unchanged return assertion measures carry preservation
+without also performing a valid delivery.
+
+The focused suite against the builder's current source passes **33/33 tests,
+771 checks, 0 failures and 0 skipped; exit 0**. The ten unchanged-mode
+fingerprint checks and actual 30/60/144 FPS comparison still pass. A strict
+comparison with the committed suite proved the only text changes were these
+two approved setup replacements. Every assertion, input, loop duration and
+fingerprint remains unchanged. This test-only commit does not grant a passing
+lane/build gate or an independent production review.
