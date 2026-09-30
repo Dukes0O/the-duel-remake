@@ -45,3 +45,14 @@ assertion, race-rule or dependency change. The keep-current recommendation
 honors the stop rule. This final note records that verdict; the Director owns
 the mandatory lane/build run and its integration verdict. Source choice still
 waits for Kyle, with no fitting or runtime installation authorized.
+
+## Gate placement correction
+
+The first mandatory lane gate at clean688fabe failed repository hygiene: the
+sheet was named round1.jpg, which is treated as a raw capture. It completed
+247 suites, failed1, left58 unrun, in651.60seconds; build passed1.13seconds.
+Renamed the exact376150-byte JPEG to round-1.jpg and updated both review
+metadata/reproduction references. No image bytes, source, catalog, runtime or
+assertions change. The incorrect filename is removed in the same correction.
+The existing placement rule remains unchanged. A fresh mandatory lane/build
+run follows on this final commit; prior partial gate is not a pass.

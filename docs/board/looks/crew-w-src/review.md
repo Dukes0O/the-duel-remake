@@ -3,7 +3,7 @@
 status: review
 waiting_on: kyle
 date: 2026-09-30
-sheet: round1.jpg
+sheet: round-1.jpg
 scope: source choice only
 
 Keep the current women for now. The two downloaded CC0 candidates do not yet supply the settled costumes and actions. Standard is the stronger anatomy lead, but fitting it would need existing garment and action sources. Kenney's cartoon proportions conflict with the settled tone. Modular Women has promising workwear in its preview, but its licence and model access are unresolved. This is a source recommendation, not a fitted-art pass.
@@ -58,6 +58,6 @@ Run in this isolated lane:
 
 - Blender: `blender -b --python-exit-code 1 --python tools/art/crew-w-source-inspect.py -- --output .evidence/2026-09-30/ART-SRC-CREW-W/sources`
 - Current game: `node tools/browser-harness.mjs scenario crew-w-source-current --output-dir .evidence/2026-09-30/ART-SRC-CREW-W/current`
-- Sheet: `python tools/art/crew-w-source-sheet.py --evidence .evidence/2026-09-30/ART-SRC-CREW-W --output docs/board/looks/crew-w-src/round1.jpg`
+- Sheet: `python tools/art/crew-w-source-sheet.py --evidence .evidence/2026-09-30/ART-SRC-CREW-W --output docs/board/looks/crew-w-src/round-1.jpg`
 
 Default cache: C:/Users/kyleb/dev/art-library. Keep downloaded originals and licences. Raw review evidence is deleted after the independent verdict is committed; retain this verdict and the single compressed sheet.
