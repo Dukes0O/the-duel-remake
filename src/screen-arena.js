@@ -99,6 +99,9 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   } else if (warlord && result.settlementSaved && result.kitEarned === 'side-saws') {
     description += ' Side Saws unlocked and equipped on this car. Free on every car you own.';
   }
+  if (warlord && result.settlementSaved && typeof result.rewardReason === 'string') {
+    description += ' ' + escapeHTML(result.rewardReason);
+  }
   const metrics = metric('PLACE', `${ORDINALS[place - 1]} / ${arena.participants.length}`, true) +
     metric('WRECKS', me.wrecks) + metric('WRECKED', me.wrecked) + metric('DAMAGE DEALT', Math.round(me.damageDealt)) +
     (warlord && !Number.isSafeInteger(result.scrapEarned) ? '' :

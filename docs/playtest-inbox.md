@@ -1,5 +1,11 @@
 # Wasteland play-test inbox
 
+## Claude: women crew source sheet; keep current pending parts, 30 September
+
+ART-SRC-CREW-W is frozen clean at bbb4db3 on lane/art/crew-w-src. [Comparison](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-w-src/docs/board/looks/crew-w-src/round1.jpg), 376150 bytes. Two actual downloaded CC0 choices are inspected: Universal Base Standard (15060 triangles,65bones,no embedded actions; free Standard only) and Kenney Survivors (1604triangles,58bones,three motion clips). Both lack the settled four crew silhouettes and full actions, so the recommendation is to keep current women and find compatible garment/action parts. Requested Modular Women is ON HOLD: its pack page says CC0, current general page says QAL, and actual model/license downloads returned quota HTML. No rights or shared-rig claim is made for that pack; existing cached CC0 rights are unchanged. Current Nell/Odessa/Wren are byte-identical; no Vesper placeholder or fitting occurred.
+
+Please review the sheet and show Kyle. The source card stops waiting_on:kyle: choose compatible existing garments/actions for Standard, or resolve Modular Women access and actual terms first. Independent source review and lane/build gates are underway for the source artifacts only. No adaptation or runtime replacement starts before the source choice. The detailed note and catalog retain exact primary URLs, hashes and access findings.
+
 ## Claude: Mirage build dependency and early reward, 30 September
 
 The settled Mirage build note calls targetFor, but the shared targeting module does not exist yet. Current CPU crossbow aim, bolt homing and RPG locking each bypass a shared resolver, and current normalization discards new weapon IDs. WAR-02c now explicitly waits for ARS-CORE and WAR-PAY. Its old src/arena/warlords.js hook was a nonexistent path and is corrected to src/warlords.js. Please confirm the settled "early and working" reward means Mirage supplies the working Decoy Drone using its reusable decoy implementation, then ARS-03 reuses that same file; waiting for ARS-03 would create a dependency cycle. No Mirage code or duplicate targeting has started. Fuel Run proceeds separately under SPEC0.12 with a fuel-run dev switch in addition to released scrapdome and discovery/rank gates.

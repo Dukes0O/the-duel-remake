@@ -615,10 +615,12 @@ tasks:
     lane: ART
     size: S
     needs: [ART-SRC-CREW]
-    status: building
+    status: review
+    waiting_on: kyle
     claimed_by: codex-director-2026-09-30-resume
     owns: [tools/art/crew-w-source-sheet.py, tools/art/crew-w-source-inspect.py, tools/scenarios/crew-w-source-current.mjs, docs/board/looks/crew-w-src/, docs/changes/ART-SRC-CREW-W.md]
     hooks: [tools/art/catalog.json]
+    review_checkpoint: "Clean bbb4db3 source comparison376150B1800x1660; current female GLBs unchanged. Two verified CC0 packs lack settled garments/actions; requested Modular Women actual license/model downloads quota-blocked and general/pack pages differ. Keep current; Claude receives sheet/source gap before artifact merge. Independent review and lane/build gates pending; no adaptation."
     helpers: [reviewer]
     sequencing: "Male fitting paused and released its unchanged catalog hook. Source women now; tanker waits for this catalog lane to merge. Source only, no runtime assets or adaptation. Compare 2-3 CC0 packs with checked licences and source geometry/rig when available; ask Kyle at the sheet and send it to Claude."
     acceptance:
@@ -723,7 +725,8 @@ tasks:
     status: ready
     flag: arsenal
     owns: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/arsenal/oil.js, src/arsenal/smoke.js, tools/test-arsenal-core.mjs, tools/test-arsenal-save.mjs, docs/changes/ARS-CORE.md]
-    hooks: [src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat-ai.js, src/weapon-upgrades.js, src/car-loadout.js, src/screen-armory.js, src/wasteland-progress.js, src/sim-driving.js, src/sim-rival.js, src/render3d.js, src/combat-effects.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js]
+    hooks: [src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/onfoot-weapons.js, src/combat-ai.js, src/weapon-upgrades.js, src/car-loadout.js, src/screen-armory.js, src/wasteland-progress.js, src/sim-driving.js, src/sim-rival.js, src/render3d.js, src/combat-effects.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js]
+    sequencing: "Steering owns sim-driving until its gate/merge; Fuel owns feature-flags/render/audio/onfoot/app hooks until its merge. Add actual RPG lock/guidance through onfoot-weapons to targetFor, proven by read-only bypass inspection. Protected sound-bank belongs to external audio owner: named cue additions only by explicit file handoff, otherwise wait; no competing edits."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build docs/ARSENAL.md section 2 exactly: road hazards, car effects, targetFor (every existing CPU aim, homing and lock path routed through it, with a test that fails on a bypass), unlocks by rank and 400-scrap purchase, rewards that unlock free, upgrades, computer loadouts, and the arsenal switch (dev)."
@@ -801,7 +804,7 @@ tasks:
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run
-    owns: [src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md]
+    owns: [src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/replays/arena-fuel-run-controls.json, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md]
     hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js]
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     sequencing: "Tests first in owned files now. Production App and screen-arena edits wait for WAR-PAY merge; held ARENA-STEER App demo hook is deferred until Fuel merges. No config, driving, pilot or crate-test ownership. Future Arsenal waits Fuel feature/render/audio hooks. Protected sound-bank/catalog/assets remain untouched: explicit fuel events reuse authored interface.bonus, vehicle.landing, interface.go cues. SPEC0.12 adds fuel-run:dev plus scrapdome/discovery/rank6 gates; Last Car Rolling unchanged."
@@ -2645,11 +2648,12 @@ tasks:
     lane: SAVE
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: codex-director-2026-09-30-resume
     flag: warlords
     owns: [tools/test-warlord-pay.mjs, tools/scenarios/warlord-pay.mjs, docs/changes/WAR-PAY.md]
     hooks: [tools/preview.js, src/arena/warlord-settlement.js, src/app.js, src/screen-arena.js, tools/test-warlord-settlement.mjs, tools/scenarios/warlord-reward.mjs]
+    merge_verdict: "Final clean da5e8f3 lane306/306 in451.87s and build0.97s; Reviewer54/54 with343checks, SaveGuardian76/76 plus247historical/1320syntheticchecks approve uncapped loss and all changed assertions. Actual private Preview/reward High/Performance18captures clear. App/screen hooks released to Fuel Run."
     helpers: [test_author, reviewer, save_guardian, browser_qa]
     sequencing: "Exclusive settlement/App/results hooks before WAR-02c. Preserve all named-player, fresh-owner, fail/retry and single-write guarantees. Changed old pay assertions require independent review."
     acceptance:
