@@ -1,6 +1,6 @@
 ---
 task: SAVE-DAMAGED-FIELDS
-status: tests-first
+status: review
 ---
 
 # Damaged profile numeric fields
@@ -60,6 +60,21 @@ The Director owns the source fix and later lane/build gates. Migration/backup
 suites and race pins are untouched; this tests-only commit does not claim the
 later migration/backup/storage, lane, build or full-tier gates.
 
+## Implementation and focused verification
+
+The shared integer helper now catches a failed number conversion and applies
+its existing zero fallback to that field. Successful conversion still follows
+the original flooring, nonnegative clamp and separate upper limits. It keeps
+supported numeric strings, booleans, Infinity clamping and all valid progress.
+No profile schema, storage key, ID rule, receipt or race behavior changes.
+
+The unchanged authored suite now passes **86/86 tests and 3,654 checks**.
+Historical fixtures still pass **7 shapes and 247 checks**. Existing career
+backup, storage budget, Wasteland profile and memory-only QA guards pass.
+Independent review, Save Guardian and the mandatory lane/build gate remain
+pending; this focused verification does not substitute for them.
+
 ## Removed
 
-Nothing. This tests-first change adds only its owned suite and evidence note.
+Replaced the packed integer conversion helper with its readable, guarded
+version. No assets, saves, existing tests, assertions or fingerprints removed.

@@ -71,7 +71,15 @@ const completionCars = () =>
   Object.keys(CARS).filter(car => CARS[car].unlockRequirement === 'max-all-other-cars');
 const maxUpgradeLevels = () =>
   Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type => [type, 3]));
-const integer = (value, max) => Math.min(max, Math.max(0, Math.floor(Number(value) || 0)));
+function integer(value, max) {
+  let number;
+  try {
+    number = Number(value);
+  } catch {
+    number = 0;
+  }
+  return Math.min(max, Math.max(0, Math.floor(number || 0)));
+}
 const combatCount = value => Number.isSafeInteger(value) && value > 0 ? value : 0;
 function combatCreditBonus(result, base) {
   const tuning = COMBAT_TUNING.creditBonus;
