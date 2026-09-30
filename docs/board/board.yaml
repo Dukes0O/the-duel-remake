@@ -581,7 +581,10 @@ tasks:
     lane: OPS
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [tools/test-rustwall-frame.mjs, tools/test-rustwall-baseline.mjs, tools/fixtures/rustwall-frame-baseline.json, docs/changes/HK-RUSTWALL-BASELINE.md]
+    hooks: [tools/scenarios/rustwall-frame.mjs]
     acceptance:
       - "tools/test-rustwall-frame.mjs reads its baseline from commit 5a994ad in Git history, so a history compaction would break it. Record the numbers it compares (not images) in a small checked-in file under tools/ and read that instead; the test's verdicts must not change."
   - id: DESIGN-ARSENAL
