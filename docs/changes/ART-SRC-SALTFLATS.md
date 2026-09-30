@@ -122,3 +122,7 @@ Git history. No history rewrite was performed.
 No runtime model or texture added or removed. Licensed external originals are
 preserved. Raw review evidence is temporary and must be deleted after its
 verdict is recorded.
+
+## Shared catalog turn completed
+
+Rustwall source artifacts merged before this lane touched tools/art/catalog.json. The Director synced integration and appended the five verified Salt source records, preserving every parsed prior record byte for byte. The Marina Shemesh photograph is selected by Kyle; the original raster remains unchanged and the mirrored material is tileable. Independent delta review at6696673 verifies all24 source hashes and actual4×4 joins, with documented mirrored motifs and baked glints. Model selection remains waiting_on: kyle. Mandatory final lane/build gates are pending.
