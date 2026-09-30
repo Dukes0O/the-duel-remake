@@ -65,7 +65,7 @@ export function _drive(dt) {
   const s = this.state, car = this.car, d = this.diff;
   // A crash that knocked the car loose: it slides and spins until the tyres
   // bite, and the driver has no control meanwhile (docs/CRASH_PHYSICS.md).
-  if (this.featureFlags?.enabled('crash-physics') === true && s.knock) {
+  if (s.knock) {
     stepKnock(this, s, dt);
     s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[Math.max(0, s.gear)]);
     s.boosting = false; s.steerVisual = 0; s.yawVelocity = 0;

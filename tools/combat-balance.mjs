@@ -21,12 +21,12 @@ const repeatSeeds = baselineSeeds.slice(0, 6);
 // bands (easy 0-3, medium 2-6, hard 4-10) came from one race; the live game
 // itself averages 7.3 on Medium over thirty (CRASH-RELEASE).
 export const CPU_HIT_BANDS = Object.freeze({ easy: [1, 4], medium: [4, 9], hard: [4, 10] });
-const usage = 'Usage: node tools/combat-balance.mjs [--flags wasteland2,crash-physics] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED';
-const BALANCE_FLAGS = ['wasteland2', 'crash-physics'];
+const usage = 'Usage: node tools/combat-balance.mjs [--flags wasteland2] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED';
+const BALANCE_FLAGS = ['wasteland2'];
 
 function selectedFlags(flags = []) {
   if (!Array.isArray(flags) || flags.some(flag => !BALANCE_FLAGS.includes(flag)))
-    throw Error('Unsupported flags; expected wasteland2 or crash-physics.');
+    throw Error('Unsupported flags; expected wasteland2.');
   return [...new Set(flags)];
 }
 
@@ -61,9 +61,7 @@ export function parseArgs(args = []) {
 
 function simulationFlags(flags) {
   return createFeatureFlags({ storage: null, search: '', qa: false,
-    // crash-physics follows the game's own switch unless asked for.
-    overrides: { wasteland2: flags.includes('wasteland2'),
-      ...(flags.includes('crash-physics') ? { 'crash-physics': true } : {}) } });
+    overrides: { wasteland2: flags.includes('wasteland2') } });
 }
 
 function emptyWrecks() {

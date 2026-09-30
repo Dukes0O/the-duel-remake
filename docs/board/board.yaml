@@ -11,7 +11,7 @@ tasks:
     size: S
     needs: []
     owner: codex
-    status: building
+    status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
     helpers: [test_author, reviewer, browser_qa]
     owns: [src/screen-hud.js, src/onfoot-hints.js, tools/test-onfoot-hints.mjs, tools/scenarios/onfoot-hints.mjs, docs/changes/UX-ENTRY-HINTS.md]
@@ -511,7 +511,7 @@ tasks:
     lane: CMB
     size: M
     needs: [CRASH-RELEASE]
-    status: building
+    status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [src/feature-flags.js, src/sim-contacts.js, src/combat-armor.js, src/sim-driving.js, src/sim-police.js, src/sim-rival.js, src/render3d.js, src/audio.js, src/sound-bank.js, src/arena/arena-event.js, src/test.js, tools/test-crash-switch-remove.mjs, docs/changes/CRASH-SWITCH-REMOVE.md]
     hooks: [tools/test-feature-flags.mjs, tools/test-combat-knockaway.mjs, tools/test-combat-ramming.mjs, tools/test-combat-replays.mjs, tools/test-crash-hollow-audio.mjs, tools/test-crash-presentation.mjs, tools/test-crash-slide.mjs, tools/test-armored-vehicle-impact.mjs, tools/test-madmax-crash.mjs, tools/test-madmax-solid.mjs, tools/test-police-knock.mjs, tools/test-vehicle-knock-integration.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, tools/test-combat-balance.mjs, tools/combat-balance.mjs, tools/scenarios/preview-storage.mjs, src/destructibles.js, src/vehicle-impact.js, tools/test-roadside-destruction.mjs, tools/scenarios/crash-presentation.mjs, start-preview.bat, src/wasteland-tuning.js]
@@ -546,7 +546,7 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
     flag: wasteland2
     owns: [tools/art/catalog.json, tools/art/crew-source-sheet.py, docs/board/looks/crew-src/round-1.jpg, docs/board/looks/crew-src/round-1-review.md, docs/changes/ART-SRC-CREW.md]
@@ -576,7 +576,11 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [tools/art/rustwall-source-sheet.py, tools/scenarios/art-source-rustwall.mjs, docs/board/looks/rustwall-src/round-1.jpg, docs/board/looks/rustwall-src/round-1-review.md, docs/changes/ART-SRC-RUSTWALL.md]
+    hooks: [tools/art/catalog.json]
+    sequencing: "Shared catalog edits wait for CREW then HANDS source lanes to merge; original-source research and private capture may proceed."
     flag: hidden-road
     acceptance:
       - "SPEC 0.11 sourcing step for Rustwall's salvage (wrecked cars, sheet metal, tower parts) and the canyon strata (replaces EGG-02-P3). Two or three candidate sets, CC0 first, licences recorded in tools/art/catalog.json, files cached outside the repository. The Quaternius pack already used for Muddy Hollow counts as a candidate source."
@@ -2497,7 +2501,11 @@ tasks:
     lane: PHYS
     size: S
     needs: [CRASH-SWITCH-REMOVE]
-    status: ready
+    status: building
+    claimed_by: "Codex autonomous Director, 30 September 2026"
+    owns: [src/config.js, src/sim-driving.js, src/sim-rival.js, src/arena/arena-pilot.js, tools/test-titan-handling.mjs, tools/replays/titan-handling.json, tools/scenarios/titan-handling.mjs, docs/changes/TITAN-HANDLING.md]
+    hooks: [src/app.js]
+    sequencing: "Independent tests first. app.js caller update waits for WAR-02a-FORMAT to merge; other owned steering callers are disjoint from FORMAT."
     acceptance:
       - "Kyle, 30 September 2026: the Titan is hard to steer compared with the computer cars. Cause: steeringYawAuthority (src/config.js) scales turning down below 30 mph and by grip, and the Titan spends Muddy Hollow and the climbs slow, with grip .91 against the rally car's 1.05."
       - "Settled rule: for the Titan only (a new car field, lowSpeedSteer: true in its CARS entry), the rolling factor is max(speed/30, .55) once the Titan moves faster than 3 mph, and steering grip is max(grip, 1.0) below 45 mph. Above 45 mph nothing changes, so its high-speed feel and every other car stay exactly as they are."

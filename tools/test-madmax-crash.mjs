@@ -13,10 +13,10 @@ const BASE = 900;
 // m/s², about 1 g: the hardest a sliding, spinning car may slow.
 const MAX_DECEL = 10;
 
-function start({mode = 'wasteland', car = 'falcone_f42', crashPhysics = true,
+function start({mode = 'wasteland', car = 'falcone_f42',
   playerMph = 100} = {}) {
   const duel = new Duel({seed: 2709,
-    featureFlags: {wasteland2: true, 'crash-physics': crashPhysics}});
+    featureFlags: {wasteland2: true}});
   duel.startCampaign({mode, startStage: STAGE, car, opponentCount: 1});
   const s = duel.state;
   Object.assign(s, {status: 'racing', countdown: 0, invulnerableSec: 0,
@@ -190,12 +190,4 @@ test('Mad Max: armor-kit plating adds weight to the crash body', () => {
   const bare = duel._vehicleSpec(s).mass;
   s.combatArmorKit = 'warlord';
   assert.equal(duel._vehicleSpec(s).mass, bare + 270);
-});
-
-test('Crash physics off: Mad Max keeps the scripted burst and closing-speed damage', () => {
-  const {duel, s} = start({crashPhysics: false, playerMph: 205});
-  const traffic = placeTraffic(s, 40);
-  run(duel, .3);
-  assert.equal(traffic.roadsideMotion?.outcome, 'obliterate');
-  assert.ok(!traffic.wrecked);
 });

@@ -1437,7 +1437,6 @@ export class EngineAudio {
     if (ev.crash) this._lastCrashCueAt = this.context.currentTime;
     if (
       ev.vehicleSmash &&
-      this.flags.enabled('crash-effects') &&
       !(this.context.currentTime - (this._lastCrashCueAt ?? -Infinity) < 0.15)
     )
       this._smashImpact(ev, state, course);

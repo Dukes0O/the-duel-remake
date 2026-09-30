@@ -1317,3 +1317,11 @@ Kyle also approved retiring the rule set with wasteland2 off, which players
 cannot reach: BALANCE-W2-OFF-RETIRE removes the switch, its off branches and
 the second balance run from the release evidence.
 
+
+## 2026-09-30 PDT — Existing crew assets
+
+Kyle authorized choosing existing developer-made assets and said he is not picky about Rook or the CC0 packs. Choose Quaternius Modular Men (comparison B) as the crew starting pack: 24 existing actions and modular costumes offer the best reuse. Keep the Kenney option as a declined source record. Female crew require a licensed companion source or permitted changes to the selected pack; the sourcing card does not adapt or ship a model. Other art families continue their source comparisons. A later source choice can replace this selection before adaptation.
+
+## 2026-09-30 PDT — Titan steering implementation
+
+Implement Claude's settled numbers through an optional car argument to the existing steeringYawAuthority helper. Calls without a car keep their exact existing behavior. Pass the actual car specification from player, rival, arena and demo callers so all Titan drivers use the same limits. Only the Titan receives lowSpeedSteer. The App caller waits for FORMAT's App edits to merge. This is API plumbing, with no new handling numbers or encounter design.

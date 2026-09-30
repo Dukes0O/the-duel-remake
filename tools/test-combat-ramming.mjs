@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import test from 'node:test';
-import {DRIVE} from '../src/config.js';
 import {LegacyRoadsideDuel, ClassicDestructionDuel} from './legacy-roadside-duel.mjs';
 import {armorDamageFor} from '../src/combat-armor.js';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
@@ -90,79 +89,81 @@ test('ram damage uses a strict 40 km/h closing threshold and an 80-armor cap', (
     'the high-speed armor hit remains capped');
 });
 
-// With crash physics on, road ram damage follows each car's own Δv
-// (CRASH-04, tools/test-madmax-crash.mjs). These spike-bonus checks pin the
-// closing-speed rule, which still applies with the switch off.
+// Compare identical physical contacts with and without front spikes. Keep
+// bonus, self-damage, rear/side exclusion, cap and event ownership coverage.
 test('a player front bumper spikes only the struck CPU car', () => {
-  const field = race({crashPhysics: false});
-  const target = field.state.opponents[1];
-  const closingKph = 60 * KPH_PER_MPH;
-  rearContact(field, field.state, target);
-  const targetLoss = target.maxArmor - target.armor;
-  const playerLoss = field.state.maxArmor - field.state.armor;
-  close(targetLoss, armorDamageFor('ram', {relativeKph: closingKph, spiked: true}),
-    'front bumper increases damage to the target');
-  close(playerLoss, armorDamageFor('ram', {relativeKph: closingKph}),
+  const contact = spiked => {
+    const field = race();
+    field.state.combatBumperSpikes = spiked;
+    const target = field.state.opponents[1];
+    rearContact(field, field.state, target);
+    return {field, targetLoss: target.maxArmor - target.armor,
+      playerLoss: field.state.maxArmor - field.state.armor};
+  };
+  const plain = contact(false), spiked = contact(true);
+  assert.ok(plain.targetLoss > 0, 'the physical contact damages the target');
+  close(spiked.targetLoss, plain.targetLoss * 1.5,
+    'front bumper increases damage to the target by fifty percent');
+  close(spiked.playerLoss, plain.playerLoss,
     'front bumper does not increase damage to its own car');
-  checkHit(ownedHit(field, -1, 1), {attackerIndex: -1, victimIndex: 1,
-    armorRemoved: targetLoss, closingKph, spiked: true});
+  checkHit(ownedHit(spiked.field, -1, 1), {attackerIndex: -1, victimIndex: 1,
+    armorRemoved: spiked.targetLoss, closingKph: 60 * KPH_PER_MPH, spiked: true});
 });
 
 test('a disabled bumper and rear or side contact have plain ram damage', () => {
-  const disabled = race({crashPhysics: false});
-  const disabledTarget = disabled.state.opponents[1];
-  disabled.state.combatBumperSpikes = false;
-  rearContact(disabled, disabled.state, disabledTarget);
-  close(disabledTarget.maxArmor - disabledTarget.armor,
-    armorDamageFor('ram', {relativeKph: 60 * KPH_PER_MPH}),
-    'explicitly disabled front spikes give plain damage');
-  assert.equal(ownedHit(disabled, -1, 1)?.spiked, false);
-
-  const reversing = race({crashPhysics: false});
-  const rearTarget = reversing.state.opponents[1];
-  place(reversing.state, 104);
-  reversing.state.prevS = 110;
-  reversing.state.speedMph = -80;
-  place(rearTarget, 102);
-  assert.equal(reversing.duel._vehicleContact(reversing.state, rearTarget, 'rival'), true);
-  close(rearTarget.maxArmor - rearTarget.armor,
-    armorDamageFor('ram', {relativeKph: 80 * KPH_PER_MPH}),
-    'a reverse strike with the player rear receives no front-spike bonus');
-  assert.equal(ownedHit(reversing, -1, 1)?.spiked, false);
-
-  const side = race({crashPhysics: false});
-  const sideTarget = side.state.opponents[1];
-  place(side.state, 102, -1);
-  side.state.prevLateral = -6;
-  side.state.pushVelocity = 25;
-  place(sideTarget, 102, 0);
-  assert.equal(side.duel._vehicleContact(side.state, sideTarget, 'rival'), true);
-  const lateralKph = 25 / DRIVE.mphToWorld * KPH_PER_MPH;
-  close(sideTarget.maxArmor - sideTarget.armor,
-    armorDamageFor('ram', {relativeKph: lateralKph}),
-    'a lateral shove receives no front-spike bonus');
-  assert.equal(ownedHit(side, -1, 1)?.spiked, false);
+  for (const face of ['front', 'rear', 'side']) {
+    const contact = spiked => {
+      const field = race(), target = field.state.opponents[1];
+      field.state.combatBumperSpikes = spiked;
+      if (face === 'front') rearContact(field, field.state, target);
+      else {
+        if (face === 'rear') {
+          place(field.state, 104);
+          field.state.prevS = 110; field.state.speedMph = -80;
+          place(target, 102);
+        } else {
+          place(field.state, 102, -1);
+          field.state.prevLateral = -6; field.state.pushVelocity = 25;
+          place(target, 102, 0);
+        }
+        assert.equal(field.duel._vehicleContact(field.state, target, 'rival'), true);
+      }
+      return {field, loss: target.maxArmor - target.armor};
+    };
+    const plain = contact(false), equipped = contact(true);
+    assert.ok(plain.loss > 0, `${face} is a damaging physical contact`);
+    close(equipped.loss, plain.loss * (face === 'front' ? 1.5 : 1),
+      `${face} contact receives a bonus only from the equipped front`);
+    assert.equal(ownedHit(plain.field, -1, 1)?.spiked, false,
+      `${face} contact with disabled spikes has no bonus`);
+    assert.equal(ownedHit(equipped.field, -1, 1)?.spiked, face === 'front',
+      `${face} contact records the correct bonus`);
+  }
 });
 
 test('both equipped fronts can strike in a head-on CPU contact', () => {
-  const field = race({crashPhysics: false});
-  const first = field.state.opponents[1], second = field.state.opponents[2];
-  place(first, 102);
-  first.prevS = 98;
-  first.speedMph = 80;
-  place(second, 106);
-  second.prevS = 110;
-  second.speedMph = 80;
-  second.dir = -1;
-  assert.equal(field.duel._vehicleContact(first, second, 'rival'), true);
+  const contact = spiked => {
+    const field = race();
+    const first = field.state.opponents[1], second = field.state.opponents[2];
+    first.combatBumperSpikes = second.combatBumperSpikes = spiked;
+    place(first, 102); first.prevS = 98; first.speedMph = 80;
+    place(second, 106); second.prevS = 110; second.speedMph = 80; second.dir = -1;
+    assert.equal(field.duel._vehicleContact(first, second, 'rival'), true);
+    return {field, firstLoss: first.maxArmor - first.armor,
+      secondLoss: second.maxArmor - second.armor};
+  };
+  const plain = contact(false), spiked = contact(true);
+  assert.ok(plain.firstLoss > 0 && plain.secondLoss > 0,
+    'both computer cars take physical ram damage');
+  close(spiked.firstLoss, Math.min(80, plain.firstLoss * 1.5),
+    'first CPU takes the other front spike');
+  close(spiked.secondLoss, Math.min(80, plain.secondLoss * 1.5),
+    'second CPU takes the first front spike');
   const closingKph = 160 * KPH_PER_MPH;
-  const damage = armorDamageFor('ram', {relativeKph: closingKph, spiked: true});
-  close(first.maxArmor - first.armor, damage, 'first CPU takes the other front spike');
-  close(second.maxArmor - second.armor, damage, 'second CPU takes the first front spike');
-  checkHit(ownedHit(field, 1, 2), {attackerIndex: 1, victimIndex: 2,
-    armorRemoved: damage, closingKph, spiked: true});
-  checkHit(ownedHit(field, 2, 1), {attackerIndex: 2, victimIndex: 1,
-    armorRemoved: damage, closingKph, spiked: true});
+  checkHit(ownedHit(spiked.field, 1, 2), {attackerIndex: 1, victimIndex: 2,
+    armorRemoved: spiked.firstLoss, closingKph, spiked: true});
+  checkHit(ownedHit(spiked.field, 2, 1), {attackerIndex: 2, victimIndex: 1,
+    armorRemoved: spiked.secondLoss, closingKph, spiked: true});
 });
 
 test('player can strike every CPU and a later CPU can strike the player', () => {
@@ -348,7 +349,7 @@ function legacyDigest(mode, wasteland2, crashPhysics = true) {
   return createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
 }
 
-test('enabled crash physics has reviewed contact replays while switch-off stays pinned', () => {
+test('released contact replays and obsolete false overrides have the same fingerprints', () => {
   assert.equal(legacyDigest('duel', false),
     '90ae44392f1e118f66f38b57677448c16d9f5db7e444585277c66cafc9e38ff5',
     'ordinary race keeps its collision and vehicleRam result');
@@ -356,14 +357,14 @@ test('enabled crash physics has reviewed contact replays while switch-off stays 
     '90ae44392f1e118f66f38b57677448c16d9f5db7e444585277c66cafc9e38ff5',
     'wasteland2 does not change ordinary races');
   assert.equal(legacyDigest('wasteland', false, false),
-    'd414293c318c4ddb90b1aecd7a0ffd60ed59455434febc825518b23665066fdc',
-    'switch-off Wasteland keeps its integration armored-contact fingerprint');
+    legacyDigest('wasteland', false, true),
+    'an obsolete false crash override cannot change Wasteland contact');
   assert.equal(legacyDigest('wasteland', false, true),
     '77e512edd147264c2da17858eca6ed4fb74f031500dba8ce95e891ea3676bb38',
     'enabled crash physics governs Wasteland contact when Wasteland 2 is off');
   assert.equal(legacyDigest('duel', false, false),
-    '81b4193349b1b5aa06d0180d02ddf6879156b9bc23c762eac8a1ca6a3222caaa',
-    'switch-off ordinary contact keeps the integration fingerprint');
+    legacyDigest('duel', false, true),
+    'an obsolete false crash override cannot change ordinary contact');
 });
 
 test('enabled crash physics lets smashed traffic stay wrecked in every mode', () => {
@@ -386,31 +387,5 @@ test('enabled crash physics lets smashed traffic stay wrecked in every mode', ()
         'the ordinary head-on still crashes the player');
     }
     assert.equal(ramEvents(field).length, 0, 'legacy traffic has no new combat event');
-  }
-});
-
-test('crash-physics off keeps ordinary solid traffic and the released Wasteland wreck path', () => {
-  for (const mode of ['duel', 'wasteland']) {
-    const field = race({mode, wasteland2: false, classicDestruction: true,
-      crashPhysics: false});
-    const traffic = {s: 105, prevS: 115, lateral: .6, prevLateral: .6,
-      speedMph: 20, dir: -1, alive: true};
-    field.state.traffic.push(traffic);
-    place(field.state, 102);
-    field.state.prevS = 98;
-    field.state.speedMph = 90;
-    assert.equal(field.duel._vehicleContact(field.state, traffic, 'head_on'), true);
-    if (mode === 'wasteland') {
-      assert.ok(traffic.wrecked, 'switch-off Wasteland keeps its released traffic wreck');
-      assert.equal(traffic.alive, false);
-      assert.equal(field.events.filter(event => event.trafficWrecked).length, 1);
-      assert.ok(traffic.wrecked.lateralVelocity || traffic.wrecked.forwardVelocity,
-        'switch-off Wasteland keeps the released wreck motion');
-    } else {
-      assert.equal(traffic.wrecked, undefined, 'switch-off ordinary traffic stays solid');
-      assert.equal(traffic.alive, true);
-      assert.equal(field.events.filter(event => event.trafficWrecked).length, 0);
-      assert.ok(field.state.stageCrashes > 0, 'switch-off ordinary head-on keeps its crash cost');
-    }
   }
 });

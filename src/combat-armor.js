@@ -76,8 +76,7 @@ function startCombatWreck(duel, actor, source, owner) {
   const point = duel.course.groundAt(actor.s, actor.lateral);
   actor.armor = 0;
   actor.combatWrecking = true;
-  const slide = duel.featureFlags?.enabled('crash-physics') === true &&
-    !state.arena && !(player && state.onFoot);
+  const slide = !state.arena && !(player && state.onFoot);
   if (slide && !player) startWreckSlide(duel, actor);
   else actor.knock = null;
   recordCombatWreck(duel, actor, owner);
