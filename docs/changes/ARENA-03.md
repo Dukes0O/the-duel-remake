@@ -651,3 +651,38 @@ new post-rejection profile-adoption checks as test weakening. No removal or
 retry occurred. The Director explicitly accepted the retained stronger
 contract: the existing durable refresh adopts the same owner's newer credits
 and unknown field while refusing the launch. All acceptance remains intact.
+
+## Durable launch gate and event-owned presentation cache fixed
+
+After independent tests-first freeze 3c67fe4, Fuel performs one authoritative
+existing owner refresh before its rank, discovery and switch checks inside
+_startArenaFight. Rejection happens before run IDs, seeds, receipts, retries
+or race state change. Newer durable credits and unknown fields are adopted
+by the existing refresh. Its failed-save session guard remains intact.
+Last Car Rolling and Warlord keep their previous refresh position.
+
+Fuel presentation caches each fixed pad ground pose during initialization.
+Existing pickup, drop and delivery events prepare loose-canister poses in
+the view; a refill uses its already prepared pad pose. The render loop does
+not call groundAt, create pose objects or put caches into race state. Real
+creation/refill/drop pose and twin-engine checks preserve all mesh, geometry,
+matrix and color buffer identities. No new simulation event or sound cue is
+needed.
+
+Focused acceptance passes 68/68 tests with zero failures or skips; all 59
+prior tests, unchanged-mode fingerprints and actual 30/60/144 FPS controls
+remain unchanged. The switch suite passes its 27 checks. Existing arena
+settlement, Warlord settlement/pay and progression controls pass 64/64.
+The isolated lane build passes, 246 modules, 0.524 seconds; the existing
+large-chunk warning remains. Commands were node --test --test-reporter=dot
+with the named suites, node tools/test-feature-flags.mjs and npm run build.
+Independent narrow code and Save Guardian re-review are still required.
+No whole-lane/full, fresh browser or final feature merge verdict is claimed.
+Claude's fighter-contact design lane has not merged; that implementation
+and final gameplay/audio/look checks remain held.
+
+### Removed — durable launch and render cache
+
+Replaced Fuel's stale pre-refresh launch check and repeated render-time
+ground sampling. No existing test assertion, replay pin, storage key, save
+schema, runtime or licensed asset was changed or removed.

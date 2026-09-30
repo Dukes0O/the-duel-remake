@@ -48,6 +48,7 @@ export function createFuelRunView(duel) {
   const color = new THREE.Color();
   let cargo, capacity = 0, activeArena = null;
   const depotMaterials = [], labelTextures = [];
+  const padGround = [], looseGround = new Map();
   function reserve(count) {
     if (count <= capacity) return;
     capacity = Math.max(256, capacity * 2, count);
@@ -80,18 +81,35 @@ export function createFuelRunView(duel) {
     const sign = label(text, shade); holder.add(sign);
     depotMaterials.push(sign.material); labelTextures.push(sign.material.map);
     pads.add(holder);
+    return at;
   }
   function prepare() {
     const arena = duel.state.arena;
     if (arena?.mode !== 'fuel-run') { group.visible = false; return; }
     reserve(arena.fuelRun.canisters.length + 8);
-    if (activeArena === arena) return;
-    activeArena = arena; clearPads();
-    for (const pad of arena.fuelRun.pads) marker(duel.course, pad, 'FUEL', '#e8c55b', true);
-    for (const depot of arena.fuelRun.depots) {
-      const participant = arena.participants.find(p => p.id === depot.participantId);
-      marker(duel.course, depot, participant.id === 'player' ? 'YOUR DEPOT' : participant.name,
-        depot.color, false);
+    if (activeArena !== arena) {
+      activeArena = arena; clearPads(); padGround.length = 0;
+      for (const pad of arena.fuelRun.pads)
+        padGround.push(marker(duel.course, pad, 'FUEL', '#e8c55b', true));
+      for (const depot of arena.fuelRun.depots) {
+        const participant = arena.participants.find(p => p.id === depot.participantId);
+        marker(duel.course, depot, participant.id === 'player' ? 'YOUR DEPOT' : participant.name,
+          depot.color, false);
+      }
+    }
+    // These objects belong to presentation and are prepared only at events.
+    // Refills reuse their fixed pad pose without needing a render-time sample.
+    looseGround.clear();
+    for (const canister of arena.fuelRun.canisters) {
+      if (canister.carriedBy) continue;
+      let at = null;
+      for (let index = 0; index < arena.fuelRun.pads.length; index++) {
+        const pad = arena.fuelRun.pads[index];
+        if (canister.s === pad.s && canister.lateral === pad.lateral) {
+          at = padGround[index]; break;
+        }
+      }
+      looseGround.set(canister.id, at || duel.course.groundAt(canister.s, canister.lateral));
     }
   }
   const stop = duel.onChange((_state, event) => {
@@ -124,7 +142,15 @@ export function createFuelRunView(duel) {
             dummy.matrix.multiplyMatrices(entry.mesh.matrixWorld, local);
           }
         } else {
-          const at = course.groundAt(canister.s, canister.lateral);
+          let at = looseGround.get(canister.id);
+          if (!at) {
+            for (let index = 0; index < fuel.pads.length; index++) {
+              if (fuel.pads[index].canisterId === canister.id) {
+                at = padGround[index]; break;
+              }
+            }
+          }
+          if (!at) continue;
           dummy.position.set(at.x, at.y + .08, at.z);
           dummy.rotation.set(0, at.heading, 0); dummy.scale.setScalar(1); dummy.updateMatrix();
         }
@@ -138,7 +164,8 @@ export function createFuelRunView(duel) {
       if (cargo.instanceColor) cargo.instanceColor.needsUpdate = true;
       group.userData.available=available;group.userData.carried=carried;
     },
-    dispose() { stop(); clearPads(); cargo?.dispose(); geometry.dispose();
+    dispose() { stop(); clearPads(); looseGround.clear(); padGround.length = 0;
+      cargo?.dispose(); geometry.dispose();
       material.dispose(); ringGeometry.dispose(); baseGeometry.dispose(); group.removeFromParent(); },
   };
 }

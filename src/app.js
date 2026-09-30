@@ -818,14 +818,18 @@ export class App {
       this.profile.wasteland?.rank >= 6;
   }
   startArenaEvent({mode = 'last-car-rolling', opponents = this._arenaOpponents ?? 3} = {}) {
-    if (!['last-car-rolling', 'fuel-run'].includes(mode) || (mode === 'fuel-run' && !this.fuelRunAvailable())) return false;
+    if (!['last-car-rolling', 'fuel-run'].includes(mode)) return false;
     return this._startArenaFight({mode, opponents});
   }
   _startArenaFight({opponents, warlordId = null, mode = 'last-car-rolling'}) {
     const state = this.duel.state;
-    if (!(warlordId ? this.warlordsAvailable() : this.arenaAvailable()) ||
-        !(this.isYardHomeActive() || state.arena)) return false;
-    this._refreshPlayer();
+    // Fuel checks the current durable owner before creating any run state.
+    // The existing failed-save guard keeps unsaved session progress intact.
+    if (mode === 'fuel-run') this._refreshPlayer();
+    const available = warlordId ? this.warlordsAvailable() :
+      mode === 'fuel-run' ? this.fuelRunAvailable() : this.arenaAvailable();
+    if (!available || !(this.isYardHomeActive() || state.arena)) return false;
+    if (mode !== 'fuel-run') this._refreshPlayer();
     const count = Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
     const car = isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42';
     const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
