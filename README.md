@@ -75,6 +75,12 @@ and both cars feel the hit. In Mad Max Duel armored cars keep control, traffic
 hit hard is wrecked and left smouldering at the roadside for the rest of the
 race, a hit over 250 km/h closing blows the car up after the smash, and ram
 damage follows each car's change in velocity, so heavy cars hit hardest.
+The Wasteland yard now leads to the Scrapdome, where Last Car Rolling is a
+free-for-all against one to three computer cars. The Titan Monster climbs a
+whole hill as long as the slope is under its limit, slowing uphill and
+speeding up downhill, and somewhere off the road it has a playground of its
+own to find. Leaving the car shows the exit, bailout and get-back-in controls
+on screen.
 Wreck recovery has a short two-second race penalty. A missed checkpoint retries
 near that checkpoint. The UFO jump never moves the rival or skips a checkpoint.
 

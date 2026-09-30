@@ -59,8 +59,21 @@ Please include the car, approximate speed, course, and difficulty with a note.
 | 2026-09-26 | Improve vehicle crash physics overall, especially in Mad Max and Rival Duel: crashing into a vehicle should smash it out of the way like real physics. The monster truck should climb mountains and hills far off-road, with a hidden playground easter egg: mud pits, big water puddles, jumps. | Crashes; Titan | Designed by Claude: docs/CRASH_PHYSICS.md (CRASH-01 in progress on a branch, CRASH-02) and docs/MUDDY_HOLLOW.md (TITAN-01, EGG-03). |
 | 2026-09-26 | After driving up the hidden road far enough that the clock stops, reversing back to the course leaves the clock stopped and the race frozen: the opponent doesn't drive and power-ups and weapons don't work. | Mad Max Duel, live build | Confirmed and fixed in GATE-REJOIN: leaving only pauses the race and driving back resumes it; only driving through the gate abandons it. Released 26 September 2026. |
 | 2026-09-26 | Gratian would really like to test the warlord battles. With the rally car on the first course, near the shortcut, the game keeps resetting you and dropping you onto the track. | Warlords; Pacific Canyon, rally car | Rally: reproduced (a checkpoint crossed out on the dirt snaps the rally car back onto the road); fixed in RALLY-CHECKPOINT, released 26 September 2026. Warlords: plan in next-run.md, 'Warlords for Gratian'; Sal's fight settled in SCRAPDOME.md section 5. |
-| 2026-09-30 | The Scrapdome, Titan climbing and Muddy Hollow are good enough to release. The Titan can be hard to steer, especially next to how the opponents move. Retire and remove the rule set that can't be played. | Preview: Scrapdome, Titan, Muddy Hollow | Release follows the crash cleanup Codex is finishing (SCRAPDOME-RELEASE). Titan steering at low speed: TITAN-HANDLING. Rule set removal: BALANCE-W2-OFF-RETIRE. |
+| 2026-09-30 | The Scrapdome, Titan climbing and Muddy Hollow are good enough to release. The Titan can be hard to steer, especially next to how the opponents move. Retire and remove the rule set that can't be played. | Preview: Scrapdome, Titan, Muddy Hollow | Released 30 September 2026: reload the live game from the menu. Titan steering at low speed: TITAN-HANDLING. Rule set removal: BALANCE-W2-OFF-RETIRE. |
 | 2026-09-30 | Kyle: "I'm not picky about the rook and CC0 packs. we can use existing assets that others have developed instead of creating our own." | Crew and source art | Director chooses Quaternius Modular Men as the crew starting pack: reuse its existing rig and animations. Source comparison and licence checks stay; no bespoke body creation. Female crew source coverage is recorded for the later adaptation card. |
+
+## Pending Preview check: Titan steering
+
+Claude: the Titan steering fix is ready for Kyle’s feel check. Please stage
+lane/phys/titan-handling at 71a1582c0d9b5c9a009282c389f5290ba6745946.
+It passes independent review, 300 lane suites, build, 40 focused checks,
+162 replay checks and four private mud/hill captures. Kyle’s check remains
+required before merge. The Director has not touched the Preview.
+Sal’s pilot hook and Reward’s App hook wait for this lane to merge.
+
+Kyle chose the CC0 Marina Shemesh salt photograph and tiling. Its mirrored
+material preview is reviewed; original pixels stay unchanged. Salt model picks,
+hands and Rustwall source picks remain pending in their comparison sheets.
 
 ## Design questions for Claude, 30 September 2026
 

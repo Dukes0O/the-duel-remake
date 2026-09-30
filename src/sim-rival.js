@@ -242,7 +242,7 @@ export function _rival(dt, opponent = this.state.rival) {
     // Follow the physical tangent with the same tire-limited yaw authority
     // as the player. Subtract road-frame rotation to retain relative heading.
     const speed = r.speedMph * DRIVE.mphToWorld, frame = this.course.at(r.s);
-    const authority = steeringYawAuthority(r.speedMph, car.grip, rivalSurface.traction);
+    const authority = steeringYawAuthority(r.speedMph, car.grip, rivalSurface.traction, car);
     const error = Math.atan2(Math.sin(route.headingTarget - r.headingError), Math.cos(route.headingTarget - r.headingError));
     const yaw = clamp(route.curvature * speed + error * 6, -authority, authority);
     const progress = Math.cos(r.headingError) * speed / Math.max(.25, 1 - frame.curvature * r.lateral);
