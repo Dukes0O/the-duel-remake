@@ -679,12 +679,13 @@ tasks:
     lane: SAVE
     size: S
     needs: []
-    status: review
+    status: merged
     review_commit: 6d92948908b5e749e5d805e4bc6f91943a28e273
     claimed_by: codex-director-2026-09-30-resume
     branch: lane/save/save-damaged-fields
     owns: [src/progression.js, tools/test-profile-damaged-fields.mjs, docs/changes/SAVE-DAMAGED-FIELDS.md]
     hooks: []
+    note: "Clean 6d929489: tests-first 48 intended reds fixed; lane175/175 in508.52s and build1.16s. Independent correctness/SaveGuardian100/100,192 successful-conversion controls and96 mutation/backup probes clear. No schema/key/receipt/race or existing assertion changes."
     helpers: [test_author, reviewer, save_guardian]
     acceptance:
       - "Save Guardian reproduced JSON-safe credits and winStreak objects with a non-callable own toString throwing in normalizeProfile; loadPlayers then displays a default Player 1. Write failing synthetic tests first. Normalize damaged numeric fields without object-coercion errors while preserving the named owner and every valid historical field. All seven fixtures and 247 preservation checks, migration/backup and storage gates pass unchanged; no real saves, schema/key change or runtime dependency. Race fingerprints remain unchanged."
@@ -834,7 +835,7 @@ tasks:
     size: M
     needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
     status: review
-    review_commit: e20470ab6587765c3cf2144235b2e2000c323efa
+    review_commit: 24a27af9b3879e6cdd98debde3b17d34b942cf15
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run

@@ -1,6 +1,6 @@
 ---
 task: SAVE-DAMAGED-FIELDS
-status: review
+status: merged
 ---
 
 # Damaged profile numeric fields
@@ -78,3 +78,16 @@ pending; this focused verification does not substitute for them.
 
 Replaced the packed integer conversion helper with its readable, guarded
 version. No assets, saves, existing tests, assertions or fingerprints removed.
+
+## Integration verdict
+
+Exact clean lane source `6d92948908b5e749e5d805e4bc6f91943a28e273`
+passed the mandatory lane tier **175/175 suites in 508.52 seconds**, no
+selected suites skipped, and build **1.16 seconds**. Campaigns ran.
+Independent correctness and Save Guardian review pass **100/100 tests**,
+**192 successful old-conversion comparisons** and **96 damaged-field probes**
+across all seven fixtures, preserving owner identity, progress and raw stored
+bytes with zero load writes. All 96 backup-before-migration probes pass.
+No existing assertion or fingerprint changed. The ordinary large-chunk build
+warning remains. This is integration evidence, not a release or exact-HEAD
+full-tier pass for a later metadata commit.
