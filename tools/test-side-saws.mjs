@@ -330,3 +330,14 @@ test('an earned saved kit cannot multiply a released arena contact with warlords
   near(savedKit.removed, plain.removed, 'dev reward has no flag-off damage effect');
   ok(!savedKit.hits.some(hit => hit.sideSaws), 'flag-off contact emits no earned saw cue');
 });
+
+
+test('released Armory does not advertise an inactive saved Side Saws kit', () => {
+  const saved = equipArmorKit(ownedProfile(), 'falcone_f42', 'side-saws').profile;
+  const html = createArmoryScreen({profile: () => saved, credits: String, escapeHTML: String,
+    getGarageMessage: () => '', getArmoryCar: () => 'falcone_f42', kitsEnabled: () => true,
+    warlordsEnabled: () => false, action: label => label}).yardContent();
+  ok(!/SIDE SAWS|1\.6|side-saws/i.test(html), 'dev reward is hidden with warlords off, including its equipped heading');
+  ok(/Scrapper/.test(html) && /Raider/.test(html) && /Warlord/.test(html), 'three paid plating choices remain visible');
+  equal(getEquippedArmorKit(saved, 'falcone_f42'), 'side-saws', 'presentation does not erase the saved equip');
+});

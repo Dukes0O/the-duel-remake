@@ -253,3 +253,10 @@ without it (1.6 times). App also allowed equip with that switch off.
 The tests keep the saved entitlement, require ordinary Last Car Rolling to
 remain playable, and require its started actor to have no active Side Saws.
 No old contact assertion, FSM rule or fingerprint changed.
+
+
+A third separate red test found the same switch leak in the Armory's equipped
+heading: its item row was hidden, but the saved kit still advertised
+"SIDE SAWS EQUIPPED" and 1.6 times damage. The test fails before changing that
+heading, requires all three paid choices to remain visible, and proves the
+presentation does not erase the saved kit. Existing assertions are unchanged.
