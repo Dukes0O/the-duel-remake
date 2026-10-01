@@ -666,6 +666,15 @@ Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
   can be played here (the venue choice is on the SCRAPDOME panel once the
   Salt Flats is unlocked). Warlord fights stay where section 5 places them:
   the Scrapdome, except the Tollkeeper, whose fight is the Convoy Raid here.
+- **Salt ground (Kyle, 1 October 2026; replaces the tiled salt photo):** the
+  mirrored photo repeats as an obvious checker pattern ("looks like a silly
+  pattern"). The salt is generated instead, from a fixed seed, with no
+  visible repeat from the full view or the racing camera: a large-scale
+  tone that drifts across the whole bowl, the raised polygon crust ridges
+  that real salt pans have (a few metres across), and fine grain up close.
+  The drivable band is a little greyer and dustier from tyres. The salt photo
+  and its mirrored material are removed in the same card. Frame cost stays
+  within the venue's 10% limit.
 
 ### Convoy Raid (ARENA-07)
 

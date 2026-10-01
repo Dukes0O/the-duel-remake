@@ -1454,3 +1454,11 @@ Vesper's export guard is settled without asking Kyle.
 Kyle: the dome steering is good, and Sal is approved as she is. ARENA-STEER
 is kept, ARENA-WRECK-RATE starts, and WAR-SAL-TUNE closes with no tuning.
 
+## 1 October 2026: generated salt replaces the tiled salt photo
+
+Kyle: the mirrored salt photo "looks like a silly pattern"; a generated ground
+would be better. This replaces his 30 September approval of the tiled photo.
+The Salt Flats ground is generated from a seed with no visible repeat
+(SCRAPDOME.md, Salt Flats), and WASTELAND_ART.md rule 10 bars visible repeats
+on any large ground.
+

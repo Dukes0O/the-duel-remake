@@ -41,7 +41,7 @@ not move. From this run on:
 | --- | --- | --- |
 | A. Dome feel | ARENA-SHOVE merge (trim its note), then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
 | B. Arsenal | ARS-CORE finish and merge, then ARS-01 | Unsounded cues while `arsenal` is dev |
-| C. Salt Flats | ARENA-06: the far edge, the sparse inner island, heat shimmer | Next comparison sheet to Claude |
+| C. Salt Flats | ARENA-06: generated salt ground first (Kyle), then the far edge, the sparse inner island, heat shimmer | Next comparison sheet to Claude |
 | D. Art | ART-FIT-TANKER round 3, then ART-FIT-CREW-W (Vesper) | Final tanker round; sheets to Claude |
 | E. Warlords and clean-up | WAR-02c (Mother Mirage) after ARS-CORE; BALANCE-W2-OFF-RETIRE when no other lane owns its files; WAR-03b when its files are free | |
 
@@ -85,8 +85,8 @@ releases. A design question goes to Claude in writing.
   Claude owns Sal's play-through and release; do not touch that lane.
 - **Art:** Quaternius Modular Men is picked for crew. Claude recorded Kyle's
   picks in f586be4: WRAD Arms for hands, all three Rustwall sets, and all three
-  Salt Flats groups with the plain Bus. The CC0 salt photo with mirrored UV
-  tiling is approved. Source comparisons do not replace runtime assets. The
+  Salt Flats groups with the plain Bus. The tiled salt photo is replaced by
+  generated salt (Kyle, 1 October 2026; SCRAPDOME.md, Salt Flats). Source comparisons do not replace runtime assets. The
   fitting cards follow docs/WASTELAND_ART.md, Fitting existing models: gritty
   materials, comparison in the game, and a three-round cap. Kyle keeps the current women; only Vesper needs fitting. The tanker
   shortlist remains a source decision with missing trailer parts.
@@ -200,7 +200,8 @@ Run the tracks in next-run.md "Resume here" side by side, up to five
 lanes at once, and follow its "Keep it proportionate" rules:
   A. Merge ARENA-SHOVE (trim its change note first), then ARENA-04.
   B. Finish and merge ARS-CORE with rangeForTarget, then ARS-01.
-  C. ARENA-06 Salt Flats: far edge, inner island, heat shimmer.
+  C. ARENA-06 Salt Flats: generated salt ground (Kyle), far edge, inner
+     island, heat shimmer.
   D. ART-FIT-TANKER round 3 (final), then ART-FIT-CREW-W.
   E. WAR-02c after ARS-CORE; BALANCE-W2-OFF-RETIRE and WAR-03b when their
      files are free.
