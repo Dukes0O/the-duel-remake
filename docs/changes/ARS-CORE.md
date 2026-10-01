@@ -690,3 +690,113 @@ Private logs stay under ignored `.evidence/2026-09-30/ARS-CORE/owned-identity-fi
 Independent Save Guardian and source reviewer approval are still required. Existing native scheduled fire/homing/lock, effects/lifecycle, recharge, CPU use and discovery/dev consumer wiring remain ungranted, as do the later armory UI, rendering and protected audio hooks. The settled upgrade dimension and decoy contexts still need Claude's written answer. Actual game/browser, High/Performance rendering, listening, thirty-race balance with real use counts, retained Arsenal replay and mandatory lane/full gates remain outstanding. No finished-feature or merge claim follows from this repair.
 
 Removed the arbitrary 100-entry and 80-character truncations from the ID normalizer. No earned data, old assertion, fixture, core module, replay fingerprint, runtime asset, licensed source, external audio, real save or other lane work was removed. The fix forwards through the independently reproduced loss rather than rewriting history.
+
+## PROSPECTIVE Arsenal registry-wiring acceptance — 1 October 2026
+
+RED consumer source: clean cd73eb1613eb841c0e600aa363371067d22953f2.
+This tests-first slice owns only appended save-suite cases and this section.
+It changes no production file, previous assertion, helper, fixture or replay pin.
+
+The current production WEAPONS dictionary is frozen, is not extensible and
+contains only four starters. Genuine temporary Oil/Smoke registration in
+that object is impossible. No current gameplay leak is claimed. The Director
+therefore explicitly approved an isolated in-memory native module-loader
+fixture to test the impending registration obligation before runtime wiring.
+Actual combat registry changes still wait for the Fuel merge and their hook
+handoff; this fixture grants no runtime, flag, UI or audio ownership.
+
+The fixture follows the existing data-URL import-routing pattern used by
+polyline-terrain and scenery tests. It reads the genuine car-loadout module
+and changes only its import routing. Its complete consumer body stays byte-
+identical; availableCarWeapons, getCarLoadout and equipCarWeapon are neither
+mocked nor reimplemented. The replacement dependency imports the real starter
+dictionary and extends it in memory with only Oil Slick (10 s recharge) and
+Smoke Screen (14 s recharge), as ARSENAL section 3 settles. All other imports
+resolve to their actual production modules. The frozen production dictionary
+is never mutated. No assertion requires registry mutability or permanent
+registration; this is explicitly prospective acceptance.
+
+Seven views exercise native availability and runtime slots separately:
+default options, dev off, Wasteland off, undiscovered player, no implemented
+Arsenal ids, Oil only and Smoke only. Each excluded weapon also gets its own
+native equip rejection test. Actual canonical earned profiles hold all four
+starters, owned Oil/Smoke and a future identity, with levels, nested receipts,
+unknown profile/career fields and four exact saved identities. Read and equip
+checks compare entire raw/canonical source profiles, not selected fields.
+Filtering usable weapons must never erase the saved future ownership or slots.
+
+Passing controls prove eligible owned registered weapons work, every starter
+remains available, native equip swaps only the chosen slots while retaining
+all four unique identities and the entire profile, registry entries alone
+never grant ownership, and normalization stays idempotent. A real named-player
+registry saves/reloads disposable memory storage: both complete profiles,
+levels, nested fields, the future saved slot and stored raw bytes survive;
+the second player receives no earned weapon. Production dictionary descriptors
+stay unchanged throughout. These controls use native normalization, registry
+and loadout functions with no browser or real saves.
+
+### Measured RED and protected passing controls
+
+- Before appending tests, node tools/test-arsenal-save.mjs passes all original
+  68/68 cases, 451 checks, on the unchanged consumer.
+- node --test --test-reporter=tap --test-name-pattern='^SAVE PROSPECTIVE:' tools/test-arsenal-save.mjs:
+  30 selected cases, four pass, 26 fail, 139 reached checks, no skips/TODO.
+- The full default save suite after append: 98 cases, 72 pass, 26 fail,
+  590 reached checks, no skips/TODO. Every failure is a new prospective gate
+  failure; all original 68 cases still pass.
+- All 21,299 original save-suite bytes remain an exact prefix, SHA-256
+  f1e9afafa39838f5fbd4f822ff021672f659940a33f5659aa262164616ee2427.
+  Existing core suite and both replay pins remain byte-identical to the RED
+  source and their recorded hashes. No replay pin was regenerated.
+- Actual car-loadout source hash remains
+  aff0f3e89befe947a7e83ff6bf15b690b712d73c613badfb279718b31e321a75;
+  actual wasteland-tuning remains
+  5dbbdd39dc4c20f6eb3c861e0c76ae58eea1b0e0183c838f32d25edd44c66022.
+  git diff --check passes.
+
+### Each prospective RED failure message
+
+Availability always returns starters plus both Oil/Smoke; runtime slots
+always retain both, although the relevant view excludes one or both.
+Every excluded native equip incorrectly returns ok=true rather than false.
+These are the exact messages from the native-consumer fixture:
+
+- prospective default-view: registered-owned Oil/Smoke cannot bypass the Arsenal availability guards
+- prospective default-view: actual runtime slots contain only admitted registered weapons
+- prospective default-view: native equip must reject excluded registered oil
+- prospective default-view: native equip must reject excluded registered smoke
+- prospective dev-off: registered-owned Oil/Smoke cannot bypass the Arsenal availability guards
+- prospective dev-off: actual runtime slots contain only admitted registered weapons
+- prospective dev-off: native equip must reject excluded registered oil
+- prospective dev-off: native equip must reject excluded registered smoke
+- prospective wasteland-off: registered-owned Oil/Smoke cannot bypass the Arsenal availability guards
+- prospective wasteland-off: actual runtime slots contain only admitted registered weapons
+- prospective wasteland-off: native equip must reject excluded registered oil
+- prospective wasteland-off: native equip must reject excluded registered smoke
+- prospective undiscovered: registered-owned Oil/Smoke cannot bypass the Arsenal availability guards
+- prospective undiscovered: actual runtime slots contain only admitted registered weapons
+- prospective undiscovered: native equip must reject excluded registered oil
+- prospective undiscovered: native equip must reject excluded registered smoke
+- prospective unimplemented: registered-owned Oil/Smoke cannot bypass the Arsenal availability guards
+- prospective unimplemented: actual runtime slots contain only admitted registered weapons
+- prospective unimplemented: native equip must reject excluded registered oil
+- prospective unimplemented: native equip must reject excluded registered smoke
+- prospective oil-only: registered-owned Oil/Smoke cannot bypass the Arsenal availability guards
+- prospective oil-only: actual runtime slots contain only admitted registered weapons
+- prospective oil-only: native equip must reject excluded registered smoke
+- prospective smoke-only: registered-owned Oil/Smoke cannot bypass the Arsenal availability guards
+- prospective smoke-only: actual runtime slots contain only admitted registered weapons
+- prospective smoke-only: native equip must reject excluded registered oil
+
+No heavy lane/full tier, build, browser, audio or combat wiring was attempted
+for this tests-first freeze. Guardian/reviewer approval and the remaining
+whole-card consumer, save, presentation, balance, replay and merge gates stay
+outstanding. A new retained Arsenal replay remains under the later ownership
+grant; this slice owns no replay files and preserves their existing pins.
+
+### Removed — prospective registry test freeze
+
+Nothing replaced or removed. Tests and their verdict were appended only.
+No production registry mutation, dependency, source, previous assertion,
+asset, licensed file, protected audio, other lane, real save, live checkout,
+Preview output or port was used or changed.

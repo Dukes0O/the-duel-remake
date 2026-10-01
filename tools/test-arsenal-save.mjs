@@ -335,3 +335,163 @@ for (const kind of OWNED_IDENTITY_CASES) for (const path of ['normalize', 'regis
     eq(new Set(result.wasteland.loadout).size, 4, 'the actual saved slots retain unique identities');
   });
 }
+
+// PROSPECTIVE ARS-CORE registry wiring, 1 October 2026. Production WEAPONS
+// is frozen and has only starters today. This in-memory dependency fixture
+// predicts Oil/Smoke registration; it is not a current-gameplay bug or a
+// mutation of that registry. Run the actual consumer, changing imports only.
+let prospectiveLoadoutPromise;
+function prospectiveArsenalLoadout() {
+  if (!prospectiveLoadoutPromise) prospectiveLoadoutPromise = (async () => {
+    const {readFile} = await import('node:fs/promises');
+    const consumerUrl = new URL('../src/car-loadout.js', import.meta.url);
+    const combatUrl = new URL('../src/combat.js', import.meta.url).href;
+    const {WEAPONS: productionRegistry} = await import(combatUrl);
+    const dataUrl = source => 'data:text/javascript;base64,' + Buffer.from(source).toString('base64');
+    // ARSENAL section 3 settles names and 10/14-second recharge. The real
+    // starter definitions are imported, rather than copied or imitated.
+    const registryUrl = dataUrl(`import {WEAPONS as starters} from ${JSON.stringify(combatUrl)};
+export const WEAPONS = Object.freeze({...starters,
+  oil: Object.freeze({name: 'OIL SLICK', cooldown: 10}),
+  smoke: Object.freeze({name: 'SMOKE SCREEN', cooldown: 14})});`);
+    const originalSource = await readFile(consumerUrl, 'utf8');
+    const routedSource = originalSource.replace(/from\s+(['"])([^'"]+)\1/g,
+      (_match, _quote, specifier) => 'from ' + JSON.stringify(specifier === './combat.js'
+        ? registryUrl : new URL(specifier, consumerUrl).href));
+    return {loadout: await import(dataUrl(routedSource)),
+      registry: (await import(registryUrl)).WEAPONS, productionRegistry,
+      productionBefore: Object.getOwnPropertyDescriptors(productionRegistry),
+      originalSource, routedSource};
+  })();
+  return prospectiveLoadoutPromise;
+}
+function prospectiveOwnedCareer(discovered = true) {
+  const raw = career(6, 4000);
+  raw.wasteland.discoveredGate = discovered;
+  raw.wasteland.weapons = {version: 1, unlocked: [...STARTERS, 'oil', 'smoke', 'future-cannon'],
+    levels: {ufo: 2, bomb: 0, crossbow: 0, star: 0, oil: 1, smoke: 2, 'future-cannon': 9},
+    futureWeaponData: {receipt: 'earned', nested: {keep: [3, 7, 11]}}};
+  raw.wasteland.loadout = ['oil', 'smoke', 'future-cannon', 'star'];
+  raw.wasteland.futureCareerData = {territory: 'kept', receipt: {owner: 'player-1'}};
+  raw.futureProfileData = {garage: ['keep'], receipt: 'racing'};
+  const before = structuredClone(raw), canonical = normalizeProfile(raw);
+  return {raw, before, canonical, canonicalBefore: structuredClone(canonical)};
+}
+const PROSPECTIVE_GATES = [
+  {name: 'default-view', options: {}, allowed: []},
+  {name: 'dev-off', options: {...ENABLED, arsenalEnabled: false}, allowed: []},
+  {name: 'wasteland-off', options: {...ENABLED, wastelandEnabled: false}, allowed: []},
+  {name: 'undiscovered', discovered: false, options: {...ENABLED}, allowed: []},
+  {name: 'unimplemented', options: {...ENABLED, implemented: []}, allowed: []},
+  {name: 'oil-only', options: {...ENABLED, implemented: ['oil']}, allowed: ['oil']},
+  {name: 'smoke-only', options: {...ENABLED, implemented: ['smoke']}, allowed: ['smoke']},
+];
+
+test('SAVE PROSPECTIVE: registry fixture runs the native consumer with only import routing changed', async () => {
+  const fixture = await prospectiveArsenalLoadout();
+  const removeImports = source => source.replace(/^import[^\n]*\n/gm, '');
+  eq(removeImports(fixture.routedSource), removeImports(fixture.originalSource),
+    'prospective fixture preserves every native loadout consumer byte outside imports');
+  for (const id of STARTERS) eq(fixture.registry[id], fixture.productionRegistry[id],
+    'prospective dictionary uses each genuine production starter definition');
+  eq(fixture.registry.oil, {name: 'OIL SLICK', cooldown: 10}, 'prospective Oil uses the settled recharge');
+  eq(fixture.registry.smoke, {name: 'SMOKE SCREEN', cooldown: 14}, 'prospective Smoke uses the settled recharge');
+  eq(Object.getOwnPropertyDescriptors(fixture.productionRegistry), fixture.productionBefore,
+    'prospective dependency creation never changes the genuine production registry');
+});
+
+for (const guard of PROSPECTIVE_GATES) {
+  test('SAVE PROSPECTIVE: registered Arsenal availability respects ' + guard.name, async () => {
+    const {loadout} = await prospectiveArsenalLoadout();
+    const witness = prospectiveOwnedCareer(guard.discovered ?? true);
+    const actual = loadout.availableCarWeapons(witness.canonical, guard.options);
+    eq(witness.raw, witness.before, 'prospective gate fixture normalization keeps its complete raw input');
+    eq(witness.canonical, witness.canonicalBefore, 'prospective availability read preserves the complete canonical profile');
+    eq(actual, [...STARTERS, ...guard.allowed],
+      'prospective ' + guard.name + ': registered-owned Oil/Smoke cannot bypass the Arsenal availability guards');
+  });
+  test('SAVE PROSPECTIVE: runtime slots exclude registered Arsenal under ' + guard.name, async () => {
+    const {loadout} = await prospectiveArsenalLoadout();
+    const witness = prospectiveOwnedCareer(guard.discovered ?? true);
+    const actual = loadout.getCarLoadout(witness.canonical, guard.options);
+    eq(witness.canonical, witness.canonicalBefore,
+      'filtering usable slots never erases earned ownership or exact saved future slots');
+    const expected = guard.allowed.length ? [guard.allowed[0], 'star', 'ufo', 'bomb']
+      : ['star', 'ufo', 'bomb', 'crossbow'];
+    eq(actual, expected, 'prospective ' + guard.name + ': actual runtime slots contain only admitted registered weapons');
+  });
+  for (const id of ['oil', 'smoke'].filter(id => !guard.allowed.includes(id))) {
+    test('SAVE PROSPECTIVE: native equip rejects registered ' + id + ' under ' + guard.name, async () => {
+      const {loadout} = await prospectiveArsenalLoadout();
+      const witness = prospectiveOwnedCareer(guard.discovered ?? true);
+      const result = loadout.equipCarWeapon(witness.canonical, 3, id, guard.options);
+      eq(witness.raw, witness.before, 'registered weapon equip attempt keeps the complete raw source');
+      eq(witness.canonical, witness.canonicalBefore, 'registered weapon equip attempt keeps its complete input profile');
+      eq(result.ok, false, 'prospective ' + guard.name + ': native equip must reject excluded registered ' + id);
+      eq(result.profile, witness.canonical, 'prospective rejected equip returns the untouched original profile');
+    });
+  }
+}
+
+test('SAVE PROSPECTIVE: eligible earned registered weapons work while starters and future slots survive', async () => {
+  const {loadout} = await prospectiveArsenalLoadout();
+  const witness = prospectiveOwnedCareer(), options = {...ENABLED, implemented: ['oil', 'smoke']};
+  eq(loadout.availableCarWeapons(witness.canonical, options), [...STARTERS, 'oil', 'smoke'],
+    'positive eligible ownership exposes all four starters and both registered implemented weapons');
+  eq(loadout.getCarLoadout(witness.canonical, options), ['oil', 'smoke', 'star', 'ufo'],
+    'usable slots retain eligible Oil/Smoke and fill four unique usable choices');
+  for (const [id, expected] of [['oil', ['star', 'smoke', 'future-cannon', 'oil']],
+    ['smoke', ['oil', 'star', 'future-cannon', 'smoke']]]) {
+    const result = loadout.equipCarWeapon(witness.canonical, 3, id, options);
+    eq(result.ok, true, 'positive native equip admits earned registered ' + id);
+    const expectedProfile = {...witness.canonicalBefore,
+      wasteland: {...witness.canonicalBefore.wasteland, loadout: expected}};
+    eq(result.profile, expectedProfile, 'native equip changes only selected/swapped slots, preserving the entire career');
+    eq(result.loadout.length, 4, 'registered weapon equip still has exactly four saved slots');
+    eq(new Set(result.loadout).size, 4, 'registered weapon equip keeps all four saved identities unique');
+  }
+  eq(witness.raw, witness.before, 'positive registered equip leaves the complete raw profile unchanged');
+  eq(witness.canonical, witness.canonicalBefore, 'positive registered equip never mutates the canonical source');
+  eq(normalizeProfile(witness.canonical), witness.canonicalBefore,
+    'registered dictionary does not change idempotent native profile normalization');
+});
+
+test('SAVE PROSPECTIVE: registered weapons never create unearned ownership or usable future ids', async () => {
+  const {loadout} = await prospectiveArsenalLoadout();
+  const fresh = normalizeProfile(career(6)), before = structuredClone(fresh);
+  eq(loadout.availableCarWeapons(fresh, {...ENABLED, implemented: ['oil', 'smoke']}), STARTERS,
+    'registered implemented dictionary alone never grants owned weapons');
+  for (const id of ['oil', 'smoke', 'future-cannon']) eq(loadout.equipCarWeapon(fresh, 0, id, ENABLED).ok,
+    false, 'unearned or unknown registered-view weapon cannot enter an actual saved slot');
+  eq(fresh, before, 'unearned registered equip attempts preserve the complete actual profile');
+});
+
+test('SAVE PROSPECTIVE: registered dependency preserves both complete named careers through real memory registry', async () => {
+  const fixture = await prospectiveArsenalLoadout(), witness = prospectiveOwnedCareer();
+  const second = normalizeProfile(career(1, 0));
+  second.futureProfileData = {name: 'Second', nested: {only: 'player-2'}};
+  const secondBefore = structuredClone(second), options = {...ENABLED, implemented: ['oil', 'smoke']};
+  const equipped = fixture.loadout.equipCarWeapon(witness.canonical, 3, 'oil', options);
+  eq(equipped.ok, true, 'first named player performs a real native registered-weapon equip');
+  let registry = createPlayerRegistry(witness.canonical);
+  registry.players.push({id: 'player-2', name: 'Second', profile: second});
+  registry = replacePlayerProfile(registry, 'player-1', equipped.profile);
+  const storage = memoryStorage();
+  eq(savePlayers(registry, storage), true, 'genuine named registry saves registered-view profiles only to memory');
+  const bytes = storage.getItem(PLAYERS_KEY), loaded = loadPlayers(storage);
+  eq(loaded.players[0].profile, equipped.profile,
+    'the complete first named profile, ownership, levels, receipts and future slot survive serialization');
+  eq(loaded.players[1].profile, secondBefore, 'the complete other named career receives no Arsenal ownership or slot change');
+  eq(loaded.players[0].profile.wasteland.loadout, ['star', 'smoke', 'future-cannon', 'oil'],
+    'exact four unique registered and future saved slot identities survive real reload');
+  eq(fixture.loadout.availableCarWeapons(loaded.players[0].profile, options), [...STARTERS, 'oil', 'smoke'],
+    'the eligible first named career retains its registered usable offer after reload');
+  eq(fixture.loadout.availableCarWeapons(loaded.players[1].profile, options), STARTERS,
+    'the other named career has only its own four starters after reload');
+  eq(storage.getItem(PLAYERS_KEY), bytes, 'native registry reload never rewrites raw stored profile bytes');
+  eq(witness.raw, witness.before, 'native registry and registered equip leave the complete raw first source unchanged');
+  eq(witness.canonical, witness.canonicalBefore, 'native registry and registered equip leave the canonical first source unchanged');
+  eq(second, secondBefore, 'native registry never mutates the complete second source');
+  eq(Object.getOwnPropertyDescriptors(fixture.productionRegistry), fixture.productionBefore,
+    'all prospective gate and registry paths leave the production dictionary untouched');
+});
