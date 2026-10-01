@@ -286,7 +286,7 @@ event was installed by this source stage; future removal/installation belongs
 to the approved continuation after review.
 
 
-## Reviewed native contact correction and independent crossing RED � 1 October 2026
+## Reviewed native contact correction and independent crossing RED � 1 October 2026
 
 Tests-only follow-up on unchanged source
 `23748e635f8fa0784a9c5c72998b19a94facc015`, with the original test freeze
@@ -620,3 +620,128 @@ player data, catalog or current asset removed. Generated PNGs/logs stay ignored;
 only one compressed sheet is committed for round1. The Director removes used
 captures after Claude's verdict is committed. No live, Preview,.preview-dist,
 port5174, real saves, merge, release, push, force or history rewrite used.
+
+## Independent exact native valve contact, 1 October 2026
+
+This tests-only continuation starts from clean QA
+`ef3c7e216e38460add772cd0a9f1fee66c51eef5`. It adds exact valve attachment
+acceptance after all 42 original checks. Source2583, the native recipe, fit
+input, approved picks, catalog, runtime module and public assets remain exact.
+
+### Genuine native connection contract
+
+The original verified Factory `pipe-large-valve` is still 456 triangles,
+SHA-256 `57126374dce5b172e06d5d6f8cbaab97c9cffe3e5e726060eb14c50a5bd519b6`.
+Its genuine pipe/flange connections are the two source-X extreme patches,
+X -0.5 and +0.5, **16 triangles each**. The handwheel/stem extends separately
+along negative source Z. These are measured original native faces, not a
+bounding box, gizmo, invented foot, proxy cylinder or guessed bottom plane.
+
+The tests transform those exact original patches through each output
+source-instance matrix and match them to the actual loaded native triangles.
+Exact contact uses real triangle crossings and vertex/face and edge/edge
+distances. The Director approved requiring both whole-valve contact and at
+least one genuine pipe/flange connection touching within the existing
+**.002 m** precision or crossing the tank skin as a genuine embedded connection.
+Handwheel-only contact does not mount a fuel valve. No full-flush rule, flat
+feet, new fit angle, new tolerance or recipe value is prescribed.
+
+The three real candidate valves use their actual output faces. Separate
+positive and negative DATA controls copy the genuine Source2583 valve2
+geometry relative to the original tank donor's affine frame. This pins a
+proven native control, not a candidate fitting choice. A future source repair
+cannot move the negative rear-pose fixture into a valid mounting or make an
+allowed touching candidate fail an embedded-only predicate.
+
+### Exact failures and native controls
+
+The final normal command `node tools/test-convoy-tanker-art.mjs` exits 1:
+
+- Original suite: **42 checks, 42 passed, 0 failed**.
+- Additive exact-contact suite: **12 checks, 9 passed, 3 failed**.
+- Combined: **54 cases, 51 passed, 3 genuine contact failures**.
+  All original cases and all new cases run; none are skipped or excluded.
+
+The three exact failures are:
+
+1. `valve0: actual whole native valve touches or crosses actual native tank skin`.
+   Actual valve face 328 and tank face 274 have a minimum native surface gap
+   of **0.11249710048096646 m**. Closest points:
+   valve [0.8233996135990674, 1.9172951119420445, -2.630021095275879];
+   tank [0.7394046126322701, 1.8825032711029053, -2.563764282492314].
+   There are zero whole-valve/tank interior crossings.
+2. `valve0: genuine original pipe/flange connection touches or embeds in actual tank skin`.
+   The actual retained two connection patches miss by
+   **0.11249710048096646** and **0.4517631304430445 m**.
+3. `valve1: genuine original pipe/flange connection touches or embeds in actual tank skin`.
+   Its genuine mating patches miss by **0.01793217681641043** and
+   **0.017932231510569226 m**, despite **31** whole-valve crossings elsewhere.
+   Handwheel/stem contact therefore cannot clear the actual pipe attachment.
+
+Candidate valve2 is a true native positive: **166** whole-valve crossings
+and **five genuine pipe-patch/tank-skin crossings**. Its other port is
+0.017933879638581805 m from the tank. These passes do not erase the other
+valves' failures. The rear visual gap is physical, not a camera-only artifact.
+
+The copied native controls pass:
+
+- Genuine full 456-triangle valve2 copy retains a real embedded pipe patch.
+- Six-centimetre outward hover retains overlapping complete bounding boxes
+  and whole-part contact elsewhere, but its two original pipe patches miss
+  by **0.007891468737308852** and **0.07336666842676882 m** and are rejected.
+- Genuine copied rear lateral pose retains bounding-box overlap but has
+  the measured 0.11249705105537215 m whole-part gap and is rejected.
+- Removing only actual native tank triangles **111 and 118** retains the
+  exact tank bounding box and whole-valve contact elsewhere. Both pipe
+  patches are disconnected; the nearest is **0.004315894402245505 m** away,
+  and attachment is rejected.
+- Original topology, all transformed source patches and protected bytes pass.
+
+The regenerated native model remains **1,063,268 bytes**, **6,328 triangles**,
+**16 meshes and 16 draws**, SHA-256
+`0af1e450360a329cbc91bd9a90267ec68f1aa4628791f8bb857d431a107e75be`.
+All **1,186** tracked files outside the owned test and note are hash-checked;
+licensed source files are checked separately. The complete original test
+prefix is exactly **42,161 bytes**, SHA-256
+`6021849168fe659eccd47a6db40e2e320a5b66a5c34f81dbc6632212f97cad05`.
+The prior note prefix is exactly **38,715 bytes**, SHA-256
+`7bcd5ecbf1d277efeb7422946d60a2a4af8d9309722c37a146cdcae2cfacb94c`.
+
+Full raw probe, focused and default logs, native closest-point/crossing
+witnesses, original-patch indices, protected Source hashes and recipe output
+are retained in ignored integration
+`.evidence/2026-10-01/ART-FIT-TANKER/valve-contact-tests/`.
+The focused fixture supplies the unchanged existing private candidate and
+runs only the 12 new cases; it never claims the 42 original cases passed there.
+The final default run executes their real bounded recipe and all 54 cases.
+
+### Durable independent round-one art verdict
+
+The Director relayed the read-only independent art critic's **round1 FAIL**
+for all 18 actual-yard images in lane
+`.evidence/2026-10-01/ART-FIT-TANKER/browser-source2583-final/`.
+Scores: direction **2/5**, materials **3/5**, racing read **3/5**, opposite-view
+grounding **2/5**, and broken/recovery lamp contrast **3/5**. The opposite High
+and Performance images show the detached valve around screen X 452–508,
+Y 365–407. Exact native geometry above independently confirms the rear gap.
+
+The palette improves on Source1, but the cab still reads like a toy, the pale
+wheels read flat, tank blotches look uniform, and lamp-state differences are
+small at race distance. All images are from the actual yard. No motion/frame
+measurement or whole-art clearance follows from them. Claude's round-one
+review remains held before public installation. Structural Source/native
+passes cannot clear this look or the attachment failures.
+
+### Changed assertions and Removed
+
+Changed assertions: **none**. Every byte of the original 42-check prefix and
+prior change-note prefix remains intact. Only new checks, native copied DATA
+controls, exact witnesses and this appended note were added.
+
+Removed: none. No source, native recipe, fit, approved model, licensed file,
+current asset, assertion or replay pin was replaced. Native attachment Source
+work remains for the builder after this independent acceptance handoff.
+Private evidence remains for review and the Director's used-once janitor.
+No lane/full/build, frame, art, whole-card, merge, public-install, push or
+release pass is claimed. No live folder, Preview, port 5174, real save,
+protected audio, dependency, external service or source repair was touched.

@@ -507,3 +507,218 @@ writeFileSync(join(scratch,'verdict.json'),JSON.stringify({sourceCommit:execFile
 console.log('Convoy tanker art: '+checks.length+' checks, '+(checks.length-failed)+' passed, '+failed+' failed.');
 console.log('Private raw native/test evidence: '+scratch);
 if(failed)process.exitCode=1;
+
+// Independent exact valve-to-tank acceptance. Append only: the complete
+// original42-check file, all assertions and its runner remain byte exact.
+const valveContactStart=checks.length;
+const valveProtectedPaths=execFileSync('git',['ls-files'],{cwd:root,encoding:'utf8'}).trim().split(/\r?\n/)
+  .filter(path=>path!=='tools/test-convoy-tanker-art.mjs'&&path!=='docs/changes/ART-FIT-TANKER.md');
+const valveProtectedHashes=valveProtectedPaths.map(path=>hash(readFileSync(join(root,path))));
+function valveSegmentPair(a,b,c,d){
+  const u=b.clone().sub(a),v=d.clone().sub(c),w=a.clone().sub(c);
+  const aa=u.dot(u),bb=u.dot(v),cc=v.dot(v),dd=u.dot(w),ee=v.dot(w),denominator=aa*cc-bb*bb;
+  let s=0,t=0;
+  if(aa<=1e-24&&cc<=1e-24)return {distance:a.distanceTo(c),left:a.toArray(),right:c.toArray()};
+  if(aa<=1e-24)t=Math.max(0,Math.min(1,ee/cc));
+  else if(cc<=1e-24)s=Math.max(0,Math.min(1,-dd/aa));
+  else {
+    s=denominator>1e-24?Math.max(0,Math.min(1,(bb*ee-cc*dd)/denominator)):0;
+    t=(bb*s+ee)/cc;
+    if(t<0){t=0;s=Math.max(0,Math.min(1,-dd/aa));}
+    else if(t>1){t=1;s=Math.max(0,Math.min(1,(bb-dd)/aa));}
+  }
+  const left=a.clone().addScaledVector(u,s),right=c.clone().addScaledVector(v,t);
+  return {distance:left.distanceTo(right),left:left.toArray(),right:right.toArray()};
+}
+function valveFaceDistance(left,right){
+  let witness={distance:Infinity};
+  const update=row=>{if(row.distance<witness.distance)witness=row;};
+  const a=left.map(vector),b=right.map(vector),ta=new THREE.Triangle(...a),tb=new THREE.Triangle(...b);
+  for(const point of a){
+    const q=tb.closestPointToPoint(point,new THREE.Vector3());
+    update({distance:point.distanceTo(q),left:point.toArray(),right:q.toArray()});
+  }
+  for(const point of b){
+    const q=ta.closestPointToPoint(point,new THREE.Vector3());
+    update({distance:point.distanceTo(q),left:q.toArray(),right:point.toArray()});
+  }
+  for(let i=0;i<3;i++)for(let j=0;j<3;j++)
+    update(valveSegmentPair(a[i],a[(i+1)%3],b[j],b[(j+1)%3]));
+  return witness;
+}
+function valveSurfaceContact(left,right){
+  const crossings=strictCrossings(left,right);
+  if(crossings.length)return {distance:0,crossings:crossings.length,firstCrossing:crossings[0]};
+  // Disjoint/coplanar triangle distance is attained by a vertex/face or edge/
+  // edge pair. Strict native skin crossings above cover intersecting interiors.
+  let witness={distance:Infinity};
+  for(let i=0;i<left.length;i++)for(let j=0;j<right.length;j++){
+    const row=valveFaceDistance(left[i],right[j]);
+    if(row.distance<witness.distance)witness={...row,leftFace:i,rightFace:j};
+  }
+  return witness;
+}
+function valveTranslated(faces,offset){
+  return faces.map(face=>face.map(point=>point.map((value,axis)=>value+offset[axis])));
+}
+const valveBounds=faces=>new THREE.Box3().setFromPoints(faces.flat().map(vector));
+function valveEnvelopeOverlap(left,right){
+  const a=valveBounds(left),b=valveBounds(right);
+  return ['x','y','z'].every(axis=>overlaps(a,b,axis));
+}
+let valveNativePromise;
+function valveNative(){
+  if(!valveNativePromise)valveNativePromise=(async()=>{
+    const data=await candidate(),pick=config.sourcePicks.find(row=>row.role==='valve');
+    const source=await original(pick),faces=facesOf(source.gltf.scene),bounds=valveBounds(faces);
+    // Actual selected Factory donor: its two pipe/flange ends are along X.
+    // The handwheel/stem is a different negative-Z assembly, not a tank foot.
+    const ports=[bounds.min.x,bounds.max.x].map(x=>({
+      x,indices:faces.flatMap((face,index)=>face.every(point=>Math.abs(point[0]-x)<=weldPrecision)?[index]:[])
+    }));
+    const tank=facesOf(nativePart(data,'tank')[0].node);
+    const valves=nativePart(data,'valve').map(part=>{
+      const instance=data.manifest.sourceInstances.find(row=>row.node===part.row.node);
+      assert.equal(instance?.sourceKey,key(pick),'actual valve connection retains original donor identity');
+      const matrix=new THREE.Matrix4().fromArray(instance.matrix),actual=facesOf(part.node);
+      const mapped=ports.map(port=>{
+        const expected=port.indices.map(index=>faces[index].map(point=>vector(point).applyMatrix4(matrix).toArray()));
+        const native=expected.map(face=>{
+          const retained=actual.find(row=>faceKey(row)===faceKey(face));
+          assert.ok(retained,'genuine original pipe-end triangle survives actual fitted output');
+          return retained;
+        });
+        return {sourceX:port.x,sourceIndices:port.indices,faces:native};
+      });
+      return {node:part.row.node,instance,faces:actual,ports:mapped};
+    });
+    const tankInstance=data.manifest.sourceInstances.find(row=>row.node===nativePart(data,'tank')[0].row.node);
+    const tankMatrix=new THREE.Matrix4().fromArray(tankInstance.matrix);
+    // Genuine Source2583/candidate0af1 valve2 DATA fixture relative to its
+    // original full native tank. This is a copied positive witness, not a
+    // candidate fit prescription. Tank-affine routing keeps these controls
+    // valid when the builder fixes the candidate valve poses.
+    const referenceRelative=new THREE.Matrix4().fromArray([-0.11084337349397591,0,-1.2803125627449602e-17,0,
+      0,0.10823529411764705,0,0,1.3574398255609217e-17,0,-0.10454545454545455,0,
+      0.2795180722891566,0.18352941176470586,-0.23068181818181813,1]);
+    const copiedMatrix=tankMatrix.clone().multiply(referenceRelative);
+    const copied=rows=>rows.map(face=>face.map(point=>vector(point).applyMatrix4(copiedMatrix).toArray()));
+    const positive={node:'genuine-source2583-native-valve2-data',faces:copied(faces),
+      ports:ports.map(port=>({sourceX:port.x,sourceIndices:port.indices,faces:copied(port.indices.map(index=>faces[index]))}))};
+    return {data,pick,sourceBounds:{min:bounds.min.toArray(),max:bounds.max.toArray()},sourceFaces:faces,ports,tank,valves,tankMatrix,positive};
+  })();
+  return valveNativePromise;
+}
+function valveAttachment(valve,tank){
+  const whole=valveSurfaceContact(valve.faces,tank);
+  const ports=valve.ports.map(port=>({sourceX:port.sourceX,...valveSurfaceContact(port.faces,tank)}));
+  return {whole,ports,attached:whole.distance<=contactPrecision&&ports.some(port=>port.distance<=contactPrecision)};
+}
+const valveContactEvidence={precision:contactPrecision,valves:[],controls:[]};
+check('original valve connection patches are genuine native pipe-flange end triangles',async()=>{
+  const native=await valveNative();
+  assert.equal(native.sourceFaces.length,456,'complete picked source valve remains native');
+  assert.deepEqual(native.ports.map(port=>port.x),[-.5,.5],'measured pipe connection axis is sourceX');
+  assert.deepEqual(native.ports.map(port=>port.indices.length),[16,16],'measured two genuine flange-end triangle patches');
+  assert.equal(native.valves.length,3);
+  assert.ok(native.sourceBounds.min[2]<-.5,'native handwheel extends separately on negativeZ');
+  for(const valve of native.valves){
+    assert.equal(valve.faces.length,456);
+    assert.deepEqual(valve.ports.map(port=>port.faces.length),[16,16]);
+  }
+});
+for(let index=0;index<3;index++){
+  check('valve'+index+': actual whole native valve touches or crosses actual native tank skin',async()=>{
+    const native=await valveNative(),valve=native.valves[index],witness=valveAttachment(valve,native.tank);
+    valveContactEvidence.valves[index]={node:valve.node,matrix:valve.instance.matrix,...witness};
+    assert.ok(witness.whole.distance<=contactPrecision,
+      valve.node+': no actual native valve/tank contact within .002m: '+JSON.stringify(witness.whole));
+  });
+  check('valve'+index+': genuine original pipe/flange connection touches or embeds in actual tank skin',async()=>{
+    const native=await valveNative(),valve=native.valves[index],witness=valveAttachment(valve,native.tank);
+    assert.ok(witness.ports.some(port=>port.distance<=contactPrecision),
+      valve.node+': handwheel/body contact cannot replace native pipe connection: '+JSON.stringify(witness.ports));
+  });
+}
+check('genuine copied embedded valve pipe is a positive native attachment control',async()=>{
+  const native=await valveNative();
+  const valid=native.positive;
+  assert.ok(valid,'actual candidate supplies a genuine positive original-pipe contact');
+  const witness=valveAttachment(valid,native.tank);
+  assert.ok(witness.whole.crossings>0,'real complete source valve crosses actual tank skin');
+  assert.ok(witness.ports.some(port=>port.crossings>0),'genuine source pipe patch crosses actual tank skin');
+  valveContactEvidence.controls.push({name:'genuine embedded pipe',node:valid.node,...witness});
+});
+function valveMoved(valve,offset){
+  return {...valve,faces:valveTranslated(valve.faces,offset),
+    ports:valve.ports.map(port=>({...port,faces:valveTranslated(port.faces,offset)}))};
+}
+check('copied genuine hovering pipe is rejected while complete native envelopes overlap',async()=>{
+  const native=await valveNative(),valid=native.positive;
+  assert.ok(valid,'negative starts from actual mounted native pipe');
+  // Actual copied six-centimetre Source2583 hover, expressed in the genuine
+  // tank donor frame. It does not depend on a candidate's new attachment depth.
+  const offset=vector([0,0,-.06/4.4]).applyMatrix4(native.tankMatrix).sub(
+    vector([0,0,0]).applyMatrix4(native.tankMatrix)).toArray(),changed=valveMoved(valid,offset);
+  assert.equal(changed.faces.length,456,'copy retains complete actual native donor');
+  assert.ok(valveEnvelopeOverlap(changed.faces,native.tank),'hover still passes old bounding-envelope overlap');
+  const witness=valveAttachment(changed,native.tank);
+  assert.equal(witness.attached,false,'actual hovering pipe cannot pass through bounding boxes');
+  assert.ok(witness.ports.every(port=>port.distance>contactPrecision),'original mating surfaces are truly disconnected');
+  valveContactEvidence.controls.push({name:'copied native hover',offset,...witness});
+});
+check('copied native lateral disconnection is rejected inside overlapping native envelopes',async()=>{
+  const native=await valveNative(),valid=native.positive;
+  assert.ok(valid);
+  // Genuine copied Source2583 rear-disconnected pose, relative to the tank
+  // donor. A later candidate repair cannot silently move this negative fixture.
+  const offset=vector([-2.32/4.15,0,0]).applyMatrix4(native.tankMatrix).sub(
+    vector([0,0,0]).applyMatrix4(native.tankMatrix)).toArray();
+  const changed=valveMoved(valid,offset);
+  assert.equal(changed.faces.length,456);
+  assert.ok(valveEnvelopeOverlap(changed.faces,native.tank),'genuine rear-pose copy still passes old envelopes');
+  const witness=valveAttachment(changed,native.tank);
+  assert.equal(witness.attached,false,'actual disconnected lateral pipe cannot pass via an overlapping box');
+  assert.ok(witness.whole.distance>contactPrecision,'genuine rear-pose copy has a measured whole-native gap');
+  valveContactEvidence.controls.push({name:'copied native lateral',offset,...witness});
+});
+check('removing only real tank attachment triangles is rejected with unchanged native tank envelope',async()=>{
+  const native=await valveNative(),valid=native.positive;
+  assert.ok(valid);
+  const contactFaces=valid.ports.flatMap(port=>port.faces),removed=[];
+  const kept=native.tank.filter((face,index)=>{
+    if(valveSurfaceContact(contactFaces,[face]).distance<=contactPrecision){removed.push(index);return false;}
+    return true;
+  });
+  assert.ok(removed.length>0&&kept.length>0,'remove actual native contact support, retain actual remaining tank');
+  assert.ok(valveBounds(native.tank).equals(valveBounds(kept)),'contact removal leaves old native tank bounding box exact');
+  assert.ok(valveEnvelopeOverlap(valid.faces,kept),'native valve still passes old bounding-envelope overlap');
+  const witness=valveAttachment(valid,kept);
+  assert.equal(witness.attached,false,'missing native tank support cannot be replaced by its old bounding box');
+  assert.ok(witness.ports.every(port=>port.distance>contactPrecision));
+  valveContactEvidence.controls.push({name:'removed native tank attachment faces',removed,...witness});
+});
+check('all unowned source, fit, picks, module, catalog, public, assertions and pins stay byte exact',()=>{
+  assert.deepEqual(valveProtectedPaths.map(path=>hash(readFileSync(join(root,path)))),valveProtectedHashes);
+  assert.deepEqual(sourceFiles.map(path=>hash(readFileSync(path))),originalSourceHashes);
+});
+const valveContactVerdicts=[];
+for(const {name,run}of checks.slice(valveContactStart))try{
+  await run();valveContactVerdicts.push({name,passed:true});
+}catch(error){
+  valveContactVerdicts.push({name,passed:false,message:error.message,stack:error.stack});
+  console.error('FAIL '+name+': '+error.message);
+}
+const valveContactFailures=valveContactVerdicts.filter(row=>!row.passed).length;
+const valveNativeData=await valveNative();
+writeFileSync(join(scratch,'valve-contact-witness.json'),JSON.stringify({
+  sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
+  nativeModel:{bytes:valveNativeData.data.model.bytes.length,sha256:hash(valveNativeData.data.model.bytes)},
+  originalValve:{sha256:valveNativeData.pick.sha256,bounds:valveNativeData.sourceBounds,
+    pipeAxis:'sourceX',ports:valveNativeData.ports},
+  ...valveContactEvidence,verdicts:valveContactVerdicts,
+  protectedFiles:valveProtectedPaths.map((path,index)=>({path,sha256:valveProtectedHashes[index]}))
+},null,2)+'\n');
+console.log('Convoy tanker valve contact: '+valveContactVerdicts.length+' checks, '+
+  (valveContactVerdicts.length-valveContactFailures)+' passed, '+valveContactFailures+' failed.');
+if(valveContactFailures)process.exitCode=1;
