@@ -40,10 +40,13 @@ and compile-counter look tests as card gates. They tested presentation
 calibration rather than player acceptance. The normal scenario retains
 actual race-state purity, native loading, geometry budgets and matched
 frame cost; actual heat views replace cloned diagnostic silhouettes.
-The native effect tests remain unchanged. No gameplay assertion is weakened.
+Native effect behaviour assertions remain unchanged. The asset integrity pins
+and measured mesh and triangle counts now match the checked island export;
+those updates change no rule or budget and await independent review.
+No gameplay assertion is weakened.
 
-Next: refresh private renderer artifact pins, capture the actual game in
-both quality modes, obtain the critic and Claude verdict, then finish the
+Next: run the refreshed renderer checks and actual game captures in both
+quality modes, obtain the critic and Claude verdict, then finish the
 held public hooks.
 Required lane and build gates have not passed on this current change.
 
