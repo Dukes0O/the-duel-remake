@@ -54,8 +54,10 @@ controls, all ten actual game captures pass again with the same candidate.
 Frame timing, motion feel, audio and phone layout remain unmeasured.
 The existing Blender coverage guard is red because this new private recipe
 needs registration. Tanker owns that shared test file, so registration waits
-for its merge. Final lane/build evidence and Claude's look verdict remain
-required; no failing gate is waived.
+for its merge. The required lane floor on 3fe32b9 has 115 passes, one placement failure and
+203 unrun after fail-fast; campaign shards one and two pass, the rest remain
+unrun. Build passes. This is a red lane gate, not merge clearance. Claude's
+look verdict and a fresh passing floor after registration remain required.
 Nothing is installed or revealed by this private leaf.
 
 ## Removed

@@ -29,6 +29,7 @@ private Odessa fetch substitution for Vesper. Nell, Odessa and Wren keep their
 original production figures. Source review is clear. All ten captures pass again after the normal merge of
 latest integration controls at 4044431, using the unchanged candidate.
 The existing placement guard needs this recipe registered in Tanker's shared
-test file, which stays with that lane until merge. Final lane/build gates and
-Claude's look verdict remain required before merge. WAR-04 owns the
+test file, which stays with that lane until merge. The mandatory lane floor on 3fe32b9 fails only generator coverage: 115 pass,
+one fail and 203 unrun after fail-fast. Build passes. Claude's look verdict
+and a fresh green lane/build floor after registration are required before merge. WAR-04 owns the
 later reveal and installation; this comparison installs nothing.
