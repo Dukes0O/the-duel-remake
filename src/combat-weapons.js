@@ -3,7 +3,8 @@ import {sweepObstacle} from './collision.js';
 import {CARS, DRIVE} from './config.js';
 import {makeRng} from './rng.js';
 import {WEAPONS, CPU_COMBAT, COMBAT_TUNING} from './wasteland-tuning.js';
-import {arenaTargetOf, combatOwnerId} from './combat-teams.js';
+import {arenaTargetOf, arenaTargetOutOfPlay, combatOwnerId} from './combat-teams.js';
+import {footMoveDirection} from './onfoot.js';
 
 export {WEAPONS};
 const T = COMBAT_TUNING;
@@ -37,6 +38,20 @@ export function point(duel, actor) {
   return {...at, y: at.y + T.pointHeight + (actor.airHeight || 0)};
 }
 
+// A carrier's aim follows the fighter; point() remains the physical car hitbox.
+function fuelCarrierFighter(duel, actor) {
+  const state = duel.state;
+  return actor === state && state.arena?.mode === 'fuel-run' && state.onFoot &&
+    state.arena.participants.find(p => p.id === 'player')?.fuelCanisterId
+    ? state.fighter : null;
+}
+
+export function aimPoint(duel, actor) {
+  const fighter = fuelCarrierFighter(duel, actor);
+  return fighter ? {x: fighter.x, y: fighter.y + T.pointHeight, z: fighter.z,
+    heading: fighter.yaw} : point(duel, actor);
+}
+
 export function velocity(actor, at) {
   const heading = at.heading + (actor.headingError || 0);
   const speed = (actor.speedMph || 0) * (actor.dir || 1) * DRIVE.mphToWorld;
@@ -47,6 +62,13 @@ export function velocity(actor, at) {
 }
 
 export function predictedPoint(duel, actor, seconds) {
+  const fighter = fuelCarrierFighter(duel, actor);
+  if (fighter) {
+    const move = footMoveDirection(fighter.yaw, duel.state.fighterInput || {});
+    const speed = fighter.knockedDown ? 0 : fighter.speed;
+    return {x: fighter.x + move.x * speed * seconds, y: fighter.y,
+      z: fighter.z + move.z * speed * seconds};
+  }
   const frame = duel.course.at(actor.s);
   const speed = (actor.speedMph || 0) * (actor.dir || 1) * DRIVE.mphToWorld;
   const headingError = actor.headingError || 0;
@@ -253,8 +275,9 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
     }
     burst(combat, at, 'star');
   } else {
-    if (weapon === 'crossbow' && (!target || target.finished || target.crushed ||
-        target.combatWrecking)) return false;
+    if (weapon === 'crossbow' && (!target || (enemy && state.arena?.mode === 'fuel-run'
+      ? arenaTargetOutOfPlay(duel, target)
+      : target.finished || target.crushed || target.combatWrecking))) return false;
     const count = weapon === 'bomb' ? T.bomb.baseCount + T.bomb.countPerLevel * level : 1;
     if (combat.projectiles.length + count > T.projectileLimit) return false;
     const modernProjectile = state.mode === 'wasteland' &&
@@ -275,7 +298,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         dz = Math.cos(angle);
         speed = T.bomb.launchSpeed;
       } else {
-        const goal = point(duel, target);
+        const goal = aimPoint(duel, target);
         speed = T.crossbow.baseSpeed + T.crossbow.speedPerLevel * level;
         let aimX = goal.x;
         let aimZ = goal.z;

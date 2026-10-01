@@ -6,18 +6,12 @@ const { App } = await import('../src/app.js');
 const { combatAudioSpace } = await import('../src/audio.js');
 const app = new App();
 const qa = {
-  limiter: null,
   recorder: null,
   category: null,
   tags: new WeakMap(),
 };
 const originalConnect = AudioNode.prototype.connect;
 AudioNode.prototype.connect = function (destination, ...rest) {
-  if (
-    destination instanceof DynamicsCompressorNode &&
-    this === app.audio.master
-  )
-    qa.limiter = destination;
   const recorder = qa.recorder;
   const name = Object.entries(app.audio.buses || {}).find(
     ([, bus]) => bus === destination,
@@ -131,8 +125,9 @@ function createRecorder(audio) {
       recorder.chunks[track].push(chunk);
     };
   }
-  if (!qa.limiter) throw Error('The game audio limiter was not found.');
-  originalConnect.call(qa.limiter, recorder.buses.mix);
+  if (!(audio.output instanceof AudioNode))
+    throw Error('The final game audio output was not found.');
+  originalConnect.call(audio.output, recorder.buses.mix);
   const engineNodes = [audio.engineGain];
   for (const key of [
     'idle',

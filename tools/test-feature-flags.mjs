@@ -15,13 +15,15 @@ check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES.wasteland2 ===
   && FEATURE_STATES.scrapdome === 'on' && !Object.hasOwn(FEATURE_STATES, 'crash-physics')
   && !Object.hasOwn(FEATURE_STATES, 'crash-effects')
   && FEATURE_STATES['titan-climb'] === 'on' && FEATURE_STATES['muddy-hollow'] === 'on'
-  && FEATURE_STATES.warlords === 'on' && Object.keys(FEATURE_STATES).length === 7,
-  'career backup stays in QA; Wasteland 2, Hidden Road, the Scrapdome, Titan climbing, Muddy Hollow (SCRAPDOME-RELEASE) and the warlord fights (WAR-SAL-RELEASE) are released; roadside destruction, crash physics and crash effects have no switches');
+  && FEATURE_STATES.warlords === 'on' && FEATURE_STATES['fuel-run'] === 'dev'
+  && Object.keys(FEATURE_STATES).length === 8,
+  'career backup and Fuel Run stay in QA; Wasteland 2, Hidden Road, the Scrapdome, Titan climbing, Muddy Hollow (SCRAPDOME-RELEASE) and the warlord fights (WAR-SAL-RELEASE) are released; roadside destruction, crash physics and crash effects have no switches');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 check(!productionFlags.enabled('roadside-destruction'), 'retired roadside switch is no longer recognized');
 check(productionFlags.enabled('wasteland2') && productionFlags.enabled('hidden-road'),
   'production has the released Wasteland switches on without any menu choice');
 check(!productionFlags.enabled('career-backup'), 'production keeps career backup off');
+check(!productionFlags.enabled('fuel-run'), 'production keeps unfinished Fuel Run off');
 check(productionFlags.enabled('warlords'), 'production has the warlord fights on (WAR-SAL-RELEASE)');
 check(productionFlags.enabled('scrapdome') && productionFlags.enabled('titan-climb') &&
   productionFlags.enabled('muddy-hollow'),
@@ -30,6 +32,8 @@ check(!productionFlags.enabled('crash-physics') && !productionFlags.enabled('cra
   'retired crash switches are no longer recognized (CRASH-SWITCH-REMOVE)');
 const productionQuery = createFeatureFlags({ storage: null, qa: false, search: '?flags=career-backup' });
 check(!productionQuery.enabled('career-backup'), 'production URL flags cannot enable dev');
+check(!createFeatureFlags({storage: null, qa: false, search: '?flags=fuel-run'}).enabled('fuel-run'),
+  'production URL flags cannot enable unfinished Fuel Run');
 const release = createFeatureFlags({ catalog, storage, search: '?flags=photo,crew', qa: false });
 check(!release.enabled('photo') && !release.enabled('crew'), 'release ignores QA URL switches');
 check(release.enabled('arena') && !release.enabled('unknown'), 'only known on switches are active');

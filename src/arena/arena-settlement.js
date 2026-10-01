@@ -1,4 +1,6 @@
-// Last Car Rolling economy. This module is pure: App owns player identity and
+import {FUEL_RULES} from './modes/fuel-run.js';
+
+// Arena economy. This module is pure: App owns player identity and
 // the atomic storage write after it receives an arenaResult event.
 
 const DIFFICULTY_FACTORS = Object.freeze({easy: 1, medium: 1.2, hard: 1.4});
@@ -8,9 +10,28 @@ const currentHold = profile => bounded(profile?.wasteland?.territories?.kettle?.
 const noAward = (profile, key = null) => ({profile, key, awarded: false,
   scrapEarned: 0, holdAdded: 0, hold: currentHold(profile)});
 
+function validFuelFinish(arena) {
+  const scores = new Map(arena.participants.map(p => [p.id, p.fuelDelivered]));
+  if (arena.participants.some(p => !Number.isSafeInteger(p.fuelDelivered) ||
+      p.fuelDelivered < 0 || p.fuelDelivered > FUEL_RULES.deliveriesToWin)) return false;
+  const {placings, winnerId, reason} = arena.result;
+  const delivered = scores.get(winnerId);
+  // Sudden death promotes its next-delivery winner, even from below the leaders.
+  // Everyone else still places by deliveries; tied counts need no extra ordering.
+  for (let index = 2; index < placings.length; index++)
+    if (scores.get(placings[index - 1]) < scores.get(placings[index])) return false;
+  if (reason === 'fuel') return delivered === FUEL_RULES.deliveriesToWin &&
+    arena.participants.every(p => p.id === winnerId || p.fuelDelivered < delivered);
+  if (!Number.isFinite(arena.clockSec) || arena.clockSec < FUEL_RULES.timeLimitSec) return false;
+  if (reason === 'time') return delivered < FUEL_RULES.deliveriesToWin &&
+    arena.participants.every(p => p.id === winnerId || p.fuelDelivered < delivered);
+  return reason === 'sudden-death' && delivered > 0 &&
+    arena.participants.every(p => p.id === winnerId || p.fuelDelivered < FUEL_RULES.deliveriesToWin);
+}
+
 function arenaFacts(arena) {
   if (arena?.version !== 1 || arena.venueId !== 'scrapdome' ||
-      arena.mode !== 'last-car-rolling' || arena.phase !== 'over' ||
+      !['last-car-rolling', 'fuel-run'].includes(arena.mode) || arena.phase !== 'over' ||
       !arena.result || !Array.isArray(arena.participants) ||
       !Array.isArray(arena.result.placings)) return null;
   const player = arena.participants.filter(item => item?.id === 'player' && item.kind === 'player');
@@ -23,6 +44,7 @@ function arenaFacts(arena) {
       placings.length !== ids.length || new Set(placings).size !== placings.length ||
       placings.some(id => !ids.includes(id)) || !placings.includes('player') ||
       arena.result.winnerId !== placings[0]) return null;
+  if (arena.mode === 'fuel-run' && !validFuelFinish(arena)) return null;
   const placeIndex = placings.indexOf('player');
   return {player: player[0], computers: computers.length,
     behind: placings.slice(placeIndex + 1).filter(id => id !== 'player').length,
