@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-01T21:16:27.131Z
+Observed at: 2026-10-01T21:33:25.712Z
 
-Observation commit: ff0c7dfc5234b16b0cba31bb079d43f92998a54d
+Observation commit: e797ca9f3d6ce4c0e8a429173ae770cdedf360ac
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: ff0c7dfc5234b16b0cba31bb079d43f92998a54d
+Integration HEAD: e797ca9f3d6ce4c0e8a429173ae770cdedf360ac
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -53,10 +53,10 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/art/vesper | unknown | 2026-10-01T08:10:01-07:00 | 0 | last commit 2026-10-01T08:10:01-07:00 | docs/changes/ART-FIT-CREW-W.md, tools/art/vesper-fit.json, tools/blender/vesper-blackiron.py, tools/test-vesper-art.mjs |
-| lane/art/convoy-tanker | unknown | 2026-10-01T07:53:15-07:00 | 0 | last commit 2026-10-01T07:53:15-07:00 | docs/board/looks/convoy-tanker/round-1-review.md, docs/board/looks/convoy-tanker/round-1-sheet.py, docs/board/looks/convoy-tanker/round-1.jpg, docs/board/looks/convoy-tanker/round-2-review.md, docs/board/looks/convoy-tanker/round-2-sheet.py |
-| lane/cmb/arena-shove | unknown | 2026-10-01T07:45:52-07:00 | 0 | last commit 2026-10-01T07:45:52-07:00 | docs/changes/ARENA-SHOVE.md, src/arena/arena-event.js, src/arena/arena-floor.js, src/sim-contacts.js, src/vehicle-collision.js |
-| lane/cmb/arsenal-core | unknown | 2026-10-01T07:08:34-07:00 | 0 | last commit 2026-10-01T07:08:34-07:00 | docs/changes/ARS-CORE.md, src/app.js, src/arena/arena-pilot.js, src/arsenal/car-effects.js, src/arsenal/hazards.js |
-| lane/vis/salt-flats | unknown | 2026-10-01T07:56:27-07:00 | 0 | last commit 2026-10-01T07:56:27-07:00 | docs/changes/ARENA-06.md, src/arena/venues.js, src/arena/venues/salt-flats.js, src/course.js, src/render3d.js |
+| lane/art/convoy-tanker | unknown | 2026-10-01T14:29:16-07:00 | 0 | last commit 2026-10-01T14:29:16-07:00 | docs/board/looks/convoy-tanker/round-1-review.md, docs/board/looks/convoy-tanker/round-1-sheet.py, docs/board/looks/convoy-tanker/round-1.jpg, docs/board/looks/convoy-tanker/round-2-review.md, docs/board/looks/convoy-tanker/round-2-sheet.py |
+| lane/cmb/arena-shove | unknown | 2026-10-01T14:25:23-07:00 | 0 | last commit 2026-10-01T14:25:23-07:00 | docs/changes/ARENA-SHOVE.md, src/arena/arena-event.js, src/arena/arena-floor.js, src/sim-contacts.js, src/vehicle-collision.js |
+| lane/cmb/arsenal-core | unknown | 2026-10-01T14:30:21-07:00 | 0 | last commit 2026-10-01T14:30:21-07:00 | docs/changes/ARS-CORE.md, src/app.js, src/arena/arena-pilot.js, src/arsenal/car-effects.js, src/arsenal/hazards.js |
+| lane/vis/salt-flats | unknown | 2026-10-01T14:30:35-07:00 | 0 | last commit 2026-10-01T14:30:35-07:00 | docs/changes/ARENA-06.md, src/arena/venues.js, src/arena/venues/salt-flats.js, src/course.js, src/render3d.js |
 
 ## Size targets
 
@@ -70,9 +70,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 430,908 B | +0 B | 500,000 B |
 | Review `looks/` | 10,712,857 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 289,604 B | -143,262 B | 5,000,000 B |
+| Added bytes in last merge | 507,856 B | +218,252 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 337,936,384 B | +117,760 B | unavailable |
+| Git objects | 339,036,160 B | +1,099,776 B | unavailable |
 | Lane folders | 5 | +0 | unavailable |
 
 ## Backups
@@ -81,7 +81,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: ff0c7dfc5234b16b0cba31bb079d43f92998a54d
+- Local integration/wasteland: e797ca9f3d6ce4c0e8a429173ae770cdedf360ac
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
