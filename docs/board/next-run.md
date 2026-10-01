@@ -12,36 +12,54 @@ Kyle played Sal on Medium and won 3-0. Three findings, settled as cards:
 **WAR-PAY** (the win paid 25 scrap), **ARENA-STEER** (steering in the dome is
 too slow for a ring) and **ARENA-SHOVE** (sitting cars cannot be shoved).
 
-### Director checkpoint, 30 September, 23:44 UTC
+### Director checkpoint, 30 September evening (1 October, 00:15 UTC)
 
-WAR-PAY and SAVE-DAMAGED-FIELDS are merged. The profile fix preserves named
-careers when a damaged numeric field cannot convert; its lane 175/175,
-build and independent save review pass. The five-merge full checkpoint passed307/307 on exact clean352dba3,
-792.56 seconds, build1.17 seconds, completed23:32:52UTC. No campaigns
-skipped. D8 push is blocked by automatic review requiring explicit human
-approval of the verified existing GitHub destination and committed content;
-the precise question is pending. Further metadata needs its own final full.
+WAR-PAY and SAVE-DAMAGED-FIELDS are merged. The five-merge checkpoint passed
+307/307 on exact clean commit 352dba3, with build, at 23:32:52UTC. No campaigns
+were skipped. This handoff needs a fresh end-of-run full on its final commit.
+The exact result will be in docs/board/checks/full-tier.json. Do not inherit
+the older checkpoint or STATUS observation as a pass for a later commit.
 
-ART-SRC-CREW-W records are merged. Kyle keeps Nell, Odessa and Wren;
-ART-FIT-CREW-W now covers only Vesper. ART-FIT-CREW-M stopped at failed
-round 1, retaining current art until Kyle chooses better parts or closes it.
-ART-SRC-TANKER has two verified CC0 cab/tank leads and a reviewed sheet;
-its lane 306/306 and build pass and its records are merged. Kyle picks A.
-Separate trailer/frame/hitch, valves and hatch are missing, so fitting waits
-ART-SRC-TANKER-PARTS, now claimed in a separate fifth lane. Catalog editing is released to Hands. ART-FIT-HANDS is claimed from the approved WRAD pick:
-tests first, actual source topology/rig and current crew garment/motion
-contracts. All eight private candidates pass61/61 mechanical checks; matched
-in-game comparison/critic remains pending before any runtime replacement.
+ART-SRC-CREW-W and ART-SRC-TANKER records are merged. Kyle keeps current
+Nell, Odessa and Wren; only Vesper needs later fitting. Kyle picked Tanker A
+as starting parts. Fitting and ARENA-07 still wait for the missing parts.
 
-ARENA-STEER waits for Kyle's explicit crate-fixture authorization. Its App
-demo correction still waits for Fuel ownership to end. Fuel Run's clean
-held53e6796 includes the profile fix and tests-first stale-rank/render-cache
-repairs; current tests68/1,552checks,
-actual High/Performance browser/durable Retry and independent save review
-pass. Fighter projectile damage, bomb splash and cargo-drop rules wait for
-Claude's DESIGN-FUEL-FIGHTER-HITS. No whole lane/full/audio/art clearance
-or merge is claimed for that held card. Arsenal and other arena cards wait
-for these shared files. Never take hooks from held or active lanes.
+ART-FIT-HANDS stops after two rounds without resemblance gain. All eight
+private candidates pass70/70 mechanical tests, but the independent critic
+scores resemblance1/5 and grip grounding1/5 for every crew. Keep the current
+hands. Clean34e914b retains two sheets, reviews, recipes and tests; no third
+round, runtime install or merge is cleared. Kyle chooses keeping current and
+closing this attempt or a new source/fitting card. Catalog is released.
+
+ART-SRC-TANKER-PARTS stops at clean commit 0ace07d. Independent stop-record review
+clears source commit 6b613fed and its334548-byte sheet. A genuine Factory valve can
+supply three targets. Separate trailer, frame, hitch and a suitable opening
+boarding hatch remain missing. Tests 56:52 pass/four real gap failures; source
+rights, native FBX geometry and rejection probes pass. The inspection-folder
+provenance bug was fixed after a new red regression. No fitting or finished
+convoy is claimed. Kyle chooses another bounded search or a Claude plan
+revision. Licensed originals remain outside the repository.
+
+ARENA-03 stays held at clean commit 96aaa2a, with source commit 53e6796 independently clear
+for the durable launch gate and render cache only. Focused 68/68 and save
+review pass. Fighter contacts, fresh browser, gameplay, sound, look and the
+whole lane/build floor wait for Claude's design merge. His draft is on
+lane/docs/fighter-rules at7e3bd200; never implement or merge that unhanded
+lane. ARENA-STEER stays clean ae4c168, source commit 1c06417: explicit fixture
+authorization is pending, and its App hook waits Fuel. After Claude's ceiling
+design lands, retest the unchanged crate fixture before considering an edit.
+ART-FIT-CREW-M remains held59a5b99. Current runtime assets stay unchanged.
+
+The sweep removed 1,550 consumed evidence/QA files,1,450,065,875 bytes, and
+four empty directories. Five unmerged lanes remain with their recipes and
+verdicts. The final audit skips protected audio worktrees. It finds48 advisory
+runtime candidates, no unused modules or removed-feature tests; DISC holds
+uncertain removals. Runtime 236249990 bytes and Wasteland 78998200 bytes remain.
+
+D8 push is blocked by automatic review requiring explicit human approval of
+https://github.com/Dukes0O/the-duel-remake.git and the committed payload.
+That precise question is pending. No push, rewrite or Director release ran.
+After approval, verify the exact final full and perform a normal push.
 
 ### Tracks for this run (up to five lanes)
 

@@ -641,15 +641,17 @@ tasks:
     lane: ART
     size: M
     needs: [ART-SRC-HANDS]
-    status: building
+    status: review
+    waiting_on: kyle
+    review_commit: 34e914b482190114a575716d0fa107a818a4ef0c
     claimed_by: codex-director-2026-09-30-resume
     branch: lane/art/hands-fit
     flag: wasteland2
     owns: [tools/blender/first-person-wrad.py, tools/blender/first-person-wrad-source.json, tools/art/hands-fit-sheet.py, tools/test-first-person-wrad.mjs, tools/scenarios/hands-fit-wrad.mjs, docs/board/looks/hands-fit/, docs/changes/ART-FIT-HANDS.md]
-    hooks: [public/assets/models/wasteland/first-person/hands/, tools/art/catalog.json, tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, tools/blender/first-person-p2-source.json, tools/test-first-person-gear.mjs, tools/test-first-person-cloth.mjs, tools/test-first-person-contact.mjs, tools/test-first-person-polish.mjs, tools/test-runtime-art-sources.mjs]
+    hooks: [public/assets/models/wasteland/first-person/hands/, tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, tools/blender/first-person-p2-source.json, tools/test-first-person-gear.mjs, tools/test-first-person-cloth.mjs, tools/test-first-person-contact.mjs, tools/test-first-person-polish.mjs, tools/test-runtime-art-sources.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
-    note: "Private candidates mechanically pass61/61 and492423 source/loader assertions after independently approved added-bone naming seam; current runtime unchanged. First matched round1 comparison/critic in progress, no visual or merge clearance."
-    sequencing: "Tests first. Fit actual licensed WRAD Arms, preserve source topology/weights/rig and existing crew garment direction and motion. No sculpted replacement anatomy. Private candidate outputs/comparison first; no runtime install or old recipe removal until independent comparison beats current at4/5 on every item. At most3rounds; two without gain stop. Catalog editing waits Tanker artifact merge; protected audio credits HTML has no granted hook and waits its owner. No App/renderer/simulation/audio/crew-body files. Retain shared RPG/wrench models and their build recipe; replace only superseded hand build paths after acceptance. Existing assertion edits require a written independent review reason, never weakened to pass."
+    note: "Stopped after two rounds without resemblance gain. Independent critic inspected all320 matched shots; every crew scores1/5 resemblance and1/5 grip grounding, worse than current. Mechanical70/70 with493816checks is separate from visual failure. Current hands stay; no third round or install. Clean34e914b retains both sheets/verdicts/recipes/tests; used raw is deleted. Kyle chooses keeping current and closing or a new source/fitting card."
+    sequencing: "Tests first. Fit actual licensed WRAD Arms, preserve source topology/weights/rig and existing crew garment direction and motion. No sculpted replacement anatomy. Private candidate outputs/comparison first; no runtime install or old recipe removal until independent comparison beats current at4/5 on every item. At most3rounds; two without gain stop. The unchanged catalog hook is released while paused; a future approved card must reclaim it before editing; protected audio credits HTML has no granted hook and waits its owner. No App/renderer/simulation/audio/crew-body files. Retain shared RPG/wrench models and their build recipe; replace only superseded hand build paths after acceptance. Existing assertion edits require a written independent review reason, never weakened to pass."
     acceptance:
       - "Fit Kyle's pick from docs/board/looks/first-person-src following docs/WASTELAND_ART.md 'Fitting existing models': gloves and sleeves per crew member matching ART-FIT-CREW-M and -W, RPG and wrench grips, and the existing aim, fire, reload and repair motion. The current hands are already acceptable, so rule 5 applies strictly: if the fit does not beat them on the same sheet by round 3, keep the current hands and close the card."
   - id: ART-FIT-RUSTWALL
@@ -685,13 +687,17 @@ tasks:
     lane: ART
     size: S
     needs: [ART-SRC-TANKER]
-    status: building
+    status: review
+    waiting_on: kyle
+    review_commit: 0ace07df6c747ef499d9d50293477e535550f152
+    source_review_commit: 6b613fed6bafa07f482e4962c112e97ed3e7c8bf
+    note: "Bounded stop records independently clear, not finished source readiness. Genuine Factory valve456tri can supply three targets; separate trailer/frame/hitch and suitable boarding hatch remain missing. Default56checks52pass/four meaningful gap failures; native FBX and pinned rights/geometry negatives pass. Tests-first provenance guard fixed before output/import. One334548B sheet and verdict retained; used raw deleted. No fitting, whole-lane/build, merge or ARENA-07 clearance. Kyle chooses another existing-parts search or Claude plan revision."
     claimed_by: codex-director-2026-09-30-resume
     branch: lane/art/tanker-parts
     owns: [tools/test-tanker-parts-sources.mjs, tools/art/tanker-parts-source.json, tools/art/tanker-parts-inspect.py, tools/art/tanker-parts-sheet.py, docs/board/looks/tanker-parts/, docs/changes/ART-SRC-TANKER-PARTS.md]
     hooks: []
     helpers: [test_author, reviewer]
-    sequencing: "Kyle picked A as starting parts only. Source search and inspection may proceed; fitting and ARENA-07 wait for the missing parts. Catalog hook belongs to Hands and can be granted only after that lane releases it. No runtime model, game code, source fabrication or protected audio edit."
+    sequencing: "Kyle picked A as starting parts only. Source search and inspection may proceed; fitting and ARENA-07 wait for the missing parts. Hands has released its unchanged catalog hook while paused; this stopped card has no catalog ownership. A new approved source card must claim hooks before editing. No runtime model, game code, source fabrication or protected audio edit."
     acceptance:
       - "Find actual existing licensed CC0 parts for a separate trailer/frame/hitch, three fuel valves and an opening boarding hatch around the picked Kenney delivery-flat plus horizontal detail-tank. Verify original embedded rights, source hashes and actual geometry; a complete existing trailer may come from another free pack. Do not claim kit sample columns or boxes already supply a finished articulated trailer."
       - "Retain one bounded comparison and matching review with a recommendation and explicit remaining gaps; stop waiting_on: kyle before adaptation. Existing placement/source validators and independent review plus lane/build floor apply. If free sources and this laptop cannot meet acceptance, write why and stop for Kyle; never fabricate a finished substitute."
@@ -857,13 +863,14 @@ tasks:
     size: M
     needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
     status: review
-    review_commit: 53e67964fb3e5c1f2a2c75d4ca087b1b8306cb08
+    review_commit: 96aaa2a444080efb518d2e76cf4afa9fa25807ac
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run
     owns: [src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/replays/arena-fuel-run-controls.json, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md]
     hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js, src/combat-ai.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-feature-flags.mjs]
     waiting_on: claude
+    review_note: "Clean96aaa2a adds factual narrow-review notes only to source53e6796. Focused68/68, code10checks/162assertions and SaveGuardian77/77 plus six actual memory-App probes clear stale durable launch and event-owned render cache. Whole-feature contact/browser/audio/look/floor still wait for Claude design merge. No final feature clearance."
     design_question: "Actual on-foot Fuel carrier is currently immune to car projectiles. Claude must settle bolt damage, bomb splash and cargo-drop behavior before that contact code; chase and aim fixes follow the settled carrier rule now."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     sequencing: "Tests first in owned files now. Production App and screen-arena edits wait for WAR-PAY merge; held ARENA-STEER App demo hook is deferred until Fuel merges. No config, driving, pilot or crate-test ownership. Future Arsenal waits Fuel feature/render/audio hooks. Protected sound-bank/catalog/assets remain untouched: explicit fuel events reuse authored interface.bonus, vehicle.landing, interface.go cues. SPEC0.12 adds fuel-run:dev plus scrapdome/discovery/rank6 gates; Last Car Rolling unchanged."
@@ -2726,12 +2733,13 @@ tasks:
     size: S
     needs: []
     status: review
+    review_commit: ae4c168bf6d8202f6d163e63e849298e6e3d1c4d
     waiting_on: kyle
     claimed_by: codex-director-2026-09-30-resume
     flag: scrapdome
     owns: [tools/test-arena-steering.mjs, tools/replays/arena-steering-controls.json, tools/scenarios/arena-steering.mjs, docs/changes/ARENA-STEER.md]
     hooks: [tools/test-arena-event.mjs, src/config.js, src/sim-driving.js, src/arena/arena-pilot.js]
-    hold_reason: "Automatic approval rejected isolated crate timing fixture despite independent technical approval; explicit user test authorization is pending. Clean checkpoint1c06417 retains the regression, no weakened assertion. App demo authority hook is deferred to Fuel Run after WAR-PAY; this lane does not edit App until Fuel merges or its hook is released."
+    hold_reason: "Current clean ae4c168 adds verdict/evidence cleanup only to source1c06417. Automatic review still requires explicit user crate-fixture authorization; no assertion edit ran. Claude ceiling draft remains in its unmerged design lane; retest unchanged crate fixture after that design lands. App demo hook waits Fuel. No lane/build or merge clearance."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     sequencing: "One lane before ARENA-SHOVE and ARS-CORE: driving hooks are exclusive. App demo hook waits for WAR-PAY if needed. Road and Titan handling stay unchanged."
     acceptance:

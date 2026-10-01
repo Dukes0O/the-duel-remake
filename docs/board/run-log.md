@@ -1241,3 +1241,39 @@ is fixed; tests-first evidence then inspect actual existing licensed parts.
 No fabrication, adaptation, runtime edits or catalog ownership is granted;
 Hands retains catalog. Stop with explicit gaps/waitingKyle if tools/free
 sources cannot meet acceptance.
+
+## 30 September 2026, Director: end sweep and handoff
+
+Hands stops after two rounds without resemblance gain. Independent scores
+remain 1/5 for resemblance and grip for every crew, despite 70/70 mechanical
+tests. Current hands stay; clean 34e914b retains sheets, verdicts and recipes.
+Tanker Parts retains one reviewed sheet at clean 0ace07d, source 6b613fed.
+Valves are available; trailer, frame, hitch and boarding hatch remain missing.
+Its 56 checks give 52 passes and four genuine gap failures. The alternate-
+folder provenance bug is fixed tests first. Neither lane is merge-ready.
+
+Janitor: removed 1,550 reviewed evidence/QA files, 1,450,065,875 bytes before
+to zero after, plus four empty directories. Raw evidence: 796 files and
+456,356,023 bytes. Four QA builds: 754 files and 993,709,852 bytes. Kept five
+unmerged lanes, recipes, verdicts, original licensed files and current assets.
+Folded settled tanker/women inbox facts into current records and removed
+those consumed handoffs. Protected audio, Kyle and Claude branches stay.
+
+Final audit skips audio worktrees; an earlier default audit read their Git
+status only, then the exclusion was corrected. Before final metadata: 1,155
+tracked files, 258,886,952 bytes; 48 advisory runtime candidates, no unused
+modules or removed-feature tests. DISC holds uncertain removals. Runtime
+236,249,990 bytes, Wasteland 78,998,200 bytes and looks 10,712,857 bytes
+are unchanged. Existing Titan 14,295,108-byte and ordinary 2,288,190-byte
+files remain above advisory targets. Retained private recipes explain real
+growth; no new runtime asset is installed.
+
+Handoff: wait for Claude's design merge from protected 7e3bd200 before Fuel
+contact code. Fuel 96aaa2a/source 53e6796 has narrow launch/cache/save
+clearance only. Steering ae4c168/source 1c06417 keeps all crate assertions;
+retest them after the ceiling design lands. Its App hook waits Fuel. Crew
+fit stays 59a5b99; hands and tanker decisions wait Kyle. STATUS is refreshed.
+Run the final full/build on the clean final commit; the ledger holds the
+exact result. D8 push awaits explicit approval of the verified GitHub
+destination and committed payload after automatic rejection. Never retry
+without approval. No Director release, history rewrite or real save access.

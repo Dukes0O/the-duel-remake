@@ -1,24 +1,49 @@
 # Wasteland play-test inbox
 
-## Claude: tanker source comparison stops at missing trailer parts, 30 September
+## Claude and Kyle: hands attempt stops after two rounds, 30 September
 
-ART-SRC-TANKER source-only freeze is clean 764967db. Please review the [comparison](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/docs/board/looks/tanker-src/round-1.jpg) and show Kyle. A recommends the actual Kenney delivery-flat cab/bed (2574 triangles) with the horizontal Industrial detail-tank (310); B uses truck-flat (2488). Both original archives contain verified CC0 licenses. The sheet also shows the actual approved Salt Flats salvage donors. No game assets changed.
+The independent critic inspected all 320 matched round-two captures, all eight
+crew members and both qualities. Aiming distortion and the unused arm are
+fixed, but resemblance stays1/5 and tool contact1/5 for every crew. Palms
+collapse, wrists look hollow and fingers fail to form a convincing grip.
+Current hands look better. Kyle's two-round no-gain rule stops this attempt.
 
-These are trim/combine leads only: neither supplies a separate trailer/frame/hitch, valves or opening boarding hatch. Kyle picked A as starting parts only. The comparison records are merged; ART-SRC-TANKER-PARTS now searches for the missing parts and ARENA-07 waits for it. Fitting stays paused until the gaps are resolved. No fitting, invented connector geometry or finished-convoy claim is approved. Independent source review and the lane 306/306/build floor now pass on clean 764967db. Source records are merged and the catalog is released; Kyle's A choice is recorded and the missing-part fitting stop remains.
+Please show Kyle [round2](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/hands-fit/docs/board/looks/hands-fit/round-2.jpg)
+and its matching review. Clean34e914b retains both rounds, recipes and tests.
+Mechanical 70/70 does not clear the visual failure. Kyle chooses keeping
+current and closing this attempt or a new approved source/fitting card. No
+third round, install or merge is claimed. The unchanged catalog is released.
 
-## Claude: Fuel Run fighter projectile rules needed, 30 September
+## Claude and Kyle: tanker parts remain incomplete, 30 September
 
-Independent review used actual F exit and fuel pickup on seed 1989. A hunter chased the parked car, 52.55 m from the carrying fighter; its crossbow aimed 109.602 degrees away from the fighter. Those chase and aim bugs will be fixed under the settled rule that hunters pursue the carrier. A real bolt then swept through the fighter's torso without a hit: health stayed 110, fuel remained carried and the bolt stayed live. Current projectile contacts enumerate cars; vehicle sweeps already knock fighters down and drop fuel.
+The independently reviewed [parts sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/tanker-parts/docs/board/looks/tanker-parts/round-1.jpg)
+retains Kyle's A cab/tank choice and a genuine valve donor for three targets.
+The truck's cab/chassis/trailer share one body mesh; the opening building
+door does not establish a suitable boarding hatch. Separate trailer, frame,
+hitch and hatch remain missing. Original rights and native geometry are
+verified. The inspection-folder provenance bug is fixed tests first.
 
-Please settle the missing contact rules in writing: how much damage a car crossbow bolt deals to a fighter, whether car bomb splash affects fighters and by how much, and whether a surviving fighter drops cargo on a hit or only on knockdown. Fuel's settled drop rule names more than 25 armor in one car hit; it does not name fighter health thresholds. We will keep the parked car's physical hitbox, use a separate actual fighter aim pose, and wait for your decision before adding fighter projectile damage. No temporary invulnerability or invented damage values will be merged.
+Clean0ace07d retains the334548-byte comparison, source recipe and verdict.
+Tests 56:52 pass/four genuine gap failures. This clears stop records only, not
+readiness, fitting, a lane/build floor or ARENA-07. Kyle chooses another
+bounded existing-parts search or a Claude revision of the convoy art plan.
+Both source cards' settled earlier picks and rights remain in the board,
+decisions, catalog and change notes; consumed inbox handoffs are removed.
 
-The proposed 0.75-second original-carrier pickup delay is withdrawn. A test will enforce the literal rule that anyone can recover dropped fuel.
+## Claude: Fuel Run contact design merge still needed, 30 September
 
-## Women source records merged; Kyle keeps current crew, 30 September
+Hunter chase and crossbow aim now use the actual carrying fighter, while the
+parked car retains its physical hitbox. The fighter still has no car-projectile
+contact rule. Your draft is in lane/docs/fighter-rules at7e3bd200; please hand
+its settled design to integration before the dependent contact code starts.
+No damage numbers, cargo-drop rules or four-metre depot change from that
+unmerged draft have been implemented. Anyone can recover dropped fuel; the
+withdrawn original-carrier delay remains absent.
 
-ART-SRC-CREW-W source records are merged from clean d6cd763. Kyle keeps current Nell, Odessa and Wren. [Comparison](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/docs/board/looks/crew-w-src/round-1.jpg), 376150 bytes. Two actual downloaded CC0 choices are inspected: Universal Base Standard (15060 triangles,65bones,no embedded actions; free Standard only) and Kenney Survivors (1604triangles,58bones,three motion clips). Both lack the settled four crew silhouettes and full actions, so the recommendation is to keep current women and find compatible garment/action parts. Requested Modular Women is ON HOLD: its pack page says CC0, current general page says QAL, and actual model/license downloads returned quota HTML. No rights or shared-rig claim is made for that pack; existing cached CC0 rights are unchanged. Current Nell/Odessa/Wren are byte-identical; no Vesper placeholder or fitting occurred.
-
-Kyle has chosen to keep the current women. Independent source review, lane 306/306 and build pass for these records. No new-source adaptation or runtime replacement is approved. The later figure card covers only Vesper under Claude's settled scope. The detailed note and catalog retain exact primary URLs, hashes and access findings.
+Held ARENA-03 is clean commit 96aaa2a, source commit 53e6796. The durable rank/discovery
+launch gate and event-owned render cache have independent code and save
+clearance only. Final contacts, fresh browser/gameplay/sound/look and the
+whole lane/build floor remain. Current status is in the board and change note.
 
 ## Claude: Mirage build dependency and early reward, 30 September
 
