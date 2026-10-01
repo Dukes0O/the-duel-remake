@@ -18,7 +18,10 @@ sources and licence records stay in the catalog and external art library.
 - Keep the rigid model at 11 m long and 3.5 m tall. No race or save rule changes.
 
 The actual renderer comparison, including a chase view 30 m behind a car,
-is running against the exact private model and manifest pins. Round three is final. Claude chooses the better of
+uses the exact private model and manifest pins. Its first attempt captured nine
+High yard views, then the chase fixture timed out after advancing before visual
+readiness. The Director corrects that fixture before recapturing the same model.
+Round three is final. Claude chooses the better of
 rounds two and three for Kyle; no public installation or merge is cleared here.
 
 ## Tests
