@@ -68,6 +68,14 @@ export async function run(context) {
       const select = document.querySelector('#graphics-quality');
       select.value = '${quality}'; select.dispatchEvent(new Event('change', {bubbles: true}));
       const app = window.__qaApp;
+      app.addPlayer('Arsenal QA Rank One');
+      app.profile = {...app.profile, wasteland: {...app.profile.wasteland, discoveredGate: true, scrap: 3000}};
+      app._saveProfile();
+      if (app.purchaseArsenalWeapon('oil').ok) throw Error('Rank one bought rank-two Oil');
+      app.profile = {...app.profile, wasteland: {...app.profile.wasteland, xp: 400}};
+      app._saveProfile();
+      if (app.profile.wasteland.rank !== 2 || app.purchaseArsenalWeapon('smoke').ok)
+        throw Error('Rank two bought rank-six Smoke');
       app.addPlayer('Arsenal QA Unseen');
       app.profile = {...app.profile, wasteland: {...app.profile.wasteland, xp: 3500, scrap: 3000}};
       app._saveProfile();
