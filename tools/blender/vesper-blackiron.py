@@ -168,7 +168,13 @@ def fit_in_blender(root, fit, output, document, binary):
     rng = np.random.default_rng(fit["costume"]["seed"])
     variation = rng.uniform(-.018, .018, (1024, 1024)).astype(np.float32)
     luminance = np.clip(original[:, :, :3] @ np.array([.2126, .7152, .0722]), 0, 1)
-    shade = np.clip(.58 + luminance * .74 + variation, .48, 1.16)
+    local_mean = (np.roll(luminance,2,0)+np.roll(luminance,-2,0)+
+                  np.roll(luminance,2,1)+np.roll(luminance,-2,1))*.25
+    folds = luminance-local_mean
+    # Keep the donor's actual seams and fold contrast in the charcoal finish.
+    shade = np.clip(.32+luminance*1.85+folds*.70+variation, .22, 1.78)
+    steel_shade = np.clip(.82+luminance*.48+folds*.35+variation, .72, 1.30)
+    red_shade = np.clip(.68+luminance*.78+folds*.45+variation, .55, 1.42)
     cloth = yy >= settings["preserveFaceThroughRow"]
     steel = np.zeros((1024, 1024), dtype=bool)
     red = np.zeros_like(steel)
@@ -195,13 +201,19 @@ def fit_in_blender(root, fit, output, document, binary):
     first, last = settings["beltRows"]
     leather = boots | ((yy >= first) & (yy < last))
     color[leather, :3] = np.asarray(palette["leather"]) * shade[leather, None]
-    color[steel, :3] = np.asarray(palette["blackenedSteel"]) * shade[steel, None]
-    color[red, :3] = np.asarray(palette["darkRed"]) * shade[red, None]
+    color[steel, :3] = np.asarray(palette["blackenedSteel"]) * steel_shade[steel, None]
+    color[red, :3] = np.asarray(palette["darkRed"]) * red_shade[red, None]
     # Sparse deterministic rubbed scratches and dust are albedo detail, never
     # painted specular highlights. Real reflectance lives in the surface atlas.
-    scratches = steel & ~red & (np.mod(xx * 19 + yy * 7, 241) < 2)
-    color[scratches, :3] = np.asarray(palette["wear"]) * .63
-    dust = np.clip((yy / 1024) ** 4 * .033, 0, .033)
+    bare_steel = steel & ~red
+    inner_steel = (bare_steel & np.roll(bare_steel,2,0) & np.roll(bare_steel,-2,0) &
+                   np.roll(bare_steel,2,1) & np.roll(bare_steel,-2,1))
+    worn_edges = bare_steel & ~inner_steel & (np.mod(xx*7+yy*13,29)<18)
+    scratches = bare_steel & (np.mod(xx * 19 + yy * 7, 241) < 1)
+    color[scratches | worn_edges, :3] = np.asarray(palette["wear"]) * .88
+    # Dust follows original light wear patches and the existing lower garment,
+    # rather than flattening every cloth pixel with a uniform brown wash.
+    dust = (yy/1024)**4*.018+np.maximum(0,luminance-.48)*.048
     color[cloth, :3] += dust[cloth, None] * np.array([.67, .53, .36])
     color[:, :, :3] = np.clip(color[:, :, :3], 0, 1)
     color[:, :, 3] = 1
@@ -209,13 +221,13 @@ def fit_in_blender(root, fit, output, document, binary):
     surface = np.ones((1024, 1024, 4), dtype=np.float32)
     surface[:, :, 1] = .90 + variation
     surface[:, :, 2] = 0
-    surface[steel, 1] = .64 + variation[steel]
-    surface[steel, 2] = .72
+    surface[steel, 1] = .52 + variation[steel]
+    surface[steel, 2] = .70
     surface[red, 1] = .84 + variation[red]
     surface[red, 2] = .12
     surface[leather, 1] = .79 + variation[leather]
-    surface[scratches, 1] = .76
-    surface[scratches, 2] = .47
+    surface[scratches | worn_edges, 1] = .70
+    surface[scratches | worn_edges, 2] = .45
 
     fitted_images = {}
     for role, array in (("color", color), ("surface", surface)):
