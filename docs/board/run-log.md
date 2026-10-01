@@ -1465,3 +1465,13 @@ road controls; reviewer follows. Three free save transaction hooks are granted
 only now, ahead of UI/combat wiring, with all16SAVE REDs and Save Guardian
 stillrequired. Salt Flats keeps independent source/native/runtime REDs and
 newfrozen Scrapdome control; no art/scenario/frame/heat or merge pass invented.
+
+AUD-CRASH-PEAK tests-only freeze 8494081 records six real final-output peak
+failures on unchanged a6523ea. Native non-Fuel, Fuel and overlap captures
+retain actual cue mapping, timing, contrast, quiet-reference and cleanup.
+Repair stays in Fuel's lane; bank/assets and external audio ownership stay
+protected. Fresh source, independent review and mandatory gate evidence will
+follow; no waiver or current merge clearance is recorded. Core geometry
+review clears 5604703. Pure save transactions continue under their three
+granted hooks; the two named-player raw-profile fixture mismatches need
+independent review before any test correction.

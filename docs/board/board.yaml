@@ -12,6 +12,7 @@ tasks:
     size: S
     needs: []
     status: building
+    test_commit: 8494081e234c997c3879de50dd792af30e1bb89c
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arena-03-fuel-run
     owns: [tools/test-audio-crash-peak.mjs, tools/scenarios/audio-crash-peak.mjs, src/audio-output.js, docs/changes/AUD-CRASH-PEAK.md]
@@ -22,6 +23,7 @@ tasks:
       - "Reproduce actual car contact behind the current engine mix with memory-only saves/private port and record RED: nonFuel samplepeak-0.049dBFS/truepeak+0.22dBTP, also Fuel-0.087/+0.15. Source gain/limiting repair meets clean-signal samplepeak<=-1dBFS and advisory truepeak<=-1dBTP with actual contact and appropriate overlapping-voice controls. Keep impact contrast, engine audibility, existing event mapping, timing and old assertions. Native browser/audio capture before and after; flag human listening rather than invent ratings."
       - "Required lane/build and independent review before merge; no release, Preview, real saves, source-audio fabrication or protected external audio inspection."
 
+    test_verdict: "Native unchanged a6523ea output has six real sample/true-peak failures across nonFuel, Fuel and overlapping blasts. Actual final output, cue/event/onset, contrast, quiet reference and cleanup controls pass. Tests-only clean8494081; no source repair or gate clearance yet."
   - id: ART-KEEP-VALVE-DONOR
     title: "Keep the verified CC0 convoy valve donor after closing the trailer search"
     owner: codex

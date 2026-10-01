@@ -9,19 +9,17 @@
   the basic resolver; the optional attack-context question remains for the
   consumer routes and decoy range. All existing geometry/save controls stay.
 
-- Fuel final audio at clean4a60b99 proves actual pickup/drop/delivery/result
-  mapping and scoped onsets within30ms, with no human listening claim.
-  Existing crash overload is reproduced by an identical60mph Last Car Rolling
-  contact with no Fuel cues: sample-0.049dBFS/true+0.22dBTP. Fuel is-0.087/+0.15;
-  suppressing only landing still overloads, so added Fuel feedback is not the
-  necessary cause. AUD-CRASH-PEAK records that separate audio-owner follow-up.
-  Pickup/delivery UI is14–16/10dB below full-throttle engine: listen flag,
-  not a blanket weapons-only+6dB violation. Final delivery/win onsets overlap;
-  no full-audio clean pass is claimed. Private recordings/graphs/recipe are
-  .lanes/arena-03-fuel-run/.evidence/2026-09-30/ARENA-03/audio-final-4a60b99/VERDICT.md.
-  Please review disposition with the existing peak debt retained. The latest
-  lane finds only the exact old switch catalog expectation; its narrowly
-  reviewed new dev entry/control correction and fresh gate are next.
+- Fuel's runtime, browser, save review and exact a6523ea lane/build clear.
+  The sound gate is held for a shared output repair, not a Fuel cue redesign.
+  Tests-first AUD-CRASH-PEAK freeze 8494081 reproduces actual non-Fuel and
+  Fuel contacts plus overlapping blasts above the peak limits. Final-output
+  routing, event mapping, onset, contrast, quiet-reference and cleanup controls
+  pass. The repair shares Fuel's lane with exclusive audio.js ownership.
+  No protected bank, source or asset changes are authorized. Fresh native
+  capture and review must clear the repair before Fuel merges. Kyle's listening
+  flags remain for quiet pickups and simultaneous final delivery/win cues.
+  The existing exact switch catalog expectation was corrected independently;
+  every prior assertion remains. No sound or whole-feature pass is claimed.
 - ARENA-SHOVE question: a car exactly pinned to the outer solid wall and
   rammed straight outward has no allowed displacement along that normal.
   The universal1.5/4m minimum conflicts with containment there. Tests cover
