@@ -769,3 +769,48 @@ writeFileSync(join(scratch,'round2-scale-witness.json'),JSON.stringify({
 console.log('Convoy tanker round2 scale: '+tankerScaleVerdicts.length+' checks, '+
   (tankerScaleVerdicts.length-tankerScaleFailures)+' passed, '+tankerScaleFailures+' failed.');
 if(tankerScaleFailures)process.exitCode=1;
+
+// Claude's final round tests measure the loaded target and beacon geometry.
+// Material colour, weathering, stripes and readability are judged in pictures.
+const finalRoundStart=checks.length;
+check('round3 native red handwheels are about .6m across and face outward',async()=>{
+  const data=await candidate();
+  for(const {row,node} of nativePart(data,'valve')){
+    const wheels=meshList(node).filter(mesh=>(Array.isArray(mesh.material)?mesh.material:[mesh.material])
+      .some(material=>material.name==='hazard-red-controls'));
+    assert.ok(wheels.length,row.node+': loaded native handwheel geometry');
+    const bounds=new THREE.Box3();for(const wheel of wheels)bounds.union(boxOf(wheel));
+    const size=bounds.getSize(new THREE.Vector3());
+    assert.ok(size.y>=.5&&size.y<=.7&&size.z>=.5&&size.z<=.7,
+      row.node+': actual outward handwheel must span about .6m in Y and Z; measured '+JSON.stringify(size.toArray()));
+    assert.ok(size.x<=.15,row.node+': actual handwheel plane must face outward, not along the rig; thickness '+size.x+'m');
+  }
+});
+check('round3 two loaded amber beacon assemblies are about .4m tall',async()=>{
+  const data=await candidate(),lamps=nativePart(data,'warning-lamp');
+  assert.equal(lamps.length,2,'two actual amber beacon assemblies');
+  for(const {row,node} of lamps){const size=boxOf(node).getSize(new THREE.Vector3());
+    assert.ok(size.y>=.35&&size.y<=.5,
+      row.node+': actual .4m beacon plus short post must remain between .35m and .5m; measured '+size.y+'m');}
+});
+check('round3 both native beacons occupy the boarding plate front corners',async()=>{
+  const data=await candidate(),plate=boxOf(nativePart(data,'boarding-plate')[0].node);
+  const span=plate.getSize(new THREE.Vector3()),center=plate.getCenter(new THREE.Vector3());
+  const positions=nativePart(data,'warning-lamp').map(({node})=>boxOf(node).getCenter(new THREE.Vector3()));
+  assert.ok(positions.some(point=>point.x<center.x)&&positions.some(point=>point.x>center.x),
+    'one actual beacon on each side of the native plate');
+  for(const point of positions){
+    assert.ok(Math.abs(point.x-center.x)>=span.x*.3,
+      'native beacon must sit toward its plate side edge, not near the center');
+    assert.ok(point.z>=plate.min.z+span.z*.7&&point.z<=plate.max.z+.1,
+      'native beacon must sit toward the plate front edge, not its center');
+  }
+});
+const finalRoundVerdicts=[];
+for(const {name,run} of checks.slice(finalRoundStart))try{
+  await run();finalRoundVerdicts.push({name,passed:true});
+}catch(error){finalRoundVerdicts.push({name,passed:false,message:error.message});console.error('FAIL '+name+': '+error.message);}
+const finalRoundFailures=finalRoundVerdicts.filter(row=>!row.passed).length;
+writeFileSync(join(scratch,'round3-native-verdict.json'),JSON.stringify({verdicts:finalRoundVerdicts},null,2)+'\n');
+console.log('Convoy tanker final round: '+finalRoundVerdicts.length+' checks, '+(finalRoundVerdicts.length-finalRoundFailures)+' passed, '+finalRoundFailures+' failed.');
+if(finalRoundFailures)process.exitCode=1;

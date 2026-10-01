@@ -1,6 +1,6 @@
 /** Private matched shots in the production yard renderer, never a blank viewer.
  * Stage the cleared native candidate under .evidence/tanker-private-candidate.
- * Round two: camera framing derives from the complete loaded 11 m rig and car.
+ * Round three adds the production chase camera with the rig 30 m ahead.
  * Native source review and Director capture clearance must precede execution.
  */
 import {readFileSync, writeFileSync} from 'node:fs';
@@ -96,19 +96,27 @@ async function browserBundle() {
 }
 
 export async function run(context) {
+  const round=Number(process.env.TANKER_ART_ROUND||2);
+  if(![2,3].includes(round))throw Error('Only approved tanker rounds 2 and 3 are supported');
   const directory = privateDirectory();
   const bytes = readFileSync(join(directory, 'tanker.glb'));
   const manifestBytes = readFileSync(join(directory, 'manifest.json'));
-  if (manifestBytes.length !== 12224 || digest(manifestBytes) !==
-      '6c7949a0e19e0b87cca33c5f8c05cca13eeb73a7b7014a1dc715d059a3c270d8') {
+  if (round===2 && (manifestBytes.length !== 12224 || digest(manifestBytes) !==
+      '6c7949a0e19e0b87cca33c5f8c05cca13eeb73a7b7014a1dc715d059a3c270d8')) {
     throw Error('Round-two comparison requires the exact cleared transform manifest');
   }
   const manifest = JSON.parse(manifestBytes.toString('utf8'));
   const fit = JSON.parse(readFileSync(join(root, 'tools/art/tanker-fit.json'), 'utf8'));
   const catalog = JSON.parse(readFileSync(join(root, 'tools/art/catalog.json'), 'utf8'));
-  if (bytes.length !== 1616912 || digest(bytes) !==
-      'a3ed6fa81dd493983a4b9e07f69216258e2ce048b9849acf9af291ef02823377') {
+  if (round===2 && (bytes.length !== 1616912 || digest(bytes) !==
+      'a3ed6fa81dd493983a4b9e07f69216258e2ce048b9849acf9af291ef02823377')) {
     throw Error('Round-two comparison requires the exact cleared a1ce674 native artifact');
+  }
+  if(round===3){
+    const modelPin=process.env.TANKER_ART_SHA256,manifestPin=process.env.TANKER_ART_MANIFEST_SHA256;
+    if(!/^[a-f0-9]{64}$/.test(modelPin||'')||!/^[a-f0-9]{64}$/.test(manifestPin||'')||
+        digest(bytes)!==modelPin||digest(manifestBytes)!==manifestPin)
+      throw Error('Round three requires Director-cleared model and manifest hashes');
   }
   const {json} = nativeGlb(bytes);
   if (manifest.card !== 'ART-FIT-TANKER' || manifest.seed !== fit.seed) throw Error('Fitting manifest required');
@@ -119,7 +127,7 @@ export async function run(context) {
   const payload = {candidate: bytes.toString('base64'), manifest, sources};
   const bundle = await browserBundle();
   const report = {
-    card: 'ART-FIT-TANKER', round: 2, sourceRef: 'a1ce674134dab9e71a0ac519f1322ecfbecc70b3',
+    card: 'ART-FIT-TANKER', round, sourceRef: round===2?'a1ce674134dab9e71a0ac519f1322ecfbecc70b3':process.env.TANKER_ART_SOURCE_REF,
     artifactSha256: digest(bytes), artifactBytes: bytes.length, stats: manifest.stats,
     manifestSha256: digest(manifestBytes),
     framing: 'Actual loaded native bounds; 48 degree production inspection camera, 14% edge margin. Near/racing include the actual game car. Full frames, no crop.',
@@ -132,7 +140,7 @@ export async function run(context) {
   const saveReport = () => writeFileSync(join(context.outputDir, 'tanker-comparison.json'), JSON.stringify(report, null, 2) + '\n');
   saveReport();
   for (const quality of ['high', 'performance']) {
-    await context.navigate('/tools/menu-check.html?flags=hidden-road,wasteland2');
+    await context.navigate('/tools/menu-check.html?flags=hidden-road,wasteland2,scrapdome');
     await context.waitFor("!!window.__qaApp && !!window.__render && !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value",
       'memory-only tanker comparison menu', 60000);
     await context.waitFor('window.__qaApp.visualReady === true', 'real renderer ready', 60000);
@@ -306,8 +314,61 @@ export async function run(context) {
       return same;
     })()`);
     if (!unchanged) throw Error('Art comparison changed simulation state');
+    if(round===3){
+      // The renderer's production chase camera sees a private rig 30 m ahead.
+      await context.evaluate(`(() => {
+        const app=window.__qaApp;
+        app.cameraMode='chase';
+        if(!app.startArenaEvent({opponents:1}))throw Error('Private production arena did not start');
+        app.stop();app.advance(8);app.stop();
+      })()`);
+      await context.waitFor(`(() => {const app=window.__qaApp;app.onFrame?.(app.duel.state,0);window.__render.renderFrame();
+        return app.duel.state.arena?.phase==='fight'&&app.visualReady&&document.querySelector('#renderer-loading')?.hidden;})()`,
+        quality+' production arena chase ready',60000);
+      const detail=await context.evaluate(`(async () => {
+        const api=TankerArtQa,app=window.__qaApp,view=window.__render;
+        app.stop();delete app.inspectionCamera;
+        const before=JSON.stringify(app.duel.state),state=app.duel.state;
+        const ground=app.duel.course.groundAt(state.s,state.lateral);
+        const carPoint=new api.Vector3(ground.x,ground.y||0,ground.z);
+        const car=view.scene.children.filter(node=>node.visible&&node.userData.vehicleKey===state.car)
+          .sort((a,b)=>a.position.distanceToSquared(carPoint)-b.position.distanceToSquared(carPoint))[0];
+        if(!car)throw Error('Production chase car missing');
+        const heading=car.rotation.y,forward=new api.Vector3(Math.sin(heading),0,Math.cos(heading));
+        const position=car.position.clone().addScaledVector(forward,30);
+        const nearest=app.duel.course.nearest(position.x,position.z,state.s);
+        const support=app.duel.course.groundAt(nearest.s,nearest.lateral);
+        position.y=support.y||0;
+        const raw=Uint8Array.from(atob(${JSON.stringify(payload.candidate)}),value=>value.charCodeAt(0));
+        const model=api.createTankerModel({loadAsset:()=>new api.GLTFLoader().parseAsync(raw.buffer,'')});
+        await model.ready;model.group.position.copy(position);model.group.rotation.y=heading;
+        view.scene.add(model.group);
+        document.querySelectorAll('#race-hud,#modal-layer').forEach(node=>node.style.display='none');
+        for(let i=0;i<24;i++){await new Promise(requestAnimationFrame);view.renderFrame();}
+        const carToRig=Math.hypot(position.x-car.position.x,position.z-car.position.z);
+        const unchanged=before===JSON.stringify(app.duel.state);
+        if(Math.abs(carToRig-30)>.002||app.cameraMode!=='chase'||app.inspectionCamera||!unchanged)
+          throw Error('Normal chase view changed its 30 m placement or simulation');
+        window.__tankerChase={model,state:before};
+        return {cameraMode:app.cameraMode,inspectionCamera:false,carToRigMetres:carToRig,
+          camera:{position:view.camera.position.toArray(),fov:view.camera.fov},
+          car:{key:car.userData.vehicleKey,position:car.position.toArray()},rig:position.toArray(),
+          triangles:view.renderer.info.render.triangles,draws:view.renderer.info.render.calls,stateUnchanged:unchanged};
+      })()`);
+      const name='tanker-normal-chase-30m-'+quality;
+      await context.screenshot(name);
+      report.captures.push({name,quality,version:'candidate',distance:'normal-chase-30m',...detail,
+        limit:'Actual production Scrapdome chase camera and car; the private art rig is 30 m ahead. No Convoy Raid gameplay.'});
+      saveReport();
+      const chaseUnchanged=await context.evaluate(`(() => {
+        const q=window.__tankerChase,same=q.state===JSON.stringify(window.__qaApp.duel.state);
+        q.model.dispose();delete window.__tankerChase;return same;
+      })()`);
+      if(!chaseUnchanged)throw Error('Normal chase art presentation changed simulation state');
+    }
+
   }
-  if(report.captures.length!==18)throw Error('All eighteen matched round-two views are required');
-  report.captureVerdict='All 18 actual-yard views, quality, native bounds, supplied health and simulation state checks passed';
+  if(report.captures.length!==(round===3?20:18))throw Error('All matched art views, including the final-round chase views, are required');
+  report.captureVerdict='All '+report.captures.length+' actual-game views, quality, native bounds, supplied health and simulation state checks passed';
   saveReport();
 }
