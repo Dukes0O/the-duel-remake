@@ -44,8 +44,14 @@ fold detail and worn edges. Same-seed exports repeat exactly. Source/public/save
 code and replay bytes stay unchanged. No assertion or tolerance was changed.
 Candidate, manifest and logs are in .evidence/vesper-round2/ in the lane.
 
-The actual game round-two pictures, frame measurements and Claude/Kyle look
-verdict remain pending. Nothing is installed or revealed by this private leaf.
+All ten actual round-two High and Performance pictures pass with no errors
+or failed requests and two inherited duplicate-Three warnings. The original
+comparison pool releases 29 owned resources once per quality; rendering and
+cleanup preserve the whole Duel state. The independent critic scores every
+assessed visual item four: steel, cloth and the dark red harness now read.
+Source review is clear. Frame timing, motion feel, audio and phone layout remain
+unmeasured. Lane/build gates and Claude's final look verdict are pending.
+Nothing is installed or revealed by this private leaf.
 
 ## Removed
 
