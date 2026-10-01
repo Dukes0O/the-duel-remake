@@ -263,3 +263,75 @@ No browser, audio, heavy lane/full gate or build was run in this module step.
 Nothing replaced or removed. These are new source modules. No stub or native
 consumer bypass is accepted as completion. No real saves, live checkout,
 Preview output, runtime dependency, protected audio/catalog or port was used.
+
+## Independent module review regressions — 30 September 2026
+
+RED source: clean 2ffecc718150c2b9621dea47956376aa628fd79c. This slice appends
+only tests in tools/test-arsenal-core.mjs and this note. It changes no module,
+production hook, original assertion, helper, fixture or replay pin.
+
+The independent review found three failures in the settled body-contact,
+away-from-pool kick and smoke targeting rules. New cases use actual Duel
+cars and the native F exit and fighter movement. They introduce no decoy
+range, upgrade choice or projectile-origin design.
+
+- Rotated contact: a native Falcone at s=500/lateral=0 has half-width 1.02 m
+  and half-length 2.35 m. At crashSpin=PI/2, both a radius-0.05 circle and a
+  0.1-by-0.1 strip 1.685 m course-right touch its long body; the same
+  course-forward placement misses its narrow body. Each real body gets
+  at most one contact over three hazard steps. Nonspinning player/CPU
+  and headingError=PI/2 CPU hit/miss controls pass.
+- Oil direction: the actual player at s=500/lateral=0/slipAngle=0.4 touches
+  oil deployed by the actual CPU at s=503/lateral=-0.1. The kick is +2.2
+  rad/s when the body-relative away direction requires -2.2. The mirrored
+  slip=-0.4/owner lateral=0.1 case fails in the opposite direction.
+  Opposite-side and zero-slip controls pass. Before judging the sign,
+  every case verifies grip 0.35 for 0.7 s, speed 60 to 51 once, unchanged
+  armor, no repeated kick and exactly one native player slip cue.
+- Fighter sightline: the native 48-tick F hold creates the actual RPG
+  fighter. Native left+sprint input for 360 ticks moves it more than 20 m
+  toward camera left and more than 24 m from its parked car. The actual
+  first-person camera follows its x/z; parked car course coordinates stay
+  fixed. A radius-6 cloud around that fighter leaves targetFor incorrectly
+  returning its real rival. A cloud around only the parked car incorrectly
+  returns null although the actual fighter line is clear. Independently
+  checked segment-circle geometry separates those two lines. Unobscured
+  car/fighter targets and smoke away from both points pass.
+
+Commands and measured results:
+
+- node --test --test-reporter=tap --test-name-pattern='^CORE: regression' tools/test-arsenal-core.mjs:
+  19 selected cases, 11 pass, 8 fail, zero skips/TODO; the existing summary
+  prints 166 acceptance checks reached.
+- node --test --test-reporter=tap --test-name-pattern='^CORE:(?! regression)' tools/test-arsenal-core.mjs:
+  all 29 protected original CORE cases pass, 283 checks, zero skips/TODO.
+- Raw-byte comparison against the RED source: all 27,708 original core-suite
+  bytes remain the exact prefix of the appended suite. Their SHA-256 stays
+  55c66d0586b1d0af6826491a8dba7b0c09e715d7995a21a3aef97ccabd9eb3a6.
+- Frozen save suite and both replay-pin SHA-256 values remain identical to
+  the values recorded above. No pins were regenerated. git diff --check passes.
+
+Exact new RED messages:
+
+| New case | Failure message and actual result |
+| --- | --- |
+| Spinning player circle, course-right | spinning player actual long body touches course-right hazard once: 0 !== 1 |
+| Spinning player circle, course-forward | spinning player actual narrow body misses course-forward hazard: 1 !== 0 |
+| Spinning player strip, course-right | spinning player actual long body touches course-right hazard once: 0 !== 1 |
+| Spinning player strip, course-forward | spinning player actual narrow body misses course-forward hazard: 1 !== 0 |
+| Oil slip 0.4, owner lateral -0.1 | oil kick turns away from centre using actual player slip angle: 2.2 versus -2.2 |
+| Oil slip -0.4, owner lateral 0.1 | oil kick turns away from centre using actual player slip angle: -2.2 versus 2.2 |
+| Moved RPG fighter, cloud at fighter | moved actual RPG fighter inside smoke has no target: actual real rival, expected null |
+| Moved RPG fighter, cloud at parked car | parked-car-only smoke does not block the moved actual RPG fighter clear line: actual null, expected real rival |
+
+No heavy lane/full gate, build, browser or audio run was made for this RED
+freeze. The already-deferred integration and save tests remain unchanged;
+this slice does not grant hook ownership, whole-card completion or merge
+clearance. A new retained arsenal replay still needs the later ownership
+grant recorded above; this test-only slice preserves the existing pins.
+
+### Removed — independent regression step
+
+Nothing replaced or removed. Only new acceptance cases and their verdict
+were appended. No source, dependency, asset, protected audio file, live
+checkout, Preview output, port or real save was touched.

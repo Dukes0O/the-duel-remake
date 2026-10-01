@@ -462,3 +462,127 @@ test('INTEGRATION: native new weapons remain unavailable before discovery or wit
     eq(duel.fireWeapon('smoke'), false, 'native smoke cannot bypass the discovery/switch gate');
   }
 });
+
+// Independent review regressions, ARS-CORE, 30 September 2026.
+// Append only: the tests-first freeze above remains byte-identical.
+for (const shape of ['circle', 'strip']) for (const axis of ['right', 'forward']) {
+  test('CORE: regression spinning player ' + shape + ' contact on course-' + axis, () => {
+    const duel = race(), player = duel.state, at = point(duel, player);
+    const dimensions = duel._vehicleSpec(player);
+    eq([dimensions.halfWidth, dimensions.halfLength], [1.02, 2.35],
+      'real Falcone body supplies the independently reproduced dimensions');
+    player.crashSpin = Math.PI / 2;
+    const distance = (dimensions.halfWidth + dimensions.halfLength) / 2, hits = [];
+    const dx = axis === 'right' ? Math.cos(at.heading) : Math.sin(at.heading);
+    const dz = axis === 'right' ? -Math.sin(at.heading) : Math.cos(at.heading);
+    api('hazards', 'addHazard')(duel, {kind: 'test', shape,
+      x: at.x + dx * distance, z: at.z + dz * distance,
+      radius: .05, width: .1, length: .1, heading: at.heading, lifetime: 2,
+      onTouch: actor => hits.push(actor)});
+    tickHazards(duel, 3);
+    eq(hits.filter(actor => actor === player).length, axis === 'right' ? 1 : 0,
+      axis === 'right'
+        ? 'spinning player actual long body touches course-right hazard once'
+        : 'spinning player actual narrow body misses course-forward hazard');
+  });
+}
+
+for (const actorKind of ['player', 'cpu', 'turning-cpu']) for (const axis of ['right', 'forward']) {
+  test('CORE: regression body orientation control ' + actorKind + ' course-' + axis, () => {
+    const duel = race(), actor = actorKind === 'player' ? duel.state : duel.state.rival;
+    place(actor, 500);
+    if (actorKind === 'turning-cpu') actor.headingError = Math.PI / 2;
+    const at = point(duel, actor), dimensions = duel._vehicleSpec(actor), hits = [];
+    const distance = (dimensions.halfWidth + dimensions.halfLength) / 2;
+    const dx = axis === 'right' ? Math.cos(at.heading) : Math.sin(at.heading);
+    const dz = axis === 'right' ? -Math.sin(at.heading) : Math.cos(at.heading);
+    circle(duel, actor, {x: at.x + dx * distance, z: at.z + dz * distance,
+      radius: .05, onTouch: body => hits.push(body)});
+    tickHazards(duel, 3);
+    const shouldTouch = actorKind === 'turning-cpu' ? axis === 'right' : axis === 'forward';
+    eq(hits.filter(body => body === actor).length, shouldTouch ? 1 : 0,
+      'native nonspinning/CPU orientation retains its real long and narrow body contacts');
+  });
+}
+
+for (const [slipAngle, ownerLateral, kick] of [
+  [.4, -.1, -2.2], [.4, .1, -2.2], [-.4, .1, 2.2], [-.4, -.1, 2.2],
+  [0, -.1, 2.2], [0, .1, -2.2],
+]) {
+  test('CORE: regression oil away kick at actual player slip ' + slipAngle + ' owner lateral ' + ownerLateral, () => {
+    const duel = race(), player = duel.state, owner = duel.state.rival;
+    place(player, 500); place(owner, 503, ownerLateral);
+    player.slipAngle = slipAngle; player.speedMph = 60;
+    const armor = player.armor, events = [];
+    duel.onChange((_, event) => events.push(event));
+    const oil = api('oil', 'deployOil')(duel, owner), at = point(duel, player);
+    const facing = at.heading + player.headingError + player.slipAngle + player.crashSpin;
+    const side = (at.x - oil.x) * Math.cos(facing) - (at.z - oil.z) * Math.sin(facing);
+    eq(Math.sign(side), Math.sign(kick),
+      'actual rotated player body independently identifies the away-from-pool side');
+    tickHazards(duel, 1);
+    const slick = api('car-effects', 'carEffect')(player, 'slick');
+    ok(slick, 'native already-sliding player really touches this pool');
+    near(slick.remainingSec, .7, 'sliding contact keeps the settled 0.7-second effect');
+    eq(slick.grip, .35, 'sliding contact keeps the settled grip');
+    near(player.speedMph, 51, 'sliding contact slows the actual player exactly once');
+    eq(player.armor, armor, 'sliding contact never damages actual player armor');
+    const firstYaw = player.yawVelocity;
+    tickHazards(duel, 4);
+    near(player.speedMph, 51, 'continued overlap never repeats sliding speed loss');
+    near(player.yawVelocity, firstYaw, 'continued overlap never repeats sliding spin kick');
+    eq(events.filter(event => event.arsenalCue === 'weapon.oil.slip' && event.actor === player).length, 1,
+      'actual player receives exactly one slip cue per pool');
+    near(firstYaw, kick, 'oil kick turns away from centre using actual player slip angle');
+  });
+}
+
+for (const smokeAt of ['fighter', 'parked-car', 'away']) {
+  test('CORE: regression moved native RPG fighter smoke at ' + smokeAt, async () => {
+    const {onFootCameraPose} = await import('../src/onfoot-camera.js');
+    const {segmentCircle} = await import('../src/collision.js');
+    const duel = race(), state = duel.state, select = api('targeting', 'targetFor');
+    eq(select(duel, state), state.rival, 'native car has its ordinary clear-line target before F exit');
+    const parked = point(duel, state), parkedS = state.s, parkedLateral = state.lateral;
+    duel.setInput({interact: true}); for (let i = 0; i < 48; i++) duel.step(DT);
+    duel.setInput({interact: false});
+    eq(state.onFoot, true, 'real 48-tick F hold creates the native RPG fighter');
+    eq(state.footWeapons.selected, 'rpg', 'native fighter carries the actual RPG');
+    const fighter = state.fighter, start = {x: fighter.x, z: fighter.z};
+    const cameraBefore = onFootCameraPose(duel.course, fighter);
+    const forwardX = cameraBefore.target.x - cameraBefore.position.x;
+    const forwardZ = cameraBefore.target.z - cameraBefore.position.z;
+    const forwardLength = Math.hypot(forwardX, forwardZ);
+    eq(duel.setFighterInput({left: true, sprint: true}), true,
+      'actual camera-left sprint input is accepted by the native engine');
+    for (let i = 0; i < 360; i++) duel.step(DT);
+    duel.setFighterInput({left: false, sprint: false, aim: true});
+    const movedCamera = onFootCameraPose(duel.course, fighter);
+    ok(((fighter.x - start.x) * forwardZ - (fighter.z - start.z) * forwardX) / forwardLength > 20,
+      'native left sprint moves over twenty metres toward actual camera left');
+    near(movedCamera.position.x, fighter.x, 'actual first-person camera uses moved fighter x');
+    near(movedCamera.position.z, fighter.z, 'actual first-person camera uses moved fighter z');
+    near(state.s, parkedS, 'real exit and walking leave the parked car course progress unchanged');
+    near(state.lateral, parkedLateral, 'real exit and walking leave parked car lateral unchanged');
+    ok(Math.hypot(fighter.x - parked.x, fighter.z - parked.z) > 24,
+      'native moved fighter is well outside a six-metre cloud around its parked car');
+    place(state.rival, 540); place(state.opponents[1], 600, 5);
+    const target = point(duel, state.rival);
+    eq(select(duel, state), state.rival, 'native moved RPG fighter has an unobscured real target');
+    const center = smokeAt === 'parked-car' ? parked : smokeAt === 'fighter'
+      ? movedCamera.position : {x: fighter.x + 50, z: fighter.z + 50};
+    const smoke = cloud(duel, center, 6);
+    const fighterBlocked = segmentCircle(movedCamera.position.x, movedCamera.position.z,
+      target.x, target.z, smoke.x, smoke.z, smoke.radius);
+    const carBlocked = segmentCircle(parked.x, parked.z, target.x, target.z,
+      smoke.x, smoke.z, smoke.radius);
+    eq(fighterBlocked, smokeAt === 'fighter', 'smoke intersects the actual RPG fighter line only in the fighter case');
+    eq(carBlocked, smokeAt === 'parked-car', 'parked-car cloud is independently distinct from actual fighter smoke');
+    eq(select(duel, state), smokeAt === 'fighter' ? null : state.rival,
+      smokeAt === 'fighter'
+        ? 'moved actual RPG fighter inside smoke has no target'
+        : smokeAt === 'parked-car'
+          ? 'parked-car-only smoke does not block the moved actual RPG fighter clear line'
+          : 'smoke away from actual fighter and parked car retains the native clear target');
+  });
+}
