@@ -1,4 +1,4 @@
-# AUD-CRASH-PEAK — output repair
+# AUD-CRASH-PEAK: output repair
 
 The output repair and existing recorder routing pass all **23 frozen
 native tests and 98 checks**. All three measured sample peaks and true peaks
@@ -454,7 +454,10 @@ engine contrast, actual carried-Fuel drop, Float32 continuity and native
 pause/dispose assertions still pass. The overlap true peak leaves only
 **0.07 dB measured headroom** to the target in this capture. Peak variation
 between native schedules is recorded rather than treated as a guarantee
-for every future mix. No production ceiling or cue was adjusted here.
+for every future mix. This narrow margin is an unresolved robustness concern
+for the Director's independent repeated native stress checks. All frozen
+peak assertions pass in this capture. No production ceiling or cue was
+adjusted here.
 
 A fresh unchanged old-audio rerun passes **460 checks / 617,062 finite
 automation commands**, maximum existing blend swing 6.68 dB. Relevant
