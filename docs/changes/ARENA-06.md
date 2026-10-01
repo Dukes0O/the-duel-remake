@@ -1234,3 +1234,33 @@ Final bounded Source bytes (SHA-256):
 - src/arena/venues/salt-flats.js: 7858 bytes; 80b825bafbf3ad08256bf7373f4dae522f32230f87db812e64ead76994214b97.
 - src/world.js: 13064 bytes; 3c3d4bfb28046c53b42fc99ec1f58284e3148388cac903c735b0b55b162ad5a2.
 - src/render3d.js: 42794 bytes; da1cb83d7765171c633d09504d23ec20bb3c5d546f1b11b898773f2a62c9794c.
+
+## Approved strict inspection warmup fixture (1 October 2026)
+
+Tests only, after Source ownership returned clean b9f99b728bab4befee07d35cbc81a70e24a0284c. Director approved a measured fixture correction, without changing production interpolation or any existing assertion. Only additive code inside the new effects portion of tools/scenarios/salt-flats.mjs and this append-only note changed. All three native test files, the original eight renderer cases, original twelve shots and 10% frame assertions, Source and exact native asset remain untouched.
+
+### Native cause proof before this edit
+
+The read-only browser probe used genuine memory-only App/Duel entry, actual inspection camera and production renderFrame/final-canvas readPixels. A native whole browser-harness runner was imported in memory with only its Node project-root/scenario-import routing changed to an ignored probe. Production module bodies, renderer methods, scene visibility, race clock and pixels were not replaced. The successful probe report means cause diagnosis only, not heat acceptance.
+
+On private port 16824 with Source b9f99b, all six views reached four consecutive draws with exact full-canvas RGBA bytes AND observed camera/light/sky/mesh transforms. Draws after the short original warmup were High Salt 168, Scrapdome 133, road 112; Performance Salt 176, Scrapdome 147, road 127. The maximum bound was 240. Initial actual changed-pixel counts were 834080, 899855, 984135, 911603, 873072 and 994043 respectively, including upper sky, lower road and center regions.
+
+Camera height genuinely converged: High Salt 7.046822894447058 to 7.199999999999998; High Scrapdome 6.97801833136527 to 7.1999999999999975; High road 38.41786868688565 to 38.8851268057668. Performance values and all matrices are retained in the raw report. Sky mesh matrices follow the camera. Sky shader uniforms, fog color/distances and exposure stayed exact; broad lighting fade was not observed. Arena sun intensity 2.1 to 2.0999999999999996 and environment intensity .85 to .8500000000000001 show tiny genuine blend convergence. Actual Duel/Course/HUD stayed identical; zero browser issues/warnings/screenshots and no timing samples. This explains the shared off-repeat blocker without attributing it to Salt heat.
+
+### Additive fixture contract and unexecuted checks
+
+Before projecting nearby/far geometry masks, the fixture now makes genuine heat-OFF, presentation-time-10 draws at the same fixed inspection and Source settings. It allows at most 240 draws and requires four consecutive exact full-canvas RGBA byte arrays AND exact presentation snapshots. Snapshots observe real camera matrix/projection/pose, light matrix/color/intensity/target, mesh visibility/matrices/geometry attribute versions, actual material properties/textures/uniforms including sky, fog, environment and exposure. Input snapshots require the actual inspection, camera mode, quality, mood, flag query, frozen Duel state, canvas dimensions and pixel ratio to stay exact. No numeric tolerance or image-difference threshold was introduced. Failure to converge remains a hard fixture limit.
+
+An explicitly labelled changing-input negative DATA fixture performs one genuine production off draw with the actual inspection height temporarily shifted by 1m. The warmup must refuse changed input; finally restores the exact original height, then ordinary fixed-input convergence runs. This is a camera-fixture observation, not a geometry margin or race rule. No mocked renderer return, fabricated unstable image or hidden scenery is used. Never-settling input retains the hard 240-draw refusal; no fake Source instability was added to exercise it.
+
+Every pre-existing scenario byte reconstructs exactly by removing only the new insertions. All original strict off-repeat, same-time repeat, tint-only negative, distant displacement/motion, near-car/road, ordinary-venue, HUD/state/RNG and disposal assertions remain byte-for-byte. Warmup receipts are retained even when a later assertion fails. The expanded full-material snapshot, changed-input negative and post-warmup tint/displacement checks are UNEXECUTED at this freeze and need independent actual browser validation. They are not asserted passing from the narrower read-only probe.
+
+### Quiet window, evidence and remaining gates
+
+Root's Shove timing window started before this edit. Only small reads, writes, static syntax/diff checks and the scoped fixture commit run during the window. No browser, native suite, build, image batch or timing job ran after that instruction. Future functional jobs require Root's window release; fresh matched 180-RAF frame measurement also requires its own agreed quiet window. Default no-argument production rendering is untouched.
+
+Preserve the six original Source 36878 off-repeat failures and all earlier missing-seam attempts. Complete cause probe, runner provenance, actual native transform/pixel-region report and summary live in integration .evidence/2026-10-01/ARENA-06/effects-tests/warmup-cause/. Original/new byte receipts and authorized insertion recipe live in effects-tests/warmup-fixture/. No new heat displacement, tint detector, frame, motion, art round, look, lane/full, whole-card, merge, push or release pass is claimed. Live, Preview, port 5174 and real saves were not used.
+
+### Removed
+
+None. This adds a proved convergence prerequisite before the existing strict acceptance. Production interpolation and the short branch-compile warmup remain unchanged. Existing assertions, source assets, donor lineage, physical Course and replay pins are retained.

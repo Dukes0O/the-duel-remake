@@ -77,6 +77,83 @@ function causalSaltPixels({venue}) {
   const protectedPixels = new Set(), farPatches = [], native = r.scene.getObjectByName('Salt Flats');
   const materialRefs=[],diagnosticMaterials=[],disposed=new Map();
   try {
+  // Native cause proof shows the ordinary camera/light interpolation needs
+  // real draws to converge even when ambient time is fixed. Observe it; never
+  // snap Source transforms, loosen pixel equality or hide scene objects.
+  function observed(value) {
+    if(value?.isTexture)return {texture:value.uuid,version:value.version,matrix:value.matrix?.toArray()};
+    if(value?.toArray)return value.toArray();
+    if(Array.isArray(value))return value.map(observed);
+    if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value)
+      .filter(([,item])=>typeof item!=='function').map(([key,item])=>[key,observed(item)]));
+    return value;
+  }
+  function actualPresentationSnapshot() {
+    const lights=[],meshes=[],materials=new Map();
+    const materialKeys=['uuid','type','version','visible','color','emissive','emissiveIntensity',
+      'opacity','transparent','alphaTest','side','fog','roughness','metalness','envMapIntensity',
+      'toneMapped','depthTest','depthWrite','wireframe','blending','uniforms'];
+    r.scene.traverse(node=>{
+      if(node.isLight)lights.push({id:node.uuid,type:node.type,matrix:node.matrixWorld.toArray(),
+        color:node.color.toArray(),ground:node.groundColor?.toArray(),intensity:node.intensity,
+        target:node.target?.matrixWorld.toArray()});
+      if(node.isMesh) {
+        meshes.push({id:node.uuid,visible:node.visible,matrix:node.matrixWorld.toArray(),
+          geometry:node.geometry.uuid,indexVersion:node.geometry.index?.version,
+          attributeVersions:Object.fromEntries(Object.entries(node.geometry.attributes).map(([key,v])=>[key,v.version]))});
+        for(const material of [].concat(node.material||[]))if(!materials.has(material.uuid)) {
+          const keys=new Set([...materialKeys,...Object.keys(material).filter(key=>material[key]?.isTexture)]);
+          materials.set(material.uuid,Object.fromEntries([...keys].filter(key=>material[key]!==undefined)
+            .map(key=>[key,observed(material[key])])));
+        }
+      }
+    });
+    return JSON.stringify({camera:{matrix:r.camera.matrixWorld.toArray(),projection:r.camera.projectionMatrix.toArray(),
+      position:r.camera.position.toArray(),quaternion:r.camera.quaternion.toArray(),fov:r.camera.fov},
+      lights,meshes,materials:[...materials.values()],fog:observed(r.scene.fog),
+      environment:r.scene.environment?.uuid,environmentIntensity:r.scene.environmentIntensity,
+      exposure:r.renderer.toneMappingExposure});
+  }
+  function inspectionInputs() {
+    return JSON.stringify({inspection:a.inspectionCamera,camera:a.cameraMode,footCamera:a.footCameraMode,
+      high:a.ambientOcclusionEnabled,mood:a.lightingMood,flagsSearch:location.search,
+      state:d.state,width:gl.drawingBufferWidth,height:gl.drawingBufferHeight,pixelRatio:r.renderer.getPixelRatio()});
+  }
+  function sameRgba(left,right) {
+    if(left.length!==right.length)return false;
+    for(let i=0;i<left.length;i++)if(left[i]!==right[i])return false;
+    return true;
+  }
+  function fixedInspectionWarmup(beforeDraw=()=>{}) {
+    const input=inspectionInputs();let prior=capture(10,false),priorScene=actualPresentationSnapshot(),consecutive=0;
+    const rows=[];
+    for(let draw=1;draw<=240;draw++) {
+      beforeDraw(draw);
+      const next=capture(10,false),nextScene=actualPresentationSnapshot();
+      if(inspectionInputs()!==input)fail('FIXTURE LIMIT: actual fixed inspection inputs changed during warmup');
+      const pixelsExact=sameRgba(prior,next),presentationExact=priorScene===nextScene;
+      consecutive=pixelsExact&&presentationExact?consecutive+1:0;
+      rows.push({draw,pixelsExact,presentationExact,consecutive,cameraY:r.camera.position.y});
+      if(consecutive===4)return {draws:draw,maxDraws:240,requiredExactConsecutive:4,rows};
+      prior=next;priorScene=nextScene;
+    }
+    fail('FIXTURE LIMIT: actual fixed inspection never settled within240 draws; exact RGBA/transforms required');
+  }
+  // Genuine changing-input negative DATA fixture. The actual production draw
+  // sees a changed inspection height; restoring the exact original input is
+  // followed by ordinary convergence, with no renderer method replacement.
+  if(!a.inspectionCamera?.position)fail('Actual fixed inspection camera is required for warmup');
+  const inspection=a.inspectionCamera,originalHeight=inspection.position[1];let rejectedInput=false;
+  try {
+    fixedInspectionWarmup(()=>{inspection.position[1]=originalHeight+1;});
+  } catch(error) {
+    if(!String(error).includes('actual fixed inspection inputs changed during warmup'))throw error;
+    rejectedInput=true;
+  } finally {inspection.position[1]=originalHeight;}
+  if(!rejectedInput)fail('Actual changed inspection negative must be refused by the fixed warmup');
+  const warmup=fixedInspectionWarmup();
+  window.__saltEffectsWarmupReceipt={...warmup,changedInspectionInputRejected:true,
+    originalInspectionHeightRestored:inspection.position[1]===originalHeight,scope:'Fixture convergence only; no heat/frame/art pass'};
   const project = point => {
     const p = point.clone().project(r.camera);
     return {x:(p.x+1)*width/2, y:(p.y+1)*height/2, z:p.z};
@@ -252,6 +329,8 @@ export async function runEffects(context) {
     }
     try {row.diagnosticLifecycle=await context.evaluate('window.__saltEffectsDiagnosticLifecycle||null');}
     catch(error){row.lifecycleReadFailure=error.message;}
+    try {row.warmup=await context.evaluate('window.__saltEffectsWarmupReceipt||null');}
+    catch(error){row.warmupReadFailure=error.message;}
     report.cases.push(row);
     await writeFile(join(context.outputDir,'salt-flats-effects-browser.json'),JSON.stringify(report,null,2)+'\n');
   }
