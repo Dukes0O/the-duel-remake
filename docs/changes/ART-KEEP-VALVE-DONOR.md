@@ -116,3 +116,26 @@ No new game event or sound cue is added.
 None in this tests-first freeze. After the donor record merges, the Director
 removes the replaced tanker-parts lane and branch with plain git worktree
 remove, while preserving the external licensed originals and Kyle’s decision.
+
+## Retained record
+
+The small recipe preserves the reviewed original valve source record. The
+existing Factory catalogue gains only the valve file and its actual
+456-triangle inspection. All earlier catalogue entries and Factory rights,
+files and inspection records keep their frozen fingerprints.
+
+The focused suite now passes all 30 checks, including actual ZIP-member
+bytes and CRC, CC0 commercial-use text, original geometry, and ten corrupt
+or unlicensed negative controls. No runtime asset is fitted or installed.
+The recipe does not claim a complete trailer, hitch, hatch or convoy truck.
+
+The final lane tier and build follow independent review. No new simulation
+event or sound cue is introduced. No player-save or runtime code changes.
+
+## Removed after retaining the donor
+
+The old complete-trailer search is explicitly closed by Kyle. Its lane and
+branch are removed by the integration janitor after this record merges.
+Its four source gaps remain on the closed card; its obsolete readiness test,
+manifest and generated inspection output are excluded from this change.
+External licensed originals, their rights and Kyle's decisions remain.
