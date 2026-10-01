@@ -1,0 +1,234 @@
+import assert from 'node:assert/strict';
+import {test, after} from 'node:test';
+import * as weapons from '../src/weapon-upgrades.js';
+import {createProfile, normalizeProfile, createPlayerRegistry, replacePlayerProfile,
+  loadPlayers, savePlayers, PLAYERS_KEY} from '../src/progression.js';
+import {normalizeWasteland} from '../src/wasteland-progress.js';
+import {availableCarWeapons, getCarLoadout, equipCarWeapon} from '../src/car-loadout.js';
+import {makeRng} from '../src/rng.js';
+
+const STARTERS = ['ufo', 'bomb', 'crossbow', 'star'];
+const ENABLED = {wastelandEnabled: true, arsenalEnabled: true};
+let checks = 0;
+const eq = (a, b, message) => {checks++; assert.deepEqual(a, b, message);};
+const ok = (value, message) => {checks++; assert.ok(value, message);};
+function api(name) {
+  eq(typeof weapons[name], 'function', 'DEFERRED SAVE HOOK: weapon-upgrades.' + name + ' must exist');
+  return weapons[name];
+}
+function career(rank = 2, scrap = 2000) {
+  const profile = createProfile(); let xp = 0;
+  for (let current = 1; current < rank; current++) xp += 400 + 150 * (current - 1);
+  profile.credits = 9000;
+  profile.wasteland = normalizeWasteland({...profile.wasteland,
+    discoveredGate: true, xp, scrap});
+  eq(profile.wasteland.rank, rank, 'the actual rank calculation creates the named rank fixture');
+  return profile;
+}
+function memoryStorage() {
+  const values = new Map();
+  return {getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, String(value)),
+    removeItem: key => values.delete(key)};
+}
+
+test('SAVE CONTROL: fresh and malformed profiles never grant unearned arsenal weapons', () => {
+  eq(weapons.WEAPON_IDS, STARTERS, 'WEAPON_IDS remains the four original starters');
+  for (const value of [undefined, {}, {weapons: {unlocked: null, levels: {oil: 3}}}]) {
+    const saved = normalizeWasteland(value);
+    eq(saved.weapons.unlocked, STARTERS, 'normalization grants only the owned starters');
+    eq(getCarLoadout({wasteland: saved}).length, 4, 'fresh loadout remains exactly four slots');
+  }
+});
+
+test('SAVE CONTROL: old credit-bought starter upgrades retain the larger nested level', () => {
+  const loaded = normalizeProfile({...createProfile(), weapons: {levels: {ufo: 2, bomb: 1}},
+    wasteland: {version: 1, weapons: {levels: {ufo: 1, bomb: 3}}}});
+  eq(loaded.wasteland.weapons.levels, {ufo: 2, bomb: 3, crossbow: 0, star: 0},
+    'legacy owned upgrades migrate without a second charge');
+  eq(Object.hasOwn(loaded, 'weapons'), false, 'legacy weapon field is removed after migration');
+  eq(loaded.wasteland.weapons.unlocked, STARTERS, 'migration grants no arsenal ids');
+});
+
+test('SAVE CONTROL: future Wasteland schemas stay opaque and cannot be written', () => {
+  const future = {...career(), wasteland: {version: 8, discoveredGate: true,
+    weapons: {unlocked: ['ion-cannon'], levels: {'ion-cannon': 9}, future: {kept: true}},
+    loadout: ['ion-cannon'], futureCareer: {kept: true}}};
+  eq(normalizeProfile(future).wasteland, future.wasteland, 'unknown schema remains byte-equivalent');
+  const storage = memoryStorage(), registry = createPlayerRegistry(future);
+  storage.setItem(PLAYERS_KEY, 'sentinel');
+  eq(savePlayers(registry, storage), false, 'older game cannot overwrite a future career');
+  eq(storage.getItem(PLAYERS_KEY), 'sentinel', 'failed save keeps existing raw data');
+  const upgraded = weapons.purchaseWeaponUpgrade(future, 'ufo', ENABLED);
+  eq(upgraded.ok, false, 'future schema blocks even starter upgrades');
+  eq(upgraded.profile, future, 'future upgrade refusal returns the untouched object');
+});
+
+test('SAVE: earned and future weapon ids, levels and nested fields survive normalization', () => {
+  const source = career();
+  source.wasteland.weapons = {version: 1, unlocked: [...STARTERS, 'oil', 'future-cannon'],
+    levels: {ufo: 2, oil: 1, 'future-cannon': 2}, futureWeaponData: {id: 'kept'}};
+  source.wasteland.loadout = ['oil', 'future-cannon', 'crossbow', 'star'];
+  const loaded = normalizeProfile(source);
+  ok(loaded.wasteland.weapons.unlocked.includes('oil'), 'SAVE: earned oil cannot be dropped during normalization');
+  ok(loaded.wasteland.weapons.unlocked.includes('future-cannon'), 'future earned id remains preserved');
+  eq(loaded.wasteland.weapons.levels.oil, 1, 'owned oil level survives');
+  eq(loaded.wasteland.weapons.levels['future-cannon'], 2, 'future weapon level survives');
+  eq(loaded.wasteland.weapons.futureWeaponData, {id: 'kept'}, 'unknown weapon fields survive');
+  eq(loaded.wasteland.loadout, source.wasteland.loadout, 'saved future slot identities are not erased');
+  eq(normalizeProfile(loaded).wasteland, loaded.wasteland, 'normalization stays idempotent');
+});
+
+test('SAVE: a purchased oil weapon costs exactly 400 scrap, retains credits and is idempotent', () => {
+  const source = career(), before = structuredClone(source), purchase = api('purchaseArsenalWeapon');
+  const bought = purchase(source, 'oil', ENABLED);
+  eq(bought.ok, true, 'rank-two discovered player can purchase implemented oil');
+  eq(bought.cost, 400, 'new weapon price is exactly 400 scrap');
+  eq(bought.profile.wasteland.scrap, 1600, 'only scrap pays for the purchase');
+  eq(bought.profile.credits, 9000, 'racing credits stay unchanged');
+  ok(bought.profile.wasteland.weapons.unlocked.includes('oil'), 'purchase persists actual earned ownership');
+  eq(source, before, 'pure purchase never mutates its input profile');
+  const again = purchase(bought.profile, 'oil', ENABLED);
+  eq(again.profile.wasteland.scrap, 1600, 'repeat purchase cannot charge twice');
+  eq(again.profile.wasteland.weapons.unlocked.filter(id => id === 'oil').length, 1,
+    'repeat purchase never duplicates ownership');
+});
+
+for (const condition of ['rank', 'switch', 'discovery', 'balance', 'unimplemented', 'future']) {
+  test('SAVE: arsenal purchase rejects the ' + condition + ' guard', () => {
+    const profile = career(condition === 'rank' ? 1 : 2, condition === 'balance' ? 399 : 2000);
+    const opts = {...ENABLED}; let id = 'oil';
+    if (condition === 'switch') opts.arsenalEnabled = false;
+    if (condition === 'discovery') profile.wasteland.discoveredGate = false;
+    if (condition === 'unimplemented') id = 'future-cannon';
+    if (condition === 'future') profile.wasteland.version = 8;
+    const before = structuredClone(profile), result = api('purchaseArsenalWeapon')(profile, id, opts);
+    eq(result.ok, false, 'guard rejects invalid or unavailable weapon purchase');
+    eq(result.profile, profile, 'refused transaction retains its original profile');
+    eq(profile, before, 'refused transaction cannot consume scrap or ownership');
+  });
+}
+
+test('SAVE: offered arsenal honors oil rank2, smoke rank6, implementation and discovery', () => {
+  const offered = api('offeredArsenalWeapons');
+  const options = {arsenalEnabled: true, implemented: ['oil', 'smoke']};
+  eq(offered(career(1), options), [], 'rank one has no new purchase offers');
+  eq(offered(career(2), options), ['oil'], 'oil first appears at rank two');
+  eq(offered(career(5), options), ['oil'], 'smoke remains hidden before rank six');
+  eq(offered(career(6), options), ['oil', 'smoke'], 'rank six admits smoke');
+  eq(offered(career(30), {...options, implemented: ['oil']}), ['oil'], 'unbuilt smoke is never offered');
+  eq(offered(career(30), {...options, arsenalEnabled: false}), [], 'switch off hides new offers');
+  const unknown = career(30); unknown.wasteland.discoveredGate = false;
+  eq(offered(unknown, options), [], 'undiscovered player sees no arsenal offers');
+});
+
+test('SAVE: earned Dustmonger entitlement unlocks smoke free below rank6 without enabling purchases', () => {
+  const profile = career(1, 0);
+  // Existing receipt shape: version1 career.warlords.<id>.defeated, the same
+  // settled-defeat entitlement that current Sal reward code reads.
+  profile.wasteland.warlords.dustmonger = {defeated: true, wins: 1, losses: 0};
+  const grant = api('rewardArsenalWeapon');
+  const result = grant(profile, 'smoke', {warlordId: 'dustmonger'});
+  eq(result.ok, true, 'existing earned defeat can deliver its implemented weapon early');
+  ok(result.profile.wasteland.weapons.unlocked.includes('smoke'), 'free reward records earned ownership');
+  eq(result.profile.wasteland.scrap, 0, 'reward never spends scrap');
+  eq(result.profile.credits, profile.credits, 'reward never spends racing credits');
+  eq(result.profile.wasteland.rank, 1, 'reward never fabricates rank');
+  eq(grant(result.profile, 'smoke', {warlordId: 'dustmonger'}).profile.wasteland.weapons.unlocked,
+    result.profile.wasteland.weapons.unlocked, 'repeated reward is idempotent');
+  const unearned = career(1, 0);
+  const refused = grant(unearned, 'smoke', {warlordId: 'dustmonger'});
+  eq(refused.ok, false, 'warlord name alone cannot mint a reward without earned defeat');
+  eq(refused.profile, unearned, 'unearned reward keeps the original career');
+});
+
+test('SAVE: new owned weapons use all three existing scrap upgrade prices and stop at level3', () => {
+  let profile = career(6, 2000);
+  profile.wasteland.weapons.unlocked.push('oil'); profile.wasteland.weapons.levels.oil = 0;
+  for (const [level, cost] of [[1, 150], [2, 300], [3, 600]]) {
+    const before = profile.wasteland.scrap;
+    const result = weapons.purchaseWeaponUpgrade(profile, 'oil', ENABLED);
+    eq(result.ok, true, 'SAVE: earned implemented oil can use the existing upgrade transaction');
+    eq(result.cost, cost, 'new weapon uses existing three-level scrap price');
+    eq(result.profile.wasteland.weapons.levels.oil, level, 'upgrade adds exactly one level');
+    eq(result.profile.wasteland.scrap, before - cost, 'upgrade spends exact scrap');
+    eq(result.profile.credits, 9000, 'new upgrade never spends racing credits');
+    profile = result.profile;
+  }
+  eq(weapons.purchaseWeaponUpgrade(profile, 'oil', ENABLED).ok, false, 'level three is the maximum');
+});
+
+test('SAVE: an owned implemented oil equips into four unique slots while a locked weapon cannot', () => {
+  const profile = career(); profile.wasteland.weapons.unlocked.push('oil');
+  ok(availableCarWeapons(profile, ENABLED).includes('oil'), 'SAVE: implemented earned oil becomes available');
+  const result = equipCarWeapon(profile, 0, 'oil', ENABLED);
+  eq(result.ok, true, 'owned oil can enter a saved slot');
+  eq(getCarLoadout(result.profile, ENABLED)[0], 'oil', 'selected new weapon persists in the selected slot');
+  eq(result.loadout.length, 4, 'new weapons never add a fifth slot');
+  eq(new Set(result.loadout).size, 4, 'loadout never duplicates a weapon');
+  eq(equipCarWeapon(profile, 0, 'smoke', ENABLED).ok, false, 'unearned smoke cannot be equipped');
+  eq(equipCarWeapon(profile, 4, 'oil', ENABLED).ok, false, 'an out-of-range slot cannot be equipped');
+});
+
+test('SAVE: starter purchase/equip changes preserve unknown earned ids and fields', () => {
+  const profile = career();
+  profile.wasteland.weapons.unlocked.push('future-cannon');
+  profile.wasteland.weapons.levels['future-cannon'] = 2;
+  profile.wasteland.weapons.future = {curve: [1, 2]};
+  const result = weapons.purchaseWeaponUpgrade(profile, 'ufo', ENABLED);
+  eq(result.ok, true, 'ordinary starter upgrade remains available');
+  ok(result.profile.wasteland.weapons.unlocked.includes('future-cannon'),
+    'SAVE: starter upgrade cannot erase a future earned weapon');
+  eq(result.profile.wasteland.weapons.levels['future-cannon'], 2, 'starter upgrade keeps unknown levels');
+  eq(result.profile.wasteland.weapons.future, {curve: [1, 2]}, 'starter upgrade keeps unknown fields');
+});
+
+test('SAVE: named player purchase, upgrade and equip survive actual registry roundtrip in memory', () => {
+  const first = career(), second = career(), secondBefore = structuredClone(second);
+  let registry = createPlayerRegistry(first);
+  registry.players.push({id: 'player-2', name: 'Second', profile: second});
+  const bought = api('purchaseArsenalWeapon')(registry.players[0].profile, 'oil', ENABLED);
+  eq(bought.ok, true, 'first named player buys oil');
+  const upgraded = weapons.purchaseWeaponUpgrade(bought.profile, 'oil', ENABLED);
+  eq(upgraded.ok, true, 'first named player upgrades owned oil');
+  const equipped = equipCarWeapon(upgraded.profile, 1, 'oil', ENABLED);
+  eq(equipped.ok, true, 'first named player equips owned oil');
+  registry = replacePlayerProfile(registry, 'player-1', equipped.profile);
+  const storage = memoryStorage(); eq(savePlayers(registry, storage), true, 'actual registry writes only memory storage');
+  const loaded = loadPlayers(storage);
+  ok(loaded.players[0].profile.wasteland.weapons.unlocked.includes('oil'), 'purchase survives serialization');
+  eq(loaded.players[0].profile.wasteland.weapons.levels.oil, 1, 'upgrade survives serialization');
+  eq(getCarLoadout(loaded.players[0].profile, ENABLED)[1], 'oil', 'equip survives serialization');
+  eq(loaded.players[1].profile, secondBefore, 'second named career stays unchanged');
+});
+
+test('SAVE: CPU four-slot loadout uses seeded selection and only eligible implemented weapons', () => {
+  const select = api('cpuArsenalLoadout');
+  for (const difficulty of ['easy', 'medium', 'hard']) for (const rank of [1, 2, 6, 30]) {
+    const opts = {implemented: ['oil', 'smoke'], rng: makeRng(1989)};
+    const loadout = select(rank, difficulty, opts);
+    eq(loadout.length, 4, 'every actual CPU policy produces four slots');
+    eq(new Set(loadout).size, 4, 'CPU selection never repeats a weapon');
+    ok(loadout.every(id => STARTERS.includes(id) || id === 'oil' && rank >= 2 || id === 'smoke' && rank >= 6),
+      'CPU only selects rank-eligible implemented starters or wave-one weapons');
+    eq(loadout, select(rank, difficulty, {implemented: ['oil', 'smoke'], rng: makeRng(1989)}),
+      'same seeded generator reproduces CPU loadout');
+  }
+});
+
+after(() => console.log('Arsenal save: ' + checks + ' acceptance checks reached.'));
+
+
+test('SAVE: free warlord reward stays with its named player through registry reload', () => {
+  const first = career(1, 0), second = career(1, 0), secondBefore = structuredClone(second);
+  first.wasteland.warlords.dustmonger = {defeated: true, wins: 1, losses: 0};
+  const registry = createPlayerRegistry(first);
+  registry.players.push({id: 'player-2', name: 'Second', profile: second});
+  const reward = api('rewardArsenalWeapon')(registry.players[0].profile, 'smoke', {warlordId: 'dustmonger'});
+  eq(reward.ok, true, 'the first named career receives its earned reward');
+  const updated = replacePlayerProfile(registry, 'player-1', reward.profile), storage = memoryStorage();
+  eq(savePlayers(updated, storage), true, 'named reward persists using actual memory-only registry storage');
+  const loaded = loadPlayers(storage);
+  ok(loaded.players[0].profile.wasteland.weapons.unlocked.includes('smoke'), 'earned reward survives reload');
+  eq(loaded.players[1].profile, secondBefore, 'unrelated named player receives no free weapon or other change');
+});
