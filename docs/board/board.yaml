@@ -697,12 +697,14 @@ tasks:
     size: L
     needs: [ART-SRC-RUSTWALL]
     status: building
+    waiting_on: claude
     claimed_by: codex-director-2026-09-30-late-resume
     branch: lane/art/rustwall-source-fit
     owns: [tools/blender/rustwall-source-fit.py, tools/blender/rustwall-source-fit.json, tools/test-rustwall-source-fit.mjs, tools/scenarios/rustwall-source-fit.mjs, tools/art/rustwall-fit-sheet.py, docs/board/looks/rustwall-fit/, docs/changes/ART-FIT-RUSTWALL.md]
-    hooks: [public/assets/models/wasteland/rustwall/wall.glb, public/assets/models/wasteland/rustwall/wash.glb]
+    hooks: [src/rustwall-scene.js, public/assets/models/wasteland/rustwall/wall.glb, public/assets/models/wasteland/rustwall/wash.glb]
     helpers: [test_author, reviewer, art_critic, browser_qa]
-    sequencing: "Private candidate first, tests-first source provenance and frozen gate/collision envelope controls. Reuse existing renderer and recipe-only private model substitution; no render3d/App/feature/audio/world-signature edits while Fuel owns them. Catalog stays read-only until the valve donor merge; reclaim an exact adaptation hook before writes. Every comparison goes to Claude (waiting_on: claude); no runtime install or merge before review. Three rounds maximum and stop after two without gain."
+    review_question: "Private source recipe continues. Existing scene tests require procedural joined sections; actual source banks need native geometry. Review a consumer migration that keeps collision/continuity/draw/disposal controls, before old assertions or generator consumers change. See playtest-inbox."
+    sequencing: "Private candidate first, tests-first source provenance and frozen gate/collision envelope controls. Reuse existing renderer and recipe-only private model substitution; no render3d/App/feature/audio/world-signature edits while Fuel owns them. rustwall-scene.js is an exclusive hook: current prepareWash discards imported geometry, so native source banks must be proven in the actual renderer; current assets remain frozen until Claude visual review. Catalog stays read-only until the valve donor merge; reclaim an exact adaptation hook before writes. Every comparison goes to Claude (waiting_on: claude); no runtime install or merge before review. Three rounds maximum and stop after two without gain."
     flag: hidden-road
     acceptance:
       - "Rebuild the Rustwall's salvage face, towers and canyon banks from Kyle's picks in docs/board/looks/rustwall-src, following docs/WASTELAND_ART.md 'Fitting existing models': crushed and burned car hulks, rusted sheet metal and container panels on the existing scaffold, tower supports from the industrial kit, canyon banks from the rock shapes with desert strata. The gate, its opening and every collision envelope stay exactly where they are; world signatures change only with a reviewed visual difference (AGENTS.md)."
@@ -921,8 +923,8 @@ tasks:
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run
-    owns: [tools/test-onfoot-car-contacts.mjs, tools/test-arena-fuel-depot.mjs, src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/replays/arena-fuel-run-controls.json, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md]
-    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js, src/combat-ai.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-feature-flags.mjs]
+    owns: [tools/test-onfoot-car-contacts.mjs, tools/test-arena-fuel-depot.mjs, src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/replays/arena-fuel-run-controls.json, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md, tools/test-fuel-car-attribution.mjs, tools/test-fuel-standing-carrier.mjs]
+    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js, src/combat-ai.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-feature-flags.mjs, src/raiders.js]
     review_note: "Claude fighter contacts and 4 m depot design are merged in ba157a5. Resume with independent red tests for every on-foot fighter; preserve the reviewed durable launch/cache/save source. Whole-feature browser/audio/gameplay/review and exact lane/build gates remain before Claude review and merge."
     design_question_answered: "Claude, 30 September 2026: see docs/CREW.md, Car weapons against fighters on foot. Original question: Actual on-foot Fuel carrier is currently immune to car projectiles. Claude must settle bolt damage, bomb splash and cargo-drop behavior before that contact code; chase and aim fixes follow the settled carrier rule now."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
@@ -930,6 +932,7 @@ tasks:
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Fuel Run, exactly: canisters, depots, dropping, the collector brain, rank 6 unlock (hidden before), pay and hold once per event (Save Guardian). Headless tests and a private browser scenario."
     claude_review: "30 September 2026: rules match SCRAPDOME.md Fuel Run. Settled the open question in docs/CREW.md (car bolt 35 health, splash up to 60 and knockdown inside half radius, cargo drops only on knockdown) and raised the depot pad to 4 m radius. Merge after these, the gates and a browser pass; Kyle checks it in the Preview behind fuel-run (dev)."
+    review_findings: "Independent review at e4c8aee reproduced car-only raider hits falsely awarding on-foot XP and hunters dropping standing carriers after only their parked car wrecks. Rework tests first in the two new owned suites. raiders.js hook is limited to accurate damage-source/award attribution; preserve existing on-foot rewards and recovery. Existing brain/team/CPU aim hooks may recognize real standing Fuel fighters without weakening non-Fuel physical-car eligibility."
   - id: ARENA-04
     title: "Bounty Hunt"
     owner: codex
@@ -2786,13 +2789,14 @@ tasks:
     lane: PHYS
     size: S
     needs: []
-    status: building
-    review_commit: ae4c168bf6d8202f6d163e63e849298e6e3d1c4d
+    status: review
+    waiting_on: claude
+    review_commit: c73ce03a2d1d14148077df56b2093a3c6c3b2e87
     claimed_by: codex-director-2026-09-30-resume
     flag: scrapdome
     owns: [tools/test-arena-steering-ceiling.mjs, tools/test-arena-steering.mjs, tools/replays/arena-steering-controls.json, tools/scenarios/arena-steering.mjs, docs/changes/ARENA-STEER.md]
     hooks: [tools/test-arena-event.mjs, src/config.js, src/sim-driving.js, src/arena/arena-pilot.js]
-    hold_reason: "Design is merged. Resume tests first for the 150 degree/s ceiling. Keep all existing crate assertions; retest the unchanged fixture after implementing the settled ceiling. App edits wait Fuel; use existing memory-only entry or wait for the hook."
+    hold_reason: "Ceiling implementation is frozen; new and protected handling tests pass. Unchanged crate fixture fails after a legal CPU pickup despite all five spawning. See the written fixture-review question in playtest-inbox. No existing assertion changed; review, balance, browser and gates still pending."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     sequencing: "One lane before ARENA-SHOVE and ARS-CORE: driving hooks are exclusive. App demo hook waits for WAR-PAY if needed. Road and Titan handling stay unchanged."
     acceptance:
