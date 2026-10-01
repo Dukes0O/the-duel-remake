@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "capturedCommit": "60c20f0294cc7a0e852d7e9923602ee4c191fffa",
-  "scope": "ARENA-03 pre-build engine controls. Fixed 120 Hz, ten seconds, literal scripted input. Fuel switch off and on must preserve these traces.",
+  "capturedCommit": "664a20726e981aac09ccf809fc26d54a6aeb29f9",
+  "scope": "ARENA-03 current pre-Fuel integration engine controls at 664a207, including reviewed ARENA-STEER 723ad61. Historical capture 60c20f0 predates steering; only Last Car Rolling and Sal hashes migrated after independent native review. Fixed 120 Hz, ten seconds, unchanged literal scripted input. Fuel switch off and on must preserve these traces.",
   "cases": [
     {
       "kind": "road",
@@ -27,12 +27,12 @@
     {
       "kind": "last-car-rolling",
       "seed": 1989,
-      "fingerprint": "0bea25ff94c52712c8ff0de88af58f31a382c91333f2a17f1fc1d5e6cef51d88"
+      "fingerprint": "db8e981b60eb98aa80ba74acccb76fb49be0dc391c472454f7c1ea5b07fbe526"
     },
     {
       "kind": "sal",
       "seed": 1989,
-      "fingerprint": "67c00e4e979986de686266b64cc1d920d491282b7a733657dcfe2cbcd552c5e5"
+      "fingerprint": "78b67f5087f4fbd80c483cc760934e4227e7d57c3ad9bb35884d070a4c68f314"
     }
   ]
 }

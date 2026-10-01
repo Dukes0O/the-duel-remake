@@ -1437,3 +1437,40 @@ Director never launches, modifies or releases the Preview or live game.
 
 No runtime asset, assertion, pin or real save was removed. All current lane
 work is retained until final gates, verdict and ordinary worktree cleanup.
+
+## Reviewed steering baseline migration — 1 October 2026
+
+The Fuel-disabled control failure came from the accepted arena steering change, not a Fuel leak. The old fixture captured the pre-steering engine. Updating the current baseline requires only the Last Car Rolling and Sal hashes and their provenance. Every scripted input, sampling field, assertion, other fixture field and all three road pins remain unchanged.
+
+Independent read-only proof ran the actual frozen game, config and arena modules from Git objects in memory, using the installed native Three math classes. No simulation was mocked, no source was restored on disk and no real save was accessed. The exact source commits were:
+
+- Original capture: `60c20f0294cc7a0e852d7e9923602ee4c191fffa`.
+- Immediate pre-steering integration: `25b4f3900052c7f72eb43fc214f150a9a358a273`.
+- Reviewed steering merge: `723ad61e33bc4f6843bc09ce332b0b345f8ff351`.
+- Current pre-Fuel integration baseline: `664a20726e981aac09ccf809fc26d54a6aeb29f9`.
+- Current Fuel production source: `e182643e1b12e22ed9396d1b9fa1d1a54ab3e1c3`.
+
+Both historical engines reproduce all five old pins. Reviewed steering and current pre-Fuel integration produce the following two current arena pins; the three road pins stay exact:
+
+| Control | Historical fingerprint | Current fingerprint |
+| --- | --- | --- |
+| Last Car Rolling | `0bea25ff94c52712c8ff0de88af58f31a382c91333f2a17f1fc1d5e6cef51d88` | `db8e981b60eb98aa80ba74acccb76fb49be0dc391c472454f7c1ea5b07fbe526` |
+| Sal | `67c00e4e979986de686266b64cc1d920d491282b7a733657dcfe2cbcd552c5e5` | `78b67f5087f4fbd80c483cc760934e4227e7d57c3ad9bb35884d070a4c68f314` |
+
+For all five cases, Fuel source e182643 with the switch off and on matches the current pre-Fuel baseline **byte-for-byte in raw JSON sampled state**. The unchanged script executes 1,200 fixed 120 Hz steps and records ten samples: status, player course position/lateral/speed/time, rival positions/speeds/armor, complete arena state and results. This comparison is independent of hashing the current lane and calling it a baseline.
+
+The steering merge changes only `src/config.js`, `src/sim-driving.js` and `src/arena/arena-pilot.js`: a real-venue-only authority curve and shared player/CPU course argument, with the reviewed 150 degree/s ceiling. Bidirectional **memory-only Last Car Rolling** overlays reproduce exact raw pre/post samples: adding only those three reviewed files to the pre-steering engine produces the current fingerprint; using their pre-steering versions in the post-steering engine reproduces the historical fingerprint. This overlay proof was executed for Last Car Rolling only. Sal's provenance is proved by its native historical/pre-steering/post-steering/current traces and the same three-file source diff; a separate Sal overlay was not claimed. The first changed Last Car Rolling sample is at tick 479: player lateral 9.382307071267054 becomes 9.037269895880518 while speed remains 37.876858383710406 mph and time remains 0.9916666666666656 s.
+
+Independent reviewer `/root/audio_output_source_review` approved exactly these two hashes plus `capturedCommit` and scope provenance after checking the native probe against the frozen inputs and sampled fields. The reviewer independently confirmed that pre-steering to current integration has only the three accepted steering source changes and steering merge to current integration has no simulation source changes. The Director then authorized this narrow fixture migration. The current provenance points to 664a207; this note retains the historical capture and values. No unrelated fingerprint was regenerated or assertion weakened.
+
+Fresh verification on unchanged e182643 production with the migrated fixture: `node tools/test-arena-fuel-run.mjs` exits 0, **68 tests passed, zero failures, skips or TODOs**, 3,503.5568 ms. This includes the unchanged Fuel switch-on/off fingerprint assertion and the actual Fuel carry/refill/delivery/result repeatability control at 30, 60 and 144 FPS. Raw stdout and stderr are retained at `.evidence/2026-10-01/ARENA-03/steering-control-migration/targeted-native.log`. The independent earlier probe was memory-only tool output; it created no retained evidence file. Lane tier, build and full tier have not been run for this migration; the Director owns the next exact gate assignment.
+
+### Fresh browser result and limits
+
+The Director reports the fresh actual e182643 High/Performance Fuel scenario completed **22 images**, with zero console errors, warnings or failed requests. High moving-frame mean is **17.557 ms**, P95 **18.2 ms**; Performance mean is **17.584 ms**, P95 **18.2 ms**. The actual final settlement reports **+240 scrap and hold 35**. The earlier 1b9628e timing numbers remain historical evidence for that earlier source, not the current source's frame result.
+
+The scenario uses labelled placement, held-CPU and whistle fixtures. These captures do not establish natural CPU behavior, human handling feel or a listening verdict. Existing historical HUD overlap and possible carry-cell visual mismatch observations are not declared resolved by these numbers. The authored fighter readiness and settled loading checks improve capture validity; they do not change simulation or remove those review limits. Actual fighter projectile contacts, cargo/drop controls and the 4 m depot boundary remain native simulation proof, not claims inferred from a screenshot. Recorded audio/output checks remain separate evidence, with Kyle's listening flags retained. No Preview was launched and no live game, real save, audio bank or runtime asset was touched.
+
+### Removed — reviewed steering baseline migration
+
+Replaced only the two stale pre-steering arena fingerprints and their old active baseline provenance. Their exact historical values and source commits remain documented above. Kept all three road pins, the complete input/sampling script, every existing assertion and all current game rules. No generated output, runtime path, licensed original or player save was removed. Raw gate evidence remains ignored until its verdict is consumed.
