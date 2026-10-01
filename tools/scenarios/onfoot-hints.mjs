@@ -77,11 +77,11 @@ async function qualityRun(context, quality) {
   const desktop = await layout(context, quality + '-exit-hint-desktop');
 
   // These are production key events; no onFoot state or transition is assigned.
-  await key(context, 'keyDown', 'KeyX', 'x', 88);
+  await key(context, 'keyDown', 'KeyC', 'c', 67);
   await advance(context, 50);
-  await key(context, 'keyUp', 'KeyX', 'x', 88);
-  if (await context.evaluate('window.__qaApp.duel.state.onFoot || window.__qaApp.cameraMode !== "left"'))
-    throw Error('Keyboard X must select the car camera without exiting');
+  await key(context, 'keyUp', 'KeyC', 'c', 67);
+  if (await context.evaluate('window.__qaApp.duel.state.onFoot || window.__qaApp.cameraMode !== "hood"'))
+    throw Error('Keyboard C must step the car camera without exiting');
   await context.evaluate('window.__qaApp.setCamera("chase")');
   await interact(context, true);
   await advance(context, 47);
