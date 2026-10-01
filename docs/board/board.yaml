@@ -782,8 +782,8 @@ tasks:
     sequencing: "Claim after completed Fuel lane cleanup frees one builder slot. Tests first for exact approved delivery-flat/detail-tank/Factory valve/salvage provenance, genuine fitting geometry, single rigid body, three valves and read-only boarding lamps/lifecycle. New model/recipe/scenario files only; no renderer/event/simulation/source catalog edits. Private candidate and actual game-renderer comparison before public installation; every comparison goes to Claude, three-round cap. Source catalog records and licences remain exact; if an existing hook is needed, request it before editing. No fake convoy implementation or current runtime replacement."
     helpers: [test_author, art_director, reviewer, art_critic, browser_qa]
     test_commit: 67fb882849aa386dc197cc51ac03ae8681193249
-    source_commit: 23748e635f8fa0784a9c5c72998b19a94facc015
-    private_stage: "Approved native contact-edge assertion correction is frozen at 67fb882 with all other original test bytes preserved. Genuine support, coplanar contact and six hover/burial/lateral/missing-deck negatives pass at unchanged 0.002 m precision. Suite is 41/42: sole RED proves 20 strict bracket/wheel-arch crossings and 0.1735 m penetration. Source worker may now fix coherent affine placement in owned recipe only, preserving entire picked donors, proportions, source rights, palette, topology and all runtime controls. Private source 23748e6 has no fit/art/whole-card clearance; actual game-renderer comparison and Claude verdict still precede installation."
+    source_commit: 2583c4de126629e7b673a136381ecb86b6e4aad0
+    private_stage: "Private source 2583c4d preserves scales and complete donors while reversing tank orientation and moving its center to Z -1.700021. Native 42/42, zero strict crossings, both full original contact edges supported by native bed faces, all six negatives pass at unchanged precision. Frozen two warning lamps remain. Only recipe/note changed; original test bytes and palette/licences/topology/lifecycle controls stay. Source review, actual game-renderer comparison, Claude verdict and final lane/build precede public installation; no whole-card art/frame/merge clearance."
     flag: scrapdome
     acceptance:
       - "Build the tanker settled in docs/SCRAPDOME.md, Convoy Raid (30 September 2026): one rigid vehicle from Kyle's pick A (Kenney delivery-flat cab and bed with the City Kit Industrial detail-tank on the bed), three fuel valves from the verified factory pipe valve donor on the tank, scrap armor plating from the Salt Flats salvage parts, and a raised boarding plate on the tank roof with warning lamps that light when all three valves are broken. Nothing opens or articulates."
@@ -875,6 +875,9 @@ tasks:
     status: building
     review_commit: 58116aec7e8eafd1308be8bc399b3c7a9624e269
     test_commit: 25e0d3403c50332b571ec7abbe3ce8f8ff580d5c
+    source_commit: 41ed21dfb84bf0b2326ef5cbe32a9ad133447f83
+    waiting_on: claude
+    design_question: "Please settle player-launch and in-flight Crossbow range context. CPU acquisition is 180 m; released player acquisition/homing is uncapped, with 200 + 30 per level speed, 2.5 s lifetime and inherited velocity. Current shared 180 at those routes must not ship. Exact question is written at inbox top; no range redesign is inferred. Protected sound-bank handoff is also requested. Native source 41ed21d is provisional at 300/301; independent geometry correction is approved but not yet edited. Original CORE/save/replay controls and build pass; whole-card source/save/browser/audio/lane gates remain."
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arsenal-core
     flag: arsenal
@@ -2870,6 +2873,7 @@ tasks:
     needs: []
     status: building
     review_commit: eba804dd4e48e2856051b962efbe7ebd6560466c
+    source_commit: f703714101525b7786b1abe852ef1794ab9a6f97
     test_commit: 7b928ef5a6452d02db3f1f90a66812fb39d7b70b
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arena-shove
@@ -2883,7 +2887,7 @@ tasks:
       - "Kyle, 30 September 2026: cars other than the Titan cannot budge the sitting cars in the dome. Measured by Claude: a live computer car hit at 20, 40 and 60 mph moves 2 to 12 m, so the stuck case is a car in another state. Reproduce each in a test: a wreck waiting to respawn, a car pinned against the wall, a car inside its respawn protection, and a stopped car with its brain idle."
       - "Settled rule: in the dome any car rammed at 20 mph or more by any car moves at least 1.5 m, and at 40 mph at least 4 m, through the crash solver (released crash physics), in every state above. A wreck waiting to respawn slides like a traffic hulk and stays on the floor; respawn protection blocks damage, not movement. The Titan's crush stays as it is."
       - "Tests first; arena replays that change are named and explained."
-    private_stage: "Independent source review clears eba804d waiting-wreck motion and all 1944 original minima witnesses. New clean test freeze 7b928ef adds 50 normal-wall cases: 10 pass, 40 actual attacker-rebound RED, 3950 checks; oblique 8/8 with 128 checks. Damage, containment, guards, dead timers and genuine native traffic controls pass. Browser recipe is syntax-checked but deliberately unrun before the source fix. No source or replay-pin change, art/frame/listening or whole-card clearance is claimed."
+    private_stage: "Provisional f703714 fixes all 40 rebound failures while default solver and frozen tests/pins stay exact. Eight held-player wreck/protection cases expose a genuine later oblique contact after an invalid fixture target causes native AI to replan. Independent review approves only holding targetId null when the real player is unfightable, preserving reaction/goals and every strict assertion; first smash remains identical and all eight mass groups pass under that setup. Independent author applies that correction plus valid/stale/null native goal controls. Source review, whole native controls, actual private browser, exact lane/build and Kyle feel remain."
     claude_answer: "1 October 2026: the 1.5 m and 4 m minimums apply where the push direction has open floor. A car pinned against the outer wall and rammed straight into it cannot move through the wall: it stays, takes the ram damage, and the attacker rebounds. Any part of the push along the wall still slides it along the wall. No teleport, no escape direction, containment unchanged."
   - id: WAR-SAL-RELEASE
     title: "Release the warlord ladder with Sawtooth Sal"
