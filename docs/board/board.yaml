@@ -1069,6 +1069,7 @@ tasks:
     kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
     qa_commit: "439d006d33062b6e7f5f8d832ecaa8a6b4714d04"
     note: "The native venue, collision alignment and renderer route are built. The first actual views showed a sparse island and finite salt slab; outside ground and heat Source now need a normal visual comparison. Pixel and counter look tests do not hold this card."
+    kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
   - id: ARENA-07
     title: "Convoy Raid"
     owner: codex
