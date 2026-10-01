@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "capturedCommit": "40b81c1159565ac1713b5d5d4d9a6c0593f64c96",
+  "scope": "Unmodified Scrapdome physical features/spawns and eight-second actual 120 Hz LCR trace; no old fingerprints regenerated.",
+  "scrapdome": {
+    "physicalSha256": "ed9d0c026108a96dc68e34f5fb56a7b3db4f7d667ba39a744f7762faa5ff2ec7",
+    "traceSha256": "8d56bfd8d80eb7d0968d919d1c4732991313ebdc5f2c632cd4d46a2c9fad72db",
+    "ordinaryReplayFileSha256": "b55182cbc6d6121a205fa24ba9049aeefabd7943a6e12ebba5a7f868c068c77a"
+  }
+}
