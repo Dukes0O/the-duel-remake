@@ -1425,3 +1425,125 @@ fixture was corrected before freeze; its full failure remains honest evidence.
 All old cases remain exact, and review evidence stays ignored until consumed.
 No live folder, Preview, `.preview-dist`, port 5174, new dependency, network,
 helper agent, merge, push, release or history rewrite was used.
+
+## Independent App retry save acceptance - 1 October 2026
+
+The actual App purchase, upgrade and equip retry overwrites another named
+player's newer durable profile after an earlier shop save fails. This is a
+pre-existing shared-helper defect exposed by the new Arsenal caller, not a
+claim that Oil introduced the helper. The independent Save Guardian report at
+integration `.evidence/2026-10-01/ARS-CORE/wiring-save-review/guardian-report.json`
+identified this obligation on `bffb2eaf5b0c6fd4b5603f5365733632f808b341`, with
+Source `41ed21dfb84bf0b2326ef5cbe32a9ad133447f83` unchanged. The card's settled
+save acceptance in `docs/ARSENAL.md` section 2 requires per-player isolation,
+unknown fields, future identities and four saved slots to survive.
+
+### Actual App reproduction and passing controls
+
+Eight appended cases use real `App.purchaseArsenalWeapon('oil')`,
+`App.purchaseWeapon('oil')` and `App.equipCarWeapon(1, 'oil')`, with actual
+registry creation, replacement, normalization, load and save. Both synthetic
+named players start with 54,321 ordinary credits. Only `PLAYERS_KEY` writes
+throw during the first action; reads remain real memory reads. The real action
+reports the proper save error and restores its entire owner profile and full
+raw durable registry. Exactly one attempted write fails, with no durable write.
+The App retains its genuine `profileSaved === false` retry state.
+
+After write recovery, a distinct storage adapter loads the durable registry
+and uses real `replacePlayerProfile`/`savePlayers` to advance only player two:
+99,999 credits, `externalProgress: {kept: 'new'}`, unknown career and weapon
+progress, one future level of 17, and four distinct earned future slot ids.
+The external writer's raw input remains unchanged. A genuine load proves all
+of this is saved before the owner retries; no app registry is edited to model
+that concurrent writer and no saver or shop return is fabricated.
+
+All three owner-only controls pass after the retry. The real action succeeds,
+saves exactly once, retains the active owner, and persists the complete owner
+profile. The failed-then-successful purchase costs exactly 400 scrap, upgrade
+exactly 150 scrap and one level, and equip costs nothing. Ordinary credits
+remain 54,321. Oil ownership appears exactly once; upgrade alone advances to
+level one; equip alone changes the requested slot. Unknown owner fields,
+future level nine and the other saved slots remain intact. Upgrade and equip
+exercise distinct real mutations and rollback/save call branches, rather than
+mock copies of the purchase result.
+
+### Five genuine RED and their exact messages
+
+The real retry reverts player two to 54,321 credits, removes its concurrent
+unknown progress and future level, and replaces its new four-slot loadout with
+the older one. The five failing acceptance messages are:
+
+- `successful purchase retry must preserve the full latest other-player profile after failed save`
+- `successful upgrade retry must preserve the full latest other-player profile after failed save`
+- `successful equip retry must preserve the full latest other-player profile after failed save`
+- `successful purchase retry must retain concurrently saved unknown root/career/weapon progress and future level`
+- `successful purchase retry must retain all four concurrent future slots and their earned ownership`
+
+The shared helper currently chooses stale `this.players` when `profileSaved`
+is false. Its refresh helper also returns early in that state. These source
+observations explain the measured result; acceptance compares real native
+results and complete normalized profiles, not strings from source bodies.
+No policy for changing the active player or same-owner concurrent writes is
+chosen by this test slice.
+
+### Existing absent/unreadable storage guards and scope
+
+Existing `tools/test-warlord-settlement.mjs` cases at lines 384-487 exercise
+actual App settlement retry against missing, unreadable and unsupported
+registries, including safe initial-registry creation and preservation of
+unsaved session fields. They pass unchanged: 29 cases. These are a distinct
+settlement helper and do not claim Arsenal shop retry clearance. Existing
+progression denied/corrupt-storage controls pass (27 checks), as do real App
+session-only race settings (42 checks) and paint (35 checks). No new storage
+fallback policy or duplicated guard assertion was added. A future shared-save
+fix must keep these controls: `loadPlayers` can return a default registry for
+absent or unreadable storage; blindly treating that as fresh durable progress
+must not erase an unsaved named-player profile.
+
+### Executed results and protected byte receipts
+
+Before edits, actual native CORE/runtime/SAVE ran **343 cases: 323 pass,
+20 existing physical-range failures, zero skips/TODO**, exit 1. The original
+range failures remain separate from this save defect.
+
+Focused command: `node --test --test-name-pattern='NATIVE APP RETRY'
+tools/test-arsenal-runtime.mjs`. Actual result: **8 cases, 3 pass, 5 genuine
+save failures, zero skips/TODO**, exit 1, 245 acceptance checks reached.
+
+Complete command: `node --test tools/test-arsenal-core.mjs
+tools/test-arsenal-runtime.mjs tools/test-arsenal-save.mjs`. Actual result:
+**351 cases, 326 pass, 25 fail, zero skips/TODO**, exit 1. This is the same
+20 original range failures plus the five measured save failures. Runtime
+reports 1,558 reached checks; CORE 598 and canonical SAVE 602 are unchanged.
+Existing replay fingerprints pass: 162 checks, 18 cases, three frame rates
+and three repetitions. Feature switches pass all 32 checks. Syntax and
+`git diff --check` pass. No full/lane/build/browser/audio or card clearance
+is claimed by this intentionally RED test freeze.
+
+The original runtime prefix is byte-exact: 68,232 bytes, SHA-256
+`fb01286476f229e331636c03053f0b32ca565c1fe43cbee964979928b6b3b7d7`.
+Its new complete test is 77,259 bytes, SHA-256
+`3ecc2c4a896797d79905b300318d82dd4d40a1204af6afdf733a47f476f01dda`.
+The original note prefix remains raw-byte exact by append: 126,274 bytes,
+SHA-256 `4371bcbacfaae8ea543ee8b2eec2769abcd9d63476257f97e6cba2fe2ee51a82`.
+No old assertion, helper, case, fingerprint, Source or profile normalizer was
+changed. Protected source and all unowned tracked files are checked against
+the original receipts. In particular actual App SHA-256 remains
+`b73b90c1c9202e62ce1a7a59f254076f0f73b33e99d5b56b9f91aabc328c9970`
+and progression remains
+`6360f5aa2b7d05c76ab0599f043551610785a52930df66b5704ed579983918e2`.
+
+Complete original and final native TAP, targeted RED, replay and feature logs,
+existing storage-guard logs, original prefix copies and before/after protected
+byte receipts are ignored integration evidence under
+`.evidence/2026-10-01/ARS-CORE/retry-save-tests/`. The Salt quiet frame window
+was honored: only reads occurred until the Director released it. The Director
+owns the later Source fix and gates. All storage here is process-local memory.
+
+### Removed - retry save acceptance
+
+Removed none. These are additive tests and an appended note. No Source,
+existing assertion, registry helper, profile field, slot, asset, flag, replay,
+launcher, audio, recipe or runtime behavior was replaced. No live folder,
+Preview, `.preview-dist`, port 5174, real saves, new dependency, network,
+helper agent, merge, push, release or history rewrite was used.

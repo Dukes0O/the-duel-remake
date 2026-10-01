@@ -1025,3 +1025,134 @@ for (const inside of [true, false]) test('PHYSICAL REACH actual CPU bolt flight 
     'every in-flight bolt uses physical reach although CPU acquisition remains 180m');
   if (inside) eq(shot.targetId, 'player', 'real biased enemy bolt keeps its locked player identity');
 });
+
+// Actual App retry regression: a separate memory-only registry writer advances
+// another named player after a failed shop save. No production saver is mocked.
+function retryRegistryFixture(action) {
+  values.clear(); writes.length = 0;
+  const owner = career(6, {owned: action === 'purchase' ? [] : ['oil']});
+  owner.credits = 54321;
+  let registry = createPlayerRegistry(owner);
+  registry.players[0].name = 'Retry Owner';
+  registry = createPlayer(registry, 'Concurrent Other Player').registry;
+  const other = career(1); other.credits = 54321;
+  registry = replacePlayerProfile(registry, registry.players[1].id, other);
+  registry.activePlayerId = registry.players[0].id;
+  eq(savePlayers(registry), true, 'retry fixture persists both genuine named profiles');
+  const app = new App(); app.duel.featureFlags = flags(); app.audio.unlock = () => {};
+  return app;
+}
+function actualRetryAction(app, action) {
+  return action === 'purchase' ? app.purchaseArsenalWeapon('oil')
+    : action === 'upgrade' ? app.purchaseWeapon('oil') : app.equipCarWeapon(1, 'oil');
+}
+function concurrentShopRetry(action) {
+  const app = retryRegistryFixture(action), storage = globalThis.localStorage;
+  try {
+    const ownerId = app.player.id, original = structuredClone(app.profile);
+    const initialRegistry = loadPlayers(), otherId = initialRegistry.players[1].id;
+    const originalRaw = values.get(PLAYERS_KEY), writeCount = writes.length;
+    let failedWrites = 0;
+    Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: {
+      getItem: key => storage.getItem(key), removeItem: key => storage.removeItem(key),
+      setItem: (key, value) => {
+        if (key === PLAYERS_KEY) {failedWrites++; throw new Error('Test-only registry write failure');}
+        storage.setItem(key, value);
+      },
+    }});
+    let refused;
+    try {refused = actualRetryAction(app, action);}
+    finally {Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: storage});}
+    eq(refused, {ok: false, reason: action === 'equip' ? 'Could not save this loadout.' : 'Could not save this purchase.'},
+      'actual ' + action + ' reports the real failed registry save');
+    eq(failedWrites, 1, 'one actual shop action attempts one failed PLAYERS_KEY write');
+    eq(writes.length, writeCount, 'failed registry write commits no memory storage write');
+    eq(values.get(PLAYERS_KEY), originalRaw, 'failed ' + action + ' leaves full raw registry bytes unchanged');
+    eq(app.profile, original, 'failed ' + action + ' restores the complete owner profile');
+    eq(app.profileSaved, false, 'genuine save failure leaves the App retry branch active');
+    eq(loadPlayers(), initialRegistry, 'failed ' + action + ' changes neither durable named player');
+
+    // This is a distinct writer object and genuine load/save normalization, not
+    // an assignment to app.players or a fabricated return from the App saver.
+    const separateWriter = {getItem: key => storage.getItem(key),
+      setItem: (key, value) => storage.setItem(key, value), removeItem: key => storage.removeItem(key)};
+    const external = loadPlayers(separateWriter), rawExternal = structuredClone(external);
+    const other = external.players.find(player => player.id === otherId);
+    const futureSlots = ['future-weapon', 'future-external-one', 'future-external-two', 'future-external-three'];
+    const updated = {...other.profile, credits: 99999, externalProgress: {kept: 'new'},
+      wasteland: normalizeWasteland({...other.profile.wasteland,
+        externalCareer: {kept: 'new-career'},
+        weapons: {...other.profile.wasteland.weapons, externalWeapons: {kept: 'new-weapons'},
+          unlocked: [...other.profile.wasteland.weapons.unlocked, ...futureSlots],
+          levels: {...other.profile.wasteland.weapons.levels, 'future-external-one': 17}},
+        loadout: futureSlots})};
+    eq(savePlayers(replacePlayerProfile(external, otherId, updated), separateWriter), true,
+      'independent actual writer durably advances the other named player before retry');
+    eq(external, rawExternal, 'independent profile replacement/save leaves its full raw input unchanged');
+    const advanced = loadPlayers(separateWriter), expectedOther = structuredClone(advanced.players.find(player => player.id === otherId));
+    eq(expectedOther.profile.credits, 99999, 'separate writer genuinely persists the concurrent credit advance');
+    eq(expectedOther.profile.externalProgress, {kept: 'new'}, 'separate writer genuinely persists unknown root progress');
+    eq(expectedOther.profile.wasteland.loadout, futureSlots, 'separate writer genuinely persists four earned future slots');
+    eq(advanced.players.find(player => player.id === ownerId).profile, original,
+      'external writer advances only the other player, leaving retry owner unchanged');
+    const beforeRetryWrites = writes.length, retried = actualRetryAction(app, action);
+    eq(retried.ok, true, 'actual ' + action + ' retries successfully after storage recovers');
+    eq(app.profileSaved, true, 'successful real retry restores saved status');
+    eq(writes.length, beforeRetryWrites + 1, 'successful retry performs exactly one registry write');
+    const loaded = loadPlayers(separateWriter), savedOwner = loaded.players.find(player => player.id === ownerId);
+    eq(loaded.activePlayerId, ownerId, 'successful retry preserves the intended active owner identity');
+    eq(savedOwner.profile, app.profile, 'successful retry persists the complete actual owner profile');
+    eq(savedOwner.profile.credits, 54321, 'Arsenal retry never charges ordinary credits');
+    eq(savedOwner.profile.wasteland.scrap, original.wasteland.scrap -
+      (action === 'purchase' ? 400 : action === 'upgrade' ? 150 : 0),
+      'failed then successful ' + action + ' charges its settled scrap cost only once');
+    eq(savedOwner.profile.wasteland.weapons.unlocked.filter(id => id === 'oil').length, 1,
+      'retry persists exactly one earned Oil identity for its owner');
+    eq(savedOwner.profile.wasteland.weapons.levels.oil, action === 'upgrade' ? 1 : 0,
+      'actual retry purchases precisely one level only for the upgrade branch');
+    eq(savedOwner.profile.wasteland.loadout, action === 'equip'
+      ? ['future-weapon', 'oil', 'bomb', 'star'] : original.wasteland.loadout,
+      'retry changes only the intended slot and preserves all four owner slots');
+    eq(savedOwner.profile.unknownRoot, original.unknownRoot, 'retry preserves owner unknown root fields');
+    eq(savedOwner.profile.wasteland.unknownCareer, original.wasteland.unknownCareer,
+      'retry preserves owner unknown career fields');
+    eq(savedOwner.profile.wasteland.weapons.levels['future-weapon'], 9,
+      'retry preserves earned future owner weapon levels');
+    eq(original, initialRegistry.players.find(player => player.id === ownerId).profile,
+      'complete original owner input remains unchanged after both attempts');
+    return {actualOther: loaded.players.find(player => player.id === otherId), expectedOther};
+  } finally {
+    Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: storage});
+    app.dispose?.();
+  }
+}
+for (const action of ['purchase', 'upgrade', 'equip']) {
+  test('NATIVE APP RETRY CONTROL: ' + action + ' refusal, recovery and once-only owner mutation', () => {
+    concurrentShopRetry(action);
+  });
+  test('NATIVE APP RETRY: ' + action + ' must preserve the complete concurrently advanced other player', () => {
+    const {actualOther, expectedOther} = concurrentShopRetry(action);
+    eq(actualOther, expectedOther,
+      'successful ' + action + ' retry must preserve the full latest other-player profile after failed save');
+  });
+}
+test('NATIVE APP RETRY: purchase preserves concurrent unknown future profile fields', () => {
+  const {actualOther, expectedOther} = concurrentShopRetry('purchase');
+  eq({root: actualOther.profile.externalProgress,
+    career: actualOther.profile.wasteland.externalCareer,
+    weapons: actualOther.profile.wasteland.weapons.externalWeapons,
+    level: actualOther.profile.wasteland.weapons.levels['future-external-one']},
+  {root: expectedOther.profile.externalProgress,
+    career: expectedOther.profile.wasteland.externalCareer,
+    weapons: expectedOther.profile.wasteland.weapons.externalWeapons,
+    level: expectedOther.profile.wasteland.weapons.levels['future-external-one']},
+  'successful purchase retry must retain concurrently saved unknown root/career/weapon progress and future level');
+});
+test('NATIVE APP RETRY: purchase preserves four concurrently earned future slots and ownership', () => {
+  const {actualOther, expectedOther} = concurrentShopRetry('purchase');
+  eq({loadout: actualOther.profile.wasteland.loadout,
+    owned: actualOther.profile.wasteland.weapons.unlocked},
+  {loadout: expectedOther.profile.wasteland.loadout,
+    owned: expectedOther.profile.wasteland.weapons.unlocked},
+  'successful purchase retry must retain all four concurrent future slots and their earned ownership');
+});
