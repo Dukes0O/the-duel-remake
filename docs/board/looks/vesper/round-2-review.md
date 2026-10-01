@@ -26,6 +26,9 @@ rendering and cleanup preserve the whole Duel state.
 
 The declared row uses the existing game world, lights, fog and HUD, with a
 private Odessa fetch substitution for Vesper. Nell, Odessa and Wren keep their
-original production figures. Source review is clear. Lane/build gates and
-Claude's final look verdict remain required before merge. WAR-04 owns the
+original production figures. Source review is clear. All ten captures pass again after the normal merge of
+latest integration controls at 4044431, using the unchanged candidate.
+The existing placement guard needs this recipe registered in Tanker's shared
+test file, which stays with that lane until merge. Final lane/build gates and
+Claude's look verdict remain required before merge. WAR-04 owns the
 later reveal and installation; this comparison installs nothing.

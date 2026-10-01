@@ -49,8 +49,13 @@ or failed requests and two inherited duplicate-Three warnings. The original
 comparison pool releases 29 owned resources once per quality; rendering and
 cleanup preserve the whole Duel state. The independent critic scores every
 assessed visual item four: steel, cloth and the dark red harness now read.
-Source review is clear. Frame timing, motion feel, audio and phone layout remain
-unmeasured. Lane/build gates and Claude's final look verdict are pending.
+Source review is clear. After syncing the latest integration camera/arrow
+controls, all ten actual game captures pass again with the same candidate.
+Frame timing, motion feel, audio and phone layout remain unmeasured.
+The existing Blender coverage guard is red because this new private recipe
+needs registration. Tanker owns that shared test file, so registration waits
+for its merge. Final lane/build evidence and Claude's look verdict remain
+required; no failing gate is waived.
 Nothing is installed or revealed by this private leaf.
 
 ## Removed
