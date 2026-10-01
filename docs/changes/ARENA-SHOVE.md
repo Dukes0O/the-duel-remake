@@ -1057,3 +1057,80 @@ reachability goal, with explicit independent approval and durable RED evidence.
 The existing floor-containment rule and all legacy acceptance remain exact.
 No source change, candidate run, frame/art/listening/human pass, merge or push
 is granted by this tests-only correction.
+
+
+## Static-contact observer baseline: two genuine controls, next path RED
+
+The native-contact recipe was frozen clean before execution at
+`9c07e4ff925926249a4e1e9720343522632358a1`. Exact released0f source/assets
+were checked again (888 original archived files), and the authentic public-only
+baseline was run. It returned **exit 1** on the third attempt, High/+1/0.
+It completed both High negative-side attempts and produced nine actual images,
+zero browser issues and zero warnings on private memory-only port **59361**.
+The runtime/profile closed. The remaining five attempts and candidate run
+were not executed; the planned eight-attempt/24-image matrix is still pending.
+No complete baseline pass or frame result is claimed.
+
+The actual serialized collision observer source SHA-256 is
+`463822964946f85b344f4cd23d984b205b36956f744cc7b7dd9cf212ab27fe7f`, exactly
+equal to the real verified baseline collision module bytes. A separate native
+Node check imported that actual baseline module and recomputed both browser
+receipt sweeps. Hit t/nx/nz/penetration/inside matched exactly. Both receipts
+have unchanged true player argument, undefined return, inward correction and
+speed reduction; original invocation counts equal wrapper invocation counts,
+and the original inherited method is restored before captures.
+
+High/-1/0 first contacts `arena-wall-40--1` at tick **231**, native hit
+`t=.9786980968189574`. The original method corrects inward by
+**.04518133552758462 m** and changes speed **65.29587148844699 →
+5.223669719075759 mph**. All 696 wrapper calls delegated once, with no
+observation errors. The stopped-at-contact sample retains **38 strict sampled
+rail crossing pairs** in actual loaded geometry.
+
+High/-1/360 first contacts `arena-wall-112--1` at tick **784**, native hit
+`t=.9866838547897729`. Inward correction is **.04120897804103275 m**, speed
+**12.02219116912412 → .9617752935299296 mph**. All 2,355 wrapper calls
+delegated once, with no observation errors. That bounded contact sample has
+**54 strict sampled rail crossing pairs**. These early contact samples differ
+from the earlier 20-second diagnostic's retained 24 crossing pairs; no old
+witness was overwritten or claimed unchanged at a different pose.
+
+High/+1/0 exposes a second actual native wall path. At tick **139**, the real
+production `arenaWallHit` event reports player normal impact **43 mph**.
+The center reaches +18 through original arena containment, before reaching a
+static mesh collider. Across all 2,400 steps, the static-contact observer finds
+**zero** actual wall sweeps and therefore correctly refuses to pass its current
+static-only goal. Final center is +18 at s=34.17546614275784, heading error
+1.6440691690817246, speed .08207905829331785 mph and armor 30. The closest
+native collider `arena-wall-32-1` has absolute local X 3.1580115043526615 versus
+expanded half-width 2.8882000567848696 (about **.2698114475677919 m gap**),
+with local Z inside its longitudinal range. No proximity receipt was invented.
+The failure message remains `Legal public controls did not reach chosen wall
+within twenty seconds`; all real trace, inputs and close/world views were saved
+before throw.
+
+This is a genuine remaining recipe-goal limitation: released arena containment
+and static barrier sweeps are two actual wall response paths. Only the static
+path was approved in this freeze. No OR condition, center relaxation, timeout
+increase, manual collision or fabricated boundary event was introduced to make
+the positive side green. Independent review must decide how to observe the
+existing real containment path before a complete baseline can be established.
+Actual historical body/front-kit crossings remain bounded released0f debt for
+Claude; no asset/source repair or new-regression claim is hidden in Shove.
+
+The exact command (public-only environment) was:
+`node tools/browser-harness.mjs scenario arena-shove --output-dir .evidence/2026-10-01/ARENA-SHOVE/public-wall-native-contact`.
+Full raw stdout/stderr is integration
+`.evidence/2026-10-01/ARENA-SHOVE/expanded-browser/baseline-native-contact-launcher.log`.
+Copied complete report/receipts/trace/images/provenance are in sibling
+`public-wall-native-contact/`. The separate actual native-module receipt check
+is `native-contact-receipt-oracle.log`; it passes **2 exact native sweeps** and
+states that the complete matrix remains RED. Earlier failed launcher logs and
+24-crossing diagnostic stay retained. Syntax and diff checks pass.
+
+Removed nothing after the independently approved goal correction. All source,
+assets, original 39 scenario assertion lines, 118 native tests and pins remain
+unchanged. No candidate/browser/frame/art/human/listening/full-gate clearance,
+merge, push, live folder, Preview, .preview-dist, port 5174, real save, source
+overlay, dependency change or history rewrite occurred. Ownership returns for
+independent review before any further public goal change.
