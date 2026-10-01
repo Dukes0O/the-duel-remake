@@ -262,7 +262,7 @@ test('SAVE CONTROL: registry normalization alone preserves raw inputs and canoni
   }
 });
 
- 
+
 // Independently authored preservation regression. These are boundary witnesses,
 // not new limits on supported owned identities or saved future slots.
 const OWNED_IDENTITY_CASES = ['duplicate-prefix', '101-distinct', '81-character'];
