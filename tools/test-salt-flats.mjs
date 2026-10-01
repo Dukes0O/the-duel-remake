@@ -400,11 +400,40 @@ if(process.argv.includes('--capture-controls')){
     scrapdome:scrapdomeControls()},null,2)+'\n');
   console.log('Salt Flats: independent existing-venue controls captured once.');process.exit(0);
 }
+// New generated-ground acceptance. The earlier photo assertions remain until
+// the Director arranges their replacement under Kyle's written change.
+check('ground-config','the salt ground uses a fixed generator seed and no active photograph input',()=>{
+  assert.ok(Number.isSafeInteger(config.seed),'venue has an explicit repeatable seed');
+  assert.equal(config.saltPhoto,undefined,'retired salt photo must be removed from the active ground configuration');
+  assert.equal(config.saltGround?.generator,'seeded','ground is selected as generated salt');
+  assert.equal(config.saltGround?.seed,config.seed,'generated salt uses the fixed venue seed');
+});
+check('native','generated ground excludes the retired photo and mirrored samplers',async()=>{
+  const {model,manifest}=await build();
+  assert.equal(manifest.ground.generator,'seeded','native export identifies generated salt');
+  assert.equal(manifest.ground.seed,config.saltGround.seed,'native ground uses the settled fixed seed');
+  const retired=catalog.assets.find(row=>row.id==='marina-salt-crystals-beach').files
+    .find(row=>row.path==='salt-crystals-on-beach-textures.jpg').sha256;
+  const nativeImages=images(model);
+  assert.ok(nativeImages.every(bytes=>hash(bytes)!==retired),'retired photo is absent from the native venue');
+  const node=model.json.nodes.find(row=>row.name===manifest.ground.node);assert.ok(node?.mesh!==undefined);
+  for(const primitive of model.json.meshes[node.mesh].primitives){
+    const texture=model.json.materials[primitive.material]?.pbrMetallicRoughness?.baseColorTexture;
+    assert.ok(texture,'generated ground uses a genuine embedded salt texture');
+    const row=model.json.textures[texture.index];assert.ok(nativeImages[row.source]?.length);
+    const sampler=model.json.samplers?.[row.sampler];
+    assert.notEqual(sampler?.wrapS,33648,'ground does not mirror the generated U texture');
+    assert.notEqual(sampler?.wrapT,33648,'ground does not mirror the generated V texture');
+  }
+  // Tone, crust, grain, tyre dust and visible repeat are judged in game captures.
+});
 let failures=0;const nativeOnly=process.argv.includes('--native-only');
-const selected=checks.filter(row=>!nativeOnly||row.group!=='runtime');
+const groundConfigOnly=process.argv.includes('--ground-config-only');
+const selected=checks.filter(row=>groundConfigOnly?['ground-config','control'].includes(row.group):!nativeOnly||row.group!=='runtime');
 for(const {group,name,run}of selected)try{await run();}catch(error){failures++;console.error(`FAIL [${group}] ${name}: ${error.message}`);}
 console.log(`Salt Flats${nativeOnly?' native WIP':''}: ${selected.length} checks, ${selected.length-failures} passed, ${failures} failed.`);
 if(failures)process.exitCode=1;
+if(groundConfigOnly)process.exit(failures?1:0);
 
 // Independent ARENA-06 geometry acceptance. Append only: preserve every byte
 // of the original 41 checks and their selection/runner. Native triangles are
