@@ -1,8 +1,8 @@
-# ARENA-06: Salt Flats — independent tests-first freeze
+# ARENA-06: Salt Flats — private native source stage
 
 ## Status and scope
 
-Tests-first only, based on clean integration commit `40b81c1159565ac1713b5d5d4d9a6c0593f64c96`. The Director claimed the card before this lane started. New control-fixture ownership was granted in board commit `927f57c`. No recipe, runtime, catalog, existing assertion, current asset or existing replay fingerprint changed.
+Private native source stage, built after independent tests-first commit `c37eac8254f16f0f55491f08c799b7514da9d75e`, on clean integration `40b81c1159565ac1713b5d5d4d9a6c0593f64c96`. This is WIP and cannot be merged or installed as the finished card. The Director claimed the card before this lane started and granted the new recipe, new scene module and this note; control-fixture ownership was granted in board commit `927f57c`. Existing game hooks, catalog, frozen assertions, fit configuration, current assets and replay fingerprints remain unchanged.
 
 Kyle selected Kenney Car Kit, Kenney City Kit Industrial, Kenney Factory Kit and Quaternius Public Transport; the bus is the plain `Bus.blend`. He selected the CC0 salt photograph with mirrored UV tiling. The small fit JSON pins these actual inputs, the nominal 300 × 200 metre ground and exactly two ramps. It contains no behavior fingerprints or invented material scores.
 
@@ -35,7 +35,36 @@ The normal build emits `venue.glb` and a small `manifest.json`. Manifest source 
 
 `ground.node` names the actual ground mesh. Feature rows name actual meshes and one of `ramp`, `salvage-cover`, `crane`, `bus`, `tyre-wall`, `container-wall`; solid cover, bus and boundary parts carry `collision: {center:[x,y,z], halfExtents:[x,y,z], heading}`. Tests check actual world vertices with 2 mm numerical tolerance. These are observable geometry/provenance interfaces, not settled new gameplay dimensions. Source GLBs may legitimately reference their pinned local palettes; only the candidate must embed all resources.
 
-Proposed native scene interface: `createSaltFlatsScene(course, {loadAsset})` in the owned new venue module returns `{group, ready, dispose}`. The injected loader returns the actual candidate GLTF scene, allowing native geometry consumption, physics/RNG independence and cleanup to be tested without graphics or live saves. Renderer/App/course/launcher/flags/UI and old catalog-test hook requests remain ungranted until the Director hands them off after Fuel merges. No hook was edited during RED.
+The new native scene interface is implemented: `createSaltFlatsScene(course, {loadAsset})` in the owned new venue module returns `{group, ready, dispose}`. The injected loader returns the actual candidate GLTF scene, allowing native geometry consumption, physics/RNG independence and cleanup to be tested without graphics or live saves. Renderer/App/course/launcher/flags/UI and old catalog-test hook requests remain ungranted until the Director hands them off after Fuel merges. No existing hook was edited during RED or the private native build.
+
+## Private implementation and actual checks
+
+The native recipe verifies all cached CC0 licence records, byte counts and hashes before creating output or importing source models. It uses the installed Blender with script auto-execution disabled. Each exported reused face retains the original native triangle index and its affine source-to-world placement. The candidate is self-contained and does not depend on another procedural venue builder or any current runtime model.
+
+The actual 300 × 200 metre ground uses the unchanged approved JPEG. Its exported glTF texture sampler mirrors both UV axes; the recipe changes sampler metadata, not photograph pixels. A new reproducible wear atlas replaces the original source palettes with faded paint, rust, scorch, dusty metal, dark glass and rubber. Its appearance remains unreviewed in the game.
+
+Four container boundaries use grounded, aligned two-high native containers. Dense three-high tyre sections stand against the inner side boundaries. Six cover piles reuse strongly compressed sedan shells with wheels removed, supported by actual tyre/drivetrain parts and accompanied by actual detached doors. The upper shells overlap the lower roofs. The plain Bus retains its native body and wheels with window faces removed. The source crane retains its native proportions and has its actual source magnet hung from the jib by a simple cable connector. Exactly two native sine-profile ramps are included. These are private geometry/layout candidates, not newly settled gameplay dimensions.
+
+The manifest names 16 real feature meshes, their actual solid collision envelopes, two ramp profiles and all source triangle placements. Native output contains **102,764 triangles and 17 mesh draws** before game lighting/shadow costs. The candidate GLB is **12,821,528 bytes** and the manifest **476,009 bytes**. This output cost remains to be measured and tuned in the actual game; it does not establish the <=10% frame gate. The field `geometrySha256` currently hashes the complete candidate GLB bytes: `59b4807bcd600bcb8e458dc4e9e2bdc3512fa4f3126c0c2343d594efdc0bcd7b`. The native test separately verifies repeatable actual geometry and source placements for seed 1989.
+
+The new scene constructor attaches the actual loaded native graph and checks its real ground dimensions. It tracks loading, ready, failed and retired states without consuming simulation RNG or mutating supplied course features. It owns resource cleanup, clears its graph before enclosing disposal and releases late-loaded assets after retirement. No runtime asset was installed, and no existing renderer imports this new module yet.
+
+On 30 September 2026:
+
+- `node tools/test-salt-flats.mjs --native-only`: **25/25 pass**. Actual original-source imports, four-pack triangle lineage, supported feature meshes, containment, repeatability, embedded photo/sampler and preservation controls pass. Empty cache, changed model, changed licence and SchoolBus replacement are expected rejections before export.
+- `node tools/test-salt-flats.mjs`: **38 checks, 29 passed, nine failed**. The remaining nine are the ungranted switch, venue/physical registry, rank-eight/dev-off rejection, selected rank-nine launcher, unknown venue/mode rejection, complete Salt Flats round and game scene through the real registered course. The new scene module now exists; the scene acceptance stops at the missing registered venue (`assert.ok(venue)`). No runtime assertion changed or was skipped.
+- An additional private native-component diagnostic used the actual candidate GLB: **11 assertions passed** for disabled-course loading, real graph/ground consumption, preserved geometry pointers/features/RNG, exact-once disposal, late-load retirement and wrong-width rejection. This exercises the new module only; it is not a substitute for the frozen game scene acceptance.
+- Existing arena event tests: **13/13 pass**; arena UI: **6/6 pass**; ordinary replay fingerprints: **162/162 pass**. `npm run build` passes; the inactive new module is exercised separately by the native-component diagnostic. The existing large-chunk warning remains.
+
+Logs and generated private candidates are under the ignored `.evidence/2026-09-30/ARENA-06/native-stage/` and `.qa-dist/` paths. No comparison sheet or art round has been started: **0 of 3 rounds used**. There is no heat-shimmer, frame, browser, look-score, Claude approval or full-card pass.
+
+Frozen read-only SHA-256 controls still match: fit JSON `c6298b9cc516a31cb97d76a6da88a84c6232200626699d5e499cc553107b660b`; independent source test `c67929fe883072b5bed5ed660e746225b694439dc95e00c46db94b9095bea05a`; new Scrapdome control fixture `db071b927146aea534ca6fb46a67655e7cb5fe864f62993e8149d22baa44513a`; original catalog `3902a750659da37892ac0ff6ac3431393fdfb9f35e2a4a4273117fa71eda0843`. Changed assertions: **none**. All licensed originals and tracked public assets remain unchanged.
+
+## Next ownership boundary
+
+The Director must re-slice or release the existing venue registry, Course/arena physical consumer, App/launcher/access/flag/UI and render hooks after their current owner finishes. Real physics must consume the same candidate cover positions and ramp profiles before seeded full-round checks can pass. Actual heat shimmer, matched High/Performance game comparisons, <=10% frame measurements versus current Scrapdome and Claude's written comparison review remain required. A public model/catalog installation belongs to that later authorized stage. Do not infer approval from the native-only result or add synthetic heat/render proof to turn a check green.
+
+This is an ownership boundary, not a laptop-tool failure. The story-warlord venue exception remains a written design question with Claude, routed by the Director. The current partial stage is frozen for review and handoff; it does not use the stopped Rustwall refit, modify its current assets or reopen that closed card.
 
 ## Exact pre-implementation RED
 
@@ -91,7 +120,7 @@ Other untouched SHA-256 controls: catalog `3902a750659da37892ac0ff6ac3431393fdfb
 - `node tools/test-replays.mjs`: 162/162 pass across 18 cases, 16 events, eight categories, three frame rates and three runs.
 - New files use LF. Existing assertion files and replay pins were not edited or regenerated. Final staged diff check must be clean before freezing.
 
-Lane tier/build, full tier, matched actual browser/art/frame review and Claude review are still required before integration. This RED commit grants no merge pass. Existing arena launch sounds cover the event; this tests-only change adds no event or audio asset. Any proposed new ambient cue belongs to the implementation/review, not an invented test-author design.
+The normal build passes. Lane tier, full tier, matched actual browser/art/frame review and Claude review remain required before integration after the runtime acceptance is complete. This WIP freeze grants no merge pass. Existing arena launch sounds cover the event; this private stage adds no game event or audio asset. Any proposed new ambient cue belongs to the implementation/review, not an invented test-author design.
 
 ## Removed
 
