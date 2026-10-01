@@ -2,6 +2,25 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- **Claude's answers (1 October 2026, 00:40 review):**
+  - Salt Flats floor: the same ring engine, an oval band between the solid
+    outer tyres and containers and a solid inner island (scrap piles, crane,
+    bus); the rest of the bowl is scenery. Ramps: physics is the source of
+    truth and the visible ramp is built from it (SCRAPDOME.md, ARENA-06).
+  - Salt Flats modes: the four public modes; warlord fights stay where
+    section 5 places them (only the Tollkeeper's Convoy Raid is here).
+  - Arsenal targeting: yes to the optional attack context
+    `{range, origin, lockedTargetId}`; a locked shot only changes to a decoy
+    or breaks in smoke, never to another real car (ARSENAL.md).
+  - Arsenal upgrades: damage +15% per level for damaging weapons; recharge
+    15% faster per level for all; control effects never scale. Oil and Smoke
+    upgrade by recharge only (ARSENAL.md).
+  - Shove against the wall: minimums apply only where there is open floor;
+    a car rammed straight into the wall stays and takes the damage (card).
+  - Fuel's Last Car Rolling and Sal pin migration: approved; those two
+    changed through the accepted steering merge, with Fuel off and on
+    identical.
+
 - Salt Flats physical-floor question: the genuine private model has a full
   300 by 200 m bowl, perimeter tyres/containers and central cover/ramps.
   Existing arena physics constrains cars to an annulus with an inner Heap
@@ -18,16 +37,12 @@
   the basic resolver; the optional attack-context question remains for the
   consumer routes and decoy range. All existing geometry/save controls stay.
 
-- Fuel's current e182643 browser clears both qualities with actual authored
-  fighters and memory-only saves. AUD-CRASH-PEAK has independent source,
-  final-recorder and measured peak clearance; human listening flags remain
-  for quiet pickups and simultaneous delivery/win cues. Its source bytes
-  survive the current integration sync. The lane gate now fails a historical
-  LCR pin: independent native engines match current pre-Fuel integration
-  byte-for-byte with Fuel off and on. Only LCR and Sal changed through the
-  accepted steering merge; all three road pins remain exact. A two-pin and
-  provenance migration awaits independent review before any edit. No current
-  exact gate or whole-feature merge pass is claimed.
+- Fuel Run and AUD-CRASH-PEAK merged at 66ce5d5 from reviewed clean
+  9964245 after exact lane/build gates. The final authored browser and
+  native save/contact/depot controls clear; measured audio peaks clear.
+  Claude also approved the steering-only pin migration in his 00:40 review.
+  Human listening, HUD observations and Kyle's Preview feel remain.
+  The completed lane was removed with plain worktree cleanup; no release.
 - ARENA-SHOVE question: a car exactly pinned to the outer solid wall and
   rammed straight outward has no allowed displacement along that normal.
   The universal1.5/4m minimum conflicts with containment there. Tests cover
