@@ -901,3 +901,24 @@ capture were added. No candidate run, native rerun, build/full gate, frame
 measurement, human Preview feel or listening pass is claimed. No live folder,
 Preview, .preview-dist, port 5174, real save, source change, integration merge,
 push, history rewrite or dependency change occurred.
+
+
+## Independently approved public car-key correction (1 October)
+
+The Director independently inspected keyboard-steering, input-contexts,
+App input application and the native negative-steer yaw convention. The
+2,400-step baseline trace proved that A/D supplied zero native car steering.
+The approved narrow correction sends ArrowLeft for heading error > .1 and
+ArrowRight for heading error < -.1, with their real code/key event names and
+matching release events. W, the controller calculation, exact center predicate,
+20-second/2,400-step limit and all 39 existing assertion lines remain unchanged.
+The private recipe still calls real keyboard handlers and native App stepping;
+no input, collision or renderer method is replaced. Source/assets/native tests
+and pins remain untouched. The corrected recipe is frozen before its next
+actual baseline diagnostic; the result will be appended after that run.
+
+Removed only the incorrectly mapped A/D car-turn and release key names from
+this new public QA controller. A/D foot controls and all production behavior
+are unchanged. This correction grants no wall-contact, browser, frame, art,
+human-feel or listening clearance. A physical body contact that stops the
+center before 18 must remain RED pending independent acceptance review.

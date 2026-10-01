@@ -225,8 +225,8 @@ function installReviewTools(mphToWorld,arenaTargetOutOfPlay) {
       if(keys.length)q.events.push({tick:q.tick,time:s.stageTimeSec,keys,zone:event.zone||null,strength:event.strength||null,wall:event.arenaWallHit||null});});
     for(let i=0;i<(recorded?recorded.length:alongTicks+2400);i++){
       const toward=i<alongTicks?0:side*Math.PI/2,error=Math.atan2(Math.sin(toward-s.headingError),Math.cos(toward-s.headingError));
-      const input=recorded?recorded[i]:{KeyW:true,KeyA:error>.1,KeyD:error<-.1};
-      for(const [code,key] of [['KeyW','w'],['KeyA','a'],['KeyD','d']])if(!!a.keys[code]!==!!input[code])
+      const input=recorded?recorded[i]:{KeyW:true,ArrowLeft:error>.1,ArrowRight:error<-.1};
+      for(const [code,key] of [['KeyW','w'],['ArrowLeft','ArrowLeft'],['ArrowRight','ArrowRight']])if(!!a.keys[code]!==!!input[code])
         window.dispatchEvent(new KeyboardEvent(input[code]?'keydown':'keyup',{code,key,bubbles:true}));
       q.tick=i;a.advance(dt);
       q.samples.push({tick:i,time:s.stageTimeSec,status:s.status,paused:s.paused,inputContext:a.activeInputContext(),
@@ -234,7 +234,7 @@ function installReviewTools(mphToWorld,arenaTargetOutOfPlay) {
         s:s.s,lateral:s.lateral,heading:s.headingError,speedMph:s.speedMph,armor:s.armor,combatWrecking:!!s.combatWrecking,nativeInput:structuredClone(s.input)});
       q.inputs.push(input);if(i%12===0)q.trace.push({tick:i,s:s.s,lateral:s.lateral,heading:s.headingError,speedMph:s.speedMph,armor:s.armor,nativeInput:structuredClone(s.input)});
       if(i>=alongTicks&&side*s.lateral>=d.course.def.scrapdome.floorHalfWidth-1e-6){touched=true;if(!recorded)break;}}
-    for(const [code,key] of [['KeyW','w'],['KeyA','a'],['KeyD','d']])window.dispatchEvent(new KeyboardEvent('keyup',{code,key,bubbles:true}));
+    for(const [code,key] of [['KeyW','w'],['ArrowLeft','ArrowLeft'],['ArrowRight','ArrowRight']])window.dispatchEvent(new KeyboardEvent('keyup',{code,key,bubbles:true}));
     off();
     if(!touched){
       const at=d.course.worldAt(s.s,s.lateral),heading=d.course.at(s.s).heading+s.headingError,spec=d._vehicleSpec(s);
