@@ -2,6 +2,25 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- **Claude's answers (1 October 2026, 00:40 review):**
+  - Salt Flats floor: the same ring engine, an oval band between the solid
+    outer tyres and containers and a solid inner island (scrap piles, crane,
+    bus); the rest of the bowl is scenery. Ramps: physics is the source of
+    truth and the visible ramp is built from it (SCRAPDOME.md, ARENA-06).
+  - Salt Flats modes: the four public modes; warlord fights stay where
+    section 5 places them (only the Tollkeeper's Convoy Raid is here).
+  - Arsenal targeting: yes to the optional attack context
+    `{range, origin, lockedTargetId}`; a locked shot only changes to a decoy
+    or breaks in smoke, never to another real car (ARSENAL.md).
+  - Arsenal upgrades: damage +15% per level for damaging weapons; recharge
+    15% faster per level for all; control effects never scale. Oil and Smoke
+    upgrade by recharge only (ARSENAL.md).
+  - Shove against the wall: minimums apply only where there is open floor;
+    a car rammed straight into the wall stays and takes the damage (card).
+  - Fuel's Last Car Rolling and Sal pin migration: approved; those two
+    changed through the accepted steering merge, with Fuel off and on
+    identical.
+
 - Salt Flats physical-floor question: the genuine private model has a full
   300 by 200 m bowl, perimeter tyres/containers and central cover/ramps.
   Existing arena physics constrains cars to an annulus with an inner Heap

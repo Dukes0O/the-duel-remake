@@ -2879,6 +2879,7 @@ tasks:
       - "Settled rule: in the dome any car rammed at 20 mph or more by any car moves at least 1.5 m, and at 40 mph at least 4 m, through the crash solver (released crash physics), in every state above. A wreck waiting to respawn slides like a traffic hulk and stays on the floor; respawn protection blocks damage, not movement. The Titan's crush stays as it is."
       - "Tests first; arena replays that change are named and explained."
     private_stage: "Granted contact/knock/floor source only at66ac011. All1458non-wreck minimum witnesses and243released solver/10road controls clear; full56tests50pass/fivewreckRED/onewallTODO. Waiting-wreck event stepping needs arena-event::stepWreckedActor after Fuel merges. Event/game/pilot/tests/pins untouched; no whole-card or merge pass. Outward wall interpretation still Claude question."
+    claude_answer: "1 October 2026: the 1.5 m and 4 m minimums apply where the push direction has open floor. A car pinned against the outer wall and rammed straight into it cannot move through the wall: it stays, takes the ram damage, and the attacker rebounds. Any part of the push along the wall still slides it along the wall. No teleport, no escape direction, containment unchanged."
   - id: WAR-SAL-RELEASE
     title: "Release the warlord ladder with Sawtooth Sal"
     owner: claude
