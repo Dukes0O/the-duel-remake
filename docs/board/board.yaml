@@ -695,7 +695,7 @@ tasks:
     owns: [tools/blender/vesper-blackiron.py, tools/art/vesper-fit.json, tools/test-vesper-art.mjs, tools/scenarios/vesper-art.mjs, docs/changes/ART-FIT-CREW-W.md, docs/board/looks/vesper/]
     hooks: []
     helpers: [test_author, art_director, reviewer, art_critic, browser_qa]
-    sequencing: "Claimed while Tanker/Arsenal awaited review. Claude04:00 just reopened both; Vesper stays queued with no Source/test edits until an existing active builder returns ownership, keeping five active builders including external audio. Tests first against a genuine current women GLB, preserving rig/actions/topology and all current crew/roster/assets. Build only private Vesper costume in settled blackened steel/dark red; no sculpting replacement anatomy or revealing her. Current women source choice within the approved family is routine fitting; record it. Native private recipe/model comparison uses actual game renderer, every sheet goes to Claude, three rounds at most. No public asset, crew/rigged-fighter/registry/reward/App/save or shared hook granted; WAR-04 owns later reveal/install integration. Independent reviewer must approve any hook before edits. No new source search or existing crew refit."
+    sequencing: "Activate private tests after Source workers return ownership and Tanker enters review. Choose actual current Odessa GLB within approved women family: original17joint rig/all12actions/near+distant topology retained, fitted new Vesper only inblackenedsteel/darkred. Currentwomen/roster/Source/assets/saves/rigged-fighter sharedhooks untouched; no Source search or refit. TestsFIRST in owned nativefile; recipe/fit/privateactualgame comparison thenClaude. Sourcechoice withinsettledfamily routine; no invented stricter art/triangle targets. Any Blender-output shared coverage waits exclusiveTanker hook merge. WAR04 retains laterreveal/install."
     flag: wasteland2
     acceptance:
       - "Kyle kept the current Nell, Odessa and Wren on 30 September 2026, so they are not refitted. Build only Vesper Blackiron, the Baron's daughter, by adapting the current women's figure (its rig, actions and topology) under docs/WASTELAND_ART.md 'Fitting existing models': her own costume in the Baron's blackened steel and a dark red accent, recognizable next to Nell, Odessa and Wren. Built but shown only once WAR-04 reveals her. Kyle has the last look in the Preview."
@@ -785,8 +785,8 @@ tasks:
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/art/convoy-tanker
     owns: [tools/blender/convoy-tanker.py, tools/art/tanker-fit.json, src/arena/tanker-model.js, tools/test-convoy-tanker-art.mjs, tools/scenarios/convoy-tanker-art.mjs, docs/changes/ART-FIT-TANKER.md, docs/board/looks/convoy-tanker/, public/assets/models/wasteland/convoy-tanker/]
-    hooks: []
     sequencing: "Claim after completed Fuel lane cleanup frees one builder slot. Tests first for exact approved delivery-flat/detail-tank/Factory valve/salvage provenance, genuine fitting geometry, single rigid body, three valves and read-only boarding lamps/lifecycle. New model/recipe/scenario files only; no renderer/event/simulation/source catalog edits. Private candidate and actual game-renderer comparison before public installation; every comparison goes to Claude, three-round cap. Source catalog records and licences remain exact; if an existing hook is needed, request it before editing. No fake convoy implementation or current runtime replacement."
+    hooks: [tools/test-blender-output.mjs]
     helpers: [test_author, art_director, reviewer, art_critic, browser_qa]
     test_commit: 6572240cd07beb284a0f60d816ca212582ed7afc
     source_commit: "a1ce674134dab9e71a0ac519f1322ecfbecc70b3"
@@ -886,7 +886,7 @@ tasks:
     status: building
     review_commit: 58116aec7e8eafd1308be8bc399b3c7a9624e269
     test_commit: "54f511d2c24c1c6150b1bb5af7c5eb2bd6e44fb7"
-    source_commit: "9614a3ef5fd3267f1c9837fe6450763f2ed195f4"
+    source_commit: "276e0362a0fef5b891ca4afb8b6aad44583d547d"
     design_question: "Claude06:30 vector policy is settled. Genuine chosen-decoy has launchspeed285.836914 versus real288.343020, ownreach714.592285 anddistance714.642285. Existing numericcontext realrange720.85755 selectsunreachabledecoy; recompute ownrange returnsreal andrepeatoscillates. Approve optional pure context.rangeForTarget(actor) inexisting resolver within(actor), preserving all numeric callers, so each candidate uses own genuine launchvector reach? Nativeproof writteninbox. Launchinterface remainsheld; independentimmutableinflight Source proceeds inalreadyowned twofiles, no targetingchange untilwrittenanswer."
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arsenal-core
@@ -1045,7 +1045,7 @@ tasks:
     needs: [ART-SRC-SALTFLATS]
     status: building
     review_commit: 2d6e5cc94ddd5c3a46316db411e20872b449f4ca
-    source_commit: 0dad93ececc7d61cfa6f64b308f941fbd21eb01a
+    source_commit: "b9f99b728bab4befee07d35cbc81a70e24a0284c"
     test_commit: "d5543db7adaa5b111a7164b6f7b91238f4443d4e"
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/vis/salt-flats
@@ -2900,7 +2900,7 @@ tasks:
     status: building
     review_commit: eba804dd4e48e2856051b962efbe7ebd6560466c
     source_commit: f703714101525b7786b1abe852ef1794ab9a6f97
-    test_commit: "1760bef8198df1218b71447578e295f59a60ae59"
+    test_commit: "f409b6f472516110ab152907c8c8496521b24873"
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arena-shove
     owns: [tools/test-arena-shove.mjs, tools/replays/arena-shove-controls.json, tools/scenarios/arena-shove.mjs, docs/changes/ARENA-SHOVE.md]
@@ -2914,7 +2914,7 @@ tasks:
       - "Settled rule: in the dome any car rammed at 20 mph or more by any car moves at least 1.5 m, and at 40 mph at least 4 m, through the crash solver (released crash physics), in every state above. A wreck waiting to respawn slides like a traffic hulk and stays on the floor; respawn protection blocks damage, not movement. The Titan's crush stays as it is."
       - "Tests first; arena replays that change are named and explained."
     private_stage: "Sourcef703/119 native118 independently clear; road162 exact. Expanded genuine released0f baseline418 private51420 passes8 real wall attempts/24captures, inputs/source/native receipts verified; negative contact samples inherit38/54 body/kit crossings, no full-clear claim. Independent candidate418 private60395 FAILS first High wreck/player-attacker40mph open-floor case: target maxmotion2.494298m at210ticks below unchanged4m;17images inspected, no reported console/request errors. Four High public traces/assets exactbaseline; positive lateral extent differs.0001307m, no full geometry-exact claim. Perf/remaining roles/full8comparison/frame not reached. Author read-only native contact diagnosis now precedes any Source or fixture edits; no browser/merge clearance."
-    qa_commit: "1760bef8198df1218b71447578e295f59a60ae59"
+    qa_commit: "f409b6f472516110ab152907c8c8496521b24873"
     claude_answer: "1 October 2026: the 1.5 m and 4 m minimums apply where the push direction has open floor. A car pinned against the outer wall and rammed straight into it cannot move through the wall: it stays, takes the ram damage, and the attacker rebounds. Any part of the push along the wall still slides it along the wall. No teleport, no escape direction, containment unchanged."
     fixture_review: "Clean1760 appends2 native actualseed89098 ballistic-height controls FIRST (36checks), then only NEWQA pose resets_jumpYnull/vertical0. Full124/6457checks; old122 whole35513Bprefix exact, prior39/publiclogic reconstructed by reversing approved twofields plus wreck-separatedstep, pins and5Sourcefiles exactf703. Both previous failed browser verdicts retained. Fresh independent wholebrowser running; no timing/merge clearance yet."
     browser_stage: "Independentd366 private35255 memoryonly0errors/warnings FAIL protectedCPUattacker0.649119809m/4m;42imagesinspected, wreckbothroles10.317/8.652,pinnedboth/protectedplayer pass. High4publictraces/assets exactbaseline; inherited38/54crossingsretained; positiveextentdelta.0000543m noeveryfieldexactclaim. Perf/remaining8comparison/frames notreached. Nativeexactseed89098 diagnosis refutesincidents/protection: attacker retainsrealpreviousramp_jumpY1.803827/vertical3.113334despitevisibleairflagsreset;54nativeheightrejects41.099687mphimpact, then0normalrearhit. Canonical arena-eventplaceActor73-74 freshpose resets_jumpYnull/vertical0; ignoredcontrastfirsttruehit targetdv21.025785moves8.997531861m/protection2to.25/noarmor/noair. Director approves2additivenativefreshness/heightguard controlsFIRST thenonlyNEWQApose2fields; old122/39/publicinputs/pins/Sourceunchanged. Authorfreezingnext; nobrowser/mergeclearance."
