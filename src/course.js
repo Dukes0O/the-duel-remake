@@ -1,6 +1,7 @@
 // Closed, arc-length sampled circuits. The same surface and obstacle data drive
 // the renderer, player, CPU and checkpoint validation.
 import { makeRng } from './rng.js';
+import { saltFlatsPhysicalGeometry, saltFlatsRampHeight } from './arena/venues.js';
 import { installHiddenRoad } from './hidden-road.js';
 import { installMuddyHollow } from './muddy-hollow.js';
 import { THEMES } from './config.js';
@@ -76,7 +77,7 @@ export class Course {
       const city=this.def.expansion?expansionPoint(this.def,i/count):cityLoop?.(i/count);raw.push({x:city?city.x:Math.cos(a)*r*(arena?1.3:shape[0]),z:city?city.z:Math.sin(a)*r*(arena?.8:shape[1]),s:0});
       if(i)raw[i].s=raw[i-1].s+Math.hypot(raw[i].x-raw[i-1].x,raw[i].z-raw[i-1].z);}
     const scale=this.length/raw.at(-1).s;raw.forEach(p=>{p.x*=scale;p.z*=scale;p.s*=scale;});
-    const origin=raw[0];let cursor=1;this.samples=[];
+    const origin=this.def.saltFlats?{x:0,z:0}:raw[0];let cursor=1;this.samples=[];
     for(let s=0;s<=this.length;s+=STEP){while(cursor<raw.length-1&&raw[cursor].s<s)cursor++;
       const a=raw[cursor-1],b=raw[cursor],t=(s-a.s)/(b.s-a.s);
       this.samples.push({s,x:lerp(a.x,b.x,t)-origin.x,z:lerp(a.z,b.z,t),y:this._height(s),heading:0,curvature:0});}
@@ -91,6 +92,10 @@ export class Course {
     if(!this.def.practice)f.checkpoints.push({s:this.raceLength,kind:'finish'});
     if(this.def.hasRadar)f.radarTraps.push({s:Math.round(this.length*.43),limitMph:this.def.speedLimitMph});
     if(this.def.practice){buildFreestyleFeatures(this);}
+    else if(this.def.saltFlats){
+      this.saltFlatsGeometry=saltFlatsPhysicalGeometry(this);
+      f.ramps.push(...this.saltFlatsGeometry.ramps);
+    }
     else if(this.def.scrapdome){
       // The Scrapdome venue (src/arena/venues.js); Titan Monster Arena below is unchanged.
       const layout=this.def.scrapdome;
@@ -133,10 +138,12 @@ export class Course {
     if(this.muddyHollow&&!surface.road){const world=this.worldAt(s,lateral);if(this.muddyHollow.contains(world.x,world.z))return {...surface,...this.muddyHollow.surfaceAt(world.x,world.z)};}
     return surface;}
   tunnelAt(s){const p=this.phase(s);return this.features.tunnels.find(t=>p>=t.start&&p<=t.end)||null;}
-  jumpAt(s){const p=this.phase(s),r=this.features.ramps.find(r=>p>=r.start&&p<=r.end);if(!r)return 0;
+  jumpAt(s){if(this.def.saltFlats){const at=this.worldAt(s);return saltFlatsRampHeight(this.features.ramps,at.x,at.z);}
+    const p=this.phase(s),r=this.features.ramps.find(r=>p>=r.start&&p<=r.end);if(!r)return 0;
     const t=(p-r.start)/(r.end-r.start);return r.height*Math.sin(Math.PI*t)**2;}
   _relief(s,off){
     if(this.def.practice){const p=this.worldAt(s,off);return freestyleSurfaceHeightAt(this,p.x,p.z);}
+    if(this.def.saltFlats){const p=this.worldAt(s,off);return saltFlatsRampHeight(this.features.ramps,p.x,p.z);}
     if(this.def.arena)return Math.abs(off)<=15?this.jumpAt(s):0;
     const p=this.phase(s),theme=this.themeAt(p),edge=Math.max(0,Math.abs(off)-this.roadHalfWidthAt(p)-2.5);
     const wave=frequency=>p/this.length*TAU*Math.max(1,Math.round(this.length*frequency/TAU));
@@ -167,6 +174,40 @@ export class Course {
     return p;}
   _solidScenery(){
     const f=this.features,rng=this.rng;
+    if(this.def.saltFlats){
+      for(const solid of this.saltFlatsGeometry.solids){
+        const {center,halfExtents,heading}=solid.collision;
+        const nearest=this.nearest(center[0],center[2]);
+        const obstacle={id:solid.id,kind:'prop',saltFlatsKind:solid.kind,shape:'box',
+          s:nearest.s,off:nearest.lateral,x:center[0],y:center[1]-halfExtents[1],z:center[2],
+          heading,halfX:halfExtents[0],halfZ:halfExtents[2],
+          minY:center[1]-halfExtents[1],maxY:center[1]+halfExtents[1],
+          height:halfExtents[1]*2,theme:'arena'};
+        f.obstacles.push(obstacle);
+        if(solid.kind.endsWith('-wall'))f.barriers.push(obstacle);
+      }
+      this.obstacleBuckets=new Map();this.rockBuckets=new Map();
+      const buckets=Math.ceil(this.length/64);this.bucketCount=buckets;
+      for(const obstacle of f.obstacles){
+        // An interior solid can have several equally near ring frames. Give
+        // off-band world solids to every bucket; the real world sweep filters
+        // their tight native envelopes. This small venue has fourteen solids.
+        if(Math.abs(obstacle.off)>this.roadHalfWidthAt(obstacle.s)){
+          for(let key=0;key<buckets;key++){
+            if(!this.obstacleBuckets.has(key))this.obstacleBuckets.set(key,[]);
+            this.obstacleBuckets.get(key).push(obstacle);
+          }
+          continue;
+        }
+        const reach=Math.hypot(obstacle.halfX,obstacle.halfZ)*1.5+20;
+        for(let bucket=Math.floor((obstacle.s-reach)/64);bucket<=Math.floor((obstacle.s+reach)/64);bucket++){
+          const key=((bucket%buckets)+buckets)%buckets;
+          if(!this.obstacleBuckets.has(key))this.obstacleBuckets.set(key,[]);
+          this.obstacleBuckets.get(key).push(obstacle);
+        }
+      }
+      return;
+    }
     const add=(id,kind,s,off,halfX,halfZ,angle=0,extra={})=>{const p=this.groundAt(s,off),o={id,kind,s:this.phase(s),off,x:p.x,y:p.y,z:p.z,heading:p.heading+angle,halfX,halfZ,shape:'box',theme:this.themeAt(s),...extra};f.obstacles.push(o);return o;};
     const roadClear=(s,off,radius=0,margin=2)=>{const p=this.worldAt(s,off),n=this.nearest(p.x,p.z),width=this.roadHalfWidthAt(n.s);
       if(n.distance<width+radius+margin)return false;
@@ -273,6 +314,20 @@ export class Course {
     return{x:lerp(a.x,b.x,t),z:lerp(a.z,b.z,t),y:this.def.expansion?this._height(s):lerp(a.y,b.y,t),heading:lerp(a.heading,b.heading,t),curvature:lerp(a.curvature,b.curvature,t),tunnel:!!this.tunnelAt(s)};}
   worldAt(s,lat=0){const f=this.at(s);return{x:f.x+Math.cos(f.heading)*lat,y:f.y,z:f.z-Math.sin(f.heading)*lat,heading:f.heading};}
   nearest(x,z,referenceS){const nearest=this._nearestIndex.query(x,z);let bestS=nearest.index<0?0:this.samples[nearest.index-1].s+nearest.t*STEP;
+    if(this.def.saltFlats){
+      // Solve the same sampled frame's normal projection, including scenery
+      // coordinates inside and outside the driving band. No coordinate oracle.
+      const residual=s=>{const frame=this.at(s);return (x-frame.x)*Math.sin(frame.heading)+(z-frame.z)*Math.cos(frame.heading);};
+      for(let iteration=0;iteration<40;iteration++){
+        const along=residual(bestS);if(Math.abs(along)<1e-9)break;
+        const derivative=(residual(bestS+.01)-residual(bestS-.01))/.02;
+        if(Math.abs(derivative)<1e-10)break;
+        bestS=this.phase(bestS-clamp(along/derivative,-16,16));
+      }
+      const frame=this.at(bestS),lateral=(x-frame.x)*Math.cos(frame.heading)-(z-frame.z)*Math.sin(frame.heading);
+      if(Number.isFinite(referenceS))bestS+=Math.round((referenceS-bestS)/this.length)*this.length;
+      return {...frame,s:bestS,lateral,distance:Math.hypot(x-frame.x,z-frame.z)};
+    }
     for(let i=0;i<3;i++){const f=this.at(bestS),lat=(x-f.x)*Math.cos(f.heading)-(z-f.z)*Math.sin(f.heading),along=(x-f.x)*Math.sin(f.heading)+(z-f.z)*Math.cos(f.heading);bestS=this.phase(bestS+along/Math.max(.3,1-f.curvature*lat));}
     const frame=this.at(bestS),lateral=(x-frame.x)*Math.cos(frame.heading)-(z-frame.z)*Math.sin(frame.heading);
     if(Number.isFinite(referenceS))bestS+=Math.round((referenceS-bestS)/this.length)*this.length;

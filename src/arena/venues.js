@@ -30,7 +30,96 @@ export const SCRAPDOME_VENUE = Object.freeze({
   sections: Object.freeze([Object.freeze({theme: 'arena', name: 'The Scrapdome', share: 1})]),
 });
 
-export const ARENA_VENUES = Object.freeze({scrapdome: SCRAPDOME_VENUE});
+// The Salt Flats keeps the arena ring engine. Its centered oval and its
+// source-fitted solid envelopes live here so physics owns the native recipe.
+export const SALT_FLATS_LAYOUT = Object.freeze({
+  ...SCRAPDOME_LAYOUT,
+  rampFractions: Object.freeze([0, .5]),
+  rampLength: 26,
+  rampHeight: 2.4,
+  rampWidth: 8,
+  rampStations: 16,
+  junk: Object.freeze([]),
+});
+
+export const SALT_FLATS_VENUE = Object.freeze({
+  id: 'salt-flats', venue: true, layoutVersion: 1, theme: 'arena', stage: 31,
+  name: 'The Salt Flats Scrapyard', lengthU: 640, closed: true, laps: 1,
+  kind: 'arena', arena: true, scrapdome: SALT_FLATS_LAYOUT,
+  saltFlats: Object.freeze({width: 300, depth: 200}),
+  hasRadar: false, hasRival: true, speedLimitMph: 100,
+  sections: Object.freeze([Object.freeze({theme: 'arena', name: 'The Salt Flats Scrapyard', share: 1})]),
+});
+
+export const ARENA_VENUES = Object.freeze({
+  scrapdome: SCRAPDOME_VENUE,
+  'salt-flats': SALT_FLATS_VENUE,
+});
+
+export function saltFlatsPhysicalGeometry(course) {
+  const solids = [];
+  const solid = (id, kind, center, size, fit = {}) => {
+    solids.push({id, kind, center, size, fit,
+      collision: {center, halfExtents: size.map(value => value / 2 + .002), heading: 0}});
+  };
+  for (const side of [-1, 1]) {
+    solid(`container-boundary-${side < 0 ? 'north' : 'south'}`, 'container-wall',
+      [0, 2.6, side * 97], [287.15, 5.2, 2.44], {side, axis: 'x'});
+    solid(`container-boundary-${side < 0 ? 'west' : 'east'}`, 'container-wall',
+      [side * 147, 2.6, 0], [2.44, 5.2, 187.15], {side, axis: 'z'});
+    solid(`tyre-boundary-${side < 0 ? 'west' : 'east'}`, 'tyre-wall',
+      [side * 145.5, 1.71, 0], [.46, 3.42, 16.26], {side});
+  }
+  for (const [index, [x, z]] of [[-53, -43], [0, -48], [55, -41],
+    [-60, 38], [0, 45], [58, 40]].entries()) {
+    solid(`salvage-cover-${index + 1}`, 'salvage-cover', [x, 1.035, z],
+      [3.55, 2.07, 5.25]);
+  }
+  solid('plain-derelict-bus', 'bus', [-35, 1.275, 0], [10.8, 2.55, 2.72]);
+  // The picked crane and hanging magnet retain the original 12 m assembly.
+  // This tight source-derived envelope includes its actual jib and cable.
+  solid('salvage-jib-crane', 'crane', [35, 6, -4.078], [6.505, 12, 12.817]);
+  const layout = course.def.scrapdome;
+  const ramps = layout.rampFractions.map((fraction, index) => {
+    const s = course.length * fraction, at = course.worldAt(s);
+    const center = [at.x, 0, at.z], heading = index ? Math.PI : 0;
+    const stations = Array.from({length: layout.rampStations + 1}, (_, station) => ({
+      z: (station / layout.rampStations - .5) * layout.rampLength,
+      y: layout.rampHeight * Math.sin(Math.PI * station / layout.rampStations) ** 2,
+    }));
+    const vertices = stations.flatMap(({z, y}) => [-1, 1].map(side => {
+      const x = side * layout.rampWidth / 2;
+      return [center[0] + Math.cos(heading) * x + Math.sin(heading) * z,
+        y, center[2] - Math.sin(heading) * x + Math.cos(heading) * z];
+    }));
+    const triangles = stations.slice(1).flatMap((_, station) => {
+      const a = station * 2, b = a + 2;
+      return [[a, b + 1, a + 1], [a, b, b + 1]];
+    });
+    return {id: `salt-ramp-${index + 1}`, start: s - layout.rampLength / 2,
+      end: s + layout.rampLength / 2, height: layout.rampHeight,
+      profile: {center, heading, width: layout.rampWidth, length: layout.rampLength,
+        height: layout.rampHeight, shape: 'sampled-arena-sine-squared'},
+      stations, vertices, triangles};
+  });
+  return {ground: course.def.saltFlats, solids, ramps};
+}
+
+export function saltFlatsRampHeight(ramps, x, z) {
+  for (const ramp of ramps) {
+    const {center, heading, width, length} = ramp.profile;
+    const dx = x - center[0], dz = z - center[2];
+    const across = Math.cos(heading) * dx - Math.sin(heading) * dz;
+    const along = Math.sin(heading) * dx + Math.cos(heading) * dz;
+    // Only float export precision is allowed at the authored footprint edge.
+    if (Math.abs(across) > width / 2 + .00001 || Math.abs(along) > length / 2 + .00001) continue;
+    const position = Math.max(0, Math.min(ramp.stations.length - 1,
+      (along / length + .5) * (ramp.stations.length - 1)));
+    const index = Math.min(ramp.stations.length - 2, Math.floor(position));
+    return ramp.stations[index].y + (ramp.stations[index + 1].y - ramp.stations[index].y) * (position - index);
+  }
+  return 0;
+}
 
 // A car's top speed on the arena floor.
 export function arenaFloorSpeed(layout, topSpeedMph) {

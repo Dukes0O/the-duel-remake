@@ -1,5 +1,5 @@
-// Private native Salt Flats source stage. The venue registry and game wiring
-// are separate, ungranted hooks. This module cannot launch an event or save.
+// Private native Salt Flats source stage. Course geometry is registered;
+// public launch and renderer wiring are separate hooks. This module only presents art.
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {registerSceneSystem} from '../../scene-systems.js';

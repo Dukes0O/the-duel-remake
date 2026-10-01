@@ -8,6 +8,8 @@ import hashlib
 import json
 import math
 import struct
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 import bpy
@@ -104,6 +106,27 @@ def originals(config,homes):
     return result
 
 
+def physical_geometry(root, config, seed):
+    """Read the real headless Course; no generated manifest drives physics."""
+    program = (
+        'import {Course} from "./src/course.js";'
+        'import {SALT_FLATS_VENUE} from "./src/arena/venues.js";'
+        'const course=new Course(SALT_FLATS_VENUE,Number(process.argv[1]));'
+        'console.log(JSON.stringify(course.saltFlatsGeometry));'
+    )
+    node = shutil.which('node')
+    if node is None:
+        raise ValueError('The installed Node runtime is needed for native Course geometry')
+    result = subprocess.run([node, '--input-type=module', '-e', program, str(seed)],
+                            cwd=root, capture_output=True, text=True, timeout=60,
+                            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0)
+    if result.returncode:
+        raise ValueError('Actual Salt Flats Course geometry failed: ' + result.stderr)
+    geometry = json.loads(result.stdout)
+    if geometry['ground'] != config['targetSizeMetres'] or len(geometry['ramps']) != config['ramps']:
+        raise ValueError('Actual Course geometry differs from the approved bowl or ramp count')
+    return geometry
+
 def game_to_blender(point):
     return (point[0],-point[2],point[1])
 
@@ -145,6 +168,19 @@ class Geometry:
         self.lineage.append({'sourceKey':source['key'],'node':self.name,'triangleStart':start,
                              'sourceTriangleIndices':list(indices),'matrix':matrix_array(matrix)})
 
+    def fit_collision(self, collision):
+        """Fit the actual assembled source faces to the authored Course solid."""
+        low = Vector(tuple(min(point[axis] for point in self.points) for axis in range(3)))
+        high = Vector(tuple(max(point[axis] for point in self.points) for axis in range(3)))
+        size = [extent * 2 - .004 for extent in collision['halfExtents']]
+        scale = Matrix.Diagonal(Vector(tuple(size[axis] / (high[axis] - low[axis])
+                                            for axis in range(3)) + (1,)))
+        placement = Matrix.Translation(Vector(collision['center'])) @ scale @ Matrix.Translation(-(low + high) / 2)
+        self.points = [tuple(placement @ Vector(point)) for point in self.points]
+        for row in self.lineage:
+            source_matrix = Matrix([[row['matrix'][column * 4 + axis] for column in range(4)]
+                                    for axis in range(4)])
+            row['matrix'] = matrix_array(placement @ source_matrix)
     def build(self,material):
         data=bpy.data.meshes.new(self.name)
         data.from_pydata([game_to_blender(point) for point in self.points],[],self.faces);data.update()
@@ -232,10 +268,14 @@ def main():
         print('Approved source licence and byte guards pass; no geometry exported.');return
     if output.exists() and any(output.iterdir()):
         raise ValueError('Use a fresh private native output directory')
+    physical=physical_geometry(root,config,args.seed)
     source=originals(config,homes);bpy.ops.wm.read_factory_settings(use_empty=True);output.mkdir(parents=True,exist_ok=True)
-    metal=worn_material(output);salt=salt_material(photo);rng=np.random.default_rng(args.seed & 0xffffffff)
+    metal=worn_material(output);salt=salt_material(photo)
     objects=[];features=[];lineage=[]
+    solids={row['id']:row for row in physical['solids']}
     def add(geometry,kind,material=metal):
+        if geometry.name in solids:
+            geometry.fit_collision(solids[geometry.name]['collision'])
         objects.append(geometry.build(material));features.append(geometry.feature(kind));lineage.extend(geometry.lineage)
     ground=Geometry('salt-flats-ground');w=config['targetSizeMetres']['width']/2;d=config['targetSizeMetres']['depth']/2
     points=[(-w,0,-d),(-w,0,d),(w,0,d),(w,0,-d)];uv=[(0,0),(0,2*d/12),(2*w/12,2*d/12),(2*w/12,0)]
@@ -267,7 +307,7 @@ def main():
                 wall.stamp(part,indices,matrix,tile=6)
         add(wall,'tyre-wall')
     for index,(x,z) in enumerate([(-53,-43),(0,-48),(55,-41),(-60,38),(0,45),(58,40)]):
-        pile=Geometry('salvage-cover-'+str(index+1));yaw=float(rng.uniform(-.24,.24))
+        pile=Geometry('salvage-cover-'+str(index+1));yaw=0
         sedan=source['sedan'];body=sedan['parts']['body']
         # Actual missing wheels and strongly compressed source shells. Upper
         # wreck overlaps the lower roof; every loose part rests on the floor.
@@ -283,14 +323,14 @@ def main():
         pile.stamp(part,indices,matrix,tile=3);add(pile,'salvage-cover')
     bus=Geometry('plain-derelict-bus');part=source['Bus']
     retained=[index for index,role in enumerate(part['roles']) if 'windows' not in role.lower()]
-    indices,matrix=fit(part,(10.8,2.55,2.72),(-99,1.275,-3),yaw=.10,indices=retained)
+    indices,matrix=fit(part,(10.8,2.55,2.72),(-35,1.275,0),indices=retained)
     bus.stamp(part,indices,matrix,tile=1);add(bus,'bus')
     crane=Geometry('salvage-jib-crane');part=source['crane'];scale=12/3.553319215774536
-    matrix=Matrix.Translation(Vector((103,0,55)))@Matrix.Diagonal(Vector((scale,scale,scale,1)))
+    matrix=Matrix.Translation(Vector((35,0,0)))@Matrix.Diagonal(Vector((scale,scale,scale,1)))
     crane.stamp(part,list(range(len(part['faces']))),matrix,tile=2)
     # The source jib tip lies at Blender +Y, game -Z. The actual separate
     # source magnet hangs below that tip on a simple steel cable connector.
-    tip=(103,12,55-2.92*scale)
+    tip=(35,12,-2.92*scale)
     part=source['crane-magnet'];indices,matrix=fit(part,(1.25,1.40,1.25),(tip[0],3.3,tip[2]))
     crane.stamp(part,indices,matrix,tile=3)
     for axis in (0,2):
@@ -300,18 +340,14 @@ def main():
         crane.triangle([corners[i] for i in (0,1,2)],[(0,0),(0,1),(1,1)])
         crane.triangle([corners[i] for i in (0,2,3)],[(0,0),(1,1),(1,0)])
     add(crane,'crane')
-    for index,(x,z,heading) in enumerate([(-29,0,0),(31,0,math.pi)]):
-        ramp=Geometry('salt-ramp-'+str(index+1));length=26;width=8;height=2.4
-        matrix=Matrix.Translation(Vector((x,0,z)))@Matrix.Rotation(heading,4,'Y')
-        for station in range(16):
-            a=station/16;b=(station+1)/16
-            corners=[(-width/2,height*math.sin(math.pi*a),(a-.5)*length),
-                     (width/2,height*math.sin(math.pi*a),(a-.5)*length),
-                     (width/2,height*math.sin(math.pi*b),(b-.5)*length),
-                     (-width/2,height*math.sin(math.pi*b),(b-.5)*length)]
-            ramp.triangle([matrix@Vector(corners[i]) for i in (0,2,1)],[(0,a),(1,b),(1,a)])
-            ramp.triangle([matrix@Vector(corners[i]) for i in (0,3,2)],[(0,a),(0,b),(1,b)])
-        add(ramp,'ramp');features[-1]['profile']={'center':[x,0,z],'heading':heading,'width':width,'length':length,'height':height,'shape':'sine'}
+    for native_ramp in physical['ramps']:
+        ramp=Geometry(native_ramp['id'])
+        for indices in native_ramp['triangles']:
+            points=[native_ramp['vertices'][index] for index in indices]
+            uvs=[(index % 2, (index // 2) / (len(native_ramp['stations']) - 1)) for index in indices]
+            ramp.triangle(points,uvs)
+        add(ramp,'ramp')
+        features[-1]['profile']=native_ramp['profile']
     bpy.ops.object.select_all(action='DESELECT')
     for obj in objects:obj.select_set(True)
     bpy.context.view_layer.objects.active=objects[0]
@@ -324,7 +360,7 @@ def main():
     manifest={'version':1,'card':'ARENA-06','seed':args.seed,'ground':{'node':ground.name,'targetSizeMetres':config['targetSizeMetres'],
                'photoSha256':config['saltPhoto']['sha256'],'tiling':'mirrored-uv'},'features':features,'sourceInstances':lineage,
                'nativeTriangles':native_triangles,'nativeDraws':len(objects),'geometrySha256':digest(venue),
-               'scope':'Private native source stage. Runtime registration, physical consumer, game/art/frame and Claude review remain pending.'}
+               'scope':'Private registered Course geometry. Island continuity, launch hooks, game/art/frame and Claude review remain pending.'}
     (output/'manifest.json').write_text(json.dumps(manifest,separators=(',',':'))+'\n')
     print(json.dumps({'nativeTriangles':native_triangles,'nativeDraws':len(objects),'features':len(features),'output':str(output)}))
 

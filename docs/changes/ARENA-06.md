@@ -397,3 +397,171 @@ None. No source, asset, licensed input, existing check, assertion, fixture
 or replay pin was replaced. Temporary private native exports and copied
 negative-source fixtures remain reproducible ignored .qa-dist scratch for
 the Director's janitor once their verdict is used.
+
+## Registered native Course geometry slice — 1 October 2026
+
+This partial source slice executes and passes all **16 native geometry checks**,
+including all **13 formerly missing registered-Course cases**. All **31 native
+source/geometry controls** pass. The default suite remains RED on **six held
+runtime hooks**. Visible inner/outer boundary correspondence is still incomplete;
+this is a source freeze for independent acceptance, not a finished venue.
+
+The Director granted only the existing venue module, venue registry, Course,
+recipe and this append-only note. Work began at the tests-first freeze
+`3dbecc33e9487efe536c3a7d63958afae33df549`, preserving source guard
+`2d6e5cc94ddd5c3a46316db411e20872b449f4ca`. A normal merge of current integration
+produced `8d34b1fa5abab0a271f0879d8656a08e9e558d23` before source edits. Fuel,
+steering, Claude's settled oval-band direction and the current source picks
+remain preserved. No test, input setting or replay fingerprint changed.
+
+### Exact RED and resulting physical source
+
+After the Fuel merge, the unchanged default command
+`node tools/test-salt-flats.mjs` reproduced:
+
+- Original selection: **42 checks, 33 passed, 9 failed**.
+- Appended geometry: **16 checks, 3 passed, 13 failed**. Every failure required
+  the actual registered Salt Flats Course.
+- Combined: **58 checks, 36 passed, 22 failed**, exit 1. Fuel adds its complete
+  round case while its merged unknown-mode rejection now passes. This explains
+  the one-check change from the pre-merge 57-check freeze; no test was edited.
+
+The registered venue uses the existing ring engine and a centered 640 m oval
+inside the unchanged 300 by 200 m native bowl. Centerline sample bounds are
+X +/-124.34283226679858 m and Z +/-76.51866601033758 m, with the existing
+18 m floor half-width. Native declared-floor samples at the center and 95%
+of both sides stay on actual ground triangles. Curvature ratio is
+0.4383909713295506, below 1. All eight native spawn slots are off ramps, clear
+of one another and deterministic.
+
+The new Salt-specific nearest-frame solve inverts the same sampled Course
+frame for native and scenery coordinates. It does not return a cached fixture,
+rename another venue or teleport a requested point. The coordinate diagnostic
+at native ground bounds, all solid centers and ramp vertices measures maximum
+nearest/world error 2.3327151445628006e-10 m. Existing ordinary Course mapping
+and all frozen Scrapdome geometry/driving fingerprints remain unchanged.
+
+Both ramps move to the actual oval ends at X +/-124.34283226679858 m, Z about
+zero. The Course owns their 26 m length, 8 m width, 2.4 m height, 17 squared-sine
+sample stations over 16 segments, vertices and triangles. Blender reads this actual headless
+Course through installed Node and exports those vertices. The old independent
+sine recipe and generic 30 m-wide relief are removed from the Salt path.
+Actual exported meshes both measure [8, 2.4000000953674316, 26] m. At the native
+quarter station Z -6.5 m, both meshes are Y 1.2000000476837158 m; Course heights
+are 1.1999999999999993 and 1.1999999999996902 m. Eight-metre side probes are Y 0.
+All station, midpoint, triangle-centroid, side, edge and outside-footprint
+checks pass at the frozen 0.002 m tolerance.
+
+The Salt surface currently interpolates its own 17 squared-sine station
+heights linearly. That is an explicitly unreviewed polygonal approximation of
+the continuous arena curve between stations; existing Scrapdome/Titan analytic
+ramps are unchanged. Independent source review must settle this approximation
+before a final venue pass. Increasing mesh sampling from an unchanged analytic
+physical rule remains a possible follow-up; no claim is made that a test
+against the native mesh settles that game-rule question.
+
+Fourteen actual solid envelopes are authored in the owned venue registry:
+four container boundaries, two tyre sections, six genuine salvage piles, the
+plain Bus and the crane/magnet assembly. The Bus and crane now sit in the
+central area. The recipe fits their genuine assembled source faces to those
+Course envelopes and updates each full affine lineage matrix honestly. The
+exported manifest still measures actual visible vertices with its 0.002 m
+margin; no runtime manifest, proxy source or new network request drives physics.
+Every visible solid reaches real Course collision buckets and swept contacts,
+with correct position, extents, orientation, vertical bounds and outside misses.
+
+The first fit passed 15/16 geometry cases; the Bus alone exposed an ambiguous
+interior nearest-frame projection. An inner world solid can be equally near
+opposite sides of a ring. Salt off-band solids therefore reach every small
+venue bucket, with actual world sweeps filtering their tight native envelopes.
+This fixes real broad-phase coverage without adding an obstacle. The venue has
+only fourteen solids; frame cost remains unmeasured.
+
+### Exact final checks and native artifact
+
+The final unchanged default command reports:
+
+- Original selection: **42 checks, 36 passed, 6 failed**.
+- Appended geometry: **16 checks, 16 passed, 0 failed**, with **zero registered
+  cases excluded**.
+- Combined: **58 checks, 52 passed, 6 failed**, exit 1.
+
+All 28 original source/native controls and three appended native oracle controls
+pass, including exact nine picked model/catalog/path bindings; empty, changed
+licence, changed model, genuine unpicked SchoolBus and relabelled sedan
+rejections before export; four-pack original triangle lineage; unchanged photo
+pixels and mirrored UV sampler; palette replacement; tight visible envelopes;
+real repeat geometry and source transforms; and preservation of licensed inputs,
+current public art and retained tests/replay pins. Registry/spawn checks, actual
+native scene consumption and a complete seeded Last Car Rolling round now pass
+through the real existing consumers. Those passes do not grant App launch or
+whole runtime acceptance.
+
+The six held failures remain: missing Salt dev flag; rank-eight rejection;
+dev-off rejection; rank-nine App selection reaching Salt; unknown-venue App
+rejection; and complete Fuel Run on Salt. No new public mode, stub, flag, App,
+event, UI, renderer or audio wiring was added.
+
+Unchanged regression commands all exit 0:
+
+- Course nearest: 127296 checks; all existing samples/features/colliders exact.
+- Polyline index: 95656 checks.
+- Road surface: 495518 checks.
+- Arena event: 13/13; salvage props: 29; ramp sides: 42; steering: 215.
+- Scene systems: 16 lifecycle/clock/disposal controls.
+- Ordinary replay fingerprints: **162 retained checks**, unchanged.
+- `npm run build`: pass in 449 ms, with the existing large-chunk warning.
+
+Private current artifact: **102764 triangles, 17 draws, 16 features, two ramps**.
+GLB: **12821472 bytes**, SHA-256
+`07d4e706af9ba14d2329247997346501b438e43cfbe27eac763db89899c0336f`.
+Manifest: **474178 bytes**. These are actual native counts, not a frame gate;
+the model remains above the advisory 8 MB single-file target.
+
+Current source SHA-256 pins:
+
+- Venue registry: `c7cd3906fc8502a5dda2b6a93aa8e5eb85090db34280a7204334badeaf68d2f8`.
+- Course: `b624aff7bc9c0ee397a3a7af07ccfb30c6cccdd2291ff5a5a105acf1bb407497`.
+- Native scene header: `0970a895ad885d4b3122aa721550a371fccd7748da7b4566abbe768f0c8f8f75`.
+- Recipe: `2fb751bd89cdc070ec2fec9ba4ccc7f1f9395fdcc7f7c18caa50b96b1e07674d`.
+- Unchanged full frozen test: `d56517bed257b7150c2030a77fa053c69ad8b874bb67095fe863f27cc49ea824`.
+- Unchanged fit: `c6298b9cc516a31cb97d76a6da88a84c6232200626699d5e499cc553107b660b`.
+- Unchanged catalog: `3902a750659da37892ac0ff6ac3431393fdfb9f35e2a4a4273117fa71eda0843`.
+- Unchanged Scrapdome control: `db071b927146aea534ca6fb46a67655e7cb5fe864f62993e8149d22baa44513a`.
+
+Raw RED, first-fit and final logs, native source reports and manifests are kept
+in ignored integration `.evidence/2026-10-01/ARENA-06/physical-source/`.
+`native-measurements.json` measures the actual exported GLB;
+`course-physical-receipt.json` records the actual authoritative Course data.
+The final candidate remains only in the lane's
+`.qa-dist/salt-flats-tests-BUlPcJ/candidate/`. Changed assertions: none.
+
+### Required continuation and Removed
+
+The frozen geometry checks do not prove that the driving domain's whole boundary
+matches visible geometry. Continuous visible/solid inner-island correspondence
+and the oval outer-band/native perimeter correspondence need additive independent
+acceptance before another construction step. No continuous rim, perimeter
+relocation or invisible filling collider was added in this partial slice.
+The current right band endpoint is X 142.34283226679858 m while the native
+rectangular wall's inner face is about X 145.78 m, a 3.43716773320142 m difference.
+The north band edge is Z 94.51866601033758 m versus native wall inner Z about
+95.78 m, a 1.26133398966242 m difference; diagonal gaps are wider. These figures
+compare nominal center-line domain edges, not an independently settled car-body
+wall clearance. The six small piles, crane and Bus do not yet establish a
+continuous native island boundary. Neither gap is a finished-venue pass.
+
+This hands back Source ownership for independent acceptance. Island/perimeter
+continuity, held launch/flag/event hooks, art/wear/heat, actual matched game
+High/Performance measurements within 10%, Claude comparison, public installation
+and final exact lane/full/build gates remain required. No art round, Salt frame,
+whole-card merge, integration merge, push or release is claimed. No Preview,
+live folder, port 5174, real save, protected audio, new service or source pick
+was touched.
+
+Removed: Salt's missing-registry path, off-origin generic physical course,
+independent sine ramp recipe and oversized generic side relief were replaced
+in this source slice. The now-unused native yaw RNG was removed. No existing
+Scrapdome/ordinary Course path, current art, old assertion, original licensed
+source, source recipe binding or replay pin was discarded. Private candidates
+and source receipts stay ignored used-once evidence for the Integrator's janitor.
