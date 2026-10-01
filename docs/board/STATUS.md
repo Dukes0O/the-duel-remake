@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-01T21:33:25.712Z
+Observed at: 2026-10-01T21:55:14.607Z
 
-Observation commit: e797ca9f3d6ce4c0e8a429173ae770cdedf360ac
+Observation commit: 7b3be3603b6581fc39a9104dcdb4a07c25715ebe
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e797ca9f3d6ce4c0e8a429173ae770cdedf360ac
+Integration HEAD: 7b3be3603b6581fc39a9104dcdb4a07c25715ebe
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -44,7 +44,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | lane/audio/aud-17-picks | 6 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/cmb/arena-shove | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-shove |
 | lane/cmb/arsenal-core | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-core |
-| lane/vis/salt-flats | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/salt-flats |
+| lane/vis/salt-flats | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/salt-flats |
 
 ## Unmerged branches for idle review
 
@@ -53,10 +53,10 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/art/vesper | unknown | 2026-10-01T08:10:01-07:00 | 0 | last commit 2026-10-01T08:10:01-07:00 | docs/changes/ART-FIT-CREW-W.md, tools/art/vesper-fit.json, tools/blender/vesper-blackiron.py, tools/test-vesper-art.mjs |
-| lane/art/convoy-tanker | unknown | 2026-10-01T14:29:16-07:00 | 0 | last commit 2026-10-01T14:29:16-07:00 | docs/board/looks/convoy-tanker/round-1-review.md, docs/board/looks/convoy-tanker/round-1-sheet.py, docs/board/looks/convoy-tanker/round-1.jpg, docs/board/looks/convoy-tanker/round-2-review.md, docs/board/looks/convoy-tanker/round-2-sheet.py |
-| lane/cmb/arena-shove | unknown | 2026-10-01T14:25:23-07:00 | 0 | last commit 2026-10-01T14:25:23-07:00 | docs/changes/ARENA-SHOVE.md, src/arena/arena-event.js, src/arena/arena-floor.js, src/sim-contacts.js, src/vehicle-collision.js |
-| lane/cmb/arsenal-core | unknown | 2026-10-01T14:30:21-07:00 | 0 | last commit 2026-10-01T14:30:21-07:00 | docs/changes/ARS-CORE.md, src/app.js, src/arena/arena-pilot.js, src/arsenal/car-effects.js, src/arsenal/hazards.js |
-| lane/vis/salt-flats | unknown | 2026-10-01T14:30:35-07:00 | 0 | last commit 2026-10-01T14:30:35-07:00 | docs/changes/ARENA-06.md, src/arena/venues.js, src/arena/venues/salt-flats.js, src/course.js, src/render3d.js |
+| lane/art/convoy-tanker | unknown | 2026-10-01T14:36:40-07:00 | 0 | last commit 2026-10-01T14:36:40-07:00 | docs/board/looks/convoy-tanker/round-1-review.md, docs/board/looks/convoy-tanker/round-1-sheet.py, docs/board/looks/convoy-tanker/round-1.jpg, docs/board/looks/convoy-tanker/round-2-review.md, docs/board/looks/convoy-tanker/round-2-sheet.py |
+| lane/cmb/arena-shove | unknown | 2026-10-01T14:36:44-07:00 | 0 | last commit 2026-10-01T14:36:44-07:00 | docs/changes/ARENA-SHOVE.md, src/arena/arena-event.js, src/arena/arena-floor.js, src/sim-contacts.js, src/vehicle-collision.js |
+| lane/cmb/arsenal-core | unknown | 2026-10-01T14:41:46-07:00 | 0 | last commit 2026-10-01T14:41:46-07:00 | docs/changes/ARS-CORE.md, src/app.js, src/arena/arena-pilot.js, src/arsenal/car-effects.js, src/arsenal/hazards.js |
+| lane/vis/salt-flats | unknown | 2026-10-01T14:30:35-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/ARENA-06.md, src/arena/venues.js, src/arena/venues/salt-flats.js, src/course.js, src/render3d.js |
 
 ## Size targets
 
@@ -70,9 +70,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 430,908 B | +0 B | 500,000 B |
 | Review `looks/` | 10,712,857 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 507,856 B | +218,252 B | 5,000,000 B |
+| Added bytes in last merge | 465,143 B | -42,713 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 339,036,160 B | +1,099,776 B | unavailable |
+| Git objects | 339,562,496 B | +526,336 B | unavailable |
 | Lane folders | 5 | +0 | unavailable |
 
 ## Backups
@@ -81,7 +81,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: e797ca9f3d6ce4c0e8a429173ae770cdedf360ac
+- Local integration/wasteland: 7b3be3603b6581fc39a9104dcdb4a07c25715ebe
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
