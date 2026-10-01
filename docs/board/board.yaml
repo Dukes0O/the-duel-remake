@@ -613,8 +613,7 @@ tasks:
     lane: ART
     size: L
     needs: [ART-SRC-CREW]
-    status: review
-    waiting_on: kyle
+    status: closed
     claimed_by: codex-director-2026-09-30-resume
     flag: wasteland2
     owns: [tools/blender/crew-source-fit.py, tools/blender/crew-source-fit.json, tools/test-crew-source-fit.mjs, tools/scenarios/crew-source-fit.mjs, tools/art/crew-fit-sheet.py, public/assets/models/wasteland/crew/rook.glb, public/assets/models/wasteland/crew/jax.glb, public/assets/models/wasteland/crew/cinder.glb, public/assets/models/wasteland/crew/dune.glb, public/assets/models/wasteland/crew/tusk.glb, docs/board/looks/crew-fit-m/, docs/changes/ART-FIT-CREW-M.md]
@@ -628,6 +627,7 @@ tasks:
       - "Reuse the pack's shared rig and 24 actions; map them to the game's existing on-foot actions (idle, walk, run, aim, fire, reload, repair, knockdown, get up, enter and exit the car). A missing action is adapted from the nearest pack action, never hand-animated from nothing."
       - "Near and distant versions within the budgets; the old Rook runtime model and its figure scripts are removed once all five pass; Kyle checks them in the Preview."
     claude_review: "30 September 2026: agree with the critic; round 1 is worse than the current figures at every distance. Recommend Kyle keeps the current crew and this card closes (as he chose for the women). Correction: Cinder is a woman (crew sheet and current figure); she stays as she is either way."
+    kyle_decision: "Kyle, 30 September 2026: keep the current crew figures. Round 1 scored 1 to 2 against them. Closed without installing anything; the Director removes this card's lane and branch."
   - id: ART-SRC-CREW-W
     title: "Crew figures for women: short list of existing starting models"
     owner: codex
@@ -660,8 +660,7 @@ tasks:
     lane: ART
     size: M
     needs: [ART-SRC-HANDS]
-    status: review
-    waiting_on: kyle
+    status: closed
     review_commit: 34e914b482190114a575716d0fa107a818a4ef0c
     claimed_by: codex-director-2026-09-30-resume
     branch: lane/art/hands-fit
@@ -673,6 +672,7 @@ tasks:
     sequencing: "Tests first. Fit actual licensed WRAD Arms, preserve source topology/weights/rig and existing crew garment direction and motion. No sculpted replacement anatomy. Private candidate outputs/comparison first; no runtime install or old recipe removal until independent comparison beats current at4/5 on every item. At most3rounds; two without gain stop. The unchanged catalog hook is released while paused; a future approved card must reclaim it before editing; protected audio credits HTML has no granted hook and waits its owner. No App/renderer/simulation/audio/crew-body files. Retain shared RPG/wrench models and their build recipe; replace only superseded hand build paths after acceptance. Existing assertion edits require a written independent review reason, never weakened to pass."
     acceptance:
       - "Fit Kyle's pick from docs/board/looks/first-person-src following docs/WASTELAND_ART.md 'Fitting existing models': gloves and sleeves per crew member matching ART-FIT-CREW-M and -W, RPG and wrench grips, and the existing aim, fire, reload and repair motion. The current hands are already acceptable, so rule 5 applies strictly: if the fit does not beat them on the same sheet by round 3, keep the current hands and close the card."
+    kyle_decision: "Kyle, 30 September 2026: keep the current first-person hands. Two rounds did not beat them. Closed without installing anything; the Director removes this card's lane and branch."
   - id: ART-FIT-RUSTWALL
     title: "Rustwall salvage wall and canyon rock from the picked sources"
     owner: codex
@@ -706,8 +706,7 @@ tasks:
     lane: ART
     size: S
     needs: [ART-SRC-TANKER]
-    status: review
-    waiting_on: kyle
+    status: closed
     review_commit: 0ace07df6c747ef499d9d50293477e535550f152
     source_review_commit: 6b613fed6bafa07f482e4962c112e97ed3e7c8bf
     note: "Bounded stop records independently clear, not finished source readiness. Genuine Factory valve456tri can supply three targets; separate trailer/frame/hitch and suitable boarding hatch remain missing. Default56checks52pass/four meaningful gap failures; native FBX and pinned rights/geometry negatives pass. Tests-first provenance guard fixed before output/import. One334548B sheet and verdict retained; used raw deleted. No fitting, whole-lane/build, merge or ARENA-07 clearance. Kyle chooses another existing-parts search or Claude plan revision."
@@ -720,13 +719,25 @@ tasks:
     acceptance:
       - "Find actual existing licensed CC0 parts for a separate trailer/frame/hitch, three fuel valves and an opening boarding hatch around the picked Kenney delivery-flat plus horizontal detail-tank. Verify original embedded rights, source hashes and actual geometry; a complete existing trailer may come from another free pack. Do not claim kit sample columns or boxes already supply a finished articulated trailer."
       - "Retain one bounded comparison and matching review with a recommendation and explicit remaining gaps; stop waiting_on: kyle before adaptation. Existing placement/source validators and independent review plus lane/build floor apply. If free sources and this laptop cannot meet acceptance, write why and stop for Kyle; never fabricate a finished substitute."
+    kyle_decision: "Kyle, 30 September 2026: stop searching; Claude simplified the convoy rig (docs/SCRAPDOME.md, Convoy Raid) so no trailer, hitch or opening hatch is needed. Keep the verified valve donor record in tools/art/catalog.json when the lane's records merge; otherwise the Director removes the lane."
+  - id: ART-FIT-TANKER
+    title: "Convoy Raid tanker: one armored truck from Kyle's pick A"
+    owner: codex
+    lane: ART
+    size: M
+    needs: []
+    status: ready
+    flag: scrapdome
+    acceptance:
+      - "Build the tanker settled in docs/SCRAPDOME.md, Convoy Raid (30 September 2026): one rigid vehicle from Kyle's pick A (Kenney delivery-flat cab and bed with the City Kit Industrial detail-tank on the bed), three fuel valves from the verified factory pipe valve donor on the tank, scrap armor plating from the Salt Flats salvage parts, and a raised boarding plate on the tank roof with warning lamps that light when all three valves are broken. Nothing opens or articulates."
+      - "Follow docs/WASTELAND_ART.md 'Fitting existing models' (no source palette, gritty, judged in the game renderer, three-round cap); send the comparison sheet to Claude, who shows Kyle."
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex
     lane: SAVE
     size: S
     needs: []
-    status: merged
+    status: released
     review_commit: 6d92948908b5e749e5d805e4bc6f91943a28e273
     claimed_by: codex-director-2026-09-30-resume
     branch: lane/save/save-damaged-fields
@@ -736,6 +747,7 @@ tasks:
     helpers: [test_author, reviewer, save_guardian]
     acceptance:
       - "Save Guardian reproduced JSON-safe credits and winStreak objects with a non-callable own toString throwing in normalizeProfile; loadPlayers then displays a default Player 1. Write failing synthetic tests first. Normalize damaged numeric fields without object-coercion errors while preserving the named owner and every valid historical field. All seven fixtures and 247 preservation checks, migration/backup and storage gates pass unchanged; no real saves, schema/key change or runtime dependency. Race fingerprints remain unchanged."
+    kyle_decision: "Released 30 September 2026 on Kyle's go-ahead (SAVE-FIX-RELEASE)."
   - id: HK-RUSTWALL-BASELINE
     title: "Rustwall frame test keeps its baseline in the repository"
     owner: codex
@@ -954,7 +966,7 @@ tasks:
     owner: codex
     lane: CMB
     size: L
-    needs: [ARENA-06, CREW-03, ART-SRC-TANKER, ART-SRC-TANKER-PARTS]
+    needs: [ARENA-06, CREW-03, ART-FIT-TANKER]
     status: ready
     flag: scrapdome
     owns: [src/arena/modes/convoy-raid.js, src/arena/convoy.js, tools/test-arena-convoy.mjs, tools/scenarios/convoy-raid.mjs, docs/changes/ARENA-07.md]
