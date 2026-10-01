@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
-import {writeFile} from 'node:fs/promises';
-import {join} from 'node:path';
+import {writeFile, mkdir, copyFile} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+import {mkdtempSync, realpathSync, readFileSync, existsSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+import {join, resolve, sep} from 'node:path';
 import {DRIVE} from '../../src/config.js';
 import {arenaParticipant, outOfPlay, arenaTargetOutOfPlay} from '../../src/combat-teams.js';
 
@@ -29,6 +33,7 @@ async function ready(c, label) {
   })()`,label,60000);
 }
 async function capture(c, label) {
+  await collapseQA(c);
   await ready(c,label+' actual car/crew readiness');
   await c.screenshot(label);
 }
@@ -102,13 +107,270 @@ function installFixtures(mphToWorld, arenaTargetOutOfPlay) {
       protectedSec:member(b).protectedSec,wreckCount:member(b).wrecked};}
   window.__shove={prepare,hit,deadline};return true;
 }
+
+const REFERENCE='0f934845',PUBLIC_SEED=1989;
+// This is a QA-output snapshot, never a worktree or a source overlay. The
+// independent browser worker runs the same owned recipe against the real App.
+export async function preparePublicBaseline() {
+  const lane=resolve(fileURLToPath(new URL('../../',import.meta.url))),integration=resolve(lane,'../..');
+  assert.ok(lane.toLowerCase().startsWith((integration+sep+'.lanes'+sep).toLowerCase()));
+  const commit=execFileSync('git',['rev-parse',REFERENCE],{cwd:lane,encoding:'utf8'}).trim();
+  const publicTree=ref=>execFileSync('git',['ls-tree','-r',ref,'--','public'],{cwd:lane,encoding:'utf8'});
+  assert.equal(publicTree(commit),publicTree('HEAD'),'baseline and candidate runtime asset bytes are identical');
+  const different=execFileSync('git',['diff','--name-only',commit,'HEAD','--','src'],{cwd:lane,encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
+  const granted=new Set(['src/arena/arena-event.js','src/sim-contacts.js','src/vehicle-collision.js','src/vehicle-knock.js','src/arena/arena-floor.js']);
+  assert.ok(different.every(path=>granted.has(path)),'reference differs only in the granted Shove source');
+  const qa=join(integration,'.qa-dist');await mkdir(qa,{recursive:true});
+  const home=mkdtempSync(join(qa,'arena-shove-public-baseline-'));
+  assert.ok(resolve(home).toLowerCase().startsWith((resolve(qa)+sep).toLowerCase()));
+  const archive=join(home,'reference.tar'),snapshot=join(home,'snapshot');await mkdir(snapshot);
+  execFileSync('git',['archive','--format=tar','--output',archive,commit,'src','public','tools','index.html','package.json','package-lock.json','vite.config.js'],{cwd:lane});
+  execFileSync('tar',['-xf',archive,'-C',snapshot]);
+  await mkdir(join(snapshot,'tools/scenarios'),{recursive:true});
+  const archived=execFileSync('git',['ls-tree','-rz',commit,'--','src','public','tools','index.html','package.json','package-lock.json','vite.config.js'],{cwd:lane,encoding:'utf8'}).split('\0').filter(Boolean);
+  for(const entry of archived){const [header,path]=entry.split('\t'),[mode,kind,expected]=header.split(' ');assert.equal(kind,'blob');
+    const bytes=readFileSync(join(snapshot,path)),actual=createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
+    assert.equal(actual,expected,'actual archived source/runtime bytes: '+path);}
+  await copyFile(fileURLToPath(import.meta.url),join(snapshot,'tools/scenarios/arena-shove.mjs'));
+  const dependencies=realpathSync(join(integration,'node_modules')),junction=join(snapshot,'node_modules');
+  assert.equal(dependencies.toLowerCase().startsWith('c:'+sep+'users'+sep+'kyleb'+sep+'dev'+sep+'the-duel-remake'),false,'never link live dependencies');
+  const psQuote=value=>"'"+value.replaceAll("'","''")+"'";
+  execFileSync('powershell',['-NoProfile','-Command',`New-Item -ItemType Junction -Path ${psQuote(junction)} -Target ${psQuote(dependencies)} | Out-Null`]);
+  const provenance={commit,verifiedArchivedFiles:archived.length,sourceDifferences:different,runtimeAssetTree:publicTree(commit),snapshot,junction,dependencies,
+    command:'ARENA_SHOVE_PUBLIC_ONLY=1 node tools/browser-harness.mjs scenario arena-shove --output-dir .evidence/2026-10-01/ARENA-SHOVE/public-baseline',
+    cleanup:'Resolve and verify snapshot remains inside integration/.qa-dist. Unlink node_modules junction nonrecursively before deleting checked QA output. No forced worktree or history action.'};
+  await writeFile(join(home,'provenance.json'),JSON.stringify(provenance,null,2)+'\n');
+  return provenance;
+}
+async function collapseQA(c) {
+  const points=await c.evaluate(`(() => [...document.querySelectorAll('details[open]')].flatMap(panel=>{
+    const summary=panel.querySelector('summary'),title=summary?.textContent||'';
+    if(!/TEMPORARY SAVES|Performance samples/.test(title)||panel.hidden)return [];
+    const r=summary.getBoundingClientRect();return r.width&&r.height?[{x:r.x+r.width/2,y:r.y+r.height/2}]:[];
+  }))()`);
+  for(const point of points)for(const type of ['mousePressed','mouseReleased'])
+    await c.command('Input.dispatchMouseEvent',{type,button:'left',clickCount:1,...point});
+  assert.equal(await c.evaluate(`[...document.querySelectorAll('details[open]')].some(panel=>!panel.hidden&&/TEMPORARY SAVES|Performance samples/.test(panel.querySelector('summary')?.textContent||''))`),false,
+    'private overlay is collapsed through its actual summary control');
+}
+function installReviewTools(mphToWorld,arenaTargetOutOfPlay) {
+  const a=window.__qaApp,dt=1/120,r=window.__render;
+  const actor=id=>id==='player'?a.duel.state:a.duel.state.opponents.find(car=>car.arenaId===id);
+  const member=car=>a.duel.state.arena.participants.find(p=>p.id===(car===a.duel.state?'player':car.arenaId));
+  const tick=n=>{for(let i=0;i<n;i++)a.duel.step(dt);};
+  const uiTick=n=>{for(let i=0;i<n;i++)a.advance(dt);};
+  const paint=()=>{a.onFrame?.(a.duel.state,0);r.renderFrame();r.scene.updateMatrixWorld(true);};
+  const visible=node=>{for(let at=node;at;at=at.parent)if(!at.visible)return false;return true;};
+  const pose=(car,s,lateral=0,headingError=0)=>Object.assign(car,{s,prevS:s,lateral,prevLateral:lateral,headingError,
+    speedMph:0,yawVelocity:0,pushVelocity:0,steerVisual:0,slipAngle:0,knock:null,tumble:null,
+    airborne:false,airHeight:0,prevAirHeight:0,groundHeight:null,contactCooldown:0,damageCooldown:0});
+  const hold=(car,speedMph=0)=>{if(car===a.duel.state){a.duel.setInput({throttle:0,brake:0,steer:0,boost:false});return;}
+    const d=a.duel,g=d.course.worldAt(car.s,car.lateral),heading=d.course.at(car.s).heading+car.headingError;
+    Object.assign(member(car),{targetId:arenaTargetOutOfPlay(d,d.state)?null:'player',targetHeldSec:-100,reactionSec:10,
+      goal:{x:g.x+Math.sin(heading)*30,z:g.z+Math.cos(heading)*30,speedMph,boost:false}});};
+  function roots(){paint();const used=new Set(),all=[];r.scene.traverse(node=>{if(node.userData.vehicleKey&&node.userData.vehicleSource&&visible(node))all.push(node);});
+    return [a.duel.state,...a.duel.state.opponents].map(car=>{const at=a.duel.course.worldAt(car.s,car.lateral),choices=all.filter(node=>!used.has(node)&&node.userData.vehicleKey===car.car)
+      .sort((x,y)=>{const xp=x.getWorldPosition(x.position.clone()),yp=y.getWorldPosition(y.position.clone());return Math.hypot(xp.x-at.x,xp.z-at.z)-Math.hypot(yp.x-at.x,yp.z-at.z);});
+      if(!choices.length)throw Error('Actual visible authored car root missing: '+car.car);used.add(choices[0]);return {car,node:choices[0]};});}
+  function faces(node,matrix=null){const rows=[];node.traverse(mesh=>{if(!mesh.isMesh||!visible(mesh)||!mesh.geometry?.attributes.position||(Array.isArray(mesh.material)?mesh.material.every(mat=>!mat.visible):mesh.material?.visible===false))return;
+    const g=mesh.geometry,p=g.attributes.position,count=g.index?.count??p.count;
+    if(count>750000)throw Error('Bounded actual mesh inspection exceeds 250k triangles');
+    for(let i=0;i<count;i+=3)rows.push({mesh:mesh.name,points:[0,1,2].map(offset=>mesh.position.clone().fromBufferAttribute(p,g.index?g.index.getX(i+offset):i+offset)
+      .applyMatrix4(matrix||mesh.matrixWorld).toArray())});});return rows;}
+  function geometry(){return roots().map(({car,node})=>{const rows=faces(node),points=rows.flatMap(row=>row.points),offsets=points.map(p=>a.duel.course.nearest(p[0],p[2],car.s).lateral),spec=a.duel._vehicleSpec(car);
+    return {id:car===a.duel.state?'player':car.arenaId,car:car.car,source:node.userData.vehicleSource,authoredKit:!!node.getObjectByName('authored-kit'),
+      frontMeshes:[...new Set(rows.map(row=>row.mesh).filter(name=>/front|bull|bar|crossbow|kit/i.test(name)))],triangles:rows.length,
+      lateralMin:offsets.reduce((x,y)=>Math.min(x,y),Infinity),lateralMax:offsets.reduce((x,y)=>Math.max(x,y),-Infinity),floorLimit:a.duel.course.def.scrapdome.floorHalfWidth,
+      center:{s:car.s,lateral:car.lateral,heading:car.headingError,speedMph:car.speedMph},nativeEnvelope:{halfWidth:spec.halfWidth,halfLength:spec.halfLength},rows,points};});}
+  function wallGeometry(){paint();const barriers=a.duel.course.features.barriers,near=barriers.map((feature,index)=>({feature,index,
+    distance:Math.hypot(feature.x-a.duel.course.worldAt(a.duel.state.s,a.duel.state.lateral).x,feature.z-a.duel.course.worldAt(a.duel.state.s,a.duel.state.lateral).z)})).filter(row=>row.feature.arenaWall).sort((x,y)=>x.distance-y.distance).slice(0,4);
+    const meshes=[];r.scene.traverse(mesh=>{if(mesh.isInstancedMesh&&visible(mesh)&&mesh.count===barriers.length&&mesh.geometry?.attributes.position){
+      const p=mesh.geometry.attributes.position,coords=Array.from({length:p.count},(_,i)=>[p.getX(i),p.getY(i),p.getZ(i)]),range=i=>Math.max(...coords.map(p=>p[i]))-Math.min(...coords.map(p=>p[i]));
+      if(Math.abs(range(2)-8)<1e-5&&Math.abs(range(1)-.38)<1e-5)meshes.push(mesh);}});
+    if(!meshes.length)throw Error('Actual instanced arena rail geometry not found');
+    return meshes.flatMap(mesh=>near.map(({feature,index})=>{const matrix=mesh.matrixWorld.clone();mesh.getMatrixAt(index,matrix);matrix.premultiply(mesh.matrixWorld);
+      return {feature:{id:feature.id,x:feature.x,y:feature.y,z:feature.z,heading:feature.heading,arenaWall:feature.arenaWall},instance:index,
+        rows:faces(mesh,matrix),mesh:mesh.name||mesh.type};}));}
+  const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],sub=(a,b)=>a.map((x,i)=>x-b[i]),dot=(a,b)=>a.reduce((sum,x,i)=>sum+x*b[i],0);
+  function strictCross(a,b){const norm=face=>{const n=cross(sub(face[1],face[0]),sub(face[2],face[0])),len=Math.hypot(...n);return n.map(v=>v/len);},an=norm(a),bn=norm(b),ad=a.map(p=>dot(bn,sub(p,b[0]))),bd=b.map(p=>dot(an,sub(p,a[0]))),eps=1e-7;
+    if(![ad,bd].every(d=>Math.min(...d)<-eps&&Math.max(...d)>eps))return false;
+    const line=cross(an,bn),len=Math.hypot(...line);if(len<eps)return false;const direction=line.map(v=>v/len);
+    const slice=(face,distances)=>{const values=[];for(let i=0;i<3;i++){const j=(i+1)%3;if(Math.abs(distances[i])<=eps)values.push(dot(face[i],direction));
+      if(distances[i]*distances[j]<0){const t=distances[i]/(distances[i]-distances[j]);values.push(dot(face[i].map((v,k)=>v+(face[j][k]-v)*t),direction));}}return values;};
+    const av=slice(a,ad),bv=slice(b,bd);return Math.min(Math.max(...av),Math.max(...bv))-Math.max(Math.min(...av),Math.min(...bv))>eps;}
+  const overlap=(a,b)=>[0,1,2].every(i=>Math.max(...a.map(p=>p[i]))>=Math.min(...b.map(p=>p[i]))&&Math.max(...b.map(p=>p[i]))>=Math.min(...a.map(p=>p[i])));
+  function measure(){const cars=geometry(),walls=wallGeometry();return {stageTimeSec:a.duel.state.stageTimeSec,seed:a.duel.state.seed,
+    wallPolicy:{floorHalfWidth:a.duel.course.def.scrapdome.floorHalfWidth,wallOffset:a.duel.course.def.scrapdome.wallOffset,scope:'Existing center containment; mesh/attachment clearance is measured separately, never assumed.'},
+    cars:cars.map(({rows,points,...car})=>({...car,crossings:walls.flatMap(wall=>rows.flatMap((row,index)=>wall.rows.flatMap((surface,face)=>overlap(row.points,surface.points)&&strictCross(row.points,surface.points)?[{mesh:row.mesh,face:index,wall:wall.feature.id,wallFace:face}]:[])))})),
+    walls:walls.map(wall=>({feature:wall.feature,instance:wall.instance,mesh:wall.mesh,triangles:wall.rows.length,points:wall.rows.flatMap(row=>row.points)}))};}
+  function view(mode,scope='both'){const before=JSON.stringify([a.duel.state,...a.duel.state.opponents].map(car=>[car.s,car.lateral,car.speedMph,car.armor,car.combatWreckTimer])),cars=geometry(),selected=scope==='player'&&mode!=='world'?cars.filter(car=>car.id==='player'):cars;
+    const points=selected.flatMap(car=>car.points),center=points.reduce((sum,p)=>sum.map((v,i)=>v+p[i]),[0,0,0]).map(v=>v/points.length),radius=points.reduce((max,p)=>Math.max(max,Math.hypot(...sub(p,center))),3),heading=a.duel.course.at(a.duel.state.s).heading;
+    const distance=Math.max(mode==='world'?100:mode==='medium'?24:12,radius*3.4),side=a.duel.state.lateral>0?-1:1;
+    a.inspectionCamera={position:[center[0]+Math.sin(heading)*distance*.45+Math.cos(heading)*side*distance*.65,center[1]+distance*.75,
+      center[2]+Math.cos(heading)*distance*.45-Math.sin(heading)*side*distance*.65],target:center};
+    r.camera.position.fromArray(a.inspectionCamera.position);r.camera.lookAt(...center);r.camera.updateMatrixWorld(true);paint();
+    const projection=cars.map(car=>{const projected=car.points.map(point=>r.camera.position.clone().fromArray(point).project(r.camera));return {id:car.id,
+      inFrame:projected.every(p=>Math.abs(p.x)<.98&&Math.abs(p.y)<.98&&p.z>=-1&&p.z<=1),
+      x:[projected.reduce((v,p)=>Math.min(v,p.x),Infinity),projected.reduce((v,p)=>Math.max(v,p.x),-Infinity)],y:[projected.reduce((v,p)=>Math.min(v,p.y),Infinity),projected.reduce((v,p)=>Math.max(v,p.y),-Infinity)],source:car.source,triangles:car.triangles};});
+    if(JSON.stringify([a.duel.state,...a.duel.state.opponents].map(car=>[car.s,car.lateral,car.speedMph,car.armor,car.combatWreckTimer]))!==before)throw Error('Inspection camera changed native actor state');
+    if(projection.filter(p=>scope==='both'||mode==='world'||p.id==='player').some(p=>!p.inFrame))throw Error('Actual required authored actor geometry is outside the inspection frame');
+    return {mode,scope,camera:a.inspectionCamera,projection};}
+  function publicStart(){if(a.autopilot)throw Error('Public control must be driven by real input, not autopilot');if(!a.restart())throw Error('Public native rematch failed');return {countdown:a.duel.state.countdown,seed:a.duel.state.seed};}
+  function publicCountdown(){uiTick(362);const d=a.duel,s=d.state,spec=d._vehicleSpec(s);
+    if(s.status!=='racing'||s.arena.phase!=='fight')throw Error('Public countdown not completed by native ticks');
+    if(Math.abs(s.lateral)+spec.halfWidth>=d.course.def.scrapdome.floorHalfWidth)throw Error('Public spawn body is not fully inside floor');
+    window.__publicWall={startS:s.s,inputs:[],trace:[]};return {s:s.s,lateral:s.lateral,seed:s.seed,car:s.car,opponents:s.opponents.map(car=>car.car)};}
+  function publicDrive(side,alongTicks,recorded=null){const d=a.duel,s=d.state,q=window.__publicWall;let touched=false;
+    for(let i=0;i<(recorded?recorded.length:alongTicks+2400);i++){
+      const toward=i<alongTicks?0:side*Math.PI/2,error=Math.atan2(Math.sin(toward-s.headingError),Math.cos(toward-s.headingError));
+      const input=recorded?recorded[i]:{KeyW:true,KeyA:error>.1,KeyD:error<-.1};
+      for(const [code,key] of [['KeyW','w'],['KeyA','a'],['KeyD','d']])if(!!a.keys[code]!==!!input[code])
+        window.dispatchEvent(new KeyboardEvent(input[code]?'keydown':'keyup',{code,key,bubbles:true}));
+      a.advance(dt);
+
+      q.inputs.push(input);if(i%12===0)q.trace.push({tick:i,s:s.s,lateral:s.lateral,heading:s.headingError,speedMph:s.speedMph,armor:s.armor,nativeInput:structuredClone(s.input)});
+      if(i>=alongTicks&&side*s.lateral>=d.course.def.scrapdome.floorHalfWidth-1e-6){touched=true;if(!recorded)break;}}
+    for(const [code,key] of [['KeyW','w'],['KeyA','a'],['KeyD','d']])window.dispatchEvent(new KeyboardEvent('keyup',{code,key,bubbles:true}));
+    if(!touched)throw Error('Legal public controls did not reach chosen wall within twenty seconds');
+    return {side,alongTicks,touched,inputs:q.inputs,trace:q.trace,...measure()};}
+  function scripted(kind,role,side=1,normal=false,oblique=0,segment=260){
+    if(!a.restart())throw Error('Scripted native rematch failed');tick(362);const d=a.duel,s=d.state,cpu=s.opponents[0],target=role==='player-attacker'?cpu:s,attacker=target===s?cpu:s;
+    s.combat.aiTimer=s.combat.pickupTimer=Infinity;pose(s,20);pose(cpu,90);hold(cpu);
+    function approach(mph){const heading=normal?side*Math.PI/2-oblique:0;
+      pose(attacker,target.s,target.lateral,heading);const A=d._vehicleSpec(attacker),B=d._vehicleSpec(target),alpha=attacker.headingError,beta=target.headingError;
+      const width=A.halfWidth*Math.abs(Math.cos(alpha))+B.halfWidth*Math.abs(Math.cos(beta))+A.halfLength*Math.abs(Math.sin(alpha))+B.halfLength*Math.abs(Math.sin(beta))+.2;
+      const length=A.halfLength*Math.abs(Math.cos(alpha))+B.halfLength*Math.abs(Math.cos(beta))+A.halfWidth*Math.abs(Math.sin(alpha))+B.halfWidth*Math.abs(Math.sin(beta))+.3;
+      pose(attacker,normal?target.s:target.s-length-.02,normal?target.lateral-side*(width+.02):target.lateral,heading);
+      hold(attacker,(mph+1.1)/Math.cos(oblique));attacker.speedMph=(mph+1.1)/Math.cos(oblique);}
+    if(kind==='wreck'||kind==='protected'){target.armor=1;approach(60);d._vehicleContact(attacker,target,'rival');tick(1);
+      if(!target.combatWrecking)throw Error('Real owned contact did not create scripted wreck');
+      if(kind==='protected'){for(let n=0;n<430&&target.combatWrecking;n++)tick(1);
+        if(target.combatWrecking||member(target).protectedSec!==2||target.armor!==target.maxArmor)throw Error('Real scripted deadline/protection failed');}}
+    const limit=d.course.def.scrapdome.floorHalfWidth,pinned=normal||kind==='pinned';
+    pose(target,segment,pinned?side*(limit+.01):0,kind==='pinned'&&!normal?side*Math.PI/2:0);hold(target);if(pinned)tick(1);
+    approach(40);const start=d.course.worldAt(target.s,target.lateral),frame=d.course.at(target.s),events=[];
+    const off=d.onChange((_,event)=>{if(event.vehicleSmash||event.combatRamHit)events.push({time:s.stageTimeSec,event:structuredClone(event)});});
+    window.__shoveExtended={kind,role,side,normal,oblique,target,attacker,start,frame,events,off,ticks:0,moved:0,tangent:0,reverse:0,rebound:0,air:0,
+      targetArmor:target.armor,attackerArmor:attacker.armor,timer:target.combatWreckTimer,protectedSec:member(target).protectedSec,limit,attackerStart:attacker.lateral};
+    return {kind,role,side,normal,oblique,segment,poseScope:pinned?'Explicit center-at-floor fixture; full body/front-kit may extend beyond the center boundary. Not public body clearance.':'Explicit stopped native actors on open floor.',...measure()};}
+  function observe(){const d=a.duel,q=window.__shoveExtended,t=q.target,x=q.attacker,at=d.course.worldAt(t.s,t.lateral),k=x.knock,
+    velocity=k?k.vx*Math.cos(q.frame.heading)-k.vz*Math.sin(q.frame.heading):Math.sin(x.headingError)*x.speedMph*mphToWorld+(x.pushVelocity||0);
+    q.moved=Math.max(q.moved,Math.hypot(at.x-q.start.x,at.z-q.start.z));q.tangent=Math.max(q.tangent,Math.abs((at.x-q.start.x)*Math.sin(q.frame.heading)+(at.z-q.start.z)*Math.cos(q.frame.heading)));
+    q.reverse=Math.max(q.reverse,-q.side*velocity);q.rebound=Math.max(q.rebound,q.side*(q.attackerStart-x.lateral));q.air=Math.max(q.air,t.airHeight||0);
+    if(Math.abs(t.lateral)>q.limit+1e-8||Math.abs(x.lateral)>q.limit+1e-8)throw Error('Real scripted center escaped native containment');}
+  function progress(to){const q=window.__shoveExtended;if(to<q.ticks)throw Error('Cannot rewind a native transient');
+    while(q.ticks<to){tick(1);q.ticks++;observe();}
+    return {kind:q.kind,role:q.role,side:q.side,normal:q.normal,oblique:q.oblique,ticks:q.ticks,moved:q.moved,tangent:q.tangent,reverse:q.reverse,rebound:q.rebound,air:q.air,
+      targetArmorBefore:q.targetArmor,targetArmor:q.target.armor,attackerArmorBefore:q.attackerArmor,attackerArmor:q.attacker.armor,
+      remainingTimer:q.target.combatWreckTimer,initialTimer:q.timer,protectedSec:member(q.target).protectedSec,wreck:q.target.combatWrecking,
+      actualEvents:q.events.map(row=>({time:row.time,smash:row.event.vehicleSmash?{severity:row.event.vehicleSmash.severity,dvMph:row.event.vehicleSmash.dvMph}:null,ram:row.event.combatRamHit||null})),...measure()};}
+  window.__shoveReview={geometry:measure,view,publicStart,publicCountdown,publicDrive,scripted,progress,finish(){window.__shoveExtended?.off();}};return true;
+}
+async function reviewedCapture(c,label,mode='medium',scope='both') {
+  await collapseQA(c);await ready(c,label+' actual authored readiness');
+  await c.waitFor(`(() => {const a=window.__qaApp,r=window.__render;a.onFrame?.(a.duel.state,0);r.renderFrame();
+    let count=0,kit=0;r.scene.traverse(node=>{if(node.userData.vehicleKey&&node.userData.vehicleSource&&node.visible){count++;if(node.getObjectByName('authored-kit'))kit++;}});
+    return count>=a.duel.state.opponents.length+1&&kit>=a.duel.state.opponents.length+1&&document.querySelector('#view3d')?.dataset.combatEffectsStatus==='ready';})()`,label+' bounded actual front-kit/effects readiness',60000);
+  const view=await c.evaluate(`window.__shoveReview.view(${JSON.stringify(mode)},${JSON.stringify(scope)})`);
+  await c.screenshot(label);return view;
+}
+async function extendedQuality(c,quality,report,save) {
+  const wire=`(() => {${arenaParticipant.toString()}\n${outOfPlay.toString()}\nreturn ${arenaTargetOutOfPlay.toString()};})()`;
+  await c.evaluate(`(${installReviewTools.toString()})(${DRIVE.mphToWorld},${wire})`);
+  // Public/legal-input controls run BEFORE any constructed pinned contact.
+  for(const side of [-1,1])for(const alongTicks of [0,360]){
+    const label=quality+'-public-'+side+'-'+alongTicks;
+    await c.evaluate('window.__shoveReview.publicStart()');await ready(c,label+' real rematch readiness before public controls');
+    const start=await c.evaluate('window.__shoveReview.publicCountdown()');
+    const before=await reviewedCapture(c,label+'-spawn-world','world','player');
+    const startGeometry=await c.evaluate('window.__shoveReview.geometry()'),player=startGeometry.cars.find(car=>car.id==='player');
+    assert.ok(player.lateralMin>-player.floorLimit&&player.lateralMax<player.floorLimit,'actual loaded public spawn body and attachments start fully inside floor');
+    const reference=process.env.ARENA_SHOVE_PUBLIC_INPUTS_FILE?JSON.parse(readFileSync(resolve(process.env.ARENA_SHOVE_PUBLIC_INPUTS_FILE),'utf8')):null;
+    const referenceCase=reference?.publicWalls.find(row=>row.quality===quality&&row.result.side===side&&row.result.alongTicks===alongTicks);
+    if(reference){assert.ok(reference.sourceCommit.startsWith('0f934845')&&reference.baselineVerifiedArchivedFiles>0,'actual baseline source bytes were verified');
+      assert.equal(reference.runtimeAssetTree,report.runtimeAssetTree,'actual public runtime assets match');assert.ok(referenceCase,'exact public baseline input recipe is present');}
+
+    const result=await c.evaluate(`window.__shoveReview.publicDrive(${side},${alongTicks},${JSON.stringify(referenceCase?.result.inputs||null)})`),views=[];
+    if(referenceCase){assert.equal(start.seed,referenceCase.start.seed);assert.equal(start.car,referenceCase.start.car);assert.deepEqual(start.opponents,referenceCase.start.opponents);
+      assert.deepEqual(result.inputs,referenceCase.result.inputs,'candidate uses the exact native baseline input stream');}
+
+    views.push(await reviewedCapture(c,label+'-wall-close','close','player'));
+    views.push(await reviewedCapture(c,label+'-wall-world','world','player'));
+    report.publicWalls.push({quality,start,startGeometry,before,result,views,matchedBaselineInputs:!!referenceCase});await save();
+    assert.ok(result.touched&&result.cars.every(car=>Math.abs(car.center.lateral)<=result.wallPolicy.floorHalfWidth+1e-8),'actual legal-input actors preserve the existing center policy');
+  }
+  if(process.env.ARENA_SHOVE_PUBLIC_ONLY==='1')return;
+  for(const kind of ['wreck','pinned','protected','idle'])for(const role of ['player-attacker','cpu-attacker']){
+    const label=quality+'-roles-'+kind+'-'+role,before=await c.evaluate(`window.__shoveReview.scripted(${JSON.stringify(kind)},${JSON.stringify(role)})`),views=[];
+    views.push(await reviewedCapture(c,label+'-before-close','close'));views.push(await reviewedCapture(c,label+'-before-world','world'));
+    const during=await c.evaluate('window.__shoveReview.progress(8)');views.push(await reviewedCapture(c,label+'-during-medium','medium'));
+    const after=await c.evaluate('window.__shoveReview.progress(210)');views.push(await reviewedCapture(c,label+'-after-close','close'));views.push(await reviewedCapture(c,label+'-after-world','world'));
+    report.roleCases.push({quality,before,during,after,views});await save();
+    assert.ok(after.moved>=4-1e-8,'both actual attacker roles meet the forty-mph open-direction minimum');
+    if(kind==='wreck')assert.ok(after.wreck&&after.air===0&&after.remainingTimer>0&&after.remainingTimer<after.initialTimer,'real stopped-player/CPU wreck preserves native deadline and floor slide');
+    if(kind==='protected')assert.ok(after.targetArmor===after.targetArmorBefore&&after.attackerArmor===after.attackerArmorBefore&&after.protectedSec>0,'both real roles preserve actual protection');
+    await c.evaluate('window.__shoveReview.finish()');
+  }
+  for(const role of ['player-attacker','cpu-attacker'])for(const side of [-1,1]){
+    const label=quality+'-roles-normal-'+role+'-'+side,before=await c.evaluate(`window.__shoveReview.scripted('idle',${JSON.stringify(role)},${side},true,0,${side<0?260:360})`),views=[];
+    views.push(await reviewedCapture(c,label+'-before-close','close'));views.push(await reviewedCapture(c,label+'-before-world','world'));
+    const during=await c.evaluate('window.__shoveReview.progress(8)');views.push(await reviewedCapture(c,label+'-during-medium','medium'));
+    const after=await c.evaluate('window.__shoveReview.progress(210)');views.push(await reviewedCapture(c,label+'-after-close','close'));views.push(await reviewedCapture(c,label+'-after-world','world'));
+    report.extraWalls.push({quality,before,during,after,views});await save();
+    assert.ok(after.moved<1e-4&&after.reverse>1e-6&&after.rebound>.01,'both actual attacker roles retain strict normal-wall stay/rebound');
+    assert.ok(after.targetArmor<after.targetArmorBefore,'real normal-wall eligible damage remains');await c.evaluate('window.__shoveReview.finish()');
+  }
+  for(const [role,side,angle] of [['player-attacker',1,Math.PI/12],['cpu-attacker',-1,-Math.PI/12]]){
+    const label=quality+'-transient-'+role+'-'+side,before=await c.evaluate(`window.__shoveReview.scripted('idle',${JSON.stringify(role)},${side},true,${angle},260)`),frames=[];
+    frames.push({ticks:0,view:await reviewedCapture(c,label+'-before-world','world')});
+    for(const [ticks,mode] of [[1,'close'],[24,'medium'],[210,'world']]){const state=await c.evaluate(`window.__shoveReview.progress(${ticks})`),view=await reviewedCapture(c,label+'-tick-'+ticks+'-'+mode,mode);frames.push({ticks,state,view});}
+    report.obliques.push({quality,before,frames});await save();
+    assert.ok(frames.at(-1).state.tangent>1e-6,'actual oblique transient retains physical along-wall motion');
+    await c.evaluate('window.__shoveReview.finish()');
+  }
+  await c.evaluate('window.__qaApp.inspectionCamera=null');
+}
+
+export async function comparePublicWalls(referencePath,candidatePath,outputPath) {
+  const reference=JSON.parse(readFileSync(resolve(referencePath),'utf8')),candidate=JSON.parse(readFileSync(resolve(candidatePath),'utf8'));
+  assert.ok(reference.sourceCommit.startsWith('0f934845')&&reference.baselineVerifiedArchivedFiles>0,'reference is the verified real pre-card snapshot');
+  assert.equal(candidate.runtimeAssetTree,reference.runtimeAssetTree,'matched real runtime asset bytes');
+  assert.equal(reference.publicWalls.length,8,'all High/Performance legal wall controls are present');
+  assert.equal(candidate.publicWalls.length,8,'candidate has the same full public control matrix');
+  const cases=reference.publicWalls.map(before=>{const after=candidate.publicWalls.find(row=>row.quality===before.quality&&row.result.side===before.result.side&&row.result.alongTicks===before.result.alongTicks);
+    assert.ok(after);assert.deepEqual(after.result.inputs,before.result.inputs,'identical actual native input stream');
+    assert.deepEqual(after.start,before.start,'identical real seed, spawn and actors');
+    const player=report=>report.result.cars.find(car=>car.id==='player'),a=player(before),b=player(after);
+    const geometryEqual=JSON.stringify({min:a.lateralMin,max:a.lateralMax,center:a.center,crossings:a.crossings})===JSON.stringify({min:b.lateralMin,max:b.lateralMax,center:b.center,crossings:b.crossings});
+    const classification=a.crossings.length?b.crossings.length?geometryEqual?'pre-existing public mesh/rail crossing, exact matched geometry':'pre-existing public crossing; candidate geometry differs and needs review':'reference crosses, candidate does not; review required':
+      b.crossings.length?'new candidate public mesh/rail crossing':'no public mesh/rail crossing in this matched sample';
+    return {quality:before.quality,side:before.result.side,alongTicks:before.result.alongTicks,classification,
+      reference:{source:reference.sourceCommit,player:a,wallPolicy:before.result.wallPolicy,walls:before.result.walls},
+      candidate:{source:candidate.sourceCommit,player:b,wallPolicy:after.result.wallPolicy,walls:after.result.walls},
+      geometryExactlyEqual:geometryEqual,tracesExactlyEqual:JSON.stringify(before.result.trace)===JSON.stringify(after.result.trace),
+      scope:'Actual loaded triangles and actual rail instances. Body extent beyond the existing center-limit floor is recorded separately; no new whole-body containment rule is invented.'};});
+  const report={reference:reference.sourceCommit,candidate:candidate.sourceCommit,cases,
+    verdict:cases.some(row=>/crossing|review required/.test(row.classification)&&!row.classification.startsWith('no public'))?
+      'Actual public mismatch needs Claude review; do not repair global source or alter containment in this QA card.':'No public rail crossing in these matched inputs. Constructed fixtures remain separately labelled; this is not all-model/all-wall clearance.',
+    limits:'Natural public close views show player/wall; world covers the roster. Matched samples do not grant art, frame, handling or listening clearance.'};
+  const scenarioRoot=resolve(fileURLToPath(new URL('../../',import.meta.url))),integration=resolve(scenarioRoot,'../..'),destination=resolve(outputPath);
+  assert.ok([join(scenarioRoot,'.evidence'),join(integration,'.evidence')].some(home=>destination.toLowerCase().startsWith((resolve(home)+sep).toLowerCase())),
+    'comparison output stays in ignored card evidence');
+  await writeFile(destination,JSON.stringify(report,null,2)+'\n');return report;
+}
+
 export async function run(c) {
-  const report={cases:[],walls:[],frames:[],fixtures:'Memory-only discovered profile, stopped/approach poses, one-armor native wreck setup, real recovery timers, existing held CPU goals and isolated weapon/crate timers. Contacts and subsequent 120 Hz physics remain genuine.',
+  const scenarioRoot=resolve(fileURLToPath(new URL('../../',import.meta.url))),snapshotProvenance=join(scenarioRoot,'../provenance.json');
+  const baseline=process.env.ARENA_SHOVE_PUBLIC_ONLY==='1'&&existsSync(snapshotProvenance)?JSON.parse(readFileSync(snapshotProvenance,'utf8')):null;
+  const sourceCommit=baseline?.commit||execFileSync('git',['rev-parse','HEAD'],{cwd:scenarioRoot,encoding:'utf8'}).trim();
+  const runtimeAssetTree=baseline?.runtimeAssetTree||execFileSync('git',['ls-tree','-r','HEAD','--','public'],{cwd:scenarioRoot,encoding:'utf8'});
+  if(process.env.ARENA_SHOVE_PUBLIC_ONLY!=='1')assert.ok(process.env.ARENA_SHOVE_PUBLIC_INPUTS_FILE,'run verified public baseline first and provide its exact native input report');
+  const report={publicWalls:[],roleCases:[],extraWalls:[],obliques:[],publicOnly:process.env.ARENA_SHOVE_PUBLIC_ONLY==='1',sourceCommit,runtimeAssetTree,baselineVerifiedArchivedFiles:baseline?.verifiedArchivedFiles||null,referenceCommit:REFERENCE,publicSeed:PUBLIC_SEED,cases:[],walls:[],frames:[],fixtures:'Memory-only discovered profile, stopped/approach poses, one-armor native wreck setup, real recovery timers, existing held CPU goals and isolated weapon/crate timers. Contacts and subsequent 120 Hz physics remain genuine.',
     limits:'Scripted contact/state captures do not prove natural CPU behavior, human Preview feel, listening or resolved historical HUD overlaps. Native all-mass/FPS/traffic controls remain independent.'};
   const save=()=>writeFile(join(c.outputDir,'arena-shove-browser.json'),JSON.stringify(report,null,2)+'\n');
   for(const quality of ['high','performance']){
     await c.evaluate('window.name=""');
-    await c.navigate('/tools/menu-check.html?harness=arena-shove-'+quality);
+    await c.navigate('/tools/menu-check.html?seed='+PUBLIC_SEED+'&harness=arena-shove-'+quality);
     await c.waitFor('!!window.__qaApp&&!!window.__render',quality+' private menu',60000);
     await c.evaluate(`(() => {const a=window.__qaApp;
       if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value||!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only QA is required');
@@ -124,6 +386,9 @@ export async function run(c) {
       ${outOfPlay.toString()}
       return ${arenaTargetOutOfPlay.toString()};
     })())`);
+    await extendedQuality(c,quality,report,save);
+    if(report.publicOnly)continue;
+    await collapseQA(c);
     for(const kind of ['wreck','pinned','protected','idle'])for(const mph of [20,40]){
       const label=quality+'-'+kind+'-'+mph+'mph';
       const before=await c.evaluate(`window.__shove.prepare(${JSON.stringify(kind)},${mph})`);
@@ -159,5 +424,5 @@ export async function run(c) {
     report.frames.push({quality,...frames});await save();
   }
   await c.evaluate('window.__qaApp.stop()');
-  console.log('Arena shove: actual High/Performance stopped-state, 20/40 mph, solid-wall rebound and native respawn/protection controls passed. Human feel/listening remain pending.');
+  console.log('Arena shove recipe completed its scoped native assertions. Public mesh/solid clearance requires the matched baseline comparison; browser/frame/art/human/listening clearance remains independent.');
 }

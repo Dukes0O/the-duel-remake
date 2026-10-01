@@ -642,3 +642,157 @@ Nothing removed. Generated evidence is retained for the Director's review;
 only regenerated captures may be deleted after their verdict is consumed.
 No licensed input, current asset, player save, protected folder or old evidence
 was discarded. No live folder, Preview, .preview-dist or port 5174 was touched.
+
+
+## Expanded browser recipe freeze — 1 October 2026, capture pending
+
+The independent worker's entire limited 42-image verdict above is preserved
+in separate PENDING commit `4004c28bff933ef121adc628c8dded74d29716be`.
+Its High/Performance p95 values of 18.1/18.2 ms and scoped chase views remain
+historical partial evidence. They do not clear this expanded recipe, body
+clearance, public wall inputs, new roles or transient views.
+
+Only `tools/scenarios/arena-shove.mjs` and this append-only note changed.
+Production is still the independently reviewed `f703714101525b7786b1abe852ef1794ab9a6f97`
+game source. Native tests and all replay pins remain exact. No pose was
+corrected to make a constructed pinned body look clear of the wall.
+
+### New actual acceptance and capture recipe
+
+The recipe first runs natural public wall controls, before any constructed
+contact: a real App rematch, actual car/kit readiness, native countdown steps,
+and actual keyboard events through the App's existing handlers. No actor
+position, heading, armor, opponent brain, timer or wall is changed in this
+public control. Starting loaded body/attachment vertices must be inside the
+floor. Both inner/outer sides use two approach lengths, zero and 360 native
+ticks, at seed 1989. The bounded public input search holds W and chooses A/D
+from actual heading until the chosen center wall is reached within 20 seconds.
+It records every key state and the resulting native inputs/pose trace.
+
+A verified pre-card run produces that key stream. The full candidate run
+requires its report and replays **identical** key states, seed, spawn, opponent
+cars and runtime assets. An input-free or unverified comparison cannot quietly
+pass. Public close views are explicitly scoped to the driven player and wall;
+world views include the actual roster without hiding or moving the CPU.
+
+Additive scripted controls cover all four stopped states with both the real
+player attacker and real CPU attacker at 40 mph, while retaining the original
+20/40 mph cases. Actual one-armor contacts create wrecks; native timers create
+respawn and protection. The stopped player is not replaced by a fake CPU.
+Both normal wall sides and both attacker roles are sampled at additional
+segments s=260/360. The original strict movement/rebound, damage, deadline
+and protection assertions remain unchanged.
+
+Two off-axis contact sequences use a genuine positive/negative 15-degree
+component with both attacker roles and opposite wall sides. Separate captures
+at native ticks 1, 24 and 210 show immediate contact, ongoing motion and its
+result; the final actual tangential displacement must be nonzero. No later
+state is teleported or clock-jumped to make a transient picture.
+
+New contact captures show both real participants before/during/after using
+close, medium and world inspection cameras already supported by the private
+renderer. Projected actual vertex extents must fit their stated view scope.
+Camera setup checks that native actor poses/armor/deadlines do not change.
+Private QA overlays are collapsed by clicking their actual summary controls,
+including before the retained old captures. No hidden CSS replacement is used.
+Actual car source and authored front-kit/effects readiness must complete within
+60 seconds; missing authored geometry fails instead of accepting a fallback.
+
+### Actual geometry and the existing floor policy
+
+Measurements read the visible loaded body/attachment triangles, their true
+world matrices, actual native collision envelope, and the nearby real
+instanced barrier/rail triangles tied to course feature records. Strict
+triangle crossings distinguish shared contact from interior overlap.
+The report records body extents beyond the floor and rail crossings separately.
+It never replaces that geometry with an envelope-only clearance claim.
+
+The existing floor policy contains centers; it does not promise every visible
+front attachment stays inside the center limit. The explicit center-at-floor
+pinned/normal fixtures remain labelled constructed fixtures. Their body or
+front kit can enter the visible rail by construction and cannot establish a
+new public penetration defect or whole-body clearance.
+
+`comparePublicWalls(referencePath, candidatePath, outputPath)` checks all eight
+High/Performance public cases, real source provenance, exact key streams,
+spawn/actors and identical runtime asset trees. It records exact trace/geometry
+equality and distinguishes a pre-existing public crossing, a new candidate
+crossing, changed candidate geometry requiring review, or no crossing in the
+sample. Any actual public mismatch is evidence for Claude; this recipe does
+not change global physics, move a wall, weaken a rule or claim all-model/all-wall
+clearance from a bounded sample. Output is confined to ignored card evidence.
+
+### Exact baseline snapshot and independent commands
+
+The Director explicitly approved an ignored QA snapshot of the real pre-card
+App/renderer, not an overlaid or fabricated native module graph.
+`preparePublicBaseline()` uses `git archive --output` and native `tar -xf`,
+then verifies every archived file against its Git blob bytes. This preparation
+ran successfully: **888 actual files verified**, exact reference
+`0f934845b451dc2429efcb574bc9847cc04a1fe5`. All public runtime asset tree entries
+match the candidate exactly. All **five** Shove source differences are recorded:
+arena-event, arena-floor, sim-contacts, vehicle-collision and vehicle-knock.
+The first attempted preparer correctly stopped before output when its initial
+four-file guard omitted the already-reviewed arena-event stepWreckSlide hook;
+that provenance mistake was reported and corrected, without editing source.
+
+Prepared snapshot:
+`.qa-dist/arena-shove-public-baseline-E1IJpV/snapshot` in the integration folder.
+Its parent `provenance.json` records the exact commit, byte verification,
+source differences and dependency junction. The junction targets only the
+integration `node_modules`, never the live folder. Only this owned QA recipe
+is copied into the verified snapshot; actual baseline game files stay exact.
+The baseline's build label may inherit parent Git metadata; the verified actual
+archived bytes and report provenance establish source identity.
+
+Independent worker commands, with full stdout/stderr redirected to integration
+`.evidence/2026-10-01/ARENA-SHOVE/expanded-browser/`:
+
+1. From the prepared snapshot, set `ARENA_SHOVE_PUBLIC_ONLY=1`; run
+   `node tools/browser-harness.mjs scenario arena-shove --output-dir .evidence/2026-10-01/ARENA-SHOVE/public-baseline`.
+   Save the full launcher log as `baseline-launcher.log`. Copy the resulting
+   baseline evidence back to integration card evidence before snapshot cleanup.
+2. From this held lane, clear `ARENA_SHOVE_PUBLIC_ONLY`; set
+   `ARENA_SHOVE_PUBLIC_INPUTS_FILE` to the actual baseline
+   `arena-shove-browser.json`; run the same private harness for `arena-shove`
+   with output below `.evidence/2026-10-01/ARENA-SHOVE/expanded-browser/current`.
+   Save complete stdout/stderr as `candidate-launcher.log`.
+3. Call `comparePublicWalls` on the two actual reports; write its comparison
+   JSON under integration card evidence. Inspect actual captures and report
+   all errors/requests/readiness, source/capture metadata and scoped limitations.
+
+The expected bounded recipe makes 24 public baseline images, then 202 candidate
+images including the retained 42 legacy captures. These are recipe counts,
+not executed or inspected images. Screenshot artifacts stay ignored.
+Before cleanup, resolve and verify snapshot paths remain inside integration
+`.qa-dist`; unlink its dependency junction nonrecursively before any checked
+snapshot removal. This is QA output, not a branch or worktree.
+
+### Verification, exact preservation and Removed
+
+`node --check tools/scenarios/arena-shove.mjs`, module export import and
+`git diff --check` pass. The baseline preparer actually verified its snapshot.
+No expanded browser run, capture inspection, new frame measurement, listening
+or handling verdict has been performed by this test author. Existing 118 native
+Shove tests, 241 control tests and 162 replay checks passed at the prior fixture
+freeze; they are unchanged, not falsely reported as a new exact full-tier gate.
+
+After removing additive helpers/fields/calls and reversing only the approved
+QA overlay/explicit seed/console wording changes, the entire prior recipe
+reconstructs byte-for-byte, SHA-256
+`7c2fab6cad6bf4c04556388468de1be59540a46c54b4cc08d10a69c36e2beccc`.
+Every old contact/assertion body and original native fixture helper is exact.
+Unchanged native test SHA-256:
+`36b4216ca5173b066b9798baea05238c092c312b2483c55aef75350d2200246b`;
+unchanged Shove pin SHA-256:
+`a08bb7507e8e2c110789b907ed3977dc6de9ac39943e89aad4c8cb9f5a3a474b`.
+No source, runtime asset, settings, other test or replay file changed.
+
+Removed only the implicit broad browser-completion wording. The recipe now
+states its scoped native assertions and pending independent comparison/gates.
+The prior limited verdict remains preserved as pending, not discarded. No
+source behavior, original acceptance assertion, timer, licensed input, current
+asset, audio or player save was removed. Human feel/listening, historical HUD
+overlaps, actual frame budgets and final independent source/lane gates remain
+pending. No live folder, Preview, `.preview-dist`, port 5174, real save, source
+overlay, worktree creation, release, push or history rewrite was used.
