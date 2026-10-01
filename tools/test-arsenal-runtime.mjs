@@ -625,14 +625,17 @@ for (const kind of ['oil', 'smoke']) for (const admission of ['eligible', 'rank'
     eq(availableCarWeapons(p, options).includes(kind), admission === 'owned',
       'actual offered equip list requires owned implemented admitted weapon');
     const name = WEAPONS[kind].name;
+    const buttons = html.match(/<button\b[\s\S]*?<\/button>/g) || [];
+    const boundToWeapon = button => [...button.matchAll(/\bdata-[a-z-]+="([^"]+)"/g)]
+      .some(match => match[1] === kind);
     if (admission === 'eligible') {
       ok(html.includes(name), 'genuine Armory renders the newly eligible weapon offer');
-      ok(new RegExp('<button[^>]*data-[^>]*["\\\']' + kind + '["\\\'][^>]*>[\\s\\S]*?400\\s+SCRAP').test(html),
+      ok(buttons.some(button => boundToWeapon(button) && /\b400\s+SCRAP\b/.test(button) && !/\bdisabled\b/.test(button)),
         'actual Armory offer provides the bound buy action and exact scrap price');
     } else if (admission === 'owned') {
       ok(new RegExp('<option[^>]*value="' + kind + '"').test(html), 'actual Armory offers owned Arsenal weapon for equip');
       ok(new RegExp('data-weapon-upgrade="' + kind + '"').test(html), 'actual Armory exposes the owned weapon upgrade action');
-    } else ok(!new RegExp('<button[^>]*data-[^>]*["\\\']' + kind + '["\\\']').test(html),
+    } else ok(!buttons.some(button => boundToWeapon(button) && !/\bdisabled\b/.test(button)),
       'genuine Armory contains no enabled acquisition action outside rank/dev/discovery admission');
     eq(p, before, 'genuine screen rendering preserves complete raw profile');
   });
