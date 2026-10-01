@@ -526,3 +526,119 @@ replay pin, asset, audio or real player data was removed or changed.
 No live folder, Preview, `.preview-dist`, port 5174, real save, dependency,
 network, forced worktree action or history rewrite was used. Raw evidence
 stays ignored for independent review and the Director's later janitor cleanup.
+
+## Independent browser review — 1 October 2026, freeze 119295b
+
+Reviewed exact HEAD `119295b8b678680f522dcbbfe2eee075b9b92879` using the
+unchanged `tools/scenarios/arena-shove.mjs` through:
+`node tools/browser-harness.mjs scenario arena-shove --output-dir .evidence/2026-10-01/ARENA-SHOVE/browser-current`.
+The launcher selected private free port 50015. The isolated QA build and disposable
+browser completed with exit 0. `report.json` confirms passed=true,
+memoryOnlySaves=true, issues=[], warnings=[]: no console errors, warnings or
+failed requests. No source, tests, assertions, pins, assets or scene geometry
+were edited. Source HEAD stayed exact and tracked worktree clean before this
+append. Salt exports and heavy Director gates were held during frame windows.
+
+### Scoped verdict and numbers
+
+The existing recipe passes. This is not clearance of the broader requested
+body-clearance, all-wall and public-state browser coverage. Actual production
+App yard entry, arena/rematch/countdown, authored cars and native Duel contacts
+and 120 Hz steps were used. Loading waits render actual current state; they do
+not advance physics to conceal loading. No missing vehicle textures or detached
+attachments were seen. No authored crew was exercised by this car-only recipe.
+
+Both qualities produced identical native stopped-target movements in metres:
+wreck 4.773260/11.572046, pinned 4.776950/11.247841, protected
+4.825078/11.143189 and idle 4.825078/11.143189 at 20/40 mph respectively.
+Wreck targets stayed grounded, retained one wreck count and the original
+deadline; after the 1.75-second observation their remaining timer was 1.741667s.
+Native recovery restored full armor and exactly two seconds of protection.
+Protected targets and attackers took no armor loss; 0.25s protection remained
+after observation. Eligible idle/pinned 40 mph hits reduced target armor from
+46.977618 to about 27.13766.
+
+For both wall-normal sides, target displacement was below 0.000001m and
+outward centers stayed bounded at +/-18m. Actual attacker reversal was
+3.671680 world units/s and separation/rebound 6.018735m. Player reverse gear
+and separation are visible in the after captures. This proves the native
+center constraint/rebound assertion, not full mesh clearance.
+
+| Quality | Actual mean / p95 | Samples | Draw calls | Triangles |
+| --- | --- | --- | --- | --- |
+| High | 17.616807 / 18.1 ms | 119 | 329 | 436341 |
+| Performance | 17.671429 / 18.2 ms | 119 | 205 | 298646 |
+
+These are short actual requestAnimationFrame samples after warmup, with the
+recipe's one active CPU, not a maximum-load stress test or human feel rating.
+
+### Screenshot inspection — all 42
+
+Evidence stays ignored in `.evidence/2026-10-01/ARENA-SHOVE/browser-current/`.
+Every row below names both `high-<suffix>.png` and `performance-<suffix>.png`.
+All 42 individual images were inspected; these descriptions apply to both.
+
+| Suffix | What the screenshot shows |
+| --- | --- |
+| wreck-20mph-before | Authored player approaching native zero-armor smoking CPU wreck. |
+| wreck-20mph-after | Wreck pushed ahead; smoke/fire partly obscure contact. |
+| wreck-40mph-before | Faster approach to the same native wreck state. |
+| wreck-40mph-after | Greater wreck travel; target remains smoking and zero armor. |
+| native-deadline-respawn-protection | Full-armor target HUD after native respawn; target body is outside close view. |
+| pinned-20mph-before | Crosswise stopped CPU at wall; initial body/attachment enters wall. |
+| pinned-20mph-after | Along-wall displacement with initial wall penetration still visible. |
+| pinned-40mph-before | Faster crosswise approach, same explicit wall placement. |
+| pinned-40mph-after | Along-wall displacement and eligible armor loss. |
+| protected-20mph-before | Respawn-protected CPU with blue glow and full armor. |
+| protected-20mph-after | CPU pushed ahead with unchanged armor. |
+| protected-40mph-before | Faster approach to blue-glowing protected target. |
+| protected-40mph-after | Greater push with unchanged target/player armor. |
+| idle-20mph-before | Unprotected stopped CPU in clear central floor. |
+| idle-20mph-after | CPU pushed forward without qualifying damage. |
+| idle-40mph-before | Faster approach to idle CPU. |
+| idle-40mph-after | Greater push and qualifying armor loss. |
+| normal-wall--1-before | Close side-on ram of stopped CPU at inner boundary. |
+| normal-wall--1-after | Player reverse gear and separation; target partly outside right edge. |
+| normal-wall-1-before | Close side-on ram at opposite boundary; minimap covers target rear. |
+| normal-wall-1-after | Player reverse gear and separation; target partly outside left edge. |
+
+### Gaps returned to the Director
+
+The pinned/normal fixture places target center at floorHalfWidth before impact.
+That explicitly embeds body/front attachment in the wall, visible in pinned
+before/after images. It cannot establish whole-body clearance, and is not by
+itself a reproduced natural production penetration bug. The fixture's native
+center-containment assertion passes. No source remedy or assertion change was
+attempted. Source and fixture ownership remains with the Director/author.
+
+The recipe captures chase before/after views only at s=90, both lateral sides.
+It does not cover every physical wall segment, separate close/medium/world
+views, a time sequence of off-axis oblique sliding, stopped player targets,
+ordinary road traffic or public traffic respawn. The pinned crosswise held-goal
+case shows along-wall travel but is a labelled native fixture, not unrestricted
+AI behavior. Wreck creation, deadline and protection use actual event rules;
+starting poses, held CPU goal, stopped motion, one-armor setup and disabled
+unrelated weapon/crate timers remain explicit fixtures.
+
+The High MENU QA panel remains expanded over upper-left UI while Performance
+is collapsed. Private QA presentation differs; no public HUD defect is inferred.
+The target/crosshair and normal-case minimap/body intersections limit reading
+contact in these captures. Existing hunting-label/placing overlaps remain
+recorded HUD debt. No garbage/missing texture was identified outside these
+fixture/overlay limits. Laptop viewport only; no phone, human handling or sound
+rating. Audio is muted and no human listening clearance is granted.
+
+Full structured native/browser records and captures remain on disk as
+`arena-shove-browser.json`, `report.json` and 42 PNGs. Launcher console output
+was retained in the tool transcript, not redirected as a full disk raw log;
+this is an evidence limit, not a claimed full raw-log archive. Broader browser
+acceptance remains pending Director authorization of the fixture author and
+new freeze/gates. No clean NOTE commit, merge, release or push is granted by
+this limited verdict.
+
+### Removed — independent browser review
+
+Nothing removed. Generated evidence is retained for the Director's review;
+only regenerated captures may be deleted after their verdict is consumed.
+No licensed input, current asset, player save, protected folder or old evidence
+was discarded. No live folder, Preview, .preview-dist or port 5174 was touched.
