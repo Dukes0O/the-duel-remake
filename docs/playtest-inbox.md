@@ -2,6 +2,18 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- **ART-FIT-TANKER round 1 needs your verdict:** Source2583 / QAef3
+  and the actual 483,090-byte comparison are in `.lanes/convoy-tanker/`
+  `docs/board/looks/convoy-tanker/round-1.jpg` and its review recipe/note.
+  Independent critic inspected all18 actual App frames: direction2, material3,
+  distant readability3 and opposite valve grounding2; round1 FAIL. Native
+  acceptance confirms the rear valve has a genuine0.112497m surface gap and
+  another valve connects only through its handwheel, with both original pipe
+  ports0.017932m away. Tests are being frozen before repair. Please review
+  this comparison and the recommended native mounting/material/contrast
+  fixes. No source pick change or public installation is proposed. One of
+  three rounds used; frame/motion and actual Convoy gameplay remain unverified.
+
 - **ARS-CORE Crossbow range context:** source 41ed21d is provisional.
   Released CPU acquisition is 180 m. Released player acquisition and bolt
   homing have no explicit distance cap; flight uses speed 200 + 30 per

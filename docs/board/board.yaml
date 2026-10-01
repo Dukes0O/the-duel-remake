@@ -775,6 +775,7 @@ tasks:
     size: M
     needs: [ART-KEEP-VALVE-DONOR]
     status: building
+    waiting_on: claude
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/art/convoy-tanker
     owns: [tools/blender/convoy-tanker.py, tools/art/tanker-fit.json, src/arena/tanker-model.js, tools/test-convoy-tanker-art.mjs, tools/scenarios/convoy-tanker-art.mjs, docs/changes/ART-FIT-TANKER.md, docs/board/looks/convoy-tanker/, public/assets/models/wasteland/convoy-tanker/]
@@ -783,7 +784,8 @@ tasks:
     helpers: [test_author, art_director, reviewer, art_critic, browser_qa]
     test_commit: 67fb882849aa386dc197cc51ac03ae8681193249
     source_commit: 2583c4de126629e7b673a136381ecb86b6e4aad0
-    private_stage: "Clean private2583c4d independently reviewed by Director: fresh42/42 native at unchanged assertions, genuine complete donors/support/zero strict intersections/rights/materials/loaded-late-fail disposal/read-only health. No source/runtime state or network dependency. Actual App/renderer comparison underway with original palette baseline and fitted candidate, two warning lamps and all-valves-broken recovery. Art/frame/Claude verdict/final lane+build remain before public installation and merge; no whole-card clearance."
+    private_stage: "Clean QA ef3c7e2 records actual18 High/Performance App captures and round1 sheet483090B; Source2583 native42 passes but independent art critic FAIL: direction2/material3, distant readability3, opposite valve grounding2. Real native tests reproduce valve0 whole gap0.112497m and both ports disconnected, valve1 ports0.017932m despite handwheel crossings; valve2 genuine pipe contact passes. Additive12 checks9pass3realRED being frozen before Source repair. Old42 controls remain exact. One of three art rounds used. Claude reviews this sheet before a further fitting round; no public installation, whole-card, motion/frame or merge clearance. Two duplicate-Three QA warnings remain recorded."
+    qa_commit: ef3c7e216e38460add772cd0a9f1fee66c51eef5
     flag: scrapdome
     acceptance:
       - "Build the tanker settled in docs/SCRAPDOME.md, Convoy Raid (30 September 2026): one rigid vehicle from Kyle's pick A (Kenney delivery-flat cab and bed with the City Kit Industrial detail-tank on the bed), three fuel valves from the verified factory pipe valve donor on the tank, scrap armor plating from the Salt Flats salvage parts, and a raised boarding plate on the tank roof with warning lamps that light when all three valves are broken. Nothing opens or articulates."
@@ -1023,7 +1025,7 @@ tasks:
     needs: [ART-SRC-SALTFLATS]
     status: building
     review_commit: 2d6e5cc94ddd5c3a46316db411e20872b449f4ca
-    source_commit: d1ed6dc75635c47acfd56a9b9d6b11794d2ea367
+    source_commit: 0050a724944549d8ae9d5ad2d16a9217a3bc3d65
     test_commit: d5b77fe28b71ae461393a399e0f4a6105fa61ef6
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/vis/salt-flats
@@ -2889,7 +2891,8 @@ tasks:
       - "Kyle, 30 September 2026: cars other than the Titan cannot budge the sitting cars in the dome. Measured by Claude: a live computer car hit at 20, 40 and 60 mph moves 2 to 12 m, so the stuck case is a car in another state. Reproduce each in a test: a wreck waiting to respawn, a car pinned against the wall, a car inside its respawn protection, and a stopped car with its brain idle."
       - "Settled rule: in the dome any car rammed at 20 mph or more by any car moves at least 1.5 m, and at 40 mph at least 4 m, through the crash solver (released crash physics), in every state above. A wreck waiting to respawn slides like a traffic hulk and stays on the floor; respawn protection blocks damage, not movement. The Titan's crush stays as it is."
       - "Tests first; arena replays that change are named and explained."
-    private_stage: "Source f703714 independently clear; reviewed held-goal-only fixture119295 preserves strict assertions and passes118/1186373checks, road162 and20 regressions. Limited actual browser119295 passes42 captures, High/PerformanceP9518.1/18.2ms with no errors, but constructed pinned centers embed body/attachment and views omit full roles/oblique/close-medium-world coverage. This is not whole browser clearance or a proven production regression. Owned QA author preserves partial verdict4004c28 and adds legal-input public wall baseline against exact0f plus broader actual views before fresh review and exact lane/build."
+    private_stage: "Native Sourcef703714/119295 remains independently clear118/1186373checks and road162 exact. Limited42 browser captures retain partial verdict4004. Expanded recipead52 froze24baseline/202candidate planned captures. Actual public baseline private22196 failed at High side-1 approach0: legal controls did not reach requested center boundary within20s; no final trace was serialized. Memory-only saves/no reported errors. This is a QA reachability problem, not a proven production wall defect. Owned author adds actual keyboard/final-body/contact/failure-view evidence while preserving predicate/timeout before reviewed correction. Candidate comparison/frame coverage remains unrun; no whole-browser or merge clearance."
+    qa_commit: ad52b26462844df9ea79223e095cd53d5b509987
     claude_answer: "1 October 2026: the 1.5 m and 4 m minimums apply where the push direction has open floor. A car pinned against the outer wall and rammed straight into it cannot move through the wall: it stays, takes the ram damage, and the attacker rebounds. Any part of the push along the wall still slides it along the wall. No teleport, no escape direction, containment unchanged."
   - id: WAR-SAL-RELEASE
     title: "Release the warlord ladder with Sawtooth Sal"

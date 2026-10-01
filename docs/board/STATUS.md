@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-01T08:32:30.075Z
+Observed at: 2026-10-01T10:59:26.191Z
 
-Observation commit: 0f934845b451dc2429efcb574bc9847cc04a1fe5
+Observation commit: d07fff94f046017c82f61c7ddf4209652994afa4
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 0f934845b451dc2429efcb574bc9847cc04a1fe5
+Integration HEAD: d07fff94f046017c82f61c7ddf4209652994afa4
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: passed; exact HEAD passed: yes.
 
-Last recorded full run: 2026-10-01T08:19:35.052Z; tested commit: 0f934845b451dc2429efcb574bc9847cc04a1fe5.
+Last recorded full run: 2026-10-01T10:36:45.939Z; tested commit: d07fff94f046017c82f61c7ddf4209652994afa4.
 
 ## Feature switches
 
@@ -38,11 +38,11 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | lane/art/convoy-tanker | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/convoy-tanker |
-| lane/audio/aud-10 | 5 | unknown | true | false | unknown |
+| lane/audio/aud-10 | 6 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 6 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 5 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/cmb/arena-shove | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-shove |
-| lane/cmb/arsenal-core | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-core |
+| lane/cmb/arena-shove | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-shove |
+| lane/cmb/arsenal-core | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-core |
 | lane/vis/salt-flats | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/salt-flats |
 
 ## Unmerged branches for idle review
@@ -51,10 +51,10 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| lane/art/convoy-tanker | unknown | 2026-10-01T00:58:56-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/ART-FIT-TANKER.md, tools/art/tanker-fit.json, tools/test-convoy-tanker-art.mjs, src/arena/tanker-model.js, tools/blender/convoy-tanker.py |
-| lane/cmb/arena-shove | unknown | 2026-10-01T01:08:15-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/ARENA-SHOVE.md, src/arena/arena-event.js, src/arena/arena-floor.js, src/sim-contacts.js, src/vehicle-knock.js |
-| lane/cmb/arsenal-core | unknown | 2026-10-01T01:07:46-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/ARS-CORE.md, src/arsenal/car-effects.js, src/arsenal/hazards.js, src/arsenal/oil.js, src/arsenal/smoke.js |
-| lane/vis/salt-flats | unknown | 2026-10-01T00:33:54-07:00 | 0 | last commit 2026-10-01T00:33:54-07:00 | docs/changes/ARENA-06.md, src/arena/venues/salt-flats.js, tools/art/salt-flats-fit.json, tools/blender/salt-flats.py, tools/replays/salt-flats-controls.json |
+| lane/art/convoy-tanker | unknown | 2026-10-01T03:36:48-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/convoy-tanker/round-1-review.md, docs/board/looks/convoy-tanker/round-1-sheet.py, docs/board/looks/convoy-tanker/round-1.jpg, docs/changes/ART-FIT-TANKER.md, src/arena/tanker-model.js |
+| lane/cmb/arena-shove | unknown | 2026-10-01T03:28:33-07:00 | 0 | last commit 2026-10-01T03:28:33-07:00 | docs/changes/ARENA-SHOVE.md, src/arena/arena-event.js, src/arena/arena-floor.js, src/sim-contacts.js, src/vehicle-collision.js |
+| lane/cmb/arsenal-core | unknown | 2026-10-01T02:45:47-07:00 | 0 | last commit 2026-10-01T02:45:47-07:00 | docs/changes/ARS-CORE.md, src/app.js, src/arena/arena-pilot.js, src/arsenal/car-effects.js, src/arsenal/hazards.js |
+| lane/vis/salt-flats | unknown | 2026-10-01T03:51:28-07:00 | 0 | last commit 2026-10-01T03:51:28-07:00 | docs/changes/ARENA-06.md, src/arena/venues.js, src/arena/venues/salt-flats.js, src/course.js, tools/art/salt-flats-fit.json |
 
 ## Size targets
 
@@ -70,7 +70,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 10,712,857 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 330,949 B | +0 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 329,054,208 B | +269,312 B | unavailable |
+| Git objects | 331,348,992 B | +2,294,784 B | unavailable |
 | Lane folders | 4 | +0 | unavailable |
 
 ## Backups
@@ -79,7 +79,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: 0f934845b451dc2429efcb574bc9847cc04a1fe5
+- Local integration/wasteland: d07fff94f046017c82f61c7ddf4209652994afa4
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -87,4 +87,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 4cd4a9608238d86a90a1335adacf526eb7f4a2d3.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: behind local; cached commit 664a20726e981aac09ccf809fc26d54a6aeb29f9.
+- Remote origin/integration/wasteland: matches local; cached commit d07fff94f046017c82f61c7ddf4209652994afa4.
