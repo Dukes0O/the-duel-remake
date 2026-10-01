@@ -2913,7 +2913,7 @@ tasks:
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/cmb/arena-shove
     owns: [tools/test-arena-shove.mjs, tools/replays/arena-shove-controls.json, tools/scenarios/arena-shove.mjs, docs/changes/ARENA-SHOVE.md]
-    hooks: [src/sim-contacts.js, src/vehicle-knock.js, src/vehicle-collision.js, src/arena/arena-floor.js, src/arena/arena-event.js]
+    hooks: [src/sim-contacts.js, src/vehicle-knock.js, src/vehicle-collision.js, src/arena/arena-floor.js, src/arena/arena-event.js, tools/browser-harness.mjs]
     hook_requests: [src/game.js]
     sequencing: "Claude approved the arena shove and the unchanged inherited wall crossings. The note is trimmed and independently reviewed; fresh lane and build gates precede merge. Kyle checks the Preview feel after merge."
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
@@ -2925,7 +2925,7 @@ tasks:
     qa_commit: "f409b6f472516110ab152907c8c8496521b24873"
     claude_answer: "1 October 2026: the 1.5 m and 4 m minimums apply where the push direction has open floor. A car pinned against the outer wall and rammed straight into it cannot move through the wall: it stays, takes the ram damage, and the attacker rebounds. Any part of the push along the wall still slides it along the wall. No teleport, no escape direction, containment unchanged."
     claude_verdict: "1 October 2026, afternoon: merge. The 38 of 54 body and rail crossings are inherited, unchanged by this card, and outside it; they do not hold the merge and need no new card now (P3-POLISH looks at cars touching the dome wall only if Kyle sees it in play). The code change is contained to the arena paths and the road solver is untouched. After merge, set waiting_on: kyle for his Preview feel check. The 1568-line change note is far too long: cut it to under 100 lines of plain sentences before merge (what changed, tests, replays that changed and why, removed)."
-    note: "Native mass, role and state tests and private browser checks pass. Road replay fingerprints stay unchanged. The current note records the fixture corrections and timing limits."
+    note: "The unchanged audio capture passes alone but twice reaches the parallel gate’s browser command deadline before assertions. A narrow bounded transport-wait fix and independent review precede the fresh gate. Gameplay and audio assertions stay unchanged."
   - id: WAR-SAL-RELEASE
     title: "Release the warlord ladder with Sawtooth Sal"
     owner: claude
