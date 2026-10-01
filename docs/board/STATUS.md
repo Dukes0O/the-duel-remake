@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-01T11:27:57.784Z
+Observed at: 2026-10-01T12:39:48.360Z
 
-Observation commit: 20999f952259b21301d4a8de661b25f4c8da548d
+Observation commit: 53b970d20c4fdac5c92160b88c49d478579a0907
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 20999f952259b21301d4a8de661b25f4c8da548d
+Integration HEAD: 53b970d20c4fdac5c92160b88c49d478579a0907
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -52,10 +52,10 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| lane/art/convoy-tanker | unknown | 2026-10-01T04:08:37-07:00 | 0 | last commit 2026-10-01T04:08:37-07:00 | docs/board/looks/convoy-tanker/round-1-review.md, docs/board/looks/convoy-tanker/round-1-sheet.py, docs/board/looks/convoy-tanker/round-1.jpg, docs/changes/ART-FIT-TANKER.md, src/arena/tanker-model.js |
-| lane/cmb/arena-shove | unknown | 2026-10-01T04:26:49-07:00 | 0 | last commit 2026-10-01T04:26:49-07:00 | docs/changes/ARENA-SHOVE.md, src/arena/arena-event.js, src/arena/arena-floor.js, src/sim-contacts.js, src/vehicle-collision.js |
-| lane/cmb/arsenal-core | unknown | 2026-10-01T02:45:47-07:00 | 0 | last commit 2026-10-01T02:45:47-07:00 | docs/changes/ARS-CORE.md, src/app.js, src/arena/arena-pilot.js, src/arsenal/car-effects.js, src/arsenal/hazards.js |
-| lane/vis/salt-flats | unknown | 2026-10-01T04:19:11-07:00 | 0 | last commit 2026-10-01T04:19:11-07:00 | docs/changes/ARENA-06.md, src/arena/venues.js, src/arena/venues/salt-flats.js, src/course.js, tools/art/salt-flats-fit.json |
+| lane/art/convoy-tanker | unknown | 2026-10-01T05:33:22-07:00 | 0 | last commit 2026-10-01T05:33:22-07:00 | docs/board/looks/convoy-tanker/round-1-review.md, docs/board/looks/convoy-tanker/round-1-sheet.py, docs/board/looks/convoy-tanker/round-1.jpg, docs/changes/ART-FIT-TANKER.md, src/arena/tanker-model.js |
+| lane/cmb/arena-shove | unknown | 2026-10-01T05:31:40-07:00 | 0 | last commit 2026-10-01T05:31:40-07:00 | docs/changes/ARENA-SHOVE.md, src/arena/arena-event.js, src/arena/arena-floor.js, src/sim-contacts.js, src/vehicle-collision.js |
+| lane/cmb/arsenal-core | unknown | 2026-10-01T05:39:38-07:00 | 0 | last commit 2026-10-01T05:39:38-07:00 | docs/changes/ARS-CORE.md, src/app.js, src/arena/arena-pilot.js, src/arsenal/car-effects.js, src/arsenal/hazards.js |
+| lane/vis/salt-flats | unknown | 2026-10-01T04:37:15-07:00 | 0 | last commit 2026-10-01T04:37:15-07:00 | docs/changes/ARENA-06.md, src/arena/venues.js, src/arena/venues/salt-flats.js, src/course.js, src/world.js |
 
 ## Size targets
 
@@ -69,10 +69,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 430,908 B | +0 B | 500,000 B |
 | Review `looks/` | 10,712,857 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 298,589 B | -32,360 B | 5,000,000 B |
+| Added bytes in last merge | 298,589 B | +0 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 332,407,808 B | +1,058,816 B | unavailable |
-| Lane folders | 5 | +1 | unavailable |
+| Git objects | 333,938,688 B | +1,530,880 B | unavailable |
+| Lane folders | 5 | +0 | unavailable |
 
 ## Backups
 
@@ -80,7 +80,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: 20999f952259b21301d4a8de661b25f4c8da548d
+- Local integration/wasteland: 53b970d20c4fdac5c92160b88c49d478579a0907
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
