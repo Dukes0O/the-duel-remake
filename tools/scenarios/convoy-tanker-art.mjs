@@ -320,8 +320,14 @@ export async function run(context) {
         const app=window.__qaApp;
         app.cameraMode='chase';
         if(!app.startArenaEvent({opponents:1}))throw Error('Private production arena did not start');
-        app.stop();app.advance(8);app.stop();
+        app.stop();
       })()`);
+      // Loading gates App simulation. Render the actual arena until it is ready
+      // before advancing its native countdown; never bypass visual readiness.
+      await context.waitFor(`(() => {const app=window.__qaApp;app.onFrame?.(app.duel.state,0);window.__render.renderFrame();
+        return !!app.duel.state.arena&&app.visualReady&&document.querySelector('#renderer-loading')?.hidden;})()`,
+        quality+' production arena transition ready',60000);
+      await context.evaluate('window.__qaApp.advance(8);window.__qaApp.stop()');
       await context.waitFor(`(() => {const app=window.__qaApp;app.onFrame?.(app.duel.state,0);window.__render.renderFrame();
         return app.duel.state.arena?.phase==='fight'&&app.visualReady&&document.querySelector('#renderer-loading')?.hidden;})()`,
         quality+' production arena chase ready',60000);
