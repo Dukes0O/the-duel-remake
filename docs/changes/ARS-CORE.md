@@ -1326,3 +1326,102 @@ Full raw before/targeted/final TAP, feature/core/replay logs, exact native witne
 ### Removed — reviewed fixture follow-up
 
 Replaced only the misleading 180-metre negative arena fixture context and wrapped coordinates in the reviewer-approved case. No strict expected selection, actor/participant assertion or other original status/road context was removed or weakened. No production rule, old test, source body, real save, asset or fingerprint was removed. The pending active player launch/flight cap is documented for the later Claude-settled Source change; this tests-only task does not replace it.
+
+## Claude-settled Crossbow physical reach acceptance, 1 October 2026
+
+This tests-first follow-up starts from clean `048d55c4419c6621a0b9a39dfcb60df31c4b3f95`
+with provisional Source unchanged. Claude's 04:00 decision is in the current
+`docs/ARSENAL.md` and board: player launch and in-flight reach use bolt speed at
+its upgrade level plus launching-car speed, times remaining lifetime. CPU
+acquisition remains 180 m. Only additive runtime tests and this appended note
+are owned. Source continuation is not part of this test-author freeze.
+
+### Actual consumers and independent native boundary witnesses
+
+Thirty-five added cases exercise `fireWeapon` and `stepProjectiles` against
+measured native world targets. The expected formula uses settled 200 m/s base
+speed, 30 m/s per level, 2.5 seconds lifetime and actual `DRIVE.mphToWorld`.
+Targets are real actors placed at real legal Course points found by native
+`worldAt` distance measurements. No target resolver, projectile, Course return,
+launch method or stepping clock is replaced. Measured boundaries use +/- .05 m,
+with the existing 1e-7 native measurement precision; no acceptance tolerance or
+physical tuning was added. Cases cover:
+
+- L0/L3, zero/40 mph collinear carry, player acquisition just inside/outside.
+- Actual .125/.25-second bolts, current projectile origin and remaining lifetime,
+  inside/outside reach, original horizontal speed and fixed-step age increments.
+- A real target inside range from the bolt but beyond range from the parked car.
+- Original launched upgrade/carry after changing the car's current speed to
+  zero/120 mph and its current upgrade level to zero.
+- Stable locked identity with a nearer hostile real car; native flagged decoys
+  just inside/outside player launch and flight boundaries.
+- Actual biased CPU bolts in flight and unchanged CPU 180 m launch boundaries.
+
+Flight fixtures first launch using the genuine released/off consumer, then run
+normal `stepProjectiles(1/120)` ticks with the original target temporarily out
+of play. The same real bolt retains its position, velocity, level and age; none
+is reset or fabricated. Actual Arsenal is activated only after aging to isolate
+the in-flight reach route. The first draft aimed an 850 m initial shot that hit
+native terrain before the intended age. That fixture error is preserved in
+`first-physical-red.log`; the initial clear ascending shot was corrected to
+230 m without changing any physical boundary assertion. All final fixtures
+survive their real aging. Native decoy DATA uses the existing initialized NPC
+fixture; future playable decoy creation remains its producer card's work.
+
+### Scalar/vector ambiguity sent to the Director
+
+The released producer adds `velocity(actor, at)` as a vector, including heading,
+dir and push velocity. Existing L3/carry40 released road-witness measurement gives
+actual horizontal speed 307.65131264062467 m/s, while the literal scalar decision
+would give 290 + 40*.44704 = 307.8816 m/s: about .5757 m difference over 2.5 s.
+The Director was informed in writing before any Source fix. All new moving-car
+boundaries deliberately use collinear forward carry, where both interpretations
+agree. These tests do not choose diagonal, negative-speed or push-velocity
+policy. Such material interpretation needs Claude's written clarification;
+no new cap or redesign is supplied by this task. Original off-path velocities,
+ages and lifetime remain covered by unchanged released-consumer controls.
+
+### Executed RED, preservation and reproduction
+
+Targeted command: `node --test --test-name-pattern='PHYSICAL REACH'
+tools/test-arsenal-runtime.mjs`. Final actual result: **35 cases, 17 pass,
+18 genuine reach/identity failures, zero skips/TODO**, exit1. All failures reach
+actual consumer acceptance, not fixture exceptions. CPU 180 m launch and all
+outside-range controls pass; current player launch and guidance still discard
+reachable targets at the old CPU cap. No fabricated GREEN is claimed.
+
+Complete command: `node --test tools/test-arsenal-core.mjs
+tools/test-arsenal-runtime.mjs tools/test-arsenal-save.mjs`. Actual result:
+**343 cases, 323 pass, 20 fail, zero skips/TODO**, exit1, 16.90 s. This retains
+all original **308 cases: 306 pass and the two existing genuine reach RED**;
+new cases add 17 passing controls and 18 RED. CORE and canonical save cases
+remain unchanged, including whole-profile unknown and per-player preservation.
+No bank/audio file changed; cue dispatch names alone do not establish listening
+or sound readiness. AUD-ARSENAL-W1 owns sounds while Arsenal is in development.
+
+The original runtime prefix remains byte-exact: **58,219 bytes**, SHA-256
+`c33d70b4bc6e993a713db67f154ab07e940e731f1934d3d0e125d58b5ca37554`.
+A Buffer comparison against the original Git blob proves exact preservation,
+including UTF-8 and line endings. CORE/save tests and the three Source consumer
+files were also directly byte-compared with that freeze. The only changed
+tracked path before this note was the assigned runtime test. No original case,
+assertion, helper, replay pin, flag, Source, fit, catalog or asset changed.
+The original note prefix is retained by append, with its size/hash recorded.
+Syntax and `git diff --check` pass. This intentionally RED test freeze is not a
+Source/lane/full/build/browser/audio or merge clearance.
+
+Complete raw TAP and byte provenance are retained under integration
+`.evidence/2026-10-01/ARS-CORE/physical-reach-tests/`: first fixture failure,
+clear-flight RED, final targeted RED, whole CORE/runtime/save RED,
+`byte-preservation.json` and the original runtime/note-prefix receipts.
+The Director owns the remaining design clarification, Source assignment and
+exact gates. No real player storage was read; synthetic test storage only.
+
+### Removed - physical reach acceptance
+
+Removed none. No existing Source, assertion, test, profile field, asset, audio,
+flag or replay fingerprint was replaced. The 850 m initial test-only launch
+fixture was corrected before freeze; its full failure remains honest evidence.
+All old cases remain exact, and review evidence stays ignored until consumed.
+No live folder, Preview, `.preview-dist`, port 5174, new dependency, network,
+helper agent, merge, push, release or history rewrite was used.

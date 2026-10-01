@@ -863,3 +863,165 @@ test('PENDING CLAUDE RANGE: actual in-flight player bolt beyond180 retains measu
   eq(nativeBoltVariables(now), nativeBoltVariables(baseline),
     'PENDING CLAUDE RANGE: active in-flight consumer must not discard measured released beyond180 real-target guidance at the CPU acquisition cap');
 });
+
+// Claude's 1 October physical-reach settlement. These fixtures use measured
+// native world distances and real launch/flight consumers, never a fake bolt.
+import {DRIVE as reachDrive} from '../src/config.js';
+
+function measuredReach(origin, target) {
+  return Math.hypot(target.x - origin.x, target.z - origin.z);
+}
+function settledReach(level, speedMph, age = 0) {
+  // The decision is independently expressed using settled native units.
+  eq(T.crossbow.baseSpeed, 200, 'settled native L0 bolt speed');
+  eq(T.crossbow.speedPerLevel, 30, 'settled native speed increment');
+  eq(T.crossbow.lifetime, 2.5, 'settled native lifetime');
+  return (200 + 30 * level + speedMph * reachDrive.mphToWorld) * (2.5 - age);
+}
+function nativeAtRange(duel, actor, origin, distance, lateral = 0) {
+  // Find a real legal course point with this horizontal distance, rather than
+  // substituting a target point or replacing the resolver/geometry API.
+  let previous = duel.state.s, low = previous, high;
+  const worldDistance = s => {
+    const at = duel.course.worldAt(s, lateral);
+    return Math.hypot(at.x - origin.x, at.z - origin.z);
+  };
+  for (let s = previous + 8; s < duel.state.s + duel.course.length; s += 8) {
+    if (worldDistance(s) >= distance && worldDistance(previous) < distance) {
+      low = previous; high = s; break;
+    }
+    previous = s;
+  }
+  ok(Number.isFinite(high), 'native course contains the measured physical boundary witness');
+  for (let i = 0; i < 52; i++) {
+    const middle = (low + high) / 2;
+    if (worldDistance(middle) < distance) low = middle; else high = middle;
+  }
+  place(actor, (low + high) / 2, lateral);
+  eq(duel.course.surfaceAt(actor.s, actor.lateral).road, true, 'physical-range target uses real legal road');
+  const at = point(duel, actor);
+  near(measuredReach(origin, at), distance, 'actual native target world distance realizes the boundary');
+  return at;
+}
+function physicalLaunch({enabled = true, level = 0, speedMph = 0, distance} = {}) {
+  const duel = race({enabled});
+  place(duel.state, 200);
+  duel.state.opponents[1].finished = true;
+  const origin = point(duel, duel.state);
+  const target = nativeAtRange(duel, duel.state.rival, origin, distance);
+  duel.state.combat.levels.crossbow = level;
+  duel.state.speedMph = speedMph;
+  // Collinear carry removes the documented diagonal/vector ambiguity. The
+  // actual launch still computes and inherits native car velocity itself.
+  duel.state.headingError = Math.atan2(target.x - origin.x, target.z - origin.z) - origin.heading;
+  return {duel, origin, target, level, speedMph};
+}
+function realAgedBolt({level = 0, speedMph = 0, age = .125} = {}) {
+  const fixture = physicalLaunch({enabled: false, level, speedMph, distance: 230});
+  const {duel} = fixture;
+  eq(fireWeapon(duel, 'crossbow'), true, 'genuine released route creates the real initial locked bolt');
+  const shot = duel.state.combat.projectiles.at(-1);
+  const initial = {vx: shot.vx, vz: shot.vz, age: shot.age, level: shot.level};
+  near(Math.hypot(shot.vx, shot.vz), 200 + 30 * level + speedMph * reachDrive.mphToWorld,
+    'actual collinear native launch inherits speed in correct world units');
+  duel.state.rival.finished = true;
+  for (let i = 0; i < Math.round(age / DT); i++) stepProjectiles(duel, DT);
+  ok(duel.state.combat.projectiles.includes(shot), 'real aged bolt remains alive without position/age resets');
+  near(shot.age, age, 'remaining lifetime comes from actual projectile stepping');
+  duel.state.rival.finished = false;
+  duel.featureFlags = flags(true);
+  return {...fixture, shot, initial};
+}
+for (const level of [0, 3]) for (const speedMph of [0, 40]) for (const inside of [true, false]) {
+  test('PHYSICAL REACH launch L' + level + ' carry' + speedMph + ' ' + (inside ? 'inside' : 'outside'), () => {
+    const range = settledReach(level, speedMph), distance = range + (inside ? -.05 : .05);
+    const {duel} = physicalLaunch({level, speedMph, distance});
+    eq(fireWeapon(duel, 'crossbow'), true, 'player can still fire a real straight bolt when physical aim is unavailable');
+    const shot = duel.state.combat.projectiles.at(-1);
+    eq(shot.targetIndex, inside ? 0 : undefined, 'actual launch accepts only the measured physical-range target');
+    if (inside) {
+      eq(shot.targetId, 'cpu:0', 'real launch preserves the selected stable identity');
+      near(Math.hypot(shot.vx, shot.vz), 200 + 30 * level + speedMph * reachDrive.mphToWorld,
+        'aimed native launch keeps upgrade and carry speed');
+    }
+    near(shot.age, 0, 'real physical boundary launch starts at age zero');
+  });
+}
+for (const level of [0, 3]) for (const speedMph of [0, 40]) for (const age of [.125, .25]) for (const inside of [true, false]) {
+  test('PHYSICAL REACH flight L' + level + ' carry' + speedMph + ' age' + age + ' ' + (inside ? 'inside' : 'outside'), () => {
+    const {duel, shot} = realAgedBolt({level, speedMph, age});
+    const origin = {...shot}, range = settledReach(level, speedMph, shot.age);
+    const target = nativeAtRange(duel, duel.state.rival, origin, range + (inside ? -.05 : .05), 3);
+    if (inside) ok(measuredReach(point(duel, duel.state), target) > range,
+      'actual target is beyond remaining reach from the car but inside from the native projectile');
+    const velocity = {vx: shot.vx, vz: shot.vz}, oldAge = shot.age;
+    stepProjectiles(duel, DT);
+    eq(shot.targetIndex, inside ? 0 : null, 'actual homing range uses current bolt origin and remaining native lifetime');
+    near(shot.age, oldAge + DT, 'native guidance keeps original fixed-step age increment');
+    near(Math.hypot(shot.vx, shot.vz), Math.hypot(velocity.vx, velocity.vz), 'guidance never changes original horizontal flight speed');
+    if (inside) eq(shot.targetId, 'cpu:0', 'within reach guidance keeps real locked identity');
+    else eq({vx: shot.vx, vz: shot.vz}, velocity, 'out-of-reach bolt continues original flight instead of re-aiming');
+  });
+}
+for (const speedAfterLaunch of [0, 120]) test('PHYSICAL REACH flight freezes launch carry despite current car speed' + speedAfterLaunch, () => {
+  const {duel, shot} = realAgedBolt({level: 3, speedMph: 40, age: .25});
+  const range = settledReach(3, 40, shot.age);
+  duel.state.speedMph = speedAfterLaunch;
+  duel.state.combat.levels.crossbow = 0;
+  nativeAtRange(duel, duel.state.rival, shot, range - .05, 3);
+  stepProjectiles(duel, DT);
+  eq(shot.targetIndex, 0, 'remaining reach uses actual launched upgrade/carry, not a later actor/profile change');
+  eq(shot.level, 3, 'original real projectile level remains unchanged');
+});
+for (const inside of [true, false]) test('PHYSICAL REACH native decoy launch ' + (inside ? 'inside' : 'outside'), () => {
+  const {duel, origin} = physicalLaunch({distance: 100});
+  const data = decoyData(duel, duel.state.rival, {id: 'physical-reach-decoy'});
+  nativeAtRange(duel, data, origin, settledReach(0, 0) + (inside ? -.05 : .05));
+  eq(fireWeapon(duel, 'crossbow'), true, 'actual native aimed player consumer fires');
+  const shot = duel.state.combat.projectiles.at(-1);
+  eq(shot.targetIndex, inside ? duel.state.opponents.indexOf(data) : 0,
+    'real resolver redirects only to a native flagged decoy inside physical reach');
+  eq(shot.targetId, inside ? data.id : 'cpu:0', 'stable native decoy/real identity survives launch');
+});
+for (const inside of [true, false]) test('PHYSICAL REACH native decoy flight ' + (inside ? 'inside' : 'outside'), () => {
+  const {duel, shot} = realAgedBolt();
+  nativeAtRange(duel, duel.state.rival, shot, 100, 3);
+  const data = decoyData(duel, duel.state.rival, {id: 'physical-flight-decoy'});
+  nativeAtRange(duel, data, shot, settledReach(0, 0, shot.age) + (inside ? -.05 : .05));
+  stepProjectiles(duel, DT);
+  eq(shot.targetId, inside ? data.id : 'cpu:0', 'actual in-flight guidance admits only a physically reachable native decoy');
+});
+test('PHYSICAL REACH flight keeps locked real identity despite nearer hostile car', () => {
+  const {duel, shot} = realAgedBolt();
+  nativeAtRange(duel, duel.state.rival, shot, 300, 3);
+  const nearer = duel.state.opponents[1]; nearer.finished = false;
+  nativeAtRange(duel, nearer, shot, 80, 3);
+  stepProjectiles(duel, DT);
+  eq(shot.targetIndex, 0, 'physical range does not retarget another real car');
+  eq(shot.targetId, 'cpu:0', 'actual locked identity survives a nearer enemy');
+});
+for (const inside of [true, false]) test('PHYSICAL REACH CPU acquisition remains180 ' + (inside ? 'inside' : 'outside'), () => {
+  const duel = race(), cpu = duel.state.rival;
+  place(cpu, 200); duel.state.opponents[1].finished = true;
+  nativeAtRange(duel, duel.state, point(duel, cpu), 180 + (inside ? -.05 : .05));
+  eq(fireWeapon(duel, 'crossbow', true, cpu), inside,
+    'actual CPU launch preserves the settled 180m acquisition boundary');
+});
+for (const inside of [true, false]) test('PHYSICAL REACH actual CPU bolt flight ' + (inside ? 'inside' : 'outside'), () => {
+  const duel = race({enabled: false}), cpu = duel.state.rival;
+  place(cpu, 200); place(duel.state, 430); duel.state.opponents[1].finished = true;
+  eq(fireWeapon(duel, 'crossbow', true, cpu), true, 'genuine released CPU route launches its actual biased bolt');
+  const shot = duel.state.combat.projectiles.at(-1);
+  eq(shot.enemy, true, 'flight fixture is the actual enemy producer');
+  duel.state.finished = true;
+  for (let i = 0; i < 15; i++) stepProjectiles(duel, DT);
+  ok(duel.state.combat.projectiles.includes(shot), 'native enemy bolt survives real aging without resets');
+  near(shot.age, .125, 'actual enemy age supplies remaining lifetime');
+  duel.state.finished = false;
+  duel.featureFlags = flags(true);
+  nativeAtRange(duel, duel.state, shot, settledReach(0, 0, shot.age) + (inside ? -.05 : .05), 3);
+  stepProjectiles(duel, DT);
+  eq(shot.targetIndex, inside ? -1 : null,
+    'every in-flight bolt uses physical reach although CPU acquisition remains 180m');
+  if (inside) eq(shot.targetId, 'player', 'real biased enemy bolt keeps its locked player identity');
+});
