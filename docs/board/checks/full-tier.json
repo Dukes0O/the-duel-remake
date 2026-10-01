@@ -1,17 +1,15 @@
 {
   "schema": 1,
-  "commit": "2d1216fd545343d48ef714fde4d91da40ae5638e",
-  "time": "2026-10-01T00:24:18.011Z",
+  "commit": "ba157a5c782b2cf239b86a76e76867f7529688ae",
+  "time": "2026-10-01T01:29:51.654Z",
   "tier": "full",
-  "passed": false,
+  "passed": true,
   "dirty": false,
   "startDirty": false,
   "endDirty": false,
-  "endCommit": "2d1216fd545343d48ef714fde4d91da40ae5638e",
+  "endCommit": "ba157a5c782b2cf239b86a76e76867f7529688ae",
   "complete": true,
-  "total": 307,
-  "completed": 307,
-  "failures": [
-    "tools/test-rustwall-p2-relief.mjs"
-  ]
+  "total": 308,
+  "completed": 308,
+  "failures": []
 }

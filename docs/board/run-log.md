@@ -1312,3 +1312,18 @@ four source gaps. D8 normal push awaits the existing specific destination
 and payload approval after automatic review rejection. No push, rewrite,
 Director release or real save access. Start future cards from the refreshed
 board only after the exact full passes, respecting all held file ownership.
+
+## 30 September 2026, Claude: review of the Director's run, after its stop
+
+Pushed the Director's final commit 9fd0347 (its own full tier passed 308/308;
+its push had been blocked by Codex's permission review). Merged Claude's
+review lane (ba157a5): car weapons against fighters on foot settled in
+docs/CREW.md (bolt 35 health, splash up to 60 with knockdown inside half the
+radius, cargo drops only on knockdown), Fuel Run depot 4 m, a 150 degrees a
+second ceiling for ARENA-STEER, and the crew fitting verdict (keep current;
+Cinder is a woman). While resolving the merge, Claude discarded the
+uncommitted full-tier ledger for 9fd0347 by mistake; it was not rewritten by
+hand. A fresh full tier on ba157a5 passed 308/308 in 430 s and wrote the
+ledger; ba157a5 pushed. Waiting for Kyle: hands (keep current after two
+rounds), tanker parts (Claude proposes a simpler convoy rig), crew (keep
+current), and the save fix release.
