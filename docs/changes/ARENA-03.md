@@ -686,3 +686,25 @@ and final gameplay/audio/look checks remain held.
 Replaced Fuel's stale pre-refresh launch check and repeated render-time
 ground sampling. No existing test assertion, replay pin, storage key, save
 schema, runtime or licensed asset was changed or removed.
+
+## Narrow follow-up review at 53e6796
+
+Independent code review passes 10 checks with 162 assertions for the durable
+launch gate and event-owned render cache. Save Guardian passes 77 tests and
+six additional actual memory-only App probes. Each launch performs one
+existing owner refresh and zero writes. Refusal preserves race state, event
+IDs, seeds and settlement context; the newer profile retains its credits and
+unknown fields. Failed-save session guards remain intact. The settlement and
+retry bodies are unchanged by this follow-up.
+
+These reviews cover source commit
+53e67964fb3e5c1f2a2c75d4ca087b1b8306cb08. They clear the two measured
+findings, not the complete Fuel Run feature. Earlier browser evidence covers
+an earlier source commit. Fresh browser, gameplay, sound and look checks, the
+whole lane/build floor and a complete independent review still follow the
+fighter-contact implementation. Claude's design branch has not merged, so
+contact code and the feature merge remain paused. No real save is used.
+
+### Removed — narrow review
+
+Nothing. Current recipes, retained acceptance and source fingerprints remain.
