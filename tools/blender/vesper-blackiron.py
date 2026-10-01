@@ -46,6 +46,8 @@ def validate(root, config_path, output):
     output, local = contained(root, output)
     if len(local.parts) < 2 or local.parts[0] not in (".qa-dist", ".evidence"):
         raise ValueError("Output must be a named private .qa-dist/ or .evidence/ child")
+    if output.exists():
+        raise ValueError("Output must be a new absent private folder; an existing destination is refused")
     config_path, _ = contained(root, config_path)
     fit = json.loads(config_path.read_text(encoding="utf-8"))
     expected = [{"path": path, "sha256": sha} for path, sha in SOURCE_PINS]
@@ -118,6 +120,12 @@ def write_glb(document, binary):
     return struct.pack("<4sII", b"glTF", 2, length) + struct.pack("<II", len(encoded), 0x4E4F534A) + encoded + struct.pack("<II", len(binary), 0x004E4942) + binary
 
 
+def write_new(path, data):
+    """Every file belongs to this newly created export directory."""
+    with path.open("xb") as target:
+        target.write(data)
+
+
 def fit_in_blender(root, fit, output, document, binary):
     import bpy
     import numpy as np
@@ -143,7 +151,7 @@ def fit_in_blender(root, fit, output, document, binary):
     surface_index = document["textures"][original_material["metallicRoughnessTexture"]["index"]]["source"]
     source_color = view_bytes(document, binary, document["images"][color_index]["bufferView"])
     input_path = output / "bound-donor-color.png"
-    input_path.write_bytes(source_color)
+    write_new(input_path, source_color)
     try:
         image = bpy.data.images.load(str(input_path), check_existing=False)
         if list(image.size) != [1024, 1024]:
@@ -216,7 +224,10 @@ def fit_in_blender(root, fit, output, document, binary):
         fitted.pixels.foreach_set(array[::-1].reshape(-1))
         fitted.filepath_raw = str(output / ("vesper-" + role + ".png"))
         fitted.file_format = "PNG"
-        fitted.save()
+        # Blender encodes the native atlas in memory; the only filesystem
+        # writer opens create-new rather than overwriting an existing path.
+        fitted.pack()
+        write_new(Path(fitted.filepath_raw), bytes(fitted.packed_file.data))
         if role == "color":
             fitted.colorspace_settings.name = "sRGB"
         fitted_images[role] = fitted
@@ -249,7 +260,7 @@ def export(root, fit, output):
     document, binary = read_glb(source_data)
     before = accessor_hashes(document, binary)
     # Output creation occurs only after every standard-library guard succeeded.
-    output.mkdir(parents=True, exist_ok=True)
+    output.mkdir(parents=True, exist_ok=False)
     images, native = fit_in_blender(root, fit, output, document, binary)
     candidate = copy.deepcopy(document)
     replacements = {document["images"][index]["bufferView"]: pixels for index, pixels in images.items()}
@@ -269,7 +280,7 @@ def export(root, fit, output):
     if after != before:
         raise ValueError("Lossless costume rebinding changed native accessor bytes")
     model = write_glb(candidate, bytes(packed))
-    (output / "vesper.glb").write_bytes(model)
+    write_new(output / "vesper.glb", model)
     manifest = {"version": 1, "id": "vesper", "source": fit["source"], "provenance": fit["provenance"],
                 "modelSha256": digest(model), "modelBytes": len(model), "recipe": "tools/blender/vesper-blackiron.py",
                 "recipeSha256": digest(Path(__file__).read_bytes()), "fitSha256": digest(json.dumps(fit, sort_keys=True, separators=(",", ":")).encode()),
@@ -279,7 +290,7 @@ def export(root, fit, output):
                 "sourceImageHashes": [digest(view_bytes(document, binary, image["bufferView"])) for image in document["images"]],
                 "candidateImageHashes": [digest(view_bytes(candidate, bytes(packed), image["bufferView"])) for image in candidate["images"]],
                 "geometryUnchanged": True, "rigAndActionsUnchanged": True, "privateOnly": True}
-    (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    write_new(output / "manifest.json", (json.dumps(manifest, indent=2) + "\n").encode("utf-8"))
     print("VESPER_PRIVATE_EXPORT " + json.dumps({"modelSha256": digest(model), "bytes": len(model), **native}))
 
 
