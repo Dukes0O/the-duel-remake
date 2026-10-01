@@ -598,6 +598,7 @@ tasks:
       - "Race fingerprints for the released rules stay unchanged (replay check). Cards that name flag: wasteland2 on the board lose the field."
       - "Also remove the scrapdome, titan-climb and muddy-hollow switches and their switch-off branches, released by SCRAPDOME-RELEASE on 30 September 2026, and warlords, released by WAR-SAL-RELEASE the same day, keeping the switched-on behavior."
       - "Touches many files: run it when no other lane owns any of them, in parts if needed (src first, then tools and scenarios), each part through the lane tier."
+    sequencing: "Retirement waits for Arsenal, Salt Flats and the wreck-rate card to free their shared runtime and test hooks. No parallel lane may remove a switch while another is implementing its consumers."
   - id: ART-SRC-CREW
     title: "Crew figures: short list of existing starting models for Kyle"
     owner: codex
@@ -1024,6 +1025,8 @@ tasks:
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Bounty Hunt, exactly, with rank 9 unlock, pay and hold once per event. Headless tests and a private browser scenario."
+    sequencing: "Bounty Hunt waits for the wreck-rate event hook and Arsenal App hook to merge. Its mode leaf is separate, but the complete public mode requires both owners to finish first."
+    hook_requests: [src/arena/arena-event.js, src/app.js, src/screen-arena.js]
   - id: ARENA-05
     title: "Ambush Alley: hold the scrap fort on foot"
     owner: codex
@@ -1126,6 +1129,8 @@ tasks:
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: Kettle Kingpin' in docs/SCRAPDOME.md section 5. The ring is always drawn before he lands; the shove goes through the crash solver. Tusk unlocks early only once CREW-02 has made him active. When built, status review and waiting_on: claude before merge."
+    sequencing: "Kettle waits for Arsenal progression and App hooks and the wreck-rate arena event hook to merge. The move, native fight, early Tusk and Titan kit reward are one complete card."
+    hook_requests: [src/warlord-event.js, src/warlords.js, src/arena/arena-event.js, src/wasteland-progress.js, src/app.js]
   - id: WAR-03c
     title: "The Twin Vultures: the pair and Pincer; grapple upgrade"
     owner: codex
