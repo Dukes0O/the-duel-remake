@@ -1,8 +1,16 @@
-# ARS-CORE — tests-first freeze, 30 September 2026
+# ARS-CORE — partial implementation, 30 September 2026
 
-Source RED commit: 9ef873123e78b6ed4fcd866d6355da2185c8522a. Director claim is on that integration commit.
-Only the two new suites and this note are owned here. No production source,
-existing test, assertion, fingerprint, asset or save was edited.
+Latest bounded step: earned-ID preservation fix after clean independent RED
+`8f34e1835f14600f530643ea4bf01b681323adee`. This step owns only
+`src/weapon-upgrades.js` and this note. All 68 SAVE and 48 CORE tests pass;
+13 native integration failures and three design TODOs remain. No whole-card,
+lane/full-tier or merge pass is claimed. Independent Guardian and reviewer
+review are required before further integration work.
+
+Original tests-first baseline: 9ef873123e78b6ed4fcd866d6355da2185c8522a.
+The Director claimed the card on that integration commit. That initial step
+owned only two new suites and this note; production work followed under the
+explicit grants recorded below.
 
 ## Settled rules and routine API contracts
 
@@ -644,3 +652,41 @@ The merge janitor deletes raw evidence after its verdict is retained.
 - SAVE PRESERVATION: 81-character/purchase retains FOUR unique saved slots: 81-character/purchase: losing an owned identity must never delete or replace its saved slot
 - SAVE PRESERVATION: 81-character/equip retains every earned owned identity: 81-character/equip: full earned ownership must survive without an arbitrary count or length cap
 - SAVE PRESERVATION: 81-character/equip retains FOUR unique saved slots: 81-character/equip: losing an owned identity must never delete or replace its saved slot
+
+## Earned-ID preservation source fix — 30 September 2026
+
+Built on clean independent RED `8f34e1835f14600f530643ea4bf01b681323adee`, production hooks `dd8ca6c7350f641e7fa8757c50bba76288027e9e` and independently approved fixture correction `6d1fdd08fba606e2f36c7a7102a26c4550c03dd9`. The Director granted only `src/weapon-upgrades.js` and this note for this fix. Other source hooks, both independent suites, core modules, replay pins and the Salt Flats lane remain untouched.
+
+The actual `validIds` helper previously filtered out earned strings longer than 80 characters and took the first 100 entries before deduplication. That erased late earned oil, a 101st future identity and an 81-character future identity. The native Wasteland normalizer then dropped or replaced their four-slot saved identities. These were undocumented limits; settled ARSENAL save rules require preservation and impose neither limit.
+
+The source fix removes only those count and length limits. It still accepts an array of nonempty string identities; existing ownership deduplication, four starters, level normalization and unknown-field preservation continue unchanged. It does not manufacture ownership from levels or catalog entries. Existing reward receipts, offer/dev/discovery guards, rank, XP, credits, scrap costs, upgrade caps and seeded CPU selection keep their current rules. The independent malformed, future-schema, named-player and transaction controls remain unchanged.
+
+### Actual RED to GREEN
+
+- Before the source edit, `node tools/test-arsenal-save.mjs` reproduced **68 tests, 44 pass, 24 fail, 427 acceptance checks** on the clean independent freeze. All 24 failures were the documented earned-identity or exact-slot loss.
+- After the edit, the same unchanged default suite passes **68/68**, reaching **451 acceptance checks**. Normalize, memory registry save/reload, actual smoke purchase/reload and actual equip/reload retain every earned identity, level, unknown field and all four exact saved slot identities in all three independent witnesses. The original 20 tests and approved canonical fixtures remain included.
+- `node --test --test-name-pattern '^CORE:' --test-reporter=tap tools/test-arsenal-core.mjs`: **48/48 pass**.
+- The complete unchanged two-suite command reaches **132 tests: 116 pass, 13 fail, three TODO**. Those 13 are the existing ungranted native consumers, and the three TODOs remain the written design questions. This narrow save repair does not hide or resolve them.
+- Existing relevant controls pass **108/108 TAP tests across 11 suites**: weapon upgrades, car loadout, Wasteland profile, career backup, progression, App progression integration, historical save fixtures, damaged profile fields, combat credit bonus, storage budget and career budget. These include **3,654 damaged-profile checks**, **seven historical fixtures/247 first-load and round-trip checks**, **146 App progression assertions** and **27 progression/leaderboard controls**. The storage model remains **3.48 MB / 4.00 MB**; maximum ghost journal is **2,500,604 / 4,000,000 bytes**. These controls use disposable memory storage only.
+- `npm run build`: passes on this isolated lane; the existing large-chunk warning remains. No Preview/live build or port was used.
+
+Private logs stay under ignored `.evidence/2026-09-30/ARS-CORE/owned-identity-fix/`. No test/assertion/fixture/pin changed. `node tools/test-replays.mjs` passes **162/162** checks across 18 cases, 16 events, eight categories, three frame rates and three runs. No replay pin was regenerated.
+
+### Source and protected hashes
+
+| File | SHA-256 |
+| --- | --- |
+| Fixed src/weapon-upgrades.js | 6b5f76ac6d537b9b80986cf11bbaea59142fc202cb4da8736707d999489a8cc8 |
+| Unchanged src/car-loadout.js | aff0f3e89befe947a7e83ff6bf15b690b712d73c613badfb279718b31e321a75 |
+| Unchanged src/wasteland-progress.js | 40e9934fbbc5bf19f1d00ce28692330653d3ceb13c1b67aa344987ec0c4eac6f |
+| Unchanged src/progression.js | 6360f5aa2b7d05c76ab0599f043551610785a52930df66b5704ed579983918e2 |
+| Frozen tools/test-arsenal-core.mjs | fcbf6e253bad37c5aacbd5c688304c222be5ffeca36bc673e468fc4ce571c210 |
+| Frozen tools/test-arsenal-save.mjs | f1e9afafa39838f5fbd4f822ff021672f659940a33f5659aa262164616ee2427 |
+| Existing ordinary replay pin | b55182cbc6d6121a205fa24ba9049aeefabd7943a6e12ebba5a7f868c068c77a |
+| Existing combat replay pin | 85d9457ccd27534cfd7134547690b0ea5ad430fd9f374a63a1015c0b4b781536 |
+
+### Remaining acceptance and Removed
+
+Independent Save Guardian and source reviewer approval are still required. Existing native scheduled fire/homing/lock, effects/lifecycle, recharge, CPU use and discovery/dev consumer wiring remain ungranted, as do the later armory UI, rendering and protected audio hooks. The settled upgrade dimension and decoy contexts still need Claude's written answer. Actual game/browser, High/Performance rendering, listening, thirty-race balance with real use counts, retained Arsenal replay and mandatory lane/full gates remain outstanding. No finished-feature or merge claim follows from this repair.
+
+Removed the arbitrary 100-entry and 80-character truncations from the ID normalizer. No earned data, old assertion, fixture, core module, replay fingerprint, runtime asset, licensed source, external audio, real save or other lane work was removed. The fix forwards through the independently reproduced loss rather than rewriting history.

@@ -14,8 +14,9 @@ export const ARSENAL_WEAPONS = Object.freeze({
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const levelFor = value => Number.isFinite(value) ? Math.max(0, Math.min(3, Math.floor(value))) : 0;
+// Count or length limits would erase earned identities and their saved slots.
 const validIds = value => (Array.isArray(value) ? value : [])
-  .filter(id => typeof id === 'string' && id.length > 0 && id.length <= 80).slice(0, 100);
+  .filter(id => typeof id === 'string' && id.length > 0);
 const futureCareer = profile => Number.isSafeInteger(profile?.wasteland?.version) &&
   profile.wasteland.version > 1;
 
