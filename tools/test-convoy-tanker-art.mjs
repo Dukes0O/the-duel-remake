@@ -722,3 +722,50 @@ writeFileSync(join(scratch,'valve-contact-witness.json'),JSON.stringify({
 console.log('Convoy tanker valve contact: '+valveContactVerdicts.length+' checks, '+
   (valveContactVerdicts.length-valveContactFailures)+' passed, '+valveContactFailures+' failed.');
 if(valveContactFailures)process.exitCode=1;
+
+
+// Additive round2 build scale. Claude approved about11m long/3.5m tall;
+// Director made those exact reproducible build targets at existing .002m
+// export precision. These are presentation targets, not race/body physics or
+// a width, triangle, draw, material-brightness or renderer-frame budget.
+const tankerScaleStart=checks.length;
+const tankerScaleTargets=Object.freeze({length:11,height:3.5,precision:contactPrecision});
+const tankerScaleEvidence={targets:tankerScaleTargets};
+async function measuredTankerScale(){
+  const data=await candidate(),scene=data.model.gltf.scene;
+  scene.updateMatrixWorld(true);
+  const bounds=boxOf(scene),size=bounds.getSize(new THREE.Vector3());
+  assert.ok(!bounds.isEmpty(),'scale measures the complete loaded native assembly');
+  assert.ok(size.toArray().every(value=>Number.isFinite(value)&&value>0),'actual complete native dimensions');
+  const receipt={min:bounds.min.toArray(),max:bounds.max.toArray(),
+    width:size.x,height:size.y,length:size.z,sha256:hash(data.model.bytes),bytes:data.model.bytes.length};
+  tankerScaleEvidence.actual=receipt;return receipt;
+}
+check('round2 full native assembly length is11m within existing export precision',async()=>{
+  const measured=await measuredTankerScale();
+  assert.ok(Math.abs(measured.length-tankerScaleTargets.length)<=tankerScaleTargets.precision,
+    'complete native tanker length '+measured.length+'m differs from approved11m build target by '+
+    Math.abs(measured.length-tankerScaleTargets.length)+'m; tolerance remains.002m');
+});
+check('round2 full native assembly height is3.5m within existing export precision',async()=>{
+  const measured=await measuredTankerScale();
+  assert.ok(Math.abs(measured.height-tankerScaleTargets.height)<=tankerScaleTargets.precision,
+    'complete native tanker height '+measured.height+'m differs from approved3.5m build target by '+
+    Math.abs(measured.height-tankerScaleTargets.height)+'m; tolerance remains.002m');
+});
+const tankerScaleVerdicts=[];
+for(const {name,run}of checks.slice(tankerScaleStart))try{
+  await run();tankerScaleVerdicts.push({name,passed:true});
+}catch(error){
+  tankerScaleVerdicts.push({name,passed:false,message:error.message,stack:error.stack});
+  console.error('FAIL '+name+': '+error.message);
+}
+const tankerScaleFailures=tankerScaleVerdicts.filter(row=>!row.passed).length;
+writeFileSync(join(scratch,'round2-scale-witness.json'),JSON.stringify({
+  sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
+  ...tankerScaleEvidence,verdicts:tankerScaleVerdicts,
+  scope:'Native build dimensions only; actual renderer car-size/material/art/frame comparison pending.'
+},null,2)+'\n');
+console.log('Convoy tanker round2 scale: '+tankerScaleVerdicts.length+' checks, '+
+  (tankerScaleVerdicts.length-tankerScaleFailures)+' passed, '+tankerScaleFailures+' failed.');
+if(tankerScaleFailures)process.exitCode=1;

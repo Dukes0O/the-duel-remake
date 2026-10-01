@@ -745,3 +745,86 @@ Private evidence remains for review and the Director's used-once janitor.
 No lane/full/build, frame, art, whole-card, merge, public-install, push or
 release pass is claimed. No live folder, Preview, port 5174, real save,
 protected audio, dependency, external service or source repair was touched.
+
+## Round-two native scale acceptance, 1 October 2026
+
+This append-only tests-first continuation starts at clean
+`5a844645b79438cd27d86849f2c2fa8dd9bec58a`. Claude's 04:00 review approved
+a tanker about 11 m long and 3.5 m tall, plus the native mounting and material
+direction recorded in the integration inbox/card at `12329e5`.
+The Director adopted **11 m length and 3.5 m height as exact reproducible
+build targets**, using the existing **.002 m** native export precision.
+These realize the approximate visual direction; they are not new race or
+collision-shell rules. No width target was introduced.
+
+Two new default checks use the bounding box of the **complete loaded native
+assembly**, with actual world matrices updated: truck, tank, all three valves,
+armor, boarding plate and warning lamps. They measure the model's existing
+longitudinal Z and vertical Y spans. No displayed gizmo, declared manifest size,
+substitute truck, camera scale or shader-pixel expectation supplies the result.
+
+### Exact measured RED
+
+The existing pinned private candidate was measured first without rebuilding:
+SHA-256 `0af1e450360a329cbc91bd9a90267ec68f1aa4628791f8bb857d431a107e75be`,
+1,063,268 bytes. Both native checks fail:
+
+- `complete native tanker length 7.227999687194824m differs from approved11m
+  build target by 3.772000312805176m; tolerance remains.002m`
+- `complete native tanker height 2.875006699562073m differs from approved3.5m
+  build target by 0.6249933004379269m; tolerance remains.002m`
+
+Actual complete minimum:
+[-1.5, -0.000000023841858265427618, -3.7079999446868896].
+Actual complete maximum:
+[1.5, 2.875006675720215, 3.5199997425079346].
+The measured width is 3 m; it is reported only and has no acceptance target.
+
+The normal full default command was then run once through the unchanged recipe.
+It regenerates the same exact candidate and reports:
+
+- Original native checks: **42/42 pass**.
+- Previously frozen pipe contact checks: **12 cases, 9 pass, 3 genuine RED**.
+- New native scale checks: **2 cases, 0 pass, 2 genuine RED**.
+- Combined: **56 cases, 51 pass, 5 fail; no skips or exclusions**.
+
+The prior rear gap and handwheel-only attachment failures remain exactly the
+same. Full native donor affine lineage, tank support, zero strict truck/tank
+crossings, three original pipe-mount conditions, native copied positive/
+hover/lateral/disconnected-surface controls and all rights/lifecycle guards
+are unchanged. No fixture bug was found and no existing control was edited.
+The copied native controls remain expressed relative to the actual tank's
+affine frame; this continuation does not alter their scaling behavior.
+
+The previous **55,768-byte** test prefix remains exact, SHA-256
+`ff00ff7c590d52df8844aa39c1c7fc21620cf7b5e7d4e769efb735039c50330a`.
+The previous **45,806-byte** change-note prefix remains exact, SHA-256
+`742a58ed3986b8ae75d0a8e2458b39163d5f8d1633b332773d732ec7702267a1`.
+All **1,186** unowned tracked files and the separately checked licensed source
+bytes remain unchanged.
+
+Raw focused and default stdout/stderr, the complete native box/target receipt,
+original42 and existing12 verdicts, native manifest/build output and protected
+byte proof are retained under ignored integration
+`.evidence/2026-10-01/ART-FIT-TANKER/round2-scale-tests/`.
+The focused proof runs only the two new cases against the existing genuine
+candidate; it does not claim prior cases passed there. The default run executes
+all 56 cases and preserves the five intentional failures.
+
+Actual renderer comparison against a car, race-distance hazard-red valves/
+bright collars, stripes, lighter tank/darker cab, independent art review,
+frame/motion and Claude's round-two verdict remain pending. No arbitrary width,
+triangle, draw or brightness budget was added. Native build dimensions alone
+cannot clear those visual outcomes.
+
+### Changed assertions and Removed
+
+Changed assertions: none. This adds exactly two native size checks and their
+measurement/runner after every byte of all 54 existing cases.
+
+Removed: none. No source, recipe, fit, approved pick, licensed file, public
+asset, material, valve control, assertion or replay pin was changed or replaced.
+The separate Source worker receives these RED checks before implementing
+round two. No whole-card, art, frame, lane/full/build, merge, push or public
+installation pass is claimed. No live folder, Preview, port 5174, real save,
+protected external system, new dependency or runtime physics was touched.
