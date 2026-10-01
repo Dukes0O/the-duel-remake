@@ -1,10 +1,12 @@
 # ARENA-SHOVE — partial collision source stage
 
-The granted collision stage passes all 18 non-wreck mass/state/role minimum
-groups. The unchanged complete native suite now reports **56 tests: 50 pass,
-five wreck-motion failures, one wall-design TODO; 2,251 checks reached**.
-This is a bounded WIP source handoff, not a finished card or merge pass.
-Arena-event/game/pilot hooks remain owned by Fuel and were not edited.
+All **1,944 native mass/state/role shove witnesses now pass**. The unchanged
+complete suite reports **56 tests: 55 pass, zero fail, one wall-design TODO;
+2,251 checks reached**. The newly granted waiting-wreck hook steps real slide
+motion during the unchanged recovery timer after a normal Fuel integration
+merge. Independent source review, the wall interpretation, browser/Kyle feel
+and exact lane/full gates remain; no whole-card or merge pass is claimed.
+Pilot and game remain outside this slice. Earlier partial results are below.
 
 The original tests-first sweep on unchanged source
 `40b81c1159565ac1713b5d5d4d9a6c0593f64c96` reported **31 pass, 24 fail,
@@ -228,3 +230,55 @@ Raw logs are ignored under `.evidence/2026-09-30/ARENA-SHOVE/source-stage/`. Cha
 ### Removed — partial source stage
 
 Removed arena participants from the road-only NPC yield exception and removed the waiting-arena-wreck contact rejection; both original road rules remain. The new sitting-arena motion path replaces premature forward-only knock hand-back for that path. No pure solver, old road rule, steering setting, timer, damage/protection rule, Titan crush path, test, fingerprint, asset, licensed source, real save or other lane work was removed. The card's unfinished event hook stays recorded rather than hidden behind a placeholder.
+
+## Granted waiting-wreck event continuation — 1 October 2026
+
+The Director returned source ownership and granted only `arena-event::stepWreckedActor`, with the existing contact/knock/solver/floor hooks, in integration commit `1998f9df4be7bc9eada083dd50986d593f85d9e4`. Before editing source, this lane normally merged `integration/wasteland` into its clean `66ac011b441237cffb549c7f17576d5855edd90b` head. Merge commit is `e11ff1080cae41d8bf678a9018201a17522df14f`; Fuel's reviewed source and history are preserved. No rebase, history rewrite, release or live operation occurred.
+
+The native suite on that clean merged source reproduced the same **50 pass, five real wreck-motion failures and one TODO**, with **2,251 checks**. Its frozen tests and controls preceded this continuation and remain unchanged.
+
+### Narrow native fix
+
+`stepWreckedActor` still decrements the actual recovery timer once per fixed tick and mirrors it into `impactTimer`. If a waiting player/CPU wreck has native knock motion, it now calls the existing obstacle-aware `stepWreckSlide` and solid `containInArena` functions. A stationary wreck retains the prior speed-damping branch. The only other event-file edit is the required named import for that native function. No event mode, score, Fuel, respawn, pilot or game body was rewritten.
+
+The floor now removes outward free-body velocity for a waiting wreck as well as the prior sitting-car shove, while retaining tangential motion. An already wrecked actor is contained quietly: it receives no second scenery damage attempt or wall-hit cue. Live-car wall damage, thresholds, cooldown, protection and steep/glancing rules remain intact. No source code resets a wreck timer, sets a target pose, invents displacement, adds an observation-window clock or changes the released solver math.
+
+The native crash result and existing arena minimum feed real slide velocity; both player and CPU waiting wrecks now consume it through actual Duel fixed steps. Wrecks remain grounded, count once and recover at the original deadline with full armor and exactly two seconds of protection. A ram into a physically blocking outward wall still has no invented exit. The authored universal normal minimum remains Claude's unresolved interpretation; the existing TODO is retained verbatim.
+
+### Final native and preservation checks
+
+- `node --test --test-reporter=tap tools/test-arena-shove.mjs`: **56 tests, 55 pass, zero fail, one TODO**, **2,251 checks**. All **1,944 real witnesses** pass across every ordered pair of nine cars, all four sitting states, three roles and both 20/40 mph minimums. The original five event-driven wreck REDs are green without editing an assertion.
+- The same suite retains **243 released solver rear/side/corner results**, momentum/energy controls, **ten road full-state pins**, Titan crush/non-crush, native swept miss, actual wreck counting/deadline/full-armor/protection, floor containment and repeated results at 30/60/144 presentation FPS. Solver fingerprint remains `fb34f6167f8707be7c4cd3bee0addbde206a32ef9f5cddf3adb0a7c6a6baa9f2`.
+- The contained outward pinned live witness remains **0.000001 m**. This is measurable constrained motion, not a passing universal normal minimum or a cleared design TODO.
+- Merged Fuel controls: **186/186 TAP tests across five suites** pass unchanged: Fuel Run, depot, car attribution, standing carrier and on-foot car contacts. Fuel logic/source/pins were not modified by this continuation.
+- Existing collision/knock/NPC/Mad Max/crash/damage/armor/Titan/event/steering/police controls: **83/83 TAP tests across 14 suites** pass unchanged, retaining **43,174 NPC yielding** and **195 contact-damage** checks.
+- `node tools/test-replays.mjs`: **162/162 pass** across 18 cases, 16 events, eight categories, three frame rates and three runs. No original road/combat replay pin was regenerated.
+- `npm run build`: passes in this isolated lane's normal `dist`; the existing large-chunk warning remains.
+
+An additional ignored native diagnostic used a genuine 95 mph swept ram into an already counted waiting wreck at the wall. Native target velocity represented **60.352414 mph** into the wall, above the ordinary 30 mph wall cue threshold. Real event stepping contained it with **zero new wall cues**, **one wreck count** and no airborne motion. Its **3.491667 s** remaining deadline expired at **3.5 s** elapsed, within one existing 120 Hz tick; native respawn restored full armor and **2 s** protection. The first diagnostic setup stopped because its ignored scratch folder was missing; creating that folder and rerunning the native diagnostic passed. This setup error is not counted as an acceptance failure or a browser gate.
+
+Raw logs and the extra diagnostic stay ignored under `.evidence/2026-10-01/ARENA-SHOVE/wreck-event-stage/` and `.qa-dist/`. Changed assertions, fixtures and replay pins: **none**. Source uses LF; staged diff is checked before review freeze. No real save, port 5174, Preview, `.preview-dist`, protected audio, dependency or network service was used.
+
+### Current hashes
+
+| File | SHA-256 |
+| --- | --- |
+| Changed src/arena/arena-event.js | a31f935b2d00446d8cc26b72929f128ef86bb49bdc5f0373766d0a28fbaf0852 |
+| Changed src/arena/arena-floor.js | 1b9e39b1c3439468558ae6a290dcb3a75230a5f9a25601d578bb829d9929f28c |
+| Prior unchanged src/sim-contacts.js | c9df9d399a61b78775e641e2239c9137843c1a544871455a9051486a82023522 |
+| Prior unchanged src/vehicle-knock.js | b3137b7566e50fce7eef0b680fd770ca2179af4515bdad9f6ba76d210b6047c0 |
+| Unchanged pure src/vehicle-collision.js | 087d90e9d02689908755f13feb5ec121722f0f26de8acdc8ac3362b536337993 |
+| Unchanged src/arena/arena-pilot.js | f2bfa54d0f0cd19382fd8aa67b2aeec1e9f790a274f5f220e7510d7e7dcd071c |
+| Unchanged merged-Fuel src/game.js | 141b7183413366b7a4a4c9df12d22f165106b5706ae78ebd54d68a73ab4e822e |
+| Unchanged merged-Fuel src/arena/modes/fuel-run.js | d7bf8b46872b921f27320950421e8cedc506ba2d4d3a7cd9a37a634bd7d0335e |
+| Frozen shove acceptance | b4a5ca0c387345618d94c37d05567ca583d2a1e7dcbd291ea72f2b89cf024fd6 |
+| Frozen shove controls | a08bb7507e8e2c110789b907ed3977dc6de9ac39943e89aad4c8cb9f5a3a474b |
+| Unchanged Fuel controls | dba6cbb7fc3ff26d1a4b2076c662276352975b9ccf723cb1739caa2399511089 |
+| Existing ordinary replay pin | b55182cbc6d6121a205fa24ba9049aeefabd7943a6e12ebba5a7f868c068c77a |
+| Existing combat replay pin | 85d9457ccd27534cfd7134547690b0ea5ad430fd9f374a63a1015c0b4b781536 |
+
+### Remaining gates and Removed
+
+Independent source review comes next. The Director retains the outward-wall interpretation with Claude. Native browser checks, Kyle's Preview feel check and any required gameplay/balance evidence remain; exact lane/build/full integration gates follow review. The production build above is passing evidence for this source stage, not whole-card or integration merge clearance. Existing crash cues are reused, and protected sound-bank/audio files remain unchanged.
+
+Removed the waiting-arena-wreck event branch's stationary-only motion handling when an actual native knock exists. The original stationary damping remains. Removed duplicate wall-damage/cue attempts for an already waiting wreck while preserving solid containment. No timer, score, protection rule, Titan crush rule, released solver, road rule, Fuel source, pilot/game hook, old assertion, replay pin, asset, licensed source or real save was removed.

@@ -28,7 +28,7 @@ export function containInArena(duel, actor, dt) {
   const normalMph = Math.max(0, outward * (Math.sin(heading) * speed +
     (actor.pushVelocity || 0) / DRIVE.mphToWorld));
   actor.lateral = outward * limit;
-  if (actor.knock?.arenaShove) {
+  if (actor.knock && (actor.knock.arenaShove || actor.combatWrecking)) {
     // The solid floor removes an outward free-body velocity too. Keep its
     // tangential component; minimum shove never grants passage through a wall.
     const frame = duel.course.at(actor.s), c = Math.cos(frame.heading), s = Math.sin(frame.heading);
@@ -46,7 +46,8 @@ export function containInArena(duel, actor, dt) {
     actor.headingError = wrapHeading(Math.cos(heading) >= 0 ? 0 : Math.PI);
     actor.yawVelocity = 0;
   }
-  if (normalMph > FLOOR_RULES.damageNormalMph && actor._arenaWallCooldown === 0) {
+  // An already waiting wreck is contained quietly, without a second hit cue.
+  if (!actor.combatWrecking && normalMph > FLOOR_RULES.damageNormalMph && actor._arenaWallCooldown === 0) {
     actor._arenaWallCooldown = FLOOR_RULES.damageCooldownSec;
     applySceneryArmorDamage(duel, actor);
     duel.emit({arenaWallHit: {id: actor === duel.state ? 'player' : actor.arenaId,
