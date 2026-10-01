@@ -1336,3 +1336,16 @@ on that commit. Build 20261001023145-f3bee8 checked on port 5188 and copied
 into the live dist; verified on 5174. dist 149, dist-previous 149 (039fc6),
 dist-next deleted, master and integration pushed at 4cd4a96. Run plan
 refreshed (3d4fd35): Codex starts from "Resume here".
+
+## 30 September 2026, Director: resumed from Kyle and Claude decisions
+
+Claimed steering and Fuel rework against the merged design, plus private
+Rustwall fitting and the verified valve-donor record. Arsenal waits their
+shared hooks; rule-set retirement waits all affected owners. Current crew
+and hands are closed without installing failed art. Old trailer readiness
+failures are retained facts, not assertions to weaken for the rigid truck.
+
+Kyle explicitly approved uploading committed game code, tests, docs and
+licensed asset records to https://github.com/Dukes0O/the-duel-remake.git
+on integration/wasteland. D8 normal pushes resume after each exact passing
+full and a read-only compaction check. No release or rewrite is authorized.

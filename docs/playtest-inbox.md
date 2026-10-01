@@ -1,65 +1,21 @@
 # Wasteland play-test inbox
 
-## Claude and Kyle: hands attempt stops after two rounds, 30 September
+## Settled for the resumed build, 30 September
 
-The independent critic inspected all 320 matched round-two captures, all eight
-crew members and both qualities. Aiming distortion and the unused arm are
-fixed, but resemblance stays1/5 and tool contact1/5 for every crew. Palms
-collapse, wrists look hollow and fingers fail to form a convincing grip.
-Current hands look better. Kyle's two-round no-gain rule stops this attempt.
+Kyle keeps the current crew figures and first-person hands. Their failed
+fitting lanes are closed and removed without a runtime install. The old
+comparison verdicts and Kyle's decisions remain on the cards.
 
-Please show Kyle [round2](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/hands-fit/docs/board/looks/hands-fit/round-2.jpg)
-and its matching review. Clean34e914b retains both rounds, recipes and tests.
-Mechanical 70/70 does not clear the visual failure. Kyle chooses keeping
-current and closing this attempt or a new approved source/fitting card. No
-third round, install or merge is claimed. The unchanged catalog is released.
-
-## Claude and Kyle: tanker parts remain incomplete, 30 September
-
-The independently reviewed [parts sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/tanker-parts/docs/board/looks/tanker-parts/round-1.jpg)
-retains Kyle's A cab/tank choice and a genuine valve donor for three targets.
-The truck's cab/chassis/trailer share one body mesh; the opening building
-door does not establish a suitable boarding hatch. Separate trailer, frame,
-hitch and hatch remain missing. Original rights and native geometry are
-verified. The inspection-folder provenance bug is fixed tests first.
-
-Clean0ace07d retains the334548-byte comparison, source recipe and verdict.
-Tests 56:52 pass/four genuine gap failures. This clears stop records only, not
-readiness, fitting, a lane/build floor or ARENA-07. Kyle chooses another
-bounded existing-parts search or a Claude revision of the convoy art plan.
-Both source cards' settled earlier picks and rights remain in the board,
-decisions, catalog and change notes; consumed inbox handoffs are removed.
-
-## Claude: Fuel Run contact design merge still needed, 30 September
-
-Hunter chase and crossbow aim now use the actual carrying fighter, while the
-parked car retains its physical hitbox. The fighter still has no car-projectile
-contact rule. Your draft is in lane/docs/fighter-rules at7e3bd200; please hand
-its settled design to integration before the dependent contact code starts.
-No damage numbers, cargo-drop rules or four-metre depot change from that
-unmerged draft have been implemented. Anyone can recover dropped fuel; the
-withdrawn original-carrier delay remains absent.
-
-**Claude's answer (30 September 2026), settled in docs/CREW.md, "Car weapons
-against fighters on foot":** a car crossbow bolt deals 35 health to a fighter
-with no knockdown; car bomb splash uses the car falloff up to 60 health and
-knocks down inside half the radius; a carrying fighter drops cargo only on a
-knockdown. These apply to every fighter on foot, not only in Fuel Run. Also
-from the review: the depot pad is 4 m in radius, not 2 m (SCRAPDOME.md,
-Fuel Run).
-
-Held ARENA-03 is clean commit 96aaa2a, source commit 53e6796. The durable rank/discovery
-launch gate and event-owned render cache have independent code and save
-clearance only. Final contacts, fresh browser/gameplay/sound/look and the
-whole lane/build floor remain. Current status is in the board and change note.
+Claude's fighter rules, 4 m Fuel depot and 150 degree/s steering ceiling are
+merged. Fuel and steering resume with tests first. The convoy is one rigid
+truck from pick A with three verified donor valves and a lit roof plate;
+there is no trailer, hitch or opening hatch. The donor record is retained
+before the old parts-search lane is removed. Details are in CREW.md,
+SCRAPDOME.md and the board. Current comparisons go to Claude before merge.
 
 ## Claude: Mirage build dependency and early reward, 30 September
 
 The settled Mirage build note calls targetFor, but the shared targeting module does not exist yet. Current CPU crossbow aim, bolt homing and RPG locking each bypass a shared resolver, and current normalization discards new weapon IDs. WAR-02c now explicitly waits for ARS-CORE and WAR-PAY. Its old src/arena/warlords.js hook was a nonexistent path and is corrected to src/warlords.js. Please confirm the settled "early and working" reward means Mirage supplies the working Decoy Drone using its reusable decoy implementation, then ARS-03 reuses that same file; waiting for ARS-03 would create a dependency cycle. No Mirage code or duplicate targeting has started. Fuel Run proceeds separately under SPEC0.12 with a fuel-run dev switch in addition to released scrapdome and discovery/rank gates.
-
-## Claude: crew round 1 fails; current art kept
-
-Independent critic inspected the sheet, reference boards and all 40 fitted captures. All five are worse than current: direction/resemblance 1 to 2, materials 2, scene consistency 1. Jax lacks a continuous long coat; Dune reads as a helmet; Cinder has wrong hair and an arm assembly problem; Tusk reads as clean fantasy armor. Material or normal changes alone cannot meet the card. No second round or runtime replacement is authorized on this result. Kyle has been asked to choose better existing source parts or stop fitting. The clean review lane is lane/art/crew-fit-m at 59a5b99. Its comparison is [round 1](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-fit-m/docs/board/looks/crew-fit-m/round-1.jpg). The recipe and original licensed source can rebuild it; all current runtime assets remain unchanged. Please review the source gap and show Kyle the sheet.
 
 Add a note here after trying a build. Include the event, car, difficulty and
 what happened. Screenshots and short recordings help when a problem is visual

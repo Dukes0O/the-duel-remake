@@ -5,6 +5,23 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: ART-KEEP-VALVE-DONOR
+    title: "Keep the verified CC0 convoy valve donor after closing the trailer search"
+    owner: codex
+    lane: ART
+    size: S
+    needs: []
+    status: building
+    claimed_by: codex-director-2026-09-30-late-resume
+    branch: lane/art/keep-valve-donor
+    owns: [tools/art/catalog.json, tools/art/tanker-valve-source.json, tools/test-tanker-valve-source.mjs, docs/changes/ART-KEEP-VALVE-DONOR.md]
+    hooks: []
+    helpers: [test_author, reviewer]
+    acceptance:
+      - "Kyle closed ART-SRC-TANKER-PARTS and Claude simplified Convoy Raid to one rigid truck. Preserve only the verified Kenney Factory pipe-large-valve donor in catalog and a small pinned source recipe: original archive, embedded CC0 licence, palette and GLB hashes; actual 456-triangle source. Source files stay outside the repo."
+      - "Meaningful provenance tests first and independent source review. No runtime fitting, source fabrication, new comparison, or protected audio edits. Keep current catalog records. Do not merge the obsolete articulated-trailer test/manifest/inspection recipe; its four genuine missing-part failures remain facts for the closed design, not assertions weakened to pass."
+      - "Lane tier and build before merge. After the verdict, remove the replaced tanker-parts lane and branch with the janitor, keeping original licensed files and Kyle's decision. ART-FIT-TANKER may use the donor after this catalog merge."
+
   - id: HK-RUSTWALL-ATLAS-ISOLATION
     title: "Keep concurrent Rustwall probe atlases private until packed"
     owner: codex
@@ -679,7 +696,13 @@ tasks:
     lane: ART
     size: L
     needs: [ART-SRC-RUSTWALL]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-09-30-late-resume
+    branch: lane/art/rustwall-source-fit
+    owns: [tools/blender/rustwall-source-fit.py, tools/blender/rustwall-source-fit.json, tools/test-rustwall-source-fit.mjs, tools/scenarios/rustwall-source-fit.mjs, tools/art/rustwall-fit-sheet.py, docs/board/looks/rustwall-fit/, docs/changes/ART-FIT-RUSTWALL.md]
+    hooks: [public/assets/models/wasteland/rustwall/wall.glb, public/assets/models/wasteland/rustwall/wash.glb]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    sequencing: "Private candidate first, tests-first source provenance and frozen gate/collision envelope controls. Reuse existing renderer and recipe-only private model substitution; no render3d/App/feature/audio/world-signature edits while Fuel owns them. Catalog stays read-only until the valve donor merge; reclaim an exact adaptation hook before writes. Every comparison goes to Claude (waiting_on: claude); no runtime install or merge before review. Three rounds maximum and stop after two without gain."
     flag: hidden-road
     acceptance:
       - "Rebuild the Rustwall's salvage face, towers and canyon banks from Kyle's picks in docs/board/looks/rustwall-src, following docs/WASTELAND_ART.md 'Fitting existing models': crushed and burned car hulks, rusted sheet metal and container panels on the existing scaffold, tower supports from the industrial kit, canyon banks from the rock shapes with desert strata. The gate, its opening and every collision envelope stay exactly where they are; world signatures change only with a reviewed visual difference (AGENTS.md)."
@@ -725,7 +748,7 @@ tasks:
     owner: codex
     lane: ART
     size: M
-    needs: []
+    needs: [ART-KEEP-VALVE-DONOR]
     status: ready
     flag: scrapdome
     acceptance:
@@ -893,14 +916,14 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
-    status: review
+    status: building
     review_commit: 96aaa2a444080efb518d2e76cf4afa9fa25807ac
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run
-    owns: [src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/replays/arena-fuel-run-controls.json, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md]
+    owns: [tools/test-onfoot-car-contacts.mjs, tools/test-arena-fuel-depot.mjs, src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/replays/arena-fuel-run-controls.json, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md]
     hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js, src/combat-ai.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-feature-flags.mjs]
-    review_note: "Clean96aaa2a adds factual narrow-review notes only to source53e6796. Focused68/68, code10checks/162assertions and SaveGuardian77/77 plus six actual memory-App probes clear stale durable launch and event-owned render cache. Whole-feature contact/browser/audio/look/floor still wait for Claude design merge. No final feature clearance."
+    review_note: "Claude fighter contacts and 4 m depot design are merged in ba157a5. Resume with independent red tests for every on-foot fighter; preserve the reviewed durable launch/cache/save source. Whole-feature browser/audio/gameplay/review and exact lane/build gates remain before Claude review and merge."
     design_question_answered: "Claude, 30 September 2026: see docs/CREW.md, Car weapons against fighters on foot. Original question: Actual on-foot Fuel carrier is currently immune to car projectiles. Claude must settle bolt damage, bomb splash and cargo-drop behavior before that contact code; chase and aim fixes follow the settled carrier rule now."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     sequencing: "Tests first in owned files now. Production App and screen-arena edits wait for WAR-PAY merge; held ARENA-STEER App demo hook is deferred until Fuel merges. No config, driving, pilot or crate-test ownership. Future Arsenal waits Fuel feature/render/audio hooks. Protected sound-bank/catalog/assets remain untouched: explicit fuel events reuse authored interface.bonus, vehicle.landing, interface.go cues. SPEC0.12 adds fuel-run:dev plus scrapdome/discovery/rank6 gates; Last Car Rolling unchanged."
@@ -2763,13 +2786,13 @@ tasks:
     lane: PHYS
     size: S
     needs: []
-    status: review
+    status: building
     review_commit: ae4c168bf6d8202f6d163e63e849298e6e3d1c4d
     claimed_by: codex-director-2026-09-30-resume
     flag: scrapdome
-    owns: [tools/test-arena-steering.mjs, tools/replays/arena-steering-controls.json, tools/scenarios/arena-steering.mjs, docs/changes/ARENA-STEER.md]
+    owns: [tools/test-arena-steering-ceiling.mjs, tools/test-arena-steering.mjs, tools/replays/arena-steering-controls.json, tools/scenarios/arena-steering.mjs, docs/changes/ARENA-STEER.md]
     hooks: [tools/test-arena-event.mjs, src/config.js, src/sim-driving.js, src/arena/arena-pilot.js]
-    hold_reason: "Current clean ae4c168 adds verdict/evidence cleanup only to source1c06417. Automatic review still requires explicit user crate-fixture authorization; no assertion edit ran. Claude ceiling draft remains in its unmerged design lane; retest unchanged crate fixture after that design lands. App demo hook waits Fuel. No lane/build or merge clearance."
+    hold_reason: "Design is merged. Resume tests first for the 150 degree/s ceiling. Keep all existing crate assertions; retest the unchanged fixture after implementing the settled ceiling. App edits wait Fuel; use existing memory-only entry or wait for the hook."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     sequencing: "One lane before ARENA-SHOVE and ARS-CORE: driving hooks are exclusive. App demo hook waits for WAR-PAY if needed. Road and Titan handling stay unchanged."
     acceptance:
