@@ -1357,3 +1357,30 @@ Removed car-only readiness from authored-fighter captures and immediate
 capture of unsettled rematch presentation. Kept every original assertion,
 current crew assets, runtime renderer and simulation source. Failed and
 pending-review captures stay private until their verdict is consumed.
+
+## Existing launcher gate follow-up — tests first
+
+At clean1b9628e the exact lane gate reached237 passes,1 failure and75 not
+run in418.02s; build did not run. The unchanged22-check launcher suite
+reproduces21pass/1fail: Preview URL must request fuel-run, now a dev switch.
+The Director grants only start-preview.bat's URL flag hook. The checked-in
+flag list now adds fuel-run beside existing warlords; all other recipe text,
+ports, output paths, isolation and launch behavior are retained. The test
+assertions are unchanged. No launcher is executed or Preview build/process
+changed. This is source-only preparation for a future user launch.
+
+Actual final1b9628e browser passes all22 captures on private54854,
+memory-only with no warnings/errors/failed requests. High/Performance moving
+means16.667/16.666ms, P9516.8ms. Both capture authored fighters and settled
+sudden death with no loading fallback. The HUD overlaps and possible carry-
+cell visual mismatch remain observations for a narrow native reproduction;
+fixture intersections are labelled, not natural gameplay claims.
+
+Fresh exact lane/build and independent review of the single URL change are
+required before merge. No old assertion, race pin, world signature or runtime
+asset changes. Final human feel/audio and Claude review remain separate.
+
+### Removed — launcher hook
+
+Removed the source URL omission of the new fuel-run development switch.
+No Preview output, running service, shortcut, real save or code path removed.
