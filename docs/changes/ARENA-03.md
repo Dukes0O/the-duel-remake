@@ -1414,6 +1414,6 @@ Preview feel, full-audio, fresh exact gate or whole-feature review is invented.
 
 ### Removed — switch test follow-up
 
-Removed the exact old catalog's accidental exclusion of every future dev
-feature while retaining its complete release-state check. No production
+Removed the old catalog expectation's accidental exclusion of the required
+new Fuel dev entry while retaining its complete release-state check. No production
 rule/source, prior assertion, runtime asset, licensed file or pin removed.
