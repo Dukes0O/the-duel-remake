@@ -885,9 +885,9 @@ tasks:
     needs: [WAR-02a-REWARD]
     status: building
     review_commit: 58116aec7e8eafd1308be8bc399b3c7a9624e269
-    test_commit: "bafc5d6c8baee94928e72b38596eee3ef9e8b549"
+    test_commit: "54f511d2c24c1c6150b1bb5af7c5eb2bd6e44fb7"
     source_commit: "9614a3ef5fd3267f1c9837fe6450763f2ed195f4"
-    design_question: "Settled by Claude06:30: actual resultant horizontal launch speed magnitude fixed at launch, times remaining lifetime; CPU acquisition180 unchanged. Additive reverse/sideways/diagonal native boundary controls precede narrow Source fix. Save961 has independent Guardian clearance; no whole-card clearance yet."
+    design_question: "Claude06:30 vector policy is settled. Genuine chosen-decoy has launchspeed285.836914 versus real288.343020, ownreach714.592285 anddistance714.642285. Existing numericcontext realrange720.85755 selectsunreachabledecoy; recompute ownrange returnsreal andrepeatoscillates. Approve optional pure context.rangeForTarget(actor) inexisting resolver within(actor), preserving all numeric callers, so each candidate uses own genuine launchvector reach? Nativeproof writteninbox. Launchinterface remainsheld; independentimmutableinflight Source proceeds inalreadyowned twofiles, no targetingchange untilwrittenanswer."
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arsenal-core
     flag: arsenal
@@ -1046,13 +1046,13 @@ tasks:
     status: building
     review_commit: 2d6e5cc94ddd5c3a46316db411e20872b449f4ca
     source_commit: 0dad93ececc7d61cfa6f64b308f941fbd21eb01a
-    test_commit: 23d3208af373bcc39ca183c8cc41954916e8906b
+    test_commit: "d5543db7adaa5b111a7164b6f7b91238f4443d4e"
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/vis/salt-flats
     flag: salt-flats
     owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
     hooks: [tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js]
-    hook_requests: [src/arena/arena-event.js, src/screen-arena.js, src/render3d.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, start-preview.bat, tools/test-wasteland-beta.mjs]
+    hook_requests: [src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, start-preview.bat, tools/test-wasteland-beta.mjs]
     sequencing: "Only venue registry/course plus tests-first native world/render routing hooks granted. Frozen Source d1ed6dc aligns native Course oval/ramp interpolation with actual private GLB; all31 native and16 geometry checks pass. Inner-island/outer-perimeter correspondence gaps require additive independent tests before further layout source. Arsenal owns App/UI/flags/launcher/pilot; Shove owns floor/collision/knock/event. Catalog/public/runtime handoffs remain held; no overlap. Four public modes and Claude settled solid island/perimeter apply; every comparison goes to Claude before install/merge."
     helpers: [test_author, reviewer, art_critic, browser_qa]
     acceptance:
