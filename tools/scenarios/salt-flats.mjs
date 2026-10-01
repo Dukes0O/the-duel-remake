@@ -6,9 +6,9 @@ import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
-const expected='babcebe73f616e7e7aca5ea628e1d8a94f272d0794286f98474f279935eec643';
+const expected='87e30d6da263f189310077ce12328286835334fee218558817368b7bb50ea0cd';
 function privatePath(path,kind){const result=resolve(path),local=relative(root,result);assert(!isAbsolute(local)&&!local.startsWith('..')&&new RegExp('^\\.'+kind+'[\\\\/]').test(local),'checked lane '+kind+' path');return result;}
-async function assets(){const source=privatePath(process.env.SALT_FLATS_RENDER_ASSET||join(root,'.evidence/2026-10-01/ARENA-06/ground-round-2/candidate/venue.glb'),'evidence');const bytes=await readFile(source);assert.equal(createHash('sha256').update(bytes).digest('hex'),expected);assert.equal(bytes.toString('ascii',0,4),'glTF');assert.equal(bytes.readUInt32LE(8),bytes.length);
+async function assets(){const source=privatePath(process.env.SALT_FLATS_RENDER_ASSET||join(root,'.evidence/2026-10-01/ARENA-06/ground-round-3/candidate/venue.glb'),'evidence');const bytes=await readFile(source);assert.equal(createHash('sha256').update(bytes).digest('hex'),expected);assert.equal(bytes.toString('ascii',0,4),'glTF');assert.equal(bytes.readUInt32LE(8),bytes.length);
   // The harness has already built. Serve unchanged approved bytes from only its
   // disposable QA root at the native loader URL. No public asset is installed.
   const destination=privatePath(join(root,'.qa-dist/assets/models/wasteland/salt-flats/venue.glb'),'qa-dist');await mkdir(resolve(destination,'..'),{recursive:true});await copyFile(source,destination);return {source,destination,sha256:expected,bytes:bytes.length};}

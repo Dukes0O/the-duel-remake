@@ -18,13 +18,13 @@ import {createFeatureFlags} from '../src/feature-flags.js';
 // from the browser companion in scenarios/salt-flats.mjs.
 const root = resolve(import.meta.dirname, '..');
 const candidate = resolve(process.env.SALT_FLATS_RENDER_ASSET ||
-  resolve(root, '.evidence/2026-10-01/ARENA-06/ground-round-2/candidate/venue.glb'));
+  resolve(root, '.evidence/2026-10-01/ARENA-06/ground-round-3/candidate/venue.glb'));
 const local = relative(root, candidate);
 assert(!isAbsolute(local) && !local.startsWith('..') && /^(?:\.evidence|\.qa-dist)[\\/]/.test(local),
   'effects checks read only the exact private native Salt candidate');
 const bytes = readFileSync(candidate);
 const hash = value => createHash('sha256').update(value).digest('hex');
-assert.equal(hash(bytes), 'babcebe73f616e7e7aca5ea628e1d8a94f272d0794286f98474f279935eec643');
+assert.equal(hash(bytes), '87e30d6da263f189310077ce12328286835334fee218558817368b7bb50ea0cd');
 const originalDocument = globalThis.document;
 const originalTextureLoad = THREE.TextureLoader.prototype.load;
 const context = new Proxy({measureText: text => ({width: String(text).length * 8}),
