@@ -922,3 +922,88 @@ this new public QA controller. A/D foot controls and all production behavior
 are unchanged. This correction grants no wall-contact, browser, frame, art,
 human-feel or listening clearance. A physical body contact that stops the
 center before 18 must remain RED pending independent acceptance review.
+
+
+## Corrected-arrow baseline remains RED at actual wall contact (1 October)
+
+The approved three-line key correction was frozen clean before capture at
+`580c646c6bed705cc9a78f5f88afaebdace913c6`. A byte reconstruction verifies
+that the only scenario differences from the prior instrumentation freeze are
+the input key names and actual press/release key names; all 39 prior assertion
+lines, center predicate, 2,400-step limit and native controls remain exact.
+No production source, native test or replay pin changed.
+
+All 888 original snapshot files were reverified against exact pre-card commit
+`0f934845b451dc2429efcb574bc9847cc04a1fe5` before copying only the frozen
+owned recipe. The actual memory-only High baseline ran on private port
+**24015**, then closed. It failed again on side -1, approach 0 with the same
+`Legal public controls did not reach chosen wall within twenty seconds`.
+The harness returned exit 1, zero browser issues, zero warnings, and three
+actual images saved before throw (spawn world, failure close, failure world).
+No candidate matrix or pacing measurement ran.
+
+### Actual input, contact and pre-existing geometry witness
+
+The real input trace now proves car steering: native steer spans
+[-0.79375, 1]. Across 2,400 steps W stayed held, A/D stayed released,
+ArrowRight was held for 469 steps, ArrowLeft for 9 and neither for 1,922.
+The input context remained car. These are actual input-handler/App simulation
+results, not an injected native steer or patched collision API.
+
+The center travels toward the intended negative side. Its minimum lateral is
+**-17.877361353859357** at tick 1,225; final lateral is
+**-17.795540112965845**, s=43.480001095844386, heading error
+-1.4817295544726137, speed 0.2283563581480786 mph and armor
+18.159918550922026. It stays racing and never satisfies the exact -18 center
+goal. The native trace retains every actual approach/contact step; the final
+sequence repeatedly accelerates outward, then corrects inward and slows.
+For example tick 2,398 is lateral -17.835148557181796 at 2.5262400815987105 mph;
+tick 2,399 is -17.795540112965845 at 0.2283563581480786 mph.
+
+The final native collider `arena-wall-48--1` has local center X
+3.0154482160526905 versus expanded half-width 2.975413651730933:
+**0.0400345643217575 m normal clearance**. Local Z=-3.4456930020890133 is
+inside expanded half-length 5.5576639887256425. The original static-contact
+solver separates by .04 m and reduces speed at a steep contact. This measured
+contact envelope, repeated native correction and the close image establish
+that the car has reached the real wall before its center can meet this recipe's
+exact floor-center goal. The contact-event observer recorded six listed cues,
+including a front scrape at tick 231 and a genuine CPU smash at tick 1,328;
+that later CPU incident is kept visible, not mistaken for the initial wall
+contact or suppressed from the public test.
+
+The actual loaded player body/front-kit contains 71,798 triangles, with
+lateral extents **[-21.17823635341611, -15.302816564026957]**. It has **24 strict
+triangle crossing pairs** against the sampled real rails at s=40/48, recorded
+by actual mesh-face and wall-face identity. The close capture visibly shows
+the authored front attachment entering the rail. Its actual player geometry
+is in-frame; the world capture includes both real actors. No CPU was moved,
+hidden or staged for these public views.
+
+This sample is on unchanged **pre-card source**, so its attachment/visible-rail
+mismatch already exists before Shove. It does not establish a new Shove
+regression or all-model/all-wall defect. Candidate source has not been run
+under this control yet. The exact predicate remains RED; no revised physical
+contact goal, timeout, steering controller, asset fit, wall position or global
+physics policy is approved by these findings. Independent review should settle
+the public recipe's contact goal and route the baseline visible geometry
+mismatch to Claude before any acceptance or source change.
+
+### Commands, evidence and Removed
+
+The same frozen baseline command, with `ARENA_SHOVE_PUBLIC_ONLY=1`, was run:
+`node tools/browser-harness.mjs scenario arena-shove --output-dir .evidence/2026-10-01/ARENA-SHOVE/public-wall-arrow-diagnostic`.
+Complete launcher stdout/stderr is integration
+`.evidence/2026-10-01/ARENA-SHOVE/expanded-browser/baseline-arrow-diagnostic-launcher.log`.
+Raw reports/images are copied to sibling `public-wall-arrow-diagnostic/`,
+including failure JSON with all keys, native inputs, sampled states, real body
+extents/crossing identities, native wall envelope and failure-time views,
+plus baseline and preservation provenance. Browser failure is retained plainly.
+`node --check tools/scenarios/arena-shove.mjs` and `git diff --check` pass.
+
+Removed nothing further. This result note adds evidence; the exact failing
+predicate and original assertions remain unchanged. No browser/frame/art or
+human/listening clearance is claimed. No live folder, Preview, .preview-dist,
+port 5174, real save, source overlay/edit, native pin migration, integration
+merge, push or history rewrite occurred. Ownership returns for independent
+interpretation before any next recipe acceptance change.
