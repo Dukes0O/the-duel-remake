@@ -90,7 +90,7 @@ function causalSaltPixels({venue}) {
   }
   function actualPresentationSnapshot() {
     const lights=[],meshes=[],materials=new Map();
-    const materialKeys=['uuid','type','version','visible','color','emissive','emissiveIntensity',
+    const materialKeys=['uuid','type','version','forceSinglePass','visible','color','emissive','emissiveIntensity',
       'opacity','transparent','alphaTest','side','fog','roughness','metalness','envMapIntensity',
       'toneMapped','depthTest','depthWrite','wireframe','blending','uniforms'];
     r.scene.traverse(node=>{
@@ -103,7 +103,12 @@ function causalSaltPixels({venue}) {
           attributeVersions:Object.fromEntries(Object.entries(node.geometry.attributes).map(([key,v])=>[key,v.version]))});
         for(const material of [].concat(node.material||[]))if(!materials.has(material.uuid)) {
           const keys=new Set([...materialKeys,...Object.keys(material).filter(key=>material[key]?.isTexture)]);
-          materials.set(material.uuid,Object.fromEntries([...keys].filter(key=>material[key]!==undefined)
+          // Loaded Three's transparent double-sided draw changes this compile
+          // counter twice per frame, then restores side. All actual visual
+          // values and all texture/geometry versions remain strict.
+          const doublePass=material.transparent===true&&material.side===2&&material.forceSinglePass===false;
+          materials.set(material.uuid,Object.fromEntries([...keys].filter(key=>material[key]!==undefined&&
+            !(key==='version'&&doublePass))
             .map(key=>[key,observed(material[key])])));
         }
       }
@@ -154,6 +159,40 @@ function causalSaltPixels({venue}) {
   const warmup=fixedInspectionWarmup();
   window.__saltEffectsWarmupReceipt={...warmup,changedInspectionInputRejected:true,
     originalInspectionHeightRestored:inspection.position[1]===originalHeight,scope:'Fixture convergence only; no heat/frame/art pass'};
+  // Actual native Glass control proves the reviewed compile-counter exception
+  // does not discard visual properties. This touches only diagnostic material
+  // DATA and restores its exact colour before strict final-canvas convergence.
+  const nativeGlass=[];
+  r.scene.traverse(node=>{
+    if(!node.isMesh)return;
+    let owner=node;while(owner&&!owner.userData.vehicleKey)owner=owner.parent;
+    if(!owner)return;
+    for(const material of [].concat(node.material||[]))if(material.name==='Glass'&&
+      material.transparent===true&&material.side===2&&material.forceSinglePass===false&&
+      !nativeGlass.includes(material))nativeGlass.push(material);
+  });
+  if(!nativeGlass.length)fail('Actual loaded vehicle Glass is required for compile-counter witness');
+  const glass=nativeGlass[0],originalGlassColor=glass.color.clone();
+  const beforeColor=actualPresentationSnapshot();let changedColorSnapshot=false;
+  try {
+    glass.color.setRGB(originalGlassColor.r===0?1:0,originalGlassColor.g===0?1:0,originalGlassColor.b===0?1:0);
+    capture(10,false);
+    changedColorSnapshot=actualPresentationSnapshot()!==beforeColor;
+    if(!changedColorSnapshot)fail('Actual changed native Glass color must change observed presentation');
+  } finally {glass.color.copy(originalGlassColor);}
+  if(!glass.color.equals(originalGlassColor))fail('Actual native Glass color was not restored exactly');
+  const restoredWarmup=fixedInspectionWarmup();
+  const witnessA=capture(10,false),valuesA=actualPresentationSnapshot();
+  const counterBefore=nativeGlass.map(material=>({id:material.uuid,version:material.version}));
+  const witnessB=capture(10,false),valuesB=actualPresentationSnapshot();
+  const counters=nativeGlass.map((material,index)=>({id:material.uuid,name:material.name,
+    prior:counterBefore[index].version,actual:material.version,transparent:material.transparent,
+    side:material.side,forceSinglePass:material.forceSinglePass}));
+  if(!counters.every(row=>row.actual>row.prior))fail('Genuine native Glass double-pass draw must advance compile counters');
+  if(valuesA!==valuesB||!sameRgba(witnessA,witnessB))
+    fail('Actual native Glass counter witness requires exact visual properties and full-canvas RGBA');
+  window.__saltEffectsWarmupReceipt.compileCounterWitness={counters,actualValuesExact:true,actualRgbaExact:true,
+    actualGlassColorChangeObserved:changedColorSnapshot,originalGlassColorRestored:true,restoredWarmup};
   const project = point => {
     const p = point.clone().project(r.camera);
     return {x:(p.x+1)*width/2, y:(p.y+1)*height/2, z:p.z};
