@@ -781,7 +781,9 @@ tasks:
     hooks: []
     sequencing: "Claim after completed Fuel lane cleanup frees one builder slot. Tests first for exact approved delivery-flat/detail-tank/Factory valve/salvage provenance, genuine fitting geometry, single rigid body, three valves and read-only boarding lamps/lifecycle. New model/recipe/scenario files only; no renderer/event/simulation/source catalog edits. Private candidate and actual game-renderer comparison before public installation; every comparison goes to Claude, three-round cap. Source catalog records and licences remain exact; if an existing hook is needed, request it before editing. No fake convoy implementation or current runtime replacement."
     helpers: [test_author, art_director, reviewer, art_critic, browser_qa]
-    test_commit: 415bd22c1a313399d3391d6fc626ca702ab89cad
+    test_commit: 67fb882849aa386dc197cc51ac03ae8681193249
+    source_commit: 23748e635f8fa0784a9c5c72998b19a94facc015
+    private_stage: "Approved native contact-edge assertion correction is frozen at 67fb882 with all other original test bytes preserved. Genuine support, coplanar contact and six hover/burial/lateral/missing-deck negatives pass at unchanged 0.002 m precision. Suite is 41/42: sole RED proves 20 strict bracket/wheel-arch crossings and 0.1735 m penetration. Source worker may now fix coherent affine placement in owned recipe only, preserving entire picked donors, proportions, source rights, palette, topology and all runtime controls. Private source 23748e6 has no fit/art/whole-card clearance; actual game-renderer comparison and Claude verdict still precede installation."
     flag: scrapdome
     acceptance:
       - "Build the tanker settled in docs/SCRAPDOME.md, Convoy Raid (30 September 2026): one rigid vehicle from Kyle's pick A (Kenney delivery-flat cab and bed with the City Kit Industrial detail-tank on the bed), three fuel valves from the verified factory pipe valve donor on the tank, scrap armor plating from the Salt Flats salvage parts, and a raised boarding plate on the tank roof with warning lamps that light when all three valves are broken. Nothing opens or articulates."
@@ -872,13 +874,14 @@ tasks:
     needs: [WAR-02a-REWARD]
     status: building
     review_commit: 58116aec7e8eafd1308be8bc399b3c7a9624e269
+    test_commit: 25e0d3403c50332b571ec7abbe3ce8f8ff580d5c
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arsenal-core
     flag: arsenal
     owns: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/arsenal/oil.js, src/arsenal/smoke.js, tools/test-arsenal-core.mjs, tools/test-arsenal-save.mjs, tools/test-arsenal-runtime.mjs, docs/changes/ARS-CORE.md]
     hooks: [src/weapon-upgrades.js, src/car-loadout.js, src/wasteland-progress.js, src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-ai.js, src/screen-armory.js, src/wasteland-access.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/wasteland-tuning.js, src/app.js, src/game.js, src/screen-router.js, src/arena/arena-pilot.js, src/combat-scene.js, src/combat-projectiles.js, src/onfoot-weapons.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, start-preview.bat]
     hook_requests: [src/audio.js, src/sound-bank.js]
-    sequencing: "Claude e5a9490 settles optional attack context and safe recharge-only Oil/Smoke upgrades. Context projectile/on-foot hooks are granted only after independent new context/native consumer tests freeze; the worker still holds these parts. Covered flag/player deployment/lifecycle work continues first. New real road-hit/reset, seeded CPU loadout/recharge, Oil spin/avoidance, bound App transactions and pooled native scene tests precede those consumers. Shove exclusively owns event/floor/collision/knock; Salt owns course/venues. Combat-scene presents hazards; render3d remains free. Audio/bank remain requests under protected ownership; no fallback cue is finished. No unfinished slice is a complete feature."
+    sequencing: "Independent native consumer tests freeze at 25e0d34: 301 cases, 202 pass, 99 meaningful RED, no TODO. All 48 original CORE cases, 98 save cases and 162 replay controls remain. Granted context/projectile/on-foot and native CPU/App/effects/scene hooks may now follow those tests. Decoy fixtures use actual arena participants/opponents with the settled decoy flag, not an auxiliary list or a Mirage producer. Claude actual range/origin/locked target and exponential recharge answers apply. Shove exclusively owns event/floor/collision/knock; Salt course/venues. Audio/bank remain held under protected ownership; written handoff requested. Independent source/save/browser/audio reviews and exact lane/build remain before whole-card clearance."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build docs/ARSENAL.md section 2 exactly: road hazards, car effects, targetFor (every existing CPU aim, homing and lock path routed through it, with a test that fails on a bypass), unlocks by rank and 400-scrap purchase, rewards that unlock free, upgrades, computer loadouts, and the arsenal switch (dev)."
