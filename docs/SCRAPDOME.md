@@ -55,6 +55,41 @@ metres. Two cars on opposite sides closing on each other meet in about five
 seconds. The venue is not a menu circuit: it never appears in the main menu's
 circuit list.
 
+### The Pit: the dome's open layout (Kyle, 1 October 2026)
+
+Kyle asked for some dome fights without the inside barrier. The Pit is a
+second layout of the same Scrapdome: same stands, lights, crowd and floor
+rules, with the Heap and its ring wall taken out.
+
+- **Shape:** a round floor. The centreline is a circle of radius 40 m (about
+  251 m around); the floor runs 32 m either side of it, so you can drive
+  anywhere from 8 m to 72 m from the centre, with the outer wall at 75 m (a
+  bowl 150 m across). The car-tracking system needs a pole in the middle, so
+  a small solid scrap pile 16 m across stays at the centre; it is the only
+  inside obstacle. Floor curvature check: 35 / 40 = 0.875, inside the limit.
+- **Same room:** the drivable area (about 17,500 square metres) matches the
+  ring's (about 17,300), so cars are no more crowded. What changes is open
+  sight lines, more head-on hits and no long wall to hide behind.
+- **Walls:** a round wall of stacked hulks inside the existing stands. The
+  gaps at the long ends between the round wall and the oval stands are
+  filled with scrap piles (scenery, not floor).
+- **Cover:** eight junk cars spread across the floor at mixed distances from
+  the centre (breakable, only the Titan crushes them), so there is something
+  to break a line of fire. Two ramps, placed opposite each other.
+- **Floor:** the same speed limit, traction and wall rules as the ring.
+- **Spawns:** eight slots as on the ring; in a warlord fight the player and
+  the warlord start on opposite sides of the centre pile.
+- **Which fights:** Gearhead Gunn (his barrage needs sight lines), the Twin
+  Vultures (their pincer needs room to come from two sides) and Baron
+  Blackiron (the final fight). Sal, the Dustmonger, Mother Mirage and the
+  Kettle Kingpin stay on the ring; their tricks use the Heap. Last Car Rolling
+  and the other public modes stay on the ring. No new menu or picker: the
+  warlord's fight sets the layout, and the fight intro names it "THE PIT".
+- **Art:** reuse the dome's existing stands, lights, hulk wall pieces and
+  crushed cars. No sourcing round. The comparison sheet (ring and Pit, full
+  view and racing camera, High and Performance) goes to Claude. Frame cost
+  within 10% of the ring.
+
 ## 3. Last Car Rolling
 
 The first mode. Up to four cars: you and one to three computer cars, every car
