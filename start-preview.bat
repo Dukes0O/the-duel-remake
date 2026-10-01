@@ -8,7 +8,7 @@ rem its own folder, emptied on every build, so test runs never touch it and
 rem old builds never pile up.
 set "PREVIEW_PORT=5195"
 set "PREVIEW_DIR=.preview-dist"
-set "PREVIEW_FLAGS=warlords"
+set "PREVIEW_FLAGS=warlords,fuel-run"
 set "PREVIEW_PATH=/tools/preview.html?flags=%PREVIEW_FLAGS%"
 set "PREVIEW_COMMIT=unknown"
 for /f %%c in ('git rev-parse HEAD 2^>nul') do set "PREVIEW_COMMIT=%%c"

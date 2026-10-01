@@ -1,3 +1,6 @@
+import {FUEL_RULES, stepFuelRun} from './modes/fuel-run.js';
+import {stepFootTransition} from '../onfoot-transition.js';
+import {strikeFighterFromVehicles} from '../onfoot-race.js';
 import {stepCombat} from '../combat.js';
 import {arenaActor, arenaParticipant} from '../combat-teams.js';
 import {containInArena, floorLimit, worldPose} from './arena-floor.js';
@@ -12,6 +15,7 @@ import {WARLORD_RULES, noteWarlordWreck, stepWarlordClock} from './warlord-event
 // whole event; its presence replaces laps, finish, traffic, police and raiders.
 
 export const ARENA_MODES = Object.freeze({
+  'fuel-run': Object.freeze({timeLimitSec: FUEL_RULES.timeLimitSec, suddenDeathSec: Infinity, maxOpponents: 3}),
   warlord: Object.freeze({timeLimitSec: WARLORD_RULES.timeLimitSec,
     suddenDeathSec: WARLORD_RULES.suddenDeathSec, maxOpponents: 1}),
   'last-car-rolling': Object.freeze({timeLimitSec: 150, suddenDeathSec: 30, maxOpponents: 3}),
@@ -149,6 +153,7 @@ function creditWrecks(duel) {
 }
 
 export function arenaRanking(arena) {
+  if (arena.mode === 'fuel-run') return [...arena.participants].sort((a, b) => b.fuelDelivered - a.fuelDelivered);
   const score = participant => arena.mode === 'warlord' ? participant.wrecks :
     participant.wrecks - participant.wrecked;
   return arena.participants.map((participant, order) => ({participant, order})).sort((a, b) =>
@@ -159,6 +164,7 @@ export function arenaRanking(arena) {
 
 function topTied(arena) {
   const [first, second] = arenaRanking(arena);
+  if (arena.mode === 'fuel-run') return !!second && first.fuelDelivered === second.fuelDelivered;
   return !!second && first.wrecks - first.wrecked === second.wrecks - second.wrecked &&
     first.wrecks === second.wrecks;
 }
@@ -174,7 +180,7 @@ function finish(duel, reason, winnerId = null) {
   state.results = {arena: arena.result};
   const winner = arena.participants.find(p => p.id === placings[0]);
   duel._callout(winner.id === 'player' ?
-    arena.mode === 'warlord' ? 'WARLORD DUEL / YOU WIN' : 'LAST CAR ROLLING / YOU WIN' :
+    arena.mode === 'warlord' ? 'WARLORD DUEL / YOU WIN' : arena.mode === 'fuel-run' ? 'FUEL RUN / YOU WIN' : 'LAST CAR ROLLING / YOU WIN' :
     `${winner.name} WINS`, 3);
   duel.emit({arenaPhase: {phase: 'over'}, arenaResult: {result: arena.result}});
 }
@@ -195,11 +201,12 @@ function stepClock(duel, dt) {
     if (arena.clockSec < arena.timeLimitSec) return;
     if (!topTied(arena)) return finish(duel, 'time');
     arena.phase = 'sudden-death';
-    duel._callout('SUDDEN DEATH / NEXT WRECK WINS', 3);
+    duel._callout(arena.mode === 'fuel-run' ? 'SUDDEN DEATH / NEXT DELIVERY WINS' : 'SUDDEN DEATH / NEXT WRECK WINS', 3);
     duel.emit({arenaPhase: {phase: 'sudden-death'}});
     return;
   }
   if (arena.phase === 'sudden-death') {
+    if (arena.mode === 'fuel-run') { arena.suddenDeathSec += dt; return; }
     arena.suddenDeathSec = Math.min(arena.suddenDeathLimitSec, arena.suddenDeathSec + dt);
     if (!topTied(arena)) return finish(duel, 'sudden-death');
     if (arena.suddenDeathSec >= arena.suddenDeathLimitSec) finish(duel, 'damage');
@@ -231,11 +238,22 @@ export function stepArenaEvent(duel, dt) {
 
   stepCombat(duel, dt);
 
+  const onFoot = arena.mode === 'fuel-run' && stepFootTransition(duel, dt);
   const respawns = [];
   if (state.combatWrecking) { if (stepWreckedActor(duel, state, dt)) respawns.push(state); }
   else {
-    duel._drive(dt);
-    duel._jump(state, dt);
+    if (onFoot) {
+      state.reverseHoldSec = 0;
+      state.input.throttle = state.speedMph < -.1 ? 1 : 0;
+      state.input.brake = state.speedMph > .1 ? 1 : 0;
+      state.input.steer = 0; state.input.boost = false;
+      if (Math.abs(state.speedMph) <= .1) { state.speedMph = 0; state.gear = 0; }
+    }
+    if (!onFoot || state.airborne || state.knock || state.tumble ||
+        Math.abs(state.speedMph) > .1 || Math.abs(state.pushVelocity || 0) > .001) {
+      duel._drive(dt);
+      duel._jump(state, dt);
+    } else { state.prevS = state.s; state.prevLateral = state.lateral; }
     containInArena(duel, state, dt);
   }
   for (const actor of state.opponents) {
@@ -261,8 +279,11 @@ export function stepArenaEvent(duel, dt) {
   duel._crushProps(state);
   for (const actor of state.opponents) duel._crushProps(actor);
 
+  if (onFoot) strikeFighterFromVehicles(duel);
+  const fuelDecision = arena.mode === 'fuel-run' ? stepFuelRun(duel, dt) : null;
   creditWrecks(duel);
   if (arena.result) return;
+  if (fuelDecision) { finish(duel, fuelDecision.reason, fuelDecision.winnerId); return; }
   for (const actor of respawns) respawn(duel, arenaParticipant(duel, actor), actor);
   stepClock(duel, dt);
 }

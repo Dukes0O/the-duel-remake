@@ -2,6 +2,66 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- **ARS-CORE audio ownership handoff:** integrated sound-bank has no
+  `weapon.oil.deploy`, `weapon.oil.slip` or `weapon.smoke.deploy` entries.
+  The protected external audio owner still holds the bank; no overlapping
+  edit or fallback cue is authorized. Please route these settled cue names
+  to that owner, or record a file handoff after its final gate. The Director
+  spends no credits and leaves pending voice auditions and picks alone.
+
+- **Claude's answers (1 October 2026, 00:40 review):**
+  - Salt Flats floor: the same ring engine, an oval band between the solid
+    outer tyres and containers and a solid inner island (scrap piles, crane,
+    bus); the rest of the bowl is scenery. Ramps: physics is the source of
+    truth and the visible ramp is built from it (SCRAPDOME.md, ARENA-06).
+  - Salt Flats modes: the four public modes; warlord fights stay where
+    section 5 places them (only the Tollkeeper's Convoy Raid is here).
+  - Arsenal targeting: yes to the optional attack context
+    `{range, origin, lockedTargetId}`; a locked shot only changes to a decoy
+    or breaks in smoke, never to another real car (ARSENAL.md).
+  - Arsenal upgrades: damage +15% per level for damaging weapons; recharge
+    15% faster per level for all; control effects never scale. Oil and Smoke
+    upgrade by recharge only (ARSENAL.md).
+  - Shove against the wall: minimums apply only where there is open floor;
+    a car rammed straight into the wall stays and takes the damage (card).
+  - Fuel's Last Car Rolling and Sal pin migration: approved; those two
+    changed through the accepted steering merge, with Fuel off and on
+    identical.
+
+- Salt Flats physical-floor question: the genuine private model has a full
+  300 by 200 m bowl, perimeter tyres/containers and central cover/ramps.
+  Existing arena physics constrains cars to an annulus with an inner Heap
+  boundary. Please confirm how the Salt Flats drivable floor should consume
+  this bowl; no invisible inner boundary or altered venue design is inferred.
+  The builder also proved a 0.497 m quarter-ramp height mismatch and a 30 m
+  physical strip under an 8 m visible ramp. Independent native alignment
+  checks precede the course changes. Floor/collision hooks remain Shove's.
+
+- ARS targeting context must also carry the actual origin and intended target
+  for inflight homing and RPG locks, so a routed consumer cannot silently use
+  the launch car’s old position or switch an already locked actor to the
+  nearest car. Native moved-fighter smoke exposed and fixes that origin for
+  the basic resolver; the optional attack-context question remains for the
+  consumer routes and decoy range. All existing geometry/save controls stay.
+
+- Fuel Run and AUD-CRASH-PEAK merged at 66ce5d5 from reviewed clean
+  9964245 after exact lane/build gates. The final authored browser and
+  native save/contact/depot controls clear; measured audio peaks clear.
+  Claude also approved the steering-only pin migration in his 00:40 review.
+  Human listening, HUD observations and Kyle's Preview feel remain.
+  The completed lane was removed with plain worktree cleanup; no release.
+- ARENA-SHOVE question: a car exactly pinned to the outer solid wall and
+  rammed straight outward has no allowed displacement along that normal.
+  The universal1.5/4m minimum conflicts with containment there. Tests cover
+  real tangential shove with open physical space and separate outward
+  containment. Please settle the outward-pin interpretation; no teleport,
+  escape direction or relaxed containment is invented.
+- ARENA-06 tests public arena modes on Salt Flats. Dedicated warlord/story
+  fights currently hardcode Scrapdome; please settle whether "every mode"
+  also relocates those fights. No story fight moves by inference. New venue
+  follows SPEC0.12 with salt-flats:dev, discovery/rank9 and released scrapdome;
+  optional venue launch arguments cannot bypass real App/race guards.
+
 - ARS-CORE is claimed in a separate lane for independent tests and new
   core modules only; existing hooks remain ungranted until their owners merge.
   Two gaps need written clarification before those parts are built: required

@@ -1,10 +1,11 @@
 import {contactZone} from './collision.js';
-import {point, predictedPoint, burst} from './combat-weapons.js';
+import {point, aimPoint, predictedPoint, burst} from './combat-weapons.js';
 import {applyArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {tickCombatScoring} from './combat-scoring.js';
 import {damageRaider} from './raiders.js';
-import {arenaDamageBlocked, arenaStrikeCandidates} from './combat-teams.js';
+import {arenaActor, arenaDamageBlocked, arenaStrikeCandidates, arenaTargetOutOfPlay, hostile} from './combat-teams.js';
+import {damageFighter, knockdownFighter, FIGHTER_RULES} from './onfoot.js';
 
 const T = COMBAT_TUNING;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -15,7 +16,9 @@ function steerBolt(duel, projectile, dt, sampleSeconds = dt * .5) {
       !Number.isFinite(projectile.launchBearing) || !(dt > 0)) return;
   const state = duel.state;
   const target = projectile.targetIndex < 0 ? state : state.opponents[projectile.targetIndex];
-  if (!target || target.finished || target.crushed || target.combatWrecking) return;
+  if (!target || (projectile.enemy && state.arena?.mode === 'fuel-run'
+    ? arenaTargetOutOfPlay(duel, target)
+    : target.finished || target.crushed || target.combatWrecking)) return;
   const speed = Math.hypot(projectile.vx, projectile.vz);
   if (!(speed > 0)) return;
   // Sample biased enemy guidance halfway through the step. At close range,
@@ -23,7 +26,7 @@ function steerBolt(duel, projectile, dt, sampleSeconds = dt * .5) {
   const biasedEnemy = projectile.enemy && Number.isFinite(projectile.aimBias);
   const sampleX = projectile.x + (biasedEnemy ? projectile.vx * sampleSeconds : 0);
   const sampleZ = projectile.z + (biasedEnemy ? projectile.vz * sampleSeconds : 0);
-  const at = point(duel, target);
+  const at = aimPoint(duel, target);
   const travel = Math.min(T.crossbow.leadTime,
     Math.hypot(at.x - sampleX, at.z - sampleZ) / speed);
   const future = predictedPoint(duel, target, travel);
@@ -142,6 +145,56 @@ function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
       owner: projectile.raid ? 'raider' : state.arena ? projectile.ownerId : enemy ? 'cpu' : 'player'});
 }
 
+// Car weapons use each current fighter's own body. CPU crew exits will join
+// this path when CREW-04 supplies their real fighter state.
+function playerFighterTarget(duel, projectile) {
+  const state = duel.state, fighter = state.onFoot && state.fighter;
+  if (!fighter || fighter.knockedDown || state.finished || state.crushed ||
+      projectile.raid) return null;
+  // Participant respawn guards apply to the fighter. A parked car's shield
+  // and wreck-recovery timer belong to its own body.
+  if (state.arena) {
+    const owner = arenaActor(duel, projectile.ownerId);
+    if (!owner || !hostile(duel, owner, state) ||
+        arenaDamageBlocked(duel, state, projectile.ownerId)) return null;
+  } else if (!projectile.enemy) return null;
+  return fighter;
+}
+
+function fighterBody(fighter, raider = false) {
+  return {x: fighter.x, y: fighter.y + (raider ? .9 : FIGHTER_RULES.height / 2),
+    z: fighter.z};
+}
+
+function hitCarFighter(duel, fighter, projectile, health, knockdown = false, raider = false) {
+  if (fighter.knockedDown || !(health > 0)) return false;
+  if (raider) damageRaider(duel, fighter, knockdown ? fighter.health : health,
+    {source: 'car', owner: projectile.enemy ? 'cpu' : 'player'});
+  else {
+    damageFighter(fighter, health);
+    if (knockdown) knockdownFighter(fighter);
+  }
+  const where = fighterBody(fighter, raider);
+  // The established combat.hit cue supplies body-hit feedback without a new bank.
+  duel.emit({combatHit: true, strength: health / 60, enemy: projectile.enemy,
+    victim: raider ? 'raider' : 'player', fighter: true,
+    hitPosition: where});
+  if (!raider && fighter.knockedDown) {
+    duel.emit({fighterKnockdown: true, source: projectile.kind,
+      owner: projectile.ownerId, hitPosition: where});
+    duel._callout('FIGHTER HIT / RECOVERING', 2);
+  }
+  return true;
+}
+
+function splashCarFighter(duel, fighter, projectile, radius, raider = false) {
+  const at = fighterBody(fighter, raider);
+  const distance = Math.hypot(at.x - projectile.x, at.y - projectile.y,
+    at.z - projectile.z);
+  if (distance < radius) hitCarFighter(duel, fighter, projectile,
+    60 * (1 - distance / radius), distance < radius / 2, raider);
+}
+
 function sweptApproach(projectile, old, target, radius) {
   const dx = projectile.x - old.x;
   const dz = projectile.z - old.z;
@@ -244,6 +297,7 @@ export function stepProjectiles(duel, dt) {
     let floor = duel.course.groundAt(nearest.s, nearest.lateral).y;
     let target = null;
     let raiderTarget = null;
+    let fighterTarget = null;
     let firstContact = Infinity;
     for (const actor of projectile.raid ? [state, ...state.opponents]
       : state.arena ? arenaStrikeCandidates(duel, projectile.ownerId)
@@ -274,7 +328,19 @@ export function stepProjectiles(duel, dt) {
         target = actor;
       }
     }
-    if (modernProjectiles && projectile.kind === 'rpg') {
+    if (modernProjectiles && projectile.kind === 'crossbow') {
+      const fighter = playerFighterTarget(duel, projectile);
+      if (fighter) {
+        const center = fighterBody(fighter);
+        const approach = sweptVehicleContact(projectile, old, center, center,
+          FIGHTER_RULES.radius, FIGHTER_RULES.height / 2);
+        if (approach && approach.fraction < firstContact) {
+          firstContact = approach.fraction; target = null; fighterTarget = fighter;
+        }
+      }
+    }
+    if (modernProjectiles && (projectile.kind === 'rpg' ||
+        projectile.kind === 'crossbow' && !projectile.enemy && !projectile.raid)) {
       for (const zone of state.raids?.zones || []) {
         for (const raider of zone.raiders) {
           if (raider.knockedDown) continue;
@@ -285,11 +351,12 @@ export function stepProjectiles(duel, dt) {
             firstContact = approach.fraction;
             target = null;
             raiderTarget = raider;
+            fighterTarget = null;
           }
         }
       }
     }
-    const contact = !!target || !!raiderTarget;
+    const contact = !!target || !!raiderTarget || !!fighterTarget;
     const rpgLifetime = Number.isInteger(projectile.targetIndex) &&
       Number.isFinite(projectile.lifetimeSeconds)
       ? clamp(projectile.lifetimeSeconds, T.foot.rpgLifetimeSeconds,
@@ -330,7 +397,7 @@ export function stepProjectiles(duel, dt) {
       continue;
     }
 
-    if (raiderTarget) {
+    if (raiderTarget || fighterTarget) {
       projectile.x = old.x + (projectile.x - old.x) * firstContact;
       projectile.y = old.y + (projectile.y - old.y) * firstContact;
       projectile.z = old.z + (projectile.z - old.z) * firstContact;
@@ -370,6 +437,15 @@ export function stepProjectiles(duel, dt) {
               self: actor === thrower});
         }
       }
+      if (modernProjectiles) {
+        const fighter = playerFighterTarget(duel, projectile);
+        if (fighter) splashCarFighter(duel, fighter, projectile, bombRadius);
+        if (!projectile.enemy && !projectile.raid) {
+          for (const zone of state.raids?.zones || [])
+            for (const raider of zone.raiders)
+              if (!raider.knockedDown) splashCarFighter(duel, raider, projectile, bombRadius, true);
+        }
+      }
     } else if (projectile.kind === 'rpg') {
       if (raiderTarget) damageRaider(duel, raiderTarget, T.raider.directDamage);
       if (contact) {
@@ -399,6 +475,10 @@ export function stepProjectiles(duel, dt) {
             T.raider.splashDamage * (1 - distance / rpgSplashRadius));
         }
       }
+    } else if (fighterTarget) {
+      hitCarFighter(duel, fighterTarget, projectile, 35);
+    } else if (raiderTarget) {
+      hitCarFighter(duel, raiderTarget, projectile, 35, false, true);
     } else if (contact) {
       hit(duel, target, projectile,
         projectile.raid ? .32 :
