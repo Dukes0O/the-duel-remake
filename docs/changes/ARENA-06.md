@@ -828,3 +828,113 @@ with native-backed local collision. No original licensed geometry, selected
 source binding, current asset, test, assertion, old Course/Scrapdome behavior,
 photo pixel or replay pin was removed. Superseded private candidates remain
 used-once review evidence for the Director's janitor after verdict capture.
+
+## Tests-first production Salt renderer route, 1 October 2026
+
+Test-author work starts from clean Source `0050a724944549d8ae9d5ad2d16a9217a3bc3d65`.
+Only new `tools/test-salt-flats-render.mjs`, new
+`tools/scenarios/salt-flats.mjs` and this appended note are owned. All Source,
+old tests, replay pins, fit, catalog, settings and public assets remain unchanged.
+The Director approved the optional additive API
+`buildEnvironment(course, {saltFlats: {loadAsset}} = {})`, forwarding the loader
+only to the Salt presenter. Existing renderer callers remain valid. The Source
+implementation is still held until this acceptance freeze is reviewed.
+
+### Meaningful native RED and lifecycle acceptance
+
+The new suite invokes the real `buildEnvironment` with real Course/Duel data
+and decodes the actual approved GLB. Only headless canvas labels and image
+textures use adapters; native geometry, materials, Course, simulation, scene
+registry and disposal are production. Eight cases cover actual world routing,
+complete native geometry, successful exact-once cleanup, late arrival after
+world retirement, load rejection, invalid native ground rejection, untouched
+Duel/Course/RNG, and ordinary Scrapdome/road controls. They are not source-string
+or import-presence tests. The fixed candidate is SHA-256
+`6cd41757ee903b3924ddd760f66533e1295ba96d96d863a8689361db74d35bdc`.
+
+Executed command, before any Source hook:
+`SALT_FLATS_RENDER_ASSET=<lane-private-GLB> node tools/test-salt-flats-render.mjs`.
+Eight checks run: six fail at the real missing-world-route assertion; two
+ordinary Scrapdome/pacific-canyon environment controls pass. The first draft
+had two test-adapter errors (wrong RNG method and missing canvas image-data
+method); these were corrected to the actual APIs before this RED freeze.
+No original test assertion was changed. Both raw runs are retained in
+integration `.evidence/2026-10-01/ARENA-06/director-geometry-review/`, named
+`renderer-native-red.log` and `renderer-native-red-corrected.log`.
+
+Reproduce after the harness has rebuilt its scratch output by using the
+preserved lane `.evidence/ARENA-06/render-candidate/venue.glb`. The earlier
+`.qa-dist/salt-boundary-tests-USdfdq/candidate` is not a durable path: a QA build
+clears that output. The asset is regenerable Source evidence, not public output.
+
+### Actual game-renderer browser RED
+
+Executed `node tools/browser-harness.mjs scenario salt-flats --output-dir
+.evidence/2026-10-01/ARENA-06/renderer-red-final` with no timing opt-in.
+The standard harness builds/serves actual App/game renderer on private port
+46060 with throwaway Chrome and memory-only storage. Low-level
+`Duel.startArenaEvent` selects the actual registered venue; it does not claim
+held rank, switch or public App/menu selection hooks. Seed 1989, Falcone,
+Dusthawk, quality, fractional station/offset and relative camera formulas match
+between the current production Scrapdome baseline and Salt. Racing captures
+use the unchanged Duel input and sixty native fixed steps. No App method,
+renderer method, state return, source module or game clock is replaced.
+
+After the real harness build, the recipe verifies the exact private GLB hash
+and copies its unchanged bytes only to the checked lane
+`.qa-dist/assets/models/wasteland/salt-flats/venue.glb`. The actual loader's URL
+can then decode it naturally once the missing Source route exists. No file is
+installed in public, Preview or the live folder. Its provenance is serialized
+in `salt-flats-browser.json`. The original first browser failure is retained;
+its first Scrapdome QA panel reopened asynchronously. The final capture helper
+collapses only the private QA details after loading, without changing game UI.
+
+Final browser RED is exactly `actual game renderer is missing native Salt world
+route`. The serialized actual renderer witness has no Salt group, no native
+ground, neither native ramp, zero native meshes/triangles. There are no reported
+console errors, warnings or failed-request issues. All six final High screenshots
+were inspected individually under lane
+`.evidence/2026-10-01/ARENA-06/renderer-red-final/`:
+
+- `high-scrapdome-near.png`: real loaded cars and body/front gear on existing dirt.
+- `high-scrapdome-racing.png`: actual chase camera, player/CPU and original stands.
+- `high-scrapdome-full.png`: complete original stadium; inherited HUD covers parts.
+- `high-salt-flats-near.png`: real cars but generic dirt instead of native salt art.
+- `high-salt-flats-racing.png`: generic stadium remains; Salt ground/cover/rim absent.
+- `high-salt-flats-full.png`: generic oval/stands instead of the approved native bowl.
+
+All use 1280x800 laptop capture; the private panel is collapsed in the final
+six. Race-start text and existing HUD labels overlap views. These are not native
+Salt visual passes. No new floating-part or missing-car-texture fault is proved.
+Performance execution stops behind the meaningful High route failure; no
+Performance visual or whole-card result is claimed. Full launcher stdout/stderr
+is preserved before filtering under integration director-geometry-review as
+`renderer-browser-red.log` and `renderer-browser-red-final.log`.
+
+### Pending frame/art/public limits and Removed
+
+The committed recipe includes both actual quality settings and near/racing/full
+pairs. Native Salt presence/readiness, actual ground/two ramps, all 171 meshes
+and 152,180 triangles must pass. It does not fabricate geometry or warmup success.
+The optional `SALT_FLATS_MEASURE_FRAMES=1` is allowed only after the Director
+agrees a quiet window. It collects 180 real requestAnimationFrame intervals,
+mean/P95 and actual renderer draw/triangle counts, while advancing native fixed
+steps. It compares Salt P95 with the matched current Scrapdome P95 at no more
+than 10% growth in each quality. Without that opt-in, even a later visual run
+cannot claim a complete scenario pass. No timing samples were taken in this
+RED run. Native 171-draw cost is pending, not accepted. This is a headless frame
+interval check; actual laptop feel/GPU diagnosis and independent art/heat/wear
+judgment are still needed. No listening or phone verdict is inferred.
+
+The unchanged original Salt suite's six public runtime hooks remain held by
+Arsenal. These tests do not cover or counterfeit them. Exact old native/road
+regressions and all replay fingerprints remain necessary after Source lands.
+No lane/full/build or merge clearance is claimed by this intentional RED freeze.
+Syntax checks and `git diff --check` pass. No existing assertion or pin changed.
+
+Removed: none. No current Source, model, licensed input, old test, public asset
+or player save was replaced. Failed logs/captures and the private pinned asset
+are retained until independent review consumes their verdict; the next harness
+build removes the disposable QA asset copy. No screenshots or GLB are committed.
+No live folder, Preview, `.preview-dist`, port 5174, real save, external service,
+dependency addition, helper agent, release, merge, push or history rewrite was used.
