@@ -697,9 +697,8 @@ tasks:
     lane: ART
     size: L
     needs: [ART-SRC-RUSTWALL]
-    status: review
+    status: closed
     review_commit: 14513acde01d8b11e7596d8245635d682bec261e
-    waiting_on: claude
     claimed_by: codex-director-2026-09-30-late-resume
     branch: lane/art/rustwall-source-fit
     owns: [tools/blender/rustwall-source-fit.py, tools/blender/rustwall-source-fit.json, tools/test-rustwall-source-fit.mjs, tools/scenarios/rustwall-source-fit.mjs, tools/art/rustwall-fit-sheet.py, docs/board/looks/rustwall-fit/, docs/changes/ART-FIT-RUSTWALL.md]
@@ -710,6 +709,7 @@ tasks:
     flag: hidden-road
     acceptance:
       - "Rebuild the Rustwall's salvage face, towers and canyon banks from Kyle's picks in docs/board/looks/rustwall-src, following docs/WASTELAND_ART.md 'Fitting existing models': crushed and burned car hulks, rusted sheet metal and container panels on the existing scaffold, tower supports from the industrial kit, canyon banks from the rock shapes with desert strata. The gate, its opening and every collision envelope stay exactly where they are; world signatures change only with a reviewed visual difference (AGENTS.md)."
+    claude_review: "30 September 2026: agree with the critic. The fitted wall swaps the dense stacked hulks for empty dark bays and floating parts; the wash is no better. Current wall 3/3/3/3 stays, with the current wash and no new wash hook. Closed under the new rule in docs/WASTELAND_ART.md: no refitting of art the game already has. Remove the lane and branch with the janitor; keep nothing from it."
   - id: ART-SRC-TANKER
     title: "Convoy Raid tanker and trailer: short list of existing starting models"
     owner: codex
@@ -2795,7 +2795,6 @@ tasks:
     size: S
     needs: []
     status: review
-    waiting_on: claude
     review_commit: 0f57648ae5385295ec934812ce92f46efea4ecda
     claimed_by: codex-director-2026-09-30-resume
     flag: scrapdome
@@ -2809,6 +2808,17 @@ tasks:
       - "Settled rule: in an arena venue only, every car at full lock turns at least 100 degrees a second from 15 to 50 mph and at least 75 degrees a second at the floor's top speed, by raising both the steering limit and the tyre limit in steeringYawAuthority for arena courses (one arena factor, recorded). Computer cars use the same function, so it stays fair. Sal's window still halves her steering. Road courses, Muddy Hollow and the Titan's road handling are unchanged (replay fingerprints unchanged except arena replays, each named)."
       - "Re-run tools/arena-balance.mjs and the Sal tests and record the change; cars must not spin out or oscillate at full lock (check yaw settles within 0.3 s of releasing the stick). Kyle checks it in the Preview."
     claude_review: "30 September 2026: the uniform 3.4 factor meets the floor but turns cars 205 to 300 degrees a second at 45 mph, likely twitchy. Added rule (Claude's gap: the first rule set no ceiling): at full lock no car turns faster than 150 degrees a second at any speed in the arena. Suggested shape: an arena floor on the low-speed rolling factor (as the Titan's lowSpeedSteer does) plus a smaller factor, rather than one large multiplier. Re-measure the same table, then Kyle checks it in the Preview."
+    claude_verdict: "30 September 2026: accept the measured wreck rate (Medium full field 23.3 against 10 to 14) for now. Steering feel comes first; finish the browser proof, merge, and mark waiting_on: kyle for his Preview check. If Kyle keeps the steering, ARENA-WRECK-RATE brings wrecks back to the target without touching steering."
+  - id: ARENA-WRECK-RATE
+    title: "Last Car Rolling wreck rate back to target after the new steering"
+    owner: codex
+    lane: CMB
+    size: S
+    needs: [ARENA-STEER]
+    status: ready
+    flag: scrapdome
+    acceptance:
+      - "After Kyle keeps ARENA-STEER's steering in the Preview, bring Medium full-field wrecks per round back to 10 to 14 (SCRAPDOME.md section 8; 23.3 with the new steering) without touching steering: first lever the arena armor scale for ordinary cars, second the computer cars' ram aggression. Re-run tools/arena-balance.mjs for all three difficulties and record the change; Sal's warlord armor (1.5) is unchanged."
   - id: ARENA-SHOVE
     title: "Every car can shove a sitting car in the Scrapdome"
     owner: codex

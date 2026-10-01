@@ -47,6 +47,11 @@ here." A toy-like or cartoon result fails the consistency score outright.
    the same card. Credits for every source appear in game.
 8. **Kyle has the last look** in the Preview before a family's switch or
    release.
+9. **Only for art the game does not have yet** (Claude, 30 September 2026).
+   Three fitting attempts on existing art (crew, hands, Rustwall) all lost to
+   the current versions, which score about 3 and read well at speed. Do not
+   start a card that refits art the game already has. Fitting is for new
+   things only: the Salt Flats arena, the convoy tanker and Vesper.
 
 ## public/assets/reference/wasteland-art-direction.png
 

@@ -1427,3 +1427,14 @@ The crate timer failure was separately proved to be legal collection after
 all five spawns and corrected with every original assertion retained plus
 a native unprotected moving-CPU positive control. This is test isolation,
 not a race-rule or balance change. Kyle's Preview feel remains pending.
+
+## 30 September 2026: no more refitting of existing art; steering before wreck rate
+
+ART-FIT-RUSTWALL round 1 scored 2 against the current wall's 3 (empty bays,
+floating parts, no better wash). It joins the crew and hands: three attempts,
+three losses to the current art. Rule 9 in docs/WASTELAND_ART.md: fitting is
+for new things only (Salt Flats, tanker, Vesper). ARENA-STEER raised Medium
+Last Car Rolling wrecks to 23.3 a round (target 10 to 14); steering feel
+comes first, and ARENA-WRECK-RATE restores the target with armor or
+aggression if Kyle keeps the steering.
+
