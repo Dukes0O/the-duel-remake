@@ -8,6 +8,15 @@ import {footMoveDirection} from './onfoot.js';
 import {carEffect} from './arsenal/car-effects.js';
 import {deployOil} from './arsenal/oil.js';
 import {deploySmoke} from './arsenal/smoke.js';
+import {targetFor, targetIdentity} from './arsenal/targeting.js';
+
+const cpuCooldowns = new WeakMap();
+export function clearCpuWeaponCooldowns(actor) { cpuCooldowns.delete(actor); }
+export function stepCpuWeaponCooldowns(actor, dt) {
+  const timers = cpuCooldowns.get(actor);
+  if (timers) for (const id of Object.keys(timers))
+    timers[id] = Math.max(0, timers[id] - dt);
+}
 
 export {WEAPONS};
 const T = COMBAT_TUNING;
@@ -231,7 +240,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   if (state.onFoot && !enemy) return false;
   const combat = state.combat;
   const actor = enemy ? cpuActor : state;
-  const target = enemy ? (state.arena ? arenaTargetOf(duel, cpuActor) : state) : state.opponents.length > 1
+  let target = enemy ? (state.arena ? arenaTargetOf(duel, cpuActor) : state) : state.opponents.length > 1
     ? state.opponents.filter(opponent => !opponent.finished && !opponent.crushed &&
         !opponent.combatWrecking)
       .reduce((closest, opponent) =>
@@ -243,14 +252,27 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
       actor.impactTimer > 0 || !WEAPONS[weapon]) return false;
   if (!enemy && state.onFoot) return false;
   const arsenal = arsenalEnabled(duel);
+  let straightShot = false;
   const rearHazard = weapon === 'oil' || weapon === 'smoke';
-  if (rearHazard && (!arsenal || enemy)) return false;
+  if (rearHazard && !arsenal) return false;
   if (arsenal && carEffect(actor, 'disabled')) return false;
-  if (!enemy && combat.cooldowns[weapon] > 0) return false;
+  if (arsenal && enemy && !actor.weaponLoadout?.includes(weapon)) return false;
+  let cooldowns = combat.cooldowns;
+  if (arsenal && enemy) {
+    cooldowns = cpuCooldowns.get(actor);
+    if (!cooldowns) cpuCooldowns.set(actor, cooldowns = {});
+  }
+  if ((!enemy || arsenal) && cooldowns[weapon] > 0) return false;
+  if (arsenal && weapon === 'crossbow') {
+    const origin = point(duel, actor);
+    target = targetFor(duel, actor, {range: T.cpu.attackRange, origin});
+    // A player may still fire straight through smoke; CPUs cannot aim blind.
+    if (!target && enemy) return false;
+    straightShot = !target;
+  }
 
   const at = point(duel, actor);
-  // Rear control weapons remain at L0 until the reviewed upgrade consumer slice.
-  const level = enemy || rearHazard ? 0 : combat.levels[weapon];
+  const level = enemy ? 0 : combat.levels[weapon] || 0;
   if (rearHazard) {
     const hazard = weapon === 'oil' ? deployOil(duel, actor) : deploySmoke(duel, actor);
     if (!hazard) return false;
@@ -292,7 +314,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
     }
     burst(combat, at, 'star');
   } else {
-    if (weapon === 'crossbow' && (!target || (enemy && state.arena?.mode === 'fuel-run'
+    if (weapon === 'crossbow' && !straightShot && (!target || (enemy && state.arena?.mode === 'fuel-run'
       ? arenaTargetOutOfPlay(duel, target)
       : target.finished || target.crushed || target.combatWrecking))) return false;
     const count = weapon === 'bomb' ? T.bomb.baseCount + T.bomb.countPerLevel * level : 1;
@@ -315,11 +337,12 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         dz = Math.cos(angle);
         speed = T.bomb.launchSpeed;
       } else {
-        const goal = aimPoint(duel, target);
+        const goal = straightShot ? {x:at.x+Math.sin(at.heading+(actor.headingError||0))*100,
+          y:at.y+T.crossbow.aimHeightOffset,z:at.z+Math.cos(at.heading+(actor.headingError||0))*100} : aimPoint(duel, target);
         speed = T.crossbow.baseSpeed + T.crossbow.speedPerLevel * level;
         let aimX = goal.x;
         let aimZ = goal.z;
-        if (enemy || modernProjectile) {
+        if (!straightShot && (enemy || modernProjectile)) {
           const travel = Math.min(T.crossbow.leadTime,
             Math.hypot(goal.x - at.x, goal.z - at.z) / speed);
           const predicted = predictedPoint(duel, target, travel);
@@ -354,9 +377,11 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         vx: dx * speed + carryX,
         vz: dz * speed + carryZ,
         vy, age: 0,
-        ...(modernProjectile && weapon === 'crossbow' ? {
+        ...(modernProjectile && weapon === 'crossbow' && !straightShot ? {
           targetIndex: enemy ? (state.arena && target !== state ? state.opponents.indexOf(target) : -1)
             : state.opponents.indexOf(target),
+          ...(arsenal ? {targetId: targetIdentity(duel, target),
+            attackerId: targetIdentity(duel, actor)} : {}),
           launchBearing: Math.atan2(dx * speed + carryX, dz * speed + carryZ),
           ...(enemy ? {aimBias} : {}),
         } : {}),
@@ -365,8 +390,9 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
       });
     }
   }
-  if (!enemy) combat.cooldowns[weapon] = WEAPONS[weapon].cooldown *
-    (1 - level * T.cooldownUpgradeDiscount);
+  if (!enemy || arsenal) cooldowns[weapon] = arsenal
+    ? WEAPONS[weapon].cooldown / 1.15 ** level
+    : WEAPONS[weapon].cooldown * (1 - level * T.cooldownUpgradeDiscount);
   duel.emit({weaponFired: weapon});
   return true;
 }

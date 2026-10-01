@@ -7,7 +7,7 @@ import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
 import { stepKnock } from './vehicle-knock.js';
 import {arsenalEnabled} from './combat-weapons.js';
-import {carEffect} from './arsenal/car-effects.js';
+import {carEffect,carGrip} from './arsenal/car-effects.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -175,7 +175,7 @@ export function _drive(dt) {
   s.roughness += (roughTarget - s.roughness) * (1 - Math.exp(-8 * dt));
   const traction = surface.traction;
   s.steerVisual += (s.input.steer - s.steerVisual) * (1 - Math.exp(-DRIVE.steerResponse * dt));
-  const targetYaw = -s.steerVisual * steeringYawAuthority(Math.abs(s.speedMph), car.grip, traction, car, this.course) * (s.speedMph < 0 ? -1 : 1);
+  const targetYaw = -s.steerVisual * steeringYawAuthority(Math.abs(s.speedMph), car.grip * (arsenalEnabled(this) ? carGrip(s) : 1), traction, car, this.course) * (s.speedMph < 0 ? -1 : 1);
   s.yawVelocity += (targetYaw - s.yawVelocity) * (1 - Math.exp(-DRIVE.yawResponse * dt));
   // The nose turns first while momentum carries the rear outward. A short
   // release or counter-steer settles the slide without steering toward the road.

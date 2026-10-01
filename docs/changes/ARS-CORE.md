@@ -1104,3 +1104,165 @@ Each row below records the exact first failure message; complete assertion value
 ### Removed
 
 Replaced the invalid successful-finish setup and three settled design TODOs in this same tests-only change. Removed the Director’s superseded auxiliary decoy-list proposal from the new fixtures; the frozen tests use Claude’s native actor/participant flag. No production code, asset, licensed source, existing test assertion, save test, replay fixture, launcher, audio or source catalog was removed or edited. The real source consumer slice on this card replaces the held paths after this acceptance is frozen.
+
+
+## Native consumer Source continuation — provisional freeze, 1 October 2026
+
+This is a source review handoff, not a finished card or a merge pass. The unchanged
+301-case acceptance now reports **300 pass, one fail, zero skips and zero TODOs**.
+The retained RED needs independent native fixture review. A separate real
+Crossbow range-context design limit is held. The Director requires independent
+fixture/source/range regression review before continuation.
+
+### Starting point and scope
+
+Started from clean test freeze 25e0d3403c50332b571ec7abbe3ce8f8ff580d5c.
+Normally merged integration 1498b33c2c4d85903db2002a11da6583d35f64bb, producing
+clean lane commit 3af31db5adf7230637dba2de48a8903f4e7cb83d. Fuel, steering,
+Claude's designs and reviewed pure Arsenal/save code were preserved. No conflict
+fix, rebase, history rewrite or integration merge was made here.
+
+Only Director-granted source consumers below and this append-only note changed.
+All tests, fixture configurations and replay pins remain unchanged. Shove's
+event/floor/contacts/collision/knock, Salt's course/venues, render3d, protected
+audio/bank, assets and source catalogs were not edited.
+
+### Native behavior
+
+- Positive hostile armor removal records private per-fight/per-actor hit history.
+  Zero, shielded, protected and friendly damage do not qualify Smoke. Eligibility
+  lasts through exactly five seconds and clears at actual reset/recovery/fight
+  boundaries. Existing damage-owner strings remain unchanged.
+- Each real CPU receives four unique eligible implemented weapons from rank using
+  a separate seeded generator. Real scheduled Oil/Smoke use follows settled rear
+  enemy/recent-hit conditions, with separate per-actor recharge timers.
+- Player road/arena and both CPU driving paths read timed grip. Road CPU oil spin
+  changes actual heading; Medium/Hard physically steer around visible oil within
+  the settled perception range. Easy stays unchanged. No teleport or target pose.
+- Actual bound App calls pass discovery/dev/Wasteland options and rank. Existing
+  pure functions handle 400-scrap purchase, equip and 150/300/600 upgrades. Genuine
+  Armory HTML exposes eligible offers and owned equip/upgrades. Named-owner,
+  unknown fields, future identities/levels/slots and no-write refusals stay green.
+- Scheduled CPU selection, direct Crossbow launch, fired bolt guidance, walking
+  RPG lock and fired RPG guidance call the shared resolver with current origin
+  and stable native identity. Existing locks never choose another real car.
+  Qualifying decoys redirect; Smoke breaks guidance, including enemy endpoint
+  half-steps. Player straight fire through Smoke remains legal.
+- Decoy DATA uses actual native NPC/arena participant records with owner/active/
+  expiry metadata. No Mirage/Drone producer, auxiliary decoy list or future fight
+  rules were built. Legal results/menu/stage clear transient flagged actors;
+  refused finish does not.
+- Recharge is cooldown / 1.15**level; existing armor damage already supplies +15%
+  per level. Oil control strength/duration and Smoke lifetime do not scale.
+- Actual native Oil disks and Smoke volumes use a preallocated 24-entry geometry/
+  material pool. Updates are read-only, bounded, consume no simulation RNG, reuse
+  resources and dispose owned resources exactly once.
+
+### Exact validation
+
+Default command: node --test tools/test-arsenal-core.mjs tools/test-arsenal-save.mjs tools/test-arsenal-runtime.mjs.
+
+| Check | Result |
+| --- | --- |
+| Frozen default 301 cases | Baseline 202 pass/99 RED; now 300 pass/one retained RED. Zero skips/TODOs. |
+| Complete CORE | 72/72; 598 acceptance checks. |
+| Original CORE subset | 48/48; exactly 449 checks. |
+| Complete SAVE | 98/98; exactly 602 checks. |
+| Original SAVE subset | 68/68; exactly 451 checks. |
+| Native runtime | 130/131; 771 checks reached including disputed assertion. |
+| Ordinary replay pins | 162/162 unchanged; 18 cases, 16 events, eight categories, three frame rates, three runs. |
+| Combat replay pins | 12/12 unchanged across four encounters. |
+| Existing source regressions | 32 unchanged scripts all exit zero. |
+| npm run build | Pass in the isolated lane, normal dist only; existing advisory chunk warning. |
+| git diff --check/source LF | Pass. |
+
+The 32 regressions cover upgrades/loadouts, damaged profile fields, historical
+save fixtures, Wasteland profiles, progression/named registry; combat, armor,
+projectile motion/ordering, CPU brain, pickups/field shields, on-foot weapons/
+race, scoring/opponents; road/combat replays, NPC routes/yielding, standing Fuel
+carrier/attribution, Fuel Run/depot and steering; career/storage budgets, feature
+flags, Wasteland beta and repository placement. NPC route reports 16,755 checks;
+yielding reports 43,174 checks. Private raw logs, hashes and geometry witness:
+.evidence/2026-10-01/ARS-CORE/native-consumer-build/.
+
+### Retained native geometry RED
+
+The frozen runtime case "SHARED DECOY DATA: actual resolver out-of-range on arena"
+places CPU s=540 and decoy s=940, lateral=0, on the actual 480 m Scrapdome circuit,
+seed 1989. Native CPU world point is (-35.129535363953366, 44.7878291227254);
+decoy is (-5.442488544529219, -18.96501939013382). Actual planar distance is
+**70.32600118279339 m**, inside the caller's **180 m** range. Correct source
+selects the live hostile decoy; the frozen assertion expects the real player.
+
+The Director confirmed this closed-course fixture problem and requires author/
+reviewer resolution. The assertion remains RED and unchanged. No unwrapped-s
+range rule, fixture-name detection, replacement geometry or weakened range
+check was added. Exact private witness: closed-arena-range-witness.json.
+
+### Held Crossbow range question and outstanding acceptance
+
+The Director confirmed that released tuning gives only CPU acquisition a 180 m
+cap. Player Crossbow acquisition/homing has no explicit cap. Existing bolt
+settings are 200 + 30/level m/s, 2.5 s lifetime and inherited world velocity with
+Wasteland2. A common 180 m context at player/in-flight routes could shorten that
+released reach. This provisional source currently uses it at those new resolver
+calls; **it is not settled and must not ship**. The Director is asking Claude in
+writing for the precise existing-weapon values/formula. No invented cap is an
+authorized solution. Independent native range regressions precede continuation.
+
+Source/reviewer and Save Guardian review, range settlement/tests, exact lane/
+build gates, retained Arsenal replay, balance, browser/DOM/game presentation and
+frame checks remain before merge. No lane/full-tier, whole-card or release pass.
+Protected audio/bank hooks remain requests; settled cues are weapon.oil.deploy,
+weapon.oil.slip and weapon.smoke.deploy. Generic weapon.fire fallback is not
+finished audio. No listening or audio-integration clearance is claimed.
+
+### Exact source and protected bytes
+
+SHA-256 hashes below cover this provisional review freeze. Unchanged files were
+compared directly against Git bytes on the normal integration merge commit.
+
+| Path | SHA-256 |
+| --- | --- |
+| src/app.js | b73b90c1c9202e62ce1a7a59f254076f0f73b33e99d5b56b9f91aabc328c9970 |
+| src/arena/arena-pilot.js | 20141483434d16d0ab45443cc9c6199b832ea57cfb08d6150ab31cf42659fc7d |
+| src/arsenal/car-effects.js | 4f7d3842234172ab8422c46797f45eb5e3f6bb0f39b4485f615f4db1075512cb |
+| src/arsenal/smoke.js | c7a10f24ea6082092a04dd2e69566c1ec7afb55be2239e91faf0a2ea789de7cf |
+| src/arsenal/targeting.js | 020625e24a75cd7846675b3e665d63c3a19a78f4541105ca641e1c329d1da189 |
+| src/combat-ai.js | 8037af43a2ac69f822eb8fd2f504cd7e06dc1c6f673bce24765b0bd56c5c7819 |
+| src/combat-armor.js | 6e3c8ab02303f2f84e99b606f2e4f6b07ad43e84cd28f9ef6dcc82bcd1e87a30 |
+| src/combat-projectiles.js | dccf888a423f4fd2fdc56482699d27dbff6b709358c8701d22bc690a704876b4 |
+| src/combat-scene.js | 094d2999017e08fd3f250f6da67662597016840c8834bc4b561751755c3c35a5 |
+| src/combat-weapons.js | 745d08116824f622b8d7c0ef869dc386f9f74de9848db022fae9b7a5ccd8026f |
+| src/combat.js | 42b12987e2c0131d14a1d20461c5a92cff1a9cbb00124a5f495c808ec4448508 |
+| src/game.js | 1e245caf76a59d4e7343856456c10bb7e6fc053f3e671be1735e6cace2fb04af |
+| src/onfoot-weapons.js | b1355a487139ec1d759cd0859b5a4e0fd9ee304a1e84b1f740e674b29f728da6 |
+| src/screen-armory.js | 28d8127e18ecf346216b51873118196d8886a35b9169e36fc0c89d44d1cc5f46 |
+| src/screen-router.js | 75485c6b99cf93ea5dd3decb7dbaf80556271a8ebcac3959dbb9735bca10a99e |
+| src/sim-driving.js | 418139dcb7e692868c1c2b886d403e0cd3b3acb94a863aaa7d6d570f5365f21d |
+| src/sim-rival.js | f7d23861373833e55050c9ac403e02842e143b53732056a73fc618ab999bb410 |
+| Unchanged src/weapon-upgrades.js | 6b5f76ac6d537b9b80986cf11bbaea59142fc202cb4da8736707d999489a8cc8 |
+| Unchanged src/car-loadout.js | e20d84276b5d8c5e5e45629579a306db220354278eff16ea88fdf7c9600d918e |
+| Unchanged src/wasteland-progress.js | 40e9934fbbc5bf19f1d00ce28692330653d3ceb13c1b67aa344987ec0c4eac6f |
+| Unchanged src/wasteland-tuning.js | 426e9a05d3d4e5e08e7e43a1db1d5020889fd31fb9009cd0d492c0d240b17e7f |
+| Unchanged src/audio.js | 0ce6602c798a4326da9436219f24b232d16019727f6f1c71b796b32c2f17f56f |
+| Unchanged src/sound-bank.js | 7f0ca4e57f609b911183659418da5feac6802e9a2a280935bdaf4726c6e42339 |
+| Unchanged src/feature-flags.js | 5b4921d09daf7f264df71f14a61c90b245c0f42bd5a4868358d32777fc1ba335 |
+| Unchanged start-preview.bat | 0a0f2a058afc7cbad0fee4560eaf6cf90679ac15278e83ba49bb67ac1a76f55f |
+| Unchanged tools/test-arsenal-core.mjs | ca1f275216c643b802ceada5d86967751608356ee7aea1bda4ffeeeed43c541f |
+| Unchanged tools/test-arsenal-save.mjs | 54480590357b34f190dc2ce8f713ccb420ece5a959480ade437254ecb5f6b945 |
+| Unchanged tools/test-arsenal-runtime.mjs | 6df9f61733bb052f419d65b4317cd44a414a66b34c6087bed8a6ef63be5fb46e |
+
+### Removed — native consumer continuation
+
+Replaced the held CPU rear-weapon refusal, unwired real hit-history reader,
+default-only bound Armory calls and bypassing native aimed/lock/homing consumers
+in this slice. The old fixed four-entry UI enumeration uses the genuine admitted
+owned list. The new pooled presenter owns/disposes its resources without
+accumulating render output.
+
+No assertion, fixture, replay pin, reviewed earned-identity/slot rule, pure save
+module, runtime binary, licensed source, protected audio, other lane work or real
+save was removed or changed. Earlier note sections remain verbatim. Further
+Crossbow range replacement belongs to the Director's design/test continuation
+before the card may merge.

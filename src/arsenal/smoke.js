@@ -1,6 +1,6 @@
 import {point} from '../combat-weapons.js';
 import {DRIVE} from '../config.js';
-import {arenaParticipant, outOfPlay} from '../combat-teams.js';
+import {arenaActor, hostile, outOfPlay} from '../combat-teams.js';
 import {addHazard} from './hazards.js';
 import {enemiesBehind} from './targeting.js';
 
@@ -17,9 +17,26 @@ export function deploySmoke(duel, owner) {
   return smoke;
 }
 
+const recentHits = new WeakMap();
+
+export function clearSmokeHistory(duel, actor) {
+  if (actor) recentHits.get(duel)?.delete(actor);
+  else recentHits.delete(duel);
+}
+
+export function noteSmokeHit(duel, victim, removed, ownerId) {
+  if (!(removed > 0) || !ownerId) return;
+  const owner = duel.state.arena ? arenaActor(duel, ownerId) :
+    ownerId === 'player' ? duel.state :
+    ownerId === 'cpu' && victim === duel.state ? duel.state.rival : null;
+  if (!owner || !hostile(duel, owner, victim)) return;
+  let hits = recentHits.get(duel);
+  if (!hits) recentHits.set(duel, hits = new WeakMap());
+  hits.set(victim, duel.state.stageTimeSec);
+}
+
 export function shouldUseSmoke(duel, owner) {
-  const hit = arenaParticipant(duel, owner);
-  const elapsed = duel.state.stageTimeSec - (hit?.lastHitAt ?? -Infinity);
-  return !!hit?.lastHitBy && elapsed >= 0 && elapsed <= 5 &&
+  const elapsed = duel.state.stageTimeSec - (recentHits.get(duel)?.get(owner) ?? -Infinity);
+  return elapsed >= 0 && elapsed <= 5 &&
     enemiesBehind(duel, owner, 50).length > 0;
 }

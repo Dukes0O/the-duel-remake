@@ -6,6 +6,13 @@ export function carEffect(car, kind) {
   return effectsByCar.get(car)?.get(kind) || null;
 }
 
+export function carGrip(car) {
+  return Math.min(1, ...['slick','grip'].map(kind => {
+    const effect=carEffect(car,kind);
+    return effect && Number.isFinite(effect.grip) ? Math.max(0,effect.grip) : 1;
+  }));
+}
+
 export function setCarEffect(car, kind, {duration, ...data} = {}) {
   if (!car || !EFFECT_KINDS.has(kind) || !Number.isFinite(duration)) return null;
   let effects = effectsByCar.get(car);

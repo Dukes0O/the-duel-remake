@@ -105,6 +105,7 @@ const garageScreen = createGarageScreen({app, profile, credits, escapeHTML, getG
 const armoryScreen = createArmoryScreen({profile, credits, escapeHTML,
   getGarageMessage:()=>garageMessage, getArmoryCar:()=>armoryCar,
   kitsEnabled:()=>app.wastelandUnlocked(),
+  arsenalEnabled:()=>app._switches().enabled('arsenal')===true,
   warlordsEnabled:()=>app.warlordsAvailable?.()===true,
   loadoutsEnabled:()=>app.wastelandUnlocked(),
   crewEnabled:()=>app.wastelandUnlocked(),
@@ -162,6 +163,7 @@ root.addEventListener('click',e => {
   if(handleGarageUpgrade(button,{app,garageCar,refreshGarage,profile,credits}))return;
   if (button.dataset.car && !isCarUnlocked(profile(), button.dataset.car)) { openGarage(button.dataset.car); return; }
   for (const key of ['car','difficulty','mode','cpuDifficulty']) if (button.dataset[key]) { choices[key] = button.dataset[key];updateMenuScene();return; }
+  if(button.dataset.arsenalPurchase){const result=app.purchaseArsenalWeapon(button.dataset.arsenalPurchase);refreshGarage(result.ok?'Weapon purchased.':result.reason);return;}
   if(button.dataset.weaponUpgrade){const result=app.purchaseWeapon(button.dataset.weaponUpgrade);refreshGarage(result.ok?'Weapon upgraded.':result.reason);return;}
   if(button.dataset.crewSelect){
     const result=app.selectCrewMember(button.dataset.crewSelect);
