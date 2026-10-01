@@ -982,3 +982,130 @@ comparison or replay pin was deleted. Private superseded candidates remain
 used-once evidence for the Director's janitor after verdict capture. No live,
 Preview, port 5174, real save, protected audio, new dependency, service, source
 pack, download, helper, model override or history rewrite was used.
+
+
+## Round 2 QA framing recorded before capture — 1 October 2026
+
+Director independently cleared Source a1ce674 and the exact private candidate
+SHA-256 a3ed6fa81dd493983a4b9e07f69216258e2ce048b9849acf9af291ef02823377,
+1,616,912 bytes, for actual comparison only. The unchanged candidate and manifest
+are staged in lane `.evidence/tanker-private-candidate/` before the QA build
+clears `.qa-dist/`. The scenario rejects any other candidate SHA or size.
+
+The round-one fixed camera offsets assumed the prior 7.228 m truck. Before any
+round-two capture, QA framing now derives from the complete loaded 3 x 3.5 x 11 m
+truck bounds. Near and distant matched views include the actual rendered game
+car for scale. The paired view includes both native graphs and that car; opposite
+and roof inspection include the complete truck. The existing production
+inspection camera stays at 48 degrees. Its position/target are set only by this
+private QA scenario, using all eight bounds corners and a 14% edge margin.
+Projected corners must remain inside the actual camera. No production camera,
+model transform, native recipe, test or simulation rule changes.
+
+All eighteen named High/Performance views and existing readiness, yard, health,
+input and state controls remain. The exact two-lamp on expectation follows the
+approved real presenter: orange ff6610, strength 6; recovery remains zero.
+Original main-donor Source palettes are loaded only for the disposable comparison
+graph with the exact new manifest matrices; the fitted graph uses the verified
+complete native asset and actual presenter. No former runtime tanker exists.
+The report is saved incrementally to retain completed details if an attempt fails.
+Capture and art verdicts remain pending at this preparation entry. Heavy work is
+held for Shove's agreed frame window; Tanker frame timing is not measured.
+
+Removed: replaced private round-one fixed review offsets and stale lamp-output
+expectations. Round-one sheet/verdict, Source/native assertions, palettes/catalog,
+licensed files and public/runtime assets remain intact.
+
+
+### Round-two camera correction before recapture
+
+Attempt 1 stopped before images on the new QA quality assertion. The inherited
+report read nonexistent `app.graphicsQuality`; the actual renderer selects High
+from `app.ambientOcclusionEnabled !== false`. QA now reads that real selector and
+retains an exact High/Performance check. No production setting or rule changed.
+
+Attempt 2 passed all eighteen functional checks at private port 59369, with two
+duplicate-Three QA warnings and no errors. Direct image inspection found that the
+paired bounds-fitting camera was behind a genuine yard wall; the distant angle
+partly hid the car. Bounds alone do not prove visible art. Before recapture, only
+QA view directions are corrected: paired [2,10,-5] and distant [1,10,-2], each
+normalized before actual-bounds fitting. The distant camera retains its 3.4
+distance multiplier. These higher actual-yard angles keep the review context
+clear of the real wall. Near/opposite/roof directions, model placement, all native
+graphs, yard walls, complete eighteen-view count and every state/health assertion
+stay unchanged. No wall is hidden or altered. Attempt 2 is retained as used-once
+evidence, not accepted as the finished sheet.
+
+
+Attempt 3 clears the wall and passes eighteen checks, but direct paired-image
+inspection shows that the inherited +4 world-X Source shift overlaps the actual
+car. Before final recapture, the paired Source graph stays at its normal actual
+`groundAt(s,lateral+8)` point; the fitted graph uses the native
+`groundAt(s,lateral+16)` point. The complete fitted position is reset to its
+normal native ground point before health/opposite/roof views. Only private
+comparison placement changes; donor manifest matrices, model scale, real car,
+yard and simulation state remain unchanged. This replaces arbitrary paired
+world-X translation with genuine course ground coordinates. The same higher
+paired camera fits both actual graphs, and report records the paired ground.
+Attempts 1–3 remain complete private evidence; one round-two candidate is used.
+
+
+### Round-two actual capture result — bounded QA ownership return
+
+Final attempt 4 uses private port **6331**, memory-only saves and the actual
+App/Duel/renderer. All **18/18** named High/Performance Source/fitted/paired/
+health/opposite/roof views pass. Loaded native dimensions are **3 x 3.5 x 11 m**;
+all projected context corners remain inside the camera (maximum absolute X/Y
+**0.860000000000072**). The actual Falcone F42 is retained for scale. Both loaded
+warning-lamp meshes show exact ff6610/6 at [0,0,0], and zero emission at recovery
+[1,0,0]. Supplied arrays and Duel state are unchanged. There are zero browser
+errors and **two duplicate-Three QA-bundle warnings**, preserved without hiding.
+
+One round-two sheet is **444,260 bytes, 1200 x 3707**, SHA-256
+`dc21c8e4f55551bcd53ba4e6769e50e1c61bdef6ee0aafbd9102afbfe062bd63`.
+All eighteen actual full frames are resized only, with labels outside the pixels.
+The source-palette baseline uses exact new manifest transforms. Manifest is
+**12,224 bytes**, SHA-256
+`6c7949a0e19e0b87cca33c5f8c05cca13eeb73a7b7014a1dc715d059a3c270d8`.
+Candidate remains exact **a3ed6fa8 / 1,616,912 B / 6,328 triangles / 26 native draws**.
+The approved QA expectation changes are exact candidate/manifest bindings and
+old lamp b32904/2.2 -> real approved ff6610/6. No threshold, health count, state
+rule, native 56-case assertion, source palette/catalog or Source file is weakened
+or changed. New bounds/corner/quality checks add evidence.
+
+The complete original Source/note prefix, first-round sheet/recipe/verdict and
+all unowned tracked files remain unchanged; explicit hashes are in
+`protected-before.json` and `protected-after.json`. Raw logs, every attempt's
+complete report, final camera/ground/corner/health records and all eighteen final
+PNG hashes/images are in integration
+`.evidence/2026-10-01/ART-FIT-TANKER/round2-comparison/`. Lane evidence retains
+every attempt. No active export was interrupted. The two camera/placement repairs
+are QA recaptures of one unchanged round-two candidate; **two of three art rounds**
+are used. Round-one verdict stays intact.
+
+The review note records self-observations only: full rigid truck/car scale,
+lighter tank/darker cab/glass, distinct hubs, bright collars/small red controls,
+prominent open ports, raised striped plate and small lamp contrast. Distant
+views use a higher static angle to clear the real wall; they do not clear the
+production racing camera or motion readability. Independent critic and Claude
+verdicts remain pending. Every comparison goes to Claude before merge/install.
+No frame timings, full Convoy/gameplay, art score, public install, whole card,
+merge/push/release or final lane/full clearance is claimed here.
+
+Removed: stale private QA fixture/lamp expectations, fixed comparison offsets
+and paired world-X shifts were replaced. No native donor, Source/provenance/test,
+licensed input, first-round record, public model/catalog, runtime asset, replay
+pin, world signature or protected audio is removed. Failed/occluded evidence
+stays used-once pending Director consumption and janitor deletion.
+
+
+Focused unchanged QA controls pass: browser harness **5 tests / 14 evidence
+checks**, memory-only storage **39 checks**, review evidence **9 tests / 319
+checks**. Private `npm run build` passes (**439 ms**) with the existing large-chunk
+warning. The sheet recipe deterministically selects **JPEG quality 60** to stay
+under 500,000 bytes; dimensions and the final sheet SHA stay exact after rebuilding.
+Complete outputs are preserved under the same integration evidence directory.
+Native 56-case Source assertions remain byte-exact and retain their previously
+reviewed Sourcea1ce evidence; this QA slice does not change or rerun them.
+The full lane plan is unchanged and remains a later pre-merge gate. No merge
+occurs in this handoff. QA ownership returns for independent review and Claude.

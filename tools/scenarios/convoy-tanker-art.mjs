@@ -1,5 +1,6 @@
 /** Private matched shots in the production yard renderer, never a blank viewer.
- * Build candidate under .evidence/ART-FIT-TANKER/candidate before the harness.
+ * Stage the cleared native candidate under .evidence/tanker-private-candidate.
+ * Round two: camera framing derives from the complete loaded 11 m rig and car.
  * Native source review and Director capture clearance must precede execution.
  */
 import {readFileSync, writeFileSync} from 'node:fs';
@@ -13,7 +14,7 @@ const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
 function privateDirectory() {
   const directory = resolve(process.env.TANKER_ART_OUTPUT ||
-    join(root, '.evidence/ART-FIT-TANKER/candidate'));
+    join(root, '.evidence/tanker-private-candidate'));
   const local = relative(root, directory);
   if (isAbsolute(local) || local.startsWith('..') ||
       !/^(?:\.evidence|\.qa-dist)[\\/]/.test(local)) {
@@ -78,7 +79,7 @@ async function browserBundle() {
       resolveId(id) { if (id.replaceAll('\\', '/') === entry) return '\0tanker-art-private'; },
       load(id) {
         if (id !== '\0tanker-art-private') return;
-        return "export {Group,Matrix4,Vector3} from 'three';" +
+        return "export {Box3,Group,Matrix4,Vector3} from 'three';" +
           "export {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';" +
           'export {createTankerModel} from ' + JSON.stringify(modulePath) + ';';
       },
@@ -97,9 +98,18 @@ async function browserBundle() {
 export async function run(context) {
   const directory = privateDirectory();
   const bytes = readFileSync(join(directory, 'tanker.glb'));
-  const manifest = JSON.parse(readFileSync(join(directory, 'manifest.json'), 'utf8'));
+  const manifestBytes = readFileSync(join(directory, 'manifest.json'));
+  if (manifestBytes.length !== 12224 || digest(manifestBytes) !==
+      '6c7949a0e19e0b87cca33c5f8c05cca13eeb73a7b7014a1dc715d059a3c270d8') {
+    throw Error('Round-two comparison requires the exact cleared transform manifest');
+  }
+  const manifest = JSON.parse(manifestBytes.toString('utf8'));
   const fit = JSON.parse(readFileSync(join(root, 'tools/art/tanker-fit.json'), 'utf8'));
   const catalog = JSON.parse(readFileSync(join(root, 'tools/art/catalog.json'), 'utf8'));
+  if (bytes.length !== 1616912 || digest(bytes) !==
+      'a3ed6fa81dd493983a4b9e07f69216258e2ce048b9849acf9af291ef02823377') {
+    throw Error('Round-two comparison requires the exact cleared a1ce674 native artifact');
+  }
   const {json} = nativeGlb(bytes);
   if (manifest.card !== 'ART-FIT-TANKER' || manifest.seed !== fit.seed) throw Error('Fitting manifest required');
   if ([...(json.images || []), ...(json.buffers || [])].some(row => row.uri)) throw Error('Self-contained candidate required');
@@ -109,13 +119,18 @@ export async function run(context) {
   const payload = {candidate: bytes.toString('base64'), manifest, sources};
   const bundle = await browserBundle();
   const report = {
-    card: 'ART-FIT-TANKER', artifactSha256: digest(bytes), stats: manifest.stats,
+    card: 'ART-FIT-TANKER', round: 2, sourceRef: 'a1ce674134dab9e71a0ac519f1322ecfbecc70b3',
+    artifactSha256: digest(bytes), artifactBytes: bytes.length, stats: manifest.stats,
+    manifestSha256: digest(manifestBytes),
+    framing: 'Actual loaded native bounds; 48 degree production inspection camera, 14% edge margin. Near/racing include the actual game car. Full frames, no crop.',
     baseline: 'Original picked body/tank/three valves at fitted transforms; no previous runtime tanker exists.',
     setting: 'Actual production Scrapdome yard and renderer.',
     artVerdict: 'Pending independent comparison review.',
     frameVerdict: 'Not measured by this screenshot scenario.',
     captures: [],
   };
+  const saveReport = () => writeFileSync(join(context.outputDir, 'tanker-comparison.json'), JSON.stringify(report, null, 2) + '\n');
+  saveReport();
   for (const quality of ['high', 'performance']) {
     await context.navigate('/tools/menu-check.html?flags=hidden-road,wasteland2');
     await context.waitFor("!!window.__qaApp && !!window.__render && !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value",
@@ -136,7 +151,7 @@ export async function run(context) {
     await context.waitFor("(() => {const a=window.__qaApp;a.onFrame?.(a.duel.state,0);window.__render?.renderFrame();return a.isYardHomeActive() && a.visualReady && document.querySelector('#renderer-loading')?.hidden;})()",
       quality + ' actual game yard ready', 60000);
     await context.evaluate(bundle);
-    await context.evaluate(`(async () => {
+    const placement = await context.evaluate(`(async () => {
       const api=TankerArtQa,app=window.__qaApp,view=window.__render,input=${JSON.stringify(payload)};
       const parse=async base64=>{
         const bytes=Uint8Array.from(atob(base64),value=>value.charCodeAt(0));
@@ -158,51 +173,103 @@ export async function run(context) {
         view.scene.add(model.group);model.group.visible=false;
       }
       document.querySelectorAll('.yard-home-panel,#race-hud,#modal-layer').forEach(n=>n.style.display='none');
-      window.__tankerArt={source,candidate,state:JSON.stringify(app.duel.state),
-        placement:new api.Vector3(world.x,(world.y||0)+1.55,world.z-1)};
-      return true;
+      const origin=new api.Vector3(world.x,world.y||0,world.z);
+      const truckBounds=new api.Box3().setFromObject(candidate.group);
+      const size=truckBounds.getSize(new api.Vector3());
+      if(Math.abs(size.x-3)>.002||Math.abs(size.y-3.5)>.002||Math.abs(size.z-11)>.002)
+        throw Error('Actual loaded round-two rig dimensions changed');
+      const carGround=app.duel.course.groundAt(app.duel.state.s,app.duel.state.lateral);
+      const carPoint=new api.Vector3(carGround.x,carGround.y||0,carGround.z);
+      const car=view.scene.children.filter(n=>n.visible&&n.userData.vehicleKey===app.duel.state.car)
+        .sort((a,b)=>a.position.distanceToSquared(carPoint)-b.position.distanceToSquared(carPoint))[0];
+      if(!car)throw Error('Actual game car missing from scale context');
+      const carBounds=new api.Box3().setFromObject(car);
+      const referenceBounds=truckBounds.clone().union(carBounds);
+      const corners=box=>{
+        const result=[];
+        for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])
+          for(const z of [box.min.z,box.max.z])result.push(new api.Vector3(x,y,z));
+        return result;
+      };
+      const frame=(box,direction,distanceScale=1)=>{
+        const target=box.getCenter(new api.Vector3()),back=new api.Vector3(...direction).normalize();
+        const right=new api.Vector3(0,1,0).cross(back).normalize(),up=back.clone().cross(right);
+        const tangent=Math.tan(48*Math.PI/360),margin=.86;
+        let distance=0;
+        for(const corner of corners(box)){
+          const delta=corner.clone().sub(target),depth=delta.dot(back);
+          distance=Math.max(distance,depth+Math.abs(delta.dot(right))/(tangent*view.camera.aspect*margin),
+            depth+Math.abs(delta.dot(up))/(tangent*margin));
+        }
+        const position=target.clone().addScaledVector(back,distance*distanceScale);
+        app.inspectionCamera={position:position.toArray(),target:target.toArray()};
+        for(let i=0;i<12;i++)view.renderFrame();
+        view.camera.updateMatrixWorld(true);
+        const projected=corners(box).map(corner=>corner.project(view.camera).toArray());
+        if(projected.some(p=>Math.abs(p[0])>.99||Math.abs(p[1])>.99||p[2]<-1||p[2]>1))
+          throw Error('Actual native comparison framing clips declared context');
+        return {camera:app.inspectionCamera,bounds:{min:box.min.toArray(),max:box.max.toArray()},
+          projectedCorners:projected,car:{key:car.userData.vehicleKey,source:car.userData.vehicleSource,
+            min:carBounds.min.toArray(),max:carBounds.max.toArray()},
+          stateUnchanged:JSON.stringify(app.duel.state)===window.__tankerArt.state};
+      };
+      window.__tankerArt={source,candidate,state:JSON.stringify(app.duel.state),origin,
+        truckBounds,carBounds,referenceBounds,frame,
+        pairedGround:app.duel.course.groundAt(app.duel.state.s,app.duel.state.lateral+16)};
+      return {truckSize:size.toArray(),truckBounds:{min:truckBounds.min.toArray(),max:truckBounds.max.toArray()},
+        car:{key:car.userData.vehicleKey,source:car.userData.vehicleSource,
+          min:carBounds.min.toArray(),max:carBounds.max.toArray()},ground:{...world}};
     })()`);
+    report.placements ??= [];
+    report.placements.push({quality,...placement});
+    saveReport();
     for (const version of ['source', 'candidate']) {
       for (const distance of ['near', 'racing']) {
         const detail = await context.evaluate(`(() => {
           const q=window.__tankerArt,app=window.__qaApp,view=window.__render;
           q.source.group.visible=${version === 'source'};
           q.candidate.group.visible=${version === 'candidate'};
-          const p=q.placement,scale=${distance === 'near' ? 1 : 3.4};
-          app.inspectionCamera={position:[p.x+(scale===1?7:-7*scale),p.y+3.5*scale,p.z+(scale===1?-9:9*scale)],target:[p.x,p.y,p.z]};
-          for(let i=0;i<12;i++)view.renderFrame();
-          return {gameYard:app.isYardHomeActive(),quality:app.graphicsQuality,
+          const framing=q.frame(q.referenceBounds,${distance === 'near' ? '[7,3.5,-9]' : '[1,10,-2]'},${distance === 'near' ? 1 : 3.4});
+          return {...framing,gameYard:app.isYardHomeActive(),quality:app.ambientOcclusionEnabled!==false?'high':'performance',
             triangles:view.renderer.info.render.triangles,draws:view.renderer.info.render.calls};
         })()`);
+        report.attemptChecks ??= [];
+        report.attemptChecks.push({quality,distance,version,...detail});
+        saveReport();
         if (!detail.gameYard) throw Error('Comparison left actual game yard');
+        if (detail.quality !== quality || !detail.stateUnchanged) throw Error('Matched quality/state changed: '+JSON.stringify(detail));
         const name = 'tanker-' + version + '-' + distance + '-' + quality;
         await context.screenshot(name);
         report.captures.push({name, quality, distance, version, ...detail});
+        saveReport();
       }
     }
-    await context.evaluate(`(() => {
-      const q=window.__tankerArt,p=q.placement;
+    const pairedDetail=await context.evaluate(`(() => {
+      const q=window.__tankerArt;
       q.source.group.visible=true;q.candidate.group.visible=true;
-      q.source.group.position.x+=4;q.candidate.group.position.x-=4;
-      window.__qaApp.inspectionCamera={
-        position:[p.x+7,p.y+4,p.z-9],target:[p.x,p.y,p.z]};
-      for(let i=0;i<12;i++)window.__render.renderFrame();
+      q.source.group.position.copy(q.origin);
+      const ground=q.pairedGround;
+      q.candidate.group.position.set(ground.x,ground.y||0,ground.z);
+      const box=new TankerArtQa.Box3().setFromObject(q.source.group)
+        .union(new TankerArtQa.Box3().setFromObject(q.candidate.group)).union(q.carBounds);
+      return {...q.frame(box,[2,10,-5]),pairedGround:{...ground}};
     })()`);
     const pairedName='tanker-source-and-fit-'+quality;
     await context.screenshot(pairedName);
-    report.captures.push({name:pairedName,quality,version:'source-and-fit',
+    if(!pairedDetail.stateUnchanged)throw Error('Paired capture changed simulation state');
+    report.captures.push({name:pairedName,quality,version:'source-and-fit',...pairedDetail,
       limit:'Original main donors on left; fitted complete truck on right. Shared actual renderer, camera and lighting. No former runtime tanker.'});
+    saveReport();
     // Loaded presentation health only; this is not future Convoy Raid gameplay.
     for (const health of [[0, 0, 0], [1, 0, 0]]) {
       const broken=health.every(value=>value<=0);
       const detail=await context.evaluate(`(() => {
-        const q=window.__tankerArt,app=window.__qaApp,view=window.__render,p=q.placement;
+        const q=window.__tankerArt,app=window.__qaApp,view=window.__render;
         q.source.group.visible=false;q.candidate.group.visible=true;
-        q.candidate.group.position.x=q.placement.x;
+        q.candidate.group.position.copy(q.origin);
         const input=${JSON.stringify(health)},before=JSON.stringify(input);
         q.candidate.setValveHealth(input);
-        app.inspectionCamera={position:[p.x+7,p.y+3.5,p.z-9],target:[p.x,p.y,p.z]};
-        for(let i=0;i<12;i++)view.renderFrame();
+        const framing=q.frame(q.referenceBounds,[7,3.5,-9]);
         const lamps=[];q.candidate.group.traverse(n=>{
           if(n.isMesh&&n.name.startsWith('tanker-warning-lamp-')){
             const materials=Array.isArray(n.material)?n.material:[n.material];
@@ -210,25 +277,27 @@ export async function run(context) {
           }
         });
         if(before!==JSON.stringify(input))throw Error('Presentation mutated supplied health');
-        if(lamps.length!==2||lamps.some(l=>l.materials.some(m=>m.hex!==${broken?0xb32904:0}||m.intensity!==${broken?2.2:0})))
+        if(lamps.length!==2||lamps.some(l=>l.materials.some(m=>m.hex!==${broken?0xff6610:0}||m.intensity!==${broken?6:0})))
           throw Error('Actual loaded two-lamp health presentation failed');
-        return {lamps,stateUnchanged:q.state===JSON.stringify(app.duel.state),inputUnchanged:true};
+        return {...framing,lamps,stateUnchanged:q.state===JSON.stringify(app.duel.state),inputUnchanged:true};
       })()`);
       if(!detail.stateUnchanged)throw Error('Health capture changed simulation state');
       const name='tanker-'+(broken?'all-three-broken':'recovered')+'-'+quality;
       await context.screenshot(name);
       report.captures.push({name,quality,version:'candidate',health,...detail,
         limit:'Actual loaded read-only presentation health; no future Convoy Raid gameplay claim.'});
+      saveReport();
     }
     for(const angle of ['opposite-valve','roof-plate']) {
-      await context.evaluate(`(() => {
-        const q=window.__tankerArt,p=q.placement;
-        window.__qaApp.inspectionCamera={position:${angle==='roof-plate'?'[p.x+4,p.y+10,p.z-7]':'[p.x-7,p.y+3.5,p.z-9]'},target:[p.x,p.y,p.z]};
-        for(let i=0;i<12;i++)window.__render.renderFrame();
+      const detail=await context.evaluate(`(() => {
+        const q=window.__tankerArt;
+        return q.frame(q.truckBounds,${angle==='roof-plate'?'[4,10,-7]':'[-7,3.5,-9]'});
       })()`);
+      if(!detail.stateUnchanged)throw Error('Supplemental capture changed simulation state');
       const name='tanker-'+angle+'-'+quality;
-      await context.screenshot(name);report.captures.push({name,quality,version:'candidate',angle,
+      await context.screenshot(name);report.captures.push({name,quality,version:'candidate',angle,...detail,
         limit:'Supplemental actual-yard inspection of opposite valve or raised roof plate; no gameplay.'});
+      saveReport();
     }
     const unchanged = await context.evaluate(`(() => {
       const q=window.__tankerArt,same=q.state===JSON.stringify(window.__qaApp.duel.state);
@@ -238,5 +307,7 @@ export async function run(context) {
     })()`);
     if (!unchanged) throw Error('Art comparison changed simulation state');
   }
-  writeFileSync(join(context.outputDir, 'tanker-comparison.json'), JSON.stringify(report, null, 2) + '\n');
+  if(report.captures.length!==18)throw Error('All eighteen matched round-two views are required');
+  report.captureVerdict='All 18 actual-yard views, quality, native bounds, supplied health and simulation state checks passed';
+  saveReport();
 }
