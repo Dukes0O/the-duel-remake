@@ -183,3 +183,128 @@ No existing assertion is changed. There is no prior test/note prefix to
 reconstruct because both assigned files are new. The leaf remains tests-first
 RED for the proper Source builder, not ready to merge. The earlier Removed
 section and all stated art/Claude/Kyle/installation limits still apply.
+
+
+## Private Vesper Source freeze, 1 October 2026
+
+Status: private native fit ready for independent Source and visual review.
+Waiting on: independent recipe/material review, matched game comparison and
+Claude; no installation or WAR-04 reveal approval is implied.
+
+The Source leaf changed only new tools/blender/vesper-blackiron.py, new
+tools/art/vesper-fit.json and this appended note. All 1180
+previously tracked files outside this note are byte exact, including the
+frozen test/scenario, every runtime Source/public/crew/roster/save/flag/replay
+file, original donor recipe, reference and rights. The original 11497
+note bytes remain exact, SHA-256 c748896411d9e3da79a93f22fb090fefe6db08eaeb9e4711655809ba5604d044.
+
+### Native fitting and output
+
+The genuine current Odessa donor remains 1,920,000 bytes and retains the four
+source/rights hashes above. Blender 4.5.13 LTS imports the actual seventeen-
+joint figure, two armature-bound LODs and all twelve named actions. The
+private costume retains the existing body; no existing woman is refitted.
+
+The new atlas follows the native projected UV islands: blackened steel on
+the mechanic bib, shoulders and existing knee shapes; charcoal fabric and
+leather; a worn dark red diagonal harness and left sleeve accent. The face
+region remains from the approved source. Color shade uses original garment
+detail, deterministic dust and rubbed wear; physical roughness/metallic
+channels produce the steel response. This is a private costume candidate,
+not a visual-recognizability or gritty-tone verdict. The actual atlas was
+inspected; no game comparison or art score was taken.
+
+Blender genuinely creates two 1024 PNG atlases and assigns the fitted
+material to both imported bound LODs. Per Director approval, lossless
+material/image rebinding then replaces only the donor's embedded atlas
+views and material/image names. Every other buffer view is copied exactly;
+all 383 native geometry, UV, joint,
+weight, bind and action accessor-view hashes match. Buffer offsets are
+repacked; vertex/topology/animation contents are not resampled. This avoids
+ordinary importer/exporter vertex ordering or animation sampling changes.
+No Blender bone-display helper enters the candidate.
+
+Both costume roles genuinely use exported material 0, through different
+regions of its single shared color/surface texture set. This preserves one
+skinned draw per visible LOD. Actual unchanged measurements are 4,876 near
+and 1,880 far triangles, seventeen joints and twelve actions.
+
+Private output is vesper.glb plus manifest.json; Blender-produced PNGs stay
+alongside them under ignored .qa-dist/vesper-art. Candidate: 2163704
+bytes, SHA-256 47f76f334ee1025b8ad0cdef5539dd85e86f899f1b67b4022f35263d7d73ef35. Its size grows by
+243704 bytes from the donor because the
+new atlases contain different deterministic detail. Old atlas payloads are
+replaced in the candidate, not duplicated or retained as another version.
+No generated binary or Blender file is committed.
+
+Original embedded image SHA-256 values:
+
+- Color: 1b89921aad0cebd13d38ea63b732d21a2d3b3aa2f75fce40c513c16302d9c9b4.
+- Surface: 9e3ea83c17608325976c74d9db5a5869dad9dfae21d41dc589e8df5588fad854.
+
+Candidate embedded image SHA-256 values:
+
+- Color: cb44e2c95073eed776426b6e61e83155f8617698e3fa10ca086e7f624354ba3e.
+- Surface: e0bd8aa77c3005d2abafd9f8d006fc6b76e3f76cd23f1b889162eba3868944ab.
+
+The standard-library CLI validates the exact donor/provenance checksums
+and resolved private output path before bpy import or output creation.
+Paths-only and source-validation modes run in ordinary Python and create
+no output directory. Public, root and other-lane destinations are refused;
+stale-source fixtures are rejected without creating output.
+
+### Tests, failures and limits
+
+On clean tests-first e5811d8e0927bb6542d508968b9aac76068fd979,
+the unchanged native suite reproduced 18 cases: six pass, twelve missing
+recipe/config/candidate RED; 27,017 acceptance checks. First real fit attempt
+gave eleven pass/seven RED because the recipe counted Blender's unskinned
+Icosphere bone-display object as donor geometry. Read-only native inspection
+proved two actual bound LODs, one seventeen-joint rig and that display
+helper. The recipe now counts armature-bound meshes. No test changed and
+the helper never enters the lossless export.
+
+Final unchanged suite: **18/18, 105,015 acceptance checks**. It rebuilds the
+default candidate from the recipe, then makes two actual exports to fresh
+private directories. Both repeat GLB hashes equal the default hash above.
+The real GLTFLoader/AnimationMixer tests prove retained native topology,
+UVs/weights/bind data and exact original action tracks/times/values, with
+all twelve actions deforming bound vertices. The actual unmodified native
+view accepts the candidate using its private recognized Odessa seam,
+clones twelve real skeletons, switches one visible LOD, reuses mesh/material
+objects, deduplicates requests and disposes real resources exactly once.
+Only unavailable Node image decoding uses the declared Three.Texture seam;
+actual embedded PNG dimensions/bytes are inspected separately.
+
+Complete RED/first-fit/GREEN logs, manifest/accessor/image hashes, independent
+repeat witnesses and protected receipts are retained in integration
+.evidence/2026-10-01/ART-FIT-CREW-W/source/. Existing native crew/rigged view,
+crew-rule and replay checks and build results are recorded there. The
+Source-only leaf does not claim lane/full or integration merge clearance.
+
+Actual matched near/distant High/Performance game comparison beside Nell,
+Odessa and Wren, recognizability/gritty consistency, frame cost, Claude
+sheet review and Kyle's Preview last look remain pending. At most three
+fitting rounds and two rounds without gain still apply; no comparison round
+has been spent by this native-only slice. WAR-04 owns later reveal/install
+and its roster/gameplay/save hooks. No shared output-hook, Source, public
+asset, reveal or credits record was edited. Live, Preview, .preview-dist,
+port 5174, real saves, external audio, dependencies and history were untouched.
+
+### Removed
+
+The candidate replaces the original embedded costume atlas payloads in its
+own private output. It does not replace or remove current Odessa/Nell/Wren
+runtime models, the original recipe/reference/rights, existing tests or
+replay pins. The temporary source-color extraction is deleted after native
+image loading; Blender's unskinned display helper is not exported. Eventual
+runtime install/removal belongs to WAR-04 after visual approval.
+
+Final recipe/config Source hashes:
+
+- tools/blender/vesper-blackiron.py: 17104 bytes; SHA-256 8b79d19c0204b6b441e7a6f8e8820b877d8e6ab5f6aa900ab52d8d5436560b5c.
+- tools/art/vesper-fit.json: 1994 bytes; SHA-256 5bf4167962b90d6d70f0d74c123e0b1564ec9735bce70a361d92850366dce0e1.
+
+Final preservation controls: crew fighters 26/26, native rigged fighter
+14/14, crew-rule tests 4/4, unchanged road fingerprints 162/162 and
+npm run build pass. Build retains its existing advisory chunk-size warning.
