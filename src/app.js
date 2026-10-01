@@ -425,11 +425,20 @@ export class App {
   }
   _saveProfile(){
     // Preserve other local players if another tab added or updated one.
-    const fresh=this.profileSaved===false?this.players:loadPlayers(),players=new Map(this.players.players.map(p=>[p.id,p]));
-    for(const p of fresh.players)players.set(p.id,p);
+    const retrying = this.profileSaved === false;
+    const durable = retrying ? readWarlordRegistry() : null;
+    const fresh = retrying
+      ? durable.status === 'ready' ? durable.registry : this.players
+      : loadPlayers();
+    const players = new Map(this.players.players.map(player => [player.id, player]));
+    for (const player of fresh.players) {
+      if (!retrying || player.id !== this.player.id) players.set(player.id, player);
+    }
     this.players=replacePlayerProfile({...this.players,players:[...players.values()]},this.player.id,this.profile);
     this.player=activePlayer(this.players);this.profile=this.player.profile;
-    this.profileSaved=savePlayers(this.players);
+    // Keep session-only edits local, but never overwrite unproved durable data.
+    this.profileSaved = retrying && durable.status === 'invalid'
+      ? false : savePlayers(this.players);
     if(this.profileSaved)this._rememberWarlordOwner();
     this._syncHiddenRoadDiscovery();return this.profileSaved;
   }

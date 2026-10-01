@@ -1644,3 +1644,110 @@ helpers, cases, saves, fingerprints, assets and Source bytes remain intact.
 No live folder, Preview, `.preview-dist`, port 5174, real save, protected audio,
 new dependency, network, helper agent, merge, push, release or history rewrite
 was used.
+
+
+## Narrow App retry-save Source fix — 1 October 2026
+
+The actual purchase/upgrade/equip retry loss and unsafe durable-write cases are
+fixed in the existing App save hook. Only src/app.js and this appended verdict
+changed. This is a bounded Source handoff for independent Save Guardian review,
+not a lane merge, full-tier pass or finished ARS-CORE card.
+
+### Tests first and approved scope
+
+Started clean at c58a27537d230bbc76642f6bd3c6d4f71d0660a9. Reproduced the
+unchanged eight actual App cases: **3 pass, five RED**. The Director then held
+source edits because an invalid-to-local write fallback could destroy a genuine
+future version-eight other-player career or an unreadable durable registry.
+Independent additive guard freeze bafc5d6c8baee94928e72b38596eee3ef9e8b549
+was clean before this fix. Reproduced its full targeted acceptance unchanged:
+**14 cases, three pass, 11 RED, 317 reached checks**, zero skips/TODOs.
+
+The Director approved exactly the refined bounded approach before source edits:
+valid durable retry merges only OTHER player IDs; invalid durable retry skips
+only the durable write; absence keeps prior local/session behavior. Existing
+local owner replacement, activePlayer selection, discovery sync and unsaved
+status remain, so session-only paint/setup survives unavailable storage.
+The normal non-retry loadPlayers path, raw registry validator, refresh helper,
+same-owner concurrency policy and active-player policy were not changed.
+
+### What changed
+
+_saveProfile now uses the existing validated raw readWarlordRegistry reader
+only during a retry after profileSaved===false. It does not treat loadPlayers'
+synthesized defaults as durable evidence. Ready data contributes complete latest
+OTHER-player entries to the existing local map. The acting owner's current
+profile is still applied through the existing replacement/save flow.
+
+An invalid or unreadable durable retry returns the existing failed-save status
+without calling savePlayers or issuing a registry write. Existing in-memory
+owner replacement and discovery sync still run. The shop's existing rollback
+therefore preserves the whole owner profile with no charge or unearned weapon.
+Future-version-eight and unreadable durable raw bytes remain exact. A proved
+absent registry retains the earlier local/session path; no helper was refactored.
+
+### Executed results
+
+| Check | Result |
+| --- | --- |
+| Exact targeted retry command | 14/14 pass; 317 checks; zero skips/TODOs. Before: 3/14 pass, 11 genuine RED. |
+| Frozen complete native command | 357 cases: 337 pass, 20 existing range RED, zero skips/TODOs; exit 1. Before: 326 pass, 31 RED. |
+| CORE and canonical SAVE | CORE 72/72, 598 checks; SAVE 98/98, 602 checks, unchanged. |
+| Complete native runtime | 187 cases: 167 pass, 20 held physical-range failures; 1,630 reached checks. |
+| Existing settlement read/missing/future guards | 29/29 pass unchanged. |
+| Existing progression, per-player race settings and paint | 27, 42 and 35 checks pass unchanged, including unsaved session behavior. |
+| Relevant native source/save regressions | All 34 unchanged scripts exit zero. |
+| Road and combat replay pins | 162/162 and 12/12 unchanged. |
+| Feature flag controls | All 32 pass unchanged. |
+| npm run build | Pass in the isolated lane; normal dist only. Existing advisory chunk warning remains. |
+| Syntax, git diff --check, source LF | Pass. |
+
+Targeted command: node --test --test-name-pattern='NATIVE APP RETRY' tools/test-arsenal-runtime.mjs.
+
+Complete command: node --test tools/test-arsenal-core.mjs tools/test-arsenal-runtime.mjs tools/test-arsenal-save.mjs.
+
+The 34 regressions cover actual Warlord settlement, progression/race settings/
+paint, upgrades/loadouts, damaged/historical/Wasteland profiles, named-player
+integration, career backup and save budgets; combat/armor/projectile ordering/
+CPU/pickups/shields/on-foot/scoring/opponents, road/combat pins, standing Fuel
+carrier/attribution, Fuel Run/depot, steering, flags/beta and repository placement.
+Every remaining native failure is in the unchanged PENDING CLAUDE RANGE or
+PHYSICAL REACH groups. No range source, assertion or tuning was changed here.
+
+Full logs and raw-byte receipts are private integration evidence under
+.evidence/2026-10-01/ARS-CORE/retry-save-source/. The source tests used process-local
+memory storage. No real save, live folder, Preview, .preview-dist, port 5174,
+browser/frame measurement, new dependency, network, audio, asset, merge, push,
+release, forced operation or history rewrite was used.
+
+### Exact protected bytes and remaining gates
+
+All **1,186 unowned tracked files** match the clean bafc guard freeze exactly.
+All test assertions, pure save/Arsenal modules, physical-range source, audio,
+launcher, flags, pins and metadata are protected. Earlier note bytes remain an
+exact appended prefix; no previous verdict was rewritten.
+
+| Receipt | Bytes / SHA-256 |
+| --- | --- |
+| Original App | 78707 / b73b90c1c9202e62ce1a7a59f254076f0f73b33e99d5b56b9f91aabc328c9970 |
+| Fixed App | 79117 / dfbe3e0542c156b02d9f975463aec1f2c0389de0e8a38039bae72d587782517f |
+| Unchanged note prefix | 139343 / a73be59d4ae2815f870276b1b5c0bdccc3711d7716e22813b2c6fa0e734840b7 |
+| Unchanged runtime tests | f5965bb6f02ec3c39aabd04c1806052c62ec7f6a19f4525e7dc9f3ebc0448b67 |
+| Unchanged CORE tests | ca1f275216c643b802ceada5d86967751608356ee7aea1bda4ffeeeed43c541f |
+| Unchanged SAVE tests | 54480590357b34f190dc2ce8f713ccb420ece5a959480ade437254ecb5f6b945 |
+
+
+Independent Save Guardian/source review follows this clean freeze. Claude's
+physical-range settlement and source continuation, wiring/browser/balance/
+audio acceptance and exact lane/build merge gates remain. The full native suite
+is still RED for the 20 known range cases; no feature merge or whole-card
+clearance is claimed.
+
+### Removed — narrow retry-save Source fix
+
+Removed stale OTHER-player selection during actual retry and the unsafe attempt
+to write a stale local registry when recovered durable data is invalid or
+unreadable. The existing reader, validator, normal save path, same-owner policy,
+session-only memory behavior, transaction rollback and one-charge rules remain.
+No test, fixture, profile field, future schema, earned identity, slot, pin,
+runtime asset, licensed source or other lane work was removed.
