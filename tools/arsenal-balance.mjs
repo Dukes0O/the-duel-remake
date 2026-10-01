@@ -156,9 +156,10 @@ async function main() {
       sampleNote: 'Three seeds per difficulty; opportunity and effect seconds sampled at 30 Hz; no balance targets asserted.',
       exactRepeat: {cpuDifficulty: 'medium', seed: SEEDS[0], matched: true}, totals, rows}, null, 2));
   } finally {
-    app?.dispose();
-    for (const [key, descriptor] of previous) {
-      if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key];
+    try { app?.dispose(); } finally {
+      for (const [key, descriptor] of previous) {
+        if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key];
+      }
     }
   }
 }
