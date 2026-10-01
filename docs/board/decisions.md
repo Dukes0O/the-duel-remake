@@ -1462,3 +1462,13 @@ The Salt Flats ground is generated from a seed with no visible repeat
 (SCRAPDOME.md, Salt Flats), and WASTELAND_ART.md rule 10 bars visible repeats
 on any large ground.
 
+## 1 October 2026: the Pit, an open dome layout
+
+Kyle asked for some dome fights without the inside barrier. Claude measured
+the dome: a round floor 150 m across with a 16 m centre pile has the same
+driving area as the ring, so it is not more crowded; it trades the Heap's
+cover for open sight lines. Kyle agreed to a second layout. Gunn, the Twin
+Vultures and the Baron fight there; the ring keeps Last Car Rolling, the
+public modes and the warlords whose moves use the Heap (SCRAPDOME.md section
+2, The Pit; card ARENA-PIT).
+

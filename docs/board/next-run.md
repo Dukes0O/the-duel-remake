@@ -41,14 +41,15 @@ not move. From this run on:
 | --- | --- | --- |
 | A. Dome feel | ARENA-SHOVE merge (trim its note), then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
 | B. Arsenal | ARS-CORE finish and merge, then ARS-01 | Unsounded cues while `arsenal` is dev |
-| C. Salt Flats | ARENA-06: generated salt ground first (Kyle), then the far edge, the sparse inner island, heat shimmer | Next comparison sheet to Claude |
+| C. Salt Flats, then the Pit | ARENA-06: generated salt ground first (Kyle), then the far edge, the sparse inner island, heat shimmer; then ARENA-PIT | Comparison sheets to Claude |
 | D. Art | ART-FIT-TANKER round 3, then ART-FIT-CREW-W (Vesper) | Final tanker round; sheets to Claude |
 | E. Warlords and clean-up | WAR-02c (Mother Mirage) after ARS-CORE; BALANCE-W2-OFF-RETIRE when no other lane owns its files; WAR-03b when its files are free | |
 
 Kyle, 1 October 2026: the dome steering is kept, so ARENA-WRECK-RATE is
 ready (add it to track A after ARENA-SHOVE), and Sal is approved as she is
 (WAR-SAL-TUNE closed). The weapon sounds (AUD-ARSENAL-W1) need only ARS-CORE:
-the sound bank is already live. Kyle keeps the nine crew and raider voice takes as they are.
+the sound bank is already live. New card ARENA-PIT (the dome's open
+layout, SCRAPDOME.md section 2) follows ARENA-06 in track C. Kyle keeps the nine crew and raider voice takes as they are.
 
 Then follow "Order: the rest of phase 3" below as cards open. Give every card
 explicit owned files before starting it; when two cards need one file, take

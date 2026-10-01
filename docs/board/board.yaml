@@ -1070,6 +1070,19 @@ tasks:
     qa_commit: "439d006d33062b6e7f5f8d832ecaa8a6b4714d04"
     note: "The native venue, collision alignment and renderer route are built. The first actual views showed a sparse island and finite salt slab; outside ground and heat Source now need a normal visual comparison. Pixel and counter look tests do not hold this card."
     kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
+  - id: ARENA-PIT
+    title: "The Pit: the Scrapdome's open layout for three warlord fights"
+    owner: codex
+    lane: VIS
+    size: M
+    needs: [ARENA-06]
+    status: ready
+    flag: warlords
+    sequencing: "Starts after ARENA-06 merges, because both use src/arena/venues.js and the venue registry."
+    acceptance:
+      - "Kyle, 1 October 2026: some dome fights without the inside barrier. Build the layout in docs/SCRAPDOME.md section 2, The Pit: a round floor (centreline radius 40 m, floor 32 m either side, outer wall at 75 m), a solid centre pile 16 m across, eight junk cars, two ramps, the ring's floor rules, and the existing dome stands and kit."
+      - "Tests first: the curvature check passes; every car can reach every part of the floor; computer cars do not stick on the centre pile or the round wall (all three brains, all three difficulties); containment, respawn and the shove rules hold on a round wall. Ring replays unchanged."
+      - "Gunn, the Twin Vultures and the Baron use the Pit; their cards build on it. Comparison sheet to Claude; frame cost within 10% of the ring in High and Performance. Kyle checks it in the Preview."
   - id: ARENA-07
     title: "Convoy Raid"
     owner: codex
@@ -1087,7 +1100,7 @@ tasks:
     owner: codex
     lane: CMB
     size: M
-    needs: [WAR-02a-SAL, ARS-02]
+    needs: [WAR-02a-SAL, ARS-02, ARENA-PIT]
     status: ready
     flag: scrapdome
     owns: [src/arena/moves/barrage.js, tools/test-warlord-gunn.mjs, docs/changes/WAR-03a.md]
@@ -1111,7 +1124,7 @@ tasks:
     owner: codex
     lane: CMB
     size: M
-    needs: [WAR-02a-SAL, CREW-02]
+    needs: [WAR-02a-SAL, CREW-02, ARENA-PIT]
     status: ready
     flag: scrapdome
     owns: [src/arena/moves/pincer.js, tools/test-warlord-vultures.mjs, docs/changes/WAR-03c.md]
@@ -1135,7 +1148,7 @@ tasks:
     owner: codex
     lane: CMB
     size: M
-    needs: [WAR-02b, WAR-02c, WAR-03a, WAR-03b, WAR-03c, WAR-03d, ARS-03]
+    needs: [WAR-02b, WAR-02c, WAR-03a, WAR-03b, WAR-03c, WAR-03d, ARS-03, ARENA-PIT]
     status: ready
     flag: scrapdome
     owns: [src/arena/moves/blackiron.js, tools/test-warlord-blackiron.mjs, docs/changes/WAR-03e.md]
