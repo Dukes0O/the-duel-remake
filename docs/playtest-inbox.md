@@ -2,6 +2,15 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- Salt Flats physical-floor question: the genuine private model has a full
+  300 by 200 m bowl, perimeter tyres/containers and central cover/ramps.
+  Existing arena physics constrains cars to an annulus with an inner Heap
+  boundary. Please confirm how the Salt Flats drivable floor should consume
+  this bowl; no invisible inner boundary or altered venue design is inferred.
+  The builder also proved a 0.497 m quarter-ramp height mismatch and a 30 m
+  physical strip under an 8 m visible ramp. Independent native alignment
+  checks precede the course changes. Floor/collision hooks remain Shove's.
+
 - ARS targeting context must also carry the actual origin and intended target
   for inflight homing and RPG locks, so a routed consumer cannot silently use
   the launch car’s old position or switch an already locked actor to the
