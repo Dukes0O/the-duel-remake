@@ -328,7 +328,14 @@ test('INTEGRATION: real fighter RPG lock breaks and fired RPG guidance stops in 
 test('INTEGRATION: stage end and a new stage remove hazards and timed effects', () => {
   const duel = race(); circle(duel, duel.state);
   api('car-effects', 'setCarEffect')(duel.state, 'slick', {duration: .7, grip: .35});
-  duel._finishStage();
+  const events = []; duel.onChange((_, event) => events.push(event));
+  duel.state.completedLaps = duel.state.lapsTotal;
+  duel.state.s = duel.raceLength;
+  eq(duel._finishStage(), true, 'native finish accepts completed laps and actual finish position');
+  eq(duel.state.status, 'stage_result', 'accepted native finish reaches the genuine stage result');
+  eq(events.filter(event => event.stageResult), [{stageResult: duel.state.results}],
+    'accepted finish emits exactly its genuine successful stageResult');
+  eq(duel.state.results.completed, true, 'genuine stage result records completion');
   eq(api('hazards', 'hazardsFor')(duel).length, 0, 'INTEGRATION: native stage finish clears hazards');
   eq(api('car-effects', 'carEffect')(duel.state, 'slick'), null, 'native stage finish clears timed effects');
   duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', seed: 1989, discoveredGate: true});
@@ -415,11 +422,54 @@ test('INTEGRATION: native fired RPG homing independently cannot bypass smoke', (
   near(shot.vz, initial.vz, 'INTEGRATION: native fired RPG guidance respects smoke independently of lock update z');
 });
 
-// Written design questions are with Claude. These are explicit unfilled
-// obligations, never passing coverage or release clearance.
-test.todo('DEFERRED DESIGN: actual CPU shot redirects to a live in-range decoy and ignores an out-of-range decoy');
-test.todo('DEFERRED DESIGN: actual crossbow/RPG homing and RPG lock redirect to a live decoy without bypass');
-test.todo('DEFERRED DESIGN: oil/smoke upgrade applies the settled fifteen-percent stronger-or-faster dimension');
+// Claude settled context and upgrade rules; the Director settled transient decoy DATA.
+// The records below exercise shared Core selection, not a playable Mirage/Drone.
+test('SETTLED DECOY DATA: actual CPU shot aims at a live hostile record', () => {
+  const duel = race(), cpu = duel.state.rival, player = duel.state;
+  const data = nativeDecoyData(duel, {id: 'core-data-decoy', ownerId: 'player', car: player.car,
+    s: player.s, lateral: 8, headingError: 0, active: true,
+    expiresAt: player.stageTimeSec + 10, decoy: true});
+  eq(fireWeapon(duel, 'crossbow', true, cpu), true, 'actual clear native CPU launches');
+  const shot = player.combat.projectiles.at(-1), at = point(duel, cpu), target = point(duel, data);
+  const desired = Math.atan2(target.x - at.x, target.z - at.z) + shot.aimBias;
+  const actual = Math.atan2(shot.vx, shot.vz);
+  near(Math.atan2(Math.sin(actual - desired), Math.cos(actual - desired)), 0,
+    'native CPU launch aims at genuine course conversion of live decoy DATA');
+});
+test('SETTLED DECOY DATA: native crossbow flight redirects from its real current origin', () => {
+  const duel = race(), target = duel.state.rival;
+  eq(duel.fireWeapon('crossbow'), true, 'actual native player launches its real bolt');
+  const shot = duel.state.combat.projectiles.at(-1);
+  const data = nativeDecoyData(duel, {id: 'core-flight-decoy', ownerId: 'cpu:0', car: target.car || duel.state.car,
+    s: target.s, lateral: 3, headingError: 0, active: true,
+    expiresAt: duel.state.stageTimeSec + 10, decoy: true});
+  const at = point(duel, data), desired = Math.atan2(at.x - shot.x, at.z - shot.z);
+  const error = () => Math.abs(Math.atan2(Math.sin(desired - Math.atan2(shot.vx, shot.vz)),
+    Math.cos(desired - Math.atan2(shot.vx, shot.vz))));
+  const before = error(); stepProjectiles(duel, DT);
+  ok(error() < before - 1e-5, 'genuine in-flight crossbow steers toward live hostile decoy DATA');
+});
+for (const [weapon, recharge, radius, lifetime] of [['oil', 10, 3.5, 6], ['smoke', 14, 6, 5]]) {
+  for (const level of [0, 1, 2, 3]) test('SETTLED UPGRADE: actual ' + weapon + ' level ' + level, () => {
+    const duel = race(); duel.state.combat.levels[weapon] = level;
+    eq(duel.fireWeapon(weapon), true, 'actual native rear weapon launches at this owned upgrade level');
+    const hazard = api('hazards', 'hazardsFor')(duel).find(h => h.kind === weapon);
+    ok(hazard, 'actual native upgraded launch creates its genuine hazard');
+    near(hazard.radius, radius, 'upgrades do not scale control-weapon footprint');
+    near(hazard.lifetime, lifetime, 'upgrades do not lengthen oil or smoke control lifetime');
+    if (weapon === 'oil') {
+      place(duel.state.rival, duel.state.s - 4);
+      tickHazards(duel, 1);
+      const effect = api('car-effects', 'carEffect')(duel.state.rival, 'slick');
+      ok(effect, 'native upgraded pool really contacts the CPU');
+      near(effect.remainingSec, .7, 'upgrades never lengthen the actual slick');
+      near(effect.grip, .35, 'upgrades never strengthen control grip loss');
+      near(Math.abs(duel.state.rival.yawVelocity), 2.2, 'upgrades never strengthen the spin kick');
+    }
+    near(duel.state.combat.cooldowns[weapon], recharge / 1.15 ** level,
+      'settled recharge divides by 1.15 once per level');
+  });
+}
 
 
 test('CORE: one hazard separately affects each actual body exactly once', () => {
@@ -585,4 +635,27 @@ for (const smokeAt of ['fighter', 'parked-car', 'away']) {
           ? 'parked-car-only smoke does not block the moved actual RPG fighter clear line'
           : 'smoke away from actual fighter and parked car retains the native clear target');
   });
+}
+
+// Independent native refusal control for the reviewed legal-finish fixture.
+test('LIFECYCLE CONTROL: refused unfinished race preserves complete state, hazard and effect', () => {
+  const duel = race(); const hazard = circle(duel, duel.state);
+  const effect = api('car-effects', 'setCarEffect')(duel.state, 'slick', {duration: .7, grip: .35});
+  const before = structuredClone(duel.state), hazardsBefore = {...hazard}, effectBefore = {...effect};
+  const events = []; duel.onChange((_, event) => events.push(event));
+  eq(duel._finishStage(), false, 's=500 and zero completed laps are refused by the native finish guard');
+  eq(events, [], 'refused finish emits no fake stage event');
+  eq(duel.state, before, 'refused finish preserves every actual state field');
+  eq(api('hazards', 'hazardsFor')(duel), [hazard], 'refused finish preserves the actual hazard identity');
+  eq(hazard, hazardsBefore, 'refused finish preserves every hazard field');
+  eq(api('car-effects', 'carEffect')(duel.state, 'slick'), effectBefore,
+    'refused finish preserves the complete timed effect');
+});
+
+function nativeDecoyData(duel, metadata) {
+  // A genuine initialized native NPC; explicit data for the future producer.
+  const donor = race(), actor = donor.state.opponents[1];
+  Object.assign(actor, metadata, {prevS: metadata.s, prevLateral: metadata.lateral});
+  duel.state.opponents.push(actor);
+  return actor;
 }

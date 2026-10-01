@@ -928,3 +928,179 @@ Private logs are under ignored `.evidence/2026-10-01/ARS-CORE/native-partial/`. 
 ### Removed
 
 Replaced registry-wide default-slot, starter-upgrade and initial HUD enumeration with the explicit existing four starters in the same change. Removed the packed first registry line while retaining all existing starter values. No old gameplay, test, fixture, replay, licensed source, asset or protected audio was removed or replaced. The limited player L0 launch and CPU hold will be completed by the independently tested native consumer slice on this same card; no parallel implementation or fallback was added. The Preview source-only flag change does not remove or rebuild Preview output. Save hooks and the existing core modules were preserved.
+
+## Independent native consumer acceptance freeze — 1 October 2026
+
+This is tests-first acceptance for the held ARS-CORE consumers. Production sources remain unchanged. The lane first merged integration/wasteland 0f934845 normally, bringing Claude's e5a9490 answers into merge commit 7c2d7eed17164ba6e2509718ddd9c75911169a9f. No history was rewritten. This freeze does not complete ARS-CORE or grant a merge/release pass.
+
+### Approved changes and preservation
+
+The reviewer-approved finish fixture now sets completedLaps=lapsTotal and s=duel.raceLength before calling the actual _finishStage(). It checks the true return, genuine stage_result, exactly one successful stageResult with the actual results object, and completion. Every existing hazard/effect/new-stage cleanup assertion remains byte-exact. The corrected legal finish and cleanup **pass**; this measured result supersedes the earlier narrower probe. An independent refused-finish control uses the original s=500/zero-lap progress, checks false/no event, complete native state, hazard identity/fields and complete effect preservation.
+
+Only the three authorized design TODOs were replaced. The two decoy TODOs now execute genuine native CPU launch/crossbow flight against explicitly labelled decoy actor DATA; the upgrade TODO becomes eight actual Oil/Smoke launch cases at levels 0–3, including fixed control radius/lifetime/grip/spin and the settled recharge division. New native acceptance is in tools/test-arsenal-runtime.mjs. Existing helpers, assertions, fixtures and replay pins remain unchanged. The rest of the original core file reconstructs **exactly 35,677 bytes**, SHA-256 fcbf6e253bad37c5aacbd5c688304c222be5ffeca36bc673e468fc4ce571c210, after reversing only the authorized finish/TODO blocks and removing appended checks. The untouched save file retains SHA-256 54480590357b34f190dc2ce8f713ccb420ece5a959480ade437254ecb5f6b945.
+
+### Shared decoy DATA contract and settled contexts
+
+The Director corrected the temporary auxiliary-list proposal before freeze to respect Claude's existing SCRAPDOME section 5: a decoy is a **genuine initialized NPC actor** in state.opponents and, in arenas, its corresponding real state.arena.participants record, both flagged decoy:true. The fixture borrows an actual initialized native NPC/participant from another genuine Duel; it supplies explicit metadata rather than inventing a producer or mocking targetFor. Unique id, ownerId, existing car, s/lateral/headingError, active and expiresAt metadata identify the future producer's record. Owner identity is player, actual arenaId, or road cpu:<opponents index>. Active expiry is measured against real stageTimeSec; same-owner/team, inactive, expired and out-of-range records cannot draw hostile aim. Combat damage owner strings remain unchanged. Native course/point conversion supplies the position. Fight DATA may be in serialized race state; the memory-only actual App saver/player round trip proves that it does **not enter player saves**. No auxiliary duel.arsenalDecoys field or playable Mirage/Drone is claimed.
+
+Minimal correction from the Director's temporary contract: new setup appends a genuine initialized flagged actor/participant instead of an auxiliary array; flag assertions use decoy:true; lifecycle assertions require removal of flagged transient actors; the no-race-serialization assertion was replaced with the genuine named-save isolation check. Native resolver, launch, flight, lock, range and current-origin assertions are retained.
+
+Claude's actual optional target context is {range, origin, lockedTargetId}: supplied caller range, actual current projectile/fighter origin, stable intended identity, no change to another real car, allowed hostile live decoy redirection and smoke break. Native CPU direct/scheduled shots, player/CPU bolts, real F-exit plus 360 fixed-step camera-left sprint RPG locks, and actual fired RPG guidance exercise the real consumers. A paired genuine no-decoy RPG flight prevents ordinary steering from satisfying the redirection case. Native walking speed in this new fixture moves 22.5 metres; the fixture requires more than 20 metres so parked-car-only and six-metre fighter smoke are physically distinct. The frozen original moved-fighter checks remain unchanged.
+
+Upgrades use recharge / 1.15**level and damaging weapons add 15% damage per level. Oil/Smoke control duration, grip and spin never scale. Actual fixed-step native road driving and arena pilot/brain APIs test player/CPU grip, real pool contact/spin, shield/denial controls and visible-oil avoidance. Actual road/arena armor hits supply the smoke history fixture; no private history helper or fake event supplies eligibility.
+
+### Native UI, storage and presentation boundaries
+
+App purchase/equip/upgrade tests use the actual bound methods, actual saved named profiles and the genuine production hooks. purchaseArsenalWeapon(id) is the explicit new bound App acceptance boundary for the existing pure purchaseArsenalWeapon hook. The native screen factory receives the Arsenal admission callback and must provide an actual weapon offer/buy button, exact 400-scrap cost, owned-slot options and upgrade action. Rank/dev/discovery/unimplemented/racing refusals preserve raw bytes, unknown/future fields and the other named player. Already-owned upgrades and already-saved equipped-slot launches are independent cases, so a failed new purchase cannot hide those missing consumers. Synthetic localStorage/cancelAnimationFrame belong only to this Node process and are restored; only audio unlock is silenced. All gameplay, profile saves and UI presenter methods are genuine.
+
+CPU acceptance covers native four unique slots for every real CPU, all three difficulties and ranks 1/2/6, seed repetition, existing seeded traffic continuation, closed-switch starter-only control, actual multi-seed rank-six growth, independent per-CPU recharge and settled Oil/Smoke trigger conditions.
+
+Combat-scene acceptance inspects actual THREE geometry, world bounds, visibility, geometry/material reuse and disposal at the shared 24-hazard bound. Repeated genuine presentation updates preserve complete state, hazards, effects, emitted events and Course RNG continuation. Unrelated fighter asset loading is inactive in these hazard-specific fixtures. No copied geometry/count report, renderer screenshot, art score, frame pacing or sound verdict is substituted. Actual DOM click routing/browser appearance, audio, balance, frame pacing and whole-card review remain later gates; native screen output and bound App action checks do not claim those browser checks.
+
+### Commands and measured verdict
+
+- node --test --test-reporter=tap tools/test-arsenal-core.mjs tools/test-arsenal-runtime.mjs tools/test-arsenal-save.mjs: **exit 1; 301 cases, 202 pass, 99 fail, zero TODO/skipped**. Checks reached: core **592**, runtime **466**, save **602**. All failures are assertion failures for the held consumers; none is an undefined API fixture, syntax error, missing native menu method or other accidental test exception. Missing bound purchaseArsenalWeapon is explicitly asserted as a required consumer boundary.
+- node --test --test-name-pattern '^CORE:' --test-reporter=tap tools/test-arsenal-core.mjs: **48/48, exactly 449 checks, exit 0**. Existing protected core controls remain unchanged.
+- node --test --test-reporter=tap tools/test-arsenal-save.mjs: **98/98, 602 checks, exit 0**, unchanged source/tests.
+- node tools/test-replays.mjs: **162/162 unchanged fingerprints**, 18 cases, 16 events, eight categories, three FPS values, three runs; exit 0. No replay pin was regenerated or changed.
+- node --check tools/test-arsenal-runtime.mjs and git diff --check: pass.
+
+Full raw final TAP and the exact per-failure JSON are retained privately at .evidence/2026-10-01/ARS-CORE/native-consumer-tests-red/final.tap and failures.json, alongside the frozen-control and replay outputs. No lane/full/build/browser/audio/art/save-budget gate is claimed by this tests-only freeze. The Director owns subsequent source implementation, review, lane/build gates and integration.
+
+### RED groups and each failure message
+
+| Native group | RED cases |
+| --- | ---: |
+| INTEGRATION | 8 |
+| SETTLED DECOY DATA | 2 |
+| SETTLED UPGRADE | 6 |
+| NATIVE HISTORY | 5 |
+| NATIVE APP | 4 |
+| NATIVE APP CONTROL | 10 |
+| NATIVE CPU | 9 |
+| NATIVE CPU RECHARGE | 4 |
+| NATIVE CPU CONDITION | 4 |
+| NATIVE DRIVING | 4 |
+| NATIVE AVOIDANCE | 4 |
+| SETTLED NATIVE UPGRADE | 9 |
+| NATIVE PRESENTATION | 2 |
+| SHARED DECOY DATA | 2 |
+| SHARED TARGET CONTEXT | 4 |
+| NATIVE DECOY SHOT | 2 |
+| NATIVE BOLT CONTEXT | 4 |
+| NATIVE MOVED RPG LOCK | 2 |
+| NATIVE RPG GUIDANCE | 2 |
+| SHARED DECOY LIFECYCLE | 1 |
+| NATIVE ARMORY VIEW | 4 |
+| NATIVE APP UPGRADE | 2 |
+| NATIVE APP LAUNCH | 2 |
+| NATIVE CPU GROWTH | 1 |
+| SHARED DECOY TERMINAL | 2 |
+
+Each row below records the exact first failure message; complete assertion values/stacks remain in the raw TAP.
+
+| Case | Failure message |
+| --- | --- |
+| INTEGRATION: a real scheduled CPU shot cannot bypass smoke | INTEGRATION: native scheduled CPU aimed fire must route through smoke targeting |
+| INTEGRATION: direct native CPU launch cannot bypass smoke while player straight fire remains legal | INTEGRATION: direct native CPU aimed launch must respect the same smoke targetFor |
+| INTEGRATION: an actual fired crossbow stops homing while smoke interrupts its line | INTEGRATION: native homing cannot bypass an intervening smoke cloud: -1.0786663763034925 versus -1.09175634569345 |
+| INTEGRATION: real fighter RPG lock breaks and fired RPG guidance stops in smoke | INTEGRATION: native RPG lock must break inside smoke |
+| INTEGRATION: native CPU weapon scheduler really deploys equipped oil | INTEGRATION: a real CPU with oil equipped must use it at the settled rear-enemy trigger |
+| INTEGRATION: a native CPU bolt cannot home through smoke | INTEGRATION: native CPU crossbow homing is disabled by smoke x: 179.76694051323733 versus 178.6041374884129 |
+| INTEGRATION: native fired RPG homing independently cannot bypass smoke | INTEGRATION: native fired RPG guidance respects smoke independently of lock update x: -50.38620422078649 versus -50.65712160310798 |
+| SETTLED DECOY DATA: actual CPU shot aims at a live hostile record | native CPU launch aims at genuine course conversion of live decoy DATA: 0.197565267528645 versus 0 |
+| SETTLED DECOY DATA: native crossbow flight redirects from its real current origin | genuine in-flight crossbow steers toward live hostile decoy DATA |
+| SETTLED UPGRADE: actual oil level 1 | settled recharge divides by 1.15 once per level: 10 versus 8.695652173913045 |
+| SETTLED UPGRADE: actual oil level 2 | settled recharge divides by 1.15 once per level: 10 versus 7.561436672967865 |
+| SETTLED UPGRADE: actual oil level 3 | settled recharge divides by 1.15 once per level: 10 versus 6.575162324319883 |
+| SETTLED UPGRADE: actual smoke level 1 | settled recharge divides by 1.15 once per level: 14 versus 12.173913043478262 |
+| SETTLED UPGRADE: actual smoke level 2 | settled recharge divides by 1.15 once per level: 14 versus 10.586011342155011 |
+| SETTLED UPGRADE: actual smoke level 3 | settled recharge divides by 1.15 once per level: 14 versus 9.205227254047836 |
+| INTEGRATION: native CPU scheduler really deploys smoke after a recent native hit | INTEGRATION: native CPU with smoke equipped uses it after the settled real-hit trigger |
+| NATIVE HISTORY: positive owned armor hit admits smoke on road | actual owned armor hit admits native defensive smoke |
+| NATIVE HISTORY: hit eligibility expires by five-seconds on road | native positive hit qualification must work before checking cleanup |
+| NATIVE HISTORY: hit eligibility expires by stage on road | native positive hit qualification must work before checking cleanup |
+| NATIVE HISTORY: hit eligibility expires by recovery on road | native positive hit qualification must work before checking cleanup |
+| NATIVE HISTORY: hit eligibility expires by recovery on arena | genuine expiry/stage/recovery clears previous defensive hit eligibility |
+| NATIVE APP: purchase, equip and three upgrades of oil preserve the named registry | native App must expose purchaseArsenalWeapon for the actual Armory action |
+| NATIVE APP CONTROL: rank denies bound oil purchase without a write | native App must expose purchaseArsenalWeapon for the actual Armory action |
+| NATIVE APP CONTROL: dev denies bound oil purchase without a write | native App must expose purchaseArsenalWeapon for the actual Armory action |
+| NATIVE APP CONTROL: discovery denies bound oil purchase without a write | native App must expose purchaseArsenalWeapon for the actual Armory action |
+| NATIVE APP CONTROL: implementation denies bound oil purchase without a write | native App must expose purchaseArsenalWeapon for the actual Armory action |
+| NATIVE APP CONTROL: race denies bound oil purchase without a write | native App must expose purchaseArsenalWeapon for the actual Armory action |
+| NATIVE APP: owned oil equip/upgrade and actual launch respect dev=true | native equip follows actual feature admission |
+| NATIVE APP: purchase, equip and three upgrades of smoke preserve the named registry | native App must expose purchaseArsenalWeapon for the actual Armory action |
+| NATIVE APP CONTROL: rank denies bound smoke purchase without a write | native App must expose purchaseArsenalWeapon for the actual Armory action |
+| NATIVE APP CONTROL: dev denies bound smoke purchase without a write | native App must expose purchaseArsenalWeapon for the actual Armory action |
+| NATIVE APP CONTROL: discovery denies bound smoke purchase without a write | native App must expose purchaseArsenalWeapon for the actual Armory action |
+| NATIVE APP CONTROL: implementation denies bound smoke purchase without a write | native App must expose purchaseArsenalWeapon for the actual Armory action |
+| NATIVE APP CONTROL: race denies bound smoke purchase without a write | native App must expose purchaseArsenalWeapon for the actual Armory action |
+| NATIVE APP: owned smoke equip/upgrade and actual launch respect dev=true | native equip follows actual feature admission |
+| NATIVE CPU: deterministic four-slot native loadouts at rank 1 easy | every real CPU actor receives a native weaponLoadout |
+| NATIVE CPU: deterministic four-slot native loadouts at rank 1 medium | every real CPU actor receives a native weaponLoadout |
+| NATIVE CPU: deterministic four-slot native loadouts at rank 1 hard | every real CPU actor receives a native weaponLoadout |
+| NATIVE CPU: deterministic four-slot native loadouts at rank 2 easy | every real CPU actor receives a native weaponLoadout |
+| NATIVE CPU: deterministic four-slot native loadouts at rank 2 medium | every real CPU actor receives a native weaponLoadout |
+| NATIVE CPU: deterministic four-slot native loadouts at rank 2 hard | every real CPU actor receives a native weaponLoadout |
+| NATIVE CPU: deterministic four-slot native loadouts at rank 6 easy | every real CPU actor receives a native weaponLoadout |
+| NATIVE CPU: deterministic four-slot native loadouts at rank 6 medium | every real CPU actor receives a native weaponLoadout |
+| NATIVE CPU: deterministic four-slot native loadouts at rank 6 hard | every real CPU actor receives a native weaponLoadout |
+| NATIVE CPU RECHARGE: separate real oil timers on road | first actual CPU rear weapon launches |
+| NATIVE CPU CONDITION: oil rear trigger=true on road | actual equipped CPU scheduler uses the settled enemy-behind trigger |
+| NATIVE CPU RECHARGE: separate real smoke timers on road | first actual CPU rear weapon launches |
+| NATIVE CPU CONDITION: smoke rear trigger=true on road | actual equipped CPU scheduler uses the settled enemy-behind trigger |
+| NATIVE CPU RECHARGE: separate real oil timers on arena | first actual CPU rear weapon launches |
+| NATIVE CPU CONDITION: oil rear trigger=true on arena | actual equipped CPU scheduler uses the settled enemy-behind trigger |
+| NATIVE CPU RECHARGE: separate real smoke timers on arena | first actual CPU rear weapon launches |
+| NATIVE CPU CONDITION: smoke rear trigger=true on arena | actual equipped CPU scheduler uses the settled enemy-behind trigger |
+| NATIVE DRIVING: actual slick changes player fixed-step grip on road | genuine driving consumer changes its physical trajectory while slick is active |
+| NATIVE DRIVING: actual slick changes cpu fixed-step grip on road | genuine driving consumer changes its physical trajectory while slick is active |
+| NATIVE DRIVING: actual slick changes player fixed-step grip on arena | genuine driving consumer changes its physical trajectory while slick is active |
+| NATIVE DRIVING: actual slick changes cpu fixed-step grip on arena | genuine driving consumer changes its physical trajectory while slick is active |
+| NATIVE AVOIDANCE: real CPU medium trajectory responds to visible oil on road | Medium/Hard native steering really changes course to avoid visible oil |
+| NATIVE AVOIDANCE: real CPU hard trajectory responds to visible oil on road | Medium/Hard native steering really changes course to avoid visible oil |
+| NATIVE AVOIDANCE: real CPU medium trajectory responds to visible oil on arena | Medium/Hard native steering really changes course to avoid visible oil |
+| NATIVE AVOIDANCE: real CPU hard trajectory responds to visible oil on arena | Medium/Hard native steering really changes course to avoid visible oil |
+| SETTLED NATIVE UPGRADE: bomb level 1 recharge and damage | actual upgraded recharge uses the settled exponential division: 7.6499999999999995 versus 7.82608695652174 |
+| SETTLED NATIVE UPGRADE: crossbow level 1 recharge and damage | actual upgraded recharge uses the settled exponential division: 3.4 versus 3.4782608695652177 |
+| SETTLED NATIVE UPGRADE: star level 1 recharge and damage | actual upgraded recharge uses the settled exponential division: 13.6 versus 13.913043478260871 |
+| SETTLED NATIVE UPGRADE: bomb level 2 recharge and damage | actual upgraded recharge uses the settled exponential division: 6.3 versus 6.8052930056710785 |
+| SETTLED NATIVE UPGRADE: crossbow level 2 recharge and damage | actual upgraded recharge uses the settled exponential division: 2.8 versus 3.024574669187146 |
+| SETTLED NATIVE UPGRADE: star level 2 recharge and damage | actual upgraded recharge uses the settled exponential division: 11.2 versus 12.098298676748584 |
+| SETTLED NATIVE UPGRADE: bomb level 3 recharge and damage | actual upgraded recharge uses the settled exponential division: 4.95 versus 5.917646091887894 |
+| SETTLED NATIVE UPGRADE: crossbow level 3 recharge and damage | actual upgraded recharge uses the settled exponential division: 2.2 versus 2.6300649297279532 |
+| SETTLED NATIVE UPGRADE: star level 3 recharge and damage | actual upgraded recharge uses the settled exponential division: 8.8 versus 10.520259718911813 |
+| NATIVE PRESENTATION: oil is visible, bounded, read-only and disposed | actual native oil hazard exposes nonempty visible geometry |
+| NATIVE PRESENTATION: smoke is visible, bounded, read-only and disposed | actual native smoke hazard exposes nonempty visible geometry |
+| SHARED DECOY DATA: actual resolver live on road | genuine resolver selects only a live hostile decoy within this attack range |
+| SHARED TARGET CONTEXT: actual weapon range and supplied current origin on road | resolver excludes a target beyond the exact caller range |
+| SHARED TARGET CONTEXT: intended real target cannot switch to a nearer real car on road | genuine resolver preserves intended real target despite a nearer enemy |
+| SHARED DECOY DATA: actual resolver live on arena | genuine resolver selects only a live hostile decoy within this attack range |
+| SHARED TARGET CONTEXT: actual weapon range and supplied current origin on arena | resolver excludes a target beyond the exact caller range |
+| SHARED TARGET CONTEXT: intended real target cannot switch to a nearer real car on arena | genuine resolver preserves intended real target despite a nearer enemy |
+| NATIVE DECOY SHOT: actual scheduled CPU crossbow aims at live DATA | actual CPU launch bearing aims at decoy DATA rather than the real player |
+| NATIVE DECOY SHOT: actual direct CPU crossbow aims at live DATA | actual CPU launch bearing aims at decoy DATA rather than the real player |
+| NATIVE BOLT CONTEXT: player in-flight origin-smoke | native in-flight bolt reads smoke at its current projectile origin x: -176.26568961842156 versus -177.4875661406689 |
+| NATIVE BOLT CONTEXT: player in-flight decoy | actual native in-flight bolt steers toward the qualifying decoy DATA |
+| NATIVE BOLT CONTEXT: CPU in-flight origin-smoke | native in-flight bolt reads smoke at its current projectile origin x: 179.46545981012562 versus 178.29462475594036 |
+| NATIVE BOLT CONTEXT: CPU in-flight decoy | actual native in-flight bolt steers toward the qualifying decoy DATA |
+| NATIVE MOVED RPG LOCK: actual lock from current walking fighter with fighter-smoke | actual native lock breaks when current fighter ray is smoked or target leaves range |
+| NATIVE MOVED RPG LOCK: actual lock from current walking fighter with decoy | native RPG carries the stable decoy identity rather than a real-car-only index |
+| NATIVE RPG GUIDANCE: actual fired projectile origin-smoke | genuine RPG guidance breaks at its current projectile smoke origin x: -50.91265943913013 versus -51.16786107472422 |
+| NATIVE RPG GUIDANCE: actual fired projectile decoy | actual RPG decoy guidance differs from genuine no-decoy flight; ordinary steering cannot satisfy this case |
+| SHARED DECOY LIFECYCLE: actual menu transition clears transient DATA | genuine lifecycle removes transient flagged decoy actors |
+| NATIVE ARMORY VIEW: oil offer/equip admission=eligible | genuine Armory renders the newly eligible weapon offer |
+| NATIVE ARMORY VIEW: oil offer/equip admission=owned | actual Armory offers owned Arsenal weapon for equip |
+| NATIVE ARMORY VIEW: smoke offer/equip admission=eligible | genuine Armory renders the newly eligible weapon offer |
+| NATIVE ARMORY VIEW: smoke offer/equip admission=owned | actual Armory offers owned Arsenal weapon for equip |
+| NATIVE APP UPGRADE: already-owned oil upgrades without needing an equip action | actual bound already-owned Arsenal upgrade succeeds |
+| NATIVE APP LAUNCH: an already-saved earned oil slot survives actual App-to-Duel launch | actual native launch admits the already-owned implemented saved Arsenal slot |
+| NATIVE APP UPGRADE: already-owned smoke upgrades without needing an equip action | actual bound already-owned Arsenal upgrade succeeds |
+| NATIVE APP LAUNCH: an already-saved earned smoke slot survives actual App-to-Duel launch | actual native launch admits the already-owned implemented saved Arsenal slot |
+| NATIVE CPU GROWTH: actual seeded rank-six launches use both implemented wave-one weapons | actual seeded CPU growth requires native assigned slots |
+| SHARED DECOY TERMINAL: genuine legal race finish clears transient DATA | native terminal event clears transient flagged decoy actors without a fake emit |
+| SHARED DECOY TERMINAL: genuine arena result clears transient DATA | native terminal event clears transient flagged decoy actors without a fake emit |
+
+### Removed
+
+Replaced the invalid successful-finish setup and three settled design TODOs in this same tests-only change. Removed the Director’s superseded auxiliary decoy-list proposal from the new fixtures; the frozen tests use Claude’s native actor/participant flag. No production code, asset, licensed source, existing test assertion, save test, replay fixture, launcher, audio or source catalog was removed or edited. The real source consumer slice on this card replaces the held paths after this acceptance is frozen.
