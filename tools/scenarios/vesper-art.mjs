@@ -79,8 +79,13 @@ export async function run(context) {
     quality + ' actual candidate rig loaded', 60000);
     await context.evaluate(`(async () => {
       const q = window.__vesperReview, app = window.__qaApp, state = app.duel.state, view = window.__render;
-      const at = app.duel.course.groundAt(500, 0);
-      Object.assign(state.fighter, {x: at.x, y: at.y, z: at.z, yaw: 0, groundY: at.y, speed: 0});
+      const at = app.duel.course.groundAt(500, 8);
+      // Four native skins in a grounded row beside, not inside, the parked car.
+      const groundPose = x => {
+        const near=app.duel.course.nearest(x,at.z,500),ground=app.duel.course.groundAt(near.s,near.lateral);
+        return {x,y:ground.y,z:at.z,s:near.s,lateral:near.lateral,yaw:0,groundY:ground.y,speed:0};
+      };
+      Object.assign(state.fighter, groundPose(at.x-3.45));
       state.stageTimeSec = 10; state.fighterInput = {};
       q.center = at; q.local = view.scene.getObjectByName('Rigged on-foot fighters');
       q.pool = VesperComparison.createRiggedFighterFigures({loadAsset: async id => {
@@ -90,8 +95,7 @@ export async function run(context) {
       }});
       q.pool.group.name = 'Vesper original women comparison'; view.scene.add(q.pool.group);
       q.entries = ['nell', 'odessa', 'wren'].map((id, index) => ({fighter: {
-        crewId: id, x: at.x + (index - 1) * 2.3, y: at.y, z: at.z + 2.5,
-        yaw: 0, speed: 0, groundY: at.y}}));
+        ...groundPose(at.x+(index-.5)*2.3),crewId:id}}));
       q.update = () => q.pool.update(q.entries, {active: true, enabled: true, time: state.stageTimeSec, cameraPosition: view.camera.position});
       q.update();
       q.paint = () => {
@@ -106,9 +110,11 @@ export async function run(context) {
       const capture = await context.evaluate(`(() => {
         const q=window.__vesperReview,app=window.__qaApp,state=app.duel.state,view=window.__render;
         const mode='${mode}',at=q.center;
+        // Matched pose rotations keep four distinct profiles visible in one row.
+        const yaw=mode==='side'?Math.PI/2:mode==='back'?Math.PI:0;
+        state.fighter.yaw=yaw;for(const entry of q.entries)entry.fighter.yaw=yaw;
         if (mode === 'overhead' || mode === 'walk') delete app.inspectionCamera;
-        else {const offset=mode==='side'?[10,3,1]:mode==='back'?[0,2.7,-10]:[0,2.7,10];
-          app.inspectionCamera={position:[at.x+offset[0],at.y+offset[1],at.z+offset[2]],target:[at.x,at.y+1,at.z+1]};}
+        else app.inspectionCamera={position:[at.x,at.y+2.7,at.z+10],target:[at.x,at.y+1,at.z]};
         if (mode === 'walk') {
           state.fighterInput={forward:true}; for(let i=0;i<24;i++)app.duel.step(1/120);
           if (!(state.fighter.speed > .01)) throw Error('Actual walking input did not move candidate');
@@ -143,7 +149,11 @@ export async function run(context) {
           resources.add(material);for(const value of Object.values(material))if(value?.isTexture)resources.add(value);
         }
       });
-      for(const resource of resources){counts.set(resource,0);resource.addEventListener('dispose',()=>counts.set(resource,counts.get(resource)+1));}
+      for(const resource of resources){
+        counts.set(resource,0);
+        if(resource.addEventListener)resource.addEventListener('dispose',()=>counts.set(resource,counts.get(resource)+1));
+        else {const nativeDispose=resource.dispose.bind(resource);resource.dispose=()=>{counts.set(resource,counts.get(resource)+1);return nativeDispose();};}
+      }
       q.pool.dispose();q.pool.dispose();window.fetch=q.originalFetch;
       if(q.pool.group.parent||q.pool.group.children.length||!resources.size||[...counts.values()].some(count=>count!==1))
         throw Error('Owned native comparison resources did not retire exactly once');
