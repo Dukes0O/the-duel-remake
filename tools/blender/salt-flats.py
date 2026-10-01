@@ -50,10 +50,20 @@ def source_guard(root,config,override):
                 if not any(word in text for word in ('cc0','creative commons zero','publicdomain/zero')):
                     raise ValueError('Cached primary source does not grant the selected CC0 use')
         records[key]=row;homes[key]=home
-    expected=['sedan','debris-door','debris-drivetrain','debris-tire','shipping-container-a',
-              'shipping-container-b','crane','crane-magnet','Bus']
-    if [pick['model'] for pick in config['sourcePicks']]!=expected:
-        raise ValueError('The recipe accepts only Kyle\'s nine picked native parts and plain Bus')
+    expected=[
+        ('sedan','kenney-car-kit','unpacked/Models/GLB format/sedan.glb'),
+        ('debris-door','kenney-car-kit','unpacked/Models/GLB format/debris-door.glb'),
+        ('debris-drivetrain','kenney-car-kit','unpacked/Models/GLB format/debris-drivetrain.glb'),
+        ('debris-tire','kenney-car-kit','unpacked/Models/GLB format/debris-tire.glb'),
+        ('shipping-container-a','kenney-city-kit-industrial','unpacked/Models/GLB format/shipping-container-a.glb'),
+        ('shipping-container-b','kenney-city-kit-industrial','unpacked/Models/GLB format/shipping-container-b.glb'),
+        ('crane','kenney-factory-kit','unpacked/Models/GLB format/crane.glb'),
+        ('crane-magnet','kenney-factory-kit','unpacked/Models/GLB format/crane-magnet.glb'),
+        ('Bus','quaternius-public-transport','blend/Bus.blend'),
+    ]
+    selected=[(pick['model'],pick['catalogId'],pick['path']) for pick in config['sourcePicks']]
+    if selected!=expected:
+        raise ValueError('The recipe accepts only Kyle\'s nine picked native source bindings and plain Bus')
     for pick in config['sourcePicks']:
         pin=next((file for file in records[pick['catalogId']]['files'] if file['path']==pick['path']),None)
         if pin is None or pin['sha256']!=pick['sha256']:

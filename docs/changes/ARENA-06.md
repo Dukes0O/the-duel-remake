@@ -1,4 +1,10 @@
-# ARENA-06: Salt Flats — private native source stage
+# ARENA-06: Salt Flats source validation
+
+The three independently frozen wrong-pick regressions are repaired. All
+**28 source/native/preservation checks pass**; the default suite reports
+**41 checks, 32 passed, the same nine runtime failures**. This is a private
+source-only WIP handoff. Existing game hooks remain ungranted, and runtime,
+art/frame, heat, comparison and whole-card approval remain pending.
 
 ## Status and scope
 
@@ -151,3 +157,134 @@ All **31,310 original test bytes** remain exact after removing only the new regi
 ### Removed for this test-only follow-up
 
 None. The old hash-substitution negative and every original control remain. The new fit copies, accepted wrong-pick outputs and verdicts are reproducible ignored scratch, to be deleted after their verdict is used. No licensed source or current game asset is removed.
+
+
+## Settled model/source binding repair
+
+Tests-first input is clean `098d5132dbefa92b445c782ed8c25464050dc5de`,
+with unchanged production source `6474637`. This implementation owns only
+`tools/blender/salt-flats.py` and this note. Every frozen assertion, fit
+input, catalog/source record, licensed original, scene module, public asset,
+existing runtime hook and replay pin remains read-only and unchanged.
+
+The previous guard checked ordered model labels, then accepted any genuine
+catalog/path/hash assigned to each label. It now checks the settled ordered
+**(model, catalogId, path)** triples for all nine selected native parts.
+The plain Bus must be `quaternius-public-transport/blend/Bus.blend`;
+SchoolBus and another pack's sedan cannot pass under its label even when
+their bytes, catalog hash and native triangle count are genuine. The other
+eight bindings retain Kyle's selected Car Kit, City Kit Industrial and
+Factory Kit parts. No source choice or fitting rule was redesigned.
+
+This guard runs inside `source_guard`, called before `originals`, Blender
+source import, output-directory creation or native export in both modes.
+The existing CC0/cache/hash/byte-count guards still run, the existing
+model pin guard still checks each chosen hash, and the original triangle
+counts still validate actual imported meshes. Fit transforms, source photo
+pixels, mirrored UV tiling, palette replacement and geometry/layout
+construction are unchanged. No new config field, source/license/hash/count,
+substitute model or runtime dependency was introduced.
+
+## Reproduce the native source RED to GREEN
+
+Command: `node tools/test-salt-flats.mjs`.
+
+Before, with frozen tests on `6474637`: **41 checks, 29 pass, 12 fail**.
+The three accepted wrong-pick cases are recorded in the independent RED
+section above; all 25 older native checks already passed. The same nine
+runtime consumers remained missing.
+
+After: exit 1, **41 checks, 32 pass, nine fail**. All **28 non-runtime
+source/native/preservation checks pass**, including all original 25 and
+all three appended genuine-source negatives. No test was skipped or
+weakened. The failure status truthfully reports unfinished runtime wiring;
+it is not a source-native pass for the whole card.
+
+Actual native verdicts at `.qa-dist/salt-flats-tests-AJxQYB/`:
+
+| Changed fit in plain Bus slot | Native mode | Rejected | Output directory exists | GLB exists |
+| --- | --- | --- | --- | --- |
+| quaternius-public-transport/blend/SchoolBus.blend | validation | true | false | false |
+| quaternius-public-transport/blend/SchoolBus.blend | full export | true | false | false |
+| kenney-car-kit/unpacked/Models/GLB format/sedan.glb | validation | true | false | false |
+
+Every rejection is native exit code 1 with the settled-source message
+`The recipe accepts only Kyle's nine picked native source bindings and plain Bus`.
+The original missing-cache, changed-byte, changed-license and Bus-path
+SchoolBus-byte-substitution controls still pass. The approved actual source
+still builds a self-contained native candidate: **102,764 triangles, 17
+mesh draws**, with the original photograph, two ramps and real source-face
+lineage. Repeat actual geometry and source transforms still pass. A valid
+candidate and copied negative fixtures stay only in ignored private
+`.qa-dist`; no public asset was installed.
+
+## Unchanged nearby controls and source protections
+
+Fresh existing checks all exit 0:
+
+- `tools/test-arena-event.mjs`: 13/13.
+- `tools/test-arena-ui.mjs`: 6/6.
+- `tools/test-scene-systems.mjs`: 16 lifecycle/clock/disposal checks.
+- `tools/test-crash-slide.mjs`: 4/4 ordinary and Mad Max contact checks.
+- `tools/test-replays.mjs`: **162 retained fingerprint checks**, unchanged.
+
+An in-memory diagnostic also rechecks the unchanged private Salt constructor
+using this actual candidate GLB: **11 checks pass on its 17 native meshes**.
+It covers disabled loading, real native attachment/shared geometry, supplied
+Course features and RNG preservation, exact-once disposal with enclosing
+disposal, late-load retirement and wrong-ground-size rejection. It supplies
+an explicitly unregistered private Course with the Salt ID, derived from
+unchanged Scrapdome solely for the constructor's state/RNG contract. This
+does not register physical Salt Flats, launch a game, clear the failing
+registered-scene acceptance or measure art/frame/heat. Its local GLTF
+texture adapter skips pixel decoding only; native geometry is loaded.
+An initial incomplete one-off command stopped on an undefined diagnostic
+variable; the corrected in-memory command passes. That setup error is not
+counted as production RED and changed no frozen test or source.
+
+Read-only SHA-256 controls:
+
+- source recipe: `91a5f43df171eb2393f4faac71ddbc49e8a5bd716353020c30d78015de7f8872`
+- frozen full source test: `46d27e8be782591d07ff5440ca0e20673bcc78e24060b8f9865a900d994d9774`
+- unchanged fit JSON: `c6298b9cc516a31cb97d76a6da88a84c6232200626699d5e499cc553107b660b`
+- unchanged catalog: `3902a750659da37892ac0ff6ac3431393fdfb9f35e2a4a4273117fa71eda0843`
+- unchanged Salt scene module: `17f3532974d57e9b49be98c8da1f8f5f95f8f58167a9ddad80b67c3f0aa676d1`
+- unchanged Scrapdome controls: `db071b927146aea534ca6fb46a67655e7cb5fe864f62993e8149d22baa44513a`
+- retained ordinary pins: `b55182cbc6d6121a205fa24ba9049aeefabd7943a6e12ebba5a7f868c068c77a`
+- retained combat pins: `85d9457ccd27534cfd7134547690b0ea5ad430fd9f374a63a1015c0b4b781536`
+- retained Hidden Road ordinary pins: `e7ac791e2889fb44fef7fe825820a80b6ea56770f1d73bb096d381b3a1a88b50`
+- retained world-composition assertions: `03c46238e3a56ae9179cf3962bca56edf3d3a4778ffe93b962d6c36aafe35238`
+
+The full frozen suite additionally verifies every tracked runtime asset,
+its old protected assertion files and every catalog-pinned licensed source
+against hashes captured before this run. All preservation controls pass.
+The selection fix changes no input bytes or native model counts. The
+approved plain Bus source remains `b6603f556b73b0e9f4aa92d02f11d2a197fc8d55139c960788f0db36a679bbd8`.
+Changed assertions and regenerated fingerprints: **none**.
+
+## Remaining ownership and review
+
+The nine unchanged runtime failures are the separate dev flag, physical
+venue registration, rank-eight and dev-off rejection, selected rank-nine
+entry, unknown venue/mode rejection, completed Salt Flats public round and
+scene through the actual registered course. The last one still stops at
+`assert.ok(venue)`. Existing source/scene modules are partial WIP until
+the Director grants those real hooks and they pass actual consumer checks.
+
+White bowl/wear/readable boundaries, actual heat shimmer, matched High and
+Performance game captures, <=10% frame cost, six look scores and Claude's
+written comparison review remain mandatory. No art round was started by
+this source repair. No private/native result is a full-card, public install,
+lane/full/build, merge or release pass. The Director owns the next hook
+slice, independent source review and all required whole-card gates.
+
+## Removed for the source-binding repair
+
+Replaced the insufficient label-only selection guard with the complete
+settled model/catalog/path guard. The old independent hash, CC0, licence,
+count and triangle checks remain. No model/source, texture/palette recipe,
+scene/runtime hook, asset, config claim, licensed original, old assertion
+or replay pin was removed or substituted. The new copied negative inputs,
+private candidate and native logs are reproducible ignored scratch; the
+janitor removes them after their verdict is used. Original licensed files
+and current game assets remain preserved.
