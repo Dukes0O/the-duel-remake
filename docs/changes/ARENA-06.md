@@ -1088,3 +1088,149 @@ Complete raw native/browser attempt logs, original prefix bytes, before/after pr
 ### Removed
 
 None. These are additive tests and an append-only note. The next owned Source slice must provide the real outside scenery, diagnostic clock and distant heat; the tests do not substitute a finished effect or bless the provisional detector as complete.
+
+
+## Bounded outside-ground and heat Source freeze, 1 October 2026
+
+The independently frozen outside-ground failures now pass in this private
+presentation slice. Heat motion is **unproved**: all six real final-canvas
+diagnostics stop at repeated heat-off pixel instability before the tint and
+displacement assertions. This is a review handoff, not a venue, art, frame,
+public-install or merge pass.
+
+### Scope and protected inputs
+
+Tests-first baseline: d5543db7adaa5b111a7164b6f7b91238f4443d4e; prior
+native world Source: 0dad93ececc7d61cfa6f64b308f941fbd21eb01a.
+Only src/arena/venues/salt-flats.js, src/world.js, src/render3d.js and this
+append-only note changed. All 1,185 other tracked files are byte-exact,
+including every test/scenario, recipe, fit/config/catalog, Course, venue
+registry, App/flags/UI/game/audio, public file and replay/signature pin.
+The original 83,143 note bytes are exact (SHA-256
+6d66e657cab0465b960b16e1e2c96418039c7ebf5989d1d20df7a5c48fb1acb3).
+Previous non-UTF8 note bytes were preserved by appending UTF-8 bytes.
+
+The private native GLB remains 17,480,484 bytes, SHA-256
+6cd41757ee903b3924ddd760f66533e1295ba96d96d863a8689361db74d35bdc.
+Its 171 donor meshes, 152,180 triangles, original buffers/transforms and
+300 by 200 metre prepared bowl remain exact. All 168 physical colliders and
+both ramps are unchanged.
+
+### Presentation changes
+
+The world adds a separate outside-scenery sibling to the native Salt Flats
+group. Four adjoining strips, eight triangles and one material, continue the
+genuine salt ground to +/-3,000 metres. UVs are derived from actual native
+ground vertices and photo UVs, so the chosen unmodified CC0 salt image and
+approved mirrored sampler continue at their original orientation and scale.
+The native bowl has no overlapping extra floor. The cloned ground material
+participates in real fog. Existing clear/golden/overcast fog endpoints
+1,650/1,550/1,450 metres, lighting and camera far 2,400 remain unchanged.
+These strips are visual-only; no physical query or collider is added.
+
+Only native distant scenery materials receive view-space vertex displacement.
+The shared presentation-time uniform controls two small wave components;
+the effect fades in over 70 to 95 metres from the camera. Native geometry and
+world transforms stay unchanged, the near salt ground and actual car/HUD
+materials have no heat shader, and the original shadow geometry is retained.
+The production material hook runs through the ordinary scene pass in either
+quality path; this implementation fact is not an actual pixel-motion pass.
+The native group still counts 171 meshes/152,180 triangles; the separate
+visual extension adds one mesh/eight triangles to the world.
+
+The approved renderFrame({presentationSeconds,saltHeatEnabled}={}) hook
+returns its effective ambient time and applied Salt-only enable boolean,
+alongside existing drawCalls/triangles. Supplied time reaches existing
+presentation clocks (sky/clouds, scene animation, visible tells, menu-only
+ambient motion, light flashes and effects), without becoming Duel/RNG/race
+time. Diagnostic heat disable is restored after that one draw, and each
+ordinary frame uses the normal default effect. No-argument RAF/frame
+milliseconds retain their previous values; frame metrics, real dt, race
+timers and state remain separate. No inspection-camera interpolation or
+lighting-transition behavior was changed for the pixel fixture.
+
+Native and added resources share an idempotent retirement path. The cloned
+material reuses the selected photo texture, which retires exactly once
+alongside all native/added resources. Late, failed and invalid native loads
+remain real failures without a substitute mesh; disposal cannot resurrect
+the presentation.
+
+### RED, GREEN and held checks
+
+Before any Source edit, unchanged native renderer acceptance reproduced
+13/16: original renderer 8/8 and outside presentation 5/8. All 408 actual
+outside ray stations missed, 136 in each frozen fog mood; the genuine native
+ground positive control passed.
+
+After Source changes, unchanged native renderer acceptance is **16/16**.
+All 408 stations hit actual visible fog-participating salt triangles, with
+zero misses and zero unfogged materials. Donor geometry/buffer/transform,
+physical features, actual Duel/queries/seeded RNG, late/error handling,
+ordinary road/Scrapdome and exact-once disposal controls pass. This was
+repeated on the final Source bytes.
+
+Unchanged source/native diagnostic selection is **31/31** (28 original
+source/native plus three appended native geometry checks; thirteen registered
+Course checks are excluded by that named selection). The unchanged default
+suite separately runs **42 checks: 36 pass, six known public/runtime RED**,
+then **16/16 registered geometry checks**. The six retained failures are
+the absent public feature switch, rank-eight refusal, dev-off refusal,
+rank-nine selected Salt launcher, unknown-selection refusal and complete
+Fuel Run Salt consumer. They are not replaced or skipped by native-only
+evidence. Native boundary **29/29**, complete world composition **33/33**,
+scene systems **16/16**, production scene-presentation/composer/direct/mirror/
+warmup/lifecycle controls and road replay fingerprints **162/162** pass.
+npm run build passes; its advisory chunk-size warning remains.
+
+One approved six-case functional browser attempt ran on private port 36878,
+with actual memory-only App/Duel and the final main canvas, not sample().
+The hook now reports the supplied clock and genuinely applied venue boolean,
+so all six pass the former missing-seam check. Every case then fails the
+unchanged assertion: Actual ambient-off fixed-time frames are unstable after
+warmup. Cases are High/Performance times Salt Flats/Scrapdome/ordinary road.
+Both Salt fixtures retained 80 genuine far-donor meshes and their production
+shader callbacks. All six restore original materials, dispose every
+diagnostic clone exactly once, and retain identical Duel/Course/HUD/seeded
+RNG state. The actual harness report is failed, with zero browser
+warnings/issues, zero screenshots and no frame samples. Neither tint-only
+negative validation nor distant heat displacement/motion assertions execute
+past the off-frame equality blocker.
+
+Read-only trace identified existing shared camera and lighting convergence
+as a review question: repeated inspection draws still interpolate camera.y,
+and lighting.apply blends fog/sky/sun/environment/exposure using real dt.
+The fixture currently warms only two diagnostic draws before exact full-
+canvas equality. No measured-cause claim is made from this source trace.
+Per Director instruction, Source is frozen without changing those existing
+production paths or weakening the fixture. Independent author must measure
+and wait for actual camera/light/scene convergence while preserving exact
+off-pixel equality, then review the provisional tint/displacement detector.
+
+### Evidence, remaining gates and Removed
+
+Raw RED/GREEN, original/default geometry, boundary receipt, scene/replay,
+build, failed functional browser reports and protected-byte receipts are in
+integration .evidence/2026-10-01/ARENA-06/effects-source/. No live or Preview
+folder, .preview-dist, port 5174, real save, dependency, external audio or
+history operation was used. No new art sheet/round or timing measurement
+was taken.
+
+The prior 0dad native art critique still stands: direction/material quality
+and full-view readability are below four. Heat displacement, real motion,
+near-car/road controls beyond the current blocker, matched game comparison,
+Claude/Kyle art/feel review, quiet 180-RAF High/Performance +10% frame gates,
+public mode/launcher/flags/install and whole-card/lane/full merge gates
+remain pending. This source freeze does not grant any of those passes.
+
+Removed: the hard visual termination outside the prepared bowl is replaced
+by picked-photo scenery continuing through existing opaque fog. The old
+counts-only diagnostic draw body is replaced by the approved ambient-clock
+and nonpersistent effect hook, retaining its two existing count fields.
+No native model, donor, physical surface, replay pin, test/assertion or
+licensed source was removed; the currently installed art remains intact.
+
+Final bounded Source bytes (SHA-256):
+
+- src/arena/venues/salt-flats.js: 7858 bytes; 80b825bafbf3ad08256bf7373f4dae522f32230f87db812e64ead76994214b97.
+- src/world.js: 13064 bytes; 3c3d4bfb28046c53b42fc99ec1f58284e3148388cac903c735b0b55b162ad5a2.
+- src/render3d.js: 42794 bytes; da1cb83d7765171c633d09504d23ec20bb3c5d546f1b11b898773f2a62c9794c.

@@ -36,7 +36,9 @@ export { addTurnSigns, addHarbor } from './world-props.js';
 export function buildEnvironment(course, {saltFlats} = {}) {
   if(course.def.id==='salt-flats'){
     const group=new THREE.Group();
-    group.add(createSaltFlatsScene(course,saltFlats).group);
+    const salt = createSaltFlatsScene(course,saltFlats);
+    group.add(salt.group,salt.outside);
+    registerSceneSystem(group,{animate:salt.animate});
     return group;
   }
   const group = new THREE.Group(), alpine = course.def.theme === 'alpine', night=course.def.theme==='city';
