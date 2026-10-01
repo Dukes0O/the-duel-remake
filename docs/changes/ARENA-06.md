@@ -39,7 +39,8 @@ The independent author's generated-ground config check was committed RED
 with both old controls passing before Source. Its three checks now pass.
 The final default suite passes every source/native check and retains exactly
 six known public switch, launcher and Fuel Run failures. All 16 registered
-Course geometry cases and 29 native boundary/collision cases pass.
+Course geometry cases and 29 native boundary/collision cases pass. Build
+passes; the whole-card merge floor still awaits the held public hooks.
 
 Repeated exports preserve the generated colour and normal image bytes.
 Comparison with round two proves every native attribute, index, UV,
