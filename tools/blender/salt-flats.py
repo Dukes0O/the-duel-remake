@@ -238,7 +238,8 @@ def salt_material(output,config,physical):
         raise ValueError('Salt ground must use the settled fixed venue seed')
     bowl=config['targetSizeMetres'];yy,xx=np.mgrid[0:height,0:width]
     x=(xx/(width-1)-.5)*bowl['width'];z=(yy/(height-1)-.5)*bowl['depth']
-    macro=.065*(salt_noise(x/53,z/53,seed)-.5)+.04*(salt_noise(x/137+7,z/137-3,seed)-.5)
+    tone53,tone137=settings['toneDriftWeights']
+    macro=tone53*(salt_noise(x/53,z/53,seed)-.5)+tone137*(salt_noise(x/137+7,z/137-3,seed)-.5)
     size=settings['crustSizeMetres'];px=x/size;pz=z/size;ix=np.floor(px);iz=np.floor(pz)
     first=np.full(x.shape,np.inf);second=np.full(x.shape,np.inf)
     for dx in (-1,0,1):
@@ -248,9 +249,11 @@ def salt_material(output,config,physical):
             distance=(sx-px)**2+(sz-pz)**2
             second=np.minimum(second,np.maximum(first,distance));first=np.minimum(first,distance)
     gap=(np.sqrt(second)-np.sqrt(first))*size
-    ridge=np.exp(-(gap/.13)**2);seam=np.exp(-(gap/.32)**2)
-    tone=macro+.055*ridge-.022*seam
-    rgb=np.stack([.70+tone,.72+tone,.695+tone],axis=-1)
+    # The ridge spans several native atlas samples instead of vanishing
+    # between texels. Its relief and wider seam share the same seeded cells.
+    ridge=np.exp(-(gap/settings['crustRidgeWidthMetres'])**2)
+    seam=np.exp(-(gap/settings['crustSeamWidthMetres'])**2)
+    bright,dark=settings['crustColorWeights'];crust=bright*ridge+dark*seam
     # Read the real Course boundary frames to tint its tyre-worn driving band.
     # This changes only the texture; every physical surface stays authoritative.
     frames=[]
@@ -265,11 +268,19 @@ def salt_material(output,config,physical):
         t=np.clip(((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz),0,1)
         distance=np.minimum(distance,(x-ax-t*dx)**2+(z-az-t*dz)**2)
     band=np.clip((21-np.sqrt(distance))/7,0,1);band=band*band*(3-2*band)
-    rgb=rgb*(1-band[:,:,None]*.07)+np.array([-.016,-.016,-.004])[None,None,:]*band[:,:,None]
-    rgb=np.clip(rgb,.45,.85)
+    crust_scale=1-band*(1-settings['drivingBandCrustScale'])
+    tone=macro+crust*crust_scale
+    salt=np.array([.70,.72,.695])[None,None,:]
+    dust=np.array(settings['drivingBandColor'])[None,None,:]
+    rgb=salt*(1-band[:,:,None])+dust*band[:,:,None]+tone[:,:,None]
+    rgb=np.clip(rgb,.30,.93)
     material=bpy.data.materials.new('Seeded weathered salt pan');material.use_nodes=True
     material['saltGroundSeed']=seed;material['saltGroundGenerator']='seeded'
     material['saltCrustSizeMetres']=settings['crustSizeMetres']
+    material['saltToneDriftWeights']=settings['toneDriftWeights']
+    material['saltCrustWidths']=[settings['crustRidgeWidthMetres'],settings['crustSeamWidthMetres']]
+    material['saltCrustColorWeights']=settings['crustColorWeights']
+    material['saltGrainContrast']=settings['grainContrast']
     material['saltAtlasEdgeFadeMetres']=settings['atlasEdgeFadeMetres']
     material['saltGrainSizeMetres']=settings['grainSizeMetres']
     shader=material.node_tree.nodes.get('Principled BSDF');shader.inputs['Roughness'].default_value=.98
@@ -284,7 +295,8 @@ def salt_material(output,config,physical):
         return node,digest(path)
     color,color_hash=texture('seeded-salt-color',rgb)
     material.node_tree.links.new(color.outputs['Color'],shader.inputs['Base Color'])
-    dz,dx=np.gradient(.028*ridge,bowl['depth']/(height-1),bowl['width']/(width-1))
+    dz,dx=np.gradient(settings['crustReliefMetres']*ridge*crust_scale,
+                      bowl['depth']/(height-1),bowl['width']/(width-1))
     normal=np.stack([-dx,-dz,np.ones(x.shape)],axis=-1)
     normal/=np.linalg.norm(normal,axis=-1)[:,:,None]
     normal,normal_hash=texture('seeded-salt-normal',normal*.5+.5,True)

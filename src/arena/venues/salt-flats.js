@@ -58,6 +58,10 @@ function applyGeneratedSalt(material, bounds) {
     shader.uniforms.saltGroundCenter = {value: new THREE.Vector2(center.x, center.z)};
     shader.uniforms.saltGroundHalfSize = {value: new THREE.Vector2(half.x, half.z)};
     shader.uniforms.saltCrustSize = {value: settings.saltCrustSizeMetres};
+    shader.uniforms.saltToneDrift = {value: new THREE.Vector2(...settings.saltToneDriftWeights)};
+    shader.uniforms.saltCrustWidths = {value: new THREE.Vector2(...settings.saltCrustWidths)};
+    shader.uniforms.saltCrustColors = {value: new THREE.Vector2(...settings.saltCrustColorWeights)};
+    shader.uniforms.saltGrainContrast = {value: settings.saltGrainContrast};
     shader.uniforms.saltEdgeFade = {value: settings.saltAtlasEdgeFadeMetres};
     shader.uniforms.saltGrainSize = {value: settings.saltGrainSizeMetres};
     shader.vertexShader = 'varying vec3 saltGroundPosition;\n' + shader.vertexShader.replace(
@@ -68,6 +72,10 @@ uniform float saltGroundSeed;
 uniform vec2 saltGroundCenter;
 uniform vec2 saltGroundHalfSize;
 uniform float saltCrustSize;
+uniform vec2 saltToneDrift;
+uniform vec2 saltCrustWidths;
+uniform vec2 saltCrustColors;
+uniform float saltGrainContrast;
 uniform float saltEdgeFade;
 uniform float saltGrainSize;
 float saltHash(vec2 at) {
@@ -96,20 +104,23 @@ if (saltAtlasEdge > 0.0) {
     saltDistances.x = min(saltDistances.x, distance);
   }
   float gap = (sqrt(saltDistances.y) - sqrt(saltDistances.x)) * saltCrustSize;
-  float tone = 0.065 * (saltNoise(saltAt / 53.0) - 0.5) +
-    0.04 * (saltNoise(saltAt / 137.0 + vec2(7.0, -3.0)) - 0.5);
-  tone += 0.055 * exp(-pow(gap / 0.13, 2.0)) - 0.022 * exp(-pow(gap / 0.32, 2.0));
+  float tone = saltToneDrift.x * (saltNoise(saltAt / 53.0) - 0.5) +
+    saltToneDrift.y * (saltNoise(saltAt / 137.0 + vec2(7.0, -3.0)) - 0.5);
+  tone += saltCrustColors.x * exp(-pow(gap / saltCrustWidths.x, 2.0)) +
+    saltCrustColors.y * exp(-pow(gap / saltCrustWidths.y, 2.0));
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.70, 0.72, 0.695) + tone, saltAtlasEdge);
 }
 float saltNearGrain = 1.0 - smoothstep(10.0, 25.0, length(vViewPosition));
 float saltGrain = saltHash(floor(saltAt / saltGrainSize)) - 0.5;
-diffuseColor.rgb *= 1.0 + saltGrain * 0.024 * saltNearGrain;
+float saltGrainFootprint = max(fwidth(saltAt.x), fwidth(saltAt.y));
+float saltGrainResolved = 1.0 - smoothstep(saltGrainSize * 0.45, saltGrainSize * 2.0, saltGrainFootprint);
+diffuseColor.rgb *= 1.0 + saltGrain * saltGrainContrast * saltNearGrain * saltGrainResolved;
 `).replace('#include <normal_fragment_maps>', `
 #include <normal_fragment_maps>
 normal = normalize(mix(normal, nonPerturbedNormal, saltAtlasEdge));
 `);
   };
-  material.customProgramCacheKey = function() {return previousKey.call(this) + '|salt-generated-ground-v1';};
+  material.customProgramCacheKey = function() {return previousKey.call(this) + '|salt-generated-ground-v2';};
   material.needsUpdate = true;
 }
 

@@ -119,6 +119,24 @@
     ],
     "crustSizeMetres": 4.2,
     "atlasEdgeFadeMetres": 12,
-    "grainSizeMetres": 0.075
+    "grainSizeMetres": 0.035,
+    "toneDriftWeights": [
+      0.24,
+      0.15
+    ],
+    "crustRidgeWidthMetres": 0.32,
+    "crustSeamWidthMetres": 0.7,
+    "crustReliefMetres": 0.1,
+    "crustColorWeights": [
+      0.09,
+      -0.085
+    ],
+    "drivingBandColor": [
+      0.53,
+      0.535,
+      0.525
+    ],
+    "drivingBandCrustScale": 0.25,
+    "grainContrast": 0.1
   }
 }
