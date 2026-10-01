@@ -3075,6 +3075,7 @@ tasks:
       - "Any runtime voice wiring beyond the existing bank/credit hooks requires a named scope addition before implementation. Retain subtitles, attribution, one-version source placement and normal gates."
     note: "Candidate preparation merged e1a2d63; full casting/runtime card remains in progress pending Kyle. Ten auditions used400 credits, none selected/rejected/kept. External owner preserves audition bytes/receipts and branch. No additional generation or audio runtime work tonight."
     claude_note: "1 October 2026: Kyle kept all eight crew takes and Bill's raider take on 25 September (31ef0ba, in audio-src/voices). Claude sent him a listening page of those nine on 1 October; any he wants redone come back as a new batch for the audio session. Wiring the lines into the game is still to do."
+    kyle_decision: "Kyle, 1 October 2026: the nine kept voice takes are fine for now; no new takes. Wiring them into the game remains."
   - id: ARS-01
     title: "Arsenal wave 1: Harpoon and Caltrops, and computer use of wave 1"
     owner: codex
