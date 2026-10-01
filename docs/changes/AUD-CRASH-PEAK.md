@@ -535,3 +535,21 @@ later commit, and no release clearance is claimed.
 The recorder change removed the superseded compressor tap and its unused
 detector. No asset or player data was removed. Pending evidence stays until
 its verdict and merge cleanup.
+
+## Final merge evidence
+
+This repair shares exact clean Fuel freeze 996424592ba99becccd47442065c656314dd9673.
+The lane tier passed all 317 suites with no failures or unrun tasks in
+451.80 s; build passed in 416 ms. Merge 66ce5d5 installs the independently
+reviewed output and final-recorder source. Its audio source remains byte-
+exact through the current integration sync and final arena-pin-only
+migration. Native peaks and final race measurements have the scoped
+clearance above; human listening and unplayed cue coverage remain flagged.
+No protected sound bank, licensed source, current audio asset or release
+was changed.
+
+### Removed: completed shared lane
+
+Once this verdict is committed, the completed shared Fuel lane and its
+reproducible captures/logs are removed with ordinary worktree cleanup.
+Current game assets, licensed originals and measured verdicts remain.

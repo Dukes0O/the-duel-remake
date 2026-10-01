@@ -11,7 +11,7 @@ tasks:
     lane: AUDIO
     size: S
     needs: []
-    status: building
+    status: merged
     test_commit: 8494081e234c997c3879de50dd792af30e1bb89c
     source_commit: d96f1f273d301e5dd838f8502d0a329136044581
     claimed_by: codex-director-2026-09-30-overnight
@@ -946,10 +946,11 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
-    status: building
-    review_commit: e182643e1b12e22ed9396d1b9fa1d1a54ab3e1c3
+    status: merged
+    review_commit: 996424592ba99becccd47442065c656314dd9673
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
+    waiting_on: kyle
     flag: fuel-run
     owns: [tools/test-onfoot-car-contacts.mjs, tools/test-arena-fuel-depot.mjs, src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/replays/arena-fuel-run-controls.json, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md, tools/test-fuel-car-attribution.mjs, tools/test-fuel-standing-carrier.mjs]
     hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/combat-ai.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-feature-flags.mjs, src/raiders.js, start-preview.bat, tools/test-wasteland-beta.mjs]
@@ -2862,9 +2863,9 @@ tasks:
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arena-shove
     owns: [tools/test-arena-shove.mjs, tools/replays/arena-shove-controls.json, tools/scenarios/arena-shove.mjs, docs/changes/ARENA-SHOVE.md]
-    hooks: [src/sim-contacts.js, src/vehicle-knock.js, src/vehicle-collision.js, src/arena/arena-floor.js]
-    hook_requests: [src/arena/arena-event.js, src/arena/arena-pilot.js, src/game.js]
-    sequencing: "Steering merged and its physics lane removed. New acceptance tests first for all four settled sitting states, all car masses and native solver paths. Granted collision/knock/floor hooks are exclusive. Fuel retains arena-event/game; do not edit them until its merge and explicit Director handoff. Arsenal requests are not ownership. No steering, damage, protection, Titan crush or road-rule redesign. Kyle checks Preview after gates."
+    hooks: [src/sim-contacts.js, src/vehicle-knock.js, src/vehicle-collision.js, src/arena/arena-floor.js, src/arena/arena-event.js]
+    hook_requests: [src/game.js]
+    sequencing: "Fuel merged; grant ONLY arena-event::stepWreckedActor for real waiting-wreck knock/slide stepping with quiet solid-floor containment. Existing collision/knock/floor hooks remain exclusive. Pilot is explicitly released to Arsenal, not Shove; game remains a request. Merge current integration normally into this lane before source continuation, preserving Fuel and reviewed steering. Original independent wreck-motion REDs precede the fix; unchanged respawn/damage/protection/Titan/road controls stay. Outward pinned-wall interpretation awaits Claude; no escape or teleport invented. Kyle Preview feel and exact whole gates follow."
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
     flag: scrapdome
     acceptance:

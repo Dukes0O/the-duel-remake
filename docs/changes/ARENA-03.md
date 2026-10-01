@@ -1474,3 +1474,22 @@ The scenario uses labelled placement, held-CPU and whistle fixtures. These captu
 ### Removed — reviewed steering baseline migration
 
 Replaced only the two stale pre-steering arena fingerprints and their old active baseline provenance. Their exact historical values and source commits remain documented above. Kept all three road pins, the complete input/sampling script, every existing assertion and all current game rules. No generated output, runtime path, licensed original or player save was removed. Raw gate evidence remains ignored until its verdict is consumed.
+
+## Final merge evidence
+
+The exact clean lane freeze 996424592ba99becccd47442065c656314dd9673 passed
+`node tools/run-tests.mjs --tier lane --changed --jobs 8`: 317 suites, no
+failures, skips or unrun tasks, 451.80 s. `npm run build` passed in 416 ms.
+Complete raw logs were retained for review under the ignored gate evidence.
+The fresh authored browser was e182643; the later commit changes only the
+approved two arena control hashes, provenance and this note. All source and
+scenario bytes remain exact. Claude's written contact/depot/gate/browser
+merge conditions are met; merge 66ce5d50cbebab96b93d937259e894ef0107a665
+installs Fuel behind fuel-run:dev. Kyle's Preview feel, human listening and
+recorded HUD observations remain follow-ups. This is not a release.
+
+### Removed: completed lane
+
+The merged lane, dependency link, branch and reproducible review outputs
+are removed after these verdicts are committed. Licensed originals, current
+game assets, source recipes, assertions and Kyle's decisions remain.
