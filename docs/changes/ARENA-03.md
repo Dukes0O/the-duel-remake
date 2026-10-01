@@ -928,3 +928,119 @@ conditions from standing fighter cargo, and the transient borrowed car
 recovery guard from new fighter contacts. Pickup markers retain their original
 geometry. No old assertion, replay pin, current game asset, licensed original,
 save key or save schema was removed or changed.
+
+
+## Independent red follow-up: car attribution and standing-carrier targeting
+
+Two independent review findings are reproduced on source 38ec12eb859b0333808b2c8e7090e6f844e37ef8.
+The Director claimed the two new suites in b5132f9 before work. The held Fuel
+lane ordinarily merged that integration claim, without rebasing or rewriting
+history. This freeze adds tests only; prior source and frozen acceptance stay.
+
+### Car knockdowns and the existing eligible XP award
+
+The actual player remains in its occupied car while fireWeapon creates two
+real car crossbow projectiles. A controlled swept path crosses one real
+seeded 70-health raider; the native four-second combat cooldown update makes
+the second shot legal. No direct damageRaider call or fake reward event is
+used. The actual contact currently reports a player knockdown with no source
+in its gameplay event, labels the award onFoot, promises +25 NOTORIETY,
+and banks that false on-foot award through combatNotoriety and settleRace.
+The actual completed Duel result supplies the settled combat snapshot.
+
+SPEC 3.8 gives raider knockdowns 25 XP. RAID-02's current written card records
+one player-RPG award per raider per race, and the existing accepted XP filter
+requires owner player and source onFoot. This follow-up preserves that filter
+and adds no car bonus. Genuine native F exit, RPG input/launch, three-second
+recovery, no recovery restart and repeated-result receipts remain positive
+controls. Real foot-first recovery cannot farm another award.
+
+The Director interprets the existing entitlement as the first eligible
+on-foot knockdown: an ineligible car action must not consume it. The added
+car-first test uses actual three-second raider recovery, a real 48-step F
+exit and native RPG launch on the same raider, and requires a newly eligible
+onFoot record and truthful first-eligible callout. A later genuine RPG down
+must not duplicate it; real settlement keeps exactly 25 raider XP. No explicit
+contradictory design text was found. This preservation interpretation is
+recorded for Claude's required whole-card review before any feature merge.
+
+### Standing carrier and the physical parked wreck
+
+A genuine 48-step F exit and native pad pickup establish the actual fighter,
+physical canister and participant. One native hostile car bolt against parked
+armor 1 wrecks that car. The fighter remains standing at 100 health and keeps
+its cargo. Physical outOfPlay must still return true for the actual parked
+wreck. Medium and Hard hunter/rammer checks require the real selection,
+brain, pursuit goal, arena weapon target, native crossbow launch and guidance
+to follow this standing carrier. The current car-only guards incorrectly drop
+all those paths.
+
+Native healthy-car controls prove the existing seeded CPU crossbow actually
+hits this fighter. Explicit launch/hit checks use eight metres so the unchanged
+Medium/Hard spread fits the real body; scheduled weapon/range and moved-fighter
+guidance checks keep their original forty-metre setup. No aiming spread,
+weapon range or physical-car hitbox is changed by these tests. Actual knocked
+down, participant-protected, delivered/no-cargo and friendly controls exclude
+targets. The downed-fighter exclusion is checked before the native Fuel step
+clears cargo, and weapon exclusions are checked before the brain clears its
+target. Native Last Car Rolling still excludes a real physically wrecked car.
+
+### Final native red verdict and unchanged controls
+
+Command: node --test --test-reporter=tap tools/test-fuel-car-attribution.mjs
+ tools/test-fuel-standing-carrier.mjs.
+**36 tests, 10 passed, 26 failed, zero skipped, 618 checks reached; exit 1.**
+Car attribution: ten tests, three passed, seven failed, 225 checks.
+Standing carrier: 26 tests, seven passed, 19 failed, 393 checks.
+Every first failure below follows passing native fixture controls; full
+simulation dumps are not retained as verdict prose.
+
+| Failing scenario | Actual first assertion message |
+| --- | --- |
+| actual car-to-raider knockdown has accurate car attribution in its gameplay event | the real car knockdown event identifies a car source |
+| actual car-to-raider contact never creates a false on-foot XP event | a car bolt cannot label its raider knockdown as an on-foot award |
+| a car raider knockdown does not display a false +25 Notoriety promise | a real car raider hit never promises the excluded on-foot +25 XP |
+| the actual XP filter excludes real car raider events while keeping normal finish and win XP | the existing on-foot XP filter excludes the actual car-caused knockdown |
+| native finish and real settlement never bank fake on-foot raider XP from car bolts | real settlement excludes the false on-foot award from actual car hits |
+| car bolt recovery cannot farm a false on-foot XP award | repeated real car knockdowns never farm an on-foot award |
+| an ineligible car knockdown preserves the first genuine on-foot award after actual recovery | an ineligible car knockdown cannot consume the first genuine on-foot XP entitlement |
+| medium hunter: target selection retains the actual standing carrier after its parked car wrecks | CPU selection still targets the standing fuel carrier despite its parked wreck |
+| medium hunter: actual brain and pilot goal follow the standing carrier after its parked wrecks | the real Fuel brain cannot discard a standing carrier because its car is wrecked |
+| medium hunter: native arena weapon target retains the carrier while physical car stays out of play | the native arena weapon target still identifies the standing carrier participant |
+| medium hunter: actual CPU crossbow fires and aims at the standing carrier after parked-car wreck | native CPU crossbow can fire at the standing carrier despite its parked wreck |
+| medium rammer: target selection retains the actual standing carrier after its parked car wrecks | CPU selection still targets the standing fuel carrier despite its parked wreck |
+| medium rammer: actual brain and pilot goal follow the standing carrier after its parked wrecks | the real Fuel brain cannot discard a standing carrier because its car is wrecked |
+| medium rammer: native arena weapon target retains the carrier while physical car stays out of play | the native arena weapon target still identifies the standing carrier participant |
+| medium rammer: actual CPU crossbow fires and aims at the standing carrier after parked-car wreck | native CPU crossbow can fire at the standing carrier despite its parked wreck |
+| hard hunter: target selection retains the actual standing carrier after its parked car wrecks | CPU selection still targets the standing fuel carrier despite its parked wreck |
+| hard hunter: actual brain and pilot goal follow the standing carrier after its parked wrecks | the real Fuel brain cannot discard a standing carrier because its car is wrecked |
+| hard hunter: native arena weapon target retains the carrier while physical car stays out of play | the native arena weapon target still identifies the standing carrier participant |
+| hard hunter: actual CPU crossbow fires and aims at the standing carrier after parked-car wreck | native CPU crossbow can fire at the standing carrier despite its parked wreck |
+| hard rammer: target selection retains the actual standing carrier after its parked car wrecks | CPU selection still targets the standing fuel carrier despite its parked wreck |
+| hard rammer: actual brain and pilot goal follow the standing carrier after its parked wrecks | the real Fuel brain cannot discard a standing carrier because its car is wrecked |
+| hard rammer: native arena weapon target retains the carrier while physical car stays out of play | the native arena weapon target still identifies the standing carrier participant |
+| hard rammer: actual CPU crossbow fires and aims at the standing carrier after parked-car wreck | native CPU crossbow can fire at the standing carrier despite its parked wreck |
+| medium: native scheduled CPU attack still fires at standing carrier beside its parked wreck | 'the actual scheduled CPU attack uses the standing carrier and emits its real crossbow' |
+| hard: native scheduled CPU attack still fires at standing carrier beside its parked wreck | 'the actual scheduled CPU attack uses the standing carrier and emits its real crossbow' |
+| an already-fired CPU bolt still guides toward the moved carrier after the parked car wrecks | 'actual in-flight bolt guidance continues toward the moved standing carrier' |
+
+The prior commands remain unchanged: node --test --test-reporter=tap
+ tools/test-onfoot-car-contacts.mjs tools/test-arena-fuel-depot.mjs
+ tools/test-arena-fuel-run.mjs tools/test-notoriety.mjs tools/test-raiders.mjs.
+**156/156 pass**, zero skipped. All five suites and the existing Fuel replay
+JSON are byte-identical to this source. No fingerprint is regenerated, no
+existing assertion changes, and no source file is edited. Tests use isolated
+Duel state and freshly fabricated profiles; no real storage is accessed.
+No whole-lane/build, browser, Save Guardian or Claude merge clearance is
+claimed by this red freeze.
+
+| New frozen suite | SHA-256 |
+| --- | --- |
+| tools/test-fuel-car-attribution.mjs | 0da0ab8c095741b175ca1c2bee30bb222f8ec1de00616a8d8406bba81e82b88a |
+| tools/test-fuel-standing-carrier.mjs | f92b26e339935f1b319bbe263f73b975f335133561b97c311d09bbc2e42531fe |
+
+### Removed — attribution and standing-carrier red follow-up
+
+Nothing. The two claimed suites and this failure record are new. Existing
+simulation, reward filter, settlement, save format, assets, audio, prior
+assertions, replay pins and world signatures remain unchanged.
