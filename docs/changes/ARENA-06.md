@@ -1,6 +1,6 @@
 # ARENA-06: Salt Flats
 
-Status: building; the third and final material round awaits game review.
+Status: review; final native look is clear, public hooks and Claude remain.
 
 ## Changed
 
@@ -49,9 +49,12 @@ driving, ramp, state and lifecycle checks remain unchanged.
 
 Round one removed visible photo repeats but scored 3 near/racing and 2 in
 full/heat views. Round two improved the worn-band separation to 4 and full
-art/materials to 3; near/chase remained 3. These are critic verdicts from
-actual game pictures, not look approval. Final pictures, actual shader checks
-and matched High/Performance frame measurements remain pending.
+art/materials to 3; near/chase remained 3. The final round passes all sixteen actual game views without errors or
+warnings; independent Source review finds no defect. Headless renderer and
+effects each pass eight cases. The critic scores every assessed visual item
+four in both qualities. Paired 180 actual animation frames per venue/quality
+give Scrapdome/Salt P95 of 16.8/16.8 ms throughout, within ten percent. All
+samples remain; motion and sound are unassessed. The final sheet goes to Claude.
 
 Earlier assertion migration: Kyle's written ground change removed the active
 photo binding, JPEG helper, mandatory photo input and embedded mirrored-photo
@@ -60,11 +63,11 @@ mirror sampler, and actual image-byte repeatability replace those checks.
 The external CC0 photo's licence/catalog provenance stays intact. Claude's
 removed pixel/counter look diagnostics remain removed.
 
-Next: Root refreshes private artifact pins and checks loading, disposal,
-race-state purity and actual game/frame performance, then obtains the final
-critic and Claude verdict. The same Scrapdome plus 10% frame limit applies.
-This is round three: no fourth material round. If the final look stays below
-4, record the remaining gap and take the card to Kyle under the stop rule.
+Next: Claude reviews the completed native comparison. Public switch, rank,
+launcher and mode hooks wait for Arsenal and the wreck-rate event hook;
+then final lane/build gates precede any whole-card merge. The existing
+Blender coverage file also stays with Tanker until its merge. No fourth
+material round or public installation is cleared by these private checks.
 
 ## Removed
 
