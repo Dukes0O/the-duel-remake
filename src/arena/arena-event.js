@@ -5,7 +5,7 @@ import {stepCombat} from '../combat.js';
 import {arenaActor, arenaParticipant} from '../combat-teams.js';
 import {containInArena, floorLimit, worldPose} from './arena-floor.js';
 import {pilotStep} from './arena-pilot.js';
-import {stepKnock} from '../vehicle-knock.js';
+import {stepKnock, stepWreckSlide} from '../vehicle-knock.js';
 import {thinkBrain, STYLE_ORDER, ARENA_FEEL} from './arena-brains.js';
 import {spawnSlots} from './venues.js';
 import {resetSalFight} from './sal-fight.js';
@@ -216,7 +216,12 @@ function stepClock(duel, dt) {
 function stepWreckedActor(duel, actor, dt) {
   actor.combatWreckTimer = Math.max(0, (actor.combatWreckTimer || 0) - dt);
   actor.impactTimer = actor.combatWreckTimer;
-  actor.speedMph *= Math.exp(-3.2 * dt);
+  if (actor.knock) {
+    // Physical wreck motion shares the existing recovery clock; a shove
+    // cannot postpone respawn or create another wreck/damage event.
+    stepWreckSlide(duel, actor, dt);
+    containInArena(duel, actor, dt);
+  } else actor.speedMph *= Math.exp(-3.2 * dt);
   if (actor === duel.state) duel.state.impactTimer = actor.combatWreckTimer;
   return actor.combatWreckTimer === 0;
 }
