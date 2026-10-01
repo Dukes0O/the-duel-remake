@@ -137,6 +137,11 @@
       0.525
     ],
     "drivingBandCrustScale": 0.25,
-    "grainContrast": 0.1
+    "grainContrast": 0.1,
+    "macroWarpMetres": 26,
+    "crustWarpMetres": 5,
+    "crustSiteJitter": 0.84,
+    "drivingBandReliefScale": 0.9,
+    "textureAnisotropy": 4
   }
 }

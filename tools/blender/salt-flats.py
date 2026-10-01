@@ -232,6 +232,12 @@ def salt_noise(x,z,seed):
     return low*(1-fz)+high*fz
 
 
+def salt_warp(x,z,seed,metres):
+    wx=np.sin(z*.018+seed*.17)+.43*np.sin((x+z)*.027-seed*.13)
+    wz=np.sin(x*.019-seed*.11)+.37*np.sin((x-z)*.023+seed*.07)
+    return x+wx*metres*.65,z+wz*metres*.65
+
+
 def salt_material(output,config,physical):
     settings=config['saltGround'];seed=settings['seed'];width,height=settings['pixels']
     if settings['generator']!='seeded' or seed!=config['seed']:
@@ -239,13 +245,18 @@ def salt_material(output,config,physical):
     bowl=config['targetSizeMetres'];yy,xx=np.mgrid[0:height,0:width]
     x=(xx/(width-1)-.5)*bowl['width'];z=(yy/(height-1)-.5)*bowl['depth']
     tone53,tone137=settings['toneDriftWeights']
-    macro=tone53*(salt_noise(x/53,z/53,seed)-.5)+tone137*(salt_noise(x/137+7,z/137-3,seed)-.5)
-    size=settings['crustSizeMetres'];px=x/size;pz=z/size;ix=np.floor(px);iz=np.floor(pz)
+    wx,wz=salt_warp(x,z,seed,settings['macroWarpMetres'])
+    # Rotation and smooth seeded warping remove axis-aligned broad patches.
+    rx=wx*.819152-wz*.573576;rz=wx*.573576+wz*.819152
+    macro=tone53*(salt_noise(rx/53,rz/53,seed)-.5)+tone137*(salt_noise(rx/137+7,rz/137-3,seed)-.5)
+    wx,wz=salt_warp(x,z,seed,settings['crustWarpMetres'])
+    size=settings['crustSizeMetres'];px=wx/size;pz=wz/size;ix=np.floor(px);iz=np.floor(pz)
+    jitter=settings['crustSiteJitter'];start=(1-jitter)/2
     first=np.full(x.shape,np.inf);second=np.full(x.shape,np.inf)
-    for dx in (-1,0,1):
-        for dz in (-1,0,1):
+    for dx in range(-2,3):
+        for dz in range(-2,3):
             cx=ix+dx;cz=iz+dz
-            sx=cx+.2+.6*salt_hash(cx,cz,seed);sz=cz+.2+.6*salt_hash(cx+19,cz-7,seed)
+            sx=cx+start+jitter*salt_hash(cx,cz,seed);sz=cz+start+jitter*salt_hash(cx+19,cz-7,seed)
             distance=(sx-px)**2+(sz-pz)**2
             second=np.minimum(second,np.maximum(first,distance));first=np.minimum(first,distance)
     gap=(np.sqrt(second)-np.sqrt(first))*size
@@ -281,6 +292,10 @@ def salt_material(output,config,physical):
     material['saltCrustWidths']=[settings['crustRidgeWidthMetres'],settings['crustSeamWidthMetres']]
     material['saltCrustColorWeights']=settings['crustColorWeights']
     material['saltGrainContrast']=settings['grainContrast']
+    material['saltMacroWarpMetres']=settings['macroWarpMetres']
+    material['saltCrustWarpMetres']=settings['crustWarpMetres']
+    material['saltCrustSiteJitter']=settings['crustSiteJitter']
+    material['saltTextureAnisotropy']=settings['textureAnisotropy']
     material['saltAtlasEdgeFadeMetres']=settings['atlasEdgeFadeMetres']
     material['saltGrainSizeMetres']=settings['grainSizeMetres']
     shader=material.node_tree.nodes.get('Principled BSDF');shader.inputs['Roughness'].default_value=.98
@@ -295,7 +310,9 @@ def salt_material(output,config,physical):
         return node,digest(path)
     color,color_hash=texture('seeded-salt-color',rgb)
     material.node_tree.links.new(color.outputs['Color'],shader.inputs['Base Color'])
-    dz,dx=np.gradient(settings['crustReliefMetres']*ridge*crust_scale,
+    # Tyre colour wear does not flatten the visible ridge shoulders.
+    relief_scale=1-band*(1-settings['drivingBandReliefScale'])
+    dz,dx=np.gradient(settings['crustReliefMetres']*ridge*relief_scale,
                       bowl['depth']/(height-1),bowl['width']/(width-1))
     normal=np.stack([-dx,-dz,np.ones(x.shape)],axis=-1)
     normal/=np.linalg.norm(normal,axis=-1)[:,:,None]

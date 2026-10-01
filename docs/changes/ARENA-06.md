@@ -1,79 +1,75 @@
 # ARENA-06: Salt Flats
 
-Status: building; generated ground is ready for the next game comparison.
+Status: building; the third and final material round awaits game review.
 
 ## Changed
 
-Kyleâ€™s 1 October decision replaces the repeating photograph with seeded
-salt. A fixed seed builds one 1536 by 1024 colour atlas across the whole
-300 by 200 metre bowl: broad tone drift, salt polygons about four metres
-across, and a dustier driving band read from the actual Course frames.
-A generated normal atlas gives the crust ridges relief. Fine grain uses
-world coordinates close to the camera. Round two widens the ridge beyond
-the native texel spacing, strengthens its relief and whole-bowl tone drift,
-and makes the Course-derived band greyer with feathered edges and weaker
-crust. Close grain is stronger and fades when the screen cannot resolve it.
-The atlas remains the same size; no geometry or UV changes are needed.
+Kyle's 1 October decision replaces the repeating photograph with seeded
+salt. One fixed-seed 1536 by 1024 colour atlas covers the 300 by 200 metre
+bowl with broad tone drift, four-metre salt polygons and a dustier driving
+band read from actual Course frames. A normal atlas gives crust relief;
+world-coordinate grain appears close to the camera.
 
-The unique atlas fades inside its edge. The four adjoining scenery strips
-use generated world-coordinate salt without a stretched or repeated bowl
-image. Both surfaces share the same seed and ground settings. Distant heat
-remains view-only; no race state or seeded simulation randomness changes.
+The final correction follows inspection of the actual round-two colour and
+normal atlases. Colour wear was also reducing band relief to 25%, and the
+cells formed a regular lattice. Band colour and feathering remain intact;
+normal relief now keeps 90% independently. Seeded coordinate warping and
+less regular sites remove straight grid alignment, while a wider site search
+and screen-footprint filtering keep distant procedural ridges from aliasing.
+Anisotropic filtering preserves native atlas detail at oblique views.
 
-The accepted island contains four native salvage stacks behind its solid
+The unique atlas fades inside its edge into four adjoining strips with
+matching generated world-coordinate salt. No clamped bowl image stretches
+outside. Distant heat remains view-only; race state and seeded simulation
+randomness are unchanged.
+
+The accepted island retains four genuine salvage stacks behind its solid
 wreck boundary. All 172 native meshes, 184,340 triangles, donor faces and
-transforms, the Bus, crane, ramps and 168 Course colliders are preserved.
-The second round changes only material settings and generated images. Its
-private candidate is 22,791,328 bytes, about 0.96 MB above the first generated
-candidate because the stronger crust and tone use more PNG bytes. Atlas
-dimensions, 172 draws and two shared native materials stay unchanged.
+transforms, the Bus, crane, ramps and 168 Course colliders remain exact.
+The final candidate is 23,283,392 bytes, about 0.49 MB above round two because
+the irregular generated images use more PNG bytes. Atlas dimensions, native
+UVs, 172 draws and two shared native materials remain unchanged.
 
-The public venue entry still waits for Arsenal and the wreck-rate event
-hook to be free. No visual approval or passing final merge gate is claimed.
+Public entry still waits for Arsenal and the wreck-rate event hook. No
+visual approval, public install or passing final merge gate is claimed.
 
 ## Tests and review
 
-The independent author committed the generated-ground checks while the
-config check was RED; both original control cases passed. Source then
-implemented the generator and the explicitly approved photo-test migration.
-The config and its two controls now pass. The complete native/source suite
-has no new failure; its six held public switch, launcher and Fuel Run cases
-remain explicit. All 16 registered Course geometry cases and 29 independent
-native boundary/collision cases pass.
+The independent author's generated-ground config check was committed RED
+with both old controls passing before Source. Its three checks now pass.
+The final default suite passes every source/native check and retains exactly
+six known public switch, launcher and Fuel Run failures. All 16 registered
+Course geometry cases and 29 native boundary/collision cases pass.
 
-Repeated native exports preserve actual generated colour and normal image
-bytes. Every round-two native attribute, index, transform and UV matches the
-first generated browser artifact exactly. Existing native/source cases pass,
-with all 16 Course geometry and 29 collision/boundary checks passing again.
-Only the same six held public-entry failures remain. No assertion changes
-in this material tuning; donor, driving, ramp, state, lifecycle and replay
-checks remain unchanged.
+Repeated exports preserve the generated colour and normal image bytes.
+Comparison with round two proves every native attribute, index, UV,
+transform, physical feature and donor lineage unchanged. No assertion,
+tolerance or replay pin changes in either material tuning round. Donor,
+driving, ramp, state and lifecycle checks remain unchanged.
 
-The critic judged all actual round-one pictures: visible repeats are gone,
-but near and racing views score 3, while full and heat views score 2. Crust,
-grain, tone drift and the worn band were too faint. Those pictures do not
-approve the look. The stronger round-two material awaits new pictures and
-matched frame measurements.
+Round one removed visible photo repeats but scored 3 near/racing and 2 in
+full/heat views. Round two improved the worn-band separation to 4 and full
+art/materials to 3; near/chase remained 3. These are critic verdicts from
+actual game pictures, not look approval. Final pictures, actual shader checks
+and matched High/Performance frame measurements remain pending.
 
-Changed assertions: the retired photo catalog binding, JPEG helper,
-mandatory photo-input assertion and embedded photo/mirrored-repeat
-assertion are removed from active ground tests under Kyleâ€™s written change.
-Their replacement checks cover seeded settings, genuine embedded generated
-textures, absence of the old photo and mirrored samplers, and actual image
-byte repeatability. No tolerance, gameplay assertion or replay pin changes.
-Earlier pixel and compile-counter art diagnostics were removed under
-Claudeâ€™s direction; looks are judged from actual pictures.
+Earlier assertion migration: Kyle's written ground change removed the active
+photo binding, JPEG helper, mandatory photo input and embedded mirrored-photo
+assertion. Seeded settings, genuine embedded textures, no retired photo or
+mirror sampler, and actual image-byte repeatability replace those checks.
+The external CC0 photo's licence/catalog provenance stays intact. Claude's
+removed pixel/counter look diagnostics remain removed.
 
-Next: refresh private renderer artifact pins and check loading, disposal,
-race-state purity and matched High/Performance frame cost on this candidate.
-Capture full and racing views, obtain critic and Claude verdicts, then finish
-the held public hooks. The same Scrapdome plus 10% frame limit applies.
+Next: Root refreshes private artifact pins and checks loading, disposal,
+race-state purity and actual game/frame performance, then obtains the final
+critic and Claude verdict. The same Scrapdome plus 10% frame limit applies.
+This is round three: no fourth material round. If the final look stays below
+4, record the remaining gap and take the card to Kyle under the stop rule.
 
 ## Removed
 
 Removed active photo configuration, loading, embedded image, mirrored
-sampler rewrite and obsolete photo-only helpers/assertions. The external
-CC0 photograph and its licence/catalog provenance remain untouched.
-The second material round replaces its weaker generated images with the
-current recipe settings; no new runtime asset is installed here. Removed no
-licensed donor, current game asset, physical rule or replay pin.
+sampler rewrite and obsolete photo-only helpers/assertions. Final recipe
+settings replace the earlier regular cells and coupled colour/normal wear.
+No new runtime asset is installed here. Removed no licensed donor, current
+game asset, physical rule or replay pin.
