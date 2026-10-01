@@ -79,3 +79,25 @@ No new game event is added. Existing tyre, engine, collision and Sal sound cues 
 ## Removed
 
 No file or asset is replaced. The real arena's old ceiling is superseded inside the existing shared function; that function retains the released ceiling elsewhere. No duplicate driving path or runtime dependency is added.
+
+## Consumed evidence cleanup
+
+The independent crate-fixture technical review is clear, but automatic
+approval still requires Kyle's explicit authorization. Neither rejected
+edit ran. All old crate assertions remain intact. The proposed App demo
+hook waits for Fuel Run, and the lane remains unmerged. Claude's later
+150-degree-per-second ceiling is in an unmerged design branch; this lane
+has not implemented it. A new source change needs fresh gates and reviews.
+
+The browser and balance verdicts above retain the observed measurements,
+reproduction recipes and unchanged road fingerprints. The janitor consumes
+44 reviewed raw files,
+28920464 bytes, including the integration
+baseline report whose exact numbers are already in the balance table.
+The lane branch, tests, recipes, verdict and current game assets stay.
+No live folder, Preview, real save or source assertion is changed.
+
+### Removed — consumed evidence
+
+Only used regeneratable browser captures and reports. No unmerged source,
+licensed original, Kyle decision, test or runtime asset is removed.
