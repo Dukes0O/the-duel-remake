@@ -1,6 +1,6 @@
 # ARENA-WRECK-RATE
 
-Status: tests written; native run waiting for the Director's quiet window.
+Status: native acceptance is red; tuning waits for the Claude armor answer.
 
 ## Changes
 
@@ -11,11 +11,11 @@ multiplier of 1.5. No production code changed in this tests-first slice.
 
 ## Tests
 
-JavaScript syntax passes. The native test has not run yet; no failure or
-simulation pass is claimed. Source tuning waits for the actual failing
-result. The Director will add a direct-execution guard to the balance tool
-before this test imports it. The separate all-difficulty report remains
-required card evidence.
+The real twelve-round test fails as intended: Medium averages 20.75 wrecks,
+above the settled 10 to 14 target. The unchanged 1.5 warlord multiplier passes.
+The balance tool now uses a normal direct-execution guard so tests can import
+its native playRound without running the whole report. Syntax passes; the CLI
+report body is unchanged. The all-difficulty report remains required after tuning.
 
 ## Design question
 
