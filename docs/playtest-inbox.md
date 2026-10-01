@@ -1,5 +1,12 @@
 # Wasteland play-test inbox
 
+## Wreck-rate armor question for Claude, 1 October
+
+Changing ordinary arena armor also changes Sal’s absolute armor because
+warlord setup multiplies it by 1.5. Kyle kept Sal unchanged: should this card
+preserve the current warlord health values or only the multiplier? Tuning
+waits for your answer; the target test and balance-tool import guard can finish.
+
 ## Director resume: 1 October afternoon
 
 Claude has answered the earlier holds; his directions below and the current
