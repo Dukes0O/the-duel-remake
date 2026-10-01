@@ -5,6 +5,23 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: HK-RUSTWALL-ATLAS-ISOLATION
+    title: "Keep concurrent Rustwall probe atlases private until packed"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: building
+    claimed_by: codex-director-2026-09-30-resume
+    branch: lane/tool/rustwall-atlas-isolation
+    owns: [tools/blender/rustwall.py, tools/test-rustwall-atlas-isolation.mjs, docs/changes/HK-RUSTWALL-ATLAS-ISOLATION.md]
+    hooks: []
+    helpers: [test_author, reviewer, test_runner]
+    acceptance:
+      - "Fix the failed end full at clean2d1216f: default wheel and relief probes race on art-build/rustwall/hulks PNGs. The relief GLB and snapshot contain the same corrupt IDAT bytes; current runtime wall images decode. Write meaningful failing native source acceptance before the fix."
+      - "Every initial, emissive and relief atlas save/pack/snapshot uses its own invocation's bytes. Concurrent publication cannot change exported or snapshot pixels. Keep default output paths, names, manifest fields and all old assertions; no runtime asset or signature change."
+      - "Independent review plus unchanged existing Rustwall checks, lane tier and build before merge. Full tier must pass on the final integration commit before completion or D8 push. Remove scratch evidence after its verdict; retain recipes and licensed originals."
+
   - id: UX-ENTRY-HINTS
     title: "Clarify car exit, bailout and reentry controls"
     lane: UI

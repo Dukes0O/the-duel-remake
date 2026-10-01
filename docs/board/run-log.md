@@ -1277,3 +1277,13 @@ Run the final full/build on the clean final commit; the ledger holds the
 exact result. D8 push awaits explicit approval of the verified GitHub
 destination and committed payload after automatic rejection. Never retry
 without approval. No Director release, history rewrite or real save access.
+
+End full failed on exact clean2d1216f: 306/307, one failure, no skipped
+suites, 438.58 seconds, completed00:24:18UTC. Build was not run. The relief
+probe embedded an invalid scratch PNG while wheel and relief native recipes
+shared atlas paths. Read-only diagnosis found the same corrupt bytes in the
+GLB and snapshot, a failed IDAT CRC crossing a294912-byte common prefix,
+and33130stale trailing bytes in the later shared PNG. Production wall
+images decode; source remains clean apart from the full ledger. Feature
+merges stop. HK-RUSTWALL-ATLAS-ISOLATION is claimed tests first, with one
+active fix lane; the five prior checkouts remain held pending decisions.
