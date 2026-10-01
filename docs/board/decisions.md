@@ -1403,3 +1403,12 @@ ARENA-STEER met Claude's floor (100 degrees a second at low speed) with a
 Added: no car turns faster than 150 degrees a second at full lock in an
 arena. Floor and ceiling together keep the ring manageable without twitch.
 
+## 30 September 2026: Kyle's four decisions
+
+Kyle: release the save fix, keep the current crew figures, keep the current
+first-person hands, and simplify the tanker. The fitting cards for the crew
+and hands close without installing anything. The Convoy Raid tanker is one
+rigid armored truck from pick A with three valves and a roof boarding plate
+that lights when the valves break (SCRAPDOME.md, Convoy Raid), built by
+ART-FIT-TANKER. Kyle also said test results need no reporting once passed.
+

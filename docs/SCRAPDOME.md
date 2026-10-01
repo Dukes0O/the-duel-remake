@@ -654,16 +654,18 @@ Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
 ### Convoy Raid (ARENA-07)
 
 - **Goal:** destroy an armored tanker rig in five minutes.
-- **The convoy:** a 12 tonne truck and trailer driving a fixed loop on the
-  Salt Flats at 55 km/h (it follows the loop like traffic; crash physics
+- **The convoy:** a 12 tonne armored tanker truck (one rigid vehicle: cab
+  and tank on one chassis, no separate trailer; settled 30 September 2026
+  because no free source has a trailer or hitch, and a rig on a fixed loop
+  gains nothing from one) driving a fixed loop on the Salt Flats at 55 km/h (it follows the loop like traffic; crash physics
   treats it as a very heavy body), with two escort cars (guard brain: ram
   whoever attacks the rig).
-- **Weak points:** three fuel valves on the trailer, 150 armor each, hit by
-  weapons and rams. When all three are broken the rig slows to 35 km/h and a
-  hatch on its roof opens.
+- **Weak points:** three fuel valves on the tank, 150 armor each, hit by
+  weapons and rams. When all three are broken the rig slows to 35 km/h and the
+  boarding plate on the tank roof lights up (warning lamps; nothing opens).
 - **The finish:** board the rig (CREW-03; at 35 km/h anyone can) and plant
-  the finishing charge. If nobody does within 60 s, the hatch closes and the
-  valves come back at half armor.
+  the finishing charge on the lit plate. If nobody does within 60 s, the lamps
+  go out and the valves come back at half armor.
 - **Pay:** the largest arena payout, since it is the hardest.
 - **The Tollkeeper's fight** (section 5) is this mode with his tells added.
 
