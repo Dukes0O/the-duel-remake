@@ -700,11 +700,11 @@ tasks:
     acceptance:
       - "Kyle kept the current Nell, Odessa and Wren on 30 September 2026, so they are not refitted. Build only Vesper Blackiron, the Baron's daughter, by adapting the current women's figure (its rig, actions and topology) under docs/WASTELAND_ART.md 'Fitting existing models': her own costume in the Baron's blackened steel and a dark red accent, recognizable next to Nell, Odessa and Wren. Built but shown only once WAR-04 reveals her. Kyle has the last look in the Preview."
     test_commit: "e5811d8e0927bb6542d508968b9aac76068fd979"
-    source_commit: "15a11c5082e48c4d8cb775458b64c27614bf03e2"
+    source_commit: "43fc3eb864632d36869858e2e9a55d25daa405f7"
     guard_test_commit: "5e986cf"
     review_commit: "edf527e"
     claude_answer: "1 October 2026, afternoon (answered by Claude so Kyle need not): do not turn on Windows file-link permissions or change any system setting. Close the gap simply: each export run writes only into a new, empty folder it creates under .qa-dist, opens every output file as create-new (fail if anything already exists at that path), and copies into the lane only after the run. A pre-existing file or link then stops the run. That is enough for a game on one laptop; no further hardlink or link test matrix. Resume Source review and the in-game comparison."
-    note: "The fitted native rig, actions, topology and original crew checks pass. The export guard needs the approved small fix before comparison; Kyle does not need to answer the old question."
+    note: "The approved fresh-folder fix and all original native checks pass; the costume stays byte-identical. The actual game comparison follows, then independent review and Claude's look verdict."
   - id: ART-FIT-HANDS
     title: "First-person hands, gloves and sleeves from the picked source"
     owner: codex
@@ -807,7 +807,7 @@ tasks:
     placement_test_commit: "1c366f4ac3a92edea3eef7d254a49bc1bee54713"
     planning_source_commit: "86d0d6dbe83f272980826c1b8eff57e98a5b38d8"
     claude_review_round_2: "1 October 2026, afternoon: clear progress (scale, light tank against dark cab, seated valves), still below the bar, so round 3 is the final round. 1) Valves read as dark pipe holes, not targets: cap the open pipe ports in the tank colour so no black holes show, and make each valve the brightest thing on its side: a red handwheel about 0.6 m across facing out, on a red-painted band around the tank at that valve. 2) Boarding plate reads as a yellow grille: make it a plain dark steel plate with a black and yellow diagonal stripe border only. Replace the two small lamp tips with two amber beacon lamps about 0.4 m tall on short posts at the plate's front corners; off is dull dark amber glass, on is bright. 3) Rear bumper: full-width black and yellow diagonal stripes that read from behind. 4) Cab: break the flat olive with rust patches, grime toward the bottom and a welded scrap plate over the lower windscreen, keeping it darker than the tank. 5) Add one view from the normal chase camera behind a car 30 m back so readability is judged from where the player sees it. After round 3 the better of rounds 2 and 3 goes to Kyle with Claude's pick; there is no round 4."
-    note: "Round two made clear progress but stayed below the art bar. Native fitting, provenance, lamp lifecycle and output planning tests pass. Final-round tests precede Source changes."
+    note: "The final round passes native fitting and twenty actual game captures. The critic prefers it but the roof center still has stripes and the look stays below the bar; Claude chooses the better final sheet for Kyle."
     final_comparison: ".lanes/convoy-tanker/docs/board/looks/convoy-tanker/round-3.jpg"
     final_verdict: "All twenty actual-game views and native checks pass. The critic prefers round three but it stays below the art bar; the roof center still has stripes. Please choose the better round for Kyle; no fourth fitting round or installation is cleared."
   - id: SAVE-DAMAGED-FIELDS
@@ -1061,7 +1061,7 @@ tasks:
     status: building
     review_commit: 2d6e5cc94ddd5c3a46316db411e20872b449f4ca
     source_commit: "b9f99b728bab4befee07d35cbc81a70e24a0284c"
-    test_commit: "d5543db7adaa5b111a7164b6f7b91238f4443d4e"
+    test_commit: "c18e814"
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/vis/salt-flats
     flag: salt-flats

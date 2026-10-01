@@ -1569,18 +1569,14 @@ Consumed checkpoint facts: exact0f934845/d07fff94 full317/317, builds402/418ms, 
 
 Janitor sweep: removed10consumed passing gate files/993386B across3folders after their exact verdicts were committed; folded superseded0f/d07 checkpoint paragraphs into current facts. No unused runtime asset/module/test deletion is proved:48literal asset candidates/26exports remain dynamic or uncertain underDISC/CLEAN-11. Retain allfiveunmergedlane folders andtheirbranches, Kyle/licensed/currentassets, pendingrawfailures andallthreeprotectedaudio refs (inspection skipped). Trackedruntime/public remains236249990B; wasteland78998200B exceeds60MB target becausecurrentmodelsremain required, largest runtime14295108B exceeds8MB, ordinary2288190B exceeds2MB. No forced worktree removal or history rewrite. Exact sweep byte receipt is ignored; status records currenttargets and idlecards at handoff.
 
-## 1 October 2026, Director: final overnight handoff
-
-Integrated earlier this run: Fuel fighter contacts/depot and final-output audio ceiling, accepted steering ceiling, and the licensed valve donor. The final continuation merged only Claude06:30range documentation; no pending private model installed.
-
-Next: Claude settles Arsenal candidate-range interface (10launchRED), Shove inherited public rail classification, and Tanker round2look (2of3rounds). Salt439 still fails its two actualSalt pixel witnesses; public hooks wait for Arsenal/Shove. Vesper privateSource15a preserves native rig/actions, but guardtestsad737 expose5hardlinkRED and6file-symlinkUNAVAILABLE; waiting_on:kyle for the sent tool/coveragechoice.
-
-All five unmerged lane tips/last activity/holds are listed inSTATUS; preserve them. Quiet mandatory lane/build clear exactShove16a andTanker86d; initial overlappingaudio timeouts are retained, unchangedisolatedrecovery clear. No merge waiver, relativeframe/art/gamecomparison/Preview approval is inferred. Ready cards remain blocked by exclusive hooks.
-
-Janitor sweep complete: removed10consumed passing gatefiles993386B, folded usedcheckpointfacts, runtime/public bytesunchanged; uncertain48asset/26export candidates stayDISC/CLEAN-11. No unusedmodule/test deletion proved. Final exactintegration full/build, outgoingbinary audit andnormal approvedpush follow this committed handoff. Keep the runner-owned final ledger on disk; do not commit new metadata afterward and inherit its pass. Overnightfollowups stop at this run's deadline. Live, Preview,5174, real saves, protectedaudiofiles, release andhistory remained untouched.
-
 ## Director, 1 October afternoon: Shove
 
 Merged the approved arena shove after independent review, all 318 lane suites and build. The parallel audio setup deadline is now bounded at 60 seconds for promise evaluations; assertions and measurements stayed unchanged. Native shove and road replay verdicts are recorded in the concise change note. Kyle checks the Preview feel.
 
 Janitor after Shove: plain worktree removal and merged-branch deletion completed; used card evidence removed after its verdict was committed. Freed about 174 MB of review files; runtime assets are unchanged.
+
+## Director, 1 October afternoon: sweep
+
+The answered overnight handoff is consumed. Current directions and questions live in the board, next-run and play-test inbox; prior exact checkpoint verdicts remain above. Shove is the only feature merge in this run; Kyle's separate control merge also requires a fresh integration full pass.
+
+Janitor: removed Shove's merged lane and about 174 MB of used evidence, folded 184 lines of answered inbox questions and the old overnight handoff. Audit proves no unused module or removed-feature test; 48 asset and 25 export candidates remain uncertain under DISC. Public assets remain 236,249,990 bytes before and after; Wasteland models remain 78,998,200 bytes against the 60 MB target because the current assets are still required. All unmerged lanes and the three protected audio references remain.
