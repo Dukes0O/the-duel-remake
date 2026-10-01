@@ -442,3 +442,98 @@ for (const kind of ['wreck', 'protected']) {
     ok(Math.hypot(after.x - before.x, after.z - before.z) < EPS, 'holding a valid null goal creates no motion');
   });
 }
+
+
+import {sweepBox} from '../src/collision.js';
+
+// The visual wreck fixture first creates a real crash. That crash is one
+// continuing incident until the actual native collision pass sees separation.
+// These controls preserve its debounce and prove a later fresh physical hit.
+function visualWreckIncident(role, separated) {
+  const attackingCar = role === 'player-attacker' ? 'falcone_f42' : 'dusthawk_rally';
+  const targetCar = role === 'player-attacker' ? 'dusthawk_rally' : 'falcone_f42';
+  const c = arena(attackingCar, targetCar, role), {duel, attacker, target} = c;
+  const resetPose = (car, distance) => {
+    pose(car, distance); Object.assign(car, {steerVisual: 0, slipAngle: 0,
+      knock: null, tumble: null, groundHeight: null});
+  };
+  const approach = mph => {
+    resetPose(attacker, target.s);
+    const envelope = vehicleContactEnvelope(attacker, target,
+      duel._vehicleSpec(attacker), duel._vehicleSpec(target));
+    resetPose(attacker, target.s - envelope.length - .02);
+    holdIdle(duel, attacker); attacker.speedMph = mph + 1.1;
+    if (attacker !== duel.state) participant(duel, attacker).goal.speedMph = mph + 1.1;
+  };
+  resetPose(duel.state, 20); resetPose(duel.state.opponents[0], 90);
+  holdIdle(duel, duel.state.opponents[0]);
+  target.armor = 1; approach(60); duel.step(DT);
+  eq(target.combatWrecking, true, 'ordinary native sixty-mph collision creates the real wreck');
+  const latchedBefore = [...duel._combatRamIncidents];
+  ok(latchedBefore.length === 1, 'actual preparation crash creates one continuing pair incident');
+  resetPose(target, 260); holdIdle(duel, target);
+  if (separated) duel.step(DT); // Real separated actors, no manual contact/map clear.
+  const latchedAfter = [...duel._combatRamIncidents], initialTimer = target.combatWreckTimer;
+  approach(40);
+  const start = worldPose(duel, target), observations = [], reports = [];
+  const original = duel._vehicleContact;
+  duel._vehicleContact = function(a, b, reason) {
+    const beforeA = actorBody(duel, a), beforeB = actorBody(duel, b);
+    const envelope = vehicleContactEnvelope(a, b, duel._vehicleSpec(a), duel._vehicleSpec(b));
+    const phase = duel.relativeS(b.s, a.s) - b.s;
+    const hit = sweepBox({x: (a.prevLateral ?? a.lateral) - (b.prevLateral ?? b.lateral),
+      z: (a.prevS ?? a.s) - (b.prevS ?? b.s) - phase},
+    {x: a.lateral - b.lateral, z: a.s - b.s - phase}, envelope.width, envelope.length);
+    const vaX = Math.sin(a.headingError || 0) * a.speedMph * (a.dir || 1) * DRIVE.mphToWorld + (a.pushVelocity || 0);
+    const vbX = Math.sin(b.headingError || 0) * b.speedMph * (b.dir || 1) * DRIVE.mphToWorld + (b.pushVelocity || 0);
+    const vaZ = a.speedMph * Math.cos(a.headingError || 0) * (a.dir || 1), vbZ = b.speedMph * Math.cos(b.headingError || 0) * (b.dir || 1);
+    const closingMph = hit ? Math.max(0, -(vaX - vbX) / DRIVE.mphToWorld * hit.nx - (vaZ - vbZ) * hit.nz) : 0;
+    const latched = [...duel._combatRamIncidents];
+    const result = Reflect.apply(original, this, [a, b, reason]);
+    if (result && hit && a === duel.state) {
+      const afterA = actorBody(duel, a), afterB = actorBody(duel, b);
+      const victimBefore = target === a ? beforeA : beforeB, victimAfter = target === a ? afterA : afterB;
+      observations.push({latched, closingMph, hit,
+        targetDvMph: Math.hypot(victimAfter.vx - victimBefore.vx, victimAfter.vz - victimBefore.vz) / DRIVE.mphToWorld});
+    }
+    return result;
+  };
+  const off = duel.onChange((_, event) => {if (event.vehicleSmash || event.combatRamHit) reports.push(event);});
+  let moved = 0, air = 0;
+  try {for (let tick = 0; tick < fixture.measureTicks; tick++) {
+    duel.step(DT); const at = worldPose(duel, target);
+    moved = Math.max(moved, Math.hypot(at.x - start.x, at.z - start.z));
+    air = Math.max(air, target.airHeight || 0);
+  }} finally {delete duel._vehicleContact; off();}
+  return {...c, latchedBefore, latchedAfter, initialTimer, observations, reports, moved, air};
+}
+for (const role of ['player-attacker', 'player-target']) {
+  test(`INCIDENT SEPARATION: ${role} continuing real wreck contact retains released debounce`, () => {
+    const r = visualWreckIncident(role, false);
+    eq(r.latchedAfter, r.latchedBefore, 'staging without a native separated step does not erase the actual incident');
+    ok(r.observations.length > 0, 'real native contact still separates overlapping physical bodies');
+    ok(r.observations[0].closingMph >= 40, 'actual first continuing contact is above forty mph');
+    ok(r.observations[0].latched.length === 1, 'first contact still belongs to the genuine preparation incident');
+    eq(r.observations[0].targetDvMph, 0, 'latched contact does not replay a solver impulse');
+    eq(r.reports.length, 0, 'released continuing incident does not duplicate smash or armor reports');
+    eq(r.target.armor, 0, 'actual wreck remains out of play without another armor loss');
+    eq(r.air, 0, 'continuing wreck contact stays on the floor');
+    ok(r.target.combatWreckTimer > 0 && r.target.combatWreckTimer < r.initialTimer,
+      'continuing contact never resets or extends the running wreck timer');
+  });
+  test(`INCIDENT SEPARATION: ${role} one real separated step permits a fresh forty-mph wreck shove`, () => {
+    const r = visualWreckIncident(role, true);
+    eq(r.latchedAfter, [], 'ordinary native collision pass clears the genuinely separated incident');
+    ok(r.observations.length > 0, 'subsequent ordinary native steps really collide');
+    ok(r.observations[0].closingMph >= 40, 'fresh actual first hit remains above forty mph');
+    eq(r.observations[0].latched, [], 'fresh hit starts a new incident');
+    ok(r.observations[0].targetDvMph > 0, 'fresh hit transfers actual rigid-body momentum');
+    ok(r.reports.some(event => event.vehicleSmash), 'fresh actual impact emits its native smash');
+    ok(r.moved >= 4, 'fresh real wreck shove retains the unchanged four-metre minimum');
+    eq(r.target.armor, 0, 'fresh shove does not revive the actual wreck');
+    eq(r.air, 0, 'fresh wreck shove slides on the floor');
+    ok(r.target.combatWrecking && r.target.combatWreckTimer > 0 && r.target.combatWreckTimer < r.initialTimer,
+      'the same actual running deadline survives a new incident without reset');
+    eq(r.duel._vehicleContact, Duel.prototype._vehicleContact, 'native observation restores the inherited contact method');
+  });
+}

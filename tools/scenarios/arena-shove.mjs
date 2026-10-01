@@ -325,7 +325,7 @@ function installReviewTools(mphToWorld,arenaTargetOutOfPlay,sweepObstacle) {
       if(kind==='protected'){for(let n=0;n<430&&target.combatWrecking;n++)tick(1);
         if(target.combatWrecking||member(target).protectedSec!==2||target.armor!==target.maxArmor)throw Error('Real scripted deadline/protection failed');}}
     const limit=d.course.def.scrapdome.floorHalfWidth,pinned=normal||kind==='pinned';
-    pose(target,segment,pinned?side*(limit+.01):0,kind==='pinned'&&!normal?side*Math.PI/2:0);hold(target);if(pinned)tick(1);
+    pose(target,segment,pinned?side*(limit+.01):0,kind==='pinned'&&!normal?side*Math.PI/2:0);hold(target);if(pinned||kind==='wreck')tick(1);
     approach(40);const start=d.course.worldAt(target.s,target.lateral),frame=d.course.at(target.s),events=[];
     const off=d.onChange((_,event)=>{if(event.vehicleSmash||event.combatRamHit)events.push({time:s.stageTimeSec,event:structuredClone(event)});});
     window.__shoveExtended={kind,role,side,normal,oblique,target,attacker,start,frame,events,off,ticks:0,moved:0,tangent:0,reverse:0,rebound:0,air:0,

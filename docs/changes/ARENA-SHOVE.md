@@ -1242,3 +1242,105 @@ art/human/listening pass, source or asset change, live folder, Preview,
 .preview-dist, port5174, real save, source overlay, dependency change, merge,
 push or history rewrite occurred. Ownership returns for independent baseline
 review and candidate QA.
+
+
+## 1 October: reviewed continuing-contact fixture correction
+
+The independent candidate browser at clean
+`418237c860d36fead46932b6087f2919c59818ef` failed the first added High
+wreck/player-attacker/open-floor case: real maximum motion was
+2.4942981899974472m against the unchanged 4m requirement. It captured 17
+images, four High public input replays matched the released baseline, and then
+stopped. No complete eight-case public comparison, Performance run or frame
+pass was obtained. An empty filtered smash/ram event list did not establish
+absence of physical contact. The full failed launcher/report remain in
+integration `.evidence/2026-10-01/ARENA-SHOVE/expanded-browser/candidate-current/`.
+
+The unchanged native engine reproduces that browser result within
+8.79296635503124e-14m of motion; target/player final longitudinal differences
+are 2.2737367544323206e-13m and 3.410605131648481e-13m. The diagnostic uses
+1e-10 only to compare those cross-runtime geometric samples. No game
+acceptance tolerance or fingerprint changes. Its first strict exact diagnostic
+comparison failed on that floating-point rounding and was corrected before
+retaining the complete report; it is not presented as a gameplay failure.
+
+The scripted preparation genuinely crashes at 60mph and leaves the pair
+incident `-1:0` active. Repositioning the stopped wreck and immediately staging
+the next attacker never gives the native collision pass a separated step.
+The first subsequent native sweep really hits at normal
+41.092974778688514mph, tangent -0.16037908126939587mph, with t
+0.10424306712011447 and normal (0,-1). Its existing incident guard correctly
+permits solid separation without replaying the crash impulse. There are 47
+real contact returns, target velocity change is zero at the first, no fresh
+smash/armor report, and native maximum motion is 2.494298189997535m.
+The failure is in this new scripted setup; the original native sitting-state
+acceptance does not first create the same continuing vehicle-crash incident.
+No Source correction is proposed.
+
+Director independently approved exactly one scenario setup change after the
+read-only proof: in new `scripted()`, `if(pinned)tick(1)` becomes
+`if(pinned||kind==='wreck')tick(1)` after the stopped target's staged pose/held
+goal and before the next approach. This is an ordinary actual fixed simulation
+step with separated cars. It clears the incident naturally. It does not edit
+or reset the contact guard, collision map, solver, target timer or event stream.
+The same first native hit now transfers actual velocity change
+21.025785306130548mph and emits its genuine smash (solver report
+19.488004305167003mph), two bidirectional armor reports and one ram event.
+Maximum movement is 10.317120499003948m after the same 210 ticks; air remains
+zero. Its initial remaining wreck deadline is honestly
+3.4916666666666667s instead of 3.5s because the added real 1/120s step elapsed.
+The later hit does not reset or extend that deadline. The 153 continuing
+physical contact returns are not claimed as 153 new impulses.
+
+Tests were added before editing the recipe. Four additive native controls
+cover actual player attacker/CPU target and actual CPU attacker/player target.
+Each retains the genuine continuing-contact negative and actual separated
+fresh-incident positive, measures the native sweep normal speed, checks real
+momentum/reports, zero armor/air, running deadline and unchanged 4m minimum.
+They delegate the observed original contact method exactly once and restore
+it; no replacement result, collision or fake event is supplied. Both focused
+runs pass 4/4 tests and 48 checks before recipe correction, including the
+strengthened actual-normal-speed version.
+
+Commands and complete raw output:
+
+- `node --test --test-name-pattern "INCIDENT SEPARATION" tools/test-arena-shove.mjs`:
+  `expanded-browser/native-incident-controls-first.log` and
+  `native-incident-controls-normal.log` (4/4; 48 checks; 184.6484/187.4155ms).
+- `node .evidence/2026-10-01/ARENA-SHOVE/expanded-browser/scripted-native-contact-diagnosis.mjs`
+  from integration: retained recipe/JSON and
+  `scripted-native-contact-corrected-freeze.log`, alongside original
+  `scripted-native-contact-diagnosis.log`. The same unchanged production modules
+  are imported directly; original/fresh cases are both retained.
+
+All original 118 native test bodies/assertions are preserved as the exact
+29,116-byte prefix from 418237c, SHA-256
+`36b4216ca5173b066b9798baea05238c092c312b2483c55aef75350d2200246b`.
+Reversing only the approved scenario line reconstructs every original byte,
+including all 39 original legacy assertion lines and the complete public wall
+recipe/input logic, SHA-256
+`48edd7b18e5948bdb09927c2b162b39a30f2fc235e717fec7bbde63af01c75ed`.
+Corrected scenario SHA-256 is
+`832bc928eea0035e3911ea1543d2a7b2740d33624bdce4dbfce60f9a210bc8e1`.
+Replay fixture bytes remain exact, SHA-256
+`a08bb7507e8e2c110789b907ed3977dc6de9ac39943e89aad4c8cb9f5a3a474b`.
+
+### Removed
+
+Replaced only the new wreck setup's immediate continuing-incident measurement
+with a naturally separated later incident. No Source, replay pin, existing
+assertion, prior evidence or historical wall-mesh finding was removed. The
+failed candidate and original native reproduction remain review evidence.
+No author browser rerun or frame measurement occurs here. Native results do
+not grant art, browser, listening, human handling, lane/full/build or release
+approval. Historical released wall/attachment crossings and HUD caveats remain
+open; independent candidate QA must rerun the corrected recipe. No live,
+Preview, .preview-dist, port5174, real saves, dependency, merge or push changes.
+
+Final author checks: `node --test tools/test-arena-shove.mjs` passes
+122/122, 6,421 acceptance checks, zero failures/skips/TODOs, 67,398.8988ms.
+Complete stdout/stderr is integration
+`expanded-browser/native-incident-full.log`. `node --check` on both owned
+JavaScript files and `git diff --check` pass. The production source remains
+unchanged from the reviewed f703714 implementation and clean 418237c baseline.
+This freeze contains only the two owned QA files and this appended verdict.
