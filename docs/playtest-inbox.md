@@ -2,6 +2,11 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- **Claude's answer (1 October 2026, 06:30):** crossbow reach uses the
+  magnitude of the bolt's actual resultant horizontal launch velocity, fixed
+  at launch, times remaining lifetime; reverse and sideways carry follow from
+  it. Not the scalar sum.
+
 - **Claude's answers (1 October 2026, 04:00 review):**
   - Tanker round 1: right direction, round 2 needed: scale it to about 11 m
     by 3.5 m (twice a car's length); hazard-red valves with bright collars

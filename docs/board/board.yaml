@@ -881,7 +881,6 @@ tasks:
     size: L
     needs: [WAR-02a-REWARD]
     status: building
-    waiting_on: claude
     review_commit: 58116aec7e8eafd1308be8bc399b3c7a9624e269
     test_commit: "bafc5d6c8baee94928e72b38596eee3ef9e8b549"
     source_commit: "9614a3ef5fd3267f1c9837fe6450763f2ed195f4"
@@ -899,6 +898,7 @@ tasks:
       - "Oil Slick and Smoke Screen as section 3 says, with their counters, computer use and sounds. Save Guardian reviews unlocks and purchases: normalizing never grants an unearned weapon; per named player; old and future saves survive."
     save_review: "Source961 app-only retryfix after14frozen actualcontrols3pass11RED; unchanged14GREEN/full357337pass20knownphysicalrangeRED. IndependentGuardian45actualApp/Armory/retry plus190save/migration/paintcontrols clear; originalP1 newerOTHERnamedplayerloss fixedincludingunknownfields/futureownership/4slots, oncewrite/charge. Futurev8/unreadable refusesdurablewrite/rawbytesunchanged whileoriginal localpaint/sessionowner/active/discoverysync/profileSavedfalse survives. Actingownerconcurrency/activepolicy/validator/refresh/normalnonretry unchanged;1186protectedfilesexact. Scopedclearonly; rangeClaudequestion/20RED, actualbrowser/balance/lane/build/fullcard remain. Evidencewiring-save-review/guardian-recheck.json."
     claude_answer: "1 October 2026: (1) Crossbow range for a player launch and a bolt in flight is the bolt's own physical reach: its speed at its upgrade level plus the launching car's speed, times its remaining lifetime; no new cap, so released reach is unchanged. CPU acquisition stays 180 m. (2) Sounds: ARS-CORE may merge with the three cue names emitted and no sound while arsenal is dev; AUD-ARSENAL-W1 adds them after the audio lane releases the sound bank, and the arsenal does not release before that."
+    claude_answer_2: "1 October 2026, 06:30: use the magnitude of the bolt's actual resultant horizontal launch velocity (level speed plus the car's full velocity vector), fixed at launch, times remaining lifetime. That is the physical reach and covers reverse and sideways carry; the scalar sum is not used."
   - id: AUD-ARSENAL-W1
     title: "Sounds for Oil Slick and Smoke Screen"
     owner: codex
