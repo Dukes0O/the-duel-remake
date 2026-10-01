@@ -1484,3 +1484,13 @@ tests. Shared native/UI hooks remain ungranted. Audio builder now owns only
 audio.js, the new audio-output module and its note, following RED8494081.
 Salt Flats reaches native-source GREEN privately, with actual unchanged
 source/photo provenance; runtime and art/frame integration remain held.
+
+The independent Guardian approved and verified the canonical second-player
+fixture correction at6d1fdd0 while preserving both whole-profile assertions.
+It separately proved arbitrary count/length limits erase earned weapon IDs
+and equipped slots. Independent native regressions precede that source fix.
+Audio source c0bb9b1 meets native peaks and quiet/onset/contrast/cleanup; the
+old recording tool still taps the upstream compressor and needs native RED
+and a separately owned fix before the sound gate. Salt private6474637 passes
+its native source/lifecycle controls but retains nine ungranted runtime REDs;
+independent narrow review is active, and no art/frame/install pass is claimed.

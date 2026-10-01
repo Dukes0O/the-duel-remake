@@ -13,6 +13,7 @@ tasks:
     needs: []
     status: building
     test_commit: 8494081e234c997c3879de50dd792af30e1bb89c
+    source_commit: c0bb9b18f33ea3a9f8377a06db74f2bb3c6d0884
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arena-03-fuel-run
     owns: [tools/test-audio-crash-peak.mjs, tools/scenarios/audio-crash-peak.mjs, src/audio-output.js, docs/changes/AUD-CRASH-PEAK.md]
@@ -24,6 +25,7 @@ tasks:
       - "Required lane/build and independent review before merge; no release, Preview, real saves, source-audio fabrication or protected external audio inspection."
 
     test_verdict: "Native unchanged a6523ea output has six real sample/true-peak failures across nonFuel, Fuel and overlapping blasts. Actual final output, cue/event/onset, contrast, quiet reference and cleanup controls pass. Tests-only clean8494081; no source repair or gate clearance yet."
+    source_verdict: "Native source repair meets sample/true peaks and quiet/onset/contrast/cleanup controls. Released master/compressor gain retained; final4x ceiling added. Independent old-audio mock support retains all assertions. Existing race recorder still taps the upstream compressor, so recorder RED/fix, independent source/audio review and current exact lane/build remain before integration."
   - id: ART-KEEP-VALVE-DONOR
     title: "Keep the verified CC0 convoy valve donor after closing the trailer search"
     owner: codex
@@ -862,7 +864,7 @@ tasks:
     size: L
     needs: [WAR-02a-REWARD]
     status: building
-    review_commit: dd8ca6c7350f641e7fa8757c50bba76288027e9e
+    review_commit: 6d1fdd08fba606e2f36c7a7102a26c4550c03dd9
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arsenal-core
     flag: arsenal
@@ -874,6 +876,7 @@ tasks:
     acceptance:
       - "Build docs/ARSENAL.md section 2 exactly: road hazards, car effects, targetFor (every existing CPU aim, homing and lock path routed through it, with a test that fails on a bypass), unlocks by rank and 400-scrap purchase, rewards that unlock free, upgrades, computer loadouts, and the arsenal switch (dev)."
       - "Oil Slick and Smoke Screen as section 3 says, with their counters, computer use and sounds. Save Guardian reviews unlocks and purchases: normalizing never grants an unearned weapon; per named player; old and future saves survive."
+    save_review: "Guardian verifies the two canonical named-player fixtures without any assertion change, SAVE20/20 and211checks. Source still blocked: arbitrary weapon-id count/length limits erase earned identity and slot (duplicate prefix,101st distinct id,81-character id). Independent RED and forward fix required before re-review. Historical fixtures, malformed fields, ordinary credits, backup/future-schema and storage budgets retain passing controls. No native/UI/flag/audio wiring clearance."
   - id: ARS-02
     title: "Arsenal wave 2: Rocket Pods, Flamethrower, Scrap Magnet"
     owner: codex
@@ -1005,6 +1008,7 @@ tasks:
     size: L
     needs: [ART-SRC-SALTFLATS]
     status: building
+    review_commit: 647463770af26327a4e04ef3a9b4a67a9949eb0e
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/vis/salt-flats
     flag: salt-flats
@@ -1017,6 +1021,7 @@ tasks:
       - "Starts after Kyle picks from the ART-SRC-SALTFLATS sheet. Build docs/SCRAPDOME.md section 10's venue from the picked assets (three art rounds at most, SPEC 0.11), rank 9 unlock, every arena mode playable there, frame cost within 10% of the Scrapdome in High and Performance."
     claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
     kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
+    private_stage: "Only new native recipe/inactive scene module/note at6474637. Frozen native source25/25, default29/38 with nine ungranted-hook REDs; source/photo/licence bytes and pins unchanged. Private candidate102764tri/17draws/12821528BGLB. Independent source/lifecycle review now; no public install, comparison/art round, runtime/frame/heat or merge pass."
   - id: ARENA-07
     title: "Convoy Raid"
     owner: codex
