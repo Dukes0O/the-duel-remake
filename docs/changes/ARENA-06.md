@@ -288,3 +288,112 @@ or replay pin was removed or substituted. The new copied negative inputs,
 private candidate and native logs are reproducible ignored scratch; the
 janitor removes them after their verdict is used. Original licensed files
 and current game assets remain preserved.
+
+
+## Independent native physical alignment acceptance (1 October 2026)
+
+Tests-first continuation on unchanged source commit
+`2d6e5cc94ddd5c3a46316db411e20872b449f4ca`. The Director granted only
+append-only tests and this note. No physical venue, source recipe, fit,
+public model, renderer, flag or floor hook was changed.
+
+The added geometry oracle reads the actual freshly generated private GLB.
+It interpolates its exported world-space triangles, including triangle
+edges with a small float tolerance. It copies no sine profile, Course
+private helper or source-text behavior. The two-millimetre comparison
+allowance covers exported float coordinates. A ramp-2 bounding-box edge
+had two micrometres of export drift; the initial strict ray probe missed
+that edge. The new oracle handles that measured float boundary, and all
+three new native controls now pass. That test setup correction is not a
+production failure or an altered frozen assertion.
+
+Coverage added before the native physical consumer is built:
+
+- Both actual ramp meshes: every exported station, midpoint between
+  stations and centroid inside every actual triangle. Quarter-height
+  acceptance comes from the mesh, not the recipe's analytic curve.
+- Center, both sides, footprint edges, just outside each side and end,
+  and eight-metre lateral offsets. The native flat floor remains the
+  expected surface where the actual ramp has no triangles.
+- Actual ground origin and near-bound coordinates, plus every actual
+  Course-declared sample at center and 95% of each side's floor width.
+- Every salvage-cover, plain Bus, crane, tyre wall and container wall:
+  actual visible mesh/envelope alignment, matching actual Course collider
+  position, extents, orientation and vertical bounds, real bucket lookup,
+  swept contact at the native envelope edge and a real outside miss.
+
+The registered checks construct the actual registry's Salt Flats Course.
+They never substitute a renamed Scrapdome or an unregistered invented
+venue. World coordinates pass through real nearest/worldAt/groundAt APIs;
+collider checks use real obstaclesNear and sweepObstacle consumers.
+The ground checks do not choose which part of the rectangular native bowl
+is playable, or impose an inner Heap. That driving-domain question remains
+with Claude through the Director's written question. These tests cover
+native coordinate mapping and the Course's own declared floor.
+
+The builder supplied a separate diagnostic witness before source edits:
+actual ramp-1 quarter station y=1.697056293 versus generic jumpAt y=1.2,
+and native width 8 m versus generic relief extending 15 m on each side.
+The appended runtime tests currently stop earlier at missing registration.
+They do not claim to have evaluated that height mismatch on a registered
+Salt Flats Course. Their GLB station/triangle/footprint oracle will check
+that obligation when the real physical consumer is registered.
+
+### Focused execution and exact RED
+
+`node tools/test-salt-flats.mjs --native-only`: exit 0.
+Original native selection **28 passed, 0 failed**; appended geometry
+selection **3 passed, 0 failed; 13 registered-Course checks excluded**.
+This is partial native evidence, not whole-card acceptance.
+
+`node tools/test-salt-flats.mjs`: exit 1.
+Original selection remains **41 checks, 32 passed, 9 failed**.
+Appended geometry selection is **16 checks, 3 passed, 13 failed**.
+Combined execution: **57 checks, 35 passed, 22 failed**.
+The original nine runtime failures remain as recorded above. Each appended
+failure has the exact message:
+`geometry acceptance requires the actual registered Salt Flats Course`.
+
+| Appended failing case | Current reason |
+| --- | --- |
+| salt-ramp-1: registered groundAt matches all actual native ramp stations | Missing actual registration |
+| salt-ramp-1: registered groundAt matches mid-segment and triangle-interpolated heights | Missing actual registration |
+| salt-ramp-1: registered groundAt respects native center, sides, edges and outside footprint | Missing actual registration |
+| salt-ramp-2: registered groundAt matches all actual native ramp stations | Missing actual registration |
+| salt-ramp-2: registered groundAt matches mid-segment and triangle-interpolated heights | Missing actual registration |
+| salt-ramp-2: registered groundAt respects native center, sides, edges and outside footprint | Missing actual registration |
+| registered Course mapping preserves the actual native ground origin and footprint coordinates | Missing actual registration |
+| registered Course declared floor samples stay inside the real native ground envelope | Missing actual registration |
+| salvage-cover: native visible collision envelopes reach actual Course buckets and swept contacts | Missing actual registration |
+| bus: native visible collision envelopes reach actual Course buckets and swept contacts | Missing actual registration |
+| crane: native visible collision envelopes reach actual Course buckets and swept contacts | Missing actual registration |
+| tyre-wall: native visible collision envelopes reach actual Course buckets and swept contacts | Missing actual registration |
+| container-wall: native visible collision envelopes reach actual Course buckets and swept contacts | Missing actual registration |
+
+### Frozen controls and handoff
+
+The Director approved a second appended runner to preserve the original
+runner and every frozen byte. Default execution runs both selections;
+either runner's RED leaves exit code 1. Native-only explicitly reports the
+13 excluded registered checks and cannot grant the physical card a pass.
+
+The original test's **34,473 bytes** compare byte-exact to the clean source
+commit, SHA-256
+`46d27e8be782591d07ff5440ca0e20673bcc78e24060b8f9865a900d994d9774`.
+The original note's **29,367 bytes** are preserved before this append.
+All original public-asset, licensed-input, old assertion and replay-pin
+preservation controls pass. No replay fingerprint was regenerated; the
+retained native/Scrapdome controls still run unchanged. The tests do not
+modify production behavior and need no new behavior fingerprint.
+
+Only the owned test and note change. No build, lane/full tier, browser,
+art/frame capture, merge or release pass is claimed by this RED freeze.
+No Preview, live folder, port 5174 or real save was used. The Director
+receives ownership of these files for source construction and review.
+
+### Removed for this tests-first continuation
+
+None. No source, asset, licensed input, existing check, assertion, fixture
+or replay pin was replaced. Temporary private native exports and copied
+negative-source fixtures remain reproducible ignored .qa-dist scratch for
+the Director's janitor once their verdict is used.

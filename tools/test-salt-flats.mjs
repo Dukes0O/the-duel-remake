@@ -405,3 +405,204 @@ const selected=checks.filter(row=>!nativeOnly||row.group!=='runtime');
 for(const {group,name,run}of selected)try{await run();}catch(error){failures++;console.error(`FAIL [${group}] ${name}: ${error.message}`);}
 console.log(`Salt Flats${nativeOnly?' native WIP':''}: ${selected.length} checks, ${selected.length-failures} passed, ${failures} failed.`);
 if(failures)process.exitCode=1;
+
+// Independent ARENA-06 geometry acceptance. Append only: preserve every byte
+// of the original 41 checks and their selection/runner. Native triangles are
+// the oracle; no sine/sine-squared recipe or private Course helper is copied.
+const geometryCheckStart=checks.length;
+const physicalTolerance=.002; // two millimetres covers exported float precision.
+function registeredSaltCourse(){
+  const venue=ARENA_VENUES['salt-flats'];
+  assert.ok(venue,'geometry acceptance requires the actual registered Salt Flats Course');
+  return new Course(venue,config.seed);
+}
+function meshSurfaceAt(meshes,x,z){
+  let height=null;
+  for(const mesh of meshes)for(const [a,b,c] of triangles(mesh)){
+    const denominator=(b[2]-c[2])*(a[0]-c[0])+(c[0]-b[0])*(a[2]-c[2]);
+    if(Math.abs(denominator)<1e-12)continue; // vertical faces provide no driving surface.
+    const u=((b[2]-c[2])*(x-c[0])+(c[0]-b[0])*(z-c[2]))/denominator;
+    const v=((c[2]-a[2])*(x-c[0])+(a[0]-c[0])*(z-c[2]))/denominator,w=1-u-v;
+    // Include the authored triangle edges despite float rotation round-off.
+    if(Math.min(u,v,w)<-1e-6||Math.max(u,v,w)>1+1e-6)continue;
+    const y=u*a[1]+v*b[1]+w*c[1];if(height===null||y>height)height=y;
+  }
+  return height;
+}
+function measuredRamp(model,feature){
+  const mesh=model.gltf.scene.getObjectByName(feature.node);
+  assert.ok(mesh?.isMesh,`${feature.id}: native ramp geometry exists`);
+  const box=new THREE.Box3().setFromObject(mesh),center=box.getCenter(new THREE.Vector3());
+  const stations=[...new Set(triangles(mesh).flat().map(p=>p[2]))].sort((a,b)=>a-b);
+  return {mesh,box,center,stations};
+}
+function actualSurfaceAt(course,x,z,label){
+  const nearest=course.nearest(x,z),world=course.worldAt(nearest.s,nearest.lateral);
+  const ground=course.groundAt(nearest.s,nearest.lateral);
+  assert.ok([nearest.s,nearest.lateral,world.x,world.z,ground.x,ground.y,ground.z].every(Number.isFinite),
+    `${label}: real physical mapping stays finite`);
+  assert.ok(Math.hypot(world.x-x,world.z-z)<=physicalTolerance,
+    `${label}: nearest/world mapping misses native position by ${Math.hypot(world.x-x,world.z-z)} m`);
+  assert.ok(Math.hypot(ground.x-x,ground.z-z)<=physicalTolerance,
+    `${label}: groundAt samples a different native world position`);
+  return ground;
+}
+function compareNativeHeight(course,meshes,x,z,label){
+  const expected=meshSurfaceAt(meshes,x,z);
+  assert.notEqual(expected,null,`${label}: actual triangle oracle has a surface`);
+  const actual=actualSurfaceAt(course,x,z,label);
+  assert.ok(Math.abs(actual.y-expected)<=physicalTolerance,
+    `${label}: groundAt height ${actual.y} differs from actual native triangle height ${expected}`);
+}
+check('native','geometry oracle reads both native ramps at stations and inside real triangles',async()=>{
+  const {model,manifest}=await build(),ramps=manifest.features.filter(row=>row.kind==='ramp');
+  assert.equal(ramps.length,2);
+  for(const feature of ramps){
+    const {mesh,box,center,stations}=measuredRamp(model,feature);
+    assert.ok(stations.length>3,'actual export has enough stations to test a profile rather than only its crest');
+    assert.ok(Math.abs(box.max.x-box.min.x-feature.profile.width)<=physicalTolerance);
+    assert.ok(Math.abs(box.max.z-box.min.z-feature.profile.length)<=physicalTolerance);
+    assert.ok(Math.abs(center.x-feature.profile.center[0])<=physicalTolerance);
+    assert.ok(Math.abs(center.z-feature.profile.center[2])<=physicalTolerance);
+    for(const z of stations)assert.notEqual(meshSurfaceAt([mesh],center.x,z),null,'native station intersects a real triangle');
+    const quarter=stations[Math.floor((stations.length-1)/4)],height=meshSurfaceAt([mesh],center.x,quarter);
+    assert.ok(height>0&&height<box.max.y,'actual quarter station lies below the native crest and above the floor');
+    for(const face of triangles(mesh)){
+      const centroid=new THREE.Vector3();for(const p of face)centroid.add(new THREE.Vector3(...p));centroid.divideScalar(3);
+      assert.ok(Math.abs(meshSurfaceAt([mesh],centroid.x,centroid.z)-centroid.y)<1e-5,
+        'actual triangle interpolation oracle agrees with actual mesh triangle centroid');
+    }
+  }
+});
+check('native','geometry oracle measures the native ground origin, bounds and exact ramp footprints',async()=>{
+  const {model,manifest}=await build(),ground=model.gltf.scene.getObjectByName(manifest.ground.node);
+  const bounds=new THREE.Box3().setFromObject(ground),center=bounds.getCenter(new THREE.Vector3());
+  assert.ok(Math.hypot(center.x,center.z)<=physicalTolerance,'native 300 by 200 ground is centered at the authored origin');
+  for(const [x,z]of [[center.x,center.z],[bounds.min.x,bounds.min.z],[bounds.max.x,bounds.max.z]])
+    assert.ok(Math.abs(meshSurfaceAt([ground],x,z))<=physicalTolerance,'actual native ground triangles provide the flat floor');
+  assert.equal(meshSurfaceAt([ground],bounds.max.x+1,center.z),null,'triangle oracle does not invent ground outside the actual mesh');
+  for(const feature of manifest.features.filter(row=>row.kind==='ramp')){
+    const {mesh,box,center:at}=measuredRamp(model,feature),quarter=box.min.z+(box.max.z-box.min.z)/4;
+    for(const x of [box.min.x,at.x,box.max.x])assert.ok(meshSurfaceAt([mesh],x,quarter)>0,'native ramp edge/center has actual positive height');
+    for(const x of [box.min.x-.05,box.max.x+.05,at.x+(box.max.x-box.min.x)]){
+      assert.equal(meshSurfaceAt([mesh],x,quarter),null,'actual native ramp footprint ends at its eight-metre width');
+      assert.ok(Math.abs(meshSurfaceAt([ground,mesh],x,quarter))<=physicalTolerance,'just-outside and eight-metre-side witnesses remain on actual salt floor');
+    }
+  }
+});
+check('native','geometry oracle measures actual cover and boundary meshes against native collision envelopes',async()=>{
+  const {model,manifest}=await build();let measured=0;
+  for(const feature of manifest.features.filter(row=>['salvage-cover','bus','crane','tyre-wall','container-wall'].includes(row.kind))){
+    const mesh=model.gltf.scene.getObjectByName(feature.node),envelope=feature.collision;
+    assert.ok(mesh?.isMesh&&envelope,'actual visible solid mesh has its native physical envelope');
+    const [x,y,z]=envelope.center,cosine=Math.cos(envelope.heading),sine=Math.sin(envelope.heading);
+    const low=[Infinity,Infinity,Infinity],high=[-Infinity,-Infinity,-Infinity];
+    for(const face of triangles(mesh))for(const point of face){
+      const dx=point[0]-x,dz=point[2]-z,local=[cosine*dx-sine*dz,point[1]-y,sine*dx+cosine*dz];
+      for(let i=0;i<3;i++){low[i]=Math.min(low[i],local[i]);high[i]=Math.max(high[i],local[i]);}
+    }
+    for(let i=0;i<3;i++){
+      assert.ok(Math.abs(low[i]+high[i])<=physicalTolerance,'declared native envelope stays centered on actual visible mesh');
+      const measuredHalf=(high[i]-low[i])/2,padding=envelope.halfExtents[i]-measuredHalf;
+      assert.ok(padding>=-1e-6&&padding<=physicalTolerance+1e-6,
+        feature.id+': actual mesh and native collision envelope differ only by export margin');
+    }
+    measured++;
+  }
+  assert.ok(measured>=5,'native controls measure every solid feature family including the crane');
+});
+for(const id of ['salt-ramp-1','salt-ramp-2']){
+  check('runtime',`${id}: registered groundAt matches all actual native ramp stations`,async()=>{
+    const {model,manifest}=await build(),course=registeredSaltCourse();
+    const feature=manifest.features.find(row=>row.id===id),{mesh,center,stations}=measuredRamp(model,feature);
+    for(const z of stations)compareNativeHeight(course,[mesh],center.x,z,`${id}/station ${z}`);
+  });
+  check('runtime',`${id}: registered groundAt matches mid-segment and triangle-interpolated heights`,async()=>{
+    const {model,manifest}=await build(),course=registeredSaltCourse();
+    const feature=manifest.features.find(row=>row.id===id),{mesh,center,stations}=measuredRamp(model,feature);
+    for(let i=1;i<stations.length;i++)compareNativeHeight(course,[mesh],center.x,
+      (stations[i-1]+stations[i])/2,`${id}/mid-segment ${i}`);
+    for(const face of triangles(mesh)){
+      const at=new THREE.Vector3();for(const p of face)at.add(new THREE.Vector3(...p));at.divideScalar(3);
+      compareNativeHeight(course,[mesh],at.x,at.z,`${id}/actual triangle centroid`);
+    }
+  });
+  check('runtime',`${id}: registered groundAt respects native center, sides, edges and outside footprint`,async()=>{
+    const {model,manifest}=await build(),course=registeredSaltCourse();
+    const feature=manifest.features.find(row=>row.id===id),{mesh,box,center}=measuredRamp(model,feature);
+    const ground=model.gltf.scene.getObjectByName(manifest.ground.node),width=box.max.x-box.min.x;
+    for(const z of [box.min.z+(box.max.z-box.min.z)/4,center.z]){
+      for(const x of [center.x,center.x-width/4,center.x+width/4,box.min.x,box.max.x,
+        box.min.x-.05,box.max.x+.05,center.x+width,center.x-width])
+        compareNativeHeight(course,[ground,mesh],x,z,`${id}/footprint x=${x} z=${z}`);
+    }
+    for(const z of [box.min.z-.05,box.max.z+.05])
+      compareNativeHeight(course,[ground,mesh],center.x,z,`${id}/outside ramp end`);
+  });
+}
+check('runtime','registered Course mapping preserves the actual native ground origin and footprint coordinates',async()=>{
+  const {model,manifest}=await build(),course=registeredSaltCourse();
+  const ground=model.gltf.scene.getObjectByName(manifest.ground.node),bounds=new THREE.Box3().setFromObject(ground);
+  const center=bounds.getCenter(new THREE.Vector3());
+  // Coordinate/height acceptance only: this does not decide which portions of
+  // the rectangular bowl are playable or invent an inner-Heap exclusion.
+  for(const [x,z]of [[center.x,center.z],[bounds.min.x+1,center.z],[bounds.max.x-1,center.z],
+    [center.x,bounds.min.z+1],[center.x,bounds.max.z-1]])
+    compareNativeHeight(course,[ground],x,z,`native ground coordinate ${x},${z}`);
+});
+check('runtime','registered Course declared floor samples stay inside the real native ground envelope',async()=>{
+  const {model,manifest}=await build(),course=registeredSaltCourse();
+  const ground=model.gltf.scene.getObjectByName(manifest.ground.node),ramps=manifest.features
+    .filter(row=>row.kind==='ramp').map(row=>model.gltf.scene.getObjectByName(row.node));
+  const bounds=new THREE.Box3().setFromObject(ground);
+  for(const sample of course.samples){
+    const halfWidth=course.roadHalfWidthAt(sample.s);
+    assert.ok(Number.isFinite(halfWidth)&&halfWidth>0,'native Course declares a real floor width');
+    for(const lateral of [-halfWidth*.95,0,halfWidth*.95]){
+      const at=course.worldAt(sample.s,lateral),expected=meshSurfaceAt([ground,...ramps],at.x,at.z);
+      assert.ok(at.x>=bounds.min.x-physicalTolerance&&at.x<=bounds.max.x+physicalTolerance&&
+        at.z>=bounds.min.z-physicalTolerance&&at.z<=bounds.max.z+physicalTolerance,
+        `declared drivable sample ${sample.s}/${lateral} lies outside actual native salt ground`);
+      assert.notEqual(expected,null,'declared floor has actual visible native triangles under it');
+      const actual=course.groundAt(sample.s,lateral);
+      assert.ok(Math.abs(actual.y-expected)<=physicalTolerance,'declared driving surface agrees with native ground/ramp triangles');
+    }
+  }
+});
+for(const kind of ['salvage-cover','bus','crane','tyre-wall','container-wall']){
+  check('runtime',`${kind}: native visible collision envelopes reach actual Course buckets and swept contacts`,async()=>{
+    const {sweepObstacle}=await import('../src/collision.js');
+    const {model,manifest}=await build(),course=registeredSaltCourse();
+    const features=manifest.features.filter(row=>row.kind===kind);assert.ok(features.length);
+    for(const feature of features){
+      const envelope=feature.collision;assert.ok(envelope,'native solid feature has its actual exported collision envelope');
+      const [x,y,z]=envelope.center,[halfX,halfY,halfZ]=envelope.halfExtents;
+      const obstacle=course.features.obstacles.find(row=>Math.hypot(row.x-x,row.z-z)<=physicalTolerance&&
+        Math.abs(row.halfX-halfX)<=physicalTolerance&&Math.abs(row.halfZ-halfZ)<=physicalTolerance);
+      assert.ok(obstacle,`${feature.id}: actual Course has the collider at the native envelope, not shifted generic junk`);
+      assert.ok(Math.abs((obstacle.heading||0)-envelope.heading)<=physicalTolerance,'native collider orientation is retained');
+      const low=obstacle.minY??obstacle.y,high=obstacle.maxY??(obstacle.y+obstacle.height);
+      assert.ok(Math.abs(low-(y-halfY))<=physicalTolerance&&Math.abs(high-(y+halfY))<=physicalTolerance,
+        `${feature.id}: native collider vertical envelope is retained`);
+      const mapped=actualSurfaceAt(course,x,z,`${feature.id}/native collider center`);
+      const nearest=course.nearest(mapped.x,mapped.z);
+      assert.ok(course.obstaclesNear(nearest.s).includes(obstacle),`${feature.id}: actual obstacle buckets expose native cover`);
+      const body={halfWidth:.01,halfLength:.01,height:.1};
+      const from={x:x-halfX-2,y,z},to={x,y,z},hit=sweepObstacle(from,to,obstacle,0,body);
+      assert.ok(hit,`${feature.id}: native sweep actually hits the declared visible envelope`);
+      const contactX=from.x+(to.x-from.x)*hit.t;
+      assert.ok(Math.abs(contactX-(x-halfX-body.halfWidth))<=physicalTolerance,
+        `${feature.id}: native contact occurs at the visible envelope edge`);
+      const missFrom={...from,z:z+halfZ+.5},missTo={...to,z:z+halfZ+.5};
+      assert.equal(sweepObstacle(missFrom,missTo,obstacle,0,body),null,
+        `${feature.id}: steering outside native envelope misses actual cover`);
+    }
+  });
+}
+const geometrySelected=checks.slice(geometryCheckStart).filter(row=>!nativeOnly||row.group!=='runtime');
+let geometryFailures=0;
+for(const {group,name,run}of geometrySelected)try{await run();}catch(error){
+  geometryFailures++;console.error(`FAIL [geometry/${group}] ${name}: ${error.message}`);
+}
+console.log(`Salt Flats geometry${nativeOnly?' native WIP':''}: ${geometrySelected.length} checks, ${geometrySelected.length-geometryFailures} passed, ${geometryFailures} failed; ${nativeOnly?checks.length-geometryCheckStart-geometrySelected.length:0} registered-Course checks excluded.`);
+if(geometryFailures)process.exitCode=1;
