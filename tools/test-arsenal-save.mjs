@@ -261,3 +261,77 @@ test('SAVE CONTROL: registry normalization alone preserves raw inputs and canoni
     eq(canonical, canonicalBefore, 'canonical registry roundtrip never mutates the second career');
   }
 });
+
+ 
+// Independently authored preservation regression. These are boundary witnesses,
+// not new limits on supported owned identities or saved future slots.
+const OWNED_IDENTITY_CASES = ['duplicate-prefix', '101-distinct', '81-character'];
+function ownedIdentityFixture(kind) {
+  const profile = career(6, 4000);
+  const late = kind === 'duplicate-prefix' ? 'oil' : kind === '101-distinct'
+    ? 'future-owned-96' : 'future-' + 'x'.repeat(74);
+  const identities = kind === 'duplicate-prefix' ? [...Array(100).fill('ufo'), 'oil'] :
+    kind === '101-distinct' ? [...STARTERS, ...Array.from({length: 97}, (_, i) => 'future-owned-' + i)] :
+      [...STARTERS, late];
+  const owned = [...new Set([...STARTERS, ...identities])];
+  const levels = Object.fromEntries(owned.map((id, i) => [id, i % 3]));
+  levels[late] = 2;
+  profile.wasteland.weapons = {version: 1, unlocked: identities, levels,
+    futureWeaponData: {kind, nested: {keep: true, curve: [0, .5, 1]}, receipt: 'earned'}};
+  profile.wasteland.loadout = [late, 'bomb', 'crossbow', 'star'];
+  profile.wasteland.futureOwnedRegistryData = {owner: 'player-1', bytes: [11, 29]};
+  return {profile, expected: {owned, levels: structuredClone(levels),
+    fields: structuredClone(profile.wasteland.weapons.futureWeaponData),
+    careerFields: structuredClone(profile.wasteland.futureOwnedRegistryData),
+    slots: [...profile.wasteland.loadout]}};
+}
+function ownedIdentityOutcome(kind, path) {
+  const {profile, expected} = ownedIdentityFixture(kind), before = structuredClone(profile);
+  let result;
+  const reload = value => {
+    const storage = memoryStorage(), registry = createPlayerRegistry(value);
+    eq(savePlayers(registry, storage), true, 'real owned-identity registry saves to disposable memory');
+    return loadPlayers(storage).players[0].profile;
+  };
+  if (path === 'normalize') result = normalizeProfile(profile);
+  else if (path === 'registry') result = reload(profile);
+  else if (path === 'purchase') {
+    const bought = weapons.purchaseArsenalWeapon(profile, 'smoke', ENABLED);
+    eq(bought.ok, true, 'other known weapon smoke is actually purchased at the eligible rank');
+    result = reload(bought.profile);
+    expected.owned.push('smoke'); expected.levels.smoke = 0;
+  } else {
+    const equipped = equipCarWeapon(profile, 1, 'ufo', ENABLED);
+    eq(equipped.ok, true, 'other known starter ufo is actually equipped into a different saved slot');
+    result = reload(equipped.profile);
+    expected.slots[1] = 'ufo';
+  }
+  eq(profile, before, 'normalization, save and known-weapon actions cannot mutate the raw earned source');
+  return {result, expected};
+}
+for (const kind of OWNED_IDENTITY_CASES) for (const path of ['normalize', 'registry', 'purchase', 'equip']) {
+  test('SAVE PRESERVATION: ' + kind + '/' + path + ' retains every earned owned identity', () => {
+    const {result, expected} = ownedIdentityOutcome(kind, path);
+    eq(result.wasteland.weapons.unlocked, expected.owned,
+      kind + '/' + path + ': full earned ownership must survive without an arbitrary count or length cap');
+  });
+  test('SAVE PRESERVATION: ' + kind + '/' + path + ' retains every owned level', () => {
+    const {result, expected} = ownedIdentityOutcome(kind, path);
+    eq(result.wasteland.weapons.levels, expected.levels,
+      kind + '/' + path + ': every earned and future level must survive exactly');
+  });
+  test('SAVE PRESERVATION: ' + kind + '/' + path + ' retains nested unknown fields', () => {
+    const {result, expected} = ownedIdentityOutcome(kind, path);
+    eq(result.wasteland.weapons.futureWeaponData, expected.fields,
+      'nested unknown weapon fields survive the real save and known-weapon action');
+    eq(result.wasteland.futureOwnedRegistryData, expected.careerFields,
+      'nested unknown career fields survive the real save and known-weapon action');
+  });
+  test('SAVE PRESERVATION: ' + kind + '/' + path + ' retains FOUR unique saved slots', () => {
+    const {result, expected} = ownedIdentityOutcome(kind, path);
+    eq(result.wasteland.loadout, expected.slots,
+      kind + '/' + path + ': losing an owned identity must never delete or replace its saved slot');
+    eq(result.wasteland.loadout.length, 4, 'the actual saved profile still contains exactly FOUR slots');
+    eq(new Set(result.wasteland.loadout).size, 4, 'the actual saved slots retain unique identities');
+  });
+}

@@ -530,3 +530,117 @@ Removed the two raw second-player fixture snapshots in favour of canonical
 fixtures at the existing native registry boundary. Every original assertion
 and all production behavior remain unchanged. No asset, old test, pin,
 licensed source, real save or unmerged lane work was removed.
+
+
+## Independent owned-identity preservation RED
+
+Save Guardian's source finding is now reproduced by appended native tests.
+Exact RED source is clean
+`6d1fdd08fba606e2f36c7a7102a26c4550c03dd9` (production save hooks
+`dd8ca6c`). No source fix or original assertion change was made.
+
+Command:
+
+`node tools/test-arsenal-save.mjs`
+
+Exit 1: **68 tests, 44 pass, 24 fail, 427 acceptance checks**, 60.398 ms.
+All 24 failures are loss of full earned ownership or its exact saved slot.
+
+The original suite remains independently green:
+
+`node --test --test-name-pattern '^SAVE(:| CONTROL:)' --test-reporter=tap tools/test-arsenal-save.mjs`
+
+Exit 0: **20/20, 211 checks**, 97.071 ms. The complete original 16,922-byte
+test prefix is byte-identical to the source freeze, SHA-256
+`533053f59c67d0f7599d978a24d716a6b55aa6359c7fbdab94081b9556729216`.
+Both original whole-profile second-player assertions, the independently
+approved canonical-fixture correction and all no-Arsenal controls remain
+unchanged. No existing replay fingerprint was regenerated.
+
+### Independent cases and controls
+
+The three boundary witnesses are supported version-one careers with actual
+rank six, 4,000 scrap, four unique saved slots, earned levels and nested
+unknown weapon/career fields:
+
+| Case | Raw owned input | Lost earned identity |
+| --- | --- | --- |
+| duplicate-prefix | 100 duplicate ufo entries followed by earned oil | oil |
+| 101-distinct | Four starters and 97 distinct future identities | future-owned-96 |
+| 81-character | Four starters and one earned 81-character future identity | The long future identity |
+
+These numbers reproduce the undocumented source bounds; they do not impose
+a new accepted maximum count or identity length. Ownership expectations
+deduplicate the source and retain every earned identity, with the existing
+four starters. No invented cap or forged rank grants ownership.
+
+For every case, separate checks run the actual paths:
+
+- `normalizeProfile`.
+- `createPlayerRegistry`, `savePlayers` and `loadPlayers` using a fresh
+  disposable memory Map.
+- An actual eligible `purchaseArsenalWeapon(..., 'smoke')`, then registry
+  save/reload.
+- An actual `equipCarWeapon(..., 1, 'ufo')` change to another known slot,
+  then registry save/reload.
+
+Each path independently checks the full owned list, exact levels, nested
+unknown fields and all four exact unique saved slots. Input immutability
+and successful native transactions/saves are checked in every witness.
+These are real normalization and transaction functions, not fake profiles,
+progression mocks, private helper mirrors or source-text assertions.
+
+All 24 level/nested-field tests pass; all raw-input immutability and transaction
+guards pass. The 24 ownership/slot tests fail for the actual loss. Normalization
+and registry reload can shrink the loadout to three slots. Equip can fill four
+slots while silently replacing the lost earned slot, so exact identity/order
+equality is retained as well as the four-slot and uniqueness controls. A
+successful smoke purchase can also disappear after reload when the count cap
+is reached; full-list equality catches that same preservation defect.
+
+The source's `validIds` rejects strings longer than 80 characters and truncates
+the input to 100 entries before deduplication. `normalizeWasteland` then
+filters saved slots against the truncated owned list. The source builder
+must repair that preservation path and retain malformed-input, starter,
+future-schema, pure-transaction and named-player guards. This RED note is not
+source-complete or merge clearance. Independent Save Guardian review and the
+card's remaining native integration/gates are still required.
+
+Raw RED output stays ignored at
+`.evidence/2026-09-30/ARS-CORE/owned-identity-red/red.txt`.
+The final failure messages are listed below.
+
+### Removed — owned-identity test freeze
+
+Nothing replaced or removed. Only independent acceptance cases were appended
+to the save suite and this note. Production, previous assertions, approved
+fixture setups, core tests, replay pins, assets, licensed sources, protected
+audio files, real saves, live/Preview and other lane work are untouched.
+The merge janitor deletes raw evidence after its verdict is retained.
+
+### Each independent RED failure
+
+- SAVE PRESERVATION: duplicate-prefix/normalize retains every earned owned identity: duplicate-prefix/normalize: full earned ownership must survive without an arbitrary count or length cap
+- SAVE PRESERVATION: duplicate-prefix/normalize retains FOUR unique saved slots: duplicate-prefix/normalize: losing an owned identity must never delete or replace its saved slot
+- SAVE PRESERVATION: duplicate-prefix/registry retains every earned owned identity: duplicate-prefix/registry: full earned ownership must survive without an arbitrary count or length cap
+- SAVE PRESERVATION: duplicate-prefix/registry retains FOUR unique saved slots: duplicate-prefix/registry: losing an owned identity must never delete or replace its saved slot
+- SAVE PRESERVATION: duplicate-prefix/purchase retains every earned owned identity: duplicate-prefix/purchase: full earned ownership must survive without an arbitrary count or length cap
+- SAVE PRESERVATION: duplicate-prefix/purchase retains FOUR unique saved slots: duplicate-prefix/purchase: losing an owned identity must never delete or replace its saved slot
+- SAVE PRESERVATION: duplicate-prefix/equip retains every earned owned identity: duplicate-prefix/equip: full earned ownership must survive without an arbitrary count or length cap
+- SAVE PRESERVATION: duplicate-prefix/equip retains FOUR unique saved slots: duplicate-prefix/equip: losing an owned identity must never delete or replace its saved slot
+- SAVE PRESERVATION: 101-distinct/normalize retains every earned owned identity: 101-distinct/normalize: full earned ownership must survive without an arbitrary count or length cap
+- SAVE PRESERVATION: 101-distinct/normalize retains FOUR unique saved slots: 101-distinct/normalize: losing an owned identity must never delete or replace its saved slot
+- SAVE PRESERVATION: 101-distinct/registry retains every earned owned identity: 101-distinct/registry: full earned ownership must survive without an arbitrary count or length cap
+- SAVE PRESERVATION: 101-distinct/registry retains FOUR unique saved slots: 101-distinct/registry: losing an owned identity must never delete or replace its saved slot
+- SAVE PRESERVATION: 101-distinct/purchase retains every earned owned identity: 101-distinct/purchase: full earned ownership must survive without an arbitrary count or length cap
+- SAVE PRESERVATION: 101-distinct/purchase retains FOUR unique saved slots: 101-distinct/purchase: losing an owned identity must never delete or replace its saved slot
+- SAVE PRESERVATION: 101-distinct/equip retains every earned owned identity: 101-distinct/equip: full earned ownership must survive without an arbitrary count or length cap
+- SAVE PRESERVATION: 101-distinct/equip retains FOUR unique saved slots: 101-distinct/equip: losing an owned identity must never delete or replace its saved slot
+- SAVE PRESERVATION: 81-character/normalize retains every earned owned identity: 81-character/normalize: full earned ownership must survive without an arbitrary count or length cap
+- SAVE PRESERVATION: 81-character/normalize retains FOUR unique saved slots: 81-character/normalize: losing an owned identity must never delete or replace its saved slot
+- SAVE PRESERVATION: 81-character/registry retains every earned owned identity: 81-character/registry: full earned ownership must survive without an arbitrary count or length cap
+- SAVE PRESERVATION: 81-character/registry retains FOUR unique saved slots: 81-character/registry: losing an owned identity must never delete or replace its saved slot
+- SAVE PRESERVATION: 81-character/purchase retains every earned owned identity: 81-character/purchase: full earned ownership must survive without an arbitrary count or length cap
+- SAVE PRESERVATION: 81-character/purchase retains FOUR unique saved slots: 81-character/purchase: losing an owned identity must never delete or replace its saved slot
+- SAVE PRESERVATION: 81-character/equip retains every earned owned identity: 81-character/equip: full earned ownership must survive without an arbitrary count or length cap
+- SAVE PRESERVATION: 81-character/equip retains FOUR unique saved slots: 81-character/equip: losing an owned identity must never delete or replace its saved slot
