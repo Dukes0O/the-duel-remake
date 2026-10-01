@@ -8,7 +8,8 @@ export const CAR_SLOT_PAD = Object.freeze(['Up', 'Right', 'Down', 'Left']);
 // Saved future slot identities remain intact even while this build cannot use them.
 export function availableCarWeapons(profile, options = {}) {
   const owned = getProfileWeapons(profile).unlocked;
-  const implemented = [...Object.keys(WEAPONS),
+  // Registered extras still need the career and caller's Arsenal gates.
+  const implemented = [...Object.keys(WEAPONS).filter(id => WEAPON_IDS.includes(id)),
     ...(arsenalCareerAvailable(profile, options) ? implementedArsenalWeapons(options) : [])];
   return [...new Set(implemented)].filter(id => owned.includes(id));
 }

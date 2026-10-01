@@ -800,3 +800,47 @@ Nothing replaced or removed. Tests and their verdict were appended only.
 No production registry mutation, dependency, source, previous assertion,
 asset, licensed file, protected audio, other lane, real save, live checkout,
 Preview output or port was used or changed.
+
+## Prospective registry gate source fix — 1 October 2026
+
+Built after clean independent tests-first freeze `496d600ee1f00ba20046bd3d9aa86be274eee793`. The Director granted only the existing `src/car-loadout.js` hook and an append-only section of this note. Every previous note byte, assertion, test fixture and other source file is retained.
+
+The legacy availability branch previously accepted every key from `WEAPONS`. That is safe with today's frozen four-starter production dictionary, but would let a genuinely registered owned Oil/Smoke bypass the caller's Arsenal gates after registry wiring. The source fix filters only that legacy branch to the four `WEAPON_IDS`. Every owned extra still goes through the existing `arsenalCareerAvailable` and `implementedArsenalWeapons` guards. Default options, dev off, Wasteland off, undiscovered player and an empty implementation list admit no extras; Oil-only and Smoke-only views admit only their corresponding earned implemented weapon.
+
+This is **prospective genuine-consumer acceptance**, not a reproduced current-gameplay leak. The frozen test routes the actual native consumer's imports to an isolated extended registry; every consumer-body byte remains genuine, all other dependencies stay real and the current production dictionary remains frozen and unchanged. No Oil/Smoke registration, new registry API, flag, UI, event, driving, combat, audio or sound-bank consumer was installed here.
+
+Saved earned and future IDs, levels, nested fields and exact slots remain intact. Runtime reads produce four unique usable choices without rewriting the profile. Eligible native equip swaps the requested saved slots while preserving future slots and the complete profile; excluded equip returns the unchanged input. Registry membership never creates ownership. The existing seeded CPU helper and its caller-supplied RNG contract are unchanged.
+
+### Actual checks
+
+- Before the source edit, `node tools/test-arsenal-save.mjs` reproduced **98 cases: 72 pass, 26 fail**, reaching **590 checks** on the clean independent freeze. All failures were the new prospective gates; the original 68 save cases stayed green.
+- After the edit, that same unchanged default command passes **98/98**, reaching **602 acceptance checks**, without skips or TODOs.
+- Independent original subset, `node --test --test-name-pattern '^(SAVE:|SAVE CONTROL:|SAVE PRESERVATION:)' --test-reporter=tap tools/test-arsenal-save.mjs`: **68/68, exactly 451 checks**. The earned-ID preservation fix, arbitrary-length/count witnesses and original named-player/future-schema controls remain unchanged.
+- Independent prospective subset, `node --test --test-name-pattern '^SAVE PROSPECTIVE:' --test-reporter=tap tools/test-arsenal-save.mjs`: **30/30, 151 checks**. Native availability/runtime/equip gates, complete raw/canonical profile immutability, four-slot uniqueness, future saved identity and both complete named careers survive the real memory registry. Production registry descriptors remain unchanged.
+- `node --test --test-name-pattern '^CORE:' --test-reporter=tap tools/test-arsenal-core.mjs`: **48/48 pass**.
+- Complete unchanged core/save command: **162 cases, 146 pass, 13 native integration failures, three design TODOs**. The prospective fixture does not bypass or substitute for those unwired real-game consumers.
+- Relevant existing controls: **108/108 TAP tests across 11 suites** pass (car loadout, weapon upgrades, Wasteland profile, backup, progression, App progression, historical fixtures, damaged profile, combat credits and both save budgets). They retain **3,654 damaged-profile checks**, **seven historical fixtures/247 first-load and round-trip checks**, the **3.48 MB / 4.00 MB** storage model and **2,500,604 / 4,000,000 byte** maximum ghost journal.
+- `node tools/test-replays.mjs`: **162/162 pass** across 18 cases, 16 events, eight categories, three frame rates and three runs. Existing road fingerprints and pins are unchanged.
+- `npm run build`: passes in the isolated lane's normal `dist`; the existing large-chunk warning remains. No Preview/live build, protected port, browser storage or real save was used.
+
+Changed assertions/fixtures/pins: **none**. Private logs stay under ignored `.evidence/2026-10-01/ARS-CORE/registry-gate-fix/`. The source remains LF and staged diff is checked before the clean review freeze.
+
+### Source and protected hashes
+
+| File | SHA-256 |
+| --- | --- |
+| Fixed src/car-loadout.js | e20d84276b5d8c5e5e45629579a306db220354278eff16ea88fdf7c9600d918e |
+| Unchanged earned-ID src/weapon-upgrades.js | 6b5f76ac6d537b9b80986cf11bbaea59142fc202cb4da8736707d999489a8cc8 |
+| Unchanged src/wasteland-progress.js | 40e9934fbbc5bf19f1d00ce28692330653d3ceb13c1b67aa344987ec0c4eac6f |
+| Unchanged production registry src/combat.js | 7b76be52faaa560aba8c7110129b8e5668e44c56b235da973ace2913706cc4c0 |
+| Unchanged src/wasteland-tuning.js | 5dbbdd39dc4c20f6eb3c861e0c76ae58eea1b0e0183c838f32d25edd44c66022 |
+| Frozen complete save suite | 54480590357b34f190dc2ce8f713ccb420ece5a959480ade437254ecb5f6b945 |
+| Frozen core suite | fcbf6e253bad37c5aacbd5c688304c222be5ffeca36bc673e468fc4ce571c210 |
+| Existing ordinary replay pin | b55182cbc6d6121a205fa24ba9049aeefabd7943a6e12ebba5a7f868c068c77a |
+| Existing combat replay pin | 85d9457ccd27534cfd7134547690b0ea5ad430fd9f374a63a1015c0b4b781536 |
+
+### Remaining acceptance and Removed
+
+Independent Save Guardian and generic source reviewer approval remain required. The 13 actual native consumer failures, three written Claude design TODOs, real registry/flag/discovery/armory/event/driving/aim/homing/lock/render wiring, protected audio, listening, game/browser/balance, retained Arsenal replay and lane/full merge gates remain outstanding. No whole-card, lane/full-tier or merge pass is claimed by this narrow source continuation.
+
+Removed the prospective registry-key bypass for nonstarter weapons from the legacy availability branch. The four starter rules and existing earned-extra gates remain. No saved identity, data, old consumer, fixture, assertion, replay pin, current registry, runtime asset, licensed source, protected audio, other lane work or real save was removed. All earlier note sections are retained verbatim.
