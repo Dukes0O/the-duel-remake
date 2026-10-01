@@ -16,8 +16,7 @@ async function nativeBundle() {
   const result = await build({root, configFile: false, logLevel: 'silent', plugins: [{
     name: 'private-production-crew-pool',
     resolveId(id) {if (id.replaceAll('\\', '/') === entry) return '\0vesper-comparison';},
-    load(id) {if (id === '\0vesper-comparison') return
-      `export {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js'; export {createRiggedFighterFigures} from ${JSON.stringify(module)};`;},
+    load(id) {if (id === '\0vesper-comparison') return `export {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js'; export {createRiggedFighterFigures} from ${JSON.stringify(module)};`;},
   }], build: {write: false, minify: false,
     lib: {entry, name: 'VesperComparison', formats: ['iife']}}});
   return (Array.isArray(result) ? result[0] : result).output.find(row => row.type === 'chunk').code;
