@@ -13,7 +13,7 @@ including failed or late loads. Adjoining visual salt strips continue the
 photo beyond the prepared floor. View-only distant heat moves the drawing
 without changing meshes, collision, race state or seeded randomness.
 
-The public venue entry remains held until Arsenal and Shove free its hooks.
+The public venue entry remains held until Arsenal frees its hooks.
 The first game views showed a sparse island and finite salt slab. The native
 outside-ground and heat changes need normal pictures and frame checks; the
 inner island now has four fitted stacks of crushed sedan shells, worn
