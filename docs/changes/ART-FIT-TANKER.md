@@ -18,14 +18,27 @@ sources and licence records stay in the catalog and external art library.
 - Keep the rigid model at 11 m long and 3.5 m tall. No race or save rule changes.
 
 The actual renderer comparison, including a chase view 30 m behind a car,
-remains with the Director. Round three is final. Claude chooses the better of
+is running against the exact private model and manifest pins. Round three is final. Claude chooses the better of
 rounds two and three for Kyle; no public installation or merge is cleared here.
 
 ## Tests
 
 Tests first: the original 56 native checks passed; three new checks failed on
 actual wheel size/orientation and beacon size/corner positions. Native acceptance
-after this recipe change is pending the Director's quiet export window.
+first passed 58 of 59, including all three new checks. The remaining exact
+lineage failure was a Float32 vertex crossing a decimal rounding boundary.
+A one-micrometre tangential fit correction preserves the original affine donor
+mapping and contact precision. The corrected native rerun passes all 59 checks:
+42 source/lifecycle checks, 12 contact checks, two dimensions and three final
+wheel/beacon checks. Tests and contact tolerances are unchanged.
+
+The candidate adds 460 triangles and eight draws over round two: native port
+caps, the salvaged windscreen sheet and beacon posts. The corrected export is
+6,788 triangles, 34 draws and 1.89 MB, below the advisory 8 MB file target.
+The actual complete native assembly remains 3 m wide, 3.5 m tall and 11 m long.
+Model, manifest and unchanged native logs are retained in private lane evidence.
+SPEC 0.3's arena frame budget at both qualities still needs actual renderer
+measurement; native counts are not a frame or look verdict.
 
 Earlier source and output-planning gates passed without changing the approved
 source bytes. The existing two duplicate-Three QA warnings remain unchanged.

@@ -336,6 +336,11 @@ def valve_mount(tank_faces, tank_matrix, donor, side, z, vertical, longitudinal)
     columns = [Vector((0,0,side))/longitudinal, Vector((0,1,0))/vertical,
                Vector((-side,0,0))*.46]
     location = contact-sum((columns[axis]*port[axis] for axis in range(3)),Vector())
+    # A one-micrometre tangential offset keeps native vertices off a Float32
+    # decimal-half boundary. The exact affine map remains in the manifest;
+    # donor topology and the existing .002 m contact precision are unchanged.
+    location.z += .000001/longitudinal
+    contact.z += .000001/longitudinal
     matrix = [[columns[column][row] for column in range(3)]+[location[row]] for row in range(3)]
     matrix.append([0,0,0,1])
     return matrix,{"tankTriangle":index,"contact":list(contact),"normal":list(normal),"sourcePortX":low[0]}
