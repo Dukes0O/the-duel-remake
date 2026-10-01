@@ -1429,7 +1429,7 @@ The lane now contains current integration via normal merge e68f03f, including
 the accepted steering ceiling and verified valve donor records. A fresh
 actual High/Performance Fuel browser scenario and exact lane/build must pass
 on the resulting clean freeze before integration. Claude's existing written
-merge condition remains: settled fighter contacts,4m depot, gates and browser.
+merge condition remains: settled fighter contacts, 4 m depot, gates and browser.
 Kyle's Preview feel check follows integration behind fuel-run:dev; this
 Director never launches, modifies or releases the Preview or live game.
 

@@ -501,39 +501,37 @@ janitor removes it; the frozen recipes reproduce the measurement.
 
 ## Independent final measurements and source verdict
 
-The output source and faithful mock support clear independent review at
-c0bb9b1. The recorder-only change clears review atd96f1f2; every category,
-stem, event, frame, timestamp, PCM format and cleanup path stays exact.
-The recorder now reads the actual final node and rejects missing/non-native
-outputs. No compressor or pre-output mix tap remains.
+Independent review clears the output and mock support at c0bb9b1 and the
+recorder change at d96f1f2. The recorder reads the final output and rejects
+missing or non-native nodes. Stem routing, events, frames, timestamps, PCM
+format and cleanup remain unchanged.
 
-Independent Audio QA ran three fresh default native suites,23/23 each. All
-nine contact/Fuel/stress sample and true peaks meet-1 individually. Stress
-sample/true peaks are-1.497/-1.36,-1.576/-1.34 and-1.478/-1.47dB. Quiet
-reference, event onset, contrast and pause/disposal controls all pass. The
-earlier narrow0.07dB margin remains recorded; no new margin or averaged
-acceptance target was introduced.
+Audio QA ran three fresh native suites, each passing 23 tests. Every one of
+the nine contact, Fuel and stress captures met both -1 dB peak limits.
+Stress sample/true peaks were -1.497/-1.36, -1.576/-1.34 and -1.478/-1.47 dB.
+Quiet signal, onset, contrast, pause and disposal checks passed. The earlier
+0.07 dB margin stays in the record; no new target or averaged pass was used.
 
-The actual final-recorded scripted race measures engine correlation0.971
-with0ms lag, final samplepeak-2.144dBFS, no detected clips/clicks/loop gaps,
-14 measured sync checks, weapon contrast6.697–10.479dB, correct spatial
-probes, blast variety and six-blast stress. The earlier0.870/-50ms engine
-miss remains an observation and did not reproduce in this controlled fresh
-capture; engine mapping/source stayed unchanged. Graph review finds no
-additional proven defect. Unplayed footsteps/bolts and absent landing cues
-are not coverage passes. Human timbre and Fuel cue masking remain listening
-flags under SPEC0.9, with no invented ear ratings.
+The final recorded race measured engine correlation 0.971 with 0 ms lag and
+sample peak -2.144 dBFS. Its 14 measured sync checks, weapon contrast
+6.697–10.479 dB, spatial probes, blast variety and six-blast stress cleared.
+Analysis found no clips, clicks or loop gaps; graph review found no further
+proven defect. The earlier 0.870/-50 ms engine miss did not reproduce, and
+engine mapping stayed unchanged. That earlier observation remains recorded.
+Unplayed footsteps and bolts, absent landing cues and human timbre or Fuel
+cue masking are not coverage passes. Kyle's listening notes remain.
 
-The ignored final recipe/verdict is
+The ignored recipe and verdict are in
 .evidence/2026-10-01/AUD-CRASH-PEAK/independent-final-d96f1f2/VERDICT.md.
-Current integration was then merged normally into the lane ate68f03f so the
-final gate includes merged steering and donor records. Raw-byte comparison
-confirms all six audio source/helper/native suite/scenario/recorder files
-remain exact tod96f1f2. Fresh Fuel browser and current exact lane/build are
-next; this note does not inherit an earlier gate or release clearance.
+
+Normal merge e68f03f brought current integration into this lane, including
+steering and donor records. All six audio source, helper, native test,
+scenario and recorder files remain byte-identical to d96f1f2. A fresh Fuel
+browser check and exact lane/build gate are next. No old gate applies to a
+later commit, and no release clearance is claimed.
 
 ### Removed: independent final measurements
 
-No asset or player data was removed. Superseded compressor tap and its
-unused detector were removed in the recorded recorder change. Pending
-review evidence stays until its final verdict and merge cleanup.
+The recorder change removed the superseded compressor tap and its unused
+detector. No asset or player data was removed. Pending evidence stays until
+its verdict and merge cleanup.
