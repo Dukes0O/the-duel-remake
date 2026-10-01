@@ -938,3 +938,107 @@ are retained until independent review consumes their verdict; the next harness
 build removes the disposable QA asset copy. No screenshots or GLB are committed.
 No live folder, Preview, `.preview-dist`, port 5174, real save, external service,
 dependency addition, helper agent, release, merge, push or history rewrite was used.
+
+
+## Native production world route Source freeze, 1 October 2026
+
+The real production world now routes Salt Flats to its existing native presenter.
+This Source slice resumes clean tests-first commit
+`23d3208af373bcc39ca183c8cc41954916e8906b` and changes only `src/world.js` and
+this append-only note. The prior 68,760-byte note prefix remains SHA-256
+`6dadc371e61a66755fb96f20c34d7dd72be7f20ed34729eceb3d5f3338a885ec`.
+
+`buildEnvironment(course, {saltFlats} = {})` accepts the Director-approved
+optional native loader argument. Only the actual `salt-flats` venue forwards
+it to `createSaltFlatsScene`. That native presenter is a direct child of the
+returned world. Salt returns before generic arena dirt, stands and furniture
+are constructed, so those shells do not cover its actual native ground/ramps.
+The existing one-argument renderer call already reaches this path. Every other
+venue/course continues through the original complete world-building code.
+No `render3d.js`, renderer readiness/timing, presenter lifecycle, App/flag/UI,
+event/game hook, geometry, recipe, source pick, fit, catalog, public asset,
+setting, pin or protected audio code changed. No batching or proxy graph was
+introduced.
+
+### Exact RED to GREEN and lifecycle controls
+
+Before Source, the independently frozen
+`SALT_FLATS_RENDER_ASSET=<lane-private-GLB> node tools/test-salt-flats-render.mjs`
+reproduces all eight cases: six real missing-world-route failures and two
+ordinary Scrapdome/pacific-canyon passes. After the additive route, the exact
+same eight tests give **8/8 passed** without an assertion change.
+
+The real loaded world contains all **171 native meshes and 152,180 triangles**,
+including the original native salt ground and both exact Course-derived ramps.
+Successful world disposal releases every owned geometry/material/texture once;
+repeated disposal is safe. Retirement before load completion rejects and disposes
+the late native asset. Actual load failure retains the real error and no
+substitute graph. Invalid real ground rejection releases its native resources
+once. Presentation clocks leave actual Duel state, Course features and seeded
+Course RNG exact. The two ordinary world controls never invoke the Salt loader.
+These are headless image/canvas adapters around production world, scene and
+native resource behavior; they do not grant a browser or frame verdict.
+
+The unchanged default `node tools/test-salt-flats.mjs` remains **42 checks,
+36 passed, 6 held runtime failures**, plus **16/16 registered/mesh geometry
+checks passed**: 58 total, 52 passed, 6 held, no selection exclusions. All 31
+native/source controls still pass. The held public hooks remain dev switch,
+rank-eight rejection, dev-off rejection, rank-nine public selection,
+unknown-venue rejection and complete Salt Fuel Run consumer.
+
+Existing `test-world-composition.mjs` passes all 33 exact complete-scene and
+immutable-feature controls across the sixteen established events.
+`test-scene-systems.mjs` passes 16 lifecycle controls; `test-scene-presentation.mjs`
+passes actual RenderPass/direct/composite/error-restoration/warmup/mirror/adaptive
+presentation controls. `test-replays.mjs` passes all **162 unchanged fingerprints**.
+Private `npm run build` passes (400 ms Vite build) with its existing large-chunk
+warning. No unchanged assertion, source binding or replay pin was regenerated.
+
+### Protected bytes, evidence and limits
+
+The eight-case renderer test is exactly 8,405 bytes, SHA-256
+`224c731f0e7b174fb50b6968b01f6cf8698474be8b6aa1d13b015dec703e99b3`.
+The original Salt suite remains SHA-256
+`d56517bed257b7150c2030a77fa053c69ad8b874bb67095fe863f27cc49ea824`;
+the boundary suite remains
+`fd8e46508f394a50c681a86812639cca9fc941241edb377c716500fb1d0b1166`.
+Frozen fit/catalog and independent Scrapdome/control fixture hashes remain
+`c6298b9cc516a31cb97d76a6da88a84c6232200626699d5e499cc553107b660b`,
+`3902a750659da37892ac0ff6ac3431393fdfb9f35e2a4a4273117fa71eda0843`, and
+`db071b927146aea534ca6fb46a67655e7cb5fe864f62993e8149d22baa44513a`.
+The unmodified native presenter and renderer are respectively
+`0970a895ad885d4b3122aa721550a371fccd7748da7b4566abbe768f0c8f8f75` and
+`139b09c6a0088da9db1101ef1690401ac5f6e198ad60d23a840ce5f727933ac4`.
+The tested world Source hash is
+`6ca45835f463df8c3120a2a3dba3d13178315907e5ea7c0b5c1ef5b552f531c0`.
+
+The pinned private GLB remains **17,480,484 bytes**, SHA-256
+`6cd41757ee903b3924ddd760f66533e1295ba96d96d863a8689361db74d35bdc`.
+The unchanged original suite's fresh candidate and repeat export have those
+same bytes. Geometry stays **152,180 triangles, 171 draws and 168 colliders**;
+171 native draws are a real pending frame cost. No instancing, heat/wear or
+renderer readiness change was made. Future readiness or batching work needs
+separate independent acceptance before Source edits.
+
+Full raw eight-case RED/GREEN, unchanged default Salt output, regression and
+build logs are in ignored integration
+`.evidence/2026-10-01/ARENA-06/renderer-source/`. The eight-case native input
+remains private lane `.evidence/ARENA-06/render-candidate/venue.glb`; fresh
+candidate/repeat output is `.qa-dist/salt-flats-tests-7FFCGw/`. No GLB or other
+runtime asset was installed in public. The existing browser recipe may copy
+these exact bytes into checked QA scratch after its own build, as previously
+reviewed, for independent actual-renderer review.
+
+This returns clean bounded Source ownership for independent Source/browser
+review. Held public mode/launch hooks, actual game browser captures, art,
+High/Performance frame acceptance within 10%, Claude comparison, public
+installation and final exact lane/full/build gates remain open. No whole-card,
+mode, browser, art, frame, merge, push or release clearance is claimed.
+
+Removed: Salt's generic arena-world rendering branch is replaced at venue
+routing by its original native presenter. The normal world implementation
+remains in use for all established courses and Scrapdome. No asset, old test,
+licensed input, source recipe, public file, current world signature or replay
+pin was removed. Private review evidence remains used-once and regenerable
+for the Director's janitor after the verdict. No Preview/live folder, port
+5174, real save, protected audio, dependency, service or download was used.
