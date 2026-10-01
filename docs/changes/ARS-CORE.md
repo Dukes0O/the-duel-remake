@@ -403,3 +403,100 @@ car-only smoke endpoint calculation, replacing them with the shared physical
 pose and current native fighter endpoint read. No test, helper, assertion,
 pin, asset, protected sound/catalog, dependency, real save, live checkout,
 Preview output or port was changed.
+
+
+## Granted pure save hooks — 30 September 2026
+
+Source baseline: clean 56047037e8612f103a182d668f9bb81213c9456b.
+Director grant 943de32 permits only weapon-upgrades.js, car-loadout.js,
+wasteland-progress.js and this section. This is partial API work, pending
+independent fixture review, Save Guardian and actual consumer/UI wiring.
+No test, helper, core module, feature flag, App, combat, driving, render,
+audio, launcher or replay path was edited.
+
+WEAPON_IDS remains the four starters. Normalization retains valid earned and
+future ids, unknown weapon fields and unknown levels. Known weapon levels
+keep the existing zero-to-three clamp; an already-earned implemented id with
+an absent level starts at zero, without creating ownership. Legacy starter
+levels still take the larger saved value. Wasteland normalization retains
+four saved slot identities when owned, including unimplemented future ids.
+Runtime availability filters those ids until implemented and admitted;
+equipping a known slot preserves future identities in untouched saved slots.
+
+The implemented catalog contains oil (rank 2/wave 1) and smoke (rank 6/wave 1)
+only. An implemented option can narrow it but cannot admit an unknown id.
+Purchase requires supported version 1, actual discovery, both caller switches,
+XP-derived rank and 400 scrap. It preserves credits and is pure/idempotent.
+Offers use the same discovery/dev/real-rank admission. Free rewards map only
+the existing Dustmonger defeat entitlement to smoke, including the supported
+legacy defeated-id list; a warlord name alone, wrong mapping or unearned
+receipt is refused. Reward never changes rank, credits, scrap or win receipts.
+Owned implemented arsenal upgrades cost 150/300/600 scrap and cap at level 3;
+no stronger/faster gameplay dimension is guessed. Starter credit and scrap
+pricing keeps its established behavior. Future Wasteland schemas refuse writes.
+
+CPU four-slot selection uses src/rng Fisher-Yates over distinct starter and
+rank-eligible implemented candidates, with the settled difficulty wave caps.
+A supplied seeded generator reproduces selection; the pure API's default is
+a deterministic src/rng seed 1989. Per-car seeding and actual scheduler use
+remain later consumer work. No new weapon is granted by normalization.
+
+Validation on this source:
+
+- Frozen SAVE RED reproduced before edits: 19 tests, 3 pass/16 fail, 49 checks.
+- node --test --test-reporter=tap tools/test-arsenal-save.mjs: 19 tests,
+  17 pass/2 fail, 187 checks. All pure purchase/reward/upgrade/equip/CPU and
+  ownership-preservation assertions pass. The two remaining named-player
+  cases fail only at their untouched second-profile full-object comparison.
+- node --test --test-reporter=tap --test-name-pattern='^CORE:' tools/test-arsenal-core.mjs:
+  all 48 unchanged cases pass, 449 checks.
+- node --test --test-reporter=tap tools/test-weapon-upgrades.mjs tools/test-car-loadout.mjs
+  tools/test-progression.mjs tools/test-progression-integration.mjs tools/test-wasteland-profile.mjs
+  tools/test-save-fixtures.mjs tools/test-profile-damaged-fields.mjs:
+  99/99 pass. This includes 3654 damaged-field checks, 247 checks across
+  seven historical save fixtures, 146 App progression assertions and 27
+  progression/leaderboard checks, all using memory-only storage.
+- Combined frozen core/save suites: 83 tests, 65 pass/15 fail/3 design TODO,
+  zero skips; 483 core and 187 save checks. The 13 native integration
+  failures remain plus the two registry fixture mismatches below.
+- Inline pure boundaries pass for missing earned levels (actual false RED
+  before the default fix, true GREEN after), future slot/level/field retention,
+  no forged stored-rank grant, implementation and switch guards, legacy
+  mapped entitlement, wrong mapping, and exact future-schema refusals.
+- Raw-byte comparisons against the baseline confirm both frozen suites,
+  all five core modules, progression.js and both replay pins are unchanged.
+  Frozen suite/pin hashes remain as recorded above. Changed source uses LF;
+  git diff --check passes. No heavy gate or build was run.
+
+The two remaining SAVE cases are named-player purchase/upgrade/equip reload
+and free-warlord-reward reload. Their second raw career starts with
+upgrades:{} from createProfile. Native registry normalization adds the
+Falcone and Stuttgart maps, each with seven zero upgrade values. That is
+the only differing field; the entire second Wasteland career remains equal.
+A no-arsenal control performs zero arsenal calls, saves/loads those same
+raw rank-two profiles in memory, and reproduces exactly this upgrades-only
+delta. progression.js is byte-identical to the source baseline, SHA-256
+6360f5aa2b7d05c76ab0599f043551610785a52930df66b5704ed579983918e2.
+Changing that existing normalization would need an ungranted hook; the
+Director has retained both assertions for independent fixture review.
+
+| Granted source | SHA-256 |
+| --- | --- |
+| src/weapon-upgrades.js | f1963f2256e315580514ef47f92db07bc09eff6479c4dd629cf37118fb002d5c |
+| src/car-loadout.js | aff0f3e89befe947a7e83ff6bf15b690b712d73c613badfb279718b31e321a75 |
+| src/wasteland-progress.js | 40e9934fbbc5bf19f1d00ce28692330653d3ceb13c1b67aa344987ec0c4eac6f |
+
+Save Guardian and independent review are required before this slice proceeds.
+All native routing, actual warlord-settlement reward invocation, UI/gate
+wiring, gameplay upgrade dimension, rendering, audio, real weapon-use balance,
+retained arsenal replay and lane/build/full gates remain pending with the
+Director. This note grants no whole-card completion or merge clearance.
+
+### Removed — granted save hook step
+
+Removed starter-only weapon/level reconstruction and starter-only saved-slot
+filtering that erased earned/future identities. Replaced the packed upgrade
+module with readable LF source, preserving its established starter behavior.
+No legacy credit/race rule, frozen assertion, fixture, core module, pin,
+licensed asset, protected sound/catalog, dependency, real save, live checkout,
+Preview output or port was changed.
