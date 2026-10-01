@@ -862,13 +862,14 @@ tasks:
     size: L
     needs: [WAR-02a-REWARD]
     status: building
+    review_commit: dd8ca6c7350f641e7fa8757c50bba76288027e9e
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arsenal-core
     flag: arsenal
     owns: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/arsenal/oil.js, src/arsenal/smoke.js, tools/test-arsenal-core.mjs, tools/test-arsenal-save.mjs, docs/changes/ARS-CORE.md]
     hooks: [src/weapon-upgrades.js, src/car-loadout.js, src/wasteland-progress.js]
     hook_requests: [src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/onfoot-weapons.js, src/combat-ai.js, src/screen-armory.js, src/wasteland-access.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/render3d.js, src/combat-effects.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js, start-preview.bat, tools/test-wasteland-beta.mjs]
-    sequencing: "Core modules/tests started independently; three native body/origin regressions now fixed at5604703 and under narrow review. Grant ONLY weapon-upgrades/car-loadout/wasteland-progress transaction hooks now: independent SAVE RED already frozen, these files have no other active owner. Pure normalization/purchase/reward/upgrade/equip/CPU-loadout work may proceed; all UI/flag/combat/driving/render/audio/game hooks remain requests. Fuel retains its UI/combat/render/flag hooks; Shove retains collision/knock/floor. Protected sound-bank remains external owner. No unwired component is a finished feature. Decoy attack context and oil/smoke upgrade dimension await Claude; do not guess. Save Guardian required before integration; native bypass/lifecycle/browser/audio/balance and exact gates still follow full wiring."
+    sequencing: "Core modules/tests started independently; three native body/origin regressions fixed at5604703 and independently cleared. Grant ONLY weapon-upgrades/car-loadout/wasteland-progress transaction hooks now: independent SAVE RED already frozen, these files have no other active owner. Pure normalization/purchase/reward/upgrade/equip/CPU-loadout work may proceed; all UI/flag/combat/driving/render/audio/game hooks remain requests. Fuel retains its UI/combat/render/flag hooks; Shove retains collision/knock/floor. Protected sound-bank remains external owner. No unwired component is a finished feature. Decoy attack context and oil/smoke upgrade dimension await Claude; do not guess. Save Guardian required before integration; native bypass/lifecycle/browser/audio/balance and exact gates still follow full wiring."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build docs/ARSENAL.md section 2 exactly: road hazards, car effects, targetFor (every existing CPU aim, homing and lock path routed through it, with a test that fails on a bypass), unlocks by rank and 400-scrap purchase, rewards that unlock free, upgrades, computer loadouts, and the arsenal switch (dev)."
@@ -956,7 +957,7 @@ tasks:
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Fuel Run, exactly: canisters, depots, dropping, the collector brain, rank 6 unlock (hidden before), pay and hold once per event (Save Guardian). Headless tests and a private browser scenario."
     claude_review: "30 September 2026: rules match SCRAPDOME.md Fuel Run. Settled the open question in docs/CREW.md (car bolt 35 health, splash up to 60 and knockdown inside half radius, cargo drops only on knockdown) and raised the depot pad to 4 m radius. Merge after these, the gates and a browser pass; Kyle checks it in the Preview behind fuel-run (dev)."
-    review_findings: "Source/save/browser subsets clear at clean1b9628e, all original race pins retained. Exact lane gate fails237pass/1fail/75notrun: existing Preview launcher assertion requires new fuel-run dev flag in its checked-in launch URL. Director grants start-preview.bat URL flag hook only; never execute launcher, build .preview-dist, change running Preview/ports/shortcuts or player storage. Fresh lane/build after this correction remains required. Final audio/feel and Claude review conditions remain."
+    review_findings: "Source/save/browser subsets clear at clean1b9628e with all original race pins retained. Independent launcher and exact dev catalog follow-ups clear; clean a6523ea lane313/313 and build513ms pass. Existing output peak failures block the sound gate: tests-only8494081 reproduces six failures with preservation controls intact. AUD-CRASH-PEAK source repair shares this same lane; fresh audio review and exact lane/build follow any source repair. Kyle Preview feel and Claude conditions remain; no later freeze inherits the a652 gate."
   - id: ARENA-04
     title: "Bounty Hunt"
     owner: codex
