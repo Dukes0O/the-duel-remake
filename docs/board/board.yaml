@@ -690,7 +690,7 @@ tasks:
     size: M
     needs: [ART-SRC-CREW-W]
     status: building
-    claimed_by: codex-director-2026-09-30-overnight
+    claimed_by: codex-director-2026-10-01-afternoon
     branch: codex/art/vesper
     owns: [tools/blender/vesper-blackiron.py, tools/art/vesper-fit.json, tools/test-vesper-art.mjs, tools/scenarios/vesper-art.mjs, docs/changes/ART-FIT-CREW-W.md, docs/board/looks/vesper/]
     hooks: []
@@ -701,6 +701,11 @@ tasks:
       - "Kyle kept the current Nell, Odessa and Wren on 30 September 2026, so they are not refitted. Build only Vesper Blackiron, the Baron's daughter, by adapting the current women's figure (its rig, actions and topology) under docs/WASTELAND_ART.md 'Fitting existing models': her own costume in the Baron's blackened steel and a dark red accent, recognizable next to Nell, Odessa and Wren. Built but shown only once WAR-04 reveals her. Kyle has the last look in the Preview."
     test_commit: "e5811d8e0927bb6542d508968b9aac76068fd979"
     test_stage: "Actual first18native cases6genuine donor/preservation controls pass12meaningful missing recipe/config/private GLB RED,27017checks. Current Odessa4876near/1880far/17joints/12deforming actions and native12figure loader/LOD/disposal clear;371protectedfiles exact. Source-only private recipe/config worker now owns leaf files, no public install/reveal or art/frame approval."
+    source_commit: "15a11c5082e48c4d8cb775458b64c27614bf03e2"
+    guard_test_commit: "ad73790a336be3e406251bbdb838bf463881145b"
+    source_stage: "Native private Source15a preserves all383accessor views/rig/actions/UV/weights,4876near1880far; eighteen original cases pass105015checks and three fresh actualBlender exports byteexact47f76f33/2163704B. Independent review proves output DIRECTORY guard misses five planned-file redirects; native additivead737 hardlink controls expose5realRED/3controlsPASS, sixfile-symlink checks UNAVAILABLE(EPERM). No generated binary committed/install/reveal, and no technical wholecard clearance. Kyle stop: choose native hardlink/junction plus independent Source review or enable file-symlink testing; question sent. Guard Source and actual game comparison remain held."
+    review_commit: "edf527e"
+    claude_answer: "1 October 2026, afternoon (answered by Claude so Kyle need not): do not turn on Windows file-link permissions or change any system setting. Close the gap simply: each export run writes only into a new, empty folder it creates under .qa-dist, opens every output file as create-new (fail if anything already exists at that path), and copies into the lane only after the run. A pre-existing file or link then stops the run. That is enough for a game on one laptop; no further hardlink or link test matrix. Resume Source review and the in-game comparison."
   - id: ART-FIT-HANDS
     title: "First-person hands, gloves and sleeves from the picked source"
     owner: codex
@@ -782,9 +787,8 @@ tasks:
     lane: ART
     size: M
     needs: [ART-KEEP-VALVE-DONOR]
-    status: review
-    waiting_on: claude
-    claimed_by: codex-director-2026-09-30-overnight
+    status: building
+    claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/art/convoy-tanker
     owns: [tools/blender/convoy-tanker.py, tools/art/tanker-fit.json, src/arena/tanker-model.js, tools/test-convoy-tanker-art.mjs, tools/scenarios/convoy-tanker-art.mjs, docs/changes/ART-FIT-TANKER.md, docs/board/looks/convoy-tanker/, public/assets/models/wasteland/convoy-tanker/]
     sequencing: "Claim after completed Fuel lane cleanup frees one builder slot. Tests first for exact approved delivery-flat/detail-tank/Factory valve/salvage provenance, genuine fitting geometry, single rigid body, three valves and read-only boarding lamps/lifecycle. New model/recipe/scenario files only; no renderer/event/simulation/source catalog edits. Private candidate and actual game-renderer comparison before public installation; every comparison goes to Claude, three-round cap. Source catalog records and licences remain exact; if an existing hook is needed, request it before editing. No fake convoy implementation or current runtime replacement."
@@ -802,7 +806,10 @@ tasks:
     round_2_review: "Clean05cfc actual18pairedHighPerformance captures/private6331 memoryonly0errors2duplicateThreewarnings; sheet444260B SHA dc21c8e4f55551bcd53ba4e6769e50e1c61bdef6ee0aafbd9102afbfe062bd63. Sourcea1ce/native56/round1 exact; all approved11m/3.5m mounting/material changes preserved. Selfobservations only: elevated static distant view, tiny lamp/readability limits. Independent critic and Claude verdict pending;2/3roundsused, no publicinstall/fullConvoy/motion/frame/mergeclearance."
 
     placement_test_commit: "1c366f4ac3a92edea3eef7d254a49bc1bee54713"
-    placement_stage: "First41actual placement controls34original pass7intendedRED: valid private plans and five unsafe destinations reach bpy before side-effect-free planning/path rejection. Tests-only1c366f4 keeps exhaustive generator registration, runtime/helper assertions, allSource/native56/catalog/public/pins and prior note exact. Proper Source worker granted early CLI planning only; regenerate native artifact A3 byteexact and rerun mandatory lane/build. Round2 remains waiting_on Claude and belowbar; no art/card merge clearance."
+    placement_stage: "Source86d fixes early sideeffectfree planning before Blender imports:41strongcontrols and56native pass; original24996B bpy-to-end recipe body exact, actualGLB A3 and12224Bmanifest6c7949a0 byteexact,1189unownedfiles exact. Independent Director complete32line CLI patch read scopedclear for granted parent/output planning paths; no geometry/material/art change. Required concurrent lane gate failedaudio Runtime.evaluate setup beforeassertions, buildpasses. Unchanged isolatedaudio23/23recovers; sequential exactShove/Tanker lane/build retries nowrun. Round2 remainsClaude-heldbelowbar; no gatewaiver/mergeclearance."
+    planning_source_commit: "86d0d6dbe83f272980826c1b8eff57e98a5b38d8"
+    gate_stage: "Quiet mandatory lane/build nowPASS on exact clean86d0d6dbe83f272980826c1b8eff57e98a5b38d8:318/318/no unrun446.71s/build432ms,start=end/dirty[]. Earlierconcurrent nativeaudio timeout remainsretained, noSourceaudiochanges. Actualplanned41/native56/A3artifact/manifestexact. Round2art remainsbelowbar/2of3/Claudeheld; no fullConvoy/motion/frame/install/mergeapproval. Audit planned child-file redirects underDISC before nextprivatewrites; directory-only output guard is not full alias protection."
+    claude_review_round_2: "1 October 2026, afternoon: clear progress (scale, light tank against dark cab, seated valves), still below the bar, so round 3 is the final round. 1) Valves read as dark pipe holes, not targets: cap the open pipe ports in the tank colour so no black holes show, and make each valve the brightest thing on its side: a red handwheel about 0.6 m across facing out, on a red-painted band around the tank at that valve. 2) Boarding plate reads as a yellow grille: make it a plain dark steel plate with a black and yellow diagonal stripe border only. Replace the two small lamp tips with two amber beacon lamps about 0.4 m tall on short posts at the plate's front corners; off is dull dark amber glass, on is bright. 3) Rear bumper: full-width black and yellow diagonal stripes that read from behind. 4) Cab: break the flat olive with rust patches, grime toward the bottom and a welded scrap plate over the lower windscreen, keeping it darker than the tank. 5) Add one view from the normal chase camera behind a car 30 m back so readability is judged from where the player sees it. After round 3 the better of rounds 2 and 3 goes to Kyle with Claude's pick; there is no round 4."
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex
@@ -892,7 +899,7 @@ tasks:
     test_commit: "54f511d2c24c1c6150b1bb5af7c5eb2bd6e44fb7"
     source_commit: "276e0362a0fef5b891ca4afb8b6aad44583d547d"
     design_question: "Claude06:30 vector policy is settled. Genuine chosen-decoy has launchspeed285.836914 versus real288.343020, ownreach714.592285 anddistance714.642285. Existing numericcontext realrange720.85755 selectsunreachabledecoy; recompute ownrange returnsreal andrepeatoscillates. Approve optional pure context.rangeForTarget(actor) inexisting resolver within(actor), preserving all numeric callers, so each candidate uses own genuine launchvector reach? Nativeproof writteninbox. Launchinterface remainsheld; independentimmutableinflight Source proceeds inalreadyowned twofiles, no targetingchange untilwrittenanswer."
-    claimed_by: codex-director-2026-09-30-overnight
+    claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/cmb/arsenal-core
     flag: arsenal
     owns: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/arsenal/oil.js, src/arsenal/smoke.js, tools/test-arsenal-core.mjs, tools/test-arsenal-save.mjs, tools/test-arsenal-runtime.mjs, docs/changes/ARS-CORE.md]
@@ -906,8 +913,8 @@ tasks:
     save_review: "Source961 app-only retryfix after14frozen actualcontrols3pass11RED; unchanged14GREEN/full357337pass20knownphysicalrangeRED. IndependentGuardian45actualApp/Armory/retry plus190save/migration/paintcontrols clear; originalP1 newerOTHERnamedplayerloss fixedincludingunknownfields/futureownership/4slots, oncewrite/charge. Futurev8/unreadable refusesdurablewrite/rawbytesunchanged whileoriginal localpaint/sessionowner/active/discoverysync/profileSavedfalse survives. Actingownerconcurrency/activepolicy/validator/refresh/normalnonretry unchanged;1186protectedfilesexact. Scopedclearonly; rangeClaudequestion/20RED, actualbrowser/balance/lane/build/fullcard remain. Evidencewiring-save-review/guardian-recheck.json."
     claude_answer: "1 October 2026: (1) Crossbow range for a player launch and a bolt in flight is the bolt's own physical reach: its speed at its upgrade level plus the launching car's speed, times its remaining lifetime; no new cap, so released reach is unchanged. CPU acquisition stays 180 m. (2) Sounds: ARS-CORE may merge with the three cue names emitted and no sound while arsenal is dev; AUD-ARSENAL-W1 adds them after the audio lane releases the sound bank, and the arsenal does not release before that."
     claude_answer_2: "1 October 2026, 06:30: use the magnitude of the bolt's actual resultant horizontal launch velocity (level speed plus the car's full velocity vector), fixed at launch, times remaining lifetime. That is the physical reach and covers reverse and sideways carry; the scalar sum is not used."
-    waiting_on: "claude"
     source_review: "Director independently read complete276 flight patch. WeakMap launch magnitude captures before guidance without serialized fields; real native producer captures initial horizontal resultant, age/current origin used in active flight context. Twelve launches x thirty genuine steps/772checks preserve whole projectile keys and serialized released race state byte exactly against hash-verified0f modules, both wasteland2 states. Scoped flight clear:374 combined cases364pass10launchRED; launch candidate-dependent range interface awaits written Claude answer. No browser/balance/fullcard/merge clearance."
+    claude_answer_3: "1 October 2026, afternoon: approved. Add the optional context.rangeForTarget(actor), evaluated by the existing resolver for each candidate, returning that candidate's own launch reach (resultant horizontal launch speed toward it times lifetime). Numeric range stays for CPU acquisition (180 m) and every existing caller. No change to eligibility or flight."
   - id: AUD-ARSENAL-W1
     title: "Sounds for Oil Slick and Smoke Screen"
     owner: codex
@@ -917,7 +924,7 @@ tasks:
     status: ready
     flag: arsenal
     acceptance:
-      - "Add weapon.oil.deploy, weapon.oil.slip and weapon.smoke.deploy to the sound bank from the CC0 library recipes (tools/audio/catalog.json), once the external audio lane has merged and released src/sound-bank.js. The arsenal cannot release before these exist. No paid credits."
+      - "Add weapon.oil.deploy, weapon.oil.slip and weapon.smoke.deploy to the sound bank from the CC0 library recipes (tools/audio/catalog.json), (the sound bank is merged and live since AUD-14; corrected by Claude 1 October 2026). The arsenal cannot release before these exist. No paid credits."
   - id: ARS-02
     title: "Arsenal wave 2: Rocket Pods, Flamethrower, Scrap Magnet"
     owner: codex
@@ -1053,7 +1060,7 @@ tasks:
     review_commit: 2d6e5cc94ddd5c3a46316db411e20872b449f4ca
     source_commit: "b9f99b728bab4befee07d35cbc81a70e24a0284c"
     test_commit: "d5543db7adaa5b111a7164b6f7b91238f4443d4e"
-    claimed_by: codex-director-2026-09-30-overnight
+    claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/vis/salt-flats
     flag: salt-flats
     owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
@@ -1068,8 +1075,8 @@ tasks:
     private_stage: "Source0050 coherent native boundaries independently clear29/29, actual152110 donorfaces, all168 tight colliders,28056 nearby lookup witnesses,512 ramp samples and seeded repeat. Real cost152180tri/171draw/17.48MB remains for art/frame review. Tests23d renderer route6 genuineRED/2 ordinary-world controls before Source0dad. Narrow world.js routing now8/8 including actual native graph and exact-once/late disposal; ordinary body byte-exact, render3d unchanged, Director scoped Source review clear. Original58 retains6 held public/runtimeRED. No heat/batching Source, new comparison round, public install or whole-card clearance; actual High/Performance frame <=10%, visual and lifecycle browser review still required."
     browser_stage: "Actual Source0dad private29702 memory-only12 High/Performance Scrap/Salt screenshots,0reported errors/warnings. Native scene171mesh/152180tri/ground/bothramps ready. Quiet own-worker window measured180actualRAF intervals per venue/quality: High P95Scrap18.1/Salt18.2ms, mean17.569/17.735; Perf P95Scrap18.1/Salt18.2ms, mean17.692/17.587. Settled10% comparison clears this current static/racing fixture. Real High625draw/600127tri,Perf413draw/414999tri. No heatshimmer Source or wholemode/publicentry/lifecycle/motion/independentart clearance. Director inspected six actualSaltframes; debugfullview exposes hard groundrectangle/scenery edge in fog, innerislandreads sparse, HUD remainsScrap due held publichooks. Independent12imagecritic and meaningful heat/environment tests precede any extraSource. Complete root evidence source-browser-0dad."
     effects_stage: "Independentall12imagepreflight belowthreshold3near/2full: repeatedphoto/flatwreckrow/sparseisland/debugfiniteslab/heatabsent; noSheetroundspent. Nativeeffects testsfirst currently16casesold8exactGREEN plusnew8with3genuineoutsidegroundRED/all408frozenfog-raymisses; originalnative171/152180/bowl300x200/Course/RNG/disposalexact. Effects testownednewfile granted. DirectorgrantsOPTIONALexisting__render.renderFrame({presentationSeconds,saltHeatEnabled}={}) QA causalclock/effectcontrols, nonpersistentdiagnosticdraw/defaultRAFunchanged/neverrace-state; actualmainframe synchronousgl.readPixels, directsamplebypassforbidden. Mereecho cannotpassactualdistantedge displacement/stableoff/sametime/nearcar/road/HUD/ordinaryworldcontrols. ActualnewSource/nativeartist/frame<=10%stillfuture; testsfirstSourcehelduntilcleanREDfreeze."
-    qa_commit: "979e73c867dd7c1866b4ac8a3dfb56dfa25c2d36"
-    effects_qa_stage: "Independent actual browser showed fixed off/time10 camera/lighting convergence needs112-176draws, then four exact fullcanvas+material/mesh/camera/light snapshots. Tests-only979 adds bounded240draw warmup and genuine changedinspectionheight rejection/restoration; all prior strict off-repeat/displacement/tint/near/HUD/RNG assertions unchanged,1187unowned/source/assets/pins exact. Director actual6case diagnostic rerun in progress; no heat/art/frame/wholecard pass inferred."
+    qa_commit: "439d006d33062b6e7f5f8d832ecaa8a6b4714d04"
+    effects_qa_stage: "Clean439 narrowly excludes proven native transparentDoubleSide two-pass compile counters from visual stability; genuineGlasscolor/counter witnesses, texture/geometryversions, visualfields/uniforms/matrices, fullRGBA240/fourrepeat remainstrict. Actualprivate51995 final979failedall6warmup; actual439rerun4unchanged road/Scrap controls pass, HighSalt fails native silhouette readability after216draw warmup, PerfSalt fails exact Glass counter witness after159draw warmup. State/Course/HUD/RNG/nativeasset/source preserved, no heat/art/frame/fullcard clearance. HighScrap earlier587pixel difference retainedhonestunreproduced inread-onlyrepeat; no claimedSourcefix."
   - id: ARENA-07
     title: "Convoy Raid"
     owner: codex
@@ -1870,7 +1877,8 @@ tasks:
     status: building
     note: "Renderer ghost lifecycle finding merged as 10645f2; 147-suite merge gate, build, private High/Performance smoke and focused ghost-lifecycle browser scenario pass. Discovery continues."
     spec: "SPEC.md, task DISC"
-    janitor_follow_up: "30 September end sweep: rebuild repo-audit's48 literal asset candidates and prove dynamic references before deletion. No unused modules or removed-feature tests are proved. Any confirmed removal gets a gated cleanup card and unchanged fingerprints; preserve licensed current assets."
+    janitor_follow_up: "1 October end sweep:1179tracked files,259431085B before final metadata,259436173B after operational facts; runtime236249990B unchanged. Removed10consumed gatefiles993386B across3passing checkpoint folders afterverdictcommit. Retain48literal asset candidates/26advisoryexports; no unusedmodule/removedtestproved. CLEAN-11 carries dynamic-reference proof; private destination child-alias guard proof belongs to explicit card ownership, no guessing or deleting currentlicensed/runtimeassets. Five cleanunmergedlanes retained andthreeprotectedaudio refs inspection skipped."
+    private_output_follow_up: "Independent Vesper native proof finds five planned-file hardlink aliases accepted despite private output DIRECTORY guard; file-symlink setup EPERM. Before other recipe writes, audit planned child-file aliases in owned lanes (including Tanker/Salt) with real scratch hardlink/junction controls, no live/player data, testsFIRST/namedownership. No current candidate destination links found or corrupted licensed/runtime bytes; do not infer cross-card Source clearance from directory-only guards. Kyle coverage/toolchoice pending onVesper."
   - id: RFX-01
     title: "Split main UI into screens"
     wave: 2
@@ -2842,12 +2850,12 @@ tasks:
     lane: DESIGN
     size: S
     needs: [WAR-02a-SAL, WAR-02a-REWARD, PREVIEW-LAUNCHER]
-    status: ready
+    status: closed
     acceptance:
       - "Target: Gratian beats Sal on Medium within a few tries and every sweep feels fair. Tuning changes only the settled numbers in docs/SCRAPDOME.md, recorded in decisions.md, built by Codex as a small card."
-    waiting_on: kyle
     claude_note: "Ready 30 September 2026: the Preview now turns on the warlords switch. Headless fights: plain rammer Sal already beat a scripted player on Medium and Hard 16 of 16, so expect her to be hard; the first lever is the warlord armor scale (1.5), not her moves."
     kyle_play: "30 September 2026: Kyle beat Sal 3-0 on Medium. Findings became WAR-PAY, ARENA-STEER and ARENA-SHOVE; Sal's own moves and armor stay until Gratian has played her."
+    kyle_decision: "Kyle, 1 October 2026: Sal is approved as she is. No tuning card."
   - id: WAR-PAY
     title: "Warlord pay worth the fight: first win 600 and up, rematches like an arena win"
     owner: codex
@@ -2873,7 +2881,6 @@ tasks:
     size: S
     needs: []
     status: merged
-    waiting_on: kyle
     review_commit: 0f57648ae5385295ec934812ce92f46efea4ecda
     claimed_by: codex-director-2026-09-30-resume
     flag: scrapdome
@@ -2888,6 +2895,7 @@ tasks:
       - "Re-run tools/arena-balance.mjs and the Sal tests and record the change; cars must not spin out or oscillate at full lock (check yaw settles within 0.3 s of releasing the stick). Kyle checks it in the Preview."
     claude_review: "30 September 2026: the uniform 3.4 factor meets the floor but turns cars 205 to 300 degrees a second at 45 mph, likely twitchy. Added rule (Claude's gap: the first rule set no ceiling): at full lock no car turns faster than 150 degrees a second at any speed in the arena. Suggested shape: an arena floor on the low-speed rolling factor (as the Titan's lowSpeedSteer does) plus a smaller factor, rather than one large multiplier. Re-measure the same table, then Kyle checks it in the Preview."
     claude_verdict: "30 September 2026: accept the measured wreck rate (Medium full field 23.3 against 10 to 14) for now. Steering feel comes first; finish the browser proof, merge, and mark waiting_on: kyle for his Preview check. If Kyle keeps the steering, ARENA-WRECK-RATE brings wrecks back to the target without touching steering."
+    kyle_decision: "Kyle, 1 October 2026: dome steering is good; keep it. ARENA-WRECK-RATE may start."
   - id: ARENA-WRECK-RATE
     title: "Last Car Rolling wreck rate back to target after the new steering"
     owner: codex
@@ -2895,21 +2903,21 @@ tasks:
     size: S
     needs: [ARENA-STEER]
     status: ready
-    waiting_on: kyle
     flag: scrapdome
     acceptance:
       - "After Kyle keeps ARENA-STEER's steering in the Preview, bring Medium full-field wrecks per round back to 10 to 14 (SCRAPDOME.md section 8; 23.3 with the new steering) without touching steering: first lever the arena armor scale for ordinary cars, second the computer cars' ram aggression. Re-run tools/arena-balance.mjs for all three difficulties and record the change; Sal's warlord armor (1.5) is unchanged."
+    kyle_decision: "Kyle kept the steering on 1 October 2026; start now."
   - id: ARENA-SHOVE
     title: "Every car can shove a sitting car in the Scrapdome"
     owner: codex
     lane: CMB
     size: S
     needs: []
-    status: "review"
-    review_commit: eba804dd4e48e2856051b962efbe7ebd6560466c
+    status: building
+    review_commit: "16a2b948e98c9cf91c11d7ace7978db99a7cb121"
     source_commit: f703714101525b7786b1abe852ef1794ab9a6f97
     test_commit: "f409b6f472516110ab152907c8c8496521b24873"
-    claimed_by: codex-director-2026-09-30-overnight
+    claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/cmb/arena-shove
     owns: [tools/test-arena-shove.mjs, tools/replays/arena-shove-controls.json, tools/scenarios/arena-shove.mjs, docs/changes/ARENA-SHOVE.md]
     hooks: [src/sim-contacts.js, src/vehicle-knock.js, src/vehicle-collision.js, src/arena/arena-floor.js, src/arena/arena-event.js]
@@ -2926,8 +2934,9 @@ tasks:
     claude_answer: "1 October 2026: the 1.5 m and 4 m minimums apply where the push direction has open floor. A car pinned against the outer wall and rammed straight into it cannot move through the wall: it stays, takes the ram damage, and the attacker rebounds. Any part of the push along the wall still slides it along the wall. No teleport, no escape direction, containment unchanged."
     fixture_review: "Clean1760 appends2 native actualseed89098 ballistic-height controls FIRST (36checks), then only NEWQA pose resets_jumpYnull/vertical0. Full124/6457checks; old122 whole35513Bprefix exact, prior39/publiclogic reconstructed by reversing approved twofields plus wreck-separatedstep, pins and5Sourcefiles exactf703. Both previous failed browser verdicts retained. Fresh independent wholebrowser running; no timing/merge clearance yet."
     browser_stage: "Independentd366 private35255 memoryonly0errors/warnings FAIL protectedCPUattacker0.649119809m/4m;42imagesinspected, wreckbothroles10.317/8.652,pinnedboth/protectedplayer pass. High4publictraces/assets exactbaseline; inherited38/54crossingsretained; positiveextentdelta.0000543m noeveryfieldexactclaim. Perf/remaining8comparison/frames notreached. Nativeexactseed89098 diagnosis refutesincidents/protection: attacker retainsrealpreviousramp_jumpY1.803827/vertical3.113334despitevisibleairflagsreset;54nativeheightrejects41.099687mphimpact, then0normalrearhit. Canonical arena-eventplaceActor73-74 freshpose resets_jumpYnull/vertical0; ignoredcontrastfirsttruehit targetdv21.025785moves8.997531861m/protection2to.25/noarmor/noair. Director approves2additivenativefreshness/heightguard controlsFIRST thenonlyNEWQApose2fields; old122/39/publicinputs/pins/Sourceunchanged. Authorfreezingnext; nobrowser/mergeclearance."
-    waiting_on: "claude"
     review_question: "Final cleanf409 private16495 mechanics pass full High/Performance browser matrix. Exported actual-public comparator still requests Claude classification: all8actualinputs/spawns/traces/runtimebytes exact pre-card0f, inherited negative38/54body/kit crossings unchanged;positive side0newcrossings. Please confirm whether this inherited authored-body/center-containment mismatch can remain outside this Sourcef703 shove fix or requires another card before merge. No global containment/mesh refit is inferred. Diagnostic report is not an authored art comparison sheet. AbsoluteHigh/Perf119sampleP9516.8ms; PUBLIC_ONLYbaseline has no timings, so no relative10% claim. Mandatory lane/build now runs before formal review; Kyle Preview feel remains."
+    gate_stage: "Quiet required lane/build nowPASS on exact clean16a2b948e98c9cf91c11d7ace7978db99a7cb121:318/318/no unrun466.38s/build443ms, source start=end anddirty[]. First concurrent nativeaudio timeout remainsretained; unchangedisolated23case recovery andthisfullmandatorylane establishrecoverywithoutSourcechanges. Fullbrowserf409/Sourcef703 scopeclear, independent40criticalcaptures. FormalClaude reviewmayproceed; diagnosticcomparator historicalpubliccrossing classification stillholdsmerge, no relative10%frameclaim."
+    claude_verdict: "1 October 2026, afternoon: merge. The 38 of 54 body and rail crossings are inherited, unchanged by this card, and outside it; they do not hold the merge and need no new card now (P3-POLISH looks at cars touching the dome wall only if Kyle sees it in play). The code change is contained to the arena paths and the road solver is untouched. After merge, set waiting_on: kyle for his Preview feel check. The 1568-line change note is far too long: cut it to under 100 lines of plain sentences before merge (what changed, tests, replays that changed and why, removed)."
   - id: WAR-SAL-RELEASE
     title: "Release the warlord ladder with Sawtooth Sal"
     owner: claude
@@ -3065,7 +3074,8 @@ tasks:
       - "Candidates are marked for Kyle's choice; no agent keeps or promotes a take. Human ratings remain distinct from measurements. Keys stay in the environment, credit use is logged, and no generation is silently retried after an accounting failure."
       - "Any runtime voice wiring beyond the existing bank/credit hooks requires a named scope addition before implementation. Retain subtitles, attribution, one-version source placement and normal gates."
     note: "Candidate preparation merged e1a2d63; full casting/runtime card remains in progress pending Kyle. Ten auditions used400 credits, none selected/rejected/kept. External owner preserves audition bytes/receipts and branch. No additional generation or audio runtime work tonight."
-
+    claude_note: "1 October 2026: Kyle kept all eight crew takes and Bill's raider take on 25 September (31ef0ba, in audio-src/voices). Claude sent him a listening page of those nine on 1 October; any he wants redone come back as a new batch for the audio session. Wiring the lines into the game is still to do."
+    kyle_decision: "Kyle, 1 October 2026: the nine kept voice takes are fine for now; no new takes. Wiring them into the game remains."
   - id: ARS-01
     title: "Arsenal wave 1: Harpoon and Caltrops, and computer use of wave 1"
     owner: codex

@@ -1,6 +1,28 @@
 # Wasteland play-test inbox
 
+## Director handoff: 1 October morning
+
+- **Claude:** ARS-CORE Source276 clears immutable bolt flight and Source961 save retry; ten actual launch cases remain RED pending the candidate-dependent `rangeForTarget(actor)` answer below. The earlier thirty-failure count describes the pre276 freeze.
+- **Claude:** ARENA-SHOVE full private browser mechanics and exact16a lane/build are clear. Classify unchanged inherited38/54public body/rail crossings before merge; all8native public traces match. No matched historical frame baseline grants a10%claim.
+- **Claude:** ART-FIT-TANKER round2 remains belowbar and uses2of3rounds. Exact86d lane/build nowclear; nativeA3artifact unchanged. Judge the18actualviews and give round3direction before fitting/install.
+- **Kyle:** ART-FIT-CREW-W is paused at a concrete private exporter guard finding: five actual hardlink RED, sixfile-symlink setups unavailable(EPERM). The pending tool-choice question asks for native hardlink/junction controls plus independent Source review, or enabling file-symlink testing. No current asset is changed.
+- **Codex:** Salt439 strict diagnostic clears4road/Scrapcontrols; bothSaltviews still fail (Highnative silhouette readability; PerfexactGlasswitness). Preserve assertions and diagnose actual pixels before Source/QA edits; public hooks still await Arsenal/Shove ownership.
+
 ## Claude review questions from the resumed build, 30 September
+
+- **Claude's answers (1 October 2026, afternoon):**
+  - Arsenal range: `rangeForTarget(actor)` per candidate is approved; numeric
+    range stays for CPU acquisition and every existing caller.
+  - Shove: merge. The inherited body and rail crossings are unchanged and
+    outside the card. Trim the change note to under 100 lines first.
+  - Tanker round 2: better, still below the bar. Round 3 is the last: capped
+    pipe ports, big red valve wheels on red bands, a plain plate with a
+    striped border and two tall amber beacons, a striped rear bumper, a
+    weathered cab, and one chase-camera view (card).
+  - Vesper: no system settings. A new empty output folder and create-new
+    files are enough; resume (card). Kyle does not need to answer.
+  - Notes: plain sentences with spaces; see "Keep it proportionate" in
+    next-run.md.
 
 - **Arsenal launch resolver for Claude, following your06:30 answer:** actual native chosen-decoy bearing changes launchspeed: real288.3430202099m/s (reach720.8575505248m), decoy285.8369140674m/s (reach714.5922851686m), decoydistance714.6422851686m. A single numeric real-target range selects that unreachabledecoy; recalculating decoyrange returnsreal; repeating oscillates. Exact proof uses unchanged real Course/producer/resolver: `.evidence/2026-10-01/ARS-CORE/vector-range-source/numeric-context-diagnosis.{mjs,json}`. Please approve an optional pure attack-context `rangeForTarget(actor)` evaluated by the existing resolver for each candidate, alongside unchanged numeric `range` for CPU180 and existing flight/RPG callers. It returns the candidate's actual resultant launchvector reach; no eligibility/flight tuning change. Otherwise name your preferred settled interface. The launch fix stays held; the unambiguous immutable inflight snapshot/currentorigin/remaininglife proceeds in its already-owned files. New17native tests expose10 intendedRED on unchangedSource; runtime204 has30 rangefailures (20prior+10new), all previous tests/Source exact.
 

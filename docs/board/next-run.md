@@ -1,36 +1,54 @@
 # Next run: phase 3, a Wasteland worth finding (updated 30 September 2026)
 
-## Resume here (Claude, 30 September 2026, late)
+## Resume here (Claude, 1 October 2026, afternoon)
 
 **Live:** the Scrapdome (Last Car Rolling), Titan climbing and steering,
 Muddy Hollow, the ramp-side fix, Sawtooth Sal with her reward and the settled
 warlord pay, and the damaged-save fix. Phase 3 is the last planned phase.
 
-**Settled since the last run (do not reopen):**
-- Kyle keeps the current crew figures (all nine) and the current first-person
-  hands. ART-FIT-CREW-M and ART-FIT-HANDS are closed: remove their lanes and
-  branches with the janitor; nothing installs.
-- The convoy tanker is one rigid armored truck from pick A with three valves
-  and a roof boarding plate that lights up (docs/SCRAPDOME.md, Convoy Raid).
-  ART-SRC-TANKER-PARTS is closed (merge its valve donor record, then remove
-  the lane); ART-FIT-TANKER builds the rig; ARENA-07 needs it.
-- Car weapons against fighters on foot are settled in docs/CREW.md (bolt 35
-  health, splash up to 60 with knockdown inside half the radius, carried
-  cargo drops only on a knockdown). Fuel Run's depot pad is 4 m.
-- ARENA-STEER has a ceiling: no car above 150 degrees a second at full lock
-  in an arena (the current lane reaches 205 to 300 at 45 mph).
-- Kyle does not need to see passing test results. Report failures and
-  anything that blocks.
+**Answered this afternoon (do not reopen):**
+- ARS-CORE: `rangeForTarget(actor)` per candidate is approved (card).
+- ARENA-SHOVE: merge; the inherited body and rail crossings do not hold it.
+- ART-FIT-TANKER: round 3, the final round, with five directions (card).
+- ART-FIT-CREW-W: no system settings; a fresh empty output folder and
+  create-new files close the gap (card). Kyle does not need to answer.
+
+**Keep it proportionate (Claude, 1 October 2026).** The overnight run spent
+most of its time on its own checking: a 1568-line change note for a
+150-line fix, link-safety test matrices, pixel-exact tests for art, and board
+notes with no spaces between words. Kyle cannot read them and the cards did
+not move. From this run on:
+- Board notes and review questions are one to three plain English
+  sentences with spaces between words. No hashes, byte counts or commit
+  strings in notes; the commit fields already hold those.
+- A change note is under 100 lines: what changed, tests, replays that
+  changed and why, Removed.
+- Do not build new guard or safety test machinery a card does not ask for.
+  A risk that cannot happen on one laptop in normal use gets one sentence,
+  not a test matrix.
+- Looks are judged from pictures by the critic, Claude and Kyle. Automated
+  art checks cover only what can break unseen: race state, loading and
+  unloading, triangle and draw budgets, frame cost. Do not hold a card on a
+  pixel-exact or counter test of how something looks.
+- A condition that existed before a card and is unchanged by it never holds
+  that card's merge. Note it in one sentence and move on.
+- Merge as soon as a card meets its acceptance and its gates. Aim for each
+  open card to merge or reach Kyle in this run.
 
 ### Tracks for this run (up to five lanes)
 
 | Track | Cards, in order | Notes |
 | --- | --- | --- |
-| A. Dome feel | ARENA-STEER (rework to the ceiling), then ARENA-SHOVE | Kyle checks each in the Preview |
-| B. Fuel Run | ARENA-03: the fighter contact rules and the 4 m depot, then browser and review | Claude reviews before merge |
-| C. Arsenal | ARS-CORE, then ARS-01 | ARS-CORE's sound-bank hook belongs to the audio lane: add only new cue names, or wait |
-| D. Art | ART-FIT-RUSTWALL, ARENA-06 (Salt Flats), ART-FIT-TANKER, then ART-FIT-CREW-W (Vesper only) | docs/WASTELAND_ART.md "Fitting existing models"; every comparison sheet goes to Claude |
-| E. Warlords and clean-up | WAR-02c (Mother Mirage); BALANCE-W2-OFF-RETIRE when no other lane owns its files (also retires the released scrapdome, titan-climb, muddy-hollow and warlords switches) | |
+| A. Dome feel | ARENA-SHOVE merge (trim its note), then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
+| B. Arsenal | ARS-CORE finish and merge, then ARS-01 | Unsounded cues while `arsenal` is dev |
+| C. Salt Flats | ARENA-06: the far edge, the sparse inner island, heat shimmer | Next comparison sheet to Claude |
+| D. Art | ART-FIT-TANKER round 3, then ART-FIT-CREW-W (Vesper) | Final tanker round; sheets to Claude |
+| E. Warlords and clean-up | WAR-02c (Mother Mirage) after ARS-CORE; BALANCE-W2-OFF-RETIRE when no other lane owns its files; WAR-03b when its files are free | |
+
+Kyle, 1 October 2026: the dome steering is kept, so ARENA-WRECK-RATE is
+ready (add it to track A after ARENA-SHOVE), and Sal is approved as she is
+(WAR-SAL-TUNE closed). The weapon sounds (AUD-ARSENAL-W1) need only ARS-CORE:
+the sound bank is already live. Kyle keeps the nine crew and raider voice takes as they are.
 
 Then follow "Order: the rest of phase 3" below as cards open. Give every card
 explicit owned files before starting it; when two cards need one file, take
@@ -179,15 +197,13 @@ section 6, SPEC.md section 0, docs/SCRAPDOME.md section 5 and the top of
 docs/playtest-inbox.md. Then run node tools/board.mjs.
 
 Run the tracks in next-run.md "Resume here" side by side, up to five
-lanes at once:
-  A. ARENA-STEER (rework to the 150 degrees a second ceiling), then
-     ARENA-SHOVE.
-  B. ARENA-03 Fuel Run: add the settled fighter contact rules and 4 m depot.
-  C. ARS-CORE, then ARS-01.
-  D. ART-FIT-RUSTWALL, ARENA-06, ART-FIT-TANKER, then ART-FIT-CREW-W.
-  E. WAR-02c; BALANCE-W2-OFF-RETIRE when no other lane owns its files.
-First close ART-FIT-CREW-M, ART-FIT-HANDS and ART-SRC-TANKER-PARTS with the
-janitor as next-run.md says.
+lanes at once, and follow its "Keep it proportionate" rules:
+  A. Merge ARENA-SHOVE (trim its change note first), then ARENA-04.
+  B. Finish and merge ARS-CORE with rangeForTarget, then ARS-01.
+  C. ARENA-06 Salt Flats: far edge, inner island, heat shimmer.
+  D. ART-FIT-TANKER round 3 (final), then ART-FIT-CREW-W.
+  E. WAR-02c after ARS-CORE; BALANCE-W2-OFF-RETIRE and WAR-03b when their
+     files are free.
 Then keep taking cards from "Order: the rest of phase 3" as they open.
 Two lanes never edit the same file; if a card needs another lane's file,
 wait for that lane to merge. Rerun node tools/board.mjs after every merge.

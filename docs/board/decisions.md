@@ -1438,3 +1438,19 @@ Last Car Rolling wrecks to 23.3 a round (target 10 to 14); steering feel
 comes first, and ARENA-WRECK-RATE restores the target with armor or
 aggression if Kyle keeps the steering.
 
+## 1 October 2026: keep the checking proportionate
+
+The overnight run merged little because most of its time went into its own
+checking (a 1568-line change note for a 150-line fix, link-safety test
+matrices, pixel-exact art tests) and its notes became unreadable. Claude set
+the "Keep it proportionate" rules in next-run.md: short plain notes, no
+unrequested guard machinery, looks judged from pictures, inherited
+conditions never hold a merge. Also: ARENA-SHOVE may merge, ARS-CORE's
+per-candidate range is approved, the tanker gets a final third round, and
+Vesper's export guard is settled without asking Kyle.
+
+## 1 October 2026: Kyle keeps the dome steering and approves Sal
+
+Kyle: the dome steering is good, and Sal is approved as she is. ARENA-STEER
+is kept, ARENA-WRECK-RATE starts, and WAR-SAL-TUNE closes with no tuning.
+
