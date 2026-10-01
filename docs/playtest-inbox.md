@@ -2,12 +2,48 @@
 
 ## Claude review questions from the resumed build, 30 September
 
-- **ARS-CORE audio ownership handoff:** integrated sound-bank has no
-  `weapon.oil.deploy`, `weapon.oil.slip` or `weapon.smoke.deploy` entries.
-  The protected external audio owner still holds the bank; no overlapping
-  edit or fallback cue is authorized. Please route these settled cue names
-  to that owner, or record a file handoff after its final gate. The Director
-  spends no credits and leaves pending voice auditions and picks alone.
+- **Tanker round2 for Claude:** clean private05cfc387 follows your04:00 directions: actual11m long/3.5m high, red handwheels/bright collars, blackyellowbumper/plate, lighter tank/darkcab and native flange contacts. Sheet: `.lanes/convoy-tanker/docs/board/looks/convoy-tanker/round-2.jpg` (444260B); review note beside it. Complete18 actual High/Performance paired source/fitted, opposite-valve/roof and broken/recovered views: `.evidence/2026-10-01/ART-FIT-TANKER/round2-comparison/captures/`. Sourcea1ce/native56 independently clear; no publicinstall. Two of three rounds used. The distant angle is elevated/static; tiny lamps and red controls remain readability questions. Independent critic is still pending. Please judge round2 and give any round3 directions in writing before fitting changes or merge. No motion/fullConvoy/frame approval is inferred.
+
+
+- **Claude's answer (1 October 2026, 06:30):** crossbow reach uses the
+  magnitude of the bolt's actual resultant horizontal launch velocity, fixed
+  at launch, times remaining lifetime; reverse and sideways carry follow from
+  it. Not the scalar sum.
+
+- **Claude's answers (1 October 2026, 04:00 review):**
+  - Tanker round 1: right direction, round 2 needed: scale it to about 11 m
+    by 3.5 m (twice a car's length); hazard-red valves with bright collars
+    that read at racing distance; black and yellow hazard stripes on bumper
+    and plate; lighter tank against a darker cab. Your valve mounting fixes
+    are approved. Kyle's pick A stays.
+  - Crossbow range: a player launch or bolt in flight uses the bolt's own
+    reach (speed at its level plus the car's speed, times remaining
+    lifetime); CPU acquisition stays 180 m. Released reach is unchanged.
+  - Arsenal sounds: merge ARS-CORE with the cue names and no sound while
+    `arsenal` is dev; new card AUD-ARSENAL-W1 adds them after the audio lane
+    releases the sound bank. The arsenal does not release before that.
+
+- **ARS-CORE implementation clarification for Claude:** your 04:00 answer
+  names level speed plus launching-car speed and also physical bolt reach.
+  The genuine L3/40 mph diagonal launch has horizontal speed307.65131264 m/s;
+  scalar290 +40*.44704 gives307.8816 m/s, a0.5757 m difference over2.5 s.
+  Should the resolver use the literal scalar sum of level speed and launch
+  speed magnitude, or the magnitude of its actual resultant horizontal
+  launch velocity? This also settles reverse and lateral carry. The range
+  context will stay fixed at launch and use remaining lifetime; CPU
+  acquisition stays180 m. No flight tuning changes. Frozen bffb2ea adds35
+  unambiguous collinear, age, locked identity, decoy and CPU controls:
+  17 pass18 genuine RED; full343 cases323 pass20 RED with prior controls
+  retained. Source41ed stays held on this choice; native save wiring review
+  proceeds. Complete evidence: .evidence/2026-10-01/ARS-CORE/physical-reach-tests/.
+
+- Tanker04:00 direction is recorded and round2 Source proceeds after
+  frozen657 size/mount acceptance:56 cases51 pass5 genuine RED. Original
+  donor topology, native supports and42 original controls remain exact.
+  Round1 used one of three comparison rounds; no public install.
+- Arsenal audio ownership is settled by AUD-ARSENAL-W1 after ARS-CORE and
+  protected external bank handoff. Dev cue names may be unsounded; arsenal
+  release waits for real sounds.
 
 - **Claude's answers (1 October 2026, 00:40 review):**
   - Salt Flats floor: the same ring engine, an oval band between the solid
