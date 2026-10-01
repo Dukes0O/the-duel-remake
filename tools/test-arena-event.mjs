@@ -237,9 +237,14 @@ test('crates sit on the ramp tops and by the Heap, come back, and can be taken f
   const spots = arenaPickupSpots(duel.course);
   assert.equal(spots.filter(spot => spot.kind === 'weapon').length, 3);
   assert.equal(spots.filter(spot => spot.kind === 'armor').length, 2);
+  // Isolate spawn timing using native, finite pickup eligibility. The next
+  // test covers the unprotected moving field's real collection.
+  for (const participant of duel.state.arena.participants)
+    participant.protectedSec = ARENA_PICKUPS.firstDelaySec + 1;
   for (let i = 0; i < 120 * (ARENA_PICKUPS.firstDelaySec + .1); i++) duel.step(1 / 120);
   assert.equal(duel.state.combat.pickups.length, 5, 'all five crates are out after the first delay');
   const s = duel.state, crate = duel.state.combat.pickups.find(item => item.kind === 'armor');
+  s.arena.participants.find(participant => participant.id === 'player').protectedSec = 0;
   s.armor = s.maxArmor / 2;
   // Drive backwards along the ring onto the crate: arena crates do not care.
   Object.assign(s, {s: crate.s + 1, prevS: crate.s + 2, lateral: crate.lateral, prevLateral: crate.lateral,
@@ -249,6 +254,8 @@ test('crates sit on the ramp tops and by the Heap, come back, and can be taken f
   duel.step(1 / 120);
   assert.ok(s.armor > before, 'the repair crate was collected');
   assert.equal(duel.state.combat.pickups.some(item => item.spot === crate.spot), false);
+  for (const participant of s.arena.participants)
+    participant.protectedSec = ARENA_PICKUPS.respawnSec + 1;
   for (let i = 0; i < 120 * (ARENA_PICKUPS.respawnSec + .1); i++) duel.step(1 / 120);
   assert.ok(duel.state.combat.pickups.some(item => item.spot === crate.spot), 'the crate came back');
 });
@@ -273,4 +280,35 @@ test('spawn points are well clear of junk, and a stalled rammer backs off to cha
   assert.ok(rammer._arenaReverseSec > 0, 'it reverses out first');
   const me = worldPose(duel, rammer), them = worldPose(duel, duel.state);
   assert.ok(Math.hypot(goal.x - them.x, goal.z - them.z) > Math.hypot(me.x - them.x, me.z - them.z), 'then it heads away to line up a charge');
+});
+
+test('a moving unprotected CPU legally collects a spawned arena weapon crate', async () => {
+  const {arenaPickupSpots, ARENA_PICKUPS} = await import('../src/arena/arena-pickups.js');
+  const {cpuPickupCharges} = await import('../src/combat-pickups.js');
+  const {duel} = arena(), records = [];
+  const spots = arenaPickupSpots(duel.course);
+  duel.onChange((state, event) => {
+    if (event.collector !== 'rival' || event.pickupKind !== 'weapon') return;
+    const actor = state.opponents[event.opponentIndex];
+    const spot = spots.find(row => event.pickupId.startsWith(row.id + '-'));
+    const a = duel.course.worldAt(actor.s, actor.lateral), b = duel.course.worldAt(spot.s, spot.lateral);
+    records.push({event, distance: Math.hypot(a.x - b.x, a.z - b.z),
+      height: actor.airHeight || 0, protection: state.arena.participants.find(row => row.id === actor.arenaId).protectedSec,
+      charge: cpuPickupCharges(state, state.combat, actor)[event.powerupCollected],
+      serial: state.combat.arenaCrateSerial, spot: spot.id});
+  });
+  duel.state.countdown = 0; duel.step(1 / 120);
+  for (let i = 0; i < 120 * (ARENA_PICKUPS.firstDelaySec + .1); i++) duel.step(1 / 120);
+  assert.ok(records.length > 0, 'the real Medium CPU field takes a weapon after all five crates spawn');
+  const pickup = records[0];
+  assert.equal(pickup.serial, 5, 'all five crates spawned before the legal pickup');
+  assert.equal(pickup.event.amount, 1, 'collection grants one native weapon charge');
+  assert.equal(pickup.charge, 1, 'the actual collector holds the charge at the event');
+  assert.ok(pickup.distance < ARENA_PICKUPS.reach, 'the moving collector is within real reach');
+  assert.ok(pickup.height < ARENA_PICKUPS.airClearance && pickup.protection <= 0,
+    'the moving collector is on the floor and unprotected');
+  assert.equal(duel.state.combat.pickups.some(row => row.id === pickup.event.pickupId), false,
+    'the collected crate disappears');
+  assert.ok(duel.state.combat.arenaSpots.find(row => row.id === pickup.spot).waitSec >
+    ARENA_PICKUPS.respawnSec - .1, 'actual collection starts the native respawn delay');
 });

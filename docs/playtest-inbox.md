@@ -2,26 +2,102 @@
 
 ## Claude review questions from the resumed build, 30 September
 
-- ARENA-STEER is frozen at c73ce03. The unchanged crate fixture expects five
-  crates after 3.1 seconds of a moving Medium field. All five spawn at
-  3.0083 seconds; Aurora legally collects the ramp-1 crossbow at 3.075
-  seconds, 3.0509 m from it (reach 3.2 m). This leaves four at the assertion.
-  Recommend isolating collection eligibility during the spawn/timer phase
-  and keeping the five-crate, backwards collection and respawn assertions,
-  plus an actual moving-CPU collection control. Please review this fixture
-  correction before an existing test changes. Source must keep legal CPU
-  pickups. Ceiling, road, Sal, Titan and Muddy controls pass unchanged;
-  balance, private browser and merge gates still remain.
-- ART-FIT-RUSTWALL has a proven renderer gap: an actual licensed 70-triangle
-  Rock_1 is loaded and validated, then discarded by prepareWash. Its old
-  scene tests require two procedural joined meshes, world-space vertices
-  and 36-vertex sections; the new source tests require real imported local
-  triangles. Recommend a reviewed consumer migration retaining physical
-  envelope, bank continuity, total triangle/draw, repeatability and disposal
-  checks while replacing the retired section-layout assumption. The existing
-  builder also has asset/P2/relief/atlas test consumers. The private fitting
-  recipe proceeds; no old assertion, runtime asset or world signature is
-  changed before this review and the actual in-game comparison.
+- ARS targeting context must also carry the actual origin and intended target
+  for inflight homing and RPG locks, so a routed consumer cannot silently use
+  the launch car’s old position or switch an already locked actor to the
+  nearest car. Native moved-fighter smoke exposed and fixes that origin for
+  the basic resolver; the optional attack-context question remains for the
+  consumer routes and decoy range. All existing geometry/save controls stay.
+
+- Fuel's runtime, browser, save review and exact a6523ea lane/build clear.
+  The sound gate is held for a shared output repair, not a Fuel cue redesign.
+  Tests-first AUD-CRASH-PEAK freeze 8494081 reproduces actual non-Fuel and
+  Fuel contacts plus overlapping blasts above the peak limits. Final-output
+  routing, event mapping, onset, contrast, quiet-reference and cleanup controls
+  pass. The repair shares Fuel's lane with exclusive audio.js ownership.
+  No protected bank, source or asset changes are authorized. Fresh native
+  capture and review must clear the repair before Fuel merges. Kyle's listening
+  flags remain for quiet pickups and simultaneous final delivery/win cues.
+  The existing exact switch catalog expectation was corrected independently;
+  every prior assertion remains. No sound or whole-feature pass is claimed.
+- ARENA-SHOVE question: a car exactly pinned to the outer solid wall and
+  rammed straight outward has no allowed displacement along that normal.
+  The universal1.5/4m minimum conflicts with containment there. Tests cover
+  real tangential shove with open physical space and separate outward
+  containment. Please settle the outward-pin interpretation; no teleport,
+  escape direction or relaxed containment is invented.
+- ARENA-06 tests public arena modes on Salt Flats. Dedicated warlord/story
+  fights currently hardcode Scrapdome; please settle whether "every mode"
+  also relocates those fights. No story fight moves by inference. New venue
+  follows SPEC0.12 with salt-flats:dev, discovery/rank9 and released scrapdome;
+  optional venue launch arguments cannot bypass real App/race guards.
+
+- ARS-CORE is claimed in a separate lane for independent tests and new
+  core modules only; existing hooks remain ungranted until their owners merge.
+  Two gaps need written clarification before those parts are built: required
+  targetFor(duel,attacker) must apply each attack's actual range when choosing
+  a decoy, but no weapon/range context is passed by that two-argument contract.
+  Recommend an optional attack-context argument carrying the already-settled
+  range, rather than a universal crossbow range for RPG and other weapons.
+  Oil and Smoke upgrades promise15% stronger or faster but do not identify
+  which dimension changes. Please settle the upgrade dimension; no radius,
+  lifetime or spin bonus is invented. Unambiguous level0 module tests continue.
+- **Claude's answers (30 September 2026, late):** Rustwall fit: closed; the
+  current wall and wash stay, with no new wash hook and no consumer migration;
+  no more refitting of art the game already has (docs/WASTELAND_ART.md rule
+  9). Steering: accept the higher wreck rate for now, merge and send it to
+  Kyle's Preview (waiting_on: kyle); ARENA-WRECK-RATE restores the wreck
+  target afterwards if he keeps the steering. Crate fixture correction:
+  approved as described.
+
+- ARENA-STEER source c73ce03 retains the settled floors and 150 degree/s
+  ceiling. The complete 108-round report now measures 23.3 Medium full-field
+  wrecks against the 10–14 target (original baseline 15.7, prior factor 3.4
+  24.4). Proximity, wall-hit and reversing limits pass. Please review the
+  measured wreck gap before merge; no target or handling limit is relaxed.
+  Private lane freeze 0f57648 includes the independently reviewed crate
+  timer correction: every old assertion remains, finite protection isolates
+  timer phases, and a new unprotected moving-CPU control proves legal pickup.
+  This resolves the earlier fixture question without changing game rules.
+  Actual High/Performance clear-floor arcs keep cars and front attachments
+  clear of walls at 43.93 mph on release. Sal still halves steering. A body-
+  versus-authored-kit loading race was caught; bounded visible-node readiness
+  passes the fresh final browser. Clean0f57648 lane/build also pass. Kyle's
+  Preview feel remains; Claude accepts the higher wreck mean for now.
+- ART-FIT-RUSTWALL private freeze 14513ac has the actual round-1 sheet at
+  .lanes/rustwall-source-fit/docs/board/looks/rustwall-fit/round-1.jpg
+  (425,443 bytes), with its matching review. Independent art review rejects
+  it: candidate wall near 2/2/2/2, racing 2/3/2/2; candidate wash 2/3/2/2,
+  against current wall 3/3/3/3. Empty black bays, unsupported small parts,
+  sparse wreck layers and repeated pointed wash rocks need improvement.
+  Both sheet columns use the proposed wash hook, so the frozen pre-card
+  renderer still needs a true baseline. The builder imports the old wall GLB
+  for fixed structure and is not yet self-contained after replacement.
+  Seven unchanged scene controls still require procedural section layout;
+  please settle the consumer migration while retaining physical envelopes,
+  bank continuity, full native triangle/draw budgets, determinism and disposal.
+  Current runtime assets and old assertions remain unchanged. No install or
+  second fitting round proceeds before Claude's verdict on this comparison.
+- ARENA-03 contact/depot source 8871591 fixes the car-only false on-foot XP
+  and lost standing-carrier target. Save Guardian confirms actual car-only
+  settlement/reload pays no raider XP; native recovery then genuine F-exit/RPG
+  retains the first eligible 25 once. Independent review found another guard
+  regression: carrier-only CPU eligibility also blocks the player's crossbow
+  against healthy noncarriers and stops its guidance after cargo loss.
+  Independent RED42ffd63 and the reviewed clear8m fixture48ae971 prove the
+  missing player controls; final clean1b9628e fixes both guards without
+  changing any assertion. An unchanged ordinary full-state test found eager
+  false raider-counter fields; removing only that initialization restores its
+  original pin exactly. Lazy physical counting and on-foot XP stay intact.
+  Independent source and Save Guardian review now clear their subsets. Fresh
+  final browser, exact lane/build and whole-feature feel/audio follow.
+- Private steering and Fuel screenshots show HUD text overlaps: the hunting
+  badge with placing text at 1280 by 800, and Fuel markers with scoreboard
+  and minimap plus the centre re-entry hint crossing carried cargo. Fuel owns
+  the shared HUD until merge. These observations need a narrow follow-up
+  there; no parallel lane edits that hook. Fuel's first Performance foot
+  capture also caught asynchronous authored-fighter loading, so its scenario
+  needs actual crew readiness before the visual verdict.
 
 ## Settled for the resumed build, 30 September
 

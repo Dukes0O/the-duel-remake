@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "card": "ART-KEEP-VALVE-DONOR",
+  "catalogId": "kenney-factory-kit",
+  "source": {
+    "id": "kenney-tanker-factory-valve",
+    "author": "Kenney",
+    "sourcePage": "https://kenney.nl/assets/factory-kit",
+    "license": "CC0-1.0",
+    "library": "C:\\Users\\kyleb\\dev\\art-library\\kenney-factory-kit",
+    "files": [
+      {
+        "path": "source.zip",
+        "sha256": "7e31fb2308e90304672bd15cd18fa9d9f02c03731a8cbc57a8e3e1c181dfb0a7",
+        "bytes": 4511890
+      },
+      {
+        "path": "unpacked/License.txt",
+        "sha256": "61e86565dd297e143ad631594980eda0a17fc81a4cd7c6d71acf2f5e0cad30b6",
+        "bytes": 700
+      },
+      {
+        "path": "unpacked/Models/GLB format/Textures/colormap.png",
+        "sha256": "35d7bd6900dde0208429eeaec87fa17fbf024ed59f3f4eab54bc92802eba9dd7",
+        "bytes": 11813
+      },
+      {
+        "path": "unpacked/Models/GLB format/pipe-large-valve.glb",
+        "sha256": "57126374dce5b172e06d5d6f8cbaab97c9cffe3e5e726060eb14c50a5bd519b6",
+        "bytes": 42604
+      }
+    ],
+    "model": {
+      "path": "unpacked/Models/GLB format/pipe-large-valve.glb",
+      "triangles": 456
+    }
+  },
+  "runtime": []
+}

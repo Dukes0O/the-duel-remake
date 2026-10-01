@@ -646,6 +646,11 @@
           "path": "unpacked/Models/GLB format/crane-magnet.glb",
           "sha256": "9ed1d4690e03fd4cafcd30d182b2319cc6c743794a50108332cab9d76a083f6e",
           "bytes": 16912
+        },
+        {
+          "path": "unpacked/Models/GLB format/pipe-large-valve.glb",
+          "sha256": "57126374dce5b172e06d5d6f8cbaab97c9cffe3e5e726060eb14c50a5bd519b6",
+          "bytes": 42604
         }
       ],
       "checked": "2026-09-30",
@@ -667,6 +672,14 @@
           "path": "unpacked/Models/GLB format/crane-magnet.glb",
           "triangles": 172,
           "evaluatedTriangles": 172,
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "pipe-large-valve",
+          "path": "unpacked/Models/GLB format/pipe-large-valve.glb",
+          "triangles": 456,
+          "evaluatedTriangles": 456,
           "armatures": 0,
           "actions": []
         }
