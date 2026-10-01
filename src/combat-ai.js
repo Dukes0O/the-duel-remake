@@ -1,5 +1,5 @@
 import {CPU_COMBAT, WEAPONS, COMBAT_TUNING} from './wasteland-tuning.js';
-import {point, velocity, fireWeapon} from './combat-weapons.js';
+import {point, aimPoint, velocity, fireWeapon} from './combat-weapons.js';
 import {cpuPickupCharges} from './combat-pickups.js';
 import {arenaTargetOf} from './combat-teams.js';
 
@@ -114,7 +114,7 @@ export function stepCombatAI(duel, dt) {
     const attacker = point(duel, opponent);
     const quarry = state.arena ? arenaTargetOf(duel, opponent) : state;
     if (!quarry) continue;
-    const player = point(duel, quarry);
+    const player = aimPoint(duel, quarry);
     const gap = Math.hypot(attacker.x - player.x, attacker.z - player.z);
     if (!(gap < T.cpu.attackRange)) continue;
 

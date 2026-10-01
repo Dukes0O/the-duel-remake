@@ -1365,12 +1365,9 @@ no outgoing binary version needs compaction. No history rewrite or release.
 Full cadence resets here: five merges, 05:05 UTC or the end of this run.
 Later metadata or source commits need their own exact full evidence.
 
-Steering freeze c73ce03 retains the failing crate fixture and records its
-legal CPU pickup witness. Rustwall native RED proves the renderer discards
-source geometry; private fitting continues while Claude reviews the needed
-legacy consumer migration. Their questions are at the top of the inbox.
-Fuel contact/depot independent RED is frozen at 4a2ee89 before implementation;
-the narrow valve donor record is independently tests first.
+Steering and Fuel began with independent native RED controls; their current
+source/review status is recorded below. The Rustwall source candidate lost
+to current art and Claude closed the refit. No replacement was installed.
 
 ART-KEEP-VALVE-DONOR merged from reviewed clean 0b49409 after 309/309
 lane suites in 783.13 seconds and build in 379 ms. Independent review found
@@ -1384,3 +1381,144 @@ deleted their merged or explicitly dropped branches. The narrow licensed
 donor record is retained; obsolete complete-trailer tests and generated
 search evidence did not enter integration. Original licensed files, current
 game assets and Kyle decisions remain. Full merge counter: one since230318e.
+
+Kyle requests continuous overnight work and confirms Claude reviews every
+three hours. The overnight thread follow-up now follows that three-hour cadence until
+08:30local on1October, with a separate08:30handoff prompt. Kyle requires
+finish by08:45; no periodic clock polling. approvals for the specific integration repository/branch push
+persist. ARS-CORE is claimed for independent tests/new owned modules, with
+all existing hooks explicitly ungranted requests. Questions on decoy attack
+range context and Oil/Smoke upgrade dimensions go to Claude; settled level0
+tests continue without invented bonuses or a universal range.
+
+## 30 September 2026, Director: overnight checkpoint in progress
+
+Claude verdicts merged as354a36d: keep current Rustwall and wash, close
+the private refit, accept steering wreck mean23.3 temporarily and send
+steering to Kyle after merge. Steering clean0f57648 merged as723ad61
+after exact lane311/311 in679.11s, build535ms, independent source/fixture
+review and final14-image memory-only High/Performance browser. All handling
+floors,150degree/s ceiling and road pins remain. Kyle Preview feel is pending;
+ARENA-WRECK-RATE explicitly waits his keep decision. No Preview or release.
+
+After-merge janitor: verified clean steering0f57648 and closed Rustwall14513ac;
+unlinked integration-only dependencies and used plain git worktree remove.
+Deleted the merged steering branch and Claude-explicitly-dropped refit branch.
+Current runtime wall/wash, old scene assertions, originals/licences and
+Claude verdict remain. Rejected private output and wash hook did not merge.
+Consumed root full/build evidence287532B was deleted after its durable
+verdict. No uncertain audit candidate was removed:48 dynamic asset candidates
+remain with DISC, zero unused modules/removed-behavior tests proven.
+Runtime public236249990B and Wasteland models78998200B remain unchanged;
+new growth is small text tests/notes and private evidence, not game binaries.
+
+Fuel clean4a60b99 adds only the source launch URL flag after the unchanged
+launcher test caught its absence. Source-only22checks clear; launcher never
+runs. Runtime/save/22-image browser subsets at1b9628e remain unchanged and
+reviewed. Fresh exact lane/build and actual audio attribution follow.
+Native pickup/HUD markup witness shows CARRYING and player cell● together;
+no durable carry-cell bug is proved. Audio capture finds existing collision
+overload also in Last Car Rolling without Fuel cues; dedicated evidence is
+being finalized before deciding its follow-up. Human listening belongs Kyle.
+
+ARS-CORE test freeze8437d2c has64tests,3passing controls,58 genuineRED and
+3 explicit Claude design TODOs. Builder owns only five new modules and note;
+existing hooks remain ungranted. Shove and Salt Flats are claimed next, with
+exclusive new files and explicit hook requests; tests precede implementations.
+Claude owns range/upgrade design answers. No partial module is a finished card.
+
+Full cadence counts three merges since230318e including Claude docs verdict
+and donor/steering. Required new full checkpoint is due by05:05UTC; source
+will freeze before it, then normal approved D8 push if passing and outgoing
+binary audit clear. Overnight work continues after this checkpoint.
+
+Exact clean40b81c1 checkpoint: full311/311, no skips,447.45s, completed
+2026-10-01T05:06:05.643Z; build434ms. Approved normal push230318e→40b81c1
+succeeded. Outgoing22commits/20text paths/zero binary objects require no
+history rewrite. Cadence resets at this full: zero merges since40b81c1,
+two hours or five merges, and final overnight tier still required. Current
+new metadata does not inherit that exact pass. Continue claimed lanes;
+Salt Flats gains only its new control fixture, existing hooks remain requests.
+Fuel's second gate failure is its old exact catalog expectation; independent
+review approves adding only the required dev entry and actual isolation controls.
+Existing crash peak debt is proven separately and queued, never hidden.
+
+AUD-CRASH-PEAK is claimed after the board shows it ready: baselinecontact
+needs no Fuel dependency. It shares Fuel lane/branch, with exclusive audio.js
+output and recorder/test hooks transferred from the frozen Fuel handler.
+Tests-first measured output repair runs before the blocked sound gate clears;
+no second lane edits audio, no bank/assets or protected external lane access.
+This removes an artificial repair/feature dependency cycle, not a sound-gate
+waiver. Native sample/true peaks, safe-signal preservation, timing/mix and
+cleanup controls stay required. Five builder lanes still at most, including
+the external audio lane; this is a second card in one existing lane.
+
+Fuel clean a6523ea exact lane/build clear after the reviewed catalog update;
+source and ordinary pins are unchanged. Audio peak gate remains explicit;
+tests-first baseline repair is in that same branch with no ownership conflict.
+Shove independent59a86de reaches1944native witnesses:31pass/24RED/one
+wall TODO,2251checks; oldsolver/road/protection/respawn/Titancontrols clear.
+ARS independentreview found real spin/slip/fighter-origin gaps; RED9d2d72b
+proved8 failures among19newcases with all29originalCOREcases unchanged.
+Narrow source5604703 fixes them, now48CORE/449checks and70native/162
+road controls; reviewer follows. Three free save transaction hooks are granted
+only now, ahead of UI/combat wiring, with all16SAVE REDs and Save Guardian
+stillrequired. Salt Flats keeps independent source/native/runtime REDs and
+newfrozen Scrapdome control; no art/scenario/frame/heat or merge pass invented.
+
+AUD-CRASH-PEAK tests-only freeze 8494081 records six real final-output peak
+failures on unchanged a6523ea. Native non-Fuel, Fuel and overlap captures
+retain actual cue mapping, timing, contrast, quiet-reference and cleanup.
+Repair stays in Fuel's lane; bank/assets and external audio ownership stay
+protected. Fresh source, independent review and mandatory gate evidence will
+follow; no waiver or current merge clearance is recorded. Core geometry
+review clears 5604703. Pure save transactions continue under their three
+granted hooks; the two named-player raw-profile fixture mismatches need
+independent review before any test correction.
+
+Arsenal pure save freeze dd8ca6c returns source ownership after the three
+granted hooks. All old suites, module bytes and replay pins remain exact.
+Independent test-author review is read-only first; Save Guardian must approve
+any proposed normalization of the raw second-player fixture before editing
+tests. Shared native/UI hooks remain ungranted. Audio builder now owns only
+audio.js, the new audio-output module and its note, following RED8494081.
+Salt Flats reaches native-source GREEN privately, with actual unchanged
+source/photo provenance; runtime and art/frame integration remain held.
+
+The independent Guardian approved and verified the canonical second-player
+fixture correction at6d1fdd0 while preserving both whole-profile assertions.
+It separately proved arbitrary count/length limits erase earned weapon IDs
+and equipped slots. Independent native regressions precede that source fix.
+Audio source c0bb9b1 meets native peaks and quiet/onset/contrast/cleanup; the
+old recording tool still taps the upstream compressor and needs native RED
+and a separately owned fix before the sound gate. Salt private6474637 passes
+its native source/lifecycle controls but retains nine ungranted runtime REDs;
+independent narrow review is active, and no art/frame/install pass is claimed.
+
+Pure Arsenal save functions atcd73eb1 now have independent Guardian and
+generic source clearance; native wiring and three Claude questions remain.
+The future registry guard is an explicit wiring obligation before adding Oil
+or Smoke to WEAPONS. Shove private66ac011 clears1458non-wreck minimum
+witnesses while five wreck-motion failures wait for Fuel's event hook; solid
+wall interpretation remains with Claude. Audio d96f1f2 now has independent
+source/final-recorder clearance and three native captures meeting both peaks
+individually. Fresh real race tracks engine at0.971/0ms; prior0.870/-50ms
+is retained, not silently removed. Human listening and absent cue coverage
+remain flags. Fuel will first merge current integration into its lane, then
+run fresh actual browser and exact lane/build before integration merge.
+
+Checkpoint full tier passed on clean integration 664a20726e981aac09ccf809fc26d54a6aeb29f9: 311/311, no failures or unrun tasks, 430.95 s; build 435 ms. Runner ledger records exact same clean start/end commit at 2026-10-01T07:05:04.125Z. The eight outgoing commits touched only five text paths and no binary revisions, so no history rewrite or binary compaction was needed. Kyle's approved normal push advanced origin/integration/wasteland from 40b81c1 to 664a207. This later metadata commit does not inherit that exact full pass; zero integration merges since the checkpoint.
+
+Fuel e182643 fresh authored browser passes with memory-only saves, no console/network failures, High/Performance P95 18.2 ms and final +240 scrap/hold 35. Its exact lane gate failed 97 passed/1 failed/219 unrun, then native target 67/68: the disabled LCR pin predates accepted steering. Independent raw native controls match current pre-Fuel integration for all five cases with Fuel off and on; three road pins stay exact. Review must approve the two arena-pin/provenance migration before edits; no gate waiver. Salt source guard 2d6e5cc independently clears 28 source controls and rejects both unpicked model witnesses before output; nine runtime hooks remain RED. Arsenal's registered-weapon offer regression is being authored before native registry wiring. No protected audio, Preview, live game or real saves touched.
+
+Salt Flats now receives only the unowned venue registry and course hooks for native geometry. Existing independent tests precede this wiring; Fuel's event, App, renderer, UI and flags remain held, and Shove's collision/floor files stay exclusive. New physical geometry must align with the actual private GLB and keep frozen Scrapdome controls exact. This partial slice grants no art/runtime/merge clearance.
+
+Salt geometry source stopped without edits at 2d6e5cc after proving untested native ramp/coordinate mismatch. Independent tests now compare actual GLB triangles and cover bounds to Course surfaces before implementation. The full-bowl versus existing annular floor question is written to Claude; no invisible inner boundary, changed art or physical shortcut is inferred. This is a fixable implementation/design boundary, not a missing-laptop-tool stop.
+
+Merged Fuel Run and AUD-CRASH-PEAK at 66ce5d50cbebab96b93d937259e894ef0107a665 from exact reviewed clean 996424592ba99becccd47442065c656314dd9673. Lane317/317 in451.80s and build416ms; no skips/unrun tasks. Existing Claude conditional merge verdict is fulfilled by settled contact/depot/native/save/browser/gates. New dev feature remains for Kyle Preview feel; human sound/HUD flags stay. Source-only launcher recipe was edited, never executed; no Preview/live/save/release touched. Board and build-status ran immediately after merge. This is integration merge1 since passing664a207 checkpoint. Shove receives only its proven waiting-wreck event hook after a normal integration sync; pilot is explicitly free for Arsenal. Plain merged-lane janitor follows the committed verdict.
+
+Janitor after Fuel/audio merge: exact merged 9964245 worktree was clean, its dependency junction pointed only to integration, and the junction was unlinked before plain git worktree remove. Merged branch deleted with git branch -d. Committed verdicts remain; regenerated lane captures/logs/build outputs went with the folder. Current public assets/licensed originals/decisions and all unmerged or protected lanes remain. Runtime public size remains236249990B; lane folders4 to3.
+
+Claimed ART-FIT-TANKER after that cleanup, with only new source recipe/model/tests/scenario/comparison files and no shared hook. Kyle's rigid pick A and verified donor drive tests first; private fitting/comparison then Claude review precede installation. With this claim there are four builder tracks plus the protected external audio lane.
+
+Arsenal 58116aec prospective consumer guard has independent Guardian and generic clearance. New tests use the genuine consumer against an isolated extended frozen registry; 26 failures were fixed by admitting only four starters to the ungated legacy branch. The production registry itself still has four starters. Following the read-only wiring map, the board grants only unambiguous native/UI/driving/lifecycle and combat-scene hooks after Fuel merge. Event/floor/collision stay Shove's; source audio/bank and context-dependent homing/locks remain held. Exact beta/flag acceptance is reviewed and frozen before the new flag source; no whole-card or release claim.

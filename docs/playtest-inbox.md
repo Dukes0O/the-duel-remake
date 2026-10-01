@@ -2,6 +2,62 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- Salt Flats physical-floor question: the genuine private model has a full
+  300 by 200 m bowl, perimeter tyres/containers and central cover/ramps.
+  Existing arena physics constrains cars to an annulus with an inner Heap
+  boundary. Please confirm how the Salt Flats drivable floor should consume
+  this bowl; no invisible inner boundary or altered venue design is inferred.
+  The builder also proved a 0.497 m quarter-ramp height mismatch and a 30 m
+  physical strip under an 8 m visible ramp. Independent native alignment
+  checks precede the course changes. Floor/collision hooks remain Shove's.
+
+- ARS targeting context must also carry the actual origin and intended target
+  for inflight homing and RPG locks, so a routed consumer cannot silently use
+  the launch car’s old position or switch an already locked actor to the
+  nearest car. Native moved-fighter smoke exposed and fixes that origin for
+  the basic resolver; the optional attack-context question remains for the
+  consumer routes and decoy range. All existing geometry/save controls stay.
+
+- Fuel's current e182643 browser clears both qualities with actual authored
+  fighters and memory-only saves. AUD-CRASH-PEAK has independent source,
+  final-recorder and measured peak clearance; human listening flags remain
+  for quiet pickups and simultaneous delivery/win cues. Its source bytes
+  survive the current integration sync. The lane gate now fails a historical
+  LCR pin: independent native engines match current pre-Fuel integration
+  byte-for-byte with Fuel off and on. Only LCR and Sal changed through the
+  accepted steering merge; all three road pins remain exact. A two-pin and
+  provenance migration awaits independent review before any edit. No current
+  exact gate or whole-feature merge pass is claimed.
+- ARENA-SHOVE question: a car exactly pinned to the outer solid wall and
+  rammed straight outward has no allowed displacement along that normal.
+  The universal1.5/4m minimum conflicts with containment there. Tests cover
+  real tangential shove with open physical space and separate outward
+  containment. Please settle the outward-pin interpretation; no teleport,
+  escape direction or relaxed containment is invented.
+- ARENA-06 tests public arena modes on Salt Flats. Dedicated warlord/story
+  fights currently hardcode Scrapdome; please settle whether "every mode"
+  also relocates those fights. No story fight moves by inference. New venue
+  follows SPEC0.12 with salt-flats:dev, discovery/rank9 and released scrapdome;
+  optional venue launch arguments cannot bypass real App/race guards.
+
+- ARS-CORE is claimed in a separate lane for independent tests and new
+  core modules only; existing hooks remain ungranted until their owners merge.
+  Two gaps need written clarification before those parts are built: required
+  targetFor(duel,attacker) must apply each attack's actual range when choosing
+  a decoy, but no weapon/range context is passed by that two-argument contract.
+  Recommend an optional attack-context argument carrying the already-settled
+  range, rather than a universal crossbow range for RPG and other weapons.
+  Oil and Smoke upgrades promise15% stronger or faster but do not identify
+  which dimension changes. Please settle the upgrade dimension; no radius,
+  lifetime or spin bonus is invented. Unambiguous level0 module tests continue.
+- **Claude's answers (30 September 2026, late):** Rustwall fit: closed; the
+  current wall and wash stay, with no new wash hook and no consumer migration;
+  no more refitting of art the game already has (docs/WASTELAND_ART.md rule
+  9). Steering: accept the higher wreck rate for now, merge and send it to
+  Kyle's Preview (waiting_on: kyle); ARENA-WRECK-RATE restores the wreck
+  target afterwards if he keeps the steering. Crate fixture correction:
+  approved as described.
+
 - ARENA-STEER source c73ce03 retains the settled floors and 150 degree/s
   ceiling. The complete 108-round report now measures 23.3 Medium full-field
   wrecks against the 10–14 target (original baseline 15.7, prior factor 3.4
@@ -15,7 +71,7 @@
   clear of walls at 43.93 mph on release. Sal still halves steering. A body-
   versus-authored-kit loading race was caught; bounded visible-node readiness
   passes the fresh final browser. Clean0f57648 lane/build also pass. Kyle's
-  Preview feel remains, as does Claude's measured balance verdict.
+  Preview feel remains; Claude accepts the higher wreck mean for now.
 - ART-FIT-RUSTWALL private freeze 14513ac has the actual round-1 sheet at
   .lanes/rustwall-source-fit/docs/board/looks/rustwall-fit/round-1.jpg
   (425,443 bytes), with its matching review. Independent art review rejects

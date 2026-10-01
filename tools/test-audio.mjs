@@ -144,6 +144,12 @@ class MockContext {
   createDynamicsCompressor() {
     return this.node('compressor', { threshold: -24, knee: 30, ratio: 12 });
   }
+  createWaveShaper() {
+    const node = new Node(this, 'waveshaper');
+    node.curve = null;
+    node.oversample = 'none';
+    return node;
+  }
   createBuffer(channels, length, sampleRate) {
     const data = Array.from(
       { length: channels },

@@ -9,12 +9,14 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     'titan-climb': 'on',
     'muddy-hollow': 'on',
     warlords: 'on',
+    'fuel-run': 'dev',
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), true);
   assert.equal(flags.enabled('hidden-road'), true);
   assert.equal(flags.enabled('career-backup'), false);
   assert.equal(flags.enabled('warlords'), true);
+  assert.equal(flags.enabled('fuel-run'), false);
   assert.deepEqual(flags.betaFeatures(), []);
   assert.equal(existsSync(new URL('../src/experimental-ui.js', import.meta.url)), false);
   const router = readFileSync(new URL('../src/screen-router.js', import.meta.url), 'utf8');
@@ -31,6 +33,14 @@ test('production URL requests cannot enable dev switches, while QA keeps named i
   assert.equal(qa.enabled('career-backup'), true);
   assert.equal(qa.enabled('unknown'), false);
   assert.equal(createFeatureFlags({ storage: null, qa: true }).enabled('career-backup'), false);
+});
+
+test('Fuel development flag is isolated from production URLs and unnamed QA builds', () => {
+  const production = createFeatureFlags({storage:null, qa:false, search:'?flags=fuel-run'});
+  assert.equal(production.enabled('fuel-run'), false);
+  const qa = createFeatureFlags({storage:null, qa:true, search:'?flags=fuel-run'});
+  assert.equal(qa.enabled('fuel-run'), true);
+  assert.equal(createFeatureFlags({storage:null, qa:true}).enabled('fuel-run'), false);
 });
 
 test('private beta journey evidence distinguishes fixtures from production actions', async () => {
