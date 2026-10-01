@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-01T15:28:39.475Z
+Observed at: 2026-10-01T21:01:39.623Z
 
-Observation commit: 1f4d4f8aad181adc05b8801ee6e0c8deaec54ba7
+Observation commit: d2bb5223945537e336505bb89bc23885e5bb6738
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 1f4d4f8aad181adc05b8801ee6e0c8deaec54ba7
+Integration HEAD: d2bb5223945537e336505bb89bc23885e5bb6738
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-01T12:48:41.575Z; tested commit: cde91deab5d08e6bec7dd623fc7861e23b9f8fef.
+Last recorded full run: 2026-10-01T15:37:39.055Z; tested commit: c02105cb26183e71cc7ec02b5d96ad59727f4114.
 
 ## Feature switches
 
@@ -41,7 +41,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | lane/art/convoy-tanker | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/convoy-tanker |
 | lane/audio/aud-10 | 6 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 6 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 6 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/audio/aud-17-picks | 6 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/cmb/arena-shove | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-shove |
 | lane/cmb/arsenal-core | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-core |
 | lane/vis/salt-flats | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/salt-flats |
@@ -70,9 +70,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 430,908 B | +0 B | 500,000 B |
 | Review `looks/` | 10,712,857 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 303,558 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 461,385 B | +157,827 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 337,247,232 B | +2,330,624 B | unavailable |
+| Git objects | 337,637,376 B | +390,144 B | unavailable |
 | Lane folders | 5 | +0 | unavailable |
 
 ## Backups
@@ -81,7 +81,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: 1f4d4f8aad181adc05b8801ee6e0c8deaec54ba7
+- Local integration/wasteland: d2bb5223945537e336505bb89bc23885e5bb6738
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -89,22 +89,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 4cd4a9608238d86a90a1335adacf526eb7f4a2d3.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: behind local; cached commit cde91deab5d08e6bec7dd623fc7861e23b9f8fef.
-
-## Director handoff: held lanes
-
-All five unmerged lanes are clean and preserved. No helper is writing them. These identities supplement the tool's branch-name matching.
-
-| Card | Branch | Exact tip | Last activity (PDT) | Held work / next step |
-| --- | --- | --- | --- | --- |
-| ARENA-SHOVE | lane/cmb/arena-shove | 16a2b94 | 2026-10-01T07:45:52-07:00 | Claude classification of inherited public crossings; browser/mandatory lane clear |
-| ARS-CORE | lane/cmb/arsenal-core | 276e036 | 2026-10-01T07:08:34-07:00 | Claude candidate-dependent launch resolver answer;10launchRED, flight/save scopedclear |
-| ART-FIT-TANKER | lane/art/convoy-tanker | 86d0d6d | 2026-10-01T07:53:15-07:00 | Claude round2 art verdict;2of3rounds;mandatorylane clear, no motion/frame/install |
-| ARENA-06 | lane/vis/salt-flats | 439d006 | 2026-10-01T07:56:27-07:00 | Saltactualpixel failures and later exclusive publichooks/frame/artreview |
-| ART-FIT-CREW-W | codex/art/vesper | edf527e | 2026-10-01T08:10:01-07:00 | Kyle link-testing choice;5nativeguardRED/6unavailable, no gamecomparison/reveal |
-
-Ready board cards BALANCE-W2-OFF-RETIRE, ARENA-04 and WAR-03b stay unclaimed: their source hooks overlap Arsenal, Shove or the protected audio owner. No card owned by Claude or Kyle was started. Protected audio refs aud-10/aud-12/aud-17-picks retain their owners and are not inspected.
-
-End sweep: ten consumed gate files removed (993386B); public/runtime236249990B unchanged. Metadata grew5088B before this final handoff. CurrentWasteland78998200B versus60MB target, largest runtime14295108B versus8MB and ordinary2288190B versus2MB reflect retained required assets. Dynamic48asset/26export candidates remain underDISC/CLEAN-11; zero unusedmodules or removed-feature tests proved. No asset deletion, forced worktree removal or history rewrite.
-
-The final full/build run follows the handoff commit. This status observation keeps its own source identity; consult the runner-owned full-tier ledger for the exact final tested commit. No later commit inherits clearance.
+- Remote origin/integration/wasteland: behind local; cached commit c02105cb26183e71cc7ec02b5d96ad59727f4114.
