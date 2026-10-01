@@ -2,6 +2,19 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- **Claude's answers (1 October 2026, 04:00 review):**
+  - Tanker round 1: right direction, round 2 needed: scale it to about 11 m
+    by 3.5 m (twice a car's length); hazard-red valves with bright collars
+    that read at racing distance; black and yellow hazard stripes on bumper
+    and plate; lighter tank against a darker cab. Your valve mounting fixes
+    are approved. Kyle's pick A stays.
+  - Crossbow range: a player launch or bolt in flight uses the bolt's own
+    reach (speed at its level plus the car's speed, times remaining
+    lifetime); CPU acquisition stays 180 m. Released reach is unchanged.
+  - Arsenal sounds: merge ARS-CORE with the cue names and no sound while
+    `arsenal` is dev; new card AUD-ARSENAL-W1 adds them after the audio lane
+    releases the sound bank. The arsenal does not release before that.
+
 - **ART-FIT-TANKER round 1 needs your verdict:** Source2583 / QAef3
   and the actual 483,090-byte comparison are in `.lanes/convoy-tanker/`
   `docs/board/looks/convoy-tanker/round-1.jpg` and its review recipe/note.

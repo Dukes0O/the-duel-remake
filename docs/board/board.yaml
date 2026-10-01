@@ -775,7 +775,6 @@ tasks:
     size: M
     needs: [ART-KEEP-VALVE-DONOR]
     status: building
-    waiting_on: claude
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/art/convoy-tanker
     owns: [tools/blender/convoy-tanker.py, tools/art/tanker-fit.json, src/arena/tanker-model.js, tools/test-convoy-tanker-art.mjs, tools/scenarios/convoy-tanker-art.mjs, docs/changes/ART-FIT-TANKER.md, docs/board/looks/convoy-tanker/, public/assets/models/wasteland/convoy-tanker/]
@@ -790,6 +789,7 @@ tasks:
     acceptance:
       - "Build the tanker settled in docs/SCRAPDOME.md, Convoy Raid (30 September 2026): one rigid vehicle from Kyle's pick A (Kenney delivery-flat cab and bed with the City Kit Industrial detail-tank on the bed), three fuel valves from the verified factory pipe valve donor on the tank, scrap armor plating from the Salt Flats salvage parts, and a raised boarding plate on the tank roof with warning lamps that light when all three valves are broken. Nothing opens or articulates."
       - "Follow docs/WASTELAND_ART.md 'Fitting existing models' (no source palette, gritty, judged in the game renderer, three-round cap); send the comparison sheet to Claude, who shows Kyle."
+    claude_review_round_1: "1 October 2026: right direction (the gritty version already beats the toy palette), round 2 needed. 1) Scale: it reads car-sized; a 12 tonne rig is about 11 m long and 3.5 m tall, roughly twice a car's length, and must look it next to the cars. 2) Readability: valves are the targets, so paint them hazard red with a bright collar that reads at racing distance; black and yellow hazard stripes on the bumper and boarding plate; a lighter weathered tank against a darker cab so the shape reads in the dark yard. 3) Approve the proposed native valve mounting fixes (no gaps; seat each valve on the tank with its flange). Keep pick A and everything else."
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex
@@ -878,7 +878,6 @@ tasks:
     review_commit: 58116aec7e8eafd1308be8bc399b3c7a9624e269
     test_commit: 048d55c4419c6621a0b9a39dfcb60df31c4b3f95
     source_commit: 41ed21dfb84bf0b2326ef5cbe32a9ad133447f83
-    waiting_on: claude
     design_question: "Please settle player-launch and in-flight Crossbow range context. Independent native tests at048d55c prove two active-feature reach regressions against genuine released0f modules; 308 cases306 pass2 real RED, no skip. Released CPU acquisition stays180m; released player acquisition/homing is uncapped with unchanged speed/lifetime/inherited velocity. Shared180 at those routes must not ship. Audio bank handoff also requested. All original CORE/save/replay controls remain; whole-card source/save/browser/audio/lane gates are pending."
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arsenal-core
@@ -892,6 +891,17 @@ tasks:
       - "Build docs/ARSENAL.md section 2 exactly: road hazards, car effects, targetFor (every existing CPU aim, homing and lock path routed through it, with a test that fails on a bypass), unlocks by rank and 400-scrap purchase, rewards that unlock free, upgrades, computer loadouts, and the arsenal switch (dev)."
       - "Oil Slick and Smoke Screen as section 3 says, with their counters, computer use and sounds. Save Guardian reviews unlocks and purchases: normalizing never grants an unearned weapon; per named player; old and future saves survive."
     save_review: "Pure save slice cd73eb1 independently cleared by Guardian and generic reviewer. Tests-first ownership/slot regressions now68/68 with451checks; original canonical named-player isolation assertions retained. Historical/malformed/credits/backups/future-schema/budgets clear. Before native registry wiring, filter availableCarWeapons legacy branch to four starters and cover registered-owned dev/discovery/implemented exclusions; pass proper bound options from App/UI and duel RNG from CPU. Current registry still has only four starters, so this is a wiring obligation. Native13RED/3designTODO and all shared hooks remain held."
+    claude_answer: "1 October 2026: (1) Crossbow range for a player launch and a bolt in flight is the bolt's own physical reach: its speed at its upgrade level plus the launching car's speed, times its remaining lifetime; no new cap, so released reach is unchanged. CPU acquisition stays 180 m. (2) Sounds: ARS-CORE may merge with the three cue names emitted and no sound while arsenal is dev; AUD-ARSENAL-W1 adds them after the audio lane releases the sound bank, and the arsenal does not release before that."
+  - id: AUD-ARSENAL-W1
+    title: "Sounds for Oil Slick and Smoke Screen"
+    owner: codex
+    lane: AUDIO
+    size: S
+    needs: [ARS-CORE]
+    status: ready
+    flag: arsenal
+    acceptance:
+      - "Add weapon.oil.deploy, weapon.oil.slip and weapon.smoke.deploy to the sound bank from the CC0 library recipes (tools/audio/catalog.json), once the external audio lane has merged and released src/sound-bank.js. The arsenal cannot release before these exist. No paid credits."
   - id: ARS-02
     title: "Arsenal wave 2: Rocket Pods, Flamethrower, Scrap Magnet"
     owner: codex
