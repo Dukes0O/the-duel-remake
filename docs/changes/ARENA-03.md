@@ -1184,3 +1184,40 @@ this RED freeze does not claim lane/build, browser or merge clearance.
 
 Nothing removed. These are append-only acceptance controls. No frozen assertion,
 fingerprint, source, runtime asset, save, Preview or audio resource changed.
+
+
+### Independent native-hit fixture correction — 30 September 2026
+
+The two enemy-versus-player source guards are held unstaged by the worker.
+They expose an unrelated fixture obstruction in the new noncarrier hit check.
+An independent native simulation reproduced the review probe: player s=39.8,
+CPU s=79.8, both lateral=-6. At tick 4 the real bolt is y=1.8537099385,
+below the raised ramp floor y=1.8981294873. It is consumed 27.56146 m before
+the CPU, so zero damage is correct for that obstructed path.
+
+Changed only that new test's target pose to s=47.8, eight metres from the same
+player. No existing assertion or helper changed. The same native player launch
+now contacts the CPU at tick 2, removes exactly 12 armor, and records one
+player scoring hit with damageDealt=12. The real projectile owner is player;
+the CPU still has no cargo. Existing positive guidance, wreck/protection and
+CPU carrier-only controls retain their previous fixtures and assertions.
+
+Read-only RED witness: loaded the original combat-weapons.js from source
+88715915953db56e59dea06c4ba0829d5f7fb3cf as an in-memory ES module, resolving
+its relative imports to existing native modules. Against that same eight-metre
+healthy no-cargo fixture, original fireWeapon returns false and emits zero
+projectiles. No source file was replaced or reverted. This confirms the
+fixture correction preserves the original player launch regression.
+
+### Removed — native-hit fixture correction
+
+Removed only the new hit control's obstructed forty-metre target placement.
+Kept every original assertion, the eight new player behaviors, frozen CPU
+helpers and controls, replay pins and production source unchanged.
+
+Focused verification with the worker's two held guard edits: node --test
+ --test-reporter=tap tools/test-fuel-standing-carrier.mjs. Result: all 34
+ tests pass, zero failures, 535 acceptance checks reached. git diff --check
+ passes. Byte comparison with freeze 42ffd63 proves the test file differs
+ only by three fixture/comment lines; every assertion and helper is unchanged.
+ No lane/build or whole-card merge clearance is claimed.

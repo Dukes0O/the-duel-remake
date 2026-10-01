@@ -289,6 +289,9 @@ function nativePlayerImpact(c, kind = 'crossbow', level = 0) {
 
 test('player crossbow launches at a healthy Fuel CPU without cargo', () => {
   const c = playerCarTarget();
+  // The original forty-metre path crosses a real raised ramp before the car.
+  // Use a clear eight-metre native shot for the independent physical-hit control.
+  place(c.cpu, {s: c.state.s + 8, lateral: c.state.lateral});
   // CPU hunting deliberately retains its carrier-only no-cargo guard.
   eq(chooseTarget(c.duel, c.participant), null,
     'the same no-cargo field still offers no carrier to the computer hunter');
