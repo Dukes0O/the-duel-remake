@@ -219,19 +219,38 @@ function installReviewTools(mphToWorld,arenaTargetOutOfPlay) {
   function publicCountdown(){uiTick(362);const d=a.duel,s=d.state,spec=d._vehicleSpec(s);
     if(s.status!=='racing'||s.arena.phase!=='fight')throw Error('Public countdown not completed by native ticks');
     if(Math.abs(s.lateral)+spec.halfWidth>=d.course.def.scrapdome.floorHalfWidth)throw Error('Public spawn body is not fully inside floor');
-    window.__publicWall={startS:s.s,inputs:[],trace:[]};return {s:s.s,lateral:s.lateral,seed:s.seed,car:s.car,opponents:s.opponents.map(car=>car.car)};}
+    window.__publicWall={startS:s.s,inputs:[],trace:[],samples:[],events:[],tick:-1};return {s:s.s,lateral:s.lateral,seed:s.seed,car:s.car,opponents:s.opponents.map(car=>car.car)};}
   function publicDrive(side,alongTicks,recorded=null){const d=a.duel,s=d.state,q=window.__publicWall;let touched=false;
+    const off=d.onChange((_,event)=>{const keys=['scrape','crash','combatWreck','combatRecovered','arenaWallHit','vehicleSmash','combatRamHit','boundaryReset'].filter(key=>event[key]);
+      if(keys.length)q.events.push({tick:q.tick,time:s.stageTimeSec,keys,zone:event.zone||null,strength:event.strength||null,wall:event.arenaWallHit||null});});
     for(let i=0;i<(recorded?recorded.length:alongTicks+2400);i++){
       const toward=i<alongTicks?0:side*Math.PI/2,error=Math.atan2(Math.sin(toward-s.headingError),Math.cos(toward-s.headingError));
       const input=recorded?recorded[i]:{KeyW:true,KeyA:error>.1,KeyD:error<-.1};
       for(const [code,key] of [['KeyW','w'],['KeyA','a'],['KeyD','d']])if(!!a.keys[code]!==!!input[code])
         window.dispatchEvent(new KeyboardEvent(input[code]?'keydown':'keyup',{code,key,bubbles:true}));
-      a.advance(dt);
-
+      q.tick=i;a.advance(dt);
+      q.samples.push({tick:i,time:s.stageTimeSec,status:s.status,paused:s.paused,inputContext:a.activeInputContext(),
+        keys:{KeyW:!!a.keys.KeyW,KeyA:!!a.keys.KeyA,KeyD:!!a.keys.KeyD,ArrowLeft:!!a.keys.ArrowLeft,ArrowRight:!!a.keys.ArrowRight},
+        s:s.s,lateral:s.lateral,heading:s.headingError,speedMph:s.speedMph,armor:s.armor,combatWrecking:!!s.combatWrecking,nativeInput:structuredClone(s.input)});
       q.inputs.push(input);if(i%12===0)q.trace.push({tick:i,s:s.s,lateral:s.lateral,heading:s.headingError,speedMph:s.speedMph,armor:s.armor,nativeInput:structuredClone(s.input)});
       if(i>=alongTicks&&side*s.lateral>=d.course.def.scrapdome.floorHalfWidth-1e-6){touched=true;if(!recorded)break;}}
     for(const [code,key] of [['KeyW','w'],['KeyA','a'],['KeyD','d']])window.dispatchEvent(new KeyboardEvent('keyup',{code,key,bubbles:true}));
-    if(!touched)throw Error('Legal public controls did not reach chosen wall within twenty seconds');
+    off();
+    if(!touched){
+      const at=d.course.worldAt(s.s,s.lateral),heading=d.course.at(s.s).heading+s.headingError,spec=d._vehicleSpec(s);
+      const nearby=d._obstacles(s.s-8,s.s+8).filter(obstacle=>obstacle.arenaWall).map(obstacle=>{
+        const cs=Math.cos(obstacle.heading||0),sn=Math.sin(obstacle.heading||0),relative=heading-(obstacle.heading||0),
+          localX=(at.x-obstacle.x)*cs-(at.z-obstacle.z)*sn,localZ=(at.x-obstacle.x)*sn+(at.z-obstacle.z)*cs;
+        return {id:obstacle.id,x:obstacle.x,z:obstacle.z,heading:obstacle.heading,halfX:obstacle.halfX,halfZ:obstacle.halfZ,
+          localX,localZ,expandedHalfX:obstacle.halfX+spec.halfWidth*Math.abs(Math.cos(relative))+spec.halfLength*Math.abs(Math.sin(relative)),
+          expandedHalfZ:obstacle.halfZ+spec.halfLength*Math.abs(Math.cos(relative))+spec.halfWidth*Math.abs(Math.sin(relative))};
+      }).sort((x,y)=>Math.hypot(x.localX,x.localZ)-Math.hypot(y.localX,y.localZ)).slice(0,6);
+      window.__publicWallFailure={side,alongTicks,touched,limitSeconds:20,predicate:'side*lateral >= floorHalfWidth-1e-6',
+        inputs:q.inputs,trace:q.trace,samples:q.samples,events:q.events,
+        final:{s:s.s,lateral:s.lateral,heading:s.headingError,world:at,nativeHeading:heading,speedMph:s.speedMph,armor:s.armor,
+          status:s.status,paused:s.paused,inputContext:a.activeInputContext(),nativeInput:structuredClone(s.input),nativeEnvelope:spec,nearbyWalls:nearby},...measure()};
+      throw Error('Legal public controls did not reach chosen wall within twenty seconds');
+    }
     return {side,alongTicks,touched,inputs:q.inputs,trace:q.trace,...measure()};}
   function scripted(kind,role,side=1,normal=false,oblique=0,segment=260){
     if(!a.restart())throw Error('Scripted native rematch failed');tick(362);const d=a.duel,s=d.state,cpu=s.opponents[0],target=role==='player-attacker'?cpu:s,attacker=target===s?cpu:s;
@@ -290,7 +309,23 @@ async function extendedQuality(c,quality,report,save) {
     if(reference){assert.ok(reference.sourceCommit.startsWith('0f934845')&&reference.baselineVerifiedArchivedFiles>0,'actual baseline source bytes were verified');
       assert.equal(reference.runtimeAssetTree,report.runtimeAssetTree,'actual public runtime assets match');assert.ok(referenceCase,'exact public baseline input recipe is present');}
 
-    const result=await c.evaluate(`window.__shoveReview.publicDrive(${side},${alongTicks},${JSON.stringify(referenceCase?.result.inputs||null)})`),views=[];
+    let result;
+    try{result=await c.evaluate(`window.__shoveReview.publicDrive(${side},${alongTicks},${JSON.stringify(referenceCase?.result.inputs||null)})`);}
+    catch(error){
+      const failure=await c.evaluate('window.__publicWallFailure||null');
+      if(failure){const row={quality,start,startGeometry,before,failure,sourceCommit:report.sourceCommit,runtimeAssetTree:report.runtimeAssetTree,
+        baselineVerifiedArchivedFiles:report.baselineVerifiedArchivedFiles,error:error.message,views:[]};
+        (report.publicFailures??=[]).push(row);await save();
+        await writeFile(join(c.outputDir,label+'-failure.json'),JSON.stringify(row,null,2)+'\n');
+        for(const mode of ['close','world']){
+          try{row.views.push(await reviewedCapture(c,label+'-failure-'+mode,mode,'player'));}
+          catch(captureError){row.views.push({mode,captureError:captureError.message});}
+          await save();await writeFile(join(c.outputDir,label+'-failure.json'),JSON.stringify(row,null,2)+'\n');
+        }
+      }
+      throw error;
+    }
+    const views=[];
     if(referenceCase){assert.equal(start.seed,referenceCase.start.seed);assert.equal(start.car,referenceCase.start.car);assert.deepEqual(start.opponents,referenceCase.start.opponents);
       assert.deepEqual(result.inputs,referenceCase.result.inputs,'candidate uses the exact native baseline input stream');}
 

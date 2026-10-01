@@ -796,3 +796,108 @@ asset, audio or player save was removed. Human feel/listening, historical HUD
 overlaps, actual frame budgets and final independent source/lane gates remain
 pending. No live folder, Preview, `.preview-dist`, port 5174, real save, source
 overlay, worktree creation, release, push or history rewrite was used.
+
+
+## Public wall failure instrumentation: unchanged baseline RED (1 October)
+
+This is a diagnostic freeze, not a controller correction or browser pass.
+The Director granted only the private scenario and this append-only note.
+All 39 existing scenario assertion lines are unchanged, including the original
+42-image controls. The 118 native Shove tests and replay fixtures are untouched.
+The exact public predicate `side*lateral >= floorHalfWidth-1e-6`, its 2,400
+native-step (20-second) limit, KeyA/KeyD controller, seed and production input
+path remain unchanged. No source, geometry, collider, timer or timeout changed.
+
+The recipe now observes real contact events without replacing any runtime
+method, retains every dispatched key and all 2,400 actual native state/input
+samples, and saves final body/front-kit geometry plus nearby native wall
+colliders before the existing throw. Its caller saves the source/assets
+provenance and failure JSON, then takes actual close/world captures before
+rethrowing the original failure. Capture errors are recorded independently
+rather than concealing the original assertion. The observer is detached at
+completion; keys are released through their existing real handlers.
+
+### Actual baseline result and interpretation
+
+The unchanged baseline failed again on **High, side -1, approach 0**:
+`Legal public controls did not reach chosen wall within twenty seconds`.
+The real memory-only browser ran on private **port 48975**, then the harness
+closed its runtime/profile. It produced three images (spawn world, failure
+close, failure world), zero browser issues and zero warnings. It did not reach
+the remaining public matrix, any candidate comparison or any pacing segment.
+Those counts are diagnostic results, not a passing browser/frame/art verdict.
+
+Exact actual source remains
+`0f934845b451dc2429efcb574bc9847cc04a1fe5`. All **888 original archived files**
+were rechecked against Git blob bytes before running; the owned recipe is an
+additional file, not one of those baseline files. The original runtime asset
+tree and preparation provenance are copied into ignored evidence. No source
+module was overlaid or substituted. The URL recipe seed remains 1989; the
+actual native rematch reported seed **17827**, preserved in the evidence.
+
+Every one of the 2,400 observed steps was in the real `car` input context with
+W and D held, A and both arrow keys released. Native input was throttle 1 and
+**steer 0 throughout**. Actual car input uses ArrowLeft/ArrowRight:
+`keyboardSteeringDirection` reads those keys; App `_applyInput` applies that
+result. A/D are foot movement controls. Thus this recipe did not issue the
+requested native car turn.
+
+The player started s=29.999999976176127, lateral=9.000000000730475 and ended
+s=610.4380757150157, **lateral +18**, heading error 0, 85.55090965482665 mph,
+armor 44.89273574782408, still racing. The sampled lateral range was
+[8.945296044135166, 18]: it never approached the chosen negative boundary.
+The geometry witness records actual loaded body/attachments lateral extents
+[16.693295318212826, 19.370918635447122], floor-center limit 18 and **zero
+strict crossings with the sampled nearby rail triangles**. For the closest
+native positive-side collider, absolute local X is 3.0672770118418486 versus
+expanded collision half-width 1.5583761698836216; the normal gap is about
+1.5089 m. The selected contact-event observer reported no listed events.
+These bounded facts do not prove clearance across the complete arena.
+
+The failure close image contains the actual player and wall; its actor
+projection is in-frame. The world image contains both real actors in-frame.
+The close view does not stage the distant CPU. Existing HUD overlap and
+listening/handling/art limitations remain unresolved.
+
+**Proposed interpretation for independent review:** this first failure is a
+public recipe input-mapping error, not proof that native wall contact stops a
+correctly driven center before 18. A narrow future correction should send
+ArrowLeft for positive heading error and ArrowRight for negative heading error,
+using the existing native keyboard handlers and yaw convention. The current
+predicate and limit should remain exact for the next diagnostic. Whether an
+actual correctly driven wall contact exposes a separate center-goal issue is
+still untested; no goal or acceptance change is approved by this note.
+
+### Commands, raw evidence, limits and Removed
+
+`node --check tools/scenarios/arena-shove.mjs` and `git diff --check` pass.
+A read-only preservation check compared every existing assertion line and
+verified the controller, predicate and 2,400-step limit against ad52b264.
+Current instrumented recipe SHA-256:
+`339de9fbae504496a7bfa8634b05a595c2fab886c40955dce519b71961e89bd4`.
+
+From the verified ignored baseline snapshot, with `ARENA_SHOVE_PUBLIC_ONLY=1`:
+`node tools/browser-harness.mjs scenario arena-shove --output-dir .evidence/2026-10-01/ARENA-SHOVE/public-wall-instrumented`
+returned **exit 1**, the genuine unchanged public assertion above.
+Full stdout/stderr is integration
+`.evidence/2026-10-01/ARENA-SHOVE/expanded-browser/baseline-diagnostic-launcher.log`.
+Copied raw JSON/images are in that directory's `public-wall-instrumented/`,
+including `high-public--1-0-failure.json`, `arena-shove-browser.json`,
+`report.json`, `baseline-provenance.json` and
+`preservation-provenance.json`.
+
+Two preparation errors were corrected before this instrumented run: a working
+folder assumption resolved the wrong snapshot path, then a count guard assumed
+887 original files although the new recipe was absent from the 888-file
+baseline archive. The first attempt also reran the old uninstrumented recipe
+and reached the same genuine timeout; its complete launcher output is retained
+as `baseline-diagnostic-preparation-failed.log`. The final byte check verified
+all 888 actual baseline files. No source or baseline asset changed during any
+attempt.
+
+Removed nothing. The old failing acceptance/controller remains intentionally
+visible pending independent review. Only diagnostic observation and evidence
+capture were added. No candidate run, native rerun, build/full gate, frame
+measurement, human Preview feel or listening pass is claimed. No live folder,
+Preview, .preview-dist, port 5174, real save, source change, integration merge,
+push, history rewrite or dependency change occurred.
