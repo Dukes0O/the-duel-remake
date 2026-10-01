@@ -15,10 +15,15 @@ function nativeTarget(duel, attacker) {
       Math.abs(duel.relativeS(closest.s, state.s) - state.s) ? actor : closest, null);
 }
 
+function sightlinePoint(duel, actor) {
+  const state = duel.state;
+  return actor === state && state.onFoot && state.fighter ? state.fighter : point(duel, actor);
+}
+
 export function targetFor(duel, attacker) {
   const target = nativeTarget(duel, attacker);
   if (!target) return null;
-  const from = point(duel, attacker), to = point(duel, target);
+  const from = sightlinePoint(duel, attacker), to = sightlinePoint(duel, target);
   const blocked = hazardsFor(duel).some(hazard => hazard.kind === 'smoke' &&
     hazard.opacity > 0 && hazard.age < hazard.lifetime &&
     segmentCircle(from.x, from.z, to.x, to.z, hazard.x, hazard.z, hazard.radius));

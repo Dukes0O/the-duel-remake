@@ -32,9 +32,18 @@ export function clearHazards(duel) {
   lists.delete(duel);
 }
 
-function bodyFor(duel, actor) {
+// The physical car pose matches native rendering and projectile contact faces.
+// Walking changes the fighter's sightline, never this parked-car body.
+export function carBodyPoint(duel, actor) {
   const at = point(duel, actor);
-  const heading = at.heading + (actor.headingError || 0) + (actor.slipAngle || 0);
+  const renderedTurn = actor === duel.state
+    ? (actor.slipAngle || 0) + (actor.crashSpin || 0)
+    : actor !== duel.state.rival && actor.dir < 0 ? Math.PI : 0;
+  return {...at, heading: at.heading + (actor.headingError || 0) + renderedTurn};
+}
+
+function bodyFor(duel, actor) {
+  const at = carBodyPoint(duel, actor), heading = at.heading;
   const dimensions = duel._vehicleSpec(actor);
   return {x: at.x, z: at.z, halfWidth: dimensions.halfWidth,
     halfLength: dimensions.halfLength, rightX: Math.cos(heading),

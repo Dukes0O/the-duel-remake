@@ -1,7 +1,7 @@
 import {point} from '../combat-weapons.js';
 import {combatShielded} from '../combat-armor.js';
 import {outOfPlay} from '../combat-teams.js';
-import {addHazard, hazardsFor} from './hazards.js';
+import {addHazard, hazardsFor, carBodyPoint} from './hazards.js';
 import {setCarEffect} from './car-effects.js';
 import {enemiesBehind} from './targeting.js';
 
@@ -13,8 +13,8 @@ export function deployOil(duel, owner) {
     radius: 3.5, lifetime: 6, fadeSec: 1, owner, ownerGraceSec: 1,
     onTouch(actor) {
       if (combatShielded(duel, actor)) return;
-      const body = point(duel, actor), facing = body.heading + (actor.headingError || 0);
-      const side = (body.x - oil.x) * Math.cos(facing) - (body.z - oil.z) * Math.sin(facing);
+      const body = carBodyPoint(duel, actor);
+      const side = (body.x - oil.x) * Math.cos(body.heading) - (body.z - oil.z) * Math.sin(body.heading);
       setCarEffect(actor, 'slick', {duration: .7, grip: .35});
       setCarEffect(actor, 'nitro', {duration: 0});
       actor.yawVelocity = (actor.yawVelocity || 0) + (Math.sign(side) || 1) * 2.2;

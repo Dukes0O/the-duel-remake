@@ -335,3 +335,71 @@ grant recorded above; this test-only slice preserves the existing pins.
 Nothing replaced or removed. Only new acceptance cases and their verdict
 were appended. No source, dependency, asset, protected audio file, live
 checkout, Preview output, port or real save was touched.
+
+
+## Reviewed module fixes — 30 September 2026
+
+Started from clean independent RED freeze
+9d2d72bd7d3655e16da4358cffdbbdc9a957411c. Only hazards.js, oil.js,
+targeting.js and this implementation section change. Both frozen suites,
+all original/appended assertions and helpers, both replay pins, car-effects.js,
+smoke.js and every existing production hook remain byte-identical.
+
+A single carBodyPoint helper now supplies the physical orientation to hazard
+body bounds and oil's away-from-centre calculation. It reuses the native car
+point and matches render3d/combat-projectiles: course heading plus headingError,
+then the actual player's slipAngle/crashSpin; native reverse-facing traffic
+uses its existing turn. Circle/strip contact therefore follows the spinning
+player's real long/narrow body. Oil now turns away in both reviewed sliding
+directions. Effect strength, duration, speed loss, armor, shield/grace and
+once-per-body/cue rules stay intact. The existing vehicle-knock.bodyHeading
+helper omits the player's slip/crash spin, so it cannot supply this pose.
+
+Smoke sightline endpoints use the current native fighter x/z when the actual
+player actor is on foot and has a fighter. This applies whether that actor is
+the attacker or target. Physical hazard bounds still use the parked car's
+point. This creates no future CPU onFoot state. Native consumer projectile
+origin, range and already-locked-target context still require the later hook
+contract; decoy context and the oil/smoke upgrade dimension remain undecided.
+
+Validation:
+
+- node --test --test-reporter=tap --test-name-pattern='^CORE:' tools/test-arsenal-core.mjs:
+  all 48 cases pass, 449 checks, no failures/skips/TODO. The 19 independently
+  appended cases now pass (previously 11 pass/8 RED), while all 29 original
+  CORE cases keep their 283 checks.
+- node --test --test-reporter=tap tools/test-combat-projectiles.mjs tools/test-combat-projectile-order.mjs
+  tools/test-combat-armor.mjs tools/test-combat-field-shields.mjs tools/test-crossbow-aim.mjs
+  tools/test-enemy-aim.mjs tools/test-arena-event.mjs: 70/70 pass. Enemy aim
+  is 23/23; crossbow aim stays 792 shots/420 hits (0.53).
+- node tools/test-replays.mjs: all 162 unchanged retained checks pass across
+  18 cases, 16 events, eight categories, three FPS values and three runs.
+- node --test --test-reporter=tap tools/test-arsenal-core.mjs tools/test-arsenal-save.mjs:
+  83 tests, 51 pass, 29 fail, 3 design TODO, zero skips. Core reaches 483
+  checks; save reaches 49. Exactly the same 13 native integration failures
+  and 16 save-hook failures remain; none is treated as completion.
+- Raw-byte comparison against the independent RED commit confirms both
+  test suites, both replay pins and the two unowned modules are exact.
+  Frozen appended core suite SHA-256 is
+  fcbf6e253bad37c5aacbd5c688304c222be5ffeca36bc673e468fc4ce571c210.
+  Other protected hashes remain as recorded above. git diff --check passes;
+  changed source uses LF.
+
+| Fixed source | SHA-256 |
+| --- | --- |
+| src/arsenal/hazards.js | 128608a78c79fc896a51f1b11c83df6ba18f1a276dc965b621dbd1c087e9fa79 |
+| src/arsenal/oil.js | 6bb341fd71cca0543ff9e91b5f841368f27971b5e4fbb35e445f0bdb9786d69d |
+| src/arsenal/targeting.js | e1da18e9409a990440a4309101efe99dd494a6c9f379c1cbdc23d52845df8113 |
+
+All previously named integration, save, retained arsenal-replay, visual,
+audio, balance, Guardian/Claude, lane/build and full-tier obligations remain
+with the Director. No heavy gate, build, browser, audio or merge clearance
+is claimed by this narrow source fix.
+
+### Removed — reviewed module fixes
+
+Removed the two inconsistent module-local heading calculations and the
+car-only smoke endpoint calculation, replacing them with the shared physical
+pose and current native fighter endpoint read. No test, helper, assertion,
+pin, asset, protected sound/catalog, dependency, real save, live checkout,
+Preview output or port was changed.
