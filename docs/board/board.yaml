@@ -697,12 +697,14 @@ tasks:
     size: L
     needs: [ART-SRC-RUSTWALL]
     status: building
+    waiting_on: claude
     claimed_by: codex-director-2026-09-30-late-resume
     branch: lane/art/rustwall-source-fit
     owns: [tools/blender/rustwall-source-fit.py, tools/blender/rustwall-source-fit.json, tools/test-rustwall-source-fit.mjs, tools/scenarios/rustwall-source-fit.mjs, tools/art/rustwall-fit-sheet.py, docs/board/looks/rustwall-fit/, docs/changes/ART-FIT-RUSTWALL.md]
-    hooks: [public/assets/models/wasteland/rustwall/wall.glb, public/assets/models/wasteland/rustwall/wash.glb]
+    hooks: [src/rustwall-scene.js, public/assets/models/wasteland/rustwall/wall.glb, public/assets/models/wasteland/rustwall/wash.glb]
     helpers: [test_author, reviewer, art_critic, browser_qa]
-    sequencing: "Private candidate first, tests-first source provenance and frozen gate/collision envelope controls. Reuse existing renderer and recipe-only private model substitution; no render3d/App/feature/audio/world-signature edits while Fuel owns them. Catalog stays read-only until the valve donor merge; reclaim an exact adaptation hook before writes. Every comparison goes to Claude (waiting_on: claude); no runtime install or merge before review. Three rounds maximum and stop after two without gain."
+    review_question: "Private source recipe continues. Existing scene tests require procedural joined sections; actual source banks need native geometry. Review a consumer migration that keeps collision/continuity/draw/disposal controls, before old assertions or generator consumers change. See playtest-inbox."
+    sequencing: "Private candidate first, tests-first source provenance and frozen gate/collision envelope controls. Reuse existing renderer and recipe-only private model substitution; no render3d/App/feature/audio/world-signature edits while Fuel owns them. rustwall-scene.js is an exclusive hook: current prepareWash discards imported geometry, so native source banks must be proven in the actual renderer; current assets remain frozen until Claude visual review. Catalog stays read-only until the valve donor merge; reclaim an exact adaptation hook before writes. Every comparison goes to Claude (waiting_on: claude); no runtime install or merge before review. Three rounds maximum and stop after two without gain."
     flag: hidden-road
     acceptance:
       - "Rebuild the Rustwall's salvage face, towers and canyon banks from Kyle's picks in docs/board/looks/rustwall-src, following docs/WASTELAND_ART.md 'Fitting existing models': crushed and burned car hulks, rusted sheet metal and container panels on the existing scaffold, tower supports from the industrial kit, canyon banks from the rock shapes with desert strata. The gate, its opening and every collision envelope stay exactly where they are; world signatures change only with a reviewed visual difference (AGENTS.md)."
@@ -2786,13 +2788,14 @@ tasks:
     lane: PHYS
     size: S
     needs: []
-    status: building
-    review_commit: ae4c168bf6d8202f6d163e63e849298e6e3d1c4d
+    status: review
+    waiting_on: claude
+    review_commit: c73ce03a2d1d14148077df56b2093a3c6c3b2e87
     claimed_by: codex-director-2026-09-30-resume
     flag: scrapdome
     owns: [tools/test-arena-steering-ceiling.mjs, tools/test-arena-steering.mjs, tools/replays/arena-steering-controls.json, tools/scenarios/arena-steering.mjs, docs/changes/ARENA-STEER.md]
     hooks: [tools/test-arena-event.mjs, src/config.js, src/sim-driving.js, src/arena/arena-pilot.js]
-    hold_reason: "Design is merged. Resume tests first for the 150 degree/s ceiling. Keep all existing crate assertions; retest the unchanged fixture after implementing the settled ceiling. App edits wait Fuel; use existing memory-only entry or wait for the hook."
+    hold_reason: "Ceiling implementation is frozen; new and protected handling tests pass. Unchanged crate fixture fails after a legal CPU pickup despite all five spawning. See the written fixture-review question in playtest-inbox. No existing assertion changed; review, balance, browser and gates still pending."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     sequencing: "One lane before ARENA-SHOVE and ARS-CORE: driving hooks are exclusive. App demo hook waits for WAR-PAY if needed. Road and Titan handling stay unchanged."
     acceptance:
