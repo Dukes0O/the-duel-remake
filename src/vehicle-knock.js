@@ -1,7 +1,8 @@
 import {DRIVE} from './config.js';
 import {sweepObstacle} from './collision.js';
 import {wrapHeading} from './offroad-physics.js';
-import {CRASH_TUNING, yawInertia, solveVehicleImpact, impactSeverity} from './vehicle-collision.js';
+import {arenaWallNormal} from './arena/arena-floor.js';
+import {CRASH_TUNING, yawInertia, solveVehicleImpact, solveWallConstrainedImpact, impactSeverity} from './vehicle-collision.js';
 
 // A struck computer car becomes a free body until its tyres bite again
 // (docs/CRASH_PHYSICS.md section 2). It keeps the road-relative fields every
@@ -84,8 +85,9 @@ export function actorBody(duel, actor, spinRate = 0) {
 }
 
 export function startKnock(actor, {vx, vz, spin, severity, hopMps = 0, heading = 0,
-  wreck = null, player = false}) {
-  actor.knock = {vx, vz, spin, severity, age: 0, vy: hopMps, ...(wreck ? {wreck} : {})};
+  wreck = null, player = false, arenaShove = false}) {
+  actor.knock = {vx, vz, spin, severity, age: 0, vy: hopMps,
+    ...(wreck ? {wreck} : {}), ...(arenaShove ? {arenaShove: true} : {})};
   const forward = vx * Math.sin(heading) + vz * Math.cos(heading);
   // Only the player's car has a reverse gear; a car shoved backwards by a hit
   // slides as a free body but its speed never reads as reversing.
@@ -109,8 +111,16 @@ export function stepKnock(duel, actor, dt) {
   const rollDecel = k.wreck ? WRECK.forwardDecel * k.wreck.decelScale :
     k.roadside ? WRECK.forwardDecel :
     actor === duel.state ? T.playerRollDecel : T.rollDecel;
-  forward = Math.sign(forward) * Math.max(0, Math.abs(forward) - rollDecel * dt);
-  across = Math.sign(across) * Math.max(0, Math.abs(across) - T.slideDecel * dt);
+  if (k.arenaShove) {
+    // A sitting arena car slides freely on the prepared floor. Isotropic
+    // tyre scrub lets body rotation stay independent of its travel direction.
+    const speed = Math.hypot(forward, across);
+    const keep = speed > 0 ? Math.max(0, 1 - T.slideDecel * dt / speed) : 0;
+    forward *= keep; across *= keep;
+  } else {
+    forward = Math.sign(forward) * Math.max(0, Math.abs(forward) - rollDecel * dt);
+    across = Math.sign(across) * Math.max(0, Math.abs(across) - T.slideDecel * dt);
+  }
   k.vx = f.x * forward + side.x * across; k.vz = f.z * forward + side.z * across;
   k.spin = Math.sign(k.spin) * Math.max(0, Math.abs(k.spin) - T.spinFriction * dt) * Math.exp(-T.spinDamping * dt);
   if (k.vy || (actor.airHeight || 0) > 0) {
@@ -130,7 +140,7 @@ export function stepKnock(duel, actor, dt) {
   // driver, so it parks only once it has nearly stopped.
   const driverless = k.roadside || k.wreck;
   const endSpeed = driverless ? 2 : T.endSpeed;
-  const sliding = driverless ? Math.hypot(forward, across) : Math.abs(across);
+  const sliding = driverless || k.arenaShove ? Math.hypot(forward, across) : Math.abs(across);
   const settled = k.age >= T.minSec && sliding < endSpeed && Math.abs(k.spin) < T.endSpin &&
     !(actor.airHeight > 0);
   if (settled || k.age >= (driverless ? WRECK.maxSec : T.maxSec)) {
@@ -266,12 +276,14 @@ function wreckTraffic(duel, actor, after, severity, dvMph, style) {
 // result and each car's severity, for crash rules and effects.
 export function resolveCarCrash(duel, a, b, {
   wreckTrafficAt = ['smashed', 'launched'], onlyB = false, forceKnock = false,
-  playerKnockMinDvMph = 0, attackerKeepsControl = false,
+  playerKnockMinDvMph = 0, attackerKeepsControl = false, arenaShoveMph = 0,
 } = {}) {
   const s = duel.state;
   const spinOf = actor => actor === s ? s.yawVelocity || 0 : 0;
   const bodyA = actorBody(duel, a, spinOf(a)), bodyB = actorBody(duel, b, spinOf(b));
-  const result = solveVehicleImpact(bodyA, bodyB);
+  const result = s.arena
+    ? solveWallConstrainedImpact(bodyA, bodyB, {a: arenaWallNormal(duel, a), b: arenaWallNormal(duel, b)})
+    : solveVehicleImpact(bodyA, bodyB);
   const style = crashStyle(duel);
   const severityA = impactSeverity(result.a.dvMph, {attackerMass: bodyB.mass, mass: bodyA.mass,
     launchMph: style.launchMph});
@@ -279,21 +291,43 @@ export function resolveCarCrash(duel, a, b, {
     launchMph: style.launchMph});
   for (const [actor, before, after, severity] of onlyB ? [[b, bodyB, result.b, severityB]]
     : [[a, bodyA, result.a, severityA], [b, bodyB, result.b, severityB]]) {
-    // forceKnock always frees the struck car; the player keeps its own rule.
-    const force = forceKnock && actor === b;
-    if (actor === s && after.dvMph < playerKnockMinDvMph && !actor.knock)
+    // Keep the road player's control rule; sitting arena bodies slide freely.
+    const arenaShove = !!s.arena && arenaShoveMph >= 20 && result.closingMps > 0 &&
+      Math.hypot(before.vx, before.vz) <= KNOCK.endSpeed;
+    const waitingArenaWreck = !!s.arena && actor.combatWrecking;
+    const arenaFree = arenaShove || waitingArenaWreck;
+    const force = forceKnock && actor === b || arenaFree;
+    let motion = after;
+    if (arenaShove && !(actor === a ? result.wallA : result.wallB)) {
+      // A blocked normal push has no open-floor minimum. Its unconstrained
+      // tangential component still comes from the physical contact impulse.
+      // The released solver supplies direction, spin and damage severity.
+      // The arena's settled minimum adds only floor motion for sitting cars.
+      // v² = 2ad gives its stopping distance under the same native tyre scrub;
+      // the hand-back speed allows it to settle before control returns. No
+      // observation-window clock or direct position change is involved.
+      const distance = arenaShoveMph >= 40 ? 4 : 1.5;
+      const minimumSpeed = Math.sqrt(2 * KNOCK.slideDecel * distance) + KNOCK.endSpeed;
+      const speed = Math.hypot(after.vx, after.vz);
+      if (speed > 0 && speed < minimumSpeed) {
+        const scale = minimumSpeed / speed;
+        motion = {...after, vx: after.vx * scale, vz: after.vz * scale};
+      }
+    }
+    if (actor === s && after.dvMph < playerKnockMinDvMph && !actor.knock && !arenaFree)
       applyDriving(duel, actor, before, after, {player: true});
     // An armored racer smashing traffic pays in speed but keeps control.
     else if (attackerKeepsControl && actor === a && actor !== s && !actor.knock)
       applyDriving(duel, actor, before, after, {player: false});
-    else if (actor === s && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: true});
+    else if (actor === s && severity === 'nudge' && !actor.knock && !arenaFree) applyDriving(duel, actor, before, after, {player: true});
     // A hulk hit again is shoved as a wreck at any severity.
     else if (s.traffic.includes(actor) && (actor.wrecked || wreckTrafficAt.includes(severity)))
       wreckTraffic(duel, actor, after, severity, after.dvMph, style);
     else if (!force && severity === 'nudge' && !actor.knock) applyDriving(duel, actor, before, after, {player: false});
-    else startKnock(actor, {vx: after.vx, vz: after.vz, spin: after.spin,
-      severity, hopMps: hopFor(severity, after.dvMph, style), heading: before.heading,
-      player: actor === s});
+    else startKnock(actor, {vx: motion.vx, vz: motion.vz, spin: motion.spin,
+      severity, hopMps: waitingArenaWreck ? 0 : hopFor(severity, after.dvMph, style),
+      heading: before.heading, player: actor === s, arenaShove,
+      wreck: waitingArenaWreck ? {decelScale: style.wreckDecelScale} : null});
   }
   return {result, severityA, severityB};
 }
