@@ -1237,3 +1237,153 @@ for (const kind of ['future-other', 'unreadable']) {
       kind + ': actual Oil purchase retry must retain complete unsaved owner profile without scrap charge or unearned Oil');
   });
 }
+
+
+// Claude's 06:30 settlement fixes reach to the actual resultant horizontal
+// launch vector. These are actual released-produced bolts and native Course
+// distance witnesses; no projectile, geometry or target resolver is replaced.
+import {velocity as nativeCarryVelocity} from '../src/combat-weapons.js';
+const vectorModes = [
+  {id: 'diagonal', speedMph: 40, angle: Math.PI / 4, push: 0},
+  {id: 'reverse', speedMph: -40, angle: 0, push: 0},
+  {id: 'sideways', speedMph: 0, angle: 0, push: 18},
+];
+const vectorReceipts = new Map();
+after(() => console.log('VECTOR REACH measured native witnesses: ' + JSON.stringify([...vectorReceipts.values()])));
+function vectorScene(mode) {
+  const duel = race({enabled: false}); place(duel.state, 200);
+  duel.state.opponents[1].finished = true;
+  duel.state.combat.levels.crossbow = 3;
+  duel.state.speedMph = mode.speedMph; duel.state.pushVelocity = mode.push;
+  return {duel, origin: point(duel, duel.state)};
+}
+function resultantFor(duel, origin, target) {
+  const length = measuredReach(origin, target), carry = nativeCarryVelocity(duel.state, origin);
+  return {speed: Math.hypot(290 * (target.x - origin.x) / length + carry.x,
+    290 * (target.z - origin.z) / length + carry.z),
+    scalar: 290 + Math.hypot(carry.x, carry.z), carry};
+}
+function vectorBoundary(mode, inside) {
+  const f = vectorScene(mode), {duel, origin} = f;
+  let speed = 290 + Math.abs(mode.speedMph) * reachDrive.mphToWorld + Math.abs(mode.push);
+  let target, result;
+  for (let i = 0; i < 12; i++) {
+    target = nativeAtRange(duel, duel.state.rival, origin, speed * 2.5 + (inside ? -.05 : .05));
+    duel.state.headingError = Math.atan2(target.x - origin.x, target.z - origin.z) - origin.heading + mode.angle;
+    result = resultantFor(duel, origin, target); speed = result.speed;
+  }
+  near(measuredReach(origin, target), result.speed * 2.5 + (inside ? -.05 : .05),
+    'native actual chosen-bearing vector realizes the settled launch boundary');
+  ok(result.scalar - result.speed > 1, 'actual native vector differs materially from a scalar sum');
+  return {...f, target, result};
+}
+for (const mode of vectorModes) for (const inside of [true, false]) {
+  test('VECTOR REACH launch ' + mode.id + ' ' + (inside ? 'inside' : 'outside'), async () => {
+    const released = await releasedCrossbowConsumers(), f = vectorBoundary(mode, inside), old = vectorBoundary(mode, inside);
+    eq(released.weapons.fireWeapon(old.duel, 'crossbow'), true, 'actual retained producer launches the chosen native target');
+    const baseline = old.duel.state.combat.projectiles.at(-1), speed = Math.hypot(baseline.vx, baseline.vz);
+    near(speed, f.result.speed, 'actual original launch vector independently verifies the resultant calculation');
+    vectorReceipts.set(mode.id + '-launch', {mode: mode.id, producerVx: baseline.vx, producerVz: baseline.vz,
+      launchSpeed: speed, scalarSpeed: f.result.scalar, reach: speed * 2.5,
+      carry: f.result.carry, lifetime: 2.5});
+    f.duel.featureFlags = flags(true);
+    eq(fireWeapon(f.duel, 'crossbow'), true, 'actual active player consumer fires at the same native boundary');
+    const shot = f.duel.state.combat.projectiles.at(-1);
+    eq(shot.targetIndex, inside ? 0 : undefined,
+      mode.id + ': launch must use actual vector magnitude, not CPU180 or scalar sum');
+    if (inside) {
+      near(Math.hypot(shot.vx, shot.vz), speed, 'selected actual bolt preserves its original native horizontal launch speed');
+      eq(shot.targetId, 'cpu:0', 'actual within-vector-range launch keeps the selected real identity');
+    } else ok(measuredReach(f.origin, f.target) < f.result.scalar * 2.5,
+      'outside-vector witness would wrongly remain eligible under scalar-sum reach');
+  });
+}
+async function nativeVectorFlight(mode, guideFirst = false) {
+  const released = await releasedCrossbowConsumers(), f = vectorScene(mode), {duel, origin} = f;
+  const target = nativeAtRange(duel, duel.state.rival, origin, 230);
+  duel.state.headingError = Math.atan2(target.x - origin.x, target.z - origin.z) - origin.heading + mode.angle;
+  eq(released.weapons.fireWeapon(duel, 'crossbow'), true, 'genuine retained producer supplies the actual locked vector bolt');
+  const shot = duel.state.combat.projectiles.at(-1), launch = {vx: shot.vx, vz: shot.vz,
+    speed: Math.hypot(shot.vx, shot.vz), level: shot.level};
+  near(launch.speed, resultantFor(duel, origin, target).speed, 'real original producer uses full native car velocity vector');
+  if (guideFirst) {
+    nativeAtRange(duel, duel.state.rival, shot, 130, 3);
+    stepProjectiles(duel, DT);
+    ok(Math.hypot(shot.vx - launch.vx, shot.vz - launch.vz) > 1e-5,
+      'actual native guidance changes the real bolt direction before testing immutable reach');
+    near(Math.hypot(shot.vx, shot.vz), launch.speed, 'actual guidance preserves original resultant launch magnitude');
+  }
+  duel.state.rival.finished = true;
+  for (let i = guideFirst ? 1 : 0; i < 15; i++) stepProjectiles(duel, DT);
+  ok(duel.state.combat.projectiles.includes(shot), 'real vector bolt survives actual aging without a pose or age reset');
+  near(shot.age, .125, 'native fixed steps supply actual remaining lifetime');
+  duel.state.rival.finished = false; duel.featureFlags = flags(true);
+  return {...f, shot, launch};
+}
+for (const mode of vectorModes) for (const inside of [true, false]) {
+  test('VECTOR REACH flight ' + mode.id + ' ' + (inside ? 'inside' : 'outside'), async () => {
+    const f = await nativeVectorFlight(mode), {duel, shot, launch} = f;
+    const range = launch.speed * (2.5 - shot.age), target = nativeAtRange(duel, duel.state.rival, shot,
+      range + (inside ? -.05 : .05), 3), before = {vx: shot.vx, vz: shot.vz};
+    near(measuredReach(shot, target), range + (inside ? -.05 : .05), 'real current-origin flight witness meets native vector boundary');
+    vectorReceipts.set(mode.id + '-flight', {mode: mode.id, launchSpeed: launch.speed,
+      age: shot.age, remainingLife: 2.5 - shot.age, range, origin: {x: shot.x, z: shot.z}});
+    stepProjectiles(duel, DT);
+    eq(shot.targetIndex, inside ? 0 : null,
+      mode.id + ': guidance must use immutable resultant launch speed times remaining lifetime at current origin');
+    near(Math.hypot(shot.vx, shot.vz), launch.speed, 'native guidance never changes actual launched magnitude');
+    if (!inside) eq({vx: shot.vx, vz: shot.vz}, before, 'outside-vector bolt does not re-aim');
+  });
+}
+for (const mode of vectorModes) test('VECTOR REACH immutable guided launch ' + mode.id, async () => {
+  const f = await nativeVectorFlight(mode, true), {duel, shot, launch} = f;
+  const changedProfile = career(6), nextLevels = getProfileWeapons(changedProfile).levels;
+  duel.state.weaponLevels = nextLevels; duel.state.combat.levels.crossbow = nextLevels.crossbow;
+  duel.state.speedMph = 120; duel.state.headingError = -Math.PI / 2; duel.state.pushVelocity = -25;
+  const range = launch.speed * (2.5 - shot.age);
+  nativeAtRange(duel, duel.state.rival, shot, range - .05, 3);
+  stepProjectiles(duel, DT);
+  eq(shot.targetIndex, 0,
+    mode.id + ': real guidance and changed actor/profile must never recompute original launch reach');
+  eq(shot.level, launch.level, 'actual original projectile retains its launch level despite normalized current profile change');
+  near(Math.hypot(shot.vx, shot.vz), launch.speed, 'guided bolt retains immutable original horizontal speed');
+});
+
+
+function vectorDecoyBoundary(inside) {
+  const mode = vectorModes.find(mode => mode.id === 'sideways'), f = vectorScene(mode), {duel, origin} = f;
+  const real = nativeAtRange(duel, duel.state.rival, origin, 100, -3);
+  duel.state.headingError = Math.atan2(real.x - origin.x, real.z - origin.z) - origin.heading;
+  const realResult = resultantFor(duel, origin, real);
+  const data = decoyData(duel, duel.state.rival, {id: 'vector-chosen-decoy'});
+  let speed = 290, target, result;
+  for (let i = 0; i < 12; i++) {
+    target = nativeAtRange(duel, data, origin, speed * 2.5 + (inside ? -.05 : .05), 3);
+    result = resultantFor(duel, origin, target); speed = result.speed;
+  }
+  near(measuredReach(origin, target), result.speed * 2.5 + (inside ? -.05 : .05),
+    'native chosen-decoy bearing has its own settled vector range boundary');
+  ok(Math.abs(realResult.speed - result.speed) * 2.5 > .1,
+    'actual real-target and chosen-decoy bearings yield distinguishable physical reach');
+  return {...f, data, target, result, realResult};
+}
+for (const inside of [true, false]) test('VECTOR REACH chosen decoy lateral ' + (inside ? 'inside' : 'outside'), async () => {
+  const released = await releasedCrossbowConsumers(), f = vectorDecoyBoundary(inside), old = vectorDecoyBoundary(inside);
+  // The unchanged retained producer selects the same native candidate when it
+  // is the only unfinished target. This separate scene measures actual launch
+  // physics for that candidate; the active scene keeps the real owner live.
+  old.duel.state.rival.finished = true;
+  eq(released.weapons.fireWeapon(old.duel, 'crossbow'), true, 'actual retained producer launches at the native chosen decoy candidate');
+  const baseline = old.duel.state.combat.projectiles.at(-1);
+  eq(baseline.targetIndex, old.duel.state.opponents.indexOf(old.data), 'actual original candidate launch selects the native decoy identity');
+  near(Math.hypot(baseline.vx, baseline.vz), f.result.speed, 'actual candidate launch speed belongs to the decoy bearing');
+  vectorReceipts.set('chosen-decoy', {mode: 'sideways', realBearingSpeed: f.realResult.speed,
+    chosenDecoySpeed: Math.hypot(baseline.vx, baseline.vz), chosenReach: f.result.speed * 2.5,
+    producerVx: baseline.vx, producerVz: baseline.vz});
+  f.duel.featureFlags = flags(true);
+  eq(fireWeapon(f.duel, 'crossbow'), true, 'actual active launch keeps real owner and native decoy available');
+  const shot = f.duel.state.combat.projectiles.at(-1);
+  eq(shot.targetIndex, inside ? f.duel.state.opponents.indexOf(f.data) : 0,
+    'chosen decoy range must use its actual launch vector, never the previously considered real bearing');
+  if (inside) near(Math.hypot(shot.vx, shot.vz), f.result.speed, 'actual selected decoy bolt uses its own immutable launch speed');
+});

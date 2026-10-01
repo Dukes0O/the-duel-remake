@@ -1751,3 +1751,130 @@ unreadable. The existing reader, validator, normal save path, same-owner policy,
 session-only memory behavior, transaction rollback and one-charge rules remain.
 No test, fixture, profile field, future schema, earned identity, slot, pin,
 runtime asset, licensed source or other lane work was removed.
+
+
+## 1 October: tests-first resultant-vector reach settlement
+
+Claude's written 06:30 answer in current integration `docs/ARSENAL.md` and
+`docs/playtest-inbox.md` settles range as the magnitude of the bolt's actual
+resultant horizontal launch velocity, fixed at launch, multiplied by remaining
+lifetime. Full native car velocity includes reverse and lateral carry. CPU
+acquisition remains180m. The lane still holds its earlier design wording;
+this tests-only slice does not edit that unowned document or any Source.
+
+Source is unchanged `9614a3ef5fd3267f1c9837fe6450763f2ed195f4`.
+Seventeen additive native tests cover diagonal40mph, reverse-40mph and
+sideways18m/s car carry, both sides of genuine physical launch/flight
+boundaries, and guidance before current actor/profile changes. They use the
+existing byte-verified whole released launch consumer from0f934845 and real
+native Course road witnesses. No bolt, targeting callback, resolver, car
+geometry or producer method is replaced. Repeated native point searches
+construct actual legal target distances; actual original produced velocity
+independently verifies the mathematical resultant. Outside witnesses remain
+inside scalar-sum reach and therefore reject an incorrect future scalar fix.
+No physical speed, lifetime, homing or damage tuning is imposed.
+
+The real bolts age through15 fixed steps to.125s (remaining2.375s), retaining
+original launch magnitude and using current projectile origin. Additional
+immutable cases first make real native guidance change direction, then change
+current car speed/heading/lateral velocity and weapon levels from a genuinely
+normalized career profile. The already-produced bolt retains its level and
+launch magnitude. No age/position reset or manufactured projectile is used.
+
+| Native mode | Actual launch speed m/s | Scalar sum m/s | Launch reach m |
+| --- | ---: | ---: | ---: |
+| Diagonal40mph | 302.90821708443286 | 307.8816 | 757.2705427110822 |
+| Reverse-40mph | 272.1184 | 307.8816 | 680.296 |
+| Sideways18m/s, launch boundary | 285.76128574006003 | 308 | 714.40321435015 |
+
+The separate native flight witness has sideways launch speed
+287.5785805895827m/s because its genuine initial target bearing differs from
+the launch-boundary witness. Diagonal/reverse/sideways remaining reach at
+.125s is719.407015575528/646.2812/682.9991289002589m. Complete raw receipts
+include actual producer vx/vz, full native carry, speed, scalar comparator,
+lifetime, remaining lifetime and current projectile origin.
+
+Two native decoy DATA boundary controls separately prove chosen-bearing
+physics. The active scene keeps the real owner alive at100m and the initialized
+native decoy candidate near its own physical boundary. A separate unchanged
+retained-producer scene makes that exact candidate its only unfinished target
+to measure an actual native launch at the chosen bearing; no consumer argument
+or return is patched. The actual real-bearing magnitude is
+288.34302020991277m/s; chosen-decoy magnitude285.8369140674296m/s and reach
+714.5922851685739m. They differ by6.2652653562m of reach, so using the
+previous real bearing cannot stand in for the chosen launch. This is a shared
+native decoy DATA contract, not implementation of a playable Decoy weapon.
+There is no circular synthetic resolver interface.
+
+Correction of abbreviated progress receipts: the first progress message's
+decoy285.9586086/285.5880195 pair was not the retained measurement and must not
+be used. It was corrected in the next message to the exact native values above.
+Also357 refers to prior runtime187 plus unchanged CORE/SAVE170; it is never the
+runtime count. Exact suite receipts follow. These corrections do not alter any
+assertion, native log or producer measurement.
+
+| Native suite | Cases | Passed | Failed | Runtime ms |
+| --- | ---: | ---: | ---: | ---: |
+| New vector cases only | 17 | 7 | 10 | 1229.8547 |
+| Runtime, original187 plus new17 | 204 | 174 | 30 | 18711.7047 |
+| Existing CORE and SAVE combined | 170 | 170 | 0 | 2506.1817 |
+
+The runtime's30 failures are exactly20 earlier held range failures plus10
+new range cases. No infrastructure, save-retry or unrelated new failure is
+observed. The first15-case run was6PASS/9RED before adding chosen-decoy cases.
+Existing CPU180 acquisition controls remain untouched. These are targeted
+native runs, not the lane/full/build merge gate or whole-card completion.
+
+Every new failure message against unchanged Source:
+
+| Case | Exact failure message |
+| --- | --- |
+| VECTOR REACH launch diagonal inside | diagonal: launch must use actual vector magnitude, not CPU180 or scalar sum |
+| VECTOR REACH launch reverse inside | reverse: launch must use actual vector magnitude, not CPU180 or scalar sum |
+| VECTOR REACH launch sideways inside | sideways: launch must use actual vector magnitude, not CPU180 or scalar sum |
+| VECTOR REACH flight diagonal inside | diagonal: guidance must use immutable resultant launch speed times remaining lifetime at current origin |
+| VECTOR REACH flight reverse inside | reverse: guidance must use immutable resultant launch speed times remaining lifetime at current origin |
+| VECTOR REACH flight sideways inside | sideways: guidance must use immutable resultant launch speed times remaining lifetime at current origin |
+| VECTOR REACH immutable guided launch diagonal | diagonal: real guidance and changed actor/profile must never recompute original launch reach |
+| VECTOR REACH immutable guided launch reverse | reverse: real guidance and changed actor/profile must never recompute original launch reach |
+| VECTOR REACH immutable guided launch sideways | sideways: real guidance and changed actor/profile must never recompute original launch reach |
+| VECTOR REACH chosen decoy lateral inside | chosen decoy range must use its actual launch vector, never the previously considered real bearing |
+
+Commands and full stdout/stderr in integration
+`.evidence/2026-10-01/ARS-CORE/vector-reach/`:
+
+- `node --test --test-name-pattern "VECTOR REACH" tools/test-arsenal-runtime.mjs`:
+  `controls-first.log` (first15) and `controls-with-decoy.log` (17cases).
+- `node --test tools/test-arsenal-runtime.mjs`: `full-runtime-red.log`,
+  including every prior failure and the complete measured native receipts.
+- `node --test tools/test-arsenal-core.mjs tools/test-arsenal-save.mjs`:
+  `unchanged-core-save.log`.
+
+Original runtime test file is an exact82,465-byte prefix from9614a3e,
+SHA-256 `f5965bb6f02ec3c39aabd04c1806052c62ec7f6a19f4525e7dc9f3ebc0448b67`.
+All187 earlier runtime case bodies/assertions and all170 CORE/SAVE cases stay
+exact. Every221 native Source file is byte-exact to9614a3e; ignored manifest
+`source-hashes.json` records every path/size/hash. Its sorted file-entry JSON
+SHA-256 is`e76959bb16093edd3dc4f5ac6005783ec6627161c2a1394077c1d45e7f943a09`.
+The existing replay fixtures, flags, audio, launchers, assets, configuration and
+all other tracked files remain untouched. No fingerprint is regenerated; the
+prior actual released-consumer/switch-off controls remain exact.
+
+### Removed
+
+Removed nothing. The old scalar collinear checks still apply to their positive
+collinear fixtures and are not weakened or rewritten. All prior note bytes,
+existing assertions, fingerprints and design decisions remain. These tests
+add the newly settled diagonal/reverse/lateral/selected-bearing contract.
+A Source worker must fix actual launch and flight reach under the granted
+hooks; tests intentionally remain RED until then. No browser, timing/build,
+art/audio/human feel, whole-card or merge approval is claimed. No Source,
+real saves, live/Preview/.preview-dist/5174, dependency, asset, merge, push or
+history change occurred.
+
+Final author freeze checks: the new17 cases reach790 acceptance checks; the
+complete runtime reaches2,416 checks before its30 intended range failures.
+Syntax and diff checks pass. Only the owned additive runtime test and appended
+change note differ from9614a3e. All unowned source and replay fixture bytes
+remain exact. Ownership returns for the proper Source worker and independent
+review; this RED freeze grants no merge or whole-card clearance.
