@@ -1308,3 +1308,52 @@ Removed carrier-only eligibility from player crossbow launch/guidance and the
 eager false raider counter field. Lazy physical counting and every award rule
 remain. No frozen assertion, fingerprint, damage/tuning rule, runtime asset,
 protected audio file, save key/schema, live folder, Preview or real save changed.
+
+## Director browser readiness and durable review follow-up
+
+The actual High/Performance yard and Fuel harness at8871591 completed on
+private port13364 with memory-only storage and no console errors, warnings
+or failed requests. It verifies rank5 hidden/rank6 clicked launch, car/foot
+pickup and delivery, heavy-hit/wreck drops, enemy recovery, five-second
+refill, delivery sudden death and actual atomic Retry of240 scrap/25 hold.
+A newer owner profile remains intact, other named players are unchanged,
+and duplicate settlement does not pay. Moving samples were17.96/17.81ms
+mean and18.20/18.10ms P95 (High/Performance). These are observed samples,
+not a final source or human feel clearance.
+
+All22 images were inspected. Performance foot pickup caught the primitive
+loading fallback; a later delivery image shows the authored fighter. The
+scenario previously waited for the car body only. The Director now polls
+the actual selected crew readiness and visible authored SkinnedMesh, fails
+on recorded asset errors, and renders without advancing simulation time.
+Every capture waits for readiness, including rematch loading indicators.
+Independent review found no assertion weakening or side effect. Every
+original rule, persistence and cue assertion stays unchanged. This final
+readiness/source freeze needs its own fresh browser and exact lane/build.
+
+Markers overlap scoreboard/minimap, and the centre re-entry hint crosses
+carried cargo; record a narrow HUD follow-up after its owned hook is free.
+These screenshots use labelled pose/held-CPU and whistle fixtures. They do
+not visually prove bolt/bomb fighter contacts or the4m depot boundary; the
+native acceptance suites do. Cue dispatch includes countdown/go/bonus,
+impact/landing/blast, respawn and win. Dispatch alone is not human listening
+or sound-balance approval. Current authored cues are reused; no sound bank
+asset, audio source or external protected audio file changes.
+
+Independent Save Guardian actual settlement/reload at8871591 confirms
+car-only0 raider XP versus400 completion/win XP, and car-first recovery then
+genuine F-exit/RPG25 raider XP versus425 total, once. Repeated knockdowns,
+settlement and reload cannot farm it. Both paths preserve9999 owner credits,
+3333 other-player credits and additive fields, with one settlement write.
+Focused102 tests pass, including247 checks on all seven historical fixtures.
+Later013cc6c changes only CPU-versus-player launch/guidance predicates and
+removes an eager false counter initializer; award/damage/lazy counting, App,
+progression and settlement source remain unchanged. Fresh narrow final
+review and source-gate proof still follow; no merge clearance is claimed.
+
+### Removed — browser readiness follow-up
+
+Removed car-only readiness from authored-fighter captures and immediate
+capture of unsettled rematch presentation. Kept every original assertion,
+current crew assets, runtime renderer and simulation source. Failed and
+pending-review captures stay private until their verdict is consumed.

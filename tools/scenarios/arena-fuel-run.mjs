@@ -16,8 +16,24 @@ async function click(c, selector) {
 }
 async function ready(c, name) {
   await c.waitFor(`(()=>{const a=window.__qaApp;a?.onFrame?.(a.duel.state,0);window.__render?.renderFrame();
+    if(a?.duel.state.onFoot){
+      const group=window.__render?.scene.getObjectByName('Rigged on-foot fighters');
+      const id=a.duel.state.fighter?.crewId||'rook';
+      if(group?.userData.loadErrors?.length)throw Error('Authored fighter failed: '+group.userData.loadErrors.join(', '));
+      if(group?.userData.crews[id]!=='ready')return false;
+      const root=group.children.find(node=>node.visible&&node.userData.crewId===id);
+      let authoredVisible=false;root?.traverse(node=>{if(!node.isSkinnedMesh)return;
+        let shown=true;for(let parent=node;parent;parent=parent.parent)if(!parent.visible)shown=false;
+        if(shown)authoredVisible=true;});
+      if(!authoredVisible)return false;
+    }
     return a?.visualReady&&document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'&&
       document.querySelector('#renderer-loading')?.hidden;})()`,name,60_000);
+}
+async function capture(c,name){
+  // Car readiness precedes asynchronously loaded crew and rematch presentation.
+  // Wait for actual authored presentation; never accept the loading fallback.
+  await ready(c,name+' authored presentation');await c.screenshot(name);
 }
 async function key(c, code, seconds) {
   await c.command('Input.dispatchKeyEvent',{type:'keyDown',key:code==='KeyF'?'f':'w',code,
@@ -88,7 +104,7 @@ async function qualityRun(c, quality) {
   await c.evaluate('window.__qaApp.advance(8)');await ready(c,'rank6 yard');
   await click(c,'[data-action="yard-scrapdome"]');
   await click(c,'[data-arena-mode="fuel-run"]');await click(c,'[data-arena-opponents="3"]');
-  await c.screenshot(quality+'-yard-fuel-rules');
+  await capture(c,quality+'-yard-fuel-rules');
   await click(c,'[data-action="arena-start"]');await ready(c,'Fuel field assets');
   await c.evaluate('window.__qaApp.advance(3.1)');
   await c.waitFor('window.__qaApp.duel.state.arena?.mode==="fuel-run"&&window.__qaApp.duel.state.arena.phase==="fight"','actual Fuel fight');
@@ -105,7 +121,7 @@ async function qualityRun(c, quality) {
     // New rematch avoids cargo accumulated during the unrestricted pacing sample.
     if(!a.restart())throw Error('Fuel rematch failed');f.hold();f.tick(374);
     f.pick();f.paint();return true;})()`);
-  await ready(c,'roof Fuel cargo');await c.screenshot(quality+'-roof-canister');
+  await ready(c,'roof Fuel cargo');await capture(c,quality+'-roof-canister');
   const heavy = await c.evaluate(`(()=>{
     const a=window.__qaApp,f=window.__fuel,contact=${contactFixture};
     const carry=f.participant('player').fuelCanisterId;
@@ -116,20 +132,20 @@ async function qualityRun(c, quality) {
     if(dropped.carriedBy!==null)throw Error('Heavy hit still has carrier');
     f.paint();return{removed:before-a.duel.state.armor,id:carry,s:dropped.s,lateral:dropped.lateral};
   })()`);
-  await c.screenshot(quality+'-heavy-hit-drop');
+  await capture(c,quality+'-heavy-hit-drop');
   await c.evaluate(`(()=>{const a=window.__qaApp,f=window.__fuel,dropped=a.duel.state.arena.fuelRun.canisters.find(x=>x.id===${JSON.stringify(heavy.id)});
     const enemy=f.actor('cpu-1');Object.assign(enemy,{combatWrecking:false,combatWreckTimer:0});
     f.participant('cpu-1').wreckCounted=false;
     f.pose('player',{s:dropped.s+20,lateral:0});f.pose('cpu-1',dropped);f.tick(1);
     if(f.participant('cpu-1').fuelCanisterId!==dropped.id)throw Error('Enemy failed to recover dropped Fuel');
     f.hold();f.paint();})()`);
-  await c.screenshot(quality+'-enemy-recovers-fuel');
+  await capture(c,quality+'-enemy-recovers-fuel');
   await c.evaluate(`(()=>{const a=window.__qaApp,f=window.__fuel,contact=${contactFixture};f.pick('player',1);
     const item=f.participant('player').fuelCanisterId;contact('player',35);f.hold();f.tick(1);
     if(!a.duel.state.combatWrecking||f.participant('player').fuelCanisterId||
       a.duel.state.arena.fuelRun.canisters.find(x=>x.id===item)?.carriedBy)throw Error('Real wreck failed to drop Fuel');
     f.paint();})()`);
-  await c.screenshot(quality+'-wreck-drops-fuel');
+  await capture(c,quality+'-wreck-drops-fuel');
   await c.evaluate(`(()=>{const a=window.__qaApp,f=window.__fuel;f.hold();f.tick(500);
     if(a.duel.state.combatWrecking)throw Error('Real arena respawn failed');
     const depot=a.duel.state.arena.fuelRun.depots[0];f.pose('player',{s:depot.s+20,lateral:depot.lateral});
@@ -139,7 +155,7 @@ async function qualityRun(c, quality) {
   await c.evaluate(`(()=>{const a=window.__qaApp,f=window.__fuel,pad=a.duel.state.arena.fuelRun.pads[2],id=pad.canisterId;f.foot(pad);f.tick(1);
     if(f.participant('player').fuelCanisterId!==id)throw Error('Foot Fuel pickup failed');
     if(!f.participant('player').fuelCanisterId)throw Error('Foot has no Fuel');f.paint();})()`);
-  await ready(c,'fighter cargo');await c.screenshot(quality+'-fighter-carries-fuel');
+  await ready(c,'fighter cargo');await capture(c,quality+'-fighter-carries-fuel');
   const walking = await c.evaluate(`(()=>{const a=window.__qaApp,f=window.__fuel;
     const beforeDelivered=f.participant('player').fuelDelivered;
     const car={s:a.duel.state.s,lateral:a.duel.state.lateral},fighter=a.duel.state.fighter,from={x:fighter.x,z:fighter.z};
@@ -150,7 +166,7 @@ async function qualityRun(c, quality) {
     const depot=a.duel.state.arena.fuelRun.depots[0];f.foot(depot);f.tick(1);
     if(f.participant('player').fuelDelivered!==beforeDelivered+1)throw Error('Actual foot delivery failed');f.paint();return{walked,car};
   })()`);
-  await c.screenshot(quality+'-fighter-delivery');
+  await capture(c,quality+'-fighter-delivery');
   await c.evaluate(`(()=>{const a=window.__qaApp,f=window.__fuel;f.foot({s:a.duel.state.s,lateral:a.duel.state.lateral+2.5});})()`);
   await key(c,'KeyF',.7);
   if(await c.evaluate('window.__qaApp.duel.state.onFoot'))throw Error('Actual F return failed');
@@ -160,19 +176,19 @@ async function qualityRun(c, quality) {
     f.pose('player',a.duel.state.arena.fuelRun.depots[0]);f.tick(599);
     if(pad.canisterId)throw Error('Fuel refilled early');f.tick(1);if(!pad.canisterId)throw Error('Fuel failed five second refill');
     f.paint();return{taken,refilled:pad.canisterId};})()`);
-  await c.screenshot(quality+'-five-second-refill');
+  await capture(c,quality+'-five-second-refill');
   // Fresh actual rematch: a tied whistle must ask for delivery rather than wreck.
   await c.evaluate(`(()=>{const a=window.__qaApp,f=window.__fuel;if(!a.restart())throw Error('Fuel rematch failed');
     f.hold();f.tick(374);f.pick();a.duel.state.arena.clockSec=180-1/240;f.tick(1);
     if(a.duel.state.arena.phase!=='sudden-death')throw Error('Fuel tie failed');f.paint();})()`);
-  await c.screenshot(quality+'-delivery-sudden-death');
+  await capture(c,quality+'-delivery-sudden-death');
   await c.evaluate(`(()=>{const a=window.__qaApp,f=window.__fuel,q=window.__fuelProbe;
     q.before=JSON.stringify(a.profile);q.saved=window.name;q.writes=0;q.fail=true;
     f.deliver();q.fail=false;f.paint();
     if(a.duel.state.status!=='arena_result'||a.duel.state.arena.result.scrapEarned!==0||
       !a.duel.state.arena.result.settlementRetryable||q.before!==JSON.stringify(a.profile)||q.saved!==window.name)
       throw Error('Failed Fuel persistence changed owner or reported payment');})()`);
-  await c.screenshot(quality+'-retry-save');
+  await capture(c,quality+'-retry-save');
   // A separate tab's progress is a raw write to this disposable memory store.
   // It bypasses only the App-write counter, not storage or actual Retry behavior.
   await c.evaluate(`(()=>{const a=window.__qaApp,q=window.__fuelProbe;
@@ -196,7 +212,7 @@ async function qualityRun(c, quality) {
     window.__fuel.paint();return{...r,durableOwner:{credits:a.profile.credits,scrap:a.profile.wasteland.scrap,
       engine:a.profile.upgrades[q.freshOwnerCar].engine,hold:a.profile.wasteland.territories.kettle.hold},
       cues:[...q.cues],events:structuredClone(q.events)};})()`);
-  await ready(c,'saved Fuel result');await c.screenshot(quality+'-saved-result');
+  await ready(c,'saved Fuel result');await capture(c,quality+'-saved-result');
   for(const cue of ['interface.bonus','vehicle.landing','interface.go','interface.win'])
     if(!saved.cues.includes(cue))throw Error('Authored Fuel cue missing '+cue);
   await click(c,'[data-action="arena-yard"]');await ready(c,'returned Fuel yard');
@@ -208,7 +224,7 @@ export async function run(context) {
   if(process.env.DUEL_FUEL_PLAYER_FALLBACK_ONLY==='1'){
     const {checkFuelPlayerModeFallback}=await import('../test-arena-fuel-run.mjs');
     await checkFuelPlayerModeFallback(context);
-    await context.screenshot('rank5-named-player-last-car-rolling');
+    await capture(context,'rank5-named-player-last-car-rolling');
     return;
   }
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
