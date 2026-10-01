@@ -1040,9 +1040,9 @@ tasks:
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/vis/salt-flats
     flag: salt-flats
-    owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
+    owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-render.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
     hooks: [tools/art/catalog.json, src/arena/venues.js, src/course.js]
-    hook_requests: [ src/arena/arena-event.js, src/screen-arena.js, src/render3d.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, start-preview.bat, tools/test-wasteland-beta.mjs]
+    hook_requests: [src/world.js, src/arena/arena-event.js, src/screen-arena.js, src/render3d.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, start-preview.bat, tools/test-wasteland-beta.mjs]
     sequencing: "Only venue registry/course hooks granted. Frozen Source d1ed6dc aligns native Course oval/ramp interpolation with actual private GLB; all31 native and16 geometry checks pass. Inner-island/outer-perimeter correspondence gaps require additive independent tests before further layout source. Arsenal owns App/UI/flags/launcher/pilot; Shove owns floor/collision/knock/event. Catalog/public/runtime handoffs remain held; no overlap. Four public modes and Claude settled solid island/perimeter apply; every comparison goes to Claude before install/merge."
     helpers: [test_author, reviewer, art_critic, browser_qa]
     acceptance:
