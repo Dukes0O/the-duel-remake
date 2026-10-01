@@ -11,6 +11,16 @@ import {deploySmoke} from './arsenal/smoke.js';
 import {targetFor, targetIdentity} from './arsenal/targeting.js';
 
 const cpuCooldowns = new WeakMap();
+const boltLaunchSpeeds = new WeakMap();
+
+// Keep launch reach out of serialized race state. Older live bolts enter this
+// cache before guidance; their horizontal speed is unchanged by native flight.
+export function boltLaunchSpeed(projectile) {
+  if (!boltLaunchSpeeds.has(projectile))
+    boltLaunchSpeeds.set(projectile, Math.hypot(projectile.vx, projectile.vz));
+  return boltLaunchSpeeds.get(projectile);
+}
+
 export function clearCpuWeaponCooldowns(actor) { cpuCooldowns.delete(actor); }
 export function stepCpuWeaponCooldowns(actor, dt) {
   const timers = cpuCooldowns.get(actor);
@@ -369,7 +379,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         }
         vy = (goal.y - at.y - T.crossbow.aimHeightOffset) / length * speed;
       }
-      combat.projectiles.push({
+      const projectile = {
         id: ++combat.serial, kind: weapon, enemy, level,
         x: at.x + dx * T.projectileSpawnOffset,
         y: at.y + T.projectileSpawnHeight,
@@ -387,7 +397,9 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         } : {}),
         ...(enemy && actor !== state.rival ? {sourceIndex: state.opponents.indexOf(actor)} : {}),
         ...(state.arena ? {ownerId: combatOwnerId(duel, actor)} : {}),
-      });
+      };
+      if (modernProjectile && weapon === 'crossbow') boltLaunchSpeed(projectile);
+      combat.projectiles.push(projectile);
     }
   }
   if (!enemy || arsenal) cooldowns[weapon] = arsenal

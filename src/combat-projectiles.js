@@ -1,6 +1,6 @@
 import {targetFor, targetIdentity, actorForTarget} from './arsenal/targeting.js';
 import {contactZone} from './collision.js';
-import {point, aimPoint, predictedPoint, burst, arsenalEnabled} from './combat-weapons.js';
+import {point, aimPoint, predictedPoint, burst, arsenalEnabled, boltLaunchSpeed} from './combat-weapons.js';
 import {applyArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {tickCombatScoring} from './combat-scoring.js';
@@ -16,14 +16,18 @@ function steerBolt(duel, projectile, dt, sampleSeconds = dt * .5) {
   if (projectile.kind !== 'crossbow' || !Number.isInteger(projectile.targetIndex) ||
       !Number.isFinite(projectile.launchBearing) || !(dt > 0)) return;
   const state = duel.state;
+  const launchSpeed = boltLaunchSpeed(projectile);
   let target = projectile.targetIndex < 0 ? state : state.opponents[projectile.targetIndex];
   if (arsenalEnabled(duel) && !projectile.raid) {
-    const attacker=actorForTarget(duel,projectile.attackerId) ||
+    const attacker = actorForTarget(duel, projectile.attackerId) ||
       (projectile.enemy ? state.opponents[projectile.sourceIndex || 0] : state);
-    target=targetFor(duel,attacker,{range:T.cpu.attackRange,origin:projectile,
-      lockedTargetId:projectile.targetId || (target && targetIdentity(duel,target))});
-    if(target)projectile.targetId=targetIdentity(duel,target);
-    else projectile.targetIndex=null;
+    const remainingLife = Math.max(0, T.crossbow.lifetime - projectile.age);
+    target = targetFor(duel, attacker, {
+      range: launchSpeed * remainingLife, origin: projectile,
+      lockedTargetId: projectile.targetId || (target && targetIdentity(duel, target)),
+    });
+    if (target) projectile.targetId = targetIdentity(duel, target);
+    else projectile.targetIndex = null;
   }
   if (!target || (projectile.enemy && state.arena?.mode === 'fuel-run'
     ? arenaTargetOutOfPlay(duel, target)

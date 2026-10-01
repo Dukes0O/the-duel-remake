@@ -1878,3 +1878,100 @@ Syntax and diff checks pass. Only the owned additive runtime test and appended
 change note differ from9614a3e. All unowned source and replay fixture bytes
 remain exact. Ownership returns for the proper Source worker and independent
 review; this RED freeze grants no merge or whole-card clearance.
+
+
+## Resultant bolt reach: independent flight slice (1 October 2026)
+
+Claude's 06:30 decision fixes physical reach to the magnitude of the actual
+horizontal launch velocity, including the car's full velocity vector, times
+remaining lifetime. Player launch selection still waits on the written
+candidate-range interface question below. This slice fixes flight only.
+
+The native producer captures each modern Crossbow's actual launch magnitude in
+a WeakMap. It adds no projectile field, save data or race-state key. Guidance
+uses that immutable value times max(0, the existing 2.5-second lifetime minus
+actual projectile age), measured from the actual current projectile position.
+The existing velocity, steering speed, cone, bias, vertical motion, collision,
+expiry, RPG and RNG paths are unchanged. CPU acquisition remains 180 metres.
+Locked real identity still uses the existing resolver; only genuine decoys or
+smoke affect its result.
+
+The cache also admits a bolt from an older producer before its first current
+native guidance step. This is a bounded compatibility path: native flight and
+guidance preserve horizontal magnitude. Every newly produced modern bolt is
+captured at age zero, before guidance. This fallback neither recomputes reach
+from a changed actor/profile nor claims to recover a saved projectile state.
+The retained whole-module producer fixtures exercise it with actual native
+launches and real fixed steps; no projectile producer is patched.
+
+Before edits, the frozen 17 vector cases reproduced 7 pass and 10 fail. The
+independent flight correction leaves the combined 54 range cases at 44 pass
+and 10 fail. The complete original 204 runtime plus unchanged 170 CORE/SAVE
+cases reaches 374 cases: 364 pass, exactly 10 held player-launch failures,
+zero skips, 18,767.9457 ms. All prior flight failures are resolved, including
+current-origin reach, real native age, immutable level/carry, diagonal,
+reverse, lateral carry, enemy flight, genuine decoys and real lock identity.
+None of the 10 launch failures is hidden, skipped or weakened.
+
+The 38 native projectile, launch, CPU, Fuel, arena, feature and replay control
+suites all pass in 32,448.2743 ms. This includes the unchanged 162 ordinary
+replay checks and unchanged combat fingerprints. No fingerprint was recorded
+or regenerated. The scoped lane build passes in 409 ms.
+
+An additional ignored native comparison supplies 12 actual player/CPU launches
+with Arsenal off, both Wasteland switch settings, and diagonal/reverse/lateral
+carry. At launch and each of 30 real projectile steps, every complete bolt
+object, every key and complete serialized native race state are byte-equivalent
+to the two retained, hash-verified released whole-module consumers. Its 772
+checks pass. Import routing is the only retained-source transformation and is
+reversed to prove the original bodies. This compares the two consumers with
+current native shared dependencies, not an entire historical deployment.
+
+### Launch interface question sent to Claude
+
+The real target's actual resultant speed is 288.34302020991277 m/s, yielding
+720.8575505247819 m. The selected native decoy's speed is
+285.8369140674296 m/s, yielding 714.5922851685739 m. A genuine legal-course
+outside witness puts that decoy at 714.6422851685732 m. The existing resolver
+with a shared numeric range from the real target selects the decoy although
+it lies outside its own reach. Recomputing the range for the decoy returns the
+real target; repeating those two native calls oscillates. Candidate-specific
+eligibility needs a written interface decision and an explicit owned-file
+grant. This slice leaves targeting.js and player launch selection untouched.
+
+A supplementary two-decoy attempt failed its own farther-distance precondition.
+Its raw failure is retained and is not evidence of an impossible interface or
+a passing acceptance. Only the exact native real/decoy oscillation above is
+claimed. No fabricated resolver, fake geometry or synthetic return is used.
+
+### Evidence and protected files
+
+Complete commands, stdout/stderr, native recipes and receipts are in
+integration .evidence/2026-10-01/ARS-CORE/vector-range-source/:
+
+- controls-before.log: actual frozen 17-case RED reproduction.
+- flight-slice-controls.log and flight-slice-full.log: all range obligations
+  and all 374 original CORE/SAVE/runtime cases, including every held failure.
+- flight-slice-native-controls.json: complete output of all 38 control suites.
+- flight-whole-object-control.mjs/.json: genuine released whole-object proof.
+- numeric-context-diagnosis.mjs/.json: actual numeric range oscillation.
+- numeric-context-two-decoys.mjs/.log: failed supplementary precondition.
+- flight-slice-build.log: complete scoped build output.
+- before-hashes.json and flight-slice-freeze.json: protected file, Source,
+  note-prefix and replay receipts.
+
+All 1185 unowned tracked files, including every test, assertion, scenario,
+replay pin, App retry/save correction, target resolver, flag, audio, asset and
+configuration, remain byte-exact to clean 54f511d. Of 221 Source files, only
+the two granted combat modules change. The original 153,796-byte change-note
+prefix is preserved. Both rewritten Source files use LF line endings.
+
+### Removed
+
+Removed the shared 180-metre CPU acquisition cap from active bolt flight.
+Removed no released rule, asset, assertion, test, pin, legacy target interface
+or player launch policy. The still-failing launch route remains explicitly
+held for Claude's written decision; it is not presented as finished work.
+No browser, timing, audio, whole-card, lane/full gate, integration merge,
+public install, push, release or human-feel approval is claimed. No live,
+Preview, .preview-dist, port 5174 or real-save access occurred.
