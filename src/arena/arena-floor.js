@@ -18,6 +18,14 @@ export function floorLimit(duel) {
   return duel.course.def.scrapdome?.floorHalfWidth ?? duel.course.roadHalfWidthAt(0);
 }
 
+// A car at the solid boundary cannot receive an outward contact impulse.
+// Use the same floor limit and local world normal as native containment.
+export function arenaWallNormal(duel, actor) {
+  if (!duel.state.arena || Math.abs(actor.lateral) < floorLimit(duel) - 1e-8) return null;
+  const side = Math.sign(actor.lateral), heading = duel.course.at(actor.s).heading;
+  return {x: side * Math.cos(heading), z: -side * Math.sin(heading)};
+}
+
 // Returns the speed into the wall in mph, or 0 when the car stayed on the floor.
 export function containInArena(duel, actor, dt) {
   actor._arenaWallCooldown = Math.max(0, (actor._arenaWallCooldown || 0) - (dt || 0));

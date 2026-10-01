@@ -1,7 +1,8 @@
 import {DRIVE} from './config.js';
 import {sweepObstacle} from './collision.js';
 import {wrapHeading} from './offroad-physics.js';
-import {CRASH_TUNING, yawInertia, solveVehicleImpact, impactSeverity} from './vehicle-collision.js';
+import {arenaWallNormal} from './arena/arena-floor.js';
+import {CRASH_TUNING, yawInertia, solveVehicleImpact, solveWallConstrainedImpact, impactSeverity} from './vehicle-collision.js';
 
 // A struck computer car becomes a free body until its tyres bite again
 // (docs/CRASH_PHYSICS.md section 2). It keeps the road-relative fields every
@@ -280,7 +281,9 @@ export function resolveCarCrash(duel, a, b, {
   const s = duel.state;
   const spinOf = actor => actor === s ? s.yawVelocity || 0 : 0;
   const bodyA = actorBody(duel, a, spinOf(a)), bodyB = actorBody(duel, b, spinOf(b));
-  const result = solveVehicleImpact(bodyA, bodyB);
+  const result = s.arena
+    ? solveWallConstrainedImpact(bodyA, bodyB, {a: arenaWallNormal(duel, a), b: arenaWallNormal(duel, b)})
+    : solveVehicleImpact(bodyA, bodyB);
   const style = crashStyle(duel);
   const severityA = impactSeverity(result.a.dvMph, {attackerMass: bodyB.mass, mass: bodyA.mass,
     launchMph: style.launchMph});
@@ -295,7 +298,9 @@ export function resolveCarCrash(duel, a, b, {
     const arenaFree = arenaShove || waitingArenaWreck;
     const force = forceKnock && actor === b || arenaFree;
     let motion = after;
-    if (arenaShove) {
+    if (arenaShove && !(actor === a ? result.wallA : result.wallB)) {
+      // A blocked normal push has no open-floor minimum. Its unconstrained
+      // tangential component still comes from the physical contact impulse.
       // The released solver supplies direction, spin and damage severity.
       // The arena's settled minimum adds only floor motion for sitting cars.
       // v² = 2ad gives its stopping distance under the same native tyre scrub;

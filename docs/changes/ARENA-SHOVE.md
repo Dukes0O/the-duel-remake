@@ -325,3 +325,54 @@ Scripted poses, held goals and state setup do not establish natural CPU behavior
 ### Removed — settled wall acceptance
 
 Removed only the former empty unresolved-wall TODO and replaced it with the written settled native behavior and genuine private browser recipe. No original assertion, fingerprint, solver, source, native actor shape, current asset, licensed source, sound bank or player data was removed or rewritten. Raw RED evidence stays ignored until its verdict is consumed. No live game, Preview, `.preview-dist`, port 5174, real save, network service, new dependency or other lane was used.
+
+
+## Provisional constrained-wall source and fixture witness: 1 October 2026
+
+The Director granted the collision/knock/floor hooks after clean independent tests-first freeze 7b928ef5a6452d02db3f1f90a66812fb39d7b70b. The lane normally merged current integration 1498b33c2c4d85903db2002a11da6583d35f64bb at 4c14691cabc700780a538f8132826f6ec899e040 without conflicts. That merge changed only five integration documentation files. Existing Fuel, steering, source reviews, assertions and pins remain intact. No history was rewritten.
+
+### Source scope
+
+Only src/vehicle-collision.js, src/vehicle-knock.js and src/arena/arena-floor.js changed. The original pure solveVehicleImpact function body is byte-exact to the merged HEAD, with its normalized-LF body SHA-256 655e36c841e42a5fdcc3e25d97d707c55a147a6d24a8e09b3bb844191f4f4ca8. Ordinary roads still call that original function directly. An arena contact derives its constraint from the existing floor limit and the actual local Course frame. When a contact impulse compresses a car into that wall, the separate pure solver uses the wall's normal and angular support reaction while retaining along-wall translation. No new wall/body geometry, teleport, pose target, escape direction, private minimum timer or artificial displacement was introduced. Open contacts still use the original pure solver. Minimum shove is not boosted into a constrained normal; real unconstrained tangential motion remains physical.
+
+The existing contact damage, protection, timers, wreck counting and cues are unchanged. No pilot, brain, game, event mode, Fuel, Salt, Arsenal or protected audio source was edited. This is a provisional measured source freeze for independent fixture review, not finished card or merge clearance.
+
+### Exact RED and intermediate results
+
+- The clean merged source reproduced the frozen focused command, node --test --test-name-pattern '^SETTLED WALL' --test-reporter=tap tools/test-arena-shove.mjs: **58 cases, 18 pass, 40 fail**, no skips/TODOs, **4,078 checks**. This includes all 3,888 normal-wall mass/state/role/side/speed witnesses, two traffic controls and eight oblique cases/128 checks. All failures were the expected missing attacker rebound.
+- First normal-only constraint stage: the same frozen focused suite reported **50 pass, eight fail**. All original 40 missing rebound groups became green. Eight previously passing player-target wreck/protection groups exposed later target movement, up to about 0.045 m. The full native suite at that intermediate source reported **113 cases, 105 pass, eight fail**, retaining every original 55 control and all 1,944 minimum witnesses.
+- Adding the pinned body's compressive angular wall reaction retained **50/58 focused cases**, **4,078 checks**, with the same eight player-target wreck/protection groups RED. Their maximum measured late movement reached about 0.410 m. No drift, containment, armor, guard, rebound or deadline assertion was changed. The eight genuine oblique cases remain green. The first-stage full result is labelled intermediate; a final full/native/lane/build pass is not claimed.
+- Current unaffected controls: **241/241 TAP cases across 20 suites** pass, covering collision, knock integration, NPC yielding, armored impacts, crash slide/switch/site, contact damage, combat armor/terrain, Titan climb/handling, arena events, steering ceiling, Wasteland police and all five Fuel/depot/attribution/carrier/on-foot car suites. Existing native actor and recovery guards remain unchanged.
+- node tools/test-replays.mjs: **162/162 unchanged ordinary fingerprints** across 18 cases, 16 events, eight categories, three frame rates and three runs. No road/combat/Shove pin was regenerated.
+
+### Exact later-contact witness for independent fixture review
+
+A read-only in-memory diagnostic reuses the frozen native wall helper setup and the actual methods. Canonical case: Falcone against Falcone, player target, genuine protected recovery, 40 mph and positive wall side. The first contact is an actual launched attacker response at stageTimeSec **3.5083333333333235**, attacker dv **48.85190090602515 mph**. Its measured reverse velocity is **3.602253516276269 m/s**. Native scrub immediately reduces the target's tiny along-wall speed to zero; through observation tick 80 the target remains at zero speed, s differs from 90 by less than 0.0000003, and its first knock has cleared normally.
+
+The frozen holdIdle helper assigns targetId='player', reactionSec=10 and a zero-speed goal. After the rebound frees this CPU's driver, actual thinkBrain sees that the player is protected or wrecking. It legitimately invalidates that fight target, changes targetId to null, resets the reaction and chooses its existing cruise goal: **39.96971184537563 mph**. At observation tick 60 the actual CPU has already resumed acceleration toward that cruise goal; by tick 80 it travels **10.868 mph** with a changed heading.
+
+The existing production vehicleSmash notification proves a second real contact at stageTimeSec **4.233333333333333**, exactly **0.725 s** after the first. Its severity is knocked, attacker dv **13.4065101738652 mph**, and the target's native speed becomes **-1.1625527355784537 mph** along the wall. It ends with **0.38956905912964235 m** of genuine target travel. This later tangential contact must not be suppressed to satisfy a fixture intended to measure one purely outward stopped-wall hit. The two combatRamHit records are the initial bidirectional zero-armor reports; they were not evidence of two contacts. The later existing vehicleSmash notification and its native state establish that second contact independently.
+
+Raw genuine tick/goal/state evidence is ignored at .evidence/2026-10-01/ARENA-SHOVE/pinned-rebound/late-contact-probe.json; the real notification witness is smash-witness.json. Both use read-only observers and unchanged production methods. The source was paused at this measured result as directed. Independent review must determine whether the held fixture should use its actual null target while the player cannot be fought, preserving the explicit reaction/zero-speed goal and every strict assertion. No proposed fixture correction was applied here, even in a claimed acceptance run. The eight REDs remain honest pending that review.
+
+### Freeze hashes
+
+| File | SHA-256 |
+| --- | --- |
+| Changed src/vehicle-collision.js | cc5f712abb3261d98facc9a41dd8d0fd2c03a8877128fdc0bc2c9db187f557f6 |
+| Changed src/vehicle-knock.js | cad4fe002892cc919e3d121c0eafd5190229e90f81a10a393d6f96bbc9760b24 |
+| Changed src/arena/arena-floor.js | ed699fc574985e82f678b31c3dde9f762a7fb02ca1fe3a1a57bfb0a007809fe0 |
+| Unchanged src/sim-contacts.js | c9df9d399a61b78775e641e2239c9137843c1a544871455a9051486a82023522 |
+| Unchanged src/arena/arena-event.js | a31f935b2d00446d8cc26b72929f128ef86bb49bdc5f0373766d0a28fbaf0852 |
+| Unchanged released src/arena/arena-pilot.js | f2bfa54d0f0cd19382fd8aa67b2aeec1e9f790a274f5f220e7510d7e7dcd071c |
+| Unchanged src/game.js | 141b7183413366b7a4a4c9df12d22f165106b5706ae78ebd54d68a73ab4e822e |
+| Unchanged src/arena/modes/fuel-run.js | d7bf8b46872b921f27320950421e8cedc506ba2d4d3a7cd9a37a634bd7d0335e |
+| Frozen tools/test-arena-shove.mjs | 60ad43622be1330d9a5238a3cea243a54aec8df86bd1e1eb313c88b48b1e8775 |
+| Frozen tools/replays/arena-shove-controls.json | a08bb7507e8e2c110789b907ed3977dc6de9ac39943e89aad4c8cb9f5a3a474b |
+| Frozen tools/scenarios/arena-shove.mjs | c1cca12330ddcef3aaf6b748b2ea9264ccbc9a1564adf53ebc20f6282c713bb0 |
+
+### Remaining gates and Removed
+
+The Director requested this clean provisional freeze and returned ownership for independent fixture review before further source work. A complete current native suite, exact lane tier/build, generic review, actual private High/Performance browser scenario and any frame/gameplay/balance/audio checks remain. No current whole-suite, browser, human feel, frame, audio, merge or release clearance is claimed. Existing temporary pose/vector objects and the constrained solver's temporary objects/closures allocate; this is not allocation-free. Logs remain private, regenerable evidence; no generated output was committed.
+
+Replaced only the arena caller's unconstrained response where an actual wall compresses the contact, and removed minimum-speed amplification into that constrained normal. The released default solver and open-floor response remain. No timer, score, protection rule, Titan rule, road rule, Fuel source, pilot/brain behavior, assertion, fixture, replay pin, asset, licence or audio was removed or replaced. No live folder, Preview/.preview-dist, port 5174, real save, dependency, network operation, force removal or release was used.
