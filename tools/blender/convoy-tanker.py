@@ -219,9 +219,12 @@ def fitted_bounds(faces, matrix):
     return bounds([(tuple(point(matrix, p) for p in face), name) for face, name in faces])
 
 
-def wear_atlas(seed):
-    """Replacement semantic surfaces: local oxide, scuffs and hazard paint."""
-    width, height, bands = 1024, 768, 12
+SURFACE_BANDS = 15
+
+
+def wear_atlas(seed, tank_bands):
+    """Seeded oxide, lower cab grime and painted target/boarding markings."""
+    width, height = 1024, SURFACE_BANDS * 64
     x, y = np.meshgrid(np.arange(width), np.arange(height))
     rng = np.random.default_rng(seed)
     grain = rng.uniform(-1, 1, (height, width))
@@ -230,16 +233,26 @@ def wear_atlas(seed):
     scratch = ((x*17 + y*3) % 251 < 2) * (grain > -.3)
     dust = np.maximum(0, np.sin(x*.013-y*.017))*.035
     bases = [(.13,.17,.15), (.47,.48,.44), (.22,.20,.17), (.095,.10,.095),
-             (.028,.030,.026), (.026,.060,.068), (.68,.045,.018), (.68,.49,.055),
-             (.71,.64,.45), (.34,.36,.34), (.57,.54,.36), (.16,.18,.17)]
+             (.028,.030,.026), (.026,.060,.068), (.84,.085,.025), (.68,.49,.055),
+             (.71,.64,.45), (.34,.36,.34), (.57,.54,.36), (.16,.18,.17),
+             (.055,.063,.046), (.105,.115,.11), (.47,.48,.44)]
     pixels = np.ones((height, width, 4), dtype=np.float32)
+    local_y = (y % 64)/63
+    tank_red = np.zeros_like(x, dtype=bool)
+    for center in tank_bands:
+        tank_red |= abs(x/(width-1)-center) < .028
+    border = (x < width*.09) | (x > width*.91) | (local_y < .12) | (local_y > .88)
+    diagonal = ((x//48 + (local_y*7).astype(int)) % 2).astype(bool)
     for band, base in enumerate(bases):
-        mask = y // (height // bands) == band
+        mask = y // 64 == band
         for channel, value in enumerate(base):
             oxide = [.34,.15,.055][channel]
-            amount = .42 if band in (0,1,2,3,9,11) else .13
+            amount = .85 if band == 0 else .42 if band in (1,2,3,9,11,12,13,14) else .13
             colour = value*(1+grain*.10)*(1-rust*amount) + oxide*rust*amount
-            colour += scratch*(.09 if band in (0,1,2,3,8,9,11) else .018) + dust
+            colour += scratch*(.09 if band in (0,1,2,3,8,9,11,12,13,14) else .018) + dust
+            if band == 1:
+                red = [.46,.022,.009][channel]*(1+grain*.08)+scratch*.035
+                colour = np.where(tank_red, red, colour)
             if band == 4:
                 colour = value*(1+grain*.20) + dust*.35
             if band == 5:
@@ -248,13 +261,17 @@ def wear_atlas(seed):
                 stripe = ((x+y*2)//48) % 2
                 colour = np.where(stripe, base[channel], [.025,.028,.026][channel])
                 colour = colour*(1-rust*.18)+scratch*.04+dust*.4
-            pixels[:,:,channel][mask] = np.clip(colour[mask], .012, .84)
+            if band == 13:
+                warning = np.where(diagonal, [.68,.49,.055][channel], [.025,.028,.026][channel])
+                colour = np.where(border, warning, colour)
+            pixels[:,:,channel][mask] = np.clip(colour[mask], .012, .88)
     image = bpy.data.images.new("tanker-local-wear-and-hazard-atlas", width=width, height=height)
     image.pixels.foreach_set(pixels.ravel()); image.pack()
     names = ["dark-worn-cab-paint", "light-dusty-tank-steel", "burnt-salvage",
              "oiled-drivetrain", "dark-weathered-rubber", "dirty-cab-glass",
              "hazard-red-controls", "black-yellow-hazard-paint", "bright-worn-flanges",
-             "worn-steel-hubs", "dusty-headlight-glass", "dark-bumper-steel"]
+             "worn-steel-hubs", "dusty-headlight-glass", "dark-bumper-steel",
+             "lower-cab-grime", "dark-boarding-steel-with-stripe-border", "tank-colour-port-caps"]
     materials = []
     for band, name in enumerate(names):
         material = bpy.data.materials.new(name); material.use_nodes = True
@@ -288,7 +305,7 @@ def closest_triangle_point(goal, a, b, c):
     return a+ab*(vb/total)+ac*(vc/total)
 
 
-def valve_mount(tank_faces, tank_matrix, donor, side, z):
+def valve_mount(tank_faces, tank_matrix, donor, side, z, vertical, longitudinal):
     """Put the genuine negative-X flange on an actual outer tank skin face."""
     goal = Vector((side*.94, 2.0, z)); candidates = []
     for index, (face, _) in enumerate(tank_faces):
@@ -313,8 +330,11 @@ def valve_mount(tank_faces, tank_matrix, donor, side, z):
     patch = [p for face,_ in donor for p in face if abs(p[0]-low[0]) < 1e-6]
     port.y = (min(p[1] for p in patch)+max(p[1] for p in patch))/2
     port.z = (min(p[2] for p in patch)+max(p[2] for p in patch))/2
-    scale = .46
-    columns = [normal*scale,up*scale,along*scale]
+    # The source handwheel is in XY, while the pipe runs along X. Put the
+    # complete pipe along the tank, with its negative-Z wheel facing outward.
+    # Compensate the final assembly fit so the genuine .6 m wheel stays round.
+    columns = [Vector((0,0,side))/longitudinal, Vector((0,1,0))/vertical,
+               Vector((-side,0,0))*.46]
     location = contact-sum((columns[axis]*port[axis] for axis in range(3)),Vector())
     matrix = [[columns[column][row] for column in range(3)]+[location[row]] for row in range(3)]
     matrix.append([0,0,0,1])
@@ -323,6 +343,7 @@ def valve_mount(tank_faces, tank_matrix, donor, side, z):
 
 def mesh_part(name, faces, matrix, materials, band):
     positions, triangles, bands, uvs = [], [], [], []
+    low, high = fitted_bounds(faces, matrix)
     for face, source_name in faces:
         fitted = [point(matrix, p) for p in face]
         normal = (Vector(fitted[1]) - Vector(fitted[0])).cross(
@@ -337,8 +358,11 @@ def mesh_part(name, faces, matrix, materials, band):
             material_band = 5
         elif source_name.endswith(":headlight"):
             material_band = 10
-        elif name == "tanker-body" and all(p[2] > 1.45 for p in face) and sum(p[1] for p in face)/3 < .65:
+        elif name == "tanker-body" and (all(p[2] > 1.45 for p in face) or
+                                       all(p[2] < -1.40 for p in face)) and sum(p[1] for p in face)/3 < .53:
             material_band = 7
+        elif name == "tanker-body" and sum(p[2] for p in face)/3 > .35 and sum(p[1] for p in face)/3 < .72:
+            material_band = 12
         elif band == 6:
             material_band = (6 if source_name.endswith(":control") else
                              8 if source_name.endswith(":flange") else 11)
@@ -347,8 +371,16 @@ def mesh_part(name, faces, matrix, materials, band):
         for p in fitted:
             # Blender Z-up converts back to game GLTF Y-up on export.
             positions.append((p[0], -p[2], p[1]))
-            u = (p[axes[0]]*.41) % 1
-            v = ((p[axes[1]]*.53) % 1)*.070 + material_band/12 + .006
+            if name == "tanker-tank":
+                u = (p[2]-low[2])/(high[2]-low[2])
+                local_v = (p[1]-low[1])/(high[1]-low[1])
+            elif name == "tanker-boarding-plate":
+                u = (p[0]-low[0])/(high[0]-low[0])
+                local_v = (p[2]-low[2])/(high[2]-low[2])
+            else:
+                u = (p[axes[0]]*.41) % 1
+                local_v = (p[axes[1]]*.53) % 1
+            v = (material_band + .03 + local_v*.94)/SURFACE_BANDS
             uvs.append((u, v))
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata(positions, [], triangles)
@@ -372,7 +404,12 @@ def build(output, fit, paths, seed):
     for pick in fit["sourcePicks"]:
         if len(sources[pick["role"]]) != pick["triangles"]:
             raise ValueError("Original source triangle count changed: " + pick["model"])
-    materials = wear_atlas(seed)
+    tank_center_z = -1.700021
+    tank_matrix = affine((4.15, 4.25, 4.4), (0, 1, tank_center_z), -math.pi/2)
+    tank_low, tank_high = fitted_bounds(sources["tank"], tank_matrix)
+    tank_bands = [(tank_center_z+offset-tank_low[2])/(tank_high[2]-tank_low[2])
+                  for offset in (-.8, 0, .8)]
+    materials = wear_atlas(seed, tank_bands)
     parts, lineage, native_builds = [], [], []
 
     def add(role, name, donor, matrix, band, subset=None):
@@ -389,73 +426,107 @@ def build(output, fit, paths, seed):
         return fitted_bounds(faces, matrix)
 
     body_low, body_high = add("body", "tanker-body", "body", affine((2, 2, 2.2)), 0)
-    # Reverse the complete tank so its asymmetric native brackets straddle
-    # the rear wheel arches. Keep the original fit scales and bed contact Y.
-    tank_center_z = -1.700021
-    tank_matrix = affine((4.15, 4.25, 4.4), (0, 1, tank_center_z), -math.pi/2)
+    # Original tank brackets retain their reviewed contact with the native bed.
     tank_low, tank_high = add("tank", "tanker-tank", "tank", tank_matrix, 1)
-    mounts = []
-    for index, offset in enumerate([-.8, 0, .8]):
-        z = tank_center_z + offset
-        side = -1 if index == 1 else 1
-        matrix, mount = valve_mount(sources["tank"], tank_matrix, sources["valve"], side, z)
-        mounts.append(mount)
-        add("valve", "tanker-valve-" + str(index), "valve", matrix, 6)
-    for side in (-1, 1):
-        add("armor", "tanker-cab-door-" + str(side), "armor-door",
-            affine((.38, 1.45, 1.35), (side*1.08, 1.22, 1.68)), 2)
-    add("armor", "tanker-rear-drivetrain", "armor-drivetrain",
-        affine((1.65, 1, .30), (0, 1.03, -3.42)), 3)
-    for side in (-1, 1):
-        add("armor", "tanker-salvage-tyre-" + str(side), "armor-tyre",
-            affine((.75, 1.3, 1.3), (side*1.280017, 1.270021, -1.289983)), 4)
     panel_faces = sources["armor-panel"]
     low, high = bounds(panel_faces)
     roof = [(face, name) for face, name in panel_faces
             if all(p[1] >= high[1] - .041 for p in face)]
     if not roof:
         raise ValueError("Approved container has no actual roof salvage")
-    plate_matrix = affine((3.75, .75, 2.15),
-                          (0, tank_high[1] - (high[1] - .040)*.75, tank_center_z))
+    roof_low, roof_high = bounds(roof)
+    plate_matrix = affine((3.75, .12, 2.15),
+                          (0, tank_high[1]+.022-roof_low[1]*.12, tank_center_z))
     plate_low, plate_high = add("boarding-plate", "tanker-boarding-plate",
-                               "armor-panel", plate_matrix, 7, roof)
-    # Compress genuine container shells into supported salvaged side skirts.
+                               "armor-panel", plate_matrix, 13, roof)
+    # The two .4 m glass housings and .08 m posts set the assembly's highest
+    # point. Calculate the final fit before placing the complete native valves.
+    target = fit["buildTargetsMetres"]
+    vertical_fit = (target["height"]-.48)/plate_high[1]
+    longitudinal_fit = target["length"]/(body_high[2]-body_low[2])
+    mounts = []
+    for index, offset in enumerate([-.8, 0, .8]):
+        z = tank_center_z + offset
+        side = -1 if index == 1 else 1
+        matrix, mount = valve_mount(sources["tank"], tank_matrix, sources["valve"],
+                                   side, z, vertical_fit, longitudinal_fit)
+        mounts.append(mount)
+        add("valve", "tanker-valve-" + str(index), "valve", matrix, 6)
+        # Close both original ports with actual salvaged roof faces. The tank
+        # colour prevents the two dark holes from competing with the wheel.
+        for port_index, pipe_x in enumerate((-.5,.5)):
+            cap = [[0,.03,0,pipe_x-roof_high[1]*.03],
+                   [.92/(roof_high[0]-roof_low[0]),0,0,
+                    .5-(roof_high[0]+roof_low[0])*.46/(roof_high[0]-roof_low[0])],
+                   [0,0,.92/(roof_high[2]-roof_low[2]),
+                    -(roof_high[2]+roof_low[2])*.46/(roof_high[2]-roof_low[2])],
+                   [0,0,0,1]]
+            add("port-cap", "tanker-valve-cap-"+str(index)+"-"+str(port_index),
+                "armor-panel", multiply(matrix,cap), 14, roof)
     for side in (-1, 1):
+        add("armor", "tanker-cab-door-" + str(side), "armor-door",
+            affine((.38, 1.45, 1.35), (side*1.08, 1.22, 1.68)), 2)
+    # A genuine roof salvage sheet follows the lower windscreen slope.
+    windscreen = [[5.1,0,0,0], [0,0,.40,1.78],
+                  [0,.10,-.176,2.52999], [0,0,0,1]]
+    add("armor", "tanker-lower-windscreen-plate", "armor-panel", windscreen, 2, roof)
+    add("armor", "tanker-rear-drivetrain", "armor-drivetrain",
+        affine((1.65, 1, .30), (0, 1.03, -3.42)), 3)
+    for side in (-1, 1):
+        add("armor", "tanker-salvage-tyre-" + str(side), "armor-tyre",
+            affine((.75, 1.3, 1.3), (side*1.280017, 1.270021, -1.289983)), 4)
         add("armor", "tanker-bed-skirt-" + str(side), "armor-panel",
             affine((.20, 1.8, 4.1), (side*1.29, .75, -1.29)), 2)
+    # One native lamp material uses packed colour/emission strips. The dark
+    # steel post never emits; only the dull amber glass lights when requested.
     lamp_material = bpy.data.materials.new("boarding-warning-lamp")
     lamp_material.use_nodes = True
     shader = lamp_material.node_tree.nodes.get("Principled BSDF")
-    shader.inputs["Base Color"].default_value = (.10, .065, .025, 1)
-    shader.inputs["Roughness"].default_value = .42
-    shader.inputs["Metallic"].default_value = .2
+    shader.inputs["Roughness"].default_value = .24
+    shader.inputs["Metallic"].default_value = 0
     shader.inputs["Emission Color"].default_value = (1, .28, .025, 1)
     shader.inputs["Emission Strength"].default_value = 0
-    for index, x in enumerate([-.52, .52]):
-        # Small warning lamps are the only authored accessory geometry.
-        vertices = []
-        for height, radius in [(plate_high[1] - .010, .075),
-                               (plate_high[1] + .080, .052)]:
+    for title, colours, socket in [
+            ("tanker-beacon-glass-and-post", [(.075,.08,.075,1),(.10,.045,.008,1)], "Base Color"),
+            ("tanker-beacon-glass-emission", [(0,0,0,1),(1,1,1,1)], "Emission Color")]:
+        image = bpy.data.images.new(title,width=2,height=2)
+        image.pixels.foreach_set([value for colour in colours for _ in range(2) for value in colour])
+        image.pack()
+        texture = lamp_material.node_tree.nodes.new("ShaderNodeTexImage")
+        texture.image = image; texture.interpolation = "Closest"
+        lamp_material.node_tree.links.new(texture.outputs["Color"],shader.inputs[socket])
+    for index, x in enumerate([plate_low[0]+.14, plate_high[0]-.14]):
+        center_z = plate_high[2]-.12
+        base = plate_high[1]-.005
+        post_top = plate_high[1]+.08/vertical_fit
+        glass_top = plate_high[1]+.48/vertical_fit
+        vertices, triangles, regions = [], [], []
+        def cylinder(bottom, top, radius, region):
+            start = len(vertices)
+            for height in (bottom,top):
+                for segment in range(12):
+                    angle = segment*math.tau/12
+                    vertices.append((x+math.cos(angle)*radius,
+                                     -center_z+math.sin(angle)*radius,height))
+            vertices.extend([(x,-center_z,bottom),(x,-center_z,top)])
             for segment in range(12):
-                angle = segment*math.tau/12
-                vertices.append((x + math.cos(angle)*radius,
-                                 -tank_center_z + math.sin(angle)*radius, height))
-        vertices += [(x, -tank_center_z, plate_high[1] - .010),
-                     (x, -tank_center_z, plate_high[1] + .080)]
-        triangles = []
-        for segment in range(12):
-            following = (segment + 1) % 12
-            triangles.extend([(segment, following, segment + 12),
-                              (following, following + 12, segment + 12),
-                              (24, following, segment),
-                              (25, segment + 12, following + 12)])
+                following = (segment+1)%12
+                triangles.extend([(start+segment,start+following,start+segment+12),
+                                  (start+following,start+following+12,start+segment+12),
+                                  (start+24,start+following,start+segment),
+                                  (start+25,start+segment+12,start+following+12)])
+                regions.extend([region]*4)
+        cylinder(base,post_top,.055,.25)
+        cylinder(post_top,glass_top,.12,.75)
         mesh = bpy.data.meshes.new("warning-lamp")
-        mesh.from_pydata(vertices, [], triangles)
-        mesh.update()
+        mesh.from_pydata(vertices, [], triangles); mesh.update()
         mesh.materials.append(lamp_material)
-        lamp = bpy.data.objects.new("tanker-warning-lamp-" + str(index), mesh)
+        uv = mesh.uv_layers.new(name="beacon-glass-and-post")
+        for polygon,region in zip(mesh.polygons,regions):
+            for loop in polygon.loop_indices: uv.data[loop].uv = (.5,region)
+        lamp = bpy.data.objects.new("tanker-warning-lamp-"+str(index),mesh)
         bpy.context.collection.objects.link(lamp)
-        parts.append({"role": "warning-lamp", "node": lamp.name})
+        parts.append({"role":"warning-lamp","node":lamp.name})
     # Fit the complete rigid assembly together. The same affine map updates
     # every genuine donor and both authored lamps, preserving all contacts.
     objects = [obj for obj in bpy.context.scene.objects if obj.type == "MESH"]
