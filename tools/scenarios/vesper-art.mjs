@@ -136,14 +136,24 @@ export async function run(context) {
     }
     const cleanup=await context.evaluate(`(async () => {
       const q=window.__vesperReview,app=window.__qaApp,before=JSON.stringify(app.duel.state);
+      const resources=new Set(),counts=new Map();
+      q.pool.group.traverse(node=>{
+        if(node.geometry)resources.add(node.geometry);if(node.skeleton)resources.add(node.skeleton);
+        for(const material of [].concat(node.material||[])){
+          resources.add(material);for(const value of Object.values(material))if(value?.isTexture)resources.add(value);
+        }
+      });
+      for(const resource of resources){counts.set(resource,0);resource.addEventListener('dispose',()=>counts.set(resource,counts.get(resource)+1));}
       q.pool.dispose();q.pool.dispose();window.fetch=q.originalFetch;
-      window.__render.dispose();
-      for(let i=0;i<120 && q.local.children.length;i++)await new Promise(requestAnimationFrame);
-      if(q.pool.group.parent||q.pool.group.children.length||q.local.children.length)throw Error('Native comparison cleanup did not retire figures');
+      if(q.pool.group.parent||q.pool.group.children.length||!resources.size||[...counts.values()].some(count=>count!==1))
+        throw Error('Owned native comparison resources did not retire exactly once');
       if(JSON.stringify(app.duel.state)!==before)throw Error('Cleanup changed Duel state');
-      return {originalCrewRetired:true,candidateRetired:true,fetchRestored:true,stateUnchanged:true};
+      return {originalCrewRetired:true,resourcesDisposedOnce:resources.size,fetchRestored:true,stateUnchanged:true,
+        candidateLifecycle:'Native tests cover resources; this game page is retired by normal navigation.'};
     })()`);
-    report.cleanup.push({quality,...cleanup});await persist();
+    await context.navigate('/tools/menu-check.html?flags=wasteland2&vesper-page-retired=1');
+    await context.waitFor('window.__qaApp?.visualReady && !window.__vesperReview', quality+' candidate page retired',60000);
+    report.cleanup.push({quality,...cleanup,pageRetiredByNavigation:true});await persist();
   }
   assert.equal(report.captures.length,10); report.passed=true;await persist();
 }
