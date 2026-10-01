@@ -56,9 +56,15 @@ receipts remain under integration .evidence/2026-10-01/ARS-CORE/.
 
 ## Still required
 
-Complete native balance with weapon-use counts, High and Performance
-memory-only browser counters, independent review, lane tier and build.
-No current lane/full-tier, browser, balance or whole-card pass is claimed.
+High and Performance passed the native browser scenario with memory-only saves,
+eight matched screenshots and no console or request failures. The real Armory,
+Oil contact, shield and grace counters, Smoke occlusion and expiry, and render
+purity passed. Extra phone captures show an existing crowded HUD.
+
+A supplemental nine-race native report repeats exactly and counts real CPU
+Oil and Smoke use. The required thirty-seed balance check with both switches
+on, its independent review, lane tier and build still remain. No whole-card
+pass is claimed.
 
 The three settled cue names may be emitted without sound while Arsenal is
 in development. AUD-ARSENAL-W1 supplies sounds before release. Protected
