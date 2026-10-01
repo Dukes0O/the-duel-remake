@@ -1442,3 +1442,13 @@ Salt Flats gains only its new control fixture, existing hooks remain requests.
 Fuel's second gate failure is its old exact catalog expectation; independent
 review approves adding only the required dev entry and actual isolation controls.
 Existing crash peak debt is proven separately and queued, never hidden.
+
+AUD-CRASH-PEAK is claimed after the board shows it ready: baselinecontact
+needs no Fuel dependency. It shares Fuel lane/branch, with exclusive audio.js
+output and recorder/test hooks transferred from the frozen Fuel handler.
+Tests-first measured output repair runs before the blocked sound gate clears;
+no second lane edits audio, no bank/assets or protected external lane access.
+This removes an artificial repair/feature dependency cycle, not a sound-gate
+waiver. Native sample/true peaks, safe-signal preservation, timing/mix and
+cleanup controls stay required. Five builder lanes still at most, including
+the external audio lane; this is a second card in one existing lane.

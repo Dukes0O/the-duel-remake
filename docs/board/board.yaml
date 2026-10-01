@@ -10,12 +10,13 @@ tasks:
     owner: codex
     lane: AUDIO
     size: S
-    needs: [ARENA-03]
-    status: ready
-    owns: [tools/test-audio-crash-peak.mjs, tools/scenarios/audio-crash-peak.mjs, docs/changes/AUD-CRASH-PEAK.md]
-    hooks: []
-    hook_requests: [src/audio.js]
-    sequencing: "Actual60mph Last Car Rolling contact with no Fuel events reproduces baseline overload. Tests first from native event/game-only WebAudio capture, then request exact audio.js hook only after Fuel merge and external audio-owner handoff. Protected bank/source/catalog/assets/branches remain untouched. Do not remove Fuel feedback, turn down all engines indiscriminately, or report analyzer unmeasured arrays as failures. Measurements proceed with listening explicitly flagged for Kyle under SPEC0.9."
+    needs: []
+    status: building
+    claimed_by: codex-director-2026-09-30-overnight
+    branch: lane/cmb/arena-03-fuel-run
+    owns: [tools/test-audio-crash-peak.mjs, tools/scenarios/audio-crash-peak.mjs, src/audio-output.js, docs/changes/AUD-CRASH-PEAK.md]
+    hooks: [src/audio.js, tools/audio-race-check.js, tools/test-audio.mjs]
+    sequencing: "Baseline nonFuel contact needs no Fuel dependency. This repair will use the SAME Fuel lane/branch, after exact tests-first and exclusive audio.js/recorder handoff; no second lane edits a shared file. Fuel handler is frozen, no bank/source/catalog/assets or external protected lane changes. Scope existing output limiting to actual recorded peak controls; preserve below-threshold signal, impact contrast/engine audibility/event timing/cleanup and old assertions. No indiscriminate engine attenuation or false post-compressor/pre-output meter pass. Kyle listening remains explicitly flagged under SPEC0.9."
     helpers: [test_author, reviewer, audio_qa]
     acceptance:
       - "Reproduce actual car contact behind the current engine mix with memory-only saves/private port and record RED: nonFuel samplepeak-0.049dBFS/truepeak+0.22dBTP, also Fuel-0.087/+0.15. Source gain/limiting repair meets clean-signal samplepeak<=-1dBFS and advisory truepeak<=-1dBTP with actual contact and appropriate overlapping-voice controls. Keep impact contrast, engine audibility, existing event mapping, timing and old assertions. Native browser/audio capture before and after; flag human listening rather than invent ratings."
@@ -945,7 +946,7 @@ tasks:
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run
     owns: [tools/test-onfoot-car-contacts.mjs, tools/test-arena-fuel-depot.mjs, src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/replays/arena-fuel-run-controls.json, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md, tools/test-fuel-car-attribution.mjs, tools/test-fuel-standing-carrier.mjs]
-    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js, src/combat-ai.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-feature-flags.mjs, src/raiders.js, start-preview.bat, tools/test-wasteland-beta.mjs]
+    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/combat-ai.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-feature-flags.mjs, src/raiders.js, start-preview.bat, tools/test-wasteland-beta.mjs]
     review_note: "Claude fighter contacts and 4 m depot design are merged in ba157a5. Resume with independent red tests for every on-foot fighter; preserve the reviewed durable launch/cache/save source. Whole-feature browser/audio/gameplay/review and exact lane/build gates remain before Claude review and merge."
     design_question_answered: "Claude, 30 September 2026: see docs/CREW.md, Car weapons against fighters on foot. Original question: Actual on-foot Fuel carrier is currently immune to car projectiles. Claude must settle bolt damage, bomb splash and cargo-drop behavior before that contact code; chase and aim fixes follow the settled carrier rule now."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
