@@ -689,7 +689,13 @@ tasks:
     lane: ART
     size: M
     needs: [ART-SRC-CREW-W]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-09-30-overnight
+    branch: codex/art/vesper
+    owns: [tools/blender/vesper-blackiron.py, tools/art/vesper-fit.json, tools/test-vesper-art.mjs, tools/scenarios/vesper-art.mjs, docs/changes/ART-FIT-CREW-W.md, docs/board/looks/vesper/]
+    hooks: []
+    helpers: [test_author, art_director, reviewer, art_critic, browser_qa]
+    sequencing: "Tanker round1 and Arsenal wait for Claude; they have no active Source builder. Move to the next free art card within five active builders including external audio. Tests first against a genuine current women GLB, preserving rig/actions/topology and all current crew/roster/assets. Build only private Vesper costume in settled blackened steel/dark red; no sculpting replacement anatomy or revealing her. Current women source choice within the approved family is routine fitting; record it. Native private recipe/model comparison uses actual game renderer, every sheet goes to Claude, three rounds at most. No public asset, crew/rigged-fighter/registry/reward/App/save or shared hook granted; WAR-04 owns later reveal/install integration. Independent reviewer must approve any hook before edits. No new source search or existing crew refit."
     flag: wasteland2
     acceptance:
       - "Kyle kept the current Nell, Odessa and Wren on 30 September 2026, so they are not refitted. Build only Vesper Blackiron, the Baron's daughter, by adapting the current women's figure (its rig, actions and topology) under docs/WASTELAND_ART.md 'Fitting existing models': her own costume in the Baron's blackened steel and a dark red accent, recognizable next to Nell, Odessa and Wren. Built but shown only once WAR-04 reveals her. Kyle has the last look in the Preview."
