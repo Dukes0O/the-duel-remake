@@ -284,3 +284,125 @@ manifest, logs and witnesses remain ignored evidence and are not committed.
 There is no prior runtime tanker or generator to retire. No switch or gameplay
 event was installed by this source stage; future removal/installation belongs
 to the approved continuation after review.
+
+
+## Reviewed native contact correction and independent crossing RED — 1 October 2026
+
+Tests-only follow-up on unchanged source
+`23748e635f8fa0784a9c5c72998b19a94facc015`, with the original test freeze
+`415bd22`. The Director assigned only this append-only note and
+`tools/test-convoy-tanker-art.mjs`. The independent reviewer
+`audio_output_source_review` approved replacing the false flat-bottom-face
+assumption before this edit. The Director confirmed the scope in writing.
+No recipe, fit settings, source mesh, model consumer, scenario, installed
+asset, catalog, licence, other assertion or replay pin changed.
+
+### Exact assertion change
+
+The picked 310-face detail-tank has four genuine minimum vertices and two
+bottom contact edges. Its minimum Y is about -2.8199664484680564e-18.
+There are no complete triangles wholly within 0.002 m of that minimum.
+The lowest complete face reaches Y 0.020147841423749924; the current 4.25
+Y scale makes that difference 0.08562832605093718 m. Requiring complete flat
+bottom triangles rejected the authentic picked source even when its actual
+contact edges rested on the bed.
+
+Only the old `feet` filter/assertion and centroid support loop were replaced.
+The new check welds original vertices at 1e-7, derives the real minimum
+triangle edges, follows the existing affine source-instance matrix, and finds
+the same retained endpoints and topology in the actual fitted GLB. It then
+checks the **actual fitted** edges against upward native body triangles.
+Support must cover the entire projected edge, including endpoints, midpoint
+and every triangle coverage boundary. The vertical precision remains
+0.002 m; the old centroid loop's wider 0.05 m allowance is removed.
+No envelope or centroid can supply missing deck geometry.
+
+The native candidate has two retained contact edges at Y 1:
+
+- X about 1.02e-6, Z from -0.9621501564979553 to -0.7131500244140625,
+  supported over its whole length by native bed face 725.
+- X about 8.07e-7, Z from -2.6553502082824707 to -2.4063501358032227,
+  supported over its whole length by native bed face 724.
+
+Both support normals have Y about 1. The contact positive control also
+checks that these genuine touching bed faces produce **zero strict interior
+crossings**. Thus a supported contact does not automatically approve the
+rest of the fit.
+
+Six new native negative controls pass: move a clone of the complete native
+310-face tank up 0.06 m, down 0.06 m or sideways 0.8 m; remove both actual
+support faces, or remove each of the two support halves separately. The
+sideways contacts remain inside the real transformed truck envelope but
+lose native bed support. Removing either or both deck triangles leaves the
+body envelope exactly unchanged. These controls preserve every donor face
+in the moved tank fixtures and prove why an envelope-only test is inadequate.
+
+### Genuine fit defect remains RED
+
+A separate check compares all 310 native tank faces with all 2574 native
+truck faces. It requires both triangles to straddle the other's actual
+plane and share a positive-length interior line interval. Coplanar contact,
+plane tangency and envelope overlap do not count as strict crossings.
+The unchanged candidate independently reproduces **20 strict crossings**,
+ten at each wheel arch. No bracket deletion or altered donor topology is
+required by the test; coherent source fitting still needs repair.
+
+The sole failure is:
+
+`complete picked native tank does not strictly cross complete native truck surfaces: actual picked tank strictly crosses native truck surfaces: 20 crossings (20 !== 0)`
+
+First native witness: tank face 158 crosses body face 541 for
+0.027917915118930048 m, from
+[-0.9136493802070618, 1.1867514031270698, -0.7857749462127686] to
+[-0.8857314650881317, 1.1867514031270698, -0.7857749462127686].
+This matches the supplied independent review witness.
+
+A separate actual triangle-surface probe finds a bracket point
+[0.9136514663696289, 1.0856282711029053, -0.8895251750946045] beneath the
+arch surface at Y 1.25912445345364: a vertical overlap of
+0.17349618235073483 m. The crossing witness's `planeDistanceExtent` is a
+triangle-plane diagnostic, not a penetration depth or physical response.
+
+### Commands, results and preservation proof
+
+- `node --check tools/test-convoy-tanker-art.mjs`: pass.
+- `node tools/test-convoy-tanker-art.mjs`: final native freeze **42 checks,
+  41 passed, 1 failed**, exit 1 for the strict crossing defect above.
+  All 34 original checks now pass, including their reviewed support
+  correction. The new contact positive and all six native negatives pass.
+- The suite's existing real Blender validation/export, complete donor
+  lineage, source corruption, exact repeat export, palette/grounding,
+  valve/plate/lamp, presentation lifecycle/disposal and protected-file
+  controls retain their original assertions and pass.
+- Raw stdout/stderr: ignored
+  `.evidence/2026-10-01/ART-FIT-TANKER/test-contact-crossing-red/native-freeze.log`.
+  Actual per-recipe logs, full verdict and native contact/crossing/surface
+  witness are retained in that directory's `native-details/`.
+  The private generated candidate is in
+  `.qa-dist/tanker-art-tests-2XVSXw`; it is evidence, not installed game art.
+- Remove only the additive helpers/checks and reverse only the reviewed
+  support replacement: the original file reconstructs byte-for-byte,
+  SHA-256 `980afce57f84e6457a83db61464bbaf0817f2ceae23c7af9dd4ca399bd2c58e7`.
+  Original prefix SHA-256 before that replacement is
+  `962f72a1cc2653bafa0827334f04980b5aa842d25512aafb82e19f1ca4dda54b`;
+  original suffix SHA-256 after it is
+  `1d5fde176938557a313d142f023f77a1a7ba24cef4378dadc144a112870de53d`.
+  Final test SHA-256:
+  `6021849168fe659eccd47a6db40e2e320a5b66a5c34f81dbc6632212f97cad05`.
+- `git diff --check`: pass. No existing replay fingerprint changed.
+
+No browser comparison, art score, frame pacing, lane/build/full gate,
+merge or runtime acceptance is claimed here. Historical scripted HUD,
+held-pose and listening limitations remain as previously recorded.
+The source worker must fix the native placement before fresh source gates
+and actual renderer review; valid support alone does not clear this card.
+
+### Removed
+
+Replaced only the reviewed false requirement for complete flat minimum-Y
+foot triangles and its centroid-only support loop. Authentic native contact
+edges now receive complete triangle coverage checks at 0.002 m precision.
+No original donor face, picked bracket, source record, settings, asset,
+other frozen assertion, old replay control or unrelated behavior was removed.
+Ignored raw evidence remains for the next independent review; the Director's
+janitor removes it after its verdict is committed.

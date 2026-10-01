@@ -62,6 +62,99 @@ function meshSurfaceAt(node,x,z){
   return top;
 }
 
+// Contact topology comes from the actual picked donor, not its envelope or a
+// presumed flat bottom face. Export rounding is allowed only within 0.002 m.
+const contactPrecision=.002,weldPrecision=1e-7;
+const distance=(a,b)=>Math.hypot(...a.map((value,i)=>value-b[i]));
+const vector=point=>new THREE.Vector3(...point);
+function weldedEdges(faces){
+  const vertices=[],edges=new Map();
+  const vertexId=point=>{let id=vertices.findIndex(other=>distance(point,other)<=weldPrecision);
+    if(id<0){id=vertices.length;vertices.push(point);}return id;};
+  for(const face of faces){const ids=face.map(vertexId);
+    for(let i=0;i<3;i++){const idsSorted=[ids[i],ids[(i+1)%3]].sort((a,b)=>a-b);
+      if(idsSorted[0]!==idsSorted[1])edges.set(idsSorted.join(':'),idsSorted.map(id=>vertices[id]));}}
+  return {vertices,edges:[...edges.values()]};
+}
+async function nativeContactEdges(data){
+  const pick=config.sourcePicks.find(row=>row.role==='tank'),source=await original(pick);
+  const topology=weldedEdges(facesOf(source.gltf.scene)),minY=Math.min(...topology.vertices.map(point=>point[1]));
+  const sourceEdges=topology.edges.filter(edge=>edge.every(point=>Math.abs(point[1]-minY)<=weldPrecision));
+  assert.ok(sourceEdges.length,'picked native tank has nonempty genuine minimum contact edges');
+  const part=nativePart(data,'tank')[0],instance=data.manifest.sourceInstances.find(row=>row.node===part.row.node);
+  assert.equal(instance?.sourceKey,key(pick),'contact lineage uses the picked native tank');
+  const matrix=new THREE.Matrix4().fromArray(instance.matrix),actual=weldedEdges(facesOf(part.node));
+  const expectedEdges=sourceEdges.map(edge=>edge.map(point=>vector(point).applyMatrix4(matrix).toArray()));
+  const edges=expectedEdges.map(edge=>{
+    const retained=actual.edges.find(other=>
+      (distance(edge[0],other[0])<=contactPrecision&&distance(edge[1],other[1])<=contactPrecision)||
+      (distance(edge[0],other[1])<=contactPrecision&&distance(edge[1],other[0])<=contactPrecision));
+    assert.ok(retained,'same original minimum contact edge survives fitted native topology');
+    return distance(edge[0],retained[0])<=contactPrecision?retained:[retained[1],retained[0]];
+  });
+  return {sourceEdges,expectedEdges,edges,minY,sourceVertices:topology.vertices.filter(point=>Math.abs(point[1]-minY)<=weldPrecision)};
+}
+function projectedWeights(face,point){
+  const [a,b,c]=face,denominator=(b[2]-c[2])*(a[0]-c[0])+(c[0]-b[0])*(a[2]-c[2]);
+  if(Math.abs(denominator)<1e-12)return null;
+  const u=((b[2]-c[2])*(point[0]-c[0])+(c[0]-b[0])*(point[2]-c[2]))/denominator;
+  const v=((c[2]-a[2])*(point[0]-c[0])+(a[0]-c[0])*(point[2]-c[2]))/denominator;
+  return [u,v,1-u-v];
+}
+function supportIntervals(edge,faces){
+  const rows=[];
+  faces.forEach((face,index)=>{
+    const normal=vector(face[1]).sub(vector(face[0])).cross(vector(face[2]).sub(vector(face[0]))).normalize();
+    if(normal.y<=1e-7)return;
+    const start=projectedWeights(face,edge[0]),end=projectedWeights(face,edge[1]);if(!start||!end)return;
+    let lo=0,hi=1;
+    for(let i=0;i<3;i++){const delta=end[i]-start[i];
+      if(Math.abs(delta)<1e-12){if(start[i]<-1e-7)return;}
+      else if(delta>0)lo=Math.max(lo,(-1e-7-start[i])/delta);
+      else hi=Math.min(hi,(-1e-7-start[i])/delta);}
+    if(hi<lo||hi<0||lo>1)return;lo=Math.max(0,lo);hi=Math.min(1,hi);
+    const gapAt=t=>{const weights=start.map((value,i)=>value+(end[i]-value)*t);
+      return edge[0][1]+(edge[1][1]-edge[0][1])*t-weights.reduce((y,value,i)=>y+value*face[i][1],0);};
+    // Both gap functions are affine on this actual triangle. Endpoints and the
+    // midpoint prove the entire clipped segment, including cell crossings.
+    if([lo,(lo+hi)/2,hi].every(t=>Math.abs(gapAt(t))<=contactPrecision))rows.push({lo,hi,index,normalY:normal.y});
+  });
+  return rows;
+}
+function assertEdgeSupport(edges,faces){
+  assert.ok(edges.length,'nonempty actual native contact edges');const witnesses=[];
+  for(const edge of edges){const intervals=supportIntervals(edge,faces).sort((a,b)=>a.lo-b.lo),boundaries=[0,1,...intervals.flatMap(row=>[row.lo,row.hi])].sort((a,b)=>a-b);
+    for(let i=0;i<boundaries.length;i++){
+      const t=boundaries[i];assert.ok(intervals.some(row=>t>=row.lo-1e-7&&t<=row.hi+1e-7),
+        'whole actual contact edge needs upward native bed triangles within 0.002 m');
+      if(i){const mid=(boundaries[i-1]+t)/2;assert.ok(intervals.some(row=>mid>=row.lo-1e-7&&mid<=row.hi+1e-7),
+        'native bed coverage cannot contain a gap between triangle cell crossings');}}
+    witnesses.push({edge,intervals});
+  }
+  return witnesses;
+}
+function strictCrossings(left,right){
+  const prepared=faces=>faces.map((face,index)=>{const points=face.map(vector),normal=points[1].clone().sub(points[0]).cross(points[2].clone().sub(points[0])).normalize();
+    return {face,index,points,normal,box:new THREE.Box3().setFromPoints(points)};});
+  const epsilon=1e-7,result=[],aRows=prepared(left),bRows=prepared(right);
+  function planeSlice(points,distances){const hits=[];
+    for(let i=0;i<3;i++){const j=(i+1)%3;if(Math.abs(distances[i])<=epsilon)hits.push(points[i].clone());
+      if(distances[i]*distances[j]<0)hits.push(points[i].clone().lerp(points[j],distances[i]/(distances[i]-distances[j])));}
+    return hits.filter((point,i)=>hits.findIndex(other=>point.distanceTo(other)<=epsilon)===i);}
+  for(const a of aRows)for(const b of bRows){if(!a.box.intersectsBox(b.box))continue;
+    const aDistances=a.points.map(point=>b.normal.dot(point.clone().sub(b.points[0]))),bDistances=b.points.map(point=>a.normal.dot(point.clone().sub(a.points[0])));
+    const straddles=distances=>Math.min(...distances)<-epsilon&&Math.max(...distances)>epsilon;
+    if(!straddles(aDistances)||!straddles(bDistances))continue;
+    const line=a.normal.clone().cross(b.normal);if(line.lengthSq()<1e-12)continue;line.normalize();
+    const aSlice=planeSlice(a.points,aDistances),bSlice=planeSlice(b.points,bDistances);if(aSlice.length<2||bSlice.length<2)continue;
+    const values=points=>points.map(point=>point.dot(line));const av=values(aSlice),bv=values(bSlice);
+    const lo=Math.max(Math.min(...av),Math.min(...bv)),hi=Math.min(Math.max(...av),Math.max(...bv));
+    if(hi-lo>epsilon){const origin=aSlice[0];result.push({leftFace:a.index,rightFace:b.index,length:hi-lo,
+      endpoints:[lo,hi].map(value=>origin.clone().addScaledVector(line,value-origin.dot(line)).toArray()),
+      planeDistanceExtent:Math.max(...aDistances.map(Math.abs),...bDistances.map(Math.abs))});}}
+  return result;
+}
+
 function pngPixelHash(bytes){
   if(bytes.subarray(0,8).toString('hex')!=='89504e470d0a1a0a')return null;
   const width=bytes.readUInt32BE(16),height=bytes.readUInt32BE(20),depth=bytes[24],type=bytes[25];
@@ -253,14 +346,8 @@ check('grounded native truck carries its tank, valve attachments and raised roof
   for(const axis of ['x','z'])assert.ok(tank.min[axis]>=body.min[axis]-.002&&tank.max[axis]<=body.max[axis]+.002,'actual tank fits the native cab/bed footprint');
   assert.ok(tank.min.y>body.min.y&&tank.min.y<body.max.y,'tank support feet overlap the actual truck bed envelope');
   const bodyNode=nativePart(data,'body')[0].node,tankNode=nativePart(data,'tank')[0].node;
-  const feet=facesOf(tankNode).filter(face=>face.every(point=>Math.abs(point[1]-tank.min.y)<=.002));
-  assert.ok(feet.length,'actual native tank has retained bottom support-foot triangles');
-  for(const foot of feet){
-    const center=foot.reduce((point,p)=>point.add(new THREE.Vector3(...p)),new THREE.Vector3()).divideScalar(3);
-    const support=meshSurfaceAt(bodyNode,center.x,center.z);
-    assert.notEqual(support,null,'actual truck bed provides visible geometry under the native tank feet');
-    assert.ok(Math.abs(center.y-support)<=.05,'native tank feet rest on actual bed triangles without a floating or buried gap');
-  }
+  const contacts=await nativeContactEdges(data);
+  assertEdgeSupport(contacts.edges,facesOf(bodyNode));
   const plate=boxOf(nativePart(data,'boarding-plate')[0].node);
   assert.ok(plate.max.y>tank.max.y&&plate.min.y<=tank.max.y+.05,'boarding plate is visibly raised and attached at the actual tank roof');
   for(const axis of ['x','z'])assert.ok(plate.min[axis]>=tank.min[axis]-.002&&plate.max[axis]<=tank.max[axis]+.002,'safe roof boarding footprint');
@@ -270,6 +357,55 @@ check('grounded native truck carries its tank, valve attachments and raised roof
     assert.ok([body,tank].some(host=>['x','y','z'].every(axis=>overlaps(box,host,axis))),'actual salvage armor attaches to cab/bed or tank');}
   for(const part of nativePart(data,'warning-lamp')){const box=boxOf(part.node);
     assert.ok(['x','y','z'].every(axis=>overlaps(box,plate,axis)),'warning lamp is physically attached to the raised plate');}
+});
+check('genuine original minimum edges rest over their complete lengths on native upward bed faces',async()=>{
+  const data=await candidate(),contacts=await nativeContactEdges(data),body=facesOf(nativePart(data,'body')[0].node);
+  const witnesses=assertEdgeSupport(contacts.edges,body);
+  const tankNode=nativePart(data,'tank')[0].node,tankFaces=facesOf(tankNode),crossings=strictCrossings(tankFaces,body);
+  const bedIndices=[...new Set(witnesses.flatMap(row=>row.intervals.map(interval=>interval.index)))];
+  assert.ok(witnesses.every(row=>row.intervals.length),'real upward bed coverage is nonempty');
+  assert.equal(strictCrossings(tankFaces,bedIndices.map(index=>body[index])).length,0,
+    'actual supported bed contact is not a strict interior crossing');
+  const vertexWitnesses=tankFaces.flat().map(point=>({point,surfaceY:meshSurfaceAt(nativePart(data,'body')[0].node,point[0],point[2])}))
+    .filter(row=>row.surfaceY!==null&&row.surfaceY-row.point[1]>contactPrecision)
+    .map(row=>({...row,verticalGap:row.surfaceY-row.point[1]})).sort((a,b)=>b.verticalGap-a.verticalGap);
+  writeFileSync(join(scratch,'native-contact-crossing-witness.json'),JSON.stringify({sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),contacts,witnesses,crossings,vertexWitnesses},null,2)+'\n');
+});
+for(const [name,offset] of [['hover',[0,.06,0]],['burial',[0,-.06,0]],['lateral inside body envelope',[.8,0,0]]])
+  check('native contact coverage rejects '+name,async()=>{
+    const data=await candidate(),contacts=await nativeContactEdges(data),bodyNode=nativePart(data,'body')[0].node;
+    // Move a clone of all genuine exported tank faces. Its source-instance
+    // matrix follows the same translation; no donor faces are invented.
+    const movedNode=nativePart(data,'tank')[0].node.clone(true),translation=new THREE.Matrix4().makeTranslation(...offset);
+    movedNode.applyMatrix4(translation);movedNode.updateMatrixWorld(true);
+    assert.equal(triangleCount(movedNode),310,'negative fixture retains the complete native picked tank');
+    const instance=data.manifest.sourceInstances.find(row=>row.node===nativePart(data,'tank')[0].row.node);
+    const movedMatrix=translation.clone().multiply(new THREE.Matrix4().fromArray(instance.matrix));
+    const fixture={model:{gltf:{scene:{getObjectByName:name=>name===movedNode.name?movedNode:null}}},
+      manifest:{parts:[nativePart(data,'tank')[0].row],sourceInstances:[{...instance,matrix:movedMatrix.toArray()}]}};
+    const changed=(await nativeContactEdges(fixture)).edges;
+    if(offset[0]){const envelope=boxOf(bodyNode);assert.ok(changed.flat().every(point=>envelope.containsPoint(vector(point))),
+      'negative lateral contact endpoints remain inside real transformed body envelope');}
+    assert.throws(()=>assertEdgeSupport(changed,facesOf(bodyNode)),/native bed|triangle cell crossings/,
+      'actual support precision rejects displaced picked contact geometry');
+  });
+for(const mode of ['both','first','second'])check('native contact coverage rejects removal of '+mode+' supporting bed half',async()=>{
+  const data=await candidate(),contacts=await nativeContactEdges(data),body=facesOf(nativePart(data,'body')[0].node);
+  const witness=assertEdgeSupport(contacts.edges,body),indices=[...new Set(witness.flatMap(row=>row.intervals.map(interval=>interval.index)))].sort((a,b)=>a-b);
+  assert.equal(indices.length,2,'actual contact edges traverse both genuine native bed halves');
+  const removed=mode==='both'?indices:[indices[mode==='first'?0:1]],changed=body.filter((face,index)=>!removed.includes(index));
+  const bounds=faces=>new THREE.Box3().setFromPoints(faces.flat().map(vector));
+  assert.ok(bounds(body).equals(bounds(changed)),'removing actual bed support triangles leaves body envelope unchanged');
+  assert.throws(()=>assertEdgeSupport(contacts.edges,changed),/native bed|triangle cell crossings/,
+    'complete native edge coverage detects actual missing bed geometry');
+});
+check('complete picked native tank does not strictly cross complete native truck surfaces',async()=>{
+  const data=await candidate(),tank=facesOf(nativePart(data,'tank')[0].node),body=facesOf(nativePart(data,'body')[0].node);
+  assert.equal(tank.length,310,'entire picked tank including brackets remains native');
+  assert.equal(body.length,2574,'entire picked cab and bed remains native');
+  const crossings=strictCrossings(tank,body);
+  assert.equal(crossings.length,0,'actual picked tank strictly crosses native truck surfaces: '+crossings.length+
+    ' crossings; first '+JSON.stringify(crossings[0]||null));
 });
 check('fitted native materials do not retain original source atlases or material palette',async()=>{
   const {model}=await candidate(),sourcePalettes=new Set(),sourcePixels=new Set();
