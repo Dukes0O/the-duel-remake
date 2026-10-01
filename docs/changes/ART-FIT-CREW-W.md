@@ -420,3 +420,5 @@ Only exact safe private alias entries are unlinked after each test; source
 link counts and bytes are restored/verified. Raw evidence remains ignored
 for independent review and the later janitor. The unsafe planned-child
 acceptance remains real RED for the proper Source worker to fix forward.
+
+Director stop under Kyle's AGENTS.md rule: independent planned-output guard review reproduces five native hardlink aliases accepted before export; six actual file-symlink setups are unavailable on this Windows token (EPERM). The additional coverage remains RED/unavailable, and no complete technical acceptance is claimed. Card is waiting_on:kyle for the written choice between native hardlink/junction controls plus independent code review, or enabling file-symlink testing. Source guard changes and matched game comparison stay paused pending that choice. Private fifteen-a candidate and all native donor/accessor/rights bytes remain preserved; nothing installs or reveals Vesper. Removed: nothing; preserve unmerged lane and current recipes.
