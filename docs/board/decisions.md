@@ -1449,3 +1449,8 @@ conditions never hold a merge. Also: ARENA-SHOVE may merge, ARS-CORE's
 per-candidate range is approved, the tanker gets a final third round, and
 Vesper's export guard is settled without asking Kyle.
 
+## 1 October 2026: Kyle keeps the dome steering and approves Sal
+
+Kyle: the dome steering is good, and Sal is approved as she is. ARENA-STEER
+is kept, ARENA-WRECK-RATE starts, and WAR-SAL-TUNE closes with no tuning.
+

@@ -924,7 +924,7 @@ tasks:
     status: ready
     flag: arsenal
     acceptance:
-      - "Add weapon.oil.deploy, weapon.oil.slip and weapon.smoke.deploy to the sound bank from the CC0 library recipes (tools/audio/catalog.json), once the external audio lane has merged and released src/sound-bank.js. The arsenal cannot release before these exist. No paid credits."
+      - "Add weapon.oil.deploy, weapon.oil.slip and weapon.smoke.deploy to the sound bank from the CC0 library recipes (tools/audio/catalog.json), (the sound bank is merged and live since AUD-14; corrected by Claude 1 October 2026). The arsenal cannot release before these exist. No paid credits."
   - id: ARS-02
     title: "Arsenal wave 2: Rocket Pods, Flamethrower, Scrap Magnet"
     owner: codex
@@ -2850,12 +2850,12 @@ tasks:
     lane: DESIGN
     size: S
     needs: [WAR-02a-SAL, WAR-02a-REWARD, PREVIEW-LAUNCHER]
-    status: ready
+    status: closed
     acceptance:
       - "Target: Gratian beats Sal on Medium within a few tries and every sweep feels fair. Tuning changes only the settled numbers in docs/SCRAPDOME.md, recorded in decisions.md, built by Codex as a small card."
-    waiting_on: kyle
     claude_note: "Ready 30 September 2026: the Preview now turns on the warlords switch. Headless fights: plain rammer Sal already beat a scripted player on Medium and Hard 16 of 16, so expect her to be hard; the first lever is the warlord armor scale (1.5), not her moves."
     kyle_play: "30 September 2026: Kyle beat Sal 3-0 on Medium. Findings became WAR-PAY, ARENA-STEER and ARENA-SHOVE; Sal's own moves and armor stay until Gratian has played her."
+    kyle_decision: "Kyle, 1 October 2026: Sal is approved as she is. No tuning card."
   - id: WAR-PAY
     title: "Warlord pay worth the fight: first win 600 and up, rematches like an arena win"
     owner: codex
@@ -2881,7 +2881,6 @@ tasks:
     size: S
     needs: []
     status: merged
-    waiting_on: kyle
     review_commit: 0f57648ae5385295ec934812ce92f46efea4ecda
     claimed_by: codex-director-2026-09-30-resume
     flag: scrapdome
@@ -2896,6 +2895,7 @@ tasks:
       - "Re-run tools/arena-balance.mjs and the Sal tests and record the change; cars must not spin out or oscillate at full lock (check yaw settles within 0.3 s of releasing the stick). Kyle checks it in the Preview."
     claude_review: "30 September 2026: the uniform 3.4 factor meets the floor but turns cars 205 to 300 degrees a second at 45 mph, likely twitchy. Added rule (Claude's gap: the first rule set no ceiling): at full lock no car turns faster than 150 degrees a second at any speed in the arena. Suggested shape: an arena floor on the low-speed rolling factor (as the Titan's lowSpeedSteer does) plus a smaller factor, rather than one large multiplier. Re-measure the same table, then Kyle checks it in the Preview."
     claude_verdict: "30 September 2026: accept the measured wreck rate (Medium full field 23.3 against 10 to 14) for now. Steering feel comes first; finish the browser proof, merge, and mark waiting_on: kyle for his Preview check. If Kyle keeps the steering, ARENA-WRECK-RATE brings wrecks back to the target without touching steering."
+    kyle_decision: "Kyle, 1 October 2026: dome steering is good; keep it. ARENA-WRECK-RATE may start."
   - id: ARENA-WRECK-RATE
     title: "Last Car Rolling wreck rate back to target after the new steering"
     owner: codex
@@ -2903,10 +2903,10 @@ tasks:
     size: S
     needs: [ARENA-STEER]
     status: ready
-    waiting_on: kyle
     flag: scrapdome
     acceptance:
       - "After Kyle keeps ARENA-STEER's steering in the Preview, bring Medium full-field wrecks per round back to 10 to 14 (SCRAPDOME.md section 8; 23.3 with the new steering) without touching steering: first lever the arena armor scale for ordinary cars, second the computer cars' ram aggression. Re-run tools/arena-balance.mjs for all three difficulties and record the change; Sal's warlord armor (1.5) is unchanged."
+    kyle_decision: "Kyle kept the steering on 1 October 2026; start now."
   - id: ARENA-SHOVE
     title: "Every car can shove a sitting car in the Scrapdome"
     owner: codex
@@ -3074,7 +3074,7 @@ tasks:
       - "Candidates are marked for Kyle's choice; no agent keeps or promotes a take. Human ratings remain distinct from measurements. Keys stay in the environment, credit use is logged, and no generation is silently retried after an accounting failure."
       - "Any runtime voice wiring beyond the existing bank/credit hooks requires a named scope addition before implementation. Retain subtitles, attribution, one-version source placement and normal gates."
     note: "Candidate preparation merged e1a2d63; full casting/runtime card remains in progress pending Kyle. Ten auditions used400 credits, none selected/rejected/kept. External owner preserves audition bytes/receipts and branch. No additional generation or audio runtime work tonight."
-
+    claude_note: "1 October 2026: Kyle kept all eight crew takes and Bill's raider take on 25 September (31ef0ba, in audio-src/voices). Claude sent him a listening page of those nine on 1 October; any he wants redone come back as a new batch for the audio session. Wiring the lines into the game is still to do."
   - id: ARS-01
     title: "Arsenal wave 1: Harpoon and Caltrops, and computer use of wave 1"
     owner: codex
