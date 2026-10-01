@@ -1169,3 +1169,76 @@ independent approval of the real containment event path. No source, asset,
 collider, timer, saved state, game event or legacy acceptance was removed or
 changed. Candidate comparison and browser/frame/art/human/listening clearance
 remain pending independent review of an actual valid complete baseline.
+
+
+## Complete authentic released0f public baseline established (1 October)
+
+Frozen recipe `ddd0fc719dc0b5fd99fe2987a725378905953366` completed all **eight
+actual public attempts and 24 planned captures**, High and Performance, with
+**exit 0**, zero browser issues and zero warnings. Actual private port was
+**51420**, memory-only storage, and the harness closed the runtime/profile.
+All 888 original archive files were checked again against exact source
+`0f934845b451dc2429efcb574bc9847cc04a1fe5` before execution. Only the owned
+recipe was added; native source/assets remained exact. The complete actual
+input stream and source/assets provenance are ready for independent review
+before any candidate replay. This is a scoped baseline pass, not a Shove merge
+or final browser/frame/art/human/listening clearance.
+
+High and Performance produced **exactly equal key streams, every sampled
+native state, static receipts and containment receipts** for each paired case.
+There are four actual static receipts and six genuine containment receipts
+across the eight attempts; a case can contain both real paths at the same step.
+Each observer restored the native method with equal original/wrapper call
+counts and zero observer errors. A separate Node verification imported the
+actual archived native collision module and recomputed all four sweep receipts:
+t/normals/penetration/inside matched exactly. It also checked actual player
+identity/side/clamped state/positive normalMph/physical response/post-step
+input for every real containment receipt. There is no synthetic event.
+
+| Side / approach ticks | Native input steps | Actual wall response, both qualities | Sampled strict crossing pairs, each quality |
+| --- | ---: | --- | ---: |
+| -1 / 0 | 232 | Static at tick231; inward .0451813355m; 65.2958715→5.2236697mph | 38 |
+| -1 / 360 | 785 | Containment and static at tick784; event60mph; static inward .0412089780m | 54 |
+| +1 / 0 | 140 | Real player containment event at tick139, normal43mph; speed42.8765959→8.6222119mph | 0 |
+| +1 / 360 | 403 | Real player containment event at tick402, normal40mph; speed84.0868846→74.1539097mph; heading .4795307477→0 | 0 |
+
+Every case reaches a genuine chosen-side native response within the original
+bounded approach plus 2,400 wall-driving steps. The current close/world actor
+projection checks pass. Actual QA overlays are collapsed through their real
+controls before every capture. Readiness checks complete before native driving
+and captures; authored body/front-kit geometry remains present. No pacing
+segment ran (`frames` is empty), and this author does not grant an independent
+art or human-handling verdict from these screenshots.
+
+Negative-side 38/54-pair contact samples continue to show inherited released
+body/front-kit versus rail mismatch. Earlier natural 20-second 24-pair evidence
+and all exact-center/static-only failed reports stay retained. Positive-side
+zero crossings mean only these bounded samples, not all-wall/model clearance.
+No unrelated asset/global containment fix is hidden in this QA card. Candidate
+source is still untested under this valid input stream and requires independent
+baseline review before replay. Historical HUD overlap caveats remain open.
+
+Exact command, with `ARENA_SHOVE_PUBLIC_ONLY=1`:
+`node tools/browser-harness.mjs scenario arena-shove --output-dir .evidence/2026-10-01/ARENA-SHOVE/public-wall-two-paths`.
+Complete launcher stdout/stderr is integration
+`.evidence/2026-10-01/ARENA-SHOVE/expanded-browser/baseline-two-paths-launcher.log`.
+Copied full report/input traces/contact receipts/capture metadata/images and
+byte provenance are in sibling `public-wall-two-paths/`. Independent actual
+native-module receipt/state verification is `two-paths-native-receipt-oracle.log`.
+Its summary is eight controls,24 captures,4 exact native sweeps,6 real events.
+The usable baseline input report is that directory's `arena-shove-browser.json`.
+
+Final recipe SHA-256:
+`48edd7b18e5948bdb09927c2b162b39a30f2fc235e717fec7bbde63af01c75ed`.
+Actual observed native collision module SHA-256 remains
+`463822964946f85b344f4cd23d984b205b36956f744cc7b7dd9cf212ab27fe7f`.
+All 39 original legacy scenario assertion lines, native test bytes and pin
+bytes were verified unchanged against ad52b264. Syntax and diff checks pass.
+
+Removed nothing further. This note records actual baseline evidence after the
+reviewed fixture-goal correction; it does not discard preceding failures or
+historical geometry findings. No candidate/full/lane/build gate, frame budget,
+art/human/listening pass, source or asset change, live folder, Preview,
+.preview-dist, port5174, real save, source overlay, dependency change, merge,
+push or history rewrite occurred. Ownership returns for independent baseline
+review and candidate QA.
