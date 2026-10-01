@@ -2867,19 +2867,20 @@ tasks:
     needs: []
     status: building
     review_commit: eba804dd4e48e2856051b962efbe7ebd6560466c
+    test_commit: 7b928ef5a6452d02db3f1f90a66812fb39d7b70b
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arena-shove
     owns: [tools/test-arena-shove.mjs, tools/replays/arena-shove-controls.json, tools/scenarios/arena-shove.mjs, docs/changes/ARENA-SHOVE.md]
     hooks: [src/sim-contacts.js, src/vehicle-knock.js, src/vehicle-collision.js, src/arena/arena-floor.js, src/arena/arena-event.js]
     hook_requests: [src/game.js]
-    sequencing: "Fuel merged; grant ONLY arena-event::stepWreckedActor for real waiting-wreck knock/slide stepping with quiet solid-floor containment. Existing collision/knock/floor hooks remain exclusive. Pilot is explicitly released to Arsenal, not Shove; game remains a request. Merge current integration normally into this lane before source continuation, preserving Fuel and reviewed steering. Original independent wreck-motion REDs precede the fix; unchanged respawn/damage/protection/Titan/road controls stay. Outward pinned-wall interpretation awaits Claude; no escape or teleport invented. Kyle Preview feel and exact whole gates follow."
+    sequencing: "Claude settles open-floor minima, straight outward containment/damage/attacker rebound, and tangential wall sliding. Independent 7b928ef tests preserve all original 55 controls and expose 40 genuine missing rebound groups across 3888 normal-wall witnesses; eight oblique controls pass. Fix only granted arena collision/knock/floor and stepWreckedActor hooks after a normal integration sync. Pure released road solver, respawn/protection/deadlines and Titan behavior stay. Pilot belongs to Arsenal; game remains a request. Source review, actual private High/Performance scenario and exact lane/build gates precede merge; Kyle Preview feel remains."
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
     flag: scrapdome
     acceptance:
       - "Kyle, 30 September 2026: cars other than the Titan cannot budge the sitting cars in the dome. Measured by Claude: a live computer car hit at 20, 40 and 60 mph moves 2 to 12 m, so the stuck case is a car in another state. Reproduce each in a test: a wreck waiting to respawn, a car pinned against the wall, a car inside its respawn protection, and a stopped car with its brain idle."
       - "Settled rule: in the dome any car rammed at 20 mph or more by any car moves at least 1.5 m, and at 40 mph at least 4 m, through the crash solver (released crash physics), in every state above. A wreck waiting to respawn slides like a traffic hulk and stays on the floor; respawn protection blocks damage, not movement. The Titan's crush stays as it is."
       - "Tests first; arena replays that change are named and explained."
-    private_stage: "Independent source review clears eba804d waiting-wreck native motion. All1944 witnesses/2251checks pass; 55tests pass and former wall TODO now has Claude's open-floor ruling. Extra player/CPU high-speed wall probes preserve deadline/fullarmor/2sprotection, one wreck and quiet dead containment; live wall cues/damage remain. Independent author must turn the settled wall TODO into actual damage/rebound/containment tests and add private visual scenario before browser/whole gates. No source code, old assertions or replay pins changed by this review; no whole-card/merge clearance yet."
+    private_stage: "Independent source review clears eba804d waiting-wreck motion and all 1944 original minima witnesses. New clean test freeze 7b928ef adds 50 normal-wall cases: 10 pass, 40 actual attacker-rebound RED, 3950 checks; oblique 8/8 with 128 checks. Damage, containment, guards, dead timers and genuine native traffic controls pass. Browser recipe is syntax-checked but deliberately unrun before the source fix. No source or replay-pin change, art/frame/listening or whole-card clearance is claimed."
     claude_answer: "1 October 2026: the 1.5 m and 4 m minimums apply where the push direction has open floor. A car pinned against the outer wall and rammed straight into it cannot move through the wall: it stays, takes the ram damage, and the attacker rebounds. Any part of the push along the wall still slides it along the wall. No teleport, no escape direction, containment unchanged."
   - id: WAR-SAL-RELEASE
     title: "Release the warlord ladder with Sawtooth Sal"

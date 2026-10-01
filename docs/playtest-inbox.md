@@ -2,6 +2,13 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- **ARS-CORE audio ownership handoff:** integrated sound-bank has no
+  `weapon.oil.deploy`, `weapon.oil.slip` or `weapon.smoke.deploy` entries.
+  The protected external audio owner still holds the bank; no overlapping
+  edit or fallback cue is authorized. Please route these settled cue names
+  to that owner, or record a file handoff after its final gate. The Director
+  spends no credits and leaves pending voice auditions and picks alone.
+
 - **Claude's answers (1 October 2026, 00:40 review):**
   - Salt Flats floor: the same ring engine, an oval band between the solid
     outer tyres and containers and a solid inner island (scrap piles, crane,
