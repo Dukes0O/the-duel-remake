@@ -1266,3 +1266,63 @@ module, runtime binary, licensed source, protected audio, other lane work or rea
 save was removed or changed. Earlier note sections remain verbatim. Further
 Crossbow range replacement belongs to the Director's design/test continuation
 before the card may merge.
+
+## Independent reviewed range-fixture and released-consumer freeze — 1 October 2026
+
+Tests only, on unchanged Source 41ed21dfb84bf0b2326ef5cbe32a9ad133447f83. The original 301-case run was reproduced first: **300 pass, one RED**, the arena out-of-range decoy DATA case. The approved arena correction resolves that invalid geometry fixture. Two additive, genuine Crossbow regressions now remain **RED pending Claude**. This does not complete ARS-CORE, approve a new range formula, or clear source/feature/lane/full/browser/audio/release gates.
+
+### Exact approved fixture correction
+
+Reviewer audio_output_source_review and the Director approved only the arena/out-of-range setup/context. The original 480-metre closed arena wraps CPU s540 to s60 and copy s940 to s460. Native positions were CPU (-35.129535364, 44.787829123), copy (-5.442488545, -18.965019390), real owner (-5.442488545, 18.965019390). Copy distance is **70.3260011828 m**, real owner **39.3463880343 m**: the former 180-metre context correctly selected the live copy, making the former expected-real geometry invalid.
+
+Only that negative arena case now places the actual real owner at s20 and CPU at s60 before sampling the origin. The unchanged cpu.s+400 setup supplies a valid native copy at s460. That shared API geometry case uses the **settled Harpoon 50-metre context** from ARSENAL section 3. No Harpoon, CPU-Harpoon shot, future producer or new shared range default is implemented. Every road case and every other arena status retains the original 180-metre context. The strict original status==='live'?data:real selection, failure message and every actor/participant/decoy assertion remain exact.
+
+Three additive genuine geometry controls prove: copy s24 is **35.6002408362 m** away and draws aim inside 50 m; copy s460 is outside 50 m while the real owner stays inside; the s460 copy selects at native current-origin copyDistance+.1 and rejects at copyDistance-.1, keeping the inside real owner. Copies remain inside the actual closed course's bounds. No outside-floor placement or unwrapped-progress shortcut supplies the expected outcome. All ten original shared decoy statuses and all three controls pass.
+
+### Genuine released Crossbow evidence and remaining RED
+
+Two retained **whole native consumer module bodies** are loaded only in memory from integration commit **0f934845b451dc2429efcb574bc9847cc04a1fe5**. Only import routing changes. Imports use genuine current shared native dependencies, and the historical projectile consumer routes its combat-weapons import to the historical whole consumer. Reversing import routing reconstructs each original body byte-exact. This is proof of those actual released consumers against native Duel fixtures, not a complete historical deployment or mocked source behavior.
+
+| Released whole module | Bytes | SHA-256 |
+| --- | ---: | --- |
+| src/combat-weapons.js | 16,708 | b37efa29b8e9834886ed20dba8cf39a1c469e246608a108a839e030fa4e601ab |
+| src/combat-projectiles.js | 22,861 | f36e7c9b109a72e15d0dc2b36ce05451a9ba0cffcbfd6fccdc78c63e3cad4747 |
+
+Actual input: native seed 1989/stage 0 Wasteland road, Falcone player s200/lateral0, real rival s430/lateral0, other CPU s900/lateral5, actual legal road at both actor points, no traffic/hazards, no paused/on-foot/impact/finished actor, no fake resolver or projectile. Fixed step is 1/120 s. The real target changes to lateral1 after the real launch. Native world distance is **229.37782688162793 m**, beyond CPU acquisition 180 m but inside the existing L0 speed/lifetime flight reach. The existing **2.5-second** bolt lifetime and native speed are used only to establish this legal released witness; no new active range equation or cap is proposed.
+
+| Actual native consumer witness | Launched/current horizontal speed (m/s) | Launch heading (rad) | Heading after actual fixed step | Launch/current targetIndex |
+| --- | --- | --- | --- | --- |
+| Switch off, L0, player carry0 mph | 200.00000000000003 / 200.00000000000003 | -1.0144014219549207 | -1.0100020443345097 | 0 / 0 |
+| Switch off, L3, player carry40 mph | 307.65131264062467 / 307.65131264062467 | -1.0048245489479222 | -1.0100020443345097 | 0 / 0 |
+| Active provisional Source, L0, carry0 mph | 200 / 200 | -0.8488799316105871 | -0.8488799316105871 | absent / absent |
+
+The mandatory switch-off controls at L0 and L3/carry40 pass. Actual current launch and in-flight x/y/z/vx/vy/vz/age/targetIndex/launchBearing match the genuine retained released consumers exactly, including real homing after the target lane change. Original replay fingerprints are unchanged.
+
+Current Source's exact held route guards: combat-weapons fires the Arsenal branch when arsenalEnabled and weapon==='crossbow', calls targetFor with **T.cpu.attackRange** and the actual actor point, refuses targetless enemy fire, and makes targetless player fire a straight shot. combat-projectiles starts steerBolt only for real crossbow/integer targetIndex/finite launchBearing/positive dt; with arsenalEnabled and no raid, it resolves actual attacker/locked identity from the current projectile origin using the same **T.cpu.attackRange**, then sets targetIndex=null if that resolver returns no target. The released native launch/flight consumers impose no such explicit 180-metre player/homing cap.
+
+The active launch is now independently measured against the genuine released clear-road launch: it loses targetIndex and launchBearing, changes the aim by **0.16552149034433358 rad**, and replaces released vx/vy/vz **(-169.8329155795106, 7.590364260619756, 105.62566348081714)** with straight **(-150.10814155500805, 0, 132.16484343009552)**. The separate actual flight test launches a genuine switch-off bolt first, then changes only the actual feature view to isolate the in-flight guard; no projectile or resolver output is fabricated. The active route drops targetIndex0 to null and keeps vx/vz **(-169.8329155795106, 105.62566348081714)** while the genuine released consumer homes to **(-169.36658638349456, 106.37179803313605)**. The released target identity remains index0.
+
+Each real pending failure message is:
+
+- **PENDING CLAUDE RANGE: active consumer must not silently replace measured released beyond180 target aim with an unreviewed straight-shot fallback**.
+- **PENDING CLAUDE RANGE: active in-flight consumer must not discard measured released beyond180 real-target guidance at the CPU acquisition cap**.
+
+Claude's written range question and audio handoff remain held. These additive failures preserve the measured released behavior for this unambiguous legal witness and prevent whole-card GREEN while the precise active context is unsettled. They do not assert a new universal cap, player reach formula, producer or upgrade rule. No empty TODO replaces either regression.
+
+### Checks and exact preservation
+
+- Before correction/additions, actual CORE/runtime/SAVE: **301 cases, 300 pass, one fail, zero TODO**; exit1. Checks reached core598/runtime771/save602.
+- Targeted reviewed decoy/range and new released consumer tests: **17 cases, 15 pass, two pending range RED, zero TODO**; exit1. Checks reached131. No fixture exceptions.
+- Final default actual CORE/runtime/SAVE: **308 cases, 306 pass, exactly the two pending range RED, zero skipped/TODO**; exit1. Checks reached **core598/runtime860/save602**. All original 301 cases now pass; all **98 save cases** remain unchanged and pass.
+- Protected original CORE selection: **48/48**, exactly **449** checks; exit0.
+- Existing feature-flags/Wasteland-beta/Wasteland-easter-egg/combat-projectiles/projectile-order guards: **50/50 TAP cases**, plus all **32 feature-switch checks**; exit0. No guard or flag was changed.
+- Unchanged replay suite: **162/162 fingerprints**, 18 cases, 16 events, eight categories, three FPS values, three runs; exit0. No fingerprint was added/regenerated because the ownership grant keeps existing replay files read-only.
+- node --check tools/test-arsenal-runtime.mjs and git diff --check: pass.
+
+Reversing only the two new Node imports and the approved setup/context, then removing additive tests, reconstructs the prior runtime file **exactly 47,971 bytes**, SHA-256 **6df9f61733bb052f419d65b4317cd44a414a66b34c6087bed8a6ef63be5fb46e**. All other existing assertions, helpers, fixtures and contexts are byte-exact. **236 tracked Source/protected test/replay/flag/audio/launcher paths** retain their pre-run hashes with zero changes. Source combat-weapons remains SHA-256 **745d08116824f622b8d7c0ef869dc386f9f74de9848db022fae9b7a5ccd8026f**; Source combat-projectiles remains **dccf888a423f4fd2fdc56482699d27dbff6b709358c8701d22bc690a704876b4**. No Source, other lane file, flag, launcher, audio, catalog, public output, live/Preview folder, port5174, player save or replay pin was touched. The existing change-note prefix is retained verbatim.
+
+Full raw before/targeted/final TAP, feature/core/replay logs, exact native witness JSON, source hash manifest and byte-preservation proof stay under ignored **.evidence/2026-10-01/ARS-CORE/native-fixture-range-review/**. No Source/lane/full/build/browser/audio/whole-card/merge claim is made. The Director owns the Claude settlement and subsequent source continuation.
+
+### Removed — reviewed fixture follow-up
+
+Replaced only the misleading 180-metre negative arena fixture context and wrapped coordinates in the reviewer-approved case. No strict expected selection, actor/participant assertion or other original status/road context was removed or weakened. No production rule, old test, source body, real save, asset or fingerprint was removed. The pending active player launch/flight cap is documented for the later Claude-settled Source change; this tests-only task does not replace it.

@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import {test, after} from 'node:test';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import * as THREE from 'three';
 import {Duel} from '../src/game.js';
 import {App} from '../src/app.js';
@@ -464,11 +466,15 @@ for (const arena of [false, true]) {
     test('SHARED DECOY DATA: actual resolver ' + status + ' on ' + (arena ? 'arena' : 'road'), () => {
       const duel = race({arena}), cpu = duel.state.rival, real = duel.state;
       if (arena) arenaParticipant(duel, cpu).targetId = 'player';
+      // Reviewed closed-loop correction: only this negative arena case uses
+      // the settled 50-metre Harpoon context; no future weapon is implemented.
+      const narrowArenaRange = arena && status === 'out-of-range';
+      if (narrowArenaRange) {place(real, 20); place(cpu, 60);}
       const origin = point(duel, cpu);
       const owner = status === 'friendly' ? cpu : real;
       const data = decoyData(duel, owner, {s: status === 'out-of-range' ? cpu.s + 400 : real.s + 4,
         active: status !== 'inactive', expiresAt: status === 'expired' ? duel.state.stageTimeSec : duel.state.stageTimeSec + 10});
-      eq(targetFor(duel, cpu, {range: T.cpu.attackRange, origin}), status === 'live' ? data : real,
+      eq(targetFor(duel, cpu, {range: narrowArenaRange ? 50 : T.cpu.attackRange, origin}), status === 'live' ? data : real,
         'genuine resolver selects only a live hostile decoy within this attack range');
       ok(duel.state.opponents.includes(data), 'decoy DATA is an actual native NPC actor record');
       eq(data.decoy, true, 'selected native actor DATA explicitly identifies its decoy role');
@@ -728,4 +734,132 @@ test('SHARED DECOY SAVE CONTROL: native fight DATA never enters named player sav
       'actual named-player round trip contains no transient fight records');
     eq(values.get(PLAYERS_KEY), rawBefore, 'profile-only save preserves registry bytes despite transient fight DATA');
   } finally {app.dispose?.();}
+});
+
+// Reviewed geometry controls use the settled Harpoon 50-metre API context,
+// not a Harpoon producer, projectile, CPU attack or a new shared range default.
+function closedArenaRangeFixture(copyS) {
+  const duel = race({arena: true}), cpu = duel.state.rival, real = duel.state;
+  place(real, 20); place(cpu, 60); arenaParticipant(duel, cpu).targetId = 'player';
+  const data = decoyData(duel, real, {s: copyS});
+  const origin = point(duel, cpu), copyAt = point(duel, data), realAt = point(duel, real);
+  return {duel, cpu, real, data, origin,
+    copyDistance: Math.hypot(copyAt.x - origin.x, copyAt.z - origin.z),
+    realDistance: Math.hypot(realAt.x - origin.x, realAt.z - origin.z)};
+}
+for (const [copyS, drawsAim] of [[24, true], [460, false]]) {
+  test('REVIEWED ARENA RANGE: genuine loop copy s=' + copyS + ' inside50=' + drawsAim, () => {
+    const {duel, cpu, real, data, origin, copyDistance, realDistance} = closedArenaRangeFixture(copyS);
+    ok(duel.course.closed, 'fixture uses the actual closed arena course');
+    ok(copyS >= 0 && copyS < duel.course.length, 'copy stays inside genuine course progress bounds without unwrapped shortcuts');
+    ok(realDistance < 50, 'native real owner stays inside the settled caller range');
+    eq(copyDistance < 50, drawsAim, 'native point conversion independently proves the copy range condition');
+    eq(targetFor(duel, cpu, {range: 50, origin}), drawsAim ? data : real,
+      'genuine shared resolver selects the inside copy and rejects the outside copy while retaining the real owner');
+    eq(arenaParticipant(duel, data).decoy, true, 'native loop copy retains the settled participant flag');
+    eq(data.decoy, true, 'native loop copy retains the genuine actor flag');
+  });
+}
+test('REVIEWED ARENA RANGE: native current-origin boundary is exact for the genuine closed-loop copy', () => {
+  const {duel, cpu, real, data, origin, copyDistance, realDistance} = closedArenaRangeFixture(460);
+  ok(realDistance < copyDistance - .1, 'real owner remains eligible on both sides of the native copy boundary');
+  eq(targetFor(duel, cpu, {range: copyDistance + .1, origin}), data,
+    'native copy draws aim when the actual current-origin range extends just past its distance');
+  eq(targetFor(duel, cpu, {range: copyDistance - .1, origin}), real,
+    'native copy cannot draw aim when the actual current-origin range stops just before its distance');
+});
+
+// Actual released whole-module bodies, held only in memory. Import routing is
+// the sole transformation, as in the existing native dependency proof suites.
+// Shared dependencies remain the genuine current native modules; this proves
+// these two released consumers, not an entirely historical game deployment.
+const RELEASED_RANGE_REF = '0f934845b451dc2429efcb574bc9847cc04a1fe5';
+let releasedRangePromise;
+function releasedCrossbowConsumers() {
+  if (!releasedRangePromise) releasedRangePromise = (async () => {
+    const specifications = [
+      ['src/combat-weapons.js', 'b37efa29b8e9834886ed20dba8cf39a1c469e246608a108a839e030fa4e601ab'],
+      ['src/combat-projectiles.js', 'f36e7c9b109a72e15d0dc2b36ce05451a9ba0cffcbfd6fccdc78c63e3cad4747'],
+    ];
+    const urls = new Map(), proof = [];
+    for (const [path, expectedHash] of specifications) {
+      const body = execFileSync('git', ['show', RELEASED_RANGE_REF + ':' + path],
+        {cwd: new URL('..', import.meta.url), encoding: 'utf8', windowsHide: true, maxBuffer: 1024 * 1024});
+      eq(createHash('sha256').update(body).digest('hex'), expectedHash,
+        'retained released native whole-module identity: ' + path);
+      const originalUrl = new URL('../' + path, import.meta.url), replacements = [];
+      const routed = body.replace(/from\s+(['"])([^'"]+)\1/g, (match, quote, specifier) => {
+        const dependency = specifier.startsWith('.') ? new URL(specifier, originalUrl) : null;
+        const historicalSibling = dependency && specifications.find(([candidate]) =>
+          new URL('../' + candidate, import.meta.url).href === dependency.href)?.[0];
+        const address = historicalSibling && urls.get(historicalSibling) ||
+          (dependency ? dependency.href : import.meta.resolve(specifier));
+        const replacement = 'from ' + JSON.stringify(address);
+        replacements.push([replacement, match]); return replacement;
+      });
+      let reconstructed = routed;
+      for (const [replacement, original] of replacements) reconstructed = reconstructed.replace(replacement, original);
+      eq(reconstructed, body, 'released consumer body is byte-exact after reversing import routing: ' + path);
+      urls.set(path, 'data:text/javascript;base64,' + Buffer.from(routed).toString('base64'));
+      proof.push({path, bytes: Buffer.byteLength(body), hash: expectedHash});
+    }
+    return {weapons: await import(urls.get('src/combat-weapons.js')),
+      projectiles: await import(urls.get('src/combat-projectiles.js')), proof};
+  })();
+  return releasedRangePromise;
+}
+function longRoadCrossbow({enabled = false, level = 0, speedMph = 0} = {}) {
+  const duel = race({enabled}); place(duel.state, 200); place(duel.state.rival, 430);
+  place(duel.state.opponents[1], 900, 5);
+  duel.state.combat.levels.crossbow = level; duel.state.speedMph = speedMph;
+  const origin = point(duel, duel.state), target = point(duel, duel.state.rival);
+  const distance = Math.hypot(target.x - origin.x, target.z - origin.z);
+  eq(duel.course.surfaceAt(200, 0).road, true, 'actual long-range shooter is on legal native road');
+  eq(duel.course.surfaceAt(430, 0).road, true, 'actual long-range target is on legal native road');
+  ok(distance > T.cpu.attackRange, 'native legal road witness lies beyond the existing CPU acquisition range');
+  ok(distance < T.crossbow.baseSpeed * T.crossbow.lifetime,
+    'native legal witness is inside the existing L0 speed/lifetime flight reach; this is not a new targeting cap');
+  eq(hazardsFor(duel), [], 'actual release witness has no smoke/oil obstruction or invented target');
+  return {duel, origin, target, distance};
+}
+const nativeBoltVariables = shot => Object.fromEntries(
+  ['x', 'y', 'z', 'vx', 'vy', 'vz', 'age', 'targetIndex', 'launchBearing'].map(key => [key, shot[key]]));
+for (const [level, speedMph] of [[0, 0], [3, 40]]) {
+  test('RELEASED RANGE CONTROL: native switch-off player bolt beyond180 level=' + level + ' carry=' + speedMph, async () => {
+    const released = await releasedCrossbowConsumers();
+    const current = longRoadCrossbow({level, speedMph}), old = longRoadCrossbow({level, speedMph});
+    eq(fireWeapon(current.duel, 'crossbow'), true, 'actual switch-off player launches at a legal beyond180 target');
+    eq(released.weapons.fireWeapon(old.duel, 'crossbow'), true, 'genuine retained released player consumer launches at that same target');
+    const now = current.duel.state.combat.projectiles.at(-1), before = old.duel.state.combat.projectiles.at(-1);
+    eq(now.targetIndex, 0, 'native switch-off launch retains its real intended car identity beyond180');
+    eq(nativeBoltVariables(now), nativeBoltVariables(before), 'switch-off launch preserves every released native physical bolt variable');
+    place(current.duel.state.rival, 430, 1); place(old.duel.state.rival, 430, 1);
+    const launch = {vx: before.vx, vz: before.vz};
+    stepProjectiles(current.duel, DT); released.projectiles.stepProjectiles(old.duel, DT);
+    ok(Math.hypot(before.vx - launch.vx, before.vz - launch.vz) > 1e-5,
+      'genuine released in-flight bolt actually homes beyond180 after the real target changes lane');
+    eq(nativeBoltVariables(now), nativeBoltVariables(before), 'switch-off current-origin guidance preserves the genuine released consumer output');
+  });
+}
+test('PENDING CLAUDE RANGE: active player launch preserves measured released beyond180 aim without a new cap formula', async () => {
+  const released = await releasedCrossbowConsumers(), current = longRoadCrossbow({enabled: true}), old = longRoadCrossbow();
+  eq(released.weapons.fireWeapon(old.duel, 'crossbow'), true, 'genuine released clear-road player consumer launches beyond180');
+  eq(fireWeapon(current.duel, 'crossbow'), true, 'actual active player launch runs on the same legal clear-road witness');
+  const now = current.duel.state.combat.projectiles.at(-1), baseline = old.duel.state.combat.projectiles.at(-1);
+  eq(nativeBoltVariables(now), nativeBoltVariables(baseline),
+    'PENDING CLAUDE RANGE: active consumer must not silently replace measured released beyond180 target aim with an unreviewed straight-shot fallback');
+});
+test('PENDING CLAUDE RANGE: actual in-flight player bolt beyond180 retains measured released guidance', async () => {
+  const released = await releasedCrossbowConsumers(), current = longRoadCrossbow(), old = longRoadCrossbow();
+  eq(fireWeapon(current.duel, 'crossbow'), true, 'actual native switch-off launch first supplies its genuine real locked bolt');
+  eq(released.weapons.fireWeapon(old.duel, 'crossbow'), true, 'genuine released launch supplies the same real locked bolt');
+  const now = current.duel.state.combat.projectiles.at(-1), baseline = old.duel.state.combat.projectiles.at(-1);
+  eq(nativeBoltVariables(now), nativeBoltVariables(baseline), 'both genuine launched bolt inputs start byte-equivalent');
+  // Activate the real view only after native launch, isolating the held flight
+  // route from the separately held acquisition route. No projectile is mocked.
+  current.duel.featureFlags = flags(true);
+  place(current.duel.state.rival, 430, 1); place(old.duel.state.rival, 430, 1);
+  stepProjectiles(current.duel, DT); released.projectiles.stepProjectiles(old.duel, DT);
+  eq(nativeBoltVariables(now), nativeBoltVariables(baseline),
+    'PENDING CLAUDE RANGE: active in-flight consumer must not discard measured released beyond180 real-target guidance at the CPU acquisition cap');
 });
