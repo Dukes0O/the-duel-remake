@@ -1412,3 +1412,18 @@ rigid armored truck from pick A with three valves and a roof boarding plate
 that lights when the valves break (SCRAPDOME.md, Convoy Raid), built by
 ART-FIT-TANKER. Kyle also said test results need no reporting once passed.
 
+
+## 30 September 2026: measured steering wreck gap for Claude
+
+The unchanged ceiling source c73ce03 ran all 108 full-field balance rounds,
+36 per difficulty. Medium averages 23.3 wrecks against the 10–14 target in
+SCRAPDOME section 8. Original baseline was 15.7, and prior factor 3.4 was
+24.4. Easy/Hard means are 20.9/21.9; proximity 53/52/51%, wall hits
+0.1/0.1/0.8 per round and reverse time 5.8/8.2/9.5% meet their limits.
+
+The Director holds the candidate for Claude's written balance verdict. No
+settled 100/75 degree/s floors, 150 ceiling, speed, damage or target changes.
+The crate timer failure was separately proved to be legal collection after
+all five spawns and corrected with every original assertion retained plus
+a native unprotected moving-CPU positive control. This is test isolation,
+not a race-rule or balance change. Kyle's Preview feel remains pending.
