@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-01T10:59:26.191Z
+Observed at: 2026-10-01T22:28:04.923Z
 
-Observation commit: d07fff94f046017c82f61c7ddf4209652994afa4
+Observation commit: 6e384ec76abc3cdef287b428eef1a3e9bf68555b
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: d07fff94f046017c82f61c7ddf4209652994afa4
+Integration HEAD: 6e384ec76abc3cdef287b428eef1a3e9bf68555b
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -14,9 +14,9 @@ Live commit: not checked
 
 Live build version: not checked
 
-Full tier: passed; exact HEAD passed: yes.
+Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-01T10:36:45.939Z; tested commit: d07fff94f046017c82f61c7ddf4209652994afa4.
+Last recorded full run: 2026-10-01T15:37:39.055Z; tested commit: c02105cb26183e71cc7ec02b5d96ad59727f4114.
 
 ## Feature switches
 
@@ -37,11 +37,12 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
+| codex/art/vesper | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/vesper |
 | lane/art/convoy-tanker | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/convoy-tanker |
 | lane/audio/aud-10 | 6 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 6 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 5 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/cmb/arena-shove | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-shove |
+| lane/audio/aud-17-picks | 6 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/cmb/arena-wreck-rate | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-wreck-rate |
 | lane/cmb/arsenal-core | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-core |
 | lane/vis/salt-flats | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/salt-flats |
 
@@ -51,10 +52,11 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| lane/art/convoy-tanker | unknown | 2026-10-01T03:36:48-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/convoy-tanker/round-1-review.md, docs/board/looks/convoy-tanker/round-1-sheet.py, docs/board/looks/convoy-tanker/round-1.jpg, docs/changes/ART-FIT-TANKER.md, src/arena/tanker-model.js |
-| lane/cmb/arena-shove | unknown | 2026-10-01T03:28:33-07:00 | 0 | last commit 2026-10-01T03:28:33-07:00 | docs/changes/ARENA-SHOVE.md, src/arena/arena-event.js, src/arena/arena-floor.js, src/sim-contacts.js, src/vehicle-collision.js |
-| lane/cmb/arsenal-core | unknown | 2026-10-01T02:45:47-07:00 | 0 | last commit 2026-10-01T02:45:47-07:00 | docs/changes/ARS-CORE.md, src/app.js, src/arena/arena-pilot.js, src/arsenal/car-effects.js, src/arsenal/hazards.js |
-| lane/vis/salt-flats | unknown | 2026-10-01T03:51:28-07:00 | 0 | last commit 2026-10-01T03:51:28-07:00 | docs/changes/ARENA-06.md, src/arena/venues.js, src/arena/venues/salt-flats.js, src/course.js, tools/art/salt-flats-fit.json |
+| codex/art/vesper | unknown | 2026-10-01T08:10:01-07:00 | 0 | last commit 2026-10-01T08:10:01-07:00 | docs/changes/ART-FIT-CREW-W.md, tools/art/vesper-fit.json, tools/blender/vesper-blackiron.py, tools/test-vesper-art.mjs |
+| lane/art/convoy-tanker | unknown | 2026-10-01T15:17:00-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/convoy-tanker/round-1-review.md, docs/board/looks/convoy-tanker/round-1-sheet.py, docs/board/looks/convoy-tanker/round-1.jpg, docs/board/looks/convoy-tanker/round-2-review.md, docs/board/looks/convoy-tanker/round-2-sheet.py |
+| lane/cmb/arena-wreck-rate | unknown | 2026-10-01T15:09:09-07:00 | 0 | last commit 2026-10-01T15:09:09-07:00 | docs/changes/ARENA-WRECK-RATE.md, tools/arena-balance.mjs, tools/test-arena-wreck-rate.mjs |
+| lane/cmb/arsenal-core | unknown | 2026-10-01T15:13:59-07:00 | 0 | last commit 2026-10-01T15:13:59-07:00 | docs/changes/ARS-CORE.md, src/app.js, src/arena/arena-pilot.js, src/arsenal/car-effects.js, src/arsenal/hazards.js |
+| lane/vis/salt-flats | unknown | 2026-10-01T15:24:22-07:00 | 0 | last commit 2026-10-01T15:24:22-07:00 | docs/changes/ARENA-06.md, src/arena/venues.js, src/arena/venues/salt-flats.js, src/course.js, src/render3d.js |
 
 ## Size targets
 
@@ -68,10 +70,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 430,908 B | +0 B | 500,000 B |
 | Review `looks/` | 10,712,857 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 330,949 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 90,436 B | -2,075,758 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 331,348,992 B | +2,294,784 B | unavailable |
-| Lane folders | 4 | +0 | unavailable |
+| Git objects | 340,634,624 B | +881,664 B | unavailable |
+| Lane folders | 5 | +1 | unavailable |
 
 ## Backups
 
@@ -79,7 +81,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: d07fff94f046017c82f61c7ddf4209652994afa4
+- Local integration/wasteland: 6e384ec76abc3cdef287b428eef1a3e9bf68555b
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -87,4 +89,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 4cd4a9608238d86a90a1335adacf526eb7f4a2d3.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: matches local; cached commit d07fff94f046017c82f61c7ddf4209652994afa4.
+- Remote origin/integration/wasteland: behind local; cached commit c02105cb26183e71cc7ec02b5d96ad59727f4114.

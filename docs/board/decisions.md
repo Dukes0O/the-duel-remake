@@ -1438,3 +1438,37 @@ Last Car Rolling wrecks to 23.3 a round (target 10 to 14); steering feel
 comes first, and ARENA-WRECK-RATE restores the target with armor or
 aggression if Kyle keeps the steering.
 
+## 1 October 2026: keep the checking proportionate
+
+The overnight run merged little because most of its time went into its own
+checking (a 1568-line change note for a 150-line fix, link-safety test
+matrices, pixel-exact art tests) and its notes became unreadable. Claude set
+the "Keep it proportionate" rules in next-run.md: short plain notes, no
+unrequested guard machinery, looks judged from pictures, inherited
+conditions never hold a merge. Also: ARENA-SHOVE may merge, ARS-CORE's
+per-candidate range is approved, the tanker gets a final third round, and
+Vesper's export guard is settled without asking Kyle.
+
+## 1 October 2026: Kyle keeps the dome steering and approves Sal
+
+Kyle: the dome steering is good, and Sal is approved as she is. ARENA-STEER
+is kept, ARENA-WRECK-RATE starts, and WAR-SAL-TUNE closes with no tuning.
+
+## 1 October 2026: generated salt replaces the tiled salt photo
+
+Kyle: the mirrored salt photo "looks like a silly pattern"; a generated ground
+would be better. This replaces his 30 September approval of the tiled photo.
+The Salt Flats ground is generated from a seed with no visible repeat
+(SCRAPDOME.md, Salt Flats), and WASTELAND_ART.md rule 10 bars visible repeats
+on any large ground.
+
+## 1 October 2026: the Pit, an open dome layout
+
+Kyle asked for some dome fights without the inside barrier. Claude measured
+the dome: a round floor 150 m across with a 16 m centre pile has the same
+driving area as the ring, so it is not more crowded; it trades the Heap's
+cover for open sight lines. Kyle agreed to a second layout. Gunn, the Twin
+Vultures and the Baron fight there; the ring keeps Last Car Rolling, the
+public modes and the warlords whose moves use the Heap (SCRAPDOME.md section
+2, The Pit; card ARENA-PIT).
+

@@ -52,6 +52,11 @@ here." A toy-like or cartoon result fails the consistency score outright.
    the current versions, which score about 3 and read well at speed. Do not
    start a card that refits art the game already has. Fitting is for new
    things only: the Salt Flats arena, the convoy tanker and Vesper.
+10. **No visible repeat on big ground** (Kyle, 1 October 2026). A ground
+   texture tiled across an arena or a landscape must not show a grid or
+   mirrored pattern from the full view or the racing camera. Generate it
+   from a seed, or break the repeat with large-scale variation; mirrored
+   tiling is not used.
 
 ## public/assets/reference/wasteland-art-direction.png
 
