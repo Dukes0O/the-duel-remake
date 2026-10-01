@@ -14,8 +14,8 @@ import {SALT_FLATS_VENUE, SCRAPDOME_VENUE} from '../src/arena/venues.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 
 // Real native scene, triangles and material fog participation. These headless
-// checks do not claim GPU heat distortion; its causal pixels belong to the
-// actual-browser companion in scenarios/salt-flats.mjs.
+// checks do not judge how heat looks. Claude judges actual game captures
+// from the browser companion in scenarios/salt-flats.mjs.
 const root = resolve(import.meta.dirname, '..');
 const candidate = resolve(process.env.SALT_FLATS_RENDER_ASSET ||
   resolve(root, '.evidence/ARENA-06/render-candidate/venue.glb'));
