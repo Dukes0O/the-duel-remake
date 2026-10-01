@@ -63,6 +63,8 @@ export async function run(context) {
   })()`);
   if (disabled.join(',') !== 'ufo,bomb,crossbow,star') throw Error('Four starter slots changed');
   for (const quality of ['high', 'performance']) {
+    await context.command('Emulation.setDeviceMetricsOverride', {
+      width: 1280, height: 800, deviceScaleFactor: 1, mobile: false});
     await ready(context, '?flags=arsenal');
     await context.evaluate(`(() => {
       const select = document.querySelector('#graphics-quality');
@@ -99,6 +101,7 @@ export async function run(context) {
       }
       if (app.profile.wasteland.loadout.slice(0, 2).join(',') !== 'oil,smoke') throw Error('Actual slot selection failed');
     })()`);
+    await context.evaluate(`document.querySelector('.armory-loadout').scrollIntoView({block: 'start'})`);
     await context.screenshot('arsenal-armory-' + quality);
     await context.evaluate(`(() => {
       const app = window.__qaApp;
@@ -157,9 +160,17 @@ export async function run(context) {
     await context.screenshot('arsenal-smoke-occlusion-' + quality);
     await context.command('Emulation.setDeviceMetricsOverride', {
       width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
-    await context.evaluate('window.__arsenalPaint()');
+    await context.evaluate(`(async () => {
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      window.__arsenalPaint();
+      const actual = window.__qaApp.duel.state.weaponLoadout.join(',');
+      const hud = [...document.querySelectorAll('[data-combat-slot]')]
+        .map(button => button.dataset.combatWeapon).join(',');
+      if (hud !== actual) throw Error('Painted phone HUD differs from real four-slot loadout');
+    })()`);
     await context.screenshot('arsenal-smoke-phone-' + quality);
-    await context.command('Emulation.clearDeviceMetricsOverride', {});
+    await context.command('Emulation.setDeviceMetricsOverride', {
+      width: 1280, height: 800, deviceScaleFactor: 1, mobile: false});
     await context.evaluate(`(() => {
       const duel = window.__qaApp.duel, state = duel.state;
       for (let i = 0; i < 620; i++) duel.step(${DT});
