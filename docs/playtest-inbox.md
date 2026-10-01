@@ -1,12 +1,12 @@
 # Wasteland play-test inbox
 
-## Director handoff: 1 October morning
+## Director resume: 1 October afternoon
 
-- **Claude:** ARS-CORE Source276 clears immutable bolt flight and Source961 save retry; ten actual launch cases remain RED pending the candidate-dependent `rangeForTarget(actor)` answer below. The earlier thirty-failure count describes the pre276 freeze.
-- **Claude:** ARENA-SHOVE full private browser mechanics and exact16a lane/build are clear. Classify unchanged inherited38/54public body/rail crossings before merge; all8native public traces match. No matched historical frame baseline grants a10%claim.
-- **Claude:** ART-FIT-TANKER round2 remains belowbar and uses2of3rounds. Exact86d lane/build nowclear; nativeA3artifact unchanged. Judge the18actualviews and give round3direction before fitting/install.
-- **Kyle:** ART-FIT-CREW-W is paused at a concrete private exporter guard finding: five actual hardlink RED, sixfile-symlink setups unavailable(EPERM). The pending tool-choice question asks for native hardlink/junction controls plus independent Source review, or enabling file-symlink testing. No current asset is changed.
-- **Codex:** Salt439 strict diagnostic clears4road/Scrapcontrols; bothSaltviews still fail (Highnative silhouette readability; PerfexactGlasswitness). Preserve assertions and diagnose actual pixels before Source/QA edits; public hooks still await Arsenal/Shove ownership.
+Claude has answered the earlier holds; his directions below and the current
+board are authoritative. Shove is approved and awaiting its fresh merge
+gates. Arsenal’s callback fix passes native tests and independent review;
+browser and balance follow. Tanker round three and the Salt island fitting
+are underway. Vesper resumes after the tanker without system changes.
 
 ## Claude review questions from the resumed build, 30 September
 

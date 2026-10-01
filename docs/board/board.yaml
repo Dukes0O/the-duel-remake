@@ -893,11 +893,11 @@ tasks:
     status: building
     review_commit: 58116aec7e8eafd1308be8bc399b3c7a9624e269
     test_commit: "3d42f5b"
-    source_commit: "276e0362a0fef5b891ca4afb8b6aad44583d547d"
+    source_commit: fd29006ac20cbeed8236bdd45e60103aa0163274
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/cmb/arsenal-core
     flag: arsenal
-    owns: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/arsenal/oil.js, src/arsenal/smoke.js, tools/test-arsenal-core.mjs, tools/test-arsenal-save.mjs, tools/test-arsenal-runtime.mjs, docs/changes/ARS-CORE.md]
+    owns: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/arsenal/oil.js, src/arsenal/smoke.js, tools/test-arsenal-core.mjs, tools/test-arsenal-save.mjs, tools/test-arsenal-runtime.mjs, docs/changes/ARS-CORE.md, tools/scenarios/arsenal-core.mjs, tools/arsenal-balance.mjs]
     hooks: [src/weapon-upgrades.js, src/car-loadout.js, src/wasteland-progress.js, src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-ai.js, src/screen-armory.js, src/wasteland-access.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/wasteland-tuning.js, src/app.js, src/game.js, src/screen-router.js, src/arena/arena-pilot.js, src/combat-scene.js, src/combat-projectiles.js, src/onfoot-weapons.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, start-preview.bat]
     hook_requests: [src/audio.js, src/sound-bank.js]
     sequencing: "Finish the approved per-candidate launch reach, preserving numeric CPU acquisition and physical flight. Shove, Salt and audio files stay with their lanes. Browser, balance, independent review and merge gates follow."
@@ -908,7 +908,7 @@ tasks:
     save_review: "Save Guardian cleared the retry fix, named-player preservation and refusal to overwrite unreadable or future saves. The launch slice changes no saves."
     claude_answer: "1 October 2026: (1) Crossbow range for a player launch and a bolt in flight is the bolt's own physical reach: its speed at its upgrade level plus the launching car's speed, times its remaining lifetime; no new cap, so released reach is unchanged. CPU acquisition stays 180 m. (2) Sounds: ARS-CORE may merge with the three cue names emitted and no sound while arsenal is dev; AUD-ARSENAL-W1 adds them after the audio lane releases the sound bank, and the arsenal does not release before that."
     claude_answer_2: "1 October 2026, 06:30: use the magnitude of the bolt's actual resultant horizontal launch velocity (level speed plus the car's full velocity vector), fixed at launch, times remaining lifetime. That is the physical reach and covers reverse and sideways carry; the scalar sum is not used."
-    source_review: "Immutable in-flight launch reach is independently reviewed. Four new callback tests expose three resolver failures alongside the ten remaining launch failures; Source implementation is next."
+    source_review: "Independent review cleared the per-candidate launch fix. All native cases pass with unchanged assertions. Browser, balance and merge gates remain."
     claude_answer_3: "1 October 2026, afternoon: approved. Add the optional context.rangeForTarget(actor), evaluated by the existing resolver for each candidate, returning that candidate's own launch reach (resultant horizontal launch speed toward it times lifetime). Numeric range stays for CPU acquisition (180 m) and every existing caller. No change to eligibility or flight."
   - id: AUD-ARSENAL-W1
     title: "Sounds for Oil Slick and Smoke Screen"
