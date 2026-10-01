@@ -319,7 +319,7 @@ function installReviewTools(mphToWorld,arenaTargetOutOfPlay,sweepObstacle) {
       const width=A.halfWidth*Math.abs(Math.cos(alpha))+B.halfWidth*Math.abs(Math.cos(beta))+A.halfLength*Math.abs(Math.sin(alpha))+B.halfLength*Math.abs(Math.sin(beta))+.2;
       const length=A.halfLength*Math.abs(Math.cos(alpha))+B.halfLength*Math.abs(Math.cos(beta))+A.halfWidth*Math.abs(Math.sin(alpha))+B.halfWidth*Math.abs(Math.sin(beta))+.3;
       pose(attacker,normal?target.s:target.s-length-.02,normal?target.lateral-side*(width+.02):target.lateral,heading);
-      hold(attacker,(mph+1.1)/Math.cos(oblique));attacker.speedMph=(mph+1.1)/Math.cos(oblique);}
+      hold(attacker,normal&&oblique===0&&attacker!==s?0:(mph+1.1)/Math.cos(oblique));attacker.speedMph=(mph+1.1)/Math.cos(oblique);}
     if(kind==='wreck'||kind==='protected'){target.armor=1;approach(60);d._vehicleContact(attacker,target,'rival');tick(1);
       if(!target.combatWrecking)throw Error('Real owned contact did not create scripted wreck');
       if(kind==='protected'){for(let n=0;n<430&&target.combatWrecking;n++)tick(1);
@@ -417,7 +417,7 @@ async function extendedQuality(c,quality,report,save) {
     await c.evaluate('window.__shoveReview.finish()');
   }
   for(const role of ['player-attacker','cpu-attacker'])for(const side of [-1,1]){
-    const label=quality+'-roles-normal-'+role+'-'+side,before=await c.evaluate(`window.__shoveReview.scripted('idle',${JSON.stringify(role)},${side},true,0,${side<0?260:360})`),views=[];
+    const label=quality+'-roles-normal-'+role+'-'+side,before=await c.evaluate(`window.__shoveReview.scripted('idle',${JSON.stringify(role)},${side},true,0,${role==='cpu-attacker'?100:side<0?260:360})`),views=[];
     views.push(await reviewedCapture(c,label+'-before-close','close'));views.push(await reviewedCapture(c,label+'-before-world','world'));
     const during=await c.evaluate('window.__shoveReview.progress(8)');views.push(await reviewedCapture(c,label+'-during-medium','medium'));
     const after=await c.evaluate('window.__shoveReview.progress(210)');views.push(await reviewedCapture(c,label+'-after-close','close'));views.push(await reviewedCapture(c,label+'-after-world','world'));

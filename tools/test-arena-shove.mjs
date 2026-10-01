@@ -642,3 +642,127 @@ test('GROUNDED POSE: complete fresh pose permits actual protected forty-mph CPU 
     'original native protection deadline elapses normally without reset');
   eq(r.duel._vehicleContact, Duel.prototype._vehicleContact, 'readonly contact observer restores its original native method');
 });
+
+
+import {sweepObstacle as observedWallSweep} from '../src/collision.js';
+import {arenaWallNormal as actualWallNormal} from '../src/arena/arena-floor.js';
+
+// One real native normal-wall incident, with a separately labelled continuing
+// CPU throttle control. No source contact/guard/controller result is replaced.
+function scriptedNormalIncident(role, side, segment, coast) {
+  const seed = role === 'player-attacker' ? (side < 0 ? 112855 : 120774) : (side < 0 ? 128693 : 136612);
+  const duel = new Duel({seed, featureFlags: {wasteland2: true, scrapdome: true}});
+  eq(duel.startArenaEvent({car: 'falcone_f42', driverId: 'club', seed, cpuDifficulty: 'easy',
+    opponents: [{car: 'dusthawk_rally', upgradeLevel: 0}]}), true, 'real normal-wall fixture uses captured native actors/options');
+  const s = duel.state, cpu = s.opponents[0], target = role === 'player-attacker' ? cpu : s,
+    attacker = target === s ? cpu : s;
+  const tick = () => duel.step(DT);
+  const fresh = (actor, distance, lateral = 0, headingError = 0) => Object.assign(actor,
+    {s: distance, prevS: distance, lateral, prevLateral: lateral, headingError,
+      speedMph: 0, yawVelocity: 0, pushVelocity: 0, steerVisual: 0, slipAngle: 0,
+      knock: null, tumble: null, airborne: false, airHeight: 0, prevAirHeight: 0,
+      _jumpY: null, _verticalSpeed: 0, groundHeight: null, contactCooldown: 0, damageCooldown: 0});
+  const hold = (actor, speedMph = 0) => {
+    holdIdle(duel, actor);
+    if (actor !== s) participant(duel, actor).goal.speedMph = speedMph;
+  };
+  for (let i = 0; i < 362; i++) tick();
+  s.combat.aiTimer = s.combat.pickupTimer = Infinity;
+  fresh(s, 20); fresh(cpu, 90); hold(cpu);
+  fresh(target, segment, side * (floorLimit(duel) + .01)); hold(target);
+  const railContacts = [], originalStatic = duel._staticContacts;
+  duel._staticContacts = function(actor, ...rest) {
+    const before = {s: actor.s, lateral: actor.lateral};
+    const from = duel.course.worldAt(actor.prevS ?? actor.s, actor.prevLateral ?? actor.lateral),
+      to = duel.course.worldAt(actor.s, actor.lateral);
+    from.y = to.y = undefined;
+    const hits = actor === target ? duel._obstacles(actor.prevS ?? actor.s, actor.s)
+      .map(obstacle => ({obstacle, hit: observedWallSweep(from, to, obstacle,
+        duel.course.at(actor.s).heading + (actor.headingError || 0) + (actor.slipAngle || 0), duel._vehicleSpec(actor))}))
+      .filter(row => row.hit && row.obstacle.arenaWall) : [];
+    const result = Reflect.apply(originalStatic, this, [actor, ...rest]);
+    if (actor === target && hits.length) railContacts.push({before, hits, after: {s: actor.s, lateral: actor.lateral}});
+    return result;
+  };
+  try {tick();} finally {delete duel._staticContacts;}
+  const staged = {s: target.s, lateral: target.lateral, wall: actualWallNormal(duel, target),
+    ground: duel.course.groundAt(target.s, target.lateral).y, air: target.airHeight};
+  fresh(attacker, target.s, target.lateral, side * Math.PI / 2);
+  const envelope = vehicleContactEnvelope(attacker, target, duel._vehicleSpec(attacker), duel._vehicleSpec(target));
+  fresh(attacker, target.s, target.lateral - side * (envelope.width + .02), side * Math.PI / 2);
+  hold(attacker, coast ? 0 : 41.1); attacker.speedMph = 41.1;
+  const before = worldPose(duel, target), frame = duel.course.at(target.s), armor = target.armor,
+    initialLateral = attacker.lateral, contacts = [], events = [], original = duel._vehicleContact;
+  let step = 0;
+  duel._vehicleContact = function(a, b, reason) {
+    const shape = vehicleContactEnvelope(a, b, duel._vehicleSpec(a), duel._vehicleSpec(b));
+    const phase = duel.relativeS(b.s, a.s) - b.s;
+    const hit = sweepBox({x: a.prevLateral - b.prevLateral, z: a.prevS - b.prevS - phase},
+      {x: a.lateral - b.lateral, z: a.s - b.s - phase}, shape.width, shape.length);
+    const vx = (Math.sin(a.headingError || 0) * a.speedMph * (a.dir || 1) -
+      Math.sin(b.headingError || 0) * b.speedMph * (b.dir || 1)) * DRIVE.mphToWorld + (a.pushVelocity || 0) - (b.pushVelocity || 0);
+    const vz = (Math.cos(a.headingError || 0) * a.speedMph * (a.dir || 1) -
+      Math.cos(b.headingError || 0) * b.speedMph * (b.dir || 1)) * DRIVE.mphToWorld;
+    const latch = [...duel._combatRamIncidents], incoming = {s: target.s, lateral: target.lateral};
+    const result = Reflect.apply(original, this, [a, b, reason]);
+    if (result && hit && a === s && b === cpu) contacts.push({step, hit, latch, incoming,
+      normalMph: Math.max(0, -(vx * hit.nx + vz * hit.nz) / DRIVE.mphToWorld),
+      tangentMph: (vx * hit.nz - vz * hit.nx) / DRIVE.mphToWorld,
+      separated: {s: target.s, lateral: target.lateral}});
+    return result;
+  };
+  const off = duel.onChange((_, event) => {if (event.combatRamHit || event.vehicleSmash) events.push(event);});
+  let moved = 0, firstMotion = 0, reverse = 0, rebound = 0, air = 0, escaped = false;
+  try {for (step = 1; step <= fixture.measureTicks; step++) {
+    tick(); const at = worldPose(duel, target), body = actorBody(duel, attacker),
+      distance = Math.hypot(at.x - before.x, at.z - before.z);
+    moved = Math.max(moved, distance); if (step === 1) firstMotion = distance;
+    reverse = Math.max(reverse, -side * (body.vx * Math.cos(frame.heading) - body.vz * Math.sin(frame.heading)));
+    rebound = Math.max(rebound, side * (initialLateral - attacker.lateral));
+    air = Math.max(air, target.airHeight || 0);
+    escaped ||= Math.abs(target.lateral) > floorLimit(duel) + EPS || Math.abs(attacker.lateral) > floorLimit(duel) + EPS;
+  }} finally {delete duel._vehicleContact; off();}
+  return {duel, target, attacker, staged, railContacts, contacts, events, armor, firstMotion, moved, reverse, rebound, air, escaped};
+}
+test('NORMAL INCIDENT: real negative rail leaves an unpinned gap that the first ram closes', () => {
+  const r = scriptedNormalIncident('cpu-attacker', -1, 260, true);
+  eq(r.staged.wall, null, 'actual staged player is not at the solid floor boundary');
+  ok(r.railContacts.some(row => row.hits.some(hit => hit.obstacle.id === 'arena-wall-248--1')),
+    'actual native rail contact supplies the inward staging displacement');
+  const gap = floorLimit(r.duel) - Math.abs(r.staged.lateral);
+  ok(gap > .04, 'native rail leaves a real open-floor gap rather than a pinned target');
+  ok(r.contacts[0].normalMph >= 40, 'first genuine ram remains above forty mph');
+  ok(r.firstMotion > .04, 'real initially unpinned target can move across its genuine gap');
+  ok(Math.abs(r.firstMotion - gap) < EPS, 'first physical displacement closes the measured native gap');
+  eq(r.escaped, false, 'native containment still prevents escape');
+  ok(r.target.armor < r.armor, 'eligible real gap-closing ram retains native armor damage');
+});
+for (const role of ['player-attacker', 'cpu-attacker']) for (const side of [-1, 1]) {
+  test(`NORMAL INCIDENT: ${role}/side${side} genuinely pinned single ram stays solid and rebounds`, () => {
+    const r = scriptedNormalIncident(role, side, 100, true);
+    ok(r.staged.wall, 'actual staged target has a native solid-wall normal');
+    eq(r.staged.lateral, side * floorLimit(r.duel), 'actual post-static pose is genuinely at the floor boundary');
+    eq(r.staged.ground, 0, 'native staged pose is on flat actual floor');
+    eq(r.staged.air, 0, 'native staged target is genuinely grounded');
+    eq(r.contacts[0].hit.nz, 0, 'first native swept contact is normal to the wall');
+    ok(r.contacts[0].normalMph >= 40, 'actual first native impact remains above forty mph');
+    ok(r.firstMotion < 1e-4, 'genuine first normal ram preserves strict pinned motion');
+    ok(r.moved < 1e-4, 'single normal ram preserves strict pinned motion for all210 actual steps');
+    ok(r.reverse > 1e-6 && r.rebound > .01, 'attacker genuinely reverses velocity and moves away from wall');
+    ok(r.target.armor < r.armor, 'eligible actual normal ram retains armor damage');
+    eq(r.escaped, false, 'all native steps retain solid floor containment');
+    eq(r.air, 0, 'actual pinned target remains on the floor');
+    eq(r.duel._vehicleContact, Duel.prototype._vehicleContact, 'contact observer restores original native method');
+    eq(r.duel._staticContacts, Duel.prototype._staticContacts, 'rail observer restores original native method');
+  });
+}
+for (const side of [-1, 1]) test(`NORMAL INCIDENT: continued CPU throttle side${side} makes a later legitimate oblique ram`, () => {
+  const r = scriptedNormalIncident('cpu-attacker', side, 100, false), later = r.contacts.slice(1).find(c => c.latch.length === 0);
+  ok(r.staged.wall, 'continuing-throttle control also begins genuinely pinned');
+  ok(r.firstMotion < 1e-4, 'the genuine first normal ram still meets strict pinned motion');
+  ok(later && later.step > 1, 'real continued pilot input naturally clears and starts a later incident');
+  ok(Math.abs(later.tangentMph) > 1, 'later native contact contains a genuine along-wall velocity component');
+  ok(r.moved > 1e-4, 'later oblique continuation legitimately moves the target along the wall');
+  eq(r.escaped, false, 'genuine oblique motion does not cross the solid boundary');
+  ok(r.reverse > 1e-6 && r.rebound > .01, 'initial physical rebound is retained before the later approach');
+});

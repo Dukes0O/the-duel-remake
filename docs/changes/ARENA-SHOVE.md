@@ -1453,3 +1453,114 @@ integration `expanded-browser/`. Both owned JavaScript syntax checks and
 `git diff --check` pass. The complete previous change note is preserved as an
 exact byte prefix. This freeze is only additive tests, the approved two-field
 NEW QA pose correction and appended verdict; independent browser QA follows.
+
+
+## 1 October: reviewed physically pinned single-normal-ram QA fixture
+
+Independent candidate QA at1760bef, private57752/memory-only, stopped after67
+captures on first High CPU-attacker/negative-side pure-normal wall case,
+seed128693. Actual maximum motion.055167561m violates the unchanged strict
+1e-4m requirement; real reverse3.632m/s, rebound1.025m and eligible damage
+were present. Original failed launcher, captures, full report and subsequent
+read-only diagnosis remain under integration `expanded-browser/`. No complete
+High/Performance/frame comparison is claimed from this stopped run.
+
+Independent actual Source diagnosis proves its initially staged player is not
+pinned. A real `arena-wall-248--1` rail contact moves staged s260/lateral-18.01
+inward to s260.31599031845735/lateral-17.951109306411844. The native wall
+normal is null, leaving a real.048890693588156m floor gap. First native car
+contact is normal nx-1/nz0; real mass separation takes target beyond-18 and
+native containment returns it to-18. That first gap closure agrees with the
+native measured gap to1.3e-14m. It is genuine motion of an unpinned car, not a
+Source wall escape or missing recoil. The whole210-step native later motion
+differs from the browser's later result; no precise late browser cause is
+inferred from those differing totals. All original failed evidence is retained.
+
+A read-only24-row native contrast keeps original Duel/car/course/rails/pilot,
+real fixed steps and collision methods. It samples s90/100/260, both roles and
+both sides, comparing constant41.1mph held CPU goal with ordinary held-speed0
+while initializing the actual car at41.1mph. At old negative-side s260, even
+zero-goal approach still closes the genuine gap and fails strict pinned motion.
+Input change alone is insufficient. At actual s100/±18, real static resolution
+leaves a grounded target at the native solid boundary with a real wall normal.
+No obstacle is removed or physics method patched to create that condition.
+
+| Genuine s100 pose | Max motion over210 ticks m | Actual reverse m/s | Rebound m | Eligible armor removed |
+| --- | ---: | ---: | ---: | ---: |
+| Player attacker, side-1 | 1.2539636700799292e-10 | 3.674068670616054 | 5.920347186379566 | 19.839970821326677 |
+| Player attacker, side+1 | 3.4894177906421735e-10 | 3.6740686706160512 | 5.92034718637966 | 19.839970821326677 |
+| CPU held-speed0, side-1 | 1.2539636700799292e-10 | 3.632027238016413 | 1.0522773540997044 | 19.613071014509465 |
+| CPU held-speed0, side+1 | 3.4894177906421735e-10 | 3.6320272380164176 | 1.0522770293148778 | 19.613071032712224 |
+
+Both genuine initial CPU sweeps exceed40mph (approximately40.6233mph
+normal). Constant-throttle CPU at the same genuine pinned pose has the same
+first physical rebound/strict stay, then a later fresh native contact at tick85
+with approximately12.902mph normal and3.062mph along-wall velocity. Its
+subsequent native motion is.3631478744/.3631475453m. That is legitimate
+oblique continuation from actual pilot input; it must not be erased by a
+stronger Source guard or claimed to be another pure-normal incident. The
+negative continuing-input control remains covered independently.
+
+Director reviewed and approved the narrow fixture slice ONLY after additive
+native controls first. In NEW `scripted()` approach, only
+`normal&&oblique===0&&attacker!==s` uses held CPU speed0; actual initialized
+speed remains41.1mph. Only NEW pure-normal CPU-attacker capture calls choose
+proven segment100 on both sides. Existing NEW player-attacker negative260 and
+positive360 calls stay exact. Oblique, open-floor, wreck/protection setup,
+public inputs, legacy controllers and all assertion bodies are untouched.
+This is a labelled single-ram stopped-input fixture. It does not change real
+AI, zero the contact incident map, reset timers, modify collisions or weaken
+strict1e-4, recoil, damage, containment or20/40mph minimums. Already-reviewed
+ballistic fresh-pose and separated-wreck-step corrections stay intact.
+
+Seven additive actual native controls cover the unpinned real rail gap,
+genuine pinned first normal/rebound/damage/all210-step strict stay for both
+roles/sides, and both sides' legitimate later continued-CPU obliques. They
+observe actual native sweeps/rail contacts, delegate each captured original
+method once with original arguments/return, and restore it. New focused
+controls pass7/7 before either recipe change. No Source bug is assigned.
+
+Commands and complete raw evidence in integration
+`.evidence/2026-10-01/ARENA-SHOVE/expanded-browser/candidate-1760-diagnosis/`:
+
+- Original independent `diagnose.mjs`, `diagnose-exact-arithmetic.mjs`,
+  `static-trace.mjs` and `scan-real-wall-poses.mjs` plus their unchanged logs
+  retain actual first-gap arithmetic and earlier72 native pose witnesses.
+- `node .../author-normal-coast-contrast.mjs`:24 current/proposed input rows
+  in same-name `.log`; no tracked fixture or Source edit during contrast.
+- `node .../author-normal-contact-witnesses.mjs`: same-name `.log` retains
+  initial and later real sweep/velocity/incident receipts.
+- `node --test --test-name-pattern "NORMAL INCIDENT" tools/test-arena-shove.mjs`:
+  `author-native-controls-first.log`,7/7,253.8465ms BEFORE recipe changes.
+
+The complete prior124-case test file is an exact43,438-byte prefix from1760bef,
+SHA-256 `8e9156970892d2355a21c1a7b02e5f3026b053939095d4708bd4acc7b80132d6`.
+Reversing only the two reviewed NEW fixture edits reconstructs every1760bef
+scenario byte, SHA-256
+`bca0b5aef9e5f0cd1822419672bd6dbac3b9dda2fc009741d85038c63aa9b29f`.
+Thus all39 original legacy assertion bodies, public wall observer methods,
+controllers and input recipe remain exact. Corrected scenario SHA-256
+`30005243cc4775bd4856cb5e422a413d08445e11d885086a65a78fbc42424187`.
+Five reviewed Source paths and replay fixture bytes remain exact; native
+Shove Source still matches f703714. Previous note bytes are an exact appended
+prefix. No protected Source, unrelated lane or Arsenal file changes occur.
+
+### Removed
+
+Replaced only the NEW CPU pure-normal setup's unpinned rail-gap pose and its
+continuing-throttle measurement with an actual pinned single-normal-ram
+fixture. Removed no Source behavior, guard, assertion, earlier test, pin,
+metadata, asset or prior evidence. Continued-input oblique behavior remains
+real and explicitly tested. Historical visual/physical rail mismatch and HUD
+caveats stay open. No author browser rerun/frame/build/full-tier/merge,
+art/audio/human feel or release pass is claimed. Independent browser QA must
+rerun the frozen recipe. No live/Preview/.preview-dist/5174/real saves,
+dependency, merge, push or history change occurs.
+
+Final author validation: complete native Shove passes131/131,6,542 reached
+acceptance checks,zero failures/skips/TODOs,75,613.128ms. Complete stdout/
+stderr is `author-full-native131.log` in the ignored diagnosis directory.
+Focused controls first reached85 checks. Both owned JavaScript syntax checks
+and diff checks pass. This clean QA-only freeze grants no browser/frame,
+Source regression, build/lane/full-tier or merge approval; independent QA
+follows. Ownership returns with all earlier failed evidence retained.
