@@ -1024,11 +1024,11 @@ tasks:
     status: building
     review_commit: 2d6e5cc94ddd5c3a46316db411e20872b449f4ca
     source_commit: d1ed6dc75635c47acfd56a9b9d6b11794d2ea367
-    test_commit: 3dbecc33e9487efe536c3a7d63958afae33df549
+    test_commit: d5b77fe28b71ae461393a399e0f4a6105fa61ef6
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/vis/salt-flats
     flag: salt-flats
-    owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
+    owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
     hooks: [tools/art/catalog.json, src/arena/venues.js, src/course.js]
     hook_requests: [ src/arena/arena-event.js, src/screen-arena.js, src/render3d.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, start-preview.bat, tools/test-wasteland-beta.mjs]
     sequencing: "Only venue registry/course hooks granted. Frozen Source d1ed6dc aligns native Course oval/ramp interpolation with actual private GLB; all31 native and16 geometry checks pass. Inner-island/outer-perimeter correspondence gaps require additive independent tests before further layout source. Arsenal owns App/UI/flags/launcher/pilot; Shove owns floor/collision/knock/event. Catalog/public/runtime handoffs remain held; no overlap. Four public modes and Claude settled solid island/perimeter apply; every comparison goes to Claude before install/merge."
@@ -1037,7 +1037,7 @@ tasks:
       - "Starts after Kyle picks from the ART-SRC-SALTFLATS sheet. Build docs/SCRAPDOME.md section 10's venue from the picked assets (three art rounds at most, SPEC 0.11), rank 9 unlock, every arena mode playable there, frame cost within 10% of the Scrapdome in High and Performance."
     claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
     kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
-    private_stage: "Clean partial d1ed6dc: default58 checks52pass6 held runtimeRED; all31 native/source and16 registered-geometry cases pass, all13 formerlyRED cases execute. Private102764tri/17draws/12821472B, SHA07d4e706af9ba14d2329247997346501b438e43cfbe27eac763db89899c0336f. New640m centered oval/18m half-band and native16-segment ramp vertices; existing Scrapdome/Titan/pins unchanged. Visible inner island and full outer boundary still incomplete; interpolation awaits independent review. No art/frame/public install/merge pass."
+    private_stage: "Clean boundary test freeze d5b77fe leaves Source d1ed6dc exact. New native29checks16pass13 meaningfulRED: inner160/160 andouter132/160 station/midpoint gaps beyond frozen inherited3m+.002; all9 realcar sweeps missing, inner44donor pieces8disconnectedgroups/no enclosingcycle. Genuine outercycle and open-spiral negative controls pass. Original58checks52pass6heldruntimeRED, native31/geometry16/replay162exact. Source owns only granted geometry/recipe/presentation; further coherent native perimeter/island follows these tests, no giant/drivable-area collider or Sourcepick change. Art/frame/runtime/Claude/install/wholegates remain."
   - id: ARENA-07
     title: "Convoy Raid"
     owner: codex
