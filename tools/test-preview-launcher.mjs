@@ -77,11 +77,10 @@ check('launcher binds a private strict port', () => {
 });
 check('preview launch requests every current dev switch', () => {
   // Read from the catalog so a new development switch cannot be missed
-  // (WAR-02a-SAL added warlords). Career backup is left out: Preview saves
+  // (WAR-02a-SAL added warlords, released by WAR-SAL-RELEASE). Career backup is left out: Preview saves
   // are memory-only.
   const devSwitches = Object.entries(FEATURE_STATES)
     .filter(([name, state]) => state === 'dev' && name !== 'career-backup').map(([name]) => name);
-  assert.ok(devSwitches.includes('warlords'), 'warlords is a development switch');
   for (const flag of devSwitches) {
     assert.match(launcher, new RegExp(`(?:flags[^\\r\\n]*|PREVIEW_FLAGS[^\\r\\n]*)${flag}`),
       `preview URL must request ${flag}`);

@@ -1,29 +1,25 @@
 # Wasteland play-test inbox
 
+## Settled for the resumed build, 30 September
+
+Kyle keeps the current crew figures and first-person hands. Their failed
+fitting lanes are closed and removed without a runtime install. The old
+comparison verdicts and Kyle's decisions remain on the cards.
+
+Claude's fighter rules, 4 m Fuel depot and 150 degree/s steering ceiling are
+merged. Fuel and steering resume with tests first. The convoy is one rigid
+truck from pick A with three verified donor valves and a lit roof plate;
+there is no trailer, hitch or opening hatch. The donor record is retained
+before the old parts-search lane is removed. Details are in CREW.md,
+SCRAPDOME.md and the board. Current comparisons go to Claude before merge.
+
+## Claude: Mirage build dependency and early reward, 30 September
+
+The settled Mirage build note calls targetFor, but the shared targeting module does not exist yet. Current CPU crossbow aim, bolt homing and RPG locking each bypass a shared resolver, and current normalization discards new weapon IDs. WAR-02c now explicitly waits for ARS-CORE and WAR-PAY. Its old src/arena/warlords.js hook was a nonexistent path and is corrected to src/warlords.js. Please confirm the settled "early and working" reward means Mirage supplies the working Decoy Drone using its reusable decoy implementation, then ARS-03 reuses that same file; waiting for ARS-03 would create a dependency cycle. No Mirage code or duplicate targeting has started. Fuel Run proceeds separately under SPEC0.12 with a fuel-run dev switch in addition to released scrapdome and discovery/rank gates.
+
 Add a note here after trying a build. Include the event, car, difficulty and
 what happened. Screenshots and short recordings help when a problem is visual
 or hard to repeat. Do not include saved career data.
-
-## Director review handoff to Claude, 30 September 2026
-
-WAR-02a-SAL is ready for your required Preview play-through before merge.
-Retained branch: `lane/cmb/war-02a-sal`; exact clean source:
-`1b5f3365a9717f477e85d6503d1f2bb88375c272`. Lane tier 304/304 and build pass.
-The 23 focused acceptance tests and 12 private High/Performance captures pass;
-independent source and visual review found no issues. A real sweep-hit and
-first-wreck replay has the same complete-state/event hash at 30/60/144 FPS.
-
-Please judge fun, fair tells/counters, scream/roar balance and the standard
-chase-camera nameplate/callout view in Preview. The browser is muted and its
-labelled inspection camera only proves move/effect/callout presentation.
-Final captures/report: integration's `.evidence/2026-09-30/WAR-02a-SAL/`.
-Keep the lane until your verdict. This Director has not merged Sal or touched
-Preview. Reward is merged as de3eb0f and remains behind warlords: dev.
-
-The end full tier passed 303/303 and build on exact clean `0f7818f6a351b4ce0f728a9a8cde3354ee99ec75`.
-The verdict and tested source are recorded at the end of run-log.md. Kyle's
-art picks and your gritty fitting rules are preserved; new fitting/source
-cards remain for the next run. Sal's Preview review remains required.
 
 ## What's new to try
 
@@ -93,7 +89,7 @@ and Reward’s App hook are now free.
 
 Kyle chose the CC0 Marina Shemesh salt photograph and tiling. Its mirrored
 material preview is reviewed; original pixels stay unchanged. Salt model picks,
-hands and Rustwall source picks remain pending in their comparison sheets.
+hands and Rustwall picks are recorded in decisions: WRAD Arms A and all three Rustwall sets. Their fitting cards follow the settled gritty direction.
 
 ## Design questions for Claude, 30 September 2026
 

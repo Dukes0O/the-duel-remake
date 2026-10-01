@@ -21,7 +21,9 @@ if (!localStorage.getItem(PLAYERS_KEY)) {
   }
 }
 
-await import('../src/main.js');
+const {app} = await import('../src/main.js');
+// Only the isolated QA build exposes the production App for repeatable checks.
+if (typeof __DUEL_QA__ !== 'undefined' && __DUEL_QA__ === true) window.__qaApp = app;
 
 // Show when this Preview was built, so it is clear which version is playing.
 fetch('/preview-build.json', {cache: 'no-store'})

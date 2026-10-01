@@ -36,6 +36,24 @@ back into the car.
 
 Computer fighters (section 3) use the same gear with the same numbers.
 
+### Car weapons against fighters on foot (settled 30 September 2026)
+
+Car weapons hit fighters on foot (the player's crew, computer crews and
+raiders), using the fighter's own body, not a car's box:
+
+- **Crossbow bolt from a car:** 35 health; no knockdown. A full-health
+  fighter survives two bolts and goes down on the third. Dune's Marksman
+  Crossbow keeps its one-hit knockdown.
+- **Bomb and other car splash:** the same falloff as against cars, up to 60
+  health at the centre (the sticky bomb's number); a fighter inside half the
+  blast radius is also knocked down.
+- **Carried cargo** (fuel, and later any carried item): a fighter drops it
+  only when knocked down. A hit that does not knock the fighter down keeps
+  the cargo, which is the on-foot match for a car's "more than 25 armor in
+  one hit" rule.
+- A car running into a fighter already knocks them down (vehicle sweeps);
+  unchanged.
+
 ## 2. Boarding (CREW-03)
 
 Boarding is the on-foot finishing move. It must feel daring but stay simple.

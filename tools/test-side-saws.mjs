@@ -19,8 +19,10 @@ const ok = (value, message) => { checks++; assert.ok(value, message); };
 const near = (actual, expected, message) => { checks++; assert.ok(Math.abs(actual - expected) < 1e-7,
   message + ' (actual ' + actual + ', expected ' + expected + ')'); };
 test.after(() => console.log('Side Saws: ' + checks + ' acceptance checks executed.'));
+// Warlords is released (WAR-SAL-RELEASE); "disabled" forces the switch off so
+// the switch-off path stays tested until the switch is removed.
 const flags = (enabled = true) => createFeatureFlags({storage: null, qa: true,
-  search: enabled ? '?flags=warlords' : ''});
+  overrides: {warlords: enabled}});
 function ownedProfile() {
   const p = createProfile();
   return normalizeProfile({...p, credits: 765, wasteland: {...p.wasteland, discoveredGate: true,

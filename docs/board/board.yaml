@@ -5,6 +5,41 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: ART-KEEP-VALVE-DONOR
+    title: "Keep the verified CC0 convoy valve donor after closing the trailer search"
+    owner: codex
+    lane: ART
+    size: S
+    needs: []
+    status: building
+    claimed_by: codex-director-2026-09-30-late-resume
+    branch: lane/art/keep-valve-donor
+    owns: [tools/art/catalog.json, tools/art/tanker-valve-source.json, tools/test-tanker-valve-source.mjs, docs/changes/ART-KEEP-VALVE-DONOR.md]
+    hooks: []
+    helpers: [test_author, reviewer]
+    acceptance:
+      - "Kyle closed ART-SRC-TANKER-PARTS and Claude simplified Convoy Raid to one rigid truck. Preserve only the verified Kenney Factory pipe-large-valve donor in catalog and a small pinned source recipe: original archive, embedded CC0 licence, palette and GLB hashes; actual 456-triangle source. Source files stay outside the repo."
+      - "Meaningful provenance tests first and independent source review. No runtime fitting, source fabrication, new comparison, or protected audio edits. Keep current catalog records. Do not merge the obsolete articulated-trailer test/manifest/inspection recipe; its four genuine missing-part failures remain facts for the closed design, not assertions weakened to pass."
+      - "Lane tier and build before merge. After the verdict, remove the replaced tanker-parts lane and branch with the janitor, keeping original licensed files and Kyle's decision. ART-FIT-TANKER may use the donor after this catalog merge."
+
+  - id: HK-RUSTWALL-ATLAS-ISOLATION
+    title: "Keep concurrent Rustwall probe atlases private until packed"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: merged
+    claimed_by: codex-director-2026-09-30-resume
+    branch: lane/tool/rustwall-atlas-isolation
+    owns: [tools/blender/rustwall.py, tools/test-rustwall-atlas-isolation.mjs, docs/changes/HK-RUSTWALL-ATLAS-ISOLATION.md]
+    hooks: []
+    note: "Director: merged cc6a7f9 from reviewed clean df3706c. Native tests first: 95 checks, 19 pass/76 real failures; fixed 95/95. Independent review clears source and native cleanup success/error probes. Unchanged Rustwall 29/29 and replay 162/162; all 143 runtime files byte-identical. Exact lane 308/308 in 440.99s and build 0.977s pass. Plain lane/branch janitor complete. Final clean integration full remains required; read its exact commit/result in checks/full-tier.json."
+    helpers: [test_author, reviewer, test_runner]
+    acceptance:
+      - "Fix the failed end full at clean2d1216f: default wheel and relief probes race on art-build/rustwall/hulks PNGs. The relief GLB and snapshot contain the same corrupt IDAT bytes; current runtime wall images decode. Write meaningful failing native source acceptance before the fix."
+      - "Every initial, emissive and relief atlas save/pack/snapshot uses its own invocation's bytes. Concurrent publication cannot change exported or snapshot pixels. Keep default output paths, names, manifest fields and all old assertions; no runtime asset or signature change."
+      - "Independent review plus unchanged existing Rustwall checks, lane tier and build before merge. Full tier must pass on the final integration commit before completion or D8 push. Remove scratch evidence after its verdict; retain recipes and licensed originals."
+
   - id: UX-ENTRY-HINTS
     title: "Clarify car exit, bailout and reentry controls"
     lane: UI
@@ -539,7 +574,7 @@ tasks:
       - "Kyle approved on 30 September 2026: retire and remove the rule set nobody can play. wasteland2 is on and cannot be turned off, so delete the switch from src/feature-flags.js and every switch-off branch in src/ (about 20 files), keeping exactly the switched-on behavior."
       - "Remove the off-balance gate: AGENTS.md and docs/OPERATIONS.md release evidence becomes one combat balance run; tools/combat-balance.mjs, tools/arena-balance.mjs and tools/onfoot-balance.mjs lose the off mode; scenarios and tests stop setting or toggling wasteland2. Delete tests that only prove the switched-off behavior; list each one in the change note's Removed section."
       - "Race fingerprints for the released rules stay unchanged (replay check). Cards that name flag: wasteland2 on the board lose the field."
-      - "Also remove the scrapdome, titan-climb and muddy-hollow switches and their switch-off branches, released by SCRAPDOME-RELEASE on 30 September 2026, keeping the switched-on behavior."
+      - "Also remove the scrapdome, titan-climb and muddy-hollow switches and their switch-off branches, released by SCRAPDOME-RELEASE on 30 September 2026, and warlords, released by WAR-SAL-RELEASE the same day, keeping the switched-on behavior."
       - "Touches many files: run it when no other lane owns any of them, in parts if needed (src first, then tools and scenarios), each part through the lane tier."
   - id: ART-SRC-CREW
     title: "Crew figures: short list of existing starting models for Kyle"
@@ -595,48 +630,79 @@ tasks:
     lane: ART
     size: L
     needs: [ART-SRC-CREW]
-    status: ready
+    status: closed
+    claimed_by: codex-director-2026-09-30-resume
     flag: wasteland2
+    owns: [tools/blender/crew-source-fit.py, tools/blender/crew-source-fit.json, tools/test-crew-source-fit.mjs, tools/scenarios/crew-source-fit.mjs, tools/art/crew-fit-sheet.py, public/assets/models/wasteland/crew/rook.glb, public/assets/models/wasteland/crew/jax.glb, public/assets/models/wasteland/crew/cinder.glb, public/assets/models/wasteland/crew/dune.glb, public/assets/models/wasteland/crew/tusk.glb, docs/board/looks/crew-fit-m/, docs/changes/ART-FIT-CREW-M.md]
+    hooks: [tools/blender/crew-fighters.py, tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, tools/test-rook-p2-source.mjs, tools/test-rook-p2-geometry.mjs, tools/test-crew-fighters.mjs, tools/test-blender-output.mjs, tools/test-review-evidence.mjs, tools/test-runtime-art-sources.mjs]
+    helpers: [test_author, reviewer, browser_qa, art_critic]
+    sequencing: "Use the existing loader. Never edit audio credits HTML while the protected audio lane owns it; its in-game credit hook waits for that merge. All candidate sheets go to Claude before merge; preserve current art until all five pass. Women and tanker sourcing wait for this catalog hook."
+    review_commit: 59a5b99
+    review_note: "Independent round 1: worse than current for all five; direction 1-2, consistency 1, coat/hood/hair gaps. Current art and generators unchanged. Kyle chooses better existing parts or closing the fit. Catalog/credit hooks released while paused; reclaim only after source lanes merge. Claude receives the sheet before any further round or merge."
     acceptance:
       - "Fit the picked Quaternius Modular Men pack (docs/board/looks/crew-src) into five crew figures following docs/WASTELAND_ART.md 'Fitting existing models'. Each is recognizable from the crew sheets (public/assets/reference/wasteland-crew-1.png and -2.png) by silhouette, costume and accent colour; faces may stay simple."
       - "Reuse the pack's shared rig and 24 actions; map them to the game's existing on-foot actions (idle, walk, run, aim, fire, reload, repair, knockdown, get up, enter and exit the car). A missing action is adapted from the nearest pack action, never hand-animated from nothing."
       - "Near and distant versions within the budgets; the old Rook runtime model and its figure scripts are removed once all five pass; Kyle checks them in the Preview."
+    claude_review: "30 September 2026: agree with the critic; round 1 is worse than the current figures at every distance. Recommend Kyle keeps the current crew and this card closes (as he chose for the women). Correction: Cinder is a woman (crew sheet and current figure); she stays as she is either way."
+    kyle_decision: "Kyle, 30 September 2026: keep the current crew figures. Round 1 scored 1 to 2 against them. Closed without installing anything; the Director removes this card's lane and branch."
   - id: ART-SRC-CREW-W
     title: "Crew figures for women: short list of existing starting models"
     owner: codex
     lane: ART
     size: S
     needs: [ART-SRC-CREW]
-    status: ready
+    status: merged
+    claimed_by: codex-director-2026-09-30-resume
+    owns: [tools/art/crew-w-source-sheet.py, tools/art/crew-w-source-inspect.py, tools/scenarios/crew-w-source-current.mjs, docs/board/looks/crew-w-src/, docs/changes/ART-SRC-CREW-W.md]
+    hooks: []
+    review_checkpoint: "Source artifacts merged from clean d6cd763 after 306 passing lane suites in 734.88 seconds and build in 1.74 seconds. Independent source and final rename reviews clear. Kyle keeps current Nell, Odessa and Wren; no runtime replacement or new-source fitting. Catalog hook released for tanker sourcing."
+    helpers: [reviewer]
+    sequencing: "Male fitting paused and released its unchanged catalog hook. Source women now; tanker waits for this catalog lane to merge. Source only, no runtime assets or adaptation. Compare 2-3 CC0 packs with checked licences and source geometry/rig when available; ask Kyle at the sheet and send it to Claude."
     acceptance:
       - "Nell, Odessa and Wren are women, and so is the secret crew member, Vesper Blackiron (settled by Claude, 30 September 2026). Quaternius Modular Men has no women. Short-list two or three CC0 sources with the ART-SRC-CREW rules; check Quaternius's own women's modular pack first, because a shared rig lets the whole crew share every action. Stop at a comparison sheet with a recommendation (waiting_on: kyle); Kyle said he is not picky."
+    kyle_pick: "Kyle, 30 September 2026: keep the current Nell, Odessa and Wren (\"that's fine. keep current.\"). Merge the comparison and source records as they are; no fitting of a new source."
   - id: ART-FIT-CREW-W
-    title: "Crew figures for Nell, Odessa, Wren and Vesper"
+    title: "Vesper Blackiron's figure from the current women's figures"
     owner: codex
     lane: ART
-    size: L
-    needs: [ART-SRC-CREW-W, ART-FIT-CREW-M]
+    size: M
+    needs: [ART-SRC-CREW-W]
     status: ready
     flag: wasteland2
     acceptance:
-      - "Same rules and actions as ART-FIT-CREW-M, from the picked women's source. Vesper's figure is built but shown only once WAR-04 reveals her."
+      - "Kyle kept the current Nell, Odessa and Wren on 30 September 2026, so they are not refitted. Build only Vesper Blackiron, the Baron's daughter, by adapting the current women's figure (its rig, actions and topology) under docs/WASTELAND_ART.md 'Fitting existing models': her own costume in the Baron's blackened steel and a dark red accent, recognizable next to Nell, Odessa and Wren. Built but shown only once WAR-04 reveals her. Kyle has the last look in the Preview."
   - id: ART-FIT-HANDS
     title: "First-person hands, gloves and sleeves from the picked source"
     owner: codex
     lane: ART
     size: M
     needs: [ART-SRC-HANDS]
-    status: ready
+    status: closed
+    review_commit: 34e914b482190114a575716d0fa107a818a4ef0c
+    claimed_by: codex-director-2026-09-30-resume
+    branch: lane/art/hands-fit
     flag: wasteland2
+    owns: [tools/blender/first-person-wrad.py, tools/blender/first-person-wrad-source.json, tools/art/hands-fit-sheet.py, tools/test-first-person-wrad.mjs, tools/scenarios/hands-fit-wrad.mjs, docs/board/looks/hands-fit/, docs/changes/ART-FIT-HANDS.md]
+    hooks: [public/assets/models/wasteland/first-person/hands/, tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, tools/blender/first-person-p2-source.json, tools/test-first-person-gear.mjs, tools/test-first-person-cloth.mjs, tools/test-first-person-contact.mjs, tools/test-first-person-polish.mjs, tools/test-runtime-art-sources.mjs]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    note: "Stopped after two rounds without resemblance gain. Independent critic inspected all320 matched shots; every crew scores1/5 resemblance and1/5 grip grounding, worse than current. Mechanical70/70 with493816checks is separate from visual failure. Current hands stay; no third round or install. Clean34e914b retains both sheets/verdicts/recipes/tests; used raw is deleted. Kyle chooses keeping current and closing or a new source/fitting card."
+    sequencing: "Tests first. Fit actual licensed WRAD Arms, preserve source topology/weights/rig and existing crew garment direction and motion. No sculpted replacement anatomy. Private candidate outputs/comparison first; no runtime install or old recipe removal until independent comparison beats current at4/5 on every item. At most3rounds; two without gain stop. The unchanged catalog hook is released while paused; a future approved card must reclaim it before editing; protected audio credits HTML has no granted hook and waits its owner. No App/renderer/simulation/audio/crew-body files. Retain shared RPG/wrench models and their build recipe; replace only superseded hand build paths after acceptance. Existing assertion edits require a written independent review reason, never weakened to pass."
     acceptance:
       - "Fit Kyle's pick from docs/board/looks/first-person-src following docs/WASTELAND_ART.md 'Fitting existing models': gloves and sleeves per crew member matching ART-FIT-CREW-M and -W, RPG and wrench grips, and the existing aim, fire, reload and repair motion. The current hands are already acceptable, so rule 5 applies strictly: if the fit does not beat them on the same sheet by round 3, keep the current hands and close the card."
+    kyle_decision: "Kyle, 30 September 2026: keep the current first-person hands. Two rounds did not beat them. Closed without installing anything; the Director removes this card's lane and branch."
   - id: ART-FIT-RUSTWALL
     title: "Rustwall salvage wall and canyon rock from the picked sources"
     owner: codex
     lane: ART
     size: L
     needs: [ART-SRC-RUSTWALL]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-09-30-late-resume
+    branch: lane/art/rustwall-source-fit
+    owns: [tools/blender/rustwall-source-fit.py, tools/blender/rustwall-source-fit.json, tools/test-rustwall-source-fit.mjs, tools/scenarios/rustwall-source-fit.mjs, tools/art/rustwall-fit-sheet.py, docs/board/looks/rustwall-fit/, docs/changes/ART-FIT-RUSTWALL.md]
+    hooks: [public/assets/models/wasteland/rustwall/wall.glb, public/assets/models/wasteland/rustwall/wash.glb]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    sequencing: "Private candidate first, tests-first source provenance and frozen gate/collision envelope controls. Reuse existing renderer and recipe-only private model substitution; no render3d/App/feature/audio/world-signature edits while Fuel owns them. Catalog stays read-only until the valve donor merge; reclaim an exact adaptation hook before writes. Every comparison goes to Claude (waiting_on: claude); no runtime install or merge before review. Three rounds maximum and stop after two without gain."
     flag: hidden-road
     acceptance:
       - "Rebuild the Rustwall's salvage face, towers and canyon banks from Kyle's picks in docs/board/looks/rustwall-src, following docs/WASTELAND_ART.md 'Fitting existing models': crushed and burned car hulks, rusted sheet metal and container panels on the existing scaffold, tower supports from the industrial kit, canyon banks from the rock shapes with desert strata. The gate, its opening and every collision envelope stay exactly where they are; world signatures change only with a reviewed visual difference (AGENTS.md)."
@@ -646,9 +712,65 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: ready
+    status: merged
+    review_commit: 764967db9fd1777725045bda2556b827f7b0aff1
+    claimed_by: codex-director-2026-09-30-resume
+    branch: lane/art/tanker-src
+    owns: [tools/art/tanker-source-sheet.py, tools/art/tanker-source-inspect.py, docs/board/looks/tanker-src/, docs/changes/ART-SRC-TANKER.md]
+    hooks: []
+    note: "Kyle picks A, delivery-flat cab plus horizontal detail-tank, on 30 September. Source records passed clean 764967db lane 306/306 and build; catalog released. Missing trailer/frame/hitch, valves and boarding hatch move to ART-SRC-TANKER-PARTS. No fitting or finished convoy is approved."
+    helpers: [reviewer]
+    sequencing: "Women source artifacts are merged and their catalog hook is released. Source comparison only: verify actual original CC0 licenses and geometry, preserve all prior catalog records, show existing Salt Flats armor parts, and stop at one <=500 KB round-1.jpg with matching round-1-review.md, waiting for Kyle. No fitting, runtime asset, game code or protected audio edit."
     acceptance:
       - "ARENA-07 needs an armored fuel tanker with a trailer, and no inspected source has one (Salt Flats review). Short-list two or three CC0 sources (cab and tank trailer may come from different packs) with the ART-SRC-CREW rules, showing how the Salt Flats salvage parts would armor it. Stop at a comparison sheet with a recommendation (waiting_on: kyle)."
+  - id: ART-SRC-TANKER-PARTS
+    title: "Existing trailer and boarding parts for the picked delivery-flat tanker lead"
+    owner: codex
+    lane: ART
+    size: S
+    needs: [ART-SRC-TANKER]
+    status: closed
+    review_commit: 0ace07df6c747ef499d9d50293477e535550f152
+    source_review_commit: 6b613fed6bafa07f482e4962c112e97ed3e7c8bf
+    note: "Bounded stop records independently clear, not finished source readiness. Genuine Factory valve456tri can supply three targets; separate trailer/frame/hitch and suitable boarding hatch remain missing. Default56checks52pass/four meaningful gap failures; native FBX and pinned rights/geometry negatives pass. Tests-first provenance guard fixed before output/import. One334548B sheet and verdict retained; used raw deleted. No fitting, whole-lane/build, merge or ARENA-07 clearance. Kyle chooses another existing-parts search or Claude plan revision."
+    claimed_by: codex-director-2026-09-30-resume
+    branch: lane/art/tanker-parts
+    owns: [tools/test-tanker-parts-sources.mjs, tools/art/tanker-parts-source.json, tools/art/tanker-parts-inspect.py, tools/art/tanker-parts-sheet.py, docs/board/looks/tanker-parts/, docs/changes/ART-SRC-TANKER-PARTS.md]
+    hooks: []
+    helpers: [test_author, reviewer]
+    sequencing: "Kyle picked A as starting parts only. Source search and inspection may proceed; fitting and ARENA-07 wait for the missing parts. Hands has released its unchanged catalog hook while paused; this stopped card has no catalog ownership. A new approved source card must claim hooks before editing. No runtime model, game code, source fabrication or protected audio edit."
+    acceptance:
+      - "Find actual existing licensed CC0 parts for a separate trailer/frame/hitch, three fuel valves and an opening boarding hatch around the picked Kenney delivery-flat plus horizontal detail-tank. Verify original embedded rights, source hashes and actual geometry; a complete existing trailer may come from another free pack. Do not claim kit sample columns or boxes already supply a finished articulated trailer."
+      - "Retain one bounded comparison and matching review with a recommendation and explicit remaining gaps; stop waiting_on: kyle before adaptation. Existing placement/source validators and independent review plus lane/build floor apply. If free sources and this laptop cannot meet acceptance, write why and stop for Kyle; never fabricate a finished substitute."
+    kyle_decision: "Kyle, 30 September 2026: stop searching; Claude simplified the convoy rig (docs/SCRAPDOME.md, Convoy Raid) so no trailer, hitch or opening hatch is needed. Keep the verified valve donor record in tools/art/catalog.json when the lane's records merge; otherwise the Director removes the lane."
+  - id: ART-FIT-TANKER
+    title: "Convoy Raid tanker: one armored truck from Kyle's pick A"
+    owner: codex
+    lane: ART
+    size: M
+    needs: [ART-KEEP-VALVE-DONOR]
+    status: ready
+    flag: scrapdome
+    acceptance:
+      - "Build the tanker settled in docs/SCRAPDOME.md, Convoy Raid (30 September 2026): one rigid vehicle from Kyle's pick A (Kenney delivery-flat cab and bed with the City Kit Industrial detail-tank on the bed), three fuel valves from the verified factory pipe valve donor on the tank, scrap armor plating from the Salt Flats salvage parts, and a raised boarding plate on the tank roof with warning lamps that light when all three valves are broken. Nothing opens or articulates."
+      - "Follow docs/WASTELAND_ART.md 'Fitting existing models' (no source palette, gritty, judged in the game renderer, three-round cap); send the comparison sheet to Claude, who shows Kyle."
+  - id: SAVE-DAMAGED-FIELDS
+    title: "Damaged numeric profile fields cannot replace a named player with defaults"
+    owner: codex
+    lane: SAVE
+    size: S
+    needs: []
+    status: released
+    review_commit: 6d92948908b5e749e5d805e4bc6f91943a28e273
+    claimed_by: codex-director-2026-09-30-resume
+    branch: lane/save/save-damaged-fields
+    owns: [src/progression.js, tools/test-profile-damaged-fields.mjs, docs/changes/SAVE-DAMAGED-FIELDS.md]
+    hooks: []
+    note: "Clean 6d929489: tests-first 48 intended reds fixed; lane175/175 in508.52s and build1.16s. Independent correctness/SaveGuardian100/100,192 successful-conversion controls and96 mutation/backup probes clear. No schema/key/receipt/race or existing assertion changes."
+    helpers: [test_author, reviewer, save_guardian]
+    acceptance:
+      - "Save Guardian reproduced JSON-safe credits and winStreak objects with a non-callable own toString throwing in normalizeProfile; loadPlayers then displays a default Player 1. Write failing synthetic tests first. Normalize damaged numeric fields without object-coercion errors while preserving the named owner and every valid historical field. All seven fixtures and 247 preservation checks, migration/backup and storage gates pass unchanged; no real saves, schema/key change or runtime dependency. Race fingerprints remain unchanged."
+    kyle_decision: "Released 30 September 2026 on Kyle's go-ahead (SAVE-FIX-RELEASE)."
   - id: HK-RUSTWALL-BASELINE
     title: "Rustwall frame test keeps its baseline in the repository"
     owner: codex
@@ -691,6 +813,15 @@ tasks:
     claimed_by: "Settled by Claude, 30 September 2026"
     acceptance:
       - "docs/SCRAPDOME.md gains a settled section for each remaining mode and the Salt Flats Scrapyard map (ARENA-03 to ARENA-07): goal, rules, scoring, pay, computer behaviour, art sources and tests. Build cards follow on the board."
+  - id: DESIGN-FUEL-FIGHTER-HITS
+    title: "Settle car projectiles against the on-foot Fuel carrier"
+    owner: claude
+    lane: DESIGN
+    size: S
+    needs: []
+    status: ready
+    acceptance:
+      - "Answer the measured ARENA-03 contact gap in docs/playtest-inbox.md: car crossbow damage to fighters, whether car bomb splash affects them and by how much, and cargo loss after a surviving fighter hit versus knockdown. Keep existing health, car knockdown and physical parked-car rules. Record the rules in docs/SCRAPDOME.md section 10 so Codex can write the remaining tests before contact code. No new source art or weapon design is requested."
   - id: DESIGN-WARLORDS-4-8
     title: "Settle warlords 4 to 8 and the ladder's end (WAR-03, WAR-04) for build"
     owner: claude
@@ -710,7 +841,8 @@ tasks:
     status: ready
     flag: arsenal
     owns: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/arsenal/oil.js, src/arsenal/smoke.js, tools/test-arsenal-core.mjs, tools/test-arsenal-save.mjs, docs/changes/ARS-CORE.md]
-    hooks: [src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat-ai.js, src/weapon-upgrades.js, src/car-loadout.js, src/screen-armory.js, src/wasteland-progress.js, src/sim-driving.js, src/sim-rival.js, src/render3d.js, src/combat-effects.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js]
+    hooks: [src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/onfoot-weapons.js, src/combat-ai.js, src/weapon-upgrades.js, src/car-loadout.js, src/screen-armory.js, src/wasteland-progress.js, src/sim-driving.js, src/sim-rival.js, src/render3d.js, src/combat-effects.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js]
+    sequencing: "Steering owns sim-driving until its gate/merge; Fuel owns feature-flags/render/audio/onfoot/app hooks until its merge. Add actual RPG lock/guidance through onfoot-weapons to targetFor, proven by read-only bypass inspection. Protected sound-bank belongs to external audio owner: named cue additions only by explicit file handoff, otherwise wait; no competing edits."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build docs/ARSENAL.md section 2 exactly: road hazards, car effects, targetFor (every existing CPU aim, homing and lock path routed through it, with a test that fails on a bypass), unlocks by rank and 400-scrap purchase, rewards that unlock free, upgrades, computer loadouts, and the arsenal switch (dev)."
@@ -783,14 +915,21 @@ tasks:
     owner: codex
     lane: CMB
     size: M
-    needs: [WAR-02a-FORMAT]
-    status: ready
-    flag: scrapdome
-    owns: [src/arena/modes/fuel-run.js, tools/test-arena-fuel-run.mjs, docs/changes/ARENA-03.md]
-    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js]
-    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
+    needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
+    status: building
+    review_commit: 96aaa2a444080efb518d2e76cf4afa9fa25807ac
+    claimed_by: "codex-director-2026-09-30-resume"
+    branch: lane/cmb/arena-03-fuel-run
+    flag: fuel-run
+    owns: [tools/test-onfoot-car-contacts.mjs, tools/test-arena-fuel-depot.mjs, src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/replays/arena-fuel-run-controls.json, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md]
+    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js, src/combat-ai.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-feature-flags.mjs]
+    review_note: "Claude fighter contacts and 4 m depot design are merged in ba157a5. Resume with independent red tests for every on-foot fighter; preserve the reviewed durable launch/cache/save source. Whole-feature browser/audio/gameplay/review and exact lane/build gates remain before Claude review and merge."
+    design_question_answered: "Claude, 30 September 2026: see docs/CREW.md, Car weapons against fighters on foot. Original question: Actual on-foot Fuel carrier is currently immune to car projectiles. Claude must settle bolt damage, bomb splash and cargo-drop behavior before that contact code; chase and aim fixes follow the settled carrier rule now."
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
+    sequencing: "Tests first in owned files now. Production App and screen-arena edits wait for WAR-PAY merge; held ARENA-STEER App demo hook is deferred until Fuel merges. No config, driving, pilot or crate-test ownership. Future Arsenal waits Fuel feature/render/audio hooks. Protected sound-bank/catalog/assets remain untouched: explicit fuel events reuse authored interface.bonus, vehicle.landing, interface.go cues. SPEC0.12 adds fuel-run:dev plus scrapdome/discovery/rank6 gates; Last Car Rolling unchanged."
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Fuel Run, exactly: canisters, depots, dropping, the collector brain, rank 6 unlock (hidden before), pay and hold once per event (Save Guardian). Headless tests and a private browser scenario."
+    claude_review: "30 September 2026: rules match SCRAPDOME.md Fuel Run. Settled the open question in docs/CREW.md (car bolt 35 health, splash up to 60 and knockdown inside half radius, cargo drops only on knockdown) and raised the depot pad to 4 m radius. Merge after these, the gates and a browser pass; Kyle checks it in the Preview behind fuel-run (dev)."
   - id: ARENA-04
     title: "Bounty Hunt"
     owner: codex
@@ -850,7 +989,7 @@ tasks:
     owner: codex
     lane: CMB
     size: L
-    needs: [ARENA-06, CREW-03, ART-SRC-TANKER]
+    needs: [ARENA-06, CREW-03, ART-FIT-TANKER]
     status: ready
     flag: scrapdome
     owns: [src/arena/modes/convoy-raid.js, src/arena/convoy.js, tools/test-arena-convoy.mjs, tools/scenarios/convoy-raid.mjs, docs/changes/ARENA-07.md]
@@ -2533,7 +2672,7 @@ tasks:
     needs: [WAR-02a-FORMAT, WAR-SAL-ART]
     status: merged
     review_commit: 1b5f3365a9717f477e85d6503d1f2bb88375c272
-    note: "Exact clean lane 304/304 in 774.64 seconds and build 1.25 seconds. Independent source/visual review and 12 private High/Performance captures pass; integrated sweep-hit/first-wreck replay matches at 30/60/144 FPS. Claude must review fun, fairness, audible cues and standard chase-camera callout clearance in Preview before merge. Retain the lane and final evidence."
+    note: "Merged after Claude review and released by WAR-SAL-RELEASE; warlords is on. Current tuning and Kyle playthrough are WAR-SAL-TUNE; no old Sal build lane is retained."
     claimed_by: "Codex autonomous Director, 30 September 2026"
     owns: [src/arena/sal-fight.js, src/arena/arena-brains.js, src/arena/arena-event.js, src/arena/warlord-event.js, tools/test-sal-fight.mjs, tools/scenarios/sal-fight.mjs, docs/changes/WAR-02a-SAL.md]
     hooks: [src/arena/arena-pilot.js]
@@ -2629,11 +2768,12 @@ tasks:
     lane: SAVE
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: codex-director-2026-09-30-resume
     flag: warlords
     owns: [tools/test-warlord-pay.mjs, tools/scenarios/warlord-pay.mjs, docs/changes/WAR-PAY.md]
-    hooks: [src/arena/warlord-settlement.js, src/app.js, src/screen-arena.js, tools/test-warlord-settlement.mjs, tools/scenarios/warlord-reward.mjs]
+    hooks: [tools/preview.js, src/arena/warlord-settlement.js, src/app.js, src/screen-arena.js, tools/test-warlord-settlement.mjs, tools/scenarios/warlord-reward.mjs]
+    merge_verdict: "Final clean da5e8f3 lane306/306 in451.87s and build0.97s; Reviewer54/54 with343checks, SaveGuardian76/76 plus247historical/1320syntheticchecks approve uncapped loss and all changed assertions. Actual private Preview/reward High/Performance18captures clear. App/screen hooks released to Fuel Run."
     helpers: [test_author, reviewer, save_guardian, browser_qa]
     sequencing: "Exclusive settlement/App/results hooks before WAR-02c. Preserve all named-player, fresh-owner, fail/retry and single-write guarantees. Changed old pay assertions require independent review."
     acceptance:
@@ -2647,16 +2787,19 @@ tasks:
     size: S
     needs: []
     status: building
+    review_commit: ae4c168bf6d8202f6d163e63e849298e6e3d1c4d
     claimed_by: codex-director-2026-09-30-resume
     flag: scrapdome
-    owns: [tools/test-arena-steering.mjs, tools/scenarios/arena-steering.mjs, docs/changes/ARENA-STEER.md]
-    hooks: [src/config.js, src/sim-driving.js, src/arena/arena-pilot.js]
+    owns: [tools/test-arena-steering-ceiling.mjs, tools/test-arena-steering.mjs, tools/replays/arena-steering-controls.json, tools/scenarios/arena-steering.mjs, docs/changes/ARENA-STEER.md]
+    hooks: [tools/test-arena-event.mjs, src/config.js, src/sim-driving.js, src/arena/arena-pilot.js]
+    hold_reason: "Design is merged. Resume tests first for the 150 degree/s ceiling. Keep all existing crate assertions; retest the unchanged fixture after implementing the settled ceiling. App edits wait Fuel; use existing memory-only entry or wait for the hook."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     sequencing: "One lane before ARENA-SHOVE and ARS-CORE: driving hooks are exclusive. App demo hook waits for WAR-PAY if needed. Road and Titan handling stay unchanged."
     acceptance:
       - "Kyle, 30 September 2026: steering in the dome is very difficult whatever the car or speed. Measured: at full lock every car turns 53 to 66 degrees a second at 25 and 45 mph, the same in a warlord fight and Last Car Rolling; turning around takes more than 3 s in a ring."
       - "Settled rule: in an arena venue only, every car at full lock turns at least 100 degrees a second from 15 to 50 mph and at least 75 degrees a second at the floor's top speed, by raising both the steering limit and the tyre limit in steeringYawAuthority for arena courses (one arena factor, recorded). Computer cars use the same function, so it stays fair. Sal's window still halves her steering. Road courses, Muddy Hollow and the Titan's road handling are unchanged (replay fingerprints unchanged except arena replays, each named)."
       - "Re-run tools/arena-balance.mjs and the Sal tests and record the change; cars must not spin out or oscillate at full lock (check yaw settles within 0.3 s of releasing the stick). Kyle checks it in the Preview."
+    claude_review: "30 September 2026: the uniform 3.4 factor meets the floor but turns cars 205 to 300 degrees a second at 45 mph, likely twitchy. Added rule (Claude's gap: the first rule set no ceiling): at full lock no car turns faster than 150 degrees a second at any speed in the arena. Suggested shape: an arena floor on the low-speed rolling factor (as the Titan's lowSpeedSteer does) plus a smaller factor, rather than one large multiplier. Re-measure the same table, then Kyle checks it in the Preview."
   - id: ARENA-SHOVE
     title: "Every car can shove a sitting car in the Scrapdome"
     owner: codex
@@ -2674,11 +2817,13 @@ tasks:
     owner: claude
     lane: RELEASE
     size: S
-    needs: [WAR-SAL-TUNE, SCRAPDOME-RELEASE]
-    status: ready
-    waiting_on: kyle
+    needs: [WAR-02a-SAL, WAR-02a-REWARD, WAR-PAY]
+    status: released
+    claimed_by: "Claude, 30 September 2026"
     acceptance:
       - "Full release evidence, then Kyle's written go-ahead. Other warlords show WARLORD FIGHT COMING LATER and have no button."
+    kyle_go: "Kyle, 30 September 2026: \"let's ensure Sal is available in the main game now.\" Released before Gratian's play; WAR-SAL-TUNE, ARENA-STEER and ARENA-SHOVE follow as normal releases."
+    note: "Release lane edits src/feature-flags.js (warlords on). ARENA-03 (Fuel Run) also edits that file: Codex merges after this and keeps warlords: on."
   - id: DESIGN-WAR-02b
     title: "Settle the Dustmonger for build (after Sal has been played)"
     owner: claude
@@ -2775,11 +2920,12 @@ tasks:
     priority: 3
     lane: CMB
     size: L
-    needs: [WAR-02a-FORMAT, DESIGN-WAR-02c]
+    needs: [WAR-02a-FORMAT, DESIGN-WAR-02c, WAR-PAY, ARS-CORE]
     status: ready
     flag: scrapdome
     owns: [src/arena/moves/mirage.js, tools/test-warlord-mirage.mjs, docs/changes/WAR-02c.md]
-    hooks: [src/arena/warlords.js, src/combat-teams.js, src/arena/arena-event.js]
+    hooks: [src/warlords.js, src/combat-teams.js, src/arena/arena-event.js]
+    sequencing: "Settled targeting requires ARS-CORE targetFor and earned-weapon normalization; WAR-PAY releases settlement first. No duplicate targeting or placeholder reward. Mirage supplies the working early Decoy Drone for ARS-03 to reuse; Director will grant its full hooks before claim."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: Mother Mirage' in docs/SCRAPDOME.md section 5, including the decoy cars as arena participants with a decoy flag (they never score, fire or settle). Only the real car fires and leaves tyre marks; a copy bursts on its first hit; the window and phase two as settled. Reward: Decoy Drone unlocked early (ARS-03 reuses the decoy cars)."

@@ -774,3 +774,31 @@ and 8 of 30 on Easy, Medium and Hard; CPU hits 2.67, 7.2 and 5.53 per race).
 The balance run with wasteland2 off is retired by Kyle's decision of the same
 day (BALANCE-W2-OFF-RETIRE).
 
+## Release 30 September 2026 (second): ramp sides and Titan steering
+
+Kyle asked for the Scrapdome ramp fix in the live game the same day he found
+it: driving up the side of a jump launched cars 600 to 2,200 m into the air.
+ARENA-RAMP-SIDE limits the vertical speed the ground gives a car in an arena
+to its travel speed times the steepest authored ramp slope; straight jumps are
+exactly as before, and sliding wrecks now stay on the floor. Also live:
+TITAN-HANDLING (Kyle approved the Titan's low-speed steering in the Preview),
+HK-LAUNCHER-PORT (a test fix). Sal's fight, the Side Saws and the warlord
+reward are in this build but stay off behind the `warlords` development
+switch. Release evidence is recorded in docs/board/run-log.md.
+
+## Release 30 September 2026 (third): Sawtooth Sal (WAR-SAL-RELEASE)
+
+Kyle beat Sal 3-0 on Medium in the Preview and asked for her in the main
+game. `warlords` is on: Sal's fight (WAR-02a-FORMAT, WAR-02a-SAL, with Claude's
+sweep and charge time limits), her reward and Side Saws (WAR-02a-REWARD) and
+the settled pay (WAR-PAY: first win 600 times the difficulty factor, rematches
+like an arena win). The main menu is unchanged. Release evidence is recorded
+in docs/board/run-log.md.
+
+## Release 30 September 2026 (fourth): save fix (SAVE-DAMAGED-FIELDS)
+
+Kyle's go-ahead: a named career whose saved file has a number that cannot be
+converted now keeps the career, using that field's existing zero fallback;
+before, the conversion failure could discard the named player's career. No
+save schema or key changes. Release evidence is in docs/board/run-log.md.
+

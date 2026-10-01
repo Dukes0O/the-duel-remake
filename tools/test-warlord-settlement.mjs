@@ -52,20 +52,21 @@ function arena(winnerId = 'player') {
   const a = structuredClone(duel.state.arena);
   a.phase = 'over';
   a.participants.find(p => p.id === winnerId).wrecks = 3;
+  a.participants.find(p => p.id !== winnerId).wrecked = 3;
   a.result = {winnerId, reason: 'three-wrecks', placings: winnerId === 'player' ? ['player', 'cpu-1'] : ['cpu-1', 'player']};
   return a;
 }
 const payload = (changes = {}) => ({runId: 'sal-run-1', ownerPlayerId: 'driver-a',
-  activePlayerId: 'driver-a', arena: arena(), car: 'falcone_f42', ...changes});
+  activePlayerId: 'driver-a', arena: arena(), car: 'falcone_f42', cpuDifficulty: 'medium', ...changes});
 
-test('first win atomically earns 150 scrap, Side Saws and territory with additive career fields', async () => {
+test('first win atomically earns 720 Medium scrap, Side Saws and territory with additive career fields', async () => {
   const settle = await settlement(), before = profile(), snapshot = structuredClone(before);
   writes = [];
   const first = settle(before, payload());
   equal(first.awarded, true, 'completed first win is accepted');
   equal(first.key, 'warlord:sal-run-1', 'marker shares the existing Wasteland result ledger');
-  equal(first.scrapEarned, 150, 'first win pays exactly 150 independent of difficulty');
-  equal(first.profile.wasteland.scrap, 160, 'first scrap is added once');
+  equal(first.scrapEarned, 720, 'first win pays exactly 720 at Medium difficulty');
+  equal(first.profile.wasteland.scrap, 730, 'first scrap is added once');
   equal(first.profile.wasteland.warlords.sal, {defeated: true, wins: 1, losses: 0, unknownSal: {kept: true}},
     'record stores the first win without removing unknown fields');
   equal(first.profile.wasteland.territories.sal, {hold: 100, claimed: true, unknownTerritory: 'kept'},
@@ -87,17 +88,17 @@ test('repeat callbacks and reload cannot duplicate first-win reward or counts', 
   equal(repeat.profile, first.profile, 'duplicate keeps the exact committed profile');
   const reloaded = normalizeProfile(first.profile), afterLoad = settle(reloaded, payload());
   equal(afterLoad.awarded, false, 'load preserves the one-time marker');
-  equal(afterLoad.profile.wasteland.scrap, 160, 'reloading does not repay the win');
+  equal(afterLoad.profile.wasteland.scrap, 730, 'reloading does not repay the win');
   equal(afterLoad.profile.wasteland.warlords.sal.wins, 1, 'reloading does not recount the win');
 });
 
-test('a new rematch pays 25 only and preserves defeat, claim and all equipped kits', async () => {
+test('a new three-wreck Medium rematch pays 312 and preserves defeat, claim and all equipped kits', async () => {
   const settle = await settlement(), first = settle(profile(), payload());
   first.profile.wasteland.kits.falcone_f42.equipped = null;
   const rematch = settle(first.profile, payload({runId: 'sal-rematch'}));
   equal(rematch.awarded, true, 'a different completed fight settles');
-  equal(rematch.scrapEarned, 25, 'rematch pays the settled 25 scrap');
-  equal(rematch.profile.wasteland.scrap, 185, 'only first and rematch rewards enter the bank');
+  equal(rematch.scrapEarned, 312, 'rematch pays the settled three-wreck Medium 312 scrap');
+  equal(rematch.profile.wasteland.scrap, 1042, 'only first and rematch rewards enter the bank');
   equal(rematch.profile.wasteland.warlords.sal.wins, 2, 'rematch adds one win');
   equal(rematch.profile.wasteland.warlords.sal.losses, 0, 'win does not change losses');
   equal(rematch.profile.wasteland.territories.sal.claimed, true, 'territory stays claimed');
@@ -160,7 +161,7 @@ test('named player registry stores one complete reward and preserves another pla
   equal(savePlayers(registry, globalThis.localStorage), true, 'synthetic registry commit succeeds');
   const loaded = loadPlayers(globalThis.localStorage);
   const a = loaded.players.find(p => p.id === 'driver-a'), b = loaded.players.find(p => p.id === 'driver-b');
-  equal(a.profile.wasteland.scrap, 160, 'starting player receives full bank change');
+  equal(a.profile.wasteland.scrap, 730, 'starting player receives full bank change');
   equal(a.profile.wasteland.territories.sal.claimed, true, 'starting player receives territory with bank');
   equal(a.profile.wasteland.warlords.sal.defeated, true, 'starting player receives defeat with bank');
   equal(getEquippedArmorKit(a.profile, 'falcone_f42'), 'side-saws', 'starting player receives kit with bank');
@@ -196,8 +197,8 @@ test('App commits kit, scrap, claim and marker once and shows the settled award'
   const app = appFight(), before = app.profile.wasteland.scrap, runId = app.runId;
   try {
     writes = []; const result = finish(app);
-    equal(app.profile.wasteland.scrap, before + 150, 'actual arenaResult callback settles the first win');
-    equal(result.scrapEarned, 150, 'result screen reports the actual saved award');
+    equal(app.profile.wasteland.scrap, before + 720, 'actual arenaResult callback settles the first win');
+    equal(result.scrapEarned, 720, 'result screen reports the actual saved award');
     equal(result.settlementSaved, true, 'presentation marks success only after storage commit');
     equal(app.profile.wasteland.settledResults.includes('warlord:' + runId), true, 'App writes the exact fight marker');
     equal(getEquippedArmorKit(app.profile, app.duel.state.car), 'side-saws', 'same callback equips the winning car');
@@ -206,13 +207,13 @@ test('App commits kit, scrap, claim and marker once and shows the settled award'
     equal(careerWrites.length, 1, 'the player registry gets one atomic result write');
     const stored = careerWrites[0].players.find(p => p.id === app.player.id).profile.wasteland;
     equal([stored.scrap, stored.warlords.sal.defeated, stored.territories.sal.claimed,
-      stored.settledResults.includes('warlord:' + runId)], [before + 150, true, true, true],
+      stored.settledResults.includes('warlord:' + runId)], [before + 720, true, true, true],
       'no intermediate registry lacks any part of the win');
     equal(app._settleArenaResult({result}, app.duel.state), false, 'duplicate actual callback is rejected');
-    equal(app.profile.wasteland.scrap, before + 150, 'duplicate callback keeps the bank');
+    equal(app.profile.wasteland.scrap, before + 720, 'duplicate callback keeps the bank');
     const screen = arenaResultsScreen(app.duel.state, {metric: screenMetric, action: screenAction,
       escapeHTML: String, time: String});
-    ok(/\+150/.test(screen.metrics), 'result presentation includes earned scrap');
+    ok(/\+720/.test(screen.metrics), 'result presentation includes earned scrap');
   } finally { app.dispose?.(); }
 });
 
@@ -225,7 +226,7 @@ test('failed App storage keeps the entire previous visible and persisted career 
     equal(result.settlementSaved, false, 'screen reports an unsaved settlement');
     equal(result.scrapEarned, 0, 'unsaved result never advertises a paid reward');
     equal(app._settleArenaResult({result}, app.duel.state), true, 'same result can retry after storage recovers');
-    equal(app.profile.wasteland.scrap, before.wasteland.scrap + 150, 'successful retry pays exactly once');
+    equal(app.profile.wasteland.scrap, before.wasteland.scrap + 720, 'successful retry pays exactly once');
     equal(app._settleArenaResult({result}, app.duel.state), false, 'retry success blocks another callback');
   } finally { failWrites = false; app.dispose?.(); }
 });
@@ -309,7 +310,7 @@ test('failed warlord settlement exposes RETRY SAVE without advertising the unpai
       'failed result provides the production RETRY SAVE control');
     ok(/Could not save this result/.test(screen().description), 'failure is explained on the result');
     ok(!/Side Saws unlocked/.test(screen().description), 'unpaid kit is not advertised');
-    ok(!/\+150/.test(screen().metrics), 'unpaid scrap is not advertised');
+    ok(!/\+720/.test(screen().metrics), 'unpaid scrap is not advertised');
     equal(app.retryArenaSettlement(), true, 'result retry verb saves the same completed fight');
     ok(!/warlord-retry-save/.test(screen().actions), 'success removes the retry control');
     ok(/Side Saws unlocked/.test(screen().description), 'saved first win shows the working reward');
@@ -318,11 +319,13 @@ test('failed warlord settlement exposes RETRY SAVE without advertising the unpai
 });
 
 
-test('App keeps a saved Side Saws reward inactive while the dev warlords switch is off', () => {
+test('App keeps a saved Side Saws reward inactive while the warlords switch is off', () => {
   const app = appFight();
   try {
     finish(app); app.returnToMenu();
-    app.duel.featureFlags = createFeatureFlags({storage: null, qa: true});
+    // Released on (WAR-SAL-RELEASE); the switch-off path stays tested until
+    // the switch is removed.
+    app.duel.featureFlags = createFeatureFlags({storage: null, qa: true, overrides: {warlords: false}});
     equal(getEquippedArmorKit(app.profile, 'falcone_f42'), 'side-saws', 'saved reward remains owned and equipped');
     equal(app.equipArmorKit('stuttgart_959s', 'side-saws').ok, false, 'released build cannot change the dev reward equip');
     equal(app.visitWasteland(), true, 'released yard remains available'); app.advance(8);
@@ -372,7 +375,7 @@ test('public reward retry rebases the immutable result on fresh owner progress',
     equal(app.retryArenaSettlement(), true, 'public retry rebases and saves the result');
     const after = loadPlayers().players.find(p => p.id === owner.id).profile;
     equal([after.credits, after.unknownOwnerLater], [1765, {keep: 31}], 'retry retains fresh owner currency and additive fields');
-    equal(after.wasteland.scrap, owner.profile.wasteland.scrap + 150, 'fresh owner receives exactly the first-win reward');
+    equal(after.wasteland.scrap, owner.profile.wasteland.scrap + 720, 'fresh owner receives exactly the first-win reward');
     equal(after.wasteland.warlords.sal.wins, 1, 'retry counts that immutable fight once');
   } finally { failWrites = false; app.dispose?.(); }
 });
@@ -415,7 +418,7 @@ test('retry recalculates rematch status from a freshly saved Sal defeat', () => 
       kits: {stuttgart_959s: {owned: ['scrapper'], equipped: 'scrapper'}}}};
     equal(savePlayers(replacePlayerProfile(fresh, owner.id, profile)), true, 'another completed win is saved during failure');
     equal(app.retryArenaSettlement(), true, 'this distinct completed fight can retry against fresh status');
-    equal([app.profile.wasteland.scrap, app.profile.wasteland.warlords.sal.wins], [325, 5], 'retry earns rematch 25 and adds only this win');
+    equal([app.profile.wasteland.scrap, app.profile.wasteland.warlords.sal.wins], [612, 5], 'retry earns Medium rematch 312 and adds only this win');
     equal(getEquippedArmorKit(app.profile, 'stuttgart_959s'), 'scrapper', 'fresh equipped paid kit survives');
     equal(getEquippedArmorKit(app.profile, 'falcone_f42'), null, 'retry does not falsely autoequip another first win');
   } finally { failWrites = false; app.dispose?.(); }
@@ -427,12 +430,12 @@ test('a durably settled exact retry marker resolves without another write or rew
     failWrites = true; finish(app); failWrites = false;
     const settle = await settlement(), fresh = loadPlayers(), owner = fresh.players.find(p => p.id === app.player.id);
     const saved = settle(owner.profile, {runId: app.runId, ownerPlayerId: owner.id, activePlayerId: owner.id,
-      arena: app.duel.state.arena, car: app.duel.state.car});
+      arena: app.duel.state.arena, car: app.duel.state.car, cpuDifficulty: app.duel.state.cpuDifficulty});
     equal(savePlayers(replacePlayerProfile(fresh, owner.id, saved.profile)), true, 'same immutable result was saved durably elsewhere');
     writes = [];
     equal(app.retryArenaSettlement(), false, 'durable exact marker rejects another award');
     equal(writes.length, 0, 'already saved result causes no registry write');
-    equal(app.profile.wasteland.scrap, 150, 'visible career adopts the proven saved reward');
+    equal(app.profile.wasteland.scrap, 720, 'visible career adopts the proven saved reward');
     equal(app.duel.state.arena.result.settlementRetryable, false, 'proven durable marker removes misleading retry UI');
     equal(app.duel.state.arena.result.settlementSaved, true, 'durable exact marker proves saved completion');
   } finally { failWrites = false; app.dispose?.(); }
@@ -456,7 +459,7 @@ test('never-saved retry creates the first registry only from proved absence and 
     finish(app); failWrites = false;
     equal(values.has(PLAYERS_KEY), false, 'durable registry was absent through initial failed settlement');
     equal(app.retryArenaSettlement(), true, 'proved absent registry can receive the same local session');
-    equal([app.profile.credits, app.profile.unsavedSession, app.profile.wasteland.scrap], [2777, {keep: true}, 150],
+    equal([app.profile.credits, app.profile.unsavedSession, app.profile.wasteland.scrap], [2777, {keep: true}, 600],
       'first durable registry retains the genuine unsaved session and one reward');
     equal(loadPlayers().players.find(p => p.id === app.player.id).profile.unsavedSession, {keep: true}, 'unsaved fields become durable');
   } finally { failWrites = false; app.dispose?.(); }
@@ -482,7 +485,7 @@ test('retry preserves genuine unsaved owner fields when that durable owner is un
     const fresh = loadPlayers(); fresh.players.push({id: 'driver-b', name: 'Driver B', profile: {...createProfile(), credits: 900}});
     equal(savePlayers(fresh), true, 'other player saves while durable owner stays unchanged');
     equal(app.retryArenaSettlement(), true, 'genuine unsaved owner can retry without discarding local work');
-    equal([app.profile.credits, app.profile.unsavedSession, app.profile.wasteland.scrap], [2777, {keep: true}, 150], 'unsaved owner remains complete');
+    equal([app.profile.credits, app.profile.unsavedSession, app.profile.wasteland.scrap], [2777, {keep: true}, 720], 'unsaved owner remains complete');
     equal(loadPlayers().players.find(p => p.id === 'driver-b')?.profile?.credits, 900, 'fresh other player is retained too');
   } finally { failWrites = false; app.dispose?.(); }
 });
@@ -533,7 +536,7 @@ test('initial reward preserves genuine unsaved owner and freshly saved other pla
     equal(savePlayers(fresh), true, 'another player is saved while the durable owner is unchanged');
     const result = finish(app);
     equal(result.settlementSaved, true, 'unchanged verified owner baseline permits complete settlement');
-    equal([app.profile.credits, app.profile.unsavedSession, app.profile.wasteland.scrap], [2777, {keep: true}, 150],
+    equal([app.profile.credits, app.profile.unsavedSession, app.profile.wasteland.scrap], [2777, {keep: true}, 720],
       'initial settlement preserves genuine unsaved owner fields');
     const other = loadPlayers().players.find(p => p.id === 'driver-b')?.profile;
     equal([other?.credits, other?.futureB], [900, {keep: 23}], 'initial settlement retains the complete fresh other player');

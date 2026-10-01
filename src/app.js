@@ -595,7 +595,7 @@ export class App {
     } else return false;
     const settled = settleWarlordResult(profile, {runId: pending.runId,
       ownerPlayerId: pending.ownerId, activePlayerId: this.player.id,
-      arena: state.arena, car: state.car});
+      arena: state.arena, car: state.car, cpuDifficulty: state.cpuDifficulty});
     if (!settled.awarded) {
       if (settled.key && profile.wasteland?.settledResults?.includes(settled.key)) {
         this._adoptWarlordRegistry(registry, true);
@@ -628,7 +628,7 @@ export class App {
       scrapBalance: this.profile.wasteland.scrap,
       hold: warlordHold(this.profile, state.arena.warlordId),
       settlementSaved: true, settlementRetryable: false,
-      firstWin: settled.firstWin, kitEarned: settled.kitEarned,
+      firstWin: settled.firstWin, rewardReason: settled.rewardReason, kitEarned: settled.kitEarned,
       territoryClaimed: settled.territoryClaimed});
     this._warlordSettlementRetry = null;
   }

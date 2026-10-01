@@ -809,6 +809,665 @@
         "independentReview": "pending"
       },
       "runtime": []
+    },
+    {
+      "card": "ART-SRC-CREW-W",
+      "family": "crew",
+      "checked": "2026-09-30",
+      "status": "awaiting-kyle",
+      "runtime": [],
+      "recipe": "tools/art/crew-w-source-inspect.py",
+      "comparisonRecipe": "tools/art/crew-w-source-sheet.py",
+      "id": "quaternius-base-standard-crew-w",
+      "sourcePage": "https://quaternius.com/packs/universalbasecharacters.html",
+      "downloadedFrom": "https://quaternius.itch.io/universal-base-characters",
+      "downloadAccess": "Anonymous zero-price Standard ZIP, free upload 15861669; paid Source edition excluded. No account, email or payment.",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Actual embedded License_Standard.txt states CC0 1.0 Universal / Public Domain Dedication. General licence page is not substituted for this embedded evidence.",
+      "downloaded": true,
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\quaternius-universal-base-characters-standard",
+      "previewImage": "https://quaternius.com/assets/images/fullres/universalbasecharacters/standard.jpg",
+      "files": [
+        {
+          "path": "Standard.zip",
+          "sha256": "fdbf1804c90dfc1ea03e992bff7da2dfd1a79318e13270a660180f9308455f40",
+          "bytes": 128968391
+        },
+        {
+          "path": "License_Standard.txt",
+          "sha256": "0f4beaf0fe360a7732e58bbe3dbf60a2422367fbea60cb9ea4add968f383268e",
+          "bytes": 806
+        },
+        {
+          "path": "Superhero_Female_FullBody.fbx",
+          "sha256": "0727e7b236eeea4115531e07aeb2bb7690c1a58155f743bbf54282944fb97ea9",
+          "bytes": 1006508
+        },
+        {
+          "path": "Hair_Buns.fbx",
+          "sha256": "cb45536c0e8c2b715732d9a75a33849239ca5e788c7dee4e17998daa0986fdfc",
+          "bytes": 259420
+        },
+        {
+          "path": "Hair_BuzzedFemale.fbx",
+          "sha256": "aeb3a606d8b9b1818025dbf6b4640ff33f14b0e9676f3cbfe410321e1a1d6a5d",
+          "bytes": 164492
+        },
+        {
+          "path": "Hair_Long.fbx",
+          "sha256": "206f14b69e05758425278f074eb61a730bfe40250e7cc30e0c433ab0b05342c7",
+          "bytes": 249404
+        },
+        {
+          "path": "Hair_SimpleParted.fbx",
+          "sha256": "5e98acd3561c814127326fdc78e74f20dfa1c3397760006d17ebaea4c8d7a24d",
+          "bytes": 181628
+        },
+        {
+          "path": "Preview.jpg",
+          "sha256": "fbe0cf5a8187ec2083906280cb1b9f8e6d0276b9821cdfb647822da0f0a9cba1",
+          "bytes": 251838
+        }
+      ],
+      "inspection": [
+        {
+          "label": "Standard female body",
+          "source": "Superhero_Female_FullBody.fbx",
+          "meshes": [
+            {
+              "name": "Eyes",
+              "triangles": 768,
+              "bound": true
+            },
+            {
+              "name": "Eyebrows",
+              "triangles": 1480,
+              "bound": true
+            },
+            {
+              "name": "Superhero_Female",
+              "triangles": 12812,
+              "bound": true
+            }
+          ],
+          "boundTriangles": 15060,
+          "bones": [
+            65
+          ],
+          "actions": []
+        },
+        {
+          "label": "Standard Hair_Buns",
+          "source": "Hair_Buns.fbx",
+          "meshes": [
+            {
+              "name": "Hair_Buns",
+              "triangles": 3284,
+              "bound": true
+            }
+          ],
+          "boundTriangles": 3284,
+          "bones": [
+            65
+          ],
+          "actions": []
+        },
+        {
+          "label": "Standard Hair_BuzzedFemale",
+          "source": "Hair_BuzzedFemale.fbx",
+          "meshes": [
+            {
+              "name": "Hair_BuzzedFemale",
+              "triangles": 830,
+              "bound": true
+            }
+          ],
+          "boundTriangles": 830,
+          "bones": [
+            65
+          ],
+          "actions": []
+        },
+        {
+          "label": "Standard Hair_Long",
+          "source": "Hair_Long.fbx",
+          "meshes": [
+            {
+              "name": "Hair_Long",
+              "triangles": 2906,
+              "bound": true
+            }
+          ],
+          "boundTriangles": 2906,
+          "bones": [
+            65
+          ],
+          "actions": []
+        },
+        {
+          "label": "Standard Hair_SimpleParted",
+          "source": "Hair_SimpleParted.fbx",
+          "meshes": [
+            {
+              "name": "Hair_SimpleParted",
+              "triangles": 1301,
+              "bound": true
+            }
+          ],
+          "boundTriangles": 1301,
+          "bones": [
+            65
+          ],
+          "actions": []
+        }
+      ],
+      "fit": "More detailed female face/body with supplied hairstyles. Downloaded Standard includes Superhero bodies only, not paid Regular/Teen.",
+      "risk": "15060 bound triangles before hair; 65-bone rig; zero embedded actions or crew garment models. Needs existing garments/actions, tested near/distant reduction and retargeting. Shared Modular Men rig is unproven.",
+      "decision": "Pending Kyle. Recommendation keep current until suitable existing garment and animation sources are verified.",
+      "changed": "No source bytes, geometry, rig, palette or runtime assets changed. The comparison crops only the official preview."
+    },
+    {
+      "card": "ART-SRC-CREW-W",
+      "family": "crew",
+      "checked": "2026-09-30",
+      "status": "awaiting-kyle",
+      "runtime": [],
+      "recipe": "tools/art/crew-w-source-inspect.py",
+      "comparisonRecipe": "tools/art/crew-w-source-sheet.py",
+      "id": "kenney-survivors-crew-w",
+      "reusesCatalogAsset": "kenney-animated-characters-survivors",
+      "sourcePage": "https://kenney.nl/assets/animated-characters-survivors",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Actual cached unpacked/License.txt states Creative Commons Zero / CC0. Original source ZIP retained.",
+      "downloaded": true,
+      "downloadAccess": "Original free pack cached; primary creator page provides download without donation/account.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\kenney-animated-characters-survivors",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "fdadced07a0454c9b7f0b46507be6144a072b4d03b4ffa37f225893c76c62845",
+          "bytes": 718027
+        },
+        {
+          "path": "unpacked/License.txt",
+          "sha256": "8eab20a1fa97308ae50443f6b8a0fabc4dd1fc37062988cd635fc74c8f1be21c",
+          "bytes": 696
+        },
+        {
+          "path": "unpacked/Model/characterMedium.fbx",
+          "sha256": "18835fef534eede635b081ee7fe647d01a885550a591d2e6bf071010906167d8",
+          "bytes": 167212
+        },
+        {
+          "path": "unpacked/Animations/idle.fbx",
+          "sha256": "c8a24e0294376ee5a195c56752a13310e1c0b5f8588a4db50e094120e3e4cc74",
+          "bytes": 608188
+        },
+        {
+          "path": "unpacked/Animations/jump.fbx",
+          "sha256": "b88429077a7a1af5d3f55f43cfd8ce0f7441b4f6f7bb15a8070d7ed15d275f74",
+          "bytes": 562796
+        },
+        {
+          "path": "unpacked/Animations/run.fbx",
+          "sha256": "e635461fc8dace85ec67a7f7941e949a7c3f108b51ae4d2da1557e6e01749df8",
+          "bytes": 572732
+        },
+        {
+          "path": "unpacked/Skins/survivorFemaleA.png",
+          "sha256": "bb7123c98f0d85029447fed30794108657ec30c788e4a6039a14766a435a88d0",
+          "bytes": 54833
+        }
+      ],
+      "inspection": [
+        {
+          "label": "Kenney body",
+          "source": "unpacked/Model/characterMedium.fbx",
+          "boundTriangles": 1604,
+          "bones": [
+            58
+          ],
+          "actions": []
+        },
+        {
+          "label": "Kenney idle",
+          "source": "unpacked/Animations/idle.fbx",
+          "boundTriangles": 0,
+          "bones": [
+            58
+          ],
+          "actions": [
+            {
+              "name": "Root|Root|0.Targeting Pose",
+              "frames": [
+                1,
+                2
+              ]
+            },
+            {
+              "name": "Root|Root|Idle",
+              "frames": [
+                1,
+                33
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Kenney jump",
+          "source": "unpacked/Animations/jump.fbx",
+          "boundTriangles": 0,
+          "bones": [
+            58
+          ],
+          "actions": [
+            {
+              "name": "Root|Root|0.Targeting Pose",
+              "frames": [
+                1,
+                2
+              ]
+            },
+            {
+              "name": "Root|Root|Jump",
+              "frames": [
+                1,
+                13
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Kenney run",
+          "source": "unpacked/Animations/run.fbx",
+          "boundTriangles": 0,
+          "bones": [
+            58
+          ],
+          "actions": [
+            {
+              "name": "Root|Root|0.Targeting Pose",
+              "frames": [
+                1,
+                2
+              ]
+            },
+            {
+              "name": "Root|Root|Run",
+              "frames": [
+                1,
+                17
+              ]
+            }
+          ]
+        }
+      ],
+      "fit": "1604 triangles, 58 bones; supplied female texture on the shared body; separate idle/jump/run motions.",
+      "risk": "Cartoon proportions conflict with settled gritty style; no distinct female topology or four crew garments. Other required actions/rig mapping unproven. Targeting-pose tracks are not extra gameplay motions.",
+      "decision": "Pending Kyle. Recommendation keep current; original declined male source record unchanged.",
+      "changed": "A disposable native Blender inspection render applies the original supplied female skin to original shared body. No source geometry, rig, UV, source files or runtime asset changed."
+    },
+    {
+      "card": "ART-SRC-CREW-W",
+      "family": "crew",
+      "checked": "2026-09-30",
+      "status": "on-hold",
+      "runtime": [],
+      "recipe": "tools/art/crew-w-source-inspect.py",
+      "comparisonRecipe": "tools/art/crew-w-source-sheet.py",
+      "id": "quaternius-modular-women-hold",
+      "sourcePage": "https://quaternius.com/packs/ultimatemodularwomen.html",
+      "author": "Quaternius",
+      "license": null,
+      "licenseUrl": "https://quaternius.com/license.html",
+      "licenseEvidence": "UNVERIFIED: official pack page says CC0; current general page displays QAL v1.0 updated 8/28/2026. Actual embedded License.txt unavailable. No rights conclusion applied to this pack or earlier cached CC0 packs.",
+      "downloaded": false,
+      "previewDownloaded": true,
+      "downloadAccess": "Creator Drive folder public, but actual License.txt, How To Use.txt and All together.fbx return quota-exceeded HTML; invalid downloads rejected/removed. No model acquired.",
+      "downloadedFrom": "https://drive.google.com/drive/folders/1720N9IGyQHXYvtvZJzazhxtTTlz-y2Vf?usp=sharing",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\quaternius-modular-women",
+      "previewImage": "https://quaternius.com/assets/images/fullres/modularwomen.jpg",
+      "files": [
+        {
+          "path": "Preview.jpg",
+          "sha256": "80daa5b48791a014d356c5107e6d312672400b87d247472ee72437f66a18efd6",
+          "bytes": 286665
+        },
+        {
+          "path": "Pack-page.html",
+          "sha256": "d2cc6dcdd11e2152ffe958cefb2ca19737ab58307601e05d53186a4a0d6d22b4",
+          "bytes": 15441
+        },
+        {
+          "path": "License-page.html",
+          "sha256": "d1b56be5228d372b049b45cc7447a823da7989a6cf7036f60cfac2284c8fcb0d",
+          "bytes": 10301
+        },
+        {
+          "path": "access-evidence.txt",
+          "sha256": "105e28b6746912139369b7583bccea926b88ced1cd1b481bd80ea09fdf91e893",
+          "bytes": 969
+        }
+      ],
+      "advertised": {
+        "outfits": 10,
+        "animations": 24,
+        "interchangeableParts": 4
+      },
+      "inspection": {
+        "triangles": null,
+        "bones": null,
+        "actions": null,
+        "sharedMaleRig": null
+      },
+      "fit": "Official preview suggests women and workwear, but source access and licence verification failed.",
+      "risk": "Not a verified CC0 option. No actual geometry/rig/action counts; shared Modular Men rig unverified. Preview also remains cartoon-like and clean.",
+      "decision": "ON HOLD; no fitting until actual model and applicable licence are acquired and reviewed.",
+      "changed": "Only primary preview and licence/page/access evidence cached; no model or embedded licence acquired."
+    },
+    {
+      "id": "kenney-tanker-car-parts",
+      "card": "ART-SRC-TANKER",
+      "family": "tanker-source",
+      "sourceName": "Car Kit 3.1",
+      "sourcePage": "https://kenney.nl/assets/car-kit",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Actual retained original ZIP contains License.txt stating Creative Commons Zero / CC0; extracted license, models and atlas match ZIP members exactly.",
+      "status": "awaiting-kyle",
+      "checked": "2026-09-30",
+      "downloaded": true,
+      "downloadAccess": "Existing cached free original Kenney archive; primary author page offers Continue without donating with no account.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\kenney-car-kit",
+      "reusesCatalogAsset": "kenney-car-kit",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "fac7dacac5c7874348cf19729af3ef205f3d366493edaf0a827d93f4fdf3d0c4",
+          "bytes": 4814237
+        },
+        {
+          "path": "unpacked/License.txt",
+          "sha256": "c33b7f6453d134deae7b1b8493717d9ccfa754c25ab97f6de89b88f8fda19b00",
+          "bytes": 696
+        },
+        {
+          "path": "unpacked/Models/GLB format/Textures/colormap.png",
+          "sha256": "f3622a03a20c6696065cae9cbe391351be873508af190c2ebd1d420c055787a5",
+          "bytes": 12371
+        },
+        {
+          "path": "unpacked/Models/GLB format/truck-flat.glb",
+          "sha256": "4279862f2442e96c6603c514edf50bfb932707545695d8c4747611cd3796cf3b",
+          "bytes": 207424
+        },
+        {
+          "path": "unpacked/Models/GLB format/delivery-flat.glb",
+          "sha256": "2973152df7699767692ce890b3a0845a11333a52a23aa74b86a12ed443254c1b",
+          "bytes": 214456
+        },
+        {
+          "path": "unpacked/Models/GLB format/truck.glb",
+          "sha256": "5e1bc66c343501dd7d5734b57e672dd949bf95d7abdce680c6508cef99d374f8",
+          "bytes": 176360
+        },
+        {
+          "path": "unpacked/Models/GLB format/wheel-truck.glb",
+          "sha256": "411ff9692f72e9b0490d20574e3efd94b20058732a587abc26f4952e2c91351e",
+          "bytes": 34304
+        },
+        {
+          "path": "unpacked/Models/GLB format/debris-door.glb",
+          "sha256": "c62ab01c07be9be5dfc0f940dbc933fa836019ea1bc8fd0baa2d0e52cd764ea2",
+          "bytes": 7052
+        },
+        {
+          "path": "unpacked/Models/GLB format/debris-drivetrain.glb",
+          "sha256": "4a93bba25d3004b028f8494105d1774a91797d116dcb136fde00b4882bfec652",
+          "bytes": 36896
+        },
+        {
+          "path": "unpacked/Models/GLB format/debris-tire.glb",
+          "sha256": "7c3f5968244e2c617c698820e943493b8480c7bef8535fbab04d4a501b3489e9",
+          "bytes": 26548
+        }
+      ],
+      "recipe": "tools/art/tanker-source-inspect.py",
+      "comparisonRecipe": "tools/art/tanker-source-sheet.py",
+      "runtime": [],
+      "inspection": [
+        {
+          "model": "truck-flat",
+          "path": "unpacked/Models/GLB format/truck-flat.glb",
+          "triangles": 2488,
+          "evaluatedTriangles": 2488,
+          "meshNames": [
+            "wheel-front-left",
+            "wheel-front-right",
+            "wheel-back-right",
+            "wheel-back-left",
+            "body"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "delivery-flat",
+          "path": "unpacked/Models/GLB format/delivery-flat.glb",
+          "triangles": 2574,
+          "evaluatedTriangles": 2574,
+          "meshNames": [
+            "wheel-back-left",
+            "body",
+            "wheel-front-left",
+            "wheel-back-right",
+            "wheel-front-right"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "truck",
+          "path": "unpacked/Models/GLB format/truck.glb",
+          "triangles": 2082,
+          "evaluatedTriangles": 2082,
+          "meshNames": [
+            "body",
+            "wheel-front-right",
+            "wheel-front-left",
+            "wheel-back-right",
+            "wheel-back-left"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "wheel-truck",
+          "path": "unpacked/Models/GLB format/wheel-truck.glb",
+          "triangles": 428,
+          "evaluatedTriangles": 428,
+          "meshNames": [
+            "wheel-truck"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "debris-door",
+          "path": "unpacked/Models/GLB format/debris-door.glb",
+          "triangles": 68,
+          "evaluatedTriangles": 68,
+          "meshNames": [
+            "debris-door"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "debris-drivetrain",
+          "path": "unpacked/Models/GLB format/debris-drivetrain.glb",
+          "triangles": 412,
+          "evaluatedTriangles": 412,
+          "meshNames": [
+            "debris-drivetrain"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "debris-tire",
+          "path": "unpacked/Models/GLB format/debris-tire.glb",
+          "triangles": 288,
+          "evaluatedTriangles": 288,
+          "meshNames": [
+            "debris-tire"
+          ],
+          "armatures": 0,
+          "actions": []
+        }
+      ],
+      "fit": "Original delivery-flat is the clearer cab/chassis source lead; truck-flat is the alternate. Separate wheels and approved door/drivetrain/tyre parts can be reused.",
+      "risk": "Cab and bed are one body mesh. No separate articulated trailer/frame/hitch, valves or opening roof hatch; physical scale and trim feasibility unproven. Source palette and proportions are not finished gritty art.",
+      "decision": "Pending Kyle source choice. Recommend delivery-flat + detail-tank as an existing-parts lead, with trailer/boarding gaps explicitly held. Do not fit or invent missing geometry.",
+      "changed": "No original geometry, model transforms, source materials, texture pixels or runtime asset changed. Native Blender neutral-camera renders and alpha-bound crops are review presentation only.",
+      "downloadedFrom": "https://kenney.nl/media/pages/assets/car-kit/1a312ec241-1775131960/kenney_car-kit.zip"
+    },
+    {
+      "id": "kenney-tanker-tank-parts",
+      "card": "ART-SRC-TANKER",
+      "family": "tanker-source",
+      "sourceName": "City Kit Industrial 2.0",
+      "sourcePage": "https://kenney.nl/assets/city-kit-industrial",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Actual retained original ZIP contains License.txt stating Creative Commons Zero / CC0; extracted license, models and atlas match ZIP members exactly.",
+      "status": "awaiting-kyle",
+      "checked": "2026-09-30",
+      "downloaded": true,
+      "downloadAccess": "Existing cached free original Kenney archive; primary author page offers Continue without donating with no account.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\kenney-city-kit-industrial",
+      "reusesCatalogAsset": "kenney-city-kit-industrial",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "5b381164e5760f3830a2dbee43b972deee38b2a695d091b56e238ab2910c96d2",
+          "bytes": 5045077
+        },
+        {
+          "path": "unpacked/License.txt",
+          "sha256": "60a8c5c31191256ec9779dc18745dea6d69c46f4b29703459ce064c1765a59ea",
+          "bytes": 708
+        },
+        {
+          "path": "unpacked/Models/GLB format/Textures/colormap.png",
+          "sha256": "950f4f891ebd05a2affac810e6eeb0fea1511bc39039b65a3cbf2e17d17bc6a2",
+          "bytes": 11986
+        },
+        {
+          "path": "unpacked/Models/GLB format/detail-tank-large.glb",
+          "sha256": "2fbf65dfbae114235dec65cc8730a870cf7d29dd76f9473218e96ee83e9f5f43",
+          "bytes": 47452
+        },
+        {
+          "path": "unpacked/Models/GLB format/detail-tank.glb",
+          "sha256": "9e955732e4ef9ccff4a4d6967d29d8a7d2f9ed16c903923f2568216d9f0b50d2",
+          "bytes": 31436
+        },
+        {
+          "path": "unpacked/Models/GLB format/shipping-container-a.glb",
+          "sha256": "7b2d5ca874c8e659ee6cfd1614f0470b70410b2ddc7620ac83b8954dedeb861d",
+          "bytes": 36624
+        }
+      ],
+      "recipe": "tools/art/tanker-source-inspect.py",
+      "comparisonRecipe": "tools/art/tanker-source-sheet.py",
+      "runtime": [],
+      "inspection": [
+        {
+          "model": "detail-tank-large",
+          "path": "unpacked/Models/GLB format/detail-tank-large.glb",
+          "triangles": 566,
+          "evaluatedTriangles": 566,
+          "meshNames": [
+            "detail-tank-large"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "detail-tank",
+          "path": "unpacked/Models/GLB format/detail-tank.glb",
+          "triangles": 310,
+          "evaluatedTriangles": 310,
+          "meshNames": [
+            "detail-tank"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "shipping-container-a",
+          "path": "unpacked/Models/GLB format/shipping-container-a.glb",
+          "triangles": 402,
+          "evaluatedTriangles": 402,
+          "meshNames": [
+            "shipping-container-a"
+          ],
+          "armatures": 0,
+          "actions": []
+        }
+      ],
+      "fit": "Original detail-tank is a horizontal banded 310-triangle tank with support feet. Original shipping-container-a supplies potential armor skirts only after trimming.",
+      "risk": "Cab and bed are one body mesh. No separate articulated trailer/frame/hitch, valves or opening roof hatch; physical scale and trim feasibility unproven. Source palette and proportions are not finished gritty art.",
+      "decision": "Pending Kyle source choice. Recommend delivery-flat + detail-tank as an existing-parts lead, with trailer/boarding gaps explicitly held. Do not fit or invent missing geometry.",
+      "changed": "No original geometry, model transforms, source materials, texture pixels or runtime asset changed. Native Blender neutral-camera renders and alpha-bound crops are review presentation only.",
+      "downloadedFrom": "https://kenney.nl/media/pages/assets/city-kit-industrial/0ec35b139d-1788171848/kenney_city-kit-industrial_2.0.zip"
+    },
+    {
+      "id": "kenney-toy-car-kit-tanker-declined",
+      "card": "ART-SRC-TANKER",
+      "family": "tanker-source",
+      "sourceName": "Toy Car Kit 1.2",
+      "sourcePage": "https://kenney.nl/assets/toy-car-kit",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Original downloaded ZIP and extracted License.txt identify Creative Commons Zero / CC0; license bytes match the ZIP member.",
+      "status": "declined",
+      "checked": "2026-09-30",
+      "downloaded": true,
+      "downloadAccess": "Primary creator free download through Continue without donating; no account or payment.",
+      "downloadedFrom": "https://kenney.nl/media/pages/assets/toy-car-kit/42e19cc426-1736346027/kenney_toy-car-kit.zip",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\kenney-toy-car-kit",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "26c11bbb77102b8dd00cdaf7b2c7ab692416d750dd064de886d809acec346782",
+          "bytes": 5245353
+        },
+        {
+          "path": "unpacked/License.txt",
+          "sha256": "2406ba62730af7633689439c1e3e913b93e54eada8e73da415003a2bb96b099e",
+          "bytes": 714
+        }
+      ],
+      "recipe": "tools/art/tanker-source-inspect.py",
+      "runtime": [],
+      "inspection": {
+        "originalArchiveInventoryChecked": true,
+        "tankModels": 0,
+        "trailerModels": 0,
+        "geometryInspected": false,
+        "triangles": null
+      },
+      "fit": "Rejected after original archive inventory: vehicle-truck and vehicle-monster-truck exist, but no tank or trailer model.",
+      "risk": "Toy proportions conflict with the settled gritty art; no source geometry count or articulation is claimed.",
+      "decision": "Declined for this shortlist. Retain downloaded original and its license outside the repository; not an adaptation candidate.",
+      "changed": "Only the original ZIP was downloaded and safely extracted for license/file inventory. No models were fitted, rendered, exported or installed."
     }
   ]
 }

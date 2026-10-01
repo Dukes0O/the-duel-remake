@@ -1369,3 +1369,46 @@ lock, too slow for a ring: ARENA-STEER sets at least 100 degrees a second for
 every car in arenas only. Sitting cars: ARENA-SHOVE. Sal's moves and armor
 wait for Gratian's play.
 
+## 30 September 2026: keep the current women on the crew
+
+Codex's short list for the women found no free source better than the game's
+current Nell, Odessa and Wren (one cartoon pack, one bare base body, and the
+Quaternius women's pack could not be downloaded to check its licence). Kyle:
+"keep current." ART-FIT-CREW-W now builds only Vesper, adapted from the
+current women's figure.
+
+
+## 30 September 2026: tanker starting source
+
+Kyle picks A: the existing Kenney delivery-flat cab and horizontal Industrial
+detail-tank. This chooses starting parts only. Fitting stays paused until
+the separate trailer/frame/hitch, valves and boarding hatch are resolved.
+ART-SRC-TANKER-PARTS owns that follow-up; ARENA-07 now waits for it. No
+assembled convoy or new missing geometry is approved by this source choice.
+
+## 30 September 2026: correction, Cinder is a woman; fitted crew not better
+
+Claude's earlier split listed Cinder with the men. Cinder's crew sheet and
+current game figure are a woman; Nell, Odessa, Wren, Cinder and Vesper are the
+women, Rook, Jax, Dune and Tusk the men. ART-FIT-CREW-M round 1 scored 1 to 2
+against the current figures (Jax without his coat, Dune's hood reading as a
+helmet, Tusk in clean fantasy armor) and stopped. Claude recommends keeping
+the current crew figures, as Kyle chose for the women, and closing the
+fitting card; Kyle confirms.
+
+## 30 September 2026: a ceiling for dome steering
+
+ARENA-STEER met Claude's floor (100 degrees a second at low speed) with a
+3.4 times multiplier that turns cars 205 to 300 degrees a second at 45 mph.
+Added: no car turns faster than 150 degrees a second at full lock in an
+arena. Floor and ceiling together keep the ring manageable without twitch.
+
+## 30 September 2026: Kyle's four decisions
+
+Kyle: release the save fix, keep the current crew figures, keep the current
+first-person hands, and simplify the tanker. The fitting cards for the crew
+and hands close without installing anything. The Convoy Raid tanker is one
+rigid armored truck from pick A with three valves and a roof boarding plate
+that lights when the valves break (SCRAPDOME.md, Convoy Raid), built by
+ART-FIT-TANKER. Kyle also said test results need no reporting once passed.
+
