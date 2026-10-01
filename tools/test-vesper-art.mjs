@@ -354,3 +354,145 @@ for (const {name, run} of checks) {
 }
 console.log(`Vesper private art: ${checks.length} cases, ${checks.length - failures} passed, ${failures} failed; ${assertions} acceptance checks.`);
 if (failures) process.exitCode = 1;
+
+// VESPER_NATIVE_DESTINATION_GUARD_START
+// Self-contained small native guard checks can also be executed verbatim from
+// ignored scratch with VESPER_GUARD_ROOT set, without the original Blender run.
+const vgFs = await import('node:fs');
+const vgPath = await import('node:path');
+const vgProcess = await import('node:child_process');
+const vgCrypto = await import('node:crypto');
+const vgAssert = (await import('node:assert/strict')).default;
+const vgUrl = await import('node:url');
+const vgRoot = vgPath.resolve(process.env.VESPER_GUARD_ROOT || vgUrl.fileURLToPath(new URL('../', import.meta.url)));
+const vgParent = vgPath.join(vgRoot, '.qa-dist', 'vesper-native-destination-guards');
+vgFs.mkdirSync(vgParent, {recursive: true});
+const vgSession = vgFs.mkdtempSync(vgPath.join(vgParent, 'run-'));
+const vgFixture = vgPath.join(vgSession, 'copied-source-root');
+const vgFitRelative = 'tools/art/vesper-fit.json';
+const vgFit = JSON.parse(vgFs.readFileSync(vgPath.join(vgRoot, vgFitRelative), 'utf8'));
+const vgHash = bytes => vgCrypto.createHash('sha256').update(bytes).digest('hex');
+const vgNames = ['bound-donor-color.png', 'vesper-color.png', 'vesper-surface.png', 'vesper.glb', 'manifest.json'];
+const vgChecks = [], vgReceipts = [];
+let vgAssertions = 0, vgFailures = 0;
+const vgOk = (value, message) => {vgAssertions++; vgAssert.ok(value, message);};
+const vgEq = (a, b, message) => {vgAssertions++; vgAssert.equal(a, b, message);};
+const vgCheck = (name, run) => vgChecks.push({name, run});
+for (const record of vgFit.provenance) {
+  const at = vgPath.join(vgFixture, record.path);
+  vgFs.mkdirSync(vgPath.dirname(at), {recursive: true});
+  vgFs.copyFileSync(vgPath.join(vgRoot, record.path), at);
+  vgEq(vgHash(vgFs.readFileSync(at)), record.sha256, 'genuine copied source retains its actual approved checksum');
+}
+const vgFitAt = vgPath.join(vgFixture, vgFitRelative);
+vgFs.mkdirSync(vgPath.dirname(vgFitAt), {recursive: true});
+vgFs.copyFileSync(vgPath.join(vgRoot, vgFitRelative), vgFitAt);
+const vgDonor = vgPath.join(vgFixture, vgFit.source.path);
+const vgOriginalSnapshot = () => vgFit.provenance.map(r => ({path: r.path, sha256: vgHash(vgFs.readFileSync(vgPath.join(vgRoot, r.path)))}));
+const vgOriginalBefore = vgOriginalSnapshot();
+function vgCopiedSourcesUnchanged() {
+  for (const r of vgFit.provenance) vgEq(vgHash(vgFs.readFileSync(vgPath.join(vgFixture, r.path))), r.sha256, 'validation preserves every copied protected source byte');
+  vgAssertions++; vgAssert.deepEqual(vgOriginalSnapshot(), vgOriginalBefore, 'real donor/recipe/reference/rights remain unchanged');
+}
+function vgCli(at, mode) {
+  const run = vgProcess.spawnSync(process.env.PYTHON || 'python', [vgPath.join(vgRoot, 'tools/blender/vesper-blackiron.py'),
+    '--root', vgFixture, '--fit-config', vgFitAt, '--output-dir', at, mode],
+    {cwd: vgRoot, encoding: 'utf8', timeout: 30000, windowsHide: true});
+  vgOk(!run.error, `actual unchanged plain Python CLI starts: ${run.error?.message}`);
+  vgOk(!/ModuleNotFoundError|No module named ['"]bpy|Traceback/.test(run.stdout + run.stderr), 'validation must finish before any Blender import, not fail on infrastructure');
+  return {mode, status: run.status, stdout: run.stdout, stderr: run.stderr};
+}
+const vgOutput = name => vgPath.join(vgFixture, '.qa-dist', name);
+vgCheck('destination control: normal absent private output validates/plans without creation or source writes', () => {
+  const at = vgOutput('normal');
+  const runs = ['--validate-sources', '--paths-only'].map(mode => vgCli(at, mode));
+  vgCopiedSourcesUnchanged(); vgEq(vgFs.existsSync(at), false, 'standard-library modes create no output directory');
+  vgReceipts.push({name: 'normal', runs});
+  for (const r of runs) vgEq(r.status, 0, 'normal source-bound private path remains valid');
+  const plan = JSON.parse(runs[1].stdout);
+  vgEq(vgPath.resolve(plan.model), vgPath.join(at, 'vesper.glb'), 'actual planned private model');
+  vgEq(vgPath.resolve(plan.manifest), vgPath.join(at, 'manifest.json'), 'actual planned private manifest');
+});
+vgCheck('destination control: pre-existing regular rerun files remain valid and byte exact', () => {
+  const at = vgOutput('regular-rerun'); vgFs.mkdirSync(at, {recursive: true});
+  const before = {};
+  for (const name of vgNames) {
+    const bytes = Buffer.from('safe existing regular rerun artifact: ' + name);
+    vgFs.writeFileSync(vgPath.join(at, name), bytes); before[name] = vgHash(bytes);
+    vgEq(vgFs.statSync(vgPath.join(at, name)).nlink, 1, 'actual regular file has a single link');
+  }
+  const runs = ['--validate-sources', '--paths-only'].map(mode => vgCli(at, mode));
+  vgCopiedSourcesUnchanged();
+  for (const name of vgNames) vgEq(vgHash(vgFs.readFileSync(vgPath.join(at, name))), before[name], 'validation preserves pre-existing regular artifact bytes');
+  vgReceipts.push({name: 'regular-rerun', runs});
+  for (const r of runs) vgEq(r.status, 0, 'ordinary private rerun remains supported');
+});
+const vgMechanismTarget = vgPath.join(vgSession, 'protected-scratch-mechanism.txt');
+vgFs.writeFileSync(vgMechanismTarget, 'safe private original');
+let vgSymlinkCapability;
+try {
+  const alias = vgPath.join(vgSession, 'native-file-symlink.txt');
+  vgFs.symlinkSync(vgMechanismTarget, alias, 'file');
+  vgSymlinkCapability = {available: true, alias};
+} catch (error) {vgSymlinkCapability = {available: false, code: error.code, message: error.message};}
+vgCheck('destination control: native hardlink really redirects writes in isolated scratch', () => {
+  const alias = vgPath.join(vgSession, 'native-hardlink.txt'); vgFs.linkSync(vgMechanismTarget, alias);
+  try {
+    vgOk(vgFs.statSync(alias).nlink > 1, 'real native multiple-link inode, not a mocked pathname');
+    vgEq(vgFs.statSync(alias).ino, vgFs.statSync(vgMechanismTarget).ino, 'hardlink addresses the same actual native file');
+    vgFs.writeFileSync(alias, 'safe hardlink redirected witness');
+    vgEq(vgFs.readFileSync(vgMechanismTarget, 'utf8'), 'safe hardlink redirected witness', 'actual alias write reaches protected SCRATCH bytes');
+    vgFs.writeFileSync(vgMechanismTarget, 'safe private original');
+  } finally {vgFs.unlinkSync(alias);}
+  vgReceipts.push({name: 'native-hardlink-mechanism', available: true});
+});
+vgCheck('destination control: native file symlink capability and safe redirect are observed without privilege changes', () => {
+  vgReceipts.push({name: 'native-file-symlink-capability', ...vgSymlinkCapability});
+  vgOk(vgSymlinkCapability.available, `UNAVAILABLE native file symlink without privilege changes: ${vgSymlinkCapability.code}: ${vgSymlinkCapability.message}`);
+  const alias = vgSymlinkCapability.alias;
+  try {
+    vgOk(vgFs.lstatSync(alias).isSymbolicLink(), 'actual native file symlink exists');
+    vgFs.writeFileSync(alias, 'safe symlink redirected witness');
+    vgEq(vgFs.readFileSync(vgMechanismTarget, 'utf8'), 'safe symlink redirected witness', 'actual symlink write reaches protected SCRATCH bytes');
+    vgFs.writeFileSync(vgMechanismTarget, 'safe private original');
+  } finally {vgFs.unlinkSync(alias);}
+});
+for (const kind of ['hardlink', 'symlink']) for (const name of vgNames) {
+  vgCheck(`destination guard: ${kind} ${name} to copied protected donor is rejected before Blender/create/write`, () => {
+    if (kind === 'symlink') vgOk(vgSymlinkCapability.available, `UNAVAILABLE native file symlink: ${vgSymlinkCapability.code}: ${vgSymlinkCapability.message}; no guard acceptance claimed`);
+    const at = vgOutput(kind + '-' + name.replaceAll('.', '-')); vgFs.mkdirSync(at, {recursive: true});
+    const alias = vgPath.join(at, name), before = vgHash(vgFs.readFileSync(vgDonor));
+    const sourceLinkCount = vgFs.statSync(vgDonor).nlink;
+    if (kind === 'hardlink') vgFs.linkSync(vgDonor, alias); else vgFs.symlinkSync(vgDonor, alias, 'file');
+    try {
+      if (kind === 'hardlink') {
+        vgOk(vgFs.statSync(alias).nlink > 1, 'planned output is an actual multiply-linked source inode');
+        vgEq(vgFs.statSync(alias).ino, vgFs.statSync(vgDonor).ino, 'planned output aliases the copied protected donor inode');
+      } else vgOk(vgFs.lstatSync(alias).isSymbolicLink(), 'planned output is an actual file symlink');
+      const runs = ['--validate-sources', '--paths-only'].map(mode => vgCli(at, mode));
+      vgCopiedSourcesUnchanged();
+      vgEq(vgHash(vgFs.readFileSync(alias)), before, 'actual alias and copied donor bytes unchanged before rejection');
+      vgEq(vgHash(vgFs.readFileSync(vgDonor)), before, 'protected copied donor bytes unchanged');
+      vgAssertions++; vgAssert.deepEqual(vgFs.readdirSync(at), [name], 'validation creates no other model, manifest or atlas');
+      vgReceipts.push({name, kind, alias, target: vgDonor, realTarget: vgFs.realpathSync(alias), nlink: vgFs.statSync(alias).nlink,
+        beforeSha256: before, afterSha256: vgHash(vgFs.readFileSync(vgDonor)), runs});
+      for (const r of runs) {
+        vgOk(r.status !== 0, `${name}: actual ${kind} destination must be rejected by ${r.mode} BEFORE Blender import or any output write; current status ${r.status}`);
+        vgOk(/reject|link|alias|destination|output|private/i.test(r.stdout + r.stderr), 'guard explains actual destination rejection');
+      }
+    } finally {
+      // Unlink only the exact created private alias; never recurse/follow it.
+      vgFs.unlinkSync(alias); vgEq(vgFs.statSync(vgDonor).nlink, sourceLinkCount, 'private alias cleanup restores source link count');
+    }
+  });
+}
+for (const {name, run} of vgChecks) {
+  try {await run();} catch (error) {vgFailures++; console.error(`FAIL Vesper native ${name}: ${error.message}`);}
+}
+vgCopiedSourcesUnchanged();
+vgFs.writeFileSync(vgPath.join(vgSession, 'native-destination-receipts.json'), JSON.stringify({root: vgRoot, fixture: vgFixture,
+  recipeSha256: vgHash(vgFs.readFileSync(vgPath.join(vgRoot, 'tools/blender/vesper-blackiron.py'))),
+  configSha256: vgHash(vgFs.readFileSync(vgPath.join(vgRoot, vgFitRelative))), originals: vgOriginalBefore,
+  plannedNames: vgNames, symlinks: vgSymlinkCapability, cases: vgChecks.length, failures: vgFailures, checks: vgAssertions, receipts: vgReceipts}, null, 2) + '\n');
+console.log(`Vesper native destination guards: ${vgChecks.length} cases, ${vgChecks.length - vgFailures} passed, ${vgFailures} failed; ${vgAssertions} checks; receipt ${vgPath.join(vgSession, 'native-destination-receipts.json')}.`);
+if (vgFailures) process.exitCode = 1;

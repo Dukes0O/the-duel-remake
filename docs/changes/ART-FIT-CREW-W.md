@@ -308,3 +308,115 @@ Final recipe/config Source hashes:
 Final preservation controls: crew fighters 26/26, native rigged fighter
 14/14, crew-rule tests 4/4, unchanged road fingerprints 162/162 and
 npm run build pass. Build retains its existing advisory chunk-size warning.
+
+## P2 destination-alias guard: independent tests first
+
+status: destination-guard-red
+source_commit: 15a11c5082e48c4d8cb775458b64c27614bf03e2
+waiting_on: Source guard fix and Director review of native file-symlink limitation
+
+The actual recipe validates only the resolved output DIRECTORY. Its later
+writes use five fixed child paths: `bound-donor-color.png`,
+`vesper-color.png`, `vesper-surface.png`, `vesper.glb` and `manifest.json`.
+Pre-existing file aliases can redirect those writes to protected bytes even
+when the directory is private. This tests-first slice appends fourteen
+native destination controls. The original eighteen cases, their runner and
+all assertions remain byte exact. No Source, config, scenario, public asset,
+material setting, topology or earlier note text changes.
+
+The added checks run the unchanged actual plain-Python recipe with a
+synthetic repository containing genuine COPIES of all four approved,
+hash-pinned source files and the unchanged fit config. This is not a source
+module overlay or mock guard. Every bad planned path is a real OS hardlink
+or, when available, file symlink to the COPIED protected Odessa donor. Both
+`--validate-sources` and `--paths-only` are invoked with the original recipe
+and real arguments. No export or `bpy` import is attempted. Alias/source
+bytes, source link count and output file list are checked before the
+expected rejection assertion. Exact aliases are unlinked in `finally`;
+there is no recursive deletion or following an alias during cleanup.
+The actual game donor and all original source/rights remain untouched.
+
+### Actual RED and tool limitation
+
+During the Director's audio timing hold, only the appended small
+standard-library block was run. It was copied VERBATIM from the appended
+test bytes into ignored scratch and supplied the real lane root via
+`VESPER_GUARD_ROOT`; the original Blender-heavy eighteen-case runner was
+not run during the hold. Default execution still runs the entire original
+suite followed by these additions. This diagnostic does not skip or claim
+acceptance for any old case. Source ownership stays with the builder.
+
+Commands:
+
+- `node --check tools/test-vesper-art.mjs` — exit 0.
+- Set `VESPER_GUARD_ROOT` to this private lane, then
+  `node .qa-dist/vesper-native-destination-guards/guard-only.mjs` — exit 1.
+- Small native byte/protected-tree audit against Source `15a11c5` — pass.
+
+Actual added-block result: **14 cases, 3 PASS, 5 genuine guard RED,
+6 UNAVAILABLE, 133 assertions**. The successful controls prove normal
+absent output validates/plans without directory creation, pre-existing
+regular rerun files validate without byte changes, and native hardlinks
+really redirect writes to isolated SCRATCH bytes. The hardlink mechanism
+control observes the actual same inode/multiple link count and safely
+writes a scratch-only alias; it never writes through an alias to a donor.
+
+Each of these five genuine REDs reports:
+`<filename>: actual hardlink destination must be rejected by --validate-sources BEFORE Blender import or any output write; current status 0`:
+
+- `bound-donor-color.png`
+- `vesper-color.png`
+- `vesper-surface.png`
+- `vesper.glb`
+- `manifest.json`
+
+For EVERY one of those cases, the retained native receipt ALSO proves
+`--paths-only` returns status 0 with the aliased planned path. Both modes
+were executed before the rejection assertion. The first failed assertion
+names validation; a future fix must pass both mode checks. The copied
+source/alias SHA-256 stayed equal to the original approved donor hash in
+all ten calls. Validation created no other files and no Blender-dependent
+failure disguised a rejection. The fixture proves unsafe acceptance before
+export without damaging any genuine or copied source bytes.
+
+Actual native `fs.symlinkSync(target, alias, 'file')` returned **EPERM** under
+this normal token. No admin mode, privilege escalation, policy change or
+Kyle request was attempted. One capability check and all five file-symlink
+guard cases report **UNAVAILABLE native file symlink ... EPERM**, with
+`no guard acceptance claimed` for the filename cases. These six failures
+are a tool limitation, distinct from the five proved hardlink Source
+failures. They are not skips, fake passes or five observed symlink guard
+reproductions. The Director must review a native alternative or approved
+handling of this limitation before a complete guard acceptance claim.
+The available hardlink mechanism already proves this P2 defect requires a
+Source fix. No final visual, frame, browser or merge verdict follows.
+
+Full raw stdout/stderr, standalone exact block, source/alias/CLI receipts and
+protected-prefix witness are in integration's ignored
+`.evidence/2026-10-01/ART-FIT-CREW-W/destination-guard-red/`:
+`guard-only-red.log`, `syntax.log`, `guard-only.mjs`,
+`native-destination-receipts.json`, `protected-prefix-receipt.json`.
+The original isolated fixture is this lane's ignored
+`.qa-dist/vesper-native-destination-guards/run-lpFdNw/`; all copied donors
+remain intact, and only the precisely created alias entries were unlinked.
+
+### Exact preservation and Removed
+
+Original test prefix: 24,520 bytes, SHA-256
+`20ddbda5bfdd44a3f33b4ce5242cf82127d0dee693fd8561680ae352bc0c966f`.
+Original entire note prefix: 18,532 bytes, SHA-256
+`92f4a909cbd5e930a19580d1f2f7b496dbfba2107ea28023f95ee5339317ce9d`.
+The executable diagnostic is byte identical to the appended guard block,
+SHA-256 `2c8c6404f76de27de4119c3f3718573b1c88c9ee7088932d4ac20bafc5b1a4b7`.
+All 373 protected tracked files (existing Source/public/replays plus the
+frozen Vesper recipe/config) match the exact `15a11c5` Git blobs; their
+SHA-256 inventory is retained with the receipt. No default eighteen-case
+rerun, Blender export, browser, build, frame test or full gate is claimed
+by this short test-author slice.
+
+Removed: no existing assertion, Source path, setting, material, topology,
+model, licence/credit, roster, save code or replay is removed or replaced.
+Only exact safe private alias entries are unlinked after each test; source
+link counts and bytes are restored/verified. Raw evidence remains ignored
+for independent review and the later janitor. The unsafe planned-child
+acceptance remains real RED for the proper Source worker to fix forward.
