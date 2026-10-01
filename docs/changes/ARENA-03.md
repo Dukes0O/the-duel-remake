@@ -1138,3 +1138,49 @@ knockdowns, and the parked-car-only availability guards from Fuel target,
 launch and guidance paths. Kept physical-car guards and the existing reward
 filter. No frozen assertion, replay pin, runtime/licensed asset, storage key,
 save schema, difficulty tuning or audio resource was removed or replaced.
+
+
+### Independent player guard regression — tests-first freeze, 30 September 2026
+
+RED production source: 88715915953db56e59dea06c4ba0829d5f7fb3cf. Added eight append-only native player
+controls to tools/test-fuel-standing-carrier.mjs. The complete prior frozen
+file remains a byte-identical prefix; no old helper, assertion or CPU no-cargo
+control changed. No production source or replay pin was edited.
+
+The computer hunter remains carrier-only under SCRAPDOME section 10.
+The occupied player car retains its earlier physical-car attack eligibility.
+The guidance reproduction starts with a native player launch at a CPU that
+collected a real pad canister. A native level-three bomb removes 26.1 armor,
+drops that actual canister and leaves the CPU physically healthy. Its already-
+fired player bolt must still turn toward the moved car inside the unchanged
+public homing cone. Cargo and events are never fabricated for this case.
+
+Positive controls preserve player guidance while cargo is held, native launch
+and guidance in Last Car Rolling, physical-wreck launch and guidance guards,
+and actual projectile no-damage contacts with protected owner and target.
+Protection controls test the established arenaDamageBlocked policy; they do
+not invent a player launch or guidance prohibition. All 26 frozen Medium/Hard
+CPU carrier, knockdown, friendly, no-cargo and parked-wreck controls pass.
+
+Focused RED command: node --test --test-reporter=tap
+ tools/test-fuel-standing-carrier.mjs
+ tools/test-fuel-car-attribution.mjs
+ tools/test-arena-fuel-run.mjs
+ tools/test-combat-projectiles.mjs
+ tools/test-enemy-aim.mjs.
+Result: tests 148, pass 146, fail 2, skipped 0.
+Standing-carrier suite alone: 34 tests, 32 pass, 2 fail, 531 acceptance checks
+reached. Existing attribution, Fuel frame-rate/replay pins, projectile and
+enemy-aim controls pass unchanged. The exact failure messages are:
+
+- player crossbow launches at a healthy Fuel CPU without cargo: the occupied player car can launch its native crossbow at this physical CPU target
+- already-fired player bolt keeps guiding after a native hit drops CPU cargo: actual in-flight PLAYER bolt keeps turning toward its healthy CPU after native cargo loss
+
+The source worker may distinguish player physical targets from enemy carrier
+targets in launch and guidance. Claude must review the whole card before merge;
+this RED freeze does not claim lane/build, browser or merge clearance.
+
+### Removed — player guard regression freeze
+
+Nothing removed. These are append-only acceptance controls. No frozen assertion,
+fingerprint, source, runtime asset, save, Preview or audio resource changed.

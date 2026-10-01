@@ -229,3 +229,138 @@ test('Last Car Rolling still excludes a physically wrecked player car from CPU t
   eq(arenaTargetOf(duel, cpu), null, 'Last Car Rolling weapon targeting retains its original wreck guard');
 });
 after(() => console.log('Fuel standing carrier: ' + checks + ' acceptance checks reached.'));
+
+
+// Independent player regression controls. SCRAPDOME's carrier-only pursuit
+// rule belongs to computer brains; occupied player cars retain physical targets.
+function playerCarTarget(mode = 'fuel-run', carrying = false) {
+  const duel = arena(mode), state = duel.state, cpu = state.opponents[0];
+  const participant = state.arena.participants.find(p => p.id === 'cpu-1');
+  const pose = mode === 'fuel-run' ? state.arena.fuelRun.pads[0] : {s: 100, lateral: -6};
+  Object.assign(cpu, {combatWrecking: false, combatWreckTimer: 0,
+    armor: cpu.maxArmor, impactTimer: 0});
+  Object.assign(participant, {wreckCounted: false, protectedSec: 0});
+  place(cpu, pose); place(state, {s: pose.s - 40, lateral: pose.lateral});
+  eq(state.onFoot, false, 'the real player launch fixture stays inside its healthy car');
+  eq(outOfPlay(duel, cpu), false, 'the real CPU car is physically healthy and unprotected');
+  eq(participant.fuelCanisterId ?? null, null, 'the real target begins without cargo');
+  if (carrying) {
+    const id = state.arena.fuelRun.pads[0].canisterId;
+    stepFuelRun(duel, DT);
+    eq(participant.fuelCanisterId, id, 'native car collection creates the real CPU carrier');
+    eq(state.arena.fuelRun.canisters.find(c => c.id === id).carriedBy, 'cpu-1',
+      'the collected physical canister belongs to the actual CPU');
+  }
+  return {duel, state, cpu, participant};
+}
+function playerBolt(c) {
+  eq(fireWeapon(c.duel, 'crossbow', false), true,
+    'the occupied player car can launch its native crossbow at this physical CPU target');
+  const shot = c.state.combat.projectiles.at(-1);
+  eq(shot.enemy, false, 'the actual launched crossbow is player-owned');
+  eq(shot.ownerId, 'player', 'the native arena projectile retains player ownership');
+  eq(shot.targetIndex, 0, 'the actual player projectile tracks the selected physical CPU');
+  return shot;
+}
+function movedPlayerBolt(c, shot) {
+  const from = point(c.duel, c.state), at = point(c.duel, c.cpu);
+  const initial = bearing(from, at), speed = Math.hypot(shot.vx, shot.vz);
+  // Preserve the actual native projectile and its speed. Remove initial lead
+  // angle so the subsequent native turn is measurable independently of motion.
+  Object.assign(shot, {x: from.x + Math.sin(initial) * 3,
+    z: from.z + Math.cos(initial) * 3, vx: Math.sin(initial) * speed,
+    vz: Math.cos(initial) * speed, launchBearing: initial});
+  place(c.cpu, {s: c.cpu.s, lateral: c.cpu.lateral + 3});
+  const desired = bearing(shot, point(c.duel, c.cpu));
+  const gap = angleGap(initial, desired);
+  ok(Math.abs(gap) > .01 && Math.abs(gap) < T.crossbow.homingConeRadians,
+    'the real moved car is a distinct aim point inside the unchanged public homing cone');
+  stepProjectiles(c.duel, DT);
+  const turn = angleGap(initial, Math.atan2(shot.vx, shot.vz));
+  return {turn, gap};
+}
+function nativePlayerImpact(c, kind = 'crossbow', level = 0) {
+  const at = point(c.duel, c.cpu);
+  c.state.combat.projectiles.push({id: ++c.state.combat.serial, kind, level,
+    enemy: false, ownerId: 'player', x: at.x, y: at.y, z: at.z,
+    vx: 0, vy: 0, vz: 0, age: kind === 'bomb' ? 2 : 0});
+  stepProjectiles(c.duel, DT);
+}
+
+test('player crossbow launches at a healthy Fuel CPU without cargo', () => {
+  const c = playerCarTarget();
+  // CPU hunting deliberately retains its carrier-only no-cargo guard.
+  eq(chooseTarget(c.duel, c.participant), null,
+    'the same no-cargo field still offers no carrier to the computer hunter');
+  playerBolt(c);
+  const before = c.cpu.armor;
+  for (let i = 0; i < 90 && c.cpu.armor === before; i++) stepProjectiles(c.duel, DT);
+  ok(c.cpu.armor < before, 'the actual player launch can damage the healthy noncarrier car');
+});
+
+test('already-fired player bolt keeps guiding after a native hit drops CPU cargo', () => {
+  const c = playerCarTarget('fuel-run', true), shot = playerBolt(c);
+  const id = c.participant.fuelCanisterId, before = c.cpu.armor;
+  c.state.combat.projectiles = [];
+  nativePlayerImpact(c, 'bomb', 3);
+  near(before - c.cpu.armor, 26.1, 'the actual level-three bomb removes more than 25 armor');
+  eq(c.cpu.combatWrecking, false, 'the native cargo-drop hit leaves the physical target healthy');
+  eq(c.participant.fuelCanisterId, null, 'the native bomb hit actually drops the CPU cargo');
+  eq(c.state.arena.fuelRun.canisters.find(canister => canister.id === id).carriedBy,
+    null, 'the actual dropped canister no longer has a carrier');
+  eq(outOfPlay(c.duel, c.cpu), false, 'cargo loss does not make the real healthy car physically unavailable');
+  c.state.combat.projectiles.push(shot);
+  const {turn, gap} = movedPlayerBolt(c, shot);
+  ok(Math.abs(turn) > 1e-8 && Math.sign(turn) === Math.sign(gap),
+    'actual in-flight PLAYER bolt keeps turning toward its healthy CPU after native cargo loss');
+});
+
+test('positive player bolt guidance follows a moved CPU while it still carries cargo', () => {
+  const c = playerCarTarget('fuel-run', true), shot = playerBolt(c);
+  const id = c.participant.fuelCanisterId;
+  const {turn, gap} = movedPlayerBolt(c, shot);
+  ok(Math.abs(turn) > 1e-8 && Math.sign(turn) === Math.sign(gap),
+    'native player guidance turns toward the actual moved carrier control');
+  eq(c.participant.fuelCanisterId, id, 'the native guidance positive control keeps its real cargo');
+});
+
+test('player crossbow still refuses a physically wrecked Fuel CPU', () => {
+  const c = playerCarTarget('fuel-run', true);
+  c.cpu.armor = 1; nativePlayerImpact(c);
+  eq(c.cpu.combatWrecking, true, 'the native player bolt physically wrecks the CPU control');
+  eq(outOfPlay(c.duel, c.cpu), true, 'the physical CPU wreck remains out of play');
+  eq(fireWeapon(c.duel, 'crossbow', false), false,
+    'actual player launch still rejects a physical wreck even while its cargo has not yet dropped');
+});
+
+test('already-fired player bolt stops guiding at a physically wrecked CPU', () => {
+  const c = playerCarTarget('fuel-run', true), shot = playerBolt(c);
+  const id = c.participant.fuelCanisterId;
+  c.state.combat.projectiles = []; c.cpu.armor = 1; nativePlayerImpact(c);
+  eq(c.cpu.combatWrecking, true, 'a separate actual player bolt creates the physical wreck control');
+  eq(c.participant.fuelCanisterId, id, 'the wreck guidance control is checked before native Fuel cargo drop');
+  c.state.combat.projectiles.push(shot);
+  const {turn} = movedPlayerBolt(c, shot);
+  near(turn, 0, 'native player guidance never follows a physically wrecked car');
+});
+
+for (const protectedId of ['cpu-1', 'player']) test('native player shot preserves ' + protectedId + ' respawn damage protection', () => {
+  const c = playerCarTarget('fuel-run', true), shot = playerBolt(c);
+  c.state.arena.participants.find(p => p.id === protectedId).protectedSec = 1;
+  const before = c.cpu.armor, at = point(c.duel, c.cpu);
+  // Move the actual fired bolt into the real physical contact band. Damage
+  // protection is checked separately from the player's freedom to launch.
+  Object.assign(shot, {x: at.x - 2, y: at.y, z: at.z,
+    vx: 480, vy: 0, vz: 0, targetIndex: null});
+  stepProjectiles(c.duel, DT);
+  eq(c.cpu.armor, before, 'actual player projectile contact cannot bypass participant respawn protection');
+  eq(c.cpu.combatWrecking, false, 'the protected native physical contact cannot create a wreck');
+});
+
+test('Last Car Rolling preserves native player launch and guidance without cargo', () => {
+  const c = playerCarTarget('last-car-rolling'), shot = playerBolt(c);
+  eq(c.state.arena.fuelRun, undefined, 'the actual non-Fuel control has no fuel event state');
+  const {turn, gap} = movedPlayerBolt(c, shot);
+  ok(Math.abs(turn) > 1e-8 && Math.sign(turn) === Math.sign(gap),
+    'non-Fuel player guidance retains physical-car targeting and native homing');
+});
