@@ -2,6 +2,31 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- Fuel final audio at clean4a60b99 proves actual pickup/drop/delivery/result
+  mapping and scoped onsets within30ms, with no human listening claim.
+  Existing crash overload is reproduced by an identical60mph Last Car Rolling
+  contact with no Fuel cues: sample-0.049dBFS/true+0.22dBTP. Fuel is-0.087/+0.15;
+  suppressing only landing still overloads, so added Fuel feedback is not the
+  necessary cause. AUD-CRASH-PEAK records that separate audio-owner follow-up.
+  Pickup/delivery UI is14–16/10dB below full-throttle engine: listen flag,
+  not a blanket weapons-only+6dB violation. Final delivery/win onsets overlap;
+  no full-audio clean pass is claimed. Private recordings/graphs/recipe are
+  .lanes/arena-03-fuel-run/.evidence/2026-09-30/ARENA-03/audio-final-4a60b99/VERDICT.md.
+  Please review disposition with the existing peak debt retained. The latest
+  lane finds only the exact old switch catalog expectation; its narrowly
+  reviewed new dev entry/control correction and fresh gate are next.
+- ARENA-SHOVE question: a car exactly pinned to the outer solid wall and
+  rammed straight outward has no allowed displacement along that normal.
+  The universal1.5/4m minimum conflicts with containment there. Tests cover
+  real tangential shove with open physical space and separate outward
+  containment. Please settle the outward-pin interpretation; no teleport,
+  escape direction or relaxed containment is invented.
+- ARENA-06 tests public arena modes on Salt Flats. Dedicated warlord/story
+  fights currently hardcode Scrapdome; please settle whether "every mode"
+  also relocates those fights. No story fight moves by inference. New venue
+  follows SPEC0.12 with salt-flats:dev, discovery/rank9 and released scrapdome;
+  optional venue launch arguments cannot bypass real App/race guards.
+
 - ARS-CORE is claimed in a separate lane for independent tests and new
   core modules only; existing hooks remain ungranted until their owners merge.
   Two gaps need written clarification before those parts are built: required

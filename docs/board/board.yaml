@@ -5,6 +5,22 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: AUD-CRASH-PEAK
+    title: "Existing car collision overload: measured sample and true-peak repair"
+    owner: codex
+    lane: AUDIO
+    size: S
+    needs: [ARENA-03]
+    status: ready
+    owns: [tools/test-audio-crash-peak.mjs, tools/scenarios/audio-crash-peak.mjs, docs/changes/AUD-CRASH-PEAK.md]
+    hooks: []
+    hook_requests: [src/audio.js]
+    sequencing: "Actual60mph Last Car Rolling contact with no Fuel events reproduces baseline overload. Tests first from native event/game-only WebAudio capture, then request exact audio.js hook only after Fuel merge and external audio-owner handoff. Protected bank/source/catalog/assets/branches remain untouched. Do not remove Fuel feedback, turn down all engines indiscriminately, or report analyzer unmeasured arrays as failures. Measurements proceed with listening explicitly flagged for Kyle under SPEC0.9."
+    helpers: [test_author, reviewer, audio_qa]
+    acceptance:
+      - "Reproduce actual car contact behind the current engine mix with memory-only saves/private port and record RED: nonFuel samplepeak-0.049dBFS/truepeak+0.22dBTP, also Fuel-0.087/+0.15. Source gain/limiting repair meets clean-signal samplepeak<=-1dBFS and advisory truepeak<=-1dBTP with actual contact and appropriate overlapping-voice controls. Keep impact contrast, engine audibility, existing event mapping, timing and old assertions. Native browser/audio capture before and after; flag human listening rather than invent ratings."
+      - "Required lane/build and independent review before merge; no release, Preview, real saves, source-audio fabrication or protected external audio inspection."
+
   - id: ART-KEEP-VALVE-DONOR
     title: "Keep the verified CC0 convoy valve donor after closing the trailer search"
     owner: codex
@@ -848,7 +864,7 @@ tasks:
     flag: arsenal
     owns: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/arsenal/oil.js, src/arsenal/smoke.js, tools/test-arsenal-core.mjs, tools/test-arsenal-save.mjs, docs/changes/ARS-CORE.md]
     hooks: []
-    hook_requests: [src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/onfoot-weapons.js, src/combat-ai.js, src/weapon-upgrades.js, src/car-loadout.js, src/screen-armory.js, src/wasteland-progress.js, src/wasteland-access.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/render3d.js, src/combat-effects.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js, start-preview.bat]
+    hook_requests: [src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/onfoot-weapons.js, src/combat-ai.js, src/weapon-upgrades.js, src/car-loadout.js, src/screen-armory.js, src/wasteland-progress.js, src/wasteland-access.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/render3d.js, src/combat-effects.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js, start-preview.bat, tools/test-wasteland-beta.mjs]
     sequencing: "Independent tests and new owned core modules may start now. Existing production hooks are requests, not granted ownership: do not edit any until Director handoff. Stop at the first need for another lane file and wait for its merge. Steering retains sim-driving; Fuel retains feature/combat/render/audio hooks; protected sound-bank remains with external audio owner. No unwired component is a finished feature; full card still needs actual consumer routing, dev switch/discovery, save/purchase/loadout, native counter/bypass, browser/audio/balance and exact merge gates."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
@@ -924,12 +940,12 @@ tasks:
     size: M
     needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
     status: building
-    review_commit: 1b9628e87e71d3562844045390fb3fa25bfb65a7
+    review_commit: 4a60b996a3e9c228d15b19fdaf7b3668fd385b75
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run
     owns: [tools/test-onfoot-car-contacts.mjs, tools/test-arena-fuel-depot.mjs, src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/replays/arena-fuel-run-controls.json, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md, tools/test-fuel-car-attribution.mjs, tools/test-fuel-standing-carrier.mjs]
-    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js, src/combat-ai.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-feature-flags.mjs, src/raiders.js, start-preview.bat]
+    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js, src/combat-ai.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-feature-flags.mjs, src/raiders.js, start-preview.bat, tools/test-wasteland-beta.mjs]
     review_note: "Claude fighter contacts and 4 m depot design are merged in ba157a5. Resume with independent red tests for every on-foot fighter; preserve the reviewed durable launch/cache/save source. Whole-feature browser/audio/gameplay/review and exact lane/build gates remain before Claude review and merge."
     design_question_answered: "Claude, 30 September 2026: see docs/CREW.md, Car weapons against fighters on foot. Original question: Actual on-foot Fuel carrier is currently immune to car projectiles. Claude must settle bolt damage, bomb splash and cargo-drop behavior before that contact code; chase and aim fixes follow the settled carrier rule now."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
@@ -987,10 +1003,10 @@ tasks:
     status: building
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/vis/salt-flats
-    flag: scrapdome
-    owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/]
+    flag: salt-flats
+    owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
     hooks: [tools/art/catalog.json]
-    hook_requests: [src/arena/venues.js, src/arena/arena-event.js, src/screen-arena.js, src/render3d.js, src/feature-flags.js, src/wasteland-access.js, src/style.css]
+    hook_requests: [src/arena/venues.js, src/arena/arena-event.js, src/screen-arena.js, src/render3d.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/course.js, src/app.js, start-preview.bat, tools/test-wasteland-beta.mjs]
     sequencing: "Rustwall refit is closed and its lane removed; start new venue from Kyle picked groups, plain Bus and CC0 salt photo with approved mirrored UV tiling. Independent tests/native recipe/private candidate first. Catalog hook may append only this adaptation while preserving every licensed source record. Fuel owns arena/render/UI/flag hooks; those remain ungranted requests until its merge. Three fitting rounds maximum; comparison goes to Claude before runtime install/merge. New venue only, no refitting existing assets. Current Scrapdome remains the physical/frame comparison baseline."
     helpers: [test_author, reviewer, art_critic, browser_qa]
     acceptance:

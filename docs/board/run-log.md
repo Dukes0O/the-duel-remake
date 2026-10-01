@@ -1431,3 +1431,14 @@ Full cadence counts three merges since230318e including Claude docs verdict
 and donor/steering. Required new full checkpoint is due by05:05UTC; source
 will freeze before it, then normal approved D8 push if passing and outgoing
 binary audit clear. Overnight work continues after this checkpoint.
+
+Exact clean40b81c1 checkpoint: full311/311, no skips,447.45s, completed
+2026-10-01T05:06:05.643Z; build434ms. Approved normal push230318e→40b81c1
+succeeded. Outgoing22commits/20text paths/zero binary objects require no
+history rewrite. Cadence resets at this full: zero merges since40b81c1,
+two hours or five merges, and final overnight tier still required. Current
+new metadata does not inherit that exact pass. Continue claimed lanes;
+Salt Flats gains only its new control fixture, existing hooks remain requests.
+Fuel's second gate failure is its old exact catalog expectation; independent
+review approves adding only the required dev entry and actual isolation controls.
+Existing crash peak debt is proven separately and queued, never hidden.
