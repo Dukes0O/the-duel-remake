@@ -844,3 +844,38 @@ Changed assertions/fixtures/pins: **none**. Private logs stay under ignored `.ev
 Independent Save Guardian and generic source reviewer approval remain required. The 13 actual native consumer failures, three written Claude design TODOs, real registry/flag/discovery/armory/event/driving/aim/homing/lock/render wiring, protected audio, listening, game/browser/balance, retained Arsenal replay and lane/full merge gates remain outstanding. No whole-card, lane/full-tier or merge pass is claimed by this narrow source continuation.
 
 Removed the prospective registry-key bypass for nonstarter weapons from the legacy availability branch. The four starter rules and existing earned-extra gates remain. No saved identity, data, old consumer, fixture, assertion, replay pin, current registry, runtime asset, licensed source, protected audio, other lane work or real save was removed. All earlier note sections are retained verbatim.
+
+## Independent Arsenal dev-flag boundary RED — 1 October 2026
+
+The Arsenal switch must be a named development entry in the real catalog. Production defaults and URLs must leave it off; a private QA build may enable it only by explicit request. The current source has no Arsenal entry. These tests expose that missing entry without registering Oil/Smoke, changing any game rule or mocking a catalog.
+
+First, the Director-authorized normal merge brought integration `e0b7fffe69b28f7a40a392d31290b86ef4008d77` into clean Arsenal `58116aec7e8eafd1308be8bc399b3c7a9624e269`. It completed without conflicts at `1cb461113ab8df05a0b77fe996c70cfa432b6bee`, retaining current Fuel and reviewed steering. No history was rewritten and no source was manually edited. This exact merged source is the RED baseline.
+
+Before editing any existing expectation, independent reviewer `/root/audio_output_source_review` approved exactly two catalog-test updates. The Director confirmed that approval:
+
+- The complete `FEATURE_STATES` dictionary assertion in `test-wasteland-beta.mjs` adds only `arsenal: 'dev'`. Every prior entry remains exact, including `fuel-run: 'dev'`; it remains a complete dictionary comparison.
+- The complete state predicate in `test-feature-flags.mjs` adds `FEATURE_STATES.arsenal === 'dev'` and changes the exact key count from eight to nine. Every prior state, release/retirement predicate and assertion message remains unchanged. No partial dictionary or minimum-count substitute is used.
+
+These are explicit reviewed assertion changes required by the card's settled `arsenal` dev switch. They do not relax a gameplay or release requirement. All other existing assertions remain byte-for-byte unchanged.
+
+New controls call the actual imported `createFeatureFlags` with its default production catalog and `storage: null`: production default off, production `?flags=arsenal` off, explicit private QA `?flags=arsenal` on, unnamed QA off, and a QA request for Fuel Run leaving Arsenal off. The beta suite also proves that the requested Fuel dev entry stays available and that requesting Arsenal does not implicitly request Fuel. No catalog argument, test override, browser profile, real save or production fallback invents the missing entry.
+
+### Actual baseline and RED commands
+
+Before these edits on merged source 1cb4611:
+
+- `node tools/test-feature-flags.mjs`: **27 checks passed**, exit 0.
+- `node tools/test-wasteland-beta.mjs`: **4/4 tests passed**, exit 0.
+
+After the tests-only edits against the same unchanged source:
+
+- `node tools/test-feature-flags.mjs`: exit 1 at its first complete catalog predicate. `FEATURE_STATES.arsenal` is undefined and the actual count remains eight. Its retained assertion message begins `career backup and Fuel Run stay in QA`; actual is false, expected true. This sequential suite stops there, so it does not claim that its later checks ran. Once the source implements the missing entry, its five appended controls bring the summary to 32 checks.
+- `node tools/test-wasteland-beta.mjs`: **8 tests, six passed, two failed**, no skips/TODOs, exit 1. The complete dictionary failure is `Expected values to be strictly deep-equal`, with missing expected `arsenal: 'dev'` and every eight prior entry matching. The independent actual QA failure is `actual registered Arsenal is available only when explicitly requested in QA`, `false !== true`. All production-off, production-URL-off and unnamed/other-request QA-off cases run and pass. Existing Fuel isolation and the beta journey evidence controls remain green.
+
+Raw stdout/stderr are retained under `.evidence/2026-10-01/ARS-CORE/flag-tests-red/feature-flags.log` and `wasteland-beta.log`. These are genuine admission failures, not missing imports or test infrastructure. The existing core/native consumer suites, discovery controls, save assertions, road/combat pins and three design TODOs are untouched; their previously frozen incomplete integration verdict is not replaced by this narrow flag test result.
+
+No source flag, launcher, registry, game, UI, audio, sound bank, asset, dependency, network call, Preview output or protected port changed. This freeze grants no source implementation, lane/full/build, browser, listening, release or whole-card pass. The Director releases the next source owner and exact gates after the clean tests-only handoff.
+
+### Removed — flag-boundary tests
+
+Replaced only the reviewed catalog expectation that the real switch dictionary has exactly eight entries. The same eight entries and every old release/retirement/Fuel assertion remain; the ninth required dev entry is explicit. No test, script, replay fingerprint, runtime path, source, licensed original, asset or player data was removed. Ignored raw RED logs are retained until their verdict is consumed.

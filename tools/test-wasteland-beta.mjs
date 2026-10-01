@@ -10,6 +10,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     'muddy-hollow': 'on',
     warlords: 'on',
     'fuel-run': 'dev',
+    arsenal: 'dev',
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), true);
@@ -91,4 +92,24 @@ test('private beta journey evidence distinguishes fixtures from production actio
   changed(copy => { copy.result.forcedCompletion = true; });
   changed(copy => { copy.result.forcedDiscovery = true; });
   changed(copy => { copy.result.status = 'results'; });
+});
+
+// ARS-CORE: the actual production catalog controls admission; tests never
+// substitute a catalog or supply an override to invent the Arsenal switch.
+test('Arsenal development flag stays off in production by default', () => {
+  assert.equal(createFeatureFlags({storage:null, qa:false, search:''}).enabled('arsenal'), false);
+});
+test('production URLs cannot enable the Arsenal development flag', () => {
+  assert.equal(createFeatureFlags({storage:null, qa:false, search:'?flags=arsenal'}).enabled('arsenal'), false);
+});
+test('an explicit private QA URL can enable only the named Arsenal development flag', () => {
+  const qa = createFeatureFlags({storage:null, qa:true, search:'?flags=arsenal'});
+  assert.equal(qa.enabled('arsenal'), true, 'actual registered Arsenal is available only when explicitly requested in QA');
+  assert.equal(qa.enabled('fuel-run'), false, 'requesting Arsenal does not implicitly enable Fuel Run');
+});
+test('unnamed QA and a different named QA request leave Arsenal off', () => {
+  assert.equal(createFeatureFlags({storage:null, qa:true, search:''}).enabled('arsenal'), false);
+  const other = createFeatureFlags({storage:null, qa:true, search:'?flags=fuel-run'});
+  assert.equal(other.enabled('fuel-run'), true, 'the other real dev flag remains explicitly available');
+  assert.equal(other.enabled('arsenal'), false, 'a request for another feature does not enable Arsenal');
 });
