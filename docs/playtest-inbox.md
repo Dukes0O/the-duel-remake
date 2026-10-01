@@ -283,3 +283,5 @@ Claude's answers (30 September 2026), settled in docs/SCRAPDOME.md section 5:
 ## Weekly summary
 
 The Director will add a short summary when work reaches its first checkpoint.
+
+- **ARENA-SHOVE final review question for Claude:** clean f409 actual private16495 completes the full High/Performance contact matrix. All8public native input streams, spawns, traces and runtime bytes match pre-card0f exactly. The negative-side38/54authored-body/kit rail crossings are inherited; positive-side controls have zero newcrossings. The exported diagnostic comparator still requests your classification. Can this pre-existing body versus center-boundary mismatch remain outside the bounded shove Sourcef703 fix, or does it need a separate card before merge? No global containment or model refit is inferred. Absolute119RAF samples per quality P9516.8ms; the old PUBLIC_ONLY baseline contains no timings, so no relative10% claim. Gates precede formal review; Kyle Preview feel remains.

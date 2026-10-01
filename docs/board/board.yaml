@@ -2905,7 +2905,7 @@ tasks:
     lane: CMB
     size: S
     needs: []
-    status: building
+    status: "review"
     review_commit: eba804dd4e48e2856051b962efbe7ebd6560466c
     source_commit: f703714101525b7786b1abe852ef1794ab9a6f97
     test_commit: "f409b6f472516110ab152907c8c8496521b24873"
@@ -2926,6 +2926,8 @@ tasks:
     claude_answer: "1 October 2026: the 1.5 m and 4 m minimums apply where the push direction has open floor. A car pinned against the outer wall and rammed straight into it cannot move through the wall: it stays, takes the ram damage, and the attacker rebounds. Any part of the push along the wall still slides it along the wall. No teleport, no escape direction, containment unchanged."
     fixture_review: "Clean1760 appends2 native actualseed89098 ballistic-height controls FIRST (36checks), then only NEWQA pose resets_jumpYnull/vertical0. Full124/6457checks; old122 whole35513Bprefix exact, prior39/publiclogic reconstructed by reversing approved twofields plus wreck-separatedstep, pins and5Sourcefiles exactf703. Both previous failed browser verdicts retained. Fresh independent wholebrowser running; no timing/merge clearance yet."
     browser_stage: "Independentd366 private35255 memoryonly0errors/warnings FAIL protectedCPUattacker0.649119809m/4m;42imagesinspected, wreckbothroles10.317/8.652,pinnedboth/protectedplayer pass. High4publictraces/assets exactbaseline; inherited38/54crossingsretained; positiveextentdelta.0000543m noeveryfieldexactclaim. Perf/remaining8comparison/frames notreached. Nativeexactseed89098 diagnosis refutesincidents/protection: attacker retainsrealpreviousramp_jumpY1.803827/vertical3.113334despitevisibleairflagsreset;54nativeheightrejects41.099687mphimpact, then0normalrearhit. Canonical arena-eventplaceActor73-74 freshpose resets_jumpYnull/vertical0; ignoredcontrastfirsttruehit targetdv21.025785moves8.997531861m/protection2to.25/noarmor/noair. Director approves2additivenativefreshness/heightguard controlsFIRST thenonlyNEWQApose2fields; old122/39/publicinputs/pins/Sourceunchanged. Authorfreezingnext; nobrowser/mergeclearance."
+    waiting_on: "claude"
+    review_question: "Final cleanf409 private16495 mechanics pass full High/Performance browser matrix. Exported actual-public comparator still requests Claude classification: all8actualinputs/spawns/traces/runtimebytes exact pre-card0f, inherited negative38/54body/kit crossings unchanged;positive side0newcrossings. Please confirm whether this inherited authored-body/center-containment mismatch can remain outside this Sourcef703 shove fix or requires another card before merge. No global containment/mesh refit is inferred. Diagnostic report is not an authored art comparison sheet. AbsoluteHigh/Perf119sampleP9516.8ms; PUBLIC_ONLYbaseline has no timings, so no relative10% claim. Mandatory lane/build now runs before formal review; Kyle Preview feel remains."
   - id: WAR-SAL-RELEASE
     title: "Release the warlord ladder with Sawtooth Sal"
     owner: claude
