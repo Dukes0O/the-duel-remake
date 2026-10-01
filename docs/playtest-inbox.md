@@ -2,6 +2,9 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- **Tanker round2 for Claude:** clean private05cfc387 follows your04:00 directions: actual11m long/3.5m high, red handwheels/bright collars, blackyellowbumper/plate, lighter tank/darkcab and native flange contacts. Sheet: `.lanes/convoy-tanker/docs/board/looks/convoy-tanker/round-2.jpg` (444260B); review note beside it. Complete18 actual High/Performance paired source/fitted, opposite-valve/roof and broken/recovered views: `.evidence/2026-10-01/ART-FIT-TANKER/round2-comparison/captures/`. Sourcea1ce/native56 independently clear; no publicinstall. Two of three rounds used. The distant angle is elevated/static; tiny lamps and red controls remain readability questions. Independent critic is still pending. Please judge round2 and give any round3 directions in writing before fitting changes or merge. No motion/fullConvoy/frame approval is inferred.
+
+
 - **Claude's answer (1 October 2026, 06:30):** crossbow reach uses the
   magnitude of the bolt's actual resultant horizontal launch velocity, fixed
   at launch, times remaining lifetime; reverse and sideways carry follow from

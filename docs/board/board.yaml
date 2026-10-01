@@ -780,7 +780,8 @@ tasks:
     lane: ART
     size: M
     needs: [ART-KEEP-VALVE-DONOR]
-    status: building
+    status: review
+    waiting_on: claude
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/art/convoy-tanker
     owns: [tools/blender/convoy-tanker.py, tools/art/tanker-fit.json, src/arena/tanker-model.js, tools/test-convoy-tanker-art.mjs, tools/scenarios/convoy-tanker-art.mjs, docs/changes/ART-FIT-TANKER.md, docs/board/looks/convoy-tanker/, public/assets/models/wasteland/convoy-tanker/]
@@ -790,12 +791,14 @@ tasks:
     test_commit: 6572240cd07beb284a0f60d816ca212582ed7afc
     source_commit: "a1ce674134dab9e71a0ac519f1322ecfbecc70b3"
     private_stage: "Clean Sourcea1ce freezes approved round2 after56genuineRED controls. All56unchangednativecases pass:42original+12ports+2size;11m/3.5m/retained3mwidth, nativefaceaffinelineage exact, allthreegenuineflange contacts7/6/2crossings, zero strictTank/bodycrossings, originalnegative/support/topology controls pass. Genuinehandwheel/control red, brightflanges, darkpipe/rubber/wornhubs/cab/glass, lighttank/nativebumper/plate stripes, two lamps strongeronlyallbroken. Current6328tri/26draw/1616912B candidate-repeatSHAa3ed6fa8. Sourceonlyrecipe/fit/presenter/note,1186protectedfiles exact; replay162/privatebuild422. Round1comparison/criticFAIL andClaude04 approval retained; one of three rounds used. IndependentSource review and actual round2 gamecomparison/Claude beforeinstall/merge; no public/cue/simulation/catalog/test/scenario/looks edits."
-    qa_commit: ef3c7e216e38460add772cd0a9f1fee66c51eef5
     flag: scrapdome
     acceptance:
       - "Build the tanker settled in docs/SCRAPDOME.md, Convoy Raid (30 September 2026): one rigid vehicle from Kyle's pick A (Kenney delivery-flat cab and bed with the City Kit Industrial detail-tank on the bed), three fuel valves from the verified factory pipe valve donor on the tank, scrap armor plating from the Salt Flats salvage parts, and a raised boarding plate on the tank roof with warning lamps that light when all three valves are broken. Nothing opens or articulates."
       - "Follow docs/WASTELAND_ART.md 'Fitting existing models' (no source palette, gritty, judged in the game renderer, three-round cap); send the comparison sheet to Claude, who shows Kyle."
     claude_review_round_1: "1 October 2026: right direction (the gritty version already beats the toy palette), round 2 needed. 1) Scale: it reads car-sized; a 12 tonne rig is about 11 m long and 3.5 m tall, roughly twice a car's length, and must look it next to the cars. 2) Readability: valves are the targets, so paint them hazard red with a bright collar that reads at racing distance; black and yellow hazard stripes on the bumper and boarding plate; a lighter weathered tank against a darker cab so the shape reads in the dark yard. 3) Approve the proposed native valve mounting fixes (no gaps; seat each valve on the tank with its flange). Keep pick A and everything else."
+    qa_commit: "05cfc387e91bb961dfb4d5811904aea5a5686d7b"
+    round_2_review: "Clean05cfc actual18pairedHighPerformance captures/private6331 memoryonly0errors2duplicateThreewarnings; sheet444260B SHA dc21c8e4f55551bcd53ba4e6769e50e1c61bdef6ee0aafbd9102afbfe062bd63. Sourcea1ce/native56/round1 exact; all approved11m/3.5m mounting/material changes preserved. Selfobservations only: elevated static distant view, tiny lamp/readability limits. Independent critic and Claude verdict pending;2/3roundsused, no publicinstall/fullConvoy/motion/frame/mergeclearance."
+
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex
