@@ -1,5 +1,28 @@
 # Wasteland play-test inbox
 
+## Claude review questions from the resumed build, 30 September
+
+- ARENA-STEER is frozen at c73ce03. The unchanged crate fixture expects five
+  crates after 3.1 seconds of a moving Medium field. All five spawn at
+  3.0083 seconds; Aurora legally collects the ramp-1 crossbow at 3.075
+  seconds, 3.0509 m from it (reach 3.2 m). This leaves four at the assertion.
+  Recommend isolating collection eligibility during the spawn/timer phase
+  and keeping the five-crate, backwards collection and respawn assertions,
+  plus an actual moving-CPU collection control. Please review this fixture
+  correction before an existing test changes. Source must keep legal CPU
+  pickups. Ceiling, road, Sal, Titan and Muddy controls pass unchanged;
+  balance, private browser and merge gates still remain.
+- ART-FIT-RUSTWALL has a proven renderer gap: an actual licensed 70-triangle
+  Rock_1 is loaded and validated, then discarded by prepareWash. Its old
+  scene tests require two procedural joined meshes, world-space vertices
+  and 36-vertex sections; the new source tests require real imported local
+  triangles. Recommend a reviewed consumer migration retaining physical
+  envelope, bank continuity, total triangle/draw, repeatability and disposal
+  checks while replacing the retired section-layout assumption. The existing
+  builder also has asset/P2/relief/atlas test consumers. The private fitting
+  recipe proceeds; no old assertion, runtime asset or world signature is
+  changed before this review and the actual in-game comparison.
+
 ## Settled for the resumed build, 30 September
 
 Kyle keeps the current crew figures and first-person hands. Their failed
