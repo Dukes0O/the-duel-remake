@@ -1042,3 +1042,49 @@ licensed input, source recipe, public file, current world signature or replay
 pin was removed. Private review evidence remains used-once and regenerable
 for the Director's janitor after the verdict. No Preview/live folder, port
 5174, real save, protected audio, dependency, service or download was used.
+
+## Independent outside-salt and heat acceptance freeze (1 October 2026)
+
+Tests only, on Source 0dad93ececc7d61cfa6f64b308f941fbd21eb01a. The default native renderer command now runs the original eight checks and eight additive outside-presentation checks. Measured result: 16 checks, 13 pass, three real outside-ground failures. The separate actual-browser diagnostic has six fixture limits, not six demonstrated heat failures or a heat-motion pass. No Source, recipe, fit, physical floor, collider, asset or public installation changed.
+
+### Real native failures and passing controls
+
+The positive ray hits the genuine native bowl first. The same native triangle ray then probes eight radial directions at seventeen stations each, from the native rectangular edge plus the existing .002 export precision through the frozen lighting fog distance. These are observation stations, not a new race or scenery shape rule. All 136 outside stations miss visible geometry in each mood: clear through 1650m, golden through 1550m and overcast through 1450m. Existing fog-near distances remain 260/240/230m. Each mood reports the exact failure:
+
+- clear: actual visible outside salt must not end at a debug slab before the existing fog transition
+- golden: actual visible outside salt must not end at a debug slab before the existing fog transition
+- overcast: actual visible outside salt must not end at a debug slab before the existing fog transition
+
+Fog participation of any actual hit material is also asserted; the missing surfaces fail first. This does not establish the final look of new scenery. The extension must remain visual, outside the native bowl, without changing Course or collisions.
+
+Five new native controls pass: actual donor buffers, indices and transforms stay exact; the native bowl stays 300x200m with 171 meshes, 152180 triangles, 168 tight colliders and two ramps; presentation updates preserve actual Duel state, physical queries and seeded Course RNG; actual resources retire exactly once and cannot resurrect; and ordinary Scrapdome/road neither load Salt nor change Course/RNG. Original eight native loading/error/late/lifecycle controls all pass. The private candidate remains SHA256 6cd41757ee903b3924ddd760f66533e1295ba96d96d863a8689361db74d35bdc, 17480484 bytes. No asset is installed in public.
+
+### Actual final-canvas fixture limit and approved next Source slice
+
+Director approved an optional diagnostic call, to be implemented by the next Source worker: __render.renderFrame({presentationSeconds,saltHeatEnabled}={}) returns existing counts plus the effective presentationSeconds and applied saltHeatEnabled. Normal calls retain the production RAF/performance clock. The override affects only that diagnostic presentation draw, never Duel time, race state or seeded RNG. It must drive the actual production effect in both graphics qualities; echoed metadata alone cannot pass causal pixels.
+
+The browser diagnostic uses genuine memory-only App/Duel entry and actual models, advances 1200 native fixed steps beyond protection/start tells, and freezes a real inspection camera. It reads the real final main canvas synchronously with getContext().readPixels in the same evaluation as renderFrame. It never uses the direct-render sample() helper. Each of High and Performance on Salt, Scrapdome and road reaches a nonempty 4096000-byte final-canvas readback, then stops with this exact honest limit:
+
+FIXTURE LIMIT: current native renderer does not expose the approved diagnostic presentation clock/effect override; causal heat pixels remain unproved
+
+All six exception-path receipts prove actual Duel state, Course features, DOM HUD and seeded Course RNG unchanged. Both Salt views select 80 genuine loaded distant donor meshes. Diagnostic material clones preserve native geometry/transforms and existing shader callbacks. All original material references are restored and every clone is disposed exactly once, including the missing-seam path. Ordinary venues use zero clones. These uniform diagnostic silhouettes are labelled DATA fixtures, not finished materials or an art comparison.
+
+An additive tint-only negative control is authored: actual cloned-material emissive intensity changes disabled-effect pixels while the detected native silhouette cores must remain identical. The later assertions require actual distant edge displacement that changes over time, same-time repeat stability, unchanged sampled nearby car/road pixels, unchanged HUD/state/RNG, and unchanged ordinary-venue pixels. None of these motion/tint assertions has executed past the missing clock seam. The silhouette detector remains provisional until the Source seam permits its actual tint-negative proof and independent review. No shader-text mirror, fabricated image, direct pixel sampler, global Date override or primitive donor replacement is used.
+
+The diagnostic command SALT_FLATS_EFFECTS_DIAGNOSTIC=1 explicitly excludes the original twelve screenshot/180-RAF frame gates and cannot report scenario/card/frame clearance. Default run still invokes all original scenario bodies first, then the new functional checks. Three functional attempts and all receipts are retained. The final harness report is failed, memoryOnlySaves true, with zero warnings/issues/screenshots. The harness process returning normally is not a passing report.
+
+### Independent current-art verdict and remaining evidence
+
+Read-only provenance: integration .evidence/2026-10-01/ARENA-06/source-browser-0dad/critic-verdict.json, reviewer salt_native_critic, Source 0dad, all twelve existing actual High/Performance Salt/Scrapdome near/racing/full images. This is Source preflight below the art threshold, not a comparison sheet, art round or whole-card approval. Salt near/racing: direction 3, readability 4, grounding 4, materials 3, road/HUD/rival 4. Full: direction 2, readability 2, grounding 4, materials 2, road/HUD/rival 3. Findings include repeated flat-roof wreck rows/container faces, sparse low central island, mirrored brown/white photos and a hard rectangular debug slab beyond fog. Still racing views at 6km/h do not prove fast combat motion or heat. Crane/ramp identity is visible; full views cannot certify plain bus, both ramps and cover. No floating was seen, which is not collision proof. Ordinary Scrapdome findings remain outside this slice.
+
+Only the earlier matched 180-real-RAF run supports prior P95 Salt 18.2ms versus Scrapdome 18.1ms in both qualities. The new heat needs a fresh matched run against the unchanged 10% frame assertion and actual distant-motion/near-clarity look review. This tests-only work makes no new frame, motion, look, whole-card, lane/full gate, merge, push or release claim.
+
+### Frozen test bodies and raw evidence
+
+The original native renderer prefix is 8405 bytes (SHA256 224c731f0e7b174fb50b6968b01f6cf8698474be8b6aa1d13b015dec703e99b3). The original scenario prefix is 8337 bytes (SHA256 aa90178f9eada594bf0cb42d5e0eb1ea00f08b46eefe7f9de701ca197d4e7db4). The existing note prefix is 75028 bytes (SHA256 b159e01ee91dda21b6d06b7ecf088f03f2ee5cece9cc8fded2b223100b68f675). All are preserved byte-for-byte; no old assertion, twelve-shot body, native asset control or 10% frame control changed. Append-only note handling preserves prior non-UTF8 bytes.
+
+Complete raw native/browser attempt logs, original prefix bytes, before/after protected receipts, final browser diagnostic JSON and read-only critic verdict are in integration .evidence/2026-10-01/ARENA-06/effects-tests/. Unchanged replay 162/162, scene systems 16/16 and actual scene-presentation composer/quality/mirror/warmup/lifecycle checks pass in their retained logs. Quiet timing windows were respected; these functional browser attempts began only after release. Live, Preview, .preview-dist, port 5174, real saves and protected audio were not accessed.
+
+### Removed
+
+None. These are additive tests and an append-only note. The next owned Source slice must provide the real outside scenery, diagnostic clock and distant heat; the tests do not substitute a finished effect or bless the provisional detector as complete.

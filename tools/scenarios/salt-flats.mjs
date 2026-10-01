@@ -41,3 +41,232 @@ export async function run(context){const report={card:'ARENA-06',sourceCommit:ex
     if(process.env.SALT_FLATS_MEASURE_FRAMES==='1'){const baseline=report.frames.find(f=>f.quality===quality&&f.venue==='scrapdome'),salt=report.frames.find(f=>f.quality===quality&&f.venue==='salt-flats');assert(salt.p95Ms<=baseline.p95Ms*1.10,quality+' Salt actual P95 exceeds settled Scrapdome +10%: '+JSON.stringify({baseline,salt}));}}
     assert.equal(process.env.SALT_FLATS_MEASURE_FRAMES,'1','actual matched frame gate is pending until agreed quiet measurement');report.passed=true;
   }catch(error){report.passed=false;report.failure=error.stack;throw error;}finally{await persist();}}
+
+// Director-approved diagnostic frame convention. Production defaults remain
+// owned by Source; this recipe uses real final canvas pixels, never sample().
+function causalSaltPixels({venue}) {
+  const a = window.__qaApp, d = a.duel, r = window.__render;
+  const fail = message => {throw Error(message);};
+  const before = JSON.stringify(d.state), courseBefore = JSON.stringify(d.course.features);
+  const rngReference = new d.course.constructor(d.course.def,d.course.seed,{hiddenRoad:!!d.course.hiddenRoad,muddyHollow:!!d.course.muddyHollow});
+  const hud = document.querySelector('#race-hud');
+  if (!hud) fail('Actual HUD is required for the causal presentation control');
+  const hudBefore = hud.outerHTML;
+  const canvas = r.renderer.domElement, gl = r.renderer.getContext();
+  const width = gl.drawingBufferWidth, height = gl.drawingBufferHeight;
+  const snapshots = [];
+  function capture(time, enabled) {
+    const rendered = r.renderFrame({presentationSeconds: time, saltHeatEnabled: enabled});
+    if (r.renderer.getRenderTarget() !== null) fail('Final main canvas must be the current target');
+    const pixels = new Uint8Array(width * height * 4);
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    if (gl.getError() !== gl.NO_ERROR) fail('Real final canvas readPixels failed');
+    if (!pixels.some((value,index) => index % 4 !== 3 && value !== 0)) fail('Real final canvas is empty');
+    snapshots.push({time, requestedHeat:enabled, appliedHeat:rendered?.saltHeatEnabled,
+      effectiveTime:rendered?.presentationSeconds, actualReadbackBytes:pixels.length,
+      draws:rendered?.drawCalls, triangles:rendered?.triangles});
+    if (rendered?.presentationSeconds !== time || typeof rendered?.saltHeatEnabled !== 'boolean') {
+      const error = Error('FIXTURE LIMIT: current native renderer does not expose the approved diagnostic presentation clock/effect override; causal heat pixels remain unproved; actual final-canvas witness: ' + JSON.stringify(snapshots));
+      error.nativeWitness = snapshots; throw error;
+    }
+    if (rendered.saltHeatEnabled !== (enabled && venue === 'salt-flats'))
+      fail('Diagnostic override must report the genuinely applied venue effect');
+    return pixels;
+  }
+  const Vector3 = r.camera.position.constructor;
+  const protectedPixels = new Set(), farPatches = [], native = r.scene.getObjectByName('Salt Flats');
+  const materialRefs=[],diagnosticMaterials=[],disposed=new Map();
+  try {
+  const project = point => {
+    const p = point.clone().project(r.camera);
+    return {x:(p.x+1)*width/2, y:(p.y+1)*height/2, z:p.z};
+  };
+  r.scene.updateMatrixWorld(true); r.camera.updateMatrixWorld(true);
+  // Near masks use projected centers of genuine opaque native car triangles.
+  // Ground control uses real Course samples alongside those same nearby cars.
+  const cars = [];
+  r.scene.traverse(node => {if (node.visible && node.userData.vehicleKey) cars.push(node);});
+  if (cars.length < 2) fail('Actual player and rival native models must be visible');
+  let nearDistance = 0;
+  for (const car of cars) {
+    const at = car.getWorldPosition(new Vector3());
+    nearDistance = Math.max(nearDistance, at.distanceTo(r.camera.position));
+    car.traverse(mesh => {
+      if (!mesh.isMesh || !mesh.visible || [].concat(mesh.material).every(m => m.transparent)) return;
+      const pos=mesh.geometry.attributes.position, index=mesh.geometry.index;
+      for(let face=0; face<(index?.count ?? pos.count); face+=3) {
+        const center = new Vector3();
+        for(let corner=0; corner<3; corner++) center.add(new Vector3().fromBufferAttribute(pos,
+          index ? index.getX(face+corner) : face+corner));
+        center.multiplyScalar(1/3).applyMatrix4(mesh.matrixWorld);
+        const p=project(center), x=Math.floor(p.x), y=Math.floor(p.y);
+        if(p.z>=-1&&p.z<=1&&x>=0&&x<width&&y>=0&&y<height)protectedPixels.add(y*width+x);
+      }
+    });
+  }
+  for(let station=-8; station<=8; station++)for(const side of [-1,0,1]) {
+    const p=d.course.groundAt(d.state.s+station, d.state.lateral+side*2);
+    const point=new Vector3(p.x,p.y+.002,p.z);
+    if(point.distanceTo(r.camera.position)>nearDistance)continue;
+    const q=project(point),x=Math.floor(q.x),y=Math.floor(q.y);
+    if(q.z>=-1&&q.z<=1&&x>=0&&x<width&&y>=0&&y<height)protectedPixels.add(y*width+x);
+  }
+  if (!protectedPixels.size) fail('Actual near-car/road pixels must be in the fixed native view');
+  if(native) native.traverse(mesh => {
+    if(!mesh.isMesh || !mesh.visible || mesh.name==='salt-flats-ground')return;
+    mesh.geometry.computeBoundingBox();
+    const box=mesh.geometry.boundingBox, center=box.getCenter(new Vector3()).applyMatrix4(mesh.matrixWorld);
+    if(center.distanceTo(r.camera.position)<=nearDistance)return;
+    const projected=[];
+    for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z])
+      projected.push(project(new Vector3(x,y,z).applyMatrix4(mesh.matrixWorld)));
+    const p=project(center), xs=projected.map(v=>v.x),ys=projected.map(v=>v.y);
+    const radius=Math.floor(Math.min((Math.max(...xs)-Math.min(...xs))/2,
+      (Math.max(...ys)-Math.min(...ys))/2));
+    if(p.z>=-1&&p.z<=1&&radius>=2&&p.x-radius>=0&&p.x+radius<width&&p.y-radius>=0&&p.y+radius<height)
+      {
+        farPatches.push({mesh:mesh.name,x:Math.floor(p.x),y:Math.floor(p.y),radius:Math.min(radius,8),
+          distance:center.distanceTo(r.camera.position)});
+        const original=mesh.material;materialRefs.push({mesh,original});
+        const clones=[].concat(original).map(material=>{
+          const clone=material.clone();
+          clone.onBeforeCompile=material.onBeforeCompile;
+          clone.customProgramCacheKey=material.customProgramCacheKey;
+          clone.color.setHex(0x000000);clone.emissive.setHex(0xff00ff);
+          clone.emissiveIntensity=1;clone.metalness=1;clone.roughness=1;
+          clone.envMapIntensity=0;clone.toneMapped=false;clone.fog=false;
+          clone.transparent=false;clone.opacity=1;
+          for(const key of ['map','emissiveMap','normalMap','bumpMap','aoMap','metalnessMap','roughnessMap'])clone[key]=null;
+          diagnosticMaterials.push(clone);disposed.set(clone,0);
+          clone.addEventListener('dispose',()=>disposed.set(clone,disposed.get(clone)+1));
+          return clone;
+        });
+        mesh.material=Array.isArray(original)?clones:clones[0];
+      }
+  });
+  // Labelled diagnostic DATA: genuine far-donor triangles become uniform
+  // magenta silhouettes, with the production shader hooks/effect still active.
+  // Equal red/blue, zero green isolates the solid marker core; color intensity
+  // alone cannot move that core. No silhouette pixel is invented or shifted.
+  function edges(pixels, patch) {
+    let count=0,xSum=0,ySum=0;
+    for(let y=patch.y-patch.radius;y<=patch.y+patch.radius;y++)
+      for(let x=patch.x-patch.radius;x<=patch.x+patch.radius;x++) {
+        if(protectedPixels.has(y*width+x))continue;
+        const i=(y*width+x)*4;
+        if(pixels[i]>0&&pixels[i]===pixels[i+2]&&pixels[i+1]===0) {count++;xSum+=x;ySum+=y;}
+      }
+    return count ? [xSum/count,ySum/count,count] : null;
+  }
+  const difference=(left,right,mask)=>{
+    let changed=0;
+    const indices=mask||Array.from({length:width*height},(_,i)=>i);
+    for(const i of indices)if(left[i*4]!==right[i*4]||left[i*4+1]!==right[i*4+1]||left[i*4+2]!==right[i*4+2])changed++;
+    return changed;
+  };
+  // Compile/warm the genuine two branches before any measured image pair.
+  capture(10,false);capture(10,true);
+  const offA=capture(10,false),offRepeat=capture(10,false);
+  if(difference(offA,offRepeat))fail('Actual ambient-off fixed-time frames are unstable after warmup');
+  let tintControl=null;
+  if(venue==='salt-flats') {
+    const originalEdges=farPatches.map(p=>edges(offA,p));
+    for(const material of diagnosticMaterials)material.emissiveIntensity=.5;
+    const tinted=capture(10,false),tintedEdges=farPatches.map(p=>edges(tinted,p));
+    for(const material of diagnosticMaterials)material.emissiveIntensity=1;
+    if(!originalEdges.some(Boolean))fail('Genuine diagnostic native silhouettes are not readable in final pixels');
+    if(!difference(offA,tinted))fail('Actual tint-only negative control did not change final native colors');
+    if(JSON.stringify(originalEdges)!==JSON.stringify(tintedEdges))
+      fail('FIXTURE LIMIT: native tint-only negative changed diagnostic core shape; displacement detector needs review');
+    tintControl={actualColorsChanged:true,nativeCoreShapesUnchanged:true,heatDisabled:true};
+  }
+  const times=[10,10.271828,10.618034,11.414214], movement=[];
+  for(const time of times) {
+    const off=capture(time,false),on=capture(time,true),repeat=capture(time,true);
+    if(difference(on,repeat))fail('Actual effect-on same-time repeat pixels are unstable');
+    if(difference(off,on,protectedPixels))fail('Salt heat changes actual nearby car/road pixels');
+    if(venue!=='salt-flats'&&difference(off,on))fail('Salt heat override changes ordinary '+venue+' final pixels');
+    movement.push({time,changedPixels:difference(off,on),edges:farPatches.map(p=>({mesh:p.mesh,
+      distance:p.distance,off:edges(off,p),on:edges(on,p)}))});
+  }
+  if(venue==='salt-flats') {
+    if(!farPatches.length)fail('Actual distant native geometry edges must be visible in the fixed inspection view');
+    const displaced=movement.some(frame=>frame.edges.some(edge=>edge.off&&edge.on&&
+      (edge.off[0]!==edge.on[0]||edge.off[1]!==edge.on[1])));
+    const moving=movement.slice(1).some(frame=>frame.edges.some((edge,i)=>{
+      const baseline=movement[0].edges[i];
+      return edge.on&&edge.off&&baseline.on&&baseline.off&&
+        (edge.on[0]-edge.off[0]!==baseline.on[0]-baseline.off[0]||
+         edge.on[1]-edge.off[1]!==baseline.on[1]-baseline.off[1]);
+    }));
+    if(!displaced||!moving)fail('Actual distant heat must displace native image edges over time, not only tint/jiggle near ground');
+  }
+  if(JSON.stringify(d.state)!==before||JSON.stringify(d.course.features)!==courseBefore)
+    fail('Actual diagnostic presentation altered native Duel/Course state');
+  if(hud.outerHTML!==hudBefore)fail('Actual heat presentation altered the DOM HUD');
+  return {venue,width,height,protectedPixels:protectedPixels.size,farPatches,snapshots,movement,tintControl,
+    stateUnchanged:true,courseUnchanged:true,hudUnchanged:true,courseRngUnchanged:true,
+    pixels:'Synchronous readPixels from real final main canvas; genuine donor diagnostic materials, no fabricated image.'};
+  } finally {
+    for(const {mesh,original} of materialRefs)mesh.material=original;
+    for(const material of diagnosticMaterials)material.dispose();
+    const restored=materialRefs.every(({mesh,original})=>mesh.material===original);
+    const exactlyOnce=[...disposed.values()].every(count=>count===1);
+    const stateUnchanged=JSON.stringify(d.state)===before;
+    const courseUnchanged=JSON.stringify(d.course.features)===courseBefore;
+    const hudUnchanged=hud.outerHTML===hudBefore;
+    const courseRngUnchanged=d.course.rng.float()===rngReference.rng.float();
+    window.__saltEffectsDiagnosticLifecycle={nativeMeshes:materialRefs.length,clones:diagnosticMaterials.length,
+      originalMaterialReferencesRestored:restored,cloneDisposeCounts:[...disposed.values()],exactlyOnce,
+      stateUnchanged,courseUnchanged,hudUnchanged,courseRngUnchanged};
+    if(!stateUnchanged||!courseUnchanged||!hudUnchanged||!courseRngUnchanged)
+      fail('Actual diagnostic presentation changed native state/Course/HUD/seeded RNG');
+    if(!restored||!exactlyOnce)fail('Actual diagnostic material fixture failed reference restoration/exact-once disposal');
+  }
+}
+export async function runEffects(context) {
+  const report={scope:'Diagnostic presentation acceptance, separate from original12shot/native/frame controls',
+    sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
+    asset:await assets(),cases:[],frameClaim:false,artRoundClaim:false};
+  for(const quality of ['high','performance'])for(const venue of ['salt-flats','scrapdome','road']) {
+    const row={quality,venue};
+    try {
+      await context.navigate('/tools/menu-check.html?flags=scrapdome,wasteland2&harness=salt-effects-'+quality+'-'+venue);
+      await context.waitFor('!!window.__qaApp&&!!window.__render',quality+' '+venue+' actual entry',60000);
+      if(venue==='road') {
+        await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();a.audio.setMuted(true);a.setGraphicsQuality(${JSON.stringify(quality)});a.duel.startCampaign({car:'falcone_f42',seed:1989,opponentCount:1});})()`);
+        await settled(context,'actual ordinary road');
+      } else await start(context,quality,venue);
+      // Genuine fixed steps age out the existing protection/start tells before
+      // freezing actors; those tells are not mislabeled as distant heat.
+      await context.evaluate(`(()=>{const a=window.__qaApp;for(let i=0;i<1200;i++)a.duel.step(1/120);a.stop();if(a.duel.state.arena?.participants.some(p=>p.protectedSec>0))throw Error('Real protection shimmer remains active');})()`);
+      await pose(context,'near');
+      await context.evaluate(`(()=>{const a=window.__qaApp;if(!a.duel.state.paused)a.togglePause();a.stop();a.onFrame(a.duel.state,0);})()`);
+      await settled(context,'fixed native '+quality+' '+venue+' inspection');
+      row.witness=await context.evaluate('('+causalSaltPixels.toString()+')('+JSON.stringify({venue})+')');
+      row.passed=true;
+    }catch(error) {
+      row.passed=false;row.failure=error.stack;
+      row.fixtureLimit=String(error).includes('FIXTURE LIMIT:');
+      console.error('FAIL Salt causal '+quality+' '+venue+': '+error.message);
+    }
+    try {row.diagnosticLifecycle=await context.evaluate('window.__saltEffectsDiagnosticLifecycle||null');}
+    catch(error){row.lifecycleReadFailure=error.message;}
+    report.cases.push(row);
+    await writeFile(join(context.outputDir,'salt-flats-effects-browser.json'),JSON.stringify(report,null,2)+'\n');
+  }
+  report.passed=report.cases.every(row=>row.passed);
+  report.fixtureLimits=report.cases.filter(row=>row.fixtureLimit).length;
+  await writeFile(join(context.outputDir,'salt-flats-effects-browser.json'),JSON.stringify(report,null,2)+'\n');
+  assert(report.passed,'Salt causal presentation checks failed; see exact actual-browser report (fixture limits are not motion evidence)');
+}
+const originalSaltRun=run;
+run=async function(context) {
+  if(process.env.SALT_FLATS_EFFECTS_DIAGNOSTIC==='1') {
+    // Named diagnostic command excludes original frame/screenshot gates and
+    // cannot report a whole scenario/card/frame pass. Default still runs all.
+    await runEffects(context);return;
+  }
+  await originalSaltRun(context);
+  await runEffects(context);
+};

@@ -57,3 +57,7 @@ try{
     try{await flush();assert.equal(called,0);assert.equal(world.getObjectByName('Salt Flats'),undefined);assert.equal(JSON.stringify(course.features),before);assert(world.children.length>0);const reference=new Course(definition,1989);assert.equal(course.rng.float(),reference.rng.float());}finally{disposeTree(world);}});
 }finally{THREE.TextureLoader.prototype.load=originalLoad;if(originalDocument===undefined)delete globalThis.document;else globalThis.document=originalDocument;}
 console.log(JSON.stringify(stats));if(stats.failed)process.exitCode=1;
+
+// Additional effects are part of the default native renderer acceptance. The
+// original eight cases above and their asset/count/lifecycle assertions stay exact.
+await import('./test-salt-flats-effects.mjs');
