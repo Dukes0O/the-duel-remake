@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {DRIVE} from '../../src/config.js';
+import {arenaParticipant, outOfPlay, arenaTargetOutOfPlay} from '../../src/combat-teams.js';
 
 // Production App entry and native Duel contacts/120 Hz steps. Temporary profile,
 // starting poses, one-armor wreck setup, stopped motion and held CPU goals are
@@ -31,7 +32,7 @@ async function capture(c, label) {
   await ready(c,label+' actual car/crew readiness');
   await c.screenshot(label);
 }
-function installFixtures(mphToWorld) {
+function installFixtures(mphToWorld, arenaTargetOutOfPlay) {
   const a=window.__qaApp,dt=1/120;
   const tick=n=>{for(let i=0;i<n;i++)a.duel.step(dt);};
   const pose=(actor,s,lateral=0,headingError=0)=>Object.assign(actor,{s,prevS:s,lateral,prevLateral:lateral,
@@ -39,7 +40,7 @@ function installFixtures(mphToWorld) {
     airborne:false,airHeight:0,prevAirHeight:0,groundHeight:null,contactCooldown:0,damageCooldown:0});
   const member=actor=>a.duel.state.arena.participants.find(p=>p.id===(actor===a.duel.state?'player':actor.arenaId));
   const hold=actor=>{const d=a.duel,at=d.course.worldAt(actor.s,actor.lateral),heading=d.course.at(actor.s).heading+actor.headingError;
-    Object.assign(member(actor),{targetId:'player',targetHeldSec:-100,reactionSec:10,
+    Object.assign(member(actor),{targetId:arenaTargetOutOfPlay(d,d.state)?null:'player',targetHeldSec:-100,reactionSec:10,
       goal:{x:at.x+Math.sin(heading)*30,z:at.z+Math.cos(heading)*30,speedMph:0,boost:false}});};
   const shell=(x,y)=>{const d=a.duel,A=d._vehicleSpec(x),B=d._vehicleSpec(y),alpha=x.headingError||0,beta=y.headingError||0;
     return{width:A.halfWidth*Math.abs(Math.cos(alpha))+B.halfWidth*Math.abs(Math.cos(beta))+
@@ -118,7 +119,11 @@ export async function run(c) {
     await ready(c,quality+' actual yard approach');await c.evaluate('window.__qaApp.advance(8)');
     await c.waitFor('window.__qaApp.isYardHomeActive()',quality+' actual yard');
     await c.evaluate(`(() => {const a=window.__qaApp;if(!a.startArenaEvent({opponents:1}))throw Error('Production arena entry failed');a.setCamera('chase');a.inspectionCamera=null;})()`);
-    await c.evaluate(`(${installFixtures.toString()})(${DRIVE.mphToWorld})`);
+    await c.evaluate(`(${installFixtures.toString()})(${DRIVE.mphToWorld},(() => {
+      ${arenaParticipant.toString()}
+      ${outOfPlay.toString()}
+      return ${arenaTargetOutOfPlay.toString()};
+    })())`);
     for(const kind of ['wreck','pinned','protected','idle'])for(const mph of [20,40]){
       const label=quality+'-'+kind+'-'+mph+'mph';
       const before=await c.evaluate(`window.__shove.prepare(${JSON.stringify(kind)},${mph})`);

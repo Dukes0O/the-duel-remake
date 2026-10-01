@@ -9,6 +9,8 @@ import {actorBody} from '../src/vehicle-knock.js';
 import {solveVehicleImpact, yawInertia} from '../src/vehicle-collision.js';
 import {vehicleContactEnvelope} from '../src/npc-yielding.js';
 import {pilotStep} from '../src/arena/arena-pilot.js';
+import {arenaTargetOutOfPlay} from '../src/combat-teams.js';
+import {thinkBrain} from '../src/arena/arena-brains.js';
 import {containInArena, floorLimit, worldPose} from '../src/arena/arena-floor.js';
 
 const DT = 1 / 120, EPS = 1e-8;
@@ -34,7 +36,7 @@ function holdIdle(duel, car) {
   const at = worldPose(duel, car), p = participant(duel, car);
   // This is the real brain's existing held-goal/reaction state, not a replaced
   // brain or pilot. The goal asks for zero speed but does not suppress knocks.
-  Object.assign(p, {targetId: 'player', targetHeldSec: -100, reactionSec: 10,
+  Object.assign(p, {targetId: arenaTargetOutOfPlay(duel, duel.state) ? null : 'player', targetHeldSec: -100, reactionSec: 10,
     goal: {x: at.x + Math.sin(at.heading) * 30,
       z: at.z + Math.cos(at.heading) * 30, speedMph: 0, boost: false}});
 }
@@ -386,3 +388,57 @@ for (const car of ['titan_monster', 'falcone_f42']) test('released road vehicle 
   eq(target.crushed === true, car === 'titan_monster', 'only the released Titan can physically crush the lighter car');
   eq(events.length, car === 'titan_monster' ? 1 : 0, 'the released crush event count is unchanged');
 });
+
+
+// The held-goal fixture obeys the native target validity contract. It never
+// suppresses a real brain decision or a later physical contact.
+test('HELD GOAL: valid actual player preserves native identity, reaction and stopped goal', () => {
+  const {duel, attacker} = arena('falcone_f42', 'dusthawk_rally', 'player-target');
+  const p = participant(duel, attacker); holdIdle(duel, attacker);
+  const goal = p.goal;
+  eq(arenaTargetOutOfPlay(duel, duel.state), false, 'ordinary actual player is fightable');
+  eq(p.targetId, 'player', 'fixture holds the valid actual player');
+  eq(p.reactionSec, 10, 'fixture retains the original ten-second reaction');
+  eq(goal.speedMph, 0, 'fixture retains the original stopped goal');
+  eq(thinkBrain(duel, p, attacker, DT), goal, 'real brain preserves a still-valid held goal');
+  ok(p.goal === goal, 'native goal identity is retained');
+  eq(p.targetId, 'player', 'actual target identity remains the player');
+  eq(p.reactionSec, 10 - DT, 'native reaction decreases by the real fixed step');
+});
+for (const kind of ['wreck', 'protected']) {
+  test(`HELD GOAL: stale actual ${kind} player invalidates and naturally cruises`, () => {
+    const c = arena('falcone_f42', 'dusthawk_rally', 'player-target'); sitting(c, kind);
+    const {duel, attacker} = c, p = participant(duel, attacker); holdIdle(duel, attacker);
+    p.targetId = 'player'; // Deliberately stale input to the unchanged real brain.
+    const goal = p.goal;
+    eq(arenaTargetOutOfPlay(duel, duel.state), true, 'native player state is actually unfightable');
+    eq(p.reactionSec, 10, 'stale control starts at the same held reaction');
+    eq(goal.speedMph, 0, 'stale control starts at the same zero-speed goal');
+    const next = thinkBrain(duel, p, attacker, DT);
+    eq(p.targetId, null, 'actual brain clears the invalid target itself');
+    ok(next !== goal && p.goal === next, 'actual brain chooses a new goal without a replacement method');
+    ok(next.speedMph > 0, 'actual no-target cruise naturally requests positive speed');
+    ok(p.reactionSec > 0 && p.reactionSec < 1, 'native decision replaces the stale ten-second reaction');
+    const before = attacker.s;
+    for (let tick = 0; tick < 120; tick++) duel.step(DT);
+    ok(attacker.speedMph > 0 && attacker.s !== before, 'native pilot really accelerates and drives the cruise goal');
+  });
+  test(`HELD GOAL: correctly null actual ${kind} player preserves native stopped goal`, () => {
+    const c = arena('falcone_f42', 'dusthawk_rally', 'player-target'); sitting(c, kind);
+    const {duel, attacker} = c, p = participant(duel, attacker); pose(attacker, 20); holdIdle(duel, attacker);
+    const goal = p.goal;
+    eq(arenaTargetOutOfPlay(duel, duel.state), true, 'actual wreck/protection guard remains active');
+    eq(p.targetId, null, 'correct fixture holds the actual unfightable-player null target');
+    eq(p.reactionSec, 10, 'correct fixture does not shorten the reaction');
+    eq(goal.speedMph, 0, 'correct fixture does not change the requested stopped speed');
+    eq(thinkBrain(duel, p, attacker, DT), goal, 'actual brain preserves the correctly held null goal');
+    ok(p.goal === goal, 'actual native held goal identity survives target selection');
+    eq(p.targetId, null, 'native selection stays null while the player cannot be fought');
+    eq(p.reactionSec, 10 - DT, 'actual native step decrements the original reaction normally');
+    const before = worldPose(duel, attacker);
+    for (let tick = 0; tick < 120; tick++) duel.step(DT);
+    const after = worldPose(duel, attacker);
+    eq(attacker.speedMph, 0, 'real pilot keeps a legitimately held stopped car stopped');
+    ok(Math.hypot(after.x - before.x, after.z - before.z) < EPS, 'holding a valid null goal creates no motion');
+  });
+}

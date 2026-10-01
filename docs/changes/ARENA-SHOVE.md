@@ -376,3 +376,153 @@ Raw genuine tick/goal/state evidence is ignored at .evidence/2026-10-01/ARENA-SH
 The Director requested this clean provisional freeze and returned ownership for independent fixture review before further source work. A complete current native suite, exact lane tier/build, generic review, actual private High/Performance browser scenario and any frame/gameplay/balance/audio checks remain. No current whole-suite, browser, human feel, frame, audio, merge or release clearance is claimed. Existing temporary pose/vector objects and the constrained solver's temporary objects/closures allocate; this is not allocation-free. Logs remain private, regenerable evidence; no generated output was committed.
 
 Replaced only the arena caller's unconstrained response where an actual wall compresses the contact, and removed minimum-speed amplification into that constrained normal. The released default solver and open-floor response remain. No timer, score, protection rule, Titan rule, road rule, Fuel source, pilot/brain behavior, assertion, fixture, replay pin, asset, licence or audio was removed or replaced. No live folder, Preview/.preview-dist, port 5174, real save, dependency, network operation, force removal or release was used.
+
+
+## Approved held-target fixture correction — 1 October 2026
+
+Independent reviewer `audio_output_source_review` approved the narrow fixture
+correction after proving that the actual brain must reject a wrecking or
+protected player. The Director then assigned only
+`tools/test-arena-shove.mjs`, `tools/scenarios/arena-shove.mjs` and this
+append-only note. Production remained frozen at
+`f703714101525b7786b1abe852ef1794ab9a6f97`; tests began at
+`7b928ef5a6452d02db3f1f90a66812fb39d7b70b`.
+Normal merge of integration `9f8f2c772adb052119aa01beefa90afdfb36f6c0`
+completed without conflicts at `45d2bc50f17d4772af4e4581cccd7a8481c98e1f`.
+Only the integration board changed in that merge; no production file changed.
+
+### Exact approved setup change
+
+The held CPU fixture now sets
+`targetId: arenaTargetOutOfPlay(duel, duel.state) ? null : 'player'`.
+The original ten-second reaction, -100 target-held time, zero-speed goal,
+coordinates and boost setting are exact. No brain decision, pilot step,
+contact, residual motion, timer, containment or notification is suppressed.
+The native tests import the real predicate. The equivalent browser helper
+receives that same imported function and its unchanged `arenaParticipant`
+and `outOfPlay` dependencies through the existing function serialization.
+It contains no copied targeting rule and changes no scenario acceptance.
+
+Five additive native tests cover: a valid actual player retains target identity,
+reaction and goal; a deliberately stale wrecking/protected player is genuinely
+invalidated by `thinkBrain`, selects a positive cruise goal and is really
+driven by the native pilot; a correctly null wrecking/protected player retains
+the same goal object, its normally decreasing reaction and zero motion.
+All five pass. These are controls on real states and native decisions, not
+replacement brain or collision methods.
+
+### Actual physical witness and RED-to-GREEN result
+
+A read-only scratch probe reused the exact existing wall fixture helpers.
+It installed only ordinary `onChange` observers and ran the original stale
+target setup and corrected setup against the same native source. No source
+or method was replaced. The actual first smash event and its target residual
+body are exactly equal in both runs: time 3.5083333333333235 s,
+launched severity, dv 48.85190090602515 mph and reverse velocity
+3.602253516276269 m/s. Both runs report the same two initial bidirectional
+`combatRamHit` events; those are not two physical collisions.
+
+The original stale setup naturally chooses the 39.96971184537563 mph cruise
+and produces a second actual `vehicleSmash` at 4.233333333333333 s,
+dv 13.4065101738652 mph. Its measured target travel is
+0.38956905912964235 m. The correctly held native-null setup preserves the
+zero-speed goal, has one actual smash and measured target travel
+0.000000739630472464469 m. Actual attacker rebound remains
+1.1165385895258186 m. This corrects the test's unintended later cruise
+collision; it does not change the real AI's response to stale targets or
+the real solver's response to oblique contact.
+
+The eight original wreck/protected player-target wall groups were separately
+rerun from the frozen test file, with only scratch import paths adjusted:
+**0/8 pass, 8 fail**, no skips/TODOs, 4533.7984 ms. All fail the unchanged
+`outward target must stay at the solid wall` assertion. The first failure
+motions by group (negative/positive side, 20/40 mph) are:
+
+- Wreck, negative side: 0.00013385071870383475 m (five mass failures) and
+  0.021710268591615074 m (81 mass failures).
+- Wreck, positive side: 0.00010293309448626744 m (seven) and
+  0.020697468172541807 m (81).
+- Protection, negative side: 0.0061910425122692495 m (eight) and
+  0.4094124636326401 m (81).
+- Protection, positive side: 0.007176966376301512 m (eight) and
+  0.38956905912964235 m (81).
+
+Those exact assertion bodies now pass all eight groups and their 81 ordered
+mass pairs each in the current complete suite. None of the original physical
+conditions changed: all original 55 tests, 1,944 minimum witnesses, 3,888
+normal-wall witnesses, all strict rebound groups, eight oblique groups,
+contained outward control, native deadlines/protection and replay controls
+are retained.
+
+### Commands and current results
+
+- `node --test --test-reporter=tap tools/test-arena-shove.mjs`:
+  **118/118 pass**, **6,373 acceptance checks**, no skips/TODOs,
+  **69,805.6487 ms**. This includes all original 113 cases and five new controls.
+- `node --test --test-name-pattern '^SETTLED WALL: (wreck|protected)/player-target/' --test-reporter=tap .qa-dist/arena-shove-original-stale-tests.mjs`:
+  the eight genuine original REDs above. This is an ignored copy of the
+  original frozen tests using the same native modules; it is not a changed
+  tracked assertion or a replacement source baseline.
+- `node --test --test-concurrency=8 --test-reporter=tap` with the unchanged
+  suites listed below: **241/241 pass**, no skips/TODOs, **24,666.1611 ms**.
+- `node tools/test-replays.mjs`: **162/162 unchanged fingerprints**, 18 cases,
+  16 events, eight categories, three FPS values and three runs.
+- `node --check tools/test-arena-shove.mjs` and
+  `node --check tools/scenarios/arena-shove.mjs`: pass.
+- `npm run build`: pass, **861 ms**. The usual large-chunk advisory is present;
+  this is not a zero-warning build claim. Only ordinary lane `dist` was built.
+- `git diff --check`: pass.
+
+The 20 unchanged control suites are:
+`test-vehicle-collision`, `test-vehicle-knock-integration`, `test-npc-yielding`,
+`test-armored-vehicle-impact`, `test-crash-slide`, `test-crash-switch-remove`,
+`test-crash-site`, `test-contact-damage`, `test-combat-armor`,
+`test-combat-armor-terrain`, `test-titan-climb`, `test-titan-handling`,
+`test-arena-event`, `test-arena-steering-ceiling`, `test-wasteland-police-off`,
+`test-arena-fuel-run`, `test-arena-fuel-depot`, `test-fuel-car-attribution`,
+`test-fuel-standing-carrier` and `test-onfoot-car-contacts`, all under `tools/`
+with `.mjs` extensions. Their source, assertions and fingerprints are exact.
+
+Raw logs are ignored under
+`.evidence/2026-10-01/ARENA-SHOVE/held-target-correction/`:
+`native-full.log`, `original-eight-red.log`, `native-controls.log`,
+`replays.log` and `build.log`. The full native contact contrast is
+`native-contact-contrast.json`. The scratch probe imported actual modules,
+used the unchanged helper bodies and collected native notifications; no
+renderer, AI, damage or physics method was substituted.
+
+### Original assertion and recipe preservation proof
+
+Remove only the additive native controls/imports and reverse the one approved
+target assignment: the original complete test file reconstructs byte-for-byte,
+SHA-256 `60ad43622be1330d9a5238a3cea243a54aec8df86bd1e1eb313c88b48b1e8775`.
+Reverse only the equivalent assignment and native function wiring: the original
+complete browser recipe reconstructs byte-for-byte, SHA-256
+`c1cca12330ddcef3aaf6b748b2ea9264ccbc9a1564adf53ebc20f6282c713bb0`.
+Every original assertion body, including the eight reviewed RED bodies,
+is exact. No Shove or ordinary road pin was regenerated.
+
+| File | Current SHA-256 |
+| --- | --- |
+| tools/test-arena-shove.mjs | 36b4216ca5173b066b9798baea05238c092c312b2483c55aef75350d2200246b |
+| tools/scenarios/arena-shove.mjs | 7c2fab6cad6bf4c04556388468de1be59540a46c54b4cc08d10a69c36e2beccc |
+| Unchanged tools/replays/arena-shove-controls.json | a08bb7507e8e2c110789b907ed3977dc6de9ac39943e89aad4c8cb9f5a3a474b |
+
+Native GREEN and an ordinary build do not clear browser capture, frame pacing,
+art, audio, independent final source review, exact lane tier or Kyle's handling
+feel. The corrected browser recipe is syntax-checked but has not been run in
+this test-author follow-up. Actual High/Performance captures, existing HUD
+caveats, held-pose limits and human listening remain separate and pending.
+The Director assigns fresh independent source/browser/exact lane gates before
+merge. No merge, release or integration push is authorized by this note.
+
+### Removed — approved held fixture
+
+Removed only the stale held-player target from stopped fixtures when the actual
+player cannot be fought. The native null target preserves the existing reaction
+and stopped goal. No genuine AI cruise behavior, physical collision, oblique
+response, drift/rebound/damage/deadline/protection assertion, source hook,
+replay pin, asset, audio or real player data was removed or changed.
+No live folder, Preview, `.preview-dist`, port 5174, real save, dependency,
+network, forced worktree action or history rewrite was used. Raw evidence
+stays ignored for independent review and the Director's later janitor cleanup.
