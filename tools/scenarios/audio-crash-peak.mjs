@@ -185,6 +185,67 @@ export async function run(context) {
   await context.waitFor("!!window.__qaApp&&!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value",
     'memory-only native audio entry',30000);
   const result=await context.evaluate('('+captureNative.toString()+')('+JSON.stringify(contactFixture)+')');
+  result.actualRecorder = await actualRecorderProbe(context);
   await writeFile(join(context.outputDir,'capture.json'),JSON.stringify(result)+'\n');
   console.log('Native final-output Float32 capture: '+result.rows.length+' cases, '+result.sampleRate+' Hz.');
+}
+
+
+// Build this QA-only entry in the test's ignored private directory. Importing
+// the real class and recorder together keeps the actual EngineAudio instance;
+// every observed runtime/native method still runs unchanged.
+export function nativeRecorderEntry() {
+  return `import {EngineAudio} from '/src/audio.js';
+const edges=[],processors=[],nativeConnect=AudioNode.prototype.connect;
+const nativeProcessor=AudioContext.prototype.createScriptProcessor;
+const nativeBuild=EngineAudio.prototype._build;
+AudioNode.prototype.connect=function(destination,...rest){
+  edges.push([this,destination]);return nativeConnect.call(this,destination,...rest);
+};
+AudioContext.prototype.createScriptProcessor=function(...args){
+  const node=nativeProcessor.apply(this,args);processors.push(node);return node;
+};
+EngineAudio.prototype._build=function(...args){
+  const result=nativeBuild.apply(this,args);window.__recorderAudioInstance=this;return result;
+};
+window.__recorderGraph=()=>{
+  const audio=window.__recorderAudioInstance,processor=processors[0];
+  const reachable=(start,end,omit)=>{const seen=new Set(),queue=[start];
+    while(queue.length){const node=queue.shift();if(node===omit||seen.has(node))continue;
+      if(node===end)return true;seen.add(node);
+      for(const [from,to]of edges)if(from===node)queue.push(to);
+    }return false;
+  };
+  return {nativeContext:audio?.context instanceof AudioContext,
+    finalIsActualNode:audio?.output instanceof AudioNode,
+    processors:processors.length,
+    finalReachesDestination:reachable(audio?.output,audio?.context?.destination),
+    mixRoutedFromFinal:reachable(audio?.output,processor),
+    masterBypassesFinalIntoMix:reachable(audio?.master,processor,audio?.output)};
+};
+window.__recorderCleanup=async()=>{
+  const audio=window.__recorderAudioInstance;await audio?.context?.close();
+  EngineAudio.prototype._build=nativeBuild;
+  AudioContext.prototype.createScriptProcessor=nativeProcessor;
+  AudioNode.prototype.connect=nativeConnect;
+  return audio?.context?.state==='closed';
+};
+await import('/tools/audio-race-check.js');
+`;
+}
+
+export async function actualRecorderProbe(context) {
+  const page=join(context.outputDir,'recorder-probe.html');
+  const relativePath=page.replaceAll('\\','/').split('/.evidence/')[1];
+  if(!relativePath)throw Error('Recorder QA page must be in the card evidence directory.');
+  await context.navigate('/.evidence/'+relativePath);
+  await context.waitFor('!!window.__audioQaReady','actual existing native race recorder',30000);
+  const started=await context.evaluate('window.__audioQaStart()');
+  await new Promise(done=>setTimeout(done,350));
+  const graph=await context.evaluate('window.__recorderGraph()');
+  const finished=await context.evaluate('window.__audioQaFinish()');
+  const contextClosed=await context.evaluate('window.__recorderCleanup()');
+  return {...graph,memoryOnly:started.storageIsMemory&&finished.memoryOnlySaves,
+    sampleRate:finished.sampleRate,mixFrames:finished.tracks.mix.frames,
+    contextClosed};
 }

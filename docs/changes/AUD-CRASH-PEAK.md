@@ -326,3 +326,78 @@ recording, licensed source, bank entry, catalog recipe, assertion, recorder
 or replay pin was removed or rewritten. Raw evidence stays ignored until
 the independent verdict; the merge janitor removes it after that verdict.
 The frozen recipes reproduce the measurement.
+
+
+## Independent actual-recorder routing RED
+
+The repaired final audio passes all 22 native peak/preservation tests, but
+the existing race recorder still taps upstream of the final output. A new
+default native regression proves this against unchanged clean source
+`c0bb9b18f33ea3a9f8377a06db74f2bb3c6d0884`.
+
+Command: `node tools/test-audio-crash-peak.mjs`.
+
+Result: **23 tests, 22 pass, one fail, 98 checks**, 22.529 seconds, exit 1.
+All original 22 acceptance tests and their 90 checks remain unchanged and
+pass. Their fresh sample/true peaks are -1.472/-1.41 dBFS/dBTP for non-Fuel,
+-1.468/-1.47 for Fuel, and -1.186/-1.19 for overlap.
+
+The new failing message is:
+
+> actual existing race recorder mix bypasses the final runtime audio.output;
+> an upstream compressor tap cannot certify final peaks
+
+The actual observed result is
+`{fromFinal:false,bypass:true}`, expected
+`{fromFinal:true,bypass:false}`.
+
+### Actual source probe
+
+A QA-only entry is generated under the test's unique ignored evidence
+directory and bundled alongside the existing menu entry. It imports the
+real EngineAudio class and unchanged `tools/audio-race-check.js` into the
+same native page. A read-only wrapper retains the actual instance after
+its original `_build` method runs. Native connect and ScriptProcessor
+creation wrappers retain their original calls, return values and routing;
+they only collect node references and actual connection edges.
+
+The real `__audioQaStart` builds and starts the existing recorder. The test
+follows its actual mix processor through the native graph, using that
+instance's actual `audio.output` reference. It does not infer a compressor,
+WaveShaper, curve, threshold or limiter API from source text. The new test
+requires the actual final output to reach the real destination and recorder
+mix, with no master-to-mix path that avoids final output.
+
+The probe used a genuine AudioContext, 48 kHz stereo, seven actual recorder
+processors and **53,248 recorded mix frames**. Memory-only storage was
+installed by the existing recorder before App import. The native context
+closed after `__audioQaFinish` stopped the runtime. Every positive setup
+and cleanup control passed.
+
+The existing recorder's integer/clamped capture is left unchanged here.
+Its data is not used to claim a peak/DSP pass. The original 22 peak tests
+still meter final output with native Float32 AudioWorklets. This appended
+regression checks the actual recorder routing that invalidates an upstream
+peak verdict; it never manufactures a graph or substitutes runtime methods.
+
+The test build and generated wrapper stay below:
+
+`.evidence/2026-10-01/AUD-CRASH-PEAK/native-2026-10-01T06-17-17-021Z/`
+
+Private port **23952**, zero browser errors and warnings. The generated
+harness admits only its own evidence prefix alongside existing tools pages.
+No shared QA output, Preview, live port, system/microphone audio, real saves,
+network dependency, sound source, bank, catalog or asset was changed.
+No mandatory generated artifact is added to the repository.
+
+Only the assigned peak test, its scenario recipe and this note changed.
+Recorder/helper/runtime source remain byte-identical. No previous acceptance,
+assertion or replay pin was altered. The minimal recorder fix and fresh
+required gates remain pending; this test freeze is not merge clearance.
+
+### Removed — actual-recorder routing test freeze
+
+Nothing replaced or removed. Added one independent native routing regression
+and its ignored wrapper recipe. Original tests, runtime methods, recorder
+data format, audio nodes, source assets and fingerprints remain unchanged.
+Raw probe output is deleted after the card's before/after verdict is retained.

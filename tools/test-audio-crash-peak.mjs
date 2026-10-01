@@ -7,6 +7,7 @@ import {join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {measureLoudness} from './audio/measurements.mjs';
 import {ffmpeg} from './audio/codec.mjs';
+import {nativeRecorderEntry} from './scenarios/audio-crash-peak.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const runDir=join(root,'.evidence',new Date().toISOString().slice(0,10),'AUD-CRASH-PEAK',
@@ -64,15 +65,18 @@ before(async()=>{
     ["resolve(fileURLToPath(new URL('../', import.meta.url)))",JSON.stringify(resolve(root))],
     ["'tools/vite-qa.config.js'",JSON.stringify(join(runDir,'vite.config.mjs'))],
     ["join(PROJECT_ROOT, '.qa-dist', 'tools', 'menu-check.html')","join("+JSON.stringify(runDir)+", 'build', 'tools', 'menu-check.html')"],
+    ["!path.startsWith('/tools/')","(!path.startsWith('/tools/')&&!path.startsWith('/.evidence/'+"+JSON.stringify(runDir.replaceAll('\\','/').split('/.evidence/')[1]) + "+'/'))"],
   ];
   for(const [from,to]of substitutions){if(!harness.includes(from))throw Error('Private harness recipe anchor changed: '+from);harness=harness.replaceAll(from,to);}
   await writeFile(join(runDir,'harness.mjs'),harness);
+  await writeFile(join(runDir,'recorder-probe.js'),nativeRecorderEntry());
+  await writeFile(join(runDir,'recorder-probe.html'),"<!doctype html><meta charset='utf-8'><link rel='icon' href='data:,'><script type='module' src='./recorder-probe.js'></script>");
   const plugin=new URL('./build-version-plugin.mjs',import.meta.url).href;
   const config="import {defineConfig} from "+JSON.stringify(new URL('../node_modules/vite/dist/node/index.js',import.meta.url).href)+";\n"+
     "import {buildVersionPlugin} from "+JSON.stringify(plugin)+";\n"+
     "export default defineConfig({root:"+JSON.stringify(resolve(root))+
     ",plugins:[buildVersionPlugin()],define:{__DUEL_QA__:'true'},build:{outDir:"+JSON.stringify(join(runDir,'build'))+
-    ",emptyOutDir:true,rollupOptions:{input:{menu:"+JSON.stringify(join(root,'tools/menu-check.html'))+"}}},server:{hmr:false}});\n";
+    ",emptyOutDir:true,rollupOptions:{input:{menu:"+JSON.stringify(join(root,'tools/menu-check.html'))+",recorder:"+JSON.stringify(join(runDir,'recorder-probe.html'))+"}}},server:{hmr:false}});\n";
   await writeFile(join(runDir,'vite.config.mjs'),config);
   const log=[];
   const code=await new Promise((done,reject)=>{
@@ -185,3 +189,18 @@ test('actual pause and dispose clean up owned audio without final-output leakage
   ok(peak(item,.25,.07)<.001,'paused final output fades below -60 dBFS');
 });
 after(()=>console.log('Audio crash peak: '+checks+' acceptance checks reached; human listening, space, variety and loop seams remain unmeasured.'));
+
+
+test('actual existing race recorder meters the final runtime audio output',()=>{
+  const probe=capture.actualRecorder;
+  eq(probe.nativeContext,true,'actual recorder uses the native AudioContext');
+  eq(probe.finalIsActualNode,true,'the captured instance exposes its actual final output node');
+  eq(probe.memoryOnly,true,'actual existing recorder starts after memory-only storage isolation');
+  ok(probe.mixFrames>2048,'actual existing recorder produced real mix samples');
+  ok(probe.processors>0,'actual existing recorder created its real input processors');
+  eq(probe.finalReachesDestination,true,'actual final game output reaches the native destination');
+  eq(probe.contextClosed,true,'actual existing recorder stops and its native context closes after the probe');
+  eq({fromFinal:probe.mixRoutedFromFinal,bypass:probe.masterBypassesFinalIntoMix},
+    {fromFinal:true,bypass:false},
+    'actual existing race recorder mix bypasses the final runtime audio.output; an upstream compressor tap cannot certify final peaks');
+});
