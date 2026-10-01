@@ -1,10 +1,12 @@
 # AUD-CRASH-PEAK — output repair
 
-The output repair passes all **22 frozen native tests and 90 checks**. All
-three measured sample peaks and true peaks stay below -1 dB. Quiet output,
-contact onset, engine/impact contrast and pause/dispose controls pass. This
-is a source handoff; fresh independent review and exact lane/build gates
-remain required before merge. Human listening is still unmeasured.
+The output repair and existing recorder routing pass all **23 frozen
+native tests and 98 checks**. All three measured sample peaks and true peaks
+stay below -1 dB. Quiet output, contact onset, engine/impact contrast,
+pause/dispose and actual final-output recorder routing pass. This is a
+source handoff; independent review, controlled whole-race audio review and
+fresh exact lane/build gates remain required before merge. Human listening
+is still unmeasured.
 
 ## Tests-first baseline (8494081)
 
@@ -401,3 +403,95 @@ Nothing replaced or removed. Added one independent native routing regression
 and its ignored wrapper recipe. Original tests, runtime methods, recorder
 data format, audio nodes, source assets and fingerprints remain unchanged.
 Raw probe output is deleted after the card's before/after verdict is retained.
+
+
+## Actual recorder repair (frozen RED 3a22afc)
+
+The existing recorder now validates `audio.output instanceof AudioNode`
+and taps that actual output into `recorder.buses.mix` using the original
+native connect method. It no longer captures the upstream compressor as
+`qa.limiter`. This implementation owns only `tools/audio-race-check.js`
+and this change-note update. Production `src/audio.js` and
+`src/audio-output.js` remain byte-exact to `c0bb9b1`; the independent
+old-audio mock helper remains byte-exact to `c3323cf`.
+
+No category or stem mapping, bus gain, event/frame/timestamp field, sample
+rate, integer/clamped recording format, start/finish behavior or playback
+behavior changed. The removed capture was unused after the mix tap was
+corrected. The actual game output still has its original destination path;
+the existing silent recorder branch records it without changing device
+playback. All frozen tests and recipes remain unchanged.
+
+### Native RED to GREEN
+
+Before: unchanged `c0bb9b1` production with tests frozen at `3a22afc`
+reports **23 tests: 22 pass, one actual routing failure; 98 checks**. The
+real recorder graph was `{fromFinal:false,bypass:true}`; final output still
+reached the real destination. All original 22 peak/preservation controls
+passed. The native RED recipe and detailed witness above are retained.
+
+After: unchanged command `node tools/test-audio-crash-peak.mjs` exits 0:
+**23/23 tests, 98 checks**, 22.811 seconds. The real graph is now
+`{fromFinal:true,bypass:false}`, with final-to-destination also true.
+The actual recorder probe uses native context, isolated memory-only saves,
+7 existing processors and **53,248 real mix frames**;
+it stops and closes its native context. Private port **6543**, 48 kHz
+stereo, zero browser errors and warnings.
+
+Ignored before/after evidence is reproducible from the frozen recipe:
+
+`.evidence/2026-10-01/AUD-CRASH-PEAK/native-2026-10-01T06-21-32-062Z/`
+
+| Case | Final sample peak, dBFS | Final true peak, dBTP | Final onset, ms | Impact/engine stem, dB | Final mix/engine, dB |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| non-fuel-contact | -1.451 | -1.40 | 18.46 | 13.20 | 11.40 |
+| fuel-contact | -1.534 | -1.53 | 12.23 | 12.39 | 11.41 |
+| six-blast-overlap | -1.074 | -1.07 | 13.58 | 25.03 | 16.51 |
+
+Quiet output differs from the retained native compressor reference by
+**-0.000004 dB peak / 0.005000 dB RMS**; all original event,
+engine contrast, actual carried-Fuel drop, Float32 continuity and native
+pause/dispose assertions still pass. The overlap true peak leaves only
+**0.07 dB measured headroom** to the target in this capture. Peak variation
+between native schedules is recorded rather than treated as a guarantee
+for every future mix. No production ceiling or cue was adjusted here.
+
+A fresh unchanged old-audio rerun passes **460 checks / 617,062 finite
+automation commands**, maximum existing blend swing 6.68 dB. Relevant
+unchanged controls also pass: audio analysis 6/6, listening/booth controls
+10/10, combat audio 11/11 and existing weapon audio signatures/lifecycle.
+The native routing test exercises the actual recorder; it does not infer
+correctness from source text or substitute a fake graph. The existing
+integer recorder is not used to prove peak limiting: those original 22
+controls continue to use the actual final Float32 AudioWorklet captures.
+
+### Recorder freeze evidence and remaining review
+
+SHA-256:
+
+- `tools/audio-race-check.js`: `31de66feca4b5138f9cb403ddd4c762e28325f02f8be2b70d3469f7b1b3422ff`
+- unchanged `src/audio.js`: `0ce6602c798a4326da9436219f24b232d16019727f6f1c71b796b32c2f17f56f`
+- unchanged `src/audio-output.js`: `f2f4955a673d47cd84e320402e598adb64e96ef4501ba56e69cdd1e99cada15c`
+- unchanged `tools/test-audio.mjs`: `4c9ebd49594a91b64b010d35a0218e6328f52047cf35d167d873a38a6ba6febb`
+- frozen `tools/test-audio-crash-peak.mjs`: `47c8972fd86bf209af0081a7f1bd85523aff9f41b92bd6fd9e01e014e0f3c3a5`
+- frozen `tools/scenarios/audio-crash-peak.mjs`: `76fd0325e396368d159abda83238857ba5242d2830631b01b3c9316f288337b8`
+
+The upstream recorder routing debt identified in the prior source freeze
+is resolved. Whole-audio clearance is still pending. The Director's prior
+actual-race capture reported engine/revs correlation **0.870** and lag
+**-50 ms**. This recorder-only change neither rechecks nor resolves that
+finding; an independent controlled actual-race capture must do so after
+this routing correction. Human listening and the previously named space,
+variety, loop and whole-race loudness limits also remain. The Director owns
+independent code review, final Audio QA and fresh exact lane/build gates.
+No merge or release pass is claimed.
+
+### Removed — recorder repair
+
+Removed the unused `qa.limiter` member and its compressor-detection hook,
+and replaced the recorder's upstream compressor guard/tap with a validated
+actual-final-output guard/tap. No category/stem, timestamp, recording format,
+audio source, asset, bank/catalog, protected licensed file, old assertion,
+recorder processor, runtime dependency or replay pin was removed or changed.
+Raw evidence remains ignored until its independent verdict, then the merge
+janitor removes it; the frozen recipes reproduce the measurement.
