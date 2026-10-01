@@ -153,7 +153,7 @@ async function collapseQA(c) {
   assert.equal(await c.evaluate(`[...document.querySelectorAll('details[open]')].some(panel=>!panel.hidden&&/TEMPORARY SAVES|Performance samples/.test(panel.querySelector('summary')?.textContent||''))`),false,
     'private overlay is collapsed through its actual summary control');
 }
-function installReviewTools(mphToWorld,arenaTargetOutOfPlay) {
+function installReviewTools(mphToWorld,arenaTargetOutOfPlay,sweepObstacle) {
   const a=window.__qaApp,dt=1/120,r=window.__render;
   const actor=id=>id==='player'?a.duel.state:a.duel.state.opponents.find(car=>car.arenaId===id);
   const member=car=>a.duel.state.arena.participants.find(p=>p.id===(car===a.duel.state?'player':car.arenaId));
@@ -219,10 +219,45 @@ function installReviewTools(mphToWorld,arenaTargetOutOfPlay) {
   function publicCountdown(){uiTick(362);const d=a.duel,s=d.state,spec=d._vehicleSpec(s);
     if(s.status!=='racing'||s.arena.phase!=='fight')throw Error('Public countdown not completed by native ticks');
     if(Math.abs(s.lateral)+spec.halfWidth>=d.course.def.scrapdome.floorHalfWidth)throw Error('Public spawn body is not fully inside floor');
-    window.__publicWall={startS:s.s,inputs:[],trace:[],samples:[],events:[],tick:-1};return {s:s.s,lateral:s.lateral,seed:s.seed,car:s.car,opponents:s.opponents.map(car=>car.car)};}
+    window.__publicWall={startS:s.s,inputs:[],trace:[],samples:[],events:[],contacts:[],observerErrors:[],tick:-1};return {s:s.s,lateral:s.lateral,seed:s.seed,car:s.car,opponents:s.opponents.map(car=>car.car)};}
   function publicDrive(side,alongTicks,recorded=null){const d=a.duel,s=d.state,q=window.__publicWall;let touched=false;
     const off=d.onChange((_,event)=>{const keys=['scrape','crash','combatWreck','combatRecovered','arenaWallHit','vehicleSmash','combatRamHit','boundaryReset'].filter(key=>event[key]);
       if(keys.length)q.events.push({tick:q.tick,time:s.stageTimeSec,keys,zone:event.zone||null,strength:event.strength||null,wall:event.arenaWallHit||null});});
+    const descriptor=Object.getOwnPropertyDescriptor(d,'_staticContacts'),original=d._staticContacts;
+    q.wrapperCalls=0;q.originalCalls=0;
+    d._staticContacts=function(...args){
+      q.wrapperCalls++;let before=null;
+      try{const car=args[0];if(car===s&&!car.crushed&&!car.combatWrecking&&!car.tumble){
+        const oldS=car.prevS??car.s,oldLateral=car.prevLateral??car.lateral,start=d.course.worldAt(oldS,oldLateral),end=d.course.worldAt(car.s,car.lateral);
+        if(car.airborne||car.airHeight>0||car.prevAirHeight>0||car.groundHeight!=null){
+          start.y=(car.prevGroundHeight??d.course.groundAt(oldS,oldLateral).y)+(car.prevAirHeight??car.airHeight??0);
+          end.y=(car.groundHeight??d.course.groundAt(car.s,car.lateral).y)+(car.airHeight||0);
+        }else{start.y=end.y=undefined;}
+        before={s:car.s,lateral:car.lateral,oldS,oldLateral,speedMph:car.speedMph,pushVelocity:car.pushVelocity||0,
+          start,end,heading:d.course.at(car.s).heading+(car.headingError||0)+(car.dir<0?Math.PI:0)+(car.slipAngle||0),dimensions:d._vehicleSpec(car)};
+      }}catch(error){q.observerErrors.push(error.message);}
+      q.originalCalls++;
+      const result=Reflect.apply(original,this,args); // Captured production method, once, original receiver and arguments.
+      try{if(before){let first=null;
+        // Native query runs after production resolution; it cannot alter that call's chosen hit or result.
+        for(const obstacle of d._obstacles(before.oldS,before.s)){
+          const hit=sweepObstacle(before.start,before.end,obstacle,before.heading,before.dimensions);
+          if(hit&&(!first||hit.t<first.t))first=hit;
+        }
+        if(first?.obstacle.arenaWall){const car=args[0],afterWorld=d.course.worldAt(car.s,car.lateral),
+          correctionAlongNormal=(afterWorld.x-before.end.x)*first.nx+(afterWorld.z-before.end.z)*first.nz,
+          reducedSpeed=Math.abs(car.speedMph)<Math.abs(before.speedMph)-1e-7,
+          chosenSide=Math.sign(first.obstacle.off??d.course.nearest(first.obstacle.x,first.obstacle.z,before.s).lateral);
+          q.contacts.push({tick:q.tick,time:s.stageTimeSec,side:chosenSide,chosen:chosenSide===side,
+            originalInvocation:q.originalCalls,playerArgument:args[1],returnType:typeof result,returnUndefined:result===undefined,
+            before,hit:{t:first.t,nx:first.nx,nz:first.nz,penetration:first.penetration,inside:first.inside,obstacle:structuredClone(first.obstacle)},
+            after:{s:car.s,lateral:car.lateral,speedMph:car.speedMph,pushVelocity:car.pushVelocity||0,world:afterWorld},
+            correctionAlongNormal,reducedSpeed,physicalResponse:correctionAlongNormal>1e-7&&reducedSpeed});
+        }
+      }}catch(error){q.observerErrors.push(error.message);}
+      return result;
+    };
+    try{
     for(let i=0;i<(recorded?recorded.length:alongTicks+2400);i++){
       const toward=i<alongTicks?0:side*Math.PI/2,error=Math.atan2(Math.sin(toward-s.headingError),Math.cos(toward-s.headingError));
       const input=recorded?recorded[i]:{KeyW:true,ArrowLeft:error>.1,ArrowRight:error<-.1};
@@ -233,9 +268,15 @@ function installReviewTools(mphToWorld,arenaTargetOutOfPlay) {
         keys:{KeyW:!!a.keys.KeyW,KeyA:!!a.keys.KeyA,KeyD:!!a.keys.KeyD,ArrowLeft:!!a.keys.ArrowLeft,ArrowRight:!!a.keys.ArrowRight},
         s:s.s,lateral:s.lateral,heading:s.headingError,speedMph:s.speedMph,armor:s.armor,combatWrecking:!!s.combatWrecking,nativeInput:structuredClone(s.input)});
       q.inputs.push(input);if(i%12===0)q.trace.push({tick:i,s:s.s,lateral:s.lateral,heading:s.headingError,speedMph:s.speedMph,armor:s.armor,nativeInput:structuredClone(s.input)});
-      if(i>=alongTicks&&side*s.lateral>=d.course.def.scrapdome.floorHalfWidth-1e-6){touched=true;if(!recorded)break;}}
-    for(const [code,key] of [['KeyW','w'],['ArrowLeft','ArrowLeft'],['ArrowRight','ArrowRight']])window.dispatchEvent(new KeyboardEvent('keyup',{code,key,bubbles:true}));
-    off();
+      if(i>=alongTicks&&q.contacts.some(contact=>contact.tick>=alongTicks&&contact.chosen&&contact.physicalResponse)){touched=true;if(!recorded)break;}}
+    }finally{
+      if(descriptor)Object.defineProperty(d,'_staticContacts',descriptor);else delete d._staticContacts;
+      off();
+      for(const [code,key] of [['KeyW','w'],['ArrowLeft','ArrowLeft'],['ArrowRight','ArrowRight']])window.dispatchEvent(new KeyboardEvent('keyup',{code,key,bubbles:true}));
+      q.restored=d._staticContacts===original;
+    }
+    if(!q.restored||q.originalCalls!==q.wrapperCalls||q.observerErrors.length)
+      throw Error('Native contact observation failed its once-only/restoration contract: '+JSON.stringify({restored:q.restored,calls:q.originalCalls,wrappers:q.wrapperCalls,errors:q.observerErrors}));
     if(!touched){
       const at=d.course.worldAt(s.s,s.lateral),heading=d.course.at(s.s).heading+s.headingError,spec=d._vehicleSpec(s);
       const nearby=d._obstacles(s.s-8,s.s+8).filter(obstacle=>obstacle.arenaWall).map(obstacle=>{
@@ -245,13 +286,14 @@ function installReviewTools(mphToWorld,arenaTargetOutOfPlay) {
           localX,localZ,expandedHalfX:obstacle.halfX+spec.halfWidth*Math.abs(Math.cos(relative))+spec.halfLength*Math.abs(Math.sin(relative)),
           expandedHalfZ:obstacle.halfZ+spec.halfLength*Math.abs(Math.cos(relative))+spec.halfWidth*Math.abs(Math.sin(relative))};
       }).sort((x,y)=>Math.hypot(x.localX,x.localZ)-Math.hypot(y.localX,y.localZ)).slice(0,6);
-      window.__publicWallFailure={side,alongTicks,touched,limitSeconds:20,predicate:'side*lateral >= floorHalfWidth-1e-6',
-        inputs:q.inputs,trace:q.trace,samples:q.samples,events:q.events,
+      window.__publicWallFailure={side,alongTicks,touched,limitSeconds:20,predicate:'first real chosen-wall native sweep hit plus actual inward correction and speed reduction',
+        inputs:q.inputs,trace:q.trace,samples:q.samples,events:q.events,contacts:q.contacts,
         final:{s:s.s,lateral:s.lateral,heading:s.headingError,world:at,nativeHeading:heading,speedMph:s.speedMph,armor:s.armor,
           status:s.status,paused:s.paused,inputContext:a.activeInputContext(),nativeInput:structuredClone(s.input),nativeEnvelope:spec,nearbyWalls:nearby},...measure()};
       throw Error('Legal public controls did not reach chosen wall within twenty seconds');
     }
-    return {side,alongTicks,touched,inputs:q.inputs,trace:q.trace,...measure()};}
+    return {side,alongTicks,touched,inputs:q.inputs,trace:q.trace,samples:q.samples,events:q.events,contacts:q.contacts,
+      observation:{restored:q.restored,wrapperCalls:q.wrapperCalls,originalCalls:q.originalCalls,errors:q.observerErrors},...measure()};}
   function scripted(kind,role,side=1,normal=false,oblique=0,segment=260){
     if(!a.restart())throw Error('Scripted native rematch failed');tick(362);const d=a.duel,s=d.state,cpu=s.opponents[0],target=role==='player-attacker'?cpu:s,attacker=target===s?cpu:s;
     s.combat.aiTimer=s.combat.pickupTimer=Infinity;pose(s,20);pose(cpu,90);hold(cpu);
@@ -295,7 +337,11 @@ async function reviewedCapture(c,label,mode='medium',scope='both') {
 }
 async function extendedQuality(c,quality,report,save) {
   const wire=`(() => {${arenaParticipant.toString()}\n${outOfPlay.toString()}\nreturn ${arenaTargetOutOfPlay.toString()};})()`;
-  await c.evaluate(`(${installReviewTools.toString()})(${DRIVE.mphToWorld},${wire})`);
+  const collisionSource=readFileSync(new URL('../../src/collision.js',import.meta.url),'utf8');
+  assert.equal(/^import\s/m.test(collisionSource),false,'actual collision observer module has no unbound imported dependencies');
+  const collisionWire=`(() => {${collisionSource.replace(/^export /gm,'')}\nreturn sweepObstacle;})()`;
+  report.collisionObserverSourceSha256=createHash('sha256').update(collisionSource).digest('hex');
+  await c.evaluate(`(${installReviewTools.toString()})(${DRIVE.mphToWorld},${wire},${collisionWire})`);
   // Public/legal-input controls run BEFORE any constructed pinned contact.
   for(const side of [-1,1])for(const alongTicks of [0,360]){
     const label=quality+'-public-'+side+'-'+alongTicks;
@@ -329,6 +375,11 @@ async function extendedQuality(c,quality,report,save) {
     if(referenceCase){assert.equal(start.seed,referenceCase.start.seed);assert.equal(start.car,referenceCase.start.car);assert.deepEqual(start.opponents,referenceCase.start.opponents);
       assert.deepEqual(result.inputs,referenceCase.result.inputs,'candidate uses the exact native baseline input stream');}
 
+    assert.ok(result.contacts.some(contact=>contact.chosen&&contact.physicalResponse&&contact.playerArgument===true&&contact.returnUndefined),
+      'public goal observes actual chosen-wall native hit and unchanged production response/result');
+    assert.equal(result.observation.restored,true,'actual native contact method is restored before capture');
+    assert.equal(result.observation.originalCalls,result.observation.wrapperCalls,'every wrapper delegates its production method exactly once');
+    assert.deepEqual(result.observation.errors,[],'native contact observation is complete');
     views.push(await reviewedCapture(c,label+'-wall-close','close','player'));
     views.push(await reviewedCapture(c,label+'-wall-world','world','player'));
     report.publicWalls.push({quality,start,startGeometry,before,result,views,matchedBaselineInputs:!!referenceCase});await save();

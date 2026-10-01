@@ -1007,3 +1007,53 @@ human/listening clearance is claimed. No live folder, Preview, .preview-dist,
 port 5174, real save, source overlay/edit, native pin migration, integration
 merge, push or history rewrite occurred. Ownership returns for independent
 interpretation before any next recipe acceptance change.
+
+
+## Reviewed native contact goal frozen before baseline rerun (1 October)
+
+The Director independently reviewed released `_staticContacts` and
+`sweepObstacle`, and approved replacing only this additive public QA center
+reachability goal with actual chosen-wall contact plus physical response.
+The old exact-center RED, traces, failure images and 20-second result above
+remain durable evidence. All 39 prior scenario assertion lines, original
+contact fixtures, 118 native tests, pins and the 2,400-step timeout stay exact.
+The original matrix is eight attempts and 24 planned images; the Director
+corrected an assignment count of twelve attempts before any recipe expansion.
+
+The temporary observer captures the real Duel `_staticContacts` method and its
+own property descriptor. Every wrapper call invokes that captured method
+exactly once with the original receiver/arguments and returns its original
+result unchanged. Observation failures cannot replace its result or gameplay
+control flow. A `finally` restores the original descriptor (or removes the
+new own property when the method was inherited), detaches its read-only event
+listener and releases real keyboard keys even if native stepping throws.
+
+Before each actual player call, the observer records the native previous/end
+world poses, current heading, speed and full native `_vehicleSpec` dimensions,
+using the same ground/air scope as production. After the original method has
+finished, the observer reads the real native obstacle query and uses the actual
+unchanged `collision.js` sweep functions to identify the first hit. The module's
+actual bytes are serialized only by removing its ESM export declarations;
+all native sweep/ellipse/box function bodies and constants remain unchanged.
+This is a read-only contact calculation, not a replacement solver or event.
+Its source SHA is retained in every report for independent verification.
+
+A valid public receipt requires that first native hit to be on the chosen
+arena wall, actual correction inward along its native normal and actual speed
+reduction across the production call. Proximity alone cannot pass. Receipts
+include t/normal/penetration/inside, the real obstacle, native pre/post pose and
+speed, player argument and actual undefined return. Separate new assertions
+require the original method restored, no observation errors and equal wrapper
+and original invocation counts. Existing center-containment assertions remain
+unchanged. The corrected input still travels through actual keyboard handlers.
+
+No original contact method, collider, pose, source, asset or game event is
+replaced. Released0f front-kit/rail crossings remain historical bounded debt,
+not a repaired asset or a complete geometry clearance claim. This recipe is
+frozen before the authentic complete baseline run; its result will be appended.
+
+Removed only the unreachable exact floor-center condition from this new public
+reachability goal, with explicit independent approval and durable RED evidence.
+The existing floor-containment rule and all legacy acceptance remain exact.
+No source change, candidate run, frame/art/listening/human pass, merge or push
+is granted by this tests-only correction.
