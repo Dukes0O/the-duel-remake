@@ -171,3 +171,95 @@ suite or heavy gate was run in this tests-first step.
 Nothing removed. This adds tests and a recipe/verdict note only. No stub,
 placeholder runtime module, dependency, audio resource, catalog, source
 asset, world signature, real save, live checkout, Preview or port was used.
+
+
+## Independent module implementation — 30 September 2026
+
+Started from clean tests-first freeze 8437d2c84bbc59acb783274b0013af302bf8534a.
+This step owns only the five new src/arsenal modules and this section. No
+existing production hook, assertion, replay pin, launcher or asset was edited.
+The modules implement settled level-zero behavior; this is not whole-card
+completion or merge clearance.
+
+Hazards use the native point and vehicle shell dimensions, including heading
+error and slip angle. Circle contacts use the closest point on the oriented
+car rectangle; strips use the four separating axes of the two real rectangles.
+A bounded list keeps at most 24 hazards, and a private WeakSet gives each
+actual body one contact per hazard. Owner grace skips contact without spending
+that entitlement. The native player, opponents, live traffic and pursuit cars
+are considered in stable order, with native out-of-play protection respected.
+Age, expiry, optional final fade and first-second drift advance only when the
+simulation calls stepHazards. Reads and cleanup do not change race data.
+
+Car effects use an independent per-car map with the six authored kinds.
+Refreshing replaces duration and data instead of stacking. Duration zero
+removes only the named effect; oil uses that to end nitro. Hazard lists and
+effect maps are held in WeakMaps until lifecycle consumers are granted, so
+importing these modules alone adds no fields to old race snapshots.
+
+Oil implements the settled rear placement, six-second lifetime, final-second
+fade, one-second owner grace, slick time/grip, away-from-centre yaw kick,
+one-time speed loss and shield counter. Its rear-enemy decision uses native
+teams, real distance and the sum of the two actual car half-widths for the
+course-lateral lane overlap; no new arbitrary lane width is introduced.
+Medium/Hard perception returns the nearest visible oil in the forward half
+plane within 60 m; Easy returns none. Smoke implements placement, lifetime
+and exact integration of its 30%-speed drift over only the first second.
+Events name weapon.oil.deploy, weapon.oil.slip and weapon.smoke.deploy in
+arsenalCue; sound consumers remain unwired.
+
+targetFor retains native arena brain choices and the existing ordinary
+player/CPU selection. A segment-circle test rejects a target when a live
+smoke cloud crosses the line or contains either endpoint. It applies no
+guessed decoy range or upgrade bonus. shouldUseSmoke reads actual arena
+lastHitAt/lastHitBy recorded by native armor hits and checks the settled
+5 s/50 m rear-enemy condition. Ordinary Wasteland currently has no per-car
+recent-hit timestamp; its recording hook still needs a Director grant.
+
+Commands and results on this source:
+
+- node --test --test-reporter=tap --test-name-pattern='^CORE:' tools/test-arsenal-core.mjs:
+  29/29 pass, 283 checks, zero failures/skips/TODO. The earlier missing-module
+  RED is now GREEN for all independent CORE cases, with assertions unchanged.
+- node --test --test-reporter=tap tools/test-arsenal-core.mjs tools/test-arsenal-save.mjs:
+  64 tests, 32 pass, 29 fail, 3 design TODO, zero skips. Core reaches 317
+  checks and save reaches 49. All 13 INTEGRATION cases remain RED at their
+  real native bypass, lifecycle, launch, driving or gate assertions; all 16
+  deferred save cases remain RED. Three existing save protection controls pass.
+- node --test --test-reporter=tap tools/test-combat-projectiles.mjs tools/test-combat-projectile-order.mjs
+  tools/test-combat-armor.mjs tools/test-combat-field-shields.mjs tools/test-crossbow-aim.mjs
+  tools/test-enemy-aim.mjs tools/test-arena-event.mjs: 70/70 pass. Enemy aim
+  retains 23/23 checks. Crossbow aim retains 792 shots, 420 hits (0.53).
+- node tools/test-replays.mjs: all 162 unchanged recorded checks pass across
+  18 cases, 16 events, eight categories, three FPS values and three runs.
+- git diff --check: pass. New source uses LF and contains no Math.random,
+  network or browser-storage calls.
+
+| New source | SHA-256 |
+| --- | --- |
+| src/arsenal/hazards.js | 6fa20386836e17b21ba3d274f93d506e122da806732fe7956f17d4ce7b9f5ed7 |
+| src/arsenal/car-effects.js | 39983d5ad6874d9b1768c5716a2070cd510e480b8d4d2a36e8b9df079e5038e8 |
+| src/arsenal/targeting.js | ac7c65200d668989db27449f04de35ec6f501440b3554aae554e62812e492bbd |
+| src/arsenal/oil.js | e507dfe8fcb88a94d0518df66b43120acc6b0b97c1881fc85e754f5f56a066c0 |
+| src/arsenal/smoke.js | 1d508b03d925351eacbb2794af043398025aad482672e74a898ad33e32bd1c95 |
+
+Frozen core suite SHA-256 remains
+55c66d0586b1d0af6826491a8dba7b0c09e715d7995a21a3aef97ccabd9eb3a6;
+frozen save suite remains
+96d68ab206d655400c628b78133813f1aa9c62dbbee8ea4cb94f78988dcf9b66.
+The two existing replay-pin hashes recorded above remain byte-identical.
+
+Native scheduled/direct aimed fire, all guidance and RPG lock routing,
+recharge/disable enforcement, effect driving, proactive oil steering,
+lifecycle cleanup, discovery/dev gates and save/loadout/reward transactions
+remain ungranted integration work. Decoy context and the oil/smoke upgrade
+dimension still await Claude's written decisions. High/Performance rendering,
+listening, actual weapon-use balance counts, retained arsenal replay, Guardian,
+Claude, lane tier and build remain whole-card gates with the Director.
+No browser, audio, heavy lane/full gate or build was run in this module step.
+
+### Removed — independent module step
+
+Nothing replaced or removed. These are new source modules. No stub or native
+consumer bypass is accepted as completion. No real saves, live checkout,
+Preview output, runtime dependency, protected audio/catalog or port was used.
