@@ -166,3 +166,121 @@ script, source record, asset, test or assertion. Raw private logs, copied
 negative fixtures and future private candidates remain until their verdict
 is used; the Director's janitor removes reproducible evidence afterward.
 Licensed originals and current game assets remain preserved.
+
+## Private native fitting stage — 1 October 2026
+
+This is a source freeze for independent review, not finished art, a runtime
+installation, a lane gate or a whole-card merge claim. It starts from the clean
+tests-first commit 415bd22c1a313399d3391d6fc626ca702ab89cad. Only the granted
+new recipe, presentation module and private game-renderer scenario were added;
+this note is append-only. Frozen tests, fit settings, catalogue, source records,
+replays, current runtime art and shared game hooks stay unchanged.
+
+The recipe checks the exact approved bindings against the retained small fit
+input, all model/archive/licence/palette SHA values, catalogue metadata and
+actual ZIP members before creating output. It accepts an intact copied source
+fixture, rejects the four genuine unpicked donors in validation and export,
+and rejects changed copied valve/licence bytes. Validation exports nothing.
+Normal export is restricted to this lane's private .qa-dist or .evidence.
+
+The complete delivery-flat body/cab/bed, detail-tank and three Factory valves
+retain their actual native source-world triangle multisets through inspectable
+affine transforms. Door, drivetrain and tyre salvage protect the cab and bed.
+Compressed genuine container shells provide side skirts; an explicitly trimmed
+subset of genuine container roof faces provides the raised boarding plate.
+Only two small deterministic 12-sided warning lamps are authored accessories.
+Materials replace the original palettes with a seeded 512-square worn-paint,
+oxide, dust, rubber and steel atlas. Native material checks include both encoded
+bytes and decoded original PNG pixels. Visual quality is still unjudged.
+
+Measured private artifact at seed 1989:
+
+- 6,328 triangles; 16 actual GLTFLoader meshes and 16 primitive/material draws.
+- 1,063,268 GLB bytes, below the advisory 8,000,000-byte runtime-file target.
+- GLB SHA256: 6240ff453c0d2df9e945cfc25cba012056d2d75dc64d4ec4bcb725f956c81342.
+- These native counts are not measured frame cost or a settled tanker budget.
+
+The frozen native suite went from 12/34 passing and 22 missing-build REDs to
+33/34 passing and one retained source-support RED. Raw verdict:
+.qa-dist/tanker-art-tests-H0RFHO/verdict.json. Full source lineage, repeat geometry,
+transforms, parts/materials, all eight valve combinations, negative health,
+half-armor recovery, immutable caller data, geometry preservation, exact-once
+loaded/late resource disposal, loader failure, no save/extra-network access and
+source/protected-file controls pass. A first run exposed a 5e-8 placement rounding
+boundary and Blender sphere triangle-order drift; forward recipe fixes retain
+the source faces and use deterministic small authored lamp triangles. The
+subsequent default suite completes normally; no heap increase was used.
+
+### Retained support RED for the independent test author and Claude
+
+The genuine picked detail-tank's global minimum source Y is effectively zero
+(-2.8199664484680564e-18). Its lowest complete triangle maxima are
+0.020147841423749924. It contains zero complete triangles wholly within 0.002
+of its global minimum before fitting. The unchanged test requires such flat
+bottom triangles in the fitted tank. At the routine 4.25 vertical scale, the
+source separation becomes 0.08562832605 m. Compressing the tank merely to pass
+that assertion would flatten the actual tank and is rejected as a workaround.
+
+Actual lowest fitted tank contact geometry is four native vertices at Y=1,
+with X approximately 0.000001 and Z -0.9621501565, -0.7131500244,
+-2.6553502083 and -2.4063501358. Barycentric interpolation of genuine visible
+truck-bed triangles under each vertex returns Y=1 exactly: all four gaps are
+zero. This proves the real contact witness only; it does not silently replace
+the retained flat-foot gate. Exact original faces, source hashes, fitted
+vertices and bed support values:
+.evidence/2026-10-01/ART-FIT-TANKER/source-support-witness.json.
+
+Written review question: should the accepted picked source be checked through
+its actual lowest contact vertices/edges over genuine bed triangles, or through
+explicitly identified native support faces? The current global-min flat-foot
+assumption does not describe this original geometry. Keep the assertion RED
+until the independent author reviews this witness and any precise assertion
+change. No assertion, donor choice or settled design has been changed here.
+Remaining attachment assertions after the early failed feet check have not yet
+received a completed green whole-test verdict.
+
+### Unrun game-renderer comparison scenario
+
+The new owned scenario mounts the actual GLTFs in the production Scrapdome
+yard via the existing private window.__render scene. It bundles the actual
+presentation module in memory using the installed Vite dependency; no shared
+renderer hook or new dependency is needed. Syntax, import, pinned source payload
+and the complete in-memory bundle were verified without starting a browser.
+The scenario itself has not run and has no screenshot, art score or frame pass.
+
+It prepares identical-position matched original-source versus fitted shots
+near and at racing distance in High and Performance, plus a paired source/fit
+shot in each setting with one camera and one actual renderer/lighting setup.
+The source baseline is honestly labelled: the picked original cab/body, tank
+and three valves at the same fitted transforms. There is no previous runtime
+tanker. It is not a claim that a source assembly was the current finished game
+art. The source palettes exist only in disposable comparison payloads.
+
+For future capture, export to .evidence/ART-FIT-TANKER/candidate first, or set
+TANKER_ART_OUTPUT to another private output directory, then run
+node tools/browser-harness.mjs scenario convoy-tanker-art. .qa-dist is rebuilt
+by that harness, so candidates stored only there must be rebuilt afterward.
+Independent native review precedes capture; coordinate heavy runs before any
+frame experiment. The scenario records renderer counts but explicitly gives
+no frame verdict. A real <=500 KB round sheet and scored verdict still go to
+Claude before installation. Zero visual rounds have been performed.
+
+Source hashes:
+
+- Recipe: ad469d6e4bf9ce0455772a0dc27cef5cf35fbdb944b1d33c714bd2384279282a.
+- Presentation: b80ef925af615c6ad3d7723fb9e17ea9dbb8ccb853a2c264099a0f241c707642.
+- Scenario: d358ec4e092462d48ea1cafa8ca6cdfaa19de1e5a29dda983c3ec49fb0cd233e.
+- Frozen test: 980afce57f84e6457a83db61464bbaf0817f2ceae23c7af9dd4ca399bd2c58e7.
+- Frozen fit input: 42113797fca80592f9a99a00238054da4b0901e958ae4b2365860f1be9a2a498.
+
+Changed assertions: none. Build/lane/full gates, actual comparison, art/frame
+review, in-game credits and runtime/Convoy Raid installation remain pending.
+No live folder, Preview, port 5174, real saves or protected audio was touched.
+
+### Removed
+
+No current art or original licensed source was replaced. Private generated GLB,
+manifest, logs and witnesses remain ignored evidence and are not committed.
+There is no prior runtime tanker or generator to retire. No switch or gameplay
+event was installed by this source stage; future removal/installation belongs
+to the approved continuation after review.
