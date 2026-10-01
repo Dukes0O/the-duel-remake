@@ -9,7 +9,7 @@ import {execFileSync} from 'node:child_process';
 import {build} from 'vite';
 const root = resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
-const candidateSha = '47f76f334ee1025b8ad0cdef5539dd85e86f899f1b67b4022f35263d7d73ef35';
+const candidateSha = '29a3873ae936dcd80ca6593d46537ce77cccda206a645e8948c06ea89a9a4f46';
 async function nativeBundle() {
   const entry = join(root, '.qa-dist/vesper-comparison.virtual.js').replaceAll('\\', '/');
   const module = join(root, 'src/rigged-fighter.js').replaceAll('\\', '/');
@@ -22,7 +22,7 @@ async function nativeBundle() {
   return (Array.isArray(result) ? result[0] : result).output.find(row => row.type === 'chunk').code;
 }
 export async function run(context) {
-  const candidate = resolve(process.env.VESPER_ART_ASSET || join(root, '.evidence/vesper-fresh-output/candidate/vesper.glb'));
+  const candidate = resolve(process.env.VESPER_ART_ASSET || join(root, '.evidence/vesper-round2/candidate/vesper.glb'));
   const local = relative(root, candidate);
   assert(!isAbsolute(local) && !local.startsWith('..') && /^\.evidence[\\/]/.test(local));
   const bytes = await readFile(candidate); assert.equal(sha(bytes), candidateSha);
