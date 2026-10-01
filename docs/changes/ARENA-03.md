@@ -1221,3 +1221,90 @@ Focused verification with the worker's two held guard edits: node --test
  passes. Byte comparison with freeze 42ffd63 proves the test file differs
  only by three fixture/comment lines; every assertion and helper is unchanged.
  No lane/build or whole-card merge clearance is claimed.
+
+## Final narrow player guards and lazy raider count — current source
+
+Built after independent player RED freeze 42ffd6341caa6ef0fad5d2b2fac2ad3cff00514d
+and the reviewed native clear-line fixture correction at
+48ae971c34255567d2a02bb5a9925f0b2763315b. No frozen helper or assertion was
+changed by the source worker. The independent author proved the same corrected
+8 m no-cargo pose still refuses launch on original 8871591 loaded in memory,
+and that the restored native launch physically removes 12 armor. The original
+40 m hit pose met a real raised ramp 27.56 m before the target; that fixture
+correction changed placement only and is recorded above.
+
+The source delta is limited to three lines:
+
+- The carrier-aware Fuel launch check applies only when enemy is true.
+- The corresponding Fuel bolt-guidance check applies only when projectile.enemy
+  is true. The player's exact prior finished/crushed/combatWrecking checks and
+  normal non-Fuel paths remain. CPU standing-carrier and no-cargo rules, physical
+  damage protection, aim spread, weapon range and reward provenance remain.
+- Removed only the eager knockdownCounted:false initializer from generated
+  raiders. The existing lazy !raider.knockdownCounted check and true assignment
+  at an actual eligible physical knockdown remain unchanged, as do every
+  damage/recovery/award rule and the first eligible on-foot entitlement.
+
+### Original full-state fingerprint: meaningful red then green
+
+Independent review compared integration 86e1f3f and Fuel every 360 ticks in
+the unchanged tools/test-onfoot-hints.mjs replay. The sole difference before
+any damage/contact was nine eagerly added false raider properties. Removing
+those properties from the review samples exactly restored the old full-state
+pin. This source worker also ran the unchanged original test before editing:
+14/15 checks passed, one failed. Actual wasteland/true fingerprint was
+535de930230e76bd5d3a189c56449dcca59f854e2d874b0faf12cce61c44d24b
+versus its original c0317a1bac65cfc107254bf6696218cf2c49944ecb7124a8ec69874979318552.
+
+After removing that eager initializer, node tools/test-onfoot-hints.mjs
+passes all 15/15 checks against the original recorded pin. Its test and
+replay JSON were neither changed nor regenerated. Red/green logs are
+raider-lazy-count-red.txt and raider-lazy-count-green.txt under the card's
+disposable evidence folder.
+
+### Final focused checks
+
+Command: node --test --test-reporter=tap tools/test-fuel-car-attribution.mjs
+ tools/test-fuel-standing-carrier.mjs tools/test-onfoot-car-contacts.mjs
+ tools/test-arena-fuel-depot.mjs tools/test-arena-fuel-run.mjs
+ tools/test-notoriety.mjs tools/test-raiders.mjs
+ tools/test-combat-projectiles.mjs tools/test-combat-projectile-order.mjs
+ tools/test-combat-replays.mjs tools/test-enemy-aim.mjs tools/test-onfoot.mjs
+ tools/test-onfoot-transition.mjs tools/test-onfoot-race.mjs
+ tools/test-onfoot-weapons.mjs tools/test-combat-field-shields.mjs
+ tools/test-arena-event.mjs tools/test-arena-feel.mjs tools/test-sal-fight.mjs
+ tools/test-arena-settlement.mjs tools/test-warlord-pay.mjs
+ tools/test-warlord-settlement.mjs tools/test-feature-flags.mjs.
+Result: 370 tests pass, zero failures or skips. The appended standing-carrier
+file passes 34 tests and 535 checks, including all 26 original CPU controls
+and all eight player controls. Car attribution passes ten tests and 242
+checks; original contacts/depot/Fuel and nearby aim/projectile/order/arena,
+Sal, reward, protection and actual 30/60/144 FPS controls pass unchanged.
+
+Separate node tools/test-replays.mjs passes all 162 ordinary fingerprints.
+No test assertion or replay pin was regenerated. git diff --check passes.
+Focused logs are player-guard-lazy-count-focused.txt and
+player-guard-lazy-count-replays.txt in .evidence/2026-09-30/ARENA-03.
+
+| Current narrow source | SHA-256 |
+| --- | --- |
+| src/combat-weapons.js | b37efa29b8e9834886ed20dba8cf39a1c469e246608a108a839e030fa4e601ab |
+| src/combat-projectiles.js | f36e7c9b109a72e15d0dc2b36ce05451a9ba0cffcbfd6fccdc78c63e3cad4747 |
+| src/raiders.js | d0045f2216943659b82eb50fac55b2d52e40a6675742cd7d0f53d53bcb2b7c57 |
+
+### Ownership and remaining gates
+
+Only combat-weapons.js, combat-projectiles.js, raiders.js and this note belong
+to this selective source freeze. The Director's unstaged
+tools/scenarios/arena-fuel-run.mjs work is neither staged, changed nor reverted
+by the source worker. Owned source files are clean after this commit; the
+whole worktree retains that separately owned scenario edit. No heavy lane/full
+gate was run here. Independent review, Save Guardian, exact lane/build, current
+browser/feel/audio and Claude review remain the Director's merge gates.
+
+### Removed — final narrow player guards and lazy count
+
+Removed carrier-only eligibility from player crossbow launch/guidance and the
+eager false raider counter field. Lazy physical counting and every award rule
+remain. No frozen assertion, fingerprint, damage/tuning rule, runtime asset,
+protected audio file, save key/schema, live folder, Preview or real save changed.

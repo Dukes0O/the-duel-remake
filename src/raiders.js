@@ -66,7 +66,6 @@ export function createRaidZones(course, seed) {
         x: at.x, y: at.y, z: at.z, yaw: Math.atan2(road.x - at.x, road.z - at.z),
         groundY: at.y, crewId: 'tusk', health: T.health, maxHealth: T.health,
         knockedDown: false, knockdownRemaining: 0, knockdownAwarded: false,
-        knockdownCounted: false,
         firedLap: 0};
     });
     const warningS = course.phase(s - 125);

@@ -16,7 +16,7 @@ function steerBolt(duel, projectile, dt, sampleSeconds = dt * .5) {
       !Number.isFinite(projectile.launchBearing) || !(dt > 0)) return;
   const state = duel.state;
   const target = projectile.targetIndex < 0 ? state : state.opponents[projectile.targetIndex];
-  if (!target || (state.arena?.mode === 'fuel-run'
+  if (!target || (projectile.enemy && state.arena?.mode === 'fuel-run'
     ? arenaTargetOutOfPlay(duel, target)
     : target.finished || target.crushed || target.combatWrecking)) return;
   const speed = Math.hypot(projectile.vx, projectile.vz);

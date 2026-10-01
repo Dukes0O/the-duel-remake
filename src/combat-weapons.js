@@ -275,7 +275,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
     }
     burst(combat, at, 'star');
   } else {
-    if (weapon === 'crossbow' && (!target || (state.arena?.mode === 'fuel-run'
+    if (weapon === 'crossbow' && (!target || (enemy && state.arena?.mode === 'fuel-run'
       ? arenaTargetOutOfPlay(duel, target)
       : target.finished || target.crushed || target.combatWrecking))) return false;
     const count = weapon === 'bomb' ? T.bomb.baseCount + T.bomb.countPerLevel * level : 1;
