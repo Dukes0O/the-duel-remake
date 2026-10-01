@@ -5,9 +5,9 @@ import * as simPolice from './sim-police.js';
 import * as simLaps from './sim-laps.js';
 import * as simCrash from './sim-crash.js';
 import * as simResults from './sim-results.js';
-import {normalizeWeapons} from './weapon-upgrades.js';
+import {normalizeWeapons, WEAPON_IDS} from './weapon-upgrades.js';
 import {normalizeCarLoadout} from './car-loadout.js';
-import {WEAPONS,createCombat,fireWeapon,stepCombat,supportsCombat} from './combat.js';
+import {WEAPONS,createCombat,fireWeapon,stepCombat,supportsCombat,clearArsenalState} from './combat.js';
 import {initializeCombatArmor} from './combat-armor.js';
 import {initializeRaiders, stepRaiders} from './raiders.js';
 import {initializeFootTransition, stepFootTransition,
@@ -118,7 +118,11 @@ export class Duel {
   }
 
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
-  emit(ev) { for (const fn of this.listeners) fn(this.state, ev); }
+  emit(ev) {
+    if (ev.stageResult || ev.gameover || ev.arenaResult || ev.menu || ev.complete)
+      clearArsenalState(this);
+    for (const fn of this.listeners) fn(this.state, ev);
+  }
   destructionEnabled() {
     return true;
   }
@@ -175,7 +179,7 @@ export class Duel {
     this.state.mode = mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
     this.state.weaponLoadout=this.state.mode==='wasteland'&&
       this.featureFlags.enabled('wasteland2')?
-      normalizeCarLoadout(weaponLoadout,Object.keys(WEAPONS)):null;
+      normalizeCarLoadout(weaponLoadout,WEAPON_IDS):null;
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
     this.state.combatArmorKit = this.state.mode === 'wasteland' &&
@@ -204,6 +208,7 @@ export class Duel {
   }
 
   _loadStage(idx) {
+    clearArsenalState(this);
     const s = this.state;
     s.stageIndex = idx;
     this.course = new Course(COURSE[idx], this.seed, {
@@ -323,7 +328,7 @@ export class Duel {
     s.opponentCount = opponents.length;
     s.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[s.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     s.mode = 'wasteland';
-    s.weaponLoadout = normalizeCarLoadout(weaponLoadout, Object.keys(WEAPONS));
+    s.weaponLoadout = normalizeCarLoadout(weaponLoadout, WEAPON_IDS);
     s.combatArmorKit = validArmorKit(combatArmorKit);
     s.crewId = Object.hasOwn(CREW, crewId) ? crewId : 'rook';
     s.lives = LIVES.start; s.totalTimeSec = 0; s.penaltySec = 0; s.score = 0; s.nearMisses = 0;
@@ -334,6 +339,7 @@ export class Duel {
   }
 
   _loadArena(venue, mode, opponentSpecs) {
+    clearArsenalState(this);
     const s = this.state;
     // Keep a valid index for code that reads the course list; the arena
     // itself always reads `this.course` and `state.arena`.

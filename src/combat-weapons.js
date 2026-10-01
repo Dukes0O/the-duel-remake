@@ -5,11 +5,20 @@ import {makeRng} from './rng.js';
 import {WEAPONS, CPU_COMBAT, COMBAT_TUNING} from './wasteland-tuning.js';
 import {arenaTargetOf, arenaTargetOutOfPlay, combatOwnerId} from './combat-teams.js';
 import {footMoveDirection} from './onfoot.js';
+import {carEffect} from './arsenal/car-effects.js';
+import {deployOil} from './arsenal/oil.js';
+import {deploySmoke} from './arsenal/smoke.js';
 
 export {WEAPONS};
 const T = COMBAT_TUNING;
 
 export const supportsCombat = stage => !!stage?.hasRival && !stage.practice && !stage.stuntTrial;
+
+export function arsenalEnabled(duel) {
+  return duel.state.mode === 'wasteland' && duel.state.wastelandGateDiscovered === true &&
+    duel.featureFlags?.enabled('wasteland2') === true &&
+    duel.featureFlags?.enabled('arsenal') === true;
+}
 
 export function createCombat(levels) {
   return {
@@ -233,11 +242,19 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
       state.paused || !actor || actor.finished || actor.crushed || actor.combatWrecking ||
       actor.impactTimer > 0 || !WEAPONS[weapon]) return false;
   if (!enemy && state.onFoot) return false;
+  const arsenal = arsenalEnabled(duel);
+  const rearHazard = weapon === 'oil' || weapon === 'smoke';
+  if (rearHazard && (!arsenal || enemy)) return false;
+  if (arsenal && carEffect(actor, 'disabled')) return false;
   if (!enemy && combat.cooldowns[weapon] > 0) return false;
 
   const at = point(duel, actor);
-  const level = enemy ? 0 : combat.levels[weapon];
-  if (weapon === 'ufo') {
+  // Rear control weapons remain at L0 until the reviewed upgrade consumer slice.
+  const level = enemy || rearHazard ? 0 : combat.levels[weapon];
+  if (rearHazard) {
+    const hazard = weapon === 'oil' ? deployOil(duel, actor) : deploySmoke(duel, actor);
+    if (!hazard) return false;
+  } else if (weapon === 'ufo') {
     if (enemy) return fireCpuUfo(duel, actor, at);
     const destination = ufoDestination(duel);
     if (destination.kind === 'blocked') {

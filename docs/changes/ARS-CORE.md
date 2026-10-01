@@ -879,3 +879,52 @@ No source flag, launcher, registry, game, UI, audio, sound bank, asset, dependen
 ### Removed — flag-boundary tests
 
 Replaced only the reviewed catalog expectation that the real switch dictionary has exactly eight entries. The same eight entries and every old release/retirement/Fuel assertion remain; the ninth required dev entry is explicit. No test, script, replay fingerprint, runtime path, source, licensed original, asset or player data was removed. Ignored raw RED logs are retained until their verdict is consumed.
+
+
+## Covered native partial source: 1 October 2026
+
+Built on clean tests-first lane `71fcb5d8ee737659d5371d7b1a765265720be74d`, with the normal integration merge retained. Board hook grant `e0b7fff` and the Director's narrowed follow-up authorize this partial slice. Frozen core/save assertions, fixtures, helpers and pins remain unchanged.
+
+The real registry now contains L0 Oil and Smoke, with recharge of 10 and 14 seconds. Arsenal starts in dev, and both the race view and the launch boundary require the player's recorded discovery and enabled Wasteland/Arsenal switches. The player launch path creates the reviewed real hazard, rejects deployment during recharge and respects the shared disabled effect. The driving boundary respects disabled boost while retaining ordinary acceleration and driving. Hazard and effect updates run from the real combat fixed step only when Arsenal is active; existing pickup/AI/projectile order stays intact. Effects age before new contacts, so a new contact receives its full authored duration.
+
+Stage/arena replacement clears the existing actors before replacing them. Actual terminal events (stageResult, gameover, arenaResult, menu, complete) clear hazards and each current car's private timed effects. No transient Arsenal field is added to sampled race state or a profile. No inactive RNG is consumed. The game's default slots and the existing starter upgrade/HUD enumerations now use the four WEAPON_IDS explicitly, so adding registry entries does not expose incomplete controls or alter an Arsenal-off loadout. The Preview launcher source requests Arsenal; the launcher was never executed.
+
+This is partial source, not a completed feature. New CPU rear deployment remains rejected at the shared launch boundary until the separate per-CPU recharge and scheduler consumer slice is independently frozen. Native seeded CPU loadouts, road/arena Oil spin and avoidance, real road hit history/reset, bound App purchase/equip/UI admission, hazard visuals, context-dependent targeting and upgraded recharge remain pending. The Director reports Claude's written context and upgrade answers at integration e5a9490; their implementation still waits for frozen consumer acceptance and the held context-file grant. Audio dispatch and protected bank cues remain pending; no substitute cue is used or counted complete. The reviewed five core modules and all three pure save hooks remain byte-identical.
+
+### Checks and remaining REDs
+
+- Independent frozen baseline recorded 13 native failures and three design TODOs. The unchanged combined command `node --test --test-reporter=tap tools/test-arsenal-core.mjs tools/test-arsenal-save.mjs` now reports **162 cases: 150 pass, nine fail, three TODO**, reaching **498 core and 602 save checks**. Four actual integration cases newly pass: dev/discovery view, player deploy/recharge/disabled launch, disabled native driving and new-weapon admission. All **98 save cases/602 checks** pass.
+- The nine failures are eight held native CPU/targeting consumers plus one invalid lifecycle fixture. That fixture calls `_finishStage()` with completedLaps=0 and s=500. The genuine finish method requires completed laps and the finish position, returns false and emits no terminal. Its cleanup assertion therefore remains RED. The Director approved preserving this successful-finish guard and requested independent fixture review; no assertion or fixture was edited here.
+- A memory-only genuine finish witness checks nine conditions: an unsuccessful native finish preserves the hazard/effect and emits no terminal; after setting completedLaps=lapsTotal and s=duel.raceLength, the same method returns true, emits stageResult, reaches stage_result and clears both. This supports the real lifecycle behavior; it does not substitute for correcting and rerunning the independent frozen fixture.
+- `node --test --test-name-pattern '^CORE:' --test-reporter=tap tools/test-arsenal-core.mjs`: **48/48, exactly 449 checks** pass. The reviewed body orientation and actual walking-fighter sightlines stay unchanged.
+- Sixteen unchanged native control suites pass **117/117 TAP cases**: feature flags, Wasteland beta, combat, projectiles, projectile order, opponents, field shields, pickups2, car loadouts, weapon upgrades, combat HUD, effects, modules, on-foot hints, arena events and the Wasteland easter egg. Feature flags retain **32 checks** and on-foot hints retain **15/15** and their original full-state pin. The enclosing shell's trailing rg produced exit 1 because no failure text was found; the TAP report itself has fail=0.
+- `node tools/test-replays.mjs`: **162/162 unchanged fingerprints** across 18 cases, 16 events, eight categories, three presentation frame rates and three runs.
+- `npm run build`: passes in the isolated lane's regular dist; the existing large-chunk warning remains. No Preview/live output was touched.
+
+Private logs are under ignored `.evidence/2026-10-01/ARS-CORE/native-partial/`. No heavy lane/full gate, browser, new Arsenal replay, balance, save-budget expansion, frame pacing, visual review or audio clearance is claimed. Whole-card review, Save Guardian, Claude review and exact lane/build gates remain the Director's next steps after the missing consumers are built. Changed tests/assertions/fixtures/pins: **none**.
+
+### Source freeze hashes
+
+| File | SHA-256 |
+| --- | --- |
+| src/combat-weapons.js | f25d4fc37671f561d98d3fbf347885d4209c3ec8469ca1bb597cccdfacea44fe |
+| src/combat.js | 8b052345ac7e27b1df7577a8c98af8c0ace85bca83de5a34c72cbb3939d60eee |
+| src/feature-flags.js | 5b4921d09daf7f264df71f14a61c90b245c0f42bd5a4868358d32777fc1ba335 |
+| src/game.js | 54f5445a4cbade43fe328f42f8ff783c3137f0953defb27f36e50597b1daa8fa |
+| src/screen-armory.js | 2d9481e1fdbf474684a0952800f54e582bc7966a2e5a7b6c3f599073528138c7 |
+| src/screen-router.js | f571b2c7c2e8872ef01c0441763b81541ca9032318e28eea672fa142e57e224a |
+| src/sim-driving.js | 532b73b0f218f33600753248f0eda107366da529564f0907931337d7df11f56a |
+| src/wasteland-access.js | fbab76a6f6ce0956e482c8e98d1646cd2358f053798b9eefd6b6c6525e288c3b |
+| src/wasteland-tuning.js | 426e9a05d3d4e5e08e7e43a1db1d5020889fd31fb9009cd0d492c0d240b17e7f |
+| start-preview.bat | 0a0f2a058afc7cbad0fee4560eaf6cf90679ac15278e83ba49bb67ac1a76f55f |
+| Unchanged tools/test-arsenal-core.mjs | fcbf6e253bad37c5aacbd5c688304c222be5ffeca36bc673e468fc4ce571c210 |
+| Unchanged tools/test-arsenal-save.mjs | 54480590357b34f190dc2ce8f713ccb420ece5a959480ade437254ecb5f6b945 |
+| Unchanged src/weapon-upgrades.js | 6b5f76ac6d537b9b80986cf11bbaea59142fc202cb4da8736707d999489a8cc8 |
+| Unchanged src/car-loadout.js | e20d84276b5d8c5e5e45629579a306db220354278eff16ea88fdf7c9600d918e |
+| Unchanged src/wasteland-progress.js | 40e9934fbbc5bf19f1d00ce28692330653d3ceb13c1b67aa344987ec0c4eac6f |
+| Unchanged held src/combat-projectiles.js | f36e7c9b109a72e15d0dc2b36ce05451a9ba0cffcbfd6fccdc78c63e3cad4747 |
+| Unchanged held src/onfoot-weapons.js | 8161e2dd90ab26cf61c32e26a131a3d64e7849b0f5db5dc5a9a7dda33fd1c922 |
+
+### Removed
+
+Replaced registry-wide default-slot, starter-upgrade and initial HUD enumeration with the explicit existing four starters in the same change. Removed the packed first registry line while retaining all existing starter values. No old gameplay, test, fixture, replay, licensed source, asset or protected audio was removed or replaced. The limited player L0 launch and CPU hold will be completed by the independently tested native consumer slice on this same card; no parallel implementation or fallback was added. The Preview source-only flag change does not remove or rebuild Preview output. Save hooks and the existing core modules were preserved.

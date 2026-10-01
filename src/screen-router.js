@@ -16,6 +16,7 @@ import {createCombatHud, combatHudEnabled} from './combat-hud.js';
 import {createHiddenRoadUi} from './hidden-road-ui.js';
 import './hidden-road-ui.css';
 import {WEAPONS, ufoDestination} from './combat.js';
+import {WEAPON_IDS} from './weapon-upgrades.js';
 import './screen-menu.css';
 import './screen-players.css';
 import './screen-leaderboard.css';
@@ -72,7 +73,7 @@ root.querySelector('.scene-line').insertAdjacentHTML('beforeend','<button type="
 const weaponHud=document.createElement('section');weaponHud.className='weapon-hud';weaponHud.hidden=true;weaponHud.setAttribute('aria-label','Combat weapons');
 const gamepadWeaponDirections={ufo:'↑',bomb:'→',crossbow:'↓',star:'←'};
 const gamepadWeaponNames={ufo:'Up',bomb:'Right',crossbow:'Down',star:'Left'};
-weaponHud.innerHTML=Object.entries(WEAPONS).map(([id,w])=>`<button type="button" data-weapon="${id}" title="${w.name} · Key ${w.key} · Gamepad D-pad ${gamepadWeaponNames[id]}" aria-label="${w.name}, keyboard ${w.key}, gamepad D-pad ${gamepadWeaponNames[id]}">${w.key} ${gamepadWeaponDirections[id]} · ${w.name}</button>`).join('')+'<span class="weapon-status"></span>';
+weaponHud.innerHTML=WEAPON_IDS.map(id=>[id,WEAPONS[id]]).map(([id,w])=>`<button type="button" data-weapon="${id}" title="${w.name} · Key ${w.key} · Gamepad D-pad ${gamepadWeaponNames[id]}" aria-label="${w.name}, keyboard ${w.key}, gamepad D-pad ${gamepadWeaponNames[id]}">${w.key} ${gamepadWeaponDirections[id]} · ${w.name}</button>`).join('')+'<span class="weapon-status"></span>';
 root.querySelector('#overlay').append(weaponHud);const weaponStatus=weaponHud.querySelector('.weapon-status');
 const weaponButtons=[...weaponHud.querySelectorAll('[data-weapon]')];
 weaponHud.addEventListener('click',e=>{const button=e.target.closest('[data-weapon]');if(button)app.duel.fireWeapon(button.dataset.weapon);});

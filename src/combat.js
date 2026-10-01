@@ -2,8 +2,19 @@ import {stepPickups} from './combat-pickups.js';
 import {stepCombatAI} from './combat-ai.js';
 import {stepProjectiles, tickImpactCooldowns} from './combat-projectiles.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {arsenalEnabled} from './combat-weapons.js';
+import {clearHazards, stepHazards} from './arsenal/hazards.js';
+import {clearCarEffects, stepCarEffects} from './arsenal/car-effects.js';
 
 export {WEAPONS, supportsCombat, createCombat, ufoDestination, fireWeapon} from './combat-weapons.js';
+
+export function clearArsenalState(duel) {
+  clearHazards(duel);
+  for (const actor of [duel.state, ...duel.state.opponents, ...duel.state.traffic,
+    duel.state.police?.pursuit]) {
+    if (actor) clearCarEffects(actor);
+  }
+}
 
 // Preserve the original update order. Projectiles resolve after pickups and
 // scheduled CPU attacks, so a weapon fired this tick can hit this tick.
@@ -30,4 +41,10 @@ export function stepCombat(duel, dt) {
 
   stepCombatAI(duel, dt);
   stepProjectiles(duel, dt);
+  if (arsenalEnabled(duel)) {
+    for (const actor of [state, ...state.opponents, ...state.traffic, state.police?.pursuit]) {
+      if (actor) stepCarEffects(actor, dt);
+    }
+    stepHazards(duel, dt);
+  }
 }

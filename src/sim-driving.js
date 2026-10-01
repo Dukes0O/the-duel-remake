@@ -6,6 +6,8 @@ import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
 import { stepKnock } from './vehicle-knock.js';
+import {arsenalEnabled} from './combat-weapons.js';
+import {carEffect} from './arsenal/car-effects.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -138,7 +140,7 @@ export function _drive(dt) {
   const nitro = s.upgrades.nitro, boostDrain = BOOST.drainPerSec / ((1 + nitro * .14) * car.boostCapacity);
   const boostTopSpeed = BOOST.topSpeedMult + nitro * .025 + (car.nitroSpeedBonus ?? 0);
   if(s.practice)s.boost=1;
-  s.boosting = !!s.input.boost && s.boost > 0 && s.gear>=0 && s.speedMph >= (s.practice?0:BOOST.minSpeedMph) && surface.boostAllowed && s.input.brake === 0;
+  s.boosting = !(arsenalEnabled(this) && carEffect(s, 'disabled')) && !!s.input.boost && s.boost > 0 && s.gear>=0 && s.speedMph >= (s.practice?0:BOOST.minSpeedMph) && surface.boostAllowed && s.input.brake === 0;
   if (s.boosting) {
     const available = Math.min(1, s.boost / (boostDrain * dt));
     s.boost = s.practice?1:Math.max(0, s.boost - boostDrain * dt);

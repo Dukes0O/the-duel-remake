@@ -1,4 +1,4 @@
-import {getProfileWeapons, WEAPON_UPGRADE_COSTS, WASTELAND_UPGRADE_COSTS} from './weapon-upgrades.js';
+import {getProfileWeapons, WEAPON_IDS, WEAPON_UPGRADE_COSTS, WASTELAND_UPGRADE_COSTS} from './weapon-upgrades.js';
 import {WEAPONS} from './combat.js';
 import {CARS} from './config.js';
 import {ARMOR_KITS, EARNED_ARMOR_KITS, armorKitDetails, ownsArmorKit, getEquippedArmorKit} from './armor-kits.js';
@@ -18,7 +18,7 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
     const scrapCareer=wastelandEnabled&&saved.wasteland?.discoveredGate===true;
     const costs=scrapCareer?WASTELAND_UPGRADE_COSTS:WEAPON_UPGRADE_COSTS;
     const balance=scrapCareer?saved.wasteland.scrap:saved.credits;
-    return `<details class="weapon-shop" open><summary>WEAPON UPGRADES · MAD MAX DUEL</summary><p>All four base weapons are included. Upgrades apply to every car next race.</p><div class="upgrade-grid">${Object.entries(WEAPONS).map(([id, w]) => {
+    return `<details class="weapon-shop" open><summary>WEAPON UPGRADES · MAD MAX DUEL</summary><p>All four base weapons are included. Upgrades apply to every car next race.</p><div class="upgrade-grid">${WEAPON_IDS.map(id => [id, WEAPONS[id]]).map(([id, w]) => {
       const level = weapons.levels[id];
       const cost = costs[level];
       return `<article class="upgrade-card"><h3>${w.name}</h3><b>LEVEL ${level} / 3</b><p>${details[id]}</p><button data-weapon-upgrade="${id}" ${level===3||balance<cost?'disabled':''}>${level===3?'MAXED':`UPGRADE · ${cost} ${scrapCareer?'SCRAP':'CR'}`}</button></article>`;}).join('')}</div></details>`;
