@@ -1,3 +1,5 @@
+import {noteFuelDamage} from './arena/modes/fuel-run.js';
+
 // Whose side is a car on? (docs/SCRAPDOME.md section 7, decision 4)
 // Outside an arena event the answer is exactly the established rule: the
 // player against the computer cars, with owners reported as 'player' or 'cpu'.
@@ -39,6 +41,20 @@ export function outOfPlay(duel, actor) {
   return (arenaParticipant(duel, actor)?.protectedSec || 0) > 0;
 }
 
+// Fuel targeting follows the active carrier while its parked car can remain
+// physically out of play. Other arenas keep the established car-only rule.
+export function arenaTargetOutOfPlay(duel, actor) {
+  const state = duel.state;
+  if (state.arena?.mode !== 'fuel-run') return outOfPlay(duel, actor);
+  const participant = arenaParticipant(duel, actor);
+  if (!participant?.fuelCanisterId) return true;
+  if (actor === state && state.onFoot) {
+    return !state.fighter || state.fighter.knockedDown || actor.finished ||
+      actor.crushed || (participant.protectedSec || 0) > 0;
+  }
+  return outOfPlay(duel, actor);
+}
+
 // The cars a projectile from this owner may strike, in a stable order.
 export function arenaStrikeCandidates(duel, ownerId) {
   const state = duel.state, owner = arenaActor(duel, ownerId);
@@ -50,13 +66,14 @@ export function arenaStrikeCandidates(duel, ownerId) {
 export function arenaTargetOf(duel, actor) {
   const participant = arenaParticipant(duel, actor);
   const target = participant?.targetId ? arenaActor(duel, participant.targetId) : null;
-  return target && !outOfPlay(duel, target) && hostile(duel, actor, target) ? target : null;
+  return target && !arenaTargetOutOfPlay(duel, target) && hostile(duel, actor, target) ? target : null;
 }
 
 // Record armor removed by a hit, for wreck credit and damage totals.
 export function noteArenaDamage(duel, victim, removed, ownerId) {
   const state = duel.state, target = arenaParticipant(duel, victim);
   if (!state.arena || !target || !(removed > 0)) return;
+  if (state.arena.mode === 'fuel-run') noteFuelDamage(duel, target, removed);
   if (ownerId && ownerId !== target.id) {
     target.lastHitBy = ownerId; target.lastHitAt = state.stageTimeSec;
     const owner = state.arena.participants.find(p => p.id === ownerId);

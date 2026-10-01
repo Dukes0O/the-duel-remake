@@ -349,7 +349,7 @@ export class App {
   restart() {
     if (this.duel.state.arena?.mode === 'warlord')
       return this.startWarlordFight(this.duel.state.arena.warlordId);
-    if (this.duel.state.arena) return this.startArenaEvent();
+    if (this.duel.state.arena) return this.startArenaEvent({mode: this.duel.state.arena.mode});
     if (this.duel.state.hiddenRoadVisit) {
       this.returnToMenu();
       return this.visitWasteland();
@@ -520,6 +520,7 @@ export class App {
   }
   _settleArenaResult(event,state){
     if (state?.arena?.mode === 'warlord') return this._settleWarlordResult(event, state);
+    if (state?.arena?.mode === 'fuel-run') return this._settleFuelResult(event, state);
     const result=state?.arena?.result,currentHold=Number.isSafeInteger(this.profile?.wasteland?.territories?.kettle?.hold)?this.profile.wasteland.territories.kettle.hold:0;
     if(result&&result.scrapEarned==null){Object.assign(result,{scrapEarned:0,holdAdded:0,hold:currentHold,settlementSaved:false});}
     if(!result||event?.result!==result||state!==this.duel.state||
@@ -535,10 +536,80 @@ export class App {
       return false;
     }
     this.profile=settled.profile;
-    if(!this._saveShopProfile(previous))return false;
+    if(!this._saveShopProfile(previous)){
+      return false;
+    }
     Object.assign(result,{scrapEarned:settled.scrapEarned,
       scrapBalance:this.profile.wasteland.scrap,holdAdded:settled.holdAdded,
       hold:settled.hold,settlementSaved:true});
+    return true;
+  }
+  _settleFuelResult(event, state) {
+    const result = state?.arena?.result;
+    if (result && result.scrapEarned == null) Object.assign(result, {
+      scrapEarned: 0, holdAdded: 0, settlementSaved: false, settlementRetryable: false,
+      hold: warlordHold(this.profile, 'kettle'),
+    });
+    if (!result || event?.result !== result || state !== this.duel.state ||
+        !this.runId || !this._switches().enabled('scrapdome') ||
+        !this._switches().enabled('fuel-run') || result.settlementSaved ||
+        this._runPlayerId !== this.player.id || state.playerId !== this._runPlayerId) return false;
+    const durable = readWarlordRegistry();
+    if (!result.settlementRetryable) {
+      const verified = this._warlordVerifiedOwner?.ownerId === this.player.id
+        ? this._warlordVerifiedOwner : null;
+      this._fuelSettlementRetry = {state, result, runId: this.runId, ownerId: this.player.id,
+        unsaved: this.profileSaved === false,
+        registryWasAbsent: durable.status === 'absent' && !verified && this.profileSaved === false,
+        ownerSnapshot: verified?.snapshot ?? null};
+      result.settlementRetryable = true;
+    }
+    return this._writeFuelResult(state, result, durable);
+  }
+  _writeFuelResult(state, result, durable) {
+    const pending = this._fuelSettlementRetry;
+    if (!pending || pending.state !== state || pending.result !== result ||
+        pending.runId !== this.runId || pending.ownerId !== this.player.id) return false;
+    let registry, profile;
+    if (durable.status === 'ready') {
+      registry = durable.registry;
+      const owner = registry.players.find(player => player.id === pending.ownerId);
+      if (!owner || registry.activePlayerId !== pending.ownerId) return false;
+      if (pending.unsaved && JSON.stringify(owner.profile) !== pending.ownerSnapshot) return false;
+      profile = pending.unsaved ? this.profile : owner.profile;
+      registry = replacePlayerProfile(registry, pending.ownerId, profile);
+      if (!validWarlordRegistry(registry)) return false;
+    } else if (durable.status === 'absent' && pending.registryWasAbsent &&
+        this.players.activePlayerId === pending.ownerId && validWarlordRegistry(this.players)) {
+      profile = this.profile;
+      registry = replacePlayerProfile(this.players, pending.ownerId, profile);
+      if (!validWarlordRegistry(registry)) return false;
+    } else return false;
+    const settled = settleArenaResult(profile, {runId: pending.runId,
+      ownerPlayerId: pending.ownerId, activePlayerId: this.player.id,
+      arena: state.arena, cpuDifficulty: state.cpuDifficulty || this.cpuDifficulty});
+    if (!settled.awarded) {
+      if (settled.key && profile.wasteland?.settledResults?.includes(settled.key)) {
+        this._adoptWarlordRegistry(registry, true);
+        Object.assign(result, {scrapEarned: 0, holdAdded: 0, settlementSaved: true,
+          settlementRetryable: false, scrapBalance: this.profile.wasteland.scrap,
+          hold: warlordHold(this.profile, 'kettle')});
+        this._fuelSettlementRetry = null;
+      }
+      return false;
+    }
+    const candidate = replacePlayerProfile(registry, pending.ownerId, settled.profile);
+    // Rebase on durable progress each time, and expose nothing until one write succeeds.
+    if (!savePlayers(candidate)) {
+      this._adoptWarlordRegistry(registry, false);
+      result.hold = warlordHold(this.profile, 'kettle');
+      return false;
+    }
+    this._adoptWarlordRegistry(candidate, true);
+    Object.assign(result, {scrapEarned: settled.scrapEarned,
+      scrapBalance: this.profile.wasteland.scrap, holdAdded: settled.holdAdded,
+      hold: settled.hold, settlementSaved: true, settlementRetryable: false});
+    this._fuelSettlementRetry = null;
     return true;
   }
   _settleWarlordResult(event, state) {
@@ -742,20 +813,31 @@ export class App {
     this._clearHiddenRoadInput();
     return beginWarlordEvent(this.duel);
   }
-  startArenaEvent({opponents = this._arenaOpponents ?? 3} = {}) {
-    return this._startArenaFight({opponents});
+  fuelRunAvailable() {
+    return this.arenaAvailable() && this._switches().enabled('fuel-run') === true &&
+      this.profile.wasteland?.rank >= 6;
   }
-  _startArenaFight({opponents, warlordId = null}) {
+  startArenaEvent({mode = 'last-car-rolling', opponents = this._arenaOpponents ?? 3} = {}) {
+    if (!['last-car-rolling', 'fuel-run'].includes(mode)) return false;
+    return this._startArenaFight({mode, opponents});
+  }
+  _startArenaFight({opponents, warlordId = null, mode = 'last-car-rolling'}) {
     const state = this.duel.state;
-    if (!(warlordId ? this.warlordsAvailable() : this.arenaAvailable()) ||
-        !(this.isYardHomeActive() || state.arena)) return false;
-    this._refreshPlayer();
+    // Fuel checks the current durable owner before creating any run state.
+    // The existing failed-save guard keeps unsaved session progress intact.
+    if (mode === 'fuel-run') this._refreshPlayer();
+    const available = warlordId ? this.warlordsAvailable() :
+      mode === 'fuel-run' ? this.fuelRunAvailable() : this.arenaAvailable();
+    if (!available || !(this.isYardHomeActive() || state.arena)) return false;
+    if (mode !== 'fuel-run') this._refreshPlayer();
     const count = Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
     const car = isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42';
     const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
-    const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map(key => ({car: key, upgradeLevel: level}));
-    if (warlordId) this._rememberWarlordOwner();
+    const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map((key, index) => ({car: key, upgradeLevel: level,
+      ...(mode === 'fuel-run' ? {brain: ['collector', 'rammer', 'hunter'][index]} : {})}));
+    if (warlordId || mode === 'fuel-run') this._rememberWarlordOwner();
     this._warlordSettlementRetry = null;
+    this._fuelSettlementRetry = null;
     this.runId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     this._runPlayerId = this.player.id; this._markedRaceKey = null; this._arenaOpponents = count;
     this._arenaSerial = (this._arenaSerial || 0) + 1;
@@ -765,7 +847,7 @@ export class App {
     this._racePaint = getPaintAppearance(this.profile, car,
       {muddyHollowEnabled: this._switches().enabled('muddy-hollow')}); this._racePaintCar = car;
     this.audio.unlock(); this.audio.setPaused(false);
-    const options = {car, driverId: getEquippedDriverId(this.profile),
+    const options = {mode, car, driverId: getEquippedDriverId(this.profile),
       upgrades: getUpgradeLevels(this.profile, car), difficulty: this._raceSettings.difficulty,
       cpuDifficulty: this.cpuDifficulty, seed: (1989 + this._arenaSerial * 7919) >>> 0,
       playerId: this.player.id, opponents: field, weaponLevels: getProfileWeapons(this.profile).levels,

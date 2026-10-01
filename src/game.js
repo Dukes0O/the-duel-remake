@@ -33,6 +33,7 @@ import {upgradedCar} from './progression.js';
 import {createFeatureFlags, featureFlags} from './feature-flags.js';
 import {hiddenRoadInRace, raceFeatureFlags} from './wasteland-access.js';
 import {clamp, freshDamageZones} from './sim-common.js';
+import {initializeFuelRun} from './arena/modes/fuel-run.js';
 import {ARENA_VENUES} from './arena/venues.js';
 import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
 
@@ -302,7 +303,8 @@ export class Duel {
     const venue = ARENA_VENUES[venueId], rules = ARENA_MODES[mode];
     const released = this.featureFlags.base || this.featureFlags;
     if (!this.featureFlags.enabled('scrapdome') || !released.enabled('wasteland2') ||
-        (mode === 'warlord' && !this.featureFlags.enabled('warlords')) || !venue || !rules ||
+        (mode === 'warlord' && !this.featureFlags.enabled('warlords')) ||
+        (mode === 'fuel-run' && !this.featureFlags.enabled('fuel-run')) || !venue || !rules ||
         !Array.isArray(opponents) || opponents.length < 1 || opponents.length > rules.maxOpponents ||
         opponents.some(spec => !CARS[spec?.car])) return false;
     const s = this.state;
@@ -365,6 +367,7 @@ export class Duel {
       placeActor(this, actor, slot);
       s.arena.participants[index].spawnSlot = slot.index;
     });
+    initializeFuelRun(this);
     s.combat = createCombat(s.weaponLevels);
     initializeCombatArmor(this);
     applyArenaArmor(this);
