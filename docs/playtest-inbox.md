@@ -11,6 +11,10 @@
   bolt already in flight, while keeping the CPU acquisition rule. Existing
   flight tuning stays. That part is held before native range tests and a fix;
   the separate closed-arena range fixture has independent correction review.
+  Tests048d55c now preserve all301 prior cases and add two actual released-
+  module witnesses: 308 cases306 pass2 real active-feature RED, no skips.
+  Both demonstrate launch/inflight reach loss at a legal target229.3778m;
+  the disabled-feature witnesses preserve released behavior.
 
 - **ARS-CORE audio ownership handoff:** integrated sound-bank has no
   `weapon.oil.deploy`, `weapon.oil.slip` or `weapon.smoke.deploy` entries.
