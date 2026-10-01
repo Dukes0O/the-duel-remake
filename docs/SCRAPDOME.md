@@ -600,10 +600,13 @@ Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
 - **Canisters:** four sit on pads in the middle; a taken canister's pad
   refills after 5 s. Drive over one to carry it (one at a time, shown on the
   roof). A fighter on foot can carry one too, walking at 70% speed.
-- **Depots:** each car has a coloured pad near its spawn. Drive onto yours
-  with a canister: one point.
+- **Depots:** each car has a coloured pad, 4 m in radius, near its spawn.
+  Drive onto yours with a canister: one point. (Claude review, 30 September:
+  the built 2 m pad was too small a target at speed for a young player.)
 - **Dropping:** a wreck, or losing more than 25 armor in one hit, drops the
-  canister where the car is; anyone can take it.
+  canister where the car is; anyone can take it. A fighter carrying one drops
+  it only when knocked down (docs/CREW.md, "Car weapons against fighters on
+  foot").
 - **Computer:** collectors go for canisters and avoid fights; rammers and
   hunters go after whoever carries one. Each brain uses the same pilot limits.
 
@@ -651,16 +654,18 @@ Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
 ### Convoy Raid (ARENA-07)
 
 - **Goal:** destroy an armored tanker rig in five minutes.
-- **The convoy:** a 12 tonne truck and trailer driving a fixed loop on the
-  Salt Flats at 55 km/h (it follows the loop like traffic; crash physics
+- **The convoy:** a 12 tonne armored tanker truck (one rigid vehicle: cab
+  and tank on one chassis, no separate trailer; settled 30 September 2026
+  because no free source has a trailer or hitch, and a rig on a fixed loop
+  gains nothing from one) driving a fixed loop on the Salt Flats at 55 km/h (it follows the loop like traffic; crash physics
   treats it as a very heavy body), with two escort cars (guard brain: ram
   whoever attacks the rig).
-- **Weak points:** three fuel valves on the trailer, 150 armor each, hit by
-  weapons and rams. When all three are broken the rig slows to 35 km/h and a
-  hatch on its roof opens.
+- **Weak points:** three fuel valves on the tank, 150 armor each, hit by
+  weapons and rams. When all three are broken the rig slows to 35 km/h and the
+  boarding plate on the tank roof lights up (warning lamps; nothing opens).
 - **The finish:** board the rig (CREW-03; at 35 km/h anyone can) and plant
-  the finishing charge. If nobody does within 60 s, the hatch closes and the
-  valves come back at half armor.
+  the finishing charge on the lit plate. If nobody does within 60 s, the lamps
+  go out and the valves come back at half armor.
 - **Pay:** the largest arena payout, since it is the hardest.
 - **The Tollkeeper's fight** (section 5) is this mode with his tells added.
 

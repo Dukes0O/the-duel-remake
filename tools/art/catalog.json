@@ -1166,6 +1166,308 @@
       "risk": "Not a verified CC0 option. No actual geometry/rig/action counts; shared Modular Men rig unverified. Preview also remains cartoon-like and clean.",
       "decision": "ON HOLD; no fitting until actual model and applicable licence are acquired and reviewed.",
       "changed": "Only primary preview and licence/page/access evidence cached; no model or embedded licence acquired."
+    },
+    {
+      "id": "kenney-tanker-car-parts",
+      "card": "ART-SRC-TANKER",
+      "family": "tanker-source",
+      "sourceName": "Car Kit 3.1",
+      "sourcePage": "https://kenney.nl/assets/car-kit",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Actual retained original ZIP contains License.txt stating Creative Commons Zero / CC0; extracted license, models and atlas match ZIP members exactly.",
+      "status": "awaiting-kyle",
+      "checked": "2026-09-30",
+      "downloaded": true,
+      "downloadAccess": "Existing cached free original Kenney archive; primary author page offers Continue without donating with no account.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\kenney-car-kit",
+      "reusesCatalogAsset": "kenney-car-kit",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "fac7dacac5c7874348cf19729af3ef205f3d366493edaf0a827d93f4fdf3d0c4",
+          "bytes": 4814237
+        },
+        {
+          "path": "unpacked/License.txt",
+          "sha256": "c33b7f6453d134deae7b1b8493717d9ccfa754c25ab97f6de89b88f8fda19b00",
+          "bytes": 696
+        },
+        {
+          "path": "unpacked/Models/GLB format/Textures/colormap.png",
+          "sha256": "f3622a03a20c6696065cae9cbe391351be873508af190c2ebd1d420c055787a5",
+          "bytes": 12371
+        },
+        {
+          "path": "unpacked/Models/GLB format/truck-flat.glb",
+          "sha256": "4279862f2442e96c6603c514edf50bfb932707545695d8c4747611cd3796cf3b",
+          "bytes": 207424
+        },
+        {
+          "path": "unpacked/Models/GLB format/delivery-flat.glb",
+          "sha256": "2973152df7699767692ce890b3a0845a11333a52a23aa74b86a12ed443254c1b",
+          "bytes": 214456
+        },
+        {
+          "path": "unpacked/Models/GLB format/truck.glb",
+          "sha256": "5e1bc66c343501dd7d5734b57e672dd949bf95d7abdce680c6508cef99d374f8",
+          "bytes": 176360
+        },
+        {
+          "path": "unpacked/Models/GLB format/wheel-truck.glb",
+          "sha256": "411ff9692f72e9b0490d20574e3efd94b20058732a587abc26f4952e2c91351e",
+          "bytes": 34304
+        },
+        {
+          "path": "unpacked/Models/GLB format/debris-door.glb",
+          "sha256": "c62ab01c07be9be5dfc0f940dbc933fa836019ea1bc8fd0baa2d0e52cd764ea2",
+          "bytes": 7052
+        },
+        {
+          "path": "unpacked/Models/GLB format/debris-drivetrain.glb",
+          "sha256": "4a93bba25d3004b028f8494105d1774a91797d116dcb136fde00b4882bfec652",
+          "bytes": 36896
+        },
+        {
+          "path": "unpacked/Models/GLB format/debris-tire.glb",
+          "sha256": "7c3f5968244e2c617c698820e943493b8480c7bef8535fbab04d4a501b3489e9",
+          "bytes": 26548
+        }
+      ],
+      "recipe": "tools/art/tanker-source-inspect.py",
+      "comparisonRecipe": "tools/art/tanker-source-sheet.py",
+      "runtime": [],
+      "inspection": [
+        {
+          "model": "truck-flat",
+          "path": "unpacked/Models/GLB format/truck-flat.glb",
+          "triangles": 2488,
+          "evaluatedTriangles": 2488,
+          "meshNames": [
+            "wheel-front-left",
+            "wheel-front-right",
+            "wheel-back-right",
+            "wheel-back-left",
+            "body"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "delivery-flat",
+          "path": "unpacked/Models/GLB format/delivery-flat.glb",
+          "triangles": 2574,
+          "evaluatedTriangles": 2574,
+          "meshNames": [
+            "wheel-back-left",
+            "body",
+            "wheel-front-left",
+            "wheel-back-right",
+            "wheel-front-right"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "truck",
+          "path": "unpacked/Models/GLB format/truck.glb",
+          "triangles": 2082,
+          "evaluatedTriangles": 2082,
+          "meshNames": [
+            "body",
+            "wheel-front-right",
+            "wheel-front-left",
+            "wheel-back-right",
+            "wheel-back-left"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "wheel-truck",
+          "path": "unpacked/Models/GLB format/wheel-truck.glb",
+          "triangles": 428,
+          "evaluatedTriangles": 428,
+          "meshNames": [
+            "wheel-truck"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "debris-door",
+          "path": "unpacked/Models/GLB format/debris-door.glb",
+          "triangles": 68,
+          "evaluatedTriangles": 68,
+          "meshNames": [
+            "debris-door"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "debris-drivetrain",
+          "path": "unpacked/Models/GLB format/debris-drivetrain.glb",
+          "triangles": 412,
+          "evaluatedTriangles": 412,
+          "meshNames": [
+            "debris-drivetrain"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "debris-tire",
+          "path": "unpacked/Models/GLB format/debris-tire.glb",
+          "triangles": 288,
+          "evaluatedTriangles": 288,
+          "meshNames": [
+            "debris-tire"
+          ],
+          "armatures": 0,
+          "actions": []
+        }
+      ],
+      "fit": "Original delivery-flat is the clearer cab/chassis source lead; truck-flat is the alternate. Separate wheels and approved door/drivetrain/tyre parts can be reused.",
+      "risk": "Cab and bed are one body mesh. No separate articulated trailer/frame/hitch, valves or opening roof hatch; physical scale and trim feasibility unproven. Source palette and proportions are not finished gritty art.",
+      "decision": "Pending Kyle source choice. Recommend delivery-flat + detail-tank as an existing-parts lead, with trailer/boarding gaps explicitly held. Do not fit or invent missing geometry.",
+      "changed": "No original geometry, model transforms, source materials, texture pixels or runtime asset changed. Native Blender neutral-camera renders and alpha-bound crops are review presentation only.",
+      "downloadedFrom": "https://kenney.nl/media/pages/assets/car-kit/1a312ec241-1775131960/kenney_car-kit.zip"
+    },
+    {
+      "id": "kenney-tanker-tank-parts",
+      "card": "ART-SRC-TANKER",
+      "family": "tanker-source",
+      "sourceName": "City Kit Industrial 2.0",
+      "sourcePage": "https://kenney.nl/assets/city-kit-industrial",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Actual retained original ZIP contains License.txt stating Creative Commons Zero / CC0; extracted license, models and atlas match ZIP members exactly.",
+      "status": "awaiting-kyle",
+      "checked": "2026-09-30",
+      "downloaded": true,
+      "downloadAccess": "Existing cached free original Kenney archive; primary author page offers Continue without donating with no account.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\kenney-city-kit-industrial",
+      "reusesCatalogAsset": "kenney-city-kit-industrial",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "5b381164e5760f3830a2dbee43b972deee38b2a695d091b56e238ab2910c96d2",
+          "bytes": 5045077
+        },
+        {
+          "path": "unpacked/License.txt",
+          "sha256": "60a8c5c31191256ec9779dc18745dea6d69c46f4b29703459ce064c1765a59ea",
+          "bytes": 708
+        },
+        {
+          "path": "unpacked/Models/GLB format/Textures/colormap.png",
+          "sha256": "950f4f891ebd05a2affac810e6eeb0fea1511bc39039b65a3cbf2e17d17bc6a2",
+          "bytes": 11986
+        },
+        {
+          "path": "unpacked/Models/GLB format/detail-tank-large.glb",
+          "sha256": "2fbf65dfbae114235dec65cc8730a870cf7d29dd76f9473218e96ee83e9f5f43",
+          "bytes": 47452
+        },
+        {
+          "path": "unpacked/Models/GLB format/detail-tank.glb",
+          "sha256": "9e955732e4ef9ccff4a4d6967d29d8a7d2f9ed16c903923f2568216d9f0b50d2",
+          "bytes": 31436
+        },
+        {
+          "path": "unpacked/Models/GLB format/shipping-container-a.glb",
+          "sha256": "7b2d5ca874c8e659ee6cfd1614f0470b70410b2ddc7620ac83b8954dedeb861d",
+          "bytes": 36624
+        }
+      ],
+      "recipe": "tools/art/tanker-source-inspect.py",
+      "comparisonRecipe": "tools/art/tanker-source-sheet.py",
+      "runtime": [],
+      "inspection": [
+        {
+          "model": "detail-tank-large",
+          "path": "unpacked/Models/GLB format/detail-tank-large.glb",
+          "triangles": 566,
+          "evaluatedTriangles": 566,
+          "meshNames": [
+            "detail-tank-large"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "detail-tank",
+          "path": "unpacked/Models/GLB format/detail-tank.glb",
+          "triangles": 310,
+          "evaluatedTriangles": 310,
+          "meshNames": [
+            "detail-tank"
+          ],
+          "armatures": 0,
+          "actions": []
+        },
+        {
+          "model": "shipping-container-a",
+          "path": "unpacked/Models/GLB format/shipping-container-a.glb",
+          "triangles": 402,
+          "evaluatedTriangles": 402,
+          "meshNames": [
+            "shipping-container-a"
+          ],
+          "armatures": 0,
+          "actions": []
+        }
+      ],
+      "fit": "Original detail-tank is a horizontal banded 310-triangle tank with support feet. Original shipping-container-a supplies potential armor skirts only after trimming.",
+      "risk": "Cab and bed are one body mesh. No separate articulated trailer/frame/hitch, valves or opening roof hatch; physical scale and trim feasibility unproven. Source palette and proportions are not finished gritty art.",
+      "decision": "Pending Kyle source choice. Recommend delivery-flat + detail-tank as an existing-parts lead, with trailer/boarding gaps explicitly held. Do not fit or invent missing geometry.",
+      "changed": "No original geometry, model transforms, source materials, texture pixels or runtime asset changed. Native Blender neutral-camera renders and alpha-bound crops are review presentation only.",
+      "downloadedFrom": "https://kenney.nl/media/pages/assets/city-kit-industrial/0ec35b139d-1788171848/kenney_city-kit-industrial_2.0.zip"
+    },
+    {
+      "id": "kenney-toy-car-kit-tanker-declined",
+      "card": "ART-SRC-TANKER",
+      "family": "tanker-source",
+      "sourceName": "Toy Car Kit 1.2",
+      "sourcePage": "https://kenney.nl/assets/toy-car-kit",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Original downloaded ZIP and extracted License.txt identify Creative Commons Zero / CC0; license bytes match the ZIP member.",
+      "status": "declined",
+      "checked": "2026-09-30",
+      "downloaded": true,
+      "downloadAccess": "Primary creator free download through Continue without donating; no account or payment.",
+      "downloadedFrom": "https://kenney.nl/media/pages/assets/toy-car-kit/42e19cc426-1736346027/kenney_toy-car-kit.zip",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\kenney-toy-car-kit",
+      "files": [
+        {
+          "path": "source.zip",
+          "sha256": "26c11bbb77102b8dd00cdaf7b2c7ab692416d750dd064de886d809acec346782",
+          "bytes": 5245353
+        },
+        {
+          "path": "unpacked/License.txt",
+          "sha256": "2406ba62730af7633689439c1e3e913b93e54eada8e73da415003a2bb96b099e",
+          "bytes": 714
+        }
+      ],
+      "recipe": "tools/art/tanker-source-inspect.py",
+      "runtime": [],
+      "inspection": {
+        "originalArchiveInventoryChecked": true,
+        "tankModels": 0,
+        "trailerModels": 0,
+        "geometryInspected": false,
+        "triangles": null
+      },
+      "fit": "Rejected after original archive inventory: vehicle-truck and vehicle-monster-truck exist, but no tank or trailer model.",
+      "risk": "Toy proportions conflict with the settled gritty art; no source geometry count or articulation is claimed.",
+      "decision": "Declined for this shortlist. Retain downloaded original and its license outside the repository; not an adaptation candidate.",
+      "changed": "Only the original ZIP was downloaded and safely extracted for license/file inventory. No models were fitted, rendered, exported or installed."
     }
   ]
 }

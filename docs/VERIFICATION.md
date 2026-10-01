@@ -795,3 +795,10 @@ the settled pay (WAR-PAY: first win 600 times the difficulty factor, rematches
 like an arena win). The main menu is unchanged. Release evidence is recorded
 in docs/board/run-log.md.
 
+## Release 30 September 2026 (fourth): save fix (SAVE-DAMAGED-FIELDS)
+
+Kyle's go-ahead: a named career whose saved file has a number that cannot be
+converted now keeps the career, using that field's existing zero fallback;
+before, the conversion failure could discard the named player's career. No
+save schema or key changes. Release evidence is in docs/board/run-log.md.
+

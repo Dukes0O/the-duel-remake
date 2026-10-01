@@ -1,61 +1,25 @@
 # Wasteland play-test inbox
 
-## Claude: tanker source comparison stops at missing trailer parts, 30 September
+## Settled for the resumed build, 30 September
 
-ART-SRC-TANKER source-only freeze is clean 764967db. Please review the [comparison](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/tanker-src/docs/board/looks/tanker-src/round-1.jpg) and show Kyle. A recommends the actual Kenney delivery-flat cab/bed (2574 triangles) with the horizontal Industrial detail-tank (310); B uses truck-flat (2488). Both original archives contain verified CC0 licenses. The sheet also shows the actual approved Salt Flats salvage donors. No game assets changed.
+Kyle keeps the current crew figures and first-person hands. Their failed
+fitting lanes are closed and removed without a runtime install. The old
+comparison verdicts and Kyle's decisions remain on the cards.
 
-These are trim/combine leads only: neither supplies a separate trailer/frame/hitch, valves or opening boarding hatch. The card stops review/waiting_on:kyle. Please settle whether to use one lead and source the missing parts, or seek a complete rig. No fitting, invented connector geometry or finished-convoy claim is approved. Independent review and the mandatory lane/build floor are pending.
-
-## Claude: Fuel Run fighter projectile rules needed, 30 September
-
-Independent review used actual F exit and fuel pickup on seed 1989. A hunter chased the parked car, 52.55 m from the carrying fighter; its crossbow aimed 109.602 degrees away from the fighter. Those chase and aim bugs will be fixed under the settled rule that hunters pursue the carrier. A real bolt then swept through the fighter's torso without a hit: health stayed 110, fuel remained carried and the bolt stayed live. Current projectile contacts enumerate cars; vehicle sweeps already knock fighters down and drop fuel.
-
-Please settle the missing contact rules in writing: how much damage a car crossbow bolt deals to a fighter, whether car bomb splash affects fighters and by how much, and whether a surviving fighter drops cargo on a hit or only on knockdown. Fuel's settled drop rule names more than 25 armor in one car hit; it does not name fighter health thresholds. We will keep the parked car's physical hitbox, use a separate actual fighter aim pose, and wait for your decision before adding fighter projectile damage. No temporary invulnerability or invented damage values will be merged.
-
-The proposed 0.75-second original-carrier pickup delay is withdrawn. A test will enforce the literal rule that anyone can recover dropped fuel.
-
-## Women source records merged; Kyle keeps current crew, 30 September
-
-ART-SRC-CREW-W source records are merged from clean d6cd763. Kyle keeps current Nell, Odessa and Wren. [Comparison](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/docs/board/looks/crew-w-src/round-1.jpg), 376150 bytes. Two actual downloaded CC0 choices are inspected: Universal Base Standard (15060 triangles,65bones,no embedded actions; free Standard only) and Kenney Survivors (1604triangles,58bones,three motion clips). Both lack the settled four crew silhouettes and full actions, so the recommendation is to keep current women and find compatible garment/action parts. Requested Modular Women is ON HOLD: its pack page says CC0, current general page says QAL, and actual model/license downloads returned quota HTML. No rights or shared-rig claim is made for that pack; existing cached CC0 rights are unchanged. Current Nell/Odessa/Wren are byte-identical; no Vesper placeholder or fitting occurred.
-
-Kyle has chosen to keep the current women. Independent source review, lane 306/306 and build pass for these records. No new-source adaptation or runtime replacement is approved. The later figure card covers only Vesper under Claude's settled scope. The detailed note and catalog retain exact primary URLs, hashes and access findings.
+Claude's fighter rules, 4 m Fuel depot and 150 degree/s steering ceiling are
+merged. Fuel and steering resume with tests first. The convoy is one rigid
+truck from pick A with three verified donor valves and a lit roof plate;
+there is no trailer, hitch or opening hatch. The donor record is retained
+before the old parts-search lane is removed. Details are in CREW.md,
+SCRAPDOME.md and the board. Current comparisons go to Claude before merge.
 
 ## Claude: Mirage build dependency and early reward, 30 September
 
 The settled Mirage build note calls targetFor, but the shared targeting module does not exist yet. Current CPU crossbow aim, bolt homing and RPG locking each bypass a shared resolver, and current normalization discards new weapon IDs. WAR-02c now explicitly waits for ARS-CORE and WAR-PAY. Its old src/arena/warlords.js hook was a nonexistent path and is corrected to src/warlords.js. Please confirm the settled "early and working" reward means Mirage supplies the working Decoy Drone using its reusable decoy implementation, then ARS-03 reuses that same file; waiting for ARS-03 would create a dependency cycle. No Mirage code or duplicate targeting has started. Fuel Run proceeds separately under SPEC0.12 with a fuel-run dev switch in addition to released scrapdome and discovery/rank gates.
 
-## Claude: crew round 1 fails; current art kept
-
-Independent critic inspected the sheet, reference boards and all 40 fitted captures. All five are worse than current: direction/resemblance 1 to 2, materials 2, scene consistency 1. Jax lacks a continuous long coat; Dune reads as a helmet; Cinder has wrong hair and an arm assembly problem; Tusk reads as clean fantasy armor. Material or normal changes alone cannot meet the card. No second round or runtime replacement is authorized on this result. Kyle has been asked to choose better existing source parts or stop fitting. The clean review lane is lane/art/crew-fit-m at 59a5b99. Its comparison is [round 1](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-fit-m/docs/board/looks/crew-fit-m/round-1.jpg). The recipe and original licensed source can rebuild it; all current runtime assets remain unchanged. Please review the source gap and show Kyle the sheet.
-
-## Claude: early crew fitting look request, 30 September
-
-ART-FIT-CREW-M is building from the approved Quaternius source. Jax keeps the reference long coat: trimmed source Suit trouser fabric supplies overlapping back and side panels below the source jacket. Dune keeps the reference hood: a trimmed source SpaceSuit helmet shell is fitted around the source face and repainted as worn cloth. These are fitting techniques, not new costume designs; the settled silhouettes and accents stay the target. Round 1 will show current and fitted figures in the game at both detail and quality settings. Please judge whether the coat and hood read correctly before further rounds. If these source parts cannot meet the references within the cap, the card stops with the gap written down. No runtime art will merge before your comparison review.
-
 Add a note here after trying a build. Include the event, car, difficulty and
 what happened. Screenshots and short recordings help when a problem is visual
 or hard to repeat. Do not include saved career data.
-
-## Director review handoff to Claude, 30 September 2026
-
-WAR-02a-SAL is ready for your required Preview play-through before merge.
-Retained branch: `lane/cmb/war-02a-sal`; exact clean source:
-`1b5f3365a9717f477e85d6503d1f2bb88375c272`. Lane tier 304/304 and build pass.
-The 23 focused acceptance tests and 12 private High/Performance captures pass;
-independent source and visual review found no issues. A real sweep-hit and
-first-wreck replay has the same complete-state/event hash at 30/60/144 FPS.
-
-Please judge fun, fair tells/counters, scream/roar balance and the standard
-chase-camera nameplate/callout view in Preview. The browser is muted and its
-labelled inspection camera only proves move/effect/callout presentation.
-Final captures/report: integration's `.evidence/2026-09-30/WAR-02a-SAL/`.
-Keep the lane until your verdict. This Director has not merged Sal or touched
-Preview. Reward is merged as de3eb0f and remains behind warlords: dev.
-
-The end full tier passed 303/303 and build on exact clean `0f7818f6a351b4ce0f728a9a8cde3354ee99ec75`.
-The verdict and tested source are recorded at the end of run-log.md. Kyle's
-art picks and your gritty fitting rules are preserved; new fitting/source
-cards remain for the next run. Sal's Preview review remains required.
 
 ## What's new to try
 
@@ -125,7 +89,7 @@ and Reward’s App hook are now free.
 
 Kyle chose the CC0 Marina Shemesh salt photograph and tiling. Its mirrored
 material preview is reviewed; original pixels stay unchanged. Salt model picks,
-hands and Rustwall source picks remain pending in their comparison sheets.
+hands and Rustwall picks are recorded in decisions: WRAD Arms A and all three Rustwall sets. Their fitting cards follow the settled gritty direction.
 
 ## Design questions for Claude, 30 September 2026
 
