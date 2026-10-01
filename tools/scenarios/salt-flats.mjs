@@ -6,7 +6,7 @@ import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
-const expected='6cd41757ee903b3924ddd760f66533e1295ba96d96d863a8689361db74d35bdc';
+const expected='7c47ce36ccf10a6fdc923236bb89d4c2dd513c60c9785e8efbe5d9ff71b4fc67';
 function privatePath(path,kind){const result=resolve(path),local=relative(root,result);assert(!isAbsolute(local)&&!local.startsWith('..')&&new RegExp('^\\.'+kind+'[\\\\/]').test(local),'checked lane '+kind+' path');return result;}
 async function assets(){const source=privatePath(process.env.SALT_FLATS_RENDER_ASSET||join(root,'.evidence/ARENA-06/render-candidate/venue.glb'),'evidence');const bytes=await readFile(source);assert.equal(createHash('sha256').update(bytes).digest('hex'),expected);assert.equal(bytes.toString('ascii',0,4),'glTF');assert.equal(bytes.readUInt32LE(8),bytes.length);
   // The harness has already built. Serve unchanged approved bytes from only its
@@ -47,9 +47,8 @@ export async function run(context){const report={card:'ARENA-06',sourceCommit:ex
           assert.equal(await context.evaluate('JSON.stringify(window.__qaApp.duel.state)'),state,'heat presentation must not change native race state');
           report.captures.push({quality,venue:'salt-flats',mode:'native heat comparison',seconds,path});
         }
-        await persist();assert(witness.present,'actual game renderer is missing native Salt world route');assert.equal(witness.status,'ready');assert.deepEqual(witness.errors,[]);assert(witness.ground&&witness.ramps.every(Boolean));assert.equal(witness.meshes,171);assert.equal(witness.triangles,152180);}
+        await persist();assert(witness.present,'actual game renderer is missing native Salt world route');assert.equal(witness.status,'ready');assert.deepEqual(witness.errors,[]);assert(witness.ground&&witness.ramps.every(Boolean));assert.equal(witness.meshes,172);assert.equal(witness.triangles,184340);}
       if(process.env.SALT_FLATS_MEASURE_FRAMES==='1'){await pose(context,'racing');await settled(context,quality+' '+venue+' frame window');report.frames.push({quality,venue,...await sample(context)});await persist();}}
     if(process.env.SALT_FLATS_MEASURE_FRAMES==='1'){const baseline=report.frames.find(f=>f.quality===quality&&f.venue==='scrapdome'),salt=report.frames.find(f=>f.quality===quality&&f.venue==='salt-flats');assert(salt.p95Ms<=baseline.p95Ms*1.10,quality+' Salt actual P95 exceeds settled Scrapdome +10%: '+JSON.stringify({baseline,salt}));}}
     assert.equal(process.env.SALT_FLATS_MEASURE_FRAMES,'1','actual matched frame gate is pending until agreed quiet measurement');report.passed=true;
   }catch(error){report.passed=false;report.failure=error.stack;throw error;}finally{await persist();}}
-

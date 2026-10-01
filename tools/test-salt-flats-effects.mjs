@@ -24,7 +24,7 @@ assert(!isAbsolute(local) && !local.startsWith('..') && /^(?:\.evidence|\.qa-dis
   'effects checks read only the exact private native Salt candidate');
 const bytes = readFileSync(candidate);
 const hash = value => createHash('sha256').update(value).digest('hex');
-assert.equal(hash(bytes), '6cd41757ee903b3924ddd760f66533e1295ba96d96d863a8689361db74d35bdc');
+assert.equal(hash(bytes), '7c47ce36ccf10a6fdc923236bb89d4c2dd513c60c9785e8efbe5d9ff71b4fc67');
 const originalDocument = globalThis.document;
 const originalTextureLoad = THREE.TextureLoader.prototype.load;
 const context = new Proxy({measureText: text => ({width: String(text).length * 8}),
@@ -138,7 +138,7 @@ try {
       let meshes = 0, triangles = 0;
       gltf.scene.traverse(mesh => {if (mesh.isMesh) {meshes++;
         triangles += (mesh.geometry.index?.count ?? mesh.geometry.attributes.position.count) / 3;}});
-      assert.equal(meshes, 171); assert.equal(triangles, 152180);
+      assert.equal(meshes, 172); assert.equal(triangles, 184340);
       assert.deepEqual(geometrySnapshot(gltf.scene), pinned,
         'visual extension/effect cannot move or rewrite genuine native donor geometry');
       assert.equal(JSON.stringify(course.features), before,
