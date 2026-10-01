@@ -1134,3 +1134,38 @@ unchanged. No candidate/browser/frame/art/human/listening/full-gate clearance,
 merge, push, live folder, Preview, .preview-dist, port 5174, real save, source
 overlay, dependency change or history rewrite occurred. Ownership returns for
 independent review before any further public goal change.
+
+
+## Reviewed second native wall path added before baseline rerun (1 October)
+
+The Director independently read released `containInArena`: it genuinely clamps
+lateral, changes outward speed/heading, applies damage and then emits
+`arenaWallHit {id,normalMph}`. The Director approved adding only this actual
+production path to the public reachability goal. The previous static-only RED
+and its full trace/images stay retained; this is not a changed card rule.
+
+A second receipt listens to that real production event without synthesizing an
+event or calling containment manually. It requires actual player identity,
+chosen wall side, positive native normalMph, exact clamped lateral and a real
+physical response. The record includes the step's real starting pose, keys and
+input; native state/input/speed at event emission; remaining outward normal
+speed; and post-step pose/input/speed. Normal speed must fall below the emitted
+normal impact speed, and actual speed, heading or push response must change.
+A static receipt still requires the exact actual native first sweep and inward
+correction/speed reduction, with unchanged once-only method delegation and
+restoration. Proximity and relaxed center thresholds cannot satisfy either.
+
+Only the new public contact goal and its corresponding new receipt assertion
+are extended to these two existing production paths. Every original 39 legacy
+assertion line, all original scripted fixtures, native118/pins, eight-attempt
+matrix, 24 planned captures and 20-second limit remain exact. Actual collision
+module source/byte proof and all earlier failed launch logs are preserved.
+The recipe is frozen before the complete authentic released0f baseline run.
+Historical visual/physical rail mismatches and their distinct 24/38/54-pair
+samples remain separate inherited debt, not a whole-geometry clearance.
+
+Removed only the static-only restriction from this additive public goal after
+independent approval of the real containment event path. No source, asset,
+collider, timer, saved state, game event or legacy acceptance was removed or
+changed. Candidate comparison and browser/frame/art/human/listening clearance
+remain pending independent review of an actual valid complete baseline.
