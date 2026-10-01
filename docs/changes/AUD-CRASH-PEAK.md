@@ -498,3 +498,42 @@ audio source, asset, bank/catalog, protected licensed file, old assertion,
 recorder processor, runtime dependency or replay pin was removed or changed.
 Raw evidence remains ignored until its independent verdict, then the merge
 janitor removes it; the frozen recipes reproduce the measurement.
+
+## Independent final measurements and source verdict
+
+The output source and faithful mock support clear independent review at
+c0bb9b1. The recorder-only change clears review atd96f1f2; every category,
+stem, event, frame, timestamp, PCM format and cleanup path stays exact.
+The recorder now reads the actual final node and rejects missing/non-native
+outputs. No compressor or pre-output mix tap remains.
+
+Independent Audio QA ran three fresh default native suites,23/23 each. All
+nine contact/Fuel/stress sample and true peaks meet-1 individually. Stress
+sample/true peaks are-1.497/-1.36,-1.576/-1.34 and-1.478/-1.47dB. Quiet
+reference, event onset, contrast and pause/disposal controls all pass. The
+earlier narrow0.07dB margin remains recorded; no new margin or averaged
+acceptance target was introduced.
+
+The actual final-recorded scripted race measures engine correlation0.971
+with0ms lag, final samplepeak-2.144dBFS, no detected clips/clicks/loop gaps,
+14 measured sync checks, weapon contrast6.697–10.479dB, correct spatial
+probes, blast variety and six-blast stress. The earlier0.870/-50ms engine
+miss remains an observation and did not reproduce in this controlled fresh
+capture; engine mapping/source stayed unchanged. Graph review finds no
+additional proven defect. Unplayed footsteps/bolts and absent landing cues
+are not coverage passes. Human timbre and Fuel cue masking remain listening
+flags under SPEC0.9, with no invented ear ratings.
+
+The ignored final recipe/verdict is
+.evidence/2026-10-01/AUD-CRASH-PEAK/independent-final-d96f1f2/VERDICT.md.
+Current integration was then merged normally into the lane ate68f03f so the
+final gate includes merged steering and donor records. Raw-byte comparison
+confirms all six audio source/helper/native suite/scenario/recorder files
+remain exact tod96f1f2. Fresh Fuel browser and current exact lane/build are
+next; this note does not inherit an earlier gate or release clearance.
+
+### Removed: independent final measurements
+
+No asset or player data was removed. Superseded compressor tap and its
+unused detector were removed in the recorded recorder change. Pending
+review evidence stays until its final verdict and merge cleanup.

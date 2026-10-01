@@ -1417,3 +1417,23 @@ Preview feel, full-audio, fresh exact gate or whole-feature review is invented.
 Removed the old catalog expectation's accidental exclusion of the required
 new Fuel dev entry while retaining its complete release-state check. No production
 rule/source, prior assertion, runtime asset, licensed file or pin removed.
+
+## Current integration sync and final gate boundary
+
+The separately claimed output repair has independent source, recorder and
+measured audio clearance, with human listening flags retained. No Fuel
+rule, settlement, guard, crew asset or sound bank was redesigned. Fuel's
+existing contact/depot/save and browser controls remain authoritative.
+
+The lane now contains current integration via normal merge e68f03f, including
+the accepted steering ceiling and verified valve donor records. A fresh
+actual High/Performance Fuel browser scenario and exact lane/build must pass
+on the resulting clean freeze before integration. Claude's existing written
+merge condition remains: settled fighter contacts,4m depot, gates and browser.
+Kyle's Preview feel check follows integration behind fuel-run:dev; this
+Director never launches, modifies or releases the Preview or live game.
+
+### Removed: current integration sync
+
+No runtime asset, assertion, pin or real save was removed. All current lane
+work is retained until final gates, verdict and ordinary worktree cleanup.
