@@ -28,6 +28,15 @@ export function containInArena(duel, actor, dt) {
   const normalMph = Math.max(0, outward * (Math.sin(heading) * speed +
     (actor.pushVelocity || 0) / DRIVE.mphToWorld));
   actor.lateral = outward * limit;
+  if (actor.knock?.arenaShove) {
+    // The solid floor removes an outward free-body velocity too. Keep its
+    // tangential component; minimum shove never grants passage through a wall.
+    const frame = duel.course.at(actor.s), c = Math.cos(frame.heading), s = Math.sin(frame.heading);
+    const normalSpeed = actor.knock.vx * c - actor.knock.vz * s;
+    if (outward * normalSpeed > 0) {
+      actor.knock.vx -= c * normalSpeed; actor.knock.vz += s * normalSpeed;
+    }
+  }
   if (outward * (actor.pushVelocity || 0) > 0) actor.pushVelocity = 0;
   if (Math.abs(Math.sin(heading)) > FLOOR_RULES.steepSine) {
     actor.speedMph = speed * FLOOR_RULES.steepSpeedKeep;
