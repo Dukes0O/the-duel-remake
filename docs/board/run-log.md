@@ -1371,3 +1371,16 @@ source geometry; private fitting continues while Claude reviews the needed
 legacy consumer migration. Their questions are at the top of the inbox.
 Fuel contact/depot independent RED is frozen at 4a2ee89 before implementation;
 the narrow valve donor record is independently tests first.
+
+ART-KEEP-VALVE-DONOR merged from reviewed clean 0b49409 after 309/309
+lane suites in 783.13 seconds and build in 379 ms. Independent review found
+no issue: actual original archive/member bytes and CRC, CC0 rights, palette
+and 456 real triangles are verified; all earlier catalogue fingerprints
+remain exact. This retains source only, with no fitted or installed truck.
+
+After-merge janitor verified clean donor and Kyle-closed parts-search lanes,
+unlinked integration-only dependencies, used plain git worktree remove and
+deleted their merged or explicitly dropped branches. The narrow licensed
+donor record is retained; obsolete complete-trailer tests and generated
+search evidence did not enter integration. Original licensed files, current
+game assets and Kyle decisions remain. Full merge counter: one since230318e.

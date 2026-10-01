@@ -11,7 +11,8 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: building
+    status: merged
+    review_commit: 0b4940915047766b43bf6b8c566aa7d03bd252e3
     claimed_by: codex-director-2026-09-30-late-resume
     branch: lane/art/keep-valve-donor
     owns: [tools/art/catalog.json, tools/art/tanker-valve-source.json, tools/test-tanker-valve-source.mjs, docs/changes/ART-KEEP-VALVE-DONOR.md]
