@@ -286,7 +286,7 @@ event was installed by this source stage; future removal/installation belongs
 to the approved continuation after review.
 
 
-## Reviewed native contact correction and independent crossing RED ï¿½ 1 October 2026
+## Reviewed native contact correction and independent crossing RED — 1 October 2026
 
 Tests-only follow-up on unchanged source
 `23748e635f8fa0784a9c5c72998b19a94facc015`, with the original test freeze
