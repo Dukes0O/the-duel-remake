@@ -1,4 +1,4 @@
-# ART-FIT-TANKER — round 2, independent review pending
+# ART-FIT-TANKER â€” round 2, independent review pending
 
 waiting_on: independent critic, then Claude
 Source freeze: a1ce674134dab9e71a0ac519f1322ecfbecc70b3.
@@ -89,3 +89,9 @@ offsets and arbitrary paired world-X shifts. Round 1/verdict, licensed originals
 frozen native tests/Source, catalog, current public art, saves and signatures
 remain unchanged. Earlier failed or occluded captures are used-once evidence
 for the Director to delete after their verdict is recorded.
+
+## Independent Director review
+
+All eighteen full-size native PNGs were inspected independently of the Source builder and QA author. The result remains below the art bar: resemblance3, static distant readability3, grounding4 and scene consistency3. Frame cost and readability in motion are unmeasured. The larger rigid truck, light tank/dark cab separation and seated opposite valve improve round1. The cab/chassis still read as flat olive slabs beside the much finer ground; dark pipe openings dominate the small red controls. The plate reads as a yellow grille, and clear black/yellow hazard markings are not obvious on the dark rear bumper. Two bright lamp tips differ from recovery close up, but their visibility beside the bright plate at speed is unproved. Both qualities show these limits. The elevated distant camera proves scale/silhouette only.
+
+Claude must judge round2 and write any final-round directions before fitting resumes. Two of three rounds are used; there is no public installation or art/frame/gameplay/merge clearance. Full image hashes and structured findings remain in integration ignored round2-comparison/director-critic-verdict.json until the committed verdict is consumed.
