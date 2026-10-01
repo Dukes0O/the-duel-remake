@@ -1,11 +1,11 @@
 # ARENA-03 — Fuel Run
 
-Status: settled contact/depot implementation candidate. Not merge-ready. The
-frozen new suites, existing focused controls, ordinary replay fingerprints and
-six native Fuel completion samples pass. Independent whole-card review, Save
-Guardian, fresh browser/feel/audio checks, exact lane/build gates and Claude's
-review remain before merge. Earlier sections record prior source evidence; the
-current changes and verdict are in the final section below.
+Status: settled contact/depot and reviewed attribution/standing-carrier
+implementation candidate. Not merge-ready. The current new frozen tests,
+prior focused controls and ordinary replay fingerprints pass. Independent
+whole-card review, Save Guardian, fresh browser/feel/audio checks, exact
+lane/build gates and Claude's review remain before merge. Earlier sections
+record prior source evidence; the latest changes are in the final section.
 
 ## Tests first
 
@@ -1044,3 +1044,97 @@ claimed by this red freeze.
 Nothing. The two claimed suites and this failure record are new. Existing
 simulation, reward filter, settlement, save format, assets, audio, prior
 assertions, replay pins and world signatures remain unchanged.
+
+## Reviewed attribution and standing-carrier fixes — current source
+
+Built after independent RED freeze 6c40a77b02300813ef6a2ed95302b565572ebe47:
+36 tests reached 618 checks, with 10 passes and 26 meaningful failures.
+The new attribution/carrier suites, prior contact/depot acceptance, old
+assertions and all replay pins remain byte-for-byte unchanged.
+
+### Accurate car damage and first eligible on-foot XP
+
+Car crossbow/bomb contacts now pass source car and the actual owner to
+damageRaider. Hit and knockdown gameplay events report that provenance.
+A car knockdown emits no false onFoot award or +25 Notoriety promise.
+The existing once-per-raider physical knockdown counter is separate from
+the first eligible on-foot award. An ineligible car down does not consume
+the on-foot entitlement. After native three-second recovery, a genuine
+F-exit/RPG down earns the existing first 25 XP; later recovery/down and
+repeated settlement cannot farm it. The existing XP filter, reward amount,
+result receipts, progression and save schema are unchanged.
+
+RAID-02's accepted foot-only entitlement and the Director's preservation
+interpretation remain subject to Claude's required whole-card review. This
+adds no new car XP award. Existing genuine RPG callers retain the established
+onFoot provenance and physical recovery behavior.
+
+### Hunt the actual standing Fuel carrier
+
+The shared arenaTargetOutOfPlay check reads the actual Fuel participant and
+current fighter. A carrier remains available while its parked car wrecks;
+knockdown, protection, no cargo, finished/crushed state and hostile-team
+guards exclude it. Brain selection, pursuit/retargeting, the native arena
+weapon target, crossbow launch and in-flight guidance share that check.
+A stale friendly target is dropped immediately in Fuel.
+
+The physical outOfPlay function and actual car hitboxes are unchanged.
+Outside Fuel, target availability delegates to the previous car rule;
+ordinary/non-Fuel crossbow launch and guidance retain their prior guards.
+No invented computer fighter state, tuning, difficulty spread, weapon range
+or simulator randomness was introduced. The real Medium/Hard hunter and
+rammer can launch a bolt that hits the standing fighter, and the actual
+weapon scheduler and moved-carrier guidance still follow its current pose.
+
+### Verification
+
+Command: node --test --test-reporter=tap tools/test-fuel-car-attribution.mjs
+ tools/test-fuel-standing-carrier.mjs tools/test-onfoot-car-contacts.mjs
+ tools/test-arena-fuel-depot.mjs tools/test-arena-fuel-run.mjs
+ tools/test-notoriety.mjs tools/test-raiders.mjs.
+Result: 192 tests pass, zero failures or skips. This includes all 36 new
+regressions and all 156 prior controls. The new attribution suite reaches
+242 checks and standing-carrier suite 437; current contacts reach 397,
+depots 107, and existing Fuel tests retain their 30/60/144 FPS and mode pins.
+
+Additional command: node --test --test-reporter=tap
+ tools/test-combat-projectiles.mjs tools/test-combat-projectile-order.mjs
+ tools/test-combat-replays.mjs tools/test-enemy-aim.mjs tools/test-onfoot.mjs
+ tools/test-onfoot-transition.mjs tools/test-onfoot-race.mjs
+ tools/test-onfoot-weapons.mjs tools/test-combat-field-shields.mjs
+ tools/test-arena-event.mjs tools/test-arena-feel.mjs tools/test-sal-fight.mjs
+ tools/test-arena-settlement.mjs tools/test-warlord-pay.mjs
+ tools/test-warlord-settlement.mjs tools/test-feature-flags.mjs.
+Result: 170 tests pass, zero failures or skips. Existing combat replays,
+Sal, arena targeting, on-foot physics, damage guards, settlement and
+feature switches pass without changed assertions.
+
+Separate node tools/test-replays.mjs passes all 162 ordinary fingerprints
+on the current source without regeneration. git diff --check passes.
+Logs are disposable under .evidence/2026-09-30/ARENA-03.
+
+| Current source | SHA-256 |
+| --- | --- |
+| src/arena/arena-brains.js | 2b33a9836553fd235441b279d8a8964256a49f2c9bc989682a4a8e2450991e18 |
+| src/combat-teams.js | 477b75f8f41c8dad9647225dbc8a71da483d1060b0c817f02a600c589c010f15 |
+| src/combat-weapons.js | 8edc3a6e3fb569ce757bedb86519575905fc23775b799529399cee02e3b2991a |
+| src/combat-projectiles.js | f8b38e45adc212e7b0744613911476adf274e428152d284bb24d9af7f57189a4 |
+| src/raiders.js | 515b728d1877e3d904d2c1dd54152fc8afd2664c12278804b0fee6aeab2add5e |
+
+### Remaining gates and ownership
+
+This clean freeze returns the candidate to the independent Reviewer and
+Save Guardian. The Director owns exact lane/build, fresh browser/feel/audio,
+Claude review and integration. No whole-card or merge clearance is claimed.
+The granted raiders.js change is limited to damage provenance, separating
+physical counting from eligible award consumption and truthful event/callout
+handling. No App, economy filter, save source/schema, steering, art, audio bank,
+live folder, Preview, port 5174, real save or world signature was edited.
+
+### Removed — reviewed attribution and standing-carrier fixes
+
+Removed the false onFoot provenance and +25 promise for car-caused raider
+knockdowns, and the parked-car-only availability guards from Fuel target,
+launch and guidance paths. Kept physical-car guards and the existing reward
+filter. No frozen assertion, replay pin, runtime/licensed asset, storage key,
+save schema, difficulty tuning or audio resource was removed or replaced.

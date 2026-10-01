@@ -66,6 +66,7 @@ export function createRaidZones(course, seed) {
         x: at.x, y: at.y, z: at.z, yaw: Math.atan2(road.x - at.x, road.z - at.z),
         groundY: at.y, crewId: 'tusk', health: T.health, maxHealth: T.health,
         knockedDown: false, knockdownRemaining: 0, knockdownAwarded: false,
+        knockdownCounted: false,
         firedLap: 0};
     });
     const warningS = course.phase(s - 125);
@@ -108,21 +109,25 @@ export function initializeRaiders(duel) {
   }
 }
 
-export function damageRaider(duel, raider, amount) {
+export function damageRaider(duel, raider, amount, {source = 'onFoot', owner = 'player'} = {}) {
   const raids = duel.state.raids;
   if (!raids || !Number.isFinite(amount) || amount <= 0 ||
       raider.knockedDown || !raids.zones.some(zone =>
         zone.raiders.includes(raider))) return false;
   raider.health = Math.max(0, raider.health - amount);
-  duel.emit({raiderHit: true, raider: raider.id,
+  duel.emit({raiderHit: true, raider: raider.id, owner, source,
     hitPosition: {x: raider.x, y: raider.y + 1, z: raider.z}});
   if (raider.health > 0) return true;
   raider.knockedDown = true;
   raider.knockdownRemaining = T.knockdownSeconds;
-  if (!raider.knockdownAwarded) {
-    raider.knockdownAwarded = true;
-    const combat = duel.state.combat;
+  const combat = duel.state.combat;
+  // Count the physical down once, separately from the first eligible foot XP.
+  if (owner === 'player' && !raider.knockdownCounted) {
+    raider.knockdownCounted = true;
     combat.scoring.knockdowns++;
+  }
+  if (owner === 'player' && source === 'onFoot' && !raider.knockdownAwarded) {
+    raider.knockdownAwarded = true;
     combat.notorietyEvents ??= [];
     if (combat.notorietyEvents.length < 256) combat.notorietyEvents.push({
       id: `raider-${raider.id}`, type: 'raiderKnockdown',
@@ -130,7 +135,7 @@ export function damageRaider(duel, raider, amount) {
     });
     duel._callout('RAIDER DOWN / +25 NOTORIETY', 1.6);
   } else duel._callout('RAIDER DOWN', 1.2);
-  duel.emit({raiderKnockdown: true, owner: 'player', raider: raider.id,
+  duel.emit({raiderKnockdown: true, owner, source, raider: raider.id,
     hitPosition: {x: raider.x, y: raider.y + 1, z: raider.z}});
   return true;
 }

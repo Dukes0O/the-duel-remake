@@ -1,7 +1,7 @@
 import {fuelGoal, fuelPose} from './modes/fuel-run.js';
 import {worldPose} from './arena-floor.js';
 import {arenaCarSpec, ringDistance} from './arena-pilot.js';
-import {arenaActor, hostile, outOfPlay} from '../combat-teams.js';
+import {arenaActor, hostile, arenaTargetOutOfPlay} from '../combat-teams.js';
 import {predictedPoint} from '../combat-weapons.js';
 import {arenaFloorSpeed} from './venues.js';
 import {nearestRepairCrate} from './arena-pickups.js';
@@ -66,7 +66,7 @@ export function chooseTarget(duel, participant) {
     if (other === participant) continue;
     if (arena.mode === 'fuel-run' && !other.fuelCanisterId) continue;
     const actor = arenaActor(duel, other.id);
-    if (!actor || outOfPlay(duel, actor) || !hostile(duel, self, actor)) continue;
+    if (!actor || arenaTargetOutOfPlay(duel, actor) || !hostile(duel, self, actor)) continue;
     if (other.id === 'player' && participant.targetId !== 'player' && huntersOnPlayer >= cap) continue;
     const at = worldPose(duel, arena.mode === 'fuel-run' ? fuelPose(duel, other) : actor);
     let score = -Math.hypot(at.x - me.x, at.z - me.z) / TARGETING.distanceScale;
@@ -106,7 +106,8 @@ export function decideGoal(duel, participant, actor) {
   const difficulty = brainDifficulty(duel), spec = arenaCarSpec(duel, actor);
   const top = arenaFloorSpeed(duel.course.def.scrapdome, spec.topSpeed) * difficulty.pace, me = worldPose(duel, actor);
   const target = participant.targetId ? arenaActor(duel, participant.targetId) : null;
-  if (!target || outOfPlay(duel, target)) {
+  if (!target || arenaTargetOutOfPlay(duel, target) ||
+      duel.state.arena.mode === 'fuel-run' && !hostile(duel, actor, target)) {
     // Nothing to fight: cruise along the ring.
     const frame = duel.course.at(actor.s + 40);
     const ahead = duel.course.worldAt(actor.s + 40, 0);
@@ -181,7 +182,9 @@ export function decideGoal(duel, participant, actor) {
 export function thinkBrain(duel, participant, actor, dt) {
   if (duel.state.arena.mode === 'fuel-run' && (participant.brain === 'collector' ||
       participant.fuelCanisterId || !duel.state.arena.participants.some(p =>
-        p !== participant && p.fuelCanisterId && !outOfPlay(duel, arenaActor(duel, p.id))))) {
+        p !== participant && p.fuelCanisterId &&
+        !arenaTargetOutOfPlay(duel, arenaActor(duel, p.id)) &&
+        hostile(duel, actor, arenaActor(duel, p.id))))) {
     participant.targetId = null;
     participant.targetHeldSec = 0;
     participant.reactionSec = Math.max(0, (participant.reactionSec || 0) - dt);
@@ -207,7 +210,8 @@ export function thinkBrain(duel, participant, actor, dt) {
   }
   participant.reactionSec = Math.max(0, (participant.reactionSec || 0) - dt);
   const current = participant.targetId ? arenaActor(duel, participant.targetId) : null;
-  if (!participant.targetId || !current || outOfPlay(duel, current) ||
+  if (!participant.targetId || !current || arenaTargetOutOfPlay(duel, current) ||
+      duel.state.arena.mode === 'fuel-run' && !hostile(duel, actor, current) ||
       participant.targetHeldSec >= TARGETING.intervalSec) {
     const next = chooseTarget(duel, participant);
     if (next !== participant.targetId) participant.reactionSec = 0;

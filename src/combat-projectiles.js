@@ -4,7 +4,7 @@ import {applyArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {tickCombatScoring} from './combat-scoring.js';
 import {damageRaider} from './raiders.js';
-import {arenaActor, arenaDamageBlocked, arenaStrikeCandidates, hostile} from './combat-teams.js';
+import {arenaActor, arenaDamageBlocked, arenaStrikeCandidates, arenaTargetOutOfPlay, hostile} from './combat-teams.js';
 import {damageFighter, knockdownFighter, FIGHTER_RULES} from './onfoot.js';
 
 const T = COMBAT_TUNING;
@@ -16,7 +16,9 @@ function steerBolt(duel, projectile, dt, sampleSeconds = dt * .5) {
       !Number.isFinite(projectile.launchBearing) || !(dt > 0)) return;
   const state = duel.state;
   const target = projectile.targetIndex < 0 ? state : state.opponents[projectile.targetIndex];
-  if (!target || target.finished || target.crushed || target.combatWrecking) return;
+  if (!target || (state.arena?.mode === 'fuel-run'
+    ? arenaTargetOutOfPlay(duel, target)
+    : target.finished || target.crushed || target.combatWrecking)) return;
   const speed = Math.hypot(projectile.vx, projectile.vz);
   if (!(speed > 0)) return;
   // Sample biased enemy guidance halfway through the step. At close range,
@@ -166,7 +168,8 @@ function fighterBody(fighter, raider = false) {
 
 function hitCarFighter(duel, fighter, projectile, health, knockdown = false, raider = false) {
   if (fighter.knockedDown || !(health > 0)) return false;
-  if (raider) damageRaider(duel, fighter, knockdown ? fighter.health : health);
+  if (raider) damageRaider(duel, fighter, knockdown ? fighter.health : health,
+    {source: 'car', owner: projectile.enemy ? 'cpu' : 'player'});
   else {
     damageFighter(fighter, health);
     if (knockdown) knockdownFighter(fighter);

@@ -3,7 +3,7 @@ import {sweepObstacle} from './collision.js';
 import {CARS, DRIVE} from './config.js';
 import {makeRng} from './rng.js';
 import {WEAPONS, CPU_COMBAT, COMBAT_TUNING} from './wasteland-tuning.js';
-import {arenaTargetOf, combatOwnerId} from './combat-teams.js';
+import {arenaTargetOf, arenaTargetOutOfPlay, combatOwnerId} from './combat-teams.js';
 import {footMoveDirection} from './onfoot.js';
 
 export {WEAPONS};
@@ -275,8 +275,9 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
     }
     burst(combat, at, 'star');
   } else {
-    if (weapon === 'crossbow' && (!target || target.finished || target.crushed ||
-        target.combatWrecking)) return false;
+    if (weapon === 'crossbow' && (!target || (state.arena?.mode === 'fuel-run'
+      ? arenaTargetOutOfPlay(duel, target)
+      : target.finished || target.crushed || target.combatWrecking))) return false;
     const count = weapon === 'bomb' ? T.bomb.baseCount + T.bomb.countPerLevel * level : 1;
     if (combat.projectiles.length + count > T.projectileLimit) return false;
     const modernProjectile = state.mode === 'wasteland' &&
