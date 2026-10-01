@@ -1452,3 +1452,16 @@ This removes an artificial repair/feature dependency cycle, not a sound-gate
 waiver. Native sample/true peaks, safe-signal preservation, timing/mix and
 cleanup controls stay required. Five builder lanes still at most, including
 the external audio lane; this is a second card in one existing lane.
+
+Fuel clean a6523ea exact lane/build clear after the reviewed catalog update;
+source and ordinary pins are unchanged. Audio peak gate remains explicit;
+tests-first baseline repair is in that same branch with no ownership conflict.
+Shove independent59a86de reaches1944native witnesses:31pass/24RED/one
+wall TODO,2251checks; oldsolver/road/protection/respawn/Titancontrols clear.
+ARS independentreview found real spin/slip/fighter-origin gaps; RED9d2d72b
+proved8 failures among19newcases with all29originalCOREcases unchanged.
+Narrow source5604703 fixes them, now48CORE/449checks and70native/162
+road controls; reviewer follows. Three free save transaction hooks are granted
+only now, ahead of UI/combat wiring, with all16SAVE REDs and Save Guardian
+stillrequired. Salt Flats keeps independent source/native/runtime REDs and
+newfrozen Scrapdome control; no art/scenario/frame/heat or merge pass invented.

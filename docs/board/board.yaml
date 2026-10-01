@@ -864,9 +864,9 @@ tasks:
     branch: lane/cmb/arsenal-core
     flag: arsenal
     owns: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/arsenal/oil.js, src/arsenal/smoke.js, tools/test-arsenal-core.mjs, tools/test-arsenal-save.mjs, docs/changes/ARS-CORE.md]
-    hooks: []
-    hook_requests: [src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/onfoot-weapons.js, src/combat-ai.js, src/weapon-upgrades.js, src/car-loadout.js, src/screen-armory.js, src/wasteland-progress.js, src/wasteland-access.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/render3d.js, src/combat-effects.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js, start-preview.bat, tools/test-wasteland-beta.mjs]
-    sequencing: "Independent tests and new owned core modules may start now. Existing production hooks are requests, not granted ownership: do not edit any until Director handoff. Stop at the first need for another lane file and wait for its merge. Steering retains sim-driving; Fuel retains feature/combat/render/audio hooks; protected sound-bank remains with external audio owner. No unwired component is a finished feature; full card still needs actual consumer routing, dev switch/discovery, save/purchase/loadout, native counter/bypass, browser/audio/balance and exact merge gates."
+    hooks: [src/weapon-upgrades.js, src/car-loadout.js, src/wasteland-progress.js]
+    hook_requests: [src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/onfoot-weapons.js, src/combat-ai.js, src/screen-armory.js, src/wasteland-access.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/render3d.js, src/combat-effects.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js, start-preview.bat, tools/test-wasteland-beta.mjs]
+    sequencing: "Core modules/tests started independently; three native body/origin regressions now fixed at5604703 and under narrow review. Grant ONLY weapon-upgrades/car-loadout/wasteland-progress transaction hooks now: independent SAVE RED already frozen, these files have no other active owner. Pure normalization/purchase/reward/upgrade/equip/CPU-loadout work may proceed; all UI/flag/combat/driving/render/audio/game hooks remain requests. Fuel retains its UI/combat/render/flag hooks; Shove retains collision/knock/floor. Protected sound-bank remains external owner. No unwired component is a finished feature. Decoy attack context and oil/smoke upgrade dimension await Claude; do not guess. Save Guardian required before integration; native bypass/lifecycle/browser/audio/balance and exact gates still follow full wiring."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build docs/ARSENAL.md section 2 exactly: road hazards, car effects, targetFor (every existing CPU aim, homing and lock path routed through it, with a test that fails on a bypass), unlocks by rank and 400-scrap purchase, rewards that unlock free, upgrades, computer loadouts, and the arsenal switch (dev)."
@@ -941,7 +941,7 @@ tasks:
     size: M
     needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
     status: building
-    review_commit: 4a60b996a3e9c228d15b19fdaf7b3668fd385b75
+    review_commit: a6523ea
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run

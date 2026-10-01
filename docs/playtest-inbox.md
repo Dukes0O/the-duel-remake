@@ -2,6 +2,13 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- ARS targeting context must also carry the actual origin and intended target
+  for inflight homing and RPG locks, so a routed consumer cannot silently use
+  the launch car’s old position or switch an already locked actor to the
+  nearest car. Native moved-fighter smoke exposed and fixes that origin for
+  the basic resolver; the optional attack-context question remains for the
+  consumer routes and decoy range. All existing geometry/save controls stay.
+
 - Fuel final audio at clean4a60b99 proves actual pickup/drop/delivery/result
   mapping and scoped onsets within30ms, with no human listening claim.
   Existing crash overload is reproduced by an identical60mph Last Car Rolling
