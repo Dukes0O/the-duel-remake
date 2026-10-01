@@ -9,17 +9,16 @@
   the basic resolver; the optional attack-context question remains for the
   consumer routes and decoy range. All existing geometry/save controls stay.
 
-- Fuel's runtime, browser, save review and exact a6523ea lane/build clear.
-  The sound gate is held for a shared output repair, not a Fuel cue redesign.
-  Tests-first AUD-CRASH-PEAK freeze 8494081 reproduces actual non-Fuel and
-  Fuel contacts plus overlapping blasts above the peak limits. Final-output
-  routing, event mapping, onset, contrast, quiet-reference and cleanup controls
-  pass. The repair shares Fuel's lane with exclusive audio.js ownership.
-  No protected bank, source or asset changes are authorized. Fresh native
-  capture and review must clear the repair before Fuel merges. Kyle's listening
-  flags remain for quiet pickups and simultaneous final delivery/win cues.
-  The existing exact switch catalog expectation was corrected independently;
-  every prior assertion remains. No sound or whole-feature pass is claimed.
+- Fuel's current e182643 browser clears both qualities with actual authored
+  fighters and memory-only saves. AUD-CRASH-PEAK has independent source,
+  final-recorder and measured peak clearance; human listening flags remain
+  for quiet pickups and simultaneous delivery/win cues. Its source bytes
+  survive the current integration sync. The lane gate now fails a historical
+  LCR pin: independent native engines match current pre-Fuel integration
+  byte-for-byte with Fuel off and on. Only LCR and Sal changed through the
+  accepted steering merge; all three road pins remain exact. A two-pin and
+  provenance migration awaits independent review before any edit. No current
+  exact gate or whole-feature merge pass is claimed.
 - ARENA-SHOVE question: a car exactly pinned to the outer solid wall and
   rammed straight outward has no allowed displacement along that normal.
   The universal1.5/4m minimum conflicts with containment there. Tests cover

@@ -947,7 +947,7 @@ tasks:
     size: M
     needs: [WAR-02a-FORMAT, DESIGN-FUEL-FIGHTER-HITS]
     status: building
-    review_commit: a6523ea
+    review_commit: e182643e1b12e22ed9396d1b9fa1d1a54ab3e1c3
     claimed_by: "codex-director-2026-09-30-resume"
     branch: lane/cmb/arena-03-fuel-run
     flag: fuel-run
@@ -1008,7 +1008,7 @@ tasks:
     size: L
     needs: [ART-SRC-SALTFLATS]
     status: building
-    review_commit: 647463770af26327a4e04ef3a9b4a67a9949eb0e
+    review_commit: 2d6e5cc94ddd5c3a46316db411e20872b449f4ca
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/vis/salt-flats
     flag: salt-flats
