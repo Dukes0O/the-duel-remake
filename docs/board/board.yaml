@@ -701,7 +701,7 @@ tasks:
       - "Kyle kept the current Nell, Odessa and Wren on 30 September 2026, so they are not refitted. Build only Vesper Blackiron, the Baron's daughter, by adapting the current women's figure (its rig, actions and topology) under docs/WASTELAND_ART.md 'Fitting existing models': her own costume in the Baron's blackened steel and a dark red accent, recognizable next to Nell, Odessa and Wren. Built but shown only once WAR-04 reveals her. Kyle has the last look in the Preview."
     test_commit: "e5811d8e0927bb6542d508968b9aac76068fd979"
     source_commit: "15a11c5082e48c4d8cb775458b64c27614bf03e2"
-    guard_test_commit: "ad73790a336be3e406251bbdb838bf463881145b"
+    guard_test_commit: "5e986cf"
     review_commit: "edf527e"
     claude_answer: "1 October 2026, afternoon (answered by Claude so Kyle need not): do not turn on Windows file-link permissions or change any system setting. Close the gap simply: each export run writes only into a new, empty folder it creates under .qa-dist, opens every output file as create-new (fail if anything already exists at that path), and copies into the lane only after the run. A pre-existing file or link then stops the run. That is enough for a game on one laptop; no further hardlink or link test matrix. Resume Source review and the in-game comparison."
     note: "The fitted native rig, actions, topology and original crew checks pass. The export guard needs the approved small fix before comparison; Kyle does not need to answer the old question."
@@ -1068,14 +1068,14 @@ tasks:
     owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
     hooks: [tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js]
     hook_requests: [src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, start-preview.bat, tools/test-wasteland-beta.mjs]
-    sequencing: "Improve the sparse inner island and judge the far ground and heat in actual pictures. Automated checks cover race state, loading, disposal, budgets and frame cost. Public entry hooks wait for Arsenal and Shove to merge."
+    sequencing: "Replace the repeating salt photo with the settled seeded ground before the next comparison. The fitted island and outside ground remain; rerun native and actual frame checks after the ground change. Public entry hooks wait for Arsenal and the wreck-rate event hook."
     helpers: [test_author, reviewer, art_critic, browser_qa]
     acceptance:
       - "Starts after Kyle picks from the ART-SRC-SALTFLATS sheet. Build docs/SCRAPDOME.md section 10's venue from the picked assets (three art rounds at most, SPEC 0.11), rank 9 unlock, every arena mode playable there, frame cost within 10% of the Scrapdome in High and Performance."
     claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
     kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
     qa_commit: "439d006d33062b6e7f5f8d832ecaa8a6b4714d04"
-    note: "The native venue, collision alignment and renderer route are built. The first actual views showed a sparse island and finite salt slab; outside ground and heat Source now need a normal visual comparison. Pixel and counter look tests do not hold this card."
+    note: "The fitted island, native renderer and sixteen actual game views pass, with equal frame results at both qualities. The pictures still show obvious photo repeats, so Kyle's settled generated-ground change comes next before Claude review."
     kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
