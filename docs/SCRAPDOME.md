@@ -650,6 +650,22 @@ Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
   three candidate CC0 sets (Kenney, Quaternius and similar) and a tileable
   salt texture, on one sheet for Kyle to pick. No building before he picks.
 - Frame cost within 10% of the Scrapdome's in High and Performance.
+- **Drivable floor (settled 1 October 2026):** the Salt Flats uses the same
+  ring engine as the Scrapdome, not an open bowl. Its course is an oval loop
+  laid inside the 300 by 200 m bowl; the drivable band runs between the outer
+  boundary (stacked tyres and containers, solid) and an inner island built
+  from the central scrap piles, the crane and the derelict bus (solid, like
+  the Scrapdome's Heap). Scrap-pile cover inside the band is solid obstacles.
+  The bowl's salt surface beyond the band is scenery. The Convoy Raid's loop
+  runs on this band.
+- **Ramps:** physics is the source of truth. The two ramps use the arena ramp
+  rule (course ramps with length and height), and the visible ramp is built
+  from exactly those numbers, so the 0.497 m height gap and the 30 m strip
+  under an 8 m visible ramp both go: what you see is what you drive.
+- **Which modes:** Last Car Rolling, Fuel Run, Bounty Hunt and Ambush Alley
+  can be played here (the venue choice is on the SCRAPDOME panel once the
+  Salt Flats is unlocked). Warlord fights stay where section 5 places them:
+  the Scrapdome, except the Tollkeeper, whose fight is the Convoy Raid here.
 
 ### Convoy Raid (ARENA-07)
 

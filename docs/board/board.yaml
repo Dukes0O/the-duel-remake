@@ -774,7 +774,14 @@ tasks:
     lane: ART
     size: M
     needs: [ART-KEEP-VALVE-DONOR]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-09-30-overnight
+    branch: lane/art/convoy-tanker
+    owns: [tools/blender/convoy-tanker.py, tools/art/tanker-fit.json, src/arena/tanker-model.js, tools/test-convoy-tanker-art.mjs, tools/scenarios/convoy-tanker-art.mjs, docs/changes/ART-FIT-TANKER.md, docs/board/looks/convoy-tanker/, public/assets/models/wasteland/convoy-tanker/]
+    hooks: []
+    sequencing: "Claim after completed Fuel lane cleanup frees one builder slot. Tests first for exact approved delivery-flat/detail-tank/Factory valve/salvage provenance, genuine fitting geometry, single rigid body, three valves and read-only boarding lamps/lifecycle. New model/recipe/scenario files only; no renderer/event/simulation/source catalog edits. Private candidate and actual game-renderer comparison before public installation; every comparison goes to Claude, three-round cap. Source catalog records and licences remain exact; if an existing hook is needed, request it before editing. No fake convoy implementation or current runtime replacement."
+    helpers: [test_author, art_director, reviewer, art_critic, browser_qa]
+    test_commit: 415bd22c1a313399d3391d6fc626ca702ab89cad
     flag: scrapdome
     acceptance:
       - "Build the tanker settled in docs/SCRAPDOME.md, Convoy Raid (30 September 2026): one rigid vehicle from Kyle's pick A (Kenney delivery-flat cab and bed with the City Kit Industrial detail-tank on the bed), three fuel valves from the verified factory pipe valve donor on the tank, scrap armor plating from the Salt Flats salvage parts, and a raised boarding plate on the tank roof with warning lamps that light when all three valves are broken. Nothing opens or articulates."
@@ -864,14 +871,14 @@ tasks:
     size: L
     needs: [WAR-02a-REWARD]
     status: building
-    review_commit: cd73eb1613eb841c0e600aa363371067d22953f2
+    review_commit: 58116aec7e8eafd1308be8bc399b3c7a9624e269
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arsenal-core
     flag: arsenal
-    owns: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/arsenal/oil.js, src/arsenal/smoke.js, tools/test-arsenal-core.mjs, tools/test-arsenal-save.mjs, docs/changes/ARS-CORE.md]
-    hooks: [src/weapon-upgrades.js, src/car-loadout.js, src/wasteland-progress.js]
-    hook_requests: [src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-projectiles.js, src/onfoot-weapons.js, src/combat-ai.js, src/screen-armory.js, src/wasteland-access.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/render3d.js, src/combat-effects.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js, start-preview.bat, tools/test-wasteland-beta.mjs]
-    sequencing: "Core modules/tests started independently; three native body/origin regressions fixed at5604703 and independently cleared. Grant ONLY weapon-upgrades/car-loadout/wasteland-progress transaction hooks now: independent SAVE RED already frozen, these files have no other active owner. Pure normalization/purchase/reward/upgrade/equip/CPU-loadout work may proceed; all UI/flag/combat/driving/render/audio/game hooks remain requests. Fuel retains its UI/combat/render/flag hooks; Shove retains collision/knock/floor. Protected sound-bank remains external owner. No unwired component is a finished feature. Decoy attack context and oil/smoke upgrade dimension await Claude; do not guess. Save Guardian required before integration; native bypass/lifecycle/browser/audio/balance and exact gates still follow full wiring."
+    owns: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/arsenal/oil.js, src/arsenal/smoke.js, tools/test-arsenal-core.mjs, tools/test-arsenal-save.mjs, tools/test-arsenal-runtime.mjs, docs/changes/ARS-CORE.md]
+    hooks: [src/weapon-upgrades.js, src/car-loadout.js, src/wasteland-progress.js, src/feature-flags.js, src/combat.js, src/combat-weapons.js, src/combat-ai.js, src/screen-armory.js, src/wasteland-access.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/wasteland-tuning.js, src/app.js, src/game.js, src/screen-router.js, src/arena/arena-pilot.js, src/combat-scene.js, src/combat-projectiles.js, src/onfoot-weapons.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, start-preview.bat]
+    hook_requests: [src/audio.js, src/sound-bank.js]
+    sequencing: "Claude e5a9490 settles optional attack context and safe recharge-only Oil/Smoke upgrades. Context projectile/on-foot hooks are granted only after independent new context/native consumer tests freeze; the worker still holds these parts. Covered flag/player deployment/lifecycle work continues first. New real road-hit/reset, seeded CPU loadout/recharge, Oil spin/avoidance, bound App transactions and pooled native scene tests precede those consumers. Shove exclusively owns event/floor/collision/knock; Salt owns course/venues. Combat-scene presents hazards; render3d remains free. Audio/bank remain requests under protected ownership; no fallback cue is finished. No unfinished slice is a complete feature."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build docs/ARSENAL.md section 2 exactly: road hazards, car effects, targetFor (every existing CPU aim, homing and lock path routed through it, with a test that fails on a bypass), unlocks by rank and 400-scrap purchase, rewards that unlock free, upgrades, computer loadouts, and the arsenal switch (dev)."
@@ -2859,7 +2866,7 @@ tasks:
     size: S
     needs: []
     status: building
-    review_commit: 66ac011b441237cffb549c7f17576d5855edd90b
+    review_commit: eba804dd4e48e2856051b962efbe7ebd6560466c
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arena-shove
     owns: [tools/test-arena-shove.mjs, tools/replays/arena-shove-controls.json, tools/scenarios/arena-shove.mjs, docs/changes/ARENA-SHOVE.md]
@@ -2872,7 +2879,8 @@ tasks:
       - "Kyle, 30 September 2026: cars other than the Titan cannot budge the sitting cars in the dome. Measured by Claude: a live computer car hit at 20, 40 and 60 mph moves 2 to 12 m, so the stuck case is a car in another state. Reproduce each in a test: a wreck waiting to respawn, a car pinned against the wall, a car inside its respawn protection, and a stopped car with its brain idle."
       - "Settled rule: in the dome any car rammed at 20 mph or more by any car moves at least 1.5 m, and at 40 mph at least 4 m, through the crash solver (released crash physics), in every state above. A wreck waiting to respawn slides like a traffic hulk and stays on the floor; respawn protection blocks damage, not movement. The Titan's crush stays as it is."
       - "Tests first; arena replays that change are named and explained."
-    private_stage: "Granted contact/knock/floor source only at66ac011. All1458non-wreck minimum witnesses and243released solver/10road controls clear; full56tests50pass/fivewreckRED/onewallTODO. Waiting-wreck event stepping needs arena-event::stepWreckedActor after Fuel merges. Event/game/pilot/tests/pins untouched; no whole-card or merge pass. Outward wall interpretation still Claude question."
+    private_stage: "Independent source review clears eba804d waiting-wreck native motion. All1944 witnesses/2251checks pass; 55tests pass and former wall TODO now has Claude's open-floor ruling. Extra player/CPU high-speed wall probes preserve deadline/fullarmor/2sprotection, one wreck and quiet dead containment; live wall cues/damage remain. Independent author must turn the settled wall TODO into actual damage/rebound/containment tests and add private visual scenario before browser/whole gates. No source code, old assertions or replay pins changed by this review; no whole-card/merge clearance yet."
+    claude_answer: "1 October 2026: the 1.5 m and 4 m minimums apply where the push direction has open floor. A car pinned against the outer wall and rammed straight into it cannot move through the wall: it stays, takes the ram damage, and the attacker rebounds. Any part of the push along the wall still slides it along the wall. No teleport, no escape direction, containment unchanged."
   - id: WAR-SAL-RELEASE
     title: "Release the warlord ladder with Sawtooth Sal"
     owner: claude
