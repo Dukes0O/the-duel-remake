@@ -36,13 +36,17 @@ function smokeBlocks(duel, from, to) {
     segmentCircle(from.x, from.z, to.x, to.z, hazard.x, hazard.z, hazard.radius));
 }
 
-/** A caller supplies its real range and current origin; locks keep identity. */
+/** A caller supplies numeric or candidate reach and current origin; locks keep identity. */
 export function targetFor(duel, attacker, context = {}) {
   if (!attacker || outOfPlay(duel, attacker)) return null;
   const from = context.origin || sightlinePoint(duel, attacker);
-  const range = Number.isFinite(context.range) ? Math.max(0, context.range) : Infinity;
-  const within = actor => Math.hypot(sightlinePoint(duel, actor).x - from.x,
-    sightlinePoint(duel, actor).z - from.z) <= range;
+  const within = actor => {
+    const requested = typeof context.rangeForTarget === 'function'
+      ? context.rangeForTarget(actor) : context.range;
+    const range = Number.isFinite(requested) ? Math.max(0, requested) : Infinity;
+    const at = sightlinePoint(duel, actor);
+    return Math.hypot(at.x - from.x, at.z - from.z) <= range;
+  };
   let target = context.lockedTargetId != null
     ? actorForTarget(duel, context.lockedTargetId) : nativeTarget(duel, attacker);
   if (target && (target.decoy || arenaTargetOutOfPlay(duel, target) ||

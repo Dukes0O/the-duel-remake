@@ -19,10 +19,11 @@ whole-card merge or release pass.
   Flight uses that immutable speed times remaining lifetime at its current
   origin. Car/profile changes cannot alter reach. Physical flight, velocity,
   steering, collision, expiry, projectile fields and RNG remain unchanged.
-- Claude approved optional pure context.rangeForTarget(actor), evaluated for
-  each candidate. Player launch still needs that callback and its native
-  producer wiring. A shared scalar range cannot correctly judge a decoy
-  whose launch bearing has a different physical reach.
+- The approved pure context.rangeForTarget(actor) checks each launch candidate
+  against its own resultant horizontal velocity times bolt lifetime. Range
+  checking and production share the native lead and direction calculation;
+  full car velocity, including reverse and sideways carry, is retained.
+  Numeric callers and the CPU's 180-metre acquisition range are unchanged.
 - Arsenal is a dev switch and requires gate discovery. Earned weapons retain
   rank, purchase, reward, upgrade and four-slot rules without adding starters
   or granting ownership during normalization. CPU loadouts use seeded RNG.
@@ -34,20 +35,13 @@ whole-card merge or release pass.
 ## Tests and independent reviews
 
 Tests came before each implementation slice. Existing assertions remain
-unchanged. Before the new callback tests, all 374 core/save/runtime cases
-reached 364 passes and ten held player-launch failures.
+unchanged. The focused range run first reproduced thirteen intended failures:
+ten player-launch cases and three new candidate-range cases.
 
-Four new candidate-range cases exercise actual native cars and decoy DATA,
-resultant launch reach, numeric CPU acquisition, smoke and pure selection.
-The focused command is:
-
-`node --test --test-name-pattern="CANDIDATE REACH" tools/test-arsenal-runtime.mjs`
-
-It reaches 141 checks: one case passes and three fail because the callback
-is missing. Exact failures are: each candidate is accepted only within its
-own resultant horizontal launch reach; the optional candidate reach excludes
-the actual real car outside its vector boundary; the optional candidate reach
-supplies this attack range while retaining genuine eligibility.
+All 378 combined native core, save and runtime cases passed after the fix.
+They include diagonal, reverse and lateral car carry, actual decoy launch
+bearings, immutable flight reach, numeric CPU acquisition and smoke blocking.
+The source callback never changes race state during selection.
 
 Save Guardian independently cleared the native retry/save slice, including
 old and future saves. Independent flight review cleared the immutable-speed
@@ -62,8 +56,7 @@ receipts remain under integration .evidence/2026-10-01/ARS-CORE/.
 
 ## Still required
 
-Fix the approved player-launch callback path and clear all held launch tests,
-then complete native balance with weapon-use counts, High and Performance
+Complete native balance with weapon-use counts, High and Performance
 memory-only browser counters, independent review, lane tier and build.
 No current lane/full-tier, browser, balance or whole-card pass is claimed.
 
@@ -74,7 +67,8 @@ settlement awaits its built fight and receipt path; no placeholder is used.
 
 ## Removed
 
-Removed the shared CPU acquisition cap from active Crossbow flight. Removed
-superseded change-note transcripts after folding their current facts here.
+Removed the shared CPU acquisition cap from active Crossbow flight and player
+launch. Removed the duplicated native launch-direction calculation and folded
+superseded change-note transcripts into these current facts.
 No game rule, asset, existing assertion, replay pin or legacy numeric target
 interface was removed. No live game, Preview, real save or release changed.

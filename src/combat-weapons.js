@@ -106,6 +106,25 @@ export function predictedPoint(duel, actor, seconds) {
   return duel.course.groundAt(actor.s + along * seconds, actor.lateral + lateral * seconds);
 }
 
+// Range checks and production share the native lead and launch direction.
+function crossbowAim(duel, actor, target, at, level, straightShot, lead) {
+  const goal = straightShot ? {x: at.x + Math.sin(at.heading + (actor.headingError || 0)) * 100,
+    y: at.y + T.crossbow.aimHeightOffset, z: at.z + Math.cos(at.heading + (actor.headingError || 0)) * 100}
+    : aimPoint(duel, target);
+  const speed = T.crossbow.baseSpeed + T.crossbow.speedPerLevel * level;
+  let aimX = goal.x, aimZ = goal.z;
+  if (!straightShot && lead) {
+    const travel = Math.min(T.crossbow.leadTime,
+      Math.hypot(goal.x - at.x, goal.z - at.z) / speed);
+    const predicted = predictedPoint(duel, target, travel);
+    aimX = predicted.x;
+    aimZ = predicted.z;
+  }
+  const dx = aimX - at.x, dz = aimZ - at.z;
+  const length = Math.hypot(dx, dz) || 1;
+  return {goal, speed, dx: dx / length, dz: dz / length, length};
+}
+
 export function burst(combat, at, kind = 'blast') {
   combat.bursts.push({...at, kind, id: ++combat.serial, age: 0});
   if (combat.bursts.length > T.burstLimit) combat.bursts.shift();
@@ -275,7 +294,15 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   if ((!enemy || arsenal) && cooldowns[weapon] > 0) return false;
   if (arsenal && weapon === 'crossbow') {
     const origin = point(duel, actor);
-    target = targetFor(duel, actor, {range: T.cpu.attackRange, origin});
+    const level = enemy ? 0 : combat.levels.crossbow || 0;
+    const carry = enemy ? null : velocity(actor, origin);
+    target = targetFor(duel, actor, enemy ? {range: T.cpu.attackRange, origin} : {
+      origin,
+      rangeForTarget: candidate => {
+        const {dx, dz, speed} = crossbowAim(duel, actor, candidate, origin, level, false, true);
+        return Math.hypot(dx * speed + carry.x, dz * speed + carry.z) * T.crossbow.lifetime;
+      },
+    });
     // A player may still fire straight through smoke; CPUs cannot aim blind.
     if (!target && enemy) return false;
     straightShot = !target;
@@ -347,23 +374,9 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         dz = Math.cos(angle);
         speed = T.bomb.launchSpeed;
       } else {
-        const goal = straightShot ? {x:at.x+Math.sin(at.heading+(actor.headingError||0))*100,
-          y:at.y+T.crossbow.aimHeightOffset,z:at.z+Math.cos(at.heading+(actor.headingError||0))*100} : aimPoint(duel, target);
-        speed = T.crossbow.baseSpeed + T.crossbow.speedPerLevel * level;
-        let aimX = goal.x;
-        let aimZ = goal.z;
-        if (!straightShot && (enemy || modernProjectile)) {
-          const travel = Math.min(T.crossbow.leadTime,
-            Math.hypot(goal.x - at.x, goal.z - at.z) / speed);
-          const predicted = predictedPoint(duel, target, travel);
-          aimX = predicted.x;
-          aimZ = predicted.z;
-        }
-        dx = aimX - at.x;
-        dz = aimZ - at.z;
-        const length = Math.hypot(dx, dz) || 1;
-        dx /= length;
-        dz /= length;
+        const aim = crossbowAim(duel, actor, target, at, level, straightShot, enemy || modernProjectile);
+        const {goal, length} = aim;
+        ({dx, dz, speed} = aim);
         if (enemy) {
           const baseSpread = CPU_COMBAT[state.cpuDifficulty]?.aimError ?? CPU_COMBAT.medium.aimError;
           const spread = state.cpuDifficulty === 'medium' && !duel.stageDef.arena &&
