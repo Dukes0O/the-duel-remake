@@ -17,12 +17,13 @@ sources and licence records stay in the catalog and external art library.
   salvaged steel sheet across the lower windscreen.
 - Keep the rigid model at 11 m long and 3.5 m tall. No race or save rule changes.
 
-The actual renderer comparison, including a chase view 30 m behind a car,
-uses the exact private model and manifest pins. Its first attempt captured nine
-High yard views, then the chase fixture timed out after advancing before visual
-readiness. The Director corrects that fixture before recapturing the same model.
-Round three is final. Claude chooses the better of
-rounds two and three for Kyle; no public installation or merge is cleared here.
+The corrected visual-readiness fixture completes all twenty actual game views
+in High and Performance, including the normal chase view 30 m behind a car.
+There are no errors or failed requests and two inherited duplicate-Three
+warnings. The independent critic prefers round three, but its art match remains
+below four. The roof center still reads as a striped grille; distant valves,
+boarding readability and local wear remain weak. Claude chooses the better of
+rounds two and three for Kyle. There is no fourth round or installation pass.
 
 ## Tests
 
@@ -49,7 +50,8 @@ No replay, signature, physics, lamp-health policy or save assertion changes.
 
 ## Removed
 
-Replaced the small sideways wheels, dark open pipe holes, yellow roof grille,
-tiny central lamps, flat cab paint and incomplete rear warning markings.
+Reworked the small sideways wheels, dark pipe openings, roof plate, lamps,
+cab wear and rear warning markings. The final review still finds stripes in
+the roof center; this gap stays explicit at the three-round cap.
 The long consumed testing transcript is folded into this note; its text history
 remains. Original donor files, licensed records and both comparison rounds stay.
