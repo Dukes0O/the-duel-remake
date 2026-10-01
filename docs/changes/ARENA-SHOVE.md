@@ -38,8 +38,11 @@ a claim of a relative performance gain.
 Claude approved the inherited body and rail crossings as outside this card.
 They are unchanged and do not hold the merge.
 
-The previous lane tier and build passed. Fresh required lane and build
-gates follow this trimmed note and integration sync before merge.
+The fresh lane gate twice hit the browser transport deadline before any
+audio assertion. The unchanged audio test passes all 23 cases alone.
+Runtime.evaluate now has a bounded 60-second wait for promise work during
+the parallel gate; other commands retain 20 seconds. No audio measurement
+or assertion changed. Independent review and a fresh lane/build follow.
 
 ## Removed
 
