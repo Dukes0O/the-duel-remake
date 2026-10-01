@@ -45,11 +45,79 @@ gl_Position = projectionMatrix * mvPosition;
   material.needsUpdate = true;
 }
 
+function applyGeneratedSalt(material, bounds) {
+  const settings = material.userData;
+  if (settings.saltGroundGenerator !== 'seeded' || !Number.isSafeInteger(settings.saltGroundSeed))
+    throw Error('Salt Flats needs its seeded generated ground material.');
+  const center = bounds.getCenter(new THREE.Vector3());
+  const half = bounds.getSize(new THREE.Vector3()).multiplyScalar(.5);
+  const previousCompile = material.onBeforeCompile, previousKey = material.customProgramCacheKey;
+  material.onBeforeCompile = function(shader, renderer) {
+    previousCompile.call(this, shader, renderer);
+    shader.uniforms.saltGroundSeed = {value: settings.saltGroundSeed};
+    shader.uniforms.saltGroundCenter = {value: new THREE.Vector2(center.x, center.z)};
+    shader.uniforms.saltGroundHalfSize = {value: new THREE.Vector2(half.x, half.z)};
+    shader.uniforms.saltCrustSize = {value: settings.saltCrustSizeMetres};
+    shader.uniforms.saltEdgeFade = {value: settings.saltAtlasEdgeFadeMetres};
+    shader.uniforms.saltGrainSize = {value: settings.saltGrainSizeMetres};
+    shader.vertexShader = 'varying vec3 saltGroundPosition;\n' + shader.vertexShader.replace(
+      '#include <worldpos_vertex>', '#include <worldpos_vertex>\nsaltGroundPosition = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    shader.fragmentShader = `
+varying vec3 saltGroundPosition;
+uniform float saltGroundSeed;
+uniform vec2 saltGroundCenter;
+uniform vec2 saltGroundHalfSize;
+uniform float saltCrustSize;
+uniform float saltEdgeFade;
+uniform float saltGrainSize;
+float saltHash(vec2 at) {
+  return fract(sin(dot(at, vec2(127.1, 311.7)) + saltGroundSeed * 0.019) * 43758.5453);
+}
+float saltNoise(vec2 at) {
+  vec2 cell = floor(at), fade = fract(at);
+  fade = fade * fade * (3.0 - 2.0 * fade);
+  return mix(mix(saltHash(cell), saltHash(cell + vec2(1.0, 0.0)), fade.x),
+    mix(saltHash(cell + vec2(0.0, 1.0)), saltHash(cell + vec2(1.0)), fade.x), fade.y);
+}
+` + shader.fragmentShader.replace('#include <map_fragment>', `
+#include <map_fragment>
+vec2 saltAt = saltGroundPosition.xz - saltGroundCenter;
+vec2 saltToEdge = saltGroundHalfSize - abs(saltAt);
+float saltAtlasEdge = 1.0 - smoothstep(0.0, saltEdgeFade, min(saltToEdge.x, saltToEdge.y));
+if (saltAtlasEdge > 0.0) {
+  vec2 saltCell = floor(saltAt / saltCrustSize);
+  vec2 saltDistances = vec2(100.0);
+  for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) {
+    vec2 cell = saltCell + vec2(float(x), float(z));
+    vec2 site = cell + 0.2 + 0.6 * vec2(saltHash(cell), saltHash(cell + vec2(19.0, -7.0)));
+    vec2 delta = site - saltAt / saltCrustSize;
+    float distance = dot(delta, delta);
+    saltDistances.y = min(saltDistances.y, max(saltDistances.x, distance));
+    saltDistances.x = min(saltDistances.x, distance);
+  }
+  float gap = (sqrt(saltDistances.y) - sqrt(saltDistances.x)) * saltCrustSize;
+  float tone = 0.065 * (saltNoise(saltAt / 53.0) - 0.5) +
+    0.04 * (saltNoise(saltAt / 137.0 + vec2(7.0, -3.0)) - 0.5);
+  tone += 0.055 * exp(-pow(gap / 0.13, 2.0)) - 0.022 * exp(-pow(gap / 0.32, 2.0));
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.70, 0.72, 0.695) + tone, saltAtlasEdge);
+}
+float saltNearGrain = 1.0 - smoothstep(10.0, 25.0, length(vViewPosition));
+float saltGrain = saltHash(floor(saltAt / saltGrainSize)) - 0.5;
+diffuseColor.rgb *= 1.0 + saltGrain * 0.024 * saltNearGrain;
+`).replace('#include <normal_fragment_maps>', `
+#include <normal_fragment_maps>
+normal = normalize(mix(normal, nonPerturbedNormal, saltAtlasEdge));
+`);
+  };
+  material.customProgramCacheKey = function() {return previousKey.call(this) + '|salt-generated-ground-v1';};
+  material.needsUpdate = true;
+}
+
 function createOutsideSaltGround(ground, bounds) {
   // Keep the native prepared bowl unchanged. Four adjoining visual strips
-  // continue its actual photo UV coordinates past the camera's far plane.
+  // share generated world-coordinate salt past the camera's far plane.
   const position = ground.geometry.attributes.position, uv = ground.geometry.attributes.uv;
-  if (!uv) throw Error('Salt Flats ground needs the picked salt photo UVs.');
+  if (!uv) throw Error('Salt Flats ground needs its generated atlas UVs.');
   const index = ground.geometry.index;
   const points = [0,1,2].map(i => {
     const vertex = index ? index.getX(i) : i;
@@ -81,7 +149,10 @@ function createOutsideSaltGround(ground, bounds) {
   geometry.setAttribute('uv',new THREE.Float32BufferAttribute(coordinates,2));
   geometry.setIndex(indices); geometry.computeVertexNormals();
   const material = [].concat(ground.material)[0].clone();
-  material.fog = true;
+  // The unique atlas fades before its native edge. Far strips use generated
+  // world-coordinate salt, so no clamped color or normal map stretches here.
+  material.map = null; material.normalMap = null;
+  material.fog = true; applyGeneratedSalt(material,bounds);
   const mesh = new THREE.Mesh(geometry,material);
   mesh.name = 'Outside Salt Flats ground'; mesh.receiveShadow = true;
   return mesh;
@@ -164,6 +235,7 @@ export function createSaltFlatsScene(course, {loadAsset = () =>
         }
       });
       outside.add(createOutsideSaltGround(ground,bounds));
+      for (const material of [].concat(ground.material)) applyGeneratedSalt(material,bounds);
       group.add(asset.scene);
       group.userData.assetStatus = 'ready';
       return true;

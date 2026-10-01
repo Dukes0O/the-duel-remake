@@ -30,22 +30,10 @@ const qaHome=join(root,'.qa-dist');mkdirSync(qaHome,{recursive:true});
 const scratch=mkdtempSync(join(qaHome,'salt-flats-tests-'));
 const blender=process.env.BLENDER_EXE||'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe';
 const recipe=join(root,'tools/blender/salt-flats.py');
-const sourceRecords=[...new Set([...config.sourcePicks.map(row=>row.catalogId),config.saltPhoto.catalogId])]
+const sourceRecords=[...new Set(config.sourcePicks.map(row=>row.catalogId))]
   .map(id=>{const row=catalog.assets.find(item=>item.id===id);assert.ok(row,`approved catalog source ${id}`);return row;});
 const originals=config.sourcePicks.map(pick=>({...pick,key:`${pick.catalogId}/${pick.path}`,
   file:resolve(sourceRecords.find(row=>row.id===pick.catalogId).library,pick.path)}));
-const photoRecord=sourceRecords.find(row=>row.id===config.saltPhoto.catalogId);
-const photoFile=resolve(photoRecord.library,config.saltPhoto.path);
-function jpegSize(bytes){
-  assert.equal(bytes.readUInt16BE(0),0xffd8,'actual JPEG salt source');
-  for(let offset=2;offset+9<bytes.length;){
-    assert.equal(bytes[offset],0xff,'valid JPEG segment');const marker=bytes[offset+1];
-    if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker))
-      return [bytes.readUInt16BE(offset+7),bytes.readUInt16BE(offset+5)];
-    const size=bytes.readUInt16BE(offset+2);assert.ok(size>=2&&offset+size+2<=bytes.length,'complete JPEG segment');offset+=size+2;
-  }
-  assert.fail('salt photo has measurable original pixel dimensions');
-}
 const protectedPaths=execFileSync('git',['ls-files','public'],{cwd:root,encoding:'utf8'}).trim().split(/\r?\n/)
   .concat(['tools/art/catalog.json','tools/replays/expected-fingerprints.json','tools/replays/combat-fingerprints.json',
     'tools/replays/hidden-road-ordinary.json','tools/test-world-composition.mjs']);
@@ -133,10 +121,9 @@ check('source','the picked plain Bus and nine original geometries are independen
   assert.equal(originals.filter(row=>row.catalogId==='quaternius-public-transport').length,1,'SchoolBus is not the pick');
   const actual=inspectOriginals();assert.deepEqual(originals.map(row=>actual[row.key].length),[2032,68,412,288,402,402,564,172,1530]);
 });
-check('source','the genuine salt photograph remains the approved unchanged 1920 by 1275 input',()=>{
-  const bytes=readFileSync(photoFile);assert.equal(hash(bytes),config.saltPhoto.sha256);
-  assert.deepEqual(jpegSize(bytes),[1920,1275]);assert.deepEqual(config.saltPhoto.pixels,[1920,1275]);
-  assert.equal(config.saltPhoto.tiling,'mirrored-uv');assert.equal(config.saltPhoto.preserveSourcePixels,true);
+check('source','generated salt settings keep an explicit seed and bounded native atlas',()=>{
+  assert.equal(config.saltGround.generator,'seeded');assert.equal(config.saltGround.seed,config.seed);
+  assert.ok(config.saltGround.pixels.every(value=>Number.isSafeInteger(value)&&value>0&&value<=2048));
 });
 check('source','actual source validation accepts the approved cache without exporting a venue',()=>{
   const output=join(scratch,'source-validation');runRecipe(output,['--validate-sources']);
@@ -184,20 +171,6 @@ check('native','ground geometry realizes the authored 300 by 200 metre salt bowl
     `nominal salt ground ${size.x} by ${size.z} metres`);
   assert.ok(triangles(ground).length>0,'ground is real geometry');
 });
-check('native','the salt ground uses the genuine photo and continuous mirrored repetition',async()=>{
-  const {model,manifest}=await build(),ground=model.gltf.scene.getObjectByName(manifest.ground?.node);assert.ok(ground?.isMesh);
-  const nativeImages=images(model);assert.ok(nativeImages.some(bytes=>hash(bytes)===config.saltPhoto.sha256),'unchanged approved photograph embedded');
-  const gltfNode=model.json.nodes.find(node=>node.name===manifest.ground.node);assert.ok(gltfNode?.mesh!==undefined);
-  const primitives=model.json.meshes[gltfNode.mesh].primitives;assert.ok(primitives.length);
-  for(const primitive of primitives){const texture=model.json.materials[primitive.material]?.pbrMetallicRoughness?.baseColorTexture;
-    assert.ok(texture,'salt photo is used on the ground material');const textureRow=model.json.textures[texture.index];
-    assert.equal(hash(nativeImages[textureRow.source]),config.saltPhoto.sha256,'ground material uses the actual approved photo, not an unrelated embedded image');
-    const sampler=model.json.samplers[textureRow.sampler];
-    assert.equal(sampler?.wrapS,33648,'actual exported U uses mirrored repeat');assert.equal(sampler?.wrapT,33648,'actual exported V uses mirrored repeat');}
-  const uv=ground.geometry.attributes.uv;assert.ok(uv,'actual repeated ground UVs');
-  const u=Array.from({length:uv.count},(_,i)=>uv.getX(i)),v=Array.from({length:uv.count},(_,i)=>uv.getY(i));
-  assert.ok(Math.max(...u)-Math.min(...u)>1&&Math.max(...v)-Math.min(...v)>1,'photo repeats across the bowl');
-});
 check('native','original bright pack palettes do not survive in fitted output',async()=>{
   const {model}=await build();const originals=sourceRecords.flatMap(row=>row.files.filter(file=>file.path.endsWith('Textures/colormap.png'))
     .map(file=>file.sha256));for(const bytes of images(model))assert.ok(!originals.includes(hash(bytes)),'no unchanged source colour palette');
@@ -232,6 +205,16 @@ check('native','the actual native layout repeats from seed and inputs',async()=>
   const manifest=JSON.parse(readFileSync(join(output,'manifest.json'),'utf8'));
   assert.deepEqual(manifest.features,first.manifest.features,'same physical features and positions');
   assert.deepEqual(manifest.sourceInstances,first.manifest.sourceInstances,'same original source transformations');
+  assert.deepEqual(manifest.ground,first.manifest.ground,'fixed generated salt metadata and image hashes repeat');
+  const groundImages=model=>{
+    const node=model.json.nodes.find(row=>row.name==='salt-flats-ground');
+    const material=model.json.materials[model.json.meshes[node.mesh].primitives[0].material];
+    return [material.pbrMetallicRoughness.baseColorTexture,material.normalTexture].map(texture=>{
+      assert.ok(texture,'native generated salt has its embedded color and crust normal textures');
+      return hash(images(model)[model.json.textures[texture.index].source]);
+    });
+  };
+  assert.deepEqual(groundImages(second),groundImages(first.model),'actual embedded generated ground bytes repeat');
 });
 const memory=new Map();globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value)),removeItem:key=>memory.delete(key)};
 globalThis.cancelAnimationFrame=()=>{};
@@ -400,8 +383,8 @@ if(process.argv.includes('--capture-controls')){
     scrapdome:scrapdomeControls()},null,2)+'\n');
   console.log('Salt Flats: independent existing-venue controls captured once.');process.exit(0);
 }
-// New generated-ground acceptance. The earlier photo assertions remain until
-// the Director arranges their replacement under Kyle's written change.
+// Generated-ground acceptance replaces the active photo assertions under
+// Kyle's written 1 October decision; driving and native donor checks stay exact.
 check('ground-config','the salt ground uses a fixed generator seed and no active photograph input',()=>{
   assert.ok(Number.isSafeInteger(config.seed),'venue has an explicit repeatable seed');
   assert.equal(config.saltPhoto,undefined,'retired salt photo must be removed from the active ground configuration');

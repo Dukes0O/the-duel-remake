@@ -7,7 +7,6 @@ import argparse
 import hashlib
 import json
 import math
-import struct
 import shutil
 import subprocess
 import sys
@@ -34,7 +33,7 @@ def digest(path):
 
 def source_guard(root,config,override):
     catalog=json.loads((root/'tools/art/catalog.json').read_text())
-    ids=list(dict.fromkeys([pick['catalogId'] for pick in config['sourcePicks']]+[config['saltPhoto']['catalogId']]))
+    ids=list(dict.fromkeys(pick['catalogId'] for pick in config['sourcePicks']))
     records={};homes={}
     for key in ids:
         row=next((record for record in catalog['assets'] if record['id']==key),None)
@@ -70,13 +69,8 @@ def source_guard(root,config,override):
         pin=next((file for file in records[pick['catalogId']]['files'] if file['path']==pick['path']),None)
         if pin is None or pin['sha256']!=pick['sha256']:
             raise ValueError('Fit input is not its pinned approved native original')
-    photo=config['saltPhoto']
-    if photo['tiling']!='mirrored-uv' or photo['preserveSourcePixels'] is not True:
-        raise ValueError('Only the approved original photo and mirrored UV repeat are authorized')
-    image=homes[photo['catalogId']]/photo['path']
-    if digest(image)!=photo['sha256']:
-        raise ValueError('The original salt photograph changed')
-    return records,homes,image
+    return records,homes
+
 
 
 def originals(config,homes):
@@ -226,36 +220,78 @@ def worn_material(output):
     return material
 
 
-def salt_material(path):
-    image=bpy.data.images.load(str(path),check_existing=False)
-    source=path.read_bytes();image.pack(data=source,data_len=len(source))
-    material=bpy.data.materials.new('Genuine salt photo with approved mirrored repetition');material.use_nodes=True
-    shader=material.node_tree.nodes.get('Principled BSDF');shader.inputs['Roughness'].default_value=1
-    node=material.node_tree.nodes.new('ShaderNodeTexImage');node.image=image;node.extension='REPEAT'
-    material.node_tree.links.new(node.outputs['Color'],shader.inputs['Base Color'])
-    return material
+def salt_hash(x,z,seed):
+    return np.mod(np.sin(x*127.1+z*311.7+seed*.019)*43758.5453,1)
 
 
-def mirrored_photo_sampler(path,photo_hash):
-    # glTF expresses mirror repetition in the sampler. The source JPEG pixels
-    # stay untouched; only this explicit exported sampler is configured.
-    bytes_=path.read_bytes();json_size=struct.unpack_from('<I',bytes_,12)[0]
-    document=json.loads(bytes_[20:20+json_size]);binary=bytes_[28+json_size:]
-    selected=[]
-    for index,image in enumerate(document.get('images',[])):
-        view=document['bufferViews'][image['bufferView']];start=view.get('byteOffset',0)
-        if hashlib.sha256(binary[start:start+view['byteLength']]).hexdigest()==photo_hash:
-            selected.append(index)
-    if len(selected)!=1:
-        raise ValueError('Export must embed exactly the unchanged original salt photograph')
-    for texture in document['textures']:
-        if texture['source'] in selected:
-            sampler=dict(document['samplers'][texture['sampler']]);sampler.update(wrapS=33648,wrapT=33648)
-            texture['sampler']=len(document['samplers']);document['samplers'].append(sampler)
-    encoded=json.dumps(document,separators=(',',':')).encode();encoded+=b' '*((-len(encoded))%4)
-    total=12+8+len(encoded)+8+len(binary)
-    path.write_bytes(struct.pack('<4sII',b'glTF',2,total)+struct.pack('<II',len(encoded),0x4e4f534a)+encoded+
-                     struct.pack('<II',len(binary),0x004e4942)+binary)
+def salt_noise(x,z,seed):
+    ix=np.floor(x);iz=np.floor(z);fx=x-ix;fz=z-iz
+    fx=fx*fx*(3-2*fx);fz=fz*fz*(3-2*fz)
+    low=salt_hash(ix,iz,seed)*(1-fx)+salt_hash(ix+1,iz,seed)*fx
+    high=salt_hash(ix,iz+1,seed)*(1-fx)+salt_hash(ix+1,iz+1,seed)*fx
+    return low*(1-fz)+high*fz
+
+
+def salt_material(output,config,physical):
+    settings=config['saltGround'];seed=settings['seed'];width,height=settings['pixels']
+    if settings['generator']!='seeded' or seed!=config['seed']:
+        raise ValueError('Salt ground must use the settled fixed venue seed')
+    bowl=config['targetSizeMetres'];yy,xx=np.mgrid[0:height,0:width]
+    x=(xx/(width-1)-.5)*bowl['width'];z=(yy/(height-1)-.5)*bowl['depth']
+    macro=.065*(salt_noise(x/53,z/53,seed)-.5)+.04*(salt_noise(x/137+7,z/137-3,seed)-.5)
+    size=settings['crustSizeMetres'];px=x/size;pz=z/size;ix=np.floor(px);iz=np.floor(pz)
+    first=np.full(x.shape,np.inf);second=np.full(x.shape,np.inf)
+    for dx in (-1,0,1):
+        for dz in (-1,0,1):
+            cx=ix+dx;cz=iz+dz
+            sx=cx+.2+.6*salt_hash(cx,cz,seed);sz=cz+.2+.6*salt_hash(cx+19,cz-7,seed)
+            distance=(sx-px)**2+(sz-pz)**2
+            second=np.minimum(second,np.maximum(first,distance));first=np.minimum(first,distance)
+    gap=(np.sqrt(second)-np.sqrt(first))*size
+    ridge=np.exp(-(gap/.13)**2);seam=np.exp(-(gap/.32)**2)
+    tone=macro+.055*ridge-.022*seam
+    rgb=np.stack([.70+tone,.72+tone,.695+tone],axis=-1)
+    # Read the real Course boundary frames to tint its tyre-worn driving band.
+    # This changes only the texture; every physical surface stays authoritative.
+    frames=[]
+    for solid in physical['solids']:
+        fit=solid['fit']
+        if fit.get('boundary') and not solid['id'].startswith('salvage-island'):
+            heading=fit['heading'];cx,_,cz=fit['center'];offset=fit['offset']
+            frames.append((cx-math.cos(heading)*offset,cz+math.sin(heading)*offset))
+    distance=np.full(x.shape,np.inf)
+    for index,(ax,az) in enumerate(frames):
+        bx,bz=frames[(index+1)%len(frames)];dx=bx-ax;dz=bz-az
+        t=np.clip(((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz),0,1)
+        distance=np.minimum(distance,(x-ax-t*dx)**2+(z-az-t*dz)**2)
+    band=np.clip((21-np.sqrt(distance))/7,0,1);band=band*band*(3-2*band)
+    rgb=rgb*(1-band[:,:,None]*.07)+np.array([-.016,-.016,-.004])[None,None,:]*band[:,:,None]
+    rgb=np.clip(rgb,.45,.85)
+    material=bpy.data.materials.new('Seeded weathered salt pan');material.use_nodes=True
+    material['saltGroundSeed']=seed;material['saltGroundGenerator']='seeded'
+    material['saltCrustSizeMetres']=settings['crustSizeMetres']
+    material['saltAtlasEdgeFadeMetres']=settings['atlasEdgeFadeMetres']
+    material['saltGrainSizeMetres']=settings['grainSizeMetres']
+    shader=material.node_tree.nodes.get('Principled BSDF');shader.inputs['Roughness'].default_value=.98
+    def texture(name,pixels,noncolor=False):
+        image=bpy.data.images.new(name,width=width,height=height,alpha=False)
+        if noncolor:image.colorspace_settings.name='Non-Color'
+        rgba=np.ones((height,width,4),np.float32);rgba[:,:,:3]=pixels
+        image.pixels.foreach_set(rgba.ravel());image.file_format='PNG'
+        path=output/(name+'.png');image.filepath_raw=str(path);image.save()
+        bytes_=path.read_bytes();image.pack(data=bytes_,data_len=len(bytes_))
+        node=material.node_tree.nodes.new('ShaderNodeTexImage');node.image=image;node.extension='EXTEND'
+        return node,digest(path)
+    color,color_hash=texture('seeded-salt-color',rgb)
+    material.node_tree.links.new(color.outputs['Color'],shader.inputs['Base Color'])
+    dz,dx=np.gradient(.028*ridge,bowl['depth']/(height-1),bowl['width']/(width-1))
+    normal=np.stack([-dx,-dz,np.ones(x.shape)],axis=-1)
+    normal/=np.linalg.norm(normal,axis=-1)[:,:,None]
+    normal,normal_hash=texture('seeded-salt-normal',normal*.5+.5,True)
+    decode=material.node_tree.nodes.new('ShaderNodeNormalMap')
+    material.node_tree.links.new(normal.outputs['Color'],decode.inputs['Color'])
+    material.node_tree.links.new(decode.outputs['Normal'],shader.inputs['Normal'])
+    return material,{'generator':'seeded','seed':seed,'colorSha256':color_hash,'normalSha256':normal_hash}
 
 
 def main():
@@ -263,14 +299,14 @@ def main():
     if qa not in output.parents or output==qa:
         raise ValueError('Native candidate output must be inside this lane .qa-dist')
     config=json.loads(Path(args.fit_config).read_text());override=Path(args.source_library).resolve() if args.source_library else None
-    records,homes,photo=source_guard(root,config,override)
+    records,homes=source_guard(root,config,override)
     if args.validate_sources:
         print('Approved source licence and byte guards pass; no geometry exported.');return
     if output.exists() and any(output.iterdir()):
         raise ValueError('Use a fresh private native output directory')
     physical=physical_geometry(root,config,args.seed)
     source=originals(config,homes);bpy.ops.wm.read_factory_settings(use_empty=True);output.mkdir(parents=True,exist_ok=True)
-    metal=worn_material(output);salt=salt_material(photo)
+    metal=worn_material(output);salt,ground_manifest=salt_material(output,config,physical)
     objects=[];features=[];lineage=[]
     solids={row['id']:row for row in physical['solids']}
     def add(geometry,kind,material=metal):
@@ -278,7 +314,7 @@ def main():
             geometry.fit_collision(solids[geometry.name]['collision'])
         objects.append(geometry.build(material));features.append(geometry.feature(kind));lineage.extend(geometry.lineage)
     ground=Geometry('salt-flats-ground');w=config['targetSizeMetres']['width']/2;d=config['targetSizeMetres']['depth']/2
-    points=[(-w,0,-d),(-w,0,d),(w,0,d),(w,0,-d)];uv=[(0,0),(0,2*d/12),(2*w/12,2*d/12),(2*w/12,0)]
+    points=[(-w,0,-d),(-w,0,d),(w,0,d),(w,0,-d)];uv=[(0,0),(0,1),(1,1),(1,0)]
     ground.triangle([points[i] for i in (0,1,2)],[uv[i] for i in (0,1,2)])
     ground.triangle([points[i] for i in (0,2,3)],[uv[i] for i in (0,2,3)]);objects.append(ground.build(salt))
     for section in physical['solids']:
@@ -394,11 +430,10 @@ def main():
     venue=output/'venue.glb'
     bpy.ops.export_scene.gltf(filepath=str(venue),export_format='GLB',use_selection=True,export_yup=True,
                              export_animations=False,export_materials='EXPORT',export_extras=True,export_image_format='AUTO')
-    mirrored_photo_sampler(venue,config['saltPhoto']['sha256'])
     native_triangles=0
     for obj in objects:obj.data.calc_loop_triangles();native_triangles+=len(obj.data.loop_triangles)
     manifest={'version':1,'card':'ARENA-06','seed':args.seed,'ground':{'node':ground.name,'targetSizeMetres':config['targetSizeMetres'],
-               'photoSha256':config['saltPhoto']['sha256'],'tiling':'mirrored-uv'},'features':features,'sourceInstances':lineage,
+               **ground_manifest},'features':features,'sourceInstances':lineage,
                'nativeTriangles':native_triangles,'nativeDraws':len(objects),'geometrySha256':digest(venue),
                'scope':'Private registered Course and native boundary geometry. Launch hooks, game/art/frame and Claude review remain pending.'}
     (output/'manifest.json').write_text(json.dumps(manifest,separators=(',',':'))+'\n')

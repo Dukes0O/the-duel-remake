@@ -72,17 +72,6 @@
       "triangles": 1530
     }
   ],
-  "saltPhoto": {
-    "catalogId": "marina-salt-crystals-beach",
-    "path": "salt-crystals-on-beach-textures.jpg",
-    "sha256": "91911006c31d862527b7b3b98719512e6074ea80e7bbe483393eb925b9237b79",
-    "pixels": [
-      1920,
-      1275
-    ],
-    "tiling": "mirrored-uv",
-    "preserveSourcePixels": true
-  },
   "islandSalvage": {
     "node": "inner-island-salvage",
     "placement": "scenery-inside-solid-island",
@@ -120,5 +109,16 @@
         "paintTile": 0
       }
     ]
+  },
+  "saltGround": {
+    "generator": "seeded",
+    "seed": 1989,
+    "pixels": [
+      1536,
+      1024
+    ],
+    "crustSizeMetres": 4.2,
+    "atlasEdgeFadeMetres": 12,
+    "grainSizeMetres": 0.075
   }
 }
