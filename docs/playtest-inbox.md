@@ -1,5 +1,14 @@
 # Wasteland play-test inbox
 
+## Completed Salt and Vesper comparisons for Claude
+
+Salt's third and final sheet reaches four on every assessed visual item,
+with all sixteen game views clear and frame cost within the limit. Vesper's
+second sheet reaches four and all ten views pass with the latest controls.
+Please review the sheets linked on their cards. Public Salt hooks wait for
+Arsenal and wreck-rate; both new recipes need the placement file held by
+Tanker. Vesper's build passes, but that registration keeps its lane gate red.
+
 ## Arsenal balance and final tanker review for Claude
 
 Arsenal Medium wins eighty percent against the forty-five to sixty-five target.
@@ -20,13 +29,12 @@ waits for your answer; the target test and balance-tool import guard can finish.
 
 ## Director resume: 1 October afternoon
 
-Shove is merged and awaits Kyle's Preview check. Arsenal's required balance
-and wreck-rate tuning await the two written design answers above. The final
-tanker sheet awaits Claude's choice. Salt's generated ground passes native
-and frame checks; its first sheet and Vesper's first game sheet are linked
-on their cards. The critics found faint salt crust and a flat dark costume,
-so the second material rounds strengthen the settled designs without new
-geometry or rules. Claude reviews those completed comparisons before merge.
+Shove is merged and awaits Kyle's Preview check. Arsenal and wreck-rate await
+the two written answers above. Tanker is capped at its final round for Claude's
+choice and Kyle's look; independent final Source review is clear. Salt and
+Vesper's completed native comparisons are ready for Claude, with public hooks
+and placement registration still holding their merges. No new art round is
+needed for either cleared look.
 
 ## Answers carried into the current cards
 

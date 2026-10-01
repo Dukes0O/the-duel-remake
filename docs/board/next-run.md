@@ -35,6 +35,16 @@ not move. From this run on:
 - Merge as soon as a card meets its acceptance and its gates. Aim for each
   open card to merge or reach Kyle in this run.
 
+**Completed this afternoon:** Shove is merged. Salt's final round and Vesper's
+second round reach four on all assessed visual items; their sheets await
+Claude. Salt's public entry still waits for the Arsenal and wreck-rate files,
+and the existing placement test needs both new recipes registered after
+Tanker releases that hook. Vesper builds, but its lane floor is red on that
+registration. Tanker's final round stays below the art bar and goes through
+Claude's choice to Kyle. Arsenal balance and the wreck-rate armor question
+remain at the top of the play-test inbox. Keep the free-file waits recorded
+on ARENA-04, WAR-03b and BALANCE-W2-OFF-RETIRE.
+
 ### Tracks for this run (up to five lanes)
 
 | Track | Cards, in order | Notes |

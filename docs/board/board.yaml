@@ -690,24 +690,28 @@ tasks:
     lane: ART
     size: M
     needs: [ART-SRC-CREW-W]
-    status: building
+    status: review
     claimed_by: codex-director-2026-10-01-afternoon
     branch: codex/art/vesper
     owns: [tools/blender/vesper-blackiron.py, tools/art/vesper-fit.json, tools/test-vesper-art.mjs, tools/scenarios/vesper-art.mjs, docs/changes/ART-FIT-CREW-W.md, docs/board/looks/vesper/]
     hooks: []
     helpers: [test_author, art_director, reviewer, art_critic, browser_qa]
-    sequencing: "After the tanker, resume Vesper using a fresh empty output folder and create-new files as Claude approved. No system settings or link matrix is needed. Run the actual game comparison and send the sheet to Claude."
+    sequencing: "Both material rounds are complete, with all assessed visual items at four. Claude reviews the finished pictures; the existing placement check needs recipe registration in Tanker's shared file after its merge. A fresh green lane and build gate precedes merge; WAR-04 owns the later reveal and installation."
     flag: wasteland2
     acceptance:
       - "Kyle kept the current Nell, Odessa and Wren on 30 September 2026, so they are not refitted. Build only Vesper Blackiron, the Baron's daughter, by adapting the current women's figure (its rig, actions and topology) under docs/WASTELAND_ART.md 'Fitting existing models': her own costume in the Baron's blackened steel and a dark red accent, recognizable next to Nell, Odessa and Wren. Built but shown only once WAR-04 reveals her. Kyle has the last look in the Preview."
     test_commit: "e5811d8e0927bb6542d508968b9aac76068fd979"
-    source_commit: "43fc3eb864632d36869858e2e9a55d25daa405f7"
+    source_commit: "c0ca0e265433742c324e0a63443ba6f9db37e6c4"
     guard_test_commit: "5e986cf"
-    review_commit: "646afc4"
+    review_commit: "bf2eccab2126b6b001f80d2cc3e6c099241255bc"
     claude_answer: "1 October 2026, afternoon (answered by Claude so Kyle need not): do not turn on Windows file-link permissions or change any system setting. Close the gap simply: each export run writes only into a new, empty folder it creates under .qa-dist, opens every output file as create-new (fail if anything already exists at that path), and copies into the lane only after the run. A pre-existing file or link then stops the run. That is enough for a game on one laptop; no further hardlink or link test matrix. Resume Source review and the in-game comparison."
-    note: "The approved fresh-folder fix and all original native checks pass; the costume stays byte-identical. The actual game comparison follows, then independent review and Claude's look verdict."
-    qa_commit: "677a4c9"
+    note: "All ten current-control game pictures pass and the critic clears the costume. Build passes, but the lane gate fails only the unregistered recipe in Tanker's exclusive placement file. The comparison is ready for Claude; merge remains held."
+    qa_commit: "4044431d36f1eec2bbf59f01e361fac75dc3442a"
     round_1_sheet: ".lanes/vesper/docs/board/looks/vesper/round-1.jpg"
+    waiting_on: claude
+    hook_requests: [tools/test-blender-output.mjs]
+    round_2_sheet: ".lanes/vesper/docs/board/looks/vesper/round-2.jpg"
+    lane_gate_commit: "3fe32b91137a8c1816b022567ca07f78162a4fcb"
   - id: ART-FIT-HANDS
     title: "First-person hands, gloves and sleeves from the picked source"
     owner: codex
@@ -795,7 +799,7 @@ tasks:
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/art/convoy-tanker
     owns: [tools/blender/convoy-tanker.py, tools/art/tanker-fit.json, src/arena/tanker-model.js, tools/test-convoy-tanker-art.mjs, tools/scenarios/convoy-tanker-art.mjs, docs/changes/ART-FIT-TANKER.md, docs/board/looks/convoy-tanker/, public/assets/models/wasteland/convoy-tanker/]
-    sequencing: "Build Claude’s five final-round directions using the approved donors. Compare in the actual game, including the normal chase view, then send the sheet to Claude. The better of rounds two and three goes to Kyle; there is no fourth round."
+    sequencing: "Build Claude's five final-round directions using the approved donors. Compare in the actual game, including the normal chase view, then send the sheet to Claude. The better of rounds two and three goes to Kyle; there is no fourth round."
     hooks: [tools/test-blender-output.mjs]
     helpers: [test_author, art_director, reviewer, art_critic, browser_qa]
     test_commit: 6572240cd07beb284a0f60d816ca212582ed7afc
@@ -805,7 +809,7 @@ tasks:
       - "Build the tanker settled in docs/SCRAPDOME.md, Convoy Raid (30 September 2026): one rigid vehicle from Kyle's pick A (Kenney delivery-flat cab and bed with the City Kit Industrial detail-tank on the bed), three fuel valves from the verified factory pipe valve donor on the tank, scrap armor plating from the Salt Flats salvage parts, and a raised boarding plate on the tank roof with warning lamps that light when all three valves are broken. Nothing opens or articulates."
       - "Follow docs/WASTELAND_ART.md 'Fitting existing models' (no source palette, gritty, judged in the game renderer, three-round cap); send the comparison sheet to Claude, who shows Kyle."
     claude_review_round_1: "1 October 2026: right direction (the gritty version already beats the toy palette), round 2 needed. 1) Scale: it reads car-sized; a 12 tonne rig is about 11 m long and 3.5 m tall, roughly twice a car's length, and must look it next to the cars. 2) Readability: valves are the targets, so paint them hazard red with a bright collar that reads at racing distance; black and yellow hazard stripes on the bumper and boarding plate; a lighter weathered tank against a darker cab so the shape reads in the dark yard. 3) Approve the proposed native valve mounting fixes (no gaps; seat each valve on the tank with its flange). Keep pick A and everything else."
-    qa_commit: "05cfc387e91bb961dfb4d5811904aea5a5686d7b"
+    qa_commit: "79129fb"
 
     placement_test_commit: "1c366f4ac3a92edea3eef7d254a49bc1bee54713"
     planning_source_commit: "86d0d6dbe83f272980826c1b8eff57e98a5b38d8"
@@ -813,6 +817,7 @@ tasks:
     note: "The final round passes native fitting and twenty actual game captures. The critic prefers it but the roof center still has stripes and the look stays below the bar; Claude chooses the better final sheet for Kyle."
     final_comparison: ".lanes/convoy-tanker/docs/board/looks/convoy-tanker/round-3.jpg"
     final_verdict: "All twenty actual-game views and native checks pass. The critic prefers round three but it stays below the art bar; the roof center still has stripes. Please choose the better round for Kyle; no fourth fitting round or installation is cleared."
+    source_review: "Independent final Source review finds no new defect; donor lineage, dimensions, glass-only lighting, state purity and disposal remain sound. The roof appearance gap, missing frame measurement and final merge gate remain explicit."
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex
@@ -1063,26 +1068,28 @@ tasks:
     lane: VIS
     size: L
     needs: [ART-SRC-SALTFLATS]
-    status: building
-    review_commit: "fb3267f"
-    source_commit: "8d36433629369f9dd2f565fe9f601f782c551d53"
+    status: review
+    review_commit: "4bb0da063863e8a9450f9b419e817eff20c377f0"
+    source_commit: "bac0d1c9c5465f953288d8d24ed2f84f62a8cbf9"
     test_commit: "c18e814"
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/vis/salt-flats
     flag: salt-flats
     owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
     hooks: [tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js]
-    hook_requests: [src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, start-preview.bat, tools/test-wasteland-beta.mjs]
-    sequencing: "Replace the repeating salt photo with the settled seeded ground before the next comparison. The fitted island and outside ground remain; rerun native and actual frame checks after the ground change. Public entry hooks wait for Arsenal and the wreck-rate event hook."
+    hook_requests: [src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, start-preview.bat, tools/test-wasteland-beta.mjs, tools/test-blender-output.mjs]
+    sequencing: "The third and final material round reaches four and meets the frame limit. Claude reviews the completed venue pictures; public entry files wait for Arsenal and wreck-rate, while the placement check stays with Tanker. Finish those hooks and the mode unlocks before the final lane and build gate."
     helpers: [test_author, reviewer, art_critic, browser_qa]
     acceptance:
       - "Starts after Kyle picks from the ART-SRC-SALTFLATS sheet. Build docs/SCRAPDOME.md section 10's venue from the picked assets (three art rounds at most, SPEC 0.11), rank 9 unlock, every arena mode playable there, frame cost within 10% of the Scrapdome in High and Performance."
     claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
     kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
-    qa_commit: "d07c6cd"
-    note: "The fitted island, native renderer and sixteen actual game views pass, with equal frame results at both qualities. The pictures still show obvious photo repeats, so Kyle's settled generated-ground change comes next before Claude review."
+    qa_commit: "de672497b81eaf4c8bdf082f2c46eccf7ca62222"
+    note: "All sixteen final game views and native checks pass, with every assessed visual item at four and matched frame cost within the limit. The six unfinished public-entry cases remain explicit. Claude reviews the final sheet; there is no fourth material round or whole-card merge pass."
     kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
     round_1_sheet: ".lanes/salt-flats/docs/board/looks/salt-flats/round-1.jpg"
+    waiting_on: claude
+    final_comparison: ".lanes/salt-flats/docs/board/looks/salt-flats/round-3.jpg"
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex

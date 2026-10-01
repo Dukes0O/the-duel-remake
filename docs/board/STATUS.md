@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-01T22:28:04.923Z
+Observed at: 2026-10-01T23:35:08.765Z
 
-Observation commit: 6e384ec76abc3cdef287b428eef1a3e9bf68555b
+Observation commit: ebb4fb18e26d7f6f624c1c52f12a4be946cd4daa
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 6e384ec76abc3cdef287b428eef1a3e9bf68555b
+Integration HEAD: ebb4fb18e26d7f6f624c1c52f12a4be946cd4daa
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -38,10 +38,10 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/art/vesper | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/vesper |
-| lane/art/convoy-tanker | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/convoy-tanker |
+| lane/art/convoy-tanker | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/convoy-tanker |
 | lane/audio/aud-10 | 6 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 6 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 6 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/audio/aud-17-picks | 6 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/cmb/arena-wreck-rate | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-wreck-rate |
 | lane/cmb/arsenal-core | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-core |
 | lane/vis/salt-flats | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/salt-flats |
@@ -52,11 +52,11 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/art/vesper | unknown | 2026-10-01T08:10:01-07:00 | 0 | last commit 2026-10-01T08:10:01-07:00 | docs/changes/ART-FIT-CREW-W.md, tools/art/vesper-fit.json, tools/blender/vesper-blackiron.py, tools/test-vesper-art.mjs |
-| lane/art/convoy-tanker | unknown | 2026-10-01T15:17:00-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/convoy-tanker/round-1-review.md, docs/board/looks/convoy-tanker/round-1-sheet.py, docs/board/looks/convoy-tanker/round-1.jpg, docs/board/looks/convoy-tanker/round-2-review.md, docs/board/looks/convoy-tanker/round-2-sheet.py |
-| lane/cmb/arena-wreck-rate | unknown | 2026-10-01T15:09:09-07:00 | 0 | last commit 2026-10-01T15:09:09-07:00 | docs/changes/ARENA-WRECK-RATE.md, tools/arena-balance.mjs, tools/test-arena-wreck-rate.mjs |
-| lane/cmb/arsenal-core | unknown | 2026-10-01T15:13:59-07:00 | 0 | last commit 2026-10-01T15:13:59-07:00 | docs/changes/ARS-CORE.md, src/app.js, src/arena/arena-pilot.js, src/arsenal/car-effects.js, src/arsenal/hazards.js |
-| lane/vis/salt-flats | unknown | 2026-10-01T15:24:22-07:00 | 0 | last commit 2026-10-01T15:24:22-07:00 | docs/changes/ARENA-06.md, src/arena/venues.js, src/arena/venues/salt-flats.js, src/course.js, src/render3d.js |
+| codex/art/vesper | ART-FIT-CREW-W | 2026-10-01T16:31:08-07:00 | 0 | last commit 2026-10-01T16:31:08-07:00 | docs/board/looks/vesper/round-1-review.md, docs/board/looks/vesper/round-1-sheet.py, docs/board/looks/vesper/round-1.jpg, docs/board/looks/vesper/round-2-review.md, docs/board/looks/vesper/round-2-sheet.py |
+| lane/art/convoy-tanker | ART-FIT-TANKER | 2026-10-01T16:20:34-07:00 | 0 | last commit 2026-10-01T16:20:34-07:00 | docs/board/looks/convoy-tanker/round-1-review.md, docs/board/looks/convoy-tanker/round-1-sheet.py, docs/board/looks/convoy-tanker/round-1.jpg, docs/board/looks/convoy-tanker/round-2-review.md, docs/board/looks/convoy-tanker/round-2-sheet.py |
+| lane/cmb/arena-wreck-rate | ARENA-WRECK-RATE | 2026-10-01T15:09:09-07:00 | 0 | last commit 2026-10-01T15:09:09-07:00 | docs/changes/ARENA-WRECK-RATE.md, tools/arena-balance.mjs, tools/test-arena-wreck-rate.mjs |
+| lane/cmb/arsenal-core | ARS-CORE | 2026-10-01T15:35:16-07:00 | 0 | last commit 2026-10-01T15:35:16-07:00 | docs/changes/ARS-CORE.md, src/app.js, src/arena/arena-pilot.js, src/arsenal/car-effects.js, src/arsenal/hazards.js |
+| lane/vis/salt-flats | ARENA-06 | 2026-10-01T16:34:41-07:00 | 0 | last commit 2026-10-01T16:34:41-07:00 | docs/board/looks/salt-flats/round-1-review.md, docs/board/looks/salt-flats/round-1-sheet.py, docs/board/looks/salt-flats/round-1.jpg, docs/board/looks/salt-flats/round-2-review.md, docs/board/looks/salt-flats/round-2-sheet.py |
 
 ## Size targets
 
@@ -70,10 +70,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 430,908 B | +0 B | 500,000 B |
 | Review `looks/` | 10,712,857 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 90,436 B | -2,075,758 B | 5,000,000 B |
+| Added bytes in last merge | 90,436 B | +0 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 340,634,624 B | +881,664 B | unavailable |
-| Lane folders | 5 | +1 | unavailable |
+| Git objects | 344,593,408 B | +467,968 B | unavailable |
+| Lane folders | 5 | +0 | unavailable |
 
 ## Backups
 
@@ -81,7 +81,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: 6e384ec76abc3cdef287b428eef1a3e9bf68555b
+- Local integration/wasteland: ebb4fb18e26d7f6f624c1c52f12a4be946cd4daa
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
