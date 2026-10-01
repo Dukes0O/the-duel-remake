@@ -537,3 +537,108 @@ for (const role of ['player-attacker', 'player-target']) {
     eq(r.duel._vehicleContact, Duel.prototype._vehicleContact, 'native observation restores the inherited contact method');
   });
 }
+
+
+// A staged grounded QA pose must not keep ballistic integration from the CPU's
+// earlier real ramp while it waits for another car's actual arena respawn.
+function protectedCpuApproach(freshGroundedPose) {
+  const duel = new Duel({seed: 89098, featureFlags: {wasteland2: true, scrapdome: true}});
+  eq(duel.startArenaEvent({car: 'falcone_f42', driverId: 'club', seed: 89098,
+    cpuDifficulty: 'easy', opponents: [{car: 'dusthawk_rally', upgradeLevel: 0}]}), true,
+  'native seed/options match the independently captured protected CPU approach');
+  const target = duel.state, attacker = target.opponents[0];
+  const tick = n => {for (let i = 0; i < n; i++) duel.step(DT);};
+  const stagedPose = (actor, distance) => {
+    Object.assign(actor, {s: distance, prevS: distance, lateral: 0, prevLateral: 0,
+      headingError: 0, speedMph: 0, yawVelocity: 0, pushVelocity: 0,
+      steerVisual: 0, slipAngle: 0, knock: null, tumble: null, airborne: false,
+      airHeight: 0, prevAirHeight: 0, groundHeight: null, contactCooldown: 0, damageCooldown: 0});
+    if (freshGroundedPose) Object.assign(actor, {_jumpY: null, _verticalSpeed: 0});
+  };
+  const approach = mph => {
+    stagedPose(attacker, target.s);
+    const envelope = vehicleContactEnvelope(attacker, target, duel._vehicleSpec(attacker), duel._vehicleSpec(target));
+    stagedPose(attacker, target.s - envelope.length - .02);
+    holdIdle(duel, attacker); participant(duel, attacker).goal.speedMph = mph + 1.1;
+    attacker.speedMph = mph + 1.1;
+  };
+  tick(362); target.combat.aiTimer = target.combat.pickupTimer = Infinity;
+  stagedPose(target, 20); stagedPose(attacker, 90); holdIdle(duel, attacker);
+  target.armor = 1; approach(60); duel._vehicleContact(attacker, target, 'rival'); tick(1);
+  eq(target.combatWrecking, true, 'actual sixty-mph contact creates the real player wreck');
+  for (let i = 0; i < 430 && target.combatWrecking; i++) tick(1);
+  eq(target.combatWrecking, false, 'actual running wreck deadline completes without a forced respawn');
+  eq(participant(duel, target).protectedSec, 2, 'native respawn grants exactly two seconds of protection');
+  eq(target.armor, target.maxArmor, 'native respawn restores player armor');
+  const beforePose = {jumpY: attacker._jumpY, verticalSpeed: attacker._verticalSpeed,
+    ground: duel.course.groundAt(attacker.s, attacker.lateral).y};
+  stagedPose(target, 260); holdIdle(duel, target); approach(40);
+  const initial = {jumpY: attacker._jumpY, verticalSpeed: attacker._verticalSpeed,
+    armor: target.armor, attackerArmor: attacker.armor, protection: participant(duel, target).protectedSec};
+  const start = worldPose(duel, target), contacts = [], reports = [];
+  const original = duel._vehicleContact;
+  duel._vehicleContact = function(a, b, reason) {
+    const envelope = vehicleContactEnvelope(a, b, duel._vehicleSpec(a), duel._vehicleSpec(b));
+    const phase = duel.relativeS(b.s, a.s) - b.s;
+    const hit = sweepBox({x: (a.prevLateral ?? a.lateral) - (b.prevLateral ?? b.lateral),
+      z: (a.prevS ?? a.s) - (b.prevS ?? b.s) - phase},
+    {x: a.lateral - b.lateral, z: a.s - b.s - phase}, envelope.width, envelope.length);
+    const before = actorBody(duel, target);
+    const vaX = Math.sin(a.headingError || 0) * a.speedMph * (a.dir || 1) * DRIVE.mphToWorld + (a.pushVelocity || 0);
+    const vbX = Math.sin(b.headingError || 0) * b.speedMph * (b.dir || 1) * DRIVE.mphToWorld + (b.pushVelocity || 0);
+    const vaZ = a.speedMph * Math.cos(a.headingError || 0) * (a.dir || 1), vbZ = b.speedMph * Math.cos(b.headingError || 0) * (b.dir || 1);
+    const closingMph = hit ? Math.max(0, -(vaX - vbX) / DRIVE.mphToWorld * hit.nx - (vaZ - vbZ) * hit.nz) : 0;
+    const targetHeight = (target.groundHeight ?? duel.course.groundAt(target.s, target.lateral).y) + (target.airHeight || 0);
+    const attackerHeight = (attacker.groundHeight ?? duel.course.groundAt(attacker.s, attacker.lateral).y) + (attacker.airHeight || 0);
+    const aboveShell = attackerHeight > targetHeight + duel._vehicleSpec(target).height;
+    const result = Reflect.apply(original, this, [a, b, reason]);
+    if (a === target && hit) {
+      const after = actorBody(duel, target);
+      contacts.push({result, hit, closingMph, aboveShell,
+        targetDvMph: Math.hypot(after.vx - before.vx, after.vz - before.vz) / DRIVE.mphToWorld});
+    }
+    return result;
+  };
+  const off = duel.onChange((_, event) => {if (event.vehicleSmash || event.combatRamHit) reports.push(event);});
+  let moved = 0, targetAir = 0, attackerAir = 0;
+  try {for (let i = 0; i < fixture.measureTicks; i++) {
+    tick(1); const at = worldPose(duel, target);
+    moved = Math.max(moved, Math.hypot(at.x - start.x, at.z - start.z));
+    targetAir = Math.max(targetAir, target.airHeight || 0);
+    attackerAir = Math.max(attackerAir, attacker.airHeight || 0);
+  }} finally {delete duel._vehicleContact; off();}
+  return {duel, attacker, target, beforePose, initial, contacts, reports, moved, targetAir, attackerAir};
+}
+test('GROUNDED POSE: retained actual ramp ballistics honor the native height guard', () => {
+  const r = protectedCpuApproach(false), first = r.contacts[0];
+  ok(r.beforePose.ground > 0 && r.beforePose.verticalSpeed > 1, 'CPU really leaves the earlier ramp with upward ballistic state');
+  eq(r.initial.jumpY, r.beforePose.jumpY, 'old staged pose carries the earlier ramp height');
+  eq(r.initial.verticalSpeed, r.beforePose.verticalSpeed, 'old staged pose carries the earlier ramp velocity');
+  ok(first.closingMph >= 40, 'first genuine native sweep still has the required incoming speed');
+  eq(first.aboveShell, true, 'actual airborne CPU is vertically outside the player shell');
+  eq(first.result, false, 'unchanged native height guard rejects that physical collision');
+  eq(first.targetDvMph, 0, 'height rejection supplies no target impulse');
+  ok(r.contacts.filter(c => c.aboveShell && !c.result).length > 1, 'native height rejection persists until real flight descends');
+  eq(r.target.armor, r.initial.armor, 'rejected/protected contacts do not damage player armor');
+  eq(r.attacker.armor, r.initial.attackerArmor, 'protected contacts do not damage CPU armor');
+  ok(participant(r.duel, r.target).protectedSec > 0, 'actual native protection remains active');
+  eq(r.targetAir, 0, 'rejected airborne attacker never launches the protected player');
+});
+test('GROUNDED POSE: complete fresh pose permits actual protected forty-mph CPU shove', () => {
+  const r = protectedCpuApproach(true), first = r.contacts.find(c => c.result);
+  eq(r.initial.jumpY, null, 'fresh staged ground pose discards the earlier absolute ramp height');
+  eq(r.initial.verticalSpeed, 0, 'fresh staged ground pose has zero inherited upward velocity');
+  ok(first && first.closingMph >= 40, 'real accepted first collision retains forty-mph closing speed');
+  eq(r.contacts[0], first, 'first real sweep is accepted without an artificial missed approach');
+  eq(first.aboveShell, false, 'actual bodies occupy overlapping physical height');
+  ok(first.targetDvMph > 0, 'native solver really transfers target momentum');
+  ok(r.reports.some(event => event.vehicleSmash), 'fresh actual collision emits its native smash');
+  ok(r.moved >= 4, 'protected real player preserves the unchanged four-metre minimum');
+  eq(r.target.armor, r.initial.armor, 'native player protection preserves armor');
+  eq(r.attacker.armor, r.initial.attackerArmor, 'native protection preserves the CPU armor too');
+  eq(r.targetAir, 0, 'actual protected target stays on the floor');
+  eq(r.attackerAir, 0, 'freshly grounded actual CPU stays on the floor');
+  ok(participant(r.duel, r.target).protectedSec > 0 && participant(r.duel, r.target).protectedSec < r.initial.protection,
+    'original native protection deadline elapses normally without reset');
+  eq(r.duel._vehicleContact, Duel.prototype._vehicleContact, 'readonly contact observer restores its original native method');
+});

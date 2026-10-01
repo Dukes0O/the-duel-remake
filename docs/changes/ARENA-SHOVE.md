@@ -1344,3 +1344,112 @@ Complete stdout/stderr is integration
 JavaScript files and `git diff --check` pass. The production source remains
 unchanged from the reviewed f703714 implementation and clean 418237c baseline.
 This freeze contains only the two owned QA files and this appended verdict.
+
+
+## 1 October: reviewed complete grounded-pose correction
+
+Independent candidate QA at clean d366edf captured 42 images with zero
+reported errors/warnings, then failed High protected/CPU-attacker motion:
+0.6491198093022446m against unchanged 4m. Both corrected wreck roles passed
+(10.317/8.652m), both pinned roles and protected player-attacker passed. No
+Performance/frame/all-case comparison was reached. Loaded actual bodies and
+zero sampled failure-case rail crossings are bounded observations only.
+Complete original launcher/report/42 captures remain in integration
+`.evidence/2026-10-01/ARENA-SHOVE/expanded-browser/candidate-d366/`.
+
+The exact native seed89098/options/setup reproduces 0.6491198093022384m,
+a -6.106226635438361e-15m browser difference. Player final longitudinal
+position matches exactly and CPU differs by 2.2737367544323206e-13m.
+Actual 60mph vehicle contact creates the wreck, the real 3.5s deadline runs,
+and the real respawn supplies full player armor and two seconds protection.
+The original incident clears at waiting tick84. Its map is empty at respawn
+and during the early subsequent approach. This disproves the initial
+continuing-contact hypothesis for this second failure.
+
+While waiting for that respawn, the native CPU really travels over an earlier
+ramp at s49.7532799586/lateral-3.4305054611. It reaches ground/jumpY
+1.8038266513707253m and vertical velocity 3.113334036837294m/s. The new QA
+pose stages it on groundY0 at s255.23/lateral0/speed41.1, resets visible air
+flags, but retains those actual jump integrator fields. The next genuine
+`_jump` yields airHeight1.8291461016777026m, reaching maximum2.0730351078m.
+Its first candidate native sweep is normal(0,+1), t0.1034484061924504,
+closing41.09968688126657mph, tangent-.1604314864507115mph. The unchanged
+native height guard correctly rejects it: the CPU is above the actual player
+shell (1.35m). There are 54 legitimate height rejects. First accepted contact
+occurs .458333s later after the CPU passes the player, normal(0,-1), closing0,
+tangent7.6170840026mph, target velocity change0. Ordinary solid separation
+creates the small movement. Protection blocks armor damage, not solver motion.
+
+Director approved an ignored native contrast first, then this exact tracked
+slice. ONLY the NEW `installReviewTools` pose helper adds `_jumpY:null` and
+`_verticalSpeed:0`. Released canonical `placeActor` in
+`src/arena/arena-event.js` lines73–74 already resets those fields for a fresh
+pose. No production method, contact-height guard, incident map, controller,
+public driving inputs or post-hit position is changed. These fields complete
+the already-explicit staged grounded pose before its actual simulation.
+The contrast accepts the first real sweep at the same
+41.09968688126657mph normal speed, with target velocity change
+21.025785306130548mph and 8.997531860805625m actual motion. Both real cars
+stay at zero jump air; player/CPU armor50/27.311765096981006 stays unchanged.
+Native protection normally elapses2→.25000000000000455s. No artificial timer
+extension, fabricated event or collision is used.
+
+Tests FIRST: two additive native controls recreate actual seed89098, car
+options, 60mph crash and real respawn. The retained-ballistics negative checks
+genuine native airborne-height rejection and no target impulse/armor loss.
+The complete-grounded positive checks actual normal speed>=40, native solver
+impulse/smash, unchanged4m minimum, protection/armor and zero air. Observers
+call the captured production contact method once with original arguments and
+return, and restore it. No old assertion was changed. They pass2/2,36 checks,
+233.2508ms BEFORE the scenario correction.
+
+Exact commands and complete raw evidence, under integration
+`expanded-browser/`:
+
+- `node .evidence/2026-10-01/ARENA-SHOVE/expanded-browser/protected-cpu-native-contact-diagnosis.mjs`:
+  retained same-name recipe/JSON/log with original failed native reproduction.
+- `node .evidence/2026-10-01/ARENA-SHOVE/expanded-browser/protected-cpu-native-height-diagnosis.mjs`:
+  full native ballistic states, candidate/accepted sweeps and delegated jump
+  receipts in same-name recipe/JSON/log.
+- `node .evidence/2026-10-01/ARENA-SHOVE/expanded-browser/protected-cpu-native-fresh-pose-contrast.mjs`:
+  approved two-field contrast recipe/JSON/log; actual native acceptance passes.
+- Existing unchanged `protection positive control` focused native test passes
+  1/1,4 checks; `protected/player-target: every playable mass pair at 40`
+  passes1/1,82 checks covering81 mass pairs. Raw
+  `protected-existing-positive-control.log` and
+  `protected-existing-cpu-attacker-control.log` retain the results.
+- `node --test --test-name-pattern "GROUNDED POSE" tools/test-arena-shove.mjs`:
+  complete `protected-freshness-controls-first.log`,2/2,36 checks.
+
+The prior whole native suite file (all122 bodies/assertions and previous new
+controls) is preserved as an exact35,513-byte prefix from d366edf, SHA-256
+`f2341a881ce24c74dacd64b912eafb31842a8c3fa76dc1f186a2789e06e9e7ba`.
+Removing only these two added fields reconstructs every d366edf scenario byte,
+SHA-256 `832bc928eea0035e3911ea1543d2a7b2740d33624bdce4dbfce60f9a210bc8e1`.
+Also reversing the earlier approved wreck separated-step change reconstructs
+all418237c scenario bytes. All39 original legacy assertions and complete
+public wall recipe/input logic therefore remain exact. Corrected scenario
+SHA-256 `bca0b5aef9e5f0cd1822419672bd6dbac3b9dda2fc009741d85038c63aa9b29f`.
+Replay fixture remains byte-exact SHA-256
+`a08bb7507e8e2c110789b907ed3977dc6de9ac39943e89aad4c8cb9f5a3a474b`.
+All five reviewed source files still match f703714 exactly.
+
+### Removed
+
+Removed only stale jump height/upward velocity from NEW explicitly grounded QA
+poses. No Source, guard, existing assertion, prior note byte, fingerprint or
+failed evidence was removed. All42 failed captures/receipts remain. The two
+native failures describe fixture setup; neither grants a Source bug finding.
+No author browser rerun, frame/performance/art/human/listening pass, full/lane
+merge gate, build, release or new candidate comparison is claimed. Historical
+wall-model/attachment crossings and HUD caveats remain open. Independent QA
+must rerun this corrected recipe. No live/Preview/.preview-dist/5174/real-save,
+dependency, merge, push or history change occurs.
+
+Final author validation: `node --test tools/test-arena-shove.mjs` passes
+124/124 tests,6,457 acceptance checks,zero failures/skips/TODOs,
+66,414.6108ms. Full stdout/stderr is `protected-freshness-full124.log` under
+integration `expanded-browser/`. Both owned JavaScript syntax checks and
+`git diff --check` pass. The complete previous change note is preserved as an
+exact byte prefix. This freeze is only additive tests, the approved two-field
+NEW QA pose correction and appended verdict; independent browser QA follows.

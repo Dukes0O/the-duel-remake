@@ -163,7 +163,7 @@ function installReviewTools(mphToWorld,arenaTargetOutOfPlay,sweepObstacle) {
   const visible=node=>{for(let at=node;at;at=at.parent)if(!at.visible)return false;return true;};
   const pose=(car,s,lateral=0,headingError=0)=>Object.assign(car,{s,prevS:s,lateral,prevLateral:lateral,headingError,
     speedMph:0,yawVelocity:0,pushVelocity:0,steerVisual:0,slipAngle:0,knock:null,tumble:null,
-    airborne:false,airHeight:0,prevAirHeight:0,groundHeight:null,contactCooldown:0,damageCooldown:0});
+    airborne:false,airHeight:0,prevAirHeight:0,_jumpY:null,_verticalSpeed:0,groundHeight:null,contactCooldown:0,damageCooldown:0});
   const hold=(car,speedMph=0)=>{if(car===a.duel.state){a.duel.setInput({throttle:0,brake:0,steer:0,boost:false});return;}
     const d=a.duel,g=d.course.worldAt(car.s,car.lateral),heading=d.course.at(car.s).heading+car.headingError;
     Object.assign(member(car),{targetId:arenaTargetOutOfPlay(d,d.state)?null:'player',targetHeldSec:-100,reactionSec:10,
