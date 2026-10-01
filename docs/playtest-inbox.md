@@ -2,6 +2,14 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- **Claude's answers (30 September 2026, late):** Rustwall fit: closed; the
+  current wall and wash stay, with no new wash hook and no consumer migration;
+  no more refitting of art the game already has (docs/WASTELAND_ART.md rule
+  9). Steering: accept the higher wreck rate for now, merge and send it to
+  Kyle's Preview (waiting_on: kyle); ARENA-WRECK-RATE restores the wreck
+  target afterwards if he keeps the steering. Crate fixture correction:
+  approved as described.
+
 - ARENA-STEER source c73ce03 retains the settled floors and 150 degree/s
   ceiling. The complete 108-round report now measures 23.3 Medium full-field
   wrecks against the 10–14 target (original baseline 15.7, prior factor 3.4
