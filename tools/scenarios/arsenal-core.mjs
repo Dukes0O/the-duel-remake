@@ -12,10 +12,10 @@ async function ready(context, query = '') {
     if (title.includes('TEMPORARY SAVES') || title.startsWith('Performance samples')) panel.hidden = true;
   })`);
 }
-async function career(context) {
+async function career(context, label = 'disabled') {
   return context.evaluate(`(() => {
     const app = window.__qaApp;
-    app.addPlayer('Arsenal QA Owner');
+    if (!app.addPlayer('Arsenal Owner ' + ${JSON.stringify(label)}).ok) throw Error('Owner fixture creation failed');
     app.profile = {...app.profile, wasteland: {...app.profile.wasteland,
       discoveredGate: true, xp: 3500, scrap: 3000}};
     if (!app._saveProfile()) throw Error('Synthetic earned career did not save');
@@ -68,7 +68,7 @@ export async function run(context) {
       const select = document.querySelector('#graphics-quality');
       select.value = '${quality}'; select.dispatchEvent(new Event('change', {bubbles: true}));
       const app = window.__qaApp;
-      app.addPlayer('Arsenal QA Rank One');
+      if (!app.addPlayer('Rank One ' + ${JSON.stringify(quality)}).ok) throw Error('Rank fixture creation failed');
       app.profile = {...app.profile, wasteland: {...app.profile.wasteland, discoveredGate: true, scrap: 3000}};
       app._saveProfile();
       if (app.purchaseArsenalWeapon('oil').ok) throw Error('Rank one bought rank-two Oil');
@@ -76,12 +76,12 @@ export async function run(context) {
       app._saveProfile();
       if (app.profile.wasteland.rank !== 2 || app.purchaseArsenalWeapon('smoke').ok)
         throw Error('Rank two bought rank-six Smoke');
-      app.addPlayer('Arsenal QA Unseen');
+      if (!app.addPlayer('Unseen ' + ${JSON.stringify(quality)}).ok) throw Error('Discovery fixture creation failed');
       app.profile = {...app.profile, wasteland: {...app.profile.wasteland, xp: 3500, scrap: 3000}};
       app._saveProfile();
       if (app.purchaseArsenalWeapon('oil').ok) throw Error('Undiscovered career bought Oil');
     })()`);
-    const ownerId = await career(context);
+    const ownerId = await career(context, quality);
     await context.evaluate(`(() => {
       const app = window.__qaApp;
       if (app.profile.wasteland.rank !== 6) throw Error('Earned rank fixture was not normalized');
@@ -103,7 +103,7 @@ export async function run(context) {
     await context.evaluate(`(() => {
       const app = window.__qaApp;
       document.querySelector('[data-action="armory-close"]').click();
-      app.addPlayer('Arsenal QA Other');
+      if (!app.addPlayer('Other ' + ${JSON.stringify(quality)}).ok) throw Error('Isolation fixture creation failed');
       if (app.profile.wasteland.weapons.unlocked.some(id => ['oil', 'smoke'].includes(id)))
         throw Error('Purchased weapons crossed named owners');
       if (!app.selectPlayer(${JSON.stringify(ownerId)})) throw Error('Owner selection failed');
