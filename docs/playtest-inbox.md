@@ -33,7 +33,7 @@
   clear of walls at 43.93 mph on release. Sal still halves steering. A body-
   versus-authored-kit loading race was caught; bounded visible-node readiness
   passes the fresh final browser. Clean0f57648 lane/build also pass. Kyle's
-  Preview feel remains, as does Claude's measured balance verdict.
+  Preview feel remains; Claude accepts the higher wreck mean for now.
 - ART-FIT-RUSTWALL private freeze 14513ac has the actual round-1 sheet at
   .lanes/rustwall-source-fit/docs/board/looks/rustwall-fit/round-1.jpg
   (425,443 bytes), with its matching review. Independent art review rejects

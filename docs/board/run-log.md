@@ -1365,12 +1365,9 @@ no outgoing binary version needs compaction. No history rewrite or release.
 Full cadence resets here: five merges, 05:05 UTC or the end of this run.
 Later metadata or source commits need their own exact full evidence.
 
-Steering freeze c73ce03 retains the failing crate fixture and records its
-legal CPU pickup witness. Rustwall native RED proves the renderer discards
-source geometry; private fitting continues while Claude reviews the needed
-legacy consumer migration. Their questions are at the top of the inbox.
-Fuel contact/depot independent RED is frozen at 4a2ee89 before implementation;
-the narrow valve donor record is independently tests first.
+Steering and Fuel began with independent native RED controls; their current
+source/review status is recorded below. The Rustwall source candidate lost
+to current art and Claude closed the refit. No replacement was installed.
 
 ART-KEEP-VALVE-DONOR merged from reviewed clean 0b49409 after 309/309
 lane suites in 783.13 seconds and build in 379 ms. Independent review found
@@ -1386,9 +1383,51 @@ search evidence did not enter integration. Original licensed files, current
 game assets and Kyle decisions remain. Full merge counter: one since230318e.
 
 Kyle requests continuous overnight work and confirms Claude reviews every
-three hours. The overnight thread follow-up is active every30minutes until
-09:00local; approvals for the specific integration repository/branch push
+three hours. The overnight thread follow-up now follows that three-hour cadence until
+08:30local on1October, with a separate08:30handoff prompt. Kyle requires
+finish by08:45; no periodic clock polling. approvals for the specific integration repository/branch push
 persist. ARS-CORE is claimed for independent tests/new owned modules, with
 all existing hooks explicitly ungranted requests. Questions on decoy attack
 range context and Oil/Smoke upgrade dimensions go to Claude; settled level0
 tests continue without invented bonuses or a universal range.
+
+## 30 September 2026, Director: overnight checkpoint in progress
+
+Claude verdicts merged as354a36d: keep current Rustwall and wash, close
+the private refit, accept steering wreck mean23.3 temporarily and send
+steering to Kyle after merge. Steering clean0f57648 merged as723ad61
+after exact lane311/311 in679.11s, build535ms, independent source/fixture
+review and final14-image memory-only High/Performance browser. All handling
+floors,150degree/s ceiling and road pins remain. Kyle Preview feel is pending;
+ARENA-WRECK-RATE explicitly waits his keep decision. No Preview or release.
+
+After-merge janitor: verified clean steering0f57648 and closed Rustwall14513ac;
+unlinked integration-only dependencies and used plain git worktree remove.
+Deleted the merged steering branch and Claude-explicitly-dropped refit branch.
+Current runtime wall/wash, old scene assertions, originals/licences and
+Claude verdict remain. Rejected private output and wash hook did not merge.
+Consumed root full/build evidence287532B was deleted after its durable
+verdict. No uncertain audit candidate was removed:48 dynamic asset candidates
+remain with DISC, zero unused modules/removed-behavior tests proven.
+Runtime public236249990B and Wasteland models78998200B remain unchanged;
+new growth is small text tests/notes and private evidence, not game binaries.
+
+Fuel clean4a60b99 adds only the source launch URL flag after the unchanged
+launcher test caught its absence. Source-only22checks clear; launcher never
+runs. Runtime/save/22-image browser subsets at1b9628e remain unchanged and
+reviewed. Fresh exact lane/build and actual audio attribution follow.
+Native pickup/HUD markup witness shows CARRYING and player cell● together;
+no durable carry-cell bug is proved. Audio capture finds existing collision
+overload also in Last Car Rolling without Fuel cues; dedicated evidence is
+being finalized before deciding its follow-up. Human listening belongs Kyle.
+
+ARS-CORE test freeze8437d2c has64tests,3passing controls,58 genuineRED and
+3 explicit Claude design TODOs. Builder owns only five new modules and note;
+existing hooks remain ungranted. Shove and Salt Flats are claimed next, with
+exclusive new files and explicit hook requests; tests precede implementations.
+Claude owns range/upgrade design answers. No partial module is a finished card.
+
+Full cadence counts three merges since230318e including Claude docs verdict
+and donor/steering. Required new full checkpoint is due by05:05UTC; source
+will freeze before it, then normal approved D8 push if passing and outgoing
+binary audit clear. Overnight work continues after this checkpoint.
