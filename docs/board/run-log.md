@@ -1494,3 +1494,15 @@ old recording tool still taps the upstream compressor and needs native RED
 and a separately owned fix before the sound gate. Salt private6474637 passes
 its native source/lifecycle controls but retains nine ungranted runtime REDs;
 independent narrow review is active, and no art/frame/install pass is claimed.
+
+Pure Arsenal save functions atcd73eb1 now have independent Guardian and
+generic source clearance; native wiring and three Claude questions remain.
+The future registry guard is an explicit wiring obligation before adding Oil
+or Smoke to WEAPONS. Shove private66ac011 clears1458non-wreck minimum
+witnesses while five wreck-motion failures wait for Fuel's event hook; solid
+wall interpretation remains with Claude. Audio d96f1f2 now has independent
+source/final-recorder clearance and three native captures meeting both peaks
+individually. Fresh real race tracks engine at0.971/0ms; prior0.870/-50ms
+is retained, not silently removed. Human listening and absent cue coverage
+remain flags. Fuel will first merge current integration into its lane, then
+run fresh actual browser and exact lane/build before integration merge.

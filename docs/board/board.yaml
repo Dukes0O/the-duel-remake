@@ -13,7 +13,7 @@ tasks:
     needs: []
     status: building
     test_commit: 8494081e234c997c3879de50dd792af30e1bb89c
-    source_commit: c0bb9b18f33ea3a9f8377a06db74f2bb3c6d0884
+    source_commit: d96f1f273d301e5dd838f8502d0a329136044581
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arena-03-fuel-run
     owns: [tools/test-audio-crash-peak.mjs, tools/scenarios/audio-crash-peak.mjs, src/audio-output.js, docs/changes/AUD-CRASH-PEAK.md]
@@ -25,7 +25,7 @@ tasks:
       - "Required lane/build and independent review before merge; no release, Preview, real saves, source-audio fabrication or protected external audio inspection."
 
     test_verdict: "Native unchanged a6523ea output has six real sample/true-peak failures across nonFuel, Fuel and overlapping blasts. Actual final output, cue/event/onset, contrast, quiet reference and cleanup controls pass. Tests-only clean8494081; no source repair or gate clearance yet."
-    source_verdict: "Native source repair meets sample/true peaks and quiet/onset/contrast/cleanup controls. Released master/compressor gain retained; final4x ceiling added. Independent old-audio mock support retains all assertions. Existing race recorder still taps the upstream compressor, so recorder RED/fix, independent source/audio review and current exact lane/build remain before integration."
+    source_verdict: "Output and final-recorder source independently clear at d96f1f2. Three native23/23 captures meet both peaks individually, with quiet/onset/contrast/cleanup unchanged. Final real-race engine correlation0.971/lag0 and measured sync/contrast/space/variety/stress clear; prior0.870/-50ms miss is retained as an observation, not reproduced. Human listening and absent cue coverage are flagged. Current integration sync, fresh Fuel browser and exact lane/build remain before merge; no later commit inherits old gates."
   - id: ART-KEEP-VALVE-DONOR
     title: "Keep the verified CC0 convoy valve donor after closing the trailer search"
     owner: codex
@@ -864,7 +864,7 @@ tasks:
     size: L
     needs: [WAR-02a-REWARD]
     status: building
-    review_commit: 6d1fdd08fba606e2f36c7a7102a26c4550c03dd9
+    review_commit: cd73eb1613eb841c0e600aa363371067d22953f2
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arsenal-core
     flag: arsenal
@@ -876,7 +876,7 @@ tasks:
     acceptance:
       - "Build docs/ARSENAL.md section 2 exactly: road hazards, car effects, targetFor (every existing CPU aim, homing and lock path routed through it, with a test that fails on a bypass), unlocks by rank and 400-scrap purchase, rewards that unlock free, upgrades, computer loadouts, and the arsenal switch (dev)."
       - "Oil Slick and Smoke Screen as section 3 says, with their counters, computer use and sounds. Save Guardian reviews unlocks and purchases: normalizing never grants an unearned weapon; per named player; old and future saves survive."
-    save_review: "Guardian verifies the two canonical named-player fixtures without any assertion change, SAVE20/20 and211checks. Source still blocked: arbitrary weapon-id count/length limits erase earned identity and slot (duplicate prefix,101st distinct id,81-character id). Independent RED and forward fix required before re-review. Historical fixtures, malformed fields, ordinary credits, backup/future-schema and storage budgets retain passing controls. No native/UI/flag/audio wiring clearance."
+    save_review: "Pure save slice cd73eb1 independently cleared by Guardian and generic reviewer. Tests-first ownership/slot regressions now68/68 with451checks; original canonical named-player isolation assertions retained. Historical/malformed/credits/backups/future-schema/budgets clear. Before native registry wiring, filter availableCarWeapons legacy branch to four starters and cover registered-owned dev/discovery/implemented exclusions; pass proper bound options from App/UI and duel RNG from CPU. Current registry still has only four starters, so this is a wiring obligation. Native13RED/3designTODO and all shared hooks remain held."
   - id: ARS-02
     title: "Arsenal wave 2: Rocket Pods, Flamethrower, Scrap Magnet"
     owner: codex
@@ -2858,6 +2858,7 @@ tasks:
     size: S
     needs: []
     status: building
+    review_commit: 66ac011b441237cffb549c7f17576d5855edd90b
     claimed_by: codex-director-2026-09-30-overnight
     branch: lane/cmb/arena-shove
     owns: [tools/test-arena-shove.mjs, tools/replays/arena-shove-controls.json, tools/scenarios/arena-shove.mjs, docs/changes/ARENA-SHOVE.md]
@@ -2870,6 +2871,7 @@ tasks:
       - "Kyle, 30 September 2026: cars other than the Titan cannot budge the sitting cars in the dome. Measured by Claude: a live computer car hit at 20, 40 and 60 mph moves 2 to 12 m, so the stuck case is a car in another state. Reproduce each in a test: a wreck waiting to respawn, a car pinned against the wall, a car inside its respawn protection, and a stopped car with its brain idle."
       - "Settled rule: in the dome any car rammed at 20 mph or more by any car moves at least 1.5 m, and at 40 mph at least 4 m, through the crash solver (released crash physics), in every state above. A wreck waiting to respawn slides like a traffic hulk and stays on the floor; respawn protection blocks damage, not movement. The Titan's crush stays as it is."
       - "Tests first; arena replays that change are named and explained."
+    private_stage: "Granted contact/knock/floor source only at66ac011. All1458non-wreck minimum witnesses and243released solver/10road controls clear; full56tests50pass/fivewreckRED/onewallTODO. Waiting-wreck event stepping needs arena-event::stepWreckedActor after Fuel merges. Event/game/pilot/tests/pins untouched; no whole-card or merge pass. Outward wall interpretation still Claude question."
   - id: WAR-SAL-RELEASE
     title: "Release the warlord ladder with Sawtooth Sal"
     owner: claude
