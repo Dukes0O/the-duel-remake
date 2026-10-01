@@ -565,3 +565,122 @@ in this source slice. The now-unused native yaw RNG was removed. No existing
 Scrapdome/ordinary Course path, current art, old assertion, original licensed
 source, source recipe binding or replay pin was discarded. Private candidates
 and source receipts stay ignored used-once evidence for the Integrator's janitor.
+
+## Independent native boundary acceptance, 1 October 2026
+
+This tests-only continuation freezes the missing visible/solid boundary acceptance
+before new perimeter or island source work. Source remains
+`d1ed6dc75635c47acfd56a9b9d6b11794d2ea367`. New file:
+`tools/test-salt-flats-art.mjs`. No previous assertion or selection was changed.
+
+### Criterion and native evidence
+
+Claude settled an oval drivable band inside the 300 by 200 m bowl, between a
+solid tyre/container perimeter and a solid central scrap/crane/Bus island.
+The Director approved the existing Scrapdome center buffer as the maximum
+visible clearance: frozen `SCRAPDOME_LAYOUT.wallOffset (21)` minus frozen
+`floorHalfWidth (18)`, or **3 m**, plus the unchanged **.002 m** native float
+export allowance. The test reads the Scrapdome reference, never Salt candidate
+tuning. This preserves an existing engine buffer; it does not require zero
+center/mesh separation or change a race rule.
+
+The recipe runs through bounded normal Blender CLI into private `.qa-dist`,
+using the unchanged seed and fit input. Native GLB position/index buffers and
+world matrices supply the triangles. Only headless texture decoding is replaced;
+no geometry, Course, containment, collision or actor behavior is mocked.
+Body-height clipping uses the genuine Falcone shell (1.02 m half width,
+2.35 m half length, 1.35 m height), so a high crane jib cannot stand in for
+a ground-level wall. The genuine Course supplies every one of its 80 segments
+and each midpoint: **160 stations per side**, 40 in each quadrant.
+
+Separate checks retain actual visible-envelope/export/Course correspondence,
+run genuine `sweepObstacle` with all nine native playable car shells, and
+prove continuous closed enclosure from native donor-instance triangle subsets.
+The latter uses source-instance bounds at body height and the conservative
+component-wise minimum of all genuine native projected contact shells at each
+ring frame. It does not use one merged-mesh box spanning separated pieces.
+Connections travel through actual overlapping contact footprints. A nonzero
+winding closed walk encloses the authored origin. An explicit connected open
+spiral control proves that complete angular projections cannot fake closure.
+These footprints follow the existing box-contact convention; the checks do
+not impose a new mesh-manifold or full-body zero-gap rule.
+
+A genuine shorter Dusthawk control touches the actual inherited wall with
+the Falcone at the same native pose but clears with the Dusthawk. Thus a
+Falcone-only sweep cannot grant solidity for all playable cars. Every native
+car also retains exact floor containment: the center at either 18 m edge is
+allowed, outward movement is clamped to that edge, and a steep 20 mph contact
+keeps the existing 4 mph result.
+
+### Frozen RED and protected controls
+
+`node tools/test-salt-flats-art.mjs` exits 1:
+**29 checks, 16 passed, 13 failed; no cases skipped or excluded.**
+
+The exact failure messages and per-car witnesses are in the raw log/receipt.
+The thirteen failures are:
+
+- Four inner-quadrant checks: 40 of 40 stations in each exceed the inherited
+  3 m allowance. Worst distances by quadrant are **60.45687548042132**,
+  **55.93165142142831**, **60.927286708663054**, and
+  **61.73863218247728 m**.
+- Four outer-quadrant checks: 33 of 40 stations in each exceed that allowance
+  (**132/160 total**). Worst distance is **34.472143819984424 m**, at s 376.
+- Inner real-car sweep coverage: no genuine contact at **157/160** stations
+  for Falcone, Stuttgart, Heritage, Aurora and Dusthawk; **156/160** for
+  Banshee, Viper, Titan and Jesko.
+- Outer real-car sweep coverage: no genuine contact at **120/160** stations
+  for Falcone, Stuttgart, Heritage, Aurora and Dusthawk; **116/160** for
+  Banshee, Viper, Titan and Jesko.
+- Inner enclosure: 44 native donor pieces form eight disconnected components,
+  with sizes **[7,7,7,7,7,7,1,1]**, and no closed enclosing cycle.
+- Real stopped-player inner witness: actual containment stops at s 636,
+  lateral -18, X 106.06806361052259, Z -2.479682550806968, ground Y 0;
+  nearest body-height solid is **61.73863218247728 m** away.
+- Real stopped-player outer witness: actual containment stops at s 376,
+  lateral 18, X -109.04748272599042, Z -61.30785495931245, ground Y 0;
+  nearest body-height solid is **34.472143819984424 m** away.
+
+The outer donor pieces do form a connected closed contact-footprint cycle.
+That passing enclosure does not clear their distance from the drivable oval.
+The envelope, all nine floor controls, genuine shorter-car witness, open-spiral
+negative control, native repeatability and protected-byte controls pass.
+
+The unchanged original default command also ran, without selection exclusions:
+**42 checks, 36 passed, 6 failed**, plus **16/16 geometry checks passed**.
+Its six existing held failures remain Salt dev flag, rank-eight rejection,
+dev-off rejection, rank-nine App selection, unknown-venue App rejection and
+Fuel Run completion. All **162 ordinary replay fingerprint checks pass**.
+This continuation does not claim a lane/full/build, art, frame, browser,
+whole-card, merge or release pass.
+
+The freshly generated GLB remains exactly **12,821,472 bytes**, SHA-256
+`07d4e706af9ba14d2329247997346501b438e43cfbe27eac763db89899c0336f`.
+The original test is exactly **48,683 bytes**, SHA-256
+`d56517bed257b7150c2030a77fa053c69ad8b874bb67095fe863f27cc49ea824`.
+All **1,184** previously tracked files outside the owned change note/test
+were hash-checked before and after, including source, fit, catalog, flags,
+settings, public assets, protected audio and replay pins. The prior note
+prefix remains exactly **46,155 bytes**, SHA-256
+`dfa5fd4ab918bccf3bfc4ede46b2a649e083c8bd688f1898291ac70726e2f7cb`.
+
+Full raw build output, new RED, original default output, replay output,
+manifest, native boundary measurements and protected-file hashes live in
+ignored integration `.evidence/2026-10-01/ARENA-06/boundary-tests/`.
+Current generated candidates stay private and regenerable. Source authors
+can now fit a genuine visible perimeter/rim to this acceptance, without
+changing the floor rule. Held runtime/art/frame hooks remain separate.
+
+### Changed assertions and Removed
+
+Changed assertions: none in any existing suite. A first new envelope control
+combined two independent float comparisons too tightly; it was corrected
+before freezing to the existing separate export-envelope and Course-envelope
+precision assertions. No source change made a check pass.
+
+Removed: none. This adds acceptance and a change-note section only. No old
+test, source model, native recipe binding, licensed input, public asset,
+source path or replay pin was replaced. Private evidence is retained for
+the Director's review and used-once janitor cleanup. No live folder,
+Preview, port 5174, real save or new service was used.
+
