@@ -1547,3 +1547,100 @@ existing assertion, registry helper, profile field, slot, asset, flag, replay,
 launcher, audio, recipe or runtime behavior was replaced. No live folder,
 Preview, `.preview-dist`, port 5174, real saves, new dependency, network,
 helper agent, merge, push, release or history rewrite was used.
+
+## Independent Oil retry safety guards - 1 October 2026
+
+Six additional actual App checks expose unsafe retry writes when a durable
+registry is unreadable or another player has a newer Wasteland schema. This
+continues the tests-only freeze `c58a27537d230bbc76642f6bd3c6d4f71d0660a9`;
+its original 351 cases, assertions and note bytes remain exact. Source is
+unchanged. These checks apply the card's existing save preservation obligation
+and the already-settled actual App settlement guards to the inherited shop
+retry path. They do not introduce an active-player or same-owner concurrency
+policy, or a new absent-registry/session-only recovery policy.
+
+### Genuine native fixtures and results
+
+Every case begins with a real failed `App.purchaseArsenalWeapon('oil')`.
+Only registry writes fail during that first call. The exact save-error result,
+full owner rollback, unchanged durable raw bytes, no committed write and
+`profileSaved === false` are proved before the unsafe retry. Storage is then
+writable. All data lives in the existing process-local memory fixture.
+
+For `future-other`, a newer-writer DATA fixture updates the OTHER player's
+raw durable registry: career version 8, credits 99,999, unknown future progress
+and four future slots. This write goes directly to the memory value so that
+this older build never fabricates the future writer's normalization. Genuine
+`savePlayers` independently refuses that exact future registry, preserves its
+complete raw bytes and full input object, and performs no write. Actual
+`loadPlayers` also retains the nested career version 8. The subsequent real
+App retry nevertheless saves the stale version-one local registry over it,
+wrongly succeeds, grants Oil and charges 400 scrap. This proves that the
+intended production future-schema refusal is bypassed, rather than alleging
+that the production save normalizer itself accepts version 8.
+
+For `unreadable`, only `getItem(PLAYERS_KEY)` throws. The controlled adapter's
+read failure is directly proved before retry; `setItem` remains a genuine
+working memory write. The actual stale-registry App retry wrongly succeeds,
+writes over the durable registry, grants Oil and charges 400 scrap despite
+being unable to read the durable save safely. No production loader, saver,
+shop result, player registry or profile normalization body is mocked.
+
+Three independent acceptance cases per scenario check the refusal result,
+exact durable bytes plus write count, and the full owner profile plus unsaved
+status. Separate cases keep each consequence observable even while the first
+refusal assertion is RED. Exact failure messages, with `K` replaced by each
+of `future-other` and `unreadable`, are:
+
+- `K: actual Oil purchase retry must refuse an unsafe durable registry`
+- `K: actual Oil purchase retry must not overwrite unsafe durable raw bytes or issue a registry write`
+- `K: actual Oil purchase retry must retain complete unsaved owner profile without scrap charge or unearned Oil`
+
+The existing settlement tests already define distinct missing/unreadable and
+legitimate never-saved recovery controls. They passed unchanged in the prior
+freeze and remain byte-exact. No absent-registry test duplicates them or
+extends their policy to a previously saved shop registry by inference. Their
+passing verdict does not clear this newly proven shop-path gap. The Director
+owns the Source fix and its safe handling of true absence, unreadable data and
+newer schemas.
+
+### Executed guard RED and preservation
+
+Focused command: `node --test --test-name-pattern='NATIVE APP RETRY GUARD'
+tools/test-arsenal-runtime.mjs`. Actual result: **6 cases, zero pass, six
+genuine guard failures, zero skips/TODO**, exit 1, 72 reached checks.
+
+Complete command: `node --test tools/test-arsenal-core.mjs
+tools/test-arsenal-runtime.mjs tools/test-arsenal-save.mjs`. Actual result:
+**357 cases, 326 pass, 31 fail, zero skips/TODO**, exit 1. The unchanged
+original 351 retain 326 pass and 25 RED: twenty physical-range failures and
+five other-player save preservation failures. The additional six RED are only
+the invalid/unreadable shop retry guards. No Source/lane/full/build/browser/
+audio, merge or whole-feature clearance is claimed.
+
+The original runtime prefix remains byte-exact: 77,259 bytes, SHA-256
+`3ecc2c4a896797d79905b300318d82dd4d40a1204af6afdf733a47f476f01dda`.
+The complete new runtime is 82,465 bytes, SHA-256
+`f5965bb6f02ec3c39aabd04c1806052c62ec7f6a19f4525e7dc9f3ebc0448b67`.
+The prior note prefix remains exact by raw append: 133,628 bytes, SHA-256
+`48eb667941f025626ce435356bbf72950dc8056d56208f6d4eb2584c6cfb74d4`.
+All 1,186 unowned tracked files, including Source, canonical save assertions,
+profile normalizers, replay fingerprints and feature guards, retain their
+protected bytes. Actual App SHA-256 is still
+`b73b90c1c9202e62ce1a7a59f254076f0f73b33e99d5b56b9f91aabc328c9970`.
+Syntax and `git diff --check` pass. Prior replay162/feature32 and storage-guard
+logs remain in the parent evidence folder; no unchanged policy was re-tested
+or represented as new implementation.
+
+Complete targeted and native TAP, original prefix copies, and before/after
+protected byte receipts are retained under integration
+`.evidence/2026-10-01/ARS-CORE/retry-save-tests/guards/`. No source fix preceded
+these failures. This freeze returns tests and note ownership to the Director.
+
+### Removed - Oil retry safety guards
+
+Removed none. Six cases and this note are appended. All earlier assertions,
+helpers, cases, saves, fingerprints, assets and Source bytes remain intact.
+No live folder, Preview, `.preview-dist`, port 5174, real save, protected audio,
+new dependency, network, helper agent, merge, push, release or history rewrite
+was used.

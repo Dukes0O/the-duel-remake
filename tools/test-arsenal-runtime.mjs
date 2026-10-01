@@ -1156,3 +1156,84 @@ test('NATIVE APP RETRY: purchase preserves four concurrently earned future slots
     owned: expectedOther.profile.wasteland.weapons.unlocked},
   'successful purchase retry must retain all four concurrent future slots and their earned ownership');
 });
+
+// Unsafe durable registries are not proof that a stale shop registry is safe
+// to save. These are real future-writer DATA and actual read-failure fixtures.
+function unsafeOilRetry(kind) {
+  const app = retryRegistryFixture('purchase'), storage = globalThis.localStorage;
+  try {
+    const ownerBefore = structuredClone(app.profile), rawBefore = values.get(PLAYERS_KEY);
+    const initialWrites = writes.length;
+    Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: {
+      getItem: key => storage.getItem(key), removeItem: key => storage.removeItem(key),
+      setItem: (key, value) => {
+        if (key === PLAYERS_KEY) throw new Error('Test-only initial Oil purchase write failure');
+        storage.setItem(key, value);
+      },
+    }});
+    let first;
+    try {first = app.purchaseArsenalWeapon('oil');}
+    finally {Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: storage});}
+    eq(first, {ok: false, reason: 'Could not save this purchase.'},
+      'unsafe-registry fixture begins with a genuine refused Oil purchase');
+    eq(app.profile, ownerBefore, 'first failed purchase restores full owner profile before unsafe retry');
+    eq(values.get(PLAYERS_KEY), rawBefore, 'first failed purchase retains exact original durable raw bytes');
+    eq(writes.length, initialWrites, 'first failed purchase commits no registry write');
+    eq(app.profileSaved, false, 'unsafe-registry fixture genuinely enters unsaved App retry state');
+
+    if (kind === 'future-other') {
+      // A newer build can write a future schema that this build may only keep.
+      // Raw memory storage models that external writer without normalizing it
+      // through this older build, and never touches a real save or app.players.
+      const newerRegistry = JSON.parse(rawBefore), other = newerRegistry.players.find(player => player.id !== app.player.id);
+      other.profile.credits = 99999;
+      other.profile.externalProgress = {kept: 'future-writer'};
+      other.profile.wasteland = {...other.profile.wasteland, version: 8,
+        futureSchema: {opaque: ['newer', {kept: true}]},
+        loadout: ['future-weapon', 'future-v8-a', 'future-v8-b', 'future-v8-c']};
+      values.set(PLAYERS_KEY, JSON.stringify(newerRegistry));
+      const futureRaw = values.get(PLAYERS_KEY), attemptedInput = structuredClone(newerRegistry);
+      eq(savePlayers(newerRegistry, storage), false,
+        'genuine production savePlayers refuses another player career version eight');
+      eq(values.get(PLAYERS_KEY), futureRaw, 'production future-schema refusal retains the complete exact external raw bytes');
+      eq(writes.length, initialWrites, 'production future-schema refusal performs no memory storage write');
+      eq(newerRegistry, attemptedInput, 'production future-schema guard never mutates the raw newer input');
+      eq(loadPlayers(storage).players.find(player => player.id === other.id).profile.wasteland.version, 8,
+        'actual load preserves the external future career rather than normalizing it to an old schema');
+    } else {
+      Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: {
+        getItem: key => {if (key === PLAYERS_KEY) throw new Error('Test-only unreadable durable registry'); return storage.getItem(key);},
+        setItem: (key, value) => storage.setItem(key, value), removeItem: key => storage.removeItem(key),
+      }});
+      assert.throws(() => globalThis.localStorage.getItem(PLAYERS_KEY), /unreadable durable registry/);
+      checks++;
+    }
+    const unsafeRaw = values.get(PLAYERS_KEY), beforeRetryWrites = writes.length;
+    const result = app.purchaseArsenalWeapon('oil');
+    return {result, rawBefore: unsafeRaw, rawAfter: values.get(PLAYERS_KEY),
+      writesBefore: beforeRetryWrites, writesAfter: writes.length,
+      ownerBefore, ownerAfter: structuredClone(app.profile), saved: app.profileSaved};
+  } finally {
+    Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: storage});
+    app.dispose?.();
+  }
+}
+for (const kind of ['future-other', 'unreadable']) {
+  test('NATIVE APP RETRY GUARD: ' + kind + ' must refuse Oil purchase retry', () => {
+    const observed = unsafeOilRetry(kind);
+    eq(observed.result, {ok: false, reason: 'Could not save this purchase.'},
+      kind + ': actual Oil purchase retry must refuse an unsafe durable registry');
+  });
+  test('NATIVE APP RETRY GUARD: ' + kind + ' must preserve complete exact raw bytes without writing', () => {
+    const observed = unsafeOilRetry(kind);
+    eq({raw: observed.rawAfter, writes: observed.writesAfter},
+      {raw: observed.rawBefore, writes: observed.writesBefore},
+      kind + ': actual Oil purchase retry must not overwrite unsafe durable raw bytes or issue a registry write');
+  });
+  test('NATIVE APP RETRY GUARD: ' + kind + ' must preserve owner profile without charging or granting Oil', () => {
+    const observed = unsafeOilRetry(kind);
+    eq({profile: observed.ownerAfter, saved: observed.saved},
+      {profile: observed.ownerBefore, saved: false},
+      kind + ': actual Oil purchase retry must retain complete unsaved owner profile without scrap charge or unearned Oil');
+  });
+}
