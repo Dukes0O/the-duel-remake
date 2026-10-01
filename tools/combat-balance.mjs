@@ -394,8 +394,8 @@ export function buildReport({ flags = [], runs, baselineRuns, firstTwelveSec, el
       winRateByDifficulty: 'No-weapon policy, thirty seeds 1989-2018 per difficulty; seed 1989 reused from policy runs.',
       cpuHitsByDifficulty: 'No-weapon policy, mean of all thirty seeds per difficulty.',
       ufoGainByDifficulty: 'UFO and UFO-max policies against no-weapon races, mean of seeds 1989-1994.',
-      hitsByDifficulty: 'All seven policies at seed 1989 plus nine additional no-weapon seeds per difficulty (16 unique races). CPU hits count enemy combatHit events whose victim is player; rivalHits uses the existing combat hit counter.',
-      wrecksByDifficulty: 'Same 16 races per difficulty; combatWreck events for player/opponents, trafficWrecked collisions and roadsideImpact traffic obliterations. Traffic victims count once; knocks are excluded. byOwner counts the attacker; current roadsideImpact events supply no attacker, so their owner is unknown. Legacy vehicleCrushed events are excluded.',
+      hitsByDifficulty: 'All policy samples and thirty-seed no-weapon baselines per difficulty. CPU hits count enemy combatHit events whose victim is player; rivalHits uses the existing combat hit counter.',
+      wrecksByDifficulty: 'Same policy and baseline samples per difficulty; combatWreck events for player/opponents, trafficWrecked collisions and roadsideImpact traffic obliterations. Traffic victims count once; knocks are excluded. byOwner counts the attacker; current roadsideImpact events supply no attacker, so their owner is unknown. Legacy vehicleCrushed events are excluded.',
       weaponProbes: 'Crossbow: 26 moving-target cases across combat courses. Own bombs: ten speeds from 20 to 200 mph.',
       gainSec: 'Policy time compared with no-weapon time at seed 1989, averaged across three difficulties.',
       weaponUses: 'All historical policy and baseline races. Native actor deployment cues, projectile batches and shield/jump products identify each use; assignments alone never count. Arsenal uses a named, discovered rank-six career with real Armory purchases and policy-compatible equipment.'
