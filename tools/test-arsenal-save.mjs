@@ -184,7 +184,7 @@ test('SAVE: starter purchase/equip changes preserve unknown earned ids and field
 });
 
 test('SAVE: named player purchase, upgrade and equip survive actual registry roundtrip in memory', () => {
-  const first = career(), second = career(), secondBefore = structuredClone(second);
+  const first = career(), second = normalizeProfile(career()), secondBefore = structuredClone(second);
   let registry = createPlayerRegistry(first);
   registry.players.push({id: 'player-2', name: 'Second', profile: second});
   const bought = api('purchaseArsenalWeapon')(registry.players[0].profile, 'oil', ENABLED);
@@ -220,7 +220,7 @@ after(() => console.log('Arsenal save: ' + checks + ' acceptance checks reached.
 
 
 test('SAVE: free warlord reward stays with its named player through registry reload', () => {
-  const first = career(1, 0), second = career(1, 0), secondBefore = structuredClone(second);
+  const first = career(1, 0), second = normalizeProfile(career(1, 0)), secondBefore = structuredClone(second);
   first.wasteland.warlords.dustmonger = {defeated: true, wins: 1, losses: 0};
   const registry = createPlayerRegistry(first);
   registry.players.push({id: 'player-2', name: 'Second', profile: second});
@@ -231,4 +231,33 @@ test('SAVE: free warlord reward stays with its named player through registry rel
   const loaded = loadPlayers(storage);
   ok(loaded.players[0].profile.wasteland.weapons.unlocked.includes('smoke'), 'earned reward survives reload');
   eq(loaded.players[1].profile, secondBefore, 'unrelated named player receives no free weapon or other change');
+});
+
+
+test('SAVE CONTROL: registry normalization alone preserves raw inputs and canonical named careers', () => {
+  const zeroUpgrades = {engine: 0, nitro: 0, handling: 0, tires: 0, brakes: 0, suspension: 0, tank: 0};
+  for (const [rank, scrap] of [[2, 2000], [1, 0]]) {
+    const raw = career(rank, scrap), before = structuredClone(raw);
+    eq(raw.upgrades, {}, 'the raw createProfile fixture has no per-car defaults yet');
+    const expected = {...before, upgrades: {
+      falcone_f42: {...zeroUpgrades}, stuttgart_959s: {...zeroUpgrades},
+    }};
+    const registry = createPlayerRegistry(career(rank, scrap));
+    registry.players.push({id: 'player-2', name: 'Second', profile: raw});
+    const storage = memoryStorage();
+    eq(savePlayers(registry, storage), true, 'no-Arsenal raw registry writes only memory storage');
+    eq(loadPlayers(storage).players[1].profile, expected,
+      'without Arsenal calls only the established free-car upgrade defaults are added');
+    eq(raw, before, 'registry normalization never mutates the raw second career');
+    const canonical = normalizeProfile(raw), canonicalBefore = structuredClone(canonical);
+    eq(canonical, expected, 'canonical fixture includes exactly the native defaults');
+    eq(normalizeProfile(canonical), canonicalBefore, 'canonical normalization is idempotent');
+    const normalizedRegistry = createPlayerRegistry(career(rank, scrap));
+    normalizedRegistry.players.push({id: 'player-2', name: 'Second', profile: canonical});
+    const canonicalStorage = memoryStorage();
+    eq(savePlayers(normalizedRegistry, canonicalStorage), true, 'canonical registry writes only memory storage');
+    eq(loadPlayers(canonicalStorage).players[1].profile, canonicalBefore,
+      'the whole canonical second-player profile survives a no-Arsenal roundtrip exactly');
+    eq(canonical, canonicalBefore, 'canonical registry roundtrip never mutates the second career');
+  }
 });

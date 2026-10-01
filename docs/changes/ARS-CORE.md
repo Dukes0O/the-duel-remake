@@ -500,3 +500,33 @@ module with readable LF source, preserving its established starter behavior.
 No legacy credit/race rule, frozen assertion, fixture, core module, pin,
 licensed asset, protected sound/catalog, dependency, real save, live checkout,
 Preview output or port was changed.
+
+## Independently approved named-player fixture correction
+
+The two original whole-profile equality checks now pass without changing
+their assertions. Both second-player fixtures are normalized before their
+snapshots. The independent test author and Save Guardian each reproduced
+the old raw fixture difference on actual 56047037 and dd8ca6c with no Arsenal
+calls: upgrades:{} becomes the two free cars' seven all-zero upgrade fields;
+no other field changes and raw inputs remain untouched. Guardian explicitly
+approved only these two setup corrections before the Integrator applied them.
+
+A separate no-Arsenal control covers rank2/2000 scrap and rank1/0 scrap. It
+checks the exact established default maps, raw-input immutability, canonical
+whole-profile roundtrip and normalization idempotence using memory storage.
+The default save suite is now20/20 with211checks. Raw-byte restoration of
+only the two setup expressions proves the entire old test prefix is exact.
+Source, core suites and replay pins remain dd8ca6c bytes. This clears the
+fixture mismatch, not Save Guardian's ongoing source review or whole-card
+native wiring, gates, browser, balance, sound and Claude design obligations.
+
+Guardian has separately proved that the new100-entry weapon-id cap can erase
+an earned identity and its saved slot. That is a source finding requiring an
+independent RED and fix; the fixture correction does not waive it.
+
+### Removed — named-player fixture correction
+
+Removed the two raw second-player fixture snapshots in favour of canonical
+fixtures at the existing native registry boundary. Every original assertion
+and all production behavior remain unchanged. No asset, old test, pin,
+licensed source, real save or unmerged lane work was removed.
