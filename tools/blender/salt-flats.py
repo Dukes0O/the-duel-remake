@@ -321,6 +321,46 @@ def main():
             pile.stamp(part,indices,matrix,tile=index%6)
         part=source['debris-drivetrain'];indices,matrix=fit(part,(1.8,.30,2.8),(x,.15,z),yaw=yaw)
         pile.stamp(part,indices,matrix,tile=3);add(pile,'salvage-cover')
+    # Genuine worn donor stacks fill the inaccessible island behind its
+    # existing solid wreck boundary. One merged scenery draw adds no Course
+    # obstacles and leaves the original bus, crane and driving band clear.
+    island=Geometry(config['islandSalvage']['node'])
+    for stack in config['islandSalvage']['stacks']:
+        x,z=stack['center'];yaw=math.radians(stack['headingDegrees']);tile=stack['paintTile']
+        def place(part,size,local,heading=0,indices=None,paint=tile):
+            lx,y,lz=local
+            center=(x+math.cos(yaw)*lx+math.sin(yaw)*lz,
+                    y,z-math.sin(yaw)*lx+math.cos(yaw)*lz)
+            faces,matrix=fit(part,size,center,yaw=yaw+heading,indices=indices)
+            island.stamp(part,faces,matrix,tile=paint)
+        # Two offset container courses sit directly on each other. They
+        # anchor each pile without stretching a primitive across empty salt.
+        for level in range(2):
+            part=source['shipping-container-a' if level else 'shipping-container-b']
+            place(part,(2.44,2.50,11.5),(level*.45,1.25+level*2.45,6.0),
+                  heading=math.pi/2,paint=(tile+level)%6)
+        sedan=source['sedan'];body=sedan['parts']['body']
+        # Compressed wheel-less shells overlap into irregular, supported
+        # heaps instead of standing as intact parked cars or floating layers.
+        for index,(lx,lz,heading) in enumerate([(-7,-1,-.35),(-2.5,-2,.23),
+                                                (2.5,-1,-.18),(7,-2,.31)]):
+            place(sedan,(2.3,.98,5.5),(lx,.49,lz),heading=heading,
+                  indices=body,paint=(tile+index)%6)
+        for index,(lx,lz,heading) in enumerate([(-4.7,-1,.45),(0,-2,-.3),(4.7,-1,.4)]):
+            place(sedan,(2.3,.92,5.25),(lx,1.39,lz),heading=heading,
+                  indices=body,paint=(tile+index+2)%6)
+        place(sedan,(2.3,.80,5.1),(0,2.18,-1.4),heading=.15,
+              indices=body,paint=(tile+4)%6)
+        # Real discarded donor parts break the base outline. Each rests on
+        # the salt; their retained source faces are recorded in the manifest.
+        for lx,lz in [(-9,1),(8.5,1.5)]:
+            place(source['debris-tire'],(.46,.72,.72),(lx,.36,lz),paint=6)
+        for index,(lx,lz) in enumerate([(-6,2),(1,1.6),(6,1.8)]):
+            place(source['debris-door'],(1.5,.18,1.2),(lx,.09,lz),
+                  heading=index*.4,paint=(tile+index)%6)
+        for lx,lz in [(-7,4),(6.5,3.8)]:
+            place(source['debris-drivetrain'],(1.8,.30,2.8),(lx,.15,lz),paint=3)
+    add(island,'island-scenery')
     bus=Geometry('plain-derelict-bus');part=source['Bus']
     retained=[index for index,role in enumerate(part['roles']) if 'windows' not in role.lower()]
     indices,matrix=fit(part,(10.8,2.55,2.72),(-35,1.275,0),indices=retained)

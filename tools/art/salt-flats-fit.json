@@ -82,5 +82,43 @@
     ],
     "tiling": "mirrored-uv",
     "preserveSourcePixels": true
+  },
+  "islandSalvage": {
+    "node": "inner-island-salvage",
+    "placement": "scenery-inside-solid-island",
+    "stacks": [
+      {
+        "center": [
+          -70,
+          -7
+        ],
+        "headingDegrees": -12,
+        "paintTile": 4
+      },
+      {
+        "center": [
+          -25,
+          27
+        ],
+        "headingDegrees": 18,
+        "paintTile": 1
+      },
+      {
+        "center": [
+          6,
+          -23
+        ],
+        "headingDegrees": -22,
+        "paintTile": 3
+      },
+      {
+        "center": [
+          63,
+          7
+        ],
+        "headingDegrees": 31,
+        "paintTile": 0
+      }
+    ]
   }
 }
