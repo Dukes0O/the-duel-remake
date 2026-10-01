@@ -2919,8 +2919,8 @@ tasks:
     lane: CMB
     size: S
     needs: []
-    status: building
-    review_commit: "16a2b948e98c9cf91c11d7ace7978db99a7cb121"
+    status: merged
+    review_commit: 4aede7211dccf4dfd65c8e22441f5fb2701a632e
     source_commit: f703714101525b7786b1abe852ef1794ab9a6f97
     test_commit: "f409b6f472516110ab152907c8c8496521b24873"
     claimed_by: codex-director-2026-10-01-afternoon
@@ -2938,7 +2938,9 @@ tasks:
     qa_commit: "f409b6f472516110ab152907c8c8496521b24873"
     claude_answer: "1 October 2026: the 1.5 m and 4 m minimums apply where the push direction has open floor. A car pinned against the outer wall and rammed straight into it cannot move through the wall: it stays, takes the ram damage, and the attacker rebounds. Any part of the push along the wall still slides it along the wall. No teleport, no escape direction, containment unchanged."
     claude_verdict: "1 October 2026, afternoon: merge. The 38 of 54 body and rail crossings are inherited, unchanged by this card, and outside it; they do not hold the merge and need no new card now (P3-POLISH looks at cars touching the dome wall only if Kyle sees it in play). The code change is contained to the arena paths and the road solver is untouched. After merge, set waiting_on: kyle for his Preview feel check. The 1568-line change note is far too long: cut it to under 100 lines of plain sentences before merge (what changed, tests, replays that changed and why, removed)."
-    note: "The unchanged audio capture passes alone but twice reaches the parallel gate’s browser command deadline before assertions. A narrow bounded transport-wait fix and independent review precede the fresh gate. Gameplay and audio assertions stay unchanged."
+    note: "Lane tier and build pass after the bounded browser transport fix. Independent Source and browser checks are clear; road fingerprints are unchanged. Kyle checks the Preview feel."
+    waiting_on: kyle
+    merged_commit: bd470392904bfb8e82b5d66adcefd95fe32364f1
   - id: WAR-SAL-RELEASE
     title: "Release the warlord ladder with Sawtooth Sal"
     owner: claude

@@ -1578,3 +1578,7 @@ Next: Claude settles Arsenal candidate-range interface (10launchRED), Shove inhe
 All five unmerged lane tips/last activity/holds are listed inSTATUS; preserve them. Quiet mandatory lane/build clear exactShove16a andTanker86d; initial overlappingaudio timeouts are retained, unchangedisolatedrecovery clear. No merge waiver, relativeframe/art/gamecomparison/Preview approval is inferred. Ready cards remain blocked by exclusive hooks.
 
 Janitor sweep complete: removed10consumed passing gatefiles993386B, folded usedcheckpointfacts, runtime/public bytesunchanged; uncertain48asset/26export candidates stayDISC/CLEAN-11. No unusedmodule/test deletion proved. Final exactintegration full/build, outgoingbinary audit andnormal approvedpush follow this committed handoff. Keep the runner-owned final ledger on disk; do not commit new metadata afterward and inherit its pass. Overnightfollowups stop at this run's deadline. Live, Preview,5174, real saves, protectedaudiofiles, release andhistory remained untouched.
+
+## Director, 1 October afternoon: Shove
+
+Merged the approved arena shove after independent review, all 318 lane suites and build. The parallel audio setup deadline is now bounded at 60 seconds for promise evaluations; assertions and measurements stayed unchanged. Native shove and road replay verdicts are recorded in the concise change note. Kyle checks the Preview feel.
