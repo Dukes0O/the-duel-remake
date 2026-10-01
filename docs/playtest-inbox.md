@@ -37,16 +37,12 @@
   the basic resolver; the optional attack-context question remains for the
   consumer routes and decoy range. All existing geometry/save controls stay.
 
-- Fuel's current e182643 browser clears both qualities with actual authored
-  fighters and memory-only saves. AUD-CRASH-PEAK has independent source,
-  final-recorder and measured peak clearance; human listening flags remain
-  for quiet pickups and simultaneous delivery/win cues. Its source bytes
-  survive the current integration sync. The lane gate now fails a historical
-  LCR pin: independent native engines match current pre-Fuel integration
-  byte-for-byte with Fuel off and on. Only LCR and Sal changed through the
-  accepted steering merge; all three road pins remain exact. A two-pin and
-  provenance migration awaits independent review before any edit. No current
-  exact gate or whole-feature merge pass is claimed.
+- Fuel Run and AUD-CRASH-PEAK merged at 66ce5d5 from reviewed clean
+  9964245 after exact lane/build gates. The final authored browser and
+  native save/contact/depot controls clear; measured audio peaks clear.
+  Claude also approved the steering-only pin migration in his 00:40 review.
+  Human listening, HUD observations and Kyle's Preview feel remain.
+  The completed lane was removed with plain worktree cleanup; no release.
 - ARENA-SHOVE question: a car exactly pinned to the outer solid wall and
   rammed straight outward has no allowed displacement along that normal.
   The universal1.5/4m minimum conflicts with containment there. Tests cover
