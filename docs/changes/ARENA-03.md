@@ -708,3 +708,113 @@ contact code and the feature merge remain paused. No real save is used.
 ### Removed — narrow review
 
 Nothing. Current recipes, retained acceptance and source fingerprints remain.
+
+
+## Settled fighter contacts and four-metre depot: tests-first freeze
+
+Claude's design merged before this work. docs/CREW.md, "Car weapons against
+fighters on foot", fixes car bolts at 35 health, car splash at up to 60 with
+the existing radial falloff, knockdown strictly inside half the blast radius,
+and fighter cargo loss only on knockdown. SCRAPDOME section 10 raises the
+Fuel depot from two to four metres. This freeze adds acceptance only; source
+at the red run is 70c2c507c69e0fda53291389ff0282d19f64a4eb.
+
+The two new suites run the real Duel entry, a real 0.4-second F exit,
+actual projectile sweeps and expiry, generated raiders, the event's physical
+canisters and actual Three depot geometry. Incoming contacts cover both
+Fuel Run and ordinary discovered Wasteland. Direct projectile steps isolate
+contact rules; two additional native Duel.step checks prove fight integration.
+Splash health checks use an explicit 0.005-health tolerance for the existing
+player/raider body centres (.85 to 1 m), without imposing a new private
+centre. Half- and three-quarter-radius damage separately recover the maximum
+of 60 from actual health removed, within 0.02 health. Centre and .499-radius
+knockdowns are checked separately from surviving .5-radius damage, for both
+base and upgraded bomb radii. The radius edge stays zero damage. No public
+geometry tuning changes.
+
+Positive controls retain physical player and later CPU car armor hits,
+body misses, friendly teams, victim/owner respawn protection, radius-edge
+misses and enemy depots. Rook keeps native 110 health; base crew keep 100;
+generated raiders keep 70. The test does not create future computer-crew
+fighter state: CREW-04 must apply these settled shared rules once its actual
+exit contract exists. Dune signature gear also remains CREW-02's scope.
+
+An actual parked-car bomb removing more than 25 armor currently emits a
+fuelDrop for a standing carrier. The test asserts the emitted event and
+ownership before another Fuel step, so immediate recollection cannot hide
+that unwanted drop. Knockdown checks require one actual drop at the fighter
+pose, unchanged three-second recovery, and no recovery restart.
+
+New command: node --test --test-reporter=tap
+ tools/test-onfoot-car-contacts.mjs tools/test-arena-fuel-depot.mjs.
+Result: **74 tests, 25 passed, 49 failed, zero skipped; 361 checks reached;
+exit 1.** Contact suite: 57 tests, 19 passed, 38 failed, 288 checks.
+Depot suite: 17 tests, six passed, 11 failed, 73 checks. Each failure below
+is the actual first failing assertion on that scenario, after native fixture
+controls pass. No missing-module or unsupported roster fixture failure is
+counted.
+
+| Failing scenario | Actual first failure message |
+| --- | --- |
+| the settled depot radius is four metres | Claude review raises every depot from two to four metres 2 !== 4 |
+| player delivers real car cargo inside the enlarged radius 2.001 | native delivery scores at every point inside four metres 0 !== 1 |
+| player delivers real car cargo inside the enlarged radius 3.999 | native delivery scores at every point inside four metres 0 !== 1 |
+| cpu-1 delivers real car cargo inside the enlarged radius 2.001 | native delivery scores at every point inside four metres 0 !== 1 |
+| cpu-1 delivers real car cargo inside the enlarged radius 3.999 | native delivery scores at every point inside four metres 0 !== 1 |
+| cpu-2 delivers real car cargo inside the enlarged radius 2.001 | native delivery scores at every point inside four metres 0 !== 1 |
+| cpu-2 delivers real car cargo inside the enlarged radius 3.999 | native delivery scores at every point inside four metres 0 !== 1 |
+| cpu-3 delivers real car cargo inside the enlarged radius 2.001 | native delivery scores at every point inside four metres 0 !== 1 |
+| cpu-3 delivers real car cargo inside the enlarged radius 3.999 | native delivery scores at every point inside four metres 0 !== 1 |
+| actual fighter depot boundary at 3.999 metres | the same four-metre rule reads the actual fighter pose 0 !== 1 |
+| actual Three depot rings and bases show four metres without changing race state | 'actual visible depot ring reaches four metres: expected 4, received 2' |
+| fuel-run: swept incoming car bolt removes 35 health from the fighter, not parked armor | a real car bolt removes exactly 35 fighter health 100 !== 65 |
+| fuel-run: three bolts knock a base-health fighter down, without an early knock | successive real bolts use the settled 35-health damage 100 !== 65 |
+| fuel-run: bomb level 0 at radius share 0.5 uses car falloff on fighter health | 'car splash removes up to 60 health using the existing linear radial falloff: expected 70, received 100' |
+| fuel-run: bomb level 0 at radius share 0.75 uses car falloff on fighter health | 'car splash removes up to 60 health using the existing linear radial falloff: expected 85, received 100' |
+| fuel-run: bomb level 0 at radius share 0.999 uses car falloff on fighter health | 'car splash removes up to 60 health using the existing linear radial falloff: expected 99.94, received 100' |
+| fuel-run: bomb level 0 inside half radius 0 knocks down | a fighter strictly inside half the upgraded blast radius is knocked down false !== true |
+| fuel-run: bomb level 0 inside half radius 0.499 knocks down | a fighter strictly inside half the upgraded blast radius is knocked down false !== true |
+| fuel-run: bomb level 3 at radius share 0.5 uses car falloff on fighter health | 'car splash removes up to 60 health using the existing linear radial falloff: expected 70, received 100' |
+| fuel-run: bomb level 3 at radius share 0.75 uses car falloff on fighter health | 'car splash removes up to 60 health using the existing linear radial falloff: expected 85, received 100' |
+| fuel-run: bomb level 3 at radius share 0.999 uses car falloff on fighter health | 'car splash removes up to 60 health using the existing linear radial falloff: expected 99.94, received 100' |
+| fuel-run: bomb level 3 inside half radius 0 knocks down | a fighter strictly inside half the upgraded blast radius is knocked down false !== true |
+| fuel-run: bomb level 3 inside half radius 0.499 knocks down | a fighter strictly inside half the upgraded blast radius is knocked down false !== true |
+| wasteland: swept incoming car bolt removes 35 health from the fighter, not parked armor | a real car bolt removes exactly 35 fighter health 100 !== 65 |
+| wasteland: three bolts knock a base-health fighter down, without an early knock | successive real bolts use the settled 35-health damage 100 !== 65 |
+| wasteland: bomb level 0 at radius share 0.5 uses car falloff on fighter health | 'car splash removes up to 60 health using the existing linear radial falloff: expected 70, received 100' |
+| wasteland: bomb level 0 at radius share 0.75 uses car falloff on fighter health | 'car splash removes up to 60 health using the existing linear radial falloff: expected 85, received 100' |
+| wasteland: bomb level 0 at radius share 0.999 uses car falloff on fighter health | 'car splash removes up to 60 health using the existing linear radial falloff: expected 99.94, received 100' |
+| wasteland: bomb level 0 inside half radius 0 knocks down | a fighter strictly inside half the upgraded blast radius is knocked down false !== true |
+| wasteland: bomb level 0 inside half radius 0.499 knocks down | a fighter strictly inside half the upgraded blast radius is knocked down false !== true |
+| wasteland: bomb level 3 at radius share 0.5 uses car falloff on fighter health | 'car splash removes up to 60 health using the existing linear radial falloff: expected 70, received 100' |
+| wasteland: bomb level 3 at radius share 0.75 uses car falloff on fighter health | 'car splash removes up to 60 health using the existing linear radial falloff: expected 85, received 100' |
+| wasteland: bomb level 3 at radius share 0.999 uses car falloff on fighter health | 'car splash removes up to 60 health using the existing linear radial falloff: expected 99.94, received 100' |
+| wasteland: bomb level 3 inside half radius 0 knocks down | a fighter strictly inside half the upgraded blast radius is knocked down false !== true |
+| wasteland: bomb level 3 inside half radius 0.499 knocks down | a fighter strictly inside half the upgraded blast radius is knocked down false !== true |
+| Rook keeps 110 health: three 35-health car bolts leave five health, fourth knocks down | car contact does not erase the existing Rook health perk 110 !== 75 |
+| Fuel carrier: a surviving 35-health body bolt keeps cargo with the real fighter | the actual carrier is no longer immune to car bolts 100 !== 65 |
+| Fuel carrier: surviving outer splash keeps cargo | 'half-radius splash removes 30 health without knockdown: expected 70, received 100' |
+| Fuel carrier: third-bolt drops cargo once at the fighter pose | actual projectile contacts knock the carrier down false !== true |
+| Fuel carrier: inner-bomb drops cargo once at the fighter pose | actual projectile contacts knock the carrier down false !== true |
+| Fuel carrier: more than 25 armor lost by its distant parked car does not drop fighter cargo | a parked-car hit never emits a drop for a standing on-foot carrier 1 !== 0 |
+| ordinary Wasteland: car crossbow strikes a real generated raider body for 35 health | actual car bolt applies the same 35-health rule to a generated raider 70 !== 35 |
+| ordinary Wasteland: car bomb splash reaches real raider at 0.5 radius | 'raiders take the same native car-splash health falloff: expected 40, received 70' |
+| ordinary Wasteland: car bomb splash reaches real raider at 0.75 radius | 'raiders take the same native car-splash health falloff: expected 55, received 70' |
+| ordinary Wasteland: inner car bomb knocks a generated raider down with its existing recovery | inside half radius car splash also knocks raiders down false !== true |
+| a second car bolt cannot damage or restart recovery of an already knocked fighter | real first incoming bolt knocks a low-health fighter down false !== true |
+| fuel-run: the actual Duel step resolves incoming fighter contact | native fight integration applies the settled car bolt to the real fighter 100 !== 65 |
+| wasteland: the actual Duel step resolves incoming fighter contact | native fight integration applies the settled car bolt to the real fighter 100 !== 65 |
+| ordinary Wasteland: two car bolts knock the native 70-health raider down | the real raider retains native health and the same 35-health car bolt 70 !== 35 |
+
+Existing command: node --test --test-reporter=tap tools/test-arena-fuel-run.mjs.
+All **68/68** existing Fuel tests pass, zero skipped, including the existing
+unchanged-mode fingerprints, actual 30/60/144 FPS checks, durable eligibility,
+one-time settlements and read-only presentation cache checks. Existing
+assertions and replay JSON remain byte-for-byte unchanged. No browser,
+whole-lane gate, implementation or merge clearance is claimed by this freeze.
+
+### Removed — settled contact/depot red tests
+
+Nothing. This adds two test suites and their red evidence. No simulation,
+save, runtime asset, audio bank, assertion, replay pin or world signature
+was changed or regenerated. Licensed originals and current game assets stay.
