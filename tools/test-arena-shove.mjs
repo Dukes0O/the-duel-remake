@@ -221,9 +221,105 @@ for (const spec of fixture.roadControls) test('released road full-state fingerpr
   eq(digest(samples), spec.fingerprint, 'road/steering/Titan High Country full-state pin is retained');
 });
 
-// Solid outward wall confinement is reproducible, but universal displacement
-// straight into that solid has no physical escape. Claude must settle it.
-test.todo('wall-pinned outward normal: Claude must reconcile minimum displacement with the solid wall');
+// Claude, 1 October: a purely outward push at the solid wall stays contained;
+// normal ram damage/protection apply, and the attacker physically rebounds.
+// The existing 1,944 open-floor/tangential witnesses stay unchanged above.
+function wallRam(attackingCar, targetCar, role, kind, mph, side, tangentRadians = 0) {
+  const c = arena(attackingCar, targetCar, role); sitting(c, kind);
+  const {duel, attacker, target} = c, limit = floorLimit(duel);
+  pose(target, 90, side * (limit + .01), 0);
+  containInArena(duel, target, DT); holdIdle(duel, target);
+  pose(attacker, target.s, target.lateral, side * Math.PI / 2 - tangentRadians);
+  const envelope = vehicleContactEnvelope(attacker, target, duel._vehicleSpec(attacker), duel._vehicleSpec(target));
+  pose(attacker, target.s, target.lateral - side * (envelope.width + .02), side * Math.PI / 2 - tangentRadians);
+  holdIdle(duel, attacker); attacker.speedMph = (mph + 1.1) / Math.cos(tangentRadians);
+  const before = worldPose(duel, target), armor = target.armor, attackerArmor = attacker.armor,
+    timer = target.combatWreckTimer, protection = participant(duel, target).protectedSec,
+    frame = duel.course.at(target.s), events = [];
+  duel.onChange((_, event) => {
+    if (event.combatRamHit || event.arenaWallHit) events.push(structuredClone(event));
+  });
+  if (attacker === duel.state) duel._drive(DT);
+  else {
+    const at = worldPose(duel, attacker);
+    pilotStep(duel, attacker, {x: at.x + Math.sin(at.heading) * 30,
+      z: at.z + Math.cos(at.heading) * 30, speedMph: mph + 1.1, boost: false}, DT);
+    holdIdle(duel, attacker);
+  }
+  const body = actorBody(duel, attacker), incomingMph = side *
+    (body.vx * Math.cos(frame.heading) - body.vz * Math.sin(frame.heading)) / DRIVE.mphToWorld;
+  const contact = duel._vehicleContact(attacker, target, 'rival');
+  const afterContactLateral = attacker.lateral;
+  let reverseMps = 0, reboundMetres = 0, targetMotion = 0, tangentMetres = 0, escaped = false, air = 0;
+  for (let tick = 0; tick < fixture.measureTicks; tick++) {
+    duel.step(DT); const velocity = actorBody(duel, attacker), at = worldPose(duel, target);
+    reverseMps = Math.max(reverseMps, -side * (velocity.vx * Math.cos(frame.heading) - velocity.vz * Math.sin(frame.heading)));
+    reboundMetres = Math.max(reboundMetres, side * (afterContactLateral - attacker.lateral));
+    targetMotion = Math.max(targetMotion, Math.hypot(at.x - before.x, at.z - before.z));
+    tangentMetres = Math.max(tangentMetres, Math.abs((at.x - before.x) * Math.sin(frame.heading) + (at.z - before.z) * Math.cos(frame.heading)));
+    escaped ||= Math.abs(target.lateral) > limit + EPS || Math.abs(attacker.lateral) > limit + EPS;
+    air = Math.max(air, target.airHeight || 0);
+  }
+  return {...c, side, contact, incomingMph, reverseMps, reboundMetres, targetMotion, tangentMetres,
+    escaped, air, armor, attackerArmor, timer, protection, events};
+}
+for (const kind of fixture.sittingStates) for (const role of fixture.roles)
+  for (const side of [-1, 1]) for (const [mph] of fixture.minimums) {
+    test(`SETTLED WALL: ${kind}/${role}/side${side}/${mph}mph all native masses stay solid and attacker rebounds`, () => {
+      const failures = [];
+      for (const attackingCar of CARS_IN_GAME) for (const targetCar of CARS_IN_GAME) {
+        const r = wallRam(attackingCar, targetCar, role, kind, mph, side), name = attackingCar + '→' + targetCar;
+        checks++;
+        if (!r.contact || r.incomingMph < mph - EPS) failures.push(name + ': actual normal swept contact below threshold/missing');
+        if (r.escaped || r.targetMotion > 1e-4) failures.push(name + ': outward target must stay at the solid wall, motion=' + r.targetMotion);
+        if (!(r.reverseMps > 1e-6 && r.reboundMetres > .01)) failures.push(name + ': attacker must genuinely rebound away from wall; reverse=' + r.reverseMps.toFixed(6) + 'm/s, inward=' + r.reboundMetres.toFixed(6) + 'm');
+        const victimId = r.target === r.duel.state ? 'player' : r.target.arenaId;
+        const damage = r.events.filter(event => event.combatRamHit &&
+          (event.victim === 'player' ? 'player' : `cpu-${event.victimIndex + 1}`) === victimId)
+          .reduce((total, event) => total + event.armorRemoved, 0);
+        if (kind === 'protected' && (r.target.armor !== r.armor || r.attacker.armor !== r.attackerArmor || damage !== 0 ||
+            !(participant(r.duel, r.target).protectedSec > 0))) failures.push(name + ': actual protection must block both ram damage directions');
+        if (kind === 'wreck' && (r.target.armor !== r.armor || damage !== 0 || r.air > EPS ||
+            !r.target.combatWrecking || !(r.target.combatWreckTimer > 0 && r.target.combatWreckTimer < r.timer) ||
+            participant(r.duel, r.target).wrecked !== 1 || r.events.some(event => event.arenaWallHit?.id === victimId)))
+          failures.push(name + ': counted waiting wreck stays grounded, quiet, undamaged, and keeps its native deadline');
+        if (kind !== 'wreck' && kind !== 'protected' && mph === 40 && !(damage > 0 && r.target.armor < r.armor))
+          failures.push(name + ': eligible forty-mph normal contact must retain real ram armor damage');
+        if (kind !== 'wreck' && kind !== 'protected' && mph === 20 && damage !== 0)
+          failures.push(name + ': twenty-mph contact remains below the existing forty-kph ram damage threshold');
+      }
+      eq(failures, [], failures.length + ' settled normal-wall witnesses fail; first: ' + failures[0]);
+    });
+  }
+for (const kind of fixture.sittingStates) for (const side of [-1, 1])
+  test(`SETTLED WALL TANGENT: ${kind}/side${side} retains both actual along-wall components`, () => {
+    for (const mph of [20, 40]) for (const angle of [-Math.PI / 12, Math.PI / 12]) {
+      const r = wallRam('falcone_f42', 'dusthawk_rally', 'player-attacker', kind, mph, side, angle);
+      eq(r.contact, true, 'oblique approach reaches actual native swept contact');
+      ok(r.incomingMph >= mph - EPS, 'actual outward closing component reaches its threshold');
+      ok(!r.escaped, 'oblique shove remains inside the same solid outer wall');
+      ok(r.tangentMetres > 1e-6, 'a genuine nonzero along-wall component still slides; no new blocked-direction minimum');
+    }
+  });
+for (const mph of [20, 40]) test(`SETTLED WALL TRAFFIC CONTROL: genuine road traffic native contact at ${mph}mph`, () => {
+  const ordinary = new Duel({seed: fixture.seed, featureFlags: {wasteland2: true}});
+  ordinary.startCampaign({mode: 'wasteland', car: 'falcone_f42', seed: fixture.seed, startStage: 0});
+  const s = ordinary.state, traffic = s.traffic.find(actor => actor.alive && actor.dir === 1);
+  ok(traffic, 'the actual seeded road spawner supplies the existing traffic shape');
+  eq(s.arena, null, 'traffic contact is an ordinary-road control, never a fabricated arena participant');
+  eq(Object.hasOwn(traffic, 'protectedSec'), false, 'traffic has no invented arena protection');
+  Object.assign(s, {status: 'racing', countdown: 0, invulnerableSec: 0});
+  pose(traffic, 905); pose(s, traffic.s, 0, Math.PI / 2);
+  const shell = vehicleContactEnvelope(s, traffic, ordinary._vehicleSpec(s), ordinary._vehicleSpec(traffic));
+  pose(s, traffic.s, -shell.width - .02, Math.PI / 2); s.speedMph = mph + 1.1;
+  ordinary.setInput({throttle: 0, brake: 0, steer: 0, boost: false}); ordinary._drive(DT);
+  eq(ordinary._vehicleContact(s, traffic, 'traffic'), true, 'actual swept traffic shell reaches contact');
+  const body = actorBody(ordinary, traffic);
+  ok([body.vx, body.vz, body.spin].every(Number.isFinite), 'released native traffic contact stays finite');
+  ok(Math.hypot(body.vx, body.vz) > EPS, 'the real traffic contact receives native solver motion');
+  const publicArena = arena('falcone_f42', 'dusthawk_rally', 'player-attacker').duel;
+  eq(publicArena.state.traffic, [], 'public arena still has no traffic roster or traffic respawn contract');
+});
 
 after(() => console.log('Arena shove: ' + checks + ' acceptance checks reached.'));
 
