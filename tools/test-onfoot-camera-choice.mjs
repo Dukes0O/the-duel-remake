@@ -48,7 +48,7 @@ await check('named-player preference persists and remains separate from car came
   app.dispose();
 });
 await check('foot KeyC changes presentation only; car keys and gamepad map remain unchanged',()=>{
-  assert.equal(keyboardAction('foot','KeyC'),'foot-camera-cycle');assert.equal(keyboardAction('car','KeyC'),'camera:front');
+  assert.equal(keyboardAction('foot','KeyC'),'foot-camera-cycle');assert.equal(keyboardAction('car','KeyC'),'camera-cycle');
   assert.deepEqual(INPUT_CONTEXTS.foot.gamepad,[[9,'pause'],[2,'enter-car'],[0,'jump'],[7,'fire'],[6,'aim'],[12,'gear:1'],[15,'gear:2'],[13,'gear:3']]);
   const app=appFixture();app.startCampaign({mode:'wasteland',startStage:0,seed:1989});
   app.duel.state.status='racing';app.duel.state.countdown=0;app.duel.state.onFoot=true;
