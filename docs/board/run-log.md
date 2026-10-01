@@ -1349,3 +1349,38 @@ Kyle explicitly approved uploading committed game code, tests, docs and
 licensed asset records to https://github.com/Dukes0O/the-duel-remake.git
 on integration/wasteland. D8 normal pushes resume after each exact passing
 full and a read-only compaction check. No release or rewrite is authorized.
+
+Janitor: Kyle closed crew-fit-m and hands-fit. Verified their clean heads
+59a5b99 and34e914b, unlinked integration dependencies, used plain worktree
+remove, and deleted the explicitly dropped branches. Their failed recipes
+and comparison output no longer occupy lanes; current runtime assets,
+original licensed sources, scores and Kyle decisions remain. The replaced
+tanker search stays until the verified valve record merges.
+
+Exact clean checkpoint 230318e passed all 308 full suites, with campaigns
+enabled and no skipped suites, in 905.51 seconds at 03:05:34 UTC. Build
+passed in 614 ms. The normal approved push advanced integration/wasteland
+from 4cd4a96 to 230318e. Outgoing five commits contain only five text paths;
+no outgoing binary version needs compaction. No history rewrite or release.
+Full cadence resets here: five merges, 05:05 UTC or the end of this run.
+Later metadata or source commits need their own exact full evidence.
+
+Steering freeze c73ce03 retains the failing crate fixture and records its
+legal CPU pickup witness. Rustwall native RED proves the renderer discards
+source geometry; private fitting continues while Claude reviews the needed
+legacy consumer migration. Their questions are at the top of the inbox.
+Fuel contact/depot independent RED is frozen at 4a2ee89 before implementation;
+the narrow valve donor record is independently tests first.
+
+ART-KEEP-VALVE-DONOR merged from reviewed clean 0b49409 after 309/309
+lane suites in 783.13 seconds and build in 379 ms. Independent review found
+no issue: actual original archive/member bytes and CRC, CC0 rights, palette
+and 456 real triangles are verified; all earlier catalogue fingerprints
+remain exact. This retains source only, with no fitted or installed truck.
+
+After-merge janitor verified clean donor and Kyle-closed parts-search lanes,
+unlinked integration-only dependencies, used plain git worktree remove and
+deleted their merged or explicitly dropped branches. The narrow licensed
+donor record is retained; obsolete complete-trailer tests and generated
+search evidence did not enter integration. Original licensed files, current
+game assets and Kyle decisions remain. Full merge counter: one since230318e.
