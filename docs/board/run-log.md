@@ -1349,3 +1349,10 @@ Kyle explicitly approved uploading committed game code, tests, docs and
 licensed asset records to https://github.com/Dukes0O/the-duel-remake.git
 on integration/wasteland. D8 normal pushes resume after each exact passing
 full and a read-only compaction check. No release or rewrite is authorized.
+
+Janitor: Kyle closed crew-fit-m and hands-fit. Verified their clean heads
+59a5b99 and34e914b, unlinked integration dependencies, used plain worktree
+remove, and deleted the explicitly dropped branches. Their failed recipes
+and comparison output no longer occupy lanes; current runtime assets,
+original licensed sources, scores and Kyle decisions remain. The replaced
+tanker search stays until the verified valve record merges.
