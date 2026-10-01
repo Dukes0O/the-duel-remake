@@ -1287,3 +1287,28 @@ and33130stale trailing bytes in the later shared PNG. Production wall
 images decode; source remains clean apart from the full ledger. Feature
 merges stop. HK-RUSTWALL-ATLAS-ISOLATION is claimed tests first, with one
 active fix lane; the five prior checkouts remain held pending decisions.
+
+## 30 September 2026, Director: repair and final handoff
+
+HK-RUSTWALL-ATLAS-ISOLATION merged cc6a7f9 from reviewed clean df3706c.
+Independent native red: 95 checks, 19 passed/76 failed. The fix passes
+95/95; the reviewer
+also proves normal/error cleanup. Unchanged Rustwall 29/29 and replay 162/162
+pass, with all 143 runtime files byte-identical. Exact lane 308/308 in 440.99s
+and build 0.977s pass. Only the recipe, new regression and change note merge.
+
+Janitor: verified dependency junction unlinked; plain worktree removal and
+merged branch deletion done. Removed 82 consumed ignored Rustwall files,
+100,043,581 bytes to zero, plus empty evidence folder. This is in addition to
+the earlier 1,550 files/1,450,065,875 bytes sweep. Current assets and original
+licensed sources stay. Five held lanes and Claude/Kyle/protected audio refs
+remain. Uncertain asset removals stay with DISC; no runtime growth.
+
+Handoff: the final full/build now runs on the clean final integration commit.
+Read the exact outcome in checks/full-tier.json; older passes never apply.
+Fuel/steering wait Claude's handed-off design merge; crew/hands/tanker wait
+Kyle's recorded choices. Current hands remain; Tanker A fitting still has
+four source gaps. D8 normal push awaits the existing specific destination
+and payload approval after automatic review rejection. No push, rewrite,
+Director release or real save access. Start future cards from the refreshed
+board only after the exact full passes, respecting all held file ownership.

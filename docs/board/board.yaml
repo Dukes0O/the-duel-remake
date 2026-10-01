@@ -11,11 +11,12 @@ tasks:
     lane: TOOL
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: codex-director-2026-09-30-resume
     branch: lane/tool/rustwall-atlas-isolation
     owns: [tools/blender/rustwall.py, tools/test-rustwall-atlas-isolation.mjs, docs/changes/HK-RUSTWALL-ATLAS-ISOLATION.md]
     hooks: []
+    note: "Director: merged cc6a7f9 from reviewed clean df3706c. Native tests first: 95 checks, 19 pass/76 real failures; fixed 95/95. Independent review clears source and native cleanup success/error probes. Unchanged Rustwall 29/29 and replay 162/162; all 143 runtime files byte-identical. Exact lane 308/308 in 440.99s and build 0.977s pass. Plain lane/branch janitor complete. Final clean integration full remains required; read its exact commit/result in checks/full-tier.json."
     helpers: [test_author, reviewer, test_runner]
     acceptance:
       - "Fix the failed end full at clean2d1216f: default wheel and relief probes race on art-build/rustwall/hulks PNGs. The relief GLB and snapshot contain the same corrupt IDAT bytes; current runtime wall images decode. Write meaningful failing native source acceptance before the fix."

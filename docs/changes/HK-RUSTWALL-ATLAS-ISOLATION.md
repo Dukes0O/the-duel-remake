@@ -145,6 +145,28 @@ build, port or player save was opened. The root will arrange independent
 review and the exact lane/build gate; final integration full-tier evidence
 remains required. This source handoff claims none of those pending gates.
 
+## Independent review and integration gate
+
+Independent review clears exact clean source commit
+`df3706c129b7f2c8e41fa6f75814192a52d83c49`. The reviewer reran the
+frozen native suite: **95/95 passed**. Independent real Blender probes
+leave zero private atlas directories on normal exit and on an injected
+pack failure immediately after a native save. Old assertions, replay
+fixtures and all runtime assets remain unchanged.
+
+The exact lane commit stayed clean before and after both required gates:
+`node tools/run-tests.mjs --tier lane --changed --jobs 8` passed
+**308/308, zero failures and zero not run, in 440.99 seconds**.
+`npm run build` passed in **0.977 seconds**. Campaign shards ran;
+only the existing forced demo shoulder excursion is explicitly skipped.
+
+Merged as `cc6a7f93861b36d7611988795cbd1da2e701840e`. The dependency
+junction was verified and unlinked, followed by plain `git worktree remove`
+and merged branch deletion. The final integration full/build must run on
+the clean commit after this handoff. Its exact verdict belongs in
+`docs/board/checks/full-tier.json`; this note does not grant another
+commit the lane result.
+
 ## Removed
 
 Removed the shared direct atlas save/read path, implicit initial image pack

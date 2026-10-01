@@ -17,8 +17,19 @@ too slow for a ring) and **ARENA-SHOVE** (sitting cars cannot be shoved).
 WAR-PAY and SAVE-DAMAGED-FIELDS are merged. The five-merge checkpoint passed
 307/307 on exact clean commit 352dba3, with build, at 23:32:52UTC. No campaigns
 were skipped. This handoff needs a fresh end-of-run full on its final commit.
-The exact result will be in docs/board/checks/full-tier.json. Do not inherit
-the older checkpoint or STATUS observation as a pass for a later commit.
+The end full on clean 2d1216f failed 306/307 because simultaneous wheel and
+relief builds shared an atlas PNG. HK-RUSTWALL-ATLAS-ISOLATION is now merged
+cc6a7f9: independently authored native red: 95 checks, 19 passed/76 failed;
+fixed 95/95,
+independent review, unchanged Rustwall 29/29 and replay 162/162, exact clean
+lane 308/308 and build pass. Each invocation packs its private captured PNG
+bytes before atomic publication. Runtime assets and old assertions stay
+unchanged. The repair lane and branch are removed with the plain janitor.
+
+The final full/build runs on the clean commit after this handoff. Feature
+merges stay paused until that exact final full passes. Read its commit and
+result in docs/board/checks/full-tier.json. Do not inherit the older
+checkpoint or STATUS observation as a pass for a later commit.
 
 ART-SRC-CREW-W and ART-SRC-TANKER records are merged. Kyle keeps current
 Nell, Odessa and Wren; only Vesper needs later fitting. Kyle picked Tanker A
@@ -51,7 +62,9 @@ design lands, retest the unchanged crate fixture before considering an edit.
 ART-FIT-CREW-M remains held59a5b99. Current runtime assets stay unchanged.
 
 The sweep removed 1,550 consumed evidence/QA files,1,450,065,875 bytes, and
-four empty directories. Five unmerged lanes remain with their recipes and
+four empty directories. A further 82 ignored Rustwall probe files, 100,043,581
+bytes, were removed after the committed failure verdict. Five unmerged
+lanes remain with their recipes and
 verdicts. The final audit skips protected audio worktrees. It finds48 advisory
 runtime candidates, no unused modules or removed-feature tests; DISC holds
 uncertain removals. Runtime 236249990 bytes and Wasteland 78998200 bytes remain.
