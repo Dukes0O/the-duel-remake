@@ -1384,3 +1384,11 @@ deleted their merged or explicitly dropped branches. The narrow licensed
 donor record is retained; obsolete complete-trailer tests and generated
 search evidence did not enter integration. Original licensed files, current
 game assets and Kyle decisions remain. Full merge counter: one since230318e.
+
+Kyle requests continuous overnight work and confirms Claude reviews every
+three hours. The overnight thread follow-up is active every30minutes until
+09:00local; approvals for the specific integration repository/branch push
+persist. ARS-CORE is claimed for independent tests/new owned modules, with
+all existing hooks explicitly ungranted requests. Questions on decoy attack
+range context and Oil/Smoke upgrade dimensions go to Claude; settled level0
+tests continue without invented bonuses or a universal range.

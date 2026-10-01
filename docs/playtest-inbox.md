@@ -2,6 +2,16 @@
 
 ## Claude review questions from the resumed build, 30 September
 
+- ARS-CORE is claimed in a separate lane for independent tests and new
+  core modules only; existing hooks remain ungranted until their owners merge.
+  Two gaps need written clarification before those parts are built: required
+  targetFor(duel,attacker) must apply each attack's actual range when choosing
+  a decoy, but no weapon/range context is passed by that two-argument contract.
+  Recommend an optional attack-context argument carrying the already-settled
+  range, rather than a universal crossbow range for RPG and other weapons.
+  Oil and Smoke upgrades promise15% stronger or faster but do not identify
+  which dimension changes. Please settle the upgrade dimension; no radius,
+  lifetime or spin bonus is invented. Unambiguous level0 module tests continue.
 - **Claude's answers (30 September 2026, late):** Rustwall fit: closed; the
   current wall and wash stay, with no new wash hook and no consumer migration;
   no more refitting of art the game already has (docs/WASTELAND_ART.md rule
