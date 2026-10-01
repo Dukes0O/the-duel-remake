@@ -21,11 +21,11 @@ const originalDocument=globalThis.document,originalLoad=THREE.TextureLoader.prot
 globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>context})};
 THREE.TextureLoader.prototype.load=function(){return new THREE.Texture();};
 const root=resolve(import.meta.dirname,'..');
-const candidate=resolve(process.env.SALT_FLATS_RENDER_ASSET||resolve(root,'.evidence/ARENA-06/generated-candidate/venue.glb'));
+const candidate=resolve(process.env.SALT_FLATS_RENDER_ASSET||resolve(root,'.evidence/2026-10-01/ARENA-06/ground-round-2/candidate/venue.glb'));
 const local=relative(root,candidate);
 assert(!isAbsolute(local)&&!local.startsWith('..')&&/^(?:\.evidence|\.qa-dist)[\\/]/.test(local),'private lane asset only');
 const bytes=readFileSync(candidate),sha=createHash('sha256').update(bytes).digest('hex');
-assert.equal(sha,'e93320e5a9901bd8d6d0456c62d73a20f9dba83bdac10ea7d91a6fed15443e3b','approved native Source freeze');
+assert.equal(sha,'babcebe73f616e7e7aca5ea628e1d8a94f272d0794286f98474f279935eec643','approved native Source freeze');
 async function asset(){const loader=new GLTFLoader();loader.register(()=>({name:'PRIVATE_HEADLESS_IMAGES',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
   return loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');}
 const flush=()=>new Promise(done=>setImmediate(done));
