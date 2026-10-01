@@ -45,9 +45,10 @@ not move. From this run on:
 | D. Art | ART-FIT-TANKER round 3, then ART-FIT-CREW-W (Vesper) | Final tanker round; sheets to Claude |
 | E. Warlords and clean-up | WAR-02c (Mother Mirage) after ARS-CORE; BALANCE-W2-OFF-RETIRE when no other lane owns its files; WAR-03b when its files are free | |
 
-Waiting on Kyle, not Codex: his Preview check of the dome steering
-(ARENA-WRECK-RATE starts only after it), Sal with Gratian (WAR-SAL-TUNE) and
-the AUD-17 voice picks.
+Kyle, 1 October 2026: the dome steering is kept, so ARENA-WRECK-RATE is
+ready (add it to track A after ARENA-SHOVE), and Sal is approved as she is
+(WAR-SAL-TUNE closed). The weapon sounds (AUD-ARSENAL-W1) need only ARS-CORE:
+the sound bank is already live. Kyle is re-hearing the crew voice takes.
 
 Then follow "Order: the rest of phase 3" below as cards open. Give every card
 explicit owned files before starting it; when two cards need one file, take
