@@ -1475,3 +1475,12 @@ follow; no waiver or current merge clearance is recorded. Core geometry
 review clears 5604703. Pure save transactions continue under their three
 granted hooks; the two named-player raw-profile fixture mismatches need
 independent review before any test correction.
+
+Arsenal pure save freeze dd8ca6c returns source ownership after the three
+granted hooks. All old suites, module bytes and replay pins remain exact.
+Independent test-author review is read-only first; Save Guardian must approve
+any proposed normalization of the raw second-player fixture before editing
+tests. Shared native/UI hooks remain ungranted. Audio builder now owns only
+audio.js, the new audio-output module and its note, following RED8494081.
+Salt Flats reaches native-source GREEN privately, with actual unchanged
+source/photo provenance; runtime and art/frame integration remain held.
