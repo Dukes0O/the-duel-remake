@@ -1884,7 +1884,7 @@ tasks:
     note: "Renderer ghost lifecycle finding merged as 10645f2; 147-suite merge gate, build, private High/Performance smoke and focused ghost-lifecycle browser scenario pass. Discovery continues."
     spec: "SPEC.md, task DISC"
     janitor_follow_up: "1 October end sweep:1179tracked files,259431085B before final metadata,259436173B after operational facts; runtime236249990B unchanged. Removed10consumed gatefiles993386B across3passing checkpoint folders afterverdictcommit. Retain48literal asset candidates/26advisoryexports; no unusedmodule/removedtestproved. CLEAN-11 carries dynamic-reference proof; private destination child-alias guard proof belongs to explicit card ownership, no guessing or deleting currentlicensed/runtimeassets. Five cleanunmergedlanes retained andthreeprotectedaudio refs inspection skipped."
-    private_output_follow_up: "Independent Vesper native proof finds five planned-file hardlink aliases accepted despite private output DIRECTORY guard; file-symlink setup EPERM. Before other recipe writes, audit planned child-file aliases in owned lanes (including Tanker/Salt) with real scratch hardlink/junction controls, no live/player data, testsFIRST/namedownership. No current candidate destination links found or corrupted licensed/runtime bytes; do not infer cross-card Source clearance from directory-only guards. Kyle coverage/toolchoice pending onVesper."
+    private_output_follow_up: "Claude approved fresh output folders and create-new files for Vesper. No additional alias matrix or system change is needed; the fitting card carries the small export fix."
   - id: RFX-01
     title: "Split main UI into screens"
     wave: 2
@@ -2908,11 +2908,17 @@ tasks:
     lane: CMB
     size: S
     needs: [ARENA-STEER]
-    status: ready
+    status: building
     flag: scrapdome
     acceptance:
       - "After Kyle keeps ARENA-STEER's steering in the Preview, bring Medium full-field wrecks per round back to 10 to 14 (SCRAPDOME.md section 8; 23.3 with the new steering) without touching steering: first lever the arena armor scale for ordinary cars, second the computer cars' ram aggression. Re-run tools/arena-balance.mjs for all three difficulties and record the change; Sal's warlord armor (1.5) is unchanged."
     kyle_decision: "Kyle kept the steering on 1 October 2026; start now."
+    claimed_by: codex-director-2026-10-01-afternoon
+    branch: lane/cmb/arena-wreck-rate
+    owns: [src/arena/arena-event.js, tools/test-arena-wreck-rate.mjs, docs/changes/ARENA-WRECK-RATE.md]
+    hooks: []
+    sequencing: "Shove is merged and frees the arena event. Use ordinary-car armor first; steering, Sal armor and Arsenal’s pilot files stay unchanged. If aggression needs changing, wait for Arsenal to free its pilot and brain hooks."
+    helpers: [test_author, reviewer, balance_analyst]
   - id: ARENA-SHOVE
     title: "Every car can shove a sitting car in the Scrapdome"
     owner: codex

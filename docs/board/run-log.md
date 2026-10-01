@@ -1582,3 +1582,5 @@ Janitor sweep complete: removed10consumed passing gatefiles993386B, folded usedc
 ## Director, 1 October afternoon: Shove
 
 Merged the approved arena shove after independent review, all 318 lane suites and build. The parallel audio setup deadline is now bounded at 60 seconds for promise evaluations; assertions and measurements stayed unchanged. Native shove and road replay verdicts are recorded in the concise change note. Kyle checks the Preview feel.
+
+Janitor after Shove: plain worktree removal and merged-branch deletion completed; used card evidence removed after its verdict was committed. Freed about 174 MB of review files; runtime assets are unchanged.
