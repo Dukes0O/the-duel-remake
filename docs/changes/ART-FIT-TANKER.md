@@ -1109,3 +1109,96 @@ Native 56-case Source assertions remain byte-exact and retain their previously
 reviewed Sourcea1ce evidence; this QA slice does not change or rerun them.
 The full lane plan is unchanged and remains a later pre-merge gate. No merge
 occurs in this handoff. QA ownership returns for independent review and Claude.
+
+
+### Private-generator placement gate: tests-first contract
+
+The mandatory lane gate on clean effa791 stopped at the exhaustive Blender
+coverage check: tools/blender/convoy-tanker.py was the single uncovered recipe.
+Its raw result is 115 passed, 1 failed and 202 not run; the separate build passes.
+Evidence remains in .evidence/2026-10-01/ART-FIT-TANKER/review-gates-round2/.
+This is a tooling gate repair, not another art round or runtime installation.
+
+The Director grants this card tools/test-blender-output.mjs exclusively until
+merge. A separate, explicitly named private-generator registry adds Tanker to
+its existing exhaustive deepEqual. The actual script enumeration and filtering
+are unchanged. All established public-generator GLB paths, one-Blend-per-model,
+editable-source placement, runtime-file-existence and review-helper assertions
+remain exact. No unknown recipe is skipped or allowed by a blanket exception.
+
+Seven additional checks run the real command-line recipe under plain Python
+with --root pointing at an empty synthetic root, --output-dir pointing at its
+.qa-dist/tanker-private or .evidence/tanker-private, --fit-config pointing at
+checked-in tools/art/tanker-fit.json, --seed 1989 and --paths-only. Two distinct
+roots must give identical relative output plans and create no files or folders.
+The plan lists absolute tanker.glb and manifest.json destinations, blend:[],
+atlas:[] and embeddedAtlas:['tanker-local-wear-and-hazard-atlas']. The actual
+worn atlas is packed in the GLB; this contract invents no external PNG or Blend.
+
+The real CLI runs with Python -I -B -S and a standard-library audit hook. Any
+bpy/mathutils/numpy import, read outside the exact recipe/fit and Python standard
+library, or filesystem mutation is recorded and rejected before it can occur.
+A successful plan therefore cannot depend on licensed caches, installed Blender
+or an output directory. Rejected public paths, paths outside the requested root,
+traversal into public, private-looking siblings and linked-directory escapes
+must fail with a specific private-output diagnostic before forbidden operations.
+The exact synthetic tree and the linked destination stay unchanged.
+
+Source repair is deliberately small: parse/validate the private plan and return
+before importing Blender dependencies. Preserve the original native recipe body,
+normal candidate output and source-validation/artifact behavior. The Source
+worker owns that later step; this tests-only slice changes no recipe or src file.
+
+The original runtime/review assertion blocks and the coverage-only registry delta
+are verified in placement-tests/existing-assertions.json. protected-before.json
+records every tracked file, including Source a1ce, native 56-case assertions,
+round-one/two sheets and recipes, fit, catalog, public assets and replay pins.
+The complete prior change-note bytes are retained for an append-only comparison.
+Execution remains held during the Director's Shove frame window. No new RED,
+browser, native Blender, full gate, art or merge result is claimed at this entry.
+
+Removed: nothing. This registers the previously uncovered private recipe while
+retaining every existing runtime placement assertion and current art asset.
+
+
+### Private-generator placement: actual RED result
+
+After the Director released the frame window, the complete placement suite ran
+in **2.62 seconds**: **41 checks, 7 intended failures**. The original 34 checks
+are clear, including the exhaustive registry equality after the explicit Tanker
+registration. This does not clear the later lane or full gate.
+
+Both valid destination checks stop at the actual top-level import with
+RuntimeError: paths-only attempted forbidden import: bpy; no path plan is
+produced. The five unsafe destination checks fail the strong requirement to
+reject paths before imports, because their actual audit receipt also records
+that forbidden import. Exact failing cases are:
+
+- tools/blender/convoy-tanker.py plans private model, manifest and packed atlas without Blender, licensed reads or writes.
+- tools/blender/convoy-tanker.py also permits a dedicated private evidence destination.
+- tools/blender/convoy-tanker.py rejects public runtime output before imports, reads and writes.
+- tools/blender/convoy-tanker.py rejects an escaping root before imports, reads and writes.
+- tools/blender/convoy-tanker.py rejects traversal into public before imports, reads and writes.
+- tools/blender/convoy-tanker.py rejects a private-looking sibling before imports, reads and writes.
+- tools/blender/convoy-tanker.py rejects a linked private directory that escapes the requested root.
+
+The guard blocked bpy before import completion. Actual read receipts contain
+only the recipe and Python standard-library files; no fit/cache/catalog or
+licensed source read occurred. Every synthetic root and outside/linked target
+remained unchanged, and the junction was unlinked without following its target.
+No Blender, browser, native 56-case rerun, build or art recapture was performed.
+Complete failure messages/audit receipts are in placement-tests/red.log and
+red-result.json; the previous uncovered-recipe failure is retained separately
+in original-coverage-failure.txt.
+
+The Source worker must add the agreed side-effect-free planning entry before
+Blender imports, including private-output validation before returning its JSON.
+No source body, fit, presenter, native art assertion, palette/catalog, runtime
+asset, round-one/two recipe/sheet, replay fingerprint or art verdict is changed.
+Original note prefix: 67804 bytes, SHA-256
+9a6dab188a5e90be5e31e8cf1e5d931671676551fe7f5230fc40122753d7a4cd. Exact tracked-file
+receipts and original assertion-block hashes are retained in placement-tests/.
+Tests-only freeze follows; whole-card, merge and push clearance remain pending.
+
+Removed: nothing. Seven real private-output acceptance checks are added; no
+existing assertion or current asset is removed or weakened.
