@@ -125,3 +125,29 @@ The normal build passes. Lane tier, full tier, matched actual browser/art/frame 
 ## Removed
 
 None: Salt Flats is a new venue and preserves Scrapdome and its native assets. The independent control capture creates its new fixture once and refuses to overwrite it. Private inspector outputs and copied negative-input fixtures are reproducible test scratch under `.qa-dist`; discard them after use. Keep all licensed originals and existing runtime assets. No closed Rustwall refit, old build path or art family was reopened.
+
+## Independent changed-fit source-binding RED (1 October 2026 UTC)
+
+The source guard checks the list of model labels, then validates each supplied catalog/path/hash independently. It does not bind Kyle's selected plain Bus label to its actual Public Transport `blend/Bus.blend` source. Genuine unpicked cached geometry can therefore pass under a misleading approved label. The old SchoolBus negative changes bytes at the Bus path; that unchanged control detects a hash mismatch but does not cover this valid alternate-source fit.
+
+Three new independent native checks use changed JSON fit copies under the suite's own ignored scratch. Every alternate input uses its genuine catalog hash and unchanged licensed bytes. The tests invoke installed Blender and the actual recipe, with script auto-execution disabled. They require rejection before the output directory exists:
+
+- `--validate-sources` must reject model `Bus` paired with genuine `quaternius-public-transport/blend/SchoolBus.blend`, hash `c51a071f872f2234dfb5ee8d94087428b0be0df51e0564e22e005bef9b16e7b8` and 1,782 native triangles.
+- The full recipe must reject the same changed fit before importing/exporting the unpicked SchoolBus geometry.
+- `--validate-sources` must reject model `Bus` paired with `kenney-car-kit/unpacked/Models/GLB format/sedan.glb`, its genuine catalog hash and 2,032 native triangles. This separately covers the catalog-family binding as well as the path binding.
+
+Exact RED production source: `647463770af26327a4e04ef3a9b4a67a9949eb0e`. Command: `node tools/test-salt-flats.mjs`, exit 1, **41 checks: 29 passed, 12 failed**. All **25 original source/native checks pass**. The same nine ungranted runtime failures remain; no runtime assertion, guard or replay pin was removed or skipped. The three added failure messages are:
+
+1. `native source validation accepted unpicked quaternius-public-transport/blend/SchoolBus.blend as Bus (1782 triangles)`.
+2. `native export accepted unpicked quaternius-public-transport/blend/SchoolBus.blend as Bus (1782 triangles)`.
+3. `native source validation accepted unpicked kenney-car-kit/unpacked/Models/GLB format/sedan.glb as Bus (2032 triangles)`.
+
+The unchanged runtime failures remain the missing dev flag, missing physical venue, rank-eight rejection, dev-off rejection, selected rank-nine entry, unknown venue rejection, unknown mode rejection, completed selected Last Car Rolling round, and registered native scene consumer. Their nine failure messages remain those documented above; the last scene check now reaches `assert.ok(venue)` rather than missing the already-built inactive scene module. This test-only freeze is not a full-card or merge pass.
+
+The full negative genuinely exports a **12,845,984-byte `venue.glb`**, a 477,200-byte manifest and a 1,602,248-byte wear texture. The manifest reports 103,004 triangles/17 draws and names `quaternius-public-transport/blend/SchoolBus.blend` for `plain-derelict-bus`. Validation-only negatives exit successfully without creating output; neither is a missing-source or infrastructure failure. Reproducible inputs, native logs and verdict JSON are in `.qa-dist/salt-flats-tests-QG4keZ/` for this run; the suite recreates them and never depends on saved review artifacts.
+
+All **31,310 original test bytes** remain exact after removing only the new registration/helper block: SHA-256 `c67929fe883072b5bed5ed660e746225b694439dc95e00c46db94b9095bea05a`. The fit JSON, source catalog, licensed originals, runtime art and old replay controls remain unchanged. `git diff --check` passes; the assigned two files use LF. No source, fitting rule, selected pick or card acceptance changed. The source owner must bind the settled model/catalog/path selection before output and rerun these native negatives plus the required lane gates when runtime acceptance is complete.
+
+### Removed for this test-only follow-up
+
+None. The old hash-substitution negative and every original control remain. The new fit copies, accepted wrong-pick outputs and verdicts are reproducible ignored scratch, to be deleted after their verdict is used. No licensed source or current game asset is removed.

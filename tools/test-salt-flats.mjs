@@ -341,6 +341,48 @@ function scrapdomeControls(){
     ordinaryReplayFileSha256:hash(readFileSync(join(root,'tools/replays/expected-fingerprints.json')))};
 }
 const controlsPath=join(root,'tools/replays/salt-flats-controls.json');
+
+// Changed fit inputs must preserve Kyle's selected model/catalog/path binding.
+// These use real, hash-valid cached sources; byte substitution alone cannot
+// expose a mislabeled source whose own catalog pin is perfectly valid.
+function rejectChangedPick({name,catalogId,path,triangles,validateOnly}){
+  const row=catalog.assets.find(item=>item.id===catalogId);
+  const pin=row?.files.find(item=>item.path===path);
+  assert.ok(pin,`native negative fixture exists in the actual catalog: ${catalogId}/${path}`);
+  const original=resolve(row.library,path);
+  assert.equal(hash(readFileSync(original)),pin.sha256,'negative uses genuine unchanged source bytes');
+  const changed=structuredClone(config),pick=changed.sourcePicks.find(item=>item.model==='Bus');
+  assert.ok(pick,'the settled plain Bus slot exists');
+  Object.assign(pick,{catalogId,path,sha256:pin.sha256,triangles});
+  const fit=join(scratch,`${name}-fit.json`),output=join(scratch,`${name}-output`);
+  writeFileSync(fit,JSON.stringify(changed,null,2)+'\n');
+  assert.ok(!existsSync(output),'private output starts absent');
+  let rejected=false,log='';
+  try{log=execFileSync(blender,['-b','--disable-autoexec','--python-exit-code','1','--python',recipe,'--',
+    '--root',root,'--output-dir',output,'--fit-config',fit,'--seed',String(config.seed),
+    ...(validateOnly?['--validate-sources']:[])],
+    {cwd:root,encoding:'utf8',timeout:240000,maxBuffer:8*1024*1024,stdio:['ignore','pipe','pipe']});
+  }catch(error){
+    assert.equal(error.status,1,'a native recipe rejection, rather than missing executable or timeout');
+    rejected=true;log=String(error.stdout||'')+'\n'+String(error.stderr||'');
+  }
+  writeFileSync(join(scratch,`${name}-verdict.json`),JSON.stringify({model:pick.model,catalogId,path,
+    triangles,validateOnly,rejected,outputExists:existsSync(output),
+    glbExists:existsSync(join(output,'venue.glb')),log},null,2)+'\n');
+  assert.ok(rejected,`native ${validateOnly?'source validation':'export'} accepted unpicked ${catalogId}/${path} as Bus (${triangles} triangles)`);
+  assert.ok(!existsSync(output),'wrong selected source is rejected before any output directory or export');
+  assert.match(log,/picked|selected|approved.*native|plain Bus|source.*(?:selection|binding)/i,
+    'native rejection identifies the selected-source contract');
+}
+check('source','changed fit cannot label genuine SchoolBus as the selected plain Bus during validation',()=>
+  rejectChangedPick({name:'changed-fit-schoolbus-validation',catalogId:'quaternius-public-transport',
+    path:'blend/SchoolBus.blend',triangles:1782,validateOnly:true}));
+check('source','changed fit cannot export genuine unpicked SchoolBus geometry under a Bus label',()=>
+  rejectChangedPick({name:'changed-fit-schoolbus-export',catalogId:'quaternius-public-transport',
+    path:'blend/SchoolBus.blend',triangles:1782,validateOnly:false}));
+check('source','changed fit cannot bind the Bus label to another selected pack and its genuine sedan',()=>
+  rejectChangedPick({name:'changed-fit-bus-catalog-validation',catalogId:'kenney-car-kit',
+    path:'unpacked/Models/GLB format/sedan.glb',triangles:2032,validateOnly:true}));
 check('control','existing Scrapdome physical geometry and real seeded driving/rule trace stay exact',()=>{
   assert.ok(existsSync(controlsPath),'independently captured current Scrapdome control fixture');
   const expected=JSON.parse(readFileSync(controlsPath,'utf8'));
