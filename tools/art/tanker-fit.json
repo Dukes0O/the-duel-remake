@@ -151,5 +151,9 @@
   "outputs": {
     "model": "tanker.glb",
     "manifest": "manifest.json"
+  },
+  "buildTargetsMetres": {
+    "length": 11,
+    "height": 3.5
   }
 }

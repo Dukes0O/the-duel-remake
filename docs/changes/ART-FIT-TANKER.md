@@ -828,3 +828,157 @@ The separate Source worker receives these RED checks before implementing
 round two. No whole-card, art, frame, lane/full/build, merge, push or public
 installation pass is claimed. No live folder, Preview, port 5174, real save,
 protected external system, new dependency or runtime physics was touched.
+
+
+## Round-two Source geometry and material freeze, 1 October 2026
+
+The final private Source clears all 56 unchanged native cases. Work resumed from
+clean tests-first `6572240cd07beb284a0f60d816ca212582ed7afc`. Only the granted
+recipe, fit input, native lamp presenter and this append-only note changed.
+The previous 50,279-byte note prefix remains SHA-256
+`afff4caff6be39b06ade6c8e6af64ce6705f84c6ca7739fa93b2a9e891ba42e8`.
+Claude's 04:00 direction and the Director's exact 11 m / 3.5 m build targets
+supply the scope; the existing .002 m export precision remains unchanged.
+
+### Genuine fitting and complete-rig affine proof
+
+Each complete original 456-triangle valve now mounts through its actual
+negative-source-X flange. The recipe measures the original extreme-X patch,
+finds the closest point on an actual outward native tank triangle, aligns the
+pipe axis with that face's outward normal, and places the genuine flange center
+on that surface. The handwheel is not used as an attachment foot. Original tank
+triangle indices 278, 251 and 279 supply the three mounting planes; these are
+picked-source indices, before export ordering. All three full valve donors,
+the complete 310-face tank and complete 2,574-face truck remain retained.
+No cap, bracket, flange or other donor geometry was replaced or sculpted.
+
+The recipe then measures the complete rigid assembly, including all salvage,
+boarding plate and both lamps. It applies one common affine map with X scale 1,
+Y scale **1.2173884674888331**, Z scale **1.5218595013898075**, Y translation
+**0.000000029024803295834896**, and Z translation **0.1430549469746238**.
+This preserves the existing width, grounds the complete model and centers its
+11 m longitudinal span. Every donor's source-to-world matrix is composed with
+that same map. Final native vertices are computed directly from original faces
+through the composed matrix, with one float conversion. Both lamps follow the
+same rigid fit. The fit input records `buildTargetsMetres`, not a claimed size
+substituted for loaded geometry. Width has no new acceptance target.
+
+Actual complete native box is minimum **[-1.5, 0.0000000000000004054718131,
+-5.5]**, maximum **[1.5, 3.5, 5.5]**: width **3 m**, height
+**3.4999999999999996 m**, length **11 m**. These are measured loaded triangles
+with world matrices, not manifest declarations or camera scaling.
+
+Both genuine minimum tank edges remain fully supported at native Y
+**1.2173885107040405 m**. Their loaded Z spans are
+**[-3.3220229148864746, -2.9430794715881348]** and
+**[-.7452099919319153, -.3662669360637665]**, with X near -0.000001 m.
+Actual upward bed faces 683/684 cover each complete interval [0,1]. Bed face
+indices changed only through material grouping/export order. There are
+**zero strict tank/body triangle crossings** and no below-bed vertex witness.
+The hover, sink, .8 m lateral and removed-both/either-bed-face negatives pass
+at the original precision. No bounding-box-only support or hidden filler was
+introduced.
+
+Final whole-valve native skin gaps are **0 m for all three**; whole-part crossing
+counts are **34, 8 and 2**. Their genuine negative-X flange patches have **0 m**
+gaps and **7, 6 and 2** real skin crossings. The opposite ports remain exposed,
+with measured gaps .3822401350741849, .4102227797574427 and
+.4041989501781599 m. At least one genuine pipe connection mounts each valve;
+no invented full-flush requirement was added. All copied native positive,
+hover, lateral and removed-attachment-surface controls remain passing.
+
+### Approved material and lamp work
+
+The replacement seeded atlas distinguishes dark worn cab paint, lighter dusty
+tank steel, localized oxide/scuffs, dark rubber, worn steel hubs and dark cab
+glass. Original donor face regions are read only as semantic labels; their
+source UVs and original palette pixels never enter output art. Actual cab glass,
+headlights and wheel hubs receive distinct replacement surfaces while every
+triangle stays native. Road tyres remain dark rubber. The genuine Factory
+handwheel/control faces receive hazard red; genuine flange/collar faces use
+bright worn metal; the remaining pipe uses dark worn metal. Black/yellow hazard
+paint is on actual front bumper and retained boarding-plate faces.
+
+The two lamp lenses are darker while inactive. The existing native presenter
+sets them to orange `0xff6610` at emission strength 6 only when all three finite
+valve health values are <=0. Initial healthy values, every one of the eight
+combinations and half-armor recovery retain the original on/off rules. All other
+materials, geometry, input arrays, simulation state and source ownership remain
+untouched by lamp updates. Exact-once success/late-load disposal, rejected load,
+no save access and no extra request controls remain passing. These material
+choices address the written review direction; they do not grant a visual score.
+
+### Exact validation and protected inputs
+
+Unchanged default RED reproduction: original **42/42 passed**, native flange
+suite **9/12 passed**, scale suite **0/2 passed**: **56 cases, 51 passed,
+5 genuine failures**. Final default `node tools/test-convoy-tanker-art.mjs`:
+**42/42 + 12/12 + 2/2 = 56/56 passed**, with no exclusions, changed assertion,
+new tolerance or fixture change. Full topology/affine lineage, actual supported
+edges, zero strict truck/tank crossings, original rights/bindings, replacement
+PNG pixels/materials, seeded byte repeatability and lamp/resource controls pass.
+
+The first Source attempt exposed repeated float-rounding error and an optional
+X-width expansion that made the fixed .8 m lateral negative genuinely supported.
+Source was corrected by retaining X scale 1 and applying the composed affine
+once to original faces. The test stayed exact. That attempt's raw two failures
+remain in private evidence. The corrected geometry passed all 56; the final
+material refinement passed all 56 again. Heavy jobs paused after a completed
+batch for the Director's actual Salt frame window and resumed only after release.
+No export was interrupted mid-write and no frame numbers are inferred here.
+
+Existing `test-tanker-valve-source.mjs` passes **30 checks**;
+`test-scene-systems.mjs` passes **16**; `test-replays.mjs` passes all **162 exact
+fingerprints**. Private `npm run build` passes (422 ms Vite build) with the existing
+large-chunk warning. No catalog, source choice/pick, licensed file, scenario,
+comparison sheet, current public model, old world signature or replay pin changed.
+
+The complete frozen test remains 58,677 bytes, SHA-256
+`fcaa36c3aabe4f67df6d07a79fcbb6d98a605aa83563c66ec62f9c429310ac4c`.
+Its original 42,161-byte prefix remains
+`6021849168fe659eccd47a6db40e2e320a5b66a5c34f81dbc6632212f97cad05`;
+the 55,768-byte contact prefix remains
+`ff00ff7c590d52df8844aa39c1c7fc21620cf7b5e7d4e769efb735039c50330a`.
+The original valve-source record remains SHA-256
+`3afc6c2a8b5c64ee72171b21894333be19a3cf8e3d8223a9dbf0f590c40bb6a4`;
+catalog remains
+`3902a750659da37892ac0ff6ac3431393fdfb9f35e2a4a4273117fa71eda0843`.
+All unowned tracked files and separately checked licensed source bytes remain
+protected. All existing source picks, provenance, rig rules and output paths
+in the fit input remain byte-equivalent data; only build targets were added.
+
+### Native cost, evidence, limits and Removed
+
+Final native candidate and repeat: **6,328 triangles, 26 meshes/draws,
+1,616,912 bytes**, SHA-256
+`a3ed6fa81dd493983a4b9e07f69216258e2ce048b9849acf9af291ef02823377`.
+Triangles remain unchanged. Ten added native draws come from genuine semantic
+material groups, and byte growth versus Source2583 is **553,644 bytes**, from
+the replacement atlas/materials. The file-size target remains advisory; no
+triangle, width, draw, brightness or frame budget was invented. Native counts
+cannot clear frame performance or visible proportions.
+
+Complete raw RED/first-fit/corrected/final logs, original source/support/flange/
+size witnesses, repeat evidence, protected receipts, replay and build output
+stay in ignored integration `.evidence/2026-10-01/ART-FIT-TANKER/round2-source/`.
+Final regenerable candidate/repeat stay in lane
+`.qa-dist/tanker-art-tests-IkL4uW/`. No generated GLB, PNG or screenshot is
+committed or installed into public/current assets.
+
+This hands back clean bounded Source ownership for independent review.
+Comparison round two, actual renderer/car-size and material views, independent
+art/frame/motion review and Claude's round-two verdict are still required.
+Every comparison goes to Claude; one comparison round has been used and the
+three-round cap remains unchanged. No comparison two was created here.
+Final exact lane/full/build/integration gates and public installation remain
+pending. No whole-art/card/frame/browser/merge/push/release clearance is claimed.
+
+Removed: prior detached/handwheel-only candidate valve poses were replaced by
+actual native flange mounts. Prior all-rubber wheel treatment, uniform worn
+paint and weak warning emission were replaced by semantic replacement surfaces
+and the brighter approved lamp state. No donor face, original licensed source,
+picked topology, source binding, old assertion, current public asset, scenario,
+comparison or replay pin was deleted. Private superseded candidates remain
+used-once evidence for the Director's janitor after verdict capture. No live,
+Preview, port 5174, real save, protected audio, new dependency, service, source
+pack, download, helper, model override or history rewrite was used.
