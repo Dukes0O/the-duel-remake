@@ -61,10 +61,19 @@ eight matched screenshots and no console or request failures. The real Armory,
 Oil contact, shield and grace counters, Smoke occlusion and expiry, and render
 purity passed. Extra phone captures show an existing crowded HUD.
 
-A supplemental nine-race native report repeats exactly and counts real CPU
-Oil and Smoke use. The required thirty-seed balance check with both switches
-on, its independent review, lane tier and build still remain. No whole-card
-pass is claimed.
+The required thirty-seed check completed with both switches on. Easy won
+27 of 30 and Hard 11 of 30; hit bands and other targets passed. Medium won
+24 of 30, above its 45 to 65 percent band, so merge is held. Computers used
+Oil five times and Smoke five times. The inherited enemy-hit count includes
+raider fire; it is not a count of car shots alone.
+
+A matched native seed kept course, traffic, car, driver, armor, rank and
+purchases exact. The Arsenal-off control lost; Arsenal won with the CPU
+loadout UFO, Oil, Smoke and Star, which made no weapon use. Independent
+analysis isolates loadout pressure on that seed; it does not prove the
+whole Medium gap. Claude must settle whether every four-slot CPU loadout
+should guarantee a working front attack. No band or gameplay number changes.
+Lane and build gates still follow once balance passes.
 
 The three settled cue names may be emitted without sound while Arsenal is
 in development. AUD-ARSENAL-W1 supplies sounds before release. Protected
