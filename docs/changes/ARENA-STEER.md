@@ -101,3 +101,74 @@ No live folder, Preview, real save or source assertion is changed.
 
 Only used regeneratable browser captures and reports. No unmerged source,
 licensed original, Kyle decision, test or runtime asset is removed.
+
+## Ceiling acceptance RED freeze — 30 September 2026
+
+Claude’s 150-degree-per-second ceiling is now merged into this lane at
+`9918e6b0fb18a09e517a2388cf2c8227fded8f1f`. The uniform 3.4 source is unchanged;
+the earlier note about an unmerged design branch no longer applies.
+
+The independent test author added only `tools/test-arena-steering-ceiling.mjs`
+and this note. `node tools/test-arena-steering-ceiling.mjs` produces **274
+checks: 144 intended failures and 130 passing controls**. Exit code is 1.
+Every failure is a measured ceiling violation, not a setup error:
+
+- 27 shared-authority speed sweeps, stock, engine-only and fully upgraded
+  matching-specialist specimens for all nine cars. Sweeps include quarter-mph
+  samples through at least 400 mph, low-speed boundaries, floor tops and both
+  production traction values. Actual maxima range from 215.650 to 410.261 degrees/s.
+- 54 actual player/CPU first-tick paths in both turn directions, including
+  standstill, reverse-sign controls, the 15–50 mph range, each car’s floor top
+  and its boost ceiling. These recover only the known response filter;
+  the measured request remains the production driving result.
+- 54 sustained raw-yaw paths. Both held directions and the real 0.3-second
+  release checks execute before the final ceiling assertion. Yaw approaches
+  one limit, does not oscillate, and settles below 1.5% on release, but exceeds 150.
+- Nine actual Sal-fight player cases keep the same floors but exceed the ceiling.
+
+The passing controls require at least 100 degrees/s from 15–50 mph and at
+least 75 at the actual floor top for both driving paths and both directions.
+Sal’s real brain requests a 0.5 window, and her actual pilot halves the same
+authority exactly. Released road/Muddy/Titan formulas and all ten original
+full-state road fingerprints remain exact. Actual arena full-state runs repeat
+with identical fixed ticks at 30, 60 and 144 graphics fps.
+
+Clear-floor measurements reset position and requested speed between physical
+samples. They do not replace either integrator. Resetting a CPU distance-watch
+sample prevents the artificial stationary pose from triggering unrelated
+unsticking; steering, yaw filtering, floor traction and real player drag run.
+
+Every named failure message is reproducible with the command above and was
+saved for the next review in `.evidence/2026-09-30/ARENA-STEER/steering-ceiling-red.txt`.
+Examples: stock Falcone actual player 204.867 degrees/s, stock Titan 249.838,
+fully upgraded specialist Jesko 389.748; all must be at most 150.
+
+Protected focused controls before source changes: existing arena steering
+215/215; Sal fight 25/25 subtests and 119 acceptance checks; Titan handling
+40/40; Titan climb 10/10; Muddy Hollow 50/50; road replay fingerprints 162/162.
+The original crate
+fixture and its assertions remain untouched. No lane/build, balance, browser,
+Preview-feel or merge clearance is claimed by this RED freeze; those follow
+implementation and independent review.
+
+SHA-256 at the RED source:
+
+| File | SHA-256 |
+| --- | --- |
+| `src/config.js` | `2e0ffaa15beaece0d12d93675857b953ce6a646c4b858898284d67e515700be5` |
+| `src/sim-driving.js` | `c9c41f7d2bbdc5300bd7d14a524a09a688044ed899608e4d3da3bed0c779d71b` |
+| `src/arena/arena-pilot.js` | `f2bfa54d0f0cd19382fd8aa67b2aeec1e9f790a274f5f220e7510d7e7dcd071c` |
+| `tools/test-arena-steering.mjs` | `9e235ca43867464ce9319a2f788842fb2018b29b87db4dc82b077a743b80b85f` |
+| `tools/test-arena-event.mjs` | `7b7f48ceaf44e733bc9cfaf9e674527bf234a066c359951719250e79789d74f6` |
+| `tools/replays/arena-steering-controls.json` | `33c621d8897faa5d06af9e763a70321c22c6f5fdbd48cd49a3edcb07491302b0` |
+| `tools/test-arena-steering-ceiling.mjs` | `a32aeba16f24d9a922763867e7b729992a48e60766d3dcdf2646e70e2e96c6b6` |
+
+### Changed assertions — ceiling RED
+
+None. This adds a new suite and reads the existing replay pins without writing
+or regenerating them. No existing suite, source, runtime asset or rule is edited.
+
+### Removed — ceiling RED
+
+None. This freeze adds acceptance tests only. The implementer owns the source
+change and the follow-up note once the Director releases this freeze.
