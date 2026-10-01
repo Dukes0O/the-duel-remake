@@ -7,6 +7,7 @@ import {
   CAR_VOICES,
 } from './sound-bank.js';
 import { SoundMixer } from './sound-mixer.js';
+import { createAudioOutput } from './audio-output.js';
 import { featureFlags } from './feature-flags.js';
 import { raceFeatureFlags } from './wasteland-access.js';
 const bank = (id) => SOUND_BANK[id];
@@ -110,13 +111,7 @@ export class EngineAudio {
     this.context = ctx;
     this.master = ctx.createGain();
     this.master.gain.value = this.muted || this.paused ? 0 : 0.42;
-    const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.value = -18;
-    limiter.knee.value = 16;
-    limiter.ratio.value = 4;
-    this.master.connect(limiter);
-    limiter.connect(ctx.destination);
-    this.output = limiter;
+    this.output = createAudioOutput(ctx, this.master);
     this.vehicleBus = ctx.createGain();
     this.vehicleBus.gain.value = 1;
     this.vehicleBus.connect(this.master);

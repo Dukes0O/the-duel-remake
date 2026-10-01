@@ -1,4 +1,12 @@
-# AUD-CRASH-PEAK — native tests-first freeze
+# AUD-CRASH-PEAK — output repair
+
+The output repair passes all **22 frozen native tests and 90 checks**. All
+three measured sample peaks and true peaks stay below -1 dB. Quiet output,
+contact onset, engine/impact contrast and pause/dispose controls pass. This
+is a source handoff; fresh independent review and exact lane/build gates
+remain required before merge. Human listening is still unmeasured.
+
+## Tests-first baseline (8494081)
 
 The existing output exceeds both peak targets without Fuel sounds. On unchanged
 production source `a6523ea086c8354a236f942509a48871026fee08`, the new default
@@ -184,10 +192,137 @@ Four unfrozen assumptions were corrected before this freeze:
 
 No frozen or preexisting assertion was changed. No output repair was made.
 
+## Source repair
+
+Only production `src/audio.js`, new `src/audio-output.js` and this note
+are owned by this implementation. The compressor retains the released
+-18 dB threshold, 16 dB knee, ratio four and native attack/release defaults.
+The master remains 0.42. The existing buses, cue dispatch, engine layers,
+sound bank, recordings and voice cleanup remain intact.
+
+A synchronous native WaveShaper follows that compressor. Its symmetric
+transfer is exactly linear through magnitude 0.65, bends smoothly to a
+zero slope at magnitude 0.95, and caps the curve at 0.8 (nominal -1.94 dBFS).
+Its 4x native oversampling filters the extra harmonics. The curve ceiling
+leaves room for native resampling overshoot: acceptance measures the actual
+final node for sample and intersample peaks, rather than treating the curve
+bound as the final signal bound. This changes only loud peaks; it does not
+reduce the blanket master/engine gain. It adds no asynchronous graph setup,
+extra output branch, recording normalization, dependency or sound asset.
+
+`EngineAudio.output` is now that final native ceiling node. All five
+frozen native graph controls pass: real AudioNode, master reaches final,
+final reaches destination, no unmetered master bypass, real AudioContext.
+No fake-context production fallback was added.
+
+## GREEN measurement and controls
+
+Reproduce with the unchanged command:
+
+`node tools/test-audio-crash-peak.mjs`
+
+Exit 0: **22/22 tests, 90 checks**, 21.320 seconds. Native Chrome used
+private port **39183**, 48 kHz stereo and memory-only saves. Browser errors
+and warnings were both zero. The actual final Float32 captures and FFmpeg
+EBU R128 measurements are ignored at:
+
+`.evidence/2026-10-01/AUD-CRASH-PEAK/native-2026-10-01T05-55-57-439Z/`
+
+| Case | Final sample peak, dBFS | Final true peak, dBTP | Final onset, ms | Impact/engine stem, dB | Final mix/engine, dB |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Non-Fuel contact | -1.486 | -1.38 | 18.46 | 14.28 | 12.31 |
+| Fuel contact | -1.520 | -1.52 | 14.75 | 13.39 | 12.23 |
+| Six-blast overlap | -1.542 | -1.32 | 13.58 | 24.36 | 15.69 |
+
+Each real swept contact still removes 38.624256 armor and dispatches the
+existing impact cue. Actual carried Fuel still drops from that contact.
+The overlap still has six real blast voices and actual native weapon fire.
+The final quiet 997 Hz signal differs from the same-context released
+compressor reference by **-0.000004 dB peak / +0.005000 dB RMS** (limit
+0.1 dB). Pause clears the actual projectile, mixer and hidden-road voices;
+its measured output is zero in the checked post-fade window. Actual App
+disposal closes the native context. All capture streams are finite and
+continuous; no clipping or gain is added to the recorder.
+
+The following unchanged nearby suites also exit 0:
+
+- `tools/test-crash-hollow-audio.mjs`: 31 checks.
+- `tools/test-combat-audio.mjs`: 11/11 tests.
+- `tools/test-weapon-audio.mjs`: existing foot/raider/car signatures,
+  ordinary, mute and pause controls.
+- `tools/test-gatekeeper-audio.mjs`: 8/8 tests.
+- `tools/test-sound-bank.mjs`: bank and mixer acceptance.
+- `tools/test-audio-listening.mjs`: 10/10 analysis/booth controls;
+  these are not a human listening verdict.
+- `tools/test-audio-analysis.mjs`: 6/6 analysis controls.
+- `tools/test-audio-compression.mjs`: all 14 recorded PCM and loop sample
+  counts exactly preserved.
+- `tools/test-crash-slide.mjs`: 4/4 tests.
+- `tools/test-crash-presentation.mjs`: 17/17 tests.
+- `tools/test-traffic-shield.mjs`: 2/2 tests.
+- `tools/test-crash-switch-remove.mjs`: 17/17 checks.
+- `tools/test-replays.mjs`: all **162 retained fingerprint checks** pass;
+  no pin was edited or regenerated.
+
+The unchanged `tools/test-audio.mjs` initially stops at
+`src/audio-output.js:22` with
+`TypeError: context.createWaveShaper is not a function`, through
+`EngineAudio._build` and its existing `makeAudio` fixture. This is missing
+mock support for a real native API; the real browser suite passes. The
+Director assigned independent helper-only adaptation, retaining every old
+assertion. No production workaround or implementation test edit was made.
+Independent test-author commit `c3323cf24e21545b270370ff2e2b0c71a32cb379`
+adds only six mock helper lines to `tools/test-audio.mjs`: a normal Node
+with native `curve = null` and `oversample = 'none'` defaults. Every
+existing assertion and pin stays intact; the helper models no DSP. A fresh
+implementation-side rerun exits 0: **460 checks**, **617,062 finite
+automation commands**, maximum existing engine blend swing 6.68 dB. This
+mock control proves the old graph/cue/PCM controls, while the frozen native
+suite supplies the actual output-limiting measurement. The initial missing
+method was at line 22 before the later explanatory source comment.
+
+## Source evidence and limits
+
+Source SHA-256:
+
+- `src/audio.js`: `0ce6602c798a4326da9436219f24b232d16019727f6f1c71b796b32c2f17f56f`
+- `src/audio-output.js`: `f2f4955a673d47cd84e320402e598adb64e96ef4501ba56e69cdd1e99cada15c`
+
+The frozen native suite and scenario remain byte-exact to `8494081`:
+
+- `tools/test-audio-crash-peak.mjs`: `81e51f9e69a8a62e95f0efe6bceaf27b1a811e474ba21a59b10703a990a0d173`
+- `tools/scenarios/audio-crash-peak.mjs`: `2e8fad75a2c23b705445b399bf1efbf198955637b185c8529fa89b4dd40c8337`
+
+No cue, asset, bank/catalog, recorder, replay fingerprint, simulation or
+save hook changed. No native/full gate or build pass is claimed for this
+source freeze. The Director owns fresh exact lane/build evidence,
+independent code review and audio QA before merge.
+
+The Director identified one remaining existing recorder issue:
+`tools/audio-race-check.js:134-135` still taps `qa.limiter`, the captured
+DynamicsCompressor, now upstream of the final ceiling. This implementation
+has no ownership of that recorder and did not inspect or edit it. Whole
+race audio clearance needs an independently frozen native RED and the
+Director's separate hook grant so that recorder captures the real final
+output. The scoped native suite already reads `EngineAudio.output` and
+passes its actual no-bypass/final-node controls. Its pass does not clear the
+older upstream recorder.
+
+Human ratings, perceived timbre of the new peak ceiling, pan/distance,
+loop seams, take variety, continuous engine/revs correlation and a complete
+race's loudness remain outside this scoped measurement. Short authored
+stress captures report -12.73/-12.94/-9.60 LUFS; their advisory -16 LUFS
+readings are not a whole-race loudness verdict. Kyle listening remains
+flagged under SPEC 0.9. The measured contacts and overlap meet both peak
+targets; this handoff does not infer that every possible future mix has
+already been measured.
+
 ## Removed
 
-Nothing replaced. No runtime sound, original licensed source, bank entry,
-catalog recipe, old test, assertion, recorder or replay fingerprint was
-removed or rewritten. Raw build/capture evidence stays ignored for the
-before/after review and is removed by the merge janitor after its verdict.
-The recipes in the two new tools reproduce it.
+Removed the previous compressor-to-destination connection and its role as
+the measured final output. Its released compression settings and behavior
+remain in the single output chain before the new ceiling. No old cue,
+recording, licensed source, bank entry, catalog recipe, assertion, recorder
+or replay pin was removed or rewritten. Raw evidence stays ignored until
+the independent verdict; the merge janitor removes it after that verdict.
+The frozen recipes reproduce the measurement.
