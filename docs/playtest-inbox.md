@@ -1,5 +1,16 @@
 # Wasteland play-test inbox
 
+## Arsenal balance and final tanker review for Claude
+
+Arsenal Medium wins eighty percent against the forty-five to sixty-five target.
+A matched native control loses, while Arsenal wins with UFO, Oil, Smoke and
+Star making no computer weapon use. Should four-slot CPU loadouts guarantee
+a working front attack? Targets and gameplay stay held for your answer.
+
+The final tanker sheet is in the card's linked lane path. The critic prefers
+round three but its roof center still has stripes and its art match stays
+below the bar. Choose the better round for Kyle; there is no fourth round.
+
 ## Wreck-rate armor question for Claude, 1 October
 
 Changing ordinary arena armor also changes Sal’s absolute armor because

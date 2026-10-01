@@ -786,7 +786,9 @@ tasks:
     lane: ART
     size: M
     needs: [ART-KEEP-VALVE-DONOR]
-    status: building
+    status: review
+    waiting_on: claude
+    review_commit: f2a0cfd
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/art/convoy-tanker
     owns: [tools/blender/convoy-tanker.py, tools/art/tanker-fit.json, src/arena/tanker-model.js, tools/test-convoy-tanker-art.mjs, tools/scenarios/convoy-tanker-art.mjs, docs/changes/ART-FIT-TANKER.md, docs/board/looks/convoy-tanker/, public/assets/models/wasteland/convoy-tanker/]
@@ -794,7 +796,7 @@ tasks:
     hooks: [tools/test-blender-output.mjs]
     helpers: [test_author, art_director, reviewer, art_critic, browser_qa]
     test_commit: 6572240cd07beb284a0f60d816ca212582ed7afc
-    source_commit: "a1ce674134dab9e71a0ac519f1322ecfbecc70b3"
+    source_commit: 2863a934eaea15c584109e6e16aeac802b7e8837
     flag: scrapdome
     acceptance:
       - "Build the tanker settled in docs/SCRAPDOME.md, Convoy Raid (30 September 2026): one rigid vehicle from Kyle's pick A (Kenney delivery-flat cab and bed with the City Kit Industrial detail-tank on the bed), three fuel valves from the verified factory pipe valve donor on the tank, scrap armor plating from the Salt Flats salvage parts, and a raised boarding plate on the tank roof with warning lamps that light when all three valves are broken. Nothing opens or articulates."
@@ -806,6 +808,8 @@ tasks:
     planning_source_commit: "86d0d6dbe83f272980826c1b8eff57e98a5b38d8"
     claude_review_round_2: "1 October 2026, afternoon: clear progress (scale, light tank against dark cab, seated valves), still below the bar, so round 3 is the final round. 1) Valves read as dark pipe holes, not targets: cap the open pipe ports in the tank colour so no black holes show, and make each valve the brightest thing on its side: a red handwheel about 0.6 m across facing out, on a red-painted band around the tank at that valve. 2) Boarding plate reads as a yellow grille: make it a plain dark steel plate with a black and yellow diagonal stripe border only. Replace the two small lamp tips with two amber beacon lamps about 0.4 m tall on short posts at the plate's front corners; off is dull dark amber glass, on is bright. 3) Rear bumper: full-width black and yellow diagonal stripes that read from behind. 4) Cab: break the flat olive with rust patches, grime toward the bottom and a welded scrap plate over the lower windscreen, keeping it darker than the tank. 5) Add one view from the normal chase camera behind a car 30 m back so readability is judged from where the player sees it. After round 3 the better of rounds 2 and 3 goes to Kyle with Claude's pick; there is no round 4."
     note: "Round two made clear progress but stayed below the art bar. Native fitting, provenance, lamp lifecycle and output planning tests pass. Final-round tests precede Source changes."
+    final_comparison: ".lanes/convoy-tanker/docs/board/looks/convoy-tanker/round-3.jpg"
+    final_verdict: "All twenty actual-game views and native checks pass. The critic prefers round three but it stays below the art bar; the roof center still has stripes. Please choose the better round for Kyle; no fourth fitting round or installation is cleared."
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex
@@ -891,6 +895,8 @@ tasks:
     size: L
     needs: [WAR-02a-REWARD]
     status: building
+    waiting_on: claude
+    balance_source_commit: 0943464
     review_commit: 58116aec7e8eafd1308be8bc399b3c7a9624e269
     test_commit: "3d42f5b"
     source_commit: fd29006ac20cbeed8236bdd45e60103aa0163274
@@ -910,6 +916,7 @@ tasks:
     claude_answer_2: "1 October 2026, 06:30: use the magnitude of the bolt's actual resultant horizontal launch velocity (level speed plus the car's full velocity vector), fixed at launch, times remaining lifetime. That is the physical reach and covers reverse and sideways carry; the scalar sum is not used."
     source_review: "Independent review cleared the per-candidate launch fix. All native cases pass with unchanged assertions. Browser, balance and merge gates remain."
     claude_answer_3: "1 October 2026, afternoon: approved. Add the optional context.rangeForTarget(actor), evaluated by the existing resolver for each candidate, returning that candidate's own launch reach (resultant horizontal launch speed toward it times lifetime). Numeric range stays for CPU acquisition (180 m) and every existing caller. No change to eligibility or flight."
+    design_question: "The required balance run puts Medium at 80 percent wins against 45 to 65. A matched native control loses, while Arsenal wins with UFO, Oil, Smoke and Star making no CPU weapon use: should every four-slot CPU loadout guarantee a working front attack? Targets and gameplay stay held for your answer."
   - id: AUD-ARSENAL-W1
     title: "Sounds for Oil Slick and Smoke Screen"
     owner: codex
