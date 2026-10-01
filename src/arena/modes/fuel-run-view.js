@@ -44,6 +44,9 @@ export function createFuelRunView(duel) {
     roughness: .86, metalness: .25});
   const ringGeometry = new THREE.RingGeometry(FUEL_RULES.depotMetres - .22, FUEL_RULES.depotMetres, 40);
   const baseGeometry = new THREE.CylinderGeometry(FUEL_RULES.depotMetres, FUEL_RULES.depotMetres, .08, 40);
+  // Pickup markers retain their established geometry as delivery depots grow.
+  const pickupRingGeometry = new THREE.RingGeometry(2 - .22, 2, 40);
+  const pickupBaseGeometry = new THREE.CylinderGeometry(2, 2, .08, 40);
   const dummy = new THREE.Object3D(), local = new THREE.Matrix4();
   const color = new THREE.Color();
   let cargo, capacity = 0, activeArena = null;
@@ -72,10 +75,12 @@ export function createFuelRunView(duel) {
     holder.position.set(at.x, at.y + .03, at.z);
     const mat = new THREE.MeshBasicMaterial({color: shade,
       transparent: true, opacity: .75, side: THREE.DoubleSide, depthWrite: false});
-    const ring = new THREE.Mesh(ringGeometry, mat); ring.rotation.x = -Math.PI / 2;
+    const ring = new THREE.Mesh(fuelPad ? pickupRingGeometry : ringGeometry, mat);
+    ring.rotation.x = -Math.PI / 2;
     holder.add(ring); depotMaterials.push(mat);
     const baseMat = new THREE.MeshStandardMaterial({color: 0x393832, roughness: 1});
-    const base = new THREE.Mesh(baseGeometry, baseMat); base.position.y = -.015;
+    const base = new THREE.Mesh(fuelPad ? pickupBaseGeometry : baseGeometry, baseMat);
+    base.position.y = -.015;
     if (fuelPad) { base.scale.setScalar(.65); ring.scale.setScalar(.65); }
     holder.add(base); depotMaterials.push(baseMat);
     const sign = label(text, shade); holder.add(sign);
@@ -166,6 +171,7 @@ export function createFuelRunView(duel) {
     },
     dispose() { stop(); clearPads(); looseGround.clear(); padGround.length = 0;
       cargo?.dispose(); geometry.dispose();
-      material.dispose(); ringGeometry.dispose(); baseGeometry.dispose(); group.removeFromParent(); },
+      material.dispose(); ringGeometry.dispose(); baseGeometry.dispose();
+      pickupRingGeometry.dispose(); pickupBaseGeometry.dispose(); group.removeFromParent(); },
   };
 }

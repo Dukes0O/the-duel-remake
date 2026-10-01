@@ -1,10 +1,11 @@
 # ARENA-03 — Fuel Run
 
-Status: held implementation candidate. Not merge-ready. The named-player UI
-red/green and current High/Performance browser checks pass. Save Guardian's
-durable-retry/result-proof fixes pass the independent acceptance tests and
-current browser probe; independent re-review, final lane/full gates, audio/art
-review and Claude's on-foot projectile contact decision remain pending.
+Status: settled contact/depot implementation candidate. Not merge-ready. The
+frozen new suites, existing focused controls, ordinary replay fingerprints and
+six native Fuel completion samples pass. Independent whole-card review, Save
+Guardian, fresh browser/feel/audio checks, exact lane/build gates and Claude's
+review remain before merge. Earlier sections record prior source evidence; the
+current changes and verdict are in the final section below.
 
 ## Tests first
 
@@ -818,3 +819,112 @@ whole-lane gate, implementation or merge clearance is claimed by this freeze.
 Nothing. This adds two test suites and their red evidence. No simulation,
 save, runtime asset, audio bank, assertion, replay pin or world signature
 was changed or regenerated. Licensed originals and current game assets stay.
+
+## Settled contact/depot implementation — current candidate
+
+Built after independent RED freeze 4a2ee897b0423afdb4beb0cf7c2924afafa2b00a.
+Car crossbow sweeps now compare the current player's real fighter body using
+FIGHTER_RULES (0.34 m radius, 1.7 m height), and generated raiders using their
+existing body geometry. The earliest physical car or fighter contact consumes
+the bolt once. Car bolts remove 35 fighter health without a forced knockdown;
+actual exhausted health uses the existing three-second recovery. Native crew
+health, including Rook's 110, remains. Car bomb splash removes up to 60 health
+with the existing linear radial falloff and each current upgraded radius;
+strictly inside half the radius also knocks the fighter down. Existing RPG
+contacts, vehicle armor hits and ordinary projectile ownership remain.
+
+Participant team and owner/victim respawn guards apply to fighter contacts.
+The standing fighter's cargo no longer reads the parked car's armor loss or
+wreck. Its own knockdown drops the physical canister once at its own pose;
+carrying in the occupied car retains the existing heavy-hit/wreck rule.
+
+The depot rule is 4 m in both simulation and actual Three ring/base geometry.
+The yellow pickup markers keep their prior outer radius 1.3 m, inner radius
+1.157 m and base height 0.052 m. Separate reusable pickup geometries are made
+once and disposed once; delivery geometry still reads the shared FUEL_RULES.
+No new geometry, material or ground sampling is added during rendering.
+
+Body hits emit the existing combatHit event, mapped to combat.hit; bombs keep
+the established combat.blast path. Fuel pickup/drop/delivery retain
+interface.bonus, vehicle.landing and interface.go. No audio bank or asset was
+changed. Fresh actual listening remains a whole-card gate. Future CREW-04
+computer exits must join this shared settled path when their real state exists;
+this work adds no invented computer fighter state or signature gear.
+
+### Verification on this source
+
+Command: node --test --test-reporter=tap tools/test-onfoot-car-contacts.mjs
+ tools/test-arena-fuel-depot.mjs tools/test-arena-fuel-run.mjs
+ tools/test-combat-projectiles.mjs tools/test-combat-projectile-order.mjs
+ tools/test-combat-replays.mjs tools/test-onfoot.mjs
+ tools/test-onfoot-transition.mjs tools/test-onfoot-race.mjs
+ tools/test-onfoot-weapons.mjs tools/test-raiders.mjs
+ tools/test-combat-field-shields.mjs tools/test-arena-settlement.mjs
+ tools/test-warlord-pay.mjs tools/test-warlord-settlement.mjs
+ tools/test-feature-flags.mjs.
+
+Result: 276 tests pass, zero failures or skips. The new contact suite reaches
+397 checks, the depot suite 107, and all 68 existing Fuel tests reach 1,552.
+The frozen contact/depot assertions, every existing Fuel assertion, its five
+mode-control fingerprints and actual 30/60/144 FPS checks are unchanged.
+Separate node tools/test-replays.mjs passes all 162 ordinary fingerprints
+without regeneration. Existing combat replay checks also pass unchanged.
+No App, storage, settlement or reward source was edited by this follow-up.
+
+Two additional actual regressions were proved red before their fixes in
+disposable memory-only probes under .evidence/2026-09-30/ARENA-03:
+
+- parked-wreck-splash-probe.mjs uses an actual F exit, parked armor 1 and
+  an expired enemy bomb at the real fighter. The initial helper borrowed the
+  car's invulnerableSec: the same blast wrecked the car, gave it 4 s recovery
+  protection and left the fighter at 100 health. After removing that borrowed
+  car-only timer, the same blast still wrecks the car and knocks the fighter
+  down to zero health. Actual participant respawn guards remain.
+- pickup-pad-view-probe.mjs uses the real Fuel view and Three geometry. The
+  shared depot change first grew pickup rings/bases to 2.6 m. Separate reusable
+  geometry retains all four native pickup marker measurements above, while
+  every actual depot still measures 4 m in the frozen suite.
+
+Rebuildable measureFuelRounds() from tools/scenarios/arena-fuel-run.mjs runs
+seeds 1989 and 77123 at each difficulty using real input, CPU pilot, canisters
+and delivery rules. All six finish at five deliveries in 46.59–104.33 s.
+Collectors win five and a rammer wins one. Aggregate: 82 pickups, 23 drops,
+56 deliveries and three wall-hit events. This is a completion smoke sample,
+not a human win-rate verdict. These new Fuel traces reflect the intentional
+depot change; no existing replay file was replaced.
+
+| Difficulty / seed | Seconds | Winner | Trace SHA-256 |
+| --- | ---: | --- | --- |
+| easy / 1989 | 64.67 | cpu-1 | a3cf98cb1cb485b6011bfa4531fbea452612d2e0043a0cdfaa193288125d978f |
+| easy / 77123 | 46.59 | cpu-1 | 5d2ef81c404af20efced172ccd5b42a150efa7d5015af0d97e57ba326464e303 |
+| medium / 1989 | 64.12 | cpu-1 | 2ea130095e58b99be337f22caac0255f3cd409af3518ddc3b8ccaf5cb874ee34 |
+| medium / 77123 | 94.66 | cpu-1 | c13523a2063ff2f083df40267afb63218ab7bf77554c9e711b073edd481fa7c1 |
+| hard / 1989 | 104.33 | cpu-2 | 580b2e160c740650ca5ad2d9ae651f3c1cd86a3ba89ed5e4136ca0245b7f9c87 |
+| hard / 77123 | 97.63 | cpu-1 | 84775f93a4fc5a2335c9a1442bb4563b5b32c808bc673a91dd841d376c91a9d8 |
+
+| Current source | SHA-256 |
+| --- | --- |
+| src/combat-projectiles.js | 77bd0d8bf846eed114660012bf22704564303be68777be7c09d78899d6f5406b |
+| src/arena/modes/fuel-run.js | d7bf8b46872b921f27320950421e8cedc506ba2d4d3a7cd9a37a634bd7d0335e |
+| src/arena/modes/fuel-run-view.js | 0919b28384deef5706eb0441279a721948877093806218bb6bfa9f1dd124ca03 |
+
+### Remaining review and gates
+
+The current code reuses damageRaider for real raider health, knockdown, recovery
+and one-time award handling. That existing helper labels its award source
+onFoot; independent review must check whether the new car contact needs a
+source-tag follow-up before merge. No raider reward rule was redesigned and
+raiders.js remains outside this slice.
+
+This freeze grants no current whole-lane, build, browser, sound, complete
+Save Guardian or Claude merge clearance. The Director owns those next gates.
+No live folder, Preview, port 5174, real save, runtime dependency, world
+signature or protected audio source was touched.
+
+### Removed — current contact/depot implementation
+
+Replaced the 2 m depot boundary with 4 m. Removed parked-car armor/wreck
+conditions from standing fighter cargo, and the transient borrowed car
+recovery guard from new fighter contacts. Pickup markers retain their original
+geometry. No old assertion, replay pin, current game asset, licensed original,
+save key or save schema was removed or changed.

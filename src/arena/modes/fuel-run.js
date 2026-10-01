@@ -1,7 +1,7 @@
 // Fuel Run rules (SCRAPDOME 10). Simulation only; presentation reads this state.
 export const FUEL_RULES = Object.freeze({
   deliveriesToWin: 5, timeLimitSec: 180, refillSec: 5,
-  pickupMetres: 3.5, depotMetres: 2, innerOffset: -6,
+  pickupMetres: 3.5, depotMetres: 4, innerOffset: -6,
   padFractions: Object.freeze([.16, .36, .57, .81]),
   walkingShare: .7, dropArmor: 25,
   colors: Object.freeze(['#78ceff', '#ffb04d', '#a6de72', '#dba3ff']),
@@ -63,6 +63,8 @@ export function dropFuel(duel, participant, reason) {
 }
 
 export function noteFuelDamage(duel, participant, removed) {
+  // Once the driver exits, cargo belongs to the fighter, not the parked car.
+  if (participant.id === 'player' && duel.state.onFoot) return;
   if (removed > FUEL_RULES.dropArmor) dropFuel(duel, participant, 'hit');
 }
 
@@ -112,8 +114,9 @@ export function stepFuelRun(duel, dt) {
   for (const participant of arena.participants) {
     const actor = actorFor(duel, participant.id), pose = fuelPose(duel, participant);
     if (!actor || !pose) continue;
-    const down = participant.id === 'player' && duel.state.onFoot && duel.state.fighter?.knockedDown;
-    if (actor.combatWrecking || down) {
+    const onFoot = participant.id === 'player' && duel.state.onFoot;
+    const down = onFoot && duel.state.fighter?.knockedDown;
+    if ((!onFoot && actor.combatWrecking) || down) {
       dropFuel(duel, participant, down ? 'knockdown' : 'wreck');
       continue;
     }
