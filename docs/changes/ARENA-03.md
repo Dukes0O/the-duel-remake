@@ -1384,3 +1384,36 @@ asset changes. Final human feel/audio and Claude review remain separate.
 
 Removed the source URL omission of the new fuel-run development switch.
 No Preview output, running service, shortcut, real save or code path removed.
+
+## Exact switch catalog follow-up and recorded audio — 30 September
+
+Clean4a60b99 lane failed301pass/1fail/11notrun in436.45s. The unchanged
+release test in test-wasteland-beta required the complete old switch catalog,
+so the required new fuel-run:dev entry was its only mismatch. Director granted
+that exact test hook in integration927f57c after independent review approved
+the correction. The exact dictionary keeps every old entry/assertion and adds
+only fuel-run:dev; production default stays false. A separate behavioral
+control proves production URL cannot enable it, explicit QA request can,
+and unnamed QA remains false. No generic partial-dictionary assertion,
+removed release-state assertion, skipped case or changed replay pin.
+
+Final actual22-image High/Performance browser at1b9628e passed on private54854,
+memory-only, zero errors/warnings/failed requests. Fighter carry uses the
+actual authored mesh, Sudden Death has no loading indicator. Scoped actual
+WebAudio capture at4a60b99 maps Fuel pickup/drop/delivery/result and measures
+onsets within30ms. It is not a clean whole-audio pass: an otherwise identical
+Last Car Rolling60mph contact with no Fuel cues exceeds sample/true peak
+(-0.049dBFS/+0.22dBTP). Fuel is-0.087/+0.15; suppressing only landing still
+exceeds limits, so Fuel feedback is not the necessary cause. AUD-CRASH-PEAK
+owns the separate audio-owner follow-up. Pickup/delivery are14–16/10dB below
+engine and flagged for Kyle listening, not a weapons-only+6dB assertion.
+Actual terminal delivery/win overlap is reported, not independently timed.
+Private recordings/causal controls and graphs remain for pending review at
+.evidence/2026-09-30/ARENA-03/audio-final-4a60b99/VERDICT.md. No human ears,
+Preview feel, full-audio, fresh exact gate or whole-feature review is invented.
+
+### Removed — switch test follow-up
+
+Removed the exact old catalog's accidental exclusion of every future dev
+feature while retaining its complete release-state check. No production
+rule/source, prior assertion, runtime asset, licensed file or pin removed.
