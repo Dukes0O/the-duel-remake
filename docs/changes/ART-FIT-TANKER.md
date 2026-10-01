@@ -406,3 +406,117 @@ No original donor face, picked bracket, source record, settings, asset,
 other frozen assertion, old replay control or unrelated behavior was removed.
 Ignored raw evidence remains for the next independent review; the Director's
 janitor removes it after its verdict is committed.
+
+## Coherent native tank placement repair — 1 October 2026
+
+Source fitting resumed from the independent tests-first freeze
+`67fb882849aa386dc197cc51ac03ae8681193249`. A normal merge of current
+`integration/wasteland` produced `a765b78f144c4adb06b5e4edf73350fccbaeec40`
+before fitting. The Director granted only the existing recipe and this
+append-only note. Every frozen test, fit input, presentation module, scenario,
+source record and original licensed donor stayed unchanged.
+
+The exact unchanged command `node tools/test-convoy-tanker-art.mjs` first
+reproduced **42 checks, 41 passed, 1 failed**, exit 1, with the same **20 strict
+tank/body crossings** and first face-158/face-541 witness. All original source,
+lineage, support, corruption, lamp and lifecycle controls passed before the fix.
+
+### Placement and native geometry proof
+
+The tank has asymmetric native brackets. Reversing its ends puts both bracket
+sets clear of the rear wheel arches without shrinking the tank or changing the
+truck. The complete tank's source-world affine placement changed only in its
+horizontal orientation and longitudinal center:
+
+- Scale remains `(4.15, 4.25, 4.4)`; rotation about Y changes from +90 to -90
+  degrees. Translation changes from `(0, 1, -1.29)` to `(0, 1, -1.700021)`.
+- Thus the tank keeps its original fitted proportions and height. Its center
+  moves rearward by 0.410021 m. Minimum Y remains exactly 1 m on the native bed.
+- The entire 2574-face truck remains at its unchanged affine placement. The
+  entire 310-face tank, including its brackets, and all three complete
+  456-face Factory valves retain their original affine lineage. No picked
+  face was deleted, welded, replaced or compressed.
+- Existing valves, the raised salvage roof plate and the two warning lamps
+  follow `tank_center_z`. Valve Z positions are -2.860021, -1.700021 and
+  -0.540021 m. Cab, wheel and bed armor keep their original body attachments.
+  The Director confirmed that the frozen plural lamps remain two.
+
+Actual exported original contact edge A has X about -1.02e-6 m, Y exactly 1 m,
+and Z endpoints -2.0278708934783936 and -2.2768709659576416 m. Genuine upward
+body face 724 covers its entire length, interval [0, 1]. Edge B has X about
+-8.07e-7 m, Y exactly 1 m, and Z endpoints -0.3346707820892334 and
+-0.5836707949638367 m. Upward body face 725 covers its entire length,
+interval [0, 1]. Both native support normals have Y about 1. Their affine
+contact gap is zero; the frozen 0.002 m precision was not changed.
+
+The final exported tank has **zero strict crossings** against all 2574 native
+truck faces, down from 20. The native vertex surface probe finds zero tank
+vertices more than 0.002 m below an actual body surface. Genuine bed contact
+still produces zero strict crossings. All six unchanged support negatives
+pass: +0.06 m hover, -0.06 m sink, +0.8 m lateral displacement, removing both
+actual bed triangles and removing either one separately. The accepted positive
+uses actual native bed triangles, not an envelope or a claimed flat foot.
+
+Final source-affine tank bounds are X [-1.1336514234542847, 1.1336495876312256],
+Y [1, 2.7650065571069717], Z [-3.459621968658924, 0.0595797212996485] m.
+The truck's rear bound remains -3.629999737739563 m, leaving 0.170377769080639 m
+of rear clearance. No source geometry or gameplay rule changed.
+
+### Exact native result and preserved controls
+
+The first reversed candidate at center Z -1.70 cleared the crossing and support
+checks but exposed a separate lineage-key rounding boundary: **41/42**, with
+15 source face keys on a four-decimal boundary. Direct measurement found the
+nearest native coordinates differed by at most 1.1250376719118549e-7 m, below
+ordinary GLB float export precision. Moving the honest center by another
+0.000021 m avoids that boundary. No test tolerance, assertion, manifest count
+or source binding was changed to hide it.
+
+The final unchanged command passes **42 checks, 42 passed, 0 failed**, exit 0.
+This includes original bytes/archives/licences, unpicked donor rejection,
+corrupted copied source rejection, complete affine triangle lineage, exact
+repeat geometry/transforms/materials, source-palette encoded and decoded pixel
+rejection, three valve attachments, roof/lamp grounding, all eight valve-health
+combinations, caller immutability, exact-once loaded and late disposal, loader
+failure and zero save/extra-network access. Protected source, runtime art,
+replay pins, catalog and old assertions remain exact. Changed assertions: none.
+
+Native output remains **6328 triangles, 16 loaded meshes/draws, 1,063,268 bytes**.
+Final private GLB SHA-256:
+`0af1e450360a329cbc91bd9a90267ec68f1aa4628791f8bb857d431a107e75be`.
+The seeded worn atlas is byte-identical before and after placement:
+419687 encoded PNG bytes, SHA-256
+`8029e5c0f05142eb0d023012387af18c91ad6e91ae87f019d1e3ef5b073110a4`.
+These native counts do not measure frame cost or approve the look.
+
+Pins at this source freeze:
+
+- Recipe SHA-256: `79c47392c75bd9845581da78b72f8f3f33e02657fa2ab5bd806c57476ac3de37`.
+- Unchanged independent 42-check test: `6021849168fe659eccd47a6db40e2e320a5b66a5c34f81dbc6632212f97cad05`.
+- Unchanged fit input: `42113797fca80592f9a99a00238054da4b0901e958ae4b2365860f1be9a2a498`.
+- Unchanged presentation: `b80ef925af615c6ad3d7723fb9e17ea9dbb8ccb853a2c264099a0f241c707642`.
+- Unchanged scenario: `d358ec4e092462d48ea1cafa8ca6cdfaa19de1e5a29dda983c3ec49fb0cd233e`.
+- Unchanged catalog: `3902a750659da37892ac0ff6ac3431393fdfb9f35e2a4a4273117fa71eda0843`.
+- Unchanged valve source record: `3afc6c2a8b5c64ee72171b21894333be19a3cf8e3d8223a9dbf0f590c40bb6a4`.
+
+Full stdout/stderr and per-recipe logs, verdicts, manifests and native contact /
+crossing witnesses are retained in ignored integration evidence at
+`.evidence/2026-10-01/ART-FIT-TANKER/placement-fix/`. The three stages are
+`red-native-details`, `lineage-boundary-details` and `green-native-details`.
+Private measurement recipes/results record the unscaled orientation sweep,
+export rounding witness and unchanged material bytes. The final candidate
+remains private in the lane's `.qa-dist/tanker-art-tests-zIEcpS/candidate/`.
+
+### Review boundary and Removed
+
+This hands back a clean source freeze for independent review. Lane tier, build,
+actual game-renderer comparison, art scores, frame pacing, credits, public
+installation and Convoy Raid integration remain pending. No comparison round
+was spent. No integration merge, push, Preview, live folder, port 5174, real
+save, audio, new asset, download or service was touched.
+
+Removed: the old tank orientation and fixed tank-accessory center coordinates
+were replaced in the recipe. No prior runtime tanker or current game asset
+exists to retire. All original licensed files and current runtime assets stay.
+Generated candidates and probe logs remain ignored, used-once review evidence;
+the Integrator removes them after the independent verdict is committed.

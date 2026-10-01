@@ -271,10 +271,13 @@ def build(output, fit, paths, seed):
         return fitted_bounds(faces, matrix)
 
     body_low, body_high = add("body", "tanker-body", "body", affine((2, 2, 2.2)), 0)
-    # Rotate the complete picked horizontal tank along the bed.
-    tank_matrix = affine((4.15, 4.25, 4.4), (0, 1, -1.29), math.pi/2)
+    # Reverse the complete tank so its asymmetric native brackets straddle
+    # the rear wheel arches. Keep the original fit scales and bed contact Y.
+    tank_center_z = -1.700021
+    tank_matrix = affine((4.15, 4.25, 4.4), (0, 1, tank_center_z), -math.pi/2)
     tank_low, tank_high = add("tank", "tanker-tank", "tank", tank_matrix, 1)
-    for index, z in enumerate([-2.45, -1.29, -.13]):
+    for index, offset in enumerate([-1.16, 0, 1.16]):
+        z = tank_center_z + offset
         side = -1 if index == 1 else 1
         matrix = affine((.46, .46, .46), (side*1.015, 1.78, z),
                         math.pi/2 if side > 0 else -math.pi/2)
@@ -294,7 +297,7 @@ def build(output, fit, paths, seed):
     if not roof:
         raise ValueError("Approved container has no actual roof salvage")
     plate_matrix = affine((3.75, .75, 2.15),
-                          (0, tank_high[1] - (high[1] - .040)*.75, -1.29))
+                          (0, tank_high[1] - (high[1] - .040)*.75, tank_center_z))
     plate_low, plate_high = add("boarding-plate", "tanker-boarding-plate",
                                "armor-panel", plate_matrix, 7, roof)
     # Compress genuine container shells into supported salvaged side skirts.
@@ -317,9 +320,9 @@ def build(output, fit, paths, seed):
             for segment in range(12):
                 angle = segment*math.tau/12
                 vertices.append((x + math.cos(angle)*radius,
-                                 1.29 + math.sin(angle)*radius, height))
-        vertices += [(x, 1.29, plate_high[1] - .010),
-                     (x, 1.29, plate_high[1] + .080)]
+                                 -tank_center_z + math.sin(angle)*radius, height))
+        vertices += [(x, -tank_center_z, plate_high[1] - .010),
+                     (x, -tank_center_z, plate_high[1] + .080)]
         triangles = []
         for segment in range(12):
             following = (segment + 1) % 12
