@@ -96,10 +96,10 @@ remain, the serial stays five, and the taken spot's respawn wait is
 11.975000000000001 seconds. This is collection after all five spawned,
 not a missing spawn.
 
-The fixture and all its assertions remain byte-for-byte unchanged. Two
-previous automatic approval reviews rejected a proposed fixture isolation;
-neither edit ran. No further fixture change was attempted. The Director
-will route this witness for independent review and Claude clarification.
+At the c73ce03 source freeze the fixture and assertions were unchanged.
+Independent review subsequently proved legal collection and approved a native
+finite-protection fixture with every existing assertion retained. The
+Director applied that correction after approval; see the follow-up below.
 
 ## Fingerprints and protected files
 
@@ -123,15 +123,18 @@ review rather than silently substituted.
 
 The old steering suite SHA remains
 `9e235ca43867464ce9319a2f788842fb2018b29b87db4dc82b077a743b80b85f`;
-the crate suite SHA remains
+at the c73ce03 freeze the crate suite SHA was
 `7b7f48ceaf44e733bc9cfaf9e674527bf234a066c359951719250e79789d74f6`;
+the later fixture correction is recorded below;
 the frozen new ceiling suite SHA remains
 `a32aeba16f24d9a922763867e7b729992a48e60766d3dcdf2646e70e2e96c6b6`.
 
 ## Changed assertions
 
-None. No old test, the frozen new test or replay pin changed. No source
-behavior is adjusted to hide the legitimate crate collection.
+Every existing assertion remains unchanged. The reviewed crate timer fixture
+now uses finite native protection and adds an unprotected moving-CPU control.
+The browser scenario adds ceiling, clear-release and authored-kit readiness
+checks. No source behavior is adjusted to hide legitimate collection.
 
 ## Sound
 
@@ -217,3 +220,56 @@ or regenerating them. No existing suite, source, runtime asset or rule is edited
 
 None. This freeze adds acceptance tests only. The implementer owns the source
 change and the follow-up note once the Director releases this freeze.
+
+## Reviewed fixture and clear-floor browser follow-up — 30 September
+
+Independent read-only review confirmed that the old timer fixture mixed
+spawning with eligible collection. Before changing its context, the Director
+added a native moving-CPU collection control: 12 of 13 tests passed and the
+original five-crate assertion failed. Finite pickup protection now isolates
+only the initial and respawn timer intervals. The player is unprotected for
+the backwards repair pickup. All original assertions are byte-for-byte
+unchanged; the new control proves five actual spawns, legal moving-CPU reach,
+floor height, no protection, one native charge, removal and respawn timing.
+The corrected suite passes 13 of 13. No gameplay pickup guard changed.
+
+The browser starts each actual full-lock arc at a clear central floor pose,
+then never resets it during 1 s of driving and 0.3 s of release. Added checks
+retain the 150 degree/s ceiling, avoid knock/air/armor loss, and require at
+least 40 mph coasting. High and Performance screenshots show the entire
+Falcone, Titan and Jesko, front bumpers and crossbows clear of walls. Release
+speed is 43.93 mph; Sal still physically halves authority in her natural
+window. Both private runs used memory-only saves with no console errors,
+warnings or failed requests.
+
+The first clear-pose run failed the Performance spark-visibility assertion;
+an unchanged repeat passed. Body readiness does not imply asynchronous
+authored-kit readiness. The scenario now waits at most 30 s for the actual
+visible spark node, calling production onFrame/renderFrame without advancing
+Sal or changing the original visibility assertion. This final readiness
+change still needs its own fresh browser result. The hunting badge overlaps
+placing text at 1280 by 800; record that separate HUD debt while Fuel owns
+the HUD. Human Preview feel and audible Sal review remain pending.
+
+## Full-field balance result — blocked for Claude
+
+The complete 108-round report at unchanged c73ce03 source used 36 rounds per
+difficulty. Medium averages 23.3 full-field wrecks against SCRAPDOME section
+8 target 10–14. Original baseline was 15.7; prior factor 3.4 was 24.4. The
+ceiling reduces this by 1.1 but does not meet the target. Easy and Hard means
+are 20.9 and 21.9. Proximity is 53/52/51%, wall hits 0.1/0.1/0.8 per round,
+and reverse time 5.8/8.2/9.5%; those measured limits pass. Wins out of 36 are
+8/4/1 and mean player places 2.19/2.58/2.72.
+
+No settled handling floor, ceiling, speed, collision, damage or balance target
+is relaxed. Route the measured wreck gap to Claude in decisions and the
+playtest inbox. Mandatory exact lane/build gates, this design/balance review
+and Kyle feel remain before merge. No whole-card clearance is claimed.
+
+### Removed — fixture and browser follow-up
+
+Removed the timer fixture's accidental dependence on how fast a CPU arrives
+after spawning, and the browser's immediate body-only assumption for Sal
+kit readiness. Kept all original assertions, road pins, current assets,
+physical pickup rules and simulation source. Raw failed/passing evidence
+stays private until the pending review consumes it.

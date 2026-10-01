@@ -33,10 +33,10 @@ async function turningArc(context, quality, car) {
     if(a.duel.state.status!=='racing')throw Error('Arena countdown did not finish');})()`);
   await ready(context, quality+' '+car+' arena');
   const arc=await context.evaluate(`(() => {
-    const a=window.__qaApp,d=a.duel,s=d.state,site=d.course.length*.18;
+    const a=window.__qaApp,d=a.duel,s=d.state,site=d.course.length*.16;
     // A clear central floor pose isolates one second of a real driving arc.
     // Positions are never reset after this initial placement.
-    Object.assign(s,{s:site,prevS:site,lateral:0,prevLateral:0,headingError:0,
+    Object.assign(s,{s:site,prevS:site,lateral:6,prevLateral:6,headingError:.5,
       speedMph:45,gear:0,steerVisual:0,yawVelocity:0,slipAngle:0,pushVelocity:0,
       knock:null,airborne:false,airHeight:0,impactTimer:0});
     const start=d.course.worldAt(s.s,s.lateral);
@@ -60,19 +60,22 @@ async function turningArc(context, quality, car) {
         window.name.startsWith('__duel_qa_tab_v2:')};})()`);
   assert.ok(arc.memoryOnly&&arc.course.venue===true&&arc.course.arena===true);
   assert.equal(arc.car,car);assert.equal(arc.status,'racing');
+  assert.ok(arc.peakYawDegreesPerSec<=150+1e-8, 'Actual full-lock arc stays within the settled ceiling');
   assert.ok(arc.yawDegreesPerSec>=100&&Math.abs(arc.turnDegrees)>=90&&arc.movedMetres>1,
     'Real45mph full-lock arc must visibly turn at the settled arena rate: '+JSON.stringify(arc));
   await capture(context, quality+'-'+car+'-full-lock');
   const release=await context.evaluate(`(() => {const d=window.__qaApp.duel,s=d.state,
-    full=Math.abs(s.yawVelocity),rows=[];let prior=s.yawVelocity;
+    full=Math.abs(s.yawVelocity),rows=[],armor=s.armor;let prior=s.yawVelocity;
     d.setInput({steer:0,throttle:0,brake:0,boost:false});
     for(let tick=0;tick<36;tick++){d.step(1/120);
       if(!Number.isFinite(s.yawVelocity)||s.yawVelocity>1e-12||Math.abs(s.yawVelocity)>Math.abs(prior)+1e-12)
         throw Error('Actual released steering must decay without oscillation');
+      if(s.knock||s.airborne||s.armor!==armor)throw Error('Clear-floor release must avoid actual collisions');
       rows.push(s.yawVelocity);prior=s.yawVelocity;}
     return {elapsedSec:.3,fullYaw:full,remainingYaw:Math.abs(s.yawVelocity),
-      fraction:Math.abs(s.yawVelocity)/full,steerVisual:s.steerVisual,status:s.status,rows};})()`);
+      fraction:Math.abs(s.yawVelocity)/full,speedMph:s.speedMph,steerVisual:s.steerVisual,status:s.status,rows};})()`);
   assert.equal(release.status,'racing');
+  assert.ok(release.speedMph>=40, 'Clear-floor release keeps its actual coasting speed');
   assert.ok(release.fraction<=.015, 'Real stick release must settle in0.3s: '+JSON.stringify(release));
   await capture(context, quality+'-'+car+'-released');
   return {arc,release};
@@ -115,6 +118,13 @@ async function salWindow(context, quality) {
     'Built Sal pilot must physically halve the current arena authority');
   assert.equal(probe.callout,'SHE MISSED. HIT HER NOW!');
   await ready(context, quality+' natural Sal window');
+  // Authored kits load after the body. Render the actual frozen window until
+  // its spark node exists; do not advance or replace the Sal state machine.
+  await context.waitFor(`(() => {
+    window.__qaApp.onFrame(window.__qaApp.duel.state,0);window.__render.renderFrame();
+    let visible=false;window.__render.scene.traverse(n=>{
+      if(n.name==='kit-sal-sparks'&&n.visible)visible=true;});return visible;
+  })()`, quality+' authored Sal spark readiness', 30000);
   const sparks=await context.evaluate(`(() => {let visible=false;
     window.__render.scene.traverse(n=>{if(n.name==='kit-sal-sparks'&&n.visible)visible=true});return visible})()`);
   assert.ok(sparks,'Natural Sal window must retain its renderer sparks');
