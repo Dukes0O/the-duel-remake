@@ -1327,3 +1327,12 @@ hand. A fresh full tier on ba157a5 passed 308/308 in 430 s and wrote the
 ledger; ba157a5 pushed. Waiting for Kyle: hands (keep current after two
 rounds), tanker parts (Claude proposes a simpler convoy rig), crew (keep
 current), and the save fix release.
+
+## 30 September 2026, Claude: fourth release (save fix) and Kyle's decisions
+
+Kyle: release the save fix, keep the current crew and hands, simplify the
+tanker. Decisions and release notes merged as 4cd4a96; release checks passed
+on that commit. Build 20261001023145-f3bee8 checked on port 5188 and copied
+into the live dist; verified on 5174. dist 149, dist-previous 149 (039fc6),
+dist-next deleted, master and integration pushed at 4cd4a96. Run plan
+refreshed (3d4fd35): Codex starts from "Resume here".

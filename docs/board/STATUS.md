@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-01T01:30:19.593Z
+Observed at: 2026-10-01T02:32:11.609Z
 
-Observation commit: ba157a5c782b2cf239b86a76e76867f7529688ae
+Observation commit: 3d4fd358d952d186974108698571df06e82a8f93
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: ba157a5c782b2cf239b86a76e76867f7529688ae
+Integration HEAD: 3d4fd358d952d186974108698571df06e82a8f93
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -14,7 +14,7 @@ Live commit: not checked
 
 Live build version: not checked
 
-Full tier: dirty; exact HEAD passed: no.
+Full tier: stale; exact HEAD passed: no.
 
 Last recorded full run: 2026-10-01T01:29:51.654Z; tested commit: ba157a5c782b2cf239b86a76e76867f7529688ae.
 
@@ -43,7 +43,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | lane/audio/aud-12 | 5 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 5 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 | lane/cmb/arena-03-fuel-run | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-03-fuel-run |
-| lane/docs/fighter-rules | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fighter-rules |
 | lane/phys/arena-steer | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-steer |
 
 ## Unmerged branches for idle review
@@ -70,23 +69,23 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 430,908 B | +0 B | 500,000 B |
 | Review `looks/` | 10,712,857 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 1,314,593 B | +1,202,523 B | 5,000,000 B |
+| Added bytes in last merge | 12,340 B | -1,302,253 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 321,804,288 B | +365,568 B | unavailable |
+| Git objects | 322,111,488 B | +307,200 B | unavailable |
 | Lane folders | 5 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: 4c3248e59bfaaa3eb02ef4f680d43fa051fd7f4c
+- Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: ba157a5c782b2cf239b86a76e76867f7529688ae
+- Local integration/wasteland: 3d4fd358d952d186974108698571df06e82a8f93
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit 4c3248e59bfaaa3eb02ef4f680d43fa051fd7f4c.
+- Remote origin/master: matches local; cached commit 4cd4a9608238d86a90a1335adacf526eb7f4a2d3.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: matches local; cached commit ba157a5c782b2cf239b86a76e76867f7529688ae.
+- Remote origin/integration/wasteland: behind local; cached commit 4cd4a9608238d86a90a1335adacf526eb7f4a2d3.
