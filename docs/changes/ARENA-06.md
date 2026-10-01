@@ -683,3 +683,148 @@ test, source model, native recipe binding, licensed input, public asset,
 source path or replay pin was replaced. Private evidence is retained for
 the Director's review and used-once janitor cleanup. No live folder,
 Preview, port 5174, real save or new service was used.
+
+
+## Native oval boundary Source freeze, 1 October 2026
+
+The independently frozen boundary RED is now GREEN in this private Source
+slice. No frozen test, source pick, fit input, palette/photo binding, floor
+rule, ramp station, settings value, current Scrapdome path or replay pin changed.
+Work resumed from clean acceptance commit
+`d5b77fe28b71ae461393a399e0f4a6105fa61ef6`. Only `src/arena/venues.js`,
+`src/course.js`, `tools/blender/salt-flats.py` and this append-only note changed.
+The prior 53,005-byte note prefix remains SHA-256
+`ca5b7cc11e805b97ece5e0d464bea05761204ed09608f02c215cf5353aa057cf`.
+
+### Actual physical construction and affine lineage
+
+The authored physical geometry now follows the actual centered Course oval.
+There are 64 local outer sections: 62 genuine two-high container stacks and
+two three-high tyre sections. Each container retains its 2.44 by 2.60 by
+12.15 m fitted dimensions, with lower/upper centers at Y 1.30/3.90 m.
+Each tyre section retains 30 genuine tyres in ten columns and three levels;
+each tyre is .46 by 1.18 by 1.18 m, with levels .59/1.71/2.83 m.
+
+There are 96 grounded original sedan-body wreck sections around the inner
+island, at the already used 2.30 by .92 by 5.25 m wreck-body proportions.
+Their complete selected body faces are retained. Their centers are Y .46 m,
+so their lowest native geometry is on the actual floor. The six existing
+central salvage piles, picked plain Bus and full crane/magnet assembly remain
+inside that closed boundary. No invisible filled bowl or island was added.
+
+Section placement comes from `course.worldAt(s, offset)`: outer stations are
+`index/64 * course.length`; inner stations are `index/96 * course.length`.
+Container centers use the inherited outer wall offset +21 m, wreck centers
+use -21 m, and the two tyre centers use +20.5 m within the same approved visible
+buffer. Each source assembly rotates by the actual frame heading. For a local
+width W and length L, its nominal world envelope is
+`abs(cos heading)*W + abs(sin heading)*L` in X and
+`abs(sin heading)*W + abs(cos heading)*L` in Z. The recipe consumes these actual
+Course numbers, fits the complete native faces into each local envelope and
+updates every source-to-world affine lineage matrix. Its manifest records
+actual source triangle indices; counts are measured from exported triangles.
+The existing .002 m export padding and axis-aligned box-contact convention
+remain unchanged. No broad sector collider encloses an empty/drivable region.
+
+There are exactly 168 tight local colliders: 64 outer sections, 96 inner
+sections and eight existing central solids. Perimeter pieces now use local
+64 m broadphase buckets. Actual buckets contain 37 or 38 obstacles. The eight
+central solids remain available across ambiguous off-band projections; the
+native Bus collision regression passes. Rendering still consumes the original
+native meshes directly. No instancing, batching, culling or resource hook was
+introduced in this Source slice.
+
+Both ramps retain the exact existing authoritative 16-segment Course geometry:
+8 m wide, 26 m long and 2.4 m high. Neither their profile nor the 300 by 200 m
+native ground changed. The original CC0 photo pixels and approved mirrored
+UVs, seeded worn material, exact nine source bindings, native face lineage,
+resource lifecycle and scene ownership controls remain passing.
+
+### Measured RED to GREEN and unchanged controls
+
+Reproduction on unchanged source: `node tools/test-salt-flats-art.mjs` produced
+29 checks, 16 passed, 13 failed, with no exclusions. After fitting, the same
+exact command produces **29/29 passed**, with no changed assertion or precision.
+All 160 native frame/midpoint stations per side have body-height visible solids.
+Inner unbacked samples fall from 160 to zero; outer samples from 132 to zero.
+Maximum inner distance falls from 61.73863218247728 to **1.9838192110987063 m**;
+maximum outer distance from 34.472143819984424 to **2.271364305221265 m**.
+Both remain below the unchanged inherited 3 m plus .002 m limit.
+
+Every one of the nine genuine car shells now contacts a real native-backed
+Course obstacle at all 160 inner and all 160 outer sweep stations. Both native
+donor contact-footprint graphs now have a closed enclosing cycle. The genuine
+shorter-Dusthawk witness, connected-open-spiral negative control, all nine exact
+floor/body rules, stopped-player witnesses, repeatability and tight native
+export/Course envelope correspondence all pass. This proves the frozen existing
+box-contact and visible-boundary criteria; it does not claim a manifold mesh,
+zero car-center clearance or a new containment rule.
+
+The unchanged `node tools/test-salt-flats.mjs` still gives **42 checks,
+36 passed, 6 held runtime failures**, plus **16/16 geometry checks passed**:
+58 total, 52 passed, 6 held. All 31 source/native controls pass and all 16
+registered/mesh geometry controls pass. None were excluded. The six held hooks
+are the dev switch, rank-eight rejection, dev-off rejection, rank-nine public
+App selection, unknown-venue rejection and complete Fuel Run Salt consumer.
+A native-only selection is not used to claim the whole geometry/runtime card.
+
+Required unchanged regression commands pass:
+
+- `test-course-nearest.mjs`: 127,296 checks across the existing 16 courses.
+- `test-polyline-index.mjs`: 95,656 checks.
+- `test-road-surface.mjs`: 495,518 checks.
+- `test-arena-event.mjs`: 13/13; `test-arena-props.mjs`: 29;
+  `test-arena-ramp-side.mjs`: 42; `test-arena-steering.mjs`: 215.
+- `test-scene-systems.mjs`: 16 lifecycle controls.
+- `test-replays.mjs`: all 162 fingerprints exact across the existing 18 cases.
+- `npm run build`: passes in the private lane (390 ms Vite build), retaining
+  the existing large-chunk warning.
+
+The boundary test remains exactly 19,194 bytes, SHA-256
+`fd8e46508f394a50c681a86812639cca9fc941241edb377c716500fb1d0b1166`.
+The original suite remains exactly 48,683 bytes, SHA-256
+`d56517bed257b7150c2030a77fa053c69ad8b874bb67095fe863f27cc49ea824`;
+its first 34,473 bytes remain
+`46d27e8be782591d07ff5440ca0e20673bcc78e24060b8f9865a900d994d9774`.
+Frozen fit SHA-256 remains
+`c6298b9cc516a31cb97d76a6da88a84c6232200626699d5e499cc553107b660b`;
+catalog SHA-256 remains
+`3902a750659da37892ac0ff6ac3431393fdfb9f35e2a4a4273117fa71eda0843`.
+The unchanged independent Scrapdome/control fixture and ordinary replay pins
+pass. No assertions or pin files changed.
+
+### Native cost, evidence, limits and Removed
+
+Actual candidate: **152,180 triangles, 171 native meshes/draws, 168 colliders,
+170 manifest features including two ramps**, GLB **17,480,484 bytes**, manifest
+**726,947 bytes**. The candidate and repeat export have the exact same GLB hash:
+`6cd41757ee903b3924ddd760f66533e1295ba96d96d863a8689361db74d35bdc`.
+Compared with the preceding 102,764-triangle/17-draw private candidate, this is
+49,416 more triangles and 154 more native draws. GLB growth is 4,659,012 bytes.
+These are real geometry/frame costs, not an accepted frame budget. The source
+is larger than the initial estimate. Recognizable stacks were retained rather
+than reduced solely for counts. Any later native instancing needs independent
+transform, lifecycle and culling acceptance before presentation edits.
+
+Raw RED/GREEN/default-suite output, original-source inspection, repeat receipts,
+regression logs, build output and native measurements are private ignored
+integration `.evidence/2026-10-01/ARENA-06/boundary-source/`. The GREEN actual
+candidate remains in this lane `.qa-dist/salt-boundary-tests-USdfdq/candidate`;
+the independent unchanged suite candidate and byte-identical repeat are in
+`.qa-dist/salt-flats-tests-OSk440/`. Output stays regenerable and is not committed
+or installed into public/current runtime assets.
+
+This returns Source ownership for independent review. Held public runtime hooks,
+art/wear/heat, actual matched game High/Performance frames within 10%, Claude
+comparison, installation and final exact lane/full/build gates remain open.
+No whole-card, mode, browser, art round, Salt frame, merge, push or release pass
+is claimed. No live folder, Preview, port 5174, real save, protected audio,
+source pack, new service or asset download was used.
+
+Removed: the six native rectangular-perimeter sections and their broad straight
+wall envelopes were replaced by actual local oval container/tyre sections.
+The empty inner-boundary path was replaced by genuine grounded wreck sections
+with native-backed local collision. No original licensed geometry, selected
+source binding, current asset, test, assertion, old Course/Scrapdome behavior,
+photo pixel or replay pin was removed. Superseded private candidates remain
+used-once review evidence for the Director's janitor after verdict capture.

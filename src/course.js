@@ -189,10 +189,11 @@ export class Course {
       this.obstacleBuckets=new Map();this.rockBuckets=new Map();
       const buckets=Math.ceil(this.length/64);this.bucketCount=buckets;
       for(const obstacle of f.obstacles){
-        // An interior solid can have several equally near ring frames. Give
-        // off-band world solids to every bucket; the real world sweep filters
-        // their tight native envelopes. This small venue has fourteen solids.
-        if(Math.abs(obstacle.off)>this.roadHalfWidthAt(obstacle.s)){
+        // Authored perimeter sections have an unambiguous nearby ring frame.
+        // Central Bus/crane/cover can have several equally near frames, so
+        // keep those off-band solids reachable and let the world sweep filter.
+        const boundary=this.saltFlatsGeometry.solids.find(solid=>solid.id===obstacle.id)?.fit.boundary;
+        if(!boundary&&Math.abs(obstacle.off)>this.roadHalfWidthAt(obstacle.s)){
           for(let key=0;key<buckets;key++){
             if(!this.obstacleBuckets.has(key))this.obstacleBuckets.set(key,[]);
             this.obstacleBuckets.get(key).push(obstacle);

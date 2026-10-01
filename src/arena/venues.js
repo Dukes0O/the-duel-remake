@@ -62,13 +62,30 @@ export function saltFlatsPhysicalGeometry(course) {
     solids.push({id, kind, center, size, fit,
       collision: {center, halfExtents: size.map(value => value / 2 + .002), heading: 0}});
   };
-  for (const side of [-1, 1]) {
-    solid(`container-boundary-${side < 0 ? 'north' : 'south'}`, 'container-wall',
-      [0, 2.6, side * 97], [287.15, 5.2, 2.44], {side, axis: 'x'});
-    solid(`container-boundary-${side < 0 ? 'west' : 'east'}`, 'container-wall',
-      [side * 147, 2.6, 0], [2.44, 5.2, 187.15], {side, axis: 'z'});
-    solid(`tyre-boundary-${side < 0 ? 'west' : 'east'}`, 'tyre-wall',
-      [side * 145.5, 1.71, 0], [.46, 3.42, 16.26], {side});
+  // Local donor sections follow the same physical offset frames as the floor.
+  // Each envelope contains one container/wreck or one short tyre assembly;
+  // none encloses a sector of drivable salt behind a broad proxy wall.
+  const boundary = (id, kind, s, offset, size, source) => {
+    const at = course.worldAt(s, offset), heading = at.heading;
+    const cosine = Math.abs(Math.cos(heading)), sine = Math.abs(Math.sin(heading));
+    const center = [at.x, size[1] / 2, at.z];
+    const envelope = [cosine * size[0] + sine * size[2], size[1],
+      sine * size[0] + cosine * size[2]];
+    solid(id, kind, center, envelope, {boundary: true, s, offset, center,
+      size, heading, source});
+  };
+  for (let index = 0; index < 64; index++) {
+    const s = index / 64 * course.length;
+    const tyres = index === 16 || index === 48;
+    boundary(`${tyres ? 'tyre' : 'container'}-boundary-${index + 1}`,
+      tyres ? 'tyre-wall' : 'container-wall', s,
+      course.def.scrapdome.wallOffset - (tyres ? .5 : 0),
+      tyres ? [.46, 3.42, 11.62] : [2.44, 5.20, 12.15],
+      tyres ? 'debris-tire' : index % 2 ? 'shipping-container-a' : 'shipping-container-b');
+  }
+  for (let index = 0; index < 96; index++) {
+    boundary(`salvage-island-${index + 1}`, 'salvage-cover', index / 96 * course.length,
+      -course.def.scrapdome.wallOffset, [2.30, .92, 5.25], 'sedan');
   }
   for (const [index, [x, z]] of [[-53, -43], [0, -48], [55, -41],
     [-60, 38], [0, 45], [58, 40]].entries()) {

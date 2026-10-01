@@ -281,31 +281,31 @@ def main():
     points=[(-w,0,-d),(-w,0,d),(w,0,d),(w,0,-d)];uv=[(0,0),(0,2*d/12),(2*w/12,2*d/12),(2*w/12,0)]
     ground.triangle([points[i] for i in (0,1,2)],[uv[i] for i in (0,1,2)])
     ground.triangle([points[i] for i in (0,2,3)],[uv[i] for i in (0,2,3)]);objects.append(ground.build(salt))
-    for side in (-1,1):
-        wall=Geometry('container-boundary-'+('north' if side<0 else 'south'))
-        for column in range(23):
+    for section in physical['solids']:
+        layout=section['fit']
+        if not layout.get('boundary'):
+            continue
+        wall=Geometry(section['id']);part=source[layout['source']]
+        x,y,z=layout['center'];yaw=layout['heading']
+        if section['kind']=='tyre-wall':
+            # Three grounded rows of original vertical tyres. Their native
+            # surfaces, not a hidden long rectangle, close these short spans.
+            for column in range(10):
+                along=-5.22+column*1.16
+                for level in range(3):
+                    center=(x+math.sin(yaw)*along,.59+level*1.12,z+math.cos(yaw)*along)
+                    indices,matrix=fit(part,(.46,1.18,1.18),center,yaw=yaw)
+                    wall.stamp(part,indices,matrix,tile=6)
+        elif section['kind']=='container-wall':
             for level in range(2):
-                part=source['shipping-container-a' if (column+level)%2 else 'shipping-container-b']
-                indices,matrix=fit(part,(2.44,2.60,12.15),(-137.5+column*12.5,1.3+level*2.60,side*97),yaw=math.pi/2)
-                wall.stamp(part,indices,matrix,tile=(column+level)%6)
-        add(wall,'container-wall')
-    for side in (-1,1):
-        # Close the side boundary with existing grounded container bodies.
-        # Real tyres form dense three-high sections on the inner face; the
-        # assembly has no car-sized gaps hidden behind a proxy collider.
-        wall=Geometry('container-boundary-'+('west' if side<0 else 'east'))
-        for column in range(15):
-            for level in range(2):
-                part=source['shipping-container-a' if (column+level)%2 else 'shipping-container-b']
-                indices,matrix=fit(part,(2.44,2.60,12.15),(side*147,1.3+level*2.60,-87.5+column*12.5))
-                wall.stamp(part,indices,matrix,tile=(column+level+2)%6)
-        add(wall,'container-wall')
-        wall=Geometry('tyre-boundary-'+('west' if side<0 else 'east'))
-        for column in range(14):
-            for level in range(3):
-                part=source['debris-tire'];indices,matrix=fit(part,(.46,1.18,1.18),(side*145.5,.59+level*1.12,-7.54+column*1.16))
-                wall.stamp(part,indices,matrix,tile=6)
-        add(wall,'tyre-wall')
+                part=source['shipping-container-a' if (int(layout['s']//10)+level)%2 else 'shipping-container-b']
+                center=(x,1.30+level*2.60,z)
+                indices,matrix=fit(part,(2.44,2.60,12.15),center,yaw=yaw)
+                wall.stamp(part,indices,matrix,tile=(int(layout['s']//10)+level)%6)
+        else:
+            indices,matrix=fit(part,layout['size'],layout['center'],yaw=yaw,indices=part['parts']['body'])
+            wall.stamp(part,indices,matrix,tile=int(layout['s']//10)%6)
+        add(wall,section['kind'])
     for index,(x,z) in enumerate([(-53,-43),(0,-48),(55,-41),(-60,38),(0,45),(58,40)]):
         pile=Geometry('salvage-cover-'+str(index+1));yaw=0
         sedan=source['sedan'];body=sedan['parts']['body']
@@ -360,7 +360,7 @@ def main():
     manifest={'version':1,'card':'ARENA-06','seed':args.seed,'ground':{'node':ground.name,'targetSizeMetres':config['targetSizeMetres'],
                'photoSha256':config['saltPhoto']['sha256'],'tiling':'mirrored-uv'},'features':features,'sourceInstances':lineage,
                'nativeTriangles':native_triangles,'nativeDraws':len(objects),'geometrySha256':digest(venue),
-               'scope':'Private registered Course geometry. Island continuity, launch hooks, game/art/frame and Claude review remain pending.'}
+               'scope':'Private registered Course and native boundary geometry. Launch hooks, game/art/frame and Claude review remain pending.'}
     (output/'manifest.json').write_text(json.dumps(manifest,separators=(',',':'))+'\n')
     print(json.dumps({'nativeTriangles':native_triangles,'nativeDraws':len(objects),'features':len(features),'output':str(output)}))
 
